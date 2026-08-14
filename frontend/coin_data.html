@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/app/i18n.js?v=1"></script>
   <title>Coin Data - PBGui</title>
   <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
   <script src="/app/js/sidebar_resize.js?v=1"></script>
@@ -16,7 +17,7 @@
       --text-dim: #94a3b8;
       --accent: #63b3ed;
       --blue: #1d4ed8;
-      --font: 'Segoe UI', system-ui, sans-serif;
+      --font: 'Segoe UI', system-ui, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
       --fs-xs: 11px;
       --fs-sm: 13px;
       --fs-base: 14px;
@@ -39,7 +40,7 @@
       overflow: hidden;
       background: #0e1117;
       color: #e2e8f0;
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
       font-size: var(--fs-base);
     }
 
@@ -1432,7 +1433,7 @@
     <div class="ovl-panel">
       <div id="help-drag-handle"></div>
       <div class="ovl-header">
-        <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
+        <div class="ovl-header-title" data-i18n-html="market.helpGuideTitle">&#128218; Guide &amp; Help</div>
         <div class="ovl-header-actions">
           <div class="lang-pill">
             <button id="help-lang-en" class="active">EN</button>
@@ -1443,10 +1444,10 @@
       </div>
       <div id="help-body">
         <div id="help-toc">
-          <input id="help-toc-filter" type="text" placeholder="Filter topics..." autocomplete="off">
+          <input id="help-toc-filter" type="text" placeholder="Filter topics..." data-i18n-placeholder="market.helpFilterPlaceholder" autocomplete="off">
           <div id="help-toc-list"></div>
         </div>
-        <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
+        <div id="help-content"><div class="help-loading" data-i18n="market.helpSelectTopic">Select a topic from the left.</div></div>
       </div>
     </div>
   </div>
@@ -1455,20 +1456,20 @@
     <aside id="sidebar">
       <div id="sidebar-sticky">
         <div id="sidebar-header">
-          <span class="sb-title">Coin Data</span>
+          <span class="sb-title" data-i18n="market.coinData">Coin Data</span>
           <span class="sb-count" id="sb-count">0 rows</span>
         </div>
 
         <div id="sidebar-toolbar">
-          <button class="sb-btn primary" id="btn-refresh-exchange">Refresh Selected Exchange</button>
-          <button class="sb-btn info" id="btn-refresh-all">Refresh All Exchanges</button>
-          <button class="sb-btn info" id="btn-refresh-cmc">Refresh CMC + Selected Exchange</button>
-          <button class="sb-btn info" id="btn-refresh-cmc-all">Refresh CMC + All Exchanges</button>
+          <button class="sb-btn primary" id="btn-refresh-exchange" data-i18n="market.refreshSelectedExchange">Refresh Selected Exchange</button>
+          <button class="sb-btn info" id="btn-refresh-all" data-i18n="market.refreshAllExchanges">Refresh All Exchanges</button>
+          <button class="sb-btn info" id="btn-refresh-cmc" data-i18n="market.refreshCmcSelected">Refresh CMC + Selected Exchange</button>
+          <button class="sb-btn info" id="btn-refresh-cmc-all" data-i18n="market.refreshCmcAll">Refresh CMC + All Exchanges</button>
           <hr class="sb-sep">
-          <button class="sb-btn" id="btn-view-main">Matched Symbols</button>
-          <button class="sb-btn" id="btn-view-unmatched">CMC Unmatched</button>
-          <button class="sb-btn" id="btn-view-hip3">HIP-3 Symbols</button>
-          <button class="sb-btn" id="btn-only-cpt">Only Copy Trading</button>
+          <button class="sb-btn" id="btn-view-main" data-i18n="market.matchedSymbols">Matched Symbols</button>
+          <button class="sb-btn" id="btn-view-unmatched" data-i18n="market.cmcUnmatched">CMC Unmatched</button>
+          <button class="sb-btn" id="btn-view-hip3" data-i18n="market.hip3Symbols">HIP-3 Symbols</button>
+          <button class="sb-btn" id="btn-only-cpt" data-i18n="market.onlyCopyTrading">Only Copy Trading</button>
         </div>
       </div>
       <div id="sidebar-resize"></div>
@@ -1481,7 +1482,7 @@
         <div class="panel-body">
           <div class="filters-grid">
             <label class="field">
-              <span class="field-label">Exchange</span>
+              <span class="field-label" data-i18n="market.exchange">Exchange</span>
               <select id="filter-exchange"></select>
             </label>
             <label class="field">
@@ -1493,9 +1494,9 @@
               <input id="filter-vol-mcap" class="stepper-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
             </label>
             <div class="field">
-              <span class="field-label">Tags</span>
+              <span class="field-label" data-i18n="market.tags">Tags</span>
               <div class="ms-wrap" id="tag-filter-wrap">
-                <input class="ms-input" id="tag-filter-input" placeholder="Select tags..." autocomplete="off">
+                <input class="ms-input" id="tag-filter-input" placeholder="Select tags..." data-i18n-placeholder="market.selectTags" autocomplete="off">
                 <div class="ms-dropdown" id="tag-options"></div>
               </div>
             </div>
@@ -1503,7 +1504,7 @@
               <span class="pill" id="quotes-pill">Quotes: -</span>
             </div>
             <div class="filters-reset">
-              <button class="btn" id="btn-reset-filters">Reset</button>
+              <button class="btn" id="btn-reset-filters" data-i18n="market.reset">Reset</button>
             </div>
           </div>
         </div>
@@ -1519,17 +1520,17 @@
         <div class="details-resize-handle corner corner-bottom-right" data-resize="bottom-right"></div>
         <div class="details-resize-handle corner corner-bottom-left" data-resize="bottom-left"></div>
         <div class="details-head">
-          <div class="details-title" id="selected-title">Selected symbol</div>
+          <div class="details-title" id="selected-title" data-i18n="market.selectedSymbol">Selected symbol</div>
           <div class="details-actions">
-            <a class="details-link" id="selected-cmc-link" href="#" target="_blank" rel="noopener noreferrer" title="Open on CoinMarketCap" hidden>Open CMC</a>
-            <button class="details-close" id="btn-close-details" type="button" title="Close details">&#x2715;</button>
+            <a class="details-link" id="selected-cmc-link" href="#" target="_blank" rel="noopener noreferrer" title="Open on CoinMarketCap" data-i18n-title="market.openOnCoinMarketCap" hidden data-i18n="market.openCmc">Open CMC</a>
+            <button class="details-close" id="btn-close-details" type="button" title="Close details" data-i18n-title="market.closeDetails">&#x2715;</button>
           </div>
         </div>
         <div class="details-grid" id="selected-grid"></div>
       </section>
 
       <details class="panel" id="unmatched-panel" open>
-        <summary id="unmatched-summary">CMC unmatched</summary>
+        <summary id="unmatched-summary" data-i18n="market.cmcUnmatchedSummary">CMC unmatched</summary>
         <div class="panel-body">
           <div class="table-wrap">
             <table class="coin-unmatched-table">
@@ -1542,27 +1543,27 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th class="sortable" data-table="unmatched" data-key="coin">Coin</th>
-                  <th class="sortable" data-table="unmatched" data-key="symbol">Symbol</th>
-                  <th class="sortable" data-table="unmatched" data-key="base">Base</th>
-                  <th class="sortable" data-table="unmatched" data-key="quote">Quote</th>
-                  <th class="sortable" data-table="unmatched" data-key="ccxt_symbol">CCXT Symbol</th>
+                  <th class="sortable" data-table="unmatched" data-key="coin" data-i18n="market.coin">Coin</th>
+                  <th class="sortable" data-table="unmatched" data-key="symbol" data-i18n="market.symbol">Symbol</th>
+                  <th class="sortable" data-table="unmatched" data-key="base" data-i18n="market.base">Base</th>
+                  <th class="sortable" data-table="unmatched" data-key="quote" data-i18n="market.quote">Quote</th>
+                  <th class="sortable" data-table="unmatched" data-key="ccxt_symbol" data-i18n="market.ccxtSymbol">CCXT Symbol</th>
                 </tr>
               </thead>
               <tbody id="unmatched-body"></tbody>
             </table>
           </div>
-          <div class="empty-state hidden" id="unmatched-empty">No unmatched CMC symbols for the selected exchange.</div>
+          <div class="empty-state hidden" id="unmatched-empty" data-i18n="market.noUnmatchedSymbols">No unmatched CMC symbols for the selected exchange.</div>
         </div>
       </details>
 
       <section class="panel" id="main-panel">
         <div class="panel-head">
           <div class="panel-title-wrap">
-            <div class="panel-title" id="main-panel-title">Filtered symbols</div>
-            <span class="panel-meta" id="main-panel-meta">Loading exchange status...</span>
+            <div class="panel-title" id="main-panel-title" data-i18n="market.filteredSymbols">Filtered symbols</div>
+            <span class="panel-meta" id="main-panel-meta" data-i18n="market.loadingExchangeStatus">Loading exchange status...</span>
           </div>
-          <span class="pill" id="main-sort-pill">Sorted by market cap</span>
+          <span class="pill" id="main-sort-pill" data-i18n="market.sortedByMarketCap">Sorted by market cap</span>
         </div>
         <div class="table-wrap">
           <table class="coin-main-table">
@@ -1582,36 +1583,36 @@
             </colgroup>
             <thead>
               <tr>
-                <th class="sortable" data-table="main" data-key="coin">Coin</th>
-                <th class="sortable" data-table="main" data-key="ccxt_symbol">CCXT Symbol</th>
-                <th class="sortable" data-table="main" data-key="base">Base</th>
-                <th class="sortable" data-table="main" data-key="quote">Quote</th>
-                <th class="sortable" data-table="main" data-key="copy_trading">CPT</th>
-                <th class="sortable" data-table="main" data-key="cmc_rank">Rank</th>
-                <th class="sortable" data-table="main" data-key="price">Price</th>
-                <th class="sortable" data-table="main" data-key="market_cap">Market Cap</th>
-                <th class="sortable" data-table="main" data-key="volume_24h">Volume 24h</th>
+                <th class="sortable" data-table="main" data-key="coin" data-i18n="market.coin">Coin</th>
+                <th class="sortable" data-table="main" data-key="ccxt_symbol" data-i18n="market.ccxtSymbol">CCXT Symbol</th>
+                <th class="sortable" data-table="main" data-key="base" data-i18n="market.base">Base</th>
+                <th class="sortable" data-table="main" data-key="quote" data-i18n="market.quote">Quote</th>
+                <th class="sortable" data-table="main" data-key="copy_trading" data-i18n="market.cpt">CPT</th>
+                <th class="sortable" data-table="main" data-key="cmc_rank" data-i18n="market.rank">Rank</th>
+                <th class="sortable" data-table="main" data-key="price" data-i18n="market.price">Price</th>
+                <th class="sortable" data-table="main" data-key="market_cap" data-i18n="market.marketCapLabel">Market Cap</th>
+                <th class="sortable" data-table="main" data-key="volume_24h" data-i18n="market.volume24h">Volume 24h</th>
                 <th class="sortable" data-table="main" data-key="vol_mcap">vol/mcap</th>
-                <th>Tags</th>
-                <th>Notice</th>
+                <th data-i18n="market.tags">Tags</th>
+                <th data-i18n="market.notice">Notice</th>
               </tr>
             </thead>
             <tbody id="main-body"></tbody>
           </table>
         </div>
-        <div class="empty-state hidden" id="main-empty">No symbols match the current filters.</div>
+        <div class="empty-state hidden" id="main-empty" data-i18n="market.noSymbolsMatch">No symbols match the current filters.</div>
       </section>
 
       <details class="panel" id="hip3-panel">
         <summary id="hip3-summary">
           <span class="summary-title">
-            <span class="summary-title-text" id="hip3-summary-title">HIP-3 symbols</span>
+            <span class="summary-title-text" id="hip3-summary-title" data-i18n="market.hip3SummaryTitle">HIP-3 symbols</span>
           </span>
           <span class="summary-inline-actions">
             <label class="summary-field hidden" id="field-hip3-dex">
-              <span class="summary-field-label">DEX</span>
+              <span class="summary-field-label" data-i18n="market.dex">DEX</span>
               <select id="filter-hip3-dex">
-                <option value="">All DEXes</option>
+                <option value="" data-i18n="market.allDexes">All DEXes</option>
               </select>
             </label>
           </span>
@@ -1631,20 +1632,20 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th class="sortable" data-table="hip3" data-key="dex">DEX</th>
-                  <th class="sortable" data-table="hip3" data-key="coin">Coin</th>
-                  <th class="sortable" data-table="hip3" data-key="ccxt_symbol">CCXT Symbol</th>
-                  <th class="sortable" data-table="hip3" data-key="quote">Quote</th>
-                  <th class="sortable" data-table="hip3" data-key="price">Price</th>
-                  <th class="sortable" data-table="hip3" data-key="volume_24h">Volume 24h</th>
-                  <th class="sortable" data-table="hip3" data-key="copy_trading">CPT</th>
-                  <th>Notice</th>
+                  <th class="sortable" data-table="hip3" data-key="dex" data-i18n="market.dex">DEX</th>
+                  <th class="sortable" data-table="hip3" data-key="coin" data-i18n="market.coin">Coin</th>
+                  <th class="sortable" data-table="hip3" data-key="ccxt_symbol" data-i18n="market.ccxtSymbol">CCXT Symbol</th>
+                  <th class="sortable" data-table="hip3" data-key="quote" data-i18n="market.quote">Quote</th>
+                  <th class="sortable" data-table="hip3" data-key="price" data-i18n="market.price">Price</th>
+                  <th class="sortable" data-table="hip3" data-key="volume_24h" data-i18n="market.volume24h">Volume 24h</th>
+                  <th class="sortable" data-table="hip3" data-key="copy_trading" data-i18n="market.cpt">CPT</th>
+                  <th data-i18n="market.notice">Notice</th>
                 </tr>
               </thead>
               <tbody id="hip3-body"></tbody>
             </table>
           </div>
-          <div class="empty-state hidden" id="hip3-empty">No HIP-3 symbols match the current state.</div>
+          <div class="empty-state hidden" id="hip3-empty" data-i18n="market.noHip3Symbols">No HIP-3 symbols match the current state.</div>
         </div>
       </details>
     </main>
@@ -1652,18 +1653,18 @@
 
   <div id="busy-overlay">
     <div class="busy-card">
-      <div class="busy-title" id="busy-title">Working...</div>
+      <div class="busy-title" id="busy-title" data-i18n="market.working">Working...</div>
       <div class="busy-progress-row">
         <div class="busy-progress" aria-hidden="true">
           <div class="busy-progress-fill" id="busy-progress-fill"></div>
         </div>
         <div class="busy-progress-label" id="busy-progress-label">0%</div>
       </div>
-      <div class="busy-subtle" id="busy-subtle">Please wait.</div>
+      <div class="busy-subtle" id="busy-subtle" data-i18n="market.pleaseWait">Please wait.</div>
     </div>
   </div>
 
-  <script src="/app/js/editor_shared.js?v=13"></script>
+  <script src="/app/js/editor_shared.js?v=14"></script>
   <script>
     var TOKEN = "%%TOKEN%%";
     var API_BASE = "%%API_BASE%%";
@@ -1858,7 +1859,7 @@
       renderHelpToc();
       var topic = helpTopics[index];
       if (!topic) return;
-      helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+      helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('common.loading') + '</div>';
       fetch('/api/help/content?file=' + encodeURIComponent(topic.file) + '&lang=' + helpLang, { headers: { 'Authorization': 'Bearer ' + TOKEN } })
         .then(function (response) { return response.json(); })
         .then(function (payload) {
@@ -1866,20 +1867,20 @@
           helpContent.scrollTop = 0;
         })
         .catch(function () {
-          helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>';
+          helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('market.helpFailedContent') + '</div>';
         });
     }
 
     function loadHelpIndex(keyword) {
       var helpTocList = document.getElementById('help-toc-list');
-      helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+      helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('common.loading') + '</div>';
       fetch('/api/help/index?lang=' + helpLang, { headers: { 'Authorization': 'Bearer ' + TOKEN } })
         .then(function (response) { return response.json(); })
         .then(function (data) {
           helpTopics = data || [];
           renderHelpToc();
           if (!helpTopics.length) {
-            document.getElementById('help-content').innerHTML = '<div class="help-loading">No help topics available.</div>';
+            document.getElementById('help-content').innerHTML = '<div class="help-loading">' + PBGuiI18n.t('market.helpNoTopics') + '</div>';
             return;
           }
           var startIdx = 0;
@@ -1896,7 +1897,7 @@
           loadHelpTopic(startIdx);
         })
         .catch(function () {
-          helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>';
+          helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('market.helpFailedTopics') + '</div>';
         });
     }
 
@@ -2059,8 +2060,8 @@
 
     function showBusy(title, subtle) {
       stopBusyPolling();
-      document.getElementById('busy-title').textContent = title || 'Working...';
-      updateBusyProgress(0, subtle || 'Please wait.');
+      document.getElementById('busy-title').textContent = title || PBGuiI18n.t('market.working');
+      updateBusyProgress(0, subtle || PBGuiI18n.t('market.pleaseWait'));
       document.getElementById('busy-overlay').classList.add('visible');
     }
 
@@ -2072,7 +2073,7 @@
     function setActionStatus(message, isError) {
       var node = document.getElementById('action-status');
       if (!node) return;
-      node.textContent = message || 'Ready.';
+      node.textContent = message || PBGuiI18n.t('market.ready');
       node.style.color = isError ? '#fca5a5' : '#94a3b8';
     }
 
@@ -2160,7 +2161,7 @@
       var requestSeq = ++loadStateRequestSeq;
       if (loadStateController) loadStateController.abort();
       loadStateController = new AbortController();
-      setActionStatus('Loading Coin Data...', false);
+      setActionStatus(PBGuiI18n.t('market.loadingCoinData'), false);
       return fetch(buildStateUrl(), { cache: 'no-store', signal: loadStateController.signal })
         .then(function (response) {
           if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -2170,12 +2171,12 @@
           if (requestSeq !== loadStateRequestSeq) return;
           applyServerState(data);
           var pool = data.cmc_pool || {};
-          var reason = pool.error || pool.reason || 'No active materialized CoinMarketCap key is available.';
-          setActionStatus(pool.ready ? 'Ready.' : reason + ' Cached Coin Data remains available.', !pool.ready);
+          var reason = pool.error || pool.reason || PBGuiI18n.t('market.noCmcKey');
+          setActionStatus(pool.ready ? PBGuiI18n.t('market.ready') : reason + PBGuiI18n.t('market.cachedCoinDataAvailable'), !pool.ready);
         })
         .catch(function (error) {
           if (requestSeq !== loadStateRequestSeq || error.name === 'AbortError') return;
-          setActionStatus('Failed to load Coin Data: ' + error.message, true);
+          setActionStatus(PBGuiI18n.t('market.failedLoadCoinData', { message: error.message }), true);
           throw error;
         });
     }
@@ -2185,7 +2186,7 @@
         .then(function (response) {
           if (!response.ok) {
             return response.json().catch(function () { return {}; }).then(function (payload) {
-              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || 'Refresh rejected'));
+              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || PBGuiI18n.t('market.refreshRejected')));
             });
           }
           return response.json();
@@ -2193,7 +2194,7 @@
         .then(function (payload) {
           var job = payload.job || {};
           if (busyJobId !== jobId) return;
-          updateBusyProgress(Number(job.percent || 0), job.message || 'Working...');
+          updateBusyProgress(Number(job.percent || 0), job.message || PBGuiI18n.t('market.working'));
           if (job.status === 'completed') {
             if (job.state) applyServerState(job.state);
             setActionStatus(job.result_message || okFallback, false);
@@ -2201,7 +2202,7 @@
             return;
           }
           if (job.status === 'error') {
-            setActionStatus(job.error || job.message || 'Refresh failed', true);
+            setActionStatus(job.error || job.message || PBGuiI18n.t('market.refreshFailed'), true);
             hideBusy();
           }
         });
@@ -2227,7 +2228,7 @@
     }
 
     function runRefresh(path, busyTitle, okFallback) {
-      showBusy(busyTitle, 'Starting refresh...');
+      showBusy(busyTitle, PBGuiI18n.t('market.startingRefresh'));
       setActionStatus(busyTitle + '...', false);
       return fetch(API_BASE + path, {
         method: 'POST',
@@ -2243,14 +2244,14 @@
         .then(function (response) {
           if (!response.ok) {
             return response.json().catch(function () { return {}; }).then(function (payload) {
-              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || 'Refresh rejected'));
+              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || PBGuiI18n.t('market.refreshRejected')));
             });
           }
           return response.json();
         })
         .then(function (payload) {
           if (!payload.job_id) {
-            throw new Error('Refresh job did not return a job id');
+            throw new Error(PBGuiI18n.t('market.refreshNoJobId'));
           }
           startRefreshJobPolling(payload.job_id, okFallback);
         })
@@ -2278,15 +2279,15 @@
       var currentCount = serverState.counts.main || 0;
       if (uiState.activeView === 'unmatched') currentCount = serverState.counts.unmatched_visible || 0;
       if (uiState.activeView === 'hip3') currentCount = getFilteredHip3Rows().length;
-      document.getElementById('sb-count').textContent = currentCount + ' rows';
+      document.getElementById('sb-count').textContent = PBGuiI18n.t('market.rowsCount', { count: currentCount });
       var pool = serverState.cmc_pool || {};
       var hasMaterializedKey = pool.ready === true && Number(pool.active_credentials || 0) > 0;
-      var reason = pool.error || pool.reason || 'No active materialized CoinMarketCap key is available.';
+      var reason = pool.error || pool.reason || PBGuiI18n.t('market.noCmcKey');
       ['btn-refresh-cmc', 'btn-refresh-cmc-all'].forEach(function (id) {
         var button = document.getElementById(id);
         button.disabled = !hasMaterializedKey;
         if (hasMaterializedKey) button.removeAttribute('title');
-        else button.title = reason + ' Cached Coin Data remains readable.';
+        else button.title = reason + PBGuiI18n.t('market.cachedCoinDataReadable');
       });
     }
 
@@ -2296,12 +2297,12 @@
       var hip3CountLabel = filters.hip3_dex
         ? (hip3VisibleCount + ' of ' + hip3TotalCount)
         : String(hip3VisibleCount);
-      document.getElementById('btn-view-main').textContent = 'Matched Symbols (' + (serverState.counts.main || 0) + ')';
-      document.getElementById('btn-view-unmatched').textContent = 'CMC Unmatched (' + (serverState.counts.unmatched_visible || 0) + ')';
-      document.getElementById('btn-view-hip3').textContent = 'HIP-3 Symbols (' + hip3CountLabel + ')';
-      document.getElementById('btn-only-cpt').textContent = 'Only Copy Trading';
-      document.getElementById('quotes-pill').textContent = 'Quotes: ' + ((serverState.options.quote_filter || []).join(', ') || '-');
-      document.getElementById('main-panel-title').textContent = 'Matched symbols (' + (serverState.counts.main || 0) + ')';
+      document.getElementById('btn-view-main').textContent = PBGuiI18n.t('market.matchedSymbolsCount', { count: (serverState.counts.main || 0) });
+      document.getElementById('btn-view-unmatched').textContent = PBGuiI18n.t('market.cmcUnmatchedCount', { count: (serverState.counts.unmatched_visible || 0) });
+      document.getElementById('btn-view-hip3').textContent = PBGuiI18n.t('market.hip3SymbolsCount', { count: hip3CountLabel });
+      document.getElementById('btn-only-cpt').textContent = PBGuiI18n.t('market.onlyCopyTrading');
+      document.getElementById('quotes-pill').textContent = PBGuiI18n.t('market.quotesPill', { quotes: ((serverState.options.quote_filter || []).join(', ') || '-') });
+      document.getElementById('main-panel-title').textContent = PBGuiI18n.t('market.matchedSymbolsLowerCount', { count: (serverState.counts.main || 0) });
       document.getElementById('main-panel-meta').textContent = serverState.meta.exchange_line + ' | ' + serverState.meta.cmc_line;
       document.getElementById('main-panel-meta').title = [
         serverState.meta.exchange_line_detail || serverState.meta.exchange_line,
@@ -2309,7 +2310,7 @@
       ].filter(Boolean).join(' | ');
       document.getElementById('unmatched-summary').textContent = serverState.sections.unmatched_title;
       document.getElementById('hip3-summary-title').textContent = filters.hip3_dex
-        ? ('HIP-3 symbols (' + hip3VisibleCount + ' of ' + hip3TotalCount + ', DEX: ' + filters.hip3_dex + ')')
+        ? PBGuiI18n.t('market.hip3SymbolsDexCount', { visible: hip3VisibleCount, total: hip3TotalCount, dex: filters.hip3_dex })
         : serverState.sections.hip3_title;
     }
 
@@ -2355,7 +2356,7 @@
       if (!supportsHip3(filters.exchange) || uiState.activeView !== 'hip3') {
         filters.hip3_dex = '';
         field.classList.add('hidden');
-        select.innerHTML = '<option value="">All DEXes</option>';
+        select.innerHTML = '<option value="">' + PBGuiI18n.t('market.allDexes') + '</option>';
         select.disabled = true;
         return;
       }
@@ -2367,7 +2368,7 @@
 
       field.classList.remove('hidden');
       select.disabled = !options.length;
-      select.innerHTML = '<option value="">All DEXes</option>' + options.map(function (dex) {
+      select.innerHTML = '<option value="">' + PBGuiI18n.t('market.allDexes') + '</option>' + options.map(function (dex) {
         var selected = dex === filters.hip3_dex ? ' selected' : '';
         return '<option value="' + escapeHtml(dex) + '"' + selected + '>' + escapeHtml(dex) + '</option>';
       }).join('');
@@ -2380,7 +2381,7 @@
         onAfterRender: function (id, state, renderOpts) {
           if (id !== 'tag-filter-wrap') return;
           var input = document.getElementById('tag-filter-input');
-          if (input) input.placeholder = state.selected.length ? '' : 'Select tags...';
+          if (input) input.placeholder = state.selected.length ? '' : PBGuiI18n.t('market.selectTags');
           filters.tags = tagMsController.getValues(id);
           if (!(renderOpts && renderOpts.silent)) loadState();
         }
@@ -2394,7 +2395,7 @@
       if (!tagMsController || !input) return;
       input.disabled = !tags.length;
       input.value = '';
-      input.placeholder = tags.length ? 'Select tags...' : 'No tags available';
+      input.placeholder = tags.length ? PBGuiI18n.t('market.selectTags') : PBGuiI18n.t('market.noTagsAvailable');
       tagMsController.rebuild('tag-filter-wrap', tags, filters.tags, { silent: true });
     }
 
@@ -2606,13 +2607,13 @@
 
     function noticeBadge(notice) {
       if (!notice) return '<span class="badge dim">-</span>';
-      return '<span class="badge warn" title="' + escapeHtml(notice) + '">Notice</span>';
+      return '<span class="badge warn" title="' + escapeHtml(notice) + '">' + PBGuiI18n.t('market.notice') + '</span>';
     }
 
     function cptBadge(copyTrading) {
       return copyTrading
-        ? '<span class="badge ok">Yes</span>'
-        : '<span class="badge dim">No</span>';
+        ? '<span class="badge ok">' + PBGuiI18n.t('common.yes') + '</span>'
+        : '<span class="badge dim">' + PBGuiI18n.t('common.no') + '</span>';
     }
 
     function renderMainRows() {
@@ -2792,7 +2793,7 @@
       }
 
       card.classList.add('visible');
-      document.getElementById('selected-title').textContent = row.coin || row.symbol || row.ccxt_symbol || 'Selected symbol';
+      document.getElementById('selected-title').textContent = row.coin || row.symbol || row.ccxt_symbol || PBGuiI18n.t('market.selectedSymbol');
 
       if (row.cmc_link) {
         cmcLink.hidden = false;
@@ -2803,22 +2804,22 @@
       }
 
       var fields = [
-        { label: 'CCXT Symbol', value: row.ccxt_symbol || row.symbol || '-' },
-        { label: 'Base', value: row.base || '-' },
-        { label: 'Quote', value: row.quote || '-' },
-        { label: 'CMC ID', value: row.cmc_id == null ? '-' : row.cmc_id },
-        { label: 'CMC Rank', value: row.cmc_rank == null ? '-' : row.cmc_rank },
-        { label: 'Price', value: formatPrice(row.price) },
-        { label: 'Market Cap', value: formatCompact(row.market_cap) },
-        { label: 'Volume 24h', value: formatCompact(row.volume_24h) },
+        { label: PBGuiI18n.t('market.ccxtSymbol'), value: row.ccxt_symbol || row.symbol || '-' },
+        { label: PBGuiI18n.t('market.base'), value: row.base || '-' },
+        { label: PBGuiI18n.t('market.quote'), value: row.quote || '-' },
+        { label: PBGuiI18n.t('market.cmcId'), value: row.cmc_id == null ? '-' : row.cmc_id },
+        { label: PBGuiI18n.t('market.cmcRank'), value: row.cmc_rank == null ? '-' : row.cmc_rank },
+        { label: PBGuiI18n.t('market.price'), value: formatPrice(row.price) },
+        { label: PBGuiI18n.t('market.marketCapLabel'), value: formatCompact(row.market_cap) },
+        { label: PBGuiI18n.t('market.volume24h'), value: formatCompact(row.volume_24h) },
         { label: 'vol/mcap', value: formatRatio(row.vol_mcap) },
-        { label: 'Contract Size', value: row.contract_size == null ? '-' : row.contract_size },
-        { label: 'Min Amount', value: row.min_amount == null ? '-' : row.min_amount },
-        { label: 'Min Cost', value: row.min_cost == null ? '-' : row.min_cost },
-        { label: 'Precision Amount', value: row.precision_amount == null ? '-' : row.precision_amount },
-        { label: 'Max Leverage', value: row.max_leverage == null ? '-' : row.max_leverage },
-        { label: 'Min Order Price', value: row.min_order_price == null ? '-' : row.min_order_price },
-        { label: 'Tags', value: (row.tags || []).join(', ') || '-', wide: true, wrap: true }
+        { label: PBGuiI18n.t('market.contractSize'), value: row.contract_size == null ? '-' : row.contract_size },
+        { label: PBGuiI18n.t('market.minAmount'), value: row.min_amount == null ? '-' : row.min_amount },
+        { label: PBGuiI18n.t('market.minCost'), value: row.min_cost == null ? '-' : row.min_cost },
+        { label: PBGuiI18n.t('market.precisionAmount'), value: row.precision_amount == null ? '-' : row.precision_amount },
+        { label: PBGuiI18n.t('market.maxLeverage'), value: row.max_leverage == null ? '-' : row.max_leverage },
+        { label: PBGuiI18n.t('market.minOrderPrice'), value: row.min_order_price == null ? '-' : row.min_order_price },
+        { label: PBGuiI18n.t('market.tags'), value: (row.tags || []).join(', ') || '-', wide: true, wrap: true }
       ];
 
       grid.innerHTML = fields.map(function (field) {
@@ -2828,7 +2829,7 @@
       }).join('');
 
       if (row.notice) {
-        grid.innerHTML += '<div class="notice-box"><strong>Notice</strong><br>' + escapeHtml(row.notice) + '</div>';
+        grid.innerHTML += '<div class="notice-box"><strong>' + PBGuiI18n.t('market.notice') + '</strong><br>' + escapeHtml(row.notice) + '</div>';
       }
 
       requestAnimationFrame(fitSelectedCardToContent);
@@ -2836,7 +2837,7 @@
 
     function renderSortPill() {
       var state = sortState.main;
-      document.getElementById('main-sort-pill').textContent = 'Sorted by ' + state.key.replace('_', ' ') + ' (' + state.dir + ')';
+      document.getElementById('main-sort-pill').textContent = PBGuiI18n.t('market.sortedBy', { key: state.key.replace('_', ' '), dir: state.dir });
     }
 
     function syncActiveTableViewport() {
@@ -3082,16 +3083,16 @@
       });
 
       document.getElementById('btn-refresh-exchange').addEventListener('click', function () {
-        runRefresh('/refresh/exchange', 'Refreshing selected exchange...', 'Refreshed selected exchange.');
+        runRefresh('/refresh/exchange', PBGuiI18n.t('market.refreshingSelectedExchange'), PBGuiI18n.t('market.refreshedSelectedExchange'));
       });
       document.getElementById('btn-refresh-all').addEventListener('click', function () {
-        runRefresh('/refresh/all', 'Refreshing all exchanges...', 'All exchanges refreshed.');
+        runRefresh('/refresh/all', PBGuiI18n.t('market.refreshingAllExchanges'), PBGuiI18n.t('market.allExchangesRefreshed'));
       });
       document.getElementById('btn-refresh-cmc').addEventListener('click', function () {
-        runRefresh('/refresh/cmc', 'Refreshing CMC + selected exchange...', 'CoinMarketCap data and the selected exchange refreshed.');
+        runRefresh('/refresh/cmc', PBGuiI18n.t('market.refreshingCmcSelected'), PBGuiI18n.t('market.cmcSelectedRefreshed'));
       });
       document.getElementById('btn-refresh-cmc-all').addEventListener('click', function () {
-        runRefresh('/refresh/cmc_all', 'Refreshing CMC + all exchanges...', 'CoinMarketCap data and all exchanges refreshed.');
+        runRefresh('/refresh/cmc_all', PBGuiI18n.t('market.refreshingCmcAll'), PBGuiI18n.t('market.cmcAllRefreshed'));
       });
 
       document.getElementById('btn-only-cpt').addEventListener('click', function () {
@@ -3180,8 +3181,9 @@
   </script>
 
   <script>
+    document.title = PBGuiI18n.t('market.coinDataTitle');
     window.PBGUI_NAV_CONFIG = {
-      subtitle: 'COIN DATA',
+      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('market.coinDataSubtitle') : 'COIN DATA'),
       current: 'info_coin_data',
       token: TOKEN,
       apiBase: API_BASE,
@@ -3189,7 +3191,7 @@
       serial: PBGUI_SERIAL
     };
   </script>
-  <script src="/app/js/shared_help_overlay.js?v=6"></script>
+  <script src="/app/js/shared_help_overlay.js?v=7"></script>
   <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>
 </html>

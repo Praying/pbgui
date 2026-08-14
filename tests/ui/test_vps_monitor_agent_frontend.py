@@ -7,11 +7,27 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+from tests.i18n_helpers import NODE_I18N_STUB
+
 
 ROOT = Path(__file__).resolve().parents[2]
 HTML_PATH = ROOT / "frontend" / "vps_monitor.html"
 EN_GUIDE = ROOT / "docs" / "help" / "29_vps_monitor.md"
 DE_GUIDE = ROOT / "docs" / "help_de" / "29_vps_monitor.md"
+
+# The shared stub's `t` does not interpolate {param} placeholders; re-bind it
+# to mirror i18n.js so assertions on interpolated English ("healthy through
+# 15s") still hold in Node evals.
+_NODE_I18N_T_INTERP = (
+    "PBGuiI18n.t = function (key, params) {\n"
+    "  var value = __PBGUI_I18N_EN__[key];\n"
+    "  if (value === undefined) return key;\n"
+    "  return String(value).replace(/\\{(\\w+)\\}/g, function (match, name) {\n"
+    "    return Object.prototype.hasOwnProperty.call(params || {}, name) ? String(params[name]) : match;\n"
+    "  });\n"
+    "};\n"
+)
+NODE_I18N_BOOTSTRAP = NODE_I18N_STUB + _NODE_I18N_T_INTERP
 
 
 def _extract_function(source: str, name: str) -> str:
@@ -61,6 +77,7 @@ def _run_agent_assertions(assertions: str) -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_BOOTSTRAP}
         const TELEMETRY_STALE_SECONDS = 15;
         const MONITOR_AGENT_COLLECTOR_STALE_SECONDS = 30;
         const MONITOR_AGENT_REQUIRED_FILES = [
@@ -195,6 +212,7 @@ def test_host_and_bot_action_markup_escapes_xss_payloads() -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_BOOTSTRAP}
         {functions}
         const attack = `bad\"' onclick='globalThis.PWNED=1'><img src=x onerror=1>`;
         const actions = renderInstanceActions({{host: attack, name: attack, pbVersion: attack}});
@@ -245,7 +263,7 @@ def test_agent_details_escape_and_bound_errors_and_show_every_required_file() ->
         const html = renderMonitorAgentDetails(agent, null, {}, 100);
         assert.equal(html.includes('<img src=x'), false);
         assert.equal(html.includes('&lt;img src=x'), true);
-        assert.equal(html.includes('Source:</strong> monitor-agent cache'), true);
+        assert.equal(html.includes('Source</strong> monitor-agent cache'), true);
         assert.equal(html.includes('healthy through 15s'), true);
         assert.equal(html.includes('healthy through 30s'), true);
         for (const filename of MONITOR_AGENT_REQUIRED_FILES) assert.equal(html.includes(filename), true);

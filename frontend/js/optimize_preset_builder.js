@@ -1,6 +1,18 @@
 (function () {
   'use strict';
 
+  function i18nT(key, params, fallback) {
+    var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+    var text = fallback == null ? key : String(fallback);
+    if (params) {
+      text = text.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return text;
+  }
+
   var DIRECTIONS = [
     'Balanced (keep run scoring)',
     'More profit (risk can be higher)',
@@ -9,6 +21,14 @@
     'Fewer/shorter holds (less time in market)',
     'Lower exposure (safer sizing)'
   ];
+  var DIRECTION_KEYS = {
+    'Balanced (keep run scoring)': 'editor.preset.directionBalanced',
+    'More profit (risk can be higher)': 'editor.preset.directionProfit',
+    'Safer (lower drawdowns)': 'editor.preset.directionSafer',
+    'Smoother equity curve': 'editor.preset.directionSmoother',
+    'Fewer/shorter holds (less time in market)': 'editor.preset.directionFewerHolds',
+    'Lower exposure (safer sizing)': 'editor.preset.directionLowerExposure'
+  };
   var active = null;
 
   function esc(value) {
@@ -112,7 +132,7 @@
     }).then(function () {
       return apiJson(apiBase + '/configs/' + encoded, token);
     }).then(function (saved) {
-      if (!saved || !saved.config) throw new Error('Saved optimize config could not be reloaded.');
+      if (!saved || !saved.config) throw new Error(i18nT('editor.preset.savedReloadFailed', null, 'Saved optimize config could not be reloaded.'));
       return saved.config;
     });
   }
@@ -164,7 +184,7 @@
       html += '</tr>';
     });
     html += '</tbody></table></div>';
-    if (rows.length > visibleRows.length) html += '<div class="opb-muted" style="margin-top:6px">Showing first ' + visibleRows.length + ' of ' + rows.length + ' rows.</div>';
+    if (rows.length > visibleRows.length) html += '<div class="opb-muted" style="margin-top:6px">' + i18nT('editor.preset.showingFirst', { shown: visibleRows.length, total: rows.length }, 'Showing first ' + visibleRows.length + ' of ' + rows.length + ' rows.') + '</div>';
     root.innerHTML = html;
   }
 
@@ -199,7 +219,7 @@
 
   function open(options) {
     options = options || {};
-    if (typeof options.buildPreset !== 'function') throw new Error('buildPreset callback is required.');
+    if (typeof options.buildPreset !== 'function') throw new Error(i18nT('editor.preset.buildPresetRequired', null, 'buildPreset callback is required.'));
     closeActive(true);
     injectStyles();
 
@@ -207,7 +227,8 @@
     var mount = resolveMount(options);
     var directions = options.directions || DIRECTIONS;
     var directionOptions = directions.map(function (direction) {
-      return '<option value="' + esc(direction) + '">' + esc(direction) + '</option>';
+      var key = DIRECTION_KEYS[direction];
+      return '<option value="' + esc(direction) + '">' + esc(key ? i18nT(key, null, direction) : direction) + '</option>';
     }).join('');
     var root = document.createElement('div');
     root.id = mount ? 'opb-inline-root' : 'opb-overlay';
@@ -218,18 +239,18 @@
     }
     root.innerHTML = '' +
       '<div class="opb-card' + (mount ? ' opb-card-inline' : '') + '">' +
-        '<div class="opb-head"><div><div class="opb-title">Create PBv7 Optimize Preset</div><div class="opb-muted">' + esc(options.sourceLabel || 'Source') + (options.sourceName ? ': ' + esc(options.sourceName) : '') + '</div></div><button class="opb-btn" data-opb="close" type="button">' + esc(options.closeLabel || (mount ? 'Back to Results' : 'Close')) + '</button></div>' +
-        '<p class="opb-muted">Create a follow-up Optimize preset with bounds tightened around this result config. Use it for focused fine-tuning instead of broad exploration.</p>' +
+        '<div class="opb-head"><div><div class="opb-title">' + i18nT('editor.preset.title', null, 'Create PBv7 Optimize Preset') + '</div><div class="opb-muted">' + esc(options.sourceLabel || i18nT('editor.preset.source', null, 'Source')) + (options.sourceName ? ': ' + esc(options.sourceName) : '') + '</div></div><button class="opb-btn" data-opb="close" type="button">' + esc(options.closeLabel || (mount ? i18nT('editor.preset.backToResults', null, 'Back to Results') : i18nT('common.close', null, 'Close'))) + '</button></div>' +
+        '<p class="opb-muted">' + i18nT('editor.preset.intro', null, 'Create a follow-up Optimize preset with bounds tightened around this result config. Use it for focused fine-tuning instead of broad exploration.') + '</p>' +
         '<div class="opb-grid">' +
-          '<div class="opb-field"><label>Optimization goal</label><select data-opb="direction">' + directionOptions + '</select></div>' +
-          '<div class="opb-field"><label>Preset name</label><input data-opb="name" type="text" maxlength="64" value="' + esc(defaultName) + '"></div>' +
-          '<div class="opb-field opb-field-full"><label class="opb-check"><input data-opb="only-near" type="checkbox" checked><span>Only adjust parameters near optimize bounds</span></label></div>' +
-          '<div class="opb-field"><label>Bounds window (%)</label><input data-opb="bounds-window" type="range" min="0" max="100" step="5" value="0"><div class="opb-muted" data-opb="bounds-window-value">0%</div></div>' +
-          '<div class="opb-field"><label>Risk adjustment</label><input data-opb="risk-adjust" type="range" min="-50" max="50" step="5" value="0"><div class="opb-muted" data-opb="risk-adjust-value">0</div></div>' +
-          '<div class="opb-field opb-field-full"><div class="opb-muted" data-opb="bounds-hint">Bounds unchanged.</div></div>' +
-          '<div class="opb-field opb-field-full"><h4 style="margin:0">Preset summary</h4><div data-opb="summary" class="opb-placeholder">Building preset preview...</div></div>' +
-          '<div class="opb-field opb-field-full"><details class="opb-details"><summary>Advanced preview details</summary><div class="opb-grid"><div class="opb-field opb-field-full"><h4 style="margin:0">Planned optimize defaults</h4><pre data-opb="json" class="opb-code">Building preset preview...</pre></div><div class="opb-field opb-field-full"><h4 style="margin:0">Bounds changes preview</h4><div data-opb="bounds" class="opb-placeholder">No preview loaded.</div></div></div></details></div>' +
-          '<div class="opb-field opb-field-full"><div class="opb-buttons"><button class="opb-btn opb-btn-primary" data-opb="create" type="button">Create Optimize Preset</button><button class="opb-btn" data-opb="queue" type="button">Create &amp; Queue</button></div><div class="opb-status opb-muted" data-opb="status"></div></div>' +
+          '<div class="opb-field"><label>' + i18nT('editor.preset.goalLabel', null, 'Optimization goal') + '</label><select data-opb="direction">' + directionOptions + '</select></div>' +
+          '<div class="opb-field"><label>' + i18nT('editor.preset.nameLabel', null, 'Preset name') + '</label><input data-opb="name" type="text" maxlength="64" value="' + esc(defaultName) + '"></div>' +
+          '<div class="opb-field opb-field-full"><label class="opb-check"><input data-opb="only-near" type="checkbox" checked><span>' + i18nT('editor.preset.onlyNear', null, 'Only adjust parameters near optimize bounds') + '</span></label></div>' +
+          '<div class="opb-field"><label>' + i18nT('editor.preset.boundsWindowLabel', null, 'Bounds window (%)') + '</label><input data-opb="bounds-window" type="range" min="0" max="100" step="5" value="0"><div class="opb-muted" data-opb="bounds-window-value">0%</div></div>' +
+          '<div class="opb-field"><label>' + i18nT('editor.preset.riskAdjustLabel', null, 'Risk adjustment') + '</label><input data-opb="risk-adjust" type="range" min="-50" max="50" step="5" value="0"><div class="opb-muted" data-opb="risk-adjust-value">0</div></div>' +
+          '<div class="opb-field opb-field-full"><div class="opb-muted" data-opb="bounds-hint">' + i18nT('editor.preset.boundsUnchanged', null, 'Bounds unchanged.') + '</div></div>' +
+          '<div class="opb-field opb-field-full"><h4 style="margin:0">' + i18nT('editor.preset.summaryTitle', null, 'Preset summary') + '</h4><div data-opb="summary" class="opb-placeholder">' + i18nT('editor.preset.buildingPreview', null, 'Building preset preview...') + '</div></div>' +
+          '<div class="opb-field opb-field-full"><details class="opb-details"><summary>' + i18nT('editor.preset.advancedPreview', null, 'Advanced preview details') + '</summary><div class="opb-grid"><div class="opb-field opb-field-full"><h4 style="margin:0">' + i18nT('editor.preset.plannedDefaults', null, 'Planned optimize defaults') + '</h4><pre data-opb="json" class="opb-code">' + i18nT('editor.preset.buildingPreview', null, 'Building preset preview...') + '</pre></div><div class="opb-field opb-field-full"><h4 style="margin:0">' + i18nT('editor.preset.boundsChangesPreview', null, 'Bounds changes preview') + '</h4><div data-opb="bounds" class="opb-placeholder">' + i18nT('editor.preset.noPreviewLoaded', null, 'No preview loaded.') + '</div></div></div></details></div>' +
+          '<div class="opb-field opb-field-full"><div class="opb-buttons"><button class="opb-btn opb-btn-primary" data-opb="create" type="button">' + i18nT('editor.preset.createBtn', null, 'Create Optimize Preset') + '</button><button class="opb-btn" data-opb="queue" type="button">' + i18nT('editor.preset.createQueueBtn', null, 'Create & Queue') + '</button></div><div class="opb-status opb-muted" data-opb="status"></div></div>' +
         '</div>' +
       '</div>';
     if (mount) {
@@ -248,8 +269,8 @@
       q('bounds-window-value').textContent = String(windowPct) + '%';
       q('risk-adjust-value').textContent = String(riskAdjust);
       q('bounds-hint').textContent = windowPct === 0
-        ? 'Bounds unchanged.'
-        : 'Effective bounds window: +/-' + String(windowPct) + '% around selected values' + (q('only-near').checked ? ' for near-bound parameters only.' : '.');
+        ? i18nT('editor.preset.boundsUnchanged', null, 'Bounds unchanged.')
+        : i18nT('editor.preset.boundsWindowHint', { pct: windowPct }, 'Effective bounds window: +/-' + String(windowPct) + '% around selected values') + (q('only-near').checked ? i18nT('editor.preset.boundsWindowHintNear', null, ' for near-bound parameters only.') : '.');
       updateRangeFill(q('bounds-window'));
       updateRangeFill(q('risk-adjust'));
     }
@@ -279,21 +300,24 @@
       var root = q('summary');
       if (!payload || !payload.ok) {
         root.className = 'opb-placeholder';
-        root.innerHTML = 'No preset preview available.';
+        root.innerHTML = i18nT('editor.preset.noPresetPreview', null, 'No preset preview available.');
         return;
       }
       var scoring = Array.isArray(payload.scoring) ? payload.scoring : [];
       var limits = Array.isArray(payload.limits) ? payload.limits : [];
       var rows = payload.bounds_preview_rows || [];
       var nearCount = parseIntSafe(payload.near_bounds_count || 0, 0);
+      var rawDirection = payload.direction || q('direction').value;
+      var directionKey = DIRECTION_KEYS[rawDirection];
+      var directionLabel = directionKey ? i18nT(directionKey, null, rawDirection) : rawDirection;
       var summaryRows = [
-        { label: 'Name', value: payload.preset_name || q('name').value || defaultName },
-        { label: 'Goal', value: payload.direction || q('direction').value },
-        { label: 'Bounds scope', value: payload.only_adjust_near_bounds ? ('near-bound parameters only' + (nearCount ? ' (' + nearCount + ')' : ' (none detected)')) : 'all optimized parameters' },
-        { label: 'Bounds window', value: (payload.window_pct || 0) > 0 ? ('+/-' + String(payload.window_pct) + '%') : 'unchanged' },
-        { label: 'Scoring', value: scoring.map(scoringLabel).filter(Boolean).join(', ') || 'unchanged' },
-        { label: 'Limits', value: String(limits.length) + ' configured' },
-        { label: 'Bounds changes', value: String(rows.length) }
+        { label: i18nT('editor.preset.summaryName', null, 'Name'), value: payload.preset_name || q('name').value || defaultName },
+        { label: i18nT('editor.preset.summaryGoal', null, 'Goal'), value: directionLabel },
+        { label: i18nT('editor.preset.summaryBoundsScope', null, 'Bounds scope'), value: payload.only_adjust_near_bounds ? (i18nT('editor.preset.nearBoundOnly', null, 'near-bound parameters only') + (nearCount ? ' (' + nearCount + ')' : i18nT('editor.preset.noneDetected', null, ' (none detected)'))) : i18nT('editor.preset.allOptimizedParams', null, 'all optimized parameters') },
+        { label: i18nT('editor.preset.summaryBoundsWindow', null, 'Bounds window'), value: (payload.window_pct || 0) > 0 ? ('+/-' + String(payload.window_pct) + '%') : i18nT('editor.preset.unchanged', null, 'unchanged') },
+        { label: i18nT('editor.preset.summaryScoring', null, 'Scoring'), value: scoring.map(scoringLabel).filter(Boolean).join(', ') || i18nT('editor.preset.unchanged', null, 'unchanged') },
+        { label: i18nT('editor.preset.summaryLimits', null, 'Limits'), value: i18nT('editor.preset.configured', { n: limits.length }, String(limits.length) + ' configured') },
+        { label: i18nT('editor.preset.summaryBoundsChanges', null, 'Bounds changes'), value: String(rows.length) }
       ];
       var html = '<table class="opb-table"><tbody>';
       summaryRows.forEach(function (row) { html += '<tr><th>' + esc(row.label) + '</th><td>' + esc(row.value) + '</td></tr>'; });
@@ -305,22 +329,22 @@
     function renderPreview(payload) {
       if (!payload || !payload.ok) {
         renderSummary(null);
-        q('json').textContent = 'No preset preview available.';
-        renderRows(q('bounds'), [], 'No bounds changes detected.', []);
+        q('json').textContent = i18nT('editor.preset.noPresetPreview', null, 'No preset preview available.');
+        renderRows(q('bounds'), [], i18nT('editor.preset.noBoundsChanges', null, 'No bounds changes detected.'), []);
         return;
       }
       if (payload.preset_name) q('name').value = String(payload.preset_name);
       renderSummary(payload);
       q('json').textContent = JSON.stringify({ scoring: payload.scoring || [], limits: payload.limits || [] }, null, 2);
-      renderRows(q('bounds'), payload.bounds_preview_rows || [], 'No bounds changes detected.', [
-        { key: 'param', label: 'Param' },
-        { key: 'change', label: 'Change' },
-        { key: 'before', label: 'Before' },
-        { key: 'expand', label: 'Expand' },
-        { key: 'window', label: 'Window' },
-        { key: 'risk', label: 'Risk' },
-        { key: 'result', label: 'Result' },
-        { key: 'expand_note', label: 'Note' }
+      renderRows(q('bounds'), payload.bounds_preview_rows || [], i18nT('editor.preset.noBoundsChanges', null, 'No bounds changes detected.'), [
+        { key: 'param', label: i18nT('editor.preset.colParam', null, 'Param') },
+        { key: 'change', label: i18nT('editor.preset.colChange', null, 'Change') },
+        { key: 'before', label: i18nT('editor.preset.colBefore', null, 'Before') },
+        { key: 'expand', label: i18nT('editor.preset.colExpand', null, 'Expand') },
+        { key: 'window', label: i18nT('editor.preset.colWindow', null, 'Window') },
+        { key: 'risk', label: i18nT('editor.preset.colRisk', null, 'Risk') },
+        { key: 'result', label: i18nT('editor.preset.colResult', null, 'Result') },
+        { key: 'expand_note', label: i18nT('editor.preset.colNote', null, 'Note') }
       ]);
     }
 
@@ -331,7 +355,7 @@
 
     function loadPreview(includeConfig) {
       var seq = ++state.seq;
-      q('status').textContent = includeConfig ? 'Building preset config...' : 'Building preset preview...';
+      q('status').textContent = includeConfig ? i18nT('editor.preset.buildingConfig', null, 'Building preset config...') : i18nT('editor.preset.buildingPreview', null, 'Building preset preview...');
       return options.buildPreset(buildBody(!!includeConfig)).then(function (payload) {
         if (seq === state.seq) {
           renderPreview(payload);
@@ -339,7 +363,7 @@
         }
         return payload;
       }).catch(function (err) {
-        if (seq === state.seq) q('status').textContent = 'Preset preview failed: ' + err.message;
+        if (seq === state.seq) q('status').textContent = i18nT('editor.preset.previewFailed', { msg: err.message }, 'Preset preview failed: ' + err.message);
         throw err;
       });
     }
@@ -355,33 +379,33 @@
     function createPreset(queueAfter) {
       setWorking(true);
       loadPreview(true).then(function (payload) {
-        if (!payload || !payload.preset_config) throw new Error('Preset config was not generated.');
+        if (!payload || !payload.preset_config) throw new Error(i18nT('editor.preset.configNotGenerated', null, 'Preset config was not generated.'));
         var name = sanitizeName(payload.preset_name || q('name').value || defaultName, defaultName);
         q('name').value = name;
-        if (typeof options.saveConfig !== 'function') throw new Error('saveConfig callback is required.');
-        q('status').textContent = 'Saving optimize preset...';
+        if (typeof options.saveConfig !== 'function') throw new Error(i18nT('editor.preset.saveConfigRequired', null, 'saveConfig callback is required.'));
+        q('status').textContent = i18nT('editor.preset.saving', null, 'Saving optimize preset...');
         return options.saveConfig(name, payload.preset_config).then(function (savedConfig) {
-          notify(options, 'Optimize preset created: ' + name + '.json', 'ok');
+          notify(options, i18nT('editor.preset.created', { name: name }, 'Optimize preset created: ' + name + '.json'), 'ok');
           if (queueAfter) {
-            if (typeof options.queueConfig !== 'function') throw new Error('queueConfig callback is required.');
-            q('status').textContent = 'Queueing optimize preset...';
+            if (typeof options.queueConfig !== 'function') throw new Error(i18nT('editor.preset.queueConfigRequired', null, 'queueConfig callback is required.'));
+            q('status').textContent = i18nT('editor.preset.queueing', null, 'Queueing optimize preset...');
             return options.queueConfig(name).then(function (queueData) {
               var suffix = queueData && queueData.filename ? ' (' + queueData.filename + ')' : '';
-              q('status').textContent = 'Optimize preset queued: ' + name + '.json' + suffix;
-              notify(options, 'Optimize preset queued: ' + name + '.json', 'ok');
+              q('status').textContent = i18nT('editor.preset.queued', { name: name }, 'Optimize preset queued: ' + name + '.json') + suffix;
+              notify(options, i18nT('editor.preset.queued', { name: name }, 'Optimize preset queued: ' + name + '.json'), 'ok');
               return savedConfig;
             });
           }
           if (typeof options.openOptimize === 'function') {
-            q('status').textContent = 'Opening PBv7 Optimize...';
+            q('status').textContent = i18nT('editor.preset.opening', null, 'Opening PBv7 Optimize...');
             return options.openOptimize(savedConfig, name);
           }
-          q('status').textContent = 'Optimize preset saved: ' + name + '.json';
+          q('status').textContent = i18nT('editor.preset.saved', { name: name }, 'Optimize preset saved: ' + name + '.json');
           return savedConfig;
         });
       }).catch(function (err) {
-        q('status').textContent = 'Create preset failed: ' + err.message;
-        notify(options, 'Create preset failed: ' + err.message, 'err');
+        q('status').textContent = i18nT('editor.preset.createFailed', { msg: err.message }, 'Create preset failed: ' + err.message);
+        notify(options, i18nT('editor.preset.createFailed', { msg: err.message }, 'Create preset failed: ' + err.message), 'err');
       }).finally(function () {
         setWorking(false);
       });

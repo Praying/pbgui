@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+from tests.i18n_helpers import assert_text_present
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -42,10 +44,11 @@ def test_integrity_panel_groups_and_repairs_by_coin() -> None:
     assert "queueIntegrityOperation(" in page
     assert "data-integrity-repair-coin" in page
     assert "group.reasons[reason]" in page
-    assert "groupedRows.length + ' coins / ' + rows.length + ' damaged days'" in page
+    assert "PBGuiI18n.t('market.issueCount', { coins: groupedRows.length, days: rows.length })" in page
+    assert_text_present(page, "{coins} coins / {days} damaged days")
     assert "coin: String(coinButton.getAttribute('data-coin') || '')" in page
     assert "a verified newer inception automatically removes obsolete local pre-inception data" in page
-    assert "'Source gaps'" in page
+    assert_text_present(page, "Source gaps")
 
 
 def test_integrity_panel_offers_explicit_gap_details_visualization() -> None:
@@ -57,8 +60,8 @@ def test_integrity_panel_offers_explicit_gap_details_visualization() -> None:
     assert 'id="integrity-gap-modal"' in page
     assert 'id="btn-integrity-gap-close"' in page
     assert "repeat(60, minmax(4px, 1fr))" in page
-    assert "Possible exchange inception; not necessarily damaged." in page
-    assert "Real interruption inside available data." in page
+    assert_text_present(page, "Possible exchange inception; not necessarily damaged.")
+    assert_text_present(page, "Real interruption inside available data.")
     assert 'id="integrity-day-context"' in page
     assert "Seven days before and after the selected day" in page
     assert "data-integrity-context-day" in page
@@ -95,11 +98,11 @@ def test_integrity_panel_offers_confirmed_removed_coin_deletion() -> None:
     assert "'/integrity/removed-coins/preview'" in page
     assert "'/integrity/removed-coins/remove'" in page
     assert "await showConfirmDialog" in page
-    assert "PB7 and PB8 runtime caches are not removed." in page
+    assert_text_present(page, "PB7 and PB8 runtime caches are not removed")
     assert "ohlcv_removed_coin_delete" in page
     assert 'id="integrity-removed-coins"' in page
     assert "'/integrity/removed-coins?exchange='" in page
-    assert "<th>From</th><th>To</th>" in page
+    assert '<th data-i18n="market.from">From</th><th data-i18n="market.to">To</th>' in page
     assert "row.from_day, row.to_day, row.market_reason" in page
     assert 'id="btn-integrity-remove-selected"' in page
     assert 'id="btn-integrity-remove-all"' in page
@@ -109,7 +112,8 @@ def test_integrity_panel_offers_confirmed_removed_coin_deletion() -> None:
     assert "ohlcv_removed_coins_delete" in page
     assert "Unavailable Coin Data" in page
     assert "String(row.market_status || '') !== 'removed'" in page
-    assert "groupedRows.length + ' coins / ' + rows.length + ' damaged days'" in page
+    assert "PBGuiI18n.t('market.issueCount', { coins: groupedRows.length, days: rows.length })" in page
+    assert_text_present(page, "{coins} coins / {days} damaged days")
 
 
 def test_integrity_panel_follows_selected_exchange_capabilities() -> None:
@@ -122,8 +126,10 @@ def test_integrity_panel_follows_selected_exchange_capabilities() -> None:
     assert "var canRepair = true" in page
     assert "document.getElementById('btn-integrity-repair-all').hidden = !canRepair" in page
     assert "fetchJson('/integrity/removed-coins?exchange=' + encodeURIComponent(storageExchange))" in page
-    assert "actionCell.textContent = 'Read-only'" in page
-    assert "meta.statusKey === 'hyperliquid' ? ' (crypto only)'" in page
+    assert "actionCell.textContent = PBGuiI18n.t('market.readOnly')" in page
+    assert_text_present(page, "Read-only")
+    assert "meta.statusKey === 'hyperliquid' ? PBGuiI18n.t('market.cryptoOnlySuffix') : ''" in page
+    assert_text_present(page, " (crypto only)")
     assert "getExchangeMeta(uiState.contextExchange).statusKey !== storageExchange" in page
     assert "integrityState.reloadAfterSave = true" in page
     assert "integrityState.status = null" in page
@@ -133,4 +139,4 @@ def test_integrity_panel_follows_selected_exchange_capabilities() -> None:
     assert 'id="btn-integrity-normalize-hl"' in page
     assert "meta.statusKey !== 'hyperliquid'" in page
     assert "'/integrity/hyperliquid/normalize-fallback'" in page
-    assert "Only candles marked other_exchange" in page
+    assert_text_present(page, "Only candles marked other_exchange with invalid envelope bounds are changed. Timestamps, Open, Close, Volume, gaps, and source assignments stay unchanged.")

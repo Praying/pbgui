@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PBGui - V7 Pareto Explorer</title>
+<script src="/app/i18n.js?v=1"></script>
 <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
 <link rel="stylesheet" href="/app/css/modals_shared.css?v=1">
 <script src="/static/plotly.min.js"></script>
@@ -22,7 +23,7 @@
   --green: #21c354;
   --orange: #ff8c00;
   --red: #ff4b4b;
-  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
   --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   --fs-xs: 11px;
   --fs-sm: 13px;
@@ -1099,27 +1100,27 @@ input[type="range"]::-moz-range-thumb {
   <div id="sidebar">
     <div id="sidebar-inner">
       <button class="sb-section active" data-stage="command_center" onclick="selectStage('command_center')">
-        <span class="sb-icon">🏛</span> Overview
+        <span class="sb-icon">🏛</span> <span data-i18n="v7explore.overview">Overview</span>
       </button>
       <button class="sb-section" data-stage="pareto_playground" onclick="selectStage('pareto_playground')">
-        <span class="sb-icon">🎯</span> Explorer
+        <span class="sb-icon">🎯</span> <span data-i18n="v7explore.explorer">Explorer</span>
       </button>
       <button class="sb-section" data-stage="deep_intelligence" onclick="selectStage('deep_intelligence')">
-        <span class="sb-icon">🧠</span> Deep Intelligence
+        <span class="sb-icon">🧠</span> <span data-i18n="v7explore.deepIntelligence">Deep Intelligence</span>
       </button>
       <button class="sb-section" data-stage="settings" onclick="selectStage('settings')">
-        <span class="sb-icon">⚙️</span> Settings
+        <span class="sb-icon">⚙️</span> <span data-i18n="v7explore.settings">Settings</span>
       </button>
 
       <hr class="sb-sep">
 
       <div class="ctx-actions" style="display:block">
-        <button class="sb-btn" id="btn-back-optimize">← Back to Optimize</button>
-        <button class="sb-btn" id="btn-run-backtest">🚀 Run Backtest</button>
-        <button class="sb-btn" id="btn-pin-strategy-baseline">Pin Explorer Baseline</button>
-        <button class="sb-btn" id="btn-open-strategy-explorer">🔍 Strategy Explorer</button>
+        <button class="sb-btn" id="btn-back-optimize"><span data-i18n="v7explore.backToOptimize">← Back to Optimize</span></button>
+        <button class="sb-btn" id="btn-run-backtest"><span data-i18n="v7explore.runBacktest">🚀 Run Backtest</span></button>
+        <button class="sb-btn" id="btn-pin-strategy-baseline" data-i18n="v7explore.pinExplorerBaseline">Pin Explorer Baseline</button>
+        <button class="sb-btn" id="btn-open-strategy-explorer"><span data-i18n="v7explore.strategyExplorer">🔍 Strategy Explorer</span></button>
         <button class="sb-btn" id="btn-load-all-results">📂 Scan all_results</button>
-        <button class="sb-btn" id="btn-load-pareto-only" style="display:none;">↩ Show Passivbot Paretos</button>
+        <button class="sb-btn" id="btn-load-pareto-only" style="display:none;"><span data-i18n="v7explore.showPassivbotParetos">↩ Show Passivbot Paretos</span></button>
       </div>
     </div>
     <div id="sidebar-resize"></div>
@@ -1128,12 +1129,12 @@ input[type="range"]::-moz-range-thumb {
   <main id="main-content">
     <section class="page-title">
       <div>
-        <h1>Pareto Explorer</h1>
-        <p id="page-subtitle">Inspect Passivbot optimize results, pareto fronts, correlations, scenarios, and preset drafts.</p>
+        <h1 data-i18n="v7explore.paretoExplorer">Pareto Explorer</h1>
+        <p id="page-subtitle" data-i18n="v7explore.pageSubtitle">Inspect Passivbot optimize results, pareto fronts, correlations, scenarios, and preset drafts.</p>
       </div>
       <div class="status-row">
-        <span id="result-chip" class="chip">No result selected</span>
-        <span id="mode-chip" class="status-chip warn">Bootstrap only</span>
+        <span id="result-chip" class="chip" data-i18n="v7explore.noResultSelected">No result selected</span>
+        <span id="mode-chip" class="status-chip warn" data-i18n="v7explore.bootstrapOnly">Bootstrap only</span>
       </div>
     </section>
 
@@ -1142,8 +1143,8 @@ input[type="range"]::-moz-range-thumb {
     <section id="display-range-card" class="panel-card range-card" style="display:none;">
       <div class="range-header">
         <div>
-          <h3>Display Range</h3>
-          <p class="hint"><span data-tip="Limits the ranked result slice used by Overview, Explorer, and Deep Intelligence. Pareto counts and preview stars are recalculated from the visible range.">Filter which ranked configs are visible. Pareto counts and preview stars follow the current visible range.</span></p>
+          <h3 data-i18n="v7explore.displayRange">Display Range</h3>
+          <p class="hint"><span data-tip="Limits the ranked result slice used by Overview, Explorer, and Deep Intelligence. Pareto counts and preview stars are recalculated from the visible range." data-i18n-tip="v7explore.displayRangeTip" data-i18n="v7explore.filterRankedVisible">Filter which ranked configs are visible. Pareto counts and preview stars follow the current visible range.</span></p>
         </div>
         <span id="display-range-total-chip" class="chip">Loaded: -</span>
       </div>
@@ -1157,18 +1158,18 @@ input[type="range"]::-moz-range-thumb {
 
     <section class="metric-grid" id="summary-metrics">
       <div class="metric-card result-metric">
-        <div class="label">Result</div>
+        <div class="label" data-i18n="v7explore.result">Result</div>
         <div class="value" id="metric-result">-</div>
       </div>
       <div class="metric-card">
-        <div class="label">Pareto Front</div>
+        <div class="label" data-i18n="v7explore.paretoFront">Pareto Front</div>
         <div class="value" id="metric-paretos">-</div>
       </div>
       <div class="metric-card">
-        <div class="label"><span data-tip="Full mode scans every all_results record, then retains up to Max Configs candidates for interactive analysis.">Candidate Set</span></div>
-        <div class="value" id="metric-all-results-wrap"><span id="metric-all-results">-</span><span id="metric-full-load-chip" class="status-chip warn" style="display:none; margin-left:10px; vertical-align:middle;">Idle</span></div>
+        <div class="label"><span data-tip="Full mode scans every all_results record, then retains up to Max Configs candidates for interactive analysis." data-i18n-tip="v7explore.candidateSetTip" data-i18n="v7explore.candidateSet">Candidate Set</span></div>
+        <div class="value" id="metric-all-results-wrap"><span id="metric-all-results">-</span><span id="metric-full-load-chip" class="status-chip warn" style="display:none; margin-left:10px; vertical-align:middle;" data-i18n="v7explore.idle">Idle</span></div>
         <div class="metric-inline-status" id="metric-full-load-panel" style="display:none;">
-          <div id="metric-full-load-text" class="load-status-text">Use `Scan all_results` to build the candidate set.</div>
+          <div id="metric-full-load-text" class="load-status-text" data-i18n="v7explore.scanToBuildCandidateSet">Use `Scan all_results` to build the candidate set.</div>
           <div class="load-status-progress"><div id="metric-full-load-bar"></div></div>
         </div>
       </div>
@@ -1177,18 +1178,18 @@ input[type="range"]::-moz-range-thumb {
     <section id="stage-settings" class="stage-view" style="display:none;">
       <div class="stage-grid">
         <div class="stage-block half panel-card">
-          <h3>Load Control</h3>
+          <h3 data-i18n="v7explore.loadControl">Load Control</h3>
           <div class="form-grid" style="margin-top: 12px;">
             <div class="form-field wide">
-              <label for="result-path-input"><span data-tip="Path to a managed Passivbot optimize result directory or pareto directory to load into the explorer.">Result Path</span></label>
+              <label for="result-path-input"><span data-tip="Path to a managed Passivbot optimize result directory or pareto directory to load into the explorer." data-i18n-tip="v7explore.resultPathTip" data-i18n="v7explore.resultPath">Result Path</span></label>
               <input id="result-path-input" type="text" placeholder="/path/to/optimize/result">
             </div>
             <div class="form-field">
-              <label for="max-configs-input"><span data-tip="Upper limit retained for interactive analysis after all_results has been scanned. It is not the number of records scanned.">Max Configs</span></label>
+              <label for="max-configs-input"><span data-tip="Upper limit retained for interactive analysis after all_results has been scanned. It is not the number of records scanned." data-i18n-tip="v7explore.maxConfigsTip" data-i18n="v7explore.maxConfigs">Max Configs</span></label>
               <input id="max-configs-input" type="number" min="100" max="10000" step="100">
             </div>
             <div class="form-field wide">
-              <label for="load-strategy-select"><span data-tip="Top criteria retain high-ranked configs. Coverage samples the optimize timeline evenly to expose a broader search-space mix. Multiple criteria can be combined.">Candidate Selection</span></label>
+              <label for="load-strategy-select"><span data-tip="Top criteria retain high-ranked configs. Coverage samples the optimize timeline evenly to expose a broader search-space mix. Multiple criteria can be combined." data-i18n-tip="v7explore.candidateSelectionTip" data-i18n="v7explore.candidateSelection">Candidate Selection</span></label>
               <select id="load-strategy-select" multiple size="7">
                 <option value="performance">performance</option>
                 <option value="robustness">robustness</option>
@@ -1204,28 +1205,28 @@ input[type="range"]::-moz-range-thumb {
             </div>
             <div class="form-field">
               <label>&nbsp;</label>
-              <div class="check-row"><input id="persist-defaults-toggle" type="checkbox" checked><label for="persist-defaults-toggle"><span data-tip="Save the current load and explorer defaults so the next Pareto Explorer session starts with the same choices.">Persist defaults</span></label></div>
+              <div class="check-row"><input id="persist-defaults-toggle" type="checkbox" checked><label for="persist-defaults-toggle"><span data-tip="Save the current load and explorer defaults so the next Pareto Explorer session starts with the same choices." data-i18n-tip="v7explore.persistDefaultsTip" data-i18n="v7explore.persistDefaults">Persist defaults</span></label></div>
             </div>
             <div class="form-field full">
               <div class="button-row">
-                <button class="btn primary" id="btn-command-load" data-tip="Reload the result with the current Settings values.">Load Result Context</button>
+                <button class="btn primary" id="btn-command-load" data-tip="Reload the result with the current Settings values." data-i18n-tip="v7explore.loadResultContextTip" data-i18n="v7explore.loadResultContext">Load Result Context</button>
               </div>
             </div>
             <div class="form-field full">
               <div class="load-status-card" id="full-load-status-card">
                 <div class="load-status-head">
-                  <strong>Full Load Status</strong>
-                  <span id="full-load-status-chip" class="status-chip warn">Idle</span>
+                  <strong data-i18n="v7explore.fullLoadStatus">Full Load Status</strong>
+                  <span id="full-load-status-chip" class="status-chip warn" data-i18n="v7explore.idle">Idle</span>
                 </div>
-                <div id="full-load-status-text" class="load-status-text">Use `Scan all_results` to select candidates from the full result stream instead of only pareto JSONs.</div>
+                <div id="full-load-status-text" class="load-status-text" data-i18n="v7explore.scanToSelectCandidates">Use `Scan all_results` to select candidates from the full result stream instead of only pareto JSONs.</div>
                 <div class="load-status-progress"><div id="full-load-status-bar"></div></div>
               </div>
             </div>
           </div>
         </div>
         <div class="stage-block half panel-card">
-          <h3>Result Context</h3>
-          <pre id="result-meta-json">Waiting for session bootstrap...</pre>
+          <h3 data-i18n="v7explore.resultContext">Result Context</h3>
+          <pre id="result-meta-json" data-i18n="v7explore.waitingForBootstrap">Waiting for session bootstrap...</pre>
         </div>
       </div>
     </section>
@@ -1233,40 +1234,40 @@ input[type="range"]::-moz-range-thumb {
     <section id="stage-command-center" class="stage-view">
       <div class="stage-grid">
         <div class="stage-block half panel-card">
-          <h3>Top Champions</h3>
+          <h3 data-i18n="v7explore.topChampions">Top Champions</h3>
           <div id="champion-list" class="champion-list">
-            <div class="placeholder-panel">Load a result to inspect the first migrated champion shortlist.</div>
+            <div class="placeholder-panel" data-i18n="v7explore.loadToInspectChampions">Load a result to inspect the first migrated champion shortlist.</div>
           </div>
         </div>
         <div class="stage-block half panel-card">
-          <h3>Insights</h3>
+          <h3 data-i18n="v7explore.insights">Insights</h3>
           <div id="insight-list" class="insight-list">
-            <div class="placeholder-panel">The migrated Command Center insights will appear here after loading result data.</div>
+            <div class="placeholder-panel" data-i18n="v7explore.insightsWillAppear">The migrated Command Center insights will appear here after loading result data.</div>
           </div>
         </div>
         <div class="stage-block panel-card">
-          <h3>Pareto Front Preview</h3>
+          <h3 data-i18n="v7explore.paretoFrontPreview">Pareto Front Preview</h3>
           <div class="toolbar" style="margin-bottom:12px;">
             <div class="check-row" style="max-width:280px;">
               <input id="preview-use-weighted" type="checkbox" checked>
-              <label for="preview-use-weighted"><span data-tip="Prefer weighted metric variants where available for preview scoring and charts.">Use weighted (_w) metrics</span></label>
+              <label for="preview-use-weighted"><span data-tip="Prefer weighted metric variants where available for preview scoring and charts." data-i18n-tip="v7explore.useWeightedTip" data-i18n="v7explore.useWeightedMetrics">Use weighted (_w) metrics</span></label>
             </div>
             <div class="check-row" style="max-width:260px;">
               <input id="preview-show-all" type="checkbox">
-              <label for="preview-show-all"><span data-tip="Show all visible configs in the preview charts instead of Pareto configs only.">Show all configs</span></label>
+              <label for="preview-show-all"><span data-tip="Show all visible configs in the preview charts instead of Pareto configs only." data-i18n-tip="v7explore.showAllConfigsPreviewTip" data-i18n="v7explore.showAllConfigs">Show all configs</span></label>
             </div>
           </div>
           <div class="preview-grid">
             <div class="chart-card">
-              <p class="muted-line" id="preview-left-summary">Pareto preview chart will appear here.</p>
+              <p class="muted-line" id="preview-left-summary" data-i18n="v7explore.paretoPreviewWillAppear">Pareto preview chart will appear here.</p>
               <div class="chart-wrap" id="preview-pareto-wrap">
-                <div class="placeholder-chart small-chart" id="preview-pareto-chart">Load a result to render the Pareto front preview.</div>
+                <div class="placeholder-chart small-chart" id="preview-pareto-chart" data-i18n="v7explore.loadToRenderParetoPreview">Load a result to render the Pareto front preview.</div>
               </div>
             </div>
             <div class="chart-card">
-              <p class="muted-line" id="preview-right-summary">Robustness preview chart will appear here.</p>
+              <p class="muted-line" id="preview-right-summary" data-i18n="v7explore.robustnessPreviewWillAppear">Robustness preview chart will appear here.</p>
               <div class="chart-wrap" id="preview-robustness-wrap">
-                <div class="placeholder-chart small-chart" id="preview-robustness-chart">Load a result to render the robustness preview.</div>
+                <div class="placeholder-chart small-chart" id="preview-robustness-chart" data-i18n="v7explore.loadToRenderRobustnessPreview">Load a result to render the robustness preview.</div>
               </div>
             </div>
           </div>
@@ -1279,37 +1280,37 @@ input[type="range"]::-moz-range-thumb {
       <div class="compact-three-col">
         <div class="chart-card panel-card" style="grid-column: span 2;">
           <div class="title-row">
-            <h3>Explorer</h3>
+            <h3 data-i18n="v7explore.explorer">Explorer</h3>
             <label id="playground-projection-layout-wrap" class="inline-switch" style="display:none;">
-              <span data-tip="Show XY, XZ, and YZ projection charts next to each other instead of stacked vertically.">Side by side</span>
+              <span data-tip="Show XY, XZ, and YZ projection charts next to each other instead of stacked vertically." data-i18n-tip="v7explore.sideBySideTip" data-i18n="v7explore.sideBySide">Side by side</span>
               <input id="playground-projection-layout-row" type="checkbox" role="switch" aria-label="Show projections side by side">
               <span class="switch-track" aria-hidden="true"></span>
             </label>
           </div>
-          <p class="muted-line" id="playground-metric-summary">This section provides multiple visualization modes.</p>
+          <p class="muted-line" id="playground-metric-summary" data-i18n="v7explore.multipleVisualizationModes">This section provides multiple visualization modes.</p>
           <div class="chart-wrap" id="playground-chart-wrap">
-            <div id="playground-chart" class="placeholder-chart small-chart">Load a result to render the explorer chart.</div>
+            <div id="playground-chart" class="placeholder-chart small-chart" data-i18n="v7explore.loadToRenderExplorerChart">Load a result to render the explorer chart.</div>
           </div>
           <div id="playground-projections" class="chart-stack" style="display:none; margin-top:12px;">
             <div class="projection-panel">
-              <div class="projection-panel-title">XY projection</div>
+              <div class="projection-panel-title" data-i18n="v7explore.xyProjection">XY projection</div>
               <div class="chart-wrap projection-wrap"><div id="playground-chart-proj-xy" class="placeholder-chart small-chart"></div></div>
             </div>
             <div class="projection-panel">
-              <div class="projection-panel-title">XZ projection</div>
+              <div class="projection-panel-title" data-i18n="v7explore.xzProjection">XZ projection</div>
               <div class="chart-wrap projection-wrap"><div id="playground-chart-proj-xz" class="placeholder-chart small-chart"></div></div>
             </div>
             <div class="projection-panel">
-              <div class="projection-panel-title">YZ projection</div>
+              <div class="projection-panel-title" data-i18n="v7explore.yzProjection">YZ projection</div>
               <div class="chart-wrap projection-wrap"><div id="playground-chart-proj-yz" class="placeholder-chart small-chart"></div></div>
             </div>
           </div>
         </div>
         <div class="chart-card panel-card">
-          <h3>Chart Settings</h3>
+          <h3 data-i18n="v7explore.chartSettings">Chart Settings</h3>
           <div class="form-grid" style="margin-top: 12px;">
             <div class="form-field full">
-              <label for="playground-viz-type"><span data-tip="Choose the chart type used for tradeoff exploration: 2D scatter, 3D WebGL, 2D projections, or radar comparison.">Visualization</span></label>
+              <label for="playground-viz-type"><span data-tip="Choose the chart type used for tradeoff exploration: 2D scatter, 3D WebGL, 2D projections, or radar comparison." data-i18n-tip="v7explore.visualizationTip" data-i18n="v7explore.visualization">Visualization</span></label>
               <select id="playground-viz-type">
                 <option value="2D Scatter">2D Scatter</option>
                 <option value="3D Scatter">3D Scatter (WebGL)</option>
@@ -1318,59 +1319,59 @@ input[type="range"]::-moz-range-thumb {
               </select>
             </div>
             <div id="playground-show-all-wrap" class="form-field full">
-              <div class="check-row"><input id="playground-show-all" type="checkbox"><label for="playground-show-all"><span data-tip="Show every config in the visible slice instead of only Pareto configs. Useful for checking whether a candidate still stands out in the broader cloud.">Show all configs</span></label></div>
+              <div class="check-row"><input id="playground-show-all" type="checkbox"><label for="playground-show-all"><span data-tip="Show every config in the visible slice instead of only Pareto configs. Useful for checking whether a candidate still stands out in the broader cloud." data-i18n-tip="v7explore.showAllConfigsPlaygroundTip" data-i18n="v7explore.showAllConfigs">Show all configs</span></label></div>
             </div>
             <div id="playground-use-weighted-wrap" class="form-field full">
-              <div class="check-row"><input id="playground-use-weighted" type="checkbox" checked><label for="playground-use-weighted"><span data-tip="Prefer weighted metric variants where available for axes, color, and scoring inputs.">Use Weighted Metrics</span></label></div>
+              <div class="check-row"><input id="playground-use-weighted" type="checkbox" checked><label for="playground-use-weighted"><span data-tip="Prefer weighted metric variants where available for axes, color, and scoring inputs." data-i18n-tip="v7explore.useWeightedMetricsTip" data-i18n="v7explore.useWeightedMetrics">Use Weighted Metrics</span></label></div>
             </div>
             <div id="playground-use-btc-wrap" class="form-field full">
-              <div class="check-row"><input id="playground-use-btc" type="checkbox"><label for="playground-use-btc"><span data-tip="Use BTC-denominated metrics instead of USD-denominated metrics when matching metrics are available.">Use BTC instead of USD</span></label></div>
+              <div class="check-row"><input id="playground-use-btc" type="checkbox"><label for="playground-use-btc"><span data-tip="Use BTC-denominated metrics instead of USD-denominated metrics when matching metrics are available." data-i18n-tip="v7explore.useBtcTip" data-i18n="v7explore.useBtcInsteadOfUsd">Use BTC instead of USD</span></label></div>
             </div>
             <div class="form-field full">
-              <label for="playground-quick-view"><span data-tip="Prebuilt metric layouts for common decisions. Choose Custom to pick your own axes.">Quick Views</span></label>
+              <label for="playground-quick-view"><span data-tip="Prebuilt metric layouts for common decisions. Choose Custom to pick your own axes." data-i18n-tip="v7explore.quickViewsTip" data-i18n="v7explore.quickViews">Quick Views</span></label>
               <select id="playground-quick-view"></select>
             </div>
             <div id="playground-custom-controls" class="form-field full" style="display:none;">
               <div class="load-status-card">
                 <div class="load-status-head">
-                  <strong>Custom Metrics</strong>
+                  <strong data-i18n="v7explore.customMetrics">Custom Metrics</strong>
                 </div>
                 <div id="playground-custom-filters" class="stack" style="display:none; gap:8px;">
-                  <div class="check-row"><input id="playground-allow-mixed-weighted" type="checkbox"><label for="playground-allow-mixed-weighted"><span data-tip="Allow custom axes to mix weighted and unweighted metric variants.">Allow Mixed Weighted</span></label></div>
-                  <div class="check-row"><input id="playground-allow-mixed-currency" type="checkbox"><label for="playground-allow-mixed-currency"><span data-tip="Allow custom axes to mix USD and BTC metric variants.">Allow Mixed USD/BTC</span></label></div>
+                  <div class="check-row"><input id="playground-allow-mixed-weighted" type="checkbox"><label for="playground-allow-mixed-weighted"><span data-tip="Allow custom axes to mix weighted and unweighted metric variants." data-i18n-tip="v7explore.allowMixedWeightedTip" data-i18n="v7explore.allowMixedWeighted">Allow Mixed Weighted</span></label></div>
+                  <div class="check-row"><input id="playground-allow-mixed-currency" type="checkbox"><label for="playground-allow-mixed-currency"><span data-tip="Allow custom axes to mix USD and BTC metric variants." data-i18n-tip="v7explore.allowMixedCurrencyTip" data-i18n="v7explore.allowMixedCurrency">Allow Mixed USD/BTC</span></label></div>
                 </div>
                 <div class="stack" style="gap:10px; margin-top:8px;">
                   <div class="form-field full" style="gap:6px;">
-                    <label for="playground-custom-x-metric"><span data-tip="Metric shown on the horizontal axis for Custom quick views.">X-Axis</span></label>
+                    <label for="playground-custom-x-metric"><span data-tip="Metric shown on the horizontal axis for Custom quick views." data-i18n-tip="v7explore.xAxisTip" data-i18n="v7explore.xAxis">X-Axis</span></label>
                     <select id="playground-custom-x-metric"></select>
                   </div>
                   <div class="form-field full" style="gap:6px;">
-                    <label for="playground-custom-y-metric"><span data-tip="Metric shown on the vertical axis for Custom quick views.">Y-Axis</span></label>
+                    <label for="playground-custom-y-metric"><span data-tip="Metric shown on the vertical axis for Custom quick views." data-i18n-tip="v7explore.yAxisTip" data-i18n="v7explore.yAxis">Y-Axis</span></label>
                     <select id="playground-custom-y-metric"></select>
                   </div>
                   <div id="playground-custom-z-wrap" class="form-field full" style="gap:6px; display:none;">
-                    <label for="playground-custom-z-metric"><span data-tip="Metric shown on the depth axis for 3D Custom quick views.">Z-Axis</span></label>
+                    <label for="playground-custom-z-metric"><span data-tip="Metric shown on the depth axis for 3D Custom quick views." data-i18n-tip="v7explore.zAxisTip" data-i18n="v7explore.zAxis">Z-Axis</span></label>
                     <select id="playground-custom-z-metric"></select>
                   </div>
                 </div>
               </div>
             </div>
             <div id="playground-color-metric-wrap" class="form-field full">
-              <label for="playground-color-metric"><span data-tip="Metric used for point color. Use it as an extra visual dimension beyond the chart axes.">Color by</span></label>
-              <select id="playground-color-metric"><option value="None">None</option></select>
+              <label for="playground-color-metric"><span data-tip="Metric used for point color. Use it as an extra visual dimension beyond the chart axes." data-i18n-tip="v7explore.colorByTip" data-i18n="v7explore.colorBy">Color by</span></label>
+              <select id="playground-color-metric"><option value="None" data-i18n="common.none">None</option></select>
             </div>
             <div class="form-field full">
-              <label for="playground-perf-weight"><span data-tip="How strongly the Best Match helper should favor return/performance metrics.">Performance Priority</span></label>
+              <label for="playground-perf-weight"><span data-tip="How strongly the Best Match helper should favor return/performance metrics." data-i18n-tip="v7explore.performancePriorityTip" data-i18n="v7explore.performancePriority">Performance Priority</span></label>
               <input id="playground-perf-weight" type="range" min="0" max="100" step="5" value="80">
               <div class="muted-line" id="playground-perf-weight-value">80</div>
             </div>
             <div class="form-field full">
-              <label for="playground-risk-weight"><span data-tip="How strongly the Best Match helper should penalize drawdown, tail-risk, and other risk-pressure signals.">Risk Aversion</span></label>
+              <label for="playground-risk-weight"><span data-tip="How strongly the Best Match helper should penalize drawdown, tail-risk, and other risk-pressure signals." data-i18n-tip="v7explore.riskAversionTip" data-i18n="v7explore.riskAversion">Risk Aversion</span></label>
               <input id="playground-risk-weight" type="range" min="0" max="100" step="5" value="60">
               <div class="muted-line" id="playground-risk-weight-value">60</div>
             </div>
             <div class="form-field full">
-              <label for="playground-robust-weight"><span data-tip="How strongly the Best Match helper should favor consistency and robust behavior over fragile outliers.">Robustness Importance</span></label>
+              <label for="playground-robust-weight"><span data-tip="How strongly the Best Match helper should favor consistency and robust behavior over fragile outliers." data-i18n-tip="v7explore.robustnessImportanceTip" data-i18n="v7explore.robustnessImportance">Robustness Importance</span></label>
               <input id="playground-robust-weight" type="range" min="0" max="100" step="5" value="70">
               <div class="muted-line" id="playground-robust-weight-value">70</div>
             </div>
@@ -1380,8 +1381,8 @@ input[type="range"]::-moz-range-thumb {
             </div>
           </div>
           <div style="margin-top:12px;">
-            <h4>Best Match</h4>
-            <p class="muted-line" id="playground-best-match">Load a result to compute the best match for your preferences.</p>
+            <h4 data-i18n="v7explore.bestMatch">Best Match</h4>
+            <p class="muted-line" id="playground-best-match" data-i18n="v7explore.loadToComputeBestMatch">Load a result to compute the best match for your preferences.</p>
           </div>
           </div>
         </div>
@@ -1390,71 +1391,71 @@ input[type="range"]::-moz-range-thumb {
     <section id="stage-deep-intelligence" class="stage-view" style="display:none;">
       <div class="panel-card">
         <div class="deep-tabs">
-          <button class="deep-tab-btn active" data-deep-tab="parameters" onclick="selectDeepTab('parameters')" data-tip="Find parameters that influence performance and parameters sitting close to optimize bounds.">Parameters</button>
-          <button class="deep-tab-btn" data-deep-tab="scenarios" onclick="selectDeepTab('scenarios')" data-tip="Compare the visible config set across loaded backtest scenarios.">Scenarios</button>
-          <button class="deep-tab-btn" data-deep-tab="evolution" onclick="selectDeepTab('evolution')" data-tip="Track how a selected metric evolved over optimize iterations.">Evolution</button>
-          <button class="deep-tab-btn" data-deep-tab="correlations" onclick="selectDeepTab('correlations')" data-tip="Compare selected configs across normalized multi-metric risk dimensions.">Correlations</button>
+          <button class="deep-tab-btn active" data-deep-tab="parameters" onclick="selectDeepTab('parameters')" data-tip="Find parameters that influence performance and parameters sitting close to optimize bounds." data-i18n-tip="v7explore.parametersTabTip" data-i18n="v7explore.parameters">Parameters</button>
+          <button class="deep-tab-btn" data-deep-tab="scenarios" onclick="selectDeepTab('scenarios')" data-tip="Compare the visible config set across loaded backtest scenarios." data-i18n-tip="v7explore.scenariosTabTip" data-i18n="v7explore.scenarios">Scenarios</button>
+          <button class="deep-tab-btn" data-deep-tab="evolution" onclick="selectDeepTab('evolution')" data-tip="Track how a selected metric evolved over optimize iterations." data-i18n-tip="v7explore.evolutionTabTip" data-i18n="v7explore.evolution">Evolution</button>
+          <button class="deep-tab-btn" data-deep-tab="correlations" onclick="selectDeepTab('correlations')" data-tip="Compare selected configs across normalized multi-metric risk dimensions." data-i18n-tip="v7explore.correlationsTabTip" data-i18n="v7explore.correlations">Correlations</button>
         </div>
         <p class="hint" id="deep-tab-description">Deep Intelligence tab shell for the FastAPI migration.</p>
       </div>
       <div class="panel-card" id="deep-tab-parameters-panel">
         <div class="detail-summary-row">
           <div>
-            <h3>Parameters Intelligence</h3>
-            <p class="muted-line" id="deep-parameters-summary">Load a result to inspect parameter influence and optimize-bound pressure.</p>
+            <h3 data-i18n="v7explore.parametersIntelligence">Parameters Intelligence</h3>
+            <p class="muted-line" id="deep-parameters-summary" data-i18n="v7explore.loadToInspectParameterInfluence">Load a result to inspect parameter influence and optimize-bound pressure.</p>
           </div>
           <div class="detail-toolbar">
-            <label for="deep-parameters-top-n" class="muted-line" style="align-self:center;"><span data-tip="Number of highest-variance / most relevant parameters to include in the influence and near-bounds charts.">Top N Parameters</span></label>
+            <label for="deep-parameters-top-n" class="muted-line" style="align-self:center;"><span data-tip="Number of highest-variance / most relevant parameters to include in the influence and near-bounds charts." data-i18n-tip="v7explore.topNParametersTip" data-i18n="v7explore.topNParameters">Top N Parameters</span></label>
             <div class="form-field" style="min-width:220px; gap:6px; margin:0;">
               <input id="deep-parameters-top-n" type="range" min="1" max="40" step="1" value="20">
               <div class="muted-line" id="deep-parameters-top-n-value">20</div>
             </div>
           </div>
         </div>
-        <div class="deep-chart-caption">Parameter Influence Heatmap — correlation between most variable parameters and performance metrics</div>
-        <div id="deep-parameters-heatmap" class="placeholder-chart deep-plotly-chart">Load a result to render the parameter influence heatmap.</div>
+        <div class="deep-chart-caption" data-i18n="v7explore.parameterHeatmapCaption">Parameter Influence Heatmap — correlation between most variable parameters and performance metrics</div>
+        <div id="deep-parameters-heatmap" class="placeholder-chart deep-plotly-chart" data-i18n="v7explore.loadToRenderHeatmap">Load a result to render the parameter influence heatmap.</div>
         <div style="height:12px;"></div>
-        <div class="deep-chart-caption">Parameters Near Bounds — parameters within 10% of their optimization bounds (red &lt; 5%, orange 5–10%)</div>
-        <div id="deep-parameters-bounds-chart" class="placeholder-chart deep-plotly-chart">Load a result to render the near-bounds chart.</div>
+        <div class="deep-chart-caption" data-i18n="v7explore.parametersNearBoundsCaption">Parameters Near Bounds — parameters within 10% of their optimization bounds (red &lt; 5%, orange 5–10%)</div>
+        <div id="deep-parameters-bounds-chart" class="placeholder-chart deep-plotly-chart" data-i18n="v7explore.loadToRenderNearBounds">Load a result to render the near-bounds chart.</div>
       </div>
       <div class="panel-card" id="deep-tab-scenarios-panel" style="display:none;">
         <div class="detail-summary-row">
           <div>
-            <h3>Scenario Analysis</h3>
-            <p class="muted-line" id="deep-scenarios-summary">Compare Pareto configs across loaded backtest scenarios (aggregated over visible configs).</p>
+            <h3 data-i18n="v7explore.scenarioAnalysis">Scenario Analysis</h3>
+            <p class="muted-line" id="deep-scenarios-summary" data-i18n="v7explore.compareParetoScenarios">Compare Pareto configs across loaded backtest scenarios (aggregated over visible configs).</p>
           </div>
           <div class="detail-toolbar">
-            <label for="deep-scenarios-metric" class="muted-line" style="align-self:center;"><span data-tip="Metric used for the scenario boxplots and scenario statistics. Values are aggregated over the visible config set.">Metric</span></label>
+            <label for="deep-scenarios-metric" class="muted-line" style="align-self:center;"><span data-tip="Metric used for the scenario boxplots and scenario statistics. Values are aggregated over the visible config set." data-i18n-tip="v7explore.metricTip" data-i18n="v7explore.metric">Metric</span></label>
             <select id="deep-scenarios-metric" class="inline-select">
-              <option value="">No metrics loaded</option>
+              <option value="" data-i18n="v7explore.noMetricsLoaded">No metrics loaded</option>
             </select>
           </div>
         </div>
         <div id="deep-scenarios-chart" class="placeholder-chart deep-plotly-chart"></div>
         <div id="deep-scenarios-stats" class="deep-scenarios-stats-grid">
-          <div class="placeholder-panel">Scenario statistics will appear here.</div>
+          <div class="placeholder-panel" data-i18n="v7explore.scenarioStatsWillAppear">Scenario statistics will appear here.</div>
         </div>
       </div>
       <div class="panel-card" id="deep-tab-evolution-panel" style="display:none;">
         <div class="detail-summary-row">
           <div>
-            <h3>Optimization Evolution Timeline</h3>
-            <p class="muted-line" id="deep-evolution-summary">Track whether later optimize iterations still improve the selected metric.</p>
+            <h3 data-i18n="v7explore.evolutionTimeline">Optimization Evolution Timeline</h3>
+            <p class="muted-line" id="deep-evolution-summary" data-i18n="v7explore.trackOptimizeIterations">Track whether later optimize iterations still improve the selected metric.</p>
           </div>
           <div class="detail-toolbar">
-            <div class="check-row"><input id="deep-evolution-show-all" type="checkbox"><label for="deep-evolution-show-all"><span data-tip="Show all configs in the visible range instead of only visible Pareto configs.">Show all configs</span></label></div>
-            <div class="check-row"><input id="deep-evolution-hide-outliers" type="checkbox" checked><label for="deep-evolution-hide-outliers"><span data-tip="Hide extreme liquidation-style values such as -1 so the chart scale remains readable.">Hide liquidation outliers</span></label></div>
-            <div class="check-row"><input id="deep-evolution-weighted" type="checkbox" checked><label for="deep-evolution-weighted"><span data-tip="Prefer weighted metric variants for the evolution metric selector.">Use Weighted Metrics</span></label></div>
-            <div class="check-row"><input id="deep-evolution-btc" type="checkbox"><label for="deep-evolution-btc"><span data-tip="Use BTC-denominated metric variants for the evolution metric selector where available.">Use BTC instead of USD</span></label></div>
+            <div class="check-row"><input id="deep-evolution-show-all" type="checkbox"><label for="deep-evolution-show-all"><span data-tip="Show all configs in the visible range instead of only visible Pareto configs." data-i18n-tip="v7explore.showAllConfigsEvolutionTip" data-i18n="v7explore.showAllConfigs">Show all configs</span></label></div>
+            <div class="check-row"><input id="deep-evolution-hide-outliers" type="checkbox" checked><label for="deep-evolution-hide-outliers"><span data-tip="Hide extreme liquidation-style values such as -1 so the chart scale remains readable." data-i18n-tip="v7explore.hideLiquidationOutliersTip" data-i18n="v7explore.hideLiquidationOutliers">Hide liquidation outliers</span></label></div>
+            <div class="check-row"><input id="deep-evolution-weighted" type="checkbox" checked><label for="deep-evolution-weighted"><span data-tip="Prefer weighted metric variants for the evolution metric selector." data-i18n-tip="v7explore.useWeightedMetricsTip" data-i18n="v7explore.useWeightedMetrics">Use Weighted Metrics</span></label></div>
+            <div class="check-row"><input id="deep-evolution-btc" type="checkbox"><label for="deep-evolution-btc"><span data-tip="Use BTC-denominated metric variants for the evolution metric selector where available." data-i18n-tip="v7explore.useBtcTip" data-i18n="v7explore.useBtcInsteadOfUsd">Use BTC instead of USD</span></label></div>
           </div>
         </div>
         <div class="form-grid" style="margin-bottom:12px;">
           <div class="form-field wide">
-            <label for="deep-evolution-metric"><span data-tip="Metric plotted over config index. The blue line shows the cumulative best-so-far value so you can see when later iterations stop improving materially. Click points in the timeline to inspect that config below.">Metric</span></label>
+            <label for="deep-evolution-metric"><span data-tip="Metric plotted over config index. The blue line shows the cumulative best-so-far value so you can see when later iterations stop improving materially. Click points in the timeline to inspect that config below." data-i18n-tip="v7explore.evolutionMetricTip" data-i18n="v7explore.metric">Metric</span></label>
             <select id="deep-evolution-metric"></select>
           </div>
           <div class="form-field">
-            <label for="deep-evolution-window"><span data-tip="Minimum relative improvement required to count as meaningful. This filters tiny best-so-far changes when estimating whether more iterations still helped.">Meaningful Improvement (%)</span></label>
+            <label for="deep-evolution-window"><span data-tip="Minimum relative improvement required to count as meaningful. This filters tiny best-so-far changes when estimating whether more iterations still helped." data-i18n-tip="v7explore.meaningfulImprovementTip" data-i18n="v7explore.meaningfulImprovement">Meaningful Improvement (%)</span></label>
             <input id="deep-evolution-window" type="range" min="0" max="5" step="0.1" value="1">
             <div class="muted-line" id="deep-evolution-window-value">1%</div>
           </div>
@@ -1464,13 +1465,13 @@ input[type="range"]::-moz-range-thumb {
       <div class="panel-card" id="deep-tab-correlations-panel" style="display:none;">
         <div class="detail-summary-row">
           <div>
-            <h3>Multi-Metric Correlation</h3>
-            <p class="muted-line" id="deep-correlations-summary">Compare multiple configs side-by-side across normalized risk dimensions.</p>
+            <h3 data-i18n="v7explore.multiMetricCorrelation">Multi-Metric Correlation</h3>
+            <p class="muted-line" id="deep-correlations-summary" data-i18n="v7explore.compareConfigsAcrossRisk">Compare multiple configs side-by-side across normalized risk dimensions.</p>
           </div>
         </div>
         <div class="form-grid" style="margin-bottom:12px;">
           <div class="form-field">
-            <label for="deep-correlations-strategy"><span data-tip="How configs are selected for the radar comparison: top ranked, style-diverse, or across the risk spectrum.">Selection Strategy</span></label>
+            <label for="deep-correlations-strategy"><span data-tip="How configs are selected for the radar comparison: top ranked, style-diverse, or across the risk spectrum." data-i18n-tip="v7explore.selectionStrategyTip" data-i18n="v7explore.selectionStrategy">Selection Strategy</span></label>
             <select id="deep-correlations-strategy">
               <option value="Top Performers">Top Performers</option>
               <option value="Diverse Styles">Diverse Styles</option>
@@ -1478,24 +1479,24 @@ input[type="range"]::-moz-range-thumb {
             </select>
           </div>
           <div class="form-field">
-            <label for="deep-correlations-num"><span data-tip="Number of configs to compare in the correlation radar.">Configs</span></label>
+            <label for="deep-correlations-num"><span data-tip="Number of configs to compare in the correlation radar." data-i18n-tip="v7explore.configsTip" data-i18n="v7explore.configs">Configs</span></label>
             <input id="deep-correlations-num" type="range" min="3" max="10" step="1" value="5">
             <div class="muted-line" id="deep-correlations-num-value">5</div>
           </div>
           <div class="form-field">
             <label>&nbsp;</label>
-            <div class="check-row"><input id="deep-correlations-weighted" type="checkbox" checked><label for="deep-correlations-weighted"><span data-tip="Prefer weighted metric variants for correlation/radar dimensions where available.">Use Weighted Metrics</span></label></div>
+            <div class="check-row"><input id="deep-correlations-weighted" type="checkbox" checked><label for="deep-correlations-weighted"><span data-tip="Prefer weighted metric variants for correlation/radar dimensions where available." data-i18n-tip="v7explore.useWeightedMetricsTip" data-i18n="v7explore.useWeightedMetrics">Use Weighted Metrics</span></label></div>
           </div>
           <div class="form-field">
             <label>&nbsp;</label>
-            <div class="check-row"><input id="deep-correlations-btc" type="checkbox"><label for="deep-correlations-btc"><span data-tip="Use BTC-denominated metric variants for correlation/radar dimensions where available.">Use BTC instead of USD</span></label></div>
+            <div class="check-row"><input id="deep-correlations-btc" type="checkbox"><label for="deep-correlations-btc"><span data-tip="Use BTC-denominated metric variants for correlation/radar dimensions where available." data-i18n-tip="v7explore.useBtcTip" data-i18n="v7explore.useBtcInsteadOfUsd">Use BTC instead of USD</span></label></div>
           </div>
           <div class="form-field">
             <label>&nbsp;</label>
-            <div class="button-row"><button class="ghost-btn" id="btn-deep-correlations-refresh" data-tip="Reload the radar after changing the selection strategy or metric options.">Refresh</button></div>
+            <div class="button-row"><button class="ghost-btn" id="btn-deep-correlations-refresh" data-tip="Reload the radar after changing the selection strategy or metric options." data-i18n-tip="v7explore.refreshTip" data-i18n="v7explore.refresh">Refresh</button></div>
           </div>
         </div>
-        <div id="deep-correlations-chart" class="placeholder-chart deep-plotly-chart">Load a result to render the risk-profile radar.</div>
+        <div id="deep-correlations-chart" class="placeholder-chart deep-plotly-chart" data-i18n="v7explore.loadToRenderRiskRadar">Load a result to render the risk-profile radar.</div>
       </div>
       <div class="panel-card" id="deep-tab-other-panel" style="display:none;">
         <div class="placeholder-chart" id="deep-tab-placeholder">Parameters tab placeholder</div>
@@ -1505,7 +1506,7 @@ input[type="range"]::-moz-range-thumb {
     <section id="selected-config-detail" class="panel-card">
       <div class="detail-summary-row">
         <div>
-          <h3 id="detail-title" style="margin: 0;">No config selected</h3>
+          <h3 id="detail-title" style="margin: 0;" data-i18n="v7explore.noConfigSelected">No config selected</h3>
         </div>
       </div>
 
@@ -1513,55 +1514,55 @@ input[type="range"]::-moz-range-thumb {
         <section class="detail-block panel-card">
           <div class="overview-grid">
             <div>
-              <h4>Metrics</h4>
+              <h4 data-i18n="v7explore.metrics">Metrics</h4>
               <div id="detail-top-metrics" class="mini-grid">
-                <div class="placeholder-panel" style="min-height:120px;">Select a champion to populate config metrics.</div>
+                <div class="placeholder-panel" style="min-height:120px;" data-i18n="v7explore.selectChampionToPopulate">Select a champion to populate config metrics.</div>
               </div>
             </div>
             <div>
-              <h4>Trading Style</h4>
+              <h4 data-i18n="v7explore.tradingStyle">Trading Style</h4>
               <div id="detail-style-panel" class="detail-list">
-                <div class="placeholder-panel" style="min-height:120px;">Trading style details will appear here.</div>
+                <div class="placeholder-panel" style="min-height:120px;" data-i18n="v7explore.tradingStyleWillAppear">Trading style details will appear here.</div>
               </div>
             </div>
             <div>
-              <h4>Robustness</h4>
+              <h4 data-i18n="v7explore.robustness">Robustness</h4>
               <div id="detail-risk-profile" class="mini-grid">
-                <div class="placeholder-panel" style="min-height:120px;">Risk metrics will appear here.</div>
+                <div class="placeholder-panel" style="min-height:120px;" data-i18n="v7explore.riskMetricsWillAppear">Risk metrics will appear here.</div>
               </div>
               <div id="detail-robustness-panel" class="detail-list" style="margin-top:8px;">
-                <div class="placeholder-panel" style="min-height:80px;">Robustness details will appear here.</div>
+                <div class="placeholder-panel" style="min-height:80px;" data-i18n="v7explore.robustnessDetailsWillAppear">Robustness details will appear here.</div>
               </div>
             </div>
           </div>
         </section>
         <section id="detail-scenario-section" class="detail-block half panel-card" style="display:none;">
-          <h4>Scenario Metrics</h4>
+          <h4 data-i18n="v7explore.scenarioMetrics">Scenario Metrics</h4>
           <div id="detail-scenario-metrics" class="detail-list">
-            <div class="placeholder-panel" style="min-height:120px;">Scenario metrics will appear here for the selected config.</div>
+            <div class="placeholder-panel" style="min-height:120px;" data-i18n="v7explore.scenarioMetricsWillAppear">Scenario metrics will appear here for the selected config.</div>
           </div>
         </section>
         <section class="detail-block half panel-card">
           <details class="expander-card">
-            <summary><span data-tip="Complete selected Passivbot config as JSON, with copy/expand controls.">Full Configuration</span></summary>
+            <summary><span data-tip="Complete selected Passivbot config as JSON, with copy/expand controls." data-i18n-tip="v7explore.fullConfigurationTip" data-i18n="v7explore.fullConfiguration">Full Configuration</span></summary>
             <div id="detail-full-config-panel" style="margin-top:12px;"></div>
           </details>
         </section>
         <section class="detail-block half panel-card">
           <details class="expander-card">
-            <summary><span data-tip="Full metric dump for the selected config, beyond the compact summary cards.">All Metrics & Statistics</span></summary>
+            <summary><span data-tip="Full metric dump for the selected config, beyond the compact summary cards." data-i18n-tip="v7explore.allMetricsTip" data-i18n="v7explore.allMetricsStatistics">All Metrics & Statistics</span></summary>
             <div id="detail-all-metrics" class="detail-list" style="margin-top: 12px;">
-              <div class="placeholder-panel" style="min-height:120px;">All suite metrics will be listed here for the selected config.</div>
+              <div class="placeholder-panel" style="min-height:120px;" data-i18n="v7explore.allMetricsWillBeListed">All suite metrics will be listed here for the selected config.</div>
             </div>
           </details>
         </section>
         <section id="detail-preset-section" class="detail-block panel-card" style="display:none;">
           <details class="expander-card" id="preset-generator-details">
-            <summary><span data-tip="Build a follow-up Optimize preset from the selected config, reusing existing Optimize save/queue flows.">Create Optimize Preset from this Config</span></summary>
-            <p class="muted-line">Creates a new Optimize preset with bounds tightened around the selected config's parameters. Useful for a follow-up run focused on fine-tuning instead of broad exploration.</p>
+            <summary><span data-tip="Build a follow-up Optimize preset from the selected config, reusing existing Optimize save/queue flows." data-i18n-tip="v7explore.createOptimizePresetTip" data-i18n="v7explore.createOptimizePreset">Create Optimize Preset from this Config</span></summary>
+            <p class="muted-line" data-i18n="v7explore.createOptimizePresetDesc">Creates a new Optimize preset with bounds tightened around the selected config's parameters. Useful for a follow-up run focused on fine-tuning instead of broad exploration.</p>
             <div class="preset-grid">
               <div class="form-field half">
-                <label for="preset-direction"><span data-tip="High-level scoring preset for the follow-up Optimize run. Balanced keeps the run scoring; the other goals choose suitable metrics for profit, safety, smoothness, hold time, or exposure efficiency.">Optimization goal</span></label>
+                <label for="preset-direction"><span data-tip="High-level scoring preset for the follow-up Optimize run. Balanced keeps the run scoring; the other goals choose suitable metrics for profit, safety, smoothness, hold time, or exposure efficiency." data-i18n-tip="v7explore.optimizationGoalTip" data-i18n="v7explore.optimizationGoal">Optimization goal</span></label>
                 <select id="preset-direction">
                   <option value="Balanced (keep run scoring)">Balanced (keep run scoring)</option>
                   <option value="More profit (risk can be higher)">More profit (risk can be higher)</option>
@@ -1572,48 +1573,48 @@ input[type="range"]::-moz-range-thumb {
                 </select>
               </div>
               <div class="form-field half">
-                <label for="preset-name"><span data-tip="Name of the new Optimize preset. It will be saved as an Optimize config and used as the draft name when opening Optimize.">Preset name</span></label>
+                <label for="preset-name"><span data-tip="Name of the new Optimize preset. It will be saved as an Optimize config and used as the draft name when opening Optimize." data-i18n-tip="v7explore.presetNameTip" data-i18n="v7explore.presetName">Preset name</span></label>
                 <input id="preset-name" type="text" maxlength="64" value="">
               </div>
               <div class="form-field full">
-                <div class="check-row"><input id="preset-only-near-bounds" type="checkbox" checked><label for="preset-only-near-bounds"><span data-tip="When enabled, bounds-window and risk-bound changes are applied only to parameters that are near their optimize search-space edge. Disable it to adjust all optimized parameters around the selected config.">Only adjust parameters near optimize bounds</span></label></div>
+                <div class="check-row"><input id="preset-only-near-bounds" type="checkbox" checked><label for="preset-only-near-bounds"><span data-tip="When enabled, bounds-window and risk-bound changes are applied only to parameters that are near their optimize search-space edge. Disable it to adjust all optimized parameters around the selected config." data-i18n-tip="v7explore.onlyAdjustNearBoundsTip" data-i18n="v7explore.onlyAdjustNearBounds">Only adjust parameters near optimize bounds</span></label></div>
               </div>
               <div class="form-field half">
-                <label for="preset-bounds-window"><span data-tip="Direct bounds window around the selected config's parameter values. 0% leaves bounds unchanged; 5%, 10%, ... tighten bounds to that +/- window where possible.">Bounds window (%)</span></label>
+                <label for="preset-bounds-window"><span data-tip="Direct bounds window around the selected config's parameter values. 0% leaves bounds unchanged; 5%, 10%, ... tighten bounds to that +/- window where possible." data-i18n-tip="v7explore.boundsWindowTip" data-i18n="v7explore.boundsWindow">Bounds window (%)</span></label>
                 <input id="preset-bounds-window" type="range" min="0" max="100" step="5" value="0">
                 <div class="muted-line" id="preset-bounds-window-value">0%</div>
               </div>
               <div class="form-field half">
-                <label for="preset-risk-adjust"><span data-tip="0 = neutral. Negative tightens risk-related bounds/limits; positive relaxes them. Affects exposure, position count, unstuck/enforcer parameters, and drawdown limits where applicable.">Risk adjustment</span></label>
+                <label for="preset-risk-adjust"><span data-tip="0 = neutral. Negative tightens risk-related bounds/limits; positive relaxes them. Affects exposure, position count, unstuck/enforcer parameters, and drawdown limits where applicable." data-i18n-tip="v7explore.riskAdjustmentTip" data-i18n="v7explore.riskAdjustment">Risk adjustment</span></label>
                 <input id="preset-risk-adjust" type="range" min="-50" max="50" step="5" value="0">
                 <div class="muted-line" id="preset-risk-adjust-value">0</div>
               </div>
               <div class="form-field full">
-                <div class="muted-line" id="preset-bounds-window-hint">Bounds unchanged.</div>
+                <div class="muted-line" id="preset-bounds-window-hint" data-i18n="v7explore.boundsUnchanged">Bounds unchanged.</div>
               </div>
               <div class="form-field full">
-                <h4 style="margin:0;">Preset summary</h4>
-                <div id="preset-summary" class="placeholder-panel">Select a config to build a preset preview.</div>
+                <h4 style="margin:0;" data-i18n="v7explore.presetSummary">Preset summary</h4>
+                <div id="preset-summary" class="placeholder-panel" data-i18n="v7explore.selectConfigForPreset">Select a config to build a preset preview.</div>
               </div>
               <div class="form-field full">
                 <details class="expander-card" id="preset-advanced-preview">
-                  <summary><span data-tip="Inspect generated scoring, limits, and parameter-bound changes before creating the preset.">Advanced preview details</span></summary>
+                  <summary><span data-tip="Inspect generated scoring, limits, and parameter-bound changes before creating the preset." data-i18n-tip="v7explore.advancedPreviewTip" data-i18n="v7explore.advancedPreview">Advanced preview details</span></summary>
                   <div class="preset-grid">
                     <div class="form-field full">
-                      <h4 style="margin:0;">Planned optimize defaults</h4>
-                      <pre id="preset-preview-json" class="preset-code-preview">Select a config to build a preset preview.</pre>
+                      <h4 style="margin:0;" data-i18n="v7explore.plannedOptimizeDefaults">Planned optimize defaults</h4>
+                      <pre id="preset-preview-json" class="preset-code-preview" data-i18n="v7explore.selectConfigForPreset">Select a config to build a preset preview.</pre>
                     </div>
                     <div class="form-field full">
-                      <h4 style="margin:0;">Bounds changes preview</h4>
-                      <div id="preset-bounds-preview" class="placeholder-panel">No preview loaded.</div>
+                      <h4 style="margin:0;" data-i18n="v7explore.boundsChangesPreview">Bounds changes preview</h4>
+                      <div id="preset-bounds-preview" class="placeholder-panel" data-i18n="v7explore.noPreviewLoaded">No preview loaded.</div>
                     </div>
                   </div>
                 </details>
               </div>
               <div class="form-field full">
                 <div class="button-row">
-                  <button class="btn primary" id="btn-create-preset" type="button" data-tip="Save the generated Optimize config and open it in the owning Optimize version.">💾 Create Optimize Preset</button>
-                  <button class="btn" id="btn-create-queue-preset" type="button" data-tip="Save the generated Optimize config and add it to the Optimize queue without opening Optimize.">📥 Create & Queue</button>
+                  <button class="btn primary" id="btn-create-preset" type="button" data-tip="Save the generated Optimize config and open it in the owning Optimize version." data-i18n-tip="v7explore.createOptimizePresetBtnTip" data-i18n="v7explore.createOptimizePresetBtn">💾 Create Optimize Preset</button>
+                  <button class="btn" id="btn-create-queue-preset" type="button" data-tip="Save the generated Optimize config and add it to the Optimize queue without opening Optimize." data-i18n-tip="v7explore.createQueuePresetTip" data-i18n="v7explore.createQueuePreset">📥 Create & Queue</button>
                 </div>
                 <div class="muted-line" id="preset-status" style="margin-top:8px;"></div>
               </div>
@@ -1629,8 +1630,8 @@ input[type="range"]::-moz-range-thumb {
 <div id="overlay-modal" class="overlay-modal" aria-hidden="true">
   <div class="overlay-card">
     <div class="overlay-head">
-      <strong id="overlay-title">Viewer</strong>
-      <button class="ghost-btn" id="overlay-close">Close</button>
+      <strong id="overlay-title" data-i18n="v7explore.viewer">Viewer</strong>
+      <button class="ghost-btn" id="overlay-close" data-i18n="common.close">Close</button>
     </div>
     <div class="overlay-body">
       <iframe id="overlay-frame" src="about:blank"></iframe>
@@ -1640,7 +1641,7 @@ input[type="range"]::-moz-range-thumb {
 
 <div id="data-tip-tooltip"></div>
 
-<script src="/app/js/json_panel.js?v=1"></script>
+<script src="/app/js/json_panel.js?v=2"></script>
 <script>
 window.API_BASE = "%%API_BASE%%";
 window.WS_BASE = "%%WS_BASE%%";
@@ -1805,7 +1806,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   function openOverlayUrl(title, url, sessionId, sessionKind) {
     state.plotSessionId = sessionId || '';
     state.plotSessionKind = sessionKind || '';
-    el('overlay-title').textContent = title || 'Viewer';
+    el('overlay-title').textContent = title || PBGuiI18n.t('v7explore.viewer');
     el('overlay-frame').src = url || 'about:blank';
     el('overlay-frame').style.display = '';
     el('overlay-modal').classList.add('open');
@@ -2168,7 +2169,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var loadedEnd = Math.min(range.end, Math.max(range.start, Math.round((state.displayRangeProgressDisplay / 100) * total)));
     var loadedVisible = Math.max(0, loadedEnd - range.start);
     var targetVisible = Math.max(0, range.end - range.start);
-    summary.textContent = 'Loading display range: ' + String(loadedVisible) + ' / ' + String(targetVisible) + ' configs (Rank ' + String(range.start + 1) + '-' + String(range.end) + ')';
+    summary.textContent = PBGuiI18n.t('v7explore.loadingDisplayRange', { loaded: loadedVisible, target: targetVisible, start: range.start + 1, end: range.end });
   }
 
   function stopDisplayRangeProgressAnimation() {
@@ -2371,8 +2372,8 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     endInput.min = '0';
     endInput.max = String(total);
     endInput.value = String(range.end);
-    totalChip.textContent = 'Selected: ' + String(total);
-    summary.textContent = 'Showing ' + String(Math.max(0, range.end - range.start)) + ' configs (Rank ' + String(range.start + 1) + '-' + String(range.end) + ')';
+    totalChip.textContent = PBGuiI18n.t('v7explore.selectedCount', { total: total });
+    summary.textContent = PBGuiI18n.t('v7explore.showingConfigs', { count: Math.max(0, range.end - range.start), start: range.start + 1, end: range.end });
     updateRangeFill(slider);
     if (state.displayRangeLoading) {
       setDisplayRangeLoadFill(state.displayRangeProgressDisplay, true);
@@ -2417,16 +2418,16 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var metricText = el('metric-full-load-text');
     var metricPanel = el('metric-full-load-panel');
     var normalized = Math.max(0, Math.min(100, progress || 0));
-    var label = 'Idle';
+    var label = PBGuiI18n.t('v7explore.idle');
     var chipClass = 'status-chip warn';
     if (stage === 'loading') {
-      label = 'Loading';
+      label = PBGuiI18n.t('v7explore.loading');
       chipClass = 'status-chip warn';
     } else if (stage === 'loaded') {
-      label = 'Loaded';
+      label = PBGuiI18n.t('v7explore.loaded');
       chipClass = 'status-chip good';
     } else if (stage === 'error') {
-      label = 'Error';
+      label = PBGuiI18n.t('v7explore.error');
       chipClass = 'status-chip bad';
     }
     chip.textContent = label;
@@ -2491,12 +2492,12 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
 
   function updateFullLoadPhase(phase, detail) {
     var phases = {
-      command_center: { progress: 74, text: 'Refreshing Command Center...' },
-      command_center_detail: { progress: 80, text: 'Refreshing selected config details...' },
-      playground: { progress: 88, text: 'Refreshing Explorer and preview charts...' },
-      deep_intelligence: { progress: 94, text: 'Refreshing Deep Intelligence...' },
-      deep_intelligence_panel: { progress: 97, text: 'Refreshing current Deep Intelligence panel...' },
-      complete: { progress: 100, text: 'Full result load completed.' }
+      command_center: { progress: 74, text: PBGuiI18n.t('v7explore.refreshingCommandCenter') },
+      command_center_detail: { progress: 80, text: PBGuiI18n.t('v7explore.refreshingConfigDetails') },
+      playground: { progress: 88, text: PBGuiI18n.t('v7explore.refreshingExplorerCharts') },
+      deep_intelligence: { progress: 94, text: PBGuiI18n.t('v7explore.refreshingDeepIntelligence') },
+      deep_intelligence_panel: { progress: 97, text: PBGuiI18n.t('v7explore.refreshingDeepPanel') },
+      complete: { progress: 100, text: PBGuiI18n.t('v7explore.fullLoadCompleted') }
     };
     var meta = phases[phase] || phases.command_center;
     var suffix = detail ? (' ' + detail) : '';
@@ -2521,10 +2522,10 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     if (!activeJobId) return Promise.resolve(null);
     return apiFetch('/load-status?job_id=' + encodeURIComponent(activeJobId)).then(function(data) {
       var job = data && data.job ? data.job : null;
-      if (!job) throw new Error('Load status returned no job payload.');
+      if (!job) throw new Error(PBGuiI18n.t('v7explore.loadStatusNoJob'));
       var ownsJob = state.fullLoadJobId === activeJobId;
       if (data && data.status === 'loading') {
-        if (ownsJob) setFullLoadStatus('loading', job.message || 'Scanning full result stream...', job.progress || 0);
+        if (ownsJob) setFullLoadStatus('loading', PBGuiI18n.serverMsg(job.message) || PBGuiI18n.t('v7explore.scanningFullStream'), job.progress || 0);
         return waitForNextFullLoadPoll(350).then(function() {
           return pollFullLoadStatus(activeJobId);
         });
@@ -2535,10 +2536,10 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
           state.fullLoadJobId = '';
           clearFullLoadPoll();
         }
-        throw new Error(job.error || job.message || 'Full load failed.');
+        throw new Error(PBGuiI18n.serverMsg(job.error || job.message) || PBGuiI18n.t('v7explore.fullLoadFailed'));
       }
       if (!(data && data.payload)) {
-        if (ownsJob) setFullLoadStatus('loading', job.message || 'Finalizing full result payload...', Math.max(95, job.progress || 0));
+        if (ownsJob) setFullLoadStatus('loading', PBGuiI18n.serverMsg(job.message) || PBGuiI18n.t('v7explore.finalizingPayload'), Math.max(95, job.progress || 0));
         return waitForNextFullLoadPoll(200).then(function() {
           return pollFullLoadStatus(activeJobId);
         });
@@ -2547,7 +2548,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
         state.fullLoadPending = false;
         state.fullLoadJobId = '';
         clearFullLoadPoll();
-        setFullLoadStatus('loading', job.message || 'Full load complete. Starting follow-up refreshes...', Math.max(70, job.progress || 100));
+        setFullLoadStatus('loading', PBGuiI18n.serverMsg(job.message) || PBGuiI18n.t('v7explore.fullLoadCompleteRefreshing'), Math.max(70, job.progress || 100));
       }
       return data;
     });
@@ -2707,7 +2708,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       displayModeBar: true,
       modeBarButtonsToAdd: [{
         name: 'fullscreen',
-        title: 'Toggle Fullscreen',
+        title: PBGuiI18n.t('v7explore.toggleFullscreen'),
         icon: plotlyFullscreenIcon,
         click: function(gd) {
           var wrap = gd.closest('.chart-wrap');
@@ -2836,7 +2837,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
 
   function loadAllResultsFromSidebar() {
     if (!state.resultPath) {
-      pushMessage('error', 'No result path is available yet.');
+      pushMessage('error', PBGuiI18n.t('v7explore.noResultPathYet'));
       return;
     }
     var requestedMaxConfigs = parseInt(el('max-configs-input').value || String(state.maxConfigs || 2000), 10) || 2000;
@@ -2847,21 +2848,21 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     state.loadStrategy = requestedLoadStrategy;
     state.maxConfigs = requestedMaxConfigs;
     el('btn-load-all-results').disabled = true;
-    el('btn-load-all-results').textContent = 'Scanning all_results...';
-    el('mode-chip').textContent = 'Loading full result...';
+    el('btn-load-all-results').textContent = PBGuiI18n.t('v7explore.scanningAllResults');
+    el('mode-chip').textContent = PBGuiI18n.t('v7explore.loadingFullResult');
     el('mode-chip').className = 'status-chip warn';
-    setFullLoadStatus('loading', 'Starting full result load from all_results.bin...', 0);
-    pushMessage('info', 'Scanning all_results.bin and selecting candidates. The first scan can take time for larger result sets.');
+    setFullLoadStatus('loading', PBGuiI18n.t('v7explore.startingFullLoad'), 0);
+    pushMessage('info', PBGuiI18n.t('v7explore.scanningAllResultsHint'));
     loadParetoData().catch(function() {});
   }
 
   function loadParetoOnlyFromSidebar() {
     if (!state.resultPath) {
-      pushMessage('error', 'No result path is available yet.');
+      pushMessage('error', PBGuiI18n.t('v7explore.noResultPathYet'));
       return;
     }
     if (!state.allResultsLoaded && !state.fullLoadPending) {
-      pushMessage('info', 'Already using Passivbot pareto-only mode.');
+      pushMessage('info', PBGuiI18n.t('v7explore.alreadyParetoOnly'));
       return;
     }
     state.fullLoadPending = false;
@@ -2873,11 +2874,11 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     state.viewRange = null;
     state.pendingViewRange = null;
     el('btn-load-all-results').disabled = false;
-    el('btn-load-all-results').textContent = '📂 Scan all_results';
-    el('mode-chip').textContent = 'Switching to fast mode...';
+    el('btn-load-all-results').textContent = PBGuiI18n.t('v7explore.scanAllResults');
+    el('mode-chip').textContent = PBGuiI18n.t('v7explore.switchingToFastMode');
     el('mode-chip').className = 'status-chip warn';
-    setFullLoadStatus('idle', 'Switching back to Passivbot pareto-only mode. The full all_results cache stays warm for quick return.', 0);
-    pushMessage('info', 'Switching back to the Passivbot pareto-only config set. The cached all_results loader will be reused when you switch back.');
+    setFullLoadStatus('idle', PBGuiI18n.t('v7explore.switchingBackParetoOnly'), 0);
+    pushMessage('info', PBGuiI18n.t('v7explore.switchingBackParetoOnlyHint'));
     loadParetoData({ forceSynchronous: true }).catch(function() {});
   }
 
@@ -2892,20 +2893,20 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var leftChart = el('preview-pareto-chart');
     var rightChart = el('preview-robustness-chart');
     if (!payload) {
-      leftSummary.textContent = 'Pareto preview chart will appear here.';
-      rightSummary.textContent = 'Robustness preview chart will appear here.';
+      leftSummary.textContent = PBGuiI18n.t('v7explore.paretoPreviewWillAppear');
+      rightSummary.textContent = PBGuiI18n.t('v7explore.robustnessPreviewWillAppear');
       leftChart.className = 'placeholder-chart small-chart';
-      leftChart.textContent = 'Load a result to render the Pareto front preview.';
+      leftChart.textContent = PBGuiI18n.t('v7explore.loadToRenderParetoPreview');
       rightChart.className = 'placeholder-chart small-chart';
-      rightChart.textContent = 'Load a result to render the robustness preview.';
+      rightChart.textContent = PBGuiI18n.t('v7explore.loadToRenderRobustnessPreview');
       return;
     }
     var counts = payload.counts || {};
     var previewConfigs = counts.configs || 0;
     var totalConfigs = counts.total_configs != null ? counts.total_configs : previewConfigs;
-    var previewModeLabel = counts.show_all ? String(previewConfigs) + ' / ' + String(totalConfigs) + ' configs' : String(previewConfigs) + ' Pareto configs';
-    leftSummary.textContent = 'Pareto Analysis - Showing ' + previewModeLabel + ' | ' + String(counts.pareto || 0) + ' Pareto ⭐';
-    rightSummary.textContent = 'Robustness vs Performance - Showing ' + previewModeLabel + ' | ' + String(counts.pareto || 0) + ' Pareto ⭐';
+    var previewModeLabel = counts.show_all ? PBGuiI18n.t('v7explore.configsCountLabel', { shown: previewConfigs, total: totalConfigs }) : PBGuiI18n.t('v7explore.paretoConfigsCount', { count: previewConfigs });
+    leftSummary.textContent = PBGuiI18n.t('v7explore.paretoAnalysisSummary', { mode: previewModeLabel, pareto: counts.pareto || 0 });
+    rightSummary.textContent = PBGuiI18n.t('v7explore.robustnessVsPerformanceSummary', { mode: previewModeLabel, pareto: counts.pareto || 0 });
     leftChart.className = 'small-chart';
     rightChart.className = 'small-chart';
     leftChart.textContent = '';
@@ -2945,7 +2946,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var champions = data && Array.isArray(data.champions) ? data.champions : [];
     root.innerHTML = '';
     if (!champions.length) {
-      root.innerHTML = '<div class="placeholder-panel">No champions available for the current result.</div>';
+      root.innerHTML = '<div class="placeholder-panel">' + escapeHtml(PBGuiI18n.t('v7explore.noChampions')) + '</div>';
       return;
     }
     champions.forEach(function(item, index) {
@@ -2956,13 +2957,13 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
         + '<div class="champion-row">'
         +   '<div class="champion-head"><strong>#' + escapeHtml(String(item.config_index)) + '</strong></div>'
         +   '<div class="champion-style">' + escapeHtml(item.style || '') + '</div>'
-        +   '<span class="chip">Rank ' + escapeHtml(String(index + 1)) + '</span>'
+        +   '<span class="chip">' + escapeHtml(PBGuiI18n.t('v7explore.rank', { rank: index + 1 })) + '</span>'
         + '</div>'
         + '<div class="champion-meta">'
-        +   '<span class="chip">Score ' + escapeHtml(String(item.composite_score == null ? '-' : item.composite_score)) + '</span>'
-        +   '<span class="chip">Perf ' + escapeHtml(String(item.performance == null ? '-' : item.performance)) + '</span>'
-        +   '<span class="chip">Rob ' + escapeHtml(String(item.robustness == null ? '-' : item.robustness)) + '</span>'
-        +   '<span class="chip">Risk ' + escapeHtml(String(item.risk_overall == null ? '-' : item.risk_overall)) + '</span>'
+        +   '<span class="chip">' + escapeHtml(PBGuiI18n.t('v7explore.score', { score: item.composite_score == null ? '-' : item.composite_score })) + '</span>'
+        +   '<span class="chip">' + escapeHtml(PBGuiI18n.t('v7explore.perf', { perf: item.performance == null ? '-' : item.performance })) + '</span>'
+        +   '<span class="chip">' + escapeHtml(PBGuiI18n.t('v7explore.rob', { rob: item.robustness == null ? '-' : item.robustness })) + '</span>'
+        +   '<span class="chip">' + escapeHtml(PBGuiI18n.t('v7explore.risk', { risk: item.risk_overall == null ? '-' : item.risk_overall })) + '</span>'
         + '</div>';
       node.addEventListener('click', function() {
         loadConfigDetail(item.config_index).catch(function() {});
@@ -2976,7 +2977,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var insights = data && Array.isArray(data.insights) ? data.insights : [];
     root.innerHTML = '';
     if (!insights.length) {
-      root.innerHTML = '<div class="placeholder-panel">No insights available for the current result.</div>';
+      root.innerHTML = '<div class="placeholder-panel">' + escapeHtml(PBGuiI18n.t('v7explore.noInsights')) + '</div>';
       return;
     }
     insights.forEach(function(item) {
@@ -2992,7 +2993,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var root = el(rootId);
     root.innerHTML = '';
     if (!metrics || !metrics.length) {
-      root.innerHTML = '<div class="placeholder-panel" style="min-height:120px;">No data available.</div>';
+      root.innerHTML = '<div class="placeholder-panel" style="min-height:120px;">' + escapeHtml(PBGuiI18n.t('v7explore.noDataAvailable')) + '</div>';
       return;
     }
     metrics.forEach(function(item) {
@@ -3055,7 +3056,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       }).join('');
       var node = document.createElement('div');
       node.className = 'detail-item';
-      node.innerHTML = '<div class="detail-head"><strong>' + escapeHtml(name) + '</strong><span class="chip">' + escapeHtml(String(metricNames.length)) + ' metrics shown</span></div>'
+      node.innerHTML = '<div class="detail-head"><strong>' + escapeHtml(name) + '</strong><span class="chip">' + escapeHtml(PBGuiI18n.t('v7explore.metricsShown', { count: metricNames.length })) + '</span></div>'
         + '<div class="detail-meta">' + chips + '</div>';
       root.appendChild(node);
     });
@@ -3094,15 +3095,15 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     el('preset-bounds-window-value').textContent = String(boundsWindowPct) + '%';
     el('preset-risk-adjust-value').textContent = String(riskAdjust);
     el('preset-bounds-window-hint').textContent = boundsWindowPct === 0
-      ? 'Bounds unchanged.'
-      : 'Effective bounds window: ±' + String(boundsWindowPct) + '% around selected values' + (el('preset-only-near-bounds').checked ? ' for near-bound parameters only.' : '.');
+      ? PBGuiI18n.t('v7explore.boundsUnchanged')
+      : PBGuiI18n.t('v7explore.effectiveBoundsWindow', { pct: boundsWindowPct, scope: el('preset-only-near-bounds').checked ? PBGuiI18n.t('v7explore.nearBoundParamsOnly') : PBGuiI18n.t('v7explore.allValues') });
     ['preset-bounds-window', 'preset-risk-adjust'].forEach(function(id) { updateRangeFill(el(id)); });
   }
 
   function buildPresetRequestBody(options) {
     options = options || {};
     var detail = state.selectedDetail;
-    if (!detail || detail.config_index == null) throw new Error('No selected config is available.');
+    if (!detail || detail.config_index == null) throw new Error(PBGuiI18n.t('v7explore.noSelectedConfigAvailable'));
     return {
       result_path: state.resultPath,
       config_index: detail.config_index,
@@ -3144,7 +3145,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       html += '</tr>';
     });
     html += '</tbody></table></div>';
-    if (!options.showAll && rows.length > 120) html += '<div class="muted-line" style="margin-top:6px;">Showing first 120 of ' + escapeHtml(String(rows.length)) + ' rows.</div>';
+    if (!options.showAll && rows.length > 120) html += '<div class="muted-line" style="margin-top:6px;">' + escapeHtml(PBGuiI18n.t('v7explore.showingFirstRows', { count: rows.length })) + '</div>';
     root.innerHTML = html;
   }
 
@@ -3161,7 +3162,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var root = el('preset-summary');
     if (!payload || !payload.ok) {
       root.className = 'placeholder-panel';
-      root.innerHTML = 'No preset preview available.';
+      root.innerHTML = escapeHtml(PBGuiI18n.t('v7explore.noPresetPreview'));
       return;
     }
     var scoring = Array.isArray(payload.scoring) ? payload.scoring : [];
@@ -3170,13 +3171,13 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var onlyNearBounds = !!payload.only_adjust_near_bounds;
     var nearBoundsCount = parseInt(payload.near_bounds_count || 0, 10) || 0;
     var rows = [
-      { label: 'Name', value: payload.preset_name || presetDefaultName(state.selectedDetail) },
-      { label: 'Goal', value: payload.direction || el('preset-direction').value },
-      { label: 'Bounds scope', value: onlyNearBounds ? ('near-bound parameters only' + (nearBoundsCount ? ' (' + String(nearBoundsCount) + ')' : ' (none detected)')) : 'all optimized parameters' },
-      { label: 'Bounds window', value: (payload.window_pct || 0) > 0 ? ('±' + String(payload.window_pct) + '%') : 'unchanged' },
-      { label: 'Scoring', value: scoring.map(presetScoringLabel).filter(Boolean).join(', ') || 'unchanged' },
-      { label: 'Limits', value: String(limits.length) + ' configured' },
-      { label: 'Bounds changes', value: String(boundsRows.length) }
+      { label: PBGuiI18n.t('v7explore.name'), value: payload.preset_name || presetDefaultName(state.selectedDetail) },
+      { label: PBGuiI18n.t('v7explore.goal'), value: payload.direction || el('preset-direction').value },
+      { label: PBGuiI18n.t('v7explore.boundsScope'), value: onlyNearBounds ? PBGuiI18n.t('v7explore.nearBoundParamsOnlyCount', { count: nearBoundsCount ? String(nearBoundsCount) : PBGuiI18n.t('v7explore.noneDetected') }) : PBGuiI18n.t('v7explore.allOptimizedParams') },
+      { label: PBGuiI18n.t('v7explore.boundsWindowLabel'), value: (payload.window_pct || 0) > 0 ? ('±' + String(payload.window_pct) + '%') : PBGuiI18n.t('v7explore.unchanged') },
+      { label: PBGuiI18n.t('v7explore.scoring'), value: scoring.map(presetScoringLabel).filter(Boolean).join(', ') || PBGuiI18n.t('v7explore.unchanged') },
+      { label: PBGuiI18n.t('v7explore.limits'), value: PBGuiI18n.t('v7explore.configuredCount', { count: limits.length }) },
+      { label: PBGuiI18n.t('v7explore.boundsChanges'), value: String(boundsRows.length) }
     ];
     var html = '<table class="preset-preview-table"><tbody>';
     rows.forEach(function(row) {
@@ -3190,22 +3191,22 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   function renderPresetPreview(payload) {
     if (!payload || !payload.ok) {
       renderPresetSummary(null);
-      el('preset-preview-json').textContent = 'No preset preview available.';
-      renderPresetRows('preset-bounds-preview', [], 'No bounds changes detected.', []);
+      el('preset-preview-json').textContent = PBGuiI18n.t('v7explore.noPresetPreview');
+      renderPresetRows('preset-bounds-preview', [], PBGuiI18n.t('v7explore.noBoundsChanges'), []);
       return;
     }
     if (payload.preset_name) el('preset-name').value = String(payload.preset_name);
     renderPresetSummary(payload);
     el('preset-preview-json').textContent = JSON.stringify({ scoring: payload.scoring || [], limits: payload.limits || [] }, null, 2);
-    renderPresetRows('preset-bounds-preview', payload.bounds_preview_rows || [], 'No bounds changes detected.', [
-      { key: 'param', label: 'Param' },
-      { key: 'change', label: 'Change' },
-      { key: 'before', label: 'Before' },
-      { key: 'expand', label: 'Expand' },
-      { key: 'window', label: 'Window' },
-      { key: 'risk', label: 'Risk' },
-      { key: 'result', label: 'Result' },
-      { key: 'expand_note', label: 'Note' }
+    renderPresetRows('preset-bounds-preview', payload.bounds_preview_rows || [], PBGuiI18n.t('v7explore.noBoundsChanges'), [
+      { key: 'param', label: PBGuiI18n.t('v7explore.param') },
+      { key: 'change', label: PBGuiI18n.t('v7explore.change') },
+      { key: 'before', label: PBGuiI18n.t('v7explore.before') },
+      { key: 'expand', label: PBGuiI18n.t('v7explore.expand') },
+      { key: 'window', label: PBGuiI18n.t('v7explore.window') },
+      { key: 'risk', label: PBGuiI18n.t('v7explore.riskLabel') },
+      { key: 'result', label: PBGuiI18n.t('v7explore.resultLabel') },
+      { key: 'expand_note', label: PBGuiI18n.t('v7explore.note') }
     ]);
   }
 
@@ -3214,7 +3215,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var seq = ++state.presetPreviewRequestSeq;
     var contextGeneration = state.resultContextGeneration;
     var resultPath = state.resultPath;
-    el('preset-status').textContent = options.includeConfig ? 'Building preset config...' : 'Building preset preview...';
+    el('preset-status').textContent = options.includeConfig ? PBGuiI18n.t('v7explore.buildingPresetConfig') : PBGuiI18n.t('v7explore.buildingPresetPreview');
     return apiFetch('/optimize-preset/build', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3238,7 +3239,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       el('preset-status').textContent = '';
       return data;
     }).catch(function(err) {
-      if (seq === state.presetPreviewRequestSeq) el('preset-status').textContent = 'Preset preview failed: ' + err.message;
+      if (seq === state.presetPreviewRequestSeq) el('preset-status').textContent = PBGuiI18n.t('v7explore.presetPreviewFailed', { error: PBGuiI18n.serverMsg(err.message) });
       throw err;
     });
   }
@@ -3260,7 +3261,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     }).then(function() {
       return optimizeApiFetch('/configs/' + encoded);
     }).then(function(saved) {
-      if (!saved || !saved.config) throw new Error('Saved optimize config could not be reloaded.');
+      if (!saved || !saved.config) throw new Error(PBGuiI18n.t('v7explore.savedConfigReloadFailed'));
       return saved.config;
     });
   }
@@ -3269,30 +3270,30 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     options = options || {};
     var queueAfter = !!options.queueAfter;
     loadPresetPreview({ includeConfig: true }).then(function(data) {
-      if (!data || !data.preset_config) throw new Error('Preset config was not generated.');
+      if (!data || !data.preset_config) throw new Error(PBGuiI18n.t('v7explore.presetConfigNotGenerated'));
       var name = String(data.preset_name || el('preset-name').value || '').trim();
-      if (!name) throw new Error('Preset name is required.');
-      el('preset-status').textContent = 'Saving optimize preset...';
+      if (!name) throw new Error(PBGuiI18n.t('v7explore.presetNameRequired'));
+      el('preset-status').textContent = PBGuiI18n.t('v7explore.savingOptimizePreset');
       return saveOptimizePresetConfig(name, data.preset_config).then(function(savedConfig) {
-        pushMessage('info', 'Optimize preset created: ' + name + '.json');
+        pushMessage('info', PBGuiI18n.t('v7explore.optimizePresetCreated', { name: name }));
         if (queueAfter) {
-          el('preset-status').textContent = 'Queueing optimize preset...';
+          el('preset-status').textContent = PBGuiI18n.t('v7explore.queueingOptimizePreset');
           return optimizeApiFetch('/queue', {
             method: 'POST',
             body: JSON.stringify({ name: name })
           }).then(function(queueData) {
             var filename = queueData && queueData.filename ? ' (' + queueData.filename + ')' : '';
-            el('preset-status').textContent = 'Optimize preset queued: ' + name + '.json' + filename;
-            pushMessage('info', 'Optimize preset queued: ' + name + '.json');
+            el('preset-status').textContent = PBGuiI18n.t('v7explore.optimizePresetQueued', { name: name, filename: filename });
+            pushMessage('info', PBGuiI18n.t('v7explore.optimizePresetQueuedShort', { name: name }));
             return savedConfig;
           });
         }
-        el('preset-status').textContent = 'Opening PB' + optimizeVersion() + ' Optimize...';
+        el('preset-status').textContent = PBGuiI18n.t('v7explore.openingOptimize', { v: optimizeVersion() });
         return openOptimizeSeedDraft(savedConfig, name);
       });
     }).catch(function(err) {
-      el('preset-status').textContent = 'Create preset failed: ' + err.message;
-      pushMessage('error', 'Create preset failed: ' + err.message);
+      el('preset-status').textContent = PBGuiI18n.t('v7explore.createPresetFailed', { error: PBGuiI18n.serverMsg(err.message) });
+      pushMessage('error', PBGuiI18n.t('v7explore.createPresetFailed', { error: PBGuiI18n.serverMsg(err.message) }));
     });
   }
 
@@ -3311,10 +3312,10 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var quickViewNode = el('playground-quick-view');
     var colorNode = el('playground-color-metric');
     if (!payload) {
-      bestMatchNode.textContent = 'Load a result to compute the best match for your preferences.';
-      metricNode.textContent = 'This section provides multiple visualization modes.';
+      bestMatchNode.textContent = PBGuiI18n.t('v7explore.loadToComputeBestMatch');
+      metricNode.textContent = PBGuiI18n.t('v7explore.multipleVisualizationModes');
       chartNode.className = 'placeholder-chart';
-      chartNode.textContent = 'Load a result to render the explorer chart.';
+      chartNode.textContent = PBGuiI18n.t('v7explore.loadToRenderExplorerChart');
       projectionWrap.style.display = 'none';
       updatePlaygroundCustomUi(null);
       return;
@@ -3341,7 +3342,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       quickViewNode.appendChild(option);
     });
 
-    colorNode.innerHTML = '<option value="None">None</option>';
+    colorNode.innerHTML = '<option value="None">' + escapeHtml(PBGuiI18n.t('common.none')) + '</option>';
     (payload.available_metrics || []).forEach(function(metric) {
       var option = document.createElement('option');
       option.value = metric;
@@ -3352,8 +3353,8 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     updatePlaygroundCustomUi(payload);
 
     bestMatchNode.textContent = payload.best_match && payload.best_match.config_index != null
-      ? 'Best Match: Config #' + String(payload.best_match.config_index) + ' | Score: ' + String(payload.best_match.score == null ? '-' : payload.best_match.score) + ' | ' + String(payload.best_match.style || '')
-      : 'Could not determine a best match.';
+      ? PBGuiI18n.t('v7explore.bestMatchDetail', { config: payload.best_match.config_index, score: payload.best_match.score == null ? '-' : payload.best_match.score, style: payload.best_match.style || '' })
+      : PBGuiI18n.t('v7explore.noBestMatch');
     if (followBestMatch && payload.best_match && payload.best_match.config_index != null && state.selectedConfigIndex !== payload.best_match.config_index) {
       state.selectedConfigIndex = payload.best_match.config_index;
       loadConfigDetail(payload.best_match.config_index, { skipPlaygroundRefresh: true }).catch(function() {});
@@ -3372,9 +3373,9 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       chartNode.className = 'placeholder-chart small-chart';
       chartWrap.style.display = 'none';
       projectionWrap.style.display = '';
-      ensureProjectionPanel(projXY, 'XY projection');
-      ensureProjectionPanel(projXZ, 'XZ projection');
-      ensureProjectionPanel(projYZ, 'YZ projection');
+      ensureProjectionPanel(projXY, PBGuiI18n.t('v7explore.xyProjection'));
+      ensureProjectionPanel(projXZ, PBGuiI18n.t('v7explore.xzProjection'));
+      ensureProjectionPanel(projYZ, PBGuiI18n.t('v7explore.yzProjection'));
       Plotly.newPlot(projXY, (((payload.visualizations || {}).projections || {}).xy || {}).traces || [], darkPlotLayout(((((payload.visualizations || {}).projections || {}).xy || {}).layout) || {}), plotlyConfig()).then(function() { fitChartToWrap(projXY); rememberChartHeight(projXY); bindPlotClick(projXY, function(configIndex) { loadConfigDetail(configIndex).catch(function() {}); }); });
       Plotly.newPlot(projXZ, (((payload.visualizations || {}).projections || {}).xz || {}).traces || [], darkPlotLayout(((((payload.visualizations || {}).projections || {}).xz || {}).layout) || {}), plotlyConfig()).then(function() { fitChartToWrap(projXZ); rememberChartHeight(projXZ); bindPlotClick(projXZ, function(configIndex) { loadConfigDetail(configIndex).catch(function() {}); }); });
       Plotly.newPlot(projYZ, (((payload.visualizations || {}).projections || {}).yz || {}).traces || [], darkPlotLayout(((((payload.visualizations || {}).projections || {}).yz || {}).layout) || {}), plotlyConfig()).then(function() { fitChartToWrap(projYZ); rememberChartHeight(projYZ); bindPlotClick(projYZ, function(configIndex) { loadConfigDetail(configIndex).catch(function() {}); }); });
@@ -3441,7 +3442,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       return data;
     }).catch(function(err) {
       if (requestSeq !== state.playgroundRequestSeq || contextGeneration !== state.resultContextGeneration || resultPath !== state.resultPath) return null;
-      pushMessage('error', 'Playground load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.playgroundLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -3452,16 +3453,16 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var heatmapNode = el('deep-parameters-heatmap');
     var boundsChartNode = el('deep-parameters-bounds-chart');
     if (!payload) {
-      summaryNode.textContent = 'Load a result to inspect parameter influence and optimize-bound pressure.';
+      summaryNode.textContent = PBGuiI18n.t('v7explore.loadToInspectParameterInfluence');
       heatmapNode.className = 'placeholder-chart';
-      heatmapNode.textContent = 'Load a result to render the parameter influence heatmap.';
+      heatmapNode.textContent = PBGuiI18n.t('v7explore.loadToRenderHeatmap');
       boundsChartNode.className = 'placeholder-chart';
-      boundsChartNode.textContent = 'Load a result to render the near-bounds chart.';
+      boundsChartNode.textContent = PBGuiI18n.t('v7explore.loadToRenderNearBounds');
       return;
     }
     summaryNode.textContent = payload.near_bounds_count
-      ? String(payload.near_bounds_count) + ' parameters are near bounds. Heatmap shows parameter-vs-metric correlation for the near-bound parameters only.'
-      : 'No parameters near bounds detected. Heatmap still shows the most influential available parameters.';
+      ? PBGuiI18n.t('v7explore.nearBoundsSummary', { count: payload.near_bounds_count })
+      : PBGuiI18n.t('v7explore.noNearBoundsSummary');
 
     var effectiveTopN = parseInt(payload.top_n || state.deepParametersTopN || 20, 10) || 20;
     var nearCount = parseInt(payload.near_bounds_count || 0, 10) || 0;
@@ -3477,7 +3478,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       renderStableDeepPlot(heatmapNode, payload.heatmap.traces, payload.heatmap.layout || {});
     } else {
       heatmapNode.className = 'placeholder-chart deep-plotly-chart';
-      heatmapNode.textContent = (payload.heatmap && payload.heatmap.layout && payload.heatmap.layout.title) || 'No heatmap data available.';
+      heatmapNode.textContent = (payload.heatmap && payload.heatmap.layout && payload.heatmap.layout.title) || PBGuiI18n.t('v7explore.noHeatmapData');
     }
 
     if (payload.bounds_chart && payload.bounds_chart.traces && payload.bounds_chart.traces.length) {
@@ -3485,7 +3486,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       renderStableDeepPlot(boundsChartNode, payload.bounds_chart.traces, payload.bounds_chart.layout || {});
     } else {
       boundsChartNode.className = 'placeholder-chart deep-plotly-chart';
-      boundsChartNode.textContent = (payload.bounds_chart && payload.bounds_chart.layout && payload.bounds_chart.layout.title) || 'No bounds-chart data available.';
+      boundsChartNode.textContent = (payload.bounds_chart && payload.bounds_chart.layout && payload.bounds_chart.layout.title) || PBGuiI18n.t('v7explore.noBoundsChartData');
     }
 
   }
@@ -3517,7 +3518,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       return data;
     }).catch(function(err) {
       if (seq !== state.deepParametersRequestSeq) return null;
-      pushMessage('error', 'Deep Intelligence parameters load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.deepParametersLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -3529,11 +3530,11 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var chartNode = el('deep-scenarios-chart');
     var statsNode = el('deep-scenarios-stats');
     if (!payload) {
-      summaryNode.textContent = 'Compare Pareto configs across loaded backtest scenarios (aggregated over visible configs).';
-      selectNode.innerHTML = '<option value="">No metrics loaded</option>';
+      summaryNode.textContent = PBGuiI18n.t('v7explore.compareParetoScenarios');
+      selectNode.innerHTML = '<option value="">' + escapeHtml(PBGuiI18n.t('v7explore.noMetricsLoaded')) + '</option>';
       chartNode.className = 'placeholder-chart deep-plotly-chart';
       chartNode.textContent = '';
-      statsNode.innerHTML = '<div class="placeholder-panel">Scenario statistics will appear here.</div>';
+      statsNode.innerHTML = '<div class="placeholder-panel">' + escapeHtml(PBGuiI18n.t('v7explore.scenarioStatsWillAppear')) + '</div>';
       return;
     }
 
@@ -3548,14 +3549,14 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     state.deepScenariosMetric = payload.selected_metric || '';
 
     if (!payload.has_scenarios) {
-      summaryNode.textContent = 'No scenario data is available for this result.';
+      summaryNode.textContent = PBGuiI18n.t('v7explore.noScenarioDataForResult');
       chartNode.className = 'placeholder-chart deep-plotly-chart';
-      chartNode.textContent = 'No scenario data available.';
-      statsNode.innerHTML = '<div class="placeholder-panel">No scenario statistics available.</div>';
+      chartNode.textContent = PBGuiI18n.t('v7explore.noScenarioData');
+      statsNode.innerHTML = '<div class="placeholder-panel">' + escapeHtml(PBGuiI18n.t('v7explore.noScenarioStats')) + '</div>';
       return;
     }
 
-    summaryNode.textContent = String((payload.scenario_labels || []).length) + ' scenarios loaded for metric ' + String(payload.selected_metric || '-') + ' (aggregated over visible configs).';
+    summaryNode.textContent = PBGuiI18n.t('v7explore.scenariosLoadedForMetric', { count: (payload.scenario_labels || []).length, metric: payload.selected_metric || '-' });
     if (payload.chart && payload.chart.traces && payload.chart.traces.length) {
       chartNode.className = 'deep-plotly-chart';
       chartNode.textContent = '';
@@ -3566,12 +3567,12 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       });
     } else {
       chartNode.className = 'placeholder-chart deep-plotly-chart';
-      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || 'No scenario chart data available.';
+      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || PBGuiI18n.t('v7explore.noScenarioChartData');
     }
 
     statsNode.innerHTML = '';
     if (!payload.statistics || !payload.statistics.length) {
-      statsNode.innerHTML = '<div class="placeholder-panel">No scenario statistics available.</div>';
+      statsNode.innerHTML = '<div class="placeholder-panel">' + escapeHtml(PBGuiI18n.t('v7explore.noScenarioStats')) + '</div>';
       return;
     }
     var statsByScenario = {};
@@ -3617,7 +3618,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     });
 
     if (!columnsWrap.childElementCount) {
-      statsNode.innerHTML = '<div class="placeholder-panel">No scenario statistics available.</div>';
+      statsNode.innerHTML = '<div class="placeholder-panel">' + escapeHtml(PBGuiI18n.t('v7explore.noScenarioStats')) + '</div>';
       return;
     }
     statsNode.appendChild(columnsWrap);
@@ -3651,7 +3652,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       return data;
     }).catch(function(err) {
       if (seq !== state.deepScenariosRequestSeq) return null;
-      pushMessage('error', 'Deep Intelligence scenarios load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.deepScenariosLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -3662,8 +3663,8 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var metricNode = el('deep-evolution-metric');
     var chartNode = el('deep-evolution-chart');
     if (!payload) {
-      summaryNode.textContent = 'Track whether later optimize iterations still improve the selected metric.';
-      metricNode.innerHTML = '<option value="">No metrics loaded</option>';
+      summaryNode.textContent = PBGuiI18n.t('v7explore.trackOptimizeIterations');
+      metricNode.innerHTML = '<option value="">' + escapeHtml(PBGuiI18n.t('v7explore.noMetricsLoaded')) + '</option>';
       chartNode.className = 'placeholder-chart deep-plotly-chart';
       chartNode.textContent = '';
       return;
@@ -3687,29 +3688,29 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     syncFormState();
 
     if (payload.requires_full_mode) {
-      summaryNode.textContent = payload.message || 'Evolution requires full mode because Fast Mode does not know the original all_results config index.';
+      summaryNode.textContent = PBGuiI18n.serverMsg(payload.message) || PBGuiI18n.t('v7explore.evolutionRequiresFullMode');
       el('selected-config-detail').style.display = 'none';
       el('selected-config-section').style.display = 'none';
       chartNode.className = 'placeholder-chart deep-plotly-chart';
-      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || 'Scan all_results.bin to inspect when selected configs were found.';
+      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || PBGuiI18n.t('v7explore.scanToInspectEvolution');
       return;
     }
 
     var best = payload.chart && payload.chart.best_so_far ? payload.chart.best_so_far : null;
     var bestText = '';
     if (best && best.best_config_index != null) {
-      bestText = ' Best ' + String(best.direction || 'max') + ' value: ' + String(best.best_value) + ' at config #' + String(best.best_config_index) + '.';
+      bestText = ' ' + PBGuiI18n.t('v7explore.bestValueLine', { direction: best.direction || 'max', value: best.best_value, config: best.best_config_index });
       if (best.last_meaningful_improvement_config_index != null) {
-        bestText += ' Last meaningful improvement (≥' + String(best.improvement_threshold_pct) + '%): #' + String(best.last_meaningful_improvement_config_index) + '.';
+        bestText += ' ' + PBGuiI18n.t('v7explore.lastMeaningfulImprovement', { pct: best.improvement_threshold_pct, config: best.last_meaningful_improvement_config_index });
       }
       if (best.tail_improvement_pct != null) {
-        bestText += ' Final 20% improvement: ' + String(best.tail_improvement_pct) + '%.';
+        bestText += ' ' + PBGuiI18n.t('v7explore.finalTailImprovement', { pct: best.tail_improvement_pct });
       }
       if (best.suggested_min_iters != null) {
-        bestText += ' Suggested minimum next run: ~' + String(best.suggested_min_iters) + ' iters.';
+        bestText += ' ' + PBGuiI18n.t('v7explore.suggestedMinIters', { iters: best.suggested_min_iters });
       }
     }
-    summaryNode.textContent = 'Tracking ' + String(payload.selected_metric || '-') + ' across ' + String(payload.displayed_configs || 0) + ' ' + (payload.show_all ? 'visible configs' : 'visible pareto configs') + '. Blue line shows best-so-far.' + bestText;
+    summaryNode.textContent = PBGuiI18n.t('v7explore.trackingMetricAcross', { metric: payload.selected_metric || '-', count: payload.displayed_configs || 0, configs: payload.show_all ? PBGuiI18n.t('v7explore.visibleConfigs') : PBGuiI18n.t('v7explore.visibleParetoConfigs') }) + bestText;
     if (payload.chart && payload.chart.traces && payload.chart.traces.length) {
       chartNode.className = 'deep-plotly-chart';
       chartNode.textContent = '';
@@ -3719,7 +3720,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       });
     } else {
       chartNode.className = 'placeholder-chart deep-plotly-chart';
-      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || 'No evolution chart data available.';
+      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || PBGuiI18n.t('v7explore.noEvolutionChartData');
     }
   }
 
@@ -3756,7 +3757,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       return data;
     }).catch(function(err) {
       if (seq !== state.deepEvolutionRequestSeq) return null;
-      pushMessage('error', 'Deep Intelligence evolution load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.deepEvolutionLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -3766,9 +3767,9 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var summaryNode = el('deep-correlations-summary');
     var chartNode = el('deep-correlations-chart');
     if (!payload) {
-      summaryNode.textContent = 'Compare multiple configs side-by-side across normalized risk dimensions.';
+      summaryNode.textContent = PBGuiI18n.t('v7explore.compareConfigsAcrossRisk');
       chartNode.className = 'placeholder-chart deep-plotly-chart';
-      chartNode.textContent = 'Load a result to render the risk-profile radar.';
+      chartNode.textContent = PBGuiI18n.t('v7explore.loadToRenderRiskRadar');
       return;
     }
     state.deepCorrelationsStrategy = payload.strategy || state.deepCorrelationsStrategy;
@@ -3776,9 +3777,9 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     state.deepCorrelationsUseWeighted = !!payload.use_weighted;
     state.deepCorrelationsUseBtc = !!payload.use_btc;
     syncFormState();
-    var summaryText = String((payload.selected_configs || []).length) + ' configs selected via ' + String(payload.strategy || '-') + '.';
+    var summaryText = PBGuiI18n.t('v7explore.configsSelectedVia', { count: (payload.selected_configs || []).length, strategy: payload.strategy || '-' });
     if (payload.strategy === 'Diverse Styles') {
-      summaryText += ' ' + String(payload.available_style_count || 0) + ' style categories available.';
+      summaryText += ' ' + PBGuiI18n.t('v7explore.styleCategoriesAvailable', { count: payload.available_style_count || 0 });
     }
     summaryNode.textContent = summaryText;
     if (payload.chart && payload.chart.traces && payload.chart.traces.length) {
@@ -3790,7 +3791,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       });
     } else {
       chartNode.className = 'placeholder-chart deep-plotly-chart';
-      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || 'No radar data available.';
+      chartNode.textContent = (payload.chart && payload.chart.layout && payload.chart.layout.title) || PBGuiI18n.t('v7explore.noRadarData');
     }
   }
 
@@ -3824,7 +3825,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       return data;
     }).catch(function(err) {
       if (seq !== state.deepCorrelationsRequestSeq) return null;
-      pushMessage('error', 'Deep Intelligence correlations load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.deepCorrelationsLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -3848,15 +3849,15 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   function renderDetail(detail) {
     state.selectedDetail = detail || null;
     if (!detail) {
-      el('detail-title').textContent = 'No config selected';
+      el('detail-title').textContent = PBGuiI18n.t('v7explore.noConfigSelected');
       renderMiniMetricGrid('detail-top-metrics', []);
       renderMiniMetricGrid('detail-risk-profile', []);
-      el('detail-style-panel').innerHTML = '<div class="placeholder-panel" style="min-height:120px;">Trading style details will appear here.</div>';
-      el('detail-robustness-panel').innerHTML = '<div class="placeholder-panel" style="min-height:80px;">Robustness details will appear here.</div>';
-      el('detail-all-metrics').innerHTML = '<div class="placeholder-panel" style="min-height:120px;">All suite metrics will be listed here for the selected config.</div>';
+      el('detail-style-panel').innerHTML = '<div class="placeholder-panel" style="min-height:120px;">' + escapeHtml(PBGuiI18n.t('v7explore.tradingStyleWillAppear')) + '</div>';
+      el('detail-robustness-panel').innerHTML = '<div class="placeholder-panel" style="min-height:80px;">' + escapeHtml(PBGuiI18n.t('v7explore.robustnessDetailsWillAppear')) + '</div>';
+      el('detail-all-metrics').innerHTML = '<div class="placeholder-panel" style="min-height:120px;">' + escapeHtml(PBGuiI18n.t('v7explore.allMetricsWillBeListed')) + '</div>';
       renderScenarioMetrics({});
       syncPresetForm(null);
-      window.PBGuiJsonPanel.setContent('detail-full-config', 'No config selected.', { expanded: false });
+      window.PBGuiJsonPanel.setContent('detail-full-config', PBGuiI18n.t('v7explore.noConfigSelected'), { expanded: false });
       return;
     }
 
@@ -3874,21 +3875,21 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var positionsPerDay = detail.all_metrics && detail.all_metrics.find ? detail.all_metrics.find(function(item) { return item.name === 'positions_held_per_day'; }) : null;
     var holdHours = detail.all_metrics && detail.all_metrics.find ? detail.all_metrics.find(function(item) { return item.name === 'position_held_hours_mean'; }) : null;
     el('detail-style-panel').innerHTML = ''
-      + '<div class="detail-item"><div class="detail-head"><strong>' + escapeHtml(detail.style || '-') + '</strong><span class="chip">Style</span></div></div>'
-      + '<div class="detail-item"><div class="detail-head"><strong>Positions/Day</strong><span class="chip">' + escapeHtml(String(positionsPerDay && positionsPerDay.value != null ? positionsPerDay.value : '-')) + '</span></div></div>'
-      + '<div class="detail-item"><div class="detail-head"><strong>Avg Hold Hours</strong><span class="chip">' + escapeHtml(String(holdHours && holdHours.value != null ? holdHours.value : '-')) + '</span></div></div>'
-      + '<div class="detail-item"><div class="detail-head"><strong>Explorer Score</strong><span class="chip">' + escapeHtml(String(detail.explorer_score == null ? '-' : detail.explorer_score)) + '</span></div></div>';
+      + '<div class="detail-item"><div class="detail-head"><strong>' + escapeHtml(detail.style || '-') + '</strong><span class="chip">' + escapeHtml(PBGuiI18n.t('v7explore.style')) + '</span></div></div>'
+      + '<div class="detail-item"><div class="detail-head"><strong>' + escapeHtml(PBGuiI18n.t('v7explore.positionsPerDay')) + '</strong><span class="chip">' + escapeHtml(String(positionsPerDay && positionsPerDay.value != null ? positionsPerDay.value : '-')) + '</span></div></div>'
+      + '<div class="detail-item"><div class="detail-head"><strong>' + escapeHtml(PBGuiI18n.t('v7explore.avgHoldHours')) + '</strong><span class="chip">' + escapeHtml(String(holdHours && holdHours.value != null ? holdHours.value : '-')) + '</span></div></div>'
+      + '<div class="detail-item"><div class="detail-head"><strong>' + escapeHtml(PBGuiI18n.t('v7explore.explorerScore')) + '</strong><span class="chip">' + escapeHtml(String(detail.explorer_score == null ? '-' : detail.explorer_score)) + '</span></div></div>';
 
     el('detail-robustness-panel').innerHTML = ''
       + '<div class="stats-table">'
-      + '<div class="stats-row"><span class="stats-key">Robustness Score</span><strong>' + escapeHtml(String(detail.robustness == null ? '-' : detail.robustness)) + '</strong></div>'
+      + '<div class="stats-row"><span class="stats-key">' + escapeHtml(PBGuiI18n.t('v7explore.robustnessScore')) + '</span><strong>' + escapeHtml(String(detail.robustness == null ? '-' : detail.robustness)) + '</strong></div>'
       + '</div>';
 
-    renderDetailList('detail-all-metrics', detail.all_metrics || [], 'No suite metrics available.', 24);
+    renderDetailList('detail-all-metrics', detail.all_metrics || [], PBGuiI18n.t('v7explore.noSuiteMetrics'), 24);
     renderScenarioMetrics(detail.has_scenarios ? (detail.scenario_metrics || {}) : {});
     syncPresetForm(detail);
 
-    window.PBGuiJsonPanel.setContent('detail-full-config', detail.full_config ? JSON.stringify(detail.full_config, null, 2) : 'Full config unavailable.', { expanded: false });
+    window.PBGuiJsonPanel.setContent('detail-full-config', detail.full_config ? JSON.stringify(detail.full_config, null, 2) : PBGuiI18n.t('v7explore.fullConfigUnavailable'), { expanded: false });
   }
 
   function renderSession(data) {
@@ -3937,43 +3938,43 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var visibleEnd = load && load.view_range && load.view_range.end != null ? load.view_range.end : null;
     var scanCache = load && load.load_stats ? String(load.load_stats.scan_cache || '') : '';
     var cacheSummary = scanCache === 'hit'
-      ? ' Persistent scan cache hit.'
+      ? ' ' + PBGuiI18n.t('v7explore.scanCacheHit')
       : scanCache === 'built'
-        ? ' Persistent scan cache built.'
+        ? ' ' + PBGuiI18n.t('v7explore.scanCacheBuilt')
         : '';
 
     el('metric-result').textContent = result ? result.name : '-';
     el('metric-paretos').textContent = totalParetos != null ? String(totalParetos) : (result ? String(result.pareto_count) : '-');
     if (load && load.mode === 'full' && selectedResults != null && scannedResults != null) {
       el('metric-all-results').textContent = visibleResults != null && visibleResults !== selectedResults
-        ? (String(visibleResults) + ' visible / ' + String(selectedResults) + ' selected / ' + String(scannedResults) + ' scanned')
-        : (String(selectedResults) + ' selected / ' + String(scannedResults) + ' scanned');
+        ? PBGuiI18n.t('v7explore.visibleSelectedScanned', { visible: visibleResults, selected: selectedResults, scanned: scannedResults })
+        : PBGuiI18n.t('v7explore.selectedScanned', { selected: selectedResults, scanned: scannedResults });
     } else {
       el('metric-all-results').textContent = visibleResults != null && totalResults != null && visibleResults !== totalResults
-        ? (String(visibleResults) + ' / ' + String(totalResults))
-        : (totalResults != null ? String(totalResults) : (result ? (result.has_all_results ? 'yes' : 'no') : '-'));
+        ? PBGuiI18n.t('v7explore.visibleOfTotal', { visible: visibleResults, total: totalResults })
+        : (totalResults != null ? String(totalResults) : (result ? (result.has_all_results ? PBGuiI18n.t('common.yes') : PBGuiI18n.t('common.no')) : '-'));
     }
 
-    el('result-chip').textContent = result ? result.name : 'No result selected';
+    el('result-chip').textContent = result ? result.name : PBGuiI18n.t('v7explore.noResultSelected');
     el('mode-chip').textContent = valid
       ? ((load && load.mode === 'full')
-          ? ('Full mode loaded' + (load.view_range && load.view_range.end != null && load.view_range.max != null ? ' (' + String(load.view_range.end) + '/' + String(load.view_range.max) + ' visible)' : ''))
-          : 'Fast mode loaded')
-      : 'Missing result path';
+          ? PBGuiI18n.t('v7explore.fullModeLoaded', { visible: (load.view_range && load.view_range.end != null && load.view_range.max != null) ? ' (' + String(load.view_range.end) + '/' + String(load.view_range.max) + ' visible)' : '' })
+          : PBGuiI18n.t('v7explore.fastModeLoaded'))
+      : PBGuiI18n.t('v7explore.missingResultPath');
     el('mode-chip').className = 'status-chip ' + (valid ? 'good' : 'warn');
 
     if (!valid) {
-      setFullLoadStatus('error', 'No valid result path is currently loaded.', 0);
+      setFullLoadStatus('error', PBGuiI18n.t('v7explore.noValidResultPath'), 0);
     } else if (state.fullLoadPending) {
-      setFullLoadStatus('loading', 'Scanning full result stream...', Math.max(0, state.fullLoadProgressTarget || 0));
+      setFullLoadStatus('loading', PBGuiI18n.t('v7explore.scanningFullStream'), Math.max(0, state.fullLoadProgressTarget || 0));
     } else if (load && load.mode === 'full') {
       setFullLoadStatus(
         'loaded',
-        'Full scan ready: ' + String(selectedResults == null ? '-' : selectedResults) + ' selected from ' + String(scannedResults == null ? '-' : scannedResults) + ' scanned configs, ' + String(totalParetos == null ? '-' : totalParetos) + ' paretos' + (visibleEnd != null && selectedResults != null ? ' (' + String(visibleEnd) + '/' + String(selectedResults) + ' visible in the current window).' : '.') + cacheSummary,
+        PBGuiI18n.t('v7explore.fullScanReady', { selected: selectedResults == null ? '-' : selectedResults, scanned: scannedResults == null ? '-' : scannedResults, paretos: totalParetos == null ? '-' : totalParetos, visibleSuffix: (visibleEnd != null && selectedResults != null) ? ' (' + String(visibleEnd) + '/' + String(selectedResults) + ' visible in the current window).' : '.' }) + cacheSummary,
         100
       );
     } else {
-      setFullLoadStatus('idle', 'Currently using fast pareto-only mode. Use `Scan all_results` to build a larger candidate set.', 0);
+      setFullLoadStatus('idle', PBGuiI18n.t('v7explore.usingFastMode'), 0);
     }
 
     syncFormState();
@@ -4003,15 +4004,15 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     el('deep-tab-correlations-panel').style.display = isCorrelations ? '' : 'none';
     el('deep-tab-other-panel').style.display = (!isParameters && !isScenarios && !isEvolution && !isCorrelations) ? '' : 'none';
     el('deep-tab-description').textContent = isParameters
-      ? 'Surface parameter-bound pressure from the original optimize search space.'
+      ? PBGuiI18n.t('v7explore.parametersTabDesc')
       : isScenarios
-        ? 'Compare Pareto configs across backtest scenarios and inspect per-scenario distribution statistics.'
+        ? PBGuiI18n.t('v7explore.scenariosTabDesc')
         : isEvolution
-          ? 'Track metric progression over optimization iterations and click timeline points to inspect configs.'
+          ? PBGuiI18n.t('v7explore.evolutionTabDesc')
           : isCorrelations
-            ? 'Compare selected configs across risk-profile dimensions using the migrated radar workflow.'
-        : 'Deep Intelligence tab shell for "' + tab + '".';
-    el('deep-tab-placeholder').textContent = tab.charAt(0).toUpperCase() + tab.slice(1) + ' tab placeholder';
+            ? PBGuiI18n.t('v7explore.correlationsTabDesc')
+        : PBGuiI18n.t('v7explore.deepTabShell', { tab: tab });
+    el('deep-tab-placeholder').textContent = PBGuiI18n.t('v7explore.tabPlaceholder', { tab: tab.charAt(0).toUpperCase() + tab.slice(1) });
     if (allowRefresh && (isParameters || isScenarios || isEvolution || isCorrelations) && state.resultPath) {
       refreshDeepIntelligence().catch(function() {});
     }
@@ -4068,7 +4069,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       return data;
     }).catch(function(err) {
       if (requestSeq !== state.commandCenterRequestSeq || contextGeneration !== state.resultContextGeneration || resultPath !== state.resultPath) return null;
-      pushMessage('error', 'Command Center load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.commandCenterLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -4114,7 +4115,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       return loadPlayground().then(function() { return data; });
     }).catch(function(err) {
       if (requestSeq !== state.detailRequestSeq || contextGeneration !== state.resultContextGeneration || resultPath !== state.resultPath) return null;
-      pushMessage('error', 'Config detail load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.configDetailLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -4178,22 +4179,22 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   function runSelectedConfigBacktest() {
     var detail = state.selectedDetail;
     if (!detail || !detail.full_config) {
-      pushMessage('error', 'No selected config with full configuration is available yet.');
+      pushMessage('error', PBGuiI18n.t('v7explore.noSelectedFullConfig'));
       return;
     }
     openBacktestDraft(detail.full_config, suggestDraftName(detail.full_config)).catch(function(err) {
-      pushMessage('error', 'Run Backtest failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.runBacktestFailed', { error: PBGuiI18n.serverMsg(err.message) }));
     });
   }
 
   function openSelectedStrategyExplorer() {
     var detail = state.selectedDetail;
     if (!detail || !detail.full_config || detail.config_index !== state.selectedConfigIndex) {
-      pushMessage('error', 'No selected config with full configuration is available yet.');
+      pushMessage('error', PBGuiI18n.t('v7explore.noSelectedFullConfig'));
       return;
     }
     if (detail.override_error) {
-      pushMessage('error', 'PB8 override configs are unavailable: ' + detail.override_error);
+      pushMessage('error', PBGuiI18n.t('v7explore.pb8OverrideUnavailable', { error: PBGuiI18n.serverMsg(detail.override_error) }));
       return;
     }
     optimizeVersion();
@@ -4223,7 +4224,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     }).then(function(draft) {
       window.location.href = explorerBase + '/main_page?draft_id=' + encodeURIComponent((draft && draft.draft_id) || '');
     }).catch(function(err) {
-      pushMessage('error', 'Open Strategy Explorer failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.openStrategyExplorerFailed', { error: PBGuiI18n.serverMsg(err.message) }));
     });
   }
 
@@ -4231,11 +4232,11 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     if (optimizeVersion() !== 'v8') return;
     var detail = state.selectedDetail;
     if (!detail || !detail.full_config || detail.config_index !== state.selectedConfigIndex) {
-      pushMessage('error', 'No selected config with full configuration is available yet.');
+      pushMessage('error', PBGuiI18n.t('v7explore.noSelectedFullConfig'));
       return;
     }
     if (detail.override_error) {
-      pushMessage('error', 'PB8 override configs are unavailable: ' + detail.override_error);
+      pushMessage('error', PBGuiI18n.t('v7explore.pb8OverrideUnavailable', { error: PBGuiI18n.serverMsg(detail.override_error) }));
       return;
     }
     state.strategyCompareBaseline = {
@@ -4245,8 +4246,8 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       override_configs: JSON.parse(JSON.stringify(detail.override_configs || {}))
     };
     var button = el('btn-pin-strategy-baseline');
-    if (button) button.textContent = 'Baseline pinned: #' + String(state.selectedConfigIndex == null ? '-' : state.selectedConfigIndex);
-    pushMessage('info', 'Strategy Explorer comparison baseline pinned. Select another config and open Strategy Explorer.');
+    if (button) button.textContent = PBGuiI18n.t('v7explore.baselinePinned', { config: state.selectedConfigIndex == null ? '-' : state.selectedConfigIndex });
+    pushMessage('info', PBGuiI18n.t('v7explore.baselinePinnedHint'));
   }
 
   function bindEvents() {
@@ -4450,7 +4451,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     });
     el('display-range-end').addEventListener('change', function() {
       applyDisplayRange().catch(function(err) {
-        pushMessage('error', 'Display range update failed: ' + err.message);
+        pushMessage('error', PBGuiI18n.t('v7explore.displayRangeUpdateFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       });
     });
     el('display-range-start-input').addEventListener('change', function() {
@@ -4460,7 +4461,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
         max: currentRangeMax(state.loadPayload)
       });
       applyDisplayRange().catch(function(err) {
-        pushMessage('error', 'Display range update failed: ' + err.message);
+        pushMessage('error', PBGuiI18n.t('v7explore.displayRangeUpdateFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       });
     });
     el('display-range-end-input').addEventListener('change', function() {
@@ -4470,7 +4471,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
         max: currentRangeMax(state.loadPayload)
       });
       applyDisplayRange().catch(function(err) {
-        pushMessage('error', 'Display range update failed: ' + err.message);
+        pushMessage('error', PBGuiI18n.t('v7explore.displayRangeUpdateFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       });
     });
     el('btn-run-backtest').addEventListener('click', runSelectedConfigBacktest);
@@ -4504,7 +4505,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     state.commandCenterRequestSeq += 1;
     state.presetPreviewRequestSeq += 1;
     if (state.allResultsLoaded && data && data.cache_hit) {
-      setFullLoadStatus('loaded', 'Full result restored from cache.', 100);
+      setFullLoadStatus('loaded', PBGuiI18n.t('v7explore.fullResultRestoredFromCache'), 100);
     }
     state.loadPayload = data || null;
     syncViewRangeFromLoad(data);
@@ -4561,9 +4562,9 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     }
     state.fullLoadPending = false;
     el('btn-load-all-results').disabled = false;
-    el('btn-load-all-results').textContent = '📂 Scan all_results';
+    el('btn-load-all-results').textContent = PBGuiI18n.t('v7explore.scanAllResults');
     renderSession(Object.assign({}, sessionLike));
-    if (state.allResultsLoaded) updateFullLoadPhase('complete', 'Server-side refresh pipeline completed.');
+    if (state.allResultsLoaded) updateFullLoadPhase('complete', PBGuiI18n.t('v7explore.refreshPipelineCompleted'));
     stopFullLoadProgressAnimation();
     return data;
   }
@@ -4574,10 +4575,10 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     }
     if (typeof isCurrent === 'function' && !isCurrent()) return Promise.resolve(null);
     state.fullLoadJobId = data.job.job_id;
-    setFullLoadStatus('loading', (data.job && data.job.message) || 'Scanning full result stream...', (data.job && data.job.progress) || 0);
+    setFullLoadStatus('loading', PBGuiI18n.serverMsg(data.job && data.job.message) || PBGuiI18n.t('v7explore.scanningFullStream'), (data.job && data.job.progress) || 0);
     return pollFullLoadStatus(data.job.job_id).then(function(statusData) {
       var payload = statusData && statusData.payload ? statusData.payload : null;
-      if (!payload) throw new Error('Full load completed without payload.');
+      if (!payload) throw new Error(PBGuiI18n.t('v7explore.fullLoadNoPayload'));
       if (typeof isCurrent === 'function' && !isCurrent()) return null;
       applyLoadData(payload);
       return typeof extractPayload === 'function' ? extractPayload(payload) : payload;
@@ -4607,7 +4608,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       if (state.strategyCompareBaseline && state.strategyCompareBaseline.result_path !== nextResultPath) {
         state.strategyCompareBaseline = null;
         var baselineButton = el('btn-pin-strategy-baseline');
-        if (baselineButton) baselineButton.textContent = 'Pin Explorer Baseline';
+        if (baselineButton) baselineButton.textContent = PBGuiI18n.t('v7explore.pinExplorerBaseline');
       }
     }
     state.resultPath = nextResultPath;
@@ -4661,11 +4662,11 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     }).then(function(data) {
       if (state.allResultsLoaded && data && data.status === 'loading' && data.job && data.job.job_id) {
         state.fullLoadJobId = data.job.job_id;
-        setFullLoadStatus('loading', (data.job && data.job.message) || 'Scanning full result stream...', (data.job && data.job.progress) || 0);
+        setFullLoadStatus('loading', PBGuiI18n.serverMsg(data.job && data.job.message) || PBGuiI18n.t('v7explore.scanningFullStream'), (data.job && data.job.progress) || 0);
         return pollFullLoadStatus(data.job.job_id).then(function(statusData) {
           if (seq !== state.loadRequestSeq) return null;
           var payload = statusData && statusData.payload ? statusData.payload : null;
-          if (!payload) throw new Error('Full load completed without payload.');
+          if (!payload) throw new Error(PBGuiI18n.t('v7explore.fullLoadNoPayload'));
           return payload;
         });
       }
@@ -4676,15 +4677,15 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     }).catch(function(err) {
       if (seq !== state.loadRequestSeq) return null;
       if (state.fullLoadPending || state.allResultsLoaded) {
-        setFullLoadStatus('error', 'Full load failed: ' + err.message, 0);
+        setFullLoadStatus('error', PBGuiI18n.t('v7explore.fullLoadFailedDetail', { error: PBGuiI18n.serverMsg(err.message) }), 0);
       }
       state.fullLoadPending = false;
       state.fullLoadJobId = '';
       clearFullLoadPoll();
       el('btn-load-all-results').disabled = false;
-      el('btn-load-all-results').textContent = '📂 Scan all_results';
+      el('btn-load-all-results').textContent = PBGuiI18n.t('v7explore.scanAllResults');
       stopFullLoadProgressAnimation();
-      pushMessage('error', 'Load failed: ' + err.message);
+      pushMessage('error', PBGuiI18n.t('v7explore.loadFailed', { error: PBGuiI18n.serverMsg(err.message) }));
       throw err;
     });
   }
@@ -4719,15 +4720,16 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
         result: null,
         load: null,
         defaults: null,
-        messages: [{ level: 'error', text: 'Failed to bootstrap Pareto Explorer session: ' + err.message }]
+        messages: [{ level: 'error', text: PBGuiI18n.t('v7explore.bootstrapFailed', { error: PBGuiI18n.serverMsg(err.message) }) }]
       });
     });
   }
 
   window.PBGUI_HELP_OPENER = openGuide;
 
+  document.title = PBGuiI18n.t('v7explore.pageTitle');
   window.PBGUI_NAV_CONFIG = {
-    subtitle: 'PB' + String(window.OPTIMIZE_VERSION || 'v7') + ' PARETO EXPLORER',
+    subtitle: PBGuiI18n.t('v7explore.navSubtitle', { v: String(window.OPTIMIZE_VERSION || 'v7') }),
     current: optimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer',
     apiBase: API_BASE,
     version: PBGUI_VERSION,
@@ -4737,11 +4739,11 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   el('detail-full-config-panel').innerHTML = window.PBGuiJsonPanel.createPanelHtml({
     wrapId: 'detail-full-config-wrap',
     preId: 'detail-full-config',
-    title: 'Config',
+    title: PBGuiI18n.t('v7explore.config'),
     collapsedHeight: '400px'
   });
   el('detail-full-config-wrap').style.marginTop = '0';
-  window.PBGuiJsonPanel.setContent('detail-full-config', 'No config selected.', { expanded: false });
+  window.PBGuiJsonPanel.setContent('detail-full-config', PBGuiI18n.t('v7explore.noConfigSelected'), { expanded: false });
 
   readRouteState();
   syncStrategyExplorerActions();
@@ -4757,7 +4759,8 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   document.addEventListener('mouseover', function(e) {
     var el = e.target.closest ? e.target.closest('[data-tip]') : null;
     if (!el) return;
-    var text = el.getAttribute('data-tip');
+    var tipKey = el.getAttribute('data-i18n-tip');
+    var text = tipKey ? PBGuiI18n.t(tipKey) : el.getAttribute('data-tip');
     if (!text) return;
     tip.textContent = text;
     tip.style.display = 'block';
@@ -4782,7 +4785,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   });
 }());
 </script>
-<script src="/app/js/shared_help_overlay.js?v=6"></script>
+<script src="/app/js/shared_help_overlay.js?v=7"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>
 </html>

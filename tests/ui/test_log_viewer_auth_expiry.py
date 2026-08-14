@@ -22,6 +22,10 @@ def test_log_viewer_close_4001_is_terminal_and_redirects() -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        // The i18n helper lives at module scope in log_viewer_panel.js and is
+        // not part of the extracted _connect() method; stub it to its English
+        // fallback so the 4001 terminal-redirect contract can be exercised.
+        function _lvpT(key, fallback) {{ return fallback; }}
         let sockets = [];
         let timers = 0;
         let redirects = [];
@@ -154,8 +158,8 @@ def test_every_log_viewer_asset_reference_uses_current_cache_version() -> None:
         references.extend((path, match.group(0)) for match in re.finditer(r"log_viewer_panel\.js\?v=\d+", source))
 
     assert references
-    assert all(reference.endswith("?v=29") for _path, reference in references), references
-    assert "log_viewer_panel.js?v=29" in NAV.read_text(encoding="utf-8")
+    assert all(reference.endswith("?v=30") for _path, reference in references), references
+    assert "log_viewer_panel.js?v=30" in NAV.read_text(encoding="utf-8")
 
 
 def test_remote_default_host_is_rendered_before_vps_state_arrives() -> None:

@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/app/i18n.js?v=1"></script>
 <title>Logging - PBGui</title>
 <style>
 /* ─── Design tokens ──────────────────────────────────────── */
@@ -16,7 +17,7 @@
 /* ─── Reset & Base ───────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; background: #0e1117; color: #fafafa; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; font-size: var(--fs-base); line-height: 1.5; display: flex; flex-direction: column; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; font-size: var(--fs-base); line-height: 1.5; display: flex; flex-direction: column; }
 
 /* ─── Page body ──────────────────────────────────────────── */
 #page-body {
@@ -260,14 +261,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
   <div class="ovl-panel">
     <div id="help-drag-handle"></div>
     <div class="ovl-header">
-      <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
+      <div class="ovl-header-title">&#128218; <span data-i18n="sysmon.guideHelp">Guide &amp; Help</span></div>
       <div class="ovl-header-actions">
         <div id="help-search-wrap">
-          <input id="help-search" type="text" placeholder="Search in topic…" autocomplete="off">
-          <button class="help-snav-btn" id="help-search-up" title="Previous match">&#9650;</button>
-          <button class="help-snav-btn" id="help-search-dn" title="Next match">&#9660;</button>
+          <input id="help-search" type="text" placeholder="Search in topic…" data-i18n-placeholder="sysmon.helpSearchInTopic" autocomplete="off">
+          <button class="help-snav-btn" id="help-search-up" title="Previous match" data-i18n-title="sysmon.helpPreviousMatch">&#9650;</button>
+          <button class="help-snav-btn" id="help-search-dn" title="Next match" data-i18n-title="sysmon.helpNextMatch">&#9660;</button>
           <span id="help-search-count"></span>
-          <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
+          <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="sysmon.helpSearchAllTopics"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
         </div>
         <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
         <div class="lang-pill">
@@ -279,10 +280,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
     </div>
     <div id="help-body">
       <div id="help-toc">
-        <input id="help-toc-filter" type="text" placeholder="Filter topics…" autocomplete="off">
+        <input id="help-toc-filter" type="text" placeholder="Filter topics…" data-i18n-placeholder="sysmon.helpFilterTopics" autocomplete="off">
         <div id="help-toc-list"></div>
       </div>
-      <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
+      <div id="help-content"><div class="help-loading" data-i18n="sysmon.helpSelectTopic">Select a topic from the left.</div></div>
     </div>
   </div>
 </div>
@@ -293,11 +294,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
   <!-- Sidebar -->
   <div id="sidebar">
     <div id="sidebar-header">
-      <span class="sb-title">Logging</span>
+      <span class="sb-title" data-i18n="sysmon.logging">Logging</span>
     </div>
     <div id="sidebar-toolbar">
-      <button class="sb-btn active" id="btn-logs" onclick="showView('logs')">&#128203; Log Viewer</button>
-      <button class="sb-btn" id="btn-settings" onclick="showView('settings')">&#9881;&#65039; Settings</button>
+      <button class="sb-btn active" id="btn-logs" onclick="showView('logs')">&#128203; <span data-i18n="sysmon.logViewer">Log Viewer</span></button>
+      <button class="sb-btn" id="btn-settings" onclick="showView('settings')">&#9881;&#65039; <span data-i18n="sysmon.settings">Settings</span></button>
     </div>
   </div>
 
@@ -308,12 +309,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
     <div id="log-view" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;padding:0">
       <!-- Page-level controls: rotation & purge -->
       <div id="page-toolbar" style="display:none;padding:6px 14px 0;flex-shrink:0;gap:8px;align-items:center">
-        <label id="rotation-label" style="display:none;font-size:12px;color:#a0a4ab;align-items:center;gap:4px">Version:
+        <label id="rotation-label" style="display:none;font-size:12px;color:#a0a4ab;align-items:center;gap:4px"><span data-i18n="sysmon.version">Version:</span>
           <select id="rotation-select" onchange="onRotationChange()" style="padding:3px 6px;background:#262730;border:1px solid #333640;border-radius:4px;color:#fafafa;font-size:12px">
-            <option value="current">Current</option>
+            <option value="current" data-i18n="sysmon.current">Current</option>
           </select>
         </label>
-        <button id="purge-btn" style="display:none;padding:4px 10px;background:#262730;border:1px solid #333640;border-radius:4px;color:#fafafa;font-size:13px;cursor:pointer" onclick="purgeCurrentFile()" title="Purge current log file">&#128465; Purge</button>
+        <button id="purge-btn" style="display:none;padding:4px 10px;background:#262730;border:1px solid #333640;border-radius:4px;color:#fafafa;font-size:13px;cursor:pointer" onclick="purgeCurrentFile()" title="Purge current log file" data-i18n-title="sysmon.purgeCurrentLog">&#128465; <span data-i18n="sysmon.purge">Purge</span></button>
       </div>
       <div id="log-viewer-target" style="flex:1;min-height:0;overflow:hidden"></div>
     </div>
@@ -323,44 +324,44 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
     <div id="settings-panel">
 
       <div class="settings-section">
-        <h3>Default Rotation</h3>
+        <h3 data-i18n="sysmon.defaultRotation">Default Rotation</h3>
         <div class="settings-row">
-          <label>Max file size (MB)</label>
+          <label data-i18n="sysmon.maxFileSizeMb">Max file size (MB)</label>
           <input type="number" id="def-max-mb" min="1" max="10240" value="10">
-          <label style="min-width:auto">Rotated copies</label>
+          <label style="min-width:auto" data-i18n="sysmon.rotatedCopies">Rotated copies</label>
           <input type="number" id="def-backup-count" min="0" max="20" value="0">
-          <button class="settings-btn primary" onclick="saveDefault()">Save</button>
+          <button class="settings-btn primary" onclick="saveDefault()" data-i18n="common.save">Save</button>
           <span class="settings-msg" id="def-msg"></span>
         </div>
       </div>
 
       <div class="settings-section">
-        <h3>Managed Logs</h3>
-        <p style="font-size:var(--fs-sm);color:#a0a4ab;margin-bottom:12px;">Settings for log families that may not currently contain files.</p>
+        <h3 data-i18n="sysmon.managedLogs">Managed Logs</h3>
+        <p style="font-size:var(--fs-sm);color:#a0a4ab;margin-bottom:12px;" data-i18n="sysmon.managedLogsHint">Settings for log families that may not currently contain files.</p>
         <table class="per-service-table">
-          <thead><tr><th>Scope</th><th>Path</th><th>Max MB</th><th>Copies</th><th>Action</th><th></th></tr></thead>
+          <thead><tr><th data-i18n="sysmon.scope">Scope</th><th data-i18n="sysmon.path">Path</th><th data-i18n="sysmon.maxMb">Max MB</th><th data-i18n="sysmon.copies">Copies</th><th data-i18n="sysmon.action">Action</th><th></th></tr></thead>
           <tbody id="managed-scope-body"></tbody>
         </table>
       </div>
 
       <div class="settings-section">
-        <h3>Per-Log Rotation</h3>
-        <p style="font-size:var(--fs-sm);color:#a0a4ab;margin-bottom:12px;">
+        <h3 data-i18n="sysmon.perLogRotation">Per-Log Rotation</h3>
+        <p style="font-size:var(--fs-sm);color:#a0a4ab;margin-bottom:12px;" data-i18n="sysmon.perLogRotationHint">
           Each log file can override the default size and number of rotated copies. Set copies to `0` to keep a single capped log file with no rotated generations.
         </p>
         <table class="per-service-table" id="per-svc-table">
           <thead>
             <tr>
-              <th>Log file</th>
-              <th>Max MB</th>
-              <th>Copies</th>
-              <th>Action</th>
+              <th data-i18n="sysmon.logFile">Log file</th>
+              <th data-i18n="sysmon.maxMb">Max MB</th>
+              <th data-i18n="sysmon.copies">Copies</th>
+              <th data-i18n="sysmon.action">Action</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="per-svc-body"></tbody>
         </table>
-        <div id="per-svc-loading" style="font-size:var(--fs-sm);color:#a0a4ab;padding:8px 0;">Loading…</div>
+        <div id="per-svc-loading" style="font-size:var(--fs-sm);color:#a0a4ab;padding:8px 0;" data-i18n="sysmon.loading">Loading…</div>
       </div>
 
     </div><!-- /settings-panel -->
@@ -377,9 +378,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
   var PBGUI_VERSION  = "%%VERSION%%";
   var PBGUI_SERIAL   = "%%SERIAL%%";
 </script>
-<script src="/app/js/log_viewer_panel.js?v=29"></script>
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
-<script src="/app/js/shared_help_overlay.js?v=6"></script>
+<script src="/app/js/log_viewer_panel.js?v=30"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
+<script src="/app/js/shared_help_overlay.js?v=7"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -387,7 +388,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxyge
      ════════════════════════════════════════════════════════ -->
 <script>
 /* ── Nav config ─────────────────────────────────────────── */
-window.PBGUI_NAV_CONFIG = { subtitle: 'Logging', current: 'system_logging', apiBase: API_BASE, version: PBGUI_VERSION, serial: PBGUI_SERIAL };
+document.title = PBGuiI18n.t('sysmon.loggingTitle');
+window.PBGUI_NAV_CONFIG = { subtitle: (window.PBGuiI18n ? PBGuiI18n.t('sysmon.logging') : 'Logging'), current: 'system_logging', apiBase: API_BASE, version: PBGUI_VERSION, serial: PBGUI_SERIAL };
 
 
 /* ── HTTP helpers ────────────────────────────────────────── */
@@ -459,7 +461,7 @@ function onViewerFileChange(filename) {
     purgeBtn.style.display = '';
   }
   if (variants.length) {
-    rotSel.innerHTML = '<option value="current">Current</option>';
+    rotSel.innerHTML = '<option value="current">' + PBGuiI18n.t('sysmon.current') + '</option>';
     for (var i = 0; i < variants.length; i++) {
       var v = variants[i];
       var suffix = v.replace(filename, '');
@@ -488,10 +490,10 @@ function onRotationChange() {
 async function purgeCurrentFile() {
   if (!currentFile) return;
   if (!(await window.PBGuiDialogs.confirm({
-    title: 'Purge log file',
-    message: 'Purge "' + currentFile + '"?',
-    detail: 'The current log will be emptied. Its tail is rotated according to the configured maximum size and backup count; a backup count of 0 discards it.',
-    confirmText: 'Purge'
+    title: PBGuiI18n.t('sysmon.purgeLogFile'),
+    message: PBGuiI18n.t('sysmon.purgeConfirmMsg', {file: currentFile}),
+    detail: PBGuiI18n.t('sysmon.purgeConfirmDetail'),
+    confirmText: PBGuiI18n.t('sysmon.purge')
   }))) return;
   apiPost('/purge/' + encodeURIComponent(currentFile), {})
     .then(function(data) {
@@ -500,15 +502,15 @@ async function purgeCurrentFile() {
         if (viewer) viewer.setFile(currentFile);
       } else {
         window.PBGuiDialogs.alert({
-          title: 'Purge failed',
-          message: String(data.detail || JSON.stringify(data) || 'Unknown error')
+          title: PBGuiI18n.t('sysmon.purgeFailed'),
+          message: PBGuiI18n.serverMsg(String(data.detail || JSON.stringify(data) || 'Unknown error'))
         });
       }
     })
     .catch(function(err) {
       window.PBGuiDialogs.alert({
-        title: 'Purge error',
-        message: String(err)
+        title: PBGuiI18n.t('sysmon.purgeError'),
+        message: PBGuiI18n.serverMsg(String(err))
       });
     });
 }
@@ -539,7 +541,7 @@ function loadRotationSettings() {
   var loading = document.getElementById('per-svc-loading');
   var tbody = document.getElementById('per-svc-body');
   if (loading) loading.style.display = 'block';
-  if (loading) loading.textContent = 'Loading…';
+  if (loading) loading.textContent = PBGuiI18n.t('sysmon.loading');
   if (tbody) tbody.innerHTML = '';
 
   apiGet('/rotation').then(function(data) {
@@ -569,12 +571,12 @@ function loadRotationSettings() {
       copiesCell.appendChild(copiesInput);
       var actionCell = document.createElement('td');
       var saveButton = document.createElement('button');
-      saveButton.className = 'per-svc-save'; saveButton.type = 'button'; saveButton.textContent = 'Save';
+      saveButton.className = 'per-svc-save'; saveButton.type = 'button'; saveButton.textContent = PBGuiI18n.t('common.save');
       saveButton.addEventListener('click', function() { saveManagedScope(scopeId); });
       actionCell.appendChild(saveButton);
       var messageCell = document.createElement('td');
       var message = document.createElement('span');
-      message.className = 'per-svc-msg'; message.id = 'managed-msg-' + scopeId; message.textContent = 'Saved';
+      message.className = 'per-svc-msg'; message.id = 'managed-msg-' + scopeId; message.textContent = PBGuiI18n.t('sysmon.saved');
       messageCell.appendChild(message);
       row.append(labelCell, pathCell, maxCell, copiesCell, actionCell, messageCell);
       managedBody.appendChild(row);
@@ -583,7 +585,7 @@ function loadRotationSettings() {
     var services = Object.keys(data.per_service || {}).sort();
     if (services.length === 0) {
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="5" style="color:#a0a4ab;font-size:var(--fs-sm);padding:8px">No log files found.</td>';
+      tr.innerHTML = '<td colspan="5" style="color:#a0a4ab;font-size:var(--fs-sm);padding:8px">' + PBGuiI18n.t('sysmon.noLogFilesFound') + '</td>';
       tbody.appendChild(tr);
     } else {
       services.forEach(function(svc) {
@@ -599,10 +601,10 @@ function loadRotationSettings() {
         var copiesInput = document.createElement('input'); copiesInput.className = 'per-svc-input'; copiesInput.type = 'number'; copiesInput.min = '0'; copiesInput.max = '20'; copiesInput.value = serviceBackupCount;
         copiesCell.appendChild(copiesInput);
         var actionCell = document.createElement('td');
-        var saveButton = document.createElement('button'); saveButton.className = 'per-svc-save'; saveButton.type = 'button'; saveButton.textContent = 'Save';
+        var saveButton = document.createElement('button'); saveButton.className = 'per-svc-save'; saveButton.type = 'button'; saveButton.textContent = PBGuiI18n.t('common.save');
         actionCell.appendChild(saveButton);
         var messageCell = document.createElement('td');
-        var message = document.createElement('span'); message.className = 'per-svc-msg'; message.textContent = 'Saved'; messageCell.appendChild(message);
+        var message = document.createElement('span'); message.className = 'per-svc-msg'; message.textContent = PBGuiI18n.t('sysmon.saved'); messageCell.appendChild(message);
         saveButton.addEventListener('click', function() { saveService(svc, maxInput, copiesInput, message); });
         tr.append(nameCell, maxCell, copiesCell, actionCell, messageCell);
         tbody.appendChild(tr);
@@ -611,7 +613,7 @@ function loadRotationSettings() {
     if (loading) loading.style.display = 'none';
   }).catch(function(err) {
     console.error('Failed to load rotation settings', err);
-    if (loading) loading.textContent = 'Failed to load settings.';
+    if (loading) loading.textContent = PBGuiI18n.t('sysmon.failedLoadSettings');
   });
 }
 
@@ -621,7 +623,7 @@ function saveManagedScope(scopeId) {
   apiPost('/rotation', { scope: 'managed:' + scopeId, max_mb: maxMb, backup_count: copies }).then(function(data) {
     if (!data.success) return;
     var message = document.getElementById('managed-msg-' + scopeId);
-    message.textContent = data.apply && data.apply.message ? data.apply.message : 'Saved';
+    message.textContent = data.apply && data.apply.message ? PBGuiI18n.serverMsg(data.apply.message) : PBGuiI18n.t('sysmon.saved');
     message.classList.add('visible');
     setTimeout(function() { message.classList.remove('visible'); }, 2000);
   });
@@ -634,13 +636,13 @@ function saveDefault() {
   apiPost('/rotation', { scope: 'default', max_mb: maxMb, backup_count: bc })
     .then(function(data) {
       if (data.success) {
-        msg.textContent = data.apply && data.apply.message ? data.apply.message : 'Saved'; msg.className = 'settings-msg ok';
+        msg.textContent = data.apply && data.apply.message ? PBGuiI18n.serverMsg(data.apply.message) : PBGuiI18n.t('sysmon.saved'); msg.className = 'settings-msg ok';
         setTimeout(function() { msg.className = 'settings-msg'; }, 2500);
       } else {
-        msg.textContent = 'Error'; msg.className = 'settings-msg err';
+        msg.textContent = PBGuiI18n.t('common.error'); msg.className = 'settings-msg err';
       }
     })
-    .catch(function() { msg.textContent = 'Error'; msg.className = 'settings-msg err'; });
+    .catch(function() { msg.textContent = PBGuiI18n.t('common.error'); msg.className = 'settings-msg err'; });
 }
 
 function saveService(svc, maxInput, copiesInput, msgEl) {
@@ -649,7 +651,7 @@ function saveService(svc, maxInput, copiesInput, msgEl) {
   apiPost('/rotation', { scope: svc, max_mb: maxMb, backup_count: bc })
     .then(function(data) {
       if (data.success) {
-        msgEl.textContent = data.apply && data.apply.message ? data.apply.message : 'Saved';
+        msgEl.textContent = data.apply && data.apply.message ? PBGuiI18n.serverMsg(data.apply.message) : PBGuiI18n.t('sysmon.saved');
         msgEl.classList.add('visible');
         setTimeout(function() { msgEl.classList.remove('visible'); }, 2000);
       }
@@ -738,7 +740,7 @@ loadRotationData();
     _sMarks = Array.from(helpContent.querySelectorAll('mark'));
     if (_sMarks.length > 0) _gotoMark(0); else _updateSCount();
   }
-  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? '0 found' : ''); }
+  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? PBGuiI18n.t('sysmon.helpZeroFound') : ''); }
   function _gotoMark(idx) {
     if (!_sMarks.length) return;
     if (_sIdx >= 0 && _sIdx < _sMarks.length) _sMarks[_sIdx].classList.remove('current');
@@ -756,11 +758,11 @@ loadRotationData();
       .catch(function() { _topicCache[idx] = ''; cb(''); });
   }
   function _showGlobalResults(term) {
-    if (!term) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>'; helpSearchCount.textContent = ''; return; }
+    if (!term) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpTypeSearchTerm') + '</p>'; helpSearchCount.textContent = ''; return; }
     var re; try { re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); } catch(e) { return; }
-    helpContent.innerHTML = '<div class="help-loading">Searching\u2026</div>';
+    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpSearching') + '</div>';
     var pending = helpTopics.length;
-    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = '0 found'; return; }
+    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = PBGuiI18n.t('sysmon.helpZeroFound'); return; }
     var allResults = [];
     helpTopics.forEach(function(t, idx) {
       _ensureTopicCached(idx, function(html) {
@@ -777,8 +779,8 @@ loadRotationData();
   }
   function _renderGlobalResults(term, results) {
     var re; try { re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'); } catch(e) { return; }
-    helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
-    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>'; return; }
+    helpSearchCount.textContent = results.length + (results.length === 1 ? PBGuiI18n.t('sysmon.helpOneTopic') : PBGuiI18n.t('sysmon.helpTopics'));
+    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpNoResults') + '</p>'; return; }
     var html = '<div class="gs-results">';
     results.forEach(function(r) {
       html += '<div class="gs-item" data-idx="' + r.idx + '"><div class="gs-topic">' + r.title + '</div>';
@@ -787,7 +789,7 @@ loadRotationData();
     });
     helpContent.innerHTML = html + '</div>';
     helpContent.querySelectorAll('.gs-item').forEach(function(el) {
-      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = 'Search in topic\u2026'; loadTopic(idx); });
+      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = PBGuiI18n.t('sysmon.helpSearchInTopic'); loadTopic(idx); });
     });
   }
   helpSearch.addEventListener('input', function() { if (_sTimer) clearTimeout(_sTimer); _sTimer = setTimeout(function() { var term = helpSearch.value.trim(); if (_globalMode) _showGlobalResults(term); else _applySearch(term); }, 260); });
@@ -796,7 +798,7 @@ loadRotationData();
   helpSearchDn.addEventListener('click', function() { _gotoMark(_sIdx + 1); });
   helpSearchGlobal.addEventListener('change', function() {
     _globalMode = helpSearchGlobal.checked;
-    helpSearch.placeholder = _globalMode ? 'Search all topics\u2026' : 'Search in topic\u2026';
+    helpSearch.placeholder = _globalMode ? PBGuiI18n.t('sysmon.helpSearchAllTopics') : PBGuiI18n.t('sysmon.helpSearchInTopic');
     var term = helpSearch.value.trim();
     if (_globalMode) { _showGlobalResults(term); } else { if (_rawHtml !== null) { helpContent.innerHTML = _rawHtml; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = ''; } if (term) _applySearch(term); }
   });
@@ -817,14 +819,14 @@ loadRotationData();
     helpSel = idx; renderToc();
     var t = helpTopics[idx]; if (!t) return;
     _rawHtml = null; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = '';
-    helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
     fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang)
       .then(function(r) { return r.json(); })
       .then(function(d) { _rawHtml = mdToHtml(d.content || ''); _topicCache[idx] = _rawHtml; helpContent.innerHTML = _rawHtml; helpContent.scrollTop = 0; var st = helpSearch.value.trim(); if (st) _applySearch(st); })
-      .catch(function() { helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>'; });
+      .catch(function() { helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadContent') + '</div>'; });
   }
   function loadHelpIndex(keyword) {
-    helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+    helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
     fetch(docsBase + '/docs/index?lang=' + helpLang)
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -835,7 +837,7 @@ loadRotationData();
           loadTopic(startIdx);
         }
       })
-      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>'; });
+      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadTopics') + '</div>'; });
   }
   helpFilter.addEventListener('input', renderToc);
   helpLangEN.addEventListener('click', function() { if (helpLang === 'EN') return; helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); _topicCache = {}; helpSel = 0; loadHelpIndex('logging'); });

@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/app/i18n.js?v=1"></script>
   <title>Cluster Sync - PBGui</title>
   <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
   <script src="/app/js/sidebar_resize.js?v=1"></script>
@@ -22,7 +23,7 @@
       --good: #4ade80;
       --warn: #f59e0b;
       --bad: #f87171;
-      --font: 'Segoe UI', system-ui, sans-serif;
+      --font: 'Segoe UI', system-ui, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
       --fs-xs: 11px;
       --fs-sm: 13px;
       --fs-base: 14px;
@@ -341,31 +342,31 @@
     <div id="sidebar">
       <div id="sidebar-inner">
         <div id="sidebar-header">
-          <span class="sb-title">Cluster Sync</span>
+          <span class="sb-title" data-i18n="sysmon.clusterSync">Cluster Sync</span>
         </div>
         <button class="sb-section active" type="button" data-cluster-section="overview">
-          Overview
+          <span data-i18n="sysmon.overview">Overview</span>
         </button>
         <button class="sb-section" type="button" data-cluster-section="setup">
-          Setup
+          <span data-i18n="sysmon.setup">Setup</span>
         </button>
         <button class="sb-section" type="button" data-cluster-section="nodes">
-          Nodes <span class="sb-count" id="nav-nodes-count" style="margin-left:auto" hidden></span>
+          <span data-i18n="sysmon.nodes">Nodes</span> <span class="sb-count" id="nav-nodes-count" style="margin-left:auto" hidden></span>
         </button>
         <button class="sb-section" type="button" data-cluster-section="credentials">
-          Credentials <span class="sb-count" id="nav-credentials-count" style="margin-left:auto" hidden></span>
+          <span data-i18n="sysmon.credentials">Credentials</span> <span class="sb-count" id="nav-credentials-count" style="margin-left:auto" hidden></span>
         </button>
         <button class="sb-section" type="button" data-cluster-section="instances">
-          V7 State <span class="sb-count" id="nav-instances-count" style="margin-left:auto" hidden></span>
+          <span data-i18n="sysmon.v7State">V7 State</span> <span class="sb-count" id="nav-instances-count" style="margin-left:auto" hidden></span>
         </button>
         <button class="sb-section" type="button" data-cluster-section="tombstones">
-          Tombstones <span class="sb-count" id="nav-tombstones-count" style="margin-left:auto" hidden></span>
+          <span data-i18n="sysmon.tombstones">Tombstones</span> <span class="sb-count" id="nav-tombstones-count" style="margin-left:auto" hidden></span>
         </button>
         <button class="sb-section" type="button" data-cluster-section="retention">
-          Retention
+          <span data-i18n="sysmon.retention">Retention</span>
         </button>
         <button class="sb-section" type="button" data-cluster-section="oplog">
-          Oplog <span class="sb-count" id="nav-oplog-count" style="margin-left:auto" hidden></span>
+          <span data-i18n="sysmon.oplog">Oplog</span> <span class="sb-count" id="nav-oplog-count" style="margin-left:auto" hidden></span>
         </button>
       </div>
       <div id="sidebar-resize"></div>
@@ -375,13 +376,13 @@
       <div class="page-shell">
       <section class="hero">
         <div>
-          <div class="hero-title">Cluster Sync</div>
-          <div class="hero-subtitle">Local visibility, explicit sync membership, remote probes and identity join for the multi-master cluster state. Bootstrap writes local oplog entries only; remote writes happen only through explicit actions such as Join.</div>
+          <div class="hero-title" data-i18n="sysmon.clusterSync">Cluster Sync</div>
+          <div class="hero-subtitle" data-i18n="sysmon.clusterSyncSubtitle">Local visibility, explicit sync membership, remote probes and identity join for the multi-master cluster state. Bootstrap writes local oplog entries only; remote writes happen only through explicit actions such as Join.</div>
         </div>
         <div class="hero-actions">
-          <button class="btn warn" id="repair-all-ssh-btn" type="button">Repair All SSH</button>
-          <button class="btn" id="probe-btn" type="button">Probe Active Nodes</button>
-          <button class="btn primary" id="refresh-btn" type="button">Refresh</button>
+          <button class="btn warn" id="repair-all-ssh-btn" type="button" data-i18n="sysmon.repairAllSsh">Repair All SSH</button>
+          <button class="btn" id="probe-btn" type="button" data-i18n="sysmon.probeActiveNodes">Probe Active Nodes</button>
+          <button class="btn primary" id="refresh-btn" type="button" data-i18n="common.refresh">Refresh</button>
         </div>
       </section>
 
@@ -400,8 +401,8 @@
           <div class="cluster-section is-active" data-cluster-section-panel="overview">
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Local Identity</div>
-                <div class="panel-note">Stable cluster/node identity for this PBGui install.</div>
+                <div class="panel-title" data-i18n="sysmon.localIdentity">Local Identity</div>
+                <div class="panel-note" data-i18n="sysmon.localIdentityNote">Stable cluster/node identity for this PBGui install.</div>
               </div>
               <div class="panel-body">
                 <div class="identity-grid" id="identity-grid"></div>
@@ -411,11 +412,11 @@
           </div>
 
           <div class="cluster-section" data-cluster-section-panel="setup">
-            <div class="setup-state-note" id="setup-state-note">Loading setup state...</div>
+            <div class="setup-state-note" id="setup-state-note" data-i18n="sysmon.loadingSetupState">Loading setup state...</div>
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Join Existing Cluster</div>
-                <div class="panel-note">Use this on a second master that can SSH out to an existing PBGui master.</div>
+                <div class="panel-title" data-i18n="sysmon.joinExistingCluster">Join Existing Cluster</div>
+                <div class="panel-note" data-i18n="sysmon.joinExistingClusterNote">Use this on a second master that can SSH out to an existing PBGui master.</div>
               </div>
               <div class="panel-body">
                 <div class="panel-note" style="margin-bottom:0.75rem;">Self-join preserves this install's local node id, automatically adopts the upstream cluster id when the local oplog is empty, pulls upstream operations/blobs, registers this master as outbound-only, installs the local Cluster SSH key on the upstream master and pushes the registration back. If the local oplog is not empty and belongs to another cluster, self-join is blocked.</div>
@@ -464,8 +465,8 @@
 
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Bootstrap Cluster State</div>
-                <div class="panel-note">Use this only when this master should start a new local Cluster state instead of joining an existing cluster.</div>
+                <div class="panel-title" data-i18n="sysmon.bootstrapClusterState">Bootstrap Cluster State</div>
+                <div class="panel-note" data-i18n="sysmon.bootstrapClusterStateNote">Use this only when this master should start a new local Cluster state instead of joining an existing cluster.</div>
               </div>
               <div class="panel-body">
                 <div class="bootstrap-toolbar">
@@ -487,7 +488,7 @@
           <div class="cluster-section" data-cluster-section-panel="nodes">
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Cluster Nodes</div>
+                <div class="panel-title" data-i18n="sysmon.clusterNodes">Cluster Nodes</div>
                 <div class="panel-note" id="nodes-note"></div>
               </div>
               <div class="table-wrap" id="nodes-table"></div>
@@ -497,8 +498,8 @@
           <div class="cluster-section" data-cluster-section-panel="credentials">
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Cluster Credentials</div>
-                <div class="panel-note">Signed recipient lifecycle and exact materialization acknowledgements. Secret values and ciphertext are never shown.</div>
+                <div class="panel-title" data-i18n="sysmon.clusterCredentials">Cluster Credentials</div>
+                <div class="panel-note" data-i18n="sysmon.clusterCredentialsNote">Signed recipient lifecycle and exact materialization acknowledgements. Secret values and ciphertext are never shown.</div>
               </div>
               <div class="panel-body">
                 <div class="credential-toolbar">
@@ -521,7 +522,7 @@
           <div class="cluster-section" data-cluster-section-panel="instances">
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">V7 Desired State</div>
+                <div class="panel-title" data-i18n="sysmon.v7DesiredState">V7 Desired State</div>
                 <div class="panel-note" id="instances-note"></div>
               </div>
               <div class="table-wrap" id="instances-table"></div>
@@ -531,8 +532,8 @@
           <div class="cluster-section" data-cluster-section-panel="tombstones">
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Tombstones</div>
-                <div class="panel-note">Explicit deletes that prevent stale config resurrection.</div>
+                <div class="panel-title" data-i18n="sysmon.tombstones">Tombstones</div>
+                <div class="panel-note" data-i18n="sysmon.tombstonesNote">Explicit deletes that prevent stale config resurrection.</div>
               </div>
               <div class="table-wrap" id="tombstones-table"></div>
             </section>
@@ -541,8 +542,8 @@
           <div class="cluster-section" data-cluster-section-panel="retention">
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Cluster History Retention</div>
-                <div class="panel-note">Set the history window once. PBCluster continuously applies it whenever every cluster safety condition is healthy.</div>
+                <div class="panel-title" data-i18n="sysmon.clusterHistoryRetention">Cluster History Retention</div>
+                <div class="panel-note" data-i18n="sysmon.clusterHistoryRetentionNote">Set the history window once. PBCluster continuously applies it whenever every cluster safety condition is healthy.</div>
               </div>
               <div class="panel-body">
                 <div class="modal-form-grid">
@@ -587,7 +588,7 @@
           <div class="cluster-section" data-cluster-section-panel="oplog">
             <section class="panel">
               <div class="panel-head">
-                <div class="panel-title">Recent Oplog</div>
+                <div class="panel-title" data-i18n="sysmon.recentOplog">Recent Oplog</div>
                 <div class="panel-note" id="oplog-note"></div>
               </div>
               <div class="table-wrap" id="oplog-table"></div>
@@ -601,20 +602,20 @@
   <div class="modal-backdrop" id="join-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="join-modal-title">
       <div class="modal-head">
-        <div id="join-modal-title">Join Remote Cluster Node</div>
-        <button class="modal-close" id="join-close-btn" type="button" aria-label="Close">&#x2715;</button>
+        <div id="join-modal-title" data-i18n="sysmon.joinRemoteClusterNode">Join Remote Cluster Node</div>
+        <button class="modal-close" id="join-close-btn" type="button" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div id="join-modal-message"></div>
         <div class="field">
-          <div class="field-label">Remote Node</div>
+          <div class="field-label" data-i18n="sysmon.remoteNode">Remote Node</div>
           <div class="field-value" id="join-modal-node"></div>
         </div>
         <div class="modal-error" id="join-modal-error"></div>
       </div>
       <div class="modal-actions">
-        <button class="btn" id="join-cancel-btn" type="button">Cancel</button>
-        <button class="btn warn" id="join-confirm-btn" type="button">Join &amp; Sync</button>
+        <button class="btn" id="join-cancel-btn" type="button" data-i18n="common.cancel">Cancel</button>
+        <button class="btn warn" id="join-confirm-btn" type="button" data-i18n="sysmon.joinSync">Join &amp; Sync</button>
       </div>
     </div>
   </div>
@@ -622,29 +623,29 @@
   <div class="modal-backdrop" id="self-join-password-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="self-join-password-title">
       <div class="modal-head">
-        <div id="self-join-password-title">SSH Password Required</div>
-        <button class="modal-close" id="self-join-password-close-btn" type="button" aria-label="Close">&#x2715;</button>
+        <div id="self-join-password-title" data-i18n="sysmon.sshPasswordRequired">SSH Password Required</div>
+        <button class="modal-close" id="self-join-password-close-btn" type="button" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
       </div>
       <div class="modal-body">
-        <div id="self-join-password-message">Key login is not available yet. Enter the upstream SSH password to retry the join.</div>
+        <div id="self-join-password-message" data-i18n="sysmon.selfJoinPasswordMsg">Key login is not available yet. Enter the upstream SSH password to retry the join.</div>
         <div class="field">
-          <div class="field-label">Upstream Master</div>
+          <div class="field-label" data-i18n="sysmon.upstreamMaster">Upstream Master</div>
           <div class="field-value" id="self-join-password-host"></div>
         </div>
         <div class="field">
-          <div class="field-label">SSH User</div>
+          <div class="field-label" data-i18n="sysmon.sshUser">SSH User</div>
           <div class="field-value" id="self-join-password-user"></div>
         </div>
         <div class="modal-field">
-          <label for="self-join-password-input">SSH Password</label>
-          <input class="modal-input" id="self-join-password-input" type="password" autocomplete="current-password" placeholder="SSH password">
-          <div class="field-help">Used only for this join request. It is not saved.</div>
+          <label for="self-join-password-input" data-i18n="sysmon.sshPassword">SSH Password</label>
+          <input class="modal-input" id="self-join-password-input" type="password" autocomplete="current-password" placeholder="SSH password" data-i18n-placeholder="sysmon.sshPassword">
+          <div class="field-help" data-i18n="sysmon.usedForJoinOnly">Used only for this join request. It is not saved.</div>
         </div>
         <div class="modal-error" id="self-join-password-error"></div>
       </div>
       <div class="modal-actions">
-        <button class="btn" id="self-join-password-cancel-btn" type="button">Cancel</button>
-        <button class="btn warn" id="self-join-password-confirm-btn" type="button">Retry Join</button>
+        <button class="btn" id="self-join-password-cancel-btn" type="button" data-i18n="common.cancel">Cancel</button>
+        <button class="btn warn" id="self-join-password-confirm-btn" type="button" data-i18n="sysmon.retryJoin">Retry Join</button>
       </div>
     </div>
   </div>
@@ -652,29 +653,29 @@
   <div class="modal-backdrop" id="repair-password-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="repair-password-title">
       <div class="modal-head">
-        <div id="repair-password-title">SSH Password Required</div>
-        <button class="modal-close" id="repair-password-close-btn" type="button" aria-label="Close">&#x2715;</button>
+        <div id="repair-password-title" data-i18n="sysmon.sshPasswordRequired">SSH Password Required</div>
+        <button class="modal-close" id="repair-password-close-btn" type="button" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
       </div>
       <div class="modal-body">
-        <div id="repair-password-message">Key login is not available yet. Enter the SSH password to retry Cluster SSH repair.</div>
+        <div id="repair-password-message" data-i18n="sysmon.repairPasswordMsg">Key login is not available yet. Enter the SSH password to retry Cluster SSH repair.</div>
         <div class="field">
-          <div class="field-label">Cluster Node</div>
+          <div class="field-label" data-i18n="sysmon.clusterNode">Cluster Node</div>
           <div class="field-value" id="repair-password-node"></div>
         </div>
         <div class="field">
-          <div class="field-label">SSH User</div>
+          <div class="field-label" data-i18n="sysmon.sshUser">SSH User</div>
           <div class="field-value" id="repair-password-user"></div>
         </div>
         <div class="modal-field">
-          <label for="repair-password-input">SSH Password</label>
-          <input class="modal-input" id="repair-password-input" type="password" autocomplete="current-password" placeholder="SSH password">
-          <div class="field-help">Used only for this repair request. It is not saved.</div>
+          <label for="repair-password-input" data-i18n="sysmon.sshPassword">SSH Password</label>
+          <input class="modal-input" id="repair-password-input" type="password" autocomplete="current-password" placeholder="SSH password" data-i18n-placeholder="sysmon.sshPassword">
+          <div class="field-help" data-i18n="sysmon.usedForRepairOnly">Used only for this repair request. It is not saved.</div>
         </div>
         <div class="modal-error" id="repair-password-error"></div>
       </div>
       <div class="modal-actions">
-        <button class="btn" id="repair-password-cancel-btn" type="button">Cancel</button>
-        <button class="btn warn" id="repair-password-confirm-btn" type="button">Retry Repair</button>
+        <button class="btn" id="repair-password-cancel-btn" type="button" data-i18n="common.cancel">Cancel</button>
+        <button class="btn warn" id="repair-password-confirm-btn" type="button" data-i18n="sysmon.retryRepair">Retry Repair</button>
       </div>
     </div>
   </div>
@@ -682,55 +683,55 @@
   <div class="modal-backdrop" id="node-settings-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="node-settings-title">
       <div class="modal-head">
-        <div id="node-settings-title">Edit Cluster Node</div>
-        <button class="modal-close" id="node-settings-close-btn" type="button" aria-label="Close">&#x2715;</button>
+        <div id="node-settings-title" data-i18n="sysmon.editClusterNode">Edit Cluster Node</div>
+        <button class="modal-close" id="node-settings-close-btn" type="button" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div class="field">
-          <div class="field-label">Node</div>
+          <div class="field-label" data-i18n="sysmon.node">Node</div>
           <div class="field-value" id="node-settings-node"></div>
         </div>
         <div class="modal-form-grid">
           <div class="modal-field">
-            <label for="node-settings-role">Role</label>
+            <label for="node-settings-role" data-i18n="sysmon.role">Role</label>
             <input class="modal-input" id="node-settings-role" type="text" disabled>
           </div>
           <div class="modal-field">
-            <label for="node-settings-remote-dir">Remote PBGui Dir</label>
+            <label for="node-settings-remote-dir" data-i18n="sysmon.remotePbguiDir">Remote PBGui Dir</label>
             <input class="modal-input" id="node-settings-remote-dir" type="text" placeholder="software/pbgui">
-            <div class="field-help">Path used for Cluster SSH commands; relative paths start at the SSH user's home.</div>
+            <div class="field-help" data-i18n="sysmon.remoteDirHelp">Path used for Cluster SSH commands; relative paths start at the SSH user's home.</div>
           </div>
           <div class="modal-field">
-            <label for="node-settings-mode">Sync Mode</label>
+            <label for="node-settings-mode" data-i18n="sysmon.syncMode">Sync Mode</label>
             <select class="modal-input" id="node-settings-mode">
-              <option value="disabled">Disabled</option>
-              <option value="outbound_only">Outbound only</option>
-              <option value="reachable">Reachable via SSH</option>
+              <option value="disabled" data-i18n="common.disabled">Disabled</option>
+              <option value="outbound_only" data-i18n="sysmon.outboundOnly">Outbound only</option>
+              <option value="reachable" data-i18n="sysmon.reachableViaSsh">Reachable via SSH</option>
             </select>
           </div>
           <div class="modal-field">
-            <label for="node-settings-ssh-port">SSH Port</label>
+            <label for="node-settings-ssh-port" data-i18n="sysmon.sshPort">SSH Port</label>
             <input class="modal-input" id="node-settings-ssh-port" type="number" min="1" max="65535" step="1">
           </div>
           <div class="modal-field">
-            <label for="node-settings-ssh-host">SSH Host</label>
+            <label for="node-settings-ssh-host" data-i18n="sysmon.sshHost">SSH Host</label>
             <input class="modal-input" id="node-settings-ssh-host" type="text" placeholder="203.0.113.10">
           </div>
           <div class="modal-field">
-            <label for="node-settings-ssh-user">SSH User</label>
+            <label for="node-settings-ssh-user" data-i18n="sysmon.sshUser">SSH User</label>
             <input class="modal-input" id="node-settings-ssh-user" type="text" placeholder="ssh-user">
           </div>
           <div class="modal-field modal-field-wide">
-            <label>Allowed Outbound Peers</label>
+            <label data-i18n="sysmon.allowedOutboundPeers">Allowed Outbound Peers</label>
             <div class="peer-list" id="node-settings-peers"></div>
           </div>
         </div>
-        <div class="panel-note">Role is set by setup/discovery and shown for diagnostics only. Remote PBGui Dir tells peers where this PBGui checkout lives. Outbound peers define which nodes this node is allowed to contact directly.</div>
+        <div class="panel-note" data-i18n="sysmon.nodeSettingsNote">Role is set by setup/discovery and shown for diagnostics only. Remote PBGui Dir tells peers where this PBGui checkout lives. Outbound peers define which nodes this node is allowed to contact directly.</div>
         <div class="modal-error" id="node-settings-error"></div>
       </div>
       <div class="modal-actions">
-        <button class="btn" id="node-settings-cancel-btn" type="button">Cancel</button>
-        <button class="btn primary" id="node-settings-save-btn" type="button">Save</button>
+        <button class="btn" id="node-settings-cancel-btn" type="button" data-i18n="common.cancel">Cancel</button>
+        <button class="btn primary" id="node-settings-save-btn" type="button" data-i18n="common.save">Save</button>
       </div>
     </div>
   </div>
@@ -738,11 +739,11 @@
   <div class="modal-backdrop" id="preview-modal" hidden>
     <div class="modal-card preview-modal-card" id="preview-modal-card" role="dialog" aria-modal="true" aria-labelledby="preview-modal-title">
       <div class="modal-head">
-        <div id="preview-modal-title">Remote State Preview</div>
-        <button class="modal-close" id="preview-close-x-btn" type="button" aria-label="Close">&#x2715;</button>
+        <div id="preview-modal-title" data-i18n="sysmon.remoteStatePreview">Remote State Preview</div>
+        <button class="modal-close" id="preview-close-x-btn" type="button" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
       </div>
       <div class="modal-body">
-        <div id="preview-modal-message">Loading remote state preview...</div>
+        <div id="preview-modal-message" data-i18n="sysmon.loadingRemoteStatePreview">Loading remote state preview...</div>
         <div id="preview-modal-content"></div>
         <div class="modal-error" id="preview-modal-error"></div>
       </div>
@@ -754,11 +755,11 @@
           </div>
           <div class="push-progress-track"><div class="push-progress-fill" id="preview-push-progress-fill"></div></div>
         </div>
-        <button class="btn warn" id="preview-push-ops-btn" type="button" hidden>Push Missing Ops + Rebuild</button>
-        <button class="btn primary" id="preview-materialize-btn" type="button" hidden>Materialize V7 Configs</button>
-        <button class="btn primary" id="preview-materialize-v8-btn" type="button" hidden>Reconcile PB8 Configs</button>
-        <button class="btn primary" id="preview-materialize-api-btn" type="button" hidden>Materialize API Keys</button>
-        <button class="btn" id="preview-close-btn" type="button">Close</button>
+        <button class="btn warn" id="preview-push-ops-btn" type="button" hidden data-i18n="sysmon.pushMissingOps">Push Missing Ops + Rebuild</button>
+        <button class="btn primary" id="preview-materialize-btn" type="button" hidden data-i18n="sysmon.materializeV7Configs">Materialize V7 Configs</button>
+        <button class="btn primary" id="preview-materialize-v8-btn" type="button" hidden data-i18n="sysmon.reconcilePb8Configs">Reconcile PB8 Configs</button>
+        <button class="btn primary" id="preview-materialize-api-btn" type="button" hidden data-i18n="sysmon.materializeApiKeys">Materialize API Keys</button>
+        <button class="btn" id="preview-close-btn" type="button" data-i18n="common.close">Close</button>
       </div>
     </div>
   </div>
@@ -766,8 +767,8 @@
   <div class="modal-backdrop" id="remove-node-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="remove-node-title">
       <div class="modal-head">
-        <div id="remove-node-title">Remove Cluster Node</div>
-        <button class="modal-close" id="remove-node-close-btn" type="button" aria-label="Close">&#x2715;</button>
+        <div id="remove-node-title" data-i18n="sysmon.removeClusterNode">Remove Cluster Node</div>
+        <button class="modal-close" id="remove-node-close-btn" type="button" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div id="remove-node-message"></div>
@@ -782,8 +783,8 @@
         <div class="setup-state-note" id="remove-node-result" hidden></div>
       </div>
       <div class="modal-actions">
-        <button class="btn" id="remove-node-cancel-btn" type="button">Cancel</button>
-        <button class="btn warn" id="remove-node-confirm-btn" type="button">Remove Node</button>
+        <button class="btn" id="remove-node-cancel-btn" type="button" data-i18n="common.cancel">Cancel</button>
+        <button class="btn warn" id="remove-node-confirm-btn" type="button" data-i18n="sysmon.removeNode">Remove Node</button>
       </div>
     </div>
   </div>
@@ -793,15 +794,16 @@
     window.WS_BASE = "%%WS_BASE%%";
     window.PBGUI_VERSION = "%%VERSION%%";
     window.PBGUI_SERIAL = "%%SERIAL%%";
-    window.PBGUI_NAV_CONFIG = { subtitle: 'CLUSTER SYNC', current: 'system_cluster' };
+    window.PBGUI_NAV_CONFIG = { subtitle: (window.PBGuiI18n ? PBGuiI18n.t('sysmon.clusterSyncSubtitle2') : 'CLUSTER SYNC'), current: 'system_cluster' };
+    document.title = PBGuiI18n.t('sysmon.clusterSyncTitle');
     window.PBGUI_HELP_OPENER = function () {
       if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== 'function') return;
       window.PBGuiSharedHelp.open('cluster sync');
     };
   </script>
-  <script src="/app/js/shared_help_overlay.js?v=6"></script>
+  <script src="/app/js/shared_help_overlay.js?v=7"></script>
   <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
-  <script src="/app/js/pbgui_dialogs.js?v=5"></script>
+  <script src="/app/js/pbgui_dialogs.js?v=6"></script>
   <script>
     (function () {
       'use strict';

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PBv7 Edit</title>
+<script src="/app/i18n.js?v=1"></script>
 <link rel="stylesheet" href="/app/css/sidebar.css?v=1">
 <style>
 /* ─── Reset & Base ─────────────────────────────────────────── */
@@ -21,7 +22,7 @@ html, body { height: 100%; overflow: hidden; }
   --red:      #ff4b4b;
   --blue:     #1f77ff;
   --accent:   #4da6ff;
-  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
   --fs-xs:    11px;
   --fs-sm:    13px;
   --fs-base:  14px;
@@ -547,17 +548,17 @@ textarea.json-invalid:focus {
       <span class="sb-title">Edit Instance</span>
     </div>
     <div id="sidebar-toolbar">
-      <button class="sb-btn" onclick="goBack()" title="Back to list">🏠 Home</button>
-      <button class="sb-btn primary" id="btn-save" onclick="saveConfig()" title="Save config & sync">💾 Save</button>
-      <button class="sb-btn info" onclick="openImportModal()" title="Import JSON config">📥 Import</button>
-      <button class="sb-btn info" onclick="openCopyUserModal()" title="Copy current config to another user">📋 Copy</button>
+      <button class="sb-btn" onclick="goBack()" title="Back to list" data-i18n-title="v7run.backToList">🏠 <span data-i18n="v7run.home">Home</span></button>
+      <button class="sb-btn primary" id="btn-save" onclick="saveConfig()" title="Save config & sync" data-i18n-title="v7run.saveConfigSync">💾 <span data-i18n="common.save">Save</span></button>
+      <button class="sb-btn info" onclick="openImportModal()" title="Import JSON config" data-i18n-title="v7run.importJsonConfig">📥 <span data-i18n="v7run.import">Import</span></button>
+      <button class="sb-btn info" onclick="openCopyUserModal()" title="Copy current config to another user" data-i18n-title="v7run.copyCurrentConfig">📋 <span data-i18n="v7run.copy">Copy</span></button>
       <hr class="sb-sep">
-      <button class="sb-btn" onclick="goBacktest()" title="Open in Backtest">📊 Backtest</button>
-      <button class="sb-btn" onclick="goStrategyExplorer()" title="Open Strategy Explorer">🔍 Strategy Explorer</button>
-      <button class="sb-btn" onclick="goBalanceCalc()" title="Open Balance Calculator page">💰 Balance Calculator</button>
-      <button class="sb-btn" onclick="calculateBalance()" title="Calculate needed balance from current config (shown inline)">⚡ Calc Balance</button>
+      <button class="sb-btn" onclick="goBacktest()" title="Open in Backtest" data-i18n-title="v7run.openInBacktest">📊 <span data-i18n="v7run.backtest">Backtest</span></button>
+      <button class="sb-btn" onclick="goStrategyExplorer()" title="Open Strategy Explorer" data-i18n-title="v7run.openStrategyExplorer">🔍 <span data-i18n="v7run.strategyExplorer">Strategy Explorer</span></button>
+      <button class="sb-btn" onclick="goBalanceCalc()" title="Open Balance Calculator page" data-i18n-title="v7run.openBalanceCalculatorPage">💰 <span data-i18n="v7run.balanceCalculator">Balance Calculator</span></button>
+      <button class="sb-btn" onclick="calculateBalance()" title="Calculate needed balance from current config (shown inline)" data-i18n-title="v7run.calcBalanceTitle">⚡ <span data-i18n="v7run.calcBalance">Calc Balance</span></button>
       <hr class="sb-sep">
-      <button class="sb-btn" id="btn-log" onclick="toggleLogPanel()" title="Live passivbot log">📋 Log</button>
+      <button class="sb-btn" id="btn-log" onclick="toggleLogPanel()" title="Live passivbot log" data-i18n-title="v7run.livePassivbotLog">📋 <span data-i18n="v7run.log">Log</span></button>
     </div>
   </div>
   <div id="sidebar-resize"></div>
@@ -570,19 +571,19 @@ textarea.json-invalid:focus {
 <div class="form-row cols-8" style="margin-bottom:var(--sp-lg)">
   <!-- Row 1: Configuration & Identity  2+2+1+1+1+1 = 8 -->
   <div class="form-group" style="grid-column:span 2">
-    <label><span data-tip="Fetch API key/secret from api-keys.json.">User</span></label>
+    <label><span data-tip="Fetch API key/secret from api-keys.json." data-i18n="v7run.user">User</span></label>
     <select id="f-user"></select>
   </div>
   <div class="form-group" style="grid-column:span 2">
-    <label>Enabled on</label>
+    <label data-i18n="v7run.enabledOn">Enabled on</label>
     <select id="f-enabled-on"></select>
   </div>
   <div class="form-group">
-    <label><span data-tip="The Version number of the configuration. Required for synchronisation to VPS.">Config version</span></label>
+    <label><span data-tip="The Version number of the configuration. Required for synchronisation to VPS." data-i18n="v7run.configVersion">Config version</span></label>
     <input type="number" id="f-version" min="0" step="1">
   </div>
   <div class="form-group" data-v7-only>
-    <label><span data-tip="Leverage set on exchange">Leverage</span></label>
+    <label><span data-tip="Leverage set on exchange" data-i18n="v7run.leverage">Leverage</span></label>
     <input type="number" id="f-leverage" min="0" max="100" step="1" value="10">
   </div>
   <div class="form-group" data-v7-only>
@@ -600,7 +601,7 @@ isolated: require isolated (cross-only skipped)">margin_mode_preference</span></
     </select>
   </div>
   <div class="form-group" data-v7-only>
-    <label><span data-tip="0=warning, 1=info, 2=debug, 3=trace">Logging level</span></label>
+    <label><span data-tip="0=warning, 1=info, 2=debug, 3=trace" data-i18n="v7run.loggingLevel">Logging level</span></label>
     <select id="f-logging-level">
       <option value="0">warning</option>
       <option value="1" selected>info</option>
@@ -628,7 +629,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak.">max_real
     <input type="number" id="f-max-loss-pct" min="0" max="2" step="0.01" value="1.0">
   </div>
   <div class="form-group span-4">
-    <label><span data-tip="Personal note for organising instances">Note</span></label>
+    <label><span data-tip="Personal note for organising instances" data-i18n="v7run.note">Note</span></label>
     <input type="text" id="f-note" placeholder="">
   </div>
   <!-- Row 3: Execution & Flags  1+1+1+1+2+2 = 8 -->
@@ -670,10 +671,10 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak.">max_real
 <!-- Advanced Settings -->
 <div class="expander" id="exp-advanced" data-v7-only>
   <div class="expander-header" onclick="toggleExpander('exp-advanced')">
-    <span class="arrow">▶</span> Advanced Settings
+    <span class="arrow">▶</span> <span data-i18n="v7run.advancedSettings">Advanced Settings</span>
   </div>
   <div class="expander-body">
-    <div class="subsection-title">Modes &amp; Policies</div>
+    <div class="subsection-title" data-i18n="v7run.modesPolicies">Modes &amp; Policies</div>
     <div class="form-row cols-8">
     <div class="form-group" style="grid-column:span 2">
       <label><span data-tip="Force all long positions to same mode.
@@ -749,7 +750,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title">Execution &amp; Exchange Sync</div>
+    <div class="subsection-title" data-i18n="v7run.executionExchangeSync">Execution &amp; Exchange Sync</div>
     <div class="form-row cols-8">
     <div class="form-group">
       <label><span data-tip="Cancels up to n open orders per execution cycle. Must always be greater than max_n_creations_per_batch, and the editor keeps the two fields within a valid range automatically.">max_n_cancellations_per_batch</span></label>
@@ -785,7 +786,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-v8-only>Fees &amp; Order Churn</div>
+    <div class="subsection-title" data-v8-only data-i18n="v7run.feesOrderChurn">Fees &amp; Order Churn</div>
     <div class="form-row cols-8" data-v8-only>
     <div class="form-group">
       <label><span data-tip="Maximum age in milliseconds for cached fee-currency conversion prices.">fee_conversion_max_age_ms</span></label>
@@ -817,7 +818,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title">Warmup &amp; Candle Fetch</div>
+    <div class="subsection-title" data-i18n="v7run.warmupCandleFetch">Warmup &amp; Candle Fetch</div>
     <div class="form-row cols-8">
     <div class="form-group">
       <label><span data-tip="Hard ceiling for the historical warm-up window (minutes). Use 0 to disable the cap; values above 0 clamp the per-symbol warmup calculated from EMA spans.">max_warmup_minutes</span></label>
@@ -887,7 +888,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title">Storage, Freshness &amp; Runtime</div>
+    <div class="subsection-title" data-i18n="v7run.storageFreshnessRuntime">Storage, Freshness &amp; Runtime</div>
     <div class="form-row cols-8" style="margin-bottom:0">
     <div class="form-group">
       <label><span data-tip="Maximum candles persisted on disk per symbol and timeframe. Oldest shards are pruned once this limit is hit. Default 2,000,000.">max_disk_candles_per_symbol_per_tf</span></label>
@@ -923,7 +924,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-v8-only>PB8 Runtime</div>
+    <div class="subsection-title" data-v8-only data-i18n="v7run.pb8Runtime">PB8 Runtime</div>
     <div class="form-row cols-8" data-v8-only>
     <div class="form-group" style="grid-column:span 2">
       <label><span data-tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts.">exchange_symbol_unavailable_cooldown_hours</span></label>
@@ -940,7 +941,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-v8-only>Logging</div>
+    <div class="subsection-title" data-v8-only data-i18n="v7run.logging">Logging</div>
     <div class="form-row cols-8" data-v8-only>
     <div class="form-group">
       <label><span data-tip="Directory used by PB8 for its own log files.">logging.dir</span></label>
@@ -967,7 +968,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     </div>
     </div>
 
-    <div class="subsection-title" data-v8-only>Monitoring</div>
+    <div class="subsection-title" data-v8-only data-i18n="v7run.monitoring">Monitoring</div>
     <div class="form-row cols-8" data-v8-only>
     <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-enabled"><label for="f-monitor-enabled">monitor.enabled</label></div></div>
     <div class="form-group"><label>monitor.root_dir</label><input type="text" id="f-monitor-root-dir" value="monitor"></div>
@@ -989,7 +990,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 </div>
 
 <!-- Filters section -->
-<div class="section-title">Filters</div>
+<div class="section-title" data-i18n="v7run.filters">Filters</div>
 <div class="form-row cols-8">
   <div class="form-group" style="grid-column:span 2">
     <label><span data-tip="Minimum market capitalisation in million USD. Coins below this threshold are excluded.">market_cap (min M$)</span></label>
@@ -1000,7 +1001,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
     <input type="number" id="f-vol-mcap" min="0" step="0.05" value="10">
   </div>
   <div class="form-group" id="tags-container" style="grid-column:span 2">
-    <label><span data-tip="Filter by CoinMarketCap category tags (e.g. DeFi, Layer 1). Leave empty to include all.">Tags</span></label>
+    <label><span data-tip="Filter by CoinMarketCap category tags (e.g. DeFi, Layer 1). Leave empty to include all." data-i18n="v7run.tags">Tags</span></label>
     <div class="ms-wrap" id="ms-tags">
       <input class="ms-input" id="ms-tags-input" placeholder="Select tags..." autocomplete="off">
       <div class="ms-dropdown" id="ms-tags-dd"></div>
@@ -1072,7 +1073,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 </div>
 
 <div id="dynamic-ignore-preview" data-v7-only style="display:none; margin-bottom:var(--sp-md);">
-  <div style="font-size:var(--fs-sm); color:var(--text-dim); margin-bottom:4px;">Dynamic ignore preview:</div>
+  <div style="font-size:var(--fs-sm); color:var(--text-dim); margin-bottom:4px;" data-i18n="v7run.dynamicIgnorePreview">Dynamic ignore preview:</div>
   <pre id="di-approved" style="font-size:var(--fs-xs); color:var(--green); margin-bottom:4px; white-space:pre-wrap;"></pre>
   <pre id="di-ignored" style="font-size:var(--fs-xs); color:var(--orange); white-space:pre-wrap;"></pre>
 </div>
@@ -1082,7 +1083,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 
 <!-- Bot Long / Short -->
 <div class="section-title section-title-with-control">
-  <span>Bot Configuration</span>
+  <span data-i18n="v7run.botConfiguration">Bot Configuration</span>
   <div class="form-group section-title-control run-version-hidden" data-v8-only>
     <label><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
     <select id="f-strategy-kind"></select>
@@ -1090,19 +1091,19 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 </div>
 <div class="form-row cols-4">
   <div class="form-group">
-    <label>Long TWE</label>
+    <label data-i18n="v7run.longTwe">Long TWE</label>
     <input type="number" id="f-long-twe" min="0" max="100" step="0.05" value="1.7">
   </div>
   <div class="form-group">
-    <label>Long n_positions</label>
+    <label data-i18n="v7run.longNpositions">Long n_positions</label>
     <input type="number" id="f-long-npos" min="0" max="100" step="1" value="10">
   </div>
   <div class="form-group">
-    <label>Short TWE</label>
+    <label data-i18n="v7run.shortTwe">Short TWE</label>
     <input type="number" id="f-short-twe" min="0" max="100" step="0.05" value="0">
   </div>
   <div class="form-group">
-    <label>Short n_positions</label>
+    <label data-i18n="v7run.shortNpositions">Short n_positions</label>
     <input type="number" id="f-short-npos" min="0" max="100" step="1" value="0">
   </div>
 </div>
@@ -1125,7 +1126,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Raw JSON -->
 <div class="expander" id="exp-raw">
   <div class="expander-header" onclick="toggleExpander('exp-raw')">
-    <span class="arrow">&#x25B6;</span> Raw JSON
+    <span class="arrow">&#x25B6;</span> <span data-i18n="v7run.rawJson">Raw JSON</span>
   </div>
   <div class="expander-body">
     <div class="form-group">
@@ -1141,9 +1142,9 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Log panel (floating, opened via sidebar button) -->
 <div id="log-panel">
   <div id="log-panel-header">
-    <span id="log-panel-title">📋 Passivbot Log</span>
+    <span id="log-panel-title">📋 <span data-i18n="v7run.passivbotLog">Passivbot Log</span></span>
     <span id="log-panel-host" class=""></span>
-    <button class="log-close" onclick="closeLogPanel()" title="Close">×</button>
+    <button class="log-close" onclick="closeLogPanel()" title="Close" data-i18n-title="common.close">×</button>
   </div>
   <div id="log-viewer-target" style="flex:1;overflow:hidden;min-height:0"></div>
 </div>
@@ -1155,15 +1156,15 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Balance Calc Modal -->
 <div class="modal-overlay" id="bc-modal">
   <div class="modal-box" style="max-width:560px;">
-    <h3>Calculate Balance</h3>
-    <div id="bc-loading" style="color:var(--text-dim); font-size:var(--fs-sm); margin-bottom:var(--sp-md);">Calculating...</div>
+    <h3 data-i18n="v7run.calculateBalance">Calculate Balance</h3>
+    <div id="bc-loading" style="color:var(--text-dim); font-size:var(--fs-sm); margin-bottom:var(--sp-md);" data-i18n="v7run.calculating">Calculating...</div>
     <div id="bc-result" style="display:none;">
       <div id="bc-recommendation" style="background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:var(--sp-md); margin-bottom:var(--sp-md); font-size:var(--fs-sm);"></div>
       <div id="bc-details" style="font-size:var(--fs-xs); color:var(--text-dim);"></div>
     </div>
     <div id="bc-error" style="color:var(--red); font-size:var(--fs-sm); display:none;"></div>
     <div class="modal-actions">
-      <button class="btn btn-cancel" onclick="document.getElementById('bc-modal').classList.remove('open');">Close</button>
+      <button class="btn btn-cancel" onclick="document.getElementById('bc-modal').classList.remove('open');" data-i18n="common.close">Close</button>
     </div>
   </div>
 </div>
@@ -1171,20 +1172,20 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Import Modal -->
 <div class="modal-overlay" id="import-modal">
   <div class="modal-box">
-    <h3>Paste config</h3>
+    <h3 data-i18n="v7run.pasteConfig">Paste config</h3>
     <div class="form-group">
-      <label>User</label>
+      <label data-i18n="v7run.user">User</label>
       <div class="user-combobox">
-        <input id="import-user" type="text" placeholder="Type to search users..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="import-user-options">
-        <button class="user-combobox-toggle" id="import-user-toggle" type="button" aria-label="Show configured users" aria-controls="import-user-options">&#x25BE;</button>
+        <input id="import-user" type="text" placeholder="Type to search users..." data-i18n-placeholder="v7run.typeToSearchUsers" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="import-user-options">
+        <button class="user-combobox-toggle" id="import-user-toggle" type="button" aria-label="Show configured users" data-i18n-aria-label="v7run.showConfiguredUsers" aria-controls="import-user-options">&#x25BE;</button>
         <div class="user-combobox-options" id="import-user-options" role="listbox" hidden></div>
       </div>
     </div>
-    <textarea class="json-editor" id="import-json" rows="18" placeholder="Paste full JSON config here"></textarea>
+    <textarea class="json-editor" id="import-json" rows="18" placeholder="Paste full JSON config here" data-i18n-placeholder="v7run.pasteFullJsonConfig"></textarea>
     <div id="import-error" class="field-status field-status-inline" aria-live="polite"></div>
     <div class="modal-actions">
-      <button class="btn btn-ok" onclick="doImport()">OK</button>
-      <button class="btn btn-cancel" onclick="closeImportModal()">Cancel</button>
+      <button class="btn btn-ok" onclick="doImport()" data-i18n="common.ok">OK</button>
+      <button class="btn btn-cancel" onclick="closeImportModal()" data-i18n="common.cancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -1192,18 +1193,18 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <!-- Copy User Modal -->
 <div class="modal-overlay" id="copy-user-modal">
   <div class="modal-box" style="max-width:520px;">
-    <h3>Copy config to user</h3>
-    <div style="color:var(--text-dim);font-size:var(--fs-sm);line-height:1.45;">
+    <h3 data-i18n="v7run.copyConfigToUser">Copy config to user</h3>
+    <div style="color:var(--text-dim);font-size:var(--fs-sm);line-height:1.45;" data-i18n="v7run.copyConfigToUserDesc">
       Save the current editor config for another user. The copied config is saved disabled. If the target already has a config, it will be backed up and overwritten.
     </div>
     <div class="form-group">
-      <label>Target user</label>
+      <label data-i18n="v7run.targetUser">Target user</label>
       <select id="copy-user"></select>
     </div>
     <div id="copy-user-error" class="field-status field-status-inline" aria-live="polite"></div>
     <div class="modal-actions">
-      <button class="btn btn-ok" id="btn-copy-user-ok" onclick="doCopyToUser()">Copy</button>
-      <button class="btn btn-cancel" onclick="closeCopyUserModal()">Cancel</button>
+      <button class="btn btn-ok" id="btn-copy-user-ok" onclick="doCopyToUser()" data-i18n="v7run.copy">Copy</button>
+      <button class="btn btn-cancel" onclick="closeCopyUserModal()" data-i18n="common.cancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -1212,11 +1213,11 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <div id="cov-tooltip"></div>
 <div id="data-tip-tooltip"></div>
 
-<script src="/app/js/editor_shared.js?v=13"></script>
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
-<script src="/app/js/run_editor_adapter.js?v=8"></script>
-<script src="/app/js/log_viewer_panel.js?v=29"></script>
-<script src="/app/js/coin_overrides_editor.js?v=25"></script>
+<script src="/app/js/editor_shared.js?v=14"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
+<script src="/app/js/run_editor_adapter.js?v=9"></script>
+<script src="/app/js/log_viewer_panel.js?v=30"></script>
+<script src="/app/js/coin_overrides_editor.js?v=26"></script>
 <script>
 /* ─── Injected Vars ────────────────────────────────────────── */
 var API_BASE       = "%%API_BASE%%";
@@ -1354,7 +1355,7 @@ async function prepareConfigForRunEditor(config) {
     body: JSON.stringify({ config: config })
   }));
   if (!data || !data.draft_id) {
-    throw new Error('Draft creation failed');
+    throw new Error(PBGuiI18n.t('v7run.draftCreationFailed'));
   }
   return fetchPreparedDraftConfig(data.draft_id);
 }
@@ -1422,9 +1423,9 @@ function setRawJsonValidationError(error) {
     syncRawJsonHighlightOverlay(null, null);
     return;
   }
-  var summary = 'Raw JSON is invalid';
+  var summary = PBGuiI18n.t('v7run.rawJsonInvalid');
   if (error.line != null && error.column != null) {
-    summary += ' at line ' + error.line + ', column ' + error.column;
+    summary += PBGuiI18n.t('v7run.atLineColumn', { line: error.line, column: error.column });
   }
   var detail = rawEl ? getJsonLineDetail(rawEl.value || '', error.line, error.column) : null;
   if (detail) {
@@ -1441,7 +1442,7 @@ function setRawJsonValidationError(error) {
   window.PBGuiEditorShared.setFixedValidationStatus('cfg-raw-json', {
     summary: summary,
     message: error.message || '',
-    actionLabel: detail ? 'Reveal line in editor' : '',
+    actionLabel: detail ? PBGuiI18n.t('v7run.revealLineInEditor') : '',
     action: detail ? revealRawJsonError : null,
   });
   syncRawJsonHighlightOverlay(error, detail);
@@ -1454,7 +1455,7 @@ function validateJsonText(raw, opts) {
 function validateRawJson(raw) {
   return validateJsonText(raw, {
     expectObject: true,
-    emptyMessage: 'Config cannot be empty'
+    emptyMessage: PBGuiI18n.t('v7run.configCannotBeEmpty')
   });
 }
 
@@ -1466,8 +1467,8 @@ function getJsonFieldStatusEl(textarea) {
 }
 
 function getJsonFieldLabel(textarea) {
-  if (!textarea) return 'JSON field';
-  return textarea.dataset.jsonLabel || textarea.id || 'JSON field';
+  if (!textarea) return PBGuiI18n.t('v7run.jsonField');
+  return textarea.dataset.jsonLabel || textarea.id || PBGuiI18n.t('v7run.jsonField');
 }
 
 function getJsonFieldValidationOptions(textarea) {
@@ -1475,7 +1476,7 @@ function getJsonFieldValidationOptions(textarea) {
     expectObject: textarea && textarea.dataset ? textarea.dataset.jsonExpectObject === '1' : false,
     emptyMessage: textarea && textarea.dataset && textarea.dataset.jsonEmptyMessage
       ? textarea.dataset.jsonEmptyMessage
-      : 'JSON cannot be empty'
+      : PBGuiI18n.t('v7run.jsonCannotBeEmpty')
   };
 }
 
@@ -1516,9 +1517,9 @@ function setJsonFieldValidationState(textarea, error) {
     return;
   }
 
-  var summary = getJsonFieldLabel(textarea) + ' is invalid';
+  var summary = PBGuiI18n.t('v7run.fieldIsInvalid', { label: getJsonFieldLabel(textarea) });
   if (error.line != null && error.column != null) {
-    summary += ' at line ' + error.line + ', column ' + error.column;
+    summary += PBGuiI18n.t('v7run.atLineColumn', { line: error.line, column: error.column });
   }
   if (statusEl) {
     statusEl.innerHTML = '';
@@ -1527,7 +1528,7 @@ function setJsonFieldValidationState(textarea, error) {
   window.PBGuiEditorShared.setFixedValidationStatus(textarea.id, {
     summary: summary,
     message: error.message || '',
-    actionLabel: error.line != null ? 'Reveal line in editor' : '',
+    actionLabel: error.line != null ? PBGuiI18n.t('v7run.revealLineInEditor') : '',
     action: error.line != null ? function() { revealJsonFieldError(textarea.id); } : null,
   });
 }
@@ -1553,7 +1554,7 @@ function bindJsonFieldValidation(textareaId, opts) {
   textarea.dataset.jsonStatusId = opts.statusId || (textareaId + '-status');
   textarea.dataset.jsonLabel = opts.label || textareaId;
   textarea.dataset.jsonExpectObject = opts.expectObject ? '1' : '';
-  textarea.dataset.jsonEmptyMessage = opts.emptyMessage || 'JSON cannot be empty';
+  textarea.dataset.jsonEmptyMessage = opts.emptyMessage || PBGuiI18n.t('v7run.jsonCannotBeEmpty');
   if (!textarea.dataset.jsonValidationBound) {
     textarea.dataset.jsonValidationBound = '1';
     textarea.addEventListener('input', function() {
@@ -1573,13 +1574,13 @@ function bindJsonFieldValidation(textareaId, opts) {
 function bindStructuredJsonFieldValidation() {
   bindJsonFieldValidation('f-long-json', {
     expectObject: true,
-    emptyMessage: 'Long config cannot be empty',
-    label: 'Long config JSON'
+    emptyMessage: PBGuiI18n.t('v7run.longConfigCannotBeEmpty'),
+    label: PBGuiI18n.t('v7run.longConfigJsonLabel')
   });
   bindJsonFieldValidation('f-short-json', {
     expectObject: true,
-    emptyMessage: 'Short config cannot be empty',
-    label: 'Short config JSON'
+    emptyMessage: PBGuiI18n.t('v7run.shortConfigCannotBeEmpty'),
+    label: PBGuiI18n.t('v7run.shortConfigJsonLabel')
   });
   bindJsonFieldValidation('f-startup-phase-budgets', {
     expectObject: true,
@@ -1593,8 +1594,8 @@ function bindStructuredJsonFieldValidation() {
   });
   bindJsonFieldValidation('import-json', {
     expectObject: true,
-    emptyMessage: 'Config cannot be empty',
-    label: 'Import JSON',
+    emptyMessage: PBGuiI18n.t('v7run.configCannotBeEmpty'),
+    label: PBGuiI18n.t('v7run.importJson'),
     statusId: 'import-error',
     skipInitialValidation: true
   });
@@ -1603,7 +1604,7 @@ function bindStructuredJsonFieldValidation() {
     if (!textarea || textarea.tagName !== 'TEXTAREA') return;
     bindJsonFieldValidation(textarea.id, {
       expectObject: false,
-      emptyMessage: 'JSON value cannot be empty',
+      emptyMessage: PBGuiI18n.t('v7run.jsonValueCannotBeEmpty'),
       label: k + ' JSON',
       statusId: textarea.id + '-status'
     });
@@ -1634,11 +1635,11 @@ function ensureStructuredJsonFieldsValidForSave() {
   var expander = firstInvalid.textarea.closest('.expander');
   if (expander) expander.classList.add('open');
   revealJsonFieldError(firstInvalid.textarea.id);
-  var msg = getJsonFieldLabel(firstInvalid.textarea) + ' is invalid';
+  var msg = PBGuiI18n.t('v7run.fieldIsInvalid', { label: getJsonFieldLabel(firstInvalid.textarea) });
   if (firstInvalid.validation.error.line != null && firstInvalid.validation.error.column != null) {
-    msg += ' at line ' + firstInvalid.validation.error.line + ', column ' + firstInvalid.validation.error.column;
+    msg += PBGuiI18n.t('v7run.atLineColumn', { line: firstInvalid.validation.error.line, column: firstInvalid.validation.error.column });
   }
-  toast(msg + '. Fix it before saving.', 'err');
+  toast(msg + PBGuiI18n.t('v7run.fixBeforeSaving'), 'err');
   return false;
 }
 
@@ -1652,7 +1653,7 @@ function validateExecutionSyncFieldsForSave() {
   if (expander) expander.classList.add('open');
   var field = document.getElementById('f-max-cancel');
   if (field && typeof field.focus === 'function') field.focus();
-  toast('max_n_cancellations_per_batch must be greater than max_n_creations_per_batch. Fix it before saving.', 'err');
+  toast(PBGuiI18n.t('v7run.maxCancelMustExceedCreate'), 'err');
   return false;
 }
 
@@ -1681,11 +1682,11 @@ function ensureRawJsonValidForSave() {
   var rawExpander = document.getElementById('exp-raw');
   if (rawExpander) rawExpander.classList.add('open');
   revealRawJsonError();
-  var msg = 'Raw JSON is invalid';
+  var msg = PBGuiI18n.t('v7run.rawJsonInvalid');
   if (validation.error.line != null && validation.error.column != null) {
-    msg += ' at line ' + validation.error.line + ', column ' + validation.error.column;
+    msg += PBGuiI18n.t('v7run.atLineColumn', { line: validation.error.line, column: validation.error.column });
   }
-  toast(msg + '. Fix it before saving.', 'err');
+  toast(msg + PBGuiI18n.t('v7run.fixBeforeSaving'), 'err');
   return false;
 }
 
@@ -1723,7 +1724,7 @@ function goBacktest() {
       + '&draft_name=' + encodeURIComponent(INSTANCE_NAME || config.live.user || 'draft');
     window.location.href = url;
   }).catch(function(e) {
-    toast('Failed to create draft: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.failedCreateDraft') + ': ' + e.message, 'err');
   });
 }
 
@@ -1759,7 +1760,7 @@ function goStrategyExplorer() {
     var url = explorerBase + '/main_page?draft_id=' + encodeURIComponent(data.draft_id || '');
     window.location.href = url;
   }).catch(function(e) {
-    toast('Failed to open Strategy Explorer: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.failedOpenStrategyExplorer') + ': ' + e.message, 'err');
   });
 }
 
@@ -1778,7 +1779,7 @@ async function goBalanceCalc() {
   if (!ensureStructuredJsonFieldsValidForSave()) return;
   var exchange = getSelectedUserExchange();
   if (!exchange) {
-    toast('Cannot determine exchange — please select a user first.', 'err');
+    toast(PBGuiI18n.t('v7run.cannotDetermineExchange'), 'err');
     return;
   }
   try {
@@ -1788,7 +1789,7 @@ async function goBalanceCalc() {
       exchange: exchange,
     });
   } catch (e) {
-    toast('Failed to open Balance Calculator: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.failedOpenBalanceCalculator') + ': ' + e.message, 'err');
   }
 }
 
@@ -1857,10 +1858,10 @@ async function init() {
       }
       queueSymbolsAndTagsLoad(cfg, { preferConfigValues: true });
       var backupInfo = (cfg.pbgui || {}).from_backup_config || null;
-      if (backupInfo) toast('Loaded backup ' + backupInfo.name + '/' + backupInfo.timestamp + ' as an editor draft. Save to apply and sync.', 'warn');
+      if (backupInfo) toast(PBGuiI18n.t('v7run.loadedBackupDraft', { name: backupInfo.name, timestamp: backupInfo.timestamp }), 'warn');
     } else if (IS_NEW === 'true') {
       if (DRAFT_ID) {
-        toast('Draft config not found or expired, using defaults', 'warn');
+        toast(PBGuiI18n.t('v7run.draftNotFoundUsingDefaults'), 'warn');
       }
         cfg = await fetchTemplateConfig(allUsers.length > 0 ? allUsers[0].name : '');
         paramStatus = {};
@@ -1901,7 +1902,7 @@ async function init() {
     document.getElementById('f-enabled-on').addEventListener('focus', refreshHostCapabilities);
 
   } catch (e) {
-    toast('Failed to initialize: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.failedToInitialize') + ': ' + e.message, 'err');
     console.error(e);
   }
 }
@@ -1979,7 +1980,7 @@ function updateEnabledOnAvailability() {
     }
     var capability = hostCapabilitiesByName[opt.value] || null;
     opt.disabled = !capability || capability[runEditorAdapter.capabilityKey] !== true;
-    if (opt.disabled) opt.textContent += ' (' + runEditorAdapter.label + ' capability unconfirmed)';
+    if (opt.disabled) opt.textContent += PBGuiI18n.t('v7run.capabilityUnconfirmed', { label: runEditorAdapter.label });
   });
 }
 
@@ -1999,7 +2000,7 @@ async function fetchTemplateConfig(user) {
     if (runEditorAdapter.isV8) throw e;
     console.warn('fetchTemplateConfig failed, using built-in defaults:', e);
   }
-  if (runEditorAdapter.isV8) throw new Error('PB8 template is unavailable');
+  if (runEditorAdapter.isV8) throw new Error(PBGuiI18n.t('v7run.pb8TemplateUnavailable'));
   return buildDefaultConfig(user);
 }
 
@@ -2226,13 +2227,13 @@ function selectRunStrategyConfig(side, sideConfig, strategy) {
 
 function refreshBotParamStatusLabels() {
   var legend = ' <span style="font-size:var(--fs-xs,11px);font-weight:400;opacity:.8">'
-    + '\u25a0 <span style="color:#f0a500">neutralized</span>'
-    + ' &nbsp;\u25a0 <span style="color:#e05252">review</span></span>';
+    + '\u25a0 <span style="color:#f0a500">' + PBGuiI18n.t('v7run.paramNeutralized') + '</span>'
+    + ' &nbsp;\u25a0 <span style="color:#e05252">' + PBGuiI18n.t('v7run.paramReview') + '</span></span>';
   var longLabel = document.getElementById('lbl-long-json');
   var shortLabel = document.getElementById('lbl-short-json');
-  if (longLabel) longLabel.innerHTML = 'Long config (JSON)'
+  if (longLabel) longLabel.innerHTML = PBGuiI18n.t('v7run.longConfigJson')
     + (paramStatus.long && Object.keys(paramStatus.long).length ? legend : '');
-  if (shortLabel) shortLabel.innerHTML = 'Short config (JSON)'
+  if (shortLabel) shortLabel.innerHTML = PBGuiI18n.t('v7run.shortConfigJson')
     + (paramStatus.short && Object.keys(paramStatus.short).length ? legend : '');
 }
 
@@ -2250,7 +2251,7 @@ function changeRunStrategyKind(nextStrategy) {
     });
   } catch (error) {
     setVal('f-strategy-kind', current);
-    toast('Fix the Long/Short config JSON before changing strategy_kind.', 'err');
+    toast(PBGuiI18n.t('v7run.fixLongShortJsonBeforeStrategy'), 'err');
     return;
   }
   cfg.live = cfg.live && typeof cfg.live === 'object' ? cfg.live : {};
@@ -2493,10 +2494,10 @@ function populateForm(opts) {
     arrow.className = 'arrow';
     arrow.textContent = '\u25B6';
     header.appendChild(arrow);
-    header.appendChild(document.createTextNode(' Additional Parameters'));
+    header.appendChild(document.createTextNode(' ' + PBGuiI18n.t('v7run.additionalParameters')));
     var hint = document.createElement('span');
     hint.style.cssText = 'margin-left:auto;font-size:var(--fs-xs);color:var(--text-dim)';
-    hint.textContent = 'Parameters not yet in the GUI - edit and they will be preserved on save';
+    hint.textContent = PBGuiI18n.t('v7run.parametersNotInGui');
     header.appendChild(hint);
     var body = document.createElement('div');
     body.className = 'expander-body';
@@ -2907,7 +2908,7 @@ function collectConfig() {
 async function saveConfig() {
   var btnSave = document.getElementById('btn-save');
   btnSave.disabled = true;
-  btnSave.innerHTML = '<span class="spinner"></span> Saving...';
+  btnSave.innerHTML = '<span class="spinner"></span> ' + PBGuiI18n.t('v7run.saving');
   try {
     await _symbolsAndTagsLoadPromise;
     if (!ensureRawJsonValidForSave()) return;
@@ -2917,7 +2918,7 @@ async function saveConfig() {
     var wasNew = IS_NEW === 'true';
     var name = wasNew ? runEditorAdapter.newInstanceName(config) : INSTANCE_NAME;
     if (!name) {
-      toast('User is required.', 'err');
+      toast(PBGuiI18n.t('v7run.userRequired'), 'err');
       return;
     }
     var overrideSnapshot = runEditorAdapter.isV8 && typeof coinOvSnapshotPendingFiles === 'function'
@@ -2933,12 +2934,12 @@ async function saveConfig() {
       var detail = data.detail || resp.statusText;
       if (resp.status === 409 && String(detail || '').indexOf('Update your VPS first') === 0) {
         window.PBGuiDialogs.alert({
-          title: 'Save blocked',
-          message: detail,
-          confirmText: 'OK'
+          title: PBGuiI18n.t('v7run.saveBlocked'),
+          message: PBGuiI18n.serverMsg(detail),
+          confirmText: PBGuiI18n.t('common.ok')
         });
       } else {
-        toast('Save failed: ' + detail, 'err');
+        toast(PBGuiI18n.t('v7run.saveFailed') + ': ' + PBGuiI18n.serverMsg(detail), 'err');
       }
       return;
     }
@@ -2966,17 +2967,17 @@ async function saveConfig() {
     var syncOk = (data.sync && data.sync.ok) || 0;
     var syncFail = (data.sync && data.sync.failed) || 0;
     var syncMsg = '';
-    if (syncOk > 0) syncMsg = ' | SSH sync: ' + syncOk + ' host(s) OK';
-    else if (syncFail > 0) syncMsg = ' | SSH sync: ' + syncFail + ' failed';
+    if (syncOk > 0) syncMsg = PBGuiI18n.t('v7run.sshSyncOk', { count: syncOk });
+    else if (syncFail > 0) syncMsg = PBGuiI18n.t('v7run.sshSyncFailed', { count: syncFail });
 
-    toast('Saved ' + runEditorAdapter.label + ' v' + data.version + syncMsg, 'ok');
+    toast(PBGuiI18n.t('v7run.savedVersion', { label: runEditorAdapter.label, version: data.version }) + syncMsg, 'ok');
     dirty = false;
   } catch (e) {
-    toast('Save error: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.saveError') + ': ' + e.message, 'err');
     console.error(e);
   } finally {
     btnSave.disabled = false;
-    btnSave.innerHTML = '💾 Save';
+    btnSave.innerHTML = '💾 ' + PBGuiI18n.t('common.save');
   }
 }
 
@@ -2991,8 +2992,8 @@ function openCopyUserModal() {
   if (IS_NEW === 'true') {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: 'Copy unavailable',
-      message: 'Save this new instance before copying it to another user.'
+      summary: PBGuiI18n.t('v7run.copyUnavailable'),
+      message: PBGuiI18n.t('v7run.saveNewBeforeCopy')
     });
     btn.disabled = true;
   } else {
@@ -3008,13 +3009,13 @@ function openCopyUserModal() {
     if (sel.options.length === 0) {
       window.PBGuiEditorShared.setInlineStatusError(errEl, {
         baseClassName: 'field-status field-status-inline',
-        summary: 'No target user available',
-        message: 'Add another ' + runEditorAdapter.label + ' user before copying this config.'
+        summary: PBGuiI18n.t('v7run.noTargetUser'),
+        message: PBGuiI18n.t('v7run.addUserBeforeCopy', { label: runEditorAdapter.label })
       });
     }
   }
 
-  btn.innerHTML = 'Copy';
+  btn.innerHTML = PBGuiI18n.t('v7run.copy');
   window.PBGuiEditorShared.openModal('copy-user-modal');
 }
 
@@ -3030,16 +3031,16 @@ async function doCopyToUser() {
   var targetUser = document.getElementById('copy-user').value;
   window.PBGuiEditorShared.clearInlineStatus(errEl, 'field-status field-status-inline');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Copying...';
+  btn.innerHTML = '<span class="spinner"></span> ' + PBGuiI18n.t('v7run.copying');
   try {
     if (IS_NEW === 'true') {
-      throw new Error('Save this new instance before copying it to another user.');
+      throw new Error(PBGuiI18n.t('v7run.saveNewBeforeCopy'));
     }
     if (!targetUser) {
-      throw new Error('Select a target user.');
+      throw new Error(PBGuiI18n.t('v7run.selectTargetUser'));
     }
     if (targetUser === getVal('f-user')) {
-      throw new Error('Target user must be different from the source user.');
+      throw new Error(PBGuiI18n.t('v7run.targetUserDifferent'));
     }
     await _symbolsAndTagsLoadPromise;
     if (!ensureRawJsonValidForSave()) return;
@@ -3067,18 +3068,18 @@ async function doCopyToUser() {
     var data = {};
     try { data = await resp.json(); } catch (e) { data = {}; }
     if (!resp.ok) {
-      var detail = data.detail || resp.statusText || 'Copy failed';
+      var detail = data.detail || resp.statusText || PBGuiI18n.t('v7run.copyFailed');
       if (resp.status === 409 && String(detail || '').indexOf('Update your VPS first') === 0) {
         window.PBGuiDialogs.alert({
-          title: 'Copy blocked',
-          message: detail,
-          confirmText: 'OK'
+          title: PBGuiI18n.t('v7run.copyBlocked'),
+          message: PBGuiI18n.serverMsg(detail),
+          confirmText: PBGuiI18n.t('common.ok')
         });
       } else {
         window.PBGuiEditorShared.setInlineStatusError(errEl, {
           baseClassName: 'field-status field-status-inline',
-          summary: 'Copy failed',
-          message: detail
+          summary: PBGuiI18n.t('v7run.copyFailed'),
+          message: PBGuiI18n.serverMsg(detail)
         });
       }
       return;
@@ -3087,26 +3088,26 @@ async function doCopyToUser() {
     var syncOk = (data.sync && data.sync.ok) || 0;
     var syncFail = (data.sync && data.sync.failed) || 0;
     var suffix = '';
-    if (syncOk > 0) suffix = ' | SSH sync: ' + syncOk + ' host(s) OK';
-    else if (syncFail > 0) suffix = ' | SSH sync: ' + syncFail + ' failed';
+    if (syncOk > 0) suffix = PBGuiI18n.t('v7run.sshSyncOk', { count: syncOk });
+    else if (syncFail > 0) suffix = PBGuiI18n.t('v7run.sshSyncFailed', { count: syncFail });
     var copiedOverrides = (data.override_copy && data.override_copy.copied || []).length;
     var missingOverrides = (data.override_copy && data.override_copy.missing || []).length;
-    if (copiedOverrides > 0) suffix += ' | overrides: ' + copiedOverrides;
+    if (copiedOverrides > 0) suffix += PBGuiI18n.t('v7run.overridesCount', { count: copiedOverrides });
     closeCopyUserModal();
     if (missingOverrides > 0) {
-      toast('Copied disabled config to ' + targetUser + ', but ' + missingOverrides + ' override file(s) were missing' + suffix, 'err');
+      toast(PBGuiI18n.t('v7run.copiedWithMissingOverrides', { user: targetUser, missing: missingOverrides }) + suffix, 'err');
     } else {
-      toast('Copied disabled config to ' + targetUser + ' v' + data.version + suffix, 'ok');
+      toast(PBGuiI18n.t('v7run.copiedDisabledVersion', { user: targetUser, version: data.version }) + suffix, 'ok');
     }
   } catch (e) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: 'Copy failed',
+      summary: PBGuiI18n.t('v7run.copyFailed'),
       message: e.message || String(e)
     });
   } finally {
     btn.disabled = IS_NEW === 'true' || document.getElementById('copy-user').options.length === 0;
-    btn.innerHTML = 'Copy';
+    btn.innerHTML = PBGuiI18n.t('v7run.copy');
   }
 }
 
@@ -3133,7 +3134,7 @@ function renderImportUserOptions(showAll) {
   if (!matches.length) {
     var empty = document.createElement('div');
     empty.className = 'user-combobox-empty';
-    empty.textContent = 'No matching users';
+    empty.textContent = PBGuiI18n.t('v7run.noMatchingUsers');
     options.appendChild(empty);
   } else {
     matches.forEach(function(user) {
@@ -3240,8 +3241,8 @@ async function doImport() {
   if (!matchedUser) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: 'Import failed',
-      message: 'Select a configured user from the search suggestions.'
+      summary: PBGuiI18n.t('v7run.importFailed'),
+      message: PBGuiI18n.t('v7run.selectConfiguredUser')
     });
     return;
   }
@@ -3264,8 +3265,8 @@ async function doImport() {
   } catch (e) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: 'Import failed',
-      message: e.message || 'Unable to prepare imported config'
+      summary: PBGuiI18n.t('v7run.importFailed'),
+      message: e.message || PBGuiI18n.t('v7run.unableToPrepareImport')
     });
     return;
   }
@@ -3275,7 +3276,7 @@ async function doImport() {
   populateForm();
   queueSymbolsAndTagsLoad(cfg, { preferConfigValues: true });
   closeImportModal();
-  toast('Config imported', 'ok');
+  toast(PBGuiI18n.t('v7run.configImported'), 'ok');
 }
 
 
@@ -3330,7 +3331,7 @@ async function openLogPanel() {
     _runLogViewer.open();
   }
 
-  badge.textContent = 'searching...';
+  badge.textContent = PBGuiI18n.t('v7run.searching');
   badge.className = 'disabled';
   if (runEditorAdapter.isV8) {
     var isCurrentLocal = !!MASTER_NAME && enabledOn === MASTER_NAME;
@@ -3409,7 +3410,7 @@ async function fetchDynamicIgnorePreview() {
     document.getElementById('di-approved').textContent = 'approved_symbols: [' + (data.approved || []).join(', ') + ']';
     document.getElementById('di-ignored').textContent = 'ignored_symbols: [' + (data.ignored || []).join(', ') + ']';
   } catch (e) {
-    document.getElementById('di-approved').textContent = 'Error: ' + e.message;
+    document.getElementById('di-approved').textContent = PBGuiI18n.t('common.error') + ': ' + e.message;
   }
 }
 
@@ -3463,17 +3464,17 @@ document.getElementById('f-apply-filters').addEventListener('change', async func
       '&tags=' + encodeURIComponent(tags);
     var resp = await apiFetch(url);
     var data = await resp.json();
-    if (!resp.ok) throw new Error((data && data.detail) || resp.statusText || 'Filter request failed');
+    if (!resp.ok) throw new Error(PBGuiI18n.serverMsg((data && data.detail) || resp.statusText || PBGuiI18n.t('v7run.filterRequestFailed')));
     if (runEditorAdapter.isV8 && Array.isArray(data.unresolved) && data.unresolved.length) {
-      throw new Error('PB8 could not project filtered coins: ' + data.unresolved.join(', '));
+      throw new Error(PBGuiI18n.t('v7run.pb8CannotProjectCoins', { coins: data.unresolved.join(', ') }));
     }
     setMultiselectValues('ms-approved-long', data.approved || []);
     setMultiselectValues('ms-approved-short', data.approved || []);
     setMultiselectValues('ms-ignored-long', data.ignored || []);
     setMultiselectValues('ms-ignored-short', data.ignored || []);
-    toast('Filters applied', 'info');
+    toast(PBGuiI18n.t('v7run.filtersApplied'), 'info');
   } catch (e) {
-    toast('Filter error: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.filterError') + ': ' + e.message, 'err');
   }
   this.checked = false;
 });
@@ -3658,7 +3659,7 @@ var _runMsController = window.PBGuiEditorShared.createMultiselectController({
   counterpartMap: msCounterpart,
   coinIds: msCoinIds,
   formatTagLabel: function(ctx) {
-    if (ctx.value === 'all') return '★ all';
+    if (ctx.value === 'all') return PBGuiI18n.t('v7run.starAll');
     if (ctx.meta && ctx.meta.status === 'invalid') return '? ' + (ctx.meta.raw || ctx.value);
     return pb8MarketLabels[ctx.value] || (ctx.meta && ctx.meta.normalized) || ctx.value;
   },
@@ -3669,17 +3670,17 @@ var _runMsController = window.PBGuiEditorShared.createMultiselectController({
   formatTagTitle: function(ctx) {
     if (!ctx.meta) return '';
     if (ctx.meta.status === 'invalid') {
-      return (ctx.meta.changed ? ('Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '. ') : '') +
-        (runEditorAdapter.isV8 ? 'PB8 could not resolve this market identifier for the current exchange.' : 'CoinData could not resolve this entry to an active coin for the current exchange.');
+      return (ctx.meta.changed ? PBGuiI18n.t('v7run.normalizedFrom', { raw: ctx.meta.raw, normalized: ctx.meta.normalized }) : '') +
+        (runEditorAdapter.isV8 ? PBGuiI18n.t('v7run.pb8CannotResolveMarketId') : PBGuiI18n.t('v7run.coinDataCannotResolveEntry'));
     }
     if (ctx.meta.changed) {
-      return 'Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '.';
+      return PBGuiI18n.t('v7run.normalizedFrom', { raw: ctx.meta.raw, normalized: ctx.meta.normalized });
     }
     return '';
   },
   statusSummaryBuilder: function(ctx) {
     return {
-      html: '<span class="err">' + ctx.invalidCount + ' invalid</span>',
+      html: '<span class="err">' + PBGuiI18n.t('v7run.invalidCount', { count: ctx.invalidCount }) + '</span>',
       display: 'block'
     };
   },
@@ -3714,11 +3715,11 @@ function getCoinTagLabel(value, meta) {
 function getCoinTagTitle(value, meta) {
   if (!meta) return '';
   if (meta.status === 'invalid') {
-    return (meta.changed ? ('Normalized from ' + meta.raw + ' to ' + meta.normalized + '. ') : '') +
-      (runEditorAdapter.isV8 ? 'PB8 could not resolve this market identifier for the current exchange.' : 'CoinData could not resolve this entry to an active coin for the current exchange.');
+    return (meta.changed ? PBGuiI18n.t('v7run.normalizedFrom', { raw: meta.raw, normalized: meta.normalized }) : '') +
+      (runEditorAdapter.isV8 ? PBGuiI18n.t('v7run.pb8CannotResolveMarketId') : PBGuiI18n.t('v7run.coinDataCannotResolveEntry'));
   }
   if (meta.changed) {
-    return 'Normalized from ' + meta.raw + ' to ' + meta.normalized + '.';
+    return PBGuiI18n.t('v7run.normalizedFrom', { raw: meta.raw, normalized: meta.normalized });
   }
   return '';
 }
@@ -3752,7 +3753,7 @@ async function refreshCoinStatuses(exchange, requestSeq) {
       body: JSON.stringify({ exchanges: [exchange], coins: coins })
     });
     var data = await resp.json();
-    if (!resp.ok) throw new Error((data && data.detail) || resp.statusText || 'Failed to resolve coin status');
+    if (!resp.ok) throw new Error(PBGuiI18n.serverMsg((data && data.detail) || resp.statusText || PBGuiI18n.t('v7run.failedResolveCoinStatus')));
     if (requestSeq != null && requestSeq !== _symbolsAndTagsLoadSeq) return;
     Object.keys(data.statuses || {}).forEach(function(identifier) {
       var status = data.statuses[identifier];
@@ -3818,7 +3819,7 @@ function bcApply() {
     scheduleStructuredEditorSync();
   }
   document.getElementById('bc-modal').classList.remove('open');
-  toast('balance_override set to ' + _bcRecommended, 'ok');
+  toast(PBGuiI18n.t('v7run.balanceOverrideSet', { value: _bcRecommended }), 'ok');
 }
 
 async function calculateBalance() {
@@ -3837,7 +3838,7 @@ async function calculateBalance() {
   var exchange = getSelectedUserExchange();
   if (!exchange) {
     loadingEl.style.display = 'none';
-    errorEl.textContent = 'Cannot determine exchange — please select a user first.';
+    errorEl.textContent = PBGuiI18n.t('v7run.cannotDetermineExchange');
     errorEl.style.display = 'block';
     return;
   }
@@ -3852,7 +3853,7 @@ async function calculateBalance() {
     loadingEl.style.display = 'none';
 
     if (data.error) {
-      errorEl.textContent = data.error;
+      errorEl.textContent = PBGuiI18n.serverMsg(data.error);
       errorEl.style.display = 'block';
       return;
     }
@@ -3866,16 +3867,16 @@ async function calculateBalance() {
     if (rec) {
       _bcRecommended = rec.recommended_balance;
       recEl.innerHTML =
-        '\u2705 Recommendation (' + rec.side + ') — <strong>' + exchangeLabel + '</strong>' +
-        '<br><strong>Limiting symbol:</strong> ' + rec.symbol +
-        '<br><strong>Min order price:</strong> ' + rec.min_order_price +
-        '<br><strong>TWE:</strong> ' + rec.total_wallet_exposure_limit +
-        ' &nbsp; <strong>n_positions:</strong> ' + rec.n_positions +
-        ' &nbsp; <strong>entry_initial_qty_pct:</strong> ' + rec.entry_initial_qty_pct +
-        '<br><strong>Calculated balance needed:</strong> ' + rec.calculated_balance + ' USDT' +
-        '<br><strong style="color:var(--green)">Recommended balance: ' + rec.recommended_balance + ' USDT</strong>';
+        '\u2705 ' + PBGuiI18n.t('v7run.bcRecommendation', { side: rec.side }) + ' — <strong>' + exchangeLabel + '</strong>' +
+        '<br><strong>' + PBGuiI18n.t('v7run.bcLimitingSymbol') + '</strong> ' + rec.symbol +
+        '<br><strong>' + PBGuiI18n.t('v7run.bcMinOrderPrice') + '</strong> ' + rec.min_order_price +
+        '<br><strong>' + PBGuiI18n.t('v7run.bcTwe') + '</strong> ' + rec.total_wallet_exposure_limit +
+        ' &nbsp; <strong>' + PBGuiI18n.t('v7run.bcNpositions') + '</strong> ' + rec.n_positions +
+        ' &nbsp; <strong>' + PBGuiI18n.t('v7run.bcEntryInitialQty') + '</strong> ' + rec.entry_initial_qty_pct +
+        '<br><strong>' + PBGuiI18n.t('v7run.bcCalculatedBalance') + '</strong> ' + rec.calculated_balance + ' USDT' +
+        '<br><strong style="color:var(--green)">' + PBGuiI18n.t('v7run.bcRecommendedBalance') + ' ' + rec.recommended_balance + ' USDT</strong>';
     } else {
-      recEl.innerHTML = '\u26a0\ufe0f No recommendation (' + exchangeLabel + ') — check that n_positions, TWE and entry_initial_qty_pct are set.';
+      recEl.innerHTML = '\u26a0\ufe0f ' + PBGuiI18n.t('v7run.bcNoRecommendation', { exchange: exchangeLabel });
     }
 
     // Show top 5 most restrictive coins per side
@@ -3883,18 +3884,18 @@ async function calculateBalance() {
     var bl = data.balance_long || [];
     var bs = data.balance_short || [];
     if (bl.length) {
-      details += '<br><strong>Top coins by balance needed (long):</strong><br>';
+      details += '<br><strong>' + PBGuiI18n.t('v7run.bcTopCoinsLong') + '</strong><br>';
       bl.slice(0, 5).forEach(function(r) { details += '&nbsp;&nbsp;' + r.coin + ': ' + r.balance + ' USDT<br>'; });
     }
     if (bs.length) {
-      details += '<br><strong>Top coins by balance needed (short):</strong><br>';
+      details += '<br><strong>' + PBGuiI18n.t('v7run.bcTopCoinsShort') + '</strong><br>';
       bs.slice(0, 5).forEach(function(r) { details += '&nbsp;&nbsp;' + r.coin + ': ' + r.balance + ' USDT<br>'; });
     }
     detEl.innerHTML = details;
 
   } catch (e) {
     loadingEl.style.display = 'none';
-    errorEl.textContent = 'Request failed: ' + e.message;
+    errorEl.textContent = PBGuiI18n.t('v7run.requestFailed') + ': ' + e.message;
     errorEl.style.display = 'block';
   }
 }
@@ -3920,6 +3921,9 @@ async function calculateBalance() {
 /* ─── Init ─────────────────────────────────────────────────── */
 bindStructuredEditorSync();
 _editorInitPromise = init();
+document.title = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.titleEditV8' : 'v7run.titleEdit');
+var _sbTitle = document.querySelector('.sb-title');
+if (_sbTitle) _sbTitle.textContent = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.editPb8Instance' : 'v7run.editInstance');
 </script>
 
 <!-- ── Shared nav bar ── -->
@@ -3988,7 +3992,7 @@ window.PBGUI_NAV_CONFIG = {
   });
 })();
 </script>
-<script src="/app/js/shared_help_overlay.js?v=6"></script>
+<script src="/app/js/shared_help_overlay.js?v=7"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 
 <!-- Guide overlay JS -->

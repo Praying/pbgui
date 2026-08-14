@@ -12,6 +12,21 @@
 (function () {
     'use strict';
 
+    function _t(key, fallback, params) {
+        var i18n = window.PBGuiI18n;
+        if (i18n && typeof i18n.t === 'function') {
+            var v = i18n.t(key, params);
+            if (v !== key) return v;
+        }
+        var out = String(fallback);
+        if (params) {
+            out = out.replace(/\{(\w+)\}/g, function (m, name) {
+                return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+            });
+        }
+        return out;
+    }
+
     var API_BASE = "%%API_BASE%%";
     var API_HOST = "%%API_HOST%%";
     var USERS    = %%USERS%%;
@@ -150,7 +165,7 @@
                     var _chk = document.createElement('input');
                     _chk.type = 'checkbox'; _chk.checked = toNow;
                     toNowCtrl.appendChild(_chk);
-                    toNowCtrl.appendChild(document.createTextNode('Now'));
+                    toNowCtrl.appendChild(document.createTextNode(_t('dash.now', 'Now')));
                     _chk.addEventListener('change', function () {
                         var _parts = currentPeriod.split(':');
                         if (this.checked) {
@@ -183,7 +198,7 @@
                 container.innerHTML = '';
                 var st = document.createElement('div');
                 st.className = 'dt-status';
-                st.textContent = '\u26a0 Data unavailable';
+                st.textContent = _t('dash.dataUnavailable', '\u26a0 Data unavailable');
                 container.appendChild(st);
                 reportHeight();
             });
@@ -229,7 +244,7 @@
         else { setTimeout(function () { waitForPlotly(cb); }, 50); }
     }
 
-    var DR_VERSION = '20260812b';
+    var DR_VERSION = '20260814a';
 
     function _loadRenderScript(cb) {
         if (window.DashRender && window.DashRender.VERSION !== DR_VERSION) {

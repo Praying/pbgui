@@ -7,6 +7,8 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+from tests.i18n_helpers import assert_text_present
+
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKTEST_PATH = ROOT / "frontend" / "v7_backtest.html"
@@ -129,7 +131,7 @@ def test_foreign_archives_hide_and_guard_content_mutations() -> None:
         assert read_button in visibility
     assert "mode === 'schedules' && !selectedArchiveIsOwn()" in set_mode
     assert "schedBtn.style.display = own ? '' : 'none'" in mode_buttons
-    assert "own ? '\\x3Cth>Actions" in schedule_render
+    assert "own ? '\\x3Cth>' + PBGuiI18n.t('v7backtest.actions')" in schedule_render
     assert "own ? '\\x3Ctd class=\"actions-cell\">'" in schedule_render
 
     for name in (
@@ -158,11 +160,14 @@ def test_backtest_archive_optimize_import_uses_collision_modes_and_three_choices
     assert "overwrite:" not in request
     assert "err.detail = detail" in request
     assert "detail.code !== 'optimize_config_exists'" in choose
-    assert re.findall(r"label: '([^']+)'", choose) == [
-        "Overwrite",
-        "Import as Copy",
-        "Cancel",
+    assert re.findall(r"label: PBGuiI18n\.t\('([^']+)'\)", choose) == [
+        "v7backtest.overwrite",
+        "v7backtest.importAsCopy",
+        "common.cancel",
     ]
+    assert_text_present(choose, "Overwrite")
+    assert_text_present(choose, "Import as Copy")
+    assert_text_present(choose, "Cancel")
     assert "value: 'overwrite'" in choose
     assert "value: 'copy'" in choose
     assert "value: null" in choose
@@ -187,11 +192,14 @@ def test_optimize_archive_import_persists_then_opens_server_name() -> None:
     assert "/optimize-configs/import" in request
     assert "method: 'POST'" in request
     assert "collision: collision" in request
-    assert re.findall(r"label: '([^']+)'", choose) == [
-        "Overwrite",
-        "Import as Copy",
-        "Cancel",
+    assert re.findall(r"label: PBGuiI18n\.t\('([^']+)'\)", choose) == [
+        "v7optimize.overwrite",
+        "v7optimize.importAsCopy",
+        "common.cancel",
     ]
+    assert_text_present(choose, "Overwrite")
+    assert_text_present(choose, "Import as Copy")
+    assert_text_present(choose, "Cancel")
     assert "requestArchiveOptimizeConfigImport(archiveName, item.path, suggestedName, 'error')" in archive_flow
     assert "requestArchiveOptimizeConfigImport(archiveName, item.path, suggestedName, collision)" in archive_flow
     assert "/optimize-configs/config?" not in archive_flow
@@ -209,7 +217,7 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
         path.name: path.read_text(encoding="utf-8")
         for path in (ROOT / "frontend").glob("*.html")
     }
-    assert not any("pbgui_dialogs.js?v=4" in source for source in html_sources.values())
+    assert not any("pbgui_dialogs.js?v=5" in source for source in html_sources.values())
     expected_consumers = {
         "api_keys_editor.html",
         "cluster.html",
@@ -227,4 +235,4 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
         "welcome.html",
     }
     for filename in expected_consumers:
-        assert "pbgui_dialogs.js?v=5" in html_sources[filename]
+        assert "pbgui_dialogs.js?v=6" in html_sources[filename]

@@ -9,6 +9,18 @@
  * Depends on parent page providing: apiFetch(), toast(), esc()
  */
 
+function i18nT(key, params, fallback) {
+  var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+  if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+  var text = fallback == null ? key : String(fallback);
+  if (params) {
+    text = text.replace(/\{(\w+)\}/g, function (m, name) {
+      return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+    });
+  }
+  return text;
+}
+
 /* ── State ──────────────────────────────────────────────────── */
 var _suiteState = {
   enabled: false,
@@ -59,6 +71,14 @@ var _suiteTemplates = {
     ],
     aggregate: { default: 'mean', drawdown_worst_strategy_eq: 'max' },
   },
+};
+
+/* ── Template display keys ──────────────────────────────────── */
+var _suiteTemplateKeys = {
+  'Exchange Comparison': 'editor.suite.templateExchangeComparison',
+  'Date Windows': 'editor.suite.templateDateWindows',
+  'TWE Sensitivity': 'editor.suite.templateTweSensitivity',
+  'n_positions Sensitivity': 'editor.suite.templateNposSensitivity'
 };
 
 /* ── Aggregate metric names ─────────────────────────────────── */
@@ -214,7 +234,7 @@ function _suiteAvailableCoins() {
 
 function _suiteBuildCoinMsField(id, label, tip, placeholder) {
   return '\x3Cdiv class="form-group">\x3Clabel>\x3Cspan data-tip="' + esc(tip) + '">' + label + '\x3C/span> ' +
-    '\x3Cspan class="ms-clear-btn" onclick="_suiteClearCoinMs(\'' + id + '\')" title="Clear all">\u00d7\x3C/span>\x3C/label>' +
+    '\x3Cspan class="ms-clear-btn" onclick="_suiteClearCoinMs(\'' + id + '\')" title="' + i18nT('editor.suite.clearAll', null, 'Clear all') + '">\u00d7\x3C/span>\x3C/label>' +
     '\x3Cdiv class="ms-wrap" id="' + id + '">' +
       '\x3Cinput class="ms-input" id="' + id + '-input" placeholder="' + esc(placeholder) + '" autocomplete="off">' +
       '\x3Cdiv class="ms-dropdown" id="' + id + '-dd">\x3C/div>' +
@@ -228,7 +248,7 @@ function _suiteBuildDateField(id, label, value, tip, placeholder) {
       '\x3Cinput type="text" id="' + id + '" value="' + esc(dateVal) + '" data-prev="' + esc(dateVal) + '" placeholder="' + esc(placeholder || '') + '" ' +
       'style="width:100%;box-sizing:border-box;padding-right:26px" onchange="this.dataset.prev=this.value">' +
       '\x3Cbutton type="button" data-dp="' + id + '" onclick="window.__dp.show(\'' + id + '\',this)" ' +
-      'style="position:absolute;right:2px;top:50%;transform:translateY(-50%);background:transparent;border:none;padding:0 3px;font-size:var(--fs-sm);line-height:1;cursor:pointer" title="Open calendar">📅\x3C/button>' +
+      'style="position:absolute;right:2px;top:50%;transform:translateY(-50%);background:transparent;border:none;padding:0 3px;font-size:var(--fs-sm);line-height:1;cursor:pointer" title="' + i18nT('editor.suite.openCalendar', null, 'Open calendar') + '">📅\x3C/button>' +
     '\x3C/div>\x3C/div>';
 }
 
@@ -240,21 +260,21 @@ function _suiteBuildCoinSourcesEditor(data) {
   }
   return '\x3Cdiv class="expander" id="suite-exp-csrc">' +
     '\x3Cdiv class="expander-header" onclick="toggleExpander(\'suite-exp-csrc\')">' +
-      '\x3Cspan class="arrow">▶\x3C/span> coin_sources (' + count + ' configured)' +
+      '\x3Cspan class="arrow">▶\x3C/span> ' + i18nT('editor.suite.coinSourcesCount', { n: count }, 'coin_sources (' + count + ' configured)') +
     '\x3C/div>' +
     '\x3Cdiv class="expander-body">' +
       '\x3Cdiv style="display:flex;align-items:center;justify-content:flex-end;min-height:18px;margin-bottom:4px">' +
-        '\x3Cspan class="ms-clear-btn" onclick="kvClearAll(\'' + _suiteCoinSourcesPrefix + '\')" title="Clear all">\u00d7 all\x3C/span>' +
+        '\x3Cspan class="ms-clear-btn" onclick="kvClearAll(\'' + _suiteCoinSourcesPrefix + '\')" title="' + i18nT('editor.suite.clearAll', null, 'Clear all') + '">\u00d7 all\x3C/span>' +
       '\x3C/div>' +
       '\x3Cdiv class="kv-chips" id="' + _suiteCoinSourcesPrefix + '">\x3C/div>' +
       '\x3Cdiv style="display:flex;gap:var(--sp-sm);align-items:end;margin-top:var(--sp-xs)">' +
-        '\x3Cdiv class="form-group" style="width:140px">\x3Clabel>Exchange\x3C/label>' +
+        '\x3Cdiv class="form-group" style="width:140px">\x3Clabel>' + i18nT('editor.suite.exchange', null, 'Exchange') + '\x3C/label>' +
           '\x3Cselect id="' + _suiteCoinSourcesPrefix + '-exchange" class="form-input" onchange="kvLoadCoins(\'' + _suiteCoinSourcesPrefix + '\')">' +
             exchangeOptions +
           '\x3C/select>\x3C/div>' +
-        '\x3Cdiv class="form-group" style="flex:1">\x3Clabel>Coin\x3C/label>' +
+        '\x3Cdiv class="form-group" style="flex:1">\x3Clabel>' + i18nT('editor.suite.coin', null, 'Coin') + '\x3C/label>' +
           '\x3Cdiv class="ms-wrap" id="' + _suiteCoinSourcesPrefix + '-coin">' +
-            '\x3Cinput class="ms-input" id="' + _suiteCoinSourcesPrefix + '-coin-input" placeholder="Type to search..." autocomplete="off">' +
+            '\x3Cinput class="ms-input" id="' + _suiteCoinSourcesPrefix + '-coin-input" placeholder="' + i18nT('editor.suite.typeToSearch', null, 'Type to search...') + '" autocomplete="off">' +
             '\x3Cdiv class="ms-dropdown" id="' + _suiteCoinSourcesPrefix + '-coin-dd">\x3C/div>' +
           '\x3C/div>\x3C/div>' +
       '\x3C/div>' +
@@ -435,10 +455,11 @@ function _suiteRender() {
   var h = '';
   h += '\x3Cdiv class="expander' + (_suiteState.enabled ? ' open' : '') + '" id="exp-suite">';
   h += '\x3Cdiv class="expander-header" onclick="toggleExpander(\'exp-suite\')">';
-  h += '\x3Cspan class="arrow">\u25B6\x3C/span> Suite Mode';
+  h += '\x3Cspan class="arrow">\u25B6\x3C/span> ' + i18nT('editor.suite.mode', null, 'Suite Mode');
   if (_suiteState.enabled) {
-    h += ' \x3Cspan style="color:var(--green);font-size:var(--fs-xs);margin-left:6px">ENABLED (' +
-         _suiteState.scenarios.length + ' scenario' + (_suiteState.scenarios.length !== 1 ? 's' : '') + ')\x3C/span>';
+    h += ' \x3Cspan style="color:var(--green);font-size:var(--fs-xs);margin-left:6px">' +
+         i18nT('editor.suite.enabled', null, 'ENABLED') + ' (' +
+         i18nT('editor.suite.scenario', { n: _suiteState.scenarios.length, s: _suiteState.scenarios.length !== 1 ? 's' : '' }, _suiteState.scenarios.length + ' scenario' + (_suiteState.scenarios.length !== 1 ? 's' : '')) + ')\x3C/span>';
   }
   h += '\x3C/div>';
   h += '\x3Cdiv class="expander-body">';
@@ -447,19 +468,21 @@ function _suiteRender() {
   h += '\x3Cdiv class="chk-row">\x3Cinput type="checkbox" id="suite-enabled"' +
        (_suiteState.enabled ? ' checked' : '') +
        ' onchange="_suiteToggle(this.checked)">';
-  h += '\x3Clabel for="suite-enabled">\x3Cspan data-tip="Run multiple scenarios with different parameters,\ncoin sets, date ranges, or exchanges.\nResults are aggregated for comparison.">Enable Suite Mode\x3C/span>\x3C/label>\x3C/div>';
+  h += '\x3Clabel for="suite-enabled">\x3Cspan data-tip="' + i18nT('editor.suite.enableModeTip', null, 'Run multiple scenarios with different parameters,\ncoin sets, date ranges, or exchanges.\nResults are aggregated for comparison.') + '">' + i18nT('editor.suite.enableMode', null, 'Enable Suite Mode') + '\x3C/span>\x3C/label>\x3C/div>';
   h += '\x3C/div>';
 
   if (_suiteState.enabled) {
     h += '\x3Cdiv style="display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-bottom:var(--sp-md)">';
-    h += '\x3Cspan style="font-size:var(--fs-xs);color:var(--text-dim);align-self:center">Templates:\x3C/span>';
+    h += '\x3Cspan style="font-size:var(--fs-xs);color:var(--text-dim);align-self:center">' + i18nT('editor.suite.templates', null, 'Templates:') + '\x3C/span>';
     var tKeys = Object.keys(_suiteTemplates);
     for (var ti = 0; ti < tKeys.length; ti++) {
+      var labelKey = _suiteTemplateKeys[tKeys[ti]];
+      var label = labelKey ? i18nT(labelKey, null, tKeys[ti]) : tKeys[ti];
       h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteApplyTemplate(\'' +
-           tKeys[ti].replace(/'/g, "\\'") + '\')">' + tKeys[ti] + '\x3C/button>';
+           tKeys[ti].replace(/'/g, "\\'") + '\')">' + label + '\x3C/button>';
     }
-    h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteResetToBase()" title="Clear all scenarios and reset to a single base scenario" ' +
-         'style="border-color:var(--orange);color:var(--orange)">Reset to Base\x3C/button>';
+    h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteResetToBase()" title="' + i18nT('editor.suite.resetToBaseTitle', null, 'Clear all scenarios and reset to a single base scenario') + '" ' +
+         'style="border-color:var(--orange);color:var(--orange)">' + i18nT('editor.suite.resetToBase', null, 'Reset to Base') + '\x3C/button>';
     h += '\x3C/div>';
 
     h += _suiteRenderScenariosTable();
@@ -513,13 +536,13 @@ function _suiteApplyTemplate(name) {
     }
     if (added.length) {
       cfgSetMs('ms-cfg-exchanges', baseEx);
-      toast('Added exchange(s) ' + added.join(', ') + ' to base config', 'ok');
+      toast(i18nT('editor.suite.addedExchanges', { ex: added.join(', ') }, 'Added exchange(s) ' + added.join(', ') + ' to base config'), 'ok');
     }
   }
 
   _suiteRender();
   _suiteNotifyStructuredSync();
-  toast('Template "' + name + '" applied', 'ok');
+  toast(i18nT('editor.suite.templateApplied', { name: name }, 'Template "' + name + '" applied'), 'ok');
 }
 
 /* ── Reset to single base scenario ──────────────────────────── */
@@ -529,7 +552,7 @@ function _suiteResetToBase() {
   _suiteState.editIdx = -1;
   _suiteRender();
   _suiteNotifyStructuredSync();
-  toast('Reset to base scenario', 'ok');
+  toast(i18nT('editor.suite.resetToBaseToast', null, 'Reset to base scenario'), 'ok');
 }
 
 /* ── Scenarios table ────────────────────────────────────────── */
@@ -537,31 +560,31 @@ function _suiteRenderScenariosTable() {
   var s = _suiteState.scenarios;
   var h = '\x3Cdiv style="margin-bottom:var(--sp-md)">';
   h += '\x3Cdiv style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">';
-  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600">Scenarios (' + s.length + ')\x3C/span>';
-  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteAddScenario()">+ Add Scenario\x3C/button>';
+  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600">' + i18nT('editor.suite.scenariosCount', { n: s.length }, 'Scenarios (' + s.length + ')') + '\x3C/span>';
+  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteAddScenario()">' + i18nT('editor.suite.addScenario', null, '+ Add Scenario') + '\x3C/button>';
   h += '\x3C/div>';
 
   if (s.length === 0) {
-    h += '\x3Cdiv style="color:var(--text-dim);font-size:var(--fs-sm);padding:var(--sp-sm)">No scenarios defined. Add one or use a template.\x3C/div>';
+    h += '\x3Cdiv style="color:var(--text-dim);font-size:var(--fs-sm);padding:var(--sp-sm)">' + i18nT('editor.suite.noScenarios', null, 'No scenarios defined. Add one or use a template.') + '\x3C/div>';
   } else {
     h += '\x3Ctable class="tbl" style="font-size:var(--fs-sm)">';
-    h += '\x3Cthead>\x3Ctr>\x3Cth style="width:30%">Label\x3C/th>\x3Cth>Details\x3C/th>\x3Cth style="width:120px">Actions\x3C/th>\x3C/tr>\x3C/thead>';
+    h += '\x3Cthead>\x3Ctr>\x3Cth style="width:30%">' + i18nT('editor.suite.label', null, 'Label') + '\x3C/th>\x3Cth>' + i18nT('editor.suite.details', null, 'Details') + '\x3C/th>\x3Cth style="width:120px">' + i18nT('editor.suite.actions', null, 'Actions') + '\x3C/th>\x3C/tr>\x3C/thead>';
     h += '\x3Ctbody>';
     for (var i = 0; i < s.length; i++) {
       var sc = s[i];
       var isEditing = (_suiteState.editIdx === i);
       h += '\x3Ctr' + (isEditing ? ' style="background:rgba(77,166,255,.06)"' : '') + '>';
-      h += '\x3Ctd style="font-weight:600">' + esc(sc.label || '(unnamed)') + '\x3C/td>';
+      h += '\x3Ctd style="font-weight:600">' + esc(sc.label || i18nT('editor.suite.unnamed', null, '(unnamed)')) + '\x3C/td>';
       h += '\x3Ctd>' + _suiteScenarioSummary(sc) + '\x3C/td>';
       h += '\x3Ctd>';
-      h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteEditScenario(' + i + ')" title="Edit">' +
-           (isEditing ? 'Editing' : 'Edit') + '\x3C/button> ';
-      h += '\x3Cbutton type="button" class="act-btn act-btn-danger" onclick="_suiteRemoveScenario(' + i + ')" title="Remove">\u00d7\x3C/button>';
+      h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteEditScenario(' + i + ')" title="' + i18nT('editor.suite.edit', null, 'Edit') + '">' +
+           (isEditing ? i18nT('editor.suite.editing', null, 'Editing') : i18nT('editor.suite.edit', null, 'Edit')) + '\x3C/button> ';
+      h += '\x3Cbutton type="button" class="act-btn act-btn-danger" onclick="_suiteRemoveScenario(' + i + ')" title="' + i18nT('editor.suite.remove', null, 'Remove') + '">\u00d7\x3C/button>';
       if (i > 0) {
-        h += ' \x3Cbutton type="button" class="act-btn" onclick="_suiteMoveScenario(' + i + ',-1)" title="Move up">\u2191\x3C/button>';
+        h += ' \x3Cbutton type="button" class="act-btn" onclick="_suiteMoveScenario(' + i + ',-1)" title="' + i18nT('editor.suite.moveUp', null, 'Move up') + '">\u2191\x3C/button>';
       }
       if (i < s.length - 1) {
-        h += ' \x3Cbutton type="button" class="act-btn" onclick="_suiteMoveScenario(' + i + ',1)" title="Move down">\u2193\x3C/button>';
+        h += ' \x3Cbutton type="button" class="act-btn" onclick="_suiteMoveScenario(' + i + ',1)" title="' + i18nT('editor.suite.moveDown', null, 'Move down') + '">\u2193\x3C/button>';
       }
       h += '\x3C/td>\x3C/tr>';
     }
@@ -574,15 +597,15 @@ function _suiteRenderScenariosTable() {
 /* ── Short summary of scenario ──────────────────────────────── */
 function _suiteScenarioSummary(sc) {
   var parts = [];
-  if (sc.exchanges && sc.exchanges.length > 0) parts.push('ex: ' + sc.exchanges.join(','));
+  if (sc.exchanges && sc.exchanges.length > 0) parts.push(i18nT('editor.suite.summaryEx', { ex: sc.exchanges.join(',') }, 'ex: ' + sc.exchanges.join(',')));
   if (sc.start_date || sc.end_date) parts.push((sc.start_date || '...') + ' \u2192 ' + (sc.end_date || '...'));
-  if (sc.coins && sc.coins.length > 0) parts.push('coins: ' + sc.coins.length);
-  if (sc.ignored_coins && sc.ignored_coins.length > 0) parts.push('ignored: ' + sc.ignored_coins.length);
-  if (sc.coin_sources && Object.keys(sc.coin_sources).length > 0) parts.push('coin_src: ' + Object.keys(sc.coin_sources).length);
-  if (sc.overrides && Object.keys(sc.overrides).length > 0) parts.push('overrides: ' + Object.keys(sc.overrides).length);
+  if (sc.coins && sc.coins.length > 0) parts.push(i18nT('editor.suite.summaryCoins', { n: sc.coins.length }, 'coins: ' + sc.coins.length));
+  if (sc.ignored_coins && sc.ignored_coins.length > 0) parts.push(i18nT('editor.suite.summaryIgnored', { n: sc.ignored_coins.length }, 'ignored: ' + sc.ignored_coins.length));
+  if (sc.coin_sources && Object.keys(sc.coin_sources).length > 0) parts.push(i18nT('editor.suite.summaryCoinSrc', { n: Object.keys(sc.coin_sources).length }, 'coin_src: ' + Object.keys(sc.coin_sources).length));
+  if (sc.overrides && Object.keys(sc.overrides).length > 0) parts.push(i18nT('editor.suite.summaryOverrides', { n: Object.keys(sc.overrides).length }, 'overrides: ' + Object.keys(sc.overrides).length));
   return parts.length > 0
     ? '\x3Cspan style="color:var(--text-dim);font-size:var(--fs-xs)">' + esc(parts.join(' | ')) + '\x3C/span>'
-    : '\x3Cspan style="color:var(--text-dim);font-size:var(--fs-xs)">base config\x3C/span>';
+    : '\x3Cspan style="color:var(--text-dim);font-size:var(--fs-xs)">' + i18nT('editor.suite.baseConfig', null, 'base config') + '\x3C/span>';
 }
 
 /* ── Scenario CRUD ──────────────────────────────────────────── */
@@ -630,24 +653,24 @@ function _suiteRenderScenarioEditor() {
 
   var h = '\x3Cdiv style="border:1px solid var(--accent);border-radius:6px;padding:var(--sp-md);margin-bottom:var(--sp-md);background:rgba(77,166,255,.03)">';
   h += '\x3Cdiv style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-sm)">';
-  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600;color:var(--accent)">Edit Scenario: ' + esc(sc.label || '') + '\x3C/span>';
-  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteSaveAndClose()">Done\x3C/button>';
+  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600;color:var(--accent)">' + i18nT('editor.suite.editScenario', { label: esc(sc.label || '') }, 'Edit Scenario: ' + esc(sc.label || '')) + '\x3C/span>';
+  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteSaveAndClose()">' + i18nT('editor.suite.done', null, 'Done') + '\x3C/button>';
   h += '\x3C/div>';
 
   /* Label */
   h += '\x3Cdiv class="form-row cols-4">';
-  h += '\x3Cdiv class="form-group">\x3Clabel>\x3Cspan data-tip="Unique label for this scenario.\nUsed in result filenames.">label\x3C/span>\x3C/label>';
+  h += '\x3Cdiv class="form-group">\x3Clabel>\x3Cspan data-tip="' + i18nT('editor.suite.labelTip', null, 'Unique label for this scenario.\nUsed in result filenames.') + '">label\x3C/span>\x3C/label>';
   h += '\x3Cinput type="text" id="suite-sc-label" value="' + esc(sc.label || '') + '">\x3C/div>';
 
   /* Start / End dates */
-  h += _suiteBuildDateField('suite-sc-start', 'start_date', sc.start_date || '', 'Override start date for this scenario.\nLeave empty to use base config.', 'e.g. 2023-01-01');
-  h += _suiteBuildDateField('suite-sc-end', 'end_date', sc.end_date || '', 'Override end date for this scenario.\nLeave empty to use base config.', 'e.g. now');
+  h += _suiteBuildDateField('suite-sc-start', 'start_date', sc.start_date || '', i18nT('editor.suite.startDateTip', null, 'Override start date for this scenario.\nLeave empty to use base config.'), 'e.g. 2023-01-01');
+  h += _suiteBuildDateField('suite-sc-end', 'end_date', sc.end_date || '', i18nT('editor.suite.endDateTip', null, 'Override end date for this scenario.\nLeave empty to use base config.'), 'e.g. now');
   h += '\x3C/div>';
 
   /* Exchanges checkboxes */
   var scEx = sc.exchanges || [];
   h += '\x3Cdiv class="form-group" style="margin-bottom:var(--sp-md)">';
-  h += '\x3Clabel>\x3Cspan data-tip="Override exchanges for this scenario.\nLeave all unchecked to use base config.">exchanges\x3C/span>\x3C/label>';
+  h += '\x3Clabel>\x3Cspan data-tip="' + i18nT('editor.suite.exchangesTip', null, 'Override exchanges for this scenario.\nLeave all unchecked to use base config.') + '">exchanges\x3C/span>\x3C/label>';
   h += '\x3Cdiv style="display:flex;gap:var(--sp-md);flex-wrap:wrap">';
   for (var ei = 0; ei < _suiteState.exchanges.length; ei++) {
     var ex = _suiteState.exchanges[ei];
@@ -658,8 +681,8 @@ function _suiteRenderScenarioEditor() {
 
   /* Coins */
   h += '\x3Cdiv class="form-row cols-2">';
-  h += _suiteBuildCoinMsField('suite-sc-coins-ms', 'coins', 'Override approved coins for this scenario.\nSelect one or more coins from the currently loaded exchange universe.\nLeave empty to use base config.', 'Type to search...');
-  h += _suiteBuildCoinMsField('suite-sc-ign-ms', 'ignored_coins', 'Override ignored coins for this scenario.\nSelect one or more coins from the currently loaded exchange universe.\nLeave empty to use base config.', 'Type to search...');
+  h += _suiteBuildCoinMsField('suite-sc-coins-ms', 'coins', i18nT('editor.suite.coinsTip', null, 'Override approved coins for this scenario.\nSelect one or more coins from the currently loaded exchange universe.\nLeave empty to use base config.'), i18nT('editor.suite.typeToSearch', null, 'Type to search...'));
+  h += _suiteBuildCoinMsField('suite-sc-ign-ms', 'ignored_coins', i18nT('editor.suite.ignoredCoinsTip', null, 'Override ignored coins for this scenario.\nSelect one or more coins from the currently loaded exchange universe.\nLeave empty to use base config.'), i18nT('editor.suite.typeToSearch', null, 'Type to search...'));
   h += '\x3C/div>';
 
   /* coin_sources */
@@ -679,13 +702,13 @@ function _suiteRenderOverrides(sc) {
 
   var h = '\x3Cdiv style="margin-top:var(--sp-sm)">';
   h += '\x3Cdiv style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-xs)">';
-  h += '\x3Clabel style="font-size:var(--fs-xs);color:var(--text-dim)">\x3Cspan data-tip="Override bot parameters for this scenario.\nFormat: bot.side.param_name = value\nOverrides are applied on top of the base config.">overrides (' + keys.length + ')\x3C/span>\x3C/label>';
-  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteAddOverride()">+ Override\x3C/button>';
+  h += '\x3Clabel style="font-size:var(--fs-xs);color:var(--text-dim)">\x3Cspan data-tip="' + i18nT('editor.suite.overridesTip', null, 'Override bot parameters for this scenario.\nFormat: bot.side.param_name = value\nOverrides are applied on top of the base config.') + '">' + i18nT('editor.suite.overridesCount', { n: keys.length }, 'overrides (' + keys.length + ')') + '\x3C/span>\x3C/label>';
+  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteAddOverride()">' + i18nT('editor.suite.addOverride', null, '+ Override') + '\x3C/button>';
   h += '\x3C/div>';
 
   if (keys.length > 0) {
     h += '\x3Ctable class="tbl" style="font-size:var(--fs-xs);margin-bottom:var(--sp-xs)">';
-    h += '\x3Cthead>\x3Ctr>\x3Cth>Side\x3C/th>\x3Cth>Parameter\x3C/th>\x3Cth>Value\x3C/th>\x3Cth style="width:40px">\x3C/th>\x3C/tr>\x3C/thead>';
+    h += '\x3Cthead>\x3Ctr>\x3Cth>' + i18nT('editor.suite.side', null, 'Side') + '\x3C/th>\x3Cth>' + i18nT('editor.suite.parameter', null, 'Parameter') + '\x3C/th>\x3Cth>' + i18nT('editor.suite.value', null, 'Value') + '\x3C/th>\x3Cth style="width:40px">\x3C/th>\x3C/tr>\x3C/thead>';
     h += '\x3Ctbody>';
     for (var ki = 0; ki < keys.length; ki++) {
       var k = keys[ki];
@@ -715,17 +738,17 @@ function _suiteRenderOverrides(sc) {
   /* Add override row */
   h += '\x3Cdiv id="suite-add-ov-row" style="display:none;margin-top:var(--sp-xs)">';
   h += '\x3Cdiv class="form-row cols-4" style="align-items:end">';
-  h += '\x3Cdiv class="form-group">\x3Clabel>Side\x3C/label>\x3Cselect id="suite-ov-side">';
+  h += '\x3Cdiv class="form-group">\x3Clabel>' + i18nT('editor.suite.side', null, 'Side') + '\x3C/label>\x3Cselect id="suite-ov-side">';
   h += '\x3Coption value="long">long\x3C/option>\x3Coption value="short">short\x3C/option>\x3C/select>\x3C/div>';
-  h += '\x3Cdiv class="form-group">\x3Clabel>Parameter\x3C/label>\x3Cselect id="suite-ov-param">';
+  h += '\x3Cdiv class="form-group">\x3Clabel>' + i18nT('editor.suite.parameter', null, 'Parameter') + '\x3C/label>\x3Cselect id="suite-ov-param">';
   var bp = _suiteState.botParams;
   for (var pi = 0; pi < bp.length; pi++) {
     var pk = typeof bp[pi] === 'string' ? bp[pi] : bp[pi].key;
     h += '\x3Coption value="' + esc(pk) + '">' + esc(pk) + '\x3C/option>';
   }
   h += '\x3C/select>\x3C/div>';
-  h += '\x3Cdiv class="form-group">\x3Clabel>Value\x3C/label>\x3Cinput type="text" id="suite-ov-value" placeholder="0.5">\x3C/div>';
-  h += '\x3Cdiv class="form-group">\x3Cbutton type="button" class="act-btn" onclick="_suiteConfirmOverride()" style="height:var(--btn-h)">Add\x3C/button>\x3C/div>';
+  h += '\x3Cdiv class="form-group">\x3Clabel>' + i18nT('editor.suite.value', null, 'Value') + '\x3C/label>\x3Cinput type="text" id="suite-ov-value" placeholder="0.5">\x3C/div>';
+  h += '\x3Cdiv class="form-group">\x3Cbutton type="button" class="act-btn" onclick="_suiteConfirmOverride()" style="height:var(--btn-h)">' + i18nT('editor.suite.add', null, 'Add') + '\x3C/button>\x3C/div>';
   h += '\x3C/div>\x3C/div>';
 
   h += '\x3C/div>';
@@ -741,7 +764,7 @@ function _suiteConfirmOverride() {
   var side = document.getElementById('suite-ov-side').value;
   var param = document.getElementById('suite-ov-param').value;
   var val = document.getElementById('suite-ov-value').value.trim();
-  if (!param || val === '') { toast('Parameter and value required', 'err'); return; }
+  if (!param || val === '') { toast(i18nT('editor.suite.paramValueRequired', null, 'Parameter and value required'), 'err'); return; }
 
   var key = 'bot.' + side + '.' + param;
   // Parse value: try number, then boolean, fallback string
@@ -783,7 +806,7 @@ function _suiteSaveEditingScenario() {
   if (!labelEl) return;  // editor form not rendered
 
   var sc = _suiteState.scenarios[idx];
-  sc.label = labelEl.value.trim() || 'unnamed';
+  sc.label = labelEl.value.trim() || i18nT('editor.suite.unnamedValue', null, 'unnamed');
 
   // Start / end dates
   var sd = (document.getElementById('suite-sc-start') || {}).value || '';
@@ -840,13 +863,13 @@ function _suiteRenderAggregate() {
   var agg = _suiteState.aggregate;
   var h = '\x3Cdiv class="expander" id="exp-suite-agg">';
   h += '\x3Cdiv class="expander-header" onclick="toggleExpander(\'exp-suite-agg\')">';
-  h += '\x3Cspan class="arrow">\u25B6\x3C/span> Aggregate Settings';
+  h += '\x3Cspan class="arrow">\u25B6\x3C/span> ' + i18nT('editor.suite.aggregateSettings', null, 'Aggregate Settings');
   h += '\x3C/div>';
   h += '\x3Cdiv class="expander-body">';
 
   /* Default method */
   h += '\x3Cdiv class="form-row cols-4" style="margin-bottom:var(--sp-sm)">';
-  h += '\x3Cdiv class="form-group">\x3Clabel>\x3Cspan data-tip="Default aggregation method for all metrics.\nmean = average across scenarios.\nmin = lowest value across scenarios.\nmax = highest value across scenarios.">default method\x3C/span>\x3C/label>';
+  h += '\x3Cdiv class="form-group">\x3Clabel>\x3Cspan data-tip="' + i18nT('editor.suite.defaultMethodTip', null, 'Default aggregation method for all metrics.\nmean = average across scenarios.\nmin = lowest value across scenarios.\nmax = highest value across scenarios.') + '">' + i18nT('editor.suite.defaultMethod', null, 'default method') + '\x3C/span>\x3C/label>';
   h += '\x3Cselect id="suite-agg-default" onchange="_suiteUpdateAggDefault()">';
   h += '\x3Coption value="mean"' + (agg.default === 'mean' ? ' selected' : '') + '>mean\x3C/option>';
   h += '\x3Coption value="min"' + (agg.default === 'min' ? ' selected' : '') + '>min\x3C/option>';
@@ -859,8 +882,8 @@ function _suiteRenderAggregate() {
   var metricOptions = _suiteAggMetricOptions(metricKeys);
   h += '\x3Cdiv style="margin-bottom:var(--sp-xs)">';
   h += '\x3Cdiv style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-xs)">';
-  h += '\x3Clabel style="font-size:var(--fs-xs);color:var(--text-dim)">Metric overrides (' + metricKeys.length + ')\x3C/label>';
-  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteAddAggMetric()">+ Metric\x3C/button>';
+  h += '\x3Clabel style="font-size:var(--fs-xs);color:var(--text-dim)">' + i18nT('editor.suite.metricOverrides', { n: metricKeys.length }, 'Metric overrides (' + metricKeys.length + ')') + '\x3C/label>';
+  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteAddAggMetric()">' + i18nT('editor.suite.addMetric', null, '+ Metric') + '\x3C/button>';
   h += '\x3C/div>';
 
   if (metricKeys.length > 0) {
@@ -881,15 +904,15 @@ function _suiteRenderAggregate() {
   /* Add metric row */
   h += '\x3Cdiv id="suite-add-agg-row" style="display:none;margin-top:var(--sp-xs)">';
   h += '\x3Cdiv style="display:flex;gap:var(--sp-sm);align-items:end">';
-  h += '\x3Cdiv class="form-group" style="flex:1">\x3Clabel>Metric\x3C/label>\x3Cselect id="suite-agg-sel">';
+  h += '\x3Cdiv class="form-group" style="flex:1">\x3Clabel>' + i18nT('editor.suite.metric', null, 'Metric') + '\x3C/label>\x3Cselect id="suite-agg-sel">';
   for (var ami = 0; ami < metricOptions.length; ami++) {
     h += '\x3Coption value="' + esc(metricOptions[ami]) + '">' + esc(metricOptions[ami]) + '\x3C/option>';
   }
   h += '\x3C/select>\x3C/div>';
-  h += '\x3Cdiv class="form-group">\x3Clabel>Method\x3C/label>\x3Cselect id="suite-agg-method">';
+  h += '\x3Cdiv class="form-group">\x3Clabel>' + i18nT('editor.suite.method', null, 'Method') + '\x3C/label>\x3Cselect id="suite-agg-method">';
   h += '\x3Coption value="mean">mean\x3C/option>\x3Coption value="min">min\x3C/option>\x3Coption value="max" selected>max\x3C/option>';
   h += '\x3C/select>\x3C/div>';
-  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteConfirmAggMetric()" style="height:var(--btn-h)">Add\x3C/button>';
+  h += '\x3Cbutton type="button" class="act-btn" onclick="_suiteConfirmAggMetric()" style="height:var(--btn-h)">' + i18nT('editor.suite.add', null, 'Add') + '\x3C/button>';
   h += '\x3C/div>\x3C/div>';
 
   h += '\x3C/div>';

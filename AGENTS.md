@@ -38,7 +38,8 @@ SSE /api/live/stream → delta applies on top of DB snapshot
 ## Code Conventions
 
 ### General
-- **GUI language is English throughout** — only guides are offered in DE as well.
+- **GUI language is English and Simplified Chinese** — English is the default and the fallback; the browser language selects Chinese automatically (`zh*`), and the top-bar language button switches per browser via `localStorage['pbgui-lang']`. Help guides remain EN/DE only.
+- i18n mechanics: engine `frontend/i18n.js` (`window.PBGuiI18n.t()` / `data-i18n*` attributes), dictionaries `frontend/i18n/{en,zh}.json` (semantic dot keys, en/zh key sets must stay identical — enforced by `tests/test_i18n.py`), and `frontend/i18n/server_msgs.json` for exact-match translation of known server English messages via `PBGuiI18n.serverMsg()`. Every page loads `/app/i18n.js` early in `<head>`. Never translate user data, logs, config field names, or kept-abbreviation terms (PNL, TP/SL, API, SSH, VPS, ...).
 - Snake_case for variables/functions, PascalCase for classes, UPPER_CASE for constants.
 - Private methods: `_leading_underscore`.
 - `SERVICE = "ModuleName"` constant at top of every module for logging.

@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import textwrap
 
+from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -157,8 +159,8 @@ def test_v7_and_v8_share_the_same_backtest_shell() -> None:
     adapter_source = (ROOT / "frontend" / "js" / "backtest_editor_adapter.js").read_text(encoding="utf-8")
 
     assert '/app/css/backtest_shell.css?v=3' in v7_source
-    assert '/app/js/backtest_shell.js?v=4' in v7_source
-    assert '/app/js/backtest_editor_adapter.js?v=9' in v7_source
+    assert '/app/js/backtest_shell.js?v=5' in v7_source
+    assert '/app/js/backtest_editor_adapter.js?v=10' in v7_source
     assert "PBGuiBacktestShell.upgradeLegacy" in v7_source
     assert "PBGuiBacktestEditorAdapter.create(BACKTEST_VERSION)" in v7_source
     assert "sideConfig.risk" in adapter_source
@@ -280,6 +282,18 @@ def test_backtest_settings_modal_opens_immediately_then_refreshes_authoritative_
         _extract_function(source, name)
         for name in ("loadSettings", "renderSettingsModal", "syncOpenSettingsModal", "openSettingsModal", "settingsAdjustCpu")
     )
+    # NODE_I18N_STUB returns the raw en.json template, but this test asserts on
+    # interpolated values ("max 16", "Failed to refresh settings: offline"), so
+    # extend t() with the same {name} interpolation used by frontend/i18n.js.
+    i18n_bootstrap = NODE_I18N_STUB + (
+        "PBGuiI18n.t = function (key, params) {\n"
+        "  var value = __PBGUI_I18N_EN__[key];\n"
+        "  if (value === undefined) return key;\n"
+        "  return String(value).replace(/\\{(\\w+)\\}/g, function (match, name) {\n"
+        "    return (params && Object.prototype.hasOwnProperty.call(params, name)) ? String(params[name]) : match;\n"
+        "  });\n"
+        "};\n"
+    )
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
@@ -305,6 +319,7 @@ def test_backtest_settings_modal_opens_immediately_then_refreshes_authoritative_
         function saveSettingsFromModal() {{}}
         let resolveFetch;
         let apiFetch = () => new Promise(resolve => {{ resolveFetch = resolve; }});
+        {i18n_bootstrap}
         {functions}
         (async () => {{
           const refresh = openSettingsModal();
@@ -375,7 +390,7 @@ def test_v8_backtest_result_can_open_pb8_optimize() -> None:
     assert "'/api/optimize-v8/main_page?opt_draft_id='" in adapter
     unsupported = adapter.split("var unsupported =", 1)[1].split("];", 1)[0]
     assert "'optimizeFromResult'" not in unsupported
-    assert "/app/js/backtest_editor_adapter.js?v=9" in page
+    assert "/app/js/backtest_editor_adapter.js?v=10" in page
 
 
 def test_v8_backtest_strategy_explorer_handoffs_use_cookie_drafts() -> None:
@@ -635,8 +650,6 @@ def test_shared_template_contains_the_full_visual_editor() -> None:
 
     for editor_contract in (
         "function showConfigEditor(",
-        "Coins &amp; Filters",
-        "Bot Configuration",
         "coin-overrides-container",
         "suite-container",
         "cfg-bot-long",
@@ -645,6 +658,8 @@ def test_shared_template_contains_the_full_visual_editor() -> None:
         "function collectConfig(",
     ):
         assert editor_contract in source
+    assert_text_present(source, "Coins & Filters")
+    assert_text_present(source, "Bot Configuration")
     assert "backtestEditorAdapter.getSideValue" in source
     assert "backtestEditorAdapter.setSideValue" in source
     assert "searchParams.get('config')" in source
@@ -658,7 +673,7 @@ def test_shared_template_contains_the_full_visual_editor() -> None:
     assert "var _resultsLoadGeneration = 0;" in source
     assert "loadGeneration !== _resultsLoadGeneration" in source
     assert "loadResults(selectedFilter, { emptyRetry: true })" in source
-    assert "Checking for results" in source
+    assert_text_present(source, "Checking for results…")
     assert "endDateInput.dataset.semanticValue || endDateInput.value" in source
 
 
@@ -667,14 +682,14 @@ def test_v8_advanced_backtest_fields_use_the_intended_editor_sections() -> None:
     source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
 
     for contract in (
-        "Market Settings Overrides",
-        "Result Metrics",
         "marketSettingsCollect()",
         "resultMetricsCollect()",
         "PB8_ADVANCED_BT_PARAMS",
         "apiFetch('/result-metrics')",
     ):
         assert contract in source
+    assert_text_present(source, "Market Settings Overrides")
+    assert_text_present(source, "Result Metrics")
     assert "'base_dir'," in source
     assert "extraBtKeys.length > 0 || managedBaseDir" in source
     assert source.count('id="managed-bt-base_dir"') == 1
@@ -984,6 +999,7 @@ def test_v8_apply_filters_keeps_resolved_coins_when_some_symbols_are_unavailable
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_STUB}
         const API_BASE = '/api/backtest-v8';
         const backtestEditorAdapter = {{
           isV8: true,
@@ -1035,6 +1051,7 @@ def test_backtest_v8_results_render_strategy_without_changing_v7_rows() -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_STUB}
         const window = {{}};
         let _activeResultsCtx = null;
         const backtestEditorAdapter = {{version: 'v8'}};
@@ -1081,5 +1098,5 @@ def test_backtest_v8_configs_render_sortable_strategy_without_changing_v7_rows()
     source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
 
     assert "configs: ['name', 'exchanges', 'strategy', 'coins'" in source
-    assert "backtestEditorAdapter.isV8 ? thSort('Strategy', 'strategy') : ''" in source
+    assert "backtestEditorAdapter.isV8 ? thSort(PBGuiI18n.t('v7backtest.strategy'), 'strategy') : ''" in source
     assert "backtestEditorAdapter.isV8 ? '<td>' + esc(c.strategy || '-') + '</td>' : ''" in source

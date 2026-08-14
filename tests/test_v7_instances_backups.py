@@ -10,6 +10,8 @@ from urllib.parse import parse_qs, urlparse
 
 from api import v7_instances
 
+from tests.i18n_helpers import assert_text_present
+
 
 def test_backup_delete_requires_confirmation() -> None:
     """The permanent backup delete request runs only after confirmation."""
@@ -18,7 +20,7 @@ def test_backup_delete_requires_confirmation() -> None:
     function_source = source.split("async function doDeleteBackup", 1)[1].split("/* ─── Toast", 1)[0]
 
     assert "window.PBGuiDialogs.confirm" in function_source
-    assert "detail: 'This cannot be undone.'" in function_source
+    assert_text_present(function_source, "This cannot be undone.")
     assert function_source.index("window.PBGuiDialogs.confirm") < function_source.index("method: 'DELETE'")
 
 

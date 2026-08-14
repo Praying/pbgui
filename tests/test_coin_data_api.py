@@ -10,6 +10,7 @@ import pytest
 from fastapi import HTTPException
 
 import api.coin_data as coin_data_api
+from tests.i18n_helpers import assert_text_present
 import api.services as services_api
 
 
@@ -124,6 +125,6 @@ def test_coin_data_frontend_gates_only_cmc_refresh_and_keeps_cached_state() -> N
 
     assert "var pool = serverState.cmc_pool || {};" in source
     assert "button.disabled = !hasMaterializedKey;" in source
-    assert "Cached Coin Data remains readable." in source
+    assert_text_present(source, "Cached Coin Data remains readable.")
     assert "response.status + ': ' + (payload.detail" in source
     assert "document.getElementById('btn-refresh-exchange').addEventListener" in source

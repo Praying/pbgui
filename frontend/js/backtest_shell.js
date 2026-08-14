@@ -1,6 +1,18 @@
 ;(function () {
   'use strict';
 
+  function i18nT(key, params, fallback) {
+    var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+    var text = fallback == null ? key : String(fallback);
+    if (params) {
+      text = text.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return text;
+  }
+
   function element(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -37,32 +49,32 @@
     return ''
       + '<div id="panel-configs" class="view-panel active">'
       +   '<div id="configs-toolbar" class="bt-panel-toolbar">'
-      +     '<input type="text" id="configs-filter" class="sb-input" style="max-width:240px" placeholder="Search name...">'
+      +     '<input type="text" id="configs-filter" class="sb-input" style="max-width:240px" placeholder="' + i18nT('editor.shell.searchName', null, 'Search name...') + '">'
       +     '<span class="bt-toolbar-spacer"></span>'
-      +     '<button type="button" class="act-btn" data-bt-action="selectAllConfigs">Select All</button>'
-      +     '<button type="button" class="act-btn" data-bt-action="deselectAllConfigs">Deselect</button>'
+      +     '<button type="button" class="act-btn" data-bt-action="selectAllConfigs">' + i18nT('editor.shell.selectAll', null, 'Select All') + '</button>'
+      +     '<button type="button" class="act-btn" data-bt-action="deselectAllConfigs">' + i18nT('editor.shell.deselect', null, 'Deselect') + '</button>'
       +   '</div>'
       +   '<div id="configs-list"></div><div id="configs-editor" style="display:none"></div>'
       + '</div>'
       + '<div id="panel-queue" class="view-panel">'
       +   '<div id="queue-toolbar" class="bt-panel-toolbar"><span class="bt-toolbar-spacer"></span>'
-      +     '<button type="button" class="act-btn" data-bt-action="selectAllQueue">Select All</button>'
-      +     '<button type="button" class="act-btn" data-bt-action="deselectAllQueue">Deselect</button>'
+      +     '<button type="button" class="act-btn" data-bt-action="selectAllQueue">' + i18nT('editor.shell.selectAll', null, 'Select All') + '</button>'
+      +     '<button type="button" class="act-btn" data-bt-action="deselectAllQueue">' + i18nT('editor.shell.deselect', null, 'Deselect') + '</button>'
       +   '</div><div id="queue-list"></div>'
       + '</div>'
       + '<div id="panel-results" class="view-panel">'
       +   '<div id="results-fixed-top"><div id="results-toolbar">'
-      +     '<label style="font-size:var(--fs-sm);color:var(--text-dim)">Version:</label>'
+      +     '<label style="font-size:var(--fs-sm);color:var(--text-dim)">' + i18nT('editor.shell.version', null, 'Version:') + '</label>'
       +     '<select id="results-version-filter" class="sb-input" style="max-width:100px"><option value="v7">PBv7</option><option value="v8">PBv8</option><option value="both">Both</option></select>'
-      +     '<label style="font-size:var(--fs-sm);color:var(--text-dim)">Config:</label>'
-      +     '<select id="results-config-filter" class="sb-input" style="max-width:200px"><option value="">All configs</option></select>'
-      +     '<input type="text" id="results-filter" class="sb-input" style="max-width:200px" placeholder="Search name...">'
+      +     '<label style="font-size:var(--fs-sm);color:var(--text-dim)">' + i18nT('editor.shell.config', null, 'Config:') + '</label>'
+      +     '<select id="results-config-filter" class="sb-input" style="max-width:200px"><option value="">' + i18nT('editor.shell.allConfigs', null, 'All configs') + '</option></select>'
+      +     '<input type="text" id="results-filter" class="sb-input" style="max-width:200px" placeholder="' + i18nT('editor.shell.searchName', null, 'Search name...') + '">'
       +     '<span id="results-count-label" class="results-count-label"></span><span class="bt-toolbar-spacer"></span>'
-      +     '<button type="button" class="act-btn" data-bt-action="selectAllResults">Select All</button>'
-      +     '<button type="button" class="act-btn" data-bt-action="deselectAllResults">Deselect</button>'
-      +     '<button type="button" id="results-pin-btn" class="act-btn" data-bt-action="toggleResultsSticky" title="Pin table">📌</button>'
+      +     '<button type="button" class="act-btn" data-bt-action="selectAllResults">' + i18nT('editor.shell.selectAll', null, 'Select All') + '</button>'
+      +     '<button type="button" class="act-btn" data-bt-action="deselectAllResults">' + i18nT('editor.shell.deselect', null, 'Deselect') + '</button>'
+      +     '<button type="button" id="results-pin-btn" class="act-btn" data-bt-action="toggleResultsSticky" title="' + i18nT('editor.shell.pinTable', null, 'Pin table') + '">📌</button>'
       +   '</div><div id="results-list-wrap"><div id="results-list"></div></div>'
-      +   '<div id="results-resize-handle" title="Drag to resize list"><span></span></div></div>'
+      +   '<div id="results-resize-handle" title="' + i18nT('editor.shell.dragResize', null, 'Drag to resize list') + '"><span></span></div></div>'
       +   '<div id="results-scroll-area"><div id="compare-chart-area" style="display:none"></div><div id="results-charts" style="display:none"></div><div id="results-detail"></div></div>'
       + '</div>';
   }
@@ -78,9 +90,9 @@
     var sidebar = element('div'); sidebar.id = 'sidebar';
     var sidebarInner = element('div'); sidebarInner.id = 'sidebar-inner';
     var navItems = options.navItems || [
-      { panel: 'configs', icon: '📋', label: 'Configs' },
-      { panel: 'queue', icon: '⏳', label: 'Queue', badge: true },
-      { panel: 'results', icon: '📊', label: 'Results' }
+      { panel: 'configs', icon: '📋', label: i18nT('editor.shell.navConfigs', null, 'Configs') },
+      { panel: 'queue', icon: '⏳', label: i18nT('editor.shell.navQueue', null, 'Queue'), badge: true },
+      { panel: 'results', icon: '📊', label: i18nT('editor.shell.navResults', null, 'Results') }
     ];
     navItems.forEach(function (item, index) {
       var button = element('button', 'sb-section' + (index === 0 ? ' active' : ''));
@@ -105,13 +117,13 @@
       sidebarInner.appendChild(context);
     });
     if (options.runtimeStatus) {
-      var runtime = element('div', 'bt-runtime-status', 'Checking PB8 runtime...'); runtime.id = 'bt-runtime-status';
+      var runtime = element('div', 'bt-runtime-status', i18nT('editor.shell.checkingRuntime', null, 'Checking PB8 runtime...')); runtime.id = 'bt-runtime-status';
       sidebarInner.appendChild(runtime);
     }
     sidebar.appendChild(sidebarInner);
 
     var editorSidebar = element('div', 'sidebar-sticky'); editorSidebar.id = 'sidebar-editor'; editorSidebar.style.display = 'none';
-    var editorHeader = element('div', 'sidebar-header'); editorHeader.appendChild(element('span', 'sb-title', options.editorTitle || 'EDIT BACKTEST'));
+    var editorHeader = element('div', 'sidebar-header'); editorHeader.appendChild(element('span', 'sb-title', options.editorTitle || i18nT('editor.shell.editorTitle', null, 'EDIT BACKTEST')));
     var editorToolbar = element('div', 'sidebar-toolbar');
     appendActions(editorToolbar, options.editorActions || [], callbacks);
     editorSidebar.appendChild(editorHeader); editorSidebar.appendChild(editorToolbar); sidebar.appendChild(editorSidebar);
@@ -124,7 +136,7 @@
       var modalRoot = element('div'); modalRoot.id = 'modal-root'; modalRoot.appendChild(element('div', 'modal-box')); root.appendChild(modalRoot);
       var logPanel = element('div'); logPanel.id = 'log-panel';
       var logHeader = element('div'); logHeader.id = 'log-panel-header';
-      var logTitle = element('span', '', 'Log'); logTitle.id = 'log-panel-title';
+      var logTitle = element('span', '', i18nT('editor.shell.log', null, 'Log')); logTitle.id = 'log-panel-title';
       var logClose = element('button', '', '×'); logClose.id = 'log-panel-close'; logClose.type = 'button';
       logHeader.appendChild(logTitle); logHeader.appendChild(logClose);
       var logTarget = element('div'); logTarget.id = 'log-viewer-target'; logTarget.style.cssText = 'flex:1;min-height:0;overflow:hidden';
@@ -215,7 +227,7 @@
   }
 
   function statusBadge(status) {
-    return element('span', 'badge ' + adopt({}).statusClass(status), String(status || 'unknown'));
+    return element('span', 'badge ' + adopt({}).statusClass(status), String(status || i18nT('common.unknown', null, 'unknown')));
   }
 
   function renderTable(host, definition) {
@@ -225,7 +237,7 @@
     if (!rows.length) {
       var empty = element('div', 'empty-state');
       empty.appendChild(element('div', 'empty-icon', definition.emptyIcon || '📋'));
-      empty.appendChild(document.createTextNode(definition.emptyText || 'No items.'));
+      empty.appendChild(document.createTextNode(definition.emptyText || i18nT('editor.shell.noItems', null, 'No items.')));
       host.appendChild(empty); return;
     }
     var table = element('table', 'tbl');
@@ -285,15 +297,15 @@
   function openSettings(options) {
     var root = document.getElementById('modal-root');
     var box = root.querySelector('.modal-box'); box.replaceChildren();
-    var header = element('div', 'modal-header'); header.appendChild(element('span', 'modal-title', options.title || 'Backtest Settings'));
+    var header = element('div', 'modal-header'); header.appendChild(element('span', 'modal-title', options.title || i18nT('editor.shell.settingsTitle', null, 'Backtest Settings')));
     var close = element('button', 'modal-close', '×'); close.type = 'button'; header.appendChild(close); box.appendChild(header);
     var body = element('div', 'modal-body');
-    var cpuGroup = element('div', 'form-group'); cpuGroup.appendChild(element('label', '', 'Backtest CPU Slots'));
+    var cpuGroup = element('div', 'form-group'); cpuGroup.appendChild(element('label', '', i18nT('editor.shell.cpuSlots', null, 'Backtest CPU Slots')));
     var cpu = element('input'); cpu.type = 'number'; cpu.min = '1'; cpu.max = String(options.cpuMax || 1); cpu.value = String(options.cpu || 1); cpu.id = 'bt-settings-cpu'; cpuGroup.appendChild(cpu); body.appendChild(cpuGroup);
     var autoGroup = element('label', 'form-group'); autoGroup.style.marginTop = 'var(--sp-md)';
     var auto = element('input'); auto.type = 'checkbox'; auto.checked = !!options.autostart; auto.id = 'bt-settings-autostart'; auto.style.width = 'auto';
-    autoGroup.appendChild(auto); autoGroup.appendChild(document.createTextNode(' Start queued jobs automatically')); body.appendChild(autoGroup); box.appendChild(body);
-    var actions = element('div', 'modal-actions'); var cancel = element('button', 'modal-btn', 'Cancel'); var save = element('button', 'modal-btn modal-btn-primary', 'Save');
+    autoGroup.appendChild(auto); autoGroup.appendChild(document.createTextNode(i18nT('editor.shell.startQueued', null, ' Start queued jobs automatically'))); body.appendChild(autoGroup); box.appendChild(body);
+    var actions = element('div', 'modal-actions'); var cancel = element('button', 'modal-btn', i18nT('common.cancel', null, 'Cancel')); var save = element('button', 'modal-btn modal-btn-primary', i18nT('common.save', null, 'Save'));
     actions.appendChild(cancel); actions.appendChild(save); box.appendChild(actions);
     function closeModal() { root.classList.remove('open'); }
     close.addEventListener('click', closeModal); cancel.addEventListener('click', closeModal);
@@ -317,7 +329,7 @@
     var sticky = panel.classList.contains('unpinned');
     panel.classList.toggle('unpinned', !sticky);
     button.style.opacity = sticky ? '1' : '0.4';
-    button.title = sticky ? 'Unpin table' : 'Pin table';
+    button.title = sticky ? i18nT('editor.shell.unpinTable', null, 'Unpin table') : i18nT('editor.shell.pinTable', null, 'Pin table');
     return sticky;
   }
 

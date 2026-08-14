@@ -6,8 +6,23 @@ import re
 import subprocess
 import textwrap
 
+from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
+
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+_I18N_INTERPOLATE = (
+    "PBGuiI18n.t = (function (base) {\n"
+    " return function (key, params) {\n"
+    " var value = base(key);\n"
+    " if (!params) return value;\n"
+    " return String(value).replace(/\\{(\\w+)\\}/g, function (match, name) {\n"
+    " return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match;\n"
+    " });\n"
+    " };\n"
+    "})(PBGuiI18n.t);\n"
+)
 
 
 def _page_function(page: str, name: str) -> str:
@@ -27,7 +42,14 @@ def _page_function(page: str, name: str) -> str:
 def _run_node(script: str) -> None:
     """Run one isolated Node contract and surface assertion output."""
 
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    bootstrap = NODE_I18N_STUB + _I18N_INTERPOLATE
+    completed = subprocess.run(
+        ["node", "-e", bootstrap + "\n" + script],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
     assert completed.returncode == 0, completed.stderr or completed.stdout
 
 
@@ -115,7 +137,7 @@ def test_pb8_run_editor_exposes_cookie_authenticated_strategy_handoff() -> None:
 
     assert "supportsStrategyExplorer: true" in adapter
     assert 'data-v7-only onclick="goStrategyExplorer()"' not in page
-    assert '/app/js/run_editor_adapter.js?v=8' in page
+    assert '/app/js/run_editor_adapter.js?v=9' in page
     assert "'/api/strategy-explorer-v8'" in page
     assert "coinOvSnapshotAllFiles()" in handoff
     assert "override_configs: overrideConfigs || {}" in handoff
@@ -159,7 +181,7 @@ def test_run_list_adds_strategy_only_for_pb8() -> None:
     """The shared Run list should add one escaped Strategy cell only for PB8."""
     page = (ROOT / "frontend" / "v7_run.html").read_text(encoding="utf-8")
     build_cells = _page_function(page, "buildCells")
-    assert "if (runListAdapter.isV8) COLS.splice(2, 0, { key: 'strategy', label: 'Strategy' });" in page
+    assert "if (runListAdapter.isV8) COLS.splice(2, 0, { key: 'strategy', label: PBGuiI18n.t('v7run.colStrategy') });" in page
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
@@ -317,7 +339,7 @@ def test_import_user_field_is_searchable_and_rejects_unknown_users() -> None:
     assert "input.addEventListener('focus', renderImportUserOptions)" not in page
     assert "options.replaceChildren()" in page
     assert "String(requestedUser || '').trim().toLowerCase()" in import_fn
-    assert "Select a configured user from the search suggestions." in import_fn
+    assert_text_present(import_fn, "Select a configured user from the search suggestions.")
 
 
 def test_collect_config_writes_every_managed_field_and_preserves_unknown_json() -> None:

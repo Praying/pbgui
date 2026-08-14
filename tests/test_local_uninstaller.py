@@ -14,6 +14,8 @@ import time
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
+from tests.i18n_helpers import assert_text_present
+
 from fastapi import HTTPException, Response
 from starlette.requests import Request
 from starlette.websockets import WebSocketState
@@ -220,7 +222,7 @@ def test_welcome_page_renders_authenticated_security_warnings() -> None:
     source = Path("frontend/welcome.html").read_text(encoding="utf-8")
 
     assert "auth.security_warnings" in source
-    assert "item.textContent = message" in source
+    assert "item.textContent = m(message)" in source
     assert "renderStatus(auth, setup)" in source
 
 
@@ -541,9 +543,10 @@ def test_welcome_page_renders_login_security_status() -> None:
     """The authenticated Welcome overview visibly renders login lockout history."""
     source = Path("frontend/welcome.html").read_text(encoding="utf-8")
 
-    assert 'label: "Login security"' in source
+    assert_text_present(source, "Login security")
     assert "auth.login_security || {}" in source
-    assert "temporary login lockout" in source
+    assert_text_present(source, "1 temporary login lockout detected in retained Auth logs.")
+    assert_text_present(source, "{count} temporary login lockouts detected in retained Auth logs.")
     assert '["status-detail", row.detail]' in source
 
 
@@ -776,10 +779,10 @@ def test_welcome_login_security_ack_uses_authenticated_endpoint() -> None:
     """The Welcome warning exposes an explicit authenticated acknowledgement action."""
     source = Path("frontend/welcome.html").read_text(encoding="utf-8")
 
-    assert 'acknowledgeButton.textContent = "Acknowledge"' in source
+    assert_text_present(source, "Acknowledge")
     assert '"/api/auth/login-security/ack"' in source
     assert "headers: authHeaders(false)" in source
-    assert 'setBanner("Login security alert acknowledged.", "success")' in source
+    assert_text_present(source, "Login security alert acknowledged.")
 
 
 def test_http_auth_rejects_query_tokens_and_accepts_cookie_or_bearer() -> None:

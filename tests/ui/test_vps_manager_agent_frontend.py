@@ -12,10 +12,26 @@ from starlette.requests import Request
 
 from api.auth import authenticate_websocket, require_auth
 from api import vps_manager as api_module
+from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
 
 
 ROOT = Path(__file__).resolve().parents[2]
 HTML_PATH = ROOT / "frontend" / "vps_manager.html"
+
+# NODE_I18N_STUB defines window/PBGuiI18n so Node evals can run i18n-aware
+# renderers, but its `t` does not interpolate {param} placeholders. Re-bind
+# `t` to mirror i18n.js interpolate() so assertions on interpolated English
+# output (e.g. the Linux Updates modal title) still hold.
+_NODE_I18N_T_INTERP = (
+    "PBGuiI18n.t = function (key, params) {\n"
+    "  var value = __PBGUI_I18N_EN__[key];\n"
+    "  if (value === undefined) return key;\n"
+    "  return String(value).replace(/\\{(\\w+)\\}/g, function (match, name) {\n"
+    "    return Object.prototype.hasOwnProperty.call(params || {}, name) ? String(params[name]) : match;\n"
+    "  });\n"
+    "};\n"
+)
+NODE_I18N_BOOTSTRAP = NODE_I18N_STUB + _NODE_I18N_T_INTERP
 
 
 def _extract_function(source: str, name: str) -> str:
@@ -58,6 +74,7 @@ def test_agent_renderer_shows_states_source_remediation_and_escapes() -> None:
     script = textwrap.dedent(
         fr"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_BOOTSTRAP}
         const store = {{ hostname: 'bad-host' }};
         function runMasterWithLog() {{}}
         function runVpsWithLog() {{}}
@@ -115,7 +132,7 @@ def test_overview_provisional_detail_and_sidebar_share_agent_contract() -> None:
     assert "summary.monitor_agent || { source: 'agent_cache'" in source
     assert "Source: agent cache" not in overview_renderer
     assert "model.state === 'ok'" in overview_renderer
-    assert "Last-known" in overview_renderer
+    assert_text_present(overview_renderer, " · Last-known")
     assert "renderSidebarAgentStatus(st)" in _extract_function(source, "renderSidebarActions")
     assert "renderAgentCachePanel(status, true)" in _extract_function(source, "renderMasterView")
     assert "renderAgentCachePanel(status, false)" in _extract_function(source, "renderVpsView")
@@ -127,7 +144,8 @@ def test_pb8_versions_render_in_overview_and_host_details() -> None:
     """PB8 telemetry already emitted by the backend must be visible on both surfaces."""
     source = HTML_PATH.read_text(encoding="utf-8")
     for key, label in (("pb8", "PB8"), ("pb8_branch", "PB8 Branch"), ("pb8_github", "PB8 GitHub")):
-        assert f"key: '{key}', label: '{label}'" in source
+        assert f"key: '{key}'" in source
+        assert_text_present(source, label)
     overview = _extract_function(source, "renderOverviewTable")
     assert "renderOverviewVersionCell(row.pb8, row.pb8_github)" in overview
     assert "esc(row.pb8_branch || '-')" in overview
@@ -149,6 +167,7 @@ def test_pb8_versions_render_in_overview_and_host_details() -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_BOOTSTRAP}
         const store = {{hostname: 'manibot01'}};
         function formatLatency() {{ return null; }}
         function computeUptime() {{ return null; }}
@@ -181,11 +200,11 @@ def test_linux_update_counts_open_escaped_package_details() -> None:
     handler = _extract_function(source, "handleVpsManagerAction")
 
     assert "data-vps-action='package-updates'" in overview
-    assert "Security updates available" in modal
-    assert "Kernel updates available" in modal
-    assert "Package removals planned" in modal
-    assert "Routine updates available" in modal
-    assert "Stale cache:" in modal
+    assert_text_present(modal, "Security updates available")
+    assert_text_present(modal, "Kernel updates available")
+    assert_text_present(modal, "Package removals planned")
+    assert_text_present(modal, "Routine updates available")
+    assert_text_present(modal, "Stale cache: these are last-known package details from {age} ago. Refresh the agent cache before making an urgency decision.")
     assert "esc(item.name || '-')" in modal
     assert "esc(item.candidate_version || '-')" in modal
     assert "openPackageUpdatesModal(host)" in handler
@@ -198,6 +217,7 @@ def test_linux_update_counts_open_escaped_package_details() -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_BOOTSTRAP}
         const nodes = {{
           alertModalTitle: {{textContent: ''}},
           alertModalBody: {{className: '', innerHTML: '', scrollTop: 0}},
@@ -253,6 +273,7 @@ def test_manager_renderers_keep_host_and_bot_payloads_out_of_inline_code() -> No
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        {NODE_I18N_BOOTSTRAP}
         const attack = `bad');globalThis.PWNED=1;//<img src=x onerror=1>`;
         const store = {{ overviewSort: {{field: 'name', dir: 'asc'}}, hostname: attack }};
         const OVERVIEW_COLUMNS = [{{key: 'name', label: 'Name', sortable: false, getValue: r => r.name}}];

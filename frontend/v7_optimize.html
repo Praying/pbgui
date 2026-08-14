@@ -3,11 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/app/i18n.js?v=1"></script>
 <title>PBGui - V7 Optimize</title>
 <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
 <link rel="stylesheet" href="/app/css/modals_shared.css?v=1">
 <script src="/app/js/sidebar_resize.js?v=1"></script>
-<script src="/app/js/optimize_editor_adapter.js?v=11"></script>
+<script src="/app/js/optimize_editor_adapter.js?v=12"></script>
 <style>
 :root {
   --bg: #0e1117;
@@ -21,7 +22,7 @@
   --green: #21c354;
   --orange: #ff8c00;
   --red: #ff4b4b;
-  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
   --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   --fs-xs: 11px; --fs-sm: 13px; --fs-base: 14px;
   --fs-md: 15px; --fs-lg: 18px; --fs-xl: 22px;
@@ -2128,73 +2129,73 @@ textarea.json-invalid:focus {
     </div>
   </div>
 </div>
-<div id="conn-banner" class="conn-waiting">Connecting to Optimize queue...</div>
+<div id="conn-banner" class="conn-waiting" data-i18n="v7optimize.connectingToQueue">Connecting to Optimize queue...</div>
 
 <div id="page-body">
   <div id="sidebar">
     <div id="sidebar-inner">
       <button class="sb-section active" data-panel="configs" onclick="selectPanel('configs')">
-        <span class="sb-icon">📋</span> Configs
+        <span class="sb-icon">📋</span> <span data-i18n="v7optimize.navConfigs">Configs</span>
         <span id="nav-config-count" class="sb-count" style="margin-left:auto">0</span>
       </button>
       <button class="sb-section" data-panel="queue" onclick="selectPanel('queue')">
-        <span class="sb-icon">⏳</span> Queue
+        <span class="sb-icon">⏳</span> <span data-i18n="v7optimize.navQueue">Queue</span>
         <span id="nav-queue-count" class="sb-count" style="margin-left:auto">0</span>
       </button>
       <button class="sb-section" data-panel="results" onclick="selectPanel('results')">
-        <span class="sb-icon">📊</span> Results
+        <span class="sb-icon">📊</span> <span data-i18n="v7optimize.navResults">Results</span>
         <span id="nav-result-count" class="sb-count" style="margin-left:auto">0</span>
       </button>
       <button class="sb-section" data-panel="paretos" onclick="selectPanel('paretos')">
-        <span class="sb-icon">🎯</span> Paretos
+        <span class="sb-icon">🎯</span> <span data-i18n="v7optimize.navParetos">Paretos</span>
         <span id="nav-pareto-count" class="sb-count" style="margin-left:auto">0</span>
       </button>
 
       <hr class="sb-sep">
 
       <div id="ctx-configs" class="ctx-actions">
-        <button class="sb-btn accent" id="btn-new-config">+ New Config</button>
-        <button class="sb-btn" id="btn-import-config">Import Config</button>
-        <button class="sb-btn" id="btn-edit-selected">✏ Edit Selected</button>
-        <button class="sb-btn" id="btn-duplicate-selected">⧉ Duplicate</button>
-        <button class="sb-btn" id="btn-queue-selected">▶ Queue Selected</button>
-        <button class="sb-btn" id="btn-archive-selected">🗄 Add to Archive</button>
-        <button class="sb-btn danger" id="btn-delete-selected">🗑 Delete Selected</button>
+        <button class="sb-btn accent" id="btn-new-config" data-i18n="v7optimize.newConfig">+ New Config</button>
+        <button class="sb-btn" id="btn-import-config" data-i18n="v7optimize.importConfig">Import Config</button>
+        <button class="sb-btn" id="btn-edit-selected" data-i18n="v7optimize.editSelected">✏ Edit Selected</button>
+        <button class="sb-btn" id="btn-duplicate-selected" data-i18n="v7optimize.duplicate">⧉ Duplicate</button>
+        <button class="sb-btn" id="btn-queue-selected" data-i18n="v7optimize.queueSelected">▶ Queue Selected</button>
+        <button class="sb-btn" id="btn-archive-selected" data-i18n="v7optimize.addToArchive">🗄 Add to Archive</button>
+        <button class="sb-btn danger" id="btn-delete-selected" data-i18n="v7optimize.deleteSelected">🗑 Delete Selected</button>
       </div>
 
       <div id="ctx-queue" class="ctx-actions" style="display:none">
-        <button class="sb-btn danger" id="btn-delete-selected-queue">🗑 Delete Selected</button>
-        <button class="sb-btn" id="btn-queue-settings">⚙ Settings</button>
+        <button class="sb-btn danger" id="btn-delete-selected-queue" data-i18n="v7optimize.deleteSelected">🗑 Delete Selected</button>
+        <button class="sb-btn" id="btn-queue-settings" data-i18n="v7optimize.settings">⚙ Settings</button>
       </div>
 
       <div id="ctx-results" class="ctx-actions" style="display:none">
-        <button class="sb-btn" id="btn-open-result-paretos">🗂 Paretos</button>
-        <button class="sb-btn" id="btn-open-pareto-explorer-results">🎯 Pareto Explorer</button>
-        <button class="sb-btn" id="btn-open-result-pareto-dash">PD Pareto Dash</button>
-        <button class="sb-btn" id="btn-open-result-3d">3D Plot</button>
-        <button class="sb-btn" id="btn-continue-result">🌱 Continue Optimize</button>
-        <button class="sb-btn" id="btn-resume-result" style="display:none">Resume Checkpoint</button>
-        <button class="sb-btn" id="btn-open-result-config">📄 Config Draft</button>
-        <button class="sb-btn danger" id="btn-delete-selected-results">🗑 Delete Selected</button>
+        <button class="sb-btn" id="btn-open-result-paretos" data-i18n="v7optimize.paretos">🗂 Paretos</button>
+        <button class="sb-btn" id="btn-open-pareto-explorer-results" data-i18n="v7optimize.paretoExplorer">🎯 Pareto Explorer</button>
+        <button class="sb-btn" id="btn-open-result-pareto-dash" data-i18n="v7optimize.pdParetoDash">PD Pareto Dash</button>
+        <button class="sb-btn" id="btn-open-result-3d" data-i18n="v7optimize.plot3d">3D Plot</button>
+        <button class="sb-btn" id="btn-continue-result" data-i18n="v7optimize.continueOptimize">🌱 Continue Optimize</button>
+        <button class="sb-btn" id="btn-resume-result" style="display:none" data-i18n="v7optimize.resumeCheckpoint">Resume Checkpoint</button>
+        <button class="sb-btn" id="btn-open-result-config" data-i18n="v7optimize.configDraft">📄 Config Draft</button>
+        <button class="sb-btn danger" id="btn-delete-selected-results" data-i18n="v7optimize.deleteSelected">🗑 Delete Selected</button>
       </div>
 
       <div id="ctx-paretos" class="ctx-actions" style="display:none">
-        <button class="sb-btn" id="btn-open-pareto-explorer-paretos">🎯 Pareto Explorer</button>
-        <button class="sb-btn" id="btn-backtest-selected-paretos">🔄 Backtest</button>
-        <button class="sb-btn" id="btn-seed-selected-paretos">🧬 Seed Selected</button>
-        <button class="sb-btn" id="btn-seed-whole-result">📂 Seed Whole Result</button>
+        <button class="sb-btn" id="btn-open-pareto-explorer-paretos" data-i18n="v7optimize.paretoExplorer">🎯 Pareto Explorer</button>
+        <button class="sb-btn" id="btn-backtest-selected-paretos" data-i18n="v7optimize.backtest">🔄 Backtest</button>
+        <button class="sb-btn" id="btn-seed-selected-paretos" data-i18n="v7optimize.seedSelected">🧬 Seed Selected</button>
+        <button class="sb-btn" id="btn-seed-whole-result" data-i18n="v7optimize.seedWholeResult">📂 Seed Whole Result</button>
       </div>
     </div>
     <div id="sidebar-editor" class="sidebar-sticky" style="display:none">
       <div class="sidebar-header">
-        <span class="sb-title">EDIT OPTIMIZE</span>
+        <span class="sb-title" data-i18n="v7optimize.editOptimize">EDIT OPTIMIZE</span>
       </div>
       <div class="sidebar-toolbar">
-        <button class="sb-btn" onclick="closeEditor()" title="Back to config list">🏠 Home</button>
-        <button class="sb-btn primary" onclick="saveEditor()" title="Save config">💾 Save</button>
-        <button class="sb-btn info" onclick="saveAndQueue()" title="Save config and queue it">▶ Save &amp; Queue</button>
+        <button class="sb-btn" onclick="closeEditor()" title="Back to config list" data-i18n-title="v7optimize.backToConfigList" data-i18n="v7optimize.home">🏠 Home</button>
+        <button class="sb-btn primary" onclick="saveEditor()" title="Save config" data-i18n-title="v7optimize.saveConfig" data-i18n="v7optimize.save">💾 Save</button>
+        <button class="sb-btn info" onclick="saveAndQueue()" title="Save config and queue it" data-i18n-title="v7optimize.saveConfigAndQueue" data-i18n="v7optimize.saveAndQueue">▶ Save &amp; Queue</button>
         <hr class="sb-sep">
-        <button class="sb-btn" id="opted-sidebar-ohlcv-preflight-btn" title="Check PB7 OHLCV readiness for the current config" aria-expanded="false">🧭 OHLCV Readiness</button>
+        <button class="sb-btn" id="opted-sidebar-ohlcv-preflight-btn" title="Check PB7 OHLCV readiness for the current config" aria-expanded="false" data-i18n="v7optimize.ohlcvReadiness">🧭 OHLCV Readiness</button>
       </div>
     </div>
     <div id="sidebar-resize"></div>
@@ -2203,25 +2204,25 @@ textarea.json-invalid:focus {
   <div id="main-content">
     <div id="panel-configs" class="view-panel active">
       <div id="configs-toolbar" class="panel-toolbar">
-        <input id="config-search" class="panel-input" style="max-width:240px" type="text" placeholder="Search name...">
+        <input id="config-search" class="panel-input" style="max-width:240px" type="text" placeholder="Search name..." data-i18n-placeholder="v7optimize.searchName">
         <span id="config-count-chip" class="sb-count">0 configs</span>
         <span id="config-selection-summary" class="muted-line">No configs selected.</span>
         <span style="flex:1"></span>
-        <button class="act-btn" onclick="selectAllConfigs()" title="Select all visible rows">Select All</button>
-        <button class="act-btn" onclick="deselectAllConfigs()" title="Deselect all">Deselect</button>
+        <button class="act-btn" onclick="selectAllConfigs()" title="Select all visible rows" data-i18n-title="v7optimize.selectAllVisible" data-i18n="v7optimize.selectAll">Select All</button>
+        <button class="act-btn" onclick="deselectAllConfigs()" title="Deselect all" data-i18n-title="v7optimize.deselectAll" data-i18n="v7optimize.deselect">Deselect</button>
       </div>
       <div id="configs-list-wrap">
         <table class="tbl">
           <thead id="configs-thead">
             <tr>
-              <th>Name</th>
-              <th>Exchange</th>
-              <th>Backtests</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Flags</th>
-              <th>Modified</th>
-              <th>Actions</th>
+              <th data-i18n="v7optimize.thName">Name</th>
+              <th data-i18n="v7optimize.thExchange">Exchange</th>
+              <th data-i18n="v7optimize.thBacktests">Backtests</th>
+              <th data-i18n="v7optimize.thStart">Start</th>
+              <th data-i18n="v7optimize.thEnd">End</th>
+              <th data-i18n="v7optimize.thFlags">Flags</th>
+              <th data-i18n="v7optimize.thModified">Modified</th>
+              <th data-i18n="v7optimize.thActions">Actions</th>
             </tr>
           </thead>
           <tbody id="configs-tbody"></tbody>
@@ -2235,19 +2236,19 @@ textarea.json-invalid:focus {
         <span id="queue-status-chip" class="status-chip">Queue idle</span>
         <span id="queue-selection-summary" class="muted-line">No queue items selected.</span>
         <span style="flex:1"></span>
-        <button class="act-btn" onclick="selectAllQueue()" title="Select all visible rows">Select All</button>
-        <button class="act-btn" onclick="deselectAllQueue()" title="Deselect all">Deselect</button>
+        <button class="act-btn" onclick="selectAllQueue()" title="Select all visible rows" data-i18n-title="v7optimize.selectAllVisible" data-i18n="v7optimize.selectAll">Select All</button>
+        <button class="act-btn" onclick="deselectAllQueue()" title="Deselect all" data-i18n-title="v7optimize.deselectAll" data-i18n="v7optimize.deselect">Deselect</button>
       </div>
       <div id="queue-list-wrap">
         <table class="tbl">
           <thead id="queue-thead">
             <tr>
               <th class="queue-order-head"></th>
-              <th>Name</th>
-              <th>Exchange</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Actions</th>
+              <th data-i18n="v7optimize.thName">Name</th>
+              <th data-i18n="v7optimize.thExchange">Exchange</th>
+              <th data-i18n="v7optimize.thStatus">Status</th>
+              <th data-i18n="v7optimize.thCreated">Created</th>
+              <th data-i18n="v7optimize.thActions">Actions</th>
             </tr>
           </thead>
           <tbody id="queue-tbody"></tbody>
@@ -2257,12 +2258,12 @@ textarea.json-invalid:focus {
 
     <div id="panel-results" class="view-panel">
       <div id="results-toolbar" class="panel-toolbar">
-        <input id="result-search" class="panel-input" style="max-width:260px" type="text" placeholder="Search optimize name...">
+        <input id="result-search" class="panel-input" style="max-width:260px" type="text" placeholder="Search optimize name..." data-i18n-placeholder="v7optimize.searchOptimizeName">
         <span id="result-count-chip" class="sb-count">0 result sets</span>
         <span id="result-selection-summary" class="muted-line">No results selected.</span>
         <span style="flex:1"></span>
-        <button class="act-btn" onclick="selectAllResults()" title="Select all visible rows">Select All</button>
-        <button class="act-btn" onclick="deselectAllResults()" title="Deselect all">Deselect</button>
+        <button class="act-btn" onclick="selectAllResults()" title="Select all visible rows" data-i18n-title="v7optimize.selectAllVisible" data-i18n="v7optimize.selectAll">Select All</button>
+        <button class="act-btn" onclick="deselectAllResults()" title="Deselect all" data-i18n-title="v7optimize.deselectAll" data-i18n="v7optimize.deselect">Deselect</button>
       </div>
       <div id="results-list-wrap">
         <table class="tbl">
@@ -2277,19 +2278,19 @@ textarea.json-invalid:focus {
         <span id="pareto-result-chip" class="muted-line">No result selected</span>
         <span id="pareto-mode-chip" class="status-chip">No result selected</span>
         <div id="pareto-scenario-wrap" class="pareto-toolbar-control" style="display:none">
-          <label for="pareto-scenario-select"><span data-tip="Suite paretos can show aggregated metrics or values from one scenario.">Scenario</span></label>
+          <label for="pareto-scenario-select"><span data-tip="Suite paretos can show aggregated metrics or values from one scenario." data-i18n-tip="v7optimize.scenarioTip" data-i18n="v7optimize.scenario">Scenario</span></label>
           <select id="pareto-scenario-select" class="panel-input pareto-toolbar-select"></select>
         </div>
         <div id="pareto-stat-wrap" class="pareto-toolbar-control" style="display:none">
-          <label for="pareto-stat-select"><span data-tip="Aggregated suite view and single-result paretos can switch the summary statistic.">Statistic</span></label>
+          <label for="pareto-stat-select"><span data-tip="Aggregated suite view and single-result paretos can switch the summary statistic." data-i18n-tip="v7optimize.statisticTip" data-i18n="v7optimize.statistic">Statistic</span></label>
           <select id="pareto-stat-select" class="panel-input pareto-toolbar-select"></select>
         </div>
         <span id="pareto-filter-summary" class="muted-line"></span>
         <span id="pareto-count-chip" class="sb-count">0 paretos</span>
         <span id="pareto-selection-summary" class="muted-line">No paretos selected.</span>
         <span style="flex:1"></span>
-        <button class="act-btn" onclick="selectAllParetos()" title="Select all visible rows">Select All</button>
-        <button class="act-btn" onclick="deselectAllParetos()" title="Deselect all">Deselect</button>
+        <button class="act-btn" onclick="selectAllParetos()" title="Select all visible rows" data-i18n-title="v7optimize.selectAllVisible" data-i18n="v7optimize.selectAll">Select All</button>
+        <button class="act-btn" onclick="deselectAllParetos()" title="Deselect all" data-i18n-title="v7optimize.deselectAll" data-i18n="v7optimize.deselect">Deselect</button>
       </div>
       <div id="paretos-list-wrap">
         <table class="tbl">
@@ -2306,28 +2307,28 @@ textarea.json-invalid:focus {
 <section id="editor-modal" class="modal">
   <div class="modal-head">
     <div>
-      <div class="editor-status" id="editor-status">Ready.</div>
+      <div class="editor-status" id="editor-status" data-i18n="v7optimize.ready">Ready.</div>
     </div>
-    <button class="btn ghost" id="btn-close-editor">Close</button>
+    <button class="btn ghost" id="btn-close-editor" data-i18n="common.close">Close</button>
   </div>
   <div class="modal-body">
     <div class="modal-grid">
       <div class="modal-field">
-        <label for="editor-name">Config name</label>
+        <label for="editor-name" data-i18n="v7optimize.configName">Config name</label>
         <input id="editor-name" type="text" placeholder="my_optimize_config">
       </div>
       <div class="modal-field">
-        <label for="editor-source">Editing source</label>
+        <label for="editor-source" data-i18n="v7optimize.editingSource">Editing source</label>
         <input id="editor-source" type="text" disabled>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn ghost" id="btn-editor-format">Format JSON</button>
-      <button class="btn" id="btn-editor-save">Save</button>
-      <button class="btn primary" id="btn-editor-save-queue">Save and Queue</button>
+      <button class="btn ghost" id="btn-editor-format" data-i18n="v7optimize.formatJson">Format JSON</button>
+      <button class="btn" id="btn-editor-save" data-i18n="common.save">Save</button>
+      <button class="btn primary" id="btn-editor-save-queue" data-i18n="v7optimize.saveAndQueueBtn">Save and Queue</button>
     </div>
     <div class="modal-field">
-      <label for="editor-json">Config JSON</label>
+      <label for="editor-json" data-i18n="v7optimize.configJson">Config JSON</label>
       <textarea id="editor-json" spellcheck="false"></textarea>
     </div>
   </div>
@@ -2336,54 +2337,54 @@ textarea.json-invalid:focus {
 <section id="import-config-modal" class="modal import-config-modal">
   <div class="modal-head">
     <div>
-      <h3>Import Optimize Config</h3>
-      <div class="muted-line">Paste a <span id="optimize-import-version">PB7</span> optimize JSON config, choose a local .json file, or import one from a Backtest Archive. Paste and file imports open an unsaved draft; archive imports create a local config.</div>
+      <h3 data-i18n="v7optimize.importOptimizeConfig">Import Optimize Config</h3>
+      <div class="muted-line"><span data-i18n="v7optimize.importDescBefore">Paste a </span><span id="optimize-import-version">PB7</span><span data-i18n="v7optimize.importDescAfter"> optimize JSON config, choose a local .json file, or import one from a Backtest Archive. Paste and file imports open an unsaved draft; archive imports create a local config.</span></div>
     </div>
-    <button class="btn ghost" id="btn-close-import-config">Close</button>
+    <button class="btn ghost" id="btn-close-import-config" data-i18n="common.close">Close</button>
   </div>
   <div class="modal-body">
-    <div class="import-config-source-row" role="group" aria-label="Import source">
-      <button class="btn primary" id="import-config-source-local" type="button" aria-pressed="true">Paste / File</button>
-      <button class="btn ghost" id="import-config-source-archive" type="button" aria-pressed="false">Backtest Archive</button>
+    <div class="import-config-source-row" role="group" aria-label="Import source" data-i18n-aria-label="v7optimize.importSource">
+      <button class="btn primary" id="import-config-source-local" type="button" aria-pressed="true" data-i18n="v7optimize.pasteOrFile">Paste / File</button>
+      <button class="btn ghost" id="import-config-source-archive" type="button" aria-pressed="false" data-i18n="v7optimize.backtestArchive">Backtest Archive</button>
     </div>
     <div class="modal-field">
-      <label for="import-config-name">Config name</label>
+      <label for="import-config-name" data-i18n="v7optimize.configName">Config name</label>
       <input id="import-config-name" type="text" placeholder="derived from file, archive item, or backtest.base_dir">
     </div>
     <div id="import-config-local-panel" class="import-config-panel">
       <div class="modal-field">
-        <label for="import-config-file">JSON file</label>
+        <label for="import-config-file" data-i18n="v7optimize.jsonFile">JSON file</label>
         <input id="import-config-file" type="file" accept=".json,application/json">
       </div>
       <div class="modal-field">
-        <label for="import-config-json">Config JSON</label>
+        <label for="import-config-json" data-i18n="v7optimize.configJson">Config JSON</label>
         <textarea id="import-config-json" spellcheck="false" placeholder="Paste full PB7 optimize config JSON here"></textarea>
       </div>
     </div>
     <div id="import-config-archive-panel" class="import-config-panel" style="display:none">
       <div class="modal-grid">
         <div class="modal-field">
-          <label for="import-config-archive">Backtest Archive</label>
+          <label for="import-config-archive" data-i18n="v7optimize.backtestArchive">Backtest Archive</label>
           <select id="import-config-archive">
-            <option value="">Choose archive</option>
+            <option value="" data-i18n="v7optimize.chooseArchive">Choose archive</option>
           </select>
         </div>
         <div class="modal-field">
-          <label for="import-config-archive-config">Archived config</label>
+          <label for="import-config-archive-config" data-i18n="v7optimize.archivedConfig">Archived config</label>
           <select id="import-config-archive-config">
-            <option value="">Choose config</option>
+            <option value="" data-i18n="v7optimize.chooseConfig">Choose config</option>
           </select>
         </div>
       </div>
       <div id="import-config-archive-meta" class="import-config-archive-meta">Choose Backtest Archive to load stored Optimize configs.</div>
       <div class="modal-actions">
-        <button class="btn ghost" id="btn-import-config-archive-refresh" type="button">Refresh Archives</button>
+        <button class="btn ghost" id="btn-import-config-archive-refresh" type="button" data-i18n="v7optimize.refreshArchives">Refresh Archives</button>
       </div>
     </div>
     <div id="import-config-status" class="editor-status">Paste JSON or choose a .json file.</div>
     <div class="modal-actions">
-      <button class="btn ghost" id="btn-import-config-cancel">Cancel</button>
-      <button class="btn primary" id="btn-import-config-open">Import to Editor</button>
+      <button class="btn ghost" id="btn-import-config-cancel" data-i18n="common.cancel">Cancel</button>
+      <button class="btn primary" id="btn-import-config-open" data-i18n="v7optimize.importToEditor">Import to Editor</button>
     </div>
   </div>
 </section>
@@ -2391,9 +2392,9 @@ textarea.json-invalid:focus {
 <section id="json-modal" class="modal">
   <div class="modal-head">
     <div>
-      <h3 id="json-modal-title">Pareto JSON</h3>
+      <h3 id="json-modal-title" data-i18n="v7optimize.paretoJson">Pareto JSON</h3>
     </div>
-    <button class="btn ghost" id="btn-close-json">Close</button>
+    <button class="btn ghost" id="btn-close-json" data-i18n="common.close">Close</button>
   </div>
   <div class="modal-body">
     <pre id="json-view" class="json-view"></pre>
@@ -2403,39 +2404,39 @@ textarea.json-invalid:focus {
 <section id="settings-modal" class="modal">
   <div class="modal-head">
     <div>
-      <h3>Queue Settings</h3>
+      <h3 data-i18n="v7optimize.queueSettings">Queue Settings</h3>
     </div>
-    <button class="btn ghost" id="btn-close-settings">Close</button>
+    <button class="btn ghost" id="btn-close-settings" data-i18n="common.close">Close</button>
   </div>
   <div class="modal-body">
     <div class="settings-stack">
       <div class="modal-field">
-        <label for="settings-cpu-value"><span data-tip="CPU value autostart will enforce before launching a queued optimize config (writes optimize.n_cpus right before start).">Autostart CPU</span></label>
+        <label for="settings-cpu-value"><span data-tip="CPU value autostart will enforce before launching a queued optimize config (writes optimize.n_cpus right before start)." data-i18n-tip="v7optimize.autostartCpuTip" data-i18n="v7optimize.autostartCpu">Autostart CPU</span></label>
         <div class="settings-stepper">
           <span class="muted-line">CPU</span>
           <button class="btn" type="button" id="btn-settings-cpu-down">−</button>
           <input id="settings-cpu-value" class="panel-input" type="number" min="1" step="1" inputmode="numeric">
           <button class="btn" type="button" id="btn-settings-cpu-up">+</button>
-          <span class="muted-line">max <span id="settings-cpu-max">1</span></span>
+          <span class="muted-line"><span data-i18n="v7optimize.max">max</span> <span id="settings-cpu-max">1</span></span>
         </div>
         <div class="muted-line" id="settings-cpu-effective">Autostart uses: -</div>
       </div>
       <label class="toggle" for="settings-cpu-override">
         <input id="settings-cpu-override" type="checkbox">
-        <span data-tip="If enabled, autostart rewrites optimize.n_cpus right before launch. If disabled, PBGui uses the n_cpus already stored in each config.">Override config CPU</span>
+        <span data-tip="If enabled, autostart rewrites optimize.n_cpus right before launch. If disabled, PBGui uses the n_cpus already stored in each config." data-i18n-tip="v7optimize.overrideConfigCpuTip" data-i18n="v7optimize.overrideConfigCpu">Override config CPU</span>
       </label>
       <label class="toggle" for="settings-use-pbgui-market-data">
         <input id="settings-use-pbgui-market-data" type="checkbox">
-        <span data-tip="If enabled, PBGui rewrites backtest.ohlcv_source_dir to the PBGui market data path right before launching a queued optimize config.">Use PBGui Market Data</span>
+        <span data-tip="If enabled, PBGui rewrites backtest.ohlcv_source_dir to the PBGui market data path right before launching a queued optimize config." data-i18n-tip="v7optimize.usePbguiMarketDataTip" data-i18n="v7optimize.usePbguiMarketData">Use PBGui Market Data</span>
       </label>
       <label class="toggle" for="settings-autostart">
         <input id="settings-autostart" type="checkbox">
-        <span data-tip="When enabled, PBGui starts the next queued optimize job automatically once no other optimize is running.">Autostart</span>
+        <span data-tip="When enabled, PBGui starts the next queued optimize job automatically once no other optimize is running." data-i18n-tip="v7optimize.autostartTip" data-i18n="v7optimize.autostart">Autostart</span>
       </label>
     </div>
     <div class="modal-actions">
-      <button class="btn ghost" id="btn-settings-cancel">Cancel</button>
-      <button class="btn primary" id="btn-settings-save">Save</button>
+      <button class="btn ghost" id="btn-settings-cancel" data-i18n="common.cancel">Cancel</button>
+      <button class="btn primary" id="btn-settings-save" data-i18n="common.save">Save</button>
     </div>
   </div>
 </section>
@@ -2443,20 +2444,20 @@ textarea.json-invalid:focus {
 <section id="queue-config-choice-modal" class="modal">
   <div class="modal-head">
     <div>
-      <h3 id="queue-config-choice-title">Select matching config</h3>
+      <h3 id="queue-config-choice-title" data-i18n="v7optimize.selectMatchingConfig">Select matching config</h3>
     </div>
-    <button class="btn ghost" id="btn-close-queue-config-choice">Close</button>
+    <button class="btn ghost" id="btn-close-queue-config-choice" data-i18n="common.close">Close</button>
   </div>
   <div class="modal-body">
     <div id="queue-config-choice-message" class="queue-config-choice-copy"></div>
     <div class="queue-config-choice-meta">
-      <div class="queue-config-choice-meta-label">Missing queue path</div>
+      <div class="queue-config-choice-meta-label" data-i18n="v7optimize.missingQueuePath">Missing queue path</div>
       <div id="queue-config-choice-path" class="queue-config-choice-path"></div>
     </div>
-    <div id="queue-config-choice-note" class="queue-config-choice-note">Open the correct config below, then save or queue it again so the queue entry uses the current path.</div>
+    <div id="queue-config-choice-note" class="queue-config-choice-note" data-i18n="v7optimize.queueConfigChoiceNote">Open the correct config below, then save or queue it again so the queue entry uses the current path.</div>
     <div id="queue-config-choice-list" class="queue-config-choice-list"></div>
     <div class="modal-actions">
-      <button class="btn ghost" id="btn-queue-config-choice-cancel">Close</button>
+      <button class="btn ghost" id="btn-queue-config-choice-cancel" data-i18n="common.close">Close</button>
     </div>
   </div>
 </section>
@@ -2472,9 +2473,9 @@ textarea.json-invalid:focus {
   <div class="pnr pnr-se" data-dir="se"></div>
   <div class="modal-head">
     <div>
-      <h3 id="plot-modal-title">PB7 3D plot</h3>
+      <h3 id="plot-modal-title" data-i18n="v7optimize.plot3dTitle">PB7 3D plot</h3>
     </div>
-    <button class="btn ghost" id="btn-close-plot">Close</button>
+    <button class="btn ghost" id="btn-close-plot" data-i18n="common.close">Close</button>
   </div>
   <div class="modal-body">
     <iframe id="plot-frame" class="plot-frame" title="PB7 3D plot"></iframe>
@@ -2491,38 +2492,38 @@ textarea.json-invalid:focus {
   <div class="lp-resize lp-resize-sw" data-dir="sw"></div>
   <div class="lp-resize lp-resize-se" data-dir="se"></div>
   <div id="log-panel-header">
-    <span id="log-panel-title">Optimize log</span>
-    <button id="log-panel-close" title="Close">✕</button>
+    <span id="log-panel-title" data-i18n="v7optimize.optimizeLog">Optimize log</span>
+    <button id="log-panel-close" title="Close" data-i18n-title="common.close">✕</button>
   </div>
   <div id="opt-log-dashboard">
     <div class="optlog-progress-track"><div id="optlog-progress-fill" class="optlog-progress-fill"></div></div>
     <div class="optlog-progress-meta">
-      <span id="optlog-progress-label">Waiting for optimize status...</span>
+      <span id="optlog-progress-label" data-i18n="v7optimize.waitingForOptimizeStatus">Waiting for optimize status...</span>
       <span id="optlog-updated-label">-</span>
     </div>
     <div class="optlog-summary-grid">
-      <div class="optlog-card"><div class="optlog-label">Phase</div><div id="optlog-phase" class="optlog-value">-</div></div>
+      <div class="optlog-card"><div class="optlog-label" data-i18n="v7optimize.phase">Phase</div><div id="optlog-phase" class="optlog-value">-</div></div>
       <div class="optlog-card">
         <div class="optlog-card-row">
-          <div class="optlog-label">Pareto Front</div>
+          <div class="optlog-label" data-i18n="v7optimize.paretoFront">Pareto Front</div>
           <div class="optlog-mini-actions">
-            <button type="button" class="optlog-mini-btn" id="optlog-open-results" title="Show matching optimize results">Results</button>
-            <button type="button" class="optlog-mini-btn" id="optlog-open-pareto-explorer" title="Open matching result in Pareto Explorer">Pareto Explorer</button>
+            <button type="button" class="optlog-mini-btn" id="optlog-open-results" title="Show matching optimize results" data-i18n-title="v7optimize.showMatchingResults" data-i18n="v7optimize.results">Results</button>
+            <button type="button" class="optlog-mini-btn" id="optlog-open-pareto-explorer" title="Open matching result in Pareto Explorer" data-i18n-title="v7optimize.openInParetoExplorer" data-i18n="v7optimize.paretoExplorer">Pareto Explorer</button>
           </div>
         </div>
         <div id="optlog-pareto" class="optlog-value">-</div>
       </div>
-      <div class="optlog-card"><div class="optlog-label">Backend</div><div id="optlog-backend" class="optlog-value">-</div></div>
-      <div class="optlog-card"><div class="optlog-label">Elapsed</div><div id="optlog-elapsed" class="optlog-value">-</div></div>
+      <div class="optlog-card"><div class="optlog-label" data-i18n="v7optimize.backend">Backend</div><div id="optlog-backend" class="optlog-value">-</div></div>
+      <div class="optlog-card"><div class="optlog-label" data-i18n="v7optimize.elapsed">Elapsed</div><div id="optlog-elapsed" class="optlog-value">-</div></div>
       <div class="optlog-card"><div class="optlog-label">CPU</div><div id="optlog-cpu" class="optlog-value" data-tip-mono="true">-</div></div>
-      <div class="optlog-card"><div class="optlog-label">System Memory</div><div id="optlog-memory" class="optlog-value">-</div></div>
-      <div class="optlog-card"><div class="optlog-label">Queue</div><div id="optlog-queue" class="optlog-value">-</div></div>
+      <div class="optlog-card"><div class="optlog-label" data-i18n="v7optimize.systemMemory">System Memory</div><div id="optlog-memory" class="optlog-value">-</div></div>
+      <div class="optlog-card"><div class="optlog-label" data-i18n="v7optimize.queue">Queue</div><div id="optlog-queue" class="optlog-value">-</div></div>
     </div>
     <div class="optlog-detail-grid">
-      <div class="optlog-detail"><div class="optlog-label">Objectives</div><div id="optlog-objectives" class="optlog-detail-text">-</div></div>
-      <div class="optlog-detail"><div class="optlog-label">Ranges</div><div id="optlog-ranges" class="optlog-detail-text">-</div></div>
-      <div class="optlog-detail"><div class="optlog-label">Last Activity</div><div id="optlog-activity" class="optlog-detail-text">-</div></div>
-      <div class="optlog-detail"><div class="optlog-label">Last Error</div><div id="optlog-error" class="optlog-detail-text">-</div></div>
+      <div class="optlog-detail"><div class="optlog-label" data-i18n="v7optimize.objectives">Objectives</div><div id="optlog-objectives" class="optlog-detail-text">-</div></div>
+      <div class="optlog-detail"><div class="optlog-label" data-i18n="v7optimize.ranges">Ranges</div><div id="optlog-ranges" class="optlog-detail-text">-</div></div>
+      <div class="optlog-detail"><div class="optlog-label" data-i18n="v7optimize.lastActivity">Last Activity</div><div id="optlog-activity" class="optlog-detail-text">-</div></div>
+      <div class="optlog-detail"><div class="optlog-label" data-i18n="v7optimize.lastError">Last Error</div><div id="optlog-error" class="optlog-detail-text">-</div></div>
     </div>
   </div>
   <div id="log-viewer-target"></div>
@@ -2538,10 +2539,10 @@ textarea.json-invalid:focus {
   <div class="fp-resize fp-resize-sw" data-dir="sw"></div>
   <div class="fp-resize fp-resize-se" data-dir="se"></div>
   <div id="ohlcv-panel-header" class="floating-preview-header">
-    <span class="floating-preview-title">OHLCV Readiness</span>
+    <span class="floating-preview-title" data-i18n="v7optimize.ohlcvReadinessTitle">OHLCV Readiness</span>
     <div class="floating-preview-tools">
-      <button id="ohlcv-panel-maximize" class="floating-preview-tool" title="Fit to browser window" aria-pressed="false">⛶</button>
-      <button id="ohlcv-panel-close" class="floating-preview-close" title="Close">✕</button>
+      <button id="ohlcv-panel-maximize" class="floating-preview-tool" title="Fit to browser window" data-i18n-title="nav.fit_window" aria-pressed="false">⛶</button>
+      <button id="ohlcv-panel-close" class="floating-preview-close" title="Close" data-i18n-title="common.close">✕</button>
     </div>
   </div>
   <div id="ohlcv-panel-body" class="floating-preview-body" aria-live="polite"></div>
@@ -2550,10 +2551,10 @@ textarea.json-invalid:focus {
 <div id="toast-stack"></div>
 <div id="data-tip-tooltip"></div>
 
-<script src="/app/js/editor_shared.js?v=13"></script>
-<script src="/app/js/suite_editor.js?v=10"></script>
-<script src="/app/js/log_viewer_panel.js?v=29"></script>
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
+<script src="/app/js/editor_shared.js?v=14"></script>
+<script src="/app/js/suite_editor.js?v=11"></script>
+<script src="/app/js/log_viewer_panel.js?v=30"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
 <script>
 var TOKEN = "%%TOKEN%%";
 var API_BASE = "%%API_BASE%%";
@@ -2572,6 +2573,7 @@ var optimizeEditorAdapter = window.PBGuiOptimizeEditorAdapter.create(OPTIMIZE_VE
 });
 API_BASE = optimizeEditorAdapter.apiBase;
 WS_BASE = optimizeEditorAdapter.wsBase;
+if (window.PBGuiI18n) document.title = PBGuiI18n.t('v7optimize.pageTitle');
 
 var state = {
   panel: 'configs',
@@ -2690,20 +2692,20 @@ var state = {
 
 var PANEL_META = {
   configs: {
-    title: 'Optimize Configs',
-    subtitle: 'Manage saved optimize setups and queue them in batches.'
+    title: PBGuiI18n.t('v7optimize.panelConfigsTitle'),
+    subtitle: PBGuiI18n.t('v7optimize.panelConfigsSubtitle')
   },
   queue: {
-    title: 'Optimize Queue',
-    subtitle: 'Track active jobs, control autostart, and inspect logs live.'
+    title: PBGuiI18n.t('v7optimize.panelQueueTitle'),
+    subtitle: PBGuiI18n.t('v7optimize.panelQueueSubtitle')
   },
   results: {
-    title: 'Optimize Results',
-    subtitle: 'Review completed optimize runs and jump into pareto candidates.'
+    title: PBGuiI18n.t('v7optimize.panelResultsTitle'),
+    subtitle: PBGuiI18n.t('v7optimize.panelResultsSubtitle')
   },
   paretos: {
-    title: 'Pareto Candidates',
-    subtitle: 'Inspect generated pareto configs and reopen them in the editor.'
+    title: PBGuiI18n.t('v7optimize.panelParetosTitle'),
+    subtitle: PBGuiI18n.t('v7optimize.panelParetosSubtitle')
   }
 };
 
@@ -2790,7 +2792,7 @@ function renderParetoToolbar() {
 
   if (!state.selectedResultPath) {
     modeChip.className = 'status-chip';
-    modeChip.textContent = 'No result selected';
+    modeChip.textContent = PBGuiI18n.t('v7optimize.noResultSelected');
     scenarioWrap.style.display = 'none';
     statWrap.style.display = 'none';
     filterSummary.textContent = '';
@@ -2811,25 +2813,27 @@ function renderParetoToolbar() {
   modeChip.className = 'status-chip';
   if (hasSuite) {
     modeChip.classList.add('warn');
-    modeChip.textContent = 'Suite result' + (state.paretoScenarioLabels.length ? ' · ' + state.paretoScenarioLabels.length + ' scenarios' : '');
+    modeChip.textContent = state.paretoScenarioLabels.length
+      ? PBGuiI18n.t('v7optimize.suiteResultScenarios', { count: state.paretoScenarioLabels.length })
+      : PBGuiI18n.t('v7optimize.suiteResult');
     filterSummary.textContent = state.paretoScenario === 'Aggregated'
-      ? 'Summary uses ' + state.paretoStatistic + ' across all scenarios.'
-      : 'Summary uses scenario "' + state.paretoScenario + '".';
+      ? PBGuiI18n.t('v7optimize.summaryUsesAcrossAll', { stat: state.paretoStatistic })
+      : PBGuiI18n.t('v7optimize.summaryUsesScenario', { scenario: state.paretoScenario });
     return;
   }
   if (mode === 'stats') {
     modeChip.classList.add('good');
-    modeChip.textContent = 'Single result';
-    filterSummary.textContent = 'Summary uses ' + state.paretoStatistic + ' values.';
+    modeChip.textContent = PBGuiI18n.t('v7optimize.singleResult');
+    filterSummary.textContent = PBGuiI18n.t('v7optimize.summaryUsesValues', { stat: state.paretoStatistic });
     return;
   }
   if (isLegacy) {
     modeChip.classList.add('warn');
-    modeChip.textContent = 'Legacy result';
-    filterSummary.textContent = 'Legacy paretos do not expose suite/stat summary controls.';
+    modeChip.textContent = PBGuiI18n.t('v7optimize.legacyResult');
+    filterSummary.textContent = PBGuiI18n.t('v7optimize.legacyNoControls');
     return;
   }
-  modeChip.textContent = 'Unknown result format';
+  modeChip.textContent = PBGuiI18n.t('v7optimize.unknownResultFormat');
   filterSummary.textContent = '';
 }
 
@@ -2837,13 +2841,13 @@ function resultModeMarkup(result) {
   if (!result || !result.mode) return '<span class="muted">-</span>';
   if (result.mode === 'suite') {
     var count = Number(result.scenario_count || 0);
-    return '<div class="metrics-inline"><span class="metric-pill">suite</span>'
-      + (count > 0 ? '<span class="metric-pill">' + escapeHtml(String(count)) + ' scenarios</span>' : '')
+    return '<div class="metrics-inline"><span class="metric-pill">' + escapeHtml(PBGuiI18n.t('v7optimize.modeSuite')) + '</span>'
+      + (count > 0 ? '<span class="metric-pill">' + escapeHtml(PBGuiI18n.t('v7optimize.scenarioCount', { count: count })) + '</span>' : '')
       + '</div>';
   }
-  if (result.mode === 'stats') return '<span class="metric-pill">single</span>';
-  if (result.mode === 'legacy') return '<span class="metric-pill">legacy</span>';
-  return '<span class="muted">unknown</span>';
+  if (result.mode === 'stats') return '<span class="metric-pill">' + escapeHtml(PBGuiI18n.t('v7optimize.modeSingle')) + '</span>';
+  if (result.mode === 'legacy') return '<span class="metric-pill">' + escapeHtml(PBGuiI18n.t('v7optimize.modeLegacy')) + '</span>';
+  return '<span class="muted">' + escapeHtml(PBGuiI18n.t('v7optimize.modeUnknown')) + '</span>';
 }
 
 function escapeHtml(value) {
@@ -3255,7 +3259,7 @@ function limitEntryToForm(entry) {
 
 function buildLimitEntryFromForm(rawForm) {
   var form = normalizeLimitForm(rawForm);
-  if (!form.base_metric) throw new Error('Select a metric for the limit.');
+  if (!form.base_metric) throw new Error(PBGuiI18n.t('v7optimize.selectMetricForLimit'));
   var entry = Object.assign({}, form._source_entry || {}, {
     metric: buildLimitMetricName(form.base_metric, form.currency),
     penalize_if: form.penalize_if
@@ -3277,14 +3281,14 @@ function buildLimitEntryFromForm(rawForm) {
     if (form.scenario_mode === 'aggregate') {
       entry.scenario = null;
     } else if (form.scenario_mode === 'named') {
-      if (!form.scenario_name) throw new Error('Enter a named scenario for the limit.');
-      if (form.stat) throw new Error('A named limit scenario cannot also use Stat.');
+      if (!form.scenario_name) throw new Error(PBGuiI18n.t('v7optimize.enterNamedScenarioForLimit'));
+      if (form.stat) throw new Error(PBGuiI18n.t('v7optimize.namedLimitNoStat'));
       entry.scenario = form.scenario_name;
     }
   }
   if (form.stat) entry[currentLimitsMeta().limit_basis_field] = form.stat;
   if (isLimitRangePenalize(form.penalize_if)) {
-    if (form.range_high < form.range_low) throw new Error('Range Low must be less than or equal to Range High.');
+    if (form.range_high < form.range_low) throw new Error(PBGuiI18n.t('v7optimize.rangeLowHighOrder'));
     entry.range = [form.range_low, form.range_high];
   } else {
     entry.value = form.value;
@@ -3516,7 +3520,7 @@ function addLimitEntry() {
     state.limitAddForm = defaultLimitForm(state.limitAddForm && state.limitAddForm.metric_type);
     setLimitEntries(nextEntries, { preserveAddForm: true });
   } catch (error) {
-    toast(error.message || 'Could not add limit.', 'err');
+    toast(error.message || PBGuiI18n.t('v7optimize.couldNotAddLimit'), 'err');
   }
 }
 
@@ -3530,7 +3534,7 @@ function saveLimitEdit() {
     state.limitEditForm = null;
     setLimitEntries(nextEntries, { preserveAddForm: true });
   } catch (error) {
-    toast(error.message || 'Could not save limit.', 'err');
+    toast(error.message || PBGuiI18n.t('v7optimize.couldNotSaveLimit'), 'err');
   }
 }
 
@@ -3695,7 +3699,7 @@ function renderOptimizeLimitsEditor() {
           + '</tr>';
         return;
       }
-      html += '<tr class="limits-editable-row" onclick="startLimitEdit(' + index + ')" title="Click row to edit inline">'
+      html += '<tr class="limits-editable-row" onclick="startLimitEdit(' + index + ')" title="' + PBGuiI18n.t('v7optimize.clickRowToEditInline') + '">'
         + '<td class="mono">' + escapeHtml(entry.metric || '?') + '</td>'
         + '<td>' + escapeHtml(entry.penalize_if || '?') + '</td>'
         + (isV8 ? '<td>' + escapeHtml(formatScenarioSelection(entry, false)) + '</td>' : '')
@@ -3897,7 +3901,7 @@ function scoringEntryToForm(entry) {
 
 function buildScoringEntryFromForm(rawForm) {
   var form = normalizeScoringForm(rawForm);
-  if (!form.base_metric) throw new Error('Select a metric for scoring.');
+  if (!form.base_metric) throw new Error(PBGuiI18n.t('v7optimize.selectMetricForScoring'));
   var metric = buildLimitMetricName(form.base_metric, form.currency);
   var entry = Object.assign({}, form._source_entry || {}, {
     metric: metric,
@@ -3912,8 +3916,8 @@ function buildScoringEntryFromForm(rawForm) {
     if (form.scenario_mode === 'aggregate') {
       entry.scenario = null;
     } else if (form.scenario_mode === 'named') {
-      if (!form.scenario_name) throw new Error('Enter a named scenario for the scoring objective.');
-      if (form.aggregate) throw new Error('A named scoring scenario cannot also use Aggregate.');
+      if (!form.scenario_name) throw new Error(PBGuiI18n.t('v7optimize.enterNamedScenarioForScoring'));
+      if (form.aggregate) throw new Error(PBGuiI18n.t('v7optimize.namedScoringNoAggregate'));
       entry.scenario = form.scenario_name;
     }
     if (form.aggregate) entry[currentLimitsMeta().scoring_basis_field] = form.aggregate;
@@ -3928,28 +3932,28 @@ function validatePb8ScenarioBases(scoring, limits, objectiveScenario, suiteEnabl
   (scenarioLabels || []).forEach(function(label) {
     var raw = String(label == null ? '' : label);
     var normalized = raw.trim();
-    if (!normalized) throw new Error('Suite scenario labels cannot be empty.');
-    if (raw !== normalized) throw new Error('Suite scenario labels cannot contain leading or trailing whitespace: ' + raw);
-    if (labels.has(normalized)) throw new Error('Duplicate Suite scenario label: ' + normalized);
+    if (!normalized) throw new Error(PBGuiI18n.t('v7optimize.suiteScenarioLabelsEmpty'));
+    if (raw !== normalized) throw new Error(PBGuiI18n.t('v7optimize.suiteScenarioLabelsWhitespace', { raw: raw }));
+    if (labels.has(normalized)) throw new Error(PBGuiI18n.t('v7optimize.duplicateSuiteLabel', { label: normalized }));
     labels.add(normalized);
   });
   if (objectiveScenario) {
-    if (!suiteEnabled) throw new Error('Objective Scenario requires Suite mode.');
-    if (!labels.has(String(objectiveScenario))) throw new Error('Unknown Objective Scenario: ' + objectiveScenario);
+    if (!suiteEnabled) throw new Error(PBGuiI18n.t('v7optimize.objectiveScenarioRequiresSuite'));
+    if (!labels.has(String(objectiveScenario))) throw new Error(PBGuiI18n.t('v7optimize.unknownObjectiveScenario', { scenario: objectiveScenario }));
   }
   (scoring || []).forEach(function(entry) {
     var aggregate = String(entry[currentLimitsMeta().scoring_basis_field] || '').trim().toLowerCase();
-    if (allowedAggregates.indexOf(aggregate) < 0) throw new Error('Unsupported scoring aggregate: ' + aggregate);
+    if (allowedAggregates.indexOf(aggregate) < 0) throw new Error(PBGuiI18n.t('v7optimize.unsupportedScoringAggregate', { aggregate: aggregate }));
     var hasScenario = Object.prototype.hasOwnProperty.call(entry, 'scenario');
     var namedScenario = hasScenario && entry.scenario != null && String(entry.scenario).trim() !== '';
     if (hasScenario && entry.scenario != null && !String(entry.scenario).trim()) {
-      throw new Error('Scoring scenario label cannot be empty.');
+      throw new Error(PBGuiI18n.t('v7optimize.scoringScenarioEmpty'));
     }
-    if ((hasScenario || aggregate) && !suiteEnabled) throw new Error('Scoring Scenario and Aggregate require Suite mode.');
-    if (namedScenario && !labels.has(String(entry.scenario))) throw new Error('Unknown scoring scenario: ' + entry.scenario);
-    if (namedScenario && aggregate) throw new Error('A named scoring scenario cannot also use Aggregate.');
+    if ((hasScenario || aggregate) && !suiteEnabled) throw new Error(PBGuiI18n.t('v7optimize.scoringScenarioRequiresSuite'));
+    if (namedScenario && !labels.has(String(entry.scenario))) throw new Error(PBGuiI18n.t('v7optimize.unknownScoringScenario', { scenario: entry.scenario }));
+    if (namedScenario && aggregate) throw new Error(PBGuiI18n.t('v7optimize.namedScoringNoAggregate'));
     if (!hasScenario && objectiveScenario && aggregate) {
-      throw new Error('A scoring objective inheriting a named objective_scenario cannot also use Aggregate.');
+      throw new Error(PBGuiI18n.t('v7optimize.objectiveInheritingNoAggregate'));
     }
   });
   (limits || []).forEach(function(entry) {
@@ -3957,11 +3961,11 @@ function validatePb8ScenarioBases(scoring, limits, objectiveScenario, suiteEnabl
     var namedScenario = Object.prototype.hasOwnProperty.call(entry, 'scenario')
       && entry.scenario != null && String(entry.scenario).trim() !== '';
     if (hasScenario && entry.scenario != null && !String(entry.scenario).trim()) {
-      throw new Error('Limit scenario label cannot be empty.');
+      throw new Error(PBGuiI18n.t('v7optimize.limitScenarioEmpty'));
     }
-    if (hasScenario && !suiteEnabled) throw new Error('Limit Scenario requires Suite mode.');
-    if (namedScenario && !labels.has(String(entry.scenario))) throw new Error('Unknown limit scenario: ' + entry.scenario);
-    if (namedScenario && entry[currentLimitsMeta().limit_basis_field]) throw new Error('A named limit scenario cannot also use Stat.');
+    if (hasScenario && !suiteEnabled) throw new Error(PBGuiI18n.t('v7optimize.limitScenarioRequiresSuite'));
+    if (namedScenario && !labels.has(String(entry.scenario))) throw new Error(PBGuiI18n.t('v7optimize.unknownLimitScenario', { scenario: entry.scenario }));
+    if (namedScenario && entry[currentLimitsMeta().limit_basis_field]) throw new Error(PBGuiI18n.t('v7optimize.namedLimitNoStat'));
   });
 }
 
@@ -4061,7 +4065,7 @@ function addScoringEntry() {
     state.scoringAddForm = defaultScoringForm(state.scoringAddForm && state.scoringAddForm.metric_type);
     setScoringEntries(nextEntries, { preserveAddForm: true });
   } catch (error) {
-    toast(error.message || 'Could not add scoring objective.', 'err');
+    toast(error.message || PBGuiI18n.t('v7optimize.couldNotAddScoringObjective'), 'err');
   }
 }
 
@@ -4075,7 +4079,7 @@ function saveScoringEdit() {
     state.scoringEditForm = null;
     setScoringEntries(nextEntries, { preserveAddForm: true });
   } catch (error) {
-    toast(error.message || 'Could not save scoring objective.', 'err');
+    toast(error.message || PBGuiI18n.t('v7optimize.couldNotSaveScoringObjective'), 'err');
   }
 }
 
@@ -4189,7 +4193,7 @@ function renderOptimizeScoringEditor() {
           + '</tr>';
         return;
       }
-      html += '<tr class="limits-editable-row" onclick="startScoringEdit(' + index + ')" title="Click row to edit inline">'
+      html += '<tr class="limits-editable-row" onclick="startScoringEdit(' + index + ')" title="' + PBGuiI18n.t('v7optimize.clickRowToEditInline') + '">'
         + '<td class="mono">' + escapeHtml(entry.metric || '?') + '</td>'
         + '<td>' + escapeHtml(entry.goal || '?') + '</td>'
         + (isV8 ? '<td>' + escapeHtml(formatScenarioSelection(entry, true)) + '</td>' : '')
@@ -4589,7 +4593,7 @@ function cfgEnsureDateOrder(startId, endId, changedSide, silent) {
     startEl.value = endVal;
     startEl.dataset.prev = endVal;
   }
-  if (!silent) toast('end_date cannot be before start_date', 'warn');
+  if (!silent) toast(PBGuiI18n.t('v7optimize.endDateBeforeStartDate'), 'warn');
   return false;
 }
 
@@ -5090,13 +5094,13 @@ function formatRangePairs(rangeMap) {
 function optimizePhaseLabel(phase) {
   var normalized = String(phase || '').trim().toLowerCase();
   var labels = {
-    queued: 'Queued',
-    initializing: 'Initializing',
-    evaluating_starts: 'Evaluating Starts',
-    running: 'Running',
-    optimizing: 'Optimizing',
-    complete: 'Complete',
-    error: 'Error'
+    queued: PBGuiI18n.t('v7optimize.phaseQueued'),
+    initializing: PBGuiI18n.t('v7optimize.phaseInitializing'),
+    evaluating_starts: PBGuiI18n.t('v7optimize.phaseEvaluatingStarts'),
+    running: PBGuiI18n.t('v7optimize.phaseRunning'),
+    optimizing: PBGuiI18n.t('v7optimize.phaseOptimizing'),
+    complete: PBGuiI18n.t('v7optimize.phaseComplete'),
+    error: PBGuiI18n.t('v7optimize.phaseError')
   };
   return labels[normalized] || (normalized ? normalized : '-');
 }
@@ -5167,7 +5171,7 @@ function renderOptimizeLogDashboard(status) {
   el('optlog-open-pareto-explorer').disabled = !hasLogResult;
   if (!status) {
     el('optlog-progress-fill').style.width = '0%';
-    el('optlog-progress-label').textContent = 'Waiting for optimize status...';
+    el('optlog-progress-label').textContent = PBGuiI18n.t('v7optimize.waitingForOptimizeStatus');
     el('optlog-updated-label').textContent = '-';
     el('optlog-phase').textContent = '-';
     el('optlog-pareto').textContent = '-';
@@ -5193,9 +5197,9 @@ function renderOptimizeLogDashboard(status) {
   var log = status.log || {};
   var percent = progress.percent == null || !isFinite(Number(progress.percent)) ? null : Number(progress.percent);
   el('optlog-progress-fill').style.width = percent == null ? '0%' : Math.max(0, Math.min(100, percent)) + '%';
-  var progressText = progress.eval == null ? 'Waiting for evaluations...' : progress.eval.toLocaleString() + ' evals';
+  var progressText = progress.eval == null ? PBGuiI18n.t('v7optimize.waitingForEvaluations') : PBGuiI18n.t('v7optimize.evalsCount', { count: progress.eval.toLocaleString() });
   if (progress.target_iters != null) {
-    progressText = progress.eval.toLocaleString() + ' / ' + progress.target_iters.toLocaleString() + ' evals';
+    progressText = PBGuiI18n.t('v7optimize.evalsOf', { current: progress.eval.toLocaleString(), target: progress.target_iters.toLocaleString() });
     if (percent != null) progressText += ' (' + percent.toFixed(1) + '%)';
   }
   el('optlog-progress-label').textContent = progressText;
@@ -5209,7 +5213,7 @@ function renderOptimizeLogDashboard(status) {
   var backendBits = [];
   if (runtime.backend) backendBits.push(runtime.backend);
   if (runtime.algorithm) backendBits.push(runtime.algorithm);
-  if (runtime.objective_count != null) backendBits.push(runtime.objective_count + ' obj');
+  if (runtime.objective_count != null) backendBits.push(PBGuiI18n.t('v7optimize.objCount', { count: runtime.objective_count }));
   if (runtime.config_n_cpus != null) backendBits.push('n_cpus ' + runtime.config_n_cpus);
   el('optlog-backend').textContent = backendBits.join(' / ') || '-';
   var elapsedSeconds = null;
@@ -5219,8 +5223,8 @@ function renderOptimizeLogDashboard(status) {
   }
   el('optlog-elapsed').textContent = formatDurationCompact(elapsedSeconds);
   var coreBits = [];
-  if (runtime.config_n_cpus != null) coreBits.push(runtime.config_n_cpus + ' configured');
-  if (!coreBits.length && system.cpu_percent != null) coreBits.push(system.cpu_percent.toFixed(1) + '% system');
+  if (runtime.config_n_cpus != null) coreBits.push(PBGuiI18n.t('v7optimize.configuredCount', { count: runtime.config_n_cpus }));
+  if (!coreBits.length && system.cpu_percent != null) coreBits.push(PBGuiI18n.t('v7optimize.systemPercent', { percent: system.cpu_percent.toFixed(1) }));
   cpuEl.textContent = coreBits.join(' · ') || '-';
   var cpuTooltip = buildOptimizeCpuTooltip(system, runtime, process);
   if (cpuTooltip) cpuEl.setAttribute('data-tip', cpuTooltip);
@@ -5233,9 +5237,9 @@ function renderOptimizeLogDashboard(status) {
   }
   el('optlog-memory').textContent = memBits.join(' · ') || '-';
   el('optlog-queue').textContent = [
-    (queue.running || 0) + ' run',
-    (queue.queued || 0) + ' queued',
-    (queue.error || 0) + ' err'
+    PBGuiI18n.t('v7optimize.runCount', { count: queue.running || 0 }),
+    PBGuiI18n.t('v7optimize.queuedCount', { count: queue.queued || 0 }),
+    PBGuiI18n.t('v7optimize.errCount', { count: queue.error || 0 })
   ].join(' · ');
   el('optlog-objectives').textContent = formatMetricPairs((status.metrics || {}).objectives);
   el('optlog-ranges').textContent = formatRangePairs((status.metrics || {}).ranges);
@@ -5253,8 +5257,8 @@ async function refreshOptimizeLogStatus(filename) {
   } catch (error) {
     if (state.logFilename !== filename) return;
     renderOptimizeLogDashboard(null);
-    el('optlog-activity').textContent = 'Status unavailable';
-    el('optlog-error').textContent = error && error.message ? error.message : 'Failed to load optimize status';
+    el('optlog-activity').textContent = PBGuiI18n.t('v7optimize.statusUnavailable');
+    el('optlog-error').textContent = error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.failedToLoadStatus');
   } finally {
     state.logStatusInFlight = false;
   }
@@ -5326,21 +5330,21 @@ function openLogPanelParetosForResult(result) {
 function openLogPanelResults() {
   var query = logPanelResultQuery();
   if (!query) {
-    toast('No optimize result is linked to this log.', 'warn');
+    toast(PBGuiI18n.t('v7optimize.noResultLinkedToLog'), 'warn');
     return;
   }
   if (openLogPanelParetosForResult(findLogPanelResult())) return;
   loadResults().then(function() {
     if (openLogPanelParetosForResult(findLogPanelResult())) return;
     showLogPanelResultsFallback(query);
-    toast('Matching result not found yet.', 'warn');
+    toast(PBGuiI18n.t('v7optimize.matchingResultNotFound'), 'warn');
   }).catch(handleError);
 }
 
 async function openLogPanelParetoExplorer() {
   var query = logPanelResultQuery();
   if (!query) {
-    toast('No optimize result is linked to this log.', 'warn');
+    toast(PBGuiI18n.t('v7optimize.noResultLinkedToLog'), 'warn');
     return;
   }
   var result = findLogPanelResult();
@@ -5350,7 +5354,7 @@ async function openLogPanelParetoExplorer() {
   }
   if (!result) {
     showLogPanelResultsFallback(query);
-    toast('Matching result not found yet.', 'warn');
+    toast(PBGuiI18n.t('v7optimize.matchingResultNotFound'), 'warn');
     return;
   }
   state.selectedResultPath = result.path;
@@ -6206,7 +6210,7 @@ function compareOptimizeBoundEntries(a, b) {
 function updateOptimizeBoundsHeader() {
   var label = el('opted-bounds-summary');
   if (!label) return;
-  label.textContent = 'Bounds & Overrides (' + state.optimizeBounds.length + ')';
+  label.textContent = PBGuiI18n.t('v7optimize.boundsAndOverrides', { count: state.optimizeBounds.length });
 }
 
 function setOptimizeBoundsData(rawBounds, rawFixedParams, rawRuntimeOverrides, opts) {
@@ -6232,7 +6236,7 @@ function renderOptimizeBoundRow(entry, fixedSet) {
     + '<div class="optimize-bound-row" id="' + getOptimizeBoundDomId(entry.key) + '">'
     +   '<div class="optimize-bound-head">'
     +     '<div class="optimize-bound-name"><span class="bound-key-text" data-tip="' + escAttr(getOptimizeBoundLabelTip(entry)) + '">' + escapeHtml(entry.key) + '</span></div>'
-    +     '<div class="optimize-bound-step-label"><span data-tip="' + escAttr(getOptimizeBoundStepTip(entry)) + '">step</span></div>'
+    +     '<div class="optimize-bound-step-label"><span data-tip="' + escAttr(getOptimizeBoundStepTip(entry)) + '">' + escapeHtml(PBGuiI18n.t('v7optimize.step')) + '</span></div>'
     +   '</div>'
     +   '<div class="optimize-bound-body">'
     +     '<div class="optimize-bound-slider-col">'
@@ -6249,7 +6253,7 @@ function renderOptimizeBoundRow(entry, fixedSet) {
     +     '</div>'
     +     '<div class="optimize-bound-step-col">'
     +       '<input class="optimize-bound-step-input" type="text" inputmode="decimal" spellcheck="false" autocomplete="off" value="' + escapeHtml(entry.stepText) + '" oninput="updateOptimizeBoundField(' + escAttr(JSON.stringify(entry.key)) + ', &quot;step&quot;, this.value, this)" onblur="finalizeOptimizeBoundStepField(' + escAttr(JSON.stringify(entry.key)) + ', this)">'
-    +       '<label class="optimize-bound-fixed"><input type="checkbox" ' + (fixedSet.has(optimizeEditorAdapter.canonicalFixedParam(entry.key)) ? 'checked ' : '') + (autoFixed ? 'disabled ' : '') + 'onchange="toggleOptimizeFixedParam(' + escAttr(JSON.stringify(entry.key)) + ', this.checked)"><span data-tip="' + escAttr(fixedTip) + '">fixed</span></label>'
+    +       '<label class="optimize-bound-fixed"><input type="checkbox" ' + (fixedSet.has(optimizeEditorAdapter.canonicalFixedParam(entry.key)) ? 'checked ' : '') + (autoFixed ? 'disabled ' : '') + 'onchange="toggleOptimizeFixedParam(' + escAttr(JSON.stringify(entry.key)) + ', this.checked)"><span data-tip="' + escAttr(fixedTip) + '">' + escapeHtml(PBGuiI18n.t('v7optimize.fixed')) + '</span></label>'
     +     '</div>'
     +   '</div>'
     + '</div>';
@@ -6279,9 +6283,9 @@ function renderOptimizeBoundsEditor() {
   var html = ''
     + '<div class="limits-panel">'
     +   '<div class="bounds-surface">'
-    +     renderOptimizeBoundsGroup('Bounds long', groups.long || [], fixedSet, false)
-    +     renderOptimizeBoundsGroup('Bounds short', groups.short || [], fixedSet, false)
-    +     renderOptimizeBoundsGroup('Other bounds', groups.other || [], fixedSet, true)
+    +     renderOptimizeBoundsGroup(PBGuiI18n.t('v7optimize.boundsLong'), groups.long || [], fixedSet, false)
+    +     renderOptimizeBoundsGroup(PBGuiI18n.t('v7optimize.boundsShort'), groups.short || [], fixedSet, false)
+    +     renderOptimizeBoundsGroup(PBGuiI18n.t('v7optimize.otherBounds'), groups.other || [], fixedSet, true)
     +   '</div>';
   if (!(state.optimizeBounds || []).length) {
     html += '<div class="limits-empty">No bounds configured.</div>';
@@ -6337,9 +6341,9 @@ function renderOptimizeRuntimeOverridesEditor() {
         + '<div class="runtime-override-simple-grid">' + fields.map(renderRuntimeOverrideField).join('') + '</div>'
         + '</div>';
     }
-    var fields = renderRuntimeOverrideGroup('Runtime overrides long', groups.long, false)
-      + renderRuntimeOverrideGroup('Runtime overrides short', groups.short, false)
-      + renderRuntimeOverrideGroup('Other runtime overrides', groups.other, true);
+    var fields = renderRuntimeOverrideGroup(PBGuiI18n.t('v7optimize.runtimeOverridesLong'), groups.long, false)
+      + renderRuntimeOverrideGroup(PBGuiI18n.t('v7optimize.runtimeOverridesShort'), groups.short, false)
+      + renderRuntimeOverrideGroup(PBGuiI18n.t('v7optimize.otherRuntimeOverrides'), groups.other, true);
     panel.innerHTML = fields
       ? '<div class="limits-panel runtime-overrides-panel"><div class="bounds-surface">' + fields + '</div></div>'
       : '<div class="limits-empty">No runtime overrides reported by the installed PB8 runtime.</div>';
@@ -6581,25 +6585,25 @@ function collectOptimizeBounds(opts) {
     var highText = String(entry.highText || '').trim();
     var stepText = String(entry.stepText || '').trim();
     if (!lowText || !Number.isFinite(entry.lowValue)) {
-      if (strict) throw new Error('Bounds min is required for ' + entry.key + '.');
+      if (strict) throw new Error(PBGuiI18n.t('v7optimize.boundsMinRequired', { key: entry.key }));
       if (Object.prototype.hasOwnProperty.call(fallback, entry.key)) result[entry.key] = deepClone(fallback[entry.key]);
       return;
     }
     if (!highText || !Number.isFinite(entry.highValue)) {
-      if (strict) throw new Error('Bounds max is required for ' + entry.key + '.');
+      if (strict) throw new Error(PBGuiI18n.t('v7optimize.boundsMaxRequired', { key: entry.key }));
       if (Object.prototype.hasOwnProperty.call(fallback, entry.key)) result[entry.key] = deepClone(fallback[entry.key]);
       return;
     }
     var requiredMin = getOptimizeBoundRequiredMin(entry.key);
     if (Number.isFinite(requiredMin) && entry.lowValue < requiredMin) {
-      if (strict) throw new Error(entry.key + ' lower bound must be at least ' + requiredMin + '.');
+      if (strict) throw new Error(PBGuiI18n.t('v7optimize.boundsLowerBoundAtLeast', { key: entry.key, min: requiredMin }));
       entry.lowValue = requiredMin;
       entry.lowText = formatOptimizeBoundValue(entry.lowValue, entry.meta.decimals);
     }
     var values = [entry.lowValue, entry.highValue];
     if (stepText) {
       if (!Number.isFinite(entry.stepValue)) {
-        if (strict) throw new Error('Bounds step must be numeric for ' + entry.key + '.');
+        if (strict) throw new Error(PBGuiI18n.t('v7optimize.boundsStepNumeric', { key: entry.key }));
         if (Object.prototype.hasOwnProperty.call(fallback, entry.key)) {
           result[entry.key] = deepClone(fallback[entry.key]);
           return;
@@ -6607,7 +6611,7 @@ function collectOptimizeBounds(opts) {
       } else if (entry.stepValue > 0) {
         values.push(entry.stepValue);
       } else if (entry.stepValue < 0 && strict) {
-        throw new Error('Bounds step must be zero or positive for ' + entry.key + '.');
+        throw new Error(PBGuiI18n.t('v7optimize.boundsStepZeroOrPositive', { key: entry.key }));
       }
     }
     result[entry.key] = values;
@@ -6651,7 +6655,7 @@ function collectOptimizeRuntimeOverrides(opts) {
       ? String(state.runtimeOverrideValues[field.key] || '')
       : '';
     if (!valueText.trim()) {
-      if (strict) throw new Error(field.label + ' is required.');
+      if (strict) throw new Error(PBGuiI18n.t('v7optimize.fieldRequired', { label: field.label }));
       if (Object.prototype.hasOwnProperty.call(fallback, field.key)) {
         result[field.key] = cloneJsonValue(fallback[field.key]);
       } else {
@@ -6661,7 +6665,7 @@ function collectOptimizeRuntimeOverrides(opts) {
     }
     var parsed = Number(valueText);
     if (!Number.isFinite(parsed)) {
-      if (strict) throw new Error(field.label + ' must be numeric.');
+      if (strict) throw new Error(PBGuiI18n.t('v7optimize.fieldNumeric', { label: field.label }));
       if (Object.prototype.hasOwnProperty.call(fallback, field.key)) {
         result[field.key] = cloneJsonValue(fallback[field.key]);
       } else {
@@ -6670,7 +6674,7 @@ function collectOptimizeRuntimeOverrides(opts) {
       return;
     }
     if (parsed < 0 || parsed > 1) {
-      if (strict) throw new Error(field.label + ' must be between 0.0 and 1.0.');
+      if (strict) throw new Error(PBGuiI18n.t('v7optimize.fieldBetween01', { label: field.label }));
       if (Object.prototype.hasOwnProperty.call(fallback, field.key)) {
         result[field.key] = cloneJsonValue(fallback[field.key]);
       } else {
@@ -7822,7 +7826,7 @@ var _optMsController = window.PBGuiEditorShared.createMultiselectController({
     return !!_optCoinMsIds[id] && value === 'all';
   },
   formatTagLabel: function(ctx) {
-    if (ctx.value === 'all') return '★ all';
+    if (ctx.value === 'all') return PBGuiI18n.t('v7optimize.allStar');
     if (ctx.meta && ctx.meta.status === 'invalid') return '? ' + (ctx.meta.raw || ctx.value);
     return _optMarketLabels[ctx.value] || ctx.value;
   },
@@ -7952,7 +7956,7 @@ function optKvRenderChips(prefix) {
   var entries = _optKvData[prefix] || {};
   var keys = Object.keys(entries).sort();
   if (!keys.length) {
-    container.innerHTML = '<span style="color:var(--text-dim);font-size:var(--fs-xs)">No entries</span>';
+    container.innerHTML = '<span style="color:var(--text-dim);font-size:var(--fs-xs)">' + escapeHtml(PBGuiI18n.t('v7optimize.noEntries')) + '</span>';
     return;
   }
   var html = '';
@@ -8115,7 +8119,7 @@ function optKvShowDd(prefix, filter) {
       + '</div>';
     if (!existingExchange) visibleIdx += 1;
   });
-  dropdown.innerHTML = html || '<div class="ms-option" style="color:var(--text-dim)">No matches</div>';
+  dropdown.innerHTML = html || '<div class="ms-option" style="color:var(--text-dim)">' + escapeHtml(PBGuiI18n.t('v7optimize.noMatches')) + '</div>';
   dropdown.classList.add('open');
 }
 
@@ -8142,7 +8146,7 @@ async function optFetchV7Json(path, opts) {
   opts.headers = authenticatedHeaders(opts.headers);
   var response = await fetch(v7Base + path, opts);
   var data = await response.json();
-  if (!response.ok) throw new Error((data && data.detail) || response.statusText || 'Request failed');
+  if (!response.ok) throw new Error((data && data.detail) || response.statusText || PBGuiI18n.t('v7optimize.requestFailed'));
   return data;
 }
 
@@ -8199,7 +8203,7 @@ async function loadOptSymbols(cfg, opts) {
       symbolResults = [{ status: 'fulfilled', value: resolverResult }];
       _optMarketStatusVerified = true;
     } catch (error) {
-      if (requestSeq === _optSymbolsLoadSeq) toast('PB8 market resolver error: ' + error.message, 'err');
+      if (requestSeq === _optSymbolsLoadSeq) toast(PBGuiI18n.t('v7optimize.pb8MarketResolverError', { message: error.message }), 'err');
       return;
     }
   } else {
@@ -8524,16 +8528,16 @@ function buildOptimizeEditorHtml(config, name, sourceName) {
 
     + '<div class="form-row cols-8">'
       + fieldText2('opted-name', 'config_name', name || '', true, 'my_optimize_config', 'Name of this optimize configuration.', 2)
-      + '<div class="form-group span-4"><label><span data-tip="Exchanges from which to fetch OHLCV data and coin metadata for optimize runs.">exchanges</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-exchanges\')" title="Clear all">×</span></label>'
+      + '<div class="form-group span-4"><label><span data-tip="Exchanges from which to fetch OHLCV data and coin metadata for optimize runs.">exchanges</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-exchanges\')" title="' + PBGuiI18n.t('v7optimize.clearAll') + '">×</span></label>'
         + '<div class="ms-wrap" id="ms-opt-exchanges">'
-          + '<input class="ms-input" id="ms-opt-exchanges-input" placeholder="Select exchanges..." autocomplete="off">'
+          + '<input class="ms-input" id="ms-opt-exchanges-input" placeholder="' + PBGuiI18n.t('v7optimize.selectExchanges') + '" autocomplete="off">'
           + '<div class="ms-dropdown" id="ms-opt-exchanges-dd"></div>'
         + '</div></div>'
       + fieldDate2('opted-start-date', 'start_date', backtest.start_date || '2020-01-01', 'Start date of optimize backtests.', 1)
       + fieldDate2('opted-end-date', 'end_date', endDate, 'End date of optimize backtests.', 1)
     + '</div>'
 
-    + '<div class="section-title">Market &amp; Universe</div>'
+    + '<div class="section-title">' + escapeHtml(PBGuiI18n.t('v7optimize.sectionMarketUniverse')) + '</div>'
     + '<div class="form-row cols-8">'
       + fieldNumber2('opted-starting-balance', 'starting_balance', backtest.starting_balance == null ? 1000 : backtest.starting_balance, 500, 'Starting balance in USD.', 1)
       + fieldNumber2('opted-candle-interval', 'candle_interval_minutes', backtest.candle_interval_minutes == null ? 60 : backtest.candle_interval_minutes, 1, 'Aggregates 1m OHLCVs into coarser candles.', 1)
@@ -8547,16 +8551,16 @@ function buildOptimizeEditorHtml(config, name, sourceName) {
     + '</div>'
 
     + '<div class="form-row cols-8">'
-      + '<div class="form-group" style="grid-column:span 8"><label><span data-tip="Optional path to a pre-populated OHLCV source directory.">ohlcv_source_dir</span></label><div style="display:flex;gap:var(--sp-xs)"><input type="text" id="opted-ohlcv-source-dir" value="' + escapeHtml(backtest.ohlcv_source_dir || '') + '" placeholder="Leave empty for default"><button type="button" class="act-btn" style="white-space:nowrap" onclick="clearOptimizeOhlcvSourceDir()" title="Clear path">×</button><button type="button" class="act-btn" style="white-space:nowrap" onclick="fillOptimizePbguiDataPath()" title="Use PBGui market data directory">📂 PBGui Data</button></div></div>'
+      + '<div class="form-group" style="grid-column:span 8"><label><span data-tip="Optional path to a pre-populated OHLCV source directory.">ohlcv_source_dir</span></label><div style="display:flex;gap:var(--sp-xs)"><input type="text" id="opted-ohlcv-source-dir" value="' + escapeHtml(backtest.ohlcv_source_dir || '') + '" placeholder="' + PBGuiI18n.t('v7optimize.leaveEmptyForDefault') + '"><button type="button" class="act-btn" style="white-space:nowrap" onclick="clearOptimizeOhlcvSourceDir()" title="' + PBGuiI18n.t('v7optimize.clearPath') + '">×</button><button type="button" class="act-btn" style="white-space:nowrap" onclick="fillOptimizePbguiDataPath()" title="' + PBGuiI18n.t('v7optimize.usePbguiMarketDataDir') + '">' + PBGuiI18n.t('v7optimize.pbguiData') + '</button></div></div>'
     + '</div>'
 
     + '<div class="form-row cols-8">'
       + fieldNumber2('opted-market-cap', 'market_cap (min M$)', pbgui.market_cap == null ? '' : pbgui.market_cap, 50, 'Minimum market capitalisation in millions USD.', 2)
       + fieldNumber2('opted-vol-mcap', 'vol/mcap', pbgui.vol_mcap == null ? '' : pbgui.vol_mcap, 0.05, 'Maximum 24h volume-to-market-cap ratio.', 1)
       + fieldNumber2('opted-min-coin-age', 'minimum_coin_age_days', live.minimum_coin_age_days == null ? 0 : live.minimum_coin_age_days, 1, 'Disallows coins younger than the configured number of days.', 1)
-      + '<div class="form-group" style="grid-column:span 2"><label><span data-tip="Filter by CoinMarketCap category tags. Leave empty to include all tags.">tags</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-tags\')" title="Clear all">×</span></label>'
+      + '<div class="form-group" style="grid-column:span 2"><label><span data-tip="Filter by CoinMarketCap category tags. Leave empty to include all tags.">tags</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-tags\')" title="' + PBGuiI18n.t('v7optimize.clearAll') + '">×</span></label>'
         + '<div class="ms-wrap" id="ms-opt-tags">'
-          + '<input class="ms-input" id="ms-opt-tags-input" placeholder="Select tags..." autocomplete="off">'
+          + '<input class="ms-input" id="ms-opt-tags-input" placeholder="' + PBGuiI18n.t('v7optimize.selectTags') + '" autocomplete="off">'
           + '<div class="ms-dropdown" id="ms-opt-tags-dd"></div>'
         + '</div></div>'
       + '<div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label><div class="chk-row"><input type="checkbox" id="opted-only-cpt"' + (pbgui.only_cpt ? ' checked' : '') + '><label for="opted-only-cpt"><span data-tip="Only include copy-trading eligible coins.">only_cpt</span></label></div></div>'
@@ -8564,55 +8568,55 @@ function buildOptimizeEditorHtml(config, name, sourceName) {
     + '</div>'
 
     + '<div class="form-row cols-2">'
-      + '<div class="form-group"><label><span data-tip="Coins approved for long trading.">approved_coins_long</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-app-long\')" title="Select all">all</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-app-long\')" title="Clear all">×</span></label>'
+      + '<div class="form-group"><label><span data-tip="Coins approved for long trading.">approved_coins_long</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-app-long\')" title="' + PBGuiI18n.t('v7optimize.selectAllTitle') + '">' + PBGuiI18n.t('v7optimize.allLower') + '</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-app-long\')" title="' + PBGuiI18n.t('v7optimize.clearAll') + '">×</span></label>'
         + '<div class="ms-wrap" id="ms-opt-app-long">'
-          + '<input class="ms-input" id="ms-opt-app-long-input" placeholder="Type to search..." autocomplete="off">'
+          + '<input class="ms-input" id="ms-opt-app-long-input" placeholder="' + PBGuiI18n.t('v7optimize.typeToSearch') + '" autocomplete="off">'
           + '<div class="ms-dropdown" id="ms-opt-app-long-dd"></div>'
         + '</div></div>'
-      + '<div class="form-group"><label><span data-tip="Coins approved for short trading.">approved_coins_short</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-app-short\')" title="Select all">all</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-app-short\')" title="Clear all">×</span></label>'
+      + '<div class="form-group"><label><span data-tip="Coins approved for short trading.">approved_coins_short</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-app-short\')" title="' + PBGuiI18n.t('v7optimize.selectAllTitle') + '">' + PBGuiI18n.t('v7optimize.allLower') + '</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-app-short\')" title="' + PBGuiI18n.t('v7optimize.clearAll') + '">×</span></label>'
         + '<div class="ms-wrap" id="ms-opt-app-short">'
-          + '<input class="ms-input" id="ms-opt-app-short-input" placeholder="Type to search..." autocomplete="off">'
+          + '<input class="ms-input" id="ms-opt-app-short-input" placeholder="' + PBGuiI18n.t('v7optimize.typeToSearch') + '" autocomplete="off">'
           + '<div class="ms-dropdown" id="ms-opt-app-short-dd"></div>'
         + '</div></div>'
     + '</div>'
 
     + '<div class="form-row cols-2">'
-      + '<div class="form-group"><label><span data-tip="Coins the optimizer should ignore on the long side.">ignored_coins_long</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-ign-long\')" title="Select all">all</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-ign-long\')" title="Clear all">×</span></label>'
+      + '<div class="form-group"><label><span data-tip="Coins the optimizer should ignore on the long side.">ignored_coins_long</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-ign-long\')" title="' + PBGuiI18n.t('v7optimize.selectAllTitle') + '">' + PBGuiI18n.t('v7optimize.allLower') + '</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-ign-long\')" title="' + PBGuiI18n.t('v7optimize.clearAll') + '">×</span></label>'
         + '<div class="ms-wrap" id="ms-opt-ign-long">'
-          + '<input class="ms-input" id="ms-opt-ign-long-input" placeholder="Type to search..." autocomplete="off">'
+          + '<input class="ms-input" id="ms-opt-ign-long-input" placeholder="' + PBGuiI18n.t('v7optimize.typeToSearch') + '" autocomplete="off">'
           + '<div class="ms-dropdown" id="ms-opt-ign-long-dd"></div>'
         + '</div></div>'
-      + '<div class="form-group"><label><span data-tip="Coins the optimizer should ignore on the short side.">ignored_coins_short</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-ign-short\')" title="Select all">all</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-ign-short\')" title="Clear all">×</span></label>'
+      + '<div class="form-group"><label><span data-tip="Coins the optimizer should ignore on the short side.">ignored_coins_short</span> <span class="ms-all-btn" onclick="optSelectAllMs(\'ms-opt-ign-short\')" title="' + PBGuiI18n.t('v7optimize.selectAllTitle') + '">' + PBGuiI18n.t('v7optimize.allLower') + '</span> <span class="ms-clear-btn" onclick="optClearMs(\'ms-opt-ign-short\')" title="' + PBGuiI18n.t('v7optimize.clearAll') + '">×</span></label>'
         + '<div class="ms-wrap" id="ms-opt-ign-short">'
-          + '<input class="ms-input" id="ms-opt-ign-short-input" placeholder="Type to search..." autocomplete="off">'
+          + '<input class="ms-input" id="ms-opt-ign-short-input" placeholder="' + PBGuiI18n.t('v7optimize.typeToSearch') + '" autocomplete="off">'
           + '<div class="ms-dropdown" id="ms-opt-ign-short-dd"></div>'
         + '</div></div>'
     + '</div>'
 
     + '<div class="expander" id="exp-opt-coin-sources">'
       + '<div class="expander-header" onclick="toggleExpander(\'exp-opt-coin-sources\')">'
-        + '<span class="arrow">▶</span> coin_sources (' + coinSourceKeys.length + ' configured)'
+        + '<span class="arrow">▶</span> ' + escapeHtml(PBGuiI18n.t('v7optimize.coinSourcesConfigured', { count: coinSourceKeys.length }))
       + '</div>'
       + '<div class="expander-body">'
         + '<div style="display:flex;align-items:center;justify-content:flex-end;min-height:18px;margin-bottom:4px">'
-          + '<span class="ms-clear-btn" onclick="optKvClearAll(\'opt-kv-cs\')" title="Clear all">× all</span>'
+          + '<span class="ms-clear-btn" onclick="optKvClearAll(\'opt-kv-cs\')" title="' + PBGuiI18n.t('v7optimize.clearAll') + '">' + PBGuiI18n.t('v7optimize.allStarLower') + '</span>'
         + '</div>'
         + '<div class="kv-chips" id="opt-kv-cs"></div>'
         + '<div style="display:flex;gap:var(--sp-sm);align-items:end;margin-top:var(--sp-xs)">'
-          + '<div class="form-group" style="width:140px"><label>Exchange</label>'
+          + '<div class="form-group" style="width:140px"><label>' + escapeHtml(PBGuiI18n.t('v7optimize.exchangeLabel')) + '</label>'
             + '<select id="opt-kv-cs-exchange" onchange="optKvLoadCoins(\'opt-kv-cs\');optKvShowDd(\'opt-kv-cs\', (document.getElementById(\'opt-kv-cs-coin-input\') || {}).value || \'\')">'
               + coinSourceExchangeOptionsHtml
             + '</select></div>'
-          + '<div class="form-group" style="flex:1"><label>Coin</label>'
+          + '<div class="form-group" style="flex:1"><label>' + escapeHtml(PBGuiI18n.t('v7optimize.coinLabel')) + '</label>'
             + '<div class="ms-wrap" id="opt-kv-cs-coin">'
-              + '<input class="ms-input" id="opt-kv-cs-coin-input" placeholder="Type to search..." autocomplete="off">'
+              + '<input class="ms-input" id="opt-kv-cs-coin-input" placeholder="' + PBGuiI18n.t('v7optimize.typeToSearch') + '" autocomplete="off">'
               + '<div class="ms-dropdown" id="opt-kv-cs-coin-dd"></div>'
             + '</div></div>'
         + '</div>'
       + '</div>'
     + '</div>'
 
-    + '<div class="section-title">Optimization</div>'
+    + '<div class="section-title">' + escapeHtml(PBGuiI18n.t('v7optimize.sectionOptimization')) + '</div>'
     + (optimizeEditorAdapter.isV8
       ? '<div class="form-row cols-8">'
         + fieldSelect2('opted-strategy-kind', 'strategy_kind', strategyOptions, live.strategy_kind || strategyOptions[0] || '', false, 'PB8 strategy used by both optimizer sides. Changing it loads that strategy\'s runtime-provided bot defaults and bounds.', 2)
@@ -8623,7 +8627,7 @@ function buildOptimizeEditorHtml(config, name, sourceName) {
 
     + '<div class="expander' + (normalizeScoringEntries(optimize.scoring).length ? ' open' : '') + '" id="exp-opt-scoring">'
       + '<div class="expander-header" onclick="toggleExpander(\'exp-opt-scoring\')">'
-        + '<span class="arrow">▶</span> Scoring'
+        + '<span class="arrow">▶</span> ' + escapeHtml(PBGuiI18n.t('v7optimize.scoring'))
       + '</div>'
       + '<div class="expander-body">'
         + (optimizeEditorAdapter.isV8
@@ -8639,7 +8643,7 @@ function buildOptimizeEditorHtml(config, name, sourceName) {
 
     + '<div class="expander' + (normalizeLimitEntries(optimize.limits).length ? ' open' : '') + '" id="exp-opt-limits">'
       + '<div class="expander-header" onclick="toggleExpander(\'exp-opt-limits\')">'
-        + '<span class="arrow">▶</span> Limits'
+        + '<span class="arrow">▶</span> ' + escapeHtml(PBGuiI18n.t('v7optimize.limits'))
       + '</div>'
       + '<div class="expander-body">'
         + '<div id="opted-limits-panel"></div>'
@@ -8986,9 +8990,9 @@ function collectEditorConfig(baseConfig, opts) {
   var pbgui = ensureObjectSection(cfg, 'pbgui');
   var logging = ensureObjectSection(cfg, 'logging');
   var name = el('opted-name').value.trim();
-  if (strict && !name) throw new Error('Config name is required.');
+  if (strict && !name) throw new Error(PBGuiI18n.t('v7optimize.configNameRequired'));
   var exchanges = optGetMs('ms-opt-exchanges');
-  if (strict && !exchanges.length) throw new Error('Select at least one exchange.');
+  if (strict && !exchanges.length) throw new Error(PBGuiI18n.t('v7optimize.selectAtLeastOneExchange'));
   if (name) backtest.base_dir = 'backtests/pbgui/' + name;
   else delete backtest.base_dir;
   backtest.exchanges = exchanges;
@@ -9044,7 +9048,7 @@ function collectEditorConfig(baseConfig, opts) {
     var objectiveNameNode = el('opted-objective-scenario-name');
     var objectiveMode = objectiveModeNode ? objectiveModeNode.value : 'aggregate';
     var objectiveName = objectiveNameNode ? String(objectiveNameNode.value || '').trim() : '';
-    if (strict && objectiveMode === 'named' && !objectiveName) throw new Error('Objective scenario label is required.');
+    if (strict && objectiveMode === 'named' && !objectiveName) throw new Error(PBGuiI18n.t('v7optimize.objectiveScenarioLabelRequired'));
     optimize.objective_scenario = objectiveMode === 'named' ? objectiveName : null;
   }
   delete backtest.compress_results_file;
@@ -9058,7 +9062,7 @@ function collectEditorConfig(baseConfig, opts) {
     var populationSize = normalizeOptimizePositiveInteger(el('opted-pymoo-population-size').value);
     if (populationSize == null) {
       if (strict && effectiveAlgorithm === 'nsga2') {
-        throw new Error('Population size is required for pymoo NSGA-II.');
+        throw new Error(PBGuiI18n.t('v7optimize.populationSizeRequiredNsga2'));
       }
       optimize.population_size = null;
     } else if (effectiveAlgorithm === 'nsga3') {
@@ -9075,7 +9079,7 @@ function collectEditorConfig(baseConfig, opts) {
   }
   cleanupOptimizeBackendFields(optimize);
   optimize.scoring = getScoringEntries();
-  if (strict && !optimize.scoring.length) throw new Error('At least one scoring objective is required.');
+  if (strict && !optimize.scoring.length) throw new Error(PBGuiI18n.t('v7optimize.atLeastOneScoringRequired'));
   optimize.limits = getLimitEntries();
   var activeStrategy = optimizeEditorAdapter.isV8 && el('opted-strategy-kind')
     ? String(el('opted-strategy-kind').value || '').trim()
@@ -9114,7 +9118,7 @@ function collectEditorConfig(baseConfig, opts) {
   var suite = typeof suiteCollect === 'function' ? suiteCollect() : { suite_enabled: false };
   if (strict) {
     if (optimizeEditorAdapter.isV8) {
-      if (!_optMarketStatusVerified) throw new Error('PB8 market identifiers have not been verified. Retry market loading before saving.');
+      if (!_optMarketStatusVerified) throw new Error(PBGuiI18n.t('v7optimize.pb8MarketNotVerified'));
       var invalidCoinCount = 0;
       Object.keys(_optCoinMsIds).forEach(function(id) {
         (_optMs[id] && _optMs[id].selected || []).forEach(function(value) {
@@ -9122,7 +9126,7 @@ function collectEditorConfig(baseConfig, opts) {
           if (meta && meta.status === 'invalid') invalidCoinCount += 1;
         });
       });
-      if (invalidCoinCount) throw new Error('Resolve or remove invalid PB8 market identifiers before saving.');
+      if (invalidCoinCount) throw new Error(PBGuiI18n.t('v7optimize.invalidPb8MarketIdentifiers'));
     }
     validatePb8ScenarioBases(
       optimize.scoring,
@@ -9168,7 +9172,7 @@ function collectEditorConfig(baseConfig, opts) {
   var seedMode = normalizeOptimizeSeedMode(el('opted-seed-mode').value) || 'none';
   var seedPath = el('opted-seed-path').value.trim();
   if (strict && seedMode === 'path' && !seedPath) {
-    throw new Error('Seed path is required when seed mode is path.');
+    throw new Error(PBGuiI18n.t('v7optimize.seedPathRequired'));
   }
   applyOptimizeSeedConfig(cfg, seedMode, seedPath);
   optimizeEditorAdapter.collectVersionRunSettings(cfg, el, strict);
@@ -9537,11 +9541,11 @@ function ensureStructuredJsonFieldsValidForSave() {
   var expander = firstInvalid.textarea.closest('.expander');
   if (expander) expander.classList.add('open');
   revealJsonFieldError(firstInvalid.textarea.id);
-  var msg = getJsonFieldLabel(firstInvalid.textarea) + ' is invalid';
+  var msg = PBGuiI18n.t('v7optimize.fieldIsInvalid', { field: getJsonFieldLabel(firstInvalid.textarea) });
   if (firstInvalid.validation.error.line != null && firstInvalid.validation.error.column != null) {
-    msg += ' at line ' + firstInvalid.validation.error.line + ', column ' + firstInvalid.validation.error.column;
+    msg += PBGuiI18n.t('v7optimize.atLineColumn', { line: firstInvalid.validation.error.line, column: firstInvalid.validation.error.column });
   }
-  toast(msg + '. Fix it before saving.', 'err');
+  toast(msg + '. ' + PBGuiI18n.t('v7optimize.fixBeforeSaving'), 'err');
   return false;
 }
 
@@ -9553,11 +9557,11 @@ function ensureRawJsonValidForSave() {
   var rawExpander = el('exp-raw');
   if (rawExpander) rawExpander.classList.add('open');
   revealRawJsonError();
-  var msg = 'Raw JSON is invalid';
+  var msg = PBGuiI18n.t('v7optimize.rawJsonInvalid');
   if (validation.error.line != null && validation.error.column != null) {
-    msg += ' at line ' + validation.error.line + ', column ' + validation.error.column;
+    msg += PBGuiI18n.t('v7optimize.atLineColumn', { line: validation.error.line, column: validation.error.column });
   }
-  toast(msg + '. Fix it before saving.', 'err');
+  toast(msg + '. ' + PBGuiI18n.t('v7optimize.fixBeforeSaving'), 'err');
   return false;
 }
 
@@ -9739,7 +9743,7 @@ function fillOptimizePbguiDataPath() {
       }
     }
   }).catch(function() {
-    toast('Could not fetch PBGui data path', 'err');
+    toast(PBGuiI18n.t('v7optimize.couldNotFetchPbguiDataPath'), 'err');
   });
 }
 
@@ -9756,17 +9760,17 @@ function clearOptimizeOhlcvSourceDir() {
 
 function openFastApiParetoExplorer(resultPath) {
   if (!optimizeEditorAdapter.supportsParetoExplorer) {
-    toast('Pareto Explorer is not available for this result.', 'warn');
+    toast(PBGuiI18n.t('v7optimize.paretoExplorerNotAvailable'), 'warn');
     return;
   }
   var path = String(resultPath || '').trim();
   if (!path) {
-    toast('Select an optimize result first.', 'warn');
+    toast(PBGuiI18n.t('v7optimize.selectOptimizeResultFirst'), 'warn');
     return;
   }
   var apiRoot = String(API_BASE || '').replace(/\/api\/optimize-v[78]\/?$/, '');
   if (!apiRoot) {
-    toast('Pareto Explorer route is unavailable.', 'err');
+    toast(PBGuiI18n.t('v7optimize.paretoExplorerRouteUnavailable'), 'err');
     return;
   }
   var params = new URLSearchParams();
@@ -9804,15 +9808,15 @@ async function launchResult3dPlot(path, name) {
     body: JSON.stringify({ path: path })
   });
   if (response && response.html) {
-    openPlotModal(optimizeEditorAdapter.label + ' 3D plot - ' + (name || 'result'), response.html);
-    toast((response && response.message) || (optimizeEditorAdapter.label + ' 3D plot opened for ' + (name || 'result') + '.'), 'ok');
+    openPlotModal(PBGuiI18n.t('v7optimize.plot3dTitleWithName', { label: optimizeEditorAdapter.label, name: name || PBGuiI18n.t('v7optimize.resultWord') }), response.html);
+    toast((response && response.message) || PBGuiI18n.t('v7optimize.plot3dOpenedFor', { label: optimizeEditorAdapter.label, name: name || PBGuiI18n.t('v7optimize.resultWord') }), 'ok');
     return;
   }
   if (response && response.output) {
-    openJsonModal(optimizeEditorAdapter.label + ' 3D plot details - ' + (name || 'result'), response.output);
+    openJsonModal(PBGuiI18n.t('v7optimize.plot3dDetailsTitle', { label: optimizeEditorAdapter.label, name: name || PBGuiI18n.t('v7optimize.resultWord') }), response.output);
   }
   toast(
-    (response && response.message) || (optimizeEditorAdapter.label + ' 3D plot command finished for ' + (name || 'result') + '.'),
+    (response && response.message) || PBGuiI18n.t('v7optimize.plot3dCommandFinished', { label: optimizeEditorAdapter.label, name: name || PBGuiI18n.t('v7optimize.resultWord') }),
     response && response.ok === false ? 'warn' : 'ok'
   );
 }
@@ -9823,10 +9827,10 @@ async function launchResultParetoDash(path, name) {
     body: JSON.stringify({ path: path })
   });
   if (!response || !response.url || !response.session_id) {
-    throw new Error('Pareto Dash launch returned no URL.');
+    throw new Error(PBGuiI18n.t('v7optimize.paretoDashNoUrl'));
   }
-  openPlotUrlModal(optimizeEditorAdapter.label + ' Pareto Dash - ' + (name || 'result'), response.url, response.session_id, 'pareto-dash');
-  toast(optimizeEditorAdapter.label + ' Pareto Dash opened for ' + (name || 'result') + '.', 'ok');
+  openPlotUrlModal(PBGuiI18n.t('v7optimize.paretoDashTitleWithName', { label: optimizeEditorAdapter.label, name: name || PBGuiI18n.t('v7optimize.resultWord') }), response.url, response.session_id, 'pareto-dash');
+  toast(PBGuiI18n.t('v7optimize.paretoDashOpenedFor', { label: optimizeEditorAdapter.label, name: name || PBGuiI18n.t('v7optimize.resultWord') }), 'ok');
 }
 
 function normalizeAutostart(raw) {
@@ -9852,21 +9856,21 @@ function compareSortValues(aValue, bValue, direction) {
 }
 
 function configHeaderLabel(sortKey) {
-  if (sortKey === 'name') return 'Name';
-  if (sortKey === 'exchange') return 'Exchange';
-  if (sortKey === 'strategy') return 'Strategy';
-  if (sortKey === 'backtest_count') return 'Backtests';
-  if (sortKey === 'start_date') return 'Start';
-  if (sortKey === 'end_date') return 'End';
-  if (sortKey === 'modified') return 'Modified';
+  if (sortKey === 'name') return PBGuiI18n.t('v7optimize.thName');
+  if (sortKey === 'exchange') return PBGuiI18n.t('v7optimize.thExchange');
+  if (sortKey === 'strategy') return PBGuiI18n.t('v7optimize.thStrategy');
+  if (sortKey === 'backtest_count') return PBGuiI18n.t('v7optimize.thBacktests');
+  if (sortKey === 'start_date') return PBGuiI18n.t('v7optimize.thStart');
+  if (sortKey === 'end_date') return PBGuiI18n.t('v7optimize.thEnd');
+  if (sortKey === 'modified') return PBGuiI18n.t('v7optimize.thModified');
   return sortKey;
 }
 
 function queueHeaderLabel(sortKey) {
-  if (sortKey === 'name') return 'Name';
-  if (sortKey === 'exchange') return 'Exchange';
-  if (sortKey === 'status') return 'Status';
-  if (sortKey === 'created') return 'Created';
+  if (sortKey === 'name') return PBGuiI18n.t('v7optimize.thName');
+  if (sortKey === 'exchange') return PBGuiI18n.t('v7optimize.thExchange');
+  if (sortKey === 'status') return PBGuiI18n.t('v7optimize.thStatus');
+  if (sortKey === 'created') return PBGuiI18n.t('v7optimize.thCreated');
   return sortKey;
 }
 
@@ -9901,14 +9905,14 @@ function renderConfigsTableHead() {
       + sortIndicator(sortKey, state.configSortKey, state.configSortDir)
       + '</th>';
   });
-  html += '<th>Flags</th>';
+  html += '<th>' + escapeHtml(PBGuiI18n.t('v7optimize.thFlags')) + '</th>';
   var modifiedActive = state.configSortKey === 'modified';
   var modifiedAriaSort = modifiedActive ? (state.configSortDir === 'desc' ? 'descending' : 'ascending') : 'none';
   html += '<th class="sortable' + (modifiedActive ? ' active' : '') + '" data-sort-key="modified" aria-sort="' + modifiedAriaSort + '">'
-    + 'Modified'
+    + escapeHtml(PBGuiI18n.t('v7optimize.thModified'))
     + sortIndicator('modified', state.configSortKey, state.configSortDir)
     + '</th>';
-  html += '<th>Actions</th></tr>';
+  html += '<th>' + escapeHtml(PBGuiI18n.t('v7optimize.thActions')) + '</th></tr>';
   thead.innerHTML = html;
 }
 
@@ -9920,7 +9924,7 @@ function renderQueueTableHead() {
     state.queueSortDir,
     queueHeaderLabel,
     '<th class="queue-order-head"></th>',
-    '<th>Actions</th>'
+    '<th>' + escapeHtml(PBGuiI18n.t('v7optimize.thActions')) + '</th>'
   );
 }
 
@@ -10038,9 +10042,9 @@ function updateMetaCounts() {
   el('nav-queue-count').textContent = String(state.queue.length);
   el('nav-result-count').textContent = String(state.results.length);
   el('nav-pareto-count').textContent = String(state.paretos.length);
-  el('config-count-chip').textContent = filteredConfigs.length + ' configs';
-  el('result-count-chip').textContent = filteredResults.length + ' result sets';
-  el('pareto-count-chip').textContent = state.paretos.length + ' paretos';
+  el('config-count-chip').textContent = PBGuiI18n.t('v7optimize.configCount', { count: filteredConfigs.length });
+  el('result-count-chip').textContent = PBGuiI18n.t('v7optimize.resultSetCount', { count: filteredResults.length });
+  el('pareto-count-chip').textContent = PBGuiI18n.t('v7optimize.paretoCount', { count: state.paretos.length });
 }
 
 function setQueueSelectionInteraction(active) {
@@ -10246,7 +10250,7 @@ function renderConfigs() {
   var tbody = el('configs-tbody');
   tbody.innerHTML = '';
   if (!configs.length) {
-    renderEmpty('configs-tbody', optimizeEditorAdapter.isV8 ? 9 : 8, 'No optimize configs found.', 'Create Config', 'empty-create-config');
+    renderEmpty('configs-tbody', optimizeEditorAdapter.isV8 ? 9 : 8, PBGuiI18n.t('v7optimize.noOptimizeConfigsFound'), PBGuiI18n.t('v7optimize.createConfig'), 'empty-create-config');
     updateConfigSelectionUi(configs);
     updateMetaCounts();
     return;
@@ -10257,8 +10261,8 @@ function renderConfigs() {
     if (state.selectedConfigs.has(cfg.name)) tr.classList.add('selected');
     var flags = [];
     var seedMode = cfg.seed_mode || (cfg.starting_config ? 'self' : 'none');
-    if (seedMode === 'self') flags.push('<span class="metric-pill">seed: self</span>');
-    if (seedMode === 'path') flags.push('<span class="metric-pill">seed: path</span>');
+    if (seedMode === 'self') flags.push('<span class="metric-pill">' + escapeHtml(PBGuiI18n.t('v7optimize.seedSelf')) + '</span>');
+    if (seedMode === 'path') flags.push('<span class="metric-pill">' + escapeHtml(PBGuiI18n.t('v7optimize.seedPath')) + '</span>');
     tr.innerHTML = ''
       + '<td title="' + escapeHtml(cfg.name) + '">' + escapeHtml(cfg.name) + '</td>'
       + '<td>' + escapeHtml(formatExchange(cfg.exchange)) + '</td>'
@@ -10269,10 +10273,10 @@ function renderConfigs() {
       + '<td>' + (flags.join('') || '<span class="muted">-</span>') + '</td>'
       + '<td class="muted">' + escapeHtml(formatIso(cfg.modified)) + '</td>'
       + '<td class="actions-cell">'
-      + '<button class="icon-btn cfg-edit" data-name="' + escapeHtml(cfg.name) + '" title="Edit config">✏️</button>'
-      + '<button class="icon-btn cfg-queue" data-name="' + escapeHtml(cfg.name) + '" title="Queue config">▶</button>'
-      + (!optimizeEditorAdapter.isV8 ? '<button class="icon-btn cfg-migrate-v8" data-name="' + escapeHtml(cfg.name) + '" title="Convert to PB8 Optimize">V8</button>' : '')
-      + '<button class="icon-btn danger cfg-delete" data-name="' + escapeHtml(cfg.name) + '" title="Delete config">🗑</button>'
+      + '<button class="icon-btn cfg-edit" data-name="' + escapeHtml(cfg.name) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.editConfig')) + '">✏️</button>'
+      + '<button class="icon-btn cfg-queue" data-name="' + escapeHtml(cfg.name) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.queueConfig')) + '">▶</button>'
+      + (!optimizeEditorAdapter.isV8 ? '<button class="icon-btn cfg-migrate-v8" data-name="' + escapeHtml(cfg.name) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.convertToPb8Optimize')) + '">V8</button>' : '')
+      + '<button class="icon-btn danger cfg-delete" data-name="' + escapeHtml(cfg.name) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.deleteConfig')) + '">🗑</button>'
       + '</td>';
     tbody.appendChild(tr);
   });
@@ -10285,8 +10289,20 @@ function updateConfigSelectionUi(filteredConfigs) {
   pruneSelectionSet('selectedConfigs', state.configs.map(function(cfg) { return cfg.name; }));
   var selectedCount = state.selectedConfigs.size;
   el('config-selection-summary').textContent = selectedCount
-    ? selectedCount + ' config' + (selectedCount === 1 ? '' : 's') + ' selected.'
-    : 'No configs selected.';
+    ? PBGuiI18n.t(selectedCount === 1 ? 'v7optimize.configsSelected' : 'v7optimize.configsSelectedPlural', { count: selectedCount })
+    : PBGuiI18n.t('v7optimize.noConfigsSelected');
+}
+
+function queueStatusLabel(status) {
+  var normalized = String(status || '').trim().toLowerCase();
+  var labels = {
+    queued: PBGuiI18n.t('v7optimize.statusQueued'),
+    running: PBGuiI18n.t('v7optimize.statusRunning'),
+    optimizing: PBGuiI18n.t('v7optimize.statusOptimizing'),
+    complete: PBGuiI18n.t('v7optimize.statusComplete'),
+    error: PBGuiI18n.t('v7optimize.statusError')
+  };
+  return labels[normalized] || (status || 'queued');
 }
 
 function renderQueue() {
@@ -10294,7 +10310,7 @@ function renderQueue() {
   var tbody = el('queue-tbody');
   tbody.innerHTML = '';
   if (!state.queue.length) {
-    renderEmpty('queue-tbody', 6, 'Queue is empty.', '', '');
+    renderEmpty('queue-tbody', 6, PBGuiI18n.t('v7optimize.queueIsEmpty'), '', '');
     updateQueueStatus();
     updateQueueSelectionUi();
     updateMetaCounts();
@@ -10306,25 +10322,25 @@ function renderQueue() {
     if (state.selectedQueue.has(item.filename)) tr.classList.add('selected');
     var actions = '';
     if (item.status === 'error') {
-      actions += '<button class="icon-btn warn queue-requeue" data-filename="' + escapeHtml(item.filename) + '" title="Requeue">↺</button>';
+      actions += '<button class="icon-btn warn queue-requeue" data-filename="' + escapeHtml(item.filename) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.requeue')) + '">↺</button>';
     }
     if (item.status === 'queued') {
-      actions += '<button class="icon-btn queue-start" data-filename="' + escapeHtml(item.filename) + '" title="Start">▶</button>';
+      actions += '<button class="icon-btn queue-start" data-filename="' + escapeHtml(item.filename) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.start')) + '">▶</button>';
     }
     if (item.status === 'running' || item.status === 'optimizing') {
-      actions += '<button class="icon-btn danger queue-stop" data-filename="' + escapeHtml(item.filename) + '" title="Stop">⬛</button>';
+      actions += '<button class="icon-btn danger queue-stop" data-filename="' + escapeHtml(item.filename) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.stop')) + '">⬛</button>';
     }
     if (item.status === 'complete') {
-      actions += '<button class="icon-btn good queue-results" data-name="' + escapeHtml(item.name || '') + '" title="Show results">📊</button>';
+      actions += '<button class="icon-btn good queue-results" data-name="' + escapeHtml(item.name || '') + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.showResults')) + '">📊</button>';
     }
-    actions += '<button class="icon-btn queue-log" data-filename="' + escapeHtml(item.filename) + '" data-name="' + escapeHtml(item.name || item.filename) + '" title="Open log">📋</button>';
-    actions += '<button class="icon-btn queue-edit" data-filename="' + escapeHtml(item.filename) + '" title="Edit config">✏️</button>';
-    actions += '<button class="icon-btn danger queue-delete" data-filename="' + escapeHtml(item.filename) + '" title="Delete queue item">🗑</button>';
+    actions += '<button class="icon-btn queue-log" data-filename="' + escapeHtml(item.filename) + '" data-name="' + escapeHtml(item.name || item.filename) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.openLog')) + '">📋</button>';
+    actions += '<button class="icon-btn queue-edit" data-filename="' + escapeHtml(item.filename) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.editConfig')) + '">✏️</button>';
+    actions += '<button class="icon-btn danger queue-delete" data-filename="' + escapeHtml(item.filename) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.deleteQueueItem')) + '">🗑</button>';
     tr.innerHTML = ''
-      + '<td class="queue-order-cell queue-grab-zone" draggable="true" title="Drag to reorder"><span class="queue-grab-bar"></span></td>'
+      + '<td class="queue-order-cell queue-grab-zone" draggable="true" title="' + escapeHtml(PBGuiI18n.t('v7optimize.dragToReorder')) + '"><span class="queue-grab-bar"></span></td>'
       + '<td title="' + escapeHtml(item.name || item.filename) + '">' + escapeHtml(item.name || item.filename) + '</td>'
       + '<td>' + escapeHtml(formatExchange(item.exchange)) + '</td>'
-      + '<td><span class="badge badge-' + escapeHtml(item.status || 'queued') + '">' + escapeHtml(item.status || 'queued') + '</span></td>'
+      + '<td><span class="badge badge-' + escapeHtml(item.status || 'queued') + '">' + escapeHtml(queueStatusLabel(item.status || 'queued')) + '</span></td>'
       + '<td class="muted">' + escapeHtml(formatIso(item.created)) + '</td>'
       + '<td class="actions-cell">'
       + actions
@@ -10340,8 +10356,8 @@ function updateQueueSelectionUi() {
   pruneSelectionSet('selectedQueue', state.queue.map(function(item) { return item.filename; }));
   var selectedCount = state.selectedQueue.size;
   el('queue-selection-summary').textContent = selectedCount
-    ? selectedCount + ' queue item' + (selectedCount === 1 ? '' : 's') + ' selected.'
-    : 'No queue items selected.';
+    ? PBGuiI18n.t(selectedCount === 1 ? 'v7optimize.queueItemsSelected' : 'v7optimize.queueItemsSelectedPlural', { count: selectedCount })
+    : PBGuiI18n.t('v7optimize.noQueueItemsSelected');
 }
 
 function updateQueueStatus() {
@@ -10358,16 +10374,16 @@ function updateQueueStatus() {
   chip.className = 'status-chip';
   if (errors) {
     chip.classList.add('bad');
-    chip.textContent = errors + ' errored job' + (errors === 1 ? '' : 's');
+    chip.textContent = PBGuiI18n.t(errors === 1 ? 'v7optimize.erroredJobCount' : 'v7optimize.erroredJobsCount', { count: errors });
   } else if (active) {
     chip.classList.add('warn');
-    chip.textContent = active + ' active, ' + queued + ' queued';
+    chip.textContent = PBGuiI18n.t('v7optimize.activeQueuedCount', { active: active, queued: queued });
   } else if (queued) {
     chip.classList.add('warn');
-    chip.textContent = queued + ' queued';
+    chip.textContent = PBGuiI18n.t('v7optimize.queuedOnlyCount', { queued: queued });
   } else {
     chip.classList.add('good');
-    chip.textContent = 'Queue idle';
+    chip.textContent = PBGuiI18n.t('v7optimize.queueIdle');
   }
 }
 
@@ -10570,7 +10586,7 @@ function initQueueDragDrop() {
 }
 
 function metricPills(summary) {
-  if (!summary || !Object.keys(summary).length) return '<span class="muted">No metric summary</span>';
+  if (!summary || !Object.keys(summary).length) return '<span class="muted">' + escapeHtml(PBGuiI18n.t('v7optimize.noMetricSummary')) + '</span>';
   return Object.keys(summary).slice(0, 4).map(function(key) {
     var value = summary[key];
     var rendered = typeof value === 'number' ? value.toFixed(4) : String(value);
@@ -10603,8 +10619,8 @@ function formatParetoMetricValue(value) {
 }
 
 function paretoHeaderLabel(sortKey) {
-  if (sortKey === 'name') return 'Name';
-  if (sortKey === 'modified') return 'Modified';
+  if (sortKey === 'name') return PBGuiI18n.t('v7optimize.thName');
+  if (sortKey === 'modified') return PBGuiI18n.t('v7optimize.thModified');
   if (sortKey.indexOf('summary:') === 0) {
     var metricKey = sortKey.slice(8);
     return METRIC_PILL_LABELS[metricKey] || metricKey;
@@ -10618,12 +10634,12 @@ function paretoSortIndicator(sortKey) {
 }
 
 function resultHeaderLabel(sortKey) {
-  if (sortKey === 'name') return 'Name';
-  if (sortKey === 'result') return 'Result Directory';
-  if (sortKey === 'strategy') return 'Strategy';
-  if (sortKey === 'pareto_count') return 'Paretos';
-  if (sortKey === 'mode') return 'Mode';
-  if (sortKey === 'modified') return 'Modified';
+  if (sortKey === 'name') return PBGuiI18n.t('v7optimize.thName');
+  if (sortKey === 'result') return PBGuiI18n.t('v7optimize.thResultDirectory');
+  if (sortKey === 'strategy') return PBGuiI18n.t('v7optimize.thStrategy');
+  if (sortKey === 'pareto_count') return PBGuiI18n.t('v7optimize.thParetos');
+  if (sortKey === 'mode') return PBGuiI18n.t('v7optimize.thMode');
+  if (sortKey === 'modified') return PBGuiI18n.t('v7optimize.thModified');
   return sortKey;
 }
 
@@ -10647,7 +10663,7 @@ function renderResultsTableHead() {
       + resultSortIndicator(sortKey)
       + '</th>';
   });
-  html += '<th>Actions</th></tr>';
+  html += '<th>' + escapeHtml(PBGuiI18n.t('v7optimize.thActions')) + '</th></tr>';
   thead.innerHTML = html;
 }
 
@@ -10713,15 +10729,15 @@ function renderParetoTableHead(summaryKeys) {
       + paretoSortIndicator(sortKey)
       + '</th>';
   });
-  if (!keys.length) html += '<th>Summary</th>';
+  if (!keys.length) html += '<th>' + escapeHtml(PBGuiI18n.t('v7optimize.thSummary')) + '</th>';
   var modifiedActive = state.paretoSortKey === 'modified';
   var modifiedAriaSort = 'none';
   if (modifiedActive) modifiedAriaSort = state.paretoSortDir === 'desc' ? 'descending' : 'ascending';
   html += '<th class="sortable' + (modifiedActive ? ' active' : '') + '" data-sort-key="modified" aria-sort="' + modifiedAriaSort + '">'
-    + 'Modified'
+    + escapeHtml(PBGuiI18n.t('v7optimize.thModified'))
     + paretoSortIndicator('modified')
     + '</th>';
-  html += '<th>Actions</th></tr>';
+  html += '<th>' + escapeHtml(PBGuiI18n.t('v7optimize.thActions')) + '</th></tr>';
   thead.innerHTML = html;
 }
 
@@ -10780,7 +10796,7 @@ function renderResults() {
   renderResultsTableHead();
   tbody.innerHTML = '';
   if (!results.length) {
-    renderEmpty('results-tbody', optimizeEditorAdapter.isV8 ? 7 : 6, 'No optimize results found.', '', '');
+    renderEmpty('results-tbody', optimizeEditorAdapter.isV8 ? 7 : 6, PBGuiI18n.t('v7optimize.noOptimizeResultsFound'), '', '');
     updateResultSelectionUi(results);
     updateMetaCounts();
     return;
@@ -10791,26 +10807,26 @@ function renderResults() {
     if (state.selectedResults.has(result.path)) tr.classList.add('selected');
     var capabilities = optimizeEditorAdapter.resultCapabilities(result);
     var continueAction = capabilities.hasPareto
-      ? '<button class="icon-btn good result-continue" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="Continue optimize from this result\'s pareto seeds">🌱</button>'
+      ? '<button class="icon-btn good result-continue" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.continueFromParetoSeeds')) + '">🌱</button>'
       : '';
     var resumeAction = optimizeEditorAdapter.isV8 && capabilities.resumable
-      ? '<button class="icon-btn warn result-resume" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="Resume this exact optimizer checkpoint">↻</button>'
+      ? '<button class="icon-btn warn result-resume" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.resumeCheckpointTitle')) + '">↻</button>'
       : '';
     tr.innerHTML = ''
       + '<td><strong>' + escapeHtml(result.name || result.result) + '</strong></td>'
       + '<td class="mono ellipsis">' + escapeHtml(result.result || '-') + '</td>'
       + (optimizeEditorAdapter.isV8 ? '<td class="mono">' + escapeHtml(result.strategy || '-') + '</td>' : '')
-      + '<td class="result-pareto-count" title="Double-click to open the new FastAPI Pareto Explorer">' + escapeHtml(String(result.pareto_count || 0)) + '</td>'
+      + '<td class="result-pareto-count" title="' + escapeHtml(PBGuiI18n.t('v7optimize.doubleClickOpenExplorer')) + '">' + escapeHtml(String(result.pareto_count || 0)) + '</td>'
       + '<td class="result-mode-cell">' + resultModeMarkup(result) + '</td>'
       + '<td class="muted">' + escapeHtml(formatIso(result.modified)) + '</td>'
       + '<td class="actions-cell">'
-      + (capabilities.hasPareto ? '<button class="icon-btn result-paretos" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="Open pareto list">🗂</button>' : '')
-      + (optimizeEditorAdapter.supportsParetoExplorer && capabilities.hasPareto ? '<button class="icon-btn result-explorer" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="Open Pareto Explorer">🎯</button>' : '')
-      + (optimizeEditorAdapter.supportsResultPlots && capabilities.supportsDash ? '<button class="icon-btn result-dash" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="Open ' + optimizeEditorAdapter.label + ' Pareto Dash">PD</button>' : '')
-      + (optimizeEditorAdapter.supportsResultPlots && capabilities.supports3d ? '<button class="icon-btn result-3d" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="Launch ' + optimizeEditorAdapter.label + ' 3D plot">3D</button>' : '')
+      + (capabilities.hasPareto ? '<button class="icon-btn result-paretos" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.openParetoList')) + '">🗂</button>' : '')
+      + (optimizeEditorAdapter.supportsParetoExplorer && capabilities.hasPareto ? '<button class="icon-btn result-explorer" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.openParetoExplorer')) + '">🎯</button>' : '')
+      + (optimizeEditorAdapter.supportsResultPlots && capabilities.supportsDash ? '<button class="icon-btn result-dash" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.openParetoDash', { label: optimizeEditorAdapter.label })) + '">PD</button>' : '')
+      + (optimizeEditorAdapter.supportsResultPlots && capabilities.supports3d ? '<button class="icon-btn result-3d" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.launch3dPlot', { label: optimizeEditorAdapter.label })) + '">3D</button>' : '')
       + continueAction
       + resumeAction
-      + (capabilities.hasConfig ? '<button class="icon-btn result-config" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="Open config draft">📄</button>' : '')
+      + (capabilities.hasConfig ? '<button class="icon-btn result-config" data-path="' + escapeHtml(result.path) + '" data-name="' + escapeHtml(result.name || result.result) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.openConfigDraft')) + '">📄</button>' : '')
       + '</td>';
     tbody.appendChild(tr);
   });
@@ -10825,8 +10841,8 @@ function updateResultSelectionUi(filteredResults) {
   var selected = selectedCount === 1 ? syncSelectedResultFromSelection() : null;
   var capabilities = selected ? optimizeEditorAdapter.resultCapabilities(selected) : null;
   el('result-selection-summary').textContent = selectedCount
-    ? selectedCount + ' result' + (selectedCount === 1 ? '' : 's') + ' selected.'
-    : 'No results selected.';
+    ? PBGuiI18n.t(selectedCount === 1 ? 'v7optimize.resultsSelected' : 'v7optimize.resultsSelectedPlural', { count: selectedCount })
+    : PBGuiI18n.t('v7optimize.noResultsSelected');
   el('btn-open-result-paretos').disabled = !capabilities || !capabilities.hasPareto;
   el('btn-open-pareto-explorer-results').disabled = !capabilities || !capabilities.hasPareto;
   el('btn-open-result-pareto-dash').disabled = !capabilities || !capabilities.supportsDash;
@@ -10840,17 +10856,17 @@ function renderParetos() {
   var tbody = el('paretos-tbody');
   var summaryKeys = getParetoSummaryKeys(state.paretos);
   renderParetoTableHead(summaryKeys);
-  el('pareto-result-chip').textContent = state.selectedResultName || 'No result selected';
+  el('pareto-result-chip').textContent = state.selectedResultName || PBGuiI18n.t('v7optimize.noResultSelected');
   renderParetoToolbar();
   if (!state.selectedResultPath) {
     state.selectedParetos.clear();
-    renderEmpty('paretos-tbody', 3 + (summaryKeys.length || 1), 'Choose a result set first.', '', '');
+    renderEmpty('paretos-tbody', 3 + (summaryKeys.length || 1), PBGuiI18n.t('v7optimize.chooseResultSetFirst'), '', '');
     updateParetoSelectionUi();
     updateMetaCounts();
     return;
   }
   if (!state.paretos.length) {
-    renderEmpty('paretos-tbody', 3 + (summaryKeys.length || 1), 'No pareto files found for this result.', '', '');
+    renderEmpty('paretos-tbody', 3 + (summaryKeys.length || 1), PBGuiI18n.t('v7optimize.noParetoFilesFound'), '', '');
     updateParetoSelectionUi();
     updateMetaCounts();
     return;
@@ -10868,9 +10884,9 @@ function renderParetos() {
     }
     rowHtml += '<td class="muted">' + escapeHtml(formatIso(item.modified)) + '</td>'
       + '<td class="actions-cell">'
-      + '<button class="icon-btn pareto-open" data-path="' + escapeHtml(item.path) + '" title="View JSON">👁</button>'
-      + '<button class="icon-btn pareto-seed" data-path="' + escapeHtml(item.path) + '" data-name="' + escapeHtml(item.name) + '" title="Use as seed">🧬</button>'
-      + (!optimizeEditorAdapter.isV8 ? '<button class="icon-btn pareto-migrate-v8" data-path="' + escapeHtml(item.path) + '" data-name="' + escapeHtml(item.name) + '" title="Convert Pareto config to PB8 Optimize">V8</button>' : '')
+      + '<button class="icon-btn pareto-open" data-path="' + escapeHtml(item.path) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.viewJson')) + '">👁</button>'
+      + '<button class="icon-btn pareto-seed" data-path="' + escapeHtml(item.path) + '" data-name="' + escapeHtml(item.name) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.useAsSeed')) + '">🧬</button>'
+      + (!optimizeEditorAdapter.isV8 ? '<button class="icon-btn pareto-migrate-v8" data-path="' + escapeHtml(item.path) + '" data-name="' + escapeHtml(item.name) + '" title="' + escapeHtml(PBGuiI18n.t('v7optimize.convertParetoToPb8')) + '">V8</button>' : '')
       + '</td></tr>';
     return rowHtml;
   });
@@ -10883,8 +10899,8 @@ function updateParetoSelectionUi() {
   pruneSelectionSet('selectedParetos', state.paretos.map(function(item) { return item.path; }));
   var selectedCount = state.selectedParetos.size;
   el('pareto-selection-summary').textContent = selectedCount
-    ? selectedCount + ' pareto' + (selectedCount === 1 ? '' : 's') + ' selected.'
-    : 'No paretos selected.';
+    ? PBGuiI18n.t(selectedCount === 1 ? 'v7optimize.paretosSelected' : 'v7optimize.paretosSelectedPlural', { count: selectedCount })
+    : PBGuiI18n.t('v7optimize.noParetosSelected');
   el('btn-open-pareto-explorer-paretos').disabled = !state.selectedResultPath;
   el('btn-backtest-selected-paretos').disabled = selectedCount === 0;
   el('btn-seed-selected-paretos').disabled = selectedCount === 0;
@@ -10940,7 +10956,7 @@ function parseEditorJson() {
     var formatted = window.PBGuiEditorShared && window.PBGuiEditorShared.formatJsonParseMessage
       ? window.PBGuiEditorShared.formatJsonParseMessage(error.message)
       : error.message;
-    return { ok: false, error: formatted || 'Invalid JSON' };
+    return { ok: false, error: formatted || PBGuiI18n.t('v7optimize.invalidJson') };
   }
 }
 
@@ -11004,7 +11020,7 @@ function suggestArchiveOptimizeImportName(item) {
 }
 
 function importArchiveConfigLabel(item) {
-  var name = item && item.name ? String(item.name) : 'Unnamed config';
+  var name = item && item.name ? String(item.name) : PBGuiI18n.t('v7optimize.unnamedConfig');
   var rel = item && item.relative_path ? String(item.relative_path) : '';
   return rel && rel !== name ? name + ' - ' + rel : name;
 }
@@ -11014,7 +11030,7 @@ function renderImportArchiveSelect() {
   if (!select) return;
   if (!state.importArchives.length) {
     state.importArchiveName = '';
-    select.innerHTML = '<option value="">No Backtest Archives configured</option>';
+    select.innerHTML = '<option value="">' + esc(PBGuiI18n.t('v7optimize.noBacktestArchivesConfigured')) + '</option>';
     return;
   }
   var existing = state.importArchives.some(function(archive) { return archive.name === state.importArchiveName; });
@@ -11024,7 +11040,7 @@ function renderImportArchiveSelect() {
   }
   select.innerHTML = state.importArchives.map(function(archive) {
     var count = Number(archive.optimize_configs || 0);
-    var label = archive.name + (count ? ' (' + count + ' Optimize configs)' : '');
+    var label = archive.name + (count ? PBGuiI18n.t('v7optimize.optimizeConfigsParen', { count: count }) : '');
     return '<option value="' + escAttr(archive.name) + '">' + esc(label) + '</option>';
   }).join('');
   select.value = state.importArchiveName;
@@ -11042,7 +11058,7 @@ function renderImportArchiveConfigSelect() {
   var meta = el('import-config-archive-meta');
   if (!select) return;
   if (!state.importArchiveConfigs.length) {
-    setImportArchiveConfigPlaceholder('Selected archive has no stored Optimize configs.');
+    setImportArchiveConfigPlaceholder(PBGuiI18n.t('v7optimize.selectedArchiveNoConfigs'));
     return;
   }
   select.innerHTML = state.importArchiveConfigs.map(function(item) {
@@ -11050,7 +11066,7 @@ function renderImportArchiveConfigSelect() {
     return '<option value="' + escAttr(path) + '">' + esc(importArchiveConfigLabel(item)) + '</option>';
   }).join('');
   if (meta) {
-    meta.textContent = state.importArchiveConfigs.length + ' archived Optimize config' + (state.importArchiveConfigs.length === 1 ? '' : 's') + ' available.';
+    meta.textContent = PBGuiI18n.t(state.importArchiveConfigs.length === 1 ? 'v7optimize.archivedOptimizeConfigAvailable' : 'v7optimize.archivedOptimizeConfigsAvailable', { count: state.importArchiveConfigs.length });
   }
 }
 
@@ -11071,11 +11087,11 @@ async function loadImportArchiveConfigs(archiveName) {
   state.importArchiveName = archiveName;
   state.importArchiveConfigs = [];
   if (!archiveName) {
-    setImportArchiveConfigPlaceholder('Choose Backtest Archive to load stored Optimize configs.');
+    setImportArchiveConfigPlaceholder(PBGuiI18n.t('v7optimize.chooseArchiveToLoadConfigs'));
     return;
   }
-  setImportArchiveConfigPlaceholder('Loading archived Optimize configs...');
-  setImportConfigStatus('Loading archived Optimize configs...', '');
+  setImportArchiveConfigPlaceholder(PBGuiI18n.t('v7optimize.loadingArchivedOptimizeConfigs'));
+  setImportConfigStatus(PBGuiI18n.t('v7optimize.loadingArchivedOptimizeConfigs'), '');
   var data = await authFetch(archiveApiBase() + '/archives/' + encodeURIComponent(archiveName) +
     '/optimize-configs?version=' + encodeURIComponent(optimizeEditorAdapter.version));
   state.importArchiveConfigs = (Array.isArray(data.configs) ? data.configs : []).sort(function(a, b) {
@@ -11084,9 +11100,9 @@ async function loadImportArchiveConfigs(archiveName) {
   renderImportArchiveConfigSelect();
   setImportArchiveConfigNameFromSelection();
   if (state.importArchiveConfigs.length) {
-    setImportConfigStatus('Choose an archived config, then import it to the editor.', 'ok');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.chooseArchivedConfigThenImport'), 'ok');
   } else {
-    setImportConfigStatus('Selected archive has no stored Optimize configs.', 'err');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.selectedArchiveNoConfigs'), 'err');
   }
 }
 
@@ -11095,21 +11111,21 @@ async function loadImportArchives(force) {
   if (state.importArchivesLoaded && !force) return;
   state.importArchivesLoading = true;
   try {
-    setImportConfigStatus('Loading Backtest Archives...', '');
-    setImportArchiveConfigPlaceholder('Loading Backtest Archives...');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.loadingBacktestArchives'), '');
+    setImportArchiveConfigPlaceholder(PBGuiI18n.t('v7optimize.loadingBacktestArchives'));
     var data = await authFetch(archiveApiBase() + '/archives');
     state.importArchives = Array.isArray(data.archives) ? data.archives : [];
     state.importArchivesLoaded = true;
     renderImportArchiveSelect();
     if (!state.importArchives.length) {
-      setImportArchiveConfigPlaceholder('No Backtest Archives configured.');
-      setImportConfigStatus('No Backtest Archives configured.', 'err');
+      setImportArchiveConfigPlaceholder(PBGuiI18n.t('v7optimize.noBacktestArchivesConfigured'));
+      setImportConfigStatus(PBGuiI18n.t('v7optimize.noBacktestArchivesConfigured'), 'err');
       return;
     }
     await loadImportArchiveConfigs(state.importArchiveName);
   } catch (error) {
-    setImportConfigStatus(error && error.message ? error.message : 'Could not load Backtest Archives.', 'err');
-    setImportArchiveConfigPlaceholder('Could not load Backtest Archives.');
+    setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.couldNotLoadBacktestArchives'), 'err');
+    setImportArchiveConfigPlaceholder(PBGuiI18n.t('v7optimize.couldNotLoadBacktestArchives'));
   } finally {
     state.importArchivesLoading = false;
   }
@@ -11126,19 +11142,19 @@ function setImportConfigSource(source) {
   archiveBtn.setAttribute('aria-pressed', archiveSource ? 'true' : 'false');
   el('import-config-local-panel').style.display = archiveSource ? 'none' : '';
   el('import-config-archive-panel').style.display = archiveSource ? '' : 'none';
-  el('btn-import-config-open').textContent = archiveSource ? 'Import Archive Config to Editor' : 'Import to Editor';
+  el('btn-import-config-open').textContent = archiveSource ? PBGuiI18n.t('v7optimize.importArchiveConfigToEditor') : PBGuiI18n.t('v7optimize.importToEditor');
   if (archiveSource) {
     if (!state.importArchivesLoaded) {
       loadImportArchives(false).catch(function(error) {
-        setImportConfigStatus(error && error.message ? error.message : 'Could not load Backtest Archives.', 'err');
+        setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.couldNotLoadBacktestArchives'), 'err');
       });
     } else if (state.importArchiveConfigs.length) {
-      setImportConfigStatus('Choose an archived config, then import it to the editor.', 'ok');
+      setImportConfigStatus(PBGuiI18n.t('v7optimize.chooseArchivedConfigThenImport'), 'ok');
     } else {
-      setImportConfigStatus('Choose Backtest Archive to load stored Optimize configs.', '');
+      setImportConfigStatus(PBGuiI18n.t('v7optimize.chooseArchiveToLoadConfigs'), '');
     }
   } else {
-    setImportConfigStatus('Paste JSON or choose a .json file.', '');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.pasteJsonOrChooseFile'), '');
   }
 }
 
@@ -11146,10 +11162,10 @@ function parseImportConfigJson() {
   var raw = el('import-config-json').value || '';
   var validation = validateJsonText(raw, {
     expectObject: true,
-    emptyMessage: 'Import JSON cannot be empty'
+    emptyMessage: PBGuiI18n.t('v7optimize.importJsonCannotBeEmpty')
   });
   if (validation.error || !validation.parsed) {
-    throw new Error(validation.error && validation.error.message ? validation.error.message : 'Invalid JSON');
+    throw new Error(validation.error && validation.error.message ? validation.error.message : PBGuiI18n.t('v7optimize.invalidJson'));
   }
   return validation.parsed;
 }
@@ -11172,9 +11188,9 @@ async function handleImportConfigFileChange(event) {
     el('import-config-json').value = text;
     var parsed = parseImportConfigJson();
     el('import-config-name').value = suggestOptimizeImportName(parsed, file.name || '');
-    setImportConfigStatus('Loaded ' + (file.name || 'JSON file') + '.', 'ok');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.loadedFileStatus', { name: file.name || PBGuiI18n.t('v7optimize.jsonFile') }), 'ok');
   } catch (error) {
-    setImportConfigStatus(error && error.message ? error.message : 'Could not read selected file.', 'err');
+    setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.couldNotReadSelectedFile'), 'err');
   }
 }
 
@@ -11194,13 +11210,13 @@ function chooseOptimizeArchiveImportCollision(error, importName) {
   var detail = error && error.detail && typeof error.detail === 'object' ? error.detail : {};
   if (!error || error.status !== 409 || detail.code !== 'optimize_config_exists') throw error;
   return window.PBGuiDialogs.choose({
-    title: 'Optimize config already exists',
-    message: detail.message || ('Local Optimize config "' + importName + '" already exists.'),
-    detail: detail.suggested_copy_name ? 'Suggested copy name: ' + detail.suggested_copy_name : '',
+    title: PBGuiI18n.t('v7optimize.optimizeConfigAlreadyExists'),
+    message: detail.message || PBGuiI18n.t('v7optimize.localOptimizeConfigExists', { name: importName }),
+    detail: detail.suggested_copy_name ? PBGuiI18n.t('v7optimize.suggestedCopyName', { name: detail.suggested_copy_name }) : '',
     actions: [
-      { label: 'Overwrite', value: 'overwrite', danger: true },
-      { label: 'Import as Copy', value: 'copy', primary: true },
-      { label: 'Cancel', value: null }
+      { label: PBGuiI18n.t('v7optimize.overwrite'), value: 'overwrite', danger: true },
+      { label: PBGuiI18n.t('v7optimize.importAsCopy'), value: 'copy', primary: true },
+      { label: PBGuiI18n.t('common.cancel'), value: null }
     ]
   });
 }
@@ -11209,38 +11225,38 @@ async function importArchiveOptimizeConfigDraft() {
   var archiveName = String((el('import-config-archive') || {}).value || '').trim();
   var item = selectedImportArchiveConfig();
   if (!archiveName) {
-    setImportConfigStatus('Choose a Backtest Archive first.', 'err');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.chooseBacktestArchiveFirst'), 'err');
     return;
   }
   if (!item || !item.path) {
-    setImportConfigStatus('Choose an archived Optimize config first.', 'err');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.chooseArchivedOptimizeConfigFirst'), 'err');
     return;
   }
   try {
     var suggestedName = normalizeOptimizeImportName(el('import-config-name').value)
       || suggestArchiveOptimizeImportName(item)
       || 'imported_optimize';
-    setImportConfigStatus('Importing archived config...', '');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.importingArchivedConfig'), '');
     var imported;
     try {
       imported = await requestArchiveOptimizeConfigImport(archiveName, item.path, suggestedName, 'error');
     } catch (error) {
       var collision = await chooseOptimizeArchiveImportCollision(error, suggestedName);
       if (!collision) {
-        setImportConfigStatus('Archive import cancelled.', '');
+        setImportConfigStatus(PBGuiI18n.t('v7optimize.archiveImportCancelled'), '');
         return;
       }
-      setImportConfigStatus(collision === 'copy' ? 'Importing archived config as a copy...' : 'Overwriting local Optimize config...', '');
+      setImportConfigStatus(collision === 'copy' ? PBGuiI18n.t('v7optimize.importingArchivedConfigAsCopy') : PBGuiI18n.t('v7optimize.overwritingLocalOptimizeConfig'), '');
       imported = await requestArchiveOptimizeConfigImport(archiveName, item.path, suggestedName, collision);
     }
     var localName = normalizeOptimizeImportName((imported || {}).name) || suggestedName;
     closeAllModals();
     await openConfigEditor(localName);
-    setPageEditorStatus('Imported archived config as local Optimize config "' + localName + '".', 'ok');
-    toast('Archived config imported as ' + localName + ' and opened.', 'ok');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.importedArchivedConfigStatus', { name: localName }), 'ok');
+    toast(PBGuiI18n.t('v7optimize.archivedConfigImportedAs', { name: localName }), 'ok');
   } catch (error) {
-    setImportConfigStatus(error && error.message ? error.message : 'Archive import failed.', 'err');
-    toast(error && error.message ? error.message : 'Archive import failed.', 'err');
+    setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.archiveImportFailed'), 'err');
+    toast(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.archiveImportFailed'), 'err');
   }
 }
 
@@ -11254,7 +11270,7 @@ async function importOptimizeConfigDraft() {
   try {
     parsed = parseImportConfigJson();
   } catch (error) {
-    setImportConfigStatus(error && error.message ? error.message : 'Invalid JSON', 'err');
+    setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.invalidJson'), 'err');
     return;
   }
 
@@ -11264,17 +11280,17 @@ async function importOptimizeConfigDraft() {
     || suggestOptimizeImportName(parsed, file ? file.name : '');
 
   try {
-    setImportConfigStatus('Preparing imported config...', '');
+    setImportConfigStatus(PBGuiI18n.t('v7optimize.preparingImportedConfig'), '');
     var prepared = await apiFetch('/configs/prepare', {
       method: 'POST',
       body: JSON.stringify({ config: parsed })
     });
     closeAllModals();
     openEditorWithConfig(prepared, suggestedName, '');
-    setPageEditorStatus('Imported config draft. Review it, then Save or Save & Queue.', 'ok');
-    toast('Config imported into editor draft.', 'ok');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.importedConfigDraftStatus'), 'ok');
+    toast(PBGuiI18n.t('v7optimize.configImportedIntoEditor'), 'ok');
   } catch (error) {
-    setImportConfigStatus(error && error.message ? error.message : 'Import failed.', 'err');
+    setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.importFailed'), 'err');
   }
 }
 
@@ -11285,15 +11301,15 @@ function queueConfigChoiceCandidates(detail) {
 
 function queueConfigChoiceActionLabel() {
   var intent = String(state.queueConfigChoiceIntent || '').trim().toLowerCase();
-  if (intent === 'start') return 'Use + Start';
-  if (intent === 'requeue') return 'Use + Requeue';
-  if (intent === 'edit') return 'Use + Open';
-  return 'Use for Queue';
+  if (intent === 'start') return PBGuiI18n.t('v7optimize.useAndStart');
+  if (intent === 'requeue') return PBGuiI18n.t('v7optimize.useAndRequeue');
+  if (intent === 'edit') return PBGuiI18n.t('v7optimize.useAndOpen');
+  return PBGuiI18n.t('v7optimize.useForQueue');
 }
 
 function renderQueueConfigChoiceList(candidates) {
   if (!candidates.length) {
-    return '<div class="queue-config-choice-item"><div class="queue-config-choice-name">No matching configs available</div></div>';
+    return '<div class="queue-config-choice-item"><div class="queue-config-choice-name">' + escapeHtml(PBGuiI18n.t('v7optimize.noMatchingConfigsAvailable')) + '</div></div>';
   }
   var canRepair = !!(state.queueConfigChoiceDetail && state.queueConfigChoiceDetail.queue_filename);
   var repairLabel = queueConfigChoiceActionLabel();
@@ -11303,12 +11319,12 @@ function renderQueueConfigChoiceList(candidates) {
     var path = candidate && candidate.path ? String(candidate.path) : '';
     return '<div class="queue-config-choice-item">' +
       '<div>' +
-        '<div class="queue-config-choice-name">' + escapeHtml(name || 'Unnamed config') + '</div>' +
+        '<div class="queue-config-choice-name">' + escapeHtml(name || PBGuiI18n.t('v7optimize.unnamedConfig')) + '</div>' +
         '<div class="queue-config-choice-candidate-path">' + escapeHtml(path || '-') + '</div>' +
       '</div>' +
       '<div class="queue-config-choice-actions">' +
         (canRepair ? '<button class="btn primary queue-config-choice-repair" data-name="' + escAttr(name) + '">' + escapeHtml(repairLabel) + '</button>' : '') +
-        '<button class="btn ' + openButtonClass + ' queue-config-choice-open" data-name="' + escAttr(name) + '">Open</button>' +
+        '<button class="btn ' + openButtonClass + ' queue-config-choice-open" data-name="' + escAttr(name) + '">' + escapeHtml(PBGuiI18n.t('v7optimize.open')) + '</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -11319,14 +11335,14 @@ function openQueueConfigChoiceModal(detail, intent) {
   var canRepair = !!(detail && detail.queue_filename);
   state.queueConfigChoiceDetail = detail || null;
   state.queueConfigChoiceIntent = String(intent || '').trim().toLowerCase();
-  el('queue-config-choice-title').textContent = canRepair ? 'Repair queued config' : 'Select matching config';
+  el('queue-config-choice-title').textContent = canRepair ? PBGuiI18n.t('v7optimize.repairQueuedConfig') : PBGuiI18n.t('v7optimize.selectMatchingConfig');
   el('queue-config-choice-message').textContent = detail && typeof detail.message === 'string'
-    ? detail.message
-    : 'This queue item references a config path that no longer exists.';
+    ? PBGuiI18n.serverMsg(detail.message)
+    : PBGuiI18n.t('v7optimize.queueConfigPathMissing');
   el('queue-config-choice-path').textContent = detail && detail.config_path ? String(detail.config_path) : '-';
   el('queue-config-choice-note').textContent = canRepair
-    ? 'Use the correct config below to repair this existing queue entry in place. You can also open a candidate first if you want to inspect it before repairing.'
-    : 'Open the correct config below, then save or queue it again so the queue entry uses the current path.';
+    ? PBGuiI18n.t('v7optimize.queueConfigRepairNote')
+    : PBGuiI18n.t('v7optimize.queueConfigChoiceNote');
   el('queue-config-choice-list').innerHTML = renderQueueConfigChoiceList(candidates);
   openBackdrop();
   el('queue-config-choice-modal').classList.add('open');
@@ -11337,7 +11353,7 @@ async function openConfigFromQueueChoice(name) {
   if (!configName) return;
   closeAllModals();
   await openConfigEditor(configName);
-  setPageEditorStatus('Opened matching config. Save or queue it again to refresh the old queue entry.', 'ok');
+  setPageEditorStatus(PBGuiI18n.t('v7optimize.openedMatchingConfig'), 'ok');
 }
 
 async function repairQueueItemFromQueueChoice(name) {
@@ -11354,20 +11370,20 @@ async function repairQueueItemFromQueueChoice(name) {
   closeAllModals();
   if (intent === 'start') {
     await queueAction('/queue/' + encodeURIComponent(queueFilename) + '/start', 'POST', 'start');
-    toast('Queue item updated to matching config and started.', 'ok');
+    toast(PBGuiI18n.t('v7optimize.queueItemUpdatedAndStarted'), 'ok');
     return;
   }
   if (intent === 'requeue') {
     await queueAction('/queue/' + encodeURIComponent(queueFilename) + '/requeue', 'POST', 'requeue');
-    toast('Queue item updated to matching config and requeued.', 'ok');
+    toast(PBGuiI18n.t('v7optimize.queueItemUpdatedAndRequeued'), 'ok');
     return;
   }
   if (intent === 'edit') {
     await openConfigEditor(configName);
-    setPageEditorStatus('Queue item updated to matching config and now keeps the repaired path.', 'ok');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.queueItemUpdatedRepairedPath'), 'ok');
     return;
   }
-  toast('Queue item updated to matching config.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.queueItemUpdated'), 'ok');
 }
 
 async function openQueueConfigEditor(filename) {
@@ -11420,18 +11436,18 @@ async function continueOptimizeFromResult(path, suggestedName) {
     path,
     optimizeSeedPathFromResult(path),
     suggestedName,
-    'Using result pareto directory as starting seeds.'
+    PBGuiI18n.t('v7optimize.usingResultParetoDirAsSeeds')
   );
 }
 
 async function resumeOptimizeResult(path, suggestedName) {
-  if (!optimizeEditorAdapter.isV8) throw new Error('Checkpoint resume is available only for PB8 Optimize results.');
+  if (!optimizeEditorAdapter.isV8) throw new Error(PBGuiI18n.t('v7optimize.checkpointResumePb8Only'));
   var baseName = (normalizeOptimizeImportName(suggestedName || '') || 'checkpoint').slice(0, 96);
   var queueName = normalizeOptimizeImportName(baseName + '_resume');
   var request = optimizeEditorAdapter.resultResumeRequest(queueName, path);
   var queued = await apiFetch(request.path, request.options);
-  if (!queued || !queued.filename) throw new Error('Could not create a managed queue item for checkpoint resume.');
-  toast('Checkpoint resume queued.', 'ok');
+  if (!queued || !queued.filename) throw new Error(PBGuiI18n.t('v7optimize.couldNotCreateResumeQueueItem'));
+  toast(PBGuiI18n.t('v7optimize.checkpointResumeQueued'), 'ok');
   await loadQueue();
   setPanel('queue');
 }
@@ -11491,7 +11507,7 @@ async function openBacktestQueueDraft(items) {
 
 async function backtestSelectedParetos(paths) {
   var selectedPaths = Array.isArray(paths) ? paths.slice() : Array.from(state.selectedParetos);
-  if (!selectedPaths.length) throw new Error('No paretos selected.');
+  if (!selectedPaths.length) throw new Error(PBGuiI18n.t('v7optimize.noParetosSelected'));
   var selectedItems = selectedPaths.map(function(path) {
     return state.paretos.find(function(item) {
       return item.path === path;
@@ -11531,7 +11547,7 @@ async function buildParetoSeedBundle(resultPath, paretoPaths) {
     seen.add(normalized);
     uniquePaths.push(normalized);
   });
-  if (!uniquePaths.length) throw new Error('No paretos selected.');
+  if (!uniquePaths.length) throw new Error(PBGuiI18n.t('v7optimize.noParetosSelected'));
   if (uniquePaths.length === 1) return { path: uniquePaths[0], count: 1 };
   return apiFetch(optimizeEditorAdapter.paretoSeedBundlePath, {
     method: 'POST',
@@ -11540,23 +11556,23 @@ async function buildParetoSeedBundle(resultPath, paretoPaths) {
 }
 
 async function useSelectedParetosAsSeeds(paths, suggestedName) {
-  if (!state.selectedResultPath) throw new Error('No result selected.');
+  if (!state.selectedResultPath) throw new Error(PBGuiI18n.t('v7optimize.noResultSelectedError'));
   var selectedPaths = Array.isArray(paths) ? paths.slice() : Array.from(state.selectedParetos);
   var bundle = await buildParetoSeedBundle(state.selectedResultPath, selectedPaths);
   var count = bundle && typeof bundle.count === 'number' ? bundle.count : selectedPaths.length;
   var seedPath = bundle && bundle.path ? String(bundle.path) : '';
-  if (!seedPath) throw new Error('Could not prepare pareto seed path.');
+  if (!seedPath) throw new Error(PBGuiI18n.t('v7optimize.couldNotPrepareParetoSeedPath'));
   var fallbackName = count === 1 ? String((selectedPaths[0] || '').split('/').slice(-1)[0] || '').replace(/\.json$/i, '') : '';
   var name = suggestedName || fallbackName || state.selectedResultName || '';
-  var title = count === 1 ? 'Pareto Seed Draft' : 'Selected Pareto Seeds Draft';
+  var title = count === 1 ? PBGuiI18n.t('v7optimize.paretoSeedDraft') : PBGuiI18n.t('v7optimize.selectedParetoSeedsDraft');
   var statusMessage = count === 1
-    ? 'Using selected pareto as starting seed.'
-    : 'Using ' + count + ' selected paretos as starting seeds.';
+    ? PBGuiI18n.t('v7optimize.usingSelectedParetoAsSeed')
+    : PBGuiI18n.t('v7optimize.usingSelectedParetosAsSeeds', { count: count });
   return openSeededOptimizeFromResult(state.selectedResultPath, seedPath, name, title, statusMessage);
 }
 
 async function seedWholeSelectedResult() {
-  if (!state.selectedResultPath) throw new Error('No result selected.');
+  if (!state.selectedResultPath) throw new Error(PBGuiI18n.t('v7optimize.noResultSelectedError'));
   return continueOptimizeFromResult(state.selectedResultPath, state.selectedResultName);
 }
 
@@ -11567,20 +11583,20 @@ async function validateEditor() {
       setEditorStatus(parsed.error, 'err');
       return false;
     }
-    setEditorStatus('JSON looks valid.', 'ok');
+    setEditorStatus(PBGuiI18n.t('v7optimize.jsonLooksValid'), 'ok');
     return true;
   }
   if (!ensureRawJsonValidForSave()) {
-    setPageEditorStatus('Raw JSON is invalid.', 'err');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.rawJsonInvalidPeriod'), 'err');
     return false;
   }
   if (!ensureStructuredJsonFieldsValidForSave()) {
-    setPageEditorStatus('Some JSON sections are invalid.', 'err');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.someJsonSectionsInvalid'), 'err');
     return false;
   }
   try {
     collectEditorConfig(null, { strict: true });
-    setPageEditorStatus('All editor sections look valid.', 'ok');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.allEditorSectionsValid'), 'ok');
     return true;
   } catch (error) {
     setPageEditorStatus(error.message, 'err');
@@ -11596,11 +11612,11 @@ async function saveEditor(andQueue) {
   var queueFilename = state.editorQueueFilename;
   if (editorVisible()) {
     if (!ensureRawJsonValidForSave()) {
-      setPageEditorStatus('Raw JSON is invalid.', 'err');
+      setPageEditorStatus(PBGuiI18n.t('v7optimize.rawJsonInvalidPeriod'), 'err');
       return;
     }
     if (!ensureStructuredJsonFieldsValidForSave()) {
-      setPageEditorStatus('Some JSON sections are invalid.', 'err');
+      setPageEditorStatus(PBGuiI18n.t('v7optimize.someJsonSectionsInvalid'), 'err');
       return;
     }
     try {
@@ -11614,7 +11630,7 @@ async function saveEditor(andQueue) {
   } else {
     name = el('editor-name').value.trim();
     if (!name) {
-      setEditorStatus('Config name is required.', 'err');
+      setEditorStatus(PBGuiI18n.t('v7optimize.configNameRequired'), 'err');
       return;
     }
     var parsed = parseEditorJson();
@@ -11648,9 +11664,9 @@ async function saveEditor(andQueue) {
     closeAllModals();
   }
   if (queueAfterSave) {
-    toast(isNewName ? 'Saved as new config and queued.' : 'Config saved and queued.', 'ok');
+    toast(isNewName ? PBGuiI18n.t('v7optimize.savedAsNewConfigAndQueued') : PBGuiI18n.t('v7optimize.configSavedAndQueued'), 'ok');
   } else {
-    toast(isNewName ? ('Saved as new config "' + name + '".') : 'Config saved.', 'ok');
+    toast(isNewName ? PBGuiI18n.t('v7optimize.savedAsNewConfig', { name: name }) : PBGuiI18n.t('v7optimize.configSaved'), 'ok');
   }
   await loadConfigs();
   await loadQueue();
@@ -11809,7 +11825,7 @@ function openLogPanel(filename, name) {
   state.logFilename = filename;
   state.logResultName = name || '';
   var panel = el('log-panel');
-  el('log-panel-title').textContent = 'Optimize log - ' + (name || filename);
+  el('log-panel-title').textContent = PBGuiI18n.t('v7optimize.optimizeLogWithName', { name: name || filename });
   if (state.logViewer) {
     state.logViewer.close();
     state.logViewer = null;
@@ -12056,18 +12072,18 @@ async function loadParetos(path, name) {
 
 async function deleteConfig(name) {
   if (!(await window.PBGuiDialogs.confirm({
-    title: 'Delete optimize config',
-    message: 'Delete optimize config "' + name + '"?',
-    confirmText: 'Delete'
+    title: PBGuiI18n.t('v7optimize.deleteOptimizeConfig'),
+    message: PBGuiI18n.t('v7optimize.deleteOptimizeConfigMsg', { name: name }),
+    confirmText: PBGuiI18n.t('common.delete')
   }))) return;
   await apiFetch('/configs/' + encodeURIComponent(name), { method: 'DELETE' });
   removeConfigsFromState(name);
-  toast('Config deleted.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.configDeleted'), 'ok');
 }
 
 async function queueConfig(name) {
   await apiFetch('/queue', { method: 'POST', body: JSON.stringify({ name: name }) });
-  toast('Config queued.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.configQueued'), 'ok');
   await loadQueue();
 }
 
@@ -12084,7 +12100,7 @@ async function migrateOptimizeConfigToV8(name) {
     return;
   }
   var migratedName = response && response.name ? response.name : targetName;
-  toast('Converted Optimize config to PB8: ' + migratedName, 'ok');
+  toast(PBGuiI18n.t('v7optimize.convertedOptimizeConfigToPb8', { name: migratedName }), 'ok');
   window.location.href = window.location.origin + '/api/optimize-v8/main_page?open_config=' + encodeURIComponent(migratedName);
 }
 
@@ -12101,81 +12117,81 @@ async function migrateParetoConfigToV8(path, name) {
     return;
   }
   var migratedName = response && response.name ? response.name : targetName;
-  toast('Converted Pareto config to PB8: ' + migratedName, 'ok');
+  toast(PBGuiI18n.t('v7optimize.convertedParetoConfigToPb8', { name: migratedName }), 'ok');
   window.location.href = window.location.origin + '/api/optimize-v8/main_page?open_config=' + encodeURIComponent(migratedName);
 }
 
 async function showOptimizeMigrationError(error) {
   var report = error && error.detail && typeof error.detail === 'object' ? error.detail.report : null;
   var detail = report
-    ? 'Official PB8 migration report:\n\n' + JSON.stringify(report, null, 2) +
-      '\n\nThe V7 source was not changed and no runnable PB8 config was published.'
-    : 'The V7 source was not changed and no runnable PB8 config was published.';
+    ? PBGuiI18n.t('v7optimize.migrationReportPrefix') + '\n\n' + JSON.stringify(report, null, 2) +
+      '\n\n' + PBGuiI18n.t('v7optimize.migrationReportSuffix')
+    : PBGuiI18n.t('v7optimize.migrationReportSuffix');
   await window.PBGuiDialogs.alert({
-    title: 'PB8 migration failed',
-    message: error && error.message ? error.message : 'PB8 migration failed',
+    title: PBGuiI18n.t('v7optimize.migrationFailedTitle'),
+    message: error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.migrationFailedMsg'),
     detail: detail,
-    confirmText: 'OK'
+    confirmText: PBGuiI18n.t('common.ok')
   });
 }
 
 async function duplicateSelected() {
   var selected = Array.from(state.selectedConfigs);
   if (selected.length !== 1) {
-    toast('Select exactly one config to duplicate.', 'err');
+    toast(PBGuiI18n.t('v7optimize.selectOneConfigToDuplicate'), 'err');
     return;
   }
   var newName = await window.PBGuiDialogs.prompt({
-    title: 'Duplicate config',
-    message: 'Duplicate config as:',
-    label: 'New config name',
+    title: PBGuiI18n.t('v7optimize.duplicateConfig'),
+    message: PBGuiI18n.t('v7optimize.duplicateConfigAs'),
+    label: PBGuiI18n.t('v7optimize.newConfigName'),
     defaultValue: selected[0] + '_copy',
-    confirmText: 'Duplicate'
+    confirmText: PBGuiI18n.t('v7optimize.duplicate')
   });
   if (!newName) return;
   await apiFetch('/configs/' + encodeURIComponent(selected[0]) + '/duplicate', {
     method: 'POST',
     body: JSON.stringify({ new_name: newName.trim() })
   });
-  toast('Config duplicated.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.configDuplicated'), 'ok');
   await loadConfigs();
 }
 
 async function deleteSelectedConfigs() {
   var selected = Array.from(state.selectedConfigs);
   if (!selected.length) {
-    toast('Select at least one config to delete.', 'err');
+    toast(PBGuiI18n.t('v7optimize.selectAtLeastOneConfigToDelete'), 'err');
     return;
   }
   if (!(await window.PBGuiDialogs.confirm({
-    title: 'Delete configs',
-    message: 'Delete ' + selected.length + ' selected config(s)?',
-    confirmText: 'Delete'
+    title: PBGuiI18n.t('v7optimize.deleteConfigs'),
+    message: PBGuiI18n.t('v7optimize.deleteSelectedConfigsMsg', { count: selected.length }),
+    confirmText: PBGuiI18n.t('common.delete')
   }))) return;
   for (var i = 0; i < selected.length; i++) {
     await apiFetch('/configs/' + encodeURIComponent(selected[i]), { method: 'DELETE' });
   }
   removeConfigsFromState(selected);
-  toast('Selected configs deleted.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.selectedConfigsDeleted'), 'ok');
 }
 
 async function deleteSelectedQueue() {
   var selected = Array.from(state.selectedQueue);
   if (!selected.length) {
-    toast('Select at least one queue item to delete.', 'err');
+    toast(PBGuiI18n.t('v7optimize.selectAtLeastOneQueueItemToDelete'), 'err');
     return;
   }
   if (!(await window.PBGuiDialogs.confirm({
-    title: 'Delete queue items',
-    message: 'Delete ' + selected.length + ' selected queue item(s)?',
-    confirmText: 'Delete'
+    title: PBGuiI18n.t('v7optimize.deleteQueueItems'),
+    message: PBGuiI18n.t('v7optimize.deleteSelectedQueueItemsMsg', { count: selected.length }),
+    confirmText: PBGuiI18n.t('common.delete')
   }))) return;
   await apiFetch('/queue/delete', {
     method: 'POST',
     body: JSON.stringify({ filenames: selected })
   });
   removeQueueItemsFromState(selected);
-  toast('Selected queue items deleted.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.selectedQueueItemsDeleted'), 'ok');
 }
 
 async function deleteQueueItem(filename) {
@@ -12189,13 +12205,13 @@ async function deleteQueueItem(filename) {
 async function queueSelectedConfigs() {
   var selected = Array.from(state.selectedConfigs);
   if (!selected.length) {
-    toast('Select at least one config to queue.', 'err');
+    toast(PBGuiI18n.t('v7optimize.selectAtLeastOneConfigToQueue'), 'err');
     return;
   }
   for (var i = 0; i < selected.length; i++) {
     await apiFetch('/queue', { method: 'POST', body: JSON.stringify({ name: selected[i] }) });
   }
-  toast(selected.length + ' config(s) added to queue.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.configsAddedToQueue', { count: selected.length }), 'ok');
   await loadQueue();
   setPanel('queue');
 }
@@ -12207,7 +12223,7 @@ function archiveApiBase() {
 async function addSelectedOptimizeConfigsToArchive() {
   var selected = Array.from(state.selectedConfigs);
   if (!selected.length) {
-    toast('Select at least one config to archive.', 'err');
+    toast(PBGuiI18n.t('v7optimize.selectAtLeastOneConfigToArchive'), 'err');
     return;
   }
   var button = el('btn-archive-selected');
@@ -12221,28 +12237,28 @@ async function addSelectedOptimizeConfigsToArchive() {
   }
   try {
     var base = archiveApiBase();
-    setProgress('🗄 Checking archive...');
-    toast('Preparing archive export for ' + selected.length + ' config(s)...', 'info');
+    setProgress(PBGuiI18n.t('v7optimize.checkingArchive'));
+    toast(PBGuiI18n.t('v7optimize.preparingArchiveExport', { count: selected.length }), 'info');
     var settings = await authFetch(base + '/archives/settings');
     var archiveName = settings.my_archive || '';
     if (!archiveName) {
-      toast('No own archive configured in Backtest Archive setup.', 'err');
+      toast(PBGuiI18n.t('v7optimize.noOwnArchive'), 'err');
       return;
     }
     for (var i = 0; i < selected.length; i++) {
-      setProgress('🗄 Archiving ' + (i + 1) + '/' + selected.length + ': ' + selected[i]);
+      setProgress(PBGuiI18n.t('v7optimize.archivingProgress', { current: i + 1, total: selected.length, name: selected[i] }));
       await authFetch(base + '/archives/' + encodeURIComponent(archiveName) + '/add-optimize-config', {
         method: 'POST',
         body: JSON.stringify({ config_name: selected[i], optimize_version: optimizeEditorAdapter.version })
       });
-      toast('Archived ' + (i + 1) + '/' + selected.length + ': ' + selected[i], 'ok');
+      toast(PBGuiI18n.t('v7optimize.archivedProgress', { current: i + 1, total: selected.length, name: selected[i] }), 'ok');
     }
-    toast('Archived ' + selected.length + ' Optimize config(s) to ' + archiveName + '.', 'ok');
+    toast(PBGuiI18n.t('v7optimize.archivedConfigsTo', { count: selected.length, name: archiveName }), 'ok');
   } finally {
     if (button) {
       button.disabled = false;
       button.removeAttribute('aria-busy');
-      button.textContent = originalText || '🗄 Add to Archive';
+      button.textContent = originalText || PBGuiI18n.t('v7optimize.addToArchive');
     }
   }
 }
@@ -12250,7 +12266,7 @@ async function addSelectedOptimizeConfigsToArchive() {
 async function editSelectedConfig() {
   var selected = Array.from(state.selectedConfigs);
   if (selected.length !== 1) {
-    toast('Select exactly one config to edit.', 'err');
+    toast(PBGuiI18n.t('v7optimize.selectOneConfigToEdit'), 'err');
     return;
   }
   await openConfigEditor(selected[0]);
@@ -12263,7 +12279,7 @@ async function updateAutostart(enabled) {
   });
   state.settings.autostart = !!enabled;
   updateMetaCounts();
-  toast('Queue settings updated.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.queueSettingsUpdated'), 'ok');
 }
 
 function syncQueueSettingsModalFields() {
@@ -12280,9 +12296,8 @@ function syncQueueSettingsModalFields() {
   el('btn-settings-cpu-down').disabled = false;
   el('btn-settings-cpu-up').disabled = false;
   el('settings-cpu-effective').textContent = override
-    ? ('Autostart uses: ' + (normalizeOptimizePositiveInteger(el('settings-cpu-value').value) || 1) + ' CPU')
-    : ('Autostart uses: config value (saved override: '
-      + (normalizeOptimizePositiveInteger(el('settings-cpu-value').value) || 1) + ' CPU)');
+    ? PBGuiI18n.t('v7optimize.autostartUsesCpu', { count: normalizeOptimizePositiveInteger(el('settings-cpu-value').value) || 1 })
+    : PBGuiI18n.t('v7optimize.autostartUsesConfigValue', { count: normalizeOptimizePositiveInteger(el('settings-cpu-value').value) || 1 });
 }
 
 function openQueueSettingsModal() {
@@ -12328,7 +12343,7 @@ async function saveQueueSettingsFromModal() {
   state.settingsModalCpuDirty = false;
   state.settingsModalCpuOverrideDirty = false;
   closeAllModals();
-  toast('Queue settings updated.', 'ok');
+  toast(PBGuiI18n.t('v7optimize.queueSettingsUpdated'), 'ok');
 }
 
 async function queueAction(path, method, ambiguousIntent) {
@@ -12347,24 +12362,26 @@ async function queueAction(path, method, ambiguousIntent) {
 async function deleteResultsByPaths(paths) {
   var selected = Array.from(new Set((paths || []).filter(Boolean)));
   if (!selected.length) return;
-  var label = selected.length === 1 ? 'this optimize result directory' : (selected.length + ' optimize result directories');
+  var label = selected.length === 1
+    ? PBGuiI18n.t('v7optimize.thisOptimizeResultDirectory')
+    : PBGuiI18n.t('v7optimize.optimizeResultDirectories', { count: selected.length });
   if (!(await window.PBGuiDialogs.confirm({
-    title: 'Delete optimize results',
-    message: 'Delete ' + label + '?',
-    confirmText: 'Delete'
+    title: PBGuiI18n.t('v7optimize.deleteOptimizeResults'),
+    message: PBGuiI18n.t('v7optimize.deleteResultsMsg', { label: label }),
+    confirmText: PBGuiI18n.t('common.delete')
   }))) return;
   await apiFetch(optimizeEditorAdapter.resultDeletePath, {
     method: 'POST',
     body: JSON.stringify({ paths: selected })
   });
   removeResultsFromState(selected);
-  toast(selected.length === 1 ? 'Result deleted.' : (selected.length + ' results deleted.'), 'ok');
+  toast(selected.length === 1 ? PBGuiI18n.t('v7optimize.resultDeleted') : PBGuiI18n.t('v7optimize.resultsDeleted', { count: selected.length }), 'ok');
 }
 
 async function deleteSelectedResults() {
   var selected = Array.from(state.selectedResults);
   if (!selected.length) {
-    toast('Select at least one result to delete.', 'err');
+    toast(PBGuiI18n.t('v7optimize.selectAtLeastOneResultToDelete'), 'err');
     return;
   }
   return deleteResultsByPaths(selected);
@@ -12441,13 +12458,13 @@ function attachEventHandlers() {
   });
   el('import-config-archive').addEventListener('change', function(event) {
     loadImportArchiveConfigs(event.target.value).catch(function(error) {
-      setImportConfigStatus(error && error.message ? error.message : 'Could not load archived configs.', 'err');
+      setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.couldNotLoadArchivedConfigs'), 'err');
     });
   });
   el('import-config-archive-config').addEventListener('change', setImportArchiveConfigNameFromSelection);
   el('btn-import-config-archive-refresh').addEventListener('click', function() {
     loadImportArchives(true).catch(function(error) {
-      setImportConfigStatus(error && error.message ? error.message : 'Could not refresh Backtest Archives.', 'err');
+      setImportConfigStatus(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.couldNotRefreshBacktestArchives'), 'err');
     });
   });
   el('config-search').addEventListener('input', function(event) {
@@ -12495,7 +12512,7 @@ function attachEventHandlers() {
   el('btn-resume-result').addEventListener('click', function() {
     var selected = syncSelectedResultFromSelection();
     if (!selected || !optimizeEditorAdapter.resultCapabilities(selected).resumable) {
-      toast('Select one resumable checkpoint result first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.selectResumableCheckpointFirst'), 'warn');
       return;
     }
     resumeOptimizeResult(selected.path, selected.name || selected.result).catch(handleError);
@@ -12668,7 +12685,7 @@ function attachEventHandlers() {
       return apiFetch(optimizeEditorAdapter.paretoFilePath(path))
         .then(function(data) {
           var payload = normalizeParetoBacktestPayload(data);
-          openJsonModal('Pareto JSON - ' + path.split('/').slice(-1)[0], payload.config);
+          openJsonModal(PBGuiI18n.t('v7optimize.paretoJsonWithName', { name: path.split('/').slice(-1)[0] }), payload.config);
         })
         .catch(handleError);
     }
@@ -12737,7 +12754,7 @@ function initSelections() {
   el('btn-open-result-paretos').addEventListener('click', function() {
     var selected = syncSelectedResultFromSelection();
     if (!selected) {
-      toast('Select exactly one result first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.selectOneResultFirst'), 'warn');
       return;
     }
     state.selectedResultPath = selected.path;
@@ -12749,7 +12766,7 @@ function initSelections() {
   el('btn-open-pareto-explorer-results').addEventListener('click', function() {
     var selected = syncSelectedResultFromSelection();
     if (!selected) {
-      toast('Select exactly one result first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.selectOneResultFirst'), 'warn');
       return;
     }
     openFastApiParetoExplorer(selected.path);
@@ -12758,7 +12775,7 @@ function initSelections() {
   el('btn-open-result-pareto-dash').addEventListener('click', function() {
     var selected = syncSelectedResultFromSelection();
     if (!selected) {
-      toast('Select exactly one result first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.selectOneResultFirst'), 'warn');
       return;
     }
     launchResultParetoDash(selected.path, selected.name || selected.result).catch(handleError);
@@ -12767,7 +12784,7 @@ function initSelections() {
   el('btn-open-result-3d').addEventListener('click', function() {
     var selected = syncSelectedResultFromSelection();
     if (!selected) {
-      toast('Select exactly one result first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.selectOneResultFirst'), 'warn');
       return;
     }
     launchResult3dPlot(selected.path, selected.name || selected.result).catch(handleError);
@@ -12776,11 +12793,11 @@ function initSelections() {
   el('btn-continue-result').addEventListener('click', function() {
     var selected = syncSelectedResultFromSelection();
     if (!selected) {
-      toast('Select exactly one result first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.selectOneResultFirst'), 'warn');
       return;
     }
     if (!optimizeEditorAdapter.resultCapabilities(selected).hasPareto) {
-      toast('Selected result has no pareto seeds to continue from.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.resultHasNoParetoSeeds'), 'warn');
       return;
     }
     continueOptimizeFromResult(selected.path, selected.name || selected.result).catch(handleError);
@@ -12789,7 +12806,7 @@ function initSelections() {
   el('btn-open-result-config').addEventListener('click', function() {
     var selected = syncSelectedResultFromSelection();
     if (!selected) {
-      toast('Select exactly one result first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.selectOneResultFirst'), 'warn');
       return;
     }
     openResultConfig(selected.path, selected.name || selected.result).catch(handleError);
@@ -12797,7 +12814,7 @@ function initSelections() {
 
   el('btn-open-pareto-explorer-paretos').addEventListener('click', function() {
     if (!state.selectedResultPath) {
-      toast('Choose a result set first.', 'warn');
+      toast(PBGuiI18n.t('v7optimize.chooseResultSetFirstToast'), 'warn');
       return;
     }
     openFastApiParetoExplorer(state.selectedResultPath);
@@ -12813,13 +12830,13 @@ function connectWS() {
     state.ws.onopen = state.ws.onmessage = state.ws.onclose = state.ws.onerror = null;
     try { state.ws.close(); } catch (error) {}
   }
-  setBanner('conn-waiting', 'Connecting to Optimize queue...');
+  setBanner('conn-waiting', PBGuiI18n.t('v7optimize.connectingToQueue'));
   var wsUrl = WS_BASE + optimizeEditorAdapter.websocketPath;
   var socket = new WebSocket(wsUrl);
   state.ws = socket;
   socket.onopen = function() {
     if (state.ws !== socket) return;
-    setBanner('conn-ok', 'Connected');
+    setBanner('conn-ok', PBGuiI18n.t('v7optimize.connected'));
   };
   socket.onmessage = function(event) {
     if (state.ws !== socket) return;
@@ -12866,7 +12883,7 @@ function connectWS() {
   socket.onclose = function() {
     if (state.ws !== socket) return;
     state.ws = null;
-    setBanner('conn-lost', 'Queue connection lost. Reconnecting...');
+    setBanner('conn-lost', PBGuiI18n.t('v7optimize.queueConnectionLost'));
     if (!state.wsReconnectTimer) {
       var reconnectTimer = window.setTimeout(function() {
         if (state.wsReconnectTimer !== reconnectTimer) return;
@@ -12880,7 +12897,7 @@ function connectWS() {
 
 function handleError(error) {
   console.error(error);
-  toast(error && error.message ? error.message : 'Unexpected error', 'err');
+  toast(error && error.message ? PBGuiI18n.serverMsg(error.message) : PBGuiI18n.t('v7optimize.unexpectedError'), 'err');
 }
 
 async function handleIncomingDraft() {
@@ -12899,7 +12916,7 @@ async function handleIncomingDraft() {
     applyOptimizeSeedConfig(payload.config, 'self', '');
     var suggested = draftName || (((payload.config || {}).backtest || {}).base_dir || '').split('/').slice(-1)[0] || '';
     openEditorWithConfig(payload, suggested, '');
-    setPageEditorStatus('Loaded backtest result into Optimize with Starting Seeds = self.', 'ok');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.loadedBacktestResultWithSelfSeeds'), 'ok');
     url.searchParams.delete('opt_draft_id');
     url.searchParams.delete('draft_name');
     var remainingSearch = url.searchParams.toString();
@@ -12915,7 +12932,7 @@ async function handleOpenConfigParam() {
   if (!configName) return;
   try {
     await openConfigEditor(configName);
-    setPageEditorStatus('Opened Optimize config from archive.', 'ok');
+    setPageEditorStatus(PBGuiI18n.t('v7optimize.openedOptimizeConfigFromArchive'), 'ok');
     url.searchParams.delete('open_config');
     var remainingSearch = url.searchParams.toString();
     history.replaceState({}, '', url.pathname + (remainingSearch ? '?' + remainingSearch : '') + url.hash);
@@ -12932,7 +12949,8 @@ async function handleOpenConfigParam() {
 
   function applyTooltipFromTarget(target) {
     if (!target) return;
-    var text = target.getAttribute('data-tip');
+    var key = target.getAttribute('data-i18n-tip');
+    var text = key && window.PBGuiI18n ? PBGuiI18n.t(key) : target.getAttribute('data-tip');
     if (!text) return;
     tip.textContent = text;
     tip.style.fontFamily = target.getAttribute('data-tip-mono') === 'true' ? 'var(--mono)' : '';
@@ -13367,7 +13385,7 @@ window.PBGUI_NAV_CONFIG = {
   serial: PBGUI_SERIAL
 };
 </script>
-<script src="/app/js/shared_help_overlay.js?v=6"></script>
+<script src="/app/js/shared_help_overlay.js?v=7"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>
 </html>

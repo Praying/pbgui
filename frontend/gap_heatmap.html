@@ -24,7 +24,7 @@
         --fs-lg: 18px;
         --fs-xl: 22px;
 
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
         color: var(--hm-text-primary);
         line-height: 1.5;
         margin: 0;
@@ -241,35 +241,35 @@
 
     <!-- overview chart -->
     <div class="hm-section">
-        <p class="hm-section-title">Overview</p>
+        <p class="hm-section-title" data-i18n="misc.heatmap.overview">Overview</p>
         <div id="__HM_ROOT_ID___overview-chart" class="hm-chart-div">
-            <div class="hm-status-msg">Loading overview chart&#8230;</div>
+            <div class="hm-status-msg" data-i18n="misc.heatmap.loadingOverviewChart">Loading overview chart&#8230;</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <div class="hm-legend" id="__HM_ROOT_ID___overview-legend" style="flex:1;"></div>
-            <button class="hm-btn" id="__HM_ROOT_ID___btn-dl-ov-missing" title="Queue l2Book download for missing days (last data &#8594; today)" style="display:none;background:var(--hm-success);border-color:var(--hm-success);white-space:nowrap;">&#9660; Download missing</button>
+            <button class="hm-btn" id="__HM_ROOT_ID___btn-dl-ov-missing" title="Queue l2Book download for missing days (last data &#8594; today)" data-i18n-title="misc.heatmap.queueL2BookMissingTitle" style="display:none;background:var(--hm-success);border-color:var(--hm-success);white-space:nowrap;">&#9660; <span data-i18n="misc.heatmap.downloadMissing">Download missing</span></button>
         </div>
     </div>
 
     <!-- month detail chart -->
     <div class="hm-section" id="__HM_ROOT_ID___minutes-section">
         <div class="hm-controls">
-            <span class="hm-label">Month:</span>
+            <span class="hm-label" data-i18n="misc.heatmap.month">Month:</span>
             <select class="hm-select" id="__HM_ROOT_ID___month-select" disabled>
-                <option value="">— select month —</option>
+                <option value="" data-i18n="misc.heatmap.selectMonth">— select month —</option>
             </select>
             <label class="hm-checkbox-label">
-                <input type="checkbox" id="__HM_ROOT_ID___cb-holiday"> Show holidays
+                <input type="checkbox" id="__HM_ROOT_ID___cb-holiday"> <span data-i18n="misc.heatmap.showHolidays">Show holidays</span>
             </label>
             <label class="hm-checkbox-label">
-                <input type="checkbox" id="__HM_ROOT_ID___cb-oos" checked> Show out-of-session
+                <input type="checkbox" id="__HM_ROOT_ID___cb-oos" checked> <span data-i18n="misc.heatmap.showOutOfSession">Show out-of-session</span>
             </label>
-            <button class="hm-btn" id="__HM_ROOT_ID___btn-reload" title="Reload charts">&#8635;</button>
-            <button class="hm-btn" id="__HM_ROOT_ID___btn-stop-min" title="Stop loading" style="display:none;background:var(--hm-danger);border-color:var(--hm-danger);">&#9632; Stop</button>
-            <button class="hm-btn" id="__HM_ROOT_ID___btn-dl-l2book" title="Queue l2Book download for this month" style="display:none;background:var(--hm-success);border-color:var(--hm-success);">&#9660; Download month</button>
+            <button class="hm-btn" id="__HM_ROOT_ID___btn-reload" title="Reload charts" data-i18n-title="misc.heatmap.reloadCharts">&#8635;</button>
+            <button class="hm-btn" id="__HM_ROOT_ID___btn-stop-min" title="Stop loading" data-i18n-title="misc.heatmap.stopLoading" style="display:none;background:var(--hm-danger);border-color:var(--hm-danger);">&#9632; <span data-i18n="misc.heatmap.stop">Stop</span></button>
+            <button class="hm-btn" id="__HM_ROOT_ID___btn-dl-l2book" title="Queue l2Book download for this month" data-i18n-title="misc.heatmap.queueL2BookMonthTitle" style="display:none;background:var(--hm-success);border-color:var(--hm-success);">&#9660; <span data-i18n="misc.heatmap.downloadMonth">Download month</span></button>
         </div>
         <div id="__HM_ROOT_ID___minutes-chart" class="hm-chart-div">
-            <div class="hm-status-msg">Select a month to view minute-level detail.</div>
+            <div class="hm-status-msg" data-i18n="misc.heatmap.selectMonthForDetail">Select a month to view minute-level detail.</div>
         </div>
         <div class="hm-legend" id="__HM_ROOT_ID___minutes-legend"></div>
     </div>
@@ -281,6 +281,10 @@
     var ROOT_ID = '__HM_ROOT_ID__';
     var root = document.getElementById(ROOT_ID);
     if (!root) return;
+
+    function t(key, params) { return window.PBGuiI18n ? window.PBGuiI18n.t(key, params) : key; }
+    function m(text) { return window.PBGuiI18n ? window.PBGuiI18n.serverMsg(text) : text; }
+    if (window.PBGuiI18n) window.PBGuiI18n.translateDom(root);
 
     // ---------------------------------------------------------------- config
     var TOKEN    = root.dataset.token    || '';
@@ -348,8 +352,7 @@
         s.onload = function() { cb(); };
         s.onerror = function() {
             if (elOvChart) elOvChart.innerHTML =
-                '\x3cdiv class="hm-error-msg">\u26a0 Could not load Plotly.js from ' +
-                API_ORIGIN + '/app/plotly.min.js\x3c/div>';
+                '\x3cdiv class="hm-error-msg">\u26a0 ' + t('misc.heatmap.couldNotLoadPlotly', { url: API_ORIGIN + '/app/plotly.min.js' }) + '\x3c/div>';
         };
         document.head.appendChild(s);
     }
@@ -384,7 +387,7 @@
         if (!el) return;
         if (!figJson) {
             if (window.Plotly) Plotly.purge(el);
-            el.innerHTML = '\x3cdiv class="hm-status-msg">\u2014 No data \u2014\x3c/div>';
+            el.innerHTML = '\x3cdiv class="hm-status-msg">\u2014 ' + t('misc.heatmap.noData') + ' \u2014\x3c/div>';
             return;
         }
         try {
@@ -406,7 +409,7 @@
             }
         } catch (e) {
             if (window.Plotly) Plotly.purge(el);
-            el.innerHTML = '\x3cdiv class="hm-error-msg">\u26a0 Chart render error: ' + e.message + '\x3c/div>';
+            el.innerHTML = '\x3cdiv class="hm-error-msg">\u26a0 ' + t('misc.heatmap.chartRenderError', { error: e.message }) + '\x3c/div>';
         }
     }
 
@@ -434,9 +437,9 @@
         apiGet('/heatmap/info', buildQS(), function(data) {
             infoData = data;
             var meta = '';
-            if (data.tradfi_type) meta += 'TradFi: ' + data.tradfi_type + ' \u00b7 ';
-            if (data.is_candles)  meta += 'candles \u00b7 ';
-            meta += data.months ? (data.months.length + ' months') : '';
+            if (data.tradfi_type) meta += t('misc.heatmap.tradfi', { type: data.tradfi_type }) + ' \u00b7 ';
+            if (data.is_candles)  meta += t('misc.heatmap.candles') + ' \u00b7 ';
+            meta += data.months ? (data.months.length + ' ' + t('misc.heatmap.months')) : '';
             if (elMeta) elMeta.textContent = meta;
             // populate month selector
             if (elMoSelect && data.months && data.months.length > 0) {
@@ -458,13 +461,13 @@
             }
             if (then) then();
         }, function() {
-            if (elMeta) elMeta.textContent = 'Could not load metadata.';
+            if (elMeta) elMeta.textContent = t('misc.heatmap.couldNotLoadMetadata');
         });
     }
 
     // ---------------------------------------------------------------- load overview
     function loadOverview(silent) {
-        if (!silent) setLoading(elOvChart, 'Loading overview\u2026');
+        if (!silent) setLoading(elOvChart, t('misc.heatmap.loadingOverview'));
         var url = API_BASE + '/heatmap/overview-stream?' + buildQS();
         fetch(url, {method: 'GET', headers: authHeaders()})
             .then(function(response) {
@@ -492,11 +495,11 @@
                                     var msg = JSON.parse(evtData);
                                     if (evtType === 'progress') {
                                         if (!silent) {
-                                        var txt = msg.msg || 'Loading\u2026';
+                                        var txt = msg.msg || t('misc.heatmap.loading');
                                         var pctVal = -1;
                                         if (msg.total > 0) {
                                             pctVal = Math.round(msg.current / msg.total * 100);
-                                            txt += ' (' + msg.current.toLocaleString() + '/' + msg.total.toLocaleString() + ' files \u2014 ' + pctVal + '%)';
+                                            txt += t('misc.heatmap.filesProgress', { current: msg.current.toLocaleString(), total: msg.total.toLocaleString(), pct: pctVal });
                                         }
                                         setLoading(elOvChart, txt, pctVal >= 0 ? pctVal : undefined);
                                         }
@@ -550,7 +553,7 @@
     function loadMinutes(month, showHoliday, showOos, silent) {
         if (!month) return;
         abortMinutes();
-        if (!silent) setLoading(elMinChart, 'Loading minute detail for ' + month + '\u2026');
+        if (!silent) setLoading(elMinChart, t('misc.heatmap.loadingMinuteDetail', { month: month }));
         showStopBtn(!silent);
 
         minutesAbort = new AbortController();
@@ -585,11 +588,11 @@
                                     var msg = JSON.parse(evtData);
                                     if (evtType === 'progress') {
                                         if (!silent) {
-                                        var txt = msg.msg || 'Loading\u2026';
+                                        var txt = msg.msg || t('misc.heatmap.loading');
                                         var pctVal = -1;
                                         if (msg.total > 0) {
                                             pctVal = Math.round(msg.current / msg.total * 100);
-                                            txt += ' (' + msg.current + '/' + msg.total + ' files \u2014 ' + pctVal + '%)';
+                                            txt += t('misc.heatmap.filesProgress', { current: msg.current, total: msg.total, pct: pctVal });
                                         }
                                         setLoading(elMinChart, txt, pctVal >= 0 ? pctVal : undefined);
                                         }
@@ -617,7 +620,7 @@
                 showStopBtn(false);
                 minutesAbort = null;
                 if (e.name === 'AbortError') {
-                    if (elMinChart) elMinChart.innerHTML = '\x3cdiv class="hm-status-msg">Cancelled.\x3c/div>';
+                    if (elMinChart) elMinChart.innerHTML = '\x3cdiv class="hm-status-msg">' + t('misc.heatmap.cancelled') + '\x3c/div>';
                     return;
                 }
                 // Fallback: try regular /minutes endpoint
@@ -689,7 +692,7 @@
     if (elBtnStopMin) {
         elBtnStopMin.addEventListener('click', function() {
             abortMinutes();
-            if (elMinChart) elMinChart.innerHTML = '\x3cdiv class="hm-status-msg">Cancelled.\x3c/div>';
+            if (elMinChart) elMinChart.innerHTML = '\x3cdiv class="hm-status-msg">' + t('misc.heatmap.cancelled') + '\x3c/div>';
         });
     }
 
@@ -739,10 +742,10 @@
             var m = ('0' + (dt.getMonth() + 1)).slice(-2);
             var d = ('0' + dt.getDate()).slice(-2);
             sd = '' + y + m + d;
-            if (sd > today) { showToast('No missing days — data is up to date', 'success'); return; }
+            if (sd > today) { showToast(t('misc.heatmap.noMissingDays'), 'success'); return; }
 
             elBtnDlOvMissing.disabled = true;
-            elBtnDlOvMissing.textContent = 'Queueing\u2026';
+            elBtnDlOvMissing.textContent = t('misc.heatmap.queueing');
             var url = API_BASE + '/heatmap/queue-l2book-download?exchange=' +
                       encodeURIComponent(EXCHANGE) +
                       '&coin=' + encodeURIComponent(COIN) +
@@ -752,17 +755,17 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     elBtnDlOvMissing.disabled = false;
-                    elBtnDlOvMissing.textContent = '\u25bc Download missing';
+                    elBtnDlOvMissing.textContent = '\u25bc ' + t('misc.heatmap.downloadMissing');
                     if (data.error) {
-                        showToast(data.error, 'error');
+                        showToast(m(data.error), 'error');
                     } else {
-                        showToast('Queued: ' + data.coin + ' ' + data.start_day + '\u2013' + data.end_day + ' (job ' + data.job_id.substring(0, 12) + '\u2026)', 'success');
+                        showToast(t('misc.heatmap.queued', { coin: data.coin, start: data.start_day, end: data.end_day, job: data.job_id.substring(0, 12) }), 'success');
                     }
                 })
                 .catch(function(e) {
                     elBtnDlOvMissing.disabled = false;
-                    elBtnDlOvMissing.textContent = '\u25bc Download missing';
-                    showToast('Queue failed: ' + e.message, 'error');
+                    elBtnDlOvMissing.textContent = '\u25bc ' + t('misc.heatmap.downloadMissing');
+                    showToast(t('misc.heatmap.queueFailed', { error: e.message }), 'error');
                 });
         });
     }
@@ -778,7 +781,7 @@
         elBtnDlL2book.addEventListener('click', function() {
             if (!currentMonth) return;
             elBtnDlL2book.disabled = true;
-            elBtnDlL2book.textContent = 'Queueing\u2026';
+            elBtnDlL2book.textContent = t('misc.heatmap.queueing');
             var url = API_BASE + '/heatmap/queue-l2book-download?exchange=' +
                       encodeURIComponent(EXCHANGE) +
                       '&coin=' + encodeURIComponent(COIN) +
@@ -787,17 +790,17 @@
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
                     elBtnDlL2book.disabled = false;
-                    elBtnDlL2book.textContent = '\u25bc Download month';
+                    elBtnDlL2book.textContent = '\u25bc ' + t('misc.heatmap.downloadMonth');
                     if (data.error) {
-                        showToast(data.error, 'error');
+                        showToast(m(data.error), 'error');
                     } else {
-                        showToast('Download queued: ' + data.coin + ' ' + data.start_day + '\u2013' + data.end_day + ' (job ' + data.job_id.substring(0, 12) + '\u2026)', 'success');
+                        showToast(t('misc.heatmap.downloadQueued', { coin: data.coin, start: data.start_day, end: data.end_day, job: data.job_id.substring(0, 12) }), 'success');
                     }
                 })
                 .catch(function(e) {
                     elBtnDlL2book.disabled = false;
-                    elBtnDlL2book.textContent = '\u25bc Download month';
-                    showToast('Queue failed: ' + e.message, 'error');
+                    elBtnDlL2book.textContent = '\u25bc ' + t('misc.heatmap.downloadMonth');
+                    showToast(t('misc.heatmap.queueFailed', { error: e.message }), 'error');
                 });
         });
     }
@@ -807,7 +810,7 @@
         wsAlive = (state === 'connected');
         if (!elWsDot || !elWsTxt) return;
         elWsDot.className = 'hm-ws-indicator ' + state;
-        var labels = {connected: 'Live', reconnecting: 'Reconnecting\u2026', disconnected: 'Offline'};
+        var labels = {connected: t('misc.heatmap.live'), reconnecting: t('misc.heatmap.reconnecting'), disconnected: t('misc.heatmap.offline')};
         elWsTxt.textContent = labels[state] || state;
     }
 

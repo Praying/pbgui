@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PBv7 Run</title>
+<script src="/app/i18n.js?v=1"></script>
 <link rel="stylesheet" href="/app/css/sidebar.css?v=1">
 <script src="/app/js/sidebar_resize.js?v=1"></script>
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
-<script src="/app/js/run_list_adapter.js?v=2"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
+<script src="/app/js/run_list_adapter.js?v=3"></script>
 <style>
 /* ─── Reset & Base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,7 +26,7 @@ html, body { height: 100%; overflow: hidden; }
   --red:      #ff4b4b;
   --blue:     #1f77ff;
   --accent:   #4da6ff;
-  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
   --fs-xs:    11px;
   --fs-sm:    13px;
   --fs-base:  14px;
@@ -504,7 +505,7 @@ tr.row-inactive td  { opacity: 0.45; }
 <nav id="topnav"></nav>
 
 <!-- Connection banner -->
-<div id="conn-banner" class="conn-waiting">Connecting…</div>
+<div id="conn-banner" class="conn-waiting" data-i18n="v7run.connecting">Connecting…</div>
 
 <!-- Page body: sidebar + main content -->
 <div id="page-body">
@@ -513,31 +514,31 @@ tr.row-inactive td  { opacity: 0.45; }
   <div id="sidebar">
     <div id="sidebar-sticky">
       <div id="sidebar-header">
-        <span class="sb-title">Instances</span>
+        <span class="sb-title" data-i18n="v7run.instances">Instances</span>
         <span class="sb-count" id="instance-count">0</span>
       </div>
       <div id="sidebar-toolbar">
-        <div class="sb-label">Search</div>
-        <input type="text" id="f-search" class="sb-input" placeholder="Name, note, host…">
-        <div class="sb-label" style="margin-top:4px">Status</div>
+        <div class="sb-label" data-i18n="common.search">Search</div>
+        <input type="text" id="f-search" class="sb-input" placeholder="Name, note, host…" data-i18n-placeholder="v7run.searchPlaceholder">
+        <div class="sb-label" style="margin-top:4px" data-i18n="v7run.status">Status</div>
         <select id="f-status" class="sb-input">
-          <option value="All" selected>All</option>
-          <option value="active">Active</option>
-          <option value="synced">Synced</option>
-          <option value="outdated">Outdated</option>
-          <option value="activate_needed">Needs Sync</option>
-          <option value="stop_needed">Stop Needed</option>
-          <option value="blocked">Blocked</option>
-          <option value="conflicted">Conflicted</option>
-          <option value="tombstoned">Tombstoned</option>
-          <option value="config_error">Config Error</option>
-          <option value="disabled">Disabled</option>
-          <option value="collecting">Collecting</option>
+          <option value="All" selected data-i18n="common.all">All</option>
+          <option value="active" data-i18n="v7run.statusFilterActive">Active</option>
+          <option value="synced" data-i18n="v7run.statusFilterSynced">Synced</option>
+          <option value="outdated" data-i18n="v7run.statusFilterOutdated">Outdated</option>
+          <option value="activate_needed" data-i18n="v7run.statusFilterNeedsSync">Needs Sync</option>
+          <option value="stop_needed" data-i18n="v7run.statusFilterStopNeeded">Stop Needed</option>
+          <option value="blocked" data-i18n="v7run.statusFilterBlocked">Blocked</option>
+          <option value="conflicted" data-i18n="v7run.statusFilterConflicted">Conflicted</option>
+          <option value="tombstoned" data-i18n="v7run.statusFilterTombstoned">Tombstoned</option>
+          <option value="config_error" data-i18n="v7run.statusFilterConfigError">Config Error</option>
+          <option value="disabled" data-i18n="common.disabled">Disabled</option>
+          <option value="collecting" data-i18n="v7run.statusFilterCollecting">Collecting</option>
         </select>
         <hr class="sb-sep">
-        <button class="sb-btn" onclick="loadInstances()">&#x21bb; Refresh</button>
+        <button class="sb-btn" onclick="loadInstances()">&#x21bb; <span data-i18n="common.refresh">Refresh</span></button>
         <button class="sb-btn" id="add-instance-btn" onclick="addInstance()">&#x2795; Add Instance</button>
-        <button class="sb-btn" onclick="openBackups()">&#x1F4BE; Backups</button>
+        <button class="sb-btn" onclick="openBackups()">&#x1F4BE; <span data-i18n="v7run.backups">Backups</span></button>
       </div>
     </div>
     <div id="sidebar-resize"></div>
@@ -546,8 +547,8 @@ tr.row-inactive td  { opacity: 0.45; }
   <!-- Main content -->
   <div id="main-content">
     <div id="pb8-update-warning" class="pb8-update-warning" role="status" hidden>
-      <div><strong>PBRun cannot start PB8.</strong> <span id="pb8-update-warning-hosts"></span></div>
-      <a href="/api/vps-manager/main_page">Open VPS Manager -&gt; Update PB8</a>
+      <div><strong data-i18n="v7run.pbrunCannotStartPb8">PBRun cannot start PB8.</strong> <span id="pb8-update-warning-hosts"></span></div>
+      <a href="/api/vps-manager/main_page" data-i18n="v7run.openVpsManagerUpdatePb8">Open VPS Manager -&gt; Update PB8</a>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -662,31 +663,31 @@ function scheduleReconnect() {
 
 /* ─── Render (diff-based: only update changed cells) ──────── */
 var COLS = [
-  { key: 'name',            label: 'Name' },
-  { key: 'user',            label: 'User' },
-  { key: 'enabled_on',      label: 'Enabled On' },
-  { key: 'status',          label: 'Status' },
-  { key: 'version',         label: 'Cfg Ver' },
-  { key: 'running_version', label: 'Run Ver' },
-  { key: 'twe',             label: 'TWE' },
-  { key: 'running_on',      label: 'Running On' },
-  { key: 'desired_state',   label: 'Desired' },
-  { key: 'note',            label: 'Note' },
+  { key: 'name',            label: PBGuiI18n.t('v7run.colName') },
+  { key: 'user',            label: PBGuiI18n.t('v7run.user') },
+  { key: 'enabled_on',      label: PBGuiI18n.t('v7run.colEnabledOn') },
+  { key: 'status',          label: PBGuiI18n.t('v7run.status') },
+  { key: 'version',         label: PBGuiI18n.t('v7run.colCfgVer') },
+  { key: 'running_version', label: PBGuiI18n.t('v7run.colRunVer') },
+  { key: 'twe',             label: PBGuiI18n.t('v7run.colTwe') },
+  { key: 'running_on',      label: PBGuiI18n.t('v7run.colRunningOn') },
+  { key: 'desired_state',   label: PBGuiI18n.t('v7run.colDesired') },
+  { key: 'note',            label: PBGuiI18n.t('v7run.note') },
   { key: '_actions',        label: '' },
 ];
-if (runListAdapter.isV8) COLS.splice(2, 0, { key: 'strategy', label: 'Strategy' });
+if (runListAdapter.isV8) COLS.splice(2, 0, { key: 'strategy', label: PBGuiI18n.t('v7run.colStrategy') });
 
 var STATUS_LABELS = {
-  synced:          'synced',
-  outdated:        'outdated',
-  activate_needed: 'sync needed',
-  stop_needed:     'stop needed',
-  blocked:         'blocked',
-  disabled:        'disabled',
-  collecting:      'collecting…',
-  conflicted:      'conflicted',
-  tombstoned:      'tombstoned',
-  config_error:    'config error',
+  synced:          PBGuiI18n.t('v7run.statusSynced'),
+  outdated:        PBGuiI18n.t('v7run.statusOutdated'),
+  activate_needed: PBGuiI18n.t('v7run.statusActivateNeeded'),
+  stop_needed:     PBGuiI18n.t('v7run.statusStopNeeded'),
+  blocked:         PBGuiI18n.t('v7run.statusBlocked'),
+  disabled:        PBGuiI18n.t('v7run.statusDisabled'),
+  collecting:      PBGuiI18n.t('v7run.statusCollecting'),
+  conflicted:      PBGuiI18n.t('v7run.statusConflicted'),
+  tombstoned:      PBGuiI18n.t('v7run.statusTombstoned'),
+  config_error:    PBGuiI18n.t('v7run.statusConfigError'),
 };
 
 var headerRendered = false;
@@ -698,7 +699,7 @@ function buildCells(r) {
   var stTitle = r.blocked_reason ? ' title="' + esc(r.blocked_reason) + '"' : '';
   var runOn = (r.running_on || []).join(', ') || '\u2013';
   if ((!r.running_on || !r.running_on.length) && r.blocked_on && r.blocked_on.length) {
-    runOn = 'blocked on ' + r.blocked_on.join(', ');
+    runOn = PBGuiI18n.t('v7run.blockedOn', { hosts: r.blocked_on.join(', ') });
   }
   var cells = [
     esc(r.name),
@@ -714,13 +715,13 @@ function buildCells(r) {
     esc(runOn),
     esc(r.desired_state || '\u2013'),
     esc(r.note || ''),
-    (runListAdapter.supportsForcedModes ? '<button class="btn-panic" data-forced-mode="panic" data-forced-name="' + esc(r.name) + '" title="Panic all positions">P</button>' +
-    '<button class="btn-graceful" data-forced-mode="graceful_stop" data-forced-name="' + esc(r.name) + '" title="Graceful stop all positions">G</button>' +
-    '<button class="btn-tp-only" data-forced-mode="tp_only" data-forced-name="' + esc(r.name) + '" title="Take Profit Only all positions">T</button>' : '') +
-    '<button class="btn-edit" data-edit="' + esc(r.name) + '" title="Edit">\u270E</button>' +
-    '<button class="btn-edit" data-balance="' + esc(r.name) + '" title="Open Balance Calculator">$</button>' +
-    (runListAdapter.supportsConversion ? '<button class="btn-v8" data-convert-v8="' + esc(r.name) + '" title="Convert this V7 run config to V8">V8</button>' : '') +
-    '<button class="btn-del" data-delete="' + esc(r.name) + '" title="Delete">\u2716</button>',
+    (runListAdapter.supportsForcedModes ? '<button class="btn-panic" data-forced-mode="panic" data-forced-name="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.panicAllPositions') + '">P</button>' +
+    '<button class="btn-graceful" data-forced-mode="graceful_stop" data-forced-name="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.gracefulStopAllPositions') + '">G</button>' +
+    '<button class="btn-tp-only" data-forced-mode="tp_only" data-forced-name="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.takeProfitOnlyAllPositions') + '">T</button>' : '') +
+    '<button class="btn-edit" data-edit="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.edit') + '">\u270E</button>' +
+    '<button class="btn-edit" data-balance="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.openBalanceCalculator') + '">$</button>' +
+    (runListAdapter.supportsConversion ? '<button class="btn-v8" data-convert-v8="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.convertToV8') + '">V8</button>' : '') +
+    '<button class="btn-del" data-delete="' + esc(r.name) + '" title="' + PBGuiI18n.t('common.delete') + '">\u2716</button>',
   ]);
 }
 
@@ -782,7 +783,7 @@ function renderPb8UpdateWarning(rows) {
   hosts.sort();
   warning.hidden = hosts.length === 0;
   hostText.textContent = hosts.length
-    ? 'The validated PB8 runtime is not ready on ' + hosts.join(', ') + '.'
+    ? PBGuiI18n.t('v7run.pb8RuntimeNotReady', { hosts: hosts.join(', ') })
     : '';
 }
 
@@ -883,7 +884,7 @@ function render() {
       emptyRow.appendChild(emptyCell);
       tbody.appendChild(emptyRow);
     }
-    emptyRow.firstChild.textContent = instances.length ? 'No instances match the current filters.' : 'No ' + runListAdapter.label + ' live instances yet.';
+    emptyRow.firstChild.textContent = instances.length ? PBGuiI18n.t('v7run.noInstancesMatchFilters') : PBGuiI18n.t('v7run.noLiveInstancesYet', { label: runListAdapter.label });
   } else if (emptyRow) {
     emptyRow.remove();
   }
@@ -918,23 +919,23 @@ async function convertInstanceToV8(name) {
     var payload = await response.json().catch(function() { return {}; });
     if (response.status === 409) {
       await window.PBGuiDialogs.alert({
-        title: 'V8 config already exists',
-        message: payload.detail || ('Config "' + targetName + '" already exists.'),
-        detail: 'The existing V8 config will be opened without overwriting it.',
-        confirmText: 'Open'
+        title: PBGuiI18n.t('v7run.v8ConfigExists'),
+        message: payload.detail ? PBGuiI18n.serverMsg(payload.detail) : PBGuiI18n.t('v7run.configAlreadyExists', { name: targetName }),
+        detail: PBGuiI18n.t('v7run.v8ConfigWillOpen'),
+        confirmText: PBGuiI18n.t('v7run.open')
       });
       window.location.href = window.location.origin + '/api/backtest-v8/main_page?config=' + encodeURIComponent(targetName);
       return;
     }
-    if (!response.ok) throw new Error(payload.detail || ('HTTP ' + response.status));
+    if (!response.ok) throw new Error(payload.detail ? PBGuiI18n.serverMsg(payload.detail) : ('HTTP ' + response.status));
     window.location.href = window.location.origin + '/api/backtest-v8/main_page?config=' + encodeURIComponent(payload.name || targetName);
   } catch (error) {
-    toast('V8 conversion failed: ' + error.message, 'err');
+    toast(PBGuiI18n.t('v7run.v8ConversionFailed') + ': ' + error.message, 'err');
     await window.PBGuiDialogs.alert({
-      title: 'V8 conversion failed',
+      title: PBGuiI18n.t('v7run.v8ConversionFailed'),
       message: error.message,
-      detail: 'The V7 run config was not changed and no runnable V8 config was published.',
-      confirmText: 'OK'
+      detail: PBGuiI18n.t('v7run.v8ConversionFailedDetail'),
+      confirmText: PBGuiI18n.t('common.ok')
     });
   }
 }
@@ -943,19 +944,19 @@ async function convertInstanceToV8(name) {
 function confirmDelete(name) {
   var inst = instances.find(function(r) { return r.name === name; });
   if (inst && inst.running_on && inst.running_on.length > 0) {
-    toast('Cannot delete ' + name + ' — running on ' + inst.running_on.join(', ') + '. Stop it first.', 'err');
+    toast(PBGuiI18n.t('v7run.cannotDeleteRunning', { name: name, hosts: inst.running_on.join(', ') }), 'err');
     return;
   }
   var root = document.getElementById('modal-root');
   root.innerHTML =
     '<div class="modal-overlay" id="modal-overlay">' +
       '<div class="modal-box">' +
-        '<h3>Delete Instance?</h3>' +
+        '<h3>' + PBGuiI18n.t('v7run.deleteInstanceConfirm') + '</h3>' +
         '<p class="warn">\u26A0 ' + esc(name) + '</p>' +
-        '<p>This will permanently delete the instance directory and all its files.</p>' +
+        '<p>' + PBGuiI18n.t('v7run.deleteInstanceWarning') + '</p>' +
         '<div class="modal-btns">' +
-          '<button class="modal-btn-cancel" id="modal-cancel">Cancel</button>' +
-          '<button class="modal-btn-delete" id="modal-confirm">Delete</button>' +
+          '<button class="modal-btn-cancel" id="modal-cancel">' + PBGuiI18n.t('common.cancel') + '</button>' +
+          '<button class="modal-btn-delete" id="modal-confirm">' + PBGuiI18n.t('common.delete') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -967,13 +968,13 @@ function confirmDelete(name) {
 
 function executeDelete(name) {
   var confirmBtn = document.getElementById('modal-confirm');
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Deleting\u2026'; }
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = PBGuiI18n.t('v7run.deleting'); }
   apiFetch('/instances/' + encodeURIComponent(name), { method: 'DELETE' }).then(function(res) {
     if (res.status === 409) {
-      return res.json().then(function(d) { throw new Error(d.detail || 'Instance is running'); });
+      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : PBGuiI18n.t('v7run.instanceRunning')); });
     }
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail || 'HTTP ' + res.status); });
+      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
     }
     return res.json();
   }).then(function(data) {
@@ -985,17 +986,17 @@ function executeDelete(name) {
         if (data.hosts[h].success) ok++; else fail++;
       });
       if (ok > 0 || fail > 0) {
-        hostInfo = ' (VPS: ' + ok + '/' + (ok + fail) + ' hosts OK' + (fail > 0 ? ', ' + fail + ' failed' : '') + ')';
+        hostInfo = PBGuiI18n.t(fail > 0 ? 'v7run.vpsHostsOkWithFail' : 'v7run.vpsHostsOk', { ok: ok, total: ok + fail, failed: fail });
       }
     }
-    toast(name + ' deleted' + hostInfo, 'ok');
+    toast(PBGuiI18n.t('v7run.instanceDeleted', { name: name }) + hostInfo, 'ok');
     /* Remove from local state immediately */
     instances = instances.filter(function(r) { return r.name !== name; });
     if (rowMap[name]) { rowMap[name].tr.remove(); delete rowMap[name]; }
     render();
   }).catch(function(e) {
     closeModal();
-    toast('Delete failed: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.deleteFailed') + ': ' + e.message, 'err');
   });
 }
 
@@ -1018,7 +1019,7 @@ function openBalanceCalculator(name) {
     }).then(function(payload) {
       var params = new URLSearchParams({ draft_id: payload.draft_id || '', exchange: String(inst.exchange || '').toLowerCase() });
       window.location.href = window.location.origin + '/api/balance-calc/main_page?' + params.toString();
-    }).catch(function(error) { toast('Balance Calculator failed: ' + error.message, 'err'); });
+    }).catch(function(error) { toast(PBGuiI18n.t('v7run.balanceCalculatorFailed') + ': ' + error.message, 'err'); });
     return;
   }
   var params = new URLSearchParams({ instance: name, instance_version: 'v7' });
@@ -1028,12 +1029,12 @@ function openBalanceCalculator(name) {
 
 function confirmForcedMode(name, mode) {
   var modes = {
-    panic: { title: 'Panic All Positions?', text: 'Panic', css: 'modal-btn-delete', value: 'panic' },
-    graceful_stop: { title: 'Graceful Stop All Positions?', text: 'Graceful Stop', css: 'modal-btn-graceful', value: 'graceful_stop' },
-    tp_only: { title: 'Take Profit Only All Positions?', text: 'Take Profit Only', css: 'modal-btn-tp-only', value: 'tp_only' }
+    panic: { title: PBGuiI18n.t('v7run.panicTitle'), text: PBGuiI18n.t('v7run.panic'), css: 'modal-btn-delete', value: 'panic' },
+    graceful_stop: { title: PBGuiI18n.t('v7run.gracefulStopTitle'), text: PBGuiI18n.t('v7run.gracefulStop'), css: 'modal-btn-graceful', value: 'graceful_stop' },
+    tp_only: { title: PBGuiI18n.t('v7run.takeProfitOnlyTitle'), text: PBGuiI18n.t('v7run.takeProfitOnly'), css: 'modal-btn-tp-only', value: 'tp_only' }
   };
   var info = modes[mode] || modes.panic;
-  var detail = 'This sets Passivbot global forced modes to ' + info.value + ' for long and short positions, saves the config, and syncs it to the target host.';
+  var detail = PBGuiI18n.t('v7run.forcedModeDetail', { mode: info.value });
   var root = document.getElementById('modal-root');
   root.innerHTML =
     '<div class="modal-overlay" id="modal-overlay">' +
@@ -1042,7 +1043,7 @@ function confirmForcedMode(name, mode) {
         '<p class="warn">' + esc(name) + '</p>' +
         '<p>' + detail + '</p>' +
         '<div class="modal-btns">' +
-          '<button class="modal-btn-cancel" id="modal-cancel">Cancel</button>' +
+          '<button class="modal-btn-cancel" id="modal-cancel">' + PBGuiI18n.t('common.cancel') + '</button>' +
           '<button class="' + info.css + '" id="modal-confirm">' + info.text + '</button>' +
         '</div>' +
       '</div>' +
@@ -1055,23 +1056,23 @@ function confirmForcedMode(name, mode) {
 
 function executeForcedMode(name, mode, actionText) {
   var confirmBtn = document.getElementById('modal-confirm');
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Syncing...'; }
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = PBGuiI18n.t('v7run.syncing'); }
   apiFetch('/instances/' + encodeURIComponent(name) + '/forced-mode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mode: mode })
   }).then(function(res) {
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail || 'HTTP ' + res.status); });
+      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
     }
     return res.json();
   }).then(function(data) {
     closeModal();
-    toast(actionText + ' synced for ' + name + ' (v' + data.version + ')', 'ok');
+    toast(PBGuiI18n.t('v7run.forcedModeSynced', { action: actionText, name: name, version: data.version }), 'ok');
     loadInstances();
   }).catch(function(e) {
     closeModal();
-    toast(actionText + ' failed: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.forcedModeFailed', { action: actionText }) + ': ' + e.message, 'err');
   });
 }
 
@@ -1089,22 +1090,22 @@ function openBackupConfirm(name, ts, onConfirm, runningHosts) {
   closeBackupConfirm();
   var root = document.getElementById('modal-root');
   var wrapper = document.createElement('div');
-  var runningDetail = runningHosts ? '<p class="backup-confirm-detail warn">This instance is running on ' + esc(runningHosts) + '. The restored config will be synced to the running target.</p>' : '';
+  var runningDetail = runningHosts ? '<p class="backup-confirm-detail warn">' + PBGuiI18n.t('v7run.backupRunningWarning', { hosts: esc(runningHosts) }) + '</p>' : '';
   wrapper.id = 'backup-confirm-overlay';
   wrapper.className = 'backup-confirm-overlay';
   wrapper.innerHTML =
     '<div class="backup-confirm-box" role="dialog" aria-modal="true" aria-labelledby="backup-confirm-title">' +
       '<div class="backup-confirm-header">' +
-        '<h3 id="backup-confirm-title">Rollback instance</h3>' +
-        '<button type="button" class="backup-confirm-close" id="backup-confirm-close" aria-label="Close">&#x2715;</button>' +
+        '<h3 id="backup-confirm-title">' + PBGuiI18n.t('v7run.rollbackInstance') + '</h3>' +
+        '<button type="button" class="backup-confirm-close" id="backup-confirm-close" aria-label="' + PBGuiI18n.t('common.close') + '">&#x2715;</button>' +
       '</div>' +
       '<div class="backup-confirm-body">' +
-        '<p>Rollback ' + esc(name) + ' to backup ' + esc(ts) + '?</p>' +
-        '<p class="backup-confirm-detail">The current config.json and coin override files will be replaced. A pre-restore backup of the current state will be created automatically.</p>' +
+        '<p>' + PBGuiI18n.t('v7run.rollbackToBackup', { name: esc(name), ts: esc(ts) }) + '</p>' +
+        '<p class="backup-confirm-detail">' + PBGuiI18n.t('v7run.rollbackDetail') + '</p>' +
         runningDetail +
         '<div class="backup-confirm-actions">' +
-          '<button type="button" class="btn-cancel" id="backup-confirm-cancel">Cancel</button>' +
-          '<button type="button" class="btn-confirm" id="backup-confirm-ok">Rollback</button>' +
+          '<button type="button" class="btn-cancel" id="backup-confirm-cancel">' + PBGuiI18n.t('common.cancel') + '</button>' +
+          '<button type="button" class="btn-confirm" id="backup-confirm-ok">' + PBGuiI18n.t('v7run.rollback') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -1125,24 +1126,24 @@ function openBackups() {
       '\x3Cdiv class="backup-panel" id="backup-panel">' +
         '\x3Cdiv class="backup-panel-drag" id="backup-drag">\x3C/div>' +
         '\x3Cdiv class="backup-panel-header">' +
-          '\x3Ch3>Instance Backups\x3C/h3>' +
+          '\x3Ch3>' + PBGuiI18n.t('v7run.instanceBackups') + '\x3C/h3>' +
           '\x3Cbutton class="backup-panel-close" id="backup-close">\u2715\x3C/button>' +
         '\x3C/div>' +
         '\x3Cdiv class="backup-settings-row">' +
-          '\x3Clabel>Retention limit: \x3C/label>' +
+          '\x3Clabel>' + PBGuiI18n.t('v7run.retentionLimit') + ' \x3C/label>' +
           '\x3Cdiv class="num-stepper">' +
             '\x3Cbutton type="button" class="stepper-btn" id="ret-minus">\u2212\x3C/button>' +
             '\x3Cinput type="number" id="backup-retention" min="1" step="1" />' +
             '\x3Cbutton type="button" class="stepper-btn" id="ret-plus">+\x3C/button>' +
           '\x3C/div>' +
-          '\x3Cbutton id="backup-retention-save" class="btn-save-retention" title="Save retention limit">\uD83D\uDCBE\x3C/button>' +
+          '\x3Cbutton id="backup-retention-save" class="btn-save-retention" title="' + PBGuiI18n.t('v7run.saveRetentionLimit') + '">\uD83D\uDCBE\x3C/button>' +
           '\x3Cspan id="backup-retention-msg" style="margin-left:6px;font-size:0.85em;">\x3C/span>' +
           '\x3Cdiv class="backup-filter">' +
-            '\x3Cinput type="search" id="backup-filter" placeholder="Filter instances or backup IDs" autocomplete="off" />' +
+            '\x3Cinput type="search" id="backup-filter" placeholder="' + PBGuiI18n.t('v7run.filterInstancesOrBackups') + '" autocomplete="off" />' +
           '\x3C/div>' +
         '\x3C/div>' +
         '\x3Cdiv class="backup-panel-body">' +
-          '\x3Cdiv id="backup-content" class="backup-empty">Loading\u2026\x3C/div>' +
+          '\x3Cdiv id="backup-content" class="backup-empty">' + PBGuiI18n.t('v7run.loading') + '\x3C/div>' +
         '\x3C/div>' +
         '\x3Cdiv class="backup-panel-grip" id="backup-grip">\x3C/div>' +
       '\x3C/div>';
@@ -1262,10 +1263,10 @@ function saveRetention() {
     _retSavedVal = data.max_versions;
     inp.value = data.max_versions;
     inp.style.color = '#4caf50';
-    if (msg) { msg.textContent = 'Saved'; msg.style.color = '#4caf50'; }
+    if (msg) { msg.textContent = PBGuiI18n.t('v7run.saved'); msg.style.color = '#4caf50'; }
     setTimeout(function() { if (msg) msg.textContent = ''; }, 2000);
   }).catch(function(e) {
-    if (msg) { msg.textContent = 'Error: ' + e.message; msg.style.color = '#f44336'; }
+    if (msg) { msg.textContent = PBGuiI18n.t('common.error') + ': ' + e.message; msg.style.color = '#f44336'; }
   });
 }
 
@@ -1301,7 +1302,7 @@ function fetchBackups() {
     }).filter(Boolean);
     if (backups.length === 0) {
       container.className = 'backup-empty';
-      container.textContent = filterText ? 'No backups match the current filter.' : 'No backups available.';
+      container.textContent = filterText ? PBGuiI18n.t('v7run.noBackupsMatchFilter') : PBGuiI18n.t('v7run.noBackupsAvailable');
       return;
     }
     container.className = 'backup-list';
@@ -1312,15 +1313,15 @@ function fetchBackups() {
       var canRestore = b.can_restore !== false;
       html += '\x3Cdiv class="backup-instance">';
       html += '\x3Cdiv class="backup-instance-name">' + esc(b.name);
-      if (b.currently_exists) html += ' \x3Cspan class="badge-exists">active\x3C/span>';
-      if (b.running_on && b.running_on.length) html += ' \x3Cspan class="badge-running">running on ' + esc(b.running_on.join(', ')) + '\x3C/span>';
+      if (b.currently_exists) html += ' \x3Cspan class="badge-exists">' + PBGuiI18n.t('v7run.active') + '\x3C/span>';
+      if (b.running_on && b.running_on.length) html += ' \x3Cspan class="badge-running">' + PBGuiI18n.t('v7run.runningOn', { hosts: esc(b.running_on.join(', ')) }) + '\x3C/span>';
       html += '\x3C/div>';
       items.forEach(function(item) {
         html += '\x3Cdiv class="backup-ts-row">';
         html += '\x3Cspan class="ts">' + esc(item.id) + '\x3C/span>';
         html += '\x3Cspan class="created-at">' + esc(item.created_at || '-') + '\x3C/span>';
         if (canRestore) {
-          html += '\x3Cbutton class="btn-restore" data-restore-name="' + esc(b.name) + '" data-restore-ts="' + esc(item.id) + '">Load in editor\x3C/button>';
+          html += '\x3Cbutton class="btn-restore" data-restore-name="' + esc(b.name) + '" data-restore-ts="' + esc(item.id) + '">' + PBGuiI18n.t('v7run.loadInEditor') + '\x3C/button>';
         }
         html += '\x3Cbutton class="btn-del-backup" data-del-name="' + esc(b.name) + '" data-del-ts="' + esc(item.id) + '">\u2716\x3C/button>';
         html += '\x3C/div>';
@@ -1337,7 +1338,7 @@ function fetchBackups() {
     };
   }).catch(function(e) {
     var container = document.getElementById('backup-content');
-    if (container) { container.className = 'backup-empty'; container.textContent = 'Error: ' + e.message; }
+    if (container) { container.className = 'backup-empty'; container.textContent = PBGuiI18n.t('common.error') + ': ' + e.message; }
   });
 }
 
@@ -1351,36 +1352,36 @@ function loadBackupInEditor(name, ts) {
           var data = JSON.parse(text);
           detail = data.detail || detail;
         } catch (_) {}
-        throw new Error(detail);
+        throw new Error(PBGuiI18n.serverMsg(detail));
       });
     }
     return res.json();
   }).then(function(data) {
-    if (!data.edit_url) throw new Error('Missing editor URL');
+    if (!data.edit_url) throw new Error(PBGuiI18n.t('v7run.missingEditorUrl'));
     window.location.href = data.edit_url;
   }).catch(function(e) {
-    toast('Load backup failed: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.loadBackupFailed') + ': ' + e.message, 'err');
   });
 }
 
 async function doDeleteBackup(name, ts) {
   if (!(await window.PBGuiDialogs.confirm({
-    title: 'Delete backup',
-    message: "Delete backup '" + name + '/' + ts + "'?",
-    detail: 'This cannot be undone.',
-    confirmText: 'Delete'
+    title: PBGuiI18n.t('v7run.deleteBackupTitle'),
+    message: PBGuiI18n.t('v7run.deleteBackupConfirm', { name: name, ts: ts }),
+    detail: PBGuiI18n.t('v7run.cannotUndone'),
+    confirmText: PBGuiI18n.t('common.delete')
   }))) return;
   var url = '/backups/' + encodeURIComponent(name) + '/' + encodeURIComponent(ts);
   apiFetch(url, { method: 'DELETE' }).then(function(res) {
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail || 'HTTP ' + res.status); });
+      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
     }
     return res.json();
   }).then(function() {
-    toast('Backup ' + name + '/' + ts + ' deleted', 'ok');
+    toast(PBGuiI18n.t('v7run.backupDeleted', { name: name, ts: ts }), 'ok');
     fetchBackups(); /* refresh list */
   }).catch(function(e) {
-    toast('Delete backup failed: ' + e.message, 'err');
+    toast(PBGuiI18n.t('v7run.deleteBackupFailed') + ': ' + e.message, 'err');
   });
 }
 
@@ -1445,6 +1446,9 @@ document.getElementById('tbody').addEventListener('dblclick', function(e) {
 
 /* ─── Auto-refresh via WebSocket ──────────────────────────── */
 runListAdapter.configureUi();
+document.title = PBGuiI18n.t(runListAdapter.isV8 ? 'v7run.titleV8' : 'v7run.title');
+var _addBtn = document.getElementById('add-instance-btn');
+if (_addBtn) _addBtn.textContent = '\u2795 ' + PBGuiI18n.t(runListAdapter.isV8 ? 'v7run.addPb8Instance' : 'v7run.addInstance');
 loadInstances();  /* initial REST fetch for immediate data */
 connectWS();      /* then switch to real-time WebSocket */
 window.addEventListener('beforeunload', function() {

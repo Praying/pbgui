@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/app/i18n.js?v=1"></script>
   <title>PBGui — Help & Tutorials</title>
   <script src="/app/vendor/marked.min.js?v=1"></script>
   <script src="/app/vendor/purify.min.js?v=1"></script>
@@ -26,7 +27,7 @@
     html, body {
       height: 100%;
       width: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
       font-size: var(--fs-base);
       background: #0e1117;
       color: #e2e8f0;
@@ -515,14 +516,14 @@
     <div class="ovl-panel">
       <div id="help-drag-handle"></div>
       <div class="ovl-header">
-        <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
+        <div class="ovl-header-title">&#128218; <span data-i18n="misc.help.guideHelp">Guide &amp; Help</span></div>
         <div class="ovl-header-actions">
           <div id="help-search-wrap">
-            <input id="help-search" type="text" placeholder="Search in topic..." autocomplete="off">
-            <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>
-            <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)">&#9660;</button>
+            <input id="help-search" type="text" placeholder="Search in topic..." data-i18n-placeholder="misc.help.searchInTopic" autocomplete="off">
+            <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)" data-i18n-title="misc.help.previousMatch">&#9650;</button>
+            <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)" data-i18n-title="misc.help.nextMatch">&#9660;</button>
             <span id="help-search-count"></span>
-            <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
+            <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="misc.help.searchAcrossAll"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
           </div>
           <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
           <div class="lang-pill">
@@ -535,15 +536,18 @@
       </div>
       <div id="help-body">
         <div id="help-toc">
-          <input id="help-toc-filter" type="text" placeholder="Filter topics..." autocomplete="off">
+          <input id="help-toc-filter" type="text" placeholder="Filter topics..." data-i18n-placeholder="misc.help.filterTopics" autocomplete="off">
           <div id="help-toc-list"></div>
         </div>
-        <div id="help-content"><div class="help-loading">Loading help topics...</div></div>
+        <div id="help-content"><div class="help-loading" data-i18n="misc.help.loadingHelpTopics">Loading help topics...</div></div>
       </div>
     </div>
   </div>
 
   <script>
+    document.title = PBGuiI18n.t('misc.help.title');
+    function t(key, params) { return window.PBGuiI18n.t(key, params); }
+
     var _query = new URLSearchParams(window.location.search);
     var TOKEN = '';
     var API_BASE = '%%API_BASE%%';
@@ -668,7 +672,7 @@
       function updateSearchCount() {
         helpSearchCount.textContent = searchMarks.length
           ? (searchIndex + 1) + '/' + searchMarks.length
-          : (helpSearch.value.trim() ? '0 found' : '');
+          : (helpSearch.value.trim() ? t('misc.help.found0') : '');
       }
 
       function gotoMark(index) {
@@ -738,11 +742,11 @@
           return;
         }
         if (!results.length) {
-          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
-          helpSearchCount.textContent = '0 found';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
+          helpSearchCount.textContent = t('misc.help.found0');
           return;
         }
-        helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
+        helpSearchCount.textContent = results.length + (results.length === 1 ? ' ' + t('misc.help.topic') : ' ' + t('misc.help.topics'));
         var html = '<div class="gs-results">';
         results.forEach(function (result) {
           html += '<div class="gs-item" data-idx="' + result.idx + '">';
@@ -759,7 +763,7 @@
             var idx = parseInt(item.getAttribute('data-idx'), 10);
             helpSearchGlobal.checked = false;
             globalMode = false;
-            helpSearch.placeholder = 'Search in topic...';
+            helpSearch.placeholder = t('misc.help.searchInTopic');
             loadTopic(idx);
           });
         });
@@ -767,7 +771,7 @@
 
       function showGlobalResults(term) {
         if (!term) {
-          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + t('misc.help.typeSearchTerm') + '</p>';
           helpSearchCount.textContent = '';
           return;
         }
@@ -777,11 +781,11 @@
         } catch (error) {
           return;
         }
-        helpContent.innerHTML = '<div class="help-loading">Searching...</div>';
+        helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.searching') + '</div>';
         var pending = helpTopics.length;
         var results = [];
         if (!pending) {
-          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
           return;
         }
         helpTopics.forEach(function (topic, index) {
@@ -833,7 +837,7 @@
         searchMarks = [];
         searchIndex = -1;
         helpSearchCount.textContent = '';
-        helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+        helpContent.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
         fetch('/api/help/content?file=' + encodeURIComponent(topic.file) + '&lang=' + helpLang, { headers: authHeaders() })
           .then(function (response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -847,12 +851,12 @@
             if (helpSearch.value.trim() && !globalMode) applySearch(helpSearch.value.trim());
           })
           .catch(function () {
-            helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>';
+            helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadContent') + '</div>';
           });
       }
 
       function loadHelpIndex(keyword) {
-        helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+        helpTocList.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
         fetch('/api/help/index?lang=' + helpLang, { headers: authHeaders() })
           .then(function (response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -862,7 +866,7 @@
             helpTopics = data || [];
             renderToc();
             if (!helpTopics.length) {
-              helpContent.innerHTML = '<div class="help-loading">No help topics found.</div>';
+              helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.noHelpTopics') + '</div>';
               return;
             }
             var startIndex = 0;
@@ -881,8 +885,8 @@
             helpLoaded = true;
           })
           .catch(function () {
-            helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>';
-            helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>';
+            helpTocList.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadTopics') + '</div>';
+            helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadContent') + '</div>';
           });
       }
 
@@ -896,7 +900,7 @@
         if (!maxBtn) return;
         var isMaximized = helpOvl.classList.contains('is-maximized');
         maxBtn.setAttribute('aria-pressed', isMaximized ? 'true' : 'false');
-        maxBtn.setAttribute('title', isMaximized ? 'Restore window size' : 'Fit to browser window');
+        maxBtn.setAttribute('title', isMaximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow'));
         maxBtn.textContent = isMaximized ? '❐' : '⛶';
       }
 
@@ -992,7 +996,7 @@
 
       helpSearchGlobal.addEventListener('change', function () {
         globalMode = helpSearchGlobal.checked;
-        helpSearch.placeholder = globalMode ? 'Search all topics...' : 'Search in topic...';
+        helpSearch.placeholder = globalMode ? t('misc.help.searchAllTopics') : t('misc.help.searchInTopic');
         var term = helpSearch.value.trim();
         if (globalMode) {
           showGlobalResults(term);
@@ -1091,7 +1095,7 @@
 
   <script>
     window.PBGUI_NAV_CONFIG = {
-      subtitle: 'HELP',
+      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.help.subtitle') : 'HELP'),
       current: 'help',
       token: TOKEN,
       apiBase: API_BASE,
@@ -1099,6 +1103,6 @@
       serial: PBGUI_SERIAL
     };
   </script>
-  <script src="/app/pbgui_nav.js?v=1778"></script>
+  <script src="/app/pbgui_nav.js?v=1779"></script>
 </body>
 </html>

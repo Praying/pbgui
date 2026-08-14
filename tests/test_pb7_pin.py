@@ -8,6 +8,7 @@ import pytest
 
 import pb7_guard
 from setup.installer import core
+from tests.i18n_helpers import assert_text_present
 
 
 PINNED_COMMIT = "befaa9b7aa89e00ee55704221b39621ad700ac36"
@@ -340,7 +341,7 @@ def test_pb7_upstream_shortcut_requests_pin_and_task_logs_load_existing_output()
     shortcut = source[shortcut_start:shortcut_end]
     assert "pb7_source_branch: 'master'" in shortcut
     assert "pb7_use_pin: true" in shortcut
-    assert "Use pinned upstream PB7" in source
+    assert_text_present(source, "Use pinned upstream PB7")
 
     master_log_start = source.index("function openMasterTaskLog(")
     master_log_end = source.index("function openMasterTaskLogs(", master_log_start)

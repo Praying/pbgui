@@ -4,8 +4,26 @@ from pathlib import Path
 import subprocess
 import textwrap
 
+from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
+
 
 ROOT = Path(__file__).resolve().parents[2]
+
+# PBGuiI18n double for Node evals. The shared stub only resolves keys; the
+# interpolation patch mirrors i18n.js so `t(key, params)` still fills {name}.
+NODE_I18N_BOOTSTRAP = NODE_I18N_STUB + (
+    "\n"
+    "globalThis.PBGuiI18n.t = function (key, params) {\n"
+    "  var value = __PBGUI_I18N_EN__[key];\n"
+    "  if (value === undefined) return key;\n"
+    "  if (params) {\n"
+    "    value = String(value).replace(/\\{(\\w+)\\}/g, function (match, name) {\n"
+    "      return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match;\n"
+    "    });\n"
+    "  }\n"
+    "  return value;\n"
+    "};\n"
+)
 
 
 def _page_function(page: str, name: str) -> str:
@@ -25,7 +43,13 @@ def _page_function(page: str, name: str) -> str:
 
 def _run_node(script: str) -> None:
     """Run one isolated Node contract and surface its assertion output."""
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    completed = subprocess.run(
+        ["node", "-e", NODE_I18N_BOOTSTRAP + script],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
     assert completed.returncode == 0, completed.stderr or completed.stdout
 
 
@@ -40,7 +64,7 @@ def test_v7_and_v8_use_one_optimize_template() -> None:
     assert '"%%OPTIMIZE_VERSION%%": "v8"' in api_v8
     assert '"%%OPTIMIZE_NAV_CURRENT%%": "v8_optimize"' in api_v8
     assert not (ROOT / "frontend" / "v8_optimize.html").exists()
-    assert '/app/js/optimize_editor_adapter.js?v=11' in page
+    assert '/app/js/optimize_editor_adapter.js?v=12' in page
     assert "PBGuiOptimizeEditorAdapter.create(OPTIMIZE_VERSION" in page
     assert 'backtestVersion: BACKTEST_VERSION' in page
     for panel in ("panel-configs", "panel-queue", "panel-results", "panel-paretos"):
@@ -529,8 +553,8 @@ def test_pb8_runtime_overrides_render_by_side_with_policy_selects() -> None:
     """PB8 Long/Short overrides must stay separated and enums must use selects."""
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
 
-    assert "Runtime overrides long" in page
-    assert "Runtime overrides short" in page
+    assert_text_present(page, "Runtime overrides long")
+    assert_text_present(page, "Runtime overrides short")
     assert "field.choices" in _page_function(page, "renderOptimizeRuntimeOverridesEditor")
     assert "groups[side === 'long' || side === 'short' ? side : 'other']" in page
 
@@ -1187,7 +1211,7 @@ def test_pb8_config_list_shows_sortable_strategy_column() -> None:
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
 
     assert "if (optimizeEditorAdapter.isV8) configSortKeys.push('strategy');" in page
-    assert "if (sortKey === 'strategy') return 'Strategy';" in page
+    assert "if (sortKey === 'strategy') return PBGuiI18n.t('v7optimize.thStrategy');" in page
     assert "if (sortKey === 'strategy') return String(cfg && cfg.strategy || '').toLowerCase();" in page
     assert "optimizeEditorAdapter.isV8 ? '<td>' + escapeHtml(cfg.strategy || '-') + '</td>' : ''" in page
 
@@ -1311,6 +1335,6 @@ def test_pb8_scenario_controls_are_not_rendered_for_pb7() -> None:
     assert "optimizeEditorAdapter.isV8" in _page_function(page, "renderOptimizeLimitsEditor")
     assert "field !== 'scenario_name'" in _page_function(page, "updateScoringEditField")
     assert "field !== 'scenario_name'" in _page_function(page, "updateLimitEditField")
-    assert "Resolve or remove invalid PB8 market identifiers before saving." in page
-    assert "PB8 market resolver error:" in page
-    assert "PB8 market identifiers have not been verified." in page
+    assert_text_present(page, "Resolve or remove invalid PB8 market identifiers before saving.")
+    assert_text_present(page, "PB8 market resolver error: {message}")
+    assert_text_present(page, "PB8 market identifiers have not been verified. Retry market loading before saving.")

@@ -8,6 +8,23 @@
   }
 
   var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MN_ZH = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  var DOW = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+  var DOW_ZH = ['一','二','三','四','五','六','日'];
+
+  /* i18n helper: translate via PBGuiI18n, fall back to the English/Chinese arrays. */
+  function _dpT(key, fallback) {
+    var F = window.PBGuiI18n;
+    if (F && typeof F.t === 'function') {
+      var v = F.t(key);
+      return v === key ? fallback : v;
+    }
+    return fallback;
+  }
+  function _dpIsZh() { return !!(window.PBGuiI18n && window.PBGuiI18n.lang === 'zh'); }
+  function monthName(i) { return _dpT('shared.dp.month.' + i, _dpIsZh() ? MN_ZH[i] : MN[i]); }
+  function dowName(i) { return _dpT('shared.dp.dow.' + i, _dpIsZh() ? DOW_ZH[i] : DOW[i]); }
+
   var inputId = null;
   var panel = null;
   var year = 0;
@@ -66,7 +83,7 @@
 
   function monthMenu() {
     var html = '';
-    for (var i = 0; i < 12; i++) html += '<button type="button" class="' + (i === month ? 'selected' : '') + '" onclick="window.__dp.sm(' + i + ')">' + MN[i] + '</button>';
+    for (var i = 0; i < 12; i++) html += '<button type="button" class="' + (i === month ? 'selected' : '') + '" onclick="window.__dp.sm(' + i + ')">' + monthName(i) + '</button>';
     return html;
   }
 
@@ -88,17 +105,24 @@
     var blanks = (first.getDay() + 6) % 7;
     var html = '<div class="pbgui-dp-row">'
       + '<button type="button" onclick="window.__dp.pm()">&#8249;</button>'
-      + '<div style="position:relative"><button type="button" onclick="window.__dp.tm()" style="width:100%">' + MN[month] + ' <span style="font-size:10px;opacity:.8">▾</span></button><div class="pbgui-dp-menu ' + (menu === 'month' ? 'open' : '') + '" style="left:0;min-width:112px">' + monthMenu() + '</div></div>'
+      + '<div style="position:relative"><button type="button" onclick="window.__dp.tm()" style="width:100%">' + monthName(month) + ' <span style="font-size:10px;opacity:.8">▾</span></button><div class="pbgui-dp-menu ' + (menu === 'month' ? 'open' : '') + '" style="left:0;min-width:112px">' + monthMenu() + '</div></div>'
       + '<div style="position:relative"><button type="button" onclick="window.__dp.ty()" style="width:100%">' + year + ' <span style="font-size:10px;opacity:.8">▾</span></button><div class="pbgui-dp-menu ' + (menu === 'year' ? 'open' : '') + '" style="right:0;min-width:74px">' + yearMenu() + '</div></div>'
       + '<button type="button" onclick="window.__dp.nm()">&#8250;</button></div>';
-    html += '<div class="pbgui-dp-grid"><div class="pbgui-dp-dow">Mo</div><div class="pbgui-dp-dow">Tu</div><div class="pbgui-dp-dow">We</div><div class="pbgui-dp-dow">Th</div><div class="pbgui-dp-dow">Fr</div><div class="pbgui-dp-dow">Sa</div><div class="pbgui-dp-dow">Su</div>';
+    html += '<div class="pbgui-dp-grid">'
+      + '<div class="pbgui-dp-dow">' + dowName(0) + '</div>'
+      + '<div class="pbgui-dp-dow">' + dowName(1) + '</div>'
+      + '<div class="pbgui-dp-dow">' + dowName(2) + '</div>'
+      + '<div class="pbgui-dp-dow">' + dowName(3) + '</div>'
+      + '<div class="pbgui-dp-dow">' + dowName(4) + '</div>'
+      + '<div class="pbgui-dp-dow">' + dowName(5) + '</div>'
+      + '<div class="pbgui-dp-dow">' + dowName(6) + '</div>';
     for (var b = 0; b < blanks; b++) html += '<div></div>';
     for (var day = 1; day <= days; day++) {
       var isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
       var isSelected = selected && selected.getFullYear() === year && selected.getMonth() === month && selected.getDate() === day;
       html += '<div class="pbgui-dp-day' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + '" onclick="window.__dp.pick(' + day + ')">' + day + '</div>';
     }
-    html += '</div><div class="pbgui-dp-foot"><button type="button" onclick="window.__dp.hide()">Close</button><button type="button" onclick="window.__dp.today()">Today</button></div>';
+    html += '</div><div class="pbgui-dp-foot"><button type="button" onclick="window.__dp.hide()">' + _dpT('common.close', 'Close') + '</button><button type="button" onclick="window.__dp.today()">' + _dpT('shared.dp.today', 'Today') + '</button></div>';
     panel.innerHTML = html;
   }
 

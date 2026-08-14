@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/app/i18n.js?v=1"></script>
   <title>Services - PBGui</title>
   <style>
     /* ── Design tokens ── */
@@ -12,7 +13,7 @@
       --sp-xs: 4px; --sp-sm: 8px; --sp-md: 12px; --sp-lg: 20px;
       --input-h: 32px; --btn-h: 32px;
     }
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0e1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: var(--fs-base); }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0e1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; font-size: var(--fs-base); }
     * { box-sizing: border-box; }
 
     /* ── Layout ── */
@@ -470,19 +471,19 @@
     .gs-topic { color:#93c5fd; font-weight:600; font-size:13px; margin-bottom:5px; }
     .gs-snip { color:#94a3b8; font-size:11px; line-height:1.55; }
   </style>
-  <script src="/app/js/log_viewer_panel.js?v=29"></script>
+  <script src="/app/js/log_viewer_panel.js?v=30"></script>
 </head>
 <body>
 <!-- ── Prices overlay ── -->
 <div id="prices-overlay">
   <div id="prices-overlay-title">
-    <span>&#128202; Price Snapshot</span>
+    <span>&#128202; <span data-i18n="sysmon.priceSnapshot">Price Snapshot</span></span>
     <div style="display:flex;gap:0.4rem;align-items:center;">
-      <button class="po-btn" onclick="closePricesOverlay()" title="Close">&#10005;</button>
+      <button class="po-btn" onclick="closePricesOverlay()" title="Close" data-i18n-title="common.close">&#10005;</button>
     </div>
   </div>
   <div style="padding:0.4rem 0.75rem;border-bottom:1px solid #1e2736;flex-shrink:0;">
-    <input type="text" class="po-search" id="po-search" placeholder="Filter symbols…" oninput="filterPricesOverlay(this.value)">
+    <input type="text" class="po-search" id="po-search" placeholder="Filter symbols…" data-i18n-placeholder="sysmon.filterSymbols" oninput="filterPricesOverlay(this.value)">
   </div>
   <div id="prices-overlay-body"></div>
 </div>
@@ -491,14 +492,14 @@
   <div class="ovl-panel">
     <div id="help-drag-handle"></div>
     <div class="ovl-header">
-      <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
+      <div class="ovl-header-title">&#128218; <span data-i18n="sysmon.guideHelp">Guide &amp; Help</span></div>
       <div class="ovl-header-actions">
         <div id="help-search-wrap">
-          <input id="help-search" type="text" placeholder="Search in topic…" autocomplete="off">
-          <button class="help-snav-btn" id="help-search-up" title="Previous match">&#9650;</button>
-          <button class="help-snav-btn" id="help-search-dn" title="Next match">&#9660;</button>
+          <input id="help-search" type="text" placeholder="Search in topic…" data-i18n-placeholder="sysmon.helpSearchInTopic" autocomplete="off">
+          <button class="help-snav-btn" id="help-search-up" title="Previous match" data-i18n-title="sysmon.helpPreviousMatch">&#9650;</button>
+          <button class="help-snav-btn" id="help-search-dn" title="Next match" data-i18n-title="sysmon.helpNextMatch">&#9660;</button>
           <span id="help-search-count"></span>
-          <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
+          <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="sysmon.helpSearchAllTopics"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
         </div>
         <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
         <div class="lang-pill">
@@ -510,10 +511,10 @@
     </div>
     <div id="help-body">
       <div id="help-toc">
-        <input id="help-toc-filter" type="text" placeholder="Filter topics…" autocomplete="off">
+        <input id="help-toc-filter" type="text" placeholder="Filter topics…" data-i18n-placeholder="sysmon.helpFilterTopics" autocomplete="off">
         <div id="help-toc-list"></div>
       </div>
-      <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
+      <div id="help-content"><div class="help-loading" data-i18n="sysmon.helpSelectTopic">Select a topic from the left.</div></div>
     </div>
   </div>
 </div>
@@ -525,34 +526,34 @@
     <div id="sidebar-resize"></div>
     <div id="sidebar-inner">
       <button class="sb-btn active" data-panel="overview">
-        <span class="sb-dot"></span>Overview
+        <span class="sb-dot"></span><span data-i18n="sysmon.overview">Overview</span>
       </button>
       <button class="sb-btn" data-panel="workers">
-        <span class="sb-dot" id="dot-workers"></span>Workers
+        <span class="sb-dot" id="dot-workers"></span><span data-i18n="sysmon.workers">Workers</span>
       </button>
       <button class="sb-btn" data-panel="migration">
-        <span class="sb-dot" id="dot-migration"></span>Migration
+        <span class="sb-dot" id="dot-migration"></span><span data-i18n="sysmon.migration">Migration</span>
       </button>
       <button class="sb-btn" data-panel="pbcluster">
-        <span class="sb-dot" id="dot-pbcluster"></span>PBCluster
+        <span class="sb-dot" id="dot-pbcluster"></span><span>PBCluster</span>
       </button>
       <button class="sb-btn" data-panel="pbrun">
-        <span class="sb-dot" id="dot-pbrun"></span>PBRun
+        <span class="sb-dot" id="dot-pbrun"></span><span>PBRun</span>
       </button>
       <button class="sb-btn" data-panel="pbdata">
-        <span class="sb-dot" id="dot-pbdata"></span>PBData
+        <span class="sb-dot" id="dot-pbdata"></span><span>PBData</span>
       </button>
       <button class="sb-btn" data-panel="pbcoindata">
-        <span class="sb-dot" id="dot-pbcoindata"></span>PBCoinData
+        <span class="sb-dot" id="dot-pbcoindata"></span><span>PBCoinData</span>
       </button>
       <button class="sb-btn" data-panel="monitor-agent">
-        <span class="sb-dot" id="dot-monitor-agent"></span>PBMonitorAgent
+        <span class="sb-dot" id="dot-monitor-agent"></span><span>PBMonitorAgent</span>
       </button>
       <button class="sb-btn" data-panel="vps-monitor">
-        <span class="sb-dot" id="dot-vps-monitor"></span>VPSMonitor
+        <span class="sb-dot" id="dot-vps-monitor"></span><span>VPSMonitor</span>
       </button>
       <button class="sb-btn" data-panel="api-server">
-        <span class="sb-dot" id="dot-api-server"></span>PBAPIServer
+        <span class="sb-dot" id="dot-api-server"></span><span>PBAPIServer</span>
       </button>
     </div>
   </div>
@@ -568,25 +569,25 @@
     <!-- Workers panel -->
     <div id="panel-workers" class="svc-panel">
       <div class="ctrl-strip">
-        <span class="ctrl-title">Workers</span>
+        <span class="ctrl-title" data-i18n="sysmon.workers">Workers</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-workers"></div>
-          <span class="status-label" id="sl-workers">loading…</span>
+          <span class="status-label" id="sl-workers" data-i18n="sysmon.loading">loading…</span>
         </div>
         <span style="flex:1"></span>
-        <button class="ctrl-btn" type="button" onclick="fetchWorkers(true)">&#8635; Refresh</button>
+        <button class="ctrl-btn" type="button" onclick="fetchWorkers(true)">&#8635; <span data-i18n="common.refresh">Refresh</span></button>
       </div>
       <div class="workers-shell">
         <div class="workers-groups" id="workers-groups">
-          <div class="worker-detail-empty">Loading workers…</div>
+          <div class="worker-detail-empty" data-i18n="sysmon.loadingWorkers">Loading workers…</div>
         </div>
         <div class="worker-detail">
           <div class="worker-detail-body" id="worker-detail-body">
-            <div class="worker-detail-empty">Select a worker to inspect status, actions, and logs.</div>
+            <div class="worker-detail-empty" data-i18n="sysmon.selectWorker">Select a worker to inspect status, actions, and logs.</div>
           </div>
           <div class="worker-log-section">
             <div class="worker-log-empty" id="worker-log-empty">
-              <div>Worker log or monitor details will appear here.</div>
+              <div data-i18n="sysmon.workerLogHint">Worker log or monitor details will appear here.</div>
             </div>
             <div id="worker-log-wrap" class="log-wrap" style="display:none;"><div id="worker-log" style="height:100%;"></div></div>
           </div>
@@ -597,16 +598,16 @@
     <!-- Migration panel -->
     <div id="panel-migration" class="svc-panel">
       <div class="ctrl-strip">
-        <span class="ctrl-title">Migration</span>
+        <span class="ctrl-title" data-i18n="sysmon.migration">Migration</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-migration"></div>
-          <span class="status-label" id="sl-migration">loading...</span>
+          <span class="status-label" id="sl-migration" data-i18n="common.loading">loading...</span>
         </div>
         <span style="flex:1"></span>
-        <button class="ctrl-btn" type="button" onclick="loadMigrationStatus(true)">&#8635; Refresh</button>
+        <button class="ctrl-btn" type="button" onclick="loadMigrationStatus(true)">&#8635; <span data-i18n="common.refresh">Refresh</span></button>
       </div>
       <div class="settings-wrap" id="migration-wrap">
-        <div style="color:#4a5568;font-style:italic;">Loading migration status...</div>
+        <div style="color:#4a5568;font-style:italic;" data-i18n="sysmon.loadingMigrationStatus">Loading migration status...</div>
       </div>
     </div>
 
@@ -616,7 +617,7 @@
         <span class="ctrl-title">PBCluster</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-pbcluster"></div>
-          <span class="status-label" id="sl-pbcluster">checking…</span>
+          <span class="status-label" id="sl-pbcluster" data-i18n="sysmon.checking">checking…</span>
         </div>
         <span id="ctrl-btns-pbcluster"></span>
       </div>
@@ -629,7 +630,7 @@
         <span class="ctrl-title">PBRun</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-pbrun"></div>
-          <span class="status-label" id="sl-pbrun">checking…</span>
+          <span class="status-label" id="sl-pbrun" data-i18n="sysmon.checking">checking…</span>
         </div>
         <span id="ctrl-btns-pbrun"></span>
       </div>
@@ -642,29 +643,29 @@
         <span class="ctrl-title">PBData</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-pbdata"></div>
-          <span class="status-label" id="sl-pbdata">checking…</span>
+          <span class="status-label" id="sl-pbdata" data-i18n="sysmon.checking">checking…</span>
         </div>
         <span id="ctrl-btns-pbdata"></span>
       </div>
       <div class="tab-bar">
-        <button class="tab-btn active" data-svc="pbdata" data-tab="log" onclick="switchTab(this)">&#128203; Log</button>
-        <button class="tab-btn" data-svc="pbdata" data-tab="settings" onclick="switchTab(this)">&#9881; Settings</button>
-        <button class="tab-btn" data-svc="pbdata" data-tab="status" onclick="switchTab(this)">&#128202; Status</button>
+        <button class="tab-btn active" data-svc="pbdata" data-tab="log" onclick="switchTab(this)">&#128203; <span data-i18n="sysmon.logTab">Log</span></button>
+        <button class="tab-btn" data-svc="pbdata" data-tab="settings" onclick="switchTab(this)">&#9881; <span data-i18n="sysmon.settings">Settings</span></button>
+        <button class="tab-btn" data-svc="pbdata" data-tab="status" onclick="switchTab(this)">&#128202; <span data-i18n="sysmon.status">Status</span></button>
       </div>
       <div id="pbdata-tab-log" class="tab-pane active log-wrap">
         <div id="log-pbdata" style="height:100%;"></div>
       </div>
       <div id="pbdata-tab-settings" class="tab-pane">
         <div class="settings-wrap" id="pbdata-settings-wrap">
-          <div style="color:#4a5568;font-style:italic;">Loading settings&#8230;</div>
+          <div style="color:#4a5568;font-style:italic;" data-i18n="sysmon.loadingSettings">Loading settings&#8230;</div>
         </div>
       </div>
       <div id="pbdata-tab-status" class="tab-pane">
         <div class="fetch-summary" id="pbdata-status-wrap">
-          <div style="color:#4a5568;font-style:italic;">Loading status&#8230;</div>
+          <div style="color:#4a5568;font-style:italic;" data-i18n="sysmon.loadingStatus">Loading status&#8230;</div>
         </div>
         <div class="poller-metrics" id="pbdata-poller-metrics-wrap">
-          <div style="color:#4a5568;font-style:italic;">Loading poller metrics&#8230;</div>
+          <div style="color:#4a5568;font-style:italic;" data-i18n="sysmon.loadingPollerMetrics">Loading poller metrics&#8230;</div>
         </div>
       </div>
     </div>
@@ -675,18 +676,18 @@
         <span class="ctrl-title">PBCoinData</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-pbcoindata"></div>
-          <span class="status-label" id="sl-pbcoindata">checking…</span>
+          <span class="status-label" id="sl-pbcoindata" data-i18n="sysmon.checking">checking…</span>
         </div>
         <span id="ctrl-btns-pbcoindata"></span>
       </div>
       <div class="cmc-status-bar loading" id="cmc-status-bar">
-        <button class="cmc-refresh-btn" onclick="loadCmcPool()" title="Refresh">&#8635;</button>
-        <span class="cmc-status-text" id="cmc-status-text">Loading CMC pool&#8230;</span>
+        <button class="cmc-refresh-btn" onclick="loadCmcPool()" title="Refresh" data-i18n-title="common.refresh">&#8635;</button>
+        <span class="cmc-status-text" id="cmc-status-text" data-i18n="sysmon.loadingCmcPool">Loading CMC pool&#8230;</span>
       </div>
       <div class="tab-bar">
-        <button class="tab-btn active" data-svc="pbcoindata" data-tab="log" onclick="switchTab(this)">&#128203; Log</button>
-        <button class="tab-btn" data-svc="pbcoindata" data-tab="pool" onclick="switchTab(this)">Pool</button>
-        <button class="tab-btn" data-svc="pbcoindata" data-tab="settings" onclick="switchTab(this)">&#9881; Settings</button>
+        <button class="tab-btn active" data-svc="pbcoindata" data-tab="log" onclick="switchTab(this)">&#128203; <span data-i18n="sysmon.logTab">Log</span></button>
+        <button class="tab-btn" data-svc="pbcoindata" data-tab="pool" onclick="switchTab(this)"><span data-i18n="sysmon.pool">Pool</span></button>
+        <button class="tab-btn" data-svc="pbcoindata" data-tab="settings" onclick="switchTab(this)">&#9881; <span data-i18n="sysmon.settings">Settings</span></button>
       </div>
       <div id="pbcoindata-tab-log" class="tab-pane active log-wrap">
         <div id="log-pbcoindata" style="height:100%;"></div>
@@ -695,53 +696,53 @@
         <div class="cmc-pool-wrap">
           <div class="cmc-summary-grid" id="cmc-summary-grid"></div>
           <div class="cmc-pool-toolbar">
-            <button class="form-btn save" data-cmc-mutation type="button" onclick="openCmcKeyModal('add')">Add Key</button>
-            <button class="form-btn" id="cmc-rotate-btn" type="button" onclick="openCmcKeyModal('rotate')" disabled>Rotate</button>
-            <button class="form-btn" id="cmc-edit-btn" type="button" onclick="openCmcKeyModal('edit')" disabled>Edit</button>
-            <button class="form-btn" id="cmc-disable-btn" type="button" onclick="toggleSelectedCmcKey()" disabled>Disable</button>
-            <button class="form-btn" id="cmc-delete-btn" type="button" onclick="deleteSelectedCmcKey()" disabled>Delete</button>
-            <button class="form-btn" id="cmc-authority-btn" type="button" onclick="openCmcAuthorityModal()" disabled>Transfer Authority</button>
-            <button class="form-btn" type="button" onclick="loadCmcPool()">Refresh</button>
+            <button class="form-btn save" data-cmc-mutation type="button" onclick="openCmcKeyModal('add')" data-i18n="sysmon.addKey">Add Key</button>
+            <button class="form-btn" id="cmc-rotate-btn" type="button" onclick="openCmcKeyModal('rotate')" disabled data-i18n="sysmon.rotate">Rotate</button>
+            <button class="form-btn" id="cmc-edit-btn" type="button" onclick="openCmcKeyModal('edit')" disabled data-i18n="sysmon.edit">Edit</button>
+            <button class="form-btn" id="cmc-disable-btn" type="button" onclick="toggleSelectedCmcKey()" disabled data-i18n="sysmon.disable">Disable</button>
+            <button class="form-btn" id="cmc-delete-btn" type="button" onclick="deleteSelectedCmcKey()" disabled data-i18n="common.delete">Delete</button>
+            <button class="form-btn" id="cmc-authority-btn" type="button" onclick="openCmcAuthorityModal()" disabled data-i18n="sysmon.transferAuthority">Transfer Authority</button>
+            <button class="form-btn" type="button" onclick="loadCmcPool()" data-i18n="common.refresh">Refresh</button>
             <span class="cmc-pool-message" id="cmc-pool-message"></span>
           </div>
           <div class="cmc-pool-warnings" id="cmc-pool-warnings"></div>
           <div class="cmc-table-wrap">
             <table class="cmc-table">
-              <thead><tr><th>Label</th><th>Local</th><th>Desired</th><th>Materialized / Desired</th><th>Source</th><th>Shared</th><th>Local Used</th><th>Reserved</th><th>Uncertain</th><th>Provider Used</th><th>Provider Limit</th><th>Provider Remaining</th><th>Provider Reset</th><th>Provider Age</th><th>Cooldown</th><th>Quota Domain</th><th>Assigned Authority</th><th>Epoch / Reachable</th><th>Authority Updated</th><th>Authority Age</th></tr></thead>
-              <tbody id="cmc-pool-body"><tr><td colspan="20">Loading pool&#8230;</td></tr></tbody>
+              <thead><tr><th data-i18n="sysmon.label">Label</th><th data-i18n="sysmon.local">Local</th><th data-i18n="sysmon.desired">Desired</th><th data-i18n="sysmon.materializedDesired">Materialized / Desired</th><th data-i18n="sysmon.source">Source</th><th data-i18n="sysmon.shared">Shared</th><th data-i18n="sysmon.localUsed">Local Used</th><th data-i18n="sysmon.reserved">Reserved</th><th data-i18n="sysmon.uncertain">Uncertain</th><th data-i18n="sysmon.providerUsed">Provider Used</th><th data-i18n="sysmon.providerLimit">Provider Limit</th><th data-i18n="sysmon.providerRemaining">Provider Remaining</th><th data-i18n="sysmon.providerReset">Provider Reset</th><th data-i18n="sysmon.providerAge">Provider Age</th><th data-i18n="sysmon.cooldown">Cooldown</th><th data-i18n="sysmon.quotaDomain">Quota Domain</th><th data-i18n="sysmon.assignedAuthority">Assigned Authority</th><th data-i18n="sysmon.epochReachable">Epoch / Reachable</th><th data-i18n="sysmon.authorityUpdated">Authority Updated</th><th data-i18n="sysmon.authorityAge">Authority Age</th></tr></thead>
+              <tbody id="cmc-pool-body"><tr><td colspan="20" data-i18n="sysmon.loadingPool">Loading pool&#8230;</td></tr></tbody>
             </table>
           </div>
-          <div class="form-section-title" style="margin-top:1rem;">Lease Details</div>
+          <div class="form-section-title" style="margin-top:1rem;" data-i18n="sysmon.leaseDetails">Lease Details</div>
           <div class="cmc-table-wrap">
             <table class="cmc-table" style="min-width:1050px;">
-              <thead><tr><th>Lease</th><th>Key</th><th>Generation</th><th>Quota Domain</th><th>Authority Epoch</th><th>Recipient</th><th>Reserved</th><th>Requests</th><th>Granted</th><th>Expires</th><th>Outcome</th></tr></thead>
-              <tbody id="cmc-leases-body"><tr><td colspan="11">Loading leases&#8230;</td></tr></tbody>
+              <thead><tr><th data-i18n="sysmon.lease">Lease</th><th data-i18n="sysmon.key">Key</th><th data-i18n="sysmon.generation">Generation</th><th data-i18n="sysmon.quotaDomain">Quota Domain</th><th data-i18n="sysmon.authorityEpoch">Authority Epoch</th><th data-i18n="sysmon.recipient">Recipient</th><th data-i18n="sysmon.reserved">Reserved</th><th data-i18n="sysmon.requests">Requests</th><th data-i18n="sysmon.granted">Granted</th><th data-i18n="sysmon.expires">Expires</th><th data-i18n="sysmon.outcome">Outcome</th></tr></thead>
+              <tbody id="cmc-leases-body"><tr><td colspan="11" data-i18n="sysmon.loadingLeases">Loading leases&#8230;</td></tr></tbody>
             </table>
           </div>
         </div>
       </div>
       <div id="pbcoindata-tab-settings" class="tab-pane">
         <div class="settings-wrap">
-          <div class="form-section-title">Intervals</div>
+          <div class="form-section-title" data-i18n="sysmon.intervals">Intervals</div>
           <div class="form-row">
             <div class="form-field">
-              <span class="form-label">Fetch Interval (h)</span>
+              <span class="form-label" data-i18n="sysmon.fetchInterval">Fetch Interval (h)</span>
               <input class="form-input narrow" type="number" id="coindata-fetch-interval" min="1" max="24" step="1">
             </div>
             <div class="form-field">
-              <span class="form-label">Fetch Limit</span>
+              <span class="form-label" data-i18n="sysmon.fetchLimit">Fetch Limit</span>
               <input class="form-input narrow" type="number" id="coindata-fetch-limit" min="200" max="5000" step="200">
             </div>
             <div class="form-field">
-              <span class="form-label">Metadata Interval (d)</span>
+              <span class="form-label" data-i18n="sysmon.metadataInterval">Metadata Interval (d)</span>
               <input class="form-input narrow" type="number" id="coindata-metadata-interval" min="1" max="7" step="1">
             </div>
             <div class="form-field">
-              <span class="form-label">Mapping Interval (h)</span>
+              <span class="form-label" data-i18n="sysmon.mappingInterval">Mapping Interval (h)</span>
               <input class="form-input narrow" type="number" id="coindata-mapping-interval" min="1" max="168" step="1">
             </div>
           </div>
-          <button class="form-btn save" onclick="saveCoinDataSettings()">&#128190; Save</button>
+          <button class="form-btn save" onclick="saveCoinDataSettings()">&#128190; <span data-i18n="common.save">Save</span></button>
           <span class="inline-msg" id="coindata-save-msg"></span>
         </div>
       </div>
@@ -753,7 +754,7 @@
         <span class="ctrl-title">PBMonitorAgent</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-monitor-agent"></div>
-          <span class="status-label" id="sl-monitor-agent">checking…</span>
+          <span class="status-label" id="sl-monitor-agent" data-i18n="sysmon.checking">checking…</span>
         </div>
         <span id="ctrl-btns-monitor-agent"></span>
       </div>
@@ -766,7 +767,7 @@
         <span class="ctrl-title">VPSMonitor</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-vps-monitor"></div>
-          <span class="status-label" id="sl-vps-monitor">checking…</span>
+          <span class="status-label" id="sl-vps-monitor" data-i18n="sysmon.checking">checking…</span>
         </div>
         <span id="ctrl-btns-vps-monitor"></span>
       </div>
@@ -779,7 +780,7 @@
         <span class="ctrl-title">PBAPIServer</span>
         <div class="ctrl-status">
           <div class="status-dot" id="cs-api-server"></div>
-          <span class="status-label" id="sl-api-server">checking…</span>
+          <span class="status-label" id="sl-api-server" data-i18n="sysmon.checking">checking…</span>
         </div>
         <span id="ctrl-btns-api-server"></span>
       </div>
@@ -792,48 +793,48 @@
       </div>
       <div id="api-server-tab-settings" class="tab-pane">
         <div class="settings-wrap">
-          <div class="form-section-title">Connection</div>
+          <div class="form-section-title" data-i18n="sysmon.connection">Connection</div>
           <div class="form-row">
             <div class="form-field">
-              <span class="form-label">Bind Address</span>
+              <span class="form-label" data-i18n="sysmon.bindAddress">Bind Address</span>
               <input class="form-input medium" type="text" id="apiserver-host" placeholder="0.0.0.0">
-              <span class="form-hint">Requires restart to take effect</span>
+              <span class="form-hint" data-i18n="sysmon.requiresRestart">Requires restart to take effect</span>
             </div>
             <div class="form-field">
-              <span class="form-label">Port</span>
+              <span class="form-label" data-i18n="sysmon.port">Port</span>
               <input class="form-input narrow" type="number" id="apiserver-port" min="1024" max="65535" step="1">
-              <span class="form-hint">Default: 8000</span>
+              <span class="form-hint" data-i18n="sysmon.defaultPort">Default: 8000</span>
             </div>
           </div>
           <hr class="form-divider">
-          <div class="form-section-title">VPS Monitoring</div>
+          <div class="form-section-title" data-i18n="sysmon.vpsMonitoring">VPS Monitoring</div>
           <div class="form-row" style="align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
             <input type="checkbox" id="apiserver-auto-restart" style="accent-color:#4da6ff;cursor:pointer;width:15px;height:15px;">
-            <label for="apiserver-auto-restart" style="color:#94a3b8;font-size:var(--fs-sm);cursor:pointer;">Auto-restart services</label>
+            <label for="apiserver-auto-restart" style="color:#94a3b8;font-size:var(--fs-sm);cursor:pointer;" data-i18n="sysmon.autoRestartServices">Auto-restart services</label>
           </div>
           <div class="form-field">
-            <span class="form-label">Monitored VPS Hosts <span style="color:#4a5568;font-weight:400;">(click to toggle)</span></span>
+            <span class="form-label"><span data-i18n="sysmon.monitoredVpsHosts">Monitored VPS Hosts</span> <span style="color:#4a5568;font-weight:400;" data-i18n="sysmon.clickToToggle">(click to toggle)</span></span>
             <div class="multiselect-wrap" id="vps-hosts-select"></div>
           </div>
           <div id="apiserver-monitor-config-wrap"></div>
           <hr class="form-divider">
-          <div class="form-section-title">Alerts / Telegram</div>
+          <div class="form-section-title" data-i18n="sysmon.alertsTelegram">Alerts / Telegram</div>
           <div class="form-row">
             <div class="form-field">
-              <span class="form-label">Bot Token</span>
+              <span class="form-label" data-i18n="sysmon.botToken">Bot Token</span>
               <div class="pw-wrap">
-                <input class="form-input wide" type="password" id="apiserver-telegram-token" placeholder="Paste token…" autocomplete="off" style="width:370px;">
-                <button class="pw-eye" type="button" onclick="togglePw('apiserver-telegram-token', this)" title="Show/hide">&#128065;</button>
+                <input class="form-input wide" type="password" id="apiserver-telegram-token" placeholder="Paste token…" data-i18n-placeholder="sysmon.pasteToken" autocomplete="off" style="width:370px;">
+                <button class="pw-eye" type="button" onclick="togglePw('apiserver-telegram-token', this)" title="Show/hide" data-i18n-title="sysmon.showHide">&#128065;</button>
               </div>
             </div>
             <div class="form-field">
-              <span class="form-label">Chat ID</span>
+              <span class="form-label" data-i18n="sysmon.chatId">Chat ID</span>
               <input class="form-input medium" type="text" id="apiserver-telegram-chat-id" placeholder="e.g. -1001234567">
             </div>
           </div>
           <div id="apiserver-alert-routing-wrap"></div>
           <div style="margin-top:1rem;">
-            <button class="form-btn save" onclick="saveApiServerSettings()">&#128190; Save</button>
+            <button class="form-btn save" onclick="saveApiServerSettings()">&#128190; <span data-i18n="common.save">Save</span></button>
             <span class="inline-msg" id="apiserver-save-msg"></span>
           </div>
         </div>
@@ -846,28 +847,28 @@
 <div class="cmc-modal-backdrop" id="cmc-key-modal" hidden>
   <div class="cmc-modal-card" role="dialog" aria-modal="true" aria-labelledby="cmc-key-modal-title">
     <div class="cmc-modal-head">
-      <div class="cmc-modal-title" id="cmc-key-modal-title">Add CMC Key</div>
-      <button class="cmc-modal-close" type="button" onclick="closeCmcKeyModal()" aria-label="Close">&#x2715;</button>
+      <div class="cmc-modal-title" id="cmc-key-modal-title" data-i18n="sysmon.addCmcKey">Add CMC Key</div>
+      <button class="cmc-modal-close" type="button" onclick="closeCmcKeyModal()" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
     </div>
     <div class="cmc-modal-body">
       <div class="form-field" id="cmc-key-label-field">
-        <label class="form-label" for="cmc-key-label">Label</label>
-        <input class="form-input" id="cmc-key-label" type="text" maxlength="120" autocomplete="off" placeholder="Primary CMC key">
+        <label class="form-label" for="cmc-key-label" data-i18n="sysmon.label">Label</label>
+        <input class="form-input" id="cmc-key-label" type="text" maxlength="120" autocomplete="off" placeholder="Primary CMC key" data-i18n-placeholder="sysmon.primaryCmcKey">
       </div>
       <div class="form-field" id="cmc-key-secret-field">
-        <label class="form-label" for="cmc-key-secret">Secret</label>
-        <input class="form-input" id="cmc-key-secret" type="password" autocomplete="new-password" placeholder="Paste CoinMarketCap key">
+        <label class="form-label" for="cmc-key-secret" data-i18n="sysmon.secret">Secret</label>
+        <input class="form-input" id="cmc-key-secret" type="password" autocomplete="new-password" placeholder="Paste CoinMarketCap key" data-i18n-placeholder="sysmon.pasteCmcKey">
       </div>
       <div class="cmc-modal-options" id="cmc-key-options">
-        <label><input id="cmc-key-imported" type="checkbox"> Imported / externally used</label>
-        <label><input id="cmc-key-shared" type="checkbox"> Shared quota</label>
-        <label><input id="cmc-key-active" type="checkbox" checked> Active</label>
+        <label><input id="cmc-key-imported" type="checkbox"> <span data-i18n="sysmon.importedExternal">Imported / externally used</span></label>
+        <label><input id="cmc-key-shared" type="checkbox"> <span data-i18n="sysmon.sharedQuota">Shared quota</span></label>
+        <label><input id="cmc-key-active" type="checkbox" checked> <span data-i18n="sysmon.active">Active</span></label>
       </div>
       <div class="cmc-modal-error" id="cmc-key-modal-error"></div>
     </div>
     <div class="cmc-modal-actions">
-      <button class="form-btn" type="button" onclick="closeCmcKeyModal()">Cancel</button>
-      <button class="form-btn save" id="cmc-key-submit" data-cmc-mutation type="button" onclick="submitCmcKey()">Add Key</button>
+      <button class="form-btn" type="button" onclick="closeCmcKeyModal()" data-i18n="common.cancel">Cancel</button>
+      <button class="form-btn save" id="cmc-key-submit" data-cmc-mutation type="button" onclick="submitCmcKey()" data-i18n="sysmon.addKey">Add Key</button>
     </div>
   </div>
 </div>
@@ -875,21 +876,21 @@
 <div class="cmc-modal-backdrop" id="cmc-authority-modal" hidden>
   <div class="cmc-modal-card" role="dialog" aria-modal="true" aria-labelledby="cmc-authority-modal-title">
     <div class="cmc-modal-head">
-      <div class="cmc-modal-title" id="cmc-authority-modal-title">Transfer CMC Authority</div>
-      <button class="cmc-modal-close" type="button" onclick="closeCmcAuthorityModal()" aria-label="Close">&#x2715;</button>
+      <div class="cmc-modal-title" id="cmc-authority-modal-title" data-i18n="sysmon.transferCmcAuthority">Transfer CMC Authority</div>
+      <button class="cmc-modal-close" type="button" onclick="closeCmcAuthorityModal()" aria-label="Close" data-i18n-aria-label="common.close">&#x2715;</button>
     </div>
     <div class="cmc-modal-body">
-      <div class="form-field"><span class="form-label">Quota Domain</span><div id="cmc-authority-domain" class="form-hint"></div></div>
-      <div class="form-field"><span class="form-label">Current Assignment</span><div id="cmc-authority-current" class="form-hint"></div></div>
+      <div class="form-field"><span class="form-label" data-i18n="sysmon.quotaDomain">Quota Domain</span><div id="cmc-authority-domain" class="form-hint"></div></div>
+      <div class="form-field"><span class="form-label" data-i18n="sysmon.currentAssignment">Current Assignment</span><div id="cmc-authority-current" class="form-hint"></div></div>
       <div class="form-field">
-        <label class="form-label" for="cmc-authority-target">Eligible Target Node</label>
+        <label class="form-label" for="cmc-authority-target" data-i18n="sysmon.eligibleTargetNode">Eligible Target Node</label>
         <select class="form-select" id="cmc-authority-target"></select>
       </div>
       <div class="cmc-modal-error" id="cmc-authority-error"></div>
     </div>
     <div class="cmc-modal-actions">
-      <button class="form-btn" type="button" onclick="closeCmcAuthorityModal()">Cancel</button>
-      <button class="form-btn save" id="cmc-authority-submit" data-cmc-mutation type="button" onclick="submitCmcAuthorityTransfer()">Transfer Authority</button>
+      <button class="form-btn" type="button" onclick="closeCmcAuthorityModal()" data-i18n="common.cancel">Cancel</button>
+      <button class="form-btn save" id="cmc-authority-submit" data-cmc-mutation type="button" onclick="submitCmcAuthorityTransfer()" data-i18n="sysmon.transferAuthority">Transfer Authority</button>
     </div>
   </div>
 </div>
@@ -904,15 +905,16 @@
 </script>
 <script>
 window.PBGUI_NAV_CONFIG = {
-  subtitle: 'SERVICES',
+  subtitle: (window.PBGuiI18n ? PBGuiI18n.t('sysmon.servicesSubtitle') : 'SERVICES'),
   current:  'system_services',
   token:    TOKEN,
   version:  PBGUI_VERSION,
   serial:   PBGUI_SERIAL
 };
+document.title = PBGuiI18n.t('sysmon.servicesTitle');
 </script>
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
-<script src="/app/js/shared_help_overlay.js?v=6"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
+<script src="/app/js/shared_help_overlay.js?v=7"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 <!-- Guide button override — must run AFTER pbgui_nav.js DOMContentLoaded handler -->
 <script>
@@ -978,7 +980,7 @@ window.PBGUI_NAV_CONFIG = {
     _sMarks = Array.from(helpContent.querySelectorAll('mark'));
     if (_sMarks.length > 0) _gotoMark(0); else _updateSCount();
   }
-  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? '0 found' : ''); }
+  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? PBGuiI18n.t('sysmon.helpZeroFound') : ''); }
   function _gotoMark(idx) {
     if (!_sMarks.length) return;
     if (_sIdx >= 0 && _sIdx < _sMarks.length) _sMarks[_sIdx].classList.remove('current');
@@ -996,11 +998,11 @@ window.PBGUI_NAV_CONFIG = {
       .catch(function() { _topicCache[idx] = ''; cb(''); });
   }
   function _showGlobalResults(term) {
-    if (!term) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>'; helpSearchCount.textContent = ''; return; }
+    if (!term) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpTypeSearchTerm') + '</p>'; helpSearchCount.textContent = ''; return; }
     var re; try { re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); } catch(e) { return; }
-    helpContent.innerHTML = '<div class="help-loading">Searching\u2026</div>';
+    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpSearching') + '</div>';
     var pending = helpTopics.length;
-    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = '0 found'; return; }
+    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = PBGuiI18n.t('sysmon.helpZeroFound'); return; }
     var allResults = [];
     helpTopics.forEach(function(t, idx) {
       _ensureTopicCached(idx, function(html) {
@@ -1017,8 +1019,8 @@ window.PBGUI_NAV_CONFIG = {
   }
   function _renderGlobalResults(term, results) {
     var re; try { re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'); } catch(e) { return; }
-    helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
-    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>'; return; }
+    helpSearchCount.textContent = results.length + (results.length === 1 ? PBGuiI18n.t('sysmon.helpOneTopic') : PBGuiI18n.t('sysmon.helpTopics'));
+    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpNoResults') + '</p>'; return; }
     var html = '<div class="gs-results">';
     results.forEach(function(r) {
       html += '<div class="gs-item" data-idx="' + r.idx + '"><div class="gs-topic">' + r.title + '</div>';
@@ -1027,7 +1029,7 @@ window.PBGUI_NAV_CONFIG = {
     });
     helpContent.innerHTML = html + '</div>';
     helpContent.querySelectorAll('.gs-item').forEach(function(el) {
-      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = 'Search in topic\u2026'; loadTopic(idx); });
+      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = PBGuiI18n.t('sysmon.helpSearchInTopic'); loadTopic(idx); });
     });
   }
   helpSearch.addEventListener('input', function() { if (_sTimer) clearTimeout(_sTimer); _sTimer = setTimeout(function() { var term = helpSearch.value.trim(); if (_globalMode) _showGlobalResults(term); else _applySearch(term); }, 260); });
@@ -1036,7 +1038,7 @@ window.PBGUI_NAV_CONFIG = {
   helpSearchDn.addEventListener('click', function() { _gotoMark(_sIdx + 1); });
   helpSearchGlobal.addEventListener('change', function() {
     _globalMode = helpSearchGlobal.checked;
-    helpSearch.placeholder = _globalMode ? 'Search all topics\u2026' : 'Search in topic\u2026';
+    helpSearch.placeholder = _globalMode ? PBGuiI18n.t('sysmon.helpSearchAllTopics') : PBGuiI18n.t('sysmon.helpSearchInTopic');
     var term = helpSearch.value.trim();
     if (_globalMode) { _showGlobalResults(term); } else { if (_rawHtml !== null) { helpContent.innerHTML = _rawHtml; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = ''; } if (term) _applySearch(term); }
   });
@@ -1057,14 +1059,14 @@ window.PBGUI_NAV_CONFIG = {
     helpSel = idx; renderToc();
     var t = helpTopics[idx]; if (!t) return;
     _rawHtml = null; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = '';
-    helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
     fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, authOptions())
       .then(function(r) { return r.json(); })
       .then(function(d) { _rawHtml = mdToHtml(d.content || ''); _topicCache[idx] = _rawHtml; helpContent.innerHTML = _rawHtml; helpContent.scrollTop = 0; var st = helpSearch.value.trim(); if (st) _applySearch(st); })
-      .catch(function() { helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>'; });
+      .catch(function() { helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadContent') + '</div>'; });
   }
   function loadHelpIndex(keyword) {
-    helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+    helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
     fetch(docsBase + '/docs/index?lang=' + helpLang, authOptions())
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -1075,7 +1077,7 @@ window.PBGUI_NAV_CONFIG = {
           loadTopic(startIdx);
         }
       })
-      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>'; });
+      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadTopics') + '</div>'; });
   }
   helpFilter.addEventListener('input', renderToc);
   helpLangEN.addEventListener('click', function() {
@@ -1200,9 +1202,9 @@ window.PBGUI_NAV_CONFIG = {
   }
 
   function serviceStatusText(item, svcId) {
-    var base = serviceSkipped(item) ? 'Skipped' : (item.running ? 'Running' : 'Stopped');
+    var base = serviceSkipped(item) ? PBGuiI18n.t('sysmon.skippedStatus') : (item.running ? PBGuiI18n.t('sysmon.running') : PBGuiI18n.t('sysmon.stopped'));
     if (item.can_enable) {
-      base += ' · ' + (item.enabled ? 'Enabled' : 'Disabled');
+      base += ' · ' + (item.enabled ? PBGuiI18n.t('common.enabled') : PBGuiI18n.t('common.disabled'));
     }
     var pending = _serviceActionPending[svcId || ''] || '';
     if (pending) base += ' · ' + serviceActionProgressText(pending);
@@ -1210,29 +1212,29 @@ window.PBGUI_NAV_CONFIG = {
   }
 
   function serviceActionProgressText(action) {
-    if (action === 'restart') return 'Restarting...';
-    if (action === 'start') return 'Starting...';
-    if (action === 'stop') return 'Stopping...';
-    if (action === 'enable') return 'Enabling...';
-    if (action === 'disable') return 'Disabling...';
-    return 'Working...';
+    if (action === 'restart') return PBGuiI18n.t('sysmon.restarting');
+    if (action === 'start') return PBGuiI18n.t('sysmon.starting');
+    if (action === 'stop') return PBGuiI18n.t('sysmon.stopping');
+    if (action === 'enable') return PBGuiI18n.t('sysmon.enabling');
+    if (action === 'disable') return PBGuiI18n.t('sysmon.disabling');
+    return PBGuiI18n.t('sysmon.working');
   }
 
   function serviceActionDoneText(action, svcId) {
-    if (action === 'restart') return svcId + ' restart requested successfully.';
-    if (action === 'start') return svcId + ' start requested successfully.';
-    if (action === 'stop') return svcId + ' stop requested successfully.';
-    if (action === 'enable') return svcId + ' autostart enabled.';
-    if (action === 'disable') return svcId + ' autostart disabled.';
-    return svcId + ' action completed.';
+    if (action === 'restart') return PBGuiI18n.t('sysmon.restartRequested', {svc: svcId});
+    if (action === 'start') return PBGuiI18n.t('sysmon.startRequested', {svc: svcId});
+    if (action === 'stop') return PBGuiI18n.t('sysmon.stopRequested', {svc: svcId});
+    if (action === 'enable') return PBGuiI18n.t('sysmon.autostartEnabled', {svc: svcId});
+    if (action === 'disable') return PBGuiI18n.t('sysmon.autostartDisabled', {svc: svcId});
+    return PBGuiI18n.t('sysmon.actionCompleted', {svc: svcId});
   }
 
   function serviceStatusTitle(item) {
     var parts = [];
     if (item.reason) parts.push(item.reason);
-    if (item.unit) parts.push('Unit: ' + item.unit);
-    if (item.systemd_state) parts.push('State: ' + item.systemd_state);
-    if (item.systemd_enabled_state) parts.push('Autostart: ' + item.systemd_enabled_state);
+    if (item.unit) parts.push(PBGuiI18n.t('sysmon.unit', {v: item.unit}));
+    if (item.systemd_state) parts.push(PBGuiI18n.t('sysmon.stateColon', {v: item.systemd_state}));
+    if (item.systemd_enabled_state) parts.push(PBGuiI18n.t('sysmon.autostartColon', {v: item.systemd_enabled_state}));
     return parts.join('\n');
   }
 
@@ -1248,20 +1250,20 @@ window.PBGUI_NAV_CONFIG = {
     if (!skipped) {
       if (svc.isApiServer) {
         html += running
-          ? '<button class="' + cls + ' restart" onclick="restartApiServer()' + stopProp + '"' + disabledAttr + '>&#8635; ' + (pending === 'restart' ? pendingText : 'Restart') + '</button>'
-          : '<button class="' + cls + ' start" onclick="svcAction(\'' + svc.id + '\',\'start\')' + stopProp + '"' + disabledAttr + '>&#9654; ' + (pending === 'start' ? pendingText : 'Start') + '</button>';
+          ? '<button class="' + cls + ' restart" onclick="restartApiServer()' + stopProp + '"' + disabledAttr + '>&#8635; ' + (pending === 'restart' ? pendingText : PBGuiI18n.t('sysmon.restart')) + '</button>'
+          : '<button class="' + cls + ' start" onclick="svcAction(\'' + svc.id + '\',\'start\')' + stopProp + '"' + disabledAttr + '>&#9654; ' + (pending === 'start' ? pendingText : PBGuiI18n.t('sysmon.start')) + '</button>';
       } else {
         html += running
-          ? '<button class="' + cls + ' stop" onclick="svcAction(\'' + svc.id + '\',\'stop\')' + stopProp + '"' + disabledAttr + '>&#9632; ' + (pending === 'stop' ? pendingText : 'Stop') + '</button>'
-            + '<button class="' + cls + ' restart" onclick="svcAction(\'' + svc.id + '\',\'restart\')' + stopProp + '"' + disabledAttr + '>&#8635; ' + (pending === 'restart' ? pendingText : 'Restart') + '</button>'
-          : '<button class="' + cls + ' start" onclick="svcAction(\'' + svc.id + '\',\'start\')' + stopProp + '"' + disabledAttr + '>&#9654; ' + (pending === 'start' ? pendingText : 'Start') + '</button>';
+          ? '<button class="' + cls + ' stop" onclick="svcAction(\'' + svc.id + '\',\'stop\')' + stopProp + '"' + disabledAttr + '>&#9632; ' + (pending === 'stop' ? pendingText : PBGuiI18n.t('sysmon.stop')) + '</button>'
+            + '<button class="' + cls + ' restart" onclick="svcAction(\'' + svc.id + '\',\'restart\')' + stopProp + '"' + disabledAttr + '>&#8635; ' + (pending === 'restart' ? pendingText : PBGuiI18n.t('sysmon.restart')) + '</button>'
+          : '<button class="' + cls + ' start" onclick="svcAction(\'' + svc.id + '\',\'start\')' + stopProp + '"' + disabledAttr + '>&#9654; ' + (pending === 'start' ? pendingText : PBGuiI18n.t('sysmon.start')) + '</button>';
       }
     }
     if (item.can_enable) {
       if (item.enabled) {
-        html += '<button class="' + cls + ' disable" onclick="svcAction(\'' + svc.id + '\',\'disable\')' + stopProp + '"' + disabledAttr + '>' + (pending === 'disable' ? pendingText : 'Disable') + '</button>';
+        html += '<button class="' + cls + ' disable" onclick="svcAction(\'' + svc.id + '\',\'disable\')' + stopProp + '"' + disabledAttr + '>' + (pending === 'disable' ? pendingText : PBGuiI18n.t('sysmon.disable')) + '</button>';
       } else if (!item.enable_blocked_reason) {
-        html += '<button class="' + cls + ' enable" onclick="svcAction(\'' + svc.id + '\',\'enable\')' + stopProp + '"' + disabledAttr + '>' + (pending === 'enable' ? pendingText : 'Enable') + '</button>';
+        html += '<button class="' + cls + ' enable" onclick="svcAction(\'' + svc.id + '\',\'enable\')' + stopProp + '"' + disabledAttr + '>' + (pending === 'enable' ? pendingText : PBGuiI18n.t('sysmon.enable')) + '</button>';
       }
     }
     return html;
@@ -1340,7 +1342,7 @@ window.PBGUI_NAV_CONFIG = {
     var lbl = document.getElementById('sl-workers');
     if (dotSb) dotSb.className = 'sb-dot ' + cls;
     if (dotCs) dotCs.className = 'status-dot ' + cls;
-    if (lbl) lbl.textContent = running + ' / ' + total + ' running';
+    if (lbl) lbl.textContent = PBGuiI18n.t('sysmon.workersRunning', {running: running, total: total});
   }
 
   /* ── Systemd migration ─────────────────────────────────── */
@@ -1357,13 +1359,13 @@ window.PBGUI_NAV_CONFIG = {
   }
 
   function migrationStatusMeta(data) {
-    if (!data) return { cls: '', label: 'Not loaded', text: 'Migration status not loaded yet.', needed: false };
-    if (data._restart_pending) return { cls: 'warn', label: 'Restarting', text: 'API restart is in progress after successful migration.', needed: false };
-    if (data._error) return { cls: 'stopped', label: 'Error', text: data._error, needed: false };
+    if (!data) return { cls: '', label: PBGuiI18n.t('sysmon.notLoaded'), text: PBGuiI18n.t('sysmon.migrationNotLoaded'), needed: false };
+    if (data._restart_pending) return { cls: 'warn', label: PBGuiI18n.t('sysmon.restartingStatus'), text: PBGuiI18n.t('sysmon.apiRestartInProgress'), needed: false };
+    if (data._error) return { cls: 'stopped', label: PBGuiI18n.t('common.error'), text: data._error, needed: false };
     var warnings = data.warnings || [];
-    if (data.migration_needed) return { cls: 'warn', label: 'Needed', text: 'Systemd migration is available for this master.', needed: true };
-    if (warnings.length) return { cls: 'warn', label: 'Warnings', text: 'Systemd services are installed, but warnings need review.', needed: false };
-    return { cls: 'running', label: 'Ready', text: 'This master is already managed by systemd user services.', needed: false };
+    if (data.migration_needed) return { cls: 'warn', label: PBGuiI18n.t('sysmon.needed'), text: PBGuiI18n.t('sysmon.migrationAvailable'), needed: true };
+    if (warnings.length) return { cls: 'warn', label: PBGuiI18n.t('sysmon.warnings'), text: PBGuiI18n.t('sysmon.migrationWarnings'), needed: false };
+    return { cls: 'running', label: PBGuiI18n.t('sysmon.ready'), text: PBGuiI18n.t('sysmon.alreadyManaged'), needed: false };
   }
 
   function updateMigrationSummary() {
@@ -1614,13 +1616,13 @@ window.PBGUI_NAV_CONFIG = {
     var html = '';
     if (item.running) {
       if (item.can_stop !== false) {
-        html += '<button class="' + cls + ' stop" onclick="workerConfirmAction(\'' + item.id + '\',\'stop\');event.stopPropagation()">&#9632; Stop</button>';
+        html += '<button class="' + cls + ' stop" onclick="workerConfirmAction(\'' + item.id + '\',\'stop\');event.stopPropagation()">&#9632; ' + PBGuiI18n.t('sysmon.stop') + '</button>';
         if (item.can_start !== false) {
-          html += '<button class="' + cls + ' restart" onclick="workerRestart(\'' + item.id + '\');event.stopPropagation()">&#8635; Restart</button>';
+          html += '<button class="' + cls + ' restart" onclick="workerRestart(\'' + item.id + '\');event.stopPropagation()">&#8635; ' + PBGuiI18n.t('sysmon.restart') + '</button>';
         }
       }
     } else if (item.can_start !== false) {
-      html += '<button class="' + cls + ' start" onclick="workerAction(\'' + item.id + '\',\'start\');event.stopPropagation()">&#9654; Start</button>';
+      html += '<button class="' + cls + ' start" onclick="workerAction(\'' + item.id + '\',\'start\');event.stopPropagation()">&#9654; ' + PBGuiI18n.t('sysmon.start') + '</button>';
     }
     return html;
   }
@@ -1630,7 +1632,7 @@ window.PBGUI_NAV_CONFIG = {
     if (!groupsWrap) return;
     var groups = _workers.groups || [];
     if (!groups.length) {
-      groupsWrap.innerHTML = '<div class="worker-detail-empty">No workers available.</div>';
+      groupsWrap.innerHTML = '<div class="worker-detail-empty">' + PBGuiI18n.t('sysmon.noWorkersAvailable') + '</div>';
       renderWorkerDetail();
       return;
     }
@@ -1639,8 +1641,8 @@ window.PBGUI_NAV_CONFIG = {
       var items = group.items || [];
       if (!items.length) return;
       html += '<section class="worker-group">';
-      html += '<div><div class="worker-group-title">' + esc(group.label || group.id || 'Workers') + '</div>';
-      html += '<div class="worker-group-subtitle">' + items.length + ' item(s)</div></div>';
+      html += '<div><div class="worker-group-title">' + esc(group.label || group.id || PBGuiI18n.t('sysmon.workers')) + '</div>';
+      html += '<div class="worker-group-subtitle">' + items.length + ' ' + PBGuiI18n.t('sysmon.itemCount') + '</div></div>';
       html += '<div class="worker-grid">';
       items.forEach(function (item) {
         var cls = item.running ? 'running' : 'stopped';
@@ -1651,7 +1653,7 @@ window.PBGUI_NAV_CONFIG = {
         html += '<article class="worker-card ' + cls + selected + '" onclick="selectWorker(\'' + item.id + '\')">';
         html += '<div class="worker-type">' + esc(item.type || 'worker') + '</div>';
         html += '<div class="card-name">' + esc(item.label || item.id) + '</div>';
-        html += '<div class="card-status-row"><span class="card-dot ' + cls + '"></span>' + (item.running ? 'Running' : 'Stopped') + '</div>';
+        html += '<div class="card-status-row"><span class="card-dot ' + cls + '"></span>' + (item.running ? PBGuiI18n.t('sysmon.running') : PBGuiI18n.t('sysmon.stopped')) + '</div>';
         html += '<div class="worker-summary">' + esc(item.summary || '') + '</div>';
         if (stats) html += '<div class="worker-stats-inline">' + stats + '</div>';
         html += '<div class="worker-btnrow">' + renderWorkerActionButtons(item, true) + '</div>';
@@ -1685,7 +1687,7 @@ window.PBGUI_NAV_CONFIG = {
     if (!body) return;
     var item = _workerIndex[_selectedWorkerId];
     if (!item) {
-      body.innerHTML = '<div class="worker-detail-empty">Select a worker to inspect status, actions, and logs.</div>';
+      body.innerHTML = '<div class="worker-detail-empty">' + PBGuiI18n.t('sysmon.selectWorker') + '</div>';
       updateWorkerLog(null);
       return;
     }
@@ -1695,7 +1697,7 @@ window.PBGUI_NAV_CONFIG = {
     var html = '<div class="worker-detail-top">';
     html += '<div><div class="worker-detail-title">' + esc(item.label || item.id) + '</div>';
     html += '<div class="worker-detail-subtitle">' + esc(item.type || 'worker') + ' • ' + esc(item.summary || '') + '</div></div>';
-    html += '<span class="worker-state-badge ' + (item.running ? 'running' : 'stopped') + '">' + (item.running ? 'Running' : 'Stopped') + '</span>';
+    html += '<span class="worker-state-badge ' + (item.running ? 'running' : 'stopped') + '">' + (item.running ? PBGuiI18n.t('sysmon.running') : PBGuiI18n.t('sysmon.stopped')) + '</span>';
     html += '</div>';
     html += '<div class="worker-detail-desc">' + esc(item.description || '') + '</div>';
     if (item.note) {
@@ -1726,7 +1728,7 @@ window.PBGUI_NAV_CONFIG = {
     if (!item) {
       wrap.style.display = 'none';
       empty.style.display = 'flex';
-      empty.innerHTML = '<div>Worker log or monitor details will appear here.</div>';
+      empty.innerHTML = '<div>' + PBGuiI18n.t('sysmon.workerLogHint') + '</div>';
       return;
     }
     if (!item.log_file) {
@@ -1749,7 +1751,7 @@ window.PBGUI_NAV_CONFIG = {
       }
       wrap.style.display = 'none';
       empty.style.display = 'flex';
-      empty.innerHTML = '<div>No dedicated local log is configured for this worker.</div>';
+      empty.innerHTML = '<div>' + PBGuiI18n.t('sysmon.noDedicatedWorkerLog') + '</div>';
       return;
     }
     empty.style.display = 'none';
@@ -1775,7 +1777,7 @@ window.PBGUI_NAV_CONFIG = {
     } catch (e) {
       wrap.style.display = 'none';
       empty.style.display = 'flex';
-      empty.innerHTML = '<div style="color:#fca5a5;">Log viewer unavailable: ' + esc(e.message || e) + '</div>';
+      empty.innerHTML = '<div style="color:#fca5a5;">' + PBGuiI18n.t('sysmon.logViewerUnavailable', {v: esc(e.message || e)}) + '</div>';
     }
   }
 
@@ -1793,7 +1795,7 @@ window.PBGUI_NAV_CONFIG = {
     var label = item.label || workerId;
     var ok = true;
     if (action === 'stop') {
-      ok = await workerConfirm('Stop worker', 'Stop worker "' + label + '"?', 'Stop');
+      ok = await workerConfirm(PBGuiI18n.t('sysmon.stopWorker'), PBGuiI18n.t('sysmon.stopWorkerMsg', {label: label}), PBGuiI18n.t('sysmon.stop'));
     }
     if (!ok) return;
     return window.workerAction(workerId, action);
@@ -1803,7 +1805,7 @@ window.PBGUI_NAV_CONFIG = {
     var item = _workerIndex[workerId];
     if (!item) return;
     var label = item.label || workerId;
-    var ok = await workerConfirm('Restart worker', 'Restart worker "' + label + '"?', 'Restart');
+    var ok = await workerConfirm(PBGuiI18n.t('sysmon.restartWorker'), PBGuiI18n.t('sysmon.restartWorkerMsg', {label: label}), PBGuiI18n.t('sysmon.restart'));
     if (!ok) return;
     return window.workerAction(workerId, 'restart');
   };
@@ -1835,16 +1837,16 @@ window.PBGUI_NAV_CONFIG = {
         var workerCounts = _workers.counts || { total: 0, running: 0 };
         var workerCls = Number(workerCounts.running || 0) > 0 ? 'running' : 'stopped';
         html += '<div class="svc-card ' + workerCls + '" onclick="selectPanel(\'workers\')">'
-          +  '<div class="card-name">Workers</div>'
-          +  '<div class="card-status-row"><span class="card-dot ' + workerCls + '"></span>' + esc((workerCounts.running || 0) + ' / ' + (workerCounts.total || 0) + ' running') + '</div>'
-          +  '<div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="card-btn" onclick="selectPanel(\'workers\');event.stopPropagation()">Open</button></div>'
+          +  '<div class="card-name">' + PBGuiI18n.t('sysmon.workers') + '</div>'
+          +  '<div class="card-status-row"><span class="card-dot ' + workerCls + '"></span>' + esc(PBGuiI18n.t('sysmon.workersRunning', {running: workerCounts.running || 0, total: workerCounts.total || 0})) + '</div>'
+          +  '<div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="card-btn" onclick="selectPanel(\'workers\');event.stopPropagation()">' + PBGuiI18n.t('sysmon.open') + '</button></div>'
           +  '</div>';
         var migrationMeta = migrationStatusMeta(_migrationStatus);
         var migrationCls = migrationMeta.cls || 'stopped';
         html += '<div class="svc-card ' + (migrationCls === 'warn' ? '' : migrationCls) + '" onclick="selectPanel(\'migration\')">'
-          +  '<div class="card-name">Migration</div>'
+          +  '<div class="card-name">' + PBGuiI18n.t('sysmon.migration') + '</div>'
           +  '<div class="card-status-row"><span class="card-dot ' + migrationCls + '"></span>' + esc(migrationMeta.text) + '</div>'
-          +  '<div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="card-btn" onclick="selectPanel(\'migration\');event.stopPropagation()">Open</button></div>'
+          +  '<div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="card-btn" onclick="selectPanel(\'migration\');event.stopPropagation()">' + PBGuiI18n.t('sysmon.open') + '</button></div>'
           +  '</div>';
     grid.innerHTML = html;
   }
@@ -1943,7 +1945,7 @@ window.PBGUI_NAV_CONFIG = {
       viewer.open();
       _logViewers[svcId] = viewer;
     } catch (e) {
-      el.textContent = 'Log viewer unavailable: ' + String(e.message || e);
+      el.textContent = PBGuiI18n.t('sysmon.logViewerUnavailable', {v: String(e.message || e)});
       el.style.color = '#fca5a5';
       el.style.padding = '1rem';
     }
@@ -1973,9 +1975,9 @@ window.PBGUI_NAV_CONFIG = {
         }
         if (action === 'restart') {
           _resultPopup(
-            'Service restart requested',
+            PBGuiI18n.t('sysmon.serviceRestartRequested'),
             serviceActionDoneText(action, svcId),
-            'The status cards refresh automatically; watch the service dot and log tab for startup progress.',
+            PBGuiI18n.t('sysmon.statusRefreshHint'),
             true,
             false
           );
@@ -1984,9 +1986,9 @@ window.PBGUI_NAV_CONFIG = {
       })
       .catch(function (err) {
         _resultPopup(
-          'Service action failed',
-          'Could not ' + action + ' ' + svcId + '.',
-          err && err.message ? err.message : 'Service action failed.',
+          PBGuiI18n.t('sysmon.serviceActionFailed'),
+          PBGuiI18n.t('sysmon.couldNotAction', {action: action, svc: svcId}),
+          err && err.message ? PBGuiI18n.serverMsg(err.message) : PBGuiI18n.t('sysmon.serviceActionFailed'),
           false,
           false
         );
@@ -2000,13 +2002,13 @@ window.PBGUI_NAV_CONFIG = {
 
   window.restartApiServer = function () {
     var btn = document.querySelector('[onclick="restartApiServer()"]');
-    if (btn) { btn.disabled = true; btn.textContent = 'Restarting\u2026'; }
+    if (btn) { btn.disabled = true; btn.textContent = PBGuiI18n.t('sysmon.restarting'); }
     var origin = API_BASE.replace(/\/api\/services$/, '');
     fetch(API_BASE + '/api-server/restart', authOptions({ method: 'POST' }))
       .then(function (resp) {
         if (!resp.ok) {
           return resp.json().catch(function () { return {}; }).then(function (data) {
-            var detail = (data && data.detail) ? String(data.detail) : 'Restart failed.';
+            var detail = (data && data.detail) ? String(data.detail) : PBGuiI18n.t('sysmon.restartFailed');
             throw new Error(detail);
           });
         }
@@ -2014,15 +2016,15 @@ window.PBGUI_NAV_CONFIG = {
       })
       .catch(function (err) {
         _resultPopup(
-          'Restart blocked',
-          'The API server restart was rejected.',
-          err && err.message ? err.message : 'Restart failed.',
+          PBGuiI18n.t('sysmon.restartBlocked'),
+          PBGuiI18n.t('sysmon.restartRejected'),
+          err && err.message ? PBGuiI18n.serverMsg(err.message) : PBGuiI18n.t('sysmon.restartFailed'),
           false,
           false
         );
       })
       .finally(function () {
-        if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Restart'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; ' + PBGuiI18n.t('sysmon.restart'); }
       });
   };
 
@@ -2333,7 +2335,7 @@ window.PBGUI_NAV_CONFIG = {
 
   /* ── Result popup dialog ── */
   function _resultPopup(title, message, output, isOk, hideFoot) {
-    _logUiNotification(String(title || 'Notice') + ': ' + String(message || ''), isOk ? 'ok' : 'err');
+    _logUiNotification(String(title || PBGuiI18n.t('sysmon.notice')) + ': ' + String(message || ''), isOk ? 'ok' : 'err');
     var isNew = !document.getElementById('result-modal');
     var modal = document.getElementById('result-modal');
     if (!modal) {
@@ -2350,7 +2352,7 @@ window.PBGUI_NAV_CONFIG = {
       + '<button class="result-modal-close" onclick="document.getElementById(\'result-modal\').remove()">&times;</button></div>'
       + '<div class="result-modal-status ' + (isOk ? 'ok' : 'fail') + '">' + icon + ' ' + _esc(message) + '</div>'
       + (output ? '<div class="result-modal-body">' + _esc(output) + '</div>' : '')
-      + (hideFoot ? '' : '<div class="result-modal-footer"><button onclick="document.getElementById(\'result-modal\').remove()">OK</button></div>');
+      + (hideFoot ? '' : '<div class="result-modal-footer"><button onclick="document.getElementById(\'result-modal\').remove()">' + PBGuiI18n.t('common.ok') + '</button></div>');
     if (isNew) document.body.appendChild(modal);
     /* attach drag to header */
     (function () {
@@ -3422,15 +3424,15 @@ window.PBGUI_NAV_CONFIG = {
       var body = document.getElementById('prices-overlay-body');
       if (!body) return;
       if (!rows.length) {
-        body.innerHTML = '<div style="color:#4a5568;padding:1rem;">No price data available yet.</div>';
+        body.innerHTML = '<div style="color:#4a5568;padding:1rem;">' + PBGuiI18n.t('sysmon.noPriceData') + '</div>';
         return;
       }
       var html = '<table class="po-table"><thead><tr>'
         + '<th>#</th>'
-        + '<th>Symbol</th>'
-        + '<th>Exchange</th>'
-        + '<th style="text-align:right;">Price</th>'
-        + '<th style="text-align:right;">Age</th>'
+        + '<th>' + PBGuiI18n.t('sysmon.symbol') + '</th>'
+        + '<th>' + PBGuiI18n.t('sysmon.exchange') + '</th>'
+        + '<th style="text-align:right;">' + PBGuiI18n.t('sysmon.price') + '</th>'
+        + '<th style="text-align:right;">' + PBGuiI18n.t('sysmon.age') + '</th>'
         + '</tr></thead><tbody>';
       rows.forEach(function (r, i) {
         html += '<tr>'
@@ -3462,7 +3464,7 @@ window.PBGUI_NAV_CONFIG = {
       if (_pricesLoading) return;
       _pricesLoading = true;
       var body = document.getElementById('prices-overlay-body');
-      if (!opts.silent && body) body.innerHTML = '<div style="color:#64748b;padding:1rem;">Loading\u2026</div>';
+      if (!opts.silent && body) body.innerHTML = '<div style="color:#64748b;padding:1rem;">' + PBGuiI18n.t('sysmon.loading') + '</div>';
       fetch(API_BASE + '/prices-snapshot', authOptions())
         .then(function (r) { return r.json(); })
         .then(function (d) {
@@ -3471,7 +3473,7 @@ window.PBGUI_NAV_CONFIG = {
         })
         .catch(function () {
           var body = document.getElementById('prices-overlay-body');
-          if (!opts.silent && body) body.innerHTML = '<div style="color:#fca5a5;padding:1rem;">Failed to load prices.</div>';
+          if (!opts.silent && body) body.innerHTML = '<div style="color:#fca5a5;padding:1rem;">' + PBGuiI18n.t('sysmon.failedLoadPrices') + '</div>';
         })
         .finally(function () {
           _pricesLoading = false;

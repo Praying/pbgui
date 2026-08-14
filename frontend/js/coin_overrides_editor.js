@@ -11,6 +11,18 @@
  * Design pattern: mirrors suite_editor.js — uses .tbl, .act-btn, .form-group
  */
 
+function i18nT(key, params, fallback) {
+  var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+  if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+  var text = fallback == null ? key : String(fallback);
+  if (params) {
+    text = text.replace(/\{(\w+)\}/g, function (m, name) {
+      return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+    });
+  }
+  return text;
+}
+
 /* ── State ──────────────────────────────────────────────────── */
 var _covState = {
   overrides: {},        // { COIN: { bot: { long: {...}, short: {...} }, live: {...} } }
@@ -402,16 +414,16 @@ function _covSetCfgJsonValidationState(side, error) {
     statusEl.className = 'cov-json-status';
     window.PBGuiEditorShared.clearFixedValidationStatus('cov-cfg-' + side);
   } else {
-    var summary = 'Coin Override ' + side + ' JSON is invalid';
+    var summary = i18nT('editor.overrides.jsonInvalid', { side: side }, 'Coin Override ' + side + ' JSON is invalid');
     if (error.line != null && error.column != null) {
-      summary += ' at line ' + error.line + ', column ' + error.column;
+      summary += i18nT('editor.overrides.atLineColumn', { line: error.line, column: error.column }, ' at line ' + error.line + ', column ' + error.column);
     }
     statusEl.innerHTML = '';
     statusEl.className = 'cov-json-status';
     window.PBGuiEditorShared.setFixedValidationStatus('cov-cfg-' + side, {
       summary: summary,
       message: error.message || '',
-      actionLabel: error.line != null ? 'Reveal line in editor' : '',
+      actionLabel: error.line != null ? i18nT('editor.json.revealLine', null, 'Reveal line in editor') : '',
       action: error.line != null ? function() { covRevealCfgJsonError(side); } : null,
     });
   }
@@ -790,10 +802,10 @@ function _covRender() {
 
   var h = '\x3Cdiv class="expander' + isOpen + '" id="exp-coin-ov">';
   h += '\x3Cdiv class="expander-header" onclick="toggleExpander(\'exp-coin-ov\')">';
-  h += '\x3Cspan class="arrow">\u25B6\x3C/span> Coin Overrides';
+  h += '\x3Cspan class="arrow">\u25B6\x3C/span> ' + i18nT('editor.overrides.title', null, 'Coin Overrides');
   if (count > 0) {
     h += ' \x3Cspan style="color:var(--text-dim);font-size:var(--fs-xs);margin-left:6px">(' +
-         count + ' coin' + (count > 1 ? 's' : '') + ')\x3C/span>';
+         i18nT('editor.overrides.coinCount', { n: count, s: count > 1 ? 's' : '' }, count + ' coin' + (count > 1 ? 's' : '')) + ')\x3C/span>';
   }
   h += '\x3C/div>';
   h += '\x3Cdiv class="expander-body">';
@@ -801,7 +813,7 @@ function _covRender() {
   /* Summary table */
   if (count > 0) {
     h += '\x3Ctable class="tbl" style="font-size:var(--fs-sm)">';
-    h += '\x3Cthead>\x3Ctr>\x3Cth>Coin\x3C/th>\x3Cth>Overrides\x3C/th>\x3Cth style="width:100px">Actions\x3C/th>\x3C/tr>\x3C/thead>';
+    h += '\x3Cthead>\x3Ctr>\x3Cth>' + i18nT('editor.overrides.coin', null, 'Coin') + '\x3C/th>\x3Cth>' + i18nT('editor.overrides.overrides', null, 'Overrides') + '\x3C/th>\x3Cth style="width:100px">' + i18nT('editor.overrides.actions', null, 'Actions') + '\x3C/th>\x3C/tr>\x3C/thead>';
     h += '\x3Ctbody>';
     var coins = Object.keys(ov).sort();
     for (var i = 0; i < coins.length; i++) {
@@ -814,7 +826,7 @@ function _covRender() {
       h += '\x3Ctd>\x3Cspan class="cov-badge" data-tooltip="' + tooltipHtml.replace(/"/g, '&quot;') + '">' + badge + '\x3C/span>\x3C/td>';
       h += '\x3Ctd>';
       h += '\x3Cbutton type="button" class="act-btn" onclick="coinOvEditAt(' + i + ')">' +
-           (isEditing ? 'Editing' : 'Edit') + '\x3C/button> ';
+           (isEditing ? i18nT('editor.overrides.editing', null, 'Editing') : i18nT('editor.overrides.edit', null, 'Edit')) + '\x3C/button> ';
       h += '\x3Cbutton type="button" class="act-btn act-btn-danger" onclick="coinOvRemoveAt(' + i + ')">\u00d7\x3C/button>';
       h += '\x3C/td>\x3C/tr>';
     }
@@ -823,9 +835,9 @@ function _covRender() {
 
   /* Add coin — searchable dropdown (same as approved_coins) */
   h += '\x3Cdiv class="form-group" style="margin-top:var(--sp-sm);max-width:300px">';
-  h += '\x3Clabel>\x3Cspan data-tip="Select a coin to add per-coin overrides.\nType to search the list.">Add coin\x3C/span>\x3C/label>';
+  h += '\x3Clabel>\x3Cspan data-tip="' + i18nT('editor.overrides.addCoinTip', null, 'Select a coin to add per-coin overrides.\nType to search the list.') + '">' + i18nT('editor.overrides.addCoin', null, 'Add coin') + '\x3C/span>\x3C/label>';
   h += '\x3Cdiv class="ms-wrap" id="cov-coin-picker">';
-  h += '\x3Cinput class="ms-input" id="cov-coin-input" placeholder="Type to search\u2026">';
+  h += '\x3Cinput class="ms-input" id="cov-coin-input" placeholder="' + i18nT('editor.overrides.typeToSearch', null, 'Type to search\u2026') + '">';
   h += '\x3Cdiv class="ms-dropdown" id="cov-coin-dd">\x3C/div>';
   h += '\x3C/div>\x3C/div>';
 
@@ -905,7 +917,7 @@ function _covShowCoinDd(filter) {
     // Allow adding custom coin if typed and not already present
     var custom = _covState.preserveMarketIdentifiers ? rawFilter : f;
     if (!ov[custom]) {
-      html += '\x3Cdiv class="ms-option" data-val="' + esc(custom) + '">' + esc(custom) + ' (custom)\x3C/div>';
+      html += '\x3Cdiv class="ms-option" data-val="' + esc(custom) + '">' + esc(custom) + ' ' + i18nT('editor.overrides.custom', null, '(custom)') + '\x3C/div>';
     }
   }
   dd.innerHTML = html;
@@ -920,7 +932,7 @@ function _covShowCoinDd(filter) {
 
 function _covPickCoin(coin) {
   if (!coin) return;
-  if (_covState.overrides[coin]) { toast(coin + ' already has overrides', 'err'); return; }
+  if (_covState.overrides[coin]) { toast(i18nT('editor.overrides.alreadyHas', { coin: coin }, coin + ' already has overrides'), 'err'); return; }
   _covState.overrides[coin] = {};
   _covState.editCoin = coin;
   _covRender();
@@ -1151,29 +1163,29 @@ function _covEditHtml(coin) {
 
   var h = '\x3Cdiv style="border:1px solid var(--accent);border-radius:6px;padding:var(--sp-md);margin-top:var(--sp-sm);background:rgba(77,166,255,.03)">';
   h += '\x3Cdiv style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-sm)">';
-  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600;color:var(--accent)">Edit: ' + esc(coin) + '\x3C/span>';
-  h += '\x3Cbutton type="button" class="act-btn" onclick="coinOvCloseEdit()">Done\x3C/button>';
+  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600;color:var(--accent)">' + i18nT('editor.overrides.editCoin', { coin: esc(coin) }, 'Edit: ' + esc(coin)) + '\x3C/span>';
+  h += '\x3Cbutton type="button" class="act-btn" onclick="coinOvCloseEdit()">' + i18nT('editor.overrides.done', null, 'Done') + '\x3C/button>';
   h += '\x3C/div>';
 
   if (_covState.allowedParams === null) {
-    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--text-dim);font-size:var(--fs-sm)">Loading override parameters...\x3C/div>';
+    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--text-dim);font-size:var(--fs-sm)">' + i18nT('editor.overrides.loadingParams', null, 'Loading override parameters...') + '\x3C/div>';
   } else if (_covState.allowedParamsError) {
-    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--red);font-size:var(--fs-sm)">Override parameters unavailable: ' +
-      esc(_covState.allowedParamsError) + '\x3C/div>';
+    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--red);font-size:var(--fs-sm)">' +
+      i18nT('editor.overrides.paramsUnavailable', { msg: esc(_covState.allowedParamsError) }, 'Override parameters unavailable: ' + esc(_covState.allowedParamsError)) + '\x3C/div>';
   } else if (_covAllowedParamCount(allowed) === 0) {
-    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--text-dim);font-size:var(--fs-sm)">No inline override parameters were reported by this Passivbot runtime.\x3C/div>';
+    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--text-dim);font-size:var(--fs-sm)">' + i18nT('editor.overrides.noInlineParams', null, 'No inline override parameters were reported by this Passivbot runtime.') + '\x3C/div>';
   }
   var unsupported = _covUnsupportedInlineParams(data, allowed);
   if (unsupported.length) {
-    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--red);font-size:var(--fs-sm)">Unsupported inline override values are preserved but PB8 will reject them: ' +
-      esc(unsupported.join(', ')) + '\x3C/div>';
+    h += '\x3Cdiv style="margin-bottom:var(--sp-sm);color:var(--red);font-size:var(--fs-sm)">' +
+      i18nT('editor.overrides.unsupportedInline', { params: esc(unsupported.join(', ')) }, 'Unsupported inline override values are preserved but PB8 will reject them: ' + esc(unsupported.join(', '))) + '\x3C/div>';
   }
 
   /* Bot Long / Bot Short / Live sections — inline parameter overrides */
   var sections = [
-    { key: 'bot.long', label: 'Bot Long', color: 'var(--green)', akey: ['bot','long'] },
-    { key: 'bot.short', label: 'Bot Short', color: 'var(--red)', akey: ['bot','short'] },
-    { key: 'live', label: 'Live', color: 'var(--blue)', akey: ['live'] },
+    { key: 'bot.long', label: i18nT('editor.overrides.botLong', null, 'Bot Long'), color: 'var(--green)', akey: ['bot','long'] },
+    { key: 'bot.short', label: i18nT('editor.overrides.botShort', null, 'Bot Short'), color: 'var(--red)', akey: ['bot','short'] },
+    { key: 'live', label: i18nT('editor.overrides.live', null, 'Live'), color: 'var(--blue)', akey: ['live'] },
   ];
 
   for (var s = 0; s < sections.length; s++) {
@@ -1191,7 +1203,7 @@ function _covEditHtml(coin) {
     var existingKeys = Object.keys(secData).sort();
     if (existingKeys.length > 0) {
       h += '\x3Ctable class="tbl" style="font-size:var(--fs-xs);margin-bottom:var(--sp-xs)">';
-      h += '\x3Cthead>\x3Ctr>\x3Cth>Parameter\x3C/th>\x3Cth>Value\x3C/th>\x3Cth style="width:40px">\x3C/th>\x3C/tr>\x3C/thead>';
+      h += '\x3Cthead>\x3Ctr>\x3Cth>' + i18nT('editor.overrides.parameter', null, 'Parameter') + '\x3C/th>\x3Cth>' + i18nT('editor.overrides.value', null, 'Value') + '\x3C/th>\x3Cth style="width:40px">\x3C/th>\x3C/tr>\x3C/thead>';
       h += '\x3Ctbody>';
       for (var e = 0; e < existingKeys.length; e++) {
         var pk = existingKeys[e];
@@ -1212,16 +1224,16 @@ function _covEditHtml(coin) {
     if (unusedParams.length > 0) {
       var secId = sec.key.replace('.', '-');
       h += '\x3Cdiv class="form-row cols-4" style="align-items:end;margin-bottom:0">';
-      h += '\x3Cdiv class="form-group" style="grid-column:span 2">\x3Clabel>Parameter\x3C/label>';
+      h += '\x3Cdiv class="form-group" style="grid-column:span 2">\x3Clabel>' + i18nT('editor.overrides.parameter', null, 'Parameter') + '\x3C/label>';
       h += '\x3Cdiv class="ms-wrap" id="cov-ps-' + secId + '">';
-      h += '\x3Cinput class="ms-input" id="cov-ps-' + secId + '-input" placeholder="Type to search\u2026">';
+      h += '\x3Cinput class="ms-input" id="cov-ps-' + secId + '-input" placeholder="' + i18nT('editor.overrides.typeToSearch', null, 'Type to search\u2026') + '">';
       h += '\x3Cdiv class="ms-dropdown" id="cov-ps-' + secId + '-dd">\x3C/div>';
       h += '\x3C/div>\x3C/div>';
-      h += '\x3Cdiv class="form-group">\x3Clabel>Value\x3C/label>';
+      h += '\x3Cdiv class="form-group">\x3Clabel>' + i18nT('editor.overrides.value', null, 'Value') + '\x3C/label>';
       h += '\x3Cinput type="text" id="cov-pv-' + secId + '" placeholder="0.5">\x3C/div>';
       h += '\x3Cdiv class="form-group">';
       h += '\x3Cbutton type="button" class="act-btn" onclick="covAddCurrentParam(\'' + sec.key + '\')" ' +
-           'style="height:var(--input-h)">Add\x3C/button>';
+           'style="height:var(--input-h)">' + i18nT('editor.overrides.add', null, 'Add') + '\x3C/button>';
       h += '\x3C/div>\x3C/div>';
     }
 
@@ -1239,15 +1251,15 @@ function _covEditHtml(coin) {
   var fileShortJson = JSON.stringify(fileShort, null, 4);
   var hasFile = ovFile && (Object.keys(fileLong).length > 0 || Object.keys(fileShort).length > 0);
   if (fileLoadError) {
-    h += '\x3Cdiv style="margin-top:var(--sp-xs);color:var(--red);font-size:var(--fs-sm)">Override file unavailable: ' + esc(fileLoadError) + '\x3C/div>';
+    h += '\x3Cdiv style="margin-top:var(--sp-xs);color:var(--red);font-size:var(--fs-sm)">' + i18nT('editor.overrides.fileUnavailable', { msg: esc(fileLoadError) }, 'Override file unavailable: ' + esc(fileLoadError)) + '\x3C/div>';
   }
 
   h += '\x3Cdiv style="margin-top:var(--sp-xs)">';
   h += '\x3Cdiv style="display:flex;align-items:center;gap:var(--sp-sm);margin-bottom:var(--sp-xs);cursor:pointer" onclick="covToggleConfig()">';
   h += '\x3Cspan id="cov-cfg-arrow" style="font-size:var(--fs-xs);color:var(--text-dim);transition:transform .15s;display:inline-block' +
        (hasFile ? ';transform:rotate(90deg)' : '') + '">\u25B6\x3C/span>';
-  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600;color:var(--text-dim)">Config File\x3C/span>';
-  h += '\x3Cspan style="font-size:var(--fs-xs);color:var(--text-dim)">(' + esc(coin) + '.json \u2014 bot.long/bot.short overrides as JSON file)\x3C/span>';
+  h += '\x3Cspan style="font-size:var(--fs-sm);font-weight:600;color:var(--text-dim)">' + i18nT('editor.overrides.configFile', null, 'Config File') + '\x3C/span>';
+  h += '\x3Cspan style="font-size:var(--fs-xs);color:var(--text-dim)">' + i18nT('editor.overrides.configFileHint', { coin: esc(coin) }, '(' + esc(coin) + '.json \u2014 bot.long/bot.short overrides as JSON file)') + '\x3C/span>';
   h += '\x3C/div>';
   h += '\x3Cdiv id="cov-cfg-area" style="display:' + (hasFile ? 'block' : 'none') + '">';
   h += '\x3Cdiv style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-sm)">';
@@ -1269,8 +1281,7 @@ function _covEditHtml(coin) {
   h += '\x3C/div>';
   h += '\x3C/div>';
   h += '\x3Cspan style="font-size:var(--fs-xs);color:var(--text-dim);margin-top:2px;display:block">' +
-       'Saved as ' + esc(coin) + '.json alongside backtest.json. Passivbot applies these after the base config. ' +
-       'Inline overrides above take precedence over file values.\x3C/span>';
+       i18nT('editor.overrides.savedAs', { coin: esc(coin) }, 'Saved as ' + esc(coin) + '.json alongside backtest.json. Passivbot applies these after the base config. Inline overrides above take precedence over file values.') + '\x3C/span>';
   h += '\x3C/div>';
   h += '\x3C/div>';
 
@@ -1366,7 +1377,7 @@ function covAddParam(coin, secKey) {
     var inp = document.getElementById('cov-ps-' + secId + '-input');
     if (inp) param = inp.value.trim();
   }
-  if (!param) { toast('Select a parameter first', 'err'); return; }
+  if (!param) { toast(i18nT('editor.overrides.selectParamFirst', null, 'Select a parameter first'), 'err'); return; }
   var valInput = document.getElementById('cov-pv-' + secId);
   var rawVal = valInput ? valInput.value.trim() : '';
   var data = _covState.overrides[coin];
@@ -1436,7 +1447,7 @@ function _covSaveEdit() {
       try {
         _covSetDotted(target, param, _covParseParamValue(el.value, allowed[param], param));
       } catch (e) {
-        toast('Invalid value for ' + param + ': ' + ((e && e.message) || e), 'err');
+        toast(i18nT('editor.overrides.invalidValue', { param: param, msg: ((e && e.message) || e) }, 'Invalid value for ' + param + ': ' + ((e && e.message) || e)), 'err');
         el.focus();
         return false;
       }
@@ -1460,7 +1471,7 @@ function _covSaveConfigFile(coin) {
 
   var existingFile = _covState.overrideConfigs[coin];
   if (existingFile && existingFile.__pbgui_load_error__) {
-    toast('Override file could not be loaded. It was not changed.', 'err');
+    toast(i18nT('editor.overrides.fileLoadFailed', null, 'Override file could not be loaded. It was not changed.'), 'err');
     return false;
   }
   var fileContent = existingFile && typeof existingFile === 'object'
@@ -1483,7 +1494,7 @@ function _covSaveConfigFile(coin) {
     var validation = _covValidateCfgJsonField(side);
     if (validation.error) {
       covRevealCfgJsonError(side);
-      toast('Invalid JSON in ' + side + '. Fix it before closing.', 'err');
+      toast(i18nT('editor.overrides.invalidJsonInSide', { side: side }, 'Invalid JSON in ' + side + '. Fix it before closing.'), 'err');
       return false;
     }
     var parsed = validation.parsed;
@@ -1514,7 +1525,7 @@ function _covSaveConfigFile(coin) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fileContent)
-      }).catch(function(e) { toast('Save ' + filename + ' failed: ' + e.message, 'err'); });
+      }).catch(function(e) { toast(i18nT('editor.overrides.saveFailed', { filename: filename, msg: e.message }, 'Save ' + filename + ' failed: ' + e.message), 'err'); });
     }
   } else {
     // No file content → remove override_config_path
@@ -1600,9 +1611,13 @@ function covFilterCfgPaste(evt, side) {
   ta.value = JSON.stringify(filtered, null, 4);
   covAutoResizeCfgTa(ta);
   _covNotifyStructuredSync();
-  var msg = flat !== parsed ? 'Extracted ' + side + ' side' : '';
-  if (removed.length > 0) {
-    msg += (msg ? ', filtered ' : 'Filtered ') + removed.length + ' non-override param(s)';
+  var msg = '';
+  if (flat !== parsed && removed.length > 0) {
+    msg = i18nT('editor.overrides.extractedFilteredPaste', { side: side, n: removed.length }, 'Extracted ' + side + ' side, filtered ' + removed.length + ' non-override param(s)');
+  } else if (flat !== parsed) {
+    msg = i18nT('editor.overrides.extractedPaste', { side: side }, 'Extracted ' + side + ' side');
+  } else if (removed.length > 0) {
+    msg = i18nT('editor.overrides.filteredPaste', { n: removed.length }, 'Filtered ' + removed.length + ' non-override param(s)');
   }
   if (msg) toast(msg, 'info');
 }

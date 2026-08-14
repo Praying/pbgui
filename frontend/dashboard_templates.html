@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/app/i18n.js?v=1"></script>
 <title>Dashboard Templates</title>
 <style>
 :root {
@@ -22,7 +23,7 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   font-size: var(--fs-base);
   background: #0e1117;
   color: #e2e8f0;
@@ -270,20 +271,22 @@ body {
 </head>
 <body>
 <div class="tpl-header">
-  <div class="tpl-title"><span class="icon">📋</span> Dashboard Templates</div>
-  <button class="tpl-close" id="btn-close" title="Close" style="display:none">✕</button>
+  <div class="tpl-title"><span class="icon">📋</span> <span data-i18n="dash.dashboardTemplates">Dashboard Templates</span></div>
+  <button class="tpl-close" id="btn-close" title="Close" data-i18n-title="common.close" style="display:none">✕</button>
 </div>
 <div class="tpl-content" id="content">
-  <div style="color:#4a5568;padding:1rem">Loading…</div>
+  <div style="color:#4a5568;padding:1rem" data-i18n="dash.loading">Loading…</div>
 </div>
 
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
 <script>
 (function() {
   'use strict';
 
   var API_BASE = "%%API_BASE%%";
   var CURRENT  = %%CURRENT%%;
+
+  document.title = PBGuiI18n.t('dash.templatesTitle');
 
   var _templates    = [];
   var _users        = [];
@@ -345,7 +348,7 @@ body {
   function updatePlaceholder() {
     var inp = document.getElementById('dash-name');
     if (!inp) return;
-    inp.placeholder = getEffectiveUsers().length > 0 ? 'optional — default: username' : 'required';
+    inp.placeholder = getEffectiveUsers().length > 0 ? PBGuiI18n.t('dash.optionalDefaultUsername') : PBGuiI18n.t('dash.required');
   }
 
   /* ── Show/hide rename+delete buttons based on template selection ── */
@@ -377,16 +380,16 @@ body {
     drop.id    = uid + '-drop';
     var filter = el('input');
     filter.type = 'text'; filter.className = 'msel-filter';
-    filter.placeholder = 'Filter\u2026';
+    filter.placeholder = PBGuiI18n.t('dash.filter');
     var list   = el('div', 'msel-list');
     drop.appendChild(filter);
     drop.appendChild(list);
     wrap.appendChild(drop);
 
     function updateLabel() {
-      if (!selected.length)           btnLbl.textContent = '\u2014 none \u2014';
+      if (!selected.length)           btnLbl.textContent = PBGuiI18n.t('dash.noneDash');
       else if (selected.length === 1) btnLbl.textContent = selected[0];
-      else                            btnLbl.textContent = selected.length + ' templates';
+      else                            btnLbl.textContent = PBGuiI18n.t('dash.nTemplates', { count: selected.length });
     }
 
     function setItemSelected(item, isSelected) {
@@ -523,17 +526,17 @@ body {
     drop.id    = uid + '-drop';
     var filter = el('input');
     filter.type = 'text'; filter.className = 'msel-filter';
-    filter.placeholder = 'Filter…';
+    filter.placeholder = PBGuiI18n.t('dash.filter');
     var list   = el('div', 'msel-list');
     drop.appendChild(filter);
     drop.appendChild(list);
     wrap.appendChild(drop);
 
     function updateLabel() {
-      if (!selected.length)                  btnLbl.textContent = '\u2014 none \u2014';
+      if (!selected.length)                  btnLbl.textContent = PBGuiI18n.t('dash.noneDash');
       else if (selected.indexOf('ALL') >= 0) btnLbl.textContent = 'ALL';
       else if (selected.length === 1)        btnLbl.textContent = selected[0];
-      else                                   btnLbl.textContent = selected.length + ' users';
+      else                                   btnLbl.textContent = PBGuiI18n.t('dash.nUsers', { count: selected.length });
     }
 
     function setValueSelected(value, isSelected, allowEmpty) {
@@ -671,11 +674,11 @@ body {
     /* ── Card 1: Save current as template ── */
     if (CURRENT) {
       html += '<div class="tpl-card">';
-      html += '<div class="tpl-card-title">Save current dashboard as template</div>';
-      html += '<div class="tpl-label">Current: <strong>' + esc(CURRENT) + '</strong></div>';
+      html += '<div class="tpl-card-title">' + PBGuiI18n.t('dash.saveCurrentAsTemplate') + '</div>';
+      html += '<div class="tpl-label">' + PBGuiI18n.t('dash.current') + ' <strong>' + esc(CURRENT) + '</strong></div>';
       html += '<div class="input-row">';
-      html += '<input class="tpl-input" id="save-name" type="text" placeholder="Template name…" value="' + esc(CURRENT) + '" autocomplete="off">';
-      html += '<button class="btn primary" id="btn-save">💾 Save</button>';
+      html += '<input class="tpl-input" id="save-name" type="text" placeholder="' + PBGuiI18n.t('dash.templateNamePlaceholder') + '" value="' + esc(CURRENT) + '" autocomplete="off">';
+      html += '<button class="btn primary" id="btn-save">💾 ' + PBGuiI18n.t('common.save') + '</button>';
       html += '</div>';
       html += '<div class="msg" id="save-msg"></div>';
       html += '</div>';
@@ -683,19 +686,19 @@ body {
 
     /* ── Card 2: My templates list ── */
     html += '<div class="tpl-card">';
-    html += '<div class="tpl-card-title">My templates</div>';
+    html += '<div class="tpl-card-title">' + PBGuiI18n.t('dash.myTemplates') + '</div>';
     if (_templates.length === 0) {
-      html += '<div class="tpl-empty">No templates saved yet.</div>';
+      html += '<div class="tpl-empty">' + PBGuiI18n.t('dash.noTemplatesSaved') + '</div>';
     } else {
       html += '<div class="tpl-mgmt-row">';
       html += '<div id="tpl-manage-msel" style="flex:1"></div>';
-      html += '<button class="btn" id="btn-rename-tpl" title="Rename" style="display:none">📝</button>';
-      html += '<button class="btn danger" id="btn-del-tpl" title="Delete" style="display:none">🗑</button>';
+      html += '<button class="btn" id="btn-rename-tpl" title="' + PBGuiI18n.t('dash.rename') + '" style="display:none">📝</button>';
+      html += '<button class="btn danger" id="btn-del-tpl" title="' + PBGuiI18n.t('common.delete') + '" style="display:none">🗑</button>';
       html += '</div>';
       html += '<div id="rename-wrap" style="display:none;margin-top:0.5rem">';
       html += '<div class="input-row">';
       html += '<input class="tpl-input" id="rename-input" type="text" autocomplete="off">';
-      html += '<button class="btn primary" id="btn-rename-confirm">\u2713 Rename</button>';
+      html += '<button class="btn primary" id="btn-rename-confirm">\u2713 ' + PBGuiI18n.t('dash.rename') + '</button>';
       html += '<button class="btn" id="btn-rename-cancel">\u2715</button>';
       html += '</div>';
       html += '</div>';
@@ -705,26 +708,26 @@ body {
 
     /* ── Card 3: Create from template ── */
     html += '<div class="tpl-card">';
-    html += '<div class="tpl-card-title">Create dashboards from template</div>';
+    html += '<div class="tpl-card-title">' + PBGuiI18n.t('dash.createFromTemplate') + '</div>';
     if (_templates.length === 0) {
-      html += '<div class="tpl-empty">Save a template first.</div>';
+      html += '<div class="tpl-empty">' + PBGuiI18n.t('dash.saveTemplateFirst') + '</div>';
     } else {
-      html += '<div class="tpl-label">Template</div>';
+      html += '<div class="tpl-label">' + PBGuiI18n.t('dash.template') + '</div>';
       html += '<select class="tpl-select" id="tpl-select">';
-      html += '<option value="">— select template —</option>';
+      html += '<option value="">' + PBGuiI18n.t('dash.selectTemplate') + '</option>';
       for (var j = 0; j < _templates.length; j++) {
         html += '<option value="' + esc(_templates[j]) + '">' + esc(_templates[j]) + '</option>';
       }
       html += '</select>';
 
-      html += '<div class="tpl-label">Users</div>';
+      html += '<div class="tpl-label">' + PBGuiI18n.t('dash.users') + '</div>';
       html += '<div id="users-msel" style="margin-bottom:0.5rem"></div>';
 
-      html += '<div class="tpl-label">Dashboard name</div>';
-      html += '<input class="tpl-input" id="dash-name" type="text" placeholder="required" autocomplete="off">';
+      html += '<div class="tpl-label">' + PBGuiI18n.t('dash.dashboardName') + '</div>';
+      html += '<input class="tpl-input" id="dash-name" type="text" placeholder="' + PBGuiI18n.t('dash.required') + '" autocomplete="off">';
 
       html += '<div class="action-row">';
-      html += '<button class="btn primary" id="btn-create">📋 Create dashboard(s)</button>';
+      html += '<button class="btn primary" id="btn-create">📋 ' + PBGuiI18n.t('dash.createDashboards') + '</button>';
       html += '</div>';
       html += '<div class="msg" id="create-msg"></div>';
     }
@@ -754,18 +757,18 @@ body {
     if (saveBtn) {
       saveBtn.addEventListener('click', function() {
         var name = (document.getElementById('save-name').value || '').trim();
-        if (!name) { showMsg('save-msg', 'Name required', 'err'); return; }
+        if (!name) { showMsg('save-msg', PBGuiI18n.t('dash.nameRequired'), 'err'); return; }
         apiGet('/dashboards/' + encodeURIComponent(CURRENT), function(data) {
-          if (!data || !data.config) { showMsg('save-msg', 'Could not load dashboard config', 'err'); return; }
+          if (!data || !data.config) { showMsg('save-msg', PBGuiI18n.t('dash.couldNotLoadConfig'), 'err'); return; }
           apiPost('/dashboards/templates/' + encodeURIComponent(name), data.config, function(res) {
             if (res && res.status === 'ok') {
-              showMsg('save-msg', '\u201c' + name + '\u201d saved', 'ok');
+              showMsg('save-msg', PBGuiI18n.t('dash.savedName', { name: name }), 'ok');
               if (_templates.indexOf(name) === -1) {
                 _templates = _templates.concat([name]).sort();
               }
               render();
             } else {
-              showMsg('save-msg', 'Error saving template', 'err');
+              showMsg('save-msg', PBGuiI18n.t('dash.errorSavingTemplate'), 'err');
             }
           });
         });
@@ -787,11 +790,11 @@ body {
     if (delTplBtn) {
       delTplBtn.addEventListener('click', async function() {
         if (!_selTemplates.length) return;
-        var label = _selTemplates.length === 1 ? '\u201c' + _selTemplates[0] + '\u201d' : _selTemplates.length + ' templates';
+        var label = _selTemplates.length === 1 ? '\u201c' + _selTemplates[0] + '\u201d' : PBGuiI18n.t('dash.nTemplates', { count: _selTemplates.length });
         if (!(await confirmDialog({
-          title: 'Delete templates',
-          message: 'Delete ' + label + '?',
-          confirmText: 'Delete'
+          title: PBGuiI18n.t('dash.deleteTemplates'),
+          message: PBGuiI18n.t('dash.deleteTemplatesConfirm', { label: label }),
+          confirmText: PBGuiI18n.t('common.delete')
         }))) return;
         var pending = _selTemplates.slice();
         var toDelete = pending.slice();
@@ -840,9 +843,9 @@ body {
             _selTemplates = [newName];
             render();
           } else {
-            showMsg('manage-msg', res && res.detail ? res.detail : 'Error renaming template', 'err');
+            showMsg('manage-msg', res && res.detail ? PBGuiI18n.serverMsg(res.detail) : PBGuiI18n.t('dash.errorRenamingTemplate'), 'err');
           }
-        }).catch(function() { showMsg('manage-msg', 'Network error', 'err'); });
+        }).catch(function() { showMsg('manage-msg', PBGuiI18n.t('dash.networkError'), 'err'); });
       });
     }
 
@@ -870,16 +873,16 @@ body {
     if (createBtn) {
       createBtn.addEventListener('click', async function() {
         var template = (document.getElementById('tpl-select').value || '').trim();
-        if (!template) { showMsg('create-msg', 'Select a template', 'err'); return; }
+        if (!template) { showMsg('create-msg', PBGuiI18n.t('dash.selectATemplate'), 'err'); return; }
         var users = getEffectiveUsers();
         var nameInput = (document.getElementById('dash-name').value || '').trim();
 
         if (users.length > 0) {
           /* One dashboard per user — name optional, default: username */
           if (!(await confirmDialog({
-            title: 'Create dashboards',
-            message: 'Create ' + users.length + ' dashboard(s) from template “' + template + '”?',
-            confirmText: 'Create'
+            title: PBGuiI18n.t('dash.createDashboards'),
+            message: PBGuiI18n.t('dash.createConfirm', { count: users.length, template: template }),
+            confirmText: PBGuiI18n.t('dash.create')
           }))) return;
           createBtn.disabled = true;
           var pending = users.slice();
@@ -887,8 +890,8 @@ body {
           function createNext() {
             if (pending.length === 0) {
               createBtn.disabled = false;
-              var msg = nCreated + ' dashboard(s) created';
-              if (nSkipped > 0) msg += ', ' + nSkipped + ' skipped';
+              var msg = PBGuiI18n.t('dash.createdCount', { count: nCreated });
+              if (nSkipped > 0) msg += ', ' + PBGuiI18n.t('dash.skippedCount', { count: nSkipped });
               showMsg('create-msg', msg, nCreated > 0 ? 'ok' : 'err');
               if (nCreated > 0) window.parent.postMessage({type: 'pbgui_dashboard_created'}, '*');
               return;
@@ -898,10 +901,10 @@ body {
             apiGet('/dashboards/' + encodeURIComponent(dashName), function(existing) {
               if (existing && existing.config !== undefined) {
                 confirmDialog({
-                  title: 'Overwrite dashboard',
-                  message: 'Dashboard “' + dashName + '” already exists.',
-                  detail: 'Overwrite it with the selected template?',
-                  confirmText: 'Overwrite'
+                  title: PBGuiI18n.t('dash.overwriteDashboard'),
+                  message: PBGuiI18n.t('dash.dashboardExists', { name: dashName }),
+                  detail: PBGuiI18n.t('dash.overwriteConfirm'),
+                  confirmText: PBGuiI18n.t('dash.overwrite')
                 }).then(function(confirmed) {
                   if (!confirmed) {
                     nSkipped++;
@@ -924,15 +927,15 @@ body {
           createNext();
         } else {
           /* No users — single dashboard, name required */
-          if (!nameInput) { showMsg('create-msg', 'Dashboard name required', 'err'); return; }
+          if (!nameInput) { showMsg('create-msg', PBGuiI18n.t('dash.dashboardNameRequired'), 'err'); return; }
           createBtn.disabled = true;
           apiGet('/dashboards/' + encodeURIComponent(nameInput), function(existing) {
             if (existing && existing.config !== undefined) {
               confirmDialog({
-                title: 'Overwrite dashboard',
-                message: 'Dashboard “' + nameInput + '” already exists.',
-                detail: 'Overwrite it with the selected template?',
-                confirmText: 'Overwrite'
+                title: PBGuiI18n.t('dash.overwriteDashboard'),
+                message: PBGuiI18n.t('dash.dashboardExists', { name: nameInput }),
+                detail: PBGuiI18n.t('dash.overwriteConfirm'),
+                confirmText: PBGuiI18n.t('dash.overwrite')
               }).then(function(confirmed) {
                 if (!confirmed) {
                   createBtn.disabled = false;
@@ -941,13 +944,13 @@ body {
                 apiPost('/dashboards/from_template', {template: template, name: nameInput}, function(res) {
                   createBtn.disabled = false;
                   if (res && res.status === 'ok') {
-                    showMsg('create-msg', '\u201c' + nameInput + '\u201d created', 'ok');
+                    showMsg('create-msg', PBGuiI18n.t('dash.createdName', { name: nameInput }), 'ok');
                     document.getElementById('dash-name').value = '';
                     if (window.parent && window.parent !== window) {
                       window.parent.postMessage({type: 'pbgui_dashboard_created'}, '*');
                     }
                   } else {
-                    showMsg('create-msg', 'Error creating dashboard', 'err');
+                    showMsg('create-msg', PBGuiI18n.t('dash.errorCreatingDashboard'), 'err');
                   }
                 });
               });

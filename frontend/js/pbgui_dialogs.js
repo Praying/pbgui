@@ -1,6 +1,16 @@
 (function () {
   'use strict';
 
+  /* i18n helper: translate via PBGuiI18n, fall back to the English original. */
+  function _dlgT(key, fallback) {
+    var F = window.PBGuiI18n;
+    if (F && typeof F.t === 'function') {
+      var v = F.t(key);
+      return v === key ? fallback : v;
+    }
+    return fallback;
+  }
+
   var STYLE_ID = 'pbgui-dialogs-style';
   var OVERLAY_ID = 'pbgui-dialog-ovl';
   var resolveDialog = null;
@@ -92,6 +102,8 @@
     var acceptBtn = document.getElementById('pbgui-dialog-accept');
     var input = document.getElementById('pbgui-dialog-input');
 
+    if (closeBtn) closeBtn.setAttribute('aria-label', _dlgT('common.close', 'Close'));
+
     closeBtn.addEventListener('click', function () { close(false); });
     cancelBtn.addEventListener('click', function () { close(false); });
     acceptBtn.addEventListener('click', function () { close(true); });
@@ -168,17 +180,17 @@
     }
 
     currentMode = mode;
-    title.textContent = String(options.title || (mode === 'prompt' ? 'Enter value' : mode === 'alert' ? 'Notice' : 'Confirm action'));
-    message.textContent = String(options.message || (mode === 'prompt' ? 'Enter a value.' : mode === 'alert' ? 'Done.' : 'Are you sure?'));
+    title.textContent = String(options.title || (mode === 'prompt' ? _dlgT('shared.dialog.enterValue', 'Enter value') : mode === 'alert' ? _dlgT('shared.dialog.notice', 'Notice') : _dlgT('common.confirmAction', 'Confirm action')));
+    message.textContent = String(options.message || (mode === 'prompt' ? _dlgT('shared.dialog.enterAValue', 'Enter a value.') : mode === 'alert' ? _dlgT('shared.dialog.done', 'Done.') : _dlgT('common.areYouSure', 'Are you sure?')));
     var detailText = String(options.detail || '').trim();
     detail.textContent = detailText;
     detail.hidden = !detailText;
     field.hidden = mode !== 'prompt';
-    label.textContent = String(options.label || 'Value');
+    label.textContent = String(options.label || _dlgT('shared.dialog.value', 'Value'));
     input.value = String(options.defaultValue == null ? '' : options.defaultValue);
     input.placeholder = String(options.placeholder || '');
-    acceptBtn.textContent = String(options.confirmText || (mode === 'prompt' ? 'Save' : mode === 'alert' ? 'OK' : 'Confirm'));
-    cancelBtn.textContent = String(options.cancelText || 'Cancel');
+    acceptBtn.textContent = String(options.confirmText || (mode === 'prompt' ? _dlgT('common.save', 'Save') : mode === 'alert' ? _dlgT('common.ok', 'OK') : _dlgT('common.confirm', 'Confirm')));
+    cancelBtn.textContent = String(options.cancelText || _dlgT('common.cancel', 'Cancel'));
     cancelBtn.hidden = mode === 'alert' || mode === 'choose';
     acceptBtn.hidden = mode === 'choose';
     choices.hidden = mode !== 'choose';

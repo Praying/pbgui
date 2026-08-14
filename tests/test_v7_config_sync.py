@@ -5,8 +5,25 @@ import subprocess
 import textwrap
 from pathlib import Path
 
+from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+_I18N_INTERPOLATE = (
+    "PBGuiI18n.t = (function (base) {\n"
+    " return function (key, params) {\n"
+    " var value = base(key);\n"
+    " if (!params) return value;\n"
+    " return String(value).replace(/\\{(\\w+)\\}/g, function (match, name) {\n"
+    " return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match;\n"
+    " });\n"
+    " };\n"
+    "})(PBGuiI18n.t);\n"
+)
+
+_I18N_T_ALIAS = "function t(key, params) { return window.PBGuiI18n.t(key, params); }\n"
 
 
 def _read(relative_path: str) -> str:
@@ -62,6 +79,7 @@ def _run_frontend_node(relative_path: str, function_names: list[str], bootstrap:
         {assertions}
         """
     )
+    script = NODE_I18N_STUB + _I18N_INTERPOLATE + _I18N_T_ALIAS + script
     result = subprocess.run(["node", "-e", script], cwd=ROOT, capture_output=True, text=True, check=False)
     assert result.returncode == 0, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
 
@@ -456,10 +474,12 @@ def test_xss_hardening_preserves_job_and_api_key_visual_contract() -> None:
     history = _extract_js_function(_read("frontend/jobs_monitor.html"), "renderJob")
     hl_jobs = _extract_js_function(_read("frontend/hl_data_actions.html"), "renderActiveJob")
 
-    assert 'class="btn btn-sm btn-info" data-user-action="edit">Edit</button>' in api_keys
-    assert 'class="btn btn-sm btn-danger" data-user-action="delete">Delete</button>' in api_keys
-    assert jobs.index('>Run</button>') < jobs.index('>View</button>') < jobs.index('>Log</button>') < jobs.index('>Cancel</button>')
-    assert history.index('>View</button>') < history.index('>Log</button>') < history.index('>Retry</button>') < history.index('>Requeue</button>') < history.index('>Delete</button>')
+    assert 'class="btn btn-sm btn-info" data-user-action="edit"' in api_keys
+    assert_text_present(api_keys, "Edit")
+    assert 'class="btn btn-sm btn-danger" data-user-action="delete"' in api_keys
+    assert_text_present(api_keys, "Delete")
+    assert jobs.index('data-job-action="run"') < jobs.index('data-job-action="view"') < jobs.index('data-job-action="log"') < jobs.index('data-job-action="cancel"')
+    assert history.index('data-job-action="view"') < history.index('data-job-action="log"') < history.index('data-job-action="retry"') < history.index('data-job-action="requeue"') < history.index('data-job-action="delete"')
     assert 'class="job-card"' in jobs
     assert 'class="progress-bar"' in jobs
     assert 'class="hlda-jc"' in hl_jobs

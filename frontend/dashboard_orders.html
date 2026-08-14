@@ -13,6 +13,21 @@
 (function () {
     'use strict';
 
+    function _t(key, fallback, params) {
+        var i18n = window.PBGuiI18n;
+        if (i18n && typeof i18n.t === 'function') {
+            var v = i18n.t(key, params);
+            if (v !== key) return v;
+        }
+        var out = String(fallback);
+        if (params) {
+            out = out.replace(/\{(\w+)\}/g, function (m, name) {
+                return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+            });
+        }
+        return out;
+    }
+
     var API_BASE   = "%%API_BASE%%";
     var API_HOST   = "%%API_HOST%%";
     var POSITION   = "%%POSITION%%";
@@ -100,7 +115,7 @@
         }
         var upnl = posData.upnl || 0;
         var cls = upnl >= 0 ? 'dt-pos' : 'dt-neg';
-        infoEl.innerHTML = ' \u00b7 uPnL: \x3Cspan class="' + cls + '">'
+        infoEl.innerHTML = ' \u00b7 ' + _t('dash.upnl', 'uPnL') + ': \x3Cspan class="' + cls + '">'
             + (upnl >= 0 ? '+' : '') + upnl.toFixed(2) + '\x3C/span>';
     }
 
@@ -172,7 +187,7 @@
             chartCtrl = null;
             DashRender.buildOrders(container, null, {
                 position: POSITION,
-                message: 'Select a position to view orders'
+                message: _t('dash.selectPosition', 'Select a position to view orders')
             });
             reportHeight();
             return;
@@ -185,7 +200,7 @@
         chartCtrl = null;
         DashRender.buildOrders(container, null, {
             position: POSITION,
-            message: 'Loading\u2026'
+            message: _t('dash.loading', 'Loading\u2026')
         });
         reportHeight();
 
@@ -269,7 +284,7 @@
                 container.innerHTML = '';
                 var st = document.createElement('div');
                 st.className = 'dt-status';
-                st.textContent = '\u26a0 Data unavailable';
+                st.textContent = _t('dash.dataUnavailable', '\u26a0 Data unavailable');
                 container.appendChild(st);
                 reportHeight();
             });
@@ -305,7 +320,7 @@
         };
     }
 
-    var DR_VERSION = '20260812b';
+    var DR_VERSION = '20260814a';
 
     function _loadRenderScript(cb) {
         if (window.DashRender && window.DashRender.VERSION !== DR_VERSION) {

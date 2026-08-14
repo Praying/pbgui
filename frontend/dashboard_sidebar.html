@@ -12,7 +12,7 @@
     --fs-xl: 22px;
 }
 #dash-sidebar-root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   font-size: var(--fs-sm);
   color: #e2e8f0;
   padding: 0.1rem 0 0.5rem;
@@ -235,10 +235,25 @@
 
 </style>
 
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
 <script>
 (function() {
   'use strict';
+
+  function _t(key, fallback, params) {
+    var i18n = window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') {
+      var v = i18n.t(key, params);
+      if (v !== key) return v;
+    }
+    var out = String(fallback);
+    if (params) {
+      out = out.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return out;
+  }
 
   var API_BASE = "%%API_BASE%%";
   var DASHBOARDS    = (%%DASHBOARDS%%).slice().sort(function(a,b){return a.toLowerCase().localeCompare(b.toLowerCase());});
@@ -267,10 +282,10 @@
   /* ── Build list HTML from filtered names ── */
   function buildList(names) {
     if (DASHBOARDS.length === 0) {
-      return '\x3Cdiv class="ds-empty"\x3ENo dashboards yet\x3C/div\x3E';
+      return '\x3Cdiv class="ds-empty"\x3E' + _t('dash.noDashboards', 'No dashboards yet') + '\x3C/div\x3E';
     }
     if (names.length === 0) {
-      return '\x3Cdiv class="ds-no-match"\x3ENo match\x3C/div\x3E';
+      return '\x3Cdiv class="ds-no-match"\x3E' + _t('dash.noMatch', 'No match') + '\x3C/div\x3E';
     }
     var h = '\x3Cdiv class="ds-list" id="ds-list"\x3E';
     for (var i = 0; i < names.length; i++) {
@@ -279,7 +294,7 @@
       h += '\x3Cdiv class="ds-item' + ac + '" data-name="' + esc(n) + '"\x3E';
       h += '\x3Cspan class="ds-item-name"\x3E' + esc(n) + '\x3C/span\x3E';
       if (n === CURRENT) {
-        h += '\x3Cspan class="ds-item-edit" data-act="edit_dashboard" title="Edit"\x3E\u270E\x3C/span\x3E';
+        h += '\x3Cspan class="ds-item-edit" data-act="edit_dashboard" title="' + _t('dash.edit', 'Edit') + '"\x3E\u270E\x3C/span\x3E';
       }
       h += '\x3C/div\x3E';
     }
@@ -296,17 +311,17 @@
     h += '\x3Cdiv class="ds-edit-sticky"\x3E';
     h += '\x3Cdiv class="ds-edit-banner"\x3E';
     h += '\x3Cspan class="ds-edit-dot"\x3E\x3C/span\x3E';
-    h += 'Edit Mode\x3C/div\x3E';
+    h += _t('dash.editMode', 'Edit Mode') + '\x3C/div\x3E';
     h += '\x3Cdiv class="ds-header"\x3E';
-    h += '\x3Cspan class="ds-title"\x3EDashboards\x3C/span\x3E';
+    h += '\x3Cspan class="ds-title"\x3E' + _t('dash.dashboards', 'Dashboards') + '\x3C/span\x3E';
     if (DASHBOARDS.length > 0) {
       h += '\x3Cspan class="ds-count" id="ds-count"\x3E' + DASHBOARDS.length + '\x3C/span\x3E';
     }
     h += '\x3C/div\x3E';
     h += '\x3Cdiv class="ds-toolbar"\x3E';
-    h += '\x3Cbutton class="ds-btn save" data-act="save_dashboard" title="Save"\x3E\uD83D\uDCBE\x3C/button\x3E';
-    h += '\x3Cbutton class="ds-btn" data-act="cancel_edit" title="Cancel"\x3E\u2715\x3C/button\x3E';
-    h += '\x3Cbutton class="ds-btn danger" data-act="delete_dashboard" title="Delete"\x3E\uD83D\uDDD1\x3C/button\x3E';
+    h += '\x3Cbutton class="ds-btn save" data-act="save_dashboard" title="' + _t('common.save', 'Save') + '"\x3E\uD83D\uDCBE\x3C/button\x3E';
+    h += '\x3Cbutton class="ds-btn" data-act="cancel_edit" title="' + _t('common.cancel', 'Cancel') + '"\x3E\u2715\x3C/button\x3E';
+    h += '\x3Cbutton class="ds-btn danger" data-act="delete_dashboard" title="' + _t('common.delete', 'Delete') + '"\x3E\uD83D\uDDD1\x3C/button\x3E';
     h += '\x3C/div\x3E'; /* ds-toolbar */
     h += '\x3C/div\x3E'; /* ds-edit-sticky */
   } else {
@@ -314,26 +329,26 @@
     h += '\x3Cdiv class="ds-sticky-top"\x3E';
     /* Header */
     h += '\x3Cdiv class="ds-header"\x3E';
-    h += '\x3Cspan class="ds-title"\x3EDashboards\x3C/span\x3E';
+    h += '\x3Cspan class="ds-title"\x3E' + _t('dash.dashboards', 'Dashboards') + '\x3C/span\x3E';
     if (DASHBOARDS.length > 0) {
       h += '\x3Cspan class="ds-count" id="ds-count"\x3E' + DASHBOARDS.length + '\x3C/span\x3E';
     }
     h += '\x3C/div\x3E';
     /* Normal toolbar */
     h += '\x3Cdiv class="ds-toolbar"\x3E';
-    h += '\x3Cbutton class="ds-btn" data-act="refresh" title="Refresh list"\x3E\u21BB\x3C/button\x3E';
-    h += '\x3Cbutton class="ds-btn" data-act="new_dashboard" title="New dashboard"\x3E\u2795\x3C/button\x3E';
+    h += '\x3Cbutton class="ds-btn" data-act="refresh" title="' + _t('dash.refreshList', 'Refresh list') + '"\x3E\u21BB\x3C/button\x3E';
+    h += '\x3Cbutton class="ds-btn" data-act="new_dashboard" title="' + _t('dash.newDashboard', 'New dashboard') + '"\x3E\u2795\x3C/button\x3E';
     if (HAS_DASHBOARD) {
-      h += '\x3Cbutton class="ds-btn" data-act="edit_dashboard" title="Edit current"\x3E\u270E\x3C/button\x3E';
-      h += '\x3Cbutton class="ds-btn danger" data-act="delete_selected" title="Delete selected dashboard"\x3E\uD83D\uDDD1\x3C/button\x3E';
+      h += '\x3Cbutton class="ds-btn" data-act="edit_dashboard" title="' + _t('dash.editCurrent', 'Edit current') + '"\x3E\u270E\x3C/button\x3E';
+      h += '\x3Cbutton class="ds-btn danger" data-act="delete_selected" title="' + _t('dash.deleteSelectedDashboard', 'Delete selected dashboard') + '"\x3E\uD83D\uDDD1\x3C/button\x3E';
     }
-    h += '\x3Cbutton class="ds-btn" data-act="open_templates" title="Templates"\x3E\uD83D\uDCCB\x3C/button\x3E';
+    h += '\x3Cbutton class="ds-btn" data-act="open_templates" title="' + _t('dash.templates', 'Templates') + '"\x3E\uD83D\uDCCB\x3C/button\x3E';
     h += '\x3C/div\x3E';
     /* Search — only shown with 4+ dashboards */
     if (DASHBOARDS.length >= 4) {
       h += '\x3Cdiv class="ds-search-wrap"\x3E';
       h += '\x3Cspan class="ds-search-icon"\x3E\uD83D\uDD0D\x3C/span\x3E';
-      h += '\x3Cinput class="ds-search" id="ds-search" type="text" placeholder="Filter\u2026" autocomplete="off"\x3E';
+      h += '\x3Cinput class="ds-search" id="ds-search" type="text" placeholder="' + _t('dash.filter', 'Filter\u2026') + '" autocomplete="off"\x3E';
       h += '\x3C/div\x3E';
     }
     h += '\x3C/div\x3E'; /* ds-sticky-top */
@@ -419,7 +434,7 @@
     /* Close button — overlaid top-right, closes box directly (no postMessage) */
     var closeBtn = doc.createElement('button');
     closeBtn.textContent = '\u2715';
-    closeBtn.title = 'Close';
+    closeBtn.title = _t('common.close', 'Close');
     closeBtn.style.cssText = [
       'position:absolute', 'top:6px', 'right:8px',
       'z-index:10',
@@ -487,16 +502,16 @@
       var act = btn.getAttribute('data-act');
       if (act === 'delete_dashboard') {
         if (!(await window.PBGuiDialogs.confirm({
-          title: 'Delete dashboard',
-          message: 'Delete this dashboard?',
-          confirmText: 'Delete'
+          title: _t('dash.deleteDashboard', 'Delete dashboard'),
+          message: _t('dash.deleteThisDashboard', 'Delete this dashboard?'),
+          confirmText: _t('common.delete', 'Delete')
         }))) return;
       }
       if (act === 'delete_selected') {
         if (!(await window.PBGuiDialogs.confirm({
-          title: 'Delete dashboard',
-          message: 'Delete dashboard “' + CURRENT + '”?',
-          confirmText: 'Delete'
+          title: _t('dash.deleteDashboard', 'Delete dashboard'),
+          message: _t('dash.deleteDashboardName', 'Delete dashboard “{name}”?', { name: CURRENT }),
+          confirmText: _t('common.delete', 'Delete')
         }))) return;
         sendAction('delete_dashboard');
         return;

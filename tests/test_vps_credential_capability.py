@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from api import v7_instances
+from tests.i18n_helpers import assert_text_present
 import monitor_agent
 import vps_manager_core
 import vps_manager_service
@@ -410,19 +411,19 @@ def test_vps_frontend_renders_reason_and_guards_detail_requests() -> None:
     """VPS credential diagnostics include the reason and reject stale detail responses."""
     source = (ROOT / "frontend" / "vps_manager.html").read_text(encoding="utf-8")
 
-    assert "Credential Reason" in source
+    assert_text_present(source, "Credential Reason")
     assert "status.credential_reason || capabilityStateText" in source
     assert "detailRequestGeneration" in source
     assert "detailAbortController" in source
     assert "generation !== store.detailRequestGeneration" in source
     assert "store.detailRequestGeneration += 1" in source
     assert "store.detailAbortController.abort()" in source
-    assert "CMC Provider Usage Age" in source
-    assert "CMC Provider Used / Limit" in source
+    assert_text_present(source, "CMC Provider Usage Age")
+    assert_text_present(source, "CMC Provider Used / Limit")
     assert "status.cmc_provider_used" in source
     assert "status.cmc_provider_limit" in source
-    assert "CMC Authority Reachable" in source
-    assert "CMC Authority State Age" in source
+    assert_text_present(source, "CMC Authority Reachable")
+    assert_text_present(source, "CMC Authority State Age")
 
 
 def test_vps_provider_usage_metadata_uses_newest_secret_free_observation(

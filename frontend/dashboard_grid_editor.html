@@ -13,7 +13,7 @@
     --fs-xl: 22px;
 }
 .dge-root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
     font-size: var(--fs-base);
     color: #e2e8f0;
     background: #0e1117;
@@ -55,15 +55,15 @@
 <div class="dge-root">
   <div class="dge-header">
     <div class="dge-field">
-      <label>Dashboard Name</label>
-      <input id="dge-name" type="text" maxlength="32" placeholder="Enter name...">
+      <label data-i18n="dash.dashboardName">Dashboard Name</label>
+      <input id="dge-name" type="text" maxlength="32" placeholder="Enter name..." data-i18n-placeholder="dash.enterName">
     </div>
     <div class="dge-field">
-      <label>Columns</label>
+      <label data-i18n="dash.columns">Columns</label>
       <input id="dge-cols" type="number" min="1" max="2" step="1">
     </div>
     <div class="dge-field">
-      <label>Rows</label>
+      <label data-i18n="dash.rows">Rows</label>
       <input id="dge-rows" type="number" min="1" max="6" step="1">
     </div>
     <div id="dge-status" class="dge-status"></div>
@@ -71,6 +71,21 @@
 </div>
 <script>
 (function () {
+  function _t(key, fallback, params) {
+    var i18n = window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') {
+      var v = i18n.t(key, params);
+      if (v !== key) return v;
+    }
+    var out = String(fallback);
+    if (params) {
+      out = out.replace(/\{(\w+)\}/g, function (m, nm) {
+        return Object.prototype.hasOwnProperty.call(params, nm) ? String(params[nm]) : m;
+      });
+    }
+    return out;
+  }
+
   var API_BASE = "%%API_BASE%%";
   var name = %%DASHBOARD_NAME%%;
   var rows = %%DASHBOARD_ROWS%%;
@@ -96,15 +111,15 @@
   function sync() {
     clearTimeout(syncTimer);
     syncTimer = setTimeout(function () {
-      setStatus("saving...", "");
+      setStatus(_t("dash.gridSaving", "saving..."), "");
       var payload = { name: name, rows: rows, cols: cols };
       fetch(API_BASE + "/dashboard/grid/pending", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }).then(function (r) {
-        if (r.ok) { setStatus("saved", "saved"); } else { setStatus("error", "error"); }
-      }).catch(function () { setStatus("offline", "error"); });
+        if (r.ok) { setStatus(_t("dash.saved", "saved"), "saved"); } else { setStatus(_t("dash.statusError", "error"), "error"); }
+      }).catch(function () { setStatus(_t("dash.offline", "offline"), "error"); });
     }, 300);
   }
 

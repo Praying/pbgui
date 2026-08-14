@@ -6,56 +6,71 @@
     <div class="db-header">
         <div class="db-totals">
             <div class="db-total-item">
-                <label>Total Balance</label>
+                <label data-i18n="dash.totalBalance">Total Balance</label>
                 <span class="db-green" id="db-tot-balance">—</span>
             </div>
             <div class="db-total-item">
-                <label>Total uPnl</label>
+                <label data-i18n="dash.totalUPnl">Total uPnl</label>
                 <span id="db-tot-upnl">—</span>
             </div>
             <div class="db-total-item">
-                <label>Total TWE</label>
+                <label data-i18n="dash.totalTwe">Total TWE</label>
                 <span id="db-tot-twe">—</span>
             </div>
         </div>
         <div class="db-user-sel" id="db-user-sel-edit" style="display:none">
-            <label>Users:</label>
+            <label data-i18n="dash.usersColon">Users:</label>
             <div style="position:relative">
                 <div class="db-msel-btn" id="db-msel-btn">
                     <span id="db-msel-label">ALL</span>
                     <span class="db-msel-arrow">▼</span>
                 </div>
                 <div class="db-msel-drop" id="db-msel-drop">
-                    <input class="db-msel-filter" id="db-msel-filter" type="text" placeholder="Filter...">
+                    <input class="db-msel-filter" id="db-msel-filter" type="text" placeholder="Filter..." data-i18n-placeholder="dash.filterDots">
                     <div class="db-msel-list" id="db-msel-list"></div>
                 </div>
             </div>
         </div>
         <div class="db-user-sel" id="db-user-sel-static">
-            <label>Users:</label>
+            <label data-i18n="dash.usersColon">Users:</label>
             <span id="db-user-static" style="color:#e2e8f0;font-size:var(--fs-sm);"></span>
         </div>
     </div>
-    <div class="db-status" id="db-status">Connecting…</div>
+    <div class="db-status" id="db-status" data-i18n="dash.connectingCap">Connecting…</div>
     <div class="db-table-wrap">
         <table class="db-table">
             <thead>
                 <tr>
-                    <th data-col="user">User <span class="db-sort-arrow"></span></th>
-                    <th data-col="date">Date <span class="db-sort-arrow"></span></th>
-                    <th data-col="balance">Balance USDT <span class="db-sort-arrow"></span></th>
-                    <th data-col="upnl">uPnl <span class="db-sort-arrow"></span></th>
-                    <th data-col="we">TWE % <span class="db-sort-arrow"></span></th>
+                    <th data-col="user"><span data-i18n="dash.user">User</span> <span class="db-sort-arrow"></span></th>
+                    <th data-col="date"><span data-i18n="dash.date">Date</span> <span class="db-sort-arrow"></span></th>
+                    <th data-col="balance"><span data-i18n="dash.balanceUsdt">Balance USDT</span> <span class="db-sort-arrow"></span></th>
+                    <th data-col="upnl"><span data-i18n="dash.upnl">uPnl</span> <span class="db-sort-arrow"></span></th>
+                    <th data-col="we"><span data-i18n="dash.twePct">TWE %</span> <span class="db-sort-arrow"></span></th>
                 </tr>
             </thead>
             <tbody id="db-body"></tbody>
         </table>
-        <div class="db-nodata" id="db-nodata" style="display:none">No balance data available.</div>
+        <div class="db-nodata" id="db-nodata" style="display:none" data-i18n="dash.noBalanceDataAvailable">No balance data available.</div>
     </div>
 </div>
 
 <script>
 (function () {
+    function _t(key, fallback, params) {
+        var i18n = window.PBGuiI18n;
+        if (i18n && typeof i18n.t === 'function') {
+            var v = i18n.t(key, params);
+            if (v !== key) return v;
+        }
+        var out = String(fallback);
+        if (params) {
+            out = out.replace(/\{(\w+)\}/g, function (m, name) {
+                return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+            });
+        }
+        return out;
+    }
+
     // Config injected directly by the dashboard view renderer.
     var API_BASE = "%%API_BASE%%";
     var API_HOST = "%%API_HOST%%";
@@ -82,7 +97,7 @@
         }
     }
 
-    var DR_VERSION = '20260812b';
+    var DR_VERSION = '20260814a';
 
     /* Load dashboard_render.js once (CSS + shared render primitives) */
     function _loadRenderScript(cb) {
@@ -132,15 +147,15 @@
     function setStatus(m) { var e = document.getElementById('db-status'); if (e) e.textContent = m; }
     function statusLabel(source) {
         var src = String(source || 'db').toLowerCase();
-        return src === 'live' ? 'Live' : (src === 'mixed' ? 'Mixed live/DB' : 'DB fallback');
+        return src === 'live' ? _t('dash.live', 'Live') : (src === 'mixed' ? _t('dash.mixedLiveDb', 'Mixed live/DB') : _t('dash.dbFallback', 'DB fallback'));
     }
     function ageLabel(ts) {
         var age = Math.max(0, Math.round((Date.now() - (ts || Date.now())) / 1000));
-        if (age <= 1) return 'now';
-        if (age < 60) return age + 's ago';
+        if (age <= 1) return _t('dash.nowShort', 'now');
+        if (age < 60) return _t('dash.secondsAgo', '{n}s ago', { n: age });
         var min = Math.floor(age / 60);
-        if (min < 60) return min + 'm ago';
-        return Math.floor(min / 60) + 'h ago';
+        if (min < 60) return _t('dash.minutesAgo', '{n}m ago', { n: min });
+        return _t('dash.hoursAgo', '{n}h ago', { n: Math.floor(min / 60) });
     }
     function refreshStatusAge() {
         if (!statusTs) return;
@@ -336,13 +351,13 @@
         var lbl = document.getElementById('db-msel-label');
         if (!lbl) return;
         if (selectedUsers.length === 0) {
-            lbl.textContent = '\u2014 select \u2014';
+            lbl.textContent = _t('dash.selectDash', '— select —');
         } else if (selectedUsers.indexOf('ALL') >= 0) {
             lbl.textContent = 'ALL';
         } else if (selectedUsers.length === 1) {
             lbl.textContent = selectedUsers[0];
         } else {
-            lbl.textContent = selectedUsers.length + ' users';
+            lbl.textContent = _t('dash.nUsers', '{count} users', { count: selectedUsers.length });
         }
     }
 
@@ -386,7 +401,7 @@
                     })
                     .catch(function() {});
             })
-            .catch(function(e) { if (!isStale()) setStatus('\u26a0 Data unavailable'); });
+            .catch(function(e) { if (!isStale()) setStatus(_t('dash.dataUnavailable', '⚠ Data unavailable')); });
     }
 
     function connect() {
@@ -403,7 +418,7 @@
         };
         ws.onclose   = function() {
             if (isStale()) return;
-            setStatus('Disconnected \u2014 reconnecting\u2026');
+            setStatus(_t('dash.disconnectedReconnecting', 'Disconnected — reconnecting…'));
             reconnTimer = setTimeout(connect, reconnDelay);
             reconnDelay = Math.min(reconnDelay * 2, 30000);
             window._dbBalanceReconnTimer = reconnTimer;

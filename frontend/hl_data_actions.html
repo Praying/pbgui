@@ -4,6 +4,7 @@
      .hlda-root. Config injected via data-attributes on root element.
      All event binding via addEventListener / event delegation.
 -->
+<script src="/app/i18n.js?v=1"></script>
 
 <style>
     html, body {
@@ -46,7 +47,7 @@
         --sp-lg: 20px;
         --input-h: 32px;
         --btn-h: 32px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
         color: var(--hlda-text);
         line-height: 1.6;
         margin: 0;
@@ -475,29 +476,29 @@
     <div class="hlda-section" id="__HLDA__sec-download">
         <div class="hlda-sh" id="__HLDA__sh-download" data-action="toggle-section" data-id="download">
             <span class="hlda-arrow" id="__HLDA__arrow-download">&#9654;</span>
-            Download l2Book from AWS
+            <span data-i18n="market.hldaDownloadL2book">Download l2Book from AWS</span>
             <span class="hlda-sh-status" id="__HLDA__sh-status-dl"></span>
         </div>
         <div class="hlda-sb" id="__HLDA__body-download">
-            <span style="color:var(--hlda-text3);font-size:13px;">Loading…</span>
+            <span style="color:var(--hlda-text3);font-size:13px;" data-i18n="market.loading">Loading…</span>
         </div>
     </div>
 
     <div class="hlda-section" id="__HLDA__sec-build">
         <div class="hlda-sh" id="__HLDA__sh-build" data-action="toggle-section" data-id="build">
             <span class="hlda-arrow" id="__HLDA__arrow-build">&#9654;</span>
-            Build best 1m OHLCV
+            <span data-i18n="market.hldaBuildBest1m">Build best 1m OHLCV</span>
             <span class="hlda-sh-status" id="__HLDA__sh-status-build"></span>
         </div>
         <div class="hlda-sb" id="__HLDA__body-build">
-            <span style="color:var(--hlda-text3);font-size:13px;">Loading…</span>
+            <span style="color:var(--hlda-text3);font-size:13px;" data-i18n="market.loading">Loading…</span>
         </div>
     </div>
 
     <div class="hlda-modal" id="__HLDA__modal">
         <div class="hlda-modal-box">
             <div class="hlda-modal-hd">
-                <h3 id="__HLDA__modal-title">Job Log</h3>
+                <h3 id="__HLDA__modal-title" data-i18n="market.jobLog">Job Log</h3>
                 <button class="hlda-modal-close" data-action="close-modal">✕</button>
             </div>
             <div class="hlda-modal-body" id="__HLDA__modal-body"></div>
@@ -643,11 +644,11 @@
         var parts = [];
         if (running.length) {
             var coins = (running[0].payload || {}).coins || [];
-            var label = coins.length ? coins.length + ' coins' : 'job';
-            parts.push('\x3Cspan class="sh-running"\x3E\x3Cspan class="sh-dot"\x3E\x3C/span\x3E Running ' + escHtml(label) + '\x3C/span\x3E');
+            var label = coins.length ? PBGuiI18n.t('market.coinsCount', { count: coins.length }) : PBGuiI18n.t('market.job');
+            parts.push('\x3Cspan class="sh-running"\x3E\x3Cspan class="sh-dot"\x3E\x3C/span\x3E ' + PBGuiI18n.t('market.runningLabel', { label: escHtml(label) }) + '\x3C/span\x3E');
         }
         if (pending.length) {
-            parts.push('\x3Cspan class="sh-pending"\x3E' + pending.length + ' pending\x3C/span\x3E');
+            parts.push('\x3Cspan class="sh-pending"\x3E' + PBGuiI18n.t('market.pendingCount', { count: pending.length }) + '\x3C/span\x3E');
         }
         el.innerHTML = parts.join(' \x3Cspan style="color:var(--hlda-text4)"\x3E·\x3C/span\x3E ');
     }
@@ -950,11 +951,11 @@
             connectWS();
         } catch(e) {
             if (attempt < INIT_MAX_RETRIES) {
-                var msg = '\x3Cdiv class="hlda-empty"\x3EConnection failed, retrying (' + (attempt+1) + '/' + INIT_MAX_RETRIES + ')…\x3C/div\x3E';
+                var msg = '\x3Cdiv class="hlda-empty"\x3E' + PBGuiI18n.t('market.connectionRetrying', { current: (attempt+1), max: INIT_MAX_RETRIES }) + '\x3C/div\x3E';
                 if(dl) dl.innerHTML=msg; if(bl) bl.innerHTML=msg;
                 setTimeout(function() { doInit(attempt + 1); }, INIT_RETRY_DELAY);
             } else {
-                var err = '\x3Cdiv class="hlda-msg error" style="display:block"\x3EFailed to load: ' + escHtml(e.message) + '\x3C/div\x3E';
+                var err = '\x3Cdiv class="hlda-msg error" style="display:block"\x3E' + PBGuiI18n.t('market.failedToLoad', { message: escHtml(e.message) }) + '\x3C/div\x3E';
                 if(dl) dl.innerHTML=err; if(bl) bl.innerHTML=err;
             }
         }
@@ -968,35 +969,35 @@
         var body = $('body-download');
         if (!body) return;
         if (!dlHasCreds) {
-            body.innerHTML = '\x3Cdiv class="hlda-nocreds"\x3E⚠ No AWS credentials configured. Go to \x3Cstrong\x3ESettings (l2Book)\x3C/strong\x3E above to enter your Access Key ID and Secret Access Key.\x3C/div\x3E';
+            body.innerHTML = '\x3Cdiv class="hlda-nocreds"\x3E' + PBGuiI18n.t('market.noAwsCreds', { settings: PBGuiI18n.t('market.settingsL2book') }) + '\x3C/div\x3E';
             return;
         }
         if (!dlCoins.length) {
-            body.innerHTML = '\x3Cdiv class="hlda-msg warning" style="display:block"\x3ENo downloadable Hyperliquid l2Book coins configured. XYZ/TradFi symbols are excluded here.\x3C/div\x3E';
+            body.innerHTML = '\x3Cdiv class="hlda-msg warning" style="display:block"\x3E' + PBGuiI18n.t('market.noDownloadableCoins') + '\x3C/div\x3E';
             return;
         }
         var oldest = dlArchive.oldest_day ? fmtDay(dlArchive.oldest_day) : '?';
         var newest = dlArchive.newest_day ? fmtDay(dlArchive.newest_day) : '?';
         body.innerHTML =
             '\x3Cdiv class="hlda-fs"\x3E' +
-                '\x3Cspan class="hlda-lbl"\x3ECoins for download\x3C/span\x3E' +
-                '\x3Cdiv class="hlda-hint"\x3ELeave this empty to queue all downloadable non-XYZ coins. Drag across visible coin rows to add or remove larger ranges quickly.\x3C/div\x3E' +
+                '\x3Cspan class="hlda-lbl"\x3E' + PBGuiI18n.t('market.coinsForDownload') + '\x3C/span\x3E' +
+                '\x3Cdiv class="hlda-hint"\x3E' + PBGuiI18n.t('market.dlSelectionHint') + '\x3C/div\x3E' +
                 '\x3Cdiv class="hlda-picker-toolbar"\x3E' +
-                    '\x3Cdiv class="hlda-picker-filter-wrap"\x3E\x3Cinput type="text" class="hlda-filter-input" id="' + P + 'search-dl" placeholder="Filter enabled coin list" data-action="dl-filter"\x3E\x3C/div\x3E' +
-                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'dl-select-visible" data-action="dl-select-visible"\x3ESelect visible\x3C/button\x3E' +
-                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'dl-clear-selection" data-action="dl-clear-selection"\x3EClear all\x3C/button\x3E' +
-                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'dl-selected-count"\x3E0 selected / ' + dlCoins.length + ' total\x3C/span\x3E' +
-                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'dl-visible-count"\x3E0 visible\x3C/span\x3E' +
+                    '\x3Cdiv class="hlda-picker-filter-wrap"\x3E\x3Cinput type="text" class="hlda-filter-input" id="' + P + 'search-dl" placeholder="' + PBGuiI18n.t('market.filterEnabledCoinList') + '" data-action="dl-filter"\x3E\x3C/div\x3E' +
+                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'dl-select-visible" data-action="dl-select-visible"\x3E' + PBGuiI18n.t('market.selectVisible') + '\x3C/button\x3E' +
+                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'dl-clear-selection" data-action="dl-clear-selection"\x3E' + PBGuiI18n.t('market.clearAll') + '\x3C/button\x3E' +
+                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'dl-selected-count"\x3E' + PBGuiI18n.t('market.zeroSelectedTotal', { total: dlCoins.length }) + '\x3C/span\x3E' +
+                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'dl-visible-count"\x3E' + PBGuiI18n.t('market.zeroVisible') + '\x3C/span\x3E' +
                 '\x3C/div\x3E' +
                 '\x3Cdiv class="hlda-coin-grid" id="' + P + 'opts-dl"\x3E\x3C/div\x3E' +
             '\x3C/div\x3E' +
             '\x3Cdiv class="hlda-dr"\x3E' +
-                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3EStart date\x3C/span\x3E\x3Cinput type="date" id="' + P + 'dl-sd" value="' + fmtDay(dlArchive.oldest_day) + '"\x3E\x3Cdiv class="hlda-hint"\x3EArchive oldest: ' + oldest + '\x3C/div\x3E\x3C/div\x3E' +
-                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3EEnd date\x3C/span\x3E\x3Cinput type="date" id="' + P + 'dl-ed" value="' + fmtDay(dlArchive.newest_day) + '"\x3E\x3Cdiv class="hlda-hint"\x3EArchive newest: ' + newest + '\x3C/div\x3E\x3C/div\x3E' +
+                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3E' + PBGuiI18n.t('market.startDate') + '\x3C/span\x3E\x3Cinput type="date" id="' + P + 'dl-sd" value="' + fmtDay(dlArchive.oldest_day) + '"\x3E\x3Cdiv class="hlda-hint"\x3E' + PBGuiI18n.t('market.archiveOldest', { date: oldest }) + '\x3C/div\x3E\x3C/div\x3E' +
+                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3E' + PBGuiI18n.t('market.endDate') + '\x3C/span\x3E\x3Cinput type="date" id="' + P + 'dl-ed" value="' + fmtDay(dlArchive.newest_day) + '"\x3E\x3Cdiv class="hlda-hint"\x3E' + PBGuiI18n.t('market.archiveNewest', { date: newest }) + '\x3C/div\x3E\x3C/div\x3E' +
             '\x3C/div\x3E' +
-            '\x3Cdiv class="hlda-cb"\x3E\x3Cinput type="checkbox" id="' + P + 'dl-only" checked\x3E\x3Clabel for="' + P + 'dl-only"\x3EOnly missing 1m_src hours\x3C/label\x3E\x3C/div\x3E' +
-            '\x3Cdiv class="hlda-help"\x3EDownloads only l2Book hours without minute coverage in 1m_src yet. Skips days older than your local oldest l2Book day.\x3C/div\x3E' +
-            '\x3Cdiv class="hlda-ar"\x3E\x3Cbutton class="hlda-btn" id="' + P + 'dl-btn" data-action="submit-dl"\x3EDownload\x3C/button\x3E\x3Cdiv class="hlda-lo" id="' + P + 'dl-lo"\x3E\x3Cdiv class="hlda-spin"\x3E\x3C/div\x3E\x3Cspan\x3EPreflight check…\x3C/span\x3E\x3C/div\x3E\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-cb"\x3E\x3Cinput type="checkbox" id="' + P + 'dl-only" checked\x3E\x3Clabel for="' + P + 'dl-only"\x3E' + PBGuiI18n.t('market.onlyMissing1mSrc') + '\x3C/label\x3E\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-help"\x3E' + PBGuiI18n.t('market.dlOnlyHelp') + '\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-ar"\x3E\x3Cbutton class="hlda-btn" id="' + P + 'dl-btn" data-action="submit-dl"\x3E' + PBGuiI18n.t('market.download') + '\x3C/button\x3E\x3Cdiv class="hlda-lo" id="' + P + 'dl-lo"\x3E\x3Cdiv class="hlda-spin"\x3E\x3C/div\x3E\x3Cspan\x3E' + PBGuiI18n.t('market.preflightCheck') + '\x3C/span\x3E\x3C/div\x3E\x3C/div\x3E' +
             '\x3Cdiv class="hlda-msg" id="' + P + 'dl-msg"\x3E\x3C/div\x3E' +
             renderJobMonitorHTML('dl');
         dlFilter = '';
@@ -1010,41 +1011,41 @@
         var body = $('body-build');
         if (!body) return;
         if (!buildCoins.length) {
-            body.innerHTML = '\x3Cdiv class="hlda-msg warning" style="display:block"\x3ENo eligible coins found. XYZ symbols require Tiingo mapping with status \'ok\'.\x3C/div\x3E';
+            body.innerHTML = '\x3Cdiv class="hlda-msg warning" style="display:block"\x3E' + PBGuiI18n.t('market.noEligibleCoins') + '\x3C/div\x3E';
             return;
         }
         body.innerHTML =
             '\x3Cdiv class="hlda-fs"\x3E' +
-                '\x3Cspan class="hlda-lbl"\x3ECoins for build\x3C/span\x3E' +
-                '\x3Cdiv class="hlda-hint"\x3ELeave this empty to queue all eligible coins. Drag across visible coin rows to add or remove larger ranges quickly.\x3C/div\x3E' +
+                '\x3Cspan class="hlda-lbl"\x3E' + PBGuiI18n.t('market.coinsForBuild') + '\x3C/span\x3E' +
+                '\x3Cdiv class="hlda-hint"\x3E' + PBGuiI18n.t('market.buildSelectionHint') + '\x3C/div\x3E' +
                 '\x3Cdiv class="hlda-picker-toolbar"\x3E' +
-                    '\x3Cdiv class="hlda-picker-filter-wrap"\x3E\x3Cinput type="text" class="hlda-filter-input" id="' + P + 'search-build" placeholder="Filter enabled coin list" data-action="build-filter"\x3E\x3C/div\x3E' +
-                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-tradfi-only" data-action="build-tradfi-only" aria-pressed="false"\x3ETradFi only\x3C/button\x3E' +
-                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-no-local-data" data-action="build-no-local-data" aria-pressed="false"\x3ENo downloaded history\x3C/button\x3E' +
-                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-select-visible" data-action="build-select-visible"\x3ESelect visible\x3C/button\x3E' +
-                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-clear-selection" data-action="build-clear-selection"\x3EClear all\x3C/button\x3E' +
-                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'build-selected-count"\x3E0 selected / ' + buildCoins.length + ' total\x3C/span\x3E' +
-                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'build-visible-count"\x3E0 visible\x3C/span\x3E' +
+                    '\x3Cdiv class="hlda-picker-filter-wrap"\x3E\x3Cinput type="text" class="hlda-filter-input" id="' + P + 'search-build" placeholder="' + PBGuiI18n.t('market.filterEnabledCoinList') + '" data-action="build-filter"\x3E\x3C/div\x3E' +
+                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-tradfi-only" data-action="build-tradfi-only" aria-pressed="false"\x3E' + PBGuiI18n.t('market.tradfiOnly') + '\x3C/button\x3E' +
+                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-no-local-data" data-action="build-no-local-data" aria-pressed="false"\x3E' + PBGuiI18n.t('market.noDownloadedHistory') + '\x3C/button\x3E' +
+                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-select-visible" data-action="build-select-visible"\x3E' + PBGuiI18n.t('market.selectVisible') + '\x3C/button\x3E' +
+                    '\x3Cbutton type="button" class="hlda-mini-btn" id="' + P + 'build-clear-selection" data-action="build-clear-selection"\x3E' + PBGuiI18n.t('market.clearAll') + '\x3C/button\x3E' +
+                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'build-selected-count"\x3E' + PBGuiI18n.t('market.zeroSelectedTotal', { total: buildCoins.length }) + '\x3C/span\x3E' +
+                    '\x3Cspan class="hlda-picker-meta" id="' + P + 'build-visible-count"\x3E' + PBGuiI18n.t('market.zeroVisible') + '\x3C/span\x3E' +
                 '\x3C/div\x3E' +
                 '\x3Cdiv class="hlda-coin-grid" id="' + P + 'opts-build"\x3E\x3C/div\x3E' +
             '\x3C/div\x3E' +
             '\x3Cdiv class="hlda-br"\x3E' +
-                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3EStart date (optional)\x3C/span\x3E' +
+                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3E' + PBGuiI18n.t('market.startDateOptional') + '\x3C/span\x3E' +
                     '\x3Cdiv class="hlda-date-wrap"\x3E' +
                         '\x3Cinput type="text" class="hlda-date-input" id="' + P + 'build-sd" data-prev="" placeholder="yyyy-mm-dd"\x3E' +
-                        '\x3Cbutton type="button" class="hlda-date-btn" data-dp="' + P + 'build-sd" data-action="open-build-date" onclick="window.__dp.show(\'' + P + 'build-sd\', this)" title="Open calendar"\x3E📅\x3C/button\x3E' +
+                        '\x3Cbutton type="button" class="hlda-date-btn" data-dp="' + P + 'build-sd" data-action="open-build-date" onclick="window.__dp.show(\'' + P + 'build-sd\', this)" title="' + PBGuiI18n.t('market.openCalendar') + '"\x3E📅\x3C/button\x3E' +
                     '\x3C/div\x3E' +
                 '\x3C/div\x3E' +
-                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3EEnd date (optional)\x3C/span\x3E' +
+                '\x3Cdiv class="hlda-fs"\x3E\x3Cspan class="hlda-lbl"\x3E' + PBGuiI18n.t('market.endDateOptional') + '\x3C/span\x3E' +
                     '\x3Cdiv class="hlda-date-wrap"\x3E' +
                         '\x3Cinput type="text" class="hlda-date-input" id="' + P + 'build-ed" data-prev="" placeholder="yyyy-mm-dd"\x3E' +
-                        '\x3Cbutton type="button" class="hlda-date-btn" data-dp="' + P + 'build-ed" data-action="open-build-date" onclick="window.__dp.show(\'' + P + 'build-ed\', this)" title="Open calendar"\x3E📅\x3C/button\x3E' +
+                        '\x3Cbutton type="button" class="hlda-date-btn" data-dp="' + P + 'build-ed" data-action="open-build-date" onclick="window.__dp.show(\'' + P + 'build-ed\', this)" title="' + PBGuiI18n.t('market.openCalendar') + '"\x3E📅\x3C/button\x3E' +
                     '\x3C/div\x3E' +
                 '\x3C/div\x3E' +
             '\x3C/div\x3E' +
-            '\x3Cdiv class="hlda-cb"\x3E\x3Cinput type="checkbox" id="' + P + 'build-refetch"\x3E\x3Clabel for="' + P + 'build-refetch"\x3ERefetch TradFi data from scratch (stock-perps)\x3C/label\x3E\x3C/div\x3E' +
-            '\x3Cdiv class="hlda-help"\x3EIgnores existing TradFi 1m data and re-fetches from 2016-12-12. Use after symbol mapping corrections. Applies only to XYZ-* coins.\x3C/div\x3E' +
-            '\x3Cdiv class="hlda-ar"\x3E\x3Cbutton class="hlda-btn" id="' + P + 'build-btn" data-action="submit-build"\x3EBuild best 1m\x3C/button\x3E\x3Cdiv class="hlda-lo" id="' + P + 'build-lo"\x3E\x3Cdiv class="hlda-spin"\x3E\x3C/div\x3E\x3Cspan\x3EQueuing…\x3C/span\x3E\x3C/div\x3E\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-cb"\x3E\x3Cinput type="checkbox" id="' + P + 'build-refetch"\x3E\x3Clabel for="' + P + 'build-refetch"\x3E' + PBGuiI18n.t('market.refetchTradfi') + '\x3C/label\x3E\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-help"\x3E' + PBGuiI18n.t('market.refetchHelp') + '\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-ar"\x3E\x3Cbutton class="hlda-btn" id="' + P + 'build-btn" data-action="submit-build"\x3E' + PBGuiI18n.t('market.buildBest1m') + '\x3C/button\x3E\x3Cdiv class="hlda-lo" id="' + P + 'build-lo"\x3E\x3Cdiv class="hlda-spin"\x3E\x3C/div\x3E\x3Cspan\x3E' + PBGuiI18n.t('market.queuing') + '\x3C/span\x3E\x3C/div\x3E\x3C/div\x3E' +
             '\x3Cdiv class="hlda-msg" id="' + P + 'build-msg"\x3E\x3C/div\x3E' +
             renderJobMonitorHTML('build');
         buildFilter = '';
@@ -1071,7 +1072,7 @@
         var tr = $('ct-'+ns);
         if (!tr) return;
         if (sel.size === 0) {
-            tr.innerHTML = '\x3Cspan class="ph"\x3E' + (ns==='build'?'All ('+coins.length+' coins)':'Select coins…') + '\x3C/span\x3E';
+            tr.innerHTML = '\x3Cspan class="ph"\x3E' + (ns==='build' ? PBGuiI18n.t('market.allCoinsTrigger', { count: coins.length }) : PBGuiI18n.t('market.selectCoins')) + '\x3C/span\x3E';
             return;
         }
         var MAX=8, sorted=[].concat(Array.from(sel)).sort();
@@ -1079,7 +1080,7 @@
         sorted.slice(0,MAX).forEach(function(c) {
             h+='\x3Cspan class="hlda-chip"\x3E' + escHtml(c) + '\x3Cspan class="rm" data-action="cs-remove" data-ns="' + ns + '" data-coin="' + escAttr(c) + '"\x3E×\x3C/span\x3E\x3C/span\x3E';
         });
-        if (sorted.length>MAX) h+='\x3Cspan class="hlda-csm"\x3E+' + (sorted.length-MAX) + ' more (' + sorted.length + ' total)\x3C/span\x3E';
+        if (sorted.length>MAX) h+='\x3Cspan class="hlda-csm"\x3E' + PBGuiI18n.t('market.moreTotal', { count: (sorted.length-MAX), total: sorted.length }) + '\x3C/span\x3E';
         tr.innerHTML = h;
     }
 
@@ -1111,8 +1112,8 @@
         var selectVisibleBtn = $('dl-select-visible');
         var clearSelectionBtn = $('dl-clear-selection');
         var visible = Array.isArray(visibleCoins) ? visibleCoins : getDownloadVisibleCoins();
-        if (selectedMeta) selectedMeta.textContent = dlSelected.size + ' selected / ' + dlCoins.length + ' total';
-        if (visibleMeta) visibleMeta.textContent = visible.length + ' visible';
+        if (selectedMeta) selectedMeta.textContent = PBGuiI18n.t('market.selectedTotal', { selected: dlSelected.size, total: dlCoins.length });
+        if (visibleMeta) visibleMeta.textContent = PBGuiI18n.t('market.visibleCount', { visible: visible.length });
         if (selectVisibleBtn) selectVisibleBtn.disabled = !visible.length;
         if (clearSelectionBtn) clearSelectionBtn.disabled = !dlSelected.size;
     }
@@ -1167,7 +1168,7 @@
             return left.localeCompare(right);
         });
         if (!visibleCoins.length) {
-            el.innerHTML = '\x3Cdiv class="hlda-coin-empty"\x3ENo coins match the current filter.\x3C/div\x3E';
+            el.innerHTML = '\x3Cdiv class="hlda-coin-empty"\x3E' + PBGuiI18n.t('market.noCoinsMatch') + '\x3C/div\x3E';
             updateDownloadPickerSummary([]);
             return;
         }
@@ -1206,8 +1207,8 @@
         var selectVisibleBtn = $('build-select-visible');
         var clearSelectionBtn = $('build-clear-selection');
         var visible = Array.isArray(visibleCoins) ? visibleCoins : getBuildVisibleCoins();
-        if (selectedMeta) selectedMeta.textContent = buildSelected.size + ' selected / ' + buildCoins.length + ' total';
-        if (visibleMeta) visibleMeta.textContent = visible.length + ' visible';
+        if (selectedMeta) selectedMeta.textContent = PBGuiI18n.t('market.selectedTotal', { selected: buildSelected.size, total: buildCoins.length });
+        if (visibleMeta) visibleMeta.textContent = PBGuiI18n.t('market.visibleCount', { visible: visible.length });
         if (selectVisibleBtn) selectVisibleBtn.disabled = !visible.length;
         if (clearSelectionBtn) clearSelectionBtn.disabled = !buildSelected.size;
     }
@@ -1262,7 +1263,7 @@
             return left.localeCompare(right);
         });
         if (!visibleCoins.length) {
-            el.innerHTML = '\x3Cdiv class="hlda-coin-empty"\x3ENo coins match the current filter.\x3C/div\x3E';
+            el.innerHTML = '\x3Cdiv class="hlda-coin-empty"\x3E' + PBGuiI18n.t('market.noCoinsMatch') + '\x3C/div\x3E';
             updateBuildPickerSummary([]);
             return;
         }
@@ -1313,7 +1314,7 @@
             startEl.value = endVal;
             startEl.dataset.prev = endVal;
         }
-        if (!silent) showMsg('build','warning','End date cannot be before start date. The range was adjusted automatically.');
+        if (!silent) showMsg('build','warning',PBGuiI18n.t('market.endBeforeStart'));
         return false;
     }
 
@@ -1470,8 +1471,8 @@
                 }
                 h += '</div>';
                 h += '<div style="margin-top:8px;display:flex;justify-content:space-between">' +
-                  '<button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--hlda-text3,#8899aa);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">Close</button>' +
-                  '<button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--hlda-accent,#26a69a);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px"' + (canToday ? '' : ' disabled') + '>Today</button>' +
+                  '<button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--hlda-text3,#8899aa);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('common.close') + '</button>' +
+                  '<button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--hlda-accent,#26a69a);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px"' + (canToday ? '' : ' disabled') + '>' + PBGuiI18n.t('market.today') + '</button>' +
                   '</div>';
                 e.innerHTML = h;
                 _reposition();
@@ -1554,8 +1555,8 @@
     async function submitDL() {
         var btn = $('dl-btn'), lo = $('dl-lo');
         var sd=inputToDay($('dl-sd')?$('dl-sd').value:''), ed=inputToDay($('dl-ed')?$('dl-ed').value:'');
-        if (!sd||!ed) { showMsg('dl','error','Start and end dates are required.'); return; }
-        if (ed < sd) { showMsg('dl','error','End date must be after start date.'); return; }
+        if (!sd||!ed) { showMsg('dl','error',PBGuiI18n.t('market.datesRequired')); return; }
+        if (ed < sd) { showMsg('dl','error',PBGuiI18n.t('market.endAfterStart')); return; }
         btn.disabled=true; lo.classList.add('active'); hideMsg('dl');
         try {
             var coins = dlSelected.size===0||dlSelected.size===dlCoins.length ? ['All'] : Array.from(dlSelected);
@@ -1567,7 +1568,7 @@
             var data = await resp.json();
             if (data.error) { showMsg('dl','error',data.error); }
             else showQueuedMsg('dl', data);
-        } catch(e) { showMsg('dl','error','Request failed: ' + e.message); }
+        } catch(e) { showMsg('dl','error',PBGuiI18n.t('market.requestFailed', { message: e.message })); }
         finally { btn.disabled=false; lo.classList.remove('active'); }
     }
 
@@ -1577,7 +1578,7 @@
         try {
             var coins = buildSelected.size===0||buildSelected.size===buildCoins.length ? ['All'] : Array.from(buildSelected);
             var sd=inputToDay($('build-sd')?$('build-sd').value:''), ed=inputToDay($('build-ed')?$('build-ed').value:'');
-            if (sd&&ed&&ed < sd) { showMsg('build','error','Start date must be on or before End date.'); return; }
+            if (sd&&ed&&ed < sd) { showMsg('build','error',PBGuiI18n.t('market.startOnOrBeforeEnd')); return; }
             var resp = await fetch(API_BASE + '/heatmap/queue-build-ohlcv', authOptions({
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({ coins: coins, start_day:sd, end_day:ed,
@@ -1586,25 +1587,25 @@
             var data = await resp.json();
             if (data.error) { showMsg('build','error',data.error); }
             else showQueuedMsg('build', data);
-        } catch(e) { showMsg('build','error','Request failed: ' + e.message); }
+        } catch(e) { showMsg('build','error',PBGuiI18n.t('market.requestFailed', { message: e.message })); }
         finally { btn.disabled=false; lo.classList.remove('active'); }
     }
 
     function showMsg(ns,type,text) { var m=$(ns+'-msg'); if(!m)return; m.className='hlda-msg '+type; m.textContent=String(text==null?'':text); m.style.display='block'; }
     function showQueuedMsg(ns,data) {
         var m=$(ns+'-msg'); if(!m)return;
-        m.className='hlda-msg success'; m.textContent='Queued job ';
+        m.className='hlda-msg success'; m.textContent=PBGuiI18n.t('market.queuedJobPrefix');
         var strong=document.createElement('strong'); strong.textContent=String(data.job_id||''); m.appendChild(strong);
-        var suffix=' — '+String(data.coins_count||0)+' coins';
+        var suffix=PBGuiI18n.t('market.coinsCountSuffix', { count: String(data.coins_count||0) });
         if(ns==='dl') suffix+=', '+fmtDay(data.start_day)+' → '+fmtDay(data.end_day);
         else if(data.start_day) suffix+=', '+fmtDay(data.start_day)+' → '+fmtDay(data.end_day);
-        else suffix+=', end: '+fmtDay(data.end_day);
-        if(data.refetch) suffix+=' (refetch)';
+        else suffix+=PBGuiI18n.t('market.endDaySuffix', { date: fmtDay(data.end_day) });
+        if(data.refetch) suffix+=PBGuiI18n.t('market.refetchSuffix');
         m.appendChild(document.createTextNode(suffix));
         if(ns==='dl'&&data.missing_coins&&data.missing_coins.length){
             m.appendChild(document.createElement('br'));
             var small=document.createElement('small'); small.style.color='var(--hlda-warn)';
-            small.textContent='Skipped (not in archive): '+data.missing_coins.join(', '); m.appendChild(small);
+            small.textContent=PBGuiI18n.t('market.skippedNotInArchive', { coins: data.missing_coins.join(', ') }); m.appendChild(small);
         }
         m.style.display='block';
     }
@@ -1617,13 +1618,13 @@
 
     function renderJobMonitorHTML(ns) {
         return '\x3Cdiv class="hlda-jm"\x3E' +
-            '\x3Cdiv class="hlda-jm-title"\x3EJob Monitor \x3Cspan class="hlda-jm-badge disconnected" id="' + P + 'jm-badge-' + ns + '"\x3EConnecting\x3C/span\x3E\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-jm-title"\x3E' + PBGuiI18n.t('market.jobMonitor') + ' \x3Cspan class="hlda-jm-badge disconnected" id="' + P + 'jm-badge-' + ns + '"\x3E' + PBGuiI18n.t('market.connecting') + '\x3C/span\x3E\x3C/div\x3E' +
             '\x3Cdiv class="hlda-tabs"\x3E' +
-                '\x3Cbutton class="hlda-tab active" id="' + P + 'jm-tab-' + ns + '-running" data-action="switch-tab" data-ns="' + ns + '" data-tab="running"\x3EActive\x3C/button\x3E' +
-                '\x3Cbutton class="hlda-tab" id="' + P + 'jm-tab-' + ns + '-done" data-action="switch-tab" data-ns="' + ns + '" data-tab="done"\x3EDone\x3C/button\x3E' +
-                '\x3Cbutton class="hlda-tab" id="' + P + 'jm-tab-' + ns + '-failed" data-action="switch-tab" data-ns="' + ns + '" data-tab="failed"\x3EFailed\x3C/button\x3E' +
+                '\x3Cbutton class="hlda-tab active" id="' + P + 'jm-tab-' + ns + '-running" data-action="switch-tab" data-ns="' + ns + '" data-tab="running"\x3E' + PBGuiI18n.t('market.activeTab') + '\x3C/button\x3E' +
+                '\x3Cbutton class="hlda-tab" id="' + P + 'jm-tab-' + ns + '-done" data-action="switch-tab" data-ns="' + ns + '" data-tab="done"\x3E' + PBGuiI18n.t('market.done') + '\x3C/button\x3E' +
+                '\x3Cbutton class="hlda-tab" id="' + P + 'jm-tab-' + ns + '-failed" data-action="switch-tab" data-ns="' + ns + '" data-tab="failed"\x3E' + PBGuiI18n.t('market.failed') + '\x3C/button\x3E' +
             '\x3C/div\x3E' +
-            '\x3Cdiv class="hlda-tp active" id="' + P + 'jm-panel-' + ns + '-running"\x3E\x3Cdiv class="hlda-empty"\x3EConnecting…\x3C/div\x3E\x3C/div\x3E' +
+            '\x3Cdiv class="hlda-tp active" id="' + P + 'jm-panel-' + ns + '-running"\x3E\x3Cdiv class="hlda-empty"\x3E' + PBGuiI18n.t('market.connectingEllipsis') + '\x3C/div\x3E\x3C/div\x3E' +
             '\x3Cdiv class="hlda-tp" id="' + P + 'jm-panel-' + ns + '-done"\x3E\x3C/div\x3E' +
             '\x3Cdiv class="hlda-tp" id="' + P + 'jm-panel-' + ns + '-failed"\x3E\x3C/div\x3E' +
         '\x3C/div\x3E';
@@ -1649,7 +1650,7 @@
                 wsRetryCount = 0;
                 ['dl','build'].forEach(function(ns) {
                     var badge = $('jm-badge-' + ns);
-                    if (badge) { badge.textContent='Connected'; badge.className='hlda-jm-badge connected'; }
+                    if (badge) { badge.textContent=PBGuiI18n.t('market.connected'); badge.className='hlda-jm-badge connected'; }
                 });
             };
             ws.onmessage = function(evt) {
@@ -1674,7 +1675,7 @@
             ws.onclose = function() {
                 ['dl','build'].forEach(function(ns) {
                     var badge = $('jm-badge-' + ns);
-                    if (badge) { badge.textContent='Disconnected'; badge.className='hlda-jm-badge disconnected'; }
+                    if (badge) { badge.textContent=PBGuiI18n.t('market.disconnected'); badge.className='hlda-jm-badge disconnected'; }
                 });
                 if (wsRetryCount < 5) { wsRetryCount++; setTimeout(connectWS, 3000); }
             };
@@ -1682,7 +1683,7 @@
         } catch(ex) {
             ['dl','build'].forEach(function(ns) {
                 var badge = $('jm-badge-' + ns);
-                if (badge) { badge.textContent='Error'; badge.className='hlda-jm-badge disconnected'; }
+                if (badge) { badge.textContent=PBGuiI18n.t('common.error'); badge.className='hlda-jm-badge disconnected'; }
             });
         }
     }
@@ -1691,7 +1692,7 @@
         var panel = $('jm-panel-' + ns + '-running');
         if (!panel) return;
         var jobs = activeJobs[ns];
-        if (!jobs.length) { panel.innerHTML = '\x3Cdiv class="hlda-empty"\x3ENo active jobs.\x3C/div\x3E'; return; }
+        if (!jobs.length) { panel.innerHTML = '\x3Cdiv class="hlda-empty"\x3E' + PBGuiI18n.t('market.noActiveJobs') + '\x3C/div\x3E'; return; }
         panel.innerHTML = jobs.map(function(j) { return renderActiveJob(ns, j); }).join('');
     }
 
@@ -1714,33 +1715,33 @@
                     '\x3Cspan class="jtype"\x3E' + escHtml(job.type) + '\x3C/span\x3E' +
                 '\x3C/div\x3E' +
                 '\x3Cdiv class="hlda-ja"\x3E' +
-                    (job.status === 'pending' ? '\x3Cbutton class="hlda-jbtn run" data-action="run-job" data-job="' + escAttr(job.id) + '"\x3ERun\x3C/button\x3E' : '') +
-                    '\x3Cbutton class="hlda-jbtn view" data-action="show-job-details" data-job="' + escAttr(job.id) + '"\x3EView\x3C/button\x3E' +
-                    '\x3Cbutton class="hlda-jbtn" data-action="show-log" data-job="' + escAttr(job.id) + '"\x3ELog\x3C/button\x3E' +
-                    '\x3Cbutton class="hlda-jbtn danger" data-action="cancel-job" data-job="' + escAttr(job.id) + '"\x3ECancel\x3C/button\x3E' +
+                    (job.status === 'pending' ? '\x3Cbutton class="hlda-jbtn run" data-action="run-job" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('market.run') + '\x3C/button\x3E' : '') +
+                    '\x3Cbutton class="hlda-jbtn view" data-action="show-job-details" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('market.view') + '\x3C/button\x3E' +
+                    '\x3Cbutton class="hlda-jbtn" data-action="show-log" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('market.log') + '\x3C/button\x3E' +
+                    '\x3Cbutton class="hlda-jbtn danger" data-action="cancel-job" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('common.cancel') + '\x3C/button\x3E' +
                 '\x3C/div\x3E' +
             '\x3C/div\x3E' +
             '\x3Cdiv class="hlda-jd"\x3E' +
-                (coin ? '\x3Cspan\x3ECoin: ' + escHtml(coin) + '\x3C/span\x3E' : '') +
-                (chunk ? '\x3Cspan\x3EChunk: ' + escHtml(chunk) + '\x3C/span\x3E' : '') +
-                '\x3Cspan\x3EUpdated: ' + escHtml(fmtTS(job.updated_ts)) + '\x3C/span\x3E' +
+                (coin ? '\x3Cspan\x3E' + PBGuiI18n.t('market.coinLabel', { coin: escHtml(coin) }) + '\x3C/span\x3E' : '') +
+                (chunk ? '\x3Cspan\x3E' + PBGuiI18n.t('market.chunkLabel', { chunk: escHtml(chunk) }) + '\x3C/span\x3E' : '') +
+                '\x3Cspan\x3E' + PBGuiI18n.t('market.updatedLabel', { ts: escHtml(fmtTS(job.updated_ts)) }) + '\x3C/span\x3E' +
             '\x3C/div\x3E' +
             '\x3Cdiv class="hlda-pb"\x3E\x3Cdiv class="hlda-pf" style="width:' + pct + '%"\x3E\x3C/div\x3E\x3Cdiv class="hlda-pt"\x3E' + pct + '%\x3C/div\x3E\x3C/div\x3E';
         if (total>0) {
             h += '\x3Cdiv class="hlda-pd"\x3E' +
-                '\x3Cspan\x3EStep: ' + escHtml(String(step)) + '/' + escHtml(String(total)) + '\x3C/span\x3E' +
-                (chT>0 ? '\x3Cspan\x3EChunk: ' + escHtml(String(chD)) + '/' + escHtml(String(chT)) + '\x3C/span\x3E' : '') +
-                (stage ? '\x3Cspan\x3EStage: ' + escHtml(stage) + '\x3C/span\x3E' : '') +
-                (mode ? '\x3Cspan\x3EMode: ' + escHtml(mode) + '\x3C/span\x3E' : '') +
+                '\x3Cspan\x3E' + PBGuiI18n.t('market.stepLabel', { step: escHtml(String(step)), total: escHtml(String(total)) }) + '\x3C/span\x3E' +
+                (chT>0 ? '\x3Cspan\x3E' + PBGuiI18n.t('market.chunkProgressLabel', { done: escHtml(String(chD)), total: escHtml(String(chT)) }) + '\x3C/span\x3E' : '') +
+                (stage ? '\x3Cspan\x3E' + PBGuiI18n.t('market.stageLabel', { stage: escHtml(stage) }) + '\x3C/span\x3E' : '') +
+                (mode ? '\x3Cspan\x3E' + PBGuiI18n.t('market.modeLabel', { mode: escHtml(mode) }) + '\x3C/span\x3E' : '') +
             '\x3C/div\x3E';
         }
         if (dl+sk+fl>0) {
             h += '\x3Cdiv class="hlda-exp"\x3E' +
-                '\x3Cbutton class="hlda-exp-toggle" data-action="tog-exp" data-ns="' + ns + '" data-job="' + escAttr(job.id) + '"\x3E' + (isExp?'▼':'▶') + ' Details\x3C/button\x3E' +
+                '\x3Cbutton class="hlda-exp-toggle" data-action="tog-exp" data-ns="' + ns + '" data-job="' + escAttr(job.id) + '"\x3E' + (isExp?'▼':'▶') + ' ' + PBGuiI18n.t('market.details') + '\x3C/button\x3E' +
                 '\x3Cdiv class="hlda-exp-body ' + (isExp?'open':'') + '" data-expander-job="' + escAttr(job.id) + '"\x3E' +
-                    '\x3Cdiv class="dr"\x3E\x3Cstrong\x3EDownloads:\x3C/strong\x3E ' + escHtml(String(dl)) + ' files (' + escHtml(fmtBytes(pr.downloaded_bytes_total)) + ')\x3C/div\x3E' +
-                    '\x3Cdiv class="dr"\x3E\x3Cstrong\x3ESkipped:\x3C/strong\x3E ' + escHtml(String(sk)) + ' files (' + escHtml(fmtBytes(pr.skipped_existing_bytes_total)) + ')\x3C/div\x3E' +
-                    '\x3Cdiv class="dr"\x3E\x3Cstrong\x3EFailed:\x3C/strong\x3E ' + escHtml(String(fl)) + ' files (' + escHtml(fmtBytes(pr.failed_bytes_total)) + ')\x3C/div\x3E' +
+                    '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.downloadsStat', { count: escHtml(String(dl)), size: escHtml(fmtBytes(pr.downloaded_bytes_total)) }) + '\x3C/div\x3E' +
+                    '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.skippedStat', { count: escHtml(String(sk)), size: escHtml(fmtBytes(pr.skipped_existing_bytes_total)) }) + '\x3C/div\x3E' +
+                    '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.failedStat', { count: escHtml(String(fl)), size: escHtml(fmtBytes(pr.failed_bytes_total)) }) + '\x3C/div\x3E' +
                 '\x3C/div\x3E' +
             '\x3C/div\x3E';
         }
@@ -1751,7 +1752,7 @@
     async function loadHistoryTab(ns, tab) {
         var panel = $('jm-panel-' + ns + '-' + tab);
         if (!panel) return;
-        panel.innerHTML = '\x3Cdiv class="hlda-empty"\x3ELoading…\x3C/div\x3E';
+        panel.innerHTML = '\x3Cdiv class="hlda-empty"\x3E' + PBGuiI18n.t('market.loading') + '\x3C/div\x3E';
         try {
             var jt = JOB_TYPES[ns];
             var resp = await fetch(API_BASE + '/jobs/?states=' + tab + '&limit=20&job_type=' + encodeURIComponent(jt), authOptions());
@@ -1760,15 +1761,15 @@
             var jobs = data.jobs || data;
             var filtered = jobs.filter(function(j) { return (j.type||'').toLowerCase()===jt; });
             filtered.sort(function(a,b) { return (b.updated_ts||0)-(a.updated_ts||0); });
-            if (!filtered.length) { panel.innerHTML = '\x3Cdiv class="hlda-empty"\x3ENo ' + tab + ' jobs.\x3C/div\x3E'; return; }
+            if (!filtered.length) { panel.innerHTML = '\x3Cdiv class="hlda-empty"\x3E' + PBGuiI18n.t('market.noTabJobs', { tab: tab }) + '\x3C/div\x3E'; return; }
             panel.innerHTML = filtered.map(function(j) { return renderHistoryJob(ns, j); }).join('');
-        } catch(e) { panel.innerHTML = '\x3Cdiv class="hlda-msg error" style="display:block"\x3EFailed to load: ' + escHtml(e.message) + '\x3C/div\x3E'; }
+        } catch(e) { panel.innerHTML = '\x3Cdiv class="hlda-msg error" style="display:block"\x3E' + PBGuiI18n.t('market.failedToLoad', { message: escHtml(e.message) }) + '\x3C/div\x3E'; }
     }
 
     function renderHistoryJob(ns, job) {
         var payload=job.payload||{}, pr=job.progress||{}, lr=pr.last_result||{};
         var coins=Array.isArray(payload.coins)?payload.coins:[];
-        var coinPrev=coins.length<=8?coins.join(', '):coins.slice(0,8).join(', ')+' … (' + coins.length + ' total)';
+        var coinPrev=coins.length<=8?coins.join(', '):coins.slice(0,8).join(', ')+PBGuiI18n.t('market.totalSuffix', { count: coins.length });
         var sd=payload.start_day||'', ed=payload.end_day||'';
         var rangeStr=(sd||ed)?(fmtDay(sd)||'?')+' → '+(fmtDay(ed)||'?'):'';
         var dl=pr.downloaded_total||lr.downloaded||0, sk=pr.skipped_existing_total||lr.skipped_existing||0, fl=pr.failed_total||lr.failed||0;
@@ -1788,27 +1789,27 @@
                     (durStr ? '\x3Cspan class="jdur"\x3E' + durStr + '\x3C/span\x3E' : '') +
                 '\x3C/div\x3E' +
                 '\x3Cdiv class="hlda-ja"\x3E' +
-                    '\x3Cbutton class="hlda-jbtn view" data-action="show-job-details" data-job="' + escAttr(job.id) + '"\x3EView\x3C/button\x3E' +
-                    '\x3Cbutton class="hlda-jbtn" data-action="show-log" data-job="' + escAttr(job.id) + '"\x3ELog\x3C/button\x3E' +
-                    (isFailed ? '\x3Cbutton class="hlda-jbtn" data-action="retry-job" data-job="' + escAttr(job.id) + '"\x3ERetry\x3C/button\x3E' : '') +
-                    (isDone ? '\x3Cbutton class="hlda-jbtn" data-action="requeue-job" data-job="' + escAttr(job.id) + '"\x3ERequeue\x3C/button\x3E' : '') +
-                    '\x3Cbutton class="hlda-jbtn danger" data-action="delete-job" data-job="' + escAttr(job.id) + '"\x3EDelete\x3C/button\x3E' +
+                    '\x3Cbutton class="hlda-jbtn view" data-action="show-job-details" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('market.view') + '\x3C/button\x3E' +
+                    '\x3Cbutton class="hlda-jbtn" data-action="show-log" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('market.log') + '\x3C/button\x3E' +
+                    (isFailed ? '\x3Cbutton class="hlda-jbtn" data-action="retry-job" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('market.retry') + '\x3C/button\x3E' : '') +
+                    (isDone ? '\x3Cbutton class="hlda-jbtn" data-action="requeue-job" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('market.requeue') + '\x3C/button\x3E' : '') +
+                    '\x3Cbutton class="hlda-jbtn danger" data-action="delete-job" data-job="' + escAttr(job.id) + '"\x3E' + PBGuiI18n.t('common.delete') + '\x3C/button\x3E' +
                 '\x3C/div\x3E' +
             '\x3C/div\x3E' +
             '\x3Cdiv class="hlda-jd"\x3E' +
                 '\x3Cspan\x3E' + escHtml(fmtTS(job.updated_ts)) + '\x3C/span\x3E' +
-                (rangeStr ? '\x3Cspan\x3ERange: ' + escHtml(rangeStr) + '\x3C/span\x3E' : '') +
+                (rangeStr ? '\x3Cspan\x3E' + PBGuiI18n.t('market.rangeLabel', { range: escHtml(rangeStr) }) + '\x3C/span\x3E' : '') +
             '\x3C/div\x3E';
         if (job.error) h += '\x3Cdiv class="hlda-jerr"\x3E' + escHtml(job.error) + '\x3C/div\x3E';
         if (hasStats||coinPrev) {
             h += '\x3Cdiv class="hlda-exp"\x3E' +
-                '\x3Cbutton class="hlda-exp-toggle" data-action="tog-exp" data-ns="' + ns + '" data-job="' + escAttr(job.id) + '"\x3E' + (isExp?'▼':'▶') + ' Details\x3C/button\x3E' +
+                '\x3Cbutton class="hlda-exp-toggle" data-action="tog-exp" data-ns="' + ns + '" data-job="' + escAttr(job.id) + '"\x3E' + (isExp?'▼':'▶') + ' ' + PBGuiI18n.t('market.details') + '\x3C/button\x3E' +
                 '\x3Cdiv class="hlda-exp-body ' + (isExp?'open':'') + '" data-expander-job="' + escAttr(job.id) + '"\x3E' +
-                    (coinPrev ? '\x3Cdiv class="dr"\x3E\x3Cstrong\x3ECoins:\x3C/strong\x3E ' + escHtml(coinPrev) + '\x3C/div\x3E' : '') +
-                    (payload.only_missing_1m_src_hours!==undefined ? '\x3Cdiv class="dr"\x3E\x3Cstrong\x3EOnly missing 1m_src hours:\x3C/strong\x3E ' + (payload.only_missing_1m_src_hours?'Yes':'No') + '\x3C/div\x3E' : '') +
-                    (hasStats ? '\x3Cdiv class="dr"\x3E\x3Cstrong\x3EDownloaded:\x3C/strong\x3E ' + escHtml(String(dl)) + ' files (' + escHtml(fmtBytes(pr.downloaded_bytes_total||lr.downloaded_bytes||0)) + ')\x3C/div\x3E' +
-                        '\x3Cdiv class="dr"\x3E\x3Cstrong\x3ESkipped:\x3C/strong\x3E ' + escHtml(String(sk)) + ' files (' + escHtml(fmtBytes(pr.skipped_existing_bytes_total||lr.skipped_existing_bytes||0)) + ')\x3C/div\x3E' +
-                        '\x3Cdiv class="dr"\x3E\x3Cstrong\x3EFailed:\x3C/strong\x3E ' + escHtml(String(fl)) + ' files (' + escHtml(fmtBytes(pr.failed_bytes_total||lr.failed_bytes||0)) + ')\x3C/div\x3E' : '') +
+                    (coinPrev ? '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.coinsLabel', { coins: escHtml(coinPrev) }) + '\x3C/div\x3E' : '') +
+                    (payload.only_missing_1m_src_hours!==undefined ? '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.onlyMissingLabel', { value: (payload.only_missing_1m_src_hours?PBGuiI18n.t('common.yes'):PBGuiI18n.t('common.no')) }) + '\x3C/div\x3E' : '') +
+                    (hasStats ? '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.downloadedStat', { count: escHtml(String(dl)), size: escHtml(fmtBytes(pr.downloaded_bytes_total||lr.downloaded_bytes||0)) }) + '\x3C/div\x3E' +
+                        '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.skippedStat', { count: escHtml(String(sk)), size: escHtml(fmtBytes(pr.skipped_existing_bytes_total||lr.skipped_existing_bytes||0)) }) + '\x3C/div\x3E' +
+                        '\x3Cdiv class="dr"\x3E' + PBGuiI18n.t('market.failedStat', { count: escHtml(String(fl)), size: escHtml(fmtBytes(pr.failed_bytes_total||lr.failed_bytes||0)) }) + '\x3C/div\x3E' : '') +
                 '\x3C/div\x3E' +
             '\x3C/div\x3E';
         }
@@ -1832,7 +1833,7 @@
 
     function formatJsonBlock(value) {
         if (!value || (typeof value === 'object' && Object.keys(value).length === 0)) {
-            return '\x3Cdiv class="hlda-detail-empty"\x3ENo data.\x3C/div\x3E';
+            return '\x3Cdiv class="hlda-detail-empty"\x3E' + PBGuiI18n.t('market.noData') + '\x3C/div\x3E';
         }
         return '\x3Cpre class="hlda-json"\x3E' + escHtml(JSON.stringify(value, null, 2)) + '\x3C/pre\x3E';
     }
@@ -1844,7 +1845,7 @@
             return '\x3Cdiv class="hlda-detail-key"\x3E' + escHtml(String(row.label)) + '\x3C/div\x3E' +
                    '\x3Cdiv class="hlda-detail-value"\x3E' + escHtml(String(row.value)) + '\x3C/div\x3E';
         }).join('');
-        return html || '\x3Cdiv class="hlda-detail-empty"\x3ENo details available.\x3C/div\x3E';
+        return html || '\x3Cdiv class="hlda-detail-empty"\x3E' + PBGuiI18n.t('market.noDetails') + '\x3C/div\x3E';
     }
 
     function renderJobDetails(job) {
@@ -1858,47 +1859,47 @@
         var currentChunk = progress.chunk_start ? String(progress.chunk_start) + ' → ' + String(progress.chunk_end || '') : '';
 
         var summaryRows = [
-            { label: 'Status', value: job.status || '' },
-            { label: 'Type', value: job.type || '' },
-            { label: 'Exchange', value: job.exchange || '' },
-            { label: 'Created', value: fmtTS(job.created_ts) },
-            { label: 'Updated', value: fmtTS(job.updated_ts) },
-            { label: 'Duration', value: formatJobDuration(job) },
-            { label: 'Run requested', value: job.run_requested ? 'Yes' : '' },
-            { label: 'Cancel requested', value: job.cancel_requested ? 'Yes' : '' },
-            { label: 'Error', value: job.error || '' }
+            { label: PBGuiI18n.t('market.status'), value: job.status || '' },
+            { label: PBGuiI18n.t('market.type'), value: job.type || '' },
+            { label: PBGuiI18n.t('market.exchange'), value: job.exchange || '' },
+            { label: PBGuiI18n.t('market.created'), value: fmtTS(job.created_ts) },
+            { label: PBGuiI18n.t('market.updated'), value: fmtTS(job.updated_ts) },
+            { label: PBGuiI18n.t('market.duration'), value: formatJobDuration(job) },
+            { label: PBGuiI18n.t('market.runRequested'), value: job.run_requested ? PBGuiI18n.t('common.yes') : '' },
+            { label: PBGuiI18n.t('market.cancelRequested'), value: job.cancel_requested ? PBGuiI18n.t('common.yes') : '' },
+            { label: PBGuiI18n.t('common.error'), value: job.error || '' }
         ];
         var scopeRows = [
-            { label: 'Coins', value: coins },
-            { label: 'Range', value: range },
-            { label: 'Chunk days', value: payload.chunk_days },
-            { label: 'Profile', value: payload.profile || '' },
-            { label: 'Region', value: payload.region || '' },
-            { label: 'Refetch', value: payload.refetch ? 'Yes' : '' },
-            { label: 'Only missing 1m_src hours', value: payload.only_missing_1m_src_hours !== undefined ? (payload.only_missing_1m_src_hours ? 'Yes' : 'No') : '' },
-            { label: 'Current coin', value: progress.coin || '' },
-            { label: 'Current chunk', value: currentChunk },
-            { label: 'Stage', value: progress.stage || '' },
-            { label: 'Step', value: progress.total ? String(progress.step || 0) + '/' + String(progress.total) : '' },
-            { label: 'Chunk progress', value: progress.chunk_total ? String(progress.chunk_done || 0) + '/' + String(progress.chunk_total) : '' }
+            { label: PBGuiI18n.t('market.coins'), value: coins },
+            { label: PBGuiI18n.t('market.range'), value: range },
+            { label: PBGuiI18n.t('market.chunkDays'), value: payload.chunk_days },
+            { label: PBGuiI18n.t('market.profile'), value: payload.profile || '' },
+            { label: PBGuiI18n.t('market.region'), value: payload.region || '' },
+            { label: PBGuiI18n.t('market.refetch'), value: payload.refetch ? PBGuiI18n.t('common.yes') : '' },
+            { label: PBGuiI18n.t('market.onlyMissing1mSrc'), value: payload.only_missing_1m_src_hours !== undefined ? (payload.only_missing_1m_src_hours ? PBGuiI18n.t('common.yes') : PBGuiI18n.t('common.no')) : '' },
+            { label: PBGuiI18n.t('market.currentCoin'), value: progress.coin || '' },
+            { label: PBGuiI18n.t('market.currentChunk'), value: currentChunk },
+            { label: PBGuiI18n.t('market.stage'), value: progress.stage || '' },
+            { label: PBGuiI18n.t('market.step'), value: progress.total ? String(progress.step || 0) + '/' + String(progress.total) : '' },
+            { label: PBGuiI18n.t('market.chunkProgress'), value: progress.chunk_total ? String(progress.chunk_done || 0) + '/' + String(progress.chunk_total) : '' }
         ];
 
         return '\x3Cdiv class="hlda-detail-section"\x3E' +
-                   '\x3Ch4\x3ESummary\x3C/h4\x3E' +
+                   '\x3Ch4\x3E' + PBGuiI18n.t('market.summary') + '\x3C/h4\x3E' +
                    '\x3Cdiv class="hlda-detail-grid"\x3E' + renderDetailRows(summaryRows) + '\x3C/div\x3E' +
                '\x3C/div\x3E' +
                '\x3Cdiv class="hlda-detail-section"\x3E' +
-                   '\x3Ch4\x3EScope\x3C/h4\x3E' +
+                   '\x3Ch4\x3E' + PBGuiI18n.t('market.scope') + '\x3C/h4\x3E' +
                    '\x3Cdiv class="hlda-detail-grid"\x3E' + renderDetailRows(scopeRows) + '\x3C/div\x3E' +
                '\x3C/div\x3E' +
                '\x3Cdiv class="hlda-detail-section"\x3E' +
-                   '\x3Ch4\x3EPayload\x3C/h4\x3E' + formatJsonBlock(payload) +
+                   '\x3Ch4\x3E' + PBGuiI18n.t('market.payload') + '\x3C/h4\x3E' + formatJsonBlock(payload) +
                '\x3C/div\x3E' +
                '\x3Cdiv class="hlda-detail-section"\x3E' +
-                   '\x3Ch4\x3EProgress\x3C/h4\x3E' + formatJsonBlock(progress) +
+                   '\x3Ch4\x3E' + PBGuiI18n.t('market.progress') + '\x3C/h4\x3E' + formatJsonBlock(progress) +
                '\x3C/div\x3E' +
                '\x3Cdiv class="hlda-detail-section"\x3E' +
-                   '\x3Ch4\x3ELast Result\x3C/h4\x3E' + formatJsonBlock(lastResult) +
+                   '\x3Ch4\x3E' + PBGuiI18n.t('market.lastResult') + '\x3C/h4\x3E' + formatJsonBlock(lastResult) +
                '\x3C/div\x3E';
     }
 
@@ -1917,8 +1918,8 @@
             var modal = $('modal'), title = $('modal-title'), body = $('modal-body');
             if (modal && title && body) {
                 body.classList.remove('is-details');
-                title.textContent = 'Run failed';
-                body.textContent = 'Failed to start job ' + id + ': ' + (e && e.message ? e.message : 'Unknown error');
+                title.textContent = PBGuiI18n.t('market.runFailed');
+                body.textContent = PBGuiI18n.t('market.failedStartJob', { id: id, message: (e && e.message ? e.message : PBGuiI18n.t('market.unknownError')) });
                 updateModalViewportHeight();
                 modal.classList.add('active');
             }
@@ -1928,9 +1929,9 @@
     async function showJobDetails(jobId) {
         var modal = $('modal'), title = $('modal-title'), body = $('modal-body');
         if (!modal || !title || !body) return;
-        title.textContent = 'Job Details: ' + jobId;
+        title.textContent = PBGuiI18n.t('market.jobDetailsTitle', { id: jobId });
         body.classList.add('is-details');
-        body.innerHTML = '\x3Cdiv class="hlda-detail-empty"\x3ELoading…\x3C/div\x3E';
+        body.innerHTML = '\x3Cdiv class="hlda-detail-empty"\x3E' + PBGuiI18n.t('market.loading') + '\x3C/div\x3E';
         updateModalViewportHeight();
         modal.classList.add('active');
         try {
@@ -1946,22 +1947,22 @@
             var job = await resp.json();
             body.innerHTML = renderJobDetails(job || {});
         } catch(e) {
-            body.innerHTML = '\x3Cdiv class="hlda-detail-empty" style="color:#ef4444;"\x3EFailed to load job details: ' + escHtml(e && e.message ? e.message : 'Unknown error') + '\x3C/div\x3E';
+            body.innerHTML = '\x3Cdiv class="hlda-detail-empty" style="color:#ef4444;"\x3E' + PBGuiI18n.t('market.failedLoadJobDetails', { message: escHtml(e && e.message ? e.message : PBGuiI18n.t('market.unknownError')) }) + '\x3C/div\x3E';
         }
     }
 
     async function showLog(jobId) {
         var modal=$('modal'), title=$('modal-title'), body=$('modal-body');
         body.classList.remove('is-details');
-        title.textContent='Log: '+jobId; body.textContent='Loading…';
+        title.textContent=PBGuiI18n.t('market.logTitle', { id: jobId }); body.textContent=PBGuiI18n.t('market.loading');
         updateModalViewportHeight();
         modal.classList.add('active');
         try {
             var r=await fetch(API_BASE + '/jobs/' + jobId + '/log', authOptions());
             if (!r.ok) throw new Error('HTTP '+r.status);
             var d=await r.json();
-            body.textContent = (d.log||d.lines||[]).join('\n') || 'No log entries.';
-        } catch(e) { body.textContent='Failed to load log: '+e.message; }
+            body.textContent = (d.log||d.lines||[]).join('\n') || PBGuiI18n.t('market.noLogEntries');
+        } catch(e) { body.textContent=PBGuiI18n.t('market.failedLoadLog', { message: e.message }); }
     }
     function closeModal() {
         var modal = $('modal'), body = $('modal-body');
@@ -1987,8 +1988,8 @@
         } catch(e) {
             var modal=$('modal'), title=$('modal-title'), body=$('modal-body');
             if (modal && title && body) {
-                title.textContent='Cancel failed';
-                body.textContent='Failed to cancel job ' + id + ': ' + (e && e.message ? e.message : 'Unknown error');
+                title.textContent=PBGuiI18n.t('market.cancelFailed');
+                body.textContent=PBGuiI18n.t('market.failedCancelJob', { id: id, message: (e && e.message ? e.message : PBGuiI18n.t('market.unknownError')) });
                 updateModalViewportHeight();
                 modal.classList.add('active');
             }
@@ -2013,10 +2014,10 @@
         if (!el) return;
         if (el.classList.contains('open')) {
             el.classList.remove('open'); expandedJobs[ns].delete(jobId);
-            if(btn) btn.textContent='▶ Details';
+            if(btn) btn.textContent=PBGuiI18n.t('market.detailsExpand');
         } else {
             el.classList.add('open'); expandedJobs[ns].add(jobId);
-            if(btn) btn.textContent='▼ Details';
+            if(btn) btn.textContent=PBGuiI18n.t('market.detailsCollapse');
         }
     }
 

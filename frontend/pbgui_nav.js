@@ -40,6 +40,23 @@
     };
   }
 
+  /* ── i18n helper: translate through PBGuiI18n when present, otherwise keep
+     the English fallback (also used while dictionaries are being extended) ── */
+  function navT(key, fallback, params) {
+    var i18n = window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') {
+      var v = i18n.t(key, params);
+      if (v !== key) return v;
+    }
+    var out = String(fallback);
+    if (params) {
+      out = out.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return out;
+  }
+
   function authOptions(token, options) {
     var opts = Object.assign({}, options || {});
     var headers = Object.assign({}, opts.headers || {});
@@ -323,7 +340,7 @@
           + '<rect x="14.5" y="15" width="5" height="15" rx="1.5" fill="#4299e1"/>'
           + '<rect x="22" y="9" width="5" height="21" rx="1.5" fill="#3182ce"/>'
           + '<text x="42" y="15" font-family="\'Segoe UI\',system-ui,sans-serif" font-size="13" font-weight="700" fill="#e2e8f0" letter-spacing="0.3">PBGui</text>'
-          + '<text x="42" y="28" font-family="\'Segoe UI\',system-ui,sans-serif" font-size="7.5" font-weight="400" fill="#4299e1" letter-spacing="1.2">' + esc(c.subtitle) + '</text>'
+          + '<text x="42" y="28" font-family="\'Segoe UI\',system-ui,sans-serif" font-size="7.5" font-weight="400" fill="#4299e1" letter-spacing="1.2">' + esc(window.PBGuiI18n ? PBGuiI18n.serverMsg(c.subtitle) : c.subtitle) + '</text>'
           + '</svg></a>';
 
     /* groups */
@@ -331,14 +348,15 @@
       var isActive = (group.id === activeGroup);
       html += '<div class="nav-group">';
       html += '<button class="nav-group-btn' + (isActive ? ' active' : '') + '" data-group="' + group.id + '">';
-      html += esc(group.label) + ' <span class="nav-arrow">&#9660;</span></button>';
+      html += esc(navT('nav.' + group.id, group.label)) + ' <span class="nav-arrow">&#9660;</span></button>';
       html += '<div class="nav-dropdown">';
       group.items.forEach(function (item) {
         var isCurrent = (item.page === CURRENT);
+        var itemLabel = esc(navT('nav.page.' + item.page, item.label));
         if (isCurrent) {
-          html += '<span class="nav-item current"><span class="nav-item-icon">' + item.icon + '</span>' + esc(item.label) + '</span>';
+          html += '<span class="nav-item current"><span class="nav-item-icon">' + item.icon + '</span>' + itemLabel + '</span>';
         } else {
-          html += '<a class="nav-item" data-page="' + item.page + '"><span class="nav-item-icon">' + item.icon + '</span>' + esc(item.label) + '</a>';
+          html += '<a class="nav-item" data-page="' + item.page + '"><span class="nav-item-icon">' + item.icon + '</span>' + itemLabel + '</a>';
         }
       });
       html += '</div></div>';
@@ -347,15 +365,16 @@
     /* spacer + right buttons */
     html += '<div id="nav-spacer"></div>';
     html += '<div id="nav-right">'
-          + '<span id="pbgui-auth-mode-pill" role="status">NO LOGIN</span>'
-          + '<span id="pbgui-master-pill"><span class="pbgui-master-label">Master</span><span id="pbgui-master-name"></span></span>'
-          + '<button class="nav-action-btn restart" id="pbgui-restart-btn"><span class="nav-restart-dot"></span>Restart</button>'
-          + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="Notification log">&#128276;</button>'
+          + '<span id="pbgui-auth-mode-pill" role="status">' + esc(navT('nav.no_login', 'NO LOGIN')) + '</span>'
+          + '<span id="pbgui-master-pill"><span class="pbgui-master-label">' + esc(navT('nav.master', 'Master')) + '</span><span id="pbgui-master-name"></span></span>'
+          + '<button class="nav-action-btn restart" id="pbgui-restart-btn"><span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart')) + '</button>'
+          + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '">&#128276;</button>'
           + '<span class="nav-divider" aria-hidden="true"></span>'
-          + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="VPSMonitor alerts">&#128737; <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
-          + '<button class="nav-action-btn accent" id="pbgui-guide-btn">&#128218; Guide</button>'
-          + '<button class="nav-action-btn" id="pbgui-about-btn">&#x2139;&#xFE0F; About</button>'
-          + '<button class="nav-action-btn icon-only logout" id="pbgui-logout-btn" title="Logout" aria-label="Logout">'
+          + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '">&#128737; <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
+          + '<button class="nav-action-btn" id="pbgui-lang-btn" title="' + esc(navT('nav.switch_language', 'Switch language')) + '">' + ((window.PBGuiI18n && window.PBGuiI18n.lang === 'zh') ? 'English' : '中文') + '</button>'
+          + '<button class="nav-action-btn accent" id="pbgui-guide-btn">&#128218; ' + esc(navT('nav.guide', 'Guide')) + '</button>'
+          + '<button class="nav-action-btn" id="pbgui-about-btn">&#x2139;&#xFE0F; ' + esc(navT('nav.about', 'About')) + '</button>'
+          + '<button class="nav-action-btn icon-only logout" id="pbgui-logout-btn" title="' + esc(navT('nav.logout', 'Logout')) + '" aria-label="' + esc(navT('nav.logout', 'Logout')) + '">'
           +   '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
           +     '<path d="M4 4.75C4 4.33579 4.33579 4 4.75 4H13.25C13.6642 4 14 4.33579 14 4.75V19.25C14 19.6642 13.6642 20 13.25 20H4.75C4.33579 20 4 19.6642 4 19.25V4.75Z" stroke-width="1.7" stroke-linejoin="round"/>'
           +     '<path d="M14 6.25L18.75 8V16L14 17.75V6.25Z" stroke-width="1.7" stroke-linejoin="round"/>'
@@ -380,7 +399,7 @@
       return;
     }
     value.textContent = masterName;
-    pill.title = 'Master: ' + masterName;
+    pill.title = navT('nav.master_of', 'Master: {name}', { name: masterName });
     pill.classList.add('visible');
   }
 
@@ -408,7 +427,7 @@
       '<div class="pnr pnr-sw" data-dir="sw"></div>' +
       '<div class="pnr pnr-se" data-dir="se"></div>' +
       '<div id="pbgui-notify-hdr">' +
-        '<span id="pbgui-notify-title">Notifications</span>' +
+        '<span id="pbgui-notify-title">' + esc(navT('nav.notifications', 'Notifications')) + '</span>' +
         '<button id="pbgui-notify-close">\u2715</button>' +
       '</div>' +
       '<div id="pbgui-notify-target" style="flex:1;min-height:0;overflow:hidden"></div>';
@@ -418,7 +437,7 @@
   function _ensureLogViewer(cb) {
     if (typeof window.LogViewerPanel === 'function') { cb(); return; }
     var s = document.createElement('script');
-    s.src = '/app/js/log_viewer_panel.js?v=29';
+    s.src = '/app/js/log_viewer_panel.js?v=30';
     s.onload = cb;
     s.onerror = function() { console.warn('Failed to load log_viewer_panel.js'); };
     document.head.appendChild(s);
@@ -550,15 +569,15 @@
       +     '<div class="pnr pnr-sw" data-dir="sw"></div>'
       +     '<div class="pnr pnr-se" data-dir="se"></div>'
       +     '<div class="pbgui-ovl-header" id="pbgui-alert-hdr">'
-      +       '<span class="pbgui-ovl-title" id="pbgui-alert-title">VPSMonitor Alerts</span>'
+      +       '<span class="pbgui-ovl-title" id="pbgui-alert-title">' + esc(navT('nav.alert_title', 'VPSMonitor Alerts')) + '</span>'
       +       '<button class="pbgui-ovl-close" id="pbgui-alert-close">&#x2715;</button>'
       +     '</div>'
       +     '<div id="pbgui-alert-body">'
       +       '<div id="pbgui-alert-toolbar">'
       +         '<div id="pbgui-alert-summary"></div>'
       +         '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">'
-      +           '<button type="button" class="pbgui-modal-btn secondary" id="pbgui-alert-ack-all">Ack all</button>'
-      +           '<a class="pbgui-alert-link" id="pbgui-alert-open-monitor" href="#">Open VPS Monitor</a>'
+      +           '<button type="button" class="pbgui-modal-btn secondary" id="pbgui-alert-ack-all">' + esc(navT('nav.alert_ack_all', 'Ack all')) + '</button>'
+      +           '<a class="pbgui-alert-link" id="pbgui-alert-open-monitor" href="#">' + esc(navT('nav.alert_open_monitor', 'Open VPS Monitor')) + '</a>'
       +         '</div>'
       +       '</div>'
       +       '<div id="pbgui-alert-list"></div>'
@@ -605,7 +624,13 @@
   }
 
   function _alertKindLabel(kind) {
-    return ({ offline: 'Offline', service: 'Service', system: 'System', instance: 'Instance' })[String(kind || '')] || 'Alert';
+    var keyMap = {
+      offline: 'nav.alert_kind_offline',
+      service: 'nav.alert_kind_service',
+      system: 'nav.alert_kind_system',
+      instance: 'nav.alert_kind_instance'
+    };
+    return navT(keyMap[String(kind || '')] || 'nav.alert_kind_alert', 'Alert');
   }
 
   function _formatTs(ts) {
@@ -635,19 +660,25 @@
     }
     if (summaryEl) {
       var s = _navAlerts.summary || { new_count: 0, ack_count: 0, total_active: 0 };
-      summaryEl.textContent = s.total_active + ' active alerts, ' + s.new_count + ' new, ' + s.ack_count + ' acknowledged';
+      summaryEl.textContent = navT('nav.alert_summary', '{total} active alerts, {new} new, {ack} acknowledged', {
+        total: s.total_active, new: s.new_count, ack: s.ack_count
+      });
     }
     if (!listEl) return;
     var items = Array.isArray(_navAlerts.items) ? _navAlerts.items : [];
     var history = Array.isArray(_navAlerts.history) ? _navAlerts.history : [];
+    var defaultAlertLabel = navT('nav.alert_item_default', 'Alert');
+    var pillAck = navT('nav.alert_pill_ack', 'ACK');
+    var pillNew = navT('nav.alert_pill_new', 'NEW');
+    var pillDone = navT('nav.alert_done', 'DONE');
     var html = '';
     if (!items.length) {
-      html += '<div class="pbgui-alert-empty">No active VPSMonitor alerts.</div>';
+      html += '<div class="pbgui-alert-empty">' + esc(navT('nav.alert_empty', 'No active VPSMonitor alerts.')) + '</div>';
     }
     items.forEach(function (item) {
       var ack = !!item.acknowledged;
       var host = esc(item.host || '');
-      var title = esc(item.summary || 'Alert');
+      var title = esc(item.summary || defaultAlertLabel);
       var details = esc(item.details || '');
       html += '<div class="pbgui-alert-item' + (ack ? '' : ' new') + '">';
       html +=   '<div class="pbgui-alert-head">';
@@ -655,13 +686,13 @@
       html +=       '<div class="pbgui-alert-title">' + title + '</div>';
       html +=       '<div class="pbgui-alert-meta">';
       html +=         '<span class="pbgui-alert-pill kind">' + esc(_alertKindLabel(item.kind)) + '</span>';
-      html +=         '<span class="pbgui-alert-pill ' + (ack ? 'ack' : 'new') + '">' + (ack ? 'ACK' : 'NEW') + '</span>';
+      html +=         '<span class="pbgui-alert-pill ' + (ack ? 'ack' : 'new') + '">' + (ack ? pillAck : pillNew) + '</span>';
       html +=         '<span>' + host + (item.name ? ' / ' + esc(item.name) : '') + '</span>';
-      html +=         '<span>Seen ' + esc(_formatTs(item.first_seen_ts)) + '</span>';
+      html +=         '<span>' + esc(navT('nav.alert_seen', 'Seen {ts}', { ts: _formatTs(item.first_seen_ts) })) + '</span>';
       html +=       '</div>';
       html +=     '</div>';
       if (!ack) {
-        html +=   '<div class="pbgui-alert-actions"><button type="button" class="pbgui-modal-btn secondary" data-alert-ack="' + escAttr(item.id) + '">Ack</button></div>';
+        html +=   '<div class="pbgui-alert-actions"><button type="button" class="pbgui-modal-btn secondary" data-alert-ack="' + escAttr(item.id) + '">' + esc(navT('nav.alert_ack_btn', 'Ack')) + '</button></div>';
       }
       html +=   '</div>';
       html +=   '<div class="pbgui-alert-details">' + details + '</div>';
@@ -669,10 +700,10 @@
     });
     if (history.length) {
       html += '<div class="pbgui-alert-section-sep"></div>';
-      html += '<div class="pbgui-alert-history-title">History</div>';
+      html += '<div class="pbgui-alert-history-title">' + esc(navT('nav.alert_history', 'History')) + '</div>';
       history.forEach(function (item) {
         var host = esc(item.host || '');
-        var title = esc(item.summary || 'Alert');
+        var title = esc(item.summary || defaultAlertLabel);
         var details = esc(item.details || '');
         var seenTs = esc(_formatTs(item.first_seen_ts));
         var resolvedTs = esc(_formatTs(item.resolved_ts || item.last_seen_ts));
@@ -682,10 +713,10 @@
         html +=       '<div class="pbgui-alert-title">' + title + '</div>';
         html +=       '<div class="pbgui-alert-meta">';
         html +=         '<span class="pbgui-alert-pill kind">' + esc(_alertKindLabel(item.kind)) + '</span>';
-        html +=         '<span class="pbgui-alert-pill ack">' + (item.acknowledged ? 'ACK' : 'DONE') + '</span>';
+        html +=         '<span class="pbgui-alert-pill ack">' + (item.acknowledged ? pillAck : pillDone) + '</span>';
         html +=         '<span>' + host + (item.name ? ' / ' + esc(item.name) : '') + '</span>';
-        html +=         '<span>Seen ' + seenTs + '</span>';
-        html +=         '<span>Resolved ' + resolvedTs + '</span>';
+        html +=         '<span>' + esc(navT('nav.alert_seen', 'Seen {ts}', { ts: seenTs })) + '</span>';
+        html +=         '<span>' + esc(navT('nav.alert_resolved', 'Resolved {ts}', { ts: resolvedTs })) + '</span>';
         html +=       '</div>';
         html +=     '</div>';
         html +=   '</div>';
@@ -865,7 +896,7 @@
     var html = '<div id="pbgui-about-ovl">'
       + '<div id="pbgui-about-box">'
       +   '<div class="pbgui-ovl-header">'
-      +     '<span class="pbgui-ovl-title">&#x2139;&#xFE0F; About PBGui</span>'
+      +     '<span class="pbgui-ovl-title">&#x2139;&#xFE0F; ' + esc(navT('nav.about_pbgui', 'About PBGui')) + '</span>'
       +     '<button class="pbgui-ovl-close" id="pbgui-about-close">&#x2715;</button>'
       +   '</div>'
       +   '<div id="pbgui-about-body">'
@@ -876,16 +907,16 @@
       +       '<rect x="22" y="9" width="5" height="21" rx="1.5" fill="#3182ce"/>'
       +     '</svg>'
       +     '<div id="pbgui-about-ver">PBGui ' + ver + '</div>'
-      +     (serial ? '<div id="pbgui-about-serial">API Serial ' + serial + '</div>' : '')
+      +     (serial ? '<div id="pbgui-about-serial">' + esc(navT('nav.api_serial', 'API Serial')) + ' ' + serial + '</div>' : '')
       +     '<div id="pbgui-about-tag">Passivbot GUI &mdash; by msei99</div>'
       +     '<div class="pbgui-about-divider"></div>'
       +     '<div class="pbgui-about-links">'
-      +       '<a class="pbgui-about-link kofi" href="https://ko-fi.com/Y8Y216Q3QS" target="_blank" rel="noopener">&#9749; Support on Ko-fi</a>'
-      +       '<a class="pbgui-about-link github" href="https://github.com/msei99/pbgui" target="_blank" rel="noopener">&#128279; GitHub Repository</a>'
-      +       '<a class="pbgui-about-link readme" href="https://github.com/msei99/pbgui#readme" target="_blank" rel="noopener">&#128196; README</a>'
+      +       '<a class="pbgui-about-link kofi" href="https://ko-fi.com/Y8Y216Q3QS" target="_blank" rel="noopener">&#9749; ' + esc(navT('nav.support_kofi', 'Support on Ko-fi')) + '</a>'
+      +       '<a class="pbgui-about-link github" href="https://github.com/msei99/pbgui" target="_blank" rel="noopener">&#128279; ' + esc(navT('nav.github_repo', 'GitHub Repository')) + '</a>'
+      +       '<a class="pbgui-about-link readme" href="https://github.com/msei99/pbgui#readme" target="_blank" rel="noopener">&#128196; ' + esc(navT('nav.readme', 'README')) + '</a>'
       +     '</div>'
       +   '</div>'
-      +   '<div id="pbgui-about-footer">Open-source &bull; MIT License</div>'
+      +   '<div id="pbgui-about-footer">' + esc(navT('nav.about_footer', 'Open-source &bull; MIT License')) + '</div>'
       + '</div></div>';
 
     var wrapper = document.createElement('div');
@@ -900,15 +931,15 @@
       + '<div id="pbgui-confirm-ovl" aria-hidden="true">'
       +   '<div id="pbgui-confirm-box" role="dialog" aria-modal="true" aria-labelledby="pbgui-confirm-title">'
       +     '<div class="pbgui-ovl-header">'
-      +       '<span class="pbgui-ovl-title" id="pbgui-confirm-title">Confirm action</span>'
+      +       '<span class="pbgui-ovl-title" id="pbgui-confirm-title">' + esc(navT('common.confirmAction', 'Confirm action')) + '</span>'
       +       '<button class="pbgui-ovl-close" id="pbgui-confirm-close">&#x2715;</button>'
       +     '</div>'
       +     '<div id="pbgui-confirm-body">'
       +       '<div id="pbgui-confirm-msg"></div>'
       +       '<div id="pbgui-confirm-detail" hidden></div>'
       +       '<div id="pbgui-confirm-actions">'
-      +         '<button type="button" class="pbgui-modal-btn secondary" id="pbgui-confirm-cancel">Cancel</button>'
-      +         '<button type="button" class="pbgui-modal-btn primary" id="pbgui-confirm-accept">Confirm</button>'
+      +         '<button type="button" class="pbgui-modal-btn secondary" id="pbgui-confirm-cancel">' + esc(navT('common.cancel', 'Cancel')) + '</button>'
+      +         '<button type="button" class="pbgui-modal-btn primary" id="pbgui-confirm-accept">' + esc(navT('common.confirm', 'Confirm')) + '</button>'
       +       '</div>'
       +     '</div>'
       +   '</div>'
@@ -950,7 +981,7 @@
     var cancelBtn = document.getElementById('pbgui-confirm-cancel');
     var acceptBtn = document.getElementById('pbgui-confirm-accept');
     if (!overlay || !title || !message || !detail || !cancelBtn || !acceptBtn) {
-      logUiNotification('Confirmation dialog unavailable. Reload the page and try again.', 'err');
+      logUiNotification(navT('nav.confirm_unavailable', 'Confirmation dialog unavailable. Reload the page and try again.'), 'err');
       return Promise.resolve(false);
     }
 
@@ -960,10 +991,10 @@
       previousResolve(false);
     }
 
-    title.textContent = String(options.title || 'Confirm action');
-    message.textContent = String(options.message || 'Are you sure?');
-    acceptBtn.textContent = String(options.confirmText || 'Confirm');
-    cancelBtn.textContent = String(options.cancelText || 'Cancel');
+    title.textContent = String(options.title || navT('common.confirmAction', 'Confirm action'));
+    message.textContent = String(options.message || navT('common.areYouSure', 'Are you sure?'));
+    acceptBtn.textContent = String(options.confirmText || navT('common.confirm', 'Confirm'));
+    cancelBtn.textContent = String(options.cancelText || navT('common.cancel', 'Cancel'));
     var detailText = String(options.detail || '').trim();
     detail.textContent = detailText;
     detail.hidden = !detailText;
@@ -1063,7 +1094,7 @@
       maxBtn.className = 'ovl-tool';
       maxBtn.setAttribute('data-role', 'maximize');
       maxBtn.setAttribute('aria-pressed', 'false');
-      maxBtn.setAttribute('title', 'Fit to browser window');
+      maxBtn.setAttribute('title', navT('nav.fit_window', 'Fit to browser window'));
       maxBtn.textContent = '⛶';
       if (closeBtn && closeBtn.parentNode === actions) actions.insertBefore(maxBtn, closeBtn);
       else actions.appendChild(maxBtn);
@@ -1073,7 +1104,7 @@
       if (!maxBtn) return;
       var isMaximized = helpOvl.classList.contains('is-maximized');
       maxBtn.setAttribute('aria-pressed', isMaximized ? 'true' : 'false');
-      maxBtn.setAttribute('title', isMaximized ? 'Restore window size' : 'Fit to browser window');
+      maxBtn.setAttribute('title', isMaximized ? navT('nav.restore_window', 'Restore window size') : navT('nav.fit_window', 'Fit to browser window'));
       maxBtn.textContent = isMaximized ? '❐' : '⛶';
     }
 
@@ -1173,10 +1204,10 @@
       }
 
       console.warn('[pbgui_nav] Unknown PBGui page "' + page + '".');
-      logUiNotification('Navigation unavailable - page is not registered.', 'warn');
+      logUiNotification(navT('nav.nav_unavailable', 'Navigation unavailable - page is not registered.'), 'warn');
       var msg = document.createElement('div');
       msg.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;background:#ef444480;color:#fff;padding:.6rem 1.2rem;border-radius:8px;font-size:.85rem;pointer-events:none;';
-      msg.textContent = 'Navigation unavailable — page is not registered.';
+      msg.textContent = navT('nav.nav_unavailable_body', 'Navigation unavailable — page is not registered.');
       document.body.appendChild(msg);
       setTimeout(function() { msg.remove(); }, 4000);
     }
@@ -1228,7 +1259,7 @@
 
       guideBtn.disabled = true;
       var script = document.createElement('script');
-      script.src = '/app/js/shared_help_overlay.js?v=6';
+      script.src = '/app/js/shared_help_overlay.js?v=7';
       script.onload = function () {
         guideBtn.disabled = false;
         if (window.PBGuiSharedHelp && typeof window.PBGuiSharedHelp.open === 'function') {
@@ -1270,6 +1301,17 @@
       logoutBtn.addEventListener('click', function () { performLogout(); });
     }
 
+    /* Language switcher → persist choice, reload to re-render the page */
+    var langBtn = document.getElementById('pbgui-lang-btn');
+    if (langBtn) {
+      langBtn.addEventListener('click', function () {
+        var i18n = window.PBGuiI18n;
+        if (i18n && typeof i18n.setLang === 'function') {
+          i18n.setLang(i18n.lang === 'zh' ? 'en' : 'zh');
+        }
+      });
+    }
+
     /* Esc key closes about overlay */
     document.addEventListener('keydown', function (e) {
       var confirmOvl = document.getElementById('pbgui-confirm-ovl');
@@ -1300,10 +1342,10 @@
         var blockReason = restartBtn.getAttribute('data-restart-block-reason') || '';
         if (blocked) {
           showNavConfirm({
-            title: 'Restart blocked',
-            message: 'PBGui services cannot restart while protected work is still running.',
-            detail: blockReason || 'Wait until the active VPS task finishes or is marked interrupted.',
-            confirmText: 'OK',
+            title: navT('nav.restart_blocked', 'Restart blocked'),
+            message: navT('nav.restart_blocked_msg', 'PBGui services cannot restart while protected work is still running.'),
+            detail: blockReason || navT('nav.restart_blocked_wait', 'Wait until the active VPS task finishes or is marked interrupted.'),
+            confirmText: navT('common.ok', 'OK'),
             cancelText: '',
             hideCancel: true
           });
@@ -1314,13 +1356,13 @@
           return String((item || {}).label || (item || {}).service || '').trim();
         }).filter(Boolean);
         var restartDetail = restartLabels.length
-          ? 'Outdated services: ' + restartLabels.join(', ') + '. The API server restarts last and the page reconnects automatically.'
-          : 'The API server restarts and the page reconnects automatically.';
+          ? navT('nav.restart_outdated', 'Outdated services: {list}. The API server restarts last and the page reconnects automatically.', { list: restartLabels.join(', ') })
+          : navT('nav.restart_auto', 'The API server restarts and the page reconnects automatically.');
         showNavConfirm({
-          title: 'Restart PBGui services',
-          message: 'Restart all PBGui services running outdated code?',
+          title: navT('nav.restart_services_title', 'Restart PBGui services'),
+          message: navT('nav.restart_services_msg', 'Restart all PBGui services running outdated code?'),
           detail: restartDetail,
-          confirmText: 'Restart'
+          confirmText: navT('nav.restart', 'Restart')
         }).then(function (confirmed) {
           if (!confirmed) return;
           var c2 = cfg();
@@ -1329,14 +1371,14 @@
           if (!origin2) origin2 = window.location.origin;
           restartBtn.disabled = true;
           restartBtn.classList.add('disabled');
-          restartBtn.innerHTML = '<span class="nav-restart-dot"></span>Restarting...';
+          restartBtn.innerHTML = '<span class="nav-restart-dot"></span>' + esc(navT('nav.restarting', 'Restarting...'));
           fetch(origin2 + '/api/server-restart', authOptions(c2.token, {
             method: 'POST',
             credentials: 'same-origin'
           })).then(function(resp) {
             if (!resp.ok) {
               return resp.json().catch(function () { return {}; }).then(function (data) {
-                var detail = (data && data.detail) ? String(data.detail) : 'Restart failed.';
+                var detail = (data && data.detail) ? String(data.detail) : navT('nav.restart_failed_default', 'Restart failed.');
                 throw new Error(detail);
               });
             }
@@ -1344,13 +1386,13 @@
           }).catch(function(err) {
             restartBtn.disabled = false;
             restartBtn.classList.remove('disabled');
-            restartBtn.innerHTML = '<span class="nav-restart-dot"></span>Restart';
+            restartBtn.innerHTML = '<span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart'));
             fetchRestartStatus(c2.token, origin2);
             showNavConfirm({
-              title: 'Restart failed',
-              message: 'The PBGui service restart request was rejected.',
-              detail: err && err.message ? err.message : 'Restart failed.',
-              confirmText: 'OK',
+              title: navT('nav.restart_failed', 'Restart failed'),
+              message: navT('nav.restart_rejected', 'The PBGui service restart request was rejected.'),
+              detail: err && err.message ? err.message : navT('nav.restart_failed_default', 'Restart failed.'),
+              confirmText: navT('common.ok', 'OK'),
               cancelText: '',
               hideCancel: true
             });
@@ -1381,8 +1423,8 @@
     ov.id = 'pbgui-restart-overlay';
     ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(9,14,26,.92);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;font-family:sans-serif;';
     ov.innerHTML =
-      '<div style="color:#e2e8f0;font-size:1.1rem;font-weight:600;">Restarting PBGui Services\u2026</div>' +
-      '<div id="pbgui-restart-status" style="color:#64748b;font-size:0.85rem;">Waiting for services\u2026</div>';
+      '<div style="color:#e2e8f0;font-size:1.1rem;font-weight:600;">' + esc(navT('nav.restarting_services', 'Restarting PBGui Services\u2026')) + '</div>' +
+      '<div id="pbgui-restart-status" style="color:#64748b;font-size:0.85rem;">' + esc(navT('nav.waiting_services', 'Waiting for services\u2026')) + '</div>';
     document.body.appendChild(ov);
 
     var attempts = 0;
@@ -1392,7 +1434,7 @@
 
     function probe() {
       attempts++;
-      if (statusEl) statusEl.textContent = 'Reconnecting\u2026 (' + attempts + '/' + maxAttempts + ')';
+      if (statusEl) statusEl.textContent = navT('nav.reconnecting', 'Reconnecting\u2026 ({done}/{total})', { done: attempts, total: maxAttempts });
       fetch(apiBase + '/api/server-status', authOptions(token, { cache: 'no-store', credentials: 'same-origin' }))
         .then(function (r) {
           if (!r.ok) throw new Error('status unavailable');
@@ -1411,7 +1453,7 @@
     }
 
     function _overlayFail() {
-      if (statusEl) statusEl.textContent = 'Services did not become current \u2014 please refresh and inspect service status.';
+      if (statusEl) statusEl.textContent = navT('nav.services_not_current', 'Services did not become current \u2014 please refresh and inspect service status.');
     }
 
     /* First probe after PBGUI_RESTART_DELAY (3s) + a small buffer */
@@ -1441,10 +1483,10 @@
     btn.disabled = false;
     btn.setAttribute('aria-disabled', blocked ? 'true' : 'false');
     btn.classList.toggle('disabled', blocked);
-    btn.innerHTML = '<span class="nav-restart-dot"></span>Restart' + (serviceLabels.length ? ' (' + serviceLabels.length + ')' : '');
+    btn.innerHTML = '<span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart')) + (serviceLabels.length ? ' (' + serviceLabels.length + ')' : '');
     btn.title = blocked
-      ? ('Restart blocked: ' + (reason || 'Protected PBGui work is still running.'))
-      : ('Restart outdated PBGui services' + (serviceLabels.length ? ': ' + serviceLabels.join(', ') : ''));
+      ? navT('nav.restart_blocked_title', 'Restart blocked: {reason}', { reason: (reason || navT('nav.restart_blocked_default', 'Protected PBGui work is still running.')) })
+      : (navT('nav.restart_outdated_title', 'Restart outdated PBGui services') + (serviceLabels.length ? ': ' + serviceLabels.join(', ') : ''));
   }
 
   function updateAuthModeState(auth) {
@@ -1456,10 +1498,10 @@
       pill.title = '';
       return;
     }
-    var bindHost = String(auth.bind_host || 'configured interface');
+    var bindHost = String(auth.bind_host || navT('nav.configured_interface', 'configured interface'));
     pill.title = auth.wildcard_bind
-      ? 'Authentication disabled. Anyone who can reach the PBGui API port has full access.'
-      : 'Authentication disabled on ' + bindHost + '. Anyone who can reach this address has full access.';
+      ? navT('nav.auth_disabled_any', 'Authentication disabled. Anyone who can reach the PBGui API port has full access.')
+      : navT('nav.auth_disabled_host', 'Authentication disabled on {host}. Anyone who can reach this address has full access.', { host: bindHost });
   }
 
   function fetchRestartStatus(token, apiOrigin) {

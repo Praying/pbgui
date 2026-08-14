@@ -26,6 +26,27 @@
 (function (global) {
     'use strict';
 
+    /* ── i18n helpers: translate through PBGuiI18n when present, otherwise
+       fall back to the English literal (e.g. legacy fragments / test VMs). ── */
+    function _t(key, fallback, params) {
+        var i18n = window.PBGuiI18n;
+        if (i18n && typeof i18n.t === 'function') {
+            var v = i18n.t(key, params);
+            if (v !== key) return v;
+        }
+        var out = String(fallback);
+        if (params) {
+            out = out.replace(/\{(\w+)\}/g, function (m, name) {
+                return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+            });
+        }
+        return out;
+    }
+    function _serverMsg(text) {
+        var i18n = window.PBGuiI18n;
+        return (i18n && typeof i18n.serverMsg === 'function') ? i18n.serverMsg(text) : text;
+    }
+
     /* ──────────────────────────────── CSS ──────────────────────────────── */
 
     var _CSS = [
@@ -47,7 +68,7 @@
         '  --db-red:#ef4444;',
         '  --db-orange:#f59e0b;',
         '  --db-radius:6px;',
-        '  --db-font:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}',
+        '  --db-font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif}',
 
         /* ── Balance widget ── */
         '.db-root{font-family:var(--db-font);font-size:0.875rem;color:var(--db-text);background:var(--db-bg);}',
@@ -361,16 +382,16 @@
     }
     function liveAgeText(ts) {
         var age = Math.max(0, Math.round((Date.now() - (ts || Date.now())) / 1000));
-        if (age <= 1) return 'now';
-        if (age < 60) return age + 's ago';
+        if (age <= 1) return _t('dash.nowShort', 'now');
+        if (age < 60) return _t('dash.secondsAgo', '{n}s ago', { n: age });
         var min = Math.floor(age / 60);
-        if (min < 60) return min + 'm ago';
-        return Math.floor(min / 60) + 'h ago';
+        if (min < 60) return _t('dash.minutesAgo', '{n}m ago', { n: min });
+        return _t('dash.hoursAgo', '{n}h ago', { n: Math.floor(min / 60) });
     }
     function positionsStatusText(source, ts) {
         var normalized = String(source || 'db').toLowerCase();
-        var label = normalized === 'live' ? 'Live' : 'DB fallback';
-        if (normalized === 'mixed') label = 'Mixed live/DB';
+        var label = normalized === 'live' ? _t('dash.live', 'Live') : _t('dash.dbFallback', 'DB fallback');
+        if (normalized === 'mixed') label = _t('dash.mixedLiveDb', 'Mixed live/DB');
         return label + ': ' + liveAgeText(ts);
     }
     function tweBarPct(v) { return Math.min(100, (v / 300) * 100).toFixed(1); }
@@ -393,7 +414,7 @@
             var trash = document.createElement('button');
             trash.className = 'dt-trash';
             trash.innerHTML = '&#128465;';
-            trash.title = 'Remove widget';
+            trash.title = _t('dash.removeWidget', 'Remove widget');
             trash.addEventListener('click', function (e) { e.stopPropagation(); onDelete(); });
             hdr.appendChild(trash);
         }
@@ -447,16 +468,16 @@
         if (_dbRoot && _dbTbody && data && (data.rows || []).length > 0) {
             container._dbStatusSource = data.source || container._dbStatusSource || 'db';
             container._dbStatusTs = Date.now();
-            var _t = (data.totals) ? data.totals : {};
+            var _totals = (data.totals) ? data.totals : {};
             var _totDiv = _dbRoot.querySelector('.db-totals');
             if (_totDiv) {
                 _totDiv.innerHTML =
-                    '<div class="db-total-item"><label>Total Balance</label>' +
-                    '<span class="db-green">$' + (_t.balance || 0).toFixed(2) + ' USDT</span></div>' +
-                    '<div class="db-total-item"><label>Total uPnl</label>' +
-                    '<span style="color:' + upnlColor(_t.upnl || 0) + '">' + signedFmt(_t.upnl || 0) + '</span></div>' +
-                    '<div class="db-total-item"><label>Total TWE</label>' +
-                    '<span style="color:' + tweColor(_t.we || 0) + '">' + (_t.we || 0).toFixed(2) + ' %</span></div>';
+                    '<div class="db-total-item"><label>' + _t('dash.totalBalance', 'Total Balance') + '</label>' +
+                    '<span class="db-green">$' + (_totals.balance || 0).toFixed(2) + ' USDT</span></div>' +
+                    '<div class="db-total-item"><label>' + _t('dash.totalUPnl', 'Total uPnl') + '</label>' +
+                    '<span style="color:' + upnlColor(_totals.upnl || 0) + '">' + signedFmt(_totals.upnl || 0) + '</span></div>' +
+                    '<div class="db-total-item"><label>' + _t('dash.totalTwe', 'Total TWE') + '</label>' +
+                    '<span style="color:' + tweColor(_totals.we || 0) + '">' + (_totals.we || 0).toFixed(2) + ' %</span></div>';
             }
             updateBalanceStatus(container._dbStatusSource, container._dbStatusTs);
             renderBalanceRows(_dbTbody, data.rows);
@@ -479,11 +500,11 @@
         var totDiv = document.createElement('div');
         totDiv.className = 'db-totals';
         totDiv.innerHTML =
-            '<div class="db-total-item"><label>Total Balance</label>' +
+            '<div class="db-total-item"><label>' + _t('dash.totalBalance', 'Total Balance') + '</label>' +
             '<span class="db-green">$' + (t.balance || 0).toFixed(2) + ' USDT</span></div>' +
-            '<div class="db-total-item"><label>Total uPnl</label>' +
+            '<div class="db-total-item"><label>' + _t('dash.totalUPnl', 'Total uPnl') + '</label>' +
             '<span style="color:' + upnlColor(t.upnl || 0) + '">' + signedFmt(t.upnl || 0) + '</span></div>' +
-            '<div class="db-total-item"><label>Total TWE</label>' +
+            '<div class="db-total-item"><label>' + _t('dash.totalTwe', 'Total TWE') + '</label>' +
             '<span style="color:' + tweColor(t.we || 0) + '">' + (t.we || 0).toFixed(2) + ' %</span></div>';
         /* optional icon before totals */
         hdr.appendChild(totDiv);
@@ -498,7 +519,7 @@
             /* interactive dropdown element passed in by the editor */
             var userSelCtrl = document.createElement('div');
             userSelCtrl.className = 'db-user-sel';
-            userSelCtrl.innerHTML = '<label>Users:</label>';
+            userSelCtrl.innerHTML = '<label>' + _t('dash.usersColon', 'Users:') + '</label>';
             userSelCtrl.appendChild(opts.usersControl);
             hdr.appendChild(userSelCtrl);
         } else if (opts.users !== undefined) {
@@ -509,7 +530,7 @@
             var userSel = document.createElement('div');
             userSel.className = 'db-user-sel';
             var userLbl = document.createElement('label');
-            userLbl.textContent = 'Users:';
+            userLbl.textContent = _t('dash.usersColon', 'Users:');
             userSel.appendChild(userLbl);
             var userSpan = document.createElement('span');
             userSpan.style.cssText = 'color:#e2e8f0;font-size:0.78rem;';
@@ -521,7 +542,7 @@
             var trash = document.createElement('button');
             trash.className = 'dt-trash';
             trash.innerHTML = '&#128465;';
-            trash.title = 'Remove widget';
+            trash.title = _t('dash.removeWidget', 'Remove widget');
             trash.addEventListener('click', function (e) { e.stopPropagation(); opts.onDelete(); });
             hdr.appendChild(trash);
         }
@@ -536,7 +557,7 @@
         if (rows.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'db-nodata';
-            noData.textContent = 'No balance data.';
+            noData.textContent = _t('dash.noBalanceData', 'No balance data.');
             root.appendChild(noData);
             container.appendChild(root);
             return;
@@ -549,8 +570,8 @@
         tbl.className = 'db-table';
         tbl.innerHTML =
             '<thead><tr>' +
-            '<th>User</th><th>Date</th>' +
-            '<th>Balance USDT</th><th>uPnl</th><th>TWE %</th>' +
+            '<th>' + _t('dash.user', 'User') + '</th><th>' + _t('dash.date', 'Date') + '</th>' +
+            '<th>' + _t('dash.balanceUsdt', 'Balance USDT') + '</th><th>' + _t('dash.upnl', 'uPnl') + '</th><th>' + _t('dash.twePct', 'TWE %') + '</th>' +
             '</tr></thead>';
         var tbody = document.createElement('tbody');
         renderBalanceRows(tbody, rows);
@@ -576,7 +597,7 @@
     function renderTop(chartDiv, data, opts) {
         opts = opts || {};
         var P = opts.Plotly || global.Plotly;
-        if (!P) { chartDiv.textContent = 'Plotly not loaded'; return; }
+        if (!P) { chartDiv.textContent = _t('dash.plotlyNotLoaded', 'Plotly not loaded'); return; }
 
         var rows    = (data && data.rows) ? data.rows : [];
         var symbols = rows.map(function (r) { return r[1]; });
@@ -588,7 +609,7 @@
             y: incomes,
             type: 'bar',
             marker: { color: colors },
-            hovertemplate: '<b>%{x}</b><br>Income: %{y:.4f}<extra></extra>'
+            hovertemplate: '<b>%{x}</b><br>' + _t('dash.income', 'Income') + ': %{y:.4f}<extra></extra>'
         };
         var layout = {
             paper_bgcolor: '#0e1117',
@@ -633,7 +654,7 @@
             modeBarButtonsToAdd: [
                 {
                     name:  'fullscreen',
-                    title: 'Fullscreen',
+                    title: _t('dash.fullscreen', 'Fullscreen'),
                     icon:  {
                         width: 857.1, height: 857.1,
                         path: 'M0 0v285.7h142.9V142.9H285.7V0H0zm571.4 0v142.9h142.9v142.9H857.1V0H571.4zM0 571.4v285.7h285.7V714.3H142.9V571.4H0zm714.3 142.9v142.9H571.4v142.9H857.1V571.4H714.3z'
@@ -673,7 +694,7 @@
         var _fc = container.querySelector('.dt-chart');
         if (_fc && data && (data.rows || []).length > 0) {
             var _dr = container.querySelector('.dt-daterange');
-            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? 'From: ' + data.from_date + '  To: ' + data.to_date : '';
+            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date : '';
             renderTop(_fc, data, { noResize: true });
             return;
         }
@@ -687,7 +708,7 @@
         hdr.className = 'dt-header';
         var titleSpan = document.createElement('span');
         titleSpan.className = 'dt-title';
-        titleSpan.textContent = 'Top Symbols';
+        titleSpan.textContent = _t('dash.topSymbols', 'Top Symbols');
         hdr.appendChild(titleSpan);
 
         if (opts.topNControl || opts.periodControl || opts.usersControl) {
@@ -696,7 +717,7 @@
             metaDiv.className = 'dt-meta dt-meta-controls';
             if (opts.topNControl) {
                 var lTop = document.createElement('span');
-                lTop.className = 'dt-meta-lbl'; lTop.textContent = 'Top';
+                lTop.className = 'dt-meta-lbl'; lTop.textContent = _t('dash.top', 'Top');
                 metaDiv.appendChild(lTop);
                 metaDiv.appendChild(opts.topNControl);
             }
@@ -705,7 +726,7 @@
                 sepP.className = 'dt-meta-sep'; sepP.innerHTML = '&middot;';
                 metaDiv.appendChild(sepP);
                 var lPrd = document.createElement('span');
-                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = 'Period';
+                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = _t('dash.period', 'Period');
                 metaDiv.appendChild(lPrd);
                 metaDiv.appendChild(opts.periodControl);
             }
@@ -714,13 +735,13 @@
                 sepF.className = 'dt-meta-sep'; sepF.innerHTML = '&middot;';
                 metaDiv.appendChild(sepF);
                 var lFrom = document.createElement('span');
-                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = 'From';
+                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = _t('dash.from', 'From');
                 metaDiv.appendChild(lFrom);
                 metaDiv.appendChild(opts.fromControl);
             }
             if (opts.toControl) {
                 var lTo = document.createElement('span');
-                lTo.className = 'dt-meta-lbl'; lTo.textContent = 'To';
+                lTo.className = 'dt-meta-lbl'; lTo.textContent = _t('dash.to', 'To');
                 metaDiv.appendChild(lTo);
                 metaDiv.appendChild(opts.toControl);                if (opts.toNowControl) {
                     metaDiv.appendChild(opts.toNowControl);
@@ -730,7 +751,7 @@
                 sepU.className = 'dt-meta-sep'; sepU.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU);
                 var lUsr = document.createElement('span');
-                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = 'Users';
+                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr);
                 metaDiv.appendChild(opts.usersControl);
             } else if (opts.users && opts.users.length > 0) {
@@ -738,7 +759,7 @@
                 sepU2.className = 'dt-meta-sep'; sepU2.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU2);
                 var lUsr2 = document.createElement('span');
-                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = 'Users';
+                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr2);
                 var usrVal = document.createElement('span');
                 usrVal.className = 'dt-meta-user';
@@ -757,16 +778,16 @@
             var _periodDisplay = (_rawPeriod.indexOf('CUSTOM:') === 0)
                 ? (function () {
                       var _pp = _rawPeriod.split(':');
-                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? 'Now' : _pp[2];
+                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? _t('dash.now', 'Now') : _pp[2];
                       return _pp[1] + ' \u2192 ' + _toDisp;
                   }())
                 : _rawPeriod;
             var metaSpan = document.createElement('span');
             metaSpan.className = 'dt-meta';
             metaSpan.innerHTML =
-                'Top:&nbsp;' + (opts.topN || 10) +
-                '&nbsp;&middot;&nbsp;Period:&nbsp;' + _periodDisplay +
-                '&nbsp;&middot;&nbsp;Users:&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
+                _t('dash.top', 'Top') + ':&nbsp;' + (opts.topN || 10) +
+                '&nbsp;&middot;&nbsp;' + _t('dash.period', 'Period') + ':&nbsp;' + _periodDisplay +
+                '&nbsp;&middot;&nbsp;' + _t('dash.users', 'Users') + ':&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
             hdr.appendChild(metaSpan);
         }
         _decorateHeader(hdr, opts.icon, titleSpan, opts.onDelete);
@@ -776,7 +797,7 @@
         var dr = document.createElement('div');
         dr.className = 'dt-daterange';
         if (data && data.from_date && data.to_date) {
-            dr.textContent = 'From: ' + data.from_date + '  To: ' + data.to_date;
+            dr.textContent = _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date;
         }
         root.appendChild(dr);
 
@@ -784,7 +805,7 @@
         if (rows.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'dt-nodata';
-            noData.textContent = 'No data for the selected period.';
+            noData.textContent = _t('dash.noDataPeriod', 'No data for the selected period.');
             root.appendChild(noData);
             container.appendChild(root);
             return;
@@ -799,7 +820,7 @@
         var closeBtn = document.createElement('button');
         closeBtn.className = 'dt-fs-close';
         closeBtn.textContent = '\u2715';  /* × */
-        closeBtn.title = 'Exit Fullscreen';
+        closeBtn.title = _t('dash.exitFullscreen', 'Exit Fullscreen');
         closeBtn.addEventListener('click', function () {
             if (document.exitFullscreen) document.exitFullscreen();
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -841,7 +862,7 @@
             var _diChart = container.querySelector('.di-chart');
             if (_diChart && data && (data.traces || []).length > 0) {
                 var _dr = container.querySelector('.dt-daterange');
-                if (_dr) _dr.textContent = (data.from_date && data.to_date) ? 'From: ' + data.from_date + '  To: ' + data.to_date : '';
+                if (_dr) _dr.textContent = (data.from_date && data.to_date) ? _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date : '';
                 var _plotTraces = (data.traces || []).map(function(t) {
                     return { x: t.x, y: t.y, name: t.name, type: 'scatter', mode: 'lines', showlegend: true };
                 });
@@ -884,7 +905,7 @@
         hdr.className = 'dt-header';
         var titleSpan = document.createElement('span');
         titleSpan.className = 'dt-title';
-        titleSpan.textContent = 'Income';
+        titleSpan.textContent = _t('dash.income', 'Income');
         hdr.appendChild(titleSpan);
 
         if (opts.periodControl || opts.usersControl || opts.lastNControl || opts.filterControl) {
@@ -893,7 +914,7 @@
             metaDiv.className = 'dt-meta dt-meta-controls';
             if (opts.periodControl) {
                 var lPrd = document.createElement('span');
-                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = 'Period';
+                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = _t('dash.period', 'Period');
                 metaDiv.appendChild(lPrd);
                 metaDiv.appendChild(opts.periodControl);
             }
@@ -902,13 +923,13 @@
                 sepF.className = 'dt-meta-sep'; sepF.innerHTML = '&middot;';
                 metaDiv.appendChild(sepF);
                 var lFrom = document.createElement('span');
-                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = 'From';
+                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = _t('dash.from', 'From');
                 metaDiv.appendChild(lFrom);
                 metaDiv.appendChild(opts.fromControl);
             }
             if (opts.toControl) {
                 var lTo = document.createElement('span');
-                lTo.className = 'dt-meta-lbl'; lTo.textContent = 'To';
+                lTo.className = 'dt-meta-lbl'; lTo.textContent = _t('dash.to', 'To');
                 metaDiv.appendChild(lTo);
                 metaDiv.appendChild(opts.toControl);
                 if (opts.toNowControl) metaDiv.appendChild(opts.toNowControl);
@@ -918,7 +939,7 @@
                 sepL.className = 'dt-meta-sep'; sepL.innerHTML = '&middot;';
                 metaDiv.appendChild(sepL);
                 var lLast = document.createElement('span');
-                lLast.className = 'dt-meta-lbl'; lLast.textContent = 'Last N';
+                lLast.className = 'dt-meta-lbl'; lLast.textContent = _t('dash.lastN', 'Last N');
                 metaDiv.appendChild(lLast);
                 metaDiv.appendChild(opts.lastNControl);
             }
@@ -927,7 +948,7 @@
                 sepFi.className = 'dt-meta-sep'; sepFi.innerHTML = '&middot;';
                 metaDiv.appendChild(sepFi);
                 var lFilt = document.createElement('span');
-                lFilt.className = 'dt-meta-lbl'; lFilt.textContent = 'Filter';
+                lFilt.className = 'dt-meta-lbl'; lFilt.textContent = _t('dash.filterVal', 'Filter');
                 metaDiv.appendChild(lFilt);
                 metaDiv.appendChild(opts.filterControl);
             }
@@ -936,7 +957,7 @@
                 sepU.className = 'dt-meta-sep'; sepU.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU);
                 var lUsr = document.createElement('span');
-                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = 'Users';
+                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr);
                 metaDiv.appendChild(opts.usersControl);
             } else if (opts.users && opts.users.length > 0) {
@@ -944,7 +965,7 @@
                 sepU2.className = 'dt-meta-sep'; sepU2.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU2);
                 var lUsr2 = document.createElement('span');
-                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = 'Users';
+                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr2);
                 var usrVal = document.createElement('span');
                 usrVal.className = 'dt-meta-user';
@@ -963,17 +984,17 @@
             var _periodDisplay = (_rawPeriod.indexOf('CUSTOM:') === 0)
                 ? (function () {
                       var _pp = _rawPeriod.split(':');
-                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? 'Now' : _pp[2];
+                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? _t('dash.now', 'Now') : _pp[2];
                       return _pp[1] + ' \u2192 ' + _toDisp;
                   }())
                 : _rawPeriod;
             var metaSpan = document.createElement('span');
             metaSpan.className = 'dt-meta';
             metaSpan.innerHTML =
-                'Period:&nbsp;' + _periodDisplay +
-                '&nbsp;&middot;&nbsp;Last&nbsp;N:&nbsp;' + (opts.lastN || 0) +
-                '&nbsp;&middot;&nbsp;Filter:&nbsp;' + (opts.filterVal || 0) +
-                '&nbsp;&middot;&nbsp;Users:&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
+                _t('dash.period', 'Period') + ':&nbsp;' + _periodDisplay +
+                '&nbsp;&middot;&nbsp;' + _t('dash.lastN', 'Last N') + ':&nbsp;' + (opts.lastN || 0) +
+                '&nbsp;&middot;&nbsp;' + _t('dash.filterVal', 'Filter') + ':&nbsp;' + (opts.filterVal || 0) +
+                '&nbsp;&middot;&nbsp;' + _t('dash.users', 'Users') + ':&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
             hdr.appendChild(metaSpan);
         }
         _decorateHeader(hdr, opts.icon, titleSpan, opts.onDelete);
@@ -983,7 +1004,7 @@
         var dr = document.createElement('div');
         dr.className = 'dt-daterange';
         if (data && data.from_date && data.to_date) {
-            dr.textContent = 'From: ' + data.from_date + '  To: ' + data.to_date;
+            dr.textContent = _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date;
         }
         root.appendChild(dr);
 
@@ -1011,7 +1032,7 @@
         if (rows.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'dt-nodata';
-            noData.textContent = 'No data for the selected period.';
+            noData.textContent = _t('dash.noDataPeriod', 'No data for the selected period.');
             root.appendChild(noData);
             return;
         }
@@ -1032,10 +1053,10 @@
 
         /* columns definition */
         var cols = [
-            { key: 'date',   label: 'Date', sortable: true },
-            { key: 'user',   label: 'User', sortable: true },
-            { key: 'symbol', label: 'Symbol', sortable: true },
-            { key: 'income', label: 'Income', sortable: true }
+            { key: 'date',   label: _t('dash.date', 'Date'), sortable: true },
+            { key: 'user',   label: _t('dash.user', 'User'), sortable: true },
+            { key: 'symbol', label: _t('dash.symbol', 'Symbol'), sortable: true },
+            { key: 'income', label: _t('dash.income', 'Income'), sortable: true }
         ];
 
         function renderTable() {
@@ -1050,7 +1071,7 @@
                     var jumpInput = document.createElement('input');
                     jumpInput.type = 'date';
                     jumpInput.className = 'di-jump-input';
-                    jumpInput.title = 'Go to date';
+                    jumpInput.title = _t('dash.goToDate', 'Go to date');
                     jumpInput.addEventListener('click', function (e) { e.stopPropagation(); });
                     var _jumpDebounce = null;
                     jumpInput.addEventListener('change', (function (ji) {
@@ -1253,10 +1274,10 @@
 
         var btnDeleteSel = document.createElement('button');
         btnDeleteSel.className = 'di-btn di-btn-danger';
-        btnDeleteSel.textContent = 'Delete selected\u2026';
+        btnDeleteSel.textContent = _t('dash.deleteSelected', 'Delete selected\u2026');
         btnDeleteSel.addEventListener('click', function () {
             var ids = Object.keys(selected).map(Number);
-            showConfirm('Delete ' + ids.length + ' selected income row(s)?', function () {
+            showConfirm(_t('dash.deleteIncomeConfirm', 'Delete {count} selected income row(s)?', { count: ids.length }), function () {
                 apiPost('/income/delete_ids', { ids: ids });
             });
         });
@@ -1264,7 +1285,7 @@
 
         var btnDeleteOlder = document.createElement('button');
         btnDeleteOlder.className = 'di-btn di-btn-danger';
-        btnDeleteOlder.textContent = 'Delete older than selected\u2026';
+        btnDeleteOlder.textContent = _t('dash.deleteOlder', 'Delete older than selected\u2026');
         btnDeleteOlder.addEventListener('click', function () {
             var ids = Object.keys(selected).map(Number);
             var minMs = Infinity;
@@ -1279,8 +1300,10 @@
             var userList = Object.keys(selUsers);
             var usersParam = (opts.users && opts.users.indexOf('ALL') >= 0) ? ['ALL'] : userList;
             showConfirm(
-                'Delete all income for ' + (usersParam[0] === 'ALL' ? 'ALL users' : usersParam.join(', ')) +
-                ' with timestamp \u2264 ' + cutoffDate + '?',
+                _t('dash.deleteOlderConfirm', 'Delete all income for {users} with timestamp ≤ {cutoff}?', {
+                    users: (usersParam[0] === 'ALL' ? _t('dash.allUsers', 'ALL users') : usersParam.join(', ')),
+                    cutoff: cutoffDate
+                }),
                 function () {
                     apiPost('/income/delete_older', { users: usersParam, cutoff_ms: minMs });
                 }
@@ -1291,7 +1314,7 @@
         /* backup/restore toggle */
         var btnBackup = document.createElement('button');
         btnBackup.className = 'di-btn';
-        btnBackup.textContent = 'Backup / Restore\u2026';
+        btnBackup.textContent = _t('dash.backupRestore', 'Backup / Restore\u2026');
         btnBackup.addEventListener('click', function () {
             loadBackups();
         });
@@ -1336,14 +1359,14 @@
             btns.className = 'di-confirm-btns';
             var yesBtn = document.createElement('button');
             yesBtn.className = 'di-btn di-btn-yes';
-            yesBtn.textContent = 'Yes';
+            yesBtn.textContent = _t('common.yes', 'Yes');
             yesBtn.addEventListener('click', function () {
                 confirmDiv.style.display = 'none';
                 onYes();
             });
             var noBtn = document.createElement('button');
             noBtn.className = 'di-btn di-btn-no';
-            noBtn.textContent = 'No';
+            noBtn.textContent = _t('common.no', 'No');
             noBtn.addEventListener('click', function () {
                 confirmDiv.style.display = 'none';
             });
@@ -1367,19 +1390,19 @@
             })
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                showStatus('Deleted ' + (d.deleted || 0) + ' row(s). Backup created.');
+                showStatus(_t('dash.deletedRowsBackup', 'Deleted {count} row(s). Backup created.', { count: (d.deleted || 0) }));
                 selected = {};
                 updateActions();
                 if (opts.onReload) setTimeout(opts.onReload, 500);
             })
             .catch(function (e) {
-                showStatus('Error: ' + e.message);
+                showStatus(_t('common.error', 'Error') + ': ' + e.message);
             });
         }
 
         function loadBackups() {
             backupDiv.style.display = 'block';
-            backupDiv.innerHTML = '<span style="color:#94a3b8;font-size:0.73rem;">Loading backups\u2026</span>';
+            backupDiv.innerHTML = '<span style="color:#94a3b8;font-size:0.73rem;">' + _t('dash.loadingBackups', 'Loading backups\u2026') + '</span>';
             var url = (opts.apiBase || '') + '/dashboard/income/backups';
             fetch(url)
             .then(function (r) { return r.json(); })
@@ -1387,12 +1410,12 @@
                 backupDiv.innerHTML = '';
                 var backups = d.backups || [];
                 if (backups.length === 0) {
-                    backupDiv.innerHTML = '<span style="color:#94a3b8;font-size:0.73rem;">No backups available.</span>';
+                    backupDiv.innerHTML = '<span style="color:#94a3b8;font-size:0.73rem;">' + _t('dash.noBackups', 'No backups available.') + '</span>';
                     return;
                 }
                 var lbl = document.createElement('span');
                 lbl.className = 'dt-meta-lbl';
-                lbl.textContent = 'Restore from:';
+                lbl.textContent = _t('dash.restoreFrom', 'Restore from:');
                 backupDiv.appendChild(lbl);
                 var sel = document.createElement('select');
                 backups.forEach(function (b) {
@@ -1404,9 +1427,9 @@
                 backupDiv.appendChild(sel);
                 var restoreBtn = document.createElement('button');
                 restoreBtn.className = 'di-btn';
-                restoreBtn.textContent = 'Restore';
+                restoreBtn.textContent = _t('dash.restore', 'Restore');
                 restoreBtn.addEventListener('click', function () {
-                    showConfirm('Restore database from ' + sel.options[sel.selectedIndex].textContent + '?', function () {
+                    showConfirm(_t('dash.restoreConfirm', 'Restore database from {name}?', { name: sel.options[sel.selectedIndex].textContent }), function () {
                         var url2 = (opts.apiBase || '') + '/dashboard/income/restore';
                         fetch(url2, {
                             method: 'POST',
@@ -1416,16 +1439,16 @@
                         .then(function (r) { return r.json(); })
                         .then(function (d) {
                             if (d.ok) {
-                                showStatus('Database restored successfully.');
+                                showStatus(_t('dash.databaseRestored', 'Database restored successfully.'));
                                 backupDiv.style.display = 'none';
                                 selected = {};
                                 updateActions();
                                 if (opts.onReload) setTimeout(opts.onReload, 500);
                             } else {
-                                showStatus('Restore failed.');
+                                showStatus(_t('dash.restoreFailed', 'Restore failed.'));
                             }
                         })
-                        .catch(function (e) { showStatus('Error: ' + e.message); });
+                        .catch(function (e) { showStatus(_t('common.error', 'Error') + ': ' + e.message); });
                     });
                 });
                 backupDiv.appendChild(restoreBtn);
@@ -1440,7 +1463,7 @@
                 backupDiv.textContent = '';
                 var errSpan = document.createElement('span');
                 errSpan.style.cssText = 'color:#f56565;font-size:0.73rem;';
-                errSpan.textContent = 'Error loading backups';
+                errSpan.textContent = _t('dash.errorLoadingBackups', 'Error loading backups');
                 backupDiv.appendChild(errSpan);
             });
         }
@@ -1452,7 +1475,7 @@
         if (traces.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'dt-nodata';
-            noData.textContent = 'No data for the selected period.';
+            noData.textContent = _t('dash.noDataPeriod', 'No data for the selected period.');
             root.appendChild(noData);
             return;
         }
@@ -1465,7 +1488,7 @@
         var closeBtn = document.createElement('button');
         closeBtn.className = 'dt-fs-close';
         closeBtn.textContent = '\u2715';
-        closeBtn.title = 'Exit Fullscreen';
+        closeBtn.title = _t('dash.exitFullscreen', 'Exit Fullscreen');
         closeBtn.addEventListener('click', function () {
             if (document.exitFullscreen) document.exitFullscreen();
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -1526,7 +1549,7 @@
             modeBarButtonsToAdd: [
                 {
                     name:  'fullscreen',
-                    title: 'Fullscreen',
+                    title: _t('dash.fullscreen', 'Fullscreen'),
                     icon:  {
                         width: 857.1, height: 857.1,
                         path: 'M0 0v285.7h142.9V142.9H285.7V0H0zm571.4 0v142.9h142.9v142.9H857.1V0H571.4zM0 571.4v285.7h285.7V714.3H142.9V571.4H0zm714.3 142.9v142.9H571.4v142.9H857.1V571.4H714.3z'
@@ -1561,7 +1584,7 @@
     function renderPnl(chartDiv, data, opts) {
         opts = opts || {};
         var P = opts.Plotly || global.Plotly;
-        if (!P) { chartDiv.textContent = 'Plotly not loaded'; return; }
+        if (!P) { chartDiv.textContent = _t('dash.plotlyNotLoaded', 'Plotly not loaded'); return; }
 
         var bars = (data && data.bars) ? data.bars : [];
         var mode = (data && data.mode) || 'bar';
@@ -1576,7 +1599,7 @@
                 x: dates, y: values, type: 'scatter', mode: 'lines+markers',
                 line: { color: '#63b3ed', width: 1 },
                 marker: { color: colors, size: 6 },
-                hovertemplate: '<b>%{x}</b><br>Income: %{y:.2f}<extra></extra>'
+                hovertemplate: '<b>%{x}</b><br>' + _t('dash.income', 'Income') + ': %{y:.2f}<extra></extra>'
             };
         } else {
             trace = {
@@ -1584,7 +1607,7 @@
                 marker: { color: colors },
                 text: values.map(function (v) { return v.toFixed(2); }),
                 textposition: 'auto',
-                hovertemplate: '<b>%{x}</b><br>Income: %{y:.2f}<extra></extra>'
+                hovertemplate: '<b>%{x}</b><br>' + _t('dash.income', 'Income') + ': %{y:.2f}<extra></extra>'
             };
         }
 
@@ -1640,7 +1663,7 @@
             modeBarButtonsToAdd: [
                 {
                     name:  'fullscreen',
-                    title: 'Fullscreen',
+                    title: _t('dash.fullscreen', 'Fullscreen'),
                     icon:  {
                         width: 857.1, height: 857.1,
                         path: 'M0 0v285.7h142.9V142.9H285.7V0H0zm571.4 0v142.9h142.9v142.9H857.1V0H571.4zM0 571.4v285.7h285.7V714.3H142.9V571.4H0zm714.3 142.9v142.9H571.4v142.9H857.1V571.4H714.3z'
@@ -1672,7 +1695,7 @@
         var _fc = container.querySelector('.dt-chart');
         if (_fc && data && (data.bars || []).length > 0) {
             var _dr = container.querySelector('.dt-daterange');
-            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? 'From: ' + data.from_date + '  To: ' + data.to_date : '';
+            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date : '';
             /* Preserve current zoom state across WS-triggered data updates */
             var _z = opts.savedZoom || null;
             if (!_z && _fc.layout) {
@@ -1694,7 +1717,7 @@
         hdr.className = 'dt-header';
         var titleSpan = document.createElement('span');
         titleSpan.className = 'dt-title';
-        titleSpan.textContent = 'Daily PNL';
+        titleSpan.textContent = _t('dash.dailyPnl', 'Daily PNL');
         hdr.appendChild(titleSpan);
 
         if (opts.modeControl || opts.periodControl || opts.usersControl) {
@@ -1702,7 +1725,7 @@
             metaDiv.className = 'dt-meta dt-meta-controls';
             if (opts.modeControl) {
                 var lMode = document.createElement('span');
-                lMode.className = 'dt-meta-lbl'; lMode.textContent = 'Mode';
+                lMode.className = 'dt-meta-lbl'; lMode.textContent = _t('dash.mode', 'Mode');
                 metaDiv.appendChild(lMode);
                 metaDiv.appendChild(opts.modeControl);
             }
@@ -1711,7 +1734,7 @@
                 sepP.className = 'dt-meta-sep'; sepP.innerHTML = '&middot;';
                 metaDiv.appendChild(sepP);
                 var lPrd = document.createElement('span');
-                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = 'Period';
+                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = _t('dash.period', 'Period');
                 metaDiv.appendChild(lPrd);
                 metaDiv.appendChild(opts.periodControl);
             }
@@ -1720,13 +1743,13 @@
                 sepF.className = 'dt-meta-sep'; sepF.innerHTML = '&middot;';
                 metaDiv.appendChild(sepF);
                 var lFrom = document.createElement('span');
-                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = 'From';
+                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = _t('dash.from', 'From');
                 metaDiv.appendChild(lFrom);
                 metaDiv.appendChild(opts.fromControl);
             }
             if (opts.toControl) {
                 var lTo = document.createElement('span');
-                lTo.className = 'dt-meta-lbl'; lTo.textContent = 'To';
+                lTo.className = 'dt-meta-lbl'; lTo.textContent = _t('dash.to', 'To');
                 metaDiv.appendChild(lTo);
                 metaDiv.appendChild(opts.toControl);
                 if (opts.toNowControl) {
@@ -1738,7 +1761,7 @@
                 sepU.className = 'dt-meta-sep'; sepU.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU);
                 var lUsr = document.createElement('span');
-                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = 'Users';
+                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr);
                 metaDiv.appendChild(opts.usersControl);
             } else if (opts.users && opts.users.length > 0) {
@@ -1746,7 +1769,7 @@
                 sepU2.className = 'dt-meta-sep'; sepU2.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU2);
                 var lUsr2 = document.createElement('span');
-                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = 'Users';
+                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr2);
                 var usrVal = document.createElement('span');
                 usrVal.className = 'dt-meta-user';
@@ -1764,16 +1787,16 @@
             var _periodDisplay = (_rawPeriod.indexOf('CUSTOM:') === 0)
                 ? (function () {
                       var _pp = _rawPeriod.split(':');
-                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? 'Now' : _pp[2];
+                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? _t('dash.now', 'Now') : _pp[2];
                       return _pp[1] + ' \u2192 ' + _toDisp;
                   }())
                 : _rawPeriod;
             var metaSpan = document.createElement('span');
             metaSpan.className = 'dt-meta';
             metaSpan.innerHTML =
-                'Mode:&nbsp;' + ((data && data.mode) || 'bar') +
-                '&nbsp;&middot;&nbsp;Period:&nbsp;' + _periodDisplay +
-                '&nbsp;&middot;&nbsp;Users:&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
+                _t('dash.mode', 'Mode') + ':&nbsp;' + ((data && data.mode) || 'bar') +
+                '&nbsp;&middot;&nbsp;' + _t('dash.period', 'Period') + ':&nbsp;' + _periodDisplay +
+                '&nbsp;&middot;&nbsp;' + _t('dash.users', 'Users') + ':&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
             hdr.appendChild(metaSpan);
         }
         _decorateHeader(hdr, opts.icon, titleSpan, opts.onDelete);
@@ -1783,7 +1806,7 @@
         var dr = document.createElement('div');
         dr.className = 'dt-daterange';
         if (data && data.from_date && data.to_date) {
-            dr.textContent = 'From: ' + data.from_date + '  To: ' + data.to_date;
+            dr.textContent = _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date;
         }
         root.appendChild(dr);
 
@@ -1791,7 +1814,7 @@
         if (bars.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'dt-nodata';
-            noData.textContent = 'No data for the selected period.';
+            noData.textContent = _t('dash.noDataPeriod', 'No data for the selected period.');
             root.appendChild(noData);
             container.appendChild(root);
             return;
@@ -1805,7 +1828,7 @@
         var closeBtn = document.createElement('button');
         closeBtn.className = 'dt-fs-close';
         closeBtn.textContent = '\u2715';
-        closeBtn.title = 'Exit Fullscreen';
+        closeBtn.title = _t('dash.exitFullscreen', 'Exit Fullscreen');
         closeBtn.addEventListener('click', function () {
             if (document.exitFullscreen) document.exitFullscreen();
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -1824,7 +1847,7 @@
     function renderPpl(chartDiv, data, opts) {
         opts = opts || {};
         var P = opts.Plotly || global.Plotly;
-        if (!P) { chartDiv.textContent = 'Plotly not loaded'; return; }
+        if (!P) { chartDiv.textContent = _t('dash.plotlyNotLoaded', 'Plotly not loaded'); return; }
 
         var bars = (data && data.bars) ? data.bars : [];
 
@@ -1833,18 +1856,18 @@
         var losses  = bars.map(function (b) { return b.losses; });
 
         var profitTrace = {
-            x: periods, y: profits, type: 'bar', name: 'Profits',
+            x: periods, y: profits, type: 'bar', name: _t('dash.profits', 'Profits'),
             marker: { color: '#48bb78' },
             text: profits.map(function (v) { return v === 0 ? '' : v.toFixed(2); }),
             textposition: 'outside',
-            hovertemplate: '<b>%{x}</b><br>Profits: %{y:.2f}<extra></extra>'
+            hovertemplate: '<b>%{x}</b><br>' + _t('dash.profits', 'Profits') + ': %{y:.2f}<extra></extra>'
         };
         var lossTrace = {
-            x: periods, y: losses, type: 'bar', name: 'Losses',
+            x: periods, y: losses, type: 'bar', name: _t('dash.losses', 'Losses'),
             marker: { color: '#f56565' },
             text: losses.map(function (v) { return v === 0 ? '' : v.toFixed(2); }),
             textposition: 'outside',
-            hovertemplate: '<b>%{x}</b><br>Losses: %{y:.2f}<extra></extra>'
+            hovertemplate: '<b>%{x}</b><br>' + _t('dash.losses', 'Losses') + ': %{y:.2f}<extra></extra>'
         };
 
         /* Y-axis range with 10% padding; guard against yRange=0 */
@@ -1924,7 +1947,7 @@
             modeBarButtonsToAdd: [
                 {
                     name:  'fullscreen',
-                    title: 'Fullscreen',
+                    title: _t('dash.fullscreen', 'Fullscreen'),
                     icon:  {
                         width: 857.1, height: 857.1,
                         path: 'M0 0v285.7h142.9V142.9H285.7V0H0zm571.4 0v142.9h142.9v142.9H857.1V0H571.4zM0 571.4v285.7h285.7V714.3H142.9V571.4H0zm714.3 142.9v142.9H571.4v142.9H857.1V571.4H714.3z'
@@ -1956,7 +1979,7 @@
         var _fc = container.querySelector('.dt-chart');
         if (_fc && data && (data.bars || []).length > 0) {
             var _dr = container.querySelector('.dt-daterange');
-            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? 'From: ' + data.from_date + '  To: ' + data.to_date : '';
+            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date : '';
             /* Preserve current zoom state across WS-triggered data updates */
             var _z = opts.savedZoom || null;
             if (!_z && _fc.layout) {
@@ -1978,7 +2001,7 @@
         hdr.className = 'dt-header';
         var titleSpan = document.createElement('span');
         titleSpan.className = 'dt-title';
-        titleSpan.textContent = 'Profits and Losses';
+        titleSpan.textContent = _t('dash.profitsAndLosses', 'Profits and Losses');
         hdr.appendChild(titleSpan);
 
         if (opts.sumPeriodControl || opts.periodControl || opts.usersControl) {
@@ -1986,7 +2009,7 @@
             metaDiv.className = 'dt-meta dt-meta-controls';
             if (opts.sumPeriodControl) {
                 var lSum = document.createElement('span');
-                lSum.className = 'dt-meta-lbl'; lSum.textContent = 'Sum Period';
+                lSum.className = 'dt-meta-lbl'; lSum.textContent = _t('dash.sumPeriod', 'Sum Period');
                 metaDiv.appendChild(lSum);
                 metaDiv.appendChild(opts.sumPeriodControl);
             }
@@ -1995,7 +2018,7 @@
                 sepP.className = 'dt-meta-sep'; sepP.innerHTML = '&middot;';
                 metaDiv.appendChild(sepP);
                 var lPrd = document.createElement('span');
-                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = 'Period';
+                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = _t('dash.period', 'Period');
                 metaDiv.appendChild(lPrd);
                 metaDiv.appendChild(opts.periodControl);
             }
@@ -2004,13 +2027,13 @@
                 sepF.className = 'dt-meta-sep'; sepF.innerHTML = '&middot;';
                 metaDiv.appendChild(sepF);
                 var lFrom = document.createElement('span');
-                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = 'From';
+                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = _t('dash.from', 'From');
                 metaDiv.appendChild(lFrom);
                 metaDiv.appendChild(opts.fromControl);
             }
             if (opts.toControl) {
                 var lTo = document.createElement('span');
-                lTo.className = 'dt-meta-lbl'; lTo.textContent = 'To';
+                lTo.className = 'dt-meta-lbl'; lTo.textContent = _t('dash.to', 'To');
                 metaDiv.appendChild(lTo);
                 metaDiv.appendChild(opts.toControl);
                 if (opts.toNowControl) {
@@ -2022,7 +2045,7 @@
                 sepU.className = 'dt-meta-sep'; sepU.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU);
                 var lUsr = document.createElement('span');
-                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = 'Users';
+                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr);
                 metaDiv.appendChild(opts.usersControl);
             } else if (opts.users && opts.users.length > 0) {
@@ -2030,7 +2053,7 @@
                 sepU2.className = 'dt-meta-sep'; sepU2.innerHTML = '&middot;';
                 metaDiv.appendChild(sepU2);
                 var lUsr2 = document.createElement('span');
-                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = 'Users';
+                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr2);
                 var usrVal = document.createElement('span');
                 usrVal.className = 'dt-meta-user';
@@ -2048,16 +2071,16 @@
             var _periodDisplay = (_rawPeriod.indexOf('CUSTOM:') === 0)
                 ? (function () {
                       var _pp = _rawPeriod.split(':');
-                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? 'Now' : _pp[2];
+                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? _t('dash.now', 'Now') : _pp[2];
                       return _pp[1] + ' \u2192 ' + _toDisp;
                   }())
                 : _rawPeriod;
             var metaSpan = document.createElement('span');
             metaSpan.className = 'dt-meta';
             metaSpan.innerHTML =
-                'Sum:&nbsp;' + ((data && data.sum_period) || 'MONTH') +
-                '&nbsp;&middot;&nbsp;Period:&nbsp;' + _periodDisplay +
-                '&nbsp;&middot;&nbsp;Users:&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
+                _t('dash.sum', 'Sum') + ':&nbsp;' + ((data && data.sum_period) || 'MONTH') +
+                '&nbsp;&middot;&nbsp;' + _t('dash.period', 'Period') + ':&nbsp;' + _periodDisplay +
+                '&nbsp;&middot;&nbsp;' + _t('dash.users', 'Users') + ':&nbsp;<span class="dt-meta-user">' + uLabel + '</span>';
             hdr.appendChild(metaSpan);
         }
         _decorateHeader(hdr, opts.icon, titleSpan, opts.onDelete);
@@ -2067,7 +2090,7 @@
         var dr = document.createElement('div');
         dr.className = 'dt-daterange';
         if (data && data.from_date && data.to_date) {
-            dr.textContent = 'From: ' + data.from_date + '  To: ' + data.to_date;
+            dr.textContent = _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date;
         }
         root.appendChild(dr);
 
@@ -2075,7 +2098,7 @@
         if (bars.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'dt-nodata';
-            noData.textContent = 'No data for the selected period.';
+            noData.textContent = _t('dash.noDataPeriod', 'No data for the selected period.');
             root.appendChild(noData);
             container.appendChild(root);
             return;
@@ -2089,7 +2112,7 @@
         var closeBtn = document.createElement('button');
         closeBtn.className = 'dt-fs-close';
         closeBtn.textContent = '\u2715';
-        closeBtn.title = 'Exit Fullscreen';
+        closeBtn.title = _t('dash.exitFullscreen', 'Exit Fullscreen');
         closeBtn.addEventListener('click', function () {
             if (document.exitFullscreen) document.exitFullscreen();
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -2130,15 +2153,15 @@
         hdr.className = 'dt-header';
         var titleSpan = document.createElement('span');
         titleSpan.className = 'dt-title';
-        titleSpan.textContent = 'Positions';
+        titleSpan.textContent = _t('dash.positions', 'Positions');
         hdr.appendChild(titleSpan);
 
         if (opts.apiBase) {
             var manageBtn = document.createElement('button');
             manageBtn.className = 'dp-manage-btn';
             manageBtn.type = 'button';
-            manageBtn.textContent = 'Manage';
-            manageBtn.title = 'Manage selected position';
+            manageBtn.textContent = _t('dash.manage', 'Manage');
+            manageBtn.title = _t('dash.manageSelectedPosition', 'Manage selected position');
             manageBtn.addEventListener('click', function (event) {
                 event.stopPropagation();
                 openManageModal();
@@ -2150,7 +2173,7 @@
             var metaDiv = document.createElement('div');
             metaDiv.className = 'dt-meta dt-meta-controls';
             var lUsr = document.createElement('span');
-            lUsr.className = 'dt-meta-lbl'; lUsr.textContent = 'Users';
+            lUsr.className = 'dt-meta-lbl'; lUsr.textContent = _t('dash.users', 'Users');
             metaDiv.appendChild(lUsr);
             metaDiv.appendChild(opts.usersControl);
             hdr.appendChild(metaDiv);
@@ -2159,7 +2182,7 @@
             metaSpan.className = 'dt-meta';
             var _uLabel = (opts.users.length === 1 && opts.users[0] === 'ALL')
                 ? 'ALL' : opts.users.join(', ');
-            metaSpan.innerHTML = 'Users:&nbsp;<span class="dt-meta-user">' + _uLabel + '</span>';
+            metaSpan.innerHTML = _t('dash.users', 'Users') + ':&nbsp;<span class="dt-meta-user">' + _uLabel + '</span>';
             hdr.appendChild(metaSpan);
         }
         _decorateHeader(hdr, opts.icon, titleSpan, opts.onDelete);
@@ -2175,7 +2198,7 @@
         if (rows.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'dt-nodata';
-            noData.textContent = 'No open positions.';
+            noData.textContent = _t('dash.noOpenPositions', 'No open positions.');
             root.appendChild(noData);
             container.appendChild(root);
             return;
@@ -2183,17 +2206,17 @@
 
         /* table */
         var COLS = [
-            { key: 'user',      label: 'User',      fmt: null },
-            { key: 'symbol',    label: 'Symbol',     fmt: null },
-            { key: 'side',      label: 'Side',       fmt: null },
-            { key: 'size',      label: 'Size',       fmt: function (v) { return v.toFixed(3); } },
-            { key: 'upnl',      label: 'uPnl',       fmt: function (v) { return v.toFixed(4); } },
-            { key: 'entry',     label: 'Entry',      fmt: function (v) { return v.toFixed(5); } },
-            { key: 'price',     label: 'Price',      fmt: function (v) { return v.toFixed(5); } },
-            { key: 'dca',       label: 'DCA',        fmt: null },
-            { key: 'next_dca',  label: 'Next DCA',   fmt: function (v) { return v.toFixed(5); } },
-            { key: 'next_tp',   label: 'Next TP',    fmt: function (v) { return v.toFixed(5); } },
-            { key: 'pos_value', label: 'Pos Value',  fmt: function (v) { return v.toFixed(2); } }
+            { key: 'user',      label: _t('dash.user', 'User'),      fmt: null },
+            { key: 'symbol',    label: _t('dash.symbol', 'Symbol'),     fmt: null },
+            { key: 'side',      label: _t('dash.side', 'Side'),       fmt: null },
+            { key: 'size',      label: _t('dash.size', 'Size'),       fmt: function (v) { return v.toFixed(3); } },
+            { key: 'upnl',      label: _t('dash.upnl', 'uPnl'),       fmt: function (v) { return v.toFixed(4); } },
+            { key: 'entry',     label: _t('dash.entry', 'Entry'),      fmt: function (v) { return v.toFixed(5); } },
+            { key: 'price',     label: _t('dash.price', 'Price'),      fmt: function (v) { return v.toFixed(5); } },
+            { key: 'dca',       label: _t('dash.dca', 'DCA'),        fmt: null },
+            { key: 'next_dca',  label: _t('dash.nextDca', 'Next DCA'),   fmt: function (v) { return v.toFixed(5); } },
+            { key: 'next_tp',   label: _t('dash.nextTp', 'Next TP'),    fmt: function (v) { return v.toFixed(5); } },
+            { key: 'pos_value', label: _t('dash.posValue', 'Pos Value'),  fmt: function (v) { return v.toFixed(2); } }
         ];
 
         var sortCol = null, sortAsc = true;
@@ -2308,14 +2331,18 @@
             var qty = Math.abs(Number(amount || 0));
             var minQty = Number(state && state.minCloseAmount || 0);
             if (minQty > 0 && qty > 0 && qty < minQty) {
-                return 'Exchange minimum close amount is ' + formatManageNumber(minQty, 8) + '.';
+                return _t('dash.exchangeMinClose', 'Exchange minimum close amount is {amount}.', { amount: formatManageNumber(minQty, 8) });
             }
             var minValue = minCloseValueForRow(row, state);
             if (minValue <= 0) return '';
             var value = quoteValueForAmount(row, amount, state);
             if (value >= minValue) return '';
             var minValueAmount = minCloseAmountForRow(row, state);
-            return 'Hyperliquid minimum order value is $' + formatManageNumber(minValue, 2) + '. Selected close value is $' + formatManageNumber(value, 6) + '; use at least ' + formatManageNumber(minValueAmount, 8) + ' amount.';
+            return _t('dash.hyperliquidMinOrder', 'Hyperliquid minimum order value is ${min}. Selected close value is ${value}; use at least {amount} amount.', {
+                min: formatManageNumber(minValue, 2),
+                value: formatManageNumber(value, 6),
+                amount: formatManageNumber(minValueAmount, 8)
+            });
         }
 
         function rememberMarketCloseErrorHint(body, message) {
@@ -2354,7 +2381,7 @@
             .catch(function (err) {
                 state.closePriceLoading = false;
                 state.closePriceLoaded = true;
-                setStatus(manageState.status, err.message || 'Could not load fresh close price.', 'err');
+                setStatus(manageState.status, _serverMsg(err.message) || _t('dash.couldNotLoadClosePrice', 'Could not load fresh close price.'), 'err');
                 updateManageRowControls(tr, row, state);
             });
         }
@@ -2384,7 +2411,7 @@
             head.className = 'dp-modal-head';
             var title = document.createElement('div');
             title.className = 'dp-modal-title';
-            title.textContent = titleText || 'Panic config preview';
+            title.textContent = titleText || _t('dash.panicConfigPreview', 'Panic config preview');
             var closeBtn = document.createElement('button');
             closeBtn.type = 'button';
             closeBtn.className = 'dp-modal-close';
@@ -2397,7 +2424,7 @@
             body.className = 'dp-preview-body';
             var note = document.createElement('div');
             note.className = 'dp-status-msg ok';
-            note.textContent = 'Preview only. No config was saved and no SSH sync was started.';
+            note.textContent = _t('dash.previewOnly', 'Preview only. No config was saved and no SSH sync was started.');
             var pre = document.createElement('pre');
             pre.className = 'dp-preview';
             pre.textContent = JSON.stringify(config || {}, null, 2);
@@ -2407,7 +2434,7 @@
             spacer.className = 'spacer';
             var closeOnlyBtn = document.createElement('button');
             closeOnlyBtn.type = 'button';
-            closeOnlyBtn.textContent = 'Close';
+            closeOnlyBtn.textContent = _t('common.close', 'Close');
             actions.appendChild(spacer);
             actions.appendChild(closeOnlyBtn);
             body.appendChild(note);
@@ -2425,14 +2452,14 @@
 
         function requestManageAction(body, statusEl, confirmBtn) {
             if (manageState.actionInFlight) {
-                setStatus(statusEl, 'Another manage action is still running.', 'err');
+                setStatus(statusEl, _t('dash.anotherActionRunning', 'Another manage action is still running.'), 'err');
                 updateManageLiveRows();
                 return;
             }
             confirmBtn.disabled = true;
             manageState.actionInFlight = true;
             updateManageLiveRows();
-            setStatus(statusEl, 'Working...', '');
+            setStatus(statusEl, _t('dash.working', 'Working...'), '');
             fetch((opts.apiBase || '') + '/dashboard/positions/manage', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2446,23 +2473,23 @@
             })
             .then(function (data) {
                 if (data && data.dry_run) {
-                    var previewLabel = body.action === 'graceful_stop_all' ? 'Graceful stop' : (body.action === 'tp_only_all' ? 'Take Profit Only' : 'Panic');
-                    openConfigPreviewModal(data.config || null, previewLabel + ' config preview for ' + (body.user || 'user'));
-                    setStatus(statusEl, 'Preview only. No config was saved and no SSH sync was started.', 'ok');
+                    var previewLabel = body.action === 'graceful_stop_all' ? _t('dash.gracefulStop', 'Graceful stop') : (body.action === 'tp_only_all' ? _t('dash.takeProfitOnly', 'Take Profit Only') : _t('dash.panic', 'Panic'));
+                    openConfigPreviewModal(data.config || null, _t('dash.configPreviewFor', '{kind} config preview for {user}', { kind: previewLabel, user: (body.user || 'user') }));
+                    setStatus(statusEl, _t('dash.previewOnly', 'Preview only. No config was saved and no SSH sync was started.'), 'ok');
                 } else if (body.action === 'market_close') {
-                    setStatus(statusEl, 'Market close order sent.', 'ok');
+                    setStatus(statusEl, _t('dash.marketCloseSent', 'Market close order sent.'), 'ok');
                 } else if (body.action === 'panic_symbol') {
-                    setStatus(statusEl, 'Panic synced for ' + (data.coin || body.symbol) + '.', 'ok');
+                    setStatus(statusEl, _t('dash.panicSynced', 'Panic synced for {coin}.', { coin: (data.coin || body.symbol) }), 'ok');
                 } else if (body.action === 'graceful_stop_symbol') {
-                    setStatus(statusEl, 'Graceful stop synced for ' + (data.coin || body.symbol) + '.', 'ok');
+                    setStatus(statusEl, _t('dash.gracefulStopSynced', 'Graceful stop synced for {coin}.', { coin: (data.coin || body.symbol) }), 'ok');
                 } else if (body.action === 'tp_only_symbol') {
-                    setStatus(statusEl, 'Take Profit Only synced for ' + (data.coin || body.symbol) + '.', 'ok');
+                    setStatus(statusEl, _t('dash.tpOnlySynced', 'Take Profit Only synced for {coin}.', { coin: (data.coin || body.symbol) }), 'ok');
                 } else if (body.action === 'graceful_stop_all') {
-                    setStatus(statusEl, 'Global graceful stop synced for user ' + body.user + '.', 'ok');
+                    setStatus(statusEl, _t('dash.globalGracefulStopSynced', 'Global graceful stop synced for user {user}.', { user: body.user }), 'ok');
                 } else if (body.action === 'tp_only_all') {
-                    setStatus(statusEl, 'Global Take Profit Only synced for user ' + body.user + '.', 'ok');
+                    setStatus(statusEl, _t('dash.globalTpOnlySynced', 'Global Take Profit Only synced for user {user}.', { user: body.user }), 'ok');
                 } else {
-                    setStatus(statusEl, 'Global panic synced for user ' + body.user + '.', 'ok');
+                    setStatus(statusEl, _t('dash.globalPanicSynced', 'Global panic synced for user {user}.', { user: body.user }), 'ok');
                 }
                 if ((!data || !data.dry_run) && typeof opts.onReload === 'function') setTimeout(opts.onReload, 600);
                 manageState.actionInFlight = false;
@@ -2475,7 +2502,7 @@
                 confirmBtn.disabled = false;
                 rememberMarketCloseErrorHint(body, err.message);
                 updateManageLiveRows();
-                setStatus(statusEl, err.message || 'Action failed.', 'err');
+                setStatus(statusEl, _serverMsg(err.message) || _t('dash.actionFailed', 'Action failed.'), 'err');
                 if (manageState.pendingRefresh && !isManageEditing()) refreshManageRowsAfterEdit();
             });
         }
@@ -2614,11 +2641,11 @@
             if (runBtn) {
                 var minMessage = isMarket ? marketCloseMinMessage(row, state.amount, state) : '';
                 var modeClass = state.action === 'panic_symbol' ? ' danger' : (state.action === 'graceful_stop_symbol' ? ' warn' : (state.action === 'tp_only_symbol' ? ' ok' : ''));
-                var modeText = state.action === 'panic_symbol' ? 'Panic' : (state.action === 'graceful_stop_symbol' ? 'Graceful stop' : (state.action === 'tp_only_symbol' ? 'Take Profit Only' : ''));
-                runBtn.textContent = marketDisabled ? 'Unavailable' : (isMarket ? 'Market Close' : modeText);
+                var modeText = state.action === 'panic_symbol' ? _t('dash.panic', 'Panic') : (state.action === 'graceful_stop_symbol' ? _t('dash.gracefulStop', 'Graceful stop') : (state.action === 'tp_only_symbol' ? _t('dash.takeProfitOnly', 'Take Profit Only') : ''));
+                runBtn.textContent = marketDisabled ? _t('dash.unavailable', 'Unavailable') : (isMarket ? _t('dash.marketClose', 'Market Close') : modeText);
                 runBtn.className = 'dp-row-run' + (isMarket ? ' danger' : modeClass);
                 runBtn.disabled = manageState.actionInFlight || marketDisabled || !!minMessage || (isMarket && state.closePriceLoading);
-                runBtn.title = marketDisabled ? String(row.market_close_reason || 'Direct market close is unavailable for this exchange.') : (manageState.actionInFlight ? 'Another manage action is still running.' : (state.closePriceLoading ? 'Loading fresh close price...' : (minMessage || '')));
+                runBtn.title = marketDisabled ? String(row.market_close_reason || _t('dash.marketCloseUnavailable', 'Direct market close is unavailable for this exchange.')) : (manageState.actionInFlight ? _t('dash.anotherActionRunning', 'Another manage action is still running.') : (state.closePriceLoading ? _t('dash.loadingClosePrice', 'Loading fresh close price...') : (minMessage || '')));
             }
         }
 
@@ -2629,35 +2656,37 @@
 
         function updatePanicAllButton() {
             var user = selectedManageUser();
+            var busyTitle = _t('dash.anotherActionRunning', 'Another manage action is still running.');
+            var noUserTitle = _t('dash.selectUserPositionFirst', 'Select a user position first.');
             if (manageState.previewAllBtn) {
                 manageState.previewAllBtn.disabled = !user || manageState.actionInFlight;
-                manageState.previewAllBtn.textContent = 'Preview Panic';
-                manageState.previewAllBtn.title = manageState.actionInFlight ? 'Another manage action is still running.' : (user ? ('Build the panic-all config for ' + user + ' without saving or syncing.') : 'Select a user position first.');
+                manageState.previewAllBtn.textContent = _t('dash.previewPanic', 'Preview Panic');
+                manageState.previewAllBtn.title = manageState.actionInFlight ? busyTitle : (user ? _t('dash.buildPanicAll', 'Build the panic-all config for {user} without saving or syncing.', { user: user }) : noUserTitle);
             }
             if (manageState.panicAllBtn) {
                 manageState.panicAllBtn.disabled = !user || manageState.actionInFlight;
-                manageState.panicAllBtn.textContent = 'Panic';
-                manageState.panicAllBtn.title = manageState.actionInFlight ? 'Another manage action is still running.' : (user ? ('Save Panic for all positions of ' + user + ' and sync it to the bot host.') : 'Select a user position first.');
+                manageState.panicAllBtn.textContent = _t('dash.panic', 'Panic');
+                manageState.panicAllBtn.title = manageState.actionInFlight ? busyTitle : (user ? _t('dash.savePanicAll', 'Save Panic for all positions of {user} and sync it to the bot host.', { user: user }) : noUserTitle);
             }
             if (manageState.previewGracefulBtn) {
                 manageState.previewGracefulBtn.disabled = !user || manageState.actionInFlight;
-                manageState.previewGracefulBtn.textContent = 'Preview Graceful stop';
-                manageState.previewGracefulBtn.title = manageState.actionInFlight ? 'Another manage action is still running.' : (user ? ('Build the Graceful Stop config for ' + user + ' without saving or syncing.') : 'Select a user position first.');
+                manageState.previewGracefulBtn.textContent = _t('dash.previewGracefulStop', 'Preview Graceful stop');
+                manageState.previewGracefulBtn.title = manageState.actionInFlight ? busyTitle : (user ? _t('dash.buildGracefulAll', 'Build the Graceful Stop config for {user} without saving or syncing.', { user: user }) : noUserTitle);
             }
             if (manageState.gracefulAllBtn) {
                 manageState.gracefulAllBtn.disabled = !user || manageState.actionInFlight;
-                manageState.gracefulAllBtn.textContent = 'Graceful stop';
-                manageState.gracefulAllBtn.title = manageState.actionInFlight ? 'Another manage action is still running.' : (user ? ('Save Graceful Stop for all positions of ' + user + ' and sync it to the bot host.') : 'Select a user position first.');
+                manageState.gracefulAllBtn.textContent = _t('dash.gracefulStop', 'Graceful stop');
+                manageState.gracefulAllBtn.title = manageState.actionInFlight ? busyTitle : (user ? _t('dash.saveGracefulAll', 'Save Graceful Stop for all positions of {user} and sync it to the bot host.', { user: user }) : noUserTitle);
             }
             if (manageState.previewTpOnlyBtn) {
                 manageState.previewTpOnlyBtn.disabled = !user || manageState.actionInFlight;
-                manageState.previewTpOnlyBtn.textContent = 'Preview TP only';
-                manageState.previewTpOnlyBtn.title = manageState.actionInFlight ? 'Another manage action is still running.' : (user ? ('Build the Take Profit Only config for ' + user + ' without saving or syncing.') : 'Select a user position first.');
+                manageState.previewTpOnlyBtn.textContent = _t('dash.previewTpOnly', 'Preview TP only');
+                manageState.previewTpOnlyBtn.title = manageState.actionInFlight ? busyTitle : (user ? _t('dash.buildTpOnlyAll', 'Build the Take Profit Only config for {user} without saving or syncing.', { user: user }) : noUserTitle);
             }
             if (manageState.tpOnlyAllBtn) {
                 manageState.tpOnlyAllBtn.disabled = !user || manageState.actionInFlight;
-                manageState.tpOnlyAllBtn.textContent = 'Take Profit Only';
-                manageState.tpOnlyAllBtn.title = manageState.actionInFlight ? 'Another manage action is still running.' : (user ? ('Save Take Profit Only for all positions of ' + user + ' and sync it to the bot host.') : 'Select a user position first.');
+                manageState.tpOnlyAllBtn.textContent = _t('dash.takeProfitOnly', 'Take Profit Only');
+                manageState.tpOnlyAllBtn.title = manageState.actionInFlight ? busyTitle : (user ? _t('dash.saveTpOnlyAll', 'Save Take Profit Only for all positions of {user} and sync it to the bot host.', { user: user }) : noUserTitle);
             }
         }
 
@@ -2676,7 +2705,7 @@
                 var emptyTr = document.createElement('tr');
                 var emptyTd = document.createElement('td');
                 emptyTd.colSpan = COLS.length + 5;
-                emptyTd.textContent = 'No open positions.';
+                emptyTd.textContent = _t('dash.noOpenPositions', 'No open positions.');
                 emptyTd.style.color = 'var(--db-text-muted)';
                 emptyTd.style.textAlign = 'center';
                 emptyTd.style.padding = '1.25rem';
@@ -2710,17 +2739,17 @@
                     var actionSelect = document.createElement('select');
                     actionSelect.className = 'dp-manage-action';
                     [
-                        ['market_close', 'Market close amount'],
-                        ['panic_symbol', 'Panic symbol'],
-                        ['graceful_stop_symbol', 'Graceful stop symbol'],
-                        ['tp_only_symbol', 'Take profit only symbol']
+                        ['market_close', _t('dash.marketCloseAmount', 'Market close amount')],
+                        ['panic_symbol', _t('dash.panicSymbol', 'Panic symbol')],
+                        ['graceful_stop_symbol', _t('dash.gracefulStopSymbol', 'Graceful stop symbol')],
+                        ['tp_only_symbol', _t('dash.takeProfitOnlySymbol', 'Take profit only symbol')]
                     ].forEach(function (item) {
                         var opt = document.createElement('option');
                         opt.value = item[0];
                         opt.textContent = item[1];
                         if (item[0] === 'market_close' && row.market_close_supported === false) {
                             opt.disabled = true;
-                            opt.textContent += ' (unavailable)';
+                            opt.textContent += _t('dash.unavailableSuffix', ' (unavailable)');
                         }
                         if (state.action === item[0]) opt.selected = true;
                         actionSelect.appendChild(opt);
@@ -2760,7 +2789,7 @@
                     quoteInput.className = 'dp-manage-amount dp-manage-quote';
                     quoteInput.type = 'text';
                     quoteInput.inputMode = 'decimal';
-                    quoteInput.title = 'Close value in ' + quoteCurrencyForRow(row) + '; edits are converted to amount.';
+                    quoteInput.title = _t('dash.closeValueIn', 'Close value in {currency}; edits are converted to amount.', { currency: quoteCurrencyForRow(row) });
                     quoteInput.placeholder = quoteCurrencyForRow(row);
                     quoteInput.value = formatManageNumber(quoteValueForAmount(row, state.amount || defaultAmountForRow(row), state), 4);
                     quoteInput.addEventListener('click', function (event) { event.stopPropagation(); });
@@ -2821,12 +2850,12 @@
                         };
                         if (state.action === 'market_close') {
                             if (currentRow.market_close_supported === false) {
-                                setStatus(manageState.status, currentRow.market_close_reason || 'Direct market close is unavailable for this exchange.', 'err');
+                                setStatus(manageState.status, _serverMsg(currentRow.market_close_reason) || _t('dash.marketCloseUnavailable', 'Direct market close is unavailable for this exchange.'), 'err');
                                 return;
                             }
                             var amount = parseAmountValue(state.amount);
                             if (isNaN(amount) || amount <= 0) {
-                                setStatus(manageState.status, 'Enter an amount greater than zero.', 'err');
+                                setStatus(manageState.status, _t('dash.enterAmountGreaterZero', 'Enter an amount greater than zero.'), 'err');
                                 return;
                             }
                             var minMessage = marketCloseMinMessage(currentRow, amount, state);
@@ -2884,7 +2913,7 @@
             head.className = 'dp-modal-head';
             var title = document.createElement('div');
             title.className = 'dp-modal-title';
-            title.textContent = 'Manage positions';
+            title.textContent = _t('dash.managePositions', 'Manage positions');
             var closeBtn = document.createElement('button');
             closeBtn.type = 'button';
             closeBtn.className = 'dp-modal-close';
@@ -2909,11 +2938,17 @@
                 th.textContent = col.label;
                 manageHeadRow.appendChild(th);
             });
-            ['Action', 'Amount', 'USDT/USDC', 'Quick', 'Execute'].forEach(function (label) {
+            [
+                _t('dash.action', 'Action'),
+                _t('dash.amount', 'Amount'),
+                'USDT/USDC',
+                _t('dash.quick', 'Quick'),
+                _t('dash.execute', 'Execute')
+            ].forEach(function (label) {
                 var th = document.createElement('th');
                 th.textContent = label;
-                if (label === 'Quick') th.className = 'dp-quick-col';
-                if (label === 'Execute') th.className = 'dp-exec-col';
+                if (label === _t('dash.quick', 'Quick')) th.className = 'dp-quick-col';
+                if (label === _t('dash.execute', 'Execute')) th.className = 'dp-exec-col';
                 manageHeadRow.appendChild(th);
             });
             manageHead.appendChild(manageHeadRow);
@@ -2925,7 +2960,7 @@
 
             var note = document.createElement('div');
             note.className = 'dp-note';
-            note.textContent = 'Market close sends a direct reduce-only market order only for exchange contracts verified by PBGui; unavailable contracts remain visibly disabled. Panic, Graceful Stop and Take Profit Only actions save the Passivbot config and sync it. Use preview to inspect all-position configs without saving or syncing.';
+            note.textContent = _t('dash.manageNote', 'Market close sends a direct reduce-only market order only for exchange contracts verified by PBGui; unavailable contracts remain visibly disabled. Panic, Graceful Stop and Take Profit Only actions save the Passivbot config and sync it. Use preview to inspect all-position configs without saving or syncing.');
             body.appendChild(note);
 
             var statusMsg = document.createElement('div');
@@ -2953,7 +2988,7 @@
             spacer.className = 'spacer';
             var closeOnlyBtn = document.createElement('button');
             closeOnlyBtn.type = 'button';
-            closeOnlyBtn.textContent = 'Close';
+            closeOnlyBtn.textContent = _t('common.close', 'Close');
             actions.appendChild(previewAllBtn);
             actions.appendChild(panicAllBtn);
             actions.appendChild(previewGracefulBtn);
@@ -2990,7 +3025,7 @@
             previewAllBtn.addEventListener('click', function () {
                 var user = selectedManageUser();
                 if (!user) {
-                    setStatus(statusMsg, 'Select a user position first.', 'err');
+                    setStatus(statusMsg, _t('dash.selectUserPositionFirst', 'Select a user position first.'), 'err');
                     return;
                 }
                 requestManageAction({ user: user, action: 'panic_all', dry_run: true }, statusMsg, previewAllBtn);
@@ -2998,7 +3033,7 @@
             panicAllBtn.addEventListener('click', function () {
                 var user = selectedManageUser();
                 if (!user) {
-                    setStatus(statusMsg, 'Select a user position first.', 'err');
+                    setStatus(statusMsg, _t('dash.selectUserPositionFirst', 'Select a user position first.'), 'err');
                     return;
                 }
                 requestManageAction({ user: user, action: 'panic_all' }, statusMsg, panicAllBtn);
@@ -3006,7 +3041,7 @@
             previewGracefulBtn.addEventListener('click', function () {
                 var user = selectedManageUser();
                 if (!user) {
-                    setStatus(statusMsg, 'Select a user position first.', 'err');
+                    setStatus(statusMsg, _t('dash.selectUserPositionFirst', 'Select a user position first.'), 'err');
                     return;
                 }
                 requestManageAction({ user: user, action: 'graceful_stop_all', dry_run: true }, statusMsg, previewGracefulBtn);
@@ -3014,7 +3049,7 @@
             gracefulAllBtn.addEventListener('click', function () {
                 var user = selectedManageUser();
                 if (!user) {
-                    setStatus(statusMsg, 'Select a user position first.', 'err');
+                    setStatus(statusMsg, _t('dash.selectUserPositionFirst', 'Select a user position first.'), 'err');
                     return;
                 }
                 requestManageAction({ user: user, action: 'graceful_stop_all' }, statusMsg, gracefulAllBtn);
@@ -3022,7 +3057,7 @@
             previewTpOnlyBtn.addEventListener('click', function () {
                 var user = selectedManageUser();
                 if (!user) {
-                    setStatus(statusMsg, 'Select a user position first.', 'err');
+                    setStatus(statusMsg, _t('dash.selectUserPositionFirst', 'Select a user position first.'), 'err');
                     return;
                 }
                 requestManageAction({ user: user, action: 'tp_only_all', dry_run: true }, statusMsg, previewTpOnlyBtn);
@@ -3030,7 +3065,7 @@
             tpOnlyAllBtn.addEventListener('click', function () {
                 var user = selectedManageUser();
                 if (!user) {
-                    setStatus(statusMsg, 'Select a user position first.', 'err');
+                    setStatus(statusMsg, _t('dash.selectUserPositionFirst', 'Select a user position first.'), 'err');
                     return;
                 }
                 requestManageAction({ user: user, action: 'tp_only_all' }, statusMsg, tpOnlyAllBtn);
@@ -3257,11 +3292,11 @@
            Returns controller with live-update methods (Phase 2).
         */
         var LWC = window.LightweightCharts;
-        if (!LWC) { chartDiv.textContent = 'Lightweight Charts not loaded'; return null; }
+        if (!LWC) { chartDiv.textContent = _t('dash.lwcNotLoaded', 'Lightweight Charts not loaded'); return null; }
 
         var candles = (data && data.candles) ? data.candles : [];
         if (candles.length === 0) {
-            chartDiv.textContent = 'No candle data';
+            chartDiv.textContent = _t('dash.noCandleData', 'No candle data');
             return null;
         }
 
@@ -3343,7 +3378,7 @@
                 lineWidth: 2,
                 lineStyle: LWC.LineStyle.Solid,
                 axisLabelVisible: true,
-                title: 'Entry',
+                title: _t('dash.entry', 'Entry'),
                 autoscaleInfoProvider: function () { return null; }
             });
         }
@@ -3356,7 +3391,7 @@
                 lineWidth: 1,
                 lineStyle: LWC.LineStyle.Dotted,
                 axisLabelVisible: true,
-                title: 'Price',
+                title: _t('dash.price', 'Price'),
                 autoscaleInfoProvider: function () { return null; }
             });
         }
@@ -3479,7 +3514,7 @@
                         lineWidth: 2,
                         lineStyle: LWC.LineStyle.Solid,
                         axisLabelVisible: true,
-                        title: 'Entry',
+                        title: _t('dash.entry', 'Entry'),
                         autoscaleInfoProvider: function () { return null; }
                     });
                 }
@@ -3587,7 +3622,7 @@
         hdr.className = 'dt-header';
         var titleSpan = document.createElement('span');
         titleSpan.className = 'dt-title';
-        titleSpan.textContent = 'Orders';
+        titleSpan.textContent = _t('dash.orders', 'Orders');
         hdr.appendChild(titleSpan);
 
         if (opts.message) {
@@ -3633,7 +3668,7 @@
         });
 
         var lTf = document.createElement('span');
-        lTf.className = 'dt-meta-lbl'; lTf.textContent = 'Timeframe';
+        lTf.className = 'dt-meta-lbl'; lTf.textContent = _t('dash.timeframe', 'Timeframe');
         metaDiv.appendChild(lTf);
         metaDiv.appendChild(tfBar);
 
@@ -3657,8 +3692,8 @@
                     + (_upnl >= 0 ? '+' : '') + _upnl.toFixed(2) + '\x3C/span>';
             }
             infoSpan.innerHTML =
-                'User:&nbsp;\x3Cspan class="dt-meta-user">' + (data.user || '') + '\x3C/span>' +
-                '&nbsp;\u00b7&nbsp;Symbol:&nbsp;\x3Cspan class="dt-meta-user">' + (data.symbol || '') + '\x3C/span>' +
+                _t('dash.user', 'User') + ':&nbsp;\x3Cspan class="dt-meta-user">' + (data.user || '') + '\x3C/span>' +
+                '&nbsp;\u00b7&nbsp;' + _t('dash.symbol', 'Symbol') + ':&nbsp;\x3Cspan class="dt-meta-user">' + (data.symbol || '') + '\x3C/span>' +
                 '&nbsp;\u00b7&nbsp;';
             infoSpan.appendChild(_clockSpan);
             infoSpan.appendChild(_posInfoSpan);
@@ -3676,10 +3711,10 @@
         var legendDiv = document.createElement('div');
         legendDiv.className = 'do-legend';
         var legendItems = [
-            { style: 'do-leg-solid', color: '#a0aec0', label: 'Entry' },
-            { style: 'do-leg-dotted', color: '#a0aec0', label: 'Price' },
-            { style: 'do-leg-dashed', color: '#48bb78', label: 'Buy Order' },
-            { style: 'do-leg-dashed', color: '#f56565', label: 'Sell Order' }
+            { style: 'do-leg-solid', color: '#a0aec0', label: _t('dash.entry', 'Entry') },
+            { style: 'do-leg-dotted', color: '#a0aec0', label: _t('dash.price', 'Price') },
+            { style: 'do-leg-dashed', color: '#48bb78', label: _t('dash.buyOrder', 'Buy Order') },
+            { style: 'do-leg-dashed', color: '#f56565', label: _t('dash.sellOrder', 'Sell Order') }
         ];
         legendItems.forEach(function (li) {
             var item = document.createElement('span');
@@ -3699,7 +3734,7 @@
         if (candles.length === 0) {
             var noData2 = document.createElement('div');
             noData2.className = 'dt-nodata';
-            noData2.textContent = 'No candle data for this symbol.';
+            noData2.textContent = _t('dash.noCandleSymbol', 'No candle data for this symbol.');
             root.appendChild(noData2);
             container.appendChild(root);
             return null;
@@ -3709,7 +3744,7 @@
         var fsBtn = document.createElement('button');
         fsBtn.className = 'do-fs-btn';
         fsBtn.textContent = '\u26F6';
-        fsBtn.title = 'Fullscreen';
+        fsBtn.title = _t('dash.fullscreen', 'Fullscreen');
 
         var chartToolbar = document.createElement('div');
         chartToolbar.className = 'do-chart-toolbar';
@@ -3827,7 +3862,7 @@
     function renderAdg(chartDiv, data, opts) {
         opts = opts || {};
         var P = opts.Plotly || global.Plotly;
-        if (!P) { chartDiv.textContent = 'Plotly not loaded'; return; }
+        if (!P) { chartDiv.textContent = _t('dash.plotlyNotLoaded', 'Plotly not loaded'); return; }
 
         var bars = (data && data.bars) ? data.bars : [];
         var mode = (data && data.mode) || 'bar';
@@ -3905,7 +3940,7 @@
             modeBarButtonsToAdd: [
                 {
                     name:  'fullscreen',
-                    title: 'Fullscreen',
+                    title: _t('dash.fullscreen', 'Fullscreen'),
                     icon:  {
                         width: 857.1, height: 857.1,
                         path: 'M0 0v285.7h142.9V142.9H285.7V0H0zm571.4 0v142.9h142.9v142.9H857.1V0H571.4zM0 571.4v285.7h285.7V714.3H142.9V571.4H0zm714.3 142.9v142.9H571.4v142.9H857.1V571.4H714.3z'
@@ -3938,7 +3973,7 @@
         var _fc = container.querySelector('.dt-chart');
         if (_fc && data && (data.bars || []).length > 0) {
             var _dr = container.querySelector('.dt-daterange');
-            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? 'From: ' + data.from_date + '  To: ' + data.to_date : '';
+            if (_dr) _dr.textContent = (data.from_date && data.to_date) ? _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date : '';
             /* Preserve current zoom state across WS-triggered data updates */
             var _z = opts.savedZoom || null;
             if (!_z && _fc.layout) {
@@ -3968,7 +4003,7 @@
             metaDiv.className = 'dt-meta dt-meta-controls';
             if (opts.modeControl) {
                 var lMode = document.createElement('span');
-                lMode.className = 'dt-meta-lbl'; lMode.textContent = 'Mode';
+                lMode.className = 'dt-meta-lbl'; lMode.textContent = _t('dash.mode', 'Mode');
                 metaDiv.appendChild(lMode);
                 metaDiv.appendChild(opts.modeControl);
             }
@@ -3977,7 +4012,7 @@
                 sepP.className = 'dt-meta-sep'; sepP.innerHTML = '\x26middot;';
                 metaDiv.appendChild(sepP);
                 var lPrd = document.createElement('span');
-                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = 'Period';
+                lPrd.className = 'dt-meta-lbl'; lPrd.textContent = _t('dash.period', 'Period');
                 metaDiv.appendChild(lPrd);
                 metaDiv.appendChild(opts.periodControl);
             }
@@ -3986,13 +4021,13 @@
                 sepF.className = 'dt-meta-sep'; sepF.innerHTML = '\x26middot;';
                 metaDiv.appendChild(sepF);
                 var lFrom = document.createElement('span');
-                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = 'From';
+                lFrom.className = 'dt-meta-lbl'; lFrom.textContent = _t('dash.from', 'From');
                 metaDiv.appendChild(lFrom);
                 metaDiv.appendChild(opts.fromControl);
             }
             if (opts.toControl) {
                 var lTo = document.createElement('span');
-                lTo.className = 'dt-meta-lbl'; lTo.textContent = 'To';
+                lTo.className = 'dt-meta-lbl'; lTo.textContent = _t('dash.to', 'To');
                 metaDiv.appendChild(lTo);
                 metaDiv.appendChild(opts.toControl);
                 if (opts.toNowControl) {
@@ -4004,7 +4039,7 @@
                 sepU.className = 'dt-meta-sep'; sepU.innerHTML = '\x26middot;';
                 metaDiv.appendChild(sepU);
                 var lUsr = document.createElement('span');
-                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = 'Users';
+                lUsr.className = 'dt-meta-lbl'; lUsr.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr);
                 metaDiv.appendChild(opts.usersControl);
             } else if (opts.users && opts.users.length > 0) {
@@ -4012,7 +4047,7 @@
                 sepU2.className = 'dt-meta-sep'; sepU2.innerHTML = '\x26middot;';
                 metaDiv.appendChild(sepU2);
                 var lUsr2 = document.createElement('span');
-                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = 'Users';
+                lUsr2.className = 'dt-meta-lbl'; lUsr2.textContent = _t('dash.users', 'Users');
                 metaDiv.appendChild(lUsr2);
                 var usrVal = document.createElement('span');
                 usrVal.className = 'dt-meta-user';
@@ -4030,16 +4065,16 @@
             var _periodDisplay = (_rawPeriod.indexOf('CUSTOM:') === 0)
                 ? (function () {
                       var _pp = _rawPeriod.split(':');
-                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? 'Now' : _pp[2];
+                      var _toDisp = (_pp[2] === 'NOW' || _pp[2] === '') ? _t('dash.now', 'Now') : _pp[2];
                       return _pp[1] + ' \u2192 ' + _toDisp;
                   }())
                 : _rawPeriod;
             var metaSpan = document.createElement('span');
             metaSpan.className = 'dt-meta';
             metaSpan.innerHTML =
-                'Mode:\x26nbsp;' + ((data && data.mode) || 'bar') +
-                '\x26nbsp;\x26middot;\x26nbsp;Period:\x26nbsp;' + _periodDisplay +
-                '\x26nbsp;\x26middot;\x26nbsp;Users:\x26nbsp;\x3Cspan class="dt-meta-user">' + uLabel + '\x3C/span>';
+                _t('dash.mode', 'Mode') + ':\x26nbsp;' + ((data && data.mode) || 'bar') +
+                '\x26nbsp;\x26middot;\x26nbsp;' + _t('dash.period', 'Period') + ':\x26nbsp;' + _periodDisplay +
+                '\x26nbsp;\x26middot;\x26nbsp;' + _t('dash.users', 'Users') + ':\x26nbsp;\x3Cspan class="dt-meta-user">' + uLabel + '\x3C/span>';
             hdr.appendChild(metaSpan);
         }
         _decorateHeader(hdr, opts.icon, titleSpan, opts.onDelete);
@@ -4049,9 +4084,9 @@
         if (data && data.starting_balance !== undefined) {
             var sumDiv = document.createElement('div');
             sumDiv.className = 'dt-daterange';
-            sumDiv.innerHTML = 'Starting Balance: \x3Cb>' + data.starting_balance.toFixed(2) + '\x3C/b>'
-                + ' \x26middot; Total PNL: \x3Cb>' + data.total_pnl.toFixed(2) + '\x3C/b>'
-                + ' \x26middot; Current Balance: \x3Cb>' + data.current_balance.toFixed(2) + '\x3C/b>';
+            sumDiv.innerHTML = _t('dash.startingBalance', 'Starting Balance') + ': \x3Cb>' + data.starting_balance.toFixed(2) + '\x3C/b>'
+                + ' \x26middot; ' + _t('dash.totalPnl', 'Total PNL') + ': \x3Cb>' + data.total_pnl.toFixed(2) + '\x3C/b>'
+                + ' \x26middot; ' + _t('dash.currentBalance', 'Current Balance') + ': \x3Cb>' + data.current_balance.toFixed(2) + '\x3C/b>';
             root.appendChild(sumDiv);
         }
 
@@ -4059,7 +4094,7 @@
         var dr = document.createElement('div');
         dr.className = 'dt-daterange';
         if (data && data.from_date && data.to_date) {
-            dr.textContent = 'From: ' + data.from_date + '  To: ' + data.to_date;
+            dr.textContent = _t('dash.from', 'From') + ': ' + data.from_date + '  ' + _t('dash.to', 'To') + ': ' + data.to_date;
         }
         root.appendChild(dr);
 
@@ -4067,7 +4102,7 @@
         if (bars.length === 0) {
             var noData = document.createElement('div');
             noData.className = 'dt-nodata';
-            noData.textContent = 'No data for the selected period.';
+            noData.textContent = _t('dash.noDataPeriod', 'No data for the selected period.');
             root.appendChild(noData);
             container.appendChild(root);
             return;
@@ -4081,7 +4116,7 @@
         var closeBtn = document.createElement('button');
         closeBtn.className = 'dt-fs-close';
         closeBtn.textContent = '\u2715';
-        closeBtn.title = 'Exit Fullscreen';
+        closeBtn.title = _t('dash.exitFullscreen', 'Exit Fullscreen');
         closeBtn.addEventListener('click', function () {
             if (document.exitFullscreen) document.exitFullscreen();
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -4098,7 +4133,7 @@
     /* ──────────────────────────── Export ───────────────────────────────── */
 
     global.DashRender = {
-        VERSION:            '20260812b',
+        VERSION:            '20260814a',
         injectCSS:          injectCSS,
         tweColor:           tweColor,
         upnlColor:          upnlColor,

@@ -5,6 +5,8 @@ import re
 import subprocess
 import textwrap
 
+from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
+
 
 ROOT = Path(__file__).resolve().parents[2]
 PAGE_PATH = ROOT / "frontend" / "v7_strategy_explorer.html"
@@ -44,9 +46,11 @@ def test_shared_page_detects_v8_and_switches_identity_without_a_second_template(
 
     assert not (ROOT / "frontend" / "v8_strategy_explorer.html").exists()
     assert "var IS_V8 = /\\/api\\/strategy-explorer-v8" in source
-    assert "PBGui - PB8 Strategy Explorer" in source
-    assert "STRATEGY_LABEL + ' Strategy Explorer'" in source
-    assert "subtitle: IS_V8 ? 'PBv8 Strategy Explorer'" in source
+    assert_text_present(source, "PBGui - PB8 Strategy Explorer")
+    assert_text_present(source, "{label} Strategy Explorer")
+    assert "PBGuiI18n.t('v7explore.titleV8', { label: STRATEGY_LABEL })" in source
+    assert_text_present(source, "PBv8 Strategy Explorer")
+    assert "subtitle: IS_V8 ? PBGuiI18n.t('v7explore.navSubtitleV8')" in source
     assert "current: IS_V8 ? 'v8_strategy_explorer' : 'v7_strategy_explorer'" in source
     assert "page.strategy_label || 'PB8'" in source
 
@@ -123,8 +127,8 @@ def test_snapshot_adopts_dynamic_groups_metadata_and_pb8_visual_aliases() -> Non
     assert "meta.type === 'string' || meta.type === 'text'" in source
     assert "function paramNearBound(sideKey, name, value)" in source
     assert "['optimize', 'bounds', sideKey].concat(field.path)" in source
-    assert "Near lower bound" in source
-    assert "Near upper bound" in source
+    assert_text_present(source, "Near lower bound")
+    assert_text_present(source, "Near upper bound")
 
 
 def test_v8_fetches_use_only_same_origin_cookie_authentication() -> None:
@@ -142,7 +146,8 @@ def test_v8_replay_compare_and_provenance_labels_do_not_claim_pb7() -> None:
     """PB8 mode must relabel the fixed shell and keep server result paths out of visible fields."""
     source = PAGE_PATH.read_text(encoding="utf-8")
 
-    assert '<option value="pb8_engine">PB8 Native Replay</option>' in source
+    assert '<option value="pb8_engine">' in source
+    assert_text_present(source, "PB8 Native Replay")
     assert "data.engine === 'pb8_engine'" in source
     assert "Stored PB8 Result vs Fresh PB8 Replay" in source
     assert "Stored PB8 Result only" in source
@@ -378,7 +383,7 @@ def test_pb8_refresh_cache_rejects_secrets_and_restores_expired_drafts() -> None
 
     assert completed.returncode == 0, completed.stderr or completed.stdout
     load_session = _extract_function(source, "loadSession")
-    recovery_script = textwrap.dedent(
+    recovery_script = NODE_I18N_STUB + textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
         let sessionRequestGeneration = 0;

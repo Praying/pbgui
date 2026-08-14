@@ -16,6 +16,8 @@ import PBApiServer
 import api.auth as auth
 import pbgui_purefunc
 
+from tests.i18n_helpers import assert_text_present
+
 
 def _ready_pb8(tmp_path: Path, *, stamped: bool = True) -> tuple[Path, Path]:
     """Create a static PB8 artifact layout without executing external code."""
@@ -231,6 +233,6 @@ def test_welcome_frontend_renders_and_saves_pb8_runtime() -> None:
     assert 'id="sb-pb8-state"' in source
     assert 'id="pb8dir"' in source
     assert 'id="pb8venv"' in source
-    assert 'label: "PB8 CLI / Rust"' in source
+    assert_text_present(source, "PB8 CLI / Rust")
     assert 'pb8dir: document.getElementById("pb8dir").value' in source
     assert 'pb8venv: document.getElementById("pb8venv").value' in source

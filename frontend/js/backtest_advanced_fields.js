@@ -1,6 +1,18 @@
 (function(root) {
   'use strict';
 
+  function i18nT(key, params, fallback) {
+    var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+    var text = fallback == null ? key : String(fallback);
+    if (params) {
+      text = text.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return text;
+  }
+
   var MARKET_FIELDS = [
     'qty_step', 'price_step', 'min_qty', 'min_cost',
     'c_mult'
@@ -105,11 +117,11 @@
 
   function metricCategory(metric) {
     var name = String(metric || '').toLowerCase();
-    if (name.indexOf('hard_stop_') === 0) return 'Hard Stop';
-    if (/fills|position_|positions_|trade_|win_rate|volume_|entry_interval/.test(name)) return 'Trading Activity';
-    if (/drawdown|recovery|underwater|shortfall|paper_loss|exposure|equity_balance/.test(name)) return 'Risk & Recovery';
-    if (/ratio|sharpe|sortino|calmar|sterling|omega/.test(name)) return 'Performance Ratios';
-    return 'Returns & Growth';
+    if (name.indexOf('hard_stop_') === 0) return i18nT('editor.backtest.metricHardStop', null, 'Hard Stop');
+    if (/fills|position_|positions_|trade_|win_rate|volume_|entry_interval/.test(name)) return i18nT('editor.backtest.metricTradingActivity', null, 'Trading Activity');
+    if (/drawdown|recovery|underwater|shortfall|paper_loss|exposure|equity_balance/.test(name)) return i18nT('editor.backtest.metricRiskRecovery', null, 'Risk & Recovery');
+    if (/ratio|sharpe|sortino|calmar|sterling|omega/.test(name)) return i18nT('editor.backtest.metricPerformanceRatios', null, 'Performance Ratios');
+    return i18nT('editor.backtest.metricReturnsGrowth', null, 'Returns & Growth');
   }
 
   root.PBGuiBacktestAdvancedFields = {

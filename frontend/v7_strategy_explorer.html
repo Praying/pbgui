@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PBGui - Strategy Explorer</title>
+<script src="/app/i18n.js?v=1"></script>
 <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
 <script src="/static/plotly.min.js"></script>
 <script src="/app/js/sidebar_resize.js?v=1"></script>
@@ -21,7 +22,7 @@
   --orange: #ff8c00;
   --red: #ff4b4b;
   --purple: #b77dff;
-  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
   --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   --fs-xs: 11px;
   --fs-sm: 13px;
@@ -186,12 +187,12 @@ input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius:
 <div id="page-body">
   <aside id="sidebar">
     <div id="sidebar-inner">
-      <button class="sb-section active" data-stage="analysis">Analysis</button>
-      <button class="sb-section" data-stage="exchange-state">Exchange / State</button>
-      <button class="sb-section" data-stage="raw">Raw Config</button>
-      <button class="sb-section" data-stage="simulation">Simulation</button>
-      <button class="sb-section" data-stage="compare">Compare</button>
-      <button class="sb-section" data-stage="movie">Movie Builder</button>
+      <button class="sb-section active" data-stage="analysis" data-i18n="v7explore.analysis">Analysis</button>
+      <button class="sb-section" data-stage="exchange-state" data-i18n="v7explore.exchangeState">Exchange / State</button>
+      <button class="sb-section" data-stage="raw" data-i18n="v7explore.rawConfig">Raw Config</button>
+      <button class="sb-section" data-stage="simulation" data-i18n="v7explore.simulation">Simulation</button>
+      <button class="sb-section" data-stage="compare" data-i18n="v7explore.compare">Compare</button>
+      <button class="sb-section" data-stage="movie" data-i18n="v7explore.movieBuilder">Movie Builder</button>
     </div>
     <div id="sidebar-resize"></div>
   </aside>
@@ -199,11 +200,11 @@ input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius:
   <main id="main-content">
     <section class="page-title">
       <div>
-        <h1 id="strategy-explorer-title">Strategy Explorer</h1>
-        <p id="page-subtitle">Visual analysis of PB7 grid strategies using the PB7/Rust calculation path.</p>
+        <h1 id="strategy-explorer-title" data-i18n="v7explore.strategyExplorerTitle">Strategy Explorer</h1>
+        <p id="page-subtitle" data-i18n="v7explore.strategyExplorerSubtitle">Visual analysis of PB7 grid strategies using the PB7/Rust calculation path.</p>
       </div>
       <div class="toolbar">
-        <span id="source-chip" class="chip warn">Loading</span>
+        <span id="source-chip" class="chip warn" data-i18n="v7explore.loading">Loading</span>
         <span id="ohlcv-chip" class="chip">OHLCV: -</span>
         <span id="engine-chip" class="chip">Engine: -</span>
         <span id="market-chip" class="chip">Market: -</span>
@@ -214,15 +215,15 @@ input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius:
 
     <section id="shared-analysis-controls" class="panel-card shared-controls">
       <div class="shared-controls-grid">
-        <div class="field"><label for="ohlcv-source-select" data-tip="Select which local 1m OHLCV store should be used for the chart and candle-backed state injection.">OHLCV source</label><select id="ohlcv-source-select" data-tip="Select which local 1m OHLCV store should be used for the chart and candle-backed state injection."><option>PB7 cache/historical</option><option>Backtest ohlcv_source_dir</option><option>PBGui market_data</option></select></div>
-        <div class="field"><label for="exchange-select" data-tip="Exchange / market namespace used to load markets.json metadata and OHLCV candles.">Exchange</label><select id="exchange-select" data-tip="Exchange / market namespace used to load markets.json metadata and OHLCV candles."></select></div>
-        <div class="field"><label for="coin-select" data-tip="Coin symbol used for market metadata, candle loading, charts, and simulations.">Coin</label><select id="coin-select" data-tip="Coin symbol used for market metadata, candle loading, charts, and simulations."></select></div>
-        <div class="field"><label for="start-date-input" data-tip="Analysis start date. The chart and Rust state are initialized from the nearest candle at this date/time.">Start Date</label><div class="date-input-wrap"><input id="start-date-input" type="text" placeholder="YYYY-MM-DD" data-tip="Analysis start date. The chart and Rust state are initialized from the nearest candle at this date/time."><button type="button" class="calendar-trigger" data-dp="start-date-input" onclick="window.__dp.show('start-date-input', this)" title="Open calendar">📅</button></div></div>
-        <div class="field"><label for="start-time-input" data-tip="Analysis start time with minute precision.">Start Time</label><input id="start-time-input" type="time" value="00:00" data-tip="Analysis start time with minute precision."></div>
-        <div class="field"><label for="reference-price-input" data-tip="Fallback price used when no candles are available. Candle close price overrides this when OHLCV is loaded.">Reference Price</label><input id="reference-price-input" type="number" step="0.000001" value="100" data-tip="Fallback price used when no candles are available. Candle close price overrides this when OHLCV is loaded."></div>
-        <div class="field"><label for="balance-input" data-tip="Wallet balance used for state, order sizing, exposure budgets, and simulations.">Balance</label><input id="balance-input" type="number" step="1" value="1000" data-tip="Wallet balance used for state, order sizing, exposure budgets, and simulations."></div>
-        <div class="field"><label for="context-days-input" data-tip="Number of days shown from the selected analysis start time.">Chart Context</label><input id="context-days-input" type="range" min="0.5" max="60" step="0.5" value="5" data-tip="Number of days shown from the selected analysis start time."><span class="slider-value" id="context-days-value">5.00</span></div>
-        <div class="check-row" style="display:none"><input id="load-candles-toggle" type="checkbox" checked><label for="load-candles-toggle">Load candles</label></div>
+        <div class="field"><label for="ohlcv-source-select" data-tip="Select which local 1m OHLCV store should be used for the chart and candle-backed state injection." data-i18n-tip="v7explore.ohlcvSourceTip" data-i18n="v7explore.ohlcvSource">OHLCV source</label><select id="ohlcv-source-select" data-tip="Select which local 1m OHLCV store should be used for the chart and candle-backed state injection." data-i18n-tip="v7explore.ohlcvSourceTip"><option>PB7 cache/historical</option><option>Backtest ohlcv_source_dir</option><option>PBGui market_data</option></select></div>
+        <div class="field"><label for="exchange-select" data-tip="Exchange / market namespace used to load markets.json metadata and OHLCV candles." data-i18n-tip="v7explore.exchangeTip" data-i18n="v7explore.exchange">Exchange</label><select id="exchange-select" data-tip="Exchange / market namespace used to load markets.json metadata and OHLCV candles." data-i18n-tip="v7explore.exchangeTip"></select></div>
+        <div class="field"><label for="coin-select" data-tip="Coin symbol used for market metadata, candle loading, charts, and simulations." data-i18n-tip="v7explore.coinTip" data-i18n="v7explore.coin">Coin</label><select id="coin-select" data-tip="Coin symbol used for market metadata, candle loading, charts, and simulations." data-i18n-tip="v7explore.coinTip"></select></div>
+        <div class="field"><label for="start-date-input" data-tip="Analysis start date. The chart and Rust state are initialized from the nearest candle at this date/time." data-i18n-tip="v7explore.startDateTip" data-i18n="v7explore.startDate">Start Date</label><div class="date-input-wrap"><input id="start-date-input" type="text" placeholder="YYYY-MM-DD" data-tip="Analysis start date. The chart and Rust state are initialized from the nearest candle at this date/time." data-i18n-tip="v7explore.startDateTip"><button type="button" class="calendar-trigger" data-dp="start-date-input" onclick="window.__dp.show('start-date-input', this)" title="Open calendar" data-i18n-title="v7explore.openCalendar">📅</button></div></div>
+        <div class="field"><label for="start-time-input" data-tip="Analysis start time with minute precision." data-i18n-tip="v7explore.startTimeTip" data-i18n="v7explore.startTime">Start Time</label><input id="start-time-input" type="time" value="00:00" data-tip="Analysis start time with minute precision." data-i18n-tip="v7explore.startTimeTip"></div>
+        <div class="field"><label for="reference-price-input" data-tip="Fallback price used when no candles are available. Candle close price overrides this when OHLCV is loaded." data-i18n-tip="v7explore.referencePriceTip" data-i18n="v7explore.referencePrice">Reference Price</label><input id="reference-price-input" type="number" step="0.000001" value="100" data-tip="Fallback price used when no candles are available. Candle close price overrides this when OHLCV is loaded." data-i18n-tip="v7explore.referencePriceTip"></div>
+        <div class="field"><label for="balance-input" data-tip="Wallet balance used for state, order sizing, exposure budgets, and simulations." data-i18n-tip="v7explore.balanceTip" data-i18n="v7explore.balance">Balance</label><input id="balance-input" type="number" step="1" value="1000" data-tip="Wallet balance used for state, order sizing, exposure budgets, and simulations." data-i18n-tip="v7explore.balanceTip"></div>
+        <div class="field"><label for="context-days-input" data-tip="Number of days shown from the selected analysis start time." data-i18n-tip="v7explore.chartContextTip" data-i18n="v7explore.chartContext">Chart Context</label><input id="context-days-input" type="range" min="0.5" max="60" step="0.5" value="5" data-tip="Number of days shown from the selected analysis start time." data-i18n-tip="v7explore.chartContextTip"><span class="slider-value" id="context-days-value">5.00</span></div>
+        <div class="check-row" style="display:none"><input id="load-candles-toggle" type="checkbox" checked><label for="load-candles-toggle" data-i18n="v7explore.loadCandles">Load candles</label></div>
       </div>
     </section>
 
@@ -245,12 +246,12 @@ input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius:
 
     <section id="stage-exchange-state" class="stage-view">
       <div class="panel-card">
-        <h3>Exchange / State</h3>
+        <h3 data-i18n="v7explore.exchangeState">Exchange / State</h3>
         <div class="control-group">
-          <p class="muted" style="margin:0 0 8px">Exchange Parameters</p>
-          <div class="check-row"><input id="auto-exchange-params" type="checkbox" checked><label for="auto-exchange-params">Auto-fill exchange params (best-effort)</label></div>
-          <button class="action-btn" id="btn-reset-exchange-params" type="button">Reset ExchangeParams to market (clear overrides)</button>
-          <section class="accordion-card collapsed" style="margin-top:8px"><button class="accordion-head" type="button">Debug Data Sources (markets.json / OHLCV)</button><div class="accordion-body"><pre id="exchange-state-json" class="debug-json"></pre></div></section>
+          <p class="muted" style="margin:0 0 8px" data-i18n="v7explore.exchangeParameters">Exchange Parameters</p>
+          <div class="check-row"><input id="auto-exchange-params" type="checkbox" checked><label for="auto-exchange-params" data-i18n="v7explore.autoFillExchangeParams">Auto-fill exchange params (best-effort)</label></div>
+          <button class="action-btn" id="btn-reset-exchange-params" type="button" data-i18n="v7explore.resetExchangeParams">Reset ExchangeParams to market (clear overrides)</button>
+          <section class="accordion-card collapsed" style="margin-top:8px"><button class="accordion-head" type="button" data-i18n="v7explore.debugDataSources">Debug Data Sources (markets.json / OHLCV)</button><div class="accordion-body"><pre id="exchange-state-json" class="debug-json"></pre></div></section>
           <div class="grid" style="margin-top:12px" id="exchange-state-controls"></div>
         </div>
       </div>
@@ -264,58 +265,58 @@ input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius:
 
     <section id="stage-simulation" class="stage-view">
       <section class="panel-card">
-        <h3>Simulation</h3>
+        <h3 data-i18n="v7explore.simulation">Simulation</h3>
         <div class="toolbar" style="margin-top:12px">
-          <button class="action-btn" id="btn-run-local-sim">Run PBGui Simulation</button>
-          <button class="action-btn" id="btn-run-pb7-engine">Run PB7 Backtest Engine</button>
-          <span class="muted">Requires local candles for the selected Exchange/Coin.</span>
+          <button class="action-btn" id="btn-run-local-sim" data-i18n="v7explore.runPbguiSimulation">Run PBGui Simulation</button>
+          <button class="action-btn" id="btn-run-pb7-engine" data-i18n="v7explore.runPb7Engine">Run PB7 Backtest Engine</button>
+          <span class="muted" data-i18n="v7explore.requiresLocalCandles">Requires local candles for the selected Exchange/Coin.</span>
         </div>
         <div class="grid" style="margin-top:var(--sp-md)">
-          <div class="field third"><label for="max-candles-input">Simulation Max Candles</label><input id="max-candles-input" type="number" min="50" max="20000" step="50" value="2000"></div>
-          <div class="field third"><label for="max-orders-input">Simulation Max Entry Fills</label><input id="max-orders-input" type="number" min="1" max="2000" step="1" value="200"></div>
-          <div class="field third"><label id="sim-start-state-label" for="sim-start-state-select">Simulation Start State (PBGui)</label><select id="sim-start-state-select"><option value="flat">Flat (Compare)</option><option value="manual">Manual (custom)</option></select></div>
+          <div class="field third"><label for="max-candles-input" data-i18n="v7explore.simMaxCandles">Simulation Max Candles</label><input id="max-candles-input" type="number" min="50" max="20000" step="50" value="2000"></div>
+          <div class="field third"><label for="max-orders-input" data-i18n="v7explore.simMaxEntryFills">Simulation Max Entry Fills</label><input id="max-orders-input" type="number" min="1" max="2000" step="1" value="200"></div>
+          <div class="field third"><label id="sim-start-state-label" for="sim-start-state-select" data-i18n="v7explore.simStartState">Simulation Start State (PBGui)</label><select id="sim-start-state-select"><option value="flat" data-i18n="v7explore.flatCompare">Flat (Compare)</option><option value="manual" data-i18n="v7explore.manualCustom">Manual (custom)</option></select></div>
         </div>
         <div class="grid" id="sim-manual-start-grid" style="display:none;margin-top:var(--sp-md)">
-          <div class="field third"><label for="sim-start-balance-input">Start Balance</label><input id="sim-start-balance-input" type="number" min="0" step="10" value="1000"></div>
-          <div class="field third"><label for="sim-start-long-size-input">LONG Size (&gt;=0)</label><input id="sim-start-long-size-input" type="number" step="0.001" value="0"></div>
-          <div class="field third"><label for="sim-start-long-price-input">LONG Price</label><input id="sim-start-long-price-input" type="number" min="0" step="0.000001" value="0"></div>
-          <div class="field third"><label for="sim-start-short-size-input">SHORT Size (&lt;=0)</label><input id="sim-start-short-size-input" type="number" step="0.001" value="0"></div>
-          <div class="field third"><label for="sim-start-short-price-input">SHORT Price</label><input id="sim-start-short-price-input" type="number" min="0" step="0.000001" value="0"></div>
+          <div class="field third"><label for="sim-start-balance-input" data-i18n="v7explore.startBalance">Start Balance</label><input id="sim-start-balance-input" type="number" min="0" step="10" value="1000"></div>
+          <div class="field third"><label for="sim-start-long-size-input" data-i18n="v7explore.longSize">LONG Size (&gt;=0)</label><input id="sim-start-long-size-input" type="number" step="0.001" value="0"></div>
+          <div class="field third"><label for="sim-start-long-price-input" data-i18n="v7explore.longPrice">LONG Price</label><input id="sim-start-long-price-input" type="number" min="0" step="0.000001" value="0"></div>
+          <div class="field third"><label for="sim-start-short-size-input" data-i18n="v7explore.shortSize">SHORT Size (&lt;=0)</label><input id="sim-start-short-size-input" type="number" step="0.001" value="0"></div>
+          <div class="field third"><label for="sim-start-short-price-input" data-i18n="v7explore.shortPrice">SHORT Price</label><input id="sim-start-short-price-input" type="number" min="0" step="0.000001" value="0"></div>
         </div>
-        <div id="simulation-progress" class="movie-progress"><div class="movie-progress-bar"><div id="simulation-progress-fill" class="movie-progress-fill"></div></div><div id="simulation-progress-text" class="movie-progress-text">Waiting...</div></div>
+        <div id="simulation-progress" class="movie-progress"><div class="movie-progress-bar"><div id="simulation-progress-fill" class="movie-progress-fill"></div></div><div id="simulation-progress-text" class="movie-progress-text" data-i18n="v7explore.waiting">Waiting...</div></div>
       </section>
       <div class="sim-columns">
         <section class="main-column" id="sim-long-workspace">
           <div class="side-title"><h3>LONG</h3><span id="sim-long-active-chip" class="chip">-</span></div>
           <div id="sim-long-tuning"></div>
           <div id="sim-plot-long" class="plot"></div>
-          <section class="panel-card"><h4>LONG Fills</h4><div id="sim-long"></div></section>
+          <section class="panel-card"><h4 data-i18n="v7explore.longFills">LONG Fills</h4><div id="sim-long"></div></section>
         </section>
         <section class="main-column" id="sim-short-workspace">
           <div class="side-title"><h3>SHORT</h3><span id="sim-short-active-chip" class="chip">-</span></div>
           <div id="sim-short-tuning"></div>
           <div id="sim-plot-short" class="plot"></div>
-          <section class="panel-card"><h4>SHORT Fills</h4><div id="sim-short"></div></section>
+          <section class="panel-card"><h4 data-i18n="v7explore.shortFills">SHORT Fills</h4><div id="sim-short"></div></section>
         </section>
       </div>
     </section>
 
     <section id="stage-compare" class="stage-view">
       <section class="panel-card">
-        <h3>Compare</h3>
+        <h3 data-i18n="v7explore.compare">Compare</h3>
         <div class="grid">
-          <div class="field full"><label>Compare mode</label><div class="toolbar"><label class="check-row" id="compare-mode-primary"><input type="radio" name="compare-mode" value="pb7_b_c" checked>PB7 Backtest Result vs PBGui Simulation vs PB7 Backtest Engine</label><label class="check-row" id="compare-mode-secondary"><input type="radio" name="compare-mode" value="b_c">PBGui Simulation vs PB7 Backtest Engine</label></div></div>
-          <div class="field third"><label for="compare-max-candles">Compare max candles (1m)</label><input id="compare-max-candles" type="number" min="10" max="20000" step="50" value="10000"></div>
-          <div class="field full compare-pb7-only"><label for="compare-pb7-folder">PB7 backtest folder (contains fills.csv)</label><input id="compare-pb7-folder" type="text" placeholder="/path/to/backtest/result"></div>
-          <label class="check-row full compare-pb7-only"><input id="compare-use-fills-range" type="checkbox" checked>Use fills.csv time range for PBGui Simulation / PB7 Backtest Engine</label>
-          <label class="check-row full"><input id="compare-mismatches-only" type="checkbox" checked>Mismatches only</label>
+          <div class="field full"><label data-i18n="v7explore.compareMode">Compare mode</label><div class="toolbar"><label class="check-row" id="compare-mode-primary"><input type="radio" name="compare-mode" value="pb7_b_c" checked>PB7 Backtest Result vs PBGui Simulation vs PB7 Backtest Engine</label><label class="check-row" id="compare-mode-secondary"><input type="radio" name="compare-mode" value="b_c"><span data-i18n="v7explore.compareModeSecondary">PBGui Simulation vs PB7 Backtest Engine</span></label></div></div>
+          <div class="field third"><label for="compare-max-candles" data-i18n="v7explore.compareMaxCandles">Compare max candles (1m)</label><input id="compare-max-candles" type="number" min="10" max="20000" step="50" value="10000"></div>
+          <div class="field full compare-pb7-only"><label for="compare-pb7-folder" data-i18n="v7explore.pb7BacktestFolder">PB7 backtest folder (contains fills.csv)</label><input id="compare-pb7-folder" type="text" placeholder="/path/to/backtest/result"></div>
+          <label class="check-row full compare-pb7-only"><input id="compare-use-fills-range" type="checkbox" checked><span data-i18n="v7explore.useFillsRange">Use fills.csv time range for PBGui Simulation / PB7 Backtest Engine</span></label>
+          <label class="check-row full"><input id="compare-mismatches-only" type="checkbox" checked><span data-i18n="v7explore.mismatchesOnly">Mismatches only</span></label>
         </div>
-        <button class="action-btn primary" id="btn-run-compare" type="button" style="margin-top:14px;width:100%">Start Compare</button>
+        <button class="action-btn primary" id="btn-run-compare" type="button" style="margin-top:14px;width:100%" data-i18n="v7explore.startCompare">Start Compare</button>
       </section>
       <section class="panel-card" style="margin-top:var(--sp-md)">
-        <h3>Compare Result</h3>
-        <div id="compare-summary" class="hint">Configure Compare and start a run.</div>
-        <div id="compare-progress" class="movie-progress"><div class="movie-progress-bar"><div id="compare-progress-fill" class="movie-progress-fill"></div></div><div id="compare-progress-text" class="movie-progress-text">Waiting...</div></div>
+        <h3 data-i18n="v7explore.compareResult">Compare Result</h3>
+        <div id="compare-summary" class="hint" data-i18n="v7explore.configureCompareHint">Configure Compare and start a run.</div>
+        <div id="compare-progress" class="movie-progress"><div class="movie-progress-bar"><div id="compare-progress-fill" class="movie-progress-fill"></div></div><div id="compare-progress-text" class="movie-progress-text" data-i18n="v7explore.waiting">Waiting...</div></div>
         <div id="compare-result" style="margin-top:12px"></div>
       </section>
     </section>
@@ -323,42 +324,42 @@ input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius:
     <section id="stage-movie" class="stage-view">
       <div class="movie-layout">
         <section class="panel-card">
-          <h3>Movie Builder Config</h3>
-          <p class="hint" id="movie-status">Build replay frames from the selected candle window.</p>
+          <h3 data-i18n="v7explore.movieBuilderConfig">Movie Builder Config</h3>
+          <p class="hint" id="movie-status" data-i18n="v7explore.buildReplayFrames">Build replay frames from the selected candle window.</p>
           <div class="movie-config-grid">
-            <div class="field"><label id="movie-engine-label" for="movie-engine-select" data-tip="PBGui Simulation shows local replay grids/fills. PB7 Backtest Engine uses PB7 Rust fills. PB7 fills.csv uses an existing result folder without recomputing fills.">Movie engine</label><select id="movie-engine-select"><option value="local_simulation">PBGui Simulation</option><option value="pb7_engine">PB7 Backtest Engine</option><option value="pb7_fills">PB7 fills.csv (from backtest)</option></select></div>
-            <div class="field"><label for="movie-side-select" data-tip="Side to display in the movie preview. Auto prefers Long.">Side</label><select id="movie-side-select"><option value="auto" selected>Auto</option><option value="long">Long</option><option value="short">Short</option></select></div>
-            <div class="field"><label for="movie-start-date-input" data-tip="Movie start date. Defaults to the Analysis start date but can be changed independently for Movie Builder.">Start Date</label><div style="position:relative"><input id="movie-start-date-input" type="text" placeholder="YYYY-MM-DD" style="padding-right:28px"><button type="button" data-dp="movie-start-date-input" onclick="window.__dp.show('movie-start-date-input', this)" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text);padding:0 3px;font-size:var(--fs-sm);line-height:1;cursor:pointer" title="Open calendar">📅</button></div></div>
-            <div class="field"><label for="movie-start-time-input" data-tip="Movie start time with minute precision. Defaults to the Analysis start time.">Start Time</label><input id="movie-start-time-input" type="time" value="00:00"></div>
-            <div class="field"><label for="movie-step-select" data-tip="Distance between generated movie frames.">Step Size</label><select id="movie-step-select"><option value="1">1m</option><option value="5">5m</option><option value="15">15m</option><option value="60">1h</option><option value="240" selected>4h</option><option value="1440">1d</option></select></div>
-            <div class="field"><label for="movie-duration-select" data-tip="Duration presets depend on Step Size. Custom keeps the Frames value unchanged.">Duration</label><select id="movie-duration-select"></select></div>
-            <div class="field"><label for="movie-frames-input" data-tip="Number of frames to generate when Duration is Custom, or computed from Duration / Step Size.">Frames</label><input id="movie-frames-input" type="number" min="10" max="20000" step="1" value="200"></div>
-            <div class="field"><label for="movie-visible-input" data-tip="Number of candles shown in the moving viewport.">Visible candles</label><input id="movie-visible-input" type="number" min="10" max="500" step="5" value="60"></div>
-            <div class="field"><label id="movie-result-label" for="movie-pb7-folder" data-tip="Backtest result folder containing fills.csv, used by the PB7 fills.csv engine.">PB7 backtest folder</label><input id="movie-pb7-folder" type="text" placeholder="/path/to/backtest/result"></div>
-            <div class="field"><label>&nbsp;</label><button class="action-btn primary" id="btn-build-movie">Generate Movie</button></div>
-            <div class="field"><label>&nbsp;</label><button class="action-btn danger" id="btn-stop-movie" type="button" disabled>Stop Movie Builder</button></div>
+            <div class="field"><label id="movie-engine-label" for="movie-engine-select" data-tip="PBGui Simulation shows local replay grids/fills. PB7 Backtest Engine uses PB7 Rust fills. PB7 fills.csv uses an existing result folder without recomputing fills." data-i18n-tip="v7explore.movieEngineTip" data-i18n="v7explore.movieEngine">Movie engine</label><select id="movie-engine-select"><option value="local_simulation" data-i18n="v7explore.pbguiSimulation">PBGui Simulation</option><option value="pb7_engine" data-i18n="v7explore.pb7BacktestEngine">PB7 Backtest Engine</option><option value="pb7_fills" data-i18n="v7explore.pb7FillsCsv">PB7 fills.csv (from backtest)</option></select></div>
+            <div class="field"><label for="movie-side-select" data-tip="Side to display in the movie preview. Auto prefers Long." data-i18n-tip="v7explore.sideTip" data-i18n="v7explore.side">Side</label><select id="movie-side-select"><option value="auto" selected data-i18n="v7explore.auto">Auto</option><option value="long" data-i18n="v7explore.long">Long</option><option value="short" data-i18n="v7explore.short">Short</option></select></div>
+            <div class="field"><label for="movie-start-date-input" data-tip="Movie start date. Defaults to the Analysis start date but can be changed independently for Movie Builder." data-i18n-tip="v7explore.movieStartDateTip" data-i18n="v7explore.startDate">Start Date</label><div style="position:relative"><input id="movie-start-date-input" type="text" placeholder="YYYY-MM-DD" style="padding-right:28px"><button type="button" data-dp="movie-start-date-input" onclick="window.__dp.show('movie-start-date-input', this)" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text);padding:0 3px;font-size:var(--fs-sm);line-height:1;cursor:pointer" title="Open calendar" data-i18n-title="v7explore.openCalendar">📅</button></div></div>
+            <div class="field"><label for="movie-start-time-input" data-tip="Movie start time with minute precision. Defaults to the Analysis start time." data-i18n-tip="v7explore.movieStartTimeTip" data-i18n="v7explore.startTime">Start Time</label><input id="movie-start-time-input" type="time" value="00:00"></div>
+            <div class="field"><label for="movie-step-select" data-tip="Distance between generated movie frames." data-i18n-tip="v7explore.stepSizeTip" data-i18n="v7explore.stepSize">Step Size</label><select id="movie-step-select"><option value="1">1m</option><option value="5">5m</option><option value="15">15m</option><option value="60">1h</option><option value="240" selected>4h</option><option value="1440">1d</option></select></div>
+            <div class="field"><label for="movie-duration-select" data-tip="Duration presets depend on Step Size. Custom keeps the Frames value unchanged." data-i18n-tip="v7explore.durationTip" data-i18n="v7explore.duration">Duration</label><select id="movie-duration-select"></select></div>
+            <div class="field"><label for="movie-frames-input" data-tip="Number of frames to generate when Duration is Custom, or computed from Duration / Step Size." data-i18n-tip="v7explore.framesTip" data-i18n="v7explore.frames">Frames</label><input id="movie-frames-input" type="number" min="10" max="20000" step="1" value="200"></div>
+            <div class="field"><label for="movie-visible-input" data-tip="Number of candles shown in the moving viewport." data-i18n-tip="v7explore.visibleCandlesTip" data-i18n="v7explore.visibleCandles">Visible candles</label><input id="movie-visible-input" type="number" min="10" max="500" step="5" value="60"></div>
+            <div class="field"><label id="movie-result-label" for="movie-pb7-folder" data-tip="Backtest result folder containing fills.csv, used by the PB7 fills.csv engine." data-i18n-tip="v7explore.movieResultFolderTip" data-i18n="v7explore.pb7BacktestFolder">PB7 backtest folder</label><input id="movie-pb7-folder" type="text" placeholder="/path/to/backtest/result"></div>
+            <div class="field"><label>&nbsp;</label><button class="action-btn primary" id="btn-build-movie" data-i18n="v7explore.generateMovie">Generate Movie</button></div>
+            <div class="field"><label>&nbsp;</label><button class="action-btn danger" id="btn-stop-movie" type="button" disabled data-i18n="v7explore.stopMovieBuilder">Stop Movie Builder</button></div>
           </div>
         </section>
         <section class="panel-card">
-          <h3>Movie Builder Result</h3>
-          <div id="movie-output" class="hint">Generate a movie to preview replay frames.</div>
-          <div id="movie-progress" class="movie-progress"><div class="movie-progress-bar"><div id="movie-progress-fill" class="movie-progress-fill"></div></div><div id="movie-progress-text" class="movie-progress-text">Waiting...</div></div>
+          <h3 data-i18n="v7explore.movieBuilderResult">Movie Builder Result</h3>
+          <div id="movie-output" class="hint" data-i18n="v7explore.generateMovieHint">Generate a movie to preview replay frames.</div>
+          <div id="movie-progress" class="movie-progress"><div class="movie-progress-bar"><div id="movie-progress-fill" class="movie-progress-fill"></div></div><div id="movie-progress-text" class="movie-progress-text" data-i18n="v7explore.waiting">Waiting...</div></div>
           <div class="movie-export-panel">
             <div class="movie-config-grid">
-              <div class="field"><label for="movie-export-preset" data-tip="Video export preset. Advanced values switch the preset to Custom.">Export preset</label><select id="movie-export-preset"><option value="Fast">Fast</option><option value="Balanced" selected>Balanced</option><option value="Quality">Quality</option><option value="Custom">Custom</option></select></div>
-              <div class="field"><label>&nbsp;</label><button class="action-btn primary" id="btn-export-movie" type="button" disabled>Export MP4</button></div>
-              <div class="field"><label>&nbsp;</label><a id="movie-export-download" class="movie-export-download" href="#" download="movie.mp4">Download MP4</a></div>
+              <div class="field"><label for="movie-export-preset" data-tip="Video export preset. Advanced values switch the preset to Custom." data-i18n-tip="v7explore.exportPresetTip" data-i18n="v7explore.exportPreset">Export preset</label><select id="movie-export-preset"><option value="Fast" data-i18n="v7explore.fast">Fast</option><option value="Balanced" selected data-i18n="v7explore.balanced">Balanced</option><option value="Quality" data-i18n="v7explore.quality">Quality</option><option value="Custom" data-i18n="v7explore.custom">Custom</option></select></div>
+              <div class="field"><label>&nbsp;</label><button class="action-btn primary" id="btn-export-movie" type="button" disabled data-i18n="v7explore.exportMp4">Export MP4</button></div>
+              <div class="field"><label>&nbsp;</label><a id="movie-export-download" class="movie-export-download" href="#" download="movie.mp4" data-i18n="v7explore.downloadMp4">Download MP4</a></div>
             </div>
-            <p class="hint" id="movie-export-info">Export directly, or generate a preview first.</p>
+            <p class="hint" id="movie-export-info" data-i18n="v7explore.exportDirectlyHint">Export directly, or generate a preview first.</p>
             <details>
-              <summary>Advanced export settings</summary>
+              <summary data-i18n="v7explore.advancedExportSettings">Advanced export settings</summary>
               <div class="movie-config-grid" style="margin-top:var(--sp-sm)">
-                <div class="field"><label for="movie-export-codec" data-tip="Auto selects the best detected encoder. CPU codecs use the FFmpeg preset below.">Video Codec</label><select id="movie-export-codec"><option value="auto">Auto (detect best available)</option><option value="libx264">H.264 (libx264) - CPU software</option><option value="libx265">H.265/HEVC (libx265) - CPU software</option></select></div>
-                <div class="field"><label for="movie-export-width" data-tip="Export width in pixels. H.264 requires even dimensions.">Width</label><input id="movie-export-width" type="number" min="640" max="3840" step="20" value="1600"></div>
-                <div class="field"><label for="movie-export-height" data-tip="Export height in pixels. H.264 requires even dimensions.">Height</label><input id="movie-export-height" type="number" min="360" max="2160" step="20" value="800"></div>
-                <div class="field"><label for="movie-export-scale" data-tip="Kaleido render scale multiplier. Higher is sharper and slower.">Scale</label><input id="movie-export-scale" type="number" min="1" max="4" step="1" value="1"></div>
-                <div class="field"><label for="movie-export-crf" data-tip="Lower values improve quality and increase file size. Typical values are 16 to 23.">CRF / Quality</label><input id="movie-export-crf" type="number" min="0" max="51" step="1" value="18"></div>
-                <div class="field"><label for="movie-export-ffmpeg-preset" data-tip="Used by CPU software encoders such as libx264 and libx265.">FFmpeg preset</label><select id="movie-export-ffmpeg-preset"><option value="ultrafast">ultrafast</option><option value="superfast">superfast</option><option value="veryfast" selected>veryfast</option><option value="faster">faster</option><option value="fast">fast</option><option value="medium">medium</option><option value="slow">slow</option></select></div>
+                <div class="field"><label for="movie-export-codec" data-tip="Auto selects the best detected encoder. CPU codecs use the FFmpeg preset below." data-i18n-tip="v7explore.videoCodecTip" data-i18n="v7explore.videoCodec">Video Codec</label><select id="movie-export-codec"><option value="auto" data-i18n="v7explore.autoDetectBest">Auto (detect best available)</option><option value="libx264">H.264 (libx264) - CPU software</option><option value="libx265">H.265/HEVC (libx265) - CPU software</option></select></div>
+                <div class="field"><label for="movie-export-width" data-tip="Export width in pixels. H.264 requires even dimensions." data-i18n-tip="v7explore.widthTip" data-i18n="v7explore.width">Width</label><input id="movie-export-width" type="number" min="640" max="3840" step="20" value="1600"></div>
+                <div class="field"><label for="movie-export-height" data-tip="Export height in pixels. H.264 requires even dimensions." data-i18n-tip="v7explore.heightTip" data-i18n="v7explore.height">Height</label><input id="movie-export-height" type="number" min="360" max="2160" step="20" value="800"></div>
+                <div class="field"><label for="movie-export-scale" data-tip="Kaleido render scale multiplier. Higher is sharper and slower." data-i18n-tip="v7explore.scaleTip" data-i18n="v7explore.scale">Scale</label><input id="movie-export-scale" type="number" min="1" max="4" step="1" value="1"></div>
+                <div class="field"><label for="movie-export-crf" data-tip="Lower values improve quality and increase file size. Typical values are 16 to 23." data-i18n-tip="v7explore.crfQualityTip" data-i18n="v7explore.crfQuality">CRF / Quality</label><input id="movie-export-crf" type="number" min="0" max="51" step="1" value="18"></div>
+                <div class="field"><label for="movie-export-ffmpeg-preset" data-tip="Used by CPU software encoders such as libx264 and libx265." data-i18n-tip="v7explore.ffmpegPresetTip" data-i18n="v7explore.ffmpegPreset">FFmpeg preset</label><select id="movie-export-ffmpeg-preset"><option value="ultrafast">ultrafast</option><option value="superfast">superfast</option><option value="veryfast" selected>veryfast</option><option value="faster">faster</option><option value="fast">fast</option><option value="medium">medium</option><option value="slow">slow</option></select></div>
               </div>
             </details>
           </div>
@@ -372,7 +373,7 @@ input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius:
   </main>
 </div>
 
-<script src="/app/js/json_panel.js?v=1"></script>
+<script src="/app/js/json_panel.js?v=2"></script>
 <script>
 var API_BASE = "%%API_BASE%%";
 var WS_BASE = "%%WS_BASE%%";
@@ -428,13 +429,13 @@ var FIELD_TOOLTIPS = {
   state_volatility: 'entry_volatility_logrange_ema_1h injected from candles. Used only when volatility-weighted entry parameters are non-zero.'
 };
 var SEGMENTS = [
-  { key: 'entry_grid', label: 'Entry grid', fields: ['entry_initial_qty_pct','entry_initial_ema_dist','entry_grid_spacing_pct','entry_grid_spacing_we_weight','entry_grid_spacing_volatility_weight','entry_grid_double_down_factor','entry_volatility_ema_span_hours','ema_span_0','ema_span_1'] },
-  { key: 'entry_trailing', label: 'Entry trailing', fields: ['entry_trailing_threshold_pct','entry_trailing_retracement_pct','entry_trailing_grid_ratio','entry_trailing_double_down_factor','entry_trailing_threshold_we_weight','entry_trailing_threshold_volatility_weight','entry_trailing_retracement_we_weight','entry_trailing_retracement_volatility_weight'] },
-  { key: 'close_grid', label: 'Close grid', fields: ['close_grid_markup_end','close_grid_markup_start','close_grid_qty_pct','close_trailing_grid_ratio'] },
-  { key: 'close_trailing', label: 'Close trailing', fields: ['close_trailing_threshold_pct','close_trailing_retracement_pct','close_trailing_qty_pct','close_trailing_grid_ratio'] },
-  { key: 'risk_state', label: 'Risk/State', fields: ['total_wallet_exposure_limit','n_positions','risk_we_excess_allowance_pct','risk_wel_enforcer_threshold','risk_twel_enforcer_threshold'] },
-  { key: 'forager_unstuck', label: 'Forager/Unstuck', fields: ['forager_volatility_ema_span','forager_volume_ema_span','forager_volume_drop_pct','forager_score_weights.volume','forager_score_weights.volatility','forager_score_weights.ema_readiness','unstuck_close_pct','unstuck_ema_dist','unstuck_loss_allowance_pct','unstuck_threshold'] },
-  { key: 'hsl', label: 'HSL', fields: ['hsl_enabled','hsl_red_threshold','hsl_ema_span_minutes','hsl_cooldown_minutes_after_red','hsl_no_restart_drawdown_threshold','hsl_tier_ratios.yellow','hsl_tier_ratios.orange','hsl_orange_tier_mode','hsl_panic_close_order_type','live.hsl_signal_mode'] }
+  { key: 'entry_grid', label: PBGuiI18n.t('v7explore.segmentEntryGrid'), fields: ['entry_initial_qty_pct','entry_initial_ema_dist','entry_grid_spacing_pct','entry_grid_spacing_we_weight','entry_grid_spacing_volatility_weight','entry_grid_double_down_factor','entry_volatility_ema_span_hours','ema_span_0','ema_span_1'] },
+  { key: 'entry_trailing', label: PBGuiI18n.t('v7explore.segmentEntryTrailing'), fields: ['entry_trailing_threshold_pct','entry_trailing_retracement_pct','entry_trailing_grid_ratio','entry_trailing_double_down_factor','entry_trailing_threshold_we_weight','entry_trailing_threshold_volatility_weight','entry_trailing_retracement_we_weight','entry_trailing_retracement_volatility_weight'] },
+  { key: 'close_grid', label: PBGuiI18n.t('v7explore.segmentCloseGrid'), fields: ['close_grid_markup_end','close_grid_markup_start','close_grid_qty_pct','close_trailing_grid_ratio'] },
+  { key: 'close_trailing', label: PBGuiI18n.t('v7explore.segmentCloseTrailing'), fields: ['close_trailing_threshold_pct','close_trailing_retracement_pct','close_trailing_qty_pct','close_trailing_grid_ratio'] },
+  { key: 'risk_state', label: PBGuiI18n.t('v7explore.segmentRiskState'), fields: ['total_wallet_exposure_limit','n_positions','risk_we_excess_allowance_pct','risk_wel_enforcer_threshold','risk_twel_enforcer_threshold'] },
+  { key: 'forager_unstuck', label: PBGuiI18n.t('v7explore.segmentForagerUnstuck'), fields: ['forager_volatility_ema_span','forager_volume_ema_span','forager_volume_drop_pct','forager_score_weights.volume','forager_score_weights.volatility','forager_score_weights.ema_readiness','unstuck_close_pct','unstuck_ema_dist','unstuck_loss_allowance_pct','unstuck_threshold'] },
+  { key: 'hsl', label: PBGuiI18n.t('v7explore.segmentHsl'), fields: ['hsl_enabled','hsl_red_threshold','hsl_ema_span_minutes','hsl_cooldown_minutes_after_red','hsl_no_restart_drawdown_threshold','hsl_tier_ratios.yellow','hsl_tier_ratios.orange','hsl_orange_tier_mode','hsl_panic_close_order_type','live.hsl_signal_mode'] }
 ];
 
 var PARAM_FIELD_META = {
@@ -480,8 +481,8 @@ function configureSimulationModes(page) {
     return mode && mode.key;
   }) : [];
   if (!modes.length) modes = IS_V8
-    ? [{ key: 'pb8_engine', label: 'PB8 Native Replay' }]
-    : [{ key: 'local_simulation', label: 'PBGui Simulation' }, { key: 'pb7_engine', label: 'PB7 Backtest Engine' }];
+    ? [{ key: 'pb8_engine', label: PBGuiI18n.t('v7explore.simModePb8Replay') }]
+    : [{ key: 'local_simulation', label: PBGuiI18n.t('v7explore.simModeLocalSimulation') }, { key: 'pb7_engine', label: PBGuiI18n.t('v7explore.simModePb7Engine') }];
   if (IS_V8) modes = modes.slice(0, 1);
   var buttons = [document.getElementById('btn-run-local-sim'), document.getElementById('btn-run-pb7-engine')];
   buttons.forEach(function(button, idx) {
@@ -496,36 +497,36 @@ function configureSimulationModes(page) {
   });
   state.activeSimulationMode = String(modes[0].key);
   var stateLabel = document.getElementById('sim-start-state-label');
-  if (stateLabel) stateLabel.textContent = 'Simulation Start State (' + String(modes[0].label || STRATEGY_LABEL) + ')';
+  if (stateLabel) stateLabel.textContent = PBGuiI18n.t('v7explore.simStartStateWith', { label: String(modes[0].label || STRATEGY_LABEL) });
   updateSimulationButtons();
 }
 
 function configureVersionUi(page) {
   page = page || {};
   if (IS_V8) STRATEGY_LABEL = String(page.strategy_label || 'PB8');
-  document.title = IS_V8 ? 'PBGui - PB8 Strategy Explorer' : 'PBGui - Strategy Explorer';
+  document.title = IS_V8 ? PBGuiI18n.t('v7explore.pageTitleV8') : PBGuiI18n.t('v7explore.pageTitleV7');
   var title = document.getElementById('strategy-explorer-title');
-  if (title) title.textContent = IS_V8 ? STRATEGY_LABEL + ' Strategy Explorer' : 'Strategy Explorer';
+  if (title) title.textContent = IS_V8 ? PBGuiI18n.t('v7explore.titleV8', { label: STRATEGY_LABEL }) : PBGuiI18n.t('v7explore.titleV7');
   var subtitle = document.getElementById('page-subtitle');
   if (subtitle) subtitle.textContent = IS_V8
-    ? 'Visual analysis of PB8 strategies using native PB8 replay.'
-    : 'Visual analysis of PB7 grid strategies using the PB7/Rust calculation path.';
+    ? PBGuiI18n.t('v7explore.subtitleV8')
+    : PBGuiI18n.t('v7explore.subtitleV7');
   if (IS_V8) {
     var sourceSelect = document.getElementById('ohlcv-source-select');
-    if (sourceSelect) sourceSelect.innerHTML = '<option value="PB8 native candles">PB8 native candles</option>';
-    setLabelText(document.getElementById('compare-mode-primary'), 'PB8 Native Replay Compare');
+    if (sourceSelect) sourceSelect.innerHTML = '<option value="PB8 native candles">' + escapeHtml(PBGuiI18n.t('v7explore.pb8NativeCandles')) + '</option>';
+    setLabelText(document.getElementById('compare-mode-primary'), PBGuiI18n.t('v7explore.compareModePrimaryV8'));
     var secondary = document.getElementById('compare-mode-secondary');
     if (secondary) secondary.style.display = 'none';
     var compareInput = document.getElementById('compare-pb7-folder');
-    if (compareInput) { compareInput.readOnly = true; compareInput.placeholder = 'Available from a stored-result handoff'; }
+    if (compareInput) { compareInput.readOnly = true; compareInput.placeholder = PBGuiI18n.t('v7explore.storedResultHandoff'); }
     var compareLabel = compareInput && compareInput.previousElementSibling;
-    if (compareLabel) compareLabel.textContent = 'Stored PB8 result (optional)';
+    if (compareLabel) compareLabel.textContent = PBGuiI18n.t('v7explore.storedPb8Result');
     var fillsRange = document.getElementById('compare-use-fills-range');
     if (fillsRange && fillsRange.parentElement) fillsRange.parentElement.style.display = 'none';
     var movieEngine = document.getElementById('movie-engine-select');
-    if (movieEngine) movieEngine.innerHTML = '<option value="pb8_engine">PB8 Native Replay</option>';
+    if (movieEngine) movieEngine.innerHTML = '<option value="pb8_engine">' + escapeHtml(PBGuiI18n.t('v7explore.simModePb8Replay')) + '</option>';
     var movieEngineLabel = document.getElementById('movie-engine-label');
-    if (movieEngineLabel) movieEngineLabel.dataset.tip = 'PB8 Native Replay builds frames and fills with the native PB8 engine.';
+    if (movieEngineLabel) movieEngineLabel.dataset.tip = PBGuiI18n.t('v7explore.movieEngineV8Tip');
     var movieResultInput = document.getElementById('movie-pb7-folder');
     if (movieResultInput && movieResultInput.closest('.field')) movieResultInput.closest('.field').style.display = 'none';
     var startState = document.getElementById('sim-start-state-select');
@@ -538,6 +539,8 @@ function configureVersionUi(page) {
     }
     var manualGrid = document.getElementById('sim-manual-start-grid');
     if (manualGrid) manualGrid.style.display = 'none';
+  } else {
+    setLabelText(document.getElementById('compare-mode-primary'), PBGuiI18n.t('v7explore.compareModePrimary'));
   }
   configureSimulationModes(page);
 }
@@ -686,31 +689,35 @@ function installCandleZoomHandler(target, candles) {
   };
   if (target.on) target.on('plotly_relayout', target._pbguiCandleRelayout);
 }
-function tooltip(key) { return FIELD_TOOLTIPS[key] || ''; }
+function tr(key, fallback) {
+  var v = PBGuiI18n.t(key);
+  return v === key ? (fallback == null ? key : fallback) : v;
+}
+function tooltip(key) { return tr('v7explore.tip.' + key, FIELD_TOOLTIPS[key] || ''); }
 function paramTooltip(name) {
   var metaTip = (PARAM_FIELD_META[name] || {}).tooltip;
   if (metaTip) return String(metaTip);
   var specific = FIELD_TOOLTIPS[name];
   if (specific) return specific;
-  if (name.indexOf('forager_score_weights.') === 0) return 'Forager coin-scoring weight. ' + STRATEGY_LABEL + ' normalizes these weights and uses them when ranking eligible coins.';
-  if (name.indexOf('forager_') === 0) return 'Forager filter/scoring parameter used by ' + STRATEGY_LABEL + ' coin selection and candidate ranking.';
-  if (name.indexOf('hsl_tier_ratios.') === 0) return 'Hard Stop Loss tier ratio. ' + STRATEGY_LABEL + ' requires yellow < orange between 0 and 1.';
-  if (name.indexOf('hsl_') === 0) return 'Hard Stop Loss parameter used by ' + STRATEGY_LABEL + ' backtests and live risk handling.';
-  if (name === 'live.hsl_signal_mode') return 'Global HSL signal mode. pside tracks each side independently; unified uses one account-level combined signal.';
-  if (name.indexOf('ema_span') >= 0) return 'EMA span used by ' + STRATEGY_LABEL + ' to build the entry EMA band.';
-  if (name.indexOf('volatility_weight') >= 0) return 'Multiplier applied to the injected LogRange EMA volatility when calculating this parameter.';
-  if (name.indexOf('we_weight') >= 0) return 'Wallet-exposure weight used to adjust this parameter as exposure changes.';
-  if (name.indexOf('grid_spacing') >= 0) return 'Spacing between grid entry orders.';
-  if (name.indexOf('trailing_threshold') >= 0) return 'Distance needed before trailing logic arms.';
-  if (name.indexOf('trailing_retracement') >= 0) return 'Retracement required after trailing has armed before an order can trigger.';
-  if (name.indexOf('double_down') >= 0) return 'Size multiplier for additional entry levels.';
-  if (name.indexOf('markup') >= 0) return 'Close grid markup distance from the position/reference price.';
-  if (name.indexOf('qty_pct') >= 0) return 'Order quantity as a fraction of the relevant exposure/position budget.';
-  if (name.indexOf('unstuck') >= 0) return 'Auto-unstuck parameter used when positions exceed configured risk thresholds.';
-  if (name.indexOf('risk_') === 0) return 'Risk control parameter used by ' + STRATEGY_LABEL + ' exposure enforcement.';
-  if (name === 'total_wallet_exposure_limit') return 'Maximum total wallet exposure for this side.';
-  if (name === 'n_positions') return 'Maximum number of concurrently active positions for this side.';
-  return STRATEGY_LABEL + ' bot parameter: ' + name;
+  if (name.indexOf('forager_score_weights.') === 0) return PBGuiI18n.t('v7explore.tipForagerScoreWeights', { label: STRATEGY_LABEL });
+  if (name.indexOf('forager_') === 0) return PBGuiI18n.t('v7explore.tipForager', { label: STRATEGY_LABEL });
+  if (name.indexOf('hsl_tier_ratios.') === 0) return PBGuiI18n.t('v7explore.tipHslTierRatios', { label: STRATEGY_LABEL });
+  if (name.indexOf('hsl_') === 0) return PBGuiI18n.t('v7explore.tipHsl', { label: STRATEGY_LABEL });
+  if (name === 'live.hsl_signal_mode') return PBGuiI18n.t('v7explore.tipHslSignalMode');
+  if (name.indexOf('ema_span') >= 0) return PBGuiI18n.t('v7explore.tipEmaSpan', { label: STRATEGY_LABEL });
+  if (name.indexOf('volatility_weight') >= 0) return PBGuiI18n.t('v7explore.tipVolatilityWeight');
+  if (name.indexOf('we_weight') >= 0) return PBGuiI18n.t('v7explore.tipWeWeight');
+  if (name.indexOf('grid_spacing') >= 0) return PBGuiI18n.t('v7explore.tipGridSpacing');
+  if (name.indexOf('trailing_threshold') >= 0) return PBGuiI18n.t('v7explore.tipTrailingThreshold');
+  if (name.indexOf('trailing_retracement') >= 0) return PBGuiI18n.t('v7explore.tipTrailingRetracement');
+  if (name.indexOf('double_down') >= 0) return PBGuiI18n.t('v7explore.tipDoubleDown');
+  if (name.indexOf('markup') >= 0) return PBGuiI18n.t('v7explore.tipMarkup');
+  if (name.indexOf('qty_pct') >= 0) return PBGuiI18n.t('v7explore.tipQtyPct');
+  if (name.indexOf('unstuck') >= 0) return PBGuiI18n.t('v7explore.tipUnstuck');
+  if (name.indexOf('risk_') === 0) return PBGuiI18n.t('v7explore.tipRisk', { label: STRATEGY_LABEL });
+  if (name === 'total_wallet_exposure_limit') return PBGuiI18n.t('v7explore.tipTotalWalletExposure');
+  if (name === 'n_positions') return PBGuiI18n.t('v7explore.tipNPositions');
+  return PBGuiI18n.t('v7explore.botParameter', { label: STRATEGY_LABEL, name: name });
 }
 function apiFetch(path, opts) {
   opts = opts || {};
@@ -866,7 +873,7 @@ function cfgDateValueToMs(value) {
 }
 !function() {
   var _id = null, _y = 0, _m = 0, _anchor = null, _menu = '';
-  var MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var MN = [PBGuiI18n.t('v7explore.monthJanuary'),PBGuiI18n.t('v7explore.monthFebruary'),PBGuiI18n.t('v7explore.monthMarch'),PBGuiI18n.t('v7explore.monthApril'),PBGuiI18n.t('v7explore.monthMay'),PBGuiI18n.t('v7explore.monthJune'),PBGuiI18n.t('v7explore.monthJuly'),PBGuiI18n.t('v7explore.monthAugust'),PBGuiI18n.t('v7explore.monthSeptember'),PBGuiI18n.t('v7explore.monthOctober'),PBGuiI18n.t('v7explore.monthNovember'),PBGuiI18n.t('v7explore.monthDecember')];
   var cssId = '__dp_css';
   if (!document.getElementById(cssId)) {
     var s = document.createElement('style'); s.id = cssId;
@@ -940,7 +947,7 @@ function cfgDateValueToMs(value) {
       var bg = isS ? 'var(--accent,#4a90d9)' : isT ? 'rgba(255,255,255,.12)' : 'transparent';
       h += '<div class="dp-day" onclick="window.__dp.pick(' + day + ')" style="cursor:pointer;border-radius:4px;padding:4px 0;background:' + bg + ';color:var(--text,#ccc);font-weight:' + ((isS || isT) ? '600' : '400') + ';font-size:var(--fs-sm)">' + day + '</div>';
     }
-    h += '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-dim,#888);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">Close</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent,#4a90d9);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">Today</button></div>';
+    h += '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-dim,#888);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('common.close') + '</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent,#4a90d9);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('v7explore.today') + '</button></div>';
     e.innerHTML = h;
     _reposition();
   }
@@ -1170,7 +1177,7 @@ function changeOhlcvSource() {
   });
 }
 function orderRows(orders) {
-  if (!orders || !orders.length) return '<tr><td colspan="5" class="muted" style="text-align:left">None</td></tr>';
+  if (!orders || !orders.length) return '<tr><td colspan="5" class="muted" style="text-align:left">' + PBGuiI18n.t('common.none') + '</td></tr>';
   return orders.map(function(order) {
     var idx = Number(order.index);
     if (!isFinite(idx)) idx = 1;
@@ -1178,7 +1185,7 @@ function orderRows(orders) {
   }).join('');
 }
 function eventRows(events) {
-  if (!events || !events.length) return '<table class="orders"><tbody><tr><td class="muted" style="text-align:left">No fills</td></tr></tbody></table>';
+  if (!events || !events.length) return '<table class="orders"><tbody><tr><td class="muted" style="text-align:left">' + PBGuiI18n.t('v7explore.noFills') + '</td></tr></tbody></table>';
   var rows = events.slice(0, 500).map(function(ev, idx) {
     return '<tr><td>' + esc(idx + 1) + '</td><td>' + esc(ev.timestamp || ev.time || ev.date || '-') + '</td><td>' + esc(ev.event || ev.type || ev.order_type || '-') + '</td><td>' + fmt(ev.qty, 8) + '</td><td>' + fmt(ev.price, 8) + '</td><td>' + fmt(ev.pos_size, 8) + '</td></tr>';
   }).join('');
@@ -1287,10 +1294,10 @@ function compareEventsTable(events, data) {
     var item = events[key] || {};
     return '<tr><td>' + esc(labels[key] || key) + '</td><td>' + esc(item.long || 0) + '</td><td>' + esc(item.short || 0) + '</td><td>' + esc(item.total || 0) + '</td></tr>';
   }).join('');
-  return '<table class="orders"><thead><tr><th>Source</th><th>Long</th><th>Short</th><th>Total</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  return '<table class="orders"><thead><tr><th>' + PBGuiI18n.t('v7explore.source') + '</th><th>' + PBGuiI18n.t('v7explore.long') + '</th><th>' + PBGuiI18n.t('v7explore.short') + '</th><th>' + PBGuiI18n.t('v7explore.total') + '</th></tr></thead><tbody>' + rows + '</tbody></table>';
 }
 function compareRowsTable(rows, data) {
-  if (!rows || !rows.length) return '<table class="orders"><tbody><tr><td class="muted" style="text-align:left">No rows</td></tr></tbody></table>';
+  if (!rows || !rows.length) return '<table class="orders"><tbody><tr><td class="muted" style="text-align:left">' + PBGuiI18n.t('v7explore.noRows') + '</td></tr></tbody></table>';
   var statusLabels = IS_V8
     ? { pb7_only: 'Stored PB8 Result only', b_only: 'Fresh PB8 Replay only', c_only: 'PB8 Native Replay only', pb7_and_b: 'Stored + Fresh PB8', pb7_and_c: 'Stored + Native PB8', b_and_c: 'Fresh + Native PB8', match: 'Match', mismatch: 'Mismatch' }
     : { pb7_only: 'PB7 Result only', b_only: 'PBGui Simulation only', c_only: 'PB7 Backtest Engine only', pb7_and_b: 'PB7 Result + PBGui', pb7_and_c: 'PB7 Result + PB7 Backtest Engine', b_and_c: 'PBGui Simulation + PB7 Backtest Engine', match: 'Match', mismatch: 'Mismatch' };
@@ -1339,12 +1346,12 @@ function renderCompareResult(data) {
   var resultRoot = document.getElementById('compare-result');
   if (!summaryRoot || !resultRoot) return;
   if (!data || !data.ok) {
-    summaryRoot.innerHTML = '<span class="muted">' + esc((data && data.message) || 'Compare failed.') + '</span>';
+    summaryRoot.innerHTML = '<span class="muted">' + esc(PBGuiI18n.serverMsg(data && data.message) || PBGuiI18n.t('v7explore.compareFailed')) + '</span>';
     resultRoot.innerHTML = '';
     return;
   }
   summaryRoot.innerHTML = compareEventsTable(deepGet(data, ['summary', 'events'], {}), data) + '<div style="margin-top:12px">' + compareStatusTable(data.summary || {}, data) + '</div>';
-  resultRoot.innerHTML = '<h4>LONG Compare Rows</h4>' + compareRowsTable(deepGet(data, ['rows', 'long'], []), data) + '<h4>SHORT Compare Rows</h4>' + compareRowsTable(deepGet(data, ['rows', 'short'], []), data);
+  resultRoot.innerHTML = '<h4>' + PBGuiI18n.t('v7explore.longCompareRows') + '</h4>' + compareRowsTable(deepGet(data, ['rows', 'long'], []), data) + '<h4>' + PBGuiI18n.t('v7explore.shortCompareRows') + '</h4>' + compareRowsTable(deepGet(data, ['rows', 'short'], []), data);
 }
 function debugBlock(title, value) {
   return '<h4>' + esc(title) + '</h4><pre class="debug-json">' + esc(JSON.stringify(value || {}, null, 2)) + '</pre>';
@@ -1353,7 +1360,7 @@ function updateActiveChip(id, active) {
   var el = document.getElementById(id);
   if (!el) return;
   el.className = 'chip ' + (active ? 'ok' : 'warn');
-  el.textContent = active ? 'Active' : 'Inactive';
+  el.textContent = active ? PBGuiI18n.t('v7explore.active') : PBGuiI18n.t('v7explore.inactive');
 }
 function renderStats(sideKey, snapshot) {
   var side = (snapshot.sides || {})[sideKey] || {};
@@ -1361,16 +1368,16 @@ function renderStats(sideKey, snapshot) {
   var card = document.getElementById(sideKey + '-stats');
   updateActiveChip(sideKey + '-active-chip', side.active);
   updateActiveChip('sim-' + sideKey + '-active-chip', side.active);
-  card.innerHTML = '<div class="side-title"><h3>' + sideKey.toUpperCase() + ' Statistics</h3><span class="chip">' + esc(deepGet(side, ['modes', 'entry'], '-')) + ' / ' + esc(deepGet(side, ['modes', 'close'], '-')) + '</span></div>'
+  card.innerHTML = '<div class="side-title"><h3>' + esc(PBGuiI18n.t('v7explore.sideStatistics', { side: sideKey.toUpperCase() })) + '</h3><span class="chip">' + esc(deepGet(side, ['modes', 'entry'], '-')) + ' / ' + esc(deepGet(side, ['modes', 'close'], '-')) + '</span></div>'
     + '<div class="metric-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:12px">'
-    + '<div class="metric-card"><div class="label">Entry Orders</div><div class="value">' + esc(summary.entry_orders || 0) + '</div></div>'
-    + '<div class="metric-card"><div class="label">Entry Avg</div><div class="value">' + fmt(summary.entry_avg_price, 8) + '</div></div>'
-    + '<div class="metric-card"><div class="label">Entry Grid</div><div class="value">' + fmt(summary.entry_grid_pct, 2) + '%</div></div>'
-    + '<div class="metric-card"><div class="label">WEL / Pos</div><div class="value">' + fmt(summary.wallet_exposure_limit_per_position, 4) + '</div></div>'
+    + '<div class="metric-card"><div class="label">' + esc(PBGuiI18n.t('v7explore.entryOrders')) + '</div><div class="value">' + esc(summary.entry_orders || 0) + '</div></div>'
+    + '<div class="metric-card"><div class="label">' + esc(PBGuiI18n.t('v7explore.entryAvg')) + '</div><div class="value">' + fmt(summary.entry_avg_price, 8) + '</div></div>'
+    + '<div class="metric-card"><div class="label">' + esc(PBGuiI18n.t('v7explore.entryGrid')) + '</div><div class="value">' + fmt(summary.entry_grid_pct, 2) + '%</div></div>'
+    + '<div class="metric-card"><div class="label">' + esc(PBGuiI18n.t('v7explore.welPerPos')) + '</div><div class="value">' + fmt(summary.wallet_exposure_limit_per_position, 4) + '</div></div>'
     + '</div>'
-    + '<h4>Entry Orders</h4><table class="orders"><thead><tr><th></th><th>Qty</th><th>Price</th><th>Max-TWE% After</th><th>Order Type</th></tr></thead><tbody>' + orderRows(deepGet(side, ['orders', 'entries'], [])) + '</tbody></table>'
-    + '<h4>Close Orders</h4><table class="orders"><thead><tr><th></th><th>Qty</th><th>Price</th><th>Max-TWE% After</th><th>Order Type</th></tr></thead><tbody>' + orderRows(deepGet(side, ['orders', 'closes'], [])) + '</tbody></table>'
-    + '<section class="accordion-card collapsed" style="margin-top:14px"><button class="accordion-head" type="button">Debug Rust Interface (' + esc(sideKey.toUpperCase()) + ')</button><div class="accordion-body">'
+    + '<h4>' + esc(PBGuiI18n.t('v7explore.entryOrders')) + '</h4><table class="orders"><thead><tr><th></th><th>' + esc(PBGuiI18n.t('v7explore.qty')) + '</th><th>' + esc(PBGuiI18n.t('v7explore.price')) + '</th><th>' + esc(PBGuiI18n.t('v7explore.maxTweAfter')) + '</th><th>' + esc(PBGuiI18n.t('v7explore.orderType')) + '</th></tr></thead><tbody>' + orderRows(deepGet(side, ['orders', 'entries'], [])) + '</tbody></table>'
+    + '<h4>' + esc(PBGuiI18n.t('v7explore.closeOrders')) + '</h4><table class="orders"><thead><tr><th></th><th>' + esc(PBGuiI18n.t('v7explore.qty')) + '</th><th>' + esc(PBGuiI18n.t('v7explore.price')) + '</th><th>' + esc(PBGuiI18n.t('v7explore.maxTweAfter')) + '</th><th>' + esc(PBGuiI18n.t('v7explore.orderType')) + '</th></tr></thead><tbody>' + orderRows(deepGet(side, ['orders', 'closes'], [])) + '</tbody></table>'
+    + '<section class="accordion-card collapsed" style="margin-top:14px"><button class="accordion-head" type="button">' + esc(PBGuiI18n.t('v7explore.debugRustInterface', { side: sideKey.toUpperCase() })) + '</button><div class="accordion-body">'
     + debugBlock('Sent to Rust', deepGet(side, ['debug', 'entry_input'], {}))
     + debugBlock('Received from Rust (Decoded)', deepGet(side, ['debug', 'entry_output_decoded'], []))
     + debugBlock('GridOnly Entries (Decoded)', deepGet(side, ['debug', 'entry_gridonly_output_decoded'], []))
@@ -1624,7 +1631,7 @@ function renderPlot(sideKey, snapshot, prefix) {
   var analysisTs = deepGet(market, ['metadata', 'ohlcv', 'grid_time'], '') || deepGet(market, ['metadata', 'ohlcv', 'selected_start'], '') || x1;
   if (candles.length && analysisTs) {
     shapes.push({ type: 'line', xref: 'x', x0: analysisTs, x1: analysisTs, yref: 'paper', y0: 0, y1: 1, line: { color: 'cyan', dash: 'dot', width: 2 }, layer: 'above' });
-    annotations.push({ x: analysisTs, y: 1, xref: 'x', yref: 'paper', text: 'Analysis Time', showarrow: false, xanchor: 'left', yanchor: 'bottom', font: { color: 'cyan', size: 11 } });
+    annotations.push({ x: analysisTs, y: 1, xref: 'x', yref: 'paper', text: PBGuiI18n.t('v7explore.analysisTime'), showarrow: false, xanchor: 'left', yanchor: 'bottom', font: { color: 'cyan', size: 11 } });
   }
 
   if (entryMode !== 'GridOnly') {
@@ -1682,12 +1689,12 @@ function renderPlot(sideKey, snapshot, prefix) {
   if (!target) return;
   Plotly.react(targetId, traces, {
     paper_bgcolor: '#1a1d24', plot_bgcolor: '#1a1d24', font: { color: '#fafafa' },
-    title: sideKey.toUpperCase() + ' Entry and Close Grids Visualization',
+    title: PBGuiI18n.t('v7explore.entryCloseGridsVisualization', { side: sideKey.toUpperCase() }),
     margin: { l: 55, r: 25, t: 45, b: 35 },
     shapes: shapes,
     annotations: annotations,
-    xaxis: { type: 'date', title: 'Date', gridcolor: '#333640', rangeslider: { visible: plotInfo.bucketSize <= 1, bgcolor: '#151922', bordercolor: '#333640', thickness: 0.16 } },
-    yaxis: { title: 'Price', gridcolor: '#333640', range: yRange || undefined },
+    xaxis: { type: 'date', title: PBGuiI18n.t('v7explore.date'), gridcolor: '#333640', rangeslider: { visible: plotInfo.bucketSize <= 1, bgcolor: '#151922', bordercolor: '#333640', thickness: 0.16 } },
+    yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#333640', range: yRange || undefined },
     hovermode: 'closest', hoverdistance: 30,
     legend: { orientation: 'h', bgcolor: 'rgba(0,0,0,0)', bordercolor: 'rgba(0,0,0,0)' }
   }, plotlyFullscreenConfig(targetId, 520)).then(function() { installCandleZoomHandler(target, candles); });
@@ -1699,10 +1706,10 @@ function syncRawFromState() {
     panel.innerHTML = window.PBGuiJsonPanel.createPanelHtml({
       wrapId: 'raw-config-wrap',
       preId: 'raw-config-json',
-      title: 'Config',
+      title: PBGuiI18n.t('v7explore.config'),
       collapsedHeight: 'calc(50vh - 30px)'
     });
-    panel.insertAdjacentHTML('beforeend', '<div id="raw-config-status" class="raw-config-status">Edit JSON directly; valid changes recalculate automatically.</div>');
+    panel.insertAdjacentHTML('beforeend', '<div id="raw-config-status" class="raw-config-status">' + PBGuiI18n.t('v7explore.editJsonHint') + '</div>');
     bindRawConfigEditor();
   }
   var pre = document.getElementById('raw-config-json');
@@ -1727,28 +1734,28 @@ function bindRawConfigEditor() {
     var editGeneration = ++rawConfigEditGeneration;
     invalidateConfigRequests();
     rawConfigDirty = true;
-    setRawConfigStatus('Validating JSON...', false);
+    setRawConfigStatus(PBGuiI18n.t('v7explore.validatingJson'), false);
     if (rawConfigTimer) clearTimeout(rawConfigTimer);
     rawConfigTimer = setTimeout(function() {
       if (editGeneration !== rawConfigEditGeneration) return;
       try {
         var parsed = JSON.parse(pre.textContent || '{}');
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Config JSON must be an object.');
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(PBGuiI18n.t('v7explore.configJsonMustBeObject'));
         state.config = parsed;
         var revision = configRevision;
         rawConfigDirty = false;
-        setRawConfigStatus('JSON valid. Updating market selectors...', false);
+        setRawConfigStatus(PBGuiI18n.t('v7explore.jsonValidUpdatingSelectors'), false);
         syncControlsFromConfig(state.config);
         populateMarkets().then(function() {
           if (revision !== configRevision || editGeneration !== rawConfigEditGeneration) return false;
           syncControlsFromConfig(state.config);
-          setRawConfigStatus('JSON valid. Recalculating...', false);
+          setRawConfigStatus(PBGuiI18n.t('v7explore.jsonValidRecalculating'), false);
           return recalculate({ preserveConfig: true, reportError: true }).then(function() { return true; });
         }).then(function(updated) {
           if (!updated || editGeneration !== rawConfigEditGeneration) return;
-          setRawConfigStatus('JSON valid. Snapshot updated.', false);
+          setRawConfigStatus(PBGuiI18n.t('v7explore.jsonValidSnapshotUpdated'), false);
         }).catch(function(err) {
-          if (editGeneration === rawConfigEditGeneration) setRawConfigStatus('JSON valid, but recalculation failed: ' + err.message, true);
+          if (editGeneration === rawConfigEditGeneration) setRawConfigStatus(PBGuiI18n.t('v7explore.jsonValidRecalcFailed', { error: PBGuiI18n.serverMsg(err.message) }), true);
         });
       } catch (err) {
         setRawConfigStatus('Invalid JSON/config: ' + err.message, true);
@@ -1809,11 +1816,11 @@ function renderParamField(sideKey, valuePrefix, name, params) {
   var label = paramLabel(name);
   var nearBound = paramNearBound(sideKey, name, val);
   var fieldClass = 'slider-field' + (nearBound ? ' near-bound' : '');
-  var boundBadge = nearBound ? '<span class="near-bound-badge">' + (nearBound === 'lower' ? 'Near lower bound' : 'Near upper bound') + '</span>' : '';
+  var boundBadge = nearBound ? '<span class="near-bound-badge">' + (nearBound === 'lower' ? PBGuiI18n.t('v7explore.nearLowerBound') : PBGuiI18n.t('v7explore.nearUpperBound')) + '</span>' : '';
   if (meta.type === 'bool' || meta.type === 'boolean') {
     return '<div class="' + fieldClass + '">'
       + '<div class="slider-label"><span class="slider-name" data-tip="' + esc(tip) + '">' + esc(label) + '</span><span class="slider-meta">' + boundBadge + '<span class="help" data-tip="' + esc(tip) + '">?</span></span></div>'
-      + '<label class="param-check"><input class="param-bool" aria-label="' + esc(label) + '" data-param-side="' + esc(sideKey) + '" data-param-name="' + esc(name) + '" type="checkbox"' + (val ? ' checked' : '') + '>Enabled</label>'
+      + '<label class="param-check"><input class="param-bool" aria-label="' + esc(label) + '" data-param-side="' + esc(sideKey) + '" data-param-name="' + esc(name) + '" type="checkbox"' + (val ? ' checked' : '') + '>' + PBGuiI18n.t('common.enabled') + '</label>'
       + '</div>';
   }
   if (meta.type === 'select') {
@@ -1851,15 +1858,15 @@ function renderSideTuning(sideKey, snapshot, prefix) {
   var segment = SEGMENTS.filter(function(s) { return s.key === segmentKey; })[0] || SEGMENTS[0];
   var params = deepGet(snapshot, ['sides', sideKey, 'params'], {});
   var valuePrefix = prefix + sideKey;
-  var html = '<div class="field"><label>Segment</label></div><div class="segment-tabs">' + SEGMENTS.map(function(seg) {
+  var html = '<div class="field"><label>' + PBGuiI18n.t('v7explore.segment') + '</label></div><div class="segment-tabs">' + SEGMENTS.map(function(seg) {
     return '<button type="button" class="' + (seg.key === segmentKey ? 'active' : '') + '" data-side-segment="' + esc(sideKey) + '" data-segment="' + esc(seg.key) + '">' + esc(seg.label) + '</button>';
   }).join('') + '</div>';
   html += (segment.fields || []).map(function(name) { return renderParamField(sideKey, valuePrefix, name, params); }).join('');
   if (segmentKey === 'entry_grid') {
-    html += '<div class="inline-note">Theoretical Max Grid Orders: ' + esc(deepGet(snapshot, ['sides', sideKey, 'summary', 'entry_orders'], 0)) + ' (Reason: Wallet Limit) | Orders follow ' + esc(STRATEGY_LABEL) + ' output.</div>';
+    html += '<div class="inline-note">' + esc(PBGuiI18n.t('v7explore.theoreticalMaxGridOrders', { count: deepGet(snapshot, ['sides', sideKey, 'summary', 'entry_orders'], 0), label: STRATEGY_LABEL })) + '</div>';
   }
   if (segmentKey === 'entry_grid' || segmentKey === 'entry_trailing') {
-    html += '<div class="inline-note">Injected <code>entry_volatility_logrange_ema_1h</code>: ' + esc(fmt(deepGet(snapshot, ['sides', sideKey, 'debug', 'state_params', 'entry_volatility_logrange_ema_1h'], 0), 8)) + '</div>';
+    html += '<div class="inline-note">' + PBGuiI18n.t('v7explore.injectedVolatility', { value: fmt(deepGet(snapshot, ['sides', sideKey, 'debug', 'state_params', 'entry_volatility_logrange_ema_1h'], 0), 8) }) + '</div>';
   }
   var root = document.getElementById(prefix + sideKey + '-tuning');
   if (!root) return;
@@ -1943,8 +1950,8 @@ function exchangeParamSource(metadata, key, value) {
     c_mult: 'c_mult_from_contractSize'
   }[key];
   var raw = sourceKey ? derived[sourceKey] : undefined;
-  if (raw === undefined || raw === null || raw === '') return 'source: current (' + fmt(value, 8) + ')';
-  return 'source: market (' + raw + ')';
+  if (raw === undefined || raw === null || raw === '') return PBGuiI18n.t('v7explore.sourceCurrent', { value: fmt(value, 8) });
+  return PBGuiI18n.t('v7explore.sourceMarket', { value: raw });
 }
 function renderExchangeState(snapshot) {
   var root = document.getElementById('exchange-state-controls');
@@ -1961,8 +1968,8 @@ function renderExchangeState(snapshot) {
   html += renderNumberStepper('ep-qty-step', 'qty_step', exchangeParams.qty_step, 0.000001, exchangeParamSource(metadata, 'qty_step', exchangeParams.qty_step));
   html += renderNumberStepper('ep-c-mult', 'c_mult', exchangeParams.c_mult, 0.000001, exchangeParamSource(metadata, 'c_mult', exchangeParams.c_mult));
   html += '<hr class="subtle-divider full">';
-  html += renderNumberStepper('state-balance', 'Wallet Balance (State)', balance, 1, '');
-  html += renderNumberStepper('state-volatility', 'Vol (LogRange EMA)', volatility, 0.0001, '');
+  html += renderNumberStepper('state-balance', PBGuiI18n.t('v7explore.walletBalanceState'), balance, 1, '');
+  html += renderNumberStepper('state-volatility', PBGuiI18n.t('v7explore.volLogRangeEma'), volatility, 0.0001, '');
   root.innerHTML = html;
   var autoEl = document.getElementById('auto-exchange-params');
   if (autoEl) autoEl.checked = state.autoExchangeParams !== false;
@@ -2012,18 +2019,18 @@ function renderSnapshot(snapshot) {
   var ohlcvStatus = deepGet(snapshot, ['market', 'ohlcv_status'], 'Candles disabled');
   var sourceChip = document.getElementById('source-chip');
   var configName = snapshot.title || deepGet(snapshot, ['config', 'pbgui', 'note'], '') || deepGet(snapshot, ['market', 'coin'], '') || 'default';
-  sourceChip.textContent = 'Source: ' + configName;
-  sourceChip.title = 'Loaded from: ' + (snapshot.source || 'default');
+  sourceChip.textContent = PBGuiI18n.t('v7explore.sourceChip', { name: configName });
+  sourceChip.title = PBGuiI18n.t('v7explore.loadedFrom', { source: snapshot.source || 'default' });
   sourceChip.className = 'chip ' + (snapshot.source === 'draft' ? 'ok' : 'warn');
   var ohlcvChip = document.getElementById('ohlcv-chip');
-  ohlcvChip.textContent = 'OHLCV: ' + (loadedRows ? fmt(loadedRows, 0) : '-') + (displayedRows ? ' | Displaying: ' + fmt(displayedRows, 0) : '');
-  ohlcvChip.title = ohlcvStatus + (loadedRows ? ' - loaded ' + fmt(loadedRows, 0) + ' candles' : '') + (displayedRows ? ', window ' + fmt(displayedRows, 0) : '') + (plotRows && plotRows !== displayedRows ? ', plotting ' + fmt(plotRows, 0) + ' aggregated candles' : '');
+  ohlcvChip.textContent = PBGuiI18n.t('v7explore.ohlcvChip', { loaded: loadedRows ? fmt(loadedRows, 0) : '-', displaying: displayedRows ? fmt(displayedRows, 0) : null });
+  ohlcvChip.title = ohlcvStatus + (loadedRows ? ' - ' + PBGuiI18n.t('v7explore.loadedCandles', { count: fmt(loadedRows, 0) }) : '') + (displayedRows ? ', ' + PBGuiI18n.t('v7explore.windowCandles', { count: fmt(displayedRows, 0) }) : '') + (plotRows && plotRows !== displayedRows ? ', ' + PBGuiI18n.t('v7explore.plottingAggregatedCandles', { count: fmt(plotRows, 0) }) : '');
   ohlcvChip.className = 'chip ' + (loadedRows ? 'ok' : 'warn');
   var engineStatus = deepGet(snapshot, ['market', 'engine_status'], '-');
   document.getElementById('engine-chip').textContent = engineStatus;
   document.getElementById('engine-chip').className = 'chip ' + (String(engineStatus).indexOf('failed') >= 0 ? 'err' : 'ok');
   document.getElementById('reference-price-input').value = deepGet(snapshot, ['market', 'reference_price'], 100) || 100;
-  document.getElementById('market-chip').textContent = 'Market: ' + deepGet(snapshot, ['market', 'exchange'], '-') + ' / ' + deepGet(snapshot, ['market', 'coin'], '-') + ' @ ' + fmt(deepGet(snapshot, ['market', 'reference_price'], 0), 8);
+  document.getElementById('market-chip').textContent = PBGuiI18n.t('v7explore.marketChip', { exchange: deepGet(snapshot, ['market', 'exchange'], '-'), coin: deepGet(snapshot, ['market', 'coin'], '-'), price: fmt(deepGet(snapshot, ['market', 'reference_price'], 0), 8) });
   renderStats('long', snapshot); renderStats('short', snapshot);
   renderPlot('long', snapshot); renderPlot('short', snapshot);
   renderSideTuning('long', snapshot); renderSideTuning('short', snapshot); renderExchangeState(snapshot); renderSimulationWorkspace(snapshot); syncRawFromState(); updateSimulationStartStateUi();
@@ -2042,7 +2049,7 @@ function recalculate(options) {
     renderSnapshot(snapshot); setMessages(snapshot.messages || []);
   }).catch(function(err) {
     if (generation !== snapshotRequestGeneration) return null;
-    setMessages([{ level: 'error', text: 'Failed to calculate Strategy Explorer snapshot: ' + err.message }]);
+    setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.snapshotFailed', { error: PBGuiI18n.serverMsg(err.message) }) }]);
     if (options.reportError) throw err;
   });
 }
@@ -2115,7 +2122,7 @@ function runSimulation(mode) {
   if (localBtn) localBtn.disabled = true;
   if (pb7Btn) pb7Btn.disabled = true;
   setMessages([]);
-  setSimulationProgress(0, 'Starting Simulation...');
+  setSimulationProgress(0, PBGuiI18n.t('v7explore.startingSimulation'));
   startSimulationProgressPolling(simulationProgressId);
   function finishSimulationButtons() {
     if (localBtn) localBtn.disabled = false;
@@ -2124,7 +2131,7 @@ function runSimulation(mode) {
   apiFetch('/simulate', { method: 'POST', body: JSON.stringify({ config: state.config, options: opts, mode: mode, progress_id: simulationProgressId }) }).then(function(data) {
     if (generation !== simulationRequestGeneration) { stopSimulationProgressPolling(); finishSimulationButtons(); return; }
     stopSimulationProgressPolling();
-    setSimulationProgress(1, data.message || 'Simulation finished.');
+    setSimulationProgress(1, PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.simulationFinished'));
     state.simulations[mode] = data;
     state.activeSimulationMode = mode;
     updateSimulationButtons();
@@ -2140,8 +2147,8 @@ function runSimulation(mode) {
   }).catch(function(err) {
     if (generation !== simulationRequestGeneration) { stopSimulationProgressPolling(); finishSimulationButtons(); return; }
     stopSimulationProgressPolling();
-    setSimulationProgress(1, 'Simulation failed: ' + err.message);
-    setMessages([{ level: 'error', text: 'Simulation failed: ' + err.message }]);
+    setSimulationProgress(1, PBGuiI18n.t('v7explore.simulationFailed', { error: PBGuiI18n.serverMsg(err.message) }));
+    setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.simulationFailed', { error: PBGuiI18n.serverMsg(err.message) }) }]);
     finishSimulationButtons();
   });
 }
@@ -2152,7 +2159,7 @@ function setSimulationProgress(progress, message) {
   var pct = Math.max(0, Math.min(100, Math.round(Number(progress || 0) * 100)));
   if (wrap) wrap.classList.add('active');
   if (fill) fill.style.width = pct + '%';
-  if (text) text.textContent = pct + '% - ' + (message || 'Running Simulation...');
+  if (text) text.textContent = pct + '% - ' + (message || PBGuiI18n.t('v7explore.runningSimulation'));
 }
 function stopSimulationProgressPolling() {
   if (simulationProgressTimer) {
@@ -2166,7 +2173,7 @@ function startSimulationProgressPolling(progressId) {
     if (!progressId) return;
     apiFetch('/simulate/progress/' + encodeURIComponent(progressId)).then(function(data) {
       if (progressId !== simulationProgressId) return;
-      setSimulationProgress(Number(data.progress || 0), data.message || 'Running Simulation...');
+      setSimulationProgress(Number(data.progress || 0), PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.runningSimulation'));
       if (data.done) stopSimulationProgressPolling();
     }).catch(function() {});
   }, 700);
@@ -2176,36 +2183,36 @@ function runCompare() {
   var opts = compareOptions();
   var btn = document.getElementById('btn-run-compare');
   var oldText = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = 'Compare running...'; }
+  if (btn) { btn.disabled = true; btn.textContent = PBGuiI18n.t('v7explore.compareRunning'); }
   compareProgressId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : String(Date.now()) + '-' + String(Math.random()).slice(2);
   var generation = ++compareRequestGeneration;
   opts.progress_id = compareProgressId;
-  setMessages([{ level: 'info', text: 'Running Compare...' }]);
-  document.getElementById('compare-summary').innerHTML = '<span class="muted">Compare running...</span>';
+  setMessages([{ level: 'info', text: PBGuiI18n.t('v7explore.runningCompare') }]);
+  document.getElementById('compare-summary').innerHTML = '<span class="muted">' + PBGuiI18n.t('v7explore.compareRunning') + '</span>';
   document.getElementById('compare-result').innerHTML = '';
-  setCompareProgress(0, 'Starting Compare...');
+  setCompareProgress(0, PBGuiI18n.t('v7explore.startingCompare'));
   startCompareProgressPolling(compareProgressId);
   function finishCompareButton() {
-    if (btn) { btn.disabled = false; btn.textContent = oldText || 'Start Compare'; }
+    if (btn) { btn.disabled = false; btn.textContent = oldText || PBGuiI18n.t('v7explore.startCompare'); }
   }
   apiFetch('/compare', { method: 'POST', body: JSON.stringify({ config: state.config, options: opts, progress_id: compareProgressId }) }).then(function(data) {
     if (generation !== compareRequestGeneration) { stopCompareProgressPolling(); finishCompareButton(); return; }
     stopCompareProgressPolling();
-    setCompareProgress(1, data.message || 'Compare finished.');
+    setCompareProgress(1, PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.compareFinished'));
     renderCompareResult(data);
     var partial = deepGet(data, ['summary', 'coverage', 'partial'], false) === true;
     setMessages([{
       level: partial || !data.ok ? 'warning' : 'info',
-      text: (data.message || 'Compare finished.') + (partial ? ' The configured candle limit covers only part of the stored fill range.' : '')
+      text: (PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.compareFinished')) + (partial ? ' ' + PBGuiI18n.t('v7explore.candleLimitPartial') : '')
     }]);
     finishCompareButton();
   }).catch(function(err) {
     if (generation !== compareRequestGeneration) { stopCompareProgressPolling(); finishCompareButton(); return; }
     stopCompareProgressPolling();
-    setCompareProgress(1, 'Compare failed: ' + err.message);
-    document.getElementById('compare-summary').innerHTML = '<span class="muted">Compare failed: ' + esc(err.message) + '</span>';
+    setCompareProgress(1, PBGuiI18n.t('v7explore.compareFailedDetail', { error: PBGuiI18n.serverMsg(err.message) }));
+    document.getElementById('compare-summary').innerHTML = '<span class="muted">' + esc(PBGuiI18n.t('v7explore.compareFailedDetail', { error: PBGuiI18n.serverMsg(err.message) })) + '</span>';
     document.getElementById('compare-result').innerHTML = '';
-    setMessages([{ level: 'error', text: 'Compare failed: ' + err.message }]);
+    setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.compareFailedDetail', { error: PBGuiI18n.serverMsg(err.message) }) }]);
     finishCompareButton();
   });
 }
@@ -2216,7 +2223,7 @@ function setCompareProgress(progress, message) {
   var pct = Math.max(0, Math.min(100, Math.round(Number(progress || 0) * 100)));
   if (wrap) wrap.classList.add('active');
   if (fill) fill.style.width = pct + '%';
-  if (text) text.textContent = pct + '% - ' + (message || 'Running Compare...');
+  if (text) text.textContent = pct + '% - ' + (message || PBGuiI18n.t('v7explore.runningCompare'));
 }
 function stopCompareProgressPolling() {
   if (compareProgressTimer) {
@@ -2230,7 +2237,7 @@ function startCompareProgressPolling(progressId) {
     if (!progressId) return;
     apiFetch('/compare/progress/' + encodeURIComponent(progressId)).then(function(data) {
       if (progressId !== compareProgressId) return;
-      setCompareProgress(Number(data.progress || 0), data.message || 'Running Compare...');
+      setCompareProgress(Number(data.progress || 0), PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.runningCompare'));
       if (data.done) stopCompareProgressPolling();
     }).catch(function() {});
   }, 700);
@@ -2245,7 +2252,7 @@ function selectedMovieSideKey(events) {
   return 'long';
 }
 function movieRows(frames) {
-  if (!frames || !frames.length) return '<table class="orders"><tbody><tr><td class="muted" style="text-align:left">No frames</td></tr></tbody></table>';
+  if (!frames || !frames.length) return '<table class="orders"><tbody><tr><td class="muted" style="text-align:left">' + PBGuiI18n.t('v7explore.noFrames') + '</td></tr></tbody></table>';
   return '<table class="orders"><thead><tr><th>#</th><th>Time</th><th>Close</th><th>Entry Orders</th><th>Close Orders</th></tr></thead><tbody>' + frames.slice(0, 500).map(function(frame) {
     var sideKey = selectedMovieSideKey();
     return '<tr><td>' + esc(frame.index) + '</td><td>' + esc(frame.timestamp) + '</td><td>' + fmt(deepGet(frame, ['candle', 'close'], 0), 8) + '</td><td>' + esc(deepGet(frame, [sideKey, 'summary', 'entry_orders'], 0)) + '</td><td>' + esc(deepGet(frame, [sideKey, 'summary', 'close_orders'], 0)) + '</td></tr>';
@@ -2326,7 +2333,7 @@ function applyBacktestHandoff(handoff, resultPath) {
   if (IS_V8 && handoff.compare_available) {
     state.compareBaselineAvailable = true;
     var compareInput = document.getElementById('compare-pb7-folder');
-    if (compareInput) compareInput.value = 'Pinned Pareto baseline (opaque)';
+    if (compareInput) compareInput.value = PBGuiI18n.t('v7explore.pinnedParetoBaseline');
     setLabelText(document.getElementById('compare-mode-primary'), 'Current PB8 Config vs Pinned PB8 Baseline');
   }
   if (resultPath) applyInitialResultPath(resultPath);
@@ -2372,7 +2379,7 @@ function setMovieProgress(progress, message) {
   var pct = Math.max(0, Math.min(100, Math.round(Number(progress || 0) * 100)));
   if (wrap) wrap.classList.add('active');
   if (fill) fill.style.width = pct + '%';
-  if (text) text.textContent = pct + '% - ' + (message || 'Generating movie...');
+  if (text) text.textContent = pct + '% - ' + (message || PBGuiI18n.t('v7explore.generatingMovie'));
 }
 function hideMovieProgress() {
   var wrap = document.getElementById('movie-progress');
@@ -2390,7 +2397,7 @@ function startMovieProgressPolling(progressId) {
     if (!progressId) return;
     apiFetch('/movie/progress/' + encodeURIComponent(progressId)).then(function(data) {
       if (progressId !== movieProgressId) return;
-      setMovieProgress(Number(data.progress || 0), data.message || 'Generating movie...');
+      setMovieProgress(Number(data.progress || 0), PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.generatingMovie'));
       if (data.done) stopMovieProgressPolling();
     }).catch(function() {});
   }, 700);
@@ -2411,7 +2418,7 @@ function stopMovieBuilder() {
     movieExportAbortController = null;
   }
   stopMovieProgressPolling();
-  var msg = stoppingExport ? 'Movie export stopped.' : 'Movie Builder stopped.';
+  var msg = stoppingExport ? PBGuiI18n.t('v7explore.movieExportStopped') : PBGuiI18n.t('v7explore.movieBuilderStopped');
   setMovieProgress(1, msg);
   document.getElementById('movie-output').innerHTML = '<span class="muted">' + esc(msg) + '</span>';
   setMessages([{ level: 'warning', text: msg }]);
@@ -2504,7 +2511,7 @@ function loadMovieExportOptions() {
       select.value = codecs.some(function(codec) { return codec.id === current; }) ? current : 'auto';
     }
     var info = document.getElementById('movie-export-info');
-    if (info) info.textContent = deepGet(data, ['encoder', 'label'], 'Export directly, or generate a preview first.');
+    if (info) info.textContent = deepGet(data, ['encoder', 'label'], PBGuiI18n.t('v7explore.exportDirectlyHint'));
     try {
       var saved = JSON.parse(window.localStorage.getItem('pbgui_strategy_explorer_movie_export') || '{}');
       if (saved && typeof saved === 'object') setMovieExportInputs(Object.assign({}, data.defaults || movieExportPresetValues('Balanced'), saved));
@@ -2513,7 +2520,7 @@ function loadMovieExportOptions() {
     }
   }).catch(function(err) {
     var info = document.getElementById('movie-export-info');
-    if (info) info.textContent = 'Movie export options unavailable: ' + err.message;
+    if (info) info.textContent = PBGuiI18n.t('v7explore.movieExportOptionsUnavailable', { error: PBGuiI18n.serverMsg(err.message) });
   });
 }
 function renderMovieDetails(data) {
@@ -2524,12 +2531,12 @@ function renderMovieDetails(data) {
   var meta = data.metadata || {};
   var engineLabel = IS_V8 && (data.engine === 'pb8_engine' || data.engine === 'pb8_native_replay') ? 'PB8 Native Replay' : (data.engine || '-');
   document.getElementById('movie-frame-details').innerHTML = '<div class="metric-grid" style="grid-template-columns:1fr 1fr;margin-bottom:12px">'
-    + '<div class="metric-card"><div class="label">Frames</div><div class="value">' + esc(frames.length) + '</div></div>'
-    + '<div class="metric-card"><div class="label">Fills</div><div class="value">' + esc(sideEvents.length) + '</div></div>'
+    + '<div class="metric-card"><div class="label">' + PBGuiI18n.t('v7explore.frames') + '</div><div class="value">' + esc(frames.length) + '</div></div>'
+    + '<div class="metric-card"><div class="label">' + PBGuiI18n.t('v7explore.fills') + '</div><div class="value">' + esc(sideEvents.length) + '</div></div>'
     + '</div>'
-    + '<p class="hint">Engine: ' + esc(engineLabel) + ' | Market: ' + esc(meta.exchange || '') + ' ' + esc(meta.coin || '') + '</p>'
-    + '<h4>Frames</h4>' + movieRows(frames)
-    + '<h4>Fills</h4>' + eventRows(sideEvents);
+    + '<p class="hint">' + esc(PBGuiI18n.t('v7explore.movieEngineMarketLine', { engine: engineLabel, exchange: meta.exchange || '', coin: meta.coin || '' })) + '</p>'
+    + '<h4>' + PBGuiI18n.t('v7explore.frames') + '</h4>' + movieRows(frames)
+    + '<h4>' + PBGuiI18n.t('v7explore.fills') + '</h4>' + eventRows(sideEvents);
 }
 function currentMovieFrameIndex() {
   var plot = document.getElementById('movie-plot');
@@ -2784,7 +2791,7 @@ function buildMovieFigureSpec(data, initialFrameIdx) {
     var yMin = yVals.length ? Math.min.apply(null, yVals) * 0.995 : 0;
     var yMax = yVals.length ? Math.max.apply(null, yVals) * 1.005 : 1;
     var mstate = movieFrameState(frame, closePrice);
-    var annotationParts = ['Frame: ' + (idx + 1), 'Price: ' + fmt(closePrice, 8)];
+    var annotationParts = [PBGuiI18n.t('v7explore.frameAnnotation', { frame: idx + 1 }), PBGuiI18n.t('v7explore.priceAnnotation', { price: fmt(closePrice, 8) })];
     if (isFinite(mstate.balance)) annotationParts.push('Wallet Balance: ' + fmtFixed(mstate.balance, 2));
     if (mstate.walletExposure !== null && isFinite(mstate.walletExposure)) annotationParts.push('WE: ' + fmt(mstate.walletExposure, 6));
     if (isFinite(mstate.posSize)) annotationParts.push('posSize: ' + fmt(mstate.posSize, 8));
@@ -2800,7 +2807,7 @@ function buildMovieFigureSpec(data, initialFrameIdx) {
   var init = plotFrames[activeFrame] || plotFrames[0] || dynamicFrame(frames[0], 0);
   var initData = [traceCandles, traceEmaHigh, traceEmaLow].concat(init.data || []);
   var playFrameNames = plotFrames.slice(activeFrame).map(function(frame) { return frame.name; });
-  var layout = { title: 'Animation: ' + esc(deepGet(data, ['metadata', 'coin'], '')) + ' | Frames: ' + frames.length, paper_bgcolor: '#1a1d24', plot_bgcolor: '#1a1d24', font: { color: '#fafafa' }, height: 760, hovermode: 'closest', hoverdistance: 50, margin: { l: 55, r: 260, t: 60, b: 150 }, xaxis: { type: 'date', gridcolor: '#333640', rangeslider: { visible: false }, autorange: false, range: deepGet(init, ['layout', 'xaxis', 'range'], [xs[0], xs[0]]) }, yaxis: { title: 'Price', gridcolor: '#333640', autorange: false, range: deepGet(init, ['layout', 'yaxis', 'range'], [0, 1]) }, legend: { x: 1.02, y: 0.85, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0.5)' }, annotations: deepGet(init, ['layout', 'annotations'], []), updatemenus: [{ type: 'buttons', direction: 'left', showactive: false, x: 0.01, y: -0.06, xanchor: 'left', yanchor: 'top', pad: { r: 10, t: 10 }, buttons: [{ label: 'Play', method: 'animate', args: [playFrameNames, { frame: { duration: 120, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 240, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Very Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 480, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Pause', method: 'animate', args: [[null], { frame: { duration: 0, redraw: false }, mode: 'immediate', transition: { duration: 0 } }] }] }], sliders: [{ active: activeFrame, steps: plotFrames.map(function(_, k) { return { method: 'animate', args: [[String(k)], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }], label: String(k) }; }), transition: { duration: 0 }, x: 0.01, y: -0.15, currentvalue: { font: { size: 12 }, prefix: 'Frame: ', visible: true, xanchor: 'left' }, len: 0.99, pad: { b: 10, t: 10 } }] };
+  var layout = { title: PBGuiI18n.t('v7explore.animationTitle', { coin: deepGet(data, ['metadata', 'coin'], ''), frames: frames.length }), paper_bgcolor: '#1a1d24', plot_bgcolor: '#1a1d24', font: { color: '#fafafa' }, height: 760, hovermode: 'closest', hoverdistance: 50, margin: { l: 55, r: 260, t: 60, b: 150 }, xaxis: { type: 'date', gridcolor: '#333640', rangeslider: { visible: false }, autorange: false, range: deepGet(init, ['layout', 'xaxis', 'range'], [xs[0], xs[0]]) }, yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#333640', autorange: false, range: deepGet(init, ['layout', 'yaxis', 'range'], [0, 1]) }, legend: { x: 1.02, y: 0.85, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0.5)' }, annotations: deepGet(init, ['layout', 'annotations'], []), updatemenus: [{ type: 'buttons', direction: 'left', showactive: false, x: 0.01, y: -0.06, xanchor: 'left', yanchor: 'top', pad: { r: 10, t: 10 }, buttons: [{ label: 'Play', method: 'animate', args: [playFrameNames, { frame: { duration: 120, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 240, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Very Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 480, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Pause', method: 'animate', args: [[null], { frame: { duration: 0, redraw: false }, mode: 'immediate', transition: { duration: 0 } }] }] }], sliders: [{ active: activeFrame, steps: plotFrames.map(function(_, k) { return { method: 'animate', args: [[String(k)], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }], label: String(k) }; }), transition: { duration: 0 }, x: 0.01, y: -0.15, currentvalue: { font: { size: 12 }, prefix: PBGuiI18n.t('v7explore.framePrefix'), visible: true, xanchor: 'left' }, len: 0.99, pad: { b: 10, t: 10 } }] };
   delete layout.xaxis.autorange;
   return { data: initData, layout: layout, frames: plotFrames, activeFrame: activeFrame };
 }
@@ -2826,7 +2833,7 @@ function renderMoviePlot(data, initialFrameIdx) {
   var spec = buildMovieFigureSpec(data, initialFrameIdx);
   lastMovieFigureSpec = spec;
   if (!spec || !window.Plotly) {
-    document.getElementById(target).innerHTML = '<p class="hint">No frames to plot.</p>';
+    document.getElementById(target).innerHTML = '<p class="hint">' + PBGuiI18n.t('v7explore.noFramesToPlot') + '</p>';
     return;
   }
   Plotly.purge(target);
@@ -2889,7 +2896,7 @@ function applyMovieFrameResult(data) {
   renderMovieDetails(data);
   renderMoviePlot(data);
   setMovieExportAvailable(true);
-  if (!data.ok || !(data.frames || []).length) throw new Error(data.message || 'No movie frames generated.');
+  if (!data.ok || !(data.frames || []).length) throw new Error(PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.noMovieFramesGenerated'));
   persistStrategyRefreshState();
   return data;
 }
@@ -2915,38 +2922,38 @@ function buildMovieFrames() {
   var stopBtn = document.getElementById('btn-stop-movie');
   var exportBtn = document.getElementById('btn-export-movie');
   var oldLabels = buttons.map(function(btn) { return btn.textContent; });
-  buttons.forEach(function(btn) { btn.disabled = true; btn.textContent = 'Generating movie...'; });
+  buttons.forEach(function(btn) { btn.disabled = true; btn.textContent = PBGuiI18n.t('v7explore.generatingMovie'); });
   if (exportBtn) exportBtn.disabled = true;
   if (stopBtn) stopBtn.disabled = false;
   function finishButtons() {
-    buttons.forEach(function(btn, idx) { btn.disabled = false; btn.textContent = oldLabels[idx] || 'Generate Movie'; });
+    buttons.forEach(function(btn, idx) { btn.disabled = false; btn.textContent = oldLabels[idx] || PBGuiI18n.t('v7explore.generateMovie'); });
     if (stopBtn) stopBtn.disabled = true;
     movieAbortController = null;
   }
-  setMessages([{ level: 'info', text: 'Generating movie...' }]);
-  setMovieProgress(0, 'Generating movie...');
+  setMessages([{ level: 'info', text: PBGuiI18n.t('v7explore.generatingMovie') }]);
+  setMovieProgress(0, PBGuiI18n.t('v7explore.generatingMovie'));
   clearMovieExportDownload();
   startMovieProgressPolling(movieProgressId);
-  document.getElementById('movie-output').innerHTML = '<span class="muted">Generating movie...</span>';
+  document.getElementById('movie-output').innerHTML = '<span class="muted">' + PBGuiI18n.t('v7explore.generatingMovie') + '</span>';
   movieAbortController = new AbortController();
   requestMovieFrames(movieProgressId, movieAbortController.signal, generation).then(function(data) {
-    setMovieProgress(1, data.message || 'Movie Builder finished.');
-    setMessages([{ level: data.ok ? 'info' : 'warning', text: data.message || 'Movie Builder finished.' }]);
+    setMovieProgress(1, PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.movieBuilderFinished'));
+    setMessages([{ level: data.ok ? 'info' : 'warning', text: PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.movieBuilderFinished') }]);
     stopMovieProgressPolling();
     finishButtons();
   }).catch(function(err) {
     if (err && err.name === 'AbortError') {
-      document.getElementById('movie-output').innerHTML = '<span class="muted">Movie Builder stopped.</span>';
-      setMessages([{ level: 'warning', text: 'Movie Builder stopped.' }]);
+      document.getElementById('movie-output').innerHTML = '<span class="muted">' + PBGuiI18n.t('v7explore.movieBuilderStopped') + '</span>';
+      setMessages([{ level: 'warning', text: PBGuiI18n.t('v7explore.movieBuilderStopped') }]);
       setMovieExportAvailable(!!lastMovieData && !!(lastMovieData.frames || []).length);
       stopMovieProgressPolling();
       finishButtons();
       return;
     }
-    document.getElementById('movie-output').innerHTML = '<span class="muted">Movie failed: ' + esc(err.message) + '</span>';
+    document.getElementById('movie-output').innerHTML = '<span class="muted">' + esc(PBGuiI18n.t('v7explore.movieFailed', { error: PBGuiI18n.serverMsg(err.message) })) + '</span>';
     setMovieExportAvailable(!!lastMovieData && !!(lastMovieData.frames || []).length);
-    setMovieProgress(1, 'Movie failed: ' + err.message);
-    setMessages([{ level: 'error', text: 'Movie Builder failed: ' + err.message }]);
+    setMovieProgress(1, PBGuiI18n.t('v7explore.movieFailed', { error: PBGuiI18n.serverMsg(err.message) }));
+    setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.movieBuilderFailed', { error: PBGuiI18n.serverMsg(err.message) }) }]);
     stopMovieProgressPolling();
     finishButtons();
   });
@@ -2976,9 +2983,9 @@ function exportMovieMp4() {
   var btn = document.getElementById('btn-export-movie');
   var buildBtn = document.getElementById('btn-build-movie');
   var stopBtn = document.getElementById('btn-stop-movie');
-  var oldLabel = btn ? btn.textContent : 'Export MP4';
+  var oldLabel = btn ? btn.textContent : PBGuiI18n.t('v7explore.exportMp4');
   var generation = ++movieRequestGeneration;
-  if (btn) { btn.disabled = true; btn.textContent = 'Exporting MP4...'; }
+  if (btn) { btn.disabled = true; btn.textContent = PBGuiI18n.t('v7explore.exportingMp4'); }
   if (buildBtn) buildBtn.disabled = true;
   if (stopBtn) stopBtn.disabled = false;
 
@@ -2993,8 +3000,8 @@ function exportMovieMp4() {
     var opts = selectedMovieExportOptions(spec);
     movieProgressId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : String(Date.now()) + '-' + String(Math.random()).slice(2);
     opts.progress_id = movieProgressId;
-    setMessages([{ level: 'info', text: 'Exporting Movie MP4...' }]);
-    setMovieProgress(0, 'Starting Movie export...');
+    setMessages([{ level: 'info', text: PBGuiI18n.t('v7explore.exportingMovieMp4') }]);
+    setMovieProgress(0, PBGuiI18n.t('v7explore.startingMovieExport'));
     startMovieProgressPolling(movieProgressId);
     movieExportAbortController = new AbortController();
     return fetchMovieExportBlob({ figure: { data: spec.data, layout: spec.layout, frames: spec.frames }, options: opts, progress_id: movieProgressId }, movieExportAbortController.signal).then(function(result) {
@@ -3012,10 +3019,10 @@ function exportMovieMp4() {
   var chain;
   if (needsMovieFrames) {
     movieProgressId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : String(Date.now()) + '-' + String(Math.random()).slice(2);
-    setMessages([{ level: 'info', text: 'Generating movie frames for export...' }]);
-    setMovieProgress(0, 'Generating movie frames for export...');
+    setMessages([{ level: 'info', text: PBGuiI18n.t('v7explore.generatingMovieFramesForExport') }]);
+    setMovieProgress(0, PBGuiI18n.t('v7explore.generatingMovieFramesForExport'));
     startMovieProgressPolling(movieProgressId);
-    document.getElementById('movie-output').innerHTML = '<span class="muted">Generating movie frames for export...</span>';
+    document.getElementById('movie-output').innerHTML = '<span class="muted">' + PBGuiI18n.t('v7explore.generatingMovieFramesForExport') + '</span>';
     movieAbortController = new AbortController();
     chain = requestMovieFrames(movieProgressId, movieAbortController.signal, generation).then(function(data) {
       stopMovieProgressPolling();
@@ -3028,27 +3035,27 @@ function exportMovieMp4() {
 
   chain.then(function(payload) {
     stopMovieProgressPolling();
-    setMovieProgress(1, 'Movie export ready.');
+    setMovieProgress(1, PBGuiI18n.t('v7explore.movieExportReady'));
     lastMovieExportUrl = URL.createObjectURL(payload.result.blob);
     var link = document.getElementById('movie-export-download');
     if (link) {
       link.href = lastMovieExportUrl;
       link.download = payload.result.filename || payload.options.filename || 'movie.mp4';
-      link.textContent = 'Download MP4 (' + humanSize(payload.result.blob.size || 0) + ')';
+      link.textContent = PBGuiI18n.t('v7explore.downloadMp4Size', { size: humanSize(payload.result.blob.size || 0) });
       link.classList.add('active');
     }
-    setMessages([{ level: 'info', text: 'Movie export ready.' }]);
+    setMessages([{ level: 'info', text: PBGuiI18n.t('v7explore.movieExportReady') }]);
   }).catch(function(err) {
     stopMovieProgressPolling();
     if (err && err.name === 'AbortError') {
-      setMovieProgress(1, 'Movie export stopped.');
-      setMessages([{ level: 'warning', text: 'Movie export stopped.' }]);
+      setMovieProgress(1, PBGuiI18n.t('v7explore.movieExportStopped'));
+      setMessages([{ level: 'warning', text: PBGuiI18n.t('v7explore.movieExportStopped') }]);
       return;
     }
-    setMovieProgress(1, 'Movie export failed: ' + err.message);
-    setMessages([{ level: 'error', text: 'Movie export failed: ' + err.message }]);
+    setMovieProgress(1, PBGuiI18n.t('v7explore.movieExportFailed', { error: PBGuiI18n.serverMsg(err.message) }));
+    setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.movieExportFailed', { error: PBGuiI18n.serverMsg(err.message) }) }]);
   }).finally(function() {
-    if (btn) { btn.disabled = false; btn.textContent = oldLabel || 'Export MP4'; }
+    if (btn) { btn.disabled = false; btn.textContent = oldLabel || PBGuiI18n.t('v7explore.exportMp4'); }
     if (buildBtn) buildBtn.disabled = false;
     if (stopBtn) stopBtn.disabled = true;
     movieExportAbortController = null;
@@ -3083,7 +3090,7 @@ function applySessionBootstrap(data, snapshot, cached, warning, generation, snap
     if (cached) restoreStrategyRefreshControls(cached);
     applyInitialResultPath(data.result_path || RESULT_PATH || '');
     applyBacktestHandoff(data.handoff || {}, data.result_path || RESULT_PATH || '');
-    document.getElementById('movie-status').textContent = deepGet(data, ['movie', 'message'], 'Build replay frames from the selected candle window.');
+    document.getElementById('movie-status').textContent = PBGuiI18n.serverMsg(deepGet(data, ['movie', 'message'])) || PBGuiI18n.t('v7explore.buildReplayFrames');
     setMovieExportAvailable(true);
     var controls = cached && cached.controls ? cached.controls : {};
     var stage = String(controls.stage || 'analysis');
@@ -3133,7 +3140,7 @@ function loadSession() {
       DRAFT_ID = '';
       snapshot.source = 'refresh-cache';
       return applySessionBootstrap(
-        { page: {}, handoff: {}, movie: { message: 'Restored Movie Builder state from this browser tab.' }, messages: [] },
+        { page: {}, handoff: {}, movie: { message: PBGuiI18n.t('v7explore.restoredMovieState') }, messages: [] },
         snapshot,
         cached,
         'The server-side handoff draft expired. PBGui restored the non-sensitive Strategy Explorer and Movie state from this browser tab; stored-result Compare provenance is no longer available.',
@@ -3143,7 +3150,7 @@ function loadSession() {
     });
   }).catch(function(err) {
     if (generation === sessionRequestGeneration && snapshotGeneration === snapshotRequestGeneration) {
-      setMessages([{ level: 'error', text: 'Failed to load Strategy Explorer session: ' + err.message }]);
+      setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.sessionLoadFailed', { error: PBGuiI18n.serverMsg(err.message) }) }]);
     }
   });
 }
@@ -3237,7 +3244,8 @@ document.addEventListener('fullscreenchange', function() {
   document.addEventListener('mouseover', function(e) {
     var el = e.target.closest ? e.target.closest('[data-tip]') : null;
     if (!el) return;
-    var text = el.getAttribute('data-tip');
+    var tipKey = el.getAttribute('data-i18n-tip');
+    var text = tipKey ? PBGuiI18n.t(tipKey) : el.getAttribute('data-tip');
     if (!text) return;
     tip.textContent = text;
     tip.style.display = 'block';
@@ -3260,7 +3268,7 @@ document.addEventListener('fullscreenchange', function() {
   });
 })();
 configureVersionUi({});
-window.PBGUI_NAV_CONFIG = { subtitle: IS_V8 ? 'PBv8 Strategy Explorer' : 'Strategy Explorer', current: IS_V8 ? 'v8_strategy_explorer' : 'v7_strategy_explorer', apiBase: API_BASE, version: PBGUI_VERSION, serial: PBGUI_SERIAL };
+window.PBGUI_NAV_CONFIG = { subtitle: IS_V8 ? PBGuiI18n.t('v7explore.navSubtitleV8') : PBGuiI18n.t('v7explore.navSubtitleV7'), current: IS_V8 ? 'v8_strategy_explorer' : 'v7_strategy_explorer', apiBase: API_BASE, version: PBGUI_VERSION, serial: PBGUI_SERIAL };
 syncMovieDurationOptions();
 var initialRefreshState = readStrategyRefreshState();
 if (initialRefreshState && initialRefreshState.controls && initialRefreshState.controls.stage) {

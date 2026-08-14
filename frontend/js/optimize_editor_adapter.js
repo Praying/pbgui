@@ -1,6 +1,18 @@
 ;(function () {
   'use strict';
 
+  function i18nT(key, params, fallback) {
+    var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+    var text = fallback == null ? key : String(fallback);
+    if (params) {
+      text = text.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return text;
+  }
+
   function injected(value, fallback) {
     var text = String(value == null ? '' : value).trim();
     return !text || /^%%[A-Z0-9_]+%%$/.test(text) ? fallback : text;
@@ -78,7 +90,7 @@
       apiBase: apiBase,
       wsBase: wsBase,
       label: isV8 ? 'PB8' : 'PB7',
-      navSubtitle: injected(options.navSubtitle, isV8 ? 'PBv8 OPTIMIZE' : 'PBv7 OPTIMIZE'),
+      navSubtitle: injected(options.navSubtitle, i18nT('editor.optimize.navSubtitle', { version: isV8 ? '8' : '7' }, isV8 ? 'PBv8 OPTIMIZE' : 'PBv7 OPTIMIZE')),
       navCurrent: injected(options.navCurrent, isV8 ? 'v8_optimize' : 'v7_optimize'),
       supportsArchive: true,
       supportsResultPlots: true,
@@ -230,10 +242,10 @@
         var polishPercent = runtime.polish_percentage == null ? '' : Number(runtime.polish_percentage) * 100;
         return ''
           + '<div class="form-row cols-8" data-optimize-version="v8">'
-          + '<div class="form-group"><label><span data-tip="Optional deterministic optimizer RNG seed.">rng_seed</span></label><input type="number" id="opted-rng-seed" step="1" value="' + escape(optimize.seed == null ? '' : String(optimize.seed)) + '"></div>'
-          + '<div class="form-group span-3"><label><span data-tip="Comma-separated dotted selectors to keep tunable; all other bounds are fixed.">fine_tune_params</span></label><input type="text" id="opted-fine-tune-params" value="' + escape(String(fineTune)) + '" placeholder="long.risk, short.strategy"></div>'
-          + '<div class="form-group"><label><span data-tip="Percentage window used to polish bounds. PB8 receives this as a 0.0 to 1.0 fraction.">polish_percentage (%)</span></label><input type="number" id="opted-polish-pct" min="0" max="100" step="0.01" value="' + escape(polishPercent === '' || !Number.isFinite(polishPercent) ? '' : String(polishPercent)) + '"></div>'
-          + '<div class="form-group span-2"><label><span data-tip="Controls whether polished bounds may extend beyond configured bounds.">polish_bounds_mode</span></label><select id="opted-polish-bounds-mode">'
+          + '<div class="form-group"><label><span data-tip="' + i18nT('editor.optimize.rngSeedTip', null, 'Optional deterministic optimizer RNG seed.') + '">rng_seed</span></label><input type="number" id="opted-rng-seed" step="1" value="' + escape(optimize.seed == null ? '' : String(optimize.seed)) + '"></div>'
+          + '<div class="form-group span-3"><label><span data-tip="' + i18nT('editor.optimize.fineTuneParamsTip', null, 'Comma-separated dotted selectors to keep tunable; all other bounds are fixed.') + '">fine_tune_params</span></label><input type="text" id="opted-fine-tune-params" value="' + escape(String(fineTune)) + '" placeholder="long.risk, short.strategy"></div>'
+          + '<div class="form-group"><label><span data-tip="' + i18nT('editor.optimize.polishPctTip', null, 'Percentage window used to polish bounds. PB8 receives this as a 0.0 to 1.0 fraction.') + '">' + i18nT('editor.optimize.polishPctLabel', null, 'polish_percentage (%)') + '</span></label><input type="number" id="opted-polish-pct" min="0" max="100" step="0.01" value="' + escape(polishPercent === '' || !Number.isFinite(polishPercent) ? '' : String(polishPercent)) + '"></div>'
+          + '<div class="form-group span-2"><label><span data-tip="' + i18nT('editor.optimize.polishModeTip', null, 'Controls whether polished bounds may extend beyond configured bounds.') + '">polish_bounds_mode</span></label><select id="opted-polish-bounds-mode">'
           + polishModes.map(function (value) { return '<option value="' + value + '"' + (polishMode === value ? ' selected' : '') + '>' + value + '</option>'; }).join('')
           + '</select></div></div>'
           + (additionalOverrides.length ? '<div class="form-row cols-8" data-optimize-version="v8">'
@@ -242,7 +254,7 @@
               return '<div class="form-group" style="justify-content:flex-end"><label>&nbsp;</label><div class="chk-row">'
                 + '<input type="checkbox" id="' + id + '" data-pb8-enable-override="' + escape(value) + '"'
                 + (enabledOverrides.indexOf(value) >= 0 ? ' checked' : '') + '><label for="' + id + '">'
-                + '<span data-tip="PB8 optimizer override reported by the installed runtime.">' + escape(value) + '</span></label></div></div>';
+                + '<span data-tip="' + i18nT('editor.optimize.pb8OverrideTip', null, 'PB8 optimizer override reported by the installed runtime.') + '">' + escape(value) + '</span></label></div></div>';
             }).join('') + '</div>' : '');
       },
       collectVersionRunSettings: function (config, lookup, strict) {
@@ -256,7 +268,7 @@
         var seedText = String((lookup('opted-rng-seed') || {}).value || '').trim();
         if (seedText) {
           var seed = Number(seedText);
-          if (strict && (!Number.isInteger(seed) || seed < 0)) throw new Error('RNG seed must be a non-negative integer.');
+          if (strict && (!Number.isInteger(seed) || seed < 0)) throw new Error(i18nT('editor.optimize.rngSeedError', null, 'RNG seed must be a non-negative integer.'));
           optimize.seed = Number.isFinite(seed) ? Math.round(seed) : seedText;
         } else {
           optimize.seed = null;
@@ -266,7 +278,7 @@
         var polishText = String((lookup('opted-polish-pct') || {}).value || '').trim();
         if (polishText) {
           var polish = Number(polishText);
-          if (strict && (!Number.isFinite(polish) || polish < 0 || polish > 100)) throw new Error('Polish percentage must be between 0 and 100.');
+          if (strict && (!Number.isFinite(polish) || polish < 0 || polish > 100)) throw new Error(i18nT('editor.optimize.polishPctError', null, 'Polish percentage must be between 0 and 100.'));
           runtime.polish_percentage = Number.isFinite(polish) ? polish / 100 : polishText;
           runtime.polish_bounds_mode = String((lookup('opted-polish-bounds-mode') || {}).value || 'clamp');
         } else {
@@ -306,14 +318,14 @@
           var normalized = clone(field);
           var match = String(normalized.key).match(/^bot\.(long|short)\./);
           if (match && !normalized.side) normalized.side = match[1];
-          var sideLabel = normalized.side === 'long' ? 'Long' : (normalized.side === 'short' ? 'Short' : '');
+          var sideLabel = normalized.side === 'long' ? i18nT('editor.side.long', null, 'Long') : (normalized.side === 'short' ? i18nT('editor.side.short', null, 'Short') : '');
           if (/\.hsl\.restart_after_red_policy$/.test(normalized.key)) {
             normalized.label = normalized.label && normalized.label !== normalized.key
               ? normalized.label
-              : sideLabel + ' HSL restart after RED';
+              : i18nT('editor.optimize.hslRestartAfterRed', { side: sideLabel }, sideLabel + ' HSL restart after RED');
             normalized.type = 'string';
             normalized.choices = ['always', 'threshold', 'never'];
-            normalized.tip = normalized.tip || 'Restart policy after an HSL RED episode: always restarts after cooldown, threshold stops restarting after the no-restart drawdown threshold is breached, and never permanently halts after RED.';
+            normalized.tip = normalized.tip || i18nT('editor.optimize.hslRestartTip', null, 'Restart policy after an HSL RED episode: always restarts after cooldown, threshold stops restarting after the no-restart drawdown threshold is breached, and never permanently halts after RED.');
           }
           var index = runtimeOverrides.findIndex(function (existing) { return existing.key === normalized.key; });
           if (index >= 0) runtimeOverrides[index] = normalized;
@@ -321,21 +333,21 @@
         }
         if (isV8) {
           ['long', 'short'].forEach(function (side) {
-            var sideLabel = side === 'long' ? 'Long' : 'Short';
+            var sideLabel = side === 'long' ? i18nT('editor.side.long', null, 'Long') : i18nT('editor.side.short', null, 'Short');
             var hsl = object(object(bot[side]).hsl);
             mergeRuntimeOverride({
               key: 'bot.' + side + '.hsl.enabled',
-              label: sideLabel + ' HSL enabled',
+              label: i18nT('editor.optimize.hslEnabled', { side: sideLabel }, sideLabel + ' HSL enabled'),
               side: side,
               storage: 'bot_hsl',
               botKey: 'enabled',
               type: 'boolean',
               defaultValue: hsl.enabled === true,
-              tip: 'Enable ' + side + '-side equity hard stop behavior during optimizer evaluations.'
+              tip: i18nT('editor.optimize.hslEnabledTip', { side: side }, 'Enable ' + side + '-side equity hard stop behavior during optimizer evaluations.')
             });
             mergeRuntimeOverride({
               key: 'bot.' + side + '.hsl.no_restart_drawdown_threshold',
-              label: sideLabel + ' HSL no-restart drawdown threshold',
+              label: i18nT('editor.optimize.hslNoRestartDrawdown', { side: sideLabel }, sideLabel + ' HSL no-restart drawdown threshold'),
               side: side,
               storage: 'bot_hsl',
               botKey: 'no_restart_drawdown_threshold',
@@ -345,7 +357,7 @@
               minimum: 0,
               maximum: 1,
               step: 0.01,
-              tip: 'Persistent HSL drawdown at which threshold policy stops restarting. Keep 1.0 to avoid terminal truncation during optimizer evaluations.'
+              tip: i18nT('editor.optimize.hslThresholdTip', null, 'Persistent HSL drawdown at which threshold policy stops restarting. Keep 1.0 to avoid terminal truncation during optimizer evaluations.')
             });
           });
         }
@@ -392,22 +404,22 @@
         };
       },
       configureUi: function () {
-        document.title = 'PBGui - ' + (isV8 ? 'V8' : 'V7') + ' Optimize';
+        document.title = i18nT('editor.optimize.pageTitle', { version: isV8 ? 'V8' : 'V7' }, 'PBGui - ' + (isV8 ? 'V8' : 'V7') + ' Optimize');
         var resume = document.getElementById('btn-resume-result');
         if (resume) resume.style.display = isV8 ? '' : 'none';
         var plotTitle = document.getElementById('plot-modal-title');
-        if (plotTitle) plotTitle.textContent = (isV8 ? 'PB8' : 'PB7') + ' 3D plot';
+        if (plotTitle) plotTitle.textContent = i18nT('editor.optimize.plot3dTitle', { version: isV8 ? '8' : '7' }, (isV8 ? 'PB8' : 'PB7') + ' 3D plot');
         var plotFrame = document.getElementById('plot-frame');
-        if (plotFrame) plotFrame.title = (isV8 ? 'PB8' : 'PB7') + ' 3D plot';
+        if (plotFrame) plotFrame.title = i18nT('editor.optimize.plot3dTitle', { version: isV8 ? '8' : '7' }, (isV8 ? 'PB8' : 'PB7') + ' 3D plot');
         var preflight = document.getElementById('opted-sidebar-ohlcv-preflight-btn');
         if (preflight) {
-          preflight.title = 'Check ' + (isV8 ? 'PB8' : 'PB7') + ' OHLCV readiness for the current config';
+          preflight.title = i18nT('editor.optimize.preflightTitle', { version: isV8 ? 'PB8' : 'PB7' }, 'Check ' + (isV8 ? 'PB8' : 'PB7') + ' OHLCV readiness for the current config');
           preflight.style.display = '';
         }
         var importVersion = document.getElementById('optimize-import-version');
         if (importVersion) importVersion.textContent = isV8 ? 'PB8' : 'PB7';
         var importJson = document.getElementById('import-config-json');
-        if (importJson) importJson.placeholder = 'Paste full ' + (isV8 ? 'PB8' : 'PB7') + ' optimize config JSON here';
+        if (importJson) importJson.placeholder = i18nT('editor.optimize.importPlaceholder', { version: isV8 ? 'PB8' : 'PB7' }, 'Paste full ' + (isV8 ? 'PB8' : 'PB7') + ' optimize config JSON here');
       }
     };
   }

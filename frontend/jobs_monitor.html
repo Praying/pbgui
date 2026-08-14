@@ -3,9 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/app/i18n.js?v=1"></script>
     <title>Job Monitor - PBGui</title>
     <link rel="stylesheet" href="/app/css/app.css">
     <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; }
         /* Additional styles for new features */
         .job-actions {
             display: flex;
@@ -417,40 +419,40 @@
 <body>
     <div class="container">
         <header>
-            <h1>Job Monitor</h1>
+            <h1 data-i18n="sysmon.jobMonitor">Job Monitor</h1>
             <div class="status">
-                <span id="connection-status" class="badge badge-connecting">Connecting...</span>
-                <span id="worker-status" class="badge badge-unknown">Worker: Unknown</span>
+                <span id="connection-status" class="badge badge-connecting" data-i18n="sysmon.connecting">Connecting...</span>
+                <span id="worker-status" class="badge badge-unknown" data-i18n="sysmon.workerUnknown">Worker: Unknown</span>
             </div>
         </header>
 
         <div class="tabs">
-            <button class="tab-btn active" data-tab="running">Active</button>
-            <button class="tab-btn" data-tab="done">Done</button>
-            <button class="tab-btn" data-tab="failed">Failed</button>
+            <button class="tab-btn active" data-tab="running" data-i18n="sysmon.active">Active</button>
+            <button class="tab-btn" data-tab="done" data-i18n="sysmon.done">Done</button>
+            <button class="tab-btn" data-tab="failed" data-i18n="sysmon.failedTab">Failed</button>
         </div>
 
         <div class="tab-content active" id="tab-running">
             <div id="jobs-running" class="jobs-list">
-                <p class="loading">Loading...</p>
+                <p class="loading" data-i18n="common.loading">Loading...</p>
             </div>
         </div>
 
         <div class="tab-content" id="tab-done">
             <div class="tab-header-actions">
-                <button onclick="deleteAllJobs('done')" id="delete-all-done-btn">Delete All Done Jobs</button>
+                <button onclick="deleteAllJobs('done')" id="delete-all-done-btn" data-i18n="sysmon.deleteAllDoneJobs">Delete All Done Jobs</button>
             </div>
             <div id="jobs-done" class="jobs-list">
-                <p class="loading">Loading...</p>
+                <p class="loading" data-i18n="common.loading">Loading...</p>
             </div>
         </div>
 
         <div class="tab-content" id="tab-failed">
             <div class="tab-header-actions">
-                <button onclick="deleteAllJobs('failed')" id="delete-all-failed-btn">Delete All Failed Jobs</button>
+                <button onclick="deleteAllJobs('failed')" id="delete-all-failed-btn" data-i18n="sysmon.deleteAllFailedJobs">Delete All Failed Jobs</button>
             </div>
             <div id="jobs-failed" class="jobs-list">
-                <p class="loading">Loading...</p>
+                <p class="loading" data-i18n="common.loading">Loading...</p>
             </div>
         </div>
     </div>
@@ -459,11 +461,11 @@
     <div id="log-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Job Log: <span id="log-job-id"></span></h2>
-                <button class="close-btn" onclick="closeLogModal()">Close</button>
+                <h2><span data-i18n="sysmon.jobLog">Job Log:</span> <span id="log-job-id"></span></h2>
+                <button class="close-btn" onclick="closeLogModal()" data-i18n="common.close">Close</button>
             </div>
             <div class="modal-body" id="log-content">
-                <p>Loading...</p>
+                <p data-i18n="common.loading">Loading...</p>
             </div>
         </div>
     </div>
@@ -471,11 +473,11 @@
     <div id="details-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Job Details: <span id="details-job-id"></span></h2>
-                <button class="close-btn" onclick="closeDetailsModal()">Close</button>
+                <h2><span data-i18n="sysmon.jobDetails">Job Details:</span> <span id="details-job-id"></span></h2>
+                <button class="close-btn" onclick="closeDetailsModal()" data-i18n="common.close">Close</button>
             </div>
             <div class="modal-body job-details-modal-body" id="details-content">
-                <p>Loading...</p>
+                <p data-i18n="common.loading">Loading...</p>
             </div>
         </div>
     </div>
@@ -483,15 +485,15 @@
     <div id="action-modal" class="action-modal" aria-hidden="true">
         <div class="action-modal-card" role="dialog" aria-modal="true" aria-labelledby="action-modal-title">
             <div class="action-modal-header">
-                <div class="action-modal-title" id="action-modal-title">Confirm action</div>
+                <div class="action-modal-title" id="action-modal-title" data-i18n="common.confirmAction">Confirm action</div>
                 <button class="action-modal-close" id="action-modal-close" type="button">&#x2715;</button>
             </div>
             <div class="action-modal-body">
                 <div class="action-modal-message" id="action-modal-message"></div>
                 <div class="action-modal-detail" id="action-modal-detail" hidden></div>
                 <div class="action-modal-actions">
-                    <button class="btn btn-secondary action-modal-cancel" id="action-modal-cancel" type="button">Cancel</button>
-                    <button class="btn btn-info" id="action-modal-accept" type="button">Confirm</button>
+                    <button class="btn btn-secondary action-modal-cancel" id="action-modal-cancel" type="button" data-i18n="common.cancel">Cancel</button>
+                    <button class="btn btn-info" id="action-modal-accept" type="button" data-i18n="common.confirm">Confirm</button>
                 </div>
             </div>
         </div>
@@ -499,6 +501,7 @@
 
     <script>
         const API_BASE = window.location.origin + '/api';
+        document.title = PBGuiI18n.t('sysmon.jobMonitorTitle');
         
         // Browser authentication is carried by the same-origin session cookie.
         const urlParams = new URLSearchParams(window.location.search);
@@ -667,8 +670,8 @@
                 previousResolve(false);
             }
 
-            title.textContent = String(options.title || 'Confirm action');
-            message.textContent = String(options.message || 'Are you sure?');
+            title.textContent = String(options.title || PBGuiI18n.t('common.confirmAction'));
+            message.textContent = String(options.message || PBGuiI18n.t('common.areYouSure'));
             const detailText = String(options.detail || '').trim();
             detail.textContent = detailText;
             detail.hidden = !detailText;
@@ -678,9 +681,9 @@
                 cancelBtn.hidden = true;
             } else {
                 cancelBtn.hidden = false;
-                cancelBtn.textContent = String(cancelText || 'Cancel');
+                cancelBtn.textContent = String(cancelText || PBGuiI18n.t('common.cancel'));
             }
-            acceptBtn.textContent = String(options.confirmText || 'Confirm');
+            acceptBtn.textContent = String(options.confirmText || PBGuiI18n.t('common.confirm'));
             acceptBtn.className = 'btn ' + (options.confirmClass || 'btn-info');
             actionDialogReturnFocus = document.activeElement;
 
@@ -694,14 +697,14 @@
         }
 
         async function showActionNotice(options) {
-            const noticeTitle = options && options.title ? String(options.title) : 'Notice';
+            const noticeTitle = options && options.title ? String(options.title) : PBGuiI18n.t('sysmon.notice');
             const noticeMessage = options && options.message ? String(options.message) : '';
             logUiNotification(noticeMessage ? noticeTitle + ': ' + noticeMessage : noticeTitle, options && options.level ? options.level : 'info');
             await showActionDialog({
                 title: noticeTitle,
                 message: noticeMessage,
                 detail: options && options.detail ? options.detail : '',
-                confirmText: options && options.confirmText ? options.confirmText : 'OK',
+                confirmText: options && options.confirmText ? options.confirmText : PBGuiI18n.t('common.ok'),
                 confirmClass: options && options.confirmClass ? options.confirmClass : 'btn-info',
                 cancelText: null
             });
@@ -748,14 +751,14 @@
         // ── WebSocket Connection ──
         function connectWebSocket() {
             const statusEl = document.getElementById('connection-status');
-            statusEl.textContent = 'Connecting...';
+            statusEl.textContent = PBGuiI18n.t('sysmon.connecting');
             statusEl.className = 'badge badge-connecting';
 
             ws = new WebSocket(WS_URL);
 
             ws.onopen = () => {
                 console.log('WebSocket connected');
-                statusEl.textContent = 'Connected';
+                statusEl.textContent = PBGuiI18n.t('sysmon.connected');
                 statusEl.className = 'badge badge-connected';
                 reconnectAttempts = 0;
             };
@@ -773,13 +776,13 @@
 
             ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
-                statusEl.textContent = 'Error';
+                statusEl.textContent = PBGuiI18n.t('common.error');
                 statusEl.className = 'badge badge-error';
             };
 
             ws.onclose = () => {
                 console.log('WebSocket closed');
-                statusEl.textContent = 'Disconnected';
+                statusEl.textContent = PBGuiI18n.t('sysmon.disconnected');
                 statusEl.className = 'badge badge-error';
                 
                 // Try to reconnect
@@ -800,7 +803,7 @@
             if (pollingInterval) return;
             
             const statusEl = document.getElementById('connection-status');
-            statusEl.textContent = 'Polling';
+            statusEl.textContent = PBGuiI18n.t('sysmon.polling');
             statusEl.className = 'badge badge-connecting';
 
             pollingInterval = setInterval(async () => {
@@ -874,16 +877,16 @@
                             ${durationStr ? `<span class="detail" style="color:#8899aa;">${escapeHtml(durationStr)}</span>` : ''}
                         </div>
                         <div class="job-actions">
-                            ${job.status === 'pending' ? `<button class="btn btn-run" data-job-action="run" data-job-id="${jobIdAttr}">Run</button>` : ''}
-                            <button class="btn btn-view" data-job-action="view" data-job-id="${jobIdAttr}">View</button>
-                            <button class="btn btn-info" data-job-action="log" data-job-id="${jobIdAttr}">Log</button>
-                            <button class="btn btn-danger" data-job-action="cancel" data-job-id="${jobIdAttr}">Cancel</button>
+                            ${job.status === 'pending' ? `<button class="btn btn-run" data-job-action="run" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.run')}</button>` : ''}
+                            <button class="btn btn-view" data-job-action="view" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.view')}</button>
+                            <button class="btn btn-info" data-job-action="log" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.log')}</button>
+                            <button class="btn btn-danger" data-job-action="cancel" data-job-id="${jobIdAttr}">${PBGuiI18n.t('common.cancel')}</button>
                         </div>
                     </div>
                     <div class="job-details">
-                        ${coin ? `<span class="detail">Coin: ${escapeHtml(coin)}</span>` : ''}
-                        ${chunk ? `<span class="detail">Chunk: ${escapeHtml(chunk)}</span>` : ''}
-                        <span class="detail">Updated: ${escapeHtml(formatTimestamp(job.updated_ts))}</span>
+                        ${coin ? `<span class="detail">${PBGuiI18n.t('sysmon.coin', {v: escapeHtml(coin)})}</span>` : ''}
+                        ${chunk ? `<span class="detail">${PBGuiI18n.t('sysmon.chunk', {v: escapeHtml(chunk)})}</span>` : ''}
+                        <span class="detail">${PBGuiI18n.t('sysmon.updatedAt', {t: escapeHtml(formatTimestamp(job.updated_ts))})}</span>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" style="width: ${pct}%">
@@ -892,21 +895,21 @@
                     </div>
                     ${total > 0 ? `
                         <div class="progress-details">
-                            <span class="detail">Step: ${escapeHtml(String(step))}/${escapeHtml(String(total))}</span>
-                            ${chunkTotal > 0 ? `<span class="detail">Chunk: ${escapeHtml(String(chunkDone))}/${escapeHtml(String(chunkTotal))}</span>` : ''}
-                            ${stage ? `<span class="detail">Stage: ${escapeHtml(stage)}</span>` : ''}
-                            ${mode ? `<span class="detail">Mode: ${escapeHtml(mode)}</span>` : ''}
+                            <span class="detail">${PBGuiI18n.t('sysmon.step', {step: escapeHtml(String(step)), total: escapeHtml(String(total))})}</span>
+                            ${chunkTotal > 0 ? `<span class="detail">${PBGuiI18n.t('sysmon.chunkProgress', {done: escapeHtml(String(chunkDone)), total: escapeHtml(String(chunkTotal))})}</span>` : ''}
+                            ${stage ? `<span class="detail">${PBGuiI18n.t('sysmon.stage', {v: escapeHtml(stage)})}</span>` : ''}
+                            ${mode ? `<span class="detail">${PBGuiI18n.t('sysmon.mode', {v: escapeHtml(mode)})}</span>` : ''}
                         </div>
                     ` : ''}
                     ${(downloaded + skipped + failed > 0) ? `
                         <div class="job-expander">
                             <button class="expander-toggle" data-job-action="toggle" data-job-id="${jobIdAttr}">
-                                ${isExpanded ? '▼' : '▶'} Details
+                                ${isExpanded ? '▼' : '▶'} ${PBGuiI18n.t('sysmon.details')}
                             </button>
                             <div class="expander-content ${isExpanded ? 'open' : ''}" data-expander-job-id="${jobIdAttr}">
-                                <div class="detail-row"><strong>Downloads:</strong> ${escapeHtml(String(downloaded))} files (${escapeHtml(dlBytes)})</div>
-                                <div class="detail-row"><strong>Skipped:</strong> ${escapeHtml(String(skipped))} files (${escapeHtml(skBytes)})</div>
-                                <div class="detail-row"><strong>Failed:</strong> ${escapeHtml(String(failed))} files (${escapeHtml(flBytes)})</div>
+                                <div class="detail-row"><strong>${PBGuiI18n.t('sysmon.downloadsLabel')}</strong> ${escapeHtml(String(downloaded))} ${PBGuiI18n.t('sysmon.files', {n: escapeHtml(dlBytes)})}</div>
+                                <div class="detail-row"><strong>${PBGuiI18n.t('sysmon.skippedLabel')}</strong> ${escapeHtml(String(skipped))} ${PBGuiI18n.t('sysmon.files', {n: escapeHtml(skBytes)})}</div>
+                                <div class="detail-row"><strong>${PBGuiI18n.t('sysmon.failedLabel')}</strong> ${escapeHtml(String(failed))} ${PBGuiI18n.t('sysmon.files', {n: escapeHtml(flBytes)})}</div>
                             </div>
                         </div>
                     ` : ''}
@@ -961,30 +964,30 @@
                             ${durationStr ? `<span class="detail" style="color:#8899aa;">${escapeHtml(durationStr)}</span>` : ''}
                         </div>
                         <div class="job-actions">
-                            <button class="btn btn-view" data-job-action="view" data-job-id="${jobIdAttr}">View</button>
-                            <button class="btn btn-info" data-job-action="log" data-job-id="${jobIdAttr}">Log</button>
-                            ${isFailed ? `<button class="btn btn-secondary" data-job-action="retry" data-job-id="${jobIdAttr}">Retry</button>` : ''}
-                            ${isDone ? `<button class="btn btn-secondary" data-job-action="requeue" data-job-id="${jobIdAttr}">Requeue</button>` : ''}
-                            <button class="btn btn-danger" data-job-action="delete" data-job-id="${jobIdAttr}">Delete</button>
+                            <button class="btn btn-view" data-job-action="view" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.view')}</button>
+                            <button class="btn btn-info" data-job-action="log" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.log')}</button>
+                            ${isFailed ? `<button class="btn btn-secondary" data-job-action="retry" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.retry')}</button>` : ''}
+                            ${isDone ? `<button class="btn btn-secondary" data-job-action="requeue" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.requeue')}</button>` : ''}
+                            <button class="btn btn-danger" data-job-action="delete" data-job-id="${jobIdAttr}">${PBGuiI18n.t('common.delete')}</button>
                         </div>
                     </div>
                     <div class="job-details">
                         <span class="detail">${escapeHtml(formatTimestamp(job.updated_ts))}</span>
-                        ${rangeStr ? `<span class="detail" style="margin-left:0.8rem;">Range: ${escapeHtml(rangeStr)}</span>` : ''}
+                        ${rangeStr ? `<span class="detail" style="margin-left:0.8rem;">${PBGuiI18n.t('sysmon.range', {v: escapeHtml(rangeStr)})}</span>` : ''}
                     </div>
                     ${job.error ? `<div class="job-error" style="margin-top:0.5rem;color:#ef4444;font-size:var(--fs-sm);">${escapeHtml(job.error)}</div>` : ''}
                     ${(hasStats || coinPreview) ? `
                         <div class="job-expander">
                             <button class="expander-toggle" data-job-action="toggle" data-job-id="${jobIdAttr}">
-                                ${isExpanded ? '▼' : '▶'} Details
+                                ${isExpanded ? '▼' : '▶'} ${PBGuiI18n.t('sysmon.details')}
                             </button>
                             <div class="expander-content ${isExpanded ? 'open' : ''}" data-expander-job-id="${jobIdAttr}">
-                                ${coinPreview ? `<div class="detail-row"><strong>Coins:</strong> ${escapeHtml(coinPreview)}</div>` : ''}
-                                ${payload.only_missing_1m_src_hours !== undefined ? `<div class="detail-row"><strong>Only missing 1m_src hours:</strong> ${payload.only_missing_1m_src_hours ? 'Yes' : 'No'}</div>` : ''}
+                                ${coinPreview ? `<div class="detail-row"><strong>${PBGuiI18n.t('sysmon.coinsLabel')}</strong> ${escapeHtml(coinPreview)}</div>` : ''}
+                                ${payload.only_missing_1m_src_hours !== undefined ? `<div class="detail-row"><strong>${PBGuiI18n.t('sysmon.onlyMissing1mSrcHours')}</strong> ${payload.only_missing_1m_src_hours ? PBGuiI18n.t('common.yes') : PBGuiI18n.t('common.no')}</div>` : ''}
                                 ${hasStats ? `
-                                    <div class="detail-row"><strong>Downloaded:</strong> ${escapeHtml(String(downloaded))} files (${escapeHtml(dlBytes)})</div>
-                                    <div class="detail-row"><strong>Skipped:</strong> ${escapeHtml(String(skipped))} files (${escapeHtml(skBytes)})</div>
-                                    <div class="detail-row"><strong>Failed:</strong> ${escapeHtml(String(failed))} files (${escapeHtml(flBytes)})</div>
+                                    <div class="detail-row"><strong>${PBGuiI18n.t('sysmon.downloadsLabel')}</strong> ${escapeHtml(String(downloaded))} ${PBGuiI18n.t('sysmon.files', {n: escapeHtml(dlBytes)})}</div>
+                                    <div class="detail-row"><strong>${PBGuiI18n.t('sysmon.skippedLabel')}</strong> ${escapeHtml(String(skipped))} ${PBGuiI18n.t('sysmon.files', {n: escapeHtml(skBytes)})}</div>
+                                    <div class="detail-row"><strong>${PBGuiI18n.t('sysmon.failedLabel')}</strong> ${escapeHtml(String(failed))} ${PBGuiI18n.t('sysmon.files', {n: escapeHtml(flBytes)})}</div>
                                 ` : ''}
                             </div>
                         </div>
@@ -1213,23 +1216,23 @@
                             <div class="downloader-meter-fill${score > 0 ? '' : ' empty'}" style="width:${score > 0 ? pct : 100}%"></div>
                         </div>
                         <div class="downloader-stats">
-                            <div title="Data streamed to master."><span class="downloader-stat-label">Payload</span><span class="downloader-stat-value">${escapeHtml(formatBytes(row.payloadBytes))}</span></div>
-                            <div title="Raw 1m candles fetched."><span class="downloader-stat-label">Rows</span><span class="downloader-stat-value">${escapeHtml(formatCount(row.rows))}</span></div>
-                            <div title="Bitget REST pages fetched."><span class="downloader-stat-label">Pages</span><span class="downloader-stat-value">${escapeHtml(formatCount(row.pages))}</span></div>
-                            <div title="Chunks assigned; default is 30d per coin."><span class="downloader-stat-label">Segments</span><span class="downloader-stat-value">${escapeHtml(formatCount(row.segments))}</span></div>
-                            <div title="Unique 1m candles written, in days."><span class="downloader-stat-label">Written</span><span class="downloader-stat-value">${escapeHtml(formatDaysFromMinutes(row.minutesWritten))} days</span></div>
-                            <div title="Downloader state."><span class="downloader-stat-label">Status</span><span class="downloader-stat-value">${escapeHtml(row.status || 'active')}</span></div>
-                            ${currentText ? `<div class="downloader-current" title="${escapeAttr(currentText)}">Current: ${escapeHtml(currentText)}</div>` : ''}
+                            <div title="${PBGuiI18n.t('sysmon.tipPayload')}"><span class="downloader-stat-label">${PBGuiI18n.t('sysmon.payload')}</span><span class="downloader-stat-value">${escapeHtml(formatBytes(row.payloadBytes))}</span></div>
+                            <div title="${PBGuiI18n.t('sysmon.tipRows')}"><span class="downloader-stat-label">${PBGuiI18n.t('sysmon.rows')}</span><span class="downloader-stat-value">${escapeHtml(formatCount(row.rows))}</span></div>
+                            <div title="${PBGuiI18n.t('sysmon.tipPages')}"><span class="downloader-stat-label">${PBGuiI18n.t('sysmon.pages')}</span><span class="downloader-stat-value">${escapeHtml(formatCount(row.pages))}</span></div>
+                            <div title="${PBGuiI18n.t('sysmon.tipSegments')}"><span class="downloader-stat-label">${PBGuiI18n.t('sysmon.segments')}</span><span class="downloader-stat-value">${escapeHtml(formatCount(row.segments))}</span></div>
+                            <div title="${PBGuiI18n.t('sysmon.tipWritten')}"><span class="downloader-stat-label">${PBGuiI18n.t('sysmon.written')}</span><span class="downloader-stat-value">${escapeHtml(formatDaysFromMinutes(row.minutesWritten))} ${PBGuiI18n.t('sysmon.days')}</span></div>
+                            <div title="${PBGuiI18n.t('sysmon.tipStatus')}"><span class="downloader-stat-label">${PBGuiI18n.t('sysmon.status')}</span><span class="downloader-stat-value">${escapeHtml(row.status || PBGuiI18n.t('sysmon.active'))}</span></div>
+                            ${currentText ? `<div class="downloader-current" title="${escapeAttr(currentText)}">${PBGuiI18n.t('sysmon.currentLabel', {v: escapeHtml(currentText)})}</div>` : ''}
                         </div>
                     </div>
                 `;
             }).join('');
-            const title = options.compact ? 'Downloader Traffic' : 'Downloader Traffic Details';
-            const totalText = `${formatBytes(totalPayload)} · ${formatCount(totalRows)} rows · ${formatCount(totalPages)} pages · ${formatCount(totalSegments)} segments`;
+            const title = options.compact ? PBGuiI18n.t('sysmon.downloaderTraffic') : PBGuiI18n.t('sysmon.downloaderTrafficDetails');
+            const totalText = PBGuiI18n.t('sysmon.downloaderTotal', {bytes: formatBytes(totalPayload), rows: formatCount(totalRows), pages: formatCount(totalPages), segments: formatCount(totalSegments)});
             const hasLogFallback = Array.isArray(options.logLines) && options.logLines.length > 0;
             const hint = totalPayload + totalRows + totalPages + totalSegments > 0
                 ? ''
-                : '<div class="details-empty" style="padding:0 0.9rem 0.9rem;">No per-downloader contribution has been recorded for this job yet.' + (hasLogFallback ? ' The log did not contain segment summary lines.' : ' New distributed Bitget runs fill these cards live.') + '</div>';
+                : '<div class="details-empty" style="padding:0 0.9rem 0.9rem;">' + PBGuiI18n.t('sysmon.noDownloaderContribution') + (hasLogFallback ? PBGuiI18n.t('sysmon.noSegmentSummary') : PBGuiI18n.t('sysmon.newDistributedRuns')) + '</div>';
             const jobId = String(options.jobId || (job && job.id) || '');
             const jobAttr = jobId ? ` data-downloader-job-id="${escapeAttr(jobId)}"` : '';
             return `
@@ -1301,11 +1304,11 @@
             if (!btn || !content) return;
             if (content.classList.contains('open')) {
                 content.classList.remove('open');
-                btn.textContent = '▶ Details';
+                btn.textContent = '▶ ' + PBGuiI18n.t('sysmon.details');
                 expandedJobs.delete(jobId);
             } else {
                 content.classList.add('open');
-                btn.textContent = '▼ Details';
+                btn.textContent = '▼ ' + PBGuiI18n.t('sysmon.details');
                 expandedJobs.add(jobId);
             }
         }
@@ -1323,9 +1326,9 @@
         // ── API Actions ──
         async function cancelJob(jobId) {
             if (!(await showActionDialog({
-                title: 'Cancel job',
-                message: `Cancel job ${jobId}?`,
-                confirmText: 'Cancel job',
+                title: PBGuiI18n.t('sysmon.cancelJob'),
+                message: PBGuiI18n.t('sysmon.cancelJobMsg', {id: jobId}),
+                confirmText: PBGuiI18n.t('sysmon.cancelJob'),
                 confirmClass: 'btn-danger'
             }))) return;
             
@@ -1340,20 +1343,20 @@
                     console.log(`Job ${jobId} cancelled`);
                 } else {
                     const err = await resp.json();
-                    await showActionNotice({ title: 'Cancel failed', message: `Failed to cancel: ${err.detail}` });
+                    await showActionNotice({ title: PBGuiI18n.t('sysmon.cancelFailed'), message: PBGuiI18n.t('sysmon.failedToCancel', {detail: PBGuiI18n.serverMsg(String(err.detail))}) });
                 }
             } catch (e) {
                 console.error('Cancel error:', e);
-                await showActionNotice({ title: 'Cancel failed', message: 'Failed to cancel job' });
+                await showActionNotice({ title: PBGuiI18n.t('sysmon.cancelFailed'), message: PBGuiI18n.t('sysmon.failedToCancelJob') });
             }
         }
 
         async function deleteJob(jobId) {
             if (!(await showActionDialog({
-                title: 'Delete job',
-                message: `Delete job ${jobId}?`,
-                detail: 'This action cannot be undone.',
-                confirmText: 'Delete',
+                title: PBGuiI18n.t('sysmon.deleteJob'),
+                message: PBGuiI18n.t('sysmon.deleteJobMsg', {id: jobId}),
+                detail: PBGuiI18n.t('sysmon.actionUndoable'),
+                confirmText: PBGuiI18n.t('common.delete'),
                 confirmClass: 'btn-danger'
             }))) return;
             
@@ -1367,19 +1370,19 @@
                     loadTab(currentTab); // Refresh current tab
                 } else {
                     const err = await resp.json();
-                    await showActionNotice({ title: 'Delete failed', message: `Failed to delete: ${err.detail}` });
+                    await showActionNotice({ title: PBGuiI18n.t('sysmon.deleteFailed'), message: PBGuiI18n.t('sysmon.failedToDelete', {detail: PBGuiI18n.serverMsg(String(err.detail))}) });
                 }
             } catch (e) {
                 console.error('Delete error:', e);
-                await showActionNotice({ title: 'Delete failed', message: 'Failed to delete job' });
+                await showActionNotice({ title: PBGuiI18n.t('sysmon.deleteFailed'), message: PBGuiI18n.t('sysmon.failedToDeleteJob') });
             }
         }
 
         async function retryJob(jobId) {
             if (!(await showActionDialog({
-                title: 'Retry failed job',
-                message: `Retry failed job ${jobId}?`,
-                confirmText: 'Retry',
+                title: PBGuiI18n.t('sysmon.retryFailedJob'),
+                message: PBGuiI18n.t('sysmon.retryFailedJobMsg', {id: jobId}),
+                confirmText: PBGuiI18n.t('sysmon.retry'),
                 confirmClass: 'btn-info'
             }))) return;
             
@@ -1393,19 +1396,19 @@
                     loadTab(currentTab); // Refresh current tab
                 } else {
                     const err = await resp.json();
-                    await showActionNotice({ title: 'Retry failed', message: `Failed to retry: ${err.detail}` });
+                    await showActionNotice({ title: PBGuiI18n.t('sysmon.retryFailed'), message: PBGuiI18n.t('sysmon.failedToRetry', {detail: PBGuiI18n.serverMsg(String(err.detail))}) });
                 }
             } catch (e) {
                 console.error('Retry error:', e);
-                await showActionNotice({ title: 'Retry failed', message: 'Failed to retry job' });
+                await showActionNotice({ title: PBGuiI18n.t('sysmon.retryFailed'), message: PBGuiI18n.t('sysmon.failedToRetryJob') });
             }
         }
 
         async function requeueJob(jobId) {
             if (!(await showActionDialog({
-                title: 'Requeue job',
-                message: `Requeue job ${jobId}?`,
-                confirmText: 'Requeue',
+                title: PBGuiI18n.t('sysmon.requeueJob'),
+                message: PBGuiI18n.t('sysmon.requeueJobMsg', {id: jobId}),
+                confirmText: PBGuiI18n.t('sysmon.requeue'),
                 confirmClass: 'btn-info'
             }))) return;
             
@@ -1419,23 +1422,23 @@
                     loadTab(currentTab); // Refresh current tab
                 } else {
                     const err = await resp.json();
-                    await showActionNotice({ title: 'Requeue failed', message: `Failed to requeue: ${err.detail}` });
+                    await showActionNotice({ title: PBGuiI18n.t('sysmon.requeueFailed'), message: PBGuiI18n.t('sysmon.failedToRequeue', {detail: PBGuiI18n.serverMsg(String(err.detail))}) });
                 }
             } catch (e) {
                 console.error('Requeue error:', e);
-                await showActionNotice({ title: 'Requeue failed', message: 'Failed to requeue job' });
+                await showActionNotice({ title: PBGuiI18n.t('sysmon.requeueFailed'), message: PBGuiI18n.t('sysmon.failedToRequeueJob') });
             }
         }
 
         async function deleteAllJobs(state) {
-            const stateLabel = state === 'done' ? 'done' : 'failed';
-            const exchangeLabel = EXCHANGE_FILTER ? ` for ${EXCHANGE_FILTER}` : '';
+            const stateLabel = state === 'done' ? PBGuiI18n.t('sysmon.doneLower') : PBGuiI18n.t('sysmon.failedLower');
+            const exchangeLabel = EXCHANGE_FILTER ? ' ' + PBGuiI18n.t('sysmon.forExchange', {exchange: EXCHANGE_FILTER}) : '';
             
             if (!(await showActionDialog({
-                title: `Delete all ${stateLabel} jobs`,
-                message: `Delete all ${stateLabel} jobs${exchangeLabel}?`,
-                detail: 'This action cannot be undone.',
-                confirmText: 'Delete all',
+                title: PBGuiI18n.t('sysmon.deleteAllJobsTitle', {state: stateLabel}),
+                message: PBGuiI18n.t('sysmon.deleteAllJobsMsg', {state: stateLabel, exchange: exchangeLabel}),
+                detail: PBGuiI18n.t('sysmon.actionUndoable'),
+                confirmText: PBGuiI18n.t('sysmon.deleteAll'),
                 confirmClass: 'btn-danger'
             }))) {
                 return;
@@ -1461,19 +1464,19 @@
                 if (resp.ok) {
                     const data = await resp.json();
                     await showActionNotice({
-                        title: 'Jobs deleted',
-                        message: `Successfully deleted ${data.deleted} of ${data.total} jobs.`,
-                        confirmText: 'OK',
+                        title: PBGuiI18n.t('sysmon.jobsDeleted'),
+                        message: PBGuiI18n.t('sysmon.successfullyDeleted', {deleted: data.deleted, total: data.total}),
+                        confirmText: PBGuiI18n.t('common.ok'),
                         confirmClass: 'btn-info'
                     });
                     loadTab(currentTab); // Refresh current tab
                 } else {
                     const err = await resp.json();
-                    await showActionNotice({ title: 'Delete failed', message: `Failed to delete jobs: ${err.detail}` });
+                    await showActionNotice({ title: PBGuiI18n.t('sysmon.deleteFailed'), message: PBGuiI18n.t('sysmon.failedToDeleteJobs', {detail: PBGuiI18n.serverMsg(String(err.detail))}) });
                 }
             } catch (e) {
                 console.error('Delete all error:', e);
-                await showActionNotice({ title: 'Delete failed', message: 'Failed to delete jobs' });
+                await showActionNotice({ title: PBGuiI18n.t('sysmon.deleteFailed'), message: PBGuiI18n.t('sysmon.failedToDeleteJobsShort') });
             }
         }
 
@@ -1483,7 +1486,7 @@
             const logJobId = document.getElementById('log-job-id');
             
             logJobId.textContent = jobId;
-            logContent.innerHTML = '<p>Loading...</p>';
+            logContent.innerHTML = '<p>' + PBGuiI18n.t('common.loading') + '</p>';
             modal.classList.add('active');
             
             try {
@@ -1491,7 +1494,7 @@
                 const data = await resp.json();
                 
                 if (!data.exists || !data.log || data.log.length === 0) {
-                    logContent.innerHTML = '<p style="color:#94a3b8;">No log file found or log is empty.</p>';
+                    logContent.innerHTML = '<p style="color:#94a3b8;">' + PBGuiI18n.t('sysmon.noLogFileFound') + '</p>';
                     return;
                 }
                 
@@ -1503,7 +1506,7 @@
                 logContent.scrollTop = logContent.scrollHeight;
             } catch (e) {
                 console.error('Log error:', e);
-                logContent.innerHTML = '<p style="color:#ef4444;">Failed to load log.</p>';
+                logContent.innerHTML = '<p style="color:#ef4444;">' + PBGuiI18n.t('sysmon.failedLoadLog') + '</p>';
             }
         }
 
@@ -1526,9 +1529,16 @@
                 .split('>').join('&gt;');
         }
 
+        function tabLabel(tab) {
+            if (tab === 'done') return PBGuiI18n.t('sysmon.doneLower');
+            if (tab === 'failed') return PBGuiI18n.t('sysmon.failedLower');
+            if (tab === 'running') return PBGuiI18n.t('sysmon.runningLower');
+            return String(tab || '');
+        }
+
         function formatJsonBlock(value) {
             if (!value || (typeof value === 'object' && Object.keys(value).length === 0)) {
-                return '<div class="details-empty">No data.</div>';
+                return '<div class="details-empty">' + PBGuiI18n.t('sysmon.noData') + '</div>';
             }
             return `<pre class="json-block">${escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
         }
@@ -1539,7 +1549,7 @@
                     return '<div class="details-kv-key">' + escapeHtml(String(row.label)) + '</div>' +
                            '<div class="details-kv-value">' + escapeHtml(String(row.value)) + '</div>';
                 }).join('');
-            return rendered || '<div class="details-empty">No details available.</div>';
+            return rendered || '<div class="details-empty">' + PBGuiI18n.t('sysmon.noDetailsAvailable') + '</div>';
         }
 
         function renderJobDetails(job, logLines) {
@@ -1552,58 +1562,58 @@
             const lastResult = progress.last_result && typeof progress.last_result === 'object' ? progress.last_result : {};
 
             const summaryRows = [
-                { label: 'Status', value: job.status || '' },
-                { label: 'Type', value: job.type || '' },
-                { label: 'Exchange', value: job.exchange || '' },
-                { label: 'Created', value: formatTimestamp(job.created_ts) },
-                { label: 'Updated', value: formatTimestamp(job.updated_ts) },
-                { label: 'Duration', value: formatJobDuration(job) },
-                { label: 'Run requested', value: job.run_requested ? 'Yes' : '' },
-                { label: 'Cancel requested', value: job.cancel_requested ? 'Yes' : '' },
-                { label: 'Error', value: job.error || '' }
+                { label: PBGuiI18n.t('sysmon.status'), value: job.status || '' },
+                { label: PBGuiI18n.t('sysmon.type'), value: job.type || '' },
+                { label: PBGuiI18n.t('sysmon.exchange'), value: job.exchange || '' },
+                { label: PBGuiI18n.t('sysmon.created'), value: formatTimestamp(job.created_ts) },
+                { label: PBGuiI18n.t('sysmon.updated'), value: formatTimestamp(job.updated_ts) },
+                { label: PBGuiI18n.t('sysmon.duration'), value: formatJobDuration(job) },
+                { label: PBGuiI18n.t('sysmon.runRequested'), value: job.run_requested ? PBGuiI18n.t('common.yes') : '' },
+                { label: PBGuiI18n.t('sysmon.cancelRequested'), value: job.cancel_requested ? PBGuiI18n.t('common.yes') : '' },
+                { label: PBGuiI18n.t('common.error'), value: job.error || '' }
             ];
 
             const scopeRows = [
-                { label: 'Coins', value: coins },
-                { label: 'Range', value: range },
-                { label: 'Chunk days', value: payload.chunk_days },
-                { label: 'Profile', value: payload.profile || '' },
-                { label: 'Region', value: payload.region || '' },
-                { label: 'Refetch', value: payload.refetch ? 'Yes' : '' },
-                { label: 'Only missing 1m_src hours', value: payload.only_missing_1m_src_hours !== undefined ? (payload.only_missing_1m_src_hours ? 'Yes' : 'No') : '' },
-                { label: 'Current coin', value: progress.coin || '' },
-                { label: 'Current chunk', value: progress.chunk_start ? `${progress.chunk_start} → ${progress.chunk_end}` : '' },
-                { label: 'Stage', value: progress.stage || '' },
-                { label: 'Step', value: progress.total ? `${progress.step || 0}/${progress.total}` : '' },
-                { label: 'Chunk progress', value: progress.chunk_total ? `${progress.chunk_done || 0}/${progress.chunk_total}` : '' }
+                { label: PBGuiI18n.t('sysmon.coins'), value: coins },
+                { label: PBGuiI18n.t('sysmon.rangeLabel'), value: range },
+                { label: PBGuiI18n.t('sysmon.chunkDays'), value: payload.chunk_days },
+                { label: PBGuiI18n.t('sysmon.profile'), value: payload.profile || '' },
+                { label: PBGuiI18n.t('sysmon.region'), value: payload.region || '' },
+                { label: PBGuiI18n.t('sysmon.refetch'), value: payload.refetch ? PBGuiI18n.t('common.yes') : '' },
+                { label: PBGuiI18n.t('sysmon.onlyMissing1mSrcHours'), value: payload.only_missing_1m_src_hours !== undefined ? (payload.only_missing_1m_src_hours ? PBGuiI18n.t('common.yes') : PBGuiI18n.t('common.no')) : '' },
+                { label: PBGuiI18n.t('sysmon.currentCoin'), value: progress.coin || '' },
+                { label: PBGuiI18n.t('sysmon.currentChunk'), value: progress.chunk_start ? `${progress.chunk_start} → ${progress.chunk_end}` : '' },
+                { label: PBGuiI18n.t('sysmon.stageLabel'), value: progress.stage || '' },
+                { label: PBGuiI18n.t('sysmon.stepLabel'), value: progress.total ? `${progress.step || 0}/${progress.total}` : '' },
+                { label: PBGuiI18n.t('sysmon.chunkProgressLabel'), value: progress.chunk_total ? `${progress.chunk_done || 0}/${progress.chunk_total}` : '' }
             ];
             const downloaderDetails = renderDownloaderDetails(job, { open: true, logLines: logLines || [] });
 
             return `
                 <div class="details-section">
-                    <h3>Summary</h3>
+                    <h3>${PBGuiI18n.t('sysmon.summary')}</h3>
                     <div class="details-kv">${renderDetailRows(summaryRows)}</div>
                 </div>
                 <div class="details-section">
-                    <h3>Scope</h3>
+                    <h3>${PBGuiI18n.t('sysmon.scope')}</h3>
                     <div class="details-kv">${renderDetailRows(scopeRows)}</div>
                 </div>
                 ${downloaderDetails ? `
                     <div class="details-section">
-                        <h3>Downloader Traffic</h3>
+                        <h3>${PBGuiI18n.t('sysmon.downloaderTraffic')}</h3>
                         ${downloaderDetails}
                     </div>
                 ` : ''}
                 <div class="details-section">
-                    <h3>Payload</h3>
+                    <h3>${PBGuiI18n.t('sysmon.payload')}</h3>
                     ${formatJsonBlock(payload)}
                 </div>
                 <div class="details-section">
-                    <h3>Progress</h3>
+                    <h3>${PBGuiI18n.t('sysmon.progress')}</h3>
                     ${formatJsonBlock(progress)}
                 </div>
                 <div class="details-section">
-                    <h3>Last Result</h3>
+                    <h3>${PBGuiI18n.t('sysmon.lastResult')}</h3>
                     ${formatJsonBlock(lastResult)}
                 </div>
             `;
@@ -1616,15 +1626,15 @@
                     }));
                     if (!resp.ok) {
                         const err = await resp.json().catch(() => ({}));
-                        throw new Error(err.detail || resp.statusText || 'Failed to request run');
+                        throw new Error(err.detail || resp.statusText || PBGuiI18n.t('sysmon.failedRequestRun'));
                     }
                 } catch (e) {
                     console.error('Run job error:', e);
                     await showActionNotice({
-                        title: 'Run failed',
-                        message: `Failed to start job ${jobId}.`,
-                        detail: (e && e.message) || 'Unknown error',
-                        confirmText: 'Close',
+                        title: PBGuiI18n.t('sysmon.runFailed'),
+                        message: PBGuiI18n.t('sysmon.failedStartJob', {id: jobId}),
+                        detail: (e && e.message) ? PBGuiI18n.serverMsg(String(e.message)) : PBGuiI18n.t('common.unknown'),
+                        confirmText: PBGuiI18n.t('common.close'),
                         confirmClass: 'btn-danger'
                     });
                 }
@@ -1636,14 +1646,14 @@
             const title = document.getElementById('details-job-id');
 
             title.textContent = jobId;
-            content.innerHTML = '<p>Loading...</p>';
+            content.innerHTML = '<p>' + PBGuiI18n.t('common.loading') + '</p>';
             modal.classList.add('active');
 
             try {
                 const resp = await fetch(`${API_BASE}/jobs/${jobId}`, authOptions());
                 if (!resp.ok) {
                     const err = await resp.json().catch(() => ({}));
-                    throw new Error(err.detail || resp.statusText || 'Failed to load job details');
+                    throw new Error(err.detail || resp.statusText || PBGuiI18n.t('sysmon.failedLoadJobDetails'));
                 }
                 const job = await resp.json();
                 content.innerHTML = renderJobDetails(job || {});
@@ -1661,7 +1671,7 @@
                 }
             } catch (e) {
                 console.error('Job details error:', e);
-                content.innerHTML = `<div class="details-empty" style="color:#ef4444;">Failed to load job details: ${escapeHtml((e && e.message) || 'Unknown error')}</div>`;
+                content.innerHTML = `<div class="details-empty" style="color:#ef4444;">${PBGuiI18n.t('sysmon.failedLoadJobDetailsMsg', {detail: escapeHtml((e && e.message) ? PBGuiI18n.serverMsg(String(e.message)) : PBGuiI18n.t('common.unknown'))})}</div>`;
             }
         }
 
@@ -1698,7 +1708,7 @@
 
         async function loadTab(tab) {
             const container = document.getElementById(`jobs-${tab}`);
-            container.innerHTML = '<p class="loading">Loading...</p>';
+            container.innerHTML = '<p class="loading">' + PBGuiI18n.t('common.loading') + '</p>';
             
             try {
                 const resp = await fetch(`${API_BASE}/jobs/?states=${tab}&limit=50`, authOptions());
@@ -1709,14 +1719,14 @@
                 filteredJobs.sort((a, b) => (b.updated_ts || 0) - (a.updated_ts || 0));
                 
                 if (filteredJobs.length === 0) {
-                    container.innerHTML = `<p class="no-jobs">No ${escapeHtml(tab)} jobs${EXCHANGE_FILTER ? ' for ' + escapeHtml(EXCHANGE_FILTER) : ''}.</p>`;
+                    container.innerHTML = `<p class="no-jobs">${PBGuiI18n.t('sysmon.noJobs', {state: tabLabel(tab), exchange: EXCHANGE_FILTER ? ' ' + PBGuiI18n.t('sysmon.forExchange', {exchange: escapeHtml(EXCHANGE_FILTER)}) : ''})}</p>`;
                     return;
                 }
                 
                 container.innerHTML = filteredJobs.map(renderJob).join('');
             } catch (e) {
                 console.error(`Load ${tab} error:`, e);
-                container.innerHTML = `<p class="error">Failed to load ${escapeHtml(tab)} jobs.</p>`;
+                container.innerHTML = `<p class="error">${PBGuiI18n.t('sysmon.failedLoadJobs', {state: tabLabel(tab)})}</p>`;
             }
         }
 

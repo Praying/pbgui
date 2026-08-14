@@ -1,6 +1,18 @@
 ;(function () {
   'use strict';
 
+  function i18nT(key, params, fallback) {
+    var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+    var text = fallback == null ? key : String(fallback);
+    if (params) {
+      text = text.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return text;
+  }
+
   function object(value) {
     return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
@@ -94,7 +106,7 @@
       version: isV8 ? 'v8' : 'v7',
       isV8: isV8,
       label: isV8 ? 'PB8' : 'PB7',
-      navSubtitle: isV8 ? 'PBv8 EDIT' : 'PBv7 EDIT',
+      navSubtitle: i18nT('editor.run.editNavSubtitle', { version: isV8 ? '8' : '7' }, isV8 ? 'PBv8 EDIT' : 'PBv7 EDIT'),
       navCurrent: isV8 ? 'v8_run' : 'v7_run',
       backtestPath: isV8 ? '/api/backtest-v8/main_page' : '/api/backtest-v7/main_page',
       supportsStrategyExplorer: true,
@@ -162,8 +174,8 @@
           element.classList.remove('run-version-hidden');
         });
         var title = document.querySelector('.sb-title');
-        if (title) title.textContent = isV8 ? 'Edit PB8 Instance' : 'Edit Instance';
-        document.title = isV8 ? 'PBv8 Edit' : 'PBv7 Edit';
+        if (title) title.textContent = i18nT(isV8 ? 'editor.run.editInstanceP8' : 'editor.run.editInstance', null, isV8 ? 'Edit PB8 Instance' : 'Edit Instance');
+        document.title = i18nT('editor.run.editTitle', { version: isV8 ? '8' : '7' }, isV8 ? 'PBv8 Edit' : 'PBv7 Edit');
         var versionInput = document.getElementById('f-version');
         if (versionInput && isV8) versionInput.readOnly = true;
       },

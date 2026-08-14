@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import textwrap
 
+from tests.i18n_helpers import NODE_I18N_STUB
+
 
 ROOT = Path(__file__).resolve().parents[2]
 PAGE = ROOT / "frontend" / "market_data_main.html"
@@ -46,6 +48,7 @@ def test_tiingo_token_save_reuses_profile_and_clears_secret_input() -> None:
     function = _extract_function(source, "saveTiingoToken")
     script = textwrap.dedent(
         f"""
+        {NODE_I18N_STUB}
         const assert = require('node:assert/strict');
         const input = {{value: 'new-vault-token', type: 'password', disabled: false, dataset: {{}}}};
         const button = {{disabled: false}};

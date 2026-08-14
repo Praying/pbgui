@@ -116,7 +116,7 @@ def test_shared_backtest_refine_builder_routes_pb8_actions_to_pb8() -> None:
     assert "saveOptimizePresetConfig(TOKEN, name, config, BACKTEST_VERSION)" in page
     assert "queueOptimizePreset(TOKEN, name, BACKTEST_VERSION)" in page
     assert "openOptimizeSeedDraft(TOKEN, config, name, BACKTEST_VERSION)" in page
-    assert "optimize_preset_builder.js?v=3" in page
+    assert "optimize_preset_builder.js?v=4" in page
 
 
 def test_concurrent_pb8_draft_creation_stays_bounded() -> None:
@@ -580,7 +580,7 @@ def test_main_page_renders_shared_editor_without_exposing_session_token(monkeypa
     html = response.body.decode("utf-8")
 
     assert "PBGui — V8 Backtest" in html
-    assert "PBv8 BACKTEST" in html
+    assert "PBGuiI18n.t('v7backtest.navSubtitle', { version: (backtestEditorAdapter.isV8 ? 'PBv8' : 'PBv7') })" in html
     assert "current:  BACKTEST_NAV_CURRENT" in html
     assert "backtestEditorAdapter.isV8 ? 'v8_backtest' : 'v7_backtest'" in html
     assert 'var BACKTEST_VERSION = "v8"' in html

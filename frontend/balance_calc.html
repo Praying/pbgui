@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/app/i18n.js?v=1"></script>
 <title>Balance Calculator</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,7 +20,7 @@ html, body { height: 100%; }
   --red:      #ff4b4b;
   --blue:     #1f77ff;
   --accent:   #4da6ff;
-  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
   --fs-xs:    11px;
   --fs-sm:    13px;
   --fs-base:  14px;
@@ -220,13 +221,13 @@ body {
 
   <!-- Toolbar -->
   <div class="toolbar">
-    <label for="sel-instance">PB7 / PB8 Instance:</label>
-    <select id="sel-instance"><option value="">— load from instance —</option></select>
+    <label for="sel-instance" data-i18n="misc.balance.instanceLabel">PB7 / PB8 Instance:</label>
+    <select id="sel-instance"><option value="" data-i18n="misc.balance.loadFromInstance">— load from instance —</option></select>
 
-    <label for="sel-exchange">Exchange:</label>
+    <label for="sel-exchange" data-i18n="misc.balance.exchange">Exchange:</label>
     <select id="sel-exchange"></select>
 
-    <button id="btn-calc">Calculate</button>
+    <button id="btn-calc" data-i18n="misc.balance.calculate">Calculate</button>
     <span id="calc-status"></span>
   </div>
 
@@ -239,13 +240,14 @@ body {
 
     <!-- Right: Results -->
     <div class="results-panel" id="results-panel">
-      <div class="msg-info">Select a PB7 or PB8 instance, or paste a PB7/PB8 config, choose an exchange, and click <b>Calculate</b>.</div>
+      <div class="msg-info"><span data-i18n="misc.balance.intro">Select a PB7 or PB8 instance, or paste a PB7/PB8 config, choose an exchange, and click </span><b data-i18n="misc.balance.calculate">Calculate</b>.</div>
     </div>
   </div>
 </div>
 
 <!-- Globals injected server-side -->
 <script>
+  document.title = PBGuiI18n.t('misc.balance.title');
   var API_BASE     = "%%API_BASE%%";
   var PBGUI_VERSION= "%%VERSION%%";
   var PBGUI_SERIAL = "%%SERIAL%%";
@@ -258,7 +260,7 @@ body {
 
 <!-- Nav bar -->
 <script>
-  window.PBGUI_NAV_CONFIG = { subtitle: 'Balance Calculator', current: 'info_balance_calc' };
+  window.PBGUI_NAV_CONFIG = { subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.balance.subtitle') : 'Balance Calculator'), current: 'info_balance_calc' };
 </script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 
@@ -266,6 +268,9 @@ body {
 <script>
 (function() {
   'use strict';
+
+  function t(key, params) { return window.PBGuiI18n.t(key, params); }
+  function m(text) { return window.PBGuiI18n.serverMsg(text); }
 
   var selInstance = document.getElementById('sel-instance');
   var selExchange = document.getElementById('sel-exchange');
@@ -337,7 +342,7 @@ body {
       }
     })
     .catch(function(e) {
-      configEditor.value = '// Failed to load config: ' + e;
+      configEditor.value = '// ' + t('misc.balance.failedLoadConfig', { error: m(e) });
     });
   }
 
@@ -355,24 +360,24 @@ body {
   btnCalc.addEventListener('click', function() {
     var configText = configEditor.value.trim();
     if (!configText) {
-      showError('Please enter or load a config first.');
+      showError(t('misc.balance.enterConfig'));
       return;
     }
     var config;
     try {
       config = JSON.parse(configText);
     } catch(e) {
-      showError('Invalid JSON in config editor: ' + e.message);
+      showError(t('misc.balance.invalidJson', { error: e.message }));
       return;
     }
     var exchange = selExchange.value;
     if (!exchange) {
-      showError('Please select an exchange.');
+      showError(t('misc.balance.selectExchange'));
       return;
     }
 
     btnCalc.disabled = true;
-    calcStatus.innerHTML = '<span class="spinner"></span> Calculating...';
+    calcStatus.innerHTML = '<span class="spinner"></span> ' + t('misc.balance.calculating');
 
     fetch(API_BASE + '/calculate', {
       method: 'POST',
@@ -385,7 +390,7 @@ body {
       btnCalc.disabled = false;
       calcStatus.textContent = '';
       if (data.error) {
-        showError(data.error);
+        showError(m(data.error));
         return;
       }
       renderResults(data);
@@ -393,7 +398,7 @@ body {
     .catch(function(e) {
       btnCalc.disabled = false;
       calcStatus.textContent = '';
-      showError('Request failed: ' + e);
+      showError(t('misc.balance.requestFailed', { error: e }));
     });
   });
 
@@ -404,7 +409,7 @@ body {
     // Exchange header
     if (data.exchange) {
       html += '<div class="result-card" style="padding:8px 16px;margin-bottom:8px">';
-      html += '<strong>Exchange:</strong> ' + esc(data.exchange);
+      html += '<strong>' + t('misc.balance.exchange') + '</strong> ' + esc(data.exchange);
       html += '</div>';
     }
 
@@ -412,15 +417,15 @@ body {
     if (data.recommendation) {
       var rec = data.recommendation;
       html += '<div class="result-card">';
-      html += '<h3>Recommended Balance for ' + esc(rec.symbol) + ' (' + esc(rec.side) + ')</h3>';
+      html += '<h3>' + t('misc.balance.recommendedBalance', { symbol: esc(rec.symbol), side: esc(rec.side) }) + '</h3>';
       html += '<div class="value">' + rec.recommended_balance + ' USDT</div>';
       html += '<div style="margin-top:8px">';
-      html += paramRow('Min Order Price', rec.min_order_price.toFixed(2));
-      html += paramRow('TWE Limit', rec.total_wallet_exposure_limit.toFixed(2));
-      html += paramRow('N Positions', rec.n_positions);
-      html += paramRow('Entry Initial Qty %', rec.entry_initial_qty_pct.toFixed(4));
-      html += paramRow('Calculated', rec.calculated_balance.toFixed(2) + ' USDT');
-      html += paramRow('Recommended (+10%)', rec.recommended_balance + ' USDT');
+      html += paramRow(t('misc.balance.minOrderPrice'), rec.min_order_price.toFixed(2));
+      html += paramRow(t('misc.balance.tweLimit'), rec.total_wallet_exposure_limit.toFixed(2));
+      html += paramRow(t('misc.balance.nPositions'), rec.n_positions);
+      html += paramRow(t('misc.balance.entryInitialQtyPct'), rec.entry_initial_qty_pct.toFixed(4));
+      html += paramRow(t('misc.balance.calculated'), rec.calculated_balance.toFixed(2) + ' USDT');
+      html += paramRow(t('misc.balance.recommendedPct'), rec.recommended_balance + ' USDT');
       html += '</div>';
       html += '<div class="formula">min_order_price / ((twe_limit / n_positions) * entry_initial_qty_pct)</div>';
       html += '<div class="formula">' + rec.min_order_price.toFixed(2) + ' / ((' + rec.total_wallet_exposure_limit.toFixed(2) + ' / ' + rec.n_positions + ') * ' + rec.entry_initial_qty_pct.toFixed(4) + ') = ' + rec.calculated_balance.toFixed(2) + '</div>';
@@ -430,8 +435,8 @@ body {
     // Balance Long table
     if (data.balance_long && data.balance_long.length > 0) {
       html += '<div class="result-card">';
-      html += '<h3>Balance per Coin (Long)</h3>';
-      html += '<div class="table-wrap"><table class="data-table"><thead><tr><th>Coin</th><th>Required Balance</th></tr></thead><tbody>';
+      html += '<h3>' + t('misc.balance.balanceLong') + '</h3>';
+      html += '<div class="table-wrap"><table class="data-table"><thead><tr><th>' + t('misc.balance.coin') + '</th><th>' + t('misc.balance.requiredBalance') + '</th></tr></thead><tbody>';
       data.balance_long.forEach(function(r) {
         html += '<tr><td>' + esc(r.coin) + '</td><td>' + r.balance.toFixed(2) + '</td></tr>';
       });
@@ -441,8 +446,8 @@ body {
     // Balance Short table
     if (data.balance_short && data.balance_short.length > 0) {
       html += '<div class="result-card">';
-      html += '<h3>Balance per Coin (Short)</h3>';
-      html += '<div class="table-wrap"><table class="data-table"><thead><tr><th>Coin</th><th>Required Balance</th></tr></thead><tbody>';
+      html += '<h3>' + t('misc.balance.balanceShort') + '</h3>';
+      html += '<div class="table-wrap"><table class="data-table"><thead><tr><th>' + t('misc.balance.coin') + '</th><th>' + t('misc.balance.requiredBalance') + '</th></tr></thead><tbody>';
       data.balance_short.forEach(function(r) {
         html += '<tr><td>' + esc(r.coin) + '</td><td>' + r.balance.toFixed(2) + '</td></tr>';
       });
@@ -452,9 +457,9 @@ body {
     // Coin Info table
     if (data.coin_infos && data.coin_infos.length > 0) {
       html += '<div class="result-card">';
-      html += '<h3>Coin Information</h3>';
+      html += '<h3>' + t('misc.balance.coinInfo') + '</h3>';
       html += '<div class="table-wrap"><table class="data-table"><thead><tr>';
-      html += '<th>Coin</th><th>Price</th><th>Contract</th><th>Min Amount</th><th>Min Cost</th><th>Min Order Price</th><th>Max Lev</th>';
+      html += '<th>' + t('misc.balance.coin') + '</th><th>' + t('misc.balance.price') + '</th><th>' + t('misc.balance.contract') + '</th><th>' + t('misc.balance.minAmount') + '</th><th>' + t('misc.balance.minCost') + '</th><th>' + t('misc.balance.minOrderPrice') + '</th><th>' + t('misc.balance.maxLev') + '</th>';
       html += '</tr></thead><tbody>';
       data.coin_infos.forEach(function(c) {
         html += '<tr>';
@@ -471,7 +476,7 @@ body {
     }
 
     if (!html) {
-      html = '<div class="msg-info">No results. Check that your config has approved coins.</div>';
+      html = '<div class="msg-info">' + t('misc.balance.noResults') + '</div>';
     }
 
     resultsPanel.innerHTML = html;

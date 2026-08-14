@@ -2,14 +2,42 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import textwrap
 from pathlib import Path
+
+from tests.i18n_helpers import NODE_I18N_STUB, assert_text_present
 
 
 ROOT = Path(__file__).resolve().parents[2]
 HTML_PATH = ROOT / "frontend" / "vps_manager.html"
 LOG_VIEWER_PATH = ROOT / "frontend" / "js" / "log_viewer_panel.js"
+EN_PATH = ROOT / "frontend" / "i18n" / "en.json"
+
+
+def _assert_text_fragment(source: str, fragment: str) -> None:
+    """Assert an English UI fragment is presented by the given frontend source.
+
+    ``assert_text_present`` matches i18n keys whose ``en.json`` value equals
+    the expected text. Some regression tests assert only a phrase from a longer
+    sentence, so this helper matches keys whose value contains the fragment.
+    """
+    if fragment in source:
+        return
+    en = json.loads(EN_PATH.read_text(encoding="utf-8"))
+    keys = [key for key, value in en.items() if isinstance(value, str) and fragment in value]
+    if not keys:
+        raise AssertionError(
+            f"UI fragment is neither literal in the source nor present in en.json: {fragment!r}"
+        )
+    for key in keys:
+        if f"'{key}'" in source or f'"{key}"' in source:
+            return
+    raise AssertionError(
+        f"UI fragment {fragment!r} exists in en.json ({keys[0]!r}) "
+        f"but that key is not referenced in the source"
+    )
 
 
 def test_unknown_ssh_host_confirmation_uses_exact_fingerprint() -> None:
@@ -20,7 +48,7 @@ def test_unknown_ssh_host_confirmation_uses_exact_fingerprint() -> None:
     assert "accepted_host_key_fingerprint = fingerprint" in source
     assert "accepted_host_key_fingerprint: String(msg.fingerprint || '')" in source
     assert "replace_existing_host_key = changed" in source
-    assert "Review changed key" in source
+    assert_text_present(source, "Review changed key")
 
 
 def test_add_vps_offers_pb8_live_only_profile() -> None:
@@ -28,11 +56,11 @@ def test_add_vps_offers_pb8_live_only_profile() -> None:
     source = HTML_PATH.read_text(encoding="utf-8")
 
     assert "runtime_profile: 'pb7'" in source
-    assert "PB8 Live only (no PB7)" in source
-    assert "PB7 + PB8" in source
-    assert "PB8-only setup does not clone or install PB7" in source
+    assert_text_present(source, "PB8 Live only (no PB7)")
+    assert_text_present(source, "PB7 + PB8")
+    _assert_text_fragment(source, "PB8-only setup does not clone or install PB7")
     assert "pb8Requested: ['pb8', 'pb7_pb8'].includes(String(store.addForm.runtime_profile || 'pb7'))" in source
-    assert "Setup and PB8 Live installation successful." in source
+    assert_text_present(source, "Setup and PB8 Live installation successful.")
 
 
 def _extract_function(source: str, name: str) -> str:
@@ -80,6 +108,8 @@ def _run_node_assertions(function_names: list[str], *, bootstrap: str, assertion
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+
+        {NODE_I18N_STUB}
 
         {bootstrap}
 
@@ -143,7 +173,7 @@ class TestVpsManagerFrontendLogic:
         assert "const hasBothRuntimes = !!st.pb7_installed && !!st.pb8_installed" in sidebar_source
         assert "hasBothRuntimes ? `<button" in sidebar_source
         assert "data-command='vps-update-pbgui-pb8' data-command-text='Update PBGui and PB8'" in sidebar_source
-        assert "st.pb8_installed ? 'Updates the installed PB8 runtime.'" in sidebar_source
+        assert "st.pb8_installed ? PBGuiI18n.t('vpsmgr.updatesInstalledPb8')" in sidebar_source
         assert "PB8-only leaves PBRun disabled" not in source
 
     def test_pb8_branch_sidebar_views_and_hash_routes_are_installed_only(self) -> None:
@@ -395,7 +425,7 @@ class TestVpsManagerFrontendLogic:
 
         assert "const runtimeRows = pb7Rows.concat(pb8Rows)" in render_monitor
         assert "const runtimeFallback = pb7Fallback.concat(pb8Fallback)" in render_monitor
-        assert "No running PB7 or PB8 instances reported." in source
+        assert_text_present(source, "No running PB7 or PB8 instances reported.")
         assert "data-bot-key" in source
         assert "var rowKey = pbVersion + ':' + name" in live_update
 
@@ -542,7 +572,7 @@ class TestVpsManagerFrontendLogic:
         source = HTML_PATH.read_text(encoding="utf-8")
         handle_message = _extract_function(source, "handleMessage")
 
-        assert "Setup and PB8 Live installation successful." in handle_message
+        assert_text_present(handle_message, "Setup and PB8 Live installation successful.")
         assert "Starting PB8 Live installation" not in handle_message
         assert "activeCommand === 'vps-update-pb8'" not in handle_message
         assert "switchToVpsTaskLog(store.detail.hostname, 'vps-update-pb8'" not in handle_message
@@ -571,11 +601,11 @@ class TestVpsManagerFrontendLogic:
         """Deleting a VPS record stays local while remote install purge is explicit."""
         source = HTML_PATH.read_text(encoding="utf-8")
 
-        assert "This only removes the saved VPS Manager record from PBGui" in source
+        _assert_text_fragment(source, "This only removes the saved VPS Manager record from PBGui")
         assert "function confirmPurgeVpsInstall(hostname)" in source
         assert "vpsActionWithPw(hostname, 'vps-purge-install', 'Purge VPS Install')" in source
         assert "data-vps-action='purge-vps'" in source
-        assert "data-host='${escAttr(selectedHost)}'>Purge VPS Install</button>" in source
+        assert "data-host='${escAttr(selectedHost)}'>${PBGuiI18n.t('vpsmgr.purgeVpsInstallAction')}</button>" in source
 
     def test_existing_vps_host_key_can_be_repaired_in_gui(self) -> None:
         """Expose review, exact confirmation, replacement, and reconnect in the VPS sidebar."""
@@ -587,12 +617,12 @@ class TestVpsManagerFrontendLogic:
         assert "function openSshHostKeyReviewModal(data)" in source
         assert "const hostKeyBtnClass = st.host_key_error || (hostKeyStatus !== 'known' && hostKeyStatus !== 'local') ? 'sb-btn warning' : 'sb-btn'" in sidebar_source
         assert "data-vps-action='review-host-key'" in sidebar_source
-        assert "data-host='${escAttr(selectedHost)}'>Review SSH Host Key</button>" in sidebar_source
+        assert "data-host='${escAttr(selectedHost)}'>${PBGuiI18n.t('vpsmgr.reviewSshHostKey')}</button>" in sidebar_source
         assert "reviewVpsSshHostKey" not in main_source
-        assert "Replace Key & Reconnect" in source
+        assert_text_present(source, "Replace Key & Reconnect")
         assert "expected_fingerprint: fingerprint" in source
         assert "replace_existing: status === 'mismatch'" in source
-        assert "Monitor reconnect requested" in source
+        _assert_text_fragment(source, "Monitor reconnect requested")
         assert "class='ssh-host-key-targets'" in source
         assert "class='status-sub code ssh-host-key-fingerprint'" in source
         assert "overflow-wrap: anywhere" in source
@@ -604,8 +634,8 @@ class TestVpsManagerFrontendLogic:
         preview_source = _extract_function(source, "renderExistingVpsImportPreview")
         trust_source = _extract_function(source, "trustExistingVpsImportHostKey")
 
-        assert "Replace stored key and probe again" in preview_source
-        assert "Verify this fingerprint through a trusted channel" in preview_source
+        assert_text_present(preview_source, "Replace stored key and probe again")
+        _assert_text_fragment(preview_source, "Verify this fingerprint through a trusted channel")
         assert "flow.form.accept_unknown_host = true" in trust_source
         assert "flow.form.accepted_host_key_fingerprint = fingerprint" in trust_source
 
@@ -614,11 +644,11 @@ class TestVpsManagerFrontendLogic:
         source = HTML_PATH.read_text(encoding="utf-8")
         table_source = _extract_function(source, "renderOverviewTable")
 
-        assert "{ key: 'ssh_key', label: 'SSH Key', defaultVisible: true" in source
-        assert "levelTag('ok', 'Trusted')" in table_source
-        assert "levelTag('warning', 'Unknown')" in table_source
-        assert "levelTag('error', 'Changed')" in table_source
-        assert "levelTag('error', 'Failed')" in table_source
+        assert "{ key: 'ssh_key', label: PBGuiI18n.t('vpsmgr.sshKeyLabel'), defaultVisible: true" in source
+        assert "levelTag('ok', PBGuiI18n.t('vpsmgr.trusted'))" in table_source
+        assert "levelTag('warning', PBGuiI18n.t('vpsmgr.unknown'))" in table_source
+        assert "levelTag('error', PBGuiI18n.t('vpsmgr.changed'))" in table_source
+        assert "levelTag('error', PBGuiI18n.t('vpsmgr.failed'))" in table_source
 
     def test_vps_manager_add_to_cluster_runs_complete_join(self) -> None:
         """VPS Manager exposes the complete guarded Cluster onboarding flow."""
@@ -633,12 +663,12 @@ class TestVpsManagerFrontendLogic:
         assert "if (isClusterOnboardModalVisible() && isClusterOnboardRunning()) return;" in source
         assert source.count("if (isClusterOnboardModalVisible() && isClusterOnboardRunning()) return;") >= 2
         assert "closeButton.style.display = running ? 'none' : ''" in source
-        assert "clusterNodeAction === 'resume' ? 'Resume Cluster Onboarding'" in source
-        assert "id='cluster-onboard-retry'>Retry</button>" in source
+        assert "clusterNodeAction === 'resume' ? PBGuiI18n.t('vpsmgr.resumeClusterOnboarding')" in source
+        assert "id='cluster-onboard-retry'>${PBGuiI18n.t('vpsmgr.retry')}</button>" in source
         assert "retryButton.onclick = function () { startClusterOnboard(String(flow.hostname || '')); };" in source
-        assert "install restricted Cluster keys" in source
-        assert "verify that no conflicting identity exists" in source
-        assert "VPS joined and synchronized with Cluster." in source
+        _assert_text_fragment(source, "install restricted Cluster keys")
+        _assert_text_fragment(source, "verify that no conflicting identity exists")
+        assert_text_present(source, "VPS joined and synchronized with Cluster.")
         assert "${showClusterNodeBtn ? `<button class='${clusterNodeBtnClass}'" in source
 
     def test_add_vps_initialize_requires_green_preflight_checks(self) -> None:

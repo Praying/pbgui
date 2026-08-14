@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/app/i18n.js?v=1"></script>
 <title>VPS Monitor</title>
 <style>
 /* ─── Reset & Base ─────────────────────────────────────────── */
@@ -20,7 +21,7 @@ html, body { height: 100%; overflow: hidden; }
   --red:      #ff4b4b;
   --blue:     #1f77ff;
   --accent:   #4da6ff;
-  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
 }
 body {
   font-family: var(--font);
@@ -839,14 +840,14 @@ tr.row-inactive td { opacity: 0.45; }
   <div class="ovl-panel">
     <div id="help-drag-handle"></div>
     <div class="ovl-header">
-      <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
+      <div class="ovl-header-title">&#128218; <span data-i18n="sysmon.guideHelp">Guide &amp; Help</span></div>
       <div class="ovl-header-actions">
         <div id="help-search-wrap">
-          <input id="help-search" type="text" placeholder="Search in topic…" autocomplete="off">
-          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>
-          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)">&#9660;</button>
+          <input id="help-search" type="text" placeholder="Search in topic…" data-i18n-placeholder="sysmon.helpSearchInTopic" autocomplete="off">
+          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)" data-i18n-title="sysmon.helpPreviousMatch">&#9650;</button>
+          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)" data-i18n-title="sysmon.helpNextMatch">&#9660;</button>
           <span id="help-search-count"></span>
-          <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
+          <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="sysmon.helpSearchAllTopics"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
         </div>
         <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
         <div class="lang-pill">
@@ -858,10 +859,10 @@ tr.row-inactive td { opacity: 0.45; }
     </div>
     <div id="help-body">
       <div id="help-toc">
-        <input id="help-toc-filter" type="text" placeholder="Filter topics…" autocomplete="off">
+        <input id="help-toc-filter" type="text" placeholder="Filter topics…" data-i18n-placeholder="sysmon.helpFilterTopics" autocomplete="off">
         <div id="help-toc-list"></div>
       </div>
-      <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
+      <div id="help-content"><div class="help-loading" data-i18n="sysmon.helpSelectTopic">Select a topic from the left.</div></div>
     </div>
   </div>
 </div>
@@ -878,8 +879,8 @@ tr.row-inactive td { opacity: 0.45; }
     <div class="cpu-history-resize-handle corner corner-bottom-left" data-resize="bottom-left"></div>
     <div class="cpu-history-head" id="cpu-history-head">
       <div>
-        <div id="cpu-history-title" class="cpu-history-title">CPU History</div>
-        <div id="cpu-history-sub" class="cpu-history-sub">Loading…</div>
+        <div id="cpu-history-title" class="cpu-history-title" data-i18n="sysmon.cpuHistory">CPU History</div>
+        <div id="cpu-history-sub" class="cpu-history-sub" data-i18n="sysmon.loading">Loading…</div>
       </div>
       <button class="cpu-history-close" type="button" onclick="closeCpuHistory()">&times;</button>
     </div>
@@ -891,7 +892,7 @@ tr.row-inactive td { opacity: 0.45; }
 </div>
 
 <!-- Connection Banner -->
-<div id="conn-banner" class="conn-waiting">Connecting to VPS Monitor...</div>
+<div id="conn-banner" class="conn-waiting" data-i18n="sysmon.connectingVpsMonitor">Connecting to VPS Monitor...</div>
 
 <!-- Page body: sidebar + main content -->
 <div id="page-body">
@@ -900,22 +901,22 @@ tr.row-inactive td { opacity: 0.45; }
 <div id="sidebar">
   <div id="sidebar-sticky">
     <div id="sidebar-header">
-      <span class="sb-title">VPS Monitor</span>
+      <span class="sb-title" data-i18n="sysmon.vpsMonitor">VPS Monitor</span>
     </div>
     <div id="sidebar-toolbar">
-      <button class="sb-btn active" data-tab="dashboard">&#128187; Dashboard</button>
-      <button class="sb-btn" data-tab="instances">&#128196; Instances</button>
-      <button class="sb-btn" data-tab="services">&#9881;&#65039; Services</button>
-      <button class="sb-btn" data-tab="logs">&#128203; Live Logs</button>
+      <button class="sb-btn active" data-tab="dashboard">&#128187; <span data-i18n="sysmon.dashboard">Dashboard</span></button>
+      <button class="sb-btn" data-tab="instances">&#128196; <span data-i18n="sysmon.instances">Instances</span></button>
+      <button class="sb-btn" data-tab="services">&#9881;&#65039; <span data-i18n="sysmon.services">Services</span></button>
+      <button class="sb-btn" data-tab="logs">&#128203; <span data-i18n="sysmon.liveLogs">Live Logs</span></button>
       <hr class="sb-sep">
-      <label class="sb-toggle" title="Hide IP addresses">
-        <input type="checkbox" id="hideip-check"> Hide IP
+      <label class="sb-toggle" title="Hide IP addresses" data-i18n-title="sysmon.hideIpAddresses">
+        <input type="checkbox" id="hideip-check"> <span data-i18n="sysmon.hideIp">Hide IP</span>
       </label>
-      <label class="sb-toggle" title="Reduce card size for many servers">
-        <input type="checkbox" id="compact-check"> Compact
+      <label class="sb-toggle" title="Reduce card size for many servers" data-i18n-title="sysmon.reduceCardSize">
+        <input type="checkbox" id="compact-check"> <span data-i18n="sysmon.compact">Compact</span>
       </label>
-      <label class="sb-toggle" title="Enable DEBUG entries in VPSMonitor.log">
-        <input type="checkbox" id="debuglog-check" onchange="onDebugLogChange()"> Debug log
+      <label class="sb-toggle" title="Enable DEBUG entries in VPSMonitor.log" data-i18n-title="sysmon.enableDebugEntries">
+        <input type="checkbox" id="debuglog-check" onchange="onDebugLogChange()"> <span data-i18n="sysmon.debugLog">Debug log</span>
       </label>
     </div>
   </div>
@@ -957,7 +958,7 @@ tr.row-inactive td { opacity: 0.45; }
 </div><!-- /#main-content -->
 </div><!-- /#page-body -->
 
-<script src="/app/js/log_viewer_panel.js?v=29"></script>
+<script src="/app/js/log_viewer_panel.js?v=30"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    VPS Monitor — WebSocket-powered real-time dashboard
@@ -1018,7 +1019,7 @@ function connect() {
       if (banner) {
         banner.className = 'conn-lost';
         banner.style.display = 'block';
-        banner.textContent = 'Session expired. Returning to login...';
+        banner.textContent = PBGuiI18n.t('sysmon.sessionExpired');
       }
       window.location.replace('/');
       return;
@@ -1053,7 +1054,7 @@ function setBanner(status) {
   if (status === 'ok') { b.style.display = 'none'; }
   else {
     b.style.display = 'block';
-    b.textContent = status === 'lost' ? 'Connection lost — reconnecting...' : 'Connecting to VPS Monitor...';
+    b.textContent = status === 'lost' ? PBGuiI18n.t('sysmon.connectionLost') : PBGuiI18n.t('sysmon.connectingVpsMonitor');
   }
 }
 
@@ -1105,26 +1106,26 @@ function tooltipTextForMetrics(label, metrics) {
   }
   if (label === 'RAM') {
     return [
-      'RAM used: ' + fmtBytes(metrics.mem_used),
-      'RAM free: ' + fmtBytes(metrics.mem_available),
-      'RAM total: ' + fmtBytes(metrics.mem_total),
-      'Usage: ' + (Number(metrics.mem_percent || 0)).toFixed(1) + '%',
+      PBGuiI18n.t('sysmon.ramUsed', {v: fmtBytes(metrics.mem_used)}),
+      PBGuiI18n.t('sysmon.ramFree', {v: fmtBytes(metrics.mem_available)}),
+      PBGuiI18n.t('sysmon.ramTotal', {v: fmtBytes(metrics.mem_total)}),
+      PBGuiI18n.t('sysmon.usage', {v: (Number(metrics.mem_percent || 0)).toFixed(1) + '%'}),
     ].join('\n');
   }
   if (label === 'Disk') {
     return [
-      'Disk used: ' + fmtBytes(metrics.disk_used),
-      'Disk free: ' + fmtBytes(metrics.disk_free),
-      'Disk total: ' + fmtBytes(metrics.disk_total),
-      'Usage: ' + (Number(metrics.disk_percent || 0)).toFixed(1) + '%',
+      PBGuiI18n.t('sysmon.diskUsed', {v: fmtBytes(metrics.disk_used)}),
+      PBGuiI18n.t('sysmon.diskFree', {v: fmtBytes(metrics.disk_free)}),
+      PBGuiI18n.t('sysmon.diskTotal', {v: fmtBytes(metrics.disk_total)}),
+      PBGuiI18n.t('sysmon.usage', {v: (Number(metrics.disk_percent || 0)).toFixed(1) + '%'}),
     ].join('\n');
   }
   if (label === 'Swap') {
     return [
-      'Swap used: ' + fmtBytes(metrics.swap_used),
-      'Swap free: ' + fmtBytes(metrics.swap_free),
-      'Swap total: ' + fmtBytes(metrics.swap_total),
-      'Usage: ' + (Number(metrics.swap_percent || 0)).toFixed(1) + '%',
+      PBGuiI18n.t('sysmon.swapUsed', {v: fmtBytes(metrics.swap_used)}),
+      PBGuiI18n.t('sysmon.swapFree', {v: fmtBytes(metrics.swap_free)}),
+      PBGuiI18n.t('sysmon.swapTotal', {v: fmtBytes(metrics.swap_total)}),
+      PBGuiI18n.t('sysmon.usage', {v: (Number(metrics.swap_percent || 0)).toFixed(1) + '%'}),
     ].join('\n');
   }
   return '';
@@ -1210,8 +1211,8 @@ function handleResult(msg) {
     if (btn) {
       btn.disabled = false;
       btn.classList.remove('restarting');
-      btn.textContent = msg.success ? '✅ Restarted' : '❌ Failed';
-      setTimeout(() => { btn.textContent = 'Restart'; }, 3000);
+      btn.textContent = msg.success ? ('✅ ' + PBGuiI18n.t('sysmon.restarted')) : ('❌ ' + PBGuiI18n.t('sysmon.failed'));
+      setTimeout(() => { btn.textContent = PBGuiI18n.t('sysmon.restart'); }, 3000);
     }
   }
   if (msg.cmd === 'kill_instance') {
@@ -1294,11 +1295,11 @@ function pctColor(pct) {
 }
 
 function ageStr(ts) {
-  if (!ts || ts <= 0) return 'no data';
+  if (!ts || ts <= 0) return PBGuiI18n.t('sysmon.noData');
   const age = (Date.now() / 1000) - ts;
-  if (age < 0) return 'future?';
-  if (age < 60) return Math.round(age) + 's ago';
-  return (age / 60).toFixed(1) + 'm ago';
+  if (age < 0) return PBGuiI18n.t('sysmon.future');
+  if (age < 60) return PBGuiI18n.t('sysmon.secondsAgo', {n: Math.round(age)});
+  return PBGuiI18n.t('sysmon.minutesAgo', {n: (age / 60).toFixed(1)});
 }
 
 const TELEMETRY_STALE_SECONDS = 15;
@@ -1359,7 +1360,7 @@ function monitorAgentHealth(agent, metrics, stream, nowSeconds) {
   if (!agent || typeof agent !== 'object' || !Object.keys(agent).length) {
     return {
       state: 'unknown',
-      label: 'Unknown',
+      label: PBGuiI18n.t('common.unknown'),
       badgeClass: 'badge-neutral',
       liveAge: telemetryAgeSeconds(metrics, stream),
       heartbeatAge: null,
@@ -1412,11 +1413,11 @@ function monitorAgentHealth(agent, metrics, stream, nowSeconds) {
   else if (explicitState === 'ok') healthState = 'ok';
 
   const models = {
-    ok: { label: 'OK', badgeClass: 'badge-green' },
-    stale: { label: 'Stale', badgeClass: 'badge-orange' },
-    missing: { label: 'Missing', badgeClass: 'badge-red' },
-    error: { label: 'Error', badgeClass: 'badge-red' },
-    unknown: { label: 'Unknown', badgeClass: 'badge-neutral' },
+    ok: { label: PBGuiI18n.t('sysmon.ok'), badgeClass: 'badge-green' },
+    stale: { label: PBGuiI18n.t('sysmon.stale'), badgeClass: 'badge-orange' },
+    missing: { label: PBGuiI18n.t('sysmon.missing'), badgeClass: 'badge-red' },
+    error: { label: PBGuiI18n.t('common.error'), badgeClass: 'badge-red' },
+    unknown: { label: PBGuiI18n.t('common.unknown'), badgeClass: 'badge-neutral' },
   };
   return { state: healthState, label: models[healthState].label, badgeClass: models[healthState].badgeClass, liveAge, heartbeatAge, heartbeatBaseAge, files, errors: errors.filter(Boolean).slice(0, 4) };
 }
@@ -1435,16 +1436,16 @@ function renderMonitorAgentDetails(agent, metrics, stream, nowSeconds) {
     return `<span class="agent-file agent-file-${file.state}">${esc(file.name)}: ${esc(file.state)}${file.age === null ? '' : ' (' + esc(formatAgentAge(file.age)) + ')'}</span>`;
   }).join('');
   const errorHtml = health.errors.length
-    ? `<div class="agent-errors"><strong>Collector errors:</strong> ${health.errors.map(esc).join(' | ')}</div>`
+    ? `<div class="agent-errors"><strong>${PBGuiI18n.t('sysmon.collectorErrors')}</strong> ${health.errors.map(esc).join(' | ')}</div>`
     : '';
   const helpHtml = health.state === 'ok' ? '' : '<div class="agent-help">Troubleshooting: inspect <code>systemctl --user status pbgui-monitor-agent.service</code> and <code>journalctl --user -u pbgui-monitor-agent.service</code>. Restart with <code>systemctl --user restart pbgui-monitor-agent.service</code>. SSH can remain connected while telemetry is stale.</div>';
   return `<div class="agent-panel agent-${health.state}">
     <div class="agent-summary">
-      <span><strong>Source:</strong> monitor-agent cache</span>
-      <span><strong>Live effective age:</strong> ${esc(formatAgentAge(health.liveAge))} (healthy through ${TELEMETRY_STALE_SECONDS}s)</span>
-      <span><strong>Collector heartbeat:</strong> ${esc(formatAgentAge(health.heartbeatBaseAge))}; <strong>effective age:</strong> ${esc(formatAgentAge(health.heartbeatAge))} (healthy through ${MONITOR_AGENT_COLLECTOR_STALE_SECONDS}s)</span>
+      <span><strong>${PBGuiI18n.t('sysmon.source')}</strong> ${PBGuiI18n.t('sysmon.monitorAgentCache')}</span>
+      <span><strong>${PBGuiI18n.t('sysmon.liveEffectiveAge')}</strong> ${esc(formatAgentAge(health.liveAge))} (${PBGuiI18n.t('sysmon.healthyThrough', {n: TELEMETRY_STALE_SECONDS})})</span>
+      <span><strong>${PBGuiI18n.t('sysmon.collectorHeartbeat')}</strong> ${esc(formatAgentAge(health.heartbeatBaseAge))}; <strong>${PBGuiI18n.t('sysmon.effectiveAge')}</strong> ${esc(formatAgentAge(health.heartbeatAge))} (${PBGuiI18n.t('sysmon.healthyThrough', {n: MONITOR_AGENT_COLLECTOR_STALE_SECONDS})})</span>
     </div>
-    <div class="agent-files"><strong>Required files:</strong> ${fileHtml}</div>
+    <div class="agent-files"><strong>${PBGuiI18n.t('sysmon.requiredFiles')}</strong> ${fileHtml}</div>
     ${errorHtml}${helpHtml}
   </div>`;
 }
@@ -1463,10 +1464,10 @@ function renderDashboard() {
   const disconnected = total - connected - connecting;
   const summaryEl = document.getElementById('dash-summary');
   summaryEl.innerHTML = `
-    <span class="summary-item"><span class="summary-dot" style="background:var(--green)"></span> ${connected} connected</span>
-    <span class="summary-item"><span class="summary-dot" style="background:var(--orange)"></span> ${connecting} connecting</span>
-    <span class="summary-item"><span class="summary-dot" style="background:var(--red)"></span> ${disconnected} disconnected</span>
-    <span class="summary-item" style="color:var(--text-dim)">Updated: ${ageStr(state.timestamp)}</span>
+    <span class="summary-item"><span class="summary-dot" style="background:var(--green)"></span> ${PBGuiI18n.t('sysmon.connectedCount', {n: connected})}</span>
+    <span class="summary-item"><span class="summary-dot" style="background:var(--orange)"></span> ${PBGuiI18n.t('sysmon.connectingCount', {n: connecting})}</span>
+    <span class="summary-item"><span class="summary-dot" style="background:var(--red)"></span> ${PBGuiI18n.t('sysmon.disconnectedCount', {n: disconnected})}</span>
+    <span class="summary-item" style="color:var(--text-dim)">${PBGuiI18n.t('sysmon.updated', {t: ageStr(state.timestamp)})}</span>
   `;
 
   // VPS cards
@@ -1503,11 +1504,11 @@ function renderDashboard() {
     html += `<div class="vps-header" data-monitor-action="toggle-card">`;
     html += `<span class="vps-title">${isConn ? '✅' : (isConnecting ? '⏳' : '❌')} ${esc(host)}`;
     html += ` <span class="vps-badge ${isConn ? 'badge-green' : (isConnecting ? 'badge-orange' : 'badge-red')}"${hideIP ? ' style="display:none"' : ''}>${esc(info.ip || '?')}</span>`;
-    html += ` <span class="vps-badge ${agentHealth.badgeClass}" style="font-size:10px">Monitor Agent: ${agentHealth.label}</span>`;
+    html += ` <span class="vps-badge ${agentHealth.badgeClass}" style="font-size:10px">${PBGuiI18n.t('sysmon.monitorAgentLabel', {label: agentHealth.label})}</span>`;
     if (lastUpdate) {
       const streamAge = lastUpdate ? (Date.now()/1000 - lastUpdate) : -1;
       const ageColor = metricsFresh ? (streamAge < 5 ? 'green' : 'orange') : 'red';
-      const ageText = metricsFresh ? ageStr(lastUpdate) : ('stale ' + ageStr(lastUpdate));
+      const ageText = metricsFresh ? ageStr(lastUpdate) : PBGuiI18n.t('sysmon.staleAge', {age: ageStr(lastUpdate)});
       html += ` <span class="vps-badge badge-${ageColor}" style="font-size:10px">${ageText}</span>`;
     }
     html += `</span>`;
@@ -1523,7 +1524,7 @@ function renderDashboard() {
           html += compactMetric('Swap', fmtBytes(metrics.swap_used), metrics.swap_percent, '', tooltipTextForMetrics('Swap', metrics), ` class="cpu-clickable compact-metric" data-history-host="${escAttr(host)}" data-history-metric="swap"`);
         }
       } else {
-        html += `<span class="compact-metric"><span class="cm-label">Metrics</span><span class="cm-value" style="color:var(--red)">stale</span><span class="cm-sub">${esc(ageStr(lastUpdate))}</span></span>`;
+        html += `<span class="compact-metric"><span class="cm-label">${PBGuiI18n.t('sysmon.metrics')}</span><span class="cm-value" style="color:var(--red)">${PBGuiI18n.t('sysmon.staleText')}</span><span class="cm-sub">${esc(ageStr(lastUpdate))}</span></span>`;
       }
       html += `</span>`;
     }
@@ -1534,13 +1535,13 @@ function renderDashboard() {
 
     if (!isConn) {
       const err = info.error || info.last_error || '';
-      const statusText = isConnecting ? 'Connecting...' : 'Disconnected';
+      const statusText = isConnecting ? PBGuiI18n.t('sysmon.connecting') : PBGuiI18n.t('sysmon.disconnected');
       const statusColor = isConnecting ? 'var(--orange)' : 'var(--red)';
       html += `<div style="color:${statusColor};padding:8px 0">${statusText}${err ? ': ' + esc(err) : ''}</div>`;
     } else if (!metrics) {
-      html += `<div style="color:var(--text-dim);padding:8px 0">Waiting for system metrics...</div>`;
+      html += `<div style="color:var(--text-dim);padding:8px 0">${PBGuiI18n.t('sysmon.waitingSystemMetrics')}</div>`;
     } else if (!metricsFresh) {
-      html += `<div style="color:var(--orange);padding:8px 0">Live system metrics are stale after ${TELEMETRY_STALE_SECONDS}s. Last update: ${esc(ageStr(lastUpdate))}. The cache stream will reconnect without marking SSH disconnected.</div>`;
+      html += `<div style="color:var(--orange);padding:8px 0">${PBGuiI18n.t('sysmon.metricsStale', {n: TELEMETRY_STALE_SECONDS, t: esc(ageStr(lastUpdate))})}</div>`;
     } else {
       const cpuUi = cpuTelemetry(metrics);
       html += `<div class="metrics-grid">`;
@@ -1560,7 +1561,7 @@ function renderDashboard() {
   }
 
   if (!sorted.length) {
-    html = '<div style="padding:24px;text-align:center;color:var(--text-dim)">No VPS servers configured.</div>';
+    html = '<div style="padding:24px;text-align:center;color:var(--text-dim)">' + PBGuiI18n.t('sysmon.noVpsConfigured') + '</div>';
   }
   cardsEl.innerHTML = html;
 }
@@ -1589,14 +1590,14 @@ function compactMetric(label, value, pct, sub, title, extraAttrs) {
 }
 
 const METRIC_HISTORY_META = {
-  cpu: { label: 'CPU', source: 'cpu_60s', unit: '%', empty: 'No confirmed 60s samples stored yet.' },
-  memory: { label: 'Memory', source: 'mem_percent', unit: '%', botSource: 'rss_mb', botUnit: 'MB', empty: 'No memory history available yet.', botEmpty: 'No bot memory history available yet.' },
-  disk: { label: 'Disk', source: 'disk_percent', unit: '%', empty: 'No disk history available yet.' },
-  swap: { label: 'Swap', source: 'swap_percent', unit: '%', botSource: 'swap_mb', botUnit: 'MB', empty: 'No swap history available yet.', botEmpty: 'No bot swap history available yet.' },
-  errors: { label: 'Errors', source: 'passivbot.log', unit: '', empty: 'No bot error history available yet.', timezoneBasis: 'UTC', countMetric: true },
-  tracebacks: { label: 'Tracebacks', source: 'passivbot_err.log', unit: '', empty: 'No bot traceback history available yet.', timezoneBasis: 'UTC', countMetric: true },
-  pnl: { label: 'PNL', source: 'passivbot.log', unit: '', empty: 'No bot PNL history available yet.', timezoneBasis: 'UTC', pnlMetric: true },
-  pnl_fills: { label: 'Fills', source: 'passivbot.log', unit: '', empty: 'No bot fill history available yet.', timezoneBasis: 'UTC', fillsMetric: true },
+  cpu: { label: 'CPU', source: 'cpu_60s', unit: '%', empty: PBGuiI18n.t('sysmon.noCpuSamples') },
+  memory: { label: PBGuiI18n.t('sysmon.memory'), source: 'mem_percent', unit: '%', botSource: 'rss_mb', botUnit: 'MB', empty: PBGuiI18n.t('sysmon.noMemoryHistory'), botEmpty: PBGuiI18n.t('sysmon.noBotMemoryHistory') },
+  disk: { label: PBGuiI18n.t('sysmon.disk'), source: 'disk_percent', unit: '%', empty: PBGuiI18n.t('sysmon.noDiskHistory') },
+  swap: { label: PBGuiI18n.t('sysmon.swap'), source: 'swap_percent', unit: '%', botSource: 'swap_mb', botUnit: 'MB', empty: PBGuiI18n.t('sysmon.noSwapHistory'), botEmpty: PBGuiI18n.t('sysmon.noBotSwapHistory') },
+  errors: { label: PBGuiI18n.t('sysmon.errors'), source: 'passivbot.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotErrorHistory'), timezoneBasis: 'UTC', countMetric: true },
+  tracebacks: { label: PBGuiI18n.t('sysmon.tracebacks'), source: 'passivbot_err.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotTracebackHistory'), timezoneBasis: 'UTC', countMetric: true },
+  pnl: { label: 'PNL', source: 'passivbot.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotPnlHistory'), timezoneBasis: 'UTC', pnlMetric: true },
+  pnl_fills: { label: PBGuiI18n.t('sysmon.fills'), source: 'passivbot.log', unit: '', empty: PBGuiI18n.t('sysmon.noBotFillHistory'), timezoneBasis: 'UTC', fillsMetric: true },
 };
 
 function metricHistoryMeta(metric) {
@@ -1605,24 +1606,25 @@ function metricHistoryMeta(metric) {
 
 function metricHistoryTitle(metric, host, bot) {
   const meta = metricHistoryMeta(metric);
-  return bot ? (meta.label + ' History - ' + bot + ' @ ' + host) : (meta.label + ' History - ' + host);
+  const target = bot ? (bot + ' @ ' + host) : host;
+  return PBGuiI18n.t('sysmon.historyTitle', {label: meta.label, target: target});
 }
 
 function metricHistorySubtitle(metric, payload) {
   const meta = metricHistoryMeta(metric);
   const source = String((payload && payload.source) || meta.source || '').trim();
-  if (meta.countMetric) return '4w history, 1 sample/hour, UTC day totals, source: ' + source;
-  if (meta.fillsMetric) return 'full history from available logs, UTC daily fill totals, source: ' + source;
-  if (meta.pnlMetric) return 'full history from available logs, UTC daily aggregates, source: ' + source;
-  return '24h history, 1 sample/minute, source: ' + source;
+  if (meta.countMetric) return PBGuiI18n.t('sysmon.countSubtitle', {source: source});
+  if (meta.fillsMetric) return PBGuiI18n.t('sysmon.fillsSubtitle', {source: source});
+  if (meta.pnlMetric) return PBGuiI18n.t('sysmon.pnlSubtitle', {source: source});
+  return PBGuiI18n.t('sysmon.hourlySubtitle', {source: source});
 }
 
 function metricHistoryLoadingSubtitle(metric, botName) {
   const meta = metricHistoryMeta(metric);
   const source = botName && meta.botSource ? meta.botSource : meta.source;
-  if (meta.fillsMetric) return 'Loading full ' + source + ' fill history...';
-  if (meta.pnlMetric) return 'Loading full ' + source + ' history...';
-  return (meta.countMetric ? 'Loading 4w ' : 'Loading 24h ') + source + ' history...';
+  if (meta.fillsMetric) return PBGuiI18n.t('sysmon.loadingFillsHistory', {source: source});
+  if (meta.pnlMetric) return PBGuiI18n.t('sysmon.loadingFullHistory', {source: source});
+  return (meta.countMetric ? PBGuiI18n.t('sysmon.loading4wHistory', {source: source}) : PBGuiI18n.t('sysmon.loading24hHistory', {source: source}));
 }
 
 function metricHistoryUnit(metric, payload) {
@@ -2024,10 +2026,10 @@ function renderInstances() {
   // Only rebuild filters if they changed
   if (!filtersEl.dataset.built) {
     filtersEl.innerHTML = `
-      <label>Server: <select id="f-server">${servers.map(s => `<option${s===instFilterServer?' selected':''}>${esc(s)}</option>`).join('')}</select></label>
-      <label>Version: <select id="f-version">${versions.map(v => `<option${v===instFilterVersion?' selected':''}>${esc(v)}</option>`).join('')}</select></label>
-      <label><input type="checkbox" id="f-errors" ${instFilterErrors?'checked':''}> Only with errors</label>
-      <label><input type="checkbox" id="f-others" ${instFilterOthers?'checked':''}> Show other</label>
+      <label>${PBGuiI18n.t('sysmon.server')} <select id="f-server">${servers.map(s => `<option value="${esc(s)}"${s===instFilterServer?' selected':''}>${s === 'All' ? esc(PBGuiI18n.t('common.all')) : esc(s)}</option>`).join('')}</select></label>
+      <label>${PBGuiI18n.t('sysmon.version')} <select id="f-version">${versions.map(v => `<option value="${esc(v)}"${v===instFilterVersion?' selected':''}>${v === 'All' ? esc(PBGuiI18n.t('common.all')) : esc(v)}</option>`).join('')}</select></label>
+      <label><input type="checkbox" id="f-errors" ${instFilterErrors?'checked':''}> ${PBGuiI18n.t('sysmon.onlyWithErrors')}</label>
+      <label><input type="checkbox" id="f-others" ${instFilterOthers?'checked':''}> ${PBGuiI18n.t('sysmon.showOther')}</label>
     `;
     filtersEl.dataset.built = '1';
     document.getElementById('f-server').onchange = (e) => { instFilterServer = e.target.value; filtersEl.dataset.built = ''; renderInstances(); };
@@ -2062,18 +2064,18 @@ function renderInstances() {
     return na < nb ? -1 : na > nb ? 1 : 0;
   });
 
-  document.getElementById('inst-count').textContent = `${filtered.length} of ${rows.length} instances`;
+  document.getElementById('inst-count').textContent = PBGuiI18n.t('sysmon.instancesOf', {filtered: filtered.length, total: rows.length});
 
   // Table header
   const cols = [
-    {key:'host',label:'Server'},{key:'version',label:'Version'},{key:'name',label:'Name'},
-    {key:'syncStatus',label:'Sync'},{key:'enabledOn',label:'Enabled On'},
-    {key:'configVer',label:'Cfg Ver'},{key:'runningVer',label:'Run Ver'},
-    {key:'start',label:'Start'},{key:'memMB',label:'Mem (MB)'},{key:'cpu',label:'CPU %'},{key:'swapMB',label:'Swap (MB)'},
-    {key:'pnlToday',label:'PnL Today'},{key:'fillsToday',label:'Fills'},
-    {key:'pnlHist',label:'PnL Hist'},{key:'fillsHist',label:'Fills Hist'},
-    {key:'errorsToday',label:'Err Tdy'},{key:'errors4w',label:'Err 4W'},
-    {key:'tbsToday',label:'TB Tdy'},{key:'tbs4w',label:'TB 4W'},
+    {key:'host',label:PBGuiI18n.t('sysmon.server')},{key:'version',label:PBGuiI18n.t('sysmon.version')},{key:'name',label:PBGuiI18n.t('sysmon.name')},
+    {key:'syncStatus',label:PBGuiI18n.t('sysmon.sync')},{key:'enabledOn',label:PBGuiI18n.t('sysmon.enabledOn')},
+    {key:'configVer',label:PBGuiI18n.t('sysmon.cfgVer')},{key:'runningVer',label:PBGuiI18n.t('sysmon.runVer')},
+    {key:'start',label:PBGuiI18n.t('sysmon.start')},{key:'memMB',label:PBGuiI18n.t('sysmon.memMb')},{key:'cpu',label:PBGuiI18n.t('sysmon.cpuPct')},{key:'swapMB',label:PBGuiI18n.t('sysmon.swapMb')},
+    {key:'pnlToday',label:PBGuiI18n.t('sysmon.pnlToday')},{key:'fillsToday',label:PBGuiI18n.t('sysmon.fills')},
+    {key:'pnlHist',label:PBGuiI18n.t('sysmon.pnlHist')},{key:'fillsHist',label:PBGuiI18n.t('sysmon.fillsHist')},
+    {key:'errorsToday',label:PBGuiI18n.t('sysmon.errTdy')},{key:'errors4w',label:PBGuiI18n.t('sysmon.err4w')},
+    {key:'tbsToday',label:PBGuiI18n.t('sysmon.tbTdy')},{key:'tbs4w',label:PBGuiI18n.t('sysmon.tb4w')},
     {key:'_actions',label:''},
   ];
 
@@ -2124,8 +2126,8 @@ function renderInstances() {
 function renderInstanceActions(row) {
   const r = row || {};
   const attrs = `data-host="${escAttr(r.host)}" data-bot="${escAttr(r.name)}" data-pb-version="${escAttr(r.pbVersion)}"`;
-  return `<button class="inst-action" type="button" title="View Log" data-monitor-action="view-instance-log" ${attrs}>📋</button>
-    <button class="inst-action" type="button" title="Restart (kill)" data-monitor-action="kill-instance" ${attrs}>🔄</button>`;
+  return `<button class="inst-action" type="button" title="${escAttr(PBGuiI18n.t('sysmon.viewLog'))}" data-monitor-action="view-instance-log" ${attrs}>📋</button>
+    <button class="inst-action" type="button" title="${escAttr(PBGuiI18n.t('sysmon.restartKill'))}" data-monitor-action="kill-instance" ${attrs}>🔄</button>`;
 }
 
 function instanceCpuCell(host, name, liveCpu, cpu60s, cpu60sWindow) {
@@ -2166,7 +2168,7 @@ window.openMetricHistory = function openMetricHistory(host, metricName, botName)
   const metaInfo = metricHistoryMeta(metric);
   sub.textContent = metricHistoryLoadingSubtitle(metric, bot);
   meta.innerHTML = '';
-  chart.innerHTML = '<div style="color:var(--text-dim);padding:24px;text-align:center">Loading…</div>';
+  chart.innerHTML = '<div style="color:var(--text-dim);padding:24px;text-align:center">' + PBGuiI18n.t('sysmon.loading') + '</div>';
   send({ cmd: requestMetric === 'cpu' ? 'get_cpu_history' : 'get_metric_history', host: hostName, bot_name: bot, metric: requestMetric, sid: String(rid) });
 };
 
@@ -2262,15 +2264,15 @@ function renderCpuHistoryMeta(data, points, metric) {
   const metaInfo = metricHistoryMeta(metric);
   const showThresholds = !metaInfo.pnlMetric && !metaInfo.fillsMetric;
   return [
-    metaInfo.pnlMetric ? cpuChartPill('Total PNL', metricHistoryValueLabel(metric, totalPnl, data)) : '',
-    (metaInfo.pnlMetric || metaInfo.fillsMetric) ? cpuChartPill('Total fills', String(totalFills == null ? 'n/a' : totalFills)) : '',
-    cpuChartPill('Latest', metricHistoryValueLabel(metric, latest, data)),
-    cpuChartPill('Peak', metricHistoryValueLabel(metric, peak, data)),
-    metaInfo.pnlMetric && bestDayPnl != null ? cpuChartPill('Best day', metricHistoryValueLabel(metric, bestDayPnl, data)) : '',
-    metaInfo.pnlMetric && worstDayPnl != null ? cpuChartPill('Worst day', metricHistoryValueLabel(metric, worstDayPnl, data)) : '',
-    showThresholds && warningThreshold != null ? cpuChartPill('Warning', metricHistoryValueLabel(metric, warningThreshold, data)) : '',
-    showThresholds && errorThreshold != null ? cpuChartPill('Error', metricHistoryValueLabel(metric, errorThreshold, data)) : '',
-    cpuChartPill(metaInfo.countMetric ? 'Last hour' : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? 'Last fill' : 'Last sample'), metaInfo.countMetric ? lastSeenHourly : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? (lastFillTs > 0 ? new Date(lastFillTs * 1000).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : 'n/a') : lastSeen)),
+    metaInfo.pnlMetric ? cpuChartPill(PBGuiI18n.t('sysmon.totalPnl'), metricHistoryValueLabel(metric, totalPnl, data)) : '',
+    (metaInfo.pnlMetric || metaInfo.fillsMetric) ? cpuChartPill(PBGuiI18n.t('sysmon.totalFills'), String(totalFills == null ? 'n/a' : totalFills)) : '',
+    cpuChartPill(PBGuiI18n.t('sysmon.latest'), metricHistoryValueLabel(metric, latest, data)),
+    cpuChartPill(PBGuiI18n.t('sysmon.peak'), metricHistoryValueLabel(metric, peak, data)),
+    metaInfo.pnlMetric && bestDayPnl != null ? cpuChartPill(PBGuiI18n.t('sysmon.bestDay'), metricHistoryValueLabel(metric, bestDayPnl, data)) : '',
+    metaInfo.pnlMetric && worstDayPnl != null ? cpuChartPill(PBGuiI18n.t('sysmon.worstDay'), metricHistoryValueLabel(metric, worstDayPnl, data)) : '',
+    showThresholds && warningThreshold != null ? cpuChartPill(PBGuiI18n.t('sysmon.warning'), metricHistoryValueLabel(metric, warningThreshold, data)) : '',
+    showThresholds && errorThreshold != null ? cpuChartPill(PBGuiI18n.t('common.error'), metricHistoryValueLabel(metric, errorThreshold, data)) : '',
+    cpuChartPill(metaInfo.countMetric ? PBGuiI18n.t('sysmon.lastHour') : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? PBGuiI18n.t('sysmon.lastFill') : PBGuiI18n.t('sysmon.lastSample')), metaInfo.countMetric ? lastSeenHourly : ((metaInfo.pnlMetric || metaInfo.fillsMetric) ? (lastFillTs > 0 ? new Date(lastFillTs * 1000).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : 'n/a') : lastSeen)),
   ].join('');
 }
 
@@ -2280,7 +2282,7 @@ function cpuChartPill(label, value) {
 
 function renderCpuHistoryChart(data, points, metric) {
   if (!points.length) {
-    return '<div style="color:var(--text-dim);padding:24px;text-align:center">No history available yet.</div>';
+    return '<div style="color:var(--text-dim);padding:24px;text-align:center">' + PBGuiI18n.t('sysmon.noHistoryAvailable') + '</div>';
   }
   const meta = metricHistoryMeta(metric);
   const width = 920;
@@ -2335,16 +2337,16 @@ function renderCpuHistoryChart(data, points, metric) {
     if (dayPath) {
       dailyLine = `<path d="${dayPath}" fill="none" stroke="rgba(171,219,255,0.92)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
     }
-    dailyLabels = `<text x="${pad.left}" y="${pad.top + 14}" fill="rgba(171,219,255,0.9)" font-size="11">daily UTC</text>`
-      + `<text x="${pad.left + 72}" y="${pad.top + 14}" fill="rgba(93,196,255,0.72)" font-size="11">hourly UTC</text>`;
+    dailyLabels = `<text x="${pad.left}" y="${pad.top + 14}" fill="rgba(171,219,255,0.9)" font-size="11">${PBGuiI18n.t('sysmon.dailyUtc')}</text>`
+      + `<text x="${pad.left + 72}" y="${pad.top + 14}" fill="rgba(93,196,255,0.72)" font-size="11">${PBGuiI18n.t('sysmon.hourlyUtc')}</text>`;
   }
   const zeroLine = meta.pnlMetric && minValue < 0 && maxValue > 0 ? `<line x1="${pad.left}" y1="${y(0).toFixed(1)}" x2="${(width - pad.right)}" y2="${y(0).toFixed(1)}" stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="3 3" />` : '';
   const warningLine = warningThreshold == null ? '' : `<line x1="${pad.left}" y1="${y(warningThreshold).toFixed(1)}" x2="${(width - pad.right)}" y2="${y(warningThreshold).toFixed(1)}" stroke="rgba(244,185,66,0.85)" stroke-width="1.5" stroke-dasharray="6 4" />`;
   const errorLine = errorThreshold == null ? '' : `<line x1="${pad.left}" y1="${y(errorThreshold).toFixed(1)}" x2="${(width - pad.right)}" y2="${y(errorThreshold).toFixed(1)}" stroke="rgba(255,75,75,0.78)" stroke-width="1.5" stroke-dasharray="6 4" />`;
-  const warningLabel = warningThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(warningThreshold) - 6).toFixed(1)}" text-anchor="end" fill="rgba(244,210,120,0.95)" font-size="11">warning ${metricHistoryValueLabel(metric, warningThreshold, data)}</text>`;
-  const errorLabel = errorThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(errorThreshold) + 14).toFixed(1)}" text-anchor="end" fill="rgba(255,120,120,0.95)" font-size="11">error ${metricHistoryValueLabel(metric, errorThreshold, data)}</text>`;
-  const rangeLabel = meta.countMetric ? '4 week' : ((meta.pnlMetric || meta.fillsMetric) ? 'full' : '24 hour');
-  const startLabel = meta.countMetric ? '4w ago' : ((meta.pnlMetric || meta.fillsMetric) ? 'first day' : '24h ago');
+  const warningLabel = warningThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(warningThreshold) - 6).toFixed(1)}" text-anchor="end" fill="rgba(244,210,120,0.95)" font-size="11">${PBGuiI18n.t('sysmon.warningValue', {v: metricHistoryValueLabel(metric, warningThreshold, data)})}</text>`;
+  const errorLabel = errorThreshold == null ? '' : `<text x="${width - pad.right}" y="${(y(errorThreshold) + 14).toFixed(1)}" text-anchor="end" fill="rgba(255,120,120,0.95)" font-size="11">${PBGuiI18n.t('sysmon.errorValue', {v: metricHistoryValueLabel(metric, errorThreshold, data)})}</text>`;
+  const rangeLabel = meta.countMetric ? PBGuiI18n.t('sysmon.range4week') : ((meta.pnlMetric || meta.fillsMetric) ? PBGuiI18n.t('sysmon.rangeFull') : PBGuiI18n.t('sysmon.range24hour'));
+  const startLabel = meta.countMetric ? PBGuiI18n.t('sysmon.start4wAgo') : ((meta.pnlMetric || meta.fillsMetric) ? PBGuiI18n.t('sysmon.startFirstDay') : PBGuiI18n.t('sysmon.start24hAgo'));
   let xAxisLabels = '';
   if ((meta.pnlMetric || meta.fillsMetric) && Array.isArray(data && data.days) && data.days.length) {
     const tickCount = Math.min(4, data.days.length);
@@ -2373,7 +2375,7 @@ function renderCpuHistoryChart(data, points, metric) {
       <path d="${path}" fill="none" stroke="rgba(93,196,255,0.95)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></path>
       ${pointMarkers}
       ${dailyLabels}
-      ${xAxisLabels || `<text x="${pad.left}" y="${height - 8}" fill="rgba(255,255,255,0.55)" font-size="11">${startLabel}</text><text x="${width - pad.right}" y="${height - 8}" text-anchor="end" fill="rgba(255,255,255,0.55)" font-size="11">now</text>`}
+      ${xAxisLabels || `<text x="${pad.left}" y="${height - 8}" fill="rgba(255,255,255,0.55)" font-size="11">${startLabel}</text><text x="${width - pad.right}" y="${height - 8}" text-anchor="end" fill="rgba(255,255,255,0.55)" font-size="11">${PBGuiI18n.t('sysmon.now')}</text>`}
     </svg>`;
 }
 
@@ -2399,7 +2401,7 @@ function killInstance(host, name, pbVersion, el) {
   if (el) {
     el.style.opacity = '1';
     el.textContent = '⏳';
-    el.title = 'Killing...';
+    el.title = PBGuiI18n.t('sysmon.killing');
   }
   send({ cmd: 'kill_instance', host: host, name: name, pb_version: pbVersion });
 }
@@ -2409,6 +2411,16 @@ function errClass(v) { return v === 0 ? 'err-none' : v < 10 ? 'err-low' : 'err-h
 function syncLabel(s) {
   const map = {synced:'synced',outdated:'outdated',pending:'pending',stopped:'stopped',disabled:'disabled'};
   return map[s] || '–';
+}
+function svcStatusLabel(s) {
+  const map = {
+    running: PBGuiI18n.t('sysmon.running'),
+    stopped: PBGuiI18n.t('sysmon.stopped'),
+    restarting: PBGuiI18n.t('sysmon.restarting'),
+    disabled: PBGuiI18n.t('sysmon.disabled'),
+    unknown: PBGuiI18n.t('common.unknown'),
+  };
+  return map[s] || s;
 }
 function esc(s) {
   if (!s) return '';
@@ -2428,7 +2440,7 @@ function renderServices() {
 
   if (!connected.length) {
     document.getElementById('svc-container').innerHTML =
-      '<div style="padding:24px;text-align:center;color:var(--text-dim)">No VPS servers connected.</div>';
+      '<div style="padding:24px;text-align:center;color:var(--text-dim)">' + PBGuiI18n.t('sysmon.noVpsConnected') + '</div>';
     return;
   }
 
@@ -2449,7 +2461,7 @@ function renderServices() {
       for (const [svcName, check] of Object.entries(hostSvc)) {
         const st = check.status || 'unknown';
         const expected = check.expected !== false && st !== 'disabled';
-        const label = expected ? st : 'skipped';
+        const label = expected ? svcStatusLabel(st) : PBGuiI18n.t('sysmon.skipped');
         let dotColor;
         if (!expected) dotColor = 'var(--text-dim)';
         else if (st === 'running') dotColor = 'var(--green)';
@@ -2463,7 +2475,7 @@ function renderServices() {
       }
       html += `</div>`;
     } else {
-      html += `<span style="color:var(--text-dim);font-size:12px">waiting...</span>`;
+      html += `<span style="color:var(--text-dim);font-size:12px">${PBGuiI18n.t('sysmon.waiting')}</span>`;
     }
     html += `<span class="svc-host-arrow">${isExpanded ? '▾' : '▸'}</span>`;
     html += `</div>`;
@@ -2475,7 +2487,7 @@ function renderServices() {
       for (const [svcName, check] of Object.entries(hostSvc)) {
         const st = check.status || 'unknown';
         const expected = check.expected !== false && st !== 'disabled';
-        const label = expected ? st : 'skipped';
+        const label = expected ? svcStatusLabel(st) : PBGuiI18n.t('sysmon.skipped');
         let icon, color;
         if (!expected) { icon = '-'; color = 'var(--text-dim)'; }
         else if (st === 'running') { icon = '✅'; color = 'var(--green)'; }
@@ -2499,13 +2511,13 @@ function renderServices() {
 }
 
 function renderServiceRestartButton(host, service) {
-  return `<button class="svc-btn" type="button" data-monitor-action="restart-service" data-host="${escAttr(host)}" data-service="${escAttr(service)}">Restart</button>`;
+  return `<button class="svc-btn" type="button" data-monitor-action="restart-service" data-host="${escAttr(host)}" data-service="${escAttr(service)}">${PBGuiI18n.t('sysmon.restart')}</button>`;
 }
 
 function restartService(host, service, btn) {
   btn.disabled = true;
   btn.classList.add('restarting');
-  btn.textContent = 'Restarting...';
+  btn.textContent = PBGuiI18n.t('sysmon.restarting');
   send({ cmd: 'restart_service', host, service });
 }
 
@@ -2650,7 +2662,7 @@ initMetricTooltipHandlers();
     _sMarks = Array.from(helpContent.querySelectorAll('mark'));
     if (_sMarks.length > 0) _gotoMark(0); else _updateSCount();
   }
-  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? '0 found' : ''); }
+  function _updateSCount() { helpSearchCount.textContent = _sMarks.length ? (_sIdx + 1) + '/' + _sMarks.length : (helpSearch.value.trim() ? PBGuiI18n.t('sysmon.helpZeroFound') : ''); }
   function _gotoMark(idx) {
     if (!_sMarks.length) return;
     if (_sIdx >= 0 && _sIdx < _sMarks.length) _sMarks[_sIdx].classList.remove('current');
@@ -2668,11 +2680,11 @@ initMetricTooltipHandlers();
       .catch(function() { _topicCache[idx] = ''; cb(''); });
   }
   function _showGlobalResults(term) {
-    if (!term) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>'; helpSearchCount.textContent = ''; return; }
+    if (!term) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpTypeSearchTerm') + '</p>'; helpSearchCount.textContent = ''; return; }
     var re; try { re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); } catch(e) { return; }
-    helpContent.innerHTML = '<div class="help-loading">Searching\u2026</div>';
+    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpSearching') + '</div>';
     var pending = helpTopics.length;
-    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = '0 found'; return; }
+    if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = PBGuiI18n.t('sysmon.helpZeroFound'); return; }
     var allResults = [];
     helpTopics.forEach(function(t, idx) {
       _ensureTopicCached(idx, function(html) {
@@ -2689,8 +2701,8 @@ initMetricTooltipHandlers();
   }
   function _renderGlobalResults(term, results) {
     var re; try { re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'); } catch(e) { return; }
-    helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
-    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>'; return; }
+    helpSearchCount.textContent = results.length + (results.length === 1 ? PBGuiI18n.t('sysmon.helpOneTopic') : PBGuiI18n.t('sysmon.helpTopics'));
+    if (results.length === 0) { helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + PBGuiI18n.t('sysmon.helpNoResults') + '</p>'; return; }
     var html = '<div class="gs-results">';
     results.forEach(function(r) {
       html += '<div class="gs-item" data-idx="' + r.idx + '"><div class="gs-topic">' + r.title + '</div>';
@@ -2699,7 +2711,7 @@ initMetricTooltipHandlers();
     });
     helpContent.innerHTML = html + '</div>';
     helpContent.querySelectorAll('.gs-item').forEach(function(el) {
-      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = 'Search in topic\u2026'; loadTopic(idx); });
+      el.addEventListener('click', function() { var idx = parseInt(el.getAttribute('data-idx'), 10); helpSearchGlobal.checked = false; _globalMode = false; helpSearch.placeholder = PBGuiI18n.t('sysmon.helpSearchInTopic'); loadTopic(idx); });
     });
   }
   helpSearch.addEventListener('input', function() { if (_sTimer) clearTimeout(_sTimer); _sTimer = setTimeout(function() { var term = helpSearch.value.trim(); if (_globalMode) _showGlobalResults(term); else _applySearch(term); }, 260); });
@@ -2708,7 +2720,7 @@ initMetricTooltipHandlers();
   helpSearchDn.addEventListener('click', function() { _gotoMark(_sIdx + 1); });
   helpSearchGlobal.addEventListener('change', function() {
     _globalMode = helpSearchGlobal.checked;
-    helpSearch.placeholder = _globalMode ? 'Search all topics\u2026' : 'Search in topic\u2026';
+    helpSearch.placeholder = _globalMode ? PBGuiI18n.t('sysmon.helpSearchAllTopics') : PBGuiI18n.t('sysmon.helpSearchInTopic');
     var term = helpSearch.value.trim();
     if (_globalMode) { _showGlobalResults(term); } else { if (_rawHtml !== null) { helpContent.innerHTML = _rawHtml; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = ''; } if (term) _applySearch(term); }
   });
@@ -2729,14 +2741,14 @@ initMetricTooltipHandlers();
     helpSel = idx; renderToc();
     var t = helpTopics[idx]; if (!t) return;
     _rawHtml = null; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = '';
-    helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+    helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
     fetch(docsBase + '/api/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r) { return r.json(); })
       .then(function(d) { _rawHtml = mdToHtml(d.content || ''); _topicCache[idx] = _rawHtml; helpContent.innerHTML = _rawHtml; helpContent.scrollTop = 0; var st = helpSearch.value.trim(); if (st) _applySearch(st); })
-      .catch(function() { helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>'; });
+      .catch(function() { helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadContent') + '</div>'; });
   }
   function loadHelpIndex(keyword) {
-    helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+    helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpLoading') + '</div>';
     fetch(docsBase + '/api/docs/index?lang=' + helpLang, { credentials: 'same-origin', cache: 'no-store' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -2747,7 +2759,7 @@ initMetricTooltipHandlers();
           loadTopic(startIdx);
         }
       })
-      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>'; });
+      .catch(function() { helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('sysmon.helpFailedLoadTopics') + '</div>'; });
   }
   helpFilter.addEventListener('input', renderToc);
   helpLangEN.addEventListener('click', function() { if (helpLang === 'EN') return; helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); _topicCache = {}; helpSel = 0; loadHelpIndex('vps_monitor'); });
@@ -2775,14 +2787,15 @@ initMetricTooltipHandlers();
 <!-- ── Shared nav bar ── -->
 <script>
 window.PBGUI_NAV_CONFIG = {
-  subtitle: 'VPS MONITOR',
+  subtitle: (window.PBGuiI18n ? PBGuiI18n.t('sysmon.vpsMonitorSubtitle') : 'VPS MONITOR'),
   current:  'system_vps_monitor',
   authenticated: true,
   version:  PBGUI_VERSION,
   serial:   PBGUI_SERIAL
 };
+document.title = PBGuiI18n.t('sysmon.vpsMonitorTitle');
 </script>
-<script src="/app/js/shared_help_overlay.js?v=6"></script>
+<script src="/app/js/shared_help_overlay.js?v=7"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 <script>
 document.addEventListener('click', handleMonitorAction);

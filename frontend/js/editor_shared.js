@@ -1,6 +1,18 @@
 (function(global) {
   'use strict';
 
+  function i18nT(key, params, fallback) {
+    var i18n = (typeof window !== 'undefined') && window.PBGuiI18n;
+    if (i18n && typeof i18n.t === 'function') return i18n.t(key, params);
+    var text = fallback == null ? key : String(fallback);
+    if (params) {
+      text = text.replace(/\{(\w+)\}/g, function (m, name) {
+        return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : m;
+      });
+    }
+    return text;
+  }
+
   function resolveElement(target) {
     if (!target) return null;
     if (typeof target === 'string') return document.getElementById(target);
@@ -80,7 +92,7 @@
   }
 
   function formatJsonParseMessage(message) {
-    if (!message) return 'Invalid JSON';
+    if (!message) return i18nT('editor.json.invalid', null, 'Invalid JSON');
     return String(message)
       .replace(/\s+at position \d+(?:\s+\(line \d+ column \d+\))?/i, '')
       .replace(/^JSON\.parse:\s*/i, '')
@@ -304,7 +316,7 @@
     if (!text.trim()) {
       return {
         parsed: null,
-        error: { line: 1, column: 1, message: opts.emptyMessage || 'JSON cannot be empty' }
+        error: { line: 1, column: 1, message: opts.emptyMessage || i18nT('editor.json.cannotBeEmpty', null, 'JSON cannot be empty') }
       };
     }
     try {
@@ -312,7 +324,7 @@
       if (opts.expectObject && (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))) {
         return {
           parsed: null,
-          error: { line: null, column: null, message: 'Top-level JSON value must be an object' }
+          error: { line: null, column: null, message: i18nT('editor.json.topLevelObject', null, 'Top-level JSON value must be an object') }
         };
       }
       return { parsed: parsed, error: null };
@@ -522,7 +534,7 @@
     var el = resolveElement(target);
     if (!el) return null;
     var baseClassName = opts && opts.baseClassName ? opts.baseClassName : 'field-status';
-    var summary = opts && opts.summary ? opts.summary : 'Error';
+    var summary = opts && opts.summary ? opts.summary : i18nT('common.error', null, 'Error');
     var message = opts && opts.message ? opts.message : '';
     var html = '<div class="field-status-main">' + escapeHtml(summary) + '</div>';
     if (message) {
@@ -683,7 +695,7 @@
 
   function summarizePreviewList(values, limit) {
     var items = uniqPreviewStrings(values || []);
-    if (!items.length) return 'None';
+    if (!items.length) return i18nT('common.none', null, 'None');
     var maxItems = Math.max(1, limit || 3);
     if (items.length <= maxItems) return items.join(', ');
     return items.slice(0, maxItems).join(', ') + ' +' + (items.length - maxItems);
@@ -711,9 +723,9 @@
   }
 
   function formatPreviewRange(startValue, endValue) {
-    var startText = String(startValue || '').trim() || 'unset';
+    var startText = String(startValue || '').trim() || i18nT('editor.ohlcvPreview.unset', null, 'unset');
     var endRaw = String(endValue || '').trim();
-    var endText = endRaw || 'unset';
+    var endText = endRaw || i18nT('editor.ohlcvPreview.unset', null, 'unset');
     return startText + ' -> ' + endText;
   }
 
@@ -753,15 +765,15 @@
     }
 
     var uniqueCoins = uniqPreviewStrings(longCoins.concat(shortCoins));
-    var label = 'Derived from filters/defaults';
+    var label = i18nT('editor.ohlcvPreview.approvedDerived', null, 'Derived from filters/defaults');
     if (longAll && shortAll) {
-      label = 'All approved coins';
+      label = i18nT('editor.ohlcvPreview.approvedAll', null, 'All approved coins');
     } else if (longAll || shortAll) {
-      label = (longAll ? 'long: all approved' : 'long: ' + longCoins.length + ' explicit') +
+      label = (longAll ? i18nT('editor.ohlcvPreview.longAllApproved', null, 'long: all approved') : i18nT('editor.ohlcvPreview.longExplicit', { n: longCoins.length }, 'long: ' + longCoins.length + ' explicit')) +
         ' | ' +
-        (shortAll ? 'short: all approved' : 'short: ' + shortCoins.length + ' explicit');
+        (shortAll ? i18nT('editor.ohlcvPreview.shortAllApproved', null, 'short: all approved') : i18nT('editor.ohlcvPreview.shortExplicit', { n: shortCoins.length }, 'short: ' + shortCoins.length + ' explicit'));
     } else if (uniqueCoins.length) {
-      label = uniqueCoins.length + ' explicit approved coin' + (uniqueCoins.length === 1 ? '' : 's');
+      label = i18nT('editor.ohlcvPreview.explicitApprovedCoin', { n: uniqueCoins.length, s: uniqueCoins.length === 1 ? '' : 's' }, uniqueCoins.length + ' explicit approved coin' + (uniqueCoins.length === 1 ? '' : 's'));
     }
 
     return {
@@ -777,7 +789,7 @@
 
   function summarizeIgnoredCoins(ignoredCoins) {
     if (!ignoredCoins || typeof ignoredCoins !== 'object') {
-      return { count: 0, coins: [], label: 'None' };
+      return { count: 0, coins: [], label: i18nT('common.none', null, 'None') };
     }
     var longCoins = normalizePreviewCoinList(ignoredCoins.long);
     var shortCoins = normalizePreviewCoinList(ignoredCoins.short);
@@ -785,7 +797,7 @@
     return {
       count: uniqueCoins.length,
       coins: uniqueCoins,
-      label: uniqueCoins.length ? uniqueCoins.length + ' ignored coin' + (uniqueCoins.length === 1 ? '' : 's') : 'None',
+      label: uniqueCoins.length ? i18nT('editor.ohlcvPreview.ignoredCount', { n: uniqueCoins.length, s: uniqueCoins.length === 1 ? '' : 's' }, uniqueCoins.length + ' ignored coin' + (uniqueCoins.length === 1 ? '' : 's')) : i18nT('common.none', null, 'None'),
     };
   }
 
@@ -797,22 +809,22 @@
     var minCoinAgeDays = live && live.minimum_coin_age_days;
 
     if (marketCap != null && marketCap !== '' && Number(marketCap) > 0) {
-      filters.push('market cap >= ' + Number(marketCap) + 'M');
+      filters.push(i18nT('editor.ohlcvPreview.filterMarketCap', { m: Number(marketCap) }, 'market cap >= ' + Number(marketCap) + 'M'));
     }
     if (volMcap != null && volMcap !== '' && isFinite(Number(volMcap))) {
-      filters.push('vol/mcap <= ' + Number(volMcap));
+      filters.push(i18nT('editor.ohlcvPreview.filterVolMcap', { v: Number(volMcap) }, 'vol/mcap <= ' + Number(volMcap)));
     }
     if (tags.length) {
-      filters.push(tags.length + ' tag' + (tags.length === 1 ? '' : 's'));
+      filters.push(i18nT('editor.ohlcvPreview.filterTags', { n: tags.length, s: tags.length === 1 ? '' : 's' }, tags.length + ' tag' + (tags.length === 1 ? '' : 's')));
     }
     if (pbgui && pbgui.only_cpt) {
-      filters.push('copy-trading only');
+      filters.push(i18nT('editor.ohlcvPreview.filterCopyTrading', null, 'copy-trading only'));
     }
     if (pbgui && pbgui.notices_ignore) {
-      filters.push('notices ignored');
+      filters.push(i18nT('editor.ohlcvPreview.filterNoticesIgnored', null, 'notices ignored'));
     }
     if (minCoinAgeDays != null && minCoinAgeDays !== '' && Number(minCoinAgeDays) > 0) {
-      filters.push('min coin age ' + Number(minCoinAgeDays) + 'd');
+      filters.push(i18nT('editor.ohlcvPreview.filterMinCoinAge', { d: Number(minCoinAgeDays) }, 'min coin age ' + Number(minCoinAgeDays) + 'd'));
     }
     return filters;
   }
@@ -822,23 +834,23 @@
     var backtest = cfg.backtest && typeof cfg.backtest === 'object' ? cfg.backtest : {};
     var live = cfg.live && typeof cfg.live === 'object' ? cfg.live : {};
     var pbgui = cfg.pbgui && typeof cfg.pbgui === 'object' ? cfg.pbgui : {};
-    var pageLabel = String((opts && opts.pageLabel) || 'Config').trim();
+    var pageLabel = String((opts && opts.pageLabel) || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config')).trim();
     var previewNote = String((opts && opts.note) || '').trim();
     var configuredSource = String(backtest.ohlcv_source_dir || '').trim();
     var pbguiDataPath = String((opts && opts.pbguiDataPath) || '').trim();
     var configuredSourceNorm = normalizePreviewPath(configuredSource);
     var pbguiDataPathNorm = normalizePreviewPath(pbguiDataPath);
     var sourceKind = 'default';
-    var sourceLabel = 'PB7 Default';
+    var sourceLabel = i18nT('editor.ohlcvPreview.sourcePb7Default', null, 'PB7 Default');
     var sourcePath = configuredSource || 'caches/ohlcv';
 
     if (configuredSourceNorm) {
       if (pbguiDataPathNorm && configuredSourceNorm === pbguiDataPathNorm) {
         sourceKind = 'pbgui';
-        sourceLabel = 'PBGui Market Data';
+        sourceLabel = i18nT('editor.ohlcvPreview.sourcePbguiMarketData', null, 'PBGui Market Data');
       } else {
         sourceKind = 'custom';
-        sourceLabel = 'Custom Directory';
+        sourceLabel = i18nT('editor.ohlcvPreview.sourceCustomDirectory', null, 'Custom Directory');
       }
     }
 
@@ -861,64 +873,64 @@
 
     var notes = [];
     if (!configuredSourceNorm) {
-      notes.push('No explicit ohlcv_source_dir is set; preview uses the default PB7 local source path.');
+      notes.push(i18nT('editor.ohlcvPreview.noteNoSource', null, 'No explicit ohlcv_source_dir is set; preview uses the default PB7 local source path.'));
     } else if (sourceKind === 'pbgui') {
-      notes.push('This config currently points at the PBGui market data root.');
+      notes.push(i18nT('editor.ohlcvPreview.notePbguiRoot', null, 'This config currently points at the PBGui market data root.'));
     }
     if (!approvedSummary.count && !approvedSummary.longAll && !approvedSummary.shortAll) {
-      notes.push('Approved coins are not pinned explicitly; the final universe is resolved from filters and market data at run time.');
+      notes.push(i18nT('editor.ohlcvPreview.noteApprovedNotPinned', null, 'Approved coins are not pinned explicitly; the final universe is resolved from filters and market data at run time.'));
     }
-    notes.push('Preview shows requested scope from the editor, not on-disk completeness.');
+    notes.push(i18nT('editor.ohlcvPreview.noteScope', null, 'Preview shows requested scope from the editor, not on-disk completeness.'));
     if (previewNote) notes.push(previewNote);
 
     var sections = [
       {
-        title: 'Source',
+        title: i18nT('editor.ohlcvPreview.sectionSource', null, 'Source'),
         items: [
-          { label: 'Type', value: sourceLabel },
-          { label: 'Directory', value: sourcePath, multiline: true },
+          { label: i18nT('editor.ohlcvPreview.labelType', null, 'Type'), value: sourceLabel },
+          { label: i18nT('editor.ohlcvPreview.labelDirectory', null, 'Directory'), value: sourcePath, multiline: true },
         ]
       },
       {
-        title: 'Coverage',
+        title: i18nT('editor.ohlcvPreview.sectionCoverage', null, 'Coverage'),
         items: [
-          { label: 'Range', value: formatPreviewRange(backtest.start_date, backtest.end_date) },
-          { label: 'Days', value: daySpan == null ? 'n/a' : String(daySpan) },
-          { label: 'Candle', value: String(backtest.candle_interval_minutes || 1) + ' min' },
-          { label: 'Warmup', value: backtest.max_warmup_minutes ? String(backtest.max_warmup_minutes) + ' min cap' : 'default' },
-          { label: 'Gap Tol.', value: backtest.gap_tolerance_ohlcvs_minutes ? String(backtest.gap_tolerance_ohlcvs_minutes) + ' min' : 'default' },
+          { label: i18nT('editor.ohlcvPreview.labelRange', null, 'Range'), value: formatPreviewRange(backtest.start_date, backtest.end_date) },
+          { label: i18nT('editor.ohlcvPreview.labelDays', null, 'Days'), value: daySpan == null ? i18nT('editor.ohlcvPreview.nA', null, 'n/a') : String(daySpan) },
+          { label: i18nT('editor.ohlcvPreview.labelCandle', null, 'Candle'), value: i18nT('editor.ohlcvPreview.min', { m: String(backtest.candle_interval_minutes || 1) }, String(backtest.candle_interval_minutes || 1) + ' min') },
+          { label: i18nT('editor.ohlcvPreview.labelWarmup', null, 'Warmup'), value: backtest.max_warmup_minutes ? i18nT('editor.ohlcvPreview.minCap', { m: String(backtest.max_warmup_minutes) }, String(backtest.max_warmup_minutes) + ' min cap') : i18nT('editor.ohlcvPreview.default', null, 'default') },
+          { label: i18nT('editor.ohlcvPreview.labelGapTol', null, 'Gap Tol.'), value: backtest.gap_tolerance_ohlcvs_minutes ? i18nT('editor.ohlcvPreview.min', { m: String(backtest.gap_tolerance_ohlcvs_minutes) }, String(backtest.gap_tolerance_ohlcvs_minutes) + ' min') : i18nT('editor.ohlcvPreview.default', null, 'default') },
         ]
       },
       {
-        title: 'Universe',
+        title: i18nT('editor.ohlcvPreview.sectionUniverse', null, 'Universe'),
         items: [
-          { label: 'Exchanges', value: summarizePreviewList(exchanges, 3) },
-          { label: 'Approved', value: approvedSummary.label },
-          { label: 'Ignored', value: ignoredSummary.label },
-          { label: 'coin_sources', value: coinSources.length ? String(coinSources.length) + ' override' + (coinSources.length === 1 ? '' : 's') : 'None' },
-          { label: 'market_settings', value: marketSettingsSources.length ? String(marketSettingsSources.length) + ' override' + (marketSettingsSources.length === 1 ? '' : 's') : 'None' },
+          { label: i18nT('editor.ohlcvPreview.labelExchanges', null, 'Exchanges'), value: summarizePreviewList(exchanges, 3) },
+          { label: i18nT('editor.ohlcvPreview.labelApproved', null, 'Approved'), value: approvedSummary.label },
+          { label: i18nT('editor.ohlcvPreview.labelIgnored', null, 'Ignored'), value: ignoredSummary.label },
+          { label: 'coin_sources', value: coinSources.length ? i18nT('editor.ohlcvPreview.overridesCount', { n: coinSources.length, s: coinSources.length === 1 ? '' : 's' }, String(coinSources.length) + ' override' + (coinSources.length === 1 ? '' : 's')) : i18nT('common.none', null, 'None') },
+          { label: 'market_settings', value: marketSettingsSources.length ? i18nT('editor.ohlcvPreview.overridesCount', { n: marketSettingsSources.length, s: marketSettingsSources.length === 1 ? '' : 's' }, String(marketSettingsSources.length) + ' override' + (marketSettingsSources.length === 1 ? '' : 's')) : i18nT('common.none', null, 'None') },
         ]
       }
     ];
 
     if (filters.length) {
       sections.push({
-        title: 'Filters',
+        title: i18nT('editor.ohlcvPreview.sectionFilters', null, 'Filters'),
         list: filters
       });
     }
     if (suiteScenarios > 0) {
       sections.push({
-        title: 'Suite',
+        title: i18nT('editor.ohlcvPreview.sectionSuite', null, 'Suite'),
         items: [
-          { label: 'Scenarios', value: String(suiteScenarios) },
+          { label: i18nT('editor.ohlcvPreview.labelScenarios', null, 'Scenarios'), value: String(suiteScenarios) },
         ]
       });
     }
 
     return {
-      title: 'OHLCV Preview',
-      subtitle: pageLabel + ' editor',
+      title: i18nT('editor.ohlcvPreview.title', null, 'OHLCV Preview'),
+      subtitle: i18nT('editor.ohlcvPreview.subtitle', { page: pageLabel }, pageLabel + ' editor'),
       badge: sourceLabel,
       badgeKind: sourceKind,
       sections: sections,
@@ -937,7 +949,7 @@
     var html = '';
     html += '<div class="sb-preview-head">';
     html += '<div>';
-    html += '<div class="sb-preview-title">' + escapeHtml(model.title || 'OHLCV Preview') + '</div>';
+    html += '<div class="sb-preview-title">' + escapeHtml(model.title || i18nT('editor.ohlcvPreview.title', null, 'OHLCV Preview')) + '</div>';
     if (model.subtitle) {
       html += '<div class="sb-preview-subtitle">' + escapeHtml(model.subtitle) + '</div>';
     }
@@ -987,7 +999,7 @@
     var syncRoot = resolveElement(opts.syncRoot);
     var loadConfig = typeof opts.loadConfig === 'function' ? opts.loadConfig : function() { return {}; };
     var loadPbguiDataPath = typeof opts.loadPbguiDataPath === 'function' ? opts.loadPbguiDataPath : function() { return ''; };
-    var pageLabel = String(opts.pageLabel || 'Config').trim() || 'Config';
+    var pageLabel = String(opts.pageLabel || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config')).trim() || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config');
     var isOpen = false;
     var cachedPbguiDataPath;
     var hasPbguiDataPath = false;
@@ -1010,7 +1022,7 @@
         '<div class="sb-preview-head">' +
           '<div>' +
             '<div class="sb-preview-title">' + escapeHtml(title) + '</div>' +
-            '<div class="sb-preview-subtitle">' + escapeHtml(pageLabel + ' editor') + '</div>' +
+            '<div class="sb-preview-subtitle">' + escapeHtml(i18nT('editor.ohlcvPreview.subtitle', { page: pageLabel }, pageLabel + ' editor')) + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="sb-preview-note ' + escapeHtml(kind || '') + '">' + escapeHtml(message || '') + '</div>';
@@ -1046,7 +1058,7 @@
       },
       refresh: async function() {
         if (!panel) return null;
-        renderMessage('loading', 'OHLCV Preview', 'Refreshing preview...');
+        renderMessage('loading', i18nT('editor.ohlcvPreview.title', null, 'OHLCV Preview'), i18nT('editor.ohlcvPreview.refreshing', null, 'Refreshing preview...'));
         try {
           var loaded = await Promise.resolve(loadConfig());
           var config = loaded;
@@ -1063,7 +1075,7 @@
           renderOhlcvPreviewPanel(panel, model);
           return model;
         } catch (error) {
-          renderMessage('error', 'OHLCV Preview', error && error.message ? error.message : String(error || 'Preview failed'));
+          renderMessage('error', i18nT('editor.ohlcvPreview.title', null, 'OHLCV Preview'), error && error.message ? error.message : String(error || i18nT('editor.ohlcvPreview.failed', null, 'Preview failed')));
           return null;
         }
       },
@@ -1136,7 +1148,7 @@
         '<span class="sb-preview-pill-value">' + escapeHtml(String(count)) + '</span>' +
       '</span>';
     });
-    return html || '<span class="sb-preview-pill tone-neutral"><span class="sb-preview-pill-label">no data</span><span class="sb-preview-pill-value">0</span></span>';
+    return html || '<span class="sb-preview-pill tone-neutral"><span class="sb-preview-pill-label">' + i18nT('editor.preflight.noData', null, 'no data') + '</span><span class="sb-preview-pill-value">0</span></span>';
   }
 
   function renderOhlcvPreflightEntries(entries) {
@@ -1147,10 +1159,10 @@
         ? entry.sides.filter(function(side) { return !!side; })
         : [];
       var sideLabel = sides.length ? (' [' + sides.join('/') + ']') : '';
-      var title = escapeHtml((entry.coin || '?') + sideLabel + (entry.exchange ? (' on ' + entry.exchange) : ''));
+      var title = escapeHtml((entry.coin || '?') + sideLabel + (entry.exchange ? i18nT('editor.preflight.entryOn', { exchange: entry.exchange }, ' on ' + entry.exchange) : ''));
       var meta = [];
       if (entry.symbol) meta.push(String(entry.symbol));
-      if (entry.effective_start_date) meta.push('start ' + entry.effective_start_date);
+      if (entry.effective_start_date) meta.push(i18nT('editor.preflight.entryStart', { d: entry.effective_start_date }, 'start ' + entry.effective_start_date));
       html += '<div class="sb-preview-list-item">';
       html += '<div class="sb-preview-mini-title">' + title + '</div>';
       html += '<div class="sb-preview-mini-body">' + escapeHtml(entry.note || entry.status_label || '') + '</div>';
@@ -1159,7 +1171,7 @@
       }
       if (entry.persistent_gap && entry.persistent_gap.reason) {
         html += '<div class="sb-preview-mini-meta">' +
-          escapeHtml('gap ' + entry.persistent_gap.start + ' -> ' + entry.persistent_gap.end + ' (' + entry.persistent_gap.reason + ')') +
+          escapeHtml(i18nT('editor.preflight.entryGap', { start: entry.persistent_gap.start, end: entry.persistent_gap.end, reason: entry.persistent_gap.reason }, 'gap ' + entry.persistent_gap.start + ' -> ' + entry.persistent_gap.end + ' (' + entry.persistent_gap.reason + ')')) +
         '</div>';
       }
       html += '</div>';
@@ -1185,23 +1197,23 @@
       if (task.symbol) titleBits.push(String(task.symbol));
       var metaBits = [];
       if (task.kind === 'archive') {
-        if (task.completed != null && task.total != null) metaBits.push('Archive ' + task.completed + '/' + task.total);
-        if (task.batch) metaBits.push('Batch ' + String(task.batch));
+        if (task.completed != null && task.total != null) metaBits.push(i18nT('editor.preflight.progressArchive', { done: task.completed, total: task.total }, 'Archive ' + task.completed + '/' + task.total));
+        if (task.batch) metaBits.push(i18nT('editor.preflight.progressBatch', { b: task.batch }, 'Batch ' + String(task.batch)));
       } else if (task.kind === 'ccxt') {
-        if (task.cursor_iso) metaBits.push('Cursor ' + String(task.cursor_iso));
+        if (task.cursor_iso) metaBits.push(i18nT('editor.preflight.progressCursor', { c: task.cursor_iso }, 'Cursor ' + String(task.cursor_iso)));
         if (task.response_ignored_cursor && task.response_first_iso && task.last_iso) {
-          metaBits.push('Exchange returned ' + String(task.response_first_iso) + ' .. ' + String(task.last_iso));
+          metaBits.push(i18nT('editor.preflight.progressExchangeReturned', { first: task.response_first_iso, last: task.last_iso }, 'Exchange returned ' + String(task.response_first_iso) + ' .. ' + String(task.last_iso)));
         } else if (task.last_iso) {
-          metaBits.push('Fetched through ' + String(task.last_iso));
+          metaBits.push(i18nT('editor.preflight.progressFetchedThrough', { iso: task.last_iso }, 'Fetched through ' + String(task.last_iso)));
         } else if (task.since_iso) {
-          metaBits.push('Request started at ' + String(task.since_iso));
+          metaBits.push(i18nT('editor.preflight.progressRequestStarted', { iso: task.since_iso }, 'Request started at ' + String(task.since_iso)));
         }
-        if (job && job.target_end_iso) metaBits.push('Target ' + String(job.target_end_iso));
+        if (job && job.target_end_iso) metaBits.push(i18nT('editor.preflight.progressTarget', { iso: job.target_end_iso }, 'Target ' + String(job.target_end_iso)));
       }
       if (!metaBits.length && task.detail) metaBits.push(String(task.detail));
       html += '<div class="sb-preload-progress-row">';
       html += '<div class="sb-preload-progress-head">';
-      html += '<div class="sb-preload-progress-title">' + escapeHtml(titleBits.join(' | ') || 'Download progress') + '</div>';
+      html += '<div class="sb-preload-progress-title">' + escapeHtml(titleBits.join(' | ') || i18nT('editor.preflight.progressDownloading', null, 'Download progress')) + '</div>';
       html += '<div class="sb-preload-progress-pct">' + escapeHtml(String(pct)) + '%</div>';
       html += '</div>';
       html += '<div class="sb-preload-progress-track"><div class="sb-preload-progress-fill" style="width:' + String(pct) + '%"></div></div>';
@@ -1211,9 +1223,9 @@
       html += '</div>';
     });
     if (tracker && tracker.total) {
-      var trackerText = 'PB7 progress ' + tracker.processed + '/' + tracker.total;
-      if (tracker.current) trackerText += ' | current=' + tracker.current;
-      if (tracker.eta_seconds != null) trackerText += ' | ETA ' + tracker.eta_seconds + 's';
+      var trackerText = i18nT('editor.preflight.progressPb7', { processed: tracker.processed, total: tracker.total }, 'PB7 progress ' + tracker.processed + '/' + tracker.total);
+      if (tracker.current) trackerText += ' | ' + i18nT('editor.preflight.progressCurrent', { c: tracker.current }, 'current=' + tracker.current);
+      if (tracker.eta_seconds != null) trackerText += ' | ' + i18nT('editor.preflight.progressEta', { s: tracker.eta_seconds }, 'ETA ' + tracker.eta_seconds + 's');
       html += '<div class="sb-preview-note">' + escapeHtml(trackerText) + '</div>';
     }
     html += '</div>';
@@ -1236,35 +1248,35 @@
     var exchanges = Array.isArray(payload.exchanges) ? payload.exchanges : [];
     var notes = Array.isArray(payload.notes) ? payload.notes.slice() : [];
     if (model.clientNote) notes.unshift(String(model.clientNote));
-    if (model.stale) notes.unshift('Editor values changed. Refresh the OHLCV check to re-run the PB7 planner.');
+    if (model.stale) notes.unshift(i18nT('editor.preflight.staleNote', null, 'Editor values changed. Refresh the OHLCV check to re-run the PB7 planner.'));
 
     var job = model.job || null;
     var jobRunning = job && (job.status === 'queued' || job.status === 'running');
     var preloadDisabled = !summary.preload_supported || jobRunning;
     var refreshBtnClass = model.stale ? 'sb-btn accent' : 'sb-btn';
     var preloadBtnClass = jobRunning ? 'sb-btn info' : 'sb-btn info';
-    var sourceLabel = request.source_dir || 'PB7 default caches/ohlcv';
+    var sourceLabel = request.source_dir || i18nT('editor.preflight.defaultSource', null, 'PB7 default caches/ohlcv');
     var chipKind = getOhlcvPreflightChipKind(summary.overall_status);
 
     var html = '';
     html += '<div class="sb-preview-head">';
     html += '<div>';
-    html += '<div class="sb-preview-title">OHLCV Readiness</div>';
-    html += '<div class="sb-preview-subtitle">' + escapeHtml(String((model.pageLabel || 'Config')) + ' editor') + '</div>';
+    html += '<div class="sb-preview-title">' + i18nT('editor.preflight.title', null, 'OHLCV Readiness') + '</div>';
+    html += '<div class="sb-preview-subtitle">' + escapeHtml(i18nT('editor.ohlcvPreview.subtitle', { page: String((model.pageLabel || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config'))) }, String((model.pageLabel || 'Config')) + ' editor')) + '</div>';
     html += '</div>';
-    html += '<span class="sb-preview-chip kind-' + escapeHtml(chipKind) + '">' + escapeHtml(summary.headline || 'OHLCV check') + '</span>';
+    html += '<span class="sb-preview-chip kind-' + escapeHtml(chipKind) + '">' + escapeHtml(summary.headline || i18nT('editor.preflight.check', null, 'OHLCV check')) + '</span>';
     html += '</div>';
 
     html += '<div class="sb-preview-section">';
-    html += '<div class="sb-preview-section-title">Summary</div>';
+    html += '<div class="sb-preview-section-title">' + i18nT('editor.preflight.sectionSummary', null, 'Summary') + '</div>';
     html += '<div class="sb-preview-note">' + escapeHtml(summary.detail || '') + '</div>';
     html += '<div class="sb-preview-pill-row">' + renderOhlcvPreflightCountPills(summary.counts || {}) + '</div>';
     html += '</div>';
 
     html += '<div class="sb-preview-actions">';
-    html += '<button type="button" class="' + refreshBtnClass + '" data-action="refresh">↻ Refresh Check</button>';
+    html += '<button type="button" class="' + refreshBtnClass + '" data-action="refresh">' + i18nT('editor.preflight.refreshBtn', null, '↻ Refresh Check') + '</button>';
     html += '<button type="button" class="' + preloadBtnClass + '" data-action="preload"' + (preloadDisabled ? ' disabled' : '') + '>' +
-      escapeHtml(jobRunning ? '⏳ Preload running...' : (summary.preload_label || 'Preload OHLCV Data')) +
+      escapeHtml(jobRunning ? i18nT('editor.preflight.preloadRunning', null, '⏳ Preload running...') : (summary.preload_label || i18nT('editor.preflight.preloadDefault', null, 'Preload OHLCV Data'))) +
     '</button>';
     if (summary.preload_detail) {
       html += '<div class="sb-preview-note">' + escapeHtml(summary.preload_detail) + '</div>';
@@ -1272,23 +1284,23 @@
     html += '</div>';
 
     html += '<div class="sb-preview-section">';
-    html += '<div class="sb-preview-section-title">Request</div>';
+    html += '<div class="sb-preview-section-title">' + i18nT('editor.preflight.sectionRequest', null, 'Request') + '</div>';
     html += '<div class="sb-preview-grid">';
-    html += '<div class="sb-preview-label">Requested</div><div class="sb-preview-value">' + escapeHtml(request.requested_start_date || 'n/a') + ' → ' + escapeHtml(request.end_date || 'n/a') + '</div>';
-    html += '<div class="sb-preview-label">Effective</div><div class="sb-preview-value">' + escapeHtml(request.effective_start_date || 'n/a') + '</div>';
-    html += '<div class="sb-preview-label">Warmup</div><div class="sb-preview-value">' + escapeHtml(String(request.warmup_minutes == null ? 'n/a' : request.warmup_minutes)) + ' min</div>';
-    html += '<div class="sb-preview-label">Min age</div><div class="sb-preview-value">' + escapeHtml(String(request.minimum_coin_age_days == null ? 'n/a' : request.minimum_coin_age_days)) + ' d</div>';
-    html += '<div class="sb-preview-label">Source</div><div class="sb-preview-value multiline">' + escapeHtml(sourceLabel) + '</div>';
-    html += '<div class="sb-preview-label">Catalog</div><div class="sb-preview-value multiline">' + escapeHtml(request.catalog_present ? (request.catalog_path || 'present') : 'missing') + '</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelRequested', null, 'Requested') + '</div><div class="sb-preview-value">' + escapeHtml(request.requested_start_date || 'n/a') + ' → ' + escapeHtml(request.end_date || 'n/a') + '</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelEffective', null, 'Effective') + '</div><div class="sb-preview-value">' + escapeHtml(request.effective_start_date || 'n/a') + '</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelWarmup', null, 'Warmup') + '</div><div class="sb-preview-value">' + escapeHtml(String(request.warmup_minutes == null ? 'n/a' : request.warmup_minutes)) + ' min</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelMinAge', null, 'Min age') + '</div><div class="sb-preview-value">' + escapeHtml(String(request.minimum_coin_age_days == null ? 'n/a' : request.minimum_coin_age_days)) + ' d</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelSource', null, 'Source') + '</div><div class="sb-preview-value multiline">' + escapeHtml(sourceLabel) + '</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelCatalog', null, 'Catalog') + '</div><div class="sb-preview-value multiline">' + escapeHtml(request.catalog_present ? (request.catalog_path || i18nT('editor.preflight.present', null, 'present')) : i18nT('editor.preflight.missing', null, 'missing')) + '</div>';
     html += '</div>';
     html += '</div>';
 
     html += '<div class="sb-preview-section">';
-    html += '<div class="sb-preview-section-title">Universe</div>';
+    html += '<div class="sb-preview-section-title">' + i18nT('editor.preflight.sectionUniverse', null, 'Universe') + '</div>';
     html += '<div class="sb-preview-grid">';
-    html += '<div class="sb-preview-label">Coins</div><div class="sb-preview-value">' + escapeHtml(String(universe.coin_count || 0)) + '</div>';
-    html += '<div class="sb-preview-label">Mode</div><div class="sb-preview-value">' + escapeHtml((universe.coins_mode || 'explicit').replace(/_/g, ' ')) + '</div>';
-    html += '<div class="sb-preview-label">Exchanges</div><div class="sb-preview-value">' + escapeHtml(String(universe.exchange_count || 0)) + '</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelCoins', null, 'Coins') + '</div><div class="sb-preview-value">' + escapeHtml(String(universe.coin_count || 0)) + '</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelMode', null, 'Mode') + '</div><div class="sb-preview-value">' + escapeHtml((universe.coins_mode || 'explicit').replace(/_/g, ' ')) + '</div>';
+    html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelExchanges', null, 'Exchanges') + '</div><div class="sb-preview-value">' + escapeHtml(String(universe.exchange_count || 0)) + '</div>';
     html += '</div>';
     html += '</div>';
 
@@ -1296,7 +1308,7 @@
       var entries = bestSamples[status];
       if (!Array.isArray(entries) || !entries.length) return;
       html += '<div class="sb-preview-section">';
-      html += '<div class="sb-preview-section-title">Best Per Coin: ' + escapeHtml((entries[0] && entries[0].status_label) || status.replace(/_/g, ' ')) + '</div>';
+      html += '<div class="sb-preview-section-title">' + i18nT('editor.preflight.bestPerCoin', { label: escapeHtml((entries[0] && entries[0].status_label) || status.replace(/_/g, ' ')) }, 'Best Per Coin: ' + escapeHtml((entries[0] && entries[0].status_label) || status.replace(/_/g, ' '))) + '</div>';
       html += renderOhlcvPreflightEntries(entries);
       html += '</div>';
     });
@@ -1305,7 +1317,7 @@
       var exchangeName = exchangePayload && (exchangePayload.input_exchange || exchangePayload.exchange);
       if (!exchangeName) return;
       html += '<div class="sb-preview-section">';
-      html += '<div class="sb-preview-section-title">Exchange: ' + escapeHtml(exchangeName) + '</div>';
+      html += '<div class="sb-preview-section-title">' + i18nT('editor.preflight.exchangeSection', { name: escapeHtml(exchangeName) }, 'Exchange: ' + escapeHtml(exchangeName)) + '</div>';
       html += '<div class="sb-preview-pill-row">' + renderOhlcvPreflightCountPills((exchangePayload && exchangePayload.counts) || {}) + '</div>';
       var exchangeSamples = exchangePayload && exchangePayload.samples && typeof exchangePayload.samples === 'object'
         ? exchangePayload.samples
@@ -1328,42 +1340,42 @@
       var isJobCompleted = jobStatus === 'completed';
       var isJobError = jobStatus === 'error';
       var jobStatusClass = ' sb-preload-job-queued';
-      var jobStatusLabel = 'Queued';
+      var jobStatusLabel = i18nT('editor.preflight.statusQueued', null, 'Queued');
       var jobStatusIcon = '○';
-      var jobActivity = 'Waiting for the PB7 OHLCV downloader to start.';
+      var jobActivity = i18nT('editor.preflight.jobWaiting', null, 'Waiting for the PB7 OHLCV downloader to start.');
       if (jobStatus === 'running') {
         jobStatusClass = ' sb-preload-job-running';
-        jobStatusLabel = 'Running';
+        jobStatusLabel = i18nT('editor.preflight.statusRunning', null, 'Running');
         jobStatusIcon = '<span class="sb-preload-pulse" aria-hidden="true"></span>';
         if (currentTask) {
           var activityBits = [];
           if (currentTask.exchange) activityBits.push(String(currentTask.exchange));
           if (currentTask.symbol) activityBits.push(String(currentTask.symbol));
           if (currentTask.detail) activityBits.push(String(currentTask.detail));
-          if (currentTask.batch) activityBits.push('batch ' + String(currentTask.batch));
-          jobActivity = activityBits.join(' | ') || (job.last_log_line || 'PB7 is downloading missing OHLCV ranges.');
+          if (currentTask.batch) activityBits.push(i18nT('editor.preflight.jobBatch', { b: currentTask.batch }, 'batch ' + String(currentTask.batch)));
+          jobActivity = activityBits.join(' | ') || (job.last_log_line || i18nT('editor.preflight.jobDownloading', null, 'PB7 is downloading missing OHLCV ranges.'));
         } else {
-          jobActivity = job.last_log_line || 'PB7 is downloading missing OHLCV ranges.';
+          jobActivity = job.last_log_line || i18nT('editor.preflight.jobDownloading', null, 'PB7 is downloading missing OHLCV ranges.');
         }
       } else if (jobStatus === 'queued') {
         jobStatusClass = ' sb-preload-job-queued';
-        jobStatusLabel = 'Queued';
+        jobStatusLabel = i18nT('editor.preflight.statusQueued', null, 'Queued');
         jobStatusIcon = '<span class="sb-preload-pulse" aria-hidden="true"></span>';
       } else if (isJobCompleted) {
         jobStatusClass = ' sb-preload-job-completed';
-        jobStatusLabel = 'Completed';
+        jobStatusLabel = i18nT('editor.preflight.statusCompleted', null, 'Completed');
         jobStatusIcon = '✓';
-        jobActivity = job.last_log_line || 'Preload finished successfully.';
+        jobActivity = job.last_log_line || i18nT('editor.preflight.jobFinished', null, 'Preload finished successfully.');
       } else if (isJobStopped) {
         jobStatusClass = ' sb-preload-job-stopped';
-        jobStatusLabel = 'Stopped';
+        jobStatusLabel = i18nT('editor.preflight.statusStopped', null, 'Stopped');
         jobStatusIcon = '◼';
-        jobActivity = 'Preload was stopped before completion.';
+        jobActivity = i18nT('editor.preflight.jobStopped', null, 'Preload was stopped before completion.');
       } else if (isJobError) {
         jobStatusClass = ' sb-preload-job-error';
-        jobStatusLabel = 'Error';
+        jobStatusLabel = i18nT('common.error', null, 'Error');
         jobStatusIcon = '!';
-        jobActivity = job.error || job.last_log_line || 'The preload job failed.';
+        jobActivity = job.error || job.last_log_line || i18nT('editor.preflight.jobFailed', null, 'The preload job failed.');
       }
       var elapsedMs = 0;
       if (job.started_at) {
@@ -1381,26 +1393,26 @@
         else elapsedStr = sec + 's';
       }
       html += '<div class="sb-preview-section sb-preload-job' + jobStatusClass + '" data-preload-job="1">';
-      html += '<div class="sb-preview-section-title">Preload Job <span class="sb-preload-status-text">' + jobStatusIcon + ' ' + escapeHtml(jobStatusLabel) + '</span></div>';
+      html += '<div class="sb-preview-section-title">' + i18nT('editor.preflight.jobTitle', null, 'Preload Job') + ' <span class="sb-preload-status-text">' + jobStatusIcon + ' ' + escapeHtml(jobStatusLabel) + '</span></div>';
       html += '<div class="sb-preview-note">' + escapeHtml(jobActivity) + '</div>';
       html += renderOhlcvPreloadProgress(progressInfo, job);
       html += '<div class="sb-preview-grid">';
-      html += '<div class="sb-preview-label">Duration</div><div class="sb-preview-value">' + escapeHtml(elapsedStr) + '</div>';
-      html += '<div class="sb-preview-label">Started</div><div class="sb-preview-value">' + escapeHtml(job.started_at_iso || 'n/a') + '</div>';
-      html += '<div class="sb-preview-label">Finished</div><div class="sb-preview-value">' + escapeHtml(job.finished_at_iso || '—') + '</div>';
-      html += '<div class="sb-preview-label">PID</div><div class="sb-preview-value">' + escapeHtml(job.pid == null ? '—' : String(job.pid)) + '</div>';
-      html += '<div class="sb-preview-label">Log lines</div><div class="sb-preview-value">' + escapeHtml(String(job.log_line_count || 0)) + '</div>';
-      html += '<div class="sb-preview-label">Observed tasks</div><div class="sb-preview-value">' + escapeHtml(String(progressInfo.observed_tasks || 0)) + '</div>';
-      html += '<div class="sb-preview-label">Active tasks</div><div class="sb-preview-value">' + escapeHtml(String(progressInfo.active_tasks || 0)) + '</div>';
-      html += '<div class="sb-preview-label">Finished tasks</div><div class="sb-preview-value">' + escapeHtml(String(progressInfo.finished_tasks || 0)) + '</div>';
-      html += '<div class="sb-preview-label">Last update</div><div class="sb-preview-value">' + escapeHtml(job.log_updated_at_iso || '—') + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelDuration', null, 'Duration') + '</div><div class="sb-preview-value">' + escapeHtml(elapsedStr) + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelStarted', null, 'Started') + '</div><div class="sb-preview-value">' + escapeHtml(job.started_at_iso || 'n/a') + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelFinished', null, 'Finished') + '</div><div class="sb-preview-value">' + escapeHtml(job.finished_at_iso || '—') + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelPid', null, 'PID') + '</div><div class="sb-preview-value">' + escapeHtml(job.pid == null ? '—' : String(job.pid)) + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelLogLines', null, 'Log lines') + '</div><div class="sb-preview-value">' + escapeHtml(String(job.log_line_count || 0)) + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelObservedTasks', null, 'Observed tasks') + '</div><div class="sb-preview-value">' + escapeHtml(String(progressInfo.observed_tasks || 0)) + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelActiveTasks', null, 'Active tasks') + '</div><div class="sb-preview-value">' + escapeHtml(String(progressInfo.active_tasks || 0)) + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelFinishedTasks', null, 'Finished tasks') + '</div><div class="sb-preview-value">' + escapeHtml(String(progressInfo.finished_tasks || 0)) + '</div>';
+      html += '<div class="sb-preview-label">' + i18nT('editor.preflight.labelLastUpdate', null, 'Last update') + '</div><div class="sb-preview-value">' + escapeHtml(job.log_updated_at_iso || '—') + '</div>';
       html += '</div>';
       if (job.error) {
         html += '<div class="sb-preview-note error">' + escapeHtml(job.error) + '</div>';
       }
       if (isJobRunning) {
         html += '<div class="sb-preview-actions" style="margin-top:var(--sp-sm)">';
-        html += '<button type="button" class="sb-btn danger" data-action="stop">⏹ Stop Preload</button>';
+        html += '<button type="button" class="sb-btn danger" data-action="stop">' + i18nT('editor.preflight.stopBtn', null, '⏹ Stop Preload') + '</button>';
         html += '</div>';
       }
       if (Array.isArray(job.log_tail) && job.log_tail.length) {
@@ -1449,7 +1461,7 @@
       if (!fullscreenButton) return;
       var isMaximized = panel.classList.contains('is-maximized');
       fullscreenButton.setAttribute('aria-pressed', isMaximized ? 'true' : 'false');
-      fullscreenButton.setAttribute('title', isMaximized ? 'Restore window size' : 'Fit to browser window');
+      fullscreenButton.setAttribute('title', isMaximized ? i18nT('nav.restore_window', null, 'Restore window size') : i18nT('nav.fit_window', null, 'Fit to browser window'));
       fullscreenButton.textContent = isMaximized ? '❐' : '⛶';
     }
 
@@ -1600,7 +1612,7 @@
     var closeButton = resolveElement(opts.closeButton);
     var syncRoot = resolveElement(opts.syncRoot);
     var loadConfig = typeof opts.loadConfig === 'function' ? opts.loadConfig : function() { return {}; };
-    var pageLabel = String(opts.pageLabel || 'Config').trim() || 'Config';
+    var pageLabel = String(opts.pageLabel || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config')).trim() || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config');
     var apiBase = String(opts.apiBase || '').trim();
     var token = String(opts.token || '').trim();
     var containerOpenClass = String(opts.containerOpenClass || 'visible').trim() || 'visible';
@@ -1668,7 +1680,7 @@
         '<div class="sb-preview-head">' +
           '<div>' +
             '<div class="sb-preview-title">' + escapeHtml(title) + '</div>' +
-            '<div class="sb-preview-subtitle">' + escapeHtml(pageLabel + ' editor') + '</div>' +
+            '<div class="sb-preview-subtitle">' + escapeHtml(i18nT('editor.ohlcvPreview.subtitle', { page: pageLabel }, pageLabel + ' editor')) + '</div>' +
           '</div>' +
         '</div>' +
         '<div class="sb-preview-note ' + escapeHtml(kind || '') + '">' + escapeHtml(message || '') + '</div>';
@@ -1755,7 +1767,7 @@
         currentJob = null;
         currentJobId = '';
         pendingScrollTarget = '';
-        renderMessage('loading', 'OHLCV Readiness', 'Running PB7 OHLCV preflight...');
+        renderMessage('loading', i18nT('editor.preflight.title', null, 'OHLCV Readiness'), i18nT('editor.preflight.running', null, 'Running PB7 OHLCV preflight...'));
         try {
           var normalized = normalizeLoadedConfig(await Promise.resolve(loadConfig()));
           isStale = false;
@@ -1771,7 +1783,7 @@
           }
           return cachedPayload;
         } catch (error) {
-          renderMessage('error', 'OHLCV Readiness', error && error.message ? error.message : String(error || 'OHLCV preflight failed'));
+          renderMessage('error', i18nT('editor.preflight.title', null, 'OHLCV Readiness'), error && error.message ? error.message : String(error || i18nT('editor.preflight.preflightFailed', null, 'OHLCV preflight failed')));
           return null;
         }
       },
@@ -1787,7 +1799,7 @@
           }
           return currentJob;
         } catch (error) {
-          renderMessage('error', 'OHLCV Readiness', error && error.message ? error.message : String(error || 'Could not load preload job status'));
+          renderMessage('error', i18nT('editor.preflight.title', null, 'OHLCV Readiness'), error && error.message ? error.message : String(error || i18nT('editor.preflight.loadJobFailed', null, 'Could not load preload job status')));
           return null;
         }
       },
@@ -1807,7 +1819,7 @@
           if (currentJobId) schedulePoll(1000);
           return currentJob;
         } catch (error) {
-          renderMessage('error', 'OHLCV Readiness', error && error.message ? error.message : String(error || 'Could not start OHLCV preload'));
+          renderMessage('error', i18nT('editor.preflight.title', null, 'OHLCV Readiness'), error && error.message ? error.message : String(error || i18nT('editor.preflight.startFailed', null, 'Could not start OHLCV preload')));
           return null;
         }
       },
@@ -1821,7 +1833,7 @@
           schedulePoll(1200);
           return currentJob;
         } catch (error) {
-          renderMessage('error', 'OHLCV Readiness', error && error.message ? error.message : String(error || 'Could not stop OHLCV preload'));
+          renderMessage('error', i18nT('editor.preflight.title', null, 'OHLCV Readiness'), error && error.message ? error.message : String(error || i18nT('editor.preflight.stopFailed', null, 'Could not stop OHLCV preload')));
           return null;
         }
       }
@@ -1903,11 +1915,11 @@
       : function(ctx) {
         if (!ctx.meta) return '';
         if (ctx.meta.status === 'invalid') {
-          return (ctx.meta.changed ? ('Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '. ') : '') +
-            'CoinData could not resolve this entry to an active coin.';
+          return (ctx.meta.changed ? i18nT('editor.ms.normalizedFrom', { raw: ctx.meta.raw, normalized: ctx.meta.normalized }, 'Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '. ') : '') +
+            i18nT('editor.ms.cannotResolve', null, 'CoinData could not resolve this entry to an active coin.');
         }
         if (ctx.meta.changed) {
-          return 'Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '.';
+          return i18nT('editor.ms.normalizedFrom', { raw: ctx.meta.raw, normalized: ctx.meta.normalized }, 'Normalized from ' + ctx.meta.raw + ' to ' + ctx.meta.normalized + '.');
         }
         return '';
       };
@@ -1969,7 +1981,7 @@
 
       var summary = statusSummaryBuilder
         ? statusSummaryBuilder({ id: id, invalidCount: invalidCount, state: state, controller: api })
-        : { html: '<span class="err">' + invalidCount + ' invalid</span>', display: 'block' };
+        : { html: '<span class="err">' + i18nT('editor.ms.invalidCount', { n: invalidCount }, invalidCount + ' invalid') + '</span>', display: 'block' };
       if (!summary || !summary.html) {
         el.textContent = '';
         el.style.display = 'none';
@@ -2093,7 +2105,7 @@
       });
 
       if (!count) {
-        html = '<div style="padding:4px 8px;color:var(--text-dim);font-size:var(--fs-xs)">No matches</div>';
+        html = '<div style="padding:4px 8px;color:var(--text-dim);font-size:var(--fs-xs)">' + i18nT('editor.ms.noMatches', null, 'No matches') + '</div>';
       }
 
       dd.innerHTML = html;
@@ -2352,7 +2364,7 @@
 
     var main = document.createElement('div');
     main.className = 'pb-json-fixed-main';
-    main.textContent = entry.summary || 'Invalid JSON';
+    main.textContent = entry.summary || i18nT('editor.json.invalid', null, 'Invalid JSON');
     overlay.appendChild(main);
 
     if (entry.message) {
@@ -2368,7 +2380,7 @@
       var button = document.createElement('button');
       button.type = 'button';
       button.className = 'pb-json-fixed-btn';
-      button.textContent = entry.actionLabel || 'Reveal line in editor';
+      button.textContent = entry.actionLabel || i18nT('editor.json.revealLine', null, 'Reveal line in editor');
       button.addEventListener('click', function() {
         entry.action();
       });
@@ -2382,9 +2394,9 @@
   function setFixedValidationStatus(ownerId, opts) {
     if (!ownerId) return;
     fixedValidationEntries[ownerId] = {
-      summary: opts && opts.summary ? opts.summary : 'Invalid JSON',
+      summary: opts && opts.summary ? opts.summary : i18nT('editor.json.invalid', null, 'Invalid JSON'),
       message: opts && opts.message ? opts.message : '',
-      actionLabel: opts && opts.actionLabel ? opts.actionLabel : 'Reveal line in editor',
+      actionLabel: opts && opts.actionLabel ? opts.actionLabel : i18nT('editor.json.revealLine', null, 'Reveal line in editor'),
       action: opts && typeof opts.action === 'function' ? opts.action : null,
     };
     fixedValidationOrder = fixedValidationOrder.filter(function(id) { return id !== ownerId; });

@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/app/i18n.js?v=1"></script>
     <title>API Keys - PBGui</title>
     <style>
         /* ── Design tokens (tune these to resize globally) ── */
@@ -13,7 +14,7 @@
             --input-h: 32px; --btn-h: 32px;
         }
         /* Base layout — identical to dashboard_main.html */
-        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0e1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, sans-serif; font-size: var(--fs-base); }
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0e1117; color: #e2e8f0; font-family: 'Segoe UI', system-ui, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; font-size: var(--fs-base); }
         * { box-sizing: border-box; }
 
         /* ── Page body ──────────────────────────────── */
@@ -601,7 +602,7 @@
         .gs-topic { color:#93c5fd; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
         .gs-snip { color:#94a3b8; font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
     </style>
-    <script src="/app/js/log_viewer_panel.js?v=29"></script>
+    <script src="/app/js/log_viewer_panel.js?v=30"></script>
 </head>
 <body>
 
@@ -613,14 +614,14 @@
   <div class="ovl-panel">
     <div id="help-drag-handle"></div>
     <div class="ovl-header">
-      <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
+      <div class="ovl-header-title">&#128218; <span data-i18n="misc.help.guideHelp">Guide &amp; Help</span></div>
       <div class="ovl-header-actions">
         <div id="help-search-wrap">
-          <input id="help-search" type="text" placeholder="Search in topic…" autocomplete="off">
-          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>
-          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)">&#9660;</button>
+          <input id="help-search" type="text" placeholder="Search in topic…" data-i18n-placeholder="misc.apikeys.searchInTopic" autocomplete="off">
+          <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)" data-i18n-title="misc.help.previousMatch">&#9650;</button>
+          <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)" data-i18n-title="misc.help.nextMatch">&#9660;</button>
           <span id="help-search-count"></span>
-          <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
+          <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="misc.help.searchAcrossAll"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
         </div>
         <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
         <div class="lang-pill">
@@ -632,10 +633,10 @@
     </div>
     <div id="help-body">
       <div id="help-toc">
-        <input id="help-toc-filter" type="text" placeholder="Filter topics…" autocomplete="off">
+        <input id="help-toc-filter" type="text" placeholder="Filter topics…" data-i18n-placeholder="misc.apikeys.filterTopics" autocomplete="off">
         <div id="help-toc-list"></div>
       </div>
-      <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
+      <div id="help-content"><div class="help-loading" data-i18n="misc.apikeys.selectTopic">Select a topic from the left.</div></div>
     </div>
   </div>
 </div>
@@ -648,21 +649,21 @@
     <div id="sidebar">
         <div id="sidebar-sticky">
             <div id="sidebar-header">
-                <span class="sb-title">API Keys</span>
+                <span class="sb-title" data-i18n="misc.apikeys.apiKeys">API Keys</span>
                 <span class="sb-count" id="sb-count">…</span>
                 <span class="sb-count" id="sb-inuse" style="display:none;"></span>
             </div>
             <div id="sidebar-toolbar">
-                <button class="sb-btn primary" onclick="showCreateForm()">+ Add User</button>
+                <button class="sb-btn primary" onclick="showCreateForm()">+ <span data-i18n="misc.apikeys.addUser">Add User</span></button>
                 <hr class="sb-sep">
-                <button class="sb-btn info" onclick="refreshHLExpiry()" id="btnHLExpiry">HL Expiry Check</button>
-                <button class="sb-btn info" onclick="refreshBybitExpiry()" id="btnBybitExpiry">Bybit Expiry Check</button>
-                <button class="sb-btn" onclick="toggleHLConfig()" id="btnHLConfig">HL Warning Config</button>
+                <button class="sb-btn info" onclick="refreshHLExpiry()" id="btnHLExpiry" data-i18n="misc.apikeys.hlExpiryCheck">HL Expiry Check</button>
+                <button class="sb-btn info" onclick="refreshBybitExpiry()" id="btnBybitExpiry" data-i18n="misc.apikeys.bybitExpiryCheck">Bybit Expiry Check</button>
+                <button class="sb-btn" onclick="toggleHLConfig()" id="btnHLConfig" data-i18n="misc.apikeys.hlWarningConfig">HL Warning Config</button>
                 <hr class="sb-sep">
-                <button class="sb-btn" onclick="toggleTradfi()" id="btnTradfi">TradFi</button>
-                <button class="sb-btn" onclick="toggleComments()" id="btnComments">Comments</button>
-                <button class="sb-btn" onclick="toggleBackups()" id="btnBackups">&#x1F5C4; Backups</button>
-                <button class="sb-btn" id="btnLogs" onclick="toggleLogPanel()">&#128203; Logs</button>
+                <button class="sb-btn" onclick="toggleTradfi()" id="btnTradfi" data-i18n="misc.apikeys.tradfi">TradFi</button>
+                <button class="sb-btn" onclick="toggleComments()" id="btnComments" data-i18n="misc.apikeys.comments">Comments</button>
+                <button class="sb-btn" onclick="toggleBackups()" id="btnBackups">&#x1F5C4; <span data-i18n="misc.apikeys.backups">Backups</span></button>
+                <button class="sb-btn" id="btnLogs" onclick="toggleLogPanel()">&#128203; <span data-i18n="misc.apikeys.logs">Logs</span></button>
             </div>
         </div>
         <div id="sidebar-resize"></div>
@@ -673,33 +674,33 @@
         <div id="userListView">
             <!-- API keys metadata bar -->
             <div id="apiMetaBar" style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#0f172a; border:1px solid #1e293b; border-radius:5px; font-size:var(--fs-xs); color:#94a3b8;">
-                <span>Serial:</span>
+                <span data-i18n="misc.apikeys.serial">Serial:</span>
                 <span id="metaSerial" style="color:#e2e8f0; font-weight:700;">—</span>
                 <span id="metaTs" style="color:#94a3b8;"></span>
                 <span id="metaBy" style="color:#64748b;"></span>
             </div>
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-                <input type="text" id="userFilter" placeholder="Filter by name or exchange…"
+                <input type="text" id="userFilter" placeholder="Filter by name or exchange…" data-i18n-placeholder="misc.apikeys.filterByNameOrExchange"
                     oninput="applyFilterSort()"
                     onkeydown="if(event.key==='ArrowDown'){event.preventDefault();var r=document.querySelector('#userTableBody tr[tabindex]');if(r)r.focus();}"
                     style="flex:1; background:#0e1117; border:1px solid #2d3748; border-radius:4px;
                            padding:6px 10px; color:#fafafa; font-size:var(--fs-sm);" />
-                <button class="btn btn-sm btn-secondary" onclick="clearFilter()" title="Clear filter">✕</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearFilter()" title="Clear filter" data-i18n-title="misc.apikeys.clearFilter">✕</button>
             </div>
             <table class="user-table">
                 <thead>
                     <tr>
-                        <th class="sortable" onclick="setSort('name')" id="th-name">User <span class="sort-icon">⇅</span></th>
-                        <th class="sortable" onclick="setSort('exchange')" id="th-exchange">Exchange <span class="sort-icon">⇅</span></th>
-                        <th>Credentials</th>
-                        <th class="sortable" onclick="setSort('hl_expiry')" id="th-hl_expiry">Key Expiry <span class="sort-icon">⇅</span></th>
-                        <th class="sortable" onclick="setSort('status')" id="th-status">Status <span class="sort-icon">⇅</span></th>
-                        <th>Actions</th>
+                        <th class="sortable" onclick="setSort('name')" id="th-name"><span data-i18n="misc.apikeys.user">User</span> <span class="sort-icon">⇅</span></th>
+                        <th class="sortable" onclick="setSort('exchange')" id="th-exchange"><span data-i18n="misc.apikeys.exchange">Exchange</span> <span class="sort-icon">⇅</span></th>
+                        <th data-i18n="misc.apikeys.credentials">Credentials</th>
+                        <th class="sortable" onclick="setSort('hl_expiry')" id="th-hl_expiry"><span data-i18n="misc.apikeys.keyExpiry">Key Expiry</span> <span class="sort-icon">⇅</span></th>
+                        <th class="sortable" onclick="setSort('status')" id="th-status"><span data-i18n="misc.apikeys.status">Status</span> <span class="sort-icon">⇅</span></th>
+                        <th data-i18n="misc.apikeys.actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="userTableBody">
                     <tr class="loading-row">
-                        <td colspan="6"><span class="spinner"></span> Loading users...</td>
+                        <td colspan="6"><span class="spinner"></span> <span data-i18n="misc.apikeys.loadingUsers">Loading users...</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -708,40 +709,40 @@
         <!-- Edit/Create panel (hidden by default) -->
         <div id="editPanel" class="edit-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
-                <h3 id="editPanelTitle" style="margin:0;">Edit User</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <h3 id="editPanelTitle" style="margin:0;" data-i18n="misc.apikeys.editUser">Edit User</h3>
             </div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Username</label>
+                    <label data-i18n="misc.apikeys.username">Username</label>
                     <input type="text" id="editName" maxlength="32" />
                 </div>
                 <div class="form-group">
-                    <label>Exchange</label>
+                    <label data-i18n="misc.apikeys.exchange">Exchange</label>
                     <select id="editExchange" onchange="onExchangeChange()"></select>
                 </div>
                 <div class="form-group" id="testBtnGroup" style="padding-top:20px;">
-                    <button class="btn btn-info" onclick="testConnection()" id="btnTest">Test Connection</button>
+                    <button class="btn btn-info" onclick="testConnection()" id="btnTest" data-i18n="misc.apikeys.testConnection">Test Connection</button>
                 </div>
             </div>
 
             <!-- Standard fields (non-HL) -->
             <div class="form-grid" id="standardFields">
                 <div class="form-group">
-                    <label>API Key</label>
+                    <label data-i18n="misc.apikeys.apiKey">API Key</label>
                     <div class="pw-wrap">
                         <input type="password" id="editKey" />
                         <button type="button" class="pw-eye-btn" onclick="toggleApiKeyVisible(this)" tabindex="-1">&#128065;</button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>API Secret</label>
+                    <label data-i18n="misc.apikeys.apiSecret">API Secret</label>
                     <div class="pw-wrap">
                         <input type="password" id="editSecret" />
                     </div>
                 </div>
                 <div class="form-group" id="passphraseGroup" style="display:none;">
-                    <label>Passphrase / Password</label>
+                    <label data-i18n="misc.apikeys.passphrasePassword">Passphrase / Password</label>
                     <div class="pw-wrap">
                         <input type="password" id="editPassphrase" />
                     </div>
@@ -751,24 +752,24 @@
             <!-- HL Expiry (only shown for Hyperliquid users in edit mode) -->
             <div id="hlExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#0e1117; border:1px solid #2d3748; border-radius:6px;">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <span style="font-size:var(--fs-sm); color:#94a3b8;">HL Key Expiry:</span>
+                    <span style="font-size:var(--fs-sm); color:#94a3b8;" data-i18n="misc.apikeys.hlKeyExpiry">HL Key Expiry:</span>
                     <span id="hlExpiryInlineBadge">—</span>
                     <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;"></span>
-                    <button class="btn btn-sm btn-secondary" id="btnHLExpiryInline" onclick="checkSingleHLExpiry()" style="margin-left:auto;">&#8635; Check Expiry</button>
+                    <button class="btn btn-sm btn-secondary" id="btnHLExpiryInline" onclick="checkSingleHLExpiry()" style="margin-left:auto;">&#8635; <span data-i18n="misc.apikeys.checkExpiry">Check Expiry</span></button>
                 </div>
             </div>
 
             <!-- Bybit Expiry (only shown for Bybit users in edit mode) -->
             <div id="bybitExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#0e1117; border:1px solid #2d3748; border-radius:6px;">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <span style="font-size:var(--fs-sm); color:#94a3b8;">Bybit Key Expiry:</span>
+                    <span style="font-size:var(--fs-sm); color:#94a3b8;" data-i18n="misc.apikeys.bybitKeyExpiry">Bybit Key Expiry:</span>
                     <span id="bybitExpiryInlineBadge">—</span>
                     <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;"></span>
-                    <button class="btn btn-sm btn-secondary" id="btnBybitExpiryInline" onclick="checkSingleBybitExpiry()" style="margin-left:auto;">&#8635; Check Expiry + IPs</button>
+                    <button class="btn btn-sm btn-secondary" id="btnBybitExpiryInline" onclick="checkSingleBybitExpiry()" style="margin-left:auto;">&#8635; <span data-i18n="misc.apikeys.checkExpiryAndIps">Check Expiry + IPs</span></button>
                 </div>
                 <!-- IP list — shown only after live check, never persisted -->
                 <div id="bybitIPList" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid #2d3748;">
-                    <span style="font-size:var(--fs-xs); color:#94a3b8; display:block; margin-bottom:4px;">Whitelisted IPs (live, not saved):</span>
+                    <span style="font-size:var(--fs-xs); color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="misc.apikeys.whitelistedIps">Whitelisted IPs (live, not saved):</span>
                     <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:#e2e8f0; line-height:1.8;"></div>
                 </div>
             </div>
@@ -776,40 +777,40 @@
             <!-- Hyperliquid fields -->
             <div class="form-grid" id="hlFields" style="display:none;">
                 <div class="form-group">
-                    <label>Wallet Address</label>
+                    <label data-i18n="misc.apikeys.walletAddress">Wallet Address</label>
                     <input type="text" id="editWallet" />
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
-                    <label>Private Key</label>
+                    <label data-i18n="misc.apikeys.privateKey">Private Key</label>
                     <div class="pw-wrap">
                         <input type="password" id="editPrivateKey" />
                     </div>
                 </div>
                 <div class="form-checkbox">
                     <input type="checkbox" id="editIsVault" />
-                    <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:#fafafa;">Vault</label>
+                    <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:#fafafa;" data-i18n="misc.apikeys.vault">Vault</label>
                 </div>
             </div>
 
             <!-- Advanced (collapsible) -->
             <div class="expander">
                 <button class="expander-toggle" onclick="toggleAdvanced()">
-                    ▶ Advanced (optional)
+                    <span id="advancedToggleIcon">▶</span> <span data-i18n="misc.apikeys.advancedOptional">Advanced (optional)</span>
                 </button>
                 <div class="expander-content" id="advancedContent">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Quote</label>
+                            <label data-i18n="misc.apikeys.quote">Quote</label>
                             <input type="text" id="editQuote" placeholder="e.g. USDT" />
                         </div>
                     </div>
                     <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
                         <div class="form-group">
-                            <label>Options (JSON)</label>
+                            <label data-i18n="misc.apikeys.optionsJson">Options (JSON)</label>
                             <textarea id="editOptions" rows="3" placeholder='{"key": "value"}'></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Extra (JSON passthrough)</label>
+                            <label data-i18n="misc.apikeys.extraJson">Extra (JSON passthrough)</label>
                             <textarea id="editExtra" rows="3" placeholder='{"key": "value"}'></textarea>
                         </div>
                     </div>
@@ -820,25 +821,25 @@
             <div id="balanceDisplay" class="balance-display" style="display:none;"></div>
 
             <div class="form-actions">
-                <button class="btn btn-danger" id="btnDelete" onclick="deleteUser()" style="display:none;">Delete</button>
-                <button class="btn btn-primary" onclick="saveUser()" id="btnSave">Save</button>
+                <button class="btn btn-danger" id="btnDelete" onclick="deleteUser()" style="display:none;" data-i18n="common.delete">Delete</button>
+                <button class="btn btn-primary" onclick="saveUser()" id="btnSave" data-i18n="common.save">Save</button>
             </div>
         </div>
 
         <!-- HL Expiry Panel (hidden by default) -->
         <div id="hlExpiryPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
-                <h3 style="margin:0;">Hyperliquid API Key Expiry</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <h3 style="margin:0;" data-i18n="misc.apikeys.hyperliquidApiKeyExpiry">Hyperliquid API Key Expiry</h3>
             </div>
             <table class="hl-expiry-table">
                 <thead>
                     <tr>
-                        <th>User</th>
-                        <th>Type</th>
-                        <th>Expiry</th>
-                        <th>Days Left</th>
-                        <th>Status</th>
+                        <th data-i18n="misc.apikeys.user">User</th>
+                        <th data-i18n="misc.apikeys.type">Type</th>
+                        <th data-i18n="misc.apikeys.expiry">Expiry</th>
+                        <th data-i18n="misc.apikeys.daysLeft">Days Left</th>
+                        <th data-i18n="misc.apikeys.status">Status</th>
                     </tr>
                 </thead>
                 <tbody id="hlExpiryBody"></tbody>
@@ -848,17 +849,17 @@
         <!-- Bybit Expiry Panel -->
         <div id="bybitExpiryPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
-                <h3 style="margin:0;">Bybit API Key Expiry</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <h3 style="margin:0;" data-i18n="misc.apikeys.bybitApiKeyExpiry">Bybit API Key Expiry</h3>
             </div>
             <table class="hl-expiry-table">
                 <thead>
                     <tr>
-                        <th>User</th>
-                        <th>Expiry</th>
-                        <th>Days Left</th>
-                        <th>Status</th>
-                        <th>IPs (live)</th>
+                        <th data-i18n="misc.apikeys.user">User</th>
+                        <th data-i18n="misc.apikeys.expiry">Expiry</th>
+                        <th data-i18n="misc.apikeys.daysLeft">Days Left</th>
+                        <th data-i18n="misc.apikeys.status">Status</th>
+                        <th data-i18n="misc.apikeys.ipsLive">IPs (live)</th>
                     </tr>
                 </thead>
                 <tbody id="bybitExpiryBody"></tbody>
@@ -868,30 +869,30 @@
         <!-- Comments Panel -->
         <div id="commentsPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
-                <h3 style="margin:0; flex:1;">Comment Fields</h3>
-                <button class="btn btn-sm btn-primary" onclick="showAddComment()">+ Add</button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <h3 style="margin:0; flex:1;" data-i18n="misc.apikeys.commentFields">Comment Fields</h3>
+                <button class="btn btn-sm btn-primary" onclick="showAddComment()">+ <span data-i18n="misc.apikeys.add">Add</span></button>
             </div>
             <div id="addCommentForm" style="display:none; margin-bottom:12px; padding:12px; background:#0e1117; border-radius:4px; border:1px solid #2d3748;">
                 <div style="display:flex; gap:8px; align-items:flex-end;">
                     <div class="form-group" style="flex:1;">
-                        <label>Key (without _comment_ prefix)</label>
+                        <label data-i18n="misc.apikeys.keyWithoutCommentPrefix">Key (without _comment_ prefix)</label>
                         <input type="text" id="newCommentKey" placeholder="e.g. notes" />
                     </div>
                     <div class="form-group" style="flex:2;">
-                        <label>Value</label>
+                        <label data-i18n="misc.apikeys.value">Value</label>
                         <input type="text" id="newCommentValue" placeholder="Comment text" />
                     </div>
-                    <button class="btn btn-sm btn-primary" onclick="createComment()" style="margin-bottom:0;">Save</button>
-                    <button class="btn btn-sm btn-secondary" onclick="hideAddComment()" style="margin-bottom:0;">Cancel</button>
+                    <button class="btn btn-sm btn-primary" onclick="createComment()" style="margin-bottom:0;" data-i18n="common.save">Save</button>
+                    <button class="btn btn-sm btn-secondary" onclick="hideAddComment()" style="margin-bottom:0;" data-i18n="common.cancel">Cancel</button>
                 </div>
             </div>
             <table class="hl-expiry-table" id="commentsTable">
                 <thead>
                     <tr>
-                        <th>Key</th>
-                        <th>Value</th>
-                        <th style="width:120px;">Actions</th>
+                        <th data-i18n="misc.apikeys.key">Key</th>
+                        <th data-i18n="misc.apikeys.value">Value</th>
+                        <th style="width:120px;" data-i18n="misc.apikeys.actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="commentsBody"></tbody>
@@ -901,18 +902,18 @@
         <!-- HL Expiry Warning Config -->
         <div id="hlConfigPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
-                <h3 style="margin:0;">HL Expiry Telegram Warning</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <h3 style="margin:0;" data-i18n="misc.apikeys.hlExpiryTelegramWarning">HL Expiry Telegram Warning</h3>
             </div>
             <div style="display:flex; gap:12px; align-items:flex-end;">
                 <div class="form-group">
-                    <label>Warning threshold (days)</label>
+                    <label data-i18n="misc.apikeys.warningThresholdDays">Warning threshold (days)</label>
                     <input type="number" id="hlWarningDays" min="1" max="365" value="7" style="width:100px;" />
                 </div>
-                <button class="btn btn-sm btn-primary" onclick="saveHLExpiryConfig()">Save</button>
+                <button class="btn btn-sm btn-primary" onclick="saveHLExpiryConfig()" data-i18n="common.save">Save</button>
             </div>
             <p id="hlWarningConfigStatus" style="font-size:var(--fs-sm); color:#94a3b8; margin-top:8px;"></p>
-            <p style="font-size:var(--fs-sm); color:#94a3b8; margin-top:8px;">
+            <p style="font-size:var(--fs-sm); color:#94a3b8; margin-top:8px;" data-i18n="misc.apikeys.telegramWarningDesc">
                 Telegram warning when HL keys expire within this many days. Alerts repeat daily.
             </p>
         </div>
@@ -920,14 +921,14 @@
         <!-- TradFi Data Provider Section -->
         <div id="tradfiPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
-                <h3 style="margin:0;">TradFi Data Provider (Stock Perps Backtesting)</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <h3 style="margin:0;" data-i18n="misc.apikeys.tradfiDataProvider">TradFi Data Provider (Stock Perps Backtesting)</h3>
             </div>
-            <p style="font-size:var(--fs-sm); color:#94a3b8; margin-bottom:8px;">
+            <p style="font-size:var(--fs-sm); color:#94a3b8; margin-bottom:8px;" data-i18n-html="misc.apikeys.stockPerpBacktestsDesc">
                 Stock perp backtests use <strong>yfinance</strong> automatically for the last 7 days (free, no key).
                 For older data (months/years), configure an extended provider like <strong>Alpaca</strong> (free, 5+ years).
             </p>
-            <p style="font-size:var(--fs-sm); background:#1a2744; border-left:3px solid #26a69a; padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a0aec0;">
+            <p style="font-size:var(--fs-sm); background:#1a2744; border-left:3px solid #26a69a; padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a0aec0;" data-i18n-html="misc.apikeys.betterAlternativeDesc">
                 💡 <strong style="color:#68d391;">Better alternative for full stock-perp history:</strong>
                 PBGui's <strong>Market Data</strong> module uses <strong>Tiingo</strong> (IEX/FX feeds) to build comprehensive local 1m OHLCV archives —
                 significantly faster and more complete than the providers below.
@@ -938,40 +939,40 @@
             <div style="border:1px solid #2d3748; border-radius:6px; padding:12px; margin-bottom:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <strong>yfinance</strong> — automatic default, last 7 days, no API key
+                        <span data-i18n="misc.apikeys.yfinanceDesc">yfinance — automatic default, last 7 days, no API key</span>
                         <span id="yfStatus" style="margin-left:8px; font-size:var(--fs-sm); color:#94a3b8;"></span>
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn btn-sm btn-secondary" id="btnYfInstall" onclick="yfInstallToggle()">Install</button>
-                        <button class="btn btn-sm btn-info" id="btnYfTest" onclick="yfTest()" style="display:none;">Test</button>
+                        <button class="btn btn-sm btn-secondary" id="btnYfInstall" onclick="yfInstallToggle()" data-i18n="misc.apikeys.install">Install</button>
+                        <button class="btn btn-sm btn-info" id="btnYfTest" onclick="yfTest()" style="display:none;" data-i18n="misc.apikeys.test">Test</button>
                     </div>
                 </div>
             </div>
 
             <!-- Extended provider section -->
             <div style="border:1px solid #2d3748; border-radius:6px; padding:12px;">
-                <strong>Extended provider</strong> — optional, for backtests older than 7 days
+                <span data-i18n="misc.apikeys.extendedProviderDesc">Extended provider — optional, for backtests older than 7 days</span>
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
-                    <span style="font-size:var(--fs-sm);color:#94a3b8;">Select an exact vault profile. Active profiles are marked explicitly.</span>
-                    <button class="btn btn-sm btn-secondary" type="button" onclick="newTradfiProfile()">New Profile</button>
+                    <span style="font-size:var(--fs-sm);color:#94a3b8;" data-i18n="misc.apikeys.selectExactVaultProfile">Select an exact vault profile. Active profiles are marked explicitly.</span>
+                    <button class="btn btn-sm btn-secondary" type="button" onclick="newTradfiProfile()" data-i18n="misc.apikeys.newProfile">New Profile</button>
                 </div>
                 <div class="tradfi-profile-wrap">
                     <table class="tradfi-profile-table">
-                        <thead><tr><th>Profile ID</th><th>Provider</th><th>Label</th><th>Local State</th><th>Replicated Selection</th><th>Pending</th><th>Shared</th><th>Generation</th><th>API Key</th><th>API Secret</th><th>Origin</th><th>Updated</th></tr></thead>
-                        <tbody id="tradfiProfilesBody"><tr><td colspan="12">Loading profiles...</td></tr></tbody>
+                        <thead><tr><th data-i18n="misc.apikeys.profileId">Profile ID</th><th data-i18n="misc.apikeys.provider">Provider</th><th data-i18n="misc.apikeys.label">Label</th><th data-i18n="misc.apikeys.localState">Local State</th><th data-i18n="misc.apikeys.replicatedSelection">Replicated Selection</th><th data-i18n="misc.apikeys.pending">Pending</th><th data-i18n="misc.apikeys.shared">Shared</th><th data-i18n="misc.apikeys.generation">Generation</th><th data-i18n="misc.apikeys.apiKey">API Key</th><th data-i18n="misc.apikeys.apiSecret">API Secret</th><th data-i18n="misc.apikeys.origin">Origin</th><th data-i18n="misc.apikeys.updated">Updated</th></tr></thead>
+                        <tbody id="tradfiProfilesBody"><tr><td colspan="12"><span data-i18n="common.loading">Loading profiles...</span></td></tr></tbody>
                     </table>
                 </div>
                 <div class="tradfi-projection-status">
-                    <div class="tradfi-projection-copy" id="tradfiProjectionStatus">PB7 projection status loading...</div>
-                    <button class="btn btn-sm btn-secondary" id="btnTradfiProjectionRetry" type="button" onclick="retryTradfiProjection()">Retry PB7 Projection</button>
+                    <div class="tradfi-projection-copy" id="tradfiProjectionStatus" data-i18n="misc.apikeys.pb7ProjectionStatusLoading">PB7 projection status loading...</div>
+                    <button class="btn btn-sm btn-secondary" id="btnTradfiProjectionRetry" type="button" onclick="retryTradfiProjection()" data-i18n="misc.apikeys.retryPb7Projection">Retry PB7 Projection</button>
                 </div>
                 <div class="form-grid" style="margin-top:12px;">
                     <div class="form-group">
-                        <label>Selected Profile ID</label>
+                        <label data-i18n="misc.apikeys.selectedProfileId">Selected Profile ID</label>
                         <input type="text" id="tradfiProfileId" readonly placeholder="New profile" />
                     </div>
                     <div class="form-group">
-                        <label>Provider</label>
+                        <label data-i18n="misc.apikeys.provider">Provider</label>
                         <select id="tradfiProvider" onchange="onTradfiProviderChange()"></select>
                         <a id="tradfiProviderLink" href="#" target="_blank" rel="noopener noreferrer"
                            style="font-size:var(--fs-sm); color:#26a69a; text-decoration:none; display:none; margin-top:4px; display:flex; align-items:center; gap:4px;">
@@ -979,23 +980,23 @@
                         </a>
                     </div>
                     <div class="form-group">
-                        <label>Label</label>
+                        <label data-i18n="misc.apikeys.label">Label</label>
                         <input type="text" id="tradfiLabel" maxlength="120" placeholder="Profile label" />
                     </div>
                     <div class="form-group" style="display:flex;gap:18px;align-items:center;padding-top:24px;">
-                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiShared" checked> Shared</label>
-                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiActive" checked> Active</label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiShared" checked> <span data-i18n="misc.apikeys.shared">Shared</span></label>
+                        <label style="display:flex;gap:6px;align-items:center;"><input type="checkbox" id="tradfiActive" checked> <span data-i18n="misc.apikeys.active">Active</span></label>
                     </div>
                     <div class="form-group">
-                        <label>API Key</label>
+                        <label data-i18n="misc.apikeys.apiKey">API Key</label>
                         <div class="pw-wrap">
                             <input type="password" id="tradfiApiKey" autocomplete="new-password" />
-                            <button type="button" class="pw-eye-btn" onclick="toggleTradfiApiKeyVisible(this)" tabindex="-1" title="Show or hide the stored API key">&#128065;</button>
+                            <button type="button" class="pw-eye-btn" onclick="toggleTradfiApiKeyVisible(this)" tabindex="-1" title="Show or hide the stored API key" data-i18n-title="misc.apikeys.showHideStoredApiKey">&#128065;</button>
                         </div>
-                        <div style="font-size:var(--fs-xs);color:#718096;margin-top:4px;">Click the eye to reveal the selected profile's API key. The revealed value is cleared when hidden, when another profile is selected, or when you leave the page.</div>
+                        <div style="font-size:var(--fs-xs);color:#718096;margin-top:4px;" data-i18n="misc.apikeys.clickEyeToReveal">Click the eye to reveal the selected profile's API key. The revealed value is cleared when hidden, when another profile is selected, or when you leave the page.</div>
                     </div>
                     <div class="form-group" id="tradfiSecretGroup">
-                        <label>API Secret</label>
+                        <label data-i18n="misc.apikeys.apiSecret">API Secret</label>
                         <div class="pw-wrap">
                             <input type="password" id="tradfiApiSecret" />
                             <button type="button" class="pw-eye-btn" onclick="togglePwVisible('tradfiApiSecret', this)" tabindex="-1">&#128065;</button>
@@ -1005,11 +1006,11 @@
                 <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;"></p>
                 <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;"></p>
                 <div id="tradfiActions" style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button class="btn btn-sm btn-info" onclick="tradfiTest()">Test Connection</button>
-                    <button class="btn btn-sm btn-primary" onclick="tradfiSave(false)">Create / Update</button>
-                    <button class="btn btn-sm btn-secondary" id="btnTradfiRotate" onclick="tradfiSave(true)">Rotate Replacement</button>
-                    <button class="btn btn-sm btn-secondary" id="btnTradfiToggle" onclick="tradfiToggleActive()">Disable</button>
-                    <button class="btn btn-sm btn-danger" id="btnTradfiDelete" onclick="tradfiClear()">Delete Profile</button>
+                    <button class="btn btn-sm btn-info" onclick="tradfiTest()" data-i18n="misc.apikeys.testConnection">Test Connection</button>
+                    <button class="btn btn-sm btn-primary" onclick="tradfiSave(false)" data-i18n="misc.apikeys.createUpdate">Create / Update</button>
+                    <button class="btn btn-sm btn-secondary" id="btnTradfiRotate" onclick="tradfiSave(true)" data-i18n="misc.apikeys.rotateReplacement">Rotate Replacement</button>
+                    <button class="btn btn-sm btn-secondary" id="btnTradfiToggle" onclick="tradfiToggleActive()" data-i18n="misc.apikeys.disable">Disable</button>
+                    <button class="btn btn-sm btn-danger" id="btnTradfiDelete" onclick="tradfiClear()" data-i18n="misc.apikeys.deleteProfile">Delete Profile</button>
                 </div>
             </div>
         </div>
@@ -1017,10 +1018,10 @@
         <!-- Backups Panel -->
         <div id="backupsPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
-                <h3 style="margin:0;">API Key Backups</h3>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <h3 style="margin:0;" data-i18n="misc.apikeys.apiKeyBackups">API Key Backups</h3>
             </div>
-            <p style="font-size:var(--fs-sm); color:#94a3b8; margin:0 0 12px;">
+            <p style="font-size:var(--fs-sm); color:#94a3b8; margin:0 0 12px;" data-i18n-html="misc.apikeys.backupsDesc">
                 Backups are created automatically before every save. Stored in <code>data/api-keys/</code>.
                 A pre-restore snapshot is created before any restore.
             </p>
@@ -1032,7 +1033,7 @@
         <!-- Log viewer panel -->
         <div id="logPanel" class="hl-expiry-panel" style="display:none; flex-direction:column; padding:0; gap:0; height:calc(100vh - 120px);">
             <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid #1e293b; flex-shrink:0;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:5px 12px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; Back</button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:5px 12px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
             </div>
             <div id="logViewerTarget" style="padding:10px 16px 16px; display:flex; flex-direction:column; flex:1; min-height:0;"></div>
         </div>
@@ -1046,10 +1047,10 @@
     <!-- Alert modal (error/warning) -->
     <div id="alertModalOverlay" class="alert-modal-overlay" style="display:none;">
         <div id="alertModalBox" class="alert-modal error">
-            <div id="alertModalTitle" class="alert-modal-title">Error</div>
+            <div id="alertModalTitle" class="alert-modal-title" data-i18n="common.error">Error</div>
             <div id="alertModalBody" class="alert-modal-body"></div>
             <div class="alert-modal-footer">
-                <button class="btn btn-primary" onclick="closeAlertModal()">OK</button>
+                <button class="btn btn-primary" onclick="closeAlertModal()" data-i18n="common.ok">OK</button>
             </div>
         </div>
     </div>
@@ -1058,25 +1059,28 @@
     <div id="diffModal" style="display:none;" class="diff-modal">
         <div class="diff-modal-header">
             <div style="display:flex; align-items:center; gap:12px;">
-                <button class="btn btn-sm btn-secondary" onclick="closeDiffModal()">&#8592; Back</button>
+                <button class="btn btn-sm btn-secondary" onclick="closeDiffModal()">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <span id="diffTitle" style="font-size:var(--fs-sm); color:#94a3b8; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;"></span>
             </div>
             <div style="display:flex; gap:6px;">
-                <button class="btn btn-sm btn-secondary" id="btnDiffUnified" onclick="setDiffMode('unified')">Unified</button>
-                <button class="btn btn-sm btn-secondary" id="btnDiffSide" onclick="setDiffMode('side')">Side by Side</button>
+                <button class="btn btn-sm btn-secondary" id="btnDiffUnified" onclick="setDiffMode('unified')" data-i18n="misc.apikeys.unified">Unified</button>
+                <button class="btn btn-sm btn-secondary" id="btnDiffSide" onclick="setDiffMode('side')" data-i18n="misc.apikeys.sideBySide">Side by Side</button>
             </div>
         </div>
         <div class="diff-legend">
-            <span style="color:#86efac;">&#9608; Added</span>
-            <span style="color:#fca5a5;">&#9608; Removed</span>
-            <span style="color:#94a3b8;">&#9608; Unchanged</span>
+            <span style="color:#86efac;">&#9608; <span data-i18n="misc.apikeys.added">Added</span></span>
+            <span style="color:#fca5a5;">&#9608; <span data-i18n="misc.apikeys.removed">Removed</span></span>
+            <span style="color:#94a3b8;">&#9608; <span data-i18n="misc.apikeys.unchanged">Unchanged</span></span>
         </div>
         <div id="diffContent" style="flex:1; overflow:auto;"></div>
     </div>
 
-    <script src="/app/js/pbgui_dialogs.js?v=5"></script>
+    <script src="/app/js/pbgui_dialogs.js?v=6"></script>
     <script>
     // ── Config ──────────────────────────────────────────────
+    document.title = PBGuiI18n.t('misc.apikeys.title');
+    function t(key, params) { return window.PBGuiI18n.t(key, params); }
+    function m(text) { return window.PBGuiI18n.serverMsg(text); }
     // Browser authentication uses the same-origin HttpOnly session cookie.
     // The server replaces "%%PLACEHOLDER%%" (with quotes) via html.replace(),
     // so guard strings must use a DIFFERENT form to avoid being replaced too.
@@ -1244,7 +1248,7 @@
             V7_EXCHANGES = data.v7_exchanges || [];
             populateExchangeSelect();
         } catch (e) {
-            showToast("Failed to load exchanges: " + e.message, "error");
+            showToast(t('misc.apikeys.failedToLoadExchanges', { error: m(e.message) }), "error");
         }
     }
 
@@ -1271,33 +1275,33 @@
             } else {
                 document.getElementById("metaTs").textContent = "";
             }
-            document.getElementById("metaBy").textContent = meta.api_by ? "by " + meta.api_by : "";
+            document.getElementById("metaBy").textContent = meta.api_by ? t('misc.apikeys.byPrefix', { name: meta.api_by }) : "";
         } catch (e) { /* non-critical — ignore */ }
     }
 
     // ── Load users ──────────────────────────────────────────
     async function loadUsers() {
         const tbody = document.getElementById("userTableBody");
-        tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> Loading users...</td></tr>';
+        tbody.innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> ' + t('misc.apikeys.loadingUsers') + '</td></tr>';
         document.getElementById("sb-count").textContent = "…";
 
         try {
             currentUsers = await apiFetch("/");
             renderUserTable();
-            document.getElementById("sb-count").textContent = currentUsers.length + " users";
+            document.getElementById("sb-count").textContent = t('misc.apikeys.usersCount', { count: currentUsers.length });
             const inUseCount = currentUsers.filter(u => u.in_use).length;
             const sbInuse = document.getElementById("sb-inuse");
             if (inUseCount > 0) {
-                sbInuse.textContent = inUseCount + " in use";
+                sbInuse.textContent = t('misc.apikeys.inUseCount', { count: inUseCount });
                 sbInuse.style.display = "";
             } else {
                 sbInuse.style.display = "none";
             }
             loadApiMeta();
         } catch (e) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#ef4444;">Failed to load: ' +
-                escapeHtml(e.message) + '</td></tr>';
-            document.getElementById("sb-count").textContent = "Error";
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#ef4444;">' +
+                t('misc.apikeys.failedToLoad', { error: escapeHtml(m(e.message)) }) + '</td></tr>';
+            document.getElementById("sb-count").textContent = t('common.error');
             document.getElementById("sb-inuse").style.display = "none";
         }
     }
@@ -1305,7 +1309,7 @@
     function renderUserTable() {
         const tbody = document.getElementById("userTableBody");
         if (currentUsers.length === 0) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6">No API keys configured. Click "Add User" to create one.</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6">' + t('misc.apikeys.noApiKeysConfigured') + '</td></tr>';
             return;
         }
 
@@ -1357,7 +1361,7 @@
         });
 
         if (users.length === 0) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#94a3b8;">No users match the filter.</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#94a3b8;">' + t('misc.apikeys.noUsersMatchFilter') + '</td></tr>';
             return;
         }
 
@@ -1373,7 +1377,7 @@
                 if (u.has_key) creds.push("key");
                 if (u.has_secret) creds.push("secret");
             }
-            const credStr = creds.length > 0 ? creds.join(", ") : '<span style="color:#ef4444;">none</span>';
+            const credStr = creds.length > 0 ? creds.join(", ") : '<span style="color:#ef4444;">' + t('misc.apikeys.none') + '</span>';
 
             // Key expiry — prefer live-fetched data, fall back to locally stored
             let expiryHtml = "-";
@@ -1402,8 +1406,8 @@
             }
 
             const inUseHtml = u.in_use
-                ? '<span class="badge-in-use active">In Use</span>'
-                : '<span class="badge-in-use">Unused</span>';
+                ? '<span class="badge-in-use active">' + t('misc.apikeys.inUse') + '</span>'
+                : '<span class="badge-in-use">' + t('misc.apikeys.unused') + '</span>';
 
             html += '<tr tabindex="0" data-user-name="' + escapeAttr(u.name) + '" style="cursor:pointer;">';
             html += '<td><strong>' + escapeHtml(u.name) + '</strong></td>';
@@ -1412,9 +1416,9 @@
             html += '<td>' + expiryHtml + '</td>';
             html += '<td>' + inUseHtml + '</td>';
             html += '<td>';
-            html += '<button class="btn btn-sm btn-info" data-user-action="edit">Edit</button> ';
+            html += '<button class="btn btn-sm btn-info" data-user-action="edit">' + t('misc.apikeys.edit') + '</button> ';
             if (!u.in_use) {
-                html += '<button class="btn btn-sm btn-danger" data-user-action="delete">Delete</button>';
+                html += '<button class="btn btn-sm btn-danger" data-user-action="delete">' + t('common.delete') + '</button>';
             }
             html += '</td>';
             html += '</tr>';
@@ -1477,11 +1481,11 @@
         } else if (exp.status === "critical") {
             return '<span class="badge-expiry critical">⚠ ' + escapeHtml(exp.days_remaining) + 'd</span>';
         } else if (exp.status === "expired") {
-            return '<span class="badge-expiry expired">EXPIRED</span>';
+            return '<span class="badge-expiry expired">' + t('misc.apikeys.expired') + '</span>';
         } else if (exp.status === "no_expiry") {
-            return '<span class="badge-expiry no_expiry">No expiry</span>';
+            return '<span class="badge-expiry no_expiry">' + t('misc.apikeys.noExpiry') + '</span>';
         } else if (exp.status === "error") {
-            return '<span class="badge-expiry error" title="' + escapeAttr(exp.error || "") + '">Error</span>';
+            return '<span class="badge-expiry error" title="' + escapeAttr(exp.error || "") + '">' + t('common.error') + '</span>';
         }
         return '<span class="badge-expiry unknown">—</span>';
     }
@@ -1495,7 +1499,7 @@
             location.hash = "#edit/" + encodeURIComponent(name);
             showEditPanel(user);
         } catch (e) {
-            showToast("Failed to load user: " + e.message, "error");
+            showToast(t('misc.apikeys.failedToLoadUser', { error: m(e.message) }), "error");
         }
     }
 
@@ -1536,7 +1540,7 @@
         document.getElementById("balanceDisplay").style.display = "none";
 
         const isEdit = editMode === "edit";
-        document.getElementById("editPanelTitle").textContent = isEdit ? "Edit: " + user.name : "New User";
+        document.getElementById("editPanelTitle").textContent = isEdit ? t('misc.apikeys.editPrefix', { name: user.name }) : t('misc.apikeys.newUser');
         document.getElementById("editName").value = user.name || "";
         document.getElementById("editName").disabled = isEdit && user.in_use;
 
@@ -1626,7 +1630,7 @@
         document.getElementById("hlExpiryInlineBadge").innerHTML = exp && exp.status ? renderExpiryBadge(exp) : "—";
         const dateEl = document.getElementById("hlExpiryInlineDate");
         if (exp && exp.valid_until_iso) {
-            dateEl.textContent = "(expires " + exp.valid_until_iso.split("T")[0] + ")";
+            dateEl.textContent = t('misc.apikeys.expires', { date: exp.valid_until_iso.split("T")[0] });
         } else {
             dateEl.textContent = "";
         }
@@ -1636,7 +1640,7 @@
         if (!editingName) return;
         const btn = document.getElementById("btnHLExpiryInline");
         btn.disabled = true;
-        btn.textContent = "Checking…";
+        btn.textContent = t('misc.apikeys.checkingEllipsis');
         try {
             // Send unsaved private keys only in a POST body so they never enter URLs.
             const unsavedKey = getMaskedFieldValue("editPrivateKey");
@@ -1654,11 +1658,11 @@
             updateHLExpiryInline(data);
         } catch(e) {
             const badge = document.getElementById("hlExpiryInlineBadge");
-            badge.textContent = "Error: " + e.message;
+            badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
             badge.style.color = "#fc8181";
         } finally {
             btn.disabled = false;
-            btn.textContent = "↻ Check Expiry";
+            btn.textContent = "↻ " + t('misc.apikeys.checkExpiry');
         }
     }
 
@@ -1666,7 +1670,7 @@
         document.getElementById("bybitExpiryInlineBadge").innerHTML = exp && exp.status ? renderExpiryBadge(exp) : "—";
         const dateEl = document.getElementById("bybitExpiryInlineDate");
         if (exp && exp.expires_at_iso && exp.status !== "no_expiry") {
-            dateEl.textContent = "(expires " + exp.expires_at_iso.split("T")[0] + ")";
+            dateEl.textContent = t('misc.apikeys.expires', { date: exp.expires_at_iso.split("T")[0] });
         } else {
             dateEl.textContent = "";
         }
@@ -1677,7 +1681,7 @@
             ipContent.innerHTML = ips.map(ip => `<span style="font-family:monospace; margin-right:12px;">${escapeHtml(ip)}</span>`).join("");
             ipListDiv.style.display = "block";
         } else if (ips !== null && ips !== undefined) {
-            ipContent.textContent = "No IPs (unrestricted)";
+            ipContent.textContent = t('misc.apikeys.noIpsUnrestricted');
             ipListDiv.style.display = "block";
         } else {
             ipListDiv.style.display = "none";
@@ -1688,7 +1692,7 @@
         if (!editingName) return;
         const btn = document.getElementById("btnBybitExpiryInline");
         btn.disabled = true;
-        btn.textContent = "Checking…";
+        btn.textContent = t('misc.apikeys.checkingEllipsis');
         try {
             const data = await apiFetch("/" + encodeURIComponent(editingName) + "/bybit-expiry");
             bybitExpiryData[editingName] = data;
@@ -1696,18 +1700,18 @@
             renderUserTable();
         } catch(e) {
             const badge = document.getElementById("bybitExpiryInlineBadge");
-            badge.textContent = "Error: " + e.message;
+            badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
             badge.style.color = "#fc8181";
         } finally {
             btn.disabled = false;
-            btn.textContent = "↻ Check Expiry + IPs";
+            btn.textContent = "↻ " + t('misc.apikeys.checkExpiryAndIps');
         }
     }
 
     async function refreshBybitExpiry() {
         const btn = document.getElementById("btnBybitExpiry");
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Checking...';
+        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.checking');
 
         try {
             const data = await apiFetch("/bybit-expiry?force=true");
@@ -1729,19 +1733,19 @@
             document.getElementById("btnBackups").classList.remove("active");
             document.getElementById("btnLogs").classList.remove("active");
             document.getElementById("bybitExpiryPanel").style.display = "";
-            showToast("Bybit expiry data refreshed", "success");
+            showToast(t('misc.apikeys.bybitExpiryDataRefreshed'), "success");
         } catch (e) {
-            showToast("Bybit expiry check failed: " + e.message, "error");
+            showToast(t('misc.apikeys.bybitExpiryCheckFailed', { error: m(e.message) }), "error");
         } finally {
             btn.disabled = false;
-            btn.textContent = "Bybit Expiry Check";
+            btn.textContent = t('misc.apikeys.bybitExpiryCheck');
         }
     }
 
     function renderBybitExpiryPanel(data) {
         const tbody = document.getElementById("bybitExpiryBody");
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No Bybit users found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">' + t('misc.apikeys.noBybitUsersFound') + '</td></tr>';
             return;
         }
 
@@ -1752,7 +1756,7 @@
         for (const exp of data) {
             const ipsText = (exp.ips && exp.ips.length > 0)
                 ? exp.ips.map(ip => `<span style="font-family:monospace;font-size:var(--fs-xs);margin-right:8px;">${escapeHtml(ip)}</span>`).join("")
-                : '<span style="color:#94a3b8;font-size:var(--fs-xs);">none (unrestricted)</span>';
+                : '<span style="color:#94a3b8;font-size:var(--fs-xs);">' + t('misc.apikeys.noneUnrestricted') + '</span>';
             html += "<tr>";
             html += "<td><strong>" + escapeHtml(exp.name) + "</strong></td>";
             html += "<td>" + (exp.expires_at_iso && exp.status !== "no_expiry" ? exp.expires_at_iso.split("T")[0] : "—") + "</td>";
@@ -1766,13 +1770,13 @@
 
     function toggleAdvanced() {
         const content = document.getElementById("advancedContent");
-        const btn = content.previousElementSibling;
+        const icon = document.getElementById("advancedToggleIcon");
         if (content.classList.contains("open")) {
             content.classList.remove("open");
-            btn.textContent = "▶ Advanced (optional)";
+            if (icon) icon.textContent = "▶";
         } else {
             content.classList.add("open");
-            btn.textContent = "▼ Advanced (optional)";
+            if (icon) icon.textContent = "▼";
         }
     }
 
@@ -1785,9 +1789,9 @@
     async function backToList() {
         if (document.getElementById("editPanel").style.display !== "none" && formDirty) {
             if (!(await window.PBGuiDialogs.confirm({
-                title: "Discard changes",
-                message: "You have unsaved changes. Leave without saving?",
-                confirmText: "Leave"
+                title: t('misc.apikeys.discardChangesTitle'),
+                message: t('misc.apikeys.discardChangesMessage'),
+                confirmText: t('misc.apikeys.leave')
             }))) return;
         }
         formDirty = false;
@@ -1818,7 +1822,7 @@
     async function saveUser() {
         const name = document.getElementById("editName").value.trim();
         if (!name) {
-            showToast("Username is required", "error");
+            showToast(t('misc.apikeys.usernameRequired'), "error");
             return;
         }
 
@@ -1830,7 +1834,7 @@
         if (isHL) {
             const wallet = document.getElementById("editWallet").value.trim();
             if (!wallet) {
-                showToast("Wallet Address is required for Hyperliquid", "error");
+                showToast(t('misc.apikeys.walletAddressRequired'), "error");
                 return;
             }
             // Private key: always required on create; on edit required only if not already saved
@@ -1838,14 +1842,14 @@
             const pkInput = document.getElementById("editPrivateKey");
             const pkAlreadySaved = !isCreate && pkInput.placeholder.includes("saved");
             if (pkVal === "" || (!pkVal && !pkAlreadySaved)) {
-                showToast("Private Key is required for Hyperliquid", "error");
+                showToast(t('misc.apikeys.privateKeyRequired'), "error");
                 return;
             }
         } else {
             const apiKey = getMaskedFieldValue("editKey");
             const apiKeyAlreadySaved = !isCreate && document.getElementById("editKey").placeholder.includes("saved");
             if (!apiKey && !apiKeyAlreadySaved) {
-                showToast("API Key is required", "error");
+                showToast(t('misc.apikeys.apiKeyRequired'), "error");
                 return;
             }
             // Secret: required on create; on edit required only if not already saved
@@ -1853,7 +1857,7 @@
             const secretInput = document.getElementById("editSecret");
             const secretAlreadySaved = !isCreate && secretInput.placeholder.includes("saved");
             if (secretVal === "" || (!secretVal && !secretAlreadySaved)) {
-                showToast("API Secret is required", "error");
+                showToast(t('misc.apikeys.apiSecretRequired'), "error");
                 return;
             }
             if (PASSPHRASE_EXCHANGES.includes(exchange)) {
@@ -1861,7 +1865,7 @@
                 const ppInput = document.getElementById("editPassphrase");
                 const ppAlreadySaved = !isCreate && ppInput.placeholder.includes("saved");
                 if (ppVal === "" || (!ppVal && !ppAlreadySaved)) {
-                    showToast("Passphrase is required for " + exchange, "error");
+                    showToast(t('misc.apikeys.passphraseRequired', { exchange: exchange }), "error");
                     return;
                 }
             }
@@ -1875,12 +1879,12 @@
         const extraRaw = document.getElementById("editExtra").value.trim();
         if (optionsRaw) {
             try { options = JSON.parse(optionsRaw); } catch {
-                showToast("Invalid JSON in Options field", "error"); return;
+                showToast(t('misc.apikeys.invalidJsonOptions'), "error"); return;
             }
         }
         if (extraRaw) {
             try { extra = JSON.parse(extraRaw); } catch {
-                showToast("Invalid JSON in Extra field", "error"); return;
+                showToast(t('misc.apikeys.invalidJsonExtra'), "error"); return;
             }
         }
 
@@ -1899,7 +1903,7 @@
 
         const btnSave = document.getElementById("btnSave");
         btnSave.disabled = true;
-        btnSave.innerHTML = '<span class="spinner"></span> Saving...';
+        btnSave.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.saving');
 
         try {
             if (editMode === "create") {
@@ -1907,7 +1911,7 @@
                     method: "POST",
                     body: JSON.stringify({ name: name, data: data }),
                 });
-                showToast("User created: " + name, "success");
+                showToast(t('misc.apikeys.userCreated', { name: name }), "success");
             } else {
                 // Rename first if the username was changed
                 let currentName = editingName;
@@ -1922,7 +1926,7 @@
                     method: "PUT",
                     body: JSON.stringify(data),
                 });
-                showToast("User updated: " + name, "success");
+                showToast(t('misc.apikeys.userUpdated', { name: name }), "success");
             }
             // Clear stale expiry cache for this user so re-opening the
             // edit panel doesn't show an outdated "no expire" result.
@@ -1942,20 +1946,20 @@
                 }).catch(function() {});
             }
         } catch (e) {
-            showToast("Save failed: " + e.message, "error");
+            showToast(t('misc.apikeys.saveFailed', { error: m(e.message) }), "error");
         } finally {
             btnSave.disabled = false;
-            btnSave.textContent = "Save";
+            btnSave.textContent = t('common.save');
         }
     }
 
     // ── Delete user ─────────────────────────────────────────
     function confirmDelete(name) {
         window.PBGuiDialogs.confirm({
-            title: "Delete user",
-            message: "Delete user '" + name + "'?",
-            detail: "This cannot be undone.",
-            confirmText: "Delete"
+            title: t('misc.apikeys.deleteUserTitle'),
+            message: t('misc.apikeys.deleteUserMessage', { name: name }),
+            detail: t('misc.apikeys.cannotBeUndone'),
+            confirmText: t('common.delete')
         }).then(function(confirmed) {
             if (confirmed) doDelete(name);
         });
@@ -1964,10 +1968,10 @@
     async function deleteUser() {
         if (!editingName) return;
         if (!(await window.PBGuiDialogs.confirm({
-            title: "Delete user",
-            message: "Delete user '" + editingName + "'?",
-            detail: "This cannot be undone.",
-            confirmText: "Delete"
+            title: t('misc.apikeys.deleteUserTitle'),
+            message: t('misc.apikeys.deleteUserMessage', { name: editingName }),
+            detail: t('misc.apikeys.cannotBeUndone'),
+            confirmText: t('common.delete')
         }))) return;
         await doDelete(editingName);
     }
@@ -1975,11 +1979,11 @@
     async function doDelete(name) {
         try {
             await apiFetch("/" + encodeURIComponent(name), { method: "DELETE" });
-            showToast("User deleted: " + name, "success");
+            showToast(t('misc.apikeys.userDeleted', { name: name }), "success");
             cancelEdit();
             await loadUsers();
         } catch (e) {
-            showToast("Delete failed: " + e.message, "error");
+            showToast(t('misc.apikeys.deleteFailed', { error: m(e.message) }), "error");
         }
     }
 
@@ -1987,17 +1991,17 @@
     async function testConnection() {
         const name = editMode === "edit" ? editingName : document.getElementById("editName").value.trim();
         if (!name) {
-            showToast("Save the user first before testing", "warning");
+            showToast(t('misc.apikeys.saveBeforeTesting'), "warning");
             return;
         }
         if (editMode === "create") {
-            showToast("Save the user first before testing", "warning");
+            showToast(t('misc.apikeys.saveBeforeTesting'), "warning");
             return;
         }
 
         const btn = document.getElementById("btnTest");
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Testing...';
+        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.testing');
 
         // Build optional override payload from unsaved field values
         const exchange = document.getElementById("editExchange").value;
@@ -2026,21 +2030,21 @@
             const display = document.getElementById("balanceDisplay");
             let html = "";
             if (result.success) {
-                html += '<div class="balance-box"><div class="label">Futures Balance</div>';
+                html += '<div class="balance-box"><div class="label">' + t('misc.apikeys.futuresBalance') + '</div>';
                 html += '<div class="value">' + (result.balance_futures !== null ? result.balance_futures.toFixed(2) : "N/A") + '</div></div>';
-                showToast("Connection successful!", "success");
+                showToast(t('misc.apikeys.connectionSuccessful'), "success");
             } else {
-                html += '<div class="balance-box"><div class="label">Connection Test</div>';
-                html += '<div class="error">' + escapeHtml(result.error || "Unknown error") + '</div></div>';
-                showToast("Connection failed", "error");
+                html += '<div class="balance-box"><div class="label">' + t('misc.apikeys.connectionTest') + '</div>';
+                html += '<div class="error">' + escapeHtml(m(result.error) || t('common.unknown')) + '</div></div>';
+                showToast(t('misc.apikeys.connectionFailed'), "error");
             }
             display.innerHTML = html;
             display.style.display = "flex";
         } catch (e) {
-            showToast("Test failed: " + e.message, "error");
+            showToast(t('misc.apikeys.testFailed', { error: m(e.message) }), "error");
         } finally {
             btn.disabled = false;
-            btn.textContent = "Test Connection";
+            btn.textContent = t('misc.apikeys.testConnection');
         }
     }
 
@@ -2048,7 +2052,7 @@
     async function refreshHLExpiry() {
         const btn = document.getElementById("btnHLExpiry");
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Checking...';
+        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.checking');
 
         try {
             const data = await apiFetch("/hl-expiry?force=true");
@@ -2071,19 +2075,19 @@
             document.getElementById("btnBackups").classList.remove("active");
             document.getElementById("btnLogs").classList.remove("active");
             document.getElementById("hlExpiryPanel").style.display = "";
-            showToast("HL expiry data refreshed", "success");
+            showToast(t('misc.apikeys.hlExpiryDataRefreshed'), "success");
         } catch (e) {
-            showToast("HL expiry check failed: " + e.message, "error");
+            showToast(t('misc.apikeys.hlExpiryCheckFailed', { error: m(e.message) }), "error");
         } finally {
             btn.disabled = false;
-            btn.textContent = "HL Expiry Check";
+            btn.textContent = t('misc.apikeys.hlExpiryCheck');
         }
     }
 
     function renderHLExpiryPanel(data) {
         const tbody = document.getElementById("hlExpiryBody");
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">No Hyperliquid users found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;">' + t('misc.apikeys.noHyperliquidUsersFound') + '</td></tr>';
             return;
         }
 
@@ -2095,7 +2099,7 @@
         for (const exp of data) {
             html += "<tr>";
             html += "<td><strong>" + escapeHtml(exp.name) + "</strong></td>";
-            html += "<td>" + (exp.is_vault ? "Vault" : "Wallet") + "</td>";
+            html += "<td>" + (exp.is_vault ? t('misc.apikeys.vault') : t('misc.apikeys.wallet')) + "</td>";
             html += "<td>" + escapeHtml(exp.valid_until_iso ? exp.valid_until_iso.split("T")[0] : "-") + "</td>";
             html += "<td>" + escapeHtml(exp.days_remaining !== null && exp.days_remaining !== undefined ? exp.days_remaining : "-") + "</td>";
             html += "<td>" + renderExpiryBadge(exp) + "</td>";
@@ -2127,7 +2131,7 @@
         delete inp.dataset.revealed;
         if (maskedValue) {
             inp.value = "";
-            inp.placeholder = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (saved \u2014 leave blank to keep)";
+            inp.placeholder = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 " + t('misc.apikeys.savedLeaveBlank');
             inp.dataset.masked = maskedValue;
             inp.dataset.revealUrl = revealUrl || "";
             inp.onfocus = null;
@@ -2174,7 +2178,7 @@
                         inp.value = data.value;
                     }
                 } catch (e) {
-                    showToast("Could not reveal key: " + e.message, "error");
+                    showToast(t('misc.apikeys.couldNotRevealKey', { error: m(e.message) }), "error");
                     return;
                 }
             }
@@ -2231,7 +2235,7 @@
             inp.type = "text";
             btn.textContent = "\uD83D\uDE48";
         } catch (e) {
-            showToast("Could not reveal API key: " + e.message, "error");
+            showToast(t('misc.apikeys.couldNotRevealApiKey', { error: m(e.message) }), "error");
         }
     }
 
@@ -2277,7 +2281,7 @@
             const title  = document.getElementById("alertModalTitle");
             const body   = document.getElementById("alertModalBody");
             box.className = "alert-modal " + type;
-            title.textContent = type === "error" ? "Error" : "Warning";
+            title.textContent = type === "error" ? t('common.error') : t('misc.apikeys.warning');
             body.textContent = message;
             overlay.style.display = "flex";
             return;
@@ -2315,7 +2319,7 @@
         const title = document.getElementById("alertModalTitle");
         const body  = document.getElementById("alertModalBody");
         box.className = "alert-modal " + type;
-        title.textContent = type === "error" ? "Error" : type === "warning" ? "Warning" : "Result";
+        title.textContent = type === "error" ? t('common.error') : type === "warning" ? t('misc.apikeys.warning') : t('misc.apikeys.result');
         body.textContent = message;
     }
 
@@ -2343,11 +2347,11 @@
 
     async function loadComments() {
         const tbody = document.getElementById("commentsBody");
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">Loading...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">' + t('common.loading') + '</td></tr>';
         try {
             const data = await apiFetch("/comments/list");
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">No comment fields</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#94a3b8;">' + t('misc.apikeys.noCommentFields') + '</td></tr>';
                 return;
             }
             let html = "";
@@ -2356,8 +2360,8 @@
                 html += "<td><code>" + escapeHtml(c.key) + "</code></td>";
                 html += '<td><input type="text" class="comment-val" data-key="' + escapeAttr(c.key) + '" value="' + escapeAttr(c.value) + '" style="width:100%;background:#0e1117;border:1px solid #2d3748;border-radius:4px;padding:6px 8px;color:#fafafa;font-size:var(--fs-sm);" /></td>';
                 html += "<td>";
-                html += '<button class="btn btn-sm btn-primary" onclick="updateComment(\'' + escapeAttr(c.key) + '\')">Save</button> ';
-                html += '<button class="btn btn-sm btn-danger" onclick="deleteComment(\'' + escapeAttr(c.key) + '\')">Delete</button>';
+                html += '<button class="btn btn-sm btn-primary" onclick="updateComment(\'' + escapeAttr(c.key) + '\')">' + t('common.save') + '</button> ';
+                html += '<button class="btn btn-sm btn-danger" onclick="deleteComment(\'' + escapeAttr(c.key) + '\')">' + t('common.delete') + '</button>';
                 html += "</td>";
                 html += "</tr>";
             }
@@ -2381,17 +2385,17 @@
     async function createComment() {
         const key = document.getElementById("newCommentKey").value.trim();
         const value = document.getElementById("newCommentValue").value;
-        if (!key) { showToast("Key is required", "error"); return; }
+        if (!key) { showToast(t('misc.apikeys.keyRequired'), "error"); return; }
         try {
             await apiFetch("/comments/list", {
                 method: "POST",
                 body: JSON.stringify({ key: key, value: value }),
             });
-            showToast("Comment created", "success");
+            showToast(t('misc.apikeys.commentCreated'), "success");
             hideAddComment();
             await loadComments();
         } catch (e) {
-            showToast("Failed: " + e.message, "error");
+            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
         }
     }
 
@@ -2403,24 +2407,24 @@
                 method: "PUT",
                 body: JSON.stringify({ value: input.value }),
             });
-            showToast("Comment updated", "success");
+            showToast(t('misc.apikeys.commentUpdated'), "success");
         } catch (e) {
-            showToast("Failed: " + e.message, "error");
+            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
         }
     }
 
     async function deleteComment(key) {
         if (!(await window.PBGuiDialogs.confirm({
-            title: "Delete comment",
-            message: "Delete comment '" + key + "'?",
-            confirmText: "Delete"
+            title: t('misc.apikeys.deleteCommentTitle'),
+            message: t('misc.apikeys.deleteCommentMessage', { key: key }),
+            confirmText: t('common.delete')
         }))) return;
         try {
             await apiFetch("/comments/list/" + encodeURIComponent(key), { method: "DELETE" });
-            showToast("Comment deleted", "success");
+            showToast(t('misc.apikeys.commentDeleted'), "success");
             await loadComments();
         } catch (e) {
-            showToast("Failed: " + e.message, "error");
+            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
         }
     }
 
@@ -2451,7 +2455,7 @@
             const data = await apiFetch("/hl-expiry/config");
             updateHLExpiryConfigStatus(data);
         } catch (e) {
-            showToast("Failed to load HL config: " + e.message, "error");
+            showToast(t('misc.apikeys.failedToLoadHlConfig', { error: m(e.message) }), "error");
         }
     }
 
@@ -2466,10 +2470,10 @@
         if (!status) return;
 
         if (configured) {
-            status.textContent = "Configured in pbgui.ini. PBAPIServer warns " + days + " day" + (days === 1 ? "" : "s") + " before expiry.";
+            status.textContent = t('misc.apikeys.hlConfigConfigured', { days: days, daysLabel: (days === 1 ? t('misc.apikeys.day') : t('misc.apikeys.days')) });
             status.style.color = "#26a69a";
         } else {
-            status.textContent = "Not configured in pbgui.ini. PBAPIServer currently uses the default 7-day warning window until you save a value here.";
+            status.textContent = t('misc.apikeys.hlConfigNotConfigured');
             status.style.color = "#ecc94b";
         }
     }
@@ -2477,7 +2481,7 @@
     async function saveHLExpiryConfig() {
         const days = parseInt(document.getElementById("hlWarningDays").value, 10);
         if (isNaN(days) || days < 1) {
-            showToast("Warning days must be at least 1", "error");
+            showToast(t('misc.apikeys.warningDaysAtLeastOne'), "error");
             return;
         }
         try {
@@ -2486,9 +2490,9 @@
                 body: JSON.stringify({ telegram_warning_days: days }),
             });
             updateHLExpiryConfigStatus(data);
-            showToast("HL warning config saved", "success");
+            showToast(t('misc.apikeys.hlWarningConfigSaved'), "success");
         } catch (e) {
-            showToast("Failed: " + e.message, "error");
+            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
         }
     }
 
@@ -2589,12 +2593,12 @@
             && (item.pending_operation_id === pending.operationId || item.last_operation_id === pending.operationId)) || null;
         if (!sameTradfiSaveIntent(pending, intent)) {
             if (profile && profile.pending) {
-                showToast("Operation " + pending.operationId + " is still pending for profile " + profile.id + ". Resolve or retry it before starting another save.", "warning");
+                showToast(t('misc.apikeys.operationStillPending', { operationId: pending.operationId, profileId: profile.id }), "warning");
                 return { operationId: pending.operationId, completedProfile: null, blocked: true };
             }
             tradfiPendingSaveIntent = null;
             if (profile) {
-                showToast("Operation " + pending.operationId + " already completed for profile " + profile.id + ". Review that profile before saving another change.", "warning");
+                showToast(t('misc.apikeys.operationAlreadyCompleted', { operationId: pending.operationId, profileId: profile.id }), "warning");
                 return { operationId: pending.operationId, completedProfile: null, blocked: true };
             }
             return { operationId: "", completedProfile: null, blocked: false };
@@ -2649,9 +2653,9 @@
             selectTradfiProfile((retained || explicitActive || {}).id || "");
         } catch (e) {
             if (generation !== tradfiLoadGeneration || e.name === "AbortError") return;
-            document.getElementById("tradfiProfilesBody").innerHTML = '<tr><td colspan="12" style="color:#ef4444;cursor:default;">Failed to load profiles: ' + escapeHtml(e.message) + '</td></tr>';
-            document.getElementById("tradfiProjectionStatus").textContent = "PB7 projection status unavailable: " + e.message;
-            showToast("Failed to load TradFi profiles: " + e.message, "error");
+            document.getElementById("tradfiProfilesBody").innerHTML = '<tr><td colspan="12" style="color:#ef4444;cursor:default;">' + t('misc.apikeys.failedToLoadProfiles', { error: escapeHtml(m(e.message)) }) + '</td></tr>';
+            document.getElementById("tradfiProjectionStatus").textContent = t('misc.apikeys.pb7ProjectionStatusUnavailable', { error: m(e.message) });
+            showToast(t('misc.apikeys.failedToLoadTradFiProfiles', { error: m(e.message) }), "error");
         }
 
         // Check yfinance
@@ -2709,7 +2713,7 @@
         }
         const profile = tradfiProfiles.find(item => item && item.id === tradfiProfileId) || null;
         if (!profile || !profile.has_api_key) {
-            showToast("No stored API key is available for the selected profile", "warning");
+            showToast(t('misc.apikeys.noStoredApiKeyForProfile'), "warning");
             return;
         }
 
@@ -2729,7 +2733,7 @@
             button.textContent = "\uD83D\uDE48";
         } catch (e) {
             if (generation !== tradfiRevealGeneration) return;
-            showToast("Could not reveal API key: " + e.message, "error");
+            showToast(t('misc.apikeys.couldNotRevealApiKey', { error: m(e.message) }), "error");
         } finally {
             button.disabled = false;
         }
@@ -2747,16 +2751,16 @@
         tradfiSecretSaved = !!(profile && profile.has_api_secret);
         const keyInput = document.getElementById("tradfiApiKey");
         keyInput.value = "";
-        keyInput.placeholder = tradfiKeySaved ? "Stored in vault; enter only to replace" : "Enter API key";
+        keyInput.placeholder = tradfiKeySaved ? t('misc.apikeys.storedInVaultReplace') : t('misc.apikeys.enterApiKey');
         secretInput.value = "";
         if (needsSecret) {
             secretGroup.style.display = "";
             secretInput.disabled = false;
-            secretInput.placeholder = tradfiSecretSaved ? "Stored in vault; enter only to replace" : "Enter API secret";
+            secretInput.placeholder = tradfiSecretSaved ? t('misc.apikeys.storedInVaultReplace') : t('misc.apikeys.enterApiSecret');
         } else {
             secretGroup.style.display = "";
             secretInput.disabled = true;
-            secretInput.placeholder = "not required";
+            secretInput.placeholder = t('misc.apikeys.notRequired');
         }
         document.getElementById("tradfiProviderNote").textContent =
             tradfiProviderNotes[prov] || "";
@@ -2765,27 +2769,33 @@
         const link = tradfiProviderLinks[prov];
         if (link && link.url) {
             linkEl.href = link.url;
-            document.getElementById("tradfiProviderLinkLabel").textContent = link.label || "Get API key";
+            document.getElementById("tradfiProviderLinkLabel").textContent = link.label || t('misc.apikeys.getApiKey');
             linkEl.style.display = "flex";
         } else {
             linkEl.style.display = "none";
         }
         document.getElementById("tradfiProfileStatus").textContent = profile
-            ? `Selected vault profile ${profile.id} · generation ${profile.generation} · ${profile.active ? "locally active" : "locally inactive"} · ${profile.replicated_active ? "replicated active selection generation " + profile.activation_generation : "not the replicated active selection"}${profile.pending_delete ? " · delete pending" : profile.pending ? " · pending " + (profile.pending_stage || "stored") : ""}`
-            : "New profile. Stored secrets are never loaded into this form.";
-        document.getElementById("btnTradfiToggle").textContent = profile && profile.active ? "Disable" : "Enable";
+            ? t('misc.apikeys.selectedVaultProfile', {
+                id: profile.id,
+                generation: profile.generation,
+                activeState: (profile.active ? t('misc.apikeys.locallyActive') : t('misc.apikeys.locallyInactive')),
+                replicatedState: (profile.replicated_active ? t('misc.apikeys.replicatedActiveGen', { generation: profile.activation_generation }) : t('misc.apikeys.notReplicatedActive')),
+                pendingState: (profile.pending_delete ? t('misc.apikeys.deletePendingSuffix') : profile.pending ? t('misc.apikeys.pendingSuffix', { stage: (profile.pending_stage || 'stored') }) : '')
+              })
+            : t('misc.apikeys.newProfileSecretsNeverLoaded');
+        document.getElementById("btnTradfiToggle").textContent = profile && profile.active ? t('misc.apikeys.disable') : t('misc.apikeys.enable');
         updateTradfiActionButtons();
     }
 
     function renderTradfiProjection() {
         const projection = tradfiProjection || {};
         const parts = [
-            "PB7 projection " + (projection.status || "unknown"),
-            "desired " + Number(projection.desired_generation || 0),
-            "applied " + Number(projection.applied_generation || 0),
-            "attempts " + Number(projection.attempts || 0),
+            t('misc.apikeys.pb7Projection', { status: (projection.status || t('common.unknown')) }),
+            t('misc.apikeys.desired', { value: Number(projection.desired_generation || 0) }),
+            t('misc.apikeys.applied', { value: Number(projection.applied_generation || 0) }),
+            t('misc.apikeys.attempts', { value: Number(projection.attempts || 0) }),
         ];
-        if (projection.last_error) parts.push("last error: " + projection.last_error);
+        if (projection.last_error) parts.push(t('misc.apikeys.lastError', { error: projection.last_error }));
         document.getElementById("tradfiProjectionStatus").textContent = parts.join(" · ");
         updateTradfiActionButtons();
     }
@@ -2793,7 +2803,7 @@
     function renderTradfiProfiles() {
         const body = document.getElementById("tradfiProfilesBody");
         if (!tradfiProfiles.length) {
-            body.innerHTML = '<tr><td colspan="12" style="color:#94a3b8;cursor:default;">No TradFi vault profiles configured.</td></tr>';
+            body.innerHTML = '<tr><td colspan="12" style="color:#94a3b8;cursor:default;">' + t('misc.apikeys.noTradfiProfiles') + '</td></tr>';
             return;
         }
         body.innerHTML = tradfiProfiles.map(profile => {
@@ -2802,13 +2812,13 @@
                 + '<td class="tradfi-profile-id">' + escapeHtml(profile.id) + '</td>'
                 + '<td>' + escapeHtml(profile.provider || '-') + '</td>'
                 + '<td>' + escapeHtml(profile.label || '-') + '</td>'
-                + '<td class="' + (profile.active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.active ? 'Active' : 'Inactive') + '</td>'
-                + '<td class="' + (profile.replicated_active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.replicated_active ? 'Selected (gen ' + escapeHtml(profile.activation_generation) + ')' : 'Not selected') + '</td>'
-                + '<td>' + (profile.pending_delete ? 'Delete pending' : profile.pending ? 'Pending: ' + escapeHtml(profile.pending_stage || 'stored') + (profile.pending_operation_id ? ' (' + escapeHtml(profile.pending_operation_id) + ')' : '') : '-') + '</td>'
-                + '<td>' + (profile.shared ? 'Yes' : 'No') + '</td>'
+                + '<td class="' + (profile.active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.active ? t('misc.apikeys.active') : t('misc.apikeys.inactive')) + '</td>'
+                + '<td class="' + (profile.replicated_active ? 'tradfi-active' : 'tradfi-inactive') + '">' + (profile.replicated_active ? t('misc.apikeys.selectedGen', { gen: escapeHtml(profile.activation_generation) }) : t('misc.apikeys.notSelected')) + '</td>'
+                + '<td>' + (profile.pending_delete ? t('misc.apikeys.deletePending') : profile.pending ? t('misc.apikeys.pendingWithStage', { stage: escapeHtml(profile.pending_stage || 'stored') }) + (profile.pending_operation_id ? ' (' + escapeHtml(profile.pending_operation_id) + ')' : '') : '-') + '</td>'
+                + '<td>' + (profile.shared ? t('common.yes') : t('common.no')) + '</td>'
                 + '<td>' + escapeHtml(profile.generation) + '</td>'
-                + '<td>' + (profile.has_api_key ? 'Stored' : 'Missing') + '</td>'
-                + '<td>' + (profile.has_api_secret ? 'Stored' : 'Not stored') + '</td>'
+                + '<td>' + (profile.has_api_key ? t('misc.apikeys.stored') : t('misc.apikeys.missing')) + '</td>'
+                + '<td>' + (profile.has_api_secret ? t('misc.apikeys.stored') : t('misc.apikeys.notStored')) + '</td>'
                 + '<td>' + escapeHtml(profile.origin || '-') + '</td>'
                 + '<td>' + escapeHtml(profile.updated_at || '-') + '</td>'
                 + '</tr>';
@@ -2847,22 +2857,22 @@
             const installBtn = document.getElementById("btnYfInstall");
             const testBtn = document.getElementById("btnYfTest");
             if (data.installed) {
-                statusEl.innerHTML = '<span style="color:#26a69a;">\u2713 yfinance ' + escapeHtml(data.version) + ' installed</span>';
-                installBtn.textContent = "Uninstall";
+                statusEl.innerHTML = '<span style="color:#26a69a;">\u2713 ' + t('misc.apikeys.yfinanceInstalled', { version: escapeHtml(data.version) }) + '</span>';
+                installBtn.textContent = t('misc.apikeys.uninstall');
                 installBtn.className = "btn btn-sm btn-danger";
                 testBtn.style.display = "";
             } else {
-                statusEl.innerHTML = '<span style="color:#d69e2e;">\u26a0 not installed</span>';
-                installBtn.textContent = "Install";
+                statusEl.innerHTML = '<span style="color:#d69e2e;">\u26a0 ' + t('misc.apikeys.notInstalled') + '</span>';
+                installBtn.textContent = t('misc.apikeys.install');
                 installBtn.className = "btn btn-sm btn-primary";
                 testBtn.style.display = "none";
             }
             if (data.error) {
-                statusEl.innerHTML = '<span style="color:#ef4444;">' + escapeHtml(data.error) + '</span>';
+                statusEl.innerHTML = '<span style="color:#ef4444;">' + escapeHtml(m(data.error)) + '</span>';
             }
         } catch (e) {
             document.getElementById("yfStatus").innerHTML =
-                '<span style="color:#ef4444;">Error: ' + escapeHtml(e.message) + '</span>';
+                '<span style="color:#ef4444;">' + t('misc.apikeys.errorPrefix', { error: escapeHtml(m(e.message)) }) + '</span>';
         }
     }
 
@@ -2870,43 +2880,43 @@
         const btn = document.getElementById("btnYfInstall");
         const action = yfInstalled ? "uninstall" : "install";
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> ' + (yfInstalled ? "Uninstalling..." : "Installing...");
+        btn.innerHTML = '<span class="spinner"></span> ' + (yfInstalled ? t('misc.apikeys.uninstalling') : t('misc.apikeys.installing'));
         try {
             const data = await apiFetch("/tradfi/yfinance/" + action, { method: "POST" });
             if (data.success) {
-                showToast(data.message, "success");
+                showToast(m(data.message), "success");
             } else {
-                showToast(data.message, "error");
+                showToast(m(data.message), "error");
             }
             await checkYfinanceStatus();
         } catch (e) {
-            showToast("Failed: " + e.message, "error");
+            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
         } finally {
             btn.disabled = false;
-            btn.innerHTML = yfInstalled ? "Uninstall" : "Install";
+            btn.innerHTML = yfInstalled ? t('misc.apikeys.uninstall') : t('misc.apikeys.install');
         }
     }
 
     async function yfTest() {
         const btn = document.getElementById("btnYfTest");
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Testing...';
-        showToast("Testing yfinance...", "warning");
+        btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.testing');
+        showToast(t('misc.apikeys.testingYfinance'), "warning");
         try {
             const data = await apiFetch("/tradfi/test", {
                 method: "POST",
                 body: JSON.stringify({ provider: "yfinance" }),
             });
             if (data.success) {
-                updateAlertModal(data.message, "success");
+                updateAlertModal(m(data.message), "success");
             } else {
-                updateAlertModal(data.message, "error");
+                updateAlertModal(m(data.message), "error");
             }
         } catch (e) {
-            updateAlertModal("Failed: " + e.message, "error");
+            updateAlertModal(t('misc.apikeys.failed', { error: m(e.message) }), "error");
         } finally {
             btn.disabled = false;
-            btn.textContent = "Test";
+            btn.textContent = t('misc.apikeys.test');
         }
     }
 
@@ -2915,11 +2925,11 @@
         const key = tradfiApiKeyForAction().trim();
         const secret = document.getElementById("tradfiApiSecret").value.trim();
         if (!key && !tradfiKeySaved) {
-            showToast("Enter an API key first", "warning");
+            showToast(t('misc.apikeys.enterApiKeyFirst'), "warning");
             return;
         }
         // Show "Testing..." in the modal and keep it open for the result
-        showToast("Testing " + prov + "...", "warning");
+        showToast(t('misc.apikeys.testingProvider', { provider: prov }), "warning");
         const context = beginTradfiAction();
         if (!context) return;
         try {
@@ -2934,13 +2944,13 @@
             if (context.generation !== tradfiActionGeneration) return;
             finishTradfiAction(context, true);
             if (data.success) {
-                updateAlertModal(data.message, "success");
+                updateAlertModal(m(data.message), "success");
             } else {
-                updateAlertModal(data.message, "error");
+                updateAlertModal(m(data.message), "error");
             }
         } catch (e) {
             if (context.generation !== tradfiActionGeneration || e.name === "AbortError") return;
-            updateAlertModal("Test failed: " + e.message, "error");
+            updateAlertModal(t('misc.apikeys.testFailed', { error: m(e.message) }), "error");
         } finally {
             finishTradfiAction(context);
         }
@@ -2953,15 +2963,15 @@
         const secret = intent.apiSecret;
         const profile = tradfiProfiles.find(item => item && item.id === tradfiProfileId) || null;
         if (rotateReplacement && !profile) {
-            showToast("Select a profile to rotate", "warning");
+            showToast(t('misc.apikeys.selectProfileToRotate'), "warning");
             return;
         }
         if (rotateReplacement && !key) {
-            showToast("Enter a replacement API key", "warning");
+            showToast(t('misc.apikeys.enterReplacementApiKey'), "warning");
             return;
         }
         if (!key && !tradfiKeySaved) {
-            showToast("Enter an API key first", "warning");
+            showToast(t('misc.apikeys.enterApiKeyFirst'), "warning");
             return;
         }
         const context = beginTradfiAction();
@@ -2974,7 +2984,7 @@
                 tradfiProfileId = String(checked.completedProfile.id || "");
                 finishTradfiAction(context, true);
                 await loadTradfiData();
-                showToast("TradFi operation " + checked.operationId + " already completed.", "success");
+                showToast(t('misc.apikeys.tradfiOperationAlreadyCompleted', { operationId: checked.operationId }), "success");
                 return;
             }
             const operationId = checked.operationId || ((window.crypto && window.crypto.randomUUID)
@@ -3001,12 +3011,12 @@
             finishTradfiAction(context, true);
             tradfiProfileId = String(((data || {}).profile || {}).id || tradfiProfileId || "");
             await loadTradfiData();
-            showToast(data.status === "pending" ? "TradFi profile saved; replication pending" : "TradFi config saved", data.status === "pending" ? "warning" : "success");
+            showToast(data.status === "pending" ? t('misc.apikeys.tradfiProfileSavedPending') : t('misc.apikeys.tradfiConfigSaved'), data.status === "pending" ? "warning" : "success");
         } catch (e) {
             if (context.generation !== tradfiActionGeneration || e.name === "AbortError") return;
             if (tradfiPendingSaveIntent && e.operationId) tradfiPendingSaveIntent.operationId = e.operationId;
             const operationText = (tradfiPendingSaveIntent || {}).operationId || e.operationId || "";
-            showToast("Save status is uncertain" + (operationText ? " for operation " + operationText : "") + ": " + e.message + ". Submitted secrets remain in the form for an exact retry.", "error");
+            showToast(t('misc.apikeys.saveStatusUncertain', { operation: (operationText ? ' for operation ' + operationText : ''), error: m(e.message) }), "error");
         } finally {
             finishTradfiAction(context, false);
         }
@@ -3021,14 +3031,14 @@
 
     async function tradfiClear() {
         if (!(await window.PBGuiDialogs.confirm({
-            title: "Delete TradFi profile",
-            message: "Delete profile " + tradfiProfileId + "? Stored credential generations cannot be revealed or restored from this UI.",
-            confirmText: "Delete"
+            title: t('misc.apikeys.deleteTradfiProfileTitle'),
+            message: t('misc.apikeys.deleteTradfiProfileMessage', { profileId: tradfiProfileId }),
+            confirmText: t('common.delete')
         }))) return;
         let context = null;
         try {
             if (!tradfiProfileId) {
-                showToast("No vault profile configured for this provider", "warning");
+                showToast(t('misc.apikeys.noVaultProfileForProvider'), "warning");
                 return;
             }
             context = beginTradfiAction();
@@ -3043,10 +3053,10 @@
             tradfiSecretSaved = false;
             tradfiProfileId = "";
             await loadTradfiData();
-            showToast(data.status === "pending_delete" ? "TradFi profile delete is pending" : "TradFi profile deleted", data.status === "pending_delete" ? "warning" : "success");
+            showToast(data.status === "pending_delete" ? t('misc.apikeys.tradfiProfileDeletePending') : t('misc.apikeys.tradfiProfileDeleted'), data.status === "pending_delete" ? "warning" : "success");
         } catch (e) {
             if (e.name === "AbortError") return;
-            showToast("Failed: " + e.message, "error");
+            showToast(t('misc.apikeys.failed', { error: m(e.message) }), "error");
         } finally {
             finishTradfiAction(context);
         }
@@ -3068,10 +3078,10 @@
             tradfiProjection = data.projection || {};
             renderTradfiProjection();
             await loadTradfiData();
-            showToast(data.ok ? "PB7 TradFi projection is current" : "PB7 TradFi projection remains pending", data.ok ? "success" : "warning");
+            showToast(data.ok ? t('misc.apikeys.pb7TradfiProjectionCurrent') : t('misc.apikeys.pb7TradfiProjectionPending'), data.ok ? "success" : "warning");
         } catch (e) {
             if (context.generation !== tradfiActionGeneration || e.name === "AbortError") return;
-            showToast("Projection retry failed: " + e.message, "error");
+            showToast(t('misc.apikeys.projectionRetryFailed', { error: m(e.message) }), "error");
             await loadTradfiData();
         } finally {
             finishTradfiAction(context);
@@ -3102,28 +3112,28 @@
 
     async function loadBackups() {
         const container = document.getElementById("backupsList");
-        container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;"><span class="spinner"></span> Loading...</div>';
+        container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;"><span class="spinner"></span> ' + t('common.loading') + '</div>';
         try {
             const data = await apiFetch("/backups");
             renderBackupsPanel(data);
         } catch (e) {
-            container.innerHTML = '<div style="color:#ef4444;padding:20px;">' + escapeHtml(e.message) + '</div>';
+            container.innerHTML = '<div style="color:#ef4444;padding:20px;">' + escapeHtml(m(e.message)) + '</div>';
         }
     }
 
     function renderBackupsPanel(data) {
         const container = document.getElementById("backupsList");
         if (!data || data.length === 0) {
-            container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">No backups found.</div>';
+            container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">' + t('misc.apikeys.noBackupsFound') + '</div>';
             return;
         }
         selectedBackups = [];
         let html = '<div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">';
-        html += '<span style="font-size:var(--fs-sm); color:#94a3b8;">Select 2 to compare:</span>';
-        html += '<button class="btn btn-sm btn-secondary" id="btnDiffSelected" onclick="openDiffSelected()" disabled style="opacity:0.4;">&#9654; Compare Selected</button>';
+        html += '<span style="font-size:var(--fs-sm); color:#94a3b8;">' + t('misc.apikeys.selectTwoToCompare') + '</span>';
+        html += '<button class="btn btn-sm btn-secondary" id="btnDiffSelected" onclick="openDiffSelected()" disabled style="opacity:0.4;">&#9654; ' + t('misc.apikeys.compareSelected') + '</button>';
         html += '</div>';
         html += '<table class="hl-expiry-table backup-compare-table"><thead><tr>';
-        html += '<th>File</th><th>Date / Time</th><th>Target</th><th>Size</th><th style="width:80px;"></th>';
+        html += '<th>' + t('misc.apikeys.file') + '</th><th>' + t('misc.apikeys.dateTime') + '</th><th>' + t('misc.apikeys.target') + '</th><th>' + t('misc.apikeys.size') + '</th><th style="width:80px;"></th>';
         html += '</tr></thead><tbody>';
         for (const b of data) {
             const dt = b.ts.replace("T", " ");
@@ -3132,7 +3142,7 @@
             html += '<td>' + escapeHtml(dt) + '</td>';
             html += '<td><span class="badge-exchange">' + escapeHtml(b.target) + '</span></td>';
             html += '<td>' + b.size_kb + ' KB</td>';
-            html += '<td><button class="btn btn-sm btn-warning backup-restore-btn" type="button" data-restore-fn="' + escapeAttr(b.filename) + '">Restore</button></td>';
+            html += '<td><button class="btn btn-sm btn-warning backup-restore-btn" type="button" data-restore-fn="' + escapeAttr(b.filename) + '">' + t('misc.apikeys.restore') + '</button></td>';
             html += '</tr>';
         }
         html += '</tbody></table>';
@@ -3142,21 +3152,21 @@
 
     async function restoreBackup(filename) {
         if (!(await window.PBGuiDialogs.confirm({
-            title: "Restore backup",
-            message: "Restore from backup:\n" + filename,
-            detail: "This will overwrite the current api-keys.json. A pre-restore snapshot will be saved first.",
-            confirmText: "Restore"
+            title: t('misc.apikeys.restoreBackupTitle'),
+            message: t('misc.apikeys.restoreFromBackup', { filename: filename }),
+            detail: t('misc.apikeys.restoreBackupDetail'),
+            confirmText: t('misc.apikeys.restore')
         }))) return;
         try {
             await apiFetch("/backups/restore", {
                 method: "POST",
                 body: JSON.stringify({ filename: filename }),
             });
-            showToast("Restored from: " + filename, "success");
+            showToast(t('misc.apikeys.restoredFrom', { filename: filename }), "success");
             backToList();
             await loadUsers();
         } catch (e) {
-            showToast("Restore failed: " + e.message, "error");
+            showToast(t('misc.apikeys.restoreFailed', { error: m(e.message) }), "error");
         }
     }
 
@@ -3260,14 +3270,14 @@
     async function openDiffSelected() {
         if (selectedBackups.length !== 2) return;
         const btn = document.getElementById("btnDiffSelected");
-        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Loading...'; }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> ' + t('common.loading'); }
         try {
             diffData = await apiFetch("/backups/diff", {
                 method: "POST",
                 body: JSON.stringify({ filename1: selectedBackups[0], filename2: selectedBackups[1] }),
             });
             function _backupLabel(fn) {
-                if (fn === '_current_pb7') return 'Current (live) pb7';
+                if (fn === '_current_pb7') return t('misc.apikeys.currentLivePb7');
                 return fn;
             }
             document.getElementById("diffTitle").textContent =
@@ -3278,9 +3288,9 @@
             renderDiff();
             document.getElementById("diffModal").style.display = "flex";
         } catch (e) {
-            showToast("Diff failed: " + e.message, "error");
+            showToast(t('misc.apikeys.diffFailed', { error: m(e.message) }), "error");
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = "\u25b6 Compare Selected"; btn.style.opacity = "1"; }
+            if (btn) { btn.disabled = false; btn.textContent = "\u25b6 " + t('misc.apikeys.compareSelected'); btn.style.opacity = "1"; }
         }
     }
 
@@ -3302,8 +3312,8 @@
         if (allEqual) {
             document.getElementById("diffContent").innerHTML =
                 '<div style="text-align:center;padding:40px 20px;color:#26a69a;font-size:var(--fs-md);">' +
-                '<span style="font-size:var(--fs-xl);">&#10003;</span><br><strong>Files are identical</strong><br>' +
-                '<span style="font-size:var(--fs-sm);color:#94a3b8;margin-top:6px;display:block;">Both versions contain exactly the same content (' + diffData.lines1.length + ' lines).</span>' +
+                '<span style="font-size:var(--fs-xl);">&#10003;</span><br><strong>' + t('misc.apikeys.filesIdentical') + '</strong><br>' +
+                '<span style="font-size:var(--fs-sm);color:#94a3b8;margin-top:6px;display:block;">' + t('misc.apikeys.identicalContent', { lines: diffData.lines1.length }) + '</span>' +
                 '</div>';
             return;
         }
@@ -3331,7 +3341,7 @@
                     for (let i = i1; i < i2; i++) rows += _diffUnifiedRow("ctx", ln1++, ln2++, " ", lines1[i]);
                 } else {
                     for (let i = i1; i < i1 + CTX; i++) rows += _diffUnifiedRow("ctx", ln1++, ln2++, " ", lines1[i]);
-                    rows += "<tr class=\"diff-sep\"><td colspan=\"4\">&#8943; " + (len - CTX * 2) + " identical lines &#8943;</td></tr>";
+                    rows += "<tr class=\"diff-sep\"><td colspan=\"4\">&#8943; " + t('misc.apikeys.identicalLines', { count: (len - CTX * 2) }) + " &#8943;</td></tr>";
                     ln1 += len - CTX * 2;
                     ln2 += len - CTX * 2;
                     for (let i = i2 - CTX; i < i2; i++) rows += _diffUnifiedRow("ctx", ln1++, ln2++, " ", lines1[i]);
@@ -3374,7 +3384,7 @@
                         rightRows += _diffSideRow("ctx", ln2++, lines2[j1 + i]);
                     }
                     const skip = len - CTX * 2;
-                    const sep = "<tr class=\"diff-sep\"><td colspan=\"2\">&#8943; " + skip + " lines &#8943;</td></tr>";
+                    const sep = "<tr class=\"diff-sep\"><td colspan=\"2\">&#8943; " + t('misc.apikeys.lines', { count: skip }) + " &#8943;</td></tr>";
                     leftRows += sep; rightRows += sep;
                     ln1 += skip; ln2 += skip;
                     for (let i = len - CTX; i < len; i++) {
@@ -3539,14 +3549,14 @@
       }
       function _showGlobalResults(term) {
         if (!term) {
-          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + t('misc.help.typeSearchTerm') + '</p>';
           helpSearchCount.textContent = '';
           return;
         }
         var re; try { re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'); } catch(e) { return; }
-        helpContent.innerHTML = '<div class="help-loading">Searching\u2026</div>';
+        helpContent.innerHTML = '<div class="help-loading">' + t('misc.apikeys.searching') + '</div>';
         var pending = helpTopics.length;
-        if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = '0 found'; return; }
+        if (pending === 0) { helpContent.innerHTML = ''; helpSearchCount.textContent = t('misc.help.found0'); return; }
         var allResults = [];
         helpTopics.forEach(function(t, idx) {
           _ensureTopicCached(idx, function(html) {
@@ -3567,11 +3577,11 @@
       function _renderGlobalResults(term, results) {
         var re; try { re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'); } catch(e) { return; }
         if (results.length === 0) {
-          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
-          helpSearchCount.textContent = '0 found';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
+          helpSearchCount.textContent = t('misc.help.found0');
           return;
         }
-        helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
+        helpSearchCount.textContent = results.length + (results.length === 1 ? ' ' + t('misc.help.topic') : ' ' + t('misc.help.topics'));
         var html = '<div class="gs-results">';
         results.forEach(function(r) {
           html += '<div class="gs-item" data-idx="' + r.idx + '">';
@@ -3589,7 +3599,7 @@
             var idx = parseInt(el.getAttribute('data-idx'), 10);
             helpSearchGlobal.checked = false;
             _globalMode = false;
-            helpSearch.placeholder = 'Search in topic\u2026';
+            helpSearch.placeholder = t('misc.apikeys.searchInTopic');
             loadTopic(idx);
           });
         });
@@ -3610,7 +3620,7 @@
       helpSearchDn.addEventListener('click', function() { _gotoMark(_sIdx + 1); });
       helpSearchGlobal.addEventListener('change', function() {
         _globalMode = helpSearchGlobal.checked;
-        helpSearch.placeholder = _globalMode ? 'Search all topics\u2026' : 'Search in topic\u2026';
+        helpSearch.placeholder = _globalMode ? t('misc.apikeys.searchAllTopics') : t('misc.apikeys.searchInTopic');
         var term = helpSearch.value.trim();
         if (_globalMode) {
           _showGlobalResults(term);
@@ -3654,7 +3664,7 @@
       }
 
       function loadHelpIndex(keyword) {
-        helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+        helpTocList.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
         fetch(docsBase + '/docs/index?lang=' + helpLang, { credentials: 'same-origin' })
           .then(function (r) { return r.json(); })
           .then(function (data) {
@@ -3675,7 +3685,7 @@
             }
           })
           .catch(function () {
-            helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>';
+            helpTocList.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadTopics') + '</div>';
           });
       }
 
@@ -3698,7 +3708,7 @@
         var t = helpTopics[idx];
         if (!t) return;
         _rawHtml = null; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = '';
-        helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+        helpContent.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
         fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { credentials: 'same-origin' })
           .then(function (r) { return r.json(); })
           .then(function (d) {
@@ -3708,7 +3718,7 @@
             helpContent.scrollTop = 0;
             var st = helpSearch.value.trim(); if (st) _applySearch(st);
           })
-          .catch(function () { helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>'; });
+          .catch(function () { helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadContent') + '</div>'; });
       }
 
       helpFilter.addEventListener('input', renderToc);
@@ -3759,7 +3769,7 @@
     <!-- ── Shared nav bar ── -->
     <script>
     window.PBGUI_NAV_CONFIG = {
-        subtitle: 'API KEYS',
+        subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.apikeys.subtitle') : 'API KEYS'),
         current:  'system_api_keys',
         authenticated: true,
         apiBase:  API_BASE,
@@ -3767,7 +3777,7 @@
         serial:   PBGUI_SERIAL
     };
     </script>
-    <script src="/app/js/shared_help_overlay.js?v=6"></script>
+    <script src="/app/js/shared_help_overlay.js?v=7"></script>
     <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>
 </html>

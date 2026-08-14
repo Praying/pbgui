@@ -1,6 +1,16 @@
 ;(function () {
   'use strict';
 
+  /* i18n helper: translate via PBGuiI18n, fall back to the English original. */
+  function _helpT(key, fallback, params) {
+    var F = window.PBGuiI18n;
+    if (F && typeof F.t === 'function') {
+      var v = F.t(key, params);
+      return v === key ? fallback : v;
+    }
+    return fallback;
+  }
+
   var state = {
     token: '',
     lang: localStorage.getItem('help-lang') || 'EN',
@@ -141,30 +151,30 @@
       +   '<div id="pbgui-shared-help-box" role="dialog" aria-modal="true" aria-labelledby="pbgui-shared-help-title">'
       +     '<div id="pbgui-shared-help-drag"></div>'
       +     '<div class="ovl-header">'
-      +       '<div class="ovl-header-title" id="pbgui-shared-help-title">&#128218; Guide &amp; Help</div>'
+      +       '<div class="ovl-header-title" id="pbgui-shared-help-title">&#128218; ' + _helpT('shared.help.title', 'Guide & Help') + '</div>'
       +       '<div class="ovl-header-actions">'
       +         '<div id="pbgui-shared-help-search-wrap">'
-      +           '<input id="pbgui-shared-help-search" type="text" placeholder="Search in topic..." autocomplete="off">'
-      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>'
-      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-dn" title="Next match (Enter)">&#9660;</button>'
+      +           '<input id="pbgui-shared-help-search" type="text" placeholder="' + _helpT('shared.help.searchInTopic', 'Search in topic...') + '" autocomplete="off">'
+      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-up" title="' + _helpT('shared.help.prevMatch', 'Previous match (Shift+Enter)') + '">&#9650;</button>'
+      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-dn" title="' + _helpT('shared.help.nextMatch', 'Next match (Enter)') + '">&#9660;</button>'
       +           '<span id="pbgui-shared-help-search-count"></span>'
-      +           '<label id="pbgui-shared-help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="pbgui-shared-help-search-global"> All</label>'
+      +           '<label id="pbgui-shared-help-search-global-lbl" title="' + _helpT('shared.help.searchAllTitle', 'Search across all topics') + '"><input type="checkbox" id="pbgui-shared-help-search-global"> ' + _helpT('common.all', 'All') + '</label>'
       +         '</div>'
       +         '<div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>'
       +         '<div class="lang-pill">'
       +           '<button id="pbgui-shared-help-lang-en" type="button">EN</button>'
       +           '<button id="pbgui-shared-help-lang-de" type="button">DE</button>'
       +         '</div>'
-      +         '<button class="ovl-tool" id="pbgui-shared-help-maximize" title="Fit to browser window" aria-pressed="false">⛶</button>'
-      +         '<button class="ovl-close" id="pbgui-shared-help-close">&#x2715;</button>'
+      +         '<button class="ovl-tool" id="pbgui-shared-help-maximize" title="' + _helpT('nav.fit_window', 'Fit to browser window') + '" aria-pressed="false">⛶</button>'
+      +         '<button class="ovl-close" id="pbgui-shared-help-close" aria-label="' + _helpT('common.close', 'Close') + '">&#x2715;</button>'
       +       '</div>'
       +     '</div>'
       +     '<div id="pbgui-shared-help-body">'
       +       '<div id="pbgui-shared-help-toc">'
-      +         '<input id="pbgui-shared-help-toc-filter" type="text" placeholder="Filter topics..." autocomplete="off">'
+      +         '<input id="pbgui-shared-help-toc-filter" type="text" placeholder="' + _helpT('shared.help.filterTopics', 'Filter topics...') + '" autocomplete="off">'
       +         '<div id="pbgui-shared-help-toc-list"></div>'
       +       '</div>'
-      +       '<div id="pbgui-shared-help-content"><div class="pbgui-shared-help-loading">Loading help topics...</div></div>'
+      +       '<div id="pbgui-shared-help-content"><div class="pbgui-shared-help-loading">' + _helpT('shared.help.loadingTopics', 'Loading help topics...') + '</div></div>'
       +     '</div>'
       +   '</div>'
       + '</div>';
@@ -224,7 +234,7 @@
   function updateSearchCount() {
     dom('pbgui-shared-help-search-count').textContent = state.searchMarks.length
       ? (state.searchIndex + 1) + '/' + state.searchMarks.length
-      : (dom('pbgui-shared-help-search').value.trim() ? '0 found' : '');
+      : (dom('pbgui-shared-help-search').value.trim() ? _helpT('shared.help.zeroFound', '0 found') : '');
   }
 
   function gotoMark(index) {
@@ -288,11 +298,13 @@
     var expr;
     try { expr = new RegExp('(' + escapeRegExp(term) + ')', 'gi'); } catch (_) { return; }
     if (!results.length) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
-      dom('pbgui-shared-help-search-count').textContent = '0 found';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
+      dom('pbgui-shared-help-search-count').textContent = _helpT('shared.help.zeroFound', '0 found');
       return;
     }
-    dom('pbgui-shared-help-search-count').textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
+    dom('pbgui-shared-help-search-count').textContent = results.length === 1
+      ? _helpT('shared.help.resultTopic', results.length + ' topic', { count: results.length })
+      : _helpT('shared.help.resultTopics', results.length + ' topics', { count: results.length });
     var html = '<div class="pbgui-shared-help-gs-results">';
     results.forEach(function (result) {
       html += '<div class="pbgui-shared-help-gs-item" data-idx="' + result.idx + '">';
@@ -309,7 +321,7 @@
         var idx = parseInt(item.getAttribute('data-idx'), 10);
         dom('pbgui-shared-help-search-global').checked = false;
         state.globalMode = false;
-        dom('pbgui-shared-help-search').placeholder = 'Search in topic...';
+        dom('pbgui-shared-help-search').placeholder = _helpT('shared.help.searchInTopic', 'Search in topic...');
         loadTopic(idx);
       });
     });
@@ -317,17 +329,17 @@
 
   function showGlobalResults(term) {
     if (!term) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">' + _helpT('shared.help.searchPrompt', 'Type a search term to find across all topics.') + '</p>';
       dom('pbgui-shared-help-search-count').textContent = '';
       return;
     }
     var expr;
     try { expr = new RegExp(escapeRegExp(term), 'gi'); } catch (_) { return; }
-    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Searching...</div>';
+    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.searching', 'Searching...') + '</div>';
     var pending = state.topics.length;
     var results = [];
     if (!pending) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
       return;
     }
     state.topics.forEach(function (topic, index) {
@@ -380,7 +392,7 @@
     state.searchMarks = [];
     state.searchIndex = -1;
     dom('pbgui-shared-help-search-count').textContent = '';
-    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Loading...</div>';
+    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('common.loading', 'Loading...') + '</div>';
     fetch('/api/help/content?file=' + encodeURIComponent(topic.file) + '&lang=' + state.lang, { headers: authHeaders() })
       .then(function (response) { if (!response.ok) throw new Error('HTTP ' + response.status); return response.json(); })
       .then(function (data) {
@@ -398,7 +410,7 @@
       })
       .catch(function () {
         if (requestSeq !== state.topicRequestSeq) return;
-        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Failed to load content.</div>';
+        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.loadFailed', 'Failed to load content.') + '</div>';
       });
   }
 
@@ -407,7 +419,7 @@
     state.topicRequestSeq += 1;
     state.currentKeyword = String(keyword || 'overview');
     state.pendingAnchor = String(anchor || '');
-    dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">Loading...</div>';
+    dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('common.loading', 'Loading...') + '</div>';
     fetch('/api/help/index?lang=' + state.lang, { headers: authHeaders() })
       .then(function (response) { if (!response.ok) throw new Error('HTTP ' + response.status); return response.json(); })
       .then(function (data) {
@@ -415,7 +427,7 @@
         state.topics = data || [];
         renderToc();
         if (!state.topics.length) {
-          dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">No help topics found.</div>';
+          dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.noTopics', 'No help topics found.') + '</div>';
           return;
         }
         var startIndex = 0;
@@ -433,8 +445,8 @@
       })
       .catch(function () {
         if (requestSeq !== state.indexRequestSeq) return;
-        dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">Failed to load topics.</div>';
-        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Failed to load content.</div>';
+        dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.topicsFailed', 'Failed to load topics.') + '</div>';
+        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.loadFailed', 'Failed to load content.') + '</div>';
       });
   }
 
@@ -485,7 +497,7 @@
       box.classList.toggle('is-maximized', next);
       dom('pbgui-shared-help-maximize').setAttribute('aria-pressed', next ? 'true' : 'false');
       dom('pbgui-shared-help-maximize').textContent = next ? '❐' : '⛶';
-      dom('pbgui-shared-help-maximize').setAttribute('title', next ? 'Restore window size' : 'Fit to browser window');
+      dom('pbgui-shared-help-maximize').setAttribute('title', next ? _helpT('nav.restore_window', 'Restore window size') : _helpT('nav.fit_window', 'Fit to browser window'));
     });
   }
 
@@ -520,7 +532,7 @@
     dom('pbgui-shared-help-search-dn').addEventListener('click', function () { gotoMark(state.searchIndex + 1); });
     dom('pbgui-shared-help-search-global').addEventListener('change', function () {
       state.globalMode = dom('pbgui-shared-help-search-global').checked;
-      dom('pbgui-shared-help-search').placeholder = state.globalMode ? 'Search all topics...' : 'Search in topic...';
+      dom('pbgui-shared-help-search').placeholder = state.globalMode ? _helpT('shared.help.searchAllTopics', 'Search all topics...') : _helpT('shared.help.searchInTopic', 'Search in topic...');
       var term = dom('pbgui-shared-help-search').value.trim();
       if (state.globalMode) showGlobalResults(term);
       else {

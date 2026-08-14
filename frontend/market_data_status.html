@@ -24,7 +24,7 @@
         --fs-lg: 18px;
         --fs-xl: 22px;
 
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
         color: var(--mds-text-primary);
         line-height: 1.6;
         margin: 0;
@@ -270,13 +270,13 @@
         <div class="mds-content-wrapper" id="__MDS_ID__content-wrapper">
             <div class="mds-controls">
                 <button id="__MDS_ID__btn-refresh-now" class="mds-btn primary" disabled>
-                    &#9193; Refresh Now
+                    &#9193; <span data-i18n="misc.mds.refreshNow">Refresh Now</span>
                 </button>
                 <button id="__MDS_ID__btn-cancel" class="mds-btn danger" disabled style="display: none;">
-                    &#9209; Cancel Queued Refresh
+                    &#9209; <span data-i18n="misc.mds.cancelQueuedRefresh">Cancel Queued Refresh</span>
                 </button>
                 <button id="__MDS_ID__btn-stop" class="mds-btn danger" disabled style="display: none;">
-                    &#9209; Stop Current Run
+                    &#9209; <span data-i18n="misc.mds.stopCurrentRun">Stop Current Run</span>
                 </button>
             </div>
 
@@ -285,7 +285,7 @@
                     <div class="mds-progress-bar" id="__MDS_ID__progress-bar" style="width: 0%;"></div>
                     <span class="mds-progress-label" id="__MDS_ID__progress-text">0 / 0</span>
                 </div>
-                <div class="mds-progress-text" id="__MDS_ID__progress-details">
+                <div class="mds-progress-text" id="__MDS_ID__progress-details" data-i18n="misc.mds.idle">
                     Idle
                 </div>
             </div>
@@ -295,21 +295,21 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Coin</th>
-                                <th>Last Fetch</th>
-                                <th>Result</th>
-                                <th>Lookback Days</th>
-                                <th>Minutes Written</th>
-                                <th>Newest Day</th>
-                                <th>Next Run (s)</th>
-                                <th>Note</th>
+                                <th data-i18n="misc.mds.coin">Coin</th>
+                                <th data-i18n="misc.mds.lastFetch">Last Fetch</th>
+                                <th data-i18n="misc.mds.result">Result</th>
+                                <th data-i18n="misc.mds.lookbackDays">Lookback Days</th>
+                                <th data-i18n="misc.mds.minutesWritten">Minutes Written</th>
+                                <th data-i18n="misc.mds.newestDay">Newest Day</th>
+                                <th data-i18n="misc.mds.nextRunS">Next Run (s)</th>
+                                <th data-i18n="misc.mds.note">Note</th>
                             </tr>
                         </thead>
                         <tbody id="__MDS_ID__coin-table-body">
                             <tr>
                                 <td colspan="8" class="mds-empty-state">
                                     <div class="mds-empty-state-icon">&#9203;</div>
-                                    <div>Waiting for market data status...</div>
+                                    <div data-i18n="misc.mds.waitingForStatus">Waiting for market data status...</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -320,7 +320,7 @@
     </div>
 </div>
 
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
 <script>
 (function() {
     // === Per-instance scope: all DOM queries use this root ===
@@ -328,6 +328,10 @@
     var ID_PREFIX = '__MDS_ID__';
     var root = document.getElementById(ROOT_ID);
     if (!root) return;
+
+    function t(key, params) { return window.PBGuiI18n ? window.PBGuiI18n.t(key, params) : key; }
+    function m(text) { return window.PBGuiI18n ? window.PBGuiI18n.serverMsg(text) : text; }
+    if (window.PBGuiI18n) window.PBGuiI18n.translateDom(root);
 
     function $(id) { return document.getElementById(ID_PREFIX + id); }
 
@@ -356,7 +360,7 @@
 
     // === Init ===
     if (!API_TOKEN || !EXCHANGE) {
-        root.innerHTML = '\x3cdiv class="mds-empty-state">\x3cdiv class="mds-empty-state-icon">\u26A0\x3c/div>\x3cdiv>Missing token or exchange parameter\x3c/div>\x3c/div>';
+        root.innerHTML = '\x3cdiv class="mds-empty-state">\x3cdiv class="mds-empty-state-icon">\u26A0\x3c/div>\x3cdiv>' + t('misc.mds.missingTokenOrExchange') + '\x3c/div>\x3c/div>';
         return;
     }
 
@@ -420,7 +424,7 @@
         };
 
         ws.onerror = function() {
-            updateConnectionStatus(false, 'Connection error');
+            updateConnectionStatus(false, t('misc.mds.connectionError'));
         };
     }
 
@@ -454,12 +458,12 @@
             var percent = Math.round((data.coins_done / data.coins_total) * 100);
             progressBar.style.width = percent + '%';
             progressText.textContent = data.coins_done + ' / ' + data.coins_total;
-            progressDetails.textContent = 'Current: ' + (data.current_coin || '...');
+            progressDetails.textContent = t('misc.mds.current', { coin: (data.current_coin || '...') });
         } else if (data.running) {
             progressSection.style.display = 'block';
             progressBar.style.width = '100%';
-            progressText.textContent = 'Running...';
-            progressDetails.textContent = 'Starting...';
+            progressText.textContent = t('misc.mds.running');
+            progressDetails.textContent = t('misc.mds.starting');
         } else {
             progressSection.style.display = 'none';
         }
@@ -471,7 +475,7 @@
     function updateCoinTable(rows) {
         var tbody = $('coin-table-body');
         if (!rows || rows.length === 0) {
-            tbody.innerHTML = '\x3ctr>\x3ctd colspan="8" class="mds-empty-state">\x3cdiv class="mds-empty-state-icon">\uD83D\uDCCA\x3c/div>\x3cdiv>No coin status available yet\x3c/div>\x3c/td>\x3c/tr>';
+            tbody.innerHTML = '\x3ctr>\x3ctd colspan="8" class="mds-empty-state">\x3cdiv class="mds-empty-state-icon">\uD83D\uDCCA\x3c/div>\x3cdiv>' + t('misc.mds.noCoinStatusAvailable') + '\x3c/div>\x3c/td>\x3c/tr>';
             return;
         }
 
@@ -510,7 +514,7 @@
     function formatNextRun(seconds) {
         if (seconds === '' || seconds === null || seconds === undefined) return '';
         var s = parseInt(seconds);
-        if (isNaN(s) || s <= 0) return 'Ready';
+        if (isNaN(s) || s <= 0) return t('misc.mds.ready');
         if (s < 60) return s + 's';
         var m = Math.floor(s / 60);
         var remaining = s % 60;
@@ -526,20 +530,20 @@
     // === Event listeners (buttons) ===
     function setupEventListeners() {
         $('btn-refresh-now').addEventListener('click', function() {
-            callAPI('/market-data/refresh-now', { exchange: EXCHANGE }, 'Refresh triggered');
+            callAPI('/market-data/refresh-now', { exchange: EXCHANGE }, t('misc.mds.refreshTriggered'));
         });
         $('btn-cancel').addEventListener('click', function() {
-            callAPI('/market-data/cancel-refresh', { exchange: EXCHANGE }, 'Refresh cancelled');
+            callAPI('/market-data/cancel-refresh', { exchange: EXCHANGE }, t('misc.mds.refreshCancelled'));
         });
         $('btn-stop').addEventListener('click', async function() {
             var confirmed = await window.PBGuiDialogs.confirm({
-                title: 'Stop refresh run',
-                message: 'Stop the current market data refresh run?',
-                detail: 'The active refresh for the selected exchange will be stopped.',
-                confirmText: 'Stop'
+                title: t('misc.mds.stopRefreshTitle'),
+                message: t('misc.mds.stopRefreshMessage'),
+                detail: t('misc.mds.stopRefreshDetail'),
+                confirmText: t('misc.mds.stop')
             });
             if (!confirmed) return;
-            callAPI('/market-data/stop-run', { exchange: EXCHANGE }, 'Stop signal sent');
+            callAPI('/market-data/stop-run', { exchange: EXCHANGE }, t('misc.mds.stopSignalSent'));
         });
     }
 
@@ -554,11 +558,11 @@
             if (data.success) {
                 showToast(successMessage, 'success');
             } else {
-                showToast(data.error || 'Action failed', 'error');
+                showToast(m(data.error) || t('misc.mds.actionFailed'), 'error');
             }
         })
         .catch(function(error) {
-            showToast('Error: ' + error.message, 'error');
+            showToast(t('misc.mds.errorPrefix', { error: error.message }), 'error');
         });
     }
 

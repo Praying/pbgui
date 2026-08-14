@@ -23,6 +23,57 @@
  *   viewer.setFile(f);   // programmatic file switch (local)
  *   viewer.fetchFile(f); // one-shot fetch, no streaming (e.g. rotated files)
  */
+
+/* ── i18n helper: translate via PBGuiI18n, fall back to the English original ── */
+function _lvpT(key, fallback, params) {
+    var F = window.PBGuiI18n;
+    if (F && typeof F.t === 'function') {
+        var v = F.t(key, params);
+        return v === key ? fallback : v;
+    }
+    return fallback;
+}
+
+/* ── i18n key maps (English label → dictionary key) ─────────────────────── */
+const _LVP_PRESET_KEYS = {
+    'Errors': 'shared.log.errors',
+    'Warnings': 'shared.log.warnings',
+    'Errors + Warnings': 'shared.log.errorsWarnings',
+    'Connection': 'shared.log.connection',
+    'Restart / Stop': 'shared.log.restartStop',
+    'Traceback': 'shared.log.traceback',
+    'Orders / Fills': 'shared.log.ordersFills',
+    'Balance / PnL': 'shared.log.balancePnl',
+    'Positions': 'shared.log.positions',
+    'Startup': 'shared.log.startup',
+};
+
+const _LVP_TASK_LABEL_KEYS = {
+    'init': 'shared.log.task.initialize',
+    'setup': 'shared.log.task.setupVps',
+    'update': 'shared.log.task.update',
+    'vps_init': 'shared.log.task.initialize',
+    'vps_setup': 'shared.log.task.setupVps',
+    'vps_update': 'shared.log.task.update',
+    'vps-init': 'shared.log.task.initialize',
+    'vps-setup': 'shared.log.task.setupVps',
+    'vps-update': 'shared.log.task.updateLinux',
+    'vps-update-pbgui': 'shared.log.task.updatePbgui',
+    'vps-update-pb': 'shared.log.task.updatePbguiAndPb7',
+    'vps-pb7-python312': 'shared.log.task.updatePb7Venv',
+    'vps-pbgui-python312': 'shared.log.task.updatePbguiVenv',
+    'vps-reboot': 'shared.log.task.rebootVps',
+    'vps-cleanup': 'shared.log.task.cleanupVps',
+    'vps-resize-swap': 'shared.log.task.resizeSwap',
+    'vps-update-firewall': 'shared.log.task.updateFirewall',
+    'vps-update-coindata': 'shared.log.task.updateCoindata',
+    'master-update-pb': 'shared.log.task.updatePbguiAndPb7',
+    'master-update-pbgui': 'shared.log.task.updatePbgui',
+    'master-update-pb7': 'shared.log.task.updatePb7',
+    'master-install-rustup': 'shared.log.task.installRustup',
+    'master-install-rclone': 'shared.log.task.installRclone'
+};
+
 class LogViewerPanel {
 
     /* ── Preset sets ──────────────────────────────────────────── */
@@ -394,10 +445,11 @@ class LogViewerPanel {
         var esc = function(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
 
         /* preset options */
-        var preOpts = '<option value="">\u2014 Preset \u2014</option>';
+        var preOpts = '<option value="">' + esc(_lvpT('shared.log.presetPlaceholder', '\u2014 Preset \u2014')) + '</option>';
         for (var i = 0; i < this._presetSet.length; i++) {
             var pr = this._presetSet[i];
-            preOpts += '<option value="' + esc(pr.v) + '">' + esc(pr.l) + '</option>';
+            var prKey = _LVP_PRESET_KEYS[pr.l];
+            preOpts += '<option value="' + esc(pr.v) + '">' + esc(prKey ? _lvpT(prKey, pr.l) : pr.l) + '</option>';
         }
 
         c.innerHTML =
@@ -406,9 +458,9 @@ class LogViewerPanel {
   '<div class="lvp-sidebar" id="' + p + 'sidebar">' +
     '<div class="lvp-sidebar-header">' +
       '<button class="lvp-sb-hdr-toggle" id="' + p + 'sb-hdr-toggle">' +
-        'Files <span class="lvp-sb-hdr-toggle-arrow">&#9664;</span>' +
+        _lvpT('shared.log.files', 'Files') + ' <span class="lvp-sb-hdr-toggle-arrow">&#9664;</span>' +
       '</button>' +
-      '<button class="lvp-sort-btn lvp-hidden" type="button" id="' + p + 'sort-btn" title="Toggle sort order" aria-label="Toggle sort order">&#8595;</button>' +
+      '<button class="lvp-sort-btn lvp-hidden" type="button" id="' + p + 'sort-btn" title="' + _lvpT('shared.log.toggleSortOrder', 'Toggle sort order') + '" aria-label="' + _lvpT('shared.log.toggleSortOrder', 'Toggle sort order') + '">&#8595;</button>' +
     '</div>' +
     '<div class="lvp-item-list" id="' + p + 'item-list"></div>' +
     '<div class="lvp-sidebar-resize" id="' + p + 'sidebar-resize"></div>' +
@@ -417,14 +469,14 @@ class LogViewerPanel {
   '<div class="lvp-viewer">' +
     '<!-- toolbar -->' +
     '<div class="lvp-toolbar">' +
-      '<label class="lvp-host-label">Host:' +
+      '<label class="lvp-host-label">' + _lvpT('shared.log.host', 'Host:') +
         '<select class="lvp-host-sel" id="' + p + 'host-sel">' +
-          '<option value="local" selected>Local</option>' +
+          '<option value="local" selected>' + _lvpT('shared.log.local', 'Local') + '</option>' +
         '</select>' +
       '</label>' +
       '<div class="lvp-sep"></div>' +
       '<button class="lvp-sb-toggle lvp-sb-open" id="' + p + 'sb-toggle" style="display:none">' +
-        '<span class="lvp-sb-arrow">&#9658;</span> Files' +
+        '<span class="lvp-sb-arrow">&#9658;</span> ' + _lvpT('shared.log.files', 'Files') +
       '</button>' +
       '<span class="lvp-item-badge" id="' + p + 'item-badge"></span>' +
       '<div class="lvp-sep"></div>' +
@@ -436,47 +488,47 @@ class LogViewerPanel {
         '<button class="lvp-lvl-btn on" data-lvl="CRITICAL" id="' + p + 'lvl-CRITICAL">CRT</button>' +
       '</div>' +
       '<div class="lvp-sep"></div>' +
-      '<label class="lvp-lines-label">Lines:' +
+      '<label class="lvp-lines-label">' + _lvpT('shared.log.lines', 'Lines:') +
         '<select class="lvp-lines-sel" id="' + p + 'lines-sel">' +
           '<option value="200" selected>200</option>' +
           '<option value="500">500</option>' +
           '<option value="1000">1000</option>' +
           '<option value="2000">2000</option>' +
           '<option value="5000">5000</option>' +
-          '<option value="0">All</option>' +
+          '<option value="0">' + _lvpT('common.all', 'All') + '</option>' +
         '</select>' +
       '</label>' +
       '<span class="lvp-file-size" id="' + p + 'file-size"></span>' +
       '<div class="lvp-sep"></div>' +
-      '<button class="lvp-ctrl-btn lvp-stream-on" id="' + p + 'stream-btn">&#9208; Pause</button>' +
-      '<button class="lvp-ctrl-btn" id="' + p + 'fetch-btn">&#128229; Fetch</button>' +
-      '<button class="lvp-ctrl-btn" id="' + p + 'clear-btn">&#128465; Clear</button>' +
-      '<button class="lvp-ctrl-btn" id="' + p + 'dl-btn">\u2B07 Download</button>' +
+      '<button class="lvp-ctrl-btn lvp-stream-on" id="' + p + 'stream-btn">&#9208; ' + _lvpT('shared.log.pause', 'Pause') + '</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'fetch-btn">&#128229; ' + _lvpT('shared.log.fetch', 'Fetch') + '</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'clear-btn">&#128465; ' + _lvpT('shared.log.clear', 'Clear') + '</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'dl-btn">\u2B07 ' + _lvpT('shared.log.download', 'Download') + '</button>' +
       (this._showRestart
-        ? '<button class="lvp-ctrl-btn" id="' + p + 'restart-btn">&#128260; Restart</button>'
+        ? '<button class="lvp-ctrl-btn" id="' + p + 'restart-btn">&#128260; ' + _lvpT('shared.log.restart', 'Restart') + '</button>'
         : '') +
-      '<button class="lvp-ctrl-btn" id="' + p + 'ln-btn"># Lines</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'ln-btn">' + _lvpT('shared.log.linesBtn', '# Lines') + '</button>' +
       '<div class="lvp-sep"></div>' +
-      '<span class="lvp-conn-badge" id="' + p + 'conn">connecting\u2026</span>' +
+      '<span class="lvp-conn-badge" id="' + p + 'conn">' + _lvpT('shared.log.connConnecting', 'connecting\u2026') + '</span>' +
     '</div>' +
     '<!-- search bar -->' +
     '<div class="lvp-searchbar">' +
       '<select id="' + p + 'preset">' + preOpts + '</select>' +
-      '<input type="text" id="' + p + 'search" placeholder="Search logs\u2026">' +
-      '<label><input type="checkbox" id="' + p + 'filter-chk" checked> Filter</label>' +
+      '<input type="text" id="' + p + 'search" placeholder="' + _lvpT('shared.log.searchLogs', 'Search logs\u2026') + '">' +
+      '<label><input type="checkbox" id="' + p + 'filter-chk" checked> ' + _lvpT('shared.log.filter', 'Filter') + '</label>' +
       '<select class="lvp-ctx-sel" id="' + p + 'ctx-sel" style="display:none">' +
-        '<option value="3">\u00b13 lines</option>' +
-        '<option value="5" selected>\u00b15 lines</option>' +
-        '<option value="10">\u00b110 lines</option>' +
-        '<option value="20">\u00b120 lines</option>' +
+        '<option value="3">' + _lvpT('shared.log.contextLines', '\u00b13 lines', {n: 3}) + '</option>' +
+        '<option value="5" selected>' + _lvpT('shared.log.contextLines', '\u00b15 lines', {n: 5}) + '</option>' +
+        '<option value="10">' + _lvpT('shared.log.contextLines', '\u00b110 lines', {n: 10}) + '</option>' +
+        '<option value="20">' + _lvpT('shared.log.contextLines', '\u00b120 lines', {n: 20}) + '</option>' +
       '</select>' +
       '<span id="' + p + 'grp-actions" style="display:none">' +
-        '<button class="lvp-grp-link" id="' + p + 'expand-all">Expand all</button>' +
-        '<button class="lvp-grp-link" id="' + p + 'collapse-all">Collapse all</button>' +
+        '<button class="lvp-grp-link" id="' + p + 'expand-all">' + _lvpT('shared.log.expandAll', 'Expand all') + '</button>' +
+        '<button class="lvp-grp-link" id="' + p + 'collapse-all">' + _lvpT('shared.log.collapseAll', 'Collapse all') + '</button>' +
       '</span>' +
       '<span id="' + p + 'nav-btns" style="display:none;gap:2px;">' +
-        '<button class="lvp-nav-btn" id="' + p + 'nav-up" title="Prev (Shift+Enter)">&#9650;</button>' +
-        '<button class="lvp-nav-btn" id="' + p + 'nav-dn" title="Next (Enter)">&#9660;</button>' +
+        '<button class="lvp-nav-btn" id="' + p + 'nav-up" title="' + _lvpT('shared.log.prevMatch', 'Prev (Shift+Enter)') + '">&#9650;</button>' +
+        '<button class="lvp-nav-btn" id="' + p + 'nav-dn" title="' + _lvpT('shared.log.nextMatch', 'Next (Enter)') + '">&#9660;</button>' +
       '</span>' +
       '<span class="lvp-match-count" id="' + p + 'match-count"></span>' +
     '</div>' +
@@ -620,7 +672,7 @@ class LogViewerPanel {
 
         ws.onopen = function() {
             var ce = me._q('conn');
-            if (ce) ce.textContent = 'connected';
+            if (ce) ce.textContent = _lvpT('shared.log.connected', 'connected');
             ws.send(JSON.stringify({ cmd: 'list_local_logs' }));
             if (!me._flushPendingRestart(ws)) me._subscribe();
         };
@@ -629,7 +681,7 @@ class LogViewerPanel {
         };
         ws.onerror = function() {
             var ce = me._q('conn');
-            if (ce) ce.textContent = 'error';
+            if (ce) ce.textContent = _lvpT('shared.log.connError', 'error');
         };
         ws.onclose = function(event) {
             if (me._ws !== ws) return;
@@ -650,11 +702,11 @@ class LogViewerPanel {
                     clearTimeout(me._reconnectTimer);
                     me._reconnectTimer = 0;
                 }
-                if (ce) ce.textContent = 'session expired';
+                if (ce) ce.textContent = _lvpT('shared.log.connSessionExpired', 'session expired');
                 window.location.replace('/');
                 return;
             }
-            if (ce) ce.textContent = 'disconnected';
+            if (ce) ce.textContent = _lvpT('shared.log.disconnected', 'disconnected');
             if (!me._authExpired && !me._closed && !me._reconnectTimer) {
                 me._reconnectTimer = setTimeout(function() {
                     me._reconnectTimer = 0;
@@ -746,8 +798,8 @@ class LogViewerPanel {
                 var rb = this._q('restart-btn');
                 if (rb) {
                     rb.disabled = false;
-                    rb.textContent = msg.success ? '\u2705 Restarted' : '\u274c Failed';
-                    setTimeout(function() { rb.textContent = '\ud83d\udd04 Restart'; }, 3000);
+                    rb.textContent = msg.success ? '\u2705 ' + _lvpT('shared.log.restarted', 'Restarted') : '\u274c ' + _lvpT('shared.log.failed', 'Failed');
+                    setTimeout(function() { rb.textContent = '\ud83d\udd04 ' + _lvpT('shared.log.restart', 'Restart'); }, 3000);
                 }
                 this._finishRestartAttempt();
             }
@@ -771,7 +823,7 @@ class LogViewerPanel {
         var rb = this._q('restart-btn');
         if (rb) {
             rb.disabled = false;
-            rb.textContent = '\ud83d\udd04 Restart';
+            rb.textContent = '\ud83d\udd04 ' + _lvpT('shared.log.restart', 'Restart');
         }
     }
 
@@ -785,7 +837,7 @@ class LogViewerPanel {
         attempt.sent = true;
         this._send(attempt.command);
         var rb = this._q('restart-btn');
-        if (rb) rb.textContent = '\u231b Restarting\u2026';
+        if (rb) rb.textContent = '\u231b ' + _lvpT('shared.log.restarting', 'Restarting\u2026');
     }
 
     _ingestLines(newLines) {
@@ -812,7 +864,7 @@ class LogViewerPanel {
         this._unsubscribe();
         this._clear();
 
-        var label = this._isLocal() ? 'Files' : 'Services';
+        var label = this._isLocal() ? _lvpT('shared.log.files', 'Files') : _lvpT('shared.log.services', 'Services');
         var sbToggle = this._q('sb-toggle');
         if (sbToggle)
             sbToggle.innerHTML = '<span class="lvp-sb-arrow">&#9658;</span> ' + label;
@@ -856,7 +908,7 @@ class LogViewerPanel {
         for (var i = 0; i < hosts.length; i++) {
             var o = document.createElement('option');
             o.value = hosts[i];
-            o.textContent = hosts[i] === 'local' ? 'Local' : hosts[i];
+            o.textContent = hosts[i] === 'local' ? _lvpT('shared.log.local', 'Local') : hosts[i];
             sel.appendChild(o);
         }
         if (hosts.indexOf(prev) >= 0) sel.value = prev;
@@ -929,7 +981,7 @@ class LogViewerPanel {
             'master-install-rustup': 'Install or Update rustup',
             'master-install-rclone': 'Install or Update rclone'
         };
-        var label = labels[command] || command
+        var titleLabel = labels[command] || command
             .replace(/^vps[-_]/, '')
             .replace(/^master[-_]/, '')
             .split(/[-_]+/)
@@ -938,11 +990,13 @@ class LogViewerPanel {
                 return part.charAt(0).toUpperCase() + part.slice(1);
             })
             .join(' ');
+        var labelKey = _LVP_TASK_LABEL_KEYS[command];
+        var label = labelKey ? _lvpT(labelKey, titleLabel) : titleLabel;
         return {
             command: command,
             history: history,
             runId: runId,
-            label: label || 'Task'
+            label: label || _lvpT('shared.log.task.fallback', 'Task')
         };
     }
 
@@ -1022,7 +1076,7 @@ class LogViewerPanel {
         var f = file || '';
         if (!f) return '';
         if (f.indexOf('Bot:') === 0) return '\ud83e\udd16 ' + f.substring(4);
-        if (f.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + f.substring(7) + ' error';
+        if (f.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + f.substring(7) + ' ' + _lvpT('shared.log.errorLog', 'error');
         if (f.indexOf('pb7/logs/') === 0 || f.indexOf('software/pb7/logs/') === 0) {
             return this._svcLabel(f);
         }
@@ -1030,11 +1084,13 @@ class LogViewerPanel {
             var vpsParts = f.split(':');
             var host = vpsParts[1] || 'VPS';
             var vpsInfo = this._taskLabel(vpsParts.slice(2).join(':'));
-            return host + ' ' + vpsInfo.label + (vpsInfo.history ? ' (History ' + vpsInfo.history + ')' : '');
+            var vpsHist = vpsInfo.history ? ' ' + _lvpT('shared.log.historyParen', '(History ' + vpsInfo.history + ')', { n: vpsInfo.history }) : '';
+            return host + ' ' + vpsInfo.label + vpsHist;
         }
         if (f.indexOf('MasterAction:') === 0) {
             var masterInfo = this._taskLabel(f.split(':').slice(1).join(':'));
-            return 'Master ' + masterInfo.label + (masterInfo.history ? ' (History ' + masterInfo.history + ')' : '');
+            var masterHist = masterInfo.history ? ' ' + _lvpT('shared.log.historyParen', '(History ' + masterInfo.history + ')', { n: masterInfo.history }) : '';
+            return _lvpT('nav.master', 'Master') + ' ' + masterInfo.label + masterHist;
         }
         if (f.indexOf('/') >= 0) {
             var pathParts = f.split('/').filter(Boolean);
@@ -1051,8 +1107,12 @@ class LogViewerPanel {
             if (this._taskBrowseMode) {
                 sortBtn.classList.remove('lvp-hidden');
                 sortBtn.textContent = this._taskListSortMode === 'alphabetical' ? 'A' : (this._taskListSortMode === 'oldest' ? '\u2191' : '\u2193');
-                sortBtn.title = 'Sort: ' + (this._taskListSortMode || 'newest');
-                sortBtn.setAttribute('aria-label', 'Sort: ' + (this._taskListSortMode || 'newest'));
+                var sortMode = this._taskListSortMode || 'newest';
+                var sortModeKeys = { newest: 'shared.log.sortNewest', oldest: 'shared.log.sortOldest', alphabetical: 'shared.log.sortAlphabetical' };
+                var sortModeLabel = _lvpT(sortModeKeys[sortMode] || 'shared.log.sortNewest', sortMode);
+                var sortTitle = _lvpT('shared.log.sortLabel', 'Sort: ' + sortMode, { mode: sortModeLabel });
+                sortBtn.title = sortTitle;
+                sortBtn.setAttribute('aria-label', sortTitle);
             } else {
                 sortBtn.classList.add('lvp-hidden');
             }
@@ -1196,7 +1256,7 @@ class LogViewerPanel {
             if (errMeta) {
                 ensureGroup(errMeta.bot).history.push({
                     value: svc,
-                    label: errMeta.isOld ? 'error.old' : 'error',
+                    label: errMeta.isOld ? _lvpT('shared.log.errorLogOld', 'error.old') : _lvpT('shared.log.errorLog', 'error'),
                     title: svc,
                     className: 'lvp-subitem',
                     sortKey: errMeta.isOld ? '1' : '2',
@@ -1313,7 +1373,7 @@ class LogViewerPanel {
     }
 
     _svcLabel(s) {
-        if (s.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + s.substring(7) + ' error';
+        if (s.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + s.substring(7) + ' ' + _lvpT('shared.log.errorLog', 'error');
         if (s.indexOf('Bot:') === 0) {
             var parts = s.substring(4).split(':');
             return '\ud83e\udd16 ' + parts[0];
@@ -1321,11 +1381,11 @@ class LogViewerPanel {
         if (s.indexOf('/') >= 0) {
             var pathParts = s.split('/').filter(Boolean);
             var errMeta = this._botErrorLogMeta(s);
-            if (errMeta) return errMeta.bot + ' ' + (errMeta.isOld ? 'error.old' : 'error');
+            if (errMeta) return errMeta.bot + ' ' + (errMeta.isOld ? _lvpT('shared.log.errorLogOld', 'error.old') : _lvpT('shared.log.errorLog', 'error'));
             if (s.indexOf('pb7/logs/') === 0 || s.indexOf('software/pb7/logs/') === 0) {
                 var archive = this._archiveLogMeta(s);
                 if (archive && archive.bot && archive.timestamp) return '\ud83d\udcdc ' + archive.bot + ' ' + archive.timestamp;
-                if (archive && archive.bot) return '\ud83d\udcdc ' + archive.bot + ' history';
+                if (archive && archive.bot) return '\ud83d\udcdc ' + archive.bot + ' ' + _lvpT('shared.log.history', 'history');
                 if (archive && archive.timestamp) return '\ud83d\udcdc ' + archive.timestamp;
             }
             if (pathParts.length >= 2 && pathParts[pathParts.length - 1] === 'passivbot.log') {
@@ -1369,7 +1429,7 @@ class LogViewerPanel {
     _updateBadge() {
         var badge = this._q('item-badge');
         if (!badge) return;
-        if (this._isLocal()) badge.textContent = this._fileLabel(this._file) || '(no file)';
+        if (this._isLocal()) badge.textContent = this._fileLabel(this._file) || _lvpT('shared.log.noFile', '(no file)');
         else badge.textContent = this._svcLabel(this._service);
     }
 
@@ -1491,10 +1551,10 @@ class LogViewerPanel {
         var btn = this._q('stream-btn');
         if (!btn) return;
         if (this._streaming) {
-            btn.textContent = '\u23f8 Pause';
+            btn.textContent = '\u23f8 ' + _lvpT('shared.log.pause', 'Pause');
             btn.className   = 'lvp-ctrl-btn lvp-stream-on';
         } else {
-            btn.textContent = '\u25b6 Stream';
+            btn.textContent = '\u25b6 ' + _lvpT('shared.log.stream', 'Stream');
             btn.className   = 'lvp-ctrl-btn';
         }
     }
@@ -1589,7 +1649,7 @@ class LogViewerPanel {
         }
         if (!check) return '';
         if (check.expected === false || check.status === 'disabled') {
-            return check.reason || 'Service is not configured';
+            return check.reason || _lvpT('shared.log.serviceNotConfigured', 'Service is not configured');
         }
         return '';
     }
@@ -1602,7 +1662,7 @@ class LogViewerPanel {
         var rb = this._q('restart-btn');
         this._finishRestartAttempt();
         var generation = ++this._restartGeneration;
-        if (rb) { rb.disabled = true; rb.textContent = '\u231b Preparing log\u2026'; }
+        if (rb) { rb.disabled = true; rb.textContent = '\u231b ' + _lvpT('shared.log.preparingLog', 'Preparing log\u2026'); }
 
         var command;
         if (svc.indexOf('Bot:') === 0) {
@@ -1616,7 +1676,7 @@ class LogViewerPanel {
             this._prepareRestartStream(command);
         } else {
             this._pendingRestartCommand = command;
-            if (rb) rb.textContent = 'Connecting...';
+            if (rb) rb.textContent = _lvpT('shared.log.connecting', 'Connecting...');
             this._connect();
         }
 
@@ -1624,7 +1684,7 @@ class LogViewerPanel {
         this._restartTimeout = setTimeout(function() {
             if (generation !== me._restartGeneration) return;
             me._finishRestartAttempt();
-            if (rb) { rb.disabled = false; rb.textContent = '\ud83d\udd04 Restart'; }
+            if (rb) { rb.disabled = false; rb.textContent = '\ud83d\udd04 ' + _lvpT('shared.log.restart', 'Restart'); }
         }, 15000);
     }
 
@@ -1849,7 +1909,7 @@ class LogViewerPanel {
         var idx = 0;
         var status = document.createElement('div');
         status.style.cssText = 'color:#888;padding:8px;font-size:12px';
-        status.textContent = 'Rendering\u2026';
+        status.textContent = _lvpT('shared.log.rendering', 'Rendering\u2026');
         term.appendChild(status);
 
         function rChunk() {
@@ -1866,7 +1926,7 @@ class LogViewerPanel {
                 else me._updateMatchCount(0);
             } else {
                 term.insertBefore(frag, status);
-                status.textContent = 'Rendering\u2026 ' + Math.round(idx / total * 100) + '%';
+                status.textContent = _lvpT('shared.log.rendering', 'Rendering\u2026') + ' ' + Math.round(idx / total * 100) + '%';
                 requestAnimationFrame(rChunk);
             }
         }
@@ -2025,7 +2085,7 @@ class LogViewerPanel {
             for (; idx < end; idx++)
                 me._applyBlockDiv(children[idx], idx, isMatch, isVisible, blockOf, blocks, re);
             if (idx < total) {
-                if (countEl) countEl.textContent = 'Filtering\u2026 ' + Math.round(idx / total * 100) + '%';
+                if (countEl) countEl.textContent = _lvpT('shared.log.filtering', 'Filtering\u2026') + ' ' + Math.round(idx / total * 100) + '%';
                 requestAnimationFrame(processChunk);
             } else {
                 me._insertSeparators(terminal, children, blocks);
@@ -2056,7 +2116,7 @@ class LogViewerPanel {
             for (; idx < end; idx++)
                 me._applyHighlightDiv(children[idx], isMatch[idx], re);
             if (idx < total) {
-                if (countEl) countEl.textContent = 'Filtering\u2026 ' + Math.round(idx / total * 100) + '%';
+                if (countEl) countEl.textContent = _lvpT('shared.log.filtering', 'Filtering\u2026') + ' ' + Math.round(idx / total * 100) + '%';
                 requestAnimationFrame(processChunk);
             } else {
                 me._cacheNavMatches();
@@ -2106,7 +2166,7 @@ class LogViewerPanel {
             if (detailCount > 0) {
                 var span = document.createElement('span');
                 span.className = 'grp-count';
-                span.textContent = ' (+' + detailCount + ' lines)';
+                span.textContent = ' ' + _lvpT('shared.log.linesMore', '(+' + detailCount + ' lines)', { n: detailCount });
                 div.appendChild(span);
             }
         } else if (isMatch[idx]) {
@@ -2230,11 +2290,11 @@ class LogViewerPanel {
         var terminal = this._q('terminal');
         var count = terminal ? terminal.querySelectorAll('.lvp-highlight').length : 0;
         if (this._filterMode && blockCount > 0)
-            el.textContent = count + ' matches in ' + blockCount + ' blocks';
+            el.textContent = _lvpT('shared.log.matchesInBlocks', count + ' matches in ' + blockCount + ' blocks', { count: count, blocks: blockCount });
         else if (!this._filterMode && this._matchIdx >= 0)
             el.textContent = (this._matchIdx + 1) + ' / ' + count;
         else
-            el.textContent = count + ' matches';
+            el.textContent = _lvpT('shared.log.matches', count + ' matches', { count: count });
     }
 
     /* ── Utility ──────────────────────────────────────────────── */

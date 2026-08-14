@@ -10,6 +10,7 @@ import pytest
 from fastapi import Response
 
 from credential_store import CredentialStore
+from tests.i18n_helpers import assert_text_present
 
 
 def test_tradfi_bulk_routes_return_metadata_only(monkeypatch, tmp_path: Path) -> None:
@@ -292,19 +293,20 @@ def test_frontend_tiingo_secret_input_uses_vault_contract() -> None:
     assert "tradfiToggleActive()" in editor
     assert "tradfiLoadGeneration" in editor
     assert "tradfiActionController" in editor
-    assert "Stored in vault; enter only to replace" in editor
+    assert_text_present(editor, "Stored in vault; enter only to replace")
     assert "createNew: !tradfiProfileId" in editor
     assert "create_new: intent.createNew" in editor
-    assert "replicated active selection" in editor
+    assert_text_present(editor, "not the replicated active selection")
+    assert_text_present(editor, "replicated active selection generation {generation}")
     assert "Retry PB7 Projection" in editor
     assert "pending_delete" in editor
-    assert "Failed to load profiles:" in editor
+    assert_text_present(editor, "Failed to load profiles: {error}")
     assert "checkPendingTradfiSave(intent)" in editor
     assert "pending_operation_id === pending.operationId" in editor
     assert "last_operation_id === pending.operationId" in editor
     assert "tradfiPendingSaveIntent = { ...intent, operationId: operationId }" in editor
     assert "finishTradfiAction(context, false)" in editor
-    assert "Submitted secrets remain in the form for an exact retry" in editor
+    assert_text_present(editor, "Save status is uncertain{operation}: {error}. Submitted secrets remain in the form for an exact retry.")
     assert "error.operationId" in editor
 
 

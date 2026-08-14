@@ -7,6 +7,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/app/i18n.js?v=1"></script>
 <title>PBGui Dashboard</title>
 <style>
 :root {
@@ -26,7 +27,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%; width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   font-size: var(--fs-base);
   background: #0e1117;
   color: #e2e8f0;
@@ -692,7 +693,7 @@ html, body {
   <div class="ovl-panel">
     <div id="help-drag-handle"></div>
     <div class="ovl-header">
-      <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
+      <div class="ovl-header-title">&#128218; <span data-i18n="dash.guideHelp">Guide &amp; Help</span></div>
       <div class="ovl-header-actions">
         <div class="lang-pill">
           <button id="help-lang-en" class="active">EN</button>
@@ -703,10 +704,10 @@ html, body {
     </div>
     <div id="help-body">
       <div id="help-toc">
-        <input id="help-toc-filter" type="text" placeholder="Filter topics…" autocomplete="off">
+        <input id="help-toc-filter" type="text" placeholder="Filter topics…" data-i18n-placeholder="dash.filterTopics" autocomplete="off">
         <div id="help-toc-list"></div>
       </div>
-      <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
+      <div id="help-content"><div class="help-loading" data-i18n="dash.selectTopic">Select a topic from the left.</div></div>
     </div>
   </div>
 </div>
@@ -718,10 +719,10 @@ html, body {
   <div id="sidebar">
     <div id="sidebar-sticky">
       <div id="edit-mode-banner">
-        <span class="em-dot"></span>Edit Mode
+        <span class="em-dot"></span><span data-i18n="dash.editMode">Edit Mode</span>
       </div>
       <div id="sidebar-header">
-        <span class="sb-title">Dashboards</span>
+        <span class="sb-title" data-i18n="dash.dashboards">Dashboards</span>
         <span class="sb-count" id="sb-count">0</span>
       </div>
       <div id="sidebar-toolbar">
@@ -729,7 +730,7 @@ html, body {
       </div>
       <div id="sidebar-search-wrap">
         <span class="sb-search-icon">&#128269;</span>
-        <input id="sidebar-search" type="text" placeholder="Filter&#8230;" autocomplete="off">
+        <input id="sidebar-search" type="text" placeholder="Filter&#8230;" data-i18n-placeholder="dash.filter" autocomplete="off">
       </div>
     </div>
     <div id="sidebar-list-wrap"></div>
@@ -740,7 +741,7 @@ html, body {
   <div id="main-content">
     <div id="content-loading">
       <div class="spinner"></div>
-      <span>Select a dashboard from the sidebar</span>
+      <span data-i18n="dash.selectDashboard">Select a dashboard from the sidebar</span>
     </div>
     <iframe id="content-frame" src="" allowfullscreen></iframe>
   </div>
@@ -750,15 +751,15 @@ html, body {
 <!-- ── New dashboard dialog ── -->
 <div id="new-dash-dialog">
   <div class="dlg-box">
-    <div class="dlg-title">&#43; New Dashboard</div>
+    <div class="dlg-title">&#43; <span data-i18n="dash.newDashboard">New Dashboard</span></div>
     <div class="dlg-field">
-      <label>Dashboard Name</label>
-      <input type="text" id="new-dash-name" maxlength="32" placeholder="e.g. My Portfolio" autocomplete="off">
+      <label data-i18n="dash.dashboardName">Dashboard Name</label>
+      <input type="text" id="new-dash-name" maxlength="32" placeholder="e.g. My Portfolio" data-i18n-placeholder="dash.dashboardNamePlaceholder" autocomplete="off">
       <div class="dlg-err" id="new-dash-err"></div>
     </div>
     <div class="dlg-actions">
-      <button class="dlg-btn secondary" id="new-dash-cancel">Cancel</button>
-      <button class="dlg-btn primary"   id="new-dash-ok">Create &amp; Edit</button>
+      <button class="dlg-btn secondary" id="new-dash-cancel" data-i18n="common.cancel">Cancel</button>
+      <button class="dlg-btn primary"   id="new-dash-ok" data-i18n="dash.createEdit">Create &amp; Edit</button>
     </div>
   </div>
 </div>
@@ -766,13 +767,13 @@ html, body {
 <!-- ── Delete confirm dialog ── -->
 <div id="del-dash-dialog">
   <div class="dlg-box">
-    <div class="dlg-title">&#128465; Delete Dashboard</div>
+    <div class="dlg-title">&#128465; <span data-i18n="dash.deleteDashboard">Delete Dashboard</span></div>
     <div id="del-confirm-text">
-      Delete <span id="del-confirm-name"></span>? This cannot be undone.
+      <span data-i18n="common.delete">Delete</span> <span id="del-confirm-name"></span><span data-i18n="dash.deleteConfirmSuffix">? This cannot be undone.</span>
     </div>
     <div class="dlg-actions">
-      <button class="dlg-btn secondary" id="del-cancel">Cancel</button>
-      <button class="dlg-btn primary" style="color:#f56565;border-color:rgba(245,101,101,0.4);background:rgba(245,101,101,0.08);" id="del-ok">Delete</button>
+      <button class="dlg-btn secondary" id="del-cancel" data-i18n="common.cancel">Cancel</button>
+      <button class="dlg-btn primary" style="color:#f56565;border-color:rgba(245,101,101,0.4);background:rgba(245,101,101,0.08);" id="del-ok" data-i18n="common.delete">Delete</button>
     </div>
   </div>
 </div>
@@ -780,11 +781,11 @@ html, body {
 <!-- ── Templates popup overlay ── -->
 <div id="tpl-overlay">
   <div id="tpl-drag-handle"></div>
-  <button id="tpl-close-btn" title="Close">&#x2715;</button>
+  <button id="tpl-close-btn" title="Close" data-i18n-title="common.close">&#x2715;</button>
   <iframe id="tpl-iframe" src=""></iframe>
 </div>
 
-<script src="/app/js/pbgui_dialogs.js?v=5"></script>
+<script src="/app/js/pbgui_dialogs.js?v=6"></script>
 <script>
 (function () {
   'use strict';
@@ -795,6 +796,8 @@ html, body {
   var VERSION    = "%%VERSION%%";
   var CURRENT    = "%%CURRENT%%";
   var DASHBOARDS = %%DASHBOARDS_JSON%%;
+
+  document.title = window.PBGuiI18n ? PBGuiI18n.t('dash.pageTitle') : 'PBGui Dashboard';
 
   /* ── state ── */
   var currentDash = CURRENT || '';
@@ -893,7 +896,7 @@ html, body {
           var btn = document.createElement('button');
           btn.className = 'sb-btn view-save';
           btn.id = 'sb-view-save';
-          btn.title = 'Save view layout';
+          btn.title = PBGuiI18n.t('dash.saveViewLayout');
           btn.innerHTML = '&#128190;';
           btn.addEventListener('click', function () {
             if (contentFrame.contentWindow) {
@@ -913,9 +916,9 @@ html, body {
     var deleteTargets = getDeleteTargets();
     if (editMode) {
       sidebarToolbar.innerHTML =
-        '<button class="sb-btn edit-mode-save" id="sb-save" title="Save dashboard">&#128190;</button>' +
-        '<button class="sb-btn"               id="sb-cancel" title="Cancel edit">&#x2715;</button>' +
-        '<button class="sb-btn danger"         id="sb-delete" title="Delete dashboard">&#128465;</button>';
+        '<button class="sb-btn edit-mode-save" id="sb-save" title="' + PBGuiI18n.t('dash.saveDashboard') + '">&#128190;</button>' +
+        '<button class="sb-btn"               id="sb-cancel" title="' + PBGuiI18n.t('dash.cancelEdit') + '">&#x2715;</button>' +
+        '<button class="sb-btn danger"         id="sb-delete" title="' + PBGuiI18n.t('dash.deleteDashboard') + '">&#128465;</button>';
       document.getElementById('sb-save').addEventListener('click', function () {
         contentFrame.contentWindow.postMessage({ type: 'pbgui_trigger_save' }, '*');
       });
@@ -927,11 +930,11 @@ html, body {
       });
     } else {
       sidebarToolbar.innerHTML =
-        '<button class="sb-btn" id="sb-refresh"   title="Refresh list">&#x21BB;</button>' +
-        '<button class="sb-btn" id="sb-new"       title="New dashboard">&#x2795;</button>' +
-        (currentDash ? '<button class="sb-btn" id="sb-edit" title="Edit current dashboard">&#x270E;</button>' : '') +
-        (deleteTargets.length ? '<button class="sb-btn danger" id="sb-del" title="Delete ' + (deleteTargets.length > 1 ? 'selected dashboards' : 'selected dashboard') + '">&#128465;</button>' : '') +
-        '<button class="sb-btn" id="sb-templates" title="Templates">&#128203;</button>';
+        '<button class="sb-btn" id="sb-refresh"   title="' + PBGuiI18n.t('dash.refreshList') + '">&#x21BB;</button>' +
+        '<button class="sb-btn" id="sb-new"       title="' + PBGuiI18n.t('dash.newDashboard') + '">&#x2795;</button>' +
+        (currentDash ? '<button class="sb-btn" id="sb-edit" title="' + PBGuiI18n.t('dash.editCurrentDashboard') + '">&#x270E;</button>' : '') +
+        (deleteTargets.length ? '<button class="sb-btn danger" id="sb-del" title="' + (deleteTargets.length > 1 ? PBGuiI18n.t('dash.deleteSelectedDashboards') : PBGuiI18n.t('dash.deleteSelectedDashboard')) + '">&#128465;</button>' : '') +
+        '<button class="sb-btn" id="sb-templates" title="' + PBGuiI18n.t('dash.templates') + '">&#128203;</button>';
       document.getElementById('sb-refresh').addEventListener('click', function () {
         refreshList();
       });
@@ -956,10 +959,10 @@ html, body {
   /* ── Build the dashboard list HTML ── */
   function buildList(names) {
     if (DASHBOARDS.length === 0) {
-      return '<div class="sb-empty">No dashboards yet</div>';
+      return '<div class="sb-empty">' + PBGuiI18n.t('dash.noDashboards') + '</div>';
     }
     if (names.length === 0) {
-      return '<div class="sb-no-match">No match</div>';
+      return '<div class="sb-no-match">' + PBGuiI18n.t('dash.noMatch') + '</div>';
     }
     var h = '';
     for (var i = 0; i < names.length; i++) {
@@ -969,7 +972,7 @@ html, body {
       h += '<div class="sb-item' + active + selected + '" data-name="' + escAttr(n) + '" tabindex="0" role="option" aria-selected="' + (selected ? 'true' : 'false') + '">';
       h += '<span class="sb-item-name">' + escHtml(n) + '</span>';
       if (n === currentDash && !editMode) {
-        h += '<span class="sb-item-edit-icon" title="Edit">&#x270E;</span>';
+        h += '<span class="sb-item-edit-icon" title="' + PBGuiI18n.t('dash.edit') + '">&#x270E;</span>';
       }
       h += '</div>';
     }
@@ -1188,13 +1191,13 @@ html, body {
     var name = (newDashNameInput.value || '').trim();
     if (!name) {
       newDashNameInput.classList.add('err');
-      newDashErr.textContent = 'Please enter a name.';
+      newDashErr.textContent = PBGuiI18n.t('dash.pleaseEnterName');
       newDashErr.classList.add('visible');
       return;
     }
     if (DASHBOARDS.indexOf(name) !== -1) {
       newDashNameInput.classList.add('err');
-      newDashErr.textContent = 'A dashboard with this name already exists.';
+      newDashErr.textContent = PBGuiI18n.t('dash.nameExists');
       newDashErr.classList.add('visible');
       return;
     }
@@ -1216,7 +1219,7 @@ html, body {
     if (!_pendingDelete.length) return;
     delConfirmName.textContent = _pendingDelete.length === 1
       ? '\u201c' + _pendingDelete[0] + '\u201d'
-      : _pendingDelete.length + ' dashboards';
+      : PBGuiI18n.t('dash.dashboardsCount', { count: _pendingDelete.length });
     delDialog.classList.add('visible');
   }
   document.getElementById('del-cancel').addEventListener('click', function () {
@@ -1249,8 +1252,8 @@ html, body {
       })
       .catch(function () {
         window.PBGuiDialogs.alert({
-          title: 'Delete dashboard',
-          message: 'Delete failed.'
+          title: PBGuiI18n.t('dash.deleteDashboard'),
+          message: PBGuiI18n.t('dash.deleteFailed')
         });
       });
   });
@@ -1426,7 +1429,7 @@ html, body {
     }
 
     function loadHelpIndex() {
-      helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+      helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('common.loading') + '</div>';
       fetch(API_BASE + '/docs/index?lang=' + helpLang)
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -1447,7 +1450,7 @@ html, body {
           }
         })
         .catch(function () {
-          helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>';
+          helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('dash.failedLoadTopics') + '</div>';
         });
     }
 
@@ -1469,11 +1472,11 @@ html, body {
       renderToc();
       var t = helpTopics[idx];
       if (!t) return;
-      helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+      helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('common.loading') + '</div>';
       fetch(API_BASE + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang)
         .then(function (r) { return r.json(); })
         .then(function (d) { helpContent.innerHTML = mdToHtml(d.content || ''); helpContent.scrollTop = 0; })
-        .catch(function () { helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>'; });
+        .catch(function () { helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('dash.failedLoadContent') + '</div>'; });
     }
 
     helpFilter.addEventListener('input', renderToc);
@@ -1543,14 +1546,14 @@ html, body {
   var _NAV_VER     = "%%VERSION%%";
   var _NAV_SERIAL  = "%%SERIAL%%";
   window.PBGUI_NAV_CONFIG = {
-    subtitle: 'DASHBOARD',
+    subtitle: (window.PBGuiI18n ? PBGuiI18n.t('dash.subtitle') : 'DASHBOARD'),
     current:  'dashboards',
     apiBase:  _NAV_API,
     version:  _NAV_VER,
     serial:   _NAV_SERIAL
   };
 </script>
-<script src="/app/js/shared_help_overlay.js?v=6"></script>
+<script src="/app/js/shared_help_overlay.js?v=7"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>
 </html>
