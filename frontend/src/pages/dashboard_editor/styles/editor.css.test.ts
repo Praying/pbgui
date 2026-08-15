@@ -1,19 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
-/* Parity lock: editor.css must carry the exact CSS of the legacy editor page
-   (dashboard_editor.html <style> block, lines 15-454). The legacy page stays
-   live until D-editor-8 — this test fails loudly if the two ever drift. */
+/* editor.css is the frozen port of the legacy editor page's <style> block
+   (dashboard_editor.html lines 15-454). The legacy page was removed at
+   D-editor-8 after byte-parity was verified; the digest below was computed
+   from that verified-parity content, so any CSS drift — accidental or
+   deliberate — must consciously update this expectation. */
 
 const editorCss = readFileSync(join(import.meta.dirname, 'editor.css'), 'utf8');
 
-function legacyCss(): string {
-  const source = readFileSync(join(import.meta.dirname, '../../../../dashboard_editor.html'), 'utf8');
-  const match = /<style>([\s\S]*?)<\/style>/.exec(source);
-  if (!match) throw new Error('could not locate the <style> block in dashboard_editor.html');
-  return match[1]!;
-}
+/** sha256 of the normalized CSS, frozen at D-editor-8 (parity verified). */
+const FROZEN_EDITOR_CSS_SHA256 = '97369ddf0b25f775cd470903f90e34b49786e3e109d002ae2430b1bd16b8e5de';
 
 function normalize(text: string): string {
   /* Comments are stripped; only the line breaks are removed — the legacy
@@ -25,11 +24,15 @@ function normalize(text: string): string {
     .trim();
 }
 
-describe('editor.css vs dashboard_editor.html <style> (15-454)', () => {
-  it('carries every editor rule the legacy page styles', () => {
-    const legacy = legacyCss();
-    expect(legacy.length).toBeGreaterThan(8000); // sanity: the real style block
-    expect(normalize(editorCss)).toBe(normalize(legacy));
+function sha256(text: string): string {
+  return createHash('sha256').update(text).digest('hex');
+}
+
+describe('editor.css — frozen port of the legacy editor <style> (15-454)', () => {
+  it('stays byte-identical to the verified-parity port (frozen digest)', () => {
+    const normalized = normalize(editorCss);
+    expect(normalized.length).toBeGreaterThan(8000); // sanity: the real stylesheet
+    expect(sha256(normalized)).toBe(FROZEN_EDITOR_CSS_SHA256);
   });
 
   it('keeps the grid/cell/resize rules the grid engine depends on', () => {

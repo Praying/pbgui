@@ -1688,7 +1688,7 @@ def get_balance(
 ) -> dict[str, Any]:
     """
     Return balance data for the given users, including TWE and uPnl per user,
-    plus overall totals. Used by the dashboard_balance.html component.
+    plus overall totals. Used by the dashboard BALANCE widget.
     """
     db = _get_db()
     all_users = _get_users()
@@ -2102,7 +2102,7 @@ def get_top_data(
     top:    int = Query(default=10, ge=1, le=500),
     session: SessionToken = Depends(require_auth),
 ):
-    """Return top-symbols income data as JSON for the dashboard_top.html component."""
+    """Return top-symbols income data as JSON for the dashboard TOP widget."""
     start_ms, end_ms, from_date, to_date = _period_to_range(period)
     user_list = [u.strip() for u in users.split(",") if u.strip()] or ["ALL"]
     db = _get_db()

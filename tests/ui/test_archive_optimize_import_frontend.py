@@ -221,9 +221,6 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
     expected_consumers = {
         "api_keys_editor.html",
         "cluster.html",
-        "dashboard_main.html",
-        "dashboard_sidebar.html",
-        "dashboard_templates.html",
         "logging_monitor.html",
         "market_data_main.html",
         "market_data_status.html",
@@ -236,9 +233,17 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
     for filename in expected_consumers:
         assert "pbgui_dialogs.js?v=6" in html_sources[filename]
 
-    # services_monitor.html was replaced by the Vue page (Task 14); its entry
-    # keeps the same shared dialog asset version.
-    services_vue_index = (ROOT / "frontend" / "src" / "pages" / "services_monitor" / "index.html").read_text(
-        encoding="utf-8"
-    )
-    assert "pbgui_dialogs.js?v=6" in services_vue_index
+    # services_monitor.html and the dashboard legacy pages (dashboard_main,
+    # dashboard_templates, dashboard_editor + their fragments) were replaced
+    # by Vue pages; the entries keep the same shared dialog asset version.
+    vue_entry_consumers = [
+        "services_monitor",
+        "dashboard_main",
+        "dashboard_templates",
+        "dashboard_editor",
+    ]
+    for page in vue_entry_consumers:
+        vue_index = (ROOT / "frontend" / "src" / "pages" / page / "index.html").read_text(
+            encoding="utf-8"
+        )
+        assert "pbgui_dialogs.js?v=6" in vue_index, page
