@@ -69,7 +69,7 @@ def test_all_statically_referenced_keys_exist():
         if path.suffix not in (".html", ".js"):
             continue
         parts = path.parts
-        if "vendor" in parts or path.name in ("plotly.min.js", "i18n.js"):
+        if "vendor" in parts or "node_modules" in parts or "dist" in parts or path.name in ("plotly.min.js", "i18n.js"):
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
         for groups in STATIC_KEY_RE.findall(text):
