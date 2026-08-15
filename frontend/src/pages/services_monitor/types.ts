@@ -20,6 +20,9 @@ export interface ServiceStatus {
   systemd_enabled_state?: string;
 }
 
+/** Actions POSTed to `/{svcId}/{action}` by the legacy svcAction flow. */
+export type ServiceAction = 'start' | 'stop' | 'restart' | 'enable' | 'disable';
+
 /** GET /status payload, keyed by service id (pbcluster, pbrun, …). */
 export type ServiceStatusMap = Record<string, ServiceStatus | undefined>;
 

@@ -4,11 +4,11 @@
  * (source: frontend/services_monitor.html, kept as the fallback until Task 14)
  *
  * ┌─────────────────────┬─ Task ─┬─ Legacy functions ────────────────────────────────┐
- * │ OverviewCards       │ 9      │ renderOverviewCards, fetchStatus/updateStatusUI,   │
+ * │ OverviewCards       │ 9 ✓    │ renderOverviewCards, fetchStatus/updateStatusUI,   │
  * │                     │        │ serviceSkipped/StatusClass/StatusText/StatusTitle, │
  * │                     │        │ renderServiceButtons                               │
- * │ ServiceStatusBar    │ 9      │ updateStatusUI (sidebar dots + ctrl-strip),        │
- * │                     │        │ svcAction (start/stop/restart/enable/disable)      │
+ * │ ServiceStatusBar    │ 9+     │ updateStatusUI sidebar dots + svcAction landed ✓;  │
+ * │                     │        │ per-panel ctrl-strip (cs-/sl-/ctrl-btns-*) pending  │
  * │ WorkersPanel        │ 10     │ fetchWorkers, renderWorkers, renderWorkerDetail,   │
  * │                     │        │ renderWorkerActionButtons, updateWorkersSummary,   │
  * │                     │        │ selectWorker, updateWorkerLog, workerConfirmAction/│
@@ -45,8 +45,17 @@
  * │                     │        │ shared legacy scripts loaded by index.html         │
  * └─────────────────────┴────────┴────────────────────────────────────────────────────┘
  */
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { ApiError, apiFetch } from '@/shared/api';
+import { getBoot } from '@/shared/boot';
+import { serverMsg } from '@/shared/i18n';
+import { usePolling } from '@/shared/composables/usePolling';
+import OverviewCards from './components/OverviewCards.vue';
+import { apiBase } from './config';
+import { showResultPopup } from './resultPopup';
+import { migrationStatusMeta, serviceActionDoneText, serviceStatusClass, type Translate } from './status';
+import type { MigrationStatus, ServiceAction, ServiceStatus, ServiceStatusMap } from './types';
 
 interface PanelDef {
   id: string;
@@ -74,6 +83,34 @@ const PANELS: PanelDef[] = [
 const DEFAULT_PANEL = 'overview';
 
 const { t } = useI18n();
+const tt: Translate = (key, named) => (named ? t(key, named) : t(key));
+
+/* ── Status polling + service actions (legacy fetchStatus/svcAction) ── */
+
+/** Legacy scheduleStatus timeout. */
+const STATUS_POLL_INTERVAL_MS = 5000;
+
+const statuses = ref<ServiceStatusMap>({});
+/** True after the first successful /status fetch — legacy ships unclassed dots until then. */
+const hasLoadedStatus = ref(false);
+/** svcId → in-flight action (legacy _serviceActionPending). */
+const pendingActions = ref<Record<string, ServiceAction>>({});
+/** Legacy initial _workers.counts; Task 10 wires the workers fetch. */
+const workersCounts = ref<{ total?: number; running?: number }>({ total: 0, running: 0 });
+/** Legacy initial _migrationStatus: null until Task 14 wires the fetch. */
+const migrationStatus = ref<MigrationStatus | null>(null);
+
+/** Legacy fetchStatus: GET /status, keep the last payload on failure. */
+async function fetchStatus(): Promise<void> {
+  try {
+    statuses.value = await apiFetch<ServiceStatusMap>(`${apiBase()}/status`);
+    hasLoadedStatus.value = true;
+  } catch {
+    /* legacy rescheduled without touching the last known status */
+  }
+}
+
+const statusPolling = usePolling(fetchStatus, STATUS_POLL_INTERVAL_MS);
 
 /** Legacy restoreFromHash: `#panelId` (tab suffix arrives with the panels). */
 function panelFromHash(): string {
@@ -94,15 +131,97 @@ function panelLabel(panel: PanelDef): string {
   return panel.i18nKey ? t(panel.i18nKey) : panel.name;
 }
 
+/** Legacy updateStatusUI/updateWorkersSummary/updateMigrationSummary sidebar dot classes. */
+function sidebarDotClass(panelId: string): string {
+  if (!hasLoadedStatus.value) return '';
+  if (panelId === 'workers') {
+    return Number(workersCounts.value.running || 0) > 0 ? 'running' : 'stopped';
+  }
+  if (panelId === 'migration') {
+    return migrationStatusMeta(tt, migrationStatus.value).cls; // '' until Task 14 loads data
+  }
+  return serviceStatusClass(statuses.value[panelId] ?? {});
+}
+
+/** Legacy error message fallback: serverMsg(err.message) or the generic failure label. */
+function actionErrorText(error: unknown): string {
+  if (error instanceof ApiError) return serverMsg(error.detail);
+  if (error instanceof Error && error.message) return serverMsg(error.message);
+  return t('sysmon.serviceActionFailed');
+}
+
+/** Legacy restartApiServer: restart the API server and wait behind the shared overlay. */
+async function restartApiServer(): Promise<void> {
+  try {
+    await apiFetch(`${apiBase()}/api-server/restart`, { method: 'POST' });
+    const overlay = (window as Window & { showRestartOverlay?: (origin: string, token: string) => void })
+      .showRestartOverlay;
+    if (typeof overlay === 'function') overlay(getBoot().origin, getBoot().token);
+  } catch (error) {
+    showResultPopup({
+      title: t('sysmon.restartBlocked'),
+      message: t('sysmon.restartRejected'),
+      output: error instanceof ApiError ? serverMsg(error.detail) : t('sysmon.restartFailed'),
+      isOk: false,
+    });
+  }
+}
+
+/** Legacy svcAction: POST /{svcId}/{action} with pending-state UX and result popups. */
+async function serviceAction(svcId: string, action: ServiceAction): Promise<void> {
+  if (pendingActions.value[svcId]) return; // legacy no-op while an action is pending
+  pendingActions.value = { ...pendingActions.value, [svcId]: action };
+  try {
+    if (svcId === 'api-server' && action === 'restart') {
+      await restartApiServer();
+      return;
+    }
+    const data = await apiFetch<ServiceStatus & { error?: string }>(`${apiBase()}/${svcId}/${action}`, {
+      method: 'POST',
+    });
+    if (data.running !== undefined) {
+      statuses.value = { ...statuses.value, [svcId]: data };
+    }
+    if (data.error) throw new Error(data.error);
+    if (action === 'restart') {
+      showResultPopup({
+        title: t('sysmon.serviceRestartRequested'),
+        message: serviceActionDoneText(tt, action, svcId),
+        output: t('sysmon.statusRefreshHint'),
+        isOk: true,
+        hideFoot: true,
+      });
+    }
+    void fetchStatus();
+  } catch (error) {
+    showResultPopup({
+      title: t('sysmon.serviceActionFailed'),
+      message: t('sysmon.couldNotAction', { action, svc: svcId }),
+      output: actionErrorText(error),
+      isOk: false,
+    });
+    void fetchStatus();
+  } finally {
+    const remaining = { ...pendingActions.value };
+    delete remaining[svcId];
+    pendingActions.value = remaining;
+  }
+}
+
 onMounted(() => {
   document.title = t('sysmon.servicesTitle');
+  statusPolling.start();
+});
+
+onUnmounted(() => {
+  statusPolling.stop();
 });
 </script>
 
 <template>
   <nav id="topnav"></nav>
   <div id="page-body">
-    <!-- Sidebar — status dots (Task 9) land on the .sb-dot spans -->
+    <!-- Sidebar — status dots driven by the polled /status payload (legacy updateStatusUI) -->
     <div id="sidebar">
       <div id="sidebar-inner">
         <button
@@ -114,13 +233,13 @@ onMounted(() => {
           :data-panel="panel.id"
           @click="selectPanel(panel.id)"
         >
-          <span class="sb-dot"></span><span>{{ panelLabel(panel) }}</span>
+          <span v-if="panel.id !== 'overview'" class="sb-dot" :class="sidebarDotClass(panel.id)"></span><span>{{ panelLabel(panel) }}</span>
         </button>
       </div>
     </div>
 
-    <!-- Main content — one placeholder container per legacy panel; Tasks 9–14
-         replace the placeholder with the real panel component. -->
+    <!-- Main content — one container per legacy panel; Tasks 10–14 replace the
+         remaining placeholders with the real panel components. -->
     <div id="main-content">
       <div
         v-for="panel in PANELS"
@@ -129,7 +248,16 @@ onMounted(() => {
         class="svc-panel"
         :class="{ active: panel.id === activePanel }"
       >
-        <div class="panel-placeholder">
+        <OverviewCards
+          v-if="panel.id === 'overview'"
+          :statuses="statuses"
+          :pending="pendingActions"
+          :workers-counts="workersCounts"
+          :migration-status="migrationStatus"
+          @action="serviceAction"
+          @select="selectPanel"
+        />
+        <div v-else class="panel-placeholder">
           <div class="panel-placeholder-name">{{ panelLabel(panel) }}</div>
           <div class="panel-placeholder-hint">
             #panel-{{ panel.id }} · {{ panel.component }} ({{ panel.task }})
@@ -233,6 +361,70 @@ onMounted(() => {
 .svc-panel.active {
   display: flex;
 }
+
+/* Overview panel container (legacy #panel-overview); the grid's own padding
+   mirrors the legacy inline style, so the page keeps both like the old file. */
+#panel-overview {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+/* ── Result popup (raised imperatively by resultPopup.ts on <body>) ── */
+.result-modal {
+  position: fixed;
+  z-index: 9000;
+  background: #0d1621;
+  border: 1px solid #1e2736;
+  border-radius: 10px;
+  width: 720px;
+  min-width: 320px;
+  min-height: 160px;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  resize: both;
+  overflow: hidden;
+}
+.result-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #1e2736;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+.result-modal-header:active { cursor: grabbing; }
+.result-modal-header h3 { margin: 0; font-size: var(--fs-md); color: #e2e8f0; }
+.result-modal-close { background: none; border: none; color: #64748b; font-size: 1.4rem; cursor: pointer; padding: 0 4px; }
+.result-modal-close:hover { color: #e2e8f0; }
+.result-modal-status { padding: 0.6rem 1rem; font-size: var(--fs-sm); font-weight: 600; flex-shrink: 0; }
+.result-modal-status.ok { background: #052e16; color: #4ade80; border-bottom: 1px solid #166534; }
+.result-modal-status.fail { background: #2d1515; color: #fca5a5; border-bottom: 1px solid #7f1d1d; }
+.result-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+  font-family: monospace;
+  font-size: var(--fs-xs);
+  color: #cbd5e1;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.result-modal-footer { padding: 0.5rem 1rem; border-top: 1px solid #1e2736; text-align: right; flex-shrink: 0; }
+.result-modal-footer button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.35rem 1.2rem;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+}
+.result-modal-footer button:hover { background: #1d4ed8; }
 
 /* Skeleton-only placeholder styling; removed as panels land. */
 .panel-placeholder {
