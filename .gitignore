@@ -50,3 +50,7 @@ backup/
 .claude/
 .opencode/
 CLAUDE.md
+
+# Vue 3 frontend build tooling
+node_modules/
+dist/
