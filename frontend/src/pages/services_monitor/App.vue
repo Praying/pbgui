@@ -65,6 +65,7 @@ import CmcStatusBar from './components/CmcStatusBar.vue';
 import PbDataSettings from './components/PbDataSettings.vue';
 import CoinDataSettings from './components/CoinDataSettings.vue';
 import ApiServerSettings from './components/ApiServerSettings.vue';
+import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import { SERVICES } from './services';
 import { apiBase } from './config';
 import { cmcFetch } from './cmc';
@@ -663,6 +664,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <MigrationWatermark />
   <nav id="topnav"></nav>
   <div id="page-body">
     <!-- Sidebar — status dots driven by the polled /status payload (legacy updateStatusUI) -->

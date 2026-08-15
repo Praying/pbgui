@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
+import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import { replaceTopLocation } from '@/shared/nav';
 
 const { t, locale } = useI18n();
@@ -44,6 +45,7 @@ async function submitLogin(): Promise<void> {
 
 <template>
   <div class="page">
+    <MigrationWatermark />
     <main class="card">
       <div class="brand" aria-label="PBGui Welcome">
         <svg

@@ -149,6 +149,8 @@ python PBApiServer.py
 
 Some UI pages (starting with the login page) are Vue bundles served from `frontend/dist/` (gitignored). After cloning or pulling, run `cd frontend && npm run build` once before starting the server — without `dist/`, the affected routes return HTTP 500 with a message pointing to the build command. CI runs this frontend build gate automatically on every change.
 
+Migrated Vue pages carry a diagonal "VUE MIGRATION PREVIEW" watermark during the rollout. To hide it (e.g. once every page is migrated), build with `VITE_MIGRATION_WATERMARK=off npm run build`.
+
 ## PBRun Instance Manager
 
 PBRun manages passivbot instances from the PBGui UI. Enable or restart it from `Services -> PBRun`. New installer setups manage it with `pbgui-pbrun.service`; no `start.sh` or crontab entry is needed.
