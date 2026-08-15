@@ -24,8 +24,19 @@
  */
 
 /** Cell types stored in the persisted dashboard JSON (editor TYPES, line 502).
- *  R11: 'P+L' is the on-disk literal — never normalize it. */
-export type WidgetType = 'BALANCE' | 'TOP' | 'INCOME' | 'PNL' | 'ADG' | 'P+L' | 'POSITIONS' | 'ORDERS';
+ *  R11: 'P+L' is the on-disk literal — never normalize it.
+ *  'NONE' is the empty-cell value (editor:592 writes it, editor:872 uses it as
+ *  the default) — not a renderable widget, but part of the same on-disk union. */
+export type WidgetType =
+  | 'BALANCE'
+  | 'TOP'
+  | 'INCOME'
+  | 'PNL'
+  | 'ADG'
+  | 'P+L'
+  | 'POSITIONS'
+  | 'ORDERS'
+  | 'NONE';
 
 /** The server's live-source marker on live-poll payloads (d.source). */
 export type LiveSource = 'live' | 'mixed' | 'db';

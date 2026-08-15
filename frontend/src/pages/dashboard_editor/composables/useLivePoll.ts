@@ -88,8 +88,6 @@ function normalizeSource(value: unknown): LiveSource {
 }
 
 interface LivePollerKind {
-  /** Legacy _liveState key prefix ('pos_' / 'bal_'). */
-  prefix: 'pos' | 'bal';
   buildUrl: (apiBase: string, users: string[]) => string;
   /** Legacy MAX_LIVE_POSITIONS row cap — positions only. */
   maxPositions?: number;
@@ -160,9 +158,9 @@ function createLivePoller(kind: LivePollerKind, options: LivePollOptions): LiveP
   }
 
   function connect(pos: string, users: string[] | null | undefined, initialRows: unknown[] = []): void {
-    /* Legacy keyed the connection `${prefix}_${pos}` (e.g. pos_1_2) in the
-       page-global _liveState map; with per-widget instances the pos only
-       documents which cell this poll belongs to. */
+    /* Legacy keyed the connection `pos_R_C`/`bal_R_C` in the page-global
+       _liveState map; with per-widget instances the pos only documents which
+       cell this poll belongs to. */
     /* Legacy reuse check: keep the connection when users are unchanged. */
     const existing = current;
     if (existing && existing.timer !== null && existing.users.join(',') === (users ?? []).join(',')) {
@@ -201,7 +199,6 @@ function createLivePoller(kind: LivePollerKind, options: LivePollOptions): LiveP
 export function useLivePositions(options: LivePollOptions): LivePollController {
   return createLivePoller(
     {
-      prefix: 'pos',
       buildUrl: livePositionsUrl,
       maxPositions: MAX_LIVE_POSITIONS,
       onSuccess(payload, state, onData, applyStatus) {
@@ -218,7 +215,6 @@ export function useLivePositions(options: LivePollOptions): LivePollController {
 export function useLiveBalance(options: LivePollOptions): LivePollController {
   return createLivePoller(
     {
-      prefix: 'bal',
       buildUrl: liveBalanceUrl,
       onSuccess(payload, state, onData, applyStatus) {
         if (state.source === 'live' || state.source === 'mixed') {
