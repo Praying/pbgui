@@ -1,5 +1,7 @@
-"""Dashboard main_page route: serves the built Vue page, falls back to the
-legacy template with %% injections, fails loudly without either."""
+"""Dashboard main_page route: serves the built Vue page, fails loudly
+without a build. The legacy template fallback was removed with the Vue
+migration (D-editor-8); the page reads `current` from the URL query string,
+the dashboards list from the API, and boot values from /api/boot.js."""
 
 from pathlib import Path
 
@@ -7,7 +9,6 @@ import pytest
 from fastapi import FastAPI, Query, Request
 from fastapi.testclient import TestClient
 
-import api.auth as auth
 import api.dashboard as dashboard
 from api.auth import SessionToken
 
@@ -28,7 +29,7 @@ def client() -> TestClient:
 def test_main_page_serves_built_vue_page(tmp_path: Path, client: TestClient, monkeypatch) -> None:
     vue_index = tmp_path / "index.html"
     vue_index.write_text("<html>vue build</html>", encoding="utf-8")
-    monkeypatch.setattr(auth, "_frontend_dist_path", lambda page: vue_index)
+    monkeypatch.setattr(dashboard, "_frontend_dist_path", lambda page: vue_index)
 
     resp = client.get("/api/dashboard/main_page")
 
@@ -37,35 +38,17 @@ def test_main_page_serves_built_vue_page(tmp_path: Path, client: TestClient, mon
     assert "vue build" in resp.text
 
 
-def test_main_page_falls_back_to_legacy_html_with_injections(
+def test_main_page_errors_clearly_when_no_build_exists(
     tmp_path: Path, client: TestClient, monkeypatch
 ) -> None:
+    # A leftover legacy template must NOT satisfy the route: the Vue bundle
+    # is the only dashboard main page now (mirrors services.py get_main_page).
     legacy = tmp_path / "dashboard_main.html"
-    legacy.write_text(
-        '<html>"%%CURRENT%%" "%%API_BASE%%" %%DASHBOARDS_JSON%% %%NAV_HASH%%</html>',
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(auth, "_frontend_dist_path", lambda page: tmp_path / "missing" / "index.html")
-    monkeypatch.setattr(auth, "_frontend_template_path", lambda name: legacy)
-
-    resp = client.get("/api/dashboard/main_page", params={"current": "myDash"})
-
-    assert resp.status_code == 200
-    assert resp.headers["cache-control"] == "no-store"
-    # The legacy %% placeholders were replaced by the inject callback.
-    assert '"myDash"' in resp.text
-    assert '"%%CURRENT%%"' not in resp.text
-    assert "%%DASHBOARDS_JSON%%" not in resp.text
-    assert "%%NAV_HASH%%" not in resp.text
-
-
-def test_main_page_errors_clearly_when_no_frontend_exists(
-    tmp_path: Path, client: TestClient, monkeypatch
-) -> None:
-    monkeypatch.setattr(auth, "_frontend_dist_path", lambda page: tmp_path / "missing" / "index.html")
-    monkeypatch.setattr(auth, "_frontend_template_path", lambda name: tmp_path / "missing" / "dashboard_main.html")
+    legacy.write_text("<html>legacy main</html>", encoding="utf-8")
+    monkeypatch.setattr(dashboard, "_frontend_dist_path", lambda page: tmp_path / "missing" / "index.html")
 
     resp = client.get("/api/dashboard/main_page")
 
     assert resp.status_code == 500
     assert "npm run build" in resp.text
+    assert "legacy main" not in resp.text

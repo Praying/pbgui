@@ -136,6 +136,26 @@ interface Env {
   lwc: LwcEnv;
 }
 
+/** Minimal fetch Response shape the widget/composables consume. */
+interface Resp {
+  ok: boolean;
+  status: number;
+  json: () => Promise<unknown>;
+}
+
+function jsonResponse(body: unknown): Resp {
+  return { ok: true, status: 200, json: async () => JSON.parse(JSON.stringify(body)) };
+}
+
+/** A promise whose resolution the test controls (out-of-order responses). */
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+}
+
 function mountOrders(options: {
   config?: Record<string, unknown>;
   payloads?: Record<string, unknown>;
@@ -398,6 +418,37 @@ describe('WidgetOrders — selection linkage (editor:2135-2151)', () => {
     emitPositionSelected('9_9', BOB);
     await settle();
     expect(env.fetch.mock.calls.length).toBe(calls);
+  });
+
+  it('discards a slower response from the previous selection (legacy _ordInlineLoadSeq_ guard)', async () => {
+    /* Regression lock for dashboard_editor.html's per-position load sequence:
+     * a slow response for the PREVIOUS selection must never replace the newer
+     * selection's chart, no matter the resolution order. */
+    const { env } = mountOrders({ config: linkedConfig() });
+    await settle();
+
+    const aliceFetch = deferred<Resp>();
+    const bobFetch = deferred<Resp>();
+    let call = 0;
+    env.fetch.mockImplementation(() => (call++ === 0 ? aliceFetch.promise : bobFetch.promise));
+
+    emitPositionSelected('1_1', ALICE);
+    await settle();
+    emitPositionSelected('1_1', BOB);
+    await settle();
+    expect(env.fetch).toHaveBeenLastCalledWith(BOB_URL);
+
+    /* the newer selection resolves first and owns the chart */
+    bobFetch.resolve(jsonResponse(ordersPayload({ user: 'bob', symbol: 'ETH/USDT:USDT' })));
+    await vi.waitFor(() => {
+      expect(env.lwc.createChart).toHaveBeenCalledTimes(1);
+    });
+
+    /* the stale ALICE response lands afterwards and must be discarded */
+    aliceFetch.resolve(jsonResponse(ordersPayload()));
+    await settle();
+    await settle();
+    expect(env.lwc.createChart).toHaveBeenCalledTimes(1);
   });
 });
 

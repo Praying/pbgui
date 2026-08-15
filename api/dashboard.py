@@ -22,7 +22,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
-from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
+from api.auth import SessionToken, _frontend_dist_path, require_auth
 from logging_helpers import human_log as _log
 from pbgui_purefunc import PBGDIR
 
@@ -1920,43 +1920,23 @@ def get_editor_page(
     view_only: bool = Query(default=False, description="View-only mode (no editing controls)"),
     standalone: bool = Query(default=False, description="Standalone mode (save/cancel post to parent)"),
     session: SessionToken = Depends(require_auth),
-) -> FileResponse | HTMLResponse:
-    """Serve the dashboard grid editor: built Vue entry first, legacy fallback.
+) -> FileResponse:
+    """Serve the dashboard grid editor: the built Vue bundle only.
 
-    The Vue bundle (frontend/dist/dashboard_editor/index.html) is gitignored and
-    produced by `npm run build`; a checkout without a build still gets the
-    legacy dashboard_editor.html template with the old %% placeholder injections
-    (same 3-branch helper used by main_page and templates_page).
+    The legacy frontend/dashboard_editor.html template (and the shared
+    dashboard_render.js engine) was removed with the Vue migration; the page
+    reads name/view_only/standalone from the URL query string and derives the
+    API base from /api/boot.js at runtime. A missing build fails loudly with
+    the npm build hint.
     """
-    import json as _json
+    vue_path = _frontend_dist_path("dashboard_editor")
+    if vue_path.is_file():
+        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
 
-    def inject(html: str, _request: Request) -> str:
-        # Derive API base from the actual request URL so fetches/WS use the
-        # correct host/port (same derivation as get_main_page; the legacy
-        # `api_base` query param is kept in the signature for URL
-        # compatibility but the page always targets its own origin).
-        scheme = _request.url.scheme
-        host = _request.url.hostname or "127.0.0.1"
-        port = _request.url.port
-        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-        derived_api_base = origin + "/api"
-
-        html = html.replace("%%TOKEN%%", "")
-        html = html.replace("%%API_BASE%%", derived_api_base)
-        html = html.replace("%%DASHBOARD_NAME%%", _json.dumps(name))
-        html = html.replace("%%VIEW_ONLY%%", "1" if view_only else "0")
-        html = html.replace("%%STANDALONE%%", "1" if standalone else "0")
-        html = html.replace("%%EDIT_ONLY_STYLE%%",
-                             "display:none!important" if view_only else "")
-        body_classes = []
-        if view_only:
-            body_classes.append("view-mode")
-        if standalone:
-            body_classes.append("standalone-mode")
-        html = html.replace("%%BODY_CLASS%%", " ".join(body_classes))
-        return html
-
-    return serve_vue_or_legacy_page("dashboard_editor", "dashboard_editor.html", request, inject=inject)
+    raise HTTPException(
+        status_code=500,
+        detail="dashboard_editor page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    )
 
 
 # ---------------------------------------------------------------- /main_page
@@ -1966,52 +1946,22 @@ def get_main_page(
     request: Request,
     current: str = Query(default="", description="Currently selected dashboard name"),
     session: SessionToken = Depends(require_auth),
-) -> FileResponse | HTMLResponse:
-    """Serve the dashboard main page: built Vue entry first, legacy fallback.
+) -> FileResponse:
+    """Serve the dashboard main page: the built Vue bundle only.
 
-    The Vue bundle (frontend/dist/dashboard_main/index.html) is gitignored and
-    produced by `npm run build`; a checkout without a build still gets the
-    legacy dashboard_main.html template with the old %% placeholder injections
-    (same 3-branch helper used by root_login and services_monitor).
+    The legacy frontend/dashboard_main.html template was removed with the Vue
+    migration; the page reads `current` from the URL query string, the
+    dashboards list from the API, and boot values from /api/boot.js at
+    runtime. A missing build fails loudly with the npm build hint.
     """
-    import json as _json
-    from pathlib import Path as _P
+    vue_path = _frontend_dist_path("dashboard_main")
+    if vue_path.is_file():
+        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
 
-    def inject(html: str, _request: Request) -> str:
-        # Derive API base from the actual request URL so iframes use the correct host/port
-        scheme = _request.url.scheme
-        host   = _request.url.hostname or "127.0.0.1"
-        port   = _request.url.port
-        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-        api_base = origin + "/api"
-        ws_base  = api_base.replace("http://", "ws://").replace("https://", "wss://")
-
-        html = html.replace('"%%TOKEN%%"',         _json.dumps(""))
-        html = html.replace('"%%API_BASE%%"',      _json.dumps(api_base))
-        html = html.replace('"%%WS_BASE%%"',       _json.dumps(ws_base))
-        html = html.replace('"%%CURRENT%%"',       _json.dumps(current))
-
-        from pbgui_purefunc import PBGDIR, PBGUI_SERIAL, PBGUI_VERSION
-
-        try:
-            dashboards_dir = _P(PBGDIR) / "data" / "dashboards"
-            dashboards = sorted(path.stem for path in dashboards_dir.glob("*.json") if path.is_file())
-        except Exception:
-            dashboards = []
-        html = html.replace("%%DASHBOARDS_JSON%%", _json.dumps(dashboards))
-
-        html = html.replace('"%%VERSION%%"', _json.dumps(PBGUI_VERSION))
-        html = html.replace('%%VERSION%%', PBGUI_VERSION)
-        html = html.replace('"%%SERIAL%%"', _json.dumps(PBGUI_SERIAL))
-        html = html.replace('%%SERIAL%%', PBGUI_SERIAL)
-
-        # Cache-bust pbgui_nav.js with file mtime so browser always loads latest
-        nav_js = _P(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-        html = html.replace('%%NAV_HASH%%', nav_hash)
-        return html
-
-    return serve_vue_or_legacy_page("dashboard_main", "dashboard_main.html", request, inject=inject)
+    raise HTTPException(
+        status_code=500,
+        detail="dashboard_main page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    )
 
 
 # ---------------------------------------------------------------- /templates_page
@@ -2022,23 +1972,22 @@ def get_templates_page(
     current: str = Query(default="", description="Currently open dashboard name"),
     api_base: str = Query(default="", description="API base URL"),
     session: SessionToken = Depends(require_auth),
-) -> FileResponse | HTMLResponse:
-    """Serve the template manager popup: built Vue entry first, legacy fallback.
+) -> FileResponse:
+    """Serve the template manager popup: the built Vue bundle only.
 
-    The Vue bundle (frontend/dist/dashboard_templates/index.html) is gitignored
-    and produced by `npm run build`; a checkout without a build still gets the
-    legacy dashboard_templates.html with the old %% placeholder injections
-    (same 3-branch helper used by dashboard_main).
+    The legacy frontend/dashboard_templates.html template was removed with the
+    Vue migration; the page reads `current` from the URL query string and
+    derives the API base from /api/boot.js at runtime. A missing build fails
+    loudly with the npm build hint.
     """
-    import json as _json
+    vue_path = _frontend_dist_path("dashboard_templates")
+    if vue_path.is_file():
+        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
 
-    def inject(html: str, _request: Request) -> str:
-        html = html.replace('"%%TOKEN%%"', '""')
-        html = html.replace('"%%API_BASE%%"', f'"{api_base}"')
-        html = html.replace('%%CURRENT%%', _json.dumps(current))
-        return html
-
-    return serve_vue_or_legacy_page("dashboard_templates", "dashboard_templates.html", request, inject=inject)
+    raise HTTPException(
+        status_code=500,
+        detail="dashboard_templates page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    )
 
 
 # ---------------------------------------------------------------- period helper
