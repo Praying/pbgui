@@ -2001,21 +2001,29 @@ def get_main_page(
 
 # ---------------------------------------------------------------- /templates_page
 
-@router.get("/templates_page", response_class=HTMLResponse)
+@router.get("/templates_page", response_class=HTMLResponse, response_model=None)
 def get_templates_page(
+    request: Request,
     current: str = Query(default="", description="Currently open dashboard name"),
     api_base: str = Query(default="", description="API base URL"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the template manager popup page."""
+) -> FileResponse | HTMLResponse:
+    """Serve the template manager popup: built Vue entry first, legacy fallback.
+
+    The Vue bundle (frontend/dist/dashboard_templates/index.html) is gitignored
+    and produced by `npm run build`; a checkout without a build still gets the
+    legacy dashboard_templates.html with the old %% placeholder injections
+    (same 3-branch helper used by dashboard_main).
+    """
     import json as _json
-    from pathlib import Path as _P
-    html_path = _P(__file__).parent.parent / "frontend" / "dashboard_templates.html"
-    html = html_path.read_text(encoding="utf-8")
-    html = html.replace('"%%TOKEN%%"', '""')
-    html = html.replace('"%%API_BASE%%"', f'"{api_base}"')
-    html = html.replace('%%CURRENT%%', _json.dumps(current))
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+
+    def inject(html: str, _request: Request) -> str:
+        html = html.replace('"%%TOKEN%%"', '""')
+        html = html.replace('"%%API_BASE%%"', f'"{api_base}"')
+        html = html.replace('%%CURRENT%%', _json.dumps(current))
+        return html
+
+    return serve_vue_or_legacy_page("dashboard_templates", "dashboard_templates.html", request, inject=inject)
 
 
 # ---------------------------------------------------------------- period helper

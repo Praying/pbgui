@@ -53,7 +53,7 @@ def test_dashboard_pages_use_cookie_auth_without_rendering_session_token() -> No
         dashboard.get_editor_page(
             name="", api_base="/api", view_only=False, standalone=False, session=CookieOnlySession()
         ),
-        dashboard.get_templates_page(current="", api_base="/api", session=CookieOnlySession()),
+        dashboard.get_templates_page(request, current="", api_base="/api", session=CookieOnlySession()),
     ]
 
     for response in responses:
