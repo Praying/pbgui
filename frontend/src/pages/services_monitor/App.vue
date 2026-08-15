@@ -22,7 +22,7 @@
  * │                     │        │ openCmcAuthorityModal/submitCmcAuthorityTransfer,  │
  * │                     │        │ toggleSelectedCmcKey, deleteSelectedCmcKey,        │
  * │                     │        │ cmcNumber/cmcDuration/cmcTimestamp                 │
- * │ PbDataSettings      │ 12     │ loadSettings, applySettings, renderPBDataSettings, │
+ * │ PbDataSettings      │ 12 ✓   │ loadSettings, applySettings, renderPBDataSettings, │
  * │                     │        │ savePBDataSettings                                 │
  * │ PbDataStatus        │ 12     │ loadFetchSummary/renderFetchSummary,               │
  * │                     │        │ loadPollerMetrics/renderPollerMetrics,             │
@@ -45,7 +45,7 @@
  * │                     │        │ shared legacy scripts loaded by index.html         │
  * └─────────────────────┴────────┴────────────────────────────────────────────────────┘
  */
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch, type ComponentPublicInstance } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
@@ -56,6 +56,7 @@ import ServiceLogPanel, { type ServiceTab } from './components/ServiceLogPanel.v
 import WorkersPanel from './components/WorkersPanel.vue';
 import CmcPoolPanel from './components/CmcPoolPanel.vue';
 import CmcStatusBar from './components/CmcStatusBar.vue';
+import PbDataSettings from './components/PbDataSettings.vue';
 import { SERVICES } from './services';
 import { apiBase } from './config';
 import { cmcFetch } from './cmc';
@@ -238,6 +239,27 @@ watch(activePanel, (panelId) => {
 /** Legacy switchTab: switching to the pbcoindata pool tab reloads the pool. */
 function onServiceTab(svcId: string, tabId: string): void {
   if (svcId === 'pbcoindata' && tabId === 'pool') void loadCmcPool();
+  if (svcId === 'pbdata' && tabId === 'settings') loadPbdataSettings();
+}
+
+/* ── PBData settings (legacy loadSettings/_settingsLoaded for pbdata) ── */
+
+type PbDataSettingsInstance = ComponentPublicInstance<{ load: () => Promise<void> }>;
+
+/** Function ref — a string ref inside the PANELS v-for would collect an array. */
+const pbdataSettingsEl = ref<PbDataSettingsInstance | null>(null);
+function setPbdataSettings(el: Element | ComponentPublicInstance | null): void {
+  pbdataSettingsEl.value = el as PbDataSettingsInstance | null;
+}
+
+/** Legacy _settingsLoaded['pbdata']: the settings load exactly once per session. */
+let pbdataSettingsLoaded = false;
+
+/** Legacy loadSettings('pbdata'): GET /settings/pbdata into the settings pane. */
+function loadPbdataSettings(): void {
+  if (pbdataSettingsLoaded) return;
+  pbdataSettingsLoaded = true;
+  void pbdataSettingsEl.value?.load();
 }
 
 function panelLabel(panel: PanelDef): string {
@@ -331,6 +353,8 @@ onMounted(() => {
   void fetchWorkers(); // legacy fired fetchWorkers(false) once on load
   if (activePanel.value === 'workers') workersPolling.start(); // legacy selectPanel('workers')
   if (activePanel.value === 'pbcoindata') void loadCmcPool(); // legacy restoreFromHash -> selectPanel
+  // legacy restoreFromHash -> switchTab('settings') loads the settings once
+  if (activePanel.value === 'pbdata' && window.location.hash.split('/')[1] === 'settings') loadPbdataSettings();
 });
 
 onUnmounted(() => {
@@ -408,6 +432,9 @@ onUnmounted(() => {
               :load-notice="cmcNotice"
               @refresh="loadCmcPool"
             />
+          </template>
+          <template v-if="panel.id === 'pbdata'" #tab-settings>
+            <PbDataSettings :ref="setPbdataSettings" />
           </template>
         </ServiceLogPanel>
         <div v-else class="panel-placeholder">

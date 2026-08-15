@@ -157,6 +157,32 @@ export interface CmcLeasesResponse {
   warnings?: string[];
 }
 
+/** GET /settings/pbdata payload — renderPBDataSettings + savePBDataSettings. */
+export interface PbDataSettingsData {
+  all_users?: string[];
+  fetch_users?: string[];
+  trades_users?: string[];
+  log_level?: string;
+  ws_max?: number;
+  pollers_delay_seconds?: number;
+  poll_interval_combined_seconds?: number;
+  poll_interval_balance_seconds?: number;
+  poll_interval_positions_seconds?: number;
+  poll_interval_orders_seconds?: number;
+  poll_interval_history_seconds?: number;
+  poll_interval_executions_seconds?: number;
+  shared_rest_user_pause_seconds?: number;
+  shared_rest_pause_by_exchange?: Record<string, number>;
+  latest_1m_coin_pause_seconds?: number;
+}
+
+/** POST /settings/pbdata response — legacy _post reads ok/apply.message/detail. */
+export interface PbDataSaveResponse {
+  ok?: boolean;
+  detail?: string;
+  apply?: { message?: unknown };
+}
+
 /** systemd_units / missing_default_units / not_ready_default_units row. */
 export interface MigrationUnit {
   service?: string;

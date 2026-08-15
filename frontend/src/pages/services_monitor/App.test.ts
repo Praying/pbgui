@@ -438,6 +438,128 @@ describe('services_monitor cmc pool wiring', () => {
   });
 });
 
+describe('services_monitor pbdata settings wiring', () => {
+  const SETTINGS_PAYLOAD = {
+    all_users: ['alice', 'bob'],
+    fetch_users: ['alice'],
+    trades_users: [],
+    log_level: 'INFO',
+    ws_max: 10,
+    pollers_delay_seconds: 60,
+    poll_interval_combined_seconds: 90,
+    poll_interval_balance_seconds: 300,
+    poll_interval_positions_seconds: 300,
+    poll_interval_orders_seconds: 60,
+    poll_interval_history_seconds: 300,
+    poll_interval_executions_seconds: 1800,
+    shared_rest_user_pause_seconds: 0.75,
+    shared_rest_pause_by_exchange: {},
+    latest_1m_coin_pause_seconds: 2,
+  };
+
+  const settingsCalls = () =>
+    apiFetchMock.mock.calls.filter(([url]) => String(url).endsWith('/settings/pbdata'));
+
+  function settingsApi(): void {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/settings/pbdata')) return SETTINGS_PAYLOAD;
+      return String(url).endsWith('/workers/status')
+        ? { counts: { total: 4, running: 3 }, groups: [] }
+        : String(url).endsWith('/status')
+          ? STATUS_PAYLOAD
+          : {};
+    });
+  }
+
+  /** The pbdata settings tab button (log → settings → status order). */
+  async function openSettingsTab(wrapper: ReturnType<typeof mountApp>) {
+    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    const tab = wrapper.findAll('#panel-pbdata .tab-btn').find((b) => b.attributes('data-tab') === 'settings')!;
+    await tab.trigger('click');
+  }
+
+  it('loads GET /settings/pbdata on first settings tab activation and renders the form', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(1);
+    expect(settingsCalls()[0]![0]).toBe('http://pbgui.test:8000/api/services/settings/pbdata');
+    expect(wrapper.find('#panel-pbdata #pbdata-settings-wrap').exists()).toBe(true);
+    expect(wrapper.findAll('#panel-pbdata .form-section-title').map((s) => s.text())).toEqual([
+      'Users',
+      'Log Level',
+      'Timers',
+    ]);
+  });
+
+  it('shows the loading placeholder until the settings load resolves', async () => {
+    apiFetchMock.mockImplementation(
+      async (url: string) =>
+        String(url).endsWith('/settings/pbdata')
+          ? new Promise(() => {}) // never resolves
+          : String(url).endsWith('/status')
+            ? STATUS_PAYLOAD
+            : {}
+    );
+    const wrapper = mountApp();
+    await flushPromises();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(wrapper.find('#panel-pbdata #pbdata-settings-wrap').text()).toBe('Loading settings…');
+  });
+
+  it('does not reload settings on repeated settings tab activation (legacy _settingsLoaded)', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+    await openSettingsTab(wrapper);
+    await flushPromises();
+    const logTab = wrapper.findAll('#panel-pbdata .tab-btn').find((b) => b.attributes('data-tab') === 'log')!;
+    await logTab.trigger('click');
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(1);
+  });
+
+  it('loads once on mount when restored from #pbdata/settings (legacy restoreFromHash)', async () => {
+    settingsApi();
+    window.location.hash = '#pbdata/settings';
+    apiFetchMock.mockClear(); // the load fires during mount
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.find('.svc-panel.active').attributes('id')).toBe('panel-pbdata');
+    expect(wrapper.find('#panel-pbdata .tab-btn[data-tab="settings"]').classes()).toContain('active');
+    expect(settingsCalls()).toHaveLength(1);
+    expect(wrapper.find('#panel-pbdata #pbdata-log-level').exists()).toBe(true);
+  });
+
+  it('does not load settings when only the log tab is opened', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(0);
+    expect(wrapper.find('#panel-pbdata #pbdata-settings-wrap').text()).toBe('Loading settings…');
+  });
+});
+
 describe('services_monitor config', () => {
   it('derives the services API base from the boot origin', () => {
     expect(apiBase()).toBe('http://pbgui.test:8000/api/services');
