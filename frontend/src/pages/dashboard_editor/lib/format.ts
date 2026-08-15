@@ -100,3 +100,13 @@ export function liveBadgeText(lastTs: number, now: number = Date.now()): string 
 export function liveStatusColor(source?: string | null): string {
   return String(source || '').toLowerCase() === 'live' ? '#22c55e' : '';
 }
+
+/**
+ * The legacy .dt-daterange text — "From: X  To: Y" with TWO regular spaces
+ * (render.js:672, 1753, 2133, 4036 textContent assignments). Bound via
+ * interpolation so the text is byte-identical (template whitespace would
+ * collapse or produce non-breaking spaces).
+ */
+export function dateRangeText(from: string, to: string): string {
+  return dashT('dash.from', 'From') + ': ' + from + '  ' + dashT('dash.to', 'To') + ': ' + to;
+}

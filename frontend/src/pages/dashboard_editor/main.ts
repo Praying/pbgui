@@ -1,6 +1,8 @@
 import { createApp } from 'vue';
 import { createI18n, detectLang } from '@/shared/i18n';
 import App from './App.vue';
+/* D-editor-4: swap the EmptyCell stubs for the real Plotly widgets */
+import './components/widgets/register';
 import { setDashTranslator } from './lib/i18n';
 
 /* The editor page is a standalone document (like the legacy

@@ -135,3 +135,53 @@ export interface WidgetPositionsProps extends DataManagingWidgetProps {
   /** Legacy position opt — the 'R_C' cell key the widget reports events for. */
   position: string;
 }
+
+/* ── Plotly widget payloads (GET /dashboard/<widget>_data responses) ── */
+
+/** A /dashboard/top_data row — renderTop reads r[1] (symbol), r[2] (income). */
+export type TopRow = unknown[];
+
+/** GET /dashboard/top_data payload (buildTopInline data, editor:1244-1247). */
+export interface TopData {
+  rows: TopRow[];
+  from_date?: string;
+  to_date?: string;
+}
+
+/** A /dashboard/pnl_data bar (renderPnl reads b.date / b.income).
+ *  Type alias (not interface): assignable to the index-signature DatedBar. */
+export type PnlBar = { date: string; income: number };
+
+/** GET /dashboard/pnl_data payload (buildPnlInline data, editor:1525-1527). */
+export interface PnlData {
+  bars: PnlBar[];
+  mode?: string;
+  from_date?: string;
+  to_date?: string;
+}
+
+/** A /dashboard/adg_data bar (renderAdg reads b.date / b.adg).
+ *  Type alias (not interface): assignable to the index-signature DatedBar. */
+export type AdgBar = { date: string; adg: number };
+
+/** GET /dashboard/adg_data payload (buildAdgInline data, editor:1660-1662). */
+export interface AdgData {
+  bars: AdgBar[];
+  mode?: string;
+  starting_balance?: number;
+  total_pnl?: number;
+  current_balance?: number;
+  from_date?: string;
+  to_date?: string;
+}
+
+/** A /dashboard/ppl_data bar (renderPpl reads b.period/profits/losses). */
+export type PplBar = { period: string; profits: number; losses: number };
+
+/** GET /dashboard/ppl_data payload (buildPplInline data, editor:1798-1801). */
+export interface PplData {
+  bars: PplBar[];
+  sum_period?: string;
+  from_date?: string;
+  to_date?: string;
+}
