@@ -81,6 +81,15 @@ describe('cmcFetch (legacy cmcFetch error semantics)', () => {
     await expect(cmcFetch('/x').catch((e: Error) => e.message)).resolves.toBe('boom');
     await expect(cmcFetch('/x').catch((e: Error) => e.message)).resolves.toBe('CMC pool request failed.');
   });
+
+  it('treats falsy-but-present details like missing ones (legacy || chain)', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ detail: '' }, 400));
+    fetchMock.mockResolvedValueOnce(jsonResponse({ detail: '', error: 'secondary' }, 402));
+
+    // '' detail is falsy: legacy falls through to data.error, then the generic.
+    await expect(cmcFetch('/x').catch((e: Error) => e.message)).resolves.toBe('CMC pool request failed.');
+    await expect(cmcFetch('/x').catch((e: Error) => e.message)).resolves.toBe('secondary');
+  });
 });
 
 describe('formatting helpers (legacy cmcNumber/cmcDuration/cmcTimestamp)', () => {
