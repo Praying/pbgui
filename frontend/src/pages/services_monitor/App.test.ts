@@ -41,13 +41,33 @@ const STATUS_PAYLOAD: ServiceStatusMap = {
   'api-server': { running: true },
 };
 
+/** Realistic GET /migration/status payload used by the wiring tests. */
+const MIGRATION_PAYLOAD = {
+  migration_needed: true,
+  user: 'quran',
+  uid: 501,
+  pbgui_dir: '/opt/pbgui',
+  pbgui_python: '/usr/bin/python3',
+  systemd_unit_dir: '/home/quran/.config/systemd/user',
+  pb7dir: '',
+  warnings: [],
+  missing_default_units: [],
+  not_ready_default_units: [],
+  systemd_units: [],
+  legacy_crontab: { entries: [] },
+  legacy_start_sh: { exists: false },
+  processes: [],
+};
+
 function statusApi(): void {
   apiFetchMock.mockImplementation(async (url: string) =>
     String(url).endsWith('/workers/status')
       ? { counts: { total: 4, running: 3 }, groups: [] }
-      : String(url).endsWith('/status')
-        ? STATUS_PAYLOAD
-        : {}
+      : String(url).endsWith('/migration/status')
+        ? MIGRATION_PAYLOAD
+        : String(url).endsWith('/status')
+          ? STATUS_PAYLOAD
+          : {}
   );
 }
 
@@ -83,11 +103,12 @@ describe('services_monitor App skeleton', () => {
     for (const id of PANEL_IDS) {
       expect(wrapper.find(`#panel-${id}`).exists(), `panel ${id} container`).toBe(true);
     }
-    // The overview and workers panels are live since Tasks 9/10; the rest show
-    // placeholders or panel components per task.
+    // The overview, workers and migration panels are live since Tasks 9/10/14;
+    // the multi-tab services render their real ctrl strips too.
     expect(wrapper.find('#panel-overview .panel-placeholder').exists()).toBe(false);
     expect(wrapper.find('#panel-workers .workers-shell').exists()).toBe(true);
-    expect(wrapper.find('#panel-migration .panel-placeholder-hint').text()).toContain('MigrationPanel');
+    expect(wrapper.find('#panel-migration .ctrl-strip').exists()).toBe(true);
+    expect(wrapper.find('#panel-migration #migration-wrap').exists()).toBe(true);
   });
 
   it('shows the overview panel as active by default', () => {
@@ -781,5 +802,430 @@ describe('services_monitor config', () => {
 
   it('derives the websocket base from the boot origin', () => {
     expect(wsBase()).toBe('ws://pbgui.test:8000');
+  });
+});
+
+describe('services_monitor migration wiring (legacy loadMigrationStatus/testSystemdMigration/runSystemdMigration)', () => {
+  type DialogsGlobal = typeof globalThis & { PBGuiDialogs?: { confirm: ReturnType<typeof vi.fn> } };
+
+  const migrationCalls = () => apiFetchMock.mock.calls.filter(([url]) => String(url).endsWith('/migration/status'));
+  const statusCalls = () => apiFetchMock.mock.calls.filter(([url]) => String(url).endsWith('/status'));
+
+  beforeEach(() => {
+    (window as DialogsGlobal).PBGuiDialogs = { confirm: vi.fn(async () => true) };
+  });
+
+  afterEach(() => {
+    delete (window as DialogsGlobal).PBGuiDialogs;
+  });
+
+  it('loads the migration status once on mount (legacy init loadMigrationStatus(false))', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(migrationCalls()).toHaveLength(1);
+    expect(wrapper.find('#panel-migration .migration-title').text()).toBe('Systemd user services migration');
+    expect(wrapper.find('.sb-btn[data-panel="migration"] .sb-dot').classes()).toContain('warn');
+  });
+
+  it('force-loads the migration status when the migration panel is selected', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('.sb-btn[data-panel="migration"]').trigger('click');
+    await flushPromises();
+
+    expect(migrationCalls()).toHaveLength(1);
+  });
+
+  it('reloads the migration status from the ctrl-strip refresh button', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('#panel-migration .ctrl-btn').trigger('click');
+    await flushPromises();
+
+    expect(migrationCalls()).toHaveLength(1);
+  });
+
+  it('renders the error card when the status fetch fails (legacy _error payload)', async () => {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/migration/status')) throw new ApiError(503, 'api is restarting');
+      if (String(url).endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+      return STATUS_PAYLOAD;
+    });
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.find('#panel-migration .migration-warn').text()).toBe(
+      'Failed to load migration status: api is restarting'
+    );
+  });
+
+  it('runs the dry-run flow from the test button with the legacy popup and log prefixes', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    let releaseTest!: (r: unknown) => void;
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/migration/test')) {
+        return new Promise((resolve) => (releaseTest = resolve));
+      }
+      if (String(url).endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+      if (String(url).endsWith('/migration/status')) return MIGRATION_PAYLOAD;
+      return STATUS_PAYLOAD;
+    });
+
+    await wrapper.find('#panel-migration #migration-test-btn').trigger('click');
+    await flushPromises();
+    // Legacy button swap: disabled with the testing label while in flight.
+    const busyBtn = wrapper.find('#panel-migration #migration-test-btn');
+    expect((busyBtn.element as HTMLButtonElement).disabled).toBe(true);
+    expect(busyBtn.text()).toBe('Testing...');
+
+    releaseTest({ ok: true, warnings: ['legacy ini found'], errors: [], logs: ['would install units'] });
+    await flushPromises();
+
+    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/migration/test', {
+      method: 'POST',
+    });
+    const modal = document.getElementById('result-modal')!;
+    expect(modal.textContent).toContain('Dry-run completed');
+    expect(modal.textContent).toContain('WARNING: legacy ini found');
+    expect(modal.textContent).toContain('would install units');
+    expect(wrapper.find('#panel-migration #migration-test-btn').text()).toBe('Test migration');
+  });
+
+  it('shows the failed popup for a dry run that found blockers', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/migration/test')) {
+        return { ok: false, warnings: [], errors: ['missing unit'], logs: [] };
+      }
+      if (String(url).endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+      if (String(url).endsWith('/migration/status')) return MIGRATION_PAYLOAD;
+      return STATUS_PAYLOAD;
+    });
+
+    await wrapper.find('#panel-migration #migration-test-btn').trigger('click');
+    await flushPromises();
+
+    const modal = document.getElementById('result-modal')!;
+    expect(modal.textContent).toContain('Dry-run found blockers');
+    expect(modal.textContent).toContain('ERROR: missing unit');
+  });
+
+  it('runs the migration behind the confirm dialog and marks the restart pending', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/migration/run')) {
+        return {
+          ok: true,
+          warnings: ['restart scheduled'],
+          logs: ['enabled units'],
+          api_restart: true,
+          after: { ...MIGRATION_PAYLOAD, migration_needed: false },
+        };
+      }
+      if (String(url).endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+      if (String(url).endsWith('/migration/status')) return MIGRATION_PAYLOAD;
+      return STATUS_PAYLOAD;
+    });
+
+    await wrapper.find('#panel-migration #migration-run-btn').trigger('click');
+    await flushPromises();
+
+    expect((window as DialogsGlobal).PBGuiDialogs!.confirm).toHaveBeenCalledWith({
+      title: 'Migrate to systemd',
+      message: 'Migrate this master to systemd user services now? PBGui daemons and the API server will restart after the migration.',
+      confirmText: 'Migrate',
+    });
+    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/migration/run', {
+      method: 'POST',
+    });
+    // after payload with migration_needed: false → run button disabled again.
+    expect((wrapper.find('#panel-migration #migration-run-btn').element as HTMLButtonElement).disabled).toBe(true);
+    // _restart_pending → warn meta on the sidebar dot and the retry banner in preflight.
+    expect(wrapper.find('.sb-btn[data-panel="migration"] .sb-dot').classes()).toContain('warn');
+    expect(wrapper.find('#panel-migration .migration-ok').text()).toContain('Migration completed. API restart is in progress');
+    const modal = document.getElementById('result-modal')!;
+    expect(modal.textContent).toContain('Migration completed');
+    expect(modal.textContent).toContain('WARNING: restart scheduled');
+  });
+
+  it('does not POST /migration/run when the confirm dialog is declined', async () => {
+    (window as DialogsGlobal).PBGuiDialogs!.confirm.mockResolvedValue(false);
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('#panel-migration #migration-run-btn').trigger('click');
+    await flushPromises();
+
+    expect(apiFetchMock.mock.calls.some(([url]) => String(url).endsWith('/migration/run'))).toBe(false);
+  });
+
+  it('falls back to the blocked popup when PBGuiDialogs is unavailable', async () => {
+    delete (window as DialogsGlobal).PBGuiDialogs;
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('#panel-migration #migration-run-btn').trigger('click');
+    await flushPromises();
+
+    const modal = document.getElementById('result-modal')!;
+    expect(modal.textContent).toContain('Migration blocked');
+    expect(modal.textContent).toContain('Confirmation dialog is unavailable.');
+    expect(apiFetchMock.mock.calls.some(([url]) => String(url).endsWith('/migration/run'))).toBe(false);
+  });
+
+  it('retries the status after 3s while a restart is pending and refreshes on recovery', async () => {
+    vi.useFakeTimers();
+    try {
+      let statusFails = false;
+      apiFetchMock.mockImplementation(async (url: string) => {
+        const u = String(url);
+        if (u.endsWith('/migration/run')) {
+          return { ok: true, warnings: [], logs: [], api_restart: true, after: MIGRATION_PAYLOAD };
+        }
+        if (u.endsWith('/migration/status')) {
+          if (statusFails) throw new ApiError(503, 'restarting');
+          return MIGRATION_PAYLOAD;
+        }
+        if (u.endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+        return STATUS_PAYLOAD;
+      });
+      apiFetchMock.mockClear();
+      const wrapper = mountApp();
+      await vi.advanceTimersByTimeAsync(0);
+      await flushPromises();
+      expect(migrationCalls()).toHaveLength(1);
+
+      // Successful run arms the 3s restart check and opens the pending window.
+      await wrapper.find('#panel-migration #migration-run-btn').trigger('click');
+      await flushPromises();
+      expect(migrationCalls()).toHaveLength(1);
+
+      // API down during the pending window → keep last status + _restart_pending, retry.
+      statusFails = true;
+      await vi.advanceTimersByTimeAsync(3000);
+      await flushPromises();
+      expect(migrationCalls()).toHaveLength(2);
+      expect(wrapper.find('#panel-migration .migration-ok').text()).toContain('Migration completed. API restart is in progress');
+
+      // API back → successful fetch inside the pending window refreshes status and workers.
+      statusFails = false;
+      const statusCallsBefore = statusCalls().length;
+      await vi.advanceTimersByTimeAsync(3000);
+      await flushPromises();
+      expect(migrationCalls()).toHaveLength(3);
+      expect(statusCalls().length).toBeGreaterThan(statusCallsBefore);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shows the failed migration popup and reloads the status when the run fails', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/migration/run')) {
+        throw new ApiError(500, 'setup script failed');
+      }
+      if (String(url).endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+      if (String(url).endsWith('/migration/status')) return MIGRATION_PAYLOAD;
+      return STATUS_PAYLOAD;
+    });
+    apiFetchMock.mockClear();
+
+    await wrapper.find('#panel-migration #migration-run-btn').trigger('click');
+    await flushPromises();
+
+    const modal = document.getElementById('result-modal')!;
+    expect(modal.textContent).toContain('Migration failed.');
+    expect(modal.textContent).toContain('setup script failed');
+    // Legacy catch reloads the status.
+    expect(migrationCalls().length).toBeGreaterThan(0);
+    expect((wrapper.find('#panel-migration #migration-run-btn').element as HTMLButtonElement).disabled).toBe(false);
+  });
+});
+
+describe('services_monitor pbdata status wiring (legacy pbdata status tab + prices overlay)', () => {
+  const FETCH_SUMMARY = {
+    timestamp: '2026-08-15 12:00:00',
+    balances: { ws: ['alice'], rest: [] },
+    positions: { ws: [], rest: [] },
+    orders: { ws: [], rest: [] },
+    prices: { binance: { active: true, symbols: 120 } },
+    history: [],
+    executions: [],
+    last_fetch_ts: { alice: { balances: Math.floor(Date.now() / 1000) - 10 } },
+  };
+
+  async function selectPbdataStatusTab(wrapper: ReturnType<typeof mountApp>): Promise<void> {
+    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('#panel-pbdata .tab-btn[data-tab="status"]').trigger('click');
+    await flushPromises();
+  }
+
+  it('loads fetch summary and poller metrics when the status tab is selected', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await selectPbdataStatusTab(wrapper);
+
+    const urls = apiFetchMock.mock.calls.map(([url]) => String(url));
+    expect(urls).toContain('http://pbgui.test:8000/api/services/fetch-summary');
+    expect(urls).toContain('http://pbgui.test:8000/api/services/poller-metrics');
+  });
+
+  it('does not load the status endpoints while other tabs are active', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('#panel-pbdata .tab-btn[data-tab="settings"]').trigger('click');
+    await flushPromises();
+
+    const urls = apiFetchMock.mock.calls.map(([url]) => String(url));
+    expect(urls).not.toContain('http://pbgui.test:8000/api/services/fetch-summary');
+    expect(urls).not.toContain('http://pbgui.test:8000/api/services/poller-metrics');
+  });
+
+  it('opens the prices overlay from the fetch-summary Prices group', async () => {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.endsWith('/fetch-summary')) return FETCH_SUMMARY;
+      if (u.endsWith('/prices-snapshot')) {
+        return { rows: [{ symbol: 'BTCUSDT', exchange: 'binance', price: 120000, ts: 100 }] };
+      }
+      if (u.endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+      if (u.endsWith('/migration/status')) return MIGRATION_PAYLOAD;
+      return STATUS_PAYLOAD;
+    });
+    const wrapper = mountApp();
+    await flushPromises();
+
+    await selectPbdataStatusTab(wrapper);
+    expect(wrapper.find('#prices-overlay').classes()).not.toContain('active');
+
+    await wrapper.find('#panel-pbdata .fs-group-clickable').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('#prices-overlay').classes()).toContain('active');
+    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/prices-snapshot');
+    expect(wrapper.find('#prices-overlay .po-table tbody tr').text()).toContain('BTCUSDT');
+  });
+
+  it('closes the prices overlay from the legacy close button', async () => {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.endsWith('/fetch-summary')) return FETCH_SUMMARY;
+      if (u.endsWith('/prices-snapshot')) return { rows: [] };
+      if (u.endsWith('/workers/status')) return { counts: { total: 4, running: 3 }, groups: [] };
+      if (u.endsWith('/migration/status')) return MIGRATION_PAYLOAD;
+      return STATUS_PAYLOAD;
+    });
+    const wrapper = mountApp();
+    await flushPromises();
+    await selectPbdataStatusTab(wrapper);
+    await wrapper.find('#panel-pbdata .fs-group-clickable').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('#prices-overlay').classes()).toContain('active');
+
+    await wrapper.find('#prices-overlay .po-btn').trigger('click');
+    expect(wrapper.find('#prices-overlay').classes()).not.toContain('active');
+  });
+});
+
+describe('services_monitor help overlay wiring (legacy PBGUI_HELP_OPENER/_servicesGuideKeyword)', () => {
+  type HelpGlobal = typeof globalThis & {
+    PBGuiSharedHelp?: { open: ReturnType<typeof vi.fn> };
+    PBGUI_HELP_OPENER?: () => void;
+    _servicesGuideKeyword?: string;
+  };
+
+  afterEach(() => {
+    delete (window as HelpGlobal).PBGuiSharedHelp;
+    delete (window as HelpGlobal).PBGUI_HELP_OPENER;
+    delete (window as HelpGlobal)._servicesGuideKeyword;
+  });
+
+  it('registers the opener with the overview keyword by default', async () => {
+    const openMock = vi.fn();
+    (window as HelpGlobal).PBGuiSharedHelp = { open: openMock };
+    mountApp();
+    await flushPromises();
+
+    expect(typeof (window as HelpGlobal).PBGUI_HELP_OPENER).toBe('function');
+    expect((window as HelpGlobal)._servicesGuideKeyword).toBe('services_overview');
+
+    (window as HelpGlobal).PBGUI_HELP_OPENER!();
+    expect(openMock).toHaveBeenCalledWith('services_overview', { token: 'tok' });
+  });
+
+  it('tracks the active service guide keyword for the opener', async () => {
+    const openMock = vi.fn();
+    (window as HelpGlobal).PBGuiSharedHelp = { open: openMock };
+    const wrapper = mountApp();
+    await flushPromises();
+
+    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await flushPromises();
+    expect((window as HelpGlobal)._servicesGuideKeyword).toBe('pbdata');
+
+    await wrapper.find('.sb-btn[data-panel="api-server"]').trigger('click');
+    await flushPromises();
+    expect((window as HelpGlobal)._servicesGuideKeyword).toBe('pbapiserver');
+
+    await wrapper.find('.sb-btn[data-panel="overview"]').trigger('click');
+    await flushPromises();
+    expect((window as HelpGlobal)._servicesGuideKeyword).toBe('services_overview');
+
+    (window as HelpGlobal).PBGUI_HELP_OPENER!();
+    expect(openMock).toHaveBeenLastCalledWith('services_overview', { token: 'tok' });
+  });
+
+  it('no-ops the opener when the shared help overlay script is unavailable', async () => {
+    mountApp();
+    await flushPromises();
+
+    expect(() => (window as HelpGlobal).PBGUI_HELP_OPENER!()).not.toThrow();
+  });
+});
+
+describe('services_monitor sidebar resize handle (legacy sidebar resize IIFE)', () => {
+  it('resizes the sidebar between the 150px/300px clamps', async () => {
+    const wrapper = mountApp();
+    const handle = wrapper.find('#sidebar-resize');
+    expect(handle.exists()).toBe(true);
+    const sidebar = wrapper.find('#sidebar').element as HTMLElement;
+
+    await handle.trigger('mousedown', { clientX: 10 });
+    expect(handle.classes()).toContain('active');
+
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 190 }));
+    expect(sidebar.style.width).toBe('180px');
+
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 5000 }));
+    expect(sidebar.style.width).toBe('300px');
+
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: -200 }));
+    expect(sidebar.style.width).toBe('150px');
+
+    document.dispatchEvent(new MouseEvent('mouseup'));
+    await flushPromises();
+    expect(handle.classes()).not.toContain('active');
+
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 400 }));
+    expect(sidebar.style.width).toBe('150px');
   });
 });

@@ -240,6 +240,77 @@ export interface MigrationProcess {
   cmdline?: string;
 }
 
+/** GET /fetch-summary payload — fields read by renderFetchSummary (legacy pbdata status tab). */
+export interface FetchSummaryData {
+  timestamp?: string;
+  balances?: { ws?: string[]; rest?: string[] };
+  positions?: { ws?: string[]; rest?: string[] };
+  orders?: { ws?: string[]; rest?: string[] };
+  prices?: Record<string, { active?: boolean; symbols?: number }>;
+  history?: string[];
+  executions?: string[];
+  last_fetch_ts?: Record<
+    string,
+    { balances?: number; positions?: number; orders?: number; history?: number; executions?: number }
+  >;
+}
+
+/** One exchange in GET /poller-metrics (renderPollerMetrics exchange table). */
+export interface PollerExchangeMetrics {
+  combined_last_ts?: number;
+  combined_cycle_ms?: number;
+  combined_users?: number;
+  history_last_ts?: number;
+  history_cycle_ms?: number;
+  history_users?: number;
+  backoff_remaining_s?: number;
+  history_backoff_remaining_s?: number;
+  rate_limit_429?: number;
+  errors?: number;
+  rest_slot_timeouts?: number;
+}
+
+/** GET /poller-metrics payload — fields read by renderPollerMetrics (legacy pbdata status tab). */
+export interface PollerMetricsData {
+  timestamp?: string;
+  exchanges?: Record<string, PollerExchangeMetrics>;
+  semaphores?: Record<string, { slots: number; available: number; in_use?: number }>;
+  market_data?: Record<
+    string,
+    {
+      running?: boolean;
+      exchange?: string;
+      coins_total?: number;
+      coins_done?: number;
+      last_run_ts?: number;
+      last_run_duration_s?: number;
+      current_coin?: string;
+    }
+  >;
+  budgets?: Record<
+    string,
+    {
+      tokens: number;
+      capacity: number;
+      weight_per_minute: number;
+      refill_per_second: number;
+      total_consumed: number;
+      requests_count: number;
+      waits_count?: number;
+      total_waited_ms?: number;
+      per_operation?: Record<string, { consumed?: number; requests?: number; waits?: number; wait_ms?: number }>;
+    }
+  >;
+}
+
+/** GET /prices-snapshot row — fields read by the prices overlay table. */
+export interface PriceRow {
+  symbol?: string;
+  exchange?: string;
+  price?: number | null;
+  ts?: number | string | null;
+}
+
 /** GET /migration/status payload — fields read by migrationStatusMeta/renderMigrationStatus. */
 export interface MigrationStatus {
   _restart_pending?: boolean;

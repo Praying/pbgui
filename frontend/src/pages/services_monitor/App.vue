@@ -24,7 +24,7 @@
  * │                     │        │ cmcNumber/cmcDuration/cmcTimestamp                 │
  * │ PbDataSettings      │ 12 ✓   │ loadSettings, applySettings, renderPBDataSettings, │
  * │                     │        │ savePBDataSettings                                 │
- * │ PbDataStatus        │ 12     │ loadFetchSummary/renderFetchSummary,               │
+ * │ PbDataStatus        │ 12+14 ✓│ loadFetchSummary/renderFetchSummary,               │
  * │                     │        │ loadPollerMetrics/renderPollerMetrics,             │
  * │                     │        │ applyFetchFilters                                 │
  * │ ApiServerSettings   │ 13 ✓   │ applySettings, renderVpsHosts,                      │
@@ -33,16 +33,19 @@
  * │                     │        │ collectAlertRoutingFromForm/collectMonitorConfig-  │
  * │                     │        │ FromForm, saveApiServerSettings, restartApiServer  │
  * │ CoinDataSettings    │ 13 ✓   │ saveCoinDataSettings (interval form)               │
- * │ MigrationPanel      │ 14     │ loadMigrationStatus, renderMigrationStatus,        │
+ * │ MigrationPanel      │ 14 ✓   │ loadMigrationStatus, renderMigrationStatus,        │
  * │                     │        │ migrationStatusMeta, renderMigrationUnits/Crontab/ │
  * │                     │        │ StartScript/Processes, updateMigrationSummary,     │
  * │                     │        │ testSystemdMigration, runSystemdMigration,         │
  * │                     │        │ migrationConfirm                                  │
- * │ App (this skeleton) │ 8      │ selectPanel, restoreFromHash, sidebar markup       │
- * │                     │        │ (legacy sidebar resize handle lands with panels)   │
+ * │ PricesOverlay       │ 14 ✓   │ openPricesOverlay/closePricesOverlay,              │
+ * │                     │        │ loadPricesOverlay/filterPricesOverlay (page-global)│
+ * │ App (this skeleton) │ 8+14 ✓ │ selectPanel, restoreFromHash, sidebar markup +     │
+ * │                     │        │ resize handle, PBGUI_HELP_OPENER/                  │
+ * │                     │        │ _servicesGuideKeyword help wiring                  │
  * │ Topnav / overlays   │ —      │ pbgui_nav.js, pbgui_dialogs.js,                    │
- * │                     │        │ shared_help_overlay.js, prices overlay — stay as   │
- * │                     │        │ shared legacy scripts loaded by index.html         │
+ * │                     │        │ shared_help_overlay.js — stay as shared legacy     │
+ * │                     │        │ scripts loaded by index.html                      │
  * └─────────────────────┴────────┴────────────────────────────────────────────────────┘
  */
 import { computed, onMounted, onUnmounted, ref, watch, type ComponentPublicInstance } from 'vue';
@@ -54,6 +57,9 @@ import { usePolling } from '@/shared/composables/usePolling';
 import OverviewCards from './components/OverviewCards.vue';
 import ServiceLogPanel, { type ServiceTab } from './components/ServiceLogPanel.vue';
 import WorkersPanel from './components/WorkersPanel.vue';
+import MigrationPanel from './components/MigrationPanel.vue';
+import PbDataStatus from './components/PbDataStatus.vue';
+import PricesOverlay from './components/PricesOverlay.vue';
 import CmcPoolPanel from './components/CmcPoolPanel.vue';
 import CmcStatusBar from './components/CmcStatusBar.vue';
 import PbDataSettings from './components/PbDataSettings.vue';
@@ -136,8 +142,187 @@ const workers = ref<WorkersStatus>({ counts: { total: 0, running: 0 }, groups: [
 const workersLoadError = ref(false);
 /** Sidebar/overview counts, derived like the legacy updateWorkersSummary reads. */
 const workersCounts = computed(() => workers.value.counts ?? { total: 0, running: 0 });
-/** Legacy initial _migrationStatus: null until Task 14 wires the fetch. */
+/** Legacy _migrationStatus, updated by load/test/run flows. */
 const migrationStatus = ref<MigrationStatus | null>(null);
+/** Legacy in-flight button state: 'test' → testSystemdMigration, 'run' → runSystemdMigration. */
+const migrationBusy = ref<'test' | 'run' | null>(null);
+/** Legacy forced-reload placeholder (loadMigrationStatus(true) until the fetch settles). */
+const migrationLoading = ref(false);
+/** Legacy _apiRestartPendingUntil: the 90s window opened by a run with api_restart. */
+let migrationRestartPendingUntil = 0;
+/** Legacy _migrationRestartTimer. */
+let migrationRestartTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Legacy apiRestartPending: true while the restart window has not elapsed. */
+function apiRestartPending(): boolean {
+  return migrationRestartPendingUntil > 0 && Date.now() < migrationRestartPendingUntil;
+}
+
+/** Legacy scheduleMigrationRestartCheck: one-shot 3s retry (default), replace pending. */
+function scheduleMigrationRestartCheck(delayMs: number): void {
+  clearTimeout(migrationRestartTimer);
+  migrationRestartTimer = setTimeout(() => {
+    migrationRestartTimer = undefined;
+    void loadMigrationStatus(false);
+  }, delayMs || 3000);
+}
+
+/**
+ * Legacy loadMigrationStatus: GET /migration/status; on failure during a
+ * pending restart window keep the last status flagged _restart_pending and
+ * retry after 3s, otherwise replace with the { _error } payload. A success
+ * that ends a pending window refreshes the service + worker status.
+ */
+async function loadMigrationStatus(force: boolean): Promise<void> {
+  if (force) migrationLoading.value = true;
+  try {
+    const data = await apiFetch<MigrationStatus>(`${apiBase()}/migration/status`);
+    const restartWasPending = apiRestartPending();
+    migrationRestartPendingUntil = 0;
+    clearTimeout(migrationRestartTimer);
+    migrationRestartTimer = undefined;
+    migrationStatus.value = data;
+    if (restartWasPending) {
+      void fetchStatus();
+      void fetchWorkers();
+    }
+  } catch (error) {
+    if (apiRestartPending()) {
+      migrationStatus.value = { ...(migrationStatus.value ?? {}), _restart_pending: true };
+      scheduleMigrationRestartCheck(3000);
+      return;
+    }
+    const message =
+      error instanceof ApiError && error.detail
+        ? error.detail
+        : error instanceof Error && error.message
+          ? error.message
+          : t('sysmon.migrationStatusFailed');
+    migrationStatus.value = { _error: message };
+  } finally {
+    migrationLoading.value = false;
+  }
+}
+
+/** Legacy migrationConfirm: shared confirm dialog, result-popup fallback. */
+async function migrationConfirm(): Promise<boolean> {
+  const dialogs = (window as Window & {
+    PBGuiDialogs?: { confirm?: (opts: { title: string; message: string; confirmText: string }) => Promise<boolean> };
+  }).PBGuiDialogs;
+  if (dialogs && typeof dialogs.confirm === 'function') {
+    return dialogs.confirm({
+      title: t('sysmon.migrateToSystemd'),
+      message: t('sysmon.migrateToSystemdMsg'),
+      confirmText: t('sysmon.migrate'),
+    });
+  }
+  showResultPopup({
+    title: t('sysmon.migrationBlocked'),
+    message: t('sysmon.dialogUnavailable'),
+    output: t('sysmon.reloadAndRetry'),
+    isOk: false,
+  });
+  return false;
+}
+
+/** Legacy testSystemdMigration: POST /migration/test with dry-run popups. */
+async function testSystemdMigration(): Promise<void> {
+  migrationBusy.value = 'test';
+  showResultPopup({
+    title: t('sysmon.migrationTestTitle'),
+    message: t('sysmon.dryRunRunning'),
+    output: '',
+    isOk: true,
+    hideFoot: true, // legacy _resultPopup(..., true, true)
+  });
+  try {
+    const data = await apiFetch<{ ok?: boolean; warnings?: string[]; errors?: string[]; logs?: string[] }>(
+      `${apiBase()}/migration/test`,
+      { method: 'POST' }
+    );
+    const lines = [
+      ...(data.warnings ?? []).map((warning) => t('sysmon.warningLogPrefix') + warning),
+      ...(data.errors ?? []).map((error) => t('sysmon.errorLogPrefix') + error),
+      ...(data.logs ?? []),
+    ];
+    showResultPopup({
+      title: t('sysmon.migrationTestTitle'),
+      message: data.ok ? t('sysmon.dryRunCompleted') : t('sysmon.dryRunFoundBlockers'),
+      output: lines.join('\n'),
+      isOk: !!data.ok,
+    });
+  } catch (error) {
+    const output =
+      error instanceof ApiError && error.detail
+        ? serverMsg(error.detail)
+        : error instanceof Error && error.message
+          ? serverMsg(error.message)
+          : t('sysmon.migrationTestFailed');
+    showResultPopup({
+      title: t('sysmon.migrationTestTitle'),
+      message: t('sysmon.migrationTestFailed'),
+      output,
+      isOk: false,
+    });
+  } finally {
+    migrationBusy.value = null;
+  }
+}
+
+/** Legacy runSystemdMigration: confirm → POST /migration/run → restart window + retry. */
+async function runSystemdMigration(): Promise<void> {
+  if (!(await migrationConfirm())) return;
+  migrationBusy.value = 'run';
+  showResultPopup({
+    title: t('sysmon.migrationTitle'),
+    message: t('sysmon.migrationRunning'),
+    output: '',
+    isOk: true,
+    hideFoot: true, // legacy _resultPopup(..., true, true)
+  });
+  try {
+    const data = await apiFetch<{
+      ok?: boolean;
+      detail?: string;
+      error?: string;
+      warnings?: string[];
+      logs?: string[];
+      api_restart?: boolean;
+      after?: MigrationStatus;
+    }>(`${apiBase()}/migration/run`, { method: 'POST' });
+    if (data.ok === false) throw new Error(data.detail || data.error || t('sysmon.migrationFailed'));
+    const lines = [
+      ...(data.warnings ?? []).map((warning) => t('sysmon.warningLogPrefix') + warning),
+      ...(data.logs ?? []),
+    ];
+    if (data.api_restart) {
+      migrationRestartPendingUntil = Date.now() + 90000; // legacy 90s restart window
+    }
+    migrationStatus.value = {
+      ...(data.after ?? migrationStatus.value ?? {}),
+      ...(data.api_restart ? { _restart_pending: true } : {}),
+    };
+    showResultPopup({
+      title: t('sysmon.migrationTitle'),
+      message: t('sysmon.migrationCompleted'),
+      output: lines.join('\n'),
+      isOk: true,
+    });
+    scheduleMigrationRestartCheck(3000);
+  } catch (error) {
+    const output =
+      error instanceof Error && error.message ? serverMsg(error.message) : t('sysmon.migrationFailed');
+    showResultPopup({
+      title: t('sysmon.migrationTitle'),
+      message: t('sysmon.migrationFailed'),
+      output,
+      isOk: false,
+    });
+    void loadMigrationStatus(true);
+  } finally {
+    migrationBusy.value = null;
+  }
+}
 
 /** Legacy fetchStatus: GET /status, keep the last payload on failure. */
 async function fetchStatus(): Promise<void> {
@@ -225,26 +410,122 @@ function panelFromHash(): string {
 
 const activePanel = ref(panelFromHash());
 
-/** Legacy selectPanel: swap the visible panel and persist it in the URL hash. */
+/** Legacy selectPanel: swap the visible panel, track the guide keyword, persist the hash. */
 function selectPanel(panelId: string): void {
   activePanel.value = panelId;
+  // legacy: window._servicesGuideKeyword = svc ? svc.guideKeyword : 'services_overview'
+  const svc = SERVICES.find((s) => s.id === panelId);
+  window._servicesGuideKeyword = svc ? svc.guideKeyword : 'services_overview';
   window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${panelId}`);
 }
+
+/* ── Help overlay wiring (legacy help overlay IIFE public opener) ── */
+
+/**
+ * Legacy window._servicesGuideKeyword: read by the shared help overlay opener;
+ * updated on every panel select (svc.guideKeyword, else services_overview).
+ */
+declare global {
+  interface Window {
+    _servicesGuideKeyword?: string;
+    PBGUI_HELP_OPENER?: () => void;
+  }
+}
+window._servicesGuideKeyword = 'services_overview';
+
+/**
+ * Legacy window._openServicesHelp/PBGUI_HELP_OPENER: the pbgui_nav Guide button
+ * calls this; it forwards the current panel's keyword to the shared overlay
+ * script (PBGuiSharedHelp.open, loaded by index.html).
+ */
+window.PBGUI_HELP_OPENER = (): void => {
+  const sharedHelp = (window as Window & {
+    PBGuiSharedHelp?: { open?: (keyword: string, opts: { token: string }) => void };
+  }).PBGuiSharedHelp;
+  if (!sharedHelp || typeof sharedHelp.open !== 'function') return;
+  sharedHelp.open(window._servicesGuideKeyword || 'services_overview', { token: getBoot().token });
+};
+
+/* ── Prices overlay (legacy window.openPricesOverlay target) ── */
+
+const pricesOverlayEl = ref<InstanceType<typeof PricesOverlay> | null>(null);
+const setPricesOverlay = (el: Element | ComponentPublicInstance | null): void => {
+  pricesOverlayEl.value = el as InstanceType<typeof PricesOverlay> | null;
+};
+
+/** Legacy openPricesOverlay — invoked by the fetch-summary Prices group. */
+function openPricesOverlay(): void {
+  pricesOverlayEl.value?.open();
+}
+
+/* ── Sidebar resize (legacy sidebar resize IIFE) ── */
+
+const sidebarEl = ref<HTMLElement | null>(null);
+const resizeActive = ref(false);
+let resizeStartX = 0;
+let resizeStartW = 0;
+
+/** Legacy #sidebar-resize mousedown: capture start position/width, arm the drag. */
+function onSidebarResizeDown(event: MouseEvent): void {
+  const sidebar = sidebarEl.value;
+  if (!sidebar) return;
+  resizeActive.value = true;
+  resizeStartX = event.clientX;
+  resizeStartW = sidebar.offsetWidth;
+  document.body.style.cursor = 'col-resize';
+}
+
+/** Legacy document mousemove: clamp the sidebar width to 150-300px. */
+function onSidebarResizeMove(event: MouseEvent): void {
+  if (!resizeActive.value) return;
+  const sidebar = sidebarEl.value;
+  if (!sidebar) return;
+  sidebar.style.width = `${Math.max(150, Math.min(300, resizeStartW + event.clientX - resizeStartX))}px`;
+}
+
+/** Legacy document mouseup: end the drag. */
+function onSidebarResizeUp(): void {
+  resizeActive.value = false;
+  document.body.style.cursor = '';
+}
+
+onMounted(() => {
+  document.addEventListener('mousemove', onSidebarResizeMove);
+  document.addEventListener('mouseup', onSidebarResizeUp);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', onSidebarResizeMove);
+  document.removeEventListener('mouseup', onSidebarResizeUp);
+});
 
 /** Legacy scheduleWorkers gating: poll only while the workers panel is active. */
 watch(activePanel, (panelId) => {
   if (panelId === 'workers') workersPolling.start();
   else workersPolling.stop();
   if (panelId === 'pbcoindata') void loadCmcPool(); // legacy selectPanel
+  if (panelId === 'migration') void loadMigrationStatus(true); // legacy selectPanel
 });
 
 /** Legacy switchTab: settings tabs lazily load; the pbcoindata pool tab reloads the pool. */
 function onServiceTab(svcId: string, tabId: string): void {
+  serviceTabs.value = { ...serviceTabs.value, [svcId]: tabId };
   if (svcId === 'pbcoindata' && tabId === 'pool') void loadCmcPool();
   if (tabId === 'settings' && (SETTINGS_SERVICES as readonly string[]).includes(svcId)) {
     loadSettingsPane(svcId);
   }
 }
+
+/** Active tab per service — mirrors ServiceLogPanel's internal switchTab state so
+ *  the pbdata status pane can gate its polling (legacy _fetchSummaryTimer). */
+const serviceTabs = ref<Record<string, string>>(
+  Object.fromEntries(
+    Object.entries(SERVICE_TABS).map(([svcId, tabs]) => {
+      const parts = window.location.hash.replace(/^#/, '').split('/');
+      return [svcId, parts[0] === svcId && parts[1] && tabs.some((tab) => tab.id === parts[1]) ? parts[1] : 'log'];
+    })
+  )
+);
 
 /* ── Settings panes (legacy loadSettings/_settingsLoaded) ── */
 
@@ -365,6 +646,7 @@ onMounted(() => {
   document.title = t('sysmon.servicesTitle');
   statusPolling.start();
   void fetchWorkers(); // legacy fired fetchWorkers(false) once on load
+  void loadMigrationStatus(false); // legacy init loadMigrationStatus(false)
   if (activePanel.value === 'workers') workersPolling.start(); // legacy selectPanel('workers')
   if (activePanel.value === 'pbcoindata') void loadCmcPool(); // legacy restoreFromHash -> selectPanel
   // legacy restoreFromHash -> switchTab('settings') loads the settings once
@@ -376,6 +658,7 @@ onMounted(() => {
 onUnmounted(() => {
   statusPolling.stop();
   workersPolling.stop();
+  clearTimeout(migrationRestartTimer);
 });
 </script>
 
@@ -383,7 +666,8 @@ onUnmounted(() => {
   <nav id="topnav"></nav>
   <div id="page-body">
     <!-- Sidebar — status dots driven by the polled /status payload (legacy updateStatusUI) -->
-    <div id="sidebar">
+    <div id="sidebar" ref="sidebarEl">
+      <div id="sidebar-resize" :class="{ active: resizeActive }" @mousedown="onSidebarResizeDown"></div>
       <div id="sidebar-inner">
         <button
           v-for="panel in PANELS"
@@ -424,6 +708,15 @@ onUnmounted(() => {
           :load-error="workersLoadError && activePanel === 'workers'"
           @refresh="fetchWorkers"
         />
+        <MigrationPanel
+          v-else-if="panel.id === 'migration'"
+          :status="migrationStatus"
+          :loading="migrationLoading"
+          :busy="migrationBusy"
+          @refresh="loadMigrationStatus(true)"
+          @test="testSystemdMigration"
+          @run="runSystemdMigration"
+        />
         <ServiceLogPanel
           v-else-if="serviceDef(panel.id)"
           :svc-id="panel.id"
@@ -455,6 +748,12 @@ onUnmounted(() => {
           <template v-if="panel.id === 'pbdata'" #tab-settings>
             <PbDataSettings :ref="setPbdataSettings" />
           </template>
+          <template v-if="panel.id === 'pbdata'" #tab-status>
+            <PbDataStatus
+              :active="activePanel === 'pbdata' && serviceTabs['pbdata'] === 'status'"
+              @open-prices="openPricesOverlay"
+            />
+          </template>
           <template v-if="panel.id === 'api-server'" #tab-settings>
             <ApiServerSettings :ref="setApiServerSettings" />
           </template>
@@ -468,6 +767,9 @@ onUnmounted(() => {
       </div>
     </div>
   </div>
+
+  <!-- Page-global prices overlay (legacy #prices-overlay markup, outside page-body). -->
+  <PricesOverlay :ref="setPricesOverlay" />
 </template>
 
 <!-- Layout scaffolding ported from frontend/services_monitor.html (page-level,
@@ -494,6 +796,20 @@ onUnmounted(() => {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+}
+#sidebar-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 1;
+}
+#sidebar-resize:hover,
+#sidebar-resize.active {
+  background: rgba(99, 179, 237, 0.4);
 }
 #sidebar-inner {
   display: flex;
