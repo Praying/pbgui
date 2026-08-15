@@ -87,9 +87,10 @@ export interface CmcKey {
   authority_epoch?: number | null;
 }
 
-/** Node offered by the authority-transfer modal (node_id is all the UI reads). */
+/** Node offered by the authority-transfer modal (label: name or node_id). */
 export interface CmcAuthorityNode {
   node_id: string;
+  name?: string;
 }
 
 /** GET /cmc-pool payload (also reused as the usage source: day/soft_credit_limit). */

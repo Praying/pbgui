@@ -40,7 +40,11 @@ const props = withDefaults(defineProps<Props>(), {
   tabs: undefined,
 });
 
-const emit = defineEmits<{ action: [svcId: string, action: ServiceAction] }>();
+const emit = defineEmits<{
+  action: [svcId: string, action: ServiceAction];
+  /** Legacy switchTab side effects (e.g. loadCmcPool for the pbcoindata pool tab). */
+  tab: [svcId: string, tabId: string];
+}>();
 
 const { t } = useI18n();
 const tt: Translate = (key, named) => (named ? t(key, named) : t(key));
@@ -72,6 +76,7 @@ function switchTab(tabId: string): void {
   if (hasTabs.value) {
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${props.svcId}/${tabId}`);
   }
+  emit('tab', props.svcId, tabId);
 }
 
 /** Legacy initLogViewer: the viewer is created on first activation and cached. */
@@ -128,9 +133,12 @@ watch(
       class="tab-pane"
       :class="{ active: activeTab === tab.id }"
     >
-      <div class="tab-placeholder">
-        <div class="tab-placeholder-hint">{{ t(tab.i18nKey) }} · {{ svcId }} ({{ tab.task }})</div>
-      </div>
+      <!-- Pane content arrives per task; the placeholder stays until then. -->
+      <slot :name="`tab-${tab.id}`">
+        <div class="tab-placeholder">
+          <div class="tab-placeholder-hint">{{ t(tab.i18nKey) }} · {{ svcId }} ({{ tab.task }})</div>
+        </div>
+      </slot>
     </div>
   </template>
   <div v-else class="log-wrap">

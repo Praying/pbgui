@@ -17,7 +17,7 @@
  * │                     │        │ switchTab — covers pbcluster, pbrun, monitor-agent,│
  * │                     │        │ vps-monitor and the Log tabs of pbdata/pbcoindata/ │
  * │                     │        │ api-server                                         │
- * │ CmcPoolPanel        │ 11     │ loadCmcPool, renderCmcPool, cmcFetch, selectedCmcKey,│
+ * │ CmcPoolPanel        │ 11 ✓   │ loadCmcPool, renderCmcPool, cmcFetch, selectedCmcKey,│
  * │                     │        │ updateCmcButtons, openCmcKeyModal/submitCmcKey,    │
  * │                     │        │ openCmcAuthorityModal/submitCmcAuthorityTransfer,  │
  * │                     │        │ toggleSelectedCmcKey, deleteSelectedCmcKey,        │
@@ -54,11 +54,21 @@ import { usePolling } from '@/shared/composables/usePolling';
 import OverviewCards from './components/OverviewCards.vue';
 import ServiceLogPanel, { type ServiceTab } from './components/ServiceLogPanel.vue';
 import WorkersPanel from './components/WorkersPanel.vue';
+import CmcPoolPanel from './components/CmcPoolPanel.vue';
 import { SERVICES } from './services';
 import { apiBase } from './config';
+import { cmcFetch } from './cmc';
 import { showResultPopup } from './resultPopup';
 import { migrationStatusMeta, serviceActionDoneText, serviceStatusClass, type Translate } from './status';
-import type { MigrationStatus, ServiceAction, ServiceStatus, ServiceStatusMap, WorkersStatus } from './types';
+import type {
+  CmcLeasesResponse,
+  CmcPool,
+  MigrationStatus,
+  ServiceAction,
+  ServiceStatus,
+  ServiceStatusMap,
+  WorkersStatus,
+} from './types';
 
 interface PanelDef {
   id: string;
@@ -155,6 +165,53 @@ async function fetchWorkers(): Promise<void> {
 /** Legacy poll arm: the timer only runs while the workers panel is visible. */
 const workersPolling = usePolling(fetchWorkers, WORKERS_POLL_INTERVAL_MS);
 
+/* ── CMC pool (legacy loadCmcPool + _cmcLoad* state) ── */
+
+/** Legacy _cmcPool (also the usage source: day / soft_credit_limit). */
+const cmcPool = ref<CmcPool>({ keys: [] });
+/** Legacy _cmcLeases. */
+const cmcLeases = ref<CmcLeasesResponse>({ authority: {}, leases: [] });
+/** True after the first successful load - keeps the legacy tbody placeholders before that. */
+const cmcLoaded = ref(false);
+/** Latest load phase for the status bar (legacy bar class + text swaps). */
+const cmcStatus = ref<'loading' | 'ok' | 'error'>('loading');
+/** serverMsg()-translated error for the unavailable status bar. */
+const cmcLoadError = ref('');
+/** Legacy #cmc-pool-message content written by loadCmcPool. */
+const cmcNotice = ref<{ text: string; error: boolean } | null>(null);
+let cmcLoadGeneration = 0;
+let cmcLoadController: AbortController | null = null;
+
+/** Legacy loadCmcPool: parallel pool + leases fetch, stale generations dropped. */
+async function loadCmcPool(): Promise<void> {
+  const generation = ++cmcLoadGeneration;
+  cmcLoadController?.abort();
+  cmcLoadController = new AbortController();
+  const signal = cmcLoadController.signal;
+  cmcStatus.value = 'loading';
+  cmcNotice.value = { text: t('sysmon.loading'), error: false };
+  try {
+    const [pool, leases] = await Promise.all([
+      cmcFetch<CmcPool>('/cmc-pool', { signal, cache: 'no-store' }),
+      cmcFetch<CmcLeasesResponse>('/cmc-pool/leases', { signal, cache: 'no-store' }),
+    ]);
+    if (generation !== cmcLoadGeneration) return;
+    cmcPool.value = pool || { keys: [] };
+    cmcLeases.value = leases || { authority: {}, leases: [] };
+    cmcLoaded.value = true;
+    cmcStatus.value = 'ok';
+    cmcNotice.value = {
+      text: t('sysmon.leaseRecords', { count: cmcLeases.value.authority?.lease_count || 0 }),
+      error: false,
+    };
+  } catch (error) {
+    if (generation !== cmcLoadGeneration || (error as Error)?.name === 'AbortError') return;
+    cmcStatus.value = 'error';
+    cmcLoadError.value = serverMsg((error as Error).message);
+    cmcNotice.value = { text: (error as Error).message, error: true };
+  }
+}
+
 /** Legacy restoreFromHash: `#panelId` (tab suffix arrives with the panels). */
 function panelFromHash(): string {
   const hash = window.location.hash.replace(/^#/, '');
@@ -174,7 +231,13 @@ function selectPanel(panelId: string): void {
 watch(activePanel, (panelId) => {
   if (panelId === 'workers') workersPolling.start();
   else workersPolling.stop();
+  if (panelId === 'pbcoindata') void loadCmcPool(); // legacy selectPanel
 });
+
+/** Legacy switchTab: switching to the pbcoindata pool tab reloads the pool. */
+function onServiceTab(svcId: string, tabId: string): void {
+  if (svcId === 'pbcoindata' && tabId === 'pool') void loadCmcPool();
+}
 
 function panelLabel(panel: PanelDef): string {
   return panel.i18nKey ? t(panel.i18nKey) : panel.name;
@@ -266,6 +329,7 @@ onMounted(() => {
   statusPolling.start();
   void fetchWorkers(); // legacy fired fetchWorkers(false) once on load
   if (activePanel.value === 'workers') workersPolling.start(); // legacy selectPanel('workers')
+  if (activePanel.value === 'pbcoindata') void loadCmcPool(); // legacy restoreFromHash -> selectPanel
 });
 
 onUnmounted(() => {
@@ -329,7 +393,20 @@ onUnmounted(() => {
           :active="panel.id === activePanel"
           :tabs="SERVICE_TABS[panel.id]"
           @action="serviceAction"
-        />
+          @tab="onServiceTab"
+        >
+          <template v-if="panel.id === 'pbcoindata'" #tab-pool>
+            <CmcPoolPanel
+              :pool="cmcPool"
+              :leases="cmcLeases"
+              :loaded="cmcLoaded"
+              :status="cmcStatus"
+              :load-error="cmcLoadError"
+              :load-notice="cmcNotice"
+              @refresh="loadCmcPool"
+            />
+          </template>
+        </ServiceLogPanel>
         <div v-else class="panel-placeholder">
           <div class="panel-placeholder-name">{{ panelLabel(panel) }}</div>
           <div class="panel-placeholder-hint">

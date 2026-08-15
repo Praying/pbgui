@@ -337,6 +337,102 @@ describe('services_monitor service log wiring', () => {
   });
 });
 
+describe('services_monitor cmc pool wiring', () => {
+  const fetchMock = vi.fn();
+
+  const CMC_POOL = {
+    keys: [{ id: 'k1', label: 'Primary', active: true, generation: 3 }],
+    ready: true,
+    active_credentials: 1,
+    total_credentials: 1,
+    health: 'ok',
+    day: '2026-08-15',
+    soft_credit_limit: 1000,
+    eligible_authority_nodes: [],
+  };
+  const CMC_LEASES = { authority: { available: true, active_leases: 2, lease_count: 5 }, key_usage: [], domains: [], leases: [], warnings: [] };
+
+  function cmcResponse(body: unknown, status = 200): Response {
+    return { ok: status >= 200 && status < 300, status, statusText: 'Err', json: async () => body } as Response;
+  }
+
+  const cmcPoolLoads = () => fetchMock.mock.calls.filter(([url]) => String(url).endsWith('/cmc-pool')).length;
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(async (url: string) =>
+      String(url).endsWith('/cmc-pool/leases') ? cmcResponse(CMC_LEASES) : cmcResponse(CMC_POOL));
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('renders the pool panel in the pbcoindata pool tab and stays idle until activation', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.find('#panel-pbcoindata .cmc-pool-wrap').exists()).toBe(true);
+    // The panel is mounted but hidden behind the log tab; no legacy load until selectPanel.
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(wrapper.find('#panel-pbcoindata .cmc-table-wrap').text()).toContain('Loading pool');
+  });
+
+  it('loads the pool and leases when the pbcoindata panel is activated', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+
+    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await flushPromises();
+
+    const urls = fetchMock.mock.calls.map(([url]) => url);
+    expect(urls).toContain('http://pbgui.test:8000/api/services/cmc-pool');
+    expect(urls).toContain('http://pbgui.test:8000/api/services/cmc-pool/leases');
+    expect(cmcPoolLoads()).toBe(1);
+    expect(wrapper.find('#panel-pbcoindata .cmc-status-text').text()).toBe('CMC pool ready: 1 active, health ok, generation 3');
+    expect(wrapper.find('#panel-pbcoindata .cmc-pool-message').text()).toBe('5 lease records');
+  });
+
+  it('reloads when switching to the pool tab (legacy switchTab)', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await flushPromises();
+    expect(cmcPoolLoads()).toBe(1);
+
+    const poolTab = wrapper.findAll('#panel-pbcoindata .tab-btn').find((b) => b.attributes('data-tab') === 'pool')!;
+    await poolTab.trigger('click');
+    await flushPromises();
+
+    expect(window.location.hash).toBe('#pbcoindata/pool');
+    expect(cmcPoolLoads()).toBe(2);
+  });
+
+  it('restores #pbcoindata/pool from the hash and loads once on mount', async () => {
+    window.location.hash = '#pbcoindata/pool';
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.find('.svc-panel.active').attributes('id')).toBe('panel-pbcoindata');
+    expect(wrapper.find('#panel-pbcoindata .tab-btn[data-tab="pool"]').classes()).toContain('active');
+    expect(cmcPoolLoads()).toBe(1);
+  });
+
+  it('shows the unavailable status bar and error message when the load fails', async () => {
+    fetchMock.mockImplementation(async () => cmcResponse({ detail: 'pool down' }, 503));
+    const wrapper = mountApp();
+
+    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('#panel-pbcoindata .cmc-status-bar').classes()).toContain('error');
+    expect(wrapper.find('#panel-pbcoindata .cmc-status-text').text()).toBe('CMC pool unavailable: pool down');
+    expect(wrapper.find('#panel-pbcoindata .cmc-pool-message').classes()).toContain('error');
+    expect(wrapper.find('#panel-pbcoindata .cmc-pool-message').text()).toBe('pool down');
+  });
+});
+
 describe('services_monitor config', () => {
   it('derives the services API base from the boot origin', () => {
     expect(apiBase()).toBe('http://pbgui.test:8000/api/services');
