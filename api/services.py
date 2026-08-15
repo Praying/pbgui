@@ -24,10 +24,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from api.auth import require_auth, SessionToken
+from api.auth import require_auth, SessionToken, serve_vue_or_legacy_page
 from api.vps import get_monitor
 from cluster_credential_publisher import ClusterCredentialPublisher, CredentialPublicationError
 from cmc_leases import CmcLeaseAuthority
@@ -2904,35 +2904,38 @@ def get_poller_metrics(session: SessionToken = Depends(require_auth)) -> Dict[st
 
 # ── Main page ────────────────────────────────────────────────
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone Services Monitor page with token injected server-side."""
-    html_path = Path(__file__).parent.parent / "frontend" / "services_monitor.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the Services Monitor page: built Vue entry first, legacy fallback.
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_services_base = origin + "/api/services"
-    ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
+    The legacy HTML path keeps the token/base-URL placeholder injections; the
+    Vue bundle reads the same values from /api/boot.js at runtime.
+    """
 
-    html = html.replace('"%%TOKEN%%"', json.dumps(session.token))
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_services_base))
-    html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
+    def inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_services_base = origin + "/api/services"
+        ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
 
-    from pbgui_purefunc import PBGUI_VERSION
-    from pbgui_purefunc import PBGUI_SERIAL
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        html = html.replace('"%%TOKEN%%"', json.dumps(session.token))
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_services_base))
+        html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
 
-    nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+        from pbgui_purefunc import PBGUI_VERSION
+        from pbgui_purefunc import PBGUI_SERIAL
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("services_monitor", "services_monitor.html", request, inject)

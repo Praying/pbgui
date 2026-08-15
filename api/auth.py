@@ -2,6 +2,7 @@
 
 import asyncio
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 import hashlib
 import hmac
@@ -434,6 +435,36 @@ def _root_url() -> str:
     return "/"
 
 
+def serve_vue_or_legacy_page(
+    page: str,
+    legacy_name: str,
+    request: Request,
+    inject: Callable[[str, Request], str] | None = None,
+) -> FileResponse | HTMLResponse:
+    """Serve a migrated page: built Vue entry first, legacy template fallback.
+
+    `frontend/dist` is gitignored and produced by `npm run build`, so a clone
+    without a build must still get the legacy HTML (`inject` performs the old
+    server-side placeholder replacements). A missing legacy file means the
+    checkout is broken — fail loudly with a build hint.
+    """
+    vue_path = _frontend_dist_path(page)
+    if vue_path.is_file():
+        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
+
+    legacy_path = _frontend_template_path(legacy_name)
+    if legacy_path.is_file():
+        html = legacy_path.read_text(encoding="utf-8")
+        if inject is not None:
+            html = inject(html, request)
+        return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+
+    raise HTTPException(
+        status_code=500,
+        detail=f"{page} page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    )
+
+
 def build_root_entry_response(
     request: Request,
     session: SessionToken | None = None,
@@ -448,19 +479,13 @@ def build_root_entry_response(
     if auth_state["error"] or session is not None or not auth_state["required"]:
         return RedirectResponse(url=_main_page_url())
 
-    vue_path = _frontend_dist_path("root_login")
-    if vue_path.is_file():
-        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
-
-    legacy_path = _frontend_template_path("root_login.html")
-    if legacy_path.is_file():
-        html = legacy_path.read_text(encoding="utf-8")
-        html = html.replace('"%%API_ORIGIN%%"', json.dumps(_request_origin(request)))
-        return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
-
-    raise HTTPException(
-        status_code=500,
-        detail="Login page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    return serve_vue_or_legacy_page(
+        "root_login",
+        "root_login.html",
+        request,
+        inject=lambda html, req: html.replace(
+            '"%%API_ORIGIN%%"', json.dumps(_request_origin(req))
+        ),
     )
 
 
