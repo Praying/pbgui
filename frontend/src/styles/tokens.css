@@ -1,0 +1,16 @@
+:root {
+  --bg-page: #000000;
+  --bg-panel: #111827;
+  --bg-card: #111827;
+  --border-subtle: #1e2736;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #4a5568;
+  --accent: #4da6ff;
+  --ok: #4ade80;
+  --warn: #f59e0b;
+  --err: #ff4b4b;
+  --fs-xs: 11px; --fs-sm: 13px; --fs-base: 14px; --fs-md: 15px; --fs-lg: 18px; --fs-xl: 22px;
+  --sp-xs: 4px; --sp-sm: 8px; --sp-md: 12px; --sp-lg: 20px;
+  --input-h: 32px; --btn-h: 32px;
+}

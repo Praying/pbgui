@@ -1,0 +1,14 @@
+/* Reset and body base styles, ported from frontend/root_login.html.
+   Variables come from tokens.css (import tokens.css first). */
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+    font-size: var(--fs-base);
+}
