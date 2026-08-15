@@ -56,6 +56,12 @@ const props = withDefaults(
     zoomPos?: string | null;
     /** Widget-specific zoom application (applyRangeZoom / applyPplZoom). */
     applyZoom?: (layout: PlotlyLayout, zoom: SavedZoom | null) => PlotlyLayout;
+    /**
+     * Selector of the fullscreen target root. Legacy widgets fullscreen
+     * their own chrome root — `.dt-root` everywhere except income, which
+     * requests fullscreen on `.di-root` (render.js:1528, 1558).
+     */
+    fullscreenRoot?: string;
     displayModeBar?: boolean;
     responsive?: boolean;
   }>(),
@@ -63,6 +69,7 @@ const props = withDefaults(
     height: null,
     zoomPos: null,
     applyZoom: (layout: PlotlyLayout) => layout,
+    fullscreenRoot: '.dt-root',
     displayModeBar: false,
     responsive: true,
   }
@@ -78,7 +85,9 @@ let relayoutListenerAttached = false;
 /* ── fullscreen (legacy render.js:647-684 via useFullscreen) ── */
 
 const rootEl = computed<HTMLElement | null>(() =>
-  chartEl.value ? ((chartEl.value.closest('.dt-root') as HTMLElement | null) ?? null) : null
+  chartEl.value
+    ? ((chartEl.value.closest(props.fullscreenRoot) as HTMLElement | null) ?? null)
+    : null
 );
 
 const fs = useFullscreen({

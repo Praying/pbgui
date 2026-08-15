@@ -324,3 +324,45 @@ describe('PlotlyChart', () => {
     expect(getPlotly()).toBeDefined();
   });
 });
+
+describe('PlotlyChart fullscreenRoot selector (D-editor-7 income, render.js:1528/1558)', () => {
+  it('defaults to .dt-root and honors a custom selector like .di-root', async () => {
+    /* default: the wrapper's own .dt-root */
+    const defaultHost = mount(HOST, {
+      props: { traces: [{ x: ['a'], y: [1] }], layout: { autosize: true } },
+    });
+    const defaultRoot = defaultHost.get('.dt-root').element as HTMLElement & {
+      requestFullscreen?: () => void;
+    };
+    defaultRoot.requestFullscreen = vi.fn();
+    const defaultCfg = react.mock.calls[0]![3] as {
+      modeBarButtonsToAdd: Array<{ click: (gd: unknown) => void }>;
+    };
+    defaultCfg.modeBarButtonsToAdd[0]!.click(defaultHost.get('.dt-chart').element);
+    expect(defaultRoot.requestFullscreen).toHaveBeenCalledTimes(1);
+    defaultHost.unmount();
+    react.mockClear();
+
+    /* income: fullscreen targets .di-root, not .dt-root */
+    const incomeHost = defineComponent({
+      components: { PlotlyChart },
+      props: { traces: { type: Array, required: true }, layout: { type: Object, required: true } },
+      template: `
+        <div class="di-root">
+          <PlotlyChart :traces="traces" :layout="layout" display-mode-bar responsive fullscreen-root=".di-root" />
+        </div>`,
+    });
+    const wrapper = mount(incomeHost, {
+      props: { traces: [{ x: ['a'], y: [1] }], layout: { autosize: true } },
+    });
+    const diRoot = wrapper.get('.di-root').element as HTMLElement & {
+      requestFullscreen?: () => void;
+    };
+    diRoot.requestFullscreen = vi.fn();
+    const cfg = react.mock.calls[0]![3] as {
+      modeBarButtonsToAdd: Array<{ click: (gd: unknown) => void }>;
+    };
+    cfg.modeBarButtonsToAdd[0]!.click(wrapper.get('.dt-chart').element);
+    expect(diRoot.requestFullscreen).toHaveBeenCalledTimes(1);
+  });
+});

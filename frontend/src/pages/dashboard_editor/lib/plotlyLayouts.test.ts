@@ -5,6 +5,8 @@ import {
   applyRangeZoom,
   captureFracZoom,
   captureZoom,
+  incomeLayout,
+  incomeTraces,
   plotlyConfig,
   pnlLayout,
   pnlTraces,
@@ -322,5 +324,54 @@ describe('plotlyConfig (render.js:653-684)', () => {
     );
     (btn.click as (gd: unknown) => void)('gd');
     expect(onToggle).toHaveBeenCalledWith('gd');
+  });
+});
+
+/* ── INCOME (dashboard_render.js:866-893 fast path + 1500-1524 _buildIncomeChart) ── */
+
+describe('incomeTraces (render.js:866-868 / 1501-1510)', () => {
+  it('maps server traces to scatter/lines with legend', () => {
+    const traces = incomeTraces([
+      { name: 'Total Income', x: ['2024-01-01 00:00:00', '2024-01-02 00:00:00'], y: [10, 25] },
+      { name: 'BTC', x: ['2024-01-01 00:00:00'], y: [10] },
+    ]);
+    expect(traces).toEqual([
+      {
+        x: ['2024-01-01 00:00:00', '2024-01-02 00:00:00'],
+        y: [10, 25],
+        name: 'Total Income',
+        type: 'scatter',
+        mode: 'lines',
+        showlegend: true,
+      },
+      { x: ['2024-01-01 00:00:00'], y: [10], name: 'BTC', type: 'scatter', mode: 'lines', showlegend: true },
+    ]);
+  });
+
+  it('returns new trace objects per call (traces are never mutated in place)', () => {
+    const input = [{ name: 'a', x: ['2024-01-01 00:00:00'], y: [2] }];
+    const a = incomeTraces(input);
+    const b = incomeTraces(input);
+    expect(a[0]).not.toBe(b[0]);
+  });
+});
+
+describe('incomeLayout (render.js:869-877 / 1513-1524)', () => {
+  it('matches the legacy income layout skeleton (margins l55 r15 t40 b40, transparent legend)', () => {
+    expect(incomeLayout(null)).toEqual({
+      paper_bgcolor: '#0e1117',
+      plot_bgcolor: '#0e1117',
+      font: { color: '#e2e8f0', size: 11 },
+      margin: { l: 55, r: 15, t: 40, b: 40 },
+      autosize: true,
+      xaxis: { gridcolor: '#2d3748', color: '#e2e8f0' },
+      yaxis: { gridcolor: '#2d3748', color: '#e2e8f0', zeroline: true, zerolinecolor: '#4a5568' },
+      legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: '#e2e8f0' } },
+      transition: { duration: 0, easing: 'linear' },
+    });
+  });
+
+  it('adds the explicit height only when provided (legacy origHeight branch, render.js:1524)', () => {
+    expect(incomeLayout(320)).toEqual({ ...incomeLayout(null), height: 320 });
   });
 });

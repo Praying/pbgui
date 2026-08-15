@@ -165,6 +165,53 @@ export interface WidgetPositionsProps extends DataManagingWidgetProps {
   position: string;
 }
 
+/* ── INCOME widget payload (GET /dashboard/income_data, dashboard.py:2170-2250) ── */
+
+/**
+ * A /dashboard/income_data table row (dashboard.py:2207-2215). last_n > 0
+ * selects table mode; rows arrive sorted date_ms desc from the server — the
+ * legacy table renders them in that order untouched (render.js:1245 renders
+ * before any doSort).
+ */
+export interface IncomeRow {
+  id: number;
+  date_ms: number;
+  date: string;
+  symbol: string;
+  income: number;
+  user: string;
+}
+
+/** A /dashboard/income_data chart trace — the first is "Total Income" (dashboard.py:2228-2247). */
+export interface IncomeTrace {
+  name: string;
+  x: string[];
+  y: number[];
+}
+
+/** GET /dashboard/income_data payload (buildIncomeInline data, editor:1386-1388). */
+export interface IncomeData {
+  mode?: string;
+  rows?: IncomeRow[];
+  traces?: IncomeTrace[];
+  from_date?: string;
+  to_date?: string;
+}
+
+/** Props for the INCOME widget — legacy buildIncome opts (editor:1491-1501). */
+export interface WidgetIncomeProps extends DataManagingWidgetProps {
+  /** Legacy period opt (static display only — controls live in the header). */
+  period: string;
+  /** Legacy lastN opt. */
+  lastN: number;
+  /** Legacy filterVal opt. */
+  filterVal: number;
+  /** Legacy height opt — the editor always passes null (editor:1500). */
+  height: number | null;
+  displayModeBar: boolean;
+  responsive: boolean;
+}
+
 /* ── Orders widget payload (GET /dashboard/orders_data, dashboard.py:2931-2941) ── */
 
 /** An OHLCV candle in ms — server rows are {t,o,h,l,c,v} (dashboard.py:2855). */

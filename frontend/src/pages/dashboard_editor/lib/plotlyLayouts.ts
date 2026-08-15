@@ -20,7 +20,7 @@
  */
 import { dashT } from './i18n';
 import type { SavedZoom } from './savedZoom';
-import type { TopRow } from '../types/widgets';
+import type { IncomeTrace, TopRow } from '../types/widgets';
 
 /* ── vendor shapes (window.Plotly stays a global, R2) ── */
 
@@ -227,6 +227,45 @@ export function pplLayout(height: number | null, bars: PplBar[]): PlotlyLayout {
     },
     height
   );
+}
+
+/* ── INCOME (render.js:866-893 fast path + 1500-1524 _buildIncomeChart) ── */
+
+/**
+ * Per-symbol cumulative line traces (render.js:866-868 fast path = 1501-1510
+ * initial build): scatter/lines/showlegend, name from the server.
+ */
+export function incomeTraces(traces: IncomeTrace[]): PlotlyTrace[] {
+  return traces.map((t) => ({
+    x: t.x,
+    y: t.y,
+    name: t.name,
+    type: 'scatter',
+    mode: 'lines',
+    showlegend: true,
+  }));
+}
+
+/**
+ * The income layout (render.js:869-877 fast path = 1513-1524 initial): unlike
+ * the PNL/ADG skeleton it uses margins l55/r15/t40/b40, a plain xaxis (no
+ * tickangle/type) and a transparent legend — kept as its own factory instead
+ * of baseLayout so the parity stays byte-exact. The height key is only added
+ * when provided (legacy `if (origHeight) layout.height = origHeight`).
+ */
+export function incomeLayout(height: number | null): PlotlyLayout {
+  const layout: PlotlyLayout = {
+    paper_bgcolor: PAPER_BG,
+    plot_bgcolor: PAPER_BG,
+    font: { color: AXIS_TEXT, size: 11 },
+    margin: { l: 55, r: 15, t: 40, b: 40 },
+    autosize: true,
+    xaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT },
+    yaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT, zeroline: true, zerolinecolor: '#4a5568' },
+    legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: AXIS_TEXT } },
+    transition: { duration: 0, easing: 'linear' },
+  };
+  return withHeight(layout, height);
 }
 
 /* ── zoom restore (render.js:1630-1637, 1901-1923, 3907-3913) ── */
