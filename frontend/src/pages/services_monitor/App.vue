@@ -27,12 +27,12 @@
  * │ PbDataStatus        │ 12     │ loadFetchSummary/renderFetchSummary,               │
  * │                     │        │ loadPollerMetrics/renderPollerMetrics,             │
  * │                     │        │ applyFetchFilters                                 │
- * │ ApiServerSettings   │ 13     │ applySettings, renderVpsHosts,                      │
- * │                     │        │ renderMonitorSettingsFields, renderAlertRouting-   │
- * │                     │        │ Settings/applyAlertRoutingSettings/collectAlert-   │
- * │                     │        │ RoutingFromForm, collectMonitorConfigFromForm,     │
- * │                     │        │ saveApiServerSettings, restartApiServer            │
- * │ CoinDataSettings    │ 13     │ saveCoinDataSettings (interval form)               │
+ * │ ApiServerSettings   │ 13 ✓   │ applySettings, renderVpsHosts,                      │
+ * │                     │        │ renderMonitorSettingsFields (MonitorThresholds),   │
+ * │                     │        │ renderAlertRoutingSettings (AlertRouting)/         │
+ * │                     │        │ collectAlertRoutingFromForm/collectMonitorConfig-  │
+ * │                     │        │ FromForm, saveApiServerSettings, restartApiServer  │
+ * │ CoinDataSettings    │ 13 ✓   │ saveCoinDataSettings (interval form)               │
  * │ MigrationPanel      │ 14     │ loadMigrationStatus, renderMigrationStatus,        │
  * │                     │        │ migrationStatusMeta, renderMigrationUnits/Crontab/ │
  * │                     │        │ StartScript/Processes, updateMigrationSummary,     │
@@ -57,6 +57,8 @@ import WorkersPanel from './components/WorkersPanel.vue';
 import CmcPoolPanel from './components/CmcPoolPanel.vue';
 import CmcStatusBar from './components/CmcStatusBar.vue';
 import PbDataSettings from './components/PbDataSettings.vue';
+import CoinDataSettings from './components/CoinDataSettings.vue';
+import ApiServerSettings from './components/ApiServerSettings.vue';
 import { SERVICES } from './services';
 import { apiBase } from './config';
 import { cmcFetch } from './cmc';
@@ -236,30 +238,42 @@ watch(activePanel, (panelId) => {
   if (panelId === 'pbcoindata') void loadCmcPool(); // legacy selectPanel
 });
 
-/** Legacy switchTab: switching to the pbcoindata pool tab reloads the pool. */
+/** Legacy switchTab: settings tabs lazily load; the pbcoindata pool tab reloads the pool. */
 function onServiceTab(svcId: string, tabId: string): void {
   if (svcId === 'pbcoindata' && tabId === 'pool') void loadCmcPool();
-  if (svcId === 'pbdata' && tabId === 'settings') loadPbdataSettings();
+  if (tabId === 'settings' && (SETTINGS_SERVICES as readonly string[]).includes(svcId)) {
+    loadSettingsPane(svcId);
+  }
 }
 
-/* ── PBData settings (legacy loadSettings/_settingsLoaded for pbdata) ── */
+/* ── Settings panes (legacy loadSettings/_settingsLoaded) ── */
 
-type PbDataSettingsInstance = ComponentPublicInstance<{ load: () => Promise<void> }>;
+type SettingsPaneInstance = ComponentPublicInstance<{ load: () => Promise<void> }>;
 
-/** Function ref — a string ref inside the PANELS v-for would collect an array. */
-const pbdataSettingsEl = ref<PbDataSettingsInstance | null>(null);
-function setPbdataSettings(el: Element | ComponentPublicInstance | null): void {
-  pbdataSettingsEl.value = el as PbDataSettingsInstance | null;
+/** Services with a settings tab that lazily loads GET /settings/{svcId}. */
+const SETTINGS_SERVICES = ['pbdata', 'pbcoindata', 'api-server'] as const;
+
+/** Function refs — a string ref inside the PANELS v-for would collect an array. */
+const settingsEls: Record<string, SettingsPaneInstance | null> = Object.fromEntries(
+  SETTINGS_SERVICES.map((svcId) => [svcId, null])
+);
+/** Legacy _settingsLoaded[svc]: the settings load exactly once per session. */
+const settingsLoaded: Record<string, boolean> = {};
+
+function makeSettingsRef(svcId: string) {
+  return (el: Element | ComponentPublicInstance | null): void => {
+    settingsEls[svcId] = el as SettingsPaneInstance | null;
+  };
 }
+const setPbdataSettings = makeSettingsRef('pbdata');
+const setCoinDataSettings = makeSettingsRef('pbcoindata');
+const setApiServerSettings = makeSettingsRef('api-server');
 
-/** Legacy _settingsLoaded['pbdata']: the settings load exactly once per session. */
-let pbdataSettingsLoaded = false;
-
-/** Legacy loadSettings('pbdata'): GET /settings/pbdata into the settings pane. */
-function loadPbdataSettings(): void {
-  if (pbdataSettingsLoaded) return;
-  pbdataSettingsLoaded = true;
-  void pbdataSettingsEl.value?.load();
+/** Legacy loadSettings(svcId): GET /settings/{svcId} into the settings pane. */
+function loadSettingsPane(svcId: string): void {
+  if (settingsLoaded[svcId]) return;
+  settingsLoaded[svcId] = true;
+  void settingsEls[svcId]?.load();
 }
 
 function panelLabel(panel: PanelDef): string {
@@ -354,7 +368,9 @@ onMounted(() => {
   if (activePanel.value === 'workers') workersPolling.start(); // legacy selectPanel('workers')
   if (activePanel.value === 'pbcoindata') void loadCmcPool(); // legacy restoreFromHash -> selectPanel
   // legacy restoreFromHash -> switchTab('settings') loads the settings once
-  if (activePanel.value === 'pbdata' && window.location.hash.split('/')[1] === 'settings') loadPbdataSettings();
+  if (window.location.hash.split('/')[1] === 'settings' && (SETTINGS_SERVICES as readonly string[]).includes(activePanel.value)) {
+    loadSettingsPane(activePanel.value);
+  }
 });
 
 onUnmounted(() => {
@@ -433,8 +449,14 @@ onUnmounted(() => {
               @refresh="loadCmcPool"
             />
           </template>
+          <template v-if="panel.id === 'pbcoindata'" #tab-settings>
+            <CoinDataSettings :ref="setCoinDataSettings" />
+          </template>
           <template v-if="panel.id === 'pbdata'" #tab-settings>
             <PbDataSettings :ref="setPbdataSettings" />
+          </template>
+          <template v-if="panel.id === 'api-server'" #tab-settings>
+            <ApiServerSettings :ref="setApiServerSettings" />
           </template>
         </ServiceLogPanel>
         <div v-else class="panel-placeholder">

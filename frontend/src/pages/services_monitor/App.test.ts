@@ -560,6 +560,220 @@ describe('services_monitor pbdata settings wiring', () => {
   });
 });
 
+describe('services_monitor apiserver settings wiring', () => {
+  const SETTINGS_PAYLOAD = {
+    host: '10.0.0.5',
+    port: 8123,
+    auto_restart: true,
+    available_hosts: ['vps1.example.com'],
+    enabled_hosts: ['vps1.example.com'],
+    monitor_config: { mem_warning_server: 80 },
+    telegram_token: 'tok',
+    telegram_chat_id: '-100',
+    service_gui: false,
+  };
+
+  const settingsCalls = () =>
+    apiFetchMock.mock.calls.filter(([url]) => String(url).endsWith('/settings/api-server'));
+
+  function settingsApi(): void {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/settings/api-server')) return SETTINGS_PAYLOAD;
+      return String(url).endsWith('/workers/status')
+        ? { counts: { total: 4, running: 3 }, groups: [] }
+        : String(url).endsWith('/status')
+          ? STATUS_PAYLOAD
+          : {};
+    });
+  }
+
+  /** The api-server settings tab button (log → settings order). */
+  async function openSettingsTab(wrapper: ReturnType<typeof mountApp>) {
+    await wrapper.find('.sb-btn[data-panel="api-server"]').trigger('click');
+    const tab = wrapper.findAll('#panel-api-server .tab-btn').find((b) => b.attributes('data-tab') === 'settings')!;
+    await tab.trigger('click');
+  }
+
+  it('loads GET /settings/api-server on first settings tab activation and renders the form', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(1);
+    expect(settingsCalls()[0]![0]).toBe('http://pbgui.test:8000/api/services/settings/api-server');
+    expect(wrapper.find('#panel-api-server #apiserver-settings-wrap').exists()).toBe(true);
+    expect(wrapper.findAll('#panel-api-server .form-section-title').map((s) => s.text())).toEqual([
+      'Connection',
+      'VPS Monitoring',
+      'Alerts / Telegram',
+    ]);
+    expect((wrapper.find('#panel-api-server #apiserver-host').element as HTMLInputElement).value).toBe('10.0.0.5');
+    expect(wrapper.find('#panel-api-server #service_gui').exists()).toBe(true);
+  });
+
+  it('shows the loading placeholder until the settings load resolves', async () => {
+    apiFetchMock.mockImplementation(
+      async (url: string) =>
+        String(url).endsWith('/settings/api-server')
+          ? new Promise(() => {}) // never resolves
+          : String(url).endsWith('/status')
+            ? STATUS_PAYLOAD
+            : {}
+    );
+    const wrapper = mountApp();
+    await flushPromises();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(wrapper.find('#panel-api-server #apiserver-settings-wrap').text()).toBe('Loading settings…');
+  });
+
+  it('does not reload settings on repeated settings tab activation (legacy _settingsLoaded)', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(1);
+  });
+
+  it('loads once on mount when restored from #api-server/settings (legacy restoreFromHash)', async () => {
+    settingsApi();
+    window.location.hash = '#api-server/settings';
+    apiFetchMock.mockClear(); // the load fires during mount
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.find('.svc-panel.active').attributes('id')).toBe('panel-api-server');
+    expect(wrapper.find('#panel-api-server .tab-btn[data-tab="settings"]').classes()).toContain('active');
+    expect(settingsCalls()).toHaveLength(1);
+    expect(wrapper.find('#panel-api-server #apiserver-port').exists()).toBe(true);
+  });
+
+  it('does not load settings when only the log tab is opened', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('.sb-btn[data-panel="api-server"]').trigger('click');
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(0);
+    expect(wrapper.find('#panel-api-server #apiserver-settings-wrap').text()).toBe('Loading settings…');
+  });
+});
+
+describe('services_monitor pbcoindata settings wiring', () => {
+  const SETTINGS_PAYLOAD = {
+    fetch_interval: 6,
+    fetch_limit: 2000,
+    metadata_interval: 3,
+    mapping_interval: 48,
+  };
+
+  const settingsCalls = () =>
+    apiFetchMock.mock.calls.filter(([url]) => String(url).endsWith('/settings/pbcoindata'));
+
+  /** pbcoindata activation also fires the CMC pool loads through global fetch. */
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({}) } as Response));
+    vi.stubGlobal('fetch', fetchMock);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function settingsApi(): void {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/settings/pbcoindata')) return SETTINGS_PAYLOAD;
+      return String(url).endsWith('/workers/status')
+        ? { counts: { total: 4, running: 3 }, groups: [] }
+        : String(url).endsWith('/status')
+          ? STATUS_PAYLOAD
+          : {}
+    });
+  }
+
+  /** The pbcoindata settings tab button (log → pool → settings order). */
+  async function openSettingsTab(wrapper: ReturnType<typeof mountApp>) {
+    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    const tab = wrapper.findAll('#panel-pbcoindata .tab-btn').find((b) => b.attributes('data-tab') === 'settings')!;
+    await tab.trigger('click');
+  }
+
+  it('loads GET /settings/pbcoindata on first settings tab activation and renders the form', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(1);
+    expect(settingsCalls()[0]![0]).toBe('http://pbgui.test:8000/api/services/settings/pbcoindata');
+    expect(wrapper.find('#panel-pbcoindata #coindata-settings-wrap').exists()).toBe(true);
+    expect(wrapper.find('#panel-pbcoindata #coindata-settings-wrap .form-section-title').text()).toBe('Intervals');
+    expect((wrapper.find('#panel-pbcoindata #coindata-fetch-interval').element as HTMLInputElement).value).toBe('6');
+  });
+
+  it('does not reload settings on repeated settings tab activation (legacy _settingsLoaded)', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await openSettingsTab(wrapper);
+    await flushPromises();
+    // switch away to pool and back to settings
+    const poolTab = wrapper.findAll('#panel-pbcoindata .tab-btn').find((b) => b.attributes('data-tab') === 'pool')!;
+    await poolTab.trigger('click');
+    await openSettingsTab(wrapper);
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(1);
+  });
+
+  it('loads once on mount when restored from #pbcoindata/settings (legacy restoreFromHash)', async () => {
+    settingsApi();
+    window.location.hash = '#pbcoindata/settings';
+    apiFetchMock.mockClear(); // the load fires during mount
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.find('.svc-panel.active').attributes('id')).toBe('panel-pbcoindata');
+    expect(wrapper.find('#panel-pbcoindata .tab-btn[data-tab="settings"]').classes()).toContain('active');
+    expect(settingsCalls()).toHaveLength(1);
+    expect(wrapper.find('#panel-pbcoindata #coindata-fetch-limit').exists()).toBe(true);
+  });
+
+  it('does not load settings when only the pool tab is opened', async () => {
+    settingsApi();
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await flushPromises();
+
+    expect(settingsCalls()).toHaveLength(0);
+    expect(wrapper.find('#panel-pbcoindata #coindata-settings-wrap').text()).toBe('Loading settings…');
+  });
+});
+
 describe('services_monitor config', () => {
   it('derives the services API base from the boot origin', () => {
     expect(apiBase()).toBe('http://pbgui.test:8000/api/services');
