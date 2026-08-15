@@ -69,6 +69,48 @@ export function serviceStatusTitle(t: Translate, item: ServiceStatus): string {
   return parts.join('\n');
 }
 
+export interface ServiceButton {
+  action: ServiceAction;
+  label: string;
+  /** Legacy button icons: ▶ start, ■ stop, ↻ restart; enable/disable have none. */
+  icon: '' | '▶' | '■' | '↻';
+  disabled: boolean;
+}
+
+/**
+ * Legacy renderServiceButtons - one shared row for the overview cards (compact)
+ * and the per-panel ctrl strips. Any pending action disables every button and
+ * swaps the matching label for its progress text.
+ */
+export function serviceButtons(
+  t: Translate,
+  isApiServer: boolean,
+  item: ServiceStatus,
+  pending: ServiceAction | null
+): ServiceButton[] {
+  const buttons: ServiceButton[] = [];
+  const make = (action: ServiceAction): ServiceButton => ({
+    action,
+    label: pending === action ? serviceActionProgressText(t, pending) : t(`sysmon.${action}`),
+    icon: action === 'start' ? '▶' : action === 'stop' ? '■' : action === 'restart' ? '↻' : '',
+    disabled: pending !== null,
+  });
+  if (!serviceSkipped(item)) {
+    if (isApiServer) {
+      buttons.push(item.running ? make('restart') : make('start'));
+    } else if (item.running) {
+      buttons.push(make('stop'), make('restart'));
+    } else {
+      buttons.push(make('start'));
+    }
+  }
+  if (item.can_enable) {
+    if (item.enabled) buttons.push(make('disable'));
+    else if (!item.enable_blocked_reason) buttons.push(make('enable'));
+  }
+  return buttons;
+}
+
 export interface MigrationStatusMeta {
   cls: string;
   label: string;

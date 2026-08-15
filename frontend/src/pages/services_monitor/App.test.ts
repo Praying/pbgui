@@ -43,7 +43,11 @@ const STATUS_PAYLOAD: ServiceStatusMap = {
 
 function statusApi(): void {
   apiFetchMock.mockImplementation(async (url: string) =>
-    String(url).endsWith('/status') ? STATUS_PAYLOAD : {}
+    String(url).endsWith('/workers/status')
+      ? { counts: { total: 4, running: 3 }, groups: [] }
+      : String(url).endsWith('/status')
+        ? STATUS_PAYLOAD
+        : {}
   );
 }
 
@@ -79,9 +83,11 @@ describe('services_monitor App skeleton', () => {
     for (const id of PANEL_IDS) {
       expect(wrapper.find(`#panel-${id}`).exists(), `panel ${id} container`).toBe(true);
     }
-    // The overview panel is live since Task 9; the rest still show placeholders.
+    // The overview and workers panels are live since Tasks 9/10; the rest show
+    // placeholders or panel components per task.
     expect(wrapper.find('#panel-overview .panel-placeholder').exists()).toBe(false);
-    expect(wrapper.find('#panel-workers .panel-placeholder-hint').text()).toContain('WorkersPanel');
+    expect(wrapper.find('#panel-workers .workers-shell').exists()).toBe(true);
+    expect(wrapper.find('#panel-migration .panel-placeholder-hint').text()).toContain('MigrationPanel');
   });
 
   it('shows the overview panel as active by default', () => {
@@ -241,6 +247,93 @@ describe('services_monitor overview panel', () => {
     } finally {
       delete (window as { showRestartOverlay?: unknown }).showRestartOverlay;
     }
+  });
+});
+
+describe('services_monitor workers wiring', () => {
+  it('fetches worker status once on mount and feeds the overview card', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/status');
+    const workersCard = wrapper.findAll('#panel-overview .svc-card').find((c) => c.attributes('data-svc') === 'workers')!;
+    expect(workersCard.find('.card-status-row').text()).toBe('3 / 4 running');
+    // Worker groups drive the panel list.
+    expect(wrapper.find('#panel-workers .worker-detail-empty').text()).toContain('No workers available.');
+  });
+
+  it('polls worker status every 5s only while the workers panel is active', async () => {
+    vi.useFakeTimers();
+    const workerCalls = () => apiFetchMock.mock.calls.filter(([url]) => String(url).endsWith('/workers/status')).length;
+    try {
+      const wrapper = mountApp();
+      await flushPromises();
+
+      vi.advanceTimersByTime(10_000);
+      await flushPromises();
+      const baseline = workerCalls();
+      expect(baseline).toBeGreaterThanOrEqual(1); // legacy single fetchWorkers(false) on load
+      expect(workerCalls()).toBe(baseline); // no polling from other panels (legacy scheduleWorkers)
+
+      await wrapper.find('.sb-btn[data-panel="workers"]').trigger('click');
+      await flushPromises();
+      vi.advanceTimersByTime(10_000);
+      await flushPromises();
+      expect(workerCalls()).toBeGreaterThan(baseline);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('renders the worker list in the panel from the polled payload', async () => {
+    apiFetchMock.mockImplementation(async (url: string) =>
+      String(url).endsWith('/workers/status')
+        ? {
+            counts: { total: 1, running: 1 },
+            groups: [{ id: 'g', label: 'Group', items: [{ id: 'w1', label: 'Frontend', running: true, log_file: 'logs/frontend.log' }] }],
+          }
+        : String(url).endsWith('/status')
+          ? STATUS_PAYLOAD
+          : {}
+    );
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.find('#panel-workers .worker-group-title').text()).toBe('Group');
+    expect(wrapper.find('#panel-workers .card-name').text()).toBe('Frontend');
+  });
+});
+
+describe('services_monitor service log wiring', () => {
+  it('renders the legacy ctrl strip and log container for the log-only panels', () => {
+    const wrapper = mountApp();
+
+    expect(wrapper.find('#panel-pbcluster .ctrl-strip').exists()).toBe(true);
+    expect(wrapper.find('#panel-pbcluster .ctrl-title').text()).toBe('PBCluster');
+    // Panel not active -> no log viewer yet (legacy initLogViewer on selectPanel).
+    expect(wrapper.find('#panel-pbcluster .logviewer').exists()).toBe(false);
+  });
+
+  it('renders the legacy tab bar for the multi-tab services', () => {
+    const wrapper = mountApp();
+
+    const tabs = wrapper.findAll('#panel-pbdata .tab-btn');
+    expect(tabs.map((b) => b.text())).toEqual(['📋 Log', '⚙ Settings', '📊 Status']);
+    expect(wrapper.findAll('#panel-api-server .tab-btn').map((b) => b.text())).toEqual(['📋 Log', '⚙ Settings']);
+    expect(wrapper.findAll('#panel-pbcoindata .tab-btn').map((b) => b.text())).toEqual(['📋 Log', 'Pool', '⚙ Settings']);
+  });
+
+  it('emits service actions from the panel ctrl strip through App', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    apiFetchMock.mockClear();
+
+    await wrapper.find('#panel-pbrun .ctrl-btn.start').trigger('click');
+    await flushPromises();
+
+    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/pbrun/start', {
+      method: 'POST',
+    });
   });
 });
 

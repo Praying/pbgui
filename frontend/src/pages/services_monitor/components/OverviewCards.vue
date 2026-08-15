@@ -11,8 +11,7 @@ import { useI18n } from 'vue-i18n';
 import { SERVICES } from '../services';
 import {
   migrationStatusMeta,
-  serviceActionProgressText,
-  serviceSkipped,
+  serviceButtons,
   serviceStatusClass,
   serviceStatusText,
   serviceStatusTitle,
@@ -54,7 +53,6 @@ interface CardButton {
   disabled: boolean;
   action: ServiceAction | null;
 }
-
 interface Card {
   svcId: string;
   panelId: string;
@@ -68,32 +66,19 @@ interface Card {
   buttons: CardButton[];
 }
 
-/** Legacy renderServiceButtons(compact) row for one service. */
-function serviceButtons(svcId: string, isApiServer: boolean, item: NonNullable<ServiceStatusMap[string]>, pending: ServiceAction | null): CardButton[] {
-  const buttons: CardButton[] = [];
-  const make = (kind: ServiceAction): CardButton => ({
-    kind,
-    label: pending === kind ? serviceActionProgressText(tt, pending) : t(`sysmon.${kind}`),
-    icon: kind === 'start' ? '▶' : kind === 'stop' ? '■' : kind === 'restart' ? '↻' : '',
-    // Legacy disabledAttr: any pending action disables every button of the service.
-    disabled: pending !== null,
-    action: kind,
-  });
-  if (!serviceSkipped(item)) {
-    if (isApiServer) {
-      // api-server restart routes to the legacy restartApiServer flow in App.
-      buttons.push(item.running ? make('restart') : make('start'));
-    } else if (item.running) {
-      buttons.push(make('stop'), make('restart'));
-    } else {
-      buttons.push(make('start'));
-    }
-  }
-  if (item.can_enable) {
-    if (item.enabled) buttons.push(make('disable'));
-    else if (!item.enable_blocked_reason) buttons.push(make('enable'));
-  }
-  return buttons;
+/** Legacy renderServiceButtons(compact) row for one service (logic in ../status). */
+function cardButtons(
+  isApiServer: boolean,
+  item: NonNullable<ServiceStatusMap[string]>,
+  pending: ServiceAction | null
+): CardButton[] {
+  return serviceButtons(tt, isApiServer, item, pending).map((b) => ({
+    kind: b.action,
+    label: b.label,
+    icon: b.icon,
+    disabled: b.disabled,
+    action: b.action,
+  }));
 }
 
 const openButton: CardButton = { kind: 'open', label: '', icon: '', disabled: false, action: null };
@@ -110,7 +95,7 @@ const cards = computed<Card[]>(() => {
       dotCls: serviceStatusClass(item),
       statusText: serviceStatusText(tt, item, pending),
       title: serviceStatusTitle(tt, item),
-      buttons: serviceButtons(svc.id, svc.isApiServer, item, pending),
+      buttons: cardButtons(svc.isApiServer, item, pending),
     };
   });
 

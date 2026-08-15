@@ -8,8 +8,8 @@
  * │                     │        │ serviceSkipped/StatusClass/StatusText/StatusTitle, │
  * │                     │        │ renderServiceButtons                               │
  * │ ServiceStatusBar    │ 9+     │ updateStatusUI sidebar dots + svcAction landed ✓;  │
- * │                     │        │ per-panel ctrl-strip (cs-/sl-/ctrl-btns-*) pending  │
- * │ WorkersPanel        │ 10     │ fetchWorkers, renderWorkers, renderWorkerDetail,   │
+ * │                     │        │ per-panel ctrl-strip landed in Task 10 ✓           │
+ * │ WorkersPanel        │ 10 ✓   │ fetchWorkers, renderWorkers, renderWorkerDetail,   │
  * │                     │        │ renderWorkerActionButtons, updateWorkersSummary,   │
  * │                     │        │ selectWorker, updateWorkerLog, workerConfirmAction/│
  * │                     │        │ workerRestart/workerAction                         │
@@ -45,17 +45,20 @@
  * │                     │        │ shared legacy scripts loaded by index.html         │
  * └─────────────────────┴────────┴────────────────────────────────────────────────────┘
  */
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
 import { usePolling } from '@/shared/composables/usePolling';
 import OverviewCards from './components/OverviewCards.vue';
+import ServiceLogPanel, { type ServiceTab } from './components/ServiceLogPanel.vue';
+import WorkersPanel from './components/WorkersPanel.vue';
+import { SERVICES } from './services';
 import { apiBase } from './config';
 import { showResultPopup } from './resultPopup';
 import { migrationStatusMeta, serviceActionDoneText, serviceStatusClass, type Translate } from './status';
-import type { MigrationStatus, ServiceAction, ServiceStatus, ServiceStatusMap } from './types';
+import type { MigrationStatus, ServiceAction, ServiceStatus, ServiceStatusMap, WorkersStatus } from './types';
 
 interface PanelDef {
   id: string;
@@ -80,6 +83,24 @@ const PANELS: PanelDef[] = [
   { id: 'api-server', name: 'PBAPIServer', component: 'ApiServerSettings', task: 'Task 13' },
 ];
 
+/** Legacy tab markup for the multi-tab services; ids match data-tab values. */
+const SERVICE_TABS: Record<string, ServiceTab[]> = {
+  pbdata: [
+    { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
+    { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 12' },
+    { id: 'status', i18nKey: 'sysmon.status', icon: '📊', task: 'Task 12' },
+  ],
+  pbcoindata: [
+    { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
+    { id: 'pool', i18nKey: 'sysmon.pool', task: 'Task 11' },
+    { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 13' },
+  ],
+  'api-server': [
+    { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
+    { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 13' },
+  ],
+};
+
 const DEFAULT_PANEL = 'overview';
 
 const { t } = useI18n();
@@ -95,8 +116,12 @@ const statuses = ref<ServiceStatusMap>({});
 const hasLoadedStatus = ref(false);
 /** svcId → in-flight action (legacy _serviceActionPending). */
 const pendingActions = ref<Record<string, ServiceAction>>({});
-/** Legacy initial _workers.counts; Task 10 wires the workers fetch. */
-const workersCounts = ref<{ total?: number; running?: number }>({ total: 0, running: 0 });
+/** Legacy _workers; fetchWorkers below updates it for the cards and the panel. */
+const workers = ref<WorkersStatus>({ counts: { total: 0, running: 0 }, groups: [] });
+/** True when the latest workers fetch failed (legacy force error display). */
+const workersLoadError = ref(false);
+/** Sidebar/overview counts, derived like the legacy updateWorkersSummary reads. */
+const workersCounts = computed(() => workers.value.counts ?? { total: 0, running: 0 });
 /** Legacy initial _migrationStatus: null until Task 14 wires the fetch. */
 const migrationStatus = ref<MigrationStatus | null>(null);
 
@@ -111,6 +136,24 @@ async function fetchStatus(): Promise<void> {
 }
 
 const statusPolling = usePolling(fetchStatus, STATUS_POLL_INTERVAL_MS);
+
+/* ── Worker status polling (legacy fetchWorkers/scheduleWorkers) ── */
+
+/** Legacy scheduleWorkers timeout. */
+const WORKERS_POLL_INTERVAL_MS = 5000;
+
+/** Legacy fetchWorkers: GET /workers/status, keep the last payload on failure. */
+async function fetchWorkers(): Promise<void> {
+  try {
+    workers.value = await apiFetch<WorkersStatus>(`${apiBase()}/workers/status`);
+    workersLoadError.value = false;
+  } catch {
+    workersLoadError.value = true;
+  }
+}
+
+/** Legacy poll arm: the timer only runs while the workers panel is visible. */
+const workersPolling = usePolling(fetchWorkers, WORKERS_POLL_INTERVAL_MS);
 
 /** Legacy restoreFromHash: `#panelId` (tab suffix arrives with the panels). */
 function panelFromHash(): string {
@@ -127,8 +170,19 @@ function selectPanel(panelId: string): void {
   window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#${panelId}`);
 }
 
+/** Legacy scheduleWorkers gating: poll only while the workers panel is active. */
+watch(activePanel, (panelId) => {
+  if (panelId === 'workers') workersPolling.start();
+  else workersPolling.stop();
+});
+
 function panelLabel(panel: PanelDef): string {
   return panel.i18nKey ? t(panel.i18nKey) : panel.name;
+}
+
+/** SERVICES registry lookup for the log panels (undefined for non-service panels). */
+function serviceDef(panelId: string) {
+  return SERVICES.find((svc) => svc.id === panelId);
 }
 
 /** Legacy updateStatusUI/updateWorkersSummary/updateMigrationSummary sidebar dot classes. */
@@ -210,10 +264,13 @@ async function serviceAction(svcId: string, action: ServiceAction): Promise<void
 onMounted(() => {
   document.title = t('sysmon.servicesTitle');
   statusPolling.start();
+  void fetchWorkers(); // legacy fired fetchWorkers(false) once on load
+  if (activePanel.value === 'workers') workersPolling.start(); // legacy selectPanel('workers')
 });
 
 onUnmounted(() => {
   statusPolling.stop();
+  workersPolling.stop();
 });
 </script>
 
@@ -255,6 +312,23 @@ onUnmounted(() => {
           :migration-status="migrationStatus"
           @action="serviceAction"
           @select="selectPanel"
+        />
+        <WorkersPanel
+          v-else-if="panel.id === 'workers'"
+          :workers="workers"
+          :load-error="workersLoadError && activePanel === 'workers'"
+          @refresh="fetchWorkers"
+        />
+        <ServiceLogPanel
+          v-else-if="serviceDef(panel.id)"
+          :svc-id="panel.id"
+          :label="serviceDef(panel.id)!.label"
+          :log-file="serviceDef(panel.id)!.logFile"
+          :statuses="statuses"
+          :pending="pendingActions"
+          :active="panel.id === activePanel"
+          :tabs="SERVICE_TABS[panel.id]"
+          @action="serviceAction"
         />
         <div v-else class="panel-placeholder">
           <div class="panel-placeholder-name">{{ panelLabel(panel) }}</div>
