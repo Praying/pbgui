@@ -785,8 +785,8 @@
         <span id="ctrl-btns-api-server"></span>
       </div>
       <div class="tab-bar">
-        <button class="tab-btn active" data-svc="api-server" data-tab="log" onclick="switchTab(this)">&#128203; Log</button>
-        <button class="tab-btn" data-svc="api-server" data-tab="settings" onclick="switchTab(this)">&#9881; Settings</button>
+        <button class="tab-btn active" data-svc="api-server" data-tab="log" onclick="switchTab(this)">&#128203; <span data-i18n="sysmon.logTab">Log</span></button>
+        <button class="tab-btn" data-svc="api-server" data-tab="settings" onclick="switchTab(this)">&#9881; <span data-i18n="sysmon.settings">Settings</span></button>
       </div>
       <div id="api-server-tab-log" class="tab-pane active log-wrap">
         <div id="log-api-server" style="height:100%;"></div>
@@ -829,7 +829,7 @@
             </div>
             <div class="form-field">
               <span class="form-label" data-i18n="sysmon.chatId">Chat ID</span>
-              <input class="form-input medium" type="text" id="apiserver-telegram-chat-id" placeholder="e.g. -1001234567">
+              <input class="form-input medium" type="text" id="apiserver-telegram-chat-id" placeholder="e.g. -1001234567" data-i18n-placeholder="sysmon.chatIdExample">
             </div>
           </div>
           <div id="apiserver-alert-routing-wrap"></div>
@@ -1309,7 +1309,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
         if (force) {
           var groups = document.getElementById('workers-groups');
           if (groups && _currentPanelId === 'workers') {
-            groups.innerHTML = '<div class="worker-detail-empty">Failed to load worker status.</div>';
+            groups.innerHTML = '<div class="worker-detail-empty">' + PBGuiI18n.t('sysmon.failedToLoadWorkerStatus') + '</div>';
           }
         }
         scheduleWorkers();
@@ -1383,17 +1383,17 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
   }
 
   function renderMigrationUnits(units) {
-    if (!units || !units.length) return '<div class="migration-note">No PBGui systemd units were reported.</div>';
+    if (!units || !units.length) return '<div class="migration-note">' + PBGuiI18n.t('sysmon.noUnitsReported') + '</div>';
     var html = '<div class="migration-table-wrap"><table class="migration-table"><thead><tr>'
-      + '<th>Service</th><th>Unit</th><th>Installed</th><th>Enabled</th><th>State</th>'
+      + '<th>' + PBGuiI18n.t('sysmon.colService') + '</th><th>' + PBGuiI18n.t('sysmon.colUnit') + '</th><th>' + PBGuiI18n.t('sysmon.colInstalled') + '</th><th>' + PBGuiI18n.t('sysmon.colEnabled') + '</th><th>' + PBGuiI18n.t('sysmon.colState') + '</th>'
       + '</tr></thead><tbody>';
     units.forEach(function (row) {
       html += '<tr>'
         + '<td>' + esc(row.service || '') + '</td>'
         + '<td>' + esc(row.unit || '') + '</td>'
-        + '<td>' + migrationBadge(row.exists ? 'yes' : 'missing', row.exists ? 'ok' : 'err') + '</td>'
-        + '<td>' + migrationBadge(row.enabled ? 'yes' : 'no', row.enabled ? 'ok' : 'warn') + '</td>'
-        + '<td>' + esc(row.state || 'unknown') + '</td>'
+        + '<td>' + migrationBadge(row.exists ? PBGuiI18n.t('sysmon.yes') : PBGuiI18n.t('sysmon.missingBadge'), row.exists ? 'ok' : 'err') + '</td>'
+        + '<td>' + migrationBadge(row.enabled ? PBGuiI18n.t('sysmon.yes') : PBGuiI18n.t('sysmon.no'), row.enabled ? 'ok' : 'warn') + '</td>'
+        + '<td>' + esc(row.state || PBGuiI18n.t('sysmon.unknownState')) + '</td>'
         + '</tr>';
     });
     return html + '</tbody></table></div>';
@@ -1402,31 +1402,31 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
   function renderMigrationCrontab(crontab) {
     crontab = crontab || {};
     var entries = crontab.entries || [];
-    if (!entries.length) return '<div class="migration-ok">No legacy PBGui crontab autostart entries were detected.</div>';
-    var html = '<div class="migration-warn">Legacy crontab autostart entries will be removed automatically during migration.</div>';
-    html += '<div class="migration-table-wrap"><table class="migration-table"><thead><tr><th>Entry</th></tr></thead><tbody>';
+    if (!entries.length) return '<div class="migration-ok">' + PBGuiI18n.t('sysmon.noCrontabEntries') + '</div>';
+    var html = '<div class="migration-warn">' + PBGuiI18n.t('sysmon.crontabWillBeRemoved') + '</div>';
+    html += '<div class="migration-table-wrap"><table class="migration-table"><thead><tr><th>' + PBGuiI18n.t('sysmon.colEntry') + '</th></tr></thead><tbody>';
     entries.forEach(function (entry) { html += '<tr><td>' + esc(entry) + '</td></tr>'; });
     return html + '</tbody></table></div>';
   }
 
   function renderMigrationStartScript(startScript) {
     startScript = startScript || {};
-    if (!startScript.exists) return '<div class="migration-ok">No legacy start.sh was detected.</div>';
-    return '<div class="migration-warn">Legacy start.sh will be deleted automatically during migration: ' + esc(startScript.path || '') + '</div>';
+    if (!startScript.exists) return '<div class="migration-ok">' + PBGuiI18n.t('sysmon.noStartScript') + '</div>';
+    return '<div class="migration-warn">' + PBGuiI18n.t('sysmon.startScriptWillBeDeleted', {path: esc(startScript.path || '')}) + '</div>';
   }
 
   function renderMigrationProcesses(processes) {
     processes = processes || [];
-    if (!processes.length) return '<div class="migration-note">No PBGui daemon processes were detected by the preflight scan.</div>';
+    if (!processes.length) return '<div class="migration-note">' + PBGuiI18n.t('sysmon.noProcessesDetected') + '</div>';
     var html = '<div class="migration-table-wrap"><table class="migration-table"><thead><tr>'
-      + '<th>Service</th><th>PID</th><th>User</th><th>Current API</th><th>Command</th>'
+      + '<th>' + PBGuiI18n.t('sysmon.colService') + '</th><th>PID</th><th>' + PBGuiI18n.t('sysmon.colUser') + '</th><th>' + PBGuiI18n.t('sysmon.colCurrentApi') + '</th><th>' + PBGuiI18n.t('sysmon.colCommand') + '</th>'
       + '</tr></thead><tbody>';
     processes.forEach(function (proc) {
       html += '<tr>'
         + '<td>' + esc(proc.service || '') + '</td>'
         + '<td>' + esc(proc.pid || '') + '</td>'
         + '<td>' + esc(proc.username || '') + '</td>'
-        + '<td>' + migrationBadge(proc.current ? 'yes' : 'no', proc.current ? 'warn' : '') + '</td>'
+        + '<td>' + migrationBadge(proc.current ? PBGuiI18n.t('sysmon.yes') : PBGuiI18n.t('sysmon.no'), proc.current ? 'warn' : '') + '</td>'
         + '<td>' + esc(proc.cmdline || '') + '</td>'
         + '</tr>';
     });
@@ -1438,15 +1438,15 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     if (!wrap) return;
     var meta = migrationStatusMeta(data);
     if (data && data._restart_pending && !data.user) {
-      wrap.innerHTML = '<div class="migration-section"><div class="migration-ok">Migration completed. API restart is in progress; retrying status automatically...</div></div>';
+      wrap.innerHTML = '<div class="migration-section"><div class="migration-ok">' + PBGuiI18n.t('sysmon.migrationCompletedRetrying') + '</div></div>';
       return;
     }
     if (data && data._error) {
-      wrap.innerHTML = '<div class="migration-section"><div class="migration-warn">Failed to load migration status: ' + esc(data._error) + '</div></div>';
+      wrap.innerHTML = '<div class="migration-section"><div class="migration-warn">' + PBGuiI18n.t('sysmon.failedToLoadMigrationStatus', {msg: esc(data._error)}) + '</div></div>';
       return;
     }
     if (!data) {
-      wrap.innerHTML = '<div style="color:#4a5568;font-style:italic;">Loading migration status...</div>';
+      wrap.innerHTML = '<div style="color:#4a5568;font-style:italic;">' + PBGuiI18n.t('sysmon.loadingMigrationStatus') + '</div>';
       return;
     }
 
@@ -1454,51 +1454,51 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var missing = data.missing_default_units || [];
     var notReady = data.not_ready_default_units || [];
     var html = '<div class="migration-hero">'
-      + '<div class="migration-title">Systemd user services migration</div>'
-      + '<div class="migration-desc">Move this PBGui master from legacy autostart/process control to systemd user services. The migration keeps existing data and paths, removes legacy PBGui crontab autostarts when possible, and restarts PBGui daemons through systemd.</div>'
+      + '<div class="migration-title">' + PBGuiI18n.t('sysmon.systemdMigrationTitle') + '</div>'
+      + '<div class="migration-desc">' + PBGuiI18n.t('sysmon.systemdMigrationDesc') + '</div>'
       + '</div>';
 
     html += '<div class="migration-grid">'
-      + '<div class="migration-card"><div class="migration-label">Status</div><div class="migration-value">' + migrationBadge(meta.label, meta.cls === 'running' ? 'ok' : (meta.cls === 'warn' ? 'warn' : 'err')) + '</div></div>'
-      + '<div class="migration-card"><div class="migration-label">User</div><div class="migration-value">' + esc(data.user || '') + ' (uid ' + esc(data.uid || '') + ')</div></div>'
-      + '<div class="migration-card"><div class="migration-label">PBGui directory</div><div class="migration-value">' + esc(data.pbgui_dir || '') + '</div></div>'
+      + '<div class="migration-card"><div class="migration-label">' + PBGuiI18n.t('sysmon.status') + '</div><div class="migration-value">' + migrationBadge(meta.label, meta.cls === 'running' ? 'ok' : (meta.cls === 'warn' ? 'warn' : 'err')) + '</div></div>'
+      + '<div class="migration-card"><div class="migration-label">' + PBGuiI18n.t('sysmon.colUser') + '</div><div class="migration-value">' + esc(data.user || '') + ' (uid ' + esc(data.uid || '') + ')</div></div>'
+      + '<div class="migration-card"><div class="migration-label">' + PBGuiI18n.t('sysmon.pbguiDirectory') + '</div><div class="migration-value">' + esc(data.pbgui_dir || '') + '</div></div>'
       + '<div class="migration-card"><div class="migration-label">Python</div><div class="migration-value">' + esc(data.pbgui_python || '') + '</div></div>'
-      + '<div class="migration-card"><div class="migration-label">Unit directory</div><div class="migration-value">' + esc(data.systemd_unit_dir || '') + '</div></div>'
-      + '<div class="migration-card"><div class="migration-label">PB7</div><div class="migration-value">' + esc(data.pb7dir || 'not configured') + '</div></div>'
+      + '<div class="migration-card"><div class="migration-label">' + PBGuiI18n.t('sysmon.unitDirectory') + '</div><div class="migration-value">' + esc(data.systemd_unit_dir || '') + '</div></div>'
+      + '<div class="migration-card"><div class="migration-label">PB7</div><div class="migration-value">' + esc(data.pb7dir || PBGuiI18n.t('sysmon.notConfigured')) + '</div></div>'
       + '</div>';
 
-    html += '<div class="migration-section"><div class="migration-section-title"><span>Preflight result</span></div>';
-    html += data._restart_pending ? '<div class="migration-ok">Migration completed. API restart is in progress; retrying status automatically...</div>' : (data.migration_needed ? '<div class="migration-warn">' + esc(meta.text) + '</div>' : '<div class="migration-ok">' + esc(meta.text) + '</div>');
+    html += '<div class="migration-section"><div class="migration-section-title"><span>' + PBGuiI18n.t('sysmon.preflightResult') + '</span></div>';
+    html += data._restart_pending ? '<div class="migration-ok">' + PBGuiI18n.t('sysmon.migrationCompletedRetrying') + '</div>' : (data.migration_needed ? '<div class="migration-warn">' + esc(meta.text) + '</div>' : '<div class="migration-ok">' + esc(meta.text) + '</div>');
     if (missing.length) {
-      html += '<div class="migration-warn">Missing required units: ' + esc(missing.map(function (row) { return row.unit || row.service; }).join(', ')) + '</div>';
+      html += '<div class="migration-warn">' + PBGuiI18n.t('sysmon.missingRequiredUnits', {units: esc(missing.map(function (row) { return row.unit || row.service; }).join(', '))}) + '</div>';
     }
     if (notReady.length) {
-      html += '<div class="migration-warn">Not-ready required units: ' + esc(notReady.map(function (row) { return (row.unit || row.service) + ' (' + (row.enabled ? 'enabled' : 'disabled') + ', ' + (row.state || 'unknown') + ')'; }).join(', ')) + '</div>';
+      html += '<div class="migration-warn">' + PBGuiI18n.t('sysmon.notReadyRequiredUnits', {units: esc(notReady.map(function (row) { return (row.unit || row.service) + ' (' + (row.enabled ? PBGuiI18n.t('common.enabled') : PBGuiI18n.t('common.disabled')) + ', ' + (row.state || PBGuiI18n.t('sysmon.unknownState')) + ')'; }).join(', '))}) + '</div>';
     }
     warnings.forEach(function (warning) { html += '<div class="migration-warn">' + esc(warning) + '</div>'; });
     html += '</div>';
 
-    html += '<div class="migration-section"><div class="migration-section-title"><span>Systemd units</span></div>' + renderMigrationUnits(data.systemd_units || []) + '</div>';
-    html += '<div class="migration-section"><div class="migration-section-title"><span>Legacy crontab autostart</span></div>' + renderMigrationCrontab(data.legacy_crontab || {}) + '</div>';
-    html += '<div class="migration-section"><div class="migration-section-title"><span>Legacy start script</span></div>' + renderMigrationStartScript(data.legacy_start_sh || {}) + '</div>';
-    html += '<div class="migration-section"><div class="migration-section-title"><span>Detected PBGui processes</span></div>' + renderMigrationProcesses(data.processes || []) + '</div>';
+    html += '<div class="migration-section"><div class="migration-section-title"><span>' + PBGuiI18n.t('sysmon.systemdUnitsSection') + '</span></div>' + renderMigrationUnits(data.systemd_units || []) + '</div>';
+    html += '<div class="migration-section"><div class="migration-section-title"><span>' + PBGuiI18n.t('sysmon.legacyCrontabSection') + '</span></div>' + renderMigrationCrontab(data.legacy_crontab || {}) + '</div>';
+    html += '<div class="migration-section"><div class="migration-section-title"><span>' + PBGuiI18n.t('sysmon.legacyStartScriptSection') + '</span></div>' + renderMigrationStartScript(data.legacy_start_sh || {}) + '</div>';
+    html += '<div class="migration-section"><div class="migration-section-title"><span>' + PBGuiI18n.t('sysmon.detectedProcessesSection') + '</span></div>' + renderMigrationProcesses(data.processes || []) + '</div>';
 
-    html += '<div class="migration-section"><div class="migration-section-title"><span>Action</span></div>'
+    html += '<div class="migration-section"><div class="migration-section-title"><span>' + PBGuiI18n.t('sysmon.action') + '</span></div>'
       + '<div class="migration-actions">'
-      + '<button class="migration-primary" id="migration-test-btn" type="button" onclick="testSystemdMigration()">Test migration</button>'
-      + '<button class="migration-primary" id="migration-run-btn" type="button" onclick="runSystemdMigration()"' + (data.migration_needed ? '' : ' disabled') + '>Migrate this master to systemd</button>'
-      + '<span class="migration-note">The API server will restart after a successful migration. This page retries status automatically while the handoff is in progress.</span>'
+      + '<button class="migration-primary" id="migration-test-btn" type="button" onclick="testSystemdMigration()">' + PBGuiI18n.t('sysmon.testMigration') + '</button>'
+      + '<button class="migration-primary" id="migration-run-btn" type="button" onclick="runSystemdMigration()"' + (data.migration_needed ? '' : ' disabled') + '>' + PBGuiI18n.t('sysmon.migrateMasterToSystemd') + '</button>'
+      + '<span class="migration-note">' + PBGuiI18n.t('sysmon.apiRestartNote') + '</span>'
       + '</div></div>';
     wrap.innerHTML = html;
   }
 
   function loadMigrationStatus(force) {
     var wrap = document.getElementById('migration-wrap');
-    if (force && wrap) wrap.innerHTML = '<div style="color:#4a5568;font-style:italic;">Loading migration status...</div>';
+    if (force && wrap) wrap.innerHTML = '<div style="color:#4a5568;font-style:italic;">' + PBGuiI18n.t('sysmon.loadingMigrationStatus') + '</div>';
     fetch(API_BASE + '/migration/status', authOptions())
       .then(function (resp) {
         return resp.json().catch(function () { return {}; }).then(function (data) {
-          if (!resp.ok) throw new Error(data.detail || 'Migration status request failed.');
+          if (!resp.ok) throw new Error(data.detail || PBGuiI18n.t('sysmon.migrationStatusFailed'));
           return data;
         });
       })
@@ -1524,7 +1524,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
           scheduleMigrationRestartCheck(3000);
           return;
         }
-        _migrationStatus = { _error: err && err.message ? err.message : 'Migration status request failed.' };
+        _migrationStatus = { _error: err && err.message ? err.message : PBGuiI18n.t('sysmon.migrationStatusFailed') };
         updateMigrationSummary();
         renderMigrationStatus(_migrationStatus);
         renderOverviewCards();
@@ -1535,61 +1535,61 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
   async function migrationConfirm() {
     if (window.PBGuiDialogs && typeof window.PBGuiDialogs.confirm === 'function') {
       return window.PBGuiDialogs.confirm({
-        title: 'Migrate to systemd',
-        message: 'Migrate this master to systemd user services now? PBGui daemons and the API server will restart after the migration.',
-        confirmText: 'Migrate'
+        title: PBGuiI18n.t('sysmon.migrateToSystemd'),
+        message: PBGuiI18n.t('sysmon.migrateToSystemdMsg'),
+        confirmText: PBGuiI18n.t('sysmon.migrate')
       });
     }
-    _resultPopup('Migration blocked', 'Confirmation dialog is unavailable.', 'Reload the page and try again.', false);
+    _resultPopup(PBGuiI18n.t('sysmon.migrationBlocked'), PBGuiI18n.t('sysmon.dialogUnavailable'), PBGuiI18n.t('sysmon.reloadAndRetry'), false);
     return false;
   }
 
   window.testSystemdMigration = function () {
     var btn = document.getElementById('migration-test-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Testing...'; }
-    _resultPopup('Systemd migration test', 'Dry-run running...', '', true, true);
+    if (btn) { btn.disabled = true; btn.textContent = PBGuiI18n.t('sysmon.testing'); }
+    _resultPopup(PBGuiI18n.t('sysmon.migrationTestTitle'), PBGuiI18n.t('sysmon.dryRunRunning'), '', true, true);
     fetch(API_BASE + '/migration/test', authOptions({ method: 'POST' }))
       .then(function (resp) {
         return resp.json().catch(function () { return {}; }).then(function (data) {
-          if (!resp.ok) throw new Error(data.detail || 'Migration test failed.');
+          if (!resp.ok) throw new Error(data.detail || PBGuiI18n.t('sysmon.migrationTestFailed'));
           return data;
         });
       })
       .then(function (data) {
         var lines = [];
-        (data.warnings || []).forEach(function (warning) { lines.push('WARNING: ' + warning); });
-        (data.errors || []).forEach(function (error) { lines.push('ERROR: ' + error); });
+        (data.warnings || []).forEach(function (warning) { lines.push(PBGuiI18n.t('sysmon.warningLogPrefix') + warning); });
+        (data.errors || []).forEach(function (error) { lines.push(PBGuiI18n.t('sysmon.errorLogPrefix') + error); });
         (data.logs || []).forEach(function (line) { lines.push(line); });
         _resultPopup(
-          'Systemd migration test',
-          data.ok ? 'Dry-run completed. No changes were made.' : 'Dry-run found blockers. No changes were made.',
+          PBGuiI18n.t('sysmon.migrationTestTitle'),
+          data.ok ? PBGuiI18n.t('sysmon.dryRunCompleted') : PBGuiI18n.t('sysmon.dryRunFoundBlockers'),
           lines.join('\n'),
           !!data.ok
         );
       })
       .catch(function (err) {
-        _resultPopup('Systemd migration test', 'Migration test failed.', err && err.message ? err.message : 'Migration test failed.', false);
+        _resultPopup(PBGuiI18n.t('sysmon.migrationTestTitle'), PBGuiI18n.t('sysmon.migrationTestFailed'), err && err.message ? PBGuiI18n.serverMsg(err.message) : PBGuiI18n.t('sysmon.migrationTestFailed'), false);
       })
       .finally(function () {
-        if (btn) { btn.disabled = false; btn.textContent = 'Test migration'; }
+        if (btn) { btn.disabled = false; btn.textContent = PBGuiI18n.t('sysmon.testMigration'); }
       });
   };
 
   window.runSystemdMigration = async function () {
     if (!(await migrationConfirm())) return;
     var btn = document.getElementById('migration-run-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Migrating...'; }
-    _resultPopup('Systemd migration', 'Migration running...', '', true, true);
+    if (btn) { btn.disabled = true; btn.textContent = PBGuiI18n.t('sysmon.migrating'); }
+    _resultPopup(PBGuiI18n.t('sysmon.migrationTitle'), PBGuiI18n.t('sysmon.migrationRunning'), '', true, true);
     fetch(API_BASE + '/migration/run', authOptions({ method: 'POST' }))
       .then(function (resp) {
         return resp.json().catch(function () { return {}; }).then(function (data) {
-          if (!resp.ok || data.ok === false) throw new Error(data.detail || data.error || 'Migration failed.');
+          if (!resp.ok || data.ok === false) throw new Error(data.detail || data.error || PBGuiI18n.t('sysmon.migrationFailed'));
           return data;
         });
       })
       .then(function (data) {
         var lines = [];
-        (data.warnings || []).forEach(function (warning) { lines.push('WARNING: ' + warning); });
+        (data.warnings || []).forEach(function (warning) { lines.push(PBGuiI18n.t('sysmon.warningLogPrefix') + warning); });
         (data.logs || []).forEach(function (line) { lines.push(line); });
         if (data.api_restart) {
           _apiRestartPendingUntil = Date.now() + 90000;
@@ -1598,15 +1598,15 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
         updateMigrationSummary();
         renderMigrationStatus(_migrationStatus);
         renderOverviewCards();
-        _resultPopup('Systemd migration', 'Migration completed. API restart has been scheduled.', lines.join('\n'), true);
+        _resultPopup(PBGuiI18n.t('sysmon.migrationTitle'), PBGuiI18n.t('sysmon.migrationCompleted'), lines.join('\n'), true);
         scheduleMigrationRestartCheck(3000);
       })
       .catch(function (err) {
-        _resultPopup('Systemd migration', 'Migration failed.', err && err.message ? err.message : 'Migration failed.', false);
+        _resultPopup(PBGuiI18n.t('sysmon.migrationTitle'), PBGuiI18n.t('sysmon.migrationFailed'), err && err.message ? PBGuiI18n.serverMsg(err.message) : PBGuiI18n.t('sysmon.migrationFailed'), false);
         loadMigrationStatus(true);
       })
       .finally(function () {
-        if (btn) { btn.disabled = false; btn.textContent = 'Migrate this master to systemd'; }
+        if (btn) { btn.disabled = false; btn.textContent = PBGuiI18n.t('sysmon.migrateMasterToSystemd'); }
       });
   };
 
@@ -1785,7 +1785,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     if (window.PBGuiDialogs && typeof window.PBGuiDialogs.confirm === 'function') {
       return window.PBGuiDialogs.confirm({ title: title, message: message, confirmText: confirmText });
     }
-    _resultPopup('Confirmation blocked', 'Confirmation dialog is unavailable.', 'Reload the page and try again.', false);
+    _resultPopup(PBGuiI18n.t('sysmon.confirmationBlocked'), PBGuiI18n.t('sysmon.dialogUnavailable'), PBGuiI18n.t('sysmon.reloadAndRetry'), false);
     return false;
   }
 
@@ -2078,12 +2078,12 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var logLevel   = data.log_level || 'INFO';
     var LL = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'NONE'];
 
-    var html = '<div class="form-section-title">Users</div>';
+    var html = '<div class="form-section-title">' + PBGuiI18n.t('sysmon.users') + '</div>';
     html += '<div class="form-field" style="margin-bottom:0.75rem;">';
-    html += '<span class="form-label">Fetch Users <span style="color:#4a5568;font-weight:400;">(click to toggle)</span></span>';
-    html += '<input class="form-input" type="text" placeholder="Filter users\u2026" style="margin-bottom:0.35rem;width:220px;" oninput="filterTags(\'pbdata-fetch-users\',this.value)">';
+    html += '<span class="form-label">' + PBGuiI18n.t('sysmon.fetchUsers') + ' <span style="color:#4a5568;font-weight:400;">' + PBGuiI18n.t('sysmon.clickToToggle') + '</span></span>';
+    html += '<input class="form-input" type="text" placeholder="' + _esc(PBGuiI18n.t('sysmon.filterUsers')) + '" style="margin-bottom:0.35rem;width:220px;" oninput="filterTags(\'pbdata-fetch-users\',this.value)">';
     html += '<div class="multiselect-wrap" id="pbdata-fetch-users">';
-    if (!allUsers.length) { html += '<span style="color:#4a5568;font-size:var(--fs-xs);">No users found</span>'; }
+    if (!allUsers.length) { html += '<span style="color:#4a5568;font-size:var(--fs-xs);">' + PBGuiI18n.t('sysmon.noUsersFound') + '</span>'; }
     allUsers.forEach(function (u) {
       var active = fetchUsers.indexOf(u) !== -1;
       html += '<span class="tag' + (active ? '' : ' inactive') + '" data-user="' + _esc(u) + '" onclick="this.classList.toggle(\'inactive\')">' + _esc(u) + '</span>';
@@ -2091,10 +2091,10 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     html += '</div></div>';
 
     html += '<div class="form-field" style="margin-bottom:1rem;">';
-    html += '<span class="form-label">Executions Download <span style="color:#4a5568;font-weight:400;">(opt-in)</span></span>';
-    html += '<input class="form-input" type="text" placeholder="Filter users\u2026" style="margin-bottom:0.35rem;width:220px;" oninput="filterTags(\'pbdata-trades-users\',this.value)">';
+    html += '<span class="form-label">' + PBGuiI18n.t('sysmon.executionsDownload') + ' <span style="color:#4a5568;font-weight:400;">' + PBGuiI18n.t('sysmon.optIn') + '</span></span>';
+    html += '<input class="form-input" type="text" placeholder="' + _esc(PBGuiI18n.t('sysmon.filterUsers')) + '" style="margin-bottom:0.35rem;width:220px;" oninput="filterTags(\'pbdata-trades-users\',this.value)">';
     html += '<div class="multiselect-wrap" id="pbdata-trades-users">';
-    if (!allUsers.length) { html += '<span style="color:#4a5568;font-size:var(--fs-xs);">No users found</span>'; }
+    if (!allUsers.length) { html += '<span style="color:#4a5568;font-size:var(--fs-xs);">' + PBGuiI18n.t('sysmon.noUsersFound') + '</span>'; }
     allUsers.forEach(function (u) {
       var active = trades.indexOf(u) !== -1;
       html += '<span class="tag' + (active ? '' : ' inactive') + '" data-user="' + _esc(u) + '" onclick="this.classList.toggle(\'inactive\')">' + _esc(u) + '</span>';
@@ -2102,44 +2102,44 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     html += '</div></div>';
 
     html += '<hr class="form-divider">';
-    html += '<div class="form-section-title">Log Level</div>';
+    html += '<div class="form-section-title">' + PBGuiI18n.t('sysmon.logLevel') + '</div>';
     html += '<div class="form-row" style="margin-bottom:1rem;"><div class="form-field"><select class="form-select" id="pbdata-log-level">';
     LL.forEach(function (l) { html += '<option' + (l === logLevel ? ' selected' : '') + '>' + l + '</option>'; });
     html += '</select></div></div>';
 
     html += '<hr class="form-divider">';
-    html += '<div class="form-section-title">Timers</div>';
+    html += '<div class="form-section-title">' + PBGuiI18n.t('sysmon.timers') + '</div>';
     html += '<div class="form-row">';
-    html += _numFld('pbdata-ws-max',         'Max private WS',         data.ws_max,                           0,    999,   1);
-    html += _numFld('pbdata-pollers-delay',   'Startup delay (s)',      data.pollers_delay_seconds,            0,   3600,   5);
-    html += _numFld('pbdata-combined',        'Combined interval (s)',  data.poll_interval_combined_seconds,  10,   3600,  10);
-    html += _numFld('pbdata-balance',         'Balance interval (s)',   data.poll_interval_balance_seconds,   10,   3600,  10);
+    html += _numFld('pbdata-ws-max',         PBGuiI18n.t('sysmon.maxPrivateWs'),        data.ws_max,                           0,    999,   1);
+    html += _numFld('pbdata-pollers-delay',   PBGuiI18n.t('sysmon.startupDelay'),        data.pollers_delay_seconds,            0,   3600,   5);
+    html += _numFld('pbdata-combined',        PBGuiI18n.t('sysmon.combinedInterval'),    data.poll_interval_combined_seconds,  10,   3600,  10);
+    html += _numFld('pbdata-balance',         PBGuiI18n.t('sysmon.balanceInterval'),     data.poll_interval_balance_seconds,   10,   3600,  10);
     html += '</div><div class="form-row">';
-    html += _numFld('pbdata-positions',       'Positions interval (s)', data.poll_interval_positions_seconds, 10,   3600,  10);
-    html += _numFld('pbdata-orders',          'Orders interval (s)',    data.poll_interval_orders_seconds,    10,   3600,  10);
-    html += _numFld('pbdata-history',         'History interval (s)',   data.poll_interval_history_seconds,   10,   3600,  10);
-    html += _numFld('pbdata-executions',      'Executions interval (s)',data.poll_interval_executions_seconds,60, 86400,  60);
-    html += _numFld('pbdata-rest-pause',      'REST pause/user (s)',    data.shared_rest_user_pause_seconds,   0,     10, 0.05, true);
+    html += _numFld('pbdata-positions',       PBGuiI18n.t('sysmon.positionsInterval'),   data.poll_interval_positions_seconds, 10,   3600,  10);
+    html += _numFld('pbdata-orders',          PBGuiI18n.t('sysmon.ordersInterval'),      data.poll_interval_orders_seconds,    10,   3600,  10);
+    html += _numFld('pbdata-history',         PBGuiI18n.t('sysmon.historyInterval'),     data.poll_interval_history_seconds,   10,   3600,  10);
+    html += _numFld('pbdata-executions',      PBGuiI18n.t('sysmon.executionsInterval'),  data.poll_interval_executions_seconds,60, 86400,  60);
+    html += _numFld('pbdata-rest-pause',      PBGuiI18n.t('sysmon.restPausePerUser'),    data.shared_rest_user_pause_seconds,   0,     10, 0.05, true);
     html += '</div><div class="form-row">';
-    html += _numFld('pbdata-1m-coin-pause',   'Market data coin pause (s)', data.latest_1m_coin_pause_seconds, 0,     30, 0.5,  true);
+    html += _numFld('pbdata-1m-coin-pause',   PBGuiI18n.t('sysmon.marketDataCoinPause'), data.latest_1m_coin_pause_seconds, 0,     30, 0.5,  true);
     html += '</div>';
 
     /* ── Shared REST pause per exchange (collapsible) ── */
     var exPauses = data.shared_rest_pause_by_exchange || {};
     var EX_LIST = ['binance','bitget','bybit','gateio','hyperliquid','kucoin','okx'];
     html += '<details id="pbdata-ex-pauses" open style="margin-top:1rem;border:1px solid #1e2736;border-radius:6px;overflow:hidden;">';
-    html += '<summary style="padding:0.5rem 0.75rem;cursor:pointer;background:#111827;color:#94a3b8;font-size:var(--fs-sm);font-weight:600;user-select:none;">&#9660; Shared REST pause per exchange</summary>';
-    html += '<div style="padding:0.6rem 0.9rem 0.4rem;font-size:var(--fs-xs);color:#4a5568;border-bottom:1px solid #1e2736;">Per-exchange pause between users. Defaults come from PBData (e.g. hyperliquid/bybit) unless you set an override; only differences vs the global pause are saved as overrides.</div>';
+    html += '<summary style="padding:0.5rem 0.75rem;cursor:pointer;background:#111827;color:#94a3b8;font-size:var(--fs-sm);font-weight:600;user-select:none;">&#9660; ' + PBGuiI18n.t('sysmon.sharedRestPausePerExchange') + '</summary>';
+    html += '<div style="padding:0.6rem 0.9rem 0.4rem;font-size:var(--fs-xs);color:#4a5568;border-bottom:1px solid #1e2736;">' + PBGuiI18n.t('sysmon.sharedRestPauseHint') + '</div>';
     html += '<div class="form-row" style="padding:0.75rem;flex-wrap:wrap;">';
     EX_LIST.forEach(function (ex) {
       var def = exPauses[ex] !== undefined ? exPauses[ex] : data.shared_rest_user_pause_seconds;
-      html += '<div class="form-field"><span class="form-label">' + ex + ' (s)</span>'
+      html += '<div class="form-field"><span class="form-label">' + _esc(ex) + ' ' + PBGuiI18n.t('sysmon.secondsShort') + '</span>'
             + '<input class="form-input narrow" type="number" id="pbdata-ex-' + ex + '" min="0" max="30" step="0.25" value="' + parseFloat(def).toFixed(2) + '"'
             + ' onblur="this.value=parseFloat(this.value||0).toFixed(2)"></div>';
     });
     html += '</div></details>';
 
-    html += '<button class="form-btn save" onclick="savePBDataSettings()">&#128190; Save</button>';
+    html += '<button class="form-btn save" onclick="savePBDataSettings()">&#128190; ' + PBGuiI18n.t('common.save') + '</button>';
     html += '<span class="inline-msg" id="pbdata-save-msg"></span>';
     wrap.innerHTML = html;
   }
@@ -2179,7 +2179,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var wrap = document.getElementById('vps-hosts-select');
     if (!wrap) return;
     if (!available.length) {
-      wrap.innerHTML = '<span style="color:#4a5568;font-size:var(--fs-xs);">No VPS hosts configured</span>';
+      wrap.innerHTML = '<span style="color:#4a5568;font-size:var(--fs-xs);">' + PBGuiI18n.t('sysmon.noVpsHosts') + '</span>';
       return;
     }
     var html = '';
@@ -2193,26 +2193,26 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
   function renderMonitorSettingsFields(monitorData) {
     var html = '';
     var groups = [
-      { title: 'Server Monitor', prefix: 'server', fields: ['mem', 'swap', 'disk', 'cpu'] },
-      { title: 'V7 Monitor', prefix: 'v7', fields: ['mem', 'swap', 'cpu', 'error', 'traceback'] },
+      { title: PBGuiI18n.t('sysmon.serverMonitor'), prefix: 'server', fields: ['mem', 'swap', 'disk', 'cpu'] },
+      { title: PBGuiI18n.t('sysmon.v7Monitor'), prefix: 'v7', fields: ['mem', 'swap', 'cpu', 'error', 'traceback'] },
     ];
 
     groups.forEach(function (g) {
       html += '<div style="margin-top:1rem;">';
-      html += '<div style="font-size:var(--fs-sm);color:#93c5fd;font-weight:600;margin-bottom:0.4rem;">' + g.title + '</div>';
+      html += '<div style="font-size:var(--fs-sm);color:#93c5fd;font-weight:600;margin-bottom:0.4rem;">' + _esc(g.title) + '</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem;">';
       g.fields.forEach(function (f) {
         var warnKey = f + '_warning_' + g.prefix;
         var errKey = f + '_error_' + g.prefix;
         var warnVal = monitorData && monitorData[warnKey] !== undefined ? monitorData[warnKey] : 0;
         var errVal = monitorData && monitorData[errKey] !== undefined ? monitorData[errKey] : 0;
-        var label = f.charAt(0).toUpperCase() + f.slice(1);
+        var label = PBGuiI18n.t('sysmon.' + f);
         html += '<div style="display:flex;flex-direction:column;gap:2px;">';
-        html += '<span style="font-size:var(--fs-xs);color:#94a3b8;">' + _esc(label) + ' warn</span>';
+        html += '<span style="font-size:var(--fs-xs);color:#94a3b8;">' + _esc(label) + ' ' + PBGuiI18n.t('sysmon.warnSuffix') + '</span>';
         html += '<input class="form-input" type="number" step="any" id="mc-' + warnKey + '" value="' + warnVal + '" style="width:100%;">';
         html += '</div>';
         html += '<div style="display:flex;flex-direction:column;gap:2px;">';
-        html += '<span style="font-size:var(--fs-xs);color:#94a3b8;">' + _esc(label) + ' err</span>';
+        html += '<span style="font-size:var(--fs-xs);color:#94a3b8;">' + _esc(label) + ' ' + PBGuiI18n.t('sysmon.errSuffix') + '</span>';
         html += '<input class="form-input" type="number" step="any" id="mc-' + errKey + '" value="' + errVal + '" style="width:100%;">';
         html += '</div>';
       });
@@ -2224,36 +2224,36 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
   function renderAlertRoutingSettings(data) {
     var groups = [
       {
-        title: 'Offline Hosts',
-        gui: { id: 'offline_gui', label: 'Show active alarms in GUI' },
+        title: PBGuiI18n.t('sysmon.offlineHosts'),
+        gui: { id: 'offline_gui', label: PBGuiI18n.t('sysmon.showActiveAlarmsGui') },
         telegram: [
-          { id: 'ssh_lost_telegram', label: 'SSH lost' },
-          { id: 'ssh_recovered_telegram', label: 'SSH recovered' }
+          { id: 'ssh_lost_telegram', label: PBGuiI18n.t('sysmon.sshLost') },
+          { id: 'ssh_recovered_telegram', label: PBGuiI18n.t('sysmon.sshRecovered') }
         ]
       },
       {
-        title: 'Services',
-        gui: { id: 'service_gui', label: 'Show active alarms in GUI' },
+        title: PBGuiI18n.t('sysmon.services'),
+        gui: { id: 'service_gui', label: PBGuiI18n.t('sysmon.showActiveAlarmsGui') },
         telegram: [
-          { id: 'service_down_telegram', label: 'Service down' },
-          { id: 'service_restart_started_telegram', label: 'Restart initiated' },
-          { id: 'service_recovered_telegram', label: 'Service recovered' }
+          { id: 'service_down_telegram', label: PBGuiI18n.t('sysmon.serviceDown') },
+          { id: 'service_restart_started_telegram', label: PBGuiI18n.t('sysmon.restartInitiated') },
+          { id: 'service_recovered_telegram', label: PBGuiI18n.t('sysmon.serviceRecovered') }
         ]
       },
       {
-        title: 'System Thresholds',
-        gui: { id: 'system_gui', label: 'Show active alarms in GUI' },
+        title: PBGuiI18n.t('sysmon.systemThresholds'),
+        gui: { id: 'system_gui', label: PBGuiI18n.t('sysmon.showActiveAlarmsGui') },
         telegram: [
-          { id: 'system_problem_telegram', label: 'System problem' },
-          { id: 'system_recovered_telegram', label: 'System recovered' }
+          { id: 'system_problem_telegram', label: PBGuiI18n.t('sysmon.systemProblem') },
+          { id: 'system_recovered_telegram', label: PBGuiI18n.t('sysmon.systemRecovered') }
         ]
       },
       {
-        title: 'Instance Thresholds',
-        gui: { id: 'instance_gui', label: 'Show active alarms in GUI' },
+        title: PBGuiI18n.t('sysmon.instanceThresholds'),
+        gui: { id: 'instance_gui', label: PBGuiI18n.t('sysmon.showActiveAlarmsGui') },
         telegram: [
-          { id: 'instance_problem_telegram', label: 'Instance problem' },
-          { id: 'instance_recovered_telegram', label: 'Instance recovered' }
+          { id: 'instance_problem_telegram', label: PBGuiI18n.t('sysmon.instanceProblem') },
+          { id: 'instance_recovered_telegram', label: PBGuiI18n.t('sysmon.instanceRecovered') }
         ]
       }
     ];
@@ -2272,12 +2272,12 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
       html += '<div style="display:grid;grid-template-columns:minmax(220px,280px) minmax(280px,1fr);gap:1rem;padding:0.85rem;align-items:start;">';
       html += '<div style="display:grid;gap:0.35rem;">';
       html += '<div style="font-size:var(--fs-xs);color:#4a5568;text-transform:uppercase;letter-spacing:0.04em;">GUI</div>';
-      html += renderCheckbox(group.gui.id, group.gui.label, data[group.gui.id] !== false, 'Active alerts only');
+      html += renderCheckbox(group.gui.id, group.gui.label, data[group.gui.id] !== false, PBGuiI18n.t('sysmon.activeAlertsOnly'));
       html += '</div>';
       html += '<div style="display:grid;gap:0.45rem;">';
       html += '<div style="font-size:var(--fs-xs);color:#4a5568;text-transform:uppercase;letter-spacing:0.04em;">Telegram</div>';
       group.telegram.forEach(function (row) {
-        html += renderCheckbox(row.id, row.label, data[row.id] !== false, '-> Telegram');
+        html += renderCheckbox(row.id, row.label, data[row.id] !== false, PBGuiI18n.t('sysmon.toTelegram'));
       });
       html += '</div></div>';
     });
@@ -2386,13 +2386,13 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     fetch(API_BASE + '/fetch-summary', authOptions())
       .then(function (r) { return r.json(); })
       .then(function (d) { renderFetchSummary(d, wrap); })
-      .catch(function () { if (wrap) wrap.innerHTML = '<div style="color:#fca5a5;padding:1rem;">Failed to load fetch summary.</div>'; });
+      .catch(function () { if (wrap) wrap.innerHTML = '<div style="color:#fca5a5;padding:1rem;">' + PBGuiI18n.t('sysmon.failedToLoadFetchSummary') + '</div>'; });
   }
 
   function renderFetchSummary(data, wrap) {
     if (!wrap) return;
     if (!data || !Object.keys(data).length) {
-      wrap.innerHTML = '<div style="color:#4a5568;padding:0.5rem;">No fetch summary available yet. Start PBData or wait for the next cycle.</div>';
+      wrap.innerHTML = '<div style="color:#4a5568;padding:0.5rem;">' + PBGuiI18n.t('sysmon.noFetchSummaryYet') + '</div>';
       return;
     }
     var ts = data.timestamp || '';
@@ -2444,7 +2444,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
         if (pricesObj[ex].active) activeCount++;
         totalSymbols += (pricesObj[ex].symbols || 0);
       });
-      return '<div class="fs-group fs-group-clickable" onclick="openPricesOverlay()" title="Click to view symbols & prices"><div class="fs-group-title">' + label + '</div><div class="fs-group-body">' +
+      return '<div class="fs-group fs-group-clickable" onclick="openPricesOverlay()" title="' + esc(PBGuiI18n.t('sysmon.clickToViewPrices')) + '"><div class="fs-group-title">' + label + '</div><div class="fs-group-body">' +
         '<div class="fs-cnt"><span class="fs-dot-ws">&#9679;</span><span class="fs-cnt-lbl">WS</span><span class="fs-cnt-val">&nbsp;' + activeCount + '/' + exchanges.length + '</span></div>' +
         '<div class="fs-cnt"><span class="fs-cnt-lbl">Sym</span><span class="fs-cnt-val">&nbsp;' + totalSymbols + '</span></div>' +
         '</div></div>';
@@ -2554,13 +2554,13 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     fetch(API_BASE + '/poller-metrics', authOptions())
       .then(function (r) { return r.json(); })
       .then(function (d) { renderPollerMetrics(d, wrap); })
-      .catch(function () { if (wrap) wrap.innerHTML = '<div style="color:#fca5a5;padding:0.5rem;">Failed to load poller metrics.</div>'; });
+      .catch(function () { if (wrap) wrap.innerHTML = '<div style="color:#fca5a5;padding:0.5rem;">' + PBGuiI18n.t('sysmon.failedToLoadPollerMetrics') + '</div>'; });
   }
 
   function renderPollerMetrics(data, wrap) {
     if (!wrap) return;
     if (!data || !data.exchanges || !Object.keys(data.exchanges).length) {
-      wrap.innerHTML = '<div style="color:#4a5568;padding:0.5rem;">No poller metrics yet. PBData must be running.</div>';
+      wrap.innerHTML = '<div style="color:#4a5568;padding:0.5rem;">' + PBGuiI18n.t('sysmon.noPollerMetricsYet') + '</div>';
       return;
     }
     var ts = data.timestamp || '';
@@ -3040,8 +3040,8 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var bar = document.getElementById('cmc-status-bar');
     var text = document.getElementById('cmc-status-text');
     if (bar) bar.className = 'cmc-status-bar loading';
-    if (text) text.textContent = 'Loading CMC pool\u2026';
-    cmcMessage('Loading\u2026', false);
+    if (text) text.textContent = PBGuiI18n.t('sysmon.loadingCmcPool');
+    cmcMessage(PBGuiI18n.t('sysmon.loading'), false);
     return Promise.all([
       cmcFetch('/cmc-pool', { signal: signal, cache: 'no-store' }),
       cmcFetch('/cmc-pool/leases', { signal: signal, cache: 'no-store' })
@@ -3050,12 +3050,12 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
       _cmcPool = results[0] || { keys: [] };
       _cmcUsage = _cmcPool;
       _cmcLeases = results[1] || { authority: {}, leases: [] };
-      cmcMessage(((_cmcLeases.authority || {}).lease_count || 0) + ' lease records', false);
+      cmcMessage(PBGuiI18n.t('sysmon.leaseRecords', {count: (_cmcLeases.authority || {}).lease_count || 0}), false);
       renderCmcPool();
     }).catch(function (error) {
       if (generation !== _cmcLoadGeneration || error.name === 'AbortError') return;
       if (bar) bar.className = 'cmc-status-bar error';
-      if (text) text.textContent = 'CMC pool unavailable: ' + error.message;
+      if (text) text.textContent = PBGuiI18n.t('sysmon.cmcPoolUnavailable', {msg: PBGuiI18n.serverMsg(error.message)});
       cmcMessage(error.message, true);
     });
   }
@@ -3083,8 +3083,8 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     document.getElementById('cmc-key-imported').checked = _cmcModalMode === 'edit' ? !!selected.imported : false;
     document.getElementById('cmc-key-shared').checked = _cmcModalMode === 'edit' ? !!selected.shared : false;
     document.getElementById('cmc-key-active').checked = _cmcModalMode === 'edit' ? selected.active !== false : true;
-    title.textContent = _cmcModalMode === 'rotate' ? 'Rotate ' + (selected.label || selected.id) : _cmcModalMode === 'edit' ? 'Edit ' + (selected.label || selected.id) : 'Add CMC Key';
-    submit.textContent = _cmcModalMode === 'rotate' ? 'Rotate' : _cmcModalMode === 'edit' ? 'Save' : 'Add Key';
+    title.textContent = _cmcModalMode === 'rotate' ? PBGuiI18n.t('sysmon.rotateTitled', {label: selected.label || selected.id}) : _cmcModalMode === 'edit' ? PBGuiI18n.t('sysmon.editTitled', {label: selected.label || selected.id}) : PBGuiI18n.t('sysmon.addCmcKey');
+    submit.textContent = _cmcModalMode === 'rotate' ? PBGuiI18n.t('sysmon.rotate') : _cmcModalMode === 'edit' ? PBGuiI18n.t('common.save') : PBGuiI18n.t('sysmon.addKey');
     labelField.hidden = _cmcModalMode === 'rotate';
     options.hidden = _cmcModalMode === 'rotate';
     secretField.hidden = _cmcModalMode === 'edit';
@@ -3106,7 +3106,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var errorTarget = document.getElementById('cmc-key-modal-error');
     var submit = document.getElementById('cmc-key-submit');
     if (_cmcModalMode !== 'edit' && !secret.trim()) {
-      errorTarget.textContent = 'A non-empty secret is required.';
+      errorTarget.textContent = PBGuiI18n.t('sysmon.secretRequired');
       return;
     }
     var selected = selectedCmcKey();
@@ -3176,9 +3176,9 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
       target.appendChild(option);
     });
     document.getElementById('cmc-authority-domain').textContent = selected.quota_domain_id;
-    document.getElementById('cmc-authority-current').textContent = (domain.authority_node || domain.authority_node_id || 'unassigned') + ' · epoch ' + cmcNumber(domain.authority_epoch) + ' · reachable ' + (domain.authority_reachable === true ? 'yes' : domain.authority_reachable === false ? 'no' : 'unknown');
+    document.getElementById('cmc-authority-current').textContent = (domain.authority_node || domain.authority_node_id || PBGuiI18n.t('sysmon.unassigned')) + ' · ' + PBGuiI18n.t('sysmon.epochLabel', {v: cmcNumber(domain.authority_epoch)}) + ' · ' + PBGuiI18n.t('sysmon.reachableLabel', {v: domain.authority_reachable === true ? PBGuiI18n.t('sysmon.yes') : domain.authority_reachable === false ? PBGuiI18n.t('sysmon.no') : PBGuiI18n.t('sysmon.unknownState')});
     if (!target.options.length) {
-      document.getElementById('cmc-authority-error').textContent = 'No alternate eligible protocol-v2 master is available.';
+      document.getElementById('cmc-authority-error').textContent = PBGuiI18n.t('sysmon.noAlternateMaster');
       return;
     }
     document.getElementById('cmc-authority-error').textContent = '';
@@ -3201,10 +3201,10 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var domain = (_cmcLeases.domains || []).find(function (item) { return item.quota_domain_id === selected.quota_domain_id; }) || {};
     var targetNode = (_cmcPool.eligible_authority_nodes || []).find(function (node) { return node.node_id === targetNodeId; }) || {};
     var confirmed = await window.PBGuiDialogs.confirm({
-      title: 'Transfer CMC authority',
-      message: 'Transfer quota domain ' + selected.quota_domain_id + ' to ' + (targetNode.name || targetNodeId) + '?',
-      detail: 'This authenticated operation advances the authority epoch with compare-and-set. Existing leases remain bound to their original epoch.',
-      confirmText: 'Transfer Authority'
+      title: PBGuiI18n.t('sysmon.transferCmcAuthority'),
+      message: PBGuiI18n.t('sysmon.transferCmcAuthorityMsg', {domain: selected.quota_domain_id, node: targetNode.name || targetNodeId}),
+      detail: PBGuiI18n.t('sysmon.transferCmcAuthorityDetail'),
+      confirmText: PBGuiI18n.t('sysmon.transferAuthority')
     });
     if (!confirmed) {
       _cmcAuthorityOperationId = '';
@@ -3229,7 +3229,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     }).then(function (payload) {
       document.getElementById('cmc-authority-modal').hidden = true;
       _cmcAuthorityOperationId = '';
-      cmcMessage('Authority transferred. Operation ' + (payload.operation_id || operationId) + '.', false);
+      cmcMessage(PBGuiI18n.t('sysmon.authorityTransferred', {id: payload.operation_id || operationId}), false);
       return loadCmcPool();
     }).catch(function (error) {
       document.getElementById('cmc-authority-error').textContent = error.message;
@@ -3240,7 +3240,7 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var selected = selectedCmcKey();
     if (!selected) return;
     var enable = selected.active === false;
-    cmcMessage((enable ? 'Re-enabling ' : 'Disabling ') + (selected.label || selected.id) + '\u2026', false);
+    cmcMessage(PBGuiI18n.t(enable ? 'sysmon.cmcReEnabling' : 'sysmon.cmcDisabling', {label: selected.label || selected.id}), false);
     cmcMutationFetch({
       operationId: newCmcOperationId(enable ? 'cmc-enable' : 'cmc-disable'),
       action: enable ? 'cmc_patch' : 'cmc_disable',
@@ -3259,10 +3259,10 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     var selected = selectedCmcKey();
     if (!selected) return;
     var confirmed = await window.PBGuiDialogs.confirm({
-      title: 'Delete CMC key',
-      message: 'Delete "' + (selected.label || selected.id) + '" from the pool?',
-      detail: 'This publishes a cluster tombstone. The secret cannot be revealed or restored from this UI.',
-      confirmText: 'Delete'
+      title: PBGuiI18n.t('sysmon.deleteCmcKey'),
+      message: PBGuiI18n.t('sysmon.deleteCmcKeyMsg', {label: selected.label || selected.id}),
+      detail: PBGuiI18n.t('sysmon.deleteCmcKeyDetail'),
+      confirmText: PBGuiI18n.t('common.delete')
     });
     if (!confirmed) return;
     cmcMutationFetch({
@@ -3340,10 +3340,10 @@ document.title = PBGuiI18n.t('sysmon.servicesTitle');
     }))
     .then(function (r) { return r.json(); })
     .then(function (d) {
-      var message = d && d.apply && d.apply.message ? String(d.apply.message) : 'Saved';
-      _flash(msgId, d.ok ? message : (d.detail || 'Error'), !d.ok);
+      var message = d && d.apply && d.apply.message ? PBGuiI18n.serverMsg(String(d.apply.message)) : PBGuiI18n.t('common.saved');
+      _flash(msgId, d.ok ? message : (d.detail ? PBGuiI18n.serverMsg(d.detail) : PBGuiI18n.t('common.error')), !d.ok);
     })
-    .catch(function (e) { _flash(msgId, 'Error: ' + e.message, true); });
+    .catch(function (e) { _flash(msgId, PBGuiI18n.t('sysmon.errorPrefix', { msg: PBGuiI18n.serverMsg(e.message) }), true); });
   }
 
   function _val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
