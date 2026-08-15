@@ -19,10 +19,10 @@ from pathlib import Path
 from typing import Any, List
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from logging_helpers import human_log as _log
 from pbgui_purefunc import PBGDIR
 
@@ -1946,55 +1946,57 @@ def get_editor_page(
 
 # ---------------------------------------------------------------- /main_page
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     current: str = Query(default="", description="Currently selected dashboard name"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone dashboard main page (logo + sidebar + content area)."""
+) -> FileResponse | HTMLResponse:
+    """Serve the dashboard main page: built Vue entry first, legacy fallback.
+
+    The Vue bundle (frontend/dist/dashboard_main/index.html) is gitignored and
+    produced by `npm run build`; a checkout without a build still gets the
+    legacy dashboard_main.html template with the old %% placeholder injections
+    (same 3-branch helper used by root_login and services_monitor).
+    """
     import json as _json
     from pathlib import Path as _P
 
-    html_path = _P(__file__).parent.parent / "frontend" / "dashboard_main.html"
-    html = html_path.read_text(encoding="utf-8")
+    def inject(html: str, _request: Request) -> str:
+        # Derive API base from the actual request URL so iframes use the correct host/port
+        scheme = _request.url.scheme
+        host   = _request.url.hostname or "127.0.0.1"
+        port   = _request.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_base = origin + "/api"
+        ws_base  = api_base.replace("http://", "ws://").replace("https://", "wss://")
 
-    # Derive API base from the actual request URL so iframes use the correct host/port
-    scheme = request.url.scheme
-    host   = request.url.hostname or "127.0.0.1"
-    port   = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api"
-    ws_base  = api_base.replace("http://", "ws://").replace("https://", "wss://")
+        html = html.replace('"%%TOKEN%%"',         _json.dumps(""))
+        html = html.replace('"%%API_BASE%%"',      _json.dumps(api_base))
+        html = html.replace('"%%WS_BASE%%"',       _json.dumps(ws_base))
+        html = html.replace('"%%CURRENT%%"',       _json.dumps(current))
 
-    html = html.replace('"%%TOKEN%%"',         _json.dumps(""))
-    html = html.replace('"%%API_BASE%%"',      _json.dumps(api_base))
-    html = html.replace('"%%WS_BASE%%"',       _json.dumps(ws_base))
-    html = html.replace('"%%CURRENT%%"',       _json.dumps(current))
+        from pbgui_purefunc import PBGDIR, PBGUI_SERIAL, PBGUI_VERSION
 
-    from pbgui_purefunc import PBGDIR, PBGUI_SERIAL, PBGUI_VERSION
+        try:
+            dashboards_dir = _P(PBGDIR) / "data" / "dashboards"
+            dashboards = sorted(path.stem for path in dashboards_dir.glob("*.json") if path.is_file())
+        except Exception:
+            dashboards = []
+        html = html.replace("%%DASHBOARDS_JSON%%", _json.dumps(dashboards))
 
-    try:
-        dashboards_dir = _P(PBGDIR) / "data" / "dashboards"
-        dashboards = sorted(path.stem for path in dashboards_dir.glob("*.json") if path.is_file())
-    except Exception:
-        dashboards = []
-    html = html.replace("%%DASHBOARDS_JSON%%", _json.dumps(dashboards))
+        html = html.replace('"%%VERSION%%"', _json.dumps(PBGUI_VERSION))
+        html = html.replace('%%VERSION%%', PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', _json.dumps(PBGUI_SERIAL))
+        html = html.replace('%%SERIAL%%', PBGUI_SERIAL)
 
-    html = html.replace('"%%VERSION%%"', _json.dumps(PBGUI_VERSION))
-    html = html.replace('%%VERSION%%', PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', _json.dumps(PBGUI_SERIAL))
-    html = html.replace('%%SERIAL%%', PBGUI_SERIAL)
+        # Cache-bust pbgui_nav.js with file mtime so browser always loads latest
+        nav_js = _P(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        html = html.replace('%%NAV_HASH%%', nav_hash)
+        return html
 
-    # Cache-bust pbgui_nav.js with file mtime so browser always loads latest
-    nav_js = _P(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace('%%NAV_HASH%%', nav_hash)
-
-    return HTMLResponse(
-        content=html,
-        headers={"Cache-Control": "no-store"},
-    )
+    return serve_vue_or_legacy_page("dashboard_main", "dashboard_main.html", request, inject=inject)
 
 
 # ---------------------------------------------------------------- /templates_page

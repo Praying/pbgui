@@ -12,6 +12,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from fastapi.responses import FileResponse
 
 from api import cluster, dashboard, live, v7_instances
 import pb7_config
@@ -56,7 +57,12 @@ def test_dashboard_pages_use_cookie_auth_without_rendering_session_token() -> No
     ]
 
     for response in responses:
-        html = response.body.decode()
+        # get_main_page serves the built Vue entry (FileResponse) when
+        # frontend/dist exists; the legacy HTML fallback keeps .body.
+        if isinstance(response, FileResponse):
+            html = response.path.read_bytes().decode()
+        else:
+            html = response.body.decode()
         assert "%%TOKEN%%" not in html
         assert "Authorization" not in html
         assert "Bearer " not in html
