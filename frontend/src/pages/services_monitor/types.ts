@@ -183,6 +183,44 @@ export interface PbDataSaveResponse {
   apply?: { message?: unknown };
 }
 
+/** The 13 alert-routing ids legacy collectAlertRoutingFromForm walks (contract). */
+export type AlertRoutingId =
+  | 'offline_gui'
+  | 'service_gui'
+  | 'system_gui'
+  | 'instance_gui'
+  | 'ssh_lost_telegram'
+  | 'ssh_recovered_telegram'
+  | 'service_down_telegram'
+  | 'service_restart_started_telegram'
+  | 'service_recovered_telegram'
+  | 'system_problem_telegram'
+  | 'system_recovered_telegram'
+  | 'instance_problem_telegram'
+  | 'instance_recovered_telegram';
+
+/** GET /settings/api-server payload — applySettings('api-server') + saveApiServerSettings. */
+export interface ApiServerSettingsData {
+  host?: string;
+  port?: number;
+  auto_restart?: boolean;
+  available_hosts?: string[];
+  enabled_hosts?: string[];
+  monitor_config?: Record<string, number>;
+  telegram_token?: string;
+  telegram_chat_id?: string;
+  /** Alert-routing flags ride the same payload (undefined renders checked). */
+  [routingId: AlertRoutingId]?: boolean;
+}
+
+/** GET /settings/pbcoindata payload — applySettings('pbcoindata') + saveCoinDataSettings. */
+export interface CoinDataSettingsData {
+  fetch_interval?: number;
+  fetch_limit?: number;
+  metadata_interval?: number;
+  mapping_interval?: number;
+}
+
 /** systemd_units / missing_default_units / not_ready_default_units row. */
 export interface MigrationUnit {
   service?: string;
