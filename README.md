@@ -147,6 +147,8 @@ For manual development runs only, you can still start the API directly from an a
 python PBApiServer.py
 ```
 
+Some UI pages (starting with the login page) are Vue bundles served from `frontend/dist/` (gitignored). After cloning or pulling, run `cd frontend && npm run build` once before starting the server — without `dist/`, the affected routes return HTTP 500 with a message pointing to the build command. CI runs this frontend build gate automatically on every change.
+
 ## PBRun Instance Manager
 
 PBRun manages passivbot instances from the PBGui UI. Enable or restart it from `Services -> PBRun`. New installer setups manage it with `pbgui-pbrun.service`; no `start.sh` or crontab entry is needed.
