@@ -845,6 +845,9 @@ Run: `grep -n "function \|async function \|window\.\w* = " frontend/services_mon
 
 **完成定义（DoD）**：`frontend/*.html`（旧页面）全部删除；`frontend/js/*.js` 中被 Vue 页替代者删除；CI 前端 job 绿；`tests/test_i18n.py` 持续绿（en/zh key 集合一致）。
 
+**测试过滤语法（已验证，vitest 3.2.7 精确 pin）**：`npm test -- <filter>` 按 `test.dir`（src/）相对路径做子串匹配。页名与 dir 相对路径均可：
+`npm test -- <page>`（如 `root_login`、`services_monitor`）、`npm test -- pages/<page>`、`npm test -- shared/<module>`。**不要**用仓库根前缀（`frontend/src/...`）——匹配为空会以 exit 1 失败。升级 vitest 前先用一个页名 filter 回归验证（契约注释见 `frontend/vite.config.ts`）。
+
 ---
 
 ## Self-Review 记录
