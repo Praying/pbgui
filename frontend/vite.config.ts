@@ -20,6 +20,10 @@ const pageEntries = Object.fromEntries(
 export default defineConfig({
   // root at the pages dir so dist/<page>/index.html mirrors the serving layout
   root: 'src/pages',
+  // FastAPI mounts `frontend/` at /app (PBApiServer.py) and serves the built
+  // pages from frontend/dist, so asset URLs must be /app/dist/... — the default
+  // absolute /assets/... would 404 at the page's own route.
+  base: '/app/dist/',
   plugins: [vue()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   build: {
@@ -38,8 +42,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    // test globs resolve against root (src/pages), not the config dir —
-    // anchor them to the config dir so src/shared/* tests are discovered
+    // globs resolve against root (src/pages), where tinyglobby's absolute
+    // include pattern skips files inside that directory itself — anchor the
+    // scan to src/ so both src/shared/* and src/pages/* tests are discovered
+    dir: fileURLToPath(new URL('./src', import.meta.url)),
     include: [fileURLToPath(new URL('./src/**/*.test.ts', import.meta.url))],
   },
 });

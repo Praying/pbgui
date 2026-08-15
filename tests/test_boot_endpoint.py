@@ -25,7 +25,7 @@ def test_boot_js_returns_boot_payload() -> None:
     assert resp.headers["content-type"].startswith("application/javascript")
     assert resp.headers["cache-control"] == "no-store"
     payload = _payload(resp)
-    assert {"token", "origin", "version", "serial"} <= set(payload)
+    assert set(payload) == {"token", "origin", "version", "serial"}
 
 
 def test_boot_js_token_empty_without_auth() -> None:

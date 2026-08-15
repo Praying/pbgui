@@ -215,11 +215,13 @@ def test_token_refresh_renews_the_httponly_cookie(monkeypatch) -> None:
 
 def test_login_and_shared_nav_escape_iframes_with_one_top_level_redirect() -> None:
     """Session expiry cannot render Login or Welcome inside a Dashboard iframe."""
-    login_source = Path("frontend/root_login.html").read_text(encoding="utf-8")
+    login_source = Path("frontend/src/pages/root_login/App.vue").read_text(encoding="utf-8")
+    redirect_source = Path("frontend/src/shared/nav.ts").read_text(encoding="utf-8")
     nav_source = Path("frontend/pbgui_nav.js").read_text(encoding="utf-8")
 
     assert "window.self !== window.top" in login_source
-    assert "window.top.location.replace(url)" in login_source
+    assert "replaceTopLocation" in login_source
+    assert "window.top.location.replace(url)" in redirect_source
     assert "window.top.location.replace(url)" in nav_source
     assert "var _authRedirecting = false" in nav_source
     assert "if (_authRedirecting) return" in nav_source

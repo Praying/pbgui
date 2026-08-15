@@ -16,7 +16,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, WebSocket
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from pydantic import BaseModel
 from starlette.websockets import WebSocketState
 
@@ -414,6 +414,11 @@ def _frontend_template_path(name: str) -> Path:
     return Path(__file__).parent.parent / "frontend" / name
 
 
+def _frontend_dist_path(page: str) -> Path:
+    """Built Vue page entry (frontend/dist is gitignored; produced by `npm run build`)."""
+    return Path(__file__).parent.parent / "frontend" / "dist" / page / "index.html"
+
+
 def _request_origin(request: Request) -> str:
     scheme = request.url.scheme
     host = request.url.hostname or "127.0.0.1"
@@ -432,7 +437,7 @@ def _root_url() -> str:
 def build_root_entry_response(
     request: Request,
     session: SessionToken | None = None,
-) -> HTMLResponse | RedirectResponse:
+) -> HTMLResponse | RedirectResponse | FileResponse:
     """Return the public root response.
 
     If a password is configured and no valid token is present, show the small
@@ -443,9 +448,20 @@ def build_root_entry_response(
     if auth_state["error"] or session is not None or not auth_state["required"]:
         return RedirectResponse(url=_main_page_url())
 
-    html = _frontend_template_path("root_login.html").read_text(encoding="utf-8")
-    html = html.replace('"%%API_ORIGIN%%"', json.dumps(_request_origin(request)))
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+    vue_path = _frontend_dist_path("root_login")
+    if vue_path.is_file():
+        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
+
+    legacy_path = _frontend_template_path("root_login.html")
+    if legacy_path.is_file():
+        html = legacy_path.read_text(encoding="utf-8")
+        html = html.replace('"%%API_ORIGIN%%"', json.dumps(_request_origin(request)))
+        return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+
+    raise HTTPException(
+        status_code=500,
+        detail="Login page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    )
 
 
 def _bootstrap_payload(session: SessionToken | None = None) -> dict:

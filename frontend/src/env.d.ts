@@ -13,3 +13,12 @@ interface BootInfo {
   serial: string;
 }
 declare const __BOOT__: BootInfo | undefined;
+
+interface Window {
+  /** Legacy frontend/i18n.js engine, loaded during the Vue migration transition. */
+  PBGuiI18n?: {
+    lang: 'en' | 'zh';
+    toggleLang(): void;
+  };
+}
+
