@@ -12,7 +12,7 @@
  * - Rename: PATCH {new_name}; ok → map+sort in the parent, keep [newName]
  *   selected (legacy render()); empty/unchanged → just hide the row.
  */
-import { computed, nextTick, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
@@ -42,6 +42,19 @@ let msgTimer: number | undefined;
 const renameVisible = computed(() => selTpl.value.length === 1);
 const delVisible = computed(() => selTpl.value.length > 0);
 const renameRowVisible = computed(() => renameOpen.value && selTpl.value.length === 1);
+
+/**
+ * Legacy updateTplButtons forced the rename row closed whenever the selection
+ * left exactly one template, and render() (after delete) rebuilt it hidden —
+ * the row only ever opens via the 📝 click. Resetting here keeps the row
+ * closed across selection changes and deletes instead of leaking open state.
+ */
+watch(selTpl, (next) => {
+  if (next.length !== 1) {
+    renameOpen.value = false;
+    renameValue.value = '';
+  }
+});
 
 /** Legacy showMsg: set text + ok/err class, auto-clear after 3500 ms. */
 function showMsg(text: string, type: 'ok' | 'err'): void {

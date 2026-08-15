@@ -361,6 +361,28 @@ describe('manage templates', () => {
     expect(apiFetchMock.mock.calls.filter(([, init]) => init?.method === 'PATCH')).toHaveLength(0);
   });
 
+  it('does not auto-reopen the rename row after delete and reselection', async () => {
+    installTemplatesApi({ templates: ['A', 'B', 'C'], users: [] });
+    const wrapper = mountApp();
+    await flushPromises();
+
+    await toggleManageItem(wrapper, 'A');
+    await wrapper.find('#btn-rename-tpl').trigger('click');
+    expect(wrapper.find('#rename-wrap').isVisible()).toBe(true);
+
+    // Selection moves to two templates: legacy updateTplButtons forces the row closed.
+    await toggleManageItem(wrapper, 'B');
+    expect(wrapper.find('#rename-wrap').isVisible()).toBe(false);
+
+    await wrapper.find('#btn-del-tpl').trigger('click');
+    await flushPromises();
+
+    // Reselecting a template must keep the row closed (legacy: only 📝 opens it).
+    await toggleManageItem(wrapper, 'C');
+    expect(wrapper.find('#rename-wrap').isVisible()).toBe(false);
+    expect(wrapper.find('#btn-rename-tpl').isVisible()).toBe(true);
+  });
+
   it('shows the server detail message when the rename fails', async () => {
     installTemplatesApi({ templates: ['A'], users: [], failRename: "Template 'X' already exists" });
     const wrapper = mountApp();
