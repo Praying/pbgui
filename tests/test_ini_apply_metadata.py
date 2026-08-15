@@ -256,14 +256,20 @@ def test_runtime_restart_reason_lifecycle_and_status(monkeypatch) -> None:
 
 
 def test_services_ui_uses_safe_apply_messages() -> None:
-    """Server-provided apply text is rendered only through textContent."""
-    source = Path("frontend/services_monitor.html").read_text(encoding="utf-8")
-    post_block = source[source.index("function _post("):source.index("function _val(")]
-    assert "d.apply.message" in post_block
-    assert "textContent" not in post_block
-    flash_block = source[source.index("function _flash("):source.index("/* ── Prices Overlay")]
-    assert "el.textContent = text" in flash_block
-    assert "innerHTML" not in flash_block
+    """Server-provided apply text is rendered only through text interpolation.
+
+    The legacy services_monitor.html `_post`/`_flash` checks moved to the Vue
+    migration: the settings components render apply messages via Vue
+    interpolation (textContent semantics) and never via v-html; the behavior
+    is covered by the Vitest suites (PbDataSettings/ApiServerSettings/
+    CoinDataSettings apply-message flash tests).
+    """
+    vue_sources = "\n".join(
+        Path(f"frontend/src/pages/services_monitor/components/{name}").read_text(encoding="utf-8")
+        for name in ("PbDataSettings.vue", "ApiServerSettings.vue", "CoinDataSettings.vue")
+    )
+    assert "apply.message" in vue_sources
+    assert "v-html" not in vue_sources
     assert "Applied immediately" in json.dumps(apply_metadata("api_server_full"))
     assert apply_metadata("pbdata")["message"] == "Applies next cycle"
     assert apply_metadata("pbcoindata")["message"] == "Applies next cycle"

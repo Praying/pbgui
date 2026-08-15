@@ -227,7 +227,6 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
         "logging_monitor.html",
         "market_data_main.html",
         "market_data_status.html",
-        "services_monitor.html",
         "v7_backtest.html",
         "v7_edit.html",
         "v7_optimize.html",
@@ -236,3 +235,10 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
     }
     for filename in expected_consumers:
         assert "pbgui_dialogs.js?v=6" in html_sources[filename]
+
+    # services_monitor.html was replaced by the Vue page (Task 14); its entry
+    # keeps the same shared dialog asset version.
+    services_vue_index = (ROOT / "frontend" / "src" / "pages" / "services_monitor" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert "pbgui_dialogs.js?v=6" in services_vue_index

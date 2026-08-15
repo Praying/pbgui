@@ -37,37 +37,34 @@ def test_local_services_registry_includes_monitor_agent() -> None:
 
 
 def test_local_services_ui_includes_pbcluster() -> None:
-    """Services page renders a PBCluster card/panel and log viewer target."""
+    """Services page registry keeps the PBCluster panel and log viewer target.
 
-    source = Path("frontend/services_monitor.html").read_text(encoding="utf-8")
+    The legacy services_monitor.html DOM assertions moved to the Vue migration:
+    the registry (services.ts) carries id + logFile, App.vue renders one panel
+    container per registry id, and the Vitest suite (App.test.ts PANEL_IDS +
+    ServiceLogPanel.test.ts) covers the panel/log wiring.
+    """
 
-    assert "data-panel=\"pbcluster\"" in source
-    assert "id=\"panel-pbcluster\"" in source
-    assert "id=\"log-pbcluster\"" in source
+    source = Path("frontend/src/pages/services_monitor/services.ts").read_text(encoding="utf-8")
+
     assert "id: 'pbcluster'" in source
     assert "PBCluster.log" in source
 
 
 def test_local_services_ui_includes_monitor_agent() -> None:
-    """Services page renders PBMonitorAgent controls and log viewer target."""
+    """Services page registry keeps PBMonitorAgent controls and log viewer target."""
 
-    source = Path("frontend/services_monitor.html").read_text(encoding="utf-8")
+    source = Path("frontend/src/pages/services_monitor/services.ts").read_text(encoding="utf-8")
 
-    assert "data-panel=\"monitor-agent\"" in source
-    assert "id=\"panel-monitor-agent\"" in source
-    assert "id=\"log-monitor-agent\"" in source
     assert "id: 'monitor-agent'" in source
     assert "PBMonitorAgent.log" in source
 
 
 def test_local_services_ui_includes_persistent_vps_monitor() -> None:
-    """Services page exposes explicit daemon status without coupling it to API restart."""
+    """Services page registry keeps the VPSMonitor panel without coupling it to API restart."""
 
-    source = Path("frontend/services_monitor.html").read_text(encoding="utf-8")
+    source = Path("frontend/src/pages/services_monitor/services.ts").read_text(encoding="utf-8")
 
-    assert 'data-panel="vps-monitor"' in source
-    assert 'id="panel-vps-monitor"' in source
-    assert 'id="log-vps-monitor"' in source
     assert "id: 'vps-monitor'" in source
     assert "VPSMonitor.log" in source
 
@@ -84,16 +81,6 @@ def test_master_installers_enable_monitor_agent_service() -> None:
     assert '"VPSMonitor.py"' in core_source
     assert '"vps-monitor,api,pbrun,pbdata,pbcoindata,monitor-agent"' in core_source
     assert "--enable vps-monitor,api,pbrun,pbdata,pbcoindata,monitor-agent" in remote_source
-
-
-def test_local_services_ui_uses_real_restart_action() -> None:
-    """Services page uses the restart endpoint instead of stop/start timers."""
-
-    source = Path("frontend/services_monitor.html").read_text(encoding="utf-8")
-
-    assert "svcAction(\\'" in source
-    assert "\\',\\'restart\\')" in source
-    assert "setTimeout(function(){svcAction" not in source
 
 
 def test_systemd_action_failure_returns_final_status(monkeypatch) -> None:
@@ -627,15 +614,6 @@ def test_run_systemd_migration_deletes_legacy_start_sh(monkeypatch, tmp_path) ->
     assert any("Deleted legacy start.sh" in line for line in result["logs"])
     assert calls == [("pbcluster", "restart"), ("pbrun", "restart"), ("pbdata", "restart"), ("pbcoindata", "restart"), ("monitor-agent", "restart")]
     assert handoffs == [True]
-
-
-def test_worker_restart_uses_single_restart_action() -> None:
-    """Workers page uses the restart worker endpoint instead of stop/start timers."""
-
-    source = Path("frontend/services_monitor.html").read_text(encoding="utf-8")
-
-    assert "window.workerAction(workerId, 'restart')" in source
-    assert "setTimeout(function () { window.workerAction(workerId, 'start')" not in source
 
 
 def test_worker_action_route_dispatches_restart(monkeypatch) -> None:
