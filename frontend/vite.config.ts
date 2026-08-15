@@ -38,5 +38,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // test globs resolve against root (src/pages), not the config dir —
+    // anchor them to the config dir so src/shared/* tests are discovered
+    include: [fileURLToPath(new URL('./src/**/*.test.ts', import.meta.url))],
   },
 });
