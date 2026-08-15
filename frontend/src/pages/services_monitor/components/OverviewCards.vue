@@ -59,7 +59,10 @@ interface Card {
   svcId: string;
   panelId: string;
   name: string;
+  /** Border/status class; the migration card drops it on warn. */
   cls: string;
+  /** Dot class — the migration card keeps its raw class (warn dot) even without a border class. */
+  dotCls: string;
   statusText: string;
   title: string;
   buttons: CardButton[];
@@ -104,6 +107,7 @@ const cards = computed<Card[]>(() => {
       panelId: svc.id,
       name: svc.label,
       cls: serviceStatusClass(item),
+      dotCls: serviceStatusClass(item),
       statusText: serviceStatusText(tt, item, pending),
       title: serviceStatusTitle(tt, item),
       buttons: serviceButtons(svc.id, svc.isApiServer, item, pending),
@@ -118,18 +122,22 @@ const cards = computed<Card[]>(() => {
     panelId: 'workers',
     name: t('sysmon.workers'),
     cls: workersCls,
+    dotCls: workersCls,
     statusText: t('sysmon.workersRunning', { running: counts.running || 0, total: counts.total || 0 }),
     title: '',
     buttons: [{ ...openButton, label: t('sysmon.open') }],
   });
 
-  // Migration summary card — legacy keeps the warn dot but drops the card border class.
+  // Migration summary card — legacy: migrationCls = meta.cls || 'stopped'; the
+  // border class is dropped on warn but the dot keeps the raw class.
   const meta = migrationStatusMeta(tt, props.migrationStatus ?? null);
+  const migrationCls = meta.cls || 'stopped';
   list.push({
     svcId: 'migration',
     panelId: 'migration',
     name: t('sysmon.migration'),
-    cls: meta.cls === 'warn' ? '' : meta.cls,
+    cls: migrationCls === 'warn' ? '' : migrationCls,
+    dotCls: migrationCls,
     statusText: meta.text,
     title: '',
     buttons: [{ ...openButton, label: t('sysmon.open') }],
@@ -150,7 +158,7 @@ const cards = computed<Card[]>(() => {
       @click="emit('select', c.panelId)"
     >
       <div class="card-name">{{ c.name }}</div>
-      <div class="card-status-row" :title="c.title"><span class="card-dot" :class="c.cls"></span>{{ c.statusText }}</div>
+      <div class="card-status-row" :title="c.title"><span class="card-dot" :class="c.dotCls"></span>{{ c.statusText }}</div>
       <div class="card-buttons">
         <button
           v-for="b in c.buttons"

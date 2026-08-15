@@ -188,8 +188,7 @@ async function serviceAction(svcId: string, action: ServiceAction): Promise<void
         title: t('sysmon.serviceRestartRequested'),
         message: serviceActionDoneText(tt, action, svcId),
         output: t('sysmon.statusRefreshHint'),
-        isOk: true,
-        hideFoot: true,
+        isOk: true, // legacy _resultPopup(..., true, false): footer with OK button stays visible
       });
     }
     void fetchStatus();

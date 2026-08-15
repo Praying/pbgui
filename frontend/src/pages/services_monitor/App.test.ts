@@ -198,6 +198,8 @@ describe('services_monitor overview panel', () => {
     expect(modal).not.toBeNull();
     expect(modal!.textContent).toContain('Service restart requested');
     expect(modal!.textContent).toContain('pbcluster restart requested successfully.');
+    // Legacy passes hideFoot=false: the OK footer button is rendered.
+    expect(modal!.querySelector('.result-modal-footer button')).not.toBeNull();
   });
 
   it('shows the failure popup and re-enables buttons when an action is rejected', async () => {

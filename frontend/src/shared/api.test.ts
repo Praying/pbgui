@@ -28,4 +28,8 @@ describe('apiFetch', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('not json', { status: 500, statusText: 'Internal Server Error' })));
     await expect(apiFetch('/api/x')).rejects.toMatchObject({ status: 500, detail: 'Internal Server Error' });
   });
+  it('falls back to the body error field when detail is absent (legacy order detail → error → statusText)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"error":"boom"}', { status: 500 })));
+    await expect(apiFetch('/api/x')).rejects.toMatchObject({ status: 500, detail: 'boom' });
+  });
 });

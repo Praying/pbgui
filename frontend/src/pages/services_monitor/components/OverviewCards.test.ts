@@ -168,7 +168,21 @@ describe('OverviewCards', () => {
 
     const migration = wrapper.findAll('.svc-card').find((c) => c.attributes('data-svc') === 'migration')!;
     expect(migration.find('.card-status-row').text()).toBe('Migration status not loaded yet.');
+    // Legacy: migrationCls = meta.cls || 'stopped' — not loaded shows red border + dot.
+    expect(migration.classes()).toContain('stopped');
+    expect(migration.find('.card-dot').classes()).toContain('stopped');
     await migration.find('.card-btn').trigger('click');
     expect(wrapper.emitted('select')).toEqual([['migration']]);
+  });
+
+  it('keeps the warn dot on the migration card while dropping the border class', async () => {
+    const wrapper = mountCards();
+    await wrapper.setProps({ migrationStatus: { migration_needed: true } });
+
+    const migration = wrapper.findAll('.svc-card').find((c) => c.attributes('data-svc') === 'migration')!;
+    expect(migration.find('.card-status-row').text()).toBe('Systemd migration is available for this master.');
+    expect(migration.classes()).not.toContain('warn');
+    expect(migration.classes()).not.toContain('stopped');
+    expect(migration.find('.card-dot').classes()).toContain('warn');
   });
 });

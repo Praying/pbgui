@@ -14,7 +14,14 @@ export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<
   const resp = await fetch(url, { ...init, headers });
   const data: unknown = await resp.json().catch(() => ({}));
   if (!resp.ok) {
-    const detail = typeof (data as { detail?: unknown })?.detail === 'string' ? (data as { detail: string }).detail : resp.statusText;
+    // Legacy detail order: body detail → body error → statusText.
+    const body = data as { detail?: unknown; error?: unknown };
+    const detail =
+      typeof body.detail === 'string'
+        ? body.detail
+        : typeof body.error === 'string'
+          ? body.error
+          : resp.statusText;
     throw new ApiError(resp.status, detail);
   }
   return data as T;
