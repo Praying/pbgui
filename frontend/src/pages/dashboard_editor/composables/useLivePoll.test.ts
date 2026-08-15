@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useLiveBalance, useLivePositions, type LivePollController } from './useLivePoll';
+import {
+  canLivePoll,
+  useLiveBalance,
+  useLivePositions,
+  type LivePollController,
+} from './useLivePoll';
 import type { FetchLike } from './useDashboardFetch';
 
 const BASE = 'http://pbgui.test:8000/api';
@@ -430,5 +435,20 @@ describe('useLiveBalance (editor _connectLiveBal:1121-1159)', () => {
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(fetchFn).toHaveBeenLastCalledWith(`${BASE}/dashboard/balance?users=u2&live=1`);
+  });
+});
+
+describe('canLivePoll — the shared eligibility gate (editor:1091/1128)', () => {
+  it('accepts 1..10 specific users', () => {
+    expect(canLivePoll(['u1'])).toBe(true);
+    expect(canLivePoll(Array.from({ length: 10 }, (_, i) => 'u' + i))).toBe(true);
+  });
+
+  it('rejects null, empty, ALL and >10-user selections', () => {
+    expect(canLivePoll(null)).toBe(false);
+    expect(canLivePoll([])).toBe(false);
+    expect(canLivePoll(['ALL'])).toBe(false);
+    expect(canLivePoll(['u1', 'ALL'])).toBe(false);
+    expect(canLivePoll(Array.from({ length: 11 }, (_, i) => 'u' + i))).toBe(false);
   });
 });

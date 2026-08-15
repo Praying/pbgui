@@ -43,6 +43,7 @@ import { readEditorConfig } from './config';
 import { useDashboardUsers } from './composables/useDashboardUsers';
 import { useDashboardWs } from './composables/useDashboardWs';
 import { closeAllMselDropdowns } from './lib/mselRegistry';
+import { isPositionsLive } from './lib/livePositionsRegistry';
 import { useDashboardStore } from './stores/dashboardStore';
 import { inboundMessageType, type EditorOutboundMessage } from './types/postMessage';
 
@@ -192,7 +193,10 @@ function onDocClick(): void {
 
 /* ── WebSocket orchestration (editor:2749-2826) ── */
 
-useDashboardWs({ apiBase: config.apiBase, store });
+/* editor:2807 — positions_updated skips cells whose live poll is active
+   (`_liveState['pos_' + r + '_' + c].timer`); D-editor-5's WidgetPositions
+   maintains the registry (lib/livePositionsRegistry). */
+useDashboardWs({ apiBase: config.apiBase, store, isPositionsLive });
 
 /* The parent-message listener attaches at load like the legacy page
    (editor:2733), before init runs. Message events fire on window — the

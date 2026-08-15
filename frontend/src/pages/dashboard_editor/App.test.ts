@@ -5,6 +5,7 @@ import { createI18n } from '@/shared/i18n';
 import App from './App.vue';
 import { resetDashboardStore, useDashboardStore } from './stores/dashboardStore';
 import { isMselOpen, openMselDropdown, resetMselRegistry } from './lib/mselRegistry';
+import { resetLivePositionsRegistry, setLivePositionsActive } from './lib/livePositionsRegistry';
 import type { WebSocketLike } from './composables/useDashboardWs';
 
 /* Port of the editor shell: init (editor:2636-2705), save/cancel + the
@@ -85,6 +86,7 @@ beforeEach(() => {
   FakeWebSocket.instances = [];
   resetDashboardStore();
   resetMselRegistry();
+  resetLivePositionsRegistry();
   fetchMock.mockReset();
   defaultFetch();
   vi.stubGlobal('fetch', fetchMock);
@@ -356,5 +358,25 @@ describe('WebSocket orchestration (editor:2749-2826)', () => {
     expect(store.epochOf(2, 1)).toBe(emptyBefore);
     /* still renders */
     expect(wrapper.findAll('.editor-cell')).toHaveLength(2);
+  });
+
+  it('skips positions_updated rebuilds for cells with an active live poll (editor:2807)', async () => {
+    mountApp('?name=Draft&standalone=1');
+    await flushPromises();
+    const ws = FakeWebSocket.instances[0];
+    expect(ws).toBeTruthy();
+    const store = useDashboardStore();
+    store.state['dashboard_type_2_1'] = 'POSITIONS';
+    const before = store.epochOf(2, 1);
+    setLivePositionsActive('2_1', true);
+    ws?.onmessage?.({ data: JSON.stringify({ type: 'positions_updated' }) });
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    await flushPromises();
+    expect(store.epochOf(2, 1)).toBe(before); /* live poll owns the refresh */
+    setLivePositionsActive('2_1', false);
+    ws?.onmessage?.({ data: JSON.stringify({ type: 'positions_updated' }) });
+    await new Promise((resolve) => setTimeout(resolve, 320));
+    await flushPromises();
+    expect(store.epochOf(2, 1)).toBe(before + 1); /* rebuilt once not live */
   });
 });

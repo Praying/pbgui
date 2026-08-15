@@ -222,6 +222,10 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
       state.rows = 1;
       state.cols = 1;
     }
+    /* legacy buildGrid() rebuilt every cell's DOM here, so per-cell runtime
+       flags (the .auto-height class) never survived a reload — clear them;
+       widgets re-mark themselves once their fetch succeeds (D-editor-5 fix). */
+    for (const k of Object.keys(autoHeightCells)) delete autoHeightCells[k];
     /* legacy buildGrid() rebuilds every cell after config load */
     bumpAllCells(rowsComputed.value, colsComputed.value);
   }

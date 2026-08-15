@@ -116,6 +116,20 @@ describe('loadConfig (editor:2679-2694)', () => {
     store.loadConfig({ rows: 2, cols: 2 });
     expect(store.epochOf(2, 2)).toBe(1);
   });
+
+  it('clears stale auto-height flags on reload (D-2 handoff minor)', () => {
+    /* legacy buildGrid() rebuilt every cell's DOM after loadConfig, so the
+       .auto-height class never survived a reload; the flag map must not either
+       (widgets re-mark themselves after their fetch succeeds). */
+    const store = useDashboardStore({ apiBase: '/api', origName: '' });
+    store.loadConfig({ rows: 2, cols: 1 });
+    store.autoHeightCells['1_1'] = true;
+    store.autoHeightCells['2_1'] = true;
+    expect(store.isAutoHeight(1, 1)).toBe(true);
+    store.loadConfig({ rows: 2, cols: 1 });
+    expect(store.isAutoHeight(1, 1)).toBe(false);
+    expect(store.isAutoHeight(2, 1)).toBe(false);
+  });
 });
 
 describe('assignCellType — palette drop (editor:2269-2279)', () => {

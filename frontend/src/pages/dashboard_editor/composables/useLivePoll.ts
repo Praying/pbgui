@@ -40,6 +40,17 @@ export const MAX_LIVE_POSITIONS = 10;
 export const LIVE_TICK_MS = 1000;
 export const LIVE_MIN_FETCH_GAP_MS = 5000;
 
+/**
+ * The legacy per-kind eligibility gate (editor:1091/1128): only 1..10 specific
+ * users get a live poll. Exported because D-editor-5 widgets reuse it to
+ * decide which status writer owns the line while a poll is connected.
+ */
+export function canLivePoll(users: string[] | null | undefined): boolean {
+  return (
+    !!users && !users.includes('ALL') && users.length > 0 && users.length <= MAX_LIVE_USERS
+  );
+}
+
 export interface LivePollOptions {
   /** Legacy %%API_BASE%% (origin + /api). */
   apiBase: string;
@@ -167,9 +178,8 @@ function createLivePoller(kind: LivePollerKind, options: LivePollOptions): LiveP
       return;
     }
     disconnect();
-    if (!users || users.includes('ALL') || users.length === 0 || users.length > MAX_LIVE_USERS) {
-      return;
-    }
+    /* the explicit null check narrows `users` for users.slice() below */
+    if (!users || !canLivePoll(users)) return;
     if (kind.maxPositions !== undefined && initialRows.length > kind.maxPositions) return;
     const state: LiveState = {
       timer: null,

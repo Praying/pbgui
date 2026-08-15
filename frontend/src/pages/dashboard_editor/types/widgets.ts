@@ -85,6 +85,35 @@ export interface BalanceData {
   source?: LiveSource;
 }
 
+/**
+ * A /dashboard/positions_data row (dashboard.py:2577-2590) with the
+ * market-close capability fields the backend merges in (:2594). Tolerates
+ * server extras (index signature) like the legacy `row[col.key]` reads.
+ */
+export interface PositionRow {
+  user: string;
+  exchange?: string;
+  symbol: string;
+  side: string;
+  size: number;
+  upnl: number;
+  entry: number;
+  price: number;
+  dca?: number | string;
+  next_dca?: number;
+  next_tp?: number;
+  pos_value?: number;
+  market_close_supported?: boolean;
+  market_close_reason?: string;
+  [key: string]: unknown;
+}
+
+/** GET /dashboard/positions_data payload (buildPositionsInline data). */
+export interface PositionsData {
+  positions: PositionRow[];
+  source?: LiveSource;
+}
+
 /** Props shared by every widget (legacy icon/onDelete/usersControl chrome). */
 export interface WidgetBaseProps {
   /** state[uKey] — the users multi-select value; null/empty renders as ALL. */
