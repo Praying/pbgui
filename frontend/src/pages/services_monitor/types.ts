@@ -200,7 +200,7 @@ export type AlertRoutingId =
   | 'instance_recovered_telegram';
 
 /** GET /settings/api-server payload — applySettings('api-server') + saveApiServerSettings. */
-export interface ApiServerSettingsData {
+export type ApiServerSettingsData = {
   host?: string;
   port?: number;
   auto_restart?: boolean;
@@ -209,9 +209,10 @@ export interface ApiServerSettingsData {
   monitor_config?: Record<string, number>;
   telegram_token?: string;
   telegram_chat_id?: string;
+} & {
   /** Alert-routing flags ride the same payload (undefined renders checked). */
-  [routingId: AlertRoutingId]?: boolean;
-}
+  [routingId in AlertRoutingId]?: boolean;
+};
 
 /** GET /settings/pbcoindata payload — applySettings('pbcoindata') + saveCoinDataSettings. */
 export interface CoinDataSettingsData {
