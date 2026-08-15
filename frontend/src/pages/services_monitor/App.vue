@@ -55,6 +55,7 @@ import OverviewCards from './components/OverviewCards.vue';
 import ServiceLogPanel, { type ServiceTab } from './components/ServiceLogPanel.vue';
 import WorkersPanel from './components/WorkersPanel.vue';
 import CmcPoolPanel from './components/CmcPoolPanel.vue';
+import CmcStatusBar from './components/CmcStatusBar.vue';
 import { SERVICES } from './services';
 import { apiBase } from './config';
 import { cmcFetch } from './cmc';
@@ -395,13 +396,15 @@ onUnmounted(() => {
           @action="serviceAction"
           @tab="onServiceTab"
         >
+          <!-- Legacy #cmc-status-bar sits between the ctrl strip and the tab bar. -->
+          <template v-if="panel.id === 'pbcoindata'" #above-tabs>
+            <CmcStatusBar :status="cmcStatus" :load-error="cmcLoadError" :pool="cmcPool" @refresh="loadCmcPool" />
+          </template>
           <template v-if="panel.id === 'pbcoindata'" #tab-pool>
             <CmcPoolPanel
               :pool="cmcPool"
               :leases="cmcLeases"
               :loaded="cmcLoaded"
-              :status="cmcStatus"
-              :load-error="cmcLoadError"
               :load-notice="cmcNotice"
               @refresh="loadCmcPool"
             />

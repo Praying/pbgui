@@ -33,7 +33,8 @@ export async function cmcFetch<T>(path: string, options: RequestInit = {}): Prom
   const response = await fetch(apiBase() + path, authOptions(options));
   const data: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {
-    let detail: unknown = (data as { detail?: unknown }).detail ?? (data as { error?: unknown }).error;
+    // Legacy fallback chain: falsy details (empty string, 0, …) fall through too.
+    let detail: unknown = (data as { detail?: unknown }).detail || (data as { error?: unknown }).error || 'CMC pool request failed.';
     let operationId = '';
     if (detail && typeof detail === 'object') {
       operationId = String((detail as { operation_id?: unknown }).operation_id ?? '');
@@ -41,7 +42,6 @@ export async function cmcFetch<T>(path: string, options: RequestInit = {}): Prom
         String((detail as { message?: unknown }).message ?? 'CMC pool request failed.') +
         (operationId ? ` (operation ${operationId})` : '');
     }
-    if (detail === undefined || detail === null) detail = 'CMC pool request failed.';
     throw new CmcApiError(String(detail), response.status, operationId);
   }
   return data as T;

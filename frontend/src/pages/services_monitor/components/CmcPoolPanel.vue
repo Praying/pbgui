@@ -2,11 +2,12 @@
 /*
  * CMC pool panel, ported 1:1 from the legacy frontend/services_monitor.html
  * pbcoindata pool tab: renderCmcPool (summary cards, warnings, 20-column key
- * table, 11-column lease table, status bar), selectedCmcKey/updateCmcButtons
- * (row selection + toolbar gating), cmcMessage, openCmcKeyModal/submitCmcKey,
+ * table, 11-column lease table), selectedCmcKey/updateCmcButtons (row
+ * selection + toolbar gating), cmcMessage, openCmcKeyModal/submitCmcKey,
  * openCmcAuthorityModal/submitCmcAuthorityTransfer, toggleSelectedCmcKey and
- * deleteSelectedCmcKey. Loads stay in App (legacy loadCmcPool) - this panel
- * owns the mutation engine (legacy _cmcMutation* state) and emits refresh.
+ * deleteSelectedCmcKey. Loads stay in App (legacy loadCmcPool; the status bar
+ * lives in CmcStatusBar above the tab bar) - this panel owns the mutation
+ * engine (legacy _cmcMutation* state) and emits refresh.
  */
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -24,10 +25,6 @@ interface Props {
   leases?: CmcLeasesResponse;
   /** True after the first successful load (legacy initial tbody placeholders). */
   loaded?: boolean;
-  /** Latest load phase for the status bar; defaults from loaded. */
-  status?: 'loading' | 'ok' | 'error';
-  /** serverMsg()-translated error for the unavailable status bar. */
-  loadError?: string;
   /** cmcMessage mirror of the latest load (legacy #cmc-pool-message). */
   loadNotice?: { text: string; error: boolean } | null;
 }
@@ -36,8 +33,6 @@ const props = withDefaults(defineProps<Props>(), {
   pool: () => ({}),
   leases: () => ({}),
   loaded: false,
-  status: undefined,
-  loadError: '',
   loadNotice: null,
 });
 
@@ -45,25 +40,7 @@ const emit = defineEmits<{ refresh: [] }>();
 
 const { t } = useI18n();
 
-/* ── Load state mirror (legacy loadCmcPool side effects) ── */
-
-const effectiveStatus = computed<'loading' | 'ok' | 'error'>(() => props.status ?? (props.loaded ? 'ok' : 'loading'));
-
-const statusBarClass = computed<'loading' | 'error' | ''>(() => {
-  if (effectiveStatus.value === 'loading') return 'loading';
-  if (effectiveStatus.value === 'error') return 'error';
-  return props.pool.ready ? '' : 'error';
-});
-
 const keys = computed(() => props.pool.keys ?? []);
-
-const statusText = computed(() => {
-  if (effectiveStatus.value === 'loading') return t('sysmon.loadingCmcPool');
-  if (effectiveStatus.value === 'error') return t('sysmon.cmcPoolUnavailable', { msg: props.loadError || '' });
-  if (!props.pool.ready) return 'CMC pool is not configured. Add an active key to enable CMC requests.';
-  const maxGeneration = Math.max(0, ...keys.value.map((item) => Number(item.generation) || 0));
-  return `CMC pool ready: ${props.pool.active_credentials || 0} active, health ${props.pool.health || 'unknown'}, generation ${cmcNumber(maxGeneration)}`;
-});
 
 /** Legacy cmcMessage: one inline message area shared by loads and mutations. */
 const message = ref<{ text: string; error: boolean } | null>(null);
@@ -425,12 +402,6 @@ async function deleteSelectedCmcKey(): Promise<void> {
 
 <template>
   <div class="cmc-pool-wrap">
-    <!-- Status bar (legacy #cmc-status-bar: load phase + ready state) -->
-    <div class="cmc-status-bar" :class="statusBarClass">
-      <button class="cmc-refresh-btn" type="button" :title="t('common.refresh')" @click="emit('refresh')">&#8635;</button>
-      <span class="cmc-status-text" id="cmc-status-text">{{ statusText }}</span>
-    </div>
-
     <div v-if="loaded" class="cmc-summary-grid">
       <div v-for="card in summaryCards" :key="card.label" class="cmc-summary-card">
         <div class="cmc-summary-label">{{ card.label }}</div>
@@ -585,16 +556,6 @@ async function deleteSelectedCmcKey(): Promise<void> {
 <!-- Styles ported from frontend/services_monitor.html (CMC pool + settings form). -->
 <style scoped>
 .cmc-pool-wrap { padding: 1rem 1.5rem 1.5rem; overflow-y: auto; flex: 1; }
-.cmc-status-bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-  margin: 0 0 0.8rem; padding: 0.55rem 0.9rem; border-radius: 8px; font-size: var(--fs-sm);
-  border: 1px solid #1e2736; background: #0d2a1a; color: #4ade80; min-height: 2.2rem;
-}
-.cmc-status-bar.error { background: #2d1515; border-color: #7f1d1d; color: #fca5a5; }
-.cmc-status-bar.loading { background: #131b2b; color: #4a5568; }
-.cmc-status-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cmc-refresh-btn { background: none; border: none; color: inherit; cursor: pointer; font-size: 1rem; opacity: 0.7; padding: 0 2px; flex-shrink: 0; }
-.cmc-refresh-btn:hover { opacity: 1; }
 .cmc-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; margin-bottom: 0.8rem; }
 .cmc-summary-card { background: #131b2b; border: 1px solid #1e2736; border-radius: 8px; padding: 0.55rem 0.7rem; min-width: 0; }
 .cmc-summary-label { color: #64748b; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.05em; }

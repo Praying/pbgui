@@ -111,6 +111,10 @@ watch(
     </span>
   </div>
 
+  <!-- Legacy per-service extras between the ctrl strip and the tab bar
+       (e.g. the pbcoindata CMC status bar). -->
+  <slot name="above-tabs"></slot>
+
   <template v-if="hasTabs">
     <div class="tab-bar">
       <button

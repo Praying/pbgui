@@ -390,6 +390,11 @@ describe('services_monitor cmc pool wiring', () => {
     expect(urls).toContain('http://pbgui.test:8000/api/services/cmc-pool');
     expect(urls).toContain('http://pbgui.test:8000/api/services/cmc-pool/leases');
     expect(cmcPoolLoads()).toBe(1);
+    // Legacy markup: the status bar sits between the ctrl strip and the tab bar
+    // (visible on every pbcoindata tab, not just the pool tab).
+    const bar = wrapper.find('#panel-pbcoindata .cmc-status-bar');
+    expect((bar.element.previousElementSibling as HTMLElement | null)?.className).toContain('ctrl-strip');
+    expect((bar.element.nextElementSibling as HTMLElement | null)?.className).toContain('tab-bar');
     expect(wrapper.find('#panel-pbcoindata .cmc-status-text').text()).toBe('CMC pool ready: 1 active, health ok, generation 3');
     expect(wrapper.find('#panel-pbcoindata .cmc-pool-message').text()).toBe('5 lease records');
   });
