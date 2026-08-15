@@ -20,6 +20,7 @@
  */
 import { dashT } from './i18n';
 import type { SavedZoom } from './savedZoom';
+import type { TopRow } from '../types/widgets';
 
 /* ── vendor shapes (window.Plotly stays a global, R2) ── */
 
@@ -73,9 +74,6 @@ function signColors(values: number[]): string[] {
 }
 
 /* ── TOP (render.js:600-618, 659) ── */
-
-/** Legacy rows: arrays where [1] is the symbol and [2] the income. */
-export type TopRow = unknown[];
 
 export function topTraces(rows: TopRow[]): PlotlyTrace[] {
   const symbols = rows.map((r) => r[1]);

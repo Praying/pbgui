@@ -87,7 +87,7 @@ const HOST = defineComponent({
   },
   template: `
     <div class="dt-root">
-      <PlotlyChart :traces="traces" :layout="layout" :height="height"
+      <PlotlyChart ref="chartHost" :traces="traces" :layout="layout" :height="height"
         :zoom-pos="zoomPos" :apply-zoom="applyZoom" />
     </div>`,
 });
@@ -249,8 +249,14 @@ describe('PlotlyChart', () => {
     const gd = chartEl(env.wrapper);
     gd.layout = { xaxis: { autorange: false, range: [1, 3] }, yaxis: { autorange: false, range: [9, 10] } };
     gd.data = [{ x: [0, 1, 2, 3] }];
-    const chart = env.wrapper.findComponent(PlotlyChart);
-    (chart.vm as unknown as { captureFracZoom?: () => void }).captureFracZoom?.();
+    /* template-ref access — the production WidgetPpl path (ref="chartRef"
+       resolves through getExposeProxy; findComponent().vm goes through the
+       public-instance proxy whose exposeProxy is compile-optimization
+       sensitive) */
+    const host = env.wrapper.vm as unknown as {
+      $refs: { chartHost?: { captureFracZoom?: () => void } };
+    };
+    host.$refs.chartHost?.captureFracZoom?.();
     expect(getSavedZoom('1_2')).toEqual({
       xrange: null, yrange: [9, 10], fracRange: [0.25, 0.75],
     });
@@ -282,14 +288,16 @@ describe('PlotlyChart', () => {
     const { wrapper } = mountChart({ height: 300 });
     await nextTick();
     const closeBtn = wrapper.get('.dt-fs-close');
-    /* assert the inline style (what legacy set): jsdom's getComputedStyle
-       caches and would still report 'none' after the v-show flip */
+    /* the legacy handler sets inline 'block'/'none' (render.js:650); the
+       widgets.css base rule is display:none, so only an explicit inline
+       'block' wins in a real browser — v-show's empty-string restore would
+       leave the button invisible */
     expect((closeBtn.element as HTMLElement).style.display).toBe('none');
     const root = wrapper.get('.dt-root').element;
     Object.defineProperty(document, 'fullscreenElement', { configurable: true, value: root });
     document.dispatchEvent(new Event('fullscreenchange'));
     await nextTick();
-    expect((closeBtn.element as HTMLElement).style.display).toBe('');
+    expect((closeBtn.element as HTMLElement).style.display).toBe('block');
     /* exit → relayout restore + resize after 100 ms */
     expect(relayout).toHaveBeenCalledWith(
       chartEl(wrapper),

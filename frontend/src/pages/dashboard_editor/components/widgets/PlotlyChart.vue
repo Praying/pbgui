@@ -183,9 +183,13 @@ const heightStyle = computed<{ height: string } | undefined>(() =>
 
 <template>
   <div ref="chartEl" class="dt-chart" :style="heightStyle">
+    <!-- explicit 'block'/'none' inline display, byte-parity with the legacy
+         handler (render.js:650 closeBtn.style.display); v-show would restore
+         an empty string and lose to the widgets.css .dt-fs-close{display:none}
+         base rule, leaving the button invisible in real browsers -->
     <button
-      v-show="fs.isFullscreen.value"
       class="dt-fs-close"
+      :style="{ display: fs.isFullscreen.value ? 'block' : 'none' }"
       :title="dashT('dash.exitFullscreen', 'Exit Fullscreen')"
       @click="fs.exitFullscreen()"
     >
