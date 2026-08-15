@@ -46,6 +46,7 @@ from fastapi.staticfiles import StaticFiles
 
 from secure_files import harden_sensitive_paths
 
+from api.boot import router as boot_router
 from api.auth import (
     SessionToken,
     auth_runtime_status,
@@ -962,6 +963,7 @@ app.include_router(optimize_v8_router, prefix="/api/optimize-v8", tags=["optimiz
 app.include_router(pareto_explorer_router, prefix="/api/pareto-explorer", tags=["pareto-explorer"])
 app.include_router(strategy_explorer_router, prefix="/api/strategy-explorer", tags=["strategy-explorer"])
 app.include_router(strategy_explorer_v8_router, prefix="/api/strategy-explorer-v8", tags=["strategy-explorer-v8"])
+app.include_router(boot_router, tags=["boot"])
 
 
 @app.exception_handler(PB7ConfigurationError)
