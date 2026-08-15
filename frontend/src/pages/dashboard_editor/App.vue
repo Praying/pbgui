@@ -1,0 +1,226 @@
+<script setup lang="ts">
+/*
+ * dashboard_editor migration — D-editor-3 shell
+ * (source: frontend/dashboard_editor.html, kept as the legacy fallback)
+ *
+ * Behavior inventory: the editor SHELL around D-editor-2's grid:
+ *
+ * ┌──────────────────────┬───────────────────────────────────────────────────┐
+ * │ App (shell)          │ body mode classes (editor:2639-2641), init:      │
+ * │                      │ users → config (editor:2636-2705), status state, │
+ * │                      │ doSave/doCancel + the postMessage contract       │
+ * │                      │ (editor:2707-2742), dropdown close-on-click      │
+ * │                      │ (editor:2744-2747), /ws/dashboard orchestration  │
+ * │                      │ (editor:2749-2826, composables/useDashboardWs)   │
+ * │ EditorHeader         │ name field, layout picker, status, palette       │
+ * │ EditorGrid/GridCell  │ D-editor-2 grid + widget registry dispatch       │
+ * │ GridFooter           │ add/remove row                                   │
+ * ├──────────────────────┴───────────────────────────────────────────────────┤
+ * │ NOT PORTED (with justification):                                        │
+ * │ - #standalone-toolbar div: permanently empty in legacy (editor:472,     │
+ * │   328) — dead DOM, not emitted.                                         │
+ * │ - %%EDIT_ONLY_STYLE%% inline hides: body.view-mode CSS rules already    │
+ * │   hide the sticky top + grid footer (editor.css:311-312).               │
+ * │ - The legacy page kept its document click listener and WebSocket IIFE   │
+ * │   forever; Vue removes both on unmount (R4-style leak fix).             │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * Deliberate deviations (documented):
+ * - Body mode classes are removed on unmount (legacy never removed them);
+ *   observable behavior while mounted is identical.
+ * - init logs its error to console.error like legacy (editor:2696) and
+ *   still renders the fresh grid.
+ * - The WS is created in setup (legacy connected in an IIFE at script
+ *   load — same observable timing, first render).
+ */
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import EditorGrid from './components/EditorGrid.vue';
+import EditorHeader from './components/EditorHeader.vue';
+import GridFooter from './components/GridFooter.vue';
+import { readEditorConfig } from './config';
+import { useDashboardUsers } from './composables/useDashboardUsers';
+import { useDashboardWs } from './composables/useDashboardWs';
+import { closeAllMselDropdowns } from './lib/mselRegistry';
+import { useDashboardStore } from './stores/dashboardStore';
+import { inboundMessageType, type EditorOutboundMessage } from './types/postMessage';
+
+const { t } = useI18n();
+
+/* ── legacy injected config (%%API_BASE%% etc., editor:493-497) ── */
+
+const config = readEditorConfig();
+const store = useDashboardStore(config);
+const users = useDashboardUsers();
+
+/* ── status badge (legacy setStatus, editor:541-544) ── */
+
+const statusMsg = ref('');
+const statusCls = ref('');
+/** Bumped after store.loadConfig — triggers the legacy editor:2688 input
+ *  rewrite in EditorHeader. */
+const configRevision = ref(0);
+
+function setStatus(msg: string, cls: string): void {
+  statusMsg.value = msg;
+  statusCls.value = cls;
+}
+
+/* Mirror doSync's statuses (editor:600-610) into the badge; doSave writes
+   its own statuses directly — both drive the same element in legacy. */
+watch(
+  () => store.syncStatus,
+  (status) => {
+    if (status === 'saving') setStatus(t('dash.saving'), '');
+    else if (status === 'saved') setStatus(t('dash.saved'), 'saved');
+    else if (status === 'error') setStatus(t('dash.statusError'), 'error');
+    else if (status === 'offline') setStatus(t('dash.offline'), 'error');
+    else setStatus('', '');
+  }
+);
+
+/* ── init (editor:2636-2705) ── */
+
+interface LoadedConfig {
+  found: boolean;
+  config: Record<string, unknown> | null;
+}
+
+async function loadInitialConfig(): Promise<LoadedConfig> {
+  /* view mode: load the saved config directly (editor:2650-2653) */
+  if (config.viewOnly && config.origName) {
+    const r = await fetch(`${config.apiBase}/dashboards/${encodeURIComponent(config.origName)}`);
+    if (!r.ok) throw new Error(String(r.status));
+    const d = (await r.json()) as { config?: unknown };
+    return { found: !!(d && d.config), config: (d.config as Record<string, unknown>) || null };
+  }
+  /* edit mode: pending first, saved fallback (editor:2656-2670) */
+  const r = await fetch(
+    `${config.apiBase}/dashboard/pending_full?name=${encodeURIComponent(config.origName)}`
+  );
+  const pending = r.ok
+    ? ((await r.json()) as LoadedConfig)
+    : { found: false, config: {} };
+  if (pending.found && pending.config && Object.keys(pending.config).length > 0) {
+    return pending;
+  }
+  if (!config.origName) return { found: false, config: {} };
+  const r2 = await fetch(`${config.apiBase}/dashboards/${encodeURIComponent(config.origName)}`);
+  const saved = r2.ok ? ((await r2.json()) as LoadedConfig) : { found: false, config: {} };
+  if (saved && saved.config && Object.keys(saved.config).length > 0) {
+    return { found: true, config: saved.config };
+  }
+  return { found: false, config: {} };
+}
+
+async function init(): Promise<void> {
+  /* editor:2639-2641 — body classes drive every view/standalone CSS rule */
+  if (config.viewOnly) document.body.classList.add('view-mode');
+  if (config.standalone) document.body.classList.add('standalone-mode');
+  document.title = t('dash.editorTitle');
+  document.addEventListener('click', onDocClick);
+
+  await users.loadUsers(config.apiBase); // editor:2644-2647
+  try {
+    const loaded = await loadInitialConfig();
+    if (loaded.found && loaded.config && Object.keys(loaded.config).length > 0) {
+      store.loadConfig(loaded.config); // editor:2680-2684 (clamps inside)
+    } else {
+      store.loadConfig({}); // editor:2686 — fresh {name, 1, 1}
+    }
+  } catch (e) {
+    console.error('editor init error', e); // editor:2696
+    store.loadConfig({}); // editor:2697
+  }
+  configRevision.value++; // editor:2688 — the header name input re-syncs
+}
+
+/* ── save / cancel + the parent message contract (editor:2707-2742) ── */
+
+function postParent(msg: EditorOutboundMessage): void {
+  try {
+    window.parent.postMessage(msg, '*');
+  } catch {
+    /* cross-origin postMessage failures are swallowed (store parity) */
+  }
+}
+
+async function doSave(): Promise<void> {
+  closeAllMselDropdowns(); // editor:2709
+  const name = String(store.state.name ?? '').trim();
+  if (!name) {
+    setStatus(t('dash.enterDashboardName'), 'error'); // editor:2710-2711
+    return;
+  }
+  setStatus(t('dash.saving'), '');
+  const payload = store.serialize();
+  try {
+    const r = await fetch(`${config.apiBase}/dashboards/${encodeURIComponent(name)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (r.ok) {
+      setStatus(t('dash.saved'), 'saved');
+      postParent({ type: 'pbgui_editor_saved', name });
+    } else {
+      setStatus(t('dash.statusError'), 'error');
+    }
+  } catch {
+    setStatus(t('dash.offline'), 'error');
+  }
+}
+
+function doCancel(): void {
+  postParent({ type: 'pbgui_editor_cancelled', original_name: config.origName });
+}
+
+function onParentMessage(e: MessageEvent): void {
+  const type = inboundMessageType(e.data);
+  if (type === null) return; // editor:2734 — non-object data ignored
+  if (type === 'pbgui_trigger_cancel') doCancel();
+  else if (type === 'pbgui_trigger_save') void doSave();
+  else if (type === 'pbgui_trigger_view_save') void store.saveViewLayout();
+}
+
+/* ── dropdown close-on-click (editor:2744-2747) ── */
+
+function onDocClick(): void {
+  closeAllMselDropdowns();
+}
+
+/* ── WebSocket orchestration (editor:2749-2826) ── */
+
+useDashboardWs({ apiBase: config.apiBase, store });
+
+/* The parent-message listener attaches at load like the legacy page
+   (editor:2733), before init runs. Message events fire on window — the
+   legacy listener was window.addEventListener. */
+window.addEventListener('message', onParentMessage);
+
+/* ── lifecycle ── */
+
+onMounted(() => {
+  void init();
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick);
+  window.removeEventListener('message', onParentMessage);
+  document.body.classList.remove('view-mode', 'standalone-mode');
+});
+</script>
+
+<template>
+  <MigrationWatermark />
+  <div class="editor-wrapper">
+    <div class="editor-sticky-top">
+      <EditorHeader :msg="statusMsg" :cls="statusCls" :config-revision="configRevision" />
+    </div>
+    <div class="editor-scroll-area">
+      <EditorGrid />
+      <GridFooter />
+    </div>
+  </div>
+</template>

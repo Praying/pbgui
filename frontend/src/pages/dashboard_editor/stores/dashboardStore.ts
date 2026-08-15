@@ -110,6 +110,11 @@ export interface DashboardStore {
   /** Resize dblclick / Max button (editor:2438-2444, 2497-2499). */
   resetCellHeight(row: number, col: number): void;
 
+  /** WS-orchestration rebuild (D-editor-3, editor:2760-2784): bump the cell
+   *  epoch so GridCell remounts the widget — the reactive equivalent of the
+   *  legacy build*Inline re-render. Never touches persisted state. */
+  rebuildCell(row: number, col: number): void;
+
   /** scheduleSync (editor:595-598) — 400 ms debounce → doSync. */
   scheduleSync(): void;
   /** doSync (editor:600-610). */
@@ -272,6 +277,10 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
 
   /* ── sync ── */
 
+  function rebuildCell(row: number, col: number): void {
+    bumpCell(row, col);
+  }
+
   function scheduleSync(): void {
     if (syncTimer !== null) clearTimeout(syncTimer);
     syncTimer = setTimeout(() => {
@@ -350,6 +359,7 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
     setName,
     setCellHeight,
     resetCellHeight,
+    rebuildCell,
     scheduleSync,
     doSync,
     markViewDirty,

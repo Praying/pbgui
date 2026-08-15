@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   closeAllMselDropdowns,
   closeMselDropdown,
+  isMselOpen,
   openMselDropdown,
   resetMselRegistry,
 } from './mselRegistry';
@@ -49,5 +50,39 @@ describe('mselRegistry', () => {
     openMselDropdown(closeA);
     openMselDropdown(closeA2);
     expect(closeA).toHaveBeenCalledTimes(1);
+  });
+});
+
+/* D-editor-3 handoff: isMselOpen is the WS-orchestration guard — the Vue
+   replacement for the legacy document.querySelector('.msel-drop.open') check
+   (dashboard_editor.html:2749-2826, 2761). */
+
+describe('isMselOpen (legacy .msel-drop.open query)', () => {
+  it('reports closed when nothing is registered', () => {
+    expect(isMselOpen()).toBe(false);
+  });
+
+  it('reports open while a dropdown is registered', () => {
+    openMselDropdown(vi.fn());
+    expect(isMselOpen()).toBe(true);
+  });
+
+  it('reports closed again after closeAll', () => {
+    openMselDropdown(vi.fn());
+    closeAllMselDropdowns();
+    expect(isMselOpen()).toBe(false);
+  });
+
+  it('reports closed after the owning instance unregisters', () => {
+    const close = vi.fn();
+    openMselDropdown(close);
+    closeMselDropdown(close);
+    expect(isMselOpen()).toBe(false);
+  });
+
+  it('stays open when a different instance tries to unregister', () => {
+    openMselDropdown(vi.fn());
+    closeMselDropdown(vi.fn());
+    expect(isMselOpen()).toBe(true);
   });
 });

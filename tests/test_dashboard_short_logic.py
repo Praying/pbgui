@@ -51,7 +51,12 @@ def test_dashboard_pages_use_cookie_auth_without_rendering_session_token() -> No
     responses = [
         dashboard.get_main_page(request, current="", session=CookieOnlySession()),
         dashboard.get_editor_page(
-            name="", api_base="/api", view_only=False, standalone=False, session=CookieOnlySession()
+            request,
+            name="",
+            api_base="/api",
+            view_only=False,
+            standalone=False,
+            session=CookieOnlySession(),
         ),
         dashboard.get_templates_page(request, current="", api_base="/api", session=CookieOnlySession()),
     ]

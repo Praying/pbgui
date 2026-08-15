@@ -470,3 +470,32 @@ describe('singleton behavior', () => {
     expect(a).not.toBe(b);
   });
 });
+
+/* D-editor-3: rebuildCell is the WS-orchestration rebuild — the reactive
+   equivalent of the legacy build*Inline re-render (editor:2760-2784). */
+
+describe('rebuildCell — WS orchestration rebuild (D-editor-3)', () => {
+  it('bumps the cell epoch so the widget remounts', () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    const before = store.epochOf(1, 1);
+    store.rebuildCell(1, 1);
+    expect(store.epochOf(1, 1)).toBe(before + 1);
+  });
+
+  it('does not mutate the persisted state', () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    store.loadConfig({ dashboard_type_1_1: 'PNL' });
+    const snapshot = store.serialize();
+    store.rebuildCell(1, 1);
+    expect(store.serialize()).toEqual(snapshot);
+  });
+
+  it('rebuilds each cell independently', () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    const a = store.epochOf(1, 1);
+    const b = store.epochOf(1, 2);
+    store.rebuildCell(1, 2);
+    expect(store.epochOf(1, 1)).toBe(a);
+    expect(store.epochOf(1, 2)).toBe(b + 1);
+  });
+});

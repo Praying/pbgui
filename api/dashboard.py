@@ -1912,36 +1912,51 @@ def set_pending_full(
 
 # ---------------------------------------------------------------- /editor_page
 
-@router.get("/editor_page", response_class=HTMLResponse)
+@router.get("/editor_page", response_class=HTMLResponse, response_model=None)
 def get_editor_page(
+    request: Request,
     name: str = Query(default="", description="Dashboard name"),
     api_base: str = Query(default="", description="API base URL"),
     view_only: bool = Query(default=False, description="View-only mode (no editing controls)"),
     standalone: bool = Query(default=False, description="Standalone mode (save/cancel post to parent)"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the full dashboard grid editor HTML page."""
+) -> FileResponse | HTMLResponse:
+    """Serve the dashboard grid editor: built Vue entry first, legacy fallback.
+
+    The Vue bundle (frontend/dist/dashboard_editor/index.html) is gitignored and
+    produced by `npm run build`; a checkout without a build still gets the
+    legacy dashboard_editor.html template with the old %% placeholder injections
+    (same 3-branch helper used by main_page and templates_page).
+    """
     import json as _json
-    from pathlib import Path as _P
-    html_path = _P(__file__).parent.parent / "frontend" / "dashboard_editor.html"
-    html = html_path.read_text(encoding="utf-8")
-    html = html.replace("%%TOKEN%%", "")
-    html = html.replace("%%API_BASE%%", api_base)
-    html = html.replace("%%DASHBOARD_NAME%%", _json.dumps(name))
-    html = html.replace("%%VIEW_ONLY%%", "1" if view_only else "0")
-    html = html.replace("%%STANDALONE%%", "1" if standalone else "0")
-    html = html.replace("%%EDIT_ONLY_STYLE%%",
-                         "display:none!important" if view_only else "")
-    body_classes = []
-    if view_only:
-        body_classes.append("view-mode")
-    if standalone:
-        body_classes.append("standalone-mode")
-    html = html.replace("%%BODY_CLASS%%", " ".join(body_classes))
-    return HTMLResponse(
-        content=html,
-        headers={"Cache-Control": "no-store"},
-    )
+
+    def inject(html: str, _request: Request) -> str:
+        # Derive API base from the actual request URL so fetches/WS use the
+        # correct host/port (same derivation as get_main_page; the legacy
+        # `api_base` query param is kept in the signature for URL
+        # compatibility but the page always targets its own origin).
+        scheme = _request.url.scheme
+        host = _request.url.hostname or "127.0.0.1"
+        port = _request.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        derived_api_base = origin + "/api"
+
+        html = html.replace("%%TOKEN%%", "")
+        html = html.replace("%%API_BASE%%", derived_api_base)
+        html = html.replace("%%DASHBOARD_NAME%%", _json.dumps(name))
+        html = html.replace("%%VIEW_ONLY%%", "1" if view_only else "0")
+        html = html.replace("%%STANDALONE%%", "1" if standalone else "0")
+        html = html.replace("%%EDIT_ONLY_STYLE%%",
+                             "display:none!important" if view_only else "")
+        body_classes = []
+        if view_only:
+            body_classes.append("view-mode")
+        if standalone:
+            body_classes.append("standalone-mode")
+        html = html.replace("%%BODY_CLASS%%", " ".join(body_classes))
+        return html
+
+    return serve_vue_or_legacy_page("dashboard_editor", "dashboard_editor.html", request, inject=inject)
 
 
 # ---------------------------------------------------------------- /main_page

@@ -37,6 +37,16 @@ export function closeAllMselDropdowns(): void {
   }
 }
 
+/**
+ * Whether any dropdown is currently open — the D-editor-3 WS-orchestration
+ * guard (and the live-poll guard) equivalent of the legacy
+ * `document.querySelector('.msel-drop.open')` check (dashboard_editor.html:
+ * 2761, 2749-2826).
+ */
+export function isMselOpen(): boolean {
+  return activeDropdown !== null;
+}
+
 /** Tests only. */
 export function resetMselRegistry(): void {
   activeDropdown = null;
