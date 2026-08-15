@@ -14,6 +14,11 @@ type BridgeMessages = { en: MessageDict; zh: MessageDict };
 /** Storage key shared with the legacy frontend/i18n.js engine. */
 const STORAGE_KEY = 'pbgui-lang';
 
+/** Bare `|` (plural separator) and `@` (linked message) compile as syntax; emit them as literals. */
+function escapeSpecials(value: string): string {
+  return value.replaceAll('|', "{'|'}").replaceAll('@', "{'@'}");
+}
+
 /** vue-i18n resolves dotted paths against nested objects; our dicts are flat. */
 function nest(flat: FlatDict): MessageDict {
   const root: MessageDict = {};
@@ -24,7 +29,7 @@ function nest(flat: FlatDict): MessageDict {
       const next = node[p];
       node = (typeof next === 'object' && next !== null ? next : (node[p] = {})) as MessageDict;
     }
-    node[parts[parts.length - 1]!] = value;
+    node[parts[parts.length - 1]!] = escapeSpecials(value);
   }
   return root;
 }

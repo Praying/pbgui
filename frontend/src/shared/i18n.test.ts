@@ -27,6 +27,20 @@ describe('i18n bridge', () => {
     );
   });
 
+  it('renders pipe-containing values verbatim (plural-split escape)', () => {
+    const i18n = createI18n('en');
+    expect(i18n.global.t('misc.dbtools.filesSummary', { count: 3, size: '4MB' })).toBe(
+      '3 files | 4MB',
+    );
+  });
+
+  it('renders at-containing values verbatim (linked-format escape)', () => {
+    const i18n = createI18n('en');
+    expect(i18n.global.t('v7explore.marketChip', { exchange: 'binance', coin: 'BTC', price: '1' })).toBe(
+      'Market: binance / BTC @ 1',
+    );
+  });
+
   it('serverMsg passes through unknown text', () => {
     expect(serverMsg('totally unknown message')).toBe('totally unknown message');
   });
