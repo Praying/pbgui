@@ -5,6 +5,7 @@ import {
   incomeDataUrl,
   liveBalanceUrl,
   livePositionsUrl,
+  ordersDataUrl,
   pnlDataUrl,
   positionsDataUrl,
   pplDataUrl,
@@ -88,3 +89,20 @@ describe('live poll URLs (editor:1102,1139)', () => {
     expect(liveBalanceUrl(BASE, ['u1'])).toBe(`${BASE}/dashboard/balance?users=u1&live=1`);
   });
 });
+
+describe('orders chart URLs (editor:2060-2066, 2080-2086, 2105-2112)', () => {
+  it('builds the selection load URL with users, symbol, side, timeframe and limit', () => {
+    expect(ordersDataUrl(BASE, 'alice', 'BTC/USDT:USDT', 'long', '4h', 500)).toBe(
+      `${BASE}/dashboard/orders_data?user=alice&symbol=BTC%2FUSDT%3AUSDT` +
+        `&side=long&timeframe=4h&limit=500&live=1`
+    );
+  });
+
+  it('inserts since before limit for the load-more fetch', () => {
+    expect(ordersDataUrl(BASE, 'alice', 'BTC/USDT:USDT', 'short', '1w', 300, 1715680000000)).toBe(
+      `${BASE}/dashboard/orders_data?user=alice&symbol=BTC%2FUSDT%3AUSDT` +
+        `&side=short&timeframe=1w&since=1715680000000&limit=300&live=1`
+    );
+  });
+});
+

@@ -207,6 +207,27 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
     else scheduleSync();
   }
 
+  /**
+   * D-editor-6 (the D-2 handoff): _refreshAllOrdersCfg
+   * (dashboard_editor.html:2215-2230, called at :2275 when a POSITIONS or
+   * ORDERS widget is dropped). Legacy rebuilt every OTHER ORDERS cell's cfg
+   * panel — which re-ran buildOrdersInline (link auto-resolution +
+   * resubscription) — before the full buildGrid() rebuild. Under the blessed
+   * cell-level-rebuild contract a drop only remounts its own cell, so the
+   * ORDERS refresh becomes load-bearing: bumping the other ORDERS cells'
+   * epochs makes GridCell remount WidgetOrders, reproducing the legacy
+   * cfg-panel refresh.
+   */
+  function refreshOrdersCellsExcept(skipRow: number, skipCol: number): void {
+    for (let r = 1; r <= rowsComputed.value; r++) {
+      for (let c = 1; c <= colsComputed.value; c++) {
+        if (r === skipRow && c === skipCol) continue;
+        if (cellType(r, c) !== 'ORDERS') continue;
+        bumpCell(r, c);
+      }
+    }
+  }
+
   /* ── mutations ── */
 
   function loadConfig(raw: Record<string, unknown>): void {
@@ -233,6 +254,8 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
   function assignCellType(row: number, col: number, type: RenderableWidgetType): void {
     state[cellKey('dashboard_type', row, col)] = type;
     bumpCell(row, col);
+    /* editor:2275 — POSITIONS/ORDERS drops refresh every other ORDERS cell */
+    if (type === 'POSITIONS' || type === 'ORDERS') refreshOrdersCellsExcept(row, col);
     /* editor:2276 — palette drop schedules a sync unconditionally */
     scheduleSync();
   }

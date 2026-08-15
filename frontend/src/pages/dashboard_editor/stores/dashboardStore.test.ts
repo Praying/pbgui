@@ -513,3 +513,77 @@ describe('rebuildCell — WS orchestration rebuild (D-editor-3)', () => {
     expect(store.epochOf(1, 2)).toBe(b + 1);
   });
 });
+
+/* D-editor-6: the _refreshAllOrdersCfg cross-cell refresh (editor:2215-2230,
+   called at editor:2275 when a POSITIONS or ORDERS widget is dropped). Legacy
+   rebuilt every OTHER ORDERS cell's cfg panel, which re-ran buildOrdersInline
+   (auto-link + resubscribe); the epoch bump is the reactive equivalent under
+   the blessed cell-level-rebuild contract. */
+
+describe('assignCellType — ORDERS cross-cell refresh (D-editor-6, editor:2215-2230,2275)', () => {
+  it("bumps every OTHER ORDERS cell when a POSITIONS widget lands", () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    store.loadConfig({
+      rows: 2,
+      cols: 1,
+      dashboard_type_2_1: 'ORDERS',
+      dashboard_type_1_1: 'PNL',
+    });
+    const ordersEpoch = store.epochOf(2, 1);
+    store.assignCellType(1, 1, 'POSITIONS');
+    expect(store.epochOf(2, 1)).toBe(ordersEpoch + 1);
+    expect(store.cellType(1, 1)).toBe('POSITIONS');
+  });
+
+  it("bumps every OTHER ORDERS cell when an ORDERS widget lands", () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    store.loadConfig({
+      rows: 2,
+      cols: 2,
+      dashboard_type_1_1: 'ORDERS',
+      dashboard_type_1_2: 'ORDERS',
+      dashboard_type_2_1: 'ORDERS',
+    });
+    const a = store.epochOf(1, 1);
+    const b = store.epochOf(1, 2);
+    const c = store.epochOf(2, 1);
+    store.assignCellType(2, 2, 'ORDERS');
+    expect(store.epochOf(1, 1)).toBe(a + 1);
+    expect(store.epochOf(1, 2)).toBe(b + 1);
+    expect(store.epochOf(2, 1)).toBe(c + 1);
+  });
+
+  it('leaves other cell types and non-ORDERS drops alone (editor:2220-2221, 2275)', () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    store.loadConfig({
+      rows: 2,
+      cols: 1,
+      dashboard_type_2_1: 'ORDERS',
+      dashboard_type_1_1: 'PNL',
+    });
+    const ordersEpoch = store.epochOf(2, 1);
+    store.assignCellType(1, 1, 'TOP');
+    expect(store.epochOf(2, 1)).toBe(ordersEpoch);
+  });
+
+  it('refreshes ORDERS cells across the whole grid, not just the same row (editor:2218-2221)', () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    store.loadConfig({
+      rows: 3,
+      cols: 2,
+      dashboard_type_3_2: 'ORDERS',
+    });
+    const ordersEpoch = store.epochOf(3, 2);
+    store.assignCellType(1, 1, 'POSITIONS');
+    expect(store.epochOf(3, 2)).toBe(ordersEpoch + 1);
+  });
+
+  it('does not double-bump the dropped cell itself (editor:2220 skip)', () => {
+    const store = useDashboardStore({ apiBase: '/api', origName: 'MyDash' });
+    store.loadConfig({ rows: 1, cols: 1 });
+    const before = store.epochOf(1, 1);
+    store.assignCellType(1, 1, 'POSITIONS');
+    /* one bump from the drop itself — _refreshAllOrdersCfg skips it */
+    expect(store.epochOf(1, 1)).toBe(before + 1);
+  });
+});

@@ -98,3 +98,27 @@ export function livePositionsUrl(apiBase: string, users: string[]): string {
 export function liveBalanceUrl(apiBase: string, users: string[]): string {
   return `${apiBase}/dashboard/balance?users=${encodeURIComponent(users.join(','))}&live=1`;
 }
+
+/**
+ * GET /dashboard/orders_data — the selection load (editor:2060-2066:
+ * user/symbol/side/timeframe/limit/live) and the load-more fetch
+ * (editor:2105-2112: `since` inserted before `limit=300`). Values are
+ * encodeURIComponent'd exactly like the legacy builders.
+ */
+export function ordersDataUrl(
+  apiBase: string,
+  user: string,
+  symbol: string,
+  side: string,
+  timeframe: string,
+  limit: number,
+  since?: number
+): string {
+  const base =
+    `${apiBase}/dashboard/orders_data?user=${encodeURIComponent(user)}` +
+    `&symbol=${encodeURIComponent(symbol)}&side=${encodeURIComponent(side)}` +
+    `&timeframe=${encodeURIComponent(timeframe)}`;
+  return since === undefined
+    ? `${base}&limit=${limit}&live=1`
+    : `${base}&since=${since}&limit=${limit}&live=1`;
+}

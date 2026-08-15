@@ -165,6 +165,46 @@ export interface WidgetPositionsProps extends DataManagingWidgetProps {
   position: string;
 }
 
+/* ── Orders widget payload (GET /dashboard/orders_data, dashboard.py:2931-2941) ── */
+
+/** An OHLCV candle in ms — server rows are {t,o,h,l,c,v} (dashboard.py:2855). */
+export interface Candle {
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+}
+
+/** An open-order price line (render.js:3399-3412 reads price + side). */
+export interface OrderLine {
+  price: number;
+  amount?: number;
+  side: string;
+}
+
+/** The live-position summary the server attaches (dashboard.py:2913-2929). */
+export interface OrdersPositionData {
+  entry: number;
+  size: number;
+  upnl: number;
+  side: string;
+}
+
+/** GET /dashboard/orders_data payload (buildOrdersInline data, editor:2067-2072). */
+export interface OrdersData {
+  candles: Candle[];
+  orders: OrderLine[];
+  position: OrdersPositionData | null;
+  current_price?: number;
+  user?: string;
+  symbol?: string;
+  orders_unknown?: boolean;
+  orders_source?: string;
+  timeframe?: string;
+}
+
 /* ── Plotly widget payloads (GET /dashboard/<widget>_data responses) ── */
 
 /** A /dashboard/top_data row — renderTop reads r[1] (symbol), r[2] (income). */
