@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /*
- * market_data_main migration — M-data-1 scaffold + M-data-2 + M-data-3
- * (source: frontend/market_data_main.html, kept as the legacy fallback until
- * M-data-8 flips the route)
+ * market_data_main migration — M-data-1..7 (scaffold through best-1m +
+ * copy-data; source: frontend/market_data_main.html, kept as the legacy
+ * fallback until M-data-8 flips the route)
  *
  * Behavior inventory (this file):
  *
@@ -38,6 +38,16 @@
  * │ useInventory (+      │        │ 6387, table/actions/heatmap :7813-8854,     │
  * │ heatmap + actions +  │        │ delete-date overlay :2861-2891, sidebar     │
  * │ view state)          │        │ blocks :2929-2945, fan-out :7317-7320       │
+ * │ Best1mPanel +        │ 7 ✓    │ best-1m :3346-3410 + info/queue :7588-7740, │
+ * │ useBest1m            │        │ URL matrices :3751-3763/:4185-4213,         │
+ * │                      │        │ hyperliquid iframe :7577-7586, panel slice  │
+ * │                      │        │ :9058, fan-out :7321-7323                   │
+ * │ CopyDataPanel +      │ 7 ✓    │ copy-data :3412-3500 + :5023-5523,          │
+ * │ useCopyData (+       │        │ monitor :4215-4232, 15 s poll :5127-5153,   │
+ * │ schedule + dry-run   │        │ panel slice :9059-9064, queue/test :7742-   │
+ * │ polls)               │        │ 7811                                         │
+ * │ useFrameAutoResize + │ 7 ✓    │ frame height sync :7447-7575 (dedupe)       │
+ * │ AutoResizeFrame      │        │                                              │
  * │ DataTipTooltip       │ 2 ✓    │ #data-tip-tooltip :3637 + :3839-3865        │
  * │ Help opener wiring   │ 2 ✓    │ window._openMarketDataHelp/PBGUI_HELP_OPENER│
  * │                      │        │ :4085-4089 (shared_help_overlay path)       │
@@ -46,8 +56,8 @@
  * │                      │        │ :9032-9107, :9736-9773                      │
  * │ Topnav / help chrome │ —      │ pbgui_nav.js + shared_help_overlay.js stay  │
  * │                      │        │ as global scripts loaded by index.html      │
- * │ Panel bodies         │ 3..7   │ settings + status + integrity landed;       │
- * │                      │        │ placeholders below for the remaining panels │
+ * │ Panel bodies         │ 3..7   │ all landed except activity (M-data-8        │
+ * │                      │        │ mounts the global LogViewerPanel script)    │
  * └──────────────────────┴────────┴─────────────────────────────────────────────┘
  *
  * NOT PORTED (with justification):
@@ -77,6 +87,8 @@ import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import DataTipTooltip from './components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
+import Best1mPanel from './components/best1m/Best1mPanel.vue';
+import CopyDataPanel from './components/copydata/CopyDataPanel.vue';
 import IntegrityPanel from './components/integrity/IntegrityPanel.vue';
 import InventoryPanel from './components/inventory/InventoryPanel.vue';
 import DeleteOlderDialog from './components/inventory/DeleteOlderDialog.vue';
@@ -87,12 +99,15 @@ import SettingsPanel from './components/settings/SettingsPanel.vue';
 import SidebarNav from './components/SidebarNav.vue';
 import StatusPanel from './components/StatusPanel.vue';
 import ToastStack from './components/ToastStack.vue';
+import { apiUrl } from './config';
 import { exchangeOptions } from './lib/exchange';
 import { computeOlderPreviewView } from './lib/inventoryOlderPreview';
 import type { PlotlyLike } from './lib/heatmapFigure';
 import { SHOW_TOAST_KEY, useToasts } from './composables/useToasts';
 import { useApi } from './composables/useApi';
+import { useBest1m } from './composables/useBest1m';
 import { useConfirmDialog } from './composables/useConfirmDialog';
+import { useCopyData } from './composables/useCopyData';
 import { useIntegrity } from './composables/useIntegrity';
 import { useIntegrityPolling } from './composables/useIntegrityPolling';
 import { useInventory } from './composables/useInventory';
@@ -214,7 +229,9 @@ const fanoutHooks: ExchangeFanoutHooks = {
   loadInventoryPanel: (forceReload) => {
     if (activePanel.value === 'inventory-panel') void inventory.loadPanel(forceReload);
   },
-  // refreshBest1mPanel :7321-7323 — M-data-7
+  // refreshBest1mPanel :7321-7323 — M-data-7 (gated on the active panel
+  // by useContextExchange exactly like legacy :7321)
+  refreshBest1mPanel: (forceReload) => best1m.refreshPanel(forceReload),
   // :7324-7332 — the M-data-5 slice: reset + forced reload while active
   onIntegrityExchangeChange: (statusKey) => integrity.onExchangeChange(statusKey),
 };
@@ -323,6 +340,56 @@ function onOlderCutoff(value: string): void {
   state.olderPreview = null; // :9540
 }
 
+/* ── best-1m + copy-data panels (M-data-7 — :3346-3501, :5023-5523,
+      :7447-7812, panel slices :9058-9064, fan-out :7321-7323): both
+      controllers are referenced lazily by the exchange fan-out hook above
+      (first call = the onMounted :9771 fan-out, after every controller
+      exists). useBest1m's openBest1mPanel closure is the hoisted function
+      declaration below. ── */
+
+const best1m = useBest1m({
+  api,
+  t: (key, params) => t(key, params ?? {}),
+  showToast,
+  getExchange: () => contextExchange.contextExchange.value,
+  getBest1mSection: () => contextExchange.best1mSection.value, // :7671
+  openBest1mPanel, // :7696 — hyperliquid queue redirect
+  serial: () => getBoot().serial, // PBGUI_SERIAL (:4189)
+  dataActionsUrl: apiUrl, // :7581 via config
+});
+
+const copyData = useCopyData({
+  api,
+  fetchImpl: (...args) => fetch(...args), // fetchCopyDataScheduleJson (:5076)
+  marketDataUrl: apiUrl,
+  t: (key, params) => t(key, params ?? {}),
+  showToast,
+  isPanelActive: () => activePanel.value === 'copy-data-panel', // :5146
+  serial: () => getBoot().serial, // :4216
+});
+
+/** setActivePanel's best1m slice (:9058) — re-fires on re-entry like legacy. */
+panelHooks['best1m-panel'] = {
+  onEnter: () => best1m.refreshPanel(false),
+};
+
+/** setActivePanel's copy-data slice (:9059-9064) — mount + 15 s poll start,
+ *  poll stop when the panel is left. */
+panelHooks['copy-data-panel'] = {
+  onEnter: () => {
+    copyData.mountJobMonitor(false); // :9060
+    void copyData.loadSchedules(false); // :9061
+  },
+  onLeave: () => copyData.stopSchedulePoll(), // :9063
+};
+
+/** Legacy ran the schedule poll for the whole page life; the Vue page stops
+ *  it (and any dry-run chain) on unmount so remounts cannot leak timers. */
+onBeforeUnmount(() => {
+  copyData.stopSchedulePoll();
+  copyData.resetDryRunSummary();
+});
+
 // bootstrap :9764 — restore + remap + activate now that every landed panel
 // hook is registered (still before the :9771 fan-out in onMounted)
 restorePanel();
@@ -331,23 +398,22 @@ function onExchangeInput(value: string): void {
   contextExchange.setContextExchange(value); // :9611-9613
 }
 
-/** Legacy openBest1mPanel (:7687-7691): section → panel switch → refresh. */
+/** Legacy openBest1mPanel (:7687-7691): section → panel switch → refresh.
+ *  The :7690 refresh lands through the best1m panel's onEnter hook
+ *  (:9058) — legacy's double refresh (openBest1mPanel + setActivePanel) is
+ *  collapsed into the single idempotent hook (deviation noted in the header). */
 function openBest1mPanel(mode: Best1mSection): void {
   contextExchange.setBest1mSection(mode); // :7688
-  setActivePanel('best1m-panel'); // :7689
-  // :7690 refreshBest1mPanel(false) — M-data-7 panel hook (setActivePanel
-  // already triggers the panel's onEnter once wired)
+  setActivePanel('best1m-panel'); // :7689 → onEnter refreshBest1mPanel(false)
 }
 
 /* ── status summaries (refreshStatuses :9076-9096, bootstrap :9772) ── */
 
 const statusSummaries = useStatusSummaries();
 
-/* ── panel placeholder registry (M-data-7/8 replace these) ── */
+/* ── panel placeholder registry (M-data-8 replaces the activity one) ── */
 
-const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel'>, string> = {
-  'best1m-panel': 'M-data-7',
-  'copy-data-panel': 'M-data-7',
+const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel' | 'best1m-panel' | 'copy-data-panel'>, string> = {
   // the activity panel hosts the global LogViewerPanel script — mounting
   // it lands with the M-data-8 integration pass
   'activity-panel': 'M-data-8',
@@ -356,7 +422,7 @@ const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel
 function placeholderTask(panel: PanelDef): string {
   return panel.id === 'status-panel'
     ? 'M-data-2'
-    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel'>];
+    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel' | 'best1m-panel' | 'copy-data-panel'>];
 }
 
 /* ── help opener (legacy initHelpOverlay tail :4085-4089): the nav's Guide
@@ -440,7 +506,6 @@ onMounted(() => {
       />
 
       <PanelShell :panels="PANELS" :active="activePanel" #default="{ panel }">
-        <!-- M-data-7: best1m + copy-data panel components go here -->
         <StatusPanel v-if="panel.id === 'status-panel'" :monitor="statusMonitor" />
         <SettingsPanel
           v-else-if="panel.id === 'settings-panel'"
@@ -455,6 +520,8 @@ onMounted(() => {
           :active="integrityActive"
         />
         <InventoryPanel v-else-if="panel.id === 'inventory-panel'" :store="inventory" />
+        <Best1mPanel v-else-if="panel.id === 'best1m-panel'" :store="best1m" />
+        <CopyDataPanel v-else-if="panel.id === 'copy-data-panel'" :store="copyData" />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>
     </main>
