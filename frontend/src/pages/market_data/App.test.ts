@@ -5,16 +5,38 @@ import App from './App.vue';
 
 /* M-data-1 shell integration: sidebar registry → PanelShell switching with
    persistence (legacy setActivePanel/restorePanel :9032-9107, :9736-9773),
-   the exchange context bar (:2965-2977) and the persisted context exchange
-   (:7310, :9766). Panel bodies are placeholders until M-data-2..7. */
+   the exchange context bar (:2965-2977).
+   M-data-2: setContextExchange fan-out (:7304-7333, :9611-9613), status
+   fragment mount (:3223-3227, :4102-4174), sidebar shortcut modes
+   (:9112-9120, :7415-7446), refreshStatuses bootstrap (:9772), help opener
+   (:4085-4089), data-tip tooltip (:3637). */
+
+vi.mock('@/shared/boot', () => ({
+  getBoot: vi.fn(() => ({
+    token: 'tok',
+    origin: 'http://pbgui.test:8000',
+    version: '1.0.0',
+    serial: 'S1',
+  })),
+}));
 
 const LS_KEY_PANEL = 'market_data_fastapi_active_panel';
 const LS_KEY_EXCHANGE = 'market_data_fastapi_context_exchange';
 
+const FRAGMENT_HTML = '<div class="mds-root" id="__MDS_ROOT_ID__">fragment</div><script>void 0;<\/script>';
+const BASE = 'http://pbgui.test:8000';
+
 let fetchMock: ReturnType<typeof vi.fn>;
 
+function flushPromises(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function mountApp() {
-  return mount(App, { global: { plugins: [createI18n('en')] } });
+  return mount(App, {
+    global: { plugins: [createI18n('en')] },
+    attachTo: document.body,
+  });
 }
 
 function visiblePanelIds(wrapper: ReturnType<typeof mountApp>): string[] {
@@ -24,15 +46,31 @@ function visiblePanelIds(wrapper: ReturnType<typeof mountApp>): string[] {
     .map((s) => s.attributes('id') ?? '');
 }
 
+function statusMonitorCalls(): string[] {
+  return fetchMock.mock.calls
+    .map((call) => String(call[0]))
+    .filter((url) => url.includes('/status-monitor/'));
+}
+
 beforeEach(() => {
   window.localStorage.clear();
-  fetchMock = vi.fn().mockResolvedValue({ ok: true } as Response);
+  fetchMock = vi.fn(async (url: string | URL) => {
+    const u = String(url);
+    if (u.includes('/status-monitor/')) {
+      return new Response(FRAGMENT_HTML, { status: 200 });
+    }
+    return new Response('{"running":false}', { status: 200 });
+  });
   vi.stubGlobal('fetch', fetchMock);
 });
 
 afterEach(() => {
   window.localStorage.clear();
   vi.unstubAllGlobals();
+  delete window.PBGuiSharedHelp;
+  delete window._openMarketDataHelp;
+  delete window.PBGUI_HELP_OPENER;
+  document.body.innerHTML = '';
 });
 
 describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
@@ -87,15 +125,6 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
     expect(window.localStorage.getItem(LS_KEY_PANEL)).toBe('status-panel');
   });
 
-  it('activates best1m via the sidebar shortcut link (:9112-9115)', async () => {
-    const app = mountApp();
-    const link = app.find('#sidebar-best-1m-link');
-    expect(link.exists()).toBe(true);
-    await link.trigger('click');
-    expect(visiblePanelIds(app)).toEqual(['best1m-panel']);
-    expect(window.localStorage.getItem(LS_KEY_PANEL)).toBe('best1m-panel');
-  });
-
   it('restores the persisted panel on load (bootstrap :9764)', () => {
     window.localStorage.setItem(LS_KEY_PANEL, 'inventory-panel');
     const app = mountApp();
@@ -114,10 +143,10 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
     expect(visiblePanelIds(app)).toEqual(['settings-panel']);
   });
 
-  it('renders an empty placeholder for every panel body until M-data-2..7 land', () => {
+  it('renders placeholders for the M-data-3..7 panels only', () => {
     const app = mountApp();
-    const placeholders = app.findAll('.panel-placeholder');
-    expect(placeholders).toHaveLength(7);
+    expect(app.findAll('.panel-placeholder')).toHaveLength(6);
+    expect(app.find('#status-panel .panel-placeholder').exists()).toBe(false);
   });
 });
 
@@ -143,6 +172,181 @@ describe('exchange context bar (:2965-2977, :7304-7313, :9766)', () => {
     const app = mountApp();
     await app.find('#page-exchange').setValue('okx');
     expect(window.localStorage.getItem(LS_KEY_EXCHANGE)).toBe('okx');
+  });
+
+  it('normalizes a legacy binance spelling through the fan-out (:7304-7306)', async () => {
+    window.localStorage.setItem(LS_KEY_EXCHANGE, 'binanceusdm');
+    const app = mountApp();
+    await flushPromises();
+    expect((app.find('#page-exchange').element as HTMLSelectElement).value).toBe('binance');
+    expect(window.localStorage.getItem(LS_KEY_EXCHANGE)).toBe('binance');
+    expect(statusMonitorCalls()).toEqual([
+      `${BASE}/api/market-data/status-monitor/binanceusdm`,
+    ]);
+  });
+});
+
+describe('status monitor fragment mount (:3223-3227, :4142-4174, :7406-7413)', () => {
+  it('mounts the restored exchange fragment on bootstrap (:9771 → :7315)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    expect(statusMonitorCalls()).toEqual([`${BASE}/api/market-data/status-monitor/hyperliquid`]);
+    const host = app.find('#status-monitor-host').element as HTMLElement;
+    expect(host.dataset.exchange).toBe('hyperliquid');
+    expect(host.querySelector('.mds-root')).not.toBeNull();
+  });
+
+  it('shows the loading callout while the fragment is in flight (:4150-4154)', async () => {
+    let release: (body: string) => void = () => undefined;
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise<Response>((resolve) => {
+          release = (body) => resolve(new Response(body, { status: 200 }));
+        })
+    );
+    const app = mountApp();
+    await flushPromises();
+    const callout = app.find('#status-panel .callout');
+    expect(callout.exists()).toBe(true);
+    expect(callout.find('p').text()).toBe('Loading live market data status…');
+    release(FRAGMENT_HTML);
+    await flushPromises();
+    expect(app.find('#status-panel .callout').exists()).toBe(false);
+  });
+
+  it('destroys the live fragment and remounts on exchange change (:7315, :4148)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    const host = app.find('#status-monitor-host').element as HTMLElement;
+    const destroy = vi.fn();
+    (host.querySelector('.mds-root') as HTMLElement & { __mdsDestroy?: () => void }).__mdsDestroy =
+      destroy;
+    await app.find('#page-exchange').setValue('bybit');
+    await flushPromises();
+    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(statusMonitorCalls()).toEqual([
+      `${BASE}/api/market-data/status-monitor/hyperliquid`,
+      `${BASE}/api/market-data/status-monitor/bybit`,
+    ]);
+    expect(host.dataset.exchange).toBe('bybit');
+  });
+
+  it('does not remount when the same exchange is re-selected (:7410)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    await app.find('#page-exchange').setValue('hyperliquid');
+    await flushPromises();
+    expect(statusMonitorCalls()).toEqual([`${BASE}/api/market-data/status-monitor/hyperliquid`]);
+  });
+
+  it('renders the escaped error callout when the fragment fails (:4166-4173)', async () => {
+    fetchMock.mockImplementation(async (url: string | URL) => {
+      if (String(url).includes('/status-monitor/')) {
+        return new Response('<img src=x onerror=alert(1)>', { status: 500 });
+      }
+      return new Response('{}', { status: 200 });
+    });
+    const app = mountApp();
+    await flushPromises();
+    const callout = app.find('#status-panel .callout.warning');
+    expect(callout.exists()).toBe(true);
+    expect(callout.find('p').text()).toBe('HTTP 500');
+    expect(app.find('#status-panel .callout.warning img').exists()).toBe(false);
+  });
+
+  it('destroys the fragment when the app unmounts (R2)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    const host = app.find('#status-monitor-host').element as HTMLElement;
+    const destroy = vi.fn();
+    (host.querySelector('.mds-root') as HTMLElement & { __mdsDestroy?: () => void }).__mdsDestroy =
+      destroy;
+    app.unmount();
+    expect(destroy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('refreshStatuses bootstrap (:9772, :9076-9096)', () => {
+  it('fetches all five exchange statuses once on mount', async () => {
+    mountApp();
+    await flushPromises();
+    const statusCalls = fetchMock.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.endsWith('/status/hyperliquid') || url.includes('/status/'))
+      .filter((url) => !url.includes('/status-monitor/'));
+    expect(statusCalls).toEqual([
+      `${BASE}/api/market-data/status/hyperliquid`,
+      `${BASE}/api/market-data/status/binanceusdm`,
+      `${BASE}/api/market-data/status/bybit`,
+      `${BASE}/api/market-data/status/bitget`,
+      `${BASE}/api/market-data/status/okx`,
+    ]);
+  });
+});
+
+describe('sidebar shortcut modes (:9112-9120, :7687-7691, :7427-7446)', () => {
+  it('opens the best1m panel in build mode (:9112-9115)', async () => {
+    const app = mountApp();
+    await app.find('#sidebar-best-1m-link').trigger('click');
+    expect(visiblePanelIds(app)).toEqual(['best1m-panel']);
+    expect(window.localStorage.getItem(LS_KEY_PANEL)).toBe('best1m-panel');
+    const link = app.find('#sidebar-best-1m-link');
+    expect(link.classes()).toContain('active');
+    expect(link.attributes('aria-current')).toBe('page');
+  });
+
+  it('opens the best1m panel in download mode via the l2books shortcut (:9117-9120)', async () => {
+    const app = mountApp();
+    await app.find('#sidebar-l2books-link').trigger('click');
+    expect(visiblePanelIds(app)).toEqual(['best1m-panel']);
+    expect(app.find('#sidebar-l2books-link').classes()).toContain('active');
+    expect(app.find('#sidebar-best-1m-link').classes()).not.toContain('active');
+  });
+
+  it('shows the l2books shortcut only on hyperliquid (:7422)', async () => {
+    const app = mountApp();
+    expect(app.find('#sidebar-l2books-link').attributes('hidden')).toBeUndefined();
+    await app.find('#page-exchange').setValue('bybit');
+    expect(app.find('#sidebar-l2books-link').attributes('hidden')).toBeDefined();
+  });
+
+  it('keeps the best-1m link active off hyperliquid in either mode (:7436)', async () => {
+    const app = mountApp();
+    await app.find('#page-exchange').setValue('bybit');
+    await app.find('#sidebar-l2books-link').trigger('click'); // hidden but clickable
+    expect(app.find('#sidebar-best-1m-link').classes()).toContain('active');
+    expect(app.find('#sidebar-l2books-link').classes()).not.toContain('active');
+  });
+});
+
+describe('help opener wiring (:4085-4089)', () => {
+  it('wires PBGUI_HELP_OPENER/_openMarketDataHelp to the shared overlay', () => {
+    const open = vi.fn();
+    window.PBGuiSharedHelp = { open };
+    mountApp();
+    expect(typeof window.PBGUI_HELP_OPENER).toBe('function');
+    window.PBGUI_HELP_OPENER!();
+    expect(open).toHaveBeenCalledWith('market data', { token: 'tok' });
+  });
+
+  it('no-ops when the shared overlay script is absent (:4086)', () => {
+    mountApp();
+    expect(() => window._openMarketDataHelp!()).not.toThrow();
+  });
+});
+
+describe('data-tip tooltip mount (legacy :3637)', () => {
+  it('renders the tooltip element and reacts to [data-tip] hovers (:3843)', async () => {
+    const app = mountApp();
+    const tip = document.getElementById('data-tip-tooltip') as HTMLElement;
+    expect(tip).toBeInstanceOf(HTMLElement);
+    const el = document.createElement('span');
+    el.setAttribute('data-tip', 'hint text');
+    document.body.appendChild(el);
+    el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    await app.vm.$nextTick();
+    expect(tip.textContent).toBe('hint text');
+    expect(tip.style.display).toBe('block');
   });
 });
 
