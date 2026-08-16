@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /*
- * market_data_main migration — M-data-1 scaffold + M-data-2
+ * market_data_main migration — M-data-1 scaffold + M-data-2 + M-data-3
  * (source: frontend/market_data_main.html, kept as the legacy fallback until
  * M-data-8 flips the route)
  *
@@ -22,6 +22,9 @@
  * │ useContextExchange   │ 2 ✓    │ fan-out :7304-7333, bootstrap :9766-9771,   │
  * │                      │        │ best-1m section state :7687-7691            │
  * │ useStatusSummaries   │ 2 ✓    │ fetchStatus/refreshStatuses :9076-9096      │
+ * │ SettingsPanel +      │ 3 ✓    │ settings cards :2979-3085, subsection nav   │
+ * │ useSettings (+       │        │ :6121-6186, picker :7015-7133, load/save    │
+ * │ settingsRequest)     │        │ :8881-8948, sidebar block :2950-2958        │
  * │ DataTipTooltip       │ 2 ✓    │ #data-tip-tooltip :3637 + :3839-3865        │
  * │ Help opener wiring   │ 2 ✓    │ window._openMarketDataHelp/PBGUI_HELP_OPENER│
  * │                      │        │ :4085-4089 (shared_help_overlay path)       │
@@ -30,7 +33,8 @@
  * │                      │        │ :9032-9107, :9736-9773                      │
  * │ Topnav / help chrome │ —      │ pbgui_nav.js + shared_help_overlay.js stay  │
  * │                      │        │ as global scripts loaded by index.html      │
- * │ Panel bodies         │ 3..7   │ placeholders below, one per registry panel  │
+ * │ Panel bodies         │ 3..7   │ settings + status landed (M-data-3 slice)    │
+ * │                      │        │ placeholders below for the remaining panels │
  * └──────────────────────┴────────┴─────────────────────────────────────────────┘
  *
  * NOT PORTED (with justification):
@@ -53,7 +57,7 @@
  *    called it via setActivePanel :9058 AND openBest1mPanel :7690; the
  *    idempotent refresh lands once with M-data-7's hook).
  */
-import { onMounted, provide } from 'vue';
+import { computed, onMounted, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -61,11 +65,14 @@ import DataTipTooltip from './components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
 import PanelPlaceholder from './components/PanelPlaceholder.vue';
 import PanelShell from './components/PanelShell.vue';
+import SettingsPanel from './components/settings/SettingsPanel.vue';
 import SidebarNav from './components/SidebarNav.vue';
 import StatusPanel from './components/StatusPanel.vue';
 import ToastStack from './components/ToastStack.vue';
 import { exchangeOptions } from './lib/exchange';
 import { SHOW_TOAST_KEY, useToasts } from './composables/useToasts';
+import { useApi } from './composables/useApi';
+import { useSettings } from './composables/useSettings';
 import {
   PANELS,
   readContextExchange,
@@ -78,7 +85,7 @@ import {
 } from './composables/useContextExchange';
 import { useStatusMonitor } from './composables/useStatusMonitor';
 import { useStatusSummaries } from './composables/useStatusSummaries';
-import type { PanelDef, PanelId } from './types';
+import type { PanelDef, PanelId, SettingsSubsection } from './types';
 
 const { t } = useI18n();
 
@@ -86,6 +93,33 @@ const { t } = useI18n();
 
 const { activePanel, setActivePanel, restorePanel } = usePanels();
 restorePanel(); // bootstrap :9764 — read + remap + activate (before the fan-out)
+
+/* ── toasts (showToast :4983-5002) — provided for M-data-2..7 panels ── */
+
+const { toasts, showToast } = useToasts();
+provide(SHOW_TOAST_KEY, showToast);
+
+/* ── settings store (M-data-3 — settingsState :3698-3714 + :8881-8948);
+      created before the exchange context so the fan-out hook reaches it ── */
+
+const settings = useSettings({
+  api: useApi(),
+  t: (key, params) => t(key, params ?? {}),
+  showToast,
+});
+
+/** Sidebar view-model (legacy updateSaveSettingsButton inputs :5528-5533). */
+const settingsNav = computed(() => ({
+  isDirty: settings.isDirty.value,
+  availableSubsections: settings.availableSubsections.value,
+  activeSubsection: settings.resolvedSubsection.value,
+}));
+
+/** Subsection click — setActivePanel then subsection (:9605-9608). */
+function onSelectSettingsSubsection(key: SettingsSubsection): void {
+  setActivePanel('settings-panel'); // :9606
+  settings.setActiveSubsection(key); // :9607
+}
 
 /* ── status monitor controller (mount protocol :4102-4174) — created before
       the exchange context so the fan-out hook can reach it ── */
@@ -98,9 +132,10 @@ const statusMonitor = useStatusMonitor({
       :7304-7333; restore :9766-9771) ── */
 
 const fanoutHooks: ExchangeFanoutHooks = {
+  // :7314 — the M-data-3 slice of the fan-out (keepFeedback:false is typed)
+  loadSettings: (exchangeKey, options) => settings.loadSettings(exchangeKey, options),
   // :7315 — the M-data-2 slice of the fan-out
   updateStatusPanel: () => statusMonitor.updateStatusPanel(),
-  // loadSettings :7314 — M-data-3
   // syncInventorySubsectionVisibility :7317 + loadInventoryPanel :7318-7320 — M-data-6
   // refreshBest1mPanel :7321-7323 — M-data-7
   // onIntegrityExchangeChange :7324-7332 — M-data-5
@@ -128,15 +163,9 @@ function openBest1mPanel(mode: Best1mSection): void {
 
 const statusSummaries = useStatusSummaries();
 
-/* ── toasts (showToast :4983-5002) — provided for M-data-2..7 panels ── */
-
-const { toasts, showToast } = useToasts();
-provide(SHOW_TOAST_KEY, showToast);
-
 /* ── panel placeholder registry (M-data-3..7 replace these) ── */
 
-const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel'>, string> = {
-  'settings-panel': 'M-data-3/4',
+const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel'>, string> = {
   'inventory-panel': 'M-data-6',
   'integrity-panel': 'M-data-5',
   'best1m-panel': 'M-data-7',
@@ -147,7 +176,7 @@ const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel'>, string> = {
 function placeholderTask(panel: PanelDef): string {
   return panel.id === 'status-panel'
     ? 'M-data-2'
-    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel'>];
+    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel'>];
 }
 
 /* ── help opener (legacy initHelpOverlay tail :4085-4089): the nav's Guide
@@ -194,8 +223,11 @@ onMounted(() => {
       :active="activePanel"
       :context-exchange="contextExchange.contextExchange.value"
       :best1m-section="contextExchange.best1mSection.value"
+      :settings-nav="settingsNav"
       @select="setActivePanel"
       @shortcut="openBest1mPanel"
+      @save-settings="settings.saveSettings()"
+      @select-settings-subsection="onSelectSettingsSubsection"
     />
 
     <main id="main-content">
@@ -206,8 +238,9 @@ onMounted(() => {
       />
 
       <PanelShell :panels="PANELS" :active="activePanel" #default="{ panel }">
-        <!-- M-data-3..7: real panel components keyed on panel.id go here -->
+        <!-- M-data-4..7: real panel components keyed on panel.id go here -->
         <StatusPanel v-if="panel.id === 'status-panel'" :monitor="statusMonitor" />
+        <SettingsPanel v-else-if="panel.id === 'settings-panel'" :store="settings" />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>
     </main>

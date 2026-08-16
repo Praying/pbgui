@@ -15,14 +15,24 @@
  * NOT PORTED (documented):
  *  - #sidebar-resize handle (:2962) — silent no-op in legacy (sidebar_resize.js
  *    is never included, guard :9748-9755); recon §0 says do not port as-is.
- *  - The inventory/settings subsection navs and sidebar action blocks
- *    (:2929-2945, :2950-2958) — hidden context-dependent regions owned by
- *    M-data-3/M-data-6.
+ *  - The inventory subsection navs and sidebar action blocks (:2929-2945) —
+ *    hidden context-dependent regions owned by M-data-6.
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { computeSidebarShortcutState, type Best1mSection } from '../composables/useContextExchange';
-import type { PanelDef, PanelId } from '../types';
+import SubsectionNav from './settings/SubsectionNav.vue';
+import type { PanelDef, PanelId, SettingsSubsection } from '../types';
+
+/** Sidebar view-model of the settings store (M-data-3 wiring). */
+export interface SettingsNavModel {
+  /** settingsState.isDirty — drives the save button (:5528-5533). */
+  isDirty: boolean;
+  /** getAvailableSettingsSubsections (:6146-6150). */
+  availableSubsections: readonly SettingsSubsection[];
+  /** getResolvedSettingsSubsection (:6152-6155). */
+  activeSubsection: SettingsSubsection;
+}
 
 const props = defineProps<{
   panels: readonly PanelDef[];
@@ -31,12 +41,18 @@ const props = defineProps<{
   contextExchange: string;
   /** Current best-1m section (uiState.best1mPanelSection). */
   best1mSection: Best1mSection;
+  /** Settings context block model; omit to hide the block entirely. */
+  settingsNav?: SettingsNavModel;
 }>();
 
 const emit = defineEmits<{
   select: [panelId: PanelId];
   /** Sidebar shortcut click carrying the best-1m section mode. */
   shortcut: [mode: Best1mSection];
+  /** #btn-save-settings-sidebar click (:9686-9688). */
+  saveSettings: [];
+  /** Subsection nav select (:9605-9608) — parent also switches the panel. */
+  selectSettingsSubsection: [key: SettingsSubsection];
 }>();
 
 const { t } = useI18n();
@@ -44,6 +60,9 @@ const { t } = useI18n();
 const shortcutState = computed(() =>
   computeSidebarShortcutState(props.active, props.contextExchange, props.best1mSection)
 );
+
+/** Legacy setActivePanel sidebar slice (:9045-9049). */
+const showSettingsContext = computed(() => props.active === 'settings-panel');
 </script>
 
 <template>
@@ -90,6 +109,27 @@ const shortcutState = computed(() =>
             :aria-current="shortcutState.l2booksActive ? 'page' : 'false'"
             @click.prevent="emit('shortcut', 'download')"
           >{{ t('market.downloadL2books') }}</a>
+        </template>
+
+        <!-- Settings context block (:2950-2958) — hidden unless the settings
+             panel is active (:9045-9049). M-data-3. -->
+        <template v-if="settingsNav">
+          <hr class="sb-sep" id="sidebar-context-sep" :hidden="!showSettingsContext">
+          <div id="sidebar-context-actions" :hidden="!showSettingsContext">
+            <button
+              class="sb-btn"
+              id="btn-save-settings-sidebar"
+              type="button"
+              :disabled="!settingsNav.isDirty"
+              :class="{ 'save-needed': settingsNav.isDirty }"
+              @click="emit('saveSettings')"
+            >{{ t('market.saveSettings') }}</button>
+            <SubsectionNav
+              :available="settingsNav.availableSubsections"
+              :active="settingsNav.activeSubsection"
+              @select="emit('selectSettingsSubsection', $event)"
+            />
+          </div>
         </template>
       </div>
     </div>

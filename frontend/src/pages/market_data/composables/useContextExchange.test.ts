@@ -103,7 +103,7 @@ describe('setContextExchange fan-out (:7314-7333)', () => {
   it('passes the normalized key to loadSettings and the full meta to updateStatusPanel', () => {
     const { ctx, hooks } = makeHarness({});
     ctx.setContextExchange('binanceusdm');
-    expect(hooks.loadSettings).toHaveBeenCalledWith('binance');
+    expect(hooks.loadSettings).toHaveBeenCalledWith('binance', { keepFeedback: false }); // :7314
     expect(hooks.updateStatusPanel).toHaveBeenCalledWith(
       expect.objectContaining({ key: 'binance', statusKey: 'binanceusdm' })
     );

@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import SidebarNav from './SidebarNav.vue';
 import { PANELS } from '../composables/usePanels';
+import type { SettingsNavModel } from './SidebarNav.vue';
 
 /* Sidebar shortcut wiring (legacy market_data_main.html:2946, :2948,
    :7415-7446, :9112-9120): the best-1m link opens the best1m panel in
@@ -13,6 +14,7 @@ function mountNav(props: {
   active?: string;
   contextExchange?: string;
   best1mSection?: 'build' | 'download';
+  settingsNav?: SettingsNavModel;
 } = {}) {
   return mount(SidebarNav, {
     props: {
@@ -20,6 +22,7 @@ function mountNav(props: {
       active: (props.active ?? 'settings-panel') as never,
       contextExchange: props.contextExchange ?? 'hyperliquid',
       best1mSection: props.best1mSection ?? 'build',
+      settingsNav: props.settingsNav,
     },
     global: { plugins: [createI18n('en')] },
   });
@@ -88,5 +91,53 @@ describe('l2books download shortcut (:2948, :7415-7425, :9117-9120)', () => {
     });
     expect(nav.find('#sidebar-l2books-link').classes()).not.toContain('active');
     expect(nav.find('#sidebar-best-1m-link').classes()).toContain('active');
+  });
+});
+
+
+describe('settings context block (:2950-2958, :9045-9049, :5528-5533)', () => {
+  const model = (overrides: Partial<SettingsNavModel> = {}): SettingsNavModel => ({
+    isDirty: false,
+    availableSubsections: ['normal', 'aws', 'tradfi'],
+    activeSubsection: 'normal',
+    ...overrides,
+  });
+
+  it('is hidden while another panel is open (:9047-9049)', () => {
+    const nav = mountNav({ active: 'status-panel', settingsNav: model() });
+    expect(nav.find('#sidebar-context-actions').attributes('hidden')).toBeDefined();
+    expect(nav.find('#sidebar-context-sep').attributes('hidden')).toBeDefined();
+  });
+
+  it('is visible while the settings panel is open', () => {
+    const nav = mountNav({ active: 'settings-panel', settingsNav: model() });
+    expect(nav.find('#sidebar-context-actions').attributes('hidden')).toBeUndefined();
+  });
+
+  it('renders nothing when no settings model is passed (pre-M-data-3 shape)', () => {
+    const nav = mountNav({ active: 'settings-panel' });
+    expect(nav.find('#sidebar-context-actions').exists()).toBe(false);
+  });
+
+  it('disables the save button while clean and highlights it while dirty (:5531-5532)', () => {
+    const clean = mountNav({ settingsNav: model({ isDirty: false }) });
+    expect(clean.find('#btn-save-settings-sidebar').attributes('disabled')).toBeDefined();
+    expect(clean.find('#btn-save-settings-sidebar').classes()).not.toContain('save-needed');
+
+    const dirty = mountNav({ settingsNav: model({ isDirty: true }) });
+    expect(dirty.find('#btn-save-settings-sidebar').attributes('disabled')).toBeUndefined();
+    expect(dirty.find('#btn-save-settings-sidebar').classes()).toContain('save-needed');
+  });
+
+  it('emits saveSettings on the save button click (:9686-9688)', async () => {
+    const nav = mountNav({ settingsNav: model({ isDirty: true }) });
+    await nav.find('#btn-save-settings-sidebar').trigger('click');
+    expect(nav.emitted('saveSettings')).toHaveLength(1);
+  });
+
+  it('forwards subsection selection (:9605-9608)', async () => {
+    const nav = mountNav({ settingsNav: model() });
+    await nav.find('#btn-settings-subsection-aws').trigger('click');
+    expect(nav.emitted('selectSettingsSubsection')).toEqual([['aws']]);
   });
 });

@@ -45,6 +45,17 @@ export const DEFAULT_CONTEXT_EXCHANGE = 'hyperliquid';
 /** Legacy settings subsection vocabulary (:3683-3687, persisted :3819). */
 export const SETTINGS_SUBSECTIONS: readonly SettingsSubsection[] = ['normal', 'aws', 'tradfi'];
 
+/** Legacy settingsSubsectionButtons registry (:3683-3687; DOM :2954-2956). */
+export const SETTINGS_SUBSECTION_BUTTONS: readonly {
+  buttonId: string;
+  key: SettingsSubsection;
+  labelKey: string;
+}[] = [
+  { buttonId: 'btn-settings-subsection-normal', key: 'normal', labelKey: 'market.coinRefresh' },
+  { buttonId: 'btn-settings-subsection-aws', key: 'aws', labelKey: 'market.awsL2book' },
+  { buttonId: 'btn-settings-subsection-tradfi', key: 'tradfi', labelKey: 'market.tradfiTiingo' },
+];
+
 /** Legacy inventory subsection vocabulary (:3688-3693, persisted :3825). */
 export const INVENTORY_SUBSECTIONS: readonly InventorySubsection[] = [
   '1m',

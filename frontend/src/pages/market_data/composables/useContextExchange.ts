@@ -23,8 +23,13 @@ export type Best1mSection = 'build' | 'download';
 
 /** Per-branch fan-out hooks, each annotated with its owning migration task. */
 export interface ExchangeFanoutHooks {
-  /** loadSettings(exchangeKey, {keepFeedback:false}) :7314 — M-data-3. */
-  loadSettings?(exchangeKey: string): void;
+  /**
+   * loadSettings(exchangeKey, {keepFeedback:false}) :7314 — M-data-3.
+   * M-data-2 handoff: the literal `false` type makes the comment-only
+   * contract executable — no caller can pass true (legacy void-ed the flag,
+   * :8882-8884; useSettings also guards it at runtime).
+   */
+  loadSettings?(exchangeKey: string, options?: { keepFeedback: false }): void;
   /** updateStatusPanel() :7315 — M-data-2 (useStatusMonitor.updateStatusPanel). */
   updateStatusPanel?(meta: ExchangeOption): void;
   /** syncInventorySubsectionVisibility() :7317 — M-data-6. */
@@ -84,7 +89,7 @@ export function useContextExchange(options: UseContextExchangeOptions): UseConte
     } catch {
       /* legacy swallowed storage failures */
     }
-    hooks.loadSettings?.(meta.key); // :7314 (M-data-3)
+    hooks.loadSettings?.(meta.key, { keepFeedback: false }); // :7314 (M-data-3)
     hooks.updateStatusPanel?.(meta); // :7315
     hooks.syncInventorySubsectionVisibility?.(); // :7317 (M-data-6)
     if (options.isPanelActive('inventory-panel')) hooks.loadInventoryPanel?.(true); // :7318-7320

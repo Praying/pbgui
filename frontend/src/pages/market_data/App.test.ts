@@ -26,6 +26,29 @@ const LS_KEY_EXCHANGE = 'market_data_fastapi_context_exchange';
 const FRAGMENT_HTML = '<div class="mds-root" id="__MDS_ROOT_ID__">fragment</div><script>void 0;<\/script>';
 const BASE = 'http://pbgui.test:8000';
 
+const SETTINGS_PAYLOAD = {
+  exchange: 'hyperliquid',
+  auto_enable_new_coins: false,
+  enabled_coins: ['BTC'],
+  coin_options: ['BTC', 'ETH', 'SOL'],
+  missing_saved_coins: [],
+  settings: {
+    interval_seconds: 2700,
+    coin_pause_seconds: 0.5,
+    api_timeout_seconds: 30,
+    min_lookback_days: 2,
+    max_lookback_days: 4,
+    aws_profile: 'pbgui-hyperliquid',
+    aws_access_key_id: '',
+    aws_secret_access_key: '',
+    aws_region: 'us-east-1',
+    l2book_scan_timeout_s: 5,
+    l2book_scan_workers: 8,
+    l2book_archive_enabled: false,
+    l2book_archive_dir: '',
+  },
+};
+
 let fetchMock: ReturnType<typeof vi.fn>;
 
 function flushPromises(): Promise<void> {
@@ -54,10 +77,19 @@ function statusMonitorCalls(): string[] {
 
 beforeEach(() => {
   window.localStorage.clear();
-  fetchMock = vi.fn(async (url: string | URL) => {
+  fetchMock = vi.fn(async (url: string | URL, init?: RequestInit) => {
     const u = String(url);
     if (u.includes('/status-monitor/')) {
       return new Response(FRAGMENT_HTML, { status: 200 });
+    }
+    if (u.includes('/api/market-data/settings/')) {
+      if (init?.method === 'POST') {
+        return new Response(
+          JSON.stringify({ success: true, message: 'Hyperliquid settings saved.', settings: SETTINGS_PAYLOAD }),
+          { status: 200 }
+        );
+      }
+      return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
     }
     return new Response('{"running":false}', { status: 200 });
   });
@@ -100,12 +132,21 @@ describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
       'Copy Data',
       'Download l2Books',
       'Activity Log',
+      // settings context block (:2950-2958) — settings panel is active
+      'Save Settings',
+      'Coin Refresh',
+      'AWS / l2Book',
+      'TradFi / Tiingo',
     ]);
   });
 
   it('marks the active section button (:9038)', () => {
     const app = mountApp();
-    const active = app.findAll('#sidebar-toolbar .sb-btn').filter((b) => b.classes('active'));
+    // section buttons only — the settings subsection nav carries its own
+    // active state (:6166)
+    const active = app
+      .findAll('#sidebar-toolbar .sb-btn')
+      .filter((b) => b.classes('active') && !b.classes('settings-subsection-btn'));
     expect(active).toHaveLength(1);
     expect(active[0]?.text()).toBe('Settings');
   });
@@ -143,9 +184,11 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
     expect(visiblePanelIds(app)).toEqual(['settings-panel']);
   });
 
-  it('renders placeholders for the M-data-3..7 panels only', () => {
+  it('renders placeholders for the M-data-4..7 panels only', () => {
     const app = mountApp();
-    expect(app.findAll('.panel-placeholder')).toHaveLength(6);
+    // five unlanded panels + the two M-data-4 cards inside settings
+    expect(app.findAll('.panel-placeholder')).toHaveLength(7);
+    expect(app.findAll('#settings-panel .panel-placeholder')).toHaveLength(2);
     expect(app.find('#status-panel .panel-placeholder').exists()).toBe(false);
   });
 });
@@ -198,11 +241,19 @@ describe('status monitor fragment mount (:3223-3227, :4142-4174, :7406-7413)', (
 
   it('shows the loading callout while the fragment is in flight (:4150-4154)', async () => {
     let release: (body: string) => void = () => undefined;
-    fetchMock.mockImplementationOnce(
-      () =>
-        new Promise<Response>((resolve) => {
-          release = (body) => resolve(new Response(body, { status: 200 }));
-        })
+    fetchMock.mockImplementation(
+      async (url: string | URL, init?: RequestInit) => {
+        const u = String(url);
+        if (u.includes('/status-monitor/')) {
+          return new Promise<Response>((resolve) => {
+            release = (body) => resolve(new Response(body, { status: 200 }));
+          });
+        }
+        if (u.includes('/api/market-data/settings/') && init?.method !== 'POST') {
+          return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
+        }
+        return new Response('{"running":false}', { status: 200 });
+      }
     );
     const app = mountApp();
     await flushPromises();
@@ -316,6 +367,103 @@ describe('sidebar shortcut modes (:9112-9120, :7687-7691, :7427-7446)', () => {
     await app.find('#sidebar-l2books-link').trigger('click'); // hidden but clickable
     expect(app.find('#sidebar-best-1m-link').classes()).toContain('active');
     expect(app.find('#sidebar-l2books-link').classes()).not.toContain('active');
+  });
+});
+
+describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)', () => {
+  it('loads the settings payload through the bootstrap fan-out (:9771 → :7314)', async () => {
+    mountApp();
+    await flushPromises();
+    const settingsCalls = fetchMock.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.includes('/api/market-data/settings/'));
+    expect(settingsCalls).toEqual([`${BASE}/api/market-data/settings/hyperliquid`]);
+  });
+
+  it('reloads settings when the exchange changes (:9611-9613 → :7314)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    await app.find('#page-exchange').setValue('bybit');
+    await flushPromises();
+    const settingsCalls = fetchMock.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.includes('/api/market-data/settings/'));
+    expect(settingsCalls).toEqual([
+      `${BASE}/api/market-data/settings/hyperliquid`,
+      `${BASE}/api/market-data/settings/bybit`,
+    ]);
+  });
+
+  it('renders the settings cards and fields from the payload', async () => {
+    const app = mountApp();
+    await flushPromises();
+    expect(app.find('#settings-primary-card').exists()).toBe(true);
+    expect(app.find('#settings-enabled-coins-card').exists()).toBe(true);
+    expect(app.find('#settings-hyperliquid-aws').exists()).toBe(true);
+    expect(app.find('#settings-hyperliquid-archive').exists()).toBe(true);
+    expect(
+      (app.find('#settings-interval-seconds').element as HTMLInputElement).value
+    ).toBe('2700');
+    expect(app.find('[data-settings-coin-row="BTC"]').classes()).toContain('selected');
+  });
+
+  it('keeps the save button disabled while clean and enables it on edit (:5528-5533)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    const save = app.find('#btn-save-settings-sidebar');
+    expect(save.attributes('disabled')).toBeDefined();
+    await app.find('#settings-interval-seconds').setValue('3600');
+    expect(save.attributes('disabled')).toBeUndefined();
+    expect(save.classes()).toContain('save-needed');
+  });
+
+  it('saves the collected request and re-baselines on success (:8930-8947)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    await app.find('#settings-interval-seconds').setValue('3600');
+    await app.find('#btn-save-settings-sidebar').trigger('click');
+    await flushPromises();
+    const post = fetchMock.mock.calls
+      .filter((call) => String(call[0]).includes('/api/market-data/settings/'))
+      .find((call) => (call[1] as RequestInit | undefined)?.method === 'POST');
+    expect(post).toBeDefined();
+    const body = JSON.parse(String((post![1] as RequestInit).body));
+    expect(body).toEqual({
+      auto_enable_new_coins: false,
+      enabled_coins: ['BTC'],
+      settings: {
+        interval_seconds: 3600,
+        coin_pause_seconds: 0.5,
+        api_timeout_seconds: 30,
+        min_lookback_days: 2,
+        max_lookback_days: 4,
+        aws_profile: 'pbgui-hyperliquid',
+        aws_access_key_id: '',
+        aws_secret_access_key: '',
+        aws_region: 'us-east-1',
+        l2book_scan_timeout_s: 5,
+        l2book_scan_workers: 8,
+        l2book_archive_enabled: false,
+        l2book_archive_dir: '',
+      },
+    });
+    // toast + clean button after the re-baseline
+    expect(app.findAll('.toast.success').map((toastEl) => toastEl.text())).toEqual([
+      'Hyperliquid settings saved.',
+    ]);
+    expect(app.find('#btn-save-settings-sidebar').attributes('disabled')).toBeDefined();
+  });
+
+  it('switches to the settings panel and subsection on nav click (:9605-9608)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    await app.findAll('#sidebar-toolbar .sb-btn').find((b) => b.text() === 'Status Monitor')!.trigger('click');
+    expect(app.find('#sidebar-context-actions').attributes('hidden')).toBeDefined();
+    await app.find('#btn-settings-subsection-aws').trigger('click');
+    expect(visiblePanelIds(app)).toEqual(['settings-panel']);
+    expect(window.localStorage.getItem('market_data_fastapi_settings_subsection')).toBe('aws');
+    expect(app.find('#settings-hyperliquid-aws').classes()).not.toContain('settings-subsection-hidden');
+    expect(app.find('#sidebar-context-actions').attributes('hidden')).toBeUndefined();
   });
 });
 
