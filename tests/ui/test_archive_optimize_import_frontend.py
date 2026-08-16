@@ -222,8 +222,6 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
         "api_keys_editor.html",
         "cluster.html",
         "logging_monitor.html",
-        "market_data_main.html",
-        "market_data_status.html",
         "v7_backtest.html",
         "v7_edit.html",
         "v7_optimize.html",
@@ -236,11 +234,16 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
     # services_monitor.html and the dashboard legacy pages (dashboard_main,
     # dashboard_templates, dashboard_editor + their fragments) were replaced
     # by Vue pages; the entries keep the same shared dialog asset version.
+    # market_data_main.html went with the M-data-8 retirement; the Vue
+    # market_data page never loaded the dialogs (recon §3.1: dead include),
+    # and market_data_status.html's replacement (loaded inside the status
+    # monitor iframe) keeps the version check below.
     vue_entry_consumers = [
         "services_monitor",
         "dashboard_main",
         "dashboard_templates",
         "dashboard_editor",
+        "market_data_status",
     ]
     for page in vue_entry_consumers:
         vue_index = (ROOT / "frontend" / "src" / "pages" / page / "index.html").read_text(

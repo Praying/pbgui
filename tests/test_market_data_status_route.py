@@ -1,14 +1,21 @@
-"""Market data status-monitor route: fragment-aware page switch.
+"""Market data status-monitor route: built Vue page only (M-data-8 retirement).
 
-Unlike the migrated dashboard pages, /api/market-data/status-monitor/{exchange}
-is consumed as a live FRAGMENT by the still-legacy market_data_main.html:
-it fetches the URL, injects the HTML into #status-monitor-host via innerHTML
-and re-executes the inline scripts on every exchange switch (mountStatusMonitor,
-market_data_main.html:4142). ES module bundles execute only once per document,
-so serving the Vue build here would leave the second mount blank. The legacy
-fragment therefore stays the FIRST branch while market_data_main is live; the
-Vue build takes over once the legacy fragment is retired, and a checkout with
-neither fails loudly with the npm build hint.
+/api/market-data/status-monitor/{exchange} serves the built market_data_status
+Vue page with the exchange injected into the mount element's data-exchange
+attribute (the page itself falls back to the ?exchange= query param and the
+status-monitor path segment for standalone loads).
+
+History: until M-data-8 the legacy market_data_main.html consumed this URL as
+a live FRAGMENT — it fetched the response, injected the HTML into
+#status-monitor-host via innerHTML and re-executed the inline scripts on every
+exchange switch (mountStatusMonitor, market_data_main.html:4142). That
+contract required inline CLASSIC scripts, so the legacy template had to stay
+the first serving branch: ES module bundles execute only once per document,
+and re-injecting the Vue document would have left every remount after the
+first blank (documented here since the migration). With market_data_main.html
+retired, the Vue market_data page embeds this URL as a same-origin iframe
+(useStatusMonitor), so the built page serves every consumer — and a checkout
+without a build fails loudly with the npm build hint.
 """
 
 from pathlib import Path
@@ -21,11 +28,6 @@ import api.market_data as market_data
 from api.auth import SessionToken
 
 SESSION = SessionToken(token="tok-1", user_id="root", created_at=0.0, expires_at=0.0)
-
-LEGACY_MARKER = (
-    '<div class="mds-root" id="__MDS_ROOT_ID__" data-token="" data-exchange="" '
-    'data-api-host="" data-api-base="">'
-)
 
 
 @pytest.fixture
@@ -41,66 +43,47 @@ def client() -> TestClient:
     return TestClient(app, raise_server_exceptions=False)
 
 
-@pytest.fixture
-def legacy_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Point the module's PBGDIR at a temp tree with an (empty) frontend dir."""
-    (tmp_path / "frontend").mkdir()
-    monkeypatch.setattr(market_data, "PBGDIR", tmp_path)
-    return tmp_path
-
-
-def _write_legacy(pbgdir: Path) -> None:
-    (pbgdir / "frontend" / "market_data_status.html").write_text(
-        "<html>legacy " + LEGACY_MARKER + "</html>", encoding="utf-8"
-    )
-
-
-def _set_dist(monkeypatch: pytest.MonkeyPatch, pbgdir: Path, text: str | None) -> None:
-    vue_index = pbgdir / "missing" / "index.html"
+def _set_dist(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, text: str | None) -> None:
+    vue_index = tmp_path / "missing" / "index.html"
     if text is not None:
-        vue_index = pbgdir / "dist-vue" / "index.html"
+        vue_index = tmp_path / "dist-vue" / "index.html"
         vue_index.parent.mkdir(exist_ok=True)
         vue_index.write_text(text, encoding="utf-8")
     monkeypatch.setattr(market_data, "_frontend_dist_path", lambda page: vue_index)
 
 
-def test_serves_legacy_fragment_while_market_data_main_is_live(
-    client: TestClient, legacy_dir: Path, monkeypatch: pytest.MonkeyPatch
+def test_serves_built_vue_page_with_exchange_injected(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # The legacy consumer still injects this URL as a re-executable fragment,
-    # so the legacy template wins even when a Vue build exists.
-    _write_legacy(legacy_dir)
-    _set_dist(monkeypatch, legacy_dir, "<html>vue build</html>")
-
-    resp = client.get("/api/market-data/status-monitor/binance")
-
-    assert resp.status_code == 200
-    assert resp.headers["cache-control"] == "no-store"
-    assert "legacy" in resp.text
-    assert "vue build" not in resp.text
-    # Server-side injections the fragment depends on.
-    assert 'id="mds_fastapi_binance"' in resp.text
-    assert 'data-token="tok-1"' in resp.text
-    assert 'data-exchange="binance"' in resp.text
-    assert 'data-api-base=' in resp.text
-
-
-def test_serves_built_vue_page_after_legacy_fragment_removed(
-    client: TestClient, legacy_dir: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    _set_dist(monkeypatch, legacy_dir, '<div id="mds-app" data-exchange=""></div>')
+    _set_dist(
+        monkeypatch,
+        tmp_path,
+        '<html><body><div id="mds-app" data-exchange=""></div></body></html>',
+    )
 
     resp = client.get("/api/market-data/status-monitor/bybit")
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
     assert 'data-exchange="bybit"' in resp.text
+    assert 'id="mds-app"' in resp.text
 
 
-def test_errors_clearly_when_no_build_and_no_legacy_exist(
-    client: TestClient, legacy_dir: Path, monkeypatch: pytest.MonkeyPatch
+def test_lowercases_the_exchange_before_injecting(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _set_dist(monkeypatch, legacy_dir, None)
+    _set_dist(monkeypatch, tmp_path, '<div id="mds-app" data-exchange=""></div>')
+
+    resp = client.get("/api/market-data/status-monitor/BINANCEUSDM")
+
+    assert resp.status_code == 200
+    assert 'data-exchange="binanceusdm"' in resp.text
+
+
+def test_errors_clearly_when_no_build_exists(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _set_dist(monkeypatch, tmp_path, None)
 
     resp = client.get("/api/market-data/status-monitor/binance")
 

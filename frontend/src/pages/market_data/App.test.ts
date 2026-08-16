@@ -27,7 +27,6 @@ vi.mock('@/shared/boot', () => ({
 const LS_KEY_PANEL = 'market_data_fastapi_active_panel';
 const LS_KEY_EXCHANGE = 'market_data_fastapi_context_exchange';
 
-const FRAGMENT_HTML = '<div class="mds-root" id="__MDS_ROOT_ID__">fragment</div><script>void 0;<\/script>';
 const BASE = 'http://pbgui.test:8000';
 
 const SETTINGS_PAYLOAD = {
@@ -113,18 +112,15 @@ function visiblePanelIds(wrapper: ReturnType<typeof mountApp>): string[] {
     .map((s) => s.attributes('id') ?? '');
 }
 
-function statusMonitorCalls(): string[] {
-  return fetchMock.mock.calls
-    .map((call) => String(call[0]))
-    .filter((url) => url.includes('/status-monitor/'));
+function statusMonitorSrcs(wrapper: ReturnType<typeof mountApp>): string[] {
+  return [wrapper.find('#status-monitor-host').element as HTMLIFrameElement]
+    .map((frame) => frame.src)
+    .filter((src) => src.includes('/status-monitor/'));
 }
 
 /** Default backend mock — settings payloads are exchange-aware (:8885). */
 function defaultFetchMock(url: string | URL, init?: RequestInit): Promise<Response> {
   const u = String(url);
-  if (u.includes('/status-monitor/')) {
-    return Promise.resolve(new Response(FRAGMENT_HTML, { status: 200 }));
-  }
   if (u.includes('/tradfi-map')) {
     return Promise.resolve(new Response(JSON.stringify(TRADFI_MAP_PAYLOAD), { status: 200 }));
   }
@@ -305,97 +301,67 @@ describe('exchange context bar (:2965-2977, :7304-7313, :9766)', () => {
     await flushPromises();
     expect((app.find('#page-exchange').element as HTMLSelectElement).value).toBe('binance');
     expect(window.localStorage.getItem(LS_KEY_EXCHANGE)).toBe('binance');
-    expect(statusMonitorCalls()).toEqual([
+    expect(statusMonitorSrcs(app)).toEqual([
       `${BASE}/api/market-data/status-monitor/binanceusdm`,
     ]);
   });
 });
 
-describe('status monitor fragment mount (:3223-3227, :4142-4174, :7406-7413)', () => {
-  it('mounts the restored exchange fragment on bootstrap (:9771 → :7315)', async () => {
+describe('status monitor iframe mount (:3223-3227, :4142-4174, :7406-7413, M-data-8)', () => {
+  it('points the frame at the restored exchange on bootstrap (:9771 → :7315)', async () => {
     const app = mountApp();
     await flushPromises();
-    expect(statusMonitorCalls()).toEqual([`${BASE}/api/market-data/status-monitor/hyperliquid`]);
-    const host = app.find('#status-monitor-host').element as HTMLElement;
-    expect(host.dataset.exchange).toBe('hyperliquid');
-    expect(host.querySelector('.mds-root')).not.toBeNull();
+    expect(statusMonitorSrcs(app)).toEqual([`${BASE}/api/market-data/status-monitor/hyperliquid`]);
+    const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
+    expect(frame.dataset.exchange).toBe('hyperliquid');
+    expect(frame.tagName).toBe('IFRAME');
   });
 
-  it('shows the loading callout while the fragment is in flight (:4150-4154)', async () => {
-    let release: (body: string) => void = () => undefined;
-    fetchMock.mockImplementation(
-      async (url: string | URL, init?: RequestInit) => {
-        const u = String(url);
-        if (u.includes('/status-monitor/')) {
-          return new Promise<Response>((resolve) => {
-            release = (body) => resolve(new Response(body, { status: 200 }));
-          });
-        }
-        if (u.includes('/api/market-data/settings/') && init?.method !== 'POST') {
-          return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
-        }
-        return new Response('{"running":false}', { status: 200 });
-      }
-    );
+  it('shows the loading callout until the frame document loads (:4150-4154)', async () => {
     const app = mountApp();
     await flushPromises();
     const callout = app.find('#status-panel .callout');
     expect(callout.exists()).toBe(true);
     expect(callout.find('p').text()).toBe('Loading live market data status…');
-    release(FRAGMENT_HTML);
-    await flushPromises();
+    await app.find('#status-monitor-host').trigger('load');
     expect(app.find('#status-panel .callout').exists()).toBe(false);
   });
 
-  it('destroys the live fragment and remounts on exchange change (:7315, :4148)', async () => {
+  it('swaps the frame src to the new exchange on change (:7315, :4148)', async () => {
     const app = mountApp();
     await flushPromises();
-    const host = app.find('#status-monitor-host').element as HTMLElement;
-    const destroy = vi.fn();
-    (host.querySelector('.mds-root') as HTMLElement & { __mdsDestroy?: () => void }).__mdsDestroy =
-      destroy;
+    const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
     await app.find('#page-exchange').setValue('bybit');
     await flushPromises();
-    expect(destroy).toHaveBeenCalledTimes(1);
-    expect(statusMonitorCalls()).toEqual([
-      `${BASE}/api/market-data/status-monitor/hyperliquid`,
-      `${BASE}/api/market-data/status-monitor/bybit`,
-    ]);
-    expect(host.dataset.exchange).toBe('bybit');
+    expect(frame.src).toBe(`${BASE}/api/market-data/status-monitor/bybit`);
+    expect(frame.dataset.exchange).toBe('bybit');
   });
 
   it('does not remount when the same exchange is re-selected (:7410)', async () => {
     const app = mountApp();
     await flushPromises();
+    const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
+    const srcBefore = frame.src;
     await app.find('#page-exchange').setValue('hyperliquid');
     await flushPromises();
-    expect(statusMonitorCalls()).toEqual([`${BASE}/api/market-data/status-monitor/hyperliquid`]);
+    expect(frame.src).toBe(srcBefore);
   });
 
-  it('renders the escaped error callout when the fragment fails (:4166-4173)', async () => {
-    fetchMock.mockImplementation(async (url: string | URL) => {
-      if (String(url).includes('/status-monitor/')) {
-        return new Response('<img src=x onerror=alert(1)>', { status: 500 });
-      }
-      return new Response('{}', { status: 200 });
-    });
+  it('renders the warning callout when the frame navigation fails (:4166-4173)', async () => {
     const app = mountApp();
     await flushPromises();
+    await app.find('#status-monitor-host').trigger('error');
     const callout = app.find('#status-panel .callout.warning');
     expect(callout.exists()).toBe(true);
-    expect(callout.find('p').text()).toBe('HTTP 500');
-    expect(app.find('#status-panel .callout.warning img').exists()).toBe(false);
+    // iframe-level failure has no HTTP detail — the generic fallback message
+    expect(callout.find('p').text()).toBe('Failed to load live status monitor.');
   });
 
-  it('destroys the fragment when the app unmounts (R2)', async () => {
+  it('unmounts cleanly with the monitor frame attached (R2)', async () => {
     const app = mountApp();
     await flushPromises();
-    const host = app.find('#status-monitor-host').element as HTMLElement;
-    const destroy = vi.fn();
-    (host.querySelector('.mds-root') as HTMLElement & { __mdsDestroy?: () => void }).__mdsDestroy =
-      destroy;
-    app.unmount();
-    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(() => app.unmount()).not.toThrow();
+    expect(document.getElementById('status-monitor-host')).toBeNull();
   });
 });
 
@@ -592,7 +558,6 @@ describe('tiingo + tradfi integration (M-data-4, :7379-7401, :4924, :9734)', () 
         // first reveal succeeds, then the session expires
         return new Response(JSON.stringify({ value: 'vault-secret' }), { status: 200 });
       }
-      if (u.includes('/status-monitor/')) return new Response(FRAGMENT_HTML, { status: 200 });
       if (u.includes('/api/market-data/settings/')) return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
       if (u.includes('/tradfi-map')) return new Response(JSON.stringify(TRADFI_MAP_PAYLOAD), { status: 200 });
       return new Response('{"running":false}', { status: 200 });
@@ -610,7 +575,6 @@ describe('tiingo + tradfi integration (M-data-4, :7379-7401, :4924, :9734)', () 
       if (u.includes('/api-keys/tradfi/reveal')) {
         return new Response(JSON.stringify({ detail: 'expired' }), { status: 401 });
       }
-      if (u.includes('/status-monitor/')) return new Response(FRAGMENT_HTML, { status: 200 });
       if (u.includes('/api/market-data/settings/')) return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
       if (u.includes('/tradfi-map')) return new Response(JSON.stringify(TRADFI_MAP_PAYLOAD), { status: 200 });
       return new Response('{"running":false}', { status: 200 });
@@ -658,7 +622,6 @@ describe('integrity panel integration (M-data-5, :9066-9071, :7324-7332, :4562-4
 
   function integrityFetchMock(url: string | URL): Promise<Response> {
     const u = String(url);
-    if (u.includes('/status-monitor/')) return Promise.resolve(new Response(FRAGMENT_HTML, { status: 200 }));
     if (u === `${BASE}/api/market-data/checksums/settings`) {
       return Promise.resolve(new Response(JSON.stringify(INTEGRITY_CHECKSUM), { status: 200 }));
     }
@@ -745,7 +708,6 @@ describe('integrity panel integration (M-data-5, :9066-9071, :7324-7332, :4562-4
 describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', () => {
   function best1mFetchMock(url: string | URL): Promise<Response> {
     const u = String(url);
-    if (u.includes('/status-monitor/')) return Promise.resolve(new Response(FRAGMENT_HTML, { status: 200 }));
     if (u.includes('/api/market-data/best-1m/info/')) {
       return Promise.resolve(
         new Response(JSON.stringify({ exchange: 'bybit', coins: ['BTC', 'ETH'] }), { status: 200 })
@@ -805,7 +767,6 @@ describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', (
 describe('copy-data panel integration (M-data-7, :9059-9064, :5127-5153)', () => {
   function copyDataFetchMock(url: string | URL): Promise<Response> {
     const u = String(url);
-    if (u.includes('/status-monitor/')) return Promise.resolve(new Response(FRAGMENT_HTML, { status: 200 }));
     if (u.endsWith('/api/market-data/copy-data/schedules')) {
       return Promise.resolve(
         new Response(JSON.stringify({ schedules: [{ id: 's1', name: 'Nightly', enabled: true }] }), { status: 200 })

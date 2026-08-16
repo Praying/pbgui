@@ -9,7 +9,7 @@ import traceback
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pathlib import Path, PurePosixPath
 from typing import Any
 import json
@@ -161,35 +161,25 @@ SETTINGS_EXCHANGES: dict[str, dict[str, Any]] = {
 }
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
-    request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    html_path = PBGDIR / "frontend" / "market_data_main.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse:
+    """Serve the Market Data page: the built Vue bundle only.
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/market-data"
+    The legacy frontend/market_data_main.html template was removed with the
+    Vue migration (M-data-8); the page reads token/origin values from
+    /api/boot.js at runtime. A missing build fails loudly with the npm build
+    hint.
+    """
+    vue_path = _frontend_dist_path("market_data")
+    if vue_path.is_file():
+        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
 
-    html = html.replace('"%%TOKEN%%"', json.dumps(session.token))
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-
-    from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
-
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
-
-    nav_js = PBGDIR / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
-
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+    raise HTTPException(
+        status_code=500,
+        detail="market_data page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    )
 
 
 def _get_request_origin(request: Request) -> str:
@@ -1225,55 +1215,21 @@ def _touch_exchange_refresh_flag(exchange: str) -> None:
     flag_path.touch()
 
 
-def _render_market_data_status_html(request: Request, token: str, exchange: str) -> str:
-    exchange_param = str(exchange or "").strip().lower()
-    html_path = PBGDIR / "frontend" / "market_data_status.html"
-    html_content = html_path.read_text(encoding="utf-8")
+def _serve_market_data_status_page(request: Request, exchange: str) -> HTMLResponse:
+    """Serve the status monitor: the built Vue page with the exchange injected.
 
-    browser_origin = _get_request_origin(request)
-    api_host_str = request.url.netloc or request.headers.get("host", "127.0.0.1")
-    api_base_str = browser_origin + "/api"
-
-    instance_id = f"mds_fastapi_{exchange_param}".replace("-", "_")
-    html_content = html_content.replace("__MDS_ROOT_ID__", instance_id)
-    html_content = html_content.replace("__MDS_ID__", f"{instance_id}_")
-
-    html_content = html_content.replace(
-        'data-token=""', f'data-token="{token}"'
-    ).replace(
-        'data-exchange=""', f'data-exchange="{exchange_param}"'
-    ).replace(
-        'data-api-host=""', f'data-api-host="{api_host_str}"'
-    ).replace(
-        'data-api-base=""', f'data-api-base="{api_base_str}"'
-    )
-    return html_content
-
-
-def _serve_market_data_status_page(request: Request, token: str, exchange: str) -> HTMLResponse:
-    """Serve the status monitor with a FRAGMENT-AWARE branch order.
-
-    Unlike the migrated dashboard pages, this URL is consumed live by the
-    still-legacy market_data_main.html: it fetches the response, injects it
-    into #status-monitor-host via innerHTML and re-executes the inline
-    scripts on every exchange switch (mountStatusMonitor,
-    market_data_main.html:4142). ES module bundles execute only once per
-    document, so serving the Vue build to that consumer would leave every
-    remount after the first blank. The legacy fragment therefore stays the
-    FIRST branch while market_data_main.html exists; once it is retired the
-    built Vue page takes over (the route injects data-exchange the same way
-    the legacy renderer does), and a checkout with neither fails loudly with
+    History: while the legacy market_data_main.html consumed this URL as a
+    live FRAGMENT (innerHTML + inline-script re-execution on every exchange
+    switch, mountStatusMonitor at market_data_main.html:4142), the legacy
+    classic-script template had to stay the first serving branch — ES module
+    bundles execute only once per document, so serving the Vue build to that
+    consumer would have left every remount after the first blank. That page is
+    retired (M-data-8): the Vue market_data page embeds this URL as a
+    same-origin iframe, so the built page serves every consumer — the exchange
+    is injected into the mount element's data-exchange attribute the same way
+    the legacy renderer did — and a checkout without a build fails loudly with
     the npm build hint.
     """
-    legacy_path = PBGDIR / "frontend" / "market_data_status.html"
-    # Retirement guard: do NOT delete market_data_status.html until
-    # market_data_main is migrated — this branch keys on the file's existence,
-    # and deleting it early would serve the Vue document to market_data_main's
-    # innerHTML consumer (blank remounts).
-    if legacy_path.is_file():
-        html = _render_market_data_status_html(request=request, token=token, exchange=exchange)
-        return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
-
     vue_path = _frontend_dist_path("market_data_status")
     if vue_path.is_file():
         html = vue_path.read_text(encoding="utf-8")
@@ -3583,7 +3539,7 @@ def get_market_data_status_monitor(
     if not _get_exchange_status_key(exchange_clean) or not _get_exchange_flag_prefix(exchange_clean):
         return HTMLResponse("<div>Unknown exchange</div>", status_code=404)
 
-    return _serve_market_data_status_page(request=request, token=session.token, exchange=exchange_clean)
+    return _serve_market_data_status_page(request=request, exchange=exchange_clean)
 
 
 @router.get("/data-actions/hyperliquid", response_class=HTMLResponse)

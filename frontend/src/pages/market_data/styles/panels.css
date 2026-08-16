@@ -349,19 +349,15 @@ select {
   padding-right: 0;
 }
 
-/* legacy :1045-1052 */
+/* legacy :1045-1052 — the host became the monitor iframe (M-data-8): same
+   flex slot, block-level borderless frame, height driven by
+   useFrameAutoResize */
 .status-monitor-host {
   flex: 1 1 auto;
   min-height: 0;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-/* legacy :1053-1057 — the fragment's own .mds-* styles ship inside it */
-.status-monitor-host > .mds-root {
-  flex: 1 1 auto;
-  min-height: 0;
+  display: block;
+  border: 0;
 }
 
 /* ── data-tip tooltip (M-data-2, legacy :1438-1465) ── */

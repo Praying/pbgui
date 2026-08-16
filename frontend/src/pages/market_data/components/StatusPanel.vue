@@ -1,19 +1,24 @@
 <script setup lang="ts">
 /*
- * Status monitor panel (legacy market_data_main.html:3223-3227): a shell
- * with the #status-monitor-host div whose contents are owned entirely by
- * the fragment-mount controller (useStatusMonitor — the innerHTML+re-exec
- * contract, R2). Vue never renders into that host.
+ * Status monitor panel (legacy market_data_main.html:3223-3227): the shell
+ * hosting the monitor iframe. M-data-8: the retired innerHTML fragment
+ * (classic inline scripts re-executed per exchange) became the built
+ * market_data_status Vue page — an ES-module document that innerHTML+re-exec
+ * cannot remount — so the panel embeds it same-origin like the
+ * jobs_monitor/hl_data_actions frames of this page (useStatusMonitor owns
+ * the src/phase protocol; see its header for the mount history).
  *
  * The legacy loading/error callouts (:4150-4154, :4168-4172) were built as
- * HTML strings inside the host; here they render as Vue templates —
- * escaped by default, so the server error message can never become markup
- * (no v-html for server data). Deviation (documented): they are siblings
- * of the host rather than its children; the fragment host keeps its legacy
- * flex sizing and the callouts render in the same slot position.
+ * HTML strings inside the host; here they render as Vue templates — escaped
+ * by default, so a server error message can never become markup (no v-html
+ * for server data). Deviation (documented since M-data-2): they are
+ * siblings of the frame rather than its children; the frame keeps the
+ * legacy flex sizing and auto-sizes to its content via useFrameAutoResize
+ * (monitor variant: ResizeObserver + 120 ms settle, :7507-7575).
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useFrameAutoResize } from '../composables/useFrameAutoResize';
 import type { StatusMonitorController } from '../composables/useStatusMonitor';
 
 const props = defineProps<{
@@ -22,16 +27,29 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const hostEl = ref<HTMLElement | null>(null);
+const frameEl = ref<HTMLIFrameElement | null>(null);
 
-onMounted(() => {
-  props.monitor.attachHost(hostEl.value);
+const autoResize = useFrameAutoResize({
+  frame: () => frameEl.value,
+  useResizeObserver: true, // monitor variant (:7564-7570)
+  settleMs: 120, // :7552
 });
 
-// Destroy the live fragment (its timers/WS) before the host leaves the DOM.
+function onFrameLoad(): void {
+  autoResize.handleLoad(); // legacy frame load listener (:7490, :7550)
+  props.monitor.handleFrameLoad();
+}
+
+onMounted(() => {
+  props.monitor.attachFrame(frameEl.value);
+});
+
+// Reset the mount state before the frame leaves the DOM (R2); the frame
+// document (its timers/WS) is discarded with the element.
 onBeforeUnmount(() => {
-  props.monitor.destroyStatusMonitor(); // __mdsDestroy contract (:4127-4140)
-  props.monitor.attachHost(null);
+  autoResize.teardown(); // R7 — no observer survives a remount
+  props.monitor.destroyStatusMonitor();
+  props.monitor.attachFrame(null);
 });
 </script>
 
@@ -45,6 +63,14 @@ onBeforeUnmount(() => {
       <div class="eyebrow">{{ t('market.statusMonitor') }}</div>
       <p>{{ monitor.errorMessage.value || t('market.failedStatusMonitor') }}</p>
     </div>
-    <div id="status-monitor-host" ref="hostEl" class="status-monitor-host"></div>
+    <iframe
+      id="status-monitor-host"
+      ref="frameEl"
+      class="status-monitor-host"
+      :title="t('market.statusMonitor')"
+      scrolling="no"
+      @load="onFrameLoad"
+      @error="monitor.handleFrameError()"
+    ></iframe>
   </article>
 </template>

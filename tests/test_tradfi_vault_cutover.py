@@ -256,27 +256,39 @@ def test_market_data_and_runtime_consumers_resolve_tiingo_from_vault(monkeypatch
 
 
 def test_frontend_tiingo_secret_input_uses_vault_contract() -> None:
-    """Market Data submits replacements without persisting tokens in settings or bulk state."""
+    """Market Data submits replacements without persisting tokens in settings or bulk state.
+
+    Re-pointed at the Vue sources with the M-data-8 retirement of
+    market_data_main.html: useTiingo.ts owns the vault flows, TokenRevealField
+    the password input, App.vue the pagehide clear.
+    """
 
     root = Path(__file__).resolve().parent.parent
-    frontend = (root / "frontend" / "market_data_main.html").read_text(encoding="utf-8")
+    pages = root / "frontend" / "src" / "pages" / "market_data"
+    controller = (pages / "composables" / "useTiingo.ts").read_text(encoding="utf-8")
+    field = (pages / "components" / "tradfi" / "TokenRevealField.vue").read_text(encoding="utf-8")
+    app = (pages / "App.vue").read_text(encoding="utf-8")
+    settings_fields = (pages / "lib" / "settingsFields.ts").read_text(encoding="utf-8")
     api_source = (root / "api" / "market_data.py").read_text(encoding="utf-8")
     editor = (root / "frontend" / "api_keys_editor.html").read_text(encoding="utf-8")
 
-    assert "tiingo_api_key" not in frontend
-    assert 'id="settings-tiingo-token" type="password" autocomplete="new-password"' in frontend
-    assert "fetchApiKeysJson('/tradfi/profiles')" in frontend
-    assert "fetchApiKeysJson('/tradfi/config'" in frontend
-    assert "api_key: token" in frontend
-    assert "tiingoTokenInput.value = '';" in frontend
-    assert "if (input && input.value === token) input.value = '';" in frontend
-    assert "setFieldValue('settings-tiingo-token'" not in frontend
-    assert "fetchApiKeysJson('/tradfi/reveal'" in frontend
-    assert "method: 'POST'" in frontend
-    assert "JSON.stringify({ profile_id: profileId })" in frontend
-    assert "input.value = String(result.value || '');" in frontend
-    assert "window.toggleTiingoTokenVisible = toggleTiingoTokenVisible;" in frontend
-    assert "window.addEventListener('pagehide', clearTiingoRevealedToken)" in frontend
+    assert "tiingo_api_key" not in controller
+    assert "tiingo_api_key" not in field
+    assert 'id="settings-tiingo-token"' in field
+    assert ":type=\"tiingo.visible.value ? 'text' : 'password'\"" in field
+    assert 'autocomplete="new-password"' in field
+    assert "'/tradfi/profiles'" in controller
+    assert "'/tradfi/config'" in controller
+    assert "api_key: token" in controller
+    assert "if (tokenValue.value === token) tokenValue.value = '';" in controller
+    # the token input never routes through the settings field-value layer
+    assert "settings-tiingo-token" not in settings_fields
+    assert "'/tradfi/reveal'" in controller
+    assert "method: 'POST'" in controller
+    assert "JSON.stringify({ profile_id: profileIdAtStart })" in controller
+    assert "tokenValue.value = String(result.value || '');" in controller
+    assert "window.addEventListener('pagehide', onPageHide);" in app
+    assert "tiingo.clearRevealedToken();" in app
     assert 'settings.get("tiingo_api_key")' not in api_source
     assert '"tradfi_profiles"' not in api_source
     assert 'apiFetch("/tradfi/reveal"' in editor
