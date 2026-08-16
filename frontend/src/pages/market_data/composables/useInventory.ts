@@ -200,6 +200,7 @@ export function useInventory(options: UseInventoryOptions): InventoryController 
   );
 
   const tableRows = computed<InventoryRow[]>(() => {
+    if (tableError.value) return []; // :8727 — the table DOM was replaced by the error text
     const state = viewState();
     const sortKey = state.sortKey;
     if (!columns.value.some((column) => column.key === sortKey)) {
@@ -216,15 +217,19 @@ export function useInventory(options: UseInventoryOptions): InventoryController 
   const hasTableRows = computed(() => tableRows.value.length > 0);
 
   const tableEmptyText = computed(() => {
+    if (tableError.value) return tableError.value; // :8727 — error text in the table's place
     const state = viewState();
     if (state.rows.length) return t('market.noRowsMatchFilters'); // :8017-8018
     return String(state.payload?.empty_message || t('market.noDataFound')); // :8019
   });
 
-  /* selection pruning (:8012-8014) — legacy pruned inside every render */
+  /* selection pruning (:8012-8014) — legacy pruned inside every table
+     render; the error path replaced the DOM without re-rendering, so an
+     error load leaves the selection (and stale rows) untouched */
   watch(
     tableRows,
     (rows) => {
+      if (tableError.value) return; // no render ran to prune (:8726-8727)
       const state = viewState();
       const ids = new Set(rows.map((row) => String(row.row_id ?? '')));
       if (state.selectedRowIds.some((id) => !ids.has(id))) {
@@ -414,7 +419,9 @@ export function useInventory(options: UseInventoryOptions): InventoryController 
       ? t('market.queueL2bookDownload')
       : t('market.buildBest1m'); // :8366-8368
   });
-  const sidebarBuildDisabled = computed(() => selectedCoins.value.length === 0); // :8369/:8363
+  const sidebarBuildDisabled = computed(
+    () => selectedCoins.value.length === 0 || actions.buildInFlight.value
+  ); // :8369/:8363 + the in-flight disable (:8413 → :8469)
 
   const sidebarDeleteText = computed(() => {
     const coins = selectedCoins.value;
@@ -547,7 +554,7 @@ export function useInventory(options: UseInventoryOptions): InventoryController 
 
   /* the delete-older preview refresh — on its real inputs only */
   watch(
-    () => [viewState().olderCutoffDay, viewState().selectedRowIds.join(' ')] as const,
+    () => [viewState().olderCutoffDay, viewState().selectedRowIds.join(' ')] as const,
     () => {
       if (actions.olderDialogVisible.value) void actions.loadOlderPreview();
     }

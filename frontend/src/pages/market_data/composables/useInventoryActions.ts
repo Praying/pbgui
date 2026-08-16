@@ -56,6 +56,8 @@ export interface UseInventoryActionsOptions {
 
 export interface InventoryActionsController {
   olderDialogVisible: Ref<boolean>;
+  /** The build button's await guard (:8413 disable → :8469 finally re-enable). */
+  buildInFlight: Ref<boolean>;
   /** openInventoryDeleteOlderDialog (:8217-8232). */
   openOlderDialog(): void;
   /** closeInventoryDeleteOlderDialog (:8134-8139). */
@@ -82,6 +84,7 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
 
   let olderPreviewRequestId = 0; // inventoryState.olderPreviewRequestId
   const olderDialogVisible = ref(false);
+  const buildInFlight = ref(false); // buildBtn.disabled during the await (:8413)
 
   /** openInventoryDeleteOlderDialog (:8217-8232). */
   function openOlderDialog(): void {
@@ -134,6 +137,7 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
 
   /** runInventoryBuildBest1m (:8388-8472). */
   async function runBuildBest1m(): Promise<void> {
+    if (buildInFlight.value) return; // the disabled button couldn't be clicked
     const selectedCoins = Array.from(new Set(getSelectedCoins())); // :8400
     const queueConfig = getInventoryQueueActionConfig(getExchange(), getViewKey());
     const isL2BookAction = queueConfig?.kind === 'l2book';
@@ -146,6 +150,7 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
       return;
     }
 
+    buildInFlight.value = true; // buildBtn.disabled = true (:8413)
     try {
       let requestPayload: Record<string, unknown>;
       if (isL2BookAction) {
@@ -211,6 +216,8 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
             ? t('market.failedQueueL2book')
             : t('market.failedQueueBest1m');
       showToast(message, 'error'); // :8468
+    } finally {
+      buildInFlight.value = false; // renderInventorySidebarActions re-enabled (:8469)
     }
   }
 
@@ -348,6 +355,7 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
 
   return {
     olderDialogVisible,
+    buildInFlight,
     openOlderDialog,
     closeOlderDialog,
     loadOlderPreview,

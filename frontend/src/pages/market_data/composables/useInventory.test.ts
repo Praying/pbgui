@@ -136,6 +136,24 @@ describe('loadInventoryPanel (:8682-8733)', () => {
     expect(h.store.getState('hyperliquid', '1m').payload).toBeNull();
   });
 
+  it('replaces the table with the error text and keeps the stale rows (:8726-8727)', async () => {
+    const h = makeHarness();
+    await h.store.loadPanel(false); // healthy load: 3 rows rendered
+    h.store.toggleRow('btc');
+    h.fetchJson.mockImplementation(async () => {
+      throw new Error('kaput');
+    });
+    await h.store.loadPanel(false);
+    // legacy wrote the error straight into #inventory-table-wrap — the
+    // table is gone and the error text renders in its place
+    expect(h.store.tableRows.value).toEqual([]);
+    expect(h.store.tableEmptyText.value).toBe('kaput');
+    // legacy left viewState.rows untouched (no re-render ran) and pruned
+    // nothing — the selection survives into the next successful load
+    expect(h.store.getState('hyperliquid', '1m').rows).toEqual(ROWS);
+    expect(h.store.getState('hyperliquid', '1m').selectedRowIds).toEqual(['btc']);
+  });
+
   it('reports fetch failures with the legacy fallback (:8728-8729)', async () => {
     const h = makeHarness({
       payload: new Promise(() => {
@@ -363,6 +381,23 @@ describe('sidebar actions view model (:8339-8386, :6350-6374)', () => {
     expect(h.store.sidebarDeleteText.value).toBe('market.deleteCoinsCount:{"count":2}');
     expect(h.store.sidebarDeleteDisabled.value).toBe(false);
     expect(h.store.sidebarOlderDisabled.value).toBe(false);
+  });
+
+  it('disables the build button while a queue action is in flight (:8413-8416 + :8469)', async () => {
+    const h = makeHarness({ exchange: 'bybit' });
+    await h.store.loadPanel(false);
+    h.store.toggleRow('btc');
+    expect(h.store.sidebarBuildDisabled.value).toBe(false);
+    let release: ((v: unknown) => void) | undefined;
+    const slow = new Promise((resolve) => {
+      release = resolve;
+    });
+    h.fetchJson.mockImplementation(async () => slow);
+    const pending = h.store.actions.runBuildBest1m();
+    expect(h.store.sidebarBuildDisabled.value).toBe(true); // disabled at :8413
+    release?.({ success: true });
+    await pending;
+    expect(h.store.sidebarBuildDisabled.value).toBe(false); // finally :8469
   });
 
   it('hides the delete block for pb7_cache and shows the view availability (:6360-6371)', async () => {

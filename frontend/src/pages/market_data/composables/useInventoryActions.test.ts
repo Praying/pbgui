@@ -67,8 +67,7 @@ function makeHarness(overrides: Partial<{
 
 describe('getInventoryQueueActionConfig (:8234-8251, best1mQueueMeta :3757-3763)', () => {
   it('routes hyperliquid l2Book to the heatmap l2book bulk queue (:8236-8242)', () => {
-    expect(getInventoryQueueActionConfig('hyperliquid', 'l2Book')).toEqual({
-      kind: 'l2book',
+    expect(getInventoryQueueActionConfig('hyperliquid', 'l2Book')).toEqual({      kind: 'l2book',
       api: 'heatmap',
       path: '/queue-l2book-download-bulk',
     });
@@ -105,6 +104,23 @@ describe('runBuildBest1m (:8388-8472)', () => {
     expect(h.toasts).toEqual([{ message: 'market.selectCoinFirst', level: 'error' }]);
     expect(h.fetchJson).not.toHaveBeenCalled();
     expect(h.fetchHeatmapJson).not.toHaveBeenCalled();
+  });
+
+  it('ignores a second click while queueing and re-arms after (:8413-8416 + :8469)', async () => {
+    let release: ((v: unknown) => void) | undefined;
+    const slow = new Promise((resolve) => {
+      release = resolve;
+    });
+    const h = makeHarness({ fetchJson: vi.fn(async () => slow) });
+    const first = h.controller.runBuildBest1m();
+    const second = h.controller.runBuildBest1m(); // double-click while awaiting
+    expect(h.controller.buildInFlight.value).toBe(true); // button disabled :8413
+    release?.({ success: true });
+    await Promise.all([first, second]);
+    expect(h.fetchJson).toHaveBeenCalledTimes(1); // one queue POST, not two
+    expect(h.controller.buildInFlight.value).toBe(false); // finally :8469
+    await h.controller.runBuildBest1m();
+    expect(h.fetchJson).toHaveBeenCalledTimes(2); // re-armed
   });
 
   it('queues the market-data best-1m payload for a cex (:8441-8452)', async () => {
