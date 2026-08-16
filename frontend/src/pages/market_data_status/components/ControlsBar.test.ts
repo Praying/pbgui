@@ -5,7 +5,10 @@ import ControlsBar from './ControlsBar.vue';
 
 enableAutoUnmount(afterEach);
 
-function mountBar(props: { queued: boolean; running: boolean }, lang: 'en' | 'zh' = 'en') {
+function mountBar(
+  props: { queued: boolean; running: boolean; received: boolean },
+  lang: 'en' | 'zh' = 'en',
+) {
   return mount(ControlsBar, { props, global: { plugins: [createI18n(lang)] } });
 }
 
@@ -16,8 +19,20 @@ function buttons(bar: VueWrapper) {
 }
 
 describe('ControlsBar (legacy mds-controls button matrix)', () => {
+  it('disables Refresh Now until the first status frame arrives (html:272)', async () => {
+    // Legacy ships the button disabled and only updateUI (first WS frame)
+    // enables it — mirroring this requires the received prop.
+    const bar = mountBar({ queued: false, running: false, received: false });
+
+    expect(bar.findAll('button')[0]!.isVisible()).toBe(true);
+    expect(bar.findAll('button')[0]!.attributes('disabled')).toBeDefined();
+
+    await bar.setProps({ received: true });
+    expect(bar.findAll('button')[0]!.attributes('disabled')).toBeUndefined();
+  });
+
   it('shows only the enabled Refresh Now button in the idle state', () => {
-    const { refresh, cancel, stop } = buttons(mountBar({ queued: false, running: false }));
+    const { refresh, cancel, stop } = buttons(mountBar({ queued: false, running: false, received: true }));
 
     expect(refresh.text()).toContain('Refresh Now');
     expect(refresh.isVisible()).toBe(true);
@@ -27,7 +42,7 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
   });
 
   it('shows only Cancel Queued Refresh while a refresh is queued', () => {
-    const { refresh, cancel, stop } = buttons(mountBar({ queued: true, running: false }));
+    const { refresh, cancel, stop } = buttons(mountBar({ queued: true, running: false, received: true }));
 
     expect(refresh.isVisible()).toBe(false);
     expect(refresh.attributes('disabled')).toBeDefined();
@@ -38,7 +53,7 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
   });
 
   it('shows Stop Current Run alongside Refresh Now while running', () => {
-    const { refresh, stop } = buttons(mountBar({ queued: false, running: true }));
+    const { refresh, stop } = buttons(mountBar({ queued: false, running: true, received: true }));
 
     expect(refresh.isVisible()).toBe(true);
     expect(stop.isVisible()).toBe(true);
@@ -47,26 +62,26 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
   });
 
   it('keeps Stop disabled until running', () => {
-    const bar = mountBar({ queued: false, running: false });
+    const bar = mountBar({ queued: false, running: false, received: true });
 
     expect(bar.findAll('button')[2]!.attributes('disabled')).toBeDefined();
   });
 
   it('emits refresh/cancel/stop from the buttons a user can actually click', async () => {
     // Refresh+Stop are clickable while running unqueued; Cancel only while queued.
-    const active = mountBar({ queued: false, running: true });
+    const active = mountBar({ queued: false, running: true, received: true });
     await active.findAll('button')[0]!.trigger('click');
     await active.findAll('button')[2]!.trigger('click');
     expect(active.emitted('refresh')).toHaveLength(1);
     expect(active.emitted('stop')).toHaveLength(1);
 
-    const queued = mountBar({ queued: true, running: false });
+    const queued = mountBar({ queued: true, running: false, received: true });
     await queued.findAll('button')[1]!.trigger('click');
     expect(queued.emitted('cancel')).toHaveLength(1);
   });
 
   it('renders the legacy button classes', () => {
-    const { refresh, cancel, stop } = buttons(mountBar({ queued: false, running: false }));
+    const { refresh, cancel, stop } = buttons(mountBar({ queued: false, running: false, received: true }));
 
     expect(refresh.classes()).toContain('primary');
     expect(cancel.classes()).toContain('danger');
@@ -74,7 +89,7 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
   });
 
   it('localizes labels in zh', () => {
-    const bar = mountBar({ queued: true, running: false }, 'zh');
+    const bar = mountBar({ queued: true, running: false, received: true }, 'zh');
 
     expect(bar.findAll('button')[1]!.text()).toContain('取消排队的刷新');
   });

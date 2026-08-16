@@ -1266,6 +1266,10 @@ def _serve_market_data_status_page(request: Request, token: str, exchange: str) 
     the npm build hint.
     """
     legacy_path = PBGDIR / "frontend" / "market_data_status.html"
+    # Retirement guard: do NOT delete market_data_status.html until
+    # market_data_main is migrated — this branch keys on the file's existence,
+    # and deleting it early would serve the Vue document to market_data_main's
+    # innerHTML consumer (blank remounts).
     if legacy_path.is_file():
         html = _render_market_data_status_html(request=request, token=token, exchange=exchange)
         return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})

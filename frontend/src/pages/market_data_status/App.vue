@@ -173,7 +173,7 @@ async function onStopRun(): Promise<void> {
     </div>
     <div v-else class="mds-container">
       <div class="mds-content-wrapper">
-        <ControlsBar :queued="queued" :running="running" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
+        <ControlsBar :queued="queued" :running="running" :received="received" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
         <ProgressPanel :status="status" />
         <CoinTable :rows="coinRows" :received="received" />
       </div>

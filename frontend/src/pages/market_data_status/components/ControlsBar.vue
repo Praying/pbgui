@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /*
  * Action buttons (legacy mds-controls, market_data_status.html:271-281 and
- * updateUI button matrix :439-448):
- *   Refresh Now  visible ⇔ !queued   (disabled ⇔ queued)
+ * updateUI button matrix :439-448). Legacy ships every button disabled
+ * (html:272-280) and only updateUI — i.e. the first WS status frame —
+ * re-enables them, hence the `received` prop (true after the first frame):
+ *   Refresh Now  visible ⇔ !queued   (disabled ⇔ queued || !received)
  *   Cancel       visible ⇔ queued    (disabled ⇔ !queued)
  *   Stop         visible ⇔ running   (disabled ⇔ !running)
  * v-show keeps the legacy display:none toggling (flex children render
@@ -10,7 +12,7 @@
  */
 import { useI18n } from 'vue-i18n';
 
-defineProps<{ queued: boolean; running: boolean }>();
+defineProps<{ queued: boolean; running: boolean; received: boolean }>();
 defineEmits<{ refresh: []; cancel: []; stop: [] }>();
 
 const { t } = useI18n();
@@ -18,7 +20,7 @@ const { t } = useI18n();
 
 <template>
   <div class="mds-controls">
-    <button class="mds-btn primary" type="button" v-show="!queued" :disabled="queued" @click="$emit('refresh')">
+    <button class="mds-btn primary" type="button" v-show="!queued" :disabled="queued || !received" @click="$emit('refresh')">
       &#9193; <span>{{ t('misc.mds.refreshNow') }}</span>
     </button>
     <button class="mds-btn danger" type="button" v-show="queued" :disabled="!queued" @click="$emit('cancel')">

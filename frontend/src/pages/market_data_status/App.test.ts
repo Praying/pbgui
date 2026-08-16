@@ -142,7 +142,10 @@ describe('status-driven UI (legacy updateUI)', () => {
     const app = mountApp();
     const initial = app.findAll('.mds-btn');
 
+    // Legacy html:272 ships Refresh Now disabled; only the first status
+    // frame (updateUI) enables it.
     expect(initial[0]!.isVisible()).toBe(true);
+    expect(initial[0]!.attributes('disabled')).toBeDefined();
     expect(initial[1]!.isVisible()).toBe(false);
     expect(initial[2]!.isVisible()).toBe(false);
 
@@ -154,6 +157,7 @@ describe('status-driven UI (legacy updateUI)', () => {
     FakeWebSocket.instances[0]!.message(statusMessage({ running: true, coins_done: 2, coins_total: 4, current_coin: 'BTC' }));
     await nextTick();
     expect(app.findAll('.mds-btn')[0]!.isVisible()).toBe(true);
+    expect(app.findAll('.mds-btn')[0]!.attributes('disabled')).toBeUndefined();
     expect(app.findAll('.mds-btn')[2]!.isVisible()).toBe(true);
     expect(app.find('.mds-progress-section').isVisible()).toBe(true);
     expect(app.find('.mds-progress-label').text()).toBe('2 / 4');
@@ -208,6 +212,8 @@ describe('action buttons (legacy callAPI)', () => {
     actionsResolve({ success: true });
     const app = mountApp({ exchange: 'bybit' });
 
+    FakeWebSocket.instances[0]!.message(statusMessage());
+    await nextTick();
     await app.find('.mds-btn').trigger('click');
     await flushPromises();
 
@@ -222,6 +228,9 @@ describe('action buttons (legacy callAPI)', () => {
     actionsResolve({ success: false, error: 'boom' });
     const app = mountApp();
 
+    // Enable Refresh Now the way the legacy page does: first status frame.
+    FakeWebSocket.instances[0]!.message(statusMessage());
+    await nextTick();
     await app.find('.mds-btn').trigger('click');
     await flushPromises();
 
@@ -232,6 +241,9 @@ describe('action buttons (legacy callAPI)', () => {
     actionsResolve({ success: false });
     const app = mountApp();
 
+    // Enable Refresh Now the way the legacy page does: first status frame.
+    FakeWebSocket.instances[0]!.message(statusMessage());
+    await nextTick();
     await app.find('.mds-btn').trigger('click');
     await flushPromises();
 
@@ -242,6 +254,9 @@ describe('action buttons (legacy callAPI)', () => {
     apiFetchMock.mockRejectedValue(new Error('net down') as never);
     const app = mountApp();
 
+    // Enable Refresh Now the way the legacy page does: first status frame.
+    FakeWebSocket.instances[0]!.message(statusMessage());
+    await nextTick();
     await app.find('.mds-btn').trigger('click');
     await flushPromises();
 
@@ -305,6 +320,9 @@ describe('toasts (legacy showToast)', () => {
     actionsResolve({ success: true });
     const app = mountApp();
 
+    // Enable Refresh Now the way the legacy page does: first status frame.
+    FakeWebSocket.instances[0]!.message(statusMessage());
+    await nextTick();
     await app.find('.mds-btn').trigger('click');
     await flushPromises();
 
@@ -327,6 +345,8 @@ describe('toasts (legacy showToast)', () => {
       actionsResolve({ success: true });
       const app = mountApp();
 
+      FakeWebSocket.instances[0]!.message(statusMessage());
+      await nextTick();
       await app.find('.mds-btn').trigger('click');
       await flushPromises();
 
@@ -348,6 +368,8 @@ describe('toasts (legacy showToast)', () => {
   it('colors success and error toasts with the legacy accents', async () => {
     actionsResolve({ success: true });
     const app = mountApp();
+    FakeWebSocket.instances[0]!.message(statusMessage());
+    await nextTick();
     await app.find('.mds-btn').trigger('click');
     await flushPromises();
 
