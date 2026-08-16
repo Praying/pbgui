@@ -86,7 +86,7 @@ from market_data_integrity import (
 )
 from task_queue import enqueue_unique_job, list_jobs
 
-from .auth import require_auth, SessionToken
+from .auth import require_auth, SessionToken, _frontend_dist_path
 from .heatmap import _get_missing_lag_minutes
 
 router = APIRouter(prefix="/market-data", tags=["market-data"])
@@ -1248,6 +1248,38 @@ def _render_market_data_status_html(request: Request, token: str, exchange: str)
         'data-api-base=""', f'data-api-base="{api_base_str}"'
     )
     return html_content
+
+
+def _serve_market_data_status_page(request: Request, token: str, exchange: str) -> HTMLResponse:
+    """Serve the status monitor with a FRAGMENT-AWARE branch order.
+
+    Unlike the migrated dashboard pages, this URL is consumed live by the
+    still-legacy market_data_main.html: it fetches the response, injects it
+    into #status-monitor-host via innerHTML and re-executes the inline
+    scripts on every exchange switch (mountStatusMonitor,
+    market_data_main.html:4142). ES module bundles execute only once per
+    document, so serving the Vue build to that consumer would leave every
+    remount after the first blank. The legacy fragment therefore stays the
+    FIRST branch while market_data_main.html exists; once it is retired the
+    built Vue page takes over (the route injects data-exchange the same way
+    the legacy renderer does), and a checkout with neither fails loudly with
+    the npm build hint.
+    """
+    legacy_path = PBGDIR / "frontend" / "market_data_status.html"
+    if legacy_path.is_file():
+        html = _render_market_data_status_html(request=request, token=token, exchange=exchange)
+        return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+
+    vue_path = _frontend_dist_path("market_data_status")
+    if vue_path.is_file():
+        html = vue_path.read_text(encoding="utf-8")
+        html = html.replace('data-exchange=""', f'data-exchange="{str(exchange or "").strip().lower()}"')
+        return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+
+    raise HTTPException(
+        status_code=500,
+        detail="market_data_status page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+    )
 
 
 def _render_hl_data_actions_html(request: Request, token: str, initial_section: str = "") -> str:
@@ -3547,8 +3579,7 @@ def get_market_data_status_monitor(
     if not _get_exchange_status_key(exchange_clean) or not _get_exchange_flag_prefix(exchange_clean):
         return HTMLResponse("<div>Unknown exchange</div>", status_code=404)
 
-    html = _render_market_data_status_html(request=request, token=session.token, exchange=exchange_clean)
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+    return _serve_market_data_status_page(request=request, token=session.token, exchange=exchange_clean)
 
 
 @router.get("/data-actions/hyperliquid", response_class=HTMLResponse)
