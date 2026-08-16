@@ -34,6 +34,10 @@
  * │ polling + confirm)   │        │ :7324-7332, poll gating :9066-9071 (R5),    │
  * │                      │        │ URL matrix :4234-4250, confirm :2893-2915/ │
  * │                      │        │ :8161-8215                                 │
+ * │ InventoryPanel +     │ 6 ✓    │ inventory :3502-3579, view state :6187-    │
+ * │ useInventory (+      │        │ 6387, table/actions/heatmap :7813-8854,     │
+ * │ heatmap + actions +  │        │ delete-date overlay :2861-2891, sidebar     │
+ * │ view state)          │        │ blocks :2929-2945, fan-out :7317-7320       │
  * │ DataTipTooltip       │ 2 ✓    │ #data-tip-tooltip :3637 + :3839-3865        │
  * │ Help opener wiring   │ 2 ✓    │ window._openMarketDataHelp/PBGUI_HELP_OPENER│
  * │                      │        │ :4085-4089 (shared_help_overlay path)       │
@@ -74,6 +78,9 @@ import ConfirmDialog from './components/ConfirmDialog.vue';
 import DataTipTooltip from './components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
 import IntegrityPanel from './components/integrity/IntegrityPanel.vue';
+import InventoryPanel from './components/inventory/InventoryPanel.vue';
+import DeleteOlderDialog from './components/inventory/DeleteOlderDialog.vue';
+import SidebarActions from './components/inventory/SidebarActions.vue';
 import PanelPlaceholder from './components/PanelPlaceholder.vue';
 import PanelShell from './components/PanelShell.vue';
 import SettingsPanel from './components/settings/SettingsPanel.vue';
@@ -81,11 +88,14 @@ import SidebarNav from './components/SidebarNav.vue';
 import StatusPanel from './components/StatusPanel.vue';
 import ToastStack from './components/ToastStack.vue';
 import { exchangeOptions } from './lib/exchange';
+import { computeOlderPreviewView } from './lib/inventoryOlderPreview';
+import type { PlotlyLike } from './lib/heatmapFigure';
 import { SHOW_TOAST_KEY, useToasts } from './composables/useToasts';
 import { useApi } from './composables/useApi';
 import { useConfirmDialog } from './composables/useConfirmDialog';
 import { useIntegrity } from './composables/useIntegrity';
 import { useIntegrityPolling } from './composables/useIntegrityPolling';
+import { useInventory } from './composables/useInventory';
 import { useSettings } from './composables/useSettings';
 import { useTiingo } from './composables/useTiingo';
 import { useTradfiMap } from './composables/useTradfiMap';
@@ -102,7 +112,7 @@ import {
 } from './composables/useContextExchange';
 import { useStatusMonitor } from './composables/useStatusMonitor';
 import { useStatusSummaries } from './composables/useStatusSummaries';
-import type { PanelDef, PanelId, SettingsSubsection } from './types';
+import type { PanelDef, PanelId, InventorySubsection, SettingsSubsection } from './types';
 
 const { t } = useI18n();
 
@@ -198,7 +208,12 @@ const fanoutHooks: ExchangeFanoutHooks = {
   loadSettings: (exchangeKey, options) => settings.loadSettings(exchangeKey, options),
   // :7315 — the M-data-2 slice of the fan-out
   updateStatusPanel: () => statusMonitor.updateStatusPanel(),
-  // syncInventorySubsectionVisibility :7317 + loadInventoryPanel :7318-7320 — M-data-6
+  // syncInventorySubsectionVisibility :7317 — the M-data-6 slice
+  syncInventorySubsectionVisibility: () => inventory.syncSubsectionVisibility(),
+  // loadInventoryPanel(true) :7318-7320 — only while the panel is active
+  loadInventoryPanel: (forceReload) => {
+    if (activePanel.value === 'inventory-panel') void inventory.loadPanel(forceReload);
+  },
   // refreshBest1mPanel :7321-7323 — M-data-7
   // :7324-7332 — the M-data-5 slice: reset + forced reload while active
   onIntegrityExchangeChange: (statusKey) => integrity.onExchangeChange(statusKey),
@@ -252,6 +267,62 @@ onBeforeUnmount(() => integrityPolling.stop());
 
 const integrityActive = computed(() => activePanel.value === 'integrity-panel');
 
+/* ── inventory panel (M-data-6 — :3502-3579 + :6187-6387 + :7813-8854):
+      per-exchange×view state, table view model, server-figure heatmaps
+      (Plotly global via index.html, recon R6) and the confirm-gated
+      destructive flows. The panel hook (:9065) lazy-loads on enter; the
+      exchange fan-out slice (:7317-7320) resets visibility + reloads
+      while active. The controller is referenced lazily by the fan-out
+      hooks above (first call is the onMounted :9771 fan-out). ── */
+
+declare global {
+  interface Window {
+    Plotly?: PlotlyLike;
+  }
+}
+
+const inventory = useInventory({
+  api,
+  t: (key, params) => t(key, params ?? {}),
+  showToast,
+  confirm: confirmDialog.confirm,
+  getExchange: () => contextExchange.contextExchange.value,
+  isPanelActive: () => activePanel.value === 'inventory-panel', // :6335, :6356
+  getPlotly: () => window.Plotly, // vendor global (:3661 mirror in index.html)
+});
+
+/** setActivePanel's inventory slice (:9065). */
+panelHooks['inventory-panel'] = {
+  onEnter: () => void inventory.loadPanel(false),
+};
+
+/** View tab click (:9351-9354) — panel switch, then setActiveInventoryView
+ *  (:6376-6386) whose forced reload supersedes the enter hook's load. */
+function onSelectInventoryView(view: InventorySubsection): void {
+  setActivePanel('inventory-panel'); // :9352 — re-fires onEnter even if active
+  inventory.setActiveView(view); // :6353 + persist :6378-6382
+  void inventory.loadPanel(true); // :6385 — the view-key reload
+}
+
+/** The delete-by-date overlay's view model (renderInventoryOlderPreview
+ *  :8253-8311 as a pure function of the store). */
+const olderDialogView = computed(() =>
+  computeOlderPreviewView({
+    coins: inventory.selectedCoins.value,
+    coinLabels: inventory.selectedCoinLabels.value,
+    cutoffDay: inventory.currentViewState.value.olderCutoffDay,
+    preview: inventory.currentViewState.value.olderPreview,
+    t: (key, params) => t(key, params ?? {}),
+  })
+);
+
+/** Date input change (:9537-9543) — the store watch refires the preview. */
+function onOlderCutoff(value: string): void {
+  const state = inventory.currentViewState.value;
+  state.olderCutoffDay = value; // :9539
+  state.olderPreview = null; // :9540
+}
+
 // bootstrap :9764 — restore + remap + activate now that every landed panel
 // hook is registered (still before the :9771 fan-out in onMounted)
 restorePanel();
@@ -272,19 +343,20 @@ function openBest1mPanel(mode: Best1mSection): void {
 
 const statusSummaries = useStatusSummaries();
 
-/* ── panel placeholder registry (M-data-6/7 replace these) ── */
+/* ── panel placeholder registry (M-data-7/8 replace these) ── */
 
-const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel'>, string> = {
-  'inventory-panel': 'M-data-6',
+const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel'>, string> = {
   'best1m-panel': 'M-data-7',
   'copy-data-panel': 'M-data-7',
-  'activity-panel': 'M-data-6',
+  // the activity panel hosts the global LogViewerPanel script — mounting
+  // it lands with the M-data-8 integration pass
+  'activity-panel': 'M-data-8',
 };
 
 function placeholderTask(panel: PanelDef): string {
   return panel.id === 'status-panel'
     ? 'M-data-2'
-    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel'>];
+    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel'>];
 }
 
 /* ── help opener (legacy initHelpOverlay tail :4085-4089): the nav's Guide
@@ -336,7 +408,29 @@ onMounted(() => {
       @shortcut="openBest1mPanel"
       @save-settings="settings.saveSettings()"
       @select-settings-subsection="onSelectSettingsSubsection"
-    />
+    >
+      <!-- legacy :2929-2945 — after the integrity button, before the best-1m
+           shortcut link; M-data-6 -->
+      <template #inventory-actions>
+        <SidebarActions
+          :nav-visible="inventory.subsectionNavVisible.value"
+          :available-views="inventory.availableViews.value"
+          :active-view="inventory.currentView.value"
+          :build-visible="inventory.sidebarBuildVisible.value"
+          :build-text="inventory.sidebarBuildText.value"
+          :build-disabled="inventory.sidebarBuildDisabled.value"
+          :delete-visible="inventory.sidebarDeleteSectionVisible.value"
+          :delete-text="inventory.sidebarDeleteText.value"
+          :delete-disabled="inventory.sidebarDeleteDisabled.value"
+          :older-disabled="inventory.sidebarOlderDisabled.value"
+          @select-view="onSelectInventoryView"
+          @build="inventory.actions.runBuildBest1m()"
+          @delete-selected="inventory.actions.runDeleteSelected()"
+          @delete-older="inventory.actions.openOlderDialog()"
+          @clear-dataset="inventory.actions.runClearDataset()"
+        />
+      </template>
+    </SidebarNav>
 
     <main id="main-content">
       <ExchangeSelect
@@ -346,7 +440,7 @@ onMounted(() => {
       />
 
       <PanelShell :panels="PANELS" :active="activePanel" #default="{ panel }">
-        <!-- M-data-6/7: real panel components keyed on panel.id go here -->
+        <!-- M-data-7: best1m + copy-data panel components go here -->
         <StatusPanel v-if="panel.id === 'status-panel'" :monitor="statusMonitor" />
         <SettingsPanel
           v-else-if="panel.id === 'settings-panel'"
@@ -360,6 +454,7 @@ onMounted(() => {
           :polling="integrityPolling"
           :active="integrityActive"
         />
+        <InventoryPanel v-else-if="panel.id === 'inventory-panel'" :store="inventory" />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>
     </main>
@@ -368,4 +463,13 @@ onMounted(() => {
   <DataTipTooltip />
   <ToastStack :toasts="toasts" />
   <ConfirmDialog :dialog="confirmDialog" />
+  <!-- legacy #inventory-delete-date-ovl :2861-2891 — page-level overlay -->
+  <DeleteOlderDialog
+    :visible="inventory.actions.olderDialogVisible.value"
+    :cutoff-day="inventory.currentViewState.value.olderCutoffDay"
+    :view="olderDialogView"
+    @set-cutoff="onOlderCutoff"
+    @delete="inventory.actions.runDeleteOlder()"
+    @close="inventory.actions.closeOlderDialog()"
+  />
 </template>

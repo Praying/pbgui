@@ -37,11 +37,12 @@ export interface DifferenceRow {
   day: string;
 }
 
-/** A .summary-card view model (:4278-4292). */
+/** A .summary-card view model (:4278-4292). Optional note — the inventory
+ *  metrics (:7859-7865) render label/value cards without one. */
 export interface SummaryCard {
   label: string;
   value: string | number;
-  note: string;
+  note?: string;
 }
 
 /** GET /integrity/day-details body (:4666-4753). */

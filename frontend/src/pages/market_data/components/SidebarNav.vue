@@ -15,8 +15,10 @@
  * NOT PORTED (documented):
  *  - #sidebar-resize handle (:2962) — silent no-op in legacy (sidebar_resize.js
  *    is never included, guard :9748-9755); recon §0 says do not port as-is.
- *  - The inventory subsection navs and sidebar action blocks (:2929-2945) —
- *    hidden context-dependent regions owned by M-data-6.
+ *
+ * The inventory subsection nav and sidebar action blocks (:2929-2945) are
+ * context-dependent regions filled by M-data-6 through the #inventory-actions
+ * slot — placed after the integrity button, before the best-1m shortcut.
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -95,6 +97,11 @@ const showSettingsContext = computed(() => props.active === 'settings-panel');
             :class="{ active: panel.id === active }"
             @click="emit('select', panel.id)"
           >{{ t(panel.labelKey) }}</button>
+
+          <!-- Inventory context blocks (:2929-2945) render after the
+               integrity button and before the best-1m shortcut — M-data-6
+               fills this slot (SidebarActions). -->
+          <slot v-if="panel.id === 'integrity-panel'" name="inventory-actions"></slot>
 
           <!-- l2books shortcut between copy-data and activity (:2947-2948);
                hyperliquid-only (:7422), click → openBest1mPanel('download')

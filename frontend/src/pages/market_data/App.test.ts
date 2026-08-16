@@ -189,6 +189,16 @@ describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
       'Status Monitor',
       'OHLCV Data',
       'OHLCV Integrity',
+      // inventory context blocks (:2929-2945) — M-data-6; the four view
+      // tabs render because hyperliquid is the restored default exchange
+      '1m',
+      '1m_api',
+      'l2Book',
+      'PB7 cache',
+      'Build best 1m',
+      'Delete selected',
+      'Delete by Date',
+      'Clear dataset',
       'Build Best 1m',
       'Copy Data',
       'Download l2Books',
@@ -203,11 +213,13 @@ describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
 
   it('marks the active section button (:9038)', () => {
     const app = mountApp();
-    // section buttons only — the settings subsection nav carries its own
-    // active state (:6166)
+    // section buttons only — the settings subsection nav and the inventory
+    // view tabs carry their own active state (:6166, :6365)
     const active = app
       .findAll('#sidebar-toolbar .sb-btn')
-      .filter((b) => b.classes('active') && !b.classes('settings-subsection-btn'));
+      .filter(
+        (b) => b.classes('active') && !b.classes('settings-subsection-btn') && !b.classes('inventory-subsection-btn')
+      );
     expect(active).toHaveLength(1);
     expect(active[0]?.text()).toBe('Settings');
   });
@@ -245,15 +257,17 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
     expect(visiblePanelIds(app)).toEqual(['settings-panel']);
   });
 
-  it('renders placeholders for the M-data-6/7 panels only', () => {
+  it('renders placeholders for the M-data-7/8 panels only', () => {
     const app = mountApp();
-    // four unlanded panels; the M-data-5 integrity panel is a live component
-    expect(app.findAll('.panel-placeholder')).toHaveLength(4);
+    // three unlanded panels; integrity (M-data-5) and inventory (M-data-6)
+    // are live components
+    expect(app.findAll('.panel-placeholder')).toHaveLength(3);
     expect(app.findAll('#settings-panel .panel-placeholder')).toHaveLength(0);
     expect(app.find('#settings-hyperliquid-tiingo').exists()).toBe(true);
     expect(app.find('#settings-hyperliquid-tradfi-map').exists()).toBe(true);
     expect(app.find('#status-panel .panel-placeholder').exists()).toBe(false);
     expect(app.find('#integrity-panel .panel-placeholder').exists()).toBe(false);
+    expect(app.find('#inventory-panel .inventory-layout').exists()).toBe(true);
   });
 });
 
