@@ -22,7 +22,8 @@
        :3656-3661: NAV_CONFIG must exist before pbgui_nav.js, which fills
        #topnav; log_viewer_panel.js is the activity-panel global (M-data-2+).
        Dropped as dead (recon §3.1, zero references): pbgui_dialogs.js,
-       editor_shared.js. NOTE: no route serves this page until M-data-8. -->
+       editor_shared.js. Served by GET /api/market-data/main_page since the
+       M-data-8 route flip. -->
   <script>
     window.PBGUI_NAV_CONFIG = {
       subtitle: (window.PBGuiI18n ? PBGuiI18n.t('market.subtitle') : 'Market Data'),

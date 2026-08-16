@@ -1,0 +1,281 @@
+/* M-data-8 split — Best-1m + copy-data panels (M-data-7).
+   Moved verbatim from panels.css; main.ts imports the section files
+   in the original order. */
+/* ── M-data-7: best-1m + copy-data panels (legacy :1066-1126, :1224-1440, verbatim) ── */
+
+.best1m-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+  min-height: 0;
+}
+
+.best1m-panel-generic {
+  flex: 1 1 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.best1m-job-monitor-shell {
+  display: grid;
+  gap: var(--sp-md);
+  margin-top: var(--sp-md);
+  padding-top: var(--sp-md);
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.best1m-job-monitor-frame {
+  width: 100%;
+  height: min(72vh, 820px);
+  min-height: 520px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.best1m-panel-flat {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 0;
+}
+
+.best1m-frame {
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+}
+
+.best1m-form-grid {
+  display: grid;
+  gap: var(--sp-md);
+}
+
+.best1m-selector-stack {
+  display: grid;
+  gap: var(--sp-md);
+}
+
+.best1m-selection-note {
+  display: inline-block;
+  margin-top: var(--sp-sm);
+}
+
+
+.best1m-fields {
+  display: grid;
+  gap: var(--sp-md);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.best1m-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+}
+
+.best1m-distributed-card {
+  display: grid;
+  gap: var(--sp-sm);
+  padding: var(--sp-md);
+  border: 1px solid rgba(99, 179, 237, 0.16);
+  border-radius: 10px;
+  background: rgba(12, 17, 26, 0.45);
+}
+
+.best1m-host-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--sp-sm);
+}
+
+.best1m-host-row {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: rgba(15, 23, 34, 0.82);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.best1m-host-row:hover {
+  border-color: rgba(99, 179, 237, 0.38);
+  background: rgba(99, 179, 237, 0.08);
+}
+
+.best1m-host-row.selected {
+  border-color: rgba(99, 179, 237, 0.56);
+  background: rgba(99, 179, 237, 0.14);
+}
+
+.best1m-host-name {
+  font-weight: 700;
+}
+
+.best1m-host-target {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-data-shell {
+  display: grid;
+  gap: var(--sp-md);
+  max-width: 1120px;
+}
+
+.copy-data-form-grid {
+  display: grid;
+  gap: var(--sp-md);
+}
+
+.copy-data-exchange-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--sp-sm);
+}
+
+.copy-data-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+}
+
+.copy-data-summary {
+  border: 1px solid rgba(99, 179, 237, 0.24);
+  border-radius: 10px;
+  background: rgba(12, 17, 26, 0.5);
+  padding: var(--sp-md);
+  display: grid;
+  gap: var(--sp-sm);
+}
+
+.copy-data-summary-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+}
+
+.copy-data-summary-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: #f8fafc;
+}
+
+.copy-data-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--sp-sm);
+}
+
+.copy-data-summary-item {
+  border: 1px solid rgba(99, 179, 237, 0.16);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.72);
+  padding: var(--sp-sm) var(--sp-md);
+  min-width: 0;
+}
+
+.copy-data-summary-label {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.copy-data-summary-value {
+  color: #f8fafc;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.copy-data-summary-log {
+  margin: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(99, 179, 237, 0.12);
+  background: rgba(2, 6, 23, 0.58);
+  padding: var(--sp-sm);
+  color: #cbd5e1;
+  font-family: 'Courier New', monospace;
+  font-size: var(--fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.copy-data-schedules {
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-md);
+  display: grid;
+  gap: var(--sp-md);
+}
+
+.copy-data-schedule-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) minmax(140px, 1fr) auto;
+  gap: var(--sp-md);
+  align-items: end;
+}
+
+.copy-data-schedule-list {
+  display: grid;
+  gap: var(--sp-sm);
+}
+
+.copy-data-schedule-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(240px, 2fr) minmax(190px, 1fr) auto;
+  gap: var(--sp-md);
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(12, 17, 26, 0.5);
+  padding: var(--sp-sm) var(--sp-md);
+}
+
+.copy-data-schedule-row.is-disabled {
+  opacity: 0.68;
+}
+
+.copy-data-schedule-name {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.copy-data-schedule-detail {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.copy-data-schedule-actions {
+  display: flex;
+  gap: var(--sp-sm);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .copy-data-schedule-form,
+  .copy-data-schedule-row {
+    grid-template-columns: 1fr;
+  }
+
+  .copy-data-schedule-actions {
+    justify-content: flex-start;
+  }
+}
+

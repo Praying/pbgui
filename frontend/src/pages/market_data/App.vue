@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /*
- * market_data_main migration — M-data-1..7 (scaffold through best-1m +
- * copy-data; source: frontend/market_data_main.html, kept as the legacy
- * fallback until M-data-8 flips the route)
+ * market_data_main migration — M-data-1..8 (scaffold through best-1m +
+ * copy-data + the M-data-8 route flip; legacy source
+ * frontend/market_data_main.html — deleted, line refs below are provenance)
  *
  * Behavior inventory (this file):
  *
