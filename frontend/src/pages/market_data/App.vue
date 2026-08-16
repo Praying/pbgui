@@ -22,9 +22,13 @@
  * │ useContextExchange   │ 2 ✓    │ fan-out :7304-7333, bootstrap :9766-9771,   │
  * │                      │        │ best-1m section state :7687-7691            │
  * │ useStatusSummaries   │ 2 ✓    │ fetchStatus/refreshStatuses :9076-9096      │
- * │ SettingsPanel +      │ 3 ✓    │ settings cards :2979-3085, subsection nav   │
+ * │ SettingsPanel +      │ 3+4 ✓  │ settings cards :2979-3085, subsection nav   │
  * │ useSettings (+       │        │ :6121-6186, picker :7015-7133, load/save    │
- * │ settingsRequest)     │        │ :8881-8948, sidebar block :2950-2958        │
+ * │ settingsRequest)     │        │ :8881-8948, sidebar block :2950-2958;       │
+ * │ TiingoCard +         │ 4 ✓    │ tiingo card :3077-3103 + token flows        │
+ * │                      │        │ :5587-5741/:8949-9031 (useTiingo)           │
+ * │ TradfiMapCard +      │ 4 ✓    │ tradfi map :3105-3218, map/search/editor/   │
+ * │ useTradfiMap         │        │ specs-window :5747-7014 + 401 hook :4924    │
  * │ DataTipTooltip       │ 2 ✓    │ #data-tip-tooltip :3637 + :3839-3865        │
  * │ Help opener wiring   │ 2 ✓    │ window._openMarketDataHelp/PBGUI_HELP_OPENER│
  * │                      │        │ :4085-4089 (shared_help_overlay path)       │
@@ -57,7 +61,7 @@
  *    called it via setActivePanel :9058 AND openBest1mPanel :7690; the
  *    idempotent refresh lands once with M-data-7's hook).
  */
-import { computed, onMounted, provide } from 'vue';
+import { computed, onBeforeUnmount, onMounted, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -73,6 +77,8 @@ import { exchangeOptions } from './lib/exchange';
 import { SHOW_TOAST_KEY, useToasts } from './composables/useToasts';
 import { useApi } from './composables/useApi';
 import { useSettings } from './composables/useSettings';
+import { useTiingo } from './composables/useTiingo';
+import { useTradfiMap } from './composables/useTradfiMap';
 import {
   PANELS,
   readContextExchange,
@@ -99,14 +105,55 @@ restorePanel(); // bootstrap :9764 — read + remap + activate (before the fan-o
 const { toasts, showToast } = useToasts();
 provide(SHOW_TOAST_KEY, showToast);
 
+/* ── M-data-4: tiingo vault + tradfi map controllers, created before the
+      settings store so its payload hooks (:7379-7401) reach them; the tiingo
+      controller's reloadSettings closure resolves after settings exists
+      (only ever called from a click). One shared useApi wires the legacy
+      fetchApiKeysJson 401 side effect (:4924 → clearTiingoRevealedToken). ── */
+
+const api = useApi({
+  onUnauthorized: () => tiingo.clearRevealedToken(), // :4924 — the M-1 handoff
+});
+
+const tiingo = useTiingo({
+  api,
+  t: (key, params) => t(key, params ?? {}),
+  showToast,
+  // legacy saveTiingoToken called loadSettings('hyperliquid', {keepFeedback:true})
+  // (:9013) — the flag was void-ed (:8882-8884); the typed port takes false.
+  reloadSettings: () => settings.loadSettings('hyperliquid', { keepFeedback: false }),
+});
+
+const tradfiMap = useTradfiMap({
+  api,
+  t: (key, params) => t(key, params ?? {}),
+  showToast,
+  isTiingoConfigured: () => tiingo.isTiingoConfigured(), // :6390
+});
+
 /* ── settings store (M-data-3 — settingsState :3698-3714 + :8881-8948);
       created before the exchange context so the fan-out hook reaches it ── */
 
 const settings = useSettings({
-  api: useApi(),
+  api,
   t: (key, params) => t(key, params ?? {}),
   showToast,
+  // renderSettingsPayload hyperliquid tail (:7379-7397)
+  onHyperliquidPayload: (payload) => {
+    tiingo.applySettingsPayload(payload.settings ?? {});
+    void tradfiMap.loadMappings(); // :7397
+  },
+  // non-hyperliquid tail (:7399-7401)
+  onOtherExchangePayload: () => tradfiMap.resetForOtherExchange(),
 });
+
+/** pagehide → clearTiingoRevealedToken (:9734) — never leak a revealed token
+ *  into bfcache; removed on unmount (legacy never removed it). */
+function onPageHide(): void {
+  tiingo.clearRevealedToken();
+}
+window.addEventListener('pagehide', onPageHide);
+onBeforeUnmount(() => window.removeEventListener('pagehide', onPageHide));
 
 /** Sidebar view-model (legacy updateSaveSettingsButton inputs :5528-5533). */
 const settingsNav = computed(() => ({
@@ -240,7 +287,12 @@ onMounted(() => {
       <PanelShell :panels="PANELS" :active="activePanel" #default="{ panel }">
         <!-- M-data-4..7: real panel components keyed on panel.id go here -->
         <StatusPanel v-if="panel.id === 'status-panel'" :monitor="statusMonitor" />
-        <SettingsPanel v-else-if="panel.id === 'settings-panel'" :store="settings" />
+        <SettingsPanel
+          v-else-if="panel.id === 'settings-panel'"
+          :store="settings"
+          :tiingo="tiingo"
+          :map="tradfiMap"
+        />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>
     </main>

@@ -9,7 +9,9 @@ import App from './App.vue';
    M-data-2: setContextExchange fan-out (:7304-7333, :9611-9613), status
    fragment mount (:3223-3227, :4102-4174), sidebar shortcut modes
    (:9112-9120, :7415-7446), refreshStatuses bootstrap (:9772), help opener
-   (:4085-4089), data-tip tooltip (:3637). */
+   (:4085-4089), data-tip tooltip (:3637).
+   M-data-4: tiingo/tradfi cards through the settings payload hooks
+   (:7379-7401), the vault 401 clear (:4924) and pagehide (:9734). */
 
 vi.mock('@/shared/boot', () => ({
   getBoot: vi.fn(() => ({
@@ -46,6 +48,46 @@ const SETTINGS_PAYLOAD = {
     l2book_scan_workers: 8,
     l2book_archive_enabled: false,
     l2book_archive_dir: '',
+    tiingo_configured: true,
+    tiingo_profile_id: 'p1',
+    tiingo_usage: { hour_requests: 1, hour_limit: 4 },
+  },
+};
+
+const TRADFI_MAP_PAYLOAD = {
+  success: true,
+  payload: {
+    rows: [
+      {
+        xyz_coin: 'TSLA',
+        canonical_type: 'equity_us',
+        status: 'ok',
+        tiingo_ticker: 'TSLA',
+        hl_price: 250.5,
+      },
+    ],
+    type_values: ['equity_us'],
+    status_values: ['ok'],
+    canonical_types: ['equity_us'],
+    statuses: ['ok'],
+    meta_cache_info: { summary: 'meta' },
+    quote_cache_info: { summary: 'quote' },
+    spec_cache_info: { summary: 'spec' },
+  },
+};
+
+const BYBIT_SETTINGS_PAYLOAD = {
+  exchange: 'bybit',
+  auto_enable_new_coins: false,
+  enabled_coins: ['BTC'],
+  coin_options: ['BTC', 'ADA'],
+  missing_saved_coins: [],
+  settings: {
+    interval_seconds: 900,
+    coin_pause_seconds: 1,
+    api_timeout_seconds: 20,
+    min_lookback_days: 1,
+    max_lookback_days: 3,
   },
 };
 
@@ -75,24 +117,43 @@ function statusMonitorCalls(): string[] {
     .filter((url) => url.includes('/status-monitor/'));
 }
 
-beforeEach(() => {
-  window.localStorage.clear();
-  fetchMock = vi.fn(async (url: string | URL, init?: RequestInit) => {
-    const u = String(url);
-    if (u.includes('/status-monitor/')) {
-      return new Response(FRAGMENT_HTML, { status: 200 });
-    }
-    if (u.includes('/api/market-data/settings/')) {
+/** Default backend mock — settings payloads are exchange-aware (:8885). */
+function defaultFetchMock(url: string | URL, init?: RequestInit): Promise<Response> {
+  const u = String(url);
+  if (u.includes('/status-monitor/')) {
+    return Promise.resolve(new Response(FRAGMENT_HTML, { status: 200 }));
+  }
+  if (u.includes('/tradfi-map')) {
+    return Promise.resolve(new Response(JSON.stringify(TRADFI_MAP_PAYLOAD), { status: 200 }));
+  }
+  if (u.includes('/api/market-data/settings/')) {
+    if (u.includes('/bybit')) {
       if (init?.method === 'POST') {
-        return new Response(
-          JSON.stringify({ success: true, message: 'Hyperliquid settings saved.', settings: SETTINGS_PAYLOAD }),
-          { status: 200 }
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ success: true, message: 'Bybit settings saved.', settings: BYBIT_SETTINGS_PAYLOAD }),
+            { status: 200 }
+          )
         );
       }
-      return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
+      return Promise.resolve(new Response(JSON.stringify(BYBIT_SETTINGS_PAYLOAD), { status: 200 }));
     }
-    return new Response('{"running":false}', { status: 200 });
-  });
+    if (init?.method === 'POST') {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({ success: true, message: 'Hyperliquid settings saved.', settings: SETTINGS_PAYLOAD }),
+          { status: 200 }
+        )
+      );
+    }
+    return Promise.resolve(new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 }));
+  }
+  return Promise.resolve(new Response('{"running":false}', { status: 200 }));
+}
+
+beforeEach(() => {
+  window.localStorage.clear();
+  fetchMock = vi.fn(defaultFetchMock);
   vi.stubGlobal('fetch', fetchMock);
 });
 
@@ -184,11 +245,13 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
     expect(visiblePanelIds(app)).toEqual(['settings-panel']);
   });
 
-  it('renders placeholders for the M-data-4..7 panels only', () => {
+  it('renders placeholders for the M-data-5..7 panels only', () => {
     const app = mountApp();
-    // five unlanded panels + the two M-data-4 cards inside settings
-    expect(app.findAll('.panel-placeholder')).toHaveLength(7);
-    expect(app.findAll('#settings-panel .panel-placeholder')).toHaveLength(2);
+    // five unlanded panels; the M-data-4 cards are live components now
+    expect(app.findAll('.panel-placeholder')).toHaveLength(5);
+    expect(app.findAll('#settings-panel .panel-placeholder')).toHaveLength(0);
+    expect(app.find('#settings-hyperliquid-tiingo').exists()).toBe(true);
+    expect(app.find('#settings-hyperliquid-tradfi-map').exists()).toBe(true);
     expect(app.find('#status-panel .panel-placeholder').exists()).toBe(false);
   });
 });
@@ -376,7 +439,7 @@ describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)',
     await flushPromises();
     const settingsCalls = fetchMock.mock.calls
       .map((call) => String(call[0]))
-      .filter((url) => url.includes('/api/market-data/settings/'));
+      .filter((url) => url.includes('/api/market-data/settings/') && !url.includes('tradfi-map'));
     expect(settingsCalls).toEqual([`${BASE}/api/market-data/settings/hyperliquid`]);
   });
 
@@ -387,7 +450,7 @@ describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)',
     await flushPromises();
     const settingsCalls = fetchMock.mock.calls
       .map((call) => String(call[0]))
-      .filter((url) => url.includes('/api/market-data/settings/'));
+      .filter((url) => url.includes('/api/market-data/settings/') && !url.includes('tradfi-map'));
     expect(settingsCalls).toEqual([
       `${BASE}/api/market-data/settings/hyperliquid`,
       `${BASE}/api/market-data/settings/bybit`,
@@ -464,6 +527,103 @@ describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)',
     expect(window.localStorage.getItem('market_data_fastapi_settings_subsection')).toBe('aws');
     expect(app.find('#settings-hyperliquid-aws').classes()).not.toContain('settings-subsection-hidden');
     expect(app.find('#sidebar-context-actions').attributes('hidden')).toBeUndefined();
+  });
+});
+
+describe('tiingo + tradfi integration (M-data-4, :7379-7401, :4924, :9734)', () => {
+  it('loads the tradfi map after the settings payload renders (:7397)', async () => {
+    mountApp();
+    await flushPromises();
+    const mapCalls = fetchMock.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.endsWith('/settings/hyperliquid/tradfi-map'));
+    expect(mapCalls).toEqual([`${BASE}/api/market-data/settings/hyperliquid/tradfi-map`]);
+  });
+
+  it('renders the map rows and the tiingo usage from the payload', async () => {
+    const app = mountApp();
+    await flushPromises();
+    expect(app.find('#settings-hyperliquid-tradfi-map .tradfi-map-table').exists()).toBe(true);
+    expect(app.find('[data-tradfi-xyz="TSLA"]').exists()).toBe(true);
+    expect(app.find('#tradfi-cache-note').text()).toBe('meta · quote · spec');
+    // settings.tiingo_usage rendered (:7396) with the configured callout
+    expect(app.find('#settings-tiingo-credential-status').text()).toContain(
+      'An active Tiingo vault profile is available'
+    );
+    expect(app.find('#settings-tiingo-usage .usage-card').exists()).toBe(true);
+  });
+
+  it('drops the cards and skips the map for other exchanges (:7362-7366, :7399-7401)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    await app.find('#page-exchange').setValue('bybit');
+    await flushPromises();
+    expect(app.find('#settings-hyperliquid-tiingo').exists()).toBe(false);
+    expect(app.find('#settings-hyperliquid-tradfi-map').exists()).toBe(false);
+    const mapCalls = fetchMock.mock.calls
+      .map((call) => String(call[0]))
+      .filter((url) => url.endsWith('/settings/hyperliquid/tradfi-map'));
+    expect(mapCalls).toHaveLength(1); // only the initial hyperliquid load
+  });
+
+  it('reveals the stored token through the eye and clears it on a vault 401 (:5620-5636, :4924)', async () => {
+    fetchMock.mockImplementation(async (url: string | URL) => {
+      const u = String(url);
+      if (u.includes('/api-keys/tradfi/reveal')) {
+        // first reveal succeeds, then the session expires
+        return new Response(JSON.stringify({ value: 'vault-secret' }), { status: 200 });
+      }
+      if (u.includes('/status-monitor/')) return new Response(FRAGMENT_HTML, { status: 200 });
+      if (u.includes('/api/market-data/settings/')) return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
+      if (u.includes('/tradfi-map')) return new Response(JSON.stringify(TRADFI_MAP_PAYLOAD), { status: 200 });
+      return new Response('{"running":false}', { status: 200 });
+    });
+    const app = mountApp();
+    await flushPromises();
+    const input = app.find('#settings-tiingo-token');
+    await app.find('#settings-hyperliquid-tiingo .pw-eye-btn').trigger('click');
+    await flushPromises();
+    expect((input.element as HTMLInputElement).value).toBe('vault-secret');
+    expect((input.element as HTMLInputElement).type).toBe('text');
+    // second reveal: vault answers 401 → onUnauthorized wipes the revealed token
+    fetchMock.mockImplementation(async (url: string | URL) => {
+      const u = String(url);
+      if (u.includes('/api-keys/tradfi/reveal')) {
+        return new Response(JSON.stringify({ detail: 'expired' }), { status: 401 });
+      }
+      if (u.includes('/status-monitor/')) return new Response(FRAGMENT_HTML, { status: 200 });
+      if (u.includes('/api/market-data/settings/')) return new Response(JSON.stringify(SETTINGS_PAYLOAD), { status: 200 });
+      if (u.includes('/tradfi-map')) return new Response(JSON.stringify(TRADFI_MAP_PAYLOAD), { status: 200 });
+      return new Response('{"running":false}', { status: 200 });
+    });
+    // hide (clears), then reveal again — the 401 fires the clear hook and the
+    // stale generation drops the failure silently (:5635)
+    await app.find('#settings-hyperliquid-tiingo .pw-eye-btn').trigger('click'); // hide+clear
+    await flushPromises();
+    await app.find('#settings-hyperliquid-tiingo .pw-eye-btn').trigger('click'); // reveal → 401
+    await flushPromises();
+    expect((input.element as HTMLInputElement).value).toBe('');
+    expect((input.element as HTMLInputElement).type).toBe('password');
+  });
+
+  it('clears a revealed token on pagehide (:9734)', async () => {
+    const app = mountApp();
+    await flushPromises();
+    const input = app.find('#settings-tiingo-token');
+    await input.setValue('typed-token');
+    await app.find('#settings-hyperliquid-tiingo .pw-eye-btn').trigger('click'); // unmask typed
+    expect((input.element as HTMLInputElement).type).toBe('text');
+    window.dispatchEvent(new Event('pagehide'));
+    await flushPromises();
+    expect((input.element as HTMLInputElement).type).toBe('password'); // remasked
+  });
+
+  it('removes the pagehide listener on unmount', async () => {
+    const app = mountApp();
+    await flushPromises();
+    app.unmount();
+    // the cleared state no longer flips — the listener is gone
+    expect(() => window.dispatchEvent(new Event('pagehide'))).not.toThrow();
   });
 });
 

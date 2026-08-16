@@ -3,10 +3,12 @@ import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import SettingsPanel from './SettingsPanel.vue';
 import { useSettings, type SettingsApi, type SettingsPayload } from '../../composables/useSettings';
+import { useTiingo } from '../../composables/useTiingo';
+import { useTradfiMap } from '../../composables/useTradfiMap';
 
 /* Settings panel — legacy #settings-panel body (:2979-3085 for the M-data-3
-   cards; the tiingo/tradfi cards :3077-3222 stay as M-data-4 placeholders),
-   subsection visibility (:6157-6173), card positioning (:6121-6144) and the
+   cards), the tiingo/tradfi cards (:3077-3218, M-data-4), subsection
+   visibility (:6157-6173), card positioning (:6121-6144) and the
    subsection scroll reset (:6183-6184). */
 
 const T = (key: string): string => key;
@@ -68,11 +70,28 @@ function mkStorage(startsWith: Record<string, string> = {}): Storage {
 }
 
 async function mountPanel(payload: SettingsPayload = hyperliquidPayload(), storage = mkStorage()) {
-  const api = { fetchJson: vi.fn(async () => payload) };
-  const store = useSettings({ api: api as unknown as SettingsApi, storage, t: T, showToast: () => undefined });
+  const fetchJson = vi.fn(async () => payload);
+  const fetchApiKeysJson = vi.fn(async () => ({}) as Record<string, unknown>);
+  const fullApi = {
+    fetchJson: fetchJson as unknown as SettingsApi['fetchJson'],
+    fetchApiKeysJson,
+  };
+  const store = useSettings({ api: { fetchJson: fullApi.fetchJson }, storage, t: T, showToast: () => undefined });
+  const tiingo = useTiingo({
+    api: fullApi as unknown as Parameters<typeof useTiingo>[0]['api'],
+    t: T,
+    showToast: () => undefined,
+    reloadSettings: async () => {},
+  });
+  const map = useTradfiMap({
+    api: { fetchJson: fullApi.fetchJson },
+    t: T,
+    showToast: () => undefined,
+    isTiingoConfigured: () => tiingo.isTiingoConfigured(),
+  });
   await store.loadSettings(payload.exchange ?? 'hyperliquid');
   const wrapper = mount(SettingsPanel, {
-    props: { store },
+    props: { store, tiingo, map },
     global: { plugins: [createI18n('en')] },
     attachTo: (() => {
       // legacy #settings-panel is the scroll container (:6183-6184)
@@ -82,7 +101,7 @@ async function mountPanel(payload: SettingsPayload = hyperliquidPayload(), stora
       return section;
     })(),
   });
-  return { store, wrapper, api };
+  return { store, wrapper, api: fullApi };
 }
 
 afterEach(() => {

@@ -7,23 +7,26 @@
  * order directly), subsection class fan-out (:6169-6172) and the subsection
  * scroll reset (:6183-6184).
  *
- * The tiingo + tradfi-map cards (:3077-3222) are M-data-4 scope: they stay
- * as data-settings-subsection="tradfi" placeholders so the subsection nav is
- * fully live now.
+ * M-data-4: the tiingo (:3077-3103) and tradfi-map (:3105-3218) cards render
+ * through their controllers, created in App.vue so the settings-payload
+ * hooks (:7379-7401) reach them.
  */
 import { watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import type { SettingsController } from '../../composables/useSettings';
+import type { UseTiingo } from '../../composables/useTiingo';
+import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import ArchiveCard from './ArchiveCard.vue';
 import AwsCard from './AwsCard.vue';
 import CoinPicker from './CoinPicker.vue';
 import FieldsForm from './FieldsForm.vue';
+import TiingoCard from '../tradfi/TiingoCard.vue';
+import TradfiMapCard from '../tradfi/TradfiMapCard.vue';
 
 const props = defineProps<{
   store: SettingsController;
+  tiingo: UseTiingo;
+  map: UseTradfiMap;
 }>();
-
-const { t } = useI18n();
 
 /* setActiveSettingsSubsection tail (:6183-6184) — reset the panel scroll. */
 watch(
@@ -55,24 +58,14 @@ watch(
           :fields="store.fields"
           :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'aws' }"
         />
-        <article
-          class="panel-card panel-placeholder"
-          id="settings-hyperliquid-tiingo"
-          data-settings-subsection="tradfi"
+        <TiingoCard
+          :tiingo="tiingo"
           :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'tradfi' }"
-        >
-          <div class="panel-placeholder-name">{{ t('market.tiingoSettingsStockPerp') }}</div>
-          <div class="panel-placeholder-hint">#settings-hyperliquid-tiingo · M-data-4</div>
-        </article>
-        <article
-          class="panel-card panel-placeholder"
-          id="settings-hyperliquid-tradfi-map"
-          data-settings-subsection="tradfi"
+        />
+        <TradfiMapCard
+          :map="map"
           :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'tradfi' }"
-        >
-          <div class="panel-placeholder-name">{{ t('market.tradfiSymbolMappings') }}</div>
-          <div class="panel-placeholder-hint">#settings-hyperliquid-tradfi-map · M-data-4</div>
-        </article>
+        />
       </template>
       <template v-else>
         <FieldsForm :fields="store.fields" />
