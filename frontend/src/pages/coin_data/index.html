@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- boot.js must run before the bundle: the app reads window.__BOOT__ at
+       mount time. The legacy page's %%TOKEN%%/%%API_BASE%%/%%VERSION%%/
+       %%SERIAL%% injections are gone — REST uses the cookie session plus the
+       boot token, config.ts derives the /api/coin-data base at runtime. -->
+  <script src="/api/boot.js"></script>
+  <!-- legacy i18n engine: still drives nav subtitle and the shared help overlay -->
+  <script src="/app/i18n.js?v=1"></script>
+  <title>Coin Data - PBGui</title>
+  <!-- resizable sidebar chrome, same files as legacy coin_data.html:8-9 -->
+  <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
+  <script src="/app/js/sidebar_resize.js?v=1"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Shared legacy chrome, same loading order as legacy coin_data.html
+       :3185-3195: NAV_CONFIG must exist before pbgui_nav.js, which fills
+       #topnav. editor_shared.js is dropped (dead for this page — the Vue
+       TagMultiselect replaced its multiselect controller, recon above). -->
+  <script>
+    window.PBGUI_NAV_CONFIG = {
+      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('market.coinDataSubtitle') : 'COIN DATA'),
+      current: 'info_coin_data',
+      token: (window.__BOOT__ || {}).token || '',
+      apiBase: ((window.__BOOT__ || {}).origin || '') + '/api/coin-data',
+      version: (window.__BOOT__ || {}).version || '',
+      serial: (window.__BOOT__ || {}).serial || ''
+    };
+  </script>
+  <script src="/app/js/shared_help_overlay.js?v=7"></script>
+  <script src="/app/pbgui_nav.js"></script>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

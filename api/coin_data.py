@@ -22,10 +22,10 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from Exchange import V7
 from PBCoinData import CoinData, compute_coin_name
 from logging_helpers import human_log as _log
@@ -684,35 +684,41 @@ def _build_state(
     }
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    html_path = Path(__file__).resolve().parent.parent / "frontend" / "coin_data.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the Coin Data page: built Vue entry first, legacy template fallback.
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/coin-data"
+    The Vue page (frontend/src/pages/coin_data) reads token/origin values from
+    /api/boot.js at runtime; the legacy coin_data.html keeps the server-side
+    %%TOKEN%%/%%API_BASE%%/%%VERSION%%/%%SERIAL%%/%%NAV_HASH%% injection as
+    the fallback for checkouts without a frontend build.
+    """
 
-    html = html.replace('"%%TOKEN%%"', json.dumps(session.token))
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_base = origin + "/api/coin-data"
 
-    from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
+        html = html.replace('"%%TOKEN%%"', json.dumps(session.token))
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
 
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
 
-    nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        nav_js = PBGDIR / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("coin_data", "coin_data.html", request, inject=_inject)
 
 
 @router.get("/state")

@@ -86,7 +86,7 @@ from market_data_integrity import (
 )
 from task_queue import enqueue_unique_job, list_jobs
 
-from .auth import require_auth, SessionToken, _frontend_dist_path
+from .auth import require_auth, SessionToken, _frontend_dist_path, serve_vue_or_legacy_page
 from .heatmap import _get_missing_lag_minutes
 
 router = APIRouter(prefix="/market-data", tags=["market-data"])
@@ -1242,9 +1242,15 @@ def _serve_market_data_status_page(request: Request, exchange: str) -> HTMLRespo
     )
 
 
-def _render_hl_data_actions_html(request: Request, token: str, initial_section: str = "") -> str:
-    html_path = PBGDIR / "frontend" / "hl_data_actions.html"
-    html_content = html_path.read_text(encoding="utf-8")
+def _render_hl_data_actions_html(
+    request: Request,
+    token: str,
+    initial_section: str = "",
+    html_content: str | None = None,
+) -> str:
+    if html_content is None:
+        html_path = PBGDIR / "frontend" / "hl_data_actions.html"
+        html_content = html_path.read_text(encoding="utf-8")
 
     browser_origin = _get_request_origin(request)
     api_host_str = request.url.netloc or request.headers.get("host", "127.0.0.1")
@@ -3542,22 +3548,34 @@ def get_market_data_status_monitor(
     return _serve_market_data_status_page(request=request, exchange=exchange_clean)
 
 
-@router.get("/data-actions/hyperliquid", response_class=HTMLResponse)
+@router.get("/data-actions/hyperliquid", response_class=HTMLResponse, response_model=None)
 def get_hyperliquid_data_actions(
     request: Request,
     section: str = Query(default="", description="Optional initial section: build or download"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
+) -> FileResponse | HTMLResponse:
+    """Serve the HL data-actions widget: built Vue entry first, legacy fallback.
+
+    The Vue page (frontend/src/pages/hl_data_actions) takes the section from
+    the ?section= query it already receives and boot values from /api/boot.js;
+    the legacy hl_data_actions.html keeps the data-attribute injection and the
+    multi-mount prefix renaming as the fallback.
+    """
     section_clean = str(section or "").strip().lower()
     if section_clean not in ("build", "download"):
         section_clean = ""
 
-    html = _render_hl_data_actions_html(
-        request=request,
-        token=session.token,
-        initial_section=section_clean,
+    return serve_vue_or_legacy_page(
+        "hl_data_actions",
+        "hl_data_actions.html",
+        request,
+        inject=lambda html, req: _render_hl_data_actions_html(
+            request=req,
+            token=session.token,
+            initial_section=section_clean,
+            html_content=html,
+        ),
     )
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
 
 
 @router.get("/best-1m/info/{exchange}")

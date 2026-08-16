@@ -1,9 +1,10 @@
 /*
- * Drag-select engine — the dedupe of the two near-identical legacy pickers
+ * Drag-select engine — the dedupe of the three near-identical legacy pickers
  * (recon §2.1): the settings picker (market_data_main.html:7087-7133, bind
- * handlers :9387-9402 / :9424-9440 / :9475-9486 / keydown :9297-9305) and
- * its best1m twin (:7258-7303, :9403-9416, :9441-9456, :9487-9496 —
- * M-data-7 consumes this composable instead of a second copy).
+ * handlers :9387-9402 / :9424-9440 / :9475-9486 / keydown :9297-9305), its
+ * best1m twin (:7258-7303, :9403-9416, :9441-9456, :9487-9496) and the
+ * hl_data_actions coin grids (:835-921). Lives in shared/ since the
+ * hl_data_actions migration — no page-local copies.
  *
  * Legacy semantics preserved:
  *   - mousedown on a row records the anchor and the mode from the row's

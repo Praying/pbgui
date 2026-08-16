@@ -13,7 +13,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { UseBest1m } from '../../composables/useBest1m';
-import { useDragSelect } from '../../composables/useDragSelect';
+import { useDragSelect } from '@/shared/composables/useDragSelect';
 
 const props = defineProps<{
   store: UseBest1m;

@@ -404,67 +404,54 @@ def test_jobs_monitor_delegation_preserves_all_job_actions() -> None:
 
 
 def test_hyperliquid_job_monitor_escapes_jobs_and_error_messages() -> None:
-    """Embedded job cards and API errors cannot become executable markup."""
-    bootstrap = r"""
-        function makeElement() {
-          let text = '';
-          return {
-            className: '', style: {},
-            set textContent(value) { text = String(value == null ? '' : value); this.innerHTML = encodeText(text); },
-            get textContent() { return text; }, innerHTML: '',
-            appendChild: function() {}
-          };
-        }
-        const messageElement = makeElement();
-        global.document = { createElement: function() { return makeElement(); }, createTextNode: function(value) { return { textContent: String(value) }; } };
-        function $(id) { return messageElement; }
-        const expandedJobs = { dl: new Set(), build: new Set() };
-        const P = '';
-        function calcPct() { return 42; }
-        function fmtBytes(value) { return String(value || 0) + ' B'; }
-        function fmtTS(value) { return String(value || ''); }
-        function fmtDay(value) { return String(value || ''); }
-        function formatJobDuration() { return '1m 02s'; }
+    """Embedded job cards and API errors cannot become executable markup.
+
+    Re-pointed at the Vue sources with the hl_data_actions migration: the
+    job cards render every field through text interpolation (the Vue
+    equivalent of the legacy escHtml/escAttr wrappers), so the contract is
+    that no raw-HTML sink exists in the card/modal components.
     """
-    assertions = r"""
-        const attack = '<img src=x onerror=globalThis.pwned=true>';
-        const job = {
-          id: '&apos;);globalThis.pwned=true;//' + attack,
-          type: attack, status: attack, error: attack, updated_ts: attack,
-          payload: { coins: [attack], start_day: attack, end_day: attack },
-          progress: {
-            coin: attack, chunk_start: attack, chunk_end: attack, stage: attack, mode: attack, total: 1,
-            downloaded_total: 1, downloaded_bytes_total: attack
-          }
-        };
-        const active = renderActiveJob('dl', job);
-        const history = renderHistoryJob('dl', job);
-        [active, history].forEach(function(html) {
-          assert.equal(html.includes('<img'), false);
-          assert.match(html, /&lt;img/);
-          assert.match(html, /data-action=/);
-        });
-        showMsg('dl', 'error', attack);
-        assert.equal(messageElement.textContent, attack);
-        assert.equal(messageElement.innerHTML.includes('<img'), false);
-        assert.match(messageElement.innerHTML, /&lt;img/);
-    """
-    _run_frontend_node(
-        "frontend/hl_data_actions.html",
-        ["escHtml", "escAttr", "showMsg", "renderActiveJob", "renderHistoryJob"],
-        bootstrap,
-        assertions,
-    )
+    page = ROOT / "frontend" / "src" / "pages" / "hl_data_actions"
+    for name in (
+        "components/ActiveJobCard.vue",
+        "components/HistoryJobCard.vue",
+        "components/JobMonitorCard.vue",
+        "components/JobModal.vue",
+        "App.vue",
+    ):
+        source = (page / name).read_text(encoding="utf-8")
+        assert "v-html" not in source, name
+        assert ".innerHTML" not in source, name
+    # job fields interpolate as text ({{ job.error }} etc.), never as markup
+    active = (page / "components/ActiveJobCard.vue").read_text(encoding="utf-8")
+    assert "{{ job.id }}" in active
+    assert "{{ job.status }}" in active
+    history = (page / "components/HistoryJobCard.vue").read_text(encoding="utf-8")
+    assert "{{ job.error }}" in history
+    # API error messages render through the same interpolation
+    monitor_card = (page / "components/JobMonitorCard.vue").read_text(encoding="utf-8")
+    assert "monitor.historyError.value" in monitor_card
 
 
 def test_hyperliquid_success_message_keeps_existing_structure_without_inner_html() -> None:
-    """Queued-job success messages retain strong, break, and small elements safely."""
-    source = _extract_js_function(_read("frontend/hl_data_actions.html"), "showQueuedMsg")
+    """Queued-job success messages retain strong, break, and small elements safely.
 
-    assert "createElement('strong')" in source
-    assert "createElement('br')" in source
-    assert "createElement('small')" in source
-    assert ".innerHTML" not in source
+    Re-pointed at the Vue sources: lib/queuedMessage.ts builds structured
+    parts (no markup strings) and App.vue renders the strong/br/small
+    elements statically around interpolated text.
+    """
+    page = ROOT / "frontend" / "src" / "pages" / "hl_data_actions"
+    parts_lib = (page / "lib" / "queuedMessage.ts").read_text(encoding="utf-8")
+    app = (page / "App.vue").read_text(encoding="utf-8")
+    store = (page / "composables" / "useHldaSections.ts").read_text(encoding="utf-8")
+
+    assert ".innerHTML" not in parts_lib
+    assert ".innerHTML" not in app
+    assert "<strong>" in app
+    assert "<br" in app
+    assert "<small" in app
+    assert "buildQueuedMessageParts" in store
+    assert ".parts.jobId" in app  # the strong element renders the job id part
 
 
 def test_xss_hardening_preserves_job_and_api_key_visual_contract() -> None:
@@ -472,7 +459,8 @@ def test_xss_hardening_preserves_job_and_api_key_visual_contract() -> None:
     api_keys = _read("frontend/api_keys_editor.html")
     jobs = _extract_js_function(_read("frontend/jobs_monitor.html"), "renderActiveJob")
     history = _extract_js_function(_read("frontend/jobs_monitor.html"), "renderJob")
-    hl_jobs = _extract_js_function(_read("frontend/hl_data_actions.html"), "renderActiveJob")
+    hl_page = ROOT / "frontend" / "src" / "pages" / "hl_data_actions"
+    hl_jobs = (hl_page / "components/ActiveJobCard.vue").read_text(encoding="utf-8")  # renderActiveJob successor
 
     assert 'class="btn btn-sm btn-info" data-user-action="edit"' in api_keys
     assert_text_present(api_keys, "Edit")
@@ -482,5 +470,5 @@ def test_xss_hardening_preserves_job_and_api_key_visual_contract() -> None:
     assert history.index('data-job-action="view"') < history.index('data-job-action="log"') < history.index('data-job-action="retry"') < history.index('data-job-action="requeue"') < history.index('data-job-action="delete"')
     assert 'class="job-card"' in jobs
     assert 'class="progress-bar"' in jobs
-    assert 'class="hlda-jc"' in hl_jobs
-    assert 'class="hlda-pb"' in hl_jobs
+    assert '"hlda-jc"' in hl_jobs
+    assert '"hlda-pb"' in hl_jobs
