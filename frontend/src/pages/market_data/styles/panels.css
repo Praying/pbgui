@@ -1,0 +1,304 @@
+/*
+ * Market data page shell styles — ported from the legacy <head> block of
+ * frontend/market_data_main.html (M-data-1 scope: tokens, layout, sidebar,
+ * context bar, panels, toasts; line refs below). Imported by main.ts AFTER
+ * the shared tokens.css/base.css so the page-local look wins, exactly like
+ * the legacy page defined its own tokens on :root.
+ */
+
+:root {
+  /* legacy :10-18 (fs-*/sp-*/--input-h/--btn-h already come from tokens.css
+     with identical values; --accent matches too) */
+  --bg: #0e1117;
+  --bg2: #1a1d24;
+  --bg3: #262730;
+  --border: #333640;
+  --text: #fafafa;
+  --text-dim: #a0a4ab;
+  --accent-2: #63b3ed;
+  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif,
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+
+/* legacy :33-50 */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-base);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+}
+
+/* ── Page layout (legacy :52-57) ── */
+#page-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Sidebar (legacy :59-159; #sidebar-resize :72-86 NOT ported —
+      silent no-op in legacy, see SidebarNav.vue) ── */
+#sidebar {
+  width: 240px;
+  min-width: 170px;
+  max-width: 320px;
+  flex-shrink: 0;
+  background: var(--bg);
+  border-right: 1px solid #1e2736;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+#sidebar-sticky {
+  padding: 0.5rem 0.5rem 0;
+  flex-shrink: 0;
+}
+
+#sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.25rem 0.5rem;
+  gap: var(--sp-xs);
+  flex-wrap: wrap;
+}
+
+.sb-title {
+  font-size: var(--fs-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.sb-sep {
+  border: none;
+  border-top: 1px solid #1e2736;
+  margin: 2px 0;
+}
+
+#sidebar-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.2rem 0.1rem 0.6rem;
+  border-bottom: 1px solid #1e2736;
+}
+
+.sb-btn {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.38rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #2d3748;
+  background: #1a202c;
+  color: #94a3b8;
+  font-size: var(--fs-base);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.sb-btn:hover {
+  background: #252d3d;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}
+
+.sb-btn.active {
+  background: rgba(38, 166, 154, 0.13);
+  border-color: #26a69a;
+  color: #26a69a;
+}
+
+.sb-btn.sidebar-shortcut {
+  text-decoration: none;
+}
+
+.sb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Main content (legacy :707-765) ── */
+#main-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--sp-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+}
+
+.page-context-bar {
+  flex: 0 0 auto;
+  padding: var(--sp-md) var(--sp-lg);
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+}
+
+.page-context-selector {
+  min-width: 220px;
+  max-width: 240px;
+}
+
+.content-panel {
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  gap: var(--sp-lg);
+  padding-right: var(--sp-xs);
+}
+
+.content-panel.active-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-card {
+  background: linear-gradient(180deg, rgba(26, 34, 53, 0.98), rgba(12, 17, 26, 0.98));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: var(--sp-lg);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+/* ── Form fields (legacy :1971-2009 — the slice the context bar needs) ── */
+.settings-field {
+  display: grid;
+  gap: var(--sp-xs);
+}
+
+.field-label {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+input[type='text'],
+input[type='number'],
+input[type='password'],
+select {
+  width: 100%;
+  height: var(--input-h);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(12, 17, 26, 0.92);
+  color: var(--text);
+  padding: 0 var(--sp-sm);
+  font-size: var(--fs-base);
+}
+
+/* ── Toasts (legacy :1766-1835) ── */
+#toast-stack {
+  position: fixed;
+  top: 68px;
+  right: var(--sp-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  width: min(420px, calc(100vw - 2 * var(--sp-lg)));
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.toast {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: var(--sp-sm) var(--sp-md);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-size: var(--fs-base);
+  line-height: 1.45;
+  animation: toast-slide-in 0.22s ease;
+  pointer-events: auto;
+  word-break: break-word;
+}
+
+.toast.success {
+  background: rgba(38, 166, 154, 0.96);
+  border-color: rgba(110, 231, 183, 0.28);
+}
+
+.toast.error {
+  background: rgba(239, 68, 68, 0.96);
+  border-color: rgba(254, 202, 202, 0.28);
+}
+
+.toast.info {
+  background: rgba(29, 78, 216, 0.96);
+  border-color: rgba(191, 219, 254, 0.28);
+}
+
+.toast.warn {
+  background: rgba(245, 158, 11, 0.96);
+  border-color: rgba(253, 230, 138, 0.28);
+  color: #111827;
+}
+
+.toast.is-leaving {
+  animation: toast-slide-out 0.22s ease forwards;
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+/* ── Scaffold-only placeholder styling (removed as panels land) ── */
+.panel-placeholder {
+  flex: 0 0 auto;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-sm);
+  color: #64748b;
+  text-align: center;
+}
+
+.panel-placeholder-name {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.panel-placeholder-hint {
+  font-size: var(--fs-sm);
+  color: #4a5568;
+}
