@@ -55,6 +55,7 @@ from api.auth import (
     optional_auth,
     require_auth,
     router as auth_router,
+    serve_vue_or_legacy_page,
     shutdown as auth_shutdown,
     unauthenticated_page_redirect,
 )
@@ -1488,6 +1489,35 @@ async def help_content(file: str, lang: str = "EN", session: SessionToken = Depe
                 raise HTTPException(status_code=500, detail=f"Read error: {e}")
     
     raise HTTPException(status_code=404, detail="File not found")
+
+
+@app.get("/api/help/main_page")
+def help_main_page(request: Request, session: SessionToken = Depends(require_auth)):
+    """Serve the Help & Tutorials page: built Vue entry first, legacy fallback.
+
+    The Vue page (frontend/src/pages/help) reads token/origin values from
+    /api/boot.js at runtime. Before this route existed, help.html was served
+    as a STATIC file at /app/help.html, so its ``'%%API_BASE%%'``/
+    ``'%%WS_BASE%%'``/``'%%VERSION%%'``/``'%%SERIAL%%'`` placeholders
+    (help.html:553-556) were never filled and the page back-filled
+    version/serial from /api/help/meta. The legacy fallback served here now
+    gets those placeholders injected (single-quoted form, as written in the
+    file); frontend/help.html stays in place as that fallback.
+    """
+
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+
+        html = html.replace("'%%API_BASE%%'", json.dumps(origin + "/api/help"))
+        html = html.replace("'%%WS_BASE%%'", json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")))
+        html = html.replace("'%%VERSION%%'", json.dumps(PBGUI_VERSION))
+        html = html.replace("'%%SERIAL%%'", json.dumps(PBGUI_SERIAL))
+        return html
+
+    return serve_vue_or_legacy_page("help", "help.html", request, inject=_inject)
 
 
 # ── REST endpoints ────────────────────────────────────────────

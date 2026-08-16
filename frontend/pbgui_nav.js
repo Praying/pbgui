@@ -1025,7 +1025,7 @@
     'system_vps_monitor': '/api/vps/main_page',
     'system_services':    '/api/services/main_page',
     'system_db_tools':    '/api/db-tools/main_page',
-    'help':               '/app/help.html?v=1766',
+    'help':               '/api/help/main_page',
     'v7_run':             '/api/v7/main_page',
     'v7_backtest':        '/api/backtest-v7/main_page',
     'v7_optimize':        '/api/optimize-v7/main_page',
