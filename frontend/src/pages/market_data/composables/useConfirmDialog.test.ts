@@ -14,7 +14,7 @@ type Translate = (key: string, params?: Record<string, unknown>) => string;
 
 function makeController(t?: Translate): ConfirmDialogController {
   return useConfirmDialog({
-    t: t ?? ((key) => ({ 'common.confirmAction': 'Confirm action', 'common.areYouSure': 'Are you sure?', 'common.confirm': 'Confirm', 'common.cancel': 'Cancel', 'market.selectedCoins': 'Selected coins' })[key] ?? key),
+    t: t ?? ((key) => ({ 'common.confirmAction': 'Confirm action', 'common.areYouSure': 'Are you sure?', 'common.confirm': 'Confirm', 'common.cancel': 'Cancel', 'market.selectedItems': 'Selected items' })[key] ?? key),
   });
 }
 
@@ -64,7 +64,7 @@ describe('useConfirmDialog', () => {
     expect(controller.state.value.title).toBe('Confirm action');
     expect(controller.state.value.message).toBe('Are you sure?');
     expect(controller.state.value.confirmText).toBe('Confirm');
-    expect(controller.state.value.listLabel).toBe('Selected coins');
+    expect(controller.state.value.listLabel).toBe('Selected items'); // :8196 effective default
     expect(controller.state.value.items).toEqual(['BTC', 'ETH']);
     controller.cancel();
   });
@@ -179,7 +179,7 @@ describe('confirm wiring smoke', () => {
     const t = vi.fn((key: string) => key);
     const controller = useConfirmDialog({ t });
     void controller.confirm({ title: 'T', message: 'M', confirmText: 'C' });
-    expect(t).toHaveBeenCalledWith('market.selectedCoins'); // the listLabel default (:8196)
+    expect(t).toHaveBeenCalledWith('market.selectedItems'); // the listLabel default (:8196)
     controller.cancel();
   });
 });

@@ -4,10 +4,7 @@
  * (market_data_main.html:2893-2915) driven by useConfirmDialog
  * (showConfirmDialog/closeConfirmDialog :8161-8215). Rendered once at the
  * app root; M-data-5's integrity destructive flows and M-data-6's inventory
- * deletions share it.
- *
- * The legacy ✕ close button (:2898) had no click binding (dead) — it now
- * cancels like the Cancel button (documented deviation).
+ * deletions share it. The ✕ close button cancels like legacy (:9553-9555).
  */
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

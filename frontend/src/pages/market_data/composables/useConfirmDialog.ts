@@ -9,7 +9,10 @@ import { ref, type Ref } from 'vue';
  * Semantics preserved:
  *   - a new confirm() resolves the pending one with false (:8177-8181);
  *   - items are stringified, trimmed and emptied out (:8183-8185);
- *   - title/message/confirmText/listLabel defaults (:8187-8196);
+ *   - title/message/confirmText/listLabel defaults (:8187-8196) — the
+ *     listLabel default is market.selectedItems (:8196; the static DOM
+ *     label at :2905 says selectedCoins but the script always overwrites
+ *     it, so selectedItems is the effective default);
  *   - the accept button is focused on open and focus returns to the
  *     opener on close (:8207, :8151-8156);
  *   - Escape closes with false, Enter accepts — unless the keypress
@@ -18,8 +21,9 @@ import { ref, type Ref } from 'vue';
  * Deviations (documented):
  *   - the legacy DOM-missing fallback (nav.confirm_unavailable toast,
  *     :8172-8175) is dropped — the Vue component always renders;
- *   - the header's ✕ close button (:2898) had no click binding in legacy
- *     (dead); it now cancels like the Cancel button.
+ *   - options.cancelText (:8190) is dropped — no legacy caller ever
+ *     passed it, so the Cancel button always renders common.cancel.
+ *   The ✕ close button cancels exactly like legacy (:9553-9555).
  */
 
 export interface ConfirmDialogRequest {
@@ -106,7 +110,7 @@ export function useConfirmDialog(options: UseConfirmDialogOptions): ConfirmDialo
       message: String(request.message ?? t('common.areYouSure')),
       detail, // hidden when empty in the template (:8194)
       items,
-      listLabel: String(request.listLabel ?? t('market.selectedCoins')),
+      listLabel: String(request.listLabel ?? t('market.selectedItems')), // :8196
       confirmText: String(request.confirmText ?? t('common.confirm')),
     };
     returnFocus = (document.activeElement as HTMLElement | null) ?? null; // :8207
