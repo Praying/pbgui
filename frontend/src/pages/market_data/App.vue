@@ -29,6 +29,11 @@
  * │                      │        │ :5587-5741/:8949-9031 (useTiingo)           │
  * │ TradfiMapCard +      │ 4 ✓    │ tradfi map :3105-3218, map/search/editor/   │
  * │ useTradfiMap         │        │ specs-window :5747-7014 + 401 hook :4924    │
+ * │ IntegrityPanel +     │ 5 ✓    │ integrity :3229-3345 + gap modal :3595-3636,│
+ * │ useIntegrity (+      │        │ actions :4252-4887, exchange branch         │
+ * │ polling + confirm)   │        │ :7324-7332, poll gating :9066-9071 (R5),    │
+ * │                      │        │ URL matrix :4234-4250, confirm :2893-2915/ │
+ * │                      │        │ :8161-8215                                 │
  * │ DataTipTooltip       │ 2 ✓    │ #data-tip-tooltip :3637 + :3839-3865        │
  * │ Help opener wiring   │ 2 ✓    │ window._openMarketDataHelp/PBGUI_HELP_OPENER│
  * │                      │        │ :4085-4089 (shared_help_overlay path)       │
@@ -37,7 +42,7 @@
  * │                      │        │ :9032-9107, :9736-9773                      │
  * │ Topnav / help chrome │ —      │ pbgui_nav.js + shared_help_overlay.js stay  │
  * │                      │        │ as global scripts loaded by index.html      │
- * │ Panel bodies         │ 3..7   │ settings + status landed (M-data-3 slice)    │
+ * │ Panel bodies         │ 3..7   │ settings + status + integrity landed;       │
  * │                      │        │ placeholders below for the remaining panels │
  * └──────────────────────┴────────┴─────────────────────────────────────────────┘
  *
@@ -65,8 +70,10 @@ import { computed, onBeforeUnmount, onMounted, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import ConfirmDialog from './components/ConfirmDialog.vue';
 import DataTipTooltip from './components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
+import IntegrityPanel from './components/integrity/IntegrityPanel.vue';
 import PanelPlaceholder from './components/PanelPlaceholder.vue';
 import PanelShell from './components/PanelShell.vue';
 import SettingsPanel from './components/settings/SettingsPanel.vue';
@@ -76,6 +83,9 @@ import ToastStack from './components/ToastStack.vue';
 import { exchangeOptions } from './lib/exchange';
 import { SHOW_TOAST_KEY, useToasts } from './composables/useToasts';
 import { useApi } from './composables/useApi';
+import { useConfirmDialog } from './composables/useConfirmDialog';
+import { useIntegrity } from './composables/useIntegrity';
+import { useIntegrityPolling } from './composables/useIntegrityPolling';
 import { useSettings } from './composables/useSettings';
 import { useTiingo } from './composables/useTiingo';
 import { useTradfiMap } from './composables/useTradfiMap';
@@ -83,6 +93,7 @@ import {
   PANELS,
   readContextExchange,
   usePanels,
+  type PanelHooks,
 } from './composables/usePanels';
 import {
   useContextExchange,
@@ -95,10 +106,14 @@ import type { PanelDef, PanelId, SettingsSubsection } from './types';
 
 const { t } = useI18n();
 
-/* ── panel router (setActivePanel/restorePanel :9032-9107, :9736-9746) ── */
+/* ── panel router (setActivePanel/restorePanel :9032-9107, :9736-9746) ──
+      The hooks object is filled in as the panel controllers are created;
+      restorePanel() runs after the wiring (bootstrap :9764 — legacy ran it
+      after every init function was defined, right before the :9771
+      fan-out). */
 
-const { activePanel, setActivePanel, restorePanel } = usePanels();
-restorePanel(); // bootstrap :9764 — read + remap + activate (before the fan-out)
+const panelHooks: Partial<Record<PanelId, PanelHooks>> = {};
+const { activePanel, setActivePanel, restorePanel } = usePanels({ hooks: panelHooks });
 
 /* ── toasts (showToast :4983-5002) — provided for M-data-2..7 panels ── */
 
@@ -185,7 +200,8 @@ const fanoutHooks: ExchangeFanoutHooks = {
   updateStatusPanel: () => statusMonitor.updateStatusPanel(),
   // syncInventorySubsectionVisibility :7317 + loadInventoryPanel :7318-7320 — M-data-6
   // refreshBest1mPanel :7321-7323 — M-data-7
-  // onIntegrityExchangeChange :7324-7332 — M-data-5
+  // :7324-7332 — the M-data-5 slice: reset + forced reload while active
+  onIntegrityExchangeChange: (statusKey) => integrity.onExchangeChange(statusKey),
 };
 
 const contextExchange = useContextExchange({
@@ -193,6 +209,52 @@ const contextExchange = useContextExchange({
   isPanelActive: (panel) => activePanel.value === panel, // .active-panel check
   hooks: fanoutHooks,
 });
+
+/* ── integrity panel (M-data-5 — :3229-3345 + gap modal :3595-3636):
+      the confirm overlay is shared chrome; the 2 s job poll is gated by
+      panel activation (R5) and the exchange fan-out resets the store
+      (:7324-7332). Created after the context controller so getExchange
+      reads the live ref; the polling options close over `integrity`
+      lazily and only ever run after it exists. ── */
+
+const confirmDialog = useConfirmDialog({ t: (key: string) => t(key) });
+
+const integrityPolling = useIntegrityPolling({
+  fetchJobs: (path) => api.fetchJobsJson(path), // :4567-4572
+  isPanelActive: () => activePanel.value === 'integrity-panel', // :4564-4565
+  getSelectedExchange: () => contextExchange.contextMeta.value.statusKey, // :4583
+  isSaving: () => integrity.isSaving.value, // :4592
+  reloadPanel: () => integrity.loadIntegrityPanel(false), // :4594
+});
+
+const integrity = useIntegrity({
+  api,
+  t: (key, params) => t(key, params ?? {}),
+  showToast,
+  confirm: confirmDialog.confirm,
+  getExchange: () => contextExchange.contextExchange.value,
+  serial: () => getBoot().serial, // PBGUI_SERIAL (:4241) via boot.js
+  polling: integrityPolling,
+});
+
+/** setActivePanel's integrity slice (:9066-9071). */
+panelHooks['integrity-panel'] = {
+  onEnter: () => {
+    void integrity.loadIntegrityPanel(false); // :9067
+    integrityPolling.start(); // :9068
+  },
+  onLeave: () => integrityPolling.stop(), // :9070
+};
+
+/** Legacy ran the integrity load+poll for the whole page life; the Vue
+ *  page stops the chain on unmount so tests/remounts cannot leak it. */
+onBeforeUnmount(() => integrityPolling.stop());
+
+const integrityActive = computed(() => activePanel.value === 'integrity-panel');
+
+// bootstrap :9764 — restore + remap + activate now that every landed panel
+// hook is registered (still before the :9771 fan-out in onMounted)
+restorePanel();
 
 function onExchangeInput(value: string): void {
   contextExchange.setContextExchange(value); // :9611-9613
@@ -210,11 +272,10 @@ function openBest1mPanel(mode: Best1mSection): void {
 
 const statusSummaries = useStatusSummaries();
 
-/* ── panel placeholder registry (M-data-3..7 replace these) ── */
+/* ── panel placeholder registry (M-data-6/7 replace these) ── */
 
-const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel'>, string> = {
+const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel'>, string> = {
   'inventory-panel': 'M-data-6',
-  'integrity-panel': 'M-data-5',
   'best1m-panel': 'M-data-7',
   'copy-data-panel': 'M-data-7',
   'activity-panel': 'M-data-6',
@@ -223,7 +284,7 @@ const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel
 function placeholderTask(panel: PanelDef): string {
   return panel.id === 'status-panel'
     ? 'M-data-2'
-    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel'>];
+    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel'>];
 }
 
 /* ── help opener (legacy initHelpOverlay tail :4085-4089): the nav's Guide
@@ -285,13 +346,19 @@ onMounted(() => {
       />
 
       <PanelShell :panels="PANELS" :active="activePanel" #default="{ panel }">
-        <!-- M-data-4..7: real panel components keyed on panel.id go here -->
+        <!-- M-data-6/7: real panel components keyed on panel.id go here -->
         <StatusPanel v-if="panel.id === 'status-panel'" :monitor="statusMonitor" />
         <SettingsPanel
           v-else-if="panel.id === 'settings-panel'"
           :store="settings"
           :tiingo="tiingo"
           :map="tradfiMap"
+        />
+        <IntegrityPanel
+          v-else-if="panel.id === 'integrity-panel'"
+          :store="integrity"
+          :polling="integrityPolling"
+          :active="integrityActive"
         />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>
@@ -300,4 +367,5 @@ onMounted(() => {
 
   <DataTipTooltip />
   <ToastStack :toasts="toasts" />
+  <ConfirmDialog :dialog="confirmDialog" />
 </template>
