@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- boot.js must run before the bundle: the app reads window.__BOOT__ at
+       mount time. The legacy page's %%API_BASE%%/%%INSTANCE%%/%%DRAFT_ID%%/
+       %%INIT_EXCHANGE%%/%%EXCHANGES%% injections are gone — config.ts derives
+       the base from boot.js and the pre-selections from the URL query the
+       route already passes through verbatim. -->
+  <script src="/api/boot.js"></script>
+  <!-- legacy i18n engine: still drives the nav subtitle -->
+  <script src="/app/i18n.js?v=1"></script>
+  <title>Balance Calculator</title>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Same loading order as legacy balance_calc.html:262-265: NAV_CONFIG must
+       exist before pbgui_nav.js, which fills #topnav. -->
+  <script>
+    window.PBGUI_NAV_CONFIG = {
+      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.balance.subtitle') : 'Balance Calculator'),
+      current: 'info_balance_calc'
+    };
+  </script>
+  <script src="/app/pbgui_nav.js"></script>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

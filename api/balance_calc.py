@@ -19,9 +19,9 @@ import traceback
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from logging_helpers import human_log as _log
 from pb7_config import load_pb7_config
 from pb8_config import load_pb8_config
@@ -455,7 +455,7 @@ def get_draft(draft_id: str, session: SessionToken = Depends(require_auth)):
     return {"config": entry[1]}
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     instance: str = Query(default="", description="Pre-select instance name"),
@@ -463,33 +463,39 @@ def get_main_page(
     draft_id: str = Query(default="", description="Draft config id to pre-load"),
     exchange: str = Query(default="", description="Pre-select exchange"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone Balance Calculator page."""
-    html_path = Path(__file__).parent.parent / "frontend" / "balance_calc.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the Balance Calculator page: built Vue entry first, legacy fallback.
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/balance-calc"
+    The Vue page (frontend/src/pages/balance_calc) reads boot values from
+    /api/boot.js and the pre-selections from the URL query the route passes
+    through verbatim; the legacy balance_calc.html keeps the server-side
+    placeholder injections as the fallback for checkouts without a build.
+    """
+    del session
 
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-    html = html.replace('"%%INSTANCE%%"', json.dumps(instance))
-    html = html.replace('"%%INSTANCE_VERSION%%"', json.dumps(instance_version))
-    html = html.replace('"%%DRAFT_ID%%"', json.dumps(draft_id))
-    html = html.replace('"%%INIT_EXCHANGE%%"', json.dumps(exchange))
-    html = html.replace('"%%EXCHANGES%%"', json.dumps(EXCHANGES))
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_base = origin + "/api/balance-calc"
 
-    from pbgui_purefunc import PBGUI_VERSION
-    from pbgui_purefunc import PBGUI_SERIAL
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
+        html = html.replace('"%%INSTANCE%%"', json.dumps(instance))
+        html = html.replace('"%%INSTANCE_VERSION%%"', json.dumps(instance_version))
+        html = html.replace('"%%DRAFT_ID%%"', json.dumps(draft_id))
+        html = html.replace('"%%INIT_EXCHANGE%%"', json.dumps(exchange))
+        html = html.replace('"%%EXCHANGES%%"', json.dumps(EXCHANGES))
 
-    nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+        from pbgui_purefunc import PBGUI_VERSION
+        from pbgui_purefunc import PBGUI_SERIAL
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("balance_calc", "balance_calc.html", request, inject=_inject)

@@ -7,9 +7,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_balance_calculator_lives_under_information_navigation() -> None:
-    """The shared calculator must have one Information menu identity and route."""
+    """The shared calculator must have one Information menu identity and route.
+
+    Re-pointed at the Vue sources with the balance_calc migration: the page
+    lives in frontend/src/pages/balance_calc (index.html carries the nav
+    identity, useBalanceCalc.ts the instance/config payloads).
+    """
     nav = (ROOT / "frontend" / "pbgui_nav.js").read_text(encoding="utf-8")
-    page = (ROOT / "frontend" / "balance_calc.html").read_text(encoding="utf-8")
+    page_dir = ROOT / "frontend" / "src" / "pages" / "balance_calc"
+    index_html = (page_dir / "index.html").read_text(encoding="utf-8")
+    app = (page_dir / "App.vue").read_text(encoding="utf-8")
+    store = (page_dir / "composables" / "useBalanceCalc.ts").read_text(encoding="utf-8")
+    lib = (page_dir / "lib" / "format.ts").read_text(encoding="utf-8")
     api = (ROOT / "api" / "balance_calc.py").read_text(encoding="utf-8")
     information = nav[nav.index("{ id: 'information'") : nav.index("{ id: 'pbv7'")]
     pbv7 = nav[nav.index("{ id: 'pbv7'") : nav.index("{ id: 'pbv8'")]
@@ -19,15 +28,15 @@ def test_balance_calculator_lives_under_information_navigation() -> None:
     assert "v7_balance_calc" not in nav
     assert "'info_balance_calc':  '/api/balance-calc/main_page'" in nav
     assert "'info_balance_calc':           '38_balance_calc'" in nav
-    assert "current: 'info_balance_calc'" in page
-    assert "PBv7 Balance Calculator" not in page
-    assert "PB7 / PB8 Instance:" in page
-    assert "%%TOKEN%%" not in page
+    assert "current: 'info_balance_calc'" in index_html
+    assert "PBv7 Balance Calculator" not in index_html + app
+    assert "misc.balance.instanceLabel" in app  # 'PB7 / PB8 Instance:' label key
+    assert "%%TOKEN%%" not in index_html + app
     assert "session.token" not in api
-    assert "credentials: 'same-origin'" in page
-    assert "JSON.stringify({ name: inst.name, version: inst.version })" in page
-    assert "inst.version === 'v8' ? 'PB8' : 'PB7'" in page
-    assert "config_file" not in page
+    assert "credentials: 'same-origin'" in store
+    assert "JSON.stringify({ name: inst.name, version: inst.version })" in store
+    assert "inst.version === 'v8' ? 'PB8' : 'PB7'" in lib
+    assert "config_file" not in index_html + app + store
 
 
 def test_pb8_backtest_handoffs_use_shared_balance_calculator() -> None:
