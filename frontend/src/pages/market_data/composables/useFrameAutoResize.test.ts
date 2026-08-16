@@ -122,6 +122,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('height application (:7452-7479)', () => {
@@ -309,6 +310,35 @@ describe('observer lifecycle (:7490-7504, :7550-7574 — no observer leak, R7)',
     });
     expect(() => controller.handleLoad()).not.toThrow();
     expect(FakeMutationObserver.instances).toHaveLength(1);
+  });
+
+  it('falls back to the global ResizeObserver when no ctor is injected (:7564-7570)', () => {
+    // regression class: the composable must resolve the browser global on
+    // its own — AutoResizeFrame never passes a ctor, so a missing default
+    // silently disabled the monitor variant's second observer
+    class StubbedResizeObserver extends FakeResizeObserver {
+      static installed: StubbedResizeObserver[] = [];
+      constructor(callback: () => void) {
+        super(callback);
+        StubbedResizeObserver.installed.push(this);
+      }
+    }
+    vi.stubGlobal('ResizeObserver', StubbedResizeObserver);
+    const doc = makeDoc();
+    const root = doc.createElement('section');
+    doc.body.appendChild(root);
+    const frame = makeFrame(doc);
+    const raf = makeRaf();
+    const controller = useFrameAutoResize({
+      frame: () => frame,
+      useResizeObserver: true,
+      requestAnimationFrame: raf.fn,
+      MutationObserverCtor: FakeMutationObserver as unknown as typeof MutationObserver,
+      // no ResizeObserverCtor — the global is the only source
+    });
+    controller.handleLoad();
+    expect(StubbedResizeObserver.installed).toHaveLength(1);
+    expect(StubbedResizeObserver.installed[0]!.observed).toEqual([root]);
   });
 
   it('teardown disconnects both observers (:7554-7555 equivalent)', () => {

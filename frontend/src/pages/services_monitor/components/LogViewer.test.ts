@@ -174,7 +174,7 @@ describe('LogViewer line rendering (legacy _extractLevel/_levelClass)', () => {
       lines: [
         '2026-01-01 10:00:00 [INFO] started',
         'fatal: could not bind port',
-        '[31m[ERROR][0m disk full',
+        '\x1b[31m[ERROR]\x1b[0m disk full',
         'plain line without a marker',
       ],
     });

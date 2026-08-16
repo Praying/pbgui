@@ -28,13 +28,13 @@ let fetchJson: ReturnType<typeof vi.fn>;
 let showToast: ReturnType<typeof vi.fn>;
 let openBest1mPanel: ReturnType<typeof vi.fn>;
 
-function makeStore(overrides: { exchange?: () => string } = {}): UseBest1m {
+function makeStore(overrides: { exchange?: () => string; section?: () => string } = {}): UseBest1m {
   return useBest1m({
     api: { fetchJson } as unknown as Best1mApi,
     t,
     showToast,
     getExchange: overrides.exchange ?? (() => 'bybit'),
-    getBest1mSection: () => 'build',
+    getBest1mSection: overrides.section ?? (() => 'build'),
     openBest1mPanel,
     serial: () => 'S1',
     dataActionsUrl: (path: string) => `http://h:8/api/market-data${path}`,
@@ -216,10 +216,20 @@ describe('the hyperliquid variant (:3407-3409, :7670-7677)', () => {
     expect(panel.find('#best1m-job-monitor-frame').exists()).toBe(false);
   });
 
-  it('switches the iframe section with the l2books shortcut mode (:7580)', () => {
-    const store = makeStore({ exchange: () => 'hyperliquid' });
+  it('switches the iframe section with the l2books shortcut mode (:7580)', async () => {
+    // the shortcut's effect at panel level: the App flips best1mSection to
+    // 'download' (openBest1mPanel :7688) and the panel's onEnter refresh
+    // (:7690) re-reads it — the iframe src must follow (:7671)
+    let section = 'build';
+    const store = makeStore({ exchange: () => 'hyperliquid', section: () => section });
     store.refreshPanel(false);
     const panel = mountPanel(store);
     expect(panel.find('#best1m-hyperliquid-frame').attributes('src')).toContain('section=build');
+    section = 'download'; // l2books shortcut click (:9117-9120)
+    store.refreshPanel(false); // panel onEnter refresh the shortcut triggers
+    await panel.vm.$nextTick();
+    expect(panel.find('#best1m-hyperliquid-frame').attributes('src')).toContain(
+      'section=download'
+    );
   });
 });

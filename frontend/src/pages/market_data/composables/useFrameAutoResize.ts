@@ -86,7 +86,12 @@ export function useFrameAutoResize(options: UseFrameAutoResizeOptions): FrameAut
   const setTimeoutFn = options.setTimeoutFn ?? setTimeout;
   const clearTimeoutFn = options.clearTimeoutFn ?? clearTimeout;
   const MutationObserverCtor = options.MutationObserverCtor ?? window.MutationObserver;
-  const ResizeObserverCtor = options.ResizeObserverCtor;
+  // Legacy installed the ResizeObserver unconditionally for the monitor
+  // variant (:7564-7570); the typeof guard only covers environments without
+  // the API (jsdom) — production browsers always have it.
+  const ResizeObserverCtor =
+    options.ResizeObserverCtor ??
+    (typeof ResizeObserver === 'function' ? ResizeObserver : undefined);
 
   let resizeFramePending = false; // :7450
   let mutationObserver: {
