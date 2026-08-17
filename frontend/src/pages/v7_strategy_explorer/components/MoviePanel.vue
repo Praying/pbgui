@@ -8,7 +8,7 @@
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { deepGet, esc, fmt } from '../lib/format';
+import { deepGet, fmt } from '../lib/format';
 import MoviePlot from './MoviePlot.vue';
 import type { ExplorerStore } from '../composables/useStrategyExplorer';
 import type { useMovie } from '../composables/useMovie';
@@ -85,7 +85,6 @@ function fillRows(): FillRow[] {
     posSize: fmt(ev.pos_size, 8),
   }));
 }
-void esc;
 
 function onStepChange(): void {
   store.invalidateMovieRequest();

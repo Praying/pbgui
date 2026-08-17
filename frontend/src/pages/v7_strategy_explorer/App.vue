@@ -140,7 +140,9 @@ function onScroll(): void {
   scrollTimer = setTimeout(() => main.classList.remove('is-scrolling'), 140);
 }
 
-/** The floating data-tip tooltip (:3228-3269). */
+/** The floating data-tip tooltip (:3228-3269) — disposers for the three
+ * document listeners (R4: the legacy page leaked them on unload). */
+let disposeTooltip: (() => void) | null = null;
 function installTooltip(): void {
   const tipEl = document.getElementById('data-tip-tooltip');
   if (!tipEl) return;
@@ -158,7 +160,7 @@ function installTooltip(): void {
     if (y + th > window.innerHeight - 8) y = lastEvent.clientY - th - 10;
     tip.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
   }
-  document.addEventListener('mouseover', (e) => {
+  const onMouseOver = (e: Event) => {
     const target = e.target as HTMLElement | null;
     const el = target?.closest ? target.closest('[data-tip]') : null;
     if (!el) return;
@@ -168,17 +170,13 @@ function installTooltip(): void {
     tip.style.display = 'block';
     lastEvent = e as MouseEvent;
     if (!frameId) frameId = requestAnimationFrame(positionTip);
-  });
-  document.addEventListener(
-    'mousemove',
-    (e) => {
-      if (tip.style.display === 'none') return;
-      lastEvent = e as MouseEvent;
-      if (!frameId) frameId = requestAnimationFrame(positionTip);
-    },
-    { passive: true }
-  );
-  document.addEventListener('mouseout', (e) => {
+  };
+  const onMouseMove = (e: Event) => {
+    if (tip.style.display === 'none') return;
+    lastEvent = e as MouseEvent;
+    if (!frameId) frameId = requestAnimationFrame(positionTip);
+  };
+  const onMouseOut = (e: Event) => {
     const target = e.target as HTMLElement | null;
     const el = target?.closest ? target.closest('[data-tip]') : null;
     if (el) {
@@ -187,7 +185,16 @@ function installTooltip(): void {
       if (frameId) cancelAnimationFrame(frameId);
       frameId = 0;
     }
-  });
+  };
+  document.addEventListener('mouseover', onMouseOver);
+  document.addEventListener('mousemove', onMouseMove, { passive: true });
+  document.addEventListener('mouseout', onMouseOut);
+  disposeTooltip = () => {
+    if (frameId) cancelAnimationFrame(frameId);
+    document.removeEventListener('mouseover', onMouseOver);
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseout', onMouseOut);
+  };
 }
 
 onMounted(() => {
@@ -214,6 +221,8 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown);
   document.removeEventListener('fullscreenchange', onFullscreenChange);
   window.removeEventListener('beforeunload', onBeforeUnload);
+  disposeTooltip?.();
+  disposeTooltip = null;
   if (scrollTimer) clearTimeout(scrollTimer);
 });
 </script>

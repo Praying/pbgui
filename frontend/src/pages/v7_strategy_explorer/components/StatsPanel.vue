@@ -19,7 +19,6 @@ const side = () => deepGet<Record<string, unknown>>(store.state.snapshot, ['side
 const summary = () => (side().summary || {}) as Record<string, number>;
 const entries = () => deepGet<StrategyOrder[]>(side(), ['orders', 'entries'], []);
 const closes = () => deepGet<StrategyOrder[]>(side(), ['orders', 'closes'], []);
-const active = () => !!side().active;
 const modes = () => (side().modes || {}) as { entry?: string; close?: string };
 
 interface OrderRow {
@@ -93,6 +92,5 @@ const DEBUG_BLOCKS = [
         <div v-if="deepGet<string>(side(), ['debug', 'next_entry_error'], '')" class="message error">{{ deepGet(side(), ['debug', 'next_entry_error'], '') }}</div>
       </div>
     </section>
-    <span style="display:none">{{ active() }}</span>
   </section>
 </template>

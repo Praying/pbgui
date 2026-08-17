@@ -157,6 +157,36 @@ describe('Strategy Explorer page shell (v8 flavour)', () => {
   });
 });
 
+describe('OHLCV chip aggregation tooltip (:2016-2028)', () => {
+  it('appends the aggregated-candle count when the window exceeds the plot cap', async () => {
+    const candles = Array.from({ length: 1800 }, (_, i) => ({
+      timestamp: new Date(Date.UTC(2024, 0, 1, 0, i)).toISOString(),
+      open: 1, high: 2, low: 0.5, close: 1.5, volume: 1,
+    }));
+    const session = {
+      ...SESSION,
+      snapshot: { ...SNAPSHOT, candles, market: { ...SNAPSHOT.market, ohlcv_status: 'OK', metadata: { ohlcv: { rows: 1800, selected_start: '2024-01-02T03:04:00' } } } },
+    };
+    stubFetch(session);
+    const wrapper = await mountApp('/api/strategy-explorer/main_page');
+
+    const title = wrapper.get('#ohlcv-chip').attributes('title') ?? '';
+    // 1800 candles > MAX_PLOT_CANDLES(900) → plotCandleInfo buckets to 900 (:2018)
+    expect(title).toContain('loaded 1,800');
+    expect(title).toContain('window 1,800');
+    expect(title).toContain('plotting 900 aggregated candles');
+    wrapper.unmount();
+  });
+
+  it('omits the segment when the window fits the plot cap', async () => {
+    stubFetch();
+    const wrapper = await mountApp('/api/strategy-explorer/main_page');
+    const title = wrapper.get('#ohlcv-chip').attributes('title') ?? '';
+    expect(title).not.toContain('aggregated');
+    wrapper.unmount();
+  });
+});
+
 describe('stage switching (:3066-3079)', () => {
   it('activates the requested stage section and sidebar button', async () => {
     stubFetch();

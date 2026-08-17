@@ -6,7 +6,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { deepGet, esc, fmt } from '../lib/format';
+import { deepGet, fmt } from '../lib/format';
 import ParamTuning from './ParamTuning.vue';
 import ExplorerPlot from './ExplorerPlot.vue';
 import StatsPanel from './StatsPanel.vue';
@@ -53,7 +53,6 @@ function fillRows(): FillRow[] {
     posSize: fmt(ev.pos_size, 8),
   }));
 }
-void esc;
 </script>
 
 <template>

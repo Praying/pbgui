@@ -1,6 +1,7 @@
 import { computed, reactive, ref } from 'vue';
 import type { Ref } from 'vue';
 import { apiFetch } from '../lib/api';
+import { plotCandleInfo } from '../lib/candles';
 import { deepEnsure, deepGet, firstConfigCoin, firstConfigExchange, fmt } from '../lib/format';
 import { DEFAULT_PARAM_FIELD_META, DEFAULT_SEGMENTS, normalizeParamGroups, paramFieldPath, paramValue as paramValueOf, setParamValue } from '../lib/params';
 import { chooseMovieHandoffWindow, durationOptions, resolveDuration, framesForDuration, applyMovieDurationAnchor, movieStepLabelToMinutes } from '../lib/movieOptions';
@@ -529,7 +530,9 @@ export function useStrategyExplorer(deps: StoreDeps) {
     const snapshot = state.snapshot;
     const loadedRows = Number(deepGet<number>(snapshot, ['market', 'metadata', 'ohlcv', 'rows'], 0) || 0);
     const displayedRows = snapshot?.candles?.length || 0;
-    const plotRows = snapshot?.candles?.length ? 0 : 0; // aggregated rows shown by the plot component
+    // aggregated display rows (:2018) — differs from the window candle count
+    // when the snapshot exceeds MAX_PLOT_CANDLES (common on 1m data)
+    const plotRows = plotCandleInfo(snapshot?.candles || []).rows;
     const ohlcvStatus = deepGet<string>(snapshot, ['market', 'ohlcv_status'], 'Candles disabled');
     const title =
       ohlcvStatus +
