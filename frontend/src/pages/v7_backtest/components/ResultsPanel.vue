@@ -25,7 +25,8 @@ const props = defineProps<{
 const { t } = useI18n();
 const store = props.results;
 
-const sticky = ref(true);
+/** Pin state (:6415-6419) — the `unpinned` class lands on #panel-results in App. */
+const pinned = defineModel<boolean>('pinned', { default: true });
 const deleteConfirmOpen = ref(false);
 
 const countLabel = computed<string>(() => {
@@ -103,12 +104,8 @@ defineExpose({ deleteSelectedFlow });
 
 <template>
   <div>
-    <div
-      id="results-fixed-top"
-      :class="{ sticky }"
-      style="background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6); margin-bottom: var(--sp-md)"
-    >
-      <div id="results-toolbar" style="display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md); flex-wrap: wrap; padding-top: var(--sp-sm)">
+    <div id="results-fixed-top">
+      <div id="results-toolbar">
         <label style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.version') }}</label>
         <select
           id="results-version-filter"
@@ -131,7 +128,7 @@ defineExpose({ deleteSelectedFlow });
         <span style="flex: 1"></span>
         <button type="button" class="act-btn" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</button>
         <button type="button" class="act-btn" data-test="results-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</button>
-        <button id="results-pin-btn" type="button" class="act-btn" :title="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="sticky = !sticky">📌</button>
+        <button id="results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned">📌</button>
       </div>
       <div id="results-list-wrap" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
         <div id="results-list">
@@ -149,13 +146,8 @@ defineExpose({ deleteSelectedFlow });
           />
         </div>
       </div>
-      <div
-        id="results-resize-handle"
-        :title="t('v7backtest.dragToResize')"
-        style="height: 6px; cursor: row-resize; background: var(--border); border-radius: 0 0 4px 4px; margin-bottom: 0; display: flex; align-items: center; justify-content: center; user-select: none"
-        @mousedown="onResizeStart"
-      >
-        <span style="width: 32px; height: 2px; background: var(--text-dim); border-radius: 2px; opacity: 0.5"></span>
+      <div id="results-resize-handle" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
+        <span></span>
       </div>
     </div>
 

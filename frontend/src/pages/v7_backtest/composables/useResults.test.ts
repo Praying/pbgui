@@ -364,3 +364,25 @@ describe('dispose', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('deleteResults (:8509-8532)', () => {
+  it('surfaces HTTP errors: deleteFailed toast, sections stay open, no reload', async () => {
+    fetchMock.mockImplementationOnce(() => ok(resultPayload(['a'])));
+    const s = store();
+    const p = s.loadResults();
+    await vi.advanceTimersByTimeAsync(0);
+    await p;
+    s.toggleAction('a', 'view');
+    s.setSelected(['a']);
+    fetchMock.mockClear();
+    // the DELETE answers 500 — legacy apiFetchFrom throws on !ok (:8531-8532)
+    fetchMock.mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ detail: 'denied' }), { status: 500 })));
+    await s.deleteResults(['a']);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(String(notify.mock.calls[0]?.[0])).toContain('v7backtest.deleteFailed');
+    expect(String(notify.mock.calls[0]?.[0])).toContain('denied');
+    expect(s.activeResults.value).toHaveLength(1); // sections NOT closed
+    expect(s.getSelected()).toEqual(['a']); // selection untouched on failure
+    expect(fetchMock).toHaveBeenCalledTimes(1); // only the DELETE — no reload
+  });
+});

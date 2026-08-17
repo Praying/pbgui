@@ -110,13 +110,16 @@ describe('toolbar (:837-852)', () => {
     expect(store.getSelected()).toEqual([]);
   });
 
-  it('the pin button toggles the sticky table (:6415-6419)', async () => {
+  it('the pin button dims and reports unpinned (:6415-6419, shell.js:326-334)', async () => {
     const store = await loadedStore();
     const wrapper = mountPanel(store);
-    const top = wrapper.find('#results-fixed-top');
-    expect(top.classes()).toContain('sticky');
-    await wrapper.find('#results-pin-btn').trigger('click');
-    expect(top.classes()).not.toContain('sticky');
+    const button = wrapper.find('#results-pin-btn');
+    expect(button.classes()).not.toContain('unpinned');
+    await button.trigger('click');
+    expect(button.classes()).toContain('unpinned'); // legacy opacity .4 state
+    expect(wrapper.emitted('update:pinned')).toEqual([[false]]);
+    await button.trigger('click');
+    expect(wrapper.emitted('update:pinned')).toEqual([[false], [true]]);
   });
 });
 

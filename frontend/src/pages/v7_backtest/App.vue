@@ -44,6 +44,8 @@ const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
 const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
 const editorPanel = ref<InstanceType<typeof BacktestConfigEditor> | null>(null);
 const resultsPanel = ref<InstanceType<typeof ResultsPanel> | null>(null);
+/** Results pin state (:6415-6419) — `unpinned` releases the panel chrome. */
+const resultsPinned = ref(true);
 
 const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
@@ -224,8 +226,17 @@ onMounted(() => {
       />
 
       <!-- RESULTS panel (:834-869) — toolbar + table + compare + charts -->
-      <div id="panel-results" class="view-panel" :class="{ active: store.view.state.panel === 'results' }">
-        <ResultsPanel ref="resultsPanel" :results="store.results" :version-bound-actions="store.results.versionFilter.value !== store.adapter.version" />
+      <div
+        id="panel-results"
+        class="view-panel"
+        :class="{ active: store.view.state.panel === 'results', unpinned: !resultsPinned }"
+      >
+        <ResultsPanel
+          ref="resultsPanel"
+          v-model:pinned="resultsPinned"
+          :results="store.results"
+          :version-bound-actions="store.results.versionFilter.value !== store.adapter.version"
+        />
       </div>
 
       <!-- ARCHIVE panel — M-v7-11 -->

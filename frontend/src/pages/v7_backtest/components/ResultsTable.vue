@@ -110,7 +110,10 @@ const tbody = ref<HTMLElement | null>(null);
 
 const dragSelect = useRowDragSelect({
   getRows: () => (tbody.value ? Array.from(tbody.value.querySelectorAll('tr[data-path]')) : []),
-  getWrap: () => wrap.value,
+  // the real scroll container is the panel's #results-list-wrap (:853) —
+  // legacy auto-scrolled THAT wrap's scrollTop (:5773); ResultsTable's own
+  // root div does not scroll
+  getWrap: () => (wrap.value ? (wrap.value.closest('#results-list-wrap') as HTMLElement | null) : null),
   isSelected: (path) => props.selected.has(path),
   onToggle: (path) => emit('toggle-select', path),
   onSelectRange: (paths, selected) => emit('select-paths', paths, selected),

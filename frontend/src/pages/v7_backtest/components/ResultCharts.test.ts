@@ -254,3 +254,65 @@ describe('ResultCharts (:6576-6786)', () => {
     expect(wrapper.findAll('[data-test="price-market"] option').map((o) => (o.element as HTMLOptionElement).value)).toEqual(['binance|BTC']);
   });
 });
+
+describe('image section edge cases (:7560-7593)', () => {
+  it('empty lists render the legacy literals (:7565, :7583)', async () => {
+    const empty = mount(
+      ResultCharts,
+      {
+        props: {
+          sections: [{ result: resultItem, actions: new Set<ResultActionKind>(['plot', 'fills']) }],
+          version: 'v7' as const,
+          dataApi: {
+            resultApiBaseFor: () => 'http://h:8000/api/backtest-v7',
+            fetchCsv: () => Promise.resolve({ headers: [], rows: [] }),
+            loadBe: () => Promise.resolve({ time: [], balance: [], equity: [], balance_btc: [], equity_btc: [] }),
+            loadFills: () => Promise.resolve({ headers: [], rows: [] }),
+            loadConfig: () => Promise.resolve({}),
+            loadAnalysis: () => Promise.resolve({}),
+            loadFiles: () => Promise.resolve([]),
+            imageUrl: (path: string, _result: unknown, filename: string) => `http://h/img?path=${path}&filename=${filename}`,
+            loadPrice: () => Promise.resolve({ available: false, time: [], close: [] }),
+            beForCompare: () =>
+              Promise.resolve({ path: '', version: 'v7' as const, be: { time: [], balance: [], equity: [], balance_btc: [], equity_btc: [] } }),
+            clearCachesFor: () => undefined,
+          },
+        },
+        global: { plugins: [createI18n('en')] },
+        attachTo: document.body,
+      }
+    );
+    await vi.waitFor(() => expect(empty.find('[data-test="plot-section"]').text()).toContain('No plot images found'));
+    expect(empty.find('[data-test="fills-section"]').text()).toContain('No fills plots found');
+  });
+
+  it('a /results/files failure renders the red Failed message (:7574, :7592)', async () => {
+    const failing = mount(
+      ResultCharts,
+      {
+        props: {
+          sections: [{ result: resultItem, actions: new Set<ResultActionKind>(['plot', 'fills']) }],
+          version: 'v7' as const,
+          dataApi: {
+            resultApiBaseFor: () => 'http://h:8000/api/backtest-v7',
+            fetchCsv: () => Promise.resolve({ headers: [], rows: [] }),
+            loadBe: () => Promise.resolve({ time: [], balance: [], equity: [], balance_btc: [], equity_btc: [] }),
+            loadFills: () => Promise.resolve({ headers: [], rows: [] }),
+            loadConfig: () => Promise.resolve({}),
+            loadAnalysis: () => Promise.resolve({}),
+            loadFiles: () => Promise.reject(new Error('files unavailable')),
+            imageUrl: () => '',
+            loadPrice: () => Promise.resolve({ available: false, time: [], close: [] }),
+            beForCompare: () =>
+              Promise.resolve({ path: '', version: 'v7' as const, be: { time: [], balance: [], equity: [], balance_btc: [], equity_btc: [] } }),
+            clearCachesFor: () => undefined,
+          },
+        },
+        global: { plugins: [createI18n('en')] },
+        attachTo: document.body,
+      }
+    );
+    await vi.waitFor(() => expect(failing.find('[data-test="plot-section"]').text()).toContain('Failed: files unavailable'));
+    expect(failing.find('[data-test="fills-section"]').text()).toContain('Failed: files unavailable');
+  });
+});

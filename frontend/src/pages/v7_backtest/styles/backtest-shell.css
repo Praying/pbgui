@@ -34,11 +34,32 @@ a:hover { text-decoration: underline; }
 /* ── Page layout (:42-56 + backtest_shell.css:31-36) ── */
 #page-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
 #main-content { flex: 1; overflow: hidden; background: var(--bg); padding: var(--sp-lg); display: flex; flex-direction: column; }
+/* When the results panel is unpinned: main-content scrolls everything (:49-50) */
+#main-content:has(#panel-results.active.unpinned) { overflow-y: auto; }
 .view-panel { display: none; }
 .view-panel.active { display: flex !important; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 #configs-list, #queue-list { flex: 1; min-height: 0; overflow-y: auto; }
 .bt-panel-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-sm); }
 .bt-toolbar-spacer { flex: 1; }
+
+/* ── Results panel chrome (:57-65, :118, :836-859, :6415-6419) ── */
+/* PINNED (default): the panel fills the viewport; only the scroll area scrolls */
+#panel-results.active:not(.unpinned) { height: 100%; }
+#results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border);
+                     box-shadow: 0 4px 12px rgba(0,0,0,.6); margin-bottom: var(--sp-md); }
+#results-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md);
+                   flex-wrap: wrap; padding-top: var(--sp-sm); }
+#results-list-wrap { height: 25vh; min-height: 80px; overflow-y: auto;
+                     border: 1px solid var(--border); border-radius: 4px; position: relative; }
+#results-resize-handle { height: 6px; cursor: row-resize; background: var(--border); border-radius: 0 0 4px 4px;
+                         margin-bottom: 0; display: flex; align-items: center; justify-content: center; user-select: none; }
+#results-resize-handle > span { width: 32px; height: 2px; background: var(--text-dim); border-radius: 2px; opacity: .5; }
+#results-scroll-area { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: var(--sp-lg); }
+/* UNPINNED: release overflow + flex so main-content can scroll everything (:63-65) */
+#panel-results.active.unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
+#panel-results.unpinned #results-scroll-area { flex: none; min-height: unset; overflow-y: visible; }
+#results-pin-btn.unpinned { opacity: .4; }
+.results-count-label { color: var(--text-dim); font-size: var(--fs-sm); white-space: nowrap; }
 
 /* ── Tables (backtest_shell.css:40-49) ───────────── */
 .tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-base); user-select: none; }

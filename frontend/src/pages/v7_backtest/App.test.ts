@@ -587,3 +587,18 @@ describe('results panel (M-v7-10, :834-869)', () => {
     wrapper.unmount();
   });
 });
+
+  it('the results pin button unpins the panel chrome (:6415-6419, shell.js:326-334)', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    const panel = wrapper.find('#panel-results');
+    expect(panel.classes()).not.toContain('unpinned');
+    await wrapper.find('#results-pin-btn').trigger('click');
+    await nextTick();
+    expect(panel.classes()).toContain('unpinned');
+    await wrapper.find('#results-pin-btn').trigger('click');
+    await nextTick();
+    expect(panel.classes()).not.toContain('unpinned');
+    wrapper.unmount();
+  });

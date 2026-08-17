@@ -221,21 +221,24 @@ async function loadConfigJson(): Promise<void> {
 
 const plotFiles = ref<string[]>([]);
 const fillsFiles = ref<string[]>([]);
+const plotFilesError = ref('');
+const fillsFilesError = ref('');
 
 async function loadImages(): Promise<void> {
   const r = result.value;
   if (props.section.actions.has('plot')) {
     try {
       plotFiles.value = await props.dataApi.loadFiles(r.path, r, 'plot');
-    } catch {
-      plotFiles.value = [];
+    } catch (error) {
+      // legacy renders a red "Failed: msg" (:7574)
+      plotFilesError.value = error instanceof Error ? error.message : String(error);
     }
   }
   if (props.section.actions.has('fills')) {
     try {
       fillsFiles.value = await props.dataApi.loadFiles(r.path, r, 'fills');
-    } catch {
-      fillsFiles.value = [];
+    } catch (error) {
+      fillsFilesError.value = error instanceof Error ? error.message : String(error);
     }
   }
 }
@@ -349,10 +352,11 @@ function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, event: Event): v
       <pre class="json-pre">{{ configText }}</pre>
     </div>
 
-    <!-- Plot images (:6723-6732) -->
+    <!-- Plot images (:6723-6732) — literal strings, like the legacy -->
     <div v-if="section.actions.has('plot')" class="chart-wrap" data-test="plot-section" style="margin-top: var(--sp-md)">
       <div style="padding: var(--sp-md)">
-        <div v-if="plotFiles.length === 0" style="color: var(--text-dim)">{{ t('v7backtest.noPlotImages') }}</div>
+        <div v-if="plotFilesError" style="color: var(--red)">Failed: {{ plotFilesError }}</div>
+        <div v-else-if="plotFiles.length === 0" style="color: var(--text-dim)">No plot images found</div>
         <img
           v-for="file in plotFiles"
           :key="file"
@@ -367,7 +371,8 @@ function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, event: Event): v
     <!-- Fills plots (:6734-6743) -->
     <div v-if="section.actions.has('fills')" class="chart-wrap" data-test="fills-section" style="margin-top: var(--sp-md)">
       <div style="padding: var(--sp-md)">
-        <div v-if="fillsFiles.length === 0" style="color: var(--text-dim)">{{ t('v7backtest.noFillsPlots') }}</div>
+        <div v-if="fillsFilesError" style="color: var(--red)">Failed: {{ fillsFilesError }}</div>
+        <div v-else-if="fillsFiles.length === 0" style="color: var(--text-dim)">No fills plots found</div>
         <img
           v-for="file in fillsFiles"
           :key="file"

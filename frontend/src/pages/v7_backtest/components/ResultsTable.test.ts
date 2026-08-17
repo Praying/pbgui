@@ -209,3 +209,39 @@ describe('row selection interactions (:5755-5785)', () => {
     expect(range).toEqual([['a', 'b'], true]);
   });
 });
+
+describe('auto-scroll targets the real scroll container (:5773)', () => {
+  it('drag-selects inside #results-list-wrap and scrolls THAT wrap near its edge', async () => {
+    const rows = [row({ path: 'a' }), row({ path: 'b' }), row({ path: 'c' })];
+    const scrollWrap = document.createElement('div');
+    scrollWrap.id = 'results-list-wrap';
+    const list = document.createElement('div');
+    list.id = 'results-list';
+    scrollWrap.appendChild(list);
+    document.body.appendChild(scrollWrap);
+    const wrapper = mount(ResultsTable, {
+      props: { rows, selected: new Set<string>(), sort: { col: 'modified', asc: false }, activeActions: {} },
+      global: { plugins: [i18n] },
+      attachTo: list,
+    });
+    const trs = wrapper.findAll('tbody tr');
+    vi.spyOn(trs[0]!.element as HTMLElement, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 20 } as DOMRect);
+    vi.spyOn(trs[1]!.element as HTMLElement, 'getBoundingClientRect').mockReturnValue({ top: 20, bottom: 40 } as DOMRect);
+    vi.spyOn(trs[2]!.element as HTMLElement, 'getBoundingClientRect').mockReturnValue({ top: 40, bottom: 60 } as DOMRect);
+    vi.spyOn(scrollWrap, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: 100, height: 100 } as DOMRect);
+    Object.defineProperty(scrollWrap, 'scrollTop', {
+      configurable: true,
+      get: () => (scrollWrap as unknown as { __st?: number }).__st ?? 0,
+      set: (v: number) => ((scrollWrap as unknown as { __st?: number }).__st = v),
+    });
+    trs[0]!.element.dispatchEvent(new MouseEvent('mousedown', { button: 0, clientY: 10, bubbles: true }));
+    document.body.dispatchEvent(new MouseEvent('mousemove', { clientY: 30, bubbles: true })); // drag armed
+    document.body.dispatchEvent(new MouseEvent('mousemove', { clientY: 95, bubbles: true })); // inside the wrap's bottom edge
+    await new Promise((resolve) => setTimeout(resolve, 40)); // let rAF ticks run
+    expect((scrollWrap as unknown as { __st?: number }).__st ?? 0).toBeGreaterThan(0);
+    document.body.dispatchEvent(new MouseEvent('mouseup', { clientY: 95, bubbles: true }));
+    expect(wrapper.emitted('select-paths')?.at(-1)).toEqual([['a', 'b', 'c'], true]);
+    wrapper.unmount();
+    document.body.innerHTML = '';
+  });
+});

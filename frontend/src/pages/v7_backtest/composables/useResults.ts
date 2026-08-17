@@ -406,7 +406,7 @@ export function useResults(options: UseResultsOptions): ResultsStore {
     clearCachesFor(paths);
   }
 
-  /** deleteSelectedResults' delete branch (:8526-8532). */
+  /** deleteSelectedResults' delete branch (:8526-8532) — errors surface. */
   async function deleteResults(paths: readonly string[]): Promise<void> {
     const rows = paths.map(
       (path) =>
@@ -415,12 +415,17 @@ export function useResults(options: UseResultsOptions): ResultsStore {
     );
     try {
       await Promise.all(
-        rows.map((row) =>
-          fetchFn(`${resultApiBaseFor(row)}/results?path=${encodeURIComponent(row.path)}`, {
+        rows.map(async (row) => {
+          // legacy used apiFetchFrom, which throws the detail on !ok (:8531-8532)
+          const response = await fetchFn(`${resultApiBaseFor(row)}/results?path=${encodeURIComponent(row.path)}`, {
             method: 'DELETE',
             credentials: 'same-origin',
-          })
-        )
+          });
+          if (!response.ok) {
+            const data = (await response.json().catch(() => ({}))) as { detail?: unknown };
+            throw new Error(String(data.detail ?? response.statusText ?? `HTTP ${response.status}`));
+          }
+        })
       );
       clearActionsForPaths(paths); // closeAllSectionsForPaths (:8526)
       selectedPaths.value = new Set();
