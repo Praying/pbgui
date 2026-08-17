@@ -164,6 +164,79 @@ describe('boot chain (:10012-10024)', () => {
     wrapper.unmount();
   });
 
+  it('renders the configs list rows (renderConfigs :1654-1712)', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      if (String(url).includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4, hsl_signal_modes: ['coin', 'pside'] });
+      if (String(url).includes('/configs')) {
+        return ok({ configs: [{ name: 'alpha', exchanges: ['bybit'], coins: 3, twe_long: 1, twe_short: 0, start_date: '2021-01-01', end_date: 'now', results: 2, modified: '2026-08-01' }] });
+      }
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    const rows = wrapper.findAll('#panel-configs tbody tr');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.text()).toContain('alpha');
+    expect(rows[0]!.text()).toContain('bybit');
+    wrapper.unmount();
+  });
+
+  it('opens the editor from the ctx New Config button and closes via Home (:721, :2563)', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#sidebar-editor').exists()).toBe(false);
+    await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
+    expect(wrapper.find('[data-test="configs-editor"]').exists()).toBe(true);
+    await wrapper.find('#sidebar-editor .sb-btn').trigger('click'); // Home
+    await nextTick();
+    expect(wrapper.find('#sidebar-editor').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it('opens the editor for a row edit action (editConfig :1739-1745)', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.includes('/configs/alpha')) return ok({ name: 'alpha', config: { backtest: { start_date: '2021-01-01', exchanges: ['bybit'] }, bot: { long: {}, short: {} } }, param_status: {} });
+      if (target.includes('/configs')) return ok({ configs: [{ name: 'alpha', exchanges: ['bybit'] }] });
+      if (target.includes('/symbols')) return ok({ symbols: [] });
+      if (target.includes('/tags')) return ok({ tags: [] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="cfg-edit"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
+    const nameInput = wrapper.find('[data-test="cfg-name"]').element as HTMLInputElement;
+    expect(nameInput.value).toBe('alpha');
+    wrapper.unmount();
+  });
+
+  it('opens the queue-draft modal from the queue_draft_id deep link (:2147-2161)', async () => {
+    window.history.replaceState({}, '', '/api/backtest-v7/main_page?queue_draft_id=q1');
+    fetchMock.mockImplementation((url: string) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.includes('/queue-draft/')) return ok({ items: [{ name: 'q1', config: { backtest: { exchanges: ['bybit'] } } }] });
+      if (target.includes('/configs')) return ok({ configs: [] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('[data-test="queue-draft-modal"]').exists()).toBe(true);
+    // legacy leaves ?queue_draft_id in the URL (only the draft_id path clears, :2054 vs :2147-2161)
+    wrapper.unmount();
+  });
+
   it('restores the v8 panel from the v8 flavor key (:1068)', async () => {
     window.history.replaceState({}, '', '/api/backtest-v8/main_page');
     localStorage.setItem('pbgui:v8_backtest:view_state', JSON.stringify({ panel: 'queue', sorts: {} }));

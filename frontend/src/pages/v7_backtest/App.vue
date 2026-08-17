@@ -4,9 +4,10 @@
  * frontend/v7_backtest.html (10,340 L): page chrome (DOM :660-1005),
  * view-state restore + panel switching (:1331-1462), the queue WS
  * (:1267-1337), the settings modal (:1467-1642) and the queue panel
- * (:5136-5226, :5787-5871). Configs editor (M-v7-9), results/charts
- * (M-v7-10), archive/legacy (M-v7-11) and handoffs (M-v7-12) extend
- * this shell.
+ * (:5136-5226, :5787-5871). M-v7-9 adds the configs list (:1654-1712),
+ * the config editor (:2563-2946) and the queue-draft modal (:2062-2145).
+ * Results/charts (M-v7-10), archive/legacy (M-v7-11) and handoffs
+ * (M-v7-12) extend this shell.
  *
  * FLAVOR: pathname-derived (/api/backtest-v8/ → v8, config.ts) — both
  * routers serve this one build; v8 drops the legacy panel.
@@ -15,7 +16,10 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import BacktestConfigEditor from './components/BacktestConfigEditor.vue';
+import ConfigsPanel from './components/ConfigsPanel.vue';
 import PanelShell from './components/PanelShell.vue';
+import QueueDraftModal from './components/QueueDraftModal.vue';
 import QueuePanel from './components/QueuePanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import { useBacktestPage } from './composables/useBacktestPage';
@@ -29,11 +33,18 @@ const store = useBacktestPage({
 });
 
 const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
+const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
 
 const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
   store.banner.value === 'ok' ? t('v7backtest.connected') : store.banner.value === 'lost' ? t('v7backtest.connectionLost') : t('v7backtest.connecting')
 );
+
+const editorOpen = computed(() => store.editor.editingName.value !== null);
+const editorSettings = computed(() => ({
+  hslModes: store.settingsStore.settings.value.hsl_signal_modes,
+  exchangeOptions: store.editor.exchangeOptions(),
+}));
 
 function onQueueViewResults(name: string): void {
   /* filters + results panel land in M-v7-10 */
@@ -41,16 +52,29 @@ function onQueueViewResults(name: string): void {
   void name;
 }
 function onQueueShowLog(filename: string): void {
-  /* the LogViewerPanel wrapper lands with the M-v7-9/10 log surface */
+  /* the LogViewerPanel wrapper lands with the M-v7-10 log surface */
   void filename;
 }
 function onQueueEditConfig(name: string): void {
-  /* the configs editor opens in M-v7-9 */
-  store.selectPanel('configs');
-  void name;
+  void store.editor.editConfig(name);
 }
 function onNothingSelected(): void {
   store.notifyError(t('v7backtest.nothingSelected'));
+}
+
+/** kvLoadCoins' /symbols loader (:3925-3935). */
+function loadSymbols(exchange: string): Promise<{ symbols: string[]; catalog?: Record<string, string> }> {
+  return fetch(`${boot.origin}/api/v7/symbols?exchange=${encodeURIComponent(exchange)}`, { credentials: 'same-origin' }).then(
+    (response) => response.json() as Promise<{ symbols: string[]; catalog?: Record<string, string> }>
+  );
+}
+
+function onTemplateExchanges(needed: readonly string[]): void {
+  const base = store.editor.state.exchanges;
+  const added = needed.filter((exchange) => !base.includes(exchange));
+  if (added.length === 0) return;
+  store.editor.state.exchanges = [...base, ...added];
+  store.toast.show(t('editor.suite.addedExchanges', { ex: added.join(', ') }), 'ok');
 }
 
 declare global {
@@ -82,7 +106,10 @@ onMounted(() => {
       @select="store.selectPanel"
     >
       <template #ctx-configs>
-        <!-- ctx-configs actions (New/Delete) land with the M-v7-9 configs list -->
+        <button type="button" class="sb-btn accent" data-test="ctx-new-config" @click="store.editor.newConfig()">+ {{ t('v7backtest.newConfig') }}</button>
+        <button type="button" class="sb-btn danger" data-test="ctx-delete-configs" @click="configsPanel?.deleteSelectedFlow(store.deleteConfigs)">
+          🗑 {{ t('v7backtest.deleteSelected') }}
+        </button>
       </template>
       <template #ctx-queue>
         <button type="button" class="sb-btn" data-test="clear-finished" @click="store.clearFinished">{{ t('v7backtest.clearFinished') }}</button>
@@ -102,12 +129,63 @@ onMounted(() => {
       <template v-if="!store.adapter.isV8" #ctx-legacy>
         <!-- legacy actions land in M-v7-11 -->
       </template>
+
+      <!-- Editor sidebar (:782-804, setEditorMode :211-222) — handoff buttons land in M-v7-12 -->
+      <template #editor>
+        <div v-if="editorOpen" id="sidebar-editor" class="sidebar-sticky">
+          <div class="sidebar-header"><span class="sb-title">{{ t('v7backtest.editBacktest') }}</span></div>
+          <div class="sidebar-toolbar">
+            <button type="button" class="sb-btn" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()">🏠 {{ t('v7backtest.home') }}</button>
+            <button type="button" class="sb-btn primary" :title="t('v7backtest.saveConfig')" @click="store.editor.save()">💾 {{ t('v7backtest.save') }}</button>
+            <button type="button" class="sb-btn info" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()">▶ {{ t('v7backtest.saveQueue') }}</button>
+            <!-- Results / Convert to V8 / Add to Run / Strategy Explorer / Balance Calc / OHLCV Readiness / Log / Import land in M-v7-12 -->
+          </div>
+        </div>
+      </template>
     </PanelShell>
 
     <div id="main-content">
-      <!-- CONFIGS panel — list + editor land in M-v7-9 -->
+      <!-- CONFIGS panel (:812-821) -->
       <div id="panel-configs" class="view-panel" :class="{ active: store.view.state.panel === 'configs' }">
-        <div class="empty-state"><div class="empty-icon">📋</div><p>Configs list — M-v7-9</p></div>
+        <ConfigsPanel
+          v-show="!editorOpen"
+          ref="configsPanel"
+          :configs="store.configsStore.configs.value"
+          :sort="store.view.state.sorts.configs"
+          :is-v8="store.adapter.isV8"
+          @sort="store.setConfigsSort"
+          @edit="store.editor.editConfig"
+          @queue="store.addConfigToQueue"
+          @view-results="onQueueViewResults"
+          @new-config="store.editor.newConfig()"
+        />
+        <BacktestConfigEditor
+          v-if="editorOpen"
+          :state="store.editor.state"
+          :is-v8="store.adapter.isV8"
+          :hsl-modes="editorSettings.hslModes"
+          :exchange-options="editorSettings.exchangeOptions"
+          :suite="store.editor.suite.value"
+          :suite-exchanges="editorSettings.exchangeOptions"
+          :available-coins="store.editor.coinOptions.value.filter((coin) => coin !== 'all')"
+          :bot-params="store.editor.botParams.value"
+          :coin-ov="store.editor.coinOv"
+          :market-settings="store.editor.marketSettings.value"
+          :result-metrics="store.editor.resultMetrics.value"
+          :market-coins="store.editor.marketCoins.value"
+          :coin-options="store.editor.coinOptions.value"
+          :coin-labels="store.editor.coinLabels.value"
+          :tag-options="store.editor.tagOptions.value"
+          :raw-error-line="store.editor.rawError.value?.line ?? null"
+          :long-error-line="store.editor.longErrorLine.value"
+          :short-error-line="store.editor.shortErrorLine.value"
+          :param-status="store.editor.paramStatus.value"
+          :load-symbols="loadSymbols"
+          :apply-filters="() => store.editor.applyFilters()"
+          :fill-pbgui-data-path="() => store.editor.fillPbguiDataPath()"
+          @update:suite="store.editor.suite.value = $event"
+          @template-exchanges="onTemplateExchanges"
+        />
       </div>
 
       <QueuePanel
@@ -150,6 +228,17 @@ onMounted(() => {
   <div id="toast">
     <div v-for="item in store.toasts.value" :key="item.id" class="toast-msg" :class="'toast-' + item.kind">{{ item.msg }}</div>
   </div>
+
+  <QueueDraftModal
+    :open="store.editor.queueDraftOpen.value"
+    :items="store.editor.queueDraftItems.value"
+    :use-pbgui-market-data="store.settingsStore.settings.value.use_pbgui_market_data"
+    :post-queue="store.editor.postQueue"
+    :get-pbgui-data-path="store.editor.getPbguiDataPath"
+    @queued="store.editor.onQueueDraftQueued"
+    @close="store.editor.queueDraftOpen.value = false"
+    @error="(message: string) => store.notifyError(message)"
+  />
 
   <SettingsModal
     :settings="store.settingsStore.settings.value"

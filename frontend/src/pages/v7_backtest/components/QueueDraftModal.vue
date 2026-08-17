@@ -1,0 +1,151 @@
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+/**
+ * QueueDraftModal — the port of showInitialBacktestQueueDraftModal
+ * (:2062-2145): the queue-draft deep link asks for start/end/balance/
+ * exchanges before enqueueing one job per item × exchange, with the
+ * optional PBGui market-data path pre-fetch (:2112).
+ */
+
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    items: readonly { name?: string; config?: Record<string, unknown>; override_configs?: Record<string, unknown> }[];
+    /** settings.use_pbgui_market_data — the checkbox default (:2094). */
+    usePbguiMarketData?: boolean;
+    fetchFn?: typeof fetch;
+    /** apiFetch('/queue', …) — the page owns auth/error handling. */
+    postQueue(body: unknown): Promise<unknown>;
+    /** apiFetch('/pbgui_data_path') (:2112). */
+    getPbguiDataPath?(): Promise<string>;
+  }>(),
+  { usePbguiMarketData: false, fetchFn: undefined, getPbguiDataPath: undefined }
+);
+
+const emit = defineEmits<{ queued: [count: number]; close: []; error: [message: string] }>();
+
+const { t } = useI18n();
+
+const ALL_EXCHANGES = ['binance', 'bybit', 'bitget', 'okx', 'hyperliquid', 'kucoin', 'combined'];
+
+const startDate = ref('2020-01-01');
+const endDate = ref('');
+const balance = ref('1000');
+const exchanges = ref<string[]>([]);
+const usePbguiData = ref(false);
+
+function object(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+watch(
+  () => [props.open, props.items] as const,
+  () => {
+    if (!props.open) return;
+    const first = object(object(props.items[0]).config);
+    const bt = object(first.backtest);
+    const defExchanges = Array.isArray(bt.exchanges) ? (bt.exchanges as string[]).map(String) : [];
+    startDate.value = String(bt.start_date || '2020-01-01');
+    endDate.value = new Date().toISOString().slice(0, 10);
+    balance.value = String(bt.starting_balance || 1000);
+    exchanges.value = defExchanges.filter((exchange) => ALL_EXCHANGES.includes(exchange));
+    if (exchanges.value.length === 0) exchanges.value = ['bybit'];
+    usePbguiData.value = props.usePbguiMarketData;
+  },
+  { immediate: true }
+);
+
+const exchangeOptions = computed(() => ALL_EXCHANGES);
+
+function adjustBalance(delta: number): void {
+  const next = Math.max(1, (parseFloat(balance.value) || 0) + delta);
+  balance.value = String(next);
+}
+
+async function submit(): Promise<void> {
+  if (exchanges.value.length === 0) {
+    emit('error', t('v7backtest.selectAtLeastOneExchange'));
+    return;
+  }
+  let pbguiPath = '';
+  if (usePbguiData.value) {
+    try {
+      pbguiPath = props.getPbguiDataPath ? await props.getPbguiDataPath() : '';
+    } catch {
+      emit('error', t('v7backtest.failedGetDataPath', { msg: '' }));
+      return;
+    }
+  }
+  const bodies: unknown[] = [];
+  for (const item of props.items) {
+    const source = object(item).config as Record<string, unknown> | undefined;
+    const cfg: Record<string, unknown> = JSON.parse(JSON.stringify(source ?? {}));
+    const bt = object(cfg.backtest);
+    bt.start_date = startDate.value;
+    bt.end_date = endDate.value;
+    bt.starting_balance = parseFloat(balance.value) || 1000;
+    for (const exchange of exchanges.value) {
+      const perExchange = JSON.parse(JSON.stringify(cfg)) as Record<string, unknown>;
+      const perBt = object(perExchange.backtest);
+      perBt.exchanges = [exchange];
+      if (pbguiPath) perBt.ohlcv_source_dir = pbguiPath;
+      else perBt.ohlcv_source_dir = null;
+      perExchange.backtest = perBt;
+      bodies.push({
+        name: String(object(item).name || 'rebacktest'),
+        config: perExchange,
+        override_configs: object(item).override_configs ?? {},
+      });
+    }
+  }
+  try {
+    await Promise.all(bodies.map((body) => props.postQueue(body)));
+    emit('queued', bodies.length);
+    emit('close');
+  } catch (error) {
+    emit('error', t('v7backtest.failedWithMsg', { msg: error instanceof Error ? error.message : String(error) }));
+  }
+}
+</script>
+
+<template>
+  <div v-if="open" id="modal-root" data-test="queue-draft-modal">
+    <div class="modal-box">
+      <h3>{{ t('v7backtest.selectBacktestParams') }}</h3>
+      <div style="display: flex; flex-direction: column; gap: var(--sp-md)">
+        <div>
+          <div class="sb-label">start_date</div>
+          <input v-model="startDate" class="sb-input" type="text" data-test="rbt-start" />
+        </div>
+        <div>
+          <div class="sb-label">end_date</div>
+          <input v-model="endDate" class="sb-input" type="text" data-test="rbt-end" />
+        </div>
+        <div>
+          <div class="sb-label">{{ t('v7backtest.startingBalance') }}</div>
+          <div style="display: flex; align-items: center; gap: var(--sp-xs)">
+            <input v-model="balance" class="sb-input" style="flex: 1; text-align: right" type="number" min="1" step="100" data-test="rbt-balance" />
+            <button type="button" class="act-btn" style="width: 28px; padding: 0" @click="adjustBalance(-100)">−</button>
+            <button type="button" class="act-btn" style="width: 28px; padding: 0" @click="adjustBalance(100)">+</button>
+          </div>
+        </div>
+        <div>
+          <div class="sb-label">{{ t('v7backtest.exchanges') }}</div>
+          <select v-model="exchanges" class="sb-input" multiple style="height: auto; min-height: var(--input-h)" data-test="rbt-exchanges">
+            <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
+          </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: var(--sp-sm)">
+          <input id="rbt-pbgui-data" v-model="usePbguiData" type="checkbox" style="width: auto; margin: 0" data-test="rbt-pbgui-data" />
+          <label for="rbt-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer">📂 {{ t('v7backtest.usePbguiMarketData') }}</label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" @click="emit('close')">{{ t('common.cancel') }}</button>
+        <button type="button" class="modal-btn modal-btn-primary" data-test="rbt-ok" @click="submit">{{ t('common.ok') }}</button>
+      </div>
+    </div>
+  </div>
+</template>

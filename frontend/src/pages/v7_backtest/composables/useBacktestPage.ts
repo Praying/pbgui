@@ -1,7 +1,8 @@
 import { computed, ref } from 'vue';
-import { createBacktestAdapter, detectBacktestVersion, navItems, readDeepLinkConfig, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
+import { createBacktestAdapter, detectBacktestVersion, navItems, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
 import { createToastQueue, type ToastItem, type ToastQueue } from '../lib/toast';
 import { loadStoredBacktestViewState } from '../lib/viewState';
+import { useConfigEditor, type ConfigEditorStore } from './useConfigEditor';
 import { useConfigs } from './useConfigs';
 import { useQueueWs, type QueueWsController } from './useQueueWs';
 import { useSettings } from './useSettings';
@@ -43,6 +44,10 @@ export interface BacktestPageStore {
   queueBadge: { value: string };
   settingsOpen: { value: boolean };
   settingsCleaning: { value: boolean };
+  editor: ConfigEditorStore;
+  addConfigToQueue(name: string): Promise<void>;
+  deleteConfigs(names: readonly string[], removeResults: boolean): Promise<void>;
+  setConfigsSort(column: string): void;
   selectPanel(panel: BacktestPanel, options?: { persist?: boolean }): void;
   startQueueItem(filename: string): Promise<void>;
   restartQueueItem(filename: string): Promise<void>;
@@ -245,17 +250,79 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     /* results/archive/legacy lazy loads land with M-v7-10/11 */
   }
 
+  /** The metadata router base — /symbols, /tags, /coins/* (adapter :138-142). */
+  function metadataApiBase(): string {
+    return version === 'v8' ? `${options.origin}/api/v8` : `${options.origin}/api/v7`;
+  }
+
+  /* ── config editor + configs actions (M-v7-9) ── */
+  const editor = useConfigEditor({
+    apiBase,
+    metadataApiBase: metadataApiBase(),
+    version,
+    getSettings: () => settingsStore.settings.value,
+    t,
+    notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+    loadConfigs: () => configsStore.loadConfigs(),
+    wsRefresh: () => ws.wsRefresh(),
+    selectPanel,
+    confirm: async (confirmOptions) => {
+      const dialogs = (window as typeof window & { PBGuiDialogs?: { confirm?: (o: typeof confirmOptions) => Promise<boolean> } }).PBGuiDialogs;
+      if (dialogs?.confirm) return dialogs.confirm(confirmOptions);
+      return typeof window !== 'undefined' ? window.confirm(confirmOptions.message) : false;
+    },
+  });
+
+  /** addConfigToQueue (:4972-4981). */
+  async function addConfigToQueue(name: string): Promise<void> {
+    try {
+      await fetch(apiBase + '/queue', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      toast.show(t('v7backtest.addedToQueue'), 'ok');
+      ws.wsRefresh();
+    } catch (error) {
+      notifyError(t('v7backtest.failedWithMsg', { msg: errorMessage(error) }));
+    }
+  }
+
+  /** deleteSelectedConfigs' delete branch (:5109-5123). */
+  async function deleteConfigs(names: readonly string[], removeResults: boolean): Promise<void> {
+    if (!names.length) {
+      notifyError(t('v7backtest.nothingSelected'));
+      return;
+    }
+    try {
+      await Promise.all(
+        names.map((name) =>
+          fetch(apiBase + `/configs/${encodeURIComponent(name)}?remove_results=${removeResults}`, { method: 'DELETE', credentials: 'same-origin' })
+        )
+      );
+      toast.show(t('v7backtest.deleted'), 'ok');
+      await configsStore.loadConfigs();
+    } catch (error) {
+      notifyError(t('v7backtest.deleteFailed', { msg: errorMessage(error) }));
+    }
+  }
+
+  function setConfigsSort(column: string): void {
+    view.setSort('configs', column);
+  }
+
   /* ── boot (:10012-10024) ── */
   function boot(): void {
-    void settingsStore.loadSettings().catch((error) => {
-      console.error('Failed to load Backtest settings:', error);
-    });
+    void settingsStore
+      .loadSettings()
+      .catch((error: unknown) => {
+        console.error('Failed to load Backtest settings:', error);
+      })
+      .then(() => editor.consumeUrlDeepLinks(options.search ?? window.location.search));
     void configsStore.loadConfigs();
     ws.connect();
     if (adapter.initialPanels.includes(view.state.panel)) selectPanel(view.state.panel);
-    /* deep links: ?config= switches to configs (editor opens in M-v7-9);
-       draft_id/opt_draft_id/queue_draft_id land with the M-v7-9 modal */
-    if (readDeepLinkConfig(options.search ?? window.location.search)) selectPanel('configs');
   }
 
   return {
@@ -265,6 +332,7 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     view,
     settingsStore,
     configsStore,
+    editor,
     ws,
     toast,
     toasts: toast.items,
@@ -273,6 +341,9 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     queueBadge,
     settingsOpen,
     settingsCleaning,
+    addConfigToQueue,
+    deleteConfigs,
+    setConfigsSort,
     selectPanel,
     startQueueItem,
     restartQueueItem,

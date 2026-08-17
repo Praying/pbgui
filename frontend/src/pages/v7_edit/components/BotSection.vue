@@ -11,7 +11,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import FieldNumber from './FieldNumber.vue';
 import { useEditPageContext } from '../composables/useEditPage';
-import { botHighlightLines } from '../lib/botHighlight';
+import { botHighlightLines } from '@/shared/botHighlight';
 import { getJsonLineDetail } from '@/shared/jsonValidation';
 
 const { t } = useI18n();

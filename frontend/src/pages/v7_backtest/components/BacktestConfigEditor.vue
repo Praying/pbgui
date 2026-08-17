@@ -1,0 +1,296 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import DatePicker from '@/shared/datepicker/DatePicker.vue';
+import KvCoinSources from '@/shared/kvCoinSources/KvCoinSources.vue';
+import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
+import type { SuiteState } from '@/shared/suiteEditor/suiteModel';
+import CoinOverridesPanel from '@/shared/coinOverrides/components/CoinOverridesPanel.vue';
+import type { CoinOverridesStore } from '@/shared/coinOverrides/useCoinOverrides';
+import AdvancedFieldsPanel from './AdvancedFieldsPanel.vue';
+import BotSideEditor from './BotSideEditor.vue';
+import CoinMultiSelect from './CoinMultiSelect.vue';
+import { EXTRA_BT_META } from '../lib/backtestFormModel';
+import type { BacktestFormState } from '../lib/backtestFormModel';
+import type { MarketSettingsState, ResultMetricsState } from '../lib/advancedFields';
+
+/**
+ * BacktestConfigEditor — the structured form of showConfigEditor
+ * (:2563-2946): identity/time row, balance row, fees/controls row, data
+ * source row, coin_sources + market_settings_sources chip editors, coins
+ * & filters, the coin-overrides embed (:2927), the suite embed (:2915),
+ * bot long/short (:2816-2870), the additional-params expander (:2186)
+ * and the raw JSON expander (:2879-2892). The parent (useConfigEditor)
+ * owns the state objects; this component only binds fields.
+ */
+
+const props = withDefaults(
+  defineProps<{
+    state: BacktestFormState;
+    isV8: boolean;
+    /** settings.hsl_signal_modes + exchange_options. */
+    hslModes: readonly string[];
+    exchangeOptions: readonly string[];
+    /** suite editor state (suiteInit/suiteLoad, :2915-2916). */
+    suite: SuiteState;
+    suiteExchanges: readonly string[];
+    availableCoins: readonly string[];
+    botParams: readonly string[];
+    coinOv: CoinOverridesStore;
+    marketSettings: MarketSettingsState;
+    resultMetrics: ResultMetricsState;
+    marketCoins: readonly string[];
+    /** loadCfgSymbols options (:3735-3790). */
+    coinOptions: readonly string[];
+    coinLabels: Record<string, string>;
+    tagOptions: readonly string[];
+    /** Validation surfaces owned by the parent. */
+    rawErrorLine?: number | null;
+    longErrorLine?: number | null;
+    shortErrorLine?: number | null;
+    paramStatus: { long: Record<string, string>; short: Record<string, string> };
+    loadSymbols(exchange: string): Promise<{ symbols: string[]; catalog?: Record<string, string> }>;
+    applyFilters(): void;
+    fillPbguiDataPath(): void;
+  }>(),
+  { rawErrorLine: null, longErrorLine: null, shortErrorLine: null }
+);
+
+const emit = defineEmits<{
+  'update:suite': [value: SuiteState];
+  'template-exchanges': [exchanges: string[]];
+  'change': [];
+}>();
+
+const { t } = useI18n();
+
+const coinOptionsWithoutAll = computed(() => props.coinOptions.filter((option) => option !== 'all'));
+
+const exchangesOptions = computed(() => {
+  const options = props.exchangeOptions.filter((option) => !props.state.exchanges.includes(option));
+  return [...props.state.exchanges, ...options];
+});
+
+const loggingOptions = [
+  { value: '0', label: 'warning' },
+  { value: '1', label: 'info' },
+  { value: '2', label: 'debug' },
+  { value: '3', label: 'trace' },
+];
+
+const hslOptions = computed(() => {
+  const options = props.hslModes.map((mode) => String(mode).trim()).filter(Boolean);
+  const selected = props.state.hslSignalMode.trim();
+  if (selected && !options.includes(selected)) return [selected, ...options];
+  return options.length ? options : selected ? [selected] : [];
+});
+
+function touch(): void {
+  emit('change');
+}
+</script>
+
+<template>
+  <div id="configs-editor" data-test="configs-editor" @input="touch" @change="touch">
+    <!-- Row 1: Identity & Time (:2599-2613) -->
+    <div class="form-row cols-8">
+      <div class="form-group span-4">
+        <label>
+          exchanges
+          <span class="ms-clear-btn" :title="t('v7backtest.clearAll')" @click="state.exchanges = []">×</span>
+        </label>
+        <CoinMultiSelect id="ms-cfg-exchanges" v-model="state.exchanges" :options="exchangesOptions" :placeholder="t('v7backtest.selectExchanges')" />
+      </div>
+      <div class="form-group span-2">
+        <label>config_name</label>
+        <input v-model="state.name" type="text" data-test="cfg-name" />
+      </div>
+      <div class="form-group">
+        <label>start_date</label>
+        <DatePicker v-model="state.startDate" :max="state.endDate || undefined" />
+      </div>
+      <div class="form-group">
+        <label>end_date</label>
+        <DatePicker v-model="state.endDate" :min="state.startDate || undefined" />
+        <label v-if="state.endDateIsNow" style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px; display: flex; gap: 4px; align-items: center">
+          <input v-model="state.endDateIsNow" type="checkbox" style="width: auto" /> semantic 'now'
+        </label>
+      </div>
+    </div>
+
+    <!-- Row 2: Balance, Collateral & Behavior (:2615-2634) -->
+    <div class="form-row cols-8">
+      <div class="form-group"><label>starting_balance</label><input v-model="state.startingBalance" type="number" min="500" /></div>
+      <div class="form-group"><label>balance_sample_divider</label><input v-model="state.balanceSampleDivider" type="number" min="1" /></div>
+      <div class="form-group"><label>btc_collateral_cap</label><input v-model="state.btcCollateralCap" type="number" step="0.1" min="0" /></div>
+      <div class="form-group"><label>btc_collateral_ltv_cap</label><input v-model="state.btcCollateralLtvCap" type="number" step="0.1" min="0" /></div>
+      <div class="form-group"><label>minimum_coin_age_days</label><input v-model="state.minimumCoinAgeDays" type="number" min="1" /></div>
+      <div class="form-group">
+        <label>liquidation_threshold</label>
+        <div class="num-stepper">
+          <button type="button" class="stepper-btn" @click="state.liquidationThreshold = String(Math.max(0, +(parseFloat(state.liquidationThreshold) - 0.01).toFixed(2)))">−</button>
+          <input v-model="state.liquidationThreshold" type="number" step="0.01" min="0" max="0.99" />
+          <button type="button" class="stepper-btn" @click="state.liquidationThreshold = String(Math.min(0.99, +(parseFloat(state.liquidationThreshold) + 0.01).toFixed(2)))">+</button>
+        </div>
+      </div>
+      <div class="form-group" style="justify-content: flex-end">
+        <div class="chk-row"><input id="cfg-dyn-wel" v-model="state.dynamicWelByTradability" type="checkbox" /><label for="cfg-dyn-wel">dynamic_wel_by_tradability</label></div>
+      </div>
+    </div>
+
+    <!-- Row 3: Fees & Controls (:2636-2679) -->
+    <div class="form-row cols-8" style="align-items: end">
+      <div class="form-group" style="grid-column: span 2">
+        <div class="chk-row"><input id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" type="checkbox" /><label for="cfg-maker-fee-enabled">maker_fee_override</label></div>
+        <div class="num-stepper" style="margin-top: 4px">
+          <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5))">−</button>
+          <input v-model="state.makerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.makerFeeEnabled" />
+          <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5))">+</button>
+        </div>
+      </div>
+      <div class="form-group" style="grid-column: span 2">
+        <div class="chk-row"><input id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" type="checkbox" /><label for="cfg-taker-fee-enabled">taker_fee_override</label></div>
+        <div class="num-stepper" style="margin-top: 4px">
+          <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5))">−</button>
+          <input v-model="state.takerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.takerFeeEnabled" />
+          <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5))">+</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>market_order_slippage_pct</label>
+        <div class="num-stepper">
+          <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))">−</button>
+          <input v-model="state.marketOrderSlippagePct" type="number" step="0.0001" min="0" />
+          <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))">+</button>
+        </div>
+      </div>
+      <div class="form-group" style="justify-content: flex-end">
+        <div class="chk-row"><input id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" type="checkbox" /><label for="cfg-filter-cost">filter_by_min_effective_cost</label></div>
+      </div>
+      <div class="form-group">
+        <label>hsl_signal_mode</label>
+        <select v-model="state.hslSignalMode"><option v-for="mode in hslOptions" :key="mode" :value="mode">{{ mode }}</option></select>
+      </div>
+      <div class="form-group">
+        <label>logging_level</label>
+        <select v-model="state.loggingLevel"><option v-for="option in loggingOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select>
+      </div>
+    </div>
+
+    <!-- Row 4: Data Source (:2681-2698) -->
+    <div class="form-row cols-8" style="align-items: end">
+      <div class="form-group span-4">
+        <label>ohlcv_source_dir</label>
+        <div style="display: flex; gap: var(--sp-xs)">
+          <input v-model="state.ohlcvSourceDir" type="text" :placeholder="t('v7backtest.leaveEmptyForDefault')" />
+          <button type="button" class="act-btn" style="white-space: nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">📂 PBGui Data</button>
+        </div>
+      </div>
+      <div class="form-group"><label>candle_interval_minutes</label><input v-model="state.candleIntervalMinutes" type="number" min="1" /></div>
+      <div class="form-group"><label>gap_tolerance_ohlcvs_minutes</label><input v-model="state.gapToleranceOhlcvsMinutes" type="number" min="1" /></div>
+      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-compress" v-model="state.compressCache" type="checkbox" /><label for="cfg-compress">compress_cache</label></div></div>
+      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-vol-norm" v-model="state.volumeNormalization" type="checkbox" /><label for="cfg-vol-norm">volume_normalization</label></div></div>
+    </div>
+
+    <!-- coin_sources + market_settings_sources (:2700-2750) -->
+    <div class="expander">
+      <div class="expander-header"><span class="arrow">▶</span> coin_sources ({{ Object.keys(state.coinSources).length }} configured)</div>
+      <div class="expander-body"><KvCoinSources v-model="state.coinSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
+    </div>
+    <div class="expander">
+      <div class="expander-header"><span class="arrow">▶</span> market_settings_sources ({{ Object.keys(state.marketSettingsSources).length }} configured)</div>
+      <div class="expander-body"><KvCoinSources v-model="state.marketSettingsSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
+    </div>
+
+    <AdvancedFieldsPanel v-if="isV8" :market-settings="marketSettings" :result-metrics="resultMetrics" :exchanges="exchangeOptions" :coins="marketCoins" />
+
+    <!-- Coins & Filters (:2753-2804) -->
+    <div class="section-title">{{ t('v7backtest.coinsAndFilters') }}</div>
+    <div class="form-row cols-8" style="align-items: end">
+      <div class="form-group span-2"><label>market_cap (min M$)</label><input v-model="state.marketCap" type="number" step="50" /></div>
+      <div class="form-group span-2"><label>vol/mcap</label><input v-model="state.volMcap" type="number" step="0.05" /></div>
+      <div class="form-group span-2">
+        <label>tags</label>
+        <CoinMultiSelect id="ms-cfg-tags" v-model="state.tags" :options="tagOptions" :placeholder="t('v7backtest.selectTags')" select-all-button />
+      </div>
+      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt">only_cpt</label></div></div>
+      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore">notices_ignore</label></div></div>
+    </div>
+    <div class="form-row cols-2">
+      <CoinMultiSelect id="ms-cfg-app-long" v-model="state.approvedLong" :options="coinOptions" :labels="coinLabels" allow-all>
+        <template #label>approved_coins_long</template>
+      </CoinMultiSelect>
+      <CoinMultiSelect id="ms-cfg-app-short" v-model="state.approvedShort" :options="coinOptions" :labels="coinLabels" allow-all>
+        <template #label>approved_coins_short</template>
+      </CoinMultiSelect>
+    </div>
+    <div class="form-row cols-2">
+      <CoinMultiSelect id="ms-cfg-ign-long" v-model="state.ignoredLong" :options="coinOptionsWithoutAll" :labels="coinLabels">
+        <template #label>ignored_coins_long</template>
+      </CoinMultiSelect>
+      <CoinMultiSelect id="ms-cfg-ign-short" v-model="state.ignoredShort" :options="coinOptionsWithoutAll" :labels="coinLabels">
+        <template #label>ignored_coins_short</template>
+      </CoinMultiSelect>
+    </div>
+    <div style="margin-bottom: var(--sp-sm); text-align: right">
+      <button type="button" class="act-btn" :title="t('v7backtest.applyFiltersTitle')" @click="applyFilters">{{ t('v7backtest.applyFilters') }}</button>
+    </div>
+
+    <!-- Coin Overrides embed (:2807, :2927) -->
+    <CoinOverridesPanel :store="coinOv" />
+
+    <!-- Suite Mode embed (:2810, :2915) -->
+    <SuiteEditor
+      :model-value="suite"
+      :exchanges="suiteExchanges"
+      :available-coins="availableCoins"
+      :bot-params="botParams"
+      :is-v8="isV8"
+      :exchange-options="exchangeOptions"
+      :load-symbols="loadSymbols"
+      @update:model-value="emit('update:suite', $event)"
+      @template-exchanges="emit('template-exchanges', $event)"
+    />
+
+    <!-- Bot Configuration (:2812-2871) -->
+    <div class="section-title">{{ t('v7backtest.botConfiguration') }}</div>
+    <div class="form-row cols-2">
+      <BotSideEditor v-model="state.botLongJson" v-model:twe="state.longTwe" v-model:npos="state.longNpos" side="long" :version="isV8 ? 'v8' : 'v7'" :param-status="paramStatus.long" :error-line="longErrorLine" />
+      <BotSideEditor v-model="state.botShortJson" v-model:twe="state.shortTwe" v-model:npos="state.shortNpos" side="short" :version="isV8 ? 'v8' : 'v7'" :param-status="paramStatus.short" :error-line="shortErrorLine" />
+    </div>
+
+    <!-- Additional (unknown) backtest parameters (:2873-2876) -->
+    <div v-if="state.extraBt.length > 0" class="expander">
+      <div class="expander-header"><span class="arrow">▶</span> {{ t('v7backtest.additionalParameters') }}</div>
+      <div class="expander-body">
+        <div class="form-group" style="grid-column: span 3">
+          <label>base_dir</label>
+          <input type="text" :value="'backtests/pbgui/' + (state.name || '{config-name}')" readonly />
+        </div>
+        <div class="form-row cols-3">
+          <div v-for="field in state.extraBt" :key="field.key" class="form-group" :style="field.kind === 'json' ? 'grid-column: span 3' : ''">
+            <label :title="EXTRA_BT_META[field.key]?.tip ?? ''">{{ field.key }}</label>
+            <input v-if="field.kind === 'boolean'" v-model="field.checked" type="checkbox" style="width: auto" />
+            <input v-else-if="field.kind === 'number'" v-model="field.text" type="number" class="form-input" />
+            <textarea v-else-if="field.kind === 'json'" v-model="field.text" :data-test="'extra-bt-' + field.key" style="overflow: hidden; resize: vertical"></textarea>
+            <input v-else v-model="field.text" type="text" class="form-input" :placeholder="field.kind === 'null' ? 'null' : ''" />
+            <div v-if="EXTRA_BT_META[field.key]?.fmt" style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px">{{ EXTRA_BT_META[field.key]!.fmt }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raw JSON expander (:2878-2892) -->
+    <div class="expander">
+      <div class="expander-header"><span class="arrow">▶</span> {{ t('v7backtest.rawJson') }}</div>
+      <div class="expander-body">
+        <div class="form-group">
+          <div class="raw-json-wrap">
+            <div class="field-status" :class="{ error: rawErrorLine }" aria-live="polite" data-test="cfg-raw-json-status"></div>
+            <textarea v-model="state.rawJson" data-test="cfg-raw-json" style="overflow: hidden; resize: vertical"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
