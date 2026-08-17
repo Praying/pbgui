@@ -59,6 +59,19 @@ watch(
 
 const exchangeOptions = computed(() => ALL_EXCHANGES);
 
+/**
+ * getInitialBacktestDraftName(cfg, null) (:1985-1992, called at :2127):
+ * no draft_name param here — fall back to the base_dir's last segment
+ * before the final 'rebacktest' default.
+ */
+function draftItemName(item: { name?: string; config?: Record<string, unknown> }): string {
+  if (item.name) return String(item.name);
+  const baseDir = String(object(object(item.config).backtest).base_dir ?? '').trim();
+  if (!baseDir) return '';
+  const parts = baseDir.split('/').filter(Boolean);
+  return parts[parts.length - 1] ?? '';
+}
+
 function adjustBalance(delta: number): void {
   const next = Math.max(1, (parseFloat(balance.value) || 0) + delta);
   balance.value = String(next);
@@ -95,7 +108,7 @@ async function submit(): Promise<void> {
       if (pbguiPath) perBt.ohlcv_source_dir = pbguiPath;
       perExchange.backtest = perBt;
       bodies.push({
-        name: String(object(item).name || 'rebacktest'),
+        name: String(draftItemName(item) || 'rebacktest'),
         config: perExchange,
         override_configs: object(item).override_configs ?? {},
       });

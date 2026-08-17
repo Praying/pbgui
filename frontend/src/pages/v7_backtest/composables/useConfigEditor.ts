@@ -279,10 +279,14 @@ export function useConfigEditor(options: ConfigEditorOptions) {
   /* ── raw↔structured sync (:3429-3463) ── */
   function collect(): Record<string, unknown> {
     options.foldSuiteDraft?.();
+    // coinOv.collect() returns { coin_overrides } (:301) — the collector
+    // wants the mapping itself (:4781-4786); passing the envelope would
+    // double-wrap the saved cfg.coin_overrides.
+    const covSnapshot = coinOv.collect();
     return collectBacktestConfig(state, {
       isV8,
       suite: { suite_enabled: suite.value.enabled, ...(suite.value.enabled ? { scenarios: suite.value.scenarios, aggregate: suite.value.aggregate } : {}) },
-      coinOverrides: Object.keys(coinOv.overrides).length > 0 ? (coinOv.collect() as Record<string, unknown>) : undefined,
+      coinOverrides: Object.keys(coinOv.overrides).length > 0 ? covSnapshot.coin_overrides : undefined,
       marketSettings: isV8 ? marketSettings.value : null,
       resultMetrics: isV8 ? resultMetrics.value : null,
     });
@@ -489,6 +493,24 @@ export function useConfigEditor(options: ConfigEditorOptions) {
   }
 
   /* ── URL deep links (:2023-2172) ── */
+
+  /**
+   * initialDraftOverrideConfigs (:2033-2045): the run/opt draft carries
+   * whole override FILES (keyed by filename); the editor pre-seeds them
+   * per coin via cfg.coin_overrides[coin].override_config_path so the
+   * coinOv panel (and collect) keeps the mapping without server fetches.
+   */
+  function draftOverrideConfigs(draft: Record<string, unknown>, cfg: Record<string, unknown>): Record<string, Record<string, unknown>> {
+    const draftFiles = object(draft.override_configs);
+    const seeded: Record<string, Record<string, unknown>> = {};
+    for (const [coin, entry] of Object.entries(object(object(cfg).coin_overrides))) {
+      const filename = String(object(entry).override_config_path ?? '');
+      const file = object(draftFiles[filename]);
+      if (filename && Object.keys(file).length > 0) seeded[coin] = file;
+    }
+    return seeded;
+  }
+
   function clearUrlParams(keys: string[]): void {
     const url = new URL(window.location.href);
     for (const key of keys) url.searchParams.delete(key);
@@ -535,6 +557,11 @@ export function useConfigEditor(options: ConfigEditorOptions) {
         const name = draftName(prepared.config, params);
         options.selectPanel('configs');
         openEditor(name, prepared.config, JSON.stringify(prepared.config), prepared.param_status, { isNew: true });
+        // :2930-2932 — pre-seed the draft's whole override files per coin
+        // (after coinOv.load, like the legacy order) so the mapping survives
+        // into collect; v8 additionally marks them pending for the save ack.
+        const overrideConfigs = draftOverrideConfigs(draft, prepared.config);
+        if (Object.keys(overrideConfigs).length > 0) coinOv.setOverrideConfigs(overrideConfigs, { markPending: isV8 });
         clearUrlParams(runDraftId ? ['draft_id', 'draft_name'] : ['opt_draft_id', 'draft_name']);
       } catch (error) {
         notify(t(runDraftId ? 'v7backtest.failedOpenRunDraft' : 'v7backtest.failedOpenOptimizerDraft', { msg: message(error) }), 'err');

@@ -140,6 +140,16 @@ describe('queue submit (:2099-2142)', () => {
     expect(body.config.backtest.ohlcv_source_dir).toBe('/data/pbgui');
   });
 
+  it('falls back to the base_dir last segment before rebacktest (:2127, :1985-1992)', async () => {
+    const unnamed = { config: { backtest: { exchanges: ['bybit'], base_dir: 'backtests/pbgui/from_base_dir' } } } as never;
+    const { wrapper, postQueue } = mountModal([unnamed, { config: { backtest: { exchanges: ['bybit'] } } }]);
+    await nextTick();
+    await wrapper.find('[data-test="rbt-ok"]').trigger('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const names = postQueue.mock.calls.map((call) => (call[0] as { name: string }).name);
+    expect(names).toEqual(['from_base_dir', 'rebacktest']);
+  });
+
   it('keeps override_configs from the draft items (:2129)', async () => {
     const { wrapper, postQueue } = mountModal([item({ override_configs: { 'BTC.json': { a: 1 } } })]);
     await nextTick();

@@ -229,6 +229,44 @@ describe('deep links (:2023-2172)', () => {
   });
 });
 
+describe('run-draft override pre-seed (:2033-2045, :2930-2932)', () => {
+  const draftCfg = {
+    backtest: { exchanges: ['okx'] },
+    coin_overrides: { BTC: { override_config_path: 'BTC.json' } },
+  };
+
+  function overrideDraftEditor(version: 'v7' | 'v8' = 'v7') {
+    const fetchFn = vi.fn((url: string) => {
+      const target = String(url);
+      if (target.includes('/api/v7/draft/')) {
+        return Promise.resolve(new Response(JSON.stringify({ config: draftCfg, override_configs: { 'BTC.json': { bot: { long: { total_wallet_exposure_limit: 2 } } } } }), { status: 200 }));
+      }
+      if (target.includes('/configs/prepare')) return Promise.resolve(new Response(JSON.stringify({ config: draftCfg, param_status: {} }), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+    return makeEditor({ version, fetchFn: fetchFn as unknown as typeof fetch });
+  }
+
+  it('pre-seeds the draft override files so collect keeps the coin mapping (R6)', async () => {
+    const { editor } = overrideDraftEditor();
+    await editor.consumeUrlDeepLinks('?draft_id=d1');
+    await flush();
+    // the mapping from cfg.coin_overrides survives into a collected config
+    const collected = editor.collect();
+    expect((collected.coin_overrides as Record<string, unknown>).BTC).toMatchObject({ override_config_path: 'BTC.json' });
+    // and the whole override FILE is cached — no server fetch needed to edit it
+    expect(editor.coinOv.cachedOverrideFile('BTC')).toEqual({ bot: { long: { total_wallet_exposure_limit: 2 } } });
+  });
+
+  it('marks the pre-seeded files pending on v8 so the save ack flushes them (:2931)', async () => {
+    const { editor } = overrideDraftEditor('v8');
+    await editor.consumeUrlDeepLinks('?draft_id=d1');
+    await flush();
+    const snapshot = editor.coinOv.snapshotPendingFiles();
+    expect(snapshot.files['BTC.json']).toEqual({ bot: { long: { total_wallet_exposure_limit: 2 } } });
+  });
+});
+
 describe('loadCfgSymbols (:3710-3806)', () => {
   it('seeds coin/tag options and market labels from the selected exchanges', async () => {
     const { editor } = makeEditor();
