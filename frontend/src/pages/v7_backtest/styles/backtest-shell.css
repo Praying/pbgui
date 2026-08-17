@@ -1,0 +1,120 @@
+/* Backtest shell styles — ported from the legacy v7_backtest.html
+ * <style> block (:15-657, selective M-v7-8 subset) and
+ * frontend/css/backtest_shell.css (the design tokens, table/badge/
+ * modal/toast contracts). Ids and class names are unchanged so the
+ * shared sidebar.css chrome keeps working. */
+
+:root {
+  --bg: #0e1117;       --bg2: #1a1d24;
+  --bg3: #262730;      --border: #333640;
+  --text: #fafafa;     --text-dim: #a0a4ab;
+  --green: #21c354;    --orange: #ff8c00;
+  --red: #ff4b4b;      --blue: #1f77ff;
+  --accent: #4da6ff;
+  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+  --fs-xs: 11px; --fs-sm: 13px; --fs-base: 14px;
+  --fs-md: 15px; --fs-lg: 18px; --fs-xl: 22px;
+  --sp-xs: 4px;  --sp-sm: 8px;  --sp-md: 12px; --sp-lg: 20px;
+  --input-h: 32px; --btn-h: 32px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--font); font-size: var(--fs-base);
+             color: var(--text); background: var(--bg); overflow: hidden; }
+button, input, select, textarea { font-family: var(--font); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Connection banner (:36-40) ─────────────────── */
+#conn-banner { padding: var(--sp-sm) 16px; text-align: center; font-size: var(--fs-sm); font-weight: 600; transition: all .3s; }
+.conn-ok      { background: var(--green); color: #000; }
+.conn-lost    { background: var(--red);   color: #fff; }
+.conn-waiting { background: var(--orange); color: #000; }
+
+/* ── Page layout (:42-56 + backtest_shell.css:31-36) ── */
+#page-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
+#main-content { flex: 1; overflow: hidden; background: var(--bg); padding: var(--sp-lg); display: flex; flex-direction: column; }
+.view-panel { display: none; }
+.view-panel.active { display: flex !important; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+#configs-list, #queue-list { flex: 1; min-height: 0; overflow-y: auto; }
+.bt-panel-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-sm); }
+.bt-toolbar-spacer { flex: 1; }
+
+/* ── Tables (backtest_shell.css:40-49) ───────────── */
+.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-base); user-select: none; }
+.tbl th { position: sticky; top: 0; z-index: 2; background: var(--bg2); font-size: var(--fs-sm);
+          text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim);
+          padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--border);
+          cursor: pointer; user-select: none; white-space: nowrap; }
+.tbl th:hover { color: var(--text); }
+.tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.tbl tr:hover td { background: rgba(255,255,255,.03); }
+.tbl tbody tr { cursor: pointer; }
+.tbl tr.selected td { background: rgba(77,166,255,.12); }
+.tbl tr.selected td:first-child { border-left: 3px solid var(--accent); }
+.tbl td.actions-cell { white-space: nowrap; overflow: visible; padding: 4px 6px; }
+.sort-arrow { margin-left: 4px; font-size: var(--fs-xs); }
+
+/* ── Status badges (:51-57) ──────────────────────── */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: var(--fs-xs);
+         font-weight: 600; letter-spacing: .3px; }
+.badge-queued    { background: rgba(160,164,171,.15); color: var(--text-dim); }
+.badge-running   { background: rgba(31,119,255,.15);  color: var(--blue); }
+.badge-backtesting { background: rgba(255,140,0,.15); color: var(--orange); }
+.badge-complete  { background: rgba(33,195,84,.15);   color: var(--green); }
+.badge-error, .badge-stopped { background: rgba(255,75,75,.15); color: var(--red); }
+.badge-unknown   { background: rgba(255,140,0,.15); color: var(--orange); }
+
+/* ── Action buttons (:59-63) ─────────────────────── */
+.act-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim);
+           cursor: pointer; padding: 3px 8px; font-size: var(--fs-xs); transition: all .15s; }
+.act-btn:hover { color: var(--text); border-color: var(--accent); }
+.act-btn-danger:hover { color: var(--red); border-color: var(--red); }
+.act-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.empty-state { text-align: center; color: var(--text-dim); padding: 60px 20px; font-size: var(--fs-md); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: var(--sp-md); opacity: .4; }
+
+/* ── Modal (backtest_shell.css:91-102) ───────────── */
+#modal-root { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.6);
+              align-items: center; justify-content: center; }
+#modal-root.open { display: flex; }
+.modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+             padding: var(--sp-lg); min-width: 160px; max-width: 760px; max-height: 85vh;
+             overflow: hidden; resize: both; box-sizing: border-box;
+             display: flex; flex-direction: column; }
+.modal-header { display: flex; align-items: center; justify-content: space-between;
+                padding-bottom: var(--sp-sm); border-bottom: 1px solid var(--border);
+                margin-bottom: var(--sp-md); }
+.modal-title { font-size: var(--fs-lg); font-weight: 600; }
+.modal-close { background: none; border: none; color: var(--text-dim); cursor: pointer;
+               font-size: 1.2rem; padding: 2px 8px; border-radius: 4px; }
+.modal-close:hover { background: rgba(255,255,255,.1); color: var(--text); }
+.modal-body { flex: 1; overflow: auto; min-height: 0; }
+.modal-actions { display: flex; gap: var(--sp-sm); justify-content: flex-end; margin-top: var(--sp-lg); }
+.modal-btn { height: var(--btn-h); padding: 0 16px; border-radius: 4px; font-size: var(--fs-base);
+             cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
+.modal-btn:hover { background: rgba(255,255,255,.08); }
+.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.modal-btn-primary:hover { background: #1a6ae0; }
+.modal-btn-danger { background: var(--red); border-color: var(--red); color: #fff; }
+.modal-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Toast (:103-107) ────────────────────────────── */
+#toast { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex;
+         flex-direction: column; gap: var(--sp-sm); pointer-events: none; }
+.toast-msg { padding: 10px 16px; border-radius: 6px; font-size: var(--fs-sm); font-weight: 500;
+             pointer-events: auto; animation: bt-fade-in .2s; }
+.toast-ok   { background: var(--green); color: #000; }
+.toast-err  { background: var(--red); color: #fff; }
+.toast-info { background: var(--blue); color: #fff; }
+@keyframes bt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 760px) {
+  #page-body { position: relative; }
+  #sidebar { width: 132px; min-width: 132px; }
+  #main-content { padding: var(--sp-md); }
+  .bt-panel-toolbar { flex-wrap: wrap; }
+  .bt-toolbar-spacer { display: none; }
+}
