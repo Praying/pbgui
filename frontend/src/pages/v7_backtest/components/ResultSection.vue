@@ -50,6 +50,10 @@ const state = reactive({
   price: null as PricePayload | null,
 });
 
+/** _priceRequestSeq (:6791) — a per-section generation counter so a slow
+ * price fetch for an abandoned market never overwrites a newer one. */
+let priceRequestSeq = 0;
+
 /** Load the shared series for the view block (:6903-6916, :7229-7241). */
 async function loadSectionData(): Promise<void> {
   const result_ = result.value;
@@ -106,16 +110,18 @@ async function applyPrice(market: { exchange: string; coin: string }, autoSelect
       if (candidate.coin === market.coin && candidate.exchange !== market.exchange) candidates.push(candidate);
     }
   }
+  const seq = ++priceRequestSeq; // :6853
   setPriceStatus('Loading close prices...', false);
   const entries = await Promise.all(
     candidates.map(async (candidate) => {
       try {
-        return { market: candidate, payload: await props.dataApi.loadPrice(result.value.path, candidate) };
+        return { market: candidate, payload: await props.dataApi.loadPrice(result.value.path, candidate, result.value) };
       } catch (error) {
         return { market: candidate, payload: null, error };
       }
     })
   );
+  if (seq !== priceRequestSeq) return; // :6884 — superseded, drop the stale response
   let picked = entries[0]!;
   if (autoSelect) {
     const fullCoverage = entries.find((entry) => entry.payload && pricePayloadCoversChart(entry.payload, series));
@@ -290,6 +296,7 @@ function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, event: Event): v
         </label>
         <span
           v-if="markets.length"
+          data-test="price-status"
           style="font-size: var(--fs-xs); color: var(--text-dim)"
           :style="{ color: state.priceWarning ? 'var(--orange)' : undefined }"
         >

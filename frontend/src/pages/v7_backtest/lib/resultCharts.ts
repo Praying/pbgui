@@ -189,11 +189,14 @@ export interface CompareItem {
 }
 
 /** compareSelected's eq/bal trace pairs, one color per result. */
-export function compareTraces(items: readonly CompareItem[]): PlotlyTrace[] {
+export function compareTraces(items: readonly CompareItem[], options?: { plainLabel?: boolean }): PlotlyTrace[] {
   const traces: PlotlyTrace[] = [];
   items.forEach((item, i) => {
     if (!item.be.time.length) return;
-    const label = `PB${item.version.toUpperCase()} ${item.path.split('/').slice(-3).join('/')}`;
+    const tail = item.path.split('/').slice(-3).join('/');
+    // compareSelectedArchive labels with the PB version (:7819); the legacy
+    // panel renders the plain path tail (:7854)
+    const label = options?.plainLabel ? tail : `PB${item.version.toUpperCase()} ${tail}`;
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
     traces.push({ x: item.be.time, y: item.be.equity, name: `eq ${label}`, line: { width: 0.75, color } });
     traces.push({ x: item.be.time, y: item.be.balance, name: `bal ${label}`, line: { width: 2.5, color, dash: 'dot' } });

@@ -19,9 +19,12 @@ const props = withDefaults(
     sort: SortSpec;
     activeActions: Readonly<Record<string, ReadonlySet<ResultActionKind>>>;
     showVersion?: boolean;
+    showStrategy?: boolean;
     allowV8Convert?: boolean;
+    /** The scrolling wrap this table auto-scrolls (:5773, :5918, :5977). */
+    wrapId?: string;
   }>(),
-  { showVersion: true, allowV8Convert: false }
+  { showVersion: true, showStrategy: true, allowV8Convert: false, wrapId: '#results-list-wrap' }
 );
 
 const emit = defineEmits<{
@@ -34,7 +37,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
-const showStrategy = computed(() => props.rows.some((row) => String(row.backtest_version ?? '').toLowerCase() === 'v8'));
+const showStrategy = computed(() => props.showStrategy && props.rows.some((row) => String(row.backtest_version ?? '').toLowerCase() === 'v8'));
 const showCoins = computed(() =>
   props.rows.some((row) => Boolean(row.coins_text) || (Array.isArray(row.coins) && row.coins.length > 0))
 );
@@ -110,10 +113,10 @@ const tbody = ref<HTMLElement | null>(null);
 
 const dragSelect = useRowDragSelect({
   getRows: () => (tbody.value ? Array.from(tbody.value.querySelectorAll('tr[data-path]')) : []),
-  // the real scroll container is the panel's #results-list-wrap (:853) —
+  // the real scroll container is the panel's list wrap (:853/:902/:932) —
   // legacy auto-scrolled THAT wrap's scrollTop (:5773); ResultsTable's own
-  // root div does not scroll
-  getWrap: () => (wrap.value ? (wrap.value.closest('#results-list-wrap') as HTMLElement | null) : null),
+  // root div does not scroll. wrapId scopes archive/legacy mounts.
+  getWrap: () => (wrap.value ? (wrap.value.closest(props.wrapId) as HTMLElement | null) : null),
   isSelected: (path) => props.selected.has(path),
   onToggle: (path) => emit('toggle-select', path),
   onSelectRange: (paths, selected) => emit('select-paths', paths, selected),

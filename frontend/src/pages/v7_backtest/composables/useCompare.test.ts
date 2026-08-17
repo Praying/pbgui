@@ -260,16 +260,18 @@ describe('compareSelected (:7778-7791)', () => {
 
   it('the equity cache is keyed by version:path so both flavors coexist (:7614-7620)', async () => {
     const results = await loadedResultsStore();
-    fetchMock.mockImplementationOnce(() =>
+    // load through 'both' so p1 genuinely arrives via the v8 probe — the
+    // loader tags the REQUESTED flavor (:5390), so a server-proclaimed tag
+    // alone no longer survives a single-flavor load
+    results.versionFilter.value = 'both';
+    fetchMock.mockImplementation((url: unknown) =>
       ok({
-        results: [
-          { path: 'p1', config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T00:00:00Z', backtest_version: 'v8' },
-          { path: 'p2', config_name: 'cfg', result_name: 'r2', modified: '2024-01-12T00:00:00Z' },
-        ],
+        results: String(url).includes('backtest-v8')
+          ? [{ path: 'p1', config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T00:00:00Z' }]
+          : [{ path: 'p2', config_name: 'cfg', result_name: 'r2', modified: '2024-01-12T00:00:00Z' }],
       })
     );
     await results.loadResults();
-    results.versionFilter.value = 'both'; // cross-version compare (:735)
     results.setSelected(['p1', 'p2']);
     fetchMock.mockImplementation((url: unknown) => (String(url).includes('/results/equity') ? csvResponse() : ok({})));
     const { compareSelected } = await import('./useCompare');

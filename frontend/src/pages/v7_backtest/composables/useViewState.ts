@@ -28,6 +28,10 @@ export interface ViewStateStore {
   selectPanel(panel: BacktestPanel, options?: { persist?: boolean }): void;
   /** Enter an archive's results view (:1414-1416 hash form). */
   openArchive(name: string, mode?: ArchiveMode): void;
+  /** setArchiveResultsMode (:8999-9011) — keep the archive, change the tab. */
+  setArchiveMode(mode: ArchiveMode): void;
+  /** closeArchiveResults' reset (:8922-8925) — back to the archive list. */
+  clearArchive(): void;
   /** setSort (:1719-1723): toggle in place, new column starts ascending. */
   setSort(table: BacktestSortTable, col: string): void;
   /** setResSort semantics (:5452-5457): write an explicit spec (results tables start DESC). */
@@ -75,6 +79,15 @@ export function useViewState(options: ViewStateOptions): ViewStateStore {
       state.panel = 'archive';
       state.archive = name;
       state.archiveMode = archiveModeFromValue(mode);
+      persist();
+    },
+    setArchiveMode(mode): void {
+      state.archiveMode = archiveModeFromValue(mode);
+      persist();
+    },
+    clearArchive(): void {
+      state.archive = '';
+      state.archiveMode = 'backtests';
       persist();
     },
     setSort(table, col): void {

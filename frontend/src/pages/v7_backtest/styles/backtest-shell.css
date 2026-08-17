@@ -61,6 +61,46 @@ a:hover { text-decoration: underline; }
 #results-pin-btn.unpinned { opacity: .4; }
 .results-count-label { color: var(--text-dim); font-size: var(--fs-sm); white-space: nowrap; }
 
+/* ── Archive panel chrome (:48-86, :875-917) ─────── */
+#main-content:has(#panel-archive.active.arc-unpinned) { overflow-y: auto; }
+#main-content:has(#panel-legacy.active.leg-unpinned) { overflow-y: auto; }
+#archive-list-view { flex: 1; min-height: 0; overflow-y: auto; }
+#panel-archive.active:not(.arc-unpinned) { height: 100%; }
+#archive-results-view { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+#archive-results-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: var(--sp-lg); }
+#archive-results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border);
+                             box-shadow: 0 4px 12px rgba(0,0,0,.6); margin-bottom: var(--sp-md); }
+#archive-layout-status { font-size: var(--fs-sm); color: var(--text-dim); padding-top: var(--sp-sm); }
+#archive-results-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md);
+                           flex-wrap: wrap; padding-top: var(--sp-sm); }
+#archive-results-list-wrap { height: 25vh; min-height: 80px; overflow-y: auto;
+                             border: 1px solid var(--border); border-radius: 4px; position: relative; }
+#archive-results-resize-handle { height: 6px; cursor: row-resize; background: var(--border); border-radius: 0 0 4px 4px;
+                                 margin-bottom: 0; display: flex; align-items: center; justify-content: center; user-select: none; }
+#archive-results-resize-handle > span { width: 32px; height: 2px; background: var(--text-dim); border-radius: 2px; opacity: .5; }
+#panel-archive.active.arc-unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
+#panel-archive.arc-unpinned #archive-results-view { overflow: visible; flex: none; min-height: unset; }
+#panel-archive.arc-unpinned #archive-results-scroll { flex: none; min-height: unset; overflow-y: visible; }
+#archive-results-pin-btn.unpinned { opacity: .4; }
+
+/* ── Legacy panel chrome (:80-86, :918-945) — v7 only ── */
+#panel-legacy.active:not(.leg-unpinned) { height: 100%; }
+#legacy-results-view { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+#legacy-results-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: var(--sp-lg); }
+#legacy-results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border);
+                            box-shadow: 0 4px 12px rgba(0,0,0,.6); margin-bottom: var(--sp-md); }
+#legacy-results-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md);
+                          margin-top: var(--sp-sm); flex-wrap: wrap; }
+#legacy-results-list-wrap { height: 25vh; min-height: 80px; overflow-y: auto;
+                            border: 1px solid var(--border); border-radius: 4px; position: relative; }
+#legacy-results-resize-handle { height: 6px; cursor: row-resize; background: var(--border); border-radius: 0 0 4px 4px;
+                                margin-bottom: 0; display: flex; align-items: center; justify-content: center; user-select: none; }
+#legacy-results-resize-handle > span { width: 32px; height: 2px; background: var(--text-dim); border-radius: 2px; opacity: .5; }
+#panel-legacy.active.leg-unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
+#panel-legacy.leg-unpinned #legacy-results-view { overflow: visible; flex: none; min-height: unset; }
+#panel-legacy.leg-unpinned #legacy-results-scroll { flex: none; min-height: unset; overflow-y: visible; }
+#legacy-results-pin-btn.unpinned { opacity: .4; }
+
 /* ── Tables (backtest_shell.css:40-49) ───────────── */
 .tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-base); user-select: none; }
 .tbl th { position: sticky; top: 0; z-index: 2; background: var(--bg2); font-size: var(--fs-sm);

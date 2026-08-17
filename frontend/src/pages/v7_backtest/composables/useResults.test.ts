@@ -80,7 +80,7 @@ describe('loadResults (:5375-5416)', () => {
     expect(s.results.value.map((r) => r.backtest_version)).toEqual(['v7', 'v8']);
   });
 
-  it('a v8 result keeps its own version tag through the v7 base (:5390)', async () => {
+  it('tags the REQUESTED flavor unconditionally — a server-proclaimed v8 row through the v7 base becomes v7 (:5390, M-v7-10 follow-up #6)', async () => {
     fetchMock.mockImplementationOnce(() =>
       ok({ results: [{ path: 'p', config_name: 'c', result_name: 'r', backtest_version: 'v8' }] })
     );
@@ -88,7 +88,7 @@ describe('loadResults (:5375-5416)', () => {
     const promise = s.loadResults();
     await vi.advanceTimersByTimeAsync(0);
     await promise;
-    expect(s.results.value[0]?.backtest_version).toBe('v8');
+    expect(s.results.value[0]?.backtest_version).toBe('v7');
   });
 
   it('rejects a stale generation: the newer load wins (:5394, :5413)', async () => {
@@ -220,6 +220,9 @@ describe('filters + config names (:5357-5373, :5579-5610)', () => {
     const p = s.loadResults();
     await vi.advanceTimersByTimeAsync(0);
     await p;
+    // 'both' fans out to BOTH bases; the fixture answers the v7 URL with
+    // all three rows, which the loader re-tags v7 (:5390) — the v8 probe
+    // returns none
     // default sort: modified descending (setResSort :5451)
     expect(s.visible.value.map((r) => r.path)).toEqual(['v8a', 'v7b', 'v7a']);
     s.textFilter.value = 'r2';
@@ -228,7 +231,7 @@ describe('filters + config names (:5357-5373, :5579-5610)', () => {
     s.configFilter.value = 'alpha';
     expect(s.visible.value.map((r) => r.path)).toEqual(['v8a', 'v7a']);
     s.versionFilter.value = 'v7';
-    expect(s.visible.value.map((r) => r.path)).toEqual(['v7a']);
+    expect(s.visible.value.map((r) => r.path)).toEqual(['v8a', 'v7a']); // all rows re-tagged v7 (:5390), configFilter still alpha
   });
 });
 
@@ -338,7 +341,9 @@ describe('viewConfigResults (:4983-5006)', () => {
     expect(s.configFilter.value).toBe('c0');
     expect(s.textFilter.value).toBe('');
     expect(selectResults).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledTimes(1); // no reload
+    // the cached branch also fires the background refresh (:5001-5002,
+    // M-v7-10 follow-up #5)
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('with no cache: defers the filter to the auto load (:4984-4990)', async () => {

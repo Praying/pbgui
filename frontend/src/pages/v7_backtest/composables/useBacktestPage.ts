@@ -1,15 +1,18 @@
 import { computed, ref } from 'vue';
-import { createBacktestAdapter, detectBacktestVersion, navItems, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
+import { createBacktestAdapter, backtestApiBaseFrom, detectBacktestVersion, navItems, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
 import { createToastQueue, type ToastItem, type ToastQueue } from '../lib/toast';
 import { loadStoredBacktestViewState } from '../lib/viewState';
 import { compareSelected, compareSelectedQueue } from './useCompare';
 import { useConfigEditor, type ConfigEditorStore } from './useConfigEditor';
 import { useConfigs } from './useConfigs';
+import { useLegacyResults, type LegacyResultsStore } from './useLegacyResults';
 import { useQueueWs, type QueueWsController } from './useQueueWs';
+import { useArchive, type ArchiveStore } from './useArchive';
 import { useResults, type ResultsStore } from './useResults';
 import { useSettings } from './useSettings';
 import { useViewState, type ViewStateStore } from './useViewState';
-import type { BacktestPanel, QueueItem } from '../types';
+import { queueRebacktests } from '../lib/queueRebacktests';
+import type { BacktestPanel, BacktestResultItem, QueueItem, RebacktestFields } from '../types';
 import type { I18nT } from '../types.i18n';
 
 /**
@@ -50,6 +53,16 @@ export interface BacktestPageStore {
   settingsCleaning: { value: boolean };
   editor: ConfigEditorStore;
   results: ResultsStore;
+  /** The archive panel store (M-v7-11). */
+  archive: ArchiveStore;
+  /** The legacy panel store — null on v8 (adapter drops the panel). */
+  legacy: LegacyResultsStore | null;
+  /** rebacktestSelected's modal state (:7882-7956). */
+  resultsRebacktestOpen: { value: boolean };
+  resultsRebacktestDefaults: { value: RebacktestFields | null };
+  /** rebacktestSelected (:7864-7958) — the results ctx Backtest button. */
+  startResultsRebacktest(): Promise<void>;
+  confirmResultsRebacktest(fields: RebacktestFields): Promise<void>;
   /** compareSelected (:7778-7791) — the results ctx Compare button. */
   compareResults(): Promise<void>;
   /** compareSelectedQueue (:7744-7776) — the queue ctx Compare button. */
@@ -191,8 +204,8 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
       void configsStore.loadConfigs();
       results.refresh();
     },
-    onArchiveUpdate: () => {
-      /* archive cache invalidation lands with M-v7-11's archive store */
+    onArchiveUpdate: (panel) => {
+      archive.onArchiveUpdate(panel); // :1308-1317
     },
     onBanner: (state) => {
       banner.value = state;
@@ -260,7 +273,12 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     view.selectPanel(panel, selectOptions);
     if (panel === 'configs') void configsStore.loadIfEmpty();
     if (panel === 'results') results.loadIfEmpty();
-    /* archive/legacy lazy loads land with M-v7-11 */
+    if (panel === 'archive') {
+      // :1455 + :1459-1460 — lazy list load, fresh results on return
+      void archive.loadIfEmpty();
+      if (view.state.archive) void archive.viewArchive(view.state.archive);
+    }
+    if (panel === 'legacy' && legacy) void legacy.loadIfEmpty();
   }
 
   /** The metadata router base — /symbols, /tags, /coins/* (adapter :138-142). */
@@ -279,6 +297,116 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     initialSort: { ...view.state.sorts.results },
     onSortChange: (spec) => view.setSortSpec('results', spec),
   });
+
+  /* ── archive + legacy stores (M-v7-11) ── */
+  const archive = useArchive({
+    archiveBase: backtestApiBaseFrom(apiBase, 'v7'), // archives always live on the v7 router
+    version,
+    t,
+    notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+    getCurrentPanel: () => view.state.panel,
+    view,
+    results,
+    wsRefresh: () => ws.wsRefresh(),
+    getSettings: () => settingsStore.settings.value,
+    getPbguiDataPath: () => editor.getPbguiDataPath(),
+    fetchFn: undefined,
+    choose: (chooseOptions) => {
+      const dialogs = (window as typeof window & { PBGuiDialogs?: { choose?: (o: typeof chooseOptions) => Promise<string | null> } }).PBGuiDialogs;
+      return dialogs?.choose ? dialogs.choose(chooseOptions) : Promise.resolve(null);
+    },
+  });
+
+  const legacy = adapter.isV8
+    ? null
+    : useLegacyResults({
+        apiBase,
+        version,
+        t,
+        notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+        getCurrentPanel: () => view.state.panel,
+        view,
+        results,
+        wsRefresh: () => ws.wsRefresh(),
+        selectPanel: () => selectPanel('configs'),
+        getPbguiDataPath: () => editor.getPbguiDataPath(),
+      });
+
+  /* ── rebacktestSelected (:7864-7958) — the results ctx Backtest flow ── */
+  const resultsRebacktestOpen = ref(false);
+  const resultsRebacktestDefaults = ref<RebacktestFields | null>(null);
+
+  async function requestJsonFrom(base: string, path: string): Promise<Record<string, unknown>> {
+    const response = await fetch(base + path, { credentials: 'same-origin' });
+    const data: unknown = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = data && typeof data === 'object' ? (data as { detail?: unknown }).detail : undefined;
+      throw new Error(String(detail ?? response.statusText));
+    }
+    return (data && typeof data === 'object' ? (data as Record<string, unknown>) : {});
+  }
+
+  function resultsNameFor(path: string): string {
+    const matched = results.results.value.find((entry) => entry.path === path);
+    return matched?.config_name || path.split('/').slice(-3, -2)[0] || 'rebacktest'; // :7872
+  }
+
+  async function startResultsRebacktest(): Promise<void> {
+    const selected = results.getSelected();
+    if (selected.length === 0) {
+      notifyError(t('v7backtest.nothingSelected'));
+      return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const cfg = await requestJsonFrom(apiBase, `/results/config?path=${encodeURIComponent(selected[0]!)}`);
+      if (selected.length === 1) {
+        // :7868-7878 — open the config editor with the result's config
+        const name = resultsNameFor(selected[0]!);
+        const hasSavedSource = !adapter.isV8 || configsStore.configs.value.some((item) => item.name === name);
+        selectPanel('configs');
+        editor.openEditor(hasSavedSource ? name : '', cfg, null, undefined, { isNew: !hasSavedSource });
+        return;
+      }
+      const backtest = (cfg.backtest as Record<string, unknown> | undefined) ?? {};
+      const exchanges = Array.isArray(backtest.exchanges) ? (backtest.exchanges as string[]).map(String) : [];
+      const usePbgui = settingsStore.settings.value.use_pbgui_market_data === true || String(settingsStore.settings.value.use_pbgui_market_data).toLowerCase() === 'true';
+      resultsRebacktestDefaults.value = {
+        start: String(backtest.start_date || '2020-01-01'),
+        end: today,
+        balance: Number(backtest.starting_balance) || 1000,
+        exchanges: exchanges.length > 0 ? exchanges : ['bybit'],
+        usePbguiData: usePbgui,
+      };
+      resultsRebacktestOpen.value = true;
+    } catch (error) {
+      notifyError(t('v7backtest.failedLoadConfig', { msg: errorMessage(error) }));
+    }
+  }
+
+  async function confirmResultsRebacktest(fields: RebacktestFields): Promise<void> {
+    const selected = results.getSelected();
+    let pbguiPath = '';
+    if (fields.usePbguiData) {
+      try {
+        pbguiPath = await editor.getPbguiDataPath();
+      } catch (error) {
+        notifyError(t('v7backtest.failedGetDataPath', { msg: errorMessage(error) }));
+        return;
+      }
+    }
+    await queueRebacktests({
+      apiBase,
+      paths: selected,
+      fields,
+      fetchConfig: (path) => requestJsonFrom(apiBase, `/results/config?path=${encodeURIComponent(path)}`),
+      nameFor: resultsNameFor,
+      pbguiPath,
+      t,
+      notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+      wsRefresh: () => ws.wsRefresh(),
+    });
+  }
 
   const compareResults = compareSelected({
     results,
@@ -382,6 +510,12 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     configsStore,
     editor,
     results,
+    archive,
+    legacy,
+    resultsRebacktestOpen,
+    resultsRebacktestDefaults,
+    startResultsRebacktest,
+    confirmResultsRebacktest,
     compareResults,
     compareQueue,
     viewConfigResults,

@@ -144,3 +144,26 @@ describe('useViewState v8 key', () => {
     expect(JSON.parse(storage.getItem('pbgui:v8_backtest:view_state')!).panel).toBe('results');
   });
 });
+
+describe('useViewState archive selection (M-v7-11, :8999-9011, :8922-8925)', () => {
+  it('setArchiveMode keeps the archive and writes the #archive:<name>:<mode> hash', async () => {
+    const { view, storage, urls } = makeView();
+    view.openArchive('mine');
+    view.setArchiveMode('optimize');
+    await nextTick();
+    const stored = JSON.parse(storage.getItem('pbgui:v7_backtest:view_state')!) as { panel: string; archive: string; archiveMode: string };
+    expect(stored).toMatchObject({ panel: 'archive', archive: 'mine', archiveMode: 'optimize' });
+    expect(urls.at(-1)).toBe('/api/backtest-v7/main_page?draft_id=abc#archive:mine:optimize');
+  });
+
+  it('clearArchive resets to the list view and the plain #archive hash', async () => {
+    const { view, storage, urls } = makeView();
+    view.openArchive('mine', 'schedules');
+    view.clearArchive();
+    await nextTick();
+    expect(view.state.archive).toBe('');
+    expect(view.state.archiveMode).toBe('backtests');
+    expect(JSON.parse(storage.getItem('pbgui:v7_backtest:view_state')!)).toMatchObject({ panel: 'archive', archive: '', archiveMode: 'backtests' });
+    expect(urls.at(-1)).toBe('/api/backtest-v7/main_page?draft_id=abc#archive');
+  });
+});

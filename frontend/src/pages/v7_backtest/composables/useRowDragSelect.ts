@@ -119,6 +119,10 @@ export function useRowDragSelect(options: RowDragSelectOptions): RowDragSelect {
     const target = event.target as HTMLElement | null;
     const row = target?.closest('tr[data-path]') as HTMLElement | null;
     if (!row || target?.closest('.actions-cell')) return;
+    // scope to THIS table's rows — the document-level listener must not
+    // cross-fire when sibling panels (archive/legacy) render their own
+    // tr[data-path] tables at the same time (:5877 vs :5936)
+    if (!options.getRows().includes(row)) return;
     event.preventDefault(); // no text-selection / drag cursor
     dragStart = { row, y: event.clientY };
     dragging = false;

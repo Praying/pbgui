@@ -511,6 +511,21 @@ describe('settings modal (App wiring, :1560-1566)', () => {
 });
 
 describe('results panel (M-v7-10, :834-869)', () => {
+  it('the results pin button unpins the panel chrome (:6415-6419, shell.js:326-334)', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    const panel = wrapper.find('#panel-results');
+    expect(panel.classes()).not.toContain('unpinned');
+    await wrapper.find('#results-pin-btn').trigger('click');
+    await nextTick();
+    expect(panel.classes()).toContain('unpinned');
+    await wrapper.find('#results-pin-btn').trigger('click');
+    await nextTick();
+    expect(panel.classes()).not.toContain('unpinned');
+    wrapper.unmount();
+  });
+
   it('lazy-loads results on panel switch and renders the rows (:1434-1462, :5514-5577)', async () => {
     fetchMock.mockImplementation((url: string) => {
       const target = String(url);
@@ -587,18 +602,148 @@ describe('results panel (M-v7-10, :834-869)', () => {
     wrapper.unmount();
   });
 });
+describe('archive + legacy panels (M-v7-11)', () => {
+  function stubArchiveRoutes(): void {
+    fetchMock.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/api/backtest-v7/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (u.includes('/configs') && !u.includes('/archives/')) return ok({ configs: [] });
+      if (u.endsWith('/archives')) return ok({ archives: [{ name: 'mine', is_own: true, url: 'https://github.com/o/r', results: 2, optimize_configs: 1 }] });
+      if (u.endsWith('/archives/mine/results')) return ok({ results: [{ path: '/archives/mine/a', config_name: 'alpha', result_name: 'r1', backtest_version: 'v7', adg: 2 }], migration_status: { label: 'layout-v2' } });
+      if (u.endsWith('/optimize-configs')) return ok({ configs: [{ path: 'o1', name: 'opt', optimize_version: 'v7' }] });
+      if (u.endsWith('/retest-schedules')) return ok({ schedules: [], runs: [] });
+      if (u.endsWith('/legacy/results')) return ok({ results: [{ path: 'pb7/backtests/o/r1', config_name: 'old', result_name: 'r1' }] });
+      return ok({});
+    });
+  }
 
-  it('the results pin button unpins the panel chrome (:6415-6419, shell.js:326-334)', async () => {
+  it('switching to the archive panel lazy-loads the archive list (:1455)', async () => {
+    stubArchiveRoutes();
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    const panel = wrapper.find('#panel-results');
-    expect(panel.classes()).not.toContain('unpinned');
-    await wrapper.find('#results-pin-btn').trigger('click');
+    fetchMock.mockClear();
+    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await flush();
     await nextTick();
-    expect(panel.classes()).toContain('unpinned');
-    await wrapper.find('#results-pin-btn').trigger('click');
-    await nextTick();
-    expect(panel.classes()).not.toContain('unpinned');
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/archives'))).toBe(true);
+    expect(wrapper.find('#archive-list-view').exists()).toBe(true);
+    expect(wrapper.find('#archive-list-container tbody tr').text()).toContain('mine');
     wrapper.unmount();
   });
+
+  it('boots straight into an open archive from the #archive:name:mode hash (:10019-10023)', async () => {
+    stubArchiveRoutes();
+    window.history.replaceState({}, '', '/api/backtest-v7/main_page#archive:mine:optimize');
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#panel-archive').classes()).toContain('active');
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/archives/mine/results'))).toBe(true);
+    expect(wrapper.find('[data-test="arc-tab-optimize"]').attributes('style')).toContain('opacity: 1');
+    // the hash round-trips through the frozen view-state contract
+    expect(window.location.hash).toBe('#archive:mine:optimize');
+    expect(JSON.parse(localStorage.getItem('pbgui:v7_backtest:view_state')!)).toMatchObject({ panel: 'archive', archive: 'mine', archiveMode: 'optimize' });
+    wrapper.unmount();
+  });
+
+  it('dblclick opens an archive and the ctx sidebar gains the results actions (:8890-8920)', async () => {
+    stubArchiveRoutes();
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('[data-test="archive-add"]').exists()).toBe(true);
+    await wrapper.find('#archive-list-container tbody tr').trigger('dblclick');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#archive-results-view').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-back"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-rebacktest"]').exists()).toBe(true);
+    expect(wrapper.find('#archive-results-table tbody tr').text()).toContain('alpha');
+    wrapper.unmount();
+  });
+
+  it('an archive_update WS frame on another panel invalidates the cached list (:1308-1317)', async () => {
+    stubArchiveRoutes();
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    // load the archive list once, then leave the panel
+    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(1);
+    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await nextTick();
+    sockets[0]!.onmessage!({ data: JSON.stringify({ type: 'archive_update' }) });
+    await nextTick();
+    // no fetch fires while away; the cleared cache forces a refetch on return
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(1);
+    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(2);
+    wrapper.unmount();
+  });
+
+  it('the results ctx Backtest button is version-bound (:5349-5355) and opens the editor for one result (:7868-7878)', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      const u = String(url);
+      if (u.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (u.includes('/configs')) return ok({ configs: [] });
+      if (u.includes('/results/config')) return ok({ backtest: { exchanges: ['bybit'] } });
+      if (u.endsWith('/results')) return ok({ results: [{ path: 'p1', config_name: 'alpha', result_name: 'r', modified: '2024-01-01T00:00:00Z' }] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await flush();
+    await nextTick();
+    // version filter starts at the page flavor — the button is enabled
+    const button = wrapper.find('[data-test="results-rebacktest"]');
+    expect((button.element as HTMLButtonElement).disabled).toBe(false);
+    await wrapper.find('#results-list tbody tr').trigger('click');
+    fetchMock.mockClear();
+    await button.trigger('click');
+    await flush();
+    await nextTick();
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/results/config?path=p1'))).toBe(true);
+    expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('the legacy panel lazy-loads, renders rows and keeps the ctx actions (:9034-9039, :772-778)', async () => {
+    stubArchiveRoutes();
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    fetchMock.mockClear();
+    await wrapper.find('.sb-section[data-panel="legacy"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/legacy/results'))).toBe(true);
+    expect(wrapper.find('#legacy-results-table tbody tr').text()).toContain('old');
+    expect(wrapper.find('[data-test="legacy-refresh"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="legacy-compare"]').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('v8 keeps the archive panel but never mounts the legacy one (:160-162)', async () => {
+    stubArchiveRoutes();
+    window.history.replaceState({}, '', '/api/backtest-v8/main_page');
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#panel-archive').exists()).toBe(true);
+    expect(wrapper.find('#panel-legacy').exists()).toBe(false);
+    wrapper.unmount();
+  });
+});

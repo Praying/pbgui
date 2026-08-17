@@ -35,8 +35,9 @@ export interface ResultDataApi {
   loadBe(path: string, result: BacktestResultItem): Promise<BeSeries>;
   /** loadAndRenderPnlChart's cache (:7227-7241). */
   loadFills(path: string, result: BacktestResultItem): Promise<ParsedCsv>;
-  /** loadPricePayload's bounded cache (:6789-6823). */
-  loadPrice(path: string, market: { exchange: string; coin: string }): Promise<PricePayload>;
+  /** loadPricePayload's bounded cache (:6789-6823) — routed by the row's
+   * version like legacy resultApiFetch(cd.result, …) (:6815-6817). */
+  loadPrice(path: string, market: { exchange: string; coin: string }, result: BacktestResultItem): Promise<PricePayload>;
   /** /results/analysis (result.analysis short-circuits, :7531-7545). */
   loadAnalysis(path: string, result: BacktestResultItem): Promise<unknown>;
   /** /results/config (:7547-7557). */
@@ -175,11 +176,11 @@ export function useResults(options: UseResultsOptions): ResultsStore {
     });
   }
 
-  async function loadPrice(path: string, market: { exchange: string; coin: string }): Promise<PricePayload> {
+  async function loadPrice(path: string, market: { exchange: string; coin: string }, result: BacktestResultItem): Promise<PricePayload> {
     const cacheKey = `${path}|${market.exchange}|${market.coin}`;
     const cached = priceCache.get(cacheKey);
     if (cached) return cached;
-    const url = `${baseFor(version)}/results/price?path=${encodeURIComponent(path)}&exchange=${encodeURIComponent(market.exchange)}&coin=${encodeURIComponent(market.coin)}&max_points=6000`;
+    const url = `${resultApiBaseFor(result)}/results/price?path=${encodeURIComponent(path)}&exchange=${encodeURIComponent(market.exchange)}&coin=${encodeURIComponent(market.coin)}&max_points=6000`;
     const response = await fetchFn(url, { credentials: 'same-origin' });
     const payload = (await response.json().catch(() => ({}))) as PricePayload;
     priceCache.set(cacheKey, payload);
@@ -298,9 +299,11 @@ export function useResults(options: UseResultsOptions): ResultsStore {
           const response = await fetchFn(`${baseFor(targetVersion)}/results`, { credentials: 'same-origin' });
           const data = (await response.json().catch(() => ({}))) as { results?: BacktestResultItem[]; detail?: unknown };
           if (!response.ok) throw new Error(String(data.detail ?? response.statusText));
+          // legacy :5390 tags the REQUESTED flavor unconditionally — the
+          // server list carries no version of its own
           resultsByVersion[targetVersion] = (data.results ?? []).map((result) => ({
             ...result,
-            backtest_version: (result.backtest_version || targetVersion) as BacktestVersion,
+            backtest_version: targetVersion,
           }));
           return resultsByVersion[targetVersion]!;
         })
@@ -442,9 +445,12 @@ export function useResults(options: UseResultsOptions): ResultsStore {
     textFilter.value = '';
     options.onSelectResultsPanel?.();
     if (results.value.length > 0) {
-      // cached: apply the filter immediately — no empty-table flash (:4987-4998)
+      // cached: apply the filter immediately — no empty-table flash
+      // (:4987-4998) … and refresh in the background so newly finished
+      // jobs appear (:5001-5002)
       configFilter.value = resultConfigNames(versioned.value).includes(name) ? name : '';
       pendingFilter = '';
+      void loadResults().catch(() => undefined);
       return;
     }
     // legacy fires the panel lazy-load AND its own loadResults — the

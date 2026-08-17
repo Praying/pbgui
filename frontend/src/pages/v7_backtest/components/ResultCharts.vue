@@ -10,15 +10,20 @@ import ResultSection from './ResultSection.vue';
 import type { ResultDataApi, ResultsSection } from '../composables/useResults';
 import type { BacktestVersion } from '../types';
 
-defineProps<{
-  sections: readonly ResultsSection[];
-  version: BacktestVersion;
-  dataApi: ResultDataApi;
-}>();
+withDefaults(
+  defineProps<{
+    sections: readonly ResultsSection[];
+    version: BacktestVersion;
+    dataApi: ResultDataApi;
+    /** The legacy container id (:865 results / :912 archive / :942 legacy). */
+    chartsId?: string;
+  }>(),
+  { chartsId: 'results-charts' }
+);
 </script>
 
 <template>
-  <div id="results-charts" :style="sections.length === 0 ? 'display: none' : ''">
+  <div :id="chartsId" :style="sections.length === 0 ? 'display: none' : ''">
     <ResultSection v-for="(section, index) in sections" :key="section.result.path" :section="section" :index="index" :version="version" :data-api="dataApi" />
   </div>
 </template>

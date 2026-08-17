@@ -10,8 +10,9 @@
  * loadResults with the empty-retry ladder (:5357-5416), the sortable +
  * drag-selectable results table (:5514-5785), per-result charts
  * (:6576-7528), the compare flows (:7646-7860) and the delete flow
- * (:8509-8532). Archive/legacy (M-v7-11) and handoffs (M-v7-12) extend
- * this shell.
+ * (:8509-8532). M-v7-11 adds the archive workbench (:875-917,
+ * :8822-9463) and the legacy panel (:918-945). Handoffs (M-v7-12)
+ * extend this shell.
  *
  * FLAVOR: pathname-derived (/api/backtest-v8/ → v8, config.ts) — both
  * routers serve this one build; v8 drops the legacy panel.
@@ -20,8 +21,11 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import ArchivePanel from './components/ArchivePanel.vue';
 import BacktestConfigEditor from './components/BacktestConfigEditor.vue';
 import ConfigsPanel from './components/ConfigsPanel.vue';
+import LegacyPanel from './components/LegacyPanel.vue';
+import RebacktestModal from './components/RebacktestModal.vue';
 import PanelShell from './components/PanelShell.vue';
 import QueueDraftModal from './components/QueueDraftModal.vue';
 import QueuePanel from './components/QueuePanel.vue';
@@ -44,8 +48,13 @@ const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
 const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
 const editorPanel = ref<InstanceType<typeof BacktestConfigEditor> | null>(null);
 const resultsPanel = ref<InstanceType<typeof ResultsPanel> | null>(null);
+const archivePanel = ref<InstanceType<typeof ArchivePanel> | null>(null);
+const legacyPanel = ref<InstanceType<typeof LegacyPanel> | null>(null);
 /** Results pin state (:6415-6419) — `unpinned` releases the panel chrome. */
 const resultsPinned = ref(true);
+/** Archive (:6384-6397) + legacy (:6400-6413) pin states. */
+const archivePinned = ref(true);
+const legacyPinned = ref(true);
 
 const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
@@ -53,6 +62,9 @@ const bannerText = computed(() =>
 );
 
 const editorOpen = computed(() => store.editor.editingName.value !== null);
+/** The archive/legacy panels mount once their panel is first visited. */
+const archiveMounted = computed(() => store.view.state.panel === 'archive' || store.archive.archives.value.length > 0);
+const legacyMounted = computed(() => store.view.state.panel === 'legacy' || (store.legacy?.rows.value.length ?? 0) > 0);
 const editorSettings = computed(() => ({
   hslModes: store.settingsStore.settings.value.hsl_signal_modes,
   exchangeOptions: store.editor.exchangeOptions(),
@@ -139,16 +151,53 @@ onMounted(() => {
         <button type="button" class="sb-btn" data-test="open-settings" @click="store.openSettingsModal">{{ t('v7backtest.settings') }}</button>
       </template>
       <template #ctx-results>
-        <!-- Compare + Delete are cross-version (:735, :742); the other
-             results actions land with M-v7-11/12 handoffs -->
+        <!-- Backtest (:733) is version-bound (:5349-5355); Compare + Delete are
+             cross-version (:735, :742); the other results handoffs land in M-v7-12 -->
+        <button
+          type="button"
+          class="sb-btn"
+          data-test="results-rebacktest"
+          :disabled="store.results.versionFilter.value !== store.adapter.version"
+          :title="store.results.versionFilter.value !== store.adapter.version ? t('v7backtest.actionVersionBound', { version: store.adapter.version.toUpperCase() }) : ''"
+          @click="store.startResultsRebacktest"
+        >
+          🔄 {{ t('v7backtest.backtest') }}
+        </button>
         <button type="button" class="sb-btn" data-test="results-compare" @click="store.compareResults">📈 {{ t('v7backtest.compare') }}</button>
         <button type="button" class="sb-btn danger" data-test="results-delete" @click="resultsPanel?.deleteSelectedFlow()">🗑 {{ t('v7backtest.deleteSelected') }}</button>
       </template>
       <template #ctx-archive>
-        <!-- archive actions land in M-v7-11 -->
+        <!-- list-view actions (:747-753); pull/push/setup/log land in M-v7-12 -->
+        <template v-if="!store.archive.selectedName.value">
+          <button type="button" class="sb-btn accent" data-test="archive-add" @click="archivePanel?.openAddArchive()">+ {{ t('v7backtest.addArchive') }}</button>
+        </template>
+        <!-- results-view actions (:754-771), visibility per updateArchiveActionVisibility (:8969-8997) -->
+        <template v-else>
+          <button type="button" class="sb-btn" data-test="archive-back" @click="store.archive.closeArchive()">🏠 {{ t('v7backtest.archives') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-rebacktest" @click="store.archive.startRebacktest()">🔄 {{ t('v7backtest.backtest') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn" data-test="archive-rename" @click="archivePanel?.openRename()">✏ {{ t('v7backtest.renameConfig') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn" data-test="archive-retest" @click="store.archive.startRetestReplace()">♻ {{ t('v7backtest.retestReplace') }}</button>
+          <!-- Add to Run (:759) + Balance Calculator (:761) land in M-v7-12 -->
+          <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-compare" @click="store.archive.compareSelected()">📈 {{ t('v7backtest.compare') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-score-preview" @click="store.archive.previewScores()">⭐ {{ t('v7backtest.scorePreview') }}</button>
+          <template v-if="store.archive.mode.value === 'optimize'">
+            <button type="button" class="sb-btn" data-test="archive-opt-view" @click="archivePanel?.openViewOptimize()">📄 {{ t('v7backtest.viewConfig') }}</button>
+            <button type="button" class="sb-btn" data-test="archive-opt-open" @click="archivePanel?.openOptimizeFromConfig()">🧬 {{ t('v7backtest.optimizeFromConfig') }}</button>
+            <button type="button" class="sb-btn" data-test="archive-opt-import" @click="archivePanel?.openImportOptimize()">📥 {{ t('v7backtest.importConfig') }}</button>
+            <button v-if="store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-opt-delete" @click="archivePanel?.openDeleteOptimize()">🗑 {{ t('v7backtest.deleteConfig') }}</button>
+          </template>
+          <!-- Compact History (:767) lands in M-v7-12 -->
+          <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-remove-duplicates" @click="archivePanel?.openCleanup('duplicates')">🧹 {{ t('v7backtest.removeDuplicates') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-remove-liquidated" @click="archivePanel?.openCleanup('liquidated')">🧹 {{ t('v7backtest.removeLiquidated') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-delete" @click="archivePanel?.openDeleteResults()">🗑 {{ t('v7backtest.deleteSelected') }}</button>
+        </template>
       </template>
       <template v-if="!store.adapter.isV8" #ctx-legacy>
-        <!-- legacy actions land in M-v7-11 -->
+        <!-- legacy actions (:772-778); Add to Run lands in M-v7-12 -->
+        <button type="button" class="sb-btn" data-test="legacy-refresh" @click="store.legacy?.loadLegacyResults()">↻ {{ t('v7backtest.refresh') }}</button>
+        <button type="button" class="sb-btn" data-test="legacy-rebacktest" @click="store.legacy?.startRebacktest(store.editor.openEditor, () => store.selectPanel('configs'))">🔄 {{ t('v7backtest.backtest') }}</button>
+        <button type="button" class="sb-btn" data-test="legacy-compare" @click="store.legacy?.compareSelected()">📈 {{ t('v7backtest.compare') }}</button>
+        <button type="button" class="sb-btn danger" data-test="legacy-delete" @click="legacyPanel?.openDelete()">🗑 {{ t('v7backtest.deleteSelected') }}</button>
       </template>
 
       <!-- Editor sidebar (:782-804, setEditorMode :211-222) — handoff buttons land in M-v7-12 -->
@@ -239,20 +288,24 @@ onMounted(() => {
         />
       </div>
 
-      <!-- ARCHIVE panel — M-v7-11 -->
-      <div id="panel-archive" class="view-panel" :class="{ active: store.view.state.panel === 'archive' }">
-        <div class="empty-state"><div class="empty-icon">🗄️</div><p>Archive — M-v7-11</p></div>
-      </div>
+      <!-- ARCHIVE panel (:875-917) — M-v7-11 -->
+      <ArchivePanel
+        v-if="archiveMounted"
+        ref="archivePanel"
+        v-model:pinned="archivePinned"
+        :archive="store.archive"
+        :active="store.view.state.panel === 'archive'"
+        :version="store.adapter.version"
+      />
 
-      <!-- LEGACY panel — v7 only (adapter drops it on v8, :160-162) — M-v7-11 -->
-      <div
-        v-if="!store.adapter.isV8"
-        id="panel-legacy"
-        class="view-panel"
-        :class="{ active: store.view.state.panel === 'legacy' }"
-      >
-        <div class="empty-state"><div class="empty-icon">🧭</div><p>Legacy — M-v7-11</p></div>
-      </div>
+      <!-- LEGACY panel (:918-945) — v7 only (adapter drops it on v8, :160-162) -->
+      <LegacyPanel
+        v-if="!store.adapter.isV8 && legacyMounted"
+        ref="legacyPanel"
+        v-model:pinned="legacyPinned"
+        :legacy="store.legacy!"
+        :active="store.view.state.panel === 'legacy'"
+      />
     </div>
   </div>
 
@@ -278,5 +331,14 @@ onMounted(() => {
     @save="store.saveSettings"
     @cleanup="store.cleanNow"
     @close="store.settingsOpen.value = false"
+  />
+
+  <!-- rebacktestSelected's parameter popup (:7895-7956) -->
+  <RebacktestModal
+    :open="store.resultsRebacktestOpen.value"
+    :defaults="store.resultsRebacktestDefaults.value"
+    @confirm="(fields) => { store.resultsRebacktestOpen.value = false; void store.confirmResultsRebacktest(fields); }"
+    @close="store.resultsRebacktestOpen.value = false"
+    @error="store.notifyError"
   />
 </template>

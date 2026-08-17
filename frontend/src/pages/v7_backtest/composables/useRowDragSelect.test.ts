@@ -141,3 +141,36 @@ describe('useRowDragSelect (:5755-5784)', () => {
     dispose();
   });
 });
+
+describe('row scoping (M-v7-11 — sibling tr[data-path] tables)', () => {
+  it('ignores mousedown on rows outside this table (no cross-fire, :5877 vs :5936)', () => {
+    const foreign = document.createElement('tr');
+    foreign.dataset.path = 'foreign';
+    document.body.appendChild(foreign);
+    const own = document.createElement('tr');
+    own.dataset.path = 'own';
+    document.body.appendChild(own);
+    const toggled: string[] = [];
+    const drag = useRowDragSelect({
+      getRows: () => [own],
+      getWrap: () => null,
+      isSelected: () => false,
+      onToggle: (path) => toggled.push(path),
+      onSelectRange: () => {},
+      raf: () => 0,
+      cancelRaf: () => {},
+    });
+    try {
+      foreign.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+      document.dispatchEvent(new MouseEvent('mouseup'));
+      expect(toggled).toEqual([]);
+      own.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+      document.dispatchEvent(new MouseEvent('mouseup'));
+      expect(toggled).toEqual(['own']);
+    } finally {
+      drag.dispose();
+      foreign.remove();
+      own.remove();
+    }
+  });
+});
