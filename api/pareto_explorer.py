@@ -18,11 +18,11 @@ from collections import Counter
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 import numpy as np
 import pandas as pd
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from ParetoDataLoader import ParetoDataLoader
 from pareto_preset_generator import OPTIMIZE_PRESET_DIRECTIONS, build_optimize_preset
 from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION, load_ini, pb7dir, pb8_runtime_status, save_ini_section
@@ -3332,44 +3332,48 @@ def _build_server_refresh_bundle(loader: ParetoDataLoader, *, all_results_loaded
     }
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def main_page(
     request: Request,
     result_path: str = Query(default="", description="Optimize result directory to open"),
     optimize_version: str = Query(default="v7", description="Explorer generation when no result is selected"),
     _session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    html_path = Path(__file__).resolve().parent.parent / "frontend" / "v7_pareto_explorer.html"
-    if not html_path.exists():
-        raise HTTPException(404, "v7_pareto_explorer.html not found")
+) -> FileResponse | HTMLResponse:
+    """Serve the standalone Pareto Explorer page: Vue entry first, legacy fallback.
 
-    html = html_path.read_text(encoding="utf-8")
-
+    The Vue page (frontend/src/pages/v7_pareto_explorer) is served by this ONE
+    route for both flavours — the seed comes from ?optimize_version= and is
+    re-resolved per result at runtime (composables/useParetoSession.ts), so
+    there is no pathname detection (recon §4). The legacy
+    v7_pareto_explorer.html keeps its server-side placeholder injections —
+    including the result-dir-resolved %%OPTIMIZE_VERSION%% — as the fallback
+    for checkouts without a build.
+    """
     scheme = request.url.scheme
     host = request.url.hostname or "127.0.0.1"
     port = request.url.port
     origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/pareto-explorer"
-    ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
 
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-    html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
-    html = html.replace('"%%RESULT_PATH%%"', json.dumps(str(result_path or "")))
-    result_dir = _resolve_result_dir(result_path)
-    optimize_version = _result_optimize_version(result_dir) if result_dir else (
-        "v8" if str(optimize_version).strip().lower() == "v8" else "v7"
-    )
-    html = html.replace('"%%OPTIMIZE_VERSION%%"', json.dumps(optimize_version))
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+    def _inject(html: str, req: Request) -> str:
+        del req
+        html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/pareto-explorer"))
+        html = html.replace('"%%WS_BASE%%"', json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")))
+        html = html.replace('"%%RESULT_PATH%%"', json.dumps(str(result_path or "")))
+        resolved_dir = _resolve_result_dir(result_path)
+        resolved_version = _result_optimize_version(resolved_dir) if resolved_dir else (
+            "v8" if str(optimize_version).strip().lower() == "v8" else "v7"
+        )
+        html = html.replace('"%%OPTIMIZE_VERSION%%"', json.dumps(resolved_version))
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+        nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+    return serve_vue_or_legacy_page("v7_pareto_explorer", "v7_pareto_explorer.html", request, inject=_inject)
 
 
 @router.get("/session")

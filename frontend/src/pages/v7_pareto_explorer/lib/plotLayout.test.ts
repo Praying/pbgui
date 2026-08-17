@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { darkPlotLayout, previewPlotLayout, projectionPlotLayout } from './plotLayout';
+import { darkPlotLayout, previewPlotLayout } from './plotLayout';
 
 /*
- * Chart layout plumbing — ports of darkPlotLayout (:2580-2644), the preview
- * legend/margin/height overrides (:2914-2923, :2928-2937) and
- * projectionPlotLayout (:2646-2679; defined in legacy, never called there).
+ * Chart layout plumbing — ports of darkPlotLayout (:2580-2644) and the
+ * preview legend/margin/height overrides (:2914-2923, :2928-2937). The
+ * legacy projectionPlotLayout (:2646-2679) was never called there either
+ * and was not ported.
  */
 
 describe('darkPlotLayout (:2580-2644)', () => {
@@ -83,25 +84,5 @@ describe('previewPlotLayout (:2914-2923, :2928-2937)', () => {
   it('keeps a taller caller height', () => {
     const layout = previewPlotLayout({ height: 900 }) as Record<string, unknown>;
     expect(layout.height).toBe(900);
-  });
-});
-
-describe('projectionPlotLayout (:2646-2679)', () => {
-  it('centres the projection title and trims the colorbar — legacy kept this unused', () => {
-    const layout = projectionPlotLayout(
-      {
-        annotations: [{ name: 'projection-colorbar-title' }, { text: 'keep' }],
-        coloraxis: { colorbar: { title: { text: 'x' } } },
-        xaxis: { title: { text: 'x' } },
-      },
-      'XY projection'
-    ) as Record<string, unknown>;
-    expect(layout.title).toEqual({ text: 'XY projection', x: 0.5, xanchor: 'center', y: 0.98, yanchor: 'top', font: { color: '#9fb3c8', size: 13 } });
-    expect(layout.annotations).toEqual([{ text: 'keep', font: { color: '#fafafa' } }]);
-    expect(layout.margin).toEqual({ l: 70, r: 95, t: 56, b: 64 });
-    const colorbar = (layout.coloraxis as Record<string, Record<string, unknown>>).colorbar;
-    expect(colorbar).toEqual({ title: { text: 'x', font: { color: '#fafafa' } }, x: 1.01, thickness: 14, len: 0.78, tickfont: { size: 10, color: '#fafafa' } });
-    const xaxis = layout.xaxis as Record<string, Record<string, unknown>>;
-    expect(xaxis.title).toEqual({ text: 'x', standoff: 10 });
   });
 });
