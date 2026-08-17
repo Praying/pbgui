@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- boot.js must run before the bundle: the app reads window.__BOOT__ at
+       mount time. The legacy page's %%API_BASE%%/%%WS_BASE%%/%%RESULT_PATH%%/
+       %%OPTIMIZE_VERSION%%/%%VERSION%%/%%SERIAL%% injections are gone —
+       config.ts derives the pareto API base from boot.js origin, RESULT_PATH
+       + the version seed from the query string. This is the ONLY v7/v8 page
+       served by ONE route: the flavor is NOT derived from the pathname but
+       from ?optimize_version= (seed) + the runtime per-result resolution in
+       composables/useParetoSession.ts (recon §4). -->
+  <script src="/api/boot.js"></script>
+  <!-- legacy i18n engine: drives pbgui_nav.js labels -->
+  <script src="/app/i18n.js?v=1"></script>
+  <title>PBGui - Pareto Explorer</title>
+  <!-- resizable sidebar chrome, same files as legacy v7_pareto_explorer.html:7-11 -->
+  <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
+  <!-- Plotly stays a vendored script global. Legacy pareto loads it from the
+       dedicated /static route (legacy :10) — NOT /app/plotly.min.js like
+       backtest. Kept on /static for parity; standardising to one global
+       happens at module closeout (M-v7-18, recon R5). Charts land in M-v7-6. -->
+  <script src="/static/plotly.min.js"></script>
+  <script src="/app/js/sidebar_resize.js?v=1"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Shared legacy chrome, same loading order as legacy
+       v7_pareto_explorer.html:4731-4789: NAV_CONFIG must exist before
+       pbgui_nav.js fills #topnav.
+
+       LEGACY QUIRK (preserved deliberately, recon R3): the nav subtitle and
+       current highlight are computed ONCE at boot from the INJECTED version
+       (?optimize_version= query, legacy :4732-4733) — a mid-session runtime
+       version flip (v8 result opened on a v7-seeded page) updates the
+       sidebar handoff buttons and URL builders but NOT the nav highlight. -->
+  <script>
+    (function () {
+      var seed = String(new URLSearchParams(window.location.search || '').get('optimize_version') || 'v7').trim().toLowerCase() === 'v8' ? 'v8' : 'v7';
+      var boot = window.__BOOT__ || {};
+      window.PBGUI_NAV_CONFIG = {
+        subtitle: (window.PBGuiI18n ? PBGuiI18n.t('v7explore.navSubtitle', { v: seed }) : 'PB' + seed.toUpperCase() + ' PARETO EXPLORER'),
+        current:  seed === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer',
+        apiBase:  (boot.origin || '') + '/api/pareto-explorer',
+        version:  boot.version || '',
+        serial:   boot.serial || ''
+      };
+    })();
+  </script>
+  <script src="/app/pbgui_nav.js"></script>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>
