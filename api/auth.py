@@ -1107,7 +1107,14 @@ def main_page(
     request: Request,
     session: Optional[SessionToken] = Depends(optional_auth),
 ) -> Response:
-    """Serve the standalone Welcome/Login page."""
+    """Serve the standalone Welcome/Login page: built Vue entry first, legacy fallback.
+
+    The Vue page (frontend/src/pages/welcome) reads token/origin values from
+    /api/boot.js at runtime and refreshes them from /api/auth/bootstrap; the
+    legacy welcome.html keeps its server-side placeholder injections as the
+    fallback for checkouts without a build. The redirect-to-root and the
+    passwordless session creation run before serving, on both branches.
+    """
     auth_state = _password_state()
     active_session = session
     if active_session is None and auth_state["required"] and not auth_state["error"]:
@@ -1116,24 +1123,20 @@ def main_page(
         client_host = request.client.host if request.client else "local"
         active_session = _get_or_create_passwordless_session(client_host)
 
-    html_path = _frontend_template_path("welcome.html")
-    html = html_path.read_text(encoding="utf-8")
+    def _inject(html: str, req: Request) -> str:
+        html = html.replace('"%%TOKEN%%"', json.dumps(active_session.token if active_session else ""))
+        html = html.replace('"%%API_ORIGIN%%"', json.dumps(_request_origin(req)))
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace('%%VERSION%%', PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace('%%SERIAL%%', PBGUI_SERIAL)
 
-    html = html.replace('"%%TOKEN%%"', json.dumps(active_session.token if active_session else ""))
-    html = html.replace('"%%API_ORIGIN%%"', json.dumps(_request_origin(request)))
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace('%%VERSION%%', PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace('%%SERIAL%%', PBGUI_SERIAL)
+        nav_js = _frontend_template_path("pbgui_nav.js")
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace('%%NAV_HASH%%', nav_hash)
 
-    nav_js = _frontend_template_path("pbgui_nav.js")
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace('%%NAV_HASH%%', nav_hash)
-
-    response = HTMLResponse(
-        content=html,
-        headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"},
-    )
+    response = serve_vue_or_legacy_page("welcome", "welcome.html", request, inject=_inject)
+    response.headers["Referrer-Policy"] = "no-referrer"
     if active_session is not None:
         set_session_cookie(response, request, active_session)
     return response
