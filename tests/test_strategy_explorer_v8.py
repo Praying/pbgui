@@ -12,11 +12,25 @@ import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
+import api.auth as auth
 from api.auth import SessionToken
 from api import backtest_v8
 from api import strategy_explorer_v8 as api
 from api import strategy_explorer as api_v7
 import pb8_strategy_explorer as client
+
+
+@pytest.fixture
+def legacy_template_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """Force the legacy HTML fallback for the placeholder-injection tests.
+
+    The explorer routes serve the built Vue entry first (see
+    tests/test_strategy_explorer_route.py for both branches); these
+    assertions pin the escaping contract of the legacy fallback template,
+    so point the dist lookup at a missing file.
+    """
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda name: tmp_path / "missing" / name / "index.html")
+    return tmp_path
 
 
 @pytest.fixture(autouse=True)
@@ -193,7 +207,7 @@ def test_api_module_does_not_import_pb8_runtime_modules() -> None:
     assert not any(token in source for token in forbidden)
 
 
-def test_main_page_uses_cookie_auth_placeholders_without_session_token() -> None:
+def test_main_page_uses_cookie_auth_placeholders_without_session_token(legacy_template_only) -> None:
     """The shared HTML must receive the V8 API base but never the authenticated token."""
     secret = "never-render-this-session-token"
     request = Request(
@@ -221,7 +235,7 @@ def test_main_page_uses_cookie_auth_placeholders_without_session_token() -> None
     assert "%%API_BASE%%" not in body
 
 
-def test_main_page_script_escapes_untrusted_draft_id() -> None:
+def test_main_page_script_escapes_untrusted_draft_id(legacy_template_only) -> None:
     """A query value must not be able to terminate the inline bootstrap script."""
     request = Request(
         {
@@ -250,7 +264,7 @@ def test_main_page_script_escapes_untrusted_draft_id() -> None:
     assert "\\u003c/script\\u003e\\u003cscript id=" in body
 
 
-def test_shared_v7_page_script_escapes_untrusted_query_values() -> None:
+def test_shared_v7_page_script_escapes_untrusted_query_values(legacy_template_only) -> None:
     """The PB7 route sharing the template must escape both query placeholders."""
     request = Request(
         {

@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from api.strategy_explorer_movie import movie_builder_status
 from api.strategy_explorer_sim import simulation_modes
 from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
@@ -155,39 +155,46 @@ def _script_json(value: Any) -> str:
     )
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def main_page(
     request: Request,
     draft_id: str = Query(default="", description="Optional Strategy Explorer config draft id"),
     result_path: str = Query(default="", description="Optional source backtest result path"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone Strategy Explorer page."""
-    html_path = Path(__file__).resolve().parent.parent / "frontend" / "v7_strategy_explorer.html"
-    if not html_path.exists():
-        raise HTTPException(404, "v7_strategy_explorer.html not found")
+) -> FileResponse | HTMLResponse:
+    """Serve the standalone Strategy Explorer page: Vue entry first, legacy fallback.
 
-    html = html_path.read_text(encoding="utf-8")
+    The Vue page (frontend/src/pages/v7_strategy_explorer) reads
+    token/origin values from /api/boot.js at runtime and derives the
+    explorer flavour from the serving route's path (config.ts
+    detectExplorerFlavor). The legacy v7_strategy_explorer.html keeps its
+    server-side placeholder injections as the fallback for checkouts
+    without a build; /api/strategy-explorer-v8/main_page serves the same
+    Vue build.
+    """
     ctx = _page_context(request, session)
-    replacements = {
-        '"%%TOKEN%%"': _script_json(ctx["token"]),
-        '"%%API_BASE%%"': _script_json(ctx["api_base"]),
-        '"%%WS_BASE%%"': _script_json(ctx["ws_base"]),
-        '"%%DRAFT_ID%%"': _script_json(str(draft_id or "")),
-        '"%%RESULT_PATH%%"': _script_json(str(result_path or "")),
-        '"%%VERSION%%"': _script_json(PBGUI_VERSION),
-        '"%%SERIAL%%"': _script_json(PBGUI_SERIAL),
-    }
-    for token, value in replacements.items():
-        html = html.replace(token, value)
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+    def _inject(html: str, req: Request) -> str:
+        del req
+        replacements = {
+            '"%%TOKEN%%"': _script_json(ctx["token"]),
+            '"%%API_BASE%%"': _script_json(ctx["api_base"]),
+            '"%%WS_BASE%%"': _script_json(ctx["ws_base"]),
+            '"%%DRAFT_ID%%"': _script_json(str(draft_id or "")),
+            '"%%RESULT_PATH%%"': _script_json(str(result_path or "")),
+            '"%%VERSION%%"': _script_json(PBGUI_VERSION),
+            '"%%SERIAL%%"': _script_json(PBGUI_SERIAL),
+        }
+        for token, value in replacements.items():
+            html = html.replace(token, value)
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("v7_strategy_explorer", "v7_strategy_explorer.html", request, inject=_inject)
 
 
 @router.get("/session")

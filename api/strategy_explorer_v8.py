@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from logging_helpers import human_log as _log
 from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION, pb8_runtime_status
 from api.pb8_ohlcv_tools import (
@@ -517,38 +517,46 @@ async def shutdown() -> None:
         _started = False
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def main_page(
     request: Request,
     draft_id: str = Query(default="", description="Optional owner-bound Strategy Explorer draft id"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the exact existing Strategy Explorer HTML with cookie-only authentication."""
+) -> FileResponse | HTMLResponse:
+    """Serve the PB8 Strategy Explorer page: Vue entry first, legacy fallback.
+
+    The same Vue build as /api/strategy-explorer/main_page
+    (frontend/src/pages/v7_strategy_explorer) — the page derives the v8
+    flavour from the serving route's path (config.ts
+    detectExplorerFlavor). The legacy fallback keeps the exact
+    placeholder set the static file always received (cookie-only
+    authentication, result_path always empty, api_base from the request
+    route path).
+    """
     del session
-    html_path = Path(__file__).resolve().parent.parent / "frontend" / "v7_strategy_explorer.html"
-    if not html_path.is_file():
-        raise HTTPException(status_code=404, detail="v7_strategy_explorer.html not found")
-    html = html_path.read_text(encoding="utf-8")
-    origin = str(request.base_url).rstrip("/")
-    route_base = request.url.path.rsplit("/main_page", 1)[0]
-    api_base = origin + route_base
-    ws_base = origin.replace("http://", "ws://", 1).replace("https://", "wss://", 1)
-    replacements = {
-        '"%%TOKEN%%"': _script_json(""),
-        '"%%API_BASE%%"': _script_json(api_base),
-        '"%%WS_BASE%%"': _script_json(ws_base),
-        '"%%DRAFT_ID%%"': _script_json(str(draft_id or "")),
-        '"%%RESULT_PATH%%"': _script_json(""),
-        '"%%VERSION%%"': _script_json(PBGUI_VERSION),
-        '"%%SERIAL%%"': _script_json(PBGUI_SERIAL),
-    }
-    for placeholder, value in replacements.items():
-        html = html.replace(placeholder, value)
-    html = html.replace("%%VERSION%%", PBGUI_VERSION).replace("%%SERIAL%%", PBGUI_SERIAL)
-    nav = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav.stat().st_mtime)) if nav.is_file() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+
+    def _inject(html: str, req: Request) -> str:
+        origin = str(req.base_url).rstrip("/")
+        route_base = req.url.path.rsplit("/main_page", 1)[0]
+        api_base = origin + route_base
+        ws_base = origin.replace("http://", "ws://", 1).replace("https://", "wss://", 1)
+        replacements = {
+            '"%%TOKEN%%"': _script_json(""),
+            '"%%API_BASE%%"': _script_json(api_base),
+            '"%%WS_BASE%%"': _script_json(ws_base),
+            '"%%DRAFT_ID%%"': _script_json(str(draft_id or "")),
+            '"%%RESULT_PATH%%"': _script_json(""),
+            '"%%VERSION%%"': _script_json(PBGUI_VERSION),
+            '"%%SERIAL%%"': _script_json(PBGUI_SERIAL),
+        }
+        for placeholder, value in replacements.items():
+            html = html.replace(placeholder, value)
+        html = html.replace("%%VERSION%%", PBGUI_VERSION).replace("%%SERIAL%%", PBGUI_SERIAL)
+        nav = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav.stat().st_mtime)) if nav.is_file() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("v7_strategy_explorer", "v7_strategy_explorer.html", request, inject=_inject)
 
 
 @router.get("/session")

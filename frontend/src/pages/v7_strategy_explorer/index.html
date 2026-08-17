@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- boot.js must run before the bundle: the app reads window.__BOOT__ at
+       mount time. The legacy page's %%API_BASE%%/%%WS_BASE%%/%%DRAFT_ID%%/
+       %%RESULT_PATH%%/%%VERSION%%/%%SERIAL%% injections are gone — config.ts
+       derives the explorer API base and flavour from boot.js plus the
+       serving route's path (/api/strategy-explorer/main_page vs
+       /api/strategy-explorer-v8/main_page); DRAFT_ID/RESULT_PATH come from
+       the query string. The same Vue build serves both routes. -->
+  <script src="/api/boot.js"></script>
+  <!-- legacy i18n engine: drives pbgui_nav.js labels and the date picker -->
+  <script src="/app/i18n.js?v=1"></script>
+  <title>PBGui - Strategy Explorer</title>
+  <!-- resizable sidebar chrome, same files as legacy v7_strategy_explorer.html:8-10 -->
+  <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
+  <!-- Plotly stays a vendored script global (legacy :9); typed access via
+       lib/plotlyVendor.ts, never bundled -->
+  <script src="/static/plotly.min.js"></script>
+  <script src="/app/js/sidebar_resize.js?v=1"></script>
+  <!-- shared JSON panel global for the Raw Config stage (legacy :376) -->
+  <script src="/app/js/json_panel.js?v=2"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Shared legacy chrome, same loading order as legacy
+       v7_strategy_explorer.html:3271-3282: NAV_CONFIG must exist before
+       pbgui_nav.js fills #topnav. The subtitle/current keys depend on the
+       serving route (v7 or v8) and are derived from location.pathname — the
+       same signal config.ts uses. -->
+  <script>
+    (function () {
+      var isV8 = /\/api\/strategy-explorer-v8(\/|$)/.test(window.location.pathname);
+      var boot = window.__BOOT__ || {};
+      window.PBGUI_NAV_CONFIG = {
+        subtitle: (window.PBGuiI18n ? PBGuiI18n.t(isV8 ? 'v7explore.navSubtitleV8' : 'v7explore.navSubtitleV7') : (isV8 ? 'PB8 Strategy Explorer' : 'PB7 Strategy Explorer')),
+        current:  isV8 ? 'v8_strategy_explorer' : 'v7_strategy_explorer',
+        apiBase:  (boot.origin || '') + (isV8 ? '/api/strategy-explorer-v8' : '/api/strategy-explorer'),
+        version:  boot.version || '',
+        serial:   boot.serial || ''
+      };
+    })();
+  </script>
+  <script src="/app/pbgui_nav.js"></script>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>
