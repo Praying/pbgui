@@ -1,0 +1,197 @@
+<script setup lang="ts">
+/**
+ * Rows 1-3 of the shared 8-column grid — v7_edit.html:571-669. Field
+ * visibility via the page store (data-v7-only/data-v8-only parity).
+ */
+import { useI18n } from 'vue-i18n';
+import FieldCheck from './FieldCheck.vue';
+import FieldNumber from './FieldNumber.vue';
+import FieldSelect from './FieldSelect.vue';
+import { useEditPageContext } from '../composables/useEditPage';
+
+const { t } = useI18n();
+const page = useEditPageContext();
+const state = page.state;
+
+const marginModeOptions = [
+  { value: 'auto' }, { value: 'cross' }, { value: 'isolated' }, { value: 'auto_cross' }, { value: 'auto_isolated' },
+];
+const loggingLevelOptions = [
+  { value: '0', label: 'warning' }, { value: '1', label: 'info' }, { value: '2', label: 'debug' }, { value: '3', label: 'trace' },
+];
+</script>
+
+<template>
+  <div class="form-row cols-8" style="margin-bottom: var(--sp-lg)">
+    <!-- Row 1: Configuration & Identity -->
+    <div class="form-group" style="grid-column: span 2">
+      <label><span data-tip="Fetch API key/secret from api-keys.json.">{{ t('v7run.user') }}</span></label>
+      <select id="f-user" v-model="state.user" @change="page.onUserChange()">
+        <option v-for="user in page.users.value" :key="user.name" :value="user.name">{{ user.name }}</option>
+      </select>
+    </div>
+    <div class="form-group" style="grid-column: span 2">
+      <label>{{ t('v7run.enabledOn') }}</label>
+      <select
+        id="f-enabled-on"
+        v-model="state.enabledOn"
+        @focus="page.hosts.refresh()"
+        @change="page.onEnabledOnChange()"
+      >
+        <option
+          v-for="host in page.renderedHostOptions.value"
+          :key="host"
+          :value="host"
+          :disabled="page.hosts.gate.isDisabled(host, page.hosts.capabilities.value)"
+        >{{ page.hosts.gate.label(host, page.hosts.capabilities.value) }}</option>
+      </select>
+    </div>
+    <FieldNumber
+      id="f-version"
+      v-show="page.fieldVisible('version')"
+      v-model="state.version"
+      :label="t('v7run.configVersion')"
+      tip="The Version number of the configuration. Required for synchronisation to VPS."
+      min="0"
+      step="1"
+    />
+    <FieldNumber
+      id="f-leverage"
+      v-show="page.fieldVisible('leverage')"
+      v-model="state.leverage"
+      label="Leverage"
+      tip="Leverage set on exchange"
+      min="0"
+      max="100"
+      step="1"
+    />
+    <FieldSelect
+      id="f-margin-mode"
+      v-show="page.fieldVisible('margin_mode_preference')"
+      v-model="state.marginMode"
+      label="margin_mode_preference"
+      :options="marginModeOptions"
+      tip="Preferred margin mode when symbol supports both cross and isolated.
+auto/auto_cross: prefer cross
+auto_isolated: prefer isolated
+cross: require cross (isolated-only skipped)
+isolated: require isolated (cross-only skipped)"
+    />
+    <FieldSelect
+      id="f-logging-level"
+      v-show="page.fieldVisible('level')"
+      v-model="state.loggingLevel"
+      :label="t('v7run.loggingLevel')"
+      :options="loggingLevelOptions"
+      tip="0=warning, 1=info, 2=debug, 3=trace"
+    />
+
+    <!-- Row 2: Timing & Risk -->
+    <FieldNumber
+      id="f-min-coin-age"
+      v-show="page.fieldVisible('minimum_coin_age_days')"
+      v-model="state.minCoinAge"
+      label="minimum_coin_age_days"
+      tip="Disallows coins younger than given days"
+      min="0"
+      step="1"
+    />
+    <FieldNumber
+      id="f-pnls-lookback"
+      v-show="page.fieldVisible('pnls_max_lookback_days')"
+      v-model="state.pnlsLookback"
+      label="pnls_max_lookback_days"
+      tip="How far into the past to fetch PnL history"
+      min="0"
+      max="365"
+      step="1"
+    />
+    <FieldNumber
+      id="f-warmup-ratio"
+      v-show="page.fieldVisible('warmup_ratio')"
+      v-model="state.warmupRatio"
+      label="warmup_ratio"
+      tip="Multiplier for EMA span warmup window. 0.0&#8211;1.0"
+      min="0"
+      max="1"
+      step="0.1"
+    />
+    <FieldNumber
+      id="f-max-loss-pct"
+      v-show="page.fieldVisible('max_realized_loss_pct')"
+      v-model="state.maxLossPct"
+      label="max_realized_loss_pct"
+      tip="Global realized-loss gate for close orders anchored to peak realized balance.
+1.0 = disabled (default). &lt;=0.0 = block all lossy closes.
+Example: 0.05 blocks closes once balance would fall below 95% of peak."
+      min="0"
+      max="2"
+      step="0.01"
+    />
+    <div class="form-group span-4">
+      <label><span data-tip="Personal note for organising instances">{{ t('v7run.note') }}</span></label>
+      <input id="f-note" v-model="state.note" type="text" placeholder="" />
+    </div>
+
+    <!-- Row 3: Execution & Flags -->
+    <FieldNumber
+      id="f-price-dist"
+      v-show="page.fieldVisible('initial_entry_exec_max_market_dist_pct')"
+      v-model="state.priceDist"
+      label="initial_entry_exec_max_market_dist_pct"
+      tip="Executor-side market-distance gate for initial entry posting. Initial entry limit orders are only posted when they are close enough to market. Default 0.005 (0.5%)."
+      min="0"
+      max="1"
+      step="0.001"
+    />
+    <FieldNumber
+      id="f-exec-delay"
+      v-show="page.fieldVisible('execution_delay_seconds')"
+      v-model="state.execDelay"
+      label="execution_delay_seconds"
+      tip="Wait x seconds after executing to exchange"
+      min="1"
+      max="60"
+      step="1"
+    />
+    <FieldNumber
+      id="f-market-order-threshold"
+      v-show="page.fieldVisible('market_order_near_touch_threshold')"
+      v-model="state.marketOrderThreshold"
+      label="market_order_near_touch_threshold"
+      tip="Fractional distance from market price at which a limit order is promoted to market order (requires market_orders_allowed). Default 0.001."
+      min="0"
+      max="0.1"
+      step="0.0001"
+    />
+    <div class="form-group"></div>
+    <div class="form-group" v-show="page.fieldVisible('filter_by_min_effective_cost')" style="grid-column: span 2; justify-content: flex-end">
+      <FieldCheck
+        id="f-filter-min-cost"
+        v-model="state.filterMinCost"
+        label="filter_by_min_effective_cost"
+        tip="Skip coins where balance &#215; WE_limit &#215; entry_initial_qty_pct is below the exchange minimum effective cost."
+      />
+      <FieldCheck
+        id="f-market-orders"
+        v-model="state.marketOrders"
+        label="market_orders_allowed"
+        tip="Allow market orders when price is very close to market price. If false, only limit orders are placed."
+      />
+    </div>
+    <div class="form-group" v-show="page.fieldVisible('hedge_mode')" style="grid-column: span 2; justify-content: flex-end">
+      <FieldCheck
+        id="f-hedge-mode"
+        v-model="state.hedgeMode"
+        label="hedge_mode"
+        tip="Requests simultaneous long and short positions on the same coin when the exchange supports it."
+      />
+      <FieldCheck
+        id="f-auto-gs"
+        v-model="state.autoGs"
+        label="auto_gs"
+        tip="Automatically enable graceful stop for positions on disapproved coins instead of manual mode."
+      />
+    </div>
+  </div>
+</template>
