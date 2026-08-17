@@ -23,10 +23,10 @@ from typing import Any, Optional
 
 import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException, Path as PathParam, Query, Request, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from api_key_state import (
     RUNTIME_STATE_KEYS,
     clear_user_state,
@@ -642,38 +642,44 @@ def _refresh_bybit_expiry_cache(users_obj=None) -> dict[str, "BybitExpiryInfo"]:
 
 # ── Standalone page ───────────────────────────────────────────
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone API Keys editor page with token injected server-side."""
-    html_path = _Path(__file__).parent.parent / "frontend" / "api_keys_editor.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the standalone API Keys editor page: built Vue entry first, legacy fallback.
 
-    # Derive API base from the actual request URL
-    scheme = request.url.scheme
-    host   = request.url.hostname or "127.0.0.1"
-    port   = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/api-keys"
+    The Vue page (frontend/src/pages/api_keys_editor) reads boot values from
+    /api/boot.js at runtime; the legacy api_keys_editor.html keeps the
+    server-side placeholder injections as the fallback for checkouts without
+    a build. Browser auth uses the same-origin cookie, so the legacy %%TOKEN%%
+    injection stays empty by design.
+    """
 
-    html = html.replace('"%%TOKEN%%"',    json.dumps(""))
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
+    def _inject(html: str, req: Request) -> str:
+        # Derive API base from the actual request URL
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_base = origin + "/api/api-keys"
 
-    from pbgui_purefunc import PBGUI_VERSION
-    from pbgui_purefunc import PBGUI_SERIAL
-    html = html.replace('"%%VERSION%%"',  json.dumps(PBGUI_VERSION))
-    html = html.replace('%%VERSION%%',    PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"',   json.dumps(PBGUI_SERIAL))
-    html = html.replace('%%SERIAL%%',     PBGUI_SERIAL)
+        html = html.replace('"%%TOKEN%%"',    json.dumps(""))
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
 
-    # Cache-bust pbgui_nav.js with file mtime so browser always loads latest
-    nav_js = _Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace('%%NAV_HASH%%', nav_hash)
+        from pbgui_purefunc import PBGUI_VERSION
+        from pbgui_purefunc import PBGUI_SERIAL
+        html = html.replace('"%%VERSION%%"',  json.dumps(PBGUI_VERSION))
+        html = html.replace('%%VERSION%%',    PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"',   json.dumps(PBGUI_SERIAL))
+        html = html.replace('%%SERIAL%%',     PBGUI_SERIAL)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        # Cache-bust pbgui_nav.js with file mtime so browser always loads latest
+        nav_js = _Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace('%%NAV_HASH%%', nav_hash)
+
+    return serve_vue_or_legacy_page("api_keys_editor", "api_keys_editor.html", request, inject=_inject)
 
 
 # ── REST endpoints ────────────────────────────────────────────
