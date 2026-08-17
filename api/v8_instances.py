@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
-from api.auth import SessionToken, authenticate_websocket, require_auth
+from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page
 from file_lock import advisory_file_lock
 from logging_helpers import human_log as _log
 from master.cluster_state import (
@@ -1784,11 +1784,9 @@ def get_v8_hosts(
     }
 
 
-def _render_page(request: Request, filename: str, replacements: dict[str, Any]) -> HTMLResponse:
-    """Render a PB8 standalone page with same-origin API and shared-nav placeholders."""
+def _apply_placeholders(html: str, request: Request, replacements: dict[str, Any]) -> str:
+    """Fill the same-origin API and shared-nav placeholders of a PB8 page."""
 
-    path = Path(__file__).parent.parent / "frontend" / filename
-    html = path.read_text(encoding="utf-8")
     scheme = request.url.scheme
     host = request.url.hostname or "127.0.0.1"
     port = request.url.port
@@ -1805,15 +1803,35 @@ def _render_page(request: Request, filename: str, replacements: dict[str, Any]) 
         html = html.replace(f'"%%{key}%%"', json.dumps(value))
         html = html.replace(f"%%{key}%%", str(value))
     nav = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    html = html.replace("%%NAV_HASH%%", str(int(nav.stat().st_mtime)) if nav.exists() else pbgui_purefunc.PBGUI_VERSION)
+    return html.replace("%%NAV_HASH%%", str(int(nav.stat().st_mtime)) if nav.exists() else pbgui_purefunc.PBGUI_VERSION)
+
+
+def _render_page(request: Request, filename: str, replacements: dict[str, Any]) -> HTMLResponse:
+    """Render a PB8 standalone page with same-origin API and shared-nav placeholders."""
+
+    path = Path(__file__).parent.parent / "frontend" / filename
+    html = path.read_text(encoding="utf-8")
+    html = _apply_placeholders(html, request, replacements)
     return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
 
 
-@router.get("/main_page", response_class=HTMLResponse)
-def get_v8_main_page(request: Request, session: SessionToken = Depends(require_auth)) -> HTMLResponse:
-    """Serve the PB8 Run list page."""
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
+def get_v8_main_page(request: Request, session: SessionToken = Depends(require_auth)) -> FileResponse | HTMLResponse:
+    """Serve the PB8 Run list page: built Vue entry first, legacy fallback.
 
-    return _render_page(request, "v7_run.html", {"RUN_VERSION": "v8"})
+    The same Vue build as /api/v7/main_page (frontend/src/pages/v7_run) —
+    the page derives the v8 flavour from the serving route's path
+    (config.ts detectRunVersion). The legacy fallback keeps the exact
+    _render_page placeholder set the static file always received.
+    """
+    del session
+
+    return serve_vue_or_legacy_page(
+        "v7_run",
+        "v7_run.html",
+        request,
+        inject=lambda html, req: _apply_placeholders(html, req, {"RUN_VERSION": "v8"}),
+    )
 
 
 @router.get("/edit_page", response_class=HTMLResponse)

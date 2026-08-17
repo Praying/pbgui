@@ -27,9 +27,9 @@ from typing import Optional
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
-from api.auth import SessionToken, authenticate_websocket, require_auth, validate_token
+from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page, validate_token
 from api.pb7_bridge import get_allowed_override_params, get_template_config
 from cmc_pool import CmcPoolClient
 from credential_store import CredentialStore
@@ -2446,39 +2446,46 @@ def delete_coin_config(
     return {"ok": True}
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone v7 Run page."""
-    html_path = Path(__file__).parent.parent / "frontend" / "v7_run.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the standalone v7 Run page: built Vue entry first, legacy fallback.
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/v7"
-    ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
+    The Vue page (frontend/src/pages/v7_run) reads token/origin values from
+    /api/boot.js at runtime and derives the run version from the serving
+    route's path (config.ts detectRunVersion). The legacy v7_run.html keeps
+    its server-side placeholder injections as the fallback for checkouts
+    without a build; /api/v8/main_page serves the same Vue build.
+    """
+    del session
 
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-    html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
-    html = html.replace('"%%RUN_VERSION%%"', json.dumps("v7"))
-    html = html.replace('"%%MASTER_NAME%%"', json.dumps(_get_master_hostname()))
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_base = origin + "/api/v7"
+        ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
 
-    from pbgui_purefunc import PBGUI_VERSION
-    from pbgui_purefunc import PBGUI_SERIAL
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
+        html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
+        html = html.replace('"%%RUN_VERSION%%"', json.dumps("v7"))
+        html = html.replace('"%%MASTER_NAME%%"', json.dumps(_get_master_hostname()))
 
-    nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+        from pbgui_purefunc import PBGUI_VERSION
+        from pbgui_purefunc import PBGUI_SERIAL
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("v7_run", "v7_run.html", request, inject=_inject)
 
 
 @router.get("/edit_page", response_class=HTMLResponse)
