@@ -135,6 +135,44 @@ describe('boot chain (:10012-10024)', () => {
     expect(JSON.parse(localStorage.getItem('pbgui:v8_backtest:view_state')!).panel).toBe('configs');
     wrapper.unmount();
   });
+
+  it('restores the panel AND sorts from the actual frozen storage key (write-legacy/read-Vue parity, R2)', async () => {
+    // no URL hash: the stored view state alone must drive the restore —
+    // sorts are storage-only (never in the hash), so this test fails if
+    // the boot read uses any key other than pbgui:v7_backtest:view_state
+    localStorage.setItem(
+      'pbgui:v7_backtest:view_state',
+      JSON.stringify({ panel: 'archive', archive: 'repo', archiveMode: 'optimize', sorts: { configs: { col: 'name', asc: true }, results: { col: 'gain', asc: true } } })
+    );
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#panel-archive').classes()).toContain('active');
+    // the boot selectPanel re-persists the restored state — the sorts must
+    // survive the round-trip (a defaulted read would write col:'modified')
+    const persisted = JSON.parse(localStorage.getItem('pbgui:v7_backtest:view_state')!) as {
+      panel: string;
+      archive: string;
+      archiveMode: string;
+      sorts: { configs: { col: string; asc: boolean }; results: { col: string; asc: boolean } };
+    };
+    expect(persisted.panel).toBe('archive');
+    expect(persisted.archive).toBe('repo');
+    expect(persisted.archiveMode).toBe('optimize');
+    expect(persisted.sorts.configs).toEqual({ col: 'name', asc: true });
+    expect(persisted.sorts.results).toEqual({ col: 'gain', asc: true });
+    wrapper.unmount();
+  });
+
+  it('restores the v8 panel from the v8 flavor key (:1068)', async () => {
+    window.history.replaceState({}, '', '/api/backtest-v8/main_page');
+    localStorage.setItem('pbgui:v8_backtest:view_state', JSON.stringify({ panel: 'queue', sorts: {} }));
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#panel-queue').classes()).toContain('active');
+    wrapper.unmount();
+  });
 });
 
 describe('connection banner (:1256-1262)', () => {

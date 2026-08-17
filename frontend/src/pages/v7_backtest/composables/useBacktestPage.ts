@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import { createBacktestAdapter, detectBacktestVersion, navItems, readDeepLinkConfig, wsUrl, type BacktestAdapter } from '../config';
+import { createBacktestAdapter, detectBacktestVersion, navItems, readDeepLinkConfig, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
 import { createToastQueue, type ToastItem, type ToastQueue } from '../lib/toast';
 import { loadStoredBacktestViewState } from '../lib/viewState';
 import { useConfigs } from './useConfigs';
@@ -77,13 +77,20 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     (typeof localStorage !== 'undefined'
       ? localStorage
       : ({ getItem: () => null, setItem: () => {}, removeItem: () => {} } as unknown as Storage));
-  const initial = loadStoredBacktestViewState(options.hash ?? window.location.hash, storage.getItem(`pbgui:v${version}_backtest:view_state`));
+  // R2: read the exact frozen key the legacy page writes — viewStateKeyFor
+  // maps v7/v8 → pbgui:v{7,8}_backtest:view_state (NOT `v${version}`, which
+  // would double the v and silently never restore).
+  const initial = loadStoredBacktestViewState(options.hash ?? window.location.hash, storage.getItem(viewStateKeyFor(version)));
+  // :10023 — a stored panel the flavour does not serve (e.g. legacy on v8)
+  // never reaches legacy's currentPanel, which keeps its 'configs' default;
+  // sorts still apply. Clamp before seeding so the fallback persists.
+  const initialPanel = adapter.initialPanels.includes(initial.panel) ? initial.panel : 'configs';
   const view = useViewState({
     version,
     storage,
-    initial: { panel: initial.panel, archive: initial.archive, archiveMode: initial.archiveMode, sorts: initial.sorts },
+    initial: { ...initial, panel: initialPanel },
   });
-  view.applyViewState(initial);
+  view.applyViewState({ ...initial, panel: initialPanel });
 
   /* ── data stores ── */
   const settingsStore = useSettings({ apiBase });

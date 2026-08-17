@@ -37,6 +37,14 @@ const draft = reactive({
   cleanupInterval: 24,
 });
 const dirty = ref(false);
+/**
+ * Legacy syncOpenSettingsModal (:1542-1558) runs exactly ONCE per open —
+ * from openSettingsModal's loadSettings().then(sync) (:1563). WS settings
+ * pushes (:1296-1303) merge into the store but never re-sync an open
+ * modal, so a push mid-open leaves the displayed values stale (legacy
+ * parity). The first settings change while open models the load refresh.
+ */
+const syncedOnce = ref(false);
 
 /** syncOpenSettingsModal (:1542-1558) — skip while the user edited. */
 function syncFromSettings(): void {
@@ -53,6 +61,7 @@ watch(
   (open) => {
     if (open) {
       dirty.value = false; // openSettingsModal (:1561)
+      syncedOnce.value = false;
       syncFromSettings();
     }
   },
@@ -62,22 +71,23 @@ watch(
 watch(
   () => props.settings,
   () => {
-    // legacy sync only runs while the modal is open and cpu_max is valid (:1543-1547)
-    if (!props.open || dirty.value) return;
+    if (!props.open || dirty.value || syncedOnce.value) return;
+    // legacy sync only runs while cpu_max is valid (:1543-1547)
     const raw = Number(props.settings.cpu_max);
-    if (!Number.isFinite(raw) || raw < 1) {
-      // still follow non-cpu fields when cpu_max is unknown? legacy returns early — skip all
-      return;
-    }
+    if (!Number.isFinite(raw) || raw < 1) return;
     syncFromSettings();
+    syncedOnce.value = true;
   },
   { deep: true }
 );
 
+/** settingsAdjustCpu (:1568-1577): dirty first, no-op before cpu_max loads (:1573). */
 function adjustCpu(delta: number): void {
   dirty.value = true; // :1569
+  const mx = Number(props.settings.cpu_max);
+  if (!Number.isFinite(mx) || mx < 1) return; // :1573 — pre-load no-op
   const value = Number.parseInt(String(draft.cpu), 10) + delta;
-  draft.cpu = Math.min(Math.max(value, 1), cpuMax.value);
+  draft.cpu = Math.min(Math.max(value, 1), mx);
 }
 
 const cleanupOptsStyle = computed(() =>

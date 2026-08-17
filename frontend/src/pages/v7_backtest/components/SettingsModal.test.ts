@@ -129,6 +129,22 @@ describe('live sync (:1542-1558 syncOpenSettingsModal)', () => {
     wrapper.unmount();
   });
 
+  it('a second settings push while open is ignored — legacy WS pushes never re-synced an open modal (:1296-1303 vs :1563)', async () => {
+    const wrapper = mountModal({ settings: settings({ cpu: 2, cpu_max: 8 }) });
+    await wrapper.setProps({ settings: settings({ cpu: 5, cpu_max: 8 }) }); // the load-refresh sync
+    await wrapper.setProps({ settings: settings({ cpu: 6, cpu_max: 8 }) }); // a later WS push: stays stale
+    expect((wrapper.find('#set-cpu-val').element as HTMLInputElement).value).toBe('5');
+    wrapper.unmount();
+  });
+
+  it('adjustCpu is a no-op while cpu_max is unknown — pre-load (:1573 early return)', async () => {
+    const wrapper = mountModal({ settings: settings({ cpu: 1, cpu_max: null }) });
+    await wrapper.find('[data-test="cpu-plus"]').trigger('click');
+    // legacy marks dirty but changes nothing until /settings supplies cpu_max
+    expect((wrapper.find('#set-cpu-val').element as HTMLInputElement).value).toBe('1');
+    wrapper.unmount();
+  });
+
   it('toggling cleanup re-enables its options (:1579-1585)', async () => {
     const wrapper = mountModal();
     await wrapper.find('#set-cleanup-enabled').setValue(true);
