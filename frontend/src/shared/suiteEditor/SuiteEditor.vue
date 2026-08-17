@@ -78,9 +78,15 @@ function emptyDraft(scenario: SuiteScenario): ScenarioDraft {
   };
 }
 
-function loadDraft(): void {
-  const idx = model.value.editIdx;
-  draft.value = idx >= 0 && model.value.scenarios[idx] ? emptyDraft(model.value.scenarios[idx]!) : null;
+/**
+ * Reloads the scenario draft. Takes the state explicitly on post-commit
+ * paths: defineModel reads lag one write until the parent echoes the prop,
+ * so `model.value` right after commit() would still hold the prior state
+ * under a live v-model parent.
+ */
+function loadDraft(source: SuiteState = model.value): void {
+  const idx = source.editIdx;
+  draft.value = idx >= 0 && source.scenarios[idx] ? emptyDraft(source.scenarios[idx]!) : null;
 }
 
 function commit(next: SuiteState): void {
@@ -121,7 +127,9 @@ watch(
 function toggleEnabled(on: boolean): void {
   let next = saveEditing(model.value);
   const scenarios = on && next.scenarios.length === 0 ? [{ label: 'base' }] : next.scenarios;
-  commit({ ...next, enabled: on, scenarios });
+  const committed = { ...next, enabled: on, scenarios };
+  commit(committed);
+  loadDraft(committed);
 }
 
 /* ── templates (:518-546) ── */
@@ -132,42 +140,62 @@ function applyTemplate(name: string): void {
     for (const exchange of scenario.exchanges ?? []) if (!needed.includes(exchange)) needed.push(exchange);
   }
   commit(next);
+  loadDraft(next);
   emit('template-exchanges', needed);
 }
 
 function resetToBase(): void {
-  commit(resetSuiteToBase(saveEditing(model.value)));
-  loadDraft();
+  const next = resetSuiteToBase(saveEditing(model.value));
+  commit(next);
+  loadDraft(next);
 }
 
 /* ── scenario CRUD (:611-647) ── */
 function addScenario(): void {
   const next = addSuiteScenario(saveEditing(model.value));
   commit(next);
-  loadDraft();
+  loadDraft(next);
 }
 
 function editScenario(idx: number): void {
   const next = saveEditing(model.value);
-  commit({ ...next, editIdx: next.editIdx === idx ? -1 : idx });
-  loadDraft();
+  const committed = { ...next, editIdx: next.editIdx === idx ? -1 : idx };
+  commit(committed);
+  loadDraft(committed);
 }
 
 function removeScenario(idx: number): void {
-  commit(removeSuiteScenario(saveEditing(model.value), idx));
-  loadDraft();
+  const next = removeSuiteScenario(saveEditing(model.value), idx);
+  commit(next);
+  loadDraft(next);
 }
 
 function moveScenario(idx: number, dir: number): void {
-  commit(moveSuiteScenario(saveEditing(model.value), idx, dir));
-  loadDraft();
+  const next = moveSuiteScenario(saveEditing(model.value), idx, dir);
+  commit(next);
+  loadDraft(next);
 }
 
 function done(): void {
-  commit(saveEditing(model.value));
-  commit({ ...model.value, editIdx: -1 });
-  loadDraft();
+  const folded = saveEditing(model.value);
+  const closed = { ...folded, editIdx: -1 };
+  commit(folded);
+  commit(closed);
+  loadDraft(closed);
 }
+
+/**
+ * foldDraft — suiteCollect's auto-save (:183-184): the legacy collector
+ * called _suiteSaveEditingScenario() whenever a scenario was open, so
+ * Save/Save&Queue/raw-JSON sync always committed in-progress edits. The
+ * page calls this hook right before collectConfig (:4769).
+ */
+function foldDraft(): void {
+  if (model.value.editIdx < 0 || draft.value === null) return;
+  commit(saveEditing(model.value));
+}
+
+defineExpose({ foldDraft });
 
 /* ── override editing (:698-798) ── */
 const overrideRowOpen = ref(false);

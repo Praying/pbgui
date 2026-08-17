@@ -90,8 +90,9 @@ async function submit(): Promise<void> {
       const perExchange = JSON.parse(JSON.stringify(cfg)) as Record<string, unknown>;
       const perBt = object(perExchange.backtest);
       perBt.exchanges = [exchange];
+      // legacy only sets the dir when the PBGui-data path resolves
+      // (:2122) — an unchecked box never clobbers the draft's own value
       if (pbguiPath) perBt.ohlcv_source_dir = pbguiPath;
-      else perBt.ohlcv_source_dir = null;
       perExchange.backtest = perBt;
       bodies.push({
         name: String(object(item).name || 'rebacktest'),

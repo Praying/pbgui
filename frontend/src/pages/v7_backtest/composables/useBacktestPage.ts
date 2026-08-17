@@ -27,6 +27,8 @@ export interface BacktestPageOptions {
   storage?: Storage;
   versionOverride?: 'v7' | 'v8';
   t: I18nT;
+  /** SuiteEditor draft auto-fold (:4769) — wired to the editor panel ref by App. */
+  foldSuiteDraft?(): void;
 }
 
 export interface BacktestPageStore {
@@ -266,6 +268,7 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     loadConfigs: () => configsStore.loadConfigs(),
     wsRefresh: () => ws.wsRefresh(),
     selectPanel,
+    foldSuiteDraft: () => options.foldSuiteDraft?.(),
     confirm: async (confirmOptions) => {
       const dialogs = (window as typeof window & { PBGuiDialogs?: { confirm?: (o: typeof confirmOptions) => Promise<boolean> } }).PBGuiDialogs;
       if (dialogs?.confirm) return dialogs.confirm(confirmOptions);

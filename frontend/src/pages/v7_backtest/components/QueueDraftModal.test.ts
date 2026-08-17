@@ -77,6 +77,16 @@ describe('defaults from the first item (:2068-2077)', () => {
 });
 
 describe('queue submit (:2099-2142)', () => {
+  it('preserves the draft ohlcv_source_dir when PBGui data is unchecked (:2122)', async () => {
+    const item = { name: 'draft_1', config: { backtest: { exchanges: ['bybit'], ohlcv_source_dir: '/custom/data' } } };
+    const { wrapper, postQueue } = mountModal([item]);
+    await nextTick();
+    await wrapper.find('[data-test="rbt-ok"]').trigger('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const body = postQueue.mock.calls[0]![0] as { config: { backtest: { ohlcv_source_dir: string } } };
+    expect(body.config.backtest.ohlcv_source_dir).toBe('/custom/data');
+  });
+
   it('posts one job per item × exchange and closes', async () => {
     const { wrapper, postQueue } = mountModal([item(), item({ name: 'draft_2' })]);
     await nextTick();
@@ -85,7 +95,7 @@ describe('queue submit (:2099-2142)', () => {
     expect(postQueue).toHaveBeenCalledTimes(2);
     const bodies = postQueue.mock.calls.map((call) => call[0]);
     expect(bodies[0]).toMatchObject({ name: 'draft_1' });
-    expect(bodies[0].config.backtest).toMatchObject({ start_date: '2023-01-01', end_date: '2026-08-18', starting_balance: 2500, exchanges: ['bybit'], ohlcv_source_dir: null });
+    expect(bodies[0].config.backtest).toMatchObject({ start_date: '2023-01-01', end_date: '2026-08-18', starting_balance: 2500, exchanges: ['bybit'] });
     expect(bodies[1]).toMatchObject({ name: 'draft_2' });
     expect(wrapper.emitted('queued')![0]).toEqual([2]);
   });

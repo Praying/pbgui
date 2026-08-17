@@ -169,6 +169,29 @@ describe('overrides (:698-798)', () => {
   });
 });
 
+describe('foldDraft — suiteCollect auto-save (:183-184, called at :4769)', () => {
+  it('commits open scenario edits into the model without closing the editor', async () => {
+    const wrapper = mountSuite({
+      modelValue: state({ enabled: true, scenarios: [{ label: 'old' }], editIdx: 0 }),
+    });
+    await nextTick();
+    await wrapper.find('[data-test="suite-sc-label"]').setValue('typed mid-flight');
+    wrapper.vm.foldDraft();
+    await nextTick();
+    const next = current(wrapper);
+    expect(next.scenarios[0]!.label).toBe('typed mid-flight');
+    expect(next.editIdx).toBe(0); // still editing — collect never closes
+  });
+
+  it('is a no-op when no scenario is open', async () => {
+    const wrapper = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'a' }], editIdx: -1 }) });
+    await nextTick();
+    wrapper.vm.foldDraft();
+    await nextTick();
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+  });
+});
+
 describe('aggregate (:861-953)', () => {
   it('changes the default method and adds/removes per-metric overrides', async () => {
     const wrapper = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }) });

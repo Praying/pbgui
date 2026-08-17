@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DatePicker from '@/shared/datepicker/DatePicker.vue';
 import KvCoinSources from '@/shared/kvCoinSources/KvCoinSources.vue';
@@ -88,6 +88,15 @@ const hslOptions = computed(() => {
 function touch(): void {
   emit('change');
 }
+
+const suiteRef = useTemplateRef<InstanceType<typeof SuiteEditor>>('suiteRef');
+
+/** Forwards SuiteEditor.foldDraft — called by useConfigEditor.collect() (:4769). */
+function foldSuiteDraft(): void {
+  suiteRef.value?.foldDraft();
+}
+
+defineExpose({ foldSuiteDraft });
 </script>
 
 <template>
@@ -241,6 +250,7 @@ function touch(): void {
 
     <!-- Suite Mode embed (:2810, :2915) -->
     <SuiteEditor
+      ref="suiteRef"
       :model-value="suite"
       :exchanges="suiteExchanges"
       :available-coins="availableCoins"

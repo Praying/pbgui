@@ -40,6 +40,13 @@ export interface ConfigEditorOptions {
   selectPanel(panel: 'configs' | 'queue' | 'results' | 'archive' | 'legacy'): void;
   /** PBGuiConfirm equivalent — the v8 409 replace flow (:4840-4852). */
   confirm(options: { title: string; message: string; confirmText: string }): Promise<boolean>;
+  /**
+   * suiteCollect's auto-save hook (:183-184, called at :4769): folds the
+   * suite editor's open scenario draft into the state before collect
+   * reads it — Save, Save&Queue and the raw-JSON structured sync all go
+   * through collect(), so every path commits in-progress scenario edits.
+   */
+  foldSuiteDraft?(): void;
 }
 
 function object(value: unknown): Record<string, unknown> {
@@ -271,6 +278,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
 
   /* ── raw↔structured sync (:3429-3463) ── */
   function collect(): Record<string, unknown> {
+    options.foldSuiteDraft?.();
     return collectBacktestConfig(state, {
       isV8,
       suite: { suite_enabled: suite.value.enabled, ...(suite.value.enabled ? { scenarios: suite.value.scenarios, aggregate: suite.value.aggregate } : {}) },

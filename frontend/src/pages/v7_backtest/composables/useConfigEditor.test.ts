@@ -240,6 +240,61 @@ describe('loadCfgSymbols (:3710-3806)', () => {
   });
 });
 
+describe('suite draft auto-fold (:183-184, :4769)', () => {
+  /** Emulates SuiteEditor.foldDraft committing the open scenario draft. */
+  function makeFoldingEditor() {
+    const holder: { editor?: ReturnType<typeof useConfigEditor> } = {};
+    const fold = vi.fn(() => {
+      const editor = holder.editor!;
+      editor.suite.value = { ...editor.suite.value, scenarios: [{ label: 'typed mid-flight' }] };
+    });
+    const made = makeEditor({ foldSuiteDraft: () => fold() });
+    holder.editor = made.editor;
+    return { ...made, fold };
+  }
+
+  async function openSuiteEditor(editor: ReturnType<typeof useConfigEditor>): Promise<void> {
+    await editor.editConfig('mycfg');
+    editor.suite.value = { enabled: true, scenarios: [{ label: 'old' }], editIdx: 0, aggregate: { default: 'mean' } };
+    await flush();
+  }
+
+  it('Save folds the open scenario before the PUT (no Done clicked)', async () => {
+    const { editor, calls, fold } = makeFoldingEditor();
+    await openSuiteEditor(editor);
+    calls.length = 0;
+    await editor.save();
+    await flush();
+    expect(fold).toHaveBeenCalled();
+    const put = calls.find((call) => call.init?.method === 'PUT')!;
+    const body = JSON.parse(String(put.init!.body)) as { backtest: { scenarios?: { label: string }[] } };
+    expect(body.backtest.scenarios![0]!.label).toBe('typed mid-flight');
+  });
+
+  it('Save & Queue folds too before its PUT (:4901-4958)', async () => {
+    const { editor, calls, fold } = makeFoldingEditor();
+    await openSuiteEditor(editor);
+    calls.length = 0;
+    await editor.saveAndQueue();
+    await flush();
+    expect(fold).toHaveBeenCalled();
+    const put = calls.find((call) => call.init?.method === 'PUT')!;
+    const body = JSON.parse(String(put.init!.body)) as { backtest: { scenarios?: { label: string }[] } };
+    expect(body.backtest.scenarios![0]!.label).toBe('typed mid-flight');
+  });
+
+  it('the raw-JSON structured sync folds before rewriting the raw text (:3429-3463)', async () => {
+    const { editor, fold } = makeFoldingEditor();
+    await openSuiteEditor(editor);
+    editor.state.startingBalance = '4242';
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(fold).toHaveBeenCalled();
+    expect(JSON.parse(editor.state.rawJson).backtest.scenarios[0].label).toBe('typed mid-flight');
+    expect(JSON.parse(editor.state.rawJson).backtest.starting_balance).toBe(4242);
+  });
+});
+
 describe('structured ↔ raw sync (:3429-3463)', () => {
   it('editing a structured field refreshes the raw JSON text', async () => {
     const { editor } = makeEditor();

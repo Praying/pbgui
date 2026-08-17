@@ -220,6 +220,45 @@ describe('boot chain (:10012-10024)', () => {
     wrapper.unmount();
   });
 
+  it('Save folds an open suite scenario draft into the PUT body (:183-184, :4769)', async () => {
+    const calls: string[] = [];
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      calls.push(String(url) + ' ' + String(init?.method ?? 'GET'));
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4, hsl_signal_modes: ['coin', 'pside'] });
+      if (target.includes('/configs/mycfg')) return ok({ name: 'mycfg', config: { backtest: { start_date: '2021-01-01', exchanges: ['bybit'] }, bot: { long: {}, short: {} } }, param_status: {} });
+      if (target.includes('/configs')) return ok({ configs: [{ name: 'mycfg', exchanges: ['bybit'] }] });
+      if (target.includes('/symbols')) return ok({ symbols: [] });
+      if (target.includes('/tags')) return ok({ tags: [] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    // open the editor, enable suite mode, add a scenario (opens the draft form)
+    await wrapper.find('[data-test="cfg-edit"]').trigger('click');
+    await flush();
+    await nextTick();
+    await wrapper.find('#suite-enabled').setValue(true);
+    await nextTick();
+    await wrapper.find('[data-test="suite-add-scenario"]').trigger('click');
+    await nextTick();
+    // type a label mid-flight — NO Done click — then hit sidebar Save
+    await wrapper.find('[data-test="suite-sc-label"]').setValue('typed mid-flight');
+    await nextTick();
+    calls.length = 0;
+    await wrapper.findAll('#sidebar-editor .sb-btn').find((b) => b.text().includes('Save') && !b.text().includes('Queue'))!.trigger('click');
+    await flush();
+    await nextTick();
+    const put = fetchMock.mock.calls.find((call) => call[1]?.method === 'PUT');
+    expect(put).toBeDefined();
+    const body = JSON.parse(String(put![1]!.body)) as { backtest: { suite_enabled?: boolean; scenarios?: { label: string }[] } };
+    expect(body.backtest.suite_enabled).toBe(true);
+    // scenario 0 is 'base' (enable-seeded); the open draft (scenario 1) folds in
+    expect(body.backtest.scenarios!.map((sc) => sc.label)).toEqual(['base', 'typed mid-flight']);
+    wrapper.unmount();
+  });
+
   it('opens the queue-draft modal from the queue_draft_id deep link (:2147-2161)', async () => {
     window.history.replaceState({}, '', '/api/backtest-v7/main_page?queue_draft_id=q1');
     fetchMock.mockImplementation((url: string) => {

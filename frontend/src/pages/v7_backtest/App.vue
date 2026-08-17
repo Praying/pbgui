@@ -30,10 +30,14 @@ const boot = getBoot();
 const store = useBacktestPage({
   origin: boot.origin,
   t: (key, params) => t(key, params ?? {}),
+  // suiteCollect's auto-save (:4769): the open scenario draft folds into
+  // the state before every collect (Save / Save & Queue / raw-JSON sync).
+  foldSuiteDraft: () => editorPanel.value?.foldSuiteDraft(),
 });
 
 const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
 const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
+const editorPanel = ref<InstanceType<typeof BacktestConfigEditor> | null>(null);
 
 const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
@@ -161,6 +165,7 @@ onMounted(() => {
         />
         <BacktestConfigEditor
           v-if="editorOpen"
+          ref="editorPanel"
           :state="store.editor.state"
           :is-v8="store.adapter.isV8"
           :hsl-modes="editorSettings.hslModes"
