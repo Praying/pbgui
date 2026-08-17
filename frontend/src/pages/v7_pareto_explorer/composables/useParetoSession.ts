@@ -1,13 +1,15 @@
 import { computed, reactive, ref } from 'vue';
 import type { ComputedRef, Ref } from 'vue';
 import { serverMsg } from '@/shared/i18n';
-import { buildLocationUrl } from '../config';
+import { DEFAULT_MAX_CONFIGS, buildLocationUrl } from '../config';
 import type { RouteState } from '../config';
 import { apiFetch } from '../lib/api';
 import { buildLoadRequestBody } from '../lib/loadRequest';
 import { backToOptimizeResultsUrl, backtestApiBase, optimizeApiBase, strategyExplorerApiBase } from '../lib/paretoUrls';
 import { currentRangeMax, normalizeViewRange } from '../lib/viewRange';
 import type {
+  CommandCenterPayload,
+  ConfigDetailPayload,
   DeepTab,
   LoadData,
   OptimizeVersion,
@@ -52,6 +54,8 @@ export interface ParetoState {
   /** The settings-stage input value (el('result-path-input'), :4603). */
   resultPathInput: string;
   session: ParetoSession | null;
+  /** Sidebar-scan transient mode-chip text (:2852-2853, :2878-2879). */
+  modeChipOverride: string | null;
   loadStrategy: string[];
   maxConfigs: number;
   allResultsLoaded: boolean;
@@ -60,9 +64,9 @@ export interface ParetoState {
   viewRange: ViewRange | null;
   pendingViewRange: ViewRange | null;
   loadPayload: LoadData | null;
-  commandCenter: unknown | null;
+  commandCenter: CommandCenterPayload | null;
   selectedConfigIndex: number | null;
-  selectedDetail: unknown | null;
+  selectedDetail: ConfigDetailPayload | null;
   strategyCompareBaseline: StrategyCompareBaseline | null;
   persistDefaults: boolean;
   previewUseWeighted: boolean;
@@ -112,8 +116,9 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     resultPath: deps.resultPath,
     resultPathInput: deps.resultPath,
     session: null,
+    modeChipOverride: null,
     loadStrategy: ['performance', 'robustness', 'sharpe', 'coverage'],
-    maxConfigs: 2000,
+    maxConfigs: DEFAULT_MAX_CONFIGS,
     allResultsLoaded: false,
     fullLoadPending: false,
     fullLoadJobId: '',
@@ -175,6 +180,14 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     deepCorrelations: 0,
     presetPreview: 0,
   };
+
+  /**
+   * The max_configs request value — a cleared settings input would otherwise
+   * send "" and 422 (:4616 parseInt || 2000; M-v7-5 handoff 1).
+   */
+  function effectiveMaxConfigs(): number {
+    return state.maxConfigs || DEFAULT_MAX_CONFIGS;
+  }
 
   function bumpResultContext(): void {
     generations.detail += 1;
@@ -255,6 +268,7 @@ export function useParetoSession(deps: ParetoSessionDeps) {
    */
   function applySession(data: ParetoSession | null): void {
     state.session = data || null;
+    state.modeChipOverride = null;
     syncStrategyExplorerActions();
     const load = data && data.load ? data.load : null;
     const defaults = data && data.defaults ? data.defaults : null;
@@ -450,7 +464,7 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     return {
       resultPath: state.resultPath,
       loadStrategy: state.loadStrategy,
-      maxConfigs: state.maxConfigs,
+      maxConfigs: effectiveMaxConfigs(),
       allResultsLoaded: state.allResultsLoaded,
       persistDefaults: state.persistDefaults,
       viewRange: state.viewRange,
@@ -520,6 +534,7 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     state.fullLoadPending = true;
     state.fullLoadJobId = '';
     state.allResultsLoaded = true;
+    state.modeChipOverride = t('v7explore.loadingFullResult');
     progress.setFullLoadStatus('loading', t('v7explore.startingFullLoad'), 0);
     pushMessage('info', t('v7explore.scanningAllResultsHint'));
     void loadParetoData().catch(() => {});
@@ -539,6 +554,7 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     state.fullLoadJobId = '';
     generations.loadRequest += 1;
     progress.stopFullLoadAnimation();
+    state.modeChipOverride = t('v7explore.switchingToFastMode');
     state.allResultsLoaded = false;
     state.viewRange = null;
     state.pendingViewRange = null;
@@ -555,6 +571,8 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     state,
     generations,
     progress,
+    apiBase,
+    effectiveMaxConfigs,
     optimizeVersion,
     isV8,
     version,

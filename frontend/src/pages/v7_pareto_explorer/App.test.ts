@@ -160,4 +160,163 @@ describe('load control (settings stage)', () => {
     expect(body.max_configs).toBe(500);
     wrapper.unmount();
   });
+
+  it('falls back to DEFAULT_MAX_CONFIGS when the max-configs input is cleared (M-v7-5 handoff 1)', async () => {
+    stubFetch({ result_valid: true, messages: [] });
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r&stage=settings');
+    await wrapper.get('#max-configs-input').setValue('');
+    await wrapper.get('#btn-command-load').trigger('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const loadCall = fetchMock.mock.calls.find((c) => String(c[0]).endsWith('/load'))!;
+    expect(JSON.parse(String(loadCall[1]?.body)).max_configs).toBe(2000);
+    wrapper.unmount();
+  });
+});
+
+describe('bootstrap renders the command-center surfaces (M-v7-6)', () => {
+  function stubSurfaces(): void {
+    fetchMock.mockReset();
+    fetchMock.mockImplementation((url: string | URL) => {
+      const u = String(url);
+      if (u.includes('/session')) return ok({ result_valid: true, result: { name: 'run1' }, messages: [] });
+      if (u.includes('/command-center')) return ok({ champions: [{ config_index: 4, style: 'momentum' }], insights: [{ level: 'warning', text: 'near bounds' }] });
+      if (u.includes('/config-detail')) return ok({ ok: true, detail: { config_index: 4, full_config: { bot: {} }, style: 'momentum' } });
+      if (u.includes('/playground')) return ok({ counts: { configs: 40 }, viz_type: '2D Scatter' });
+      return ok({});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  }
+
+  it('loads command center → detail → playground and renders them', async () => {
+    stubSurfaces();
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');
+    expect(wrapper.findAll('#champion-list .champion-item')).toHaveLength(1);
+    expect(wrapper.get('#champion-list').text()).toContain('momentum');
+    expect(wrapper.findAll('#insight-list .insight-item')).toHaveLength(1);
+    expect(wrapper.get('#detail-title').text()).toBe('#4');
+    expect(wrapper.get('#selected-config-detail').isVisible()).toBe(true);
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/playground'))).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('hides the shared detail section on the settings stage (:4141-4145)', async () => {
+    stubSurfaces();
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r&stage=settings');
+    expect(wrapper.get('#selected-config-detail').isVisible()).toBe(false);
+    wrapper.unmount();
+  });
+});
+
+describe('mode chip during pending scans (M-v7-5 handoff 2, :2853/:2879)', () => {
+  function pendingLoad(session: unknown): void {
+    fetchMock.mockReset();
+    fetchMock.mockImplementation((url: string | URL) => {
+      const u = String(url);
+      if (u.includes('/session')) return ok(session);
+      if (u.includes('/load')) return new Promise(() => {}); // never settles
+      return ok({});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  }
+
+  it('shows warn + "Loading full result..." while a full scan is pending', async () => {
+    pendingLoad({ result_valid: true, result: { name: 'run1' }, messages: [] });
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');
+    await wrapper.get('#btn-load-all-results').trigger('click');
+    expect(wrapper.get('#mode-chip').text()).toBe('Loading full result...');
+    expect(wrapper.get('#mode-chip').classes()).toContain('warn');
+    wrapper.unmount();
+  });
+
+  it('shows warn + "Switching to fast mode..." while returning to pareto-only', async () => {
+    pendingLoad({
+      result_valid: true,
+      result: { name: 'run1' },
+      defaults: { all_results_loaded: true },
+      messages: [],
+    });
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');
+    await wrapper.get('#btn-load-pareto-only').trigger('click');
+    expect(wrapper.get('#mode-chip').text()).toBe('Switching to fast mode...');
+    expect(wrapper.get('#mode-chip').classes()).toContain('warn');
+    wrapper.unmount();
+  });
+
+  it('clears the override once session data applies (:3958-3964)', async () => {
+    fetchMock.mockReset();
+    let releaseLoad: ((value: Response) => void) | null = null;
+    fetchMock.mockImplementation((url: string | URL) => {
+      const u = String(url);
+      if (u.includes('/session')) return ok({ result_valid: true, result: { name: 'run1' }, messages: [] });
+      if (u.includes('/load')) return new Promise<Response>((resolve) => (releaseLoad = resolve));
+      return ok({});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');
+    await wrapper.get('#btn-load-all-results').trigger('click');
+    expect(wrapper.get('#mode-chip').classes()).toContain('warn');
+    releaseLoad!(new Response(JSON.stringify({ mode: 'full', result: { name: 'run1' } }), { status: 200 }));
+    for (let i = 0; i < 10; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(wrapper.get('#mode-chip').classes()).toContain('good');
+    expect(wrapper.get('#mode-chip').text()).toContain('Full mode loaded');
+    wrapper.unmount();
+  });
+});
+
+describe('full-load status surfaces (M-v7-5 handoff 4, :2436-2442)', () => {
+  it('reveals the candidate-set metric chip only once loaded', async () => {
+    stubFetch({ result_valid: true, result: { name: 'run1' }, messages: [] });
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');
+    const chip = wrapper.get('#metric-full-load-chip');
+    expect(chip.isVisible()).toBe(false); // fast mode → idle
+    wrapper.unmount();
+  });
+
+  it('shows the Loaded chip with the good class after a full-mode load', async () => {
+    stubFetch({
+      result_valid: true,
+      result: { name: 'run1' },
+      defaults: { all_results_loaded: true },
+      load: { mode: 'full', view_range: { start: 0, end: 500, max: 1200 } },
+      messages: [],
+    });
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');
+    const chip = wrapper.get('#metric-full-load-chip');
+    expect(chip.isVisible()).toBe(true);
+    expect(chip.text()).toBe('Loaded');
+    expect(chip.classes()).toContain('good');
+    wrapper.unmount();
+  });
+});
+
+describe('display-range loading summary (M-v7-5 handoff 3, :2163-2173)', () => {
+  it('summarises the animated fill while the range load is in flight, then restores', async () => {
+    let releaseLoad: ((value: Response) => void) | null = null;
+    fetchMock.mockReset();
+    fetchMock.mockImplementation((url: string | URL) => {
+      const u = String(url);
+      if (u.includes('/session')) {
+        return ok({
+          result_valid: true,
+          result: { name: 'run1' },
+          defaults: { all_results_loaded: true },
+          load: { mode: 'full', view_range: { start: 0, end: 500, max: 1200 } },
+          messages: [],
+        });
+      }
+      if (u.includes('/load')) return new Promise<Response>((resolve) => (releaseLoad = resolve));
+      return ok({});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');
+    expect(wrapper.get('#display-range-summary').text()).toBe('Showing 500 configs (Rank 1-500)');
+    await wrapper.get('#display-range-end-input').setValue('500');
+    await wrapper.get('#display-range-end-input').trigger('change');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(wrapper.get('#display-range-summary').text()).toBe('Loading display range: 500 / 500 configs (Rank 1-500)');
+    releaseLoad!(new Response(JSON.stringify({ mode: 'full', view_range: { start: 0, end: 500, max: 1200 } }), { status: 200 }));
+    for (let i = 0; i < 10; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(wrapper.get('#display-range-summary').text()).toBe('Showing 500 configs (Rank 1-500)');
+    wrapper.unmount();
+  });
 });

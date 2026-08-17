@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { currentRangeMax, normalizeViewRange } from './viewRange';
+import { createI18n } from '@/shared/i18n';
+import { buildDisplayRangeLoadingSummary, currentRangeMax, normalizeViewRange } from './viewRange';
 
-/* normalizeViewRange (:1986-2001) + currentRangeMax (:2003-2007). */
+/* normalizeViewRange (:1986-2001) + currentRangeMax (:2003-2007)
+ * + the loading summary (:2163-2173, M-v7-5 handoff 3). */
+
+const i18n = createI18n('en');
+const t = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
 
 describe('normalizeViewRange', () => {
   it('returns null when full mode is off', () => {
@@ -51,5 +56,23 @@ describe('currentRangeMax', () => {
     expect(currentRangeMax(null)).toBe(0);
     expect(currentRangeMax({})).toBe(0);
     expect(currentRangeMax({ view_range: { max: Number.NaN } })).toBe(0);
+  });
+});
+
+describe('buildDisplayRangeLoadingSummary (:2163-2173)', () => {
+  it('translates the animated fill into loaded-of-target visible counts', () => {
+    // total 1000, range 100..600; 50% fill → loadedEnd = min(600, max(100, 500)) = 500
+    const summary = buildDisplayRangeLoadingSummary(50, { start: 100, end: 600, max: 1000 }, 1000, t);
+    expect(summary).toBe('Loading display range: 400 / 500 configs (Rank 101-600)');
+  });
+
+  it('caps the loaded end at the target end and never reports negatives', () => {
+    // 95% fill of 1000 = 950 → capped to 600; 1% fill = 10 → clamped up to start
+    expect(buildDisplayRangeLoadingSummary(95, { start: 100, end: 600, max: 1000 }, 1000, t)).toBe(
+      'Loading display range: 500 / 500 configs (Rank 101-600)'
+    );
+    expect(buildDisplayRangeLoadingSummary(1, { start: 100, end: 600, max: 1000 }, 1000, t)).toBe(
+      'Loading display range: 0 / 500 configs (Rank 101-600)'
+    );
   });
 });

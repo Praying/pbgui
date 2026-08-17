@@ -20,9 +20,12 @@
   <!-- Plotly stays a vendored script global. Legacy pareto loads it from the
        dedicated /static route (legacy :10) — NOT /app/plotly.min.js like
        backtest. Kept on /static for parity; standardising to one global
-       happens at module closeout (M-v7-18, recon R5). Charts land in M-v7-6. -->
+       happens at module closeout (M-v7-18, recon R5). -->
   <script src="/static/plotly.min.js"></script>
   <script src="/app/js/sidebar_resize.js?v=1"></script>
+  <!-- Shared JSON panel global for the selected-config full-config viewer
+       (legacy :1644; same pattern as v7_strategy_explorer). -->
+  <script src="/app/js/json_panel.js?v=2"></script>
 </head>
 <body>
   <div id="app"></div>

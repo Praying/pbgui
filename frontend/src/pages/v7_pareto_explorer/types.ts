@@ -91,11 +91,102 @@ export interface ParetoSession {
 }
 
 export interface RefreshBundle {
-  command_center?: unknown | null;
+  command_center?: CommandCenterPayload | null;
   selected_config_index?: number | null;
-  detail?: unknown | null;
-  playground?: unknown | null;
+  detail?: ConfigDetailPayload | null;
+  playground?: PlaygroundPayload | null;
   deep_intelligence?: { tab?: string; payload?: unknown } | null;
+}
+
+/** One rendered Plotly figure — server-built traces + layout (:3379-3392). */
+export interface ChartSpec {
+  traces?: unknown[];
+  layout?: Record<string, unknown> | null;
+}
+
+export interface PlaygroundMetrics {
+  x_metric?: string;
+  y_metric?: string;
+  z_metric?: string;
+  color_metric?: string;
+}
+
+export interface PlaygroundBestMatch {
+  config_index?: number | null;
+  score?: number | null;
+  style?: string;
+}
+
+export interface PlaygroundCounts {
+  configs?: number;
+  total_configs?: number | null;
+  pareto?: number;
+  show_all?: boolean;
+}
+
+/** renderPreview's payload — counts + the two preview figures (:2890-2942). */
+export interface PlaygroundPreviewPayload {
+  counts?: PlaygroundCounts | null;
+  pareto_analysis?: ChartSpec | null;
+  robustness?: ChartSpec | null;
+}
+
+export interface PlaygroundPayload {
+  viz_type?: string;
+  quick_view?: string;
+  metrics?: PlaygroundMetrics | null;
+  available_metrics?: string[];
+  best_match?: PlaygroundBestMatch | null;
+  counts?: PlaygroundCounts | null;
+  visualizations?: {
+    preview?: PlaygroundPreviewPayload | null;
+    scatter_2d?: ChartSpec | null;
+    scatter_3d?: ChartSpec | null;
+    radar?: ChartSpec | null;
+    projections?: { xy?: ChartSpec | null; xz?: ChartSpec | null; yz?: ChartSpec | null } | null;
+  } | null;
+}
+
+/** renderChampions rows (:2944-2973). */
+export interface ChampionItem {
+  config_index?: number | null;
+  style?: string;
+  composite_score?: number | null;
+  performance?: number | null;
+  robustness?: number | null;
+  risk_overall?: number | null;
+}
+
+/** renderInsights rows (:2975-2990). */
+export interface InsightItem {
+  level?: string;
+  text?: string;
+}
+
+export interface CommandCenterPayload {
+  champions?: ChampionItem[];
+  insights?: InsightItem[];
+}
+
+export interface MetricEntry {
+  name?: string;
+  value?: unknown;
+}
+
+/** /config-detail payload → renderDetail (:3849-3893). */
+export interface ConfigDetailPayload {
+  config_index?: number | null;
+  full_config?: Record<string, unknown> | null;
+  top_metrics?: MetricEntry[];
+  risk_profile?: Record<string, unknown> | null;
+  all_metrics?: MetricEntry[];
+  style?: string;
+  explorer_score?: number | null;
+  robustness?: number | null;
+  has_scenarios?: boolean;
+  scenario_metrics?: Record<string, Record<string, unknown>> | null;
+  override_configs?: Record<string, unknown> | null;
+  override_error?: string | null;
 }
 
 /** Pinned strategy-compare baseline (:4242-4247) — v8 runtime only. */
@@ -123,7 +214,7 @@ export interface PlaygroundSettings {
   customZMetric: string;
   projectionLayout: string;
   colorMetric: string;
-  payload: unknown | null;
+  payload: PlaygroundPayload | null;
 }
 
 /** Load-progress job status response (:2520-2555). */
