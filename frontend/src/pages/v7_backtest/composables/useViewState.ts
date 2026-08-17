@@ -1,7 +1,7 @@
 import { reactive } from 'vue';
 import { BACKTEST_SORT_COLUMNS, viewStateKeyFor } from '../config';
 import { archiveModeFromValue, buildPersistedState, currentBacktestViewHash } from '../lib/viewState';
-import type { ArchiveMode, BacktestPanel, BacktestSortTable, BacktestSorts, BacktestVersion } from '../types';
+import type { ArchiveMode, BacktestPanel, BacktestSortTable, BacktestSorts, BacktestVersion, SortSpec } from '../types';
 
 /**
  * Reactive backtest view state (v7_backtest.html:1331-1462): panel
@@ -30,6 +30,8 @@ export interface ViewStateStore {
   openArchive(name: string, mode?: ArchiveMode): void;
   /** setSort (:1719-1723): toggle in place, new column starts ascending. */
   setSort(table: BacktestSortTable, col: string): void;
+  /** setResSort semantics (:5452-5457): write an explicit spec (results tables start DESC). */
+  setSortSpec(table: BacktestSortTable, spec: SortSpec): void;
   /** Seed panel + archive selection from the boot-resolved state (:10019-10023). */
   applyViewState(state: { panel: BacktestPanel; archive?: string; archiveMode?: ArchiveMode; sorts?: BacktestSorts }): void;
   dispose(): void;
@@ -82,6 +84,11 @@ export function useViewState(options: ViewStateOptions): ViewStateStore {
         ...state.sorts,
         [table]: current.col === col ? { col, asc: !current.asc } : { col, asc: true },
       };
+      persist();
+    },
+    setSortSpec(table, spec): void {
+      if (!(BACKTEST_SORT_COLUMNS[table] as readonly string[]).includes(spec.col)) return;
+      state.sorts = { ...state.sorts, [table]: { col: spec.col, asc: spec.asc } };
       persist();
     },
     applyViewState(next): void {

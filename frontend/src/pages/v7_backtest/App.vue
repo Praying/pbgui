@@ -6,8 +6,12 @@
  * (:1267-1337), the settings modal (:1467-1642) and the queue panel
  * (:5136-5226, :5787-5871). M-v7-9 adds the configs list (:1654-1712),
  * the config editor (:2563-2946) and the queue-draft modal (:2062-2145).
- * Results/charts (M-v7-10), archive/legacy (M-v7-11) and handoffs
- * (M-v7-12) extend this shell.
+ * M-v7-10 adds the results workbench (:834-869): version-filtered
+ * loadResults with the empty-retry ladder (:5357-5416), the sortable +
+ * drag-selectable results table (:5514-5785), per-result charts
+ * (:6576-7528), the compare flows (:7646-7860) and the delete flow
+ * (:8509-8532). Archive/legacy (M-v7-11) and handoffs (M-v7-12) extend
+ * this shell.
  *
  * FLAVOR: pathname-derived (/api/backtest-v8/ → v8, config.ts) — both
  * routers serve this one build; v8 drops the legacy panel.
@@ -21,6 +25,7 @@ import ConfigsPanel from './components/ConfigsPanel.vue';
 import PanelShell from './components/PanelShell.vue';
 import QueueDraftModal from './components/QueueDraftModal.vue';
 import QueuePanel from './components/QueuePanel.vue';
+import ResultsPanel from './components/ResultsPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import { useBacktestPage } from './composables/useBacktestPage';
 
@@ -38,6 +43,7 @@ const store = useBacktestPage({
 const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
 const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
 const editorPanel = ref<InstanceType<typeof BacktestConfigEditor> | null>(null);
+const resultsPanel = ref<InstanceType<typeof ResultsPanel> | null>(null);
 
 const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
@@ -51,9 +57,7 @@ const editorSettings = computed(() => ({
 }));
 
 function onQueueViewResults(name: string): void {
-  /* filters + results panel land in M-v7-10 */
-  store.selectPanel('results');
-  void name;
+  store.viewConfigResults(name);
 }
 function onQueueShowLog(filename: string): void {
   /* the LogViewerPanel wrapper lands with the M-v7-10 log surface */
@@ -116,6 +120,14 @@ onMounted(() => {
         </button>
       </template>
       <template #ctx-queue>
+        <button
+          type="button"
+          class="sb-btn"
+          data-test="queue-compare"
+          @click="store.compareQueue(queuePanel?.selectedFilenames() ?? [], store.queueItems.value)"
+        >
+          📈 {{ t('v7backtest.compare') }}
+        </button>
         <button type="button" class="sb-btn" data-test="clear-finished" @click="store.clearFinished">{{ t('v7backtest.clearFinished') }}</button>
         <button type="button" class="sb-btn danger" data-test="stop-all" @click="store.stopAllQueue">{{ t('v7backtest.stopAll') }}</button>
         <button type="button" class="sb-btn danger" data-test="delete-selected" @click="queuePanel?.deleteSelected()">
@@ -125,7 +137,10 @@ onMounted(() => {
         <button type="button" class="sb-btn" data-test="open-settings" @click="store.openSettingsModal">{{ t('v7backtest.settings') }}</button>
       </template>
       <template #ctx-results>
-        <!-- results actions land in M-v7-10 (Compare is queue-panel M-v7-10 too) -->
+        <!-- Compare + Delete are cross-version (:735, :742); the other
+             results actions land with M-v7-11/12 handoffs -->
+        <button type="button" class="sb-btn" data-test="results-compare" @click="store.compareResults">📈 {{ t('v7backtest.compare') }}</button>
+        <button type="button" class="sb-btn danger" data-test="results-delete" @click="resultsPanel?.deleteSelectedFlow()">🗑 {{ t('v7backtest.deleteSelected') }}</button>
       </template>
       <template #ctx-archive>
         <!-- archive actions land in M-v7-11 -->
@@ -208,9 +223,9 @@ onMounted(() => {
         @nothing-selected="onNothingSelected"
       />
 
-      <!-- RESULTS panel — table + charts land in M-v7-10 -->
+      <!-- RESULTS panel (:834-869) — toolbar + table + compare + charts -->
       <div id="panel-results" class="view-panel" :class="{ active: store.view.state.panel === 'results' }">
-        <div class="empty-state"><div class="empty-icon">📊</div><p>Results — M-v7-10</p></div>
+        <ResultsPanel ref="resultsPanel" :results="store.results" :version-bound-actions="store.results.versionFilter.value !== store.adapter.version" />
       </div>
 
       <!-- ARCHIVE panel — M-v7-11 -->

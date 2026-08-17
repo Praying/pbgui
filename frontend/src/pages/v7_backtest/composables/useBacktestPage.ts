@@ -2,9 +2,11 @@ import { computed, ref } from 'vue';
 import { createBacktestAdapter, detectBacktestVersion, navItems, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
 import { createToastQueue, type ToastItem, type ToastQueue } from '../lib/toast';
 import { loadStoredBacktestViewState } from '../lib/viewState';
+import { compareSelected, compareSelectedQueue } from './useCompare';
 import { useConfigEditor, type ConfigEditorStore } from './useConfigEditor';
 import { useConfigs } from './useConfigs';
 import { useQueueWs, type QueueWsController } from './useQueueWs';
+import { useResults, type ResultsStore } from './useResults';
 import { useSettings } from './useSettings';
 import { useViewState, type ViewStateStore } from './useViewState';
 import type { BacktestPanel, QueueItem } from '../types';
@@ -47,6 +49,13 @@ export interface BacktestPageStore {
   settingsOpen: { value: boolean };
   settingsCleaning: { value: boolean };
   editor: ConfigEditorStore;
+  results: ResultsStore;
+  /** compareSelected (:7778-7791) — the results ctx Compare button. */
+  compareResults(): Promise<void>;
+  /** compareSelectedQueue (:7744-7776) — the queue ctx Compare button. */
+  compareQueue(selectedFilenames: readonly string[], queueItems: readonly QueueItem[]): Promise<void>;
+  /** viewConfigResults (:4983-5006) — configs/queue "view results". */
+  viewConfigResults(name: string): void;
   addConfigToQueue(name: string): Promise<void>;
   deleteConfigs(names: readonly string[], removeResults: boolean): Promise<void>;
   setConfigsSort(column: string): void;
@@ -178,8 +187,9 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     url: wsUrl(adapter, options.origin),
     getCurrentPanel: () => view.state.panel,
     onJustCompleted: () => {
-      // :1289-1291 — refresh config result counts; results reload lands in M-v7-10
+      // :1289-1291 — refresh config result counts AND the results list
       void configsStore.loadConfigs();
+      results.refresh();
     },
     onArchiveUpdate: () => {
       /* archive cache invalidation lands with M-v7-11's archive store */
@@ -249,12 +259,47 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
   function selectPanel(panel: BacktestPanel, selectOptions?: { persist?: boolean }): void {
     view.selectPanel(panel, selectOptions);
     if (panel === 'configs') void configsStore.loadIfEmpty();
-    /* results/archive/legacy lazy loads land with M-v7-10/11 */
+    if (panel === 'results') results.loadIfEmpty();
+    /* archive/legacy lazy loads land with M-v7-11 */
   }
 
   /** The metadata router base — /symbols, /tags, /coins/* (adapter :138-142). */
   function metadataApiBase(): string {
     return version === 'v8' ? `${options.origin}/api/v8` : `${options.origin}/api/v7`;
+  }
+
+  /* ── results store (M-v7-10) ── */
+  const results = useResults({
+    apiBase,
+    version,
+    t,
+    notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+    getCurrentPanel: () => view.state.panel,
+    onSelectResultsPanel: () => selectPanel('results'),
+    initialSort: { ...view.state.sorts.results },
+    onSortChange: (spec) => view.setSortSpec('results', spec),
+  });
+
+  const compareResults = compareSelected({
+    results,
+    t,
+    notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+    selectPanel: () => selectPanel('results'),
+  });
+
+  const runCompareQueue = compareSelectedQueue({
+    results,
+    t,
+    notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+    selectPanel: () => selectPanel('results'),
+  });
+
+  function compareQueue(selectedFilenames: readonly string[], queueItems: readonly QueueItem[]): Promise<void> {
+    return runCompareQueue(selectedFilenames, queueItems);
+  }
+
+  function viewConfigResults(name: string): void {
+    results.viewConfigResults(name);
   }
 
   /* ── config editor + configs actions (M-v7-9) ── */
@@ -336,6 +381,10 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     settingsStore,
     configsStore,
     editor,
+    results,
+    compareResults,
+    compareQueue,
+    viewConfigResults,
     ws,
     toast,
     toasts: toast.items,

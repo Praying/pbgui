@@ -509,3 +509,81 @@ describe('settings modal (App wiring, :1560-1566)', () => {
     wrapper.unmount();
   });
 });
+
+describe('results panel (M-v7-10, :834-869)', () => {
+  it('lazy-loads results on panel switch and renders the rows (:1434-1462, :5514-5577)', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.includes('/configs')) return ok({ configs: [] });
+      if (target.includes('/results')) {
+        return ok({ results: [{ path: 'backtests/alpha/binance/r1', config_name: 'alpha', result_name: 'r1', modified: '2024-01-02T03:04:05Z', adg: 0.01, gain: 12 }] });
+      }
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/results'))).toBe(false);
+    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/api/backtest-v7/results'))).toBe(true);
+    expect(wrapper.find('#panel-results').classes()).toContain('active');
+    expect(wrapper.findAll('#results-list tbody tr')).toHaveLength(1);
+    expect(wrapper.find('#results-list').text()).toContain('alpha');
+    wrapper.unmount();
+  });
+
+  it('a just-completed WS job reloads the results list too (:1285-1293)', async () => {
+    fetchMock.mockImplementation((url: string) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.includes('/configs')) return ok({ configs: [] });
+      if (target.includes('/results')) return ok({ results: [{ path: 'p1', config_name: 'c', result_name: 'r', modified: '2024-01-02T00:00:00Z' }] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    sockets[0]!.readyState = 1;
+    sockets[0]!.onmessage?.({ data: JSON.stringify({ type: 'queue_update', items: [{ filename: 'a.json', name: 'a', status: 'running' }] }) });
+    await nextTick();
+    const resultsCallsBefore = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/results')).length;
+    sockets[0]!.onmessage?.({ data: JSON.stringify({ type: 'queue_update', items: [{ filename: 'a.json', name: 'a', status: 'complete' }] }) });
+    await flush();
+    await nextTick();
+    const resultsCalls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/results'));
+    expect(resultsCalls.length).toBe(resultsCallsBefore + 1);
+    wrapper.unmount();
+  });
+
+  it('the results ctx bar carries the cross-version Compare + Delete buttons (:732-743)', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('[data-test="results-compare"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="results-delete"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="queue-compare"]').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("a config's results-count cell opens the filtered results panel (:4983-5006)", async () => {
+    fetchMock.mockImplementation((url: string) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.includes('/configs')) return ok({ configs: [{ name: 'alpha', exchanges: ['bybit'], results: 2 }] });
+      if (target.includes('/results')) return ok({ results: [{ path: 'p1', config_name: 'alpha', result_name: 'r', modified: '2024-01-02T00:00:00Z' }, { path: 'p2', config_name: 'beta', result_name: 'r', modified: '2024-01-03T00:00:00Z' }] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="cfg-results"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#panel-results').classes()).toContain('active');
+    expect((wrapper.find('#results-config-filter').element as HTMLSelectElement).value).toBe('alpha');
+    expect(wrapper.findAll('#results-list tbody tr')).toHaveLength(1);
+    wrapper.unmount();
+  });
+});

@@ -81,3 +81,69 @@ export interface ConfigSummary {
   results?: number;
   modified?: string;
 }
+
+/* ── Results view (M-v7-10) ─────────────────────────────────────────── */
+
+/** The results version filter (:839-841, seeded from the flavor :10010). */
+export type ResultsVersionFilter = 'v7' | 'v8' | 'both';
+
+/** The five per-result icon toggles (:5566-5570). */
+export type ResultActionKind = 'view' | 'analysis' | 'config' | 'plot' | 'fills';
+
+/** One /results row (:5389-5392 — backtest_version is tagged client-side). */
+export interface BacktestResultItem {
+  path: string;
+  config_name: string;
+  result_name: string;
+  exchange_dir?: string;
+  backtest_version: BacktestVersion;
+  modified?: string;
+  adg?: number | null;
+  gain?: number | null;
+  drawdown_worst?: number | null;
+  sharpe_ratio?: number | null;
+  starting_balance?: number | null;
+  final_balance?: number | null;
+  twe_long?: number | null;
+  twe_short?: number | null;
+  pos_long?: number | null;
+  pos_short?: number | null;
+  coins?: string[];
+  coins_text?: string;
+  exchanges?: string[];
+  display_name?: string;
+  strategy?: string;
+  liquidated?: boolean;
+  btc_collateral_cap?: number;
+  equity_balance_diff_neg_max?: number;
+  end_date?: string;
+  /** Preloaded analysis payload (skips the /results/analysis fetch, :7534). */
+  analysis?: unknown;
+}
+
+/** Parsed results CSV (parseCsv, :5422-5437). */
+export interface ParsedCsv {
+  headers: string[];
+  rows: Record<string, string>[];
+}
+
+/** Normalized equity series (normalizeBE, :6920-6966). */
+export interface BeSeries {
+  time: string[];
+  balance: number[];
+  equity: number[];
+  balance_btc: number[];
+  equity_btc: number[];
+}
+
+/** Bounded price payload from /results/price (:6811-6823). */
+export interface PricePayload {
+  available?: boolean;
+  time?: string[];
+  close?: number[];
+  coverage_start?: string;
+  coverage_end?: string;
+  coverage_complete?: boolean;
+  exchange?: string;
+  coin?: string;
+}
