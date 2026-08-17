@@ -39,9 +39,18 @@ function schedule(): void {
   }, 600);
 }
 
+/* Checkbox flip → immediate refresh (updateDynamicIgnorePreview :3386-3391). */
+watch(
+  () => page.state.dynamicIgnore,
+  (show) => {
+    if (show) void refresh();
+  }
+);
+
+/* Filter changes → the 600 ms debounce (_scheduleIgnoreRefresh :3429-3446);
+ * schedule() itself early-returns while the checkbox is off. */
 watch(
   () => [
-    page.state.dynamicIgnore,
     page.state.marketCap,
     page.state.volMcap,
     page.state.onlyCpt,
@@ -49,10 +58,7 @@ watch(
     page.state.tags.length,
     page.state.tags.slice(),
   ],
-  () => {
-    if (page.state.dynamicIgnore) void refresh();
-    else schedule();
-  }
+  () => schedule()
 );
 
 onBeforeUnmount(() => {
