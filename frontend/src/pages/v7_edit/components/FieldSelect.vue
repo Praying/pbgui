@@ -7,6 +7,7 @@ export interface SelectOption {
 }
 
 const model = defineModel<string>({ required: true });
+const emit = defineEmits<{ (e: 'change'): void }>();
 withDefaults(defineProps<{ id: string; label: string; tip?: string; options: readonly SelectOption[] }>(), {
   tip: '',
 });
@@ -15,7 +16,7 @@ withDefaults(defineProps<{ id: string; label: string; tip?: string; options: rea
 <template>
   <div class="form-group">
     <label><span v-if="tip" :data-tip="tip">{{ label }}</span><template v-else>{{ label }}</template></label>
-    <select :id="id" v-model="model">
+    <select :id="id" v-model="model" @change="emit('change')">
       <option
         v-for="option in options"
         :key="option.value"

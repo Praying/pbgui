@@ -83,6 +83,8 @@ export interface UseSymbolsTags {
   /** Queue the next load; later calls win (:2133-2138 promise chaining). */
   queue(exchange: string, selections: CoinTagSelections, opts?: LoadSelectionsOptions): Promise<void>;
   load(exchange: string, selections: CoinTagSelections, opts?: LoadSelectionsOptions): Promise<void>;
+  /** saveConfig awaited this before collecting (:2913). */
+  whenSettled(): Promise<void>;
 }
 
 function uniqSorted(values: readonly string[]): string[] {
@@ -233,6 +235,9 @@ export function useSymbolsTags(apiBase: string, fetchFn: FetchFn = fetch): UseSy
       loadPromise = load(exchange, selections, opts).catch(() => {
         // legacy logged and continued (:2134-2136)
       });
+      return loadPromise;
+    },
+    whenSettled() {
       return loadPromise;
     },
   };

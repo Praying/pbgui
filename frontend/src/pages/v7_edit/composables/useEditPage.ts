@@ -1,7 +1,7 @@
 import { computed, inject, provide, reactive, ref, type ComputedRef, type InjectionKey, type Ref } from 'vue';
 import type { EditAdapter } from '../config';
 import type { ExtraLiveField, EditFormState } from '../lib/formModel';
-import { clampExecutionSync, intVal, isExecutionSyncValid } from '../lib/formModel';
+import { clampExecutionSync, intVal, isExecutionSyncValid, numVal } from '../lib/formModel';
 import { collectConfig } from '../lib/collectConfig';
 import { populateForm } from '../lib/populateForm';
 import {
@@ -23,14 +23,20 @@ import {
 import { loadInstanceConfig, loadUsers, type UserInfo } from './useInstanceConfig';
 import { hostOptions, useHosts } from './useHosts';
 import { useSymbolsTags } from './useSymbolsTags';
+import { useJsonSync, type UseJsonSync } from './useJsonSync';
+import { useCoinOverrides, type CoinOverridesStore } from '@/shared/coinOverrides/useCoinOverrides';
+import { validateJsonText, type JsonValidationError } from '@/shared/jsonValidation';
+import { serverMsg } from '@/shared/i18n';
+import { dialogsAlert } from '../lib/dialogs';
 
 /**
  * Page orchestration — the Vue port of init() (v7_edit.html:1797-1908) and
  * saveConfig (:2908-2982): load users → resolve the load mode (draft/new/
- * named instance) → populate the structured form → host capabilities and
- * symbols/tags; collect + PUT on save. The M-v7-2 surfaces (handoffs, raw
- * JSON bidirectional sync, coin-override panel, import/copy modals, log
- * panel) extend this store.
+ * named instance) → populate the structured form (+ coin-overrides panel
+ * load :2452) → host capabilities and symbols/tags; collect + PUT on save
+ * with the 409 "Update your VPS first" alert (:2933-2945). The raw↔
+ * structured JSON sync (createJsonSyncController) drives applyPopulated
+ * through useJsonSync (:2619-2693).
  */
 
 export type Translate = (key: string, params?: Record<string, unknown>) => string;
@@ -43,6 +49,13 @@ export interface UseEditPageOptions {
   readonly params: { name: string; isNew: boolean; draftId: string };
   readonly t: Translate;
   readonly toast: ToastFn;
+  /** PBGuiDialogs.alert bridge (the 409 save/copy block, :2935-2940). */
+  readonly alert?: (title: string, message: string) => void;
+}
+
+export interface RawJsonErrorState {
+  readonly error: JsonValidationError | null;
+  readonly label: string;
 }
 
 export interface UseEditPage {
@@ -66,13 +79,38 @@ export interface UseEditPage {
   readonly paramLegendLong: ComputedRef<boolean>;
   readonly paramLegendShort: ComputedRef<boolean>;
   readonly fieldVisible: (key: string) => boolean;
+  readonly coinOverrides: CoinOverridesStore;
+  readonly jsonSync: UseJsonSync;
+  readonly rawError: Ref<JsonValidationError | null>;
+  /** Field keys whose JSON textareas are invalid (line-reveal validation). */
+  readonly jsonFieldErrors: Ref<Record<string, JsonValidationError | null>>;
+  /** f-price-dist label rename when the v8 runtime manages the limit key (:187-192). */
+  readonly priceDistLabel: ComputedRef<string>;
   load(): Promise<void>;
   save(): Promise<void>;
   changeStrategyKind(next: string): void;
   collect(): Record<string, unknown>;
+  validateForSave(): boolean;
+  validateRawText(raw: string): { parsed: unknown; error: JsonValidationError | null };
   onUserChange(): void;
   onEnabledOnChange(): void;
   onExecutionSyncChange(changed: 'maxCancel' | 'maxCreate'): void;
+  selectedUserExchange(): string;
+  draftName(): string;
+  /** syncEditorFromParsed (:2627-2633) — the raw→structured apply. */
+  applyParsedFromRaw(parsed: Record<string, unknown>): Promise<void>;
+  /** REST base for modal-driven fetches (copy/import). */
+  apiBaseOf(): string;
+  /** doImport's apply half (:3274-3277): repopulate from a prepared config. */
+  applyImportedConfig(cfg: Record<string, unknown>, paramStatus: Record<string, Record<string, string>>): void;
+  /** syncBotInputToJson (:3494-3503) — TWE/npos inputs overlay the side JSON. */
+  syncBotInputs(side: 'long' | 'short'): void;
+  /** bot JSON blur (:3516-3522) — JSON edits flow back into the inputs. */
+  readBotInputsFromJson(side: 'long' | 'short'): void;
+  /** f-hsl-signal-mode change → coinOvSetContext (:1896-1900). */
+  onHslSignalModeChange(): void;
+  /** The page toast (modal components). */
+  notify(msg: string, kind?: 'ok' | 'err' | 'info'): void;
 }
 
 /** Provide/inject key so section components share the page store without prop drilling. */
@@ -92,19 +130,22 @@ function object(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
 }
 
-function parseOk(raw: string): boolean {
-  if (!raw.trim()) return false;
-  try {
-    JSON.parse(raw);
-    return true;
-  } catch {
-    return false;
-  }
-}
+const JSON_FIELDS: readonly { key: string; label: string; empty: string; expectObject: boolean }[] = [
+  { key: 'longJson', label: '', empty: '', expectObject: true },
+  { key: 'shortJson', label: '', empty: '', expectObject: true },
+  // the two v8-only fields keep the legacy literal labels (:1585-1594)
+  { key: 'startupPhaseBudgets', label: 'startup_phase_budgets JSON', empty: 'startup_phase_budgets cannot be empty', expectObject: true },
+  { key: 'logDebugProfiles', label: 'logging.live_event_debug_profiles JSON', empty: 'logging.live_event_debug_profiles cannot be empty', expectObject: false },
+];
 
 export function useEditPage(options: UseEditPageOptions): UseEditPage {
   const { adapter, apiBase, t, toast } = options;
   const params = { ...options.params };
+  const alert =
+    options.alert ??
+    ((title: string, message: string) => {
+      if (!dialogsAlert({ title, message, confirmText: t('common.ok') })) toast(title + ': ' + message, 'err');
+    });
 
   const state = reactive(
     populateForm({}, { adapter, known: buildKnownLiveParams(adapter.version, []) }).state
@@ -124,9 +165,27 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
   const fromBacktestConfig = ref('');
   const overrideConfigs = ref<Record<string, unknown>>({});
   const managed = ref<ManagedKeys>({ live: [], logging: [], monitor: [] });
+  const rawError = ref<JsonValidationError | null>(null);
+  const jsonFieldErrors = ref<Record<string, JsonValidationError | null>>({});
 
   const hosts = useHosts(apiBase, adapter, instanceName.value);
   const symbolsTags = useSymbolsTags(apiBase);
+
+  /** scheduleStructuredEditorSync hook for the coin-overrides panel (:60-64). */
+  let scheduleStructuredSync: () => void = () => undefined;
+
+  const coinOverrides = useCoinOverrides({
+    apiBase,
+    deferConfigFileWrites: adapter.isV8,
+    preserveMarketIdentifiers: adapter.isV8,
+    context: { hslSignalMode: '', strategyKind: '' },
+    notifyStructuredSync: () => scheduleStructuredSync(),
+    notify: (msg, kind) => toast(msg, kind),
+    jsonInvalid: (side) => t('editor.overrides.jsonInvalid', { side }),
+    invalidValue: (param, msg) => t('editor.overrides.invalidValue', { param, msg }),
+    alreadyHas: (coin) => t('editor.overrides.alreadyHas', { coin }),
+    invalidJsonInSide: (side) => t('editor.overrides.invalidJsonInSide', { side }),
+  });
 
   const known = computed(() => buildKnownLiveParams(adapter.version, managed.value.live, adapter.knownLiveParams));
   /** Rendered host select options — 'disabled' first (populateHosts :1956-1967). */
@@ -134,6 +193,16 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
 
   const paramLegendLong = computed(() => Object.keys(object(paramStatus.value.long)).length > 0);
   const paramLegendShort = computed(() => Object.keys(object(paramStatus.value.short)).length > 0);
+
+  /**
+   * v8 managed label rename — the runtime's limit_order_create_max_market_
+   * dist_pct reuses the f-price-dist field (run_editor_adapter.js :187-192).
+   */
+  const priceDistLabel = computed(() =>
+    managed.value.live.includes('limit_order_create_max_market_dist_pct')
+      ? 'limit_order_create_max_market_dist_pct'
+      : 'initial_entry_exec_max_market_dist_pct'
+  );
 
   /**
    * Field visibility — legacy data-v7-only/data-v8-only marking
@@ -174,7 +243,91 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
       hosts.allHosts.value = ['disabled', configuredHost];
     }
     hosts.selected.value = configuredHost;
+    // coinOvLoad(cfg) inside legacy populateForm (:2451-2452) + the v8
+    // context refresh from the loaded live block (:2375-2377)
+    void coinOverrides.setContext({
+      hslSignalMode: String(object(object(populated.cfg).live).hsl_signal_mode ?? ''),
+      strategyKind: String(object(object(populated.cfg).live).strategy_kind ?? ''),
+    });
+    coinOverrides.load(populated.cfg);
+    validateJsonFields(false);
   }
+
+  /** validateJsonFieldTextarea equivalents for the structured JSON fields. */
+  function validateRawText(raw: string): { parsed: unknown; error: JsonValidationError | null } {
+    const validation = validateJsonText(raw, {
+      expectObject: true,
+      emptyMessage: t('v7run.configCannotBeEmpty'),
+      messages: { cannotBeEmpty: t('v7run.configCannotBeEmpty'), topLevelObject: t('editor.json.topLevelObject') },
+    });
+    return validation;
+  }
+
+  function validateJsonFields(toastFailures: boolean): boolean {
+    let firstInvalid: { label: string; error: JsonValidationError } | null = null;
+    const errors: Record<string, JsonValidationError | null> = {};
+    for (const field of JSON_FIELDS) {
+      const label = field.label || t(field.key === 'longJson' ? 'v7run.longConfigJsonLabel' : 'v7run.shortConfigJsonLabel');
+      const empty = field.empty || t(field.key === 'longJson' ? 'v7run.longConfigCannotBeEmpty' : 'v7run.shortConfigCannotBeEmpty');
+      const validation = validateJsonText(state[field.key as keyof EditFormState] as string, {
+        expectObject: field.expectObject,
+        emptyMessage: empty,
+        messages: { cannotBeEmpty: empty, topLevelObject: t('editor.json.topLevelObject') },
+      });
+      errors[field.key] = validation.error;
+      if (validation.error && !firstInvalid) {
+        firstInvalid = { label, error: validation.error };
+      }
+    }
+    for (const field of extraLive.value) {
+      if (field.kind !== 'json') continue;
+      const validation = validateJsonText(field.text, {
+        messages: {
+          cannotBeEmpty: t('v7run.jsonValueCannotBeEmpty'),
+          topLevelObject: t('editor.json.topLevelObject'),
+        },
+      });
+      errors['extra:' + field.key] = validation.error;
+      if (validation.error && !firstInvalid) {
+        firstInvalid = { label: field.key + ' JSON', error: validation.error };
+      }
+    }
+    jsonFieldErrors.value = errors;
+    if (firstInvalid && toastFailures) {
+      toast(jsonFieldMessage(firstInvalid.label, firstInvalid.error) + t('v7run.fixBeforeSaving'), 'err');
+    }
+    return !firstInvalid;
+  }
+
+  function jsonFieldMessage(label: string, error: JsonValidationError): string {
+    let message = t('v7run.fieldIsInvalid', { label });
+    if (error.line != null && error.column != null) {
+      message += t('v7run.atLineColumn', { line: error.line, column: error.column });
+    }
+    return message;
+  }
+
+  /** syncEditorFromParsed (:2627-2633) — anchor-preserving raw→structured. */
+  async function applyParsedFromRaw(parsed: Record<string, unknown>): Promise<void> {
+    applyPopulated(parsed, paramStatus.value, { skipRawUpdate: true });
+    await queueSymbols(true);
+    syncCovCoins();
+  }
+
+  const jsonSync = useJsonSync({
+    rawId: 'cfg-raw-json',
+    getRaw: () => state.rawJson,
+    setRaw: (value) => {
+      state.rawJson = value;
+    },
+    validateRaw: (raw) => validateRawText(raw),
+    onError: (error) => {
+      rawError.value = error;
+    },
+    applyParsed: applyParsedFromRaw,
+    collectConfig: () => collect(),
+  });
+  scheduleStructuredSync = () => jsonSync.scheduleStructured();
 
   async function loadMetadata(): Promise<void> {
     if (!adapter.isV8) return;
@@ -203,20 +356,35 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     return symbolsTags.queue(exchange, selections, { preferConfigValues });
   }
 
+  /** coinOvSetCoins after each symbols load (v8 only, :3762). */
+  function syncCovCoins(): void {
+    if (adapter.isV8) {
+      coinOverrides.setCoins(symbolsTags.symbols.value, symbolsTags.marketLabels.value);
+    }
+  }
+
   async function load(): Promise<void> {
     try {
       await loadMetadata();
+      await coinOverrides.init();
       users.value = await loadUsers(apiBase);
-      if (state.user && !users.value.some((u) => u.name === state.user)) {
-        users.value = [...users.value, { name: state.user, exchange: '' }];
-      }
       const loaded = await loadInstanceConfig(apiBase, adapter, params, fetch, users.value);
       fromBacktestConfig.value = loaded.fromBacktestConfig;
       overrideConfigs.value = loaded.overrideConfigs;
+      // coinOvSetConfigName (:1852/:1873/:1886) before the populate load
+      coinOverrides.setConfigName(loaded.source === 'new' ? '' : params.name);
+      applyPopulated(loaded.cfg, loaded.paramStatus as ParamStatus);
+      // ensureSelectOption parity (:2336/:2338) — the loaded values stay
+      // selectable even when the fetched lists miss them
+      if (state.user && !users.value.some((u) => u.name === state.user)) {
+        users.value = [...users.value, { name: state.user, exchange: '' }];
+      }
       if (adapter.isV8 && state.strategyKind && !strategyKinds.value.includes(state.strategyKind)) {
         strategyKinds.value = [state.strategyKind, ...strategyKinds.value];
       }
-      applyPopulated(loaded.cfg, loaded.paramStatus as ParamStatus);
+      if (loaded.source !== 'new') {
+        coinOverrides.setOverrideConfigs(loaded.overrideConfigs, { markPending: loaded.source === 'draft' && adapter.isV8 });
+      }
       for (const warning of loaded.warnings) {
         if (warning.kind === 'draft-not-found') {
           toast(t('v7run.draftNotFoundUsingDefaults'), 'info');
@@ -225,6 +393,7 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
         }
       }
       await queueSymbols(true);
+      syncCovCoins();
       await hosts.refresh();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -233,14 +402,14 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     }
   }
 
-  /** collectConfig with the page context (:2696). */
+  /** collectConfig with the page context (:2696) — coin overrides from the panel. */
   function collect(): Record<string, unknown> {
     return collectConfig(state, {
       adapter,
       cfg: cfg.value,
       extraLive: extraLive.value,
       managed: managed.value,
-      coinOverrides: object(cfg.value.coin_overrides),
+      coinOverrides: coinOverrides.collect().coin_overrides ?? {},
       fromBacktestConfig: fromBacktestConfig.value,
     });
   }
@@ -276,19 +445,27 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     paramStatus.value = result.paramStatus;
     strategyCache.value = result.cache;
     activeStrategyKind.value = result.activeStrategyKind;
+    void coinOverrides.setContext({ hslSignalMode: state.hslSignalMode, strategyKind: cleanNext });
   }
 
-  /** Save gates kept from saveConfig (:2914-2916) with simple toasts — the
-   * full line-reveal validation UI lands with M-v7-2's JSON validation port. */
+  /**
+   * The three save gates (ensureRawJsonValidForSave :1677-1691,
+   * ensureStructuredJsonFieldsValidForSave :1614-1644,
+   * validateExecutionSyncFieldsForSave :1646-1658) — toast the first
+   * failure with its line/column.
+   */
   function validateForSave(): boolean {
-    if (!parseOk(state.rawJson)) {
-      toast(t('v7run.rawJsonInvalid') + t('v7run.fixBeforeSaving'), 'err');
+    const rawValidation = validateRawText(state.rawJson);
+    rawError.value = rawValidation.error;
+    if (rawValidation.error) {
+      let message = t('v7run.rawJsonInvalid');
+      if (rawValidation.error.line != null && rawValidation.error.column != null) {
+        message += t('v7run.atLineColumn', { line: rawValidation.error.line, column: rawValidation.error.column });
+      }
+      toast(message + t('v7run.fixBeforeSaving'), 'err');
       return false;
     }
-    if (!parseOk(state.longJson) || !parseOk(state.shortJson)) {
-      toast(t('v7run.fieldIsInvalid', { label: t('v7run.longConfigJsonLabel') }) + t('v7run.fixBeforeSaving'), 'err');
-      return false;
-    }
+    if (!validateJsonFields(true)) return false;
     if (!adapter.isV8 || (managed.value.live.includes('max_n_cancellations_per_batch') && managed.value.live.includes('max_n_creations_per_batch'))) {
       if (!isExecutionSyncValid(state)) {
         toast(t('v7run.maxCancelMustExceedCreate'), 'err');
@@ -302,6 +479,7 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     if (saving.value) return;
     saving.value = true;
     try {
+      await symbolsTags.whenSettled();
       if (!validateForSave()) return;
       const config = collect();
       const wasNew = isNew.value;
@@ -310,7 +488,8 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
         toast(t('v7run.userRequired'), 'err');
         return;
       }
-      const body = adapter.saveBody(config, overrideConfigs.value, intVal(state.version));
+      const overrideSnapshot = adapter.isV8 ? coinOverrides.snapshotPendingFiles() : {};
+      const body = adapter.saveBody(config, overrideSnapshot, intVal(state.version));
       const resp = await fetch(
         apiBase + '/instances/' + encodeURIComponent(name) + '/config' + adapter.saveQuery(wasNew),
         {
@@ -327,8 +506,13 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
         detail?: unknown;
       };
       if (!resp.ok) {
-        const detail = typeof data.detail === 'string' ? data.detail : resp.statusText;
-        toast(t('v7run.saveFailed') + ': ' + detail, 'err');
+        const rawDetail = typeof data.detail === 'string' ? data.detail : resp.statusText;
+        // 409 "Update your VPS first" → PBGuiDialogs.alert (:2935-2940)
+        if (resp.status === 409 && rawDetail.startsWith('Update your VPS first')) {
+          alert(t('v7run.saveBlocked'), serverMsg(rawDetail));
+        } else {
+          toast(t('v7run.saveFailed') + ': ' + serverMsg(rawDetail), 'err');
+        }
         return;
       }
       const baseCfg = data.config && typeof data.config === 'object' && !Array.isArray(data.config)
@@ -339,6 +523,10 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
       if (wasNew) {
         instanceName.value = name;
         isNew.value = false;
+        coinOverrides.setConfigName(name); // coinOvSetConfigName (:2961)
+      }
+      if (adapter.isV8) {
+        coinOverrides.acknowledgePendingFiles(overrideSnapshot); // :2963-2965
       }
       const syncOk = data.sync?.ok ?? 0;
       const syncFail = data.sync?.failed ?? 0;
@@ -355,7 +543,7 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
 
   /** f-user change → reload symbols/tags for the new exchange (:1893-1895). */
   function onUserChange(): void {
-    void queueSymbols(false);
+    void queueSymbols(false).then(syncCovCoins);
   }
 
   /** Keep the hosts composable's selection tracker in sync with the form. */
@@ -368,6 +556,62 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     const clamped = clampExecutionSync(state, changed);
     state.maxCancel = clamped.maxCancel;
     state.maxCreate = clamped.maxCreate;
+  }
+
+  /** getSelectedUserExchange (:1767-1775). */
+  function selectedUserExchange(): string {
+    return String(users.value.find((u) => u.name === state.user)?.exchange ?? '').toLowerCase();
+  }
+
+  /** INSTANCE_NAME || config.live.user || 'draft' (:1724). */
+  function draftName(): string {
+    return instanceName.value || String(object(collect().live).user ?? '') || 'draft';
+  }
+
+  function apiBaseOf(): string {
+    return apiBase;
+  }
+
+  /** doImport (:3274-3277): cfg = prepared; paramStatus; populate + reload symbols. */
+  function applyImportedConfig(nextCfg: Record<string, unknown>, nextParamStatus: Record<string, Record<string, string>>): void {
+    applyPopulated(nextCfg, nextParamStatus as ParamStatus);
+    void queueSymbols(true).then(syncCovCoins);
+  }
+
+  /** coinOvSetContext on hsl-signal-mode change (:1896-1900). */
+  function onHslSignalModeChange(): void {
+    void coinOverrides.setContext({ hslSignalMode: state.hslSignalMode, strategyKind: state.strategyKind });
+  }
+
+  /** syncBotInputToJson (:3494-3503). */
+  function syncBotInputs(side: 'long' | 'short'): void {
+    const jsonKey = side === 'long' ? 'longJson' : 'shortJson';
+    const tweKey = side === 'long' ? 'longTwe' : 'shortTwe';
+    const nposKey = side === 'long' ? 'longNpos' : 'shortNpos';
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(state[jsonKey] || '{}') as Record<string, unknown>;
+    } catch {
+      return; // invalid JSON while typing
+    }
+    adapter.setBotValue(parsed, 'total_wallet_exposure_limit', numVal(state[tweKey]));
+    adapter.setBotValue(parsed, 'n_positions', numVal(state[nposKey]));
+    state[jsonKey] = JSON.stringify(parsed, null, 2);
+  }
+
+  /** bot JSON blur (:3516-3522). */
+  function readBotInputsFromJson(side: 'long' | 'short'): void {
+    const jsonKey = side === 'long' ? 'longJson' : 'shortJson';
+    const tweKey = side === 'long' ? 'longTwe' : 'shortTwe';
+    const nposKey = side === 'long' ? 'longNpos' : 'shortNpos';
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(state[jsonKey] || '{}') as Record<string, unknown>;
+    } catch {
+      return;
+    }
+    state[tweKey] = String(adapter.getBotValue(parsed, 'total_wallet_exposure_limit', state[tweKey]));
+    state[nposKey] = String(adapter.getBotValue(parsed, 'n_positions', state[nposKey]));
   }
 
   return {
@@ -390,14 +634,30 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     renderedHostOptions,
     paramLegendLong,
     paramLegendShort,
+    coinOverrides,
+    jsonSync,
+    rawError,
+    jsonFieldErrors,
+    priceDistLabel,
     fieldVisible,
     load,
     save,
     changeStrategyKind,
     collect,
+    validateForSave,
+    validateRawText,
     onUserChange,
     onEnabledOnChange,
     onExecutionSyncChange,
+    selectedUserExchange,
+    draftName,
+    applyParsedFromRaw,
+    apiBaseOf,
+    applyImportedConfig,
+    syncBotInputs,
+    readBotInputsFromJson,
+    onHslSignalModeChange,
+    notify: (msg, kind) => toast(msg, kind ?? 'info'),
   };
 }
 

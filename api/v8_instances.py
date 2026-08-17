@@ -1834,24 +1834,36 @@ def get_v8_main_page(request: Request, session: SessionToken = Depends(require_a
     )
 
 
-@router.get("/edit_page", response_class=HTMLResponse)
+@router.get("/edit_page", response_class=HTMLResponse, response_model=None)
 def get_v8_edit_page(
     request: Request,
     name: str = Query(""),
     new: str = Query(""),
     draft_id: str = Query(""),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the shared structured PB7/PB8 Run editor for PB8."""
+) -> FileResponse | HTMLResponse:
+    """Serve the shared structured PB7/PB8 Run editor for PB8: Vue first.
+
+    The same Vue build as /api/v7/edit_page (frontend/src/pages/v7_edit) —
+    the page derives the PB8 flavour from the serving route's path
+    (config.ts detectEditFlavor). The legacy fallback keeps the exact
+    _render_page placeholder set the static file always received.
+    """
+    del session
 
     if name:
         _validate_name(name)
-    return _render_page(request, "v7_edit.html", {
-        "INSTANCE": name,
-        "IS_NEW": "true" if new == "1" else "false",
-        "DRAFT_ID": draft_id,
-        "RUN_VERSION": "v8",
-    })
+    return serve_vue_or_legacy_page(
+        "v7_edit",
+        "v7_edit.html",
+        request,
+        inject=lambda html, req: _apply_placeholders(html, req, {
+            "INSTANCE": name,
+            "IS_NEW": "true" if new == "1" else "false",
+            "DRAFT_ID": draft_id,
+            "RUN_VERSION": "v8",
+        }),
+    )
 
 
 @router.websocket("/ws/v8")

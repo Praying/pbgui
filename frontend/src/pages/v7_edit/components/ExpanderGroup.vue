@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 
 /** The .expander primitive (:672-676 / :1127-1140) — click header toggles. */
-withDefaults(defineProps<{ id: string; title: string; defaultOpen?: boolean }>(), { defaultOpen: false });
+defineProps<{ id: string; title: string }>();
 const open = ref(false);
 function toggle(): void {
   open.value = !open.value;

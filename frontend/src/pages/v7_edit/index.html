@@ -17,6 +17,13 @@
   <!-- resizable sidebar chrome, same files as legacy v7_edit.html:8 -->
   <link rel="stylesheet" href="/app/css/sidebar.css?v=1">
   <script src="/app/js/sidebar_resize.js?v=1"></script>
+  <!-- Shared legacy globals, same loading order as legacy v7_edit.html
+       :1216-1220/:3995: PBGuiDialogs drives the 409 save/copy blocks,
+       LogViewerPanel hosts the floating log panel, shared_help_overlay the
+       Guide button (the page-local unescaped mdToHtml overlay is dropped). -->
+  <script src="/app/js/pbgui_dialogs.js?v=6"></script>
+  <script src="/app/js/log_viewer_panel.js?v=30"></script>
+  <script src="/app/js/shared_help_overlay.js?v=7"></script>
 </head>
 <body>
   <div id="app"></div>

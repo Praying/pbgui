@@ -1,0 +1,71 @@
+<script setup lang="ts">
+/**
+ * Dynamic-ignore preview — v7_edit.html:1075-1079 markup,
+ * updateDynamicIgnorePreview/fetchDynamicIgnorePreview (:3386-3415) and the
+ * 600 ms debounced auto-refresh on filter changes (:3427-3446). v7-only.
+ */
+import { onBeforeUnmount, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useEditPageContext } from '../composables/useEditPage';
+import { fetchCoinsFilter } from '../lib/coinsFilter';
+
+const { t } = useI18n();
+const page = useEditPageContext();
+
+const approved = ref('');
+const ignored = ref('');
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+async function refresh(): Promise<void> {
+  if (!page.state.dynamicIgnore) return;
+  const exchange = page.selectedUserExchange();
+  if (!exchange) return;
+  try {
+    const data = await fetchCoinsFilter(page.apiBaseOf(), page.state, exchange, page.state.tags);
+    approved.value = 'approved_symbols: [' + (data.approved ?? []).join(', ') + ']';
+    ignored.value = 'ignored_symbols: [' + (data.ignored ?? []).join(', ') + ']';
+  } catch (e) {
+    approved.value = t('common.error') + ': ' + (e instanceof Error ? e.message : String(e));
+  }
+}
+
+/** _scheduleIgnoreRefresh (:3429-3433) — debounce 600 ms. */
+function schedule(): void {
+  if (!page.state.dynamicIgnore) return;
+  if (timer !== null) clearTimeout(timer);
+  timer = setTimeout(() => {
+    timer = null;
+    void refresh();
+  }, 600);
+}
+
+watch(
+  () => [
+    page.state.dynamicIgnore,
+    page.state.marketCap,
+    page.state.volMcap,
+    page.state.onlyCpt,
+    page.state.noticesIgnore,
+    page.state.tags.length,
+    page.state.tags.slice(),
+  ],
+  () => {
+    if (page.state.dynamicIgnore) void refresh();
+    else schedule();
+  }
+);
+
+onBeforeUnmount(() => {
+  if (timer !== null) clearTimeout(timer);
+});
+</script>
+
+<template>
+  <div v-if="page.state.dynamicIgnore" id="dynamic-ignore-preview" style="margin-bottom: var(--sp-md)">
+    <div style="font-size: var(--fs-sm); color: var(--text-dim); margin-bottom: 4px">
+      {{ t('v7run.dynamicIgnorePreview') }}
+    </div>
+    <pre id="di-approved" style="font-size: var(--fs-xs); color: var(--green); margin-bottom: 4px; white-space: pre-wrap">{{ approved }}</pre>
+    <pre id="di-ignored" style="font-size: var(--fs-xs); color: var(--orange); white-space: pre-wrap">{{ ignored }}</pre>
+  </div>
+</template>

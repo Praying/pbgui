@@ -54,6 +54,7 @@ const loggingLevelOptions = [
       tip="The Version number of the configuration. Required for synchronisation to VPS."
       min="0"
       step="1"
+      :readonly="page.isV8"
     />
     <FieldNumber
       id="f-leverage"
@@ -138,7 +139,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
       id="f-price-dist"
       v-show="page.fieldVisible('initial_entry_exec_max_market_dist_pct')"
       v-model="state.priceDist"
-      label="initial_entry_exec_max_market_dist_pct"
+      :label="page.priceDistLabel.value"
       tip="Executor-side market-distance gate for initial entry posting. Initial entry limit orders are only posted when they are close enough to market. Default 0.005 (0.5%)."
       min="0"
       max="1"

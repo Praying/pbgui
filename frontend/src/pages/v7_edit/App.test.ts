@@ -107,10 +107,15 @@ function stubFetch(opts: { flavor?: 'v7' | 'v8'; saveVersion?: number } = {}): v
       const requestId = new URL(u, 'http://pbgui.test:8000').searchParams.get('request_id') ?? '';
       return Promise.resolve(new Response(JSON.stringify({ ...HOSTS, request_id: requestId }), { status: 200 }));
     }
+    if (u.includes('/override-params')) return Promise.resolve(new Response(JSON.stringify({ params: { bot: { long: {}, short: {} }, live: {} } }), { status: 200 }));
     if (u.includes('/notify_log')) return Promise.resolve(new Response('{}', { status: 200 }));
     throw new Error('unexpected fetch: ' + method + ' ' + u);
   });
   vi.stubGlobal('fetch', fetchMock);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function mountApp(path: string): Promise<ReturnType<typeof mount>> {
@@ -230,6 +235,168 @@ describe('Edit page shell (v8 flavour)', () => {
     expect(body.config.live.strategy_kind).toBe('neat');
     expect(body.config.live.leverage).toBe(12);
     expect(body.config.pbgui.runtime).toBe('pb8');
+    wrapper.unmount();
+  });
+});
+
+describe('Edit page completion (M-v7-2)', () => {
+  const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+  it('ACCEPTANCE (handoff 5): coin_overrides raw-JSON edits flow through collect', async () => {
+    stubFetch();
+    const base = JSON.parse(JSON.stringify(V7_INSTANCE_CONFIG)) as typeof V7_INSTANCE_CONFIG;
+    base.config.coin_overrides = { BTCUSDT: { live: { leverage: 5 } } };
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      const u = String(url);
+      const method = (init && init.method) || 'GET';
+      if (u.includes('/users')) return Promise.resolve(new Response(JSON.stringify(USERS), { status: 200 }));
+      if (u.includes('/instances/alice/config') && method === 'PUT')
+        return Promise.resolve(new Response(JSON.stringify({ config: base.config, version: 12, sync: { ok: 0, failed: 0 } }), { status: 200 }));
+      if (u.includes('/instances/alice/config')) return Promise.resolve(new Response(JSON.stringify(base), { status: 200 }));
+      if (u.includes('/symbols?')) return Promise.resolve(new Response(JSON.stringify({ symbols: ['BTC'], catalog: [] }), { status: 200 }));
+      if (u.includes('/tags?')) return Promise.resolve(new Response(JSON.stringify({ tags: [] }), { status: 200 }));
+      if (u.includes('/coins/status')) return Promise.resolve(new Response(JSON.stringify({ statuses: {} }), { status: 200 }));
+      if (u.includes('/hosts')) {
+        const requestId = new URL(u, 'http://pbgui.test:8000').searchParams.get('request_id') ?? '';
+        return Promise.resolve(new Response(JSON.stringify({ ...HOSTS, request_id: requestId }), { status: 200 }));
+      }
+      if (u.includes('/notify_log') || u.includes('/override-params')) return Promise.resolve(new Response('{}', { status: 200 }));
+      throw new Error('unexpected fetch: ' + method + ' ' + u);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const wrapper = await mountApp('/api/v7/edit_page?name=alice');
+
+    // panel loaded the normalized override from the config
+    expect(wrapper.text()).toContain('Coin Overrides');
+    expect(wrapper.get('#exp-coin-ov').text()).toContain('BTC');
+
+    // edit coin_overrides through the RAW JSON editor (the acceptance path)
+    const raw = JSON.parse((wrapper.get('#cfg-raw-json').element as HTMLTextAreaElement).value) as {
+      coin_overrides: Record<string, { live: { leverage: number } }>;
+    };
+    raw.coin_overrides = {
+      BTCUSDT: { live: { leverage: 9 } },
+      ETHUSDT: { live: { leverage: 3 } },
+    };
+    await wrapper.get('#cfg-raw-json').setValue(JSON.stringify(raw, null, 2));
+    await sleep(320); // raw sync debounce (250 ms) + populate
+
+    // the panel reloaded from the parsed config (coinOvLoad :2452)
+    expect(wrapper.get('#exp-coin-ov').text()).toContain('ETH');
+
+    await wrapper.get('#btn-save').trigger('click');
+    await sleep(50);
+    const put = fetchMock.mock.calls.find(
+      (c) => String(c[0]).includes('/instances/alice/config') && (c[1]?.method ?? 'GET') === 'PUT'
+    )!;
+    expect(put).toBeDefined();
+    const body = JSON.parse(String(put[1]!.body)) as { config: { coin_overrides: Record<string, unknown> } };
+    // collect reads the panel state the raw edit produced (ACCEPTANCE)
+    expect(body.config.coin_overrides).toEqual({
+      BTC: { live: { leverage: 9 } },
+      ETH: { live: { leverage: 3 } },
+    });
+    wrapper.unmount();
+  });
+
+  it('handoff 3: 409 "Update your VPS first" opens the alert dialog, not a toast', async () => {
+    stubFetch();
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      const u = String(url);
+      const method = (init && init.method) || 'GET';
+      if (u.includes('/users')) return Promise.resolve(new Response(JSON.stringify(USERS), { status: 200 }));
+      if (u.includes('/instances/alice/config') && method === 'PUT')
+        return Promise.resolve(new Response(JSON.stringify({ detail: 'Update your VPS first: PB7 runtime too old' }), { status: 409 }));
+      if (u.includes('/instances/alice/config')) return Promise.resolve(new Response(JSON.stringify(V7_INSTANCE_CONFIG), { status: 200 }));
+      if (u.includes('/symbols?')) return Promise.resolve(new Response(JSON.stringify({ symbols: [], catalog: [] }), { status: 200 }));
+      if (u.includes('/tags?')) return Promise.resolve(new Response(JSON.stringify({ tags: [] }), { status: 200 }));
+      if (u.includes('/coins/status')) return Promise.resolve(new Response(JSON.stringify({ statuses: {} }), { status: 200 }));
+      if (u.includes('/hosts')) {
+        const requestId = new URL(u, 'http://pbgui.test:8000').searchParams.get('request_id') ?? '';
+        return Promise.resolve(new Response(JSON.stringify({ ...HOSTS, request_id: requestId }), { status: 200 }));
+      }
+      if (u.includes('/notify_log') || u.includes('/override-params')) return Promise.resolve(new Response('{}', { status: 200 }));
+      throw new Error('unexpected fetch: ' + method + ' ' + u);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const alertSpy = vi.fn();
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { alert: alertSpy };
+    const wrapper = await mountApp('/api/v7/edit_page?name=alice');
+
+    await wrapper.get('#btn-save').trigger('click');
+    await sleep(50);
+
+    expect(alertSpy).toHaveBeenCalledTimes(1);
+    expect(alertSpy).toHaveBeenCalledWith({
+      title: 'Save blocked',
+      message: 'Update your VPS first: PB7 runtime too old',
+      confirmText: 'OK',
+    });
+    delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
+    wrapper.unmount();
+  });
+
+  it('handoffs 1+2: v8 locks the version input and renames the managed distance label', async () => {
+    const metadata: typeof V8_METADATA = JSON.parse(JSON.stringify(V8_METADATA));
+    const live = metadata.params!.live as Record<string, unknown>;
+    live.limit_order_create_max_market_dist_pct = {};
+    live.max_n_cancellations_per_batch = {};
+    live.max_n_creations_per_batch = {};
+    fetchMock.mockReset();
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/editor/metadata')) return Promise.resolve(new Response(JSON.stringify(metadata), { status: 200 }));
+      if (u.includes('/users')) return Promise.resolve(new Response(JSON.stringify(USERS), { status: 200 }));
+      if (u.includes('/instances/alice/config')) return Promise.resolve(new Response(JSON.stringify(V8_INSTANCE_CONFIG), { status: 200 }));
+      if (u.includes('/symbols?')) return Promise.resolve(new Response(JSON.stringify({ symbols: [], catalog: [] }), { status: 200 }));
+      if (u.includes('/tags?')) return Promise.resolve(new Response(JSON.stringify({ tags: [] }), { status: 200 }));
+      if (u.includes('/coins/status')) return Promise.resolve(new Response(JSON.stringify({ statuses: {} }), { status: 200 }));
+      if (u.includes('/hosts')) {
+        const requestId = new URL(u, 'http://pbgui.test:8000').searchParams.get('request_id') ?? '';
+        return Promise.resolve(new Response(JSON.stringify({ ...HOSTS, request_id: requestId }), { status: 200 }));
+      }
+      if (u.includes('/override-params') || u.includes('/notify_log')) return Promise.resolve(new Response('{}', { status: 200 }));
+      throw new Error('unexpected fetch: ' + u);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const wrapper = await mountApp('/api/v8/edit_page?name=alice');
+
+    // handoff 1: version input readonly (expected_version lock token)
+    expect((wrapper.get('#f-version').element as HTMLInputElement).readOnly).toBe(true);
+    // handoff 2: f-price-dist label renamed for the managed limit key
+    expect(wrapper.get('#f-price-dist').element.parentElement!.textContent).toContain('limit_order_create_max_market_dist_pct');
+    wrapper.unmount();
+  });
+
+  it('handoff 4: unknown users/strategies from the config stay selectable after populate', async () => {
+    fetchMock.mockReset();
+    const config = JSON.parse(JSON.stringify(V8_INSTANCE_CONFIG)) as typeof V8_INSTANCE_CONFIG;
+    config.config.live = { ...config.config.live, user: 'carol', strategy_kind: 'exotic' };
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/editor/metadata')) return Promise.resolve(new Response(JSON.stringify(V8_METADATA), { status: 200 }));
+      if (u.includes('/users')) return Promise.resolve(new Response(JSON.stringify(USERS), { status: 200 }));
+      if (u.includes('/instances/alice/config')) return Promise.resolve(new Response(JSON.stringify({ ...config, param_status: {}, override_configs: {} }), { status: 200 }));
+      if (u.includes('/symbols?')) return Promise.resolve(new Response(JSON.stringify({ symbols: [], catalog: [] }), { status: 200 }));
+      if (u.includes('/tags?')) return Promise.resolve(new Response(JSON.stringify({ tags: [] }), { status: 200 }));
+      if (u.includes('/coins/status')) return Promise.resolve(new Response(JSON.stringify({ statuses: {} }), { status: 200 }));
+      if (u.includes('/hosts')) {
+        const requestId = new URL(u, 'http://pbgui.test:8000').searchParams.get('request_id') ?? '';
+        return Promise.resolve(new Response(JSON.stringify({ ...HOSTS, request_id: requestId }), { status: 200 }));
+      }
+      if (u.includes('/override-params') || u.includes('/notify_log')) return Promise.resolve(new Response('{}', { status: 200 }));
+      throw new Error('unexpected fetch: ' + u);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const wrapper = await mountApp('/api/v8/edit_page?name=alice');
+
+    // ensureSelectOption parity (:2336/:2338) — now AFTER populate (dead-branch fix)
+    expect(wrapper.findAll('#f-user option').map((o) => o.attributes('value'))).toContain('carol');
+    expect((wrapper.get('#f-user').element as HTMLSelectElement).value).toBe('carol');
+    expect(wrapper.findAll('#f-strategy-kind option').map((o) => o.attributes('value'))).toEqual(
+      expect.arrayContaining(['exotic', 'neat', 'recursive_mc'])
+    );
+    expect((wrapper.get('#f-strategy-kind').element as HTMLSelectElement).value).toBe('exotic');
     wrapper.unmount();
   });
 });

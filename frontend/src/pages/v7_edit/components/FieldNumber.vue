@@ -10,14 +10,16 @@ withDefaults(
     max?: number | string;
     step?: number | string;
     placeholder?: string;
+    /** v8 locks the version input (run_editor_adapter.js configureUi :180). */
+    readonly?: boolean;
   }>(),
-  { tip: '', min: undefined, max: undefined, step: undefined, placeholder: '' }
+  { tip: '', min: undefined, max: undefined, step: undefined, placeholder: '', readonly: false }
 );
 </script>
 
 <template>
   <div class="form-group">
     <label><span v-if="tip" :data-tip="tip">{{ label }}</span><template v-else>{{ label }}</template></label>
-    <input :id="id" v-model="model" type="number" :min="min" :max="max" :step="step" :placeholder="placeholder" />
+    <input :id="id" v-model="model" type="number" :min="min" :max="max" :step="step" :placeholder="placeholder" :readonly="readonly || undefined" />
   </div>
 </template>

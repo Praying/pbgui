@@ -2488,47 +2488,55 @@ def get_main_page(
     return serve_vue_or_legacy_page("v7_run", "v7_run.html", request, inject=_inject)
 
 
-@router.get("/edit_page", response_class=HTMLResponse)
+@router.get("/edit_page", response_class=HTMLResponse, response_model=None)
 def get_edit_page(
     request: Request,
     name: str = Query(default="", description="Instance name to edit"),
     new: str = Query(default="", description="Set to '1' for new instance"),
     draft_id: str = Query(default="", description="Draft config ID to pre-load"),
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone v7 Edit page."""
-    html_path = Path(__file__).parent.parent / "frontend" / "v7_edit.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the standalone v7 Edit page: built Vue entry first, legacy fallback.
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/v7"
-    ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
+    The Vue page (frontend/src/pages/v7_edit) reads token/origin values from
+    /api/boot.js at runtime, derives the run version from the serving route's
+    path (config.ts detectEditFlavor) and name/new/draft_id from the query
+    string. The legacy v7_edit.html keeps its server-side placeholder
+    injections as the fallback for checkouts without a build;
+    /api/v8/edit_page serves the same Vue build.
+    """
+    del session
 
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-    html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_base = origin + "/api/v7"
+        ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
 
-    is_new = "true" if new == "1" else "false"
-    html = html.replace('"%%INSTANCE%%"', json.dumps(name))
-    html = html.replace('"%%IS_NEW%%"', json.dumps(is_new))
-    html = html.replace('"%%DRAFT_ID%%"', json.dumps(draft_id))
-    html = html.replace('"%%RUN_VERSION%%"', json.dumps("v7"))
-    html = html.replace('"%%MASTER_NAME%%"', json.dumps(_get_master_hostname()))
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
+        html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
 
-    from pbgui_purefunc import PBGUI_VERSION
-    from pbgui_purefunc import PBGUI_SERIAL
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        is_new = "true" if new == "1" else "false"
+        html = html.replace('"%%INSTANCE%%"', json.dumps(name))
+        html = html.replace('"%%IS_NEW%%"', json.dumps(is_new))
+        html = html.replace('"%%DRAFT_ID%%"', json.dumps(draft_id))
+        html = html.replace('"%%RUN_VERSION%%"', json.dumps("v7"))
+        html = html.replace('"%%MASTER_NAME%%"', json.dumps(_get_master_hostname()))
 
-    nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+        from pbgui_purefunc import PBGUI_VERSION
+        from pbgui_purefunc import PBGUI_SERIAL
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("v7_edit", "v7_edit.html", request, inject=_inject)
 
 
 # ── WebSocket ────────────────────────────────────────────────

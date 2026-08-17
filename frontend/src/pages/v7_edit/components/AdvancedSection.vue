@@ -74,6 +74,7 @@ p=panic  t=take_profit_only"
         id="f-hsl-signal-mode"
         v-show="page.fieldVisible('hsl_signal_mode')"
         v-model="state.hslSignalMode"
+        @change="page.onHslSignalModeChange()"
         label="hsl_signal_mode"
         :options="hslSignalModeOptions"
         tip="coin: each coin tracks its own HSL drawdown independently (PB8).
@@ -103,7 +104,8 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
         tip="Default order time-in-force. good_till_cancelled keeps orders until filled or cancelled. post_only ensures orders are maker-only."
       />
     </div>
-    <div class="form-row cols-8" v-show="page.isV8">
+    <!-- v8-only checkbox row (legacy data-v8-only block :738-751) -->
+    <div v-if="page.isV8" class="form-row cols-8">
       <div class="form-group" v-show="page.fieldVisible('hsl_accept_incomplete_history')" style="grid-column: span 2; justify-content: flex-end">
         <FieldCheck
           id="f-hsl-accept-incomplete"
@@ -207,8 +209,8 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
     </div>
 
     <template v-if="page.isV8">
-      <div class="subsection-title" v-show="page.isV8">{{ t('v7run.feesOrderChurn') }}</div>
-      <div class="form-row cols-8" v-show="page.isV8">
+      <div class="subsection-title">{{ t('v7run.feesOrderChurn') }}</div>
+      <div class="form-row cols-8">
         <FieldNumber id="f-fee-conversion-age" v-show="page.fieldVisible('fee_conversion_max_age_ms')" v-model="state.feeConversionAge" label="fee_conversion_max_age_ms" tip="Maximum age in milliseconds for cached fee-currency conversion prices." min="0" step="1000" />
         <FieldNumber id="f-fee-pct-fallback" v-show="page.fieldVisible('fee_pct_fallback')" v-model="state.feePctFallback" label="fee_pct_fallback" tip="Fallback trading-fee fraction used when the exchange does not provide a usable value." min="0" step="0.00001" />
         <FieldNumber id="f-fee-pct-sanity" v-show="page.fieldVisible('fee_pct_sanity_abs_max')" v-model="state.feePctSanity" label="fee_pct_sanity_abs_max" tip="Absolute upper sanity bound for an exchange-reported fee fraction." min="0" step="0.0001" />
@@ -259,8 +261,8 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
     </div>
 
     <template v-if="page.isV8">
-      <div class="subsection-title" v-show="page.isV8">{{ t('v7run.pb8Runtime') }}</div>
-      <div class="form-row cols-8" v-show="page.isV8">
+      <div class="subsection-title">{{ t('v7run.pb8Runtime') }}</div>
+      <div class="form-row cols-8">
         <FieldNumber id="f-exchange-symbol-cooldown" v-show="page.fieldVisible('exchange_symbol_unavailable_cooldown_hours')" v-model="state.exchangeSymbolCooldown" label="exchange_symbol_unavailable_cooldown_hours" tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts." min="0" max="876600" step="0.1" style="grid-column: span 2" />
         <FieldText id="f-custom-endpoints-path" v-show="page.fieldVisible('custom_endpoints_path')" v-model="state.customEndpointsPath" label="custom_endpoints_path" tip="Optional path to a PB8 custom-endpoints definition. Leave blank to use built-in endpoints." placeholder="default" style="grid-column: span 2" />
         <div class="form-group" v-show="page.fieldVisible('startup_phase_budgets')" style="grid-column: span 4">
@@ -270,8 +272,8 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
         </div>
       </div>
 
-      <div class="subsection-title" v-show="page.isV8">{{ t('v7run.logging') }}</div>
-      <div class="form-row cols-8" v-show="page.isV8">
+      <div class="subsection-title">{{ t('v7run.logging') }}</div>
+      <div class="form-row cols-8">
         <FieldText id="f-log-dir" v-show="page.fieldVisible('dir')" v-model="state.logDir" label="logging.dir" tip="Directory used by PB8 for its own log files." />
         <FieldNumber id="f-log-max-bytes" v-show="page.fieldVisible('max_bytes_mb')" v-model="state.logMaxBytes" label="logging.max_bytes_mb" tip="Maximum size in MiB of one PB8 log file before rotation." min="0" step="1" />
         <FieldNumber id="f-log-backup-count" v-show="page.fieldVisible('backup_count')" v-model="state.logBackupCount" label="logging.backup_count" tip="Number of rotated PB8 log files retained." min="0" step="1" />
