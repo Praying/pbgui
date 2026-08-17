@@ -15,7 +15,12 @@ import zh from '../../../i18n/zh.json';
  */
 
 const MODULE_ROOT = __dirname;
+// direct t('…') calls…
 const KEY_PATTERN = /\bt\('((?:v7backtest|editor|nav|common)\.[A-Za-z0-9_.]+)'/g;
+// …plus every other quoted key token, which closes the blind spots the
+// direct pattern cannot see: t(cond ? 'a' : 'b') ternaries and the
+// labelKey map entries resolved via t(item.labelKey)
+const ANY_KEY_PATTERN = /'((?:v7backtest|editor|nav|common)\.[A-Za-z0-9_.]+)'/g;
 
 function collectFiles(dir: string, extension: '.ts' | '.vue'): string[] {
   const files: string[] = [];
@@ -34,8 +39,10 @@ function usedKeys(): { key: string; file: string }[] {
   );
   for (const file of files) {
     const text = readFileSync(file, 'utf8');
-    for (const match of text.matchAll(KEY_PATTERN)) {
-      hits.push({ key: match[1]!, file });
+    for (const pattern of [KEY_PATTERN, ANY_KEY_PATTERN]) {
+      for (const match of text.matchAll(pattern)) {
+        hits.push({ key: match[1]!, file });
+      }
     }
   }
   return hits;
@@ -45,6 +52,11 @@ describe('i18n presence audit (source-derived)', () => {
   it('every t() key used by module source exists in en.json and zh.json', () => {
     const hits = usedKeys();
     expect(hits.length).toBeGreaterThan(100); // the scan actually found keys
+    // ternary t(cond ? 'a' : 'b') keys are inside the scan now (round-1 fix)
+    const keys = new Set(hits.map((hit) => hit.key));
+    expect(keys).toContain('v7backtest.removeLiquidatedResults');
+    expect(keys).toContain('v7backtest.removeDuplicateResults');
+    expect(keys).toContain('editor.shell.navConfigs'); // labelKey entries too
     const missingEn = hits.filter((hit) => !(hit.key in en));
     const missingZh = hits.filter((hit) => !(hit.key in zh));
     expect({ missingEn, missingZh }).toEqual({ missingEn: [], missingZh: [] });

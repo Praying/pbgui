@@ -153,7 +153,7 @@ const renameValue = ref('');
 const renamePath = ref('');
 
 function openRename(): void {
-  if (!store.isOwn) {
+  if (!store.isOwn.value) {
     store.notifyError(t('v7backtest.renameOwnOnly'));
     return;
   }
@@ -193,7 +193,7 @@ interface CleanupFlow {
 const cleanup = ref<CleanupFlow>({ open: false, items: [], paths: [], scope: 'selected_results', kind: 'liquidated' });
 
 async function openCleanup(kind: 'liquidated' | 'duplicates'): Promise<void> {
-  if (!store.isOwn) {
+  if (!store.isOwn.value) {
     store.notifyError(t(kind === 'liquidated' ? 'v7backtest.liquidatedOwnOnly' : 'v7backtest.duplicateOwnOnly'));
     return;
   }
@@ -254,7 +254,7 @@ async function confirmImportOptimize(): Promise<void> {
 const deleteOptimizeOpen = ref(false);
 
 function openDeleteOptimize(): void {
-  if (!store.isOwn) {
+  if (!store.isOwn.value) {
     store.notifyError(t('v7backtest.optimizeDeleteOwnOnly'));
     return;
   }
@@ -452,11 +452,11 @@ defineExpose({
     </div>
 
     <ConfirmModal :open="deleteArchiveTarget !== null" :title="t('v7backtest.deleteArchive')" :confirm-label="t('common.delete')" danger test-id="delete-archive-modal" @confirm="confirmDeleteArchive" @cancel="deleteArchiveTarget = null">
-      <p>{{ t('v7backtest.deleteArchiveConfirm', { name: deleteArchiveTarget ?? '' }) }}</p>
+      <p style="white-space: pre-line">{{ plainLegacyHtml(t('v7backtest.deleteArchiveConfirm', { name: deleteArchiveTarget ?? '' })) }}</p>
     </ConfirmModal>
 
     <ConfirmModal :open="deleteResultsOpen" :title="t('v7backtest.deleteArchiveResults')" :confirm-label="t('common.delete')" danger test-id="delete-archive-results-modal" @confirm="confirmDeleteResults" @cancel="deleteResultsOpen = false">
-      <p>{{ t('v7backtest.deleteArchiveResultsConfirm', { n: store.getSelected().length, archive: store.selectedName.value }) }}</p>
+      <p style="white-space: pre-line">{{ plainLegacyHtml(t('v7backtest.deleteArchiveResultsConfirm', { n: store.getSelected().length, archive: store.selectedName.value })) }}</p>
     </ConfirmModal>
 
     <div v-if="renameOpen" id="modal-root" data-test="rename-modal">
@@ -477,7 +477,7 @@ defineExpose({
     </div>
 
     <ConfirmModal :open="cleanup.open" :title="t(cleanup.kind === 'liquidated' ? 'v7backtest.removeLiquidatedResults' : 'v7backtest.removeDuplicateResults')" :confirm-label="t('v7backtest.remove')" danger :test-id="`cleanup-${cleanup.kind}-modal`" @confirm="confirmCleanup" @cancel="cleanup = { ...cleanup, open: false }">
-      <p>{{ t(cleanup.kind === 'liquidated' ? 'v7backtest.removeLiquidatedConfirm' : 'v7backtest.removeDuplicatesConfirm', { n: cleanup.items.length, archive: store.selectedName.value }) }}</p>
+      <p>{{ plainLegacyHtml(t(cleanup.kind === 'liquidated' ? 'v7backtest.removeLiquidatedConfirm' : 'v7backtest.removeDuplicatesConfirm', { n: cleanup.items.length, archive: store.selectedName.value })) }}</p>
       <ul style="max-height: 40vh; overflow: auto">
         <li v-for="(item, i) in cleanup.items.slice(0, 20)" :key="i">
           {{ cleanupPath(item.path) }} <span class="muted-line">{{ cleanup.kind === 'liquidated' ? item.reason : t('v7backtest.keeps', { name: cleanupPath(item.keep_path) }) }}</span>
@@ -533,7 +533,7 @@ defineExpose({
     </div>
 
     <ConfirmModal :open="deleteOptimizeOpen" :title="t('v7backtest.deleteOptimizeConfig')" :confirm-label="t('common.delete')" danger test-id="delete-optimize-modal" @confirm="confirmDeleteOptimize" @cancel="deleteOptimizeOpen = false">
-      <p>{{ t('v7backtest.deleteOptimizeConfigConfirm', { name: store.selectedOptimize.value?.name || store.selectedOptimize.value?.path, archive: store.selectedName.value }) }}</p>
+      <p>{{ plainLegacyHtml(t('v7backtest.deleteOptimizeConfigConfirm', { name: store.selectedOptimize.value?.name || store.selectedOptimize.value?.path, archive: store.selectedName.value })) }}</p>
     </ConfirmModal>
 
     <RetestModal

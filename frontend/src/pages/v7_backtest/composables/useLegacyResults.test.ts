@@ -176,6 +176,17 @@ describe('deleteSelectedLegacyResults (:6364-6380)', () => {
     expect(notify).toHaveBeenCalledWith('v7backtest.nothingSelected', 'err');
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('surfaces HTTP errors instead of toasting success (legacy :6371 apiFetch throws)', async () => {
+    fetchMock.mockImplementation(() => ok({ detail: 'denied' }, 500));
+    const s = store();
+    s.rows.value = [legacyRow('p1')];
+    s.selectedPaths.value = new Set(['p1']);
+    await s.deleteSelected();
+    expect(notify).toHaveBeenCalledWith('v7backtest.deleteFailed:{"msg":"denied"}', 'err');
+    expect(notify).not.toHaveBeenCalledWith('v7backtest.deleted', 'ok');
+    expect(fetchMock).toHaveBeenCalledTimes(1); // no reload after the failure
+  });
 });
 
 describe('rebacktestSelectedLegacy single-open (:8173-8181)', () => {
@@ -195,6 +206,16 @@ describe('rebacktestSelectedLegacy single-open (:8173-8181)', () => {
     const s = store();
     await s.startRebacktest(vi.fn(), selectPanel);
     expect(notify).toHaveBeenCalledWith('v7backtest.nothingSelected', 'err');
+  });
+
+  it('seeds the multi-backtest pbgui-data toggle from settings (:8207, :1478-1480)', async () => {
+    fetchMock.mockImplementationOnce(() => ok({ backtest: { exchanges: ['bybit'], starting_balance: 900 } }));
+    const s = store({ getSettings: () => ({ use_pbgui_market_data: 'True' }) });
+    s.rows.value = [legacyRow('p1'), legacyRow('p2')];
+    s.selectedPaths.value = new Set(['p1', 'p2']);
+    await s.startRebacktest(vi.fn(), selectPanel);
+    expect(s.rebacktestOpen.value).toBe(true);
+    expect(s.rebacktestDefaults.value).toMatchObject({ usePbguiData: true, balance: 900 });
   });
 });
 

@@ -242,3 +242,80 @@ describe('archive results chrome (:879-913)', () => {
     expect(wrapper.find('#archive-list-view').exists()).toBe(true);
   });
 });
+
+describe('review round 1 fixes', () => {
+  it('flattens the html-carrying confirm keys — no literal <b>/<br> reaches the user (Fix 3)', async () => {
+    const store = makeStore();
+    await openArchive(store);
+    const wrapper = mountPanel(store);
+    const vm = wrapper.vm as unknown as {
+      openDeleteResults(): void;
+      openCleanup(kind: 'liquidated' | 'duplicates'): Promise<void>;
+      openDeleteOptimize(): void;
+    };
+    // delete-archive confirm (list-view trash)
+    store.closeArchive();
+    await nextTick();
+    await wrapper.find('#archive-list-container .act-btn-danger').trigger('click');
+    await nextTick();
+    const archiveModal = wrapper.find('[data-test="delete-archive-modal"]');
+    expect(archiveModal.text()).toContain('Delete archive mine from disk?\nThis cannot be undone.');
+    expect(archiveModal.html()).not.toContain('<b>');
+    await wrapper.find('[data-test="delete-archive-modal"] .modal-btn').trigger('click'); // cancel
+
+    // delete-results confirm
+    await store.viewArchive('mine');
+    store.selectedPaths.value = new Set(['/archives/mine/a']);
+    vm.openDeleteResults();
+    await nextTick();
+    const resultsModal = wrapper.find('[data-test="delete-archive-results-modal"]');
+    expect(resultsModal.text()).toContain('Delete 1 result(s) from archive mine?');
+    expect(resultsModal.html()).not.toContain('<b>');
+    await wrapper.find('[data-test="delete-archive-results-modal"] .modal-btn').trigger('click'); // cancel
+
+    // remove-liquidated preview confirm (dry-run fixture)
+    fetchMock.mockImplementationOnce(() => ok({ items: [{ path: '/archives/mine/a', reason: 'liq' }] }));
+    await vm.openCleanup('liquidated');
+    await nextTick();
+    const liquidatedModal = wrapper.find('[data-test="cleanup-liquidated-modal"]');
+    expect(liquidatedModal.text()).toContain('Remove 1 liquidated archive result(s) from mine?');
+    expect(liquidatedModal.html()).not.toContain('<b>');
+    await wrapper.find('[data-test="cleanup-liquidated-modal"] .modal-btn').trigger('click'); // cancel
+
+    // delete-optimize confirm
+    store.setMode('optimize');
+    store.selectedOptimize.value = { path: 'o1', name: 'opt', version: 'v7' };
+    await nextTick();
+    vm.openDeleteOptimize();
+    await nextTick();
+    const optimizeModal = wrapper.find('[data-test="delete-optimize-modal"]');
+    expect(optimizeModal.text()).toContain('Delete archived Optimize config opt from mine?');
+    expect(optimizeModal.html()).not.toContain('<b>');
+
+    // remove-duplicates shares the treatment (same builder)
+    fetchMock.mockImplementationOnce(() => ok({ items: [{ path: '/archives/mine/a', keep_path: '/archives/mine/b' }] }));
+    await vm.openCleanup('duplicates');
+    await nextTick();
+    expect(wrapper.find('[data-test="cleanup-duplicates-modal"]').html()).not.toContain('<b>');
+  });
+
+  it('the rename/cleanup/delete-optimize flows gate on own-archive (:6088, :6125, :9408)', async () => {
+    const store = makeStore();
+    await openArchive(store, false);
+    const wrapper = mountPanel(store);
+    const vm = wrapper.vm as unknown as {
+      openRename(): void;
+      openCleanup(kind: 'liquidated' | 'duplicates'): Promise<void>;
+      openDeleteOptimize(): void;
+    };
+    store.selectedPaths.value = new Set(['/archives/mine/a']);
+    store.selectedOptimize.value = { path: 'o1', name: 'opt', version: 'v7' };
+    vm.openRename();
+    expect(notify).toHaveBeenCalledWith('Rename is only available for your own archive', 'err');
+    await vm.openCleanup('liquidated');
+    expect(notify).toHaveBeenCalledWith('Liquidated cleanup is only available for your own archive', 'err');
+    vm.openDeleteOptimize();
+    expect(notify).toHaveBeenCalledWith('Optimize config deletion is only available for your own archive', 'err');
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/remove-liquidated'))).toBe(false);
+  });
+});

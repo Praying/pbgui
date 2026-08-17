@@ -31,6 +31,8 @@ export interface UseLegacyOptions {
   selectPanel(panel: 'configs'): void;
   /** The editor opener for the single-result backtest path (:8176-8178). */
   openEditor?(name: string, cfg: Record<string, unknown>): void;
+  /** Seeds the multi-backtest pbgui toggle (:8207 via :1478-1480). */
+  getSettings?(): { use_pbgui_market_data?: boolean | string };
   /** apiFetch('/pbgui_data_path') (:8224). */
   getPbguiDataPath?(): Promise<string>;
   fetchFn?: typeof fetch;
@@ -160,8 +162,10 @@ export function useLegacyResults(options: UseLegacyOptions): LegacyResultsStore 
       return;
     }
     try {
+      // legacy :6371 posts through apiFetch, which THROWS on !ok — route
+      // through the same requestJson so failures surface (:6377)
       await Promise.all(
-        selected.map((path) => fetchFn(`${options.apiBase}/legacy/results?path=${encodeURIComponent(path)}`, { method: 'DELETE', credentials: 'same-origin' }))
+        selected.map((path) => requestJson(`${options.apiBase}/legacy/results?path=${encodeURIComponent(path)}`, { method: 'DELETE' }))
       );
       notify(t('v7backtest.deleted'), 'ok');
       await loadLegacyResults();
@@ -187,12 +191,14 @@ export function useLegacyResults(options: UseLegacyOptions): LegacyResultsStore 
       }
       const backtest = (cfg.backtest as Record<string, unknown> | undefined) ?? {};
       const exchanges = Array.isArray(backtest.exchanges) ? (backtest.exchanges as string[]).map(String) : [];
+      const settingsValue = options.getSettings?.().use_pbgui_market_data;
       rebacktestDefaults.value = {
         start: String(backtest.start_date || '2020-01-01'),
         end: today,
         balance: Number(backtest.starting_balance) || 1000,
         exchanges: exchanges.length > 0 ? exchanges : ['bybit'],
-        usePbguiData: false,
+        // :8207 seeds the checkbox from settings like pbguiMarketDataDefaultCheckedAttr (:1478-1480)
+        usePbguiData: settingsValue === true || String(settingsValue).toLowerCase() === 'true',
       };
       rebacktestOpen.value = true;
     } catch (error) {

@@ -330,6 +330,7 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
         wsRefresh: () => ws.wsRefresh(),
         selectPanel: () => selectPanel('configs'),
         getPbguiDataPath: () => editor.getPbguiDataPath(),
+        getSettings: () => settingsStore.settings.value,
       });
 
   /* ── rebacktestSelected (:7864-7958) — the results ctx Backtest flow ── */
