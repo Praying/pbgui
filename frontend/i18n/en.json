@@ -5347,5 +5347,6 @@
   "v7optimize.editorTabObjectives": "Scoring & Limits",
   "v7optimize.editorTabSuite": "Suite",
   "v7optimize.editorTabRuntime": "Runtime",
-  "v7optimize.editorTabRaw": "Raw JSON"
+  "v7optimize.editorTabRaw": "Raw JSON",
+  "sysmon.runJobMsg": "Run job {id}?"
 }

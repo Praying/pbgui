@@ -1117,7 +1117,7 @@ def _get_task_worker_item() -> dict[str, Any]:
             _worker_stat("Done", done),
             _worker_stat("Failed", failed),
         ],
-        monitor_path="/app/jobs_monitor.html",
+        monitor_path="/api/jobs/main_page?embed=1",
         log_file=None,
     )
 

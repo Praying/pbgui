@@ -5347,5 +5347,6 @@
   "v7optimize.editorTabObjectives": "评分与限制",
   "v7optimize.editorTabSuite": "套件",
   "v7optimize.editorTabRuntime": "运行时",
-  "v7optimize.editorTabRaw": "原始 JSON"
+  "v7optimize.editorTabRaw": "原始 JSON",
+  "sysmon.runJobMsg": "运行任务“{id}”？"
 }
