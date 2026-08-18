@@ -8,10 +8,10 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from api.auth import SessionToken, authenticate_websocket, require_auth
+from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page
 from api.vps import get_bot_log_matches
 from logging_helpers import human_log as _log
 from vps_manager_service import UnknownHostKeyError, VPSManagerService
@@ -253,38 +253,31 @@ async def _await_cluster_onboard(service: VPSManagerService, token: str, hostnam
     return await asyncio.shield(task)
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
+) -> FileResponse | HTMLResponse:
+    """Serve the Vue VPS Manager with the legacy page as fallback."""
     del session
-    html_path = Path(__file__).resolve().parent.parent / "frontend" / "vps_manager.html"
-    html = html_path.read_text(encoding="utf-8")
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/vps-manager"
-    ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/vps-manager"))
+        html = html.replace('"%%WS_BASE%%"', json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")))
+        from pbgui_purefunc import PBGUI_VERSION, PBGUI_SERIAL
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
 
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-    html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
-
-    from pbgui_purefunc import PBGUI_VERSION
-    from pbgui_purefunc import PBGUI_SERIAL
-
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
-
-    nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
-
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+    return serve_vue_or_legacy_page("vps_manager", "vps_manager.html", request, inject=_inject)
 
 
 @router.get("/detail/{hostname}")
