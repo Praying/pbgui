@@ -3,6 +3,7 @@ import { createI18n, detectLang } from '@/shared/i18n';
 import App from './App.vue';
 import '@/styles/tokens.css';
 import '@/styles/base.css';
+import '@/styles/components.css';
 /* Page styles ported from the legacy <head> block — ids/classes unchanged. */
 import './styles/db-tools.css';
 

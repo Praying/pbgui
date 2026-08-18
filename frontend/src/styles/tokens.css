@@ -1,16 +1,93 @@
+/* ═══════════════════════════════════════════════════════════════
+   PBGui Unified Design Tokens — single source of truth for all
+   Vue 3 pages. Merges tokens from:
+   - tokens.css (original)
+   - backtest_shell.css (legacy backtest pages)
+   - app.css (legacy job monitor)
+   - sidebar.css (shared sidebar)
+
+   Import order: tokens.css → base.css → components.css
+   ═══════════════════════════════════════════════════════════════ */
+
 :root {
-  --bg-page: #000000;
-  --bg-panel: #111827;
-  --bg-card: #111827;
-  --border-subtle: #1e2736;
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-muted: #4a5568;
-  --accent: #4da6ff;
-  --ok: #4ade80;
-  --warn: #f59e0b;
-  --err: #ff4b4b;
-  --fs-xs: 11px; --fs-sm: 13px; --fs-base: 14px; --fs-md: 15px; --fs-lg: 18px; --fs-xl: 22px;
-  --sp-xs: 4px; --sp-sm: 8px; --sp-md: 12px; --sp-lg: 20px;
-  --input-h: 32px; --btn-h: 32px;
+  /* ── Typography ─────────────────────────────────────────────── */
+  --font-family: 'Segoe UI', system-ui, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: 'Fira Code', 'Cascadia Code', 'SF Mono', 'Consolas', monospace;
+
+  --fs-xs: 11px;
+  --fs-sm: 13px;
+  --fs-base: 14px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+
+  /* ── Spacing ────────────────────────────────────────────────── */
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 12px;
+  --sp-lg: 20px;
+
+  /* ── Sizing ─────────────────────────────────────────────────── */
+  --input-h: 32px;
+  --btn-h: 32px;
+
+  /* ── Border radius ──────────────────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 999px;
+
+  /* ── Page backgrounds ───────────────────────────────────────── */
+  --bg-page: #0e1117;        /* main page background */
+  --bg-panel: #1a1d24;       /* panel / card background */
+  --bg-card: #1a202c;        /* alternative card background */
+  --bg-elevated: #262730;    /* elevated surface (modals, popovers) */
+  --bg-input: #1a202c;       /* input / select background */
+
+  /* ── Borders ─────────────────────────────────────────────────── */
+  --border-subtle: #1e2736;  /* page-level borders */
+  --border-default: #2d3748; /* component borders */
+  --border-strong: #4a5568;  /* emphasized borders (focus, hover) */
+
+  /* ── Text ───────────────────────────────────────────────────── */
+  --text-primary: #e2e8f0;   /* primary body text */
+  --text-secondary: #94a3b8; /* secondary / muted text */
+  --text-muted: #64748b;     /* very muted / placeholder text */
+  --text-dim: #4a5568;       /* disabled / extremely dim text */
+
+  /* ── Semantic colors ────────────────────────────────────────── */
+  --accent: #4da6ff;         /* primary accent (links, active states) */
+  --accent-soft: #63b3ed;    /* softer accent (hover, subtle highlights) */
+  --accent-bg: rgba(77, 166, 255, 0.12);  /* accent background tint */
+
+  --success: #21c354;        /* success / positive */
+  --success-soft: #48bb78;   /* softer success */
+  --success-bg: rgba(33, 195, 84, 0.12);  /* success background tint */
+
+  --warning: #f59e0b;        /* warning / caution */
+  --warning-soft: #f4b942;   /* softer warning */
+  --warning-bg: rgba(245, 158, 11, 0.12); /* warning background tint */
+
+  --danger: #ff4b4b;         /* error / danger / destructive */
+  --danger-soft: #f56565;    /* softer danger */
+  --danger-bg: rgba(255, 75, 75, 0.1);   /* danger background tint */
+
+  --info: #1f77ff;           /* informational */
+  --info-soft: #5dc4ff;      /* softer info */
+  --info-bg: rgba(31, 119, 255, 0.12);   /* info background tint */
+
+  /* ── Legacy aliases (for backtest_shell.css compatibility) ──── */
+  --bg: var(--bg-page);
+  --bg2: var(--bg-panel);
+  --bg3: var(--bg-elevated);
+  --border: var(--border-default);
+  --text: var(--text-primary);
+  --text-dim: var(--text-secondary);
+  --green: var(--success);
+  --orange: var(--warning);
+  --red: var(--danger);
+  --blue: var(--info);
+  --font: var(--font-family);
 }

@@ -149,9 +149,9 @@ input {
   height: var(--input-h);
   padding: 0 12px;
   border-radius: 8px;
-  border: 1px solid #2d3748;
-  background: #0e1117;
-  color: #f8fafc;
+  border: 1px solid var(--border-default);
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 
 input:focus {
@@ -166,9 +166,9 @@ input:focus {
   height: var(--btn-h);
   padding: 0 14px;
   border-radius: 8px;
-  border: 1px solid #2d3748;
-  background: #1a202c;
-  color: #e2e8f0;
+  border: 1px solid var(--border-default);
+  background: var(--bg-card);
+  color: var(--text-primary);
   font-size: var(--fs-base);
   cursor: pointer;
 }

@@ -19,11 +19,11 @@
     }
 
     .hlda-root {
-        --hlda-bg: #0e1117;
+        --hlda-bg: var(--bg-page);
         --hlda-bg2: #161b22;
         --hlda-bg3: #1a1f2e;
-        --hlda-border: #262730;
-        --hlda-border2: #2d3748;
+        --hlda-border: var(--bg-elevated);
+        --hlda-border2: var(--border-default);
         --hlda-text: #fafafa;
         --hlda-text2: #b0b8c4;
         --hlda-text3: #8899aa;
@@ -88,11 +88,11 @@
         font-size: var(--fs-sm); cursor: pointer; min-height: 38px;
         display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
     }
-    .hlda-root .hlda-ct:hover { border-color: #4a5568; }
+    .hlda-root .hlda-ct:hover { border-color: var(--text-dim); }
     .hlda-root .hlda-ct .ph { color: var(--hlda-text4); }
     .hlda-root .hlda-chip {
         display: inline-flex; align-items: center;
-        background: #26a69a33; color: var(--hlda-accent);
+        background: var(--success)33; color: var(--hlda-accent);
         border-radius: 4px; padding: 2px 8px; font-size: var(--fs-xs); gap: 4px;
     }
     .hlda-root .hlda-chip .rm { cursor: pointer; font-size: var(--fs-base); line-height: 1; opacity: .7; }
@@ -111,7 +111,7 @@
         background: var(--hlda-border2); border: none; color: var(--hlda-text2);
         padding: 3px 10px; border-radius: 4px; font-size: var(--fs-xs); cursor: pointer;
     }
-    .hlda-root .hlda-ddh button:hover { background: #4a5568; color: var(--hlda-text); }
+    .hlda-root .hlda-ddh button:hover { background: var(--text-dim); color: var(--hlda-text); }
     .hlda-root .hlda-dds {
         width: 100%; background: var(--hlda-bg); border: none;
         border-bottom: 1px solid var(--hlda-border2);
@@ -130,7 +130,7 @@
         border-radius: 6px; padding: 8px 12px; color: var(--hlda-text);
         font-size: var(--fs-sm); width: 100%;
     }
-    .hlda-root input[type="date"]:hover { border-color: #4a5568; }
+    .hlda-root input[type="date"]:hover { border-color: var(--text-dim); }
     .hlda-root input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
     .hlda-root .hlda-hint { font-size: 11px; color: var(--hlda-text4); margin-top: 2px; }
     .hlda-root .hlda-date-wrap { position: relative; }
@@ -139,7 +139,7 @@
         border-radius: 6px; padding: 8px 30px 8px 12px; color: var(--hlda-text);
         font-size: var(--fs-sm); width: 100%; height: 38px;
     }
-    .hlda-root .hlda-date-input:hover { border-color: #4a5568; }
+    .hlda-root .hlda-date-input:hover { border-color: var(--text-dim); }
     .hlda-root .hlda-picker-toolbar {
         display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         margin-top: 10px;
@@ -152,12 +152,12 @@
         border-radius: 6px; color: var(--hlda-text); padding: 8px 12px; font-size: var(--fs-sm);
         height: 38px;
     }
-    .hlda-root .hlda-filter-input:hover { border-color: #4a5568; }
+    .hlda-root .hlda-filter-input:hover { border-color: var(--text-dim); }
     .hlda-root .hlda-mini-btn {
         background: var(--hlda-border2); border: 1px solid var(--hlda-border2); color: var(--hlda-text2);
         padding: 8px 12px; border-radius: 6px; font-size: var(--fs-sm); cursor: pointer; height: 38px;
     }
-    .hlda-root .hlda-mini-btn:hover { background: #4a5568; color: var(--hlda-text); }
+    .hlda-root .hlda-mini-btn:hover { background: var(--text-dim); color: var(--hlda-text); }
     .hlda-root .hlda-mini-btn.active {
         border-color: rgba(38,166,154,.7); background: rgba(38,166,154,.16); color: var(--hlda-accent);
     }
@@ -223,7 +223,7 @@
         font-weight: 500; cursor: pointer; transition: background 0.2s;
     }
     .hlda-root .hlda-btn:hover { background: var(--hlda-accent-hover); }
-    .hlda-root .hlda-btn:disabled { background: #4a5568; cursor: not-allowed; opacity: .7; }
+    .hlda-root .hlda-btn:disabled { background: var(--text-dim); cursor: not-allowed; opacity: .7; }
     .hlda-root .hlda-ar { display: flex; align-items: center; gap: 14px; }
     .hlda-root .hlda-lo {
         display: none; align-items: center; gap: 8px;
@@ -240,11 +240,11 @@
         padding: 8px 12px; border-radius: 6px; font-size: var(--fs-sm);
         margin-top: 10px; display: none;
     }
-    .hlda-root .hlda-msg.success { display: block; background: #26a69a22; border: 1px solid #26a69a55; color: var(--hlda-success); }
-    .hlda-root .hlda-msg.error   { display: block; background: #ff4b4b22; border: 1px solid #ff4b4b55; color: var(--hlda-err); }
-    .hlda-root .hlda-msg.warning { display: block; background: #ffa72622; border: 1px solid #ffa72655; color: var(--hlda-warn); }
+    .hlda-root .hlda-msg.success { display: block; background: var(--success)22; border: 1px solid var(--success)55; color: var(--hlda-success); }
+    .hlda-root .hlda-msg.error   { display: block; background: var(--danger)22; border: 1px solid var(--danger)55; color: var(--hlda-err); }
+    .hlda-root .hlda-msg.warning { display: block; background: var(--warning)22; border: 1px solid #ffa72655; color: var(--hlda-warn); }
     .hlda-root .hlda-nocreds {
-        background: #ffa72622; border: 1px solid #ffa72655; color: var(--hlda-warn);
+        background: var(--warning)22; border: 1px solid #ffa72655; color: var(--hlda-warn);
         padding: 10px 14px; border-radius: 6px; font-size: var(--fs-sm);
     }
     .hlda-root .hlda-jm {
@@ -259,7 +259,7 @@
         font-size: var(--fs-xs); padding: 2px 8px; border-radius: 3px; font-weight: 500;
     }
     .hlda-root .hlda-jm-badge.connected { background: #10b98133; color: #10b981; }
-    .hlda-root .hlda-jm-badge.disconnected { background: #ef444433; color: #ef4444; }
+    .hlda-root .hlda-jm-badge.disconnected { background: var(--danger)33; color: var(--danger); }
     .hlda-root .hlda-tabs { display: flex; gap: 0; margin-bottom: 10px; border-bottom: 1px solid var(--hlda-border); }
     .hlda-root .hlda-tab {
         padding: 6px 16px; font-size: var(--fs-sm); cursor: pointer;
@@ -282,13 +282,13 @@
     .hlda-root .hlda-sbadge {
         font-size: var(--fs-xs); padding: 2px 8px; border-radius: 3px; font-weight: 500;
     }
-    .hlda-root .hlda-sbadge.running { background: #3b82f633; color: #3b82f6; }
-    .hlda-root .hlda-sbadge.pending { background: #f59e0b33; color: #f59e0b; }
+    .hlda-root .hlda-sbadge.running { background: #3b82f633; color: var(--accent); }
+    .hlda-root .hlda-sbadge.pending { background: var(--warning)33; color: var(--warning); }
     .hlda-root .hlda-sh-status {
         margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs);
     }
     .hlda-root .hlda-sh-status .sh-running {
-        color: #3b82f6; font-weight: 500; display: flex; align-items: center; gap: 4px;
+        color: var(--accent); font-weight: 500; display: flex; align-items: center; gap: 4px;
     }
     .hlda-root .hlda-sh-status .sh-running .sh-dot {
         width: 6px; height: 6px; border-radius: 50%; background: #3b82f6;
@@ -296,7 +296,7 @@
     }
     @keyframes hlda-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .hlda-root .hlda-sh-status .sh-pending {
-        color: #f59e0b; font-weight: 500;
+        color: var(--warning); font-weight: 500;
     }
     .hlda-root .hlda-jd {
         font-size: 12px; color: var(--hlda-text3); margin-top: 4px;
@@ -338,8 +338,8 @@
         color: var(--hlda-text2); cursor: pointer;
     }
     .hlda-root .hlda-jbtn:hover { background: var(--hlda-border2); color: var(--hlda-text); }
-    .hlda-root .hlda-jbtn.danger { border-color: #ef444455; color: #ef4444; }
-    .hlda-root .hlda-jbtn.danger:hover { background: #ef444422; }
+    .hlda-root .hlda-jbtn.danger { border-color: var(--danger)55; color: var(--danger); }
+    .hlda-root .hlda-jbtn.danger:hover { background: var(--danger)22; }
     .hlda-root .hlda-empty { text-align: center; color: var(--hlda-text4); padding: 16px; font-size: 13px; }
     .hlda-root .hlda-br { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
     .hlda-root .hlda-br .hlda-fs { flex: 1; min-width: 140px; }
@@ -408,7 +408,7 @@
         line-height: 1.5;
         white-space: normal;
         color: var(--hlda-text);
-        background: #0f172a;
+        background: var(--bg-page);
     }
     .hlda-root .hlda-detail-section {
         display: grid;
@@ -452,7 +452,7 @@
     .hlda-root .hlda-jbtn.view:hover { background: rgba(20, 184, 166, 0.26); color: #f0fdfa; }
     .hlda-root .hlda-jbtn.run { border-color: rgba(34, 197, 94, 0.42); background: rgba(34, 197, 94, 0.16); color: #86efac; }
     .hlda-root .hlda-jbtn.run:hover { background: rgba(34, 197, 94, 0.26); color: #f0fdf4; }
-        background: #0b1220;
+        background: var(--bg-page);
         color: var(--hlda-text2);
         font-family: 'Fira Code', 'Consolas', monospace;
         font-size: var(--fs-sm);

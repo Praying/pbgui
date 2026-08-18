@@ -22,14 +22,14 @@
 /* legacy :694-705 — dirty-state save button */
 #btn-save-settings-sidebar.save-needed {
   background: #4a3414;
-  color: #fde68a;
+  color: var(--warning-soft);
   border-color: #a16207;
   font-weight: 700;
 }
 
 #btn-save-settings-sidebar.save-needed:hover {
   background: #7c4a03;
-  color: #fff7ed;
+  color: #fff /* white on colored bg */7ed;
   border-color: #b45309;
 }
 
@@ -72,7 +72,7 @@
 .btn.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0b1220;
+  color: var(--bg-page);
 }
 
 .btn.primary:hover {
@@ -146,7 +146,7 @@
 
 /* legacy :2017-2048 — placeholder + password-eye fields */
 input::placeholder {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .pw-wrap {
@@ -167,7 +167,7 @@ input::placeholder {
   background: none;
   border: none;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: var(--fs-md);
   padding: 0;
   line-height: 1;
@@ -175,7 +175,7 @@ input::placeholder {
 }
 
 .pw-eye-btn:hover {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 /* legacy :2057-2059 */

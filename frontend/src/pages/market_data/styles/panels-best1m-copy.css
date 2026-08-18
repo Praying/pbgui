@@ -173,7 +173,7 @@
 .copy-data-summary-title {
   margin: 0;
   font-size: var(--fs-md);
-  color: #f8fafc;
+  color: var(--text-primary);
 }
 
 .copy-data-summary-grid {
@@ -198,7 +198,7 @@
 }
 
 .copy-data-summary-value {
-  color: #f8fafc;
+  color: var(--text-primary);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -209,7 +209,7 @@
   border: 1px solid rgba(99, 179, 237, 0.12);
   background: rgba(2, 6, 23, 0.58);
   padding: var(--sp-sm);
-  color: #cbd5e1;
+  color: var(--text-primary);
   font-family: 'Courier New', monospace;
   font-size: var(--fs-xs);
   white-space: pre-wrap;
@@ -251,7 +251,7 @@
 }
 
 .copy-data-schedule-name {
-  color: #f8fafc;
+  color: var(--text-primary);
   font-weight: 700;
 }
 

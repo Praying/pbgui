@@ -5,13 +5,12 @@
  * shared sidebar.css chrome keeps working. */
 
 :root {
-  --bg: #0e1117;       --bg2: #1a1d24;
-  --bg3: #262730;      --border: #333640;
-  --text: #fafafa;     --text-dim: #a0a4ab;
-  --green: #21c354;    --orange: #ff8c00;
-  --red: #ff4b4b;      --blue: #1f77ff;
-  --accent: #4da6ff;
-  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+  --bg: var(--bg-page);       --bg2: var(--bg-panel);
+  --bg3: var(--bg-elevated);      --border: var(--border-default);
+  --text: var(--text-primary);     --text-dim: var(--text-secondary);
+  --green: var(--success);    --orange: var(--warning);
+  --red: var(--danger);      --blue: var(--info);
+  --font: var(--font-family);
   --fs-xs: 11px; --fs-sm: 13px; --fs-base: 14px;
   --fs-md: 15px; --fs-lg: 18px; --fs-xl: 22px;
   --sp-xs: 4px;  --sp-sm: 8px;  --sp-md: 12px; --sp-lg: 20px;
@@ -27,9 +26,9 @@ a:hover { text-decoration: underline; }
 
 /* ── Connection banner (:36-40) ─────────────────── */
 #conn-banner { padding: var(--sp-sm) 16px; text-align: center; font-size: var(--fs-sm); font-weight: 600; transition: all .3s; }
-.conn-ok      { background: var(--green); color: #000; }
-.conn-lost    { background: var(--red);   color: #fff; }
-.conn-waiting { background: var(--orange); color: #000; }
+.conn-ok      { background: var(--green); color: #000 /* black on colored bg */; }
+.conn-lost    { background: var(--red);   color: #fff /* white on colored bg */; }
+.conn-waiting { background: var(--orange); color: #000 /* black on colored bg */; }
 
 /* ── Page layout (:42-56 + backtest_shell.css:31-36) ── */
 #page-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
@@ -160,9 +159,9 @@ a:hover { text-decoration: underline; }
 .modal-btn { height: var(--btn-h); padding: 0 16px; border-radius: 4px; font-size: var(--fs-base);
              cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
 .modal-btn:hover { background: rgba(255,255,255,.08); }
-.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #fff /* white on colored bg */; }
 .modal-btn-primary:hover { background: #1a6ae0; }
-.modal-btn-danger { background: var(--red); border-color: var(--red); color: #fff; }
+.modal-btn-danger { background: var(--red); border-color: var(--red); color: #fff /* white on colored bg */; }
 .modal-btn:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ── Toast (:103-107) ────────────────────────────── */
@@ -170,9 +169,9 @@ a:hover { text-decoration: underline; }
          flex-direction: column; gap: var(--sp-sm); pointer-events: none; }
 .toast-msg { padding: 10px 16px; border-radius: 6px; font-size: var(--fs-sm); font-weight: 500;
              pointer-events: auto; animation: bt-fade-in .2s; }
-.toast-ok   { background: var(--green); color: #000; }
-.toast-err  { background: var(--red); color: #fff; }
-.toast-info { background: var(--blue); color: #fff; }
+.toast-ok   { background: var(--green); color: #000 /* black on colored bg */; }
+.toast-err  { background: var(--red); color: #fff /* white on colored bg */; }
+.toast-info { background: var(--blue); color: #fff /* white on colored bg */; }
 @keyframes bt-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* ── Archive git modals (M-v7-12, legacy :396-406) ── */

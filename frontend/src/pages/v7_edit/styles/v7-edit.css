@@ -12,18 +12,17 @@
 [hidden] { display: none !important; }
 html, body { height: 100%; overflow: hidden; }
 :root {
-  --bg:       #0e1117;
-  --bg2:      #1a1d24;
-  --bg3:      #262730;
-  --border:   #333640;
-  --text:     #fafafa;
-  --text-dim: #a0a4ab;
-  --green:    #21c354;
-  --orange:   #ff8c00;
-  --red:      #ff4b4b;
-  --blue:     #1f77ff;
-  --accent:   #4da6ff;
-  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+  --bg:       var(--bg-page);
+  --bg2:      var(--bg-panel);
+  --bg3:      var(--bg-elevated);
+  --border:   var(--border-default);
+  --text: var(--text-primary);
+  --text-dim: var(--text-secondary);
+  --green: var(--success);
+  --orange: var(--warning);
+  --red: var(--danger);
+  --blue: var(--info);
+  --font: var(--font-family);
   --fs-xs:    11px;
   --fs-sm:    13px;
   --fs-base:  14px;
@@ -103,7 +102,7 @@ body {
   border-bottom: none;
   text-decoration-line: underline;
   text-decoration-style: dotted;
-  text-decoration-color: #64748b;
+  text-decoration-color: var(--text-muted);
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
@@ -111,9 +110,9 @@ body {
   display: none;
   position: fixed;
   z-index: 9999;
-  background: #1e293b;
-  color: #e2e8f0;
-  border: 1px solid #334155;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   font-size: var(--fs-xs);
   font-weight: normal;
@@ -275,9 +274,9 @@ textarea.json-invalid:focus {
   font-size: var(--fs-sm); font-weight: 600; z-index: 9999;
   display: none; transition: opacity 0.3s;
 }
-.toast-ok   { background: var(--green); color: #000; }
-.toast-err  { background: var(--red); color: #fff; }
-.toast-info { background: var(--blue); color: #fff; }
+.toast-ok   { background: var(--green); color: #000 /* black on colored bg */; }
+.toast-err  { background: var(--red); color: #fff /* white on colored bg */; }
+.toast-info { background: var(--blue); color: #fff /* white on colored bg */; }
 
 /* ─── Spinner ──────────────────────────────────────────────── */
 .spinner {
@@ -291,7 +290,7 @@ textarea.json-invalid:focus {
 /* ─── M-v7-2: validation actions, overlays, cov panel, modals, log ─── */
 .field-status-meta {
   margin-top: 2px;
-  color: #ffb3b3;
+  color: var(--danger-soft);
 }
 .field-status-actions { margin-top: 8px; }
 .field-status-btn {
@@ -398,7 +397,7 @@ textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
   background: transparent; border: 0; border-radius: 4px; text-align: left; cursor: pointer;
 }
 .user-combobox-option:hover,
-.user-combobox-option.active { background: rgba(77, 166, 255, 0.14); color: #fff; }
+.user-combobox-option.active { background: rgba(77, 166, 255, 0.14); color: #fff /* white on colored bg */; }
 .user-combobox-empty { padding: 8px 9px; color: var(--text-dim); font-size: var(--fs-xs); }
 
 /* Log panel (container only — content from LogViewerPanel) */
@@ -449,7 +448,7 @@ textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
   border-radius: 4px; font-size: var(--fs-sm); font-family: var(--font);
   cursor: pointer; background: var(--bg3); color: var(--text);
 }
-.btn:hover { background: #2d3748; }
-.btn-ok { background: var(--green); color: #000; border-color: var(--green); }
+.btn:hover { background: var(--border-default); }
+.btn-ok { background: var(--green); color: #000 /* black on colored bg */; border-color: var(--green); }
 .btn-ok:hover { background: #1aa34a; }
 .btn-cancel { background: var(--bg3); }

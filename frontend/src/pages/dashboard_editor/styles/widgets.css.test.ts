@@ -15,8 +15,9 @@ const widgetsCss = readFileSync(join(import.meta.dirname, 'widgets.css'), 'utf8'
    content, so any CSS drift — accidental or deliberate — must consciously
    update this expectation. */
 
-/** sha256 of the normalized CSS, frozen at D-editor-8 (parity verified). */
-const FROZEN_WIDGETS_CSS_SHA256 = '50e6b22988b639b7a3ebd3ce7bd936312b74734b4d79a0ff36b30ce8fb171672';
+/** sha256 of the normalized CSS; re-frozen at the style-unification pass
+   (hardcoded colors redirected to the shared @/styles/tokens.css). */
+const FROZEN_WIDGETS_CSS_SHA256 = '61610837e0b117a673eed505c2f5e772d914006920807bf601b53392b79d3a82';
 
 function normalize(text: string): string {
   /* Comments are stripped (the legacy _CSS section headers were raw JS
@@ -41,9 +42,11 @@ describe('widgets.css — frozen port of the legacy _CSS (52-354)', () => {
     expect(sha256(normalized)).toBe(FROZEN_WIDGETS_CSS_SHA256);
   });
 
-  it('keeps the legacy design tokens', () => {
+  it('aliases the widget tokens to the shared design tokens', () => {
+    /* Style unification: the --db-* values now reference the global
+       @/styles/tokens.css instead of duplicating hardcoded hex values. */
     const normalized = normalize(widgetsCss);
-    for (const token of ['--db-bg:#0e1117', '--db-surface:#1a202c', '--db-pos:#48bb78', '--db-neg:#f56565']) {
+    for (const token of ['--db-bg:var(--bg-page)', '--db-surface:var(--bg-card)', '--db-pos:var(--success-soft)', '--db-neg:var(--danger-soft)']) {
       expect(normalized).toContain(token);
     }
   });

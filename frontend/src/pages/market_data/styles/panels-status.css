@@ -65,7 +65,7 @@
   cursor: help;
   text-decoration-line: underline;
   text-decoration-style: dotted;
-  text-decoration-color: #64748b;
+  text-decoration-color: var(--text-muted);
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
@@ -75,9 +75,9 @@
   display: none;
   position: fixed;
   z-index: 9999;
-  background: #1e293b;
-  color: #e2e8f0;
-  border: 1px solid #334155;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   font-size: var(--fs-xs);
   font-weight: 400;

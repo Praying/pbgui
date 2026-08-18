@@ -220,7 +220,7 @@
 .tradfi-search-window-status.info {
   border-color: rgba(99, 179, 237, 0.24);
   background: rgba(15, 23, 42, 0.92);
-  color: #bfdbfe;
+  color: var(--accent-soft);
 }
 
 .tradfi-search-window-status.error {
@@ -265,7 +265,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #131b2b;
+  background: var(--bg-page);
   border: 1px solid rgba(99, 179, 237, 0.26);
   border-radius: 12px;
   box-shadow: 0 22px 72px rgba(0, 0, 0, 0.55);
@@ -278,8 +278,8 @@
   justify-content: space-between;
   gap: var(--sp-md);
   padding: var(--sp-md) calc(var(--sp-lg) + var(--sp-sm)) var(--sp-md) var(--sp-lg);
-  background: #111827;
-  border-bottom: 1px solid #1e2736;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
   cursor: move;
   user-select: none;
   flex-shrink: 0;
@@ -299,7 +299,7 @@
 .tradfi-specs-window-close {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--text-muted);
   cursor: pointer;
   font-size: var(--fs-lg);
   line-height: 1;

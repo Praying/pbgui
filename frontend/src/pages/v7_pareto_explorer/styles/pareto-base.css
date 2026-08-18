@@ -4,19 +4,18 @@
  * unchanged; the legacy file remains the fallback page.
  */
 :root {
-  --bg: #0e1117;
-  --bg2: #1a1d24;
-  --bg3: #262730;
+  --bg: var(--bg-page);
+  --bg2: var(--bg-panel);
+  --bg3: var(--bg-elevated);
   --bg4: #151922;
-  --border: #333640;
-  --text: #fafafa;
-  --text-dim: #a0a4ab;
-  --accent: #4da6ff;
-  --blue: #1f77ff;
-  --green: #21c354;
-  --orange: #ff8c00;
-  --red: #ff4b4b;
-  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+  --border: var(--border-default);
+  --text: var(--text-primary);
+  --text-dim: var(--text-secondary);
+  --blue: var(--info);
+  --green: var(--success);
+  --orange: var(--warning);
+  --red: var(--danger);
+  --font: var(--font-family);
   --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   --fs-xs: 11px;
   --fs-sm: 13px;
@@ -219,7 +218,7 @@ a:hover { text-decoration: underline; }
   cursor: help;
   text-decoration-line: underline;
   text-decoration-style: dotted;
-  text-decoration-color: #64748b;
+  text-decoration-color: var(--text-muted);
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
@@ -232,9 +231,9 @@ button[data-tip] {
   display: none;
   position: fixed;
   z-index: 9999;
-  background: #1e293b;
-  color: #e2e8f0;
-  border: 1px solid #334155;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
   font-size: var(--fs-xs);
   font-weight: normal;
@@ -288,7 +287,7 @@ button[data-tip] {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: #fff /* white */;
   transition: transform .18s ease;
   box-shadow: 0 1px 3px rgba(0,0,0,0.35);
 }
