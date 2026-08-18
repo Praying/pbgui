@@ -16,10 +16,10 @@ import traceback
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
-from api.auth import require_auth, SessionToken
+from api.auth import require_auth, serve_vue_or_legacy_page, SessionToken
 import logging_helpers
 from ini_settings import apply_metadata
 from logging_helpers import (
@@ -203,33 +203,30 @@ def purge_logfile(
         raise HTTPException(status_code=500, detail="Failed to purge log file") from exc
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone Logging Monitor page using cookie authentication."""
-    html_path = Path(__file__).parent.parent / "frontend" / "logging_monitor.html"
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the Vue Logging Monitor with the legacy page as fallback."""
+    del session
 
-    # Derive API origin from the actual request URL
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_logging_base = origin + "/api/logging"
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_logging_base = origin + "/api/logging"
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_logging_base))
 
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_logging_base))
+        from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
 
-    from pbgui_purefunc import PBGUI_VERSION
-    from pbgui_purefunc import PBGUI_SERIAL
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
 
-    nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
-
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+    return serve_vue_or_legacy_page("logging_monitor", "logging_monitor.html", request, inject=_inject)

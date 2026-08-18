@@ -32,13 +32,23 @@ def _request() -> Request:
     })
 
 
-def test_main_page_does_not_read_or_render_session_token():
-    """Rendered monitor HTML should rely on its HttpOnly cookie only."""
+def test_main_page_does_not_read_or_render_session_token(tmp_path, monkeypatch):
+    """Rendered fallback HTML should rely on its HttpOnly cookie only."""
+    import api.auth as auth
+
     class CookieOnlySession:
         """Fail if page rendering attempts to read any session field."""
 
         def __getattr__(self, name):
             raise AssertionError(f"session field accessed: {name}")
+
+    legacy = tmp_path / "logging_monitor.html"
+    legacy.write_text(
+        '<script>var API_BASE="%%API_BASE%%";var PBGUI_NAV_CONFIG={};</script>',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda name: tmp_path / "missing" / "index.html")
+    monkeypatch.setattr(auth, "_frontend_template_path", lambda name: legacy)
 
     response = logging_api.get_main_page(_request(), CookieOnlySession())
     html = response.body.decode()
