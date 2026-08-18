@@ -561,8 +561,12 @@ def test_config_lock_recovers_interrupted_directory_swap(tmp_path, monkeypatch) 
 
 def test_main_page_renders_shared_editor_without_exposing_session_token(monkeypatch) -> None:
     """The V8 route must render the V7 editor template with V8 route metadata and cookie auth."""
+    import api.auth as auth
+
     monkeypatch.setattr(backtest_v8, "PBGUI_VERSION", "v-test")
     monkeypatch.setattr(backtest_v8, "PBGUI_SERIAL", "123")
+    # Vue build first: force the legacy fallback so the injections are testable
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda _name: Path("/nonexistent-dist") / "index.html")
     request = Request(
         {
             "type": "http",

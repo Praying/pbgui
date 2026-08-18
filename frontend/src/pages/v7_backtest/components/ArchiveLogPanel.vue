@@ -1,0 +1,79 @@
+<script setup lang="ts">
+/**
+ * The floating archive sync log panel (:9633-9639, DOM :951-965) —
+ * hosts the global LogViewerPanel (log_viewer_panel.js, kept global
+ * per the recon matrix) pinned to the local ArchiveSync.log, the
+ * v7_edit LogPanel precedent: header + target container only.
+ */
+import { onBeforeUnmount, ref, watch } from 'vue';
+
+interface LogViewer {
+  open(): void;
+  close(): void;
+}
+
+type LogViewerCtor = new (options: Record<string, unknown>) => LogViewer;
+
+withDefaults(defineProps<{ title?: string }>(), { title: 'Archive Sync Log' });
+
+const open = ref(false);
+const viewer = ref<LogViewer | null>(null);
+let disposed = false;
+
+function wsBase(): string {
+  const boot = (globalThis as { __BOOT__?: { origin?: string } }).__BOOT__;
+  const origin = boot?.origin || window.location.origin;
+  return origin.replace('http://', 'ws://').replace('https://', 'wss://');
+}
+
+function token(): string {
+  return (globalThis as { __BOOT__?: { token?: string } }).__BOOT__?.token ?? '';
+}
+
+function initViewer(): void {
+  viewer.value?.close();
+  const Ctor = (window as Window & { LogViewerPanel?: LogViewerCtor }).LogViewerPanel;
+  if (!Ctor) return;
+  viewer.value = new Ctor({
+    containerId: 'log-viewer-target',
+    wsBase: wsBase(),
+    token: token(),
+    defaultHost: 'local',
+    defaultFile: 'ArchiveSync.log',
+    presets: 'system',
+    showRestart: false,
+    height: '100%',
+  });
+  viewer.value.open();
+}
+
+function openPanel(): void {
+  open.value = true;
+}
+
+watch(
+  open,
+  (isOpen) => {
+    if (isOpen && !disposed) initViewer();
+    if (!isOpen) viewer.value?.close();
+  }
+);
+
+onBeforeUnmount(() => {
+  disposed = true;
+  viewer.value?.close();
+  viewer.value = null;
+});
+
+defineExpose({ open: openPanel });
+</script>
+
+<template>
+  <div id="log-panel" :class="{ visible: open }">
+    <div id="log-panel-header">
+      <span id="log-panel-title">📋 {{ title }}</span>
+      <button id="log-panel-close" title="Close" @click="open = false">✕</button>
+    </div>
+    <div id="log-viewer-target" style="flex: 1; min-height: 0; overflow: hidden"></div>
+  </div>
+</template>

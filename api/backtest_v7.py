@@ -74,7 +74,7 @@ from api.archive_helpers import (
     write_archive_json,
     write_optimize_meta,
 )
-from api.auth import SessionToken, authenticate_websocket, require_auth, validate_token
+from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page, validate_token
 from api.backtest_price import build_market_price_payload
 from api.pb7_bridge import (
     get_allowed_override_params,
@@ -2819,42 +2819,48 @@ async def shutdown():
 
 # ── REST: Main page ───────────────────────────────────────────
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    html_path = Path(__file__).resolve().parent.parent / "frontend" / "v7_backtest.html"
-    if not html_path.exists():
-        raise HTTPException(404, "v7_backtest.html not found")
-    html = html_path.read_text(encoding="utf-8")
+) -> FileResponse | HTMLResponse:
+    """Serve the shared V7/V8 backtest workbench: built Vue entry first, legacy fallback.
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/backtest-v7"
-    ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
+    The Vue page (frontend/src/pages/v7_backtest) reads token/origin values
+    from /api/boot.js at runtime and derives the flavour from the serving
+    route's path (config.ts detectBacktestVersion). The legacy
+    v7_backtest.html keeps its server-side placeholder injections (the
+    session TOKEN included) as the fallback for checkouts without a build;
+    /api/backtest-v8/main_page serves the same Vue build.
+    """
 
-    html = html.replace('"%%TOKEN%%"', json.dumps(session.token))
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-    html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        api_base = origin + "/api/backtest-v7"
+        ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
 
-    from pbgui_purefunc import PBGUI_VERSION, PBGUI_SERIAL
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
-    html = html.replace("%%BACKTEST_VERSION%%", "v7")
-    html = html.replace("%%BACKTEST_LABEL%%", "V7")
-    html = html.replace("%%BACKTEST_SUBTITLE%%", "PBv7 BACKTEST")
-    html = html.replace("%%BACKTEST_NAV_CURRENT%%", "v7_backtest")
+        html = html.replace('"%%TOKEN%%"', json.dumps(session.token))
+        html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
+        html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
 
-    nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
+        from pbgui_purefunc import PBGUI_VERSION, PBGUI_SERIAL
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        html = html.replace("%%BACKTEST_VERSION%%", "v7")
+        html = html.replace("%%BACKTEST_LABEL%%", "V7")
+        html = html.replace("%%BACKTEST_SUBTITLE%%", "PBv7 BACKTEST")
+        html = html.replace("%%BACKTEST_NAV_CURRENT%%", "v7_backtest")
 
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        nav_js = Path(__file__).resolve().parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("v7_backtest", "v7_backtest.html", request, inject=_inject)
 
 
 # ── REST: Optimize draft (optimize-from-result) ──────────────

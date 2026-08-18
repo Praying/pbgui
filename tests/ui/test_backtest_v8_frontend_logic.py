@@ -47,8 +47,9 @@ def test_v8_route_renders_the_v7_backtest_template() -> None:
     """PB8 must use the exact V7 page instead of maintaining a second editor."""
     api_source = (ROOT / "api" / "backtest_v8.py").read_text(encoding="utf-8")
 
-    assert '"frontend" / "v7_backtest.html"' in api_source
-    assert '"frontend" / "v8_backtest.html"' not in api_source
+    assert "serve_vue_or_legacy_page(" in api_source  # Vue build first, legacy fallback
+    assert '"v7_backtest.html"' in api_source
+    assert '"v8_backtest.html"' not in api_source
     assert not (ROOT / "frontend" / "v8_backtest.html").exists()
     assert '"%%BACKTEST_VERSION%%": "v8"' in api_source
     assert '"%%BACKTEST_NAV_CURRENT%%": "v8_backtest"' in api_source

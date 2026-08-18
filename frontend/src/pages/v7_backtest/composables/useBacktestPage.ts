@@ -8,6 +8,7 @@ import { useConfigs } from './useConfigs';
 import { useLegacyResults, type LegacyResultsStore } from './useLegacyResults';
 import { useQueueWs, type QueueWsController } from './useQueueWs';
 import { useArchive, type ArchiveStore } from './useArchive';
+import { createArchiveGitFlows, type ArchiveGitStore } from './useArchiveGit';
 import { useResults, type ResultsStore } from './useResults';
 import { useSettings } from './useSettings';
 import { useViewState, type ViewStateStore } from './useViewState';
@@ -34,6 +35,8 @@ export interface BacktestPageOptions {
   t: I18nT;
   /** SuiteEditor draft auto-fold (:4769) — wired to the editor panel ref by App. */
   foldSuiteDraft?(): void;
+  /** showArchiveLog (:9633-9639) — opens the archive sync log panel (M-v7-12). */
+  openArchiveSyncLog?(): void;
 }
 
 export interface BacktestPageStore {
@@ -55,6 +58,8 @@ export interface BacktestPageStore {
   results: ResultsStore;
   /** The archive panel store (M-v7-11). */
   archive: ArchiveStore;
+  /** The archive git-maintenance store (M-v7-12, the M-v7-11 DEFERRED block). */
+  archiveGit: ArchiveGitStore;
   /** The legacy panel store — null on v8 (adapter drops the panel). */
   legacy: LegacyResultsStore | null;
   /** rebacktestSelected's modal state (:7882-7956). */
@@ -317,6 +322,21 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     },
   });
 
+  /* ── archive git-maintenance store (M-v7-12, the M-v7-11 DEFERRED block) ── */
+  const archiveGitBase = backtestApiBaseFrom(apiBase, 'v7'); // archives always live on the v7 router
+  const archiveGit = createArchiveGitFlows({
+    archiveFetch: (path, init) => requestJsonFrom(archiveGitBase, path, init),
+    archiveUrl: (path) => archiveGitBase + path,
+    getSelectedName: () => archive.selectedName.value,
+    isOwn: () => archive.isOwn.value,
+    getArchiveNames: () => archive.archives.value.map((entry) => entry.name),
+    viewArchive: (name) => archive.viewArchive(name),
+    loadArchives: () => archive.loadArchives(),
+    openLog: () => options.openArchiveSyncLog?.(),
+    t,
+    notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+  });
+
   const legacy = adapter.isV8
     ? null
     : useLegacyResults({
@@ -337,8 +357,8 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
   const resultsRebacktestOpen = ref(false);
   const resultsRebacktestDefaults = ref<RebacktestFields | null>(null);
 
-  async function requestJsonFrom(base: string, path: string): Promise<Record<string, unknown>> {
-    const response = await fetch(base + path, { credentials: 'same-origin' });
+  async function requestJsonFrom(base: string, path: string, init?: RequestInit): Promise<Record<string, unknown>> {
+    const response = await fetch(base + path, { credentials: 'same-origin', ...init });
     const data: unknown = await response.json().catch(() => ({}));
     if (!response.ok) {
       const detail = data && typeof data === 'object' ? (data as { detail?: unknown }).detail : undefined;
@@ -512,6 +532,7 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     editor,
     results,
     archive,
+    archiveGit,
     legacy,
     resultsRebacktestOpen,
     resultsRebacktestDefaults,

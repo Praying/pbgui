@@ -31,7 +31,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse
 
 from api.archive_helpers import _read_json_object_nofollow, atomic_write_json, config_version_info
-from api.auth import SessionToken, authenticate_websocket, require_auth
+from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page
 from api.backtest_price import build_market_price_payload
 from api.pb8_ohlcv_tools import (
     PB8OhlcvUnavailableError,
@@ -1500,31 +1500,37 @@ async def shutdown() -> None:
     await _worker.stop()
 
 
-@router.get("/main_page", response_class=HTMLResponse)
-def main_page(request: Request, session: SessionToken = Depends(require_auth)) -> HTMLResponse:
-    """Render V8 through the exact shared V7 backtest page and editor."""
-    html_path = Path(PBGDIR) / "frontend" / "v7_backtest.html"
-    if not html_path.exists():
-        raise HTTPException(status_code=404, detail="v7_backtest.html not found")
-    html = html_path.read_text(encoding="utf-8")
-    origin = str(request.base_url).rstrip("/")
-    replacements = {
-        '"%%TOKEN%%"': json.dumps(""),
-        '"%%API_BASE%%"': json.dumps(origin + "/api/backtest-v8"),
-        '"%%WS_BASE%%"': json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")),
-        "%%VERSION%%": PBGUI_VERSION,
-        "%%SERIAL%%": PBGUI_SERIAL,
-        "%%BACKTEST_VERSION%%": "v8",
-        "%%BACKTEST_LABEL%%": "V8",
-        "%%BACKTEST_SUBTITLE%%": "PBv8 BACKTEST",
-        "%%BACKTEST_NAV_CURRENT%%": "v8_backtest",
-    }
-    for old, new in replacements.items():
-        html = html.replace(old, new)
-    nav_path = Path(PBGDIR) / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_path.stat().st_mtime)) if nav_path.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
+def main_page(request: Request, session: SessionToken = Depends(require_auth)) -> FileResponse | HTMLResponse:
+    """Render V8 through the exact shared V7 backtest page and editor: Vue first.
+
+    The same Vue build as /api/backtest-v7/main_page (frontend/src/pages/
+    v7_backtest) — the page derives the v8 flavour from the serving route's
+    path (config.ts detectBacktestVersion). The legacy fallback keeps the
+    exact placeholder set the static file always received (TOKEN stays "").
+    """
+    del session
+
+    def _inject(html: str, req: Request) -> str:
+        origin = str(req.base_url).rstrip("/")
+        replacements = {
+            '"%%TOKEN%%"': json.dumps(""),
+            '"%%API_BASE%%"': json.dumps(origin + "/api/backtest-v8"),
+            '"%%WS_BASE%%"': json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")),
+            "%%VERSION%%": PBGUI_VERSION,
+            "%%SERIAL%%": PBGUI_SERIAL,
+            "%%BACKTEST_VERSION%%": "v8",
+            "%%BACKTEST_LABEL%%": "V8",
+            "%%BACKTEST_SUBTITLE%%": "PBv8 BACKTEST",
+            "%%BACKTEST_NAV_CURRENT%%": "v8_backtest",
+        }
+        for old, new in replacements.items():
+            html = html.replace(old, new)
+        nav_path = Path(PBGDIR) / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_path.stat().st_mtime)) if nav_path.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("v7_backtest", "v7_backtest.html", request, inject=_inject)
 
 
 @router.get("/runtime")

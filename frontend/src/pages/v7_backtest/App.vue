@@ -21,6 +21,8 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import ArchiveGitModals from './components/ArchiveGitModals.vue';
+import ArchiveLogPanel from './components/ArchiveLogPanel.vue';
 import ArchivePanel from './components/ArchivePanel.vue';
 import BacktestConfigEditor from './components/BacktestConfigEditor.vue';
 import ConfigsPanel from './components/ConfigsPanel.vue';
@@ -42,6 +44,8 @@ const store = useBacktestPage({
   // suiteCollect's auto-save (:4769): the open scenario draft folds into
   // the state before every collect (Save / Save & Queue / raw-JSON sync).
   foldSuiteDraft: () => editorPanel.value?.foldSuiteDraft(),
+  // showArchiveLog (:9633-9639): push/compact/openLog open the sync log.
+  openArchiveSyncLog: () => archiveLogPanel.value?.open(),
 });
 
 const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
@@ -49,6 +53,7 @@ const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
 const editorPanel = ref<InstanceType<typeof BacktestConfigEditor> | null>(null);
 const resultsPanel = ref<InstanceType<typeof ResultsPanel> | null>(null);
 const archivePanel = ref<InstanceType<typeof ArchivePanel> | null>(null);
+const archiveLogPanel = ref<InstanceType<typeof ArchiveLogPanel> | null>(null);
 const legacyPanel = ref<InstanceType<typeof LegacyPanel> | null>(null);
 /** Results pin state (:6415-6419) — `unpinned` releases the panel chrome. */
 const resultsPinned = ref(true);
@@ -167,9 +172,15 @@ onMounted(() => {
         <button type="button" class="sb-btn danger" data-test="results-delete" @click="resultsPanel?.deleteSelectedFlow()">🗑 {{ t('v7backtest.deleteSelected') }}</button>
       </template>
       <template #ctx-archive>
-        <!-- list-view actions (:747-753); pull/push/setup/log land in M-v7-12 -->
+        <!-- list-view actions (:747-753) -->
         <template v-if="!store.archive.selectedName.value">
+          <button type="button" class="sb-btn" data-test="archive-pull-all" :disabled="store.archiveGit.pullRunning.value" @click="store.archiveGit.pullAll()">
+            {{ store.archiveGit.pullButtonLabel.value }}
+          </button>
+          <button type="button" class="sb-btn" data-test="archive-push" @click="store.archiveGit.push()">⬆ {{ t('v7backtest.gitPush') }}</button>
           <button type="button" class="sb-btn accent" data-test="archive-add" @click="archivePanel?.openAddArchive()">+ {{ t('v7backtest.addArchive') }}</button>
+          <button type="button" class="sb-btn" data-test="archive-setup" @click="store.archiveGit.openSetup()">⚙ {{ t('v7backtest.setup') }}</button>
+          <button type="button" class="sb-btn" data-test="archive-log" @click="archiveLogPanel?.open()">📋 {{ t('v7backtest.log') }}</button>
         </template>
         <!-- results-view actions (:754-771), visibility per updateArchiveActionVisibility (:8969-8997) -->
         <template v-else>
@@ -186,7 +197,8 @@ onMounted(() => {
             <button type="button" class="sb-btn" data-test="archive-opt-import" @click="archivePanel?.openImportOptimize()">📥 {{ t('v7backtest.importConfig') }}</button>
             <button v-if="store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-opt-delete" @click="archivePanel?.openDeleteOptimize()">🗑 {{ t('v7backtest.deleteConfig') }}</button>
           </template>
-          <!-- Compact History (:767) lands in M-v7-12 -->
+          <!-- Compact History (:767) — own-only, any mode (:8996) -->
+          <button v-if="store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-compact" @click="store.archiveGit.compactHistory()">🧨 {{ t('v7backtest.compactHistory') }}</button>
           <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-remove-duplicates" @click="archivePanel?.openCleanup('duplicates')">🧹 {{ t('v7backtest.removeDuplicates') }}</button>
           <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-remove-liquidated" @click="archivePanel?.openCleanup('liquidated')">🧹 {{ t('v7backtest.removeLiquidated') }}</button>
           <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-delete" @click="archivePanel?.openDeleteResults()">🗑 {{ t('v7backtest.deleteSelected') }}</button>
@@ -341,4 +353,8 @@ onMounted(() => {
     @close="store.resultsRebacktestOpen.value = false"
     @error="store.notifyError"
   />
+
+  <!-- archive git-maintenance modals (M-v7-12, the M-v7-11 DEFERRED block) -->
+  <ArchiveGitModals :git="store.archiveGit" />
+  <ArchiveLogPanel ref="archiveLogPanel" />
 </template>

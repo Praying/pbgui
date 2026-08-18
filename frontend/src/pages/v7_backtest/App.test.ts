@@ -747,3 +747,115 @@ describe('archive + legacy panels (M-v7-11)', () => {
     wrapper.unmount();
   });
 });
+
+describe('archive git maintenance (M-v7-12)', () => {
+  function stubGitRoutes(ndjson?: string): void {
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/api/backtest-v7/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (u.includes('/configs') && !u.includes('/archives/')) return ok({ configs: [] });
+      if (u.endsWith('/archives/settings'))
+        return ok({ my_archive: 'mine', username: 'u', email: 'e@x', access_token: 'tok', auto_pull_interval: 15, readme_title: 'T', readme_static_markdown: 's' });
+      if (u.endsWith('/archives/pull-all/stream') && init?.method === 'POST') {
+        const encoder = new TextEncoder();
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(encoder.encode(ndjson ?? '{"type":"done","ok":true,"results":[{"name":"mine","output":"ok"}]}\n'));
+            controller.close();
+          },
+        });
+        return Promise.resolve(new Response(body, { status: 200 }));
+      }
+      if (u.endsWith('/archives')) return ok({ archives: [{ name: 'mine', is_own: true, url: 'https://github.com/o/r', results: 2, optimize_configs: 1 }] });
+      if (u.endsWith('/archives/mine/results')) return ok({ results: [], migration_status: { label: 'layout-v2' } });
+      if (u.endsWith('/optimize-configs')) return ok({ configs: [] });
+      if (u.endsWith('/retest-schedules')) return ok({ schedules: [], runs: [] });
+      return ok({});
+    });
+  }
+
+  async function openArchivePanel(): Promise<ReturnType<typeof mount>> {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await flush();
+    await nextTick();
+    return wrapper;
+  }
+
+  it('the archive list ctx exposes the git buttons and Setup opens the seeded modal (:747-753, :9747-9812)', async () => {
+    stubGitRoutes();
+    const wrapper = await openArchivePanel();
+    for (const key of ['archive-pull-all', 'archive-push', 'archive-add', 'archive-setup', 'archive-log']) {
+      expect(wrapper.find(`[data-test="${key}"]`).exists()).toBe(true);
+    }
+    expect(wrapper.find('[data-test="archive-pull-all"]').text()).toBe('⬇ Pull All');
+    fetchMock.mockClear();
+    await wrapper.find('[data-test="archive-setup"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/archives/settings'))).toBe(true);
+    const modal = wrapper.find('[data-test="archive-setup"]');
+    expect(modal.exists()).toBe(true);
+    expect((modal.find('[data-test="setup-arc-name"]').element as HTMLSelectElement).value).toBe('mine');
+    expect((modal.find('[data-test="setup-arc-user"]').element as HTMLInputElement).value).toBe('u');
+    expect(wrapper.text()).toContain('Setup My Archive');
+    wrapper.unmount();
+  });
+
+  it('Pull All streams, renders the progress modal and lands on the results modal (:9484-9637)', async () => {
+    stubGitRoutes('{"type":"archive_start","archive":"mine"}\n{"type":"output","message":"Fetching origin"}\n{"type":"done","ok":true,"results":[{"name":"mine","output":"ok"}]}\n');
+    const wrapper = await openArchivePanel();
+    await wrapper.find('[data-test="archive-pull-all"]').trigger('click');
+    await flush();
+    await flush();
+    await nextTick();
+    const results = wrapper.find('[data-test="archive-pull-results"]');
+    expect(results.exists()).toBe(true);
+    expect(results.text()).toContain('Pull All - Results');
+    expect(results.find('summary').text()).toBe('mine: OK');
+    // the list reloads after a pull-all (:9636)
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives')).length).toBeGreaterThanOrEqual(2);
+    wrapper.unmount();
+  });
+
+  it('a failed pull keeps the progress modal open with the red status (:9596-9609)', async () => {
+    stubGitRoutes('{"type":"done","ok":false,"error":"git lock"}\n');
+    const wrapper = await openArchivePanel();
+    await wrapper.find('[data-test="archive-pull-all"]').trigger('click');
+    await flush();
+    await flush();
+    await nextTick();
+    const modal = wrapper.find('[data-test="archive-pull-progress-modal"]');
+    expect(modal.exists()).toBe(true);
+    expect(modal.find('[data-test="archive-pull-status"]').attributes('style')).toContain('var(--red)');
+    expect(modal.find('[data-test="archive-pull-status"]').text()).toBe('Pull failed: git lock');
+    expect(wrapper.find('[data-test="archive-pull-all"]').attributes('disabled')).toBeUndefined();
+    wrapper.unmount();
+  });
+
+  it('the Log button hosts the global LogViewerPanel on ArchiveSync.log (:9633-9639)', async () => {
+    stubGitRoutes();
+    const ctor = vi.fn().mockImplementation(() => ({ open: vi.fn(), close: vi.fn() }));
+    (window as unknown as { LogViewerPanel: unknown }).LogViewerPanel = ctor;
+    const wrapper = await openArchivePanel();
+    await wrapper.find('[data-test="archive-log"]').trigger('click');
+    await nextTick();
+    expect(ctor).toHaveBeenCalledTimes(1);
+    expect(ctor).toHaveBeenCalledWith(expect.objectContaining({ defaultHost: 'local', defaultFile: 'ArchiveSync.log', presets: 'system', showRestart: false }));
+    expect(wrapper.find('#log-panel').classes()).toContain('visible');
+    delete (window as unknown as { LogViewerPanel?: unknown }).LogViewerPanel;
+    wrapper.unmount();
+  });
+
+  it('Compact History is own-only in the open-archive ctx (:767, :8996)', async () => {
+    stubGitRoutes();
+    window.history.replaceState({}, '', '/api/backtest-v7/main_page#archive:mine:backtests');
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('[data-test="archive-compact"]').exists()).toBe(true);
+    wrapper.unmount();
+  });
+});
