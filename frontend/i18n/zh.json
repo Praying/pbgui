@@ -5348,5 +5348,13 @@
   "v7optimize.editorTabSuite": "套件",
   "v7optimize.editorTabRuntime": "运行时",
   "v7optimize.editorTabRaw": "原始 JSON",
-  "sysmon.runJobMsg": "运行任务“{id}”？"
+  "sysmon.runJobMsg": "运行任务“{id}”？",
+  "sysmon.clusterCredentialRewrap": "重新封装凭据",
+  "sysmon.rotateLocalClusterKey": "轮换本地集群密钥",
+  "sysmon.localClusterSsh": "本地集群 SSH",
+  "sysmon.noClusterNodes": "暂无集群节点",
+  "sysmon.noOplog": "暂无本地集群操作记录。",
+  "sysmon.retentionReport": "保留策略报告",
+  "sysmon.synced": "已同步",
+  "sysmon.removeNodeMsg": "移除节点“{node}”？此操作只会更改集群成员关系。"
 }

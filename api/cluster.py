@@ -23,10 +23,10 @@ from typing import Annotated, Any
 
 import asyncssh
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from api.vps import get_monitor, get_monitor_state_snapshot
 import pbgui_purefunc
 from cluster_credential_publisher import ClusterCredentialPublisher, CredentialPublicationError
@@ -6044,36 +6044,28 @@ async def onboard_vps_cluster_node(
         }
 
 
-@router.get("/main_page", response_class=HTMLResponse)
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
 def get_main_page(
     request: Request,
     session: SessionToken = Depends(require_auth),
-) -> HTMLResponse:
-    """Serve the standalone Cluster Sync status page."""
-
+) -> FileResponse | HTMLResponse:
+    """Serve the Vue Cluster Sync page with the legacy page as fallback."""
     del session
-    html_path = Path(__file__).parent.parent / "frontend" / "cluster.html"
-    html = html_path.read_text(encoding="utf-8")
 
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    api_base = origin + "/api/cluster"
-    ws_base = origin.replace("http://", "ws://").replace("https://", "wss://")
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/cluster"))
+        html = html.replace('"%%WS_BASE%%"', json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")))
+        from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace("%%VERSION%%", PBGUI_VERSION)
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
+        nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
 
-    html = html.replace('"%%API_BASE%%"', json.dumps(api_base))
-    html = html.replace('"%%WS_BASE%%"', json.dumps(ws_base))
-
-    from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
-
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace("%%VERSION%%", PBGUI_VERSION)
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
-
-    nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
-
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+    return serve_vue_or_legacy_page("cluster_sync", "cluster.html", request, inject=_inject)

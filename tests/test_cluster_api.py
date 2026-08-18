@@ -14,6 +14,7 @@ from typing import Any
 import pytest
 from fastapi import HTTPException
 
+import api.auth as auth
 from api import cluster
 from api import v7_instances
 from cluster_credential_publisher import ClusterCredentialPublisher
@@ -326,6 +327,7 @@ def test_retention_report_is_read_only_and_main_page_exposes_no_session_token(
     before = sorted(path.read_bytes() for path in (root / "oplog").glob("*/*.json"))
 
     report = asyncio.run(cluster.get_retention_report(session=None))
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda _name: Path("/missing/cluster-sync-vue/index.html"))
     response = cluster.get_main_page(
         SimpleNamespace(url=SimpleNamespace(scheme="https", hostname="localhost", port=None)),
         session=SimpleNamespace(token="must-not-appear"),

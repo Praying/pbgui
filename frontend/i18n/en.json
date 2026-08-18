@@ -5348,5 +5348,13 @@
   "v7optimize.editorTabSuite": "Suite",
   "v7optimize.editorTabRuntime": "Runtime",
   "v7optimize.editorTabRaw": "Raw JSON",
-  "sysmon.runJobMsg": "Run job {id}?"
+  "sysmon.runJobMsg": "Run job {id}?",
+  "sysmon.clusterCredentialRewrap": "Rewrap credentials",
+  "sysmon.rotateLocalClusterKey": "Rotate local cluster key",
+  "sysmon.localClusterSsh": "Local Cluster SSH",
+  "sysmon.noClusterNodes": "No cluster nodes",
+  "sysmon.noOplog": "No local cluster operations recorded.",
+  "sysmon.retentionReport": "Retention report",
+  "sysmon.synced": "Synced",
+  "sysmon.removeNodeMsg": "Remove node {node}? This only changes cluster membership."
 }
