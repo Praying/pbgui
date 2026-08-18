@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi.routing import APIRoute
 from starlette.requests import Request
 
+import api.auth as auth
 from api.auth import require_auth
 import api.vps as vps_api
 
@@ -24,7 +25,7 @@ def _request() -> Request:
     })
 
 
-def test_main_page_never_reads_or_renders_session_fields() -> None:
+def test_main_page_never_reads_or_renders_session_fields(monkeypatch) -> None:
     """The VPS page must use only the HttpOnly cookie after authentication."""
     class CookieOnlySession:
         """Reject every attempt to inspect the authenticated session object."""
@@ -34,6 +35,7 @@ def test_main_page_never_reads_or_renders_session_fields() -> None:
                 return object.__getattribute__(self, name)
             raise AssertionError(f"session field accessed: {name}")
 
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda _name: Path("/missing/vps-monitor-vue/index.html"))
     response = vps_api.get_main_page(_request(), CookieOnlySession())
     html = response.body.decode("utf-8")
 

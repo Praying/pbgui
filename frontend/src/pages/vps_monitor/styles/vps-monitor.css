@@ -1,0 +1,46 @@
+.vps-monitor { min-height: 100vh; display: flex; flex-direction: column; color: #e2e8f0; background: #0e1117; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.vps-banner { padding: 8px 14px; color: #fde68a; text-align: center; background: #854d0e; }
+.vps-banner.connected { display: none; }
+.vps-page-body { min-height: 0; flex: 1; display: flex; }
+.vps-sidebar { position: relative; width: 220px; flex: 0 0 auto; padding: 14px 10px; border-right: 1px solid #283548; background: #111827; }
+.vps-title { margin: 0 8px 14px; font-size: 1.05rem; font-weight: 700; }
+.vps-nav { display: grid; gap: 5px; }
+.vps-nav button { border: 0; border-radius: 5px; padding: 9px 10px; color: #cbd5e1; text-align: left; background: transparent; cursor: pointer; }
+.vps-nav button.active, .vps-nav button:hover { color: #f8fafc; background: #243041; }
+.vps-options { display: grid; gap: 10px; margin: 20px 8px; color: #94a3b8; font-size: .82rem; }
+.vps-options label { display: flex; gap: 7px; align-items: center; }
+.vps-main { min-width: 0; flex: 1; display: flex; flex-direction: column; padding: 14px; }
+.vps-panel { min-height: 0; flex: 1; overflow: auto; }
+.summary-bar { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 14px; color: #cbd5e1; font-size: .85rem; }
+.summary-item { display: inline-flex; gap: 6px; align-items: center; }
+.summary-dot { width: 8px; height: 8px; border-radius: 50%; }
+.vps-card { margin-bottom: 10px; border: 1px solid #2d3748; border-radius: 7px; background: #1a202c; overflow: hidden; }
+.vps-card-header { display: flex; align-items: center; gap: 9px; padding: 11px 13px; cursor: pointer; }
+.vps-card-header:hover { background: #202b3d; }
+.vps-card-title { flex: 1; font-weight: 700; }
+.vps-badge { border-radius: 999px; padding: 3px 7px; font-size: .73rem; background: #334155; }
+.vps-badge.green { color: #dcfce7; background: #166534; }
+.vps-badge.orange { color: #fef3c7; background: #92400e; }
+.vps-badge.red { color: #fee2e2; background: #991b1b; }
+.vps-card-body { padding: 12px; border-top: 1px solid #2d3748; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 9px; }
+.metric-card { padding: 10px; border: 1px solid #2d3748; border-radius: 6px; background: #111827; cursor: pointer; }
+.metric-card:hover { border-color: #60a5fa; }
+.metric-label { color: #94a3b8; font-size: .76rem; }
+.metric-value { margin-top: 3px; font-size: 1.2rem; font-weight: 700; }
+.metric-sub { color: #94a3b8; font-size: .72rem; }
+.progress-track { height: 5px; margin-top: 7px; overflow: hidden; border-radius: 999px; background: #334155; }
+.progress-fill { height: 100%; }
+.agent-details { display: grid; gap: 7px; margin-bottom: 12px; padding: 9px; border-radius: 5px; color: #cbd5e1; background: #111827; font-size: .8rem; }
+.agent-files { display: flex; flex-wrap: wrap; gap: 6px; }
+.agent-file { padding: 2px 5px; border-radius: 3px; background: #334155; }
+.agent-file.ok { color: #bbf7d0; background: #14532d; }.agent-file.stale { color: #fef08a; background: #713f12; }.agent-file.error, .agent-file.missing { color: #fecaca; background: #7f1d1d; }
+.vps-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.vps-table th, .vps-table td { padding: 8px 7px; border-bottom: 1px solid #283548; text-align: left; vertical-align: middle; }
+.vps-table th { position: sticky; top: 0; z-index: 1; color: #cbd5e1; background: #111827; }
+.vps-table tr:hover td { background: rgba(96,165,250,.08); }
+.vps-action, .service-action, .modal-close { border: 0; border-radius: 4px; padding: 5px 8px; color: #f8fafc; background: #3182ce; cursor: pointer; }
+.vps-action.danger { background: #b91c1c; }.vps-action.secondary { background: #4a5568; }
+.service-grid { display: grid; gap: 10px; }.service-host { border: 1px solid #2d3748; border-radius: 7px; overflow: hidden; }.service-head { display: flex; justify-content: space-between; padding: 10px 12px; color: #f8fafc; background: #1a202c; cursor: pointer; }.service-list { display: grid; gap: 6px; padding: 10px; }.service-row { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px; border-radius: 5px; background: #111827; }.service-name { font-weight: 600; }.service-status { color: #94a3b8; font-size: .78rem; }.service-status.running { color: #86efac; }.service-status.stopped, .service-status.error { color: #fca5a5; }
+.log-panel { height: 100%; min-height: 420px; }.history-modal, .result-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.74); }.modal-card { width: min(1000px, calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow: hidden; display: flex; flex-direction: column; padding: 18px; border-radius: 8px; background: #1a202c; }.modal-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #2d3748; }.modal-head h2 { margin: 0; font-size: 1.05rem; }.history-body { overflow: auto; padding-top: 12px; }.history-chart { width: 100%; min-height: 120px; padding: 8px; border-radius: 5px; background: #0b1220; }.history-points { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; color: #cbd5e1; font-size: .78rem; }.result-message { padding-top: 14px; color: #e2e8f0; white-space: pre-wrap; word-break: break-word; }
+@media (max-width: 780px) { .vps-sidebar { width: 165px; }.vps-card-header { flex-wrap: wrap; }.vps-table { min-width: 850px; } }
