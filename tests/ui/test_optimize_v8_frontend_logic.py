@@ -59,8 +59,9 @@ def test_v7_and_v8_use_one_optimize_template() -> None:
     api = (ROOT / "api" / "optimize_v7.py").read_text(encoding="utf-8")
     api_v8 = (ROOT / "api" / "optimize_v8.py").read_text(encoding="utf-8")
 
-    assert '"frontend" / "v7_optimize.html"' in api
-    assert '"frontend" / "v7_optimize.html"' in api_v8
+    assert 'serve_vue_or_legacy_page("v7_optimize", "v7_optimize.html"' in api
+    assert 'serve_vue_or_legacy_page("v7_optimize", "v7_optimize.html"' in api_v8
+    assert (ROOT / "frontend" / "v7_optimize.html").is_file()
     assert '"%%OPTIMIZE_VERSION%%": "v8"' in api_v8
     assert '"%%OPTIMIZE_NAV_CURRENT%%": "v8_optimize"' in api_v8
     assert not (ROOT / "frontend" / "v8_optimize.html").exists()

@@ -27,9 +27,9 @@ import psutil
 import httpx
 import msgpack
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, Response
 
-from api.auth import SessionToken, authenticate_websocket, require_auth
+from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page
 from api.pb8_ohlcv_tools import (
     PB8OhlcvUnavailableError,
     build_pb8_ohlcv_preflight,
@@ -2747,32 +2747,35 @@ async def ws_optimize(websocket: WebSocket) -> None:
         _ws_clients.discard(websocket)
 
 
-@router.get("/main_page", response_class=HTMLResponse)
-def main_page(request: Request, session: SessionToken = Depends(require_auth)) -> HTMLResponse:
-    """Render PB8 through the shared optimize page without exposing the session cookie."""
-    html_path = Path(PBGDIR) / "frontend" / "v7_optimize.html"
-    if not html_path.is_file():
-        raise HTTPException(status_code=404, detail="v7_optimize.html not found")
-    html = html_path.read_text(encoding="utf-8")
-    origin = str(request.base_url).rstrip("/")
-    limits = get_pb8_optimize_metadata().get("limits") or {}
-    replacements = {
-        "%%TOKEN%%": "",
-        "%%API_BASE%%": origin + "/api/optimize-v8",
-        "%%WS_BASE%%": origin.replace("http://", "ws://").replace("https://", "wss://"),
-        "%%LIMITS_META%%": json.dumps(limits),
-        "%%VERSION%%": PBGUI_VERSION,
-        "%%SERIAL%%": PBGUI_SERIAL,
-        "%%OPTIMIZE_VERSION%%": "v8",
-        "%%OPTIMIZE_NAV_TITLE%%": "PBv8 OPTIMIZE",
-        "%%OPTIMIZE_NAV_CURRENT%%": "v8_optimize",
-        "%%BACKTEST_VERSION%%": "v8",
-    }
-    for old, new in replacements.items():
-        html = html.replace(old, new)
-    nav_js = Path(PBGDIR) / "frontend" / "pbgui_nav.js"
-    html = html.replace("%%NAV_HASH%%", str(int(nav_js.stat().st_mtime)) if nav_js.is_file() else PBGUI_VERSION)
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
+def main_page(request: Request, session: SessionToken = Depends(require_auth)) -> FileResponse | HTMLResponse:
+    """Serve the shared PBv7/PBv8 Optimize Vue entry with legacy fallback."""
+    del session
+
+    def _inject(html: str, req: Request) -> str:
+        origin = str(req.base_url).rstrip("/")
+        limits = get_pb8_optimize_metadata().get("limits") or {}
+        replacements = {
+            '"%%TOKEN%%"': json.dumps(""),
+            '"%%API_BASE%%"': json.dumps(origin + "/api/optimize-v8"),
+            '"%%WS_BASE%%"': json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")),
+            "%%LIMITS_META%%": json.dumps(limits),
+            '"%%VERSION%%"': json.dumps(PBGUI_VERSION),
+            "%%VERSION%%": PBGUI_VERSION,
+            '"%%SERIAL%%"': json.dumps(PBGUI_SERIAL),
+            "%%SERIAL%%": PBGUI_SERIAL,
+            "%%OPTIMIZE_VERSION%%": "v8",
+            "%%OPTIMIZE_NAV_TITLE%%": "PBv8 OPTIMIZE",
+            "%%OPTIMIZE_NAV_CURRENT%%": "v8_optimize",
+            "%%BACKTEST_VERSION%%": "v8",
+        }
+        for old, new in replacements.items():
+            html = html.replace(old, new)
+        nav_js = Path(PBGDIR) / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.is_file() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("v7_optimize", "v7_optimize.html", request, inject=_inject)
 
 
 @router.get("/runtime")
