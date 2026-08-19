@@ -65,6 +65,10 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const coinOptionsWithoutAll = computed(() => props.coinOptions.filter((option) => option !== 'all'));
+const coinSourcesOpen = ref(false);
+const marketSourcesOpen = ref(false);
+const additionalOpen = ref(false);
+const rawJsonOpen = ref(false);
 
 const exchangesOptions = computed(() => {
   const options = props.exchangeOptions.filter((option) => !props.state.exchanges.includes(option));
@@ -202,12 +206,12 @@ defineExpose({ foldSuiteDraft });
     </div>
 
     <!-- coin_sources + market_settings_sources (:2700-2750) -->
-    <div class="expander">
-      <div class="expander-header"><span class="arrow">▶</span> coin_sources ({{ Object.keys(state.coinSources).length }} configured)</div>
+    <div class="expander" :class="{ open: coinSourcesOpen }">
+      <button type="button" class="expander-header" :aria-expanded="coinSourcesOpen" @click="coinSourcesOpen = !coinSourcesOpen"><span class="arrow">▶</span> coin_sources ({{ Object.keys(state.coinSources).length }} configured)</button>
       <div class="expander-body"><KvCoinSources v-model="state.coinSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
     </div>
-    <div class="expander">
-      <div class="expander-header"><span class="arrow">▶</span> market_settings_sources ({{ Object.keys(state.marketSettingsSources).length }} configured)</div>
+    <div class="expander" :class="{ open: marketSourcesOpen }">
+      <button type="button" class="expander-header" :aria-expanded="marketSourcesOpen" @click="marketSourcesOpen = !marketSourcesOpen"><span class="arrow">▶</span> market_settings_sources ({{ Object.keys(state.marketSettingsSources).length }} configured)</button>
       <div class="expander-body"><KvCoinSources v-model="state.marketSettingsSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
     </div>
 
@@ -270,8 +274,8 @@ defineExpose({ foldSuiteDraft });
     </div>
 
     <!-- Additional (unknown) backtest parameters (:2873-2876) -->
-    <div v-if="state.extraBt.length > 0" class="expander">
-      <div class="expander-header"><span class="arrow">▶</span> {{ t('v7backtest.additionalParameters') }}</div>
+    <div v-if="state.extraBt.length > 0" class="expander" :class="{ open: additionalOpen }" data-test="additional-params-expander">
+      <button type="button" class="expander-header" :aria-expanded="additionalOpen" data-test="additional-params-expander-toggle" @click="additionalOpen = !additionalOpen"><span class="arrow">▶</span> {{ t('v7backtest.additionalParameters') }}</button>
       <div class="expander-body">
         <div class="form-group" style="grid-column: span 3">
           <label>base_dir</label>
@@ -291,8 +295,8 @@ defineExpose({ foldSuiteDraft });
     </div>
 
     <!-- Raw JSON expander (:2878-2892) -->
-    <div class="expander">
-      <div class="expander-header"><span class="arrow">▶</span> {{ t('v7backtest.rawJson') }}</div>
+    <div class="expander" :class="{ open: rawJsonOpen }" data-test="raw-json-expander">
+      <button type="button" class="expander-header" :aria-expanded="rawJsonOpen" data-test="raw-json-expander-toggle" @click="rawJsonOpen = !rawJsonOpen"><span class="arrow">▶</span> {{ t('v7backtest.rawJson') }}</button>
       <div class="expander-body">
         <div class="form-group">
           <div class="raw-json-wrap">

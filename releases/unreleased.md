@@ -13,6 +13,8 @@
 
 ## Vue 3 Frontend Migration (continued)
 
+- Repaired the migrated PBv7/PBv8 Backtest config editor: restored the legacy compact grid, searchable tag dropdowns, numeric steppers and explicit expanders; restored JSON import plus Results, Convert to V8, Add to Run, Strategy Explorer, Balance Calculator and OHLCV readiness handoffs; saved-config-only actions remain disabled for unsaved configs. Added focused Vue and stylesheet regression coverage.
+
 - Refined the Vue Welcome page visual hierarchy: the overview now offers a direct PB7 setup action, groups runtime checks by Security/PB7/optional PB8/Node, removes duplicate sidebar status pills, uses neutral styling for optional PB8, constrains wide layouts, and gives password changes a focused form with a separate authentication-disable danger area. The shared Vue migration watermark is now off by default and can be enabled only with `VITE_MIGRATION_WATERMARK=on` during migration QA.
 
 - Migrated the Logging Monitor to the Vue 3 workspace (`frontend/src/pages/logging_monitor`): the shared live `LogViewerPanel` with rotated-generation switching, explicit purge confirmation, default/managed/per-log rotation settings, apply feedback, shared help/nav integration, Escape cleanup, and focused Vitest coverage. `GET /api/logging/main_page` now serves the Vue build first with `frontend/logging_monitor.html` retained as the cookie-only legacy fallback; added route coverage and bumped `api/serial.txt`.

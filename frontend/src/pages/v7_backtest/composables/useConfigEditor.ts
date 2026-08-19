@@ -537,6 +537,21 @@ export function useConfigEditor(options: ConfigEditorOptions) {
     return { config: object(data.config).config ? object(object(data.config).config) : object(data.config) || cfg, param_status: object(data.param_status) };
   }
 
+  /** Import JSON through the same normalization endpoint as the legacy editor (:5032-5097). */
+  async function importConfig(name: string, rawJson: string): Promise<void> {
+    const trimmedName = name.trim();
+    if (!trimmedName) throw new Error(t('v7backtest.configNameRequired'));
+    const validation = validateJsonText(rawJson, {
+      expectObject: true,
+      messages: { cannotBeEmpty: 'Config cannot be empty', topLevelObject: 'Config must be a JSON object' },
+    });
+    if (validation.error || !validation.parsed) throw new Error(validation.error?.message ?? 'Config must be a JSON object');
+    const prepared = await prepareImported(object(validation.parsed));
+    options.selectPanel('configs');
+    openEditor(trimmedName, prepared.config, JSON.stringify(prepared.config, null, 2), prepared.param_status, { isNew: true });
+    notify(t('v7backtest.importedIntoEditor'), 'ok');
+  }
+
   async function consumeUrlDeepLinks(search: string = window.location.search): Promise<boolean> {
     const params = new URLSearchParams(search);
     const requestedConfig = params.get('config');
@@ -669,6 +684,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
     openEditor,
     editConfig,
     newConfig,
+    importConfig,
     closeEditor,
     loadCfgSymbols,
     save,

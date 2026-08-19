@@ -20,6 +20,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
+import { replaceTopLocation } from '@/shared/nav';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import ArchiveGitModals from './components/ArchiveGitModals.vue';
 import ArchiveLogPanel from './components/ArchiveLogPanel.vue';
@@ -67,6 +68,16 @@ const bannerText = computed(() =>
 );
 
 const editorOpen = computed(() => store.editor.editingName.value !== null);
+const editorHasSavedConfig = computed(() => !!store.editor.editingName.value && store.editor.editingName.value !== '__new__');
+const importOpen = ref(false);
+const importName = ref('');
+const importJson = ref('');
+const importError = ref('');
+const importLoading = ref(false);
+const ohlcvOpen = ref(false);
+const ohlcvLoading = ref(false);
+const ohlcvError = ref('');
+const ohlcvData = ref<Record<string, unknown> | null>(null);
 /** The archive/legacy panels mount once their panel is first visited. */
 const archiveMounted = computed(() => store.view.state.panel === 'archive' || store.archive.archives.value.length > 0);
 const legacyMounted = computed(() => store.view.state.panel === 'legacy' || (store.legacy?.rows.value.length ?? 0) > 0);
@@ -87,6 +98,145 @@ function onQueueEditConfig(name: string): void {
 }
 function onNothingSelected(): void {
   store.notifyError(t('v7backtest.nothingSelected'));
+}
+
+async function requestJson(url: string, init?: RequestInit): Promise<Record<string, unknown>> {
+  const response = await fetch(url, { credentials: 'same-origin', ...init });
+  const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+  if (!response.ok) {
+    const detail = data.detail;
+    throw new Error(typeof detail === 'string' ? detail : response.statusText || `HTTP ${response.status}`);
+  }
+  return data;
+}
+
+function currentConfig(): Record<string, unknown> | null {
+  try {
+    return store.editor.collect();
+  } catch (error) {
+    store.notifyError(t('v7backtest.failedPrepareConfig', { msg: error instanceof Error ? error.message : String(error) }));
+    return null;
+  }
+}
+
+function openImport(): void {
+  importName.value = store.editor.editingName.value === '__new__' ? '' : store.editor.state.name;
+  importJson.value = '';
+  importError.value = '';
+  importOpen.value = true;
+}
+
+async function submitImport(): Promise<void> {
+  importError.value = '';
+  importLoading.value = true;
+  try {
+    await store.editor.importConfig(importName.value, importJson.value);
+    importOpen.value = false;
+  } catch (error) {
+    importError.value = error instanceof Error ? error.message : String(error);
+  } finally {
+    importLoading.value = false;
+  }
+}
+
+function editorResults(): void {
+  const name = store.editor.editingName.value;
+  if (!name || name === '__new__') return;
+  store.editor.closeEditor();
+  store.viewConfigResults(name);
+}
+
+async function convertEditorToV8(): Promise<void> {
+  const name = store.editor.editingName.value;
+  if (!name || name === '__new__' || store.adapter.isV8) return;
+  const targetName = `${name.slice(0, 120)}_v8`;
+  try {
+    const data = await requestJson(`${boot.origin}/api/backtest-v8/migrate-v7`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_type: 'backtest_config', source_name: name, target_name: targetName }),
+    });
+    replaceTopLocation(`${boot.origin}/api/backtest-v8/main_page?config=${encodeURIComponent(String(data.name || targetName))}`);
+  } catch (error) {
+    store.notifyError(t('v7backtest.v8ConversionFailed', { msg: error instanceof Error ? error.message : String(error) }));
+  }
+}
+
+async function addEditorToRun(): Promise<void> {
+  const name = store.editor.editingName.value;
+  if (!name || name === '__new__') return;
+  try {
+    const saved = await requestJson(`${store.apiBase}/configs/${encodeURIComponent(name)}`);
+    const config = structuredClone((saved.config && typeof saved.config === 'object' ? saved.config : {}) as Record<string, unknown>);
+    const live = config.live && typeof config.live === 'object' && !Array.isArray(config.live) ? (config.live as Record<string, unknown>) : {};
+    const pbgui = config.pbgui && typeof config.pbgui === 'object' && !Array.isArray(config.pbgui) ? (config.pbgui as Record<string, unknown>) : {};
+    config.live = live;
+    config.pbgui = { ...pbgui, from_backtest_config: name, enabled_on: 'disabled' };
+    const data = await requestJson(`${boot.origin}/api/v7/draft`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config }),
+    });
+    replaceTopLocation(`${boot.origin}/api/v7/edit_page?new=1&draft_id=${encodeURIComponent(String(data.draft_id || ''))}`);
+  } catch (error) {
+    store.notifyError(t('v7backtest.failedWithMsg', { msg: error instanceof Error ? error.message : String(error) }));
+  }
+}
+
+async function openStrategyExplorer(): Promise<void> {
+  const config = currentConfig();
+  if (!config) return;
+  const base = `${boot.origin}/api/${store.adapter.isV8 ? 'strategy-explorer-v8' : 'strategy-explorer'}`;
+  try {
+    const body = store.adapter.isV8 ? { config, override_configs: await store.editor.coinOv.snapshotAllFiles() } : { config };
+    const data = await requestJson(`${base}/draft`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    replaceTopLocation(`${base}/main_page?draft_id=${encodeURIComponent(String(data.draft_id || ''))}`);
+  } catch (error) {
+    store.notifyError(t('v7backtest.failedOpenStrategyExplorer', { msg: error instanceof Error ? error.message : String(error) }));
+  }
+}
+
+async function openBalanceCalculator(): Promise<void> {
+  const config = currentConfig();
+  if (!config) return;
+  const backtest = config.backtest && typeof config.backtest === 'object' && !Array.isArray(config.backtest) ? (config.backtest as Record<string, unknown>) : {};
+  const exchanges = Array.isArray(backtest.exchanges) ? backtest.exchanges.map(String) : [];
+  const exchange = String(exchanges[0] || 'binance').toLowerCase();
+  const base = `${boot.origin}/api/balance-calc`;
+  try {
+    const data = await requestJson(`${base}/draft`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config }),
+    });
+    replaceTopLocation(`${base}/main_page?draft_id=${encodeURIComponent(String(data.draft_id || ''))}&exchange=${encodeURIComponent(exchange)}`);
+  } catch (error) {
+    store.notifyError(t('v7backtest.failedOpenBalanceCalculator', { msg: error instanceof Error ? error.message : String(error) }));
+  }
+}
+
+async function openOhlcvReadiness(): Promise<void> {
+  const config = currentConfig();
+  if (!config) return;
+  ohlcvOpen.value = true;
+  ohlcvLoading.value = true;
+  ohlcvError.value = '';
+  ohlcvData.value = null;
+  try {
+    ohlcvData.value = await requestJson(`${store.apiBase}/ohlcv-preflight`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config }),
+    });
+  } catch (error) {
+    ohlcvError.value = error instanceof Error ? error.message : String(error);
+  } finally {
+    ohlcvLoading.value = false;
+  }
 }
 
 /** kvLoadCoins' /symbols loader (:3925-3935). */
@@ -217,10 +367,17 @@ onMounted(() => {
         <div v-if="editorOpen" id="sidebar-editor" class="sidebar-sticky">
           <div class="sidebar-header"><span class="sb-title">{{ t('v7backtest.editBacktest') }}</span></div>
           <div class="sidebar-toolbar">
-            <button type="button" class="sb-btn" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()">🏠 {{ t('v7backtest.home') }}</button>
-            <button type="button" class="sb-btn primary" :title="t('v7backtest.saveConfig')" @click="store.editor.save()">💾 {{ t('v7backtest.save') }}</button>
-            <button type="button" class="sb-btn info" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()">▶ {{ t('v7backtest.saveQueue') }}</button>
-            <!-- Results / Convert to V8 / Add to Run / Strategy Explorer / Balance Calc / OHLCV Readiness / Log / Import land in M-v7-12 -->
+            <button type="button" class="sb-btn" data-test="editor-home" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()">🏠 {{ t('v7backtest.home') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-import" @click="openImport">{{ t('v7backtest.import') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-results" :disabled="!editorHasSavedConfig" @click="editorResults">📊 {{ t('v7backtest.results') }}</button>
+            <button v-if="!store.adapter.isV8" type="button" class="sb-btn" data-test="editor-convert-v8" :disabled="!editorHasSavedConfig" @click="convertEditorToV8">{{ t('v7backtest.convertToV8') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-add-run" :disabled="!editorHasSavedConfig" @click="addEditorToRun">{{ t('v7backtest.addToRun') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-strategy-explorer" @click="openStrategyExplorer">{{ t('v7backtest.strategyExplorer') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-balance-calc" @click="openBalanceCalculator">{{ t('v7backtest.balanceCalculator') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-ohlcv" @click="openOhlcvReadiness">{{ t('v7backtest.ohlcvReadiness') }}</button>
+            <hr class="sb-sep" />
+            <button type="button" class="sb-btn primary" data-test="editor-save" :title="t('v7backtest.saveConfig')" @click="store.editor.save()">💾 {{ t('v7backtest.save') }}</button>
+            <button type="button" class="sb-btn info" data-test="editor-save-queue" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()">▶ {{ t('v7backtest.saveQueue') }}</button>
           </div>
         </div>
       </template>
@@ -344,6 +501,41 @@ onMounted(() => {
     @cleanup="store.cleanNow"
     @close="store.settingsOpen.value = false"
   />
+
+  <div v-if="importOpen" id="modal-root" data-test="config-import-modal">
+    <div class="modal-box">
+      <div class="modal-title">{{ t('v7backtest.importJsonConfig') }}</div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>{{ t('v7backtest.configName') }}</label>
+          <input v-model="importName" type="text" data-test="config-import-name" />
+        </div>
+        <div class="form-group">
+          <label>{{ t('v7backtest.importJson') }}</label>
+          <textarea v-model="importJson" rows="18" :placeholder="t('v7backtest.pasteJsonHere')" data-test="config-import-json"></textarea>
+        </div>
+        <div v-if="importError" class="field-status field-status-inline error" data-test="config-import-error">{{ importError }}</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" :disabled="importLoading" @click="importOpen = false">{{ t('common.cancel') }}</button>
+        <button type="button" class="modal-btn modal-btn-primary" data-test="config-import-submit" :disabled="importLoading" @click="submitImport">{{ t('v7backtest.importShort') }}</button>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="ohlcvOpen" id="modal-root" data-test="ohlcv-readiness-modal">
+    <div class="modal-box ohlcv-readiness-modal">
+      <div class="modal-title">{{ t('v7backtest.ohlcvReadinessTitle') }}</div>
+      <div class="modal-body">
+        <div v-if="ohlcvLoading" class="muted-line">{{ t('editor.preflight.running') }}</div>
+        <div v-else-if="ohlcvError" class="field-status field-status-inline error">{{ ohlcvError }}</div>
+        <pre v-else class="ohlcv-readiness-json">{{ JSON.stringify(ohlcvData, null, 2) }}</pre>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-primary" data-test="ohlcv-readiness-close" @click="ohlcvOpen = false">{{ t('common.close') }}</button>
+      </div>
+    </div>
+  </div>
 
   <!-- rebacktestSelected's parameter popup (:7895-7956) -->
   <RebacktestModal

@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+
+const replaceTopLocationMock = vi.hoisted(() => vi.fn());
+vi.mock('@/shared/nav', () => ({ replaceTopLocation: replaceTopLocationMock }));
+
 import App from './App.vue';
 
 /*
@@ -53,6 +57,7 @@ function flush(): Promise<void> {
 
 beforeEach(() => {
   localStorage.clear();
+  replaceTopLocationMock.mockReset();
   window.history.replaceState({}, '', '/api/backtest-v7/main_page');
   (window as unknown as { __BOOT__: unknown }).__BOOT__ = { origin: 'http://h:8000', token: 'tok', version: 'v9.9.9', serial: 's1' };
   vi.stubGlobal(
@@ -195,6 +200,176 @@ describe('boot chain (:10012-10024)', () => {
     await wrapper.find('#sidebar-editor .sb-btn').trigger('click'); // Home
     await nextTick();
     expect(wrapper.find('#sidebar-editor').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it('restores the compact editor layout, dropdown behavior and complete action toolbar', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
+    await flush();
+    await nextTick();
+
+    expect(wrapper.findAll('#configs-editor > .form-row.cols-8').length).toBeGreaterThanOrEqual(3);
+    const exchangeDropdown = wrapper.find('#ms-cfg-exchanges-dd');
+    expect(exchangeDropdown.classes()).not.toContain('open');
+    await wrapper.find('#ms-cfg-exchanges-input').trigger('focusin');
+    expect(exchangeDropdown.classes()).toContain('open');
+
+    expect(wrapper.findAll('#sidebar-editor [data-test]').map((button) => button.attributes('data-test'))).toEqual([
+      'editor-home',
+      'editor-import',
+      'editor-results',
+      'editor-convert-v8',
+      'editor-add-run',
+      'editor-strategy-explorer',
+      'editor-balance-calc',
+      'editor-ohlcv',
+      'editor-save',
+      'editor-save-queue',
+    ]);
+    expect(wrapper.find('[data-test="editor-results"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.find('[data-test="editor-convert-v8"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.find('[data-test="editor-add-run"]').attributes('disabled')).toBeDefined();
+
+    const rawExpander = wrapper.find('[data-test="raw-json-expander"]');
+    expect(rawExpander.classes()).not.toContain('open');
+    await rawExpander.find('[data-test="raw-json-expander-toggle"]').trigger('click');
+    expect(rawExpander.classes()).toContain('open');
+    wrapper.unmount();
+  });
+
+  it('imports JSON through /configs/prepare and opens the prepared config as new', async () => {
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.includes('/configs/prepare') && init?.method === 'POST') {
+        return ok({
+          config: { backtest: { exchanges: ['bybit'], starting_balance: 12345 }, bot: { long: {}, short: {} } },
+          param_status: {},
+        });
+      }
+      if (target.includes('/configs')) return ok({ configs: [] });
+      if (target.includes('/symbols')) return ok({ symbols: [] });
+      if (target.includes('/tags')) return ok({ tags: [] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="editor-import"]').trigger('click');
+    expect(wrapper.find('[data-test="config-import-modal"]').exists()).toBe(true);
+    await wrapper.find('[data-test="config-import-name"]').setValue('imported');
+    await wrapper.find('[data-test="config-import-json"]').setValue(JSON.stringify({ backtest: { exchanges: ['bybit'] } }));
+    await wrapper.find('[data-test="config-import-submit"]').trigger('click');
+    await flush();
+    await nextTick();
+
+    const prepareCall = fetchMock.mock.calls.find((call) => String(call[0]).includes('/configs/prepare'));
+    expect(prepareCall?.[1]?.method).toBe('POST');
+    expect(JSON.parse(String(prepareCall?.[1]?.body))).toEqual({ config: { backtest: { exchanges: ['bybit'] } } });
+    expect((wrapper.find('[data-test="cfg-name"]').element as HTMLInputElement).value).toBe('imported');
+    const balanceGroup = wrapper.findAll('.form-group').find((group) => group.text().includes('starting_balance'))!;
+    expect((balanceGroup.find('input').element as HTMLInputElement).value).toBe('12345');
+    expect(wrapper.find('[data-test="config-import-modal"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it('routes saved-config actions to Results, V8 conversion and Add to Run', async () => {
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.endsWith('/api/backtest-v7/configs/alpha')) {
+        return ok({ name: 'alpha', config: { backtest: { exchanges: ['bybit'] }, live: { user: 'u1' }, bot: { long: {}, short: {} } }, param_status: {} });
+      }
+      if (target.endsWith('/api/backtest-v8/migrate-v7') && init?.method === 'POST') return ok({ name: 'alpha_v8' });
+      if (target.endsWith('/api/v7/draft') && init?.method === 'POST') return ok({ draft_id: 'run-1' });
+      if (target.includes('/results')) return ok({ results: [] });
+      if (target.includes('/configs')) return ok({ configs: [{ name: 'alpha', exchanges: ['bybit'] }] });
+      if (target.includes('/symbols')) return ok({ symbols: [] });
+      if (target.includes('/tags')) return ok({ tags: [] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="cfg-edit"]').trigger('click');
+    await flush();
+    await nextTick();
+
+    await wrapper.find('[data-test="editor-results"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('#panel-results').classes()).toContain('active');
+
+    await wrapper.find('.sb-section[data-panel="configs"]').trigger('click');
+    await nextTick();
+    await wrapper.find('[data-test="cfg-edit"]').trigger('click');
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="editor-convert-v8"]').trigger('click');
+    await flush();
+    const migrateCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/backtest-v8/migrate-v7'));
+    expect(JSON.parse(String(migrateCall?.[1]?.body))).toEqual({ source_type: 'backtest_config', source_name: 'alpha', target_name: 'alpha_v8' });
+    expect(replaceTopLocationMock).toHaveBeenCalledWith('http://h:8000/api/backtest-v8/main_page?config=alpha_v8');
+
+    replaceTopLocationMock.mockReset();
+    await wrapper.find('[data-test="editor-add-run"]').trigger('click');
+    await flush();
+    const draftCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/v7/draft'));
+    expect(JSON.parse(String(draftCall?.[1]?.body))).toEqual({
+      config: expect.objectContaining({
+        live: expect.objectContaining({ user: 'u1' }),
+        pbgui: expect.objectContaining({ from_backtest_config: 'alpha', enabled_on: 'disabled' }),
+      }),
+    });
+    expect(replaceTopLocationMock).toHaveBeenCalledWith('http://h:8000/api/v7/edit_page?new=1&draft_id=run-1');
+    wrapper.unmount();
+  });
+
+  it('hands the current config to Strategy Explorer, Balance Calculator and OHLCV readiness', async () => {
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      const target = String(url);
+      if (target.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (target.includes('/configs/new-config')) return ok({ config: { backtest: { exchanges: ['bybit'] }, bot: { long: {}, short: {} } }, param_status: {} });
+      if (target.endsWith('/api/strategy-explorer/draft') && init?.method === 'POST') return ok({ draft_id: 'strategy-1' });
+      if (target.endsWith('/api/balance-calc/draft') && init?.method === 'POST') return ok({ draft_id: 'balance-1' });
+      if (target.endsWith('/api/backtest-v7/ohlcv-preflight') && init?.method === 'POST') return ok({ summary: { overall_status: 'ready', ready: 12, missing: 0 } });
+      if (target.includes('/configs')) return ok({ configs: [] });
+      if (target.includes('/symbols')) return ok({ symbols: [] });
+      if (target.includes('/tags')) return ok({ tags: [] });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
+    await flush();
+    await nextTick();
+
+    await wrapper.find('[data-test="editor-strategy-explorer"]').trigger('click');
+    await flush();
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/api/strategy-explorer/draft') && call[1]?.method === 'POST')).toBe(true);
+    expect(replaceTopLocationMock).toHaveBeenCalledWith('http://h:8000/api/strategy-explorer/main_page?draft_id=strategy-1');
+
+    replaceTopLocationMock.mockReset();
+    await wrapper.find('[data-test="editor-balance-calc"]').trigger('click');
+    await flush();
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith('/api/balance-calc/draft') && call[1]?.method === 'POST')).toBe(true);
+    expect(replaceTopLocationMock).toHaveBeenCalledWith('http://h:8000/api/balance-calc/main_page?draft_id=balance-1&exchange=bybit');
+
+    await wrapper.find('[data-test="editor-ohlcv"]').trigger('click');
+    await flush();
+    await nextTick();
+    const preflightCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/backtest-v7/ohlcv-preflight'));
+    expect(JSON.parse(String(preflightCall?.[1]?.body))).toEqual({ config: expect.any(Object) });
+    expect(wrapper.find('[data-test="ohlcv-readiness-modal"]').text()).toContain('ready');
+    await wrapper.find('[data-test="ohlcv-readiness-close"]').trigger('click');
+    expect(wrapper.find('[data-test="ohlcv-readiness-modal"]').exists()).toBe(false);
     wrapper.unmount();
   });
 

@@ -61,6 +61,8 @@ Die Bearbeitung öffnet sich inline im Hauptbereich. Felder:
 | **Market settings sources** | Quelle für marktspezifische Einstellungen |
 | **Bot-Parameter** | Strategie-Parameter (Long/Short-Seite, TWE, etc.) |
 
+Der migrierte Vue-Editor behält das kompakte mehrspaltige Legacy-Layout bei: Exchange- und Coin-Felder verwenden durchsuchbare Tag-Dropdowns, dichte Zahlenzeilen bleiben ausgerichtet und **Additional Parameters** / **Raw JSON** öffnen sich nur über ihre expliziten Expander-Schaltflächen.
+
 **Aktionsschaltflächen im Editor:**
 
 | Schaltfläche | Aktion |
@@ -70,6 +72,8 @@ Die Bearbeitung öffnet sich inline im Hauptbereich. Felder:
 | **Add to Queue** | Speichern und einreihen → wechselt in Queue-Panel |
 | **Apply Filters** | Approved/Ignored-Coin-Listen anhand der aktuellen Filter befüllen |
 | **📊 View Results** | Zu den Ergebnissen dieser Config im Results-Panel springen |
+| **▶ Add to Run** | Eine gespeicherte Backtest-Config als neuen PBv7-Run-Draft öffnen; bis zum ersten Speichern deaktiviert |
+| **🔍 Strategy Explorer** | Die aktuelle Editor-Config über einen authentifizierten Draft im passenden PBv7/PBv8 Strategy Explorer öffnen |
 | **⏩ Convert to V8** | Die aktuell gespeicherte V7-Config mit PB8s offiziellem Migrator konvertieren und in PBv8 Backtest öffnen; bis zum ersten Speichern deaktiviert |
 | **💰 Balance Calculator** | Den gemeinsamen Balance Calculator unter Information mit der aktuellen Editor-Config als Draft öffnen |
 | **⚡ Calc Balance** | Dieselbe Balance-Berechnung inline in einem Modal ausführen, ohne die Backtest-Seite zu verlassen |
