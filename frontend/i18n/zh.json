@@ -5441,5 +5441,16 @@
   "vpsmgr.sudoUser": "Sudo 用户",
   "vpsmgr.sourceBranch": "源分支",
   "vpsmgr.remoteName": "远程名称",
-  "vpsmgr.usePinnedUpstream": "使用固定上游版本"
+  "vpsmgr.usePinnedUpstream": "使用固定上游版本",
+  "misc.welcome.runtimeSettings": "运行环境设置",
+  "misc.welcome.runtimeSettingsCopy": "配置 PB7 / PB8 的源代码路径与 Python 解释器。",
+  "misc.welcome.saveSetupHint": "PB7 路径变更需要重启 PBRun；PB8 路径将在下一次 PB8 操作时生效。",
+  "misc.welcome.systemOverview": "系统概览",
+  "misc.welcome.overviewCopy": "查看运行状态和节点配置。",
+  "misc.welcome.configurePb7": "配置 PB7",
+  "misc.welcome.pb8OptionalGroup": "PB8（可选）",
+  "misc.welcome.node": "节点",
+  "misc.welcome.disableAuthenticationCopy": "禁用身份验证将移除此 PBGui API 的密码保护。仅应在可信且受限的网络中使用。",
+  "misc.welcome.showPassword": "显示",
+  "misc.welcome.hidePassword": "隐藏"
 }

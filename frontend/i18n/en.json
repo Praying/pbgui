@@ -5441,5 +5441,16 @@
   "vpsmgr.sudoUser": "Sudo User",
   "vpsmgr.sourceBranch": "Source Branch",
   "vpsmgr.remoteName": "Remote Name",
-  "vpsmgr.usePinnedUpstream": "Use Pinned Upstream"
+  "vpsmgr.usePinnedUpstream": "Use Pinned Upstream",
+  "misc.welcome.runtimeSettings": "Runtime Settings",
+  "misc.welcome.runtimeSettingsCopy": "Configure the PB7 / PB8 source paths and Python interpreters.",
+  "misc.welcome.saveSetupHint": "PB7 path changes require a PBRun restart; PB8 paths apply to the next PB8 operation.",
+  "misc.welcome.systemOverview": "System Overview",
+  "misc.welcome.overviewCopy": "Runtime status and node configuration.",
+  "misc.welcome.configurePb7": "Configure PB7",
+  "misc.welcome.pb8OptionalGroup": "PB8 (optional)",
+  "misc.welcome.node": "Node",
+  "misc.welcome.disableAuthenticationCopy": "Disabling authentication removes password protection for this PBGui API. Use only on a trusted, restricted network.",
+  "misc.welcome.showPassword": "Show",
+  "misc.welcome.hidePassword": "Hide"
 }

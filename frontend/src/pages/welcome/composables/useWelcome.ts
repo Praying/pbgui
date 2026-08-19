@@ -30,10 +30,38 @@ async function fetchJson(url: string, options: RequestInit = {}, token: string):
   return data;
 }
 
+export type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+
+const STATUS_COVERED_ISSUES = new Set([
+  'Passivbot V7 path is not configured.',
+  'Passivbot V7 python interpreter is not configured.',
+  'Passivbot V8 path is not configured.',
+  'Passivbot V8 python interpreter is not configured.',
+]);
+
 export interface StatusRow {
   label: string;
   state: string;
   detail: string;
+  tone: StatusTone;
+}
+
+export interface SummaryView {
+  auth: string;
+  authCopy: string;
+  pb7: string;
+  pb7Copy: string;
+  pb8: string;
+  pb8Copy: string;
+  identity: string;
+  roleText: string;
+  authTone: StatusTone;
+  pb7Tone: StatusTone;
+  pb8Tone: StatusTone;
+  identityTone: StatusTone;
+  sbAuth: string;
+  sbPb7: string;
+  sbPb8: string;
 }
 
 export interface IssueRow {
@@ -73,19 +101,7 @@ export interface UseWelcome {
     selectedPath: string;
     entries: BrowserEntry[];
   }>;
-  summaryView: ComputedRef<{
-    auth: string;
-    authCopy: string;
-    pb7: string;
-    pb7Copy: string;
-    pb8: string;
-    pb8Copy: string;
-    identity: string;
-    roleText: string;
-    sbAuth: string;
-    sbPb7: string;
-    sbPb8: string;
-  }>;
+  summaryView: ComputedRef<SummaryView>;
   statusRows: ComputedRef<StatusRow[]>;
   issues: ComputedRef<IssueRow[]>;
   loginSecurityBanner: ComputedRef<{ summary: string; showAck: boolean }>;
@@ -144,7 +160,7 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
 
   /* ── view models (:1283-1356) ── */
 
-  const summaryView = computed(() => {
+  const summaryView = computed<SummaryView>(() => {
     const pb8Optional = !pb8.value.required && !pb8.value.configured;
     return {
       auth: auth.value.authenticated ? t('misc.welcome.authenticated') : t('misc.welcome.guest'),
@@ -179,6 +195,10 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
             : t('misc.welcome.installPb8OrCorrectPaths'),
       identity: setup.value.pbname || t('misc.welcome.unnamedHost'),
       roleText: setup.value.master ? t('misc.welcome.masterRole') : t('misc.welcome.slaveRole'),
+      authTone: auth.value.authenticated ? 'success' : 'warning',
+      pb7Tone: setup.value.ready ? 'success' : setup.value.import_ready ? 'warning' : 'danger',
+      pb8Tone: pb8.value.ready ? 'success' : pb8Optional ? 'neutral' : pb8.value.source_ready ? 'warning' : 'danger',
+      identityTone: 'neutral',
       sbAuth: auth.value.authenticated ? t('misc.welcome.authenticated') : t('misc.welcome.guest'),
       sbPb7: setup.value.ready
         ? t('misc.welcome.pb7Ready')
@@ -210,21 +230,25 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
               : t('misc.welcome.stateObserved')
             : t('misc.welcome.stateClear'),
         detail: loginSecuritySummary(loginSecurity.value, t),
+        tone: activeBlocks ? 'danger' : blockedAttempts ? 'warning' : 'success',
       },
       {
         label: t('misc.welcome.pb7Source'),
         state: setup.value.import_ready ? t('misc.welcome.stateReady') : t('misc.welcome.stateMissing'),
         detail: setup.value.src_dir || t('misc.welcome.noPb7PathConfigured'),
+        tone: setup.value.import_ready ? 'success' : 'danger',
       },
       {
         label: t('misc.welcome.pb7Config'),
         state: setup.value.config_load_exists ? t('misc.welcome.stateAvailable') : t('misc.welcome.stateMissing'),
         detail: setup.value.config_load_file || t('misc.welcome.noConfigLoadPath'),
+        tone: setup.value.config_load_exists ? 'success' : 'warning',
       },
       {
         label: t('misc.welcome.pb7Python'),
         state: setup.value.venv_ready ? t('misc.welcome.stateReady') : t('misc.welcome.stateMissing'),
         detail: setup.value.pb7venv || t('misc.welcome.noInterpreterConfigured'),
+        tone: setup.value.venv_ready ? 'success' : 'warning',
       },
       {
         label: t('misc.welcome.pb8Source'),
@@ -232,6 +256,7 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
         detail: pb8.value.version
           ? `${pb8.value.src_dir || ''} (v${String(pb8.value.version).replace(/^v/, '')})`
           : pb8.value.src_dir || t('misc.welcome.noPb8PathConfigured'),
+        tone: pb8Optional ? 'info' : pb8.value.source_ready ? 'success' : 'danger',
       },
       {
         label: t('misc.welcome.pb8Config'),
@@ -239,11 +264,13 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
         detail: pb8.value.config_schema
           ? `${pb8.value.config_schema_file || ''} (${pb8.value.config_schema})`
           : pb8.value.config_schema_file || t('misc.welcome.noPb8ConfigSchema'),
+        tone: pb8Optional ? 'info' : pb8.value.config_ready ? 'success' : 'danger',
       },
       {
         label: t('misc.welcome.pb8Python'),
         state: pb8Optional ? t('misc.welcome.stateOptional') : pb8.value.python_ready ? t('misc.welcome.stateReady') : t('misc.welcome.stateMissing'),
         detail: pb8.value.pb8venv || t('misc.welcome.noPb8InterpreterConfigured'),
+        tone: pb8Optional ? 'info' : pb8.value.python_ready ? 'success' : 'danger',
       },
       {
         label: t('misc.welcome.pb8CliRust'),
@@ -256,26 +283,30 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
           cli: pb8.value.cli_file || t('misc.welcome.missing'),
           rust: pb8.value.rust_file || t('misc.welcome.missing'),
         }),
+        tone: pb8Optional ? 'info' : pb8.value.cli_ready && pb8.value.rust_ready ? 'success' : 'danger',
       },
       {
         label: t('misc.welcome.identity'),
         state: setup.value.master ? t('misc.welcome.stateMaster') : t('misc.welcome.stateSlave'),
         detail: setup.value.pbname || t('misc.welcome.unnamedHost'),
+        tone: 'neutral',
       },
     ];
   });
 
   const issues = computed<IssueRow[]>(() => {
     const rows: IssueRow[] = [];
+    const addIssue = (kind: IssueRow['kind'], message: string): void => {
+      if (!STATUS_COVERED_ISSUES.has(message)) rows.push({ kind, text: serverMsg(message) });
+    };
     const securityWarnings = (auth.value.security_warnings || []) as string[];
-    securityWarnings.forEach((message) => rows.push({ kind: 'error', text: serverMsg(message) }));
-    (setup.value.errors || []).forEach((message: string) => rows.push({ kind: 'error', text: serverMsg(message) }));
-    (setup.value.warnings || []).forEach((message: string) => rows.push({ kind: 'warning', text: serverMsg(message) }));
+    securityWarnings.forEach((message) => addIssue('error', message));
+    (setup.value.errors || []).forEach((message: string) => addIssue('error', message));
+    (setup.value.warnings || []).forEach((message: string) => addIssue('warning', message));
     if (setup.value.master || pb8.value.configured) {
-      (pb8.value.errors || []).forEach((message: string) => rows.push({ kind: 'error', text: serverMsg(message) }));
-      (pb8.value.warnings || []).forEach((message: string) => rows.push({ kind: 'warning', text: serverMsg(message) }));
+      (pb8.value.errors || []).forEach((message: string) => addIssue('error', message));
+      (pb8.value.warnings || []).forEach((message: string) => addIssue('warning', message));
     }
-    if (!rows.length) rows.push({ kind: 'warning', text: t('misc.welcome.noSetupIssuesDetected') });
     return rows;
   });
 

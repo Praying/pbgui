@@ -104,11 +104,11 @@ afterEach(() => {
 });
 
 describe('App shell (legacy mds-root)', () => {
-  it('renders the scoped root, watermark and initial waiting state', () => {
+  it('renders the scoped root and initial waiting state with the watermark disabled', () => {
     const app = mountApp();
 
     expect(app.find('.mds-root').exists()).toBe(true);
-    expect(app.find('.migration-watermark').exists()).toBe(true);
+    expect(app.find('.migration-watermark').exists()).toBe(false);
     expect(app.find('.mds-empty-state').text()).toContain('Waiting for market data status...');
   });
 

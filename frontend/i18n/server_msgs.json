@@ -418,5 +418,7 @@
   "v7_optimize.html not found": "v7_optimize.html 不存在",
   "v7_pareto_explorer.html not found": "v7_pareto_explorer.html 不存在",
   "v7_strategy_explorer.html not found": "v7_strategy_explorer.html 不存在",
-  "version must be v7 or v8": "version 必须为 v7 或 v8"
+  "version must be v7 or v8": "version 必须为 v7 或 v8",
+  "Passivbot V7 path is not configured.": "尚未配置 Passivbot V7 路径。",
+  "Passivbot V7 python interpreter is not configured.": "尚未配置 Passivbot V7 Python 解释器。"
 }

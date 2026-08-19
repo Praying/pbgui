@@ -20,8 +20,10 @@ The default **Overview** section summarizes the current local state:
 - **PB7**: whether the configured PBv7 runtime looks usable
 - **PB8**: whether source, V8 config schema, Python, CLI, and the compiled Rust extension are ready
 - **Identity**: the current host role and configured bot name
-- **Runtime Status**: detailed readiness checks from the backend
+- **Runtime Status**: detailed readiness checks grouped into Security, PB7, optional PB8, and Node sections
 - **Login security**: active login blocks and retained brute-force lockout history
+
+When PB7 is not ready, use **Configure PB7** in the PB7 summary card to open the Setup section directly. PB8 remains visually neutral when it is optional and unconfigured on a Slave.
 
 This section is intended as a quick sanity check after first startup, password changes, or path updates.
 
@@ -56,7 +58,7 @@ executes the PB8 CLI and validates the Rust import during installation.
 
 ## Password section
 
-The **Password** action in the left sidebar opens the password form.
+The **Password** action in the left sidebar opens a focused, single-column password form. The separate danger area keeps **Disable Authentication** apart from the normal password-change action.
 
 Use it to:
 

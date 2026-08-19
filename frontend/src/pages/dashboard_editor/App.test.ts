@@ -104,7 +104,7 @@ afterEach(() => {
 });
 
 describe('editor shell (editor:458-487)', () => {
-  it('renders the legacy shell layout with the migration watermark', async () => {
+  it('renders the legacy shell layout without the disabled migration watermark', async () => {
     const wrapper = mountApp();
     await flushPromises();
 
@@ -114,7 +114,7 @@ describe('editor shell (editor:458-487)', () => {
     expect(wrapper.find('.editor-scroll-area').exists()).toBe(true);
     expect(wrapper.find('#editor-grid').exists()).toBe(true);
     expect(wrapper.find('#grid-footer').exists()).toBe(true);
-    expect(wrapper.find('.migration-watermark').exists()).toBe(true);
+    expect(wrapper.find('.migration-watermark').exists()).toBe(false);
   });
 
   it('sets the document title from i18n (legacy dash.editorTitle)', async () => {

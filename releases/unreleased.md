@@ -2,6 +2,7 @@
 
 ## Internationalization (English / Simplified Chinese)
 
+
 - Web console UI now supports English (default) and Simplified Chinese.
   - Browser language auto-detection (`zh*` → Chinese), manual switch button in the top navigation bar (and on the login page), persisted per browser via `localStorage['pbgui-lang']`; switching reloads the page.
   - New lightweight i18n engine `frontend/i18n.js` (`window.PBGuiI18n`: `t()`, `setLang()`, `toggleLang()`, `translateDom()`, `serverMsg()`); dictionaries `frontend/i18n/en.json` and `zh.json` with semantic keys; `data-i18n*` attributes for static markup.
@@ -11,6 +12,8 @@
 - Updated `AGENTS.md` language convention accordingly.
 
 ## Vue 3 Frontend Migration (continued)
+
+- Refined the Vue Welcome page visual hierarchy: the overview now offers a direct PB7 setup action, groups runtime checks by Security/PB7/optional PB8/Node, removes duplicate sidebar status pills, uses neutral styling for optional PB8, constrains wide layouts, and gives password changes a focused form with a separate authentication-disable danger area. The shared Vue migration watermark is now off by default and can be enabled only with `VITE_MIGRATION_WATERMARK=on` during migration QA.
 
 - Migrated the Logging Monitor to the Vue 3 workspace (`frontend/src/pages/logging_monitor`): the shared live `LogViewerPanel` with rotated-generation switching, explicit purge confirmation, default/managed/per-log rotation settings, apply feedback, shared help/nav integration, Escape cleanup, and focused Vitest coverage. `GET /api/logging/main_page` now serves the Vue build first with `frontend/logging_monitor.html` retained as the cookie-only legacy fallback; added route coverage and bumped `api/serial.txt`.
 - Migrated the Shared Jobs Monitor to the Vue 3 workspace (`frontend/src/pages/jobs_monitor`): live cookie-authenticated WebSocket updates with polling fallback, active/done/failed history tabs, URL exchange/job-type filters, safe job detail/log modals, explicit action confirmations, distributed Bitget downloader summaries with log fallback, embedded Services Monitor routing, and legacy fallback support; added route and Vitest coverage and bumped `api/serial.txt`.

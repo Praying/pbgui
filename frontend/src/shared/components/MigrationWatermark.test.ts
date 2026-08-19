@@ -7,7 +7,8 @@ afterEach(() => {
 });
 
 describe('MigrationWatermark', () => {
-  it('renders the watermark by default (env unset)', () => {
+  it('renders the watermark when explicitly enabled', () => {
+    vi.stubEnv('VITE_MIGRATION_WATERMARK', 'on');
     const wrapper = mount(MigrationWatermark);
     expect(wrapper.find('.migration-watermark').exists()).toBe(true);
     expect(wrapper.text()).toContain('VUE MIGRATION PREVIEW');
@@ -19,13 +20,14 @@ describe('MigrationWatermark', () => {
     expect(wrapper.find('.migration-watermark').exists()).toBe(false);
   });
 
-  it('stays visible for any value other than off', () => {
+  it('is hidden by default and for any value other than on', () => {
+    expect(mount(MigrationWatermark).find('.migration-watermark').exists()).toBe(false);
     vi.stubEnv('VITE_MIGRATION_WATERMARK', '0');
-    const wrapper = mount(MigrationWatermark);
-    expect(wrapper.find('.migration-watermark').exists()).toBe(true);
+    expect(mount(MigrationWatermark).find('.migration-watermark').exists()).toBe(false);
   });
 
   it('never intercepts pointer events', () => {
+    vi.stubEnv('VITE_MIGRATION_WATERMARK', 'on');
     const wrapper = mount(MigrationWatermark);
     const style = wrapper.find('.migration-watermark').attributes('style');
     expect(style).toContain('pointer-events: none');

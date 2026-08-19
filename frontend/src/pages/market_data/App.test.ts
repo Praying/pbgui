@@ -48,7 +48,7 @@ describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
     expect(app.find('#page-body').exists()).toBe(true);
     expect(app.find('#sidebar').exists()).toBe(true);
     expect(app.find('#main-content').exists()).toBe(true);
-    expect(app.find('.migration-watermark').exists()).toBe(true);
+    expect(app.find('.migration-watermark').exists()).toBe(false);
   });
 
   it('sets the document title from the legacy market.title key (:3646)', () => {

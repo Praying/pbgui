@@ -68,6 +68,37 @@ describe('Welcome page shell', () => {
     expect(document.title).toBe('PBGui - Welcome');
   });
 
+  it('uses a focused overview with grouped statuses and a direct PB7 setup action', async () => {
+    const wrapper = await mountApp();
+
+    expect(wrapper.find('.migration-watermark').exists()).toBe(false);
+    expect(wrapper.find('.overview-header').exists()).toBe(true);
+    expect(wrapper.find('.overview-title').text()).toBe('System Overview');
+    expect(wrapper.find('.sb-meta').exists()).toBe(false);
+
+    const cards = wrapper.findAll('.summary-card');
+    expect(cards).toHaveLength(4);
+    expect(cards.map((card) => card.attributes('data-tone'))).toEqual(['success', 'warning', 'neutral', 'neutral']);
+    expect(wrapper.find('.summary-action').exists()).toBe(true);
+    expect(wrapper.find('.summary-action').text()).toBe('Configure PB7');
+    await wrapper.find('.summary-action').trigger('click');
+    expect(wrapper.find('#section-setup').attributes('hidden')).toBeUndefined();
+    await wrapper.findAll('#sidebar .sb-btn')[0]!.trigger('click');
+
+    const statusGroups = wrapper.findAll('#status-list .status-group');
+    expect(statusGroups).toHaveLength(4);
+    expect(statusGroups[0]!.findAll('.status-row')).toHaveLength(1);
+    expect(statusGroups[1]!.findAll('.status-row')).toHaveLength(3);
+    expect(statusGroups[2]!.findAll('.status-row')).toHaveLength(4);
+    expect(statusGroups[3]!.findAll('.status-row')).toHaveLength(1);
+
+    const statusBadges = wrapper.findAll('#status-list .status-badge');
+    expect(statusBadges).toHaveLength(9);
+    expect(statusBadges[0]!.attributes('data-tone')).toBe('success');
+    expect(statusBadges[1]!.attributes('data-tone')).toBe('success');
+    expect(statusBadges[2]!.attributes('data-tone')).toBe('warning');
+  });
+
   it('renders the runtime status rows and setup issues', async () => {
     const wrapper = await mountApp();
 
@@ -77,6 +108,25 @@ describe('Welcome page shell', () => {
     expect(rows[1]!.text()).toContain('/opt/pb7');
     const issues = wrapper.findAll('#issues .issue');
     expect(issues.map((issue) => issue.text())).toContain('PB7 venv missing');
+  });
+
+  it('does not repeat generic runtime-missing messages below the grouped status rows', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...BOOTSTRAP,
+          setup: {
+            ...BOOTSTRAP.setup,
+            errors: ['Passivbot V7 path is not configured.', 'Passivbot V7 python interpreter is not configured.'],
+            warnings: [],
+          },
+        }),
+        { status: 200 }
+      )
+    );
+
+    const wrapper = await mountApp();
+    expect(wrapper.findAll('#issues .issue')).toHaveLength(0);
   });
 
   it('shows the login-security warning with acknowledge until acknowledged', async () => {
@@ -138,10 +188,27 @@ describe('Welcome page shell', () => {
     expect(JSON.parse(String(init.body))).toMatchObject({ pb7dir: '/opt/pb7', pb7venv: '/venv/bin/python', pbname: 'main', role: 'master' });
   });
 
+  it('organizes setup into bounded PB7/PB8 groups with a distinct identity action area', async () => {
+    const wrapper = await mountApp();
+    await wrapper.findAll('#sidebar .sb-btn')[1]!.trigger('click');
+
+    expect(wrapper.find('#section-setup .settings-section-heading').exists()).toBe(true);
+    expect(wrapper.find('#section-setup .settings-section-heading .section-kicker').text()).toBe('Runtime Settings');
+    expect(wrapper.find('#section-setup .settings-panel').exists()).toBe(true);
+    expect(wrapper.findAll('#section-setup .runtime-group')).toHaveLength(2);
+    expect(wrapper.find('#section-setup .runtime-group--pb7 #pb7dir').exists()).toBe(true);
+    expect(wrapper.find('#section-setup .runtime-group--pb8 #pb8dir').exists()).toBe(true);
+    expect(wrapper.find('#section-setup .identity-section').exists()).toBe(true);
+    expect(wrapper.find('#section-setup .settings-actions').exists()).toBe(true);
+    expect(wrapper.find('#sidebar-header .sb-title').classes()).toContain('sb-title');
+  });
+
   it('opens the password section only when authenticated', async () => {
     const wrapper = await mountApp();
     await wrapper.find('#sidebar-password-btn').trigger('click');
     expect(wrapper.find('#section-password').attributes('hidden')).toBeUndefined();
+    expect(wrapper.find('.password-panel').exists()).toBe(true);
+    expect(wrapper.find('.password-danger-zone').exists()).toBe(true);
 
     fetchMock.mockImplementation(() =>
       Promise.resolve(

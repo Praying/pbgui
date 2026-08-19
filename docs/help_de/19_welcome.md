@@ -20,8 +20,10 @@ Der Standardbereich **Overview** fasst den aktuellen lokalen Zustand zusammen:
 - **PB7**: ob die konfigurierte PBv7-Runtime verwendbar aussieht
 - **PB8**: ob Source, V8-Config-Schema, Python, CLI und die kompilierte Rust-Erweiterung bereit sind
 - **Identity**: aktuelle Host-Rolle und konfigurierter Bot-Name
-- **Runtime Status**: detaillierte Readiness-Pruefungen aus dem Backend
+- **Runtime Status**: detaillierte Readiness-Pruefungen, gruppiert nach Security, PB7, optionalem PB8 und Node
 - **Login security**: aktive Login-Sperren und behaltene Brute-Force-Lockout-Historie
+
+Wenn PB7 nicht bereit ist, oeffnet **Configure PB7** in der PB7-Uebersichtskarte direkt den Setup-Bereich. Optionales, nicht konfiguriertes PB8 bleibt auf einem Slave visuell neutral.
 
 Dieser Bereich ist als schneller Kontrollpunkt nach dem ersten Start, nach Passwortwechseln oder nach Pfad-Anpassungen gedacht.
 
@@ -56,7 +58,7 @@ fuehrt waehrend der Installation zusaetzlich die PB8-CLI aus und validiert den R
 
 ## Bereich Password
 
-Die Aktion **Password** in der linken Sidebar oeffnet das Passwort-Formular.
+Die Aktion **Password** in der linken Sidebar oeffnet ein fokussiertes, einspaltiges Passwort-Formular. Ein separater Gefahrenbereich trennt **Disable Authentication** von der normalen Passwortaenderung.
 
 Damit kannst du:
 
