@@ -62,8 +62,8 @@ describe('metricTooltip suffix decomposition', () => {
   it('decomposes multi-suffix names with qualifiers in name order', () => {
     const tip = metricTooltip('adg_w_usd');
     expect(tip).toContain('平均日收益');
-    expect(tip).toContain('\n· 近期加权（偏向近期表现） · 美元计价\n');
-    expect(tip).toContain('\n· recency-weighted · USD-denominated\n');
+    expect(tip).toContain('\n· 近期加权（偏向近期表现） · 美元计价');
+    expect(tip).toContain('\n· recency-weighted · USD-denominated');
   });
 
   it('decomposes _strategy_eq variants down to the bare base', () => {
@@ -226,7 +226,7 @@ export function metricTooltip(name: string): string | undefined {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `cd /Users/quran/SourceCode/pbgui/frontend && npx vitest run src/pages/v7_pareto_explorer/lib/metricDocs.test.ts`
-Expected: PASS — 8 tests passed
+Expected: PASS — 7 tests passed
 
 - [ ] **Step 5: Commit**
 
