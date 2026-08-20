@@ -60,10 +60,27 @@ describe('loadResults (:5375-5416)', () => {
     const promise = s.loadResults();
     await vi.advanceTimersByTimeAsync(0);
     await promise;
-    expect(fetchMock.mock.calls[0]?.[0]).toBe('http://h:8000/api/backtest-v7/results');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('http://h:8000/api/backtest-v7/results?offset=0&limit=5');
     expect(s.results.value).toHaveLength(1);
     expect(s.results.value[0]).toMatchObject({ path: 'backtests/c1/x/r1', backtest_version: 'v7' });
     expect(s.checking.value).toBe(false);
+  });
+
+  it('loads paginated result batches and exposes each completed batch before the next request', async () => {
+    fetchMock.mockImplementation((url: unknown) => {
+      const parsed = new URL(String(url));
+      return parsed.searchParams.get('offset') === '5'
+        ? ok({ results: [{ path: 'p6', config_name: 'c6', result_name: 'r6' }], pagination: { has_more: false, next_offset: 6 } })
+        : ok({ results: Array.from({ length: 5 }, (_, index) => ({ path: `p${index + 1}`, config_name: `c${index + 1}`, result_name: `r${index + 1}` })), pagination: { has_more: true, next_offset: 5 } });
+    });
+    const s = store();
+    const promise = s.loadResults();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(s.results.value).toHaveLength(5);
+    await vi.runAllTimersAsync();
+    await promise;
+    expect(s.results.value.map((row) => row.path)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5', 'p6']);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("'both' fans out to both flavor bases and concatenates v7 before v8 (:5386-5392)", async () => {
@@ -76,7 +93,8 @@ describe('loadResults (:5375-5416)', () => {
     await vi.advanceTimersByTimeAsync(0);
     await promise;
     const urls = fetchMock.mock.calls.map((c) => String(c[0]));
-    expect(urls).toEqual(expect.arrayContaining(['http://h:8000/api/backtest-v7/results', 'http://h:8000/api/backtest-v8/results']));
+    expect(urls.some((url) => url.startsWith('http://h:8000/api/backtest-v7/results?'))).toBe(true);
+    expect(urls.some((url) => url.startsWith('http://h:8000/api/backtest-v8/results?'))).toBe(true);
     expect(s.results.value.map((r) => r.backtest_version)).toEqual(['v7', 'v8']);
   });
 

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import ast
+from datetime import datetime, timezone
 import inspect
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -223,6 +226,32 @@ def test_instance_snapshot_rejects_malformed_present_v8(value: Any) -> None:
     payload["v8"] = value
 
     with pytest.raises(MonitorAgentPayloadError, match="v8"):
+        monitor_mod._validate_monitor_agent_payload("instance_snapshot.json", payload, now=1000.0)
+
+
+def test_instance_snapshot_validates_optional_bounded_bot_history() -> None:
+    """Runtime history extensions remain optional but strict when present."""
+
+    payload = _valid_payloads(1000.0)["instance_snapshot.json"]
+    payload["history"] = {
+        "8:pb8_bot": {
+            "from_hour": 1,
+            "to_hour": 1,
+            "errors": {"1": 2},
+            "tracebacks": {},
+            "pnl": {
+                "total_pnl": -3.5,
+                "total_fills": 12,
+                "last_fill_ts": 999,
+                "source": "PB8 fill batch summary",
+            },
+        }
+    }
+
+    monitor_mod._validate_monitor_agent_payload("instance_snapshot.json", payload, now=1000.0)
+
+    payload["history"]["8:pb8_bot"]["errors"] = {"2": 1}
+    with pytest.raises(MonitorAgentPayloadError, match="bucket"):
         monitor_mod._validate_monitor_agent_payload("instance_snapshot.json", payload, now=1000.0)
 
 
@@ -1520,6 +1549,94 @@ def test_agent_process_identity_distinguishes_same_v7_v8_name(
     assert decoy is None
 
 
+def test_agent_process_collection_keeps_pb8_virtualenv_cli(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Resolving the Python symlink must not replace the sibling PB8 CLI path."""
+
+    real_path = Path
+    proc_root = tmp_path / "proc"
+    proc_dir = proc_root / "123"
+    proc_dir.mkdir(parents=True)
+    pb8_dir = tmp_path / "pb8"
+    pb8_dir.mkdir()
+    runtime_python = tmp_path / "runtime" / "python3"
+    runtime_python.parent.mkdir()
+    runtime_python.touch()
+    pb8_python = tmp_path / "venv_pb8" / "bin" / "python"
+    pb8_python.parent.mkdir(parents=True)
+    pb8_python.symlink_to(runtime_python)
+    pb8_cli = pb8_python.parent / "passivbot"
+    pb8_cli.touch()
+    config_path = tmp_path / "data" / "run_v8" / "pb8_bot" / "config.json"
+    config_path.parent.mkdir(parents=True)
+    config_path.touch()
+    (proc_dir / "cwd").symlink_to(pb8_dir, target_is_directory=True)
+    argv = [str(pb8_python), str(pb8_cli), "live", str(config_path), "--fail-on-stale-rust"]
+    (proc_dir / "cmdline").write_bytes(b"\x00".join(arg.encode() for arg in argv) + b"\x00")
+    stat_parts = ["123", "(bot)", "S", *(["0"] * 19)]
+    stat_parts[13] = "10"
+    stat_parts[14] = "0"
+    stat_parts[21] = "20"
+    (proc_dir / "stat").write_text(" ".join(stat_parts), encoding="utf-8")
+    (proc_dir / "status").write_text("VmRSS:\t2048 kB\nVmSwap:\t0 kB\n", encoding="utf-8")
+
+    monkeypatch.setattr(monitor_agent, "PBGDIR", tmp_path)
+    monkeypatch.setattr(monitor_agent, "_pb7_dir", lambda: tmp_path / "pb7")
+    monkeypatch.setattr(
+        monitor_agent,
+        "_read_ini",
+        lambda: SimpleNamespace(
+            get=lambda _section, key, fallback="": {
+                "pb8dir": str(pb8_dir), "pb8venv": str(pb8_python),
+            }.get(key, fallback)
+        ),
+    )
+    monkeypatch.setattr(
+        monitor_agent,
+        "Path",
+        lambda value: proc_root if str(value) == "/proc" else real_path(value),
+    )
+
+    bots = monitor_agent._bot_processes({}, {}, {})
+
+    assert bots == [{
+        "name": "pb8_bot", "p": "8", "cpu": 0.0, "cpu_60s": 0.0,
+        "cpu_60s_window": 0.0, "rss_mb": 2.0, "swap_mb": 0.0,
+    }]
+
+
+def test_bot_metric_history_records_zero_swap_for_pb8() -> None:
+    """A running PB8 process with zero swap still produces a valid history point."""
+
+    class Recorder:
+        """Capture one history store's record calls."""
+
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, dict[str, Any]]] = []
+
+        def record(self, key: str, **kwargs: Any) -> None:
+            """Store one record invocation."""
+
+            self.calls.append((key, kwargs))
+
+    monitor = object.__new__(VPSMonitor)
+    memory = Recorder()
+    swap = Recorder()
+    monitor._bot_metric_history = {"memory": memory, "swap": swap}
+
+    monitor._record_bot_metric_history(
+        "pb-host",
+        [{"name": "pb8_bot", "p": "8", "rss_mb": 12.5, "swap_mb": 0.0}],
+        120.0,
+    )
+
+    assert memory.calls[0][0] == "pb-host:8:pb8_bot"
+    assert swap.calls == [("pb-host:8:pb8_bot", {
+        "minute": 2, "value": 0.0, "confirmed": True, "same_minute_mode": "peak",
+    })]
+
+
 def test_agent_process_caches_reject_pid_reuse(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1603,6 +1720,157 @@ def test_embedded_instance_collector_remains_valid_python() -> None:
     assert "def _pb8_last_error(config_dir):" in monitor_mod.INSTANCE_COLLECT_SCRIPT
     assert "cluster_gate = 'runtime_not_ready'" in monitor_mod.INSTANCE_COLLECT_SCRIPT
     assert "blocked_reason = 'PB8 exits on start: ' + last_error" in monitor_mod.INSTANCE_COLLECT_SCRIPT
+    assert "'pnl_cache_version': PB8_PNL_CACHE_VERSION" in monitor_mod.INSTANCE_COLLECT_SCRIPT
+    assert "'history': bot_history" in monitor_mod.INSTANCE_COLLECT_SCRIPT
+
+
+def test_embedded_pb8_pnl_uses_fill_timestamp_and_skips_batch_summaries() -> None:
+    """PB8 startup history must not become today's PnL based on its log timestamp."""
+
+    prefix = 'python3 -u -c "\n'
+    source = monitor_mod.INSTANCE_COLLECT_SCRIPT[len(prefix):-2]
+    tree = ast.parse(source)
+    names = {
+        "FILL_SUMMARY_RE",
+        "FILL_PNL_RE",
+        "FILL_EVENT_TS_RE",
+        "_utc_ts",
+        "_parse_fill_event_timestamp",
+        "_process_pb7_line",
+    }
+    selected = []
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name in names:
+            selected.append(node)
+        elif isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id in names for target in node.targets
+        ):
+            selected.append(node)
+    namespace = {"re": re, "datetime": datetime, "timezone": timezone}
+    exec(compile(ast.Module(body=selected, type_ignores=[]), "<pb8-pnl-parser>", "exec"), namespace)
+    process = namespace["_process_pb7_line"]
+    today_start = int(datetime(2026, 8, 15, tzinfo=timezone.utc).timestamp())
+    yesterday_start = today_start - 86400
+    counters = {"et": 0, "ct": 0, "pt": 0.0}
+
+    process(
+        "2026-08-15T07:07:09Z INFO [fill] 365 fills, pnl=-50.603262 USDT, pnl_known=365",
+        "count", bc=counters, last_day="today", fill_event_dates=True,
+        today_start=today_start, yesterday_start=yesterday_start,
+    )
+    process(
+        "2026-08-15T07:07:09Z INFO [fill] 2026-08-14T23:59:59Z BTC long close -1 @ 1, pnl=-7 USDT",
+        "count", bc=counters, last_day="today", fill_event_dates=True,
+        today_start=today_start, yesterday_start=yesterday_start,
+    )
+    process(
+        "2026-08-15T07:07:09Z INFO [fill] 2026-08-15T06:00:00Z BTC long close -1 @ 1, pnl=+2.5 USDT",
+        "count", bc=counters, last_day="today", fill_event_dates=True,
+        today_start=today_start, yesterday_start=yesterday_start,
+    )
+
+    assert counters == {"et": 0, "ct": 1, "pt": 2.5}
+
+
+def test_embedded_pb8_history_uses_hourly_logs_and_latest_net_summary(tmp_path: Path) -> None:
+    """PB8 history reports exact log buckets and advances its latest canonical total."""
+
+    prefix = 'python3 -u -c "\n'
+    source = monitor_mod.INSTANCE_COLLECT_SCRIPT[len(prefix):-2]
+    tree = ast.parse(source)
+    names = {
+        "FILL_SUMMARY_RE",
+        "FILL_PNL_RE",
+        "FILL_FEE_RE",
+        "FILL_EVENT_TS_RE",
+        "_utc_ts",
+        "_parse_log_timestamp",
+        "_parse_fill_event_timestamp",
+        "_count_hourly_files",
+        "_pb8_pnl_summary",
+    }
+    selected = []
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name in names:
+            selected.append(node)
+        elif isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id in names for target in node.targets
+        ):
+            selected.append(node)
+    namespace = {
+        "datetime": datetime,
+        "timezone": timezone,
+        "os": os,
+        "re": re,
+        "SERVICE": "test",
+        "_log": lambda *_args, **_kwargs: None,
+    }
+    exec(compile(ast.Module(body=selected, type_ignores=[]), "<pb8-history>", "exec"), namespace)
+    native_log = tmp_path / "pb8.log"
+    native_log.write_text(
+        "2026-08-14T23:00:00Z ERROR old failure\n"
+        "2026-08-15T07:07:09Z INFO [fill] 365 fills, pnl=-50.603262 USDT, pnl_known=365\n"
+        "2026-08-15T08:00:00Z ERROR new failure\n"
+        "2026-08-15T08:01:00Z INFO [fill] 2026-08-15T08:00:59Z BTC long entry +1 @ 1\n"
+        "2026-08-15T08:02:00Z INFO [fill] 2026-08-15T08:01:59Z BTC long close -1 @ 1, pnl=+2 USDT, fee=-0.1 USDT\n",
+        encoding="utf-8",
+    )
+
+    from_hour = int(datetime(2026, 8, 14, 22, tzinfo=timezone.utc).timestamp() // 3600)
+    to_hour = int(datetime(2026, 8, 15, 9, tzinfo=timezone.utc).timestamp() // 3600)
+    errors = namespace["_count_hourly_files"]([str(native_log)], " ERROR ", from_hour, to_hour)
+    pnl = namespace["_pb8_pnl_summary"]([str(native_log)])
+
+    assert sum(errors.values()) == 2
+    assert pnl == {
+        "total_pnl": pytest.approx(-48.703262),
+        "total_fills": 367,
+        "last_fill_ts": int(datetime(2026, 8, 15, 8, 1, 59, tzinfo=timezone.utc).timestamp()),
+        "source": "PB8 fill batch summary",
+    }
+
+
+def test_master_imports_runtime_qualified_agent_history(tmp_path: Path) -> None:
+    """Validated PB8 history replaces bounded counts and stores summary-only net PNL."""
+
+    monitor = object.__new__(VPSMonitor)
+    monitor._bot_count_history = {
+        "errors": monitor_mod.BotCountHistoryStore(tmp_path, "errors"),
+        "tracebacks": monitor_mod.BotCountHistoryStore(tmp_path, "tracebacks"),
+    }
+    monitor._bot_pnl_history = monitor_mod.BotPnlHistoryStore(tmp_path, "pnl")
+    monitor._import_agent_bot_history("pb-host", {
+        "8:pb8_bot": {
+            "from_hour": 100,
+            "to_hour": 101,
+            "errors": {"100": 2, "101": 1},
+            "tracebacks": {"101": 1},
+            "pnl": {
+                "total_pnl": -50.603262,
+                "total_fills": 365,
+                "last_fill_ts": 999,
+                "source": "PB8 fill batch summary",
+            },
+        }
+    })
+
+    error_payload = monitor._bot_count_history["errors"].build_payload(
+        "pb-host:8:pb8_bot", hostname="pb-host", bot_name="8:pb8_bot", end_hour=101,
+    )
+    pnl_payload = monitor.get_bot_metric_history("pb-host", "8:pb8_bot", "pnl")
+
+    assert error_payload["total_count"] == 3
+    assert pnl_payload["total_pnl"] == pytest.approx(-50.603262)
+    assert pnl_payload["total_fills"] == 365
+    assert pnl_payload["summary_only"] is True
+    assert pnl_payload["points"] == []
+
+    reloaded = monitor_mod.BotPnlHistoryStore(tmp_path, "pnl")
+    reloaded_payload = reloaded.build_payload(
+        "pb-host:8:pb8_bot", hostname="pb-host",
+    )
+    assert reloaded_payload["total_pnl"] == pytest.approx(-50.603262)
+    assert reloaded_payload["total_fills"] == 365
 
 
 def test_embedded_instance_collector_reports_unstamped_pb8_runtime(tmp_path: Path) -> None:

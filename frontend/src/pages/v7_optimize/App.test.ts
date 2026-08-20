@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { apiFetch, ApiError } from '@/shared/api';
 import App from './App.vue';
 
-vi.mock('@/shared/api', () => ({ apiFetch: vi.fn().mockResolvedValue({ settings: {}, configs: [], items: [], results: [] }) }));
+vi.mock('@/shared/api', () => ({
+  apiFetch: vi.fn().mockResolvedValue({ settings: {}, configs: [], items: [], results: [] }),
+  ApiError: class ApiError extends Error {
+    constructor(public status: number, public detail: string) { super(detail); }
+  },
+}));
 
 describe('v7_optimize App', () => {
   beforeEach(() => {
@@ -67,6 +73,22 @@ describe('v7_optimize App', () => {
 
     expect(wrapper.find('[data-action="preflight"]').text()).toBe('🧭 OHLCV Readiness');
     expect(wrapper.findAll('button.opt-side-action').at(-1)?.text()).toBe('🧭 OHLCV Readiness');
+  });
+
+  it('keeps the PB8 workbench visible with an update warning when runtime metadata is unavailable', async () => {
+    window.history.replaceState({}, '', '/api/optimize-v8/main_page');
+    vi.mocked(apiFetch)
+      .mockRejectedValueOnce(new ApiError(503, 'PB8 update incomplete'))
+      .mockResolvedValueOnce({ configs: [{ name: 'alpha' }] })
+      .mockResolvedValueOnce({ items: [] })
+      .mockResolvedValueOnce({ results: [] });
+    const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
+    await flushPromises();
+
+    expect(wrapper.find('[data-test="pb8-runtime-warning"]').text()).toContain('PB8 update required');
+    expect(wrapper.find('[data-test="pb8-runtime-warning"]').text()).toContain('PB8 update incomplete');
+    expect(wrapper.find('[data-test="pb8-runtime-warning"] a').attributes('href')).toBe('/api/vps-manager/main_page');
+    expect(wrapper.text()).toContain('alpha');
   });
 
   it('does not use native confirmation APIs for destructive actions', () => {

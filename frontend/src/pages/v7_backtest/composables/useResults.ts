@@ -25,6 +25,7 @@ import type { I18nT } from '../types.i18n';
 
 export const RESULTS_EMPTY_RETRY_LIMIT = 3;
 export const RESULTS_RETRY_BASE_MS = 400;
+export const RESULTS_PAGE_SIZE = 5;
 
 export interface ResultDataApi {
   /** resultApiBase (:1160-1163) — the row's flavor router. */
@@ -280,6 +281,47 @@ export function useResults(options: UseResultsOptions): ResultsStore {
     return results.value;
   }
 
+  async function yieldRenderFrames(): Promise<void> {
+    // Let the table paint each completed batch before asking the API for more.
+    await new Promise<void>((resolve) => timers.setTimeout(resolve, 0));
+    await new Promise<void>((resolve) => timers.setTimeout(resolve, 0));
+  }
+
+  async function loadVersionResults(
+    targetVersion: BacktestVersion,
+    generation: number,
+    selectedFilter: string,
+  ): Promise<BacktestResultItem[]> {
+    const collected: BacktestResultItem[] = [];
+    resultsByVersion[targetVersion] = [];
+    let offset = 0;
+
+    while (true) {
+      const query = new URLSearchParams({ offset: String(offset), limit: String(RESULTS_PAGE_SIZE) });
+      const response = await fetchFn(`${baseFor(targetVersion)}/results?${query.toString()}`, { credentials: 'same-origin' });
+      const data = (await response.json().catch(() => ({}))) as {
+        results?: BacktestResultItem[];
+        detail?: unknown;
+        pagination?: { has_more?: boolean; next_offset?: number };
+      };
+      if (!response.ok) throw new Error(String(data.detail ?? response.statusText));
+      const page = (data.results ?? []).map((result) => ({ ...result, backtest_version: targetVersion }));
+      collected.push(...page);
+      resultsByVersion[targetVersion] = collected.slice();
+      if (generation === loadGeneration) {
+        applyResultsData(Object.values(resultsByVersion).flat(), selectedFilter);
+      }
+
+      const hasMore = data.pagination?.has_more === true;
+      const nextOffset = Number(data.pagination?.next_offset);
+      if (!hasMore || !Number.isFinite(nextOffset) || nextOffset <= offset || page.length === 0) break;
+      offset = nextOffset;
+      await yieldRenderFrames();
+      if (generation !== loadGeneration) break;
+    }
+    return collected;
+  }
+
   async function loadResults(filterName?: string, loadOptions?: { emptyRetry?: boolean }): Promise<BacktestResultItem[]> {
     const retry = loadOptions?.emptyRetry === true;
     const selectedFilter = typeof filterName === 'string' ? filterName : pendingFilter;
@@ -294,20 +336,7 @@ export function useResults(options: UseResultsOptions): ResultsStore {
 
     let loaded: BacktestResultItem[][];
     try {
-      loaded = await Promise.all(
-        versions.map(async (targetVersion) => {
-          const response = await fetchFn(`${baseFor(targetVersion)}/results`, { credentials: 'same-origin' });
-          const data = (await response.json().catch(() => ({}))) as { results?: BacktestResultItem[]; detail?: unknown };
-          if (!response.ok) throw new Error(String(data.detail ?? response.statusText));
-          // legacy :5390 tags the REQUESTED flavor unconditionally — the
-          // server list carries no version of its own
-          resultsByVersion[targetVersion] = (data.results ?? []).map((result) => ({
-            ...result,
-            backtest_version: targetVersion,
-          }));
-          return resultsByVersion[targetVersion]!;
-        })
-      );
+      loaded = await Promise.all(versions.map((targetVersion) => loadVersionResults(targetVersion, generation, selectedFilter)));
     } catch (error) {
       // :5412-5416 — stale loads fall through silently; fresh ones toast
       if (generation === loadGeneration) {

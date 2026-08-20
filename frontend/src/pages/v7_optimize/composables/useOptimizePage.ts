@@ -85,6 +85,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
   const queueConfigChoice = ref<QueueConfigChoice | null>(null);
   const loading = ref(false);
   const error = ref('');
+  const runtimeWarning = ref('');
   const connected = ref(false);
   const ws = ref<WebSocket | null>(null);
   let wsGeneration = 0;
@@ -158,29 +159,38 @@ export function useOptimizePage(options: OptimizePageOptions) {
   let paretoGeneration = 0;
   async function loadSettings(): Promise<void> {
     const generation = ++settingsGeneration;
-    const data = await request<OptimizeSettings>('/settings');
-    if (generation !== settingsGeneration) return;
-    settings.value = { ...settings.value, ...data };
-    const metadata = await request<Record<string, unknown>>('/metadata');
-    if (generation !== settingsGeneration) return;
-    let limitsMeta: unknown = metadata;
-    if (isObject(metadata.limits_meta)) {
-      limitsMeta = metadata.limits_meta;
-    } else if (isObject(metadata.limits)) {
-      const limits = metadata.limits;
-      const scoring = isObject(metadata.scoring) ? metadata.scoring : {};
-      limitsMeta = {
-        metrics_by_group: { all: Array.isArray(limits.metrics) ? limits.metrics : [] },
-        all_valid_metrics: Array.isArray(limits.metrics) ? limits.metrics : [],
-        penalize_if_options: Array.isArray(limits.operators) ? limits.operators : [],
-        stat_options: ['', ...(Array.isArray(limits.statistics) ? limits.statistics : [])],
-        limit_basis_field: limits.basis_field || 'stat',
-        scoring_basis_field: scoring.basis_field || limits.scoring_basis_field || 'aggregate',
-        goal_options: Array.isArray(scoring.goals) ? scoring.goals : ['min', 'max'],
-        default_goal_map: isObject(scoring.default_goals) ? scoring.default_goals : {},
-      };
+    runtimeWarning.value = '';
+    try {
+      const data = await request<OptimizeSettings>('/settings');
+      if (generation !== settingsGeneration) return;
+      settings.value = { ...settings.value, ...data };
+      const metadata = await request<Record<string, unknown>>('/metadata');
+      if (generation !== settingsGeneration) return;
+      let limitsMeta: unknown = metadata;
+      if (isObject(metadata.limits_meta)) {
+        limitsMeta = metadata.limits_meta;
+      } else if (isObject(metadata.limits)) {
+        const limits = metadata.limits;
+        const scoring = isObject(metadata.scoring) ? metadata.scoring : {};
+        limitsMeta = {
+          metrics_by_group: { all: Array.isArray(limits.metrics) ? limits.metrics : [] },
+          all_valid_metrics: Array.isArray(limits.metrics) ? limits.metrics : [],
+          penalize_if_options: Array.isArray(limits.operators) ? limits.operators : [],
+          stat_options: ['', ...(Array.isArray(limits.statistics) ? limits.statistics : [])],
+          limit_basis_field: limits.basis_field || 'stat',
+          scoring_basis_field: scoring.basis_field || limits.scoring_basis_field || 'aggregate',
+          goal_options: Array.isArray(scoring.goals) ? scoring.goals : ['min', 'max'],
+          default_goal_map: isObject(scoring.default_goals) ? scoring.default_goals : {},
+        };
+      }
+      settings.value = { ...settings.value, ...metadata, limitsMeta };
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 503) {
+        runtimeWarning.value = caught.detail;
+        return;
+      }
+      throw caught;
     }
-    settings.value = { ...settings.value, ...metadata, limitsMeta };
   }
 
   async function loadConfigs(): Promise<void> {
@@ -221,8 +231,11 @@ export function useOptimizePage(options: OptimizePageOptions) {
   async function loadAll(): Promise<void> {
     loading.value = true;
     error.value = '';
+    runtimeWarning.value = '';
     try {
-      await Promise.all([loadSettings(), loadConfigs(), loadQueue(), loadResults()]);
+      const tasks: Array<Promise<void>> = [loadSettings(), loadConfigs(), loadQueue()];
+      if (panel.value === 'results') tasks.push(loadResults());
+      await Promise.all(tasks);
       const openConfig = readOpenConfig(options.search);
       if (openConfig) await openEditor(openConfig);
     } catch (caught) {
@@ -234,6 +247,11 @@ export function useOptimizePage(options: OptimizePageOptions) {
 
   function setPanel(next: OptimizePanel): void {
     panel.value = next;
+    if (next === 'results' && results.value.length === 0) {
+      void loadResults().catch((caught) => {
+        if (panel.value === 'results') error.value = detailOf(caught);
+      });
+    }
   }
 
   function clearSelection(kind: 'configs' | 'queue' | 'results' | 'paretos', keys?: string[]): void {
@@ -592,6 +610,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     queueConfigChoice,
     loading,
     error,
+    runtimeWarning,
     connected,
     filteredConfigs,
     filteredQueue,

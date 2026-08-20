@@ -38,7 +38,7 @@ The editor provides the same workflow as PBv7 Run:
 
 Import, Copy, Backtest handoff, **Strategy Explorer**, live logs, and Raw JSON editing are available from the same sidebar workflow. Strategy Explorer receives the current unsaved PB8 config and every referenced sparse override through an authenticated opaque draft. The Import dialog provides searchable User suggestions and rejects names outside the configured exchange-user catalog. **Balance Calculator** opens the shared calculator with the current unsaved config, while **Calc Balance** calculates and can apply the recommended `balance_override` inline. Browser requests use the HttpOnly PBGui session cookie; no session token is rendered into the editor.
 
-Every save runs through the installed PB8 prepare/save pipeline. PBGui validates the editor's expected version, atomically replaces the complete config-and-override directory under a cross-process lock, publishes an immutable manifest, and appends an explicit `UPSERT_PB8_CONFIG` operation. If operation publication or local placement fails, the previous local bundle is retained or restored.
+Every save runs through the installed PB8 prepare/save pipeline. PBGui validates the editor's expected version, atomically replaces the complete config-and-override directory under a cross-process lock, publishes an immutable manifest, and appends an explicit `UPSERT_PB8_CONFIG` operation. A running remote assignment is sent directly to its target in one Cluster bundle with a three-second transport limit; PBCluster remains the durable retry path if that fast activation cannot complete. PBRun polls PB8 desired state and config signatures every second so successful materialization is reconciled immediately. If operation publication or local placement fails, the previous local bundle is retained or restored.
 
 ## Backups
 
@@ -50,13 +50,13 @@ PBRun supervises PB7 and PB8 through the same controller service. Restarting tha
 
 ## Eligible Hosts
 
-The target list is fail-closed. A host appears only when one of these sources confirms PB8 capability:
+The target list is fail-closed. A host appears only when one of these sources confirms PB8 capability and its reported `pb8_config_schema` is at least as new as the current config's `config_version`:
 
 - The local `pb8_runtime_status` is ready.
 - VPS Manager records runtime profile `pb8` or `pb7_pb8` and a successful setup.
 - An unmanaged remote host reports a fresh `pb8ready` value through host metadata.
 
-PB7-only, not-ready, stale, and unknown new targets are rejected with HTTP 409. An unchanged unknown target from an older saved config may remain selectable so the config can be edited without forcing an unsafe move; it cannot be selected for a new deployment.
+PB7-only, not-ready, stale, schema-incompatible, and unknown new targets are rejected with HTTP 409. For example, a `v8.1.0` config cannot target a host that reports only schema `v8.0.0`; update PB8 on that host first. An unchanged unknown target from an older saved config may remain selectable so the config can be edited without forcing an unsafe move; it cannot be selected for a new deployment.
 
 ## Cluster Rollout
 

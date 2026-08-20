@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import gzip
 import json
 import os
@@ -103,6 +104,32 @@ def test_build_optimize_preset_from_pb8_backtest_result(tmp_path: Path, monkeypa
     assert result["preset_config"]["config_version"] == "v8.0.0"
     assert result["preset_config"]["optimize"]["bounds"]["long"]["risk"]["n_positions"] == [3.0, 4.0, 1.0]
     assert result["near_bounds_count"] == 0
+
+
+def test_result_run_draft_reuses_canonical_result_without_pb8_prepare(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Add to Run stores the emitted PB8 result directly instead of re-preparing it."""
+
+    result_dir = tmp_path / "result-1"
+    result_dir.mkdir()
+    config = {"live": {"user": "alice"}, "pbgui": {"enabled_on": "old-host"}}
+    (result_dir / "config.json").write_text(json.dumps(config), encoding="utf-8")
+    monkeypatch.setattr(backtest_v8, "_resolve_result_dir", lambda _path: result_dir)
+    captured = {}
+
+    def store(candidate: dict) -> dict:
+        captured["config"] = candidate
+        return {"draft_id": "draft-1", "expires_in": 300}
+
+    monkeypatch.setattr(backtest_v8, "store_v8_editor_draft", store)
+
+    result = backtest_v8.create_result_run_draft({"path": "result-1"}, session=None)
+
+    assert result == {"draft_id": "draft-1", "expires_in": 300, "name": "result-1"}
+    assert captured["config"]["live"]["user"] == "alice"
+    assert captured["config"]["pbgui"] == {"enabled_on": "disabled", "runtime": "pb8"}
 
 
 def test_shared_backtest_refine_builder_routes_pb8_actions_to_pb8() -> None:
@@ -231,6 +258,80 @@ def test_migrate_v7_keeps_source_and_persists_report(tmp_path, monkeypatch) -> N
     assert json.loads((target / "backtest.json").read_text(encoding="utf-8"))["backtest"]["base_dir"] == "backtests/pbgui/demo_v8"
 
 
+def test_migration_sanitizer_resolves_context_safe_legacy_fields() -> None:
+    """Backtest-only migration drops live execution gates and uses canonical reducer aliases."""
+    source = {
+        "live": {
+            "empty_means_all_approved": False,
+            "price_distance_threshold": 0.006,
+        },
+        "bot": {
+            "long": {"filter_volatility_drop_pct": 0.0},
+            "short": {"filter_volatility_drop_pct": 0},
+        },
+        "backtest": {
+            "aggregate": {"default": "mean"},
+            "exchange": "binance",
+            "exchanges": ["binance", "bybit"],
+        },
+        "optimize": {"bounds": {"long_filter_volatility_drop_pct": [0.0, 0.0]}},
+    }
+
+    backtest, adjustments = backtest_v8._sanitize_v7_migration_payload(source, "backtest_result")
+    run, _run_adjustments = backtest_v8._sanitize_v7_migration_payload(source, "run_config")
+    run, churn_plan, churn_adjustments = backtest_v8.extract_legacy_churn_gate(run)
+
+    assert "initial_entry_exec_max_market_dist_pct" not in backtest["live"]
+    assert "price_distance_threshold" not in backtest["live"]
+    assert "empty_means_all_approved" not in backtest["live"]
+    assert "initial_entry_exec_max_market_dist_pct" not in run["live"]
+    assert "price_distance_threshold" not in run["live"]
+    assert churn_plan == {
+        "source_field": "live.price_distance_threshold",
+        "value": 0.006,
+        "explicit_churn_keys": [],
+    }
+    assert churn_adjustments == ["live.price_distance_threshold -> PB8 canonical churn-gate migration"]
+    assert "empty_means_all_approved" not in run["live"]
+    assert "filter_volatility_drop_pct" not in run["bot"]["long"]
+    assert "filter_volatility_drop_pct" not in run["bot"]["short"]
+    assert run["backtest"]["reducer"] == {"default": "mean"}
+    assert "aggregate" not in run["backtest"]
+    assert run["optimize"] == source["optimize"]
+    assert backtest["backtest"]["reducer"] == {"default": "mean"}
+    assert "aggregate" not in backtest["backtest"]
+    assert "exchange" not in backtest["backtest"]
+    assert "live.price_distance_threshold (live-only; omitted for backtest)" in adjustments
+    assert "backtest.aggregate -> backtest.reducer" in adjustments
+
+
+def test_migration_review_marks_only_existing_canonical_fields() -> None:
+    """Review metadata must never recreate retired V7 paths in a V8 draft."""
+    config = {"bot": {"long": {"example": 1}, "short": {}}, "live": {}}
+
+    review, param_status = backtest_v8._migration_review_config(
+        config,
+        {"bot.long.example": 42, "live.retired_parameter": 0.1},
+    )
+
+    assert review["bot"]["long"]["example"] == 1
+    assert "retired_parameter" not in review["live"]
+    assert param_status == {"long": {"example": "review"}, "short": {}}
+
+
+def test_legacy_churn_alias_conflict_is_rejected_before_migration() -> None:
+    """Two contradictory retired distance fields must not be resolved silently."""
+    with pytest.raises(ValueError, match="conflicts with"):
+        backtest_v8.extract_legacy_churn_gate(
+            {
+                "live": {
+                    "price_distance_threshold": 0.006,
+                    "initial_entry_exec_max_market_dist_pct": 0.005,
+                }
+            }
+        )
+
+
 @pytest.mark.parametrize(
     ("source_type", "filename"),
     [("run_config", "config.json"), ("backtest_result", "config.json")],
@@ -265,7 +366,12 @@ def test_migrate_v7_accepts_managed_run_and_result_sources(
     response = backtest_v8.migrate_v7(body, session=None)
 
     assert response["name"] == f"{source_type}_v8"
-    assert (configs / f"{source_type}_v8").is_dir()
+    if source_type == "run_config":
+        assert response["editor"] == "run"
+        assert response["draft_id"]
+        assert not (configs / f"{source_type}_v8").exists()
+    else:
+        assert (configs / f"{source_type}_v8").is_dir()
 
 
 def test_migrate_v7_result_uses_effective_fees_recorded_in_fills(tmp_path, monkeypatch) -> None:
@@ -417,11 +523,11 @@ def test_failed_migration_publishes_no_v8_config(tmp_path, monkeypatch) -> None:
 
 
 def test_manual_review_output_is_not_published_as_runnable_config(tmp_path, monkeypatch) -> None:
-    """Best-effort PB8 output remains unpublished while review fields are unresolved."""
+    """Best-effort PB8 output opens as a draft while remaining unpublished."""
     configs, v7_configs, _queue, _logs = _patch_roots(tmp_path, monkeypatch)
     source = v7_configs / "demo" / "backtest.json"
     source.parent.mkdir(parents=True)
-    source.write_text("{}", encoding="utf-8")
+    source.write_text(json.dumps({"bot": {"long": {"example": 42}}}), encoding="utf-8")
     monkeypatch.setattr(
         backtest_v8,
         "migrate_pb7_config",
@@ -431,17 +537,146 @@ def test_manual_review_output_is_not_published_as_runnable_config(tmp_path, monk
         },
     )
 
-    with pytest.raises(HTTPException) as error:
-        backtest_v8.migrate_v7(
-            {
-                "source_name": "demo",
-                "target_name": "demo_v8",
-                "allow_manual_review_output": True,
-            },
-            session=None,
-        )
+    result = backtest_v8.migrate_v7(
+        {
+            "source_name": "demo",
+            "target_name": "demo_v8",
+            "allow_manual_review_output": True,
+        },
+        session=None,
+    )
+    draft = backtest_v8.get_optimize_draft(result["draft_id"], session=None)
 
-    assert error.value.status_code == 422
+    assert result["review_required"] is True
+    assert draft["config"]["config_version"] == "v8.0.0"
+    assert "bot" not in draft["config"]
+    assert draft["param_status"] == {"long": {}, "short": {}}
+    assert draft["migration_report"]["manual_review_fields"] == ["bot.long.example"]
+    assert draft["migration_review_values"] == {"bot.long.example": 42}
+    assert not (configs / "demo_v8").exists()
+    assert not list(configs.glob(".migrate-*"))
+
+
+def test_run_migration_review_uses_run_editor_draft_store(tmp_path, monkeypatch) -> None:
+    """V7 Run review output must stay in the PB8 Run editor and never enter Backtest storage."""
+    configs, _v7_configs, _queue, _logs = _patch_roots(tmp_path, monkeypatch)
+    source = tmp_path / "data" / "run_v7" / "demo" / "config.json"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        json.dumps(
+            {
+                "live": {"example": 42},
+                "backtest": {"suite": {"enabled": False}},
+                "optimize": {"bounds": {"example": [0.0, 1.0]}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    migrated = {"config_version": "v8.0.0", "backtest": {}, "live": {}, "bot": {}, "optimize": {}}
+    monkeypatch.setattr(
+        backtest_v8,
+        "migrate_pb7_config",
+        lambda *_args, **_kwargs: {
+            "report": {
+                "output_written": True,
+                "manual_review_fields": [
+                    "live.example",
+                    "backtest.suite",
+                    "optimize.bounds.example",
+                ],
+            },
+            "config": migrated,
+        },
+    )
+
+    result = backtest_v8.migrate_v7(
+        {
+            "source_type": "run_config",
+            "source_name": "demo",
+            "target_name": "demo_v8",
+            "allow_manual_review_output": True,
+        },
+        session=None,
+    )
+    from api import v8_instances
+    draft = v8_instances.get_v8_editor_draft(result["draft_id"], session=None)
+
+    assert result["editor"] == "run"
+    assert "example" not in draft["config"]["live"]
+    assert draft["migration_report"]["manual_review_fields"] == ["live.example"]
+    assert draft["migration_review_values"] == {"live.example": 42}
+    assert not (configs / "demo_v8").exists()
+
+
+def test_run_legacy_churn_gate_is_canonicalized_by_pb8_without_review(tmp_path, monkeypatch) -> None:
+    """Retired Run distance gates must use PB8's canonical automatic migration."""
+    configs, _v7_configs, _queue, _logs = _patch_roots(tmp_path, monkeypatch)
+    source = tmp_path / "data" / "run_v7" / "demo" / "config.json"
+    source.parent.mkdir(parents=True)
+    source.write_text(
+        json.dumps(
+            {
+                "live": {"price_distance_threshold": 0.006},
+                "backtest": {"suite": {"enabled": False}},
+                "optimize": {"bounds": {"example": [0.0, 1.0]}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    migrated = {
+        "config_version": "v8.0.0",
+        "live": {
+            "order_replacement_churn_gate_activation_count": 10,
+            "order_replacement_churn_gate_market_dist_pct": 0.005,
+            "order_replacement_churn_gate_stability_minutes": 2.0,
+            "order_replacement_churn_gate_window_minutes": 10.0,
+        },
+        "backtest": {},
+        "bot": {},
+        "optimize": {},
+    }
+    captured = {}
+
+    def fake_migrate(source_path, _output_path, **_kwargs):
+        migrated_source = json.loads(Path(source_path).read_text(encoding="utf-8"))
+        assert "price_distance_threshold" not in migrated_source["live"]
+        assert "initial_entry_exec_max_market_dist_pct" not in migrated_source["live"]
+        return {
+            "report": {"output_written": True, "manual_review_fields": ["backtest.suite"]},
+            "config": migrated,
+        }
+
+    def fake_prepare(config, **_kwargs):
+        captured.update(config["live"])
+        prepared = copy.deepcopy(config)
+        prepared["live"].pop("initial_entry_exec_max_market_dist_pct")
+        prepared["live"]["order_replacement_churn_gate_activation_count"] = 10
+        prepared["live"]["order_replacement_churn_gate_market_dist_pct"] = 0.006
+        prepared["live"]["order_replacement_churn_gate_stability_minutes"] = 2.0
+        prepared["live"]["order_replacement_churn_gate_window_minutes"] = 10.0
+        return prepared
+
+    monkeypatch.setattr(backtest_v8, "migrate_pb7_config", fake_migrate)
+    monkeypatch.setattr(backtest_v8, "prepare_pb8_config", fake_prepare)
+
+    result = backtest_v8.migrate_v7(
+        {
+            "source_type": "run_config",
+            "source_name": "demo",
+            "target_name": "demo_v8",
+            "allow_manual_review_output": True,
+        },
+        session=None,
+    )
+    from api import v8_instances
+    draft = v8_instances.get_v8_editor_draft(result["draft_id"], session=None)
+
+    assert result["review_required"] is False
+    assert captured["initial_entry_exec_max_market_dist_pct"] == 0.006
+    assert "order_replacement_churn_gate_market_dist_pct" not in captured
+    assert draft["config"]["live"]["order_replacement_churn_gate_market_dist_pct"] == 0.006
+    assert "initial_entry_exec_max_market_dist_pct" not in draft["config"]["live"]
+    assert "migration_report" not in draft
     assert not (configs / "demo_v8").exists()
 
 
@@ -867,6 +1102,37 @@ def test_results_are_read_only_from_pb8_root(tmp_path, monkeypatch) -> None:
     assert results[0]["strategy"] == "ema_anchor"
     assert results[0]["twe_long"] == 2.0
     assert results[0]["pos_long"] == 6
+
+
+def test_results_support_newest_first_pagination_and_config_filter(tmp_path, monkeypatch) -> None:
+    """PB8 result pages should avoid parsing unrelated configs before the first response."""
+    root = tmp_path / "pb8" / "backtests" / "pbgui"
+    for index, name in enumerate(("older", "newer"), start=1):
+        result_dir = root / name / "bybit" / "run-1"
+        result_dir.mkdir(parents=True)
+        analysis_path = result_dir / "analysis.json"
+        analysis_path.write_text(json.dumps({"gain_usd": index}), encoding="utf-8")
+        (result_dir / "config.json").write_text(
+            json.dumps({"backtest": {"starting_balance": 1000}, "bot": {}, "live": {"approved_coins": {}}}),
+            encoding="utf-8",
+        )
+        os.utime(analysis_path, (index, index))
+    monkeypatch.setattr(backtest_v8, "_results_root", lambda: root)
+
+    first_page = backtest_v8.get_results(offset=0, limit=1, session=None)
+    filtered = backtest_v8.get_results(name="older", offset=0, limit=20, session=None)
+
+    assert [item["config_name"] for item in first_page["results"]] == ["newer"]
+    assert first_page["pagination"] == {
+        "total": 2,
+        "offset": 0,
+        "limit": 1,
+        "returned": 1,
+        "has_more": True,
+        "next_offset": 1,
+    }
+    assert [item["config_name"] for item in filtered["results"]] == ["older"]
+    assert filtered["pagination"]["has_more"] is False
 
 
 def test_combined_results_report_configured_exchanges(tmp_path, monkeypatch) -> None:

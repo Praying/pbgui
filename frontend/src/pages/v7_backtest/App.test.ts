@@ -755,11 +755,11 @@ describe('results panel (M-v7-10, :834-869)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/results'))).toBe(false);
+    expect(fetchMock.mock.calls.some((c) =>  /\/results(?:\?|$)/.test(String(c[0])))).toBe(false);
     await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
     await flush();
     await nextTick();
-    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/api/backtest-v7/results'))).toBe(true);
+    expect(fetchMock.mock.calls.some((c) =>  /\/api\/backtest-v7\/results(?:\?|$)/.test(String(c[0])))).toBe(true);
     expect(wrapper.find('#panel-results').classes()).toContain('active');
     expect(wrapper.findAll('#results-list tbody tr')).toHaveLength(1);
     expect(wrapper.find('#results-list').text()).toContain('alpha');
@@ -779,11 +779,11 @@ describe('results panel (M-v7-10, :834-869)', () => {
     sockets[0]!.readyState = 1;
     sockets[0]!.onmessage?.({ data: JSON.stringify({ type: 'queue_update', items: [{ filename: 'a.json', name: 'a', status: 'running' }] }) });
     await nextTick();
-    const resultsCallsBefore = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/results')).length;
+    const resultsCallsBefore = fetchMock.mock.calls.filter((c) =>  /\/results(?:\?|$)/.test(String(c[0]))).length;
     sockets[0]!.onmessage?.({ data: JSON.stringify({ type: 'queue_update', items: [{ filename: 'a.json', name: 'a', status: 'complete' }] }) });
     await flush();
     await nextTick();
-    const resultsCalls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/results'));
+    const resultsCalls = fetchMock.mock.calls.filter((c) =>  /\/results(?:\?|$)/.test(String(c[0])));
     expect(resultsCalls.length).toBe(resultsCallsBefore + 1);
     wrapper.unmount();
   });
@@ -911,7 +911,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
       if (u.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
       if (u.includes('/configs')) return ok({ configs: [] });
       if (u.includes('/results/config')) return ok({ backtest: { exchanges: ['bybit'] } });
-      if (u.endsWith('/results')) return ok({ results: [{ path: 'p1', config_name: 'alpha', result_name: 'r', modified: '2024-01-01T00:00:00Z' }] });
+      if ( /\/results(?:\?|$)/.test(u)) return ok({ results: [{ path: 'p1', config_name: 'alpha', result_name: 'r', modified: '2024-01-01T00:00:00Z' }] });
       return ok({});
     });
     const wrapper = mountApp();
@@ -930,6 +930,28 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await nextTick();
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/results/config?path=p1'))).toBe(true);
     expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('hands a PB8 result to the Run editor through the canonical run draft endpoint', async () => {
+    window.history.replaceState({}, '', '/api/backtest-v8/main_page');
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/settings')) return ok({ autostart: false, cpu: 1, cpu_max: 4 });
+      if (u.includes('/configs')) return ok({ configs: [] });
+      if (/\/results(?:\?|$)/.test(u)) return ok({ results: [{ path: 'r1', config_name: 'alpha', result_name: 'r', backtest_version: 'v8' }] });
+      if (u.endsWith('/results/run-draft') && init?.method === 'POST') return ok({ draft_id: 'run-draft-1', name: 'alpha' });
+      return ok({});
+    });
+    const wrapper = mountApp();
+    await flush();
+    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await flush();
+    await nextTick();
+    await wrapper.find('#results-list tbody tr').trigger('click');
+    await wrapper.find('[data-test="results-add-run"]').trigger('click');
+    await flush();
+    expect(replaceTopLocationMock).toHaveBeenCalledWith('http://h:8000/api/v8/edit_page?new=1&draft_id=run-draft-1&name=alpha');
     wrapper.unmount();
   });
 

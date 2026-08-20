@@ -54,6 +54,31 @@ button, input, textarea, select { font: inherit; }
 .conn-lost { background: var(--red); color: #fff; }
 .conn-waiting { background: var(--orange); color: #000; }
 
+#pb8-runtime-warning {
+  display: none;
+  min-height: 42px;
+  padding: 8px 16px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 140, 0, .16);
+  border-top: 1px solid rgba(255, 140, 0, .45);
+  border-bottom: 1px solid rgba(255, 140, 0, .45);
+  color: #ffd29a;
+  font-size: var(--fs-sm);
+}
+#pb8-runtime-warning strong { color: #ffb454; white-space: nowrap; }
+#pb8-runtime-warning a {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 180, 84, .6);
+  border-radius: 4px;
+  color: #ffd29a;
+  font-weight: 600;
+}
+body.pb8-runtime-warning-visible #pb8-runtime-warning { display: flex; }
+body.pb8-runtime-warning-visible #page-body { height: calc(100vh - 94px); }
+
 #page-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
 #main-content {
   flex: 1;
@@ -2130,6 +2155,11 @@ textarea.json-invalid:focus {
   </div>
 </div>
 <div id="conn-banner" class="conn-waiting" data-i18n="v7optimize.connectingToQueue">Connecting to Optimize queue...</div>
+<div id="pb8-runtime-warning" role="alert">
+  <strong>PB8 update required</strong>
+  <span id="pb8-runtime-warning-detail">The PB8 runtime is unavailable.</span>
+  <a href="/api/vps-manager/main_page">Open VPS Manager</a>
+</div>
 
 <div id="page-body">
   <div id="sidebar">
@@ -4941,6 +4971,20 @@ function setBanner(kind, message) {
   banner.textContent = message;
 }
 
+function setPb8RuntimeWarning(error) {
+  if (!optimizeEditorAdapter.isV8) return;
+  var detail = el('pb8-runtime-warning-detail');
+  var visible = !!error;
+  if (detail && visible) detail.textContent = (error && error.message) || 'Passivbot V8 is unavailable. Run Update PB8.';
+  document.body.classList.toggle('pb8-runtime-warning-visible', visible);
+}
+
+function handlePb8RuntimeUnavailable(error) {
+  if (!optimizeEditorAdapter.isV8 || !error || error.status !== 503) return false;
+  setPb8RuntimeWarning(error);
+  return true;
+}
+
 function buildHttpError(response, text) {
   var message = text || ('HTTP ' + response.status);
   var detail = null;
@@ -4983,7 +5027,14 @@ async function apiFetch(path, opts) {
 
 async function loadOptimizeMetadata() {
   if (!optimizeEditorAdapter.metadataPath) return;
-  var payload = await apiFetch(optimizeEditorAdapter.metadataPath);
+  var payload;
+  try {
+    payload = await apiFetch(optimizeEditorAdapter.metadataPath);
+  } catch (error) {
+    if (handlePb8RuntimeUnavailable(error)) return;
+    throw error;
+  }
+  setPb8RuntimeWarning(null);
   var metadata = optimizeEditorAdapter.normalizeMetadata(payload || {});
   if (metadata.optimizeDefaults && Object.keys(metadata.optimizeDefaults).length) {
     state.settings.optimize_defaults = metadata.optimizeDefaults;
@@ -11943,7 +11994,13 @@ async function loadSettings() {
   var requestSeq = ++state.settingsLoadSeq;
   var pushSeq = state.settingsPushSeq;
   var navigationSeq = state.navigationSeq;
-  var settings = await apiFetch('/settings');
+  var settings;
+  try {
+    settings = await apiFetch('/settings');
+  } catch (error) {
+    if (handlePb8RuntimeUnavailable(error)) return;
+    throw error;
+  }
   if (requestSeq !== state.settingsLoadSeq || navigationSeq !== state.navigationSeq) return;
   var mutableQueueSettings = ['autostart', 'cpu', 'cpu_override', 'use_pbgui_market_data'];
   var queueSettingsWerePushed = pushSeq !== state.settingsPushSeq;
@@ -11956,7 +12013,8 @@ async function loadSettings() {
 }
 
 async function loadConfigs() {
-  var data = await apiFetch('/configs');
+  var path = '/configs' + (optimizeEditorAdapter.isV8 ? '?include_result_summary=false' : '');
+  var data = await apiFetch(path);
   state.configs = data.configs || [];
   renderConfigs();
 }
@@ -12123,9 +12181,17 @@ async function migrateParetoConfigToV8(path, name) {
 
 async function showOptimizeMigrationError(error) {
   var report = error && error.detail && typeof error.detail === 'object' ? error.detail.report : null;
-  var detail = report
-    ? PBGuiI18n.t('v7optimize.migrationReportPrefix') + '\n\n' + JSON.stringify(report, null, 2) +
-      '\n\n' + PBGuiI18n.t('v7optimize.migrationReportSuffix')
+  var fields = [];
+  [report && report.manual_review_fields, report && report.dropped_unsupported_fields].forEach(function(items) {
+    if (!Array.isArray(items)) return;
+    items.forEach(function(item) {
+      var value = String(item || '').trim();
+      if (value && fields.indexOf(value) < 0) fields.push(value);
+    });
+  });
+  var warnings = report && Array.isArray(report.behavior_change_warnings) ? report.behavior_change_warnings.slice(0, 3).map(String) : [];
+  var detail = fields.length
+    ? 'Fields requiring manual review:\n- ' + fields.slice(0, 20).join('\n- ') + (warnings.length ? '\n\nWarnings:\n- ' + warnings.join('\n- ') : '')
     : PBGuiI18n.t('v7optimize.migrationReportSuffix');
   await window.PBGuiDialogs.alert({
     title: PBGuiI18n.t('v7optimize.migrationFailedTitle'),
@@ -13006,9 +13072,11 @@ async function init() {
     var initialPanel = location.hash.replace('#', '');
     if (PANEL_META[initialPanel]) setPanel(initialPanel);
     connectWS();
-    await loadSettings();
-    await loadOptimizeMetadata();
-    await Promise.all([loadConfigs(), loadQueue(), loadResults()]);
+    var settingsAndMetadata = (async function() {
+      await loadSettings();
+      await loadOptimizeMetadata();
+    })();
+    await Promise.all([settingsAndMetadata, loadConfigs(), loadQueue(), loadResults()]);
     await handleIncomingDraft();
     await handleOpenConfigParam();
   } finally {

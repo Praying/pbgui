@@ -25,7 +25,7 @@ describe('useOptimizePage', () => {
       .mockResolvedValueOnce({ items: [{ filename: 'q1', name: 'alpha' }] })
       .mockResolvedValueOnce({ results: [{ path: '/results/a', name: 'a' }] })
       .mockResolvedValueOnce({ metrics_by_group: { all: ['adg'] }, goal_options: ['min', 'max'] });
-    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v7/main_page', 'http://testserver') });
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v7/main_page', 'http://testserver'), search: '?panel=results' });
 
     await page.loadAll();
 
@@ -34,6 +34,35 @@ describe('useOptimizePage', () => {
     expect(page.queue.value[0]?.filename).toBe('q1');
     expect(page.results.value[0]?.path).toBe('/results/a');
     expect(page.settings.value.limitsMeta).toMatchObject({ metrics_by_group: { all: ['adg'] } });
+  });
+
+  it('loads configs without result inspection on the default Configs panel', async () => {
+    vi.mocked(apiFetch)
+      .mockResolvedValueOnce({ autostart: true })
+      .mockResolvedValueOnce({ configs: [{ name: 'alpha' }] })
+      .mockResolvedValueOnce({ items: [] });
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v8/main_page', 'http://testserver') });
+
+    await page.loadAll();
+
+    expect(apiFetch).toHaveBeenCalledTimes(4);
+    expect(page.configs.value).toEqual([{ name: 'alpha' }]);
+  });
+
+  it('keeps configs visible and exposes a PB8 runtime warning when settings metadata is unavailable', async () => {
+    const { ApiError } = await import('@/shared/api');
+    vi.mocked(apiFetch)
+      .mockRejectedValueOnce(new ApiError(503, 'PB8 update incomplete'))
+      .mockResolvedValueOnce({ configs: [{ name: 'alpha' }] })
+      .mockResolvedValueOnce({ items: [] })
+      .mockResolvedValueOnce({ results: [] });
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v8/main_page', 'http://testserver') });
+
+    await page.loadAll();
+
+    expect(page.runtimeWarning.value).toBe('PB8 update incomplete');
+    expect(page.configs.value).toEqual([{ name: 'alpha' }]);
+    expect(page.error.value).toBe('');
   });
 
   it('opens, validates, saves, and queues a config', async () => {

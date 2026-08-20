@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue';
+import { replaceTopLocation } from '@/shared/nav';
 import { createBacktestAdapter, backtestApiBaseFrom, detectBacktestVersion, navItems, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
 import { createToastQueue, type ToastItem, type ToastQueue } from '../lib/toast';
 import { loadStoredBacktestViewState } from '../lib/viewState';
@@ -67,6 +68,7 @@ export interface BacktestPageStore {
   resultsRebacktestDefaults: { value: RebacktestFields | null };
   /** rebacktestSelected (:7864-7958) — the results ctx Backtest button. */
   startResultsRebacktest(): Promise<void>;
+  addResultsToRun(): Promise<void>;
   confirmResultsRebacktest(fields: RebacktestFields): Promise<void>;
   /** compareSelected (:7778-7791) — the results ctx Compare button. */
   compareResults(): Promise<void>;
@@ -405,6 +407,41 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     }
   }
 
+  async function addResultsToRun(): Promise<void> {
+    const selected = results.getSelected();
+    if (selected.length !== 1) {
+      notifyError(t('v7backtest.selectExactly1Result'));
+      return;
+    }
+    const path = selected[0]!;
+    const item = results.results.value.find((entry) => entry.path === path);
+    const targetVersion = item?.backtest_version || adapter.version;
+    try {
+      if (targetVersion === 'v8') {
+        const data = await requestJsonFrom(`${origin}/api/backtest-v8`, '/results/run-draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path }),
+        });
+        replaceTopLocation(`${options.origin}/api/v8/edit_page?new=1&draft_id=${encodeURIComponent(String(data.draft_id || ''))}&name=${encodeURIComponent(String(data.name || 'pb8-run'))}`);
+        return;
+      }
+      const config = await requestJsonFrom(`${origin}/api/backtest-v7`, `/results/config?path=${encodeURIComponent(path)}`);
+      const live = config.live && typeof config.live === 'object' && !Array.isArray(config.live) ? (config.live as Record<string, unknown>) : {};
+      const pbgui = config.pbgui && typeof config.pbgui === 'object' && !Array.isArray(config.pbgui) ? (config.pbgui as Record<string, unknown>) : {};
+      config.live = live;
+      config.pbgui = { ...pbgui, enabled_on: 'disabled' };
+      const draft = await requestJsonFrom(`${origin}/api/v7`, '/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config }),
+      });
+      replaceTopLocation(`${options.origin}/api/v7/edit_page?new=1&draft_id=${encodeURIComponent(String(draft.draft_id || ''))}`);
+    } catch (error) {
+      notifyError(t('v7backtest.failedWithMsg', { msg: errorMessage(error) }));
+    }
+  }
+
   async function confirmResultsRebacktest(fields: RebacktestFields): Promise<void> {
     const selected = results.getSelected();
     let pbguiPath = '';
@@ -537,6 +574,7 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     resultsRebacktestOpen,
     resultsRebacktestDefaults,
     startResultsRebacktest,
+    addResultsToRun,
     confirmResultsRebacktest,
     compareResults,
     compareQueue,

@@ -20,7 +20,7 @@ import {
   type ParamStatus,
   type StrategyCache,
 } from '../lib/strategyKind';
-import { loadInstanceConfig, loadUsers, type UserInfo } from './useInstanceConfig';
+import { fetchPreparedDraftConfig, loadInstanceConfig, loadUsers, type EditorConfigPayload, type UserInfo } from './useInstanceConfig';
 import { hostOptions, useHosts } from './useHosts';
 import { useSymbolsTags } from './useSymbolsTags';
 import { useJsonSync, type UseJsonSync } from './useJsonSync';
@@ -69,6 +69,9 @@ export interface UseEditPage {
   readonly activeStrategyKind: Ref<string>;
   readonly saving: Ref<boolean>;
   readonly loadError: Ref<string>;
+  readonly migrationReport: Ref<Record<string, unknown> | null>;
+  readonly migrationReviewValues: Ref<Record<string, unknown>>;
+  readonly migrationMessage: Ref<string>;
   readonly instanceName: Ref<string>;
   readonly isNew: Ref<boolean>;
   readonly hosts: ReturnType<typeof useHosts>;
@@ -168,7 +171,10 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
   const rawError = ref<JsonValidationError | null>(null);
   const jsonFieldErrors = ref<Record<string, JsonValidationError | null>>({});
 
-  const hosts = useHosts(apiBase, adapter, instanceName.value);
+  const migrationReport = ref<Record<string, unknown> | null>(null);
+  const migrationReviewValues = ref<Record<string, unknown>>({});
+  const migrationMessage = ref('');
+  const hosts = useHosts(apiBase, adapter, instanceName.value, fetch, () => String(cfg.value.config_version ?? ''));
   const symbolsTags = useSymbolsTags(apiBase);
 
   /** scheduleStructuredEditorSync hook for the coin-overrides panel (:60-64). */
@@ -365,12 +371,44 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
 
   async function load(): Promise<void> {
     try {
-      await loadMetadata();
-      await coinOverrides.init();
-      users.value = await loadUsers(apiBase);
-      const loaded = await loadInstanceConfig(apiBase, adapter, params, fetch, users.value);
+      const metadataPromise = loadMetadata();
+      const coinOverridesPromise = coinOverrides.init();
+      const usersPromise = loadUsers(apiBase);
+      const draftPromise = params.draftId
+        ? fetchPreparedDraftConfig(apiBase, params.draftId, fetch).catch(() => null)
+        : Promise.resolve<EditorConfigPayload | null>(null);
+      const earlyDraft = await draftPromise;
+      let loaded: Awaited<ReturnType<typeof loadInstanceConfig>>;
+      if (earlyDraft) {
+        const draftConfig = earlyDraft.config;
+        loaded = {
+          source: 'draft',
+          cfg: draftConfig,
+          paramStatus: earlyDraft.param_status,
+          overrideConfigs: {},
+          fromBacktestConfig: String(object(draftConfig.pbgui).from_backtest_config ?? ''),
+          warnings: [],
+          migrationReport: earlyDraft.migration_report ?? null,
+          migrationReviewValues: earlyDraft.migration_review_values ?? {},
+          migrationMessage: earlyDraft.migration_message ?? '',
+        };
+        // Canonical handoff drafts can paint the basic editor before the PB8
+        // metadata subprocess returns; the final apply below fills metadata-owned fields.
+        cfg.value = draftConfig;
+        paramStatus.value = loaded.paramStatus as ParamStatus;
+        applyPopulated(draftConfig, loaded.paramStatus as ParamStatus);
+      } else {
+        await metadataPromise;
+        users.value = await usersPromise;
+        loaded = await loadInstanceConfig(apiBase, adapter, params, fetch, users.value);
+      }
+      await Promise.all([metadataPromise, coinOverridesPromise]);
+      if (!earlyDraft) users.value = await usersPromise;
       fromBacktestConfig.value = loaded.fromBacktestConfig;
       overrideConfigs.value = loaded.overrideConfigs;
+      migrationReport.value = loaded.migrationReport;
+      migrationReviewValues.value = loaded.migrationReviewValues;
+      migrationMessage.value = loaded.migrationMessage;
       // coinOvSetConfigName (:1852/:1873/:1886) before the populate load
       coinOverrides.setConfigName(loaded.source === 'new' ? '' : params.name);
       applyPopulated(loaded.cfg, loaded.paramStatus as ParamStatus);
@@ -625,6 +663,9 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     activeStrategyKind,
     saving,
     loadError,
+    migrationReport,
+    migrationReviewValues,
+    migrationMessage,
     instanceName,
     isNew,
     hosts,
