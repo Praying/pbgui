@@ -51,6 +51,7 @@ import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import { replaceTopLocation } from '@/shared/nav';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import CommandCenter from './components/CommandCenter.vue';
 import ConfigDetail from './components/ConfigDetail.vue';
 import Playground from './components/Playground.vue';
@@ -314,6 +315,7 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
+  <DataTipTooltip />
   <nav id="topnav"></nav>
 
   <div id="page-body">

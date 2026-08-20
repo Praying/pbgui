@@ -13,6 +13,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { detailViewModel } from '../lib/viewModels';
+import { metricTooltip } from '../lib/metricDocs';
 import type { ParetoStore } from '../composables/useParetoSession';
 
 interface JsonPanelGlobal {
@@ -138,7 +139,7 @@ watch(() => vm.value.fullConfigText, syncContent);
           <div id="detail-all-metrics" class="detail-list" style="margin-top: 12px">
             <div v-if="!vm.hasAllMetrics" class="placeholder-panel" style="min-height: 120px">{{ t('v7explore.allMetricsWillBeListed') }}</div>
             <div v-for="metric in vm.allMetrics" :key="metric.name" class="detail-item">
-              <div class="detail-head"><strong>{{ metric.name }}</strong><span class="chip">{{ metric.value }}</span></div>
+              <div class="detail-head"><strong :data-tip="metricTooltip(metric.name) || undefined">{{ metric.name }}</strong><span class="chip">{{ metric.value }}</span></div>
             </div>
           </div>
         </details>

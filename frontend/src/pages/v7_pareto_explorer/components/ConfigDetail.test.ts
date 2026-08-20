@@ -87,6 +87,22 @@ describe('detail render (:3863-3893)', () => {
     wrapper.unmount();
   });
 
+  it('binds bilingual metric tooltips on all-metrics names', () => {
+    const store = makeStore();
+    store.state.selectedDetail = {
+      ...DETAIL,
+      all_metrics: [{ name: 'adg_w_usd', value: 1.5 }, { name: 'mystery_metric', value: 2 }],
+    };
+    const { wrapper } = mountDetail(store);
+    const names = wrapper.findAll('#detail-all-metrics .detail-item strong');
+    const tip = names[0]!.attributes('data-tip');
+    expect(tip).toContain('平均日收益');
+    expect(tip).toContain('Average Daily Gain');
+    expect(tip).toContain('近期加权');
+    expect(names[1]!.attributes('data-tip')).toBeUndefined();
+    wrapper.unmount();
+  });
+
   it('renders scenario metrics with sorted chips (:3041-3063)', () => {
     const store = makeStore();
     store.state.selectedDetail = DETAIL;
