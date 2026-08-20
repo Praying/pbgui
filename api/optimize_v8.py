@@ -2754,7 +2754,11 @@ def main_page(request: Request, session: SessionToken = Depends(require_auth)) -
 
     def _inject(html: str, req: Request) -> str:
         origin = str(req.base_url).rstrip("/")
-        limits = get_pb8_optimize_metadata().get("limits") or {}
+        try:
+            limits = get_pb8_optimize_metadata().get("limits") or {}
+        except PB8ConfigurationError as exc:
+            _log(SERVICE, f"Rendering PB8 Optimize without unavailable runtime metadata: {exc}", level="WARNING")
+            limits = {}
         replacements = {
             '"%%TOKEN%%"': json.dumps(""),
             '"%%API_BASE%%"': json.dumps(origin + "/api/optimize-v8"),

@@ -33,6 +33,18 @@ describe('normalizeEditorConfigPayload (editor_shared.js:566-607)', () => {
     expect(payload.name).toBe('');
   });
 
+  it('preserves migration review metadata from a PB8 draft', () => {
+    const payload = normalizeEditorConfigPayload({
+      config: { live: {} },
+      migration_report: { manual_review_fields: ['bot.long.example'] },
+      migration_review_values: { 'bot.long.example': 1 },
+      migration_message: 'Migration requires manual review',
+    });
+    expect(payload.migration_report).toEqual({ manual_review_fields: ['bot.long.example'] });
+    expect(payload.migration_review_values).toEqual({ 'bot.long.example': 1 });
+    expect(payload.migration_message).toBe('Migration requires manual review');
+  });
+
   it('falls back to the _pbgui_param_status annotations and strips them', () => {
     const payload = normalizeEditorConfigPayload({
       config: { live: {}, _pbgui_param_status: { long: { neat: 'neutralized' } } },

@@ -452,3 +452,18 @@ textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
 .btn-ok { background: var(--green); color: #000 /* black on colored bg */; border-color: var(--green); }
 .btn-ok:hover { background: #1aa34a; }
 .btn-cancel { background: var(--bg3); }
+
+.migration-review-notice {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 166, 0, .48);
+  border-left: 4px solid #ffb454;
+  border-radius: 6px;
+  background: rgba(255, 166, 0, .10);
+  color: #ffe0b0;
+  line-height: 1.45;
+}
+.migration-review-notice strong { display: block; margin-bottom: 4px; color: #ffc26b; }
+.migration-review-notice p { margin: 0; }
+.migration-review-notice ul { margin: 8px 0 0 20px; }
+.migration-review-notice code { color: #ffe9c7; }

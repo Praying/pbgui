@@ -38,7 +38,7 @@ Der Editor bietet denselben Arbeitsablauf wie PBv7 Run:
 
 Import, Copy, Backtest-Uebergabe, **Strategy Explorer**, Live-Logs und Raw-JSON-Bearbeitung stehen im gleichen Sidebar-Ablauf bereit. Strategy Explorer erhaelt die aktuelle ungespeicherte PB8-Config und alle referenzierten Sparse Overrides ueber einen authentifizierten opaken Draft. Der Import-Dialog bietet durchsuchbare User-Vorschlaege und weist Namen ausserhalb des konfigurierten Exchange-User-Katalogs ab. **Balance Calculator** oeffnet den gemeinsamen Rechner mit der aktuellen ungespeicherten Config; **Calc Balance** berechnet die Empfehlung direkt und kann sie als `balance_override` uebernehmen. Browser-Anfragen verwenden das HttpOnly-PBGui-Session-Cookie; der Editor rendert kein Session-Token.
 
-Jedes Speichern verwendet PB8s installierte Prepare-/Save-Pipeline. PBGui prueft die erwartete Editor-Version, ersetzt das vollstaendige Config-und-Override-Verzeichnis atomar unter einem prozessuebergreifenden Lock, veroeffentlicht ein unveraenderliches Manifest und haengt eine explizite `UPSERT_PB8_CONFIG`-Operation an. Falls Operation oder lokale Platzierung fehlschlagen, bleibt das vorherige lokale Bundle erhalten oder wird wiederhergestellt.
+Jedes Speichern verwendet PB8s installierte Prepare-/Save-Pipeline. PBGui prueft die erwartete Editor-Version, ersetzt das vollstaendige Config-und-Override-Verzeichnis atomar unter einem prozessuebergreifenden Lock, veroeffentlicht ein unveraenderliches Manifest und haengt eine explizite `UPSERT_PB8_CONFIG`-Operation an. Eine laufende Remote-Zuordnung wird als einzelnes Cluster-Bundle mit einem Transportlimit von drei Sekunden direkt an den Zielhost gesendet; falls diese schnelle Aktivierung nicht abgeschlossen werden kann, bleibt PBCluster der dauerhafte Wiederholungspfad. PBRun prueft PB8-Sollzustand und Config-Signaturen jede Sekunde, damit eine erfolgreiche Materialisierung sofort verarbeitet wird. Falls Operation oder lokale Platzierung fehlschlagen, bleibt das vorherige lokale Bundle erhalten oder wird wiederhergestellt.
 
 ## Backups
 
@@ -50,13 +50,13 @@ PBRun ueberwacht PB7 und PB8 mit demselben Controller-Dienst. Ein Neustart diese
 
 ## Zulaessige Hosts
 
-Die Zielauswahl ist fail-closed. Ein Host erscheint nur, wenn eine dieser Quellen seine PB8-Faehigkeit bestaetigt:
+Die Zielauswahl ist fail-closed. Ein Host erscheint nur, wenn eine dieser Quellen seine PB8-Faehigkeit bestaetigt und sein gemeldetes `pb8_config_schema` mindestens so neu wie `config_version` der aktuellen Config ist:
 
 - Der lokale `pb8_runtime_status` ist bereit.
 - VPS Manager meldet das Runtime-Profil `pb8` oder `pb7_pb8` und ein erfolgreiches Setup.
 - Ein nicht verwalteter Remote-Host meldet ueber frische Host-Metadaten einen `pb8ready`-Wert.
 
-Reine PB7-, nicht bereite, veraltete und unbekannte neue Ziele werden mit HTTP 409 abgelehnt. Ein unveraendertes unbekanntes Ziel aus einer aelteren gespeicherten Config darf erhalten bleiben, damit die Config ohne erzwungenen unsicheren Umzug bearbeitet werden kann; fuer ein neues Deployment kann es nicht ausgewaehlt werden.
+Reine PB7-, nicht bereite, veraltete, schema-inkompatible und unbekannte neue Ziele werden mit HTTP 409 abgelehnt. Eine `v8.1.0`-Config kann zum Beispiel keinen Host verwenden, der nur Schema `v8.0.0` meldet; zuerst muss PB8 auf diesem Host aktualisiert werden. Ein unveraendertes unbekanntes Ziel aus einer aelteren gespeicherten Config darf erhalten bleiben, damit die Config ohne erzwungenen unsicheren Umzug bearbeitet werden kann; fuer ein neues Deployment kann es nicht ausgewaehlt werden.
 
 ## Cluster-Rollout
 

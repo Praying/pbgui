@@ -318,6 +318,9 @@ onMounted(() => {
         >
           {{ t('v7backtest.backtest') }}
         </button>
+        <button type="button" class="sb-btn" data-test="results-add-run" :disabled="store.results.getSelected().length !== 1" @click="store.addResultsToRun">
+          {{ t('v7backtest.addToRun') }}
+        </button>
         <button type="button" class="sb-btn" data-test="results-compare" @click="store.compareResults">{{ t('v7backtest.compare') }}</button>
         <button type="button" class="sb-btn danger" data-test="results-delete" @click="resultsPanel?.deleteSelectedFlow()">{{ t('v7backtest.deleteSelected') }}</button>
       </template>

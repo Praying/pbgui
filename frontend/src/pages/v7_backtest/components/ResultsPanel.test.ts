@@ -85,7 +85,10 @@ describe('toolbar (:837-852)', () => {
     await wrapper.find('#results-version-filter').setValue('both');
     expect(store.versionFilter.value).toBe('both');
     const urls = fetchMock.mock.calls.map((c) => String(c[0]));
-    expect(urls).toEqual(expect.arrayContaining(['http://h:8000/api/backtest-v7/results', 'http://h:8000/api/backtest-v8/results']));
+    expect(urls).toEqual(expect.arrayContaining([
+      'http://h:8000/api/backtest-v7/results?offset=0&limit=5',
+      'http://h:8000/api/backtest-v8/results?offset=0&limit=5',
+    ]));
   });
 
   it('the config filter and search wire into the store and update the count label', async () => {

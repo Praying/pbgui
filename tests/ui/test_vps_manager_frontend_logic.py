@@ -597,6 +597,59 @@ class TestVpsManagerFrontendLogic:
         assert "request_id: requestId" in fetch_matches
         assert "pendingBotLogMatchRequestId" in handle_message
 
+    def test_bot_log_click_preserves_pb_runtime_version(self) -> None:
+        """PB7 and PB8 telemetry links open the matching native bot log."""
+        bootstrap = """
+        const store = { detail: null };
+        const ui = { log: {} };
+        let openedHost = '';
+        function ensureVpsUi() { return ui; }
+        function openVpsHostLogs(hostname) { openedHost = hostname; }
+        function metricHistoryMeta() { return { label: 'Memory' }; }
+        """
+        assertions = """
+        openBotLog('pb-host', 'pb8_bot', '8');
+        assert.equal(ui.log.filename, 'software/pb8/logs/pb8_bot.log');
+        assert.equal(openedHost, 'pb-host');
+        assert.equal(normalizeVpsLogViewerTarget(ui.log.filename), 'Bot:pb8_bot:8');
+
+        openBotLog('pb-host', 'pb7_bot', '7');
+        assert.equal(ui.log.filename, 'software/pb7/logs/pb7_bot.log');
+        assert.equal(normalizeVpsLogViewerTarget(ui.log.filename), 'Bot:pb7_bot:7');
+        assert.equal(metricHistoryTitle('memory', 'pb-host', '8:pb8_bot'), 'Memory History - pb8_bot @ pb-host');
+        """
+        _run_node_assertions(
+            ["normalizeVpsLogViewerTarget", "openBotLog", "metricHistoryTitle"],
+            bootstrap=bootstrap,
+            assertions=assertions,
+        )
+
+    def test_pb8_summary_only_pnl_history_explains_missing_daily_curve(self) -> None:
+        """An authoritative PB8 total must not be presented as a fabricated daily series."""
+
+        bootstrap = """
+        const METRIC_HISTORY_META = {
+          pnl: { pnlMetric: true, empty: 'No bot PNL history available yet.' },
+          pnl_fills: { fillsMetric: true, empty: 'No bot fill history available yet.' }
+        };
+        """
+        assertions = """
+        const payload = { bot_name: '8:pb8_bot', summary_only: true };
+        assert.equal(
+          metricHistoryEmpty('pnl', payload),
+          'PB8 provides an authoritative total, but no reliable daily net-PNL breakdown.'
+        );
+        assert.equal(
+          metricHistoryEmpty('pnl_fills', payload),
+          'PB8 provides an authoritative total, but no reliable daily net-PNL breakdown.'
+        );
+        """
+        _run_node_assertions(
+            ["metricHistoryMeta", "metricHistoryEmpty"],
+            bootstrap=bootstrap,
+            assertions=assertions,
+        )
+
     def test_vps_manager_delete_and_remote_purge_are_separate_actions(self) -> None:
         """Deleting a VPS record stays local while remote install purge is explicit."""
         source = HTML_PATH.read_text(encoding="utf-8")

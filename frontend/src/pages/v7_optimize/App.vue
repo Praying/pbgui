@@ -387,6 +387,11 @@ onBeforeUnmount(() => {
     </aside>
 
     <main id="main-content">
+      <div v-if="page.runtimeWarning.value" class="opt-runtime-warning" data-test="pb8-runtime-warning" role="status">
+        <strong>{{ t('v7optimize.pb8UpdateRequired') }}</strong>
+        <span>{{ page.runtimeWarning.value }}</span>
+        <a href="/api/vps-manager/main_page">{{ t('v7optimize.openVpsManagerUpdatePb8') }}</a>
+      </div>
       <div v-if="page.error.value" class="opt-error opt-error-banner">{{ page.error.value }}</div>
       <div v-if="page.loading.value" class="opt-loading">{{ t('common.loading') }}</div>
       <template v-else>

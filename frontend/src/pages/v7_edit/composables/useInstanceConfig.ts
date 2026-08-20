@@ -11,6 +11,9 @@ export interface EditorConfigPayload {
   readonly name: string;
   readonly config: Record<string, unknown>;
   readonly param_status: Record<string, Record<string, string>>;
+  readonly migration_report?: Record<string, unknown>;
+  readonly migration_review_values?: Record<string, unknown>;
+  readonly migration_message?: string;
 }
 
 export interface UserInfo {
@@ -29,6 +32,9 @@ export interface LoadInstanceResult {
   readonly overrideConfigs: Record<string, unknown>;
   readonly fromBacktestConfig: string;
   readonly warnings: readonly InstanceWarning[];
+  readonly migrationReport: Record<string, unknown> | null;
+  readonly migrationReviewValues: Record<string, unknown>;
+  readonly migrationMessage: string;
 }
 
 type FetchFn = typeof fetch;
@@ -81,11 +87,23 @@ export function normalizeEditorConfigPayload(
     if (fallback) cfg = fallback;
     else throw new Error('Prepared config missing');
   }
-  return {
+  const normalized: EditorConfigPayload & {
+    migration_report?: Record<string, unknown>;
+    migration_review_values?: Record<string, unknown>;
+    migration_message?: string;
+  } = {
     name: typeof raw.name === 'string' ? raw.name : '',
     config: cfg,
     param_status: paramStatus || {},
   };
+  if (raw.migration_report && typeof raw.migration_report === 'object' && !Array.isArray(raw.migration_report)) {
+    normalized.migration_report = raw.migration_report as Record<string, unknown>;
+  }
+  if (raw.migration_review_values && typeof raw.migration_review_values === 'object' && !Array.isArray(raw.migration_review_values)) {
+    normalized.migration_review_values = raw.migration_review_values as Record<string, unknown>;
+  }
+  if (typeof raw.migration_message === 'string') normalized.migration_message = raw.migration_message;
+  return normalized;
 }
 
 /** fetchPreparedDraftConfig (:1346-1350). */
@@ -235,6 +253,9 @@ export async function loadInstanceConfig(
           overrideConfigs: {},
           fromBacktestConfig: String(object(cfg.pbgui).from_backtest_config ?? ''),
           warnings,
+          migrationReport: draft.migration_report ?? null,
+          migrationReviewValues: draft.migration_review_values ?? {},
+          migrationMessage: draft.migration_message ?? '',
         };
       }
     } catch {
@@ -252,12 +273,18 @@ export async function loadInstanceConfig(
       overrideConfigs: {},
       fromBacktestConfig: '',
       warnings,
+      migrationReport: null,
+      migrationReviewValues: {},
+      migrationMessage: '',
     };
   }
   const data = await apiFetch<{
     config?: Record<string, unknown>;
     param_status?: Record<string, Record<string, string>>;
     override_configs?: Record<string, unknown>;
+    migration_report?: Record<string, unknown>;
+    migration_review_values?: Record<string, unknown>;
+    migration_message?: string;
   }>(`${apiBase}/instances/${encodeURIComponent(params.name)}/config`, {}, fetchFn);
   const cfg = object(data.config);
   return {
@@ -267,5 +294,8 @@ export async function loadInstanceConfig(
     overrideConfigs: object(data.override_configs),
     fromBacktestConfig: String(object(cfg.pbgui).from_backtest_config ?? ''),
     warnings,
+    migrationReport: data.migration_report ?? null,
+    migrationReviewValues: data.migration_review_values ?? {},
+    migrationMessage: data.migration_message ?? '',
   };
 }

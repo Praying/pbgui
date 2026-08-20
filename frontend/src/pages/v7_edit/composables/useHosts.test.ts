@@ -30,6 +30,12 @@ describe('buildHostQuery (:1914-1918)', () => {
     expect(buildHostQuery('req-1', { isV8: false, instanceName: 'alice' })).toBe('?request_id=req-1');
     expect(buildHostQuery('req-1', { isV8: true, instanceName: '' })).toBe('?request_id=req-1');
   });
+
+  it('includes the required PB8 config schema when provided', () => {
+    expect(buildHostQuery('req-1', { isV8: true, instanceName: 'alice', configSchema: 'PB8.2' })).toBe(
+      '?request_id=req-1&name=alice&config_schema=PB8.2'
+    );
+  });
 });
 
 describe('requestHostCapabilities (:1910-1928)', () => {
@@ -146,6 +152,25 @@ describe('useHosts composable', () => {
     expect(hosts.capabilities.value).toEqual({ alpha: { pb7_capable: true } });
     expect(hosts.selected.value).toBe('alpha');
     expect(calls).toBe(1);
+  });
+
+  it('does not re-add a PB8 host whose schema is incompatible', async () => {
+    const fetchFn = vi.fn(async (url: string) => {
+      const requestId = new URL(url, 'http://x').searchParams.get('request_id') ?? '';
+      return new Response(JSON.stringify({
+        request_id: requestId,
+        hosts: ['current'],
+        host_capabilities: {
+          current: { pb8_capable: true, schema_compatible: true },
+          old: { pb8_capable: true, schema_compatible: false },
+        },
+      }), { status: 200 });
+    });
+    const hosts = useHosts('http://x/api/v8', V8, 'alice', fetchFn as unknown as typeof fetch);
+    hosts.allHosts.value = ['disabled', 'old'];
+    hosts.selected.value = 'old';
+    await hosts.refresh();
+    expect(hosts.allHosts.value).toEqual(['current']);
   });
 
   it('drops a refresh whose generation was superseded (:1925)', async () => {

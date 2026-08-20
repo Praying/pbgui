@@ -48,7 +48,7 @@
  *  - legacy toasts with the undefined 'warn' class render as 'info';
  *  - the number-stepper auto-wrap (:4157-4182) is not ported.
  */
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { replaceTopLocation } from '@/shared/nav';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -85,6 +85,20 @@ const page = useEditPage({
   params,
   t: (key, args) => t(key, args ?? {}),
   toast: (msg, kind) => toast.show(msg, kind ?? 'info'),
+});
+
+const migrationReviewFields = computed(() => {
+  const report = page.migrationReport.value;
+  if (!report || typeof report !== 'object') return [];
+  const fields: string[] = [];
+  for (const values of [report.manual_review_fields, report.dropped_unsupported_fields]) {
+    if (!Array.isArray(values)) continue;
+    for (const value of values) {
+      const field = String(value ?? '').trim();
+      if (field && !fields.includes(field)) fields.push(field);
+    }
+  }
+  return fields.slice(0, 20);
 });
 provideEditPage(page);
 
@@ -195,6 +209,13 @@ onBeforeUnmount(() => {
 
     <!-- Main content (:568) -->
     <div id="main-content">
+      <section v-if="migrationReviewFields.length" class="migration-review-notice" data-test="migration-review-notice" role="status">
+        <strong>{{ t('v7run.migrationReviewTitle') }}</strong>
+        <p>{{ page.migrationMessage.value || t('v7run.migrationReviewMessage') }}</p>
+        <ul>
+          <li v-for="field in migrationReviewFields" :key="field"><code>{{ field }}<template v-if="Object.prototype.hasOwnProperty.call(page.migrationReviewValues.value, field)"> = {{ JSON.stringify(page.migrationReviewValues.value[field]) }}</template></code></li>
+        </ul>
+      </section>
       <BasicSection />
       <AdvancedSection />
       <FiltersSection />

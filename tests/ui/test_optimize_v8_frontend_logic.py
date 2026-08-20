@@ -256,6 +256,82 @@ def test_pb8_run_controls_and_exact_resume_are_version_routed() -> None:
     assert "btn-resume-result" in page
 
 
+def test_pb8_metadata_failure_shows_persistent_update_warning() -> None:
+    """An unavailable PB8 runtime must remain visible without aborting page initialization."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n\n".join(
+        _page_function(page, name)
+        for name in ("setPb8RuntimeWarning", "handlePb8RuntimeUnavailable", "loadSettings")
+    )
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const detail = {{textContent: ''}};
+        const classes = new Set();
+        const document = {{
+          body: {{classList: {{toggle(name, active) {{ if (active) classes.add(name); else classes.delete(name); }}}}}}
+        }};
+        const optimizeEditorAdapter = {{isV8: true, metadataPath: '/metadata'}};
+        const state = {{settingsLoadSeq: 0, settingsPushSeq: 0, navigationSeq: 0, settings: {{}}}};
+        function el(id) {{ return id === 'pb8-runtime-warning-detail' ? detail : null; }}
+        async function apiFetch() {{ const error = new Error('Run Update PB8.'); error.status = 503; throw error; }}
+        {functions}
+        loadSettings().then(() => {{
+          assert.equal(detail.textContent, 'Run Update PB8.');
+          assert.equal(classes.has('pb8-runtime-warning-visible'), true);
+        }}).catch(error => {{ console.error(error); process.exit(1); }});
+        """
+    )
+
+    assert 'id="pb8-runtime-warning"' in page
+    assert "PB8 update required" in page
+    assert 'href="/api/vps-manager/main_page"' in page
+    _run_node(script)
+
+
+def test_initial_configs_load_does_not_wait_for_settings_metadata() -> None:
+    """PB8 configs should start loading immediately while slower settings initialize."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    init_function = _page_function(page, "init").split("\n\ninit().catch", 1)[0]
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        let resolveSettings;
+        let calls = [];
+        const optimizeEditorAdapter = {{configureUi() {{}}}};
+        const state = {{initialLoadPending: true}};
+        const location = {{hash: ''}};
+        const PANEL_META = {{}};
+        function attachEventHandlers() {{}}
+        function initSelections() {{}}
+        function initSidebarResize() {{}}
+        function initPlotModalWindow() {{}}
+        function initOptimizeOhlcvPreflightController() {{}}
+        function setPanel() {{}}
+        function connectWS() {{}}
+        function loadSettings() {{ calls.push('settings'); return new Promise(resolve => {{ resolveSettings = resolve; }}); }}
+        function loadOptimizeMetadata() {{ calls.push('metadata'); return Promise.resolve(); }}
+        function loadConfigs() {{ calls.push('configs'); return Promise.resolve(); }}
+        function loadQueue() {{ calls.push('queue'); return Promise.resolve(); }}
+        function loadResults() {{ calls.push('results'); return Promise.resolve(); }}
+        function handleIncomingDraft() {{ calls.push('draft'); return Promise.resolve(); }}
+        function handleOpenConfigParam() {{ calls.push('open'); return Promise.resolve(); }}
+        {init_function}
+        (async () => {{
+          const pending = init();
+          await new Promise(resolve => setImmediate(resolve));
+          assert.deepEqual(calls, ['settings', 'configs', 'queue', 'results']);
+          resolveSettings();
+          await pending;
+          assert.deepEqual(calls, ['settings', 'configs', 'queue', 'results', 'metadata', 'draft', 'open']);
+        }})().catch(error => {{ console.error(error); process.exit(1); }});
+        """
+    )
+
+    assert "?include_result_summary=false" in page
+    _run_node(script)
+
+
 def test_pb8_queue_settings_keep_the_complete_shared_controls() -> None:
     """PB8 must expose the same autostart CPU and market-data settings as PB7."""
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
@@ -535,6 +611,7 @@ def test_pb8_runtime_metadata_preserves_hsl_enable_controls() -> None:
         ]}});
         const normalizeLimitsMeta = value => value;
         const deepClone = value => JSON.parse(JSON.stringify(value));
+        const setPb8RuntimeWarning = () => {{}};
         {load_metadata}
         (async () => {{
           await loadOptimizeMetadata();
@@ -710,6 +787,39 @@ def test_cookie_auth_and_v7_migration_are_available_from_the_shared_page() -> No
     assert "migrateParetoConfigToV8" in page
     assert "/api/optimize-v8/migrate-v7" in page
     assert "json.dumps(\"\")" in api_v7
+
+
+def test_optimize_migration_error_is_compact_and_actionable() -> None:
+    """Migration failures must not dump the complete official report into a dialog."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    show_error = _page_function(page, "showOptimizeMigrationError")
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        let dialog = null;
+        const window = {{}};
+        window.PBGuiDialogs = {{}};
+        window.PBGuiDialogs.alert = async function(options) {{ dialog = options; }};
+        {show_error}
+        (async () => {{
+          await showOptimizeMigrationError({{
+            message: 'Migration requires manual review',
+            detail: {{report: {{
+              manual_review_fields: ['optimize.example'],
+              dropped_unsupported_fields: ['bot.long.legacy'],
+              moved_fields: Array.from({{length: 300}}, (_, index) => 'moved.' + index),
+              behavior_change_warnings: ['Review changed optimizer behavior.']
+            }}}}
+          }});
+          assert.match(dialog.detail, /optimize\\.example/);
+          assert.match(dialog.detail, /bot\\.long\\.legacy/);
+          assert.match(dialog.detail, /Review changed optimizer behavior/);
+          assert.doesNotMatch(dialog.detail, /moved\\.299/);
+          assert.ok(dialog.detail.length < 1000);
+        }})().catch(error => {{ console.error(error); process.exit(1); }});
+        """
+    )
+    _run_node(script)
 
 
 def test_plot_modal_is_movable_and_resizable() -> None:

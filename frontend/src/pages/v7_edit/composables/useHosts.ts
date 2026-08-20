@@ -17,9 +17,10 @@ export interface HostCapabilityPayload {
 }
 
 /** ?request_id=…&name=… (name only for v8, :1914-1918). */
-export function buildHostQuery(requestId: string, opts: { isV8: boolean; instanceName: string }): string {
+export function buildHostQuery(requestId: string, opts: { isV8: boolean; instanceName: string; configSchema?: string }): string {
   let query = '?request_id=' + encodeURIComponent(requestId);
   if (opts.isV8 && opts.instanceName) query += '&name=' + encodeURIComponent(opts.instanceName);
+  if (opts.isV8 && opts.configSchema) query += '&config_schema=' + encodeURIComponent(opts.configSchema);
   return query;
 }
 
@@ -32,7 +33,7 @@ function newRequestId(generation: number): string {
 export async function requestHostCapabilities(
   apiBase: string,
   requestId: string,
-  opts: { isV8: boolean; instanceName: string; signal?: AbortSignal },
+  opts: { isV8: boolean; instanceName: string; configSchema?: string; signal?: AbortSignal },
   fetchFn: FetchFn = fetch
 ): Promise<HostCapabilityPayload> {
   const response = await fetchFn(apiBase + '/hosts' + buildHostQuery(requestId, opts), {
@@ -110,8 +111,10 @@ export function useHosts(
   apiBase: string,
   adapter: EditAdapter,
   instanceName: string,
-  fetchFn: FetchFn = fetch
+  fetchFn: FetchFn = fetch,
+  schemaSource: Ref<string> | (() => string) = ref('')
 ): UseHosts {
+  const configSchema = schemaSource;
   const allHosts = ref<string[]>(['disabled']);
   const capabilities = ref<Record<string, Record<string, unknown>>>({});
   const selected = ref('');
@@ -127,14 +130,21 @@ export function useHosts(
       const payload = await requestHostCapabilities(
         apiBase,
         newRequestId(requestGeneration),
-        { isV8: adapter.isV8, instanceName, signal: controller.signal },
+        {
+          isV8: adapter.isV8,
+          instanceName,
+          configSchema: typeof configSchema === 'function' ? configSchema() : configSchema.value,
+          signal: controller.signal,
+        },
         fetchFn
       );
       if (requestGeneration !== generation) return; // superseded (:1925)
       const currentSelection = selected.value;
       const keepSelected = currentSelection && currentSelection !== selectedBefore ? currentSelection : selectedBefore;
       capabilities.value = payload.host_capabilities ?? {};
-      allHosts.value = mergeHostList(allHosts.value, payload.hosts, keepSelected);
+      const selectedCapability = keepSelected ? capabilities.value[keepSelected] : undefined;
+      const schemaIncompatible = adapter.isV8 && selectedCapability?.pb8_capable === true && selectedCapability.schema_compatible === false;
+      allHosts.value = mergeHostList(allHosts.value, payload.hosts, schemaIncompatible ? '' : keepSelected);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return;
       // legacy only warned (:1949) — keep the last good list
