@@ -13,6 +13,8 @@
 
 ## Vue 3 Frontend Migration (continued)
 
+- Fixed the standalone Dashboard editor color contrast by loading the shared theme tokens and base form styles, making dashboard names, layout controls, widget palette items, empty-cell hints, and grid actions readable in dark mode.
+
 - Refined the migrated PBv7/PBv8 Backtest config editor visual hierarchy: added a responsive section-card layout for basics, capital/execution, market data, coin filters and bot settings; introduced a 12-column desktop field grid, a single clean exchange selector without duplicate labels/actions, clearer section guidance, grouped sidebar actions, a dedicated filter action, and an independently scrollable editor while preserving the existing config bindings and handoff behavior; removed duplicate icon prefixes throughout the Backtest and Optimize submenu actions, including New Config, Delete Selected, Backtest, Compare, archive maintenance and editor actions.
 
 - Repaired the migrated PBv7/PBv8 Backtest config editor: restored the legacy compact grid, searchable tag dropdowns, numeric steppers and explicit expanders; restored JSON import plus Results, Convert to V8, Add to Run, Strategy Explorer, Balance Calculator and OHLCV readiness handoffs; saved-config-only actions remain disabled for unsaved configs. Added focused Vue and stylesheet regression coverage.

@@ -1,4 +1,6 @@
 import { createApp } from 'vue';
+import '@/styles/tokens.css';
+import '@/styles/base.css';
 import { createI18n, detectLang } from '@/shared/i18n';
 import App from './App.vue';
 /* D-editor-4: swap the EmptyCell stubs for the real Plotly widgets */

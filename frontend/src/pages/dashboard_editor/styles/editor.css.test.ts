@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
    deliberate — must consciously update this expectation. */
 
 const editorCss = readFileSync(join(import.meta.dirname, 'editor.css'), 'utf8');
+const editorMain = readFileSync(join(import.meta.dirname, '..', 'main.ts'), 'utf8');
 
 /** sha256 of the normalized CSS; re-frozen at the style-unification pass
    (hardcoded colors redirected to the shared @/styles/tokens.css). */
@@ -34,6 +35,11 @@ describe('editor.css — frozen port of the legacy editor <style> (15-454)', () 
     const normalized = normalize(editorCss);
     expect(normalized.length).toBeGreaterThan(8000); // sanity: the real stylesheet
     expect(sha256(normalized)).toBe(FROZEN_EDITOR_CSS_SHA256);
+  });
+
+  it('loads the shared color tokens before the standalone editor styles', () => {
+    expect(editorMain).toContain("import '@/styles/tokens.css';");
+    expect(editorMain).toContain("import '@/styles/base.css';");
   });
 
   it('keeps the grid/cell/resize rules the grid engine depends on', () => {
