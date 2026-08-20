@@ -781,9 +781,10 @@ onUnmounted(() => {
 <style>
 #page-body {
   display: flex;
-  height: calc(100vh - 52px); /* topnav height, injected by pbgui_nav.js */
+  height: calc(100vh - var(--nav-height));
+  min-height: 0;
   overflow: hidden;
-  background: #0e1117;
+  background: var(--surface-page);
 }
 
 /* ── Sidebar ── */
@@ -871,11 +872,13 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 .svc-panel {
   display: none;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 .svc-panel.active {

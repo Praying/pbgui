@@ -40,11 +40,27 @@ input:focus, select:focus, textarea:focus {
 }
 
 input::placeholder, textarea::placeholder {
-  color: var(--text-dim);
+  color: var(--text-placeholder);
 }
 
 button {
   cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: var(--focus-ring);
+}
+
+button:active:not(:disabled),
+a:active {
+  transform: translateY(1px);
 }
 
 button:disabled {
@@ -75,7 +91,7 @@ button:disabled {
 /* ── Selection ──────────────────────────────────────────────── */
 
 ::selection {
-  background: rgba(77, 166, 255, 0.3);
+  background: var(--accent-bg);
   color: var(--text-primary);
 }
 
@@ -133,4 +149,15 @@ th {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

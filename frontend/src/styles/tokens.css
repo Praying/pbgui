@@ -15,6 +15,13 @@
     'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   --font-mono: 'Fira Code', 'Cascadia Code', 'SF Mono', 'Consolas', monospace;
 
+  --text-display: 32px;
+  --text-title: 24px;
+  --text-section: 18px;
+  --text-body: 14px;
+  --text-small: 13px;
+  --text-caption: 11px;
+
   --fs-xs: 11px;
   --fs-sm: 13px;
   --fs-base: 14px;
@@ -26,11 +33,24 @@
   --sp-xs: 4px;
   --sp-sm: 8px;
   --sp-md: 12px;
+  --sp-xl: 16px;
   --sp-lg: 20px;
+  --sp-2xl: 24px;
+  --sp-3xl: 32px;
+  --sp-4xl: 40px;
+
+  --page-padding: 24px;
+  --panel-gap: 16px;
+  --section-gap: 20px;
+  --field-gap: 8px;
 
   /* ── Sizing ─────────────────────────────────────────────────── */
-  --input-h: 32px;
-  --btn-h: 32px;
+  --control-height-sm: 28px;
+  --control-height-md: 32px;
+  --control-height-lg: 38px;
+  --input-h: var(--control-height-md);
+  --btn-h: var(--control-height-md);
+  --nav-height: 52px;
 
   /* ── Border radius ──────────────────────────────────────────── */
   --radius-sm: 4px;
@@ -46,6 +66,13 @@
   --bg-elevated: #262730;    /* elevated surface (modals, popovers) */
   --bg-input: #1a202c;       /* input / select background */
 
+  /* ── Surface semantics ─────────────────────────────────────── */
+  --surface-page: var(--bg-page);
+  --surface-sidebar: #111827;
+  --surface-panel: var(--bg-panel);
+  --surface-card: var(--bg-card);
+  --surface-elevated: var(--bg-elevated);
+
   /* ── Borders ─────────────────────────────────────────────────── */
   --border-subtle: #1e2736;  /* page-level borders */
   --border-default: #2d3748; /* component borders */
@@ -55,7 +82,8 @@
   --text-primary: #e2e8f0;   /* primary body text */
   --text-secondary: #94a3b8; /* secondary / muted text */
   --text-muted: #64748b;     /* very muted / placeholder text */
-  --text-dim: #4a5568;       /* disabled / extremely dim text */
+  --text-disabled: #4a5568;  /* disabled / extremely dim text */
+  --text-placeholder: #53657b;
 
   /* ── Semantic colors ────────────────────────────────────────── */
   --accent: #4da6ff;         /* primary accent (links, active states) */
@@ -77,6 +105,22 @@
   --info: #1f77ff;           /* informational */
   --info-soft: #5dc4ff;      /* softer info */
   --info-bg: rgba(31, 119, 255, 0.12);   /* info background tint */
+
+  /* ── Elevation, motion, focus and layering ──────────────────── */
+  --shadow-panel: 0 12px 28px rgba(0, 0, 0, 0.16);
+  --shadow-elevated: 0 18px 42px rgba(0, 0, 0, 0.24);
+  --shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.5);
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+  --motion-slow: 260ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --focus-ring: 0 0 0 3px rgba(77, 166, 255, 0.28);
+  --focus-ring-offset: 2px;
+  --z-navigation: 200;
+  --z-dropdown: 300;
+  --z-modal: 1000;
+  --z-toast: 2000;
+  --z-help: 3200;
 
   /* ── Legacy aliases (for backtest_shell.css compatibility) ──── */
   --bg: var(--bg-page);

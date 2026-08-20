@@ -31,8 +31,8 @@ a:hover { text-decoration: underline; }
 .conn-waiting { background: var(--orange); color: #000 /* black on colored bg */; }
 
 /* ── Page layout (:42-56 + backtest_shell.css:31-36) ── */
-#page-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
-#main-content { flex: 1; overflow: hidden; background: var(--bg); padding: var(--sp-lg); display: flex; flex-direction: column; }
+#page-body { display: flex; height: calc(100vh - var(--nav-height)); min-height: 0; overflow: hidden; }
+#main-content { flex: 1; min-height: 0; overflow: hidden; background: var(--bg); padding: var(--sp-lg); display: flex; flex-direction: column; }
 /* When the results panel is unpinned: main-content scrolls everything (:49-50) */
 #main-content:has(#panel-results.active.unpinned) { overflow-y: auto; }
 .view-panel { display: none; }

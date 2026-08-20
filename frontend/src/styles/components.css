@@ -16,12 +16,16 @@
   padding: 0 var(--sp-md);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  background: var(--bg-elevated);
+  background: var(--surface-elevated);
   color: var(--text-primary);
   font-size: var(--fs-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
   white-space: nowrap;
   user-select: none;
 }
@@ -37,7 +41,7 @@
 }
 
 .btn:disabled:hover {
-  background: var(--bg-elevated);
+  background: var(--surface-elevated);
   border-color: var(--border-default);
 }
 
@@ -88,7 +92,7 @@
 }
 
 .btn-secondary {
-  background: var(--bg-card);
+  background: var(--surface-card);
   border-color: var(--border-default);
   color: var(--text-secondary);
 }
@@ -105,7 +109,7 @@
 }
 
 .btn-ghost:hover {
-  background: var(--bg-card);
+  background: var(--surface-card);
   color: var(--text-primary);
 }
 
@@ -124,7 +128,7 @@
 /* ── Panels / Cards ─────────────────────────────────────────── */
 
 .panel {
-  background: var(--bg-panel);
+  background: var(--surface-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--sp-lg);
@@ -144,15 +148,17 @@
 }
 
 .card {
-  background: var(--bg-card);
+  background: var(--surface-card);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   padding: var(--sp-md);
-  transition: background 0.15s;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
 }
 
 .card:hover {
-  background: var(--bg-elevated);
+  background: var(--surface-elevated);
 }
 
 /* ── Badges / Pills ─────────────────────────────────────────── */
@@ -198,7 +204,7 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--z-modal);
   background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
@@ -206,7 +212,7 @@
 }
 
 .modal {
-  background: var(--bg-panel);
+  background: var(--surface-panel);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   padding: var(--sp-lg);
@@ -216,7 +222,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  box-shadow: var(--shadow-modal);
 }
 
 .modal-header {
@@ -278,7 +284,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--bg-panel);
+  background: var(--surface-panel);
   font-size: var(--fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -353,7 +359,7 @@
 }
 
 .form-input::placeholder {
-  color: var(--text-dim);
+  color: var(--text-placeholder);
 }
 
 /* ── Progress ───────────────────────────────────────────────── */
@@ -370,7 +376,7 @@
   height: 100%;
   border-radius: var(--radius-full);
   background: var(--info);
-  transition: width 0.3s ease;
+  transition: width var(--motion-slow) var(--ease-standard);
   min-width: 0;
 }
 
@@ -443,7 +449,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 2000;
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
@@ -456,7 +462,7 @@
   font-size: var(--fs-sm);
   font-weight: 500;
   pointer-events: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-elevated);
 }
 
 .toast-success {
@@ -492,7 +498,10 @@
   font-size: var(--fs-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
 }
 
 .tab:hover {
@@ -541,7 +550,7 @@
 .status-dot-warning { background: var(--warning); }
 .status-dot-danger  { background: var(--danger); }
 .status-dot-info    { background: var(--info); }
-.status-dot-muted   { background: var(--text-dim); }
+.status-dot-muted   { background: var(--text-disabled); }
 
 /* ── Responsive ─────────────────────────────────────────────── */
 
