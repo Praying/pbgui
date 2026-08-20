@@ -387,4 +387,192 @@ onUnmounted(() => {
 .lvp-level-hidden {
   display: none !important;
 }
+
+/* ── Log terminal refinement ────────────────────────────────────────────── */
+.lvp-viewer {
+  gap: 8px;
+}
+
+.lvp-toolbar {
+  min-height: 40px;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 9px;
+  background:
+    linear-gradient(90deg, rgba(24, 38, 59, 0.76), rgba(14, 23, 37, 0.72)),
+    #111827;
+  box-shadow: 0 1px rgba(255, 255, 255, 0.025) inset;
+}
+
+.lvp-lvl-btn {
+  min-width: 39px;
+  min-height: 27px;
+  padding: 0 8px;
+  border-color: rgba(148, 163, 184, 0.17);
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.07);
+  color: #8fa5be;
+  opacity: 0.48;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
+}
+
+.lvp-lvl-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(148, 163, 184, 0.36);
+  background: rgba(148, 163, 184, 0.14);
+  color: #edf4fc;
+  opacity: 0.9;
+}
+
+.lvp-lvl-btn.on {
+  opacity: 1;
+}
+
+.lvp-lvl-btn[data-lvl='DEBUG'].on {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+}
+
+.lvp-lvl-btn[data-lvl='INFO'].on {
+  border-color: rgba(52, 211, 153, 0.38);
+  background: rgba(16, 185, 129, 0.13);
+  color: #86efac;
+}
+
+.lvp-lvl-btn[data-lvl='WARNING'].on {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(180, 83, 9, 0.16);
+  color: #fde68a;
+}
+
+.lvp-lvl-btn[data-lvl='ERROR'].on {
+  border-color: rgba(248, 113, 113, 0.42);
+  background: rgba(185, 28, 28, 0.17);
+  color: #fca5a5;
+}
+
+.lvp-lvl-btn[data-lvl='CRITICAL'].on {
+  border-color: rgba(196, 181, 253, 0.4);
+  background: rgba(109, 40, 217, 0.18);
+  color: #ddd6fe;
+}
+
+.lvp-ctrl-btn {
+  min-height: 29px;
+  padding: 0 10px;
+  border-color: rgba(148, 163, 184, 0.17);
+  border-radius: 7px;
+  background: rgba(148, 163, 184, 0.08);
+  color: #b7c6d8;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.lvp-ctrl-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(96, 165, 250, 0.38);
+  background: rgba(37, 99, 235, 0.16);
+  color: #edf4fc;
+}
+
+.lvp-ctrl-btn.lvp-stream-on {
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(16, 185, 129, 0.16);
+  color: #a7f3d0;
+}
+
+.lvp-clear-btn:hover {
+  border-color: rgba(248, 113, 113, 0.36);
+  background: rgba(185, 28, 28, 0.16);
+  color: #fecaca;
+}
+
+.lvp-conn-badge {
+  margin-left: auto;
+  padding: 4px 9px;
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 999px;
+  background: rgba(6, 13, 24, 0.4);
+  color: #8fa5be;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.lvp-terminal {
+  padding: 14px 16px;
+  border-color: rgba(96, 165, 250, 0.16);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(3, 9, 17, 0.98), rgba(2, 6, 12, 0.98)),
+    #000;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24), 0 1px rgba(255, 255, 255, 0.025) inset;
+  color: #bdc9d8;
+  font-size: 12px;
+  line-height: 1.55;
+  scrollbar-color: rgba(96, 165, 250, 0.32) rgba(148, 163, 184, 0.04);
+}
+
+.lvp-terminal > div {
+  min-height: 1.55em;
+  padding: 1px 7px;
+  border-left: 2px solid transparent;
+  border-radius: 3px;
+  transition: background 0.12s ease;
+}
+
+.lvp-terminal > div:hover {
+  background: rgba(96, 165, 250, 0.07);
+}
+
+.lvp-log-debug {
+  color: #71849b;
+}
+
+.lvp-log-info {
+  color: #c5d1df;
+}
+
+.lvp-log-warning {
+  border-left-color: rgba(251, 191, 36, 0.65) !important;
+  color: #fcd34d;
+}
+
+.lvp-log-error {
+  border-left-color: rgba(248, 113, 113, 0.72) !important;
+  color: #fca5a5;
+}
+
+.lvp-log-critical {
+  border-left-color: rgba(196, 181, 253, 0.72) !important;
+  color: #ddd6fe;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .lvp-toolbar {
+    align-items: stretch;
+  }
+
+  .lvp-conn-badge {
+    width: 100%;
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .lvp-terminal {
+    padding: 11px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
 </style>

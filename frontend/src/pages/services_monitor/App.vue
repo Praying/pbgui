@@ -964,4 +964,330 @@ onUnmounted(() => {
   font-size: var(--fs-sm);
   color: #4a5568;
 }
+
+/* ── Services command-center refinement ───────────────────────────────────
+   Keep service controls and panel behavior unchanged while improving the
+   hierarchy of health states, navigation and operational surfaces. */
+body {
+  background:
+    radial-gradient(circle at 7% 0%, rgba(37, 99, 235, 0.09), transparent 25rem),
+    var(--bg-page);
+}
+
+#page-body {
+  background:
+    linear-gradient(135deg, rgba(14, 17, 23, 0.98), rgba(10, 17, 29, 0.97));
+}
+
+#sidebar {
+  width: 224px;
+  min-width: 176px;
+  max-width: 320px;
+  background:
+    linear-gradient(180deg, rgba(18, 29, 46, 0.98), rgba(10, 16, 26, 0.98) 78%),
+    var(--bg-page);
+  border-right-color: rgba(96, 165, 250, 0.15);
+}
+
+#sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 150px;
+  pointer-events: none;
+  background: radial-gradient(circle at 22% 0%, rgba(56, 189, 248, 0.14), transparent 68%);
+}
+
+#sidebar-inner {
+  position: relative;
+  z-index: 1;
+  gap: 5px;
+  padding: 16px 12px 18px;
+}
+
+#sidebar-inner::before {
+  content: 'SYSTEM HEALTH';
+  display: block;
+  margin: 4px 8px 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  color: #dbeafe;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.sb-btn {
+  min-height: 37px;
+  padding: 0 12px;
+  border-color: transparent;
+  border-radius: 8px;
+  color: #9db2ca;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.sb-btn:hover {
+  transform: translateX(2px);
+  border-color: rgba(96, 165, 250, 0.16);
+  background: rgba(96, 165, 250, 0.08);
+  color: #edf4fc;
+}
+
+.sb-btn.active {
+  border-color: rgba(96, 165, 250, 0.3);
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.2), rgba(37, 99, 235, 0.04));
+  box-shadow: inset 3px 0 #60a5fa;
+  color: #dbeafe;
+}
+
+.sb-dot {
+  width: 7px;
+  height: 7px;
+  box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
+}
+
+.sb-dot.running {
+  background: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12), 0 0 12px rgba(52, 211, 153, 0.42);
+}
+
+.sb-dot.stopped {
+  background: #f87171;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
+}
+
+.sb-dot.warn {
+  background: #fbbf24;
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+}
+
+#main-content {
+  background:
+    radial-gradient(circle at 94% 0%, rgba(56, 189, 248, 0.1), transparent 28rem),
+    radial-gradient(circle at 0% 84%, rgba(20, 184, 166, 0.06), transparent 24rem),
+    repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.018) 0 1px, transparent 1px 42px),
+    var(--bg-page);
+}
+
+#panel-overview {
+  padding: 28px clamp(18px, 3vw, 42px) 42px;
+}
+
+#overview-grid {
+  padding: 0;
+  grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
+  gap: 16px;
+}
+
+#overview-grid .svc-card {
+  position: relative;
+  min-height: 132px;
+  padding: 17px;
+  overflow: hidden;
+  border-color: rgba(148, 163, 184, 0.14);
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.07), transparent 68%),
+    rgba(19, 29, 45, 0.82);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14), 0 1px rgba(255, 255, 255, 0.025) inset;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+#overview-grid .svc-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.45), transparent 72%);
+}
+
+#overview-grid .svc-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(96, 165, 250, 0.32);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.12), transparent 68%),
+    rgba(20, 37, 59, 0.9);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(96, 165, 250, 0.04);
+}
+
+#overview-grid .svc-card.running {
+  border-color: rgba(52, 211, 153, 0.28);
+}
+
+#overview-grid .svc-card.running::before {
+  background: linear-gradient(90deg, #34d399, transparent 72%);
+}
+
+#overview-grid .svc-card.stopped {
+  border-color: rgba(248, 113, 113, 0.26);
+}
+
+#overview-grid .svc-card.stopped::before {
+  background: linear-gradient(90deg, #f87171, transparent 72%);
+}
+
+#overview-grid .card-name {
+  color: #e8f0fa;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+#overview-grid .card-status-row {
+  min-height: 25px;
+  color: #8fa5be;
+  line-height: 1.45;
+}
+
+#overview-grid .card-dot {
+  width: 8px;
+  height: 8px;
+}
+
+#overview-grid .card-buttons {
+  margin-top: auto;
+  gap: 6px;
+}
+
+#overview-grid .card-btn {
+  min-height: 29px;
+  padding: 0 10px;
+  border-color: rgba(148, 163, 184, 0.16);
+  border-radius: 7px;
+  background: rgba(148, 163, 184, 0.08);
+  color: #b7c6d8;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+#overview-grid .card-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(96, 165, 250, 0.36);
+  background: rgba(37, 99, 235, 0.16);
+  color: #edf4fc;
+}
+
+#overview-grid .card-btn.start {
+  border-color: rgba(52, 211, 153, 0.32);
+  background: rgba(16, 185, 129, 0.12);
+  color: #86efac;
+}
+
+#overview-grid .card-btn.stop {
+  border-color: rgba(248, 113, 113, 0.32);
+  background: rgba(185, 28, 28, 0.15);
+  color: #fca5a5;
+}
+
+#overview-grid .card-btn.restart {
+  border-color: rgba(251, 191, 36, 0.32);
+  background: rgba(180, 83, 9, 0.14);
+  color: #fde68a;
+}
+
+#overview-grid .card-btn.enable {
+  border-color: rgba(96, 165, 250, 0.32);
+  background: rgba(37, 99, 235, 0.14);
+  color: #bfdbfe;
+}
+
+.result-modal {
+  border-color: rgba(96, 165, 250, 0.24);
+  border-radius: 14px;
+  background: linear-gradient(145deg, #172337, #101927);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52), 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.result-modal-header {
+  padding: 14px 17px;
+  border-bottom-color: rgba(148, 163, 184, 0.14);
+  background: rgba(24, 38, 59, 0.45);
+}
+
+.result-modal-header h3 {
+  color: #e8f0fa;
+}
+
+.result-modal-status.ok {
+  background: rgba(6, 95, 70, 0.32);
+  border-bottom-color: rgba(52, 211, 153, 0.24);
+}
+
+.result-modal-status.fail {
+  background: rgba(127, 29, 29, 0.32);
+  border-bottom-color: rgba(248, 113, 113, 0.24);
+}
+
+.result-modal-footer {
+  padding: 10px 17px;
+  border-top-color: rgba(148, 163, 184, 0.14);
+}
+
+.result-modal-footer button {
+  min-height: 34px;
+  border: 1px solid rgba(96, 165, 250, 0.46);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+button:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}
+
+@media (max-width: 980px) {
+  #sidebar {
+    width: 196px;
+  }
+
+  #panel-overview {
+    padding: 22px 18px 32px;
+  }
+
+  #overview-grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  #sidebar {
+    width: 172px;
+    min-width: 150px;
+  }
+
+  #sidebar-inner {
+    padding-inline: 8px;
+  }
+
+  #sidebar-inner::before {
+    margin-inline: 6px;
+    font-size: 10px;
+  }
+
+  .sb-btn {
+    padding-inline: 9px;
+    font-size: 12px;
+  }
+
+  #panel-overview {
+    padding: 16px 12px 24px;
+  }
+
+  #overview-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  #overview-grid .svc-card {
+    min-height: 118px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
 </style>

@@ -501,3 +501,413 @@ a:hover { text-decoration: underline; }
   .config-editor-12 { grid-template-columns: 1fr; }
   .editor-span-1, .editor-span-2, .editor-span-4, .editor-span-6, .editor-span-12 { grid-column: span 1; }
 }
+
+/* ── New-config command surface refinement ────────────────────────────────
+   Make the structured editor feel like a deliberate configuration workspace
+   while preserving every existing field, selector and editor interaction. */
+body {
+  background:
+    radial-gradient(circle at 7% 0%, rgba(37, 99, 235, 0.09), transparent 25rem),
+    var(--bg);
+}
+
+#main-content {
+  padding: 24px clamp(16px, 2.5vw, 36px) 36px;
+  background:
+    radial-gradient(circle at 94% 0%, rgba(56, 189, 248, 0.09), transparent 28rem),
+    radial-gradient(circle at 0% 84%, rgba(20, 184, 166, 0.05), transparent 24rem),
+    repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.016) 0 1px, transparent 1px 42px),
+    var(--bg);
+}
+
+#panel-configs.active:has(#configs-editor) {
+  min-width: 0;
+}
+
+/* The editor is a long-form document, unlike the fixed-height queue/results
+   workspaces. Let the main content own the vertical scroll in this mode so
+   no section or field group is clipped by the shell's viewport constraint. */
+#main-content:has(#configs-editor) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#panel-configs.active:has(#configs-editor) {
+  display: block !important;
+  flex: none;
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+#configs-editor {
+  display: flex;
+  flex: none;
+  min-height: max-content;
+  height: auto;
+  overflow: visible;
+  padding: 0 4px 28px 0;
+  scrollbar-color: rgba(96, 165, 250, 0.32) rgba(148, 163, 184, 0.04);
+}
+
+.config-editor-grid {
+  gap: 18px;
+  padding: 0 0 24px;
+}
+
+.config-editor-intro {
+  position: relative;
+  min-height: 94px;
+  padding: 10px 4px 18px;
+  border-bottom-color: rgba(148, 163, 184, 0.15);
+}
+
+.config-editor-intro::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 42px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #60a5fa);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.46);
+}
+
+.config-editor-kicker {
+  padding-top: 7px;
+  color: #7dd3fc;
+  letter-spacing: 0.16em;
+}
+
+.config-editor-intro h1 {
+  margin-top: 6px;
+  color: #edf4fc;
+  font-size: clamp(24px, 2.4vw, 34px);
+  letter-spacing: -0.035em;
+}
+
+.config-editor-intro p {
+  max-width: 760px;
+  margin-top: 8px;
+  color: #9eb0c4;
+  line-height: 1.55;
+}
+
+.config-editor-status {
+  margin-top: 7px;
+  padding: 7px 11px;
+  border-color: rgba(96, 165, 250, 0.28);
+  background: rgba(37, 99, 235, 0.1);
+  color: #bfdbfe;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.04);
+}
+
+.config-editor-status-dot {
+  background: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.14), 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.config-editor-section {
+  position: relative;
+  overflow: visible;
+  padding: 20px clamp(16px, 2vw, 24px) 24px;
+  border-color: rgba(148, 163, 184, 0.14);
+  border-radius: 13px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.065), transparent 24rem),
+    linear-gradient(145deg, rgba(20, 29, 43, 0.98), rgba(13, 21, 34, 0.98));
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16), 0 1px rgba(255, 255, 255, 0.025) inset;
+}
+
+.config-editor-section::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.76), transparent 68%);
+}
+
+.config-editor-section:nth-of-type(3)::before {
+  background: linear-gradient(90deg, rgba(45, 212, 191, 0.76), transparent 68%);
+}
+
+.config-editor-section:nth-of-type(4)::before {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.76), transparent 68%);
+}
+
+.config-editor-section:nth-of-type(5)::before {
+  background: linear-gradient(90deg, rgba(167, 139, 250, 0.76), transparent 68%);
+}
+
+.config-editor-section-head {
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 13px;
+  border-bottom-color: rgba(148, 163, 184, 0.14);
+}
+
+.config-editor-section-head h2 {
+  color: #e8f0fa;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.config-editor-section-head p {
+  max-width: 70ch;
+  margin-top: 5px;
+  color: #8fa5be;
+  line-height: 1.5;
+}
+
+.config-editor-section-index {
+  min-width: 31px;
+  padding: 4px 7px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 6px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #93c5fd;
+  text-align: center;
+}
+
+#configs-editor .form-row {
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+#configs-editor .form-group label {
+  min-height: 2.25em;
+  color: #aabbd0;
+  font-size: 11px;
+  letter-spacing: 0.035em;
+}
+
+#configs-editor .form-group input,
+#configs-editor .form-group select,
+#configs-editor .form-group textarea,
+#configs-editor .ms-wrap {
+  border-color: rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
+  background: rgba(5, 10, 18, 0.68);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
+}
+
+#configs-editor .form-group input,
+#configs-editor .form-group select {
+  height: 36px;
+  min-height: 36px;
+}
+
+#configs-editor .form-group input:hover,
+#configs-editor .form-group select:hover,
+#configs-editor .ms-wrap:hover {
+  border-color: rgba(96, 165, 250, 0.34);
+  background: rgba(7, 16, 28, 0.82);
+}
+
+#configs-editor .form-group input:focus,
+#configs-editor .form-group select:focus,
+#configs-editor .form-group textarea:focus,
+#configs-editor .ms-wrap:focus-within {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.13);
+  outline: none;
+}
+
+#configs-editor .form-group input::placeholder {
+  color: #53657b;
+}
+
+#configs-editor .form-group input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  accent-color: #60a5fa;
+}
+
+#configs-editor .chk-row {
+  min-height: 36px;
+  align-items: center;
+  padding: 7px 9px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.045);
+}
+
+#configs-editor .chk-row label {
+  min-height: 0;
+  color: #b7c6d8;
+  font-size: 11px;
+}
+
+#configs-editor .config-editor-toggle-row {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+#configs-editor .num-stepper {
+  height: 36px;
+}
+
+#configs-editor .stepper-btn {
+  width: 34px;
+  height: 36px;
+  border-color: rgba(148, 163, 184, 0.16);
+  background: rgba(148, 163, 184, 0.09);
+  color: #a8bad0;
+}
+
+#configs-editor .stepper-btn:hover {
+  border-color: rgba(96, 165, 250, 0.48);
+  background: rgba(37, 99, 235, 0.22);
+  color: #dbeafe;
+}
+
+#configs-editor .expander {
+  margin: 12px 0 14px;
+  border-color: rgba(148, 163, 184, 0.14);
+  border-radius: 9px;
+  background: rgba(5, 10, 18, 0.26);
+}
+
+#configs-editor .expander-header {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.055);
+  color: #b7c6d8;
+}
+
+#configs-editor .expander-header:hover {
+  background: rgba(37, 99, 235, 0.1);
+  color: #e8f0fa;
+}
+
+#configs-editor .expander.open .expander-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 8px 8px 0 0;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+#configs-editor .expander-body {
+  padding: 14px;
+}
+
+#configs-editor .act-btn {
+  min-height: 36px;
+  padding: 0 10px;
+  border-color: rgba(96, 165, 250, 0.25);
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  color: #bfdbfe;
+}
+
+#configs-editor .act-btn:hover {
+  border-color: rgba(96, 165, 250, 0.48);
+  background: rgba(37, 99, 235, 0.18);
+}
+
+#sidebar-editor {
+  padding: 16px 12px 0;
+  background:
+    linear-gradient(180deg, rgba(18, 29, 46, 0.98), rgba(10, 16, 26, 0.98) 78%),
+    var(--bg-page);
+}
+
+#sidebar-editor .sidebar-header {
+  padding: 7px 8px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.13);
+}
+
+#sidebar-editor .sb-title {
+  color: #e8f0fa;
+  font-size: 12px;
+  letter-spacing: 0.13em;
+}
+
+#sidebar-editor .editor-nav-group,
+#sidebar-editor .editor-analysis-group,
+#sidebar-editor .editor-config-group,
+#sidebar-editor .editor-save-group {
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom-color: rgba(148, 163, 184, 0.12);
+}
+
+#sidebar-editor .editor-action-label {
+  color: #8193aa;
+  letter-spacing: 0.13em;
+}
+
+#sidebar-editor .sb-btn {
+  min-height: 36px;
+  padding: 0 11px;
+  border-color: transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #9db2ca;
+}
+
+#sidebar-editor .sb-btn:hover:not(:disabled) {
+  border-color: rgba(96, 165, 250, 0.16);
+  background: rgba(96, 165, 250, 0.08);
+  color: #edf4fc;
+}
+
+#sidebar-editor .editor-save-group .sb-btn.primary {
+  border-color: rgba(96, 165, 250, 0.44);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+  color: #eff6ff;
+}
+
+#sidebar-editor .editor-save-group .sb-btn.info {
+  border-color: rgba(52, 211, 153, 0.32);
+  background: rgba(16, 185, 129, 0.12);
+  color: #a7f3d0;
+}
+
+#configs-editor button:focus-visible,
+#configs-editor input:focus-visible,
+#configs-editor select:focus-visible,
+#configs-editor textarea:focus-visible,
+#sidebar-editor button:focus-visible {
+  outline: 2px solid #7dd3fc;
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  #main-content {
+    padding: 18px 16px 28px;
+  }
+
+  .config-editor-section {
+    padding: 18px 16px 20px;
+  }
+}
+
+@media (max-width: 700px) {
+  .config-editor-intro {
+    gap: 12px;
+  }
+
+  .config-editor-status {
+    margin-top: 0;
+  }
+
+  #configs-editor .form-row {
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
