@@ -522,7 +522,7 @@ async function testConnection(): Promise<void> {
         </select>
       </div>
       <div class="form-group" id="testBtnGroup" style="padding-top:20px;">
-        <button class="btn btn-info" id="btnTest" :disabled="testing" @click="testConnection">
+        <button class="btn pbgui-btn btn-info" id="btnTest" :disabled="testing" @click="testConnection">
           <span v-if="testing" class="spinner"></span>
           {{ t('misc.apikeys.testConnection') }}
         </button>
@@ -573,7 +573,7 @@ async function testConnection(): Promise<void> {
         <template v-else>—</template>
       </span>
       <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;">{{ hlInline.dateText }}</span>
-      <button class="btn btn-sm btn-secondary" id="btnHLExpiryInline" :disabled="checkingHl" style="margin-left:auto;" @click="checkSingleHlExpiry">
+      <button class="btn pbgui-btn btn-sm btn-secondary" id="btnHLExpiryInline" :disabled="checkingHl" style="margin-left:auto;" @click="checkSingleHlExpiry">
         &#8635; {{ checkingHl ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiry') }}
       </button>
     </div>
@@ -590,7 +590,7 @@ async function testConnection(): Promise<void> {
         <template v-else>—</template>
       </span>
       <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;">{{ bybitInline.dateText }}</span>
-      <button class="btn btn-sm btn-secondary" id="btnBybitExpiryInline" :disabled="checkingBybit" style="margin-left:auto;" @click="checkSingleBybitExpiry">
+      <button class="btn pbgui-btn btn-sm btn-secondary" id="btnBybitExpiryInline" :disabled="checkingBybit" style="margin-left:auto;" @click="checkSingleBybitExpiry">
         &#8635; {{ checkingBybit ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiryAndIps') }}
       </button>
       <div id="bybitIPList" v-show="bybitInline.ips !== null" style="margin-top:8px; padding-top:8px; border-top:1px solid #2d3748; width:100%;">
@@ -663,10 +663,10 @@ async function testConnection(): Promise<void> {
     </div>
 
     <div class="form-actions">
-      <button class="btn btn-danger" id="btnDelete" v-show="deleteVisible" @click="editingName && confirmDelete(editingName)">
+      <button class="btn pbgui-btn btn-danger" id="btnDelete" v-show="deleteVisible" @click="editingName && confirmDelete(editingName)">
         {{ t('common.delete') }}
       </button>
-      <button class="btn btn-primary" id="btnSave" :disabled="saving" @click="save">
+      <button class="btn pbgui-btn btn-primary" id="btnSave" :disabled="saving" @click="save">
         <span v-if="saving" class="spinner"></span>
         {{ t('common.save') }}
       </button>

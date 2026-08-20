@@ -140,7 +140,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         style="flex:1; background:#0e1117; border:1px solid #2d3748; border-radius:4px; padding:6px 10px; color:#fafafa; font-size:var(--fs-sm);"
       />
       <button
-        class="btn btn-sm btn-secondary"
+        class="btn pbgui-btn btn-sm btn-secondary"
         :title="t('misc.apikeys.clearFilter')"
         @click="clearFilterAndFocus"
       >
@@ -203,10 +203,10 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
             <span class="badge-in-use" :class="{ active: u.in_use }">{{ u.in_use ? t('misc.apikeys.inUse') : t('misc.apikeys.unused') }}</span>
           </td>
           <td>
-            <button class="btn btn-sm btn-info" data-user-action="edit" @click.stop="emit('edit', u.name)">{{ t('misc.apikeys.edit') }}</button>
+            <button class="btn pbgui-btn btn-sm btn-info" data-user-action="edit" @click.stop="emit('edit', u.name)">{{ t('misc.apikeys.edit') }}</button>
             <button
               v-if="!u.in_use"
-              class="btn btn-sm btn-danger"
+              class="btn pbgui-btn btn-sm btn-danger"
               data-user-action="delete"
               @click.stop="emit('delete', u.name)"
             >

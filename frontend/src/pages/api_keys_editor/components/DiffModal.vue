@@ -45,14 +45,14 @@ function backupLabel(fn: string): string {
   <div id="diffModal" class="diff-modal" v-show="data">
     <div class="diff-modal-header">
       <div style="display:flex; align-items:center; gap:12px;">
-        <button class="btn btn-sm btn-secondary" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</button>
+        <button class="btn pbgui-btn btn-sm btn-secondary" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</button>
         <span id="diffTitle" style="font-size:var(--fs-sm); color:#94a3b8; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;">
           {{ data ? backupLabel(data.filename1) + '  →  ' + backupLabel(data.filename2) : '' }}
         </span>
       </div>
       <div style="display:flex; gap:6px;">
-        <button class="btn btn-sm btn-secondary" id="btnDiffUnified" :class="{ active: mode === 'unified' }" @click="mode = 'unified'">{{ t('misc.apikeys.unified') }}</button>
-        <button class="btn btn-sm btn-secondary" id="btnDiffSide" :class="{ active: mode === 'side' }" @click="mode = 'side'">{{ t('misc.apikeys.sideBySide') }}</button>
+        <button class="btn pbgui-btn btn-sm btn-secondary" id="btnDiffUnified" :class="{ active: mode === 'unified' }" @click="mode = 'unified'">{{ t('misc.apikeys.unified') }}</button>
+        <button class="btn pbgui-btn btn-sm btn-secondary" id="btnDiffSide" :class="{ active: mode === 'side' }" @click="mode = 'side'">{{ t('misc.apikeys.sideBySide') }}</button>
       </div>
     </div>
     <div class="diff-legend">

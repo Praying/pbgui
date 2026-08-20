@@ -65,7 +65,7 @@ onMounted(() => {
         </div>
         <div style="display:flex; gap:8px;">
           <button
-            class="btn btn-sm"
+            class="btn pbgui-btn btn-sm"
             :class="store.yfInstalled.value ? 'btn-danger' : 'btn-primary'"
             id="btnYfInstall"
             :disabled="store.yfBusy.value"
@@ -74,7 +74,7 @@ onMounted(() => {
             <span v-if="store.yfBusy.value" class="spinner"></span>
             {{ store.yfInstalled.value ? t('misc.apikeys.uninstall') : t('misc.apikeys.install') }}
           </button>
-          <button class="btn btn-sm btn-info" id="btnYfTest" v-show="store.yfInstalled.value" :disabled="store.yfBusy.value" @click="store.yfTest()">
+        <button class="btn pbgui-btn btn-sm btn-info" id="btnYfTest" v-show="store.yfInstalled.value" :disabled="store.yfBusy.value" @click="store.yfTest()">
             <span v-if="store.yfBusy.value" class="spinner"></span>
             {{ t('misc.apikeys.test') }}
           </button>
@@ -87,7 +87,7 @@ onMounted(() => {
       <span>{{ t('misc.apikeys.extendedProviderDesc') }}</span>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
         <span style="font-size:var(--fs-sm);color:#94a3b8;">{{ t('misc.apikeys.selectExactVaultProfile') }}</span>
-        <button class="btn btn-sm btn-secondary" type="button" @click="store.newProfile()">{{ t('misc.apikeys.newProfile') }}</button>
+        <button class="btn pbgui-btn btn-sm btn-secondary" type="button" @click="store.newProfile()">{{ t('misc.apikeys.newProfile') }}</button>
       </div>
       <div class="tradfi-profile-wrap">
         <table class="tradfi-profile-table">
@@ -152,7 +152,7 @@ onMounted(() => {
       <div class="tradfi-projection-status">
         <div class="tradfi-projection-copy" id="tradfiProjectionStatus">{{ store.projectionText.value }}</div>
         <button
-          class="btn btn-sm btn-secondary"
+          class="btn pbgui-btn btn-sm btn-secondary"
           id="btnTradfiProjectionRetry"
           type="button"
           :disabled="store.actionBusy.value"
@@ -232,20 +232,20 @@ onMounted(() => {
       <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;">{{ store.providerNote.value }}</p>
       <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;">{{ store.profileStatus.value }}</p>
       <div id="tradfiActions" style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn btn-sm btn-info" :disabled="store.actionBusy.value" @click="store.tradfiTest()">
+        <button class="btn pbgui-btn btn-sm btn-info" :disabled="store.actionBusy.value" @click="store.tradfiTest()">
           <span v-if="store.testing.value === 'test'" class="spinner"></span>
           {{ t('misc.apikeys.testConnection') }}
         </button>
-        <button class="btn btn-sm btn-primary" :disabled="store.actionBusy.value" @click="store.tradfiSave(false)">
+        <button class="btn pbgui-btn btn-sm btn-primary" :disabled="store.actionBusy.value" @click="store.tradfiSave(false)">
           {{ t('misc.apikeys.createUpdate') }}
         </button>
-        <button class="btn btn-sm btn-secondary" id="btnTradfiRotate" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiSave(true)">
+        <button class="btn pbgui-btn btn-sm btn-secondary" id="btnTradfiRotate" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiSave(true)">
           {{ t('misc.apikeys.rotateReplacement') }}
         </button>
-        <button class="btn btn-sm btn-secondary" id="btnTradfiToggle" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiToggleActive()">
+        <button class="btn pbgui-btn btn-sm btn-secondary" id="btnTradfiToggle" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiToggleActive()">
           {{ store.toggleLabel.value }}
         </button>
-        <button class="btn btn-sm btn-danger" id="btnTradfiDelete" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiClear()">
+        <button class="btn pbgui-btn btn-sm btn-danger" id="btnTradfiDelete" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiClear()">
           {{ t('misc.apikeys.deleteProfile') }}
         </button>
       </div>

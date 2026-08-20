@@ -179,7 +179,7 @@ onBeforeUnmount(() => {
 
       <!-- Overview -->
       <section id="section-overview" class="page-section" data-section="overview" :hidden="store.activeSection.value !== 'overview'">
-        <div class="panel overview-panel">
+        <div class="panel pbgui-panel overview-panel">
           <div class="overview-header">
             <div class="overview-heading">
               <h1 class="overview-title">{{ t('misc.welcome.systemOverview') }}</h1>
@@ -204,7 +204,7 @@ onBeforeUnmount(() => {
               <button
                 v-if="store.summaryView.value.pb7Tone !== 'success'"
                 type="button"
-                class="btn btn-secondary summary-action"
+                class="btn pbgui-btn btn-secondary summary-action"
                 @click="store.focusSection('setup')"
               >{{ t('misc.welcome.configurePb7') }}</button>
             </div>
@@ -224,7 +224,7 @@ onBeforeUnmount(() => {
           <span class="section-kicker">{{ t('misc.welcome.runtime') }}</span>
           <p class="section-copy">{{ t('misc.welcome.runtimeCopy') }}</p>
         </div>
-        <div class="panel">
+        <div class="panel pbgui-panel">
           <h2 class="panel-title">{{ t('misc.welcome.runtimeStatus') }}</h2>
           <div class="status-list" id="status-list">
             <section v-for="group in statusGroups" :key="group.key" class="status-group" :data-group="group.key">
@@ -241,7 +241,7 @@ onBeforeUnmount(() => {
           <div class="issues" id="issues">
             <div v-if="store.loginSecurityBanner.value.showAck" class="issue warning login-security-warning">
               <span>{{ store.loginSecurityBanner.value.summary }}</span>
-              <button type="button" class="btn btn-secondary login-security-ack" @click="store.acknowledgeLoginSecurity()">{{
+              <button type="button" class="btn pbgui-btn btn-secondary login-security-ack" @click="store.acknowledgeLoginSecurity()">{{
                 t('misc.welcome.acknowledge')
               }}</button>
             </div>

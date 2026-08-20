@@ -152,6 +152,15 @@ body {
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
         }
 
+        .overview-panel.pbgui-panel {
+            background:
+                radial-gradient(circle at right top, rgba(56, 189, 248, 0.1), transparent 34%),
+                linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.98));
+            border-color: var(--border-subtle);
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        }
+
         .settings-section-heading,
         .settings-panel {
             width: min(100%, 1600px);

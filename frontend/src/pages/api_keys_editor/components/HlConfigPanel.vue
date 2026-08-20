@@ -63,7 +63,7 @@ async function save(): Promise<void> {
         <label>{{ t('misc.apikeys.warningThresholdDays') }}</label>
         <input type="number" id="hlWarningDays" v-model.number="days" min="1" max="365" style="width:100px;" />
       </div>
-      <button class="btn btn-sm btn-primary" @click="save">{{ t('common.save') }}</button>
+      <button class="btn pbgui-btn btn-sm btn-primary" @click="save">{{ t('common.save') }}</button>
     </div>
     <p
       id="hlWarningConfigStatus"

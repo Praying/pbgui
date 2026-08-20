@@ -21,7 +21,7 @@ const toasts = injectToasts();
       <div id="alertModalTitle" class="alert-modal-title">{{ toasts.alert.value.title }}</div>
       <div id="alertModalBody" class="alert-modal-body">{{ toasts.alert.value.message }}</div>
       <div class="alert-modal-footer">
-        <button class="btn btn-primary" @click="toasts.closeAlert()">OK</button>
+        <button class="btn pbgui-btn btn-primary" @click="toasts.closeAlert()">OK</button>
       </div>
     </div>
   </div>

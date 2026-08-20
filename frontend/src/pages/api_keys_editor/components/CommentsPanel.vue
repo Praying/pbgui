@@ -99,7 +99,7 @@ async function remove(key: string): Promise<void> {
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <BackButton @back="emit('back')" />
       <h3 style="margin:0; flex:1;">{{ t('misc.apikeys.commentFields') }}</h3>
-      <button class="btn btn-sm btn-primary" @click="showAdd">+ {{ t('misc.apikeys.add') }}</button>
+      <button class="btn pbgui-btn btn-sm btn-primary" @click="showAdd">+ {{ t('misc.apikeys.add') }}</button>
     </div>
     <div id="addCommentForm" v-show="addVisible" style="margin-bottom:12px; padding:12px; background:#0e1117; border-radius:4px; border:1px solid #2d3748;">
       <div style="display:flex; gap:8px; align-items:flex-end;">
@@ -111,8 +111,8 @@ async function remove(key: string): Promise<void> {
           <label>{{ t('misc.apikeys.value') }}</label>
           <input type="text" id="newCommentValue" v-model="newValue" placeholder="Comment text" />
         </div>
-        <button class="btn btn-sm btn-primary" style="margin-bottom:0;" @click="create">{{ t('common.save') }}</button>
-        <button class="btn btn-sm btn-secondary" style="margin-bottom:0;" @click="addVisible = false">{{ t('common.cancel') }}</button>
+        <button class="btn pbgui-btn btn-sm btn-primary" style="margin-bottom:0;" @click="create">{{ t('common.save') }}</button>
+        <button class="btn pbgui-btn btn-sm btn-secondary" style="margin-bottom:0;" @click="addVisible = false">{{ t('common.cancel') }}</button>
       </div>
     </div>
     <table class="hl-expiry-table" id="commentsTable">
@@ -144,8 +144,8 @@ async function remove(key: string): Promise<void> {
             />
           </td>
           <td>
-            <button class="btn btn-sm btn-primary" @click="update(c.key)">{{ t('common.save') }}</button>
-            <button class="btn btn-sm btn-danger" @click="remove(c.key)">{{ t('common.delete') }}</button>
+            <button class="btn pbgui-btn btn-sm btn-primary" @click="update(c.key)">{{ t('common.save') }}</button>
+            <button class="btn pbgui-btn btn-sm btn-danger" @click="remove(c.key)">{{ t('common.delete') }}</button>
           </td>
         </tr>
       </tbody>

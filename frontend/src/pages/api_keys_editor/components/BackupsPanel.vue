@@ -166,7 +166,7 @@ async function openDiffSelected(): Promise<void> {
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
           <span style="font-size:var(--fs-sm); color:#94a3b8;">{{ t('misc.apikeys.selectTwoToCompare') }}</span>
           <button
-            class="btn btn-sm btn-secondary"
+            class="btn pbgui-btn btn-sm btn-secondary"
             id="btnDiffSelected"
             :disabled="selected.length !== 2"
             :style="{ opacity: selected.length === 2 ? '1' : '0.4' }"
@@ -203,7 +203,7 @@ async function openDiffSelected(): Promise<void> {
               <td><span class="badge-exchange">{{ b.target }}</span></td>
               <td>{{ b.size_kb }} KB</td>
               <td>
-                <button class="btn btn-sm btn-warning backup-restore-btn" type="button" @click.stop="restore(b.filename)">
+                <button class="btn pbgui-btn btn-sm btn-warning backup-restore-btn" type="button" @click.stop="restore(b.filename)">
                   {{ t('misc.apikeys.restore') }}
                 </button>
               </td>

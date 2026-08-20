@@ -7,6 +7,199 @@
 
 /* ── Buttons ────────────────────────────────────────────────── */
 
+/* Namespaced variants are used by migrated pages so legacy page-level
+   selectors cannot silently redefine shared component geometry. */
+button.pbgui-btn.pbgui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-xs);
+  height: var(--btn-h);
+  padding: 0 var(--sp-md);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+  white-space: nowrap;
+  user-select: none;
+}
+
+button.pbgui-btn.pbgui-btn:hover:not(:disabled) {
+  background: var(--border-strong);
+  border-color: var(--border-strong);
+}
+
+button.pbgui-btn.pbgui-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button.pbgui-btn.pbgui-btn.btn-primary {
+  background: var(--info);
+  border-color: var(--info);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.pbgui-btn.pbgui-btn.btn-primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+button.pbgui-btn.pbgui-btn.btn-info {
+  background: var(--info-bg);
+  border-color: rgba(31, 119, 255, 0.35);
+  color: var(--info-soft);
+}
+
+button.pbgui-btn.pbgui-btn.btn-info:hover:not(:disabled) {
+  background: rgba(31, 119, 255, 0.2);
+  border-color: var(--info);
+  color: var(--text-primary);
+}
+
+button.pbgui-btn.pbgui-btn.btn-success {
+  background: var(--success-bg);
+  border-color: rgba(33, 195, 84, 0.35);
+  color: var(--success);
+}
+
+button.pbgui-btn.pbgui-btn.btn-success:hover:not(:disabled) {
+  background: rgba(33, 195, 84, 0.2);
+  border-color: var(--success);
+}
+
+button.pbgui-btn.pbgui-btn.btn-warning {
+  background: var(--warning-bg);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: var(--warning-soft);
+}
+
+button.pbgui-btn.pbgui-btn.btn-warning:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: var(--warning);
+  color: var(--text-primary);
+}
+
+button.pbgui-btn.pbgui-btn.btn-secondary {
+  background: var(--surface-card);
+  border-color: var(--border-default);
+  color: var(--text-secondary);
+}
+
+button.pbgui-btn.pbgui-btn.btn-secondary:hover:not(:disabled) {
+  background: var(--border-default);
+  color: var(--text-primary);
+}
+
+button.pbgui-btn.pbgui-btn.btn-danger {
+  background: var(--danger-bg);
+  border-color: rgba(255, 75, 75, 0.35);
+  color: var(--danger-soft);
+}
+
+button.pbgui-btn.pbgui-btn.btn-danger:hover:not(:disabled) {
+  background: rgba(255, 75, 75, 0.2);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+button.pbgui-btn.pbgui-btn.btn-sm {
+  height: var(--control-height-sm);
+  padding: 0 var(--sp-sm);
+  font-size: var(--fs-xs);
+}
+
+button.pbgui-btn.pbgui-btn:focus-visible,
+#main-content .pbgui-panel :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: var(--focus-ring);
+}
+
+#main-content .pbgui-panel {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-lg);
+}
+
+#main-content .pbgui-panel .panel-title {
+  margin: 0 0 var(--sp-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.pbgui-badge.pbgui-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--sp-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.pbgui-badge.pbgui-badge.badge-success {
+  background: var(--success-bg);
+  border-color: rgba(33, 195, 84, 0.28);
+  color: var(--success);
+}
+
+.pbgui-badge.pbgui-badge.badge-warning {
+  background: var(--warning-bg);
+  border-color: rgba(245, 158, 11, 0.28);
+  color: var(--warning);
+}
+
+.pbgui-badge.pbgui-badge.badge-danger {
+  background: var(--danger-bg);
+  border-color: rgba(255, 75, 75, 0.28);
+  color: var(--danger);
+}
+
+.pbgui-badge.pbgui-badge.badge-info {
+  background: var(--info-bg);
+  border-color: rgba(31, 119, 255, 0.28);
+  color: var(--info);
+}
+
+.pbgui-modal-backdrop.pbgui-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.pbgui-modal.pbgui-modal {
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+  max-width: min(760px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow: hidden;
+  padding: var(--sp-lg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-modal);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
