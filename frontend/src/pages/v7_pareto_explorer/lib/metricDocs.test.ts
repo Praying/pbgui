@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { metricTooltip } from './metricDocs';
+import { metricTooltip, SUFFIX_DOCS } from './metricDocs';
 
 /* Spec 2026-08-20: exact-match-first resolution, then suffix decomposition
  * (longest-first), bilingual output "zh block\n\nen block", undefined for
@@ -38,6 +38,14 @@ describe('metricTooltip suffix decomposition', () => {
     const tip = metricTooltip('adg_per_exposure_long');
     expect(tip).toContain('除以多头敞口限额');
     expect(tip).toContain('per long exposure limit');
+  });
+
+  /* Parameterized over the exported suffix dictionary so every suffix entry's
+   * strip path is covered; new suffix entries are picked up automatically. */
+  it.each(Object.entries(SUFFIX_DOCS))('strips %s and surfaces its qualifier text', (suffix, doc) => {
+    const tip = metricTooltip(`adg${suffix}`);
+    expect(tip).toContain(doc.zh);
+    expect(tip).toContain(doc.en);
   });
 });
 

@@ -40,7 +40,7 @@ const BASE_METRIC_DOCS: Record<string, MetricDoc> = {
   peak_recovery_hours: { zh: '峰值回补时长（小时）：权益停留在前峰值以下的最长时间。', en: 'Peak recovery (hours): longest time equity stayed below its prior peak.' },
   peak_recovery_days: { zh: '峰值回补时长（天）：权益停留在前峰值以下的最长时间（按天计）。', en: 'Peak recovery (days): longest time equity stayed below its prior peak, in days.' },
   // ── Position & execution ──────────────────────────────────────────
-  positions_held_per_day: { zh: '日均开仓数：每天平均持有的仓位数量。', en: 'Average positions held per day.' },
+  positions_held_per_day: { zh: '日均开仓数：每天平均开仓的数量。', en: 'Average positions opened per day.' },
   position_held_hours_max: { zh: '最长持仓时长（小时）。', en: 'Maximum holding time in hours.' },
   position_held_hours_mean: { zh: '平均持仓时长（小时）。', en: 'Average holding time in hours.' },
   position_held_hours_median: { zh: '持仓时长中位数（小时）。', en: 'Median holding time in hours.' },
@@ -56,7 +56,7 @@ const BASE_METRIC_DOCS: Record<string, MetricDoc> = {
   backtest_completion_ratio: { zh: '回测完成率：套件中已完成回测的占比。', en: 'Backtest completion ratio: fraction of suite backtests completed.' },
 };
 
-const SUFFIX_DOCS: Record<string, MetricDoc> = {
+export const SUFFIX_DOCS: Record<string, MetricDoc> = {
   _w: { zh: '近期加权（偏向近期表现）', en: 'recency-weighted' },
   _usd: { zh: '美元计价', en: 'USD-denominated' },
   _btc: { zh: 'BTC 计价', en: 'BTC-denominated' },
@@ -66,16 +66,10 @@ const SUFFIX_DOCS: Record<string, MetricDoc> = {
   _equity: { zh: '按权益口径', en: 'equity basis' },
 };
 
-/** Longest first so _per_exposure_long wins over shorter tails. */
-const SUFFIX_ORDER: readonly string[] = [
-  '_per_exposure_long',
-  '_per_exposure_short',
-  '_strategy_eq',
-  '_equity',
-  '_w',
-  '_usd',
-  '_btc',
-];
+/** Derived from SUFFIX_DOCS keys (single source); longest-first keeps the
+ * comment honest — functionally any order works since no suffix is a suffix
+ * of another. */
+const SUFFIX_ORDER: readonly string[] = Object.keys(SUFFIX_DOCS).sort((a, b) => b.length - a.length);
 
 interface Decomposed {
   base: string;
@@ -88,6 +82,8 @@ function stripSuffixes(name: string): Decomposed {
   for (;;) {
     const suffix = SUFFIX_ORDER.find((s) => rest.endsWith(s) && rest.length > s.length);
     if (!suffix) break;
+    // Safe non-null assertion: suffix always comes from the SUFFIX_DOCS key
+    // set (SUFFIX_ORDER is derived from its keys).
     suffixes.push(SUFFIX_DOCS[suffix]!);
     rest = rest.slice(0, -suffix.length);
   }
