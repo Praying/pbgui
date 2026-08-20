@@ -23,5 +23,12 @@ describe('PBv7 config editor CSS contracts', () => {
     expect(css).toContain('.expander.open .expander-body');
     expect(css).toContain('.raw-json-wrap');
     expect(css).toContain('.section-title');
+    expect(css).toContain('.config-editor-grid');
+    expect(css).toContain('.config-editor-12');
+    expect(css).toContain('grid-template-columns: repeat(12, minmax(0, 1fr))');
+    expect(css).toContain('.config-editor-section');
+    expect(css).toContain('.config-editor-section-head');
+    expect(css).toContain('.editor-nav-group');
+    expect(css).toContain('.editor-save-group');
   });
 });

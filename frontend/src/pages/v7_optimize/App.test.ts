@@ -20,6 +20,55 @@ describe('v7_optimize App', () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
   });
 
+  it('renders each sidebar action icon exactly once', async () => {
+    const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
+    await flushPromises();
+
+    const actionTexts = () => wrapper.findAll('button.opt-side-action').map((button) => button.text());
+    expect(actionTexts()).toEqual([
+      '+ New Config',
+      '⇩ Import Config',
+      '✏ Edit Selected',
+      '⧉ Duplicate',
+      '▶ Queue Selected',
+      '🗄 Add to Archive',
+      '⇢ Convert to PB8 Optimize',
+      '🗑 Delete Selected',
+    ]);
+
+    await wrapper.findAll('button.opt-side-item')[1]!.trigger('click');
+    expect(actionTexts()).toEqual(['🗑 Delete Selected', '⚙ Settings']);
+
+    await wrapper.find('[data-test="nav-results"]').trigger('click');
+    expect(actionTexts()).toEqual([
+      '🗂 Paretos',
+      '🎯 Pareto Explorer',
+      '◫ PD Pareto Dash',
+      '◭ 3D Plot',
+      '🌱 Continue Optimize',
+      '📄 Config Draft',
+      '🗑 Delete Selected',
+    ]);
+
+    await wrapper.find('[data-test="nav-paretos"]').trigger('click');
+    expect(actionTexts()).toEqual([
+      '🎯 Pareto Explorer',
+      '🔄 Backtest',
+      '🧬 Seed Selected',
+      '📂 Seed Whole Result',
+    ]);
+  });
+
+  it('renders the OHLCV readiness icon once in editor actions', async () => {
+    const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
+    await flushPromises();
+    await wrapper.find('button.opt-side-action.primary').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.find('[data-action="preflight"]').text()).toBe('🧭 OHLCV Readiness');
+    expect(wrapper.findAll('button.opt-side-action').at(-1)?.text()).toBe('🧭 OHLCV Readiness');
+  });
+
   it('does not use native confirmation APIs for destructive actions', () => {
     const source = String(App);
     expect(source).not.toContain('window.confirm');

@@ -104,25 +104,35 @@ defineExpose({ foldSuiteDraft });
 </script>
 
 <template>
-  <div id="configs-editor" data-test="configs-editor" @input="touch" @change="touch">
-    <!-- Row 1: Identity & Time (:2599-2613) -->
-    <div class="form-row cols-8">
-      <div class="form-group span-4">
-        <label>
-          exchanges
-          <span class="ms-clear-btn" :title="t('v7backtest.clearAll')" @click="state.exchanges = []">×</span>
-        </label>
-        <CoinMultiSelect id="ms-cfg-exchanges" v-model="state.exchanges" :options="exchangesOptions" :placeholder="t('v7backtest.selectExchanges')" />
+  <div id="configs-editor" class="config-editor-grid" data-test="configs-editor" @input="touch" @change="touch">
+    <div class="config-editor-intro">
+      <div>
+        <div class="config-editor-kicker">{{ isV8 ? 'PBv8' : 'PBv7' }}</div>
+        <h1>{{ state.name ? t('v7backtest.editBacktest') : t('v7backtest.newBacktestConfig', { version: isV8 ? 'PBv8' : 'PBv7' }) }}</h1>
+        <p>{{ t('v7backtest.editorIntro') }}</p>
       </div>
-      <div class="form-group span-2">
+      <div class="config-editor-status"><span class="config-editor-status-dot"></span>{{ state.name || t('v7backtest.editorDraftStatus') }}</div>
+    </div>
+
+    <section class="config-editor-section" data-test="editor-section-basics">
+      <header class="config-editor-section-head">
+        <div><h2>{{ t('v7backtest.editorBasics') }}</h2><p>{{ t('v7backtest.editorBasicsHint') }}</p></div>
+        <span class="config-editor-section-index">01</span>
+      </header>
+      <!-- Row 1: Identity & Time (:2599-2613) -->
+    <div class="form-row config-editor-12">
+      <CoinMultiSelect id="ms-cfg-exchanges" v-model="state.exchanges" class="editor-span-6" :options="exchangesOptions" :placeholder="t('v7backtest.selectExchanges')">
+        <template #label>exchanges</template>
+      </CoinMultiSelect>
+      <div class="form-group editor-span-2">
         <label>config_name</label>
         <input v-model="state.name" type="text" data-test="cfg-name" />
       </div>
-      <div class="form-group">
+      <div class="form-group editor-span-2">
         <label>start_date</label>
         <DatePicker v-model="state.startDate" :max="state.endDate || undefined" />
       </div>
-      <div class="form-group">
+      <div class="form-group editor-span-2">
         <label>end_date</label>
         <DatePicker v-model="state.endDate" :min="state.startDate || undefined" />
         <label v-if="state.endDateIsNow" style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px; display: flex; gap: 4px; align-items: center">
@@ -130,15 +140,21 @@ defineExpose({ foldSuiteDraft });
         </label>
       </div>
     </div>
+    </section>
 
-    <!-- Row 2: Balance, Collateral & Behavior (:2615-2634) -->
-    <div class="form-row cols-8">
-      <div class="form-group"><label>starting_balance</label><input v-model="state.startingBalance" type="number" min="500" /></div>
-      <div class="form-group"><label>balance_sample_divider</label><input v-model="state.balanceSampleDivider" type="number" min="1" /></div>
-      <div class="form-group"><label>btc_collateral_cap</label><input v-model="state.btcCollateralCap" type="number" step="0.1" min="0" /></div>
-      <div class="form-group"><label>btc_collateral_ltv_cap</label><input v-model="state.btcCollateralLtvCap" type="number" step="0.1" min="0" /></div>
-      <div class="form-group"><label>minimum_coin_age_days</label><input v-model="state.minimumCoinAgeDays" type="number" min="1" /></div>
-      <div class="form-group">
+    <section class="config-editor-section" data-test="editor-section-trading">
+      <header class="config-editor-section-head">
+        <div><h2>{{ t('v7backtest.editorTrading') }}</h2><p>{{ t('v7backtest.editorTradingHint') }}</p></div>
+        <span class="config-editor-section-index">02</span>
+      </header>
+      <!-- Row 2: Balance, Collateral & Behavior (:2615-2634) -->
+    <div class="form-row config-editor-12">
+      <div class="form-group editor-span-2"><label>starting_balance</label><input v-model="state.startingBalance" type="number" min="500" /></div>
+      <div class="form-group editor-span-2"><label>balance_sample_divider</label><input v-model="state.balanceSampleDivider" type="number" min="1" /></div>
+      <div class="form-group editor-span-2"><label>btc_collateral_cap</label><input v-model="state.btcCollateralCap" type="number" step="0.1" min="0" /></div>
+      <div class="form-group editor-span-2"><label>btc_collateral_ltv_cap</label><input v-model="state.btcCollateralLtvCap" type="number" step="0.1" min="0" /></div>
+      <div class="form-group editor-span-2"><label>minimum_coin_age_days</label><input v-model="state.minimumCoinAgeDays" type="number" min="1" /></div>
+      <div class="form-group editor-span-2">
         <label>liquidation_threshold</label>
         <div class="num-stepper">
           <button type="button" class="stepper-btn" @click="state.liquidationThreshold = String(Math.max(0, +(parseFloat(state.liquidationThreshold) - 0.01).toFixed(2)))">−</button>
@@ -146,14 +162,14 @@ defineExpose({ foldSuiteDraft });
           <button type="button" class="stepper-btn" @click="state.liquidationThreshold = String(Math.min(0.99, +(parseFloat(state.liquidationThreshold) + 0.01).toFixed(2)))">+</button>
         </div>
       </div>
-      <div class="form-group" style="justify-content: flex-end">
+      <div class="form-group editor-span-12 config-editor-toggle-row">
         <div class="chk-row"><input id="cfg-dyn-wel" v-model="state.dynamicWelByTradability" type="checkbox" /><label for="cfg-dyn-wel">dynamic_wel_by_tradability</label></div>
       </div>
     </div>
 
-    <!-- Row 3: Fees & Controls (:2636-2679) -->
-    <div class="form-row cols-8" style="align-items: end">
-      <div class="form-group" style="grid-column: span 2">
+      <!-- Row 3: Fees & Controls (:2636-2679) -->
+    <div class="form-row config-editor-12">
+      <div class="form-group editor-span-2">
         <div class="chk-row"><input id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" type="checkbox" /><label for="cfg-maker-fee-enabled">maker_fee_override</label></div>
         <div class="num-stepper" style="margin-top: 4px">
           <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5))">−</button>
@@ -161,7 +177,7 @@ defineExpose({ foldSuiteDraft });
           <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5))">+</button>
         </div>
       </div>
-      <div class="form-group" style="grid-column: span 2">
+      <div class="form-group editor-span-2">
         <div class="chk-row"><input id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" type="checkbox" /><label for="cfg-taker-fee-enabled">taker_fee_override</label></div>
         <div class="num-stepper" style="margin-top: 4px">
           <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5))">−</button>
@@ -169,7 +185,7 @@ defineExpose({ foldSuiteDraft });
           <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5))">+</button>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group editor-span-2">
         <label>market_order_slippage_pct</label>
         <div class="num-stepper">
           <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))">−</button>
@@ -177,32 +193,38 @@ defineExpose({ foldSuiteDraft });
           <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))">+</button>
         </div>
       </div>
-      <div class="form-group" style="justify-content: flex-end">
+      <div class="form-group editor-span-2 config-editor-toggle-field">
         <div class="chk-row"><input id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" type="checkbox" /><label for="cfg-filter-cost">filter_by_min_effective_cost</label></div>
       </div>
-      <div class="form-group">
+      <div class="form-group editor-span-2">
         <label>hsl_signal_mode</label>
         <select v-model="state.hslSignalMode"><option v-for="mode in hslOptions" :key="mode" :value="mode">{{ mode }}</option></select>
       </div>
-      <div class="form-group">
+      <div class="form-group editor-span-2">
         <label>logging_level</label>
         <select v-model="state.loggingLevel"><option v-for="option in loggingOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select>
       </div>
     </div>
+    </section>
 
-    <!-- Row 4: Data Source (:2681-2698) -->
-    <div class="form-row cols-8" style="align-items: end">
-      <div class="form-group span-4">
+    <section class="config-editor-section" data-test="editor-section-market-data">
+      <header class="config-editor-section-head">
+        <div><h2>{{ t('v7backtest.editorMarketData') }}</h2><p>{{ t('v7backtest.editorMarketDataHint') }}</p></div>
+        <span class="config-editor-section-index">03</span>
+      </header>
+      <!-- Row 4: Data Source (:2681-2698) -->
+    <div class="form-row config-editor-12">
+      <div class="form-group editor-span-6">
         <label>ohlcv_source_dir</label>
         <div style="display: flex; gap: var(--sp-xs)">
           <input v-model="state.ohlcvSourceDir" type="text" :placeholder="t('v7backtest.leaveEmptyForDefault')" />
           <button type="button" class="act-btn" style="white-space: nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">📂 PBGui Data</button>
         </div>
       </div>
-      <div class="form-group"><label>candle_interval_minutes</label><input v-model="state.candleIntervalMinutes" type="number" min="1" /></div>
-      <div class="form-group"><label>gap_tolerance_ohlcvs_minutes</label><input v-model="state.gapToleranceOhlcvsMinutes" type="number" min="1" /></div>
-      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-compress" v-model="state.compressCache" type="checkbox" /><label for="cfg-compress">compress_cache</label></div></div>
-      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-vol-norm" v-model="state.volumeNormalization" type="checkbox" /><label for="cfg-vol-norm">volume_normalization</label></div></div>
+      <div class="form-group editor-span-2"><label>candle_interval_minutes</label><input v-model="state.candleIntervalMinutes" type="number" min="1" /></div>
+      <div class="form-group editor-span-2"><label>gap_tolerance_ohlcvs_minutes</label><input v-model="state.gapToleranceOhlcvsMinutes" type="number" min="1" /></div>
+      <div class="form-group editor-span-1 config-editor-toggle-field"><div class="chk-row"><input id="cfg-compress" v-model="state.compressCache" type="checkbox" /><label for="cfg-compress">compress_cache</label></div></div>
+      <div class="form-group editor-span-1 config-editor-toggle-field"><div class="chk-row"><input id="cfg-vol-norm" v-model="state.volumeNormalization" type="checkbox" /><label for="cfg-vol-norm">volume_normalization</label></div></div>
     </div>
 
     <!-- coin_sources + market_settings_sources (:2700-2750) -->
@@ -216,18 +238,26 @@ defineExpose({ foldSuiteDraft });
     </div>
 
     <AdvancedFieldsPanel v-if="isV8" :market-settings="marketSettings" :result-metrics="resultMetrics" :exchanges="exchangeOptions" :coins="marketCoins" />
+    </section>
 
-    <!-- Coins & Filters (:2753-2804) -->
-    <div class="section-title">{{ t('v7backtest.coinsAndFilters') }}</div>
-    <div class="form-row cols-8" style="align-items: end">
-      <div class="form-group span-2"><label>market_cap (min M$)</label><input v-model="state.marketCap" type="number" step="50" /></div>
-      <div class="form-group span-2"><label>vol/mcap</label><input v-model="state.volMcap" type="number" step="0.05" /></div>
-      <div class="form-group span-2">
+    <section class="config-editor-section" data-test="editor-section-filters">
+      <header class="config-editor-section-head">
+        <div><h2>{{ t('v7backtest.coinsAndFilters') }}</h2><p>{{ t('v7backtest.editorFiltersHint') }}</p></div>
+        <div class="config-editor-section-tools" data-test="editor-filter-toolbar">
+          <span class="config-editor-section-index">04</span>
+          <button type="button" class="act-btn" :title="t('v7backtest.applyFiltersTitle')" @click="applyFilters">{{ t('v7backtest.applyFilters') }}</button>
+        </div>
+      </header>
+      <!-- Coins & Filters (:2753-2804) -->
+    <div class="form-row config-editor-12">
+      <div class="form-group editor-span-2"><label>market_cap (min M$)</label><input v-model="state.marketCap" type="number" step="50" /></div>
+      <div class="form-group editor-span-2"><label>vol/mcap</label><input v-model="state.volMcap" type="number" step="0.05" /></div>
+      <div class="form-group editor-span-4">
         <label>tags</label>
         <CoinMultiSelect id="ms-cfg-tags" v-model="state.tags" :options="tagOptions" :placeholder="t('v7backtest.selectTags')" select-all-button />
       </div>
-      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt">only_cpt</label></div></div>
-      <div class="form-group" style="justify-content: flex-end"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore">notices_ignore</label></div></div>
+      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt">only_cpt</label></div></div>
+      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore">notices_ignore</label></div></div>
     </div>
     <div class="form-row cols-2">
       <CoinMultiSelect id="ms-cfg-app-long" v-model="state.approvedLong" :options="coinOptions" :labels="coinLabels" allow-all>
@@ -245,11 +275,23 @@ defineExpose({ foldSuiteDraft });
         <template #label>ignored_coins_short</template>
       </CoinMultiSelect>
     </div>
-    <div style="margin-bottom: var(--sp-sm); text-align: right">
-      <button type="button" class="act-btn" :title="t('v7backtest.applyFiltersTitle')" @click="applyFilters">{{ t('v7backtest.applyFilters') }}</button>
+    </section>
+
+    <section class="config-editor-section config-editor-section-bot" data-test="editor-section-bot">
+      <header class="config-editor-section-head">
+        <div><h2>{{ t('v7backtest.editorBot') }}</h2><p>{{ t('v7backtest.editorBotHint') }}</p></div>
+        <span class="config-editor-section-index">05</span>
+      </header>
+
+    <!-- Bot Configuration (:2812-2871) -->
+    <div class="section-title">{{ t('v7backtest.botConfiguration') }}</div>
+    <div class="form-row cols-2">
+      <BotSideEditor v-model="state.botLongJson" v-model:twe="state.longTwe" v-model:npos="state.longNpos" side="long" :version="isV8 ? 'v8' : 'v7'" :param-status="paramStatus.long" :error-line="longErrorLine" />
+      <BotSideEditor v-model="state.botShortJson" v-model:twe="state.shortTwe" v-model:npos="state.shortNpos" side="short" :version="isV8 ? 'v8' : 'v7'" :param-status="paramStatus.short" :error-line="shortErrorLine" />
     </div>
 
-    <!-- Coin Overrides embed (:2807, :2927) -->
+
+      <!-- Coin Overrides embed (:2807, :2927) -->
     <CoinOverridesPanel :store="coinOv" />
 
     <!-- Suite Mode embed (:2810, :2915) -->
@@ -265,13 +307,6 @@ defineExpose({ foldSuiteDraft });
       @update:model-value="emit('update:suite', $event)"
       @template-exchanges="emit('template-exchanges', $event)"
     />
-
-    <!-- Bot Configuration (:2812-2871) -->
-    <div class="section-title">{{ t('v7backtest.botConfiguration') }}</div>
-    <div class="form-row cols-2">
-      <BotSideEditor v-model="state.botLongJson" v-model:twe="state.longTwe" v-model:npos="state.longNpos" side="long" :version="isV8 ? 'v8' : 'v7'" :param-status="paramStatus.long" :error-line="longErrorLine" />
-      <BotSideEditor v-model="state.botShortJson" v-model:twe="state.shortTwe" v-model:npos="state.shortNpos" side="short" :version="isV8 ? 'v8' : 'v7'" :param-status="paramStatus.short" :error-line="shortErrorLine" />
-    </div>
 
     <!-- Additional (unknown) backtest parameters (:2873-2876) -->
     <div v-if="state.extraBt.length > 0" class="expander" :class="{ open: additionalOpen }" data-test="additional-params-expander">
@@ -306,5 +341,6 @@ defineExpose({ foldSuiteDraft });
         </div>
       </div>
     </div>
+    </section>
   </div>
 </template>

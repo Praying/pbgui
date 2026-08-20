@@ -13,6 +13,8 @@
 
 ## Vue 3 Frontend Migration (continued)
 
+- Refined the migrated PBv7/PBv8 Backtest config editor visual hierarchy: added a responsive section-card layout for basics, capital/execution, market data, coin filters and bot settings; introduced a 12-column desktop field grid, a single clean exchange selector without duplicate labels/actions, clearer section guidance, grouped sidebar actions, a dedicated filter action, and an independently scrollable editor while preserving the existing config bindings and handoff behavior; removed duplicate icon prefixes throughout the Backtest and Optimize submenu actions, including New Config, Delete Selected, Backtest, Compare, archive maintenance and editor actions.
+
 - Repaired the migrated PBv7/PBv8 Backtest config editor: restored the legacy compact grid, searchable tag dropdowns, numeric steppers and explicit expanders; restored JSON import plus Results, Convert to V8, Add to Run, Strategy Explorer, Balance Calculator and OHLCV readiness handoffs; saved-config-only actions remain disabled for unsaved configs. Added focused Vue and stylesheet regression coverage.
 
 - Refined the Vue Welcome page visual hierarchy: the overview now offers a direct PB7 setup action, groups runtime checks by Security/PB7/optional PB8/Node, removes duplicate sidebar status pills, uses neutral styling for optional PB8, constrains wide layouts, and gives password changes a focused form with a separate authentication-disable danger area. The shared Vue migration watermark is now off by default and can be enabled only with `VITE_MIGRATION_WATERMARK=on` during migration QA.

@@ -94,6 +94,32 @@ describe('boot chain (:10012-10024)', () => {
     wrapper.unmount();
   });
 
+  it('renders each submenu action icon exactly once', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+
+    expect(wrapper.find('[data-test="ctx-new-config"]').text()).toBe('+ New Config');
+    expect(wrapper.find('[data-test="ctx-delete-configs"]').text()).toBe('🗑 Delete Selected');
+    expect(wrapper.find('[data-test="queue-compare"]').text()).toBe('📈 Compare');
+    expect(wrapper.find('[data-test="results-rebacktest"]').text()).toBe('🔄 Backtest');
+    expect(wrapper.find('[data-test="results-compare"]').text()).toBe('📈 Compare');
+    expect(wrapper.find('[data-test="results-delete"]').text()).toBe('🗑 Delete Selected');
+    expect(wrapper.find('[data-test="archive-add"]').text()).toBe('+ Add Archive');
+    expect(wrapper.find('[data-test="legacy-rebacktest"]').text()).toBe('🔄 Backtest');
+    expect(wrapper.find('[data-test="legacy-compare"]').text()).toBe('📈 Compare');
+    expect(wrapper.find('[data-test="legacy-delete"]').text()).toBe('🗑 Delete Selected');
+
+    await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('[data-test="editor-home"]').text()).toBe('🏠 Home');
+    expect(wrapper.find('[data-test="editor-save"]').text()).toBe('💾 Save');
+    expect(wrapper.find('[data-test="editor-save-queue"]').text()).toBe('▶ Save & Queue');
+
+    wrapper.unmount();
+  });
+
   it('restores the panel from the URL hash (:10013, :10023)', async () => {
     window.history.replaceState({}, '', '/api/backtest-v7/main_page#queue');
     const wrapper = mountApp();
@@ -211,21 +237,36 @@ describe('boot chain (:10012-10024)', () => {
     await flush();
     await nextTick();
 
-    expect(wrapper.findAll('#configs-editor > .form-row.cols-8').length).toBeGreaterThanOrEqual(3);
+    expect(wrapper.findAll('#configs-editor .form-row.config-editor-12').length).toBeGreaterThanOrEqual(3);
+    expect(wrapper.find('[data-test="editor-section-basics"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-section-trading"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-section-market-data"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-section-filters"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-section-bot"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-filter-toolbar"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-nav-group"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-analysis-group"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-config-group"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-save-group"]').exists()).toBe(true);
+    const basics = wrapper.find('[data-test="editor-section-basics"]');
+    const exchangeWrap = wrapper.find('#ms-cfg-exchanges');
+    const exchangeGroup = exchangeWrap.element.closest('.form-group');
+    expect(exchangeGroup?.querySelector('label')?.textContent).toContain('exchanges');
+    expect(basics.findAll('.ms-clear-btn')).toHaveLength(1);
     const exchangeDropdown = wrapper.find('#ms-cfg-exchanges-dd');
     expect(exchangeDropdown.classes()).not.toContain('open');
     await wrapper.find('#ms-cfg-exchanges-input').trigger('focusin');
     expect(exchangeDropdown.classes()).toContain('open');
 
-    expect(wrapper.findAll('#sidebar-editor [data-test]').map((button) => button.attributes('data-test'))).toEqual([
+    expect(wrapper.findAll('#sidebar-editor button[data-test]').map((button) => button.attributes('data-test'))).toEqual([
       'editor-home',
       'editor-import',
       'editor-results',
-      'editor-convert-v8',
-      'editor-add-run',
       'editor-strategy-explorer',
       'editor-balance-calc',
       'editor-ohlcv',
+      'editor-convert-v8',
+      'editor-add-run',
       'editor-save',
       'editor-save-queue',
     ]);
@@ -966,6 +1007,9 @@ describe('archive git maintenance (M-v7-12)', () => {
       expect(wrapper.find(`[data-test="${key}"]`).exists()).toBe(true);
     }
     expect(wrapper.find('[data-test="archive-pull-all"]').text()).toBe('⬇ Pull All');
+    expect(wrapper.find('[data-test="archive-push"]').text()).toBe('⬆ Git Push');
+    expect(wrapper.find('[data-test="archive-setup"]').text()).toBe('⚙ Setup');
+    expect(wrapper.find('[data-test="archive-log"]').text()).toBe('📋 Log');
     fetchMock.mockClear();
     await wrapper.find('[data-test="archive-setup"]').trigger('click');
     await flush();

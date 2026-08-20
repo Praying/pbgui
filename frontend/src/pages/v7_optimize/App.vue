@@ -351,37 +351,37 @@ onBeforeUnmount(() => {
         <button class="opt-side-item" data-test="nav-paretos" :class="{ active: page.panel.value === 'paretos' }" @click="setPanel('paretos')">🎯 {{ t('v7optimize.navParetos') }} <b>{{ page.paretos.value.length }}</b></button>
         <hr />
         <template v-if="page.panel.value === 'configs'">
-          <button class="opt-side-action primary" @click="page.openEditor()">＋ {{ t('v7optimize.newConfig') }}</button>
+          <button class="opt-side-action primary" @click="page.openEditor()">{{ t('v7optimize.newConfig') }}</button>
           <button class="opt-side-action" @click="importOpen = true">⇩ {{ t('v7optimize.importConfig') }}</button>
-          <button class="opt-side-action" :disabled="page.selectedConfigs.value.size !== 1" @click="page.openEditor([...page.selectedConfigs.value][0])">✏ {{ t('v7optimize.editSelected') }}</button>
-          <button class="opt-side-action" data-test="duplicate-selected" :disabled="page.selectedConfigs.value.size !== 1" @click="openDuplicate([...page.selectedConfigs.value][0] || '')">⧉ {{ t('v7optimize.duplicate') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="queueSelected">▶ {{ t('v7optimize.queueSelected') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="archiveSelected">🗄 {{ t('v7optimize.addToArchive') }}</button>
+          <button class="opt-side-action" :disabled="page.selectedConfigs.value.size !== 1" @click="page.openEditor([...page.selectedConfigs.value][0])">{{ t('v7optimize.editSelected') }}</button>
+          <button class="opt-side-action" data-test="duplicate-selected" :disabled="page.selectedConfigs.value.size !== 1" @click="openDuplicate([...page.selectedConfigs.value][0] || '')">{{ t('v7optimize.duplicate') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="queueSelected">{{ t('v7optimize.queueSelected') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="archiveSelected">{{ t('v7optimize.addToArchive') }}</button>
           <button v-if="!adapter.isV8" class="opt-side-action" :disabled="page.selectedConfigs.value.size !== 1" @click="migrateSelected">⇢ {{ t('v7optimize.convertToPb8Optimize') }}</button>
-          <button class="opt-side-action danger" :disabled="!page.selectedConfigs.value.size" @click="askDeleteConfigs">🗑 {{ t('v7optimize.deleteSelected') }}</button>
+          <button class="opt-side-action danger" :disabled="!page.selectedConfigs.value.size" @click="askDeleteConfigs">{{ t('v7optimize.deleteSelected') }}</button>
         </template>
         <template v-else-if="page.panel.value === 'queue'">
-          <button class="opt-side-action danger" :disabled="!page.selectedQueue.value.size" @click="askDeleteQueue">🗑 {{ t('v7optimize.deleteSelected') }}</button>
-          <button class="opt-side-action" @click="page.settingsOpen.value = true">⚙ {{ t('v7optimize.settings') }}</button>
+          <button class="opt-side-action danger" :disabled="!page.selectedQueue.value.size" @click="askDeleteQueue">{{ t('v7optimize.deleteSelected') }}</button>
+          <button class="opt-side-action" @click="page.settingsOpen.value = true">{{ t('v7optimize.settings') }}</button>
         </template>
         <template v-else-if="page.panel.value === 'results'">
-          <button class="opt-side-action" data-test="result-paretos" :disabled="!selectedResultCapabilities.hasPareto" @click="openResult(selectedResult)">🗂 {{ t('v7optimize.paretos') }}</button>
-          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="openParetoExplorer()">🎯 {{ t('v7optimize.paretoExplorer') }}</button>
+          <button class="opt-side-action" data-test="result-paretos" :disabled="!selectedResultCapabilities.hasPareto" @click="openResult(selectedResult)">{{ t('v7optimize.paretos') }}</button>
+          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="openParetoExplorer()">{{ t('v7optimize.paretoExplorer') }}</button>
           <button class="opt-side-action" data-test="result-dash" :disabled="!selectedResultCapabilities.supportsDash" @click="runSelectedResult('dash')">◫ {{ t('v7optimize.pdParetoDash') }}</button>
           <button class="opt-side-action" :disabled="!selectedResultCapabilities.supports3d" @click="runSelectedResult('plot3d')">◭ {{ t('v7optimize.plot3d') }}</button>
-          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="runSelectedResult('continue')">🌱 {{ t('v7optimize.continueOptimize') }}</button>
+          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="runSelectedResult('continue')">{{ t('v7optimize.continueOptimize') }}</button>
           <button v-if="adapter.isV8" class="opt-side-action" :disabled="!selectedResultCapabilities.resumable" @click="runSelectedResult('resume')">↻ {{ t('v7optimize.resumeCheckpoint') }}</button>
-          <button class="opt-side-action" data-test="result-config" :disabled="!selectedResultCapabilities.hasConfig" @click="runSelectedResult('config')">📄 {{ t('v7optimize.configDraft') }}</button>
-          <button class="opt-side-action danger" :disabled="!page.selectedResults.value.size" @click="askDeleteResults">🗑 {{ t('v7optimize.deleteSelected') }}</button>
+          <button class="opt-side-action" data-test="result-config" :disabled="!selectedResultCapabilities.hasConfig" @click="runSelectedResult('config')">{{ t('v7optimize.configDraft') }}</button>
+          <button class="opt-side-action danger" :disabled="!page.selectedResults.value.size" @click="askDeleteResults">{{ t('v7optimize.deleteSelected') }}</button>
         </template>
         <template v-else>
-          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()">🎯 {{ t('v7optimize.paretoExplorer') }}</button>
-          <button class="opt-side-action" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)">🔄 {{ t('v7optimize.backtest') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos">🧬 {{ t('v7optimize.seedSelected') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')">📂 {{ t('v7optimize.seedWholeResult') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()">{{ t('v7optimize.paretoExplorer') }}</button>
+          <button class="opt-side-action" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)">{{ t('v7optimize.backtest') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos">{{ t('v7optimize.seedSelected') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')">{{ t('v7optimize.seedWholeResult') }}</button>
         </template>
         <hr v-if="page.editorOpen.value" />
-        <button v-if="page.editorOpen.value" class="opt-side-action" @click="runPreflight()">🧭 {{ t('v7optimize.ohlcvReadiness') }}</button>
+        <button v-if="page.editorOpen.value" class="opt-side-action" @click="runPreflight()">{{ t('v7optimize.ohlcvReadiness') }}</button>
       </div>
       <div id="sidebar-resize"></div>
     </aside>
