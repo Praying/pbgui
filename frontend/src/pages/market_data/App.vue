@@ -85,7 +85,7 @@ import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
-import DataTipTooltip from './components/DataTipTooltip.vue';
+import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
 import Best1mPanel from './components/best1m/Best1mPanel.vue';
 import CopyDataPanel from './components/copydata/CopyDataPanel.vue';
