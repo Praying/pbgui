@@ -50,8 +50,8 @@ onBeforeUnmount(() => dragSelect.dispose());
     <label v-if="(meta.scenario_labels || []).length" class="opt-inline-field">{{ t('v7optimize.scenario') }}<select :value="meta.selected_scenario || 'Aggregated'" class="opt-input" @change="emit('update:scenario', ($event.target as HTMLSelectElement).value)"><option v-for="scenario in meta.scenario_labels" :key="scenario" :value="scenario">{{ scenario }}</option></select></label>
     <label class="opt-inline-field">{{ t('v7optimize.statistic') }}<select :value="meta.selected_statistic || 'mean'" class="opt-input" @change="emit('update:statistic', ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.available_statistics || ['mean']" :key="stat" :value="stat">{{ stat }}</option></select></label>
     <span class="opt-grow"></span>
-    <button class="opt-btn small" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
-    <button class="opt-btn small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
+    <button class="opt-btn pbgui-action small" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
+    <button class="opt-btn pbgui-action small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
   </div>
   <div ref="wrap" class="opt-table-wrap">
     <table class="opt-table">
@@ -61,7 +61,7 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td class="opt-mono">{{ row.name }}</td>
           <template v-if="summaryKeys.length"><td v-for="key in summaryKeys" :key="key" :data-metric="key">{{ summaryValue(row, key) }}</td></template><td v-else class="opt-ellipsis">{{ inlineSummary(row) }}</td>
           <td>{{ row.modified || '—' }}</td>
-          <td class="opt-actions actions-cell" @click.stop><button class="opt-btn small" @click="emit('view', row)">{{ t('v7optimize.viewJson') }}</button><button class="opt-btn small" @click="emit('seed', row)">{{ t('v7optimize.useAsSeed') }}</button><button v-if="!isV8" class="opt-btn small" @click="emit('migrate', row)">{{ t('v7optimize.convertParetoToPb8') }}</button></td>
+          <td class="opt-actions actions-cell" @click.stop><button class="opt-btn pbgui-action small" @click="emit('view', row)">{{ t('v7optimize.viewJson') }}</button><button class="opt-btn pbgui-action small" @click="emit('seed', row)">{{ t('v7optimize.useAsSeed') }}</button><button v-if="!isV8" class="opt-btn pbgui-action small" @click="emit('migrate', row)">{{ t('v7optimize.convertParetoToPb8') }}</button></td>
         </tr>
         <tr v-if="!rows.length"><td :colspan="summaryKeys.length + 3" class="opt-empty">{{ t('v7optimize.noParetoFilesFound') }}</td></tr>
       </tbody>

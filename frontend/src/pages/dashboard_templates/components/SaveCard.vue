@@ -82,7 +82,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
         :placeholder="t('dash.templateNamePlaceholder')"
         autocomplete="off"
       >
-      <button id="btn-save" class="btn primary" @click="save">💾 {{ t('common.save') }}</button>
+      <button id="btn-save" class="btn pbgui-action primary" @click="save">💾 {{ t('common.save') }}</button>
     </div>
     <div id="save-msg" class="msg" :class="msgType">{{ msg }}</div>
   </div>

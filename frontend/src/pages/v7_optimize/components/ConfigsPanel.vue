@@ -52,8 +52,8 @@ onBeforeUnmount(() => dragSelect.dispose());
     <span class="opt-muted">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
     <span v-if="selectedCount" class="opt-muted">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
     <span class="opt-grow"></span>
-    <button class="opt-btn small" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
-    <button class="opt-btn small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
+    <button class="opt-btn pbgui-action small" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
+    <button class="opt-btn pbgui-action small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
   </div>
   <div ref="wrap" class="opt-table-wrap">
     <table class="opt-table">
@@ -75,8 +75,8 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td>{{ flags(row) }}</td>
           <td>{{ row.modified || '—' }}</td>
           <td class="opt-actions actions-cell" @click.stop>
-            <button class="opt-btn small" @click="emit('edit', rowName(row))">{{ t('v7optimize.editConfig') }}</button>
-            <button class="opt-btn small" @click="emit('duplicate', rowName(row))">{{ t('v7optimize.duplicate') }}</button>
+            <button class="opt-btn pbgui-action small" @click="emit('edit', rowName(row))">{{ t('v7optimize.editConfig') }}</button>
+            <button class="opt-btn pbgui-action small" @click="emit('duplicate', rowName(row))">{{ t('v7optimize.duplicate') }}</button>
           </td>
         </tr>
         <tr v-if="!rows.length"><td :colspan="isV8 ? 9 : 8" class="opt-empty">{{ t('v7optimize.noOptimizeConfigsFound') }}</td></tr>

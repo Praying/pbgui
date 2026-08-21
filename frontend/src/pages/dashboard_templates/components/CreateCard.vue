@@ -198,7 +198,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
       >
 
       <div class="action-row">
-        <button id="btn-create" class="btn primary" :disabled="creating" @click="create">
+        <button id="btn-create" class="btn pbgui-action primary" :disabled="creating" @click="create">
           📋 {{ t('dash.createDashboards') }}
         </button>
       </div>

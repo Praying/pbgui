@@ -56,8 +56,8 @@ function dropRow(row: QueueItem, event: DragEvent): void {
     <span class="opt-muted">{{ t('v7optimize.queuedCount', { count: rows.length }) }}</span>
     <span v-if="selectedCount" class="opt-muted">{{ t('v7optimize.queueItemsSelected', { count: selectedCount }) }}</span>
     <span class="opt-grow"></span>
-    <button class="opt-btn small" data-test="select-all-queue" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
-    <button class="opt-btn small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
+    <button class="opt-btn pbgui-action small" data-test="select-all-queue" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
+    <button class="opt-btn pbgui-action small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
   </div>
   <div ref="wrap" class="opt-table-wrap">
     <table class="opt-table">
@@ -66,14 +66,14 @@ function dropRow(row: QueueItem, event: DragEvent): void {
         <tr v-for="row in rows" :key="filename(row)" :data-path="filename(row)" draggable="true" :class="{ selected: selected.has(filename(row)) }" @dragstart="dragStart(row, $event)" @dragover.prevent @drop="dropRow(row, $event)">
           <td class="opt-mono">{{ row.name || filename(row) }}</td>
           <td>{{ Array.isArray(row.exchange) ? row.exchange.join(', ') : row.exchange || '—' }}</td>
-          <td><span class="opt-status" :class="statusClass(row)">{{ row.status || t('v7optimize.statusQueued') }}</span></td>
+          <td><span class="opt-status pbgui-badge" :class="statusClass(row)">{{ row.status || t('v7optimize.statusQueued') }}</span></td>
           <td>{{ row.created || row.modified || '—' }}</td>
           <td class="opt-actions actions-cell" @click.stop>
-            <button v-if="row.status === 'running' || row.status === 'optimizing'" class="opt-btn small danger" @click="emit('action', filename(row), 'stop')">{{ t('v7optimize.stop') }}</button>
-            <button v-else class="opt-btn small" @click="emit('action', filename(row), 'start')">{{ t('v7optimize.start') }}</button>
-            <button class="opt-btn small" @click="emit('action', filename(row), 'requeue')">{{ t('v7optimize.requeue') }}</button>
-            <button class="opt-btn small" @click="emit('edit', filename(row))">{{ t('v7optimize.editConfig') }}</button>
-            <button class="opt-btn small" @click="emit('log', row)">Log</button><button class="opt-btn small" @click="emit('move', filename(row), -1)">↑</button><button class="opt-btn small" @click="emit('move', filename(row), 1)">↓</button>
+            <button v-if="row.status === 'running' || row.status === 'optimizing'" class="opt-btn pbgui-action small danger" @click="emit('action', filename(row), 'stop')">{{ t('v7optimize.stop') }}</button>
+            <button v-else class="opt-btn pbgui-action small" @click="emit('action', filename(row), 'start')">{{ t('v7optimize.start') }}</button>
+            <button class="opt-btn pbgui-action small" @click="emit('action', filename(row), 'requeue')">{{ t('v7optimize.requeue') }}</button>
+            <button class="opt-btn pbgui-action small" @click="emit('edit', filename(row))">{{ t('v7optimize.editConfig') }}</button>
+            <button class="opt-btn pbgui-action small" @click="emit('log', row)">Log</button><button class="opt-btn pbgui-action small" @click="emit('move', filename(row), -1)">↑</button><button class="opt-btn pbgui-action small" @click="emit('move', filename(row), 1)">↓</button>
           </td>
         </tr>
         <tr v-if="!rows.length"><td colspan="5" class="opt-empty">{{ t('v7optimize.queueIsEmpty') }}</td></tr>

@@ -449,13 +449,13 @@ onUnmounted(() => {
       <header class="jobs-header">
         <h1>{{ t('sysmon.jobMonitor') }}</h1>
         <div class="jobs-status">
-          <span data-status="connection" class="jobs-badge" :class="connection">{{ connectionLabel }}</span>
-          <span data-status="worker" class="jobs-badge" :class="workerRunning === true ? 'running' : workerRunning === false ? 'error' : 'pending'">{{ workerTitle }}: {{ workerLabel }}</span>
+          <span data-status="connection" class="jobs-badge pbgui-badge" :class="connection">{{ connectionLabel }}</span>
+          <span data-status="worker" class="jobs-badge pbgui-badge" :class="workerRunning === true ? 'running' : workerRunning === false ? 'error' : 'pending'">{{ workerTitle }}: {{ workerLabel }}</span>
         </div>
       </header>
 
-      <nav class="jobs-tabs" aria-label="Job tabs">
-        <button v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" :key="tab" class="jobs-tab" :class="{ active: currentTab === tab }" :data-tab="tab" @click="switchTab(tab)">
+      <nav class="jobs-tabs pbgui-tab-bar" aria-label="Job tabs">
+        <button v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" :key="tab" class="jobs-tab pbgui-tab" :class="{ active: currentTab === tab }" :data-tab="tab" @click="switchTab(tab)">
           {{ tab === 'running' ? t('sysmon.active') : tab === 'done' ? t('sysmon.done') : t('sysmon.failedTab') }}
         </button>
       </nav>
@@ -470,7 +470,7 @@ onUnmounted(() => {
             <div class="job-header">
               <div class="job-info">
                 <strong class="job-id">{{ job.id }}</strong>
-                <span class="jobs-badge" :class="statusClass(job)">{{ job.status }}</span>
+                <span class="jobs-badge pbgui-badge" :class="statusClass(job)">{{ job.status }}</span>
                 <span class="job-type">{{ job.type }}</span>
                 <span v-if="formatJobDuration(job)" class="job-detail">{{ formatJobDuration(job) }}</span>
               </div>

@@ -148,14 +148,14 @@ onUnmounted(() => window.clearTimeout(msgTimer));
         <button
           v-show="renameVisible"
           id="btn-rename-tpl"
-          class="btn"
+          class="btn pbgui-action"
           :title="t('dash.rename')"
           @click="openRename"
         >📝</button>
         <button
           v-show="delVisible"
           id="btn-del-tpl"
-          class="btn danger"
+          class="btn pbgui-action danger"
           :title="t('common.delete')"
           @click="deleteTemplates"
         >🗑</button>
@@ -170,10 +170,10 @@ onUnmounted(() => window.clearTimeout(msgTimer));
             type="text"
             autocomplete="off"
           >
-          <button id="btn-rename-confirm" class="btn primary" @click="confirmRename">
+          <button id="btn-rename-confirm" class="btn pbgui-action primary" @click="confirmRename">
             ✓ {{ t('dash.rename') }}
           </button>
-          <button id="btn-rename-cancel" class="btn" @click="cancelRename">✕</button>
+          <button id="btn-rename-cancel" class="btn pbgui-action" @click="cancelRename">✕</button>
         </div>
       </div>
     </template>
