@@ -112,7 +112,7 @@ function cleanupNow(): void {
 
 <template>
   <div v-if="open" id="modal-root" class="open">
-    <div class="modal-box">
+    <div class="modal-box pbgui-modal">
       <div class="modal-header">
         <span class="modal-title">{{ t('v7backtest.settingsTitle') }}</span>
         <button type="button" class="modal-close" title="Close" @click="emit('close')">✕</button>
@@ -173,15 +173,15 @@ function cleanupNow(): void {
             </div>
           </div>
           <div style="margin-top: var(--sp-sm)">
-            <button id="clean-now-btn" type="button" class="modal-btn" style="font-size: var(--fs-sm)" :disabled="cleaning" @click="cleanupNow">
+            <button id="clean-now-btn" type="button" class="modal-btn pbgui-action" style="font-size: var(--fs-sm)" :disabled="cleaning" @click="cleanupNow">
               {{ cleaning ? t('v7backtest.cleaning') : t('v7backtest.cleanNow') }}
             </button>
           </div>
         </div>
       </div>
       <div class="modal-actions">
-        <button type="button" class="modal-btn" @click="emit('close')">{{ t('common.cancel') }}</button>
-        <button type="button" class="modal-btn modal-btn-primary" @click="save">{{ t('common.save') }}</button>
+        <button type="button" class="modal-btn pbgui-action" @click="emit('close')">{{ t('common.cancel') }}</button>
+        <button type="button" class="modal-btn pbgui-action primary" @click="save">{{ t('common.save') }}</button>
       </div>
     </div>
   </div>

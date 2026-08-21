@@ -102,7 +102,7 @@ watch(
       <button
         v-for="b in buttons"
         :key="b.action"
-        class="ctrl-btn"
+        class="ctrl-btn pbgui-action"
         :class="b.action"
         type="button"
         :disabled="b.disabled"
@@ -116,11 +116,11 @@ watch(
   <slot name="above-tabs"></slot>
 
   <template v-if="hasTabs">
-    <div class="tab-bar">
+    <div class="tab-bar pbgui-tab-bar">
       <button
         v-for="tab in tabs"
         :key="tab.id"
-        class="tab-btn"
+        class="tab-btn pbgui-tab"
         :class="{ active: activeTab === tab.id }"
         :data-tab="tab.id"
         type="button"

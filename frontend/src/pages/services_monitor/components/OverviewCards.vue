@@ -137,7 +137,7 @@ const cards = computed<Card[]>(() => {
     <div
       v-for="c in cards"
       :key="c.svcId"
-      class="svc-card"
+      class="svc-card pbgui-card"
       :class="c.cls"
       :data-svc="c.svcId"
       @click="emit('select', c.panelId)"
@@ -148,7 +148,7 @@ const cards = computed<Card[]>(() => {
         <button
           v-for="b in c.buttons"
           :key="b.kind"
-          class="card-btn"
+          class="card-btn pbgui-action"
           :class="b.kind"
           type="button"
           :disabled="b.disabled"

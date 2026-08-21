@@ -32,7 +32,7 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
 
 <template>
   <section id="stage-compare" class="stage-view" :class="{ active: store.controls.stage === 'compare' }">
-    <section class="panel-card">
+    <section class="panel-card pbgui-card">
       <h3>{{ t('v7explore.compare') }}</h3>
       <div class="grid">
         <div class="field full">
@@ -62,11 +62,11 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
           <span>{{ t('v7explore.mismatchesOnly') }}</span>
         </label>
       </div>
-      <button class="action-btn primary" id="btn-run-compare" type="button" style="margin-top:14px;width:100%" :disabled="compare.running.value" @click="compare.runCompare()">
+      <button class="action-btn pbgui-action primary" id="btn-run-compare" type="button" style="margin-top:14px;width:100%" :disabled="compare.running.value" @click="compare.runCompare()">
         {{ compare.running.value ? t('v7explore.compareRunning') : t('v7explore.startCompare') }}
       </button>
     </section>
-    <section class="panel-card" style="margin-top:var(--sp-md)">
+    <section class="panel-card pbgui-card" style="margin-top:var(--sp-md)">
       <h3>{{ t('v7explore.compareResult') }}</h3>
       <div id="compare-summary" class="hint">
         <span v-if="compare.summaryText.value" class="muted">{{ compare.summaryText.value }}</span>

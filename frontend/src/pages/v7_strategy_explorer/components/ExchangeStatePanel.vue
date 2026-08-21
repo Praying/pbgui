@@ -91,7 +91,7 @@ const debugJson = computed(() => JSON.stringify(metadata.value, null, 2));
 </script>
 
 <template>
-  <div class="panel-card">
+  <div class="panel-card pbgui-card">
     <h3>{{ t('v7explore.exchangeState') }}</h3>
     <div class="control-group">
       <p class="muted" style="margin:0 0 8px">{{ t('v7explore.exchangeParameters') }}</p>
@@ -99,7 +99,7 @@ const debugJson = computed(() => JSON.stringify(metadata.value, null, 2));
         <input id="auto-exchange-params" v-model="store.state.autoExchangeParams" type="checkbox" @change="store.recalculate()">
         <label for="auto-exchange-params">{{ t('v7explore.autoFillExchangeParams') }}</label>
       </div>
-      <button class="action-btn" id="btn-reset-exchange-params" type="button" @click="resetExchangeParams">{{ t('v7explore.resetExchangeParams') }}</button>
+      <button class="action-btn pbgui-action" id="btn-reset-exchange-params" type="button" @click="resetExchangeParams">{{ t('v7explore.resetExchangeParams') }}</button>
       <section class="accordion-card collapsed" style="margin-top:8px">
         <button class="accordion-head" type="button" @click="debugOpen = !debugOpen">{{ t('v7explore.debugDataSources') }}</button>
         <div class="accordion-body"><pre id="exchange-state-json" class="debug-json">{{ debugJson }}</pre></div>

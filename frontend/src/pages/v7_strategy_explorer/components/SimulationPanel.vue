@@ -44,13 +44,13 @@ function onStartStateChange(): void {
 
 <template>
   <section id="stage-simulation" class="stage-view" :class="{ active: store.controls.stage === 'simulation' }">
-    <section class="panel-card">
+    <section class="panel-card pbgui-card">
       <h3>{{ t('v7explore.simulation') }}</h3>
       <div class="toolbar" style="margin-top:12px">
         <button
           v-for="mode in simulationModes"
           :key="mode.key"
-          class="action-btn"
+          class="action-btn pbgui-action"
           :class="{ 'active-sim': store.state.activeSimulationMode === mode.key }"
           :disabled="simulation.running.value"
           @click="simulation.runSimulation(mode.key)"

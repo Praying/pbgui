@@ -92,8 +92,8 @@ function onSliderChange(): void {
 <template>
   <div :id="prefix + sideKey + '-tuning'">
     <div class="field"><label>{{ t('v7explore.segment') }}</label></div>
-    <div class="segment-tabs">
-      <button v-for="seg in store.segments.value" :key="seg.key" type="button" :class="seg.key === segmentKey ? 'active' : ''" @click="setSegment(seg.key)">
+    <div class="segment-tabs pbgui-tab-bar">
+      <button v-for="seg in store.segments.value" :key="seg.key" class="pbgui-tab" type="button" :class="seg.key === segmentKey ? 'active' : ''" @click="setSegment(seg.key)">
         {{ seg.label ?? t(seg.labelKey || '') }}
       </button>
     </div>

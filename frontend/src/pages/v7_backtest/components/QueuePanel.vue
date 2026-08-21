@@ -202,7 +202,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
             @mouseenter="onMouseEnter(item)"
             @mouseup="onMouseUp(item)"
           >
-            <td><span class="badge" :class="'badge-' + String(item.status || 'unknown').toLowerCase()">{{ item.status }}</span></td>
+            <td><span class="badge pbgui-badge" :class="'badge-' + String(item.status || 'unknown').toLowerCase()">{{ item.status }}</span></td>
             <td :title="item.filename" style="cursor: pointer" @dblclick="emit('editConfig', item.name ?? '')">
               {{ item.name }}
             </td>
@@ -254,14 +254,14 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
 
     <!-- deleteSelectedQueue confirm (:5860-5870) -->
     <div v-if="confirmOpen" id="modal-root" class="open">
-      <div class="modal-box">
+      <div class="modal-box pbgui-modal">
         <div class="modal-header">
           <span class="modal-title">{{ t('v7backtest.deleteQueueItems') }}</span>
         </div>
         <div class="modal-body"><p>{{ t('v7backtest.removeQueueConfirm', { n: selectedFilenames().length }) }}</p></div>
         <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="confirmOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="modal-btn modal-btn-danger" @click="confirmDelete">{{ t('common.delete') }}</button>
+          <button type="button" class="modal-btn pbgui-action" @click="confirmOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" class="modal-btn pbgui-action danger" @click="confirmDelete">{{ t('common.delete') }}</button>
         </div>
       </div>
     </div>

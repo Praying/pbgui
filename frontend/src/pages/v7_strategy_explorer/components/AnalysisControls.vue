@@ -34,7 +34,7 @@ function onContextDaysInput(event: Event): void {
 </script>
 
 <template>
-  <section id="shared-analysis-controls" class="panel-card shared-controls">
+  <section id="shared-analysis-controls" class="panel-card pbgui-card shared-controls">
     <div class="shared-controls-grid">
       <div class="field">
         <label for="ohlcv-source-select" :data-tip="t('v7explore.ohlcvSourceTip')" data-i18n-tip="v7explore.ohlcvSourceTip">{{ t('v7explore.ohlcvSource') }}</label>

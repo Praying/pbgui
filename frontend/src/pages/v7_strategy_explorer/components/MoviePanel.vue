@@ -107,7 +107,7 @@ function onVisibleInput(): void {
 <template>
   <section id="stage-movie" class="stage-view" :class="{ active: store.controls.stage === 'movie' }">
     <div class="movie-layout">
-      <section class="panel-card">
+      <section class="panel-card pbgui-card">
         <h3>{{ t('v7explore.movieBuilderConfig') }}</h3>
         <p class="hint" id="movie-status">{{ t('v7explore.buildReplayFrames') }}</p>
         <div class="movie-config-grid">
@@ -163,11 +163,11 @@ function onVisibleInput(): void {
             <label id="movie-result-label" for="movie-pb7-folder" :data-tip="t('v7explore.movieResultFolderTip')">{{ t('v7explore.pb7BacktestFolder') }}</label>
             <input id="movie-pb7-folder" v-model="store.controls.moviePb7Folder" type="text" placeholder="/path/to/backtest/result">
           </div>
-          <div class="field"><label>&nbsp;</label><button class="action-btn primary" id="btn-build-movie" :disabled="movie.building.value" @click="movie.buildMovieFrames()">{{ movie.building.value ? t('v7explore.generatingMovie') : t('v7explore.generateMovie') }}</button></div>
-          <div class="field"><label>&nbsp;</label><button class="action-btn danger" id="btn-stop-movie" type="button" :disabled="!movie.building.value && !movie.exporting.value" @click="movie.stopMovieBuilder()">{{ t('v7explore.stopMovieBuilder') }}</button></div>
+          <div class="field"><label>&nbsp;</label><button class="action-btn pbgui-action primary" id="btn-build-movie" :disabled="movie.building.value" @click="movie.buildMovieFrames()">{{ movie.building.value ? t('v7explore.generatingMovie') : t('v7explore.generateMovie') }}</button></div>
+          <div class="field"><label>&nbsp;</label><button class="action-btn pbgui-action danger" id="btn-stop-movie" type="button" :disabled="!movie.building.value && !movie.exporting.value" @click="movie.stopMovieBuilder()">{{ t('v7explore.stopMovieBuilder') }}</button></div>
         </div>
       </section>
-      <section class="panel-card">
+      <section class="panel-card pbgui-card">
         <h3>{{ t('v7explore.movieBuilderResult') }}</h3>
         <div id="movie-output" class="hint">
           <span v-if="movie.outputMessage.value !== null" class="muted">{{ movie.outputMessage.value }}</span>
@@ -188,7 +188,7 @@ function onVisibleInput(): void {
                 <option value="Custom">{{ t('v7explore.custom') }}</option>
               </select>
             </div>
-            <div class="field"><label>&nbsp;</label><button class="action-btn primary" id="btn-export-movie" type="button" :disabled="movie.exporting.value" @click="movie.exportMovieMp4()">{{ movie.exporting.value ? t('v7explore.exportingMp4') : t('v7explore.exportMp4') }}</button></div>
+            <div class="field"><label>&nbsp;</label><button class="action-btn pbgui-action primary" id="btn-export-movie" type="button" :disabled="movie.exporting.value" @click="movie.exportMovieMp4()">{{ movie.exporting.value ? t('v7explore.exportingMp4') : t('v7explore.exportMp4') }}</button></div>
             <div class="field"><label>&nbsp;</label><a v-if="movie.download.value" id="movie-export-download" class="movie-export-download active" :href="movie.download.value.url" :download="movie.download.value.filename">{{ movie.download.value.label }}</a></div>
           </div>
           <p class="hint" id="movie-export-info">{{ movie.exportInfo.value || t('v7explore.exportDirectlyHint') }}</p>

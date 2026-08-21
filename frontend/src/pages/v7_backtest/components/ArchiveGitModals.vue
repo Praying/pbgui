@@ -23,7 +23,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
 <template>
   <!-- pull progress (:9512-9525) — Hide keeps the stream running -->
   <div v-if="git.pullOpen.value" id="modal-root" data-test="archive-pull-progress-modal">
-    <div class="modal-box archive-pull-modal">
+    <div class="modal-box pbgui-modal archive-pull-modal">
       <div class="modal-header">
         <span class="modal-title" data-test="archive-pull-title">{{ git.pullTitle.value }}</span>
         <button type="button" class="modal-close" title="Close" @click="git.hidePull()">✕</button>
@@ -43,14 +43,14 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         </div>
       </div>
       <div class="modal-actions">
-        <button type="button" class="modal-btn" data-test="archive-pull-hide" @click="git.hidePull()">{{ t('v7backtest.hide') }}</button>
+        <button type="button" class="modal-btn pbgui-action" data-test="archive-pull-hide" @click="git.hidePull()">{{ t('v7backtest.hide') }}</button>
       </div>
     </div>
   </div>
 
   <!-- pull results (:9578-9587, :9613-9637) -->
   <div v-if="git.pullResults.value" id="modal-root" data-test="archive-pull-results">
-    <div class="modal-box">
+    <div class="modal-box pbgui-modal">
       <div class="modal-header">
         <span class="modal-title">{{ git.pullResults.value.title }}</span>
         <button type="button" class="modal-close" title="Close" @click="git.closePullResults()">✕</button>
@@ -63,14 +63,14 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         </details>
       </div>
       <div class="modal-actions">
-        <button type="button" class="modal-btn" data-test="archive-pull-results-close" @click="git.closePullResults()">{{ t('common.close') }}</button>
+        <button type="button" class="modal-btn pbgui-action" data-test="archive-pull-results-close" @click="git.closePullResults()">{{ t('common.close') }}</button>
       </div>
     </div>
   </div>
 
   <!-- git push output (:9660-9665) -->
   <div v-if="git.pushOutput.value" id="modal-root" data-test="archive-push-output">
-    <div class="modal-box">
+    <div class="modal-box pbgui-modal">
       <div class="modal-header">
         <span class="modal-title">{{ git.pushOutput.value.title }}</span>
         <button type="button" class="modal-close" title="Close" @click="git.closePushOutput()">✕</button>

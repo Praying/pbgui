@@ -200,6 +200,106 @@ button.pbgui-btn.pbgui-btn:focus-visible,
   box-shadow: var(--shadow-modal);
 }
 
+.pbgui-card.pbgui-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-lg);
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+.pbgui-card.pbgui-card:hover {
+  background: var(--surface-elevated);
+  border-color: var(--border-strong);
+}
+
+button.pbgui-action.pbgui-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height-sm);
+  padding: 0 var(--sp-sm);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+button.pbgui-action.pbgui-action:hover:not(:disabled) {
+  background: var(--surface-elevated);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+button.pbgui-action.pbgui-action.primary,
+button.pbgui-action.pbgui-action.action-btn.primary {
+  background: var(--accent-bg);
+  border-color: rgba(77, 166, 255, 0.35);
+  color: var(--accent-soft);
+}
+
+button.pbgui-action.pbgui-action.danger,
+button.pbgui-action.pbgui-action.action-btn.danger {
+  background: var(--danger-bg);
+  border-color: rgba(255, 75, 75, 0.35);
+  color: var(--danger-soft);
+}
+
+button.pbgui-action.pbgui-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+button.pbgui-action.pbgui-action:focus-visible,
+.pbgui-card.pbgui-card :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: var(--focus-ring);
+}
+
+.pbgui-tab-bar.pbgui-tab-bar {
+  display: flex;
+  gap: var(--sp-xs);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+button.pbgui-tab.pbgui-tab {
+  min-height: var(--control-height-md);
+  padding: 0 var(--sp-md);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+button.pbgui-tab.pbgui-tab:hover:not(.active) {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+button.pbgui-tab.pbgui-tab.active {
+  border-bottom-color: var(--accent);
+  color: var(--accent-soft);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
