@@ -239,7 +239,7 @@
 .integrity-gap-backdrop[hidden] { display: none; }
 .integrity-gap-dialog {
   width: min(1080px, 100%);
-  max-height: calc(100vh - 2 * var(--sp-lg));
+  max-height: calc(100vh - 2 * var(--sp-lg)); max-height: calc(100dvh - 2 * var(--sp-lg));
   overflow: auto;
   padding: var(--sp-lg);
   border: 1px solid var(--border);
@@ -291,5 +291,5 @@
   .integrity-settings-grid { grid-template-columns: 1fr; }
   .integrity-table { min-width: 720px; }
   .integrity-gap-backdrop { padding: var(--sp-sm); }
-  .integrity-gap-dialog { max-height: calc(100vh - 2 * var(--sp-sm)); padding: var(--sp-md); }
+  .integrity-gap-dialog { max-height: calc(100vh - 2 * var(--sp-sm)); max-height: calc(100dvh - 2 * var(--sp-sm)); padding: var(--sp-md); }
 }

@@ -1,4 +1,4 @@
-.jobs-monitor { min-height: 100vh; padding: 24px; color: var(--text-primary); background: var(--bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.jobs-monitor { min-height: 100vh; min-height: 100dvh; padding: 24px; color: var(--text-primary); background: var(--bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 .jobs-monitor.is-embedded { min-height: 0; padding: 12px; }
 .jobs-shell { max-width: 1400px; margin: 0 auto; }
 .jobs-header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
@@ -48,7 +48,7 @@
 .jobs-empty, .jobs-error { padding: 24px; color: var(--text-secondary); text-align: center; }
 .jobs-error { color: #fca5a5; }
 .modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.72); }
-.modal-card { width: min(900px, calc(100vw - 40px)); max-height: calc(100vh - 40px); overflow: hidden; display: flex; flex-direction: column; padding: 20px; border-radius: 8px; background: var(--bg-card); }
+.modal-card { width: min(900px, calc(100vw - 40px)); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow: hidden; display: flex; flex-direction: column; padding: 20px; border-radius: 8px; background: var(--bg-card); }
 .modal-header { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-default); }
 .modal-header h2 { margin: 0; font-size: 1.1rem; word-break: break-all; }
 .modal-body { overflow: auto; padding: 14px 0 0; }

@@ -16,8 +16,9 @@ const widgetsCss = readFileSync(join(import.meta.dirname, 'widgets.css'), 'utf8'
    update this expectation. */
 
 /** sha256 of the normalized CSS; re-frozen at the style-unification pass
-   (hardcoded colors redirected to the shared @/styles/tokens.css). */
-const FROZEN_WIDGETS_CSS_SHA256 = '61610837e0b117a673eed505c2f5e772d914006920807bf601b53392b79d3a82';
+   (hardcoded colors redirected to the shared @/styles/tokens.css), then at
+   the viewport-hardening pass (100vh declarations gained 100dvh twins). */
+const FROZEN_WIDGETS_CSS_SHA256 = 'cfc93b22938d30ee03d7d37d384f064c49c9e782f30f91c0a13205efdcd93b7e';
 
 function normalize(text: string): string {
   /* Comments are stripped (the legacy _CSS section headers were raw JS

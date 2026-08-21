@@ -599,7 +599,7 @@ input[type="range"]::-moz-range-thumb {
 @media (max-width: 1100px) {
   #page-body {
     flex-direction: column;
-    height: calc(100vh - 52px);
+    height: calc(100vh - 52px); height: calc(100dvh - 52px);
   }
   #sidebar {
     width: auto;

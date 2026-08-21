@@ -486,6 +486,7 @@ body {
 #page-body {
   display: flex;
   height: calc(100vh - 52px); /* topnav height, injected by pbgui_nav.js */
+  height: calc(100dvh - 52px);
   overflow: hidden;
   user-select: none;
   background: var(--bg-page);

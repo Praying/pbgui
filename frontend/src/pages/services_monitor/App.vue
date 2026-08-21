@@ -782,6 +782,7 @@ onUnmounted(() => {
 #page-body {
   display: flex;
   height: calc(100vh - var(--nav-height));
+  height: calc(100dvh - var(--nav-height));
   min-height: 0;
   overflow: hidden;
   background: var(--surface-page);

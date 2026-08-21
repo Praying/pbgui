@@ -45,7 +45,7 @@ a:hover { text-decoration: underline; }
 
 #page-body {
   display: flex;
-  height: calc(100vh - 52px);
+  height: calc(100vh - 52px); height: calc(100dvh - 52px);
   overflow: hidden;
 }
 

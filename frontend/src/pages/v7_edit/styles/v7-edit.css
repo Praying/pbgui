@@ -49,7 +49,7 @@ body {
 /* ─── Page layout ──────────────────────────────────────────── */
 #page-body {
   display: flex;
-  height: calc(100vh - 52px);
+  height: calc(100vh - 52px); height: calc(100dvh - 52px);
   overflow: hidden;
 }
 #main-content {
@@ -68,7 +68,7 @@ body {
 .span-4 { grid-column: span 4; }
 @media (max-width: 1400px) { .cols-8 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 700px) {
-  #page-body { flex-direction: column; height: calc(100vh - 52px); }
+  #page-body { flex-direction: column; height: calc(100vh - 52px); height: calc(100dvh - 52px); }
   #sidebar { width: 100% !important; min-width: 0; max-width: none; border-right: 0; border-bottom: 1px solid var(--border); }
   #sidebar-resize { display: none; }
   #sidebar-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }

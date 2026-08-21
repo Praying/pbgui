@@ -54,6 +54,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // See vitest.setup.ts: neutralize Node's experimental localStorage
+    // getter before the jsdom environment installs its own.
+    setupFiles: ['../vitest.setup.ts'],
     // globs resolve against root (src/pages), where tinyglobby's absolute
     // include pattern skips files inside that directory itself — anchor the
     // scan to src/ so both src/shared/* and src/pages/* tests are discovered

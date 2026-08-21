@@ -16,8 +16,25 @@ html, body {
   font-family: var(--font-family);
   font-size: var(--fs-base);
   line-height: 1.5;
+  font-variant-numeric: tabular-nums; /* trading UI: aligned digits everywhere */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headlines should never orphan a word onto the last line */
+h1, h2, h3 {
+  text-wrap: balance;
+  letter-spacing: var(--tracking-tight);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Numeric cells and code share the mono stack with tabular figures */
+code, pre, .mono, .num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Form elements ──────────────────────────────────────────── */
@@ -60,7 +77,7 @@ textarea:focus-visible,
 
 button:active:not(:disabled),
 a:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.995);
 }
 
 button:disabled {
@@ -71,8 +88,8 @@ button:disabled {
 /* ── Scrollbar ──────────────────────────────────────────────── */
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -82,10 +99,13 @@ button:disabled {
 ::-webkit-scrollbar-thumb {
   background: var(--border-default);
   border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-strong);
+  background-clip: padding-box;
 }
 
 /* ── Selection ──────────────────────────────────────────────── */

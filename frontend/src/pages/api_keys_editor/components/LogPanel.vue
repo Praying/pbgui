@@ -26,7 +26,7 @@ function ensureViewer(): LogViewer | null {
     wsBase: wsBase(),
     token: bootToken(),
     defaultFile: 'ApiKeys.log',
-    height: 'calc(100vh - 300px)',
+    height: 'calc(100dvh - 300px)',
   });
   return viewer;
 }
@@ -44,7 +44,7 @@ onBeforeUnmount(() => viewer?.close());
 </script>
 
 <template>
-  <div id="logPanel" class="hl-expiry-panel" v-show="visible" style="flex-direction:column; padding:0; gap:0; height:calc(100vh - 120px);">
+  <div id="logPanel" class="hl-expiry-panel" v-show="visible" style="flex-direction:column; padding:0; gap:0; height:calc(100dvh - 120px);">
     <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid #1e293b; flex-shrink:0;">
       <BackButton @back="emit('back')" />
     </div>

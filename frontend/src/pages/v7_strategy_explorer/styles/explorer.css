@@ -31,7 +31,7 @@
 html, body { height: 100%; margin: 0; color: var(--text); background: var(--bg); font: var(--fs-base)/1.45 var(--font); overflow: hidden; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
-#page-body { display: flex; height: calc(100vh - var(--nav-height)); min-height: 0; }
+#page-body { display: flex; height: calc(100vh - var(--nav-height)); height: calc(100dvh - var(--nav-height)); min-height: 0; }
 #sidebar { min-width: 0; border-right: 1px solid var(--border); }
 #sidebar-inner { display: flex; flex-direction: column; gap: var(--sp-sm); padding-bottom: var(--sp-lg); }
 #main-content { flex: 1; min-width: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: var(--sp-lg); display: flex; flex-direction: column; gap: var(--sp-lg); }
@@ -99,7 +99,7 @@ button { cursor: pointer; }
 .plot { height: 520px; min-height: 360px; content-visibility: auto; contain-intrinsic-size: 520px; }
 #long-stats, #short-stats { content-visibility: auto; contain-intrinsic-size: 720px; }
 #main-content.is-scrolling .js-plotly-plot { pointer-events: none; }
-.plot:fullscreen { width: 100vw; height: 100vh !important; min-height: 100vh; background: var(--bg); padding: 8px; }
+.plot:fullscreen { width: 100vw; height: 100vh !important; height: 100dvh !important; min-height: 100vh; min-height: 100dvh; background: var(--bg); padding: 8px; }
 .plot:fullscreen > div { height: 100% !important; }
 textarea, pre.debug-json { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #0b0e14; color: var(--text); font-family: var(--mono); font-size: var(--fs-xs); padding: 10px; overflow: auto; }
 textarea { min-height: 480px; resize: vertical; }
@@ -126,7 +126,7 @@ pre.debug-json { max-height: 460px; white-space: pre-wrap; word-break: break-wor
 .movie-config-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-md); align-items: end; }
 .movie-result-grid { display: grid; grid-template-columns: minmax(420px, 2fr) minmax(320px, 1fr); gap: var(--sp-md); align-items: start; }
 .movie-plot { height: 760px; min-height: 760px; content-visibility: auto; contain-intrinsic-size: 760px; }
-.movie-plot:fullscreen { width: 100vw; height: 100vh !important; min-height: 100vh; background: var(--bg); padding: 8px; }
+.movie-plot:fullscreen { width: 100vw; height: 100vh !important; height: 100dvh !important; min-height: 100vh; min-height: 100dvh; background: var(--bg); padding: 8px; }
 .movie-plot:fullscreen > div { height: 100% !important; }
 .movie-progress { margin-top: 10px; display: none; }
 .movie-progress.active { display: block; }

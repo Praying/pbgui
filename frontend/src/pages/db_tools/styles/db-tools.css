@@ -14,7 +14,7 @@ body {
       --text: var(--text-primary); --muted: var(--text-secondary); --dim: var(--text-muted); --accent: var(--accent-soft);
       --ok: #4ade80; --warn: #fcd34d; --danger: #f87171;
     }
-    #page-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
+    #page-body { display: flex; height: calc(100vh - 52px); height: calc(100dvh - 52px); overflow: hidden; }
     #sidebar { width: 230px; min-width: 190px; flex-shrink: 0; border-right: 1px solid var(--line); background: #0b101a; padding: var(--sp-md); display: flex; flex-direction: column; gap: var(--sp-sm); }
     .sb-title { color: var(--dim); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-bottom: var(--sp-xs); }
     .sb-btn { width: 100%; text-align: left; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--muted); padding: .55rem .7rem; cursor: pointer; font: inherit; transition: background .12s, color .12s, border-color .12s; }
@@ -55,8 +55,8 @@ body {
     .select-row:focus { outline: none; }
     .select-row.selected { background: rgba(77,166,255,.12); box-shadow: inset 3px 0 0 var(--accent); color: #fff /* white on colored bg */; }
     .select-row.loading { color: var(--muted); cursor: wait; font-style: italic; }
-    #panel-backups { min-height: calc(100vh - 120px); }
-    #panel-backups .panel-body { min-height: calc(100vh - 235px); grid-template-rows: auto auto minmax(360px, 1fr) auto auto auto; }
+    #panel-backups { min-height: calc(100vh - 120px); min-height: calc(100dvh - 120px); }
+    #panel-backups .panel-body { min-height: calc(100vh - 235px); min-height: calc(100dvh - 235px); grid-template-rows: auto auto minmax(360px, 1fr) auto auto auto; }
     .backup-list-card { min-height: 0; display: flex; flex-direction: column; }
     #backup-list { flex: 1; max-height: none; min-height: 360px; }
     .backup-table-head, .backup-row { display: grid; grid-template-columns: 180px 150px 120px 110px minmax(300px, 1fr); gap: 12px; align-items: center; min-width: 980px; }

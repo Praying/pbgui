@@ -536,7 +536,7 @@ progress {
     left: 8px;
     right: 8px;
     width: auto;
-    height: calc(100vh - 76px);
+    height: calc(100vh - 76px); height: calc(100dvh - 76px);
     min-width: 0;
     min-height: 0;
   }

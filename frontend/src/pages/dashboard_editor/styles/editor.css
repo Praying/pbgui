@@ -36,7 +36,7 @@ body {
   padding: 0.75rem;
 }
 body.standalone-mode .editor-wrapper {
-  height: 100vh;
+  height: 100vh; height: 100dvh;
   padding: 0.75rem;
 }
 /* ── Fixed top wrapper ── */
@@ -310,7 +310,7 @@ select:focus, input[type="number"]:focus { outline: none; border-color: var(--ac
 /* ── View-only mode: hide editing chrome ── */
 body.view-mode .editor-sticky-top,
 body.view-mode #grid-footer { display: none !important; }
-body.view-mode .editor-wrapper { height: 100vh; padding: 0.5rem; }
+body.view-mode .editor-wrapper { height: 100vh; height: 100dvh; padding: 0.5rem; }
 body.view-mode .cell-inline-preview {
   min-height: 320px;
 }

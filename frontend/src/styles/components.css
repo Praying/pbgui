@@ -35,6 +35,11 @@ button.pbgui-btn.pbgui-btn {
 button.pbgui-btn.pbgui-btn:hover:not(:disabled) {
   background: var(--border-strong);
   border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+button.pbgui-btn.pbgui-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
 }
 
 button.pbgui-btn.pbgui-btn.active {
@@ -48,27 +53,36 @@ button.pbgui-btn.pbgui-btn:disabled {
   cursor: not-allowed;
 }
 
-button.pbgui-btn.pbgui-btn.btn-primary {
-  background: var(--info);
-  border-color: var(--info);
-  color: #fff;
+button.pbgui-btn.pbgui-btn.btn-primary,
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #07111f;
   font-weight: 600;
+  box-shadow: 0 2px 10px rgba(77, 163, 255, 0.22);
 }
 
-button.pbgui-btn.pbgui-btn.btn-primary:hover:not(:disabled) {
+button.pbgui-btn.pbgui-btn.btn-primary:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  box-shadow: 0 4px 16px rgba(77, 163, 255, 0.3);
+}
+
+.btn-primary:disabled:hover {
   background: var(--accent);
   border-color: var(--accent);
 }
 
 button.pbgui-btn.pbgui-btn.btn-info {
-  background: var(--info-bg);
-  border-color: rgba(31, 119, 255, 0.35);
-  color: var(--info-soft);
+  background: var(--accent-bg);
+  border-color: rgba(77, 163, 255, 0.35);
+  color: var(--accent-soft);
 }
 
 button.pbgui-btn.pbgui-btn.btn-info:hover:not(:disabled) {
-  background: rgba(31, 119, 255, 0.2);
-  border-color: var(--info);
+  background: rgba(77, 163, 255, 0.2);
+  border-color: var(--accent);
   color: var(--text-primary);
 }
 
@@ -177,9 +191,9 @@ button.pbgui-btn.pbgui-btn:focus-visible,
 }
 
 .pbgui-badge.pbgui-badge.badge-info {
-  background: var(--info-bg);
-  border-color: rgba(31, 119, 255, 0.28);
-  color: var(--info);
+  background: var(--accent-bg);
+  border-color: rgba(77, 163, 255, 0.28);
+  color: var(--accent-soft);
 }
 
 .pbgui-modal-backdrop.pbgui-modal-backdrop {
@@ -220,6 +234,8 @@ button.pbgui-btn.pbgui-btn:focus-visible,
 .pbgui-card.pbgui-card:hover {
   background: var(--surface-elevated);
   border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-panel);
 }
 
 button.pbgui-action.pbgui-action {
@@ -329,9 +345,14 @@ button.pbgui-tab.pbgui-tab.active {
   user-select: none;
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   background: var(--border-strong);
   border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
 }
 
 .btn:disabled {
@@ -345,20 +366,17 @@ button.pbgui-tab.pbgui-tab.active {
 }
 
 .btn-primary {
-  background: var(--info);
-  border-color: var(--info);
-  color: #fff;
-  font-weight: 600;
-}
-
-.btn-primary:hover {
   background: var(--accent);
   border-color: var(--accent);
+  color: #07111f;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(77, 163, 255, 0.22);
 }
 
 .btn-primary:disabled:hover {
-  background: var(--info);
-  border-color: var(--info);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: none;
 }
 
 .btn-success {
@@ -489,8 +507,8 @@ button.pbgui-tab.pbgui-tab.active {
 }
 
 .badge-info {
-  background: var(--info-bg);
-  color: var(--info);
+  background: var(--accent-bg);
+  color: var(--accent-soft);
 }
 
 .badge-muted {
@@ -607,7 +625,7 @@ button.pbgui-tab.pbgui-tab.active {
 }
 
 .table tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(96, 165, 250, 0.06);
 }
 
 .table tbody tr {
@@ -674,7 +692,7 @@ button.pbgui-tab.pbgui-tab.active {
 .progress-fill {
   height: 100%;
   border-radius: var(--radius-full);
-  background: var(--info);
+  background: var(--accent);
   transition: width var(--motion-slow) var(--ease-standard);
   min-width: 0;
 }
@@ -700,14 +718,42 @@ button.pbgui-tab.pbgui-tab.active {
 .empty-state {
   text-align: center;
   color: var(--text-secondary);
-  padding: 40px var(--sp-lg);
+  padding: 48px var(--sp-lg) 56px;
   font-size: var(--fs-md);
+  text-wrap: pretty;
 }
 
 .empty-state-icon {
-  font-size: 48px;
+  font-size: 40px;
   margin-bottom: var(--sp-md);
-  opacity: 0.4;
+  opacity: 0.35;
+}
+
+/* ── Skeleton loader (matches layout shape; prefer over spinners) ── */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: rgba(148, 163, 184, 0.09);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.08), transparent);
+  animation: skeleton-shimmer 1.6s var(--ease-standard) infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to { transform: translateX(100%); }
+}
+
+.skeleton-line {
+  height: 12px;
+  margin-bottom: var(--sp-sm);
 }
 
 /* ── Notices / Banners / Toasts ─────────────────────────────── */
@@ -739,9 +785,9 @@ button.pbgui-tab.pbgui-tab.active {
 }
 
 .notice-info {
-  background: var(--info-bg);
-  border: 1px solid rgba(31, 119, 255, 0.35);
-  color: var(--info);
+  background: var(--accent-bg);
+  border: 1px solid rgba(77, 163, 255, 0.35);
+  color: var(--accent-soft);
 }
 
 .toast-container {
@@ -775,8 +821,8 @@ button.pbgui-tab.pbgui-tab.active {
 }
 
 .toast-info {
-  background: var(--info);
-  color: #fff;
+  background: var(--accent);
+  color: #07111f;
 }
 
 /* ── Tabs ───────────────────────────────────────────────────── */
@@ -848,7 +894,7 @@ button.pbgui-tab.pbgui-tab.active {
 .status-dot-success { background: var(--success); }
 .status-dot-warning { background: var(--warning); }
 .status-dot-danger  { background: var(--danger); }
-.status-dot-info    { background: var(--info); }
+.status-dot-info    { background: var(--accent); }
 .status-dot-muted   { background: var(--text-disabled); }
 
 /* ── Responsive ─────────────────────────────────────────────── */
