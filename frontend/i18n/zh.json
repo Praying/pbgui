@@ -2825,6 +2825,7 @@
   "v7backtest.addedToArchiveProgress": "已添加 {i}/{n} 到存档：{label}",
   "v7backtest.addedToQueue": "已添加到队列",
   "v7backtest.additionalParameters": "附加参数",
+  "v7backtest.advancedExecutionSettings": "高级执行设置",
   "v7backtest.allCoins": "全部币种",
   "v7backtest.allConfigs": "全部配置",
   "v7backtest.alsoDeleteResults": "同时删除结果",

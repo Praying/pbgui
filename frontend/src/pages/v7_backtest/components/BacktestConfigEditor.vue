@@ -69,6 +69,7 @@ const coinSourcesOpen = ref(false);
 const marketSourcesOpen = ref(false);
 const additionalOpen = ref(false);
 const rawJsonOpen = ref(false);
+const advancedExecutionOpen = ref(false);
 
 const exchangesOptions = computed(() => {
   const options = props.exchangeOptions.filter((option) => !props.state.exchanges.includes(option));
@@ -148,7 +149,7 @@ defineExpose({ foldSuiteDraft });
         <span class="config-editor-section-index">02</span>
       </header>
       <!-- Row 2: Balance, Collateral & Behavior (:2615-2634) -->
-    <div class="form-row config-editor-12">
+    <div class="form-row config-editor-12 config-editor-trading-primary">
       <div class="form-group editor-span-2"><label>starting_balance</label><input v-model="state.startingBalance" type="number" min="500" /></div>
       <div class="form-group editor-span-2"><label>balance_sample_divider</label><input v-model="state.balanceSampleDivider" type="number" min="1" /></div>
       <div class="form-group editor-span-2"><label>btc_collateral_cap</label><input v-model="state.btcCollateralCap" type="number" step="0.1" min="0" /></div>
@@ -168,41 +169,55 @@ defineExpose({ foldSuiteDraft });
     </div>
 
       <!-- Row 3: Fees & Controls (:2636-2679) -->
-    <div class="form-row config-editor-12">
-      <div class="form-group editor-span-2">
-        <div class="chk-row"><input id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" type="checkbox" /><label for="cfg-maker-fee-enabled">maker_fee_override</label></div>
-        <div class="num-stepper" style="margin-top: 4px">
-          <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5))">−</button>
-          <input v-model="state.makerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.makerFeeEnabled" />
-          <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5))">+</button>
+    <div class="expander" :class="{ open: advancedExecutionOpen }" data-test="advanced-execution-expander">
+      <button
+        type="button"
+        class="expander-header"
+        :aria-expanded="advancedExecutionOpen"
+        aria-controls="advanced-execution-settings"
+        data-test="advanced-execution-expander-toggle"
+        @click="advancedExecutionOpen = !advancedExecutionOpen"
+      >
+        <span class="arrow" aria-hidden="true">▶</span> {{ t('v7backtest.advancedExecutionSettings') }}
+      </button>
+      <div id="advanced-execution-settings" class="expander-body">
+        <div v-if="advancedExecutionOpen" class="form-row config-editor-12 config-editor-trading-advanced">
+          <div class="form-group editor-span-2">
+            <div class="chk-row"><input id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" type="checkbox" /><label for="cfg-maker-fee-enabled">maker_fee_override</label></div>
+            <div class="num-stepper" style="margin-top: 4px">
+              <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5))">−</button>
+              <input v-model="state.makerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.makerFeeEnabled" />
+              <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5))">+</button>
+            </div>
+          </div>
+          <div class="form-group editor-span-2">
+            <div class="chk-row"><input id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" type="checkbox" /><label for="cfg-taker-fee-enabled">taker_fee_override</label></div>
+            <div class="num-stepper" style="margin-top: 4px">
+              <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5))">−</button>
+              <input v-model="state.takerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.takerFeeEnabled" />
+              <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5))">+</button>
+            </div>
+          </div>
+          <div class="form-group editor-span-2">
+            <label>market_order_slippage_pct</label>
+            <div class="num-stepper">
+              <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))">−</button>
+              <input v-model="state.marketOrderSlippagePct" type="number" step="0.0001" min="0" />
+              <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))">+</button>
+            </div>
+          </div>
+          <div class="form-group editor-span-2 config-editor-toggle-field">
+            <div class="chk-row"><input id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" type="checkbox" /><label for="cfg-filter-cost">filter_by_min_effective_cost</label></div>
+          </div>
+          <div class="form-group editor-span-2">
+            <label>hsl_signal_mode</label>
+            <select v-model="state.hslSignalMode"><option v-for="mode in hslOptions" :key="mode" :value="mode">{{ mode }}</option></select>
+          </div>
+          <div class="form-group editor-span-2">
+            <label>logging_level</label>
+            <select v-model="state.loggingLevel"><option v-for="option in loggingOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select>
+          </div>
         </div>
-      </div>
-      <div class="form-group editor-span-2">
-        <div class="chk-row"><input id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" type="checkbox" /><label for="cfg-taker-fee-enabled">taker_fee_override</label></div>
-        <div class="num-stepper" style="margin-top: 4px">
-          <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5))">−</button>
-          <input v-model="state.takerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.takerFeeEnabled" />
-          <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5))">+</button>
-        </div>
-      </div>
-      <div class="form-group editor-span-2">
-        <label>market_order_slippage_pct</label>
-        <div class="num-stepper">
-          <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))">−</button>
-          <input v-model="state.marketOrderSlippagePct" type="number" step="0.0001" min="0" />
-          <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))">+</button>
-        </div>
-      </div>
-      <div class="form-group editor-span-2 config-editor-toggle-field">
-        <div class="chk-row"><input id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" type="checkbox" /><label for="cfg-filter-cost">filter_by_min_effective_cost</label></div>
-      </div>
-      <div class="form-group editor-span-2">
-        <label>hsl_signal_mode</label>
-        <select v-model="state.hslSignalMode"><option v-for="mode in hslOptions" :key="mode" :value="mode">{{ mode }}</option></select>
-      </div>
-      <div class="form-group editor-span-2">
-        <label>logging_level</label>
-        <select v-model="state.loggingLevel"><option v-for="option in loggingOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select>
       </div>
     </div>
     </section>

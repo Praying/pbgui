@@ -6,6 +6,8 @@
 
 ## Frontend Redesign Planning
 
+- Documented the approved Open Design direction and implementation plan for a denser shared PBv7/PBv8 Backtest configuration workbench, including responsive long-label protection, advanced-execution disclosure, aligned Long/Short controls, per-side JSON disclosure, localization, guide coverage, and verification gates without changing config or API behavior.
+
 - Documented the approved PBGui frontend redesign: Vue 3 MPA continuation, Tailwind/headless/icon Spikes, semantic dark design system, and staged Dashboard, logging, and services-monitor migration with API, authentication, i18n, offline, and legacy-fallback compatibility preserved.
 
 ## Frontend Redesign Verification
@@ -36,6 +38,8 @@
 - Fixed the standalone Dashboard editor color contrast by loading the shared theme tokens and base form styles, making dashboard names, layout controls, widget palette items, empty-cell hints, and grid actions readable in dark mode.
 
 - Refined the migrated PBv7/PBv8 Backtest config editor visual hierarchy: added a responsive section-card layout for basics, capital/execution, market data, coin filters and bot settings; introduced a 12-column desktop field grid, a single clean exchange selector without duplicate labels/actions, clearer section guidance, grouped sidebar actions, a dedicated filter action, and an independently scrollable editor while preserving the existing config bindings and handoff behavior; removed duplicate icon prefixes throughout the Backtest and Optimize submenu actions, including New Config, Delete Selected, Backtest, Compare, archive maintenance and editor actions.
+
+- Implemented a denser shared PBv7/PBv8 Backtest configuration editor with accessible Advanced execution settings and per-side Full Config JSON disclosures, aligned Long/Short comparison controls, and medium-width protection for long technical labels, without changing config or API behavior.
 
 - Repaired the migrated PBv7/PBv8 Backtest config editor: restored the legacy compact grid, searchable tag dropdowns, numeric steppers and explicit expanders; restored JSON import plus Results, Convert to V8, Add to Run, Strategy Explorer, Balance Calculator and OHLCV readiness handoffs; saved-config-only actions remain disabled for unsaved configs. Added focused Vue and stylesheet regression coverage.
 

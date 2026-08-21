@@ -2825,6 +2825,7 @@
   "v7backtest.addedToArchiveProgress": "Added {i}/{n} to archive: {label}",
   "v7backtest.addedToQueue": "Added to queue",
   "v7backtest.additionalParameters": "Additional Parameters",
+  "v7backtest.advancedExecutionSettings": "Advanced execution settings",
   "v7backtest.allCoins": "All coins",
   "v7backtest.allConfigs": "All configs",
   "v7backtest.alsoDeleteResults": "Also delete results",

@@ -244,12 +244,7 @@ a:hover { text-decoration: underline; }
 .cols-8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
 .span-4 { grid-column: span 4; }
 
-#configs-editor .form-row { gap: var(--sp-md); margin: 0 0 var(--sp-md); }
 #configs-editor .form-group { margin-bottom: 0; }
-#configs-editor .form-group label {
-  display: flex; align-items: center; align-content: flex-start; gap: 4px; flex-wrap: wrap;
-  min-width: 0; min-height: 2.4em; line-height: 1.2; white-space: normal; overflow: visible;
-}
 #configs-editor .form-group label span,
 #configs-editor .chk-row label span { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
 #configs-editor .form-group input,
@@ -332,21 +327,6 @@ a:hover { text-decoration: underline; }
 .field-status-inline.error { margin-top: var(--sp-xs); padding: 6px 10px; border: 1px solid rgba(255,75,75,.35); border-radius: 4px; background: rgba(55,20,20,.84); }
 
 /* ── New-config visual hierarchy ─────────────────────────────────────── */
-.config-editor-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-md);
-  min-width: 0;
-  padding: var(--sp-xs) 0 var(--sp-lg);
-}
-.config-editor-intro {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-lg);
-  padding: var(--sp-sm) var(--sp-xs) var(--sp-md);
-  border-bottom: 1px solid var(--border);
-}
 .config-editor-kicker {
   color: var(--accent);
   font-size: var(--fs-xs);
@@ -386,24 +366,6 @@ a:hover { text-decoration: underline; }
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 0 3px rgba(99,179,237,.12);
-}
-.config-editor-section {
-  min-width: 0;
-  padding: var(--sp-md) var(--sp-lg) var(--sp-lg);
-  border: 1px solid rgba(148,163,184,.16);
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.012));
-  box-shadow: 0 8px 22px rgba(0,0,0,.10);
-}
-.config-editor-section-bot { padding-bottom: calc(var(--sp-lg) * 1.2); }
-.config-editor-section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-md);
-  margin-bottom: var(--sp-md);
-  padding-bottom: var(--sp-sm);
-  border-bottom: 1px solid rgba(148,163,184,.16);
 }
 .config-editor-section-head h2 {
   color: var(--text);
@@ -461,7 +423,6 @@ a:hover { text-decoration: underline; }
 #sidebar-editor .editor-save-group .sb-btn { min-height: 36px; font-weight: 700; }
 
 @media (max-width: 900px) {
-  .config-editor-section { padding: var(--sp-md); }
   .config-editor-intro { flex-direction: column; gap: var(--sp-sm); }
   .config-editor-status { align-self: flex-start; }
 }
@@ -482,13 +443,6 @@ a:hover { text-decoration: underline; }
   background: rgba(255,255,255,.018);
 }
 .config-editor-toggle-field { justify-content: flex-end; }
-#configs-editor {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding-right: 4px;
-  scrollbar-gutter: stable;
-}
 @media (max-width: 1400px) {
   .config-editor-12 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .editor-span-12 { grid-column: span 6; }
@@ -541,6 +495,8 @@ body {
 }
 
 #configs-editor {
+  container-type: inline-size;
+  container-name: backtest-editor;
   display: flex;
   flex: none;
   min-height: max-content;
@@ -551,15 +507,22 @@ body {
 }
 
 .config-editor-grid {
-  gap: 18px;
-  padding: 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 0 18px;
 }
 
 .config-editor-intro {
   position: relative;
-  min-height: 94px;
-  padding: 10px 4px 18px;
-  border-bottom-color: rgba(148, 163, 184, 0.15);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-lg);
+  min-height: 72px;
+  padding: 8px 4px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
 }
 
 .config-editor-intro::before {
@@ -610,14 +573,15 @@ body {
 
 .config-editor-section {
   position: relative;
+  min-width: 0;
   overflow: visible;
-  padding: 20px clamp(16px, 2vw, 24px) 24px;
-  border-color: rgba(148, 163, 184, 0.14);
-  border-radius: 13px;
+  padding: 14px 16px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 10px;
   background:
-    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.065), transparent 24rem),
+    radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.045), transparent 24rem),
     linear-gradient(145deg, rgba(20, 29, 43, 0.98), rgba(13, 21, 34, 0.98));
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16), 0 1px rgba(255, 255, 255, 0.025) inset;
+  box-shadow: none;
 }
 
 .config-editor-section::before {
@@ -641,10 +605,13 @@ body {
 }
 
 .config-editor-section-head {
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 13px;
-  border-bottom-color: rgba(148, 163, 184, 0.14);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  margin-bottom: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .config-editor-section-head h2 {
@@ -671,15 +638,26 @@ body {
 }
 
 #configs-editor .form-row {
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 10px 12px;
+  margin: 0 0 12px;
 }
 
-#configs-editor .form-group label {
+#configs-editor .form-group > label {
+  display: flex;
+  align-content: flex-start;
+  align-items: flex-start;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
   min-height: 2.25em;
+  overflow: visible;
   color: #aabbd0;
   font-size: 11px;
+  line-height: 1.2;
   letter-spacing: 0.035em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 #configs-editor .form-group input,
@@ -736,8 +714,29 @@ body {
 
 #configs-editor .chk-row label {
   min-height: 0;
+  min-width: 0;
   color: #b7c6d8;
   font-size: 11px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+#configs-editor .chk-row,
+#configs-editor .ms-wrap,
+#configs-editor .ms-tag {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#configs-editor .ms-tag {
+  overflow-wrap: anywhere;
+}
+
+#configs-editor .form-group .ms-wrap input.ms-input {
+  flex: 1 1 60px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 #configs-editor .config-editor-toggle-row {
@@ -792,6 +791,70 @@ body {
 
 #configs-editor .expander-body {
   padding: 14px;
+}
+
+.bot-side-panel {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 9px;
+  background: rgba(5, 10, 18, 0.3);
+}
+
+.bot-side-panel.long {
+  border-top: 2px solid var(--green);
+}
+
+.bot-side-panel.short {
+  border-top: 2px solid var(--red);
+}
+
+.bot-side-head,
+.bot-side-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bot-side-head {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.bot-side-direction {
+  min-width: 0;
+  color: var(--text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.bot-side-role {
+  flex: 0 0 auto;
+  color: var(--text-dim);
+  font: 10px/1 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.12em;
+}
+
+.bot-json-review {
+  margin-left: auto;
+  color: var(--orange);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+#configs-editor .bot-side-primary {
+  margin-bottom: 10px;
+}
+
+#configs-editor .bot-json-expander {
+  margin-bottom: 0;
+}
+
+#configs-editor .bot-json-expander.error {
+  border-color: rgba(240, 165, 0, 0.38);
 }
 
 #configs-editor .act-btn {
@@ -877,13 +940,107 @@ body {
   outline-offset: 2px;
 }
 
+@container backtest-editor (min-width: 701px) and (max-width: 1180px) {
+  .config-editor-trading-primary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .config-editor-trading-primary > .editor-span-2 {
+    grid-column: span 1;
+  }
+
+  .config-editor-trading-primary > .editor-span-12 {
+    grid-column: span 3;
+  }
+
+  .config-editor-trading-advanced > .editor-span-2,
+  .config-editor-trading-advanced > .editor-span-4 {
+    grid-column: span 4;
+  }
+
+  .config-editor-trading-primary .form-group > label {
+    min-height: 2.5em;
+    align-items: flex-start;
+  }
+}
+
+@container backtest-editor (max-width: 700px) {
+  .config-editor-12,
+  .config-editor-trading-primary,
+  #configs-editor .cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-span-1,
+  .editor-span-2,
+  .editor-span-4,
+  .editor-span-6,
+  .editor-span-12 {
+    grid-column: span 1;
+  }
+
+  .bot-side-head,
+  .bot-side-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* The default 200px shell sidebar plus up to 72px of main-content horizontal
+   padding leaves about 1164px for the editor at a 1440px viewport. These
+   viewport ranges approximate the 701–1180px container contract for browsers
+   without container-query support. */
+@supports not (container-type: inline-size) {
+  @media (min-width: 952px) and (max-width: 1460px) {
+    .config-editor-trading-primary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .config-editor-trading-primary > .editor-span-2 {
+      grid-column: span 1;
+    }
+
+    .config-editor-trading-primary > .editor-span-12 {
+      grid-column: span 3;
+    }
+
+    .config-editor-trading-advanced > .editor-span-2,
+    .config-editor-trading-advanced > .editor-span-4 {
+      grid-column: span 4;
+    }
+
+    .config-editor-trading-primary .form-group > label {
+      min-height: 2.5em;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 951px) {
+    .config-editor-12,
+    .config-editor-trading-primary,
+    #configs-editor .cols-2 {
+      grid-template-columns: 1fr;
+    }
+
+    .editor-span-1,
+    .editor-span-2,
+    .editor-span-4,
+    .editor-span-6,
+    .editor-span-12 {
+      grid-column: span 1;
+    }
+
+    .bot-side-head,
+    .bot-side-title {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+  }
+}
+
 @media (max-width: 900px) {
   #main-content {
     padding: 18px 16px 28px;
-  }
-
-  .config-editor-section {
-    padding: 18px 16px 20px;
   }
 }
 
@@ -897,9 +1054,10 @@ body {
   }
 
   #configs-editor .form-row {
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 10px;
+    margin-bottom: 12px;
   }
+
 }
 
 @media (prefers-reduced-motion: reduce) {

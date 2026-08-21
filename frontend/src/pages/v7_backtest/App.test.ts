@@ -243,6 +243,21 @@ describe('boot chain (:10012-10024)', () => {
     expect(wrapper.find('[data-test="editor-section-market-data"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="editor-section-filters"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="editor-section-bot"]').exists()).toBe(true);
+
+    const trading = wrapper.find('[data-test="editor-section-trading"]');
+    const advancedExecution = trading.find('[data-test="advanced-execution-expander"]');
+    expect(advancedExecution.exists()).toBe(true);
+    expect(advancedExecution.classes()).not.toContain('open');
+    expect(advancedExecution.find('[data-test="advanced-execution-expander-toggle"]').attributes('aria-expanded')).toBe('false');
+    expect(advancedExecution.find('#cfg-maker-fee-enabled').exists()).toBe(false);
+
+    await advancedExecution.find('[data-test="advanced-execution-expander-toggle"]').trigger('click');
+    expect(advancedExecution.classes()).toContain('open');
+    expect(advancedExecution.find('[data-test="advanced-execution-expander-toggle"]').attributes('aria-expanded')).toBe('true');
+    expect(advancedExecution.find('#cfg-maker-fee-enabled').exists()).toBe(true);
+    expect(advancedExecution.find('#cfg-taker-fee-enabled').exists()).toBe(true);
+    expect(advancedExecution.find('.config-editor-trading-advanced').exists()).toBe(true);
+
     expect(wrapper.find('[data-test="editor-filter-toolbar"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="editor-nav-group"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="editor-analysis-group"]').exists()).toBe(true);
@@ -273,6 +288,24 @@ describe('boot chain (:10012-10024)', () => {
     expect(wrapper.find('[data-test="editor-results"]').attributes('disabled')).toBeDefined();
     expect(wrapper.find('[data-test="editor-convert-v8"]').attributes('disabled')).toBeDefined();
     expect(wrapper.find('[data-test="editor-add-run"]').attributes('disabled')).toBeDefined();
+
+    const longPanel = wrapper.find('[data-test="bot-side-long"]');
+    const shortPanel = wrapper.find('[data-test="bot-side-short"]');
+    expect(longPanel.exists()).toBe(true);
+    expect(shortPanel.exists()).toBe(true);
+    expect(longPanel.text()).toContain('total_wallet_exposure_limit');
+    expect(shortPanel.text()).toContain('n_positions');
+
+    const longJson = longPanel.find('[data-test="bot-json-expander-long"]');
+    const shortJson = shortPanel.find('[data-test="bot-json-expander-short"]');
+    expect(longJson.classes()).not.toContain('open');
+    expect(shortJson.classes()).not.toContain('open');
+    expect(longPanel.find('[data-test="cfg-bot-long"]').exists()).toBe(false);
+    expect(shortPanel.find('[data-test="cfg-bot-short"]').exists()).toBe(false);
+
+    await longJson.find('[data-test="bot-json-expander-toggle-long"]').trigger('click');
+    expect(longJson.classes()).toContain('open');
+    expect(longPanel.find('[data-test="cfg-bot-long"]').exists()).toBe(true);
 
     const rawExpander = wrapper.find('[data-test="raw-json-expander"]');
     expect(rawExpander.classes()).not.toContain('open');

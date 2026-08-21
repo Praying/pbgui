@@ -61,7 +61,11 @@ Die Bearbeitung öffnet sich inline im Hauptbereich. Felder:
 | **Market settings sources** | Quelle für marktspezifische Einstellungen |
 | **Bot-Parameter** | Strategie-Parameter (Long/Short-Seite, TWE, etc.) |
 
-Der migrierte Vue-Editor behält das kompakte mehrspaltige Legacy-Layout bei: Exchange- und Coin-Felder verwenden durchsuchbare Tag-Dropdowns, dichte Zahlenzeilen bleiben ausgerichtet und **Additional Parameters** / **Raw JSON** öffnen sich nur über ihre expliziten Expander-Schaltflächen.
+Der gemeinsame Vue-Editor verwendet eine dichte, responsive, mehrspaltige Workbench: Exchange- und Coin-Felder nutzen durchsuchbare Tag-Dropdowns, Zahlenzeilen bleiben ausgerichtet und **Additional Parameters** / **Raw JSON** öffnen sich nur über ihre expliziten Expander-Schaltflächen.
+
+Die häufig verwendeten Kapital- und Ausführungsfelder bleiben für die schnelle Bearbeitung sichtbar. Fee Overrides, `market_order_slippage_pct`, `filter_by_min_effective_cost`, `hsl_signal_mode` und `logging_level` sind unter **Advanced execution settings** zusammengefasst.
+
+Long und Short bleiben für den direkten Vergleich ausgerichtet: TWE (`total_wallet_exposure_limit`) und `n_positions` bleiben sichtbar, während **Full Config JSON** je Long-/Short-Seite standardmäßig eingeklappt ist. Wenn ein JSON-Fehler oder ein prüfpflichtiger Parameterstatus vorliegt, zeigt die Expander-Kopfzeile auch im eingeklappten Zustand weiterhin ihren **Review**-Indikator.
 
 **Aktionsschaltflächen im Editor:**
 

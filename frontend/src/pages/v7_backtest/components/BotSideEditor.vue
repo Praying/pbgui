@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { botHighlightLines } from '@/shared/botHighlight';
 import { getSideValue } from '../lib/sideValues';
@@ -64,7 +64,17 @@ function step(field: 'total_wallet_exposure_limit' | 'n_positions', delta: numbe
 }
 
 const hasStatus = computed(() => Object.keys(props.paramStatus).length > 0);
+const invalidModel = computed(() => {
+  try {
+    const parsed: unknown = JSON.parse(model.value);
+    return !parsed || typeof parsed !== 'object' || Array.isArray(parsed);
+  } catch {
+    return true;
+  }
+});
+const needsReview = computed(() => invalidModel.value || props.errorLine !== null || Object.values(props.paramStatus).includes('pb_default'));
 const long = computed(() => props.side === 'long');
+const jsonOpen = ref(false);
 
 /** botSyncFromJson (:4649-4659) — a JSON edit updates the TWE/npos inputs. */
 watch(model, (raw) => {
@@ -76,11 +86,20 @@ watch(model, (raw) => {
 </script>
 
 <template>
-  <div>
-    <div :style="{ fontWeight: 600, fontSize: 'var(--fs-sm)', marginBottom: 'var(--sp-sm)', color: long ? 'var(--green)' : 'var(--red)' }">
-      {{ t(side === 'long' ? 'v7backtest.long' : 'v7backtest.short') }}
-    </div>
-    <div class="form-row cols-2" style="margin-bottom: var(--sp-sm)">
+  <section
+    class="bot-side-panel"
+    :class="{ long, short: !long }"
+    :data-test="'bot-side-' + side"
+    role="region"
+    :aria-labelledby="'bot-side-title-' + side"
+  >
+    <header class="bot-side-head">
+      <h3 :id="'bot-side-title-' + side" class="bot-side-title">
+        <span class="bot-side-direction">{{ t(side === 'long' ? 'v7backtest.long' : 'v7backtest.short') }}</span>
+        <span class="bot-side-role">{{ side.toUpperCase() }}</span>
+      </h3>
+    </header>
+    <div class="form-row cols-2 bot-side-primary" style="margin-bottom: var(--sp-sm)">
       <div class="form-group">
         <label>total_wallet_exposure_limit</label>
         <div class="num-stepper">
@@ -98,39 +117,55 @@ watch(model, (raw) => {
         </div>
       </div>
     </div>
-    <div class="form-group">
-      <label>
-        {{ t('v7backtest.fullConfigJson') }}
-        <span v-if="hasStatus" style="font-size: var(--fs-xs, 11px); font-weight: 400; opacity: 0.8">
-          ■ <span style="color: #f0a500">{{ t('v7backtest.neutralized') }}</span>
-          &nbsp;■ <span style="color: #e05252">{{ t('v7backtest.review') }}</span>
-        </span>
-      </label>
-      <div class="bot-json-highlight-wrap" style="position: relative">
-        <pre class="bot-json-highlight-pre" aria-hidden="true" style="position: absolute; inset: 0; margin: 0; overflow: hidden; pointer-events: none; z-index: 0; color: transparent; white-space: pre-wrap; word-wrap: break-word"><span
-          v-for="(line, i) in lines"
-          :key="i"
-          :style="{
-            display: 'block',
-            background:
-              line.error
-                ? 'rgba(255,75,75,0.16)'
-                : line.status === 'neutralized'
-                  ? 'color-mix(in srgb,#f0a500 16%,transparent)'
-                  : line.status === 'pb_default'
-                    ? 'color-mix(in srgb,#e05252 16%,transparent)'
-                    : 'transparent',
-            borderRadius: line.status || line.error ? '2px' : undefined,
-            boxShadow: line.error ? 'inset 3px 0 0 rgba(255,75,75,0.95)' : undefined,
-          }"
-          >{{ line.text }}</span></pre>
-        <textarea
-          v-model="model"
-          style="position: relative; z-index: 1; background: transparent; overflow: hidden; resize: vertical"
-          :data-test="'cfg-bot-' + side"
-        ></textarea>
+    <div class="expander bot-json-expander" :class="{ open: jsonOpen, error: needsReview }" :data-test="'bot-json-expander-' + side">
+      <button
+        type="button"
+        class="expander-header"
+        :aria-expanded="jsonOpen"
+        :aria-controls="'bot-json-content-' + side"
+        :data-test="'bot-json-expander-toggle-' + side"
+        @click="jsonOpen = !jsonOpen"
+      >
+        <span class="arrow" aria-hidden="true">▶</span>
+        <span>{{ t('v7backtest.fullConfigJson') }}</span>
+        <span v-if="needsReview" class="bot-json-review">{{ t('v7backtest.review') }}</span>
+      </button>
+      <div :id="'bot-json-content-' + side" class="expander-body">
+        <div v-if="jsonOpen" class="form-group">
+          <label>
+            {{ t('v7backtest.fullConfigJson') }}
+            <span v-if="hasStatus" style="font-size: var(--fs-xs, 11px); font-weight: 400; opacity: 0.8">
+              ■ <span style="color: #f0a500">{{ t('v7backtest.neutralized') }}</span>
+              &nbsp;■ <span style="color: #e05252">{{ t('v7backtest.review') }}</span>
+            </span>
+          </label>
+          <div class="bot-json-highlight-wrap" style="position: relative">
+            <pre class="bot-json-highlight-pre" aria-hidden="true" style="position: absolute; inset: 0; margin: 0; overflow: hidden; pointer-events: none; z-index: 0; color: transparent; white-space: pre-wrap; word-wrap: break-word"><span
+              v-for="(line, i) in lines"
+              :key="i"
+              :style="{
+                display: 'block',
+                background:
+                  line.error
+                    ? 'rgba(255,75,75,0.16)'
+                    : line.status === 'neutralized'
+                      ? 'color-mix(in srgb,#f0a500 16%,transparent)'
+                      : line.status === 'pb_default'
+                        ? 'color-mix(in srgb,#e05252 16%,transparent)'
+                        : 'transparent',
+                borderRadius: line.status || line.error ? '2px' : undefined,
+                boxShadow: line.error ? 'inset 3px 0 0 rgba(255,75,75,0.95)' : undefined,
+              }"
+              >{{ line.text }}</span></pre>
+            <textarea
+              v-model="model"
+              style="position: relative; z-index: 1; background: transparent; overflow: hidden; resize: vertical"
+              :data-test="'cfg-bot-' + side"
+            ></textarea>
+          </div>
+          <div :id="'cfg-bot-' + side + '-status'" class="field-status field-status-inline" aria-live="polite"></div>
+        </div>
       </div>
-      <div :id="'cfg-bot-' + side + '-status'" class="field-status field-status-inline" aria-live="polite"></div>
     </div>
-  </div>
+  </section>
 </template>

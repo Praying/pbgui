@@ -61,7 +61,11 @@ Editing opens inline in the main area. Fields:
 | **Market settings sources** | Source for market-specific settings |
 | **Bot parameters** | Strategy parameters (long/short side, TWE, etc.) |
 
-The migrated Vue editor keeps the legacy compact multi-column layout: exchange and coin fields use searchable tag dropdowns, dense numeric rows stay aligned, and **Additional Parameters** / **Raw JSON** open only when their explicit expander buttons are used.
+The shared Vue editor uses a dense responsive multi-column workbench: exchange and coin fields use searchable tag dropdowns, numeric rows stay aligned, and **Additional Parameters** / **Raw JSON** open only through their explicit disclosure buttons.
+
+The common capital and execution fields remain visible for quick editing. Fee overrides, `market_order_slippage_pct`, `filter_by_min_effective_cost`, `hsl_signal_mode`, and `logging_level` are grouped under **Advanced execution settings**.
+
+Long and Short remain aligned for comparison: TWE (`total_wallet_exposure_limit`) and `n_positions` stay visible, while each side's **Full Config JSON** is collapsed by default. The disclosure header continues to show its **Review** indicator when a JSON error or review-required parameter status is present, even while collapsed.
 
 **Editor action buttons:**
 
