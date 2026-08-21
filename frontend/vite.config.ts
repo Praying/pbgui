@@ -29,7 +29,19 @@ export default defineConfig({
   build: {
     outDir: '../../dist',
     emptyOutDir: true,
-    rollupOptions: { input: pageEntries },
+    rollupOptions: {
+      input: pageEntries,
+      output: {
+        manualChunks(moduleId) {
+          // Keep each large dictionary out of the shared runtime chunk and
+          // below Rollup's 500 kB warning threshold.
+          if (moduleId.endsWith('/frontend/i18n/en.json')) return 'i18n-en';
+          if (moduleId.endsWith('/frontend/i18n/zh.json')) return 'i18n-zh';
+          if (moduleId.endsWith('/frontend/i18n/server_msgs.json')) return 'i18n-server';
+          return undefined;
+        },
+      },
+    },
   },
   server: {
     port: 5173,

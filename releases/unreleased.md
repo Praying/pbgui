@@ -8,6 +8,10 @@
 
 - Completed the Task 7 verification pass: frontend typecheck and production build pass, affected Vue page suites pass with isolated Node 26 localStorage, affected Python route/i18n tests pass, and GitNexus reports a low-risk documentation-only uncommitted scope.
 
+## Frontend Bundle Size
+
+- Split the English, Simplified Chinese, and server-message dictionaries into separate Rollup chunks so the shared frontend runtime and every generated asset remain below the 500 kB minified chunk warning threshold.
+
 ## Upstream Sync / Vue 3 Compatibility
 
 - Merged the `origin/main` v1.98.7–v1.98.23 release fixes into the Vue 3 migration branch and adapted the affected Backtest, Run, Optimize, and VPS Manager behavior to the active Vue pages, including progressive result loading, PB8 runtime warnings, schema-compatible host selection, migration review drafts, canonical PB8 Run handoffs, and runtime-qualified PB8 metric history.
