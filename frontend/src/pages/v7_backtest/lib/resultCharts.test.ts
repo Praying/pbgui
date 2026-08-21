@@ -46,8 +46,8 @@ describe('chartLayout (:7212-7224)', () => {
   it('builds the shared dark layout with unified hover', () => {
     const layout = chartLayout('T', 'Balance');
     expect(layout).toMatchObject({
-      paper_bgcolor: '#0e1117',
-      plot_bgcolor: '#0e1117',
+      paper_bgcolor: '#131114',
+      plot_bgcolor: '#131114',
       height: 800,
       hovermode: 'x unified',
       title: { text: 'T', x: 0.5 },

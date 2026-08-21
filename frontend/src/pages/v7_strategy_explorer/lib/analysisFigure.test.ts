@@ -108,7 +108,7 @@ describe('analysisLayout (:1690-1700)', () => {
   it('builds the dark layout with date axis and padded y-range', () => {
     const fig = buildAnalysisFigure('long', snapshot(), null, t);
     const layout = analysisLayout(fig, 'long', t) as Record<string, Record<string, unknown>>;
-    expect(layout.paper_bgcolor).toBe('#1a1d24');
+    expect(layout.paper_bgcolor).toBe('#1b191d');
     expect(layout.xaxis?.type).toBe('date');
     expect(layout.yaxis?.range).toEqual(fig.yRange);
     expect((layout.legend as { orientation?: string }).orientation).toBe('h');

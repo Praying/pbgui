@@ -122,12 +122,12 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
     <!-- API keys metadata bar -->
     <div
       id="apiMetaBar"
-      style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#0f172a; border:1px solid #1e293b; border-radius:5px; font-size:var(--fs-xs); color:#94a3b8;"
+      style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#0f172a; border:1px solid #1e293b; border-radius:5px; font-size:var(--fs-xs); color:#a29ca6;"
     >
       <span>{{ t('misc.apikeys.serial') }}</span>
-      <span id="metaSerial" style="color:#e2e8f0; font-weight:700;">{{ store.meta.value?.api_serial || '—' }}</span>
-      <span id="metaTs" style="color:#94a3b8;">{{ metaTsText }}</span>
-      <span id="metaBy" style="color:#64748b;">{{ metaByText }}</span>
+      <span id="metaSerial" style="color:#eae7ea; font-weight:700;">{{ store.meta.value?.api_serial || '—' }}</span>
+      <span id="metaTs" style="color:#a29ca6;">{{ metaTsText }}</span>
+      <span id="metaBy" style="color:#716b75;">{{ metaByText }}</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
       <input
@@ -137,7 +137,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         :placeholder="t('misc.apikeys.filterByNameOrExchange')"
         @input="store.setFilter(($event.target as HTMLInputElement).value)"
         @keydown="onFilterKeydown"
-        style="flex:1; background:#0e1117; border:1px solid #2d3748; border-radius:4px; padding:6px 10px; color:#fafafa; font-size:var(--fs-sm);"
+        style="flex:1; background:#131114; border:1px solid #37333a; border-radius:4px; padding:6px 10px; color:#fafafa; font-size:var(--fs-sm);"
       />
       <button
         class="btn pbgui-btn btn-sm btn-secondary"
@@ -177,7 +177,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
           <td colspan="6">{{ t('misc.apikeys.noApiKeysConfigured') }}</td>
         </tr>
         <tr v-else-if="store.filteredSortedUsers.value.length === 0" class="loading-row">
-          <td colspan="6" style="color:#94a3b8;">{{ t('misc.apikeys.noUsersMatchFilter') }}</td>
+          <td colspan="6" style="color:#a29ca6;">{{ t('misc.apikeys.noUsersMatchFilter') }}</td>
         </tr>
         <tr
           v-else

@@ -131,19 +131,19 @@ defineExpose({ load });
      static pbcoindata interval markup). -->
 <style scoped>
 .settings-wrap { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
-.settings-loading { color: #4a5568; font-style: italic; }
-.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: #94a3b8; margin: 0 0 0.5rem; }
+.settings-loading { color: #4e4851; font-style: italic; }
+.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: #a29ca6; margin: 0 0 0.5rem; }
 .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .form-field { display: flex; flex-direction: column; gap: 3px; }
-.form-label { font-size: var(--fs-xs); color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+.form-label { font-size: var(--fs-xs); color: #716b75; text-transform: uppercase; letter-spacing: 0.04em; }
 .form-input {
-  background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px;
+  background: #1f1d21; color: #eae7ea; border: 1px solid #37333a; border-radius: 5px;
   padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
 }
-.form-input:focus { border-color: #4a5568; }
+.form-input:focus { border-color: #4e4851; }
 .form-input.narrow { width: 90px; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #2d3748; background: #1a202c; color: #94a3b8; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: #4a5568; color: #e2e8f0; }
+.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #37333a; background: #1f1d21; color: #a29ca6; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
+.form-btn:hover { border-color: #4e4851; color: #eae7ea; }
 .form-btn.save { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
 .form-btn.save:hover { background: #1d4ed8; color: #fff; }
 .inline-msg { font-size: var(--fs-xs); color: #4ade80; margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }

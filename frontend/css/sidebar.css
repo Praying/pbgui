@@ -51,14 +51,14 @@
   display: block; width: 100%;
 }
 .sb-btn:hover  { background: var(--border-default); }
-.sb-btn.primary { background: var(--accent-bg); color: var(--accent-soft); border-color: rgb(var(--accent-rgb, 77 163 255) / .35); }
-.sb-btn.primary:hover { background: rgb(var(--accent-rgb, 77 163 255) / .2); }
-.sb-btn.info    { background: var(--accent-bg); color: var(--accent-soft); border-color: rgb(var(--accent-rgb, 77 163 255) / .35); }
-.sb-btn.info:hover    { background: rgb(var(--accent-rgb, 77 163 255) / .2); }
-.sb-btn.danger  { background: var(--danger-bg); color: var(--danger-soft); border-color: rgb(var(--danger-rgb, 239 83 80) / .35); }
-.sb-btn.danger:hover  { background: rgb(var(--danger-rgb, 239 83 80) / .2); }
+.sb-btn.primary { background: var(--accent-bg); color: var(--accent-soft); border-color: rgb(var(--accent-rgb, 91 156 245) / .35); }
+.sb-btn.primary:hover { background: rgb(var(--accent-rgb, 91 156 245) / .2); }
+.sb-btn.info    { background: var(--accent-bg); color: var(--accent-soft); border-color: rgb(var(--accent-rgb, 91 156 245) / .35); }
+.sb-btn.info:hover    { background: rgb(var(--accent-rgb, 91 156 245) / .2); }
+.sb-btn.danger  { background: var(--danger-bg); color: var(--danger-soft); border-color: rgb(var(--danger-rgb, 229 96 92) / .35); }
+.sb-btn.danger:hover  { background: rgb(var(--danger-rgb, 229 96 92) / .2); }
 .sb-btn.accent  { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
-.sb-btn.accent:hover  { background: var(--accent-deep, #3a7fd5); }
+.sb-btn.accent:hover  { background: var(--accent-deep, #3a72d0); }
 .sb-btn.active  { background: var(--bg); border-color: var(--accent); color: var(--accent); }
 .sb-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .sb-btn:disabled:hover { background: var(--bg3); }
@@ -96,7 +96,7 @@
 }
 .sb-stepper button:first-of-type { border-radius: 4px 0 0 4px; border-right: none; }
 .sb-stepper button:last-of-type  { border-radius: 0 4px 4px 0; border-left: none; }
-.sb-stepper button:hover { background: var(--accent); color: var(--accent-contrast, #07111f); border-color: var(--accent); }
+.sb-stepper button:hover { background: var(--accent); color: var(--accent-contrast, #0a1220); border-color: var(--accent); }
 .sb-stepper input {
   width: 36px; height: 28px; text-align: center; border: 1px solid var(--border);
   background: var(--bg2); color: var(--text); font-size: var(--fs-sm);

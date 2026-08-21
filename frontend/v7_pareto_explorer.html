@@ -20,7 +20,7 @@
   --border:var(--border-default);
   --text:var(--text-primary);
   --text-dim:var(--text-secondary);
-  --accent:#4da3ff;
+  --accent:#5b9cf5;
   --blue:var(--accent);
   --green:var(--success);
   --orange:var(--warning);
@@ -228,7 +228,7 @@ a:hover { text-decoration: underline; }
   cursor: help;
   text-decoration-line: underline;
   text-decoration-style: dotted;
-  text-decoration-color: #64748b;
+  text-decoration-color: #716b75;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
@@ -242,7 +242,7 @@ button[data-tip] {
   position: fixed;
   z-index: 9999;
   background: #1e293b;
-  color: var(--text-primary, #e2e8f0);
+  color: var(--text-primary, #eae7ea);
   border: 1px solid #334155;
   border-radius: 5px;
   font-size: var(--fs-xs);
@@ -446,9 +446,9 @@ button[data-tip] {
   color: var(--text-dim);
 }
 
-.status-chip.good { background: rgb(var(--success-rgb, 47 189 106) / .15); color: var(--green); }
-.status-chip.warn { background: rgb(var(--warning-rgb, 232 161 60) / .15); color: var(--orange); }
-.status-chip.bad { background: rgb(var(--danger-rgb, 239 83 80) / .15); color: var(--red); }
+.status-chip.good { background: rgb(var(--success-rgb, 63 186 111) / .15); color: var(--green); }
+.status-chip.warn { background: rgb(var(--warning-rgb, 227 164 74) / .15); color: var(--orange); }
+.status-chip.bad { background: rgb(var(--danger-rgb, 229 96 92) / .15); color: var(--red); }
 
 .sb-section,
 .sb-btn,
@@ -598,7 +598,7 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--accent);
   border: 0;
   margin-top: -5px;
-  box-shadow: 0 0 0 2px rgba(14,17,23,0.9);
+  box-shadow: 0 0 0 2px rgba(19, 17, 20,0.9);
 }
 
 input[type="range"]::-moz-range-track {
@@ -621,7 +621,7 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 50%;
   background: var(--accent);
   border: 0;
-  box-shadow: 0 0 0 2px rgba(14,17,23,0.9);
+  box-shadow: 0 0 0 2px rgba(19, 17, 20,0.9);
 }
 
 .range-number {
@@ -718,20 +718,20 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .message.warn {
-  background: rgb(var(--warning-rgb, 232 161 60) / .08);
-  border-color: rgb(var(--warning-rgb, 232 161 60) / .3);
+  background: rgb(var(--warning-rgb, 227 164 74) / .08);
+  border-color: rgb(var(--warning-rgb, 227 164 74) / .3);
   color: #ffd08a;
 }
 
 .message.info {
-  background: rgb(var(--accent-rgb, 77 163 255) / .08);
-  border-color: rgb(var(--accent-rgb, 77 163 255) / .3);
+  background: rgb(var(--accent-rgb, 91 156 245) / .08);
+  border-color: rgb(var(--accent-rgb, 91 156 245) / .3);
   color: #b8dbff;
 }
 
 .message.bad {
-  background: rgb(var(--danger-rgb, 239 83 80) / .08);
-  border-color: rgb(var(--danger-rgb, 239 83 80) / .3);
+  background: rgb(var(--danger-rgb, 229 96 92) / .08);
+  border-color: rgb(var(--danger-rgb, 229 96 92) / .3);
   color: #ffc0c0;
 }
 
@@ -769,7 +769,7 @@ input[type="range"]::-moz-range-thumb {
 
 .champion-item.active {
   border-color: var(--accent);
-  background: rgb(var(--accent-rgb, 77 163 255) / .08);
+  background: rgb(var(--accent-rgb, 91 156 245) / .08);
 }
 
 .champion-head,
@@ -901,7 +901,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .chart-wrap:fullscreen {
-  background: var(--bg-page, #0e1117);
+  background: var(--bg-page, #131114);
   display: flex;
   flex-direction: column;
 }
@@ -2581,8 +2581,8 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
 
   function darkPlotLayout(layout) {
     var base = Object.assign({}, layout || {});
-    base.paper_bgcolor = '#0e1117';
-    base.plot_bgcolor = '#0e1117';
+    base.paper_bgcolor = '#131114';
+    base.plot_bgcolor = '#131114';
     base.font = Object.assign({ color: '#fafafa' }, base.font || {});
     base.legend = Object.assign({ font: { color: '#fafafa' } }, base.legend || {});
     base.margin = Object.assign({ l: 80, r: 40, t: 60, b: 70 }, base.margin || {});
@@ -2609,15 +2609,15 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     }
     if (base.scene) {
       base.scene = Object.assign({}, base.scene, {
-        bgcolor: '#0e1117',
-        xaxis: Object.assign({ backgroundcolor: '#0e1117', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).xaxis || {}),
-        yaxis: Object.assign({ backgroundcolor: '#0e1117', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).yaxis || {}),
-        zaxis: Object.assign({ backgroundcolor: '#0e1117', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).zaxis || {})
+        bgcolor: '#131114',
+        xaxis: Object.assign({ backgroundcolor: '#131114', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).xaxis || {}),
+        yaxis: Object.assign({ backgroundcolor: '#131114', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).yaxis || {}),
+        zaxis: Object.assign({ backgroundcolor: '#131114', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).zaxis || {})
       });
     }
     if (base.polar) {
       base.polar = Object.assign({}, base.polar, {
-        bgcolor: '#0e1117',
+        bgcolor: '#131114',
         radialaxis: Object.assign({
           color: '#fafafa',
           gridcolor: 'rgba(255,255,255,0.16)',

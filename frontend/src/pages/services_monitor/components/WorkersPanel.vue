@@ -271,14 +271,14 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   align-items: center;
   gap: 0.75rem;
   padding: 0.55rem 1rem;
-  border-bottom: 1px solid #1e2736;
+  border-bottom: 1px solid #29262c;
   flex-shrink: 0;
-  background: #111827;
+  background: #171619;
 }
 .ctrl-title {
   font-size: var(--fs-md);
   font-weight: 700;
-  color: #e2e8f0;
+  color: #eae7ea;
 }
 .ctrl-status {
   display: flex;
@@ -289,29 +289,29 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #4a5568;
+  background: #4e4851;
   flex-shrink: 0;
 }
 .status-dot.running { background: #21c354; }
 .status-dot.stopped { background: #ff4b4b; }
 .status-label {
   font-size: var(--fs-xs);
-  color: #64748b;
+  color: #716b75;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .ctrl-btn {
   padding: 0.25rem 0.75rem;
   border-radius: 5px;
-  border: 1px solid #2d3748;
-  background: #1a202c;
-  color: #94a3b8;
+  border: 1px solid #37333a;
+  background: #1f1d21;
+  color: #a29ca6;
   cursor: pointer;
   font-size: var(--fs-sm);
   font-family: inherit;
   transition: all 0.12s;
 }
-.ctrl-btn:hover { border-color: #4a5568; color: #e2e8f0; }
+.ctrl-btn:hover { border-color: #4e4851; color: #eae7ea; }
 .ctrl-btn.start { border-color: #166534; color: #4ade80; background: #052e16; }
 .ctrl-btn.stop { border-color: #7f1d1d; color: #fca5a5; background: #2d1515; }
 .ctrl-btn.restart { border-color: #b45309; color: #fcd34d; background: #1c1a08; }
@@ -326,7 +326,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 .workers-groups {
   overflow-y: auto;
   padding: var(--sp-lg);
-  border-right: 1px solid #1e2736;
+  border-right: 1px solid #29262c;
   display: flex;
   flex-direction: column;
   gap: var(--sp-lg);
@@ -338,13 +338,13 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: #a29ca6;
 }
-.worker-group-subtitle { font-size: var(--fs-xs); color: #64748b; }
+.worker-group-subtitle { font-size: var(--fs-xs); color: #716b75; }
 .worker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-md); }
 .worker-card {
   background: #131b2b;
-  border: 1px solid #1e2736;
+  border: 1px solid #29262c;
   border-radius: 10px;
   padding: var(--sp-md);
   display: flex;
@@ -353,19 +353,19 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   cursor: pointer;
   transition: border-color 0.12s, background 0.12s;
 }
-.worker-card:hover { border-color: #2d3748; }
+.worker-card:hover { border-color: #37333a; }
 .worker-card.selected { border-color: rgba(99, 179, 237, 0.55); background: #162032; }
 .worker-card.running { border-color: rgba(33, 195, 84, 0.4); }
 .worker-card.stopped { border-color: rgba(255, 75, 75, 0.3); }
 .worker-type {
   font-size: var(--fs-xs);
-  color: #64748b;
+  color: #716b75;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.card-name { font-size: var(--fs-sm); font-weight: 700; color: #e2e8f0; }
-.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: #64748b; }
-.card-dot { width: 7px; height: 7px; border-radius: 50%; background: #4a5568; flex-shrink: 0; }
+.card-name { font-size: var(--fs-sm); font-weight: 700; color: #eae7ea; }
+.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: #716b75; }
+.card-dot { width: 7px; height: 7px; border-radius: 50%; background: #4e4851; flex-shrink: 0; }
 .card-dot.running { background: #21c354; }
 .card-dot.stopped { background: #ff4b4b; }
 .worker-summary { font-size: var(--fs-sm); color: #cbd5e1; }
@@ -376,25 +376,25 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   gap: var(--sp-xs);
   padding: 2px 7px;
   border-radius: 999px;
-  border: 1px solid #2d3748;
+  border: 1px solid #37333a;
   font-size: var(--fs-xs);
-  color: #94a3b8;
-  background: #111827;
+  color: #a29ca6;
+  background: #171619;
 }
 .worker-btnrow { display: flex; flex-wrap: wrap; gap: var(--sp-xs); margin-top: var(--sp-xs); }
 .card-btn {
   align-self: flex-start;
   padding: 0.2rem 0.65rem;
   border-radius: 4px;
-  border: 1px solid #2d3748;
-  background: #1a202c;
-  color: #94a3b8;
+  border: 1px solid #37333a;
+  background: #1f1d21;
+  color: #a29ca6;
   cursor: pointer;
   font-size: var(--fs-xs);
   font-family: inherit;
   transition: all 0.12s;
 }
-.card-btn:hover { border-color: #4a5568; color: #e2e8f0; }
+.card-btn:hover { border-color: #4e4851; color: #eae7ea; }
 .card-btn.start { border-color: #166534; color: #4ade80; background: #052e16; }
 .card-btn.stop { border-color: #7f1d1d; color: #fca5a5; background: #2d1515; }
 .card-btn.restart { border-color: #b45309; color: #fcd34d; background: #1c1a08; }
@@ -412,10 +412,10 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   display: flex;
   flex-direction: column;
   gap: var(--sp-md);
-  border-bottom: 1px solid #1e2736;
+  border-bottom: 1px solid #29262c;
 }
 .worker-detail-empty {
-  color: #64748b;
+  color: #716b75;
   font-size: var(--fs-base);
   display: flex;
   align-items: center;
@@ -424,8 +424,8 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   text-align: center;
 }
 .worker-detail-top { display: flex; justify-content: space-between; gap: var(--sp-md); align-items: flex-start; }
-.worker-detail-title { font-size: var(--fs-lg); font-weight: 700; color: #e2e8f0; }
-.worker-detail-subtitle { font-size: var(--fs-sm); color: #94a3b8; margin-top: var(--sp-xs); }
+.worker-detail-title { font-size: var(--fs-lg); font-weight: 700; color: #eae7ea; }
+.worker-detail-subtitle { font-size: var(--fs-sm); color: #a29ca6; margin-top: var(--sp-xs); }
 .worker-detail-desc { font-size: var(--fs-base); color: #cbd5e1; line-height: 1.5; }
 .worker-detail-note {
   font-size: var(--fs-sm);
@@ -441,7 +441,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   gap: var(--sp-xs);
   padding: 4px 9px;
   border-radius: 999px;
-  border: 1px solid #2d3748;
+  border: 1px solid #37333a;
   font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
@@ -453,19 +453,19 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 .worker-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--sp-sm); }
 .worker-stat-card {
   background: #131b2b;
-  border: 1px solid #1e2736;
+  border: 1px solid #29262c;
   border-radius: 8px;
   padding: var(--sp-sm) var(--sp-md);
   min-width: 0;
 }
 .worker-stat-label {
   font-size: var(--fs-xs);
-  color: #64748b;
+  color: #716b75;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 3px;
 }
-.worker-stat-value { font-size: var(--fs-md); color: #e2e8f0; font-weight: 700; }
+.worker-stat-value { font-size: var(--fs-md); color: #eae7ea; font-weight: 700; }
 .worker-log-section { flex: 1; min-height: 320px; overflow: hidden; display: flex; flex-direction: column; }
 .worker-log-empty {
   flex: 1;
@@ -475,7 +475,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #64748b;
+  color: #716b75;
   padding: var(--sp-lg);
 }
 .worker-log-empty.has-monitor {

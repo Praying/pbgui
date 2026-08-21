@@ -39,9 +39,9 @@ export interface GdLike {
 
 /* ── shared pieces ── */
 
-const PAPER_BG = '#0e1117';
-const AXIS_GRID = '#2d3748';
-const AXIS_TEXT = '#e2e8f0';
+const PAPER_BG = '#131114';
+const AXIS_GRID = '#37333a';
+const AXIS_TEXT = '#eae7ea';
 const POS_COLOR = '#68d391';
 const NEG_COLOR = '#fc8181';
 const LINE_COLOR = '#63b3ed';
@@ -57,7 +57,7 @@ function baseLayout(xaxis: AxisLayout, marginBottom: number): PlotlyLayout {
       gridcolor: AXIS_GRID,
       color: AXIS_TEXT,
       zeroline: true,
-      zerolinecolor: '#4a5568',
+      zerolinecolor: '#4e4851',
     },
     bargap: 0.3,
     autosize: true,
@@ -205,7 +205,7 @@ export function pplLayout(height: number | null, bars: PplBar[]): PlotlyLayout {
     gridcolor: AXIS_GRID,
     color: AXIS_TEXT,
     zeroline: true,
-    zerolinecolor: '#4a5568',
+    zerolinecolor: '#4e4851',
   };
   if (allVals.length > 0) {
     const yMin = Math.min(...allVals);
@@ -261,7 +261,7 @@ export function incomeLayout(height: number | null): PlotlyLayout {
     margin: { l: 55, r: 15, t: 40, b: 40 },
     autosize: true,
     xaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT },
-    yaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT, zeroline: true, zerolinecolor: '#4a5568' },
+    yaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT, zeroline: true, zerolinecolor: '#4e4851' },
     legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: AXIS_TEXT } },
     transition: { duration: 0, easing: 'linear' },
   };

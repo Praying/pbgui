@@ -80,15 +80,15 @@ function toggle(option: string): void {
 <!-- Styles ported from frontend/services_monitor.html (filter input + tag wrap). -->
 <style scoped>
 .form-input {
-  background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px;
+  background: #1f1d21; color: #eae7ea; border: 1px solid #37333a; border-radius: 5px;
   padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
 }
-.form-input:focus { border-color: #4a5568; }
+.form-input:focus { border-color: #4e4851; }
 .multiselect-filter { margin-bottom: 0.35rem; width: 220px; }
-.multiselect-wrap { background: #1a202c; border: 1px solid #2d3748; border-radius: 5px; padding: 0.3rem; min-height: 36px; max-height: 160px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; }
-.multiselect-empty { color: #4a5568; font-size: var(--fs-xs); }
+.multiselect-wrap { background: #1f1d21; border: 1px solid #37333a; border-radius: 5px; padding: 0.3rem; min-height: 36px; max-height: 160px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; }
+.multiselect-empty { color: #4e4851; font-size: var(--fs-xs); }
 .tag { display: inline-flex; align-items: center; background: #1e3a5f; border: 1px solid #2563eb; color: #93c5fd; border-radius: 4px; padding: 2px 8px; font-size: var(--fs-xs); cursor: pointer; user-select: none; transition: all 0.1s; }
 .tag:hover { background: #1d4ed8; }
-.tag.inactive { background: transparent; border-color: #2d3748; color: #64748b; }
-.tag.inactive:hover { border-color: #4a5568; color: #94a3b8; }
+.tag.inactive { background: transparent; border-color: #37333a; color: #716b75; }
+.tag.inactive:hover { border-color: #4e4851; color: #a29ca6; }
 </style>

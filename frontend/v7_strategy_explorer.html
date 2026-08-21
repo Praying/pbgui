@@ -19,7 +19,7 @@
   --border:var(--border-default);
   --text:var(--text-primary);
   --text-dim:var(--text-secondary);
-  --accent:#4da3ff;
+  --accent:#5b9cf5;
   --green:var(--success);
   --orange:var(--warning);
   --red:var(--danger);
@@ -63,8 +63,8 @@ button { cursor: pointer; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { color: var(--text-dim); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .04em; }
 .field input, .field select { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #0b0e14; color: var(--text); padding: 7px 8px; min-height: 32px; }
-[data-tip] { cursor: help; text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: #64748b; text-underline-offset: 2px; text-decoration-thickness: 1px; }
-#data-tip-tooltip { display: none; position: fixed; left: 0; top: 0; z-index: 9999; background: #1e293b; color: var(--text-primary, #e2e8f0); border: 1px solid #334155; border-radius: 5px; font-size: var(--fs-xs); font-weight: normal; padding: 6px 10px; white-space: pre-wrap; max-width: 480px; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,.5); pointer-events: none; will-change: transform; }
+[data-tip] { cursor: help; text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: #716b75; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+#data-tip-tooltip { display: none; position: fixed; left: 0; top: 0; z-index: 9999; background: #1e293b; color: var(--text-primary, #eae7ea); border: 1px solid #334155; border-radius: 5px; font-size: var(--fs-xs); font-weight: normal; padding: 6px 10px; white-space: pre-wrap; max-width: 480px; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,.5); pointer-events: none; will-change: transform; }
 .check-row { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: var(--fs-sm); }
 .check-row input { width: auto; }
 .num-stepper { display: flex; }
@@ -76,8 +76,8 @@ button { cursor: pointer; }
 .subtle-divider { border: 0; border-top: 1px solid var(--border); margin: 16px 0; }
 .tabs, .toolbar { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; }
 .tab-btn, .action-btn, .stage-btn { border: 1px solid var(--border); border-radius: 7px; background: var(--bg3); color: var(--text); padding: 7px 11px; }
-.tab-btn.active, .stage-btn.active, .action-btn.primary, .action-btn.active-sim { border-color: var(--accent); background: rgb(var(--accent-rgb, 77 163 255) / .15); }
-.action-btn.danger { border-color: rgb(var(--danger-rgb, 239 83 80) / .4); color: #ffb3b3; }
+.tab-btn.active, .stage-btn.active, .action-btn.primary, .action-btn.active-sim { border-color: var(--accent); background: rgb(var(--accent-rgb, 91 156 245) / .15); }
+.action-btn.danger { border-color: rgb(var(--danger-rgb, 229 96 92) / .4); color: #ffb3b3; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--sp-md); }
 .third { grid-column: span 4; }
 .half { grid-column: span 6; }
@@ -87,15 +87,15 @@ button { cursor: pointer; }
 .metric-card .label { color: var(--text-dim); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .05em; }
 .metric-card .value { margin-top: 4px; font-size: var(--fs-lg); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; background: var(--bg3); color: var(--text-dim); font-size: var(--fs-sm); }
-.chip.ok { color: var(--green); border-color: rgb(var(--success-rgb, 47 189 106) / .35); }
-.chip.warn { color: var(--orange); border-color: rgb(var(--warning-rgb, 232 161 60) / .35); }
-.chip.err { color: #ffb3b3; border-color: rgb(var(--danger-rgb, 239 83 80) / .45); }
+.chip.ok { color: var(--green); border-color: rgb(var(--success-rgb, 63 186 111) / .35); }
+.chip.warn { color: var(--orange); border-color: rgb(var(--warning-rgb, 227 164 74) / .35); }
+.chip.err { color: #ffb3b3; border-color: rgb(var(--danger-rgb, 229 96 92) / .45); }
 .messages { display: flex; flex-direction: column; gap: 8px; }
 .message { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--bg2); color: var(--text-dim); }
-.message.info { border-color: rgb(var(--accent-rgb, 77 163 255) / .35); }
-.message.warning { border-color: rgb(var(--warning-rgb, 232 161 60) / .45); }
-.message.error { border-color: rgb(var(--danger-rgb, 239 83 80) / .45); color: #ffb3b3; }
-.info-banner { border: 1px solid rgb(var(--accent-rgb, 77 163 255) / .22); border-radius: 7px; background: rgb(var(--accent-rgb, 77 163 255) / .16); color: var(--accent); padding: 12px 14px; }
+.message.info { border-color: rgb(var(--accent-rgb, 91 156 245) / .35); }
+.message.warning { border-color: rgb(var(--warning-rgb, 227 164 74) / .45); }
+.message.error { border-color: rgb(var(--danger-rgb, 229 96 92) / .45); color: #ffb3b3; }
+.info-banner { border: 1px solid rgb(var(--accent-rgb, 91 156 245) / .22); border-radius: 7px; background: rgb(var(--accent-rgb, 91 156 245) / .16); color: var(--accent); padding: 12px 14px; }
 .side-title { display: flex; justify-content: space-between; gap: var(--sp-md); align-items: center; margin-bottom: 10px; }
 .side-title h3 { margin: 0; }
 .orders { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
@@ -114,7 +114,7 @@ textarea, pre.debug-json { width: 100%; border: 1px solid var(--border); border-
 textarea { min-height: 480px; resize: vertical; }
 #raw-config-panel .json-panel-wrap { margin-top: 0; }
 #raw-config-panel .json-pre[contenteditable="true"] { outline: none; cursor: text; }
-#raw-config-panel .json-pre.raw-invalid { border-color: rgb(var(--danger-rgb, 239 83 80) / .55); color: #ffb3b3; }
+#raw-config-panel .json-pre.raw-invalid { border-color: rgb(var(--danger-rgb, 229 96 92) / .55); color: #ffb3b3; }
 .raw-config-status { margin-top: 8px; color: var(--text-dim); font-size: var(--fs-xs); }
 .raw-config-status.error { color: #ffb3b3; }
 pre.debug-json { max-height: 460px; white-space: pre-wrap; word-break: break-word; }
@@ -149,8 +149,8 @@ pre.debug-json { max-height: 460px; white-space: pre-wrap; word-break: break-wor
 .segment-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin: 6px 0 10px; background: #0b0e14; }
 .segment-tabs button { min-width: 0; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--text-dim); padding: 6px 6px; font-size: var(--fs-xs); transition: color .15s, background .15s; }
 .segment-tabs button:last-child { border-right: 0; }
-.segment-tabs button:hover { color: var(--text); background: rgb(var(--accent-rgb, 77 163 255) / .08); }
-.segment-tabs button.active { color: #fff; background: rgb(var(--accent-rgb, 77 163 255) / .18); outline: 1px solid rgb(var(--accent-rgb, 77 163 255) / .75); outline-offset: -1px; }
+.segment-tabs button:hover { color: var(--text); background: rgb(var(--accent-rgb, 91 156 245) / .08); }
+.segment-tabs button.active { color: #fff; background: rgb(var(--accent-rgb, 91 156 245) / .18); outline: 1px solid rgb(var(--accent-rgb, 91 156 245) / .75); outline-offset: -1px; }
 .slider-field { margin-bottom: 12px; }
 .slider-field.near-bound { border-left: 3px solid #f59e0b; padding-left: 8px; }
 .near-bound-badge { color: #fbbf24; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
@@ -161,10 +161,10 @@ pre.debug-json { max-height: 460px; white-space: pre-wrap; word-break: break-wor
 .slider-value { color: var(--accent); font-size: var(--fs-xs); font-weight: 700; padding-left: 0; font-family: var(--mono); }
 input.param-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 14px; background: transparent; accent-color: var(--accent); cursor: pointer; }
 input.param-slider::-webkit-slider-runnable-track { height: 4px; background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--range-fill, 50%), rgba(255,255,255,.22) var(--range-fill, 50%), rgba(255,255,255,.22) 100%); border-radius: 999px; }
-input.param-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 0; margin-top: -4px; box-shadow: 0 0 0 1px rgba(14,17,23,.95); }
+input.param-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 0; margin-top: -4px; box-shadow: 0 0 0 1px rgba(19, 17, 20,.95); }
 input.param-slider::-moz-range-track { height: 4px; background: rgba(255,255,255,.22); border-radius: 999px; border: 0; }
 input.param-slider::-moz-range-progress { height: 4px; background: var(--accent); border-radius: 999px; border: 0; }
-input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 0; box-shadow: 0 0 0 1px rgba(14,17,23,.95); }
+input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 0; box-shadow: 0 0 0 1px rgba(19, 17, 20,.95); }
 .param-select, .param-text { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #0b0e14; color: var(--text); padding: 7px 8px; min-height: 32px; margin-top: 6px; }
 .param-check { display: flex; align-items: center; gap: 8px; margin-top: 6px; color: var(--text-dim); font-size: var(--fs-sm); }
 .param-check input { width: auto; }
@@ -1690,7 +1690,7 @@ function renderPlot(sideKey, snapshot, prefix) {
   var target = document.getElementById(targetId);
   if (!target) return;
   Plotly.react(targetId, traces, {
-    paper_bgcolor: '#1a1d24', plot_bgcolor: '#1a1d24', font: { color: '#fafafa' },
+    paper_bgcolor: '#1b191d', plot_bgcolor: '#1b191d', font: { color: '#fafafa' },
     title: PBGuiI18n.t('v7explore.entryCloseGridsVisualization', { side: sideKey.toUpperCase() }),
     margin: { l: 55, r: 25, t: 45, b: 35 },
     shapes: shapes,
@@ -2809,7 +2809,7 @@ function buildMovieFigureSpec(data, initialFrameIdx) {
   var init = plotFrames[activeFrame] || plotFrames[0] || dynamicFrame(frames[0], 0);
   var initData = [traceCandles, traceEmaHigh, traceEmaLow].concat(init.data || []);
   var playFrameNames = plotFrames.slice(activeFrame).map(function(frame) { return frame.name; });
-  var layout = { title: PBGuiI18n.t('v7explore.animationTitle', { coin: deepGet(data, ['metadata', 'coin'], ''), frames: frames.length }), paper_bgcolor: '#1a1d24', plot_bgcolor: '#1a1d24', font: { color: '#fafafa' }, height: 760, hovermode: 'closest', hoverdistance: 50, margin: { l: 55, r: 260, t: 60, b: 150 }, xaxis: { type: 'date', gridcolor: '#333640', rangeslider: { visible: false }, autorange: false, range: deepGet(init, ['layout', 'xaxis', 'range'], [xs[0], xs[0]]) }, yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#333640', autorange: false, range: deepGet(init, ['layout', 'yaxis', 'range'], [0, 1]) }, legend: { x: 1.02, y: 0.85, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0.5)' }, annotations: deepGet(init, ['layout', 'annotations'], []), updatemenus: [{ type: 'buttons', direction: 'left', showactive: false, x: 0.01, y: -0.06, xanchor: 'left', yanchor: 'top', pad: { r: 10, t: 10 }, buttons: [{ label: 'Play', method: 'animate', args: [playFrameNames, { frame: { duration: 120, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 240, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Very Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 480, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Pause', method: 'animate', args: [[null], { frame: { duration: 0, redraw: false }, mode: 'immediate', transition: { duration: 0 } }] }] }], sliders: [{ active: activeFrame, steps: plotFrames.map(function(_, k) { return { method: 'animate', args: [[String(k)], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }], label: String(k) }; }), transition: { duration: 0 }, x: 0.01, y: -0.15, currentvalue: { font: { size: 12 }, prefix: PBGuiI18n.t('v7explore.framePrefix'), visible: true, xanchor: 'left' }, len: 0.99, pad: { b: 10, t: 10 } }] };
+  var layout = { title: PBGuiI18n.t('v7explore.animationTitle', { coin: deepGet(data, ['metadata', 'coin'], ''), frames: frames.length }), paper_bgcolor: '#1b191d', plot_bgcolor: '#1b191d', font: { color: '#fafafa' }, height: 760, hovermode: 'closest', hoverdistance: 50, margin: { l: 55, r: 260, t: 60, b: 150 }, xaxis: { type: 'date', gridcolor: '#333640', rangeslider: { visible: false }, autorange: false, range: deepGet(init, ['layout', 'xaxis', 'range'], [xs[0], xs[0]]) }, yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#333640', autorange: false, range: deepGet(init, ['layout', 'yaxis', 'range'], [0, 1]) }, legend: { x: 1.02, y: 0.85, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0.5)' }, annotations: deepGet(init, ['layout', 'annotations'], []), updatemenus: [{ type: 'buttons', direction: 'left', showactive: false, x: 0.01, y: -0.06, xanchor: 'left', yanchor: 'top', pad: { r: 10, t: 10 }, buttons: [{ label: 'Play', method: 'animate', args: [playFrameNames, { frame: { duration: 120, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 240, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Very Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 480, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Pause', method: 'animate', args: [[null], { frame: { duration: 0, redraw: false }, mode: 'immediate', transition: { duration: 0 } }] }] }], sliders: [{ active: activeFrame, steps: plotFrames.map(function(_, k) { return { method: 'animate', args: [[String(k)], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }], label: String(k) }; }), transition: { duration: 0 }, x: 0.01, y: -0.15, currentvalue: { font: { size: 12 }, prefix: PBGuiI18n.t('v7explore.framePrefix'), visible: true, xanchor: 'left' }, len: 0.99, pad: { b: 10, t: 10 } }] };
   delete layout.xaxis.autorange;
   return { data: initData, layout: layout, frames: plotFrames, activeFrame: activeFrame };
 }

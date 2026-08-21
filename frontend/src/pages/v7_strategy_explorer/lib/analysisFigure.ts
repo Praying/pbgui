@@ -377,8 +377,8 @@ export function analysisLayout(
   t: (key: string, params?: Record<string, unknown>) => string
 ): Record<string, unknown> {
   return {
-    paper_bgcolor: '#1a1d24',
-    plot_bgcolor: '#1a1d24',
+    paper_bgcolor: '#1b191d',
+    plot_bgcolor: '#1b191d',
     font: { color: '#fafafa' },
     title: t('v7explore.entryCloseGridsVisualization', { side: sideKey.toUpperCase() }),
     margin: { l: 55, r: 25, t: 45, b: 35 },

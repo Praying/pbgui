@@ -1,5 +1,9 @@
 # Unreleased
 
+## Frontend Palette — Warm Graphite
+
+- Rebased the entire frontend palette onto a warm-graphite scheme (approved option A of the palette review): surfaces moved from cool blue-gray to neutral warm graphite, the accent refined to `#5b9cf5`, semantic success/warning/danger tones re-harmonized, shadows retinted to the warm ground. Because the palette lives entirely in `tokens.css` ramps, the change is one authoritative token edit plus a mechanical sweep of fallback literals, Plotly JS color constants (with their test expectations), the favicon, and legacy HTML `:root` accents; red/green trading semantics, i18n, and layout are unchanged. Verified: typecheck, full Vitest suite (zero regressions vs. the clean-tree baseline), production build.
+
 ## Frontend Visual Unification
 
 - Consolidated the frontend palette onto the shared semantic tokens: extended `frontend/src/styles/tokens.css` with deep/soft ramp stops, `-rgb` channel companions, `--accent-contrast`, `--bg-backdrop`, and `color-scheme: dark`; a repeatable codemod (`frontend/codemod_colors.py`) redirected ~1100 hardcoded hex/rgba literals across all Vue page styles, legacy `css/`, and legacy HTML `<style>` blocks into the accent/success/warning/danger/text/surface token families, retiring the drifted blue variants and the off-palette teal accent while preserving categorical colors.

@@ -35,7 +35,7 @@ const rows = computed(() => sortByPanelOrder(props.data, bybitPanelOrder));
       </thead>
       <tbody id="bybitExpiryBody">
         <tr v-if="rows.length === 0">
-          <td colspan="5" style="text-align:center;color:#94a3b8;">{{ t('misc.apikeys.noBybitUsersFound') }}</td>
+          <td colspan="5" style="text-align:center;color:#a29ca6;">{{ t('misc.apikeys.noBybitUsersFound') }}</td>
         </tr>
         <tr v-else v-for="exp in rows" :key="exp.name">
           <td><strong>{{ exp.name }}</strong></td>
@@ -46,7 +46,7 @@ const rows = computed(() => sortByPanelOrder(props.data, bybitPanelOrder));
             <template v-if="exp.ips && exp.ips.length > 0">
               <span v-for="ip in exp.ips" :key="ip" style="font-family:monospace;font-size:var(--fs-xs);margin-right:8px;">{{ ip }}</span>
             </template>
-            <span v-else style="color:#94a3b8;font-size:var(--fs-xs);">{{ t('misc.apikeys.noneUnrestricted') }}</span>
+            <span v-else style="color:#a29ca6;font-size:var(--fs-xs);">{{ t('misc.apikeys.noneUnrestricted') }}</span>
           </td>
         </tr>
       </tbody>

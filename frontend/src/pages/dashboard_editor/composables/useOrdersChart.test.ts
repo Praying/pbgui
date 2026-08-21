@@ -172,11 +172,11 @@ describe('useOrdersChart — chart creation (render.js:3286-3363)', () => {
     expect(env.createChart.mock.calls[0]![0]).toBe(div);
     expect(env.createChart.mock.calls[0]![1]).toEqual({
       autoSize: true,
-      layout: { background: { type: 'solid', color: '#0e1117' }, textColor: '#94a3b8', fontSize: 12 },
+      layout: { background: { type: 'solid', color: '#131114' }, textColor: '#a29ca6', fontSize: 12 },
       grid: { vertLines: { color: '#1e2d3d' }, horzLines: { color: '#1e2d3d' } },
       crosshair: { mode: 3 },
-      rightPriceScale: { borderColor: '#2d3748', scaleMargins: { top: 0.1, bottom: 0.15 } },
-      timeScale: { borderColor: '#2d3748', timeVisible: true, secondsVisible: false, rightOffset: 30 },
+      rightPriceScale: { borderColor: '#37333a', scaleMargins: { top: 0.1, bottom: 0.15 } },
+      timeScale: { borderColor: '#37333a', timeVisible: true, secondsVisible: false, rightOffset: 30 },
       handleScroll: true,
       handleScale: true,
     });

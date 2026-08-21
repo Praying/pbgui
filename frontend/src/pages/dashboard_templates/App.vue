@@ -138,7 +138,7 @@ onMounted(() => {
     >✕</button>
   </div>
   <div id="content" class="tpl-content">
-    <div v-if="!loaded" style="color:#4a5568;padding:1rem">{{ t('dash.loading') }}</div>
+    <div v-if="!loaded" style="color:#4e4851;padding:1rem">{{ t('dash.loading') }}</div>
     <template v-else>
       <SaveCard v-if="current" :current="current" @saved="onTemplateSaved" />
       <ManageCard :templates="templates" @deleted="onTemplatesDeleted" @renamed="onTemplateRenamed" />

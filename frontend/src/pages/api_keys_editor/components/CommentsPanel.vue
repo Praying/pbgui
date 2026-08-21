@@ -101,7 +101,7 @@ async function remove(key: string): Promise<void> {
       <h3 style="margin:0; flex:1;">{{ t('misc.apikeys.commentFields') }}</h3>
       <button class="btn pbgui-btn btn-sm btn-primary" @click="showAdd">+ {{ t('misc.apikeys.add') }}</button>
     </div>
-    <div id="addCommentForm" v-show="addVisible" style="margin-bottom:12px; padding:12px; background:#0e1117; border-radius:4px; border:1px solid #2d3748;">
+    <div id="addCommentForm" v-show="addVisible" style="margin-bottom:12px; padding:12px; background:#131114; border-radius:4px; border:1px solid #37333a;">
       <div style="display:flex; gap:8px; align-items:flex-end;">
         <div class="form-group" style="flex:1;">
           <label>{{ t('misc.apikeys.keyWithoutCommentPrefix') }}</label>
@@ -125,10 +125,10 @@ async function remove(key: string): Promise<void> {
       </thead>
       <tbody id="commentsBody">
         <tr v-if="state === 'loading'">
-          <td colspan="3" style="text-align:center;color:#94a3b8;">{{ t('common.loading') }}</td>
+          <td colspan="3" style="text-align:center;color:#a29ca6;">{{ t('common.loading') }}</td>
         </tr>
         <tr v-else-if="state === 'empty'">
-          <td colspan="3" style="text-align:center;color:#94a3b8;">{{ t('misc.apikeys.noCommentFields') }}</td>
+          <td colspan="3" style="text-align:center;color:#a29ca6;">{{ t('misc.apikeys.noCommentFields') }}</td>
         </tr>
         <tr v-else-if="state === 'error'">
           <td colspan="3" style="color:#ef4444;">{{ errorText }}</td>
@@ -140,7 +140,7 @@ async function remove(key: string): Promise<void> {
               type="text"
               class="comment-val"
               v-model="values[c.key]"
-              style="width:100%;background:#0e1117;border:1px solid #2d3748;border-radius:4px;padding:6px 8px;color:#fafafa;font-size:var(--fs-sm);"
+              style="width:100%;background:#131114;border:1px solid #37333a;border-radius:4px;padding:6px 8px;color:#fafafa;font-size:var(--fs-sm);"
             />
           </td>
           <td>

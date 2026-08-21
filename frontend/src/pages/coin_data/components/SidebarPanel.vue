@@ -101,7 +101,7 @@ const hip3CountLabel = computed(() =>
     <!-- Legacy #action-status had no element in the DOM (setActionStatus's
          guard made it a silent no-op); the status line is rendered here so
          load/refresh errors are visible — documented deviation. -->
-    <div id="action-status" :style="{ color: actionStatus.isError ? '#fca5a5' : '#94a3b8' }">{{ actionStatus.message }}</div>
+    <div id="action-status" :style="{ color: actionStatus.isError ? '#fca5a5' : '#a29ca6' }">{{ actionStatus.message }}</div>
     <div id="sidebar-resize"></div>
   </aside>
 </template>

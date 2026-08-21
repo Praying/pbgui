@@ -96,11 +96,11 @@ function onInput(config: Record<string, string>, key: string, event: Event): voi
   gap: 0.5rem;
 }
 .monitor-cell { display: flex; flex-direction: column; gap: 2px; }
-.monitor-label { font-size: var(--fs-xs); color: #94a3b8; }
+.monitor-label { font-size: var(--fs-xs); color: #a29ca6; }
 .form-input {
-  background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px;
+  background: #1f1d21; color: #eae7ea; border: 1px solid #37333a; border-radius: 5px;
   padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
   width: 100%;
 }
-.form-input:focus { border-color: #4a5568; }
+.form-input:focus { border-color: #4e4851; }
 </style>

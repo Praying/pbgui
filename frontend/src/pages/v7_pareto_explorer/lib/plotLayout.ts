@@ -10,7 +10,7 @@ import type { PlotlyLayout } from './plotlyVendor';
  * ported as dead code.
  */
 
-const DARK_BG = '#0e1117';
+const DARK_BG = '#131114';
 const TEXT = '#fafafa';
 const GRID = 'rgba(255,255,255,0.12)';
 const ZEROLINE = 'rgba(255,255,255,0.18)';
