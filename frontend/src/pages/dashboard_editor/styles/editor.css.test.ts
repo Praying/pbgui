@@ -14,8 +14,10 @@ const editorMain = readFileSync(join(import.meta.dirname, '..', 'main.ts'), 'utf
 
 /** sha256 of the normalized CSS; re-frozen at the style-unification pass
    (hardcoded colors redirected to the shared @/styles/tokens.css), then at
-   the viewport-hardening pass (100vh declarations gained 100dvh twins). */
-const FROZEN_EDITOR_CSS_SHA256 = '003b641786783835bc55bcf5518839348644f59da09e334ec4cc39452339fba3';
+   the viewport-hardening pass (100vh declarations gained 100dvh twins),
+   then at the palette-consolidation pass (rgba literals routed through the
+   semantic -rgb token channels). */
+const FROZEN_EDITOR_CSS_SHA256 = '8f1d2999919a12d38e755b8d6177c57d261013ca8c9d807765cbc549483591f8';
 
 function normalize(text: string): string {
   /* Comments are stripped; only the line breaks are removed — the legacy

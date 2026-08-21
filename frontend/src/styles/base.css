@@ -64,6 +64,20 @@ button {
   cursor: pointer;
 }
 
+/* Native checkboxes/radios/sliders pick up the accent instead of the
+   OS default blue; text carets follow the accent as well. */
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+progress {
+  accent-color: var(--accent);
+}
+
+input,
+textarea {
+  caret-color: var(--accent);
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,

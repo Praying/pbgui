@@ -1,26 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="/app/src/styles/tokens.css">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg">
 <script src="/app/i18n.js?v=1"></script>
 <title>Balance Calculator</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 :root {
-  --bg:       #0e1117;
-  --bg2:      #1a1d24;
-  --bg3:      #262730;
-  --border:   #333640;
-  --text:     #fafafa;
-  --text-dim: #a0a4ab;
-  --green:    #21c354;
-  --orange:   #ff8c00;
-  --red:      #ff4b4b;
-  --blue:     #1f77ff;
-  --accent:   #4da6ff;
-  --font:     'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+  --bg:var(--bg-page);
+  --bg2:var(--bg-panel);
+  --bg3:var(--bg-elevated);
+  --border:var(--border-default);
+  --text:var(--text-primary);
+  --text-dim:var(--text-secondary);
+  --green:var(--success);
+  --orange:var(--warning);
+  --red:var(--danger);
+  --blue:var(--accent);
+  --accent:#4da3ff;
+  --font:var(--font-family);
   --fs-xs:    11px;
   --fs-sm:    13px;
   --fs-base:  14px;
@@ -171,7 +173,7 @@ body {
   padding: var(--sp-xs) var(--sp-sm);
   border-bottom: 1px solid var(--border);
 }
-.data-table tr:hover td { background: rgba(77,166,255,.05); }
+.data-table tr:hover td { background: rgb(var(--accent-rgb, 77 163 255) / .05); }
 .table-wrap {
   max-height: 300px;
   overflow-y: auto;
@@ -181,7 +183,7 @@ body {
 
 /* ─── Status messages ──────────────────────────────────────── */
 .msg-error {
-  background: rgba(255,75,75,.1);
+  background: rgb(var(--danger-rgb, 239 83 80) / .1);
   border: 1px solid var(--red);
   color: var(--red);
   border-radius: 6px;
@@ -189,7 +191,7 @@ body {
   font-size: var(--fs-sm);
 }
 .msg-info {
-  background: rgba(77,166,255,.08);
+  background: rgb(var(--accent-rgb, 77 163 255) / .08);
   border: 1px solid var(--accent);
   color: var(--accent);
   border-radius: 6px;

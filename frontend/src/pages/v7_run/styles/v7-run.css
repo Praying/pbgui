@@ -76,10 +76,10 @@ body {
   gap: var(--sp-md);
   margin-bottom: var(--sp-md);
   padding: var(--sp-md);
-  border: 1px solid rgba(255, 140, 0, 0.45);
+  border: 1px solid rgb(var(--warning-rgb) / 0.45);
   border-radius: 6px;
-  background: rgba(255, 140, 0, 0.10);
-  color: #ffd08a;
+  background: rgb(var(--warning-rgb) / 0.10);
+  color: var(--warning-soft);
 }
 .pb8-update-warning strong { color: var(--orange); }
 .pb8-update-warning a {
@@ -87,12 +87,12 @@ body {
   color: var(--text);
   font-weight: 600;
   text-decoration: none;
-  border: 1px solid rgba(255, 140, 0, 0.55);
+  border: 1px solid rgb(var(--warning-rgb) / 0.55);
   border-radius: 4px;
   padding: var(--sp-xs) var(--sp-sm);
-  background: rgba(255, 140, 0, 0.14);
+  background: rgb(var(--warning-rgb) / 0.14);
 }
-.pb8-update-warning a:hover { background: rgba(255, 140, 0, 0.24); }
+.pb8-update-warning a:hover { background: rgb(var(--warning-rgb) / 0.24); }
 
 /* ─── Table ────────────────────────────────────────────────── */
 .tbl-wrap {
@@ -250,8 +250,8 @@ tr.row-inactive td  { opacity: 0.45; }
   border-radius: 3px; padding: 1px 6px;
 }
 .backup-instance-name .badge-running {
-  font-size: var(--fs-xs); background: rgba(255, 140, 0, 0.12); color: var(--orange);
-  border: 1px solid rgba(255, 140, 0, 0.35); border-radius: 3px; padding: 1px 6px;
+  font-size: var(--fs-xs); background: rgb(var(--warning-rgb) / 0.12); color: var(--orange);
+  border: 1px solid rgb(var(--warning-rgb) / 0.35); border-radius: 3px; padding: 1px 6px;
 }
 .backup-ts-row {
   display: flex; align-items: center; gap: var(--sp-sm);
@@ -449,12 +449,12 @@ tr.row-inactive td  { opacity: 0.45; }
   cursor: pointer;
 }
 .backup-confirm-actions .btn-cancel {
-  background: rgba(99,179,237,.08);
-  border-color: rgba(99,179,237,.25);
+  background: rgb(var(--accent-rgb) / .08);
+  border-color: rgb(var(--accent-rgb) / .25);
   color: var(--text-primary);
 }
 .backup-confirm-actions .btn-cancel:hover {
-  background: rgba(99,179,237,.16);
+  background: rgb(var(--accent-rgb) / .16);
   border-color: var(--accent-soft);
 }
 .backup-confirm-actions .btn-confirm {

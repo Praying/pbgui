@@ -1,5 +1,15 @@
 # Unreleased
 
+## Frontend Visual Unification
+
+- Consolidated the frontend palette onto the shared semantic tokens: extended `frontend/src/styles/tokens.css` with deep/soft ramp stops, `-rgb` channel companions, `--accent-contrast`, `--bg-backdrop`, and `color-scheme: dark`; a repeatable codemod (`frontend/codemod_colors.py`) redirected ~1100 hardcoded hex/rgba literals across all Vue page styles, legacy `css/`, and legacy HTML `<style>` blocks into the accent/success/warning/danger/text/surface token families, retiring the drifted blue variants and the off-palette teal accent while preserving categorical colors.
+- Redesigned the shared navigation chrome (`frontend/pbgui_nav.js`): injected CSS fully tokenized, emoji action/dropdown icons replaced by a stroke SVG icon set (bell, shield-alert, book, info, chevron, and 17 page icons shared by the PBv7/PBv8 menu pairs), logo colors bound to tokens, and alert/confirm/about overlays aligned to the tonal surface language.
+- Reworked the root login page: a visible submit button with pending state and duplicate-submit guard, brand-accent focus ring (was teal), a surfaced card with accent rail over an ambient page glow, larger controls, and new `misc.login.submit`/`misc.login.signingIn` i18n keys with Vitest coverage.
+- Unified shared component styling: merged the duplicated `.btn`/`.pbgui-btn` definitions, switched toasts to the tonal badge language, shared the modal backdrop token, and added global `accent-color`/`caret-color` defaults; the jobs monitor and legacy sidebar/button styles were brought onto the same token system.
+- Legacy pages now link `/app/src/styles/tokens.css` and forward their local `:root` aliases to the canonical palette; all 44 page entries gained the new `favicon.svg`.
+- Fixed pre-existing styling bugs: an undefined `var(--radius)` in the strategy explorer, an invalid `var(--success)22` declaration in the API keys editor, and a dead duplicate `:root` block in the Welcome styles.
+- Verification: typecheck, production build, i18n parity, and the full Vitest suite pass with zero regressions against the clean tree (the 18 failing files are the known Node localStorage environment issue); the two frozen dashboard-editor CSS digests were re-frozen per their documented convention.
+
 ## Upstream Release Sync
 
 - Prepared the origin/main v1.98.24-v1.98.28 release changes for the Vue migration branch, including PB8 instance/VPS update behavior, deployment scripts, legacy compatibility updates, Pareto metric metadata, release notes, and regression coverage.

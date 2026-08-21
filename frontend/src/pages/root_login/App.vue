@@ -10,6 +10,7 @@ import { replaceTopLocation } from '@/shared/nav';
 const { t, locale } = useI18n();
 const password = ref('');
 const banner = ref('');
+const pending = ref(false);
 
 function toggleLang(): void {
   if (window.PBGuiI18n) {
@@ -29,7 +30,9 @@ onMounted(() => {
 });
 
 async function submitLogin(): Promise<void> {
+  if (pending.value) return;
   banner.value = '';
+  pending.value = true;
   const { origin } = getBoot();
   try {
     await apiFetch(`${origin}/api/auth/login`, {
@@ -39,6 +42,8 @@ async function submitLogin(): Promise<void> {
     replaceTopLocation(new URL(origin + '/api/auth/main_page').toString());
   } catch (error) {
     banner.value = serverMsg(error instanceof ApiError ? error.detail : String(error));
+  } finally {
+    pending.value = false;
   }
 }
 </script>
@@ -56,30 +61,14 @@ async function submitLogin(): Promise<void> {
           role="img"
           aria-hidden="true"
         >
-          <rect x="1" y="1" width="34" height="34" rx="7" fill="#1a2744" stroke="#3182ce" stroke-width="1.5" />
-          <rect x="7" y="21" width="5" height="9" rx="1.5" fill="#63b3ed" />
-          <rect x="14.5" y="15" width="5" height="15" rx="1.5" fill="#4299e1" />
-          <rect x="22" y="9" width="5" height="21" rx="1.5" fill="#3182ce" />
-          <text
-            x="42"
-            y="15"
-            font-family="'Segoe UI',system-ui,sans-serif"
-            font-size="13"
-            font-weight="700"
-            fill="#e2e8f0"
-            letter-spacing="0.3"
-          >
+          <rect x="1" y="1" width="34" height="34" rx="7" class="logo-box" />
+          <rect x="7" y="21" width="5" height="9" rx="1.5" class="logo-bar-soft" />
+          <rect x="14.5" y="15" width="5" height="15" rx="1.5" class="logo-bar" />
+          <rect x="22" y="9" width="5" height="21" rx="1.5" class="logo-bar-deep" />
+          <text x="42" y="15" class="logo-name" font-size="13" font-weight="700" letter-spacing="0.3">
             PBGui
           </text>
-          <text
-            x="42"
-            y="28"
-            font-family="'Segoe UI',system-ui,sans-serif"
-            font-size="7.5"
-            font-weight="400"
-            fill="#4299e1"
-            letter-spacing="1.2"
-          >
+          <text x="42" y="28" class="logo-sub" font-size="7.5" font-weight="400" letter-spacing="1.2">
             WELCOME
           </text>
         </svg>
@@ -96,6 +85,9 @@ async function submitLogin(): Promise<void> {
             :aria-label="t('misc.login.password')"
           />
         </div>
+        <button id="login-submit" class="submit-btn" type="submit" :disabled="pending || !password">
+          {{ pending ? t('misc.login.signingIn') : t('misc.login.submit') }}
+        </button>
       </form>
       <button id="pbgui-lang-btn" class="lang-btn" type="button" @click="toggleLang">
         {{ locale === 'zh' ? 'English' : '中文' }}
@@ -114,23 +106,73 @@ async function submitLogin(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: var(--sp-lg);
+  background:
+    radial-gradient(ellipse 60% 45% at 50% -8%, rgb(var(--accent-rgb) / 0.1), transparent 70%),
+    radial-gradient(ellipse 45% 40% at 88% 108%, rgb(var(--success-rgb) / 0.05), transparent 70%);
 }
 
 .card {
-  width: min(100%, 320px);
+  width: min(100%, 340px);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
+  align-items: stretch;
+  padding: var(--sp-3xl) var(--sp-2xl) var(--sp-2xl);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+  position: relative;
+  overflow: hidden;
+}
+
+/* accent rail along the card's top edge */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.65), transparent);
 }
 
 .brand {
-  display: inline-flex;
-  margin-bottom: var(--sp-lg);
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--sp-2xl);
+}
+
+.logo-box {
+  fill: var(--bg-elevated);
+  stroke: var(--accent-deep);
+  stroke-width: 1.5;
+}
+
+.logo-bar-soft {
+  fill: var(--accent-soft);
+}
+
+.logo-bar {
+  fill: var(--accent);
+}
+
+.logo-bar-deep {
+  fill: var(--accent-deep);
+}
+
+.logo-name {
+  fill: var(--text-primary);
+  font-family: var(--font-family);
+}
+
+.logo-sub {
+  fill: var(--accent);
+  font-family: var(--font-family);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
 }
 
 .field {
@@ -147,18 +189,53 @@ button {
 
 input {
   width: 100%;
-  height: var(--input-h);
+  height: var(--control-height-lg);
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-default);
   background: var(--bg-page);
   color: var(--text-primary);
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
 }
 
 input:focus {
   outline: none;
-  border-color: #26a69a;
-  box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.16);
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.submit-btn {
+  width: 100%;
+  height: var(--control-height-lg);
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  box-shadow: 0 4px 16px rgb(var(--accent-rgb) / 0.28);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+.submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .lang-btn {
@@ -166,22 +243,31 @@ input:focus {
   width: 100%;
   height: var(--btn-h);
   padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: var(--fs-base);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
   cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+
+.lang-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-elevated);
 }
 
 .banner {
   display: none;
   margin-top: var(--sp-md);
-  padding: var(--sp-md);
-  border-radius: 10px;
-  border: 1px solid rgba(248, 113, 113, 0.28);
-  background: rgba(127, 29, 29, 0.45);
-  color: #fecaca;
+  padding: var(--sp-sm) var(--sp-md);
+  border-radius: var(--radius-md);
+  border: 1px solid rgb(var(--danger-rgb) / 0.28);
+  background: var(--danger-bg);
+  color: var(--danger-soft);
+  font-size: var(--fs-sm);
   line-height: 1.5;
 }
 
@@ -189,3 +275,4 @@ input:focus {
   display: block;
 }
 </style>
+

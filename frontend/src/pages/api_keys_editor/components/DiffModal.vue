@@ -61,7 +61,7 @@ function backupLabel(fn: string): string {
       <span style="color:#94a3b8;">&#9608; {{ t('misc.apikeys.unchanged') }}</span>
     </div>
     <div id="diffContent" style="flex:1; overflow:auto;">
-      <div v-if="identical" style="text-align:center;padding:40px 20px;color:#26a69a;font-size:var(--fs-md);">
+      <div v-if="identical" style="text-align:center;padding:40px 20px;color:var(--success);font-size:var(--fs-md);">
         <span style="font-size:var(--fs-xl);">&#10003;</span><br />
         <strong>{{ t('misc.apikeys.filesIdentical') }}</strong><br />
         <span style="font-size:var(--fs-sm);color:#94a3b8;margin-top:6px;display:block;">

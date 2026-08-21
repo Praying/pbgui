@@ -102,6 +102,47 @@
     ]}
   ];
 
+  /* ── SVG icon set ─────────────────────────────────────────────
+     Stroke icons (24 viewBox, 1.7 weight, round joins) matching the
+     logout icon. Stroke color comes from CSS (stroke:currentColor). */
+  var SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  function svgIcon(inner) { return SVG_OPEN + inner + '</svg>'; }
+
+  var NAV_ACTION_ICONS = {
+    bell: svgIcon('<path d="M6.3 9.4a5.7 5.7 0 0 1 11.4 0c0 4.3 1.8 5.7 1.8 5.7h-15s1.8-1.4 1.8-5.7Z"/><path d="M10.2 18.7a1.9 1.9 0 0 0 3.6 0"/>'),
+    shieldAlert: svgIcon('<path d="M12 3.2 5 5.9v5.3c0 4.4 3 7.5 7 9.6 4-2.1 7-5.2 7-9.6V5.9Z"/><path d="M12 8.6v3.8"/><circle cx="12" cy="15.7" r=".95" fill="currentColor" stroke="none"/>'),
+    book: svgIcon('<path d="M12 6.6C10.6 5.3 8.6 4.7 5.2 4.7v13.5c3.4 0 5.4.6 6.8 1.9 1.4-1.3 3.4-1.9 6.8-1.9V4.7c-3.4 0-5.4.6-6.8 1.9Z"/><path d="M12 6.6v13.5"/>'),
+    info: svgIcon('<circle cx="12" cy="12" r="8.3"/><path d="M12 11.2v4.6"/><circle cx="12" cy="7.9" r="1" fill="currentColor" stroke="none"/>'),
+    chevron: svgIcon('<path d="m6.5 9.5 5.5 5.5 5.5-5.5"/>')
+  };
+
+  /* Per-page dropdown icons; v7_/v8_ prefixes fall back to the bare key. */
+  var PAGE_ICON_SVG = {
+    '/': svgIcon('<path d="M4.8 11.2 12 4.8l7.2 6.4"/><path d="M6.8 10.2v9.3h10.4v-9.3"/>'),
+    'system_api_keys': svgIcon('<circle cx="8.6" cy="12" r="3.5"/><path d="M12.1 12h7.4m-3.1 0v3.1m3.1-3.1v2.1"/>'),
+    'system_cluster': svgIcon('<path d="M4.6 9.7a7.6 7.6 0 0 1 13-2.4l1.7 2"/><path d="M19.8 4.2v4.6h-4.6"/><path d="M19.4 14.3a7.6 7.6 0 0 1-13 2.4l-1.7-2"/><path d="M4.2 19.8v-4.6h4.6"/>'),
+    'system_services': svgIcon('<rect x="4" y="4.6" width="16" height="6" rx="1.4"/><rect x="4" y="13.4" width="16" height="6" rx="1.4"/><circle cx="7.8" cy="7.6" r=".9" fill="currentColor" stroke="none"/><circle cx="7.8" cy="16.4" r=".9" fill="currentColor" stroke="none"/>'),
+    'system_db_tools': svgIcon('<ellipse cx="12" cy="5.9" rx="7" ry="2.7"/><path d="M5 5.9V18c0 1.5 3.1 2.7 7 2.7s7-1.2 7-2.7V5.9"/><path d="M5 12c0 1.5 3.1 2.7 7 2.7s7-1.2 7-2.7"/>'),
+    'system_vps_manager_fastapi': svgIcon('<rect x="3.6" y="4.6" width="16.8" height="11.8" rx="1.5"/><path d="M9.2 20.4h5.6M12 16.4v4"/>'),
+    'system_vps_monitor': svgIcon('<path d="M3.5 12h3.9l2.3-6.4 4.6 12.8 2.3-6.4h3.9"/>'),
+    'system_logging': svgIcon('<path d="M6.5 3.6h7.2l4.8 4.8v11a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4.6a1 1 0 0 1 1-1Z"/><path d="M9 12.2h6M9 15.4h4.2"/>'),
+    'dashboards': svgIcon('<rect x="4.2" y="4.2" width="6.8" height="6.8" rx="1.2"/><rect x="13" y="4.2" width="6.8" height="6.8" rx="1.2"/><rect x="4.2" y="13" width="6.8" height="6.8" rx="1.2"/><rect x="13" y="13" width="6.8" height="6.8" rx="1.2"/>'),
+    'info_coin_data': svgIcon('<path d="M8 5.5v2.3m0 8.4v2.3"/><rect x="6.1" y="7.8" width="3.8" height="8.4" rx=".9"/><path d="M16 4.5v2.8m0 9.4v1.8"/><rect x="14.1" y="7.3" width="3.8" height="9.4" rx=".9"/>'),
+    'info_market_data_fastapi': svgIcon('<path d="M4 4.5v15h16"/><path d="m6.5 14.5 4-4.5 3 3 4.5-5.5"/>'),
+    'info_balance_calc': svgIcon('<rect x="6" y="3.6" width="12" height="16.8" rx="1.5"/><path d="M9.2 7.4h5.6"/><path d="M9.3 12h.01M12 12h.01M14.7 12h.01M9.3 15h.01M12 15h.01M14.7 15h.01M9.3 18h.01M12 18h.01M14.7 18h.01" stroke-width="2.2"/>'),
+    'help': svgIcon('<circle cx="12" cy="12" r="8.3"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.8.3-1 .9-1 1.8"/><circle cx="12" cy="16.5" r=".95" fill="currentColor" stroke="none"/>'),
+    'run': svgIcon('<path d="M8.2 5.6v12.8a.7.7 0 0 0 1.1.6l10-6.4a.7.7 0 0 0 0-1.2l-10-6.4a.7.7 0 0 0-1.1.6Z"/>'),
+    'backtest': svgIcon('<path d="M5 5.2v4h4"/><path d="M5.4 9.2a7.4 7.4 0 1 1-.5 4.4"/><path d="M12 8.2v4l3 1.7"/>'),
+    'optimize': svgIcon('<path d="M4.8 19.2a8.4 8.4 0 1 1 14.4 0"/><path d="m12 14.2 3.4-4.4"/><circle cx="12" cy="14.2" r="1.3"/>'),
+    'strategy_explorer': svgIcon('<circle cx="12" cy="12" r="8.3"/><path d="m14.9 9.1-1.5 4.3-4.3 1.5 1.5-4.3Z"/>'),
+    'pareto_explorer': svgIcon('<circle cx="12" cy="12" r="8.3"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/>')
+  };
+
+  function pageIcon(page, fallback) {
+    var bare = String(page || '').replace(/^v[78]_/, '');
+    return PAGE_ICON_SVG[page] || PAGE_ICON_SVG[bare] || fallback;
+  }
+
   /* ════════════════════════════════════
      CSS (injected into <head>)
      ════════════════════════════════════ */
@@ -124,16 +165,17 @@
     'font-weight:500;cursor:pointer;border-bottom:2px solid transparent;',
     'transition:color var(--motion-fast,.12s),border-color var(--motion-fast,.12s),background-color var(--motion-fast,.12s);white-space:nowrap;}',
     'button.nav-group-btn:hover:not(:disabled){color:var(--text-primary,#e2e8f0);background:rgba(255,255,255,.04);transform:none;}',
-    '.nav-group-btn.active{color:var(--accent-soft,#63b3ed);border-bottom-color:var(--accent-soft,#63b3ed);}',
+    '.nav-group-btn.active{color:var(--accent-soft,#7db8f7);border-bottom-color:var(--accent-soft,#7db8f7);}',
     '.nav-group-btn.disabled{opacity:.45;cursor:not-allowed;}',
     '.nav-group-btn.disabled:hover{color:var(--text-secondary,#94a3b8);background:transparent;border-bottom-color:transparent;}',
 
-    '.nav-arrow{font-size:0.58rem;opacity:0.6;transition:transform .15s;}',
+    '.nav-arrow{display:inline-flex;opacity:.55;transition:transform .15s;}',
+    '.nav-arrow svg{width:9px;height:9px;display:block;stroke:currentColor;}',
     '.nav-group.open .nav-arrow{transform:rotate(180deg);}',
 
     '.nav-dropdown{display:none;position:absolute;top:calc(100% + 1px);left:0;',
     'min-width:190px;background:var(--surface-card,#1a202c);border:1px solid var(--border-default,#2d3748);',
-    'border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(0,0,0,.5);',
+    'border-radius:0 0 8px 8px;box-shadow:0 8px 24px rgba(2,8,20,.5);',
     'flex-direction:column;padding:0.3rem 0;z-index:var(--z-dropdown,300);}',
     '.nav-group.open .nav-dropdown{display:flex;}',
     'body.pbgui-help-open #topnav{z-index:3200;}',
@@ -143,22 +185,24 @@
     '.nav-item{display:flex;align-items:center;gap:0.55rem;padding:0.42rem 1rem;',
     'color:var(--text-secondary,#94a3b8);font-size:var(--fs-base,14px);text-decoration:none;cursor:pointer;',
     'transition:background-color var(--motion-fast,.12s),color var(--motion-fast,.12s);white-space:nowrap;}',
-    '.nav-item:hover{background:var(--surface-elevated,#243047);color:var(--text-primary,#e2e8f0);}',
-    '.nav-item.current{color:var(--accent-soft,#63b3ed);font-weight:600;background:rgba(99,179,237,.07);cursor:default;}',
-    '.nav-item-icon{font-size:1rem;width:1.1rem;text-align:center;flex-shrink:0;}',
+    '.nav-item:hover{background:var(--surface-elevated,#262730);color:var(--text-primary,#e2e8f0);}',
+    '.nav-item.current{color:var(--accent-soft,#7db8f7);font-weight:600;background:rgb(var(--accent-soft-rgb,125 184 247) / .07);cursor:default;}',
+    '.nav-item-icon{display:inline-flex;justify-content:center;width:1.1rem;flex-shrink:0;opacity:.8;}',
+    '.nav-item-icon svg{width:15px;height:15px;display:block;stroke:currentColor;}',
+    '.nav-item:hover .nav-item-icon,.nav-item.current .nav-item-icon{opacity:1;}',
 
     '#nav-spacer{flex:1;}',
 
     '#nav-right{display:flex;align-items:center;gap:0.25rem;padding-right:0.5rem;}',
     '.nav-divider{width:1px;height:18px;background:var(--border-subtle,#1e2736);margin:0 0.15rem;}',
     '#pbgui-master-pill{display:none;align-items:center;gap:0.35rem;max-width:240px;height:30px;',
-    'padding:0 0.65rem;border:1px solid rgba(99,179,237,.22);border-radius:999px;',
-    'background:rgba(99,179,237,.06);color:#cbd5e1;font-size:var(--fs-sm);white-space:nowrap;}',
+    'padding:0 0.65rem;border:1px solid rgb(var(--accent-soft-rgb,125 184 247) / .22);border-radius:999px;',
+    'background:rgb(var(--accent-soft-rgb,125 184 247) / .06);color:var(--text-primary,#e2e8f0);font-size:var(--fs-sm);white-space:nowrap;}',
     '#pbgui-master-pill.visible{display:inline-flex;}',
-    '.pbgui-master-label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#64748b;}',
-    '#pbgui-master-name{overflow:hidden;text-overflow:ellipsis;color:#e2e8f0;font-weight:600;}',
+    '.pbgui-master-label{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted,#64748b);}',
+    '#pbgui-master-name{overflow:hidden;text-overflow:ellipsis;color:var(--text-primary,#e2e8f0);font-weight:600;}',
     '#pbgui-auth-mode-pill{display:none;align-items:center;height:30px;padding:0 .65rem;border-radius:999px;',
-    'border:1px solid rgba(248,113,113,.5);background:rgba(127,29,29,.38);color:#fecaca;',
+    'border:1px solid rgb(var(--danger-soft-rgb,242 139 137) / .5);background:rgb(var(--danger-deep-rgb,185 28 28) / .38);color:var(--danger-soft,#f28b89);',
     'font-size:var(--fs-xs);font-weight:800;letter-spacing:.05em;white-space:nowrap;}',
     '#pbgui-auth-mode-pill.visible{display:inline-flex;}',
     '@media(max-width:920px){#pbgui-master-pill{display:none!important;}}',
@@ -168,61 +212,62 @@
     'color:var(--text-muted,#64748b);font-size:var(--fs-sm,13px);font-weight:500;cursor:pointer;',
     'transition:background-color var(--motion-fast,.12s),border-color var(--motion-fast,.12s),color var(--motion-fast,.12s);white-space:nowrap;height:32px;}',
     '.nav-action-btn:hover{background:rgba(255,255,255,.05);border-color:var(--border-default,#2d3748);color:var(--text-primary,#e2e8f0);}',
-    '.nav-action-btn:focus-visible,.nav-group-btn:focus-visible,.nav-item:focus-visible{outline:2px solid var(--accent-soft,#63b3ed);outline-offset:2px;}',
+    '.nav-action-btn:focus-visible,.nav-group-btn:focus-visible,.nav-item:focus-visible{outline:2px solid var(--accent-soft,#7db8f7);outline-offset:2px;}',
     '.nav-action-btn.icon-only{justify-content:center;gap:0;padding:0;width:32px;min-width:32px;}',
-    '.nav-action-btn.icon-only svg{width:16px;height:16px;display:block;stroke:currentColor;}',
-    '.nav-action-btn.accent{color:#63b3ed;border-color:rgba(99,179,237,.25);background:rgba(99,179,237,.04);}',
-    '.nav-action-btn.accent:hover{background:rgba(99,179,237,.12);border-color:#63b3ed;}',
-    '.nav-action-btn.restart{color:#f59e0b;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06);display:none;}',
-    '.nav-action-btn.restart:hover{background:rgba(245,158,11,.15);border-color:#f59e0b;}',
+    '.nav-action-btn svg{width:16px;height:16px;display:block;stroke:currentColor;flex-shrink:0;}',
+    '.nav-action-btn.accent{color:var(--accent-soft,#7db8f7);border-color:rgb(var(--accent-soft-rgb,125 184 247) / .25);background:rgb(var(--accent-soft-rgb,125 184 247) / .04);}',
+    '.nav-action-btn.accent:hover{background:rgb(var(--accent-soft-rgb,125 184 247) / .12);border-color:var(--accent-soft,#7db8f7);}',
+    '.nav-action-btn.restart{color:var(--warning,#e8a13c);border-color:rgb(var(--warning-rgb,232 161 60) / .3);background:rgb(var(--warning-rgb,232 161 60) / .06);display:none;}',
+    '.nav-action-btn.restart:hover{background:rgb(var(--warning-rgb,232 161 60) / .15);border-color:var(--warning,#e8a13c);}',
     '.nav-restart-dot{display:inline-block;width:7px;height:7px;border-radius:50%;',
-    'background:#f59e0b;margin-right:2px;animation:nav-blink 1.4s ease-in-out infinite;}',
+    'background:var(--warning,#e8a13c);margin-right:2px;animation:nav-blink 1.4s ease-in-out infinite;}',
     '@keyframes nav-blink{0%,100%{opacity:1;}50%{opacity:.3;}}',
-    '.nav-action-btn.notify{color:#64748b;}',
-    '.nav-action-btn.notify:hover{color:#e2e8f0;}',
-    '.nav-action-btn.alerts{color:#f59e0b;border-color:rgba(245,158,11,.24);background:rgba(245,158,11,.05);display:inline-flex;}',
-    '.nav-action-btn.alerts:hover{color:#fcd34d;border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.12);}',
-    '.nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 0.35rem;border-radius:999px;font-size:10px;font-weight:700;line-height:1;background:#243047;color:#cbd5e1;}',
-    '.nav-badge.has-new{background:#b91c1c;color:#fff;}',
-    '.nav-action-btn.logout{color:#94a3b8;}',
-    '.nav-action-btn.logout:hover{color:#f8fafc;}',
+    '.nav-action-btn.notify{color:var(--text-muted,#64748b);}',
+    '.nav-action-btn.notify:hover{color:var(--text-primary,#e2e8f0);}',
+    '.nav-action-btn.alerts{color:var(--warning,#e8a13c);border-color:rgb(var(--warning-rgb,232 161 60) / .24);background:rgb(var(--warning-rgb,232 161 60) / .05);display:inline-flex;}',
+    '.nav-action-btn.alerts:hover{color:var(--warning-soft,#f0bd6a);border-color:rgb(var(--warning-rgb,232 161 60) / .45);background:rgb(var(--warning-rgb,232 161 60) / .12);}',
+    '.nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 0.35rem;border-radius:999px;font-size:10px;font-weight:700;line-height:1;background:var(--bg-elevated,#262730);color:var(--text-primary,#e2e8f0);}',
+    '.nav-badge.has-new{background:var(--danger-deep,#b91c1c);color:#fff;}',
+    '.nav-action-btn.logout{color:var(--text-secondary,#94a3b8);}',
+    '.nav-action-btn.logout:hover{color:var(--text-primary,#e2e8f0);}',
 
     /* notification log panel */
     '#pbgui-notify-panel{position:fixed;bottom:0;right:0;width:50%;height:40vh;min-width:240px;min-height:150px;',
-    'background:var(--bg2,#131b2b);border:2px solid var(--accent,#3182ce);',
-    'z-index:2500;display:none;flex-direction:column;overflow:hidden;border-radius:6px 6px 0 0;}',
+    'background:var(--bg-panel,#1a1d24);border:1px solid var(--border-default,#2d3748);border-bottom:none;',
+    'z-index:2500;display:none;flex-direction:column;overflow:hidden;border-radius:10px 10px 0 0;',
+    'box-shadow:0 -12px 40px rgba(2,8,20,.45);}',
     '#pbgui-notify-panel.visible{display:flex;}',
     '#pbgui-notify-hdr{display:flex;align-items:center;justify-content:space-between;',
-    'padding:6px 12px;background:var(--bg3,#1a2744);border-bottom:1px solid var(--border,#2d3748);',
+    'padding:6px 12px;background:var(--bg-elevated,#262730);border-bottom:1px solid var(--border-default,#2d3748);',
     'flex-shrink:0;cursor:move;user-select:none;}',
-    '#pbgui-notify-title{font-size:var(--fs-sm,0.82rem);font-weight:600;color:var(--text,#e2e8f0);}',
-    '#pbgui-notify-close{background:none;border:none;color:var(--text-dim,#64748b);cursor:pointer;font-size:var(--fs-lg,1.15rem);}',
-    '#pbgui-notify-close:hover{color:var(--text,#e2e8f0);}',
+    '#pbgui-notify-title{font-size:var(--fs-sm,0.82rem);font-weight:600;color:var(--text-primary,#e2e8f0);}',
+    '#pbgui-notify-close{background:none;border:none;color:var(--text-muted,#64748b);cursor:pointer;font-size:var(--fs-lg,1.15rem);}',
+    '#pbgui-notify-close:hover{color:var(--text-primary,#e2e8f0);}',
     '#pbgui-notify-target{flex:1;min-height:0;overflow:hidden;}',
-    '#pbgui-alert-ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:3060;backdrop-filter:blur(2px);}',
+    '#pbgui-alert-ovl{display:none;position:fixed;inset:0;background:var(--bg-backdrop,rgba(2,6,14,.72));z-index:3060;backdrop-filter:blur(2px);}',
     '#pbgui-alert-ovl.visible{display:flex;}',
-    '#pbgui-alert-box{position:absolute;background:#131b2b;border:1px solid #2d3748;border-radius:14px;box-shadow:0 20px 70px rgba(0,0,0,.9);overflow:hidden;width:min(880px,94vw);max-width:94vw;height:min(640px,78vh);max-height:90vh;min-width:320px;min-height:220px;display:flex;flex-direction:column;}',
+    '#pbgui-alert-box{position:absolute;background:var(--bg-panel,#1a1d24);border:1px solid var(--border-default,#2d3748);border-radius:14px;box-shadow:0 20px 70px rgba(2,8,20,.9);overflow:hidden;width:min(880px,94vw);max-width:94vw;height:min(640px,78vh);max-height:90vh;min-width:320px;min-height:220px;display:flex;flex-direction:column;}',
     '#pbgui-alert-body{display:flex;flex-direction:column;gap:0.8rem;padding:1rem 1.1rem 1.1rem;min-height:0;}',
     '#pbgui-alert-toolbar{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;}',
-    '#pbgui-alert-summary{font-size:var(--fs-sm);color:#94a3b8;}',
+    '#pbgui-alert-summary{font-size:var(--fs-sm);color:var(--text-secondary,#94a3b8);}',
     '#pbgui-alert-list{display:flex;flex-direction:column;gap:0.65rem;overflow:auto;min-height:0;padding-right:0.2rem;}',
-    '.pbgui-alert-section-sep{height:1px;background:#1e2736;margin:0.35rem 0 0.2rem;}',
-    '.pbgui-alert-history-title{font-size:var(--fs-xs);letter-spacing:0.05em;text-transform:uppercase;color:#64748b;margin-top:0.2rem;}',
-    '.pbgui-alert-item{border:1px solid #243047;border-radius:10px;background:#0f1724;padding:0.8rem 0.9rem;display:grid;gap:0.45rem;}',
-    '.pbgui-alert-item.new{border-color:rgba(239,68,68,.45);}',
-    '.pbgui-alert-item.history{background:#0d1420;border-color:#1a2537;}',
+    '.pbgui-alert-section-sep{height:1px;background:var(--border-subtle,#1e2736);margin:0.35rem 0 0.2rem;}',
+    '.pbgui-alert-history-title{font-size:var(--fs-xs);letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted,#64748b);margin-top:0.2rem;}',
+    '.pbgui-alert-item{border:1px solid var(--border-default,#2d3748);border-radius:10px;background:var(--bg-page,#0e1117);padding:0.8rem 0.9rem;display:grid;gap:0.45rem;}',
+    '.pbgui-alert-item.new{border-color:rgb(var(--danger-rgb,239 83 80) / .45);}',
+    '.pbgui-alert-item.history{background:var(--bg-page,#0e1117);border-color:var(--border-subtle,#1e2736);}',
     '.pbgui-alert-head{display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;}',
-    '.pbgui-alert-title{font-size:var(--fs-base);font-weight:600;color:#e2e8f0;}',
-    '.pbgui-alert-meta{display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;font-size:var(--fs-xs);color:#64748b;}',
+    '.pbgui-alert-title{font-size:var(--fs-base);font-weight:600;color:var(--text-primary,#e2e8f0);}',
+    '.pbgui-alert-meta{display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;font-size:var(--fs-xs);color:var(--text-muted,#64748b);}',
     '.pbgui-alert-pill{display:inline-flex;align-items:center;justify-content:center;padding:0.18rem 0.45rem;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;}',
-    '.pbgui-alert-pill.new{background:rgba(239,68,68,.18);color:#fca5a5;}',
-    '.pbgui-alert-pill.ack{background:rgba(99,179,237,.15);color:#93c5fd;}',
-    '.pbgui-alert-pill.kind{background:rgba(148,163,184,.12);color:#cbd5e1;}',
-    '.pbgui-alert-details{font-size:var(--fs-sm);line-height:1.45;color:#94a3b8;}',
+    '.pbgui-alert-pill.new{background:rgb(var(--danger-rgb,239 83 80) / .18);color:var(--danger-soft,#f28b89);}',
+    '.pbgui-alert-pill.ack{background:rgb(var(--accent-soft-rgb,125 184 247) / .15);color:var(--accent-soft,#7db8f7);}',
+    '.pbgui-alert-pill.kind{background:rgb(var(--text-secondary-rgb,148 163 184) / .12);color:var(--text-primary,#e2e8f0);}',
+    '.pbgui-alert-details{font-size:var(--fs-sm);line-height:1.45;color:var(--text-secondary,#94a3b8);}',
     '.pbgui-alert-actions{display:flex;align-items:center;justify-content:flex-end;gap:0.5rem;}',
-    '.pbgui-alert-empty{padding:1rem 0.2rem;color:#64748b;font-size:var(--fs-sm);text-align:center;}',
-    '.pbgui-alert-link{display:inline-flex;align-items:center;justify-content:center;height:var(--btn-h);padding:0 var(--sp-md);border-radius:8px;border:1px solid rgba(99,179,237,.25);font-size:var(--fs-base);font-weight:600;color:#e2e8f0;background:rgba(99,179,237,.08);cursor:pointer;transition:background .15s,border-color .15s,color .15s;text-decoration:none;}',
-    '.pbgui-alert-link:hover{background:rgba(99,179,237,.16);border-color:#63b3ed;}',
+    '.pbgui-alert-empty{padding:1rem 0.2rem;color:var(--text-muted,#64748b);font-size:var(--fs-sm);text-align:center;}',
+    '.pbgui-alert-link{display:inline-flex;align-items:center;justify-content:center;height:var(--btn-h);padding:0 var(--sp-md);border-radius:8px;border:1px solid rgb(var(--accent-soft-rgb,125 184 247) / .25);font-size:var(--fs-base);font-weight:600;color:var(--text-primary,#e2e8f0);background:rgb(var(--accent-soft-rgb,125 184 247) / .08);cursor:pointer;transition:background .15s,border-color .15s,color .15s;text-decoration:none;}',
+    '.pbgui-alert-link:hover{background:rgb(var(--accent-soft-rgb,125 184 247) / .16);border-color:var(--accent-soft,#7db8f7);}',
     '.pnr{position:absolute;z-index:2;}',
     '.pnr-n{top:-4px;left:6px;right:6px;height:8px;cursor:n-resize;}',
     '.pnr-s{bottom:-4px;left:6px;right:6px;height:8px;cursor:s-resize;}',
@@ -235,64 +280,66 @@
 
     /* about overlay */
     '#pbgui-about-ovl{display:none;position:fixed;inset:0;',
-    'background:rgba(0,0,0,.72);z-index:3000;align-items:center;justify-content:center;',
+    'background:var(--bg-backdrop,rgba(2,6,14,.72));z-index:3000;align-items:center;justify-content:center;',
     'backdrop-filter:blur(2px);}',
     '#pbgui-about-ovl.visible{display:flex;}',
-    '#pbgui-about-box{background:#131b2b;border:1px solid #2d3748;border-radius:14px;',
-    'box-shadow:0 20px 70px rgba(0,0,0,.9);overflow:hidden;width:min(440px,92vw);}',
+    '#pbgui-about-box{background:var(--bg-panel,#1a1d24);border:1px solid var(--border-default,#2d3748);border-radius:14px;',
+    'box-shadow:0 20px 70px rgba(2,8,20,.9);overflow:hidden;width:min(440px,92vw);}',
     '.pbgui-ovl-header{display:flex;align-items:center;justify-content:space-between;',
-    'padding:0.85rem 1.1rem;border-bottom:1px solid #1e2736;background:#111827;}',
-    '.pbgui-ovl-title{font-size:var(--fs-md);font-weight:700;color:#e2e8f0;}',
-    '.pbgui-ovl-close{background:transparent;border:none;color:#64748b;font-size:var(--fs-lg);',
+    'padding:0.85rem 1.1rem;border-bottom:1px solid var(--border-subtle,#1e2736);background:var(--surface-sidebar,#111827);}',
+    '.pbgui-ovl-title{font-size:var(--fs-md);font-weight:700;color:var(--text-primary,#e2e8f0);',
+    'display:inline-flex;align-items:center;gap:0.45rem;}',
+    '.pbgui-ovl-title svg{width:16px;height:16px;display:block;stroke:currentColor;flex-shrink:0;}',
+    '.pbgui-ovl-close{background:transparent;border:none;color:var(--text-muted,#64748b);font-size:var(--fs-lg);',
     'cursor:pointer;padding:0.2rem 0.35rem;border-radius:5px;line-height:1;',
     'transition:color .12s,background .12s;}',
-    '.pbgui-ovl-close:hover{color:#e2e8f0;background:rgba(255,255,255,.06);}',
+    '.pbgui-ovl-close:hover{color:var(--text-primary,#e2e8f0);background:rgba(255,255,255,.06);}',
     '#pbgui-about-body{padding:2rem 2rem 1.5rem;text-align:center;}',
-    '#pbgui-about-ver{font-size:var(--fs-xl);font-weight:800;color:#e2e8f0;margin-bottom:0.2rem;}',
-    '#pbgui-about-serial{font-size:var(--fs-xs);color:#64748b;margin-bottom:0.25rem;}',
-    '#pbgui-about-tag{font-size:var(--fs-sm);color:#64748b;letter-spacing:.06em;',
+    '#pbgui-about-ver{font-size:var(--fs-xl);font-weight:800;color:var(--text-primary,#e2e8f0);margin-bottom:0.2rem;}',
+    '#pbgui-about-serial{font-size:var(--fs-xs);color:var(--text-muted,#64748b);margin-bottom:0.25rem;}',
+    '#pbgui-about-tag{font-size:var(--fs-sm);color:var(--text-muted,#64748b);letter-spacing:.06em;',
     'text-transform:uppercase;margin-bottom:1.5rem;}',
     '.pbgui-about-divider{width:100%;height:1px;',
-    'background:linear-gradient(90deg,transparent,#2d3748,transparent);margin:0 0 1.3rem;}',
+    'background:linear-gradient(90deg,transparent,var(--border-default,#2d3748),transparent);margin:0 0 1.3rem;}',
     '.pbgui-about-links{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.3rem;}',
     '.pbgui-about-link{display:flex;align-items:center;justify-content:center;gap:0.55rem;',
     'padding:0.55rem 1.2rem;border-radius:8px;text-decoration:none;font-size:var(--fs-sm);',
     'font-weight:600;transition:background-color var(--motion-fast,.12s),border-color var(--motion-fast,.12s),color var(--motion-fast,.12s);}',
     '.pbgui-about-link.kofi{background:rgba(255,94,20,.1);border:1px solid rgba(255,94,20,.35);color:#ff6a30;}',
     '.pbgui-about-link.kofi:hover{background:rgba(255,94,20,.2);border-color:#ff6a30;}',
-    '.pbgui-about-link.github{background:rgba(99,179,237,.07);border:1px solid rgba(99,179,237,.25);color:#63b3ed;}',
-    '.pbgui-about-link.github:hover{background:rgba(99,179,237,.15);border-color:#63b3ed;}',
-    '.pbgui-about-link.readme{background:rgba(72,187,120,.07);border:1px solid rgba(72,187,120,.25);color:#48bb78;}',
-    '.pbgui-about-link.readme:hover{background:rgba(72,187,120,.15);border-color:#48bb78;}',
-    '#pbgui-about-footer{padding:0.75rem 2rem;border-top:1px solid #1e2736;',
-    'text-align:center;font-size:var(--fs-xs);color:#4a5568;background:#0e1117;}',
+    '.pbgui-about-link.github{background:rgb(var(--accent-soft-rgb,125 184 247) / .07);border:1px solid rgb(var(--accent-soft-rgb,125 184 247) / .25);color:var(--accent-soft,#7db8f7);}',
+    '.pbgui-about-link.github:hover{background:rgb(var(--accent-soft-rgb,125 184 247) / .15);border-color:var(--accent-soft,#7db8f7);}',
+    '.pbgui-about-link.readme{background:rgb(var(--success-rgb,47 189 106) / .07);border:1px solid rgb(var(--success-rgb,47 189 106) / .25);color:var(--success,#2fbd6a);}',
+    '.pbgui-about-link.readme:hover{background:rgb(var(--success-rgb,47 189 106) / .15);border-color:var(--success,#2fbd6a);}',
+    '#pbgui-about-footer{padding:0.75rem 2rem;border-top:1px solid var(--border-subtle,#1e2736);',
+    'text-align:center;font-size:var(--fs-xs);color:var(--text-disabled,#4a5568);background:var(--bg-page,#0e1117);}',
 
     /* shared confirm overlay */
-    '#pbgui-confirm-ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);',
+    '#pbgui-confirm-ovl{display:none;position:fixed;inset:0;background:var(--bg-backdrop,rgba(2,6,14,.72));',
     'z-index:7000;align-items:center;justify-content:center;backdrop-filter:blur(2px);}',
     '#pbgui-confirm-ovl.visible{display:flex;}',
-    '#pbgui-confirm-box{background:#131b2b;border:1px solid #2d3748;border-radius:14px;',
-    'box-shadow:0 20px 70px rgba(0,0,0,.9);overflow:hidden;width:min(460px,92vw);}',
+    '#pbgui-confirm-box{background:var(--bg-panel,#1a1d24);border:1px solid var(--border-default,#2d3748);border-radius:14px;',
+    'box-shadow:0 20px 70px rgba(2,8,20,.9);overflow:hidden;width:min(460px,92vw);}',
     '#pbgui-confirm-body{display:grid;gap:var(--sp-md);padding:var(--sp-lg);}',
-    '#pbgui-confirm-msg{font-size:var(--fs-base);line-height:1.5;color:#e2e8f0;}',
-    '#pbgui-confirm-detail{font-size:var(--fs-sm);line-height:1.45;color:#94a3b8;}',
+    '#pbgui-confirm-msg{font-size:var(--fs-base);line-height:1.5;color:var(--text-primary,#e2e8f0);}',
+    '#pbgui-confirm-detail{font-size:var(--fs-sm);line-height:1.45;color:var(--text-secondary,#94a3b8);}',
     '#pbgui-confirm-actions{display:flex;justify-content:flex-end;gap:var(--sp-sm);flex-wrap:wrap;}',
     '.pbgui-modal-btn{display:inline-flex;align-items:center;justify-content:center;height:var(--btn-h);',
     'padding:0 var(--sp-md);border-radius:8px;border:1px solid transparent;font-size:var(--fs-base);',
     'font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}',
-    '.pbgui-modal-btn.secondary{background:rgba(99,179,237,.08);border-color:rgba(99,179,237,.25);color:#e2e8f0;}',
-    '.pbgui-modal-btn.secondary:hover{background:rgba(99,179,237,.16);border-color:#63b3ed;}',
-    '.pbgui-modal-btn.primary{background:#63b3ed;border-color:#63b3ed;color:#0b1220;}',
-    '.pbgui-modal-btn.primary:hover{background:#7cc4f5;}',
+    '.pbgui-modal-btn.secondary{background:rgb(var(--accent-soft-rgb,125 184 247) / .08);border-color:rgb(var(--accent-soft-rgb,125 184 247) / .25);color:var(--text-primary,#e2e8f0);}',
+    '.pbgui-modal-btn.secondary:hover{background:rgb(var(--accent-soft-rgb,125 184 247) / .16);border-color:var(--accent-soft,#7db8f7);}',
+    '.pbgui-modal-btn.primary{background:var(--accent,#4da3ff);border-color:var(--accent,#4da3ff);color:var(--accent-contrast,#07111f);}',
+    '.pbgui-modal-btn.primary:hover{background:var(--accent-soft,#7db8f7);border-color:var(--accent-soft,#7db8f7);}',
 
     /* shared help overlay chrome */
     '#help-ovl.is-maximized{max-width:none;max-height:none;resize:none;}',
     '#help-ovl.is-maximized #help-drag-handle{cursor:default;pointer-events:none;}',
     '.ovl-tool{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;',
-    'background:transparent;border:1px solid transparent;border-radius:4px;color:#64748b;',
+    'background:transparent;border:1px solid transparent;border-radius:4px;color:var(--text-muted,#64748b);',
     'cursor:pointer;font-size:var(--fs-md);line-height:1;padding:0;transition:color .12s,background .12s,border-color .12s;}',
-    '.ovl-tool[aria-pressed="true"]{color:#e2e8f0;border-color:rgba(148,163,184,.2);background:rgba(255,255,255,.06);}',
-    '.ovl-tool:hover{color:#e2e8f0;border-color:rgba(148,163,184,.18);background:rgba(255,255,255,.06);}',
+    '.ovl-tool[aria-pressed="true"]{color:var(--text-primary,#e2e8f0);border-color:rgb(var(--text-secondary-rgb,148 163 184) / .2);background:rgba(255,255,255,.06);}',
+    '.ovl-tool:hover{color:var(--text-primary,#e2e8f0);border-color:rgb(var(--text-secondary-rgb,148 163 184) / .18);background:rgba(255,255,255,.06);}',
 
     /* page content wrapper — used when page wraps its content in #page-content */
     '#page-content{height:calc(100vh - 52px);overflow-y:auto;padding:20px;}'
@@ -335,12 +382,12 @@
     /* logo */
     html += '<a id="nav-logo" href="#" title="PBGui">'
           + '<svg width="112" height="36" viewBox="0 0 112 36" xmlns="http://www.w3.org/2000/svg">'
-          + '<rect x="1" y="1" width="34" height="34" rx="7" fill="#1a2744" stroke="#3182ce" stroke-width="1.5"/>'
-          + '<rect x="7" y="21" width="5" height="9" rx="1.5" fill="#63b3ed"/>'
-          + '<rect x="14.5" y="15" width="5" height="15" rx="1.5" fill="#4299e1"/>'
-          + '<rect x="22" y="9" width="5" height="21" rx="1.5" fill="#3182ce"/>'
-          + '<text x="42" y="15" font-family="\'Segoe UI\',system-ui,sans-serif" font-size="13" font-weight="700" fill="#e2e8f0" letter-spacing="0.3">PBGui</text>'
-          + '<text x="42" y="28" font-family="\'Segoe UI\',system-ui,sans-serif" font-size="7.5" font-weight="400" fill="#4299e1" letter-spacing="1.2">' + esc(window.PBGuiI18n ? PBGuiI18n.serverMsg(c.subtitle) : c.subtitle) + '</text>'
+          + '<rect x="1" y="1" width="34" height="34" rx="7" style="fill:var(--bg-elevated,#262730);stroke:var(--accent-deep,#3a7fd5)" stroke-width="1.5"/>'
+          + '<rect x="7" y="21" width="5" height="9" rx="1.5" style="fill:var(--accent-soft,#7db8f7)"/>'
+          + '<rect x="14.5" y="15" width="5" height="15" rx="1.5" style="fill:var(--accent,#4da3ff)"/>'
+          + '<rect x="22" y="9" width="5" height="21" rx="1.5" style="fill:var(--accent-deep,#3a7fd5)"/>'
+          + '<text x="42" y="15" style="font-family:var(--font-family,system-ui,sans-serif);fill:var(--text-primary,#e2e8f0)" font-size="13" font-weight="700" letter-spacing="0.3">PBGui</text>'
+          + '<text x="42" y="28" style="font-family:var(--font-family,system-ui,sans-serif);fill:var(--accent,#4da3ff)" font-size="7.5" font-weight="400" letter-spacing="1.2">' + esc(window.PBGuiI18n ? PBGuiI18n.serverMsg(c.subtitle) : c.subtitle) + '</text>'
           + '</svg></a>';
 
     /* groups */
@@ -349,15 +396,16 @@
       html += '<div class="nav-group">';
       html += '<button class="nav-group-btn' + (isActive ? ' active' : '') + '" data-group="' + group.id + '"'
            + ' aria-expanded="false" aria-controls="nav-dropdown-' + group.id + '">';
-      html += esc(navT('nav.' + group.id, group.label)) + ' <span class="nav-arrow">&#9660;</span></button>';
+      html += esc(navT('nav.' + group.id, group.label)) + ' <span class="nav-arrow">' + NAV_ACTION_ICONS.chevron + '</span></button>';
       html += '<div class="nav-dropdown" id="nav-dropdown-' + group.id + '" role="menu">';
       group.items.forEach(function (item) {
         var isCurrent = (item.page === CURRENT);
         var itemLabel = esc(navT('nav.page.' + item.page, item.label));
+        var icon = pageIcon(item.page, item.icon);
         if (isCurrent) {
-          html += '<span class="nav-item current" role="menuitem" aria-current="page"><span class="nav-item-icon">' + item.icon + '</span>' + itemLabel + '</span>';
+          html += '<span class="nav-item current" role="menuitem" aria-current="page"><span class="nav-item-icon">' + icon + '</span>' + itemLabel + '</span>';
         } else {
-          html += '<a class="nav-item" role="menuitem" data-page="' + item.page + '"><span class="nav-item-icon">' + item.icon + '</span>' + itemLabel + '</a>';
+          html += '<a class="nav-item" role="menuitem" data-page="' + item.page + '"><span class="nav-item-icon">' + icon + '</span>' + itemLabel + '</a>';
         }
       });
       html += '</div></div>';
@@ -369,12 +417,12 @@
           + '<span id="pbgui-auth-mode-pill" role="status">' + esc(navT('nav.no_login', 'NO LOGIN')) + '</span>'
           + '<span id="pbgui-master-pill"><span class="pbgui-master-label">' + esc(navT('nav.master', 'Master')) + '</span><span id="pbgui-master-name"></span></span>'
           + '<button class="nav-action-btn restart" id="pbgui-restart-btn"><span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart')) + '</button>'
-          + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '">&#128276;</button>'
+          + '<button class="nav-action-btn notify icon-only" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '" aria-label="' + esc(navT('nav.notification_log', 'Notification log')) + '">' + NAV_ACTION_ICONS.bell + '</button>'
           + '<span class="nav-divider" aria-hidden="true"></span>'
-          + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '">&#128737; <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
+          + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '">' + NAV_ACTION_ICONS.shieldAlert + ' <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
           + '<button class="nav-action-btn" id="pbgui-lang-btn" title="' + esc(navT('nav.switch_language', 'Switch language')) + '">' + ((window.PBGuiI18n && window.PBGuiI18n.lang === 'zh') ? 'English' : '中文') + '</button>'
-          + '<button class="nav-action-btn accent" id="pbgui-guide-btn">&#128218; ' + esc(navT('nav.guide', 'Guide')) + '</button>'
-          + '<button class="nav-action-btn" id="pbgui-about-btn">&#x2139;&#xFE0F; ' + esc(navT('nav.about', 'About')) + '</button>'
+          + '<button class="nav-action-btn accent" id="pbgui-guide-btn">' + NAV_ACTION_ICONS.book + ' ' + esc(navT('nav.guide', 'Guide')) + '</button>'
+          + '<button class="nav-action-btn" id="pbgui-about-btn">' + NAV_ACTION_ICONS.info + ' ' + esc(navT('nav.about', 'About')) + '</button>'
           + '<button class="nav-action-btn icon-only logout" id="pbgui-logout-btn" title="' + esc(navT('nav.logout', 'Logout')) + '" aria-label="' + esc(navT('nav.logout', 'Logout')) + '">'
           +   '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
           +     '<path d="M4 4.75C4 4.33579 4.33579 4 4.75 4H13.25C13.6642 4 14 4.33579 14 4.75V19.25C14 19.6642 13.6642 20 13.25 20H4.75C4.33579 20 4 19.6642 4 19.25V4.75Z" stroke-width="1.7" stroke-linejoin="round"/>'
@@ -897,15 +945,15 @@
     var html = '<div id="pbgui-about-ovl">'
       + '<div id="pbgui-about-box">'
       +   '<div class="pbgui-ovl-header">'
-      +     '<span class="pbgui-ovl-title">&#x2139;&#xFE0F; ' + esc(navT('nav.about_pbgui', 'About PBGui')) + '</span>'
+      +     '<span class="pbgui-ovl-title">' + NAV_ACTION_ICONS.info + esc(navT('nav.about_pbgui', 'About PBGui')) + '</span>'
       +     '<button class="pbgui-ovl-close" id="pbgui-about-close">&#x2715;</button>'
       +   '</div>'
       +   '<div id="pbgui-about-body">'
       +     '<svg width="72" height="72" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:1.1rem">'
-      +       '<rect x="1" y="1" width="34" height="34" rx="7" fill="#1a2744" stroke="#3182ce" stroke-width="1.5"/>'
-      +       '<rect x="7" y="21" width="5" height="9" rx="1.5" fill="#63b3ed"/>'
-      +       '<rect x="14.5" y="15" width="5" height="15" rx="1.5" fill="#4299e1"/>'
-      +       '<rect x="22" y="9" width="5" height="21" rx="1.5" fill="#3182ce"/>'
+      +       '<rect x="1" y="1" width="34" height="34" rx="7" style="fill:var(--bg-elevated,#262730);stroke:var(--accent-deep,#3a7fd5)" stroke-width="1.5"/>'
+      +       '<rect x="7" y="21" width="5" height="9" rx="1.5" style="fill:var(--accent-soft,#7db8f7)"/>'
+      +       '<rect x="14.5" y="15" width="5" height="15" rx="1.5" style="fill:var(--accent,#4da3ff)"/>'
+      +       '<rect x="22" y="9" width="5" height="21" rx="1.5" style="fill:var(--accent-deep,#3a7fd5)"/>'
       +     '</svg>'
       +     '<div id="pbgui-about-ver">PBGui ' + ver + '</div>'
       +     (serial ? '<div id="pbgui-about-serial">' + esc(navT('nav.api_serial', 'API Serial')) + ' ' + serial + '</div>' : '')
@@ -1207,7 +1255,7 @@
       console.warn('[pbgui_nav] Unknown PBGui page "' + page + '".');
       logUiNotification(navT('nav.nav_unavailable', 'Navigation unavailable - page is not registered.'), 'warn');
       var msg = document.createElement('div');
-      msg.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;background:#ef444480;color:#fff;padding:.6rem 1.2rem;border-radius:8px;font-size:.85rem;pointer-events:none;';
+      msg.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:9999;background:rgb(26 29 36 / .97);border:1px solid rgb(239 83 80 / .45);color:#f28b89;padding:.6rem 1.2rem;border-radius:8px;font-size:.85rem;pointer-events:none;';
       msg.textContent = navT('nav.nav_unavailable_body', 'Navigation unavailable — page is not registered.');
       document.body.appendChild(msg);
       setTimeout(function() { msg.remove(); }, 4000);
@@ -1461,10 +1509,10 @@
 
     var ov = document.createElement('div');
     ov.id = 'pbgui-restart-overlay';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(9,14,26,.92);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;font-family:sans-serif;';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgb(14 17 23 / .94);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;font-family:var(--font-family,system-ui,sans-serif);';
     ov.innerHTML =
-      '<div style="color:#e2e8f0;font-size:1.1rem;font-weight:600;">' + esc(navT('nav.restarting_services', 'Restarting PBGui Services\u2026')) + '</div>' +
-      '<div id="pbgui-restart-status" style="color:#64748b;font-size:0.85rem;">' + esc(navT('nav.waiting_services', 'Waiting for services\u2026')) + '</div>';
+      '<div style="color:var(--text-primary,#e2e8f0);font-size:1.1rem;font-weight:600;">' + esc(navT('nav.restarting_services', 'Restarting PBGui Services\u2026')) + '</div>' +
+      '<div id="pbgui-restart-status" style="color:var(--text-muted,#64748b);font-size:0.85rem;">' + esc(navT('nav.waiting_services', 'Waiting for services\u2026')) + '</div>';
     document.body.appendChild(ov);
 
     var attempts = 0;

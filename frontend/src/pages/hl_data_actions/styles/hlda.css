@@ -21,18 +21,18 @@
     .hlda-root {
         --hlda-bg: var(--bg-page);
         --hlda-bg2: #161b22;
-        --hlda-bg3: #1a1f2e;
+        --hlda-bg3: var(--bg-panel);
         --hlda-border: var(--bg-elevated);
         --hlda-border2: var(--border-default);
-        --hlda-text: #fafafa;
-        --hlda-text2: #b0b8c4;
-        --hlda-text3: #8899aa;
+        --hlda-text: var(--text-primary);
+        --hlda-text2: var(--text-secondary);
+        --hlda-text3: var(--text-muted);
         --hlda-text4: #666;
-        --hlda-accent: #26a69a;
-        --hlda-accent-hover: #2bbbad;
-        --hlda-warn: #ffa726;
-        --hlda-err: #ff4b4b;
-        --hlda-info: #3182ce;
+        --hlda-accent: var(--accent);
+        --hlda-accent-hover: var(--accent-soft);
+        --hlda-warn: var(--warning);
+        --hlda-err: var(--danger);
+        --hlda-info: var(--accent-deep);
         --hlda-success: #26a69a;
         --fs-xs: 11px;
         --fs-sm: 13px;
@@ -46,7 +46,7 @@
         --sp-lg: 20px;
         --input-h: 32px;
         --btn-h: 32px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+        font-family: var(--font-family), 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
         color: var(--hlda-text);
         line-height: 1.6;
         margin: 0;
@@ -184,13 +184,13 @@
         width: 100%; justify-content: flex-start; background: transparent;
         font: inherit; text-align: left; user-select: none;
     }
-    .hlda-root .hlda-coin-row:hover { background: rgba(99, 179, 237, 0.08); }
+    .hlda-root .hlda-coin-row:hover { background: rgb(var(--accent-rgb) / 0.08); }
     .hlda-root .hlda-coin-row.selected {
-        border-color: rgba(99, 179, 237, 0.24);
-        background: rgba(99, 179, 237, 0.12);
+        border-color: rgb(var(--accent-rgb) / 0.24);
+        background: rgb(var(--accent-rgb) / 0.12);
     }
     .hlda-root .hlda-coin-row.hlda-coin-btn:focus-visible {
-        outline: 1px solid rgba(99, 179, 237, 0.42);
+        outline: 1px solid rgb(var(--accent-rgb) / 0.42);
         outline-offset: 1px;
     }
     .hlda-root .hlda-coin-row input[type="checkbox"] {
@@ -242,9 +242,9 @@
     }
     .hlda-root .hlda-msg.success { display: block; background: var(--success)22; border: 1px solid var(--success)55; color: var(--hlda-success); }
     .hlda-root .hlda-msg.error   { display: block; background: var(--danger)22; border: 1px solid var(--danger)55; color: var(--hlda-err); }
-    .hlda-root .hlda-msg.warning { display: block; background: var(--warning)22; border: 1px solid #ffa72655; color: var(--hlda-warn); }
+    .hlda-root .hlda-msg.warning { display: block; background: var(--warning)22; border: 1px solid rgb(var(--warning-rgb) / 0.333); color: var(--hlda-warn); }
     .hlda-root .hlda-nocreds {
-        background: var(--warning)22; border: 1px solid #ffa72655; color: var(--hlda-warn);
+        background: var(--warning)22; border: 1px solid rgb(var(--warning-rgb) / 0.333); color: var(--hlda-warn);
         padding: 10px 14px; border-radius: 6px; font-size: var(--fs-sm);
     }
     .hlda-root .hlda-jm {
@@ -291,7 +291,7 @@
         color: var(--accent); font-weight: 500; display: flex; align-items: center; gap: 4px;
     }
     .hlda-root .hlda-sh-status .sh-running .sh-dot {
-        width: 6px; height: 6px; border-radius: 50%; background: #3b82f6;
+        width: 6px; height: 6px; border-radius: 50%; background: var(--accent-deep);
         animation: hlda-pulse 1.2s infinite;
     }
     @keyframes hlda-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -414,9 +414,9 @@
         display: grid;
         gap: var(--sp-sm);
         padding: var(--sp-md);
-        border: 1px solid rgba(148, 163, 184, 0.18);
+        border: 1px solid rgb(var(--text-secondary-rgb) / 0.18);
         border-radius: 8px;
-        background: rgba(15, 23, 42, 0.82);
+        background: rgb(var(--bg-page-rgb) / 0.82);
     }
     .hlda-root .hlda-detail-section h4 {
         margin: 0;
@@ -447,11 +447,11 @@
         margin: 0;
         padding: var(--sp-md);
         border-radius: 6px;
-        border: 1px solid rgba(148, 163, 184, 0.14);
+        border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
     .hlda-root .hlda-jbtn.view { border-color: rgba(20, 184, 166, 0.42); background: rgba(20, 184, 166, 0.16); color: #99f6e4; }
     .hlda-root .hlda-jbtn.view:hover { background: rgba(20, 184, 166, 0.26); color: #f0fdfa; }
-    .hlda-root .hlda-jbtn.run { border-color: rgba(34, 197, 94, 0.42); background: rgba(34, 197, 94, 0.16); color: #86efac; }
-    .hlda-root .hlda-jbtn.run:hover { background: rgba(34, 197, 94, 0.26); color: #f0fdf4; }
+    .hlda-root .hlda-jbtn.run { border-color: rgb(var(--success-rgb) / 0.42); background: rgb(var(--success-rgb) / 0.16); color: var(--success-soft); }
+    .hlda-root .hlda-jbtn.run:hover { background: rgb(var(--success-rgb) / 0.26); color: #f0fdf4; }
         background: var(--bg-page);
         color: var(--hlda-text2);
         font-family: 'Fira Code', 'Consolas', monospace;

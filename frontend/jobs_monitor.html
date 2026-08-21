@@ -3,8 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="/app/i18n.js?v=1"></script>
+      <link rel="icon" type="image/svg+xml" href="/app/favicon.svg">
+<script src="/app/i18n.js?v=1"></script>
     <title>Job Monitor - PBGui</title>
+    <link rel="stylesheet" href="/app/src/styles/tokens.css">
     <link rel="stylesheet" href="/app/css/app.css">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; }
@@ -16,13 +18,13 @@
             align-items: center;
         }
         .job-actions button { margin-left: 0; }
-        .btn-secondary { background: #4a5568; }
-        .btn-secondary:hover { background: #2d3748; }
+        .btn-secondary { background: var(--text-disabled, #4a5568); }
+        .btn-secondary:hover { background: var(--border-default, #2d3748); }
         .btn-view { background: #0f766e; color: #f8fafc; }
         .btn-view:hover { background: #115e59; }
         .btn-run { background: #15803d; color: #f8fafc; }
         .btn-run:hover { background: #166534; }
-        .btn-info { background: #3182ce; }
+        .btn-info { background: var(--accent-deep, #3a7fd5); }
         .btn-info:hover { background: #2c5282; }
         
         /* Log Modal */
@@ -42,7 +44,7 @@
         }
         .modal.active { display: flex; align-items: center; justify-content: center; }
         .modal-content {
-            background: #1a202c;
+            background: var(--bg-card, #1a202c);
             border-radius: 8px;
             padding: 1.5rem;
             width: min(900px, calc(100vw - (var(--sp-lg) * 2)));
@@ -57,13 +59,13 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
-            border-bottom: 1px solid #2d3748;
+            border-bottom: 1px solid var(--border-default, #2d3748);
             padding-bottom: 0.75rem;
         }
         .modal-body {
             overflow-y: auto;
             flex: 1;
-            background: #0e1117;
+            background: var(--bg-page, #0e1117);
             padding: 1rem;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
@@ -74,12 +76,12 @@
             padding: var(--sp-md);
             font-family: inherit;
             font-size: var(--fs-base);
-            color: #e2e8f0;
+            color: var(--text-primary, #e2e8f0);
             display: grid;
             gap: var(--sp-md);
         }
         .details-section {
-            background: #111827;
+            background: var(--surface-sidebar, #111827);
             border: 1px solid #243041;
             border-radius: 6px;
             padding: var(--sp-md);
@@ -99,16 +101,16 @@
             font-size: var(--fs-sm);
         }
         .details-kv-key {
-            color: #94a3b8;
+            color: var(--text-secondary, #94a3b8);
             font-weight: 600;
         }
         .details-kv-value {
-            color: #e2e8f0;
+            color: var(--text-primary, #e2e8f0);
             min-width: 0;
             word-break: break-word;
         }
         .details-empty {
-            color: #94a3b8;
+            color: var(--text-secondary, #94a3b8);
             font-size: var(--fs-sm);
         }
         .json-block {
@@ -117,7 +119,7 @@
             border-radius: 4px;
             background: #0b1220;
             border: 1px solid #1e293b;
-            color: #e2e8f0;
+            color: var(--text-primary, #e2e8f0);
             font-family: 'Courier New', monospace;
             font-size: var(--fs-sm);
             white-space: pre-wrap;
@@ -144,7 +146,7 @@
         /* Progress details */
         .progress-details {
             font-size: var(--fs-xs);
-            color: #94a3b8;
+            color: var(--text-secondary, #94a3b8);
             margin-top: 0.5rem;
         }
         .progress-details .detail { margin-right: 1rem; }
@@ -152,7 +154,7 @@
         /* Job expander */
         .job-expander {
             margin-top: 0.5rem;
-            border-top: 1px solid #2d3748;
+            border-top: 1px solid var(--border-default, #2d3748);
             padding-top: 0.5rem;
         }
         .expander-toggle {
@@ -178,7 +180,7 @@
             margin-top: 0.75rem;
             border: 1px solid rgba(96,165,250,0.22);
             border-radius: 10px;
-            background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(17,24,39,0.9));
+            background: linear-gradient(135deg, rgb(var(--bg-page-rgb, 14 17 23) / 0.96), rgba(17,24,39,0.9));
             overflow: hidden;
         }
         .downloader-details summary {
@@ -247,12 +249,12 @@
             background: rgba(148,163,184,0.08);
         }
         .downloader-badge.failed {
-            border-color: rgba(248,113,113,0.35);
+            border-color: rgb(var(--danger-soft-rgb, 242 139 137) / 0.35);
             color: #fecaca;
-            background: rgba(239,68,68,0.12);
+            background: rgb(var(--danger-rgb, 239 83 80) / 0.12);
         }
         .downloader-badge.done {
-            border-color: rgba(74,222,128,0.32);
+            border-color: rgb(var(--success-rgb, 47 189 106) / 0.32);
             color: #bbf7d0;
             background: rgba(34,197,94,0.1);
         }
@@ -280,8 +282,8 @@
             gap: 0.45rem 0.65rem;
             font-size: var(--fs-xs);
         }
-        .downloader-stat-label { color: #94a3b8; display: block; }
-        .downloader-stat-value { color: #e2e8f0; font-weight: 700; }
+        .downloader-stat-label { color: var(--text-secondary, #94a3b8); display: block; }
+        .downloader-stat-value { color: var(--text-primary, #e2e8f0); font-weight: 700; }
         .downloader-current {
             grid-column: 1 / -1;
             color: #cbd5e1;
@@ -296,7 +298,7 @@
             justify-content: flex-end;
             margin-bottom: 1rem;
             padding: 0.5rem;
-            border-bottom: 1px solid #2d3748;
+            border-bottom: 1px solid var(--border-default, #2d3748);
         }
         .tab-header-actions button {
             background: #ef4444;
@@ -309,7 +311,7 @@
         }
         .tab-header-actions button:hover { background: #dc2626; }
         .tab-header-actions button:disabled {
-            background: #4a5568;
+            background: var(--text-disabled, #4a5568);
             cursor: not-allowed;
             opacity: 0.5;
         }
@@ -329,7 +331,7 @@
         .action-modal-card {
             width: min(460px, 92vw);
             background: #131b2b;
-            border: 1px solid #2d3748;
+            border: 1px solid var(--border-default, #2d3748);
             border-radius: 12px;
             box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9);
             overflow: hidden;
@@ -340,13 +342,13 @@
             align-items: center;
             gap: var(--sp-sm);
             padding: 0.85rem 1.1rem;
-            border-bottom: 1px solid #1e2736;
-            background: #111827;
+            border-bottom: 1px solid var(--border-subtle, #1e2736);
+            background: var(--surface-sidebar, #111827);
         }
         .action-modal-title {
             font-size: var(--fs-md);
             font-weight: 700;
-            color: #e2e8f0;
+            color: var(--text-primary, #e2e8f0);
         }
         .action-modal-close {
             background: transparent;
@@ -359,7 +361,7 @@
             line-height: 1;
         }
         .action-modal-close:hover {
-            color: #e2e8f0;
+            color: var(--text-primary, #e2e8f0);
             background: rgba(255, 255, 255, 0.06);
         }
         .action-modal-body {
@@ -369,12 +371,12 @@
         }
         .action-modal-message {
             font-size: var(--fs-base);
-            color: #e2e8f0;
+            color: var(--text-primary, #e2e8f0);
             line-height: 1.5;
         }
         .action-modal-detail {
             font-size: var(--fs-sm);
-            color: #94a3b8;
+            color: var(--text-secondary, #94a3b8);
             line-height: 1.45;
         }
         .action-modal-detail[hidden] { display: none !important; }

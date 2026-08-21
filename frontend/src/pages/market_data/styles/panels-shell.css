@@ -15,7 +15,7 @@
   --border: var(--border-default);
   --text: var(--text-primary);
   --text-dim: var(--text-secondary);
-  --accent-2: #63b3ed;
+  --accent-2: var(--accent-soft);
   --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif,
     'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
 }
@@ -236,21 +236,21 @@ select {
 
 .toast.success {
   background: rgba(38, 166, 154, 0.96);
-  border-color: rgba(110, 231, 183, 0.28);
+  border-color: rgb(var(--success-soft-rgb) / 0.28);
 }
 
 .toast.error {
-  background: rgba(239, 68, 68, 0.96);
-  border-color: rgba(254, 202, 202, 0.28);
+  background: rgb(var(--danger-rgb) / 0.96);
+  border-color: rgb(var(--danger-soft-rgb) / 0.28);
 }
 
 .toast.info {
   background: rgba(29, 78, 216, 0.96);
-  border-color: rgba(191, 219, 254, 0.28);
+  border-color: rgb(var(--accent-soft-rgb) / 0.28);
 }
 
 .toast.warn {
-  background: rgba(245, 158, 11, 0.96);
+  background: rgb(var(--warning-rgb) / 0.96);
   border-color: rgba(253, 230, 138, 0.28);
   color: var(--bg-card);
 }

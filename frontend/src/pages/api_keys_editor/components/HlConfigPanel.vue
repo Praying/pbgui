@@ -67,7 +67,7 @@ async function save(): Promise<void> {
     </div>
     <p
       id="hlWarningConfigStatus"
-      :style="{ fontSize: 'var(--fs-sm)', marginTop: '8px', color: configured ? '#26a69a' : '#ecc94b' }"
+      :style="{ fontSize: 'var(--fs-sm)', marginTop: '8px', color: configured ? 'var(--success)' : 'var(--warning)' }"
     >
       {{
         configured

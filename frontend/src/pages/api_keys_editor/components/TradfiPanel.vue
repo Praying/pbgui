@@ -35,7 +35,7 @@ onMounted(() => {
     </div>
     <p style="font-size:var(--fs-sm); color:#94a3b8; margin-bottom:8px;" v-html="t('misc.apikeys.stockPerpBacktestsDesc')"></p>
     <p
-      style="font-size:var(--fs-sm); background:#1a2744; border-left:3px solid #26a69a; padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a0aec0;"
+      style="font-size:var(--fs-sm); background:var(--bg-elevated); border-left:3px solid var(--accent); padding:8px 10px; border-radius:4px; margin-bottom:16px; color:var(--text-secondary);"
       v-html="t('misc.apikeys.betterAlternativeDesc')"
     ></p>
 
@@ -53,7 +53,7 @@ onMounted(() => {
                 : store.yfError.value
                   ? '#ef4444'
                   : store.yfInstalled.value
-                    ? '#26a69a'
+                    ? 'var(--success)'
                     : '#d69e2e',
             }"
           >
@@ -176,7 +176,7 @@ onMounted(() => {
             :href="store.providerLink.value ? store.providerLink.value.url : '#'"
             target="_blank"
             rel="noopener noreferrer"
-            :style="{ display: store.providerLink.value ? 'flex' : 'none', alignItems: 'center', gap: '4px', fontSize: 'var(--fs-sm)', color: '#26a69a', textDecoration: 'none', marginTop: '4px' }"
+            :style="{ display: store.providerLink.value ? 'flex' : 'none', alignItems: 'center', gap: '4px', fontSize: 'var(--fs-sm)', color: 'var(--accent)', textDecoration: 'none', marginTop: '4px' }"
           >
             &#128279;
             <span id="tradfiProviderLinkLabel">{{ store.providerLink.value ? store.providerLink.value.label || t('misc.apikeys.getApiKey') : '' }}</span>

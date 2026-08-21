@@ -24,7 +24,7 @@
   gap: var(--sp-md);
   margin-top: var(--sp-md);
   padding-top: var(--sp-md);
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-top: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
 }
 
 .best1m-job-monitor-frame {
@@ -82,7 +82,7 @@
   display: grid;
   gap: var(--sp-sm);
   padding: var(--sp-md);
-  border: 1px solid rgba(99, 179, 237, 0.16);
+  border: 1px solid rgb(var(--accent-rgb) / 0.16);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.45);
 }
@@ -99,7 +99,7 @@
   width: 100%;
   text-align: left;
   padding: 8px 10px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.18);
   border-radius: 8px;
   background: rgba(15, 23, 34, 0.82);
   color: var(--text);
@@ -108,13 +108,13 @@
 }
 
 .best1m-host-row:hover {
-  border-color: rgba(99, 179, 237, 0.38);
-  background: rgba(99, 179, 237, 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.38);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .best1m-host-row.selected {
-  border-color: rgba(99, 179, 237, 0.56);
-  background: rgba(99, 179, 237, 0.14);
+  border-color: rgb(var(--accent-rgb) / 0.56);
+  background: rgb(var(--accent-rgb) / 0.14);
 }
 
 .best1m-host-name {
@@ -154,7 +154,7 @@
 }
 
 .copy-data-summary {
-  border: 1px solid rgba(99, 179, 237, 0.24);
+  border: 1px solid rgb(var(--accent-rgb) / 0.24);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.5);
   padding: var(--sp-md);
@@ -183,9 +183,9 @@
 }
 
 .copy-data-summary-item {
-  border: 1px solid rgba(99, 179, 237, 0.16);
+  border: 1px solid rgb(var(--accent-rgb) / 0.16);
   border-radius: 8px;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgb(var(--bg-page-rgb) / 0.72);
   padding: var(--sp-sm) var(--sp-md);
   min-width: 0;
 }
@@ -206,11 +206,11 @@
 .copy-data-summary-log {
   margin: 0;
   border-radius: 6px;
-  border: 1px solid rgba(99, 179, 237, 0.12);
-  background: rgba(2, 6, 23, 0.58);
+  border: 1px solid rgb(var(--accent-rgb) / 0.12);
+  background: rgb(var(--bg-page-rgb) / 0.58);
   padding: var(--sp-sm);
   color: var(--text-primary);
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: var(--fs-xs);
   white-space: pre-wrap;
   overflow-wrap: anywhere;

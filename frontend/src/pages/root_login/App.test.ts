@@ -112,4 +112,49 @@ describe('root_login App', () => {
     expect(toggleLang).toHaveBeenCalled();
     expect(apiFetch).not.toHaveBeenCalled();
   });
+
+  it('keeps the submit button disabled until a password is entered', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+
+    const button = wrapper.find('#login-submit');
+    expect(button.exists()).toBe(true);
+    expect(button.attributes('disabled')).toBeDefined();
+
+    await wrapper.find('input[type=password]').setValue('pw');
+    expect(wrapper.find('#login-submit').attributes('disabled')).toBeUndefined();
+  });
+
+  it('shows a pending state on the submit button while the request runs', async () => {
+    let resolveRequest: (value: unknown) => void = () => {};
+    apiFetchMock.mockReturnValue(new Promise((resolve) => { resolveRequest = resolve; }));
+    const wrapper = mountApp();
+
+    await wrapper.find('input[type=password]').setValue('pw');
+    const submit = wrapper.find('form').trigger('submit');
+    await flushPromises();
+
+    const button = wrapper.find('#login-submit');
+    expect(button.text()).toBe('Signing in…');
+    expect(button.attributes('disabled')).toBeDefined();
+
+    resolveRequest({ ok: true });
+    await submit;
+    await flushPromises();
+    expect(wrapper.find('#login-submit').text()).toBe('Sign in');
+  });
+
+  it('does not submit twice while a login request is pending', async () => {
+    let resolveRequest: (value: unknown) => void = () => {};
+    apiFetchMock.mockReturnValue(new Promise((resolve) => { resolveRequest = resolve; }));
+    const wrapper = mountApp();
+
+    await wrapper.find('input[type=password]').setValue('pw');
+    await wrapper.find('form').trigger('submit');
+    await wrapper.find('form').trigger('submit');
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+
+    resolveRequest({ ok: true });
+    await flushPromises();
+  });
 });
