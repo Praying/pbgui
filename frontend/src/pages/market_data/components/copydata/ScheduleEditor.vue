@@ -53,14 +53,14 @@ const { t } = useI18n();
   </div>
   <div class="copy-data-actions">
     <button
-      class="btn primary"
+      class="btn pbgui-btn btn-primary primary"
       id="btn-copy-data-schedule-save"
       type="button"
       :disabled="store.isSaveBusy.value"
       @click="store.saveSchedule()"
     >{{ store.isEditing.value ? t('market.updateSchedule') : t('market.saveSchedule') }}</button>
     <button
-      class="btn secondary"
+      class="btn pbgui-btn btn-secondary secondary"
       id="btn-copy-data-schedule-cancel"
       type="button"
       v-if="store.isEditing.value"

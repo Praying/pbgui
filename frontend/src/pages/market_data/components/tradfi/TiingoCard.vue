@@ -24,7 +24,7 @@ const { t } = useI18n();
       </div>
       <div class="panel-actions">
         <button
-          class="btn secondary"
+          class="btn pbgui-btn btn-secondary secondary"
           id="btn-test-tiingo"
           type="button"
           @click="tiingo.test()"
@@ -41,7 +41,7 @@ const { t } = useI18n();
       </label>
       <div class="settings-field" style="align-self: end;">
         <button
-          class="btn primary"
+          class="btn pbgui-btn btn-primary primary"
           id="btn-save-tiingo-token"
           type="button"
           :disabled="tiingo.saveLoading.value"

@@ -48,7 +48,7 @@ const { t } = useI18n();
     </div>
     <div class="panel-actions">
       <button
-        class="btn primary"
+        class="btn pbgui-btn btn-primary primary"
         id="btn-integrity-save"
         type="button"
         :disabled="store.isSaving.value"
@@ -57,7 +57,7 @@ const { t } = useI18n();
         {{ t('market.saveArchiveSettings') }}
       </button>
       <button
-        class="btn secondary"
+        class="btn pbgui-btn btn-secondary secondary"
         id="btn-integrity-publish"
         type="button"
         :disabled="store.publishDisabled.value"
@@ -66,7 +66,7 @@ const { t } = useI18n();
         {{ t('market.publishNow') }}
       </button>
       <button
-        class="btn secondary"
+        class="btn pbgui-btn btn-secondary secondary"
         id="btn-integrity-reference"
         type="button"
         :disabled="store.referenceDisabled.value"

@@ -124,8 +124,8 @@ onBeforeUnmount(() => {
       <slot name="title"></slot>
       <div class="list-actions">
         <slot name="summary"></slot>
-        <button class="btn secondary mini" type="button" @click="emit('set-all', allValues())">{{ t('common.all') }}</button>
-        <button class="btn secondary mini" type="button" @click="emit('set-all', [])">{{ t('common.none') }}</button>
+        <button class="btn pbgui-btn btn-secondary btn-sm secondary mini" type="button" @click="emit('set-all', allValues())">{{ t('common.all') }}</button>
+        <button class="btn pbgui-btn btn-secondary btn-sm secondary mini" type="button" @click="emit('set-all', [])">{{ t('common.none') }}</button>
       </div>
     </div>
     <div class="select-list" :id="id">

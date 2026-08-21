@@ -101,7 +101,7 @@ const quotesLabel = computed(() =>
           <span class="pill" id="quotes-pill">{{ quotesLabel }}</span>
         </div>
         <div class="filters-reset">
-          <button class="btn" id="btn-reset-filters" @click="emit('reset')">{{ t('market.reset') }}</button>
+          <button class="btn pbgui-btn" id="btn-reset-filters" @click="emit('reset')">{{ t('market.reset') }}</button>
         </div>
       </div>
     </div>

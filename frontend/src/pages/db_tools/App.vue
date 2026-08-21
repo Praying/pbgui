@@ -230,9 +230,9 @@ onBeforeUnmount(() => store.teardown());
             <template #title><div class="list-title">{{ t('misc.dbtools.users') }}</div></template>
           </SelectList>
           <div class="actions">
-            <button class="btn secondary" id="cleanup-refresh" @click="store.loadUsers(store.cleanupTarget.value, 'cleanup')">{{ t('misc.dbtools.refreshUsers') }}</button>
-            <button class="btn primary" id="cleanup-preview" @click="store.previewCleanup()">{{ t('misc.dbtools.preview') }}</button>
-            <button class="btn danger" id="cleanup-run" :disabled="!store.cleanupPreview.value" @click="store.runCleanup()">{{ t('misc.dbtools.runCleanup') }}</button>
+            <button class="btn pbgui-btn btn-secondary secondary" id="cleanup-refresh" @click="store.loadUsers(store.cleanupTarget.value, 'cleanup')">{{ t('misc.dbtools.refreshUsers') }}</button>
+            <button class="btn pbgui-btn btn-primary primary" id="cleanup-preview" @click="store.previewCleanup()">{{ t('misc.dbtools.preview') }}</button>
+            <button class="btn pbgui-btn btn-danger danger" id="cleanup-run" :disabled="!store.cleanupPreview.value" @click="store.runCleanup()">{{ t('misc.dbtools.runCleanup') }}</button>
           </div>
           <PanelBits
             status-id="cleanup-status"
@@ -283,8 +283,8 @@ onBeforeUnmount(() => store.teardown());
             <template #title><div class="list-title">{{ t('misc.dbtools.usersFromSource') }}</div></template>
           </SelectList>
           <div class="actions">
-            <button class="btn secondary" id="users-refresh" @click="store.loadUsers(store.usersSource.value, 'copy')">{{ t('misc.dbtools.refreshSourceUsers') }}</button>
-            <button class="btn primary" id="users-preview" @click="store.previewCopyUsers()">{{ t('misc.dbtools.preview') }}</button>
+            <button class="btn pbgui-btn btn-secondary secondary" id="users-refresh" @click="store.loadUsers(store.usersSource.value, 'copy')">{{ t('misc.dbtools.refreshSourceUsers') }}</button>
+            <button class="btn pbgui-btn btn-primary primary" id="users-preview" @click="store.previewCopyUsers()">{{ t('misc.dbtools.preview') }}</button>
             <button class="btn warning" id="users-run" :disabled="!store.usersPreview.value" @click="store.runCopyUsers()">{{ t('misc.dbtools.copyUsers') }}</button>
           </div>
           <PanelBits
@@ -595,4 +595,3 @@ onBeforeUnmount(() => store.teardown());
 
   <LogPanel :visible="logVisible" :title="logTitle" :log-file="logFile" @close="logVisible = false" />
 </template>
-

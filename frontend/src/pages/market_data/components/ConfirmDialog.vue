@@ -66,10 +66,10 @@ watch(
         </div>
         <div class="confirm-warning" id="confirm-warning">{{ t('market.actionCannotBeUndone') }}</div>
         <div class="confirm-actions">
-          <button class="btn secondary" id="btn-confirm-cancel" type="button" @click="dialog.cancel()">
+          <button class="btn pbgui-btn btn-secondary secondary" id="btn-confirm-cancel" type="button" @click="dialog.cancel()">
             {{ t('common.cancel') }}
           </button>
-          <button class="btn primary" id="btn-confirm-accept" type="button" @click="dialog.accept()">
+          <button class="btn pbgui-btn btn-primary primary" id="btn-confirm-accept" type="button" @click="dialog.accept()">
             {{ dialog.state.value.confirmText || t('common.confirm') }}
           </button>
         </div>

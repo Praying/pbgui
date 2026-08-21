@@ -56,14 +56,14 @@ onBeforeUnmount(() => {
         <div class="panel-actions">
           <button
             v-if="store.isHyperliquid.value"
-            class="btn secondary"
+            class="btn pbgui-btn btn-secondary secondary"
             id="btn-integrity-normalize-hl"
             type="button"
             @click="store.queueNormalizeFallback()"
           >
             {{ t('market.normalizeFallbackCandles') }}
           </button>
-          <button class="btn primary" id="btn-integrity-scan" type="button" @click="store.queueScan()">
+          <button class="btn pbgui-btn btn-primary primary" id="btn-integrity-scan" type="button" @click="store.queueScan()">
             {{ t('market.runFullScan') }}
           </button>
         </div>

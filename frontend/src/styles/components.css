@@ -37,6 +37,12 @@ button.pbgui-btn.pbgui-btn:hover:not(:disabled) {
   border-color: var(--border-strong);
 }
 
+button.pbgui-btn.pbgui-btn.active {
+  background: var(--accent-bg);
+  border-color: rgba(77, 166, 255, 0.35);
+  color: var(--accent-soft);
+}
+
 button.pbgui-btn.pbgui-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;

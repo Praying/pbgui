@@ -40,7 +40,7 @@ function reasons(row: IssueGroup): string {
       <div class="panel-actions">
         <span class="note" id="integrity-issue-count">{{ store.issueCountText.value }}</span>
         <button
-          class="btn primary"
+          class="btn pbgui-btn btn-primary primary"
           id="btn-integrity-repair-all"
           type="button"
           :disabled="store.repairAllDisabled.value"
@@ -78,7 +78,7 @@ function reasons(row: IssueGroup): string {
             <td>
               <div class="integrity-action-group">
                 <button
-                  class="btn secondary"
+                  class="btn pbgui-btn btn-secondary secondary"
                   type="button"
                   data-integrity-gap-details="1"
                   :data-exchange="row.exchange"
@@ -88,7 +88,7 @@ function reasons(row: IssueGroup): string {
                   {{ t('market.details') }}
                 </button>
                 <button
-                  class="btn secondary"
+                  class="btn pbgui-btn btn-secondary secondary"
                   type="button"
                   data-integrity-repair-coin="1"
                   :data-exchange="row.exchange"

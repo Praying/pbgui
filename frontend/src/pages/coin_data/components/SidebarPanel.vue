@@ -53,17 +53,17 @@ const hip3CountLabel = computed(() =>
       </div>
 
       <div id="sidebar-toolbar">
-        <button class="sb-btn primary" id="btn-refresh-exchange" @click="$emit('refresh-exchange')">{{ t('market.refreshSelectedExchange') }}</button>
-        <button class="sb-btn info" id="btn-refresh-all" @click="$emit('refresh-all')">{{ t('market.refreshAllExchanges') }}</button>
+        <button class="sb-btn pbgui-btn btn-primary" id="btn-refresh-exchange" @click="$emit('refresh-exchange')">{{ t('market.refreshSelectedExchange') }}</button>
+        <button class="sb-btn pbgui-btn btn-info" id="btn-refresh-all" @click="$emit('refresh-all')">{{ t('market.refreshAllExchanges') }}</button>
         <button
-          class="sb-btn info"
+          class="sb-btn pbgui-btn btn-info"
           id="btn-refresh-cmc"
           :disabled="!hasMaterializedCmcKey"
           :title="cmcTitle"
           @click="$emit('refresh-cmc')"
         >{{ t('market.refreshCmcSelected') }}</button>
         <button
-          class="sb-btn info"
+          class="sb-btn pbgui-btn btn-info"
           id="btn-refresh-cmc-all"
           :disabled="!hasMaterializedCmcKey"
           :title="cmcTitle"
@@ -71,27 +71,27 @@ const hip3CountLabel = computed(() =>
         >{{ t('market.refreshCmcAll') }}</button>
         <hr class="sb-sep">
         <button
-          class="sb-btn"
+          class="sb-btn pbgui-btn"
           id="btn-view-main"
           :class="{ active: activeView === 'main' }"
           @click="$emit('set-view', 'main')"
         >{{ t('market.matchedSymbolsCount', { count: counts.main }) }}</button>
         <button
-          class="sb-btn"
+          class="sb-btn pbgui-btn"
           id="btn-view-unmatched"
           :class="{ active: activeView === 'unmatched' }"
           @click="$emit('set-view', 'unmatched')"
         >{{ t('market.cmcUnmatchedCount', { count: counts.unmatched_visible }) }}</button>
         <button
           v-if="supportsHip3"
-          class="sb-btn"
+          class="sb-btn pbgui-btn"
           id="btn-view-hip3"
           :class="{ active: activeView === 'hip3' }"
           @click="$emit('set-view', 'hip3')"
         >{{ t('market.hip3SymbolsCount', { count: hip3CountLabel }) }}</button>
         <button
           v-if="supportsCopyTrading"
-          class="sb-btn"
+          class="sb-btn pbgui-btn"
           id="btn-only-cpt"
           :class="{ active: onlyCpt }"
           @click="$emit('toggle-only-cpt')"

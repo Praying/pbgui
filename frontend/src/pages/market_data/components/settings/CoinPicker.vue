@@ -77,14 +77,14 @@ function onKeydown(event: KeyboardEvent): void {
         />
       </div>
       <button
-        class="btn secondary"
+        class="btn pbgui-btn btn-secondary secondary"
         id="btn-select-all-coins"
         type="button"
         :disabled="store.autoEnableNewCoins.value"
         @click="store.selectVisibleCoins()"
       >{{ t('market.selectVisible') }}</button>
       <button
-        class="btn secondary"
+        class="btn pbgui-btn btn-secondary secondary"
         id="btn-clear-all-coins"
         type="button"
         :disabled="store.autoEnableNewCoins.value"

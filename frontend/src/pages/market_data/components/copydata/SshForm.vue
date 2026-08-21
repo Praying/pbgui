@@ -80,21 +80,21 @@ const { t } = useI18n();
     </div>
     <div class="copy-data-actions">
       <button
-        class="btn secondary"
+        class="btn pbgui-btn btn-secondary secondary"
         id="btn-copy-data-test"
         type="button"
         :disabled="store.isQueueDisabled.value"
         @click="store.testConnection()"
       >{{ t('market.testConnection') }}</button>
       <button
-        class="btn secondary"
+        class="btn pbgui-btn btn-secondary secondary"
         id="btn-copy-data-dry-run"
         type="button"
         :disabled="store.isQueueDisabled.value"
         @click="store.queueJob(true)"
       >{{ t('market.dryRun') }}</button>
       <button
-        class="btn primary"
+        class="btn pbgui-btn btn-primary primary"
         id="btn-copy-data-queue"
         type="button"
         :disabled="store.isQueueDisabled.value"

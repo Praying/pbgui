@@ -52,7 +52,7 @@ function onDayChange(event: Event): void {
           <p class="note" id="integrity-gap-subtitle">{{ store.gapSubtitle.value }}</p>
         </div>
         <button
-          class="btn secondary"
+          class="btn pbgui-btn btn-secondary secondary"
           id="btn-integrity-gap-close"
           ref="closeEl"
           type="button"

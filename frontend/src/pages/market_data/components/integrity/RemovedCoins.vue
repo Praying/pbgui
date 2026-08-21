@@ -40,7 +40,7 @@ onBeforeUnmount(() => {
       <div class="panel-actions">
         <span class="note" id="integrity-removed-count">{{ store.removedCountText.value }}</span>
         <button
-          class="btn danger"
+          class="btn pbgui-btn btn-danger danger"
           id="btn-integrity-remove-selected"
           type="button"
           :disabled="store.removeSelectedDisabled.value"
@@ -49,7 +49,7 @@ onBeforeUnmount(() => {
           {{ store.removeSelectedLabelText.value }}
         </button>
         <button
-          class="btn danger"
+          class="btn pbgui-btn btn-danger danger"
           id="btn-integrity-remove-all"
           type="button"
           :disabled="store.removeAllDisabled.value"
@@ -100,7 +100,7 @@ onBeforeUnmount(() => {
             <td>
               <button
                 v-if="row.removable"
-                class="btn danger"
+                class="btn pbgui-btn btn-danger danger"
                 type="button"
                 data-integrity-remove-coin="1"
                 :data-exchange="row.exchange"

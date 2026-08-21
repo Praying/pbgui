@@ -62,8 +62,8 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
         <div id="confirm-msg">{{ confirm.message }}</div>
         <div id="confirm-detail">{{ confirm.detail }}</div>
         <div id="confirm-actions">
-          <button id="confirm-cancel" class="btn secondary" @click="emit('confirm', false)">{{ t('common.cancel') }}</button>
-          <button id="confirm-ok" class="btn" :class="confirm.danger ? 'danger' : 'warning'" @click="emit('confirm', true)">{{ t('common.confirm') }}</button>
+          <button id="confirm-cancel" class="btn pbgui-btn btn-secondary secondary" @click="emit('confirm', false)">{{ t('common.cancel') }}</button>
+          <button id="confirm-ok" class="btn pbgui-btn" :class="confirm.danger ? 'danger btn-danger' : 'warning btn-warning'" @click="emit('confirm', true)">{{ t('common.confirm') }}</button>
         </div>
       </div>
     </div>

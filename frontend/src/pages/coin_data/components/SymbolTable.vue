@@ -88,12 +88,12 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
         >
           <td v-for="column in columns" :key="column.key" :class="{ mono: column.mono }" :title="cellText(row, column)">
             <template v-if="column.render === 'cpt'">
-              <span v-if="row[column.key]" class="badge ok">{{ t('common.yes') }}</span>
-              <span v-else class="badge dim">{{ t('common.no') }}</span>
+              <span v-if="row[column.key]" class="badge pbgui-badge badge-success ok">{{ t('common.yes') }}</span>
+              <span v-else class="badge pbgui-badge badge-muted dim">{{ t('common.no') }}</span>
             </template>
             <template v-else-if="column.render === 'notice'">
-              <span v-if="row[column.key]" class="badge warn" :title="String(row[column.key])">{{ t('market.notice') }}</span>
-              <span v-else class="badge dim">-</span>
+              <span v-if="row[column.key]" class="badge pbgui-badge badge-warning warn" :title="String(row[column.key])">{{ t('market.notice') }}</span>
+              <span v-else class="badge pbgui-badge badge-muted dim">-</span>
             </template>
             <template v-else-if="column.render === 'tags'">
               <div v-if="rowTags(row, column).length" class="tags-cell" :title="rowTags(row, column).join(', ')">

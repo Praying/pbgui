@@ -44,21 +44,21 @@ const { t } = useI18n();
       </div>
       <div class="copy-data-schedule-actions">
         <button
-          class="btn secondary"
+          class="btn pbgui-btn btn-secondary secondary"
           type="button"
           data-copy-schedule-action="run"
           :data-schedule-id="row.id"
           @click="$emit('run', row.id)"
         >{{ t('market.runNow') }}</button>
         <button
-          class="btn secondary"
+          class="btn pbgui-btn btn-secondary secondary"
           type="button"
           data-copy-schedule-action="edit"
           :data-schedule-id="row.id"
           @click="$emit('edit', row.id)"
         >{{ t('market.edit') }}</button>
         <button
-          class="btn danger"
+          class="btn pbgui-btn btn-danger danger"
           type="button"
           data-copy-schedule-action="delete"
           :data-schedule-id="row.id"
