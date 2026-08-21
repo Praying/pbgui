@@ -1013,6 +1013,15 @@ def _list_instances() -> list[dict[str, Any]]:
     """Load canonical local PB8 configs and merge desired deployment state."""
 
     desired, tombstones, nodes = _desired_pb8_state()
+    try:
+        local_runtime = pbgui_purefunc.pb8_runtime_status()
+    except Exception:
+        local_runtime = {}
+    runtime_error = ""
+    if local_runtime.get("ready") is False:
+        runtime_error = "; ".join(
+            str(error).strip() for error in (local_runtime.get("errors") or []) if str(error).strip()
+        ) or "The local PB8 runtime is not ready; run Update PB8."
     root = _run_root()
     if not root.is_dir() or root.is_symlink():
         return []
@@ -1080,6 +1089,7 @@ def _list_instances() -> list[dict[str, Any]]:
                 "assigned_hostname": str(node.get("pbname") or node.get("hostname") or ""),
                 "conflicted": record.get("conflicted") is True,
                 "load_error": load_error,
+                "runtime_error": runtime_error if load_error else "",
                 "twe": " | ".join(exposure_parts),
             })
     return _enrich_v8_runtime(result)
@@ -1621,6 +1631,65 @@ async def save_v8_instance_config(
         "overrides": sorted(override_payloads),
         "backup_id": backup_id,
         "sync": activation,
+    }
+
+
+@router.post("/instances/{name}/forced-mode")
+async def set_v8_instance_forced_mode(
+    name: str,
+    body: dict = Body(...),
+    session: SessionToken = Depends(require_auth),
+) -> dict[str, Any]:
+    """Set the global PB8 forced mode through the normal bundle save pipeline."""
+    name = _validate_name(name)
+    requested = str(body.get("mode") or "").strip().lower()
+    if requested == "panic":
+        mode = "panic"
+        label = "panic"
+    elif requested == "graceful_stop":
+        mode = "graceful_stop"
+        label = "graceful stop"
+    elif requested in {"tp_only", "take_profit_only"}:
+        mode = "tp_only"
+        label = "take profit only"
+    else:
+        raise HTTPException(status_code=400, detail="mode must be panic, graceful_stop or tp_only")
+
+    path = _config_path(name)
+    if _run_root().is_symlink() or path.parent.is_symlink() or not path.is_file() or path.is_symlink():
+        raise HTTPException(status_code=404, detail=f"PB8 instance '{name}' not found")
+    try:
+        with _run_lock():
+            config = load_pb8_config(path)
+            expected_version = _current_version(name)
+            override_configs = _override_payloads_by_filename(config, {}, path.parent)
+    except PB8ConfigurationError as exc:
+        raise _configuration_http_error(f"Loading PB8 instance '{name}'", exc) from exc
+
+    live = config.get("live")
+    if not isinstance(live, dict):
+        raise HTTPException(status_code=422, detail="live must be an object")
+    live["forced_mode_long"] = mode
+    live["forced_mode_short"] = mode
+    result = await save_v8_instance_config(
+        name,
+        {
+            "config": config,
+            "expected_version": expected_version,
+            "override_configs": override_configs,
+        },
+        False,
+        session,
+    )
+    _log(SERVICE, f"Set PB8 forced mode '{label}' for all positions on '{name}' (v{result['version']})", level="WARNING")
+    return {
+        "ok": True,
+        "name": name,
+        "mode": requested,
+        "forced_mode": mode,
+        "version": result["version"],
+        "backup_id": result.get("backup_id"),
+        "sync": result.get("sync") or {},
     }
 
 

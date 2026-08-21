@@ -1,5 +1,9 @@
 # Unreleased
 
+## Upstream Release Sync
+
+- Prepared the origin/main v1.98.24-v1.98.28 release changes for the Vue migration branch, including PB8 instance/VPS update behavior, deployment scripts, legacy compatibility updates, Pareto metric metadata, release notes, and regression coverage.
+
 ## Frontend Redesign Planning
 
 - Documented the approved PBGui frontend redesign: Vue 3 MPA continuation, Tailwind/headless/icon Spikes, semantic dark design system, and staged Dashboard, logging, and services-monitor migration with API, authentication, i18n, offline, and legacy-fallback compatibility preserved.

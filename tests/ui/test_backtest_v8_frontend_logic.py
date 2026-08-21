@@ -216,6 +216,221 @@ def test_delayed_config_load_does_not_replace_results_sidebar() -> None:
     assert completed.returncode == 0, completed.stderr or completed.stdout
 
 
+def test_panel_navigation_closes_config_editor_sidebar_outside_configs() -> None:
+    """Every non-Config panel must synchronously restore the normal action sidebar."""
+    source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
+    function = _extract_function(source, "selectPanel")
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        let hidden = 0;
+        let selected = [];
+        const window = {{PBGuiEditorShared: {{clearFixedValidationStatus() {{}}}}}};
+        const document = {{getElementById() {{ return {{style: {{}}}}; }}}};
+        const backtestShell = {{selectPanel(id) {{ selected.push(id); }}}};
+        let currentPanel = 'configs';
+        let _resultsEmptyRetryTimer = null, _resultsEmptyRetryCount = 0;
+        let configs = [{{}}], results = [{{}}], archives = [{{}}], legacyResults = [{{}}];
+        let selectedArchiveName = '';
+        function hideEditorSidebar() {{ hidden += 1; }}
+        function persistBacktestViewState() {{}}
+        function renderConfigs() {{}}
+        function renderResults() {{}}
+        function renderLegacyResults() {{}}
+        function loadConfigs() {{}}
+        function loadResults() {{}}
+        function loadArchives() {{}}
+        function loadLegacyResults() {{}}
+        function viewArchive() {{}}
+        {function}
+        selectPanel('results', {{persist: false, deferResultsLoad: true}});
+        assert.equal(hidden, 1);
+        assert.equal(currentPanel, 'results');
+        assert.deepEqual(selected, ['results']);
+        selectPanel('configs', {{persist: false}});
+        assert.equal(hidden, 1);
+        assert.equal(currentPanel, 'configs');
+        """
+    )
+
+    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+
+
+def test_editor_results_button_opens_the_unfiltered_results_panel() -> None:
+    """The editor sidebar must always provide access to all backtest results."""
+    source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
+    button_start = source.index('<button class="sb-btn" id="sb-btn-results"')
+    button_markup = source[button_start : source.index("</button>", button_start)]
+    functions = "\n\n".join(
+        _extract_function(source, name) for name in ("showEditorSidebar", "goEditorResults")
+    )
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const elements = {{
+          'sb-btn-add-to-run': {{disabled: true}},
+          'sb-btn-convert-v8': {{disabled: true, style: {{}}}},
+          'results-filter': {{value: 'old text'}},
+          'results-config-filter': {{value: 'old config'}}
+        }};
+        const document = {{getElementById(id) {{ return elements[id] || null; }}}};
+        const backtestEditorAdapter = {{isV8: true}};
+        const backtestShell = {{setEditorMode(value) {{ assert.equal(value, true); }}}};
+        let editingConfig = '__new__';
+        let _pendingResultFilter = 'old config';
+        let closed = 0;
+        let selectedPanel = '';
+        function closeEditor() {{ closed += 1; }}
+        function selectPanel(panel) {{ selectedPanel = panel; }}
+        {functions}
+        showEditorSidebar();
+        assert.equal(elements['sb-btn-add-to-run'].disabled, true);
+        assert.equal(elements['sb-btn-convert-v8'].style.display, 'none');
+        goEditorResults();
+        assert.equal(closed, 1);
+        assert.equal(selectedPanel, 'results');
+        assert.equal(_pendingResultFilter, '');
+        assert.equal(elements['results-filter'].value, '');
+        assert.equal(elements['results-config-filter'].value, '');
+        """
+    )
+
+    assert " disabled" not in button_markup
+    assert 'title="Show all backtest results"' in button_markup
+    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+
+
+def test_queue_result_action_applies_filter_before_showing_results() -> None:
+    """Queue result navigation must never expose the stale unfiltered table."""
+    source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
+    function = _extract_function(source, "viewConfigResults")
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const configFilter = {{
+          options: [{{value: ''}}],
+          value: '',
+          appendChild(option) {{ this.options.push(option); }}
+        }};
+        const nodes = {{
+          'results-filter': {{value: 'old search'}},
+          'results-config-filter': configFilter,
+          'results-list': {{innerHTML: '<table>all results</table>'}}
+        }};
+        const document = {{
+          getElementById(id) {{ return nodes[id] || null; }},
+          createElement(tag) {{ assert.equal(tag, 'option'); return {{value: '', textContent: ''}}; }}
+        }};
+        let results = [];
+        let _pendingResultFilter = '';
+        let selectedSnapshots = [];
+        let rendered = 0;
+        let loadArgs = [];
+        let hiddenCounts = 0;
+        function selectPanel(panel, options) {{
+          selectedSnapshots.push({{
+            panel,
+            deferred: !!(options && options.deferResultsLoad),
+            config: configFilter.value,
+            list: nodes['results-list'].innerHTML
+          }});
+        }}
+        function renderResults() {{ rendered += 1; }}
+        function loadResults(name, options) {{ loadArgs.push({{name, keepVisible: !!(options && options.keepVisible)}}); }}
+        function hideResultsCountLabel() {{ hiddenCounts += 1; }}
+        {function}
+
+        viewConfigResults('target config');
+        assert.equal(nodes['results-filter'].value, '');
+        assert.equal(configFilter.value, 'target config');
+        assert.equal(_pendingResultFilter, 'target config');
+        assert.match(selectedSnapshots[0].list, /Checking for matching results/);
+        assert.equal(selectedSnapshots[0].deferred, true);
+        assert.equal(hiddenCounts, 1);
+
+        results = [{{config_name: 'target config'}}];
+        viewConfigResults('target config');
+        assert.equal(_pendingResultFilter, '');
+        assert.equal(selectedSnapshots[1].config, 'target config');
+        assert.equal(selectedSnapshots[1].deferred, true);
+        assert.equal(rendered, 1);
+        assert.deepEqual(loadArgs, [
+          {{name: 'target config', keepVisible: false}},
+          {{name: 'target config', keepVisible: true}}
+        ]);
+        """
+    )
+
+    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+
+
+def test_results_load_progressively_and_use_server_config_filter() -> None:
+    """Result pages must render incrementally and scope queue requests by config."""
+    source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
+    function = _extract_function(source, "loadResults")
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const nodes = {{
+          'results-list': {{innerHTML: '<table>stale</table>'}},
+          'results-count-label': {{textContent: '', style: {{display: ''}}}}
+        }};
+        const document = {{getElementById(id) {{ return nodes[id] || null; }}}};
+        const requests = [];
+        const appliedCounts = [];
+        let paintFrames = 0;
+        const window = {{requestAnimationFrame(callback) {{ paintFrames += 1; setImmediate(callback); }}}};
+        let results = [];
+        let resultsByVersion = {{v7: [], v8: []}};
+        let RESULTS_PAGE_SIZE = 5;
+        let _pendingResultFilter = '';
+        let _resultsLoadGeneration = 0;
+        let _resultsEmptyRetryTimer = null;
+        let _resultsEmptyRetryCount = 0;
+        let currentPanel = 'results';
+        function selectedResultsVersion() {{ return 'v8'; }}
+        function backtestApiBase(version) {{ return '/api/backtest-' + version; }}
+        function hideResultsCountLabel() {{ nodes['results-count-label'].style.display = 'none'; }}
+        function resultsForSelectedVersion(items) {{ return items.filter(item => item.backtest_version === 'v8'); }}
+        function _applyResultsData(items, filterName) {{
+          assert.equal(filterName, 'target config');
+          results = items;
+          appliedCounts.push(items.length);
+          nodes['results-count-label'].textContent = items.length + ' results';
+          return items;
+        }}
+        function apiFetchFrom(base, path) {{
+          requests.push(base + path);
+          if (path.includes('offset=0')) return Promise.resolve({{
+            results: [{{path: '/new', config_name: 'target config'}}],
+            pagination: {{total: 2, has_more: true, next_offset: 1}}
+          }});
+          return Promise.resolve({{
+            results: [{{path: '/old', config_name: 'target config'}}],
+            pagination: {{total: 2, has_more: false, next_offset: 2}}
+          }});
+        }}
+        function toast(message) {{ throw new Error(message); }}
+        {function}
+
+        loadResults('target config').then(() => {{
+          assert.deepEqual(appliedCounts, [1, 2, 2]);
+          assert.equal(results.length, 2);
+          assert.match(requests[0], /offset=0&limit=5&name=target%20config$/);
+          assert.match(requests[1], /offset=1&limit=5&name=target%20config$/);
+          assert.equal(paintFrames, 2);
+          assert.equal(nodes['results-count-label'].textContent, '2 results');
+        }}).catch(error => {{ console.error(error); process.exit(1); }});
+        """
+    )
+
+    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+
+
 def test_delayed_v8_settings_load_does_not_replace_results_sidebar() -> None:
     """A deferred V8 editor render must stop after the user leaves Configs."""
     source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
@@ -378,7 +593,7 @@ def test_v8_archive_results_can_open_the_pb8_run_editor() -> None:
     assert "'addResultToArchive'" not in adapter.split("var unsupported =", 1)[1].split("];", 1)[0]
     assert "backtest_version: selectedResult.backtest_version || backtestEditorAdapter.version" in page
     assert "archiveResultApiFetch" in page
-    assert "{ showVersion: true, showStrategy: true }" in page
+    assert "{ showVersion: true, showStrategy: true, columnContext: 'archive' }" in page
     assert "Add to Run is available only for PB7 archive results." not in page
 
 
@@ -1090,8 +1305,58 @@ def test_backtest_archive_enables_strategy_for_v8_rows() -> None:
     source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
     function = _extract_function(source, "renderArchiveResults")
 
-    assert "{ showVersion: true, showStrategy: true }" in function
+    assert "{ showVersion: true, showStrategy: true, columnContext: 'archive' }" in function
     assert "(r.strategy || '')" in function
+
+
+def test_backtest_and_archive_result_columns_are_independently_configurable() -> None:
+    """Local and archive result tables keep separate non-empty column selections."""
+    source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
+    shell = (ROOT / "frontend" / "js" / "backtest_shell.js").read_text(encoding="utf-8")
+    functions = "\n\n".join(
+        _extract_function(source, name)
+        for name in ("orderedResultColumns", "availableResultColumns", "setResultColumns")
+    )
+    assert 'id="results-columns-picker"' in shell
+    assert 'id="archive-results-columns-picker"' in source
+    assert 'id="results-columns-picker" class="result-columns-picker" hidden' not in shell
+    assert 'id="archive-results-columns-picker" class="result-columns-picker" hidden' not in source
+    assert "columnContext: 'results'" in source
+    assert "columnContext: 'archive'" in source
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const BACKTEST_RESULT_COLUMN_DEFINITIONS = [
+          {{key: 'backtest_version', conditional: 'version', default: true}},
+          {{key: 'strategy', conditional: 'strategy', default: true}},
+          {{key: 'coins_text', conditional: 'coins', default: true}},
+          {{key: 'gain', default: true}},
+          {{key: 'drawdown_worst', default: true}},
+          {{key: 'final_equity', optional: true, default: false}}
+        ];
+        const _resultColumnPreferences = {{
+          results: {{available: ['backtest_version', 'strategy', 'coins_text', 'gain', 'drawdown_worst', 'final_equity'], defaults: ['backtest_version', 'strategy', 'coins_text', 'gain', 'drawdown_worst'], selected: [], loaded: true}},
+          archive: {{available: ['backtest_version', 'gain', 'drawdown_worst'], defaults: ['backtest_version', 'gain', 'drawdown_worst'], selected: [], loaded: true}}
+        }};
+        let _resSort = 'gain', _resSortAsc = false;
+        let _archResSort = 'drawdown_worst', _archResSortAsc = false;
+        {functions}
+        const available = availableResultColumns([
+          {{backtest_version: 'v8', strategy: 'ema_anchor', coins_text: 'BTC', final_equity: 1200}}
+        ], {{showVersion: true, showStrategy: true}});
+        assert.deepEqual(available, ['backtest_version', 'strategy', 'coins_text', 'gain', 'drawdown_worst', 'final_equity']);
+        setResultColumns('results', ['gain', 'final_equity'], false);
+        setResultColumns('archive', ['drawdown_worst'], false);
+        assert.deepEqual(_resultColumnPreferences.results.selected, ['gain', 'final_equity']);
+        assert.deepEqual(_resultColumnPreferences.archive.selected, ['drawdown_worst']);
+        setResultColumns('results', [], false);
+        assert.deepEqual(_resultColumnPreferences.results.selected, ['backtest_version', 'strategy', 'coins_text', 'gain', 'drawdown_worst']);
+        assert.equal(_archResSort, 'drawdown_worst');
+        """
+    )
+
+    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert completed.returncode == 0, completed.stderr or completed.stdout
 
 
 def test_backtest_v8_configs_render_sortable_strategy_without_changing_v7_rows() -> None:

@@ -290,6 +290,50 @@ def test_save_publishes_canonical_pb8_manifest_and_explicit_upsert(
     assert desired["instances"] == {}
 
 
+@pytest.mark.parametrize(
+    ("requested", "expected"),
+    (("panic", "panic"), ("graceful_stop", "graceful_stop"), ("tp_only", "tp_only")),
+)
+def test_pb8_forced_mode_uses_versioned_bundle_save_and_preserves_overrides(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    requested: str,
+    expected: str,
+) -> None:
+    """PB8 P/G/T actions back up, version, validate, publish, and retain sparse files."""
+    _configure_root(monkeypatch, tmp_path)
+    _install_test_pipeline(monkeypatch)
+    payload = _payload()
+    payload["config"]["coin_overrides"] = {"BTC": {"override_config_path": "BTC.json"}}
+    payload["override_configs"] = {"BTC.json": {"bot": {"long": {"risk": {"n_positions": 1}}}}}
+    asyncio.run(v8_instances.save_v8_instance_config("alice", payload, True, session=None))
+
+    result = asyncio.run(v8_instances.set_v8_instance_forced_mode(
+        "alice", {"mode": requested}, session=None,
+    ))
+
+    bundle = tmp_path / "data" / "run_v8" / "alice"
+    saved = json.loads((bundle / "config.json").read_text(encoding="utf-8"))
+    desired = json.loads((tmp_path / "data" / "cluster" / "desired_state.json").read_text(encoding="utf-8"))
+    assert saved["live"]["forced_mode_long"] == expected
+    assert saved["live"]["forced_mode_short"] == expected
+    assert saved["pbgui"]["version"] == 2
+    assert (bundle / "BTC.json").is_file()
+    assert (tmp_path / "data" / "backup" / "v8" / "alice" / "1" / "config.json").is_file()
+    assert desired["pb8_instances"]["alice"]["version"] == "2"
+    assert result["forced_mode"] == expected
+    assert result["version"] == 2
+    assert result["backup_id"] == "1"
+
+
+def test_pb8_forced_mode_rejects_unknown_mode() -> None:
+    """PB8 forced-mode actions reject values outside the three exposed controls."""
+    with pytest.raises(v8_instances.HTTPException, match="mode must be") as error:
+        asyncio.run(v8_instances.set_v8_instance_forced_mode("alice", {"mode": "manual"}, session=None))
+
+    assert error.value.status_code == 400
+
+
 def test_fast_pb8_activation_has_three_second_transport_budget(monkeypatch: pytest.MonkeyPatch) -> None:
     """A PB8 save reserves time for PBRun to react within the five-second target."""
 
@@ -702,6 +746,41 @@ def test_instance_list_reports_active_pb8_strategy(monkeypatch: pytest.MonkeyPat
 
     assert len(rows) == 1
     assert rows[0]["strategy"] == "trailing_martingale"
+
+
+@pytest.mark.parametrize("runtime_ready", (False, True))
+def test_instance_list_distinguishes_runtime_failure_from_config_error(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    runtime_ready: bool,
+) -> None:
+    """Run rows classify global PB8 readiness separately from one invalid config."""
+    _configure_root(monkeypatch, tmp_path)
+    config_dir = tmp_path / "data" / "run_v8" / "alice"
+    config_dir.mkdir(parents=True)
+    (config_dir / "config.json").write_text(json.dumps({
+        "live": {"user": "alice"},
+        "bot": {},
+        "pbgui": {"enabled_on": "disabled", "version": 1},
+    }), encoding="utf-8")
+    reason = "PB8 Rust extension has no source fingerprint stamp; rerun the PB8 update on this host."
+    monkeypatch.setattr(
+        v8_instances.pbgui_purefunc,
+        "pb8_runtime_status",
+        lambda: {"ready": runtime_ready, "errors": [] if runtime_ready else [reason]},
+    )
+    monkeypatch.setattr(
+        v8_instances,
+        "load_pb8_config",
+        lambda _path: (_ for _ in ()).throw(RuntimeError("invalid live.user" if runtime_ready else reason)),
+    )
+    monkeypatch.setattr(v8_instances, "_desired_pb8_state", lambda: ({}, {}, {}))
+
+    rows = v8_instances._list_instances()
+
+    assert rows[0]["status"] == "config_error"
+    assert rows[0]["load_error"] == ("invalid live.user" if runtime_ready else reason)
+    assert rows[0]["runtime_error"] == ("" if runtime_ready else reason)
 
 
 def test_instance_list_surfaces_remote_pb8_runtime_blocker(monkeypatch: pytest.MonkeyPatch) -> None:

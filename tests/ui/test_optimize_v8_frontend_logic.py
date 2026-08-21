@@ -1166,26 +1166,41 @@ def test_pareto_contract_enables_backend_advertised_median_and_scenario() -> Non
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
     functions = "\n".join(
         _page_function(page, name)
-        for name in ("normalizeParetoStatistic", "normalizeParetoScenario", "applyParetoMeta")
+        for name in (
+            "normalizeParetoStatistic",
+            "normalizeParetoScenario",
+            "orderParetoMetrics",
+            "readStoredParetoColumns",
+            "persistParetoColumns",
+            "setParetoMetricColumns",
+            "applyParetoMeta",
+        )
     )
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
         const PARETO_STAT_OPTIONS = ['mean', 'min', 'max', 'std'];
+        const PARETO_SUMMARY_ORDER = ['adg', 'gain', 'drawdown_worst'];
+        const PARETO_COLUMNS_STORAGE_KEY = 'test';
         const state = {{
           paretoStatisticOptions: [], paretoStatistic: 'median', paretoScenario: 'bear',
-          paretoScenarioLabels: [], paretoMode: 'none', paretoStatisticEnabled: true
+          paretoScenarioLabels: [], paretoMode: 'none', paretoStatisticEnabled: true,
+          paretos: [], paretoAvailableMetrics: [], paretoDefaultMetrics: [], paretoMetricColumns: [],
+          paretoMetricColumnsLoaded: false, paretoSortKey: 'name', paretoSortDir: 'asc'
         }};
         {functions}
         applyParetoMeta({{
           mode: 'suite', scenario_labels: ['bull', 'bear'], selected_scenario: 'bear',
-          selected_statistic: 'median', available_statistics: ['mean', 'median'], statistic_enabled: false
+          selected_statistic: 'median', available_statistics: ['mean', 'median'], statistic_enabled: false,
+          available_metrics: ['quality', 'gain', 'drawdown_worst'],
+          default_metrics: ['gain', 'quality', 'drawdown_worst']
         }});
         assert.equal(state.paretoMode, 'suite');
         assert.deepEqual(state.paretoScenarioLabels, ['bull', 'bear']);
         assert.equal(state.paretoScenario, 'bear');
         assert.equal(state.paretoStatistic, 'median');
         assert.equal(state.paretoStatisticEnabled, false);
+        assert.deepEqual(state.paretoMetricColumns, ['gain', 'drawdown_worst', 'quality']);
         """
     )
     _run_node(script)
@@ -1226,6 +1241,41 @@ def test_pareto_gain_order_and_numeric_sort_are_stable() -> None:
         assert.deepEqual(sortParetos(rows, ['gain']).map((row) => row.name), ['alpha', 'bravo', 'charlie', 'missing']);
         state.paretoSortDir = 'asc';
         assert.deepEqual(sortParetos(rows, ['gain']).map((row) => row.name), ['charlie', 'alpha', 'bravo', 'missing']);
+        """
+    )
+    _run_node(script)
+
+
+def test_pareto_metric_columns_are_configurable_and_never_empty() -> None:
+    """The column picker filters visible metrics, restores defaults, and keeps one column selected."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n".join(
+        _page_function(page, name)
+        for name in ("orderParetoMetrics", "persistParetoColumns", "setParetoMetricColumns", "getParetoSummaryKeys")
+    )
+    assert 'id="pareto-columns-picker"' in page
+    assert 'id="pareto-columns-defaults"' in page
+    assert 'id="pareto-columns-all"' in page
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const PARETO_SUMMARY_ORDER = ['adg', 'gain', 'drawdown_worst', 'sharpe_ratio'];
+        const PARETO_COLUMNS_STORAGE_KEY = 'test';
+        const state = {{
+          paretoAvailableMetrics: ['gain', 'drawdown_worst', 'sharpe_ratio'],
+          paretoDefaultMetrics: ['gain', 'drawdown_worst'],
+          paretoMetricColumns: ['gain', 'drawdown_worst'],
+          paretoSortKey: 'summary:drawdown_worst',
+          paretoSortDir: 'desc'
+        }};
+        {functions}
+        const rows = [{{summary: {{gain: 37, drawdown_worst: 0.12, sharpe_ratio: 0.14}}}}];
+        assert.deepEqual(getParetoSummaryKeys(rows), ['gain', 'drawdown_worst']);
+        setParetoMetricColumns(['sharpe_ratio'], false);
+        assert.deepEqual(getParetoSummaryKeys(rows), ['sharpe_ratio']);
+        assert.equal(state.paretoSortKey, 'name');
+        setParetoMetricColumns([], false);
+        assert.deepEqual(state.paretoMetricColumns, ['gain', 'drawdown_worst']);
         """
     )
     _run_node(script)
@@ -1446,6 +1496,57 @@ def test_pb8_scenario_controls_are_not_rendered_for_pb7() -> None:
     assert "optimizeEditorAdapter.isV8" in _page_function(page, "renderOptimizeLimitsEditor")
     assert "field !== 'scenario_name'" in _page_function(page, "updateScoringEditField")
     assert "field !== 'scenario_name'" in _page_function(page, "updateLimitEditField")
-    assert_text_present(page, "Resolve or remove invalid PB8 market identifiers before saving.")
-    assert_text_present(page, "PB8 market resolver error: {message}")
-    assert_text_present(page, "PB8 market identifiers have not been verified. Retry market loading before saving.")
+    assert "Resolve or remove invalid PB8 market identifiers before saving." in page
+    assert "PB8 market resolver error:" in page
+    assert "PB8 market identifiers have not been verified." in page
+
+
+def test_optimize_apply_filters_updates_both_sides_across_exchanges() -> None:
+    """Optimize market filters must populate approved/ignored lists like Backtest."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    function = _page_function(page, "applyOptimizeFilters")
+    assert 'id="opted-sidebar-apply-filters-btn"' in page
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const button = {{disabled: false}};
+        const nodes = {{
+          'opted-sidebar-apply-filters-btn': button,
+          'opted-market-cap': {{value: '5000'}},
+          'opted-vol-mcap': {{value: ''}},
+          'opted-only-cpt': {{checked: true}},
+          'opted-notices-ignore': {{checked: false}}
+        }};
+        const selections = {{'ms-opt-exchanges': ['binance', 'bybit'], 'ms-opt-tags': ['layer-1']}};
+        const applied = {{}};
+        const urls = [];
+        const messages = [];
+        const optimizeEditorAdapter = {{isV8: true, metadataApiBase: () => '/api/v8'}};
+        function el(id) {{ return nodes[id]; }}
+        function optGetMs(id) {{ return selections[id] || []; }}
+        function optSetMs(id, values) {{ applied[id] = values; }}
+        function toast(message, level) {{ messages.push({{message, level}}); }}
+        async function authFetch(url) {{
+          urls.push(url);
+          if (url.includes('exchange=binance')) return {{approved: ['BTC', 'XRP'], ignored: ['DOGE', 'SOL'], unresolved: []}};
+          return {{approved: ['DOGE', 'HYPE'], ignored: ['XRP'], unresolved: ['OLD']}};
+        }}
+        {function}
+        applyOptimizeFilters().then(() => {{
+          assert.equal(urls.length, 2);
+          assert.match(urls[0], /market_cap=5000/);
+          assert.match(urls[0], /vol_mcap=10/);
+          assert.match(urls[0], /only_cpt=true/);
+          assert.match(urls[0], /tags=layer-1/);
+          const approved = ['BTC', 'DOGE', 'HYPE', 'XRP'];
+          assert.deepEqual(applied['ms-opt-app-long'], approved);
+          assert.deepEqual(applied['ms-opt-app-short'], approved);
+          assert.deepEqual(applied['ms-opt-ign-long'], ['SOL']);
+          assert.deepEqual(applied['ms-opt-ign-short'], ['SOL']);
+          assert.equal(messages.at(-1).level, 'info');
+          assert.match(messages.at(-1).message, /1 unavailable PB8 symbols skipped/);
+          assert.equal(button.disabled, false);
+        }}).catch(error => {{ console.error(error); process.exit(1); }});
+        """
+    )
+    _run_node(script)

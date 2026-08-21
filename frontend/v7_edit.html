@@ -570,6 +570,7 @@ textarea.json-invalid:focus {
       <button class="sb-btn" onclick="goStrategyExplorer()" title="Open Strategy Explorer" data-i18n-title="v7run.openStrategyExplorer">🔍 <span data-i18n="v7run.strategyExplorer">Strategy Explorer</span></button>
       <button class="sb-btn" onclick="goBalanceCalc()" title="Open Balance Calculator page" data-i18n-title="v7run.openBalanceCalculatorPage">💰 <span data-i18n="v7run.balanceCalculator">Balance Calculator</span></button>
       <button class="sb-btn" onclick="calculateBalance()" title="Calculate needed balance from current config (shown inline)" data-i18n-title="v7run.calcBalanceTitle">⚡ <span data-i18n="v7run.calcBalance">Calc Balance</span></button>
+      <button class="sb-btn" id="btn-apply-filters" onclick="applyRunFilters()" title="Apply market cap, volume, tag, CPT, and notice filters to approved/ignored coins" data-i18n="v7run.applyFilters">🔎 Apply Filters</button>
       <hr class="sb-sep">
       <button class="sb-btn" id="btn-log" onclick="toggleLogPanel()" title="Live passivbot log" data-i18n-title="v7run.livePassivbotLog">📋 <span data-i18n="v7run.log">Log</span></button>
     </div>
@@ -1030,12 +1031,6 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
       <label for="f-notices-ignore"><span data-tip="Automatically ignore coins flagged in the latest PBGui notices.">notices_ignore</span></label>
     </div>
   </div>
-  <div class="form-group" style="justify-content:flex-end">
-    <div class="chk-row">
-      <input type="checkbox" id="f-apply-filters">
-      <label for="f-apply-filters"><span data-tip="Enable PBGui coin filters. When unchecked all filters above are ignored.">apply_filters</span></label>
-    </div>
-  </div>
 </div>
 
 <!-- Coin multiselects -->
@@ -1073,16 +1068,14 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 </div>
 
 <!-- Dynamic Ignore -->
-<div class="form-row cols-4" data-v7-only>
+<div class="form-row cols-4">
   <div class="form-group">
     <div class="chk-row">
       <input type="checkbox" id="f-dynamic-ignore">
       <label for="f-dynamic-ignore"><span data-tip="Use the current filters and notices to auto-build ignored symbols dynamically at runtime.">dynamic_ignore</span></label>
     </div>
   </div>
-  <div class="form-group"></div>
-  <div class="form-group"></div>
-  <div class="form-group"></div>
+  <div class="form-group" data-v8-only style="grid-column:span 3;justify-content:center;color:var(--text-dim);font-size:var(--fs-xs)">PB7-only runtime feature. PB8 uses the explicit lists produced by Apply Filters.</div>
 </div>
 
 <div id="dynamic-ignore-preview" data-v7-only style="display:none; margin-bottom:var(--sp-md);">
@@ -2544,8 +2537,9 @@ function populateForm(opts) {
   setVal('f-vol-mcap', pbgui.vol_mcap != null ? pbgui.vol_mcap : 10);
   setChk('f-only-cpt', pbgui.only_cpt);
   setChk('f-notices-ignore', pbgui.notices_ignore);
-  setChk('f-apply-filters', false);
   setChk('f-dynamic-ignore', runEditorAdapter.isV8 ? false : pbgui.dynamic_ignore);
+  var dynamicIgnoreControl = document.getElementById('f-dynamic-ignore');
+  if (dynamicIgnoreControl) dynamicIgnoreControl.disabled = runEditorAdapter.isV8;
   updateEnabledOnAvailability();
 
   // Coin overrides
@@ -2995,11 +2989,7 @@ function collectConfig() {
       result.monitor[key] = structuredMonitor[key];
     });
     result.pbgui.runtime = 'pb8';
-    if (Object.prototype.hasOwnProperty.call(basePbgui, 'dynamic_ignore')) {
-      result.pbgui.dynamic_ignore = basePbgui.dynamic_ignore;
-    } else {
-      delete result.pbgui.dynamic_ignore;
-    }
+    delete result.pbgui.dynamic_ignore;
   }
   return result;
 }
@@ -3547,14 +3537,19 @@ renderMultiselectTags = function(wrapId) {
 };
 
 /* ─── Apply Filters ────────────────────────────────────────── */
-document.getElementById('f-apply-filters').addEventListener('change', async function() {
-  if (!this.checked) return;
+async function applyRunFilters() {
+  var button = document.getElementById('btn-apply-filters');
+  if (button) button.disabled = true;
   var user = getVal('f-user');
   var exchange = '';
   for (var i = 0; i < allUsers.length; i++) {
     if (allUsers[i].name === user) { exchange = allUsers[i].exchange; break; }
   }
-  if (!exchange) return;
+  if (!exchange) {
+    toast('Select a user with a known exchange', 'err');
+    if (button) button.disabled = false;
+    return;
+  }
   try {
     var tags = getMultiselectValues('ms-tags').join(',');
     var url = '/coins/filter?exchange=' + encodeURIComponent(exchange) +
@@ -3576,9 +3571,10 @@ document.getElementById('f-apply-filters').addEventListener('change', async func
     toast(PBGuiI18n.t('v7run.filtersApplied'), 'info');
   } catch (e) {
     toast(PBGuiI18n.t('v7run.filterError') + ': ' + e.message, 'err');
+  } finally {
+    if (button) button.disabled = false;
   }
-  this.checked = false;
-});
+}
 
 /* ─── BOT TWE/npos ↔ JSON sync ─────────────────────────────── */
 ['f-long-twe', 'f-long-npos'].forEach(function(id) {
