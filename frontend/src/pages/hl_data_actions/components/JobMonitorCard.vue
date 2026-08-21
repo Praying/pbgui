@@ -34,7 +34,7 @@ const historyEmpty = computed(
   <div class="hlda-jm">
     <div class="hlda-jm-title">
       {{ t('market.jobMonitor') }}
-      <span class="hlda-jm-badge" :class="monitor.badge.value">{{
+      <span class="hlda-jm-badge pbgui-badge" :class="monitor.badge.value">{{
         monitor.badge.value === 'connected'
           ? t('market.connected')
           : monitor.badge.value === 'connecting'
@@ -42,11 +42,11 @@ const historyEmpty = computed(
             : t('market.disconnected')
       }}</span>
     </div>
-    <div class="hlda-tabs">
+    <div class="hlda-tabs pbgui-tab-bar">
       <button
         v-for="tab in TABS"
         :key="tab"
-        class="hlda-tab"
+        class="hlda-tab pbgui-tab"
         :class="{ active: monitor.currentTab.value === tab }"
         @click="monitor.switchTab(tab)"
       >{{ tab === 'running' ? t('market.activeTab') : tab === 'done' ? t('market.done') : t('market.failed') }}</button>

@@ -81,7 +81,7 @@ onBeforeUnmount(() => drag.uninstall());
       <button
         v-if="showTradfiToggle"
         type="button"
-        class="hlda-mini-btn"
+        class="hlda-mini-btn pbgui-action"
         :class="{ active: tradfiOnly }"
         :id="ns + '-tradfi-only'"
         :aria-pressed="tradfiOnly ? 'true' : 'false'"
@@ -90,14 +90,14 @@ onBeforeUnmount(() => drag.uninstall());
       <button
         v-if="showNoLocalToggle"
         type="button"
-        class="hlda-mini-btn"
+        class="hlda-mini-btn pbgui-action"
         :class="{ active: noLocalData }"
         :id="ns + '-no-local-data'"
         :aria-pressed="noLocalData ? 'true' : 'false'"
         @click="emit('toggle-no-local')"
       >{{ t('market.noDownloadedHistory') }}</button>
-      <button type="button" class="hlda-mini-btn" :id="ns + '-select-visible'" :disabled="visibleCount === 0" @click="emit('select-visible')">{{ t('market.selectVisible') }}</button>
-      <button type="button" class="hlda-mini-btn" :id="ns + '-clear-selection'" :disabled="selected.size === 0" @click="emit('clear-selection')">{{ t('market.clearAll') }}</button>
+      <button type="button" class="hlda-mini-btn pbgui-action" :id="ns + '-select-visible'" :disabled="visibleCount === 0" @click="emit('select-visible')">{{ t('market.selectVisible') }}</button>
+      <button type="button" class="hlda-mini-btn pbgui-action" :id="ns + '-clear-selection'" :disabled="selected.size === 0" @click="emit('clear-selection')">{{ t('market.clearAll') }}</button>
       <span class="hlda-picker-meta">{{ t('market.selectedTotal', { selected: selected.size, total: totalCoins }) }}</span>
       <span class="hlda-picker-meta">{{ t('market.visibleCount', { visible: visibleCount }) }}</span>
     </div>
