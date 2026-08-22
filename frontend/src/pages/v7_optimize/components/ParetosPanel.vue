@@ -2,9 +2,10 @@
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
+import { PARETO_METRIC_PILL_LABELS } from '../lib/configModel';
 import type { ParetoItem, ParetoMeta } from '../types';
 
-const props = defineProps<{ rows: ParetoItem[]; meta: ParetoMeta; resultName: string; selected: Set<string>; isV8: boolean }>();
+const props = defineProps<{ rows: ParetoItem[]; meta: ParetoMeta; resultName: string; selected: Set<string>; isV8: boolean; columns?: string[]; availableMetrics?: string[] }>();
 const emit = defineEmits<{
   toggle: [path: string];
   view: [row: ParetoItem];
@@ -16,9 +17,20 @@ const emit = defineEmits<{
   selectAll: [];
   clearSelection: [];
   selectRange: [paths: string[], selected: boolean];
+  toggleColumn: [metric: string, enabled: boolean];
+  resetColumns: [];
+  selectAllColumns: [];
 }>();
 const { t } = useI18n();
+const picker = ref<HTMLDetailsElement | null>(null);
+const columns = computed(() => (Array.isArray(props.columns) ? props.columns : []));
+const availableMetrics = computed(() => (Array.isArray(props.availableMetrics) ? props.availableMetrics : []));
+function pillLabel(metric: string): string {
+  const short = PARETO_METRIC_PILL_LABELS[metric];
+  return short && short !== metric ? `${short} (${metric})` : metric;
+}
 const summaryKeys = computed(() => {
+  if (columns.value.length) return columns.value;
   const advertised = Array.isArray(props.meta.summary_keys) ? props.meta.summary_keys : [];
   if (advertised.length) return advertised.map(String);
   const keys = new Set<string>();
@@ -31,6 +43,9 @@ function summaryValue(row: ParetoItem, key: string): string {
 }
 function inlineSummary(row: ParetoItem): string {
   return Object.entries(row.summary || {}).slice(0, 4).map(([key, value]) => `${key}: ${String(value)}`).join(' · ') || '—';
+}
+function closePicker(): void {
+  if (picker.value) picker.value.open = false;
 }
 const wrap = ref<HTMLElement | null>(null);
 const tbody = ref<HTMLElement | null>(null);
@@ -49,6 +64,22 @@ onBeforeUnmount(() => dragSelect.dispose());
     <span class="opt-muted">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
     <label v-if="(meta.scenario_labels || []).length" class="opt-inline-field">{{ t('v7optimize.scenario') }}<select :value="meta.selected_scenario || 'Aggregated'" class="opt-input" @change="emit('update:scenario', ($event.target as HTMLSelectElement).value)"><option v-for="scenario in meta.scenario_labels" :key="scenario" :value="scenario">{{ scenario }}</option></select></label>
     <label class="opt-inline-field">{{ t('v7optimize.statistic') }}<select :value="meta.selected_statistic || 'mean'" class="opt-input" @change="emit('update:statistic', ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.available_statistics || ['mean']" :key="stat" :value="stat">{{ stat }}</option></select></label>
+    <details ref="picker" class="pareto-columns-picker" data-test="pareto-columns-picker">
+      <summary class="opt-btn pbgui-action small" :title="t('v7optimize.columns')">{{ t('v7optimize.columnsCount', { count: columns.length }) }}</summary>
+      <div class="pareto-columns-menu">
+        <div class="pareto-columns-options">
+          <label v-for="metric in availableMetrics" :key="metric" class="pareto-columns-option">
+            <input type="checkbox" :data-pareto-metric="metric" :checked="columns.includes(metric)" @change="emit('toggleColumn', metric, ($event.target as HTMLInputElement).checked)" />
+            <span>{{ pillLabel(metric) }}</span>
+          </label>
+        </div>
+        <div class="pareto-columns-actions">
+          <button class="opt-btn pbgui-action small" type="button" data-test="pareto-columns-defaults" @click="emit('resetColumns')">{{ t('v7optimize.columnsDefaults') }}</button>
+          <button class="opt-btn pbgui-action small" type="button" :title="t('v7optimize.columnsAllTitle')" @click="emit('selectAllColumns')">{{ t('v7optimize.columnsAll') }}</button>
+          <button class="opt-btn pbgui-action small" type="button" @click="closePicker">{{ t('v7optimize.columnsDone') }}</button>
+        </div>
+      </div>
+    </details>
     <span class="opt-grow"></span>
     <button class="opt-btn pbgui-action small" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
     <button class="opt-btn pbgui-action small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>

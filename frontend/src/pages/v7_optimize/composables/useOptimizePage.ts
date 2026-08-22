@@ -4,7 +4,16 @@ import { apiFetch, ApiError } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import type { OptimizeAdapter, OptimizePanel } from '../config';
 import { optimizeWsUrl, readInitialPanel, readOpenConfig } from '../config';
-import { buildEditorDraft, collectEditorConfig, getPath, isObject, type OptimizeEditorDraft } from '../lib/configModel';
+import {
+  buildEditorDraft,
+  collectEditorConfig,
+  getPath,
+  isObject,
+  normalizeParetoColumns,
+  orderParetoMetrics,
+  readStoredParetoColumns,
+  type OptimizeEditorDraft,
+} from '../lib/configModel';
 import type {
   ConfigPayload,
   ConfigSummary,
@@ -59,6 +68,9 @@ export function useOptimizePage(options: OptimizePageOptions) {
   const results = ref<ResultSummary[]>([]);
   const paretos = ref<ParetoItem[]>([]);
   const paretoMeta = ref<ParetoMeta>({});
+  const paretoMetricColumns = ref<string[]>([]);
+  const paretoColumnsLoaded = ref(false);
+  let paretoMetricReloadTimer: ReturnType<typeof setTimeout> | null = null;
   const configSearch = ref('');
   const resultSearch = ref('');
   const configSort = ref<{ key: string; direction: 'asc' | 'desc' }>({ key: 'modified', direction: 'desc' });
@@ -210,8 +222,82 @@ export function useOptimizePage(options: OptimizePageOptions) {
     results.value = data.results ?? [];
   }
 
+  /* ── Pareto metric column selection (legacy v7_optimize.html:2864-2903) ── */
+
+  const paretoColumnsStorageKey = `pbgui.optimize.${adapter.version}.pareto_columns`;
+
+  /** Full metric catalog: server-advertised (PB8) or collected from loaded rows (PB7). */
+  const paretoAvailableMetrics = computed(() => {
+    const advertised = Array.isArray(paretoMeta.value.available_metrics) ? paretoMeta.value.available_metrics : [];
+    const available = advertised.length
+      ? advertised
+      : paretos.value.flatMap((row) => Object.keys(row.summary || {}));
+    return orderParetoMetrics(available);
+  });
+
+  const paretoDefaultMetrics = computed(() => {
+    const advertised = Array.isArray(paretoMeta.value.default_metrics) ? paretoMeta.value.default_metrics : [];
+    const defaults = orderParetoMetrics(advertised).filter((metric) => paretoAvailableMetrics.value.includes(metric));
+    if (defaults.length) return defaults;
+    return paretoAvailableMetrics.value.slice(0, 1);
+  });
+
+  function storedParetoColumns(): string[] {
+    return readStoredParetoColumns(localStorage.getItem(paretoColumnsStorageKey))
+      .filter((metric) => paretoAvailableMetrics.value.includes(metric));
+  }
+
+  function persistParetoColumns(): void {
+    try {
+      localStorage.setItem(paretoColumnsStorageKey, JSON.stringify(paretoMetricColumns.value));
+    } catch {
+      /* storage unavailable — selection stays in-memory only */
+    }
+  }
+
+  function setParetoMetricColumns(metrics: string[], persist = true): void {
+    const selected = normalizeParetoColumns(metrics, paretoAvailableMetrics.value, paretoDefaultMetrics.value);
+    paretoMetricColumns.value = selected;
+    if (persist) persistParetoColumns();
+    if (paretoSort.value.key.startsWith('summary:') && !selected.includes(paretoSort.value.key.slice(8))) {
+      paretoSort.value = { key: 'name', direction: 'asc' };
+    }
+  }
+
+  /** Enabled: debounce a server reload; disabled: local-only (server returns a superset). */
+  function toggleParetoMetricColumn(metric: string, enabled: boolean): void {
+    const selected = paretoMetricColumns.value.slice();
+    const index = selected.indexOf(metric);
+    if (enabled && index < 0) selected.push(metric);
+    if (!enabled && index >= 0 && selected.length > 1) selected.splice(index, 1);
+    setParetoMetricColumns(selected);
+    if (enabled) scheduleParetoMetricReload();
+  }
+
+  function scheduleParetoMetricReload(): void {
+    if (paretoMetricReloadTimer !== null) clearTimeout(paretoMetricReloadTimer);
+    paretoMetricReloadTimer = setTimeout(() => {
+      paretoMetricReloadTimer = null;
+      loadParetos().catch((caught) => { error.value = detailOf(caught); });
+    }, 250);
+  }
+
+  function applyParetoColumns(): void {
+    if (!paretoColumnsLoaded.value) {
+      const stored = storedParetoColumns();
+      setParetoMetricColumns(stored.length ? stored : paretoDefaultMetrics.value, false);
+      paretoColumnsLoaded.value = true;
+    } else {
+      setParetoMetricColumns(paretoMetricColumns.value, false);
+    }
+  }
+
   async function loadParetos(resultPath = selectedResultPath.value): Promise<void> {
     const generation = ++paretoGeneration;
+    if (paretoMetricReloadTimer !== null) {
+      clearTimeout(paretoMetricReloadTimer);
+      paretoMetricReloadTimer = null;
+    }
     if (!resultPath) {
       paretos.value = [];
       paretoMeta.value = {};
@@ -222,10 +308,15 @@ export function useOptimizePage(options: OptimizePageOptions) {
       scenario: paretoMeta.value.selected_scenario || 'Aggregated',
       statistic: paretoMeta.value.selected_statistic || 'mean',
     });
+    // PB8 lazily projects only the selected metrics; PB7 ignores the parameter.
+    if (paretoColumnsLoaded.value && paretoMetricColumns.value.length) {
+      params.set('metrics', paretoMetricColumns.value.join(','));
+    }
     const data = await request<{ paretos?: ParetoItem[]; meta?: ParetoMeta }>(`/paretos?${params.toString()}`);
     if (generation !== paretoGeneration || resultPath !== selectedResultPath.value) return;
     paretos.value = data.paretos ?? [];
     paretoMeta.value = data.meta ?? {};
+    applyParetoColumns();
   }
 
   async function loadAll(): Promise<void> {
@@ -571,6 +662,10 @@ export function useOptimizePage(options: OptimizePageOptions) {
   if (getCurrentInstance()) {
     onBeforeUnmount(() => {
       disposed = true;
+      if (paretoMetricReloadTimer !== null) {
+        clearTimeout(paretoMetricReloadTimer);
+        paretoMetricReloadTimer = null;
+      }
       disconnect();
     });
   }
@@ -584,6 +679,11 @@ export function useOptimizePage(options: OptimizePageOptions) {
     results,
     paretos,
     paretoMeta,
+    paretoMetricColumns,
+    paretoAvailableMetrics,
+    paretoDefaultMetrics,
+    setParetoMetricColumns,
+    toggleParetoMetricColumn,
     configSearch,
     resultSearch,
     configSort,

@@ -338,3 +338,58 @@ export function applyOptimizeSeed(configValue: unknown, mode: OptimizeSeedMode, 
   config.optimize = optimize;
   return config;
 }
+
+/* ── Pareto metric column selection (legacy v7_optimize.html:2810-2895) ── */
+
+/** Short pill labels for the common Pareto metrics; key order is the column order. */
+export const PARETO_METRIC_PILL_LABELS: Record<string, string> = {
+  adg: 'adg',
+  gain: 'gain',
+  drawdown_worst: 'dd',
+  sharpe_ratio: 'sharpe',
+  loss_profit_ratio: 'lpr',
+  sortino_ratio: 'sortino',
+  omega_ratio: 'omega',
+  equity_balance_diff_neg_max: 'eq diff',
+};
+
+/** Pill metrics first (in label order), remaining metrics alphabetically. */
+export function orderParetoMetrics(metrics: Iterable<string>): string[] {
+  const seen: Record<string, boolean> = {};
+  for (const metric of metrics) {
+    const normalized = String(metric || '').trim();
+    if (normalized) seen[normalized] = true;
+  }
+  const ordered = Object.keys(PARETO_METRIC_PILL_LABELS).filter((metric) => !!seen[metric]);
+  Object.keys(seen)
+    .sort()
+    .forEach((metric) => {
+      if (!ordered.includes(metric)) ordered.push(metric);
+    });
+  return ordered;
+}
+
+/** Bound, dedupe and keep only advertised metrics; fall back to defaults when empty. */
+export function normalizeParetoColumns(
+  metrics: Iterable<string>,
+  available: readonly string[],
+  defaults: readonly string[],
+): string[] {
+  const selected = orderParetoMetrics(metrics).filter((metric) => available.includes(metric));
+  if (selected.length) return selected;
+  return orderParetoMetrics(defaults.length ? defaults : available.slice(0, 1));
+}
+
+/** Parse the persisted column list; malformed storage degrades to no selection. */
+export function readStoredParetoColumns(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const stored: unknown = JSON.parse(raw);
+    if (!Array.isArray(stored)) return [];
+    return stored
+      .map((metric) => String(metric ?? '').trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}

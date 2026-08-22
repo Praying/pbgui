@@ -156,4 +156,66 @@ describe('useOptimizePage', () => {
     expect(page.editorParamStatus.value).toEqual({ long: { hsl: 'neutralized' } });
   });
 
+
+  it('projects only the selected Pareto metric columns and debounces column reloads', async () => {
+    vi.useFakeTimers();
+    localStorage.removeItem('pbgui.optimize.v7.pareto_columns');
+    vi.mocked(apiFetch).mockReset();
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v7/main_page', 'http://testserver') });
+    page.selectedResultPath.value = '/results/a';
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      paretos: [{ path: '/p/1', name: 'one', summary: { gain: 0.1 } }],
+      meta: {
+        available_metrics: ['gain', 'adg', 'sharpe_ratio'],
+        default_metrics: ['gain', 'adg'],
+        selected_statistic: 'mean',
+        available_statistics: ['mean', 'median'],
+      },
+    });
+    await page.loadParetos();
+    // 首次加载：无 metrics 参数（列尚未确定），随后取 defaults
+    expect(vi.mocked(apiFetch).mock.calls[0]?.[0]).not.toContain('metrics=');
+    expect(page.paretoMetricColumns.value).toEqual(['adg', 'gain']);
+    expect(page.paretoAvailableMetrics.value).toEqual(['adg', 'gain', 'sharpe_ratio']);
+
+    // 启用列 → 250ms debounce 后带 metrics 重载并持久化
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      paretos: [{ path: '/p/1', name: 'one', summary: { gain: 0.1, sharpe_ratio: 2 } }],
+      meta: { available_metrics: ['gain', 'adg', 'sharpe_ratio'], default_metrics: ['gain', 'adg'] },
+    });
+    page.toggleParetoMetricColumn('sharpe_ratio', true);
+    expect(vi.mocked(apiFetch)).toHaveBeenCalledTimes(1); // debounce 未到期
+    vi.advanceTimersByTime(250);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(vi.mocked(apiFetch)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(apiFetch).mock.calls[1]?.[0]).toContain('metrics=adg%2Cgain%2Csharpe_ratio');
+    expect(JSON.parse(localStorage.getItem('pbgui.optimize.v7.pareto_columns') || '[]'))
+      .toEqual(['adg', 'gain', 'sharpe_ratio']);
+
+    // 禁用列 → 仅本地隐藏，不触发重载
+    page.toggleParetoMetricColumn('sharpe_ratio', false);
+    expect(page.paretoMetricColumns.value).toEqual(['adg', 'gain']);
+    expect(vi.mocked(apiFetch)).toHaveBeenCalledTimes(2);
+
+    // 最后一列不可被禁用
+    page.toggleParetoMetricColumn('gain', false);
+    page.toggleParetoMetricColumn('adg', false);
+    expect(page.paretoMetricColumns.value).toEqual(['adg']);
+    vi.useRealTimers();
+  });
+
+  it('restores persisted Pareto columns on first load', async () => {
+    localStorage.setItem('pbgui.optimize.v7.pareto_columns', JSON.stringify(['sharpe_ratio']));
+    vi.mocked(apiFetch).mockReset();
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v7/main_page', 'http://testserver') });
+    page.selectedResultPath.value = '/results/a';
+    vi.mocked(apiFetch).mockResolvedValueOnce({
+      paretos: [],
+      meta: { available_metrics: ['gain', 'sharpe_ratio'], default_metrics: ['gain'] },
+    });
+    await page.loadParetos();
+    expect(page.paretoMetricColumns.value).toEqual(['sharpe_ratio']);
+    localStorage.removeItem('pbgui.optimize.v7.pareto_columns');
+  });
+
 });

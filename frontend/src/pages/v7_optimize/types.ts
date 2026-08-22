@@ -58,6 +58,10 @@ export interface ParetoMeta {
   selected_statistic?: string;
   statistic_enabled?: boolean;
   summary_keys?: string[];
+  /** Full numeric metric catalog advertised by the result (PB8). */
+  available_metrics?: string[];
+  /** Server-side default projection (gain + objectives + drawdown_worst). */
+  default_metrics?: string[];
 }
 
 export interface OptimizeSettings {

@@ -252,6 +252,16 @@ async function updateParetoFilter(kind: 'scenario' | 'statistic', value: string)
   page.paretoMeta.value = { ...page.paretoMeta.value, [kind === 'scenario' ? 'selected_scenario' : 'selected_statistic']: value };
   await safely(() => page.loadParetos());
 }
+function onToggleParetoColumn(metric: string, enabled: boolean): void {
+  page.toggleParetoMetricColumn(metric, enabled);
+}
+function onResetParetoColumns(): void {
+  page.setParetoMetricColumns(page.paretoDefaultMetrics.value);
+}
+async function onSelectAllParetoColumns(): Promise<void> {
+  page.setParetoMetricColumns(page.paretoAvailableMetrics.value);
+  await safely(() => page.loadParetos());
+}
 async function viewPareto(row: ParetoItem): Promise<void> {
   await safely(async () => {
     const data = await actions.paretoFile(row.path);
@@ -463,7 +473,7 @@ onBeforeUnmount(() => {
         <section v-if="page.panel.value === 'configs'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
         <section v-else-if="page.panel.value === 'queue'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" /></section>
         <section v-else-if="page.panel.value === 'results'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" /></section>
-        <section v-else class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
+        <section v-else class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" :columns="page.paretoMetricColumns.value" :available-metrics="page.paretoAvailableMetrics.value" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @toggle-column="onToggleParetoColumn" @reset-columns="onResetParetoColumns" @select-all-columns="onSelectAllParetoColumns" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
       </template>
     </div>
   </div>

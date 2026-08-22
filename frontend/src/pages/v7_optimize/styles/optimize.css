@@ -110,3 +110,15 @@ body { overflow: hidden; background: var(--opt-bg); color: var(--opt-text); }
 .opt-ohlcv-notes { color: var(--opt-dim); }
 .opt-ohlcv-log { max-height: 240px; overflow: auto; margin: 10px 0 0; padding: 10px; border: 1px solid var(--opt-border); border-radius: 5px; background: var(--bg-page); color: var(--opt-text); font: 11px/1.45 var(--mono); white-space: pre-wrap; }
 @media (max-width: 700px) { .opt-ohlcv-grid, .opt-ohlcv-samples { grid-template-columns: 1fr; } }
+
+/* ── Pareto metric column picker (legacy .pareto-columns-*) ── */
+.pareto-columns-picker { position: relative; }
+.pareto-columns-picker > summary { list-style: none; cursor: pointer; }
+.pareto-columns-picker > summary::-webkit-details-marker { display: none; }
+.pareto-columns-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 80; width: min(360px, calc(100vw - 32px)); max-height: 360px; overflow: auto; padding: 10px; border: 1px solid var(--opt-border); border-radius: 8px; background: var(--opt-bg2); box-shadow: 0 12px 28px rgb(0 0 0 / .35); }
+.pareto-columns-options { display: grid; gap: 4px; margin-bottom: 8px; }
+.pareto-columns-option { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 7px; border-radius: 5px; color: var(--opt-text); font-size: 11px; }
+.pareto-columns-option:hover { background: rgb(var(--accent-rgb) / .10); }
+.pareto-columns-option input { accent-color: var(--opt-accent); }
+.pareto-columns-option span { overflow-wrap: anywhere; }
+.pareto-columns-actions { display: flex; gap: 6px; justify-content: flex-end; }

@@ -5,7 +5,10 @@ import {
   collectEditorConfig,
   flattenBounds,
   inflateBounds,
+  normalizeParetoColumns,
+  orderParetoMetrics,
   parseJsonObject,
+  readStoredParetoColumns,
   validatePb8ScenarioBases,
   validateScenarioReferences,
 } from './configModel';
@@ -107,6 +110,31 @@ describe('optimize config model', () => {
     expect(config.optimize).toMatchObject({ fixed_runtime_overrides: { 'bot.long.hsl_enabled': true, 'bot.short.hsl_enabled': false } });
     expect(config.pbgui).toMatchObject({ optimize_runtime: { fine_tune_params: ['long.risk'] } });
     expect(((config.pbgui as Record<string, unknown>).optimize_runtime as Record<string, unknown>).overrides).toBeUndefined();
+  });
+
+
+  it('orders Pareto metrics pill-first and alphabetically afterwards', () => {
+    expect(orderParetoMetrics(['zebra', 'gain', 'adg', 'gain', 'beta']))
+      .toEqual(['adg', 'gain', 'beta', 'zebra']);
+    expect(orderParetoMetrics([])).toEqual([]);
+  });
+
+  it('bounds the selected Pareto columns to the advertised catalog with a defaults fallback', () => {
+    const available = ['gain', 'adg', 'drawdown_worst'];
+    expect(normalizeParetoColumns(['adg', 'gain', 'unknown_metric'], available, ['gain']))
+      .toEqual(['adg', 'gain']);
+    expect(normalizeParetoColumns([], available, ['gain', 'drawdown_worst']))
+      .toEqual(['gain', 'drawdown_worst']);
+    // 空 catalog 时任何选择都归空（与旧版 setParetoMetricColumns 一致）
+    expect(normalizeParetoColumns(['gain'], [], [])).toEqual([]);
+  });
+
+  it('degrades malformed stored Pareto column JSON to no selection', () => {
+    expect(readStoredParetoColumns(null)).toEqual([]);
+    expect(readStoredParetoColumns('')).toEqual([]);
+    expect(readStoredParetoColumns('not json')).toEqual([]);
+    expect(readStoredParetoColumns('{"gain":true}')).toEqual([]);
+    expect(readStoredParetoColumns('[" gain ", "", "adg"]')).toEqual(['gain', 'adg']);
   });
 
 });
