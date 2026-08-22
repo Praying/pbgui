@@ -130,7 +130,8 @@ describe('CoinDataSettings rendering (legacy static interval markup)', () => {
   it('renders the save button with the legacy disk icon', async () => {
     const wrapper = await mountedSettings();
 
-    expect(wrapper.find('button.form-btn.save').text()).toBe('💾 Save');
+    expect(wrapper.find('button.form-btn.save').text()).toBe('Save');
+    expect(wrapper.find('button.form-btn.save svg').exists()).toBe(true);
   });
 });
 

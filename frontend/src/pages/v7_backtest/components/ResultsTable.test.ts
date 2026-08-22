@@ -162,6 +162,12 @@ describe('actions cell (:5565-5572)', () => {
     expect(config.classes()).not.toContain('active');
     expect(wrapper.find('button[data-action="plot"][data-path="p1"]').exists()).toBe(true);
     expect(wrapper.find('button[data-action="fills"][data-path="p1"]').exists()).toBe(true);
+    for (const action of ['view', 'analysis', 'config', 'plot', 'fills']) {
+      const button = wrapper.find(`button[data-action="${action}"][data-path="p1"]`);
+      expect(button.attributes('aria-label')).toBe(button.attributes('title'));
+      expect(button.find('svg').exists()).toBe(true);
+      expect(button.text()).toBe('');
+    }
   });
 
   it('emits toggle-action on icon click', async () => {

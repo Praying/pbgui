@@ -9,8 +9,10 @@
  * remove-liquidated/-duplicates previews, score preview, optimize
  * view/import/delete). The flows are exposed for App's ctx sidebar.
  */
+import { PhPushPin, PhTrash } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import ArchiveOptimizeTable from './ArchiveOptimizeTable.vue';
 import ArchiveSchedulesTable from './ArchiveSchedulesTable.vue';
 import ConfirmModal from './ConfirmModal.vue';
@@ -354,7 +356,7 @@ defineExpose({
               <td>{{ entry.optimize_configs ?? 0 }}</td>
               <td class="muted-line">{{ entry.migration_status?.label ?? '' }}</td>
               <td class="actions-cell" @click.stop>
-                <button type="button" class="act-btn act-btn-danger" :title="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name">🗑</button>
+                <button type="button" class="act-btn act-btn-danger" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="18" /></button>
               </td>
             </tr>
           </tbody>
@@ -401,7 +403,7 @@ defineExpose({
           <button v-show="isBacktests" type="button" class="act-btn" data-test="arc-btn-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">
             {{ t('v7backtest.deselect') }}
           </button>
-          <button id="archive-results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned">📌</button>
+          <button id="archive-results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" :aria-label="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned"><PbIcon :icon="PhPushPin" :size="18" /></button>
         </div>
         <div id="archive-results-list-wrap" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="archive-results-table">

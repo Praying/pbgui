@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PhChartBar, PhPencilSimple, PhPlay } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import type { ConfigSummary, SortSpec } from '../types';
 
 /**
@@ -162,9 +164,9 @@ defineExpose({ deleteSelectedFlow: bindRun });
           <td style="cursor: pointer; color: #63b3ed; font-weight: 600" @click.stop="emit('view-results', entry.name)">{{ entry.results ?? 0 }}</td>
           <td>{{ dateText(entry.modified) }}</td>
           <td class="actions-cell" @click.stop>
-            <button type="button" class="act-btn" data-test="cfg-edit" :title="t('v7backtest.edit')" @click="emit('edit', entry.name)">✏️</button>
-            <button type="button" class="act-btn" data-test="cfg-queue" :title="t('v7backtest.addToQueueTitle')" @click="emit('queue', entry.name)">▶</button>
-            <button type="button" class="act-btn" data-test="cfg-results" :title="t('v7backtest.viewResults')" @click="emit('view-results', entry.name)">📊</button>
+            <button type="button" class="act-btn" data-test="cfg-edit" :title="t('v7backtest.edit')" :aria-label="t('v7backtest.edit')" @click="emit('edit', entry.name)"><PbIcon :icon="PhPencilSimple" :size="18" /></button>
+            <button type="button" class="act-btn" data-test="cfg-queue" :title="t('v7backtest.addToQueueTitle')" :aria-label="t('v7backtest.addToQueueTitle')" @click="emit('queue', entry.name)"><PbIcon :icon="PhPlay" :size="18" /></button>
+            <button type="button" class="act-btn" data-test="cfg-results" :title="t('v7backtest.viewResults')" :aria-label="t('v7backtest.viewResults')" @click="emit('view-results', entry.name)"><PbIcon :icon="PhChartBar" :size="18" /></button>
           </td>
         </tr>
       </tbody>

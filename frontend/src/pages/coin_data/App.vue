@@ -38,7 +38,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
+import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import BusyOverlay from './components/BusyOverlay.vue';
 import FiltersPanel from './components/FiltersPanel.vue';
 import SelectedCard from './components/SelectedCard.vue';
@@ -195,10 +197,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="data-page-shell data-page-shell--coin-data"
+    page-key="info_coin_data"
+    :page-title="t('market.coinDataTitle')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('shared.status')"
+        :value="store.isLoading.value ? t('common.loading') : store.actionStatus.value.message || t('common.ok')"
+        :tone="store.actionStatus.value.isError ? 'danger' : store.isLoading.value ? 'warning' : 'success'"
+      />
+    </template>
 
-  <div id="page-body">
+    <MigrationWatermark />
+    <div id="page-body">
     <SidebarPanel
       :active-view="store.activeView.value"
       :counts="counts"
@@ -218,7 +231,7 @@ onBeforeUnmount(() => {
       @toggle-only-cpt="store.toggleOnlyCpt"
     />
 
-    <main id="main-content" ref="mainContent">
+    <div id="main-content" ref="mainContent">
       <div id="warning-box" class="warning-box" :class="{ hidden: !warnings.length }">
         <div v-for="warning in warnings" :key="warning">{{ warning }}</div>
       </div>
@@ -325,8 +338,9 @@ onBeforeUnmount(() => {
           />
         </div>
       </details>
-    </main>
-  </div>
+    </div>
+    </div>
 
-  <BusyOverlay :busy="refresh.busy.value" />
+    <BusyOverlay :busy="refresh.busy.value" />
+  </AppShell>
 </template>

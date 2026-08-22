@@ -11,9 +11,11 @@
  * "Loading settings…" placeholder stays visible (load failures are silent).
  */
 import { onUnmounted, ref } from 'vue';
+import { PhCaretDown, PhFloppyDisk } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiBase } from '../config';
 import type { PbDataSaveResponse, PbDataSettingsData } from '../types';
 import MultiselectTags from './MultiselectTags.vue';
@@ -235,7 +237,7 @@ defineExpose({ load });
       </div>
 
       <details class="ex-pauses" id="pbdata-ex-pauses" open>
-        <summary>&#9660; {{ t('sysmon.sharedRestPausePerExchange') }}</summary>
+        <summary><PbIcon :icon="PhCaretDown" /> {{ t('sysmon.sharedRestPausePerExchange') }}</summary>
         <div class="ex-pauses-hint">{{ t('sysmon.sharedRestPauseHint') }}</div>
         <div class="form-row ex-pauses-row">
           <div class="form-field" v-for="ex in EX_LIST" :key="ex">
@@ -254,7 +256,7 @@ defineExpose({ load });
         </div>
       </details>
 
-      <button class="form-btn save" type="button" @click="save">&#128190; {{ t('common.save') }}</button>
+      <button class="form-btn save" type="button" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</button>
       <span
         class="inline-msg"
         id="pbdata-save-msg"

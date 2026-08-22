@@ -277,7 +277,11 @@ describe('ArchiveLogPanel (:9633-9639)', () => {
     expect(instances[0]!.open).toHaveBeenCalledTimes(1);
     expect(wrapper.find('#log-panel').classes()).toContain('visible');
     expect(wrapper.find('#log-panel-title').text()).toContain('Archive Sync Log');
-    await wrapper.find('#log-panel-close').trigger('click');
+    expect(wrapper.find('#log-panel-title svg').exists()).toBe(true);
+    const closeButton = wrapper.find('#log-panel-close');
+    expect(closeButton.attributes('aria-label')).toBe('Close');
+    expect(closeButton.find('svg').exists()).toBe(true);
+    await closeButton.trigger('click');
     expect(wrapper.find('#log-panel').classes()).not.toContain('visible');
     expect(instances[0]!.close).toHaveBeenCalledTimes(1);
     delete (window as unknown as { LogViewerPanel?: unknown }).LogViewerPanel;

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { PhArrowDown, PhArrowUp } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import type { QueueItem } from '../types';
 
 const props = defineProps<{ rows: QueueItem[]; selected: Set<string>; search: string }>();
@@ -73,7 +75,9 @@ function dropRow(row: QueueItem, event: DragEvent): void {
             <button v-else class="opt-btn pbgui-action small" @click="emit('action', filename(row), 'start')">{{ t('v7optimize.start') }}</button>
             <button class="opt-btn pbgui-action small" @click="emit('action', filename(row), 'requeue')">{{ t('v7optimize.requeue') }}</button>
             <button class="opt-btn pbgui-action small" @click="emit('edit', filename(row))">{{ t('v7optimize.editConfig') }}</button>
-            <button class="opt-btn pbgui-action small" @click="emit('log', row)">Log</button><button class="opt-btn pbgui-action small" @click="emit('move', filename(row), -1)">↑</button><button class="opt-btn pbgui-action small" @click="emit('move', filename(row), 1)">↓</button>
+            <button class="opt-btn pbgui-action small" @click="emit('log', row)">Log</button>
+            <button class="opt-btn pbgui-action small" data-test="queue-move-up" :title="t('editor.suite.moveUp')" :aria-label="t('editor.suite.moveUp')" @click="emit('move', filename(row), -1)"><PbIcon :icon="PhArrowUp" :size="18" /></button>
+            <button class="opt-btn pbgui-action small" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="18" /></button>
           </td>
         </tr>
         <tr v-if="!rows.length"><td colspan="5" class="opt-empty">{{ t('v7optimize.queueIsEmpty') }}</td></tr>

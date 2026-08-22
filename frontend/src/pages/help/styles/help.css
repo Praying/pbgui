@@ -20,7 +20,7 @@ html, body {
 }
 
 #page-content {
-  height: calc(100vh - 52px); height: calc(100dvh - 52px);
+  height: 100%;
   overflow: hidden;
   position: relative;
   background:
@@ -32,7 +32,7 @@ html, body {
 #help-backdrop {
   display: none;
   position: fixed;
-  inset: 52px 0 0 0;
+  inset: 0;
   z-index: 150;
   background:
     radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 35%),
@@ -41,6 +41,17 @@ html, body {
 }
 
 #help-backdrop.visible { display: block; }
+
+.support-page-shell .app-shell__main {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.support-page-shell .app-shell__primary {
+  min-height: 0;
+}
 
 #help-ovl {
   display: none;

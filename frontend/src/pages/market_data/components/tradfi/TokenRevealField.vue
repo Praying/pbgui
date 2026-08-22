@@ -5,6 +5,8 @@
  * toggleTiingoTokenVisible (:5598-5640); glyphs :5606/:5612/:5595.
  */
 import { useI18n } from 'vue-i18n';
+import { PhEye, PhEyeSlash } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import type { UseTiingo } from '../../composables/useTiingo';
 
 defineProps<{
@@ -13,9 +15,6 @@ defineProps<{
 
 const { t } = useI18n();
 
-/** Legacy eye glyphs (:5595, :5606, :5612-5613). */
-const EYE_OPEN = '👁'; // 👁
-const EYE_CLOSED = '🙈'; // 🙈
 </script>
 
 <template>
@@ -33,10 +32,10 @@ const EYE_CLOSED = '🙈'; // 🙈
     <button
       type="button"
       class="pw-eye-btn"
-      tabindex="-1"
+      :aria-label="t('market.showHideTiingoToken')"
       :title="t('market.showHideTiingoToken')"
       :disabled="tiingo.revealLoading.value"
       @click="tiingo.toggleVisible()"
-    >{{ tiingo.visible.value ? EYE_CLOSED : EYE_OPEN }}</button>
+    ><PbIcon :icon="tiingo.visible.value ? PhEyeSlash : PhEye" /></button>
   </div>
 </template>

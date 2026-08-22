@@ -119,6 +119,8 @@ describe('dashboard_templates page shell', () => {
     installTemplatesApi({ templates: ['T1'], users: ['alice'] });
     const wrapper = mountApp();
 
+    // Iframe boundary: dashboard_main owns the rail and overlay chrome.
+    expect(wrapper.find('.app-shell').exists()).toBe(false);
     expect(wrapper.find('#content').text()).toContain('Loading…');
 
     await flushPromises();
@@ -171,6 +173,8 @@ describe('dashboard_templates page shell', () => {
 
     await wrapper.find('#btn-close').trigger('click');
 
+    expect(wrapper.find('#btn-close svg').exists()).toBe(true);
+    expect(wrapper.find('#btn-close').attributes('aria-label')).toBe('Close');
     expect(parentPost).toHaveBeenCalledWith({ type: 'pbgui_close_templates' }, '*');
   });
 
@@ -282,6 +286,10 @@ describe('manage templates', () => {
 
     expect(wrapper.find('#btn-del-tpl').isVisible()).toBe(true);
     expect(wrapper.find('#btn-rename-tpl').isVisible()).toBe(true);
+    expect(wrapper.find('#btn-del-tpl svg').exists()).toBe(true);
+    expect(wrapper.find('#btn-rename-tpl svg').exists()).toBe(true);
+    expect(wrapper.find('#btn-del-tpl').attributes('aria-label')).toBe('Delete');
+    expect(wrapper.find('#btn-rename-tpl').attributes('aria-label')).toBe('Rename');
   });
 
   it('deletes the selected templates after confirmation', async () => {

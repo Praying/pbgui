@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PhCaretRight } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import {
   MARKET_FIELDS,
   METRIC_CATEGORY_ORDER,
@@ -100,7 +102,7 @@ const groupedMetrics = computed(() => {
 
 <template>
   <div class="expander" id="exp-market-settings">
-    <div class="expander-header"><span class="arrow">▶</span> {{ t('v7backtest.marketSettingsOverrides') }} ({{ marketSettings.rows.length }} {{ t('v7backtest.configured') }})</div>
+    <div class="expander-header"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.marketSettingsOverrides') }} ({{ marketSettings.rows.length }} {{ t('v7backtest.configured') }})</div>
     <div class="expander-body">
       <div class="advanced-help">
         Override historical exchange metadata after <code>market_settings_sources</code> is resolved. Blank values inherit from the selected source. Exchange-specific rows take
@@ -160,7 +162,7 @@ const groupedMetrics = computed(() => {
   </div>
 
   <div class="expander" id="exp-result-metrics">
-    <div class="expander-header"><span class="arrow">▶</span> {{ t('v7backtest.resultMetrics') }}</div>
+    <div class="expander-header"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.resultMetrics') }}</div>
     <div class="expander-body">
       <div class="advanced-help">Controls terminal result visibility only. All metrics are still computed and saved. Optimize scoring and limit metrics are always included in Default and Custom modes.</div>
       <div class="metric-mode-row">

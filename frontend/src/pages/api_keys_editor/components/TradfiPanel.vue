@@ -5,8 +5,10 @@
  * composables/useTradfi.ts (legacy :2499-3089).
  */
 import { onMounted, ref } from 'vue';
+import { PhEye, PhEyeSlash, PhLinkSimple } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import BackButton from './BackButton.vue';
 import { useTradfi, type TradfiStore } from '../composables/useTradfi';
 import { injectToasts } from '../composables/useToasts';
@@ -178,13 +180,13 @@ onMounted(() => {
             rel="noopener noreferrer"
             :style="{ display: store.providerLink.value ? 'flex' : 'none', alignItems: 'center', gap: '4px', fontSize: 'var(--fs-sm)', color: '#26a69a', textDecoration: 'none', marginTop: '4px' }"
           >
-            &#128279;
+            <PbIcon :icon="PhLinkSimple" />
             <span id="tradfiProviderLinkLabel">{{ store.providerLink.value ? store.providerLink.value.label || t('misc.apikeys.getApiKey') : '' }}</span>
           </a>
         </div>
         <div class="form-group">
           <label>{{ t('misc.apikeys.label') }}</label>
-          <input type="text" id="tradfiLabel" v-model="store.label.value" maxlength="120" placeholder="Profile label" />
+          <input type="text" id="tradfiLabel" v-model="store.label.value" maxlength="120" :placeholder="t('misc.apikeys.profileLabel')" />
         </div>
         <div class="form-group" style="display:flex;gap:18px;align-items:center;padding-top:24px;">
           <label style="display:flex;gap:6px;align-items:center;">
@@ -204,11 +206,11 @@ onMounted(() => {
               type="button"
               class="pw-eye-btn"
               :disabled="store.revealBusy.value"
-              tabindex="-1"
+              :aria-label="t('misc.apikeys.showHideStoredApiKey')"
               :title="t('misc.apikeys.showHideStoredApiKey')"
               @click="store.toggleApiKeyVisible()"
             >
-              {{ store.apiKeyVisible.value ? '🙈' : '👁' }}
+              <PbIcon :icon="store.apiKeyVisible.value ? PhEyeSlash : PhEye" />
             </button>
           </div>
           <div style="font-size:var(--fs-xs);color:#718096;margin-top:4px;">{{ t('misc.apikeys.clickEyeToReveal') }}</div>
@@ -223,8 +225,14 @@ onMounted(() => {
               :disabled="!store.needsSecretNow.value"
               :placeholder="store.apiSecretPlaceholder.value"
             />
-            <button type="button" class="pw-eye-btn" tabindex="-1" @click="secretVisible = !secretVisible">
-              {{ secretVisible ? '🙈' : '👁' }}
+            <button
+              type="button"
+              class="pw-eye-btn"
+              :aria-label="t('misc.apikeys.showHideStoredApiKey')"
+              :title="t('misc.apikeys.showHideStoredApiKey')"
+              @click="secretVisible = !secretVisible"
+            >
+              <PbIcon :icon="secretVisible ? PhEyeSlash : PhEye" />
             </button>
           </div>
         </div>

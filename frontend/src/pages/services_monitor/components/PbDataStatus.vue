@@ -13,8 +13,10 @@
  * numeric counters, so they render as plain template spans here.
  */
 import { computed, onUnmounted, ref, watch } from 'vue';
+import { PhCaretDown, PhCaretRight } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiBase } from '../config';
 import type { FetchSummaryData, PollerMetricsData } from '../types';
 
@@ -384,7 +386,7 @@ onUnmounted(stopPolling);
       <template v-else>
         <div class="pm-header">
           <span class="pm-title">Poller Metrics<span v-if="metrics.timestamp" class="fs-ts">{{ tsNote(metrics.timestamp) }} ago</span></span>
-          <button class="pm-toggle" @click="pmCollapsed = !pmCollapsed" id="pm-toggle-btn" type="button">{{ pmCollapsed ? '&#9654; Show' : '&#9660; Hide' }}</button>
+          <button class="pm-toggle" @click="pmCollapsed = !pmCollapsed" id="pm-toggle-btn" type="button"><PbIcon :icon="pmCollapsed ? PhCaretRight : PhCaretDown" /> {{ pmCollapsed ? 'Show' : 'Hide' }}</button>
         </div>
         <div id="pm-body" :style="pmCollapsed ? { display: 'none' } : {}">
           <div class="pm-section">

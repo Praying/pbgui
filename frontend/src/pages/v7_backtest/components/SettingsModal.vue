@@ -6,8 +6,10 @@
  * (useSettings.cleanHlcvsNow); the busy visual (:1624) arrives via the
  * `cleaning` prop.
  */
+import { PhMinus, PhPlus, PhX } from '@phosphor-icons/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { effectiveCpuMax } from '../composables/useSettings';
 import type { BacktestSettings, SettingsPatch } from '../types';
 
@@ -115,16 +117,16 @@ function cleanupNow(): void {
     <div class="modal-box pbgui-modal">
       <div class="modal-header">
         <span class="modal-title">{{ t('v7backtest.settingsTitle') }}</span>
-        <button type="button" class="modal-close" title="Close" @click="emit('close')">✕</button>
+        <button type="button" class="modal-close" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="18" /></button>
       </div>
       <div class="modal-body">
         <div style="display: flex; flex-direction: column; gap: var(--sp-md); min-width: 320px">
           <div class="sb-label">{{ t('v7backtest.settingsCpuSlots') }}</div>
           <div class="sb-stepper">
             <span class="sb-stepper-label">CPU</span>
-            <button type="button" data-test="cpu-minus" @click="adjustCpu(-1)">−</button>
+            <button type="button" data-test="cpu-minus" aria-label="Decrease CPU" title="Decrease CPU" @click="adjustCpu(-1)"><PbIcon :icon="PhMinus" /></button>
             <input id="set-cpu-val" type="text" :value="draft.cpu" readonly />
-            <button type="button" data-test="cpu-plus" @click="adjustCpu(1)">+</button>
+            <button type="button" data-test="cpu-plus" aria-label="Increase CPU" title="Increase CPU" @click="adjustCpu(1)"><PbIcon :icon="PhPlus" /></button>
             <span id="set-cpu-max" style="color: var(--text-dim); font-size: var(--fs-xs); margin-left: var(--sp-sm)">
               {{ t('v7backtest.maxCpu', { n: cpuMax }) }}
             </span>

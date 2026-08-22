@@ -7,8 +7,10 @@
  * deleteSelectedResults' confirm flow (:8509-8532). Takes the results
  * store as its single prop — App owns the store.
  */
+import { PhPushPin } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import CompareModal from './CompareModal.vue';
 import ResultCharts from './ResultCharts.vue';
 import ResultsTable from './ResultsTable.vue';
@@ -128,7 +130,9 @@ defineExpose({ deleteSelectedFlow });
         <span style="flex: 1"></span>
         <button type="button" class="act-btn" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</button>
         <button type="button" class="act-btn" data-test="results-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</button>
-        <button id="results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned">📌</button>
+        <button id="results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" :aria-label="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned">
+          <PbIcon :icon="PhPushPin" :size="18" />
+        </button>
       </div>
       <div id="results-list-wrap" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
         <div id="results-list">

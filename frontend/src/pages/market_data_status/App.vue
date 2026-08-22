@@ -20,6 +20,11 @@
  * │ statusWs (composable)│ /ws/market-data frames, infinite exponential      │
  * │                      │ back-off 2 s → 30 s (useStatusWs)                │
  * ├──────────────────────┴───────────────────────────────────────────────────┤
+ * Shell boundary (intentional): AppShell and StatusStrip are not rendered
+ * because this component is a fragment mounted inside market_data's status
+ * host. The parent owns navigation and the fragment must remain dimensionless
+ * so exchange switches can unmount and remount it in place.
+ *
  * │ NOT PORTED (with justification):                                          │
  * │ - escapeHtml(): Vue interpolation and bound attributes escape by          │
  * │   construction; no v-html anywhere in the page.                           │

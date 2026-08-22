@@ -16,6 +16,12 @@
  * │ EditorGrid/GridCell  │ D-editor-2 grid + widget registry dispatch       │
  * │ GridFooter           │ add/remove row                                   │
  * ├──────────────────────┴───────────────────────────────────────────────────┤
+ * Shell boundary (intentional): AppShell and StatusStrip are not rendered
+ * because this document is both dashboard_main's editor iframe and the
+ * standalone editor route. Its token-derived API boundary and postMessage
+ * contract are retained; a second rail would break iframe sizing and editor
+ * body-mode CSS.
+ *
  * │ NOT PORTED (with justification):                                        │
  * │ - #standalone-toolbar div: permanently empty in legacy (editor:472,     │
  * │   328) — dead DOM, not emitted.                                         │

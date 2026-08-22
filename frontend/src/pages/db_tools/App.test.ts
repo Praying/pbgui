@@ -61,6 +61,8 @@ describe('DB Tools page shell', () => {
   it('renders the six panels with the cleanup panel active and users loaded', async () => {
     const wrapper = await mountApp();
 
+    expect(wrapper.findAll('main')).toHaveLength(1);
+    expect(wrapper.get('#main-content').element.tagName).toBe('DIV');
     expect(wrapper.find('#panel-cleanup').classes()).toContain('active');
     expect(wrapper.find('#panel-backups').classes()).not.toContain('active');
     const rows = wrapper.findAll('#cleanup-users .select-row[data-value]');

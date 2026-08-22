@@ -76,6 +76,10 @@ describe('render (:1482-1540)', () => {
 describe('cpu stepper (:1568-1577)', () => {
   it('steps ±1 within [1, cpu_max]', async () => {
     const wrapper = mountModal();
+    expect(wrapper.find('[data-test="cpu-minus"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="cpu-minus"]').attributes('aria-label')).toBe('Decrease CPU');
+    expect(wrapper.find('[data-test="cpu-plus"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="cpu-plus"]').attributes('aria-label')).toBe('Increase CPU');
     await wrapper.find('[data-test="cpu-plus"]').trigger('click');
     expect((wrapper.find('#set-cpu-val').element as HTMLInputElement).value).toBe('3');
     await wrapper.find('[data-test="cpu-minus"]').trigger('click');

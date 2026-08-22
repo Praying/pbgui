@@ -26,7 +26,10 @@
  *    browser modal closes via its own buttons/backdrop-free paths only.
  */
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
+import { PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
+import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import { useWelcome } from './composables/useWelcome';
 import { apiOrigin, bootSerial, bootVersion } from './config';
@@ -147,9 +150,25 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="core-workbench-shell core-workbench-shell--welcome"
+    page-key="/"
+    :page-title="t('misc.welcome.welcome')"
+    :page-description="t('misc.welcome.overviewCopy')"
+    :page-family="t('nav.system')"
+    :status-text="store.summaryView.value.auth"
+    :status-tone="store.summaryView.value.authTone === 'info' ? 'neutral' : store.summaryView.value.authTone"
+  >
+    <template #header-actions>
+      <IconButton
+        class="pbgui-icon-button"
+        :icon="PhQuestion"
+        :label="t('nav.guide')"
+        @click="openWelcomeHelp"
+      />
+    </template>
 
-  <div id="page-body">
+    <div id="page-body">
     <div id="sidebar" ref="sidebar">
       <div id="sidebar-sticky">
         <div id="sidebar-header">
@@ -172,7 +191,7 @@ onBeforeUnmount(() => {
       <div id="sidebar-resize" @mousedown="onResizeMousedown"></div>
     </div>
 
-    <div id="main-content">
+    <div class="workbench-page-content">
       <div id="banner" class="banner" :class="store.banner.value.message ? `show ${store.banner.value.kind}` : ''">
         {{ store.banner.value.message }}
       </div>
@@ -384,8 +403,9 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </section>
+      </div>
     </div>
-  </div>
+  </AppShell>
 
   <!-- File browser modal (:907-920) -->
   <div id="file-browser-modal" class="browser-modal" :hidden="!store.fileBrowser.value.open">

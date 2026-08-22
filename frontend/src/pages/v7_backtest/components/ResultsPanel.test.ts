@@ -118,6 +118,8 @@ describe('toolbar (:837-852)', () => {
     const wrapper = mountPanel(store);
     const button = wrapper.find('#results-pin-btn');
     expect(button.classes()).not.toContain('unpinned');
+    expect(button.attributes('aria-label')).toBe('Pin table (sticky on/off)');
+    expect(button.find('svg').exists()).toBe(true);
     await button.trigger('click');
     expect(button.classes()).toContain('unpinned'); // legacy opacity .4 state
     expect(wrapper.emitted('update:pinned')).toEqual([[false]]);

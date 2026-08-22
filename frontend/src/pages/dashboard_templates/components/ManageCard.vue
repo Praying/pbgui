@@ -13,9 +13,11 @@
  *   selected (legacy render()); empty/unchanged → just hide the row.
  */
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { PhCheck, PhNotePencil, PhTrash, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { dialogsConfirm } from '../dialogs';
 import { templatesUrl } from '../config';
 import type { StatusResponse } from '../types';
@@ -150,15 +152,17 @@ onUnmounted(() => window.clearTimeout(msgTimer));
           id="btn-rename-tpl"
           class="btn pbgui-action"
           :title="t('dash.rename')"
+          :aria-label="t('dash.rename')"
           @click="openRename"
-        >📝</button>
+        ><PbIcon :icon="PhNotePencil" /></button>
         <button
           v-show="delVisible"
           id="btn-del-tpl"
           class="btn pbgui-action danger"
           :title="t('common.delete')"
+          :aria-label="t('common.delete')"
           @click="deleteTemplates"
-        >🗑</button>
+        ><PbIcon :icon="PhTrash" /></button>
       </div>
       <div id="rename-wrap" v-show="renameRowVisible" style="margin-top:0.5rem">
         <div class="input-row">
@@ -171,9 +175,9 @@ onUnmounted(() => window.clearTimeout(msgTimer));
             autocomplete="off"
           >
           <button id="btn-rename-confirm" class="btn pbgui-action primary" @click="confirmRename">
-            ✓ {{ t('dash.rename') }}
+            <PbIcon :icon="PhCheck" /> {{ t('dash.rename') }}
           </button>
-          <button id="btn-rename-cancel" class="btn pbgui-action" @click="cancelRename">✕</button>
+          <button id="btn-rename-cancel" class="btn pbgui-action" :title="t('common.cancel')" :aria-label="t('common.cancel')" @click="cancelRename"><PbIcon :icon="PhX" /></button>
         </div>
       </div>
     </template>

@@ -36,10 +36,17 @@ describe('RebacktestModal (:7895-7956)', () => {
     const selected = Array.from((wrapper.find('[data-test="rbt-exchanges"]').element as HTMLSelectElement).selectedOptions).map((o) => o.value);
     expect(selected).toEqual(['bybit', 'okx']);
     expect((wrapper.find('[data-test="rbt-pbgui-data"]').element as HTMLInputElement).checked).toBe(false);
+    const marketDataLabel = wrapper.find('label[for="rbt-pbgui-data"]');
+    expect(marketDataLabel.text()).toBe('Use PBGui Market Data');
+    expect(marketDataLabel.find('svg').exists()).toBe(true);
   });
 
   it('the balance stepper adjusts by 100 and never below 1 (:7904-7905)', async () => {
     const wrapper = mountModal();
+    expect(wrapper.find('[data-test="rbt-balance-minus"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="rbt-balance-minus"]').attributes('aria-label')).toBe('Decrease starting balance');
+    expect(wrapper.find('[data-test="rbt-balance-plus"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="rbt-balance-plus"]').attributes('aria-label')).toBe('Increase starting balance');
     await wrapper.find('[data-test="rbt-balance-minus"]').trigger('click');
     expect((wrapper.find('[data-test="rbt-balance"]').element as HTMLInputElement).value).toBe('400');
     await wrapper.find('[data-test="rbt-balance-plus"]').trigger('click');

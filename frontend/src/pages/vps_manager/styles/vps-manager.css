@@ -14,12 +14,35 @@
 }
 
 .vps-manager {
-  min-height: 100vh; min-height: 100dvh;
+  min-height: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   color: var(--manager-text);
   background: var(--manager-bg);
   font-family: var(--font-family);
+}
+
+.operations-shell--vps-manager .app-shell__workspace {
+  display: flex;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.operations-shell--vps-manager .app-shell__main {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  flex: 1;
+  padding: 0;
+}
+
+.operations-shell--vps-manager .app-shell__primary {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .manager-layout {
@@ -144,6 +167,9 @@
 }
 
 .manager-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 32px;
   border: 1px solid var(--manager-border);
   border-radius: 6px;

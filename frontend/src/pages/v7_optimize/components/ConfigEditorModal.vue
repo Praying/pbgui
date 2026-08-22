@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PhPlus, PhX } from '@phosphor-icons/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
 import ScoringLimitsEditor from './ScoringLimitsEditor.vue';
 import BotJsonEditor from './BotJsonEditor.vue';
@@ -559,7 +561,7 @@ function preflight(): void {
           <label class="opt-form-label">btc_collateral_ltv_cap<input class="opt-input" type="number" step="any" :value="numberField('backtest', 'btc_collateral_ltv_cap', 0)" @input="setNumber('backtest', 'btc_collateral_ltv_cap', ($event.target as HTMLInputElement).value)" /></label>
           <label class="opt-form-label">hsl_signal_mode<select class="opt-input" :value="String(local.live.hsl_signal_mode || '')" @change="setText('live', 'hsl_signal_mode', ($event.target as HTMLSelectElement).value)"><option v-for="mode in availableHslModes" :key="mode" :value="mode">{{ mode }}</option></select></label>
           <label v-if="version === 'v8'" class="opt-form-label">strategy_kind<select class="opt-input" :value="String(local.live.strategy_kind || '')" @change="setText('live', 'strategy_kind', ($event.target as HTMLSelectElement).value)"><option v-for="strategy in availableStrategies" :key="strategy" :value="strategy">{{ strategy }}</option></select></label>
-          <label class="opt-form-label span-4">ohlcv_source_dir<div class="opt-inline-control"><input class="opt-input opt-grow" :value="String(local.backtest.ohlcv_source_dir || '')" @input="setText('backtest', 'ohlcv_source_dir', ($event.target as HTMLInputElement).value)" /><button class="opt-btn small" type="button" @click="setText('backtest', 'ohlcv_source_dir', '')">×</button><button v-if="pbguiDataPath" class="opt-btn small" type="button" @click="setText('backtest', 'ohlcv_source_dir', pbguiDataPath)">{{ t('v7optimize.pbguiData') }}</button></div></label>
+          <label class="opt-form-label span-4">ohlcv_source_dir<div class="opt-inline-control"><input class="opt-input opt-grow" :value="String(local.backtest.ohlcv_source_dir || '')" @input="setText('backtest', 'ohlcv_source_dir', ($event.target as HTMLInputElement).value)" /><button class="opt-btn small" type="button" :title="t('v7optimize.clearPath')" :aria-label="t('v7optimize.clearPath')" @click="setText('backtest', 'ohlcv_source_dir', '')"><PbIcon :icon="PhX" :size="18" /></button><button v-if="pbguiDataPath" class="opt-btn small" type="button" @click="setText('backtest', 'ohlcv_source_dir', pbguiDataPath)">{{ t('v7optimize.pbguiData') }}</button></div></label>
           <label class="opt-form-label">market_cap<input class="opt-input" type="number" step="any" :value="numberField('pbgui', 'market_cap', 0)" @input="setNumber('pbgui', 'market_cap', ($event.target as HTMLInputElement).value)" /></label>
           <label class="opt-form-label">vol_mcap<input class="opt-input" type="number" step="any" :value="numberField('pbgui', 'vol_mcap', 0)" @input="setNumber('pbgui', 'vol_mcap', ($event.target as HTMLInputElement).value)" /></label>
           <label class="opt-form-label">minimum_coin_age_days<input class="opt-input" type="number" :value="numberField('live', 'minimum_coin_age_days', 0)" @input="setNumber('live', 'minimum_coin_age_days', ($event.target as HTMLInputElement).value)" /></label>
@@ -585,7 +587,7 @@ function preflight(): void {
         </section>
 
         <section v-else-if="tab === 'bounds'" class="opt-bounds-editor">
-          <div class="opt-toolbar"><input v-model="newBoundKey" class="opt-input opt-grow" placeholder="bot.long.risk.wallet_exposure_limit" @keydown.enter.prevent="addBound" /><button class="opt-btn primary" type="button" @click="addBound">＋ Add</button></div>
+          <div class="opt-toolbar"><input v-model="newBoundKey" class="opt-input opt-grow" placeholder="bot.long.risk.wallet_exposure_limit" @keydown.enter.prevent="addBound" /><button class="opt-btn primary" data-test="add-bound" type="button" @click="addBound"><PbIcon :icon="PhPlus" /> {{ t('editor.suite.add') }}</button></div>
           <div v-for="[key, pair] in boundRows" :key="key" class="opt-bound-row">
             <code>{{ key }}</code>
             <input class="opt-input" type="number" step="any" :value="pairValue(pair, 0)" @input="setBoundValue(key, 0, ($event.target as HTMLInputElement).value)" />
@@ -593,7 +595,7 @@ function preflight(): void {
             <input class="opt-input" type="number" step="any" :value="pairValue(pair, 1)" @input="setBoundValue(key, 1, ($event.target as HTMLInputElement).value)" />
             <input class="opt-input" type="number" step="any" :data-field="`bound-step-${key}`" :value="pairValue(pair, 2)" placeholder="step" @input="setBoundValue(key, 2, ($event.target as HTMLInputElement).value)" />
             <label class="opt-bound-fixed"><input type="checkbox" :data-field="`bound-fixed-${key}`" :checked="boundFixed(key)" @change="setBoundFixed(key, ($event.target as HTMLInputElement).checked)" /> fixed</label>
-            <button class="opt-btn danger small" type="button" @click="deleteBound(key)">×</button>
+            <button class="opt-btn danger small" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="deleteBound(key)"><PbIcon :icon="PhX" :size="18" /></button>
           </div>
         </section>
 

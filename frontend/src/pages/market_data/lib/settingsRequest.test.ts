@@ -162,6 +162,22 @@ describe('hyperliquid-only AWS/archive fields (:8916-8925)', () => {
     ).toBe(true);
   });
 
+  it('omits blank credential fields so an ordinary settings save preserves stored AWS credentials', () => {
+    const request = collectSettingsRequest(makeInput());
+
+    expect(request.settings).not.toHaveProperty('aws_access_key_id');
+    expect(request.settings).not.toHaveProperty('aws_secret_access_key');
+  });
+
+  it('includes only newly entered credential values', () => {
+    const request = collectSettingsRequest(makeInput({
+      fields: { ...createSettingsFieldValues(), awsAccessKeyId: ' NEW-ACCESS ' },
+    }));
+
+    expect(request.settings.aws_access_key_id).toBe('NEW-ACCESS');
+    expect(request.settings).not.toHaveProperty('aws_secret_access_key');
+  });
+
   it('falls back to the scan defaults (5.0s / 8 workers) on empty fields (:8921-8922)', () => {
     const request = collectSettingsRequest(makeInput());
     expect(request.settings.l2book_scan_timeout_s).toBe(5);
@@ -219,8 +235,7 @@ describe('golden JSON parity — byte-level (:8934 JSON.stringify)', () => {
       '{"auto_enable_new_coins":false,"enabled_coins":["BTC","ETH"],'
         + '"settings":{"interval_seconds":1800,"coin_pause_seconds":0.5,'
         + '"api_timeout_seconds":30,"min_lookback_days":2,"max_lookback_days":4,'
-        + '"aws_profile":"pbgui-hyperliquid","aws_access_key_id":"",'
-        + '"aws_secret_access_key":"","aws_region":"",'
+        + '"aws_profile":"pbgui-hyperliquid","aws_region":"",'
         + '"l2book_scan_timeout_s":5,"l2book_scan_workers":8,'
         + '"l2book_archive_enabled":false,"l2book_archive_dir":""}}'
     );

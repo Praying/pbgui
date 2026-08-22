@@ -9,8 +9,10 @@
  * index.html exactly like the old page) and the per-worker action POSTs.
  */
 import { computed, ref, watch } from 'vue';
+import { PhArrowClockwise, PhPlay, PhStop } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiBase } from '../config';
 import { showResultPopup } from '../resultPopup';
 import type { Worker, WorkersStatus } from '../types';
@@ -64,7 +66,6 @@ const summaryText = computed(() =>
 interface WorkerButton {
   action: WorkerAction;
   label: string;
-  icon: '▶' | '■' | '↻';
 }
 
 type WorkerAction = 'start' | 'stop' | 'restart';
@@ -75,14 +76,20 @@ function actionButtons(item: Worker): WorkerButton[] {
   const buttons: WorkerButton[] = [];
   if (item.running) {
     if (item.can_stop !== false) {
-      buttons.push({ action: 'stop', label: t('sysmon.stop'), icon: '■' });
-      if (item.can_start !== false) buttons.push({ action: 'restart', label: t('sysmon.restart'), icon: '↻' });
+      buttons.push({ action: 'stop', label: t('sysmon.stop') });
+      if (item.can_start !== false) buttons.push({ action: 'restart', label: t('sysmon.restart') });
     }
   } else if (item.can_start !== false) {
-    buttons.push({ action: 'start', label: t('sysmon.start'), icon: '▶' });
+    buttons.push({ action: 'start', label: t('sysmon.start') });
   }
   return buttons;
 }
+
+const actionIcons = {
+  start: PhPlay,
+  stop: PhStop,
+  restart: PhArrowClockwise,
+} as const;
 
 function cardStats(item: Worker) {
   return (item.stats ?? []).slice(0, 3);
@@ -155,7 +162,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
       <span class="status-label">{{ summaryText }}</span>
     </div>
     <span style="flex: 1"></span>
-    <button class="ctrl-btn refresh" type="button" @click="emit('refresh')">↻ {{ t('common.refresh') }}</button>
+    <button class="ctrl-btn refresh" type="button" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
   </div>
 
   <div class="workers-shell">
@@ -198,7 +205,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
                   :class="b.action"
                   type="button"
                   @click.stop="onWorkerButton(item.id, b.action)"
-                >{{ b.icon }} {{ b.label }}</button>
+                ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</button>
               </div>
             </article>
           </div>
@@ -229,7 +236,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
               :class="b.action"
               type="button"
               @click.stop="onWorkerButton(selectedWorker.id, b.action)"
-            >{{ b.icon }} {{ b.label }}</button>
+            ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</button>
           </div>
           <div v-if="(selectedWorker.stats ?? []).length" class="worker-stats-grid">
             <div v-for="stat in selectedWorker.stats" :key="stat.label" class="worker-stat-card">

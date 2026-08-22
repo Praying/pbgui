@@ -58,6 +58,9 @@ beforeEach(() => {
 describe('VPS Manager Vue page', () => {
   it('renders overview state, selects a VPS context over the cookie WebSocket, and renders detail safely', async () => {
     const wrapper = mountApp();
+    expect(wrapper.find('.app-shell').exists()).toBe(true);
+    expect(wrapper.get('[role="status"]').text()).toContain('Connecting');
+    expect(wrapper.get('[data-action="refresh"]').find('svg').exists()).toBe(true);
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: overviewState });
     await wrapper.vm.$nextTick();

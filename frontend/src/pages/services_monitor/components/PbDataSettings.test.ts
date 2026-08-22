@@ -209,7 +209,8 @@ describe('PbDataSettings rendering (legacy renderPBDataSettings)', () => {
 
     const details = wrapper.find('details#pbdata-ex-pauses');
     expect(details.attributes('open')).toBeDefined();
-    expect(details.find('summary').text()).toBe('▼ Shared REST pause per exchange');
+    expect(details.find('summary').text()).toBe('Shared REST pause per exchange');
+    expect(details.find('summary svg').exists()).toBe(true);
     expect(details.find('.ex-pauses-hint').text()).toContain('Per-exchange pause between users');
 
     for (const [ex, value] of [
@@ -244,7 +245,8 @@ describe('PbDataSettings rendering (legacy renderPBDataSettings)', () => {
   it('renders the save button with the legacy disk icon', async () => {
     const wrapper = await mountedSettings();
 
-    expect(wrapper.find('button.form-btn.save').text()).toBe('💾 Save');
+    expect(wrapper.find('button.form-btn.save').text()).toBe('Save');
+    expect(wrapper.find('button.form-btn.save svg').exists()).toBe(true);
   });
 });
 

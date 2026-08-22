@@ -45,10 +45,23 @@
  *   a non-ok response clears the list, a network failure keeps the old one.
  */
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import {
+  PhArchive,
+  PhArrowClockwise,
+  PhFloppyDisk,
+  PhMagnifyingGlass,
+  PhPencilSimple,
+  PhPlus,
+  PhTrash,
+  PhX,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
+import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import DashboardList from './components/DashboardList.vue';
 import DeleteDialog from './components/DeleteDialog.vue';
 import NewDashboardDialog from './components/NewDashboardDialog.vue';
@@ -354,8 +367,20 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <AppShell
+    class="data-page-shell data-page-shell--dashboard-main"
+    page-key="dashboards"
+    :page-title="t('dash.dashboards')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('shared.status')"
+        :value="frameLoading ? t('common.loading') : t('common.ok')"
+        :tone="frameLoading ? 'warning' : 'success'"
+      />
+    </template>
+
   <MigrationWatermark />
-  <nav id="topnav"></nav>
   <div id="page-body">
     <!-- ── Sidebar ── -->
     <div id="sidebar" ref="sidebarEl">
@@ -373,50 +398,56 @@ onUnmounted(() => {
               class="sb-btn edit-mode-save"
               id="sb-save"
               :title="t('dash.saveDashboard')"
+              :aria-label="t('dash.saveDashboard')"
               @click="postToFrame({ type: 'pbgui_trigger_save' })"
-            >💾</button>
+            ><PbIcon :icon="PhFloppyDisk" /></button>
             <button
               class="sb-btn"
               id="sb-cancel"
               :title="t('dash.cancelEdit')"
+              :aria-label="t('dash.cancelEdit')"
               @click="postToFrame({ type: 'pbgui_trigger_cancel' })"
-            >✕</button>
+            ><PbIcon :icon="PhX" /></button>
             <button
               class="sb-btn danger"
               id="sb-delete"
               :title="t('dash.deleteDashboard')"
+              :aria-label="t('dash.deleteDashboard')"
               @click="openDeleteDialog(currentDash ? [currentDash] : [])"
-            >🗑</button>
+            ><PbIcon :icon="PhTrash" /></button>
           </template>
           <template v-else>
-            <button class="sb-btn" id="sb-refresh" :title="t('dash.refreshList')" @click="refreshList()">↻</button>
-            <button class="sb-btn" id="sb-new" :title="t('dash.newDashboard')" @click="newDialogVisible = true">➕</button>
+            <button class="sb-btn" id="sb-refresh" :title="t('dash.refreshList')" :aria-label="t('dash.refreshList')" @click="refreshList()"><PbIcon :icon="PhArrowClockwise" /></button>
+            <button class="sb-btn" id="sb-new" :title="t('dash.newDashboard')" :aria-label="t('dash.newDashboard')" @click="newDialogVisible = true"><PbIcon :icon="PhPlus" /></button>
             <button
               v-if="currentDash"
               class="sb-btn"
               id="sb-edit"
               :title="t('dash.editCurrentDashboard')"
+              :aria-label="t('dash.editCurrentDashboard')"
               @click="loadEditor(currentDash)"
-            >✎</button>
+            ><PbIcon :icon="PhPencilSimple" /></button>
             <button
               v-if="getDeleteTargets().length"
               class="sb-btn danger"
               id="sb-del"
               :title="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
+              :aria-label="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
               @click="openDeleteDialog(getDeleteTargets())"
-            >🗑</button>
-            <button class="sb-btn" id="sb-templates" :title="t('dash.templates')" @click="openTemplates()">🗃</button>
+            ><PbIcon :icon="PhTrash" /></button>
+            <button class="sb-btn" id="sb-templates" :title="t('dash.templates')" :aria-label="t('dash.templates')" @click="openTemplates()"><PbIcon :icon="PhArchive" /></button>
             <button
               v-if="showViewSave"
               class="sb-btn view-save"
               id="sb-view-save"
               :title="t('dash.saveViewLayout')"
+              :aria-label="t('dash.saveViewLayout')"
               @click="postToFrame({ type: 'pbgui_trigger_view_save' })"
-            >💾</button>
+            ><PbIcon :icon="PhFloppyDisk" /></button>
           </template>
         </div>
         <div id="sidebar-search-wrap" :class="{ visible: showSearch }">
-          <span class="sb-search-icon">🔍</span>
+          <span class="sb-search-icon" aria-hidden="true"><PbIcon :icon="PhMagnifyingGlass" /></span>
           <input
             id="sidebar-search"
             v-model="query"
@@ -470,6 +501,7 @@ onUnmounted(() => {
     @confirm="confirmDelete"
   />
   <TemplatesOverlay :visible="tplVisible" :url="tplUrl" @close="closeTemplates" />
+  </AppShell>
 </template>
 
 <!-- Layout scaffolding ported from frontend/dashboard_main.html (page-level,
@@ -485,11 +517,22 @@ body {
 
 #page-body {
   display: flex;
-  height: calc(100vh - 52px); /* topnav height, injected by pbgui_nav.js */
-  height: calc(100dvh - 52px);
+  height: calc(100vh - 112px);
+  height: calc(100dvh - 112px);
   overflow: hidden;
   user-select: none;
   background: var(--bg-page);
+}
+
+.data-page-shell .app-shell__main {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.data-page-shell .app-shell__primary {
+  min-height: 0;
 }
 
 /* ── Left sidebar ── */

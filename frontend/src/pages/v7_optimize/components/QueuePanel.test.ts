@@ -4,6 +4,20 @@ import { createI18n } from '@/shared/i18n';
 import QueuePanel from './QueuePanel.vue';
 
 describe('QueuePanel', () => {
+  it('renders accessible Phosphor reorder controls', () => {
+    const wrapper = mount(QueuePanel, {
+      props: { rows: [{ filename: 'a', name: 'a' }], selected: new Set<string>(), search: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+    const moveUp = wrapper.find('button[data-test="queue-move-up"]');
+    const moveDown = wrapper.find('button[data-test="queue-move-down"]');
+    expect(moveUp.attributes('aria-label')).toBeTruthy();
+    expect(moveDown.attributes('aria-label')).toBeTruthy();
+    expect(moveUp.find('svg').exists()).toBe(true);
+    expect(moveDown.find('svg').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
   it('supports dragging a queue item to persist a block reorder', async () => {
     const wrapper = mount(QueuePanel, {
       props: { rows: [{ filename: 'a', name: 'a' }, { filename: 'b', name: 'b' }], selected: new Set<string>(), search: '' },

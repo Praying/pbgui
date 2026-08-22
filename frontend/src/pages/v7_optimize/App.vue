@@ -1,6 +1,33 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import {
+  PhArrowRight,
+  PhArchive,
+  PhArrowsClockwise,
+  PhChartBar,
+  PhClipboardText,
+  PhCompassTool,
+  PhCopy,
+  PhCube,
+  PhDownloadSimple,
+  PhFileText,
+  PhFolderOpen,
+  PhGear,
+  PhHourglass,
+  PhDna,
+  PhPencilSimple,
+  PhPlant,
+  PhPlus,
+  PhQuestion,
+  PhTarget,
+  PhTrash,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import IconButton from '@/shared/components/IconButton.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { currentOptimizeAdapter, readIncomingDraft } from './config';
 import ConfigEditorModal from './components/ConfigEditorModal.vue';
 import ConfigsPanel from './components/ConfigsPanel.vue';
@@ -23,6 +50,10 @@ import './styles/optimize.css';
 
 const { t } = useI18n();
 const adapter = currentOptimizeAdapter();
+
+function actionLabel(key: string): string {
+  return t(key).replace(/^[^\p{L}\p{N}]+/u, '');
+}
 const toast = ref<{ message: string; kind: 'info' | 'success' | 'error' } | null>(null);
 const duplicateSource = ref('');
 const duplicateName = ref('');
@@ -42,6 +73,10 @@ let toastTimer: number | undefined;
 let liveRefreshTimer: number | undefined;
 let preflightPollTimer: number | undefined;
 let liveRefreshInFlight = false;
+
+function openOptimizeHelp(): void {
+  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER?.();
+}
 
 function notify(message: string, kind: 'info' | 'success' | 'error' = 'info'): void {
   toast.value = { message, kind };
@@ -339,69 +374,93 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <nav id="topnav"></nav>
-  <div id="opt-conn-banner" :class="page.connected.value ? 'connected' : 'disconnected'">{{ page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue') }}</div>
-  <div id="page-body">
+  <AppShell
+    class="core-workbench-shell core-workbench-shell--optimize"
+    :page-key="adapter.navCurrent"
+    :page-title="t('editor.optimize.pageTitle')"
+    :page-family="adapter.label"
+    :status-text="page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue')"
+    :status-tone="page.connected.value ? 'success' : 'warning'"
+  >
+    <template #header-actions>
+      <IconButton
+        class="pbgui-icon-button"
+        :icon="PhQuestion"
+        :label="t('nav.guide')"
+        @click="openOptimizeHelp"
+      />
+    </template>
+
+    <div id="opt-conn-banner" :class="page.connected.value ? 'connected' : 'disconnected'">{{ page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue') }}</div>
+    <div id="page-body">
     <aside id="sidebar">
       <div id="sidebar-inner">
         <div class="opt-side-title">{{ adapter.label }} Optimize</div>
-        <button class="opt-side-item" :class="{ active: page.panel.value === 'configs' }" @click="setPanel('configs')">📋 {{ t('v7optimize.navConfigs') }} <b>{{ page.configs.value.length }}</b></button>
-        <button class="opt-side-item" :class="{ active: page.panel.value === 'queue' }" @click="setPanel('queue')">⏳ {{ t('v7optimize.navQueue') }} <b>{{ page.queue.value.length }}</b></button>
-        <button class="opt-side-item" data-test="nav-results" :class="{ active: page.panel.value === 'results' }" @click="setPanel('results')">📊 {{ t('v7optimize.navResults') }} <b>{{ page.results.value.length }}</b></button>
-        <button class="opt-side-item" data-test="nav-paretos" :class="{ active: page.panel.value === 'paretos' }" @click="setPanel('paretos')">🎯 {{ t('v7optimize.navParetos') }} <b>{{ page.paretos.value.length }}</b></button>
+        <button class="opt-side-item" :class="{ active: page.panel.value === 'configs' }" @click="setPanel('configs')"><PbIcon :icon="PhClipboardText" /> {{ t('v7optimize.navConfigs') }} <b>{{ page.configs.value.length }}</b></button>
+        <button class="opt-side-item" :class="{ active: page.panel.value === 'queue' }" @click="setPanel('queue')"><PbIcon :icon="PhHourglass" /> {{ t('v7optimize.navQueue') }} <b>{{ page.queue.value.length }}</b></button>
+        <button class="opt-side-item" data-test="nav-results" :class="{ active: page.panel.value === 'results' }" @click="setPanel('results')"><PbIcon :icon="PhChartBar" /> {{ t('v7optimize.navResults') }} <b>{{ page.results.value.length }}</b></button>
+        <button class="opt-side-item" data-test="nav-paretos" :class="{ active: page.panel.value === 'paretos' }" @click="setPanel('paretos')"><PbIcon :icon="PhTarget" /> {{ t('v7optimize.navParetos') }} <b>{{ page.paretos.value.length }}</b></button>
         <hr />
         <template v-if="page.panel.value === 'configs'">
-          <button class="opt-side-action primary" @click="page.openEditor()">{{ t('v7optimize.newConfig') }}</button>
-          <button class="opt-side-action" @click="importOpen = true">⇩ {{ t('v7optimize.importConfig') }}</button>
-          <button class="opt-side-action" :disabled="page.selectedConfigs.value.size !== 1" @click="page.openEditor([...page.selectedConfigs.value][0])">{{ t('v7optimize.editSelected') }}</button>
-          <button class="opt-side-action" data-test="duplicate-selected" :disabled="page.selectedConfigs.value.size !== 1" @click="openDuplicate([...page.selectedConfigs.value][0] || '')">{{ t('v7optimize.duplicate') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="queueSelected">{{ t('v7optimize.queueSelected') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="archiveSelected">{{ t('v7optimize.addToArchive') }}</button>
-          <button v-if="!adapter.isV8" class="opt-side-action" :disabled="page.selectedConfigs.value.size !== 1" @click="migrateSelected">⇢ {{ t('v7optimize.convertToPb8Optimize') }}</button>
-          <button class="opt-side-action danger" :disabled="!page.selectedConfigs.value.size" @click="askDeleteConfigs">{{ t('v7optimize.deleteSelected') }}</button>
+          <button class="opt-side-action primary" @click="page.openEditor()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7optimize.newConfig') }}</button>
+          <button class="opt-side-action" @click="importOpen = true"><PbIcon :icon="PhDownloadSimple" /> {{ actionLabel('v7optimize.importConfig') }}</button>
+          <button class="opt-side-action" :disabled="page.selectedConfigs.value.size !== 1" @click="page.openEditor([...page.selectedConfigs.value][0])"><PbIcon :icon="PhPencilSimple" /> {{ actionLabel('v7optimize.editSelected') }}</button>
+          <button class="opt-side-action" data-test="duplicate-selected" :disabled="page.selectedConfigs.value.size !== 1" @click="openDuplicate([...page.selectedConfigs.value][0] || '')"><PbIcon :icon="PhCopy" /> {{ actionLabel('v7optimize.duplicate') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="queueSelected"><PbIcon :icon="PhArrowRight" /> {{ actionLabel('v7optimize.queueSelected') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedConfigs.value.size" @click="archiveSelected"><PbIcon :icon="PhArchive" /> {{ actionLabel('v7optimize.addToArchive') }}</button>
+          <button v-if="!adapter.isV8" class="opt-side-action" :disabled="page.selectedConfigs.value.size !== 1" @click="migrateSelected"><PbIcon :icon="PhArrowRight" /> {{ actionLabel('v7optimize.convertToPb8Optimize') }}</button>
+          <button class="opt-side-action danger" :disabled="!page.selectedConfigs.value.size" @click="askDeleteConfigs"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</button>
         </template>
         <template v-else-if="page.panel.value === 'queue'">
-          <button class="opt-side-action danger" :disabled="!page.selectedQueue.value.size" @click="askDeleteQueue">{{ t('v7optimize.deleteSelected') }}</button>
-          <button class="opt-side-action" @click="page.settingsOpen.value = true">{{ t('v7optimize.settings') }}</button>
+          <button class="opt-side-action danger" :disabled="!page.selectedQueue.value.size" @click="askDeleteQueue"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</button>
+          <button class="opt-side-action" @click="page.settingsOpen.value = true"><PbIcon :icon="PhGear" /> {{ actionLabel('v7optimize.settings') }}</button>
         </template>
         <template v-else-if="page.panel.value === 'results'">
-          <button class="opt-side-action" data-test="result-paretos" :disabled="!selectedResultCapabilities.hasPareto" @click="openResult(selectedResult)">{{ t('v7optimize.paretos') }}</button>
-          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="openParetoExplorer()">{{ t('v7optimize.paretoExplorer') }}</button>
-          <button class="opt-side-action" data-test="result-dash" :disabled="!selectedResultCapabilities.supportsDash" @click="runSelectedResult('dash')">◫ {{ t('v7optimize.pdParetoDash') }}</button>
-          <button class="opt-side-action" :disabled="!selectedResultCapabilities.supports3d" @click="runSelectedResult('plot3d')">◭ {{ t('v7optimize.plot3d') }}</button>
-          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="runSelectedResult('continue')">{{ t('v7optimize.continueOptimize') }}</button>
-          <button v-if="adapter.isV8" class="opt-side-action" :disabled="!selectedResultCapabilities.resumable" @click="runSelectedResult('resume')">↻ {{ t('v7optimize.resumeCheckpoint') }}</button>
-          <button class="opt-side-action" data-test="result-config" :disabled="!selectedResultCapabilities.hasConfig" @click="runSelectedResult('config')">{{ t('v7optimize.configDraft') }}</button>
-          <button class="opt-side-action danger" :disabled="!page.selectedResults.value.size" @click="askDeleteResults">{{ t('v7optimize.deleteSelected') }}</button>
+          <button class="opt-side-action" data-test="result-paretos" :disabled="!selectedResultCapabilities.hasPareto" @click="openResult(selectedResult)"><PbIcon :icon="PhChartBar" /> {{ actionLabel('v7optimize.paretos') }}</button>
+          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</button>
+          <button class="opt-side-action" data-test="result-dash" :disabled="!selectedResultCapabilities.supportsDash" @click="runSelectedResult('dash')"><PbIcon :icon="PhChartBar" /> {{ t('v7optimize.pdParetoDash') }}</button>
+          <button class="opt-side-action" :disabled="!selectedResultCapabilities.supports3d" @click="runSelectedResult('plot3d')"><PbIcon :icon="PhCube" /> {{ t('v7optimize.plot3d') }}</button>
+          <button class="opt-side-action" :disabled="!selectedResultCapabilities.hasPareto" @click="runSelectedResult('continue')"><PbIcon :icon="PhPlant" /> {{ actionLabel('v7optimize.continueOptimize') }}</button>
+          <button v-if="adapter.isV8" class="opt-side-action" :disabled="!selectedResultCapabilities.resumable" @click="runSelectedResult('resume')"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.resumeCheckpoint') }}</button>
+          <button class="opt-side-action" data-test="result-config" :disabled="!selectedResultCapabilities.hasConfig" @click="runSelectedResult('config')"><PbIcon :icon="PhFileText" /> {{ actionLabel('v7optimize.configDraft') }}</button>
+          <button class="opt-side-action danger" :disabled="!page.selectedResults.value.size" @click="askDeleteResults"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</button>
         </template>
         <template v-else>
-          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()">{{ t('v7optimize.paretoExplorer') }}</button>
-          <button class="opt-side-action" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)">{{ t('v7optimize.backtest') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos">{{ t('v7optimize.seedSelected') }}</button>
-          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')">{{ t('v7optimize.seedWholeResult') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</button>
+          <button class="opt-side-action" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.backtest') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos"><PbIcon :icon="PhDna" /> {{ actionLabel('v7optimize.seedSelected') }}</button>
+          <button class="opt-side-action" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')"><PbIcon :icon="PhFolderOpen" /> {{ actionLabel('v7optimize.seedWholeResult') }}</button>
         </template>
         <hr v-if="page.editorOpen.value" />
-        <button v-if="page.editorOpen.value" class="opt-side-action" @click="runPreflight()">{{ t('v7optimize.ohlcvReadiness') }}</button>
+        <button v-if="page.editorOpen.value" class="opt-side-action" @click="runPreflight()"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7optimize.ohlcvReadiness') }}</button>
       </div>
       <div id="sidebar-resize"></div>
     </aside>
 
-    <main id="main-content">
-      <div v-if="page.runtimeWarning.value" class="opt-runtime-warning" data-test="pb8-runtime-warning" role="status">
+    <div class="workbench-page-content">
+      <div v-if="page.runtimeWarning.value" class="opt-runtime-warning" data-test="pb8-runtime-warning" role="status" aria-live="polite">
         <strong>{{ t('v7optimize.pb8UpdateRequired') }}</strong>
         <span>{{ page.runtimeWarning.value }}</span>
         <a href="/api/vps-manager/main_page">{{ t('v7optimize.openVpsManagerUpdatePb8') }}</a>
       </div>
-      <div v-if="page.error.value" class="opt-error opt-error-banner">{{ page.error.value }}</div>
-      <div v-if="page.loading.value" class="opt-loading">{{ t('common.loading') }}</div>
+      <ErrorState
+        v-if="page.error.value"
+        class="opt-error opt-error-banner"
+        :title="t('common.error')"
+        :message="page.error.value"
+        :retry-label="t('common.refresh')"
+        @retry="page.loadAll"
+      />
+      <LoadingSkeleton v-if="page.loading.value" class="opt-loading" :label="t('common.loading')" />
       <template v-else>
         <section v-if="page.panel.value === 'configs'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
         <section v-else-if="page.panel.value === 'queue'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" /></section>
         <section v-else-if="page.panel.value === 'results'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" /></section>
         <section v-else class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
       </template>
-    </main>
+    </div>
   </div>
+  </AppShell>
 
   <ConfigEditorModal :open="page.editorOpen.value" :draft="page.editorDraft.value" :version="adapter.version" :error="page.editorError.value" :param-status="page.editorParamStatus.value" :limits-meta="page.settings.value.limitsMeta" :exchange-options="(page.settings.value.exchange_options as string[] | undefined) || []" :bot-params="(page.settings.value.bot_params as string[] | undefined) || []" :hsl-modes="(page.settings.value.hsl_signal_modes as string[] | undefined) || []" :backend-options="(page.settings.value.optimize_backend_options as string[] | undefined) || []" :optimize-defaults="(page.settings.value.optimize_defaults as Record<string, unknown> | undefined) || {}" :pymoo-algorithm-options="(page.settings.value.pymoo_algorithm_options as string[] | undefined) || []" :pymoo-ref-dir-method-options="(page.settings.value.pymoo_ref_dir_method_options as string[] | undefined) || []" :strategy-options="(page.settings.value.strategies as string[] | undefined) || []" :pbgui-data-path="pbguiDataPath" :load-symbols="actions.loadSymbols" @close="page.closeEditor" @save="saveEditor" @preflight="runPreflight" />
   <SettingsModal :open="page.settingsOpen.value" :settings="page.settings.value" @close="page.settingsOpen.value = false" @save="page.saveSettings" />

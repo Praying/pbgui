@@ -49,9 +49,24 @@
  *  - the number-stepper auto-wrap (:4157-4182) is not ported.
  */
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
+import {
+  PhChartBar,
+  PhCopy,
+  PhFileText,
+  PhFloppyDisk,
+  PhHouse,
+  PhLightning,
+  PhMagnifyingGlass,
+  PhQuestion,
+  PhUploadSimple,
+  PhWallet,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { replaceTopLocation } from '@/shared/nav';
+import AppShell from '@/shared/components/AppShell.vue';
+import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import CoinOverridesPanel from '@/shared/coinOverrides/components/CoinOverridesPanel.vue';
 import AdvancedSection from './components/AdvancedSection.vue';
 import BasicSection from './components/BasicSection.vue';
@@ -141,6 +156,10 @@ function openBalanceCalc(): void {
   void balanceModal.value?.show();
 }
 
+function openEditHelp(): void {
+  window.PBGUI_HELP_OPENER?.();
+}
+
 /** PBGUI_HELP_OPENER (:4184-4187) — global shared help overlay. */
 declare global {
   interface Window {
@@ -171,9 +190,22 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="core-workbench-shell core-workbench-shell--edit"
+    :page-key="adapter.navCurrent"
+    :page-title="t(adapter.titleKey)"
+    :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
+  >
+    <template #header-actions>
+      <IconButton
+        class="pbgui-icon-button"
+        :icon="PhQuestion"
+        :label="t('nav.guide')"
+        @click="openEditHelp"
+      />
+    </template>
 
-  <div id="page-body">
+    <div id="page-body">
     <!-- Sidebar (:545-565) -->
     <div id="sidebar">
       <div id="sidebar-sticky">
@@ -181,7 +213,7 @@ onBeforeUnmount(() => {
           <span class="sb-title">{{ t(adapter.sidebarTitleKey) }}</span>
         </div>
         <div id="sidebar-toolbar">
-          <button class="sb-btn" :title="t('v7run.backToList')" @click="goBack()">&#x1F3E0; {{ t('v7run.home') }}</button>
+          <button class="sb-btn" :title="t('v7run.backToList')" @click="goBack()"><PbIcon :icon="PhHouse" /> {{ t('v7run.home') }}</button>
           <button
             class="sb-btn primary"
             id="btn-save"
@@ -190,25 +222,25 @@ onBeforeUnmount(() => {
             @click="page.save()"
           >
             <span v-if="page.saving.value" class="spinner"></span>
-            <template v-else>&#x1F4BE;</template>
+            <PbIcon v-else :icon="PhFloppyDisk" />
             {{ page.saving.value ? t('v7run.saving') : t('common.save') }}
           </button>
-          <button class="sb-btn info" :title="t('v7run.importJsonConfig')" @click="openImport()">&#x1F4E5; {{ t('v7run.import') }}</button>
-          <button class="sb-btn info" :title="t('v7run.copyCurrentConfig')" @click="openCopy()">&#x1F4CB; {{ t('v7run.copy') }}</button>
+          <button class="sb-btn info" :title="t('v7run.importJsonConfig')" @click="openImport()"><PbIcon :icon="PhUploadSimple" /> {{ t('v7run.import') }}</button>
+          <button class="sb-btn info" :title="t('v7run.copyCurrentConfig')" @click="openCopy()"><PbIcon :icon="PhCopy" /> {{ t('v7run.copy') }}</button>
           <hr class="sb-sep" />
-          <button class="sb-btn" :title="t('v7run.openInBacktest')" @click="handoffs.goBacktest()">&#x1F4CA; {{ t('v7run.backtest') }}</button>
-          <button class="sb-btn" :title="t('v7run.openStrategyExplorer')" @click="handoffs.goStrategyExplorer()">&#x1F50D; {{ t('v7run.strategyExplorer') }}</button>
-          <button class="sb-btn" :title="t('v7run.openBalanceCalculatorPage')" @click="handoffs.goBalanceCalc()">&#x1F4B0; {{ t('v7run.balanceCalculator') }}</button>
-          <button class="sb-btn" :title="t('v7run.calcBalanceTitle')" @click="openBalanceCalc()">&#x26A1; {{ t('v7run.calcBalance') }}</button>
+          <button class="sb-btn" :title="t('v7run.openInBacktest')" @click="handoffs.goBacktest()"><PbIcon :icon="PhChartBar" /> {{ t('v7run.backtest') }}</button>
+          <button class="sb-btn" :title="t('v7run.openStrategyExplorer')" @click="handoffs.goStrategyExplorer()"><PbIcon :icon="PhMagnifyingGlass" /> {{ t('v7run.strategyExplorer') }}</button>
+          <button class="sb-btn" :title="t('v7run.openBalanceCalculatorPage')" @click="handoffs.goBalanceCalc()"><PbIcon :icon="PhWallet" /> {{ t('v7run.balanceCalculator') }}</button>
+          <button class="sb-btn" :title="t('v7run.calcBalanceTitle')" @click="openBalanceCalc()"><PbIcon :icon="PhLightning" /> {{ t('v7run.calcBalance') }}</button>
           <hr class="sb-sep" />
-          <button class="sb-btn" id="btn-log" :class="{ active: logOpen }" :title="t('v7run.livePassivbotLog')" @click="logOpen = !logOpen">&#x1F4CB; {{ t('v7run.log') }}</button>
+          <button class="sb-btn" id="btn-log" :class="{ active: logOpen }" :title="t('v7run.livePassivbotLog')" @click="logOpen = !logOpen"><PbIcon :icon="PhFileText" /> {{ t('v7run.log') }}</button>
         </div>
       </div>
       <div id="sidebar-resize"></div>
     </div>
 
     <!-- Main content (:568) -->
-    <div id="main-content">
+    <div class="workbench-page-content">
       <section v-if="migrationReviewFields.length" class="migration-review-notice" data-test="migration-review-notice" role="status">
         <strong>{{ t('v7run.migrationReviewTitle') }}</strong>
         <p>{{ page.migrationMessage.value || t('v7run.migrationReviewMessage') }}</p>
@@ -225,8 +257,9 @@ onBeforeUnmount(() => {
       <BotSection />
       <ExtraParamsPanel />
       <RawJsonEditor />
-    </div>
-  </div><!-- /page-body -->
+      </div>
+    </div><!-- /page-body -->
+  </AppShell>
 
   <LogPanel v-model="logOpen" />
 

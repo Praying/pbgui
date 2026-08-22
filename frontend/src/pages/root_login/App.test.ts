@@ -44,6 +44,8 @@ describe('root_login App', () => {
     const wrapper = mountApp();
     await flushPromises();
 
+    // Standalone auth boundary: login must not render the workbench rail.
+    expect(wrapper.find('.app-shell').exists()).toBe(false);
     const input = wrapper.find('input[type=password]');
     expect(wrapper.find('form').exists()).toBe(true);
     expect(input.attributes('placeholder')).toBe('Password');

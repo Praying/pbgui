@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { PhCaretDown, PhCaretRight, PhCheckCircle, PhDesktop, PhFileText, PhGear, PhList, PhStop, PhX, PhXCircle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
+import AppShell from '@/shared/components/AppShell.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { vpsWsUrl } from './config';
 import type { ConnectionInfo, HistoryPayload, HistoryPoint, InstanceRecord, Metrics, ServiceCheck, VpsState } from './types';
 
@@ -9,6 +16,7 @@ const { t } = useI18n();
 const query = new URLSearchParams(window.location.search);
 const hideIpMode = ref(query.get('hide_ip') === '1');
 const queryCompact = query.get('compact') === '1';
+const tabIcons = { dashboard: PhDesktop, instances: PhList, services: PhGear, logs: PhFileText } as const;
 
 const activeTab = ref<'dashboard' | 'instances' | 'services' | 'logs'>('dashboard');
 const state = ref<VpsState | null>(null);
@@ -284,7 +292,21 @@ onUnmounted(() => { disconnect(); closeViewer(); });
 </script>
 
 <template>
-  <main class="vps-monitor" :class="{ compact: compactMode }">
+  <AppShell
+    class="operations-shell operations-shell--vps-monitor"
+    page-key="system_vps_monitor"
+    :page-title="t('sysmon.vpsMonitor')"
+    :page-description="t('sysmon.vpsMonitorSubtitle')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('sysmon.status')"
+        :value="connection === 'connected' ? t('sysmon.connected') : connection === 'lost' ? t('sysmon.connectionLost') : t('sysmon.connectingVpsMonitor')"
+        :tone="connection === 'connected' ? 'success' : connection === 'lost' ? 'danger' : 'warning'"
+      />
+    </template>
+
+  <div class="vps-monitor" :class="{ compact: compactMode }">
     <div class="vps-banner" :class="{ connected: connection === 'connected' }" data-status="connection">
       {{ connection === 'connected' ? t('sysmon.connected') : connection === 'lost' ? t('sysmon.connectionLost') : t('sysmon.connectingVpsMonitor') }}
     </div>
@@ -292,7 +314,7 @@ onUnmounted(() => { disconnect(); closeViewer(); });
       <aside class="vps-sidebar">
         <div class="vps-title">{{ t('sysmon.vpsMonitor') }}</div>
         <nav class="vps-nav">
-          <button v-for="tab in (['dashboard', 'instances', 'services', 'logs'] as const)" :key="tab" :data-tab="tab" :class="{ active: activeTab === tab }" @click="switchTab(tab)">{{ tab === 'dashboard' ? '🖥️' : tab === 'instances' ? '📄' : tab === 'services' ? '⚙️' : '📋' }} {{ tab === 'dashboard' ? t('sysmon.dashboard') : tab === 'instances' ? t('sysmon.instances') : tab === 'services' ? t('sysmon.services') : t('sysmon.liveLogs') }}</button>
+          <button v-for="tab in (['dashboard', 'instances', 'services', 'logs'] as const)" :key="tab" :data-tab="tab" :class="{ active: activeTab === tab }" @click="switchTab(tab)"><PbIcon :icon="tabIcons[tab]" /> {{ tab === 'dashboard' ? t('sysmon.dashboard') : tab === 'instances' ? t('sysmon.instances') : tab === 'services' ? t('sysmon.services') : t('sysmon.liveLogs') }}</button>
         </nav>
         <div class="vps-options">
           <label><input data-option="hide-ip" v-model="hideIpMode" type="checkbox"> {{ t('sysmon.hideIp') }}</label>
@@ -310,11 +332,11 @@ onUnmounted(() => { disconnect(); closeViewer(); });
           </div>
           <article v-for="host in hosts" :key="host" class="vps-card">
             <header class="vps-card-header" @click="toggleHost(host)">
-              <span class="vps-card-title">{{ connectionMap[host]?.status === 'connected' ? '✅' : connectionMap[host]?.status === 'connecting' ? '⏳' : '❌' }} {{ host }}</span>
+              <span class="vps-card-title"><PbIcon :icon="connectionMap[host]?.status === 'connected' ? PhCheckCircle : PhXCircle" /> {{ host }}</span>
               <span v-if="!hideIpMode" :data-ip="host" class="vps-badge">{{ connectionMap[host]?.ip || '?' }}</span>
               <span class="vps-badge" :class="statusClass(monitorAgent(host).state)">{{ t('sysmon.monitorAgentLabel', { label: monitorAgentLabel(host) }) }}</span>
               <span class="vps-badge" :class="statusClass(connectionMap[host]?.status)">{{ serviceLabel(connectionMap[host]?.status) }}</span>
-              <span>{{ collapsedHosts[host] ? '▸' : '▾' }}</span>
+              <PbIcon :icon="collapsedHosts[host] ? PhCaretRight : PhCaretDown" aria-label="Toggle host details" />
             </header>
             <div v-if="!isHostCollapsed(host)" class="vps-card-body">
               <div v-if="Object.keys(monitorAgent(host)).length" class="agent-details"><div>{{ t('sysmon.collectorHeartbeat') }} {{ formatAge((monitorAgent(host).collector as Record<string, unknown>)?.generated_at || monitorAgent(host).generated_at) }}</div><div class="agent-files"><span v-for="file in agentFiles(host)" :key="file.name" class="agent-file" :class="file.state">{{ file.name }}: {{ file.state }}</span></div></div>
@@ -327,21 +349,26 @@ onUnmounted(() => { disconnect(); closeViewer(); });
               </div>
             </div>
           </article>
-          <div v-if="!hosts.length" class="result-message">{{ t('sysmon.noVpsConfigured') }}</div>
+          <EmptyState
+            v-if="!hosts.length"
+            class="result-message"
+            :title="t('sysmon.noVpsConfigured')"
+          />
         </div>
 
         <div v-else-if="activeTab === 'instances'" class="vps-panel">
           <div class="summary-bar"><label>Server <select v-model="instanceServerFilter"><option>All</option><option v-for="host in hosts" :key="host">{{ host }}</option></select></label><label>{{ t('sysmon.version') }} <select v-model="instanceVersionFilter"><option>All</option><option>7</option><option>8</option><option>V7</option><option>V8</option></select></label><label><input v-model="instanceErrorsOnly" type="checkbox"> {{ t('sysmon.onlyWithErrors') }}</label><label><input v-model="instanceShowOther" type="checkbox"> {{ t('sysmon.showOther') }}</label></div>
-          <table class="vps-table"><thead><tr><th>Host</th><th>{{ t('sysmon.name') }}</th><th>{{ t('sysmon.version') }}</th><th>{{ t('sysmon.cpu') }}</th><th>{{ t('sysmon.totalPnl') }}</th><th>{{ t('sysmon.totalFills') }}</th><th>{{ t('sysmon.status') }}</th><th>{{ t('sysmon.action') }}</th></tr></thead><tbody><tr v-for="entry in visibleInstanceRows" :key="`${entry.host}:${instanceName(entry.row)}`"><td>{{ entry.host }}</td><td>{{ instanceName(entry.row) }}</td><td>{{ instanceVersion(entry.row) }}</td><td :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="cpu" @click="openHistory(entry.host, 'cpu', instanceName(entry.row))">{{ numberValue(entry.row.c || entry.row.cpu).toFixed(1) }}%</td><td :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="pnl" @click="openHistory(entry.host, 'pnl', instanceName(entry.row))">{{ numberValue(entry.row.pt || entry.row.pnlToday || entry.row.pnl_hist_total).toFixed(2) }}</td><td>{{ numberValue(entry.row.ct || entry.row.fillsToday).toLocaleString() }}</td><td><span class="vps-badge" :class="statusClass(entry.row.status || 'running')">{{ entry.row.status || t('sysmon.running') }}</span></td><td><button data-action="view-instance-log" class="vps-action secondary" @click="viewInstanceLog(entry.host, entry.row)">{{ t('sysmon.viewLog') }}</button> <button data-action="kill-instance" class="vps-action danger" @click="killInstance(entry.host, entry.row)">↻</button></td></tr></tbody></table><div v-if="!visibleInstanceRows.length" class="result-message">{{ t('sysmon.noInstances') }}</div>
+          <table class="vps-table"><thead><tr><th>Host</th><th>{{ t('sysmon.name') }}</th><th>{{ t('sysmon.version') }}</th><th>{{ t('sysmon.cpu') }}</th><th>{{ t('sysmon.totalPnl') }}</th><th>{{ t('sysmon.totalFills') }}</th><th>{{ t('sysmon.status') }}</th><th>{{ t('sysmon.action') }}</th></tr></thead><tbody><tr v-for="entry in visibleInstanceRows" :key="`${entry.host}:${instanceName(entry.row)}`"><td>{{ entry.host }}</td><td>{{ instanceName(entry.row) }}</td><td>{{ instanceVersion(entry.row) }}</td><td :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="cpu" @click="openHistory(entry.host, 'cpu', instanceName(entry.row))">{{ numberValue(entry.row.c || entry.row.cpu).toFixed(1) }}%</td><td :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="pnl" @click="openHistory(entry.host, 'pnl', instanceName(entry.row))">{{ numberValue(entry.row.pt || entry.row.pnlToday || entry.row.pnl_hist_total).toFixed(2) }}</td><td>{{ numberValue(entry.row.ct || entry.row.fillsToday).toLocaleString() }}</td><td><span class="vps-badge" :class="statusClass(entry.row.status || 'running')">{{ entry.row.status || t('sysmon.running') }}</span></td><td><button data-action="view-instance-log" class="vps-action secondary" @click="viewInstanceLog(entry.host, entry.row)">{{ t('sysmon.viewLog') }}</button> <button data-action="kill-instance" class="vps-action danger" @click="killInstance(entry.host, entry.row)"><PbIcon :icon="PhStop" /> {{ t('sysmon.restartKill') }}</button></td></tr></tbody></table><EmptyState v-if="!visibleInstanceRows.length" class="result-message" :title="t('sysmon.noInstances')" />
         </div>
 
-        <div v-else-if="activeTab === 'services'" class="vps-panel"><div class="service-grid"><section v-for="host in serviceHosts" :key="host" class="service-host"><header class="service-head" @click="toggleServices(host)"><span>{{ host }}</span><span>{{ isServiceCollapsed(host) ? '▸' : '▾' }}</span></header><div v-if="!isServiceCollapsed(host)" class="service-list"><div v-for="(check, service) in services[host]" :key="service" class="service-row"><div><div class="service-name">{{ service }}</div><div class="service-status" :class="statusClass(check.status)">{{ serviceLabel(check.status) }}<span v-if="check.pid"> (PID: {{ check.pid }})</span></div><div v-if="check.reason" class="service-status">{{ check.reason }}</div><div v-if="check.error" class="service-status error">{{ check.error }}</div></div><button v-if="check.expected !== false && check.status !== 'disabled'" data-action="restart-service" class="service-action" @click="restartService(host, String(service))">{{ t('sysmon.restart') }}</button></div></div></section></div><div v-if="!serviceHosts.length" class="result-message">{{ t('sysmon.noServices') }}</div></div>
+        <div v-else-if="activeTab === 'services'" class="vps-panel"><div class="service-grid"><section v-for="host in serviceHosts" :key="host" class="service-host"><header class="service-head" @click="toggleServices(host)"><span>{{ host }}</span><PbIcon :icon="isServiceCollapsed(host) ? PhCaretRight : PhCaretDown" aria-label="Toggle service details" /></header><div v-if="!isServiceCollapsed(host)" class="service-list"><div v-for="(check, service) in services[host]" :key="service" class="service-row"><div><div class="service-name">{{ service }}</div><div class="service-status" :class="statusClass(check.status)">{{ serviceLabel(check.status) }}<span v-if="check.pid"> (PID: {{ check.pid }})</span></div><div v-if="check.reason" class="service-status">{{ check.reason }}</div><div v-if="check.error" class="service-status error">{{ check.error }}</div></div><button v-if="check.expected !== false && check.status !== 'disabled'" data-action="restart-service" class="service-action" @click="restartService(host, String(service))"><PbIcon :icon="PhGear" /> {{ t('sysmon.restart') }}</button></div></div></section></div><EmptyState v-if="!serviceHosts.length" class="result-message" :title="t('sysmon.noServices')" /></div>
 
         <div v-else class="vps-panel log-panel"><div id="vps-log-viewer"></div></div>
       </section>
     </div>
 
-    <div v-if="historyModal" data-modal="history" class="history-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><button data-close="history" class="modal-close" @click="historyModal = null">{{ t('common.close') }}</button></div><div class="history-body"><div v-if="historyModal.error" class="result-message">{{ historyModal.error }}</div><div v-else-if="!historyModal.data" class="result-message">{{ t('common.loading') }}</div><template v-else><div class="history-chart"><svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img"><polyline v-if="currentHistoryValues.length" :points="currentHistoryPolyline" fill="none" stroke="#5dc4ff" stroke-width="2" /></svg></div><div class="history-points"><span v-for="point in currentHistoryValues" :key="`${point.ts}:${point.value}`">{{ point.ts }}: {{ point.value }}</span></div></template></div></div></div>
-    <div v-if="resultModal" data-modal="result" class="result-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ resultModal.title }}</h2><button data-close="result" class="modal-close" @click="closeResult">{{ t('common.close') }}</button></div><div class="result-message">{{ resultModal.message }}</div></div></div>
-  </main>
+    <div v-if="historyModal" data-modal="history" class="history-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><button data-close="history" class="modal-close" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="history-body"><ErrorState v-if="historyModal.error" class="result-message" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="result-message" :label="t('common.loading')" /><template v-else><div class="history-chart"><svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img"><polyline v-if="currentHistoryValues.length" :points="currentHistoryPolyline" fill="none" stroke="#5dc4ff" stroke-width="2" /></svg></div><div class="history-points"><span v-for="point in currentHistoryValues" :key="`${point.ts}:${point.value}`">{{ point.ts }}: {{ point.value }}</span></div></template></div></div></div>
+    <div v-if="resultModal" data-modal="result" class="result-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ resultModal.title }}</h2><button data-close="result" class="modal-close" @click="closeResult"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="result-message">{{ resultModal.message }}</div></div></div>
+  </div>
+  </AppShell>
 </template>

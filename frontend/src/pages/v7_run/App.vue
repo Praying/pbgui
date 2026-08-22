@@ -38,8 +38,12 @@
  *    legacy row-diff innerHTML patching (:840-876) — same ids/classes.
  */
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
+import { PhArrowsClockwise, PhFloppyDisk, PhPlus, PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
+import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import BackupConfirmOverlay from './components/BackupConfirmOverlay.vue';
 import BackupPanel from './components/BackupPanel.vue';
 import ConfirmModal from './components/ConfirmModal.vue';
@@ -67,6 +71,13 @@ const ws = useRunWs({
   onInstances: store.setInstancesFromWs, // :629-639
   onBanner: store.setBanner, // :623-652
 });
+
+function openRunHelp(): void {
+  const sharedHelp = (window as Window & {
+    PBGuiSharedHelp?: { open?: (topic: string) => void };
+  }).PBGuiSharedHelp;
+  sharedHelp?.open?.(adapter.isV8 ? '44_pbv8_run' : '34_pbv7_run');
+}
 
 /* Page scroll lock while the backup panel is open (:1210). */
 watch(
@@ -99,13 +110,26 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="core-workbench-shell core-workbench-shell--run"
+    :page-key="adapter.navCurrent"
+    :page-title="t(adapter.titleKey)"
+    :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
+  >
+    <template #header-actions>
+      <IconButton
+        class="pbgui-icon-button"
+        :icon="PhQuestion"
+        :label="t('nav.guide')"
+        @click="openRunHelp"
+      />
+    </template>
 
-  <!-- Connection banner (:508) -->
-  <div id="conn-banner" :class="'conn-' + store.banner.value">{{ t('v7run.connecting') }}</div>
+    <!-- Connection banner (:508) -->
+    <div id="conn-banner" :class="'conn-' + store.banner.value">{{ t('v7run.connecting') }}</div>
 
-  <!-- Page body: sidebar + main content (:511) -->
-  <div id="page-body">
+    <!-- Page body: sidebar + main content (:511) -->
+    <div id="page-body">
     <div id="sidebar">
       <div id="sidebar-sticky">
         <div id="sidebar-header">
@@ -120,15 +144,15 @@ onBeforeUnmount(() => {
             <option v-for="filter in STATUS_FILTERS" :key="filter.value" :value="filter.value">{{ t(filter.key) }}</option>
           </select>
           <hr class="sb-sep">
-          <button class="sb-btn" @click="store.loadInstances()">&#x21BB; {{ t('common.refresh') }}</button>
-          <button class="sb-btn" id="add-instance-btn" @click="store.addInstance()">&#x2795; {{ t(adapter.addInstanceKey) }}</button>
-          <button class="sb-btn" @click="backups.open()">&#x1F4BE; {{ t('v7run.backups') }}</button>
+          <button class="sb-btn" @click="store.loadInstances()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('common.refresh') }}</button>
+          <button class="sb-btn" id="add-instance-btn" @click="store.addInstance()"><PbIcon :icon="PhPlus" /> {{ t(adapter.addInstanceKey) }}</button>
+          <button class="sb-btn" @click="backups.open()"><PbIcon :icon="PhFloppyDisk" /> {{ t('v7run.backups') }}</button>
         </div>
       </div>
       <div id="sidebar-resize"></div>
     </div>
 
-    <div id="main-content">
+    <div class="workbench-page-content">
       <Pb8UpdateWarning :hosts="store.pb8Hosts.value" />
       <InstanceTable
         :rows="store.rows.value"
@@ -144,8 +168,9 @@ onBeforeUnmount(() => {
         @remove="store.requestDelete"
         @sort="store.setSort"
       />
-    </div>
-  </div><!-- /page-body -->
+      </div>
+    </div><!-- /page-body -->
+  </AppShell>
 
   <div ref="toastEl" id="toast"></div>
   <div id="modal-root"></div>

@@ -93,6 +93,8 @@ describe('createSettingsFieldValues', () => {
       awsProfile: '',
       awsAccessKeyId: '',
       awsSecretAccessKey: '',
+      awsAccessKeyConfigured: false,
+      awsSecretAccessKeyConfigured: false,
       awsRegion: '',
       scanTimeout: '',
       scanWorkers: '',

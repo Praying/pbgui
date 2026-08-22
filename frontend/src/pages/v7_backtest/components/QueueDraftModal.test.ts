@@ -55,6 +55,10 @@ describe('defaults from the first item (:2068-2077)', () => {
     await nextTick();
     expect((wrapper.find('[data-test="rbt-start"]').element as HTMLInputElement).value).toBe('2023-01-01');
     expect((wrapper.find('[data-test="rbt-balance"]').element as HTMLInputElement).value).toBe('2500');
+    expect(wrapper.find('[data-test="rbt-balance-minus"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="rbt-balance-minus"]').attributes('aria-label')).toBe('Decrease starting balance');
+    expect(wrapper.find('[data-test="rbt-balance-plus"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="rbt-balance-plus"]').attributes('aria-label')).toBe('Increase starting balance');
     const selected = wrapper
       .findAll('[data-test="rbt-exchanges"] option')
       .filter((o) => (o.element as HTMLOptionElement).selected)
@@ -132,6 +136,9 @@ describe('queue submit (:2099-2142)', () => {
   it('fetches the PBGui data path and sets ohlcv_source_dir when toggled (:2112, :2122)', async () => {
     const { wrapper, postQueue } = mountModal([item()]);
     await nextTick();
+    const marketDataLabel = wrapper.find('label[for="rbt-pbgui-data"]');
+    expect(marketDataLabel.text()).toBe('Use PBGui Market Data');
+    expect(marketDataLabel.find('svg').exists()).toBe(true);
     await wrapper.find('[data-test="rbt-pbgui-data"]').setValue(true);
     await wrapper.find('[data-test="rbt-ok"]').trigger('click');
     await new Promise((resolve) => setTimeout(resolve, 0));

@@ -114,6 +114,8 @@ describe('editor shell (editor:458-487)', () => {
     expect(wrapper.find('.editor-scroll-area').exists()).toBe(true);
     expect(wrapper.find('#editor-grid').exists()).toBe(true);
     expect(wrapper.find('#grid-footer').exists()).toBe(true);
+    // Standalone/iframe boundary: the editor owns its body-mode contract.
+    expect(wrapper.find('.app-shell').exists()).toBe(false);
     expect(wrapper.find('.migration-watermark').exists()).toBe(false);
   });
 

@@ -77,11 +77,12 @@ describe('the tiingo card (:3077-3103)', () => {
     const input = wrapper.find('#settings-tiingo-token');
     const eye = wrapper.find('.pw-eye-btn');
     expect((input.element as HTMLInputElement).type).toBe('password');
-    expect(eye.text()).toBe('👁');
+    expect(eye.find('svg').exists()).toBe(true);
+    expect(eye.attributes('aria-label')).toBe('Show or hide the Tiingo token');
     await input.setValue('typed-token');
     await eye.trigger('click'); // unmask a locally typed value — no fetch
     expect((input.element as HTMLInputElement).type).toBe('text');
-    expect(eye.text()).toBe('🙈');
+    expect(eye.find('svg').exists()).toBe(true);
     await eye.trigger('click'); // mask again — value survives
     expect((input.element as HTMLInputElement).type).toBe('password');
     expect(tiingo.tokenValue.value).toBe('typed-token');

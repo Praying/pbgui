@@ -86,6 +86,9 @@ describe('Strategy Explorer page shell (v7 flavour)', () => {
     stubFetch();
     const wrapper = await mountApp('/api/strategy-explorer/main_page?draft_id=&result_path=');
 
+    expect(wrapper.findAll('main')).toHaveLength(1);
+    expect(wrapper.find('main#app-shell-main').exists()).toBe(true);
+    expect(wrapper.find('div.workbench-page-content').exists()).toBe(true);
     const sessionCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/session'))!;
     expect(String(sessionCall[0])).toBe('http://pbgui.test:8000/api/strategy-explorer/session?draft_id=&result_path=');
 

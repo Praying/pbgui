@@ -38,6 +38,9 @@ describe('RetestModal (:8095-8159)', () => {
     expect((wrapper.find('[data-test="arr-balance"]').element as HTMLInputElement).value).toBe('750');
     expect((wrapper.find('[data-test="arr-exchanges"]').element as HTMLSelectElement).selectedOptions[0]?.value).toBe('bybit');
     expect((wrapper.find('[data-test="arr-skip-liquidated"]').element as HTMLInputElement).checked).toBe(true);
+    const marketDataLabel = wrapper.find('label[for="arr-pbgui-data"]');
+    expect(marketDataLabel.text()).toBe('Use PBGui Market Data');
+    expect(marketDataLabel.find('svg').exists()).toBe(true);
   });
 
   it('shows the weekday select only for weekly cadence (:8054-8058)', async () => {

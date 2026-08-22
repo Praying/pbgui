@@ -11,6 +11,8 @@
  * identically to the legacy display:block).
  */
 import { useI18n } from 'vue-i18n';
+import { PhArrowClockwise, PhStop } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 defineProps<{ queued: boolean; running: boolean; received: boolean }>();
 defineEmits<{ refresh: []; cancel: []; stop: [] }>();
@@ -21,13 +23,13 @@ const { t } = useI18n();
 <template>
   <div class="mds-controls">
     <button class="mds-btn pbgui-btn btn-primary primary" type="button" v-show="!queued" :disabled="queued || !received" @click="$emit('refresh')">
-      &#9193; <span>{{ t('misc.mds.refreshNow') }}</span>
+      <PbIcon :icon="PhArrowClockwise" /> <span>{{ t('misc.mds.refreshNow') }}</span>
     </button>
     <button class="mds-btn pbgui-btn btn-danger danger" type="button" v-show="queued" :disabled="!queued" @click="$emit('cancel')">
-      &#9209; <span>{{ t('misc.mds.cancelQueuedRefresh') }}</span>
+      <PbIcon :icon="PhStop" /> <span>{{ t('misc.mds.cancelQueuedRefresh') }}</span>
     </button>
     <button class="mds-btn pbgui-btn btn-danger danger" type="button" v-show="running" :disabled="!running" @click="$emit('stop')">
-      &#9209; <span>{{ t('misc.mds.stopCurrentRun') }}</span>
+      <PbIcon :icon="PhStop" /> <span>{{ t('misc.mds.stopCurrentRun') }}</span>
     </button>
   </div>
 </template>

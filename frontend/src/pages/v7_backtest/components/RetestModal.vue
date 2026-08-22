@@ -9,8 +9,10 @@
  * Queue Now (:8126) posts retest-replace; Create Schedule (:8140) adds
  * cadence/time/weekday and posts the schedule.
  */
+import { PhFolderOpen } from '@phosphor-icons/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 const props = defineProps<{
   open: boolean;
@@ -129,7 +131,7 @@ function onCreateSchedule(): void {
           </div>
           <div style="display: flex; align-items: center; gap: var(--sp-sm)">
             <input id="arr-pbgui-data" v-model="usePbguiData" type="checkbox" style="width: auto; margin: 0" data-test="arr-pbgui-data" />
-            <label for="arr-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer">📂 {{ t('v7backtest.usePbguiMarketData') }}</label>
+            <label for="arr-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
           </div>
           <div style="display: flex; align-items: center; gap: var(--sp-sm)">
             <input id="arr-skip-liquidated" v-model="skipLiquidated" type="checkbox" checked style="width: auto; margin: 0" data-test="arr-skip-liquidated" />

@@ -16,10 +16,21 @@ body {
 /* ── Page body ──────────────────────────────── */
 #page-body {
   display: flex;
-  height: calc(100vh - var(--nav-height)); height: calc(100dvh - var(--nav-height));
+  height: calc(100vh - 112px); height: calc(100dvh - 112px);
   min-height: 0;
   overflow: hidden;
   user-select: none;
+}
+
+.data-page-shell .app-shell__main {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.data-page-shell .app-shell__primary {
+  min-height: 0;
 }
 
 /* ── Sidebar ──────────────────────────────────── */

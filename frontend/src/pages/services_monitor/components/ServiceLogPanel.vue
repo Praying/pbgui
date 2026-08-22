@@ -8,7 +8,9 @@
  * switchTab tab bar with hash persistence for the multi-tab services.
  */
 import { computed, ref, watch } from 'vue';
+import { PhArrowClockwise, PhChartBar, PhFileText, PhGear, PhPlay, PhStop, PhToggleLeft, PhToggleRight } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { serviceButtons, serviceStatusClass, serviceStatusText, serviceStatusTitle, type Translate } from '../status';
 import type { ServiceAction, ServiceStatusMap } from '../types';
 import LogViewer from './LogViewer.vue';
@@ -16,8 +18,6 @@ import LogViewer from './LogViewer.vue';
 export interface ServiceTab {
   id: string;
   i18nKey: string;
-  /** Legacy tab icons: 📋 log, ⚙ settings, 📊 status; the pool tab has none. */
-  icon?: string;
   /** Task that will implement the pane - placeholder until then. */
   task: string;
 }
@@ -55,6 +55,14 @@ const dotClass = computed(() => serviceStatusClass(status.value));
 const statusText = computed(() => serviceStatusText(tt, status.value, pending.value));
 const statusTitle = computed(() => serviceStatusTitle(tt, status.value));
 const buttons = computed(() => serviceButtons(tt, props.svcId === 'api-server', status.value, pending.value));
+const actionIcons = {
+  start: PhPlay,
+  stop: PhStop,
+  restart: PhArrowClockwise,
+  enable: PhToggleRight,
+  disable: PhToggleLeft,
+} as const;
+const tabIcons = { log: PhFileText, settings: PhGear, status: PhChartBar } as const;
 
 /** Legacy restoreFromHash: `#svcId/tab`. */
 function tabFromHash(): string | null {
@@ -107,7 +115,7 @@ watch(
         type="button"
         :disabled="b.disabled"
         @click="emit('action', svcId, b.action)"
-      ><template v-if="b.icon">{{ b.icon }} </template>{{ b.label }}</button>
+      ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</button>
     </span>
   </div>
 
@@ -125,7 +133,7 @@ watch(
         :data-tab="tab.id"
         type="button"
         @click="switchTab(tab.id)"
-      >{{ tab.icon ? `${tab.icon} ` : '' }}{{ t(tab.i18nKey) }}</button>
+      ><PbIcon v-if="tab.id in tabIcons" :icon="tabIcons[tab.id as keyof typeof tabIcons]" /> {{ t(tab.i18nKey) }}</button>
     </div>
     <div :id="`${svcId}-tab-log`" class="tab-pane log-wrap" :class="{ active: activeTab === 'log' }">
       <LogViewer v-if="logOpened" v-show="activeTab === 'log'" :file="logFile" />

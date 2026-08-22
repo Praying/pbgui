@@ -96,9 +96,14 @@ describe('renderQueue (:5136-5177)', () => {
     expect(actionsOf('e.json').map((b) => b.attributes('title'))).toContain('Restart');
     // every row has the log + remove buttons (:5171-5172)
     for (const filename of ['a.json', 'b.json', 'c.json', 'd.json', 'e.json']) {
-      const titles = actionsOf(filename).map((b) => b.attributes('title'));
+      const buttons = actionsOf(filename);
+      const titles = buttons.map((button) => button.attributes('title'));
       expect(titles).toContain('Remove');
       expect(titles).toContain('Log');
+      for (const button of buttons) {
+        expect(button.attributes('aria-label')).toBe(button.attributes('title'));
+        expect(button.find('svg').exists()).toBe(true);
+      }
     }
     wrapper.unmount();
   });

@@ -52,8 +52,10 @@ export function ageCol(ts: number | string | null | undefined): string {
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue';
+import { PhChartBar, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiBase } from '../config';
 import type { PriceRow } from '../types';
 
@@ -146,7 +148,7 @@ let dragOX = 0;
 let dragOY = 0;
 
 function onTitleMouseDown(event: MouseEvent): void {
-  if ((event.target as HTMLElement).tagName === 'BUTTON') return; // legacy drag guard
+  if ((event.target as HTMLElement).closest('button')) return;
   const ov = overlayEl.value;
   if (!ov) return;
   const rect = ov.getBoundingClientRect();
@@ -191,13 +193,13 @@ defineExpose({
 <template>
   <div id="prices-overlay" ref="overlayEl" :class="{ active: open }">
     <div id="prices-overlay-title" @mousedown="onTitleMouseDown">
-      <span>&#128202; <span>{{ t('sysmon.priceSnapshot') }}</span></span>
+      <span><PbIcon :icon="PhChartBar" /> <span>{{ t('sysmon.priceSnapshot') }}</span></span>
       <div style="display: flex; gap: 0.4rem; align-items: center">
-        <button class="po-btn" type="button" :title="t('common.close')" @click="closeOverlay">&#10005;</button>
+        <button class="po-btn" type="button" :title="t('common.close')" :aria-label="t('common.close')" @click="closeOverlay"><PbIcon :icon="PhX" /></button>
       </div>
     </div>
     <div style="padding: 0.4rem 0.75rem; border-bottom: 1px solid #1e2736; flex-shrink: 0">
-      <input type="text" class="po-search" id="po-search" :placeholder="t('sysmon.filterSymbols')" v-model="query">
+      <label class="po-search-wrap" for="po-search"><PbIcon :icon="PhMagnifyingGlass" /><input type="text" class="po-search" id="po-search" :placeholder="t('sysmon.filterSymbols')" :aria-label="t('sysmon.filterSymbols')" v-model="query"></label>
     </div>
     <div id="prices-overlay-body">
       <div v-if="loading && !rows.length" class="po-note">{{ t('sysmon.loading') }}</div>
@@ -320,6 +322,12 @@ defineExpose({
   font-size: var(--fs-xs);
   padding: 0.3rem 0.6rem;
   outline: none;
+}
+.po-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #64748b;
 }
 .po-search:focus {
   border-color: #4ade80;

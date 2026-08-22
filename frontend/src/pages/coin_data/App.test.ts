@@ -70,6 +70,8 @@ describe('Coin Data page shell', () => {
   it('renders the main table rows from /state with formatted cells', async () => {
     const wrapper = await mountApp();
 
+    expect(wrapper.findAll('main')).toHaveLength(1);
+    expect(wrapper.get('#main-content').element.tagName).toBe('DIV');
     const mainRows = wrapper.findAll('#main-body tr.data-row');
     expect(mainRows).toHaveLength(2);
     expect(mainRows[0]!.text()).toContain('BTC');

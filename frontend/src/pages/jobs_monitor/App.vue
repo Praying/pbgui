@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { PhCaretDown, PhCaretRight, PhPlay, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
+import AppShell from '@/shared/components/AppShell.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { jobsApiBase, jobsWsUrl } from './config';
 import type { DownloaderRow, JobRecord, JobsTab } from './types';
 
@@ -444,16 +451,30 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <main class="jobs-monitor" :class="{ 'is-embedded': embedMode }">
-    <div class="jobs-shell">
-      <header class="jobs-header">
-        <h1>{{ t('sysmon.jobMonitor') }}</h1>
-        <div class="jobs-status">
-          <span data-status="connection" class="jobs-badge pbgui-badge" :class="connection">{{ connectionLabel }}</span>
-          <span data-status="worker" class="jobs-badge pbgui-badge" :class="workerRunning === true ? 'running' : workerRunning === false ? 'error' : 'pending'">{{ workerTitle }}: {{ workerLabel }}</span>
-        </div>
-      </header>
+  <AppShell
+    class="operations-shell operations-shell--jobs"
+    page-key="system_services"
+    :page-title="t('sysmon.jobMonitor')"
+  >
+    <template #status>
+      <div class="jobs-status">
+        <StatusStrip
+          data-status="connection"
+          :label="t('sysmon.status')"
+          :value="connectionLabel"
+          :tone="connection === 'connected' ? 'success' : connection === 'error' ? 'danger' : 'warning'"
+        />
+        <StatusStrip
+          data-status="worker"
+          :label="workerTitle"
+          :value="workerLabel"
+          :tone="workerRunning === true ? 'success' : workerRunning === false ? 'danger' : 'warning'"
+        />
+      </div>
+    </template>
 
+  <div class="jobs-monitor" :class="{ 'is-embedded': embedMode }">
+    <div class="jobs-shell">
       <nav class="jobs-tabs pbgui-tab-bar" aria-label="Job tabs">
         <button v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" :key="tab" class="jobs-tab pbgui-tab" :class="{ active: currentTab === tab }" :data-tab="tab" @click="switchTab(tab)">
           {{ tab === 'running' ? t('sysmon.active') : tab === 'done' ? t('sysmon.done') : t('sysmon.failedTab') }}
@@ -462,9 +483,24 @@ onUnmounted(() => {
 
       <section v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" v-show="currentTab === tab" :key="tab" class="jobs-tab-panel" :class="{ active: currentTab === tab }">
         <div v-if="tab !== 'running'" class="jobs-tab-actions"><button data-action="delete-all" class="job-btn danger" @click="deleteAll(tab)">{{ tab === 'done' ? t('sysmon.deleteAllDoneJobs') : t('sysmon.deleteAllFailedJobs') }}</button></div>
-        <div v-if="tab !== 'running' && historyLoading" class="jobs-empty">{{ t('common.loading') }}</div>
-        <div v-else-if="tab !== 'running' && historyError" class="jobs-error">{{ t('sysmon.failedLoadJobs', { state: tab }) }} {{ historyError }}</div>
-        <div v-else-if="!((tab === 'running' ? activeJobs : historyJobs[tab]).length)" class="jobs-empty">{{ t('sysmon.noJobs', { state: tab === 'running' ? t('sysmon.active') : tab }) }}</div>
+        <LoadingSkeleton
+          v-if="currentTab === tab && tab !== 'running' && historyLoading"
+          class="jobs-empty"
+          :label="t('common.loading')"
+        />
+        <ErrorState
+          v-else-if="currentTab === tab && tab !== 'running' && historyError"
+          class="jobs-error"
+          :title="t('sysmon.failedLoadJobs', { state: tab })"
+          :message="historyError"
+          :retry-label="t('common.refresh')"
+          @retry="loadHistory(tab)"
+        />
+        <EmptyState
+          v-else-if="currentTab === tab && !((tab === 'running' ? activeJobs : historyJobs[tab]).length)"
+          class="jobs-empty"
+          :title="t('sysmon.noJobs', { state: tab === 'running' ? t('sysmon.active') : tab })"
+        />
         <div v-else class="jobs-list">
           <article v-for="job in (tab === 'running' ? activeJobs : historyJobs[tab])" :key="job.id" class="job-card">
             <div class="job-header">
@@ -475,7 +511,7 @@ onUnmounted(() => {
                 <span v-if="formatJobDuration(job)" class="job-detail">{{ formatJobDuration(job) }}</span>
               </div>
               <div class="job-actions">
-                <button v-if="tab === 'running' && job.status === 'pending'" data-action="run" class="job-btn run" @click="runJob(job)">{{ t('sysmon.run') }}</button>
+                <button v-if="tab === 'running' && job.status === 'pending'" data-action="run" class="job-btn run" @click="runJob(job)"><PbIcon :icon="PhPlay" /> {{ t('sysmon.run') }}</button>
                 <button v-if="tab === 'running' && job.status === 'running'" data-action="cancel" class="job-btn danger" @click="cancelJob(job)">{{ t('sysmon.cancelJob') }}</button>
                 <button data-action="details" class="job-btn view" @click="showDetails(job)">{{ t('sysmon.view') }}</button>
                 <button data-action="log" class="job-btn" @click="showLog(job)">{{ t('sysmon.log') }}</button>
@@ -491,7 +527,7 @@ onUnmounted(() => {
               <div class="job-progress-label">{{ t('sysmon.progress') }}: {{ calculateProgress(job.progress) }}% <span v-if="job.progress.stage">· {{ job.progress.stage }}</span><span v-if="job.progress.coin">· {{ job.progress.coin }}</span></div>
             </div>
             <div v-if="job.payload || job.progress" class="job-expander">
-              <button @click="toggleExpanded(job.id)">{{ expandedJobs.has(job.id) ? '▼' : '▶' }} {{ t('sysmon.details') }}</button>
+              <button :aria-expanded="expandedJobs.has(job.id)" @click="toggleExpanded(job.id)"><PbIcon :icon="expandedJobs.has(job.id) ? PhCaretDown : PhCaretRight" /> {{ t('sysmon.details') }}</button>
               <div class="job-expander-body" :class="{ open: expandedJobs.has(job.id) }">
                 <div v-if="payloadCoins(job)">{{ t('sysmon.coinsLabel') }} {{ payloadCoins(job) }}</div>
                 <div v-if="job.progress?.chunk_start">{{ t('sysmon.chunk') }} {{ job.progress.chunk_start }} → {{ job.progress.chunk_end }}</div>
@@ -507,15 +543,16 @@ onUnmounted(() => {
     </div>
 
     <div v-if="logModal" data-modal="log" class="modal" role="dialog" aria-modal="true">
-      <div class="modal-card"><div class="modal-header"><h2>{{ t('sysmon.jobLog') }} {{ logModal.jobId }}</h2><button data-close="log" class="job-btn danger" @click="logModal = null">{{ t('common.close') }}</button></div><div class="modal-body"><pre class="log-body">{{ logModal.text }}</pre></div></div>
+      <div class="modal-card"><div class="modal-header"><h2>{{ t('sysmon.jobLog') }} {{ logModal.jobId }}</h2><button data-close="log" class="job-btn danger" @click="logModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="modal-body"><pre class="log-body">{{ logModal.text }}</pre></div></div>
     </div>
 
     <div v-if="detailsModal" data-modal="details" class="modal" role="dialog" aria-modal="true">
-      <div class="modal-card"><div class="modal-header"><h2>{{ t('sysmon.jobDetails') }} {{ detailsModal.jobId }}</h2><button data-close="details" class="job-btn danger" @click="detailsModal = null">{{ t('common.close') }}</button></div><div class="modal-body"><div v-if="detailsModal.error" class="jobs-error">{{ detailsModal.error }}</div><div v-else-if="!detailsModal.job">{{ t('common.loading') }}</div><template v-else><section class="details-section"><h3>{{ t('sysmon.summary') }}</h3><div class="details-kv"><template v-for="row in detailRows(detailsModal.job)" :key="row.label"><span class="details-key">{{ row.label }}</span><span class="details-value">{{ row.value }}</span></template></div></section><section v-if="downloaderRows(detailsModal.job).length" class="details-section"><h3>{{ t('sysmon.downloaderTraffic') }}</h3><div class="downloader-list"><div v-for="row in downloaderRows(detailsModal.job)" :key="row.host" class="downloader-card"><div class="downloader-head"><span class="downloader-name">{{ row.host }}</span><span>{{ row.status }}</span></div><div class="downloader-stats"><span>{{ t('sysmon.payload') }} {{ formatBytes(row.payloadBytes) }}</span><span>{{ t('sysmon.rows') }} {{ formatCount(row.rows) }}</span><span>{{ t('sysmon.pages') }} {{ formatCount(row.pages) }}</span></div></div></div></section><section class="details-section"><h3>{{ t('sysmon.payload') }}</h3><pre class="json-block">{{ jsonText(detailsModal.job.payload) }}</pre></section><section class="details-section"><h3>{{ t('sysmon.progress') }}</h3><pre class="json-block">{{ jsonText(detailsModal.job.progress) }}</pre></section></template></div></div>
+      <div class="modal-card"><div class="modal-header"><h2>{{ t('sysmon.jobDetails') }} {{ detailsModal.jobId }}</h2><button data-close="details" class="job-btn danger" @click="detailsModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="modal-body"><ErrorState v-if="detailsModal.error" class="jobs-error" :title="t('common.error')" :message="detailsModal.error" /><LoadingSkeleton v-else-if="!detailsModal.job" class="jobs-empty" :label="t('common.loading')" /><template v-else><section class="details-section"><h3>{{ t('sysmon.summary') }}</h3><div class="details-kv"><template v-for="row in detailRows(detailsModal.job)" :key="row.label"><span class="details-key">{{ row.label }}</span><span class="details-value">{{ row.value }}</span></template></div></section><section v-if="downloaderRows(detailsModal.job).length" class="details-section"><h3>{{ t('sysmon.downloaderTraffic') }}</h3><div class="downloader-list"><div v-for="row in downloaderRows(detailsModal.job)" :key="row.host" class="downloader-card"><div class="downloader-head"><span class="downloader-name">{{ row.host }}</span><span>{{ row.status }}</span></div><div class="downloader-stats"><span>{{ t('sysmon.payload') }} {{ formatBytes(row.payloadBytes) }}</span><span>{{ t('sysmon.rows') }} {{ formatCount(row.rows) }}</span><span>{{ t('sysmon.pages') }} {{ formatCount(row.pages) }}</span></div></div></div></section><section class="details-section"><h3>{{ t('sysmon.payload') }}</h3><pre class="json-block">{{ jsonText(detailsModal.job.payload) }}</pre></section><section class="details-section"><h3>{{ t('sysmon.progress') }}</h3><pre class="json-block">{{ jsonText(detailsModal.job.progress) }}</pre></section></template></div></div>
     </div>
 
     <div v-if="confirmModal" data-modal="confirm" class="modal" role="dialog" aria-modal="true" @click.stop>
       <div class="modal-card confirm-card"><div class="modal-header"><h2>{{ confirmModal.title }}</h2><button data-confirm="cancel" class="job-btn secondary" @click="closeConfirm">{{ t('common.cancel') }}</button></div><div class="modal-body"><p>{{ confirmModal.message }}</p><div class="confirm-actions"><button data-confirm="cancel" class="job-btn secondary" @click="closeConfirm">{{ t('common.cancel') }}</button><button data-confirm="accept" class="job-btn" @click="acceptConfirm">{{ t('common.confirm') }}</button></div></div></div>
     </div>
-  </main>
+  </div>
+  </AppShell>
 </template>

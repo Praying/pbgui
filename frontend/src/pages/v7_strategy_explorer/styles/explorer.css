@@ -34,7 +34,7 @@ button { cursor: pointer; }
 #page-body { display: flex; height: calc(100vh - var(--nav-height)); height: calc(100dvh - var(--nav-height)); min-height: 0; }
 #sidebar { min-width: 0; border-right: 1px solid var(--border); }
 #sidebar-inner { display: flex; flex-direction: column; gap: var(--sp-sm); padding-bottom: var(--sp-lg); }
-#main-content { flex: 1; min-width: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: var(--sp-lg); display: flex; flex-direction: column; gap: var(--sp-lg); }
+.workbench-page-content { flex: 1; min-width: 0; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: var(--sp-lg); display: flex; flex-direction: column; gap: var(--sp-lg); }
 .page-title { display: flex; justify-content: space-between; gap: var(--sp-lg); align-items: flex-start; }
 .page-title h1 { margin: 0 0 4px; font-size: var(--fs-xl); }
 .page-title p { margin: 6px 0 0; }
@@ -98,7 +98,7 @@ button { cursor: pointer; }
 .orders.compare-grid th { position: sticky; top: 0; background: var(--bg2); z-index: 1; }
 .plot { height: 520px; min-height: 360px; content-visibility: auto; contain-intrinsic-size: 520px; }
 #long-stats, #short-stats { content-visibility: auto; contain-intrinsic-size: 720px; }
-#main-content.is-scrolling .js-plotly-plot { pointer-events: none; }
+.workbench-page-content.is-scrolling .js-plotly-plot { pointer-events: none; }
 .plot:fullscreen { width: 100vw; height: 100vh !important; height: 100dvh !important; min-height: 100vh; min-height: 100dvh; background: var(--bg); padding: 8px; }
 .plot:fullscreen > div { height: 100% !important; }
 textarea, pre.debug-json { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #0b0e14; color: var(--text); font-family: var(--mono); font-size: var(--fs-xs); padding: 10px; overflow: auto; }
@@ -240,7 +240,7 @@ body {
   color: #dbeafe;
 }
 
-#main-content {
+.workbench-page-content {
   gap: 16px;
   padding: 24px clamp(16px, 2.5vw, 38px) 38px;
   background:
@@ -584,7 +584,7 @@ textarea:focus-visible {
 }
 
 @media (max-width: 900px) {
-  #main-content {
+  .workbench-page-content {
     padding: 18px 14px 28px;
   }
 
@@ -648,4 +648,29 @@ textarea:focus-visible {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+.core-workbench-shell {
+  height: 100dvh;
+  min-height: 0;
+}
+.core-workbench-shell .app-shell__workspace,
+.core-workbench-shell .app-shell__primary {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.core-workbench-shell .app-shell__main {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.core-workbench-shell #page-body {
+  flex: 1;
+  height: auto;
 }

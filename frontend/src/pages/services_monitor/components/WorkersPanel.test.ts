@@ -227,7 +227,10 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
   it('emits refresh from the ctrl strip refresh button', async () => {
     const wrapper = mountPanel();
 
-    await wrapper.find('.ctrl-strip .ctrl-btn.refresh').trigger('click');
+    const refreshButton = wrapper.find('.ctrl-strip .ctrl-btn.refresh');
+    expect(refreshButton.text()).toContain('Refresh');
+    expect(refreshButton.find('svg').exists()).toBe(true);
+    await refreshButton.trigger('click');
 
     expect(wrapper.emitted('refresh')).toHaveLength(1);
   });

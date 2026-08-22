@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { PhArrowClockwise, PhWrench, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch, ApiError } from '@/shared/api';
+import AppShell from '@/shared/components/AppShell.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { clusterApiBase } from './config';
 
 const { t } = useI18n();
@@ -102,13 +108,45 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
 </script>
 
 <template>
-  <main class="cluster-sync">
+  <AppShell
+    class="operations-shell operations-shell--cluster"
+    page-key="system_cluster"
+    :page-title="t('sysmon.clusterSync')"
+    :page-description="t('sysmon.clusterSyncSubtitle')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('sysmon.status')"
+        :value="loading ? t('common.loading') : notice ? notice.text : t('common.ok')"
+        :tone="loading ? 'warning' : notice?.kind === 'err' ? 'danger' : notice?.kind === 'warn' ? 'warning' : 'success'"
+      />
+    </template>
+
+    <template #header-actions>
+      <button class="cluster-btn primary" @click="loadAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
+      <button class="cluster-btn warn" @click="section = 'setup'"><PbIcon :icon="PhWrench" /> {{ t('sysmon.setup') }}</button>
+    </template>
+
+  <div class="cluster-sync">
     <div class="cluster-layout">
       <aside class="cluster-sidebar"><div class="cluster-nav"><button v-for="item in (['overview','setup','nodes','instances','tombstones','operations','credentials','retention'] as Section[])" :key="item" :data-section-tab="item" :class="{ active: section === item }" @click="section = item">{{ item === 'overview' ? t('sysmon.overview') : item === 'setup' ? t('sysmon.setup') : item === 'nodes' ? t('sysmon.clusterNodes') : item === 'instances' ? t('sysmon.v7State') : item === 'tombstones' ? t('sysmon.tombstones') : item === 'operations' ? t('sysmon.oplog') : item === 'credentials' ? t('sysmon.credentials') : t('sysmon.retention') }}</button></div></aside>
       <section class="cluster-main">
-        <header class="cluster-hero"><div><h1>{{ t('sysmon.clusterSync') }}</h1><div class="cluster-subtitle">{{ t('sysmon.clusterSyncSubtitle') }}</div></div><div class="cluster-actions"><button class="cluster-btn primary" @click="loadAll">{{ t('common.refresh') }}</button><button class="cluster-btn warn" @click="section = 'setup'">{{ t('sysmon.setup') }}</button></div></header>
-        <div v-if="notice" class="cluster-status visible" :class="notice.kind">{{ notice.text }}</div>
-        <div v-if="loading" class="cluster-empty">{{ t('common.loading') }}</div>
+        <div
+          v-if="notice"
+          class="cluster-status visible"
+          :class="notice.kind"
+          :role="notice.kind === 'err' ? 'alert' : 'status'"
+          :aria-live="notice.kind === 'err' ? 'assertive' : 'polite'"
+        >{{ notice.text }}</div>
+        <LoadingSkeleton v-if="loading" class="cluster-empty" :label="t('common.loading')" />
+        <ErrorState
+          v-else-if="notice?.kind === 'err' && !Object.keys(status).length"
+          class="cluster-error"
+          :title="t('common.error')"
+          :message="notice.text"
+          :retry-label="t('common.refresh')"
+          @retry="loadAll"
+        />
 
         <section v-else-if="section === 'overview'" data-section="overview" class="cluster-grid">
           <div class="cluster-grid two"><article class="cluster-panel"><div class="cluster-panel-head"><span class="cluster-panel-title">{{ t('sysmon.localIdentity') }}</span><span class="cluster-pill good">{{ display(identity.role) }}</span></div><div class="cluster-panel-body"><div class="cluster-counts"><div class="cluster-count"><div class="cluster-count-label">Cluster ID</div><div class="cluster-count-value" data-field="cluster-id">{{ display(identity.cluster_id) }}</div></div><div class="cluster-count"><div class="cluster-count-label">Node ID</div><div class="cluster-count-value">{{ display(identity.node_id) }}</div></div><div class="cluster-count"><div class="cluster-count-label">Generation</div><div class="cluster-count-value">{{ counts.oplog || 0 }}</div></div></div></div></article><article class="cluster-panel"><div class="cluster-panel-head"><span class="cluster-panel-title">{{ t('sysmon.summary') }}</span></div><div class="cluster-panel-body"><div class="cluster-counts"><div class="cluster-count"><div class="cluster-count-label">Nodes</div><div class="cluster-count-value" data-count="nodes">{{ counts.nodes || 0 }}</div></div><div class="cluster-count"><div class="cluster-count-label">V7</div><div class="cluster-count-value">{{ counts.instances || 0 }}</div></div><div class="cluster-count"><div class="cluster-count-label">Conflicts</div><div class="cluster-count-value">{{ counts.conflicts || 0 }}</div></div></div><div v-for="warning in warnings" :key="warning" class="cluster-note">{{ warning }}</div></div></article></div>
@@ -127,7 +165,8 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
       </section>
     </div>
 
-    <div v-if="removeNode" data-modal="remove" class="cluster-modal" role="dialog" aria-modal="true" @click.stop><div class="cluster-modal-card"><div class="cluster-modal-head"><h2>{{ t('sysmon.removeNode') }}</h2><button data-close="remove" class="cluster-btn" @click="closeRemove">{{ t('common.close') }}</button></div><p>{{ t('sysmon.removeNodeMsg', { node: `${nodeLabel(removeNode)} (${removeNode.node_id})` }) }}</p><div class="cluster-modal-actions"><button class="cluster-btn" @click="closeRemove">{{ t('common.cancel') }}</button><button class="cluster-btn danger" @click="confirmRemove">{{ t('sysmon.removeNode') }}</button></div></div></div>
-    <div v-if="settingsNode" class="cluster-modal" role="dialog" aria-modal="true" @click.stop><div class="cluster-modal-card"><div class="cluster-modal-head"><h2>{{ t('sysmon.editClusterNode') }}</h2><button class="cluster-btn" @click="closeSettings">{{ t('common.close') }}</button></div><div class="cluster-form"><label>Remote PBGui Dir<input v-model="settingsForm.remote_pbgui_dir" class="cluster-input"></label><label>Sync mode<select v-model="settingsForm.sync_mode" class="cluster-input"><option value="reachable">Reachable</option><option value="outbound_only">Outbound only</option><option value="disabled">Disabled</option></select></label><label>SSH Host<input v-model="settingsForm.ssh_host" class="cluster-input"></label><label>SSH User<input v-model="settingsForm.ssh_user" class="cluster-input"></label><label>SSH Port<input v-model.number="settingsForm.ssh_port" type="number" class="cluster-input"></label></div><div class="cluster-modal-actions"><button class="cluster-btn" @click="closeSettings">{{ t('common.cancel') }}</button><button class="cluster-btn primary" @click="saveSettings">{{ t('common.save') }}</button></div></div></div>
-  </main>
+    <div v-if="removeNode" data-modal="remove" class="cluster-modal" role="dialog" aria-modal="true" @click.stop><div class="cluster-modal-card"><div class="cluster-modal-head"><h2>{{ t('sysmon.removeNode') }}</h2><button data-close="remove" class="cluster-btn" @click="closeRemove"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><p>{{ t('sysmon.removeNodeMsg', { node: `${nodeLabel(removeNode)} (${removeNode.node_id})` }) }}</p><div class="cluster-modal-actions"><button class="cluster-btn" @click="closeRemove">{{ t('common.cancel') }}</button><button class="cluster-btn danger" @click="confirmRemove">{{ t('sysmon.removeNode') }}</button></div></div></div>
+    <div v-if="settingsNode" class="cluster-modal" role="dialog" aria-modal="true" @click.stop><div class="cluster-modal-card"><div class="cluster-modal-head"><h2>{{ t('sysmon.editClusterNode') }}</h2><button class="cluster-btn" @click="closeSettings"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="cluster-form"><label>Remote PBGui Dir<input v-model="settingsForm.remote_pbgui_dir" class="cluster-input"></label><label>Sync mode<select v-model="settingsForm.sync_mode" class="cluster-input"><option value="reachable">Reachable</option><option value="outbound_only">Outbound only</option><option value="disabled">Disabled</option></select></label><label>SSH Host<input v-model="settingsForm.ssh_host" class="cluster-input"></label><label>SSH User<input v-model="settingsForm.ssh_user" class="cluster-input"></label><label>SSH Port<input v-model.number="settingsForm.ssh_port" type="number" class="cluster-input"></label></div><div class="cluster-modal-actions"><button class="cluster-btn" @click="closeSettings">{{ t('common.cancel') }}</button><button class="cluster-btn primary" @click="saveSettings">{{ t('common.save') }}</button></div></div></div>
+  </div>
+  </AppShell>
 </template>

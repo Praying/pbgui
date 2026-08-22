@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PhCaretRight, PhFolderOpen, PhMinus, PhPlus } from '@phosphor-icons/vue';
 import { computed, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import DatePicker from '@/shared/datepicker/DatePicker.vue';
 import KvCoinSources from '@/shared/kvCoinSources/KvCoinSources.vue';
 import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
@@ -158,9 +160,9 @@ defineExpose({ foldSuiteDraft });
       <div class="form-group editor-span-2">
         <label>liquidation_threshold</label>
         <div class="num-stepper">
-          <button type="button" class="stepper-btn" @click="state.liquidationThreshold = String(Math.max(0, +(parseFloat(state.liquidationThreshold) - 0.01).toFixed(2)))">−</button>
+          <button type="button" class="stepper-btn" aria-label="Decrease liquidation_threshold" title="Decrease liquidation_threshold" @click="state.liquidationThreshold = String(Math.max(0, +(parseFloat(state.liquidationThreshold) - 0.01).toFixed(2)))"><PbIcon :icon="PhMinus" /></button>
           <input v-model="state.liquidationThreshold" type="number" step="0.01" min="0" max="0.99" />
-          <button type="button" class="stepper-btn" @click="state.liquidationThreshold = String(Math.min(0.99, +(parseFloat(state.liquidationThreshold) + 0.01).toFixed(2)))">+</button>
+          <button type="button" class="stepper-btn" aria-label="Increase liquidation_threshold" title="Increase liquidation_threshold" @click="state.liquidationThreshold = String(Math.min(0.99, +(parseFloat(state.liquidationThreshold) + 0.01).toFixed(2)))"><PbIcon :icon="PhPlus" /></button>
         </div>
       </div>
       <div class="form-group editor-span-12 config-editor-toggle-row">
@@ -178,32 +180,32 @@ defineExpose({ foldSuiteDraft });
         data-test="advanced-execution-expander-toggle"
         @click="advancedExecutionOpen = !advancedExecutionOpen"
       >
-        <span class="arrow" aria-hidden="true">▶</span> {{ t('v7backtest.advancedExecutionSettings') }}
+        <PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.advancedExecutionSettings') }}
       </button>
       <div id="advanced-execution-settings" class="expander-body">
         <div v-if="advancedExecutionOpen" class="form-row config-editor-12 config-editor-trading-advanced">
           <div class="form-group editor-span-2">
             <div class="chk-row"><input id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" type="checkbox" /><label for="cfg-maker-fee-enabled">maker_fee_override</label></div>
             <div class="num-stepper" style="margin-top: 4px">
-              <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5))">−</button>
+              <button type="button" class="stepper-btn" aria-label="Decrease maker_fee_override" title="Decrease maker_fee_override" @click="state.makerFeeVal = String(Math.max(0, +(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></button>
               <input v-model="state.makerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.makerFeeEnabled" />
-              <button type="button" class="stepper-btn" @click="state.makerFeeVal = String(+(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5))">+</button>
+              <button type="button" class="stepper-btn" aria-label="Increase maker_fee_override" title="Increase maker_fee_override" @click="state.makerFeeVal = String(Math.min(0.01, +(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></button>
             </div>
           </div>
           <div class="form-group editor-span-2">
             <div class="chk-row"><input id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" type="checkbox" /><label for="cfg-taker-fee-enabled">taker_fee_override</label></div>
             <div class="num-stepper" style="margin-top: 4px">
-              <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5))">−</button>
+              <button type="button" class="stepper-btn" aria-label="Decrease taker_fee_override" title="Decrease taker_fee_override" @click="state.takerFeeVal = String(Math.max(0, +(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></button>
               <input v-model="state.takerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.takerFeeEnabled" />
-              <button type="button" class="stepper-btn" @click="state.takerFeeVal = String(+(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5))">+</button>
+              <button type="button" class="stepper-btn" aria-label="Increase taker_fee_override" title="Increase taker_fee_override" @click="state.takerFeeVal = String(Math.min(0.01, +(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></button>
             </div>
           </div>
           <div class="form-group editor-span-2">
             <label>market_order_slippage_pct</label>
             <div class="num-stepper">
-              <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))">−</button>
+              <button type="button" class="stepper-btn" aria-label="Decrease market_order_slippage_pct" title="Decrease market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))"><PbIcon :icon="PhMinus" /></button>
               <input v-model="state.marketOrderSlippagePct" type="number" step="0.0001" min="0" />
-              <button type="button" class="stepper-btn" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))">+</button>
+              <button type="button" class="stepper-btn" aria-label="Increase market_order_slippage_pct" title="Increase market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))"><PbIcon :icon="PhPlus" /></button>
             </div>
           </div>
           <div class="form-group editor-span-2 config-editor-toggle-field">
@@ -233,7 +235,10 @@ defineExpose({ foldSuiteDraft });
         <label>ohlcv_source_dir</label>
         <div style="display: flex; gap: var(--sp-xs)">
           <input v-model="state.ohlcvSourceDir" type="text" :placeholder="t('v7backtest.leaveEmptyForDefault')" />
-          <button type="button" class="act-btn" style="white-space: nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">📂 PBGui Data</button>
+          <button type="button" class="act-btn" style="white-space: nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">
+            <PbIcon :icon="PhFolderOpen" />
+            PBGui Data
+          </button>
         </div>
       </div>
       <div class="form-group editor-span-2"><label>candle_interval_minutes</label><input v-model="state.candleIntervalMinutes" type="number" min="1" /></div>
@@ -244,11 +249,11 @@ defineExpose({ foldSuiteDraft });
 
     <!-- coin_sources + market_settings_sources (:2700-2750) -->
     <div class="expander" :class="{ open: coinSourcesOpen }">
-      <button type="button" class="expander-header" :aria-expanded="coinSourcesOpen" @click="coinSourcesOpen = !coinSourcesOpen"><span class="arrow">▶</span> coin_sources ({{ Object.keys(state.coinSources).length }} configured)</button>
+      <button type="button" class="expander-header" :aria-expanded="coinSourcesOpen" @click="coinSourcesOpen = !coinSourcesOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> coin_sources ({{ Object.keys(state.coinSources).length }} configured)</button>
       <div class="expander-body"><KvCoinSources v-model="state.coinSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
     </div>
     <div class="expander" :class="{ open: marketSourcesOpen }">
-      <button type="button" class="expander-header" :aria-expanded="marketSourcesOpen" @click="marketSourcesOpen = !marketSourcesOpen"><span class="arrow">▶</span> market_settings_sources ({{ Object.keys(state.marketSettingsSources).length }} configured)</button>
+      <button type="button" class="expander-header" :aria-expanded="marketSourcesOpen" @click="marketSourcesOpen = !marketSourcesOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> market_settings_sources ({{ Object.keys(state.marketSettingsSources).length }} configured)</button>
       <div class="expander-body"><KvCoinSources v-model="state.marketSettingsSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
     </div>
 
@@ -325,7 +330,7 @@ defineExpose({ foldSuiteDraft });
 
     <!-- Additional (unknown) backtest parameters (:2873-2876) -->
     <div v-if="state.extraBt.length > 0" class="expander" :class="{ open: additionalOpen }" data-test="additional-params-expander">
-      <button type="button" class="expander-header" :aria-expanded="additionalOpen" data-test="additional-params-expander-toggle" @click="additionalOpen = !additionalOpen"><span class="arrow">▶</span> {{ t('v7backtest.additionalParameters') }}</button>
+      <button type="button" class="expander-header" :aria-expanded="additionalOpen" data-test="additional-params-expander-toggle" @click="additionalOpen = !additionalOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.additionalParameters') }}</button>
       <div class="expander-body">
         <div class="form-group" style="grid-column: span 3">
           <label>base_dir</label>
@@ -346,7 +351,7 @@ defineExpose({ foldSuiteDraft });
 
     <!-- Raw JSON expander (:2878-2892) -->
     <div class="expander" :class="{ open: rawJsonOpen }" data-test="raw-json-expander">
-      <button type="button" class="expander-header" :aria-expanded="rawJsonOpen" data-test="raw-json-expander-toggle" @click="rawJsonOpen = !rawJsonOpen"><span class="arrow">▶</span> {{ t('v7backtest.rawJson') }}</button>
+      <button type="button" class="expander-header" :aria-expanded="rawJsonOpen" data-test="raw-json-expander-toggle" @click="rawJsonOpen = !rawJsonOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.rawJson') }}</button>
       <div class="expander-body">
         <div class="form-group">
           <div class="raw-json-wrap">

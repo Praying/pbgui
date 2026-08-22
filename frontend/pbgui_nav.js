@@ -70,35 +70,35 @@
      ════════════════════════════════════ */
   var NAV_GROUPS = [
     { id: 'system', label: 'System', items: [
-      { page: '/',                    icon: '&#128682;', label: 'Welcome'           },
-      { page: 'system_api_keys',      icon: '&#128273;', label: 'API-Keys'          },
-      { page: 'system_cluster',       icon: '&#128260;', label: 'Cluster Sync'      },
-      { page: 'system_services',      icon: '&#128295;', label: 'PBGUI Services'    },
-      { page: 'system_db_tools',      icon: '&#128736;', label: 'DB Tools'          },
-      { page: 'system_vps_manager_fastapi', icon: '&#128421;', label: 'VPS Manager' },
-      { page: 'system_vps_monitor',   icon: '&#128223;', label: 'VPS Monitor'       },
-      { page: 'system_logging',       icon: '&#128196;', label: 'Logging'           }
+      { page: '/',                    icon: 'house',            label: 'Welcome'           },
+      { page: 'system_api_keys',      icon: 'key',              label: 'API-Keys'          },
+      { page: 'system_cluster',       icon: 'arrows-clockwise', label: 'Cluster Sync'      },
+      { page: 'system_services',      icon: 'wrench',           label: 'PBGUI Services'    },
+      { page: 'system_db_tools',      icon: 'database',         label: 'DB Tools'          },
+      { page: 'system_vps_manager_fastapi', icon: 'desktop',    label: 'VPS Manager'       },
+      { page: 'system_vps_monitor',   icon: 'chart-bar',        label: 'VPS Monitor'       },
+      { page: 'system_logging',       icon: 'file-text',        label: 'Logging'           }
     ]},
     { id: 'information', label: 'Information', items: [
-      { page: 'dashboards',           icon: '&#128202;', label: 'Dashboards'        },
-      { page: 'info_coin_data',       icon: '&#129689;', label: 'Coin Data'         },
-      { page: 'info_market_data_fastapi', icon: '&#128187;', label: 'Market Data' },
-      { page: 'info_balance_calc',    icon: '&#128176;', label: 'Balance Calculator'},
-      { page: 'help',                 icon: '&#10067;',  label: 'Help'              }
+      { page: 'dashboards',           icon: 'chart-bar', label: 'Dashboards'          },
+      { page: 'info_coin_data',       icon: 'database',  label: 'Coin Data'           },
+      { page: 'info_market_data_fastapi', icon: 'desktop', label: 'Market Data'       },
+      { page: 'info_balance_calc',    icon: 'wallet',     label: 'Balance Calculator' },
+      { page: 'help',                 icon: 'file-text',  label: 'Help'                }
     ]},
     { id: 'pbv7', label: 'PBv7', items: [
-      { page: 'v7_run',               icon: '&#9654;',   label: 'Run'               },
-      { page: 'v7_backtest',          icon: '&#9194;',   label: 'Backtest'          },
-      { page: 'v7_optimize',          icon: '&#9881;',   label: 'Optimize'          },
-      { page: 'v7_strategy_explorer', icon: '&#128065;', label: 'Strategy Explorer' },
-      { page: 'v7_pareto_explorer',   icon: '&#127919;', label: 'Pareto Explorer'   }
+      { page: 'v7_run',               icon: 'play',      label: 'Run'               },
+      { page: 'v7_backtest',          icon: 'backspace', label: 'Backtest'          },
+      { page: 'v7_optimize',          icon: 'gear',      label: 'Optimize'          },
+      { page: 'v7_strategy_explorer', icon: 'eye',       label: 'Strategy Explorer' },
+      { page: 'v7_pareto_explorer',   icon: 'target',    label: 'Pareto Explorer'   }
     ]},
     { id: 'pbv8', label: 'PBv8', items: [
-      { page: 'v8_run',               icon: '&#9654;',   label: 'Run'               },
-      { page: 'v8_backtest',          icon: '&#9194;',   label: 'Backtest'          },
-      { page: 'v8_optimize',          icon: '&#9881;',   label: 'Optimize'          },
-      { page: 'v8_strategy_explorer', icon: '&#128065;', label: 'Strategy Explorer' },
-      { page: 'v8_pareto_explorer',   icon: '&#9733;',   label: 'Pareto Explorer'   }
+      { page: 'v8_run',               icon: 'play',      label: 'Run'               },
+      { page: 'v8_backtest',          icon: 'backspace', label: 'Backtest'          },
+      { page: 'v8_optimize',          icon: 'gear',      label: 'Optimize'          },
+      { page: 'v8_strategy_explorer', icon: 'eye',       label: 'Strategy Explorer' },
+      { page: 'v8_pareto_explorer',   icon: 'star',      label: 'Pareto Explorer'   }
     ]}
   ];
 
@@ -145,7 +145,8 @@
     'transition:background-color var(--motion-fast,.12s),color var(--motion-fast,.12s);white-space:nowrap;}',
     '.nav-item:hover{background:var(--surface-elevated,#243047);color:var(--text-primary,#e2e8f0);}',
     '.nav-item.current{color:var(--accent-soft,#63b3ed);font-weight:600;background:rgba(99,179,237,.07);cursor:default;}',
-    '.nav-item-icon{font-size:1rem;width:1.1rem;text-align:center;flex-shrink:0;}',
+    '.nav-item-icon{display:inline-flex;align-items:center;justify-content:center;width:1.1rem;flex-shrink:0;}',
+    '.nav-item-icon svg{display:block;}',
 
     '#nav-spacer{flex:1;}',
 
@@ -170,7 +171,7 @@
     '.nav-action-btn:hover{background:rgba(255,255,255,.05);border-color:var(--border-default,#2d3748);color:var(--text-primary,#e2e8f0);}',
     '.nav-action-btn:focus-visible,.nav-group-btn:focus-visible,.nav-item:focus-visible{outline:2px solid var(--accent-soft,#63b3ed);outline-offset:2px;}',
     '.nav-action-btn.icon-only{justify-content:center;gap:0;padding:0;width:32px;min-width:32px;}',
-    '.nav-action-btn.icon-only svg{width:16px;height:16px;display:block;stroke:currentColor;}',
+    '.nav-action-btn svg{width:16px;height:16px;display:block;fill:currentColor;}',
     '.nav-action-btn.accent{color:#63b3ed;border-color:rgba(99,179,237,.25);background:rgba(99,179,237,.04);}',
     '.nav-action-btn.accent:hover{background:rgba(99,179,237,.12);border-color:#63b3ed;}',
     '.nav-action-btn.restart{color:#f59e0b;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06);display:none;}',
@@ -354,33 +355,35 @@
       group.items.forEach(function (item) {
         var isCurrent = (item.page === CURRENT);
         var itemLabel = esc(navT('nav.page.' + item.page, item.label));
+        var itemIcon = window.PBGuiIcons.create(item.icon, { size: 18 });
         if (isCurrent) {
-          html += '<span class="nav-item current" role="menuitem" aria-current="page"><span class="nav-item-icon">' + item.icon + '</span>' + itemLabel + '</span>';
+          html += '<span class="nav-item current" role="menuitem" aria-current="page"><span class="nav-item-icon">' + itemIcon + '</span>' + itemLabel + '</span>';
         } else {
-          html += '<a class="nav-item" role="menuitem" data-page="' + item.page + '"><span class="nav-item-icon">' + item.icon + '</span>' + itemLabel + '</a>';
+          html += '<a class="nav-item" role="menuitem" data-page="' + item.page + '"><span class="nav-item-icon">' + itemIcon + '</span>' + itemLabel + '</a>';
         }
       });
       html += '</div></div>';
     });
 
     /* spacer + right buttons */
+    var notificationIcon = window.PBGuiIcons.create('bell', { size: 16 });
+    var alertsIcon = window.PBGuiIcons.create('shield-warning', { size: 16 });
+    var guideIcon = window.PBGuiIcons.create('book-open', { size: 16 });
+    var aboutIcon = window.PBGuiIcons.create('info', { size: 16 });
+    var logoutIcon = window.PBGuiIcons.create('sign-out', { size: 16 });
     html += '<div id="nav-spacer"></div>';
     html += '<div id="nav-right">'
           + '<span id="pbgui-auth-mode-pill" role="status">' + esc(navT('nav.no_login', 'NO LOGIN')) + '</span>'
           + '<span id="pbgui-master-pill"><span class="pbgui-master-label">' + esc(navT('nav.master', 'Master')) + '</span><span id="pbgui-master-name"></span></span>'
           + '<button class="nav-action-btn restart" id="pbgui-restart-btn"><span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart')) + '</button>'
-          + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '">&#128276;</button>'
+          + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '" aria-label="' + esc(navT('nav.notification_log', 'Notification log')) + '">' + notificationIcon + '</button>'
           + '<span class="nav-divider" aria-hidden="true"></span>'
-          + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '">&#128737; <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
+          + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '" aria-label="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '">' + alertsIcon + ' <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
           + '<button class="nav-action-btn" id="pbgui-lang-btn" title="' + esc(navT('nav.switch_language', 'Switch language')) + '">' + ((window.PBGuiI18n && window.PBGuiI18n.lang === 'zh') ? 'English' : '中文') + '</button>'
-          + '<button class="nav-action-btn accent" id="pbgui-guide-btn">&#128218; ' + esc(navT('nav.guide', 'Guide')) + '</button>'
-          + '<button class="nav-action-btn" id="pbgui-about-btn">&#x2139;&#xFE0F; ' + esc(navT('nav.about', 'About')) + '</button>'
+          + '<button class="nav-action-btn accent" id="pbgui-guide-btn">' + guideIcon + ' ' + esc(navT('nav.guide', 'Guide')) + '</button>'
+          + '<button class="nav-action-btn" id="pbgui-about-btn">' + aboutIcon + ' ' + esc(navT('nav.about', 'About')) + '</button>'
           + '<button class="nav-action-btn icon-only logout" id="pbgui-logout-btn" title="' + esc(navT('nav.logout', 'Logout')) + '" aria-label="' + esc(navT('nav.logout', 'Logout')) + '">'
-          +   '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-          +     '<path d="M4 4.75C4 4.33579 4.33579 4 4.75 4H13.25C13.6642 4 14 4.33579 14 4.75V19.25C14 19.6642 13.6642 20 13.25 20H4.75C4.33579 20 4 19.6642 4 19.25V4.75Z" stroke-width="1.7" stroke-linejoin="round"/>'
-          +     '<path d="M14 6.25L18.75 8V16L14 17.75V6.25Z" stroke-width="1.7" stroke-linejoin="round"/>'
-          +     '<circle cx="15.8" cy="12" r="0.85" fill="currentColor" stroke="none"/>'
-          +   '</svg>'
+          +   logoutIcon
           + '</button>'
           + '</div>';
 

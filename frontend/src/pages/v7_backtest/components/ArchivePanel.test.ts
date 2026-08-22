@@ -201,7 +201,10 @@ describe('archive results chrome (:879-913)', () => {
     await openArchive(store);
     const wrapper = mountPanel(store);
     expect(wrapper.find('#panel-archive').classes()).not.toContain('arc-unpinned');
-    await wrapper.find('#archive-results-pin-btn').trigger('click');
+    const pinButton = wrapper.find('#archive-results-pin-btn');
+    expect(pinButton.attributes('aria-label')).toBe(pinButton.attributes('title'));
+    expect(pinButton.find('svg').exists()).toBe(true);
+    await pinButton.trigger('click');
     expect(wrapper.find('#panel-archive').classes()).toContain('arc-unpinned');
   });
 
@@ -216,6 +219,11 @@ describe('archive results chrome (:879-913)', () => {
     expect(row.text()).toContain('2');
     expect(row.text()).toContain('Same length → yesterday');
     expect(wrapper.find('[data-test="archive-sched-run"]').exists()).toBe(true);
+    for (const action of ['archive-sched-run', 'archive-sched-toggle', 'archive-sched-delete']) {
+      const button = wrapper.find(`[data-test="${action}"]`);
+      expect(button.attributes('aria-label')).toBe(button.attributes('title'));
+      expect(button.find('svg').exists()).toBe(true);
+    }
   });
 
   it('renders the optimize-configs table with a selectable, dblclickable row (:9243-9266)', async () => {

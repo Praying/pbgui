@@ -14,9 +14,11 @@
  * pattern adopted by this migration.
  */
 import { onUnmounted, ref } from 'vue';
+import { PhFloppyDisk } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiBase } from '../config';
 import type { CoinDataSettingsData, PbDataSaveResponse } from '../types';
 
@@ -117,7 +119,7 @@ defineExpose({ load });
           <input class="form-input narrow" type="number" id="coindata-mapping-interval" min="1" max="168" step="1" v-model="mappingInterval" />
         </div>
       </div>
-      <button class="form-btn save" type="button" @click="save">&#128190; {{ t('common.save') }}</button>
+      <button class="form-btn save" type="button" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</button>
       <span
         class="inline-msg"
         id="coindata-save-msg"

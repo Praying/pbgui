@@ -96,16 +96,17 @@ describe('ServiceLogPanel log pane (legacy initLogViewer)', () => {
 
 describe('ServiceLogPanel tabs (legacy switchTab)', () => {
   const PBDATA_TABS = [
-    { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
-    { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 12' },
-    { id: 'status', i18nKey: 'sysmon.status', icon: '📊', task: 'Task 12' },
+    { id: 'log', i18nKey: 'sysmon.logTab', task: 'Task 10' },
+    { id: 'settings', i18nKey: 'sysmon.settings', task: 'Task 12' },
+    { id: 'status', i18nKey: 'sysmon.status', task: 'Task 12' },
   ];
 
   it('renders the legacy tab bar with Log active by default', () => {
     const wrapper = mountPanel({ svcId: 'pbdata', label: 'PBData', logFile: 'PBData.log', tabs: PBDATA_TABS });
 
     const tabs = wrapper.findAll('.tab-btn');
-    expect(tabs.map((b) => b.text())).toEqual(['📋 Log', '⚙ Settings', '📊 Status']);
+    expect(tabs.map((button) => button.text())).toEqual(['Log', 'Settings', 'Status']);
+    expect(tabs.every((button) => button.find('svg').exists())).toBe(true);
     expect(tabs[0]!.classes()).toContain('active');
     expect(wrapper.find('#pbdata-tab-log').classes()).toContain('active');
     expect(wrapper.find('.logviewer-stub').text()).toBe('PBData.log');
@@ -130,8 +131,8 @@ describe('ServiceLogPanel tabs (legacy switchTab)', () => {
       label: 'PBAPIServer',
       logFile: 'PBApiServer.log',
       tabs: [
-        { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
-        { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 13' },
+        { id: 'log', i18nKey: 'sysmon.logTab', task: 'Task 10' },
+        { id: 'settings', i18nKey: 'sysmon.settings', task: 'Task 13' },
       ],
     });
 

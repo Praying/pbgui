@@ -15,6 +15,11 @@
  *   {type:'pbgui_dashboard_created'}   after any successful creation
  * No inbound messages are handled, no editor iframes, no grid engine.
  *
+ * Shell boundary (intentional): AppShell and StatusStrip are not rendered
+ * because this page is the dashboard_main templates iframe. The parent owns
+ * the rail and overlay chrome; adding another shell here would break the
+ * iframe's compact layout and its postMessage handoff.
+ *
  * ┌───────────────────────┬──────────────────────────────────────────────────┐
  * │ App (shell)           │ load templates + users in parallel (render only  │
  * │                       │ after BOTH settle; failures → empty lists),      │
@@ -47,9 +52,11 @@
  *   default); CreateCard passes ['ALL'] explicitly like the legacy page.
  */
 import { onMounted, ref } from 'vue';
+import { PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import CreateCard from './components/CreateCard.vue';
 import ManageCard from './components/ManageCard.vue';
 import SaveCard from './components/SaveCard.vue';
@@ -133,9 +140,10 @@ onMounted(() => {
       id="btn-close"
       class="tpl-close"
       :title="t('common.close')"
+      :aria-label="t('common.close')"
       style="display:none"
       @click="onClose"
-    >✕</button>
+    ><PbIcon :icon="PhX" /></button>
   </div>
   <div id="content" class="tpl-content">
     <div v-if="!loaded" style="color:#4a5568;padding:1rem">{{ t('dash.loading') }}</div>

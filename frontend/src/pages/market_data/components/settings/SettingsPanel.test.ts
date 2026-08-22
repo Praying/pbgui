@@ -27,8 +27,8 @@ function hyperliquidPayload(): SettingsPayload {
       min_lookback_days: 2,
       max_lookback_days: 4,
       aws_profile: 'pbgui-hyperliquid',
-      aws_access_key_id: '',
-      aws_secret_access_key: '',
+      aws_access_key_configured: true,
+      aws_secret_access_key_configured: true,
       aws_region: 'us-east-1',
       l2book_scan_timeout_s: 5,
       l2book_scan_workers: 8,
@@ -166,6 +166,10 @@ describe('AWS card (:3027-3061)', () => {
     expect(value('settings-aws-region')).toBe('us-east-1');
     expect(value('settings-scan-timeout')).toBe('5');
     expect(value('settings-scan-workers')).toBe('8');
+    expect(wrapper.findAll('.aws-credential-status').map((status) => status.text())).toEqual([
+      'Configured (saved value is hidden)',
+      'Configured (saved value is hidden)',
+    ]);
   });
 
   it('toggles the password visibility with the eye button (:5575-5585)', async () => {
@@ -173,13 +177,15 @@ describe('AWS card (:3027-3061)', () => {
     const input = wrapper.find('#settings-aws-access-key-id');
     const eye = wrapper.findAll('.pw-eye-btn')[0]!;
     expect((input.element as HTMLInputElement).type).toBe('password');
-    expect(eye.text()).toBe('👁');
+    expect(eye.find('svg').exists()).toBe(true);
+    expect(eye.attributes('aria-label')).toBe('Show AWS access key');
     await eye.trigger('click');
     expect((input.element as HTMLInputElement).type).toBe('text');
-    expect(eye.text()).toBe('🙈');
+    expect(eye.attributes('aria-label')).toBe('Hide AWS access key');
+    expect(eye.find('svg').exists()).toBe(true);
     await eye.trigger('click');
     expect((input.element as HTMLInputElement).type).toBe('password');
-    expect(eye.text()).toBe('👁');
+    expect(eye.find('svg').exists()).toBe(true);
   });
 
   it('edits dirty the form through the hyperliquid branch', async () => {

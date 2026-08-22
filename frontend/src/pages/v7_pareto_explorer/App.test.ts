@@ -51,6 +51,9 @@ describe('Pareto Explorer scaffold', () => {
   it('boots from /session with the query result path and seed version', async () => {
     stubFetch({ result_valid: false, messages: [] });
     const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/opt/results/run1');
+    expect(wrapper.findAll('main')).toHaveLength(1);
+    expect(wrapper.find('main#app-shell-main').exists()).toBe(true);
+    expect(wrapper.find('div.workbench-page-content').exists()).toBe(true);
     const sessionCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/session'))!;
     expect(String(sessionCall[0])).toBe(
       'http://pbgui.test:8000/api/pareto-explorer/session?result_path=' + encodeURIComponent('/opt/results/run1') + '&optimize_version=v7'

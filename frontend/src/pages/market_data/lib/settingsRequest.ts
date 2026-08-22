@@ -6,7 +6,9 @@
  *
  *   base object   :8904-8914  auto_enable_new_coins / enabled_coins / 5 fields
  *   coin expansion:8901-8903  auto-enable → all coins, default sort
- *   aws block     :8916-8925  appended AFTER the base five, hyperliquid only
+ *   aws block     :8916-8925  appended AFTER the base five, hyperliquid only;
+ *                              credential values are omitted when blank so
+ *                              routine saves preserve stored credentials
  */
 
 import {
@@ -78,8 +80,10 @@ export function collectSettingsRequest(input: CollectSettingsRequestInput): Sett
   if (input.exchange === 'hyperliquid') {
     // :8916-8925 — appended in this exact order after the base five
     request.settings.aws_profile = awsProfileOrDefault(fields.awsProfile);
-    request.settings.aws_access_key_id = readTextFieldValue(fields.awsAccessKeyId);
-    request.settings.aws_secret_access_key = readTextFieldValue(fields.awsSecretAccessKey);
+    const awsAccessKeyId = readTextFieldValue(fields.awsAccessKeyId);
+    const awsSecretAccessKey = readTextFieldValue(fields.awsSecretAccessKey);
+    if (awsAccessKeyId) request.settings.aws_access_key_id = awsAccessKeyId;
+    if (awsSecretAccessKey) request.settings.aws_secret_access_key = awsSecretAccessKey;
     request.settings.aws_region = readTextFieldValue(fields.awsRegion);
     request.settings.l2book_scan_timeout_s = readNumberValue(
       fields.scanTimeout,

@@ -6,8 +6,10 @@
  * area (:941), the charts host (:942) and deleteSelectedLegacyResults'
  * confirm flow (:6364-6380). v7-only — App never mounts it on v8.
  */
+import { PhPushPin } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import CompareModal from './CompareModal.vue';
 import ConfirmModal from './ConfirmModal.vue';
 import RebacktestModal from './RebacktestModal.vue';
@@ -99,7 +101,7 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             {{ t('v7backtest.selectAll') }}
           </button>
           <button type="button" class="act-btn" data-test="legacy-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</button>
-          <button id="legacy-results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned">📌</button>
+          <button id="legacy-results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" :aria-label="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned"><PbIcon :icon="PhPushPin" :size="18" /></button>
         </div>
         <div id="legacy-results-list-wrap" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="legacy-results-table">

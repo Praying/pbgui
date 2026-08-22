@@ -7,7 +7,9 @@
  * Tasks 10 and 14 wire their fetches.
  */
 import { computed } from 'vue';
+import { PhArrowClockwise, PhArrowRight, PhPlay, PhStop, PhToggleLeft, PhToggleRight } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { SERVICES } from '../services';
 import {
   migrationStatusMeta,
@@ -48,8 +50,6 @@ type ButtonKind = ServiceAction | 'open';
 interface CardButton {
   kind: ButtonKind;
   label: string;
-  /** Legacy button icons: ▶ start, ■ stop, ↻ restart; enable/disable/open have none. */
-  icon: '' | '▶' | '■' | '↻';
   disabled: boolean;
   action: ServiceAction | null;
 }
@@ -75,13 +75,21 @@ function cardButtons(
   return serviceButtons(tt, isApiServer, item, pending).map((b) => ({
     kind: b.action,
     label: b.label,
-    icon: b.icon,
     disabled: b.disabled,
     action: b.action,
   }));
 }
 
-const openButton: CardButton = { kind: 'open', label: '', icon: '', disabled: false, action: null };
+const buttonIcons = {
+  start: PhPlay,
+  stop: PhStop,
+  restart: PhArrowClockwise,
+  enable: PhToggleRight,
+  disable: PhToggleLeft,
+  open: PhArrowRight,
+} as const;
+
+const openButton: CardButton = { kind: 'open', label: '', disabled: false, action: null };
 
 const cards = computed<Card[]>(() => {
   const list: Card[] = SERVICES.map((svc) => {
@@ -154,7 +162,8 @@ const cards = computed<Card[]>(() => {
           :disabled="b.disabled"
           @click.stop="b.action ? emit('action', c.svcId, b.action) : emit('select', c.panelId)"
         >
-          <template v-if="b.icon">{{ b.icon }} </template>{{ b.label }}
+          <PbIcon :icon="buttonIcons[b.kind]" />
+          {{ b.label }}
         </button>
       </div>
     </div>

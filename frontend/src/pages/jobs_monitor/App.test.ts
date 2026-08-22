@@ -88,6 +88,10 @@ describe('Shared Jobs Monitor Vue page', () => {
     const wrapper = mountApp('?embed=1&exchange=bitget&job_type=bitget_best_1m_distributed');
     expect(document.documentElement.classList.contains('is-embedded')).toBe(true);
     expect(WebSocketMock.instances[0]?.url).toBe('ws://test/ws/jobs');
+    expect(wrapper.find('.app-shell').exists()).toBe(true);
+    expect(wrapper.findAll('[data-status]')).toHaveLength(2);
+    expect(wrapper.get('.jobs-tab-panel.active [role="status"]').text()).toContain('No Active jobs');
+    expect(wrapper.text()).toContain('Connecting');
 
     WebSocketMock.instances[0]!.open();
     WebSocketMock.instances[0]!.jobs(activeJobs);
@@ -97,6 +101,26 @@ describe('Shared Jobs Monitor Vue page', () => {
     expect(wrapper.text()).toContain('run-1');
     expect(wrapper.text()).not.toContain('hidden-1');
     expect(wrapper.get('[data-status="worker"]').text()).toContain('Running');
+  });
+
+  it('keeps visible action labels beside Phosphor icons', async () => {
+    const wrapper = mountApp('?exchange=bitget');
+    WebSocketMock.instances[0]!.jobs([{ ...activeJobs[0], status: 'pending' }]);
+    await wrapper.vm.$nextTick();
+
+    const runButton = wrapper.get('[data-action="run"]');
+    expect(runButton.text()).toContain('Run');
+    expect(runButton.find('svg').exists()).toBe(true);
+  });
+
+  it('renders empty history copy after a successful empty response', async () => {
+    apiFetchMock.mockResolvedValueOnce({ jobs: [] });
+    const wrapper = mountApp('?exchange=bitget');
+
+    await wrapper.get('[data-tab="done"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.get('.jobs-tab-panel.active').text()).toContain('No done jobs');
   });
 
   it('loads sorted history and invokes run, cancel, retry, requeue, and delete actions after confirmation', async () => {

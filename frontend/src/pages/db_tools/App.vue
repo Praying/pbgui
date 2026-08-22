@@ -25,7 +25,11 @@
  *  - Poll/timer handles are disposed on unmount (legacy leaked them).
  */
 import { computed, onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
+import { PhCalendar } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import LogPanel from './components/LogPanel.vue';
 import PanelBits from './components/PanelBits.vue';
 import SelectList from './components/SelectList.vue';
@@ -170,7 +174,20 @@ onBeforeUnmount(() => store.teardown());
 </script>
 
 <template>
-  <nav id="topnav"></nav>
+  <AppShell
+    class="data-page-shell data-page-shell--db-tools"
+    page-key="system_db_tools"
+    :page-title="t('misc.dbtools.pageTitle')"
+    :page-description="t('misc.dbtools.pageSub')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('shared.status')"
+        :value="store.statuses.value[store.activePanel.value]?.text || t('common.ok')"
+        :tone="store.statuses.value[store.activePanel.value]?.kind === 'err' ? 'danger' : store.statuses.value[store.activePanel.value]?.kind === 'ok' ? 'success' : 'neutral'"
+      />
+    </template>
+
   <div id="page-body">
     <aside id="sidebar">
       <div class="sb-title">{{ t('misc.dbtools.sbTitle') }}</div>
@@ -182,7 +199,7 @@ onBeforeUnmount(() => store.teardown());
         @click="store.activePanel.value = panel.key"
       >{{ t(panel.labelKey) }}</button>
     </aside>
-    <main id="main-content">
+    <div id="main-content">
       <div class="page-head">
         <div>
           <h1 class="page-title">{{ t('misc.dbtools.pageTitle') }}</h1>
@@ -215,7 +232,7 @@ onBeforeUnmount(() => store.teardown());
               <label for="cleanup-date">{{ t('misc.dbtools.cutoffDate') }}</label>
               <div class="date-input-wrap">
                 <input id="cleanup-date" v-model="store.cleanupDate.value" type="text" placeholder="YYYY-MM-DD" autocomplete="off">
-                <button type="button" class="calendar-trigger" :title="t('misc.dbtools.openCalendar')" @click="openCleanupCalendar">📅</button>
+                <button type="button" class="calendar-trigger" :title="t('misc.dbtools.openCalendar')" :aria-label="t('misc.dbtools.openCalendar')" @click="openCleanupCalendar"><PbIcon :icon="PhCalendar" /></button>
               </div>
             </div>
           </div>
@@ -590,8 +607,9 @@ onBeforeUnmount(() => store.teardown());
           />
         </div>
       </section>
-    </main>
+    </div>
   </div>
 
   <LogPanel :visible="logVisible" :title="logTitle" :log-file="logFile" @close="logVisible = false" />
+</AppShell>
 </template>

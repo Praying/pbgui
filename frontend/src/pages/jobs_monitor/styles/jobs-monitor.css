@@ -1,4 +1,4 @@
-.jobs-monitor { min-height: 100vh; min-height: 100dvh; padding: 24px; color: var(--text-primary); background: var(--bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.jobs-monitor { min-height: 0; padding: 24px; color: var(--text-primary); background: var(--bg-page); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 .jobs-monitor.is-embedded { min-height: 0; padding: 12px; }
 .jobs-shell { max-width: 1400px; margin: 0 auto; }
 .jobs-header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; }
@@ -21,7 +21,7 @@
 .job-id { color: var(--text-primary); word-break: break-all; }
 .job-type, .job-detail, .job-meta { color: var(--text-secondary); font-size: .82rem; }
 .job-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
-.job-btn { border: 0; border-radius: 4px; padding: 6px 10px; color: var(--text-primary); background: #3182ce; cursor: pointer; }
+.job-btn { display: inline-flex; align-items: center; gap: 5px; border: 0; border-radius: 4px; padding: 6px 10px; color: var(--text-primary); background: #3182ce; cursor: pointer; }
 .job-btn:hover { filter: brightness(1.12); }
 .job-btn.run { background: #15803d; }
 .job-btn.view { background: #0f766e; }
@@ -61,4 +61,10 @@
 .json-block { margin: 0; padding: 10px; overflow: auto; border-radius: 4px; color: var(--text-primary); background: var(--bg-page); white-space: pre-wrap; word-break: break-word; font: .78rem/1.4 'Courier New', monospace; }
 .confirm-card { width: min(520px, calc(100vw - 40px)); }
 .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.jobs-status .pbgui-status-strip { flex: 1 1 220px; }
+html.is-embedded .operations-shell--jobs { display: block; min-height: 0; }
+html.is-embedded .operations-shell--jobs .workbench-rail,
+html.is-embedded .operations-shell--jobs .workspace-header,
+html.is-embedded .operations-shell--jobs .pbgui-skip-link { display: none; }
+html.is-embedded .operations-shell--jobs .app-shell__main { width: 100%; max-width: none; padding: 0; }
 @media (max-width: 760px) { .jobs-monitor { padding: 14px; } .jobs-header, .job-header { flex-direction: column; } .job-actions { justify-content: flex-start; } }

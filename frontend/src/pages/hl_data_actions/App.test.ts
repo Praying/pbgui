@@ -80,6 +80,8 @@ describe('HL data-actions page shell', () => {
   it('renders both sections with their pickers after init', async () => {
     const wrapper = await mountApp();
 
+    // Embedded page boundary: the parent market-data page owns navigation.
+    expect(wrapper.find('.app-shell').exists()).toBe(false);
     expect(wrapper.find('#sec-download').exists()).toBe(true);
     expect(wrapper.find('#sec-build').exists()).toBe(true);
     expect(wrapper.findAll('#opts-dl .hlda-coin-row')).toHaveLength(3);

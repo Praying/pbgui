@@ -242,7 +242,7 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
     expect((token.element as HTMLInputElement).value).toBe('tok-secret');
 
     const eye = wrapper.find('.pw-eye');
-    expect(eye.text()).toBe('👁');
+    expect(eye.find('svg').exists()).toBe(true);
     expect(eye.attributes('title')).toBe('Show/hide');
   });
 
@@ -281,7 +281,8 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
   it('renders the save button with the legacy disk icon', async () => {
     const wrapper = await mountedSettings();
 
-    expect(wrapper.find('button.form-btn.save').text()).toBe('💾 Save');
+    expect(wrapper.find('button.form-btn.save').text()).toBe('Save');
+    expect(wrapper.find('button.form-btn.save svg').exists()).toBe(true);
   });
 });
 

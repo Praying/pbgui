@@ -7,8 +7,10 @@
  * Legacy logic :1493-2259.
  */
 import { computed, reactive, ref } from 'vue';
+import { PhArrowClockwise, PhCaretDown, PhCaretRight, PhEye, PhEyeSlash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import BackButton from './BackButton.vue';
 import ExpiryBadge from './ExpiryBadge.vue';
 import { pageFetch } from '../lib/pageApi';
@@ -47,7 +49,6 @@ const passphraseField = reactive(newMaskedField(''));
 const privateKeyField = reactive(newMaskedField(''));
 
 const secretVisible = ref(false);
-const privateKeyVisible = ref(false);
 let apiKeyRevealGeneration = 0;
 
 const saving = ref(false);
@@ -136,7 +137,6 @@ function showPanel(user: UserDetail): void {
   extraText.value = user.extra ? JSON.stringify(user.extra, null, 2) : '';
   advancedOpen.value = false;
   secretVisible.value = false;
-  privateKeyVisible.value = false;
   balance.value = { visible: false, success: false, value: null, error: '' };
 
   if (user.exchange === 'hyperliquid' && isEdit.value) {
@@ -541,16 +541,26 @@ async function testConnection(): Promise<void> {
             :placeholder="keyField.masked ? '••••••••••• ' + savedLeaveBlank : ''"
             @input="onKeyInput"
           />
-          <button type="button" class="pw-eye-btn" tabindex="-1" @click="toggleApiKeyVisible">
-            {{ keyField.visible ? '🙈' : '👁' }}
-          </button>
+          <button
+            type="button"
+            class="pw-eye-btn"
+            :aria-label="t('misc.apikeys.showHideStoredApiKey')"
+            :title="t('misc.apikeys.showHideStoredApiKey')"
+            @click="toggleApiKeyVisible"
+          ><PbIcon :icon="keyField.visible ? PhEyeSlash : PhEye" /></button>
         </div>
       </div>
       <div class="form-group">
         <label>{{ t('misc.apikeys.apiSecret') }}</label>
         <div class="pw-wrap">
           <input id="editSecret" v-model="secretField.value" :type="secretVisible ? 'text' : 'password'" :placeholder="secretField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
-          <button type="button" class="pw-eye-btn" tabindex="-1" @click="secretVisible = !secretVisible">{{ secretVisible ? '🙈' : '👁' }}</button>
+          <button
+            type="button"
+            class="pw-eye-btn"
+            :aria-label="t('misc.apikeys.showHideStoredApiKey')"
+            :title="t('misc.apikeys.showHideStoredApiKey')"
+            @click="secretVisible = !secretVisible"
+          ><PbIcon :icon="secretVisible ? PhEyeSlash : PhEye" /></button>
         </div>
       </div>
       <div class="form-group" id="passphraseGroup" v-show="needsPassphrase">
@@ -574,7 +584,7 @@ async function testConnection(): Promise<void> {
       </span>
       <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;">{{ hlInline.dateText }}</span>
       <button class="btn pbgui-btn btn-sm btn-secondary" id="btnHLExpiryInline" :disabled="checkingHl" style="margin-left:auto;" @click="checkSingleHlExpiry">
-        &#8635; {{ checkingHl ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiry') }}
+        <PbIcon :icon="PhArrowClockwise" /> {{ checkingHl ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiry') }}
       </button>
     </div>
 
@@ -591,7 +601,7 @@ async function testConnection(): Promise<void> {
       </span>
       <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#94a3b8;">{{ bybitInline.dateText }}</span>
       <button class="btn pbgui-btn btn-sm btn-secondary" id="btnBybitExpiryInline" :disabled="checkingBybit" style="margin-left:auto;" @click="checkSingleBybitExpiry">
-        &#8635; {{ checkingBybit ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiryAndIps') }}
+        <PbIcon :icon="PhArrowClockwise" /> {{ checkingBybit ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiryAndIps') }}
       </button>
       <div id="bybitIPList" v-show="bybitInline.ips !== null" style="margin-top:8px; padding-top:8px; border-top:1px solid #2d3748; width:100%;">
         <span style="font-size:var(--fs-xs); color:#94a3b8; display:block; margin-bottom:4px;">{{ t('misc.apikeys.whitelistedIps') }}</span>
@@ -616,10 +626,9 @@ async function testConnection(): Promise<void> {
           <input
             id="editPrivateKey"
             v-model="privateKeyField.value"
-            :type="privateKeyVisible ? 'text' : 'password'"
+            type="password"
             :placeholder="privateKeyField.masked ? '••••••••••• ' + savedLeaveBlank : ''"
           />
-          <button type="button" class="pw-eye-btn" tabindex="-1" @click="privateKeyVisible = !privateKeyVisible">{{ privateKeyVisible ? '🙈' : '👁' }}</button>
         </div>
       </div>
       <div class="form-checkbox">
@@ -631,7 +640,7 @@ async function testConnection(): Promise<void> {
     <!-- Advanced (collapsible) -->
     <div class="expander">
       <button class="expander-toggle" @click="advancedOpen = !advancedOpen">
-        <span id="advancedToggleIcon">{{ advancedOpen ? '▼' : '▶' }}</span> {{ t('misc.apikeys.advancedOptional') }}
+        <PbIcon id="advancedToggleIcon" :icon="advancedOpen ? PhCaretDown : PhCaretRight" /> {{ t('misc.apikeys.advancedOptional') }}
       </button>
       <div class="expander-content" :class="{ open: advancedOpen }">
         <div class="form-grid">

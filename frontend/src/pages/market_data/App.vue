@@ -83,7 +83,9 @@
 import { computed, onBeforeUnmount, onMounted, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
+import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
@@ -411,6 +413,18 @@ function openBest1mPanel(mode: Best1mSection): void {
 
 const statusSummaries = useStatusSummaries();
 
+const marketStatusText = computed(() => {
+  if (!statusSummaries.statusSummaries.value.length) return t('common.loading');
+  return statusSummaries.statusSummaries.value.some((summary) => summary.error)
+    ? t('common.error')
+    : t('common.ok');
+});
+
+const marketStatusTone = computed(() => {
+  if (!statusSummaries.statusSummaries.value.length) return 'warning' as const;
+  return statusSummaries.statusSummaries.value.some((summary) => summary.error) ? 'danger' as const : 'success' as const;
+});
+
 /* ── panel placeholder registry (M-data-8 replaces the activity one) ── */
 
 const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel' | 'best1m-panel' | 'copy-data-panel'>, string> = {
@@ -460,10 +474,21 @@ onMounted(() => {
 </script>
 
 <template>
-  <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="data-page-shell data-page-shell--market-data"
+    page-key="info_market_data_fastapi"
+    :page-title="t('market.title')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('shared.status')"
+        :value="marketStatusText"
+        :tone="marketStatusTone"
+      />
+    </template>
 
-  <div id="page-body">
+    <MigrationWatermark />
+    <div id="page-body">
     <SidebarNav
       :panels="PANELS"
       :active="activePanel"
@@ -498,7 +523,7 @@ onMounted(() => {
       </template>
     </SidebarNav>
 
-    <main id="main-content">
+    <div id="main-content">
       <ExchangeSelect
         :model-value="contextExchange.contextExchange.value"
         :options="exchangeOptions"
@@ -524,8 +549,8 @@ onMounted(() => {
         <CopyDataPanel v-else-if="panel.id === 'copy-data-panel'" :store="copyData" />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>
-    </main>
-  </div>
+    </div>
+    </div>
 
   <DataTipTooltip />
   <ToastStack :toasts="toasts" />
@@ -539,4 +564,5 @@ onMounted(() => {
     @delete="inventory.actions.runDeleteOlder()"
     @close="inventory.actions.closeOlderDialog()"
   />
+</AppShell>
 </template>

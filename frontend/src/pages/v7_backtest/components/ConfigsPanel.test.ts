@@ -106,7 +106,11 @@ describe('row actions (:1697-1702)', () => {
   it('emits edit / queue / view-results', async () => {
     const wrapper = mountPanel({ configs: [config({ name: 'a' })] });
     await nextTick();
-    expect(wrapper.find('[data-test="cfg-edit"]').exists()).toBe(true);
+    for (const action of ['cfg-edit', 'cfg-queue', 'cfg-results']) {
+      const button = wrapper.find(`[data-test="${action}"]`);
+      expect(button.attributes('aria-label')).toBe(button.attributes('title'));
+      expect(button.find('svg').exists()).toBe(true);
+    }
     await wrapper.find('[data-test="cfg-edit"]').trigger('click');
     await wrapper.find('[data-test="cfg-queue"]').trigger('click');
     await wrapper.find('[data-test="cfg-results"]').trigger('click');

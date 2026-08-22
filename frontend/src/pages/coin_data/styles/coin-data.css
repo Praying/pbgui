@@ -44,8 +44,19 @@
 
     #page-body {
       display: flex;
-      height: calc(100vh - 52px); height: calc(100dvh - 52px);
+      height: calc(100vh - 112px); height: calc(100dvh - 112px);
       overflow: hidden;
+    }
+
+    .data-page-shell .app-shell__main {
+      width: 100%;
+      max-width: none;
+      min-height: 0;
+      padding: 0;
+    }
+
+    .data-page-shell .app-shell__primary {
+      min-height: 0;
     }
 
     #sidebar {
@@ -1171,4 +1182,3 @@
         max-height: none;
       }
     }
-  

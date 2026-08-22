@@ -297,8 +297,8 @@ def _build_market_data_settings_payload(exchange: str) -> dict[str, Any]:
         settings.update(
             {
                 "aws_profile": profile_for_settings,
-                "aws_access_key_id": str(creds_settings.get("aws_access_key_id") or ""),
-                "aws_secret_access_key": str(creds_settings.get("aws_secret_access_key") or ""),
+                "aws_access_key_configured": bool(str(creds_settings.get("aws_access_key_id") or "").strip()),
+                "aws_secret_access_key_configured": bool(str(creds_settings.get("aws_secret_access_key") or "").strip()),
                 "aws_region": region_default_settings,
                 "l2book_scan_timeout_s": _read_float_ini("market_data", "hl_l2book_scan_timeout_s", 5.0),
                 "l2book_scan_workers": _read_int_ini("market_data", "hl_l2book_scan_workers", 8),
@@ -413,8 +413,6 @@ def _save_market_data_settings(exchange: str, request: dict[str, Any]) -> dict[s
 
     if ex == "hyperliquid":
         profile = str(settings.get("aws_profile") or "pbgui-hyperliquid").strip() or "pbgui-hyperliquid"
-        aws_access_key_id = str(settings.get("aws_access_key_id") or "").strip()
-        aws_secret_access_key = str(settings.get("aws_secret_access_key") or "").strip()
         aws_region = str(settings.get("aws_region") or "").strip()
 
         ini_updates["market_data"] = {
@@ -424,11 +422,25 @@ def _save_market_data_settings(exchange: str, request: dict[str, Any]) -> dict[s
             "l2book_archive_enabled": "true" if bool(settings.get("l2book_archive_enabled")) else "false",
             "l2book_archive_dir": str(settings.get("l2book_archive_dir") or "").strip(),
         }
-        save_aws_profile_credentials(
-            profile=profile,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-        )
+        has_access_key_update = "aws_access_key_id" in settings
+        has_secret_key_update = "aws_secret_access_key" in settings
+        if has_access_key_update or has_secret_key_update:
+            stored_credentials = load_aws_profile_credentials(profile)
+            aws_access_key_id = (
+                str(settings.get("aws_access_key_id") or "").strip()
+                if has_access_key_update
+                else str(stored_credentials.get("aws_access_key_id") or "").strip()
+            )
+            aws_secret_access_key = (
+                str(settings.get("aws_secret_access_key") or "").strip()
+                if has_secret_key_update
+                else str(stored_credentials.get("aws_secret_access_key") or "").strip()
+            )
+            save_aws_profile_credentials(
+                profile=profile,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+            )
         save_aws_profile_region(profile=profile, region=aws_region)
 
 

@@ -12,7 +12,9 @@
  * button swaps; the run button is disabled unless migration_needed.
  */
 import { computed } from 'vue';
+import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { migrationStatusMeta, type Translate } from '../status';
 import type { MigrationStatus } from '../types';
 
@@ -89,7 +91,7 @@ const notReadyUnitsText = computed(() =>
       <span class="status-label">{{ meta.label }}</span>
     </div>
     <span style="flex: 1"></span>
-    <button class="ctrl-btn" type="button" @click="emit('refresh')">&#8635; {{ t('common.refresh') }}</button>
+    <button class="ctrl-btn" type="button" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
   </div>
 
   <div class="settings-wrap" id="migration-wrap">

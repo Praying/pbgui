@@ -88,7 +88,8 @@ describe('VPS Monitor Vue page', () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.get('[data-status="connection"]').text()).toContain('Connected');
     expect(wrapper.text()).toContain('alpha');
-    expect(wrapper.classes()).toContain('compact');
+    expect(wrapper.get('.vps-monitor').classes()).toContain('compact');
+    expect(wrapper.get('[role="status"]').text()).toContain('Connected');
     await wrapper.get('[data-option="compact"]').setValue(false);
     expect(wrapper.text()).toContain('42.5');
     await wrapper.get('[data-tab="instances"]').trigger('click');
@@ -104,6 +105,8 @@ describe('VPS Monitor Vue page', () => {
 
     await wrapper.get('[data-tab="instances"]').trigger('click');
     await wrapper.get('[data-action="kill-instance"]').trigger('click');
+    expect(wrapper.get('[data-action="kill-instance"]').text()).toContain('Restart (kill)');
+    expect(wrapper.get('[data-action="kill-instance"]').find('svg').exists()).toBe(true);
     expect(JSON.parse(ws.sent.at(-1)!)).toMatchObject({ cmd: 'kill_instance', host: 'alpha', name: 'bot-a', pb_version: '7' });
 
     await wrapper.get('[data-tab="services"]').trigger('click');
@@ -136,6 +139,17 @@ describe('VPS Monitor Vue page', () => {
     expect(wrapper.find('[data-modal="result"]').exists()).toBe(true);
     await wrapper.get('[data-close="result"]').trigger('click');
     expect(wrapper.find('[data-modal="result"]').exists()).toBe(false);
+  });
+
+  it('renders stale monitor-agent state as visible text', async () => {
+    const wrapper = mountApp();
+    WebSocketMock.instances[0]!.state({
+      ...state,
+      streams: { alpha: { monitor_agent: { status: 'stale', files: { heartbeat: { state: 'stale' } } } } },
+    });
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).toContain('heartbeat: stale');
   });
 
   it('cleans up the WebSocket generation and closes the shared viewer', async () => {

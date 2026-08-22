@@ -43,12 +43,12 @@
  * │ App (this skeleton) │ 8+14 ✓ │ selectPanel, restoreFromHash, sidebar markup +     │
  * │                     │        │ resize handle, PBGUI_HELP_OPENER/                  │
  * │                     │        │ _servicesGuideKeyword help wiring                  │
- * │ Topnav / overlays   │ —      │ pbgui_nav.js, pbgui_dialogs.js,                    │
- * │                     │        │ shared_help_overlay.js — stay as shared legacy     │
- * │                     │        │ scripts loaded by index.html                      │
+ * │ Shared overlays     │ —      │ pbgui_dialogs.js and shared_help_overlay.js stay   │
+ * │                     │        │ as legacy helper scripts loaded by index.html      │
  * └─────────────────────┴────────┴────────────────────────────────────────────────────┘
  */
 import { computed, onMounted, onUnmounted, ref, watch, type ComponentPublicInstance } from 'vue';
+import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
@@ -66,6 +66,9 @@ import PbDataSettings from './components/PbDataSettings.vue';
 import CoinDataSettings from './components/CoinDataSettings.vue';
 import ApiServerSettings from './components/ApiServerSettings.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import AppShell from '@/shared/components/AppShell.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { SERVICES } from './services';
 import { apiBase } from './config';
 import { cmcFetch } from './cmc';
@@ -107,18 +110,18 @@ const PANELS: PanelDef[] = [
 /** Legacy tab markup for the multi-tab services; ids match data-tab values. */
 const SERVICE_TABS: Record<string, ServiceTab[]> = {
   pbdata: [
-    { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
-    { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 12' },
-    { id: 'status', i18nKey: 'sysmon.status', icon: '📊', task: 'Task 12' },
+    { id: 'log', i18nKey: 'sysmon.logTab', task: 'Task 10' },
+    { id: 'settings', i18nKey: 'sysmon.settings', task: 'Task 12' },
+    { id: 'status', i18nKey: 'sysmon.status', task: 'Task 12' },
   ],
   pbcoindata: [
-    { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
+    { id: 'log', i18nKey: 'sysmon.logTab', task: 'Task 10' },
     { id: 'pool', i18nKey: 'sysmon.pool', task: 'Task 11' },
-    { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 13' },
+    { id: 'settings', i18nKey: 'sysmon.settings', task: 'Task 13' },
   ],
   'api-server': [
-    { id: 'log', i18nKey: 'sysmon.logTab', icon: '📋', task: 'Task 10' },
-    { id: 'settings', i18nKey: 'sysmon.settings', icon: '⚙', task: 'Task 13' },
+    { id: 'log', i18nKey: 'sysmon.logTab', task: 'Task 10' },
+    { id: 'settings', i18nKey: 'sysmon.settings', task: 'Task 13' },
   ],
 };
 
@@ -135,6 +138,7 @@ const STATUS_POLL_INTERVAL_MS = 5000;
 const statuses = ref<ServiceStatusMap>({});
 /** True after the first successful /status fetch — legacy ships unclassed dots until then. */
 const hasLoadedStatus = ref(false);
+const statusLoadError = ref(false);
 /** svcId → in-flight action (legacy _serviceActionPending). */
 const pendingActions = ref<Record<string, ServiceAction>>({});
 /** Legacy _workers; fetchWorkers below updates it for the cards and the panel. */
@@ -330,7 +334,9 @@ async function fetchStatus(): Promise<void> {
   try {
     statuses.value = await apiFetch<ServiceStatusMap>(`${apiBase()}/status`);
     hasLoadedStatus.value = true;
+    statusLoadError.value = false;
   } catch {
+    statusLoadError.value = true;
     /* legacy rescheduled without touching the last known status */
   }
 }
@@ -665,7 +671,24 @@ onUnmounted(() => {
 
 <template>
   <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="operations-shell operations-shell--services"
+    page-key="system_services"
+    :page-title="t('sysmon.servicesTitle')"
+    :page-description="t('sysmon.servicesSubtitle')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('sysmon.status')"
+        :value="statusLoadError ? t('common.error') : hasLoadedStatus ? t('common.ok') : t('common.loading')"
+        :tone="statusLoadError ? 'danger' : hasLoadedStatus ? 'success' : 'warning'"
+      />
+    </template>
+
+    <template #header-actions>
+      <button class="pbgui-action" type="button" @click="fetchStatus"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
+    </template>
+
   <div id="page-body">
     <!-- Sidebar — status dots driven by the polled /status payload (legacy updateStatusUI) -->
     <div id="sidebar" ref="sidebarEl">
@@ -687,7 +710,7 @@ onUnmounted(() => {
 
     <!-- Main content — one container per legacy panel; Tasks 10–14 replace the
          remaining placeholders with the real panel components. -->
-    <div id="main-content">
+    <div id="services-main-content">
       <div
         v-for="panel in PANELS"
         :id="`panel-${panel.id}`"
@@ -772,20 +795,46 @@ onUnmounted(() => {
 
   <!-- Page-global prices overlay (legacy #prices-overlay markup, outside page-body). -->
   <PricesOverlay :ref="setPricesOverlay" />
+  </AppShell>
 </template>
 
 <!-- Layout scaffolding ported from frontend/services_monitor.html (page-level,
-     intentionally NOT scoped: pbgui_nav.js and panel components target these
-     ids/classes). Base styles and tokens come from @/styles/tokens.css +
+     intentionally NOT scoped because panel components target these ids/classes).
+     Base styles and tokens come from @/styles/tokens.css +
      base.css; panel-specific styles arrive with each panel component. -->
 <style>
 #page-body {
   display: flex;
-  height: calc(100vh - var(--nav-height));
-  height: calc(100dvh - var(--nav-height));
+  flex: 1;
+  height: auto;
   min-height: 0;
   overflow: hidden;
   background: var(--surface-page);
+}
+
+.operations-shell--services .app-shell__workspace,
+.operations-shell--services .app-shell__main,
+.operations-shell--services .app-shell__primary {
+  min-height: 0;
+}
+
+.operations-shell--services .app-shell__workspace {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.operations-shell--services .app-shell__main {
+  width: 100%;
+  max-width: none;
+  flex: 1;
+  padding: 0;
+}
+
+.operations-shell--services .app-shell__primary {
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Sidebar ── */
@@ -867,7 +916,7 @@ onUnmounted(() => {
 }
 
 /* ── Main content / service panels ── */
-#main-content {
+#services-main-content {
   flex: 1;
   overflow: hidden;
   display: flex;

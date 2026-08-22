@@ -47,6 +47,17 @@ body {
   overflow: hidden;
 }
 
+.data-page-shell .app-shell__main {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.data-page-shell .app-shell__primary {
+  min-height: 0;
+}
+
 /* ── Sidebar (legacy :59-159; #sidebar-resize :72-86 NOT ported —
       silent no-op in legacy, see SidebarNav.vue) ── */
 #sidebar {

@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { PhFileText, PhGear, PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch, ApiError } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
+import AppShell from '@/shared/components/AppShell.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { loggingApiBase, loggingWsBase } from './config';
 import type { LogFilesPayload, ManagedRotationRule, RotationPayload, RotationRule } from './types';
 
@@ -137,15 +144,28 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <nav id="topnav"></nav>
+  <AppShell
+    class="operations-shell operations-shell--logging"
+    page-key="system_logging"
+    :page-title="t('sysmon.loggingTitle')"
+    :page-description="t('sysmon.logging')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('sysmon.status')"
+        :value="loading ? t('sysmon.loading') : error ? t('common.error') : t('sysmon.connected')"
+        :tone="loading ? 'warning' : error ? 'danger' : 'success'"
+      />
+    </template>
+
   <div id="page-body" class="logging-page">
     <aside class="logging-sidebar">
       <div class="logging-sidebar-title">{{ t('sysmon.logging') }}</div>
-      <button class="logging-nav-btn" :class="{ active: view === 'logs' }" data-view="logs" @click="view = 'logs'">📋 {{ t('sysmon.logViewer') }}</button>
-      <button class="logging-nav-btn" :class="{ active: view === 'settings' }" data-view="settings" @click="view = 'settings'">⚙️ {{ t('sysmon.settings') }}</button>
+      <button class="logging-nav-btn" :class="{ active: view === 'logs' }" data-view="logs" @click="view = 'logs'"><PbIcon :icon="PhFileText" /> {{ t('sysmon.logViewer') }}</button>
+      <button class="logging-nav-btn" :class="{ active: view === 'settings' }" data-view="settings" @click="view = 'settings'"><PbIcon :icon="PhGear" /> {{ t('sysmon.settings') }}</button>
     </aside>
 
-    <main class="logging-main">
+    <div class="logging-main">
       <section v-show="view === 'logs'" class="logging-view">
         <div v-if="currentFile" class="logging-toolbar">
           <label v-if="variants.length">{{ t('sysmon.version') }}
@@ -154,15 +174,27 @@ onBeforeUnmount(() => {
               <option v-for="variant in variants" :key="variant" :value="variant">{{ variant.slice(currentFile.length) }}</option>
             </select>
           </label>
-          <button data-action="purge" class="logging-btn danger" @click="purgeOpen = true">🗑 {{ t('sysmon.purge') }}</button>
+          <button data-action="purge" class="logging-btn danger" @click="purgeOpen = true"><PbIcon :icon="PhTrash" /> {{ t('sysmon.purge') }}</button>
         </div>
-        <p v-if="viewerUnavailable" class="logging-error">{{ t('sysmon.logViewerUnavailable', { v: 'LogViewerPanel' }) }}</p>
+        <ErrorState
+          v-if="viewerUnavailable"
+          class="logging-error"
+          :title="t('common.error')"
+          :message="t('sysmon.logViewerUnavailable', { v: 'LogViewerPanel' })"
+        />
         <div id="logging-viewer-target" class="logging-viewer-target"></div>
       </section>
 
       <section v-show="view === 'settings'" class="logging-settings">
-        <p v-if="loading" class="logging-muted">{{ t('sysmon.loading') }}</p>
-        <p v-if="error" class="logging-error">{{ error }}</p>
+        <LoadingSkeleton v-if="loading" class="logging-muted" :label="t('sysmon.loading')" />
+        <ErrorState
+          v-if="error"
+          class="logging-error"
+          :title="t('common.error')"
+          :message="error"
+          :retry-label="t('common.refresh')"
+          @retry="initialize"
+        />
 
         <article class="logging-card">
           <h2>{{ t('sysmon.defaultRotation') }}</h2>
@@ -189,16 +221,15 @@ onBeforeUnmount(() => {
         <article class="logging-card">
           <h2>{{ t('sysmon.perLogRotation') }}</h2>
           <p class="logging-muted">{{ t('sysmon.perLogRotationHint') }}</p>
-          <div class="logging-table-wrap"><table class="logging-table"><thead><tr><th>{{ t('sysmon.logFile') }}</th><th>{{ t('sysmon.maxMb') }}</th><th>{{ t('sysmon.copies') }}</th><th>{{ t('sysmon.action') }}</th><th></th></tr></thead><tbody>
+          <div class="logging-table-wrap"><table v-if="serviceRows.length" class="logging-table"><thead><tr><th>{{ t('sysmon.logFile') }}</th><th>{{ t('sysmon.maxMb') }}</th><th>{{ t('sysmon.copies') }}</th><th>{{ t('sysmon.action') }}</th><th></th></tr></thead><tbody>
             <tr v-for="[service, rule] in serviceRows" :key="service">
               <td class="logging-name">{{ service }}</td><td><input v-model.number="rule.max_mb" type="number" min="1" max="10240" /></td><td><input v-model.number="rule.backup_count" type="number" min="0" max="20" /></td>
               <td><button class="logging-btn" :data-save-scope="service" @click="saveRule(service, rule)">{{ t('common.save') }}</button></td><td class="logging-saved">{{ messages[service] || '' }}</td>
             </tr>
-            <tr v-if="!serviceRows.length && !loading"><td colspan="5" class="logging-muted">{{ t('sysmon.noLogFilesFound') }}</td></tr>
-          </tbody></table></div>
+          </tbody></table><EmptyState v-else-if="!loading" :title="t('sysmon.noLogFilesFound')" /></div>
         </article>
       </section>
-    </main>
+    </div>
   </div>
 
   <div v-if="purgeOpen" class="log-modal-backdrop">
@@ -209,4 +240,5 @@ onBeforeUnmount(() => {
       <div class="log-modal-actions"><button class="logging-btn" data-action="cancel-purge" @click="purgeOpen = false">{{ t('common.cancel') }}</button><button class="logging-btn danger" data-confirm="purge" :disabled="purging" @click="confirmPurge">{{ t('sysmon.purge') }}</button></div>
     </section>
   </div>
+</AppShell>
 </template>

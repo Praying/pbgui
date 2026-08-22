@@ -50,8 +50,12 @@
  *    legacy calendar, lib/datePicker.ts).
  */
 import { computed, onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
+import { PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
+import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import AnalysisControls from './components/AnalysisControls.vue';
 import ComparePanel from './components/ComparePanel.vue';
 import ExchangeStatePanel from './components/ExchangeStatePanel.vue';
@@ -90,6 +94,13 @@ const STAGES = [
 
 const subtitle = computed(() => t(adapter.subtitleKey));
 const moviePanel = useTemplateRef<{ stepMovieFrame(direction: number): boolean }>('moviePanel');
+
+function openStrategyHelp(): void {
+  const sharedHelp = (window as Window & {
+    PBGuiSharedHelp?: { open?: (topic: string) => void };
+  }).PBGuiSharedHelp;
+  sharedHelp?.open?.('00_strategy_explorer_help');
+}
 
 /** selectStage (:3066-3079) — stage switching persists the refresh state. */
 function selectStage(stage: string): void {
@@ -229,9 +240,37 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <nav id="topnav"></nav>
-  <div id="data-tip-tooltip"></div>
-  <div id="page-body">
+  <AppShell
+    class="core-workbench-shell core-workbench-shell--strategy"
+    :page-key="adapter.navCurrent"
+    :page-title="adapter.isV8 ? t('v7explore.titleV8', { label: store.strategyLabel.value }) : t('v7explore.titleV7')"
+    :page-description="subtitle"
+    :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
+  >
+    <template #status>
+      <div class="toolbar">
+        <span id="source-chip" class="sr-only" :class="store.sourceChip.value.cls" :title="store.sourceChip.value.title">{{ store.sourceChip.value.text }}</span>
+        <StatusStrip
+          :label="t('v7explore.source')"
+          :value="store.sourceChip.value.text"
+          :tone="store.sourceChip.value.cls.includes('err') ? 'danger' : store.sourceChip.value.cls.includes('warn') ? 'warning' : store.sourceChip.value.cls.includes('ok') ? 'success' : 'neutral'"
+        />
+        <span id="ohlcv-chip" :class="store.ohlcvChip.value.cls" :title="store.ohlcvChip.value.title">OHLCV: {{ store.ohlcvChip.value.text }}</span>
+        <span id="engine-chip" :class="store.engineChip.value.cls">{{ store.engineChip.value.text }}</span>
+        <span id="market-chip" class="chip">{{ store.marketChip.value }}</span>
+      </div>
+    </template>
+    <template #header-actions>
+      <IconButton
+        class="pbgui-icon-button"
+        :icon="PhQuestion"
+        :label="t('nav.guide')"
+        @click="openStrategyHelp"
+      />
+    </template>
+
+    <div id="data-tip-tooltip"></div>
+    <div id="page-body">
     <aside id="sidebar">
       <div id="sidebar-inner">
         <button
@@ -247,19 +286,13 @@ onBeforeUnmount(() => {
       <div id="sidebar-resize"></div>
     </aside>
 
-    <main id="main-content" ref="mainContent" @scroll.passive="onScroll">
-      <section class="page-title">
+    <div class="workbench-page-content" ref="mainContent" @scroll.passive="onScroll">
+      <section class="page-title sr-only">
         <div>
           <h1 id="strategy-explorer-title">
             {{ adapter.isV8 ? t('v7explore.titleV8', { label: store.strategyLabel.value }) : t('v7explore.titleV7') }}
           </h1>
           <p id="page-subtitle">{{ subtitle }}</p>
-        </div>
-        <div class="toolbar">
-          <span id="source-chip" :class="store.sourceChip.value.cls" :title="store.sourceChip.value.title">{{ store.sourceChip.value.text }}</span>
-          <span id="ohlcv-chip" :class="store.ohlcvChip.value.cls" :title="store.ohlcvChip.value.title">OHLCV: {{ store.ohlcvChip.value.text }}</span>
-          <span id="engine-chip" :class="store.engineChip.value.cls">{{ store.engineChip.value.text }}</span>
-          <span id="market-chip" class="chip">{{ store.marketChip.value }}</span>
         </div>
       </section>
 
@@ -278,6 +311,7 @@ onBeforeUnmount(() => {
       <SimulationPanel :store="store" :simulation="page.simulation" :simulation-modes="page.simulationModes.value" />
       <ComparePanel :store="store" :compare="page.compare" />
       <MoviePanel ref="moviePanel" :store="store" :movie="page.movie" />
-    </main>
-  </div>
+      </div>
+    </div>
+  </AppShell>
 </template>

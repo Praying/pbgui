@@ -9,17 +9,7 @@
 </head>
 <body>
   <div id="app"></div>
-  <script>
-    window.PBGUI_NAV_CONFIG = {
-      subtitle: window.PBGuiI18n ? window.PBGuiI18n.t('sysmon.clusterSyncSubtitle2') : 'CLUSTER SYNC',
-      current: 'system_cluster',
-      apiBase: ((window.__BOOT__ || {}).origin || '') + '/api/cluster',
-      version: (window.__BOOT__ || {}).version || '',
-      serial: (window.__BOOT__ || {}).serial || ''
-    };
-  </script>
   <script src="/app/js/shared_help_overlay.js?v=7"></script>
-  <script src="/app/pbgui_nav.js"></script>
   <script src="/app/js/pbgui_dialogs.js?v=6"></script>
   <script type="module" src="./main.ts"></script>
 </body>

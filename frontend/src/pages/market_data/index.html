@@ -8,7 +8,7 @@
        %%TOKEN%% injection is gone — REST uses the cookie session and the
        notify_log relay takes its token from boot.js. -->
   <script src="/api/boot.js"></script>
-  <!-- legacy i18n engine: still drives nav subtitle and shared overlays -->
+  <!-- legacy i18n engine remains available to shared overlays -->
   <script src="/app/i18n.js?v=1"></script>
   <title>Market Data - PBGui</title>
   <!-- Vendor global, same file as market_data_main.html:3661 — loaded
@@ -18,24 +18,8 @@
 </head>
 <body>
   <div id="app"></div>
-  <!-- Shared legacy chrome, same loading order as frontend/market_data_main.html
-       :3656-3661: NAV_CONFIG must exist before pbgui_nav.js, which fills
-       #topnav; log_viewer_panel.js is the activity-panel global (M-data-2+).
-       Dropped as dead (recon §3.1, zero references): pbgui_dialogs.js,
-       editor_shared.js. Served by GET /api/market-data/main_page since the
-       M-data-8 route flip. -->
-  <script>
-    window.PBGUI_NAV_CONFIG = {
-      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('market.subtitle') : 'Market Data'),
-      current: 'info_market_data_fastapi',
-      token: (window.__BOOT__ || {}).token || '',
-      apiBase: ((window.__BOOT__ || {}).origin || '') + '/api/market-data',
-      version: (window.__BOOT__ || {}).version || '',
-      serial: (window.__BOOT__ || {}).serial || ''
-    };
-  </script>
+  <!-- Shared help and activity-panel bridges remain local/offline assets. -->
   <script src="/app/js/shared_help_overlay.js?v=7"></script>
-  <script src="/app/pbgui_nav.js"></script>
   <script src="/app/js/log_viewer_panel.js?v=30"></script>
   <script type="module" src="./main.ts"></script>
 </body>

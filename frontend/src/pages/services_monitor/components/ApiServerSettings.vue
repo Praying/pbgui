@@ -14,9 +14,11 @@
  * placeholder stays visible (load failures are silent).
  */
 import { onUnmounted, ref } from 'vue';
+import { PhEye, PhFloppyDisk } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiBase } from '../config';
 import type { AlertRoutingId, ApiServerSettingsData, PbDataSaveResponse } from '../types';
 import MultiselectTags from './MultiselectTags.vue';
@@ -227,9 +229,10 @@ defineExpose({ load });
               class="pw-eye"
               type="button"
               :title="t('sysmon.showHide')"
+              :aria-label="t('sysmon.showHide')"
               :style="tokenVisible ? 'color: #93c5fd' : undefined"
               @click="toggleTokenVisibility"
-            >&#128065;</button>
+            ><PbIcon :icon="PhEye" /></button>
           </div>
         </div>
         <div class="form-field">
@@ -245,7 +248,7 @@ defineExpose({ load });
       </div>
       <AlertRouting v-model:routing="routing" />
       <div class="save-row">
-        <button class="form-btn save" type="button" @click="save">&#128190; {{ t('common.save') }}</button>
+        <button class="form-btn save" type="button" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</button>
         <span
           class="inline-msg"
           id="apiserver-save-msg"

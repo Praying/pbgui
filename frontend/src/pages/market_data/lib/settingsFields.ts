@@ -32,6 +32,8 @@ export interface SettingsFieldValues {
   awsProfile: string;
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
+  awsAccessKeyConfigured: boolean;
+  awsSecretAccessKeyConfigured: boolean;
   awsRegion: string;
   scanTimeout: string;
   scanWorkers: string;
@@ -64,6 +66,8 @@ export function createSettingsFieldValues(): SettingsFieldValues {
     awsProfile: '',
     awsAccessKeyId: '',
     awsSecretAccessKey: '',
+    awsAccessKeyConfigured: false,
+    awsSecretAccessKeyConfigured: false,
     awsRegion: '',
     scanTimeout: '',
     scanWorkers: '',

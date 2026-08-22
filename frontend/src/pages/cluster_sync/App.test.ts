@@ -52,6 +52,9 @@ describe('Cluster Sync Vue page', () => {
   it('loads status, node membership, desired state and safe data-bound tables', async () => {
     const wrapper = mountApp();
     await flushPromises();
+    expect(wrapper.find('.app-shell').exists()).toBe(true);
+    expect(wrapper.get('[role="status"]').text()).toContain('OK');
+    expect(wrapper.get('.workspace-header__actions button').find('svg').exists()).toBe(true);
     expect(wrapper.get('[data-section="overview"]').text()).toContain('cluster-1');
     await wrapper.get('[data-section-tab="nodes"]').trigger('click');
     expect(wrapper.text()).toContain('node-remote');

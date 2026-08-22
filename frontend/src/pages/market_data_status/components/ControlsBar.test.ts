@@ -86,6 +86,9 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
     expect(refresh.classes()).toContain('primary');
     expect(cancel.classes()).toContain('danger');
     expect(stop.classes()).toContain('danger');
+    expect(refresh.find('svg').exists()).toBe(true);
+    expect(cancel.find('svg').exists()).toBe(true);
+    expect(stop.find('svg').exists()).toBe(true);
   });
 
   it('localizes labels in zh', () => {

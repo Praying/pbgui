@@ -37,8 +37,12 @@
  *  - No polling existed in legacy (verified) — none ported.
  */
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { PhArchive, PhClipboardText, PhPlus } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import AlertModal from './components/AlertModal.vue';
 import BackupsPanel from './components/BackupsPanel.vue';
 import BybitExpiryPanel from './components/BybitExpiryPanel.vue';
@@ -200,6 +204,20 @@ function onPageHide(): void {
   tradfiStore.clearRevealedApiKey();
 }
 
+let removeUnauthorizedListener: (() => void) | null = null;
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onDocumentKeydown);
+  document.removeEventListener('mousemove', onResizeMove);
+  document.removeEventListener('mouseup', onResizeUp);
+  window.removeEventListener('pagehide', onPageHide);
+  removeUnauthorizedListener?.();
+  removeUnauthorizedListener = null;
+  editRef.value?.clearSecretInputs();
+  tradfiStore.clearRevealedApiKey();
+  delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
+});
+
 /* ── init (:1160-1213) ── */
 
 onMounted(async () => {
@@ -209,16 +227,9 @@ onMounted(async () => {
   document.addEventListener('mousemove', onResizeMove);
   document.addEventListener('mouseup', onResizeUp);
   window.addEventListener('pagehide', onPageHide);
-  const offUnauthorized = onUnauthorized(() => {
+  removeUnauthorizedListener = onUnauthorized(() => {
     tradfiStore.clearRevealedApiKey();
     editRef.value?.clearRevealedApiKey();
-  });
-  onBeforeUnmount(() => {
-    document.removeEventListener('keydown', onDocumentKeydown);
-    document.removeEventListener('mousemove', onResizeMove);
-    document.removeEventListener('mouseup', onResizeUp);
-    window.removeEventListener('pagehide', onPageHide);
-    offUnauthorized();
   });
 
   await store.loadExchanges();
@@ -250,9 +261,19 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <AppShell
+    class="data-page-shell data-page-shell--api-keys"
+    page-key="system_api_keys"
+    :page-title="t('misc.apikeys.title')"
+  >
     <MigrationWatermark />
-    <nav id="topnav"></nav>
+    <template #status>
+      <StatusStrip
+        :label="t('shared.status')"
+        :value="store.usersState.value === 'loading' ? t('common.loading') : store.usersState.value === 'error' ? t('common.error') : t('common.ok')"
+        :tone="store.usersState.value === 'loading' ? 'warning' : store.usersState.value === 'error' ? 'danger' : 'success'"
+      />
+    </template>
 
     <div id="page-body">
       <!-- Sidebar -->
@@ -268,7 +289,7 @@ onMounted(async () => {
             </span>
           </div>
           <div id="sidebar-toolbar">
-            <button class="sb-btn primary" @click="showCreateForm">+ {{ t('misc.apikeys.addUser') }}</button>
+            <button class="sb-btn primary" @click="showCreateForm"><PbIcon :icon="PhPlus" /> {{ t('misc.apikeys.addUser') }}</button>
             <hr class="sb-sep" />
             <button class="sb-btn info" id="btnHLExpiry" :disabled="hlChecking" @click="refreshHLExpiry">
               <span v-if="hlChecking" class="spinner"></span>{{ t('misc.apikeys.hlExpiryCheck') }}
@@ -287,10 +308,10 @@ onMounted(async () => {
               {{ t('misc.apikeys.comments') }}
             </button>
             <button class="sb-btn" id="btnBackups" :class="{ active: view === 'backups' }" @click="view === 'backups' ? backToList() : setPanelView('backups', '#backups')">
-              &#x1F5C4; {{ t('misc.apikeys.backups') }}
+              <PbIcon :icon="PhArchive" /> {{ t('misc.apikeys.backups') }}
             </button>
             <button class="sb-btn" id="btnLogs" :class="{ active: view === 'logs' }" @click="view === 'logs' ? backToList() : setPanelView('logs', null)">
-              &#128203; {{ t('misc.apikeys.logs') }}
+              <PbIcon :icon="PhClipboardText" /> {{ t('misc.apikeys.logs') }}
             </button>
           </div>
         </div>
@@ -334,5 +355,5 @@ onMounted(async () => {
     </div>
 
     <AlertModal />
-  </div>
+  </AppShell>
 </template>

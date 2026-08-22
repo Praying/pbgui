@@ -18,10 +18,32 @@
  * routers serve this one build; v8 drops the legacy panel.
  */
 import { computed, onMounted, ref } from 'vue';
+import {
+  PhArchive,
+  PhArrowsClockwise,
+  PhChartBar,
+  PhChartLineUp,
+  PhCheck,
+  PhClipboardText,
+  PhCompassTool,
+  PhDownloadSimple,
+  PhFloppyDisk,
+  PhGear,
+  PhHouse,
+  PhPlay,
+  PhPlus,
+  PhQuestion,
+  PhTrash,
+  PhUploadSimple,
+  PhWallet,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import { replaceTopLocation } from '@/shared/nav';
+import AppShell from '@/shared/components/AppShell.vue';
+import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import ArchiveGitModals from './components/ArchiveGitModals.vue';
 import ArchiveLogPanel from './components/ArchiveLogPanel.vue';
 import ArchivePanel from './components/ArchivePanel.vue';
@@ -39,6 +61,14 @@ import { useBacktestPage } from './composables/useBacktestPage';
 const { t } = useI18n();
 const boot = getBoot();
 
+function cleanLabel(label: string): string {
+  return label.replace(/^[^\p{L}\p{N}]+/u, '');
+}
+
+function actionLabel(key: string): string {
+  return cleanLabel(t(key));
+}
+
 const store = useBacktestPage({
   origin: boot.origin,
   t: (key, params) => t(key, params ?? {}),
@@ -48,6 +78,13 @@ const store = useBacktestPage({
   // showArchiveLog (:9633-9639): push/compact/openLog open the sync log.
   openArchiveSyncLog: () => archiveLogPanel.value?.open(),
 });
+
+function openBacktestHelp(): void {
+  const sharedHelp = (window as Window & {
+    PBGuiSharedHelp?: { open?: (topic: string, options?: { token?: string }) => void };
+  }).PBGuiSharedHelp;
+  sharedHelp?.open?.(store.adapter.isV8 ? '42_pbv8_backtest' : '35_pbv7_backtest', { token: boot.token });
+}
 
 const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
 const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
@@ -271,11 +308,26 @@ onMounted(() => {
 
 <template>
   <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="core-workbench-shell core-workbench-shell--backtest"
+    :page-key="store.adapter.navCurrent"
+    :page-title="t(store.adapter.titleKey, store.adapter.titleParams)"
+    :page-family="store.adapter.label"
+    :status-text="bannerText"
+    :status-tone="bannerClass === 'conn-ok' ? 'success' : bannerClass === 'conn-lost' ? 'danger' : 'warning'"
+  >
+    <template #header-actions>
+      <IconButton
+        class="pbgui-icon-button"
+        :icon="PhQuestion"
+        :label="t('nav.guide')"
+        @click="openBacktestHelp"
+      />
+    </template>
 
-  <div id="conn-banner" :class="bannerClass" data-i18n="v7backtest.connecting">{{ bannerText }}</div>
+    <div id="conn-banner" :class="bannerClass" data-i18n="v7backtest.connecting">{{ bannerText }}</div>
 
-  <div id="page-body">
+    <div id="page-body">
     <PanelShell
       :items="store.nav"
       :active="store.view.state.panel"
@@ -283,9 +335,10 @@ onMounted(() => {
       @select="store.selectPanel"
     >
       <template #ctx-configs>
-        <button type="button" class="sb-btn accent" data-test="ctx-new-config" @click="store.editor.newConfig()">{{ t('v7backtest.newConfig') }}</button>
+        <button type="button" class="sb-btn accent" data-test="ctx-new-config" @click="store.editor.newConfig()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7backtest.newConfig') }}</button>
         <button type="button" class="sb-btn danger" data-test="ctx-delete-configs" @click="configsPanel?.deleteSelectedFlow(store.deleteConfigs)">
-          {{ t('v7backtest.deleteSelected') }}
+          <PbIcon :icon="PhTrash" />
+          {{ actionLabel('v7backtest.deleteSelected') }}
         </button>
       </template>
       <template #ctx-queue>
@@ -295,12 +348,14 @@ onMounted(() => {
           data-test="queue-compare"
           @click="store.compareQueue(queuePanel?.selectedFilenames() ?? [], store.queueItems.value)"
         >
-          {{ t('v7backtest.compare') }}
+          <PbIcon :icon="PhChartLineUp" />
+          {{ actionLabel('v7backtest.compare') }}
         </button>
-        <button type="button" class="sb-btn" data-test="clear-finished" @click="store.clearFinished">{{ t('v7backtest.clearFinished') }}</button>
+        <button type="button" class="sb-btn" data-test="clear-finished" @click="store.clearFinished"><PbIcon :icon="PhCheck" /> {{ actionLabel('v7backtest.clearFinished') }}</button>
         <button type="button" class="sb-btn danger" data-test="stop-all" @click="store.stopAllQueue">{{ t('v7backtest.stopAll') }}</button>
         <button type="button" class="sb-btn danger" data-test="delete-selected" @click="queuePanel?.deleteSelected()">
-          {{ t('v7backtest.deleteSelected') }}
+          <PbIcon :icon="PhTrash" />
+          {{ actionLabel('v7backtest.deleteSelected') }}
         </button>
         <hr class="sb-sep" />
         <button type="button" class="sb-btn" data-test="open-settings" @click="store.openSettingsModal">{{ t('v7backtest.settings') }}</button>
@@ -316,33 +371,35 @@ onMounted(() => {
           :title="store.results.versionFilter.value !== store.adapter.version ? t('v7backtest.actionVersionBound', { version: store.adapter.version.toUpperCase() }) : ''"
           @click="store.startResultsRebacktest"
         >
-          {{ t('v7backtest.backtest') }}
+          <PbIcon :icon="PhArrowsClockwise" />
+          {{ actionLabel('v7backtest.backtest') }}
         </button>
         <button type="button" class="sb-btn" data-test="results-add-run" :disabled="store.results.getSelected().length !== 1" @click="store.addResultsToRun">
-          {{ t('v7backtest.addToRun') }}
+          <PbIcon :icon="PhPlay" />
+          {{ actionLabel('v7backtest.addToRun') }}
         </button>
-        <button type="button" class="sb-btn" data-test="results-compare" @click="store.compareResults">{{ t('v7backtest.compare') }}</button>
-        <button type="button" class="sb-btn danger" data-test="results-delete" @click="resultsPanel?.deleteSelectedFlow()">{{ t('v7backtest.deleteSelected') }}</button>
+        <button type="button" class="sb-btn" data-test="results-compare" @click="store.compareResults"><PbIcon :icon="PhChartLineUp" /> {{ actionLabel('v7backtest.compare') }}</button>
+        <button type="button" class="sb-btn danger" data-test="results-delete" @click="resultsPanel?.deleteSelectedFlow()"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7backtest.deleteSelected') }}</button>
       </template>
       <template #ctx-archive>
         <!-- list-view actions (:747-753) -->
         <template v-if="!store.archive.selectedName.value">
           <button type="button" class="sb-btn" data-test="archive-pull-all" :disabled="store.archiveGit.pullRunning.value" @click="store.archiveGit.pullAll()">
-            {{ store.archiveGit.pullButtonLabel.value }}
+            <PbIcon :icon="PhDownloadSimple" /> {{ cleanLabel(store.archiveGit.pullButtonLabel.value) }}
           </button>
-          <button type="button" class="sb-btn" data-test="archive-push" @click="store.archiveGit.push()">{{ t('v7backtest.gitPush') }}</button>
-          <button type="button" class="sb-btn accent" data-test="archive-add" @click="archivePanel?.openAddArchive()">{{ t('v7backtest.addArchive') }}</button>
-          <button type="button" class="sb-btn" data-test="archive-setup" @click="store.archiveGit.openSetup()">{{ t('v7backtest.setup') }}</button>
-          <button type="button" class="sb-btn" data-test="archive-log" @click="archiveLogPanel?.open()">{{ t('v7backtest.log') }}</button>
+          <button type="button" class="sb-btn" data-test="archive-push" @click="store.archiveGit.push()"><PbIcon :icon="PhUploadSimple" /> {{ actionLabel('v7backtest.gitPush') }}</button>
+          <button type="button" class="sb-btn accent" data-test="archive-add" @click="archivePanel?.openAddArchive()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7backtest.addArchive') }}</button>
+          <button type="button" class="sb-btn" data-test="archive-setup" @click="store.archiveGit.openSetup()"><PbIcon :icon="PhGear" /> {{ actionLabel('v7backtest.setup') }}</button>
+          <button type="button" class="sb-btn" data-test="archive-log" @click="archiveLogPanel?.open()"><PbIcon :icon="PhClipboardText" /> {{ actionLabel('v7backtest.log') }}</button>
         </template>
         <!-- results-view actions (:754-771), visibility per updateArchiveActionVisibility (:8969-8997) -->
         <template v-else>
-          <button type="button" class="sb-btn" data-test="archive-back" @click="store.archive.closeArchive()">{{ t('v7backtest.archives') }}</button>
-          <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-rebacktest" @click="store.archive.startRebacktest()">{{ t('v7backtest.backtest') }}</button>
+          <button type="button" class="sb-btn" data-test="archive-back" @click="store.archive.closeArchive()"><PbIcon :icon="PhArchive" /> {{ actionLabel('v7backtest.archives') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-rebacktest" @click="store.archive.startRebacktest()"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7backtest.backtest') }}</button>
           <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn" data-test="archive-rename" @click="archivePanel?.openRename()">{{ t('v7backtest.renameConfig') }}</button>
           <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn" data-test="archive-retest" @click="store.archive.startRetestReplace()">{{ t('v7backtest.retestReplace') }}</button>
           <!-- Add to Run (:759) + Balance Calculator (:761) land in M-v7-12 -->
-          <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-compare" @click="store.archive.compareSelected()">{{ t('v7backtest.compare') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-compare" @click="store.archive.compareSelected()"><PbIcon :icon="PhChartLineUp" /> {{ actionLabel('v7backtest.compare') }}</button>
           <button v-if="store.archive.mode.value === 'backtests'" type="button" class="sb-btn" data-test="archive-score-preview" @click="store.archive.previewScores()">{{ t('v7backtest.scorePreview') }}</button>
           <template v-if="store.archive.mode.value === 'optimize'">
             <button type="button" class="sb-btn" data-test="archive-opt-view" @click="archivePanel?.openViewOptimize()">{{ t('v7backtest.viewConfig') }}</button>
@@ -354,15 +411,15 @@ onMounted(() => {
           <button v-if="store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-compact" @click="store.archiveGit.compactHistory()">{{ t('v7backtest.compactHistory') }}</button>
           <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-remove-duplicates" @click="archivePanel?.openCleanup('duplicates')">{{ t('v7backtest.removeDuplicates') }}</button>
           <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-remove-liquidated" @click="archivePanel?.openCleanup('liquidated')">{{ t('v7backtest.removeLiquidated') }}</button>
-          <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-delete" @click="archivePanel?.openDeleteResults()">{{ t('v7backtest.deleteSelected') }}</button>
+          <button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" class="sb-btn danger" data-test="archive-delete" @click="archivePanel?.openDeleteResults()"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7backtest.deleteSelected') }}</button>
         </template>
       </template>
       <template v-if="!store.adapter.isV8" #ctx-legacy>
         <!-- legacy actions (:772-778); Add to Run lands in M-v7-12 -->
-        <button type="button" class="sb-btn" data-test="legacy-refresh" @click="store.legacy?.loadLegacyResults()">↻ {{ t('v7backtest.refresh') }}</button>
-        <button type="button" class="sb-btn" data-test="legacy-rebacktest" @click="store.legacy?.startRebacktest(store.editor.openEditor, () => store.selectPanel('configs'))">{{ t('v7backtest.backtest') }}</button>
-        <button type="button" class="sb-btn" data-test="legacy-compare" @click="store.legacy?.compareSelected()">{{ t('v7backtest.compare') }}</button>
-        <button type="button" class="sb-btn danger" data-test="legacy-delete" @click="legacyPanel?.openDelete()">{{ t('v7backtest.deleteSelected') }}</button>
+        <button type="button" class="sb-btn" data-test="legacy-refresh" @click="store.legacy?.loadLegacyResults()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('v7backtest.refresh') }}</button>
+        <button type="button" class="sb-btn" data-test="legacy-rebacktest" @click="store.legacy?.startRebacktest(store.editor.openEditor, () => store.selectPanel('configs'))"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7backtest.backtest') }}</button>
+        <button type="button" class="sb-btn" data-test="legacy-compare" @click="store.legacy?.compareSelected()"><PbIcon :icon="PhChartLineUp" /> {{ actionLabel('v7backtest.compare') }}</button>
+        <button type="button" class="sb-btn danger" data-test="legacy-delete" @click="legacyPanel?.openDelete()"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7backtest.deleteSelected') }}</button>
       </template>
 
       <!-- Editor sidebar (:782-804, setEditorMode :211-222) — handoff buttons land in M-v7-12 -->
@@ -372,32 +429,32 @@ onMounted(() => {
           <div class="sidebar-toolbar">
             <div class="editor-nav-group" data-test="editor-nav-group">
               <div class="editor-action-label">{{ t('v7backtest.editorNavigation') }}</div>
-              <button type="button" class="sb-btn" data-test="editor-home" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()">{{ t('v7backtest.home') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-import" @click="openImport">{{ t('v7backtest.import') }}</button>
+              <button type="button" class="sb-btn" data-test="editor-home" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()"><PbIcon :icon="PhHouse" /> {{ actionLabel('v7backtest.home') }}</button>
+              <button type="button" class="sb-btn" data-test="editor-import" @click="openImport"><PbIcon :icon="PhDownloadSimple" /> {{ actionLabel('v7backtest.import') }}</button>
             </div>
             <div class="editor-analysis-group" data-test="editor-analysis-group">
               <div class="editor-action-label">{{ t('v7backtest.editorAnalysis') }}</div>
-              <button type="button" class="sb-btn" data-test="editor-results" :disabled="!editorHasSavedConfig" @click="editorResults">📊 {{ t('v7backtest.results') }}</button>
+              <button type="button" class="sb-btn" data-test="editor-results" :disabled="!editorHasSavedConfig" @click="editorResults"><PbIcon :icon="PhChartBar" /> {{ actionLabel('v7backtest.results') }}</button>
               <button type="button" class="sb-btn" data-test="editor-strategy-explorer" @click="openStrategyExplorer">{{ t('v7backtest.strategyExplorer') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-balance-calc" @click="openBalanceCalculator">{{ t('v7backtest.balanceCalculator') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-ohlcv" @click="openOhlcvReadiness">{{ t('v7backtest.ohlcvReadiness') }}</button>
+              <button type="button" class="sb-btn" data-test="editor-balance-calc" @click="openBalanceCalculator"><PbIcon :icon="PhWallet" /> {{ actionLabel('v7backtest.balanceCalculator') }}</button>
+              <button type="button" class="sb-btn" data-test="editor-ohlcv" @click="openOhlcvReadiness"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7backtest.ohlcvReadiness') }}</button>
             </div>
             <div class="editor-config-group" data-test="editor-config-group">
               <div class="editor-action-label">{{ t('v7backtest.editorConfigActions') }}</div>
               <button v-if="!store.adapter.isV8" type="button" class="sb-btn" data-test="editor-convert-v8" :disabled="!editorHasSavedConfig" @click="convertEditorToV8">{{ t('v7backtest.convertToV8') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-add-run" :disabled="!editorHasSavedConfig" @click="addEditorToRun">{{ t('v7backtest.addToRun') }}</button>
+              <button type="button" class="sb-btn" data-test="editor-add-run" :disabled="!editorHasSavedConfig" @click="addEditorToRun"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.addToRun') }}</button>
             </div>
             <div class="editor-save-group" data-test="editor-save-group">
               <div class="editor-action-label">{{ t('v7backtest.editorSaveActions') }}</div>
-              <button type="button" class="sb-btn primary" data-test="editor-save" :title="t('v7backtest.saveConfig')" @click="store.editor.save()">{{ t('v7backtest.save') }}</button>
-              <button type="button" class="sb-btn info" data-test="editor-save-queue" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()">{{ t('v7backtest.saveQueue') }}</button>
+              <button type="button" class="sb-btn primary" data-test="editor-save" :title="t('v7backtest.saveConfig')" @click="store.editor.save()"><PbIcon :icon="PhFloppyDisk" /> {{ actionLabel('v7backtest.save') }}</button>
+              <button type="button" class="sb-btn info" data-test="editor-save-queue" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.saveQueue') }}</button>
             </div>
           </div>
         </div>
       </template>
     </PanelShell>
 
-    <div id="main-content">
+    <div class="workbench-page-content">
       <!-- CONFIGS panel (:812-821) -->
       <div id="panel-configs" class="view-panel" :class="{ active: store.view.state.panel === 'configs' }">
         <ConfigsPanel
@@ -489,8 +546,9 @@ onMounted(() => {
         :legacy="store.legacy!"
         :active="store.view.state.panel === 'legacy'"
       />
+      </div>
     </div>
-  </div>
+  </AppShell>
 
   <div id="toast">
     <div v-for="item in store.toasts.value" :key="item.id" class="toast-msg" :class="'toast-' + item.kind">{{ item.msg }}</div>

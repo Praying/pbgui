@@ -19,6 +19,11 @@
  * │ useModalViewport         │ viewport metrics :546-621                   │
  * └──────────────────────────┴─────────────────────────────────────────────┘
  *
+ * Shell boundary (intentional): AppShell and StatusStrip are not rendered
+ * here because this page is also mounted as the market-data iframe's inner
+ * chrome. Adding the rail would change the embedded document's dimensions
+ * and duplicate the parent page's navigation.
+ *
  * NOT PORTED (documented):
  *  - The __HLDA_ROOT__/__HLDA__ prefix machinery (:473-507 +
  *    api/market_data.py _render_hl_data_actions_html) — the Vue build is a

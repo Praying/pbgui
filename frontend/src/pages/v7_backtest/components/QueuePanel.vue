@@ -7,8 +7,10 @@
  * (tickRowSelectAutoScroll :5642) lands with M-v7-10's shared row-
  * selection surface.
  */
+import { PhChartBar, PhFileText, PhPlay, PhStop, PhTrash } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import type { QueueItem } from '../types';
 
 const props = defineProps<{ items: QueueItem[]; active?: boolean }>();
@@ -214,38 +216,45 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
                 type="button"
                 class="act-btn"
                 :title="t('v7backtest.restart')"
+                :aria-label="t('v7backtest.restart')"
                 style="border-color: #f59e0b; color: #f59e0b"
                 @click.stop="emit('restart', item.filename)"
-              >▶</button>
+              ><PbIcon :icon="PhPlay" :size="18" /></button>
               <button
                 v-if="item.status === 'queued'"
                 type="button"
                 class="act-btn"
                 :title="t('v7backtest.start')"
+                :aria-label="t('v7backtest.start')"
                 @click.stop="emit('start', item.filename)"
-              >▶</button>
+              ><PbIcon :icon="PhPlay" :size="18" /></button>
               <button
                 v-if="item.status === 'running' || item.status === 'backtesting'"
                 type="button"
                 class="act-btn act-btn-danger"
                 :title="t('v7backtest.stop')"
+                :aria-label="t('v7backtest.stop')"
                 @click.stop="emit('stop', item.filename)"
-              >⬛</button>
+              ><PbIcon :icon="PhStop" :size="18" /></button>
               <button
                 v-if="item.status === 'complete'"
                 type="button"
                 class="act-btn"
                 :title="t('v7backtest.viewResults')"
+                :aria-label="t('v7backtest.viewResults')"
                 style="border-color: var(--green); color: var(--green)"
                 @click.stop="emit('viewResults', item.name ?? '')"
-              >📊</button>
-              <button type="button" class="act-btn" :title="t('v7backtest.logAction')" @click.stop="emit('showLog', item.filename)">📄</button>
+              ><PbIcon :icon="PhChartBar" :size="18" /></button>
+              <button type="button" class="act-btn" :title="t('v7backtest.logAction')" :aria-label="t('v7backtest.logAction')" @click.stop="emit('showLog', item.filename)">
+                <PbIcon :icon="PhFileText" :size="18" />
+              </button>
               <button
                 type="button"
                 class="act-btn act-btn-danger"
                 :title="t('v7backtest.remove')"
+                :aria-label="t('v7backtest.remove')"
                 @click.stop="emit('remove', item.filename)"
-              >🗑</button>
+              ><PbIcon :icon="PhTrash" :size="18" /></button>
             </td>
           </tr>
         </tbody>

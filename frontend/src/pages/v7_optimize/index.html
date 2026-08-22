@@ -13,20 +13,6 @@
 </head>
 <body>
   <div id="app"></div>
-  <script>
-    (function () {
-      var isV8 = /\/api\/optimize-v8(\/|$)/.test(window.location.pathname);
-      var boot = window.__BOOT__ || {};
-      window.PBGUI_NAV_CONFIG = {
-        subtitle: window.PBGuiI18n ? window.PBGuiI18n.t('v7optimize.navSubtitle', { version: isV8 ? '8' : '7' }) : (isV8 ? 'PBv8' : 'PBv7') + ' OPTIMIZE',
-        current: isV8 ? 'v8_optimize' : 'v7_optimize',
-        apiBase: (boot.origin || '') + (isV8 ? '/api/optimize-v8' : '/api/optimize-v7'),
-        version: boot.version || '',
-        serial: boot.serial || ''
-      };
-    })();
-  </script>
-  <script src="/app/pbgui_nav.js"></script>
   <script type="module" src="./main.ts"></script>
 </body>
 </html>

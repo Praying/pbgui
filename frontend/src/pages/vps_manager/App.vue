@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { PhArrowClockwise, PhFile, PhFolder, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import AppShell from '@/shared/components/AppShell.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { managerApiBase, managerWsUrl } from './config';
 
 const { t } = useI18n();
@@ -514,7 +518,25 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
 </script>
 
 <template>
-  <main class="vps-manager">
+  <AppShell
+    class="operations-shell operations-shell--vps-manager"
+    page-key="system_vps_manager_fastapi"
+    :page-title="t('vpsmgr.vpsManager')"
+    :page-description="t('vpsmgr.vueSubtitle')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('vpsmgr.status')"
+        :value="connectionLabel()"
+        :tone="connection === 'connected' ? 'success' : connection === 'lost' ? 'danger' : 'warning'"
+      />
+    </template>
+
+    <template #header-actions>
+      <button data-action="refresh" class="manager-btn primary" @click="refresh"><PbIcon :icon="PhArrowClockwise" /> {{ t('vpsmgr.refresh') }}</button>
+    </template>
+
+  <div class="vps-manager">
     <div class="manager-layout">
       <aside class="manager-sidebar">
         <div class="manager-sidebar-title">{{ t('vpsmgr.vpsManager') }}</div>
@@ -544,10 +566,6 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
       </aside>
 
       <section class="manager-main">
-        <header class="manager-hero">
-          <div><h1>{{ t('vpsmgr.vpsManager') }}</h1><div class="manager-subtitle">{{ t('vpsmgr.vueSubtitle') }}</div></div>
-          <div class="manager-actions"><span class="manager-pill" :class="statusClass(connection)">{{ connectionLabel() }}</span><button data-action="refresh" class="manager-btn primary" @click="refresh">{{ t('vpsmgr.refresh') }}</button></div>
-        </header>
         <div v-if="notice" class="manager-status visible" :class="notice.kind">{{ notice.text }}</div>
 
         <section v-if="view === 'overview'" class="manager-grid">
@@ -580,7 +598,7 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
 
     <div v-if="modal" class="manager-modal" :data-modal="modal" role="dialog" aria-modal="true" @click.stop>
       <div class="manager-modal-card">
-        <div class="manager-modal-head"><h2>{{ modalTitle }}</h2><button :data-close="modal || 'modal'" class="manager-btn" @click="closeModal">{{ t('vpsmgr.close') }}</button></div>
+        <div class="manager-modal-head"><h2>{{ modalTitle }}</h2><button :data-close="modal || 'modal'" class="manager-btn" @click="closeModal"><PbIcon :icon="PhX" /> {{ t('vpsmgr.close') }}</button></div>
         <template v-if="modal === 'confirm'"><p>{{ display(modalData.message) }}</p><div class="manager-modal-actions"><button class="manager-btn" @click="closeModal">{{ t('vpsmgr.cancel') }}</button><button class="manager-btn danger" @click="acceptConfirm">{{ t('vpsmgr.confirm') }}</button></div></template>
         <template v-else-if="modal === 'password' || modal === 'deploy-password'"><label>{{ t('vpsmgr.password') }}<input class="manager-input" data-field="deploy-password" type="password" v-model="modalData.password"></label><div class="manager-modal-actions"><button class="manager-btn" @click="closeModal">{{ t('vpsmgr.cancel') }}</button><div data-action="stage-deploy-host" @click="executePasswordModal"><button data-action="password-confirm" class="manager-btn primary" @click.stop="executePasswordModal">{{ t('vpsmgr.confirm') }}</button></div></div></template>
         <template v-else-if="modal === 'host-key'"><p>{{ display(modalData.error || t('vpsmgr.unknownSshHostKey')) }}</p><pre class="manager-json">{{ jsonText({ status: modalData.status, key_type: modalData.key_type, fingerprint: modalData.fingerprint, ssh_host: modalData.ssh_host, ip: modalData.ip }) }}</pre><div class="manager-modal-actions"><button data-action="trust-host-key" class="manager-btn primary" @click="trustHostKey">{{ t('vpsmgr.trustKeyReconnect') }}</button></div></template>
@@ -592,8 +610,9 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
         <template v-else-if="modal === 'history'"><pre class="manager-json">{{ jsonText(metric.data || modalData.data || {}) }}</pre></template>
         <template v-else-if="modal === 'bot-log'"><pre class="manager-log">{{ (botLog.lines || []).join('\n') }}</pre></template>
         <template v-else-if="modal === 'systemd'"><pre class="manager-json">{{ jsonText(modalData.data || {}) }}</pre><div class="manager-modal-actions"><button class="manager-btn primary" @click="closeModal(); setModal('confirm', { title: t('vpsmgr.systemdMigration'), message: t('vpsmgr.applyChanges'), action: 'systemd' })">{{ t('vpsmgr.applyChanges') }}</button></div></template>
-        <template v-else-if="modal === 'files'"><div v-if="modalData.columns" class="manager-form"><label v-for="(_, key) in visibleColumns" :key="key" class="manager-check"><input type="checkbox" :checked="visibleColumns[key]" @change="toggleColumn(String(key))"> {{ key }}</label></div><div v-else class="manager-file-list"><button v-if="modalData.data?.parent" class="manager-btn" @click="browsePath(modalData.data.parent)">..</button><button v-for="entry in modalData.data?.entries || []" :key="entry.name" class="manager-btn manager-file-row" @click="selectBrowsedPath(`${modalData.data.cwd}/${entry.name}`, entry.type)">{{ entry.type === 'dir' ? '📁' : '📄' }} {{ entry.name }}</button></div></template>
+        <template v-else-if="modal === 'files'"><div v-if="modalData.columns" class="manager-form"><label v-for="(_, key) in visibleColumns" :key="key" class="manager-check"><input type="checkbox" :checked="visibleColumns[key]" @change="toggleColumn(String(key))"> {{ key }}</label></div><div v-else class="manager-file-list"><button v-if="modalData.data?.parent" class="manager-btn" @click="browsePath(modalData.data.parent)">..</button><button v-for="entry in modalData.data?.entries || []" :key="entry.name" class="manager-btn manager-file-row" @click="selectBrowsedPath(`${modalData.data.cwd}/${entry.name}`, entry.type)"><PbIcon :icon="entry.type === 'dir' ? PhFolder : PhFile" /> {{ entry.name }}</button></div></template>
       </div>
     </div>
-  </main>
+  </div>
+  </AppShell>
 </template>

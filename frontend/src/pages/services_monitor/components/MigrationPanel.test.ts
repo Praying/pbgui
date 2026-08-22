@@ -39,7 +39,8 @@ describe('MigrationPanel ctrl strip (legacy migration panel markup)', () => {
     expect(wrapper.find('.ctrl-title').text()).toBe('Migration');
     expect(wrapper.find('.status-dot').classes()).toContain('warn');
     expect(wrapper.find('.status-label').text()).toBe('Needed');
-    expect(wrapper.find('button.ctrl-btn').text()).toBe('↻ Refresh');
+    expect(wrapper.find('button.ctrl-btn').text()).toBe('Refresh');
+    expect(wrapper.find('button.ctrl-btn svg').exists()).toBe(true);
   });
 
   it('shows the ready dot/label when nothing needs migration', () => {

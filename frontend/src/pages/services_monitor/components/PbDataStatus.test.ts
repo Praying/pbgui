@@ -319,11 +319,12 @@ describe('PbDataStatus poller metrics rendering (legacy renderPollerMetrics)', (
 
     const pm = wrapper.find('#pbdata-poller-metrics-wrap');
     const btn = pm.find('#pm-toggle-btn');
-    expect(btn.text()).toBe('▼ Hide');
+    expect(btn.text()).toBe('Hide');
+    expect(btn.find('svg').exists()).toBe(true);
 
     await btn.trigger('click');
     expect(pm.find('#pm-body').attributes('style')).toContain('display: none');
-    expect(pm.find('#pm-toggle-btn').text()).toBe('▶ Show');
+    expect(pm.find('#pm-toggle-btn').text()).toBe('Show');
 
     await pm.find('#pm-toggle-btn').trigger('click');
     expect(pm.find('#pm-body').attributes('style')).not.toContain('display: none');

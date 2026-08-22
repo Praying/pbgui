@@ -5,7 +5,9 @@
  * (window.togglePwVisible :5575-5585 → local reactive state).
  */
 import { ref } from 'vue';
+import { PhEye, PhEyeSlash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { SETTINGS_FIELD_IDS, type SettingsFieldValues } from '../../lib/settingsFields';
 
 defineProps<{
@@ -14,10 +16,6 @@ defineProps<{
 
 const { t } = useI18n();
 const IDS = SETTINGS_FIELD_IDS;
-
-/** Legacy togglePwVisible glyphs (:5580, :5583). */
-const EYE_OPEN = '👁'; // 👁
-const EYE_CLOSED = '🙈'; // 🙈
 
 const accessKeyVisible = ref(false);
 const secretKeyVisible = ref(false);
@@ -38,10 +36,12 @@ const secretKeyVisible = ref(false);
           <button
             type="button"
             class="pw-eye-btn"
-            tabindex="-1"
+            :aria-label="t(accessKeyVisible ? 'market.hideAwsAccessKey' : 'market.showAwsAccessKey')"
+            :title="t(accessKeyVisible ? 'market.hideAwsAccessKey' : 'market.showAwsAccessKey')"
             @click="accessKeyVisible = !accessKeyVisible"
-          >{{ accessKeyVisible ? EYE_CLOSED : EYE_OPEN }}</button>
+          ><PbIcon :icon="accessKeyVisible ? PhEyeSlash : PhEye" /></button>
         </div>
+        <span class="aws-credential-status">{{ t(fields.awsAccessKeyConfigured ? 'market.awsCredentialConfigured' : 'market.awsCredentialNotConfigured') }}</span>
       </label>
       <label class="settings-field">
         <span class="field-label">aws_secret_access_key</span>
@@ -50,10 +50,12 @@ const secretKeyVisible = ref(false);
           <button
             type="button"
             class="pw-eye-btn"
-            tabindex="-1"
+            :aria-label="t(secretKeyVisible ? 'market.hideAwsSecretKey' : 'market.showAwsSecretKey')"
+            :title="t(secretKeyVisible ? 'market.hideAwsSecretKey' : 'market.showAwsSecretKey')"
             @click="secretKeyVisible = !secretKeyVisible"
-          >{{ secretKeyVisible ? EYE_CLOSED : EYE_OPEN }}</button>
+          ><PbIcon :icon="secretKeyVisible ? PhEyeSlash : PhEye" /></button>
         </div>
+        <span class="aws-credential-status">{{ t(fields.awsSecretAccessKeyConfigured ? 'market.awsCredentialConfigured' : 'market.awsCredentialNotConfigured') }}</span>
       </label>
       <label class="settings-field">
         <span class="field-label">{{ t('market.awsRegion') }}</span>
@@ -70,3 +72,10 @@ const secretKeyVisible = ref(false);
     </div>
   </article>
 </template>
+
+<style scoped>
+.aws-credential-status {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+</style>

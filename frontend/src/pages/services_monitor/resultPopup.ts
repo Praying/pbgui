@@ -4,12 +4,15 @@
  * reused across calls) so every panel task can raise the same popup the old
  * page showed; the modal CSS lives in App.vue's page-level style block.
  */
+import { h, render } from 'vue';
+import { PhX } from '@phosphor-icons/vue';
 import { apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import { createI18n, detectLang } from '@/shared/i18n';
 
 /** Standalone translator — the popup is raised outside any component tree. */
 const t = createI18n(detectLang()).global.t;
+let closeIconHost: HTMLSpanElement | null = null;
 
 /** Legacy _logUiNotification: fire-and-forget POST to the server-side notification log. */
 function logUiNotification(message: string, level: 'ok' | 'err'): void {
@@ -44,7 +47,14 @@ export function showResultPopup({ title, message, output, isOk, hideFoot = false
     document.body.appendChild(existing);
   }
   const modal = existing;
+  if (closeIconHost) render(null, closeIconHost);
   modal.replaceChildren(); // legacy rebuilt the inner HTML on every call
+
+  const removeModal = (): void => {
+    if (closeIconHost) render(null, closeIconHost);
+    closeIconHost = null;
+    modal.remove();
+  };
 
   const header = document.createElement('div');
   header.className = 'result-modal-header';
@@ -52,13 +62,17 @@ export function showResultPopup({ title, message, output, isOk, hideFoot = false
   heading.textContent = title;
   const closeBtn = document.createElement('button');
   closeBtn.className = 'result-modal-close';
-  closeBtn.textContent = '×';
-  closeBtn.addEventListener('click', () => modal.remove());
+  closeBtn.setAttribute('aria-label', t('common.close'));
+  closeBtn.title = t('common.close');
+  closeIconHost = document.createElement('span');
+  render(h(PhX, { size: 16, weight: 'regular', 'aria-hidden': 'true' }), closeIconHost);
+  closeBtn.append(closeIconHost);
+  closeBtn.addEventListener('click', removeModal);
   header.append(heading, closeBtn);
 
   const status = document.createElement('div');
   status.className = `result-modal-status ${isOk ? 'ok' : 'fail'}`;
-  status.textContent = `${isOk ? '✅' : '❌'} ${message}`;
+  status.textContent = message;
 
   modal.append(header, status);
   if (output) {
@@ -72,7 +86,7 @@ export function showResultPopup({ title, message, output, isOk, hideFoot = false
     footer.className = 'result-modal-footer';
     const okBtn = document.createElement('button');
     okBtn.textContent = t('common.ok');
-    okBtn.addEventListener('click', () => modal.remove());
+    okBtn.addEventListener('click', removeModal);
     footer.append(okBtn);
     modal.append(footer);
   }

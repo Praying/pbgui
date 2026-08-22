@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PhCaretRight, PhMinus, PhPlus } from '@phosphor-icons/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { botHighlightLines } from '@/shared/botHighlight';
 import { getSideValue } from '../lib/sideValues';
 import type { BacktestVersion } from '../types';
@@ -103,17 +105,17 @@ watch(model, (raw) => {
       <div class="form-group">
         <label>total_wallet_exposure_limit</label>
         <div class="num-stepper">
-          <button type="button" class="stepper-btn" @click="step('total_wallet_exposure_limit', -tweStep, 10)">−</button>
+          <button type="button" class="stepper-btn" aria-label="Decrease total_wallet_exposure_limit" title="Decrease total_wallet_exposure_limit" @click="step('total_wallet_exposure_limit', -tweStep, 10)"><PbIcon :icon="PhMinus" /></button>
           <input type="number" :value="twe" step="0.05" @input="syncField('total_wallet_exposure_limit', ($event.target as HTMLInputElement).value)" />
-          <button type="button" class="stepper-btn" @click="step('total_wallet_exposure_limit', tweStep, 10)">+</button>
+          <button type="button" class="stepper-btn" aria-label="Increase total_wallet_exposure_limit" title="Increase total_wallet_exposure_limit" @click="step('total_wallet_exposure_limit', tweStep, 10)"><PbIcon :icon="PhPlus" /></button>
         </div>
       </div>
       <div class="form-group">
         <label>n_positions</label>
         <div class="num-stepper">
-          <button type="button" class="stepper-btn" @click="step('n_positions', -1, 10)">−</button>
+          <button type="button" class="stepper-btn" aria-label="Decrease n_positions" title="Decrease n_positions" @click="step('n_positions', -1, 10)"><PbIcon :icon="PhMinus" /></button>
           <input type="number" :value="npos" step="1" @input="syncField('n_positions', ($event.target as HTMLInputElement).value)" />
-          <button type="button" class="stepper-btn" @click="step('n_positions', 1, 10)">+</button>
+          <button type="button" class="stepper-btn" aria-label="Increase n_positions" title="Increase n_positions" @click="step('n_positions', 1, 10)"><PbIcon :icon="PhPlus" /></button>
         </div>
       </div>
     </div>
@@ -126,7 +128,7 @@ watch(model, (raw) => {
         :data-test="'bot-json-expander-toggle-' + side"
         @click="jsonOpen = !jsonOpen"
       >
-        <span class="arrow" aria-hidden="true">▶</span>
+        <PbIcon class="arrow" :icon="PhCaretRight" />
         <span>{{ t('v7backtest.fullConfigJson') }}</span>
         <span v-if="needsReview" class="bot-json-review">{{ t('v7backtest.review') }}</span>
       </button>

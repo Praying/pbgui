@@ -8,8 +8,10 @@
  * lives in composables/useArchiveGit.ts; legacy modal bodies are
  * re-rendered as template markup (NO v-html).
  */
+import { PhX } from '@phosphor-icons/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { archivePullResultBody, archivePullResultStatus } from '../lib/archiveGitModel';
 import type { ArchiveGitStore } from '../composables/useArchiveGit';
 
@@ -26,7 +28,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div class="modal-box pbgui-modal archive-pull-modal">
       <div class="modal-header">
         <span class="modal-title" data-test="archive-pull-title">{{ git.pullTitle.value }}</span>
-        <button type="button" class="modal-close" title="Close" @click="git.hidePull()">✕</button>
+        <button type="button" class="modal-close" :title="t('common.close')" :aria-label="t('common.close')" @click="git.hidePull()"><PbIcon :icon="PhX" :size="18" /></button>
       </div>
       <div class="modal-body">
         <div class="archive-pull-progress">
@@ -53,7 +55,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div class="modal-box pbgui-modal">
       <div class="modal-header">
         <span class="modal-title">{{ git.pullResults.value.title }}</span>
-        <button type="button" class="modal-close" title="Close" @click="git.closePullResults()">✕</button>
+        <button type="button" class="modal-close" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closePullResults()"><PbIcon :icon="PhX" :size="18" /></button>
       </div>
       <div class="modal-body">
         <div v-if="git.pullResults.value.items.length === 0">No archives.</div>
@@ -73,7 +75,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div class="modal-box pbgui-modal">
       <div class="modal-header">
         <span class="modal-title">{{ git.pushOutput.value.title }}</span>
-        <button type="button" class="modal-close" title="Close" @click="git.closePushOutput()">✕</button>
+        <button type="button" class="modal-close" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closePushOutput()"><PbIcon :icon="PhX" :size="18" /></button>
       </div>
       <div class="modal-body"><pre class="pull-result-pre">{{ git.pushOutput.value.output }}</pre></div>
       <div class="modal-actions">
@@ -87,7 +89,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div class="modal-box">
       <div class="modal-header">
         <span class="modal-title">{{ t('v7backtest.compactArchiveHistory') }}</span>
-        <button type="button" class="modal-close" title="Close" @click="git.closeCompactPreview()">✕</button>
+        <button type="button" class="modal-close" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeCompactPreview()"><PbIcon :icon="PhX" :size="18" /></button>
       </div>
       <div class="modal-body">
         <p><b>This rewrites remote Git history.</b> It replaces archive history with one root commit and force-pushes using <code>--force-with-lease</code>.</p>
@@ -134,7 +136,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div class="modal-box">
       <div class="modal-header">
         <span class="modal-title">{{ git.compactOutput.value.title }}</span>
-        <button type="button" class="modal-close" title="Close" @click="git.closeCompactOutput()">✕</button>
+        <button type="button" class="modal-close" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeCompactOutput()"><PbIcon :icon="PhX" :size="18" /></button>
       </div>
       <div class="modal-body"><pre class="pull-result-pre">{{ git.compactOutput.value.output }}</pre></div>
       <div class="modal-actions">
@@ -148,7 +150,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div class="modal-box">
       <div class="modal-header">
         <span class="modal-title">{{ t('v7backtest.setupMyArchive') }}</span>
-        <button type="button" class="modal-close" title="Close" @click="git.closeSetup()">✕</button>
+        <button type="button" class="modal-close" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeSetup()"><PbIcon :icon="PhX" :size="18" /></button>
       </div>
       <div class="modal-body">
         <div class="form-group">

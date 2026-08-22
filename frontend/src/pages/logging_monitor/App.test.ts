@@ -58,7 +58,9 @@ describe('Logging Monitor Vue page', () => {
   it('mounts the shared log viewer and exposes rotated files and purge confirmation', async () => {
     const wrapper = mountApp();
     await flushPromises();
-    expect(wrapper.find('#topnav').exists()).toBe(true);
+    expect(wrapper.find('.app-shell').exists()).toBe(true);
+    expect(wrapper.find('#topnav').exists()).toBe(false);
+    expect(wrapper.get('[role="status"]').text()).toContain('Connected');
     expect(ViewerMock.instances).toHaveLength(1);
     const viewer = ViewerMock.instances[0]!;
     expect(viewer.options).toMatchObject({ defaultHost: 'local', presets: 'system', showRestart: true });
@@ -70,6 +72,7 @@ describe('Logging Monitor Vue page', () => {
     expect(wrapper.find('[data-field="rotation-version"] option[value="PBGui.log.1"]').exists()).toBe(true);
 
     await wrapper.find('[data-action="purge"]').trigger('click');
+    expect(wrapper.get('[data-action="purge"]').find('svg').exists()).toBe(true);
     expect(wrapper.find('[role="dialog"]').text()).toContain('Purge log file');
     await wrapper.find('[data-confirm="purge"]').trigger('click');
     await flushPromises();
@@ -101,6 +104,25 @@ describe('Logging Monitor Vue page', () => {
     expect(apiFetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/rotation$/), expect.objectContaining({ body: expect.stringContaining('PBGui') }));
   });
 
+  it('renders the shared empty state when no per-log rules are returned', async () => {
+    apiFetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.endsWith('/rotation') && (!init || init.method !== 'POST')) {
+        return Promise.resolve({ ...rotationPayload, per_service: {} });
+      }
+      if (url.endsWith('/api/logging')) return Promise.resolve(filesPayload);
+      throw new Error(`Unexpected request ${url}`);
+    });
+
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.find('[data-view="settings"]').trigger('click');
+
+    const emptyState = wrapper.get('[data-state="empty"]');
+    expect(emptyState.attributes('role')).toBe('status');
+    expect(emptyState.attributes('aria-live')).toBe('polite');
+    expect(emptyState.text()).toContain('No log files found');
+  });
+
   it('requires an explicit button to close the purge dialog', async () => {
     const wrapper = mountApp();
     await flushPromises();
@@ -112,5 +134,18 @@ describe('Logging Monitor Vue page', () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
     await wrapper.find('[data-action="cancel-purge"]').trigger('click');
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+  });
+
+  it('renders loading and error status copy as text', async () => {
+    let rejectLoad!: (error: Error) => void;
+    apiFetchMock.mockReturnValue(new Promise((_resolve, reject) => { rejectLoad = reject; }));
+    const wrapper = mountApp();
+    expect(wrapper.get('[role="status"]').text()).toContain('Loading');
+
+    rejectLoad(new Error('logging unavailable'));
+    await flushPromises();
+
+    expect(wrapper.get('[role="status"]').text()).toContain('Error');
+    expect(wrapper.get('[role="status"]').attributes('data-tone')).toBe('danger');
   });
 });

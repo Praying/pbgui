@@ -7,32 +7,16 @@
          mount time. The legacy %%TOKEN%%/%%API_BASE%%/%%VERSION%%/%%SERIAL%%
          injections are gone — config.ts derives them from boot.js at runtime. -->
     <script src="/api/boot.js"></script>
-    <!-- legacy i18n engine: still drives the nav subtitle -->
+    <!-- legacy i18n engine remains available to shared scripts -->
     <script src="/app/i18n.js?v=1"></script>
     <title>API Keys - PBGui</title>
 </head>
 <body>
     <div id="app"></div>
-    <!-- Shared legacy chrome, same loading order as legacy api_keys_editor.html
-         :605 (log_viewer_panel), :1078 (pbgui_dialogs), :3780-3781
-         (shared_help_overlay + pbgui_nav): NAV_CONFIG must exist before
-         pbgui_nav.js, which fills #topnav. The logs panel hosts the
-         LogViewerPanel global; confirms keep PBGuiDialogs. -->
+    <!-- Shared bridges retained for logs, dialogs, and the page help opener. -->
     <script src="/app/js/log_viewer_panel.js?v=30"></script>
     <script src="/app/js/pbgui_dialogs.js?v=6"></script>
-    <script>
-        document.title = (window.PBGuiI18n ? PBGuiI18n.t('misc.apikeys.title') : 'API Keys - PBGui');
-        window.PBGUI_NAV_CONFIG = {
-            subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.apikeys.subtitle') : 'API KEYS'),
-            current: 'system_api_keys',
-            authenticated: true,
-            apiBase: ((window.__BOOT__ || {}).origin || window.location.origin) + '/api/api-keys',
-            version: (window.__BOOT__ || {}).version || '',
-            serial: (window.__BOOT__ || {}).serial || ''
-        };
-    </script>
     <script src="/app/js/shared_help_overlay.js?v=7"></script>
-    <script src="/app/pbgui_nav.js"></script>
     <script type="module" src="./main.ts"></script>
 </body>
 </html>

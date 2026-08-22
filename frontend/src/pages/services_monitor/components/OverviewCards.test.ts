@@ -82,13 +82,16 @@ describe('OverviewCards', () => {
     expect(running).toHaveLength(2);
     expect(running[0]!.classes()).toContain('stop');
     expect(running[0]!.text()).toContain('Stop');
+    expect(running[0]!.find('svg').exists()).toBe(true);
     expect(running[1]!.classes()).toContain('restart');
     expect(running[1]!.text()).toContain('Restart');
+    expect(running[1]!.find('svg').exists()).toBe(true);
 
     const stopped = card(wrapper, 'pbrun').findAll('.card-btn');
     expect(stopped).toHaveLength(1);
     expect(stopped[0]!.classes()).toContain('start');
     expect(stopped[0]!.text()).toContain('Start');
+    expect(stopped[0]!.find('svg').exists()).toBe(true);
   });
 
   it('renders only restart for a running api-server (legacy restartApiServer button)', () => {

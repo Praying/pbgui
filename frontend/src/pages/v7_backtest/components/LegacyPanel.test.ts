@@ -115,7 +115,10 @@ describe('LegacyPanel (:918-945)', () => {
     expect(store.getSelected()).toHaveLength(2);
     await wrapper.find('[data-test="legacy-deselect"]').trigger('click');
     expect(store.getSelected()).toHaveLength(0);
-    await wrapper.find('#legacy-results-pin-btn').trigger('click');
+    const pinButton = wrapper.find('#legacy-results-pin-btn');
+    expect(pinButton.attributes('aria-label')).toBe(pinButton.attributes('title'));
+    expect(pinButton.find('svg').exists()).toBe(true);
+    await pinButton.trigger('click');
     expect(wrapper.find('#panel-legacy').classes()).toContain('leg-unpinned');
   });
 });

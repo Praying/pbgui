@@ -86,13 +86,16 @@ afterEach(() => {
 });
 
 describe('services_monitor App skeleton', () => {
-  it('renders the nav placeholder and the page-body layout container', () => {
+  it('renders the shared shell and the page-body layout container', () => {
     const wrapper = mountApp();
 
-    expect(wrapper.find('#topnav').exists()).toBe(true);
+    expect(wrapper.find('.app-shell').exists()).toBe(true);
+    expect(wrapper.find('#topnav').exists()).toBe(false);
     expect(wrapper.find('#page-body').exists()).toBe(true);
     expect(wrapper.find('#sidebar').exists()).toBe(true);
-    expect(wrapper.find('#main-content').exists()).toBe(true);
+    expect(wrapper.findAll('main#app-shell-main')).toHaveLength(1);
+    expect(wrapper.find('#services-main-content').exists()).toBe(true);
+    expect(wrapper.get('.workspace-header__actions button').find('svg').exists()).toBe(true);
   });
 
   it('renders one sidebar button and panel container per legacy panel', () => {
@@ -155,6 +158,22 @@ describe('services_monitor App skeleton', () => {
     expect(wrapper.find('.sb-btn[data-panel="workers"]').text()).toContain('工作节点');
     // Panels the legacy page left untranslated stay as brand names.
     expect(wrapper.find('.sb-btn[data-panel="pbcluster"]').text()).toContain('PBCluster');
+  });
+
+  it('renders loading and polling failure status copy as text', async () => {
+    apiFetchMock.mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/status')) throw new Error('status unavailable');
+      if (String(url).endsWith('/workers/status')) return { counts: { total: 0, running: 0 }, groups: [] };
+      if (String(url).endsWith('/migration/status')) return MIGRATION_PAYLOAD;
+      return {};
+    });
+    const wrapper = mountApp();
+    expect(wrapper.get('[role="status"]').text()).toContain('Loading');
+
+    await flushPromises();
+
+    expect(wrapper.get('[role="status"]').text()).toContain('Error');
+    expect(wrapper.get('[role="status"]').attributes('data-tone')).toBe('danger');
   });
 });
 
@@ -339,9 +358,10 @@ describe('services_monitor service log wiring', () => {
     const wrapper = mountApp();
 
     const tabs = wrapper.findAll('#panel-pbdata .tab-btn');
-    expect(tabs.map((b) => b.text())).toEqual(['📋 Log', '⚙ Settings', '📊 Status']);
-    expect(wrapper.findAll('#panel-api-server .tab-btn').map((b) => b.text())).toEqual(['📋 Log', '⚙ Settings']);
-    expect(wrapper.findAll('#panel-pbcoindata .tab-btn').map((b) => b.text())).toEqual(['📋 Log', 'Pool', '⚙ Settings']);
+    expect(tabs.map((button) => button.text())).toEqual(['Log', 'Settings', 'Status']);
+    expect(tabs.every((button) => button.find('svg').exists())).toBe(true);
+    expect(wrapper.findAll('#panel-api-server .tab-btn').map((button) => button.text())).toEqual(['Log', 'Settings']);
+    expect(wrapper.findAll('#panel-pbcoindata .tab-btn').map((button) => button.text())).toEqual(['Log', 'Pool', 'Settings']);
   });
 
   it('emits service actions from the panel ctrl strip through App', async () => {

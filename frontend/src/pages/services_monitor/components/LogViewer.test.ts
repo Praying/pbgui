@@ -242,6 +242,7 @@ describe('LogViewer controls (legacy toolbar)', () => {
     const streamBtn = wrapper.find('.lvp-stream-btn');
     await wrapper.vm.$nextTick();
     expect(streamBtn.text()).toContain('Pause');
+    expect(streamBtn.find('svg').exists()).toBe(true);
 
     await streamBtn.trigger('click');
     expect(ws.sentObjs().at(-1)).toEqual({ cmd: 'unsubscribe_local_logs' });
@@ -261,6 +262,7 @@ describe('LogViewer controls (legacy toolbar)', () => {
     expect(wrapper.findAll('.lvp-terminal > div')).toHaveLength(2);
 
     await wrapper.find('.lvp-clear-btn').trigger('click');
+    expect(wrapper.find('.lvp-clear-btn').find('svg').exists()).toBe(true);
     expect(wrapper.findAll('.lvp-terminal > div')).toHaveLength(0);
   });
 

@@ -39,8 +39,8 @@ function hyperliquidPayload(overrides: Record<string, unknown> = {}): SettingsPa
       min_lookback_days: 2,
       max_lookback_days: 4,
       aws_profile: 'pbgui-hyperliquid',
-      aws_access_key_id: '',
-      aws_secret_access_key: '',
+      aws_access_key_configured: true,
+      aws_secret_access_key_configured: true,
       aws_region: 'us-east-1',
       l2book_scan_timeout_s: 5,
       l2book_scan_workers: 8,
@@ -196,6 +196,26 @@ describe('renderSettingsPayload field slice (:7335-7360)', () => {
     await store.loadSettings('hyperliquid');
     expect(store.fields.coinPauseSeconds).toBe('0.5');
     expect(store.fields.minLookbackDays).toBe('2');
+  });
+
+  it('never copies AWS credential values from a settings response into reactive fields', async () => {
+    const basePayload = hyperliquidPayload();
+    const { store } = makeHarness({
+      payload: hyperliquidPayload({
+        settings: {
+          ...basePayload.settings,
+          aws_access_key_id: 'must-not-render',
+          aws_secret_access_key: 'must-not-render',
+        },
+      }),
+    });
+
+    await store.loadSettings('hyperliquid');
+
+    expect(store.fields.awsAccessKeyId).toBe('');
+    expect(store.fields.awsSecretAccessKey).toBe('');
+    expect(store.fields.awsAccessKeyConfigured).toBe(true);
+    expect(store.fields.awsSecretAccessKeyConfigured).toBe(true);
   });
 
   it('keeps hyperliquid-only fields off the non-hyperliquid form (:7398-7401)', async () => {

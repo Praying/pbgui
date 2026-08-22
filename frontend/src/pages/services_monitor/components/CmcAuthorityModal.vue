@@ -8,7 +8,9 @@
  * target node.
  */
 import { ref, watch } from 'vue';
+import { PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 defineOptions({ name: 'CmcAuthorityModal' });
 
@@ -84,7 +86,7 @@ function submit(): void {
     <div class="cmc-modal-card" role="dialog" aria-modal="true" aria-labelledby="cmc-authority-modal-title">
       <div class="cmc-modal-head">
         <div class="cmc-modal-title" id="cmc-authority-modal-title">{{ t('sysmon.transferCmcAuthority') }}</div>
-        <button class="cmc-modal-close" type="button" :aria-label="t('common.close')" @click="requestClose">&#x2715;</button>
+        <button class="cmc-modal-close" type="button" :aria-label="t('common.close')" @click="requestClose"><PbIcon :icon="PhX" /></button>
       </div>
       <div class="cmc-modal-body">
         <div class="form-field">

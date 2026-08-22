@@ -52,6 +52,8 @@ export interface SettingsPayloadSettings {
   aws_profile?: unknown;
   aws_access_key_id?: unknown;
   aws_secret_access_key?: unknown;
+  aws_access_key_configured?: unknown;
+  aws_secret_access_key_configured?: unknown;
   aws_region?: unknown;
   l2book_scan_timeout_s?: unknown;
   l2book_scan_workers?: unknown;
@@ -262,8 +264,10 @@ export function useSettings(options: UseSettingsOptions): SettingsController {
     // tradfi-map placeholders stay with the panel until M-data-4 lands)
     if (current.exchange === 'hyperliquid') {
       fields.awsProfile = toFieldValue(settings.aws_profile); // :7371-7378
-      fields.awsAccessKeyId = toFieldValue(settings.aws_access_key_id);
-      fields.awsSecretAccessKey = toFieldValue(settings.aws_secret_access_key);
+      fields.awsAccessKeyId = '';
+      fields.awsSecretAccessKey = '';
+      fields.awsAccessKeyConfigured = Boolean(settings.aws_access_key_configured);
+      fields.awsSecretAccessKeyConfigured = Boolean(settings.aws_secret_access_key_configured);
       fields.awsRegion = toFieldValue(settings.aws_region);
       fields.scanTimeout = toFieldValue(settings.l2book_scan_timeout_s);
       fields.scanWorkers = toFieldValue(settings.l2book_scan_workers);

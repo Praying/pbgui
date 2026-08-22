@@ -7,23 +7,14 @@
        mount time. The legacy %%TOKEN%%/%%API_BASE%%/%%WS_BASE%% injections
        are gone — config.ts derives them from boot.js at runtime. -->
   <script src="/api/boot.js"></script>
-  <!-- legacy i18n engine: still drives the nav subtitle -->
+  <!-- legacy i18n engine remains available to shared scripts -->
   <script src="/app/i18n.js?v=1"></script>
   <title>DB Tools - PBGui</title>
 </head>
 <body>
   <div id="app"></div>
-  <!-- Shared legacy chrome, same loading order as legacy db_tools.html
-       :304-306: NAV_CONFIG must exist before pbgui_nav.js; the cleanup-date
-       calendar keeps the legacy __dp global; the sync-job log panel hosts
-       the LogViewerPanel global. -->
-  <script>
-    window.PBGUI_NAV_CONFIG = {
-      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.dbtools.subtitle') : 'DB TOOLS'),
-      current: 'system_db_tools'
-    };
-  </script>
-  <script src="/app/pbgui_nav.js"></script>
+  <!-- The cleanup-date calendar keeps the legacy __dp global; the sync-job
+       log panel hosts the LogViewerPanel global. -->
   <script src="/app/js/pbgui_datepicker.js?v=2"></script>
   <script src="/app/js/log_viewer_panel.js?v=30"></script>
   <script type="module" src="./main.ts"></script>

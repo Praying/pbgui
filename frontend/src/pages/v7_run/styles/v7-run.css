@@ -62,7 +62,7 @@ body {
 }
 
 /* ─── Main content ─────────────────────────────────────────── */
-#main-content {
+.workbench-page-content {
   flex: 1;
   overflow-y: auto;
   padding: var(--sp-lg);
@@ -487,6 +487,31 @@ tr.row-inactive td  { opacity: 0.45; }
   #sidebar-resize { display: none; }
   #sidebar-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #sidebar-toolbar .sb-label, #sidebar-toolbar .sb-input, #sidebar-toolbar .sb-sep { grid-column: 1 / -1; }
-  #main-content { padding: var(--sp-sm); }
+  .workbench-page-content { padding: var(--sp-sm); }
   th, td { padding: var(--sp-xs); }
+}
+
+.core-workbench-shell {
+  height: 100dvh;
+  min-height: 0;
+}
+.core-workbench-shell .app-shell__workspace,
+.core-workbench-shell .app-shell__primary {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.core-workbench-shell .app-shell__main {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.core-workbench-shell #page-body {
+  flex: 1;
+  height: auto;
 }

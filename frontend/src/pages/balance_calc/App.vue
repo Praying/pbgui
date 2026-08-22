@@ -20,6 +20,8 @@
  */
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import ResultsPanel from './components/ResultsPanel.vue';
 import { useBalanceCalc } from './composables/useBalanceCalc';
 import { EXCHANGES, readInitParams } from './config';
@@ -60,7 +62,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <nav id="topnav"></nav>
+  <AppShell
+    class="data-page-shell data-page-shell--balance-calc"
+    page-key="info_balance_calc"
+    :page-title="t('misc.balance.title')"
+  >
+    <template #status>
+      <StatusStrip
+        :label="t('shared.status')"
+        :value="store.calculating.value ? t('misc.balance.calculating') : t('common.ok')"
+        :tone="store.calculating.value ? 'warning' : 'success'"
+      />
+    </template>
 
   <div id="page-content">
     <div class="toolbar">
@@ -91,4 +104,5 @@ onMounted(() => {
       </div>
     </div>
   </div>
+  </AppShell>
 </template>

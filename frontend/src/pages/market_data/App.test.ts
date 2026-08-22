@@ -42,12 +42,15 @@ afterEach(() => {
 });
 
 describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
-  it('renders the topnav placeholder, sidebar and main content', () => {
+  it('renders the shared shell, sidebar and main content', () => {
     const app = mountApp();
-    expect(app.find('nav#topnav').exists()).toBe(true);
+    expect(app.find('.app-shell').exists()).toBe(true);
+    expect(app.find('nav#topnav').exists()).toBe(false);
     expect(app.find('#page-body').exists()).toBe(true);
     expect(app.find('#sidebar').exists()).toBe(true);
     expect(app.find('#main-content').exists()).toBe(true);
+    expect(app.findAll('main')).toHaveLength(1);
+    expect(app.get('#main-content').element.tagName).toBe('DIV');
     expect(app.find('.migration-watermark').exists()).toBe(false);
   });
 

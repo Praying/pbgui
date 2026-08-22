@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/*
+ * Shell boundary (intentional): the login contract stays standalone rather
+ * than rendering AppShell or StatusStrip. Authentication uses the shared
+ * apiFetch boundary, which adds the boot Bearer header while preserving the
+ * HttpOnly session-cookie flow before the top-level redirect.
+ */
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';

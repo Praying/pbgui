@@ -44,8 +44,18 @@
  *    current + scrollIntoView) over the v-html-rendered marks.
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
+import {
+  PhArrowDown,
+  PhArrowUp,
+  PhArrowsIn,
+  PhArrowsOut,
+  PhBookOpen,
+  PhX,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import HelpToc from './components/HelpToc.vue';
 import { useHelpContent, type GlobalSearchResult } from './composables/useHelpContent';
 import { highlightMarks, highlightSnippet } from './lib/search';
@@ -345,17 +355,27 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <MigrationWatermark />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="support-page-shell support-page-shell--help"
+    page-key="help"
+    :page-title="t('misc.help.title')"
+  >
+    <MigrationWatermark />
+    <div id="page-content" aria-hidden="true"></div>
+    <div id="help-backdrop" :class="{ visible: overlayVisible }"></div>
 
-  <div id="page-content" aria-hidden="true"></div>
-  <div id="help-backdrop" :class="{ visible: overlayVisible }"></div>
-
-  <div id="help-ovl" ref="ovlEl" :class="{ visible: overlayVisible, 'is-maximized': maximized }">
+  <div
+    id="help-ovl"
+    ref="ovlEl"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="help-dialog-title"
+    :class="{ visible: overlayVisible, 'is-maximized': maximized }"
+  >
     <div class="ovl-panel">
       <div id="help-drag-handle" @mousedown="onDragStart"></div>
       <div class="ovl-header">
-        <div class="ovl-header-title">&#128218; <span>{{ t('misc.help.guideHelp') }}</span></div>
+        <div id="help-dialog-title" class="ovl-header-title"><PbIcon :icon="PhBookOpen" /> <span>{{ t('misc.help.guideHelp') }}</span></div>
         <div class="ovl-header-actions">
           <div id="help-search-wrap">
             <input
@@ -370,14 +390,16 @@ onBeforeUnmount(() => {
               class="help-snav-btn"
               id="help-search-up"
               :title="t('misc.help.previousMatch')"
+              :aria-label="t('misc.help.previousMatch')"
               @click="gotoMark(searchIndex - 1)"
-            >&#9650;</button>
+            ><PbIcon :icon="PhArrowUp" /></button>
             <button
               class="help-snav-btn"
               id="help-search-dn"
               :title="t('misc.help.nextMatch')"
+              :aria-label="t('misc.help.nextMatch')"
               @click="gotoMark(searchIndex + 1)"
-            >&#9660;</button>
+            ><PbIcon :icon="PhArrowDown" /></button>
             <span id="help-search-count">{{ searchCountText }}</span>
             <label id="help-search-global-lbl" :title="t('misc.help.searchAcrossAll')">
               <input id="help-search-global" v-model="globalMode" type="checkbox"> <span>{{ t('common.all') }}</span>
@@ -392,10 +414,11 @@ onBeforeUnmount(() => {
             class="ovl-tool"
             id="help-maximize"
             :title="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
+            :aria-label="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
             :aria-pressed="maximized ? 'true' : 'false'"
             @click="setMaximized(!maximized)"
-          >{{ maximized ? '❐' : '⛶' }}</button>
-          <button class="ovl-close" id="help-close" @click="closeLocalHelp">&#x2715;</button>
+            ><PbIcon :icon="maximized ? PhArrowsIn : PhArrowsOut" /></button>
+          <button class="ovl-close" id="help-close" :aria-label="t('common.close')" @click="closeLocalHelp"><PbIcon :icon="PhX" /></button>
         </div>
       </div>
       <div id="help-body">
@@ -440,4 +463,5 @@ onBeforeUnmount(() => {
       </div>
     </div>
   </div>
+  </AppShell>
 </template>

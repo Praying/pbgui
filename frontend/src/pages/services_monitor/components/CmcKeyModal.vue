@@ -7,7 +7,9 @@
  * only collects the payload and enforces the secret-required guard.
  */
 import { computed, nextTick, ref, watch } from 'vue';
+import { PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import type { CmcKey } from '../types';
 
 defineOptions({ name: 'CmcKeyModal' });
@@ -137,7 +139,7 @@ defineExpose({ clearSecretIfUnchanged });
     <div class="cmc-modal-card" role="dialog" aria-modal="true" aria-labelledby="cmc-key-modal-title">
       <div class="cmc-modal-head">
         <div class="cmc-modal-title" id="cmc-key-modal-title">{{ title }}</div>
-        <button class="cmc-modal-close" type="button" :aria-label="t('common.close')" @click="requestClose">&#x2715;</button>
+        <button class="cmc-modal-close" type="button" :aria-label="t('common.close')" @click="requestClose"><PbIcon :icon="PhX" /></button>
       </div>
       <div class="cmc-modal-body">
         <div class="form-field" id="cmc-key-label-field" v-show="mode !== 'rotate'">

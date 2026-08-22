@@ -72,8 +72,6 @@ export function serviceStatusTitle(t: Translate, item: ServiceStatus): string {
 export interface ServiceButton {
   action: ServiceAction;
   label: string;
-  /** Legacy button icons: ▶ start, ■ stop, ↻ restart; enable/disable have none. */
-  icon: '' | '▶' | '■' | '↻';
   disabled: boolean;
 }
 
@@ -92,7 +90,6 @@ export function serviceButtons(
   const make = (action: ServiceAction): ServiceButton => ({
     action,
     label: pending === action ? serviceActionProgressText(t, pending) : t(`sysmon.${action}`),
-    icon: action === 'start' ? '▶' : action === 'stop' ? '■' : action === 'restart' ? '↻' : '',
     disabled: pending !== null,
   });
   if (!serviceSkipped(item)) {

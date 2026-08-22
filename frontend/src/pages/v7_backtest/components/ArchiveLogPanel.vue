@@ -5,7 +5,9 @@
  * per the recon matrix) pinned to the local ArchiveSync.log, the
  * v7_edit LogPanel precedent: header + target container only.
  */
+import { PhClipboardText, PhX } from '@phosphor-icons/vue';
 import { onBeforeUnmount, ref, watch } from 'vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 interface LogViewer {
   open(): void;
@@ -71,8 +73,8 @@ defineExpose({ open: openPanel });
 <template>
   <div id="log-panel" :class="{ visible: open }">
     <div id="log-panel-header">
-      <span id="log-panel-title">📋 {{ title }}</span>
-      <button id="log-panel-close" title="Close" @click="open = false">✕</button>
+      <span id="log-panel-title"><PbIcon :icon="PhClipboardText" /> {{ title }}</span>
+      <button id="log-panel-close" title="Close" aria-label="Close" @click="open = false"><PbIcon :icon="PhX" :size="18" /></button>
     </div>
     <div id="log-viewer-target" style="flex: 1; min-height: 0; overflow: hidden"></div>
   </div>

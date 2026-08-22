@@ -7,8 +7,11 @@
  * convert button (:5547-5549) and click/drag row selection with wrap
  * auto-scroll (:5731-5785).
  */
+import { PhCopy, PhEye, PhFileText, PhFlask, PhImage } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
+import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { useRowDragSelect } from '../composables/useRowDragSelect';
 import type { BacktestResultItem, ResultActionKind, SortSpec } from '../types';
 
@@ -98,12 +101,12 @@ function exchangesText(row: BacktestResultItem): string {
   return Array.isArray(row.exchanges) ? row.exchanges.join(', ') : '';
 }
 
-const ACTION_BUTTONS: Array<{ kind: ResultActionKind; icon: string; titleKey: string }> = [
-  { kind: 'view', icon: '👁', titleKey: 'v7backtest.viewChartsTitle' },
-  { kind: 'analysis', icon: '🔬', titleKey: 'v7backtest.analysisJson' },
-  { kind: 'config', icon: '📄', titleKey: 'v7backtest.configJson' },
-  { kind: 'plot', icon: '🖼', titleKey: 'v7backtest.plotImages' },
-  { kind: 'fills', icon: '📋', titleKey: 'v7backtest.fillsPlots' },
+const ACTION_BUTTONS: Array<{ kind: ResultActionKind; icon: Component; titleKey: string }> = [
+  { kind: 'view', icon: PhEye, titleKey: 'v7backtest.viewChartsTitle' },
+  { kind: 'analysis', icon: PhFlask, titleKey: 'v7backtest.analysisJson' },
+  { kind: 'config', icon: PhFileText, titleKey: 'v7backtest.configJson' },
+  { kind: 'plot', icon: PhImage, titleKey: 'v7backtest.plotImages' },
+  { kind: 'fills', icon: PhCopy, titleKey: 'v7backtest.fillsPlots' },
 ];
 
 /* ── drag selection (:5731-5785) ── */
@@ -186,9 +189,10 @@ onBeforeUnmount(() => dragSelect.dispose());
               :data-action="action.kind"
               :data-path="row.path"
               :title="action.kind === 'plot' ? t('v7backtest.plotImages', { version: String(row.backtest_version || 'v7').toUpperCase() }) : t(action.titleKey)"
+              :aria-label="action.kind === 'plot' ? t('v7backtest.plotImages', { version: String(row.backtest_version || 'v7').toUpperCase() }) : t(action.titleKey)"
               @click="emit('toggle-action', row.path, action.kind)"
             >
-              {{ action.icon }}
+              <PbIcon :icon="action.icon" :size="18" />
             </button>
             <button
               v-if="allowV8Convert && row.backtest_version === 'v7'"

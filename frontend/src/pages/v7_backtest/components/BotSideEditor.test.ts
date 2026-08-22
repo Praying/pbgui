@@ -55,6 +55,10 @@ describe('BotSideEditor', () => {
     expect(shortPanel.get('.bot-side-direction').text()).toBe('Short');
     expect(shortPanel.get('.bot-side-role').text()).toBe('SHORT');
     expect(longPanel.find('.bot-side-primary').exists()).toBe(true);
+    expect(longPanel.findAll('.stepper-btn')).toHaveLength(4);
+    expect(longPanel.findAll('.stepper-btn svg')).toHaveLength(4);
+    expect(longPanel.find('.stepper-btn').attributes('aria-label')).toBe('Decrease total_wallet_exposure_limit');
+    expect(longPanel.findAll('.stepper-btn')[1]!.attributes('aria-label')).toBe('Increase total_wallet_exposure_limit');
 
     expect(longToggle.attributes('aria-controls')).toBe('bot-json-content-long');
     expect(shortToggle.attributes('aria-controls')).toBe('bot-json-content-short');

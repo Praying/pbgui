@@ -107,7 +107,11 @@ describe('Help page shell', () => {
   it('opens the overlay on mount, loads the EN index and the first topic', async () => {
     const w = await mountApp();
 
+    expect(w.find('.app-shell').exists()).toBe(true);
     expect(w.find('#help-ovl').classes()).toContain('visible');
+    expect(w.find('#help-ovl').attributes('role')).toBe('dialog');
+    expect(w.find('#help-ovl').attributes('aria-modal')).toBe('true');
+    expect(w.find('#help-ovl').attributes('aria-labelledby')).toBe('help-dialog-title');
     expect(w.find('#help-backdrop').classes()).toContain('visible');
     expect(document.body.classList.contains('pbgui-help-open')).toBe(true);
     expect(w.findAll('.toc-item')).toHaveLength(3);
@@ -300,7 +304,7 @@ describe('Help page shell', () => {
     await btn.trigger('click');
     expect(w.find('#help-ovl').classes()).toContain('is-maximized');
     expect(btn.attributes('aria-pressed')).toBe('true');
-    expect(btn.text()).toBe('❐');
+    expect(btn.find('svg').exists()).toBe(true);
 
     await btn.trigger('click');
     expect(w.find('#help-ovl').classes()).not.toContain('is-maximized');

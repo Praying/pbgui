@@ -55,6 +55,19 @@ function flush(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+async function openTradingSteppers() {
+  const wrapper = mountApp();
+  await flush();
+  await nextTick();
+  await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
+  await flush();
+  await nextTick();
+
+  const trading = wrapper.get('[data-test="editor-section-trading"]');
+  await trading.get('[data-test="advanced-execution-expander-toggle"]').trigger('click');
+  return { wrapper, trading, steppers: trading.findAll('.num-stepper') };
+}
+
 beforeEach(() => {
   localStorage.clear();
   replaceTopLocationMock.mockReset();
@@ -81,6 +94,8 @@ describe('boot chain (:10012-10024)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
+    expect(wrapper.findAll('main')).toHaveLength(1);
+    expect(wrapper.find('main#app-shell-main').exists()).toBe(true);
     const navButtons = wrapper.findAll('.sb-section[data-panel]');
     expect(navButtons.map((b) => b.attributes('data-panel'))).toEqual(['configs', 'queue', 'results', 'archive', 'legacy']);
     expect(wrapper.find('#panel-configs').classes()).toContain('active');
@@ -99,23 +114,44 @@ describe('boot chain (:10012-10024)', () => {
     await flush();
     await nextTick();
 
-    expect(wrapper.find('[data-test="ctx-new-config"]').text()).toBe('+ New Config');
-    expect(wrapper.find('[data-test="ctx-delete-configs"]').text()).toBe('🗑 Delete Selected');
-    expect(wrapper.find('[data-test="queue-compare"]').text()).toBe('📈 Compare');
-    expect(wrapper.find('[data-test="results-rebacktest"]').text()).toBe('🔄 Backtest');
-    expect(wrapper.find('[data-test="results-compare"]').text()).toBe('📈 Compare');
-    expect(wrapper.find('[data-test="results-delete"]').text()).toBe('🗑 Delete Selected');
-    expect(wrapper.find('[data-test="archive-add"]').text()).toBe('+ Add Archive');
-    expect(wrapper.find('[data-test="legacy-rebacktest"]').text()).toBe('🔄 Backtest');
-    expect(wrapper.find('[data-test="legacy-compare"]').text()).toBe('📈 Compare');
-    expect(wrapper.find('[data-test="legacy-delete"]').text()).toBe('🗑 Delete Selected');
+    expect(wrapper.find('[data-test="ctx-new-config"]').text()).toBe('New Config');
+    expect(wrapper.find('[data-test="ctx-new-config"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="ctx-delete-configs"]').text()).toBe('Delete Selected');
+    expect(wrapper.find('[data-test="ctx-delete-configs"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="queue-compare"]').text()).toBe('Compare');
+    expect(wrapper.find('[data-test="queue-compare"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="results-rebacktest"]').text()).toBe('Backtest');
+    expect(wrapper.find('[data-test="results-rebacktest"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="results-compare"]').text()).toBe('Compare');
+    expect(wrapper.find('[data-test="results-compare"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="results-delete"]').text()).toBe('Delete Selected');
+    expect(wrapper.find('[data-test="results-delete"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-pull-all"]').text()).toBe('Pull All');
+    expect(wrapper.find('[data-test="archive-pull-all"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-push"]').text()).toBe('Git Push');
+    expect(wrapper.find('[data-test="archive-push"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-add"]').text()).toBe('Add Archive');
+    expect(wrapper.find('[data-test="archive-add"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-setup"]').text()).toBe('Setup');
+    expect(wrapper.find('[data-test="archive-setup"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="legacy-rebacktest"]').text()).toBe('Backtest');
+    expect(wrapper.find('[data-test="legacy-rebacktest"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="legacy-compare"]').text()).toBe('Compare');
+    expect(wrapper.find('[data-test="legacy-compare"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="legacy-delete"]').text()).toBe('Delete Selected');
+    expect(wrapper.find('[data-test="legacy-delete"] svg').exists()).toBe(true);
 
     await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
     await flush();
     await nextTick();
-    expect(wrapper.find('[data-test="editor-home"]').text()).toBe('🏠 Home');
-    expect(wrapper.find('[data-test="editor-save"]').text()).toBe('💾 Save');
-    expect(wrapper.find('[data-test="editor-save-queue"]').text()).toBe('▶ Save & Queue');
+    expect(wrapper.find('[data-test="editor-home"]').text()).toBe('Home');
+    expect(wrapper.find('[data-test="editor-home"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-results"]').text()).toBe('Results');
+    expect(wrapper.find('[data-test="editor-results"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-save"]').text()).toBe('Save');
+    expect(wrapper.find('[data-test="editor-save"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="editor-save-queue"]').text()).toBe('Save & Queue');
+    expect(wrapper.find('[data-test="editor-save-queue"] svg').exists()).toBe(true);
 
     wrapper.unmount();
   });
@@ -314,6 +350,95 @@ describe('boot chain (:10012-10024)', () => {
     wrapper.unmount();
   });
 
+  it('renders contextual Phosphor controls for every trading stepper', async () => {
+    const { wrapper, steppers } = await openTradingSteppers();
+    const expectedFields = [
+      'liquidation_threshold',
+      'maker_fee_override',
+      'taker_fee_override',
+      'market_order_slippage_pct',
+    ];
+    expect(steppers).toHaveLength(expectedFields.length);
+
+    expectedFields.forEach((fieldName, stepperIndex) => {
+      const buttons = steppers[stepperIndex]!.findAll('button.stepper-btn');
+      expect(buttons).toHaveLength(2);
+      expect(buttons[0]!.attributes('aria-label')).toBe(`Decrease ${fieldName}`);
+      expect(buttons[0]!.attributes('title')).toBe(`Decrease ${fieldName}`);
+      expect(buttons[1]!.attributes('aria-label')).toBe(`Increase ${fieldName}`);
+      expect(buttons[1]!.attributes('title')).toBe(`Increase ${fieldName}`);
+      buttons.forEach((button) => {
+        const icon = button.get('svg');
+        expect(icon.attributes('viewBox')).toBe('0 0 256 256');
+        expect(icon.attributes('aria-hidden')).toBe('true');
+      });
+    });
+
+    wrapper.unmount();
+  });
+
+  it('steps liquidation and slippage values within their exposed bounds', async () => {
+    const { wrapper, steppers } = await openTradingSteppers();
+    const liquidationStepper = steppers[0]!;
+    const slippageStepper = steppers[3]!;
+
+    const liquidationInput = liquidationStepper.get<HTMLInputElement>('input');
+    await liquidationStepper.get('[aria-label="Increase liquidation_threshold"]').trigger('click');
+    expect(liquidationInput.element.value).toBe('0.06');
+    await liquidationStepper.get('[aria-label="Decrease liquidation_threshold"]').trigger('click');
+    expect(liquidationInput.element.value).toBe('0.05');
+    await liquidationInput.setValue('0');
+    await liquidationStepper.get('[aria-label="Decrease liquidation_threshold"]').trigger('click');
+    expect(liquidationInput.element.value).toBe('0');
+    await liquidationInput.setValue('0.99');
+    await liquidationStepper.get('[aria-label="Increase liquidation_threshold"]').trigger('click');
+    expect(liquidationInput.element.value).toBe('0.99');
+
+    const slippageInput = slippageStepper.get<HTMLInputElement>('input');
+    await slippageStepper.get('[aria-label="Increase market_order_slippage_pct"]').trigger('click');
+    expect(slippageInput.element.value).toBe('0.0006');
+    await slippageStepper.get('[aria-label="Decrease market_order_slippage_pct"]').trigger('click');
+    expect(slippageInput.element.value).toBe('0.0005');
+    await slippageInput.setValue('0');
+    await slippageStepper.get('[aria-label="Decrease market_order_slippage_pct"]').trigger('click');
+    expect(slippageInput.element.value).toBe('0');
+
+    wrapper.unmount();
+  });
+
+  it.each([
+    { fieldName: 'maker_fee_override', checkboxSelector: '#cfg-maker-fee-enabled', stepperIndex: 1 },
+    { fieldName: 'taker_fee_override', checkboxSelector: '#cfg-taker-fee-enabled', stepperIndex: 2 },
+  ])('keeps $fieldName disabled until enabled and clamps its stepper', async ({ fieldName, checkboxSelector, stepperIndex }) => {
+    const { wrapper, trading, steppers } = await openTradingSteppers();
+    const feeStepper = steppers[stepperIndex]!;
+    const feeInput = feeStepper.get<HTMLInputElement>('input');
+    const decreaseButton = feeStepper.get(`[aria-label="Decrease ${fieldName}"]`);
+    const increaseButton = feeStepper.get(`[aria-label="Increase ${fieldName}"]`);
+
+    expect(feeInput.element.disabled).toBe(true);
+    await trading.get(checkboxSelector).setValue(true);
+    expect(feeInput.element.disabled).toBe(false);
+
+    await increaseButton.trigger('click');
+    expect(feeInput.element.value).toBe('0.00001');
+    await decreaseButton.trigger('click');
+    expect(feeInput.element.value).toBe('0');
+    await decreaseButton.trigger('click');
+    expect(feeInput.element.value).toBe('0');
+
+    await feeInput.setValue('0.01');
+    await increaseButton.trigger('click');
+    expect(feeInput.element.value).toBe('0.01');
+    await decreaseButton.trigger('click');
+    expect(feeInput.element.value).toBe('0.00999');
+
+    await trading.get(checkboxSelector).setValue(false);
+    expect(feeInput.element.disabled).toBe(true);
+
+    wrapper.unmount();
+  });
+
   it('imports JSON through /configs/prepare and opens the prepared config as new', async () => {
     fetchMock.mockImplementation((url: string, init?: RequestInit) => {
       const target = String(url);
@@ -466,6 +591,9 @@ describe('boot chain (:10012-10024)', () => {
     expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
     const nameInput = wrapper.find('[data-test="cfg-name"]').element as HTMLInputElement;
     expect(nameInput.value).toBe('alpha');
+    const pbguiDataButton = wrapper.find('button[title="Use PBGui market data directory"]');
+    expect(pbguiDataButton.text()).toBe('PBGui Data');
+    expect(pbguiDataButton.find('svg').exists()).toBe(true);
     wrapper.unmount();
   });
 
@@ -1061,10 +1189,16 @@ describe('archive git maintenance (M-v7-12)', () => {
     for (const key of ['archive-pull-all', 'archive-push', 'archive-add', 'archive-setup', 'archive-log']) {
       expect(wrapper.find(`[data-test="${key}"]`).exists()).toBe(true);
     }
-    expect(wrapper.find('[data-test="archive-pull-all"]').text()).toBe('⬇ Pull All');
-    expect(wrapper.find('[data-test="archive-push"]').text()).toBe('⬆ Git Push');
-    expect(wrapper.find('[data-test="archive-setup"]').text()).toBe('⚙ Setup');
-    expect(wrapper.find('[data-test="archive-log"]').text()).toBe('📋 Log');
+    expect(wrapper.find('[data-test="archive-pull-all"]').text()).toBe('Pull All');
+    expect(wrapper.find('[data-test="archive-pull-all"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-push"]').text()).toBe('Git Push');
+    expect(wrapper.find('[data-test="archive-push"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-add"]').text()).toBe('Add Archive');
+    expect(wrapper.find('[data-test="archive-add"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-setup"]').text()).toBe('Setup');
+    expect(wrapper.find('[data-test="archive-setup"] svg').exists()).toBe(true);
+    expect(wrapper.find('[data-test="archive-log"]').text()).toBe('Log');
+    expect(wrapper.find('[data-test="archive-log"] svg').exists()).toBe(true);
     fetchMock.mockClear();
     await wrapper.find('[data-test="archive-setup"]').trigger('click');
     await flush();

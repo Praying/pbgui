@@ -12,7 +12,7 @@
        from ?optimize_version= (seed) + the runtime per-result resolution in
        composables/useParetoSession.ts (recon §4). -->
   <script src="/api/boot.js"></script>
-  <!-- legacy i18n engine: drives pbgui_nav.js labels -->
+  <!-- Legacy i18n remains available to shared browser helpers. -->
   <script src="/app/i18n.js?v=1"></script>
   <title>PBGui - Pareto Explorer</title>
   <!-- resizable sidebar chrome, same files as legacy v7_pareto_explorer.html:7-11 -->
@@ -29,29 +29,7 @@
 </head>
 <body>
   <div id="app"></div>
-  <!-- Shared legacy chrome, same loading order as legacy
-       v7_pareto_explorer.html:4731-4789: NAV_CONFIG must exist before
-       pbgui_nav.js fills #topnav.
-
-       LEGACY QUIRK (preserved deliberately, recon R3): the nav subtitle and
-       current highlight are computed ONCE at boot from the INJECTED version
-       (?optimize_version= query, legacy :4732-4733) — a mid-session runtime
-       version flip (v8 result opened on a v7-seeded page) updates the
-       sidebar handoff buttons and URL builders but NOT the nav highlight. -->
-  <script>
-    (function () {
-      var seed = String(new URLSearchParams(window.location.search || '').get('optimize_version') || 'v7').trim().toLowerCase() === 'v8' ? 'v8' : 'v7';
-      var boot = window.__BOOT__ || {};
-      window.PBGUI_NAV_CONFIG = {
-        subtitle: (window.PBGuiI18n ? PBGuiI18n.t('v7explore.navSubtitle', { v: seed }) : 'PB' + seed.toUpperCase() + ' PARETO EXPLORER'),
-        current:  seed === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer',
-        apiBase:  (boot.origin || '') + '/api/pareto-explorer',
-        version:  boot.version || '',
-        serial:   boot.serial || ''
-      };
-    })();
-  </script>
-  <script src="/app/pbgui_nav.js"></script>
+  <script src="/app/js/shared_help_overlay.js?v=7"></script>
   <script type="module" src="./main.ts"></script>
 </body>
 </html>

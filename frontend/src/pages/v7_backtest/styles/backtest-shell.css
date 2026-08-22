@@ -32,9 +32,9 @@ a:hover { text-decoration: underline; }
 
 /* ── Page layout (:42-56 + backtest_shell.css:31-36) ── */
 #page-body { display: flex; height: calc(100vh - var(--nav-height)); height: calc(100dvh - var(--nav-height)); min-height: 0; overflow: hidden; }
-#main-content { flex: 1; min-height: 0; overflow: hidden; background: var(--bg); padding: var(--sp-lg); display: flex; flex-direction: column; }
+.workbench-page-content { flex: 1; min-height: 0; overflow: hidden; background: var(--bg); padding: var(--sp-lg); display: flex; flex-direction: column; }
 /* When the results panel is unpinned: main-content scrolls everything (:49-50) */
-#main-content:has(#panel-results.active.unpinned) { overflow-y: auto; }
+.workbench-page-content:has(#panel-results.active.unpinned) { overflow-y: auto; }
 .view-panel { display: none; }
 .view-panel.active { display: flex !important; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 #configs-list, #queue-list { flex: 1; min-height: 0; overflow-y: auto; }
@@ -61,8 +61,8 @@ a:hover { text-decoration: underline; }
 .results-count-label { color: var(--text-dim); font-size: var(--fs-sm); white-space: nowrap; }
 
 /* ── Archive panel chrome (:48-86, :875-917) ─────── */
-#main-content:has(#panel-archive.active.arc-unpinned) { overflow-y: auto; }
-#main-content:has(#panel-legacy.active.leg-unpinned) { overflow-y: auto; }
+.workbench-page-content:has(#panel-archive.active.arc-unpinned) { overflow-y: auto; }
+.workbench-page-content:has(#panel-legacy.active.leg-unpinned) { overflow-y: auto; }
 #archive-list-view { flex: 1; min-height: 0; overflow-y: auto; }
 #panel-archive.active:not(.arc-unpinned) { height: 100%; }
 #archive-results-view { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
@@ -228,7 +228,7 @@ a:hover { text-decoration: underline; }
 @media (max-width: 760px) {
   #page-body { position: relative; }
   #sidebar { width: 132px; min-width: 132px; }
-  #main-content { padding: var(--sp-md); }
+  .workbench-page-content { padding: var(--sp-md); }
   .bt-panel-toolbar { flex-wrap: wrap; }
   .bt-toolbar-spacer { display: none; }
   .cols-2 { grid-template-columns: 1fr; }
@@ -465,7 +465,7 @@ body {
     var(--bg);
 }
 
-#main-content {
+.workbench-page-content {
   padding: 24px clamp(16px, 2.5vw, 36px) 36px;
   background:
     radial-gradient(circle at 94% 0%, rgba(56, 189, 248, 0.09), transparent 28rem),
@@ -481,7 +481,7 @@ body {
 /* The editor is a long-form document, unlike the fixed-height queue/results
    workspaces. Let the main content own the vertical scroll in this mode so
    no section or field group is clipped by the shell's viewport constraint. */
-#main-content:has(#configs-editor) {
+.workbench-page-content:has(#configs-editor) {
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -1039,7 +1039,7 @@ body {
 }
 
 @media (max-width: 900px) {
-  #main-content {
+  .workbench-page-content {
     padding: 18px 16px 28px;
   }
 }
@@ -1068,4 +1068,29 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+.core-workbench-shell {
+  height: 100dvh;
+  min-height: 0;
+}
+.core-workbench-shell .app-shell__workspace,
+.core-workbench-shell .app-shell__primary {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.core-workbench-shell .app-shell__main {
+  display: block;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.core-workbench-shell #page-body {
+  flex: 1;
+  height: auto;
 }

@@ -5,7 +5,9 @@
  * expiry badges, in-use state and row actions.
  */
 import { computed } from 'vue';
+import { PhArrowsDownUp, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import ExpiryBadge from './ExpiryBadge.vue';
 import type { ApiKeysStore } from '../composables/useApiKeysStore';
 import type { BybitExpiryInfo, HlExpiryInfo, UserSummary } from '../types';
@@ -142,26 +144,27 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
       <button
         class="btn pbgui-btn btn-sm btn-secondary"
         :title="t('misc.apikeys.clearFilter')"
+        :aria-label="t('misc.apikeys.clearFilter')"
         @click="clearFilterAndFocus"
       >
-        ✕
+        <PbIcon :icon="PhX" />
       </button>
     </div>
     <table class="user-table">
       <thead>
         <tr>
           <th class="sortable" :class="sortClass('name')" id="th-name" @click="store.setSort('name')">
-            <span>{{ t('misc.apikeys.user') }}</span> <span class="sort-icon">⇅</span>
+            <span>{{ t('misc.apikeys.user') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
           <th class="sortable" :class="sortClass('exchange')" id="th-exchange" @click="store.setSort('exchange')">
-            <span>{{ t('misc.apikeys.exchange') }}</span> <span class="sort-icon">⇅</span>
+            <span>{{ t('misc.apikeys.exchange') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
           <th>{{ t('misc.apikeys.credentials') }}</th>
           <th class="sortable" :class="sortClass('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
-            <span>{{ t('misc.apikeys.keyExpiry') }}</span> <span class="sort-icon">⇅</span>
+            <span>{{ t('misc.apikeys.keyExpiry') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
           <th class="sortable" :class="sortClass('status')" id="th-status" @click="store.setSort('status')">
-            <span>{{ t('misc.apikeys.status') }}</span> <span class="sort-icon">⇅</span>
+            <span>{{ t('misc.apikeys.status') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
           <th>{{ t('misc.apikeys.actions') }}</th>
         </tr>

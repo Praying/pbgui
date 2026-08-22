@@ -47,11 +47,17 @@
  * builders but not the nav highlight (legacy quirk, preserved + documented).
  */
 import { computed, onBeforeUnmount, onMounted } from 'vue';
+import type { Component } from 'vue';
+import { PhBank, PhBrain, PhFolderOpen, PhGear, PhQuestion, PhTarget } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import { replaceTopLocation } from '@/shared/nav';
+import AppShell from '@/shared/components/AppShell.vue';
+import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import StatusStrip from '@/shared/components/StatusStrip.vue';
 import CommandCenter from './components/CommandCenter.vue';
 import ConfigDetail from './components/ConfigDetail.vue';
 import Playground from './components/Playground.vue';
@@ -99,12 +105,19 @@ onSessionApplied = () => surfaces.afterSession(); // legacy tail ignores the ses
 /** The shared config-detail section (:4141-4145). */
 const showSharedDetail = computed(() => store.state.stage === 'command_center' || store.state.stage === 'pareto_playground');
 
-const STAGE_META: Record<ParetoStage, { icon: string; labelKey: string }> = {
-  command_center: { icon: '🏛', labelKey: 'v7explore.overview' },
-  pareto_playground: { icon: '🎯', labelKey: 'v7explore.explorer' },
-  deep_intelligence: { icon: '🧠', labelKey: 'v7explore.deepIntelligence' },
-  settings: { icon: '⚙️', labelKey: 'v7explore.settings' },
+const STAGE_META: Record<ParetoStage, { icon: Component; labelKey: string }> = {
+  command_center: { icon: PhBank, labelKey: 'v7explore.overview' },
+  pareto_playground: { icon: PhTarget, labelKey: 'v7explore.explorer' },
+  deep_intelligence: { icon: PhBrain, labelKey: 'v7explore.deepIntelligence' },
+  settings: { icon: PhGear, labelKey: 'v7explore.settings' },
 };
+
+function openParetoHelp(): void {
+  const sharedHelp = (window as Window & {
+    PBGuiSharedHelp?: { open?: (topic: string) => void };
+  }).PBGuiSharedHelp;
+  sharedHelp?.open?.('37_pareto_explorer');
+}
 
 const DEEP_TAB_LABEL: Record<DeepTab, string> = {
   parameters: 'v7explore.parameters',
@@ -316,9 +329,30 @@ onBeforeUnmount(() => {
 <template>
   <MigrationWatermark />
   <DataTipTooltip />
-  <nav id="topnav"></nav>
+  <AppShell
+    class="core-workbench-shell core-workbench-shell--pareto"
+    :page-key="readSeedOptimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer'"
+    :page-title="t('v7explore.paretoExplorer')"
+    :page-description="t('v7explore.pageSubtitle')"
+    :page-family="readSeedOptimizeVersion() === 'v8' ? 'PBv8' : 'PBv7'"
+  >
+    <template #status>
+      <div class="status-row">
+        <span id="result-chip" class="chip sr-only">{{ resultChip }}</span>
+        <StatusStrip :label="t('v7explore.result')" :value="resultChip" />
+        <span id="mode-chip" :class="modeChipClass">{{ modeChip }}</span>
+      </div>
+    </template>
+    <template #header-actions>
+      <IconButton
+        class="pbgui-icon-button"
+        :icon="PhQuestion"
+        :label="t('nav.guide')"
+        @click="openParetoHelp"
+      />
+    </template>
 
-  <div id="page-body">
+    <div id="page-body">
     <aside id="sidebar">
       <div id="sidebar-inner">
         <button
@@ -329,7 +363,7 @@ onBeforeUnmount(() => {
           :data-stage="stage"
           @click="store.selectStage(stage)"
         >
-          <span class="sb-icon">{{ STAGE_META[stage].icon }}</span> <span>{{ t(STAGE_META[stage].labelKey) }}</span>
+          <PbIcon class="sb-icon" :icon="STAGE_META[stage].icon" /> <span>{{ t(STAGE_META[stage].labelKey) }}</span>
         </button>
 
         <hr class="sb-sep" />
@@ -354,7 +388,8 @@ onBeforeUnmount(() => {
             <span>{{ t('v7explore.strategyExplorer') }}</span>
           </button>
           <button class="sb-btn" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
-            {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : '📂 Scan all_results' }}
+            <PbIcon v-if="!store.state.fullLoadPending" :icon="PhFolderOpen" />
+            {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : 'Scan all_results' }}
           </button>
           <button v-show="store.state.allResultsLoaded" class="sb-btn" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
             <span>{{ t('v7explore.showPassivbotParetos') }}</span>
@@ -364,15 +399,11 @@ onBeforeUnmount(() => {
       <div id="sidebar-resize"></div>
     </aside>
 
-    <main id="main-content">
-      <section class="page-title">
+    <div class="workbench-page-content">
+      <section class="page-title sr-only">
         <div>
           <h1>{{ t('v7explore.paretoExplorer') }}</h1>
           <p id="page-subtitle">{{ t('v7explore.pageSubtitle') }}</p>
-        </div>
-        <div class="status-row">
-          <span id="result-chip" class="chip">{{ resultChip }}</span>
-          <span id="mode-chip" :class="modeChipClass">{{ modeChip }}</span>
         </div>
       </section>
 
@@ -540,6 +571,7 @@ onBeforeUnmount(() => {
       </section>
 
       <ConfigDetail v-show="showSharedDetail" :store="store" />
-    </main>
-  </div>
+    </div>
+    </div>
+  </AppShell>
 </template>

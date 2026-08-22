@@ -10,7 +10,9 @@
  * engine (legacy _cmcMutation* state) and emits refresh.
  */
 import { computed, ref, watch } from 'vue';
+import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { cmcDuration, cmcNumber, cmcTimestamp, createCmcMutationControl, newCmcOperationId, type CmcMutationCandidate } from '../cmc';
 import type { CmcDomain, CmcKey, CmcKeyUsage, CmcLeasesResponse, CmcPool } from '../types';
 import CmcAuthorityModal, { type CmcAuthorityOption } from './CmcAuthorityModal.vue';
@@ -422,7 +424,7 @@ async function deleteSelectedCmcKey(): Promise<void> {
         :disabled="busy || !selectedKey || !selectedKey.quota_domain_id || !authorityTargets.length"
         @click="openAuthorityModal"
       >{{ t('sysmon.transferAuthority') }}</button>
-      <button class="form-btn" id="cmc-refresh-btn" type="button" @click="emit('refresh')">{{ t('common.refresh') }}</button>
+      <button class="form-btn" id="cmc-refresh-btn" type="button" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
       <span class="cmc-pool-message" :class="{ error: message?.error }">{{ message?.text ?? '' }}</span>
     </div>
 

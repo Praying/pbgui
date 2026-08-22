@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { PhX } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 /**
  * CoinMultiSelect — the .ms-wrap contract of the backtest editor
@@ -66,22 +68,22 @@ function clear(): void {
   <div class="form-group">
     <label>
       <slot name="label" />
-      <span v-if="allowAll" class="ms-all-btn" :title="t('v7backtest.selectAll')" @click="setAll">all</span>
-      <span v-else-if="selectAllButton" class="ms-all-btn" :title="t('v7backtest.selectAll')" @click="selectAll">all</span>
-      <span class="ms-clear-btn" :title="t('v7backtest.clearAll')" @click="clear">×</span>
+      <button v-if="allowAll" type="button" class="ms-all-btn" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.includes('all')" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="setAll">all</button>
+      <button v-else-if="selectAllButton" type="button" class="ms-all-btn" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.length === props.options.length - (props.options.includes('all') ? 1 : 0)" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="selectAll">all</button>
+      <button type="button" class="ms-clear-btn" :title="t('v7backtest.clearAll')" :aria-label="t('v7backtest.clearAll')" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="clear"><PbIcon :icon="PhX" /></button>
     </label>
     <div :id="id" class="ms-wrap" @focusin="open = true" @focusout="open = false">
       <span v-for="value in model" :key="value" class="ms-tag" :class="{ 'ms-tag-all': value === 'all' }">
         <template v-if="value === 'all'">★ all</template>
         <template v-else>{{ display(value) }}</template>
-        <span class="ms-x" @click="toggle(value)">×</span>
+        <button type="button" class="ms-x" :aria-label="`Remove ${value === 'all' ? 'all' : display(value)}`" :title="`Remove ${value === 'all' ? 'all' : display(value)}`" style="border: 0; background: transparent; padding: 0; font: inherit; cursor: pointer" @click.stop="toggle(value)"><PbIcon :icon="PhX" /></button>
       </span>
       <input v-model="filter" :id="id + '-input'" class="ms-input" :placeholder="placeholder || t('v7backtest.typeToSearch')" autocomplete="off" @keydown.enter.prevent="filtered.length ? toggle(filtered[0]!) : undefined" />
       <div :id="id + '-dd'" class="ms-dropdown" :class="{ open }">
         <div v-if="filtered.length === 0" style="padding: 4px 8px; color: var(--text-dim); font-size: var(--fs-xs)">{{ t('v7backtest.noMatches') }}</div>
-        <div v-for="option in filtered" :key="option" class="ms-option" :class="{ selected: isSelected(option) }" @mousedown.prevent="toggle(option)">
+        <button v-for="option in filtered" :key="option" type="button" class="ms-option" :class="{ selected: isSelected(option) }" :aria-label="`Select ${option === 'all' ? 'all' : display(option)}`" :aria-pressed="isSelected(option)" style="display: block; width: 100%; border: 0; background: transparent; text-align: left; font: inherit; cursor: pointer" @click="toggle(option)">
           {{ option === 'all' ? '★ all' : display(option) }}
-        </div>
+        </button>
       </div>
     </div>
   </div>

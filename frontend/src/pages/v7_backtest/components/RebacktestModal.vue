@@ -6,8 +6,10 @@
  * stepper (:7903-7905), the exchange multi-select and the
  * pbgui-market-data toggle.
  */
+import { PhFolderOpen, PhMinus, PhPlus } from '@phosphor-icons/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import type { RebacktestFields } from '../types';
 
 const props = defineProps<{
@@ -82,8 +84,8 @@ function onConfirm(): void {
             <div class="sb-label">{{ t('v7backtest.startingBalance') }}</div>
             <div style="display: flex; align-items: center; gap: var(--sp-xs)">
               <input v-model="balance" class="sb-input" style="flex: 1; text-align: right" type="number" min="1" step="100" data-test="rbt-balance" />
-              <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-minus" @click="adjustBalance(-100)">−</button>
-              <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-plus" @click="adjustBalance(100)">+</button>
+              <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></button>
+              <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-plus" aria-label="Increase starting balance" title="Increase starting balance" @click="adjustBalance(100)"><PbIcon :icon="PhPlus" /></button>
             </div>
           </div>
           <div style="flex: 1; display: flex; flex-direction: column; min-height: 60px">
@@ -94,7 +96,7 @@ function onConfirm(): void {
           </div>
           <div style="display: flex; align-items: center; gap: var(--sp-sm)">
             <input id="rbt-pbgui-data" v-model="usePbguiData" type="checkbox" style="width: auto; margin: 0" data-test="rbt-pbgui-data" />
-            <label for="rbt-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer">📂 {{ t('v7backtest.usePbguiMarketData') }}</label>
+            <label for="rbt-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
           </div>
         </div>
       </div>

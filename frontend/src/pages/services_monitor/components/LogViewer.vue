@@ -18,7 +18,9 @@
  * level-detection pass.
  */
 import { computed, onUnmounted, ref, watch } from 'vue';
+import { PhPause, PhPlay, PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { wsBase } from '../config';
 
 const props = defineProps<{ file: string }>();
@@ -241,10 +243,11 @@ onUnmounted(() => {
           type="button"
           @click="toggleStream"
         >
-          {{ streaming ? '⏸' : '▶' }} {{ streaming ? t('shared.log.pause') : t('shared.log.stream') }}
+          <PbIcon :icon="streaming ? PhPause : PhPlay" />
+          {{ streaming ? t('shared.log.pause') : t('shared.log.stream') }}
         </button>
         <button class="lvp-ctrl-btn lvp-clear-btn" type="button" @click="clearTerminal">
-          🗑 {{ t('shared.log.clear') }}
+          <PbIcon :icon="PhTrash" /> {{ t('shared.log.clear') }}
         </button>
         <span class="lvp-conn-badge">{{ conn }}</span>
       </div>

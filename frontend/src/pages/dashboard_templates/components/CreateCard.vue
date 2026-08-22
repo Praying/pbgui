@@ -18,8 +18,10 @@
  *   when effective users exist, required otherwise.
  */
 import { computed, onUnmounted, ref } from 'vue';
+import { PhClipboardText } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { dashboardsUrl, fromTemplateUrl } from '../config';
 import { dialogsConfirm } from '../dialogs';
 import type { DashboardConfigResponse, StatusResponse } from '../types';
@@ -199,7 +201,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
 
       <div class="action-row">
         <button id="btn-create" class="btn pbgui-action primary" :disabled="creating" @click="create">
-          📋 {{ t('dash.createDashboards') }}
+          <PbIcon :icon="PhClipboardText" /> {{ t('dash.createDashboards') }}
         </button>
       </div>
       <div id="create-msg" class="msg" :class="msgType">{{ msg }}</div>

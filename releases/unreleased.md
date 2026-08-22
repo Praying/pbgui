@@ -6,11 +6,43 @@
 
 ## Frontend Redesign Planning
 
+- Standardized reachable Vue loading, empty, and error branches with shared semantic state components, visible status copy, retry actions where existing loaders support them, reduced-motion-safe skeletons, responsive shell checks, and explicit rail control semantics without changing API or composable behavior.
+
+- Migrated the Jobs, Logging, VPS Manager, VPS Monitor, Cluster Sync, and Services Monitor Vue operations pages to the shared AppShell and text-backed StatusStrip, removed their Vue-only legacy topnav bootstrap, aligned full-height responsive workspaces, and replaced legacy control glyphs with accessible local Phosphor icons while preserving live updates, polling, log viewers, confirmations, deployment and credential boundaries, cluster actions, and service controls.
+
+- Migrated the seven core Vue workbench pages (Welcome, Run, Optimize, Backtest, Edit, Strategy Explorer, and Pareto Explorer) to the shared AppShell and workbench rail, replaced page-local symbol controls with accessible Phosphor icons, retained local workspaces/status/help behavior and route-specific PBv7/PBv8 semantics, and removed their Vue-only legacy topnav bootstrapping.
+
+- Made the shared AppShell supporting column stack below primary content on narrow screens and restored the shared skeleton shimmer animation with reduced-motion compatibility.
+
+- Established the shared Vue dark-terminal foundation with a typed PBGui route model, collapsible and keyboard-accessible workbench rail, semantic application shell and workspace header, accessible text-backed status strip, cool-Morandi design tokens, and shared icon/button/loading/empty/error primitives while preserving legacy token aliases and frozen dashboard editor styles.
+
+- Added the approved implementation plan for the PBGui dark professional trading-terminal redesign: shared cool-Morandi tokens and shell, collapsible workbench rail, local Phosphor icon system, staged Vue page-family migration, responsive/accessibility states, legacy fallback alignment, and verification gates that preserve API, route, i18n, offline, and frozen-CSS contracts.
+
 - Documented the approved Open Design direction and implementation plan for a denser shared PBv7/PBv8 Backtest configuration workbench, including responsive long-label protection, advanced-execution disclosure, aligned Long/Short controls, per-side JSON disclosure, localization, guide coverage, and verification gates without changing config or API behavior.
 
 - Documented the approved PBGui frontend redesign: Vue 3 MPA continuation, Tailwind/headless/icon Spikes, semantic dark design system, and staged Dashboard, logging, and services-monitor migration with API, authentication, i18n, offline, and legacy-fallback compatibility preserved.
 
 ## Frontend Redesign Verification
+
+- Resolved final Vue migration review blockers by keeping the collapsed mobile rail in normal flow without a workspace gap, removing nested main landmarks, completing shared legacy and Vue action icons with accessible Phosphor controls, localizing API-key profile controls, and preventing Market Data settings responses from exposing stored AWS credentials while preserving body-only credential updates.
+
+- Completed the final Task 8 regression verification: the full Vue test suite (1,456 suites, 4,172 tests), frontend typecheck, and production build pass; changed Python modules pass compilation, while Python pytest verification remains unavailable because pytest is not installed in the environment. The final redesign includes the required Market Data AWS credential-response privacy fix and serial bump to 2231, has no generated dist or secret artifacts, preserves frozen dashboard CSS, and keeps existing unrelated AGENTS.md and plan deletion changes outside the redesign staging set.
+
+- Aligned the legacy fallback navigation with the Vue workbench icon language using an allowlisted local Phosphor Regular SVG factory, escaped accessible labels, explicit unknown-icon rejection, and cache-busted offline helper loading while preserving routes, cookie authentication, placeholders, help, language, restart, about, and responsive behavior.
+
+- Fixed the Task 6 collapsed mobile WorkbenchRail layout so its keyboard-accessible expand control remains visible within the 64px brand row, with focused responsive stylesheet coverage and unchanged expanded drawer, focus, and reduced-motion behavior.
+
+- Completed the compatible Task 5 supporting-page shell migration: Coin Data, DB Tools, Balance Calculator, API Keys, Market Data, Help, and Dashboard Manager now use the shared AppShell/StatusStrip without legacy topnav bootstrapping; preserved selection/drag-select, dates, job history, iframe sizing, help sanitization/deep links/EN-DE behavior, dashboard postMessage parity, authentication, and credential reveal cleanup, with Phosphor accessible controls and no private-key reveal affordance. HL data-actions, market-data status, dashboard templates, root login, and dashboard editor remain specialized embedded/standalone boundaries by design.
+
+- Completed the remaining Task 5 supporting-page shell pass: Help uses AppShell with accessible Phosphor controls, while HL data-actions, market-data status, dashboard templates, login, and dashboard editor retain their tested iframe/fragment/standalone boundaries and existing auth, route, sanitization, postMessage, and parity contracts.
+
+- Added focused Backtest config-editor regression coverage for all trading steppers, including Phosphor icons, contextual accessible names, declared numeric bounds, and disabled fee inputs; fixed the maker/taker controls to honor their existing `0` to `0.01` range.
+
+- Fixed the remaining Task 3 review findings in the Backtest and Optimize workbenches: symbol-prefixed actions now use clean i18n labels with decorative PbIcons, numeric steppers expose contextual native-button labels, and CoinMultiSelect uses keyboard-accessible semantic buttons without changing values or layout.
+
+- Completed the remaining Task 3 core-workbench icon migration across Backtest and Optimize child controls, replacing rendered action glyphs with decorative Phosphor icons while preserving labels, events, layout, and bilingual semantics, and adding accessible names plus focused icon assertions for icon-only controls.
+
+- Fixed Task 3 review findings in the migrated PBv7/PBv8 workbenches: AppShell remains the only main landmark, inner workbench containers are non-landmark elements, and Backtest/Optimize action labels render separate decorative Phosphor icons with focused visible-text and SVG assertions.
 
 - Completed the Task 7 verification pass: frontend typecheck and production build pass, affected Vue page suites pass with isolated Node 26 localStorage, affected Python route/i18n tests pass, and GitNexus reports a low-risk documentation-only uncommitted scope.
 

@@ -85,6 +85,18 @@ describe('PricesOverlay open/close (legacy openPricesOverlay/closePricesOverlay)
       vi.useRealTimers();
     }
   });
+
+  it('does not start title dragging from the Phosphor close icon', async () => {
+    const wrapper = mountOverlay();
+    await wrapper.vm.open();
+    await flushPromises();
+
+    await wrapper.find('.po-btn svg').trigger('mousedown', { clientX: 20, clientY: 20 });
+
+    expect((wrapper.find('#prices-overlay').element as HTMLElement).style.left).toBe('');
+    await wrapper.find('.po-btn').trigger('click');
+    expect(wrapper.find('#prices-overlay').classes()).not.toContain('active');
+  });
 });
 
 describe('PricesOverlay table rendering (legacy renderTable/fmtPrice/fmtAge/ageCol)', () => {
@@ -123,7 +135,7 @@ describe('PricesOverlay table rendering (legacy renderTable/fmtPrice/fmtAge/ageC
     await flushPromises();
 
     expect(wrapper.find('.po-table thead').text()).toBe('#SymbolExchangePriceAge');
-    expect(wrapper.find('#prices-overlay-title').text()).toContain('📊');
+    expect(wrapper.find('#prices-overlay-title svg').exists()).toBe(true);
     expect(wrapper.find('#prices-overlay-title').text()).toContain('Price Snapshot');
   });
 

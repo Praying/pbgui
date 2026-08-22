@@ -100,12 +100,13 @@ afterEach(() => {
 });
 
 describe('dashboard_main App shell', () => {
-  it('renders the nav placeholder, sidebar and main content layout', async () => {
+  it('renders the shared shell, sidebar and main content layout', async () => {
     dashboardsApi(['a']);
     const wrapper = mountApp();
     await flushPromises();
 
-    expect(wrapper.find('#topnav').exists()).toBe(true);
+    expect(wrapper.find('.app-shell').exists()).toBe(true);
+    expect(wrapper.find('#topnav').exists()).toBe(false);
     expect(wrapper.find('#page-body').exists()).toBe(true);
     expect(wrapper.find('#sidebar').exists()).toBe(true);
     expect(wrapper.find('#main-content').exists()).toBe(true);
