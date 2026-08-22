@@ -60,6 +60,56 @@
   transform: translateY(0);
 }
 
+/* ── Core workbench shell (fixed-height pages) ───────────────── */
+
+/*
+ * Pages that manage their own internal layout (sidebar + scrolling
+ * content: pareto explorer, optimize, strategy explorer, edit, run,
+ * welcome) add `.core-workbench-shell` to <AppShell> and thread the
+ * viewport height down through flex. The chain must stay unbroken:
+ *
+ *   .app-shell (100dvh) → __workspace (flex column) → __main
+ *   (flex: 1) → __primary (flex: 1) → #page-body (flex: 1) → the
+ *   page's own overflow container.
+ *
+ * `.app-shell__main` in particular must remain a flex container — a
+ * plain block there lets `.app-shell__primary` grow to content
+ * height, so nothing ever overflows its scroll container and the
+ * page silently clips instead of scrolling.
+ */
+.core-workbench-shell {
+  height: 100dvh;
+  min-height: 0;
+}
+
+.core-workbench-shell .app-shell__workspace,
+.core-workbench-shell .app-shell__primary {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.core-workbench-shell .app-shell__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.core-workbench-shell .app-shell__primary {
+  flex: 1;
+}
+
+.core-workbench-shell #page-body {
+  flex: 1;
+  height: auto;
+}
+
 /* ── Workbench rail ──────────────────────────────────────────── */
 
 .workbench-rail {
