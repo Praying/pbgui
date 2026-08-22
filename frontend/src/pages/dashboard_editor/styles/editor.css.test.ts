@@ -16,8 +16,10 @@ const editorMain = readFileSync(join(import.meta.dirname, '..', 'main.ts'), 'utf
    (hardcoded colors redirected to the shared @/styles/tokens.css), then at
    the viewport-hardening pass (100vh declarations gained 100dvh twins),
    then at the palette-consolidation pass (rgba literals routed through the
-   semantic -rgb token channels). */
-const FROZEN_EDITOR_CSS_SHA256 = '8f1d2999919a12d38e755b8d6177c57d261013ca8c9d807765cbc549483591f8';
+   semantic -rgb token channels), then at the Morandi-palette pass (last
+   escaped hex literals — #1a365d/#90cdf4/#2d2810/rgba(55,65,81) — routed
+   to accent/warning/bg-elevated tokens). */
+const FROZEN_EDITOR_CSS_SHA256 = 'e9205e8633685ffe497567c7c5e5856255f64a86c641918e0536b922204c9309';
 
 function normalize(text: string): string {
   /* Comments are stripped; only the line breaks are removed — the legacy

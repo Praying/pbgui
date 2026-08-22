@@ -159,7 +159,7 @@ onBeforeUnmount(() => dragSelect.dispose());
           :data-path="row.path"
           :data-liquidated="row.liquidated ? 'true' : undefined"
           :class="{ selected: selected.has(row.path) }"
-          :style="row.liquidated ? { background: 'rgba(255,75,75,.10)' } : undefined"
+          :style="row.liquidated ? { background: 'rgb(var(--danger-rgb) / .10)' } : undefined"
           @click="emit('toggle-select', row.path)"
         >
           <td v-if="showVersion">PB{{ (row.backtest_version || '').toUpperCase() }}</td>

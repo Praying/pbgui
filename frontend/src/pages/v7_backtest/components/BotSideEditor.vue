@@ -137,8 +137,8 @@ watch(model, (raw) => {
           <label>
             {{ t('v7backtest.fullConfigJson') }}
             <span v-if="hasStatus" style="font-size: var(--fs-xs, 11px); font-weight: 400; opacity: 0.8">
-              ■ <span style="color: #f0a500">{{ t('v7backtest.neutralized') }}</span>
-              &nbsp;■ <span style="color: #e05252">{{ t('v7backtest.review') }}</span>
+              ■ <span style="color: var(--warning)">{{ t('v7backtest.neutralized') }}</span>
+              &nbsp;■ <span style="color: var(--danger)">{{ t('v7backtest.review') }}</span>
             </span>
           </label>
           <div class="bot-json-highlight-wrap" style="position: relative">
@@ -149,14 +149,14 @@ watch(model, (raw) => {
                 display: 'block',
                 background:
                   line.error
-                    ? 'rgba(255,75,75,0.16)'
+                    ? 'rgb(var(--danger-rgb) / 0.16)'
                     : line.status === 'neutralized'
-                      ? 'color-mix(in srgb,#f0a500 16%,transparent)'
+                      ? 'color-mix(in srgb,var(--warning) 16%,transparent)'
                       : line.status === 'pb_default'
-                        ? 'color-mix(in srgb,#e05252 16%,transparent)'
+                        ? 'color-mix(in srgb,var(--danger) 16%,transparent)'
                         : 'transparent',
                 borderRadius: line.status || line.error ? '2px' : undefined,
-                boxShadow: line.error ? 'inset 3px 0 0 rgba(255,75,75,0.95)' : undefined,
+                boxShadow: line.error ? 'inset 3px 0 0 rgb(var(--danger-rgb) / 0.95)' : undefined,
               }"
               >{{ line.text }}</span></pre>
             <textarea

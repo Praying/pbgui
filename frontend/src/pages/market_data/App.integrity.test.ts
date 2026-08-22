@@ -99,10 +99,10 @@ describe('integrity panel integration (M-data-5, :9066-9071, :7324-7332, :4562-4
       await vi.advanceTimersByTimeAsync(0);
       const jobsAfterEnter = urlsOf().filter((url) => url.includes('/api/jobs/')).length;
       expect(jobsAfterEnter).toBe(1);
-      await app.findAll('#sidebar-toolbar .sb-btn').find((b) => b.text() === 'Settings')!.trigger('click');
+      await app.find('[data-testid="rail-section-settings-panel"]').trigger('click');
       await vi.advanceTimersByTimeAsync(10_000);
       expect(urlsOf().filter((url) => url.includes('/api/jobs/'))).toHaveLength(1); // chain dead
-      await app.findAll('#sidebar-toolbar .sb-btn').find((b) => b.text() === 'OHLCV Integrity')!.trigger('click');
+      await app.find('[data-testid="rail-section-integrity-panel"]').trigger('click');
       await vi.advanceTimersByTimeAsync(0);
       expect(urlsOf().filter((url) => url.includes('/api/jobs/'))).toHaveLength(2); // immediate restart
       await vi.advanceTimersByTimeAsync(2000);

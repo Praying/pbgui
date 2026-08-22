@@ -15,15 +15,15 @@
   --bg:var(--bg-page);
   --bg2:var(--bg-panel);
   --bg3:var(--bg-elevated);
-  --bg4: #151922;
+  --bg4: #171520;
   --border:var(--border-default);
   --text:var(--text-primary);
   --text-dim:var(--text-secondary);
-  --accent:#5b9cf5;
+  --accent:#8ba7c2;
   --green:var(--success);
   --orange:var(--warning);
   --red:var(--danger);
-  --purple: #b77dff;
+  --purple: #a493c4;
   --font:var(--font-family);
   --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   --fs-xs: 11px;
@@ -62,9 +62,9 @@ button { cursor: pointer; }
 .calendar-trigger { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); background: transparent; border: 0; color: var(--text); padding: 0 3px; font-size: var(--fs-sm); line-height: 1; cursor: pointer; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { color: var(--text-dim); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .04em; }
-.field input, .field select { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #0b0e14; color: var(--text); padding: 7px 8px; min-height: 32px; }
-[data-tip] { cursor: help; text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: #716b75; text-underline-offset: 2px; text-decoration-thickness: 1px; }
-#data-tip-tooltip { display: none; position: fixed; left: 0; top: 0; z-index: 9999; background: #1e293b; color: var(--text-primary, #eae7ea); border: 1px solid #334155; border-radius: 5px; font-size: var(--fs-xs); font-weight: normal; padding: 6px 10px; white-space: pre-wrap; max-width: 480px; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,.5); pointer-events: none; will-change: transform; }
+.field input, .field select { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #0e0c12; color: var(--text); padding: 7px 8px; min-height: 32px; }
+[data-tip] { cursor: help; text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: #756d81; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+#data-tip-tooltip { display: none; position: fixed; left: 0; top: 0; z-index: 9999; background: #23202c; color: var(--text-primary, #e9e5ee); border: 1px solid #35313d; border-radius: 5px; font-size: var(--fs-xs); font-weight: normal; padding: 6px 10px; white-space: pre-wrap; max-width: 480px; line-height: 1.5; box-shadow: 0 4px 12px rgba(0,0,0,.5); pointer-events: none; will-change: transform; }
 .check-row { display: flex; align-items: center; gap: 8px; color: var(--text-dim); font-size: var(--fs-sm); }
 .check-row input { width: auto; }
 .num-stepper { display: flex; }
@@ -77,7 +77,7 @@ button { cursor: pointer; }
 .tabs, .toolbar { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; }
 .tab-btn, .action-btn, .stage-btn { border: 1px solid var(--border); border-radius: 7px; background: var(--bg3); color: var(--text); padding: 7px 11px; }
 .tab-btn.active, .stage-btn.active, .action-btn.primary, .action-btn.active-sim { border-color: var(--accent); background: rgb(var(--accent-rgb, 91 156 245) / .15); }
-.action-btn.danger { border-color: rgb(var(--danger-rgb, 229 96 92) / .4); color: #ffb3b3; }
+.action-btn.danger { border-color: rgb(var(--danger-rgb, 229 96 92) / .4); color: #daadaa; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--sp-md); }
 .third { grid-column: span 4; }
 .half { grid-column: span 6; }
@@ -89,12 +89,12 @@ button { cursor: pointer; }
 .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; background: var(--bg3); color: var(--text-dim); font-size: var(--fs-sm); }
 .chip.ok { color: var(--green); border-color: rgb(var(--success-rgb, 63 186 111) / .35); }
 .chip.warn { color: var(--orange); border-color: rgb(var(--warning-rgb, 227 164 74) / .35); }
-.chip.err { color: #ffb3b3; border-color: rgb(var(--danger-rgb, 229 96 92) / .45); }
+.chip.err { color: #daadaa; border-color: rgb(var(--danger-rgb, 229 96 92) / .45); }
 .messages { display: flex; flex-direction: column; gap: 8px; }
 .message { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--bg2); color: var(--text-dim); }
 .message.info { border-color: rgb(var(--accent-rgb, 91 156 245) / .35); }
 .message.warning { border-color: rgb(var(--warning-rgb, 227 164 74) / .45); }
-.message.error { border-color: rgb(var(--danger-rgb, 229 96 92) / .45); color: #ffb3b3; }
+.message.error { border-color: rgb(var(--danger-rgb, 229 96 92) / .45); color: #daadaa; }
 .info-banner { border: 1px solid rgb(var(--accent-rgb, 91 156 245) / .22); border-radius: 7px; background: rgb(var(--accent-rgb, 91 156 245) / .16); color: var(--accent); padding: 12px 14px; }
 .side-title { display: flex; justify-content: space-between; gap: var(--sp-md); align-items: center; margin-bottom: 10px; }
 .side-title h3 { margin: 0; }
@@ -110,13 +110,13 @@ button { cursor: pointer; }
 #main-content.is-scrolling .js-plotly-plot { pointer-events: none; }
 .plot:fullscreen { width: 100vw; height: 100vh !important; min-height: 100vh; background: var(--bg); padding: 8px; }
 .plot:fullscreen > div { height: 100% !important; }
-textarea, pre.debug-json { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #0b0e14; color: var(--text); font-family: var(--mono); font-size: var(--fs-xs); padding: 10px; overflow: auto; }
+textarea, pre.debug-json { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: #0e0c12; color: var(--text); font-family: var(--mono); font-size: var(--fs-xs); padding: 10px; overflow: auto; }
 textarea { min-height: 480px; resize: vertical; }
 #raw-config-panel .json-panel-wrap { margin-top: 0; }
 #raw-config-panel .json-pre[contenteditable="true"] { outline: none; cursor: text; }
-#raw-config-panel .json-pre.raw-invalid { border-color: rgb(var(--danger-rgb, 229 96 92) / .55); color: #ffb3b3; }
+#raw-config-panel .json-pre.raw-invalid { border-color: rgb(var(--danger-rgb, 229 96 92) / .55); color: #daadaa; }
 .raw-config-status { margin-top: 8px; color: var(--text-dim); font-size: var(--fs-xs); }
-.raw-config-status.error { color: #ffb3b3; }
+.raw-config-status.error { color: #daadaa; }
 pre.debug-json { max-height: 460px; white-space: pre-wrap; word-break: break-word; }
 .stage-view { display: none; }
 .stage-view.active { display: block; }
@@ -139,21 +139,21 @@ pre.debug-json { max-height: 460px; white-space: pre-wrap; word-break: break-wor
 .movie-plot:fullscreen > div { height: 100% !important; }
 .movie-progress { margin-top: 10px; display: none; }
 .movie-progress.active { display: block; }
-.movie-progress-bar { height: 10px; border: 1px solid var(--border); border-radius: 999px; background: #0b0e14; overflow: hidden; }
+.movie-progress-bar { height: 10px; border: 1px solid var(--border); border-radius: 999px; background: #0e0c12; overflow: hidden; }
 .movie-progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); transition: width .2s ease; }
 .movie-progress-text { margin-top: 6px; color: var(--text-dim); font-size: var(--fs-sm); }
 .movie-export-panel { margin-top: var(--sp-md); padding: var(--sp-md); border: 1px solid var(--border); border-radius: var(--radius); background: rgba(255,255,255,.025); }
 .movie-export-panel details { margin-top: var(--sp-sm); }
 .movie-export-download { display: none; justify-content: center; align-items: center; min-height: 36px; color: var(--green); text-decoration: none; border: 1px solid rgba(80, 200, 120, .45); border-radius: var(--radius-sm); padding: 0 12px; }
 .movie-export-download.active { display: inline-flex; }
-.segment-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin: 6px 0 10px; background: #0b0e14; }
+.segment-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin: 6px 0 10px; background: #0e0c12; }
 .segment-tabs button { min-width: 0; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--text-dim); padding: 6px 6px; font-size: var(--fs-xs); transition: color .15s, background .15s; }
 .segment-tabs button:last-child { border-right: 0; }
 .segment-tabs button:hover { color: var(--text); background: rgb(var(--accent-rgb, 91 156 245) / .08); }
 .segment-tabs button.active { color: #fff; background: rgb(var(--accent-rgb, 91 156 245) / .18); outline: 1px solid rgb(var(--accent-rgb, 91 156 245) / .75); outline-offset: -1px; }
 .slider-field { margin-bottom: 12px; }
-.slider-field.near-bound { border-left: 3px solid #f59e0b; padding-left: 8px; }
-.near-bound-badge { color: #fbbf24; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.slider-field.near-bound { border-left: 3px solid #c4a67e; padding-left: 8px; }
+.near-bound-badge { color: #c4a67e; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
 .slider-label { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: var(--fs-sm); }
 .slider-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .slider-meta { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
@@ -165,7 +165,7 @@ input.param-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance:
 input.param-slider::-moz-range-track { height: 4px; background: rgba(255,255,255,.22); border-radius: 999px; border: 0; }
 input.param-slider::-moz-range-progress { height: 4px; background: var(--accent); border-radius: 999px; border: 0; }
 input.param-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 0; box-shadow: 0 0 0 1px rgba(19, 17, 20,.95); }
-.param-select, .param-text { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #0b0e14; color: var(--text); padding: 7px 8px; min-height: 32px; margin-top: 6px; }
+.param-select, .param-text { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #0e0c12; color: var(--text); padding: 7px 8px; min-height: 32px; margin-top: 6px; }
 .param-check { display: flex; align-items: center; gap: 8px; margin-top: 6px; color: var(--text-dim); font-size: var(--fs-sm); }
 .param-check input { width: auto; }
 .inline-note { color: var(--text-dim); font-size: var(--fs-xs); margin: -2px 0 10px; }
@@ -884,12 +884,12 @@ function cfgDateValueToMs(value) {
       '#__dp .dp-nav:hover{background:rgba(255,255,255,.15)!important}' +
       '#__dp .dp-nav{transition:background .1s;border-radius:4px}' +
       '#__dp .dp-ctl{transition:background .1s,border-color .1s;border-radius:4px}' +
-      '#__dp .dp-ctl:hover{background:rgba(255,255,255,.08)!important;border-color:var(--accent,#4a90d9)!important}' +
+      '#__dp .dp-ctl:hover{background:rgba(255,255,255,.08)!important;border-color:var(--accent,#8ba7c2)!important}' +
       '#__dp .dp-dd{position:absolute;top:calc(100% + 4px);z-index:2;display:none;background:var(--bg3,#2a2d40);border:1px solid var(--border,#444);border-radius:6px;box-shadow:0 8px 18px rgba(0,0,0,.55);max-height:220px;overflow:auto;padding:4px}' +
       '#__dp .dp-dd.open{display:block}' +
       '#__dp .dp-dd-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text,#ccc);font-size:var(--fs-xs);padding:6px 8px;border-radius:4px;cursor:pointer}' +
       '#__dp .dp-dd-item:hover{background:rgba(255,255,255,.10)!important}' +
-      '#__dp .dp-dd-item.selected{background:var(--accent,#4a90d9);color:#fff}' +
+      '#__dp .dp-dd-item.selected{background:var(--accent,#8ba7c2);color:#fff}' +
       '#__dp .dp-foot:hover{background:rgba(255,255,255,.15)!important}' +
       '#__dp .dp-foot{transition:background .1s;border-radius:4px}';
     document.head.appendChild(s);
@@ -898,7 +898,7 @@ function cfgDateValueToMs(value) {
     var e = document.getElementById('__dp');
     if (!e) {
       e = document.createElement('div'); e.id = '__dp';
-      e.style.cssText = 'display:none;position:fixed;z-index:99999;background:var(--bg2,#1e2030);border:1px solid var(--border,#444);border-radius:8px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.7);user-select:none;min-width:220px;color-scheme:dark';
+      e.style.cssText = 'display:none;position:fixed;z-index:99999;background:var(--bg2,#211e29);border:1px solid var(--border,#444);border-radius:8px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.7);user-select:none;min-width:220px;color-scheme:dark';
       document.body.appendChild(e);
       document.addEventListener('pointerdown', function(ev) {
         if (!_id) return;
@@ -946,10 +946,10 @@ function cfgDateValueToMs(value) {
     for (var day = 1; day <= dim; day++) {
       var isT = td.getFullYear() === _y && td.getMonth() === _m && td.getDate() === day;
       var isS = selOk && sel.getFullYear() === _y && sel.getMonth() === _m && sel.getDate() === day;
-      var bg = isS ? 'var(--accent,#4a90d9)' : isT ? 'rgba(255,255,255,.12)' : 'transparent';
+      var bg = isS ? 'var(--accent,#8ba7c2)' : isT ? 'rgba(255,255,255,.12)' : 'transparent';
       h += '<div class="dp-day" onclick="window.__dp.pick(' + day + ')" style="cursor:pointer;border-radius:4px;padding:4px 0;background:' + bg + ';color:var(--text,#ccc);font-weight:' + ((isS || isT) ? '600' : '400') + ';font-size:var(--fs-sm)">' + day + '</div>';
     }
-    h += '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-dim,#888);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('common.close') + '</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent,#4a90d9);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('v7explore.today') + '</button></div>';
+    h += '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-dim,#888);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('common.close') + '</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent,#8ba7c2);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('v7explore.today') + '</button></div>';
     e.innerHTML = h;
     _reposition();
   }
@@ -1544,7 +1544,7 @@ function renderPlot(sideKey, snapshot, prefix) {
       hovertext: hover,
       mode: 'markers+text',
       name: name,
-      marker: { color: color, size: 20, symbol: 'circle', opacity: 0.95, line: { color: '#020617', width: 2 } },
+      marker: { color: color, size: 20, symbol: 'circle', opacity: 0.95, line: { color: '#08070c', width: 2 } },
       textfont: { color: '#ffffff', size: 11, family: 'Arial Black, Arial, sans-serif' },
       textposition: 'middle center',
       hovertemplate: '%{hovertext}<extra></extra>'
@@ -1618,16 +1618,16 @@ function renderPlot(sideKey, snapshot, prefix) {
     }
   }
 
-  traces.push(lineTrace(normalEntries, 'Entry Grid (Lines)', '#ff4b4b', 'dash'));
+  traces.push(lineTrace(normalEntries, 'Entry Grid (Lines)', '#c58e8a', 'dash'));
   addHoverLine(entryPrices, 'Entry Grid', 'entry');
-  traces.push(lineTrace(closes, 'Close Grid (Lines)', '#21c354', 'dot'));
+  traces.push(lineTrace(closes, 'Close Grid (Lines)', '#8fb593', 'dot'));
   addHoverLine(closePrices, 'Close Grid', 'close');
   if (entryMode !== 'GridOnly' && shownTrailingPrices.length) {
-    traces.push(lineTrace(shownTrailingOrders, shownTrailingName, '#ff8c00', 'dash'));
+    traces.push(lineTrace(shownTrailingOrders, shownTrailingName, '#c99a6e', 'dash'));
     addHoverLine(shownTrailingPrices, shownTrailingName, 'entry_trailing');
   }
-  addShapeLine(ref, '#b77dff', 'solid', 3);
-  legendLine('EMA Band', '#b77dff', 'solid', 3, 'ema');
+  addShapeLine(ref, '#a493c4', 'solid', 3);
+  legendLine('EMA Band', '#a493c4', 'solid', 3, 'ema');
   addHoverLine([ref], 'EMA Band', 'ema');
 
   var analysisTs = deepGet(market, ['metadata', 'ohlcv', 'grid_time'], '') || deepGet(market, ['metadata', 'ohlcv', 'selected_start'], '') || x1;
@@ -1676,8 +1676,8 @@ function renderPlot(sideKey, snapshot, prefix) {
 
   if (prefix === 'sim-') {
     var simEvents = deepGet(state.simulations, [state.activeSimulationMode || 'local_simulation', 'events', sideKey], []);
-    traces.push(fillTrace(simEvents, 'buy', 'Buy Fills', '#16a34a'));
-    traces.push(fillTrace(simEvents, 'sell', 'Sell Fills', '#dc2626'));
+    traces.push(fillTrace(simEvents, 'buy', 'Buy Fills', '#8fb593'));
+    traces.push(fillTrace(simEvents, 'sell', 'Sell Fills', '#96524e'));
   }
   var yRange = null;
   if (yValues.length) {
@@ -1690,13 +1690,13 @@ function renderPlot(sideKey, snapshot, prefix) {
   var target = document.getElementById(targetId);
   if (!target) return;
   Plotly.react(targetId, traces, {
-    paper_bgcolor: '#1b191d', plot_bgcolor: '#1b191d', font: { color: '#fafafa' },
+    paper_bgcolor: '#1d1a23', plot_bgcolor: '#1d1a23', font: { color: '#f2eff5' },
     title: PBGuiI18n.t('v7explore.entryCloseGridsVisualization', { side: sideKey.toUpperCase() }),
     margin: { l: 55, r: 25, t: 45, b: 35 },
     shapes: shapes,
     annotations: annotations,
-    xaxis: { type: 'date', title: PBGuiI18n.t('v7explore.date'), gridcolor: '#333640', rangeslider: { visible: plotInfo.bucketSize <= 1, bgcolor: '#151922', bordercolor: '#333640', thickness: 0.16 } },
-    yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#333640', range: yRange || undefined },
+    xaxis: { type: 'date', title: PBGuiI18n.t('v7explore.date'), gridcolor: '#35313e', rangeslider: { visible: plotInfo.bucketSize <= 1, bgcolor: '#171520', bordercolor: '#35313e', thickness: 0.16 } },
+    yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#35313e', range: yRange || undefined },
     hovermode: 'closest', hoverdistance: 30,
     legend: { orientation: 'h', bgcolor: 'rgba(0,0,0,0)', bordercolor: 'rgba(0,0,0,0)' }
   }, plotlyFullscreenConfig(targetId, 520)).then(function() { installCandleZoomHandler(target, candles); });
@@ -2775,7 +2775,7 @@ function buildMovieFigureSpec(data, initialFrameIdx) {
     var upcomingCloses = useFillPreview ? upcomingFillPrices('close', frame.timestamp) : [];
     var trailEntry = trailingPrice(frame, 'entries', closePrice);
     var trailClose = trailingPrice(frame, 'closes', closePrice);
-    var currentTrace = { type: 'scatter', mode: 'lines', name: 'Current Price', x: [x0, x1], y: [closePrice, closePrice], line: { color: '#f0c542', width: 2 } };
+    var currentTrace = { type: 'scatter', mode: 'lines', name: 'Current Price', x: [x0, x1], y: [closePrice, closePrice], line: { color: '#dbc4a2', width: 2 } };
     var traceEntries = useFillPreview ? gridTrace(upcomingEntries, 'rgba(255, 0, 0, 0.75)', 'Upcoming Entries', x0, x1, 2) : gridTrace(entryPrices, 'rgba(255, 0, 0, 0.6)', 'Entry Grid', x0, x1);
     var traceCloses = useFillPreview ? gridTrace(upcomingCloses, 'rgba(0, 255, 0, 0.75)', 'Upcoming Closes', x0, x1, 2) : gridTrace(closePrices, 'rgba(0, 255, 0, 0.6)', 'Close Grid', x0, x1);
     var traceTrailEntry = trailEntry === null ? { type: 'scatter', mode: 'lines', name: 'Next Trailing Entry', x: [], y: [] } : gridTrace([trailEntry], 'rgba(255, 165, 0, 0.9)', 'Next Trailing Entry', x0, x1, 3);
@@ -2798,7 +2798,7 @@ function buildMovieFigureSpec(data, initialFrameIdx) {
     if (mstate.walletExposure !== null && isFinite(mstate.walletExposure)) annotationParts.push('WE: ' + fmt(mstate.walletExposure, 6));
     if (isFinite(mstate.posSize)) annotationParts.push('posSize: ' + fmt(mstate.posSize, 8));
     if (mstate.posPrice !== null && isFinite(mstate.posPrice) && mstate.posPrice > 0) annotationParts.push('posPrice: ' + fmt(mstate.posPrice, 8));
-    var annotation = { x: 1.02, y: 1, xref: 'paper', yref: 'paper', xanchor: 'left', yanchor: 'top', text: annotationParts.join('<br>'), showarrow: false, align: 'left', bgcolor: 'rgba(0,0,0,0.5)', font: { size: 13, color: '#fafafa' } };
+    var annotation = { x: 1.02, y: 1, xref: 'paper', yref: 'paper', xanchor: 'left', yanchor: 'top', text: annotationParts.join('<br>'), showarrow: false, align: 'left', bgcolor: 'rgba(0,0,0,0.5)', font: { size: 13, color: '#f2eff5' } };
     return { name: String(idx), data: [traceEntries, traceCloses, currentTrace, traceTrailEntry, traceTrailClose, ft], traces: [3, 4, 5, 6, 7, 8], layout: { xaxis: { range: [x0, x1] }, yaxis: { range: [yMin, yMax] }, annotations: [annotation] } };
   }
   var plotFrames = frames.map(function(f, idx) {
@@ -2809,7 +2809,7 @@ function buildMovieFigureSpec(data, initialFrameIdx) {
   var init = plotFrames[activeFrame] || plotFrames[0] || dynamicFrame(frames[0], 0);
   var initData = [traceCandles, traceEmaHigh, traceEmaLow].concat(init.data || []);
   var playFrameNames = plotFrames.slice(activeFrame).map(function(frame) { return frame.name; });
-  var layout = { title: PBGuiI18n.t('v7explore.animationTitle', { coin: deepGet(data, ['metadata', 'coin'], ''), frames: frames.length }), paper_bgcolor: '#1b191d', plot_bgcolor: '#1b191d', font: { color: '#fafafa' }, height: 760, hovermode: 'closest', hoverdistance: 50, margin: { l: 55, r: 260, t: 60, b: 150 }, xaxis: { type: 'date', gridcolor: '#333640', rangeslider: { visible: false }, autorange: false, range: deepGet(init, ['layout', 'xaxis', 'range'], [xs[0], xs[0]]) }, yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#333640', autorange: false, range: deepGet(init, ['layout', 'yaxis', 'range'], [0, 1]) }, legend: { x: 1.02, y: 0.85, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0.5)' }, annotations: deepGet(init, ['layout', 'annotations'], []), updatemenus: [{ type: 'buttons', direction: 'left', showactive: false, x: 0.01, y: -0.06, xanchor: 'left', yanchor: 'top', pad: { r: 10, t: 10 }, buttons: [{ label: 'Play', method: 'animate', args: [playFrameNames, { frame: { duration: 120, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 240, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Very Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 480, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Pause', method: 'animate', args: [[null], { frame: { duration: 0, redraw: false }, mode: 'immediate', transition: { duration: 0 } }] }] }], sliders: [{ active: activeFrame, steps: plotFrames.map(function(_, k) { return { method: 'animate', args: [[String(k)], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }], label: String(k) }; }), transition: { duration: 0 }, x: 0.01, y: -0.15, currentvalue: { font: { size: 12 }, prefix: PBGuiI18n.t('v7explore.framePrefix'), visible: true, xanchor: 'left' }, len: 0.99, pad: { b: 10, t: 10 } }] };
+  var layout = { title: PBGuiI18n.t('v7explore.animationTitle', { coin: deepGet(data, ['metadata', 'coin'], ''), frames: frames.length }), paper_bgcolor: '#1d1a23', plot_bgcolor: '#1d1a23', font: { color: '#f2eff5' }, height: 760, hovermode: 'closest', hoverdistance: 50, margin: { l: 55, r: 260, t: 60, b: 150 }, xaxis: { type: 'date', gridcolor: '#35313e', rangeslider: { visible: false }, autorange: false, range: deepGet(init, ['layout', 'xaxis', 'range'], [xs[0], xs[0]]) }, yaxis: { title: PBGuiI18n.t('v7explore.price'), gridcolor: '#35313e', autorange: false, range: deepGet(init, ['layout', 'yaxis', 'range'], [0, 1]) }, legend: { x: 1.02, y: 0.85, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0.5)' }, annotations: deepGet(init, ['layout', 'annotations'], []), updatemenus: [{ type: 'buttons', direction: 'left', showactive: false, x: 0.01, y: -0.06, xanchor: 'left', yanchor: 'top', pad: { r: 10, t: 10 }, buttons: [{ label: 'Play', method: 'animate', args: [playFrameNames, { frame: { duration: 120, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 240, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Very Slow', method: 'animate', args: [playFrameNames, { frame: { duration: 480, redraw: false }, fromcurrent: true, mode: 'immediate', transition: { duration: 0, easing: 'linear' } }] }, { label: 'Pause', method: 'animate', args: [[null], { frame: { duration: 0, redraw: false }, mode: 'immediate', transition: { duration: 0 } }] }] }], sliders: [{ active: activeFrame, steps: plotFrames.map(function(_, k) { return { method: 'animate', args: [[String(k)], { mode: 'immediate', frame: { duration: 0, redraw: false }, transition: { duration: 0 } }], label: String(k) }; }), transition: { duration: 0 }, x: 0.01, y: -0.15, currentvalue: { font: { size: 12 }, prefix: PBGuiI18n.t('v7explore.framePrefix'), visible: true, xanchor: 'left' }, len: 0.99, pad: { b: 10, t: 10 } }] };
   delete layout.xaxis.autorange;
   return { data: initData, layout: layout, frames: plotFrames, activeFrame: activeFrame };
 }

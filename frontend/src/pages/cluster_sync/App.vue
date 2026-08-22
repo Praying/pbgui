@@ -8,12 +8,37 @@ import ErrorState from '@/shared/components/ErrorState.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import type { PageSection } from '@/shared/navigation';
 import { clusterApiBase } from './config';
 
 const { t } = useI18n();
 const apiBase = clusterApiBase();
 type Section = 'overview' | 'setup' | 'nodes' | 'instances' | 'tombstones' | 'operations' | 'credentials' | 'retention';
 const section = ref<Section>('overview');
+
+/* Page sections live in the workbench rail (accordion under this page's
+   entry) — the legacy in-page cluster-sidebar column is retired. */
+const SECTION_LABEL_KEYS: Record<Section, string> = {
+  overview: 'sysmon.overview',
+  setup: 'sysmon.setup',
+  nodes: 'sysmon.clusterNodes',
+  instances: 'sysmon.v7State',
+  tombstones: 'sysmon.tombstones',
+  operations: 'sysmon.oplog',
+  credentials: 'sysmon.credentials',
+  retention: 'sysmon.retention',
+};
+const sections = computed<PageSection[]>(() =>
+  (Object.keys(SECTION_LABEL_KEYS) as Section[]).map((key) => ({
+    key,
+    label: t(SECTION_LABEL_KEYS[key]),
+  })),
+);
+
+function onSectionSelect(sectionKey: string): void {
+  section.value = sectionKey as Section;
+}
+
 const loading = ref(true);
 const status = ref<Record<string, any>>({});
 const nodes = ref<Record<string, any>[]>([]);
@@ -113,6 +138,9 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
     page-key="system_cluster"
     :page-title="t('sysmon.clusterSync')"
     :page-description="t('sysmon.clusterSyncSubtitle')"
+    :sections="sections"
+    :active-section="section"
+    @update:section="onSectionSelect"
   >
     <template #status>
       <StatusStrip
@@ -129,7 +157,6 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
 
   <div class="cluster-sync">
     <div class="cluster-layout">
-      <aside class="cluster-sidebar"><div class="cluster-nav"><button v-for="item in (['overview','setup','nodes','instances','tombstones','operations','credentials','retention'] as Section[])" :key="item" :data-section-tab="item" :class="{ active: section === item }" @click="section = item">{{ item === 'overview' ? t('sysmon.overview') : item === 'setup' ? t('sysmon.setup') : item === 'nodes' ? t('sysmon.clusterNodes') : item === 'instances' ? t('sysmon.v7State') : item === 'tombstones' ? t('sysmon.tombstones') : item === 'operations' ? t('sysmon.oplog') : item === 'credentials' ? t('sysmon.credentials') : t('sysmon.retention') }}</button></div></aside>
       <section class="cluster-main">
         <div
           v-if="notice"

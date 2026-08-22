@@ -202,16 +202,16 @@ async function onStopRun(): Promise<void> {
      .mds-* selector chain keeps everything page-local. -->
 <style scoped>
 .mds-root {
-  --mds-bg-primary: #1f1d21;
-  --mds-bg-secondary: #37333a;
-  --mds-bg-tertiary: #374151;
-  --mds-text-primary: #f7fafc;
-  --mds-text-secondary: #cbd5e0;
-  --mds-border-color: #4e4851;
-  --mds-accent-info: #3b82f6;
-  --mds-accent-success: #10b981;
-  --mds-accent-warning: #f59e0b;
-  --mds-accent-danger: #ef4444;
+  --mds-bg-primary: var(--bg-card);
+  --mds-bg-secondary: var(--bg-elevated);
+  --mds-bg-tertiary: var(--border-default);
+  --mds-text-primary: var(--text-primary);
+  --mds-text-secondary: var(--text-secondary);
+  --mds-border-color: var(--border-strong);
+  --mds-accent-info: var(--accent);
+  --mds-accent-success: var(--success);
+  --mds-accent-warning: var(--warning);
+  --mds-accent-danger: var(--danger);
   --fs-xs: 11px;
   --fs-sm: 13px;
   --fs-base: 14px;

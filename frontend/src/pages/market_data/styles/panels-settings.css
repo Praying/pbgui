@@ -4,32 +4,44 @@
 /* ── Settings panel (M-data-3, legacy :161-166, :694-705, :758-803, :813-876,
       :1015-1018, :1838-1857, :1961-1974, :2021-2048, :2057-2171, :2173-2197) ── */
 
-/* legacy :161-166 — sidebar subsection nav buttons */
+/* legacy :161-166 — sidebar subsection nav buttons (now an in-panel
+      segmented control above the cards, rail migration) */
 .settings-subsection-btn.active {
   background: rgb(var(--accent-rgb) / 0.22);
   border-color: rgb(var(--accent-rgb) / 0.7);
-  color: #f8fbff;
+  color: var(--text-primary);
   box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.18);
 }
 
-/* legacy :168-172 — #settings-subsection-nav mirrors the inventory nav grid */
+/* legacy :2950-2958 sidebar context block (:168-172 subsection nav) —
+      relocated toolbar above the cards; ids renamed off "sidebar" */
+.settings-context-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  flex-wrap: wrap;
+}
 #settings-subsection-nav {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-xs);
-  padding-left: var(--sp-sm);
+}
+.save-settings-btn {
+  flex: 0 0 auto;
 }
 
 /* legacy :694-705 — dirty-state save button */
-#btn-save-settings-sidebar.save-needed {
-  background: #4a3414;
+#btn-save-settings.save-needed {
+  background: rgb(var(--warning-deep-rgb) / 0.4);
   color: var(--warning-soft);
-  border-color: #a16207;
+  border-color: var(--warning-deep);
   font-weight: 700;
 }
 
-#btn-save-settings-sidebar.save-needed:hover {
-  background: #7c4a03;
-  color: #fff /* white on colored bg */7ed;
+#btn-save-settings.save-needed:hover {
+  background: var(--warning-deep);
+  color: var(--warning-soft);
   border-color: var(--warning-deep);
 }
 
@@ -76,7 +88,7 @@
 }
 
 .btn.primary:hover {
-  background: #7cc4f5;
+  background: var(--accent-soft);
 }
 
 .btn.secondary {

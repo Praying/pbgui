@@ -3,6 +3,15 @@
    in the original order. */
 /* ── M-data-7: best-1m + copy-data panels (legacy :1066-1126, :1224-1440, verbatim) ── */
 
+/* in-panel build/download mode switch (rail migration — the legacy
+   #sidebar-best-1m-link/#sidebar-l2books-link shortcuts, :2946/:2948) */
+.best1m-mode-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-xs);
+  flex: 0 0 auto;
+}
+
 .best1m-shell {
   display: flex;
   flex-direction: column;
@@ -84,7 +93,7 @@
   padding: var(--sp-md);
   border: 1px solid rgb(var(--accent-rgb) / 0.16);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.45);
+  background: rgb(var(--bg-page-rgb) / 0.45);
 }
 
 .best1m-host-list {
@@ -101,7 +110,7 @@
   padding: 8px 10px;
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.18);
   border-radius: 8px;
-  background: rgba(15, 23, 34, 0.82);
+  background: rgb(var(--bg-panel-rgb) / 0.82);
   color: var(--text);
   cursor: pointer;
   font: inherit;
@@ -156,7 +165,7 @@
 .copy-data-summary {
   border: 1px solid rgb(var(--accent-rgb) / 0.24);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.5);
+  background: rgb(var(--bg-page-rgb) / 0.5);
   padding: var(--sp-md);
   display: grid;
   gap: var(--sp-sm);
@@ -242,7 +251,7 @@
   align-items: center;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(12, 17, 26, 0.5);
+  background: rgb(var(--bg-page-rgb) / 0.5);
   padding: var(--sp-sm) var(--sp-md);
 }
 

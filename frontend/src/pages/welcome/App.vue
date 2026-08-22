@@ -5,7 +5,7 @@
  *
  * ┌──────────────────────────┬─ Legacy regions ────────────────────────────┐
  * │ App (this shell)         │ markup :744-920, globals :923-976, wiring   │
- * │                          │ :1526-1587, sidebar resize :1564-1585        │
+ * │                          │ :1526-1587                                  │
  * │ useWelcome               │ bootstrap :1435-1445, render* :1283-1356,    │
  * │                          │ save/setup+password :1447-1524, browser      │
  * │                          │ :1039-1157, banner :1002-1011                │
@@ -17,6 +17,9 @@
  *  - updateActiveSectionFromScroll (:1159-1175) — dead in legacy: only one
  *    section is ever un-hidden at a time (focusSection :1028-1037), so the
  *    scroll-proximity loop always resolved to that single visible section.
+ *  - in-page sidebar + resize (:744-769, :1564-1585) — sections moved into
+ *    the workbench rail (AppShell sections API); the disabled password
+ *    section replaces the openPasswordSection guard (:1501-1508).
  *
  * Deliberate deviations (documented):
  *  - The token lives in the store (cleared when bootstrap reports an
@@ -25,12 +28,13 @@
  *    legacy :922); Escape closes the file browser (:1556-1561) and the
  *    browser modal closes via its own buttons/backdrop-free paths only.
  */
-import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import type { PageSection } from '@/shared/navigation';
 import { useWelcome } from './composables/useWelcome';
 import { apiOrigin, bootSerial, bootVersion } from './config';
 
@@ -44,12 +48,20 @@ const metaVersion = computed(() => String(store.bootstrap.value?.version || boot
 const metaSerial = computed(() => String(store.bootstrap.value?.serial || bootSerial() || ''));
 const apiOriginText = apiOrigin();
 
-const sidebarEl = useTemplateRef<HTMLElement>('sidebar');
+/* Page sections live in the rail (accordion under the active page).
+   Password stays listed but inert until the session authenticates —
+   the disabled state replaces the legacy guard branch. */
+const sections = computed<PageSection[]>(() => [
+  { key: 'overview', label: t('misc.welcome.overview') },
+  { key: 'setup', label: t('misc.welcome.setup') },
+  { key: 'password', label: t('misc.welcome.password'), disabled: !store.canSave.value },
+]);
 
-const SECTIONS = [
-  { key: 'overview', labelKey: 'misc.welcome.overview' },
-  { key: 'setup', labelKey: 'misc.welcome.setup' },
-] as const;
+function onSectionSelect(sectionKey: string): void {
+  if (sectionKey === 'overview' || sectionKey === 'setup' || sectionKey === 'password') {
+    store.focusSection(sectionKey);
+  }
+}
 
 const statusGroups = computed(() => {
   const rows = store.statusRows.value;
@@ -88,32 +100,6 @@ async function onDisableAuth(): Promise<void> {
   await store.disableAuthentication(confirmDialog);
 }
 
-function openPasswordSection(): void {
-  if (!store.canSave.value) {
-    store.setBanner(t('misc.welcome.logInBeforeChangingPassword'), 'error');
-    store.focusSection('overview');
-    return;
-  }
-  store.focusSection('password');
-}
-
-/* ── sidebar resize (:1564-1585) ── */
-
-let resizeActive = false;
-
-function onResizeMousedown(event: MouseEvent): void {
-  event.preventDefault();
-  resizeActive = true;
-}
-function onResizeMousemove(event: MouseEvent): void {
-  if (!resizeActive || !sidebarEl.value) return;
-  const width = Math.min(420, Math.max(160, event.clientX));
-  sidebarEl.value.style.width = width + 'px';
-}
-function onResizeMouseup(): void {
-  resizeActive = false;
-}
-
 /* ── file browser keyboard (:1556-1561) ── */
 
 function onKeydown(event: KeyboardEvent): void {
@@ -134,16 +120,12 @@ onMounted(() => {
   document.title = t('misc.welcome.title');
   (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openWelcomeHelp;
   document.addEventListener('keydown', onKeydown);
-  document.addEventListener('mousemove', onResizeMousemove);
-  document.addEventListener('mouseup', onResizeMouseup);
   void store.loadBootstrap();
 });
 
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown);
-  document.removeEventListener('mousemove', onResizeMousemove);
-  document.removeEventListener('mouseup', onResizeMouseup);
   delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
 });
 </script>
@@ -158,6 +140,9 @@ onBeforeUnmount(() => {
     :page-family="t('nav.system')"
     :status-text="store.summaryView.value.auth"
     :status-tone="store.summaryView.value.authTone === 'info' ? 'neutral' : store.summaryView.value.authTone"
+    :sections="sections"
+    :active-section="store.activeSection.value"
+    @update:section="onSectionSelect"
   >
     <template #header-actions>
       <IconButton
@@ -169,28 +154,6 @@ onBeforeUnmount(() => {
     </template>
 
     <div id="page-body">
-    <div id="sidebar" ref="sidebar">
-      <div id="sidebar-sticky">
-        <div id="sidebar-header">
-          <span class="sb-title">{{ t('misc.welcome.welcome') }}</span>
-        </div>
-        <div id="sidebar-toolbar">
-          <button
-            v-for="section in SECTIONS"
-            :key="section.key"
-            class="sb-btn"
-            :class="{ active: store.activeSection.value === section.key }"
-            @click="store.focusSection(section.key)"
-          >{{ t(section.labelKey) }}</button>
-          <hr class="sb-sep">
-          <button class="sb-btn" id="sidebar-password-btn" :disabled="!store.canSave.value" @click="openPasswordSection">{{
-            t('misc.welcome.password')
-          }}</button>
-        </div>
-      </div>
-      <div id="sidebar-resize" @mousedown="onResizeMousedown"></div>
-    </div>
-
     <div class="workbench-page-content">
       <div id="banner" class="banner" :class="store.banner.value.message ? `show ${store.banner.value.kind}` : ''">
         {{ store.banner.value.message }}

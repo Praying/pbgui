@@ -10,10 +10,12 @@
  * │ App (this skeleton)  │ 1 ✓    │ DOM shell 2834-2979 + 3580-3639 (toasts),   │
  * │                      │        │ bootstrap 9736-9773 (restorePanel, title),  │
  * │                      │        │ document.title market.title (:3646)         │
- * │ SidebarNav           │ 1+2 ✓  │ sectionButtons :3674-3682 + :2925-2949,     │
- * │                      │        │ shortcut clicks :9112-9120, sync state      │
- * │                      │        │ :7415-7446 (mode payload — M-data-1 review  │
- * │                      │        │ handoff)                                    │
+ * │ Rail sections        │ 1+2 ✓  │ sectionButtons :3674-3682 → AppShell        │
+ * │                      │        │ sections API (workbench-rail accordion);    │
+ * │                      │        │ shortcut clicks :9112-9120 → rail entry     │
+ * │                      │        │ (build) + in-panel mode switch (download);  │
+ * │                      │        │ highlight sync :7415-7446 retired with the  │
+ * │                      │        │ sidebar column                              │
  * │ PanelShell           │ 1 ✓    │ setActivePanel toggling :9038-9043          │
  * │ ExchangeSelect       │ 1+2 ✓  │ context bar :2965-2977; select change       │
  * │                      │        │ :9611-9613 → setContextExchange fan-out     │
@@ -79,6 +81,12 @@
  *  - refreshBest1mPanel is not called twice for a shortcut click (legacy
  *    called it via setActivePanel :9058 AND openBest1mPanel :7690; the
  *    idempotent refresh lands once with M-data-7's hook).
+ *  - The #sidebar column is retired: the sectionButtons registry
+ *    (:3674-3682) renders as rail children (AppShell sections API); the
+ *    settings save/subsection block (:2950-2958) moved above the settings
+ *    cards, the inventory view/action blocks (:2929-2945) above the
+ *    inventory table and the l2books download shortcut (:2948) became an
+ *    in-panel build/download mode switch on the best-1m panel.
  */
 import { computed, onBeforeUnmount, onMounted, provide } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -86,6 +94,7 @@ import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import type { PageSection } from '@/shared/navigation';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
@@ -94,11 +103,9 @@ import CopyDataPanel from './components/copydata/CopyDataPanel.vue';
 import IntegrityPanel from './components/integrity/IntegrityPanel.vue';
 import InventoryPanel from './components/inventory/InventoryPanel.vue';
 import DeleteOlderDialog from './components/inventory/DeleteOlderDialog.vue';
-import SidebarActions from './components/inventory/SidebarActions.vue';
 import PanelPlaceholder from './components/PanelPlaceholder.vue';
 import PanelShell from './components/PanelShell.vue';
 import SettingsPanel from './components/settings/SettingsPanel.vue';
-import SidebarNav from './components/SidebarNav.vue';
 import StatusPanel from './components/StatusPanel.vue';
 import ToastStack from './components/ToastStack.vue';
 import { apiUrl } from './config';
@@ -129,7 +136,7 @@ import {
 } from './composables/useContextExchange';
 import { useStatusMonitor } from './composables/useStatusMonitor';
 import { useStatusSummaries } from './composables/useStatusSummaries';
-import type { PanelDef, PanelId, InventorySubsection, SettingsSubsection } from './types';
+import type { PanelDef, PanelId } from './types';
 
 const { t } = useI18n();
 
@@ -197,17 +204,27 @@ function onPageHide(): void {
 window.addEventListener('pagehide', onPageHide);
 onBeforeUnmount(() => window.removeEventListener('pagehide', onPageHide));
 
-/** Sidebar view-model (legacy updateSaveSettingsButton inputs :5528-5533). */
-const settingsNav = computed(() => ({
-  isDirty: settings.isDirty.value,
-  availableSubsections: settings.availableSubsections.value,
-  activeSubsection: settings.resolvedSubsection.value,
-}));
+/* ── page sections in the workbench rail (accordion under this page's
+      entry) — the legacy in-page #sidebar column is retired. The registry
+      order is the legacy sectionButtons order (:3674-3682); best1m, which
+      had no sidebar button (reached through the shortcut link :2946),
+      becomes a regular rail entry. ── */
 
-/** Subsection click — setActivePanel then subsection (:9605-9608). */
-function onSelectSettingsSubsection(key: SettingsSubsection): void {
-  setActivePanel('settings-panel'); // :9606
-  settings.setActiveSubsection(key); // :9607
+const sections = computed<PageSection[]>(() =>
+  PANELS.map((panel) => ({ key: panel.id, label: t(panel.labelKey) })),
+);
+
+/** Rail section click — setActivePanel (:9038). The best1m entry keeps the
+ *  legacy shortcut semantics: openBest1mPanel('build') (:9112-9115 →
+ *  :7687-7691); download mode is reached from the in-panel mode switch. */
+function onSectionSelect(sectionKey: string): void {
+  const panelId = sectionKey as PanelId;
+  if (!PANELS.some((panel) => panel.id === panelId)) return;
+  if (panelId === 'best1m-panel') {
+    openBest1mPanel('build');
+    return;
+  }
+  setActivePanel(panelId);
 }
 
 /* ── status monitor controller (mount protocol :4102-4174) — created before
@@ -314,14 +331,6 @@ const inventory = useInventory({
 panelHooks['inventory-panel'] = {
   onEnter: () => void inventory.loadPanel(false),
 };
-
-/** View tab click (:9351-9354) — panel switch, then setActiveInventoryView
- *  (:6376-6386) whose forced reload supersedes the enter hook's load. */
-function onSelectInventoryView(view: InventorySubsection): void {
-  setActivePanel('inventory-panel'); // :9352 — re-fires onEnter even if active
-  inventory.setActiveView(view); // :6353 + persist :6378-6382
-  void inventory.loadPanel(true); // :6385 — the view-key reload
-}
 
 /** The delete-by-date overlay's view model (renderInventoryOlderPreview
  *  :8253-8311 as a pure function of the store). */
@@ -478,6 +487,9 @@ onMounted(() => {
     class="data-page-shell data-page-shell--market-data"
     page-key="info_market_data_fastapi"
     :page-title="t('market.title')"
+    :sections="sections"
+    :active-section="activePanel"
+    @update:section="onSectionSelect"
   >
     <template #status>
       <StatusStrip
@@ -489,40 +501,6 @@ onMounted(() => {
 
     <MigrationWatermark />
     <div id="page-body">
-    <SidebarNav
-      :panels="PANELS"
-      :active="activePanel"
-      :context-exchange="contextExchange.contextExchange.value"
-      :best1m-section="contextExchange.best1mSection.value"
-      :settings-nav="settingsNav"
-      @select="setActivePanel"
-      @shortcut="openBest1mPanel"
-      @save-settings="settings.saveSettings()"
-      @select-settings-subsection="onSelectSettingsSubsection"
-    >
-      <!-- legacy :2929-2945 — after the integrity button, before the best-1m
-           shortcut link; M-data-6 -->
-      <template #inventory-actions>
-        <SidebarActions
-          :nav-visible="inventory.subsectionNavVisible.value"
-          :available-views="inventory.availableViews.value"
-          :active-view="inventory.currentView.value"
-          :build-visible="inventory.sidebarBuildVisible.value"
-          :build-text="inventory.sidebarBuildText.value"
-          :build-disabled="inventory.sidebarBuildDisabled.value"
-          :delete-visible="inventory.sidebarDeleteSectionVisible.value"
-          :delete-text="inventory.sidebarDeleteText.value"
-          :delete-disabled="inventory.sidebarDeleteDisabled.value"
-          :older-disabled="inventory.sidebarOlderDisabled.value"
-          @select-view="onSelectInventoryView"
-          @build="inventory.actions.runBuildBest1m()"
-          @delete-selected="inventory.actions.runDeleteSelected()"
-          @delete-older="inventory.actions.openOlderDialog()"
-          @clear-dataset="inventory.actions.runClearDataset()"
-        />
-      </template>
-    </SidebarNav>
-
     <div id="main-content">
       <ExchangeSelect
         :model-value="contextExchange.contextExchange.value"
@@ -545,7 +523,12 @@ onMounted(() => {
           :active="integrityActive"
         />
         <InventoryPanel v-else-if="panel.id === 'inventory-panel'" :store="inventory" />
-        <Best1mPanel v-else-if="panel.id === 'best1m-panel'" :store="best1m" />
+        <Best1mPanel
+          v-else-if="panel.id === 'best1m-panel'"
+          :store="best1m"
+          :active-mode="contextExchange.best1mSection.value"
+          @select-mode="openBest1mPanel"
+        />
         <CopyDataPanel v-else-if="panel.id === 'copy-data-panel'" :store="copyData" />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>

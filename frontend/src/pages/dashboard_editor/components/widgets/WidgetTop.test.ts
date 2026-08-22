@@ -122,7 +122,7 @@ describe('WidgetTop', () => {
         x: ['BTC', 'ETH'],
         y: [1.5, -2],
         type: 'bar',
-        marker: { color: ['#68d391', '#fc8181'] },
+        marker: { color: ['#8fb593', '#c58e8a'] },
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.4f}<extra></extra>',
       },
     ]);

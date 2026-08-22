@@ -7,8 +7,13 @@
  *
  * The whole panel renders from the store controller (useInventory) —
  * this component is markup + event routing only. The delete-by-date
- * overlay is shared page chrome and lives in App.vue; the sidebar action
- * blocks live in SidebarNav (SidebarActions).
+ * overlay is shared page chrome and lives in App.vue.
+ *
+ * Rail migration: the sidebar context blocks (:2929-2945 — view tabs +
+ * build/delete actions, SidebarActions) moved here above the columns; the
+ * view-tab click (:9351-9354) drops its setActivePanel leg (the panel is
+ * definitionally active here) — setActiveInventoryView (:6376-6386) plus
+ * the forced view-key reload (:6385) supersede the enter hook's load.
  *
  * The store stays mounted for the whole session (PanelShell hides
  * inactive sections), so the plot hosts registered here survive panel
@@ -16,10 +21,12 @@
  */
 import { useI18n } from 'vue-i18n';
 import type { InventoryController } from '../../composables/useInventory';
+import type { InventorySubsection } from '../../types';
 import SummaryCards from '../integrity/SummaryCards.vue';
 import DataTable from './DataTable.vue';
 import HeatmapPlot from './HeatmapPlot.vue';
 import OhlcvFrame from './OhlcvFrame.vue';
+import SidebarActions from './SidebarActions.vue';
 
 const props = defineProps<{ store: InventoryController }>();
 
@@ -34,10 +41,38 @@ function timeframeButtons(): readonly string[] {
 function legendStyle(color: string): Record<string, string> {
   return { background: color };
 }
+
+/** View tab click (:6376-6386 + :6385) — set + persist, then the forced
+ *  view-key reload. */
+function onSelectView(view: InventorySubsection): void {
+  props.store.setActiveView(view);
+  void props.store.loadPanel(true);
+}
 </script>
 
 <template>
   <div class="inventory-layout">
+    <!-- legacy sidebar context blocks (:2929-2945) — relocated above the
+         columns; visibility flags stay the store's active-panel checks -->
+    <div id="inventory-panel-actions" class="inventory-panel-actions">
+      <SidebarActions
+        :nav-visible="store.subsectionNavVisible.value"
+        :available-views="store.availableViews.value"
+        :active-view="store.currentView.value"
+        :build-visible="store.sidebarBuildVisible.value"
+        :build-text="store.sidebarBuildText.value"
+        :build-disabled="store.sidebarBuildDisabled.value"
+        :delete-visible="store.sidebarDeleteSectionVisible.value"
+        :delete-text="store.sidebarDeleteText.value"
+        :delete-disabled="store.sidebarDeleteDisabled.value"
+        :older-disabled="store.sidebarOlderDisabled.value"
+        @select-view="onSelectView"
+        @build="store.actions.runBuildBest1m()"
+        @delete-selected="store.actions.runDeleteSelected()"
+        @delete-older="store.actions.openOlderDialog()"
+        @clear-dataset="store.actions.runClearDataset()"
+      />
+    </div>
     <article class="panel-card inventory-shell">
       <div class="panel-head">
         <div>

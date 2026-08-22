@@ -230,7 +230,7 @@ defineExpose({ load });
               type="button"
               :title="t('sysmon.showHide')"
               :aria-label="t('sysmon.showHide')"
-              :style="tokenVisible ? 'color: #93c5fd' : undefined"
+              :style="tokenVisible ? 'color: var(--accent-soft)' : undefined"
               @click="toggleTokenVisibility"
             ><PbIcon :icon="PhEye" /></button>
           </div>
@@ -263,37 +263,37 @@ defineExpose({ load });
      static api-server settings markup, inline styles promoted to classes). -->
 <style scoped>
 .settings-wrap { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
-.settings-loading { color: #4e4851; font-style: italic; }
-.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: #a29ca6; margin: 0 0 0.5rem; }
-.form-divider { border: none; border-top: 1px solid #29262c; margin: 1rem 0; }
+.settings-loading { color: var(--text-disabled); font-style: italic; }
+.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-secondary); margin: 0 0 0.5rem; }
+.form-divider { border: none; border-top: 1px solid var(--border-subtle); margin: 1rem 0; }
 .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .form-field { display: flex; flex-direction: column; gap: 3px; }
-.form-label { font-size: var(--fs-xs); color: #716b75; text-transform: uppercase; letter-spacing: 0.04em; }
-.label-hint { color: #4e4851; font-weight: 400; }
-.form-hint { font-size: var(--fs-xs); color: #4e4851; }
+.form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.label-hint { color: var(--text-disabled); font-weight: 400; }
+.form-hint { font-size: var(--fs-xs); color: var(--text-disabled); }
 .form-input {
-  background: #1f1d21; color: #eae7ea; border: 1px solid #37333a; border-radius: 5px;
+  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px;
   padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
 }
-.form-input:focus { border-color: #4e4851; }
+.form-input:focus { border-color: var(--border-strong); }
 .form-input.medium { width: 140px; }
 .form-input.narrow { width: 90px; }
 .auto-restart-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
-.auto-restart-row input { accent-color: #4da6ff; cursor: pointer; width: 15px; height: 15px; }
-.auto-restart-row label { color: #a29ca6; font-size: var(--fs-sm); cursor: pointer; }
+.auto-restart-row input { accent-color: var(--accent); cursor: pointer; width: 15px; height: 15px; }
+.auto-restart-row label { color: var(--text-secondary); font-size: var(--fs-sm); cursor: pointer; }
 .hosts-field { margin-bottom: 0; }
 .telegram-row { margin-bottom: 0; }
 .pw-wrap { position: relative; display: inline-flex; align-items: center; }
 .pw-wrap input { padding-right: 2rem; }
 .token-input { width: 370px; }
-.pw-eye { position: absolute; right: 0.4rem; background: none; border: none; cursor: pointer; color: #716b75; font-size: 1rem; line-height: 1; padding: 0; }
-.pw-eye:hover { color: #a29ca6; }
+.pw-eye { position: absolute; right: 0.4rem; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; line-height: 1; padding: 0; }
+.pw-eye:hover { color: var(--text-secondary); }
 .save-row { margin-top: 1rem; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #37333a; background: #1f1d21; color: #a29ca6; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: #4e4851; color: #eae7ea; }
-.form-btn.save { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
-.form-btn.save:hover { background: #1d4ed8; color: #fff; }
-.inline-msg { font-size: var(--fs-xs); color: #4ade80; margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
+.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
+.form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
+.form-btn.save:hover { background: var(--accent-deep); color: #fff; }
+.inline-msg { font-size: var(--fs-xs); color: var(--success); margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
 .inline-msg.visible { opacity: 1; }
-.inline-msg.error { color: #fca5a5; }
+.inline-msg.error { color: var(--danger-soft); }
 </style>

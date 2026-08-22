@@ -1740,7 +1740,6 @@
   "misc.dbtools.saveBeforeRun": "Save the sync job before running it.",
   "misc.dbtools.saveJob": "Save Job",
   "misc.dbtools.savedSource": "(saved source)",
-  "misc.dbtools.sbTitle": "DB Tools",
   "misc.dbtools.selectAtLeastOneBackup": "Select at least one backup.",
   "misc.dbtools.selectCutoffDate": "Select a cutoff date.",
   "misc.dbtools.selectSyncJobToDelete": "Select a sync job to delete.",
@@ -1831,7 +1830,7 @@
   "misc.help.topics": "topics",
   "misc.help.typeSearchTerm": "Type a search term to find across all topics.",
   "misc.login.password": "Password",
-  "misc.login.signingIn": "Signing in\u2026",
+  "misc.login.signingIn": "Signing in…",
   "misc.login.submit": "Sign in",
   "misc.login.title": "PBGui - Login",
   "misc.mds.actionFailed": "Action failed",
@@ -1896,7 +1895,6 @@
   "misc.welcome.lastClient": " Last client: {client}.",
   "misc.welcome.lastEvent": " Last event: {time}.",
   "misc.welcome.logInBeforeBrowsing": "Log in before browsing server paths.",
-  "misc.welcome.logInBeforeChangingPassword": "Log in before changing the password.",
   "misc.welcome.loginLockoutDetectedSingle": "1 temporary login lockout detected in retained Auth logs.",
   "misc.welcome.loginLockoutsDetected": "{count} temporary login lockouts detected in retained Auth logs.",
   "misc.welcome.loginRequiredBeforeLeaving": "Login required before leaving the welcome page.",
@@ -2050,6 +2048,7 @@
   "nav.page.v8_pareto_explorer": "Pareto Explorer",
   "nav.page.v8_run": "Run",
   "nav.page.v8_strategy_explorer": "Strategy Explorer",
+  "nav.pageSections": "Page sections",
   "nav.pbv7": "PBv7",
   "nav.pbv8": "PBv8",
   "nav.primaryNavigation": "Primary navigation",
@@ -5493,5 +5492,6 @@
   "market.showAwsAccessKey": "Show AWS access key",
   "market.hideAwsAccessKey": "Hide AWS access key",
   "market.showAwsSecretKey": "Show AWS secret access key",
-  "market.hideAwsSecretKey": "Hide AWS secret access key"
+  "market.hideAwsSecretKey": "Hide AWS secret access key",
+  "misc.apikeys.users": "Users"
 }

@@ -511,13 +511,13 @@ onBeforeUnmount(() => {
 
     <!-- backup panel (render.js:1325-1329, 1403-1469) -->
     <div v-show="selectedCount > 0 && backupOpen" class="di-backup">
-      <span v-if="backupsLoading" style="color:#a29ca6;font-size:0.73rem;">{{
+      <span v-if="backupsLoading" style="color:var(--text-secondary);font-size:0.73rem;">{{
         dashT('dash.loadingBackups', 'Loading backups…')
       }}</span>
-      <span v-else-if="backupsError" style="color:#f56565;font-size:0.73rem;">{{
+      <span v-else-if="backupsError" style="color:var(--danger-soft);font-size:0.73rem;">{{
         dashT('dash.errorLoadingBackups', 'Error loading backups')
       }}</span>
-      <span v-else-if="backups.length === 0" style="color:#a29ca6;font-size:0.73rem;">{{
+      <span v-else-if="backups.length === 0" style="color:var(--text-secondary);font-size:0.73rem;">{{
         dashT('dash.noBackups', 'No backups available.')
       }}</span>
       <template v-else>

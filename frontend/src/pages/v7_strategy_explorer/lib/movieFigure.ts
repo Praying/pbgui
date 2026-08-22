@@ -291,7 +291,7 @@ export function buildMovieFigureSpec(
       fx.push(plotDate(snapped + offset * jitter * 1000));
       fy.push(y);
       text.push(isBuy ? 'B' : 'S');
-      colors.push(isBuy ? 'rgba(0, 200, 0, 1.0)' : 'rgba(220, 0, 0, 1.0)');
+      colors.push(isBuy ? 'rgba(143, 181, 147, 1.0)' : 'rgba(197, 142, 138, 1.0)');
       custom.push([idx + 1, Math.abs(qty), ev.event || ev.type || '', ev.order_type || '', ev.timestamp || ev.time || ev.date || '', price]);
     });
     return {
@@ -331,11 +331,11 @@ export function buildMovieFigureSpec(
     const upcomingCloses = useFillPreview ? upcomingFillPrices('close', frame.timestamp) : [];
     const trailEntry = trailingPrice(frame, 'entries', closePrice);
     const trailClose = trailingPrice(frame, 'closes', closePrice);
-    const currentTrace: PlotlyTrace = { type: 'scatter', mode: 'lines', name: 'Current Price', x: [x0, x1], y: [closePrice, closePrice], line: { color: '#f0c542', width: 2 } };
-    const traceEntries = useFillPreview ? gridTrace(upcomingEntries, 'rgba(255, 0, 0, 0.75)', 'Upcoming Entries', x0, x1, 2) : gridTrace(entryPrices, 'rgba(255, 0, 0, 0.6)', 'Entry Grid', x0, x1);
-    const traceCloses = useFillPreview ? gridTrace(upcomingCloses, 'rgba(0, 255, 0, 0.75)', 'Upcoming Closes', x0, x1, 2) : gridTrace(closePrices, 'rgba(0, 255, 0, 0.6)', 'Close Grid', x0, x1);
-    const traceTrailEntry: PlotlyTrace = trailEntry === null ? { type: 'scatter', mode: 'lines', name: 'Next Trailing Entry', x: [], y: [] } : gridTrace([trailEntry], 'rgba(255, 165, 0, 0.9)', 'Next Trailing Entry', x0, x1, 3);
-    const traceTrailClose: PlotlyTrace = trailClose === null ? { type: 'scatter', mode: 'lines', name: 'Next Trailing Close', x: [], y: [] } : gridTrace([trailClose], 'rgba(0, 255, 255, 0.9)', 'Next Trailing Close', x0, x1, 3);
+    const currentTrace: PlotlyTrace = { type: 'scatter', mode: 'lines', name: 'Current Price', x: [x0, x1], y: [closePrice, closePrice], line: { color: '#c4a67e', width: 2 } };
+    const traceEntries = useFillPreview ? gridTrace(upcomingEntries, 'rgba(197, 142, 138, 0.75)', 'Upcoming Entries', x0, x1, 2) : gridTrace(entryPrices, 'rgba(197, 142, 138, 0.6)', 'Entry Grid', x0, x1);
+    const traceCloses = useFillPreview ? gridTrace(upcomingCloses, 'rgba(143, 181, 147, 0.75)', 'Upcoming Closes', x0, x1, 2) : gridTrace(closePrices, 'rgba(143, 181, 147, 0.6)', 'Close Grid', x0, x1);
+    const traceTrailEntry: PlotlyTrace = trailEntry === null ? { type: 'scatter', mode: 'lines', name: 'Next Trailing Entry', x: [], y: [] } : gridTrace([trailEntry], 'rgba(196, 166, 126, 0.9)', 'Next Trailing Entry', x0, x1, 3);
+    const traceTrailClose: PlotlyTrace = trailClose === null ? { type: 'scatter', mode: 'lines', name: 'Next Trailing Close', x: [], y: [] } : gridTrace([trailClose], 'rgba(139, 167, 194, 0.9)', 'Next Trailing Close', x0, x1, 3);
     let yVals: number[] = [];
     for (let j = startIdx; j <= idx; j++) {
       yVals.push(Number(deepGet<number>(frames[j], ['candle', 'high'], 0)), Number(deepGet<number>(frames[j], ['candle', 'low'], 0)), emaHigh[j] ?? NaN, emaLow[j] ?? NaN);
@@ -354,7 +354,7 @@ export function buildMovieFigureSpec(
     if (mstate.walletExposure !== null && isFinite(mstate.walletExposure)) annotationParts.push('WE: ' + fmt(mstate.walletExposure, 6));
     if (isFinite(mstate.posSize)) annotationParts.push('posSize: ' + fmt(mstate.posSize, 8));
     if (mstate.posPrice !== null && isFinite(mstate.posPrice) && mstate.posPrice > 0) annotationParts.push('posPrice: ' + fmt(mstate.posPrice, 8));
-    const annotation: PlotlyTrace = { x: 1.02, y: 1, xref: 'paper', yref: 'paper', xanchor: 'left', yanchor: 'top', text: annotationParts.join('<br>'), showarrow: false, align: 'left', bgcolor: 'rgba(0,0,0,0.5)', font: { size: 13, color: '#fafafa' } };
+    const annotation: PlotlyTrace = { x: 1.02, y: 1, xref: 'paper', yref: 'paper', xanchor: 'left', yanchor: 'top', text: annotationParts.join('<br>'), showarrow: false, align: 'left', bgcolor: 'rgba(0,0,0,0.5)', font: { size: 13, color: '#e9e5ee' } };
     return {
       name: String(idx),
       data: [traceEntries, traceCloses, currentTrace, traceTrailEntry, traceTrailClose, ft],
@@ -370,15 +370,15 @@ export function buildMovieFigureSpec(
   const playFrameNames = plotFrames.slice(activeFrame).map((frame) => frame.name);
   const layout: PlotlyLayout & { xaxis: Record<string, unknown> } = {
     title: t('v7explore.animationTitle', { coin: deepGet<string>(data, ['metadata', 'coin'], ''), frames: frames.length }),
-    paper_bgcolor: '#1b191d',
-    plot_bgcolor: '#1b191d',
-    font: { color: '#fafafa' },
+    paper_bgcolor: '#1d1a23',
+    plot_bgcolor: '#1d1a23',
+    font: { color: '#e9e5ee' },
     height: 760,
     hovermode: 'closest',
     hoverdistance: 50,
     margin: { l: 55, r: 260, t: 60, b: 150 },
-    xaxis: { type: 'date', gridcolor: '#333640', rangeslider: { visible: false }, autorange: false, range: deepGet<[string, string]>(init, ['layout', 'xaxis', 'range'], [String(xs[0]), String(xs[0])]) },
-    yaxis: { title: t('v7explore.price'), gridcolor: '#333640', autorange: false, range: deepGet<[number, number]>(init, ['layout', 'yaxis', 'range'], [0, 1]) },
+    xaxis: { type: 'date', gridcolor: '#3a3545', rangeslider: { visible: false }, autorange: false, range: deepGet<[string, string]>(init, ['layout', 'xaxis', 'range'], [String(xs[0]), String(xs[0])]) },
+    yaxis: { title: t('v7explore.price'), gridcolor: '#3a3545', autorange: false, range: deepGet<[number, number]>(init, ['layout', 'yaxis', 'range'], [0, 1]) },
     legend: { x: 1.02, y: 0.85, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0.5)' },
     annotations: deepGet<PlotlyTrace[]>(init, ['layout', 'annotations'], []),
     updatemenus: [

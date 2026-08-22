@@ -276,7 +276,7 @@ function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, event: Event): v
 <template>
   <div>
     <div v-if="showView">
-      <div v-if="result.liquidated" data-test="liquidation-warning" style="background: rgba(255, 75, 75, 0.15); color: var(--red); padding: var(--sp-sm) var(--sp-md); border-radius: 4px; margin-bottom: var(--sp-sm); font-weight: 600">
+      <div v-if="result.liquidated" data-test="liquidation-warning" style="background: rgb(var(--danger-rgb) / 0.15); color: var(--red); padding: var(--sp-sm) var(--sp-md); border-radius: 4px; margin-bottom: var(--sp-sm); font-weight: 600">
         ⚠ Backtest ended in liquidation ({{ liquidationReasons.join(', ') }})
       </div>
 

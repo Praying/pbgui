@@ -13,12 +13,12 @@ import { dashT } from './i18n';
 
 /** TWE value → color: <100 green, <200 orange, else red. */
 export function tweColor(v: number): string {
-  return v < 100 ? '#22c55e' : v < 200 ? '#f59e0b' : '#ef4444';
+  return v < 100 ? '#8fb593' : v < 200 ? '#c4a67e' : '#c58e8a';
 }
 
 /** uPnL ≥ 0 green, else red. */
 export function upnlColor(v: number): string {
-  return v >= 0 ? '#22c55e' : '#ef4444';
+  return v >= 0 ? '#8fb593' : '#c58e8a';
 }
 
 /** Entry-price line color: gray without an entry, profit/loss aware with one. */
@@ -27,10 +27,10 @@ export function positionEntryColor(
   entryPrice: number | null | undefined,
   side?: string | null
 ): string {
-  if (!entryPrice) return '#a0aec0';
+  if (!entryPrice) return '#a59eaf';
   const normalizedSide = String(side || 'long').toLowerCase();
   const isProfit = normalizedSide === 'short' ? lastPrice <= entryPrice : lastPrice >= entryPrice;
-  return isProfit ? '#48bb78' : '#f56565';
+  return isProfit ? '#8fb593' : '#c58e8a';
 }
 
 /** "now" / "5s ago" / "2m ago" / "1h ago" — legacy ts || now quirk preserved. */
@@ -98,7 +98,7 @@ export function liveBadgeText(lastTs: number, now: number = Date.now()): string 
 
 /** editor _setSourceStatus color rule: green only for live sources. */
 export function liveStatusColor(source?: string | null): string {
-  return String(source || '').toLowerCase() === 'live' ? '#22c55e' : '';
+  return String(source || '').toLowerCase() === 'live' ? '#8fb593' : '';
 }
 
 /**

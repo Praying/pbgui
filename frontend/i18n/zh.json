@@ -1740,7 +1740,6 @@
   "misc.dbtools.saveBeforeRun": "运行前请先保存同步任务。",
   "misc.dbtools.saveJob": "保存任务",
   "misc.dbtools.savedSource": "（已保存的来源）",
-  "misc.dbtools.sbTitle": "数据库工具",
   "misc.dbtools.selectAtLeastOneBackup": "请至少选择一个备份。",
   "misc.dbtools.selectCutoffDate": "请选择截止日期。",
   "misc.dbtools.selectSyncJobToDelete": "请选择要删除的同步任务。",
@@ -1831,7 +1830,7 @@
   "misc.help.topics": "个主题",
   "misc.help.typeSearchTerm": "输入搜索词以在所有主题中查找。",
   "misc.login.password": "密码",
-  "misc.login.signingIn": "正在登录\u2026",
+  "misc.login.signingIn": "正在登录…",
   "misc.login.submit": "登录",
   "misc.login.title": "PBGui - 登录",
   "misc.mds.actionFailed": "操作失败",
@@ -1896,7 +1895,6 @@
   "misc.welcome.lastClient": "最近客户端：{client}。",
   "misc.welcome.lastEvent": "最近事件：{time}。",
   "misc.welcome.logInBeforeBrowsing": "浏览服务器路径前请先登录。",
-  "misc.welcome.logInBeforeChangingPassword": "更改密码前请先登录。",
   "misc.welcome.loginLockoutDetectedSingle": "在保留的 Auth 日志中检测到 1 次临时登录锁定。",
   "misc.welcome.loginLockoutsDetected": "在保留的 Auth 日志中检测到 {count} 次临时登录锁定。",
   "misc.welcome.loginRequiredBeforeLeaving": "离开欢迎页面前需要登录。",
@@ -2050,6 +2048,7 @@
   "nav.page.v8_pareto_explorer": "帕累托浏览器",
   "nav.page.v8_run": "运行",
   "nav.page.v8_strategy_explorer": "策略浏览器",
+  "nav.pageSections": "页面章节",
   "nav.pbv7": "PBv7",
   "nav.pbv8": "PBv8",
   "nav.primaryNavigation": "主导航",
@@ -5493,5 +5492,6 @@
   "market.showAwsAccessKey": "显示 AWS 访问密钥",
   "market.hideAwsAccessKey": "隐藏 AWS 访问密钥",
   "market.showAwsSecretKey": "显示 AWS 秘密访问密钥",
-  "market.hideAwsSecretKey": "隐藏 AWS 秘密访问密钥"
+  "market.hideAwsSecretKey": "隐藏 AWS 秘密访问密钥",
+  "misc.apikeys.users": "用户"
 }

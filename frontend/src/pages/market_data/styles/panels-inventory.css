@@ -5,27 +5,37 @@
       (legacy market_data_main.html :168-219 sidebar, :221-380 overlay,
       :1494-1759 panel; verbatim except noted) ── */
 
-/* sidebar context blocks (:168-219) */
-#inventory-subsection-nav { display: grid; gap: var(--sp-xs); padding-left: var(--sp-sm); }
-#sidebar-inventory-build { display: grid; gap: var(--sp-xs); padding-left: var(--sp-sm); }
+/* sidebar context blocks (:168-219) — relocated above the panel columns
+      (rail migration); ids kept verbatim, seps dropped in the row layout */
+.inventory-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-md);
+}
+#inventory-subsection-nav,
+#sidebar-inventory-build,
+#sidebar-inventory-delete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-xs);
+}
+#sidebar-inventory-build .sb-sep,
+#sidebar-inventory-delete .sb-sep { display: none; }
 .inventory-subsection-btn {
   font-size: var(--fs-sm);
-  padding-left: calc(var(--sp-lg) + var(--sp-xs));
   background: rgb(var(--accent-rgb) / 0.08);
   border-color: rgb(var(--accent-rgb) / 0.22);
-  color: #d7e8ff;
+  color: var(--accent-soft);
 }
-.inventory-subsection-btn:hover { background: rgb(var(--accent-rgb) / 0.16); border-color: rgb(var(--accent-rgb) / 0.45); color: #fff /* white on colored bg */fff; }
+.inventory-subsection-btn:hover { background: rgb(var(--accent-rgb) / 0.16); border-color: rgb(var(--accent-rgb) / 0.45); color: #fff; }
 .inventory-subsection-btn.active {
-  background: rgba(38, 166, 154, 0.14);
-  border-color: rgba(38, 166, 154, 0.75);
+  background: rgb(var(--success-rgb) / 0.14);
+  border-color: rgb(var(--success-rgb) / 0.75);
   color: var(--success-soft);
-  box-shadow: inset 0 0 0 1px rgba(38, 166, 154, 0.16);
+  box-shadow: inset 0 0 0 1px rgb(var(--success-rgb) / 0.16);
 }
-#sidebar-inventory-delete { display: grid; gap: var(--sp-xs); padding-left: var(--sp-sm); }
-#sidebar-inventory-delete .sb-sep { margin: var(--sp-xs) 0; }
-#sidebar-inventory-delete .callout { font-size: var(--fs-xs); padding: var(--sp-xs) var(--sp-sm); }
-#sidebar-inventory-build .callout { font-size: var(--fs-xs); padding: var(--sp-xs) var(--sp-sm); }
 
 /* delete-by-date overlay (:221-380) */
 #inventory-delete-date-ovl {
@@ -33,7 +43,7 @@
   position: fixed;
   inset: 0;
   z-index: 3001;
-  background: rgba(8, 11, 17, 0.68);
+  background: rgb(var(--bg-page-rgb) / 0.68);
   padding: var(--sp-lg);
   align-items: center;
   justify-content: center;
@@ -66,7 +76,7 @@
   padding: var(--sp-xs);
   border: 1px solid rgb(var(--accent-rgb) / 0.12);
   border-radius: 8px;
-  background: rgba(12, 17, 26, 0.42);
+  background: rgb(var(--bg-page-rgb) / 0.42);
 }
 .inventory-delete-date-selection-item {
   display: inline-flex;
@@ -164,7 +174,7 @@
   border-radius: 10px;
   overflow: auto;
   max-height: 33vh;
-  background: rgba(12, 17, 26, 0.42);
+  background: rgb(var(--bg-page-rgb) / 0.42);
 }
 .inventory-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1180px; }
 .inventory-table thead { position: sticky; top: 0; z-index: 1; background: var(--bg2); }
@@ -225,14 +235,14 @@
   min-height: 220px;
   border: 1px solid rgb(var(--accent-rgb) / 0.12);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.36);
+  background: rgb(var(--bg-page-rgb) / 0.36);
   padding: var(--sp-xs);
 }
 .inventory-minute-shell { display: grid; gap: var(--sp-sm); }
 .inventory-ohlcv-details {
   border: 1px solid rgb(var(--accent-rgb) / 0.12);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.36);
+  background: rgb(var(--bg-page-rgb) / 0.36);
   padding: 0;
   overflow: hidden;
 }
@@ -242,7 +252,7 @@
   padding: var(--sp-md);
   font-weight: 600;
   color: var(--text);
-  background: rgba(20, 28, 41, 0.7);
+  background: rgb(var(--bg-panel-rgb) / 0.7);
 }
 .inventory-ohlcv-details summary::-webkit-details-marker { display: none; }
 .inventory-ohlcv-frame { width: 100%; height: 630px; border: 0; background: transparent; display: block; }

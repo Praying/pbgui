@@ -74,7 +74,6 @@ describe('Welcome page shell', () => {
     expect(wrapper.find('.migration-watermark').exists()).toBe(false);
     expect(wrapper.find('.overview-header').exists()).toBe(true);
     expect(wrapper.find('.overview-title').text()).toBe('System Overview');
-    expect(wrapper.find('.sb-meta').exists()).toBe(false);
 
     const cards = wrapper.findAll('.summary-card');
     expect(cards).toHaveLength(4);
@@ -83,7 +82,7 @@ describe('Welcome page shell', () => {
     expect(wrapper.find('.summary-action').text()).toBe('Configure PB7');
     await wrapper.find('.summary-action').trigger('click');
     expect(wrapper.find('#section-setup').attributes('hidden')).toBeUndefined();
-    await wrapper.findAll('#sidebar .sb-btn')[0]!.trigger('click');
+    await wrapper.findAll('.workbench-rail__subitem')[0]!.trigger('click');
 
     const statusGroups = wrapper.findAll('#status-list .status-group');
     expect(statusGroups).toHaveLength(4);
@@ -173,7 +172,7 @@ describe('Welcome page shell', () => {
     const wrapper = await mountApp();
 
     expect(wrapper.find('#section-setup').attributes('hidden')).toBeDefined();
-    await wrapper.findAll('#sidebar [data-flow-section], #sidebar .sb-btn')[1]!.trigger('click');
+    await wrapper.findAll('.workbench-rail__subitem')[1]!.trigger('click');
     expect(wrapper.find('#section-setup').attributes('hidden')).toBeUndefined();
     expect((wrapper.find('#pb7dir').element as HTMLInputElement).value).toBe('/opt/pb7');
     expect((wrapper.find('#pbname').element as HTMLInputElement).value).toBe('main');
@@ -190,7 +189,7 @@ describe('Welcome page shell', () => {
 
   it('organizes setup into bounded PB7/PB8 groups with a distinct identity action area', async () => {
     const wrapper = await mountApp();
-    await wrapper.findAll('#sidebar .sb-btn')[1]!.trigger('click');
+    await wrapper.findAll('.workbench-rail__subitem')[1]!.trigger('click');
 
     expect(wrapper.find('#section-setup .settings-section-heading').exists()).toBe(true);
     expect(wrapper.find('#section-setup .settings-section-heading .section-kicker').text()).toBe('Runtime Settings');
@@ -200,12 +199,12 @@ describe('Welcome page shell', () => {
     expect(wrapper.find('#section-setup .runtime-group--pb8 #pb8dir').exists()).toBe(true);
     expect(wrapper.find('#section-setup .identity-section').exists()).toBe(true);
     expect(wrapper.find('#section-setup .settings-actions').exists()).toBe(true);
-    expect(wrapper.find('#sidebar-header .sb-title').classes()).toContain('sb-title');
+    expect(wrapper.findAll('.workbench-rail__subitem')).toHaveLength(3);
   });
 
   it('opens the password section only when authenticated', async () => {
     const wrapper = await mountApp();
-    await wrapper.find('#sidebar-password-btn').trigger('click');
+    await wrapper.find('[data-testid="rail-section-password"]').trigger('click');
     expect(wrapper.find('#section-password').attributes('hidden')).toBeUndefined();
     expect(wrapper.find('.password-panel').exists()).toBe(true);
     expect(wrapper.find('.password-danger-zone').exists()).toBe(true);
@@ -216,15 +215,15 @@ describe('Welcome page shell', () => {
       )
     );
     const guest = await mountApp();
-    expect((guest.find('#sidebar-password-btn').element as HTMLButtonElement).disabled).toBe(true);
-    await guest.find('#sidebar-password-btn').trigger('click');
+    expect((guest.find('[data-testid="rail-section-password"]').element as HTMLButtonElement).disabled).toBe(true);
+    await guest.find('[data-testid="rail-section-password"]').trigger('click');
     expect(guest.find('#section-password').attributes('hidden')).toBeDefined();
     expect(guest.find('#section-overview').attributes('hidden')).toBeUndefined();
   });
 
   it('changes the password with the exact payload and reloads', async () => {
     const wrapper = await mountApp();
-    await wrapper.find('#sidebar-password-btn').trigger('click');
+    await wrapper.find('[data-testid="rail-section-password"]').trigger('click');
 
     fetchMock.mockClear();
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ message: 'Password updated' }), { status: 200 }));
@@ -240,7 +239,7 @@ describe('Welcome page shell', () => {
 
   it('browses directories and applies the selection to the field', async () => {
     const wrapper = await mountApp();
-    await wrapper.findAll('#sidebar .sb-btn')[1]!.trigger('click');
+    await wrapper.findAll('.workbench-rail__subitem')[1]!.trigger('click');
 
     fetchMock.mockImplementation((url: string | URL) => {
       const u = String(url);
@@ -275,7 +274,7 @@ describe('Welcome page shell', () => {
 
   it('requires a new password before submitting', async () => {
     const wrapper = await mountApp();
-    await wrapper.find('#sidebar-password-btn').trigger('click');
+    await wrapper.find('[data-testid="rail-section-password"]').trigger('click');
 
     fetchMock.mockClear();
     await wrapper.find('#change-password-btn').trigger('click');

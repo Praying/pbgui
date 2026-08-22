@@ -25,7 +25,7 @@ html, body {
   position: relative;
   background:
     radial-gradient(circle at top right, rgb(var(--accent-deep-rgb) / 0.12), transparent 28%),
-    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.08), transparent 22%),
+    radial-gradient(circle at bottom left, rgb(var(--accent-rgb) / 0.08), transparent 22%),
     var(--bg-page);
 }
 
@@ -236,7 +236,7 @@ html, body {
 }
 
 .toc-item:hover {
-  background: #1a2030;
+  background: var(--bg-elevated);
   color: var(--text-primary);
 }
 
@@ -302,7 +302,7 @@ html, body {
 #help-content pre code {
   background: none;
   padding: 0;
-  color: #a0aec0;
+  color: var(--text-secondary);
   font-size: var(--fs-sm);
 }
 

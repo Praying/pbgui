@@ -217,7 +217,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
                 class="act-btn"
                 :title="t('v7backtest.restart')"
                 :aria-label="t('v7backtest.restart')"
-                style="border-color: #f59e0b; color: #f59e0b"
+                style="border-color: var(--warning); color: var(--warning)"
                 @click.stop="emit('restart', item.filename)"
               ><PbIcon :icon="PhPlay" :size="18" /></button>
               <button

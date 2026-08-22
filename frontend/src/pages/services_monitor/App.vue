@@ -40,9 +40,10 @@
  * │                     │        │ migrationConfirm                                  │
  * │ PricesOverlay       │ 14 ✓   │ openPricesOverlay/closePricesOverlay,              │
  * │                     │        │ loadPricesOverlay/filterPricesOverlay (page-global)│
- * │ App (this skeleton) │ 8+14 ✓ │ selectPanel, restoreFromHash, sidebar markup +     │
- * │                     │        │ resize handle, PBGUI_HELP_OPENER/                  │
- * │                     │        │ _servicesGuideKeyword help wiring                  │
+ * │ App (this skeleton) │ 8+14 ✓ │ selectPanel, restoreFromHash (sidebar markup │
+ * │                     │        │ + resize retired into the workbench rail), │
+ * │                     │        │ PBGUI_HELP_OPENER/                          │
+ * │                     │        │ _servicesGuideKeyword help wiring           │
  * │ Shared overlays     │ —      │ pbgui_dialogs.js and shared_help_overlay.js stay   │
  * │                     │        │ as legacy helper scripts loaded by index.html      │
  * └─────────────────────┴────────┴────────────────────────────────────────────────────┘
@@ -53,6 +54,7 @@ import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
+import type { PageSection, SectionTone } from '@/shared/navigation';
 import { usePolling } from '@/shared/composables/usePolling';
 import OverviewCards from './components/OverviewCards.vue';
 import ServiceLogPanel, { type ServiceTab } from './components/ServiceLogPanel.vue';
@@ -465,46 +467,9 @@ function openPricesOverlay(): void {
   pricesOverlayEl.value?.open();
 }
 
-/* ── Sidebar resize (legacy sidebar resize IIFE) ── */
-
-const sidebarEl = ref<HTMLElement | null>(null);
-const resizeActive = ref(false);
-let resizeStartX = 0;
-let resizeStartW = 0;
-
-/** Legacy #sidebar-resize mousedown: capture start position/width, arm the drag. */
-function onSidebarResizeDown(event: MouseEvent): void {
-  const sidebar = sidebarEl.value;
-  if (!sidebar) return;
-  resizeActive.value = true;
-  resizeStartX = event.clientX;
-  resizeStartW = sidebar.offsetWidth;
-  document.body.style.cursor = 'col-resize';
-}
-
-/** Legacy document mousemove: clamp the sidebar width to 150-300px. */
-function onSidebarResizeMove(event: MouseEvent): void {
-  if (!resizeActive.value) return;
-  const sidebar = sidebarEl.value;
-  if (!sidebar) return;
-  sidebar.style.width = `${Math.max(150, Math.min(300, resizeStartW + event.clientX - resizeStartX))}px`;
-}
-
-/** Legacy document mouseup: end the drag. */
-function onSidebarResizeUp(): void {
-  resizeActive.value = false;
-  document.body.style.cursor = '';
-}
-
-onMounted(() => {
-  document.addEventListener('mousemove', onSidebarResizeMove);
-  document.addEventListener('mouseup', onSidebarResizeUp);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('mousemove', onSidebarResizeMove);
-  document.removeEventListener('mouseup', onSidebarResizeUp);
-});
+/* ── Sidebar resize (legacy sidebar resize IIFE) ──
+   Retired with the in-page sidebar: sections live in the workbench rail,
+   which manages its own width. */
 
 /** Legacy scheduleWorkers gating: poll only while the workers panel is active. */
 watch(activePanel, (panelId) => {
@@ -584,6 +549,23 @@ function sidebarDotClass(panelId: string): string {
   }
   return serviceStatusClass(statuses.value[panelId] ?? {});
 }
+
+/* Rail sections — the legacy in-page sidebar moved into the workbench rail.
+   The legacy dot classes (running/stopped/warn) map onto the shared dot
+   palette; '' stays dotless until the first /status payload lands. */
+const DOT_TONES: Record<string, SectionTone> = {
+  running: 'success',
+  stopped: 'danger',
+  warn: 'warning',
+};
+
+const sections = computed<PageSection[]>(() =>
+  PANELS.map((panel) => {
+    // Legacy markup rendered no dot element on the overview entry (v-if).
+    const cls = panel.id === 'overview' ? '' : sidebarDotClass(panel.id);
+    return { key: panel.id, label: panelLabel(panel), tone: cls ? DOT_TONES[cls] : undefined };
+  }),
+);
 
 /** Legacy error message fallback: serverMsg(err.message) or the generic failure label. */
 function actionErrorText(error: unknown): string {
@@ -676,6 +658,9 @@ onUnmounted(() => {
     page-key="system_services"
     :page-title="t('sysmon.servicesTitle')"
     :page-description="t('sysmon.servicesSubtitle')"
+    :sections="sections"
+    :active-section="activePanel"
+    @update:section="selectPanel"
   >
     <template #status>
       <StatusStrip
@@ -690,24 +675,6 @@ onUnmounted(() => {
     </template>
 
   <div id="page-body">
-    <!-- Sidebar — status dots driven by the polled /status payload (legacy updateStatusUI) -->
-    <div id="sidebar" ref="sidebarEl">
-      <div id="sidebar-resize" :class="{ active: resizeActive }" @mousedown="onSidebarResizeDown"></div>
-      <div id="sidebar-inner">
-        <button
-          v-for="panel in PANELS"
-          :key="panel.id"
-          class="sb-btn"
-          :class="{ active: panel.id === activePanel }"
-          type="button"
-          :data-panel="panel.id"
-          @click="selectPanel(panel.id)"
-        >
-          <span v-if="panel.id !== 'overview'" class="sb-dot" :class="sidebarDotClass(panel.id)"></span><span>{{ panelLabel(panel) }}</span>
-        </button>
-      </div>
-    </div>
-
     <!-- Main content — one container per legacy panel; Tasks 10–14 replace the
          remaining placeholders with the real panel components. -->
     <div id="services-main-content">
@@ -837,84 +804,6 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-/* ── Sidebar ── */
-#sidebar {
-  width: 200px;
-  min-width: 150px;
-  max-width: 300px;
-  flex-shrink: 0;
-  background: #131114;
-  border-right: 1px solid #29262c;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-}
-#sidebar-resize {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 4px;
-  cursor: col-resize;
-  background: transparent;
-  z-index: 1;
-}
-#sidebar-resize:hover,
-#sidebar-resize.active {
-  background: rgba(99, 179, 237, 0.4);
-}
-#sidebar-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-.sb-btn {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  color: #a29ca6;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: var(--fs-sm);
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.1s;
-}
-.sb-btn:hover {
-  background: #1a2030;
-  color: #eae7ea;
-}
-.sb-btn.active {
-  background: rgba(99, 179, 237, 0.12);
-  border-color: rgba(99, 179, 237, 0.3);
-  color: #eae7ea;
-  font-weight: 600;
-}
-.sb-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #4e4851;
-  flex-shrink: 0;
-}
-.sb-dot.running {
-  background: #21c354;
-}
-.sb-dot.stopped {
-  background: #ff4b4b;
-}
-.sb-dot.warn {
-  background: #f59e0b;
-}
-
 /* ── Main content / service panels ── */
 #services-main-content {
   flex: 1;
@@ -946,8 +835,8 @@ onUnmounted(() => {
 .result-modal {
   position: fixed;
   z-index: 9000;
-  background: #0d1621;
-  border: 1px solid #29262c;
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   width: 720px;
   min-width: 320px;
@@ -965,31 +854,31 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #29262c;
+  border-bottom: 1px solid var(--border-subtle);
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
 }
 .result-modal-header:active { cursor: grabbing; }
-.result-modal-header h3 { margin: 0; font-size: var(--fs-md); color: #eae7ea; }
-.result-modal-close { background: none; border: none; color: #716b75; font-size: 1.4rem; cursor: pointer; padding: 0 4px; }
-.result-modal-close:hover { color: #eae7ea; }
+.result-modal-header h3 { margin: 0; font-size: var(--fs-md); color: var(--text-primary); }
+.result-modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; padding: 0 4px; }
+.result-modal-close:hover { color: var(--text-primary); }
 .result-modal-status { padding: 0.6rem 1rem; font-size: var(--fs-sm); font-weight: 600; flex-shrink: 0; }
-.result-modal-status.ok { background: #052e16; color: #4ade80; border-bottom: 1px solid #166534; }
-.result-modal-status.fail { background: #2d1515; color: #fca5a5; border-bottom: 1px solid #7f1d1d; }
+.result-modal-status.ok { background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); color: var(--success); border-bottom: 1px solid var(--success-deep); }
+.result-modal-status.fail { background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); color: var(--danger-soft); border-bottom: 1px solid var(--danger-deep); }
 .result-modal-body {
   flex: 1;
   overflow-y: auto;
   padding: 0.75rem 1rem;
   font-family: monospace;
   font-size: var(--fs-xs);
-  color: #cbd5e1;
+  color: var(--text-secondary);
   white-space: pre-wrap;
   word-break: break-all;
 }
-.result-modal-footer { padding: 0.5rem 1rem; border-top: 1px solid #29262c; text-align: right; flex-shrink: 0; }
+.result-modal-footer { padding: 0.5rem 1rem; border-top: 1px solid var(--border-subtle); text-align: right; flex-shrink: 0; }
 .result-modal-footer button {
-  background: #2563eb;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -997,7 +886,7 @@ onUnmounted(() => {
   cursor: pointer;
   font-size: var(--fs-sm);
 }
-.result-modal-footer button:hover { background: #1d4ed8; }
+.result-modal-footer button:hover { background: var(--accent-deep); }
 
 /* Skeleton-only placeholder styling; removed as panels land. */
 .panel-placeholder {
@@ -1007,7 +896,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: var(--sp-sm);
-  color: #716b75;
+  color: var(--text-muted);
 }
 .panel-placeholder-name {
   font-size: var(--fs-lg);
@@ -1015,7 +904,7 @@ onUnmounted(() => {
 }
 .panel-placeholder-hint {
   font-size: var(--fs-sm);
-  color: #4e4851;
+  color: var(--text-disabled);
 }
 
 /* ── Services command-center refinement ───────────────────────────────────
@@ -1023,13 +912,13 @@ onUnmounted(() => {
    hierarchy of health states, navigation and operational surfaces. */
 body {
   background:
-    radial-gradient(circle at 7% 0%, rgba(37, 99, 235, 0.09), transparent 25rem),
+    radial-gradient(circle at 7% 0%, rgb(var(--accent-rgb) / 0.09), transparent 25rem),
     var(--bg-page);
 }
 
 #page-body {
   background:
-    linear-gradient(135deg, rgba(19, 17, 20, 0.98), rgba(10, 17, 29, 0.97));
+    linear-gradient(135deg, rgb(var(--bg-page-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.97));
 }
 
 #sidebar {
@@ -1037,9 +926,9 @@ body {
   min-width: 176px;
   max-width: 320px;
   background:
-    linear-gradient(180deg, rgba(18, 29, 46, 0.98), rgba(10, 16, 26, 0.98) 78%),
+    linear-gradient(180deg, rgb(var(--bg-panel-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98) 78%),
     var(--bg-page);
-  border-right-color: rgba(96, 165, 250, 0.15);
+  border-right-color: rgb(var(--accent-rgb) / 0.15);
 }
 
 #sidebar::before {
@@ -1048,7 +937,7 @@ body {
   inset: 0 0 auto;
   height: 150px;
   pointer-events: none;
-  background: radial-gradient(circle at 22% 0%, rgba(56, 189, 248, 0.14), transparent 68%);
+  background: radial-gradient(circle at 22% 0%, rgb(var(--accent-rgb) / 0.14), transparent 68%);
 }
 
 #sidebar-inner {
@@ -1063,8 +952,8 @@ body {
   display: block;
   margin: 4px 8px 12px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(162, 156, 166, 0.12);
-  color: #dbeafe;
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
+  color: var(--accent-soft);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.13em;
@@ -1075,50 +964,29 @@ body {
   padding: 0 12px;
   border-color: transparent;
   border-radius: 8px;
-  color: #9db2ca;
+  color: var(--text-secondary);
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
 .sb-btn:hover {
   transform: translateX(2px);
-  border-color: rgba(96, 165, 250, 0.16);
-  background: rgba(96, 165, 250, 0.08);
-  color: #edf4fc;
+  border-color: rgb(var(--accent-rgb) / 0.16);
+  background: rgb(var(--accent-rgb) / 0.08);
+  color: var(--text-secondary);
 }
 
 .sb-btn.active {
-  border-color: rgba(96, 165, 250, 0.3);
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.2), rgba(37, 99, 235, 0.04));
-  box-shadow: inset 3px 0 #60a5fa;
-  color: #dbeafe;
-}
-
-.sb-dot {
-  width: 7px;
-  height: 7px;
-  box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
-}
-
-.sb-dot.running {
-  background: #34d399;
-  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12), 0 0 12px rgba(52, 211, 153, 0.42);
-}
-
-.sb-dot.stopped {
-  background: #f87171;
-  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
-}
-
-.sb-dot.warn {
-  background: #fbbf24;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+  border-color: rgb(var(--accent-rgb) / 0.3);
+  background: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.2), rgb(var(--accent-rgb) / 0.04));
+  box-shadow: inset 3px 0 var(--accent);
+  color: var(--accent-soft);
 }
 
 #main-content {
   background:
-    radial-gradient(circle at 94% 0%, rgba(56, 189, 248, 0.1), transparent 28rem),
-    radial-gradient(circle at 0% 84%, rgba(20, 184, 166, 0.06), transparent 24rem),
-    repeating-linear-gradient(135deg, rgba(162, 156, 166, 0.018) 0 1px, transparent 1px 42px),
+    radial-gradient(circle at 94% 0%, rgb(var(--accent-rgb) / 0.1), transparent 28rem),
+    radial-gradient(circle at 0% 84%, rgb(var(--accent-rgb) / 0.06), transparent 24rem),
+    repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.018) 0 1px, transparent 1px 42px),
     var(--bg-page);
 }
 
@@ -1137,11 +1005,11 @@ body {
   min-height: 132px;
   padding: 17px;
   overflow: hidden;
-  border-color: rgba(162, 156, 166, 0.14);
+  border-color: rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 13px;
   background:
-    radial-gradient(circle at 100% 0%, rgba(96, 165, 250, 0.07), transparent 68%),
-    rgba(19, 29, 45, 0.82);
+    radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.07), transparent 68%),
+    rgb(var(--bg-panel-rgb) / 0.82);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14), 0 1px rgba(255, 255, 255, 0.025) inset;
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
@@ -1151,43 +1019,43 @@ body {
   position: absolute;
   inset: 0 0 auto;
   height: 2px;
-  background: linear-gradient(90deg, rgba(162, 156, 166, 0.45), transparent 72%);
+  background: linear-gradient(90deg, rgb(var(--text-secondary-rgb) / 0.45), transparent 72%);
 }
 
 #overview-grid .svc-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(96, 165, 250, 0.32);
+  border-color: rgb(var(--accent-rgb) / 0.32);
   background:
-    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.12), transparent 68%),
-    rgba(20, 37, 59, 0.9);
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(96, 165, 250, 0.04);
+    radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.12), transparent 68%),
+    rgb(var(--bg-panel-rgb) / 0.9);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22), 0 0 0 1px rgb(var(--accent-rgb) / 0.04);
 }
 
 #overview-grid .svc-card.running {
-  border-color: rgba(52, 211, 153, 0.28);
+  border-color: rgb(var(--success-rgb) / 0.28);
 }
 
 #overview-grid .svc-card.running::before {
-  background: linear-gradient(90deg, #34d399, transparent 72%);
+  background: linear-gradient(90deg, var(--success), transparent 72%);
 }
 
 #overview-grid .svc-card.stopped {
-  border-color: rgba(248, 113, 113, 0.26);
+  border-color: rgb(var(--danger-rgb) / 0.26);
 }
 
 #overview-grid .svc-card.stopped::before {
-  background: linear-gradient(90deg, #f87171, transparent 72%);
+  background: linear-gradient(90deg, var(--danger), transparent 72%);
 }
 
 #overview-grid .card-name {
-  color: #e8f0fa;
+  color: var(--text-secondary);
   font-size: 14px;
   letter-spacing: -0.01em;
 }
 
 #overview-grid .card-status-row {
   min-height: 25px;
-  color: #8fa5be;
+  color: var(--text-secondary);
   line-height: 1.45;
 }
 
@@ -1204,85 +1072,85 @@ body {
 #overview-grid .card-btn {
   min-height: 29px;
   padding: 0 10px;
-  border-color: rgba(162, 156, 166, 0.16);
+  border-color: rgb(var(--text-secondary-rgb) / 0.16);
   border-radius: 7px;
-  background: rgba(162, 156, 166, 0.08);
-  color: #b7c6d8;
+  background: rgb(var(--text-secondary-rgb) / 0.08);
+  color: var(--text-secondary);
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
 
 #overview-grid .card-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.36);
-  background: rgba(37, 99, 235, 0.16);
-  color: #edf4fc;
+  border-color: rgb(var(--accent-rgb) / 0.36);
+  background: rgb(var(--accent-rgb) / 0.16);
+  color: var(--text-secondary);
 }
 
 #overview-grid .card-btn.start {
-  border-color: rgba(52, 211, 153, 0.32);
-  background: rgba(16, 185, 129, 0.12);
-  color: #86efac;
+  border-color: rgb(var(--success-rgb) / 0.32);
+  background: rgb(var(--success-rgb) / 0.12);
+  color: var(--success-soft);
 }
 
 #overview-grid .card-btn.stop {
-  border-color: rgba(248, 113, 113, 0.32);
-  background: rgba(185, 28, 28, 0.15);
-  color: #fca5a5;
+  border-color: rgb(var(--danger-rgb) / 0.32);
+  background: rgb(var(--danger-rgb) / 0.15);
+  color: var(--danger-soft);
 }
 
 #overview-grid .card-btn.restart {
-  border-color: rgba(251, 191, 36, 0.32);
-  background: rgba(180, 83, 9, 0.14);
-  color: #fde68a;
+  border-color: rgb(var(--warning-rgb) / 0.32);
+  background: rgb(var(--warning-rgb) / 0.14);
+  color: var(--warning-soft);
 }
 
 #overview-grid .card-btn.enable {
-  border-color: rgba(96, 165, 250, 0.32);
-  background: rgba(37, 99, 235, 0.14);
-  color: #bfdbfe;
+  border-color: rgb(var(--accent-rgb) / 0.32);
+  background: rgb(var(--accent-rgb) / 0.14);
+  color: var(--accent-soft);
 }
 
 .result-modal {
-  border-color: rgba(96, 165, 250, 0.24);
+  border-color: rgb(var(--accent-rgb) / 0.24);
   border-radius: 14px;
-  background: linear-gradient(145deg, #172337, #101927);
+  background: linear-gradient(145deg, var(--bg-panel), var(--bg-page));
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52), 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 
 .result-modal-header {
   padding: 14px 17px;
-  border-bottom-color: rgba(162, 156, 166, 0.14);
-  background: rgba(24, 38, 59, 0.45);
+  border-bottom-color: rgb(var(--text-secondary-rgb) / 0.14);
+  background: rgb(var(--bg-panel-rgb) / 0.45);
 }
 
 .result-modal-header h3 {
-  color: #e8f0fa;
+  color: var(--text-secondary);
 }
 
 .result-modal-status.ok {
-  background: rgba(6, 95, 70, 0.32);
-  border-bottom-color: rgba(52, 211, 153, 0.24);
+  background: rgb(var(--success-rgb) / 0.32);
+  border-bottom-color: rgb(var(--success-rgb) / 0.24);
 }
 
 .result-modal-status.fail {
-  background: rgba(127, 29, 29, 0.32);
-  border-bottom-color: rgba(248, 113, 113, 0.24);
+  background: rgb(var(--danger-rgb) / 0.32);
+  border-bottom-color: rgb(var(--danger-rgb) / 0.24);
 }
 
 .result-modal-footer {
   padding: 10px 17px;
-  border-top-color: rgba(162, 156, 166, 0.14);
+  border-top-color: rgb(var(--text-secondary-rgb) / 0.14);
 }
 
 .result-modal-footer button {
   min-height: 34px;
-  border: 1px solid rgba(96, 165, 250, 0.46);
+  border: 1px solid rgb(var(--accent-rgb) / 0.46);
   border-radius: 8px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
 }
 
 button:focus-visible {
-  outline: 2px solid #7dd3fc;
+  outline: 2px solid var(--accent-soft);
   outline-offset: 2px;
 }
 

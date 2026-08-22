@@ -252,7 +252,7 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
 
     await eye.trigger('click');
     expect(wrapper.find('#apiserver-telegram-token').attributes('type')).toBe('text');
-    expect((eye.element as HTMLElement).style.color).toBe('rgb(147, 197, 253)'); // #93c5fd
+    expect((eye.element as HTMLElement).style.color).toBe('var(--accent-soft)');
 
     await eye.trigger('click');
     expect(wrapper.find('#apiserver-telegram-token').attributes('type')).toBe('password');

@@ -44,7 +44,7 @@ describe('topTraces (render.js:600-605)', () => {
         x: ['BTC', 'ETH', 'SOL'],
         y: [1.5, -2, 0],
         type: 'bar',
-        marker: { color: ['#68d391', '#fc8181', '#68d391'] },
+        marker: { color: ['#8fb593', '#c58e8a', '#8fb593'] },
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.4f}<extra></extra>',
       },
     ]);
@@ -59,14 +59,14 @@ describe('topTraces (render.js:600-605)', () => {
 describe('topLayout (render.js:606-618, 659)', () => {
   it('matches the legacy layout skeleton', () => {
     expect(topLayout(300)).toEqual({
-      paper_bgcolor: '#131114',
-      plot_bgcolor: '#131114',
-      font: { color: '#eae7ea', size: 11 },
+      paper_bgcolor: '#16141a',
+      plot_bgcolor: '#16141a',
+      font: { color: '#e9e5ee', size: 11 },
       margin: { l: 50, r: 20, t: 40, b: 60 },
-      xaxis: { tickangle: -45, gridcolor: '#37333a', color: '#eae7ea' },
+      xaxis: { tickangle: -45, gridcolor: '#3a3545', color: '#e9e5ee' },
       yaxis: {
-        gridcolor: '#37333a', color: '#eae7ea',
-        zeroline: true, zerolinecolor: '#4e4851',
+        gridcolor: '#3a3545', color: '#e9e5ee',
+        zeroline: true, zerolinecolor: '#524b60',
       },
       bargap: 0.3,
       autosize: true,
@@ -93,7 +93,7 @@ describe('pnlTraces (render.js:1595-1642)', () => {
         x: ['2025-01-01', '2025-01-02'],
         y: [1.5, -2],
         type: 'bar',
-        marker: { color: ['#68d391', '#fc8181'] },
+        marker: { color: ['#8fb593', '#c58e8a'] },
         text: ['1.50', '-2.00'],
         textposition: 'auto',
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.2f}<extra></extra>',
@@ -108,8 +108,8 @@ describe('pnlTraces (render.js:1595-1642)', () => {
         y: [1.5, -2],
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#63b3ed', width: 1 },
-        marker: { color: ['#68d391', '#fc8181'], size: 6 },
+        line: { color: '#8ba7c2', width: 1 },
+        marker: { color: ['#8fb593', '#c58e8a'], size: 6 },
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.2f}<extra></extra>',
       },
     ]);
@@ -125,7 +125,7 @@ describe('pnlLayout (render.js:1644-1656)', () => {
     const layout = pnlLayout(280);
     expect(layout.margin).toEqual({ l: 50, r: 20, t: 40, b: 50 });
     expect(layout.xaxis).toEqual({
-      tickangle: -45, gridcolor: '#37333a', color: '#eae7ea', type: 'date',
+      tickangle: -45, gridcolor: '#3a3545', color: '#e9e5ee', type: 'date',
     });
     expect(layout.height).toBe(280);
     expect(layout.transition).toEqual({ duration: 0, easing: 'linear' });
@@ -144,7 +144,7 @@ describe('adgTraces (render.js:3871-3889)', () => {
   it('line mode matches PNL line styling', () => {
     const bars = [{ date: '2025-01-01', adg: 1.5 }];
     expect(adgTraces(bars, 'line')[0]!.type).toBe('scatter');
-    expect(adgTraces(bars, 'line')[0]!.line).toEqual({ color: '#63b3ed', width: 1 });
+    expect(adgTraces(bars, 'line')[0]!.line).toEqual({ color: '#8ba7c2', width: 1 });
   });
 });
 
@@ -161,7 +161,7 @@ describe('pplTraces (render.js:1878-1900)', () => {
         y: [10.5, 0],
         type: 'bar',
         name: 'Profits',
-        marker: { color: '#48bb78' },
+        marker: { color: '#8fb593' },
         text: ['10.50', ''],
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Profits: %{y:.2f}<extra></extra>',
@@ -171,7 +171,7 @@ describe('pplTraces (render.js:1878-1900)', () => {
         y: [0, 3.25],
         type: 'bar',
         name: 'Losses',
-        marker: { color: '#f56565' },
+        marker: { color: '#c58e8a' },
         text: ['', '3.25'],
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Losses: %{y:.2f}<extra></extra>',
@@ -188,7 +188,7 @@ describe('pplLayout y-range padding (render.js:1903-1911)', () => {
     expect(layout.barmode).toBe('relative');
     expect((layout.xaxis as PlotlyLayout).type).toBe('category');
     expect((layout.xaxis as PlotlyLayout).nticks).toBe(20);
-    expect(layout.legend).toEqual({ font: { color: '#eae7ea' } });
+    expect(layout.legend).toEqual({ font: { color: '#e9e5ee' } });
   });
 
   it('guards a zero data range with the 20%-or-1 fallback (yRange=0)', () => {
@@ -359,14 +359,14 @@ describe('incomeTraces (render.js:866-868 / 1501-1510)', () => {
 describe('incomeLayout (render.js:869-877 / 1513-1524)', () => {
   it('matches the legacy income layout skeleton (margins l55 r15 t40 b40, transparent legend)', () => {
     expect(incomeLayout(null)).toEqual({
-      paper_bgcolor: '#131114',
-      plot_bgcolor: '#131114',
-      font: { color: '#eae7ea', size: 11 },
+      paper_bgcolor: '#16141a',
+      plot_bgcolor: '#16141a',
+      font: { color: '#e9e5ee', size: 11 },
       margin: { l: 55, r: 15, t: 40, b: 40 },
       autosize: true,
-      xaxis: { gridcolor: '#37333a', color: '#eae7ea' },
-      yaxis: { gridcolor: '#37333a', color: '#eae7ea', zeroline: true, zerolinecolor: '#4e4851' },
-      legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: '#eae7ea' } },
+      xaxis: { gridcolor: '#3a3545', color: '#e9e5ee' },
+      yaxis: { gridcolor: '#3a3545', color: '#e9e5ee', zeroline: true, zerolinecolor: '#524b60' },
+      legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: '#e9e5ee' } },
       transition: { duration: 0, easing: 'linear' },
     });
   });

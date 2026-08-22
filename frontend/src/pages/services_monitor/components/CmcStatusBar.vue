@@ -58,11 +58,11 @@ const statusText = computed(() => {
 .cmc-status-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
   margin: 0.5rem 1rem 0; padding: 0.55rem 0.9rem; border-radius: 8px; font-size: var(--fs-sm);
-  border: 1px solid #29262c; background: #0d2a1a; color: #4ade80; min-height: 2.2rem;
+  border: 1px solid var(--border-subtle); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); color: var(--success); min-height: 2.2rem;
   flex-shrink: 0;
 }
-.cmc-status-bar.error { background: #2d1515; border-color: #7f1d1d; color: #fca5a5; }
-.cmc-status-bar.loading { background: #131b2b; color: #4e4851; }
+.cmc-status-bar.error { background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); border-color: var(--danger-deep); color: var(--danger-soft); }
+.cmc-status-bar.loading { background: var(--bg-page); color: var(--text-disabled); }
 .cmc-status-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cmc-refresh-btn { background: none; border: none; color: inherit; cursor: pointer; font-size: 1rem; opacity: 0.7; padding: 0 2px; flex-shrink: 0; }
 .cmc-refresh-btn:hover { opacity: 1; }

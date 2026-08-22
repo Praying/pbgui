@@ -153,18 +153,18 @@ async function openDiffSelected(): Promise<void> {
       <BackButton @back="emit('back')" />
       <h3 style="margin:0;">{{ t('misc.apikeys.apiKeyBackups') }}</h3>
     </div>
-    <p style="font-size:var(--fs-sm); color:#a29ca6; margin:0 0 12px;" v-html="t('misc.apikeys.backupsDesc')"></p>
+    <p style="font-size:var(--fs-sm); color:var(--text-secondary); margin:0 0 12px;" v-html="t('misc.apikeys.backupsDesc')"></p>
     <div id="backupsList">
-      <div v-if="state === 'loading'" style="text-align:center;color:#a29ca6;padding:20px;">
+      <div v-if="state === 'loading'" style="text-align:center;color:var(--text-secondary);padding:20px;">
         <span class="spinner"></span> {{ t('common.loading') }}
       </div>
-      <div v-else-if="state === 'empty'" style="text-align:center;color:#a29ca6;padding:20px;">
+      <div v-else-if="state === 'empty'" style="text-align:center;color:var(--text-secondary);padding:20px;">
         {{ t('misc.apikeys.noBackupsFound') }}
       </div>
-      <div v-else-if="state === 'error'" style="color:#ef4444;padding:20px;">{{ errorText }}</div>
+      <div v-else-if="state === 'error'" style="color:var(--danger);padding:20px;">{{ errorText }}</div>
       <template v-else>
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-          <span style="font-size:var(--fs-sm); color:#a29ca6;">{{ t('misc.apikeys.selectTwoToCompare') }}</span>
+          <span style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ t('misc.apikeys.selectTwoToCompare') }}</span>
           <button
             class="btn pbgui-btn btn-sm btn-secondary"
             id="btnDiffSelected"
@@ -198,7 +198,7 @@ async function openDiffSelected(): Promise<void> {
               @mousedown="onRowMousedown($event, b.filename)"
               @keydown="onRowKeydown($event, b.filename)"
             >
-              <td style="font-size:var(--fs-xs);font-family:monospace;color:#a29ca6;word-break:break-all;">{{ b.filename }}</td>
+              <td style="font-size:var(--fs-xs);font-family:monospace;color:var(--text-secondary);word-break:break-all;">{{ b.filename }}</td>
               <td>{{ b.ts.replace('T', ' ') }}</td>
               <td><span class="badge-exchange">{{ b.target }}</span></td>
               <td>{{ b.size_kb }} KB</td>

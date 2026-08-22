@@ -42,11 +42,15 @@ export function fmtAge(ts: number | string | null | undefined): string {
   return s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m` : `${Math.floor(s / 3600)}h`;
 }
 
-/** Legacy ageCol: green <60s, amber <5m, red beyond, grey for missing. */
+/**
+ * Legacy ageCol: fresh <60s, stale <5m, old beyond, grey for missing.
+ * JS-computed color strings (inline style bindings), so these stay literal
+ * Morandi palette constants (var(--success)/--warning/--danger/--text-disabled).
+ */
 export function ageCol(ts: number | string | null | undefined): string {
   const s = ageSeconds(ts);
-  if (s == null) return '#4e4851';
-  return s < 60 ? '#4ade80' : s < 300 ? '#f59e0b' : '#ff4b4b';
+  if (s == null) return '#524b60';
+  return s < 60 ? '#8fb593' : s < 300 ? '#c4a67e' : '#c58e8a';
 }
 </script>
 
@@ -198,7 +202,7 @@ defineExpose({
         <button class="po-btn" type="button" :title="t('common.close')" :aria-label="t('common.close')" @click="closeOverlay"><PbIcon :icon="PhX" /></button>
       </div>
     </div>
-    <div style="padding: 0.4rem 0.75rem; border-bottom: 1px solid #29262c; flex-shrink: 0">
+    <div style="padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0">
       <label class="po-search-wrap" for="po-search"><PbIcon :icon="PhMagnifyingGlass" /><input type="text" class="po-search" id="po-search" :placeholder="t('sysmon.filterSymbols')" :aria-label="t('sysmon.filterSymbols')" v-model="query"></label>
     </div>
     <div id="prices-overlay-body">
@@ -217,10 +221,10 @@ defineExpose({
         </thead>
         <tbody>
           <tr v-for="(row, i) in displayRows" :key="i">
-            <td style="color: #4e4851">{{ i + 1 }}</td>
+            <td style="color: var(--text-disabled)">{{ i + 1 }}</td>
             <td>{{ row.symbol }}</td>
-            <td style="color: #716b75">{{ row.exchange || '' }}</td>
-            <td style="text-align: right; color: #93c5fd; font-variant-numeric: tabular-nums">{{ fmtPrice(row.price) }}</td>
+            <td style="color: var(--text-muted)">{{ row.exchange || '' }}</td>
+            <td style="text-align: right; color: var(--accent-soft); font-variant-numeric: tabular-nums">{{ fmtPrice(row.price) }}</td>
             <td :style="'text-align:right;color:' + ageCol(row.ts) + ';font-variant-numeric:tabular-nums;'">{{ fmtAge(row.ts) }}</td>
           </tr>
         </tbody>
@@ -242,8 +246,8 @@ defineExpose({
   min-width: 280px;
   min-height: 180px;
   max-height: 80vh;
-  background: #0d1520;
-  border: 1px solid #37333a;
+  background: var(--bg-page);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
   flex-direction: column;
@@ -258,9 +262,9 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 0.55rem 0.85rem;
-  background: #131b2b;
+  background: var(--bg-page);
   border-radius: 10px 10px 0 0;
-  border-bottom: 1px solid #29262c;
+  border-bottom: 1px solid var(--border-subtle);
   cursor: move;
   user-select: none;
   flex-shrink: 0;
@@ -268,21 +272,21 @@ defineExpose({
 #prices-overlay-title span {
   font-size: var(--fs-sm);
   font-weight: 600;
-  color: #eae7ea;
+  color: var(--text-primary);
 }
 .po-btn {
-  background: #29262c;
-  border: 1px solid #37333a;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: 5px;
-  color: #a29ca6;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.2rem 0.5rem;
   font-size: var(--fs-sm);
   line-height: 1.4;
 }
 .po-btn:hover {
-  background: #37333a;
-  color: #eae7ea;
+  background: var(--border-default);
+  color: var(--text-primary);
 }
 #prices-overlay-body {
   flex: 1;
@@ -297,28 +301,28 @@ defineExpose({
 .po-table th {
   position: sticky;
   top: 0;
-  background: #0d1520;
-  color: #716b75;
+  background: var(--bg-page);
+  color: var(--text-muted);
   padding: 0.35rem 0.75rem;
-  border-bottom: 1px solid #29262c;
+  border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
 }
 .po-table td {
   padding: 0.25rem 0.75rem;
-  border-bottom: 1px solid #0f1722;
+  border-bottom: 1px solid var(--bg-page);
   white-space: nowrap;
-  color: #cbd5e1;
+  color: var(--text-secondary);
 }
 .po-table tr:hover td {
-  background: #131b2b;
+  background: var(--bg-page);
 }
 .po-search {
   width: 100%;
   box-sizing: border-box;
-  background: #0f1722;
-  border: 1px solid #29262c;
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  color: #eae7ea;
+  color: var(--text-primary);
   font-size: var(--fs-xs);
   padding: 0.3rem 0.6rem;
   outline: none;
@@ -327,17 +331,17 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 .po-search:focus {
-  border-color: #4ade80;
+  border-color: var(--success);
 }
 .po-note {
-  color: #4e4851;
+  color: var(--text-disabled);
   padding: 1rem;
 }
 .po-error {
-  color: #fca5a5;
+  color: var(--danger-soft);
   padding: 1rem;
 }
 </style>

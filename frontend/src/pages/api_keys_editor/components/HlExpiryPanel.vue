@@ -35,7 +35,7 @@ const rows = computed(() => sortByPanelOrder(props.data, hlPanelOrder));
       </thead>
       <tbody id="hlExpiryBody">
         <tr v-if="rows.length === 0">
-          <td colspan="5" style="text-align:center;color:#a29ca6;">{{ t('misc.apikeys.noHyperliquidUsersFound') }}</td>
+          <td colspan="5" style="text-align:center;color:var(--text-secondary);">{{ t('misc.apikeys.noHyperliquidUsersFound') }}</td>
         </tr>
         <tr v-else v-for="exp in rows" :key="exp.name">
           <td><strong>{{ exp.name }}</strong></td>

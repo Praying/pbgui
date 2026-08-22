@@ -143,7 +143,7 @@ provide(widgetDragKey, {
       <div
         v-else-if="!store.config.viewOnly"
         class="dt-status"
-        style="text-align:center;padding:2rem;color:#4e4851;"
+        style="text-align:center;padding:2rem;color:var(--text-disabled);"
       >
         {{ dashT('dash.dragWidgetHere', 'Drag a widget here') }}
       </div>

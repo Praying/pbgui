@@ -200,7 +200,7 @@ describe('PlotlyChart', () => {
   it('does not capture or apply zoom when zoomPos is null (TOP parity)', async () => {
     const env = mountChart();
     await nextTick();
-    env.layout.value = { autosize: true, xaxis: { gridcolor: '#37333a' } };
+    env.layout.value = { autosize: true, xaxis: { gridcolor: '#3a3545' } };
     await updateProps(env);
     simulateUserZoom(env, [1, 2], [3, 4]);
     react.mockClear();

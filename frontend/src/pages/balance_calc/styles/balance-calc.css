@@ -94,7 +94,7 @@ body {
   padding: 0 var(--sp-lg);
   transition: background .15s;
 }
-#btn-calc:hover { background: #6bbfff; }
+#btn-calc:hover { background: var(--accent-soft); }
 #btn-calc:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ─── Two-column layout ───────────────────────────────────── */

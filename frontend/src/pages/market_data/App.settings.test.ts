@@ -70,7 +70,7 @@ describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)',
   it('keeps the save button disabled while clean and enables it on edit (:5528-5533)', async () => {
     const app = mountApp();
     await flushPromises();
-    const save = app.find('#btn-save-settings-sidebar');
+    const save = app.find('#btn-save-settings');
     expect(save.attributes('disabled')).toBeDefined();
     await app.find('#settings-interval-seconds').setValue('3600');
     expect(save.attributes('disabled')).toBeUndefined();
@@ -81,7 +81,7 @@ describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)',
     const app = mountApp();
     await flushPromises();
     await app.find('#settings-interval-seconds').setValue('3600');
-    await app.find('#btn-save-settings-sidebar').trigger('click');
+    await app.find('#btn-save-settings').trigger('click');
     await flushPromises();
     const post = fetchMock.mock.calls
       .filter((call) => String(call[0]).includes('/api/market-data/settings/'))
@@ -109,18 +109,21 @@ describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)',
     expect(app.findAll('.toast.success').map((toastEl) => toastEl.text())).toEqual([
       'Hyperliquid settings saved.',
     ]);
-    expect(app.find('#btn-save-settings-sidebar').attributes('disabled')).toBeDefined();
+    expect(app.find('#btn-save-settings').attributes('disabled')).toBeDefined();
   });
 
-  it('switches to the settings panel and subsection on nav click (:9605-9608)', async () => {
+  it('renders the subsection segmented control and switches subsections in-panel (:9605-9608)', async () => {
     const app = mountApp();
     await flushPromises();
-    await app.findAll('#sidebar-toolbar .sb-btn').find((b) => b.text() === 'Status Monitor')!.trigger('click');
-    expect(app.find('#sidebar-context-actions').attributes('hidden')).toBeDefined();
+    // the context actions moved inside the settings panel — they live in the
+    // (hidden) section while another panel is active
+    await app.find('[data-testid="rail-section-status-panel"]').trigger('click');
+    expect(app.find('#settings-context-actions').exists()).toBe(true);
+    expect(visiblePanelIds(app)).toEqual(['status-panel']);
+    await app.find('[data-testid="rail-section-settings-panel"]').trigger('click');
     await app.find('#btn-settings-subsection-aws').trigger('click');
     expect(visiblePanelIds(app)).toEqual(['settings-panel']);
     expect(window.localStorage.getItem('market_data_fastapi_settings_subsection')).toBe('aws');
     expect(app.find('#settings-hyperliquid-aws').classes()).not.toContain('settings-subsection-hidden');
-    expect(app.find('#sidebar-context-actions').attributes('hidden')).toBeUndefined();
   });
 });

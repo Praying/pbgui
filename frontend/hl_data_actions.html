@@ -21,21 +21,21 @@
     }
 
     .hlda-root {
-        --hlda-bg: var(--bg-page, #131114);
-        --hlda-bg2: #161b22;
-        --hlda-bg3: #1a1f2e;
-        --hlda-border: var(--bg-elevated, #28252b);
-        --hlda-border2: var(--border-default, #37333a);
-        --hlda-text: var(--text-primary, var(--text-primary, #eae7ea));
-        --hlda-text2: #b0b8c4;
-        --hlda-text3: #8899aa;
+        --hlda-bg: var(--bg-page, #16141a);
+        --hlda-bg2: #18161e;
+        --hlda-bg3: #1c1925;
+        --hlda-border: var(--bg-elevated, #2a2632);
+        --hlda-border2: var(--border-default, #3a3545);
+        --hlda-text: var(--text-primary, var(--text-primary, #e9e5ee));
+        --hlda-text2: #a59eaf;
+        --hlda-text3: #a59eaf;
         --hlda-text4: #666;
-        --hlda-accent: #5b9cf5;
-        --hlda-accent-hover: #8db9f8;
-        --hlda-warn: var(--warning, #e3a44a);
-        --hlda-err: var(--danger, #e5605c);
-        --hlda-info: var(--accent-deep, #3a72d0);
-        --hlda-success: var(--success, #3fba6f);
+        --hlda-accent: #8ba7c2;
+        --hlda-accent-hover: #a9c0d6;
+        --hlda-warn: var(--warning, #c4a67e);
+        --hlda-err: var(--danger, #c58e8a);
+        --hlda-info: var(--accent-deep, #56748f);
+        --hlda-success: var(--success, #8fb593);
         --fs-xs: 11px;
         --fs-sm: 13px;
         --fs-base: 14px;
@@ -69,7 +69,7 @@
         font-size: var(--fs-base); font-weight: 500;
         border-radius: 8px;
     }
-    .hlda-root .hlda-sh:hover { background: #1c2230; }
+    .hlda-root .hlda-sh:hover { background: #1e1b26; }
     .hlda-root .hlda-arrow {
         font-size: 14px; transition: transform 0.15s; color: var(--hlda-text2);
         display: inline-block;
@@ -90,7 +90,7 @@
         font-size: var(--fs-sm); cursor: pointer; min-height: 38px;
         display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
     }
-    .hlda-root .hlda-ct:hover { border-color: var(--text-disabled, #4e4851); }
+    .hlda-root .hlda-ct:hover { border-color: var(--text-disabled, #524b60); }
     .hlda-root .hlda-ct .ph { color: var(--hlda-text4); }
     .hlda-root .hlda-chip {
         display: inline-flex; align-items: center;
@@ -113,7 +113,7 @@
         background: var(--hlda-border2); border: none; color: var(--hlda-text2);
         padding: 3px 10px; border-radius: 4px; font-size: var(--fs-xs); cursor: pointer;
     }
-    .hlda-root .hlda-ddh button:hover { background: var(--text-disabled, #4e4851); color: var(--hlda-text); }
+    .hlda-root .hlda-ddh button:hover { background: var(--text-disabled, #524b60); color: var(--hlda-text); }
     .hlda-root .hlda-dds {
         width: 100%; background: var(--hlda-bg); border: none;
         border-bottom: 1px solid var(--hlda-border2);
@@ -132,7 +132,7 @@
         border-radius: 6px; padding: 8px 12px; color: var(--hlda-text);
         font-size: var(--fs-sm); width: 100%;
     }
-    .hlda-root input[type="date"]:hover { border-color: var(--text-disabled, #4e4851); }
+    .hlda-root input[type="date"]:hover { border-color: var(--text-disabled, #524b60); }
     .hlda-root input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
     .hlda-root .hlda-hint { font-size: 11px; color: var(--hlda-text4); margin-top: 2px; }
     .hlda-root .hlda-date-wrap { position: relative; }
@@ -141,7 +141,7 @@
         border-radius: 6px; padding: 8px 30px 8px 12px; color: var(--hlda-text);
         font-size: var(--fs-sm); width: 100%; height: 38px;
     }
-    .hlda-root .hlda-date-input:hover { border-color: var(--text-disabled, #4e4851); }
+    .hlda-root .hlda-date-input:hover { border-color: var(--text-disabled, #524b60); }
     .hlda-root .hlda-date-btn {
         position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
         background: transparent; border: none; color: var(--hlda-text2);
@@ -160,12 +160,12 @@
         border-radius: 6px; color: var(--hlda-text); padding: 8px 12px; font-size: var(--fs-sm);
         height: 38px;
     }
-    .hlda-root .hlda-filter-input:hover { border-color: var(--text-disabled, #4e4851); }
+    .hlda-root .hlda-filter-input:hover { border-color: var(--text-disabled, #524b60); }
     .hlda-root .hlda-mini-btn {
         background: var(--hlda-border2); border: 1px solid var(--hlda-border2); color: var(--hlda-text2);
         padding: 8px 12px; border-radius: 6px; font-size: var(--fs-sm); cursor: pointer; height: 38px;
     }
-    .hlda-root .hlda-mini-btn:hover { background: var(--text-disabled, #4e4851); color: var(--hlda-text); }
+    .hlda-root .hlda-mini-btn:hover { background: var(--text-disabled, #524b60); color: var(--hlda-text); }
     .hlda-root .hlda-mini-btn.active {
         border-color: rgba(38,166,154,.7); background: rgb(var(--accent-rgb, 91 156 245) / .16); color: var(--hlda-accent);
     }
@@ -231,7 +231,7 @@
         font-weight: 500; cursor: pointer; transition: background 0.2s;
     }
     .hlda-root .hlda-btn:hover { background: var(--hlda-accent-hover); }
-    .hlda-root .hlda-btn:disabled { background: var(--text-disabled, #4e4851); cursor: not-allowed; opacity: .7; }
+    .hlda-root .hlda-btn:disabled { background: var(--text-disabled, #524b60); cursor: not-allowed; opacity: .7; }
     .hlda-root .hlda-ar { display: flex; align-items: center; gap: 14px; }
     .hlda-root .hlda-lo {
         display: none; align-items: center; gap: 8px;
@@ -266,8 +266,8 @@
     .hlda-root .hlda-jm-badge {
         font-size: var(--fs-xs); padding: 2px 8px; border-radius: 3px; font-weight: 500;
     }
-    .hlda-root .hlda-jm-badge.connected { background: #10b98133; color: #10b981; }
-    .hlda-root .hlda-jm-badge.disconnected { background: #ef444433; color: #ef4444; }
+    .hlda-root .hlda-jm-badge.connected { background: #8fb59333; color: #8fb593; }
+    .hlda-root .hlda-jm-badge.disconnected { background: #c58e8a33; color: #c58e8a; }
     .hlda-root .hlda-tabs { display: flex; gap: 0; margin-bottom: 10px; border-bottom: 1px solid var(--hlda-border); }
     .hlda-root .hlda-tab {
         padding: 6px 16px; font-size: var(--fs-sm); cursor: pointer;
@@ -290,21 +290,21 @@
     .hlda-root .hlda-sbadge {
         font-size: var(--fs-xs); padding: 2px 8px; border-radius: 3px; font-weight: 500;
     }
-    .hlda-root .hlda-sbadge.running { background: #3b82f633; color: #3b82f6; }
-    .hlda-root .hlda-sbadge.pending { background: #f59e0b33; color: #f59e0b; }
+    .hlda-root .hlda-sbadge.running { background: #8ba7c333; color: #8ba7c2; }
+    .hlda-root .hlda-sbadge.pending { background: #c4a67e33; color: #c4a67e; }
     .hlda-root .hlda-sh-status {
         margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs);
     }
     .hlda-root .hlda-sh-status .sh-running {
-        color: #3b82f6; font-weight: 500; display: flex; align-items: center; gap: 4px;
+        color: #8ba7c2; font-weight: 500; display: flex; align-items: center; gap: 4px;
     }
     .hlda-root .hlda-sh-status .sh-running .sh-dot {
-        width: 6px; height: 6px; border-radius: 50%; background: #3b82f6;
+        width: 6px; height: 6px; border-radius: 50%; background: #8ba7c2;
         animation: hlda-pulse 1.2s infinite;
     }
     @keyframes hlda-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
     .hlda-root .hlda-sh-status .sh-pending {
-        color: #f59e0b; font-weight: 500;
+        color: #c4a67e; font-weight: 500;
     }
     .hlda-root .hlda-jd {
         font-size: 12px; color: var(--hlda-text3); margin-top: 4px;
@@ -346,8 +346,8 @@
         color: var(--hlda-text2); cursor: pointer;
     }
     .hlda-root .hlda-jbtn:hover { background: var(--hlda-border2); color: var(--hlda-text); }
-    .hlda-root .hlda-jbtn.danger { border-color: #ef444455; color: #ef4444; }
-    .hlda-root .hlda-jbtn.danger:hover { background: #ef444422; }
+    .hlda-root .hlda-jbtn.danger { border-color: #c58e8a55; color: #c58e8a; }
+    .hlda-root .hlda-jbtn.danger:hover { background: #c58e8a22; }
     .hlda-root .hlda-empty { text-align: center; color: var(--hlda-text4); padding: 16px; font-size: 13px; }
     .hlda-root .hlda-br { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
     .hlda-root .hlda-br .hlda-fs { flex: 1; min-width: 140px; }
@@ -416,13 +416,13 @@
         line-height: 1.5;
         white-space: normal;
         color: var(--hlda-text);
-        background: #0f172a;
+        background: #15131c;
     }
     .hlda-root .hlda-detail-section {
         display: grid;
         gap: var(--sp-sm);
         padding: var(--sp-md);
-        border: 1px solid rgba(162, 156, 166, 0.18);
+        border: 1px solid rgb(165, 158, 175, 0.18);
         border-radius: 8px;
         background: rgb(var(--bg-page-rgb, 19 17 20) / 0.82);
     }
@@ -455,12 +455,12 @@
         margin: 0;
         padding: var(--sp-md);
         border-radius: 6px;
-        border: 1px solid rgba(162, 156, 166, 0.14);
-    .hlda-root .hlda-jbtn.view { border-color: rgba(20, 184, 166, 0.42); background: rgba(20, 184, 166, 0.16); color: #99f6e4; }
-    .hlda-root .hlda-jbtn.view:hover { background: rgba(20, 184, 166, 0.26); color: #f0fdfa; }
-    .hlda-root .hlda-jbtn.run { border-color: rgba(34, 197, 94, 0.42); background: rgba(34, 197, 94, 0.16); color: #86efac; }
-    .hlda-root .hlda-jbtn.run:hover { background: rgba(34, 197, 94, 0.26); color: #f0fdf4; }
-        background: #0b1220;
+        border: 1px solid rgb(165, 158, 175, 0.14);
+    .hlda-root .hlda-jbtn.view { border-color: rgba(20, 184, 166, 0.42); background: rgba(20, 184, 166, 0.16); color: #a9c0d6; }
+    .hlda-root .hlda-jbtn.view:hover { background: rgba(20, 184, 166, 0.26); color: #dce6ef; }
+    .hlda-root .hlda-jbtn.run { border-color: rgba(34, 197, 94, 0.42); background: rgba(34, 197, 94, 0.16); color: #accbab; }
+    .hlda-root .hlda-jbtn.run:hover { background: rgba(34, 197, 94, 0.26); color: #dfe9dd; }
+        background: #100e16;
         color: var(--hlda-text2);
         font-family: 'Fira Code', 'Consolas', monospace;
         font-size: var(--fs-sm);
@@ -1334,12 +1334,12 @@
                   '#__dp .dp-nav { transition: background .1s; border-radius: 4px; }' +
                   '#__dp .dp-nav:disabled { opacity: .35; cursor: not-allowed !important; background: transparent !important; }' +
                   '#__dp .dp-ctl { transition: background .1s, border-color .1s; border-radius: 4px; }' +
-                  '#__dp .dp-ctl:hover { background: rgba(255,255,255,.08) !important; border-color: var(--hlda-accent,#5b9cf5) !important; }' +
-                  '#__dp .dp-dd { position:absolute; top:calc(100% + 4px); z-index:2; display:none; background:var(--hlda-bg3,#1a1f2e); border:1px solid var(--hlda-border2,#37333a); border-radius:6px; box-shadow:0 8px 18px rgba(0,0,0,.55); max-height:220px; overflow:auto; padding:4px; }' +
+                  '#__dp .dp-ctl:hover { background: rgba(255,255,255,.08) !important; border-color: var(--hlda-accent,#8ba7c2) !important; }' +
+                  '#__dp .dp-dd { position:absolute; top:calc(100% + 4px); z-index:2; display:none; background:var(--hlda-bg3,#1c1925); border:1px solid var(--hlda-border2,#3a3545); border-radius:6px; box-shadow:0 8px 18px rgba(0,0,0,.55); max-height:220px; overflow:auto; padding:4px; }' +
                   '#__dp .dp-dd.open { display:block; }' +
-                  '#__dp .dp-dd-item { display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--hlda-text,#fafafa); font-size:var(--fs-xs); padding:6px 8px; border-radius:4px; cursor:pointer; }' +
+                  '#__dp .dp-dd-item { display:block; width:100%; text-align:left; background:transparent; border:none; color:var(--hlda-text,#f2eff5); font-size:var(--fs-xs); padding:6px 8px; border-radius:4px; cursor:pointer; }' +
                   '#__dp .dp-dd-item:hover { background: rgba(255,255,255,.10) !important; }' +
-                  '#__dp .dp-dd-item.selected { background: var(--hlda-accent,#5b9cf5); color:#fff; }' +
+                  '#__dp .dp-dd-item.selected { background: var(--hlda-accent,#8ba7c2); color:#fff; }' +
                   '#__dp .dp-dd-item.disabled { color: rgba(255,255,255,.28) !important; cursor:not-allowed !important; }' +
                   '#__dp .dp-dd-item.disabled:hover { background: transparent !important; }' +
                   '#__dp .dp-foot:hover { background: rgba(255,255,255,.15) !important; }' +
@@ -1351,7 +1351,7 @@
                 var e = document.getElementById('__dp');
                 if (!e) {
                     e = document.createElement('div'); e.id = '__dp';
-                    e.style.cssText = 'display:none;position:fixed;z-index:99999;background:var(--hlda-bg2,#161b22);border:1px solid var(--hlda-border2,#37333a);border-radius:8px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.7);user-select:none;min-width:220px;color-scheme:dark';
+                    e.style.cssText = 'display:none;position:fixed;z-index:99999;background:var(--hlda-bg2,#18161e);border:1px solid var(--hlda-border2,#3a3545);border-radius:8px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.7);user-select:none;min-width:220px;color-scheme:dark';
                     document.body.appendChild(e);
                     document.addEventListener('pointerdown', function(ev) {
                         if (!_id) return;
@@ -1442,8 +1442,8 @@
                 var canNext = _monthHasSelectableDays(nextMonth.y, nextMonth.m, bounds);
                 var todayMs = new Date(td.getFullYear(), td.getMonth(), td.getDate()).getTime();
                 var canToday = !_dayDisabled(todayMs, bounds);
-                var btnS = 'background:none;border:none;color:var(--hlda-text,#fafafa);cursor:pointer;font-size:1.3em;padding:0 6px;line-height:1';
-                var ctlS = 'background:var(--hlda-bg3,#1a1f2e);border:1px solid var(--hlda-border2,#37333a);color:var(--hlda-text,#fafafa);border-radius:4px;padding:2px 6px;font-size:var(--fs-xs);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px';
+                var btnS = 'background:none;border:none;color:var(--hlda-text,#f2eff5);cursor:pointer;font-size:1.3em;padding:0 6px;line-height:1';
+                var ctlS = 'background:var(--hlda-bg3,#1c1925);border:1px solid var(--hlda-border2,#3a3545);color:var(--hlda-text,#f2eff5);border-radius:4px;padding:2px 6px;font-size:var(--fs-xs);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px';
                 var h = '<div style="display:flex;align-items:center;gap:4px;margin-bottom:8px">' +
                   '<button type="button" class="dp-nav" onclick="window.__dp.pm()" style="' + btnS + '"' + (canPrev ? '' : ' disabled') + '>&#8249;</button>' +
                   '<div style="position:relative;flex:1">' +
@@ -1458,7 +1458,7 @@
                   '</div>';
                 h += '<div style="display:grid;grid-template-columns:repeat(7,30px);gap:2px;text-align:center">';
                 ['M','T','W','T','F','S','S'].forEach(function(d) {
-                    h += '<div style="color:var(--hlda-text3,#8899aa);font-size:var(--fs-xs);padding-bottom:4px">' + d + '</div>';
+                    h += '<div style="color:var(--hlda-text3,#a59eaf);font-size:var(--fs-xs);padding-bottom:4px">' + d + '</div>';
                 });
                 for (var i = 0; i < sdow; i++) h += '<div></div>';
                 for (var day = 1; day <= dim; day++) {
@@ -1466,14 +1466,14 @@
                     var disabled = _dayDisabled(dayMs, bounds);
                     var isT = td.getFullYear()===_y && td.getMonth()===_m && td.getDate()===day;
                     var isS = selOk && sel.getFullYear()===_y && sel.getMonth()===_m && sel.getDate()===day;
-                    var bg = disabled ? 'transparent' : isS ? 'var(--hlda-accent,#5b9cf5)' : isT ? 'rgba(255,255,255,.12)' : 'transparent';
+                    var bg = disabled ? 'transparent' : isS ? 'var(--hlda-accent,#8ba7c2)' : isT ? 'rgba(255,255,255,.12)' : 'transparent';
                     var fw = (isS || isT) && !disabled ? '600' : '400';
-                    h += '<div class="dp-day' + (disabled ? ' dp-disabled' : '') + '"' + (disabled ? '' : ' onclick="window.__dp.pick(' + day + ')"') + ' style="cursor:pointer;border-radius:4px;padding:4px 0;background:' + bg + ';color:var(--hlda-text,#fafafa);font-weight:' + fw + ';font-size:var(--fs-sm)">' + day + '</div>';
+                    h += '<div class="dp-day' + (disabled ? ' dp-disabled' : '') + '"' + (disabled ? '' : ' onclick="window.__dp.pick(' + day + ')"') + ' style="cursor:pointer;border-radius:4px;padding:4px 0;background:' + bg + ';color:var(--hlda-text,#f2eff5);font-weight:' + fw + ';font-size:var(--fs-sm)">' + day + '</div>';
                 }
                 h += '</div>';
                 h += '<div style="margin-top:8px;display:flex;justify-content:space-between">' +
-                  '<button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--hlda-text3,#8899aa);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('common.close') + '</button>' +
-                  '<button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--hlda-accent,#5b9cf5);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px"' + (canToday ? '' : ' disabled') + '>' + PBGuiI18n.t('market.today') + '</button>' +
+                  '<button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--hlda-text3,#a59eaf);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' + PBGuiI18n.t('common.close') + '</button>' +
+                  '<button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--hlda-accent,#8ba7c2);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px"' + (canToday ? '' : ' disabled') + '>' + PBGuiI18n.t('market.today') + '</button>' +
                   '</div>';
                 e.innerHTML = h;
                 _reposition();
@@ -1948,7 +1948,7 @@
             var job = await resp.json();
             body.innerHTML = renderJobDetails(job || {});
         } catch(e) {
-            body.innerHTML = '\x3Cdiv class="hlda-detail-empty" style="color:#ef4444;"\x3E' + PBGuiI18n.t('market.failedLoadJobDetails', { message: escHtml(e && e.message ? e.message : PBGuiI18n.t('market.unknownError')) }) + '\x3C/div\x3E';
+            body.innerHTML = '\x3Cdiv class="hlda-detail-empty" style="color:#c58e8a;"\x3E' + PBGuiI18n.t('market.failedLoadJobDetails', { message: escHtml(e && e.message ? e.message : PBGuiI18n.t('market.unknownError')) }) + '\x3C/div\x3E';
         }
     }
 

@@ -82,16 +82,44 @@ describe('Coin Data page shell', () => {
     expect(wrapper.find('#quotes-pill').text()).toBe('Quotes: USDT');
   });
 
-  it('switches views through the sidebar buttons and renders the unmatched table', async () => {
+  it('switches views through the rail sections and renders the unmatched table', async () => {
     const wrapper = await mountApp();
 
     expect(wrapper.find('#unmatched-panel').classes()).toContain('hidden');
 
-    await wrapper.find('#btn-view-unmatched').trigger('click');
+    await wrapper.find('[data-testid="rail-section-unmatched"]').trigger('click');
     expect(wrapper.find('#unmatched-panel').classes()).not.toContain('hidden');
     expect(wrapper.find('#main-panel').classes()).toContain('hidden');
     expect(wrapper.findAll('#unmatched-body tr.data-row')).toHaveLength(1);
     expect(wrapper.find('#unmatched-body').text()).toContain('FOOUSDT');
+  });
+
+  it('renders the page views as rail sections with the active view marked', async () => {
+    const wrapper = await mountApp();
+
+    const sectionButtons = wrapper.findAll('.workbench-rail__subitem'); // accordion children of the active page entry
+    expect(sectionButtons.map((button) => button.attributes('data-testid'))).toEqual([
+      'rail-section-main',
+      'rail-section-unmatched',
+    ]);
+    expect(sectionButtons[0]!.classes()).toContain('workbench-rail__subitem--active');
+    expect(sectionButtons[0]!.text()).toBe('Matched Symbols (2)');
+    expect(sectionButtons[1]!.text()).toBe('CMC Unmatched (1)');
+    wrapper.unmount();
+
+    installState(
+      stateFixture({
+        filters: { exchange: 'hyperliquid', market_cap: 0, vol_mcap: 10, tags: [], only_cpt: false, hide_notices: false },
+        hip3_rows: [{ dex: 'aster', coin: 'FOO', ccxt_symbol: 'FOO-USD', quote: 'USDC', price: 1, volume_24h: 2, copy_trading: false, notice: '' }],
+      })
+    );
+    const hl = await mountApp();
+
+    const hlSections = hl.findAll('.workbench-rail__subitem');
+    expect(hlSections).toHaveLength(3); // hip3 joins for hyperliquid
+    expect(hlSections[2]!.attributes('data-testid')).toBe('rail-section-hip3');
+    expect(hlSections[2]!.text()).toBe('HIP-3 Symbols (1)');
+    expect(hl.find('[data-testid="rail-section-main"]').classes()).toContain('workbench-rail__subitem--active');
   });
 
   it('shows the selected-row card on row click with detail fields', async () => {
@@ -141,7 +169,7 @@ describe('Coin Data page shell', () => {
   it('exposes the hip3 view only for hyperliquid and the CPT toggle only for supported exchanges', async () => {
     const wrapper = await mountApp();
 
-    expect(wrapper.find('#btn-view-hip3').exists()).toBe(false); // binance payload
+    expect(wrapper.find('[data-testid="rail-section-hip3"]').exists()).toBe(false); // binance payload
     expect(wrapper.find('#btn-only-cpt').exists()).toBe(true);
     wrapper.unmount();
 
@@ -153,10 +181,10 @@ describe('Coin Data page shell', () => {
     );
     const hl = await mountApp();
 
-    expect(hl.find('#btn-view-hip3').exists()).toBe(true);
+    expect(hl.find('[data-testid="rail-section-hip3"]').exists()).toBe(true);
     expect(hl.find('#btn-only-cpt').exists()).toBe(false);
 
-    await hl.find('#btn-view-hip3').trigger('click');
+    await hl.find('[data-testid="rail-section-hip3"]').trigger('click');
     expect(hl.find('#hip3-panel').classes()).not.toContain('hidden');
     expect(hl.findAll('#hip3-body tr.data-row')).toHaveLength(1);
     expect(hl.find('#field-hip3-dex').classes()).not.toContain('hidden');

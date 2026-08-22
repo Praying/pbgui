@@ -124,12 +124,12 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
     <!-- API keys metadata bar -->
     <div
       id="apiMetaBar"
-      style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#0f172a; border:1px solid #1e293b; border-radius:5px; font-size:var(--fs-xs); color:#a29ca6;"
+      style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:var(--bg-page); border:1px solid var(--bg-panel); border-radius:5px; font-size:var(--fs-xs); color:var(--text-secondary);"
     >
       <span>{{ t('misc.apikeys.serial') }}</span>
-      <span id="metaSerial" style="color:#eae7ea; font-weight:700;">{{ store.meta.value?.api_serial || '—' }}</span>
-      <span id="metaTs" style="color:#a29ca6;">{{ metaTsText }}</span>
-      <span id="metaBy" style="color:#716b75;">{{ metaByText }}</span>
+      <span id="metaSerial" style="color:var(--text-primary); font-weight:700;">{{ store.meta.value?.api_serial || '—' }}</span>
+      <span id="metaTs" style="color:var(--text-secondary);">{{ metaTsText }}</span>
+      <span id="metaBy" style="color:var(--text-muted);">{{ metaByText }}</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
       <input
@@ -139,7 +139,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         :placeholder="t('misc.apikeys.filterByNameOrExchange')"
         @input="store.setFilter(($event.target as HTMLInputElement).value)"
         @keydown="onFilterKeydown"
-        style="flex:1; background:#131114; border:1px solid #37333a; border-radius:4px; padding:6px 10px; color:#fafafa; font-size:var(--fs-sm);"
+        style="flex:1; background:var(--bg-page); border:1px solid var(--border-default); border-radius:4px; padding:6px 10px; color:var(--text-primary); font-size:var(--fs-sm);"
       />
       <button
         class="btn pbgui-btn btn-sm btn-secondary"
@@ -174,13 +174,13 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
           <td colspan="6"><span class="spinner"></span> {{ t('misc.apikeys.loadingUsers') }}</td>
         </tr>
         <tr v-else-if="store.usersState.value === 'error'" class="loading-row">
-          <td colspan="6" style="color:#ef4444;">{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</td>
+          <td colspan="6" style="color:var(--danger);">{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</td>
         </tr>
         <tr v-else-if="store.users.value.length === 0" class="loading-row">
           <td colspan="6">{{ t('misc.apikeys.noApiKeysConfigured') }}</td>
         </tr>
         <tr v-else-if="store.filteredSortedUsers.value.length === 0" class="loading-row">
-          <td colspan="6" style="color:#a29ca6;">{{ t('misc.apikeys.noUsersMatchFilter') }}</td>
+          <td colspan="6" style="color:var(--text-secondary);">{{ t('misc.apikeys.noUsersMatchFilter') }}</td>
         </tr>
         <tr
           v-else
@@ -196,7 +196,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
           <td><span class="badge-exchange" :class="u.exchange || ''">{{ u.exchange }}</span></td>
           <td>
             <template v-if="credsFor(u).length">{{ credsFor(u).join(', ') }}</template>
-            <span v-else style="color:#ef4444;">{{ t('misc.apikeys.none') }}</span>
+            <span v-else style="color:var(--danger);">{{ t('misc.apikeys.none') }}</span>
           </td>
           <td>
             <ExpiryBadge v-if="expiryFor(u)" :exp="expiryFor(u)!" />

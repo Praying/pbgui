@@ -113,7 +113,7 @@ describe('PBv7 config editor CSS contracts', () => {
     expectDeclaration(findRule(root, '.bot-json-review'), 'margin-left', 'auto');
     expectDeclaration(findRule(root, '#configs-editor .bot-side-primary'), 'margin-bottom', '10px');
     expectDeclaration(findRule(root, '#configs-editor .bot-json-expander'), 'margin-bottom', '0');
-    expectDeclaration(findRule(root, '#configs-editor .bot-json-expander.error'), 'border-color', 'rgba(240, 165, 0, 0.38)');
+    expectDeclaration(findRule(root, '#configs-editor .bot-json-expander.error'), 'border-color', 'rgb(var(--warning-rgb) / 0.38)');
 
     expect(css).not.toContain('.field-label');
     expect(css).not.toContain('.bot-side-panel > h3');

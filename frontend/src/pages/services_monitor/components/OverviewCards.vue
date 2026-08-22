@@ -183,8 +183,8 @@ const cards = computed<Card[]>(() => {
   align-content: start;
 }
 .svc-card {
-  background: #131b2b;
-  border: 1px solid #29262c;
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 1rem;
   display: flex;
@@ -193,35 +193,35 @@ const cards = computed<Card[]>(() => {
   cursor: pointer;
   transition: border-color 0.12s;
 }
-.svc-card:hover { border-color: #37333a; }
-.svc-card.running { border-color: rgba(33, 195, 84, 0.45); }
-.svc-card.stopped { border-color: rgba(255, 75, 75, 0.35); }
-.card-name { font-size: var(--fs-sm); font-weight: 700; color: #eae7ea; }
-.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: #716b75; }
-.card-dot { width: 7px; height: 7px; border-radius: 50%; background: #4e4851; flex-shrink: 0; }
-.card-dot.running { background: #21c354; }
-.card-dot.stopped { background: #ff4b4b; }
-.card-dot.warn { background: #f59e0b; }
+.svc-card:hover { border-color: var(--border-default); }
+.svc-card.running { border-color: rgb(var(--success-rgb) / 0.45); }
+.svc-card.stopped { border-color: rgb(var(--danger-rgb) / 0.35); }
+.card-name { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary); }
+.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: var(--text-muted); }
+.card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-disabled); flex-shrink: 0; }
+.card-dot.running { background: var(--success); }
+.card-dot.stopped { background: var(--danger); }
+.card-dot.warn { background: var(--warning); }
 /* Legacy inline style on the buttons wrapper div. */
 .card-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
 .card-btn {
   align-self: flex-start;
   padding: 0.2rem 0.65rem;
   border-radius: 4px;
-  border: 1px solid #37333a;
-  background: #1f1d21;
-  color: #a29ca6;
+  border: 1px solid var(--border-default);
+  background: var(--bg-card);
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--fs-xs);
   font-family: inherit;
   transition: all 0.12s;
 }
-.card-btn:hover:not(:disabled) { border-color: #4e4851; color: #eae7ea; }
-.card-btn.start { border-color: #166534; color: #4ade80; background: #052e16; }
-.card-btn.stop { border-color: #7f1d1d; color: #fca5a5; background: #2d1515; }
-.card-btn.restart { border-color: #b45309; color: #fcd34d; background: #1c1a08; }
-.card-btn.enable { border-color: #1d4ed8; color: #93c5fd; background: #10213f; }
-.card-btn.disable { border-color: #475569; color: #cbd5e1; background: #1e293b; }
+.card-btn:hover:not(:disabled) { border-color: var(--border-strong); color: var(--text-primary); }
+.card-btn.start { border-color: var(--success-deep); color: var(--success); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
+.card-btn.stop { border-color: var(--danger-deep); color: var(--danger-soft); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
+.card-btn.restart { border-color: var(--warning-deep); color: var(--warning-soft); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); }
+.card-btn.enable { border-color: var(--accent-deep); color: var(--accent-soft); background: color-mix(in srgb, var(--accent-deep) 28%, var(--bg-card)); }
+.card-btn.disable { border-color: var(--border-strong); color: var(--text-secondary); background: var(--bg-panel); }
 @media (max-width: 640px) {
   .overview-grid { grid-template-columns: 1fr; }
 }

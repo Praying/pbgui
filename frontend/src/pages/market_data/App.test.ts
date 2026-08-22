@@ -11,12 +11,15 @@ import {
   LS_KEY_PANEL,
 } from './App.test-support';
 
-/* M-data-1 shell integration: sidebar registry → PanelShell switching with
+/* M-data-1 shell integration: panel registry → PanelShell switching with
    persistence (legacy setActivePanel/restorePanel :9032-9107, :9736-9773),
    the exchange context bar (:2965-2977).
-   M-data-2: setContextExchange fan-out (:7304-7333, :9611-9613), sidebar
+   M-data-2: setContextExchange fan-out (:7304-7333, :9611-9613), best-1m
    shortcut modes (:9112-9120, :7415-7446), refreshStatuses bootstrap
    (:9772), help opener (:4085-4089), data-tip tooltip (:3637).
+   Rail migration: the legacy #sidebar column is retired — first-level
+   sections render as rail children ([data-testid="rail-section-<key>"]);
+   the l2books download entry lives in the best-1m panel's mode switch.
    M-data-8: the per-panel integration suites live in App.settings /
    App.tradfi / App.integrity / App.best1m-copy / App.status .test.ts; this
    file keeps the page shell, panel routing, exchange context and global
@@ -42,12 +45,14 @@ afterEach(() => {
 });
 
 describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
-  it('renders the shared shell, sidebar and main content', () => {
+  it('renders the shared shell, rail sections and main content', () => {
     const app = mountApp();
     expect(app.find('.app-shell').exists()).toBe(true);
     expect(app.find('nav#topnav').exists()).toBe(false);
     expect(app.find('#page-body').exists()).toBe(true);
-    expect(app.find('#sidebar').exists()).toBe(true);
+    // the in-page sidebar column is retired — sections live in the rail
+    expect(app.find('#sidebar').exists()).toBe(false);
+    expect(app.find('[data-testid="rail-section-settings-panel"]').exists()).toBe(true);
     expect(app.find('#main-content').exists()).toBe(true);
     expect(app.findAll('main')).toHaveLength(1);
     expect(app.get('#main-content').element.tagName).toBe('DIV');
@@ -59,47 +64,28 @@ describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
     expect(document.title).toBe('Market Data - PBGui');
   });
 
-  it('renders the sidebar section buttons with legacy labels in order (:2925-2949)', () => {
+  it('renders one rail section per registry panel in legacy order (:3674-3682)', () => {
     const app = mountApp();
-    const buttons = app.findAll('#sidebar-toolbar .sb-btn').map((b) => b.text());
-    expect(buttons).toEqual([
+    const sections = app.findAll('.workbench-rail__subitem');
+    // count assertion — every sectionButtons panel is reachable from the rail
+    expect(sections).toHaveLength(7);
+    expect(sections.map((s) => s.text())).toEqual([
       'Settings',
       'Status Monitor',
       'OHLCV Data',
       'OHLCV Integrity',
-      // inventory context blocks (:2929-2945) — M-data-6; the four view
-      // tabs render because hyperliquid is the restored default exchange
-      '1m',
-      '1m_api',
-      'l2Book',
-      'PB7 cache',
-      'Build best 1m',
-      'Delete selected',
-      'Delete by Date',
-      'Clear dataset',
       'Build Best 1m',
       'Copy Data',
-      'Download l2Books',
       'Activity Log',
-      // settings context block (:2950-2958) — settings panel is active
-      'Save Settings',
-      'Coin Refresh',
-      'AWS / l2Book',
-      'TradFi / Tiingo',
     ]);
   });
 
-  it('marks the active section button (:9038)', () => {
+  it('marks the active rail section (:9038)', () => {
     const app = mountApp();
-    // section buttons only — the settings subsection nav and the inventory
-    // view tabs carry their own active state (:6166, :6365)
-    const active = app
-      .findAll('#sidebar-toolbar .sb-btn')
-      .filter(
-        (b) => b.classes('active') && !b.classes('settings-subsection-btn') && !b.classes('inventory-subsection-btn')
-      );
+    const active = app.findAll('.workbench-rail__subitem--active');
     expect(active).toHaveLength(1);
     expect(active[0]?.text()).toBe('Settings');
+    expect(active[0]?.attributes('aria-current')).toBe('location');
   });
 });
 
@@ -109,10 +95,9 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
     expect(visiblePanelIds(app)).toEqual(['settings-panel']);
   });
 
-  it('switches panels on section button clicks and persists (:9052-9056)', async () => {
+  it('switches panels on rail section clicks and persists (:9052-9056)', async () => {
     const app = mountApp();
-    const statusButton = app.findAll('#sidebar-toolbar .sb-btn').find((b) => b.text() === 'Status Monitor');
-    await statusButton!.trigger('click');
+    await app.find('[data-testid="rail-section-status-panel"]').trigger('click');
     expect(visiblePanelIds(app)).toEqual(['status-panel']);
     expect(window.localStorage.getItem(LS_KEY_PANEL)).toBe('status-panel');
   });
@@ -204,38 +189,36 @@ describe('refreshStatuses bootstrap (:9772, :9076-9096)', () => {
   });
 });
 
-describe('sidebar shortcut modes (:9112-9120, :7687-7691, :7427-7446)', () => {
-  it('opens the best1m panel in build mode (:9112-9115)', async () => {
+describe('best-1m entries (rail section :2946 + in-panel mode switch :2948)', () => {
+  it('opens the best1m panel in build mode from the rail section (:9112-9115)', async () => {
     const app = mountApp();
-    await app.find('#sidebar-best-1m-link').trigger('click');
+    await app.find('[data-testid="rail-section-best1m-panel"]').trigger('click');
     expect(visiblePanelIds(app)).toEqual(['best1m-panel']);
     expect(window.localStorage.getItem(LS_KEY_PANEL)).toBe('best1m-panel');
-    const link = app.find('#sidebar-best-1m-link');
-    expect(link.classes()).toContain('active');
-    expect(link.attributes('aria-current')).toBe('page');
+    // the rail entry carries the active state (legacy link highlight :7436)
+    const section = app.find('[data-testid="rail-section-best1m-panel"]');
+    expect(section.classes()).toContain('workbench-rail__subitem--active');
+    expect(section.attributes('aria-current')).toBe('location');
   });
 
-  it('opens the best1m panel in download mode via the l2books shortcut (:9117-9120)', async () => {
+  it('switches to download mode via the in-panel l2books control (:9117-9120)', async () => {
     const app = mountApp();
-    await app.find('#sidebar-l2books-link').trigger('click');
+    await app.find('[data-testid="rail-section-best1m-panel"]').trigger('click');
+    await app.find('#best1m-mode-download').trigger('click');
     expect(visiblePanelIds(app)).toEqual(['best1m-panel']);
-    expect(app.find('#sidebar-l2books-link').classes()).toContain('active');
-    expect(app.find('#sidebar-best-1m-link').classes()).not.toContain('active');
+    expect(app.find('#best1m-mode-download').classes()).toContain('active');
+    expect(app.find('#best1m-mode-build').classes()).not.toContain('active');
+    // switching back to build re-fires the panel refresh path
+    await app.find('#best1m-mode-build').trigger('click');
+    expect(app.find('#best1m-mode-build').classes()).toContain('active');
+    expect(app.find('#best1m-mode-download').classes()).not.toContain('active');
   });
 
-  it('shows the l2books shortcut only on hyperliquid (:7422)', async () => {
+  it('shows the in-panel download control only on hyperliquid (:7422)', async () => {
     const app = mountApp();
-    expect(app.find('#sidebar-l2books-link').attributes('hidden')).toBeUndefined();
+    expect(app.find('#best1m-mode-switch').exists()).toBe(true);
     await app.find('#page-exchange').setValue('bybit');
-    expect(app.find('#sidebar-l2books-link').attributes('hidden')).toBeDefined();
-  });
-
-  it('keeps the best-1m link active off hyperliquid in either mode (:7436)', async () => {
-    const app = mountApp();
-    await app.find('#page-exchange').setValue('bybit');
-    await app.find('#sidebar-l2books-link').trigger('click'); // hidden but clickable
-    expect(app.find('#sidebar-best-1m-link').classes()).toContain('active');
-    expect(app.find('#sidebar-l2books-link').classes()).not.toContain('active');
+    expect(app.find('#best1m-mode-switch').exists()).toBe(false);
   });
 });
 

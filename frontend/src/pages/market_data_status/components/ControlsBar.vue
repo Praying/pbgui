@@ -60,7 +60,7 @@ const { t } = useI18n();
 }
 
 .mds-btn.primary:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--accent-deep);
 }
 
 .mds-btn.danger {
@@ -69,7 +69,7 @@ const { t } = useI18n();
 }
 
 .mds-btn.danger:hover:not(:disabled) {
-  background: #dc2626;
+  background: var(--danger-deep);
 }
 
 .mds-btn.secondary {

@@ -1,15 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  computeSidebarShortcutState,
-  useContextExchange,
-  type ExchangeFanoutHooks,
-} from './useContextExchange';
+import { useContextExchange, type ExchangeFanoutHooks } from './useContextExchange';
 import type { PanelId } from '../types';
 
 /* Legacy setContextExchange fan-out (market_data_main.html:7304-7333),
-   sidebar shortcut state (:7415-7446), openBest1mPanel section state
-   (:7687-7691) and the bootstrap restore (:9766-9771). Panel-specific
-   fan-out branches are injected hooks owned by M-data-3..7. */
+   openBest1mPanel section state (:7687-7691) and the bootstrap restore
+   (:9766-9771). Panel-specific fan-out branches are injected hooks owned by
+   M-data-3..7. The sidebar shortcut state tests (:7415-7446) retired with
+   the #sidebar column — the rail/in-panel controls carry their own active
+   state (covered in App.test.ts). */
 
 function makeStorage(): Storage {
   const map = new Map<string, string>();
@@ -166,43 +164,5 @@ describe('best-1m shortcut section state (:7687-7691, uiState.best1mPanelSection
     const { ctx } = makeHarness({});
     ctx.setContextExchange('bybit');
     expect(ctx.contextMeta.value).toEqual({ key: 'bybit', statusKey: 'bybit', label: 'Bybit' });
-  });
-});
-
-describe('computeSidebarShortcutState (:7427-7446)', () => {
-  it('marks the best-1m link active for non-hyperliquid when the panel is open', () => {
-    expect(computeSidebarShortcutState('best1m-panel', 'bybit', 'build')).toEqual({
-      best1mActive: true,
-      l2booksActive: false,
-    });
-    expect(computeSidebarShortcutState('best1m-panel', 'bybit', 'download')).toEqual({
-      best1mActive: true,
-      l2booksActive: false,
-    });
-  });
-
-  it('on hyperliquid, splits build vs download between the two links', () => {
-    expect(computeSidebarShortcutState('best1m-panel', 'hyperliquid', 'build')).toEqual({
-      best1mActive: true,
-      l2booksActive: false,
-    });
-    expect(computeSidebarShortcutState('best1m-panel', 'hyperliquid', 'download')).toEqual({
-      best1mActive: false,
-      l2booksActive: true,
-    });
-  });
-
-  it('deactivates both shortcuts when another panel is open', () => {
-    expect(computeSidebarShortcutState('settings-panel', 'hyperliquid', 'download')).toEqual({
-      best1mActive: false,
-      l2booksActive: false,
-    });
-  });
-
-  it('marks the l2books download shortcut visible only on hyperliquid (:7415-7425)', () => {
-    const { ctx } = makeHarness({});
-    expect(ctx.showL2booksShortcut.value).toBe(true);
-    ctx.setContextExchange('bybit');
-    expect(ctx.showL2booksShortcut.value).toBe(false);
   });
 });

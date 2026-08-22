@@ -574,15 +574,15 @@ async function testConnection(): Promise<void> {
     <!-- HL Expiry (edit mode, hyperliquid only) -->
     <div
       id="hlExpiryInline"
-      :style="{ display: isHL && isEdit ? 'flex' : 'none', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px', padding: '10px 14px', background: '#131114', border: '1px solid #37333a', borderRadius: '6px' }"
+      :style="{ display: isHL && isEdit ? 'flex' : 'none', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px', padding: '10px 14px', background: 'var(--bg-page)', border: '1px solid var(--border-default)', borderRadius: '6px' }"
     >
-      <span style="font-size:var(--fs-sm); color:#a29ca6;">{{ t('misc.apikeys.hlKeyExpiry') }}</span>
-      <span id="hlExpiryInlineBadge" :style="{ color: hlInline.errorText ? '#fc8181' : '' }">
+      <span style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ t('misc.apikeys.hlKeyExpiry') }}</span>
+      <span id="hlExpiryInlineBadge" :style="{ color: hlInline.errorText ? 'var(--danger-soft)' : '' }">
         <template v-if="hlInline.errorText">{{ hlInline.errorText }}</template>
         <ExpiryBadge v-else-if="hlInline.exp" :exp="hlInline.exp" />
         <template v-else>—</template>
       </span>
-      <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#a29ca6;">{{ hlInline.dateText }}</span>
+      <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ hlInline.dateText }}</span>
       <button class="btn pbgui-btn btn-sm btn-secondary" id="btnHLExpiryInline" :disabled="checkingHl" style="margin-left:auto;" @click="checkSingleHlExpiry">
         <PbIcon :icon="PhArrowClockwise" /> {{ checkingHl ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiry') }}
       </button>
@@ -591,21 +591,21 @@ async function testConnection(): Promise<void> {
     <!-- Bybit Expiry (edit mode, bybit only) -->
     <div
       id="bybitExpiryInline"
-      :style="{ display: isBybit && isEdit ? 'flex' : 'none', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px', padding: '10px 14px', background: '#131114', border: '1px solid #37333a', borderRadius: '6px' }"
+      :style="{ display: isBybit && isEdit ? 'flex' : 'none', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px', padding: '10px 14px', background: 'var(--bg-page)', border: '1px solid var(--border-default)', borderRadius: '6px' }"
     >
-      <span style="font-size:var(--fs-sm); color:#a29ca6;">{{ t('misc.apikeys.bybitKeyExpiry') }}</span>
-      <span id="bybitExpiryInlineBadge" :style="{ color: bybitInline.errorText ? '#fc8181' : '' }">
+      <span style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ t('misc.apikeys.bybitKeyExpiry') }}</span>
+      <span id="bybitExpiryInlineBadge" :style="{ color: bybitInline.errorText ? 'var(--danger-soft)' : '' }">
         <template v-if="bybitInline.errorText">{{ bybitInline.errorText }}</template>
         <ExpiryBadge v-else-if="bybitInline.exp" :exp="bybitInline.exp" />
         <template v-else>—</template>
       </span>
-      <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#a29ca6;">{{ bybitInline.dateText }}</span>
+      <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ bybitInline.dateText }}</span>
       <button class="btn pbgui-btn btn-sm btn-secondary" id="btnBybitExpiryInline" :disabled="checkingBybit" style="margin-left:auto;" @click="checkSingleBybitExpiry">
         <PbIcon :icon="PhArrowClockwise" /> {{ checkingBybit ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiryAndIps') }}
       </button>
-      <div id="bybitIPList" v-show="bybitInline.ips !== null" style="margin-top:8px; padding-top:8px; border-top:1px solid #37333a; width:100%;">
-        <span style="font-size:var(--fs-xs); color:#a29ca6; display:block; margin-bottom:4px;">{{ t('misc.apikeys.whitelistedIps') }}</span>
-        <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:#eae7ea; line-height:1.8;">
+      <div id="bybitIPList" v-show="bybitInline.ips !== null" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border-default); width:100%;">
+        <span style="font-size:var(--fs-xs); color:var(--text-secondary); display:block; margin-bottom:4px;">{{ t('misc.apikeys.whitelistedIps') }}</span>
+        <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:var(--text-primary); line-height:1.8;">
           <template v-if="bybitInline.ips && bybitInline.ips.length > 0">
             <span v-for="ip in bybitInline.ips" :key="ip" style="font-family:monospace; margin-right:12px;">{{ ip }}</span>
           </template>
@@ -633,7 +633,7 @@ async function testConnection(): Promise<void> {
       </div>
       <div class="form-checkbox">
         <input type="checkbox" id="editIsVault" v-model="isVault" />
-        <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:#fafafa;">{{ t('misc.apikeys.vault') }}</label>
+        <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:var(--text-primary);">{{ t('misc.apikeys.vault') }}</label>
       </div>
     </div>
 

@@ -26,16 +26,24 @@ export function chartTitle(result: BacktestResultItem, t: (iso: string) => strin
   return `${resultDisplayName(result)} ${t(result.modified ?? '')}`;
 }
 
+/**
+ * Morandi dark-theme chart constants — mirror the tokens.css palette as
+ * literals because Plotly resolves colors directly (no CSS var support).
+ */
+export const CHART_BG = '#16141a'; // var(--bg-page)
+export const CHART_TEXT = '#e9e5ee'; // var(--text-primary)
+export const CHART_GRID = '#3a3545'; // var(--border-default)
+
 /** _chartLayout (:7212-7224). */
 export function chartLayout(title: string, yTitle: string): PlotlyLayout {
   return {
-    paper_bgcolor: '#131114',
-    plot_bgcolor: '#131114',
-    font: { color: '#fafafa', size: 12, family: 'Source Sans Pro, sans-serif' },
+    paper_bgcolor: CHART_BG,
+    plot_bgcolor: CHART_BG,
+    font: { color: CHART_TEXT, size: 12, family: 'Source Sans Pro, sans-serif' },
     margin: { l: 60, r: 20, t: 40, b: 40 },
     title: { text: title, x: 0.5, font: { size: 14 } },
-    xaxis: { gridcolor: '#333640', griddash: 'dot', showgrid: true },
-    yaxis: { gridcolor: '#333640', title: yTitle },
+    xaxis: { gridcolor: CHART_GRID, griddash: 'dot', showgrid: true },
+    yaxis: { gridcolor: CHART_GRID, title: yTitle },
     legend: { orientation: 'h', y: 1.05 },
     hovermode: 'x unified',
     height: 800,
@@ -79,7 +87,7 @@ export function priceOverlayTrace(price: PricePayload): PlotlyTrace {
     name: `${price.exchange ?? ''} / ${price.coin ?? ''} close`,
     mode: 'lines',
     yaxis: 'y2',
-    line: { color: 'rgba(217, 70, 239, 0.7)', width: 1.25, dash: 'dot' },
+    line: { color: 'rgba(164, 147, 196, 0.7)', width: 1.25, dash: 'dot' }, // morandi purple (#a493c4 @ 0.7)
     hovertemplate: '%{y:.8g}<extra>Coin price</extra>',
   };
 }
@@ -180,7 +188,18 @@ export function tweTraces(csv: ParsedCsv, resolutionMinutes: number, result: Bac
 
 /* ── Compare (:7626-7634) ───────────────────────────────────────────── */
 
-export const COMPARE_COLORS = ['#4da6ff', '#21c354', '#ff8c00', '#ff4b4b', '#b366ff', '#ffcc00', '#00cccc', '#ff66b2'] as const;
+/** Morandi categorical series palette: accent / success / warning / danger
+ *  bases + purple + soft variants (mirrors tokens.css). */
+export const COMPARE_COLORS = [
+  '#8ba7c2', // accent
+  '#8fb593', // success
+  '#c4a67e', // warning
+  '#c58e8a', // danger
+  '#a493c4', // purple
+  '#a9c0d6', // accent-soft
+  '#accbab', // success-soft
+  '#daadaa', // danger-soft
+] as const;
 
 export interface CompareItem {
   path: string;
@@ -239,9 +258,9 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
 
   const traces: PlotlyTrace[] = [];
   const layout: PlotlyLayout = {
-    paper_bgcolor: '#131114',
-    plot_bgcolor: '#131114',
-    font: { color: '#fafafa', size: 12, family: 'Source Sans Pro, sans-serif' },
+    paper_bgcolor: CHART_BG,
+    plot_bgcolor: CHART_BG,
+    font: { color: CHART_TEXT, size: 12, family: 'Source Sans Pro, sans-serif' },
     margin: { l: 70, r: 30, t: 70, b: 50 },
     title: {
       text:
@@ -251,7 +270,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
       x: 0.5,
       font: { size: 15 },
     },
-    xaxis: { gridcolor: '#333640', griddash: 'dot', showgrid: true, anchor: 'y' },
+    xaxis: { gridcolor: CHART_GRID, griddash: 'dot', showgrid: true, anchor: 'y' },
     legend: { orientation: 'h', x: 0, y: 1.1 },
     hovermode: 'x unified',
     height: sideConfigs.length > 1 ? 1100 : 800,
@@ -263,11 +282,13 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
           { draw: [0.28, 0.50], prox: [0.0, 0.22] },
         ]
       : [{ draw: [0.30, 1.0], prox: [0.0, 0.22] }];
+  // Morandi series colors (tokens.css literals): long = accent/warning/
+  // success/success-soft; short = purple/warning-deep/danger-soft/accent-deep.
   const colors: Record<string, { raw: string; ema: string; score: string; prox: string }> = {
-    long: { raw: '#1f77b4', ema: '#ff7f0e', score: '#2ca02c', prox: '#2a9d8f' },
-    short: { raw: '#9467bd', ema: '#8c564b', score: '#e377c2', prox: '#6a4c93' },
+    long: { raw: '#8ba7c2', ema: '#c4a67e', score: '#8fb593', prox: '#accbab' },
+    short: { raw: '#a493c4', ema: '#8a6d46', score: '#daadaa', prox: '#56748f' },
   };
-  const thresholdColors = { yellow: '#d4a017', orange: '#d95f02', red: '#b22222' };
+  const thresholdColors = { yellow: '#dbc4a2', orange: '#c4a67e', red: '#c58e8a' };
 
   sideConfigs.forEach((cfg, sideIdx) => {
     const axisNum = sideIdx * 2 + 1;
@@ -288,8 +309,8 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
       `${cfg.side.toUpperCase()} RED trigger<br>${times[i] ?? ''}<br>Score: ${score[i]!.toFixed(6)}<br>RED: ${cfg.redThreshold.toFixed(6)}<br>% of RED: ${proximity[i]!.toFixed(1)}%`
     );
 
-    layout[yLayoutName] = { domain: dom.draw, gridcolor: '#333640', griddash: 'dot', title: `${prefix}Drawdown` };
-    layout[proxLayoutName] = { domain: dom.prox, gridcolor: '#333640', griddash: 'dot', title: '% of RED', anchor: 'x' };
+    layout[yLayoutName] = { domain: dom.draw, gridcolor: CHART_GRID, griddash: 'dot', title: `${prefix}Drawdown` };
+    layout[proxLayoutName] = { domain: dom.prox, gridcolor: CHART_GRID, griddash: 'dot', title: '% of RED', anchor: 'x' };
 
     traces.push({ x: times, y: raw, name: `${prefix}Raw Drawdown`, mode: 'lines', yaxis: yAxisName, line: { color: colors[cfg.side]!.raw, width: 1 }, opacity: 0.45 });
     traces.push({ x: times, y: ema, name: `${prefix}EMA Drawdown`, mode: 'lines', yaxis: yAxisName, line: { color: colors[cfg.side]!.ema, width: 1 }, opacity: 0.75 });
@@ -297,7 +318,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.yellowThreshold, cfg.yellowThreshold], name: `${prefix}Yellow Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.yellow, width: 1, dash: 'dot' }, opacity: 0.8 });
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.orangeThreshold, cfg.orangeThreshold], name: `${prefix}Orange Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.orange, width: 1, dash: 'dot' }, opacity: 0.8 });
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.redThreshold, cfg.redThreshold], name: `${prefix}RED Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.red, width: 1.2, dash: 'dash' }, opacity: 0.85 });
-    traces.push({ x: times, y: proximity, name: `${prefix}RED Proximity`, mode: 'lines', yaxis: proxAxisName, line: { color: colors[cfg.side]!.prox, width: 1.1 }, fill: 'tozeroy', fillcolor: 'rgba(42,157,143,0.14)' });
+    traces.push({ x: times, y: proximity, name: `${prefix}RED Proximity`, mode: 'lines', yaxis: proxAxisName, line: { color: colors[cfg.side]!.prox, width: 1.1 }, fill: 'tozeroy', fillcolor: 'rgba(172, 203, 171, 0.14)' }); // success-soft @ 0.14
     traces.push({ x: [times[0], times[times.length - 1]], y: [100, 100], name: `${prefix}RED Hit`, mode: 'lines', yaxis: proxAxisName, line: { color: thresholdColors.red, width: 1.2, dash: 'dash' } });
     if (redTriggerIdx.length) {
       traces.push({

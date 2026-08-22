@@ -78,7 +78,7 @@ async function save(): Promise<void> {
           : t('misc.apikeys.hlConfigNotConfigured')
       }}
     </p>
-    <p style="font-size:var(--fs-sm); color:#a29ca6; margin-top:8px;">
+    <p style="font-size:var(--fs-sm); color:var(--text-secondary); margin-top:8px;">
       {{ t('misc.apikeys.telegramWarningDesc') }}
     </p>
   </div>

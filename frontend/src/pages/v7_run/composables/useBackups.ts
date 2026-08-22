@@ -158,12 +158,12 @@ export function useBackups(options: {
       })) as { max_versions?: number };
       retentionSaved.value = data.max_versions ?? val; // :1263
       retention.value = retentionSaved.value;
-      retentionMsg.value = { text: t('v7run.saved'), color: '#4caf50' }; // :1266
+      retentionMsg.value = { text: t('v7run.saved'), color: 'var(--success)' }; // :1266
       setTimeout(() => {
         retentionMsg.value = null;
       }, 2000); // :1267
     } catch (error) {
-      retentionMsg.value = { text: t('common.error') + ': ' + String(error), color: '#f44336' }; // :1269
+      retentionMsg.value = { text: t('common.error') + ': ' + String(error), color: 'var(--danger)' }; // :1269
     }
   }
 

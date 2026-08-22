@@ -92,7 +92,7 @@ describe('services_monitor App skeleton', () => {
     expect(wrapper.find('.app-shell').exists()).toBe(true);
     expect(wrapper.find('#topnav').exists()).toBe(false);
     expect(wrapper.find('#page-body').exists()).toBe(true);
-    expect(wrapper.find('#sidebar').exists()).toBe(true);
+    expect(wrapper.findAll('.workbench-rail__subitem')).toHaveLength(PANEL_IDS.length);
     expect(wrapper.findAll('main#app-shell-main')).toHaveLength(1);
     expect(wrapper.find('#services-main-content').exists()).toBe(true);
     expect(wrapper.get('.workspace-header__actions button').find('svg').exists()).toBe(true);
@@ -101,7 +101,7 @@ describe('services_monitor App skeleton', () => {
   it('renders one sidebar button and panel container per legacy panel', () => {
     const wrapper = mountApp();
 
-    const buttons = wrapper.findAll('.sb-btn');
+    const buttons = wrapper.findAll('.workbench-rail__subitem');
     expect(buttons).toHaveLength(PANEL_IDS.length);
     for (const id of PANEL_IDS) {
       expect(wrapper.find(`#panel-${id}`).exists(), `panel ${id} container`).toBe(true);
@@ -119,13 +119,13 @@ describe('services_monitor App skeleton', () => {
 
     const active = wrapper.find('.svc-panel.active');
     expect(active.attributes('id')).toBe('panel-overview');
-    expect(wrapper.find('.sb-btn.active').attributes('data-panel')).toBe('overview');
+    expect(wrapper.find('.workbench-rail__subitem--active').attributes('data-testid')).toBe('rail-section-overview');
   });
 
   it('switches the active panel on sidebar click and persists it in the hash', async () => {
     const wrapper = mountApp();
 
-    await wrapper.find('.sb-btn[data-panel="workers"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-workers"]').trigger('click');
 
     expect(wrapper.find('.svc-panel.active').attributes('id')).toBe('panel-workers');
     expect(window.location.hash).toBe('#workers');
@@ -154,10 +154,10 @@ describe('services_monitor App skeleton', () => {
   it('renders localized sidebar labels', () => {
     const wrapper = mountApp('zh');
 
-    expect(wrapper.find('.sb-btn[data-panel="overview"]').text()).toContain('概览');
-    expect(wrapper.find('.sb-btn[data-panel="workers"]').text()).toContain('工作节点');
+    expect(wrapper.find('[data-testid="rail-section-overview"]').text()).toContain('概览');
+    expect(wrapper.find('[data-testid="rail-section-workers"]').text()).toContain('工作节点');
     // Panels the legacy page left untranslated stay as brand names.
-    expect(wrapper.find('.sb-btn[data-panel="pbcluster"]').text()).toContain('PBCluster');
+    expect(wrapper.find('[data-testid="rail-section-pbcluster"]').text()).toContain('PBCluster');
   });
 
   it('renders loading and polling failure status copy as text', async () => {
@@ -188,9 +188,9 @@ describe('services_monitor overview panel', () => {
     expect(wrapper.find('#panel-overview .svc-card[data-svc="pbrun"] .card-status-row').text()).toBe('Stopped');
 
     // Sidebar dots follow the payload (legacy updateStatusUI); overview has no dot.
-    expect(wrapper.find('.sb-btn[data-panel="pbcluster"] .sb-dot').classes()).toContain('running');
-    expect(wrapper.find('.sb-btn[data-panel="pbrun"] .sb-dot').classes()).toContain('stopped');
-    expect(wrapper.find('.sb-btn[data-panel="overview"] .sb-dot').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="rail-section-pbcluster"] .workbench-rail__subitem-dot').attributes('data-tone')).toBe('success');
+    expect(wrapper.find('[data-testid="rail-section-pbrun"] .workbench-rail__subitem-dot').attributes('data-tone')).toBe('danger');
+    expect(wrapper.find('[data-testid="rail-section-overview"] .workbench-rail__subitem-dot').exists()).toBe(false);
   });
 
   it('POSTs the legacy action endpoint and refreshes status on button click', async () => {
@@ -315,7 +315,7 @@ describe('services_monitor workers wiring', () => {
       expect(baseline).toBeGreaterThanOrEqual(1); // legacy single fetchWorkers(false) on load
       expect(workerCalls()).toBe(baseline); // no polling from other panels (legacy scheduleWorkers)
 
-      await wrapper.find('.sb-btn[data-panel="workers"]').trigger('click');
+      await wrapper.find('[data-testid="rail-section-workers"]').trigger('click');
       await flushPromises();
       vi.advanceTimersByTime(10_000);
       await flushPromises();
@@ -424,7 +424,7 @@ describe('services_monitor cmc pool wiring', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbcoindata"]').trigger('click');
     await flushPromises();
 
     const urls = fetchMock.mock.calls.map(([url]) => url);
@@ -443,7 +443,7 @@ describe('services_monitor cmc pool wiring', () => {
   it('reloads when switching to the pool tab (legacy switchTab)', async () => {
     const wrapper = mountApp();
     await flushPromises();
-    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbcoindata"]').trigger('click');
     await flushPromises();
     expect(cmcPoolLoads()).toBe(1);
 
@@ -469,7 +469,7 @@ describe('services_monitor cmc pool wiring', () => {
     fetchMock.mockImplementation(async () => cmcResponse({ detail: 'pool down' }, 503));
     const wrapper = mountApp();
 
-    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbcoindata"]').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#panel-pbcoindata .cmc-status-bar').classes()).toContain('error');
@@ -514,7 +514,7 @@ describe('services_monitor pbdata settings wiring', () => {
 
   /** The pbdata settings tab button (log → settings → status order). */
   async function openSettingsTab(wrapper: ReturnType<typeof mountApp>) {
-    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbdata"]').trigger('click');
     const tab = wrapper.findAll('#panel-pbdata .tab-btn').find((b) => b.attributes('data-tab') === 'settings')!;
     await tab.trigger('click');
   }
@@ -593,7 +593,7 @@ describe('services_monitor pbdata settings wiring', () => {
     await flushPromises();
     apiFetchMock.mockClear();
 
-    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbdata"]').trigger('click');
     await flushPromises();
 
     expect(settingsCalls()).toHaveLength(0);
@@ -630,7 +630,7 @@ describe('services_monitor apiserver settings wiring', () => {
 
   /** The api-server settings tab button (log → settings order). */
   async function openSettingsTab(wrapper: ReturnType<typeof mountApp>) {
-    await wrapper.find('.sb-btn[data-panel="api-server"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-api-server"]').trigger('click');
     const tab = wrapper.findAll('#panel-api-server .tab-btn').find((b) => b.attributes('data-tab') === 'settings')!;
     await tab.trigger('click');
   }
@@ -707,7 +707,7 @@ describe('services_monitor apiserver settings wiring', () => {
     await flushPromises();
     apiFetchMock.mockClear();
 
-    await wrapper.find('.sb-btn[data-panel="api-server"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-api-server"]').trigger('click');
     await flushPromises();
 
     expect(settingsCalls()).toHaveLength(0);
@@ -750,7 +750,7 @@ describe('services_monitor pbcoindata settings wiring', () => {
 
   /** The pbcoindata settings tab button (log → pool → settings order). */
   async function openSettingsTab(wrapper: ReturnType<typeof mountApp>) {
-    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbcoindata"]').trigger('click');
     const tab = wrapper.findAll('#panel-pbcoindata .tab-btn').find((b) => b.attributes('data-tab') === 'settings')!;
     await tab.trigger('click');
   }
@@ -807,7 +807,7 @@ describe('services_monitor pbcoindata settings wiring', () => {
     await flushPromises();
     apiFetchMock.mockClear();
 
-    await wrapper.find('.sb-btn[data-panel="pbcoindata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbcoindata"]').trigger('click');
     await flushPromises();
 
     expect(settingsCalls()).toHaveLength(0);
@@ -845,7 +845,7 @@ describe('services_monitor migration wiring (legacy loadMigrationStatus/testSyst
 
     expect(migrationCalls()).toHaveLength(1);
     expect(wrapper.find('#panel-migration .migration-title').text()).toBe('Systemd user services migration');
-    expect(wrapper.find('.sb-btn[data-panel="migration"] .sb-dot').classes()).toContain('warn');
+    expect(wrapper.find('[data-testid="rail-section-migration"] .workbench-rail__subitem-dot').attributes('data-tone')).toBe('warning');
   });
 
   it('force-loads the migration status when the migration panel is selected', async () => {
@@ -853,7 +853,7 @@ describe('services_monitor migration wiring (legacy loadMigrationStatus/testSyst
     await flushPromises();
     apiFetchMock.mockClear();
 
-    await wrapper.find('.sb-btn[data-panel="migration"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-migration"]').trigger('click');
     await flushPromises();
 
     expect(migrationCalls()).toHaveLength(1);
@@ -969,7 +969,7 @@ describe('services_monitor migration wiring (legacy loadMigrationStatus/testSyst
     // after payload with migration_needed: false → run button disabled again.
     expect((wrapper.find('#panel-migration #migration-run-btn').element as HTMLButtonElement).disabled).toBe(true);
     // _restart_pending → warn meta on the sidebar dot and the retry banner in preflight.
-    expect(wrapper.find('.sb-btn[data-panel="migration"] .sb-dot').classes()).toContain('warn');
+    expect(wrapper.find('[data-testid="rail-section-migration"] .workbench-rail__subitem-dot').attributes('data-tone')).toBe('warning');
     expect(wrapper.find('#panel-migration .migration-ok').text()).toContain('Migration completed. API restart is in progress');
     const modal = document.getElementById('result-modal')!;
     expect(modal.textContent).toContain('Migration completed');
@@ -1087,7 +1087,7 @@ describe('services_monitor pbdata status wiring (legacy pbdata status tab + pric
   };
 
   async function selectPbdataStatusTab(wrapper: ReturnType<typeof mountApp>): Promise<void> {
-    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbdata"]').trigger('click');
     await flushPromises();
     await wrapper.find('#panel-pbdata .tab-btn[data-tab="status"]').trigger('click');
     await flushPromises();
@@ -1110,7 +1110,7 @@ describe('services_monitor pbdata status wiring (legacy pbdata status tab + pric
     await flushPromises();
     apiFetchMock.mockClear();
 
-    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbdata"]').trigger('click');
     await flushPromises();
     await wrapper.find('#panel-pbdata .tab-btn[data-tab="settings"]').trigger('click');
     await flushPromises();
@@ -1198,15 +1198,15 @@ describe('services_monitor help overlay wiring (legacy PBGUI_HELP_OPENER/_servic
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('.sb-btn[data-panel="pbdata"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-pbdata"]').trigger('click');
     await flushPromises();
     expect((window as HelpGlobal)._servicesGuideKeyword).toBe('pbdata');
 
-    await wrapper.find('.sb-btn[data-panel="api-server"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-api-server"]').trigger('click');
     await flushPromises();
     expect((window as HelpGlobal)._servicesGuideKeyword).toBe('pbapiserver');
 
-    await wrapper.find('.sb-btn[data-panel="overview"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-overview"]').trigger('click');
     await flushPromises();
     expect((window as HelpGlobal)._servicesGuideKeyword).toBe('services_overview');
 
@@ -1222,30 +1222,3 @@ describe('services_monitor help overlay wiring (legacy PBGUI_HELP_OPENER/_servic
   });
 });
 
-describe('services_monitor sidebar resize handle (legacy sidebar resize IIFE)', () => {
-  it('resizes the sidebar between the 150px/300px clamps', async () => {
-    const wrapper = mountApp();
-    const handle = wrapper.find('#sidebar-resize');
-    expect(handle.exists()).toBe(true);
-    const sidebar = wrapper.find('#sidebar').element as HTMLElement;
-
-    await handle.trigger('mousedown', { clientX: 10 });
-    expect(handle.classes()).toContain('active');
-
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 190 }));
-    expect(sidebar.style.width).toBe('180px');
-
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 5000 }));
-    expect(sidebar.style.width).toBe('300px');
-
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: -200 }));
-    expect(sidebar.style.width).toBe('150px');
-
-    document.dispatchEvent(new MouseEvent('mouseup'));
-    await flushPromises();
-    expect(handle.classes()).not.toContain('active');
-
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 400 }));
-    expect(sidebar.style.width).toBe('150px');
-  });
-});

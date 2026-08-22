@@ -16,11 +16,11 @@
   --bg:var(--bg-page);
   --bg2:var(--bg-panel);
   --bg3:var(--bg-elevated);
-  --bg4: #151922;
+  --bg4: #171520;
   --border:var(--border-default);
   --text:var(--text-primary);
   --text-dim:var(--text-secondary);
-  --accent:#5b9cf5;
+  --accent:#8ba7c2;
   --blue:var(--accent);
   --green:var(--success);
   --orange:var(--warning);
@@ -228,7 +228,7 @@ a:hover { text-decoration: underline; }
   cursor: help;
   text-decoration-line: underline;
   text-decoration-style: dotted;
-  text-decoration-color: #716b75;
+  text-decoration-color: #756d81;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
@@ -241,9 +241,9 @@ button[data-tip] {
   display: none;
   position: fixed;
   z-index: 9999;
-  background: #1e293b;
-  color: var(--text-primary, #eae7ea);
-  border: 1px solid #334155;
+  background: #23202c;
+  color: var(--text-primary, #e9e5ee);
+  border: 1px solid #35313d;
   border-radius: 5px;
   font-size: var(--fs-xs);
   font-weight: normal;
@@ -701,7 +701,7 @@ input[type="range"]::-moz-range-thumb {
 .load-status-progress > div {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--blue), #8ec5ff);
+  background: linear-gradient(90deg, var(--blue), #a9c0d6);
   transition: width .2s ease;
 }
 
@@ -720,19 +720,19 @@ input[type="range"]::-moz-range-thumb {
 .message.warn {
   background: rgb(var(--warning-rgb, 227 164 74) / .08);
   border-color: rgb(var(--warning-rgb, 227 164 74) / .3);
-  color: #ffd08a;
+  color: #dbc4a2;
 }
 
 .message.info {
   background: rgb(var(--accent-rgb, 91 156 245) / .08);
   border-color: rgb(var(--accent-rgb, 91 156 245) / .3);
-  color: #b8dbff;
+  color: #a9c0d6;
 }
 
 .message.bad {
   background: rgb(var(--danger-rgb, 229 96 92) / .08);
   border-color: rgb(var(--danger-rgb, 229 96 92) / .3);
-  color: #ffc0c0;
+  color: #daadaa;
 }
 
 .stack {
@@ -901,7 +901,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .chart-wrap:fullscreen {
-  background: var(--bg-page, #131114);
+  background: var(--bg-page, #16141a);
   display: flex;
   flex-direction: column;
 }
@@ -935,7 +935,7 @@ input[type="range"]::-moz-range-thumb {
 .projection-panel-title {
   margin: 0 0 8px 0;
   text-align: center;
-  color: #9fb3c8;
+  color: #a59eaf;
   font-size: var(--fs-sm);
   font-weight: 600;
 }
@@ -2581,63 +2581,63 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
 
   function darkPlotLayout(layout) {
     var base = Object.assign({}, layout || {});
-    base.paper_bgcolor = '#131114';
-    base.plot_bgcolor = '#131114';
-    base.font = Object.assign({ color: '#fafafa' }, base.font || {});
-    base.legend = Object.assign({ font: { color: '#fafafa' } }, base.legend || {});
+    base.paper_bgcolor = '#16141a';
+    base.plot_bgcolor = '#16141a';
+    base.font = Object.assign({ color: '#f2eff5' }, base.font || {});
+    base.legend = Object.assign({ font: { color: '#f2eff5' } }, base.legend || {});
     base.margin = Object.assign({ l: 80, r: 40, t: 60, b: 70 }, base.margin || {});
     if (Array.isArray(base.annotations)) {
       base.annotations = base.annotations.map(function(annotation) {
         return Object.assign({}, annotation || {}, {
-          font: Object.assign({ color: '#fafafa' }, (annotation && annotation.font) || {})
+          font: Object.assign({ color: '#f2eff5' }, (annotation && annotation.font) || {})
         });
       });
     }
     if (base.xaxis) {
       base.xaxis = Object.assign({
-        color: '#fafafa',
+        color: '#f2eff5',
         gridcolor: 'rgba(255,255,255,0.12)',
         zerolinecolor: 'rgba(255,255,255,0.18)'
       }, base.xaxis);
     }
     if (base.yaxis) {
       base.yaxis = Object.assign({
-        color: '#fafafa',
+        color: '#f2eff5',
         gridcolor: 'rgba(255,255,255,0.12)',
         zerolinecolor: 'rgba(255,255,255,0.18)'
       }, base.yaxis);
     }
     if (base.scene) {
       base.scene = Object.assign({}, base.scene, {
-        bgcolor: '#131114',
-        xaxis: Object.assign({ backgroundcolor: '#131114', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).xaxis || {}),
-        yaxis: Object.assign({ backgroundcolor: '#131114', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).yaxis || {}),
-        zaxis: Object.assign({ backgroundcolor: '#131114', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa' }, (base.scene || {}).zaxis || {})
+        bgcolor: '#16141a',
+        xaxis: Object.assign({ backgroundcolor: '#16141a', gridcolor: 'rgba(255,255,255,0.12)', color: '#f2eff5' }, (base.scene || {}).xaxis || {}),
+        yaxis: Object.assign({ backgroundcolor: '#16141a', gridcolor: 'rgba(255,255,255,0.12)', color: '#f2eff5' }, (base.scene || {}).yaxis || {}),
+        zaxis: Object.assign({ backgroundcolor: '#16141a', gridcolor: 'rgba(255,255,255,0.12)', color: '#f2eff5' }, (base.scene || {}).zaxis || {})
       });
     }
     if (base.polar) {
       base.polar = Object.assign({}, base.polar, {
-        bgcolor: '#131114',
+        bgcolor: '#16141a',
         radialaxis: Object.assign({
-          color: '#fafafa',
+          color: '#f2eff5',
           gridcolor: 'rgba(255,255,255,0.16)',
           linecolor: 'rgba(255,255,255,0.22)',
-          tickfont: { color: '#fafafa' }
+          tickfont: { color: '#f2eff5' }
         }, (base.polar || {}).radialaxis || {}),
         angularaxis: Object.assign({
-          color: '#fafafa',
+          color: '#f2eff5',
           gridcolor: 'rgba(255,255,255,0.16)',
           linecolor: 'rgba(255,255,255,0.22)',
-          tickfont: { color: '#fafafa' }
+          tickfont: { color: '#f2eff5' }
         }, (base.polar || {}).angularaxis || {})
       });
     }
     if (base.coloraxis && base.coloraxis.colorbar) {
       base.coloraxis = Object.assign({}, base.coloraxis, {
         colorbar: Object.assign({}, base.coloraxis.colorbar, {
-          tickfont: Object.assign({ color: '#fafafa' }, (base.coloraxis.colorbar || {}).tickfont || {}),
+          tickfont: Object.assign({ color: '#f2eff5' }, (base.coloraxis.colorbar || {}).tickfont || {}),
           title: Object.assign({}, (base.coloraxis.colorbar || {}).title || {}, {
-            font: Object.assign({ color: '#fafafa' }, (((base.coloraxis || {}).colorbar || {}).title || {}).font || {})
+            font: Object.assign({ color: '#f2eff5' }, (((base.coloraxis || {}).colorbar || {}).title || {}).font || {})
           })
         })
       });
@@ -2659,7 +2659,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       xanchor: 'center',
       y: 0.98,
       yanchor: 'top',
-      font: { color: '#9fb3c8', size: 13 }
+      font: { color: '#a59eaf', size: 13 }
     };
     if (base.xaxis && base.xaxis.title) {
       base.xaxis.title = Object.assign({}, base.xaxis.title, { standoff: 10 });
@@ -2673,7 +2673,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
           x: 1.01,
           thickness: 14,
           len: 0.78,
-          tickfont: Object.assign({ size: 10, color: '#fafafa' }, (base.coloraxis.colorbar || {}).tickfont || {})
+          tickfont: Object.assign({ size: 10, color: '#f2eff5' }, (base.coloraxis.colorbar || {}).tickfont || {})
         })
       });
     }

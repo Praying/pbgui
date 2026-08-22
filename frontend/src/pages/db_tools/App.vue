@@ -30,6 +30,7 @@ import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import type { PageSection } from '@/shared/navigation';
 import LogPanel from './components/LogPanel.vue';
 import PanelBits from './components/PanelBits.vue';
 import SelectList from './components/SelectList.vue';
@@ -48,7 +49,17 @@ const PANELS = [
   { key: 'sync-jobs', labelKey: 'misc.dbtools.syncJobs' },
   { key: 'backups', labelKey: 'misc.dbtools.backupManager' },
   { key: 'copy-dashboards', labelKey: 'misc.dbtools.dashboards' },
-];
+] as const;
+
+/* Panels render as rail children (accordion under this page's entry) —
+   the legacy in-page #sidebar column is retired. */
+const sections = computed<PageSection[]>(() =>
+  PANELS.map((panel) => ({ key: panel.key, label: t(panel.labelKey) })),
+);
+
+function onSectionSelect(panelKey: string): void {
+  store.activePanel.value = panelKey;
+}
 
 /* ── list row adapters (renderChecks semantics :356-364) ── */
 
@@ -179,6 +190,9 @@ onBeforeUnmount(() => store.teardown());
     page-key="system_db_tools"
     :page-title="t('misc.dbtools.pageTitle')"
     :page-description="t('misc.dbtools.pageSub')"
+    :sections="sections"
+    :active-section="store.activePanel.value"
+    @update:section="onSectionSelect"
   >
     <template #status>
       <StatusStrip
@@ -189,16 +203,6 @@ onBeforeUnmount(() => store.teardown());
     </template>
 
   <div id="page-body">
-    <aside id="sidebar">
-      <div class="sb-title">{{ t('misc.dbtools.sbTitle') }}</div>
-      <button
-        v-for="panel in PANELS"
-        :key="panel.key"
-        class="sb-btn"
-        :class="{ active: store.activePanel.value === panel.key }"
-        @click="store.activePanel.value = panel.key"
-      >{{ t(panel.labelKey) }}</button>
-    </aside>
     <div id="main-content">
       <div class="page-head">
         <div>

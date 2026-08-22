@@ -73,7 +73,7 @@ describe('DB Tools page shell', () => {
   it('switches panels through the sidebar', async () => {
     const wrapper = await mountApp();
 
-    await wrapper.findAll('#sidebar .sb-btn')[4]!.trigger('click'); // backups
+    await wrapper.find('[data-testid="rail-section-backups"]').trigger('click');
     expect(wrapper.find('#panel-backups').classes()).toContain('active');
     expect(wrapper.find('#backup-total-summary').text()).toContain('1 files');
     const backupRow = wrapper.find('#backup-list .backup-row');
@@ -122,7 +122,7 @@ describe('DB Tools page shell', () => {
   it('renders the sync panel with the empty job list and opens the editor for a new job', async () => {
     const wrapper = await mountApp();
 
-    await wrapper.findAll('#sidebar .sb-btn')[3]!.trigger('click'); // sync-jobs
+    await wrapper.find('[data-testid="rail-section-sync-jobs"]').trigger('click');
     expect(wrapper.find('#sync-job-list').text()).toContain('No sync jobs configured');
     expect(wrapper.find('#sync-editor').classes()).not.toContain('visible');
 

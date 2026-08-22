@@ -31,6 +31,19 @@ export interface NavigationGroup {
   items: readonly NavigationItem[];
 }
 
+export type SectionTone = 'neutral' | 'success' | 'warning' | 'danger';
+
+/** Page-internal section exposed as rail children under the active page. */
+export interface PageSection {
+  key: string;
+  /** Already-translated label — pages own their i18n, like pageTitle. */
+  label: string;
+  /** Optional live-status dot tone (e.g. services_monitor panel health). */
+  tone?: SectionTone;
+  /** Disabled sections stay visible but inert (e.g. password before login). */
+  disabled?: boolean;
+}
+
 export const WORKBENCH_NAVIGATION = [
   {
     id: 'system',

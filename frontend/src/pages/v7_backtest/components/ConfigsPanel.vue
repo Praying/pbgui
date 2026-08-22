@@ -161,7 +161,7 @@ defineExpose({ deleteSelectedFlow: bindRun });
           <td>{{ num(entry.twe_long, 2) }} / {{ num(entry.twe_short, 2) }}</td>
           <td>{{ dateText(entry.start_date) }}</td>
           <td>{{ dateText(entry.end_date) }}</td>
-          <td style="cursor: pointer; color: #63b3ed; font-weight: 600" @click.stop="emit('view-results', entry.name)">{{ entry.results ?? 0 }}</td>
+          <td style="cursor: pointer; color: var(--accent-soft); font-weight: 600" @click.stop="emit('view-results', entry.name)">{{ entry.results ?? 0 }}</td>
           <td>{{ dateText(entry.modified) }}</td>
           <td class="actions-cell" @click.stop>
             <button type="button" class="act-btn" data-test="cfg-edit" :title="t('v7backtest.edit')" :aria-label="t('v7backtest.edit')" @click="emit('edit', entry.name)"><PbIcon :icon="PhPencilSimple" :size="18" /></button>

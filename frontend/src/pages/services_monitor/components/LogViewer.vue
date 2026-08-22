@@ -292,50 +292,50 @@ onUnmounted(() => {
 .lvp-lvl-btn {
   padding: 3px 7px;
   border-radius: 3px;
-  border: 1px solid #333640;
-  background: #28252b;
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   font-family: monospace;
   transition: all 0.15s;
   opacity: 0.4;
-  color: #aaa;
+  color: var(--text-secondary);
 }
 .lvp-lvl-btn.on {
   opacity: 1;
 }
 .lvp-lvl-btn[data-lvl='DEBUG'].on {
-  background: #3a3f4b;
-  border-color: #555;
-  color: #eae7ea;
+  background: var(--bg-elevated);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 .lvp-lvl-btn[data-lvl='INFO'].on {
-  background: #0d3b20;
-  border-color: #21c354;
-  color: #21c354;
+  background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card));
+  border-color: var(--success);
+  color: var(--success);
 }
 .lvp-lvl-btn[data-lvl='WARNING'].on {
-  background: #3b2700;
-  border-color: #ff8c00;
-  color: #ff8c00;
+  background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card));
+  border-color: var(--warning);
+  color: var(--warning);
 }
 .lvp-lvl-btn[data-lvl='ERROR'].on {
-  background: #3b0d0d;
-  border-color: #ff4b4b;
-  color: #ff4b4b;
+  background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card));
+  border-color: var(--danger);
+  color: var(--danger);
 }
 .lvp-lvl-btn[data-lvl='CRITICAL'].on {
-  background: #2d0040;
-  border-color: #b39ddb;
-  color: #b39ddb;
+  background: color-mix(in srgb, #a493c4 28%, var(--bg-card));
+  border-color: #a493c4;
+  color: #a493c4;
 }
 .lvp-ctrl-btn {
   padding: 3px 9px;
-  background: #28252b;
-  border: 1px solid #333640;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
-  color: #eae7ea;
+  color: var(--text-primary);
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
@@ -343,28 +343,28 @@ onUnmounted(() => {
   line-height: 1.6;
 }
 .lvp-ctrl-btn:hover {
-  background: #4da6ff;
-  color: #000;
-  border-color: #4da6ff;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
 }
 .lvp-ctrl-btn.lvp-stream-on {
-  background: #21c354;
-  color: #000;
-  border-color: #21c354;
+  background: var(--success);
+  color: var(--accent-contrast);
+  border-color: var(--success);
 }
 .lvp-conn-badge {
   font-size: 11px;
-  color: #716b75;
+  color: var(--text-muted);
 }
 .lvp-terminal {
   overflow-y: auto;
   font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
   font-size: 12px;
   line-height: 1.45;
-  background: #000;
-  color: #b0b0b0;
+  background: var(--bg-page);
+  color: var(--text-secondary);
   padding: 10px 12px;
-  border: 1px solid #1e293b;
+  border: 1px solid var(--bg-panel);
   border-radius: 5px;
   white-space: pre-wrap;
   word-break: break-all;
@@ -372,19 +372,19 @@ onUnmounted(() => {
   min-height: 0;
 }
 .lvp-log-debug {
-  color: #808080;
+  color: var(--text-muted);
 }
 .lvp-log-info {
-  color: #b0b0b0;
+  color: var(--text-secondary);
 }
 .lvp-log-warning {
-  color: #ff8c00;
+  color: var(--warning);
 }
 .lvp-log-error {
-  color: #ff4b4b;
+  color: var(--danger);
 }
 .lvp-log-critical {
-  color: #b39ddb;
+  color: #a493c4;
   font-weight: 600;
 }
 .lvp-level-hidden {
@@ -400,11 +400,11 @@ onUnmounted(() => {
   min-height: 40px;
   gap: 6px;
   padding: 6px 8px;
-  border: 1px solid rgba(162, 156, 166, 0.13);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
   border-radius: 9px;
   background:
-    linear-gradient(90deg, rgba(24, 38, 59, 0.76), rgba(14, 23, 37, 0.72)),
-    #171619;
+    linear-gradient(90deg, rgb(var(--bg-panel-rgb) / 0.76), rgb(var(--bg-page-rgb) / 0.72)),
+    var(--surface-workspace);
   box-shadow: 0 1px rgba(255, 255, 255, 0.025) inset;
 }
 
@@ -412,19 +412,19 @@ onUnmounted(() => {
   min-width: 39px;
   min-height: 27px;
   padding: 0 8px;
-  border-color: rgba(162, 156, 166, 0.17);
+  border-color: rgb(var(--text-secondary-rgb) / 0.17);
   border-radius: 6px;
-  background: rgba(162, 156, 166, 0.07);
-  color: #8fa5be;
+  background: rgb(var(--text-secondary-rgb) / 0.07);
+  color: var(--text-secondary);
   opacity: 0.48;
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
 }
 
 .lvp-lvl-btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(162, 156, 166, 0.36);
-  background: rgba(162, 156, 166, 0.14);
-  color: #edf4fc;
+  border-color: rgb(var(--text-secondary-rgb) / 0.36);
+  background: rgb(var(--text-secondary-rgb) / 0.14);
+  color: var(--text-secondary);
   opacity: 0.9;
 }
 
@@ -433,87 +433,87 @@ onUnmounted(() => {
 }
 
 .lvp-lvl-btn[data-lvl='DEBUG'].on {
-  border-color: rgba(162, 156, 166, 0.35);
-  background: rgba(162, 156, 166, 0.14);
-  color: #cbd5e1;
+  border-color: rgb(var(--text-secondary-rgb) / 0.35);
+  background: rgb(var(--text-secondary-rgb) / 0.14);
+  color: var(--text-secondary);
 }
 
 .lvp-lvl-btn[data-lvl='INFO'].on {
-  border-color: rgba(52, 211, 153, 0.38);
-  background: rgba(16, 185, 129, 0.13);
-  color: #86efac;
+  border-color: rgb(var(--success-rgb) / 0.38);
+  background: rgb(var(--success-rgb) / 0.13);
+  color: var(--success-soft);
 }
 
 .lvp-lvl-btn[data-lvl='WARNING'].on {
-  border-color: rgba(251, 191, 36, 0.4);
-  background: rgba(180, 83, 9, 0.16);
-  color: #fde68a;
+  border-color: rgb(var(--warning-rgb) / 0.4);
+  background: rgb(var(--warning-rgb) / 0.16);
+  color: var(--warning-soft);
 }
 
 .lvp-lvl-btn[data-lvl='ERROR'].on {
-  border-color: rgba(248, 113, 113, 0.42);
-  background: rgba(185, 28, 28, 0.17);
-  color: #fca5a5;
+  border-color: rgb(var(--danger-rgb) / 0.42);
+  background: rgb(var(--danger-rgb) / 0.17);
+  color: var(--danger-soft);
 }
 
 .lvp-lvl-btn[data-lvl='CRITICAL'].on {
-  border-color: rgba(196, 181, 253, 0.4);
-  background: rgba(109, 40, 217, 0.18);
-  color: #ddd6fe;
+  border-color: rgb(164 147 196 / 0.4);
+  background: rgb(164 147 196 / 0.18);
+  color: #a493c4;
 }
 
 .lvp-ctrl-btn {
   min-height: 29px;
   padding: 0 10px;
-  border-color: rgba(162, 156, 166, 0.17);
+  border-color: rgb(var(--text-secondary-rgb) / 0.17);
   border-radius: 7px;
-  background: rgba(162, 156, 166, 0.08);
-  color: #b7c6d8;
+  background: rgb(var(--text-secondary-rgb) / 0.08);
+  color: var(--text-secondary);
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
 
 .lvp-ctrl-btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(96, 165, 250, 0.38);
-  background: rgba(37, 99, 235, 0.16);
-  color: #edf4fc;
+  border-color: rgb(var(--accent-rgb) / 0.38);
+  background: rgb(var(--accent-rgb) / 0.16);
+  color: var(--text-secondary);
 }
 
 .lvp-ctrl-btn.lvp-stream-on {
-  border-color: rgba(52, 211, 153, 0.4);
-  background: rgba(16, 185, 129, 0.16);
-  color: #a7f3d0;
+  border-color: rgb(var(--success-rgb) / 0.4);
+  background: rgb(var(--success-rgb) / 0.16);
+  color: var(--success-soft);
 }
 
 .lvp-clear-btn:hover {
-  border-color: rgba(248, 113, 113, 0.36);
-  background: rgba(185, 28, 28, 0.16);
-  color: #fecaca;
+  border-color: rgb(var(--danger-rgb) / 0.36);
+  background: rgb(var(--danger-rgb) / 0.16);
+  color: var(--danger-soft);
 }
 
 .lvp-conn-badge {
   margin-left: auto;
   padding: 4px 9px;
-  border: 1px solid rgba(162, 156, 166, 0.13);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
   border-radius: 999px;
-  background: rgba(6, 13, 24, 0.4);
-  color: #8fa5be;
+  background: rgb(var(--bg-page-rgb) / 0.4);
+  color: var(--text-secondary);
   font-size: 11px;
   white-space: nowrap;
 }
 
 .lvp-terminal {
   padding: 14px 16px;
-  border-color: rgba(96, 165, 250, 0.16);
+  border-color: rgb(var(--accent-rgb) / 0.16);
   border-radius: 10px;
   background:
-    linear-gradient(180deg, rgba(3, 9, 17, 0.98), rgba(2, 6, 12, 0.98)),
-    #000;
+    linear-gradient(180deg, rgb(var(--bg-page-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98)),
+    var(--bg-page);
   box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24), 0 1px rgba(255, 255, 255, 0.025) inset;
-  color: #bdc9d8;
+  color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.55;
-  scrollbar-color: rgba(96, 165, 250, 0.32) rgba(162, 156, 166, 0.04);
+  scrollbar-color: rgb(var(--accent-rgb) / 0.32) rgb(var(--text-secondary-rgb) / 0.04);
 }
 
 .lvp-terminal > div {
@@ -525,30 +525,30 @@ onUnmounted(() => {
 }
 
 .lvp-terminal > div:hover {
-  background: rgba(96, 165, 250, 0.07);
+  background: rgb(var(--accent-rgb) / 0.07);
 }
 
 .lvp-log-debug {
-  color: #71849b;
+  color: var(--text-muted);
 }
 
 .lvp-log-info {
-  color: #c5d1df;
+  color: var(--text-secondary);
 }
 
 .lvp-log-warning {
-  border-left-color: rgba(251, 191, 36, 0.65) !important;
-  color: #fcd34d;
+  border-left-color: rgb(var(--warning-rgb) / 0.65) !important;
+  color: var(--warning-soft);
 }
 
 .lvp-log-error {
-  border-left-color: rgba(248, 113, 113, 0.72) !important;
-  color: #fca5a5;
+  border-left-color: rgb(var(--danger-rgb) / 0.72) !important;
+  color: var(--danger-soft);
 }
 
 .lvp-log-critical {
-  border-left-color: rgba(196, 181, 253, 0.72) !important;
-  color: #ddd6fe;
+  border-left-color: rgb(164 147 196 / 0.72) !important;
+  color: #a493c4;
   font-weight: 700;
 }
 

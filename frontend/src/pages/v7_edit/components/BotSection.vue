@@ -86,7 +86,7 @@ function reveal(side: 'long' | 'short'): void {
   </div>
   <div class="form-row cols-2">
     <div class="form-group">
-      <label id="lbl-long-json">{{ t('v7run.longConfigJson') }}<template v-if="page.paramLegendLong.value"> &#x25A0; <span style="color: #f0a500">{{ t('v7run.paramNeutralized') }}</span> / &#x25A0; <span style="color: #e05252">{{ t('v7run.paramReview') }}</span></template></label>
+      <label id="lbl-long-json">{{ t('v7run.longConfigJson') }}<template v-if="page.paramLegendLong.value"> &#x25A0; <span style="color: var(--warning)">{{ t('v7run.paramNeutralized') }}</span> / &#x25A0; <span style="color: var(--danger)">{{ t('v7run.paramReview') }}</span></template></label>
       <div class="bot-json-highlight-wrap">
         <pre v-if="longError" class="bot-json-highlight-pre" aria-hidden="true"><span
           v-for="(line, index) in longLines"
@@ -113,7 +113,7 @@ function reveal(side: 'long' | 'short'): void {
       </div>
     </div>
     <div class="form-group">
-      <label id="lbl-short-json">{{ t('v7run.shortConfigJson') }}<template v-if="page.paramLegendShort.value"> &#x25A0; <span style="color: #f0a500">{{ t('v7run.paramNeutralized') }}</span> / &#x25A0; <span style="color: #e05252">{{ t('v7run.paramReview') }}</span></template></label>
+      <label id="lbl-short-json">{{ t('v7run.shortConfigJson') }}<template v-if="page.paramLegendShort.value"> &#x25A0; <span style="color: var(--warning)">{{ t('v7run.paramNeutralized') }}</span> / &#x25A0; <span style="color: var(--danger)">{{ t('v7run.paramReview') }}</span></template></label>
       <div class="bot-json-highlight-wrap">
         <pre v-if="shortError" class="bot-json-highlight-pre" aria-hidden="true"><span
           v-for="(line, index) in shortLines"

@@ -16,7 +16,7 @@
             --input-h: 32px; --btn-h: 32px;
         }
         /* Base layout — identical to dashboard_main.html */
-        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-page, #131114); color: var(--text-primary, #eae7ea); font-family: 'Segoe UI', system-ui, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; font-size: var(--fs-base); }
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg-page, #16141a); color: var(--text-primary, #e9e5ee); font-family: 'Segoe UI', system-ui, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; font-size: var(--fs-base); }
         * { box-sizing: border-box; }
 
         /* ── Page body ──────────────────────────────── */
@@ -33,8 +33,8 @@
             min-width: 180px;
             max-width: 340px;
             flex-shrink: 0;
-            background: var(--bg-page, #131114);
-            border-right: 1px solid var(--border-subtle, #29262c);
+            background: var(--bg-page, #16141a);
+            border-right: 1px solid var(--border-subtle, #2c2836);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -54,16 +54,16 @@
             flex-wrap: wrap;
             gap: 4px;
         }
-        .sb-title { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.09em; color: #716b75; font-weight: 700; }
-        .sb-count { font-size: var(--fs-sm); background: var(--bg-card, #1f1d21); border: 1px solid var(--border-default, #37333a); border-radius: 10px; padding: 0.1rem 0.5rem; color: var(--text-secondary, #a29ca6); font-weight: 600; }
+        .sb-title { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.09em; color: #756d81; font-weight: 700; }
+        .sb-count { font-size: var(--fs-sm); background: var(--bg-card, #211e29); border: 1px solid var(--border-default, #3a3545); border-radius: 10px; padding: 0.1rem 0.5rem; color: var(--text-secondary, #a59eaf); font-weight: 600; }
         #sidebar-toolbar {
             display: flex;
             flex-direction: column;
             gap: 0.3rem;
             padding: 0.3rem 0.1rem 0.45rem;
-            border-bottom: 1px solid var(--border-subtle, #29262c);
+            border-bottom: 1px solid var(--border-subtle, #2c2836);
         }
-        .sb-sep { border: none; border-top: 1px solid var(--border-subtle, #29262c); margin: 2px 0; }
+        .sb-sep { border: none; border-top: 1px solid var(--border-subtle, #2c2836); margin: 2px 0; }
         .sb-btn {
             display: inline-flex;
             align-items: center;
@@ -71,22 +71,22 @@
             border-radius: 6px;
             font-size: var(--fs-base);
             cursor: pointer;
-            border: 1px solid var(--border-default, #37333a);
-            background: var(--bg-card, #1f1d21);
-            color: var(--text-secondary, #a29ca6);
+            border: 1px solid var(--border-default, #3a3545);
+            background: var(--bg-card, #211e29);
+            color: var(--text-secondary, #a59eaf);
             transition: background 0.12s, border-color 0.12s, color 0.12s;
             width: 100%;
             text-align: left;
         }
-        .sb-btn:hover { background: #252d3d; color: var(--text-primary, #eae7ea); border-color: var(--text-disabled, #4e4851); }
-        .sb-btn.active { background: rgb(var(--success-rgb, 63 186 111) / .13); border-color: var(--success, #3fba6f); color: var(--success, #3fba6f); }
-        .sb-btn.primary { background: var(--success, #3fba6f); border-color: var(--success, #3fba6f); color: #fff; }
-        .sb-btn.primary:hover { background: var(--success-deep, #15803d); }
-        .sb-btn.warning { background: var(--warning-deep, #b45309); border-color: var(--warning-deep, #b45309); color: var(--bg-card, #1f1d21); }
-        .sb-btn.warning:hover { background: var(--warning-soft, #eec27e); }
-        .sb-btn.info { color: var(--accent-soft, #8db9f8); border-color: rgb(var(--accent-soft-rgb, 141 185 248) / .27); }
+        .sb-btn:hover { background: #272331; color: var(--text-primary, #e9e5ee); border-color: var(--text-disabled, #524b60); }
+        .sb-btn.active { background: rgb(var(--success-rgb, 63 186 111) / .13); border-color: var(--success, #8fb593); color: var(--success, #8fb593); }
+        .sb-btn.primary { background: var(--success, #8fb593); border-color: var(--success, #8fb593); color: #fff; }
+        .sb-btn.primary:hover { background: var(--success-deep, #55815c); }
+        .sb-btn.warning { background: var(--warning-deep, #8a6d46); border-color: var(--warning-deep, #8a6d46); color: var(--bg-card, #211e29); }
+        .sb-btn.warning:hover { background: var(--warning-soft, #dbc4a2); }
+        .sb-btn.info { color: var(--accent-soft, #a9c0d6); border-color: rgb(var(--accent-soft-rgb, 141 185 248) / .27); }
         .sb-btn.info:hover { background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.1); border-color: rgb(var(--accent-soft-rgb, 141 185 248) / 0.5); }
-        .sb-btn.danger { color: #ef4444; border-color: #ef444455; }
+        .sb-btn.danger { color: #c58e8a; border-color: #c58e8a55; }
         .sb-btn.danger:hover { background: rgba(245,101,101,0.1); border-color: rgba(245,101,101,0.5); }
         .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -109,16 +109,16 @@
             transition: background 0.2s;
             color: white;
         }
-        .btn-primary { background: var(--success, #3fba6f); }
-        .btn-primary:hover { background: var(--success-deep, #15803d); }
-        .btn-danger { background: #ef4444; }
-        .btn-danger:hover { background: #dc2626; }
-        .btn-secondary { background: var(--text-disabled, #4e4851); }
-        .btn-secondary:hover { background: var(--border-default, #37333a); }
-        .btn-info { background: var(--accent-deep, #3a72d0); }
-        .btn-info:hover { background: #2c5282; }
-        .btn-warning { background: var(--warning-deep, #b45309); color: var(--bg-card, #1f1d21); }
-        .btn-warning:hover { background: var(--warning-soft, #eec27e); }
+        .btn-primary { background: var(--success, #8fb593); }
+        .btn-primary:hover { background: var(--success-deep, #55815c); }
+        .btn-danger { background: #c58e8a; }
+        .btn-danger:hover { background: #96524e; }
+        .btn-secondary { background: var(--text-disabled, #524b60); }
+        .btn-secondary:hover { background: var(--border-default, #3a3545); }
+        .btn-info { background: var(--accent-deep, #56748f); }
+        .btn-info:hover { background: #3d4664; }
+        .btn-warning { background: var(--warning-deep, #8a6d46); color: var(--bg-card, #211e29); }
+        .btn-warning:hover { background: var(--warning-soft, #dbc4a2); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-sm { padding: 4px 10px; font-size: var(--fs-sm); }
 
@@ -131,8 +131,8 @@
         .user-table th {
             text-align: left;
             padding: 10px 12px;
-            border-bottom: 2px solid var(--bg-elevated, #28252b);
-            color: var(--text-secondary, #a29ca6);
+            border-bottom: 2px solid var(--bg-elevated, #2a2632);
+            color: var(--text-secondary, #a59eaf);
             font-size: var(--fs-sm);
             font-weight: 600;
             text-transform: uppercase;
@@ -142,14 +142,14 @@
             cursor: pointer;
             user-select: none;
         }
-        .user-table th.sortable:hover { color: var(--text-primary, var(--text-primary, #eae7ea)); }
-        .user-table th.sort-asc .sort-icon::after  { content: " ▲"; color: var(--success, #3fba6f); }
-        .user-table th.sort-desc .sort-icon::after { content: " ▼"; color: var(--success, #3fba6f); }
+        .user-table th.sortable:hover { color: var(--text-primary, var(--text-primary, #e9e5ee)); }
+        .user-table th.sort-asc .sort-icon::after  { content: " ▲"; color: var(--success, #8fb593); }
+        .user-table th.sort-desc .sort-icon::after { content: " ▼"; color: var(--success, #8fb593); }
         .user-table th.sort-asc .sort-icon,
         .user-table th.sort-desc .sort-icon { display: none; }
         .user-table td {
             padding: 10px 12px;
-            border-bottom: 1px solid #1e2533;
+            border-bottom: 1px solid #211e29;
             font-size: var(--fs-base);
         }
         .user-table tr:hover { background: rgba(255,255,255,0.03); }
@@ -161,25 +161,25 @@
             border-radius: 3px;
             font-size: var(--fs-sm);
             font-weight: 500;
-            background: var(--border-default, #37333a);
+            background: var(--border-default, #3a3545);
         }
-        .badge-exchange.binance { color: #f0b90b; }
-        .badge-exchange.bybit { color: #f7a600; }
-        .badge-exchange.bitget { color: #00c9a7; }
-        .badge-exchange.hyperliquid { color: #50fa7b; }
+        .badge-exchange.binance { color: #c9a961; }
+        .badge-exchange.bybit { color: #c79a6b; }
+        .badge-exchange.bitget { color: #7fb3a3; }
+        .badge-exchange.hyperliquid { color: #8fb593; }
         .badge-exchange.okx { color: #ccc; }
-        .badge-exchange.gateio { color: #2ba6ff; }
-        .badge-exchange.kucoin { color: #23af91; }
+        .badge-exchange.gateio { color: #8ba7c2; }
+        .badge-exchange.kucoin { color: #86ad9e; }
 
         .badge-in-use {
             display: inline-block;
             padding: 2px 6px;
             border-radius: 3px;
             font-size: var(--fs-xs);
-            background: var(--border-default, #37333a);
-            color: var(--text-secondary, #a29ca6);
+            background: var(--border-default, #3a3545);
+            color: var(--text-secondary, #a59eaf);
         }
-        .badge-in-use.active { background: rgb(var(--success-rgb, 63 186 111) / .2); color: var(--success, #3fba6f); font-weight: 600; }
+        .badge-in-use.active { background: rgb(var(--success-rgb, 63 186 111) / .2); color: var(--success, #8fb593); font-weight: 600; }
 
         .badge-expiry {
             display: inline-block;
@@ -189,17 +189,17 @@
             font-weight: 500;
             white-space: nowrap;
         }
-        .badge-expiry.ok { background: rgb(var(--success-rgb, 63 186 111) / .2); color: var(--success, #3fba6f); }
-        .badge-expiry.expiring_soon { background: #d69e2e33; color: var(--warning-soft, #eec27e); }
-        .badge-expiry.critical { background: #ef444433; color: #ef4444; }
-        .badge-expiry.expired { background: #1a1a1a; color: #555; }
-        .badge-expiry.no_expiry { background: var(--border-default, #37333a); color: var(--text-secondary, #a29ca6); }
-        .badge-expiry.unknown, .badge-expiry.error { background: var(--border-default, #37333a); color: var(--text-muted, #716b75); }
+        .badge-expiry.ok { background: rgb(var(--success-rgb, 63 186 111) / .2); color: var(--success, #8fb593); }
+        .badge-expiry.expiring_soon { background: #c4a67e33; color: var(--warning-soft, #dbc4a2); }
+        .badge-expiry.critical { background: #c58e8a33; color: #c58e8a; }
+        .badge-expiry.expired { background: #1b181f; color: #555; }
+        .badge-expiry.no_expiry { background: var(--border-default, #3a3545); color: var(--text-secondary, #a59eaf); }
+        .badge-expiry.unknown, .badge-expiry.error { background: var(--border-default, #3a3545); color: var(--text-muted, #756d81); }
 
         /* Edit form */
         .edit-panel {
-            background: var(--bg-card, #1f1d21);
-            border: 1px solid var(--border-default, #37333a);
+            background: var(--bg-card, #211e29);
+            border: 1px solid var(--border-default, #3a3545);
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
@@ -207,7 +207,7 @@
         .edit-panel h3 {
             margin-bottom: 16px;
             font-size: var(--fs-lg);
-            color: var(--text-primary, var(--text-primary, #eae7ea));
+            color: var(--text-primary, var(--text-primary, #e9e5ee));
         }
         .form-grid {
             display: grid;
@@ -221,22 +221,22 @@
         }
         .form-group label {
             font-size: var(--fs-sm);
-            color: var(--text-secondary, #a29ca6);
+            color: var(--text-secondary, #a59eaf);
             margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .form-group input, .form-group select {
-            background: var(--bg-page, #131114);
-            border: 1px solid var(--border-default, #37333a);
+            background: var(--bg-page, #16141a);
+            border: 1px solid var(--border-default, #3a3545);
             border-radius: 4px;
             padding: 8px 12px;
-            color: var(--text-primary, var(--text-primary, #eae7ea));
+            color: var(--text-primary, var(--text-primary, #e9e5ee));
             font-size: var(--fs-base);
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: var(--success, #3fba6f);
+            border-color: var(--success, #8fb593);
         }
         .form-group input:disabled, .form-group select:disabled {
             opacity: 0.5;
@@ -247,16 +247,16 @@
         .pw-eye-btn {
             position: absolute; right: 8px;
             background: none; border: none; cursor: pointer;
-            color: #716b75; font-size: var(--fs-md); padding: 0; line-height: 1;
+            color: #756d81; font-size: var(--fs-md); padding: 0; line-height: 1;
             user-select: none;
         }
-        .pw-eye-btn:hover { color: var(--text-secondary, #a29ca6); }
+        .pw-eye-btn:hover { color: var(--text-secondary, #a59eaf); }
         .form-group textarea {
-            background: var(--bg-page, #131114);
-            border: 1px solid var(--border-default, #37333a);
+            background: var(--bg-page, #16141a);
+            border: 1px solid var(--border-default, #3a3545);
             border-radius: 4px;
             padding: 8px 12px;
-            color: var(--text-primary, var(--text-primary, #eae7ea));
+            color: var(--text-primary, var(--text-primary, #e9e5ee));
             font-size: var(--fs-sm);
             font-family: 'Courier New', monospace;
             resize: vertical;
@@ -264,7 +264,7 @@
         }
         .form-group textarea:focus {
             outline: none;
-            border-color: var(--success, #3fba6f);
+            border-color: var(--success, #8fb593);
         }
 
         .form-actions {
@@ -273,7 +273,7 @@
             justify-content: flex-end;
             margin-top: 16px;
             padding-top: 16px;
-            border-top: 1px solid var(--border-default, #37333a);
+            border-top: 1px solid var(--border-default, #3a3545);
         }
 
         .form-checkbox {
@@ -285,7 +285,7 @@
         .form-checkbox input[type="checkbox"] {
             width: 16px;
             height: 16px;
-            accent-color: var(--success, #3fba6f);
+            accent-color: var(--success, #8fb593);
         }
 
         /* Expander */
@@ -294,8 +294,8 @@
         }
         .expander-toggle {
             background: transparent;
-            border: 1px solid var(--border-default, #37333a);
-            color: var(--text-secondary, #a29ca6);
+            border: 1px solid var(--border-default, #3a3545);
+            color: var(--text-secondary, #a59eaf);
             cursor: pointer;
             font-size: var(--fs-sm);
             padding: 6px 12px;
@@ -303,7 +303,7 @@
             width: 100%;
             text-align: left;
         }
-        .expander-toggle:hover { border-color: var(--text-disabled, #4e4851); color: var(--text-primary, var(--text-primary, #eae7ea)); }
+        .expander-toggle:hover { border-color: var(--text-disabled, #524b60); color: var(--text-primary, var(--text-primary, #e9e5ee)); }
         .expander-content {
             display: none;
             padding: 12px 0;
@@ -317,8 +317,8 @@
             margin-top: 16px;
         }
         .balance-box {
-            background: var(--bg-page, #131114);
-            border: 1px solid var(--border-default, #37333a);
+            background: var(--bg-page, #16141a);
+            border: 1px solid var(--border-default, #3a3545);
             border-radius: 8px;
             padding: 16px;
             text-align: center;
@@ -326,24 +326,24 @@
         }
         .balance-box .label {
             font-size: var(--fs-sm);
-            color: var(--text-secondary, #a29ca6);
+            color: var(--text-secondary, #a59eaf);
             text-transform: uppercase;
             margin-bottom: 4px;
         }
         .balance-box .value {
             font-size: var(--fs-xl);
             font-weight: 600;
-            color: var(--success, #3fba6f);
+            color: var(--success, #8fb593);
         }
         .balance-box .error {
             font-size: var(--fs-base);
-            color: #ef4444;
+            color: #c58e8a;
         }
 
         /* HL Expiry panel */
         .hl-expiry-panel {
-            background: var(--bg-card, #1f1d21);
-            border: 1px solid var(--border-default, #37333a);
+            background: var(--bg-card, #211e29);
+            border: 1px solid var(--border-default, #3a3545);
             border-radius: 8px;
             padding: 16px;
             margin-top: 20px;
@@ -359,14 +359,14 @@
         .hl-expiry-table th {
             text-align: left;
             padding: 8px 10px;
-            border-bottom: 2px solid var(--bg-elevated, #28252b);
-            color: var(--text-secondary, #a29ca6);
+            border-bottom: 2px solid var(--bg-elevated, #2a2632);
+            color: var(--text-secondary, #a59eaf);
             font-size: var(--fs-sm);
             text-transform: uppercase;
         }
         .hl-expiry-table td {
             padding: 8px 10px;
-            border-bottom: 1px solid #1e2533;
+            border-bottom: 1px solid #211e29;
             font-size: var(--fs-sm);
         }
         .backup-compare-table {
@@ -374,8 +374,8 @@
             border-spacing: 0;
         }
         .backup-compare-table th {
-            background: var(--bg-card, #1f1d21);
-            border-bottom: 2px solid var(--border-default, #37333a);
+            background: var(--bg-card, #211e29);
+            border-bottom: 2px solid var(--border-default, #3a3545);
         }
         .backup-compare-table .backup-row {
             cursor: pointer;
@@ -387,21 +387,21 @@
             background: rgb(var(--accent-rgb, 91 156 245) / .12);
         }
         .backup-compare-table .backup-row.selected td:first-child {
-            border-left: 3px solid var(--success, #3fba6f);
+            border-left: 3px solid var(--success, #8fb593);
         }
-        .tradfi-profile-wrap { overflow-x:auto; border:1px solid var(--border-default, #37333a); border-radius:6px; margin:12px 0; }
+        .tradfi-profile-wrap { overflow-x:auto; border:1px solid var(--border-default, #3a3545); border-radius:6px; margin:12px 0; }
         .tradfi-profile-table { width:100%; min-width:980px; border-collapse:collapse; font-size:var(--fs-sm); }
-        .tradfi-profile-table th { position:sticky; top:0; background:var(--bg-card, #1f1d21); color:var(--text-secondary, #a29ca6); text-align:left; padding:8px 10px; border-bottom:2px solid var(--border-default, #37333a); white-space:nowrap; }
-        .tradfi-profile-table td { padding:8px 10px; border-bottom:1px solid #1e2533; white-space:nowrap; }
+        .tradfi-profile-table th { position:sticky; top:0; background:var(--bg-card, #211e29); color:var(--text-secondary, #a59eaf); text-align:left; padding:8px 10px; border-bottom:2px solid var(--border-default, #3a3545); white-space:nowrap; }
+        .tradfi-profile-table td { padding:8px 10px; border-bottom:1px solid #211e29; white-space:nowrap; }
         .tradfi-profile-table tbody tr { cursor:pointer; }
         .tradfi-profile-table tbody tr:hover td { background:rgba(255,255,255,.03); }
         .tradfi-profile-table tbody tr.selected td { background:rgb(var(--accent-rgb, 91 156 245) / .12); }
-        .tradfi-profile-table tbody tr.selected td:first-child { border-left:3px solid var(--success, #3fba6f); padding-left:7px; }
-        .tradfi-profile-id { font-family:monospace; color:var(--text-secondary, #a29ca6); }
-        .tradfi-projection-status { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:12px 0; padding:10px 12px; border:1px solid var(--border-default, #37333a); border-radius:6px; background:#151d2b; }
-        .tradfi-projection-copy { min-width:0; color:var(--text-secondary, #a29ca6); font-size:var(--fs-sm); overflow-wrap:anywhere; }
-        .tradfi-active { color:var(--success-soft, #74cf99); font-weight:700; }
-        .tradfi-inactive { color:#fbbf24; }
+        .tradfi-profile-table tbody tr.selected td:first-child { border-left:3px solid var(--success, #8fb593); padding-left:7px; }
+        .tradfi-profile-id { font-family:monospace; color:var(--text-secondary, #a59eaf); }
+        .tradfi-projection-status { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:12px 0; padding:10px 12px; border:1px solid var(--border-default, #3a3545); border-radius:6px; background:#191622; }
+        .tradfi-projection-copy { min-width:0; color:var(--text-secondary, #a59eaf); font-size:var(--fs-sm); overflow-wrap:anywhere; }
+        .tradfi-active { color:var(--success-soft, #accbab); font-weight:700; }
+        .tradfi-inactive { color:#c4a67e; }
         /* Toast notifications (success only) */
         .toast {
             position: fixed;
@@ -416,8 +416,8 @@
             max-width: 400px;
         }
         .toast.show { opacity: 1; }
-        .toast.success { background: var(--success, #3fba6f); color: white; }
-        .toast.info { background: #3b82f6; color: white; }
+        .toast.success { background: var(--success, #8fb593); color: white; }
+        .toast.info { background: #8ba7c2; color: white; }
 
         /* Alert modal (error / warning) */
         .alert-modal-overlay {
@@ -425,41 +425,41 @@
             z-index: 3000; display: flex; align-items: center; justify-content: center;
         }
         .alert-modal {
-            background: #1a1f2e; border-radius: 8px;
+            background: #1c1925; border-radius: 8px;
             padding: 28px 32px; max-width: 500px; width: 90%;
             box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-            border: 1px solid var(--border-default, #37333a);
+            border: 1px solid var(--border-default, #3a3545);
             display: flex; flex-direction: column; gap: 16px;
         }
-        .alert-modal.error { border-left: 4px solid #ef4444; }
-        .alert-modal.warning { border-left: 4px solid var(--warning-deep, #b45309); }
-        .alert-modal.success { border-left: 4px solid var(--success-deep, #15803d); }
-        .alert-modal.info { border-left: 4px solid #38bdf8; }
-        .alert-modal-title { font-size: var(--fs-md); font-weight: 700; color: var(--text-primary, var(--text-primary, #eae7ea)); }
-        .alert-modal.error .alert-modal-title { color: #f87171; }
-        .alert-modal.warning .alert-modal-title { color: #fbbf24; }
-        .alert-modal.success .alert-modal-title { color: var(--success-soft, #74cf99); }
-        .alert-modal.info .alert-modal-title { color: #38bdf8; }
+        .alert-modal.error { border-left: 4px solid #c58e8a; }
+        .alert-modal.warning { border-left: 4px solid var(--warning-deep, #8a6d46); }
+        .alert-modal.success { border-left: 4px solid var(--success-deep, #55815c); }
+        .alert-modal.info { border-left: 4px solid #8ba7c2; }
+        .alert-modal-title { font-size: var(--fs-md); font-weight: 700; color: var(--text-primary, var(--text-primary, #e9e5ee)); }
+        .alert-modal.error .alert-modal-title { color: #c58e8a; }
+        .alert-modal.warning .alert-modal-title { color: #c4a67e; }
+        .alert-modal.success .alert-modal-title { color: var(--success-soft, #accbab); }
+        .alert-modal.info .alert-modal-title { color: #8ba7c2; }
         .dry-run-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin-top: 8px; }
-        .dry-run-table th { color: #716b75; text-align: left; padding: 3px 8px; border-bottom: 1px solid #334155; }
-        .dry-run-table td { color: var(--text-primary, #eae7ea); padding: 3px 8px; border-bottom: 1px solid #1e293b; }
-        .alert-modal-body { font-size: var(--fs-sm); color: var(--text-secondary, #a29ca6); line-height: 1.5; word-break: break-word; }
+        .dry-run-table th { color: #756d81; text-align: left; padding: 3px 8px; border-bottom: 1px solid #35313d; }
+        .dry-run-table td { color: var(--text-primary, #e9e5ee); padding: 3px 8px; border-bottom: 1px solid #23202c; }
+        .alert-modal-body { font-size: var(--fs-sm); color: var(--text-secondary, #a59eaf); line-height: 1.5; word-break: break-word; }
         .alert-modal-footer { display: flex; justify-content: flex-end; }
         .alert-modal-footer .btn { min-width: 80px; }
 
         /* Diff viewer */
         .diff-modal {
-            position: fixed; inset: 0; background: #0f1117;
+            position: fixed; inset: 0; background: #110f15;
             z-index: 999; display: flex; flex-direction: column; overflow: hidden;
         }
         .diff-modal-header {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 16px; background: #1a1f2e;
-            border-bottom: 1px solid #2d3553; flex-shrink: 0;
+            padding: 10px 16px; background: #1c1925;
+            border-bottom: 1px solid #2e2a40; flex-shrink: 0;
         }
         .diff-legend {
             display: flex; gap: 16px; padding: 5px 14px;
-            background: var(--surface-sidebar, #171619); border-bottom: 1px solid #1e2533;
+            background: var(--surface-sidebar, #191720); border-bottom: 1px solid #211e29;
             font-size: var(--fs-xs); flex-shrink: 0;
         }
         .diff-table {
@@ -468,23 +468,23 @@
         }
         .diff-table td { padding: 1px 8px; vertical-align: top; }
         .diff-table .ln {
-            color: var(--text-disabled, #4e4851); text-align: right; user-select: none;
+            color: var(--text-disabled, #524b60); text-align: right; user-select: none;
             min-width: 36px; padding-right: 10px;
-            border-right: 1px solid var(--border-default, #37333a);
+            border-right: 1px solid var(--border-default, #3a3545);
         }
         .diff-table .diff-sign { width: 14px; user-select: none; text-align: center; }
-        .diff-add  { background: #0d2b1b; color: #86efac; }
-        .diff-del  { background: #2b0d0d; color: #fca5a5; }
-        .diff-ctx  { color: var(--text-secondary, #a29ca6); }
-        .diff-empty { background: var(--surface-sidebar, #171619); }
-        .diff-sep td { background: #1e2533; color: var(--text-disabled, #4e4851); text-align: center;
+        .diff-add  { background: #14231c; color: #accbab; }
+        .diff-del  { background: #2a1214; color: #daadaa; }
+        .diff-ctx  { color: var(--text-secondary, #a59eaf); }
+        .diff-empty { background: var(--surface-sidebar, #191720); }
+        .diff-sep td { background: #211e29; color: var(--text-disabled, #524b60); text-align: center;
                        font-style: italic; padding: 3px 8px; }
         .diff-side-wrap { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-        .diff-side-col { overflow-x: auto; border-right: 1px solid var(--border-default, #37333a); }
+        .diff-side-col { overflow-x: auto; border-right: 1px solid var(--border-default, #3a3545); }
         .diff-side-col:last-child { border-right: none; }
         .diff-side-hdr {
-            background: var(--bg-card, #1f1d21); padding: 5px 10px; font-size: var(--fs-xs); color: var(--text-secondary, #a29ca6);
-            border-bottom: 1px solid var(--border-default, #37333a); font-family: monospace;
+            background: var(--bg-card, #211e29); padding: 5px 10px; font-size: var(--fs-xs); color: var(--text-secondary, #a59eaf);
+            border-bottom: 1px solid var(--border-default, #3a3545); font-family: monospace;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: sticky; top: 0;
         }
         /* Loading spinner */
@@ -492,8 +492,8 @@
             display: inline-block;
             width: 16px;
             height: 16px;
-            border: 2px solid var(--text-disabled, #4e4851);
-            border-top-color: var(--success, #3fba6f);
+            border: 2px solid var(--text-disabled, #524b60);
+            border-top-color: var(--success, #8fb593);
             border-radius: 50%;
             animation: spin 0.6s linear infinite;
             vertical-align: middle;
@@ -505,7 +505,7 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .edit-panel, .hl-expiry-panel { animation: fadeIn 0.18s ease; }
 
-        .loading-row td { text-align: center; color: var(--text-secondary, #a29ca6); padding: 40px; }
+        .loading-row td { text-align: center; color: var(--text-secondary, #a59eaf); padding: 40px; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -526,8 +526,8 @@
           width: min(900px, 95vw);
           height: min(700px, 90vh);
           min-width: 480px; min-height: 300px;
-          background: #131b2b;
-          border: 1px solid var(--border-default, #37333a);
+          background: #16141f;
+          border: 1px solid var(--border-default, #3a3545);
           border-radius: 12px;
           box-shadow: 0 20px 70px rgba(0,0,0,0.9);
           flex-direction: column;
@@ -546,63 +546,63 @@
         .ovl-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 0.85rem 1.1rem 0.85rem 1.25rem;
-          border-bottom: 1px solid var(--border-subtle, #29262c);
-          flex-shrink: 0; background: var(--surface-sidebar, #171619);
+          border-bottom: 1px solid var(--border-subtle, #2c2836);
+          flex-shrink: 0; background: var(--surface-sidebar, #191720);
         }
-        .ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary, #eae7ea); display: flex; align-items: center; gap: 0.5rem; }
+        .ovl-header-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary, #e9e5ee); display: flex; align-items: center; gap: 0.5rem; }
         .ovl-header-actions { display: flex; align-items: center; gap: 0.5rem; position: relative; z-index: 3; }
-        .ovl-close { background: transparent; border: none; color: #716b75; font-size: var(--fs-md); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; line-height: 1; transition: color 0.12s, background 0.12s; }
-        .ovl-close:hover { color: var(--text-primary, #eae7ea); background: rgba(255,255,255,0.06); }
-        .lang-pill { display: flex; border: 1px solid var(--border-default, #37333a); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-        .lang-pill button { background: transparent; border: none; color: #716b75; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.55rem; cursor: pointer; transition: all 0.12s; }
-        .lang-pill button.active { background: #1e3a5f; color: var(--accent-soft, #8db9f8); }
-        .lang-pill button:hover:not(.active) { background: rgba(255,255,255,0.04); color: var(--text-primary, #eae7ea); }
+        .ovl-close { background: transparent; border: none; color: #756d81; font-size: var(--fs-md); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; line-height: 1; transition: color 0.12s, background 0.12s; }
+        .ovl-close:hover { color: var(--text-primary, #e9e5ee); background: rgba(255,255,255,0.06); }
+        .lang-pill { display: flex; border: 1px solid var(--border-default, #3a3545); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+        .lang-pill button { background: transparent; border: none; color: #756d81; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.05em; padding: 0.2rem 0.55rem; cursor: pointer; transition: all 0.12s; }
+        .lang-pill button.active { background: #2a2d3f; color: var(--accent-soft, #a9c0d6); }
+        .lang-pill button:hover:not(.active) { background: rgba(255,255,255,0.04); color: var(--text-primary, #e9e5ee); }
         #help-body { display: flex; flex: 1; overflow: hidden; }
-        #help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid var(--border-subtle, #29262c); overflow-y: auto; padding: 0.5rem 0; background: var(--bg-page, #131114); }
-        #help-toc-filter { width: calc(100% - 1.2rem); margin: 0 0.6rem 0.4rem; background: var(--bg-card, #1f1d21); color: var(--text-primary, #eae7ea); border: 1px solid var(--border-default, #37333a); border-radius: 5px; padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none; }
-        #help-toc-filter:focus { border-color: var(--text-disabled, #4e4851); }
-        #help-toc-filter::placeholder { color: var(--text-disabled, #4e4851); }
-        .toc-item { display: block; padding: 0.42rem 0.9rem; color: var(--text-secondary, #a29ca6); font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .toc-item:hover { background: #1a2030; color: var(--text-primary, #eae7ea); }
-        .toc-item.active { border-left-color: var(--accent-soft, #8db9f8); color: var(--accent-soft, #8db9f8); background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.07); font-weight: 600; }
-        #help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: var(--text-primary, #eae7ea); font-size: var(--fs-base); }
-        #help-content h1 { font-size: var(--fs-xl); color: var(--text-primary, #eae7ea); margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle, #29262c); }
-        #help-content h2 { font-size: var(--fs-lg); color: var(--text-primary, #eae7ea); margin: 1.5rem 0 0.5rem; }
-        #help-content h3 { font-size: var(--fs-md); color: var(--text-primary, #eae7ea); margin: 1.1rem 0 0.35rem; }
+        #help-toc { width: 230px; min-width: 170px; flex-shrink: 0; border-right: 1px solid var(--border-subtle, #2c2836); overflow-y: auto; padding: 0.5rem 0; background: var(--bg-page, #16141a); }
+        #help-toc-filter { width: calc(100% - 1.2rem); margin: 0 0.6rem 0.4rem; background: var(--bg-card, #211e29); color: var(--text-primary, #e9e5ee); border: 1px solid var(--border-default, #3a3545); border-radius: 5px; padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none; }
+        #help-toc-filter:focus { border-color: var(--text-disabled, #524b60); }
+        #help-toc-filter::placeholder { color: var(--text-disabled, #524b60); }
+        .toc-item { display: block; padding: 0.42rem 0.9rem; color: var(--text-secondary, #a59eaf); font-size: var(--fs-sm); cursor: pointer; border-left: 3px solid transparent; transition: all 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .toc-item:hover { background: #1c1926; color: var(--text-primary, #e9e5ee); }
+        .toc-item.active { border-left-color: var(--accent-soft, #a9c0d6); color: var(--accent-soft, #a9c0d6); background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.07); font-weight: 600; }
+        #help-content { flex: 1; overflow-y: auto; padding: 1.5rem 1.8rem; line-height: 1.7; color: var(--text-primary, #e9e5ee); font-size: var(--fs-base); }
+        #help-content h1 { font-size: var(--fs-xl); color: var(--text-primary, #e9e5ee); margin: 0 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-subtle, #2c2836); }
+        #help-content h2 { font-size: var(--fs-lg); color: var(--text-primary, #e9e5ee); margin: 1.5rem 0 0.5rem; }
+        #help-content h3 { font-size: var(--fs-md); color: var(--text-primary, #e9e5ee); margin: 1.1rem 0 0.35rem; }
         #help-content p  { margin: 0.5rem 0; }
-        #help-content a  { color: var(--accent-soft, #8db9f8); text-decoration: none; }
+        #help-content a  { color: var(--accent-soft, #a9c0d6); text-decoration: none; }
         #help-content a:hover { text-decoration: underline; }
-        #help-content strong { color: var(--text-primary, #eae7ea); }
-        #help-content em { color: var(--text-secondary, #a29ca6); font-style: italic; }
-        #help-content code { background: var(--bg-card, #1f1d21); color: var(--warning-soft, #eec27e); padding: 0.1em 0.35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
-        #help-content pre { background: var(--bg-page, #131114); border: 1px solid var(--border-default, #37333a); border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; margin: 0.75rem 0; }
-        #help-content pre code { background: none; padding: 0; color: var(--text-secondary, var(--text-secondary, #a29ca6)); font-size: var(--fs-sm); }
+        #help-content strong { color: var(--text-primary, #e9e5ee); }
+        #help-content em { color: var(--text-secondary, #a59eaf); font-style: italic; }
+        #help-content code { background: var(--bg-card, #211e29); color: var(--warning-soft, #dbc4a2); padding: 0.1em 0.35em; border-radius: 3px; font-size: var(--fs-xs); font-family: 'Fira Code','Consolas',monospace; }
+        #help-content pre { background: var(--bg-page, #16141a); border: 1px solid var(--border-default, #3a3545); border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; margin: 0.75rem 0; }
+        #help-content pre code { background: none; padding: 0; color: var(--text-secondary, var(--text-secondary, #a59eaf)); font-size: var(--fs-sm); }
         #help-content ul, #help-content ol { padding-left: 1.5rem; margin: 0.5rem 0; }
         #help-content li { margin: 0.2rem 0; }
-        #help-content blockquote { border-left: 3px solid var(--accent-soft, #8db9f8); margin: 0.75rem 0; padding: 0.4rem 0.9rem; background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.05); border-radius: 0 5px 5px 0; color: var(--text-secondary, #a29ca6); }
+        #help-content blockquote { border-left: 3px solid var(--accent-soft, #a9c0d6); margin: 0.75rem 0; padding: 0.4rem 0.9rem; background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.05); border-radius: 0 5px 5px 0; color: var(--text-secondary, #a59eaf); }
         #help-content table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; }
-        #help-content th, #help-content td { border: 1px solid var(--border-default, #37333a); padding: 0.4rem 0.7rem; text-align: left; font-size: var(--fs-sm); }
-        #help-content th { background: var(--bg-card, #1f1d21); color: var(--text-primary, #eae7ea); font-weight: 600; }
-        #help-content hr { border: none; border-top: 1px solid var(--border-subtle, #29262c); margin: 1rem 0; }
+        #help-content th, #help-content td { border: 1px solid var(--border-default, #3a3545); padding: 0.4rem 0.7rem; text-align: left; font-size: var(--fs-sm); }
+        #help-content th { background: var(--bg-card, #211e29); color: var(--text-primary, #e9e5ee); font-weight: 600; }
+        #help-content hr { border: none; border-top: 1px solid var(--border-subtle, #2c2836); margin: 1rem 0; }
         #help-content img { max-width: 100%; border-radius: 6px; margin: 0.5rem 0; }
-        .help-loading { color: var(--text-disabled, #4e4851); font-style: italic; padding: 2rem; text-align: center; }
+        .help-loading { color: var(--text-disabled, #524b60); font-style: italic; padding: 2rem; text-align: center; }
         /* help overlay — content search */
         #help-search-wrap { display: flex; align-items: center; gap: 3px; }
-        #help-search { background: var(--bg-card, #1f1d21); color: var(--text-primary, #eae7ea); border: 1px solid var(--border-default, #37333a); border-radius: 5px; padding: 0.28rem 0.5rem; font-size: var(--fs-sm); outline: none; width: 170px; }
-        #help-search:focus { border-color: var(--text-disabled, #4e4851); }
-        #help-search::placeholder { color: var(--text-disabled, #4e4851); }
-        .help-snav-btn { background: var(--bg-card, #1f1d21); border: 1px solid var(--border-default, #37333a); border-radius: 3px; color: var(--text-secondary, #a29ca6); cursor: pointer; font-size: var(--fs-xs); padding: 2px 5px; line-height: 1.4; transition: color 0.1s, border-color 0.1s; }
-        .help-snav-btn:hover { color: var(--text-primary, #eae7ea); border-color: var(--text-disabled, #4e4851); }
-        #help-search-count { font-size: var(--fs-xs); color: #716b75; white-space: nowrap; min-width: 44px; text-align: left; }
-        #help-content mark { background: rgb(var(--warning-rgb, 227 164 74) / 0.2); color: #fcd34d; border-radius: 2px; }
-        #help-content mark.current { background: rgb(var(--warning-rgb, 227 164 74) / 0.45); color: #fef08a; outline: 1px solid #f59e0b; }
-        #help-search-global-lbl { display:flex; align-items:center; gap:3px; color:var(--text-secondary, #a29ca6); font-size: var(--fs-xs); cursor:pointer; white-space:nowrap; user-select:none; }
-        #help-search-global-lbl input[type=checkbox] { accent-color:#4da6ff; cursor:pointer; margin:0; }
+        #help-search { background: var(--bg-card, #211e29); color: var(--text-primary, #e9e5ee); border: 1px solid var(--border-default, #3a3545); border-radius: 5px; padding: 0.28rem 0.5rem; font-size: var(--fs-sm); outline: none; width: 170px; }
+        #help-search:focus { border-color: var(--text-disabled, #524b60); }
+        #help-search::placeholder { color: var(--text-disabled, #524b60); }
+        .help-snav-btn { background: var(--bg-card, #211e29); border: 1px solid var(--border-default, #3a3545); border-radius: 3px; color: var(--text-secondary, #a59eaf); cursor: pointer; font-size: var(--fs-xs); padding: 2px 5px; line-height: 1.4; transition: color 0.1s, border-color 0.1s; }
+        .help-snav-btn:hover { color: var(--text-primary, #e9e5ee); border-color: var(--text-disabled, #524b60); }
+        #help-search-count { font-size: var(--fs-xs); color: #756d81; white-space: nowrap; min-width: 44px; text-align: left; }
+        #help-content mark { background: rgb(var(--warning-rgb, 227 164 74) / 0.2); color: #dbc4a2; border-radius: 2px; }
+        #help-content mark.current { background: rgb(var(--warning-rgb, 227 164 74) / 0.45); color: #dbc4a2; outline: 1px solid #c4a67e; }
+        #help-search-global-lbl { display:flex; align-items:center; gap:3px; color:var(--text-secondary, #a59eaf); font-size: var(--fs-xs); cursor:pointer; white-space:nowrap; user-select:none; }
+        #help-search-global-lbl input[type=checkbox] { accent-color:#8ba7c2; cursor:pointer; margin:0; }
         .gs-results { display:flex; flex-direction:column; gap:8px; padding:4px 0; }
-        .gs-item { background:var(--bg-card, #1f1d21); border:1px solid var(--border-default, #37333a); border-radius:6px; padding:10px 14px; cursor:pointer; transition:border-color 0.15s; }
-        .gs-item:hover { border-color:var(--text-disabled, #4e4851); }
-        .gs-topic { color:#93c5fd; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
-        .gs-snip { color:var(--text-secondary, #a29ca6); font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
+        .gs-item { background:var(--bg-card, #211e29); border:1px solid var(--border-default, #3a3545); border-radius:6px; padding:10px 14px; cursor:pointer; transition:border-color 0.15s; }
+        .gs-item:hover { border-color:var(--text-disabled, #524b60); }
+        .gs-topic { color:#a9c0d6; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
+        .gs-snip { color:var(--text-secondary, #a59eaf); font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
     </style>
     <script src="/app/js/log_viewer_panel.js?v=30"></script>
 </head>
@@ -625,7 +625,7 @@
           <span id="help-search-count"></span>
           <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="misc.help.searchAcrossAll"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
         </div>
-        <div style="width:1px;height:16px;background:#37333a;flex-shrink:0;"></div>
+        <div style="width:1px;height:16px;background:#3a3545;flex-shrink:0;"></div>
         <div class="lang-pill">
           <button id="help-lang-en" class="active">EN</button>
           <button id="help-lang-de">DE</button>
@@ -675,18 +675,18 @@
         <!-- User list -->
         <div id="userListView">
             <!-- API keys metadata bar -->
-            <div id="apiMetaBar" style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#0f172a; border:1px solid #1e293b; border-radius:5px; font-size:var(--fs-xs); color:#a29ca6;">
+            <div id="apiMetaBar" style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:#15131c; border:1px solid #23202c; border-radius:5px; font-size:var(--fs-xs); color:#a59eaf;">
                 <span data-i18n="misc.apikeys.serial">Serial:</span>
-                <span id="metaSerial" style="color:#eae7ea; font-weight:700;">—</span>
-                <span id="metaTs" style="color:#a29ca6;"></span>
-                <span id="metaBy" style="color:#716b75;"></span>
+                <span id="metaSerial" style="color:#e9e5ee; font-weight:700;">—</span>
+                <span id="metaTs" style="color:#a59eaf;"></span>
+                <span id="metaBy" style="color:#756d81;"></span>
             </div>
             <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
                 <input type="text" id="userFilter" placeholder="Filter by name or exchange…" data-i18n-placeholder="misc.apikeys.filterByNameOrExchange"
                     oninput="applyFilterSort()"
                     onkeydown="if(event.key==='ArrowDown'){event.preventDefault();var r=document.querySelector('#userTableBody tr[tabindex]');if(r)r.focus();}"
-                    style="flex:1; background:#131114; border:1px solid #37333a; border-radius:4px;
-                           padding:6px 10px; color:#fafafa; font-size:var(--fs-sm);" />
+                    style="flex:1; background:#16141a; border:1px solid #3a3545; border-radius:4px;
+                           padding:6px 10px; color:#f2eff5; font-size:var(--fs-sm);" />
                 <button class="btn btn-sm btn-secondary" onclick="clearFilter()" title="Clear filter" data-i18n-title="misc.apikeys.clearFilter">✕</button>
             </div>
             <table class="user-table">
@@ -711,7 +711,7 @@
         <!-- Edit/Create panel (hidden by default) -->
         <div id="editPanel" class="edit-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <h3 id="editPanelTitle" style="margin:0;" data-i18n="misc.apikeys.editUser">Edit User</h3>
             </div>
             <div class="form-grid">
@@ -752,27 +752,27 @@
             </div>
 
             <!-- HL Expiry (only shown for Hyperliquid users in edit mode) -->
-            <div id="hlExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#131114; border:1px solid #37333a; border-radius:6px;">
+            <div id="hlExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#16141a; border:1px solid #3a3545; border-radius:6px;">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <span style="font-size:var(--fs-sm); color:#a29ca6;" data-i18n="misc.apikeys.hlKeyExpiry">HL Key Expiry:</span>
+                    <span style="font-size:var(--fs-sm); color:#a59eaf;" data-i18n="misc.apikeys.hlKeyExpiry">HL Key Expiry:</span>
                     <span id="hlExpiryInlineBadge">—</span>
-                    <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#a29ca6;"></span>
+                    <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:#a59eaf;"></span>
                     <button class="btn btn-sm btn-secondary" id="btnHLExpiryInline" onclick="checkSingleHLExpiry()" style="margin-left:auto;">&#8635; <span data-i18n="misc.apikeys.checkExpiry">Check Expiry</span></button>
                 </div>
             </div>
 
             <!-- Bybit Expiry (only shown for Bybit users in edit mode) -->
-            <div id="bybitExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#131114; border:1px solid #37333a; border-radius:6px;">
+            <div id="bybitExpiryInline" style="display:none; margin-bottom:12px; padding:10px 14px; background:#16141a; border:1px solid #3a3545; border-radius:6px;">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <span style="font-size:var(--fs-sm); color:#a29ca6;" data-i18n="misc.apikeys.bybitKeyExpiry">Bybit Key Expiry:</span>
+                    <span style="font-size:var(--fs-sm); color:#a59eaf;" data-i18n="misc.apikeys.bybitKeyExpiry">Bybit Key Expiry:</span>
                     <span id="bybitExpiryInlineBadge">—</span>
-                    <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#a29ca6;"></span>
+                    <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:#a59eaf;"></span>
                     <button class="btn btn-sm btn-secondary" id="btnBybitExpiryInline" onclick="checkSingleBybitExpiry()" style="margin-left:auto;">&#8635; <span data-i18n="misc.apikeys.checkExpiryAndIps">Check Expiry + IPs</span></button>
                 </div>
                 <!-- IP list — shown only after live check, never persisted -->
-                <div id="bybitIPList" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid #37333a;">
-                    <span style="font-size:var(--fs-xs); color:#a29ca6; display:block; margin-bottom:4px;" data-i18n="misc.apikeys.whitelistedIps">Whitelisted IPs (live, not saved):</span>
-                    <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:#eae7ea; line-height:1.8;"></div>
+                <div id="bybitIPList" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid #3a3545;">
+                    <span style="font-size:var(--fs-xs); color:#a59eaf; display:block; margin-bottom:4px;" data-i18n="misc.apikeys.whitelistedIps">Whitelisted IPs (live, not saved):</span>
+                    <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:#e9e5ee; line-height:1.8;"></div>
                 </div>
             </div>
 
@@ -790,7 +790,7 @@
                 </div>
                 <div class="form-checkbox">
                     <input type="checkbox" id="editIsVault" />
-                    <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:#fafafa;" data-i18n="misc.apikeys.vault">Vault</label>
+                    <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:#f2eff5;" data-i18n="misc.apikeys.vault">Vault</label>
                 </div>
             </div>
 
@@ -831,7 +831,7 @@
         <!-- HL Expiry Panel (hidden by default) -->
         <div id="hlExpiryPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <h3 style="margin:0;" data-i18n="misc.apikeys.hyperliquidApiKeyExpiry">Hyperliquid API Key Expiry</h3>
             </div>
             <table class="hl-expiry-table">
@@ -851,7 +851,7 @@
         <!-- Bybit Expiry Panel -->
         <div id="bybitExpiryPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <h3 style="margin:0;" data-i18n="misc.apikeys.bybitApiKeyExpiry">Bybit API Key Expiry</h3>
             </div>
             <table class="hl-expiry-table">
@@ -871,11 +871,11 @@
         <!-- Comments Panel -->
         <div id="commentsPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <h3 style="margin:0; flex:1;" data-i18n="misc.apikeys.commentFields">Comment Fields</h3>
                 <button class="btn btn-sm btn-primary" onclick="showAddComment()">+ <span data-i18n="misc.apikeys.add">Add</span></button>
             </div>
-            <div id="addCommentForm" style="display:none; margin-bottom:12px; padding:12px; background:#131114; border-radius:4px; border:1px solid #37333a;">
+            <div id="addCommentForm" style="display:none; margin-bottom:12px; padding:12px; background:#16141a; border-radius:4px; border:1px solid #3a3545;">
                 <div style="display:flex; gap:8px; align-items:flex-end;">
                     <div class="form-group" style="flex:1;">
                         <label data-i18n="misc.apikeys.keyWithoutCommentPrefix">Key (without _comment_ prefix)</label>
@@ -904,7 +904,7 @@
         <!-- HL Expiry Warning Config -->
         <div id="hlConfigPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <h3 style="margin:0;" data-i18n="misc.apikeys.hlExpiryTelegramWarning">HL Expiry Telegram Warning</h3>
             </div>
             <div style="display:flex; gap:12px; align-items:flex-end;">
@@ -914,8 +914,8 @@
                 </div>
                 <button class="btn btn-sm btn-primary" onclick="saveHLExpiryConfig()" data-i18n="common.save">Save</button>
             </div>
-            <p id="hlWarningConfigStatus" style="font-size:var(--fs-sm); color:#a29ca6; margin-top:8px;"></p>
-            <p style="font-size:var(--fs-sm); color:#a29ca6; margin-top:8px;" data-i18n="misc.apikeys.telegramWarningDesc">
+            <p id="hlWarningConfigStatus" style="font-size:var(--fs-sm); color:#a59eaf; margin-top:8px;"></p>
+            <p style="font-size:var(--fs-sm); color:#a59eaf; margin-top:8px;" data-i18n="misc.apikeys.telegramWarningDesc">
                 Telegram warning when HL keys expire within this many days. Alerts repeat daily.
             </p>
         </div>
@@ -923,26 +923,26 @@
         <!-- TradFi Data Provider Section -->
         <div id="tradfiPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <h3 style="margin:0;" data-i18n="misc.apikeys.tradfiDataProvider">TradFi Data Provider (Stock Perps Backtesting)</h3>
             </div>
-            <p style="font-size:var(--fs-sm); color:#a29ca6; margin-bottom:8px;" data-i18n-html="misc.apikeys.stockPerpBacktestsDesc">
+            <p style="font-size:var(--fs-sm); color:#a59eaf; margin-bottom:8px;" data-i18n-html="misc.apikeys.stockPerpBacktestsDesc">
                 Stock perp backtests use <strong>yfinance</strong> automatically for the last 7 days (free, no key).
                 For older data (months/years), configure an extended provider like <strong>Alpaca</strong> (free, 5+ years).
             </p>
-            <p style="font-size:var(--fs-sm); background:#1a2744; border-left:3px solid var(--success, #3fba6f); padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a0aec0;" data-i18n-html="misc.apikeys.betterAlternativeDesc">
-                💡 <strong style="color:#68d391;">Better alternative for full stock-perp history:</strong>
+            <p style="font-size:var(--fs-sm); background:#21233a; border-left:3px solid var(--success, #8fb593); padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a59eaf;" data-i18n-html="misc.apikeys.betterAlternativeDesc">
+                💡 <strong style="color:#accbab;">Better alternative for full stock-perp history:</strong>
                 PBGui's <strong>Market Data</strong> module uses <strong>Tiingo</strong> (IEX/FX feeds) to build comprehensive local 1m OHLCV archives —
                 significantly faster and more complete than the providers below.
                 See <em>Setup → Market Data → Build best 1m OHLCV</em>.
             </p>
 
             <!-- yfinance section -->
-            <div style="border:1px solid #37333a; border-radius:6px; padding:12px; margin-bottom:16px;">
+            <div style="border:1px solid #3a3545; border-radius:6px; padding:12px; margin-bottom:16px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <span data-i18n="misc.apikeys.yfinanceDesc">yfinance — automatic default, last 7 days, no API key</span>
-                        <span id="yfStatus" style="margin-left:8px; font-size:var(--fs-sm); color:#a29ca6;"></span>
+                        <span id="yfStatus" style="margin-left:8px; font-size:var(--fs-sm); color:#a59eaf;"></span>
                     </div>
                     <div style="display:flex; gap:8px;">
                         <button class="btn btn-sm btn-secondary" id="btnYfInstall" onclick="yfInstallToggle()" data-i18n="misc.apikeys.install">Install</button>
@@ -952,10 +952,10 @@
             </div>
 
             <!-- Extended provider section -->
-            <div style="border:1px solid #37333a; border-radius:6px; padding:12px;">
+            <div style="border:1px solid #3a3545; border-radius:6px; padding:12px;">
                 <span data-i18n="misc.apikeys.extendedProviderDesc">Extended provider — optional, for backtests older than 7 days</span>
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
-                    <span style="font-size:var(--fs-sm);color:#a29ca6;" data-i18n="misc.apikeys.selectExactVaultProfile">Select an exact vault profile. Active profiles are marked explicitly.</span>
+                    <span style="font-size:var(--fs-sm);color:#a59eaf;" data-i18n="misc.apikeys.selectExactVaultProfile">Select an exact vault profile. Active profiles are marked explicitly.</span>
                     <button class="btn btn-sm btn-secondary" type="button" onclick="newTradfiProfile()" data-i18n="misc.apikeys.newProfile">New Profile</button>
                 </div>
                 <div class="tradfi-profile-wrap">
@@ -977,7 +977,7 @@
                         <label data-i18n="misc.apikeys.provider">Provider</label>
                         <select id="tradfiProvider" onchange="onTradfiProviderChange()"></select>
                         <a id="tradfiProviderLink" href="#" target="_blank" rel="noopener noreferrer"
-                           style="font-size:var(--fs-sm); color:var(--success, #3fba6f); text-decoration:none; display:none; margin-top:4px; display:flex; align-items:center; gap:4px;">
+                           style="font-size:var(--fs-sm); color:var(--success, #8fb593); text-decoration:none; display:none; margin-top:4px; display:flex; align-items:center; gap:4px;">
                             &#128279; <span id="tradfiProviderLinkLabel"></span>
                         </a>
                     </div>
@@ -995,7 +995,7 @@
                             <input type="password" id="tradfiApiKey" autocomplete="new-password" />
                             <button type="button" class="pw-eye-btn" onclick="toggleTradfiApiKeyVisible(this)" tabindex="-1" title="Show or hide the stored API key" data-i18n-title="misc.apikeys.showHideStoredApiKey">&#128065;</button>
                         </div>
-                        <div style="font-size:var(--fs-xs);color:#718096;margin-top:4px;" data-i18n="misc.apikeys.clickEyeToReveal">Click the eye to reveal the selected profile's API key. The revealed value is cleared when hidden, when another profile is selected, or when you leave the page.</div>
+                        <div style="font-size:var(--fs-xs);color:#756d81;margin-top:4px;" data-i18n="misc.apikeys.clickEyeToReveal">Click the eye to reveal the selected profile's API key. The revealed value is cleared when hidden, when another profile is selected, or when you leave the page.</div>
                     </div>
                     <div class="form-group" id="tradfiSecretGroup">
                         <label data-i18n="misc.apikeys.apiSecret">API Secret</label>
@@ -1005,8 +1005,8 @@
                         </div>
                     </div>
                 </div>
-                <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#a29ca6; margin:4px 0 12px;"></p>
-                <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#a29ca6; margin:4px 0 12px;"></p>
+                <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#a59eaf; margin:4px 0 12px;"></p>
+                <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#a59eaf; margin:4px 0 12px;"></p>
                 <div id="tradfiActions" style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button class="btn btn-sm btn-info" onclick="tradfiTest()" data-i18n="misc.apikeys.testConnection">Test Connection</button>
                     <button class="btn btn-sm btn-primary" onclick="tradfiSave(false)" data-i18n="misc.apikeys.createUpdate">Create / Update</button>
@@ -1020,22 +1020,22 @@
         <!-- Backups Panel -->
         <div id="backupsPanel" class="hl-expiry-panel" style="display:none;">
             <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
                 <h3 style="margin:0;" data-i18n="misc.apikeys.apiKeyBackups">API Key Backups</h3>
             </div>
-            <p style="font-size:var(--fs-sm); color:#a29ca6; margin:0 0 12px;" data-i18n-html="misc.apikeys.backupsDesc">
+            <p style="font-size:var(--fs-sm); color:#a59eaf; margin:0 0 12px;" data-i18n-html="misc.apikeys.backupsDesc">
                 Backups are created automatically before every save. Stored in <code>data/api-keys/</code>.
                 A pre-restore snapshot is created before any restore.
             </p>
             <div id="backupsList">
-                <div style="text-align:center;color:#a29ca6;padding:20px;"><span class="spinner"></span> Loading...</div>
+                <div style="text-align:center;color:#a59eaf;padding:20px;"><span class="spinner"></span> Loading...</div>
             </div>
         </div>
 
         <!-- Log viewer panel -->
         <div id="logPanel" class="hl-expiry-panel" style="display:none; flex-direction:column; padding:0; gap:0; height:calc(100vh - 120px);">
-            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid #1e293b; flex-shrink:0;">
-                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:5px 12px; border-radius:5px; border:1px solid var(--success, #3fba6f); background:transparent; color:var(--success, #3fba6f); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
+            <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid #23202c; flex-shrink:0;">
+                <button onclick="backToList()" style="width:auto; flex-shrink:0; padding:5px 12px; border-radius:5px; border:1px solid var(--success, #8fb593); background:transparent; color:var(--success, #8fb593); font-size:var(--fs-sm); cursor:pointer; font-weight:600;">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
             </div>
             <div id="logViewerTarget" style="padding:10px 16px 16px; display:flex; flex-direction:column; flex:1; min-height:0;"></div>
         </div>
@@ -1062,7 +1062,7 @@
         <div class="diff-modal-header">
             <div style="display:flex; align-items:center; gap:12px;">
                 <button class="btn btn-sm btn-secondary" onclick="closeDiffModal()">&#8592; <span data-i18n="misc.apikeys.back">Back</span></button>
-                <span id="diffTitle" style="font-size:var(--fs-sm); color:#a29ca6; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;"></span>
+                <span id="diffTitle" style="font-size:var(--fs-sm); color:#a59eaf; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;"></span>
             </div>
             <div style="display:flex; gap:6px;">
                 <button class="btn btn-sm btn-secondary" id="btnDiffUnified" onclick="setDiffMode('unified')" data-i18n="misc.apikeys.unified">Unified</button>
@@ -1070,9 +1070,9 @@
             </div>
         </div>
         <div class="diff-legend">
-            <span style="color:#86efac;">&#9608; <span data-i18n="misc.apikeys.added">Added</span></span>
-            <span style="color:#fca5a5;">&#9608; <span data-i18n="misc.apikeys.removed">Removed</span></span>
-            <span style="color:#a29ca6;">&#9608; <span data-i18n="misc.apikeys.unchanged">Unchanged</span></span>
+            <span style="color:#accbab;">&#9608; <span data-i18n="misc.apikeys.added">Added</span></span>
+            <span style="color:#daadaa;">&#9608; <span data-i18n="misc.apikeys.removed">Removed</span></span>
+            <span style="color:#a59eaf;">&#9608; <span data-i18n="misc.apikeys.unchanged">Unchanged</span></span>
         </div>
         <div id="diffContent" style="flex:1; overflow:auto;"></div>
     </div>
@@ -1301,7 +1301,7 @@
             }
             loadApiMeta();
         } catch (e) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#ef4444;">' +
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#c58e8a;">' +
                 t('misc.apikeys.failedToLoad', { error: escapeHtml(m(e.message)) }) + '</td></tr>';
             document.getElementById("sb-count").textContent = t('common.error');
             document.getElementById("sb-inuse").style.display = "none";
@@ -1363,7 +1363,7 @@
         });
 
         if (users.length === 0) {
-            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#a29ca6;">' + t('misc.apikeys.noUsersMatchFilter') + '</td></tr>';
+            tbody.innerHTML = '<tr class="loading-row"><td colspan="6" style="color:#a59eaf;">' + t('misc.apikeys.noUsersMatchFilter') + '</td></tr>';
             return;
         }
 
@@ -1379,7 +1379,7 @@
                 if (u.has_key) creds.push("key");
                 if (u.has_secret) creds.push("secret");
             }
-            const credStr = creds.length > 0 ? creds.join(", ") : '<span style="color:#ef4444;">' + t('misc.apikeys.none') + '</span>';
+            const credStr = creds.length > 0 ? creds.join(", ") : '<span style="color:#c58e8a;">' + t('misc.apikeys.none') + '</span>';
 
             // Key expiry — prefer live-fetched data, fall back to locally stored
             let expiryHtml = "-";
@@ -1661,7 +1661,7 @@
         } catch(e) {
             const badge = document.getElementById("hlExpiryInlineBadge");
             badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
-            badge.style.color = "#fc8181";
+            badge.style.color = "#daadaa";
         } finally {
             btn.disabled = false;
             btn.textContent = "↻ " + t('misc.apikeys.checkExpiry');
@@ -1703,7 +1703,7 @@
         } catch(e) {
             const badge = document.getElementById("bybitExpiryInlineBadge");
             badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
-            badge.style.color = "#fc8181";
+            badge.style.color = "#daadaa";
         } finally {
             btn.disabled = false;
             btn.textContent = "↻ " + t('misc.apikeys.checkExpiryAndIps');
@@ -1747,7 +1747,7 @@
     function renderBybitExpiryPanel(data) {
         const tbody = document.getElementById("bybitExpiryBody");
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#a29ca6;">' + t('misc.apikeys.noBybitUsersFound') + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#a59eaf;">' + t('misc.apikeys.noBybitUsersFound') + '</td></tr>';
             return;
         }
 
@@ -1758,7 +1758,7 @@
         for (const exp of data) {
             const ipsText = (exp.ips && exp.ips.length > 0)
                 ? exp.ips.map(ip => `<span style="font-family:monospace;font-size:var(--fs-xs);margin-right:8px;">${escapeHtml(ip)}</span>`).join("")
-                : '<span style="color:#a29ca6;font-size:var(--fs-xs);">' + t('misc.apikeys.noneUnrestricted') + '</span>';
+                : '<span style="color:#a59eaf;font-size:var(--fs-xs);">' + t('misc.apikeys.noneUnrestricted') + '</span>';
             html += "<tr>";
             html += "<td><strong>" + escapeHtml(exp.name) + "</strong></td>";
             html += "<td>" + (exp.expires_at_iso && exp.status !== "no_expiry" ? exp.expires_at_iso.split("T")[0] : "—") + "</td>";
@@ -2089,7 +2089,7 @@
     function renderHLExpiryPanel(data) {
         const tbody = document.getElementById("hlExpiryBody");
         if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#a29ca6;">' + t('misc.apikeys.noHyperliquidUsersFound') + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#a59eaf;">' + t('misc.apikeys.noHyperliquidUsersFound') + '</td></tr>';
             return;
         }
 
@@ -2349,18 +2349,18 @@
 
     async function loadComments() {
         const tbody = document.getElementById("commentsBody");
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#a29ca6;">' + t('common.loading') + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#a59eaf;">' + t('common.loading') + '</td></tr>';
         try {
             const data = await apiFetch("/comments/list");
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#a29ca6;">' + t('misc.apikeys.noCommentFields') + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#a59eaf;">' + t('misc.apikeys.noCommentFields') + '</td></tr>';
                 return;
             }
             let html = "";
             for (const c of data) {
                 html += "<tr>";
                 html += "<td><code>" + escapeHtml(c.key) + "</code></td>";
-                html += '<td><input type="text" class="comment-val" data-key="' + escapeAttr(c.key) + '" value="' + escapeAttr(c.value) + '" style="width:100%;background:#131114;border:1px solid #37333a;border-radius:4px;padding:6px 8px;color:#fafafa;font-size:var(--fs-sm);" /></td>';
+                html += '<td><input type="text" class="comment-val" data-key="' + escapeAttr(c.key) + '" value="' + escapeAttr(c.value) + '" style="width:100%;background:#16141a;border:1px solid #3a3545;border-radius:4px;padding:6px 8px;color:#f2eff5;font-size:var(--fs-sm);" /></td>';
                 html += "<td>";
                 html += '<button class="btn btn-sm btn-primary" onclick="updateComment(\'' + escapeAttr(c.key) + '\')">' + t('common.save') + '</button> ';
                 html += '<button class="btn btn-sm btn-danger" onclick="deleteComment(\'' + escapeAttr(c.key) + '\')">' + t('common.delete') + '</button>';
@@ -2369,7 +2369,7 @@
             }
             tbody.innerHTML = html;
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="3" style="color:#ef4444;">' + escapeHtml(e.message) + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="color:#c58e8a;">' + escapeHtml(e.message) + '</td></tr>';
         }
     }
 
@@ -2473,10 +2473,10 @@
 
         if (configured) {
             status.textContent = t('misc.apikeys.hlConfigConfigured', { days: days, daysLabel: (days === 1 ? t('misc.apikeys.day') : t('misc.apikeys.days')) });
-            status.style.color = "var(--success, #3fba6f)";
+            status.style.color = "var(--success, #8fb593)";
         } else {
             status.textContent = t('misc.apikeys.hlConfigNotConfigured');
-            status.style.color = "#ecc94b";
+            status.style.color = "#dbc4a2";
         }
     }
 
@@ -2655,7 +2655,7 @@
             selectTradfiProfile((retained || explicitActive || {}).id || "");
         } catch (e) {
             if (generation !== tradfiLoadGeneration || e.name === "AbortError") return;
-            document.getElementById("tradfiProfilesBody").innerHTML = '<tr><td colspan="12" style="color:#ef4444;cursor:default;">' + t('misc.apikeys.failedToLoadProfiles', { error: escapeHtml(m(e.message)) }) + '</td></tr>';
+            document.getElementById("tradfiProfilesBody").innerHTML = '<tr><td colspan="12" style="color:#c58e8a;cursor:default;">' + t('misc.apikeys.failedToLoadProfiles', { error: escapeHtml(m(e.message)) }) + '</td></tr>';
             document.getElementById("tradfiProjectionStatus").textContent = t('misc.apikeys.pb7ProjectionStatusUnavailable', { error: m(e.message) });
             showToast(t('misc.apikeys.failedToLoadTradFiProfiles', { error: m(e.message) }), "error");
         }
@@ -2805,7 +2805,7 @@
     function renderTradfiProfiles() {
         const body = document.getElementById("tradfiProfilesBody");
         if (!tradfiProfiles.length) {
-            body.innerHTML = '<tr><td colspan="12" style="color:#a29ca6;cursor:default;">' + t('misc.apikeys.noTradfiProfiles') + '</td></tr>';
+            body.innerHTML = '<tr><td colspan="12" style="color:#a59eaf;cursor:default;">' + t('misc.apikeys.noTradfiProfiles') + '</td></tr>';
             return;
         }
         body.innerHTML = tradfiProfiles.map(profile => {
@@ -2859,22 +2859,22 @@
             const installBtn = document.getElementById("btnYfInstall");
             const testBtn = document.getElementById("btnYfTest");
             if (data.installed) {
-                statusEl.innerHTML = '<span style="color:var(--success, #3fba6f);">\u2713 ' + t('misc.apikeys.yfinanceInstalled', { version: escapeHtml(data.version) }) + '</span>';
+                statusEl.innerHTML = '<span style="color:var(--success, #8fb593);">\u2713 ' + t('misc.apikeys.yfinanceInstalled', { version: escapeHtml(data.version) }) + '</span>';
                 installBtn.textContent = t('misc.apikeys.uninstall');
                 installBtn.className = "btn btn-sm btn-danger";
                 testBtn.style.display = "";
             } else {
-                statusEl.innerHTML = '<span style="color:#d69e2e;">\u26a0 ' + t('misc.apikeys.notInstalled') + '</span>';
+                statusEl.innerHTML = '<span style="color:#c4a67e;">\u26a0 ' + t('misc.apikeys.notInstalled') + '</span>';
                 installBtn.textContent = t('misc.apikeys.install');
                 installBtn.className = "btn btn-sm btn-primary";
                 testBtn.style.display = "none";
             }
             if (data.error) {
-                statusEl.innerHTML = '<span style="color:#ef4444;">' + escapeHtml(m(data.error)) + '</span>';
+                statusEl.innerHTML = '<span style="color:#c58e8a;">' + escapeHtml(m(data.error)) + '</span>';
             }
         } catch (e) {
             document.getElementById("yfStatus").innerHTML =
-                '<span style="color:#ef4444;">' + t('misc.apikeys.errorPrefix', { error: escapeHtml(m(e.message)) }) + '</span>';
+                '<span style="color:#c58e8a;">' + t('misc.apikeys.errorPrefix', { error: escapeHtml(m(e.message)) }) + '</span>';
         }
     }
 
@@ -3114,24 +3114,24 @@
 
     async function loadBackups() {
         const container = document.getElementById("backupsList");
-        container.innerHTML = '<div style="text-align:center;color:#a29ca6;padding:20px;"><span class="spinner"></span> ' + t('common.loading') + '</div>';
+        container.innerHTML = '<div style="text-align:center;color:#a59eaf;padding:20px;"><span class="spinner"></span> ' + t('common.loading') + '</div>';
         try {
             const data = await apiFetch("/backups");
             renderBackupsPanel(data);
         } catch (e) {
-            container.innerHTML = '<div style="color:#ef4444;padding:20px;">' + escapeHtml(m(e.message)) + '</div>';
+            container.innerHTML = '<div style="color:#c58e8a;padding:20px;">' + escapeHtml(m(e.message)) + '</div>';
         }
     }
 
     function renderBackupsPanel(data) {
         const container = document.getElementById("backupsList");
         if (!data || data.length === 0) {
-            container.innerHTML = '<div style="text-align:center;color:#a29ca6;padding:20px;">' + t('misc.apikeys.noBackupsFound') + '</div>';
+            container.innerHTML = '<div style="text-align:center;color:#a59eaf;padding:20px;">' + t('misc.apikeys.noBackupsFound') + '</div>';
             return;
         }
         selectedBackups = [];
         let html = '<div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">';
-        html += '<span style="font-size:var(--fs-sm); color:#a29ca6;">' + t('misc.apikeys.selectTwoToCompare') + '</span>';
+        html += '<span style="font-size:var(--fs-sm); color:#a59eaf;">' + t('misc.apikeys.selectTwoToCompare') + '</span>';
         html += '<button class="btn btn-sm btn-secondary" id="btnDiffSelected" onclick="openDiffSelected()" disabled style="opacity:0.4;">&#9654; ' + t('misc.apikeys.compareSelected') + '</button>';
         html += '</div>';
         html += '<table class="hl-expiry-table backup-compare-table"><thead><tr>';
@@ -3140,7 +3140,7 @@
         for (const b of data) {
             const dt = b.ts.replace("T", " ");
             html += '<tr class="backup-row" data-backup-fn="' + escapeAttr(b.filename) + '" tabindex="0" aria-selected="false">';
-            html += '<td style="font-size:var(--fs-xs);font-family:monospace;color:#a29ca6;word-break:break-all;">' + escapeHtml(b.filename) + '</td>';
+            html += '<td style="font-size:var(--fs-xs);font-family:monospace;color:#a59eaf;word-break:break-all;">' + escapeHtml(b.filename) + '</td>';
             html += '<td>' + escapeHtml(dt) + '</td>';
             html += '<td><span class="badge-exchange">' + escapeHtml(b.target) + '</span></td>';
             html += '<td>' + b.size_kb + ' KB</td>';
@@ -3313,9 +3313,9 @@
         const allEqual = diffData.opcodes.every(function(op) { return op[0] === "equal"; });
         if (allEqual) {
             document.getElementById("diffContent").innerHTML =
-                '<div style="text-align:center;padding:40px 20px;color:var(--success, #3fba6f);font-size:var(--fs-md);">' +
+                '<div style="text-align:center;padding:40px 20px;color:var(--success, #8fb593);font-size:var(--fs-md);">' +
                 '<span style="font-size:var(--fs-xl);">&#10003;</span><br><strong>' + t('misc.apikeys.filesIdentical') + '</strong><br>' +
-                '<span style="font-size:var(--fs-sm);color:#a29ca6;margin-top:6px;display:block;">' + t('misc.apikeys.identicalContent', { lines: diffData.lines1.length }) + '</span>' +
+                '<span style="font-size:var(--fs-sm);color:#a59eaf;margin-top:6px;display:block;">' + t('misc.apikeys.identicalContent', { lines: diffData.lines1.length }) + '</span>' +
                 '</div>';
             return;
         }
@@ -3551,7 +3551,7 @@
       }
       function _showGlobalResults(term) {
         if (!term) {
-          helpContent.innerHTML = '<p style="color:#716b75;padding:8px 0;">' + t('misc.help.typeSearchTerm') + '</p>';
+          helpContent.innerHTML = '<p style="color:#756d81;padding:8px 0;">' + t('misc.help.typeSearchTerm') + '</p>';
           helpSearchCount.textContent = '';
           return;
         }
@@ -3579,7 +3579,7 @@
       function _renderGlobalResults(term, results) {
         var re; try { re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'); } catch(e) { return; }
         if (results.length === 0) {
-          helpContent.innerHTML = '<p style="color:#716b75;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
+          helpContent.innerHTML = '<p style="color:#756d81;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
           helpSearchCount.textContent = t('misc.help.found0');
           return;
         }

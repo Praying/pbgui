@@ -278,7 +278,7 @@ textarea.json-invalid:focus {
   padding: 6px 10px;
   border: 1px solid rgb(var(--danger-rgb) / 0.35);
   border-radius: 4px;
-  background: rgba(55, 20, 20, 0.84);
+  background: rgb(var(--danger-deep-rgb) / 0.35);
 }
 .raw-json-wrap {
   position: relative;
@@ -299,7 +299,7 @@ textarea.json-invalid:focus {
   font-size: var(--fs-sm); font-weight: 600; z-index: 9999;
   display: none; transition: opacity 0.3s;
 }
-.toast-ok   { background: var(--green); color: #000 /* black on colored bg */; }
+.toast-ok   { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; }
 .toast-err  { background: var(--red); color: #fff /* white on colored bg */; }
 .toast-info { background: var(--blue); color: #fff /* white on colored bg */; }
 
@@ -322,7 +322,7 @@ textarea.json-invalid:focus {
   height: 26px; padding: 0 10px;
   border: 1px solid rgb(var(--danger-rgb) / 0.45);
   border-radius: 4px; background: rgba(255, 255, 255, 0.04);
-  color: #ffe7e7; cursor: pointer; font-size: var(--fs-sm);
+  color: var(--danger-soft); cursor: pointer; font-size: var(--fs-sm);
 }
 .field-status-btn:hover { background: rgba(255, 255, 255, 0.08); }
 
@@ -358,8 +358,8 @@ textarea.json-invalid:focus { border-color: var(--red); }
   line-height: 1.4;
 }
 .bot-json-line { display: block; }
-.bot-json-neutralized { background: color-mix(in srgb, #f0a500 16%, transparent); border-radius: 2px; }
-.bot-json-pb-default { background: color-mix(in srgb, #e05252 16%, transparent); border-radius: 2px; }
+.bot-json-neutralized { background: color-mix(in srgb, var(--warning) 16%, transparent); border-radius: 2px; }
+.bot-json-pb-default { background: color-mix(in srgb, var(--danger) 16%, transparent); border-radius: 2px; }
 .bot-json-error-line {
   box-shadow: inset 3px 0 0 rgb(var(--danger-rgb) / 0.95);
   background: rgb(var(--danger-rgb) / 0.16);
@@ -390,7 +390,7 @@ textarea.json-invalid:focus { border-color: var(--red); }
 .cov-json-status { display: none; margin-top: 4px; font-size: var(--fs-sm); line-height: 1.35; }
 .cov-json-status.error {
   display: block; padding: 6px 10px; border: 1px solid rgb(var(--danger-rgb) / 0.35);
-  border-radius: 4px; background: rgba(55, 20, 20, 0.84); color: var(--red);
+  border-radius: 4px; background: rgb(var(--danger-deep-rgb) / 0.35); color: var(--red);
 }
 textarea.cov-json-invalid,
 textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
@@ -457,7 +457,7 @@ textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
 
 /* Modals (:474-494) */
 .modal-overlay {
-  display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
+  display: none; position: fixed; inset: 0; background: var(--bg-backdrop);
   z-index: 1000; justify-content: center; align-items: center;
 }
 .modal-overlay.open { display: flex; }
@@ -474,21 +474,21 @@ textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
   cursor: pointer; background: var(--bg3); color: var(--text);
 }
 .btn:hover { background: var(--border-default); }
-.btn-ok { background: var(--green); color: #000 /* black on colored bg */; border-color: var(--green); }
-.btn-ok:hover { background: #1aa34a; }
+.btn-ok { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; border-color: var(--green); }
+.btn-ok:hover { background: var(--success-deep); }
 .btn-cancel { background: var(--bg3); }
 
 .migration-review-notice {
   margin: 0 0 16px;
   padding: 12px 14px;
-  border: 1px solid rgba(255, 166, 0, .48);
-  border-left: 4px solid #ffb454;
+  border: 1px solid rgb(var(--warning-rgb) / 0.48);
+  border-left: 4px solid var(--warning);
   border-radius: 6px;
-  background: rgba(255, 166, 0, .10);
-  color: #ffe0b0;
+  background: rgb(var(--warning-rgb) / 0.10);
+  color: var(--warning-soft);
   line-height: 1.45;
 }
-.migration-review-notice strong { display: block; margin-bottom: 4px; color: #ffc26b; }
+.migration-review-notice strong { display: block; margin-bottom: 4px; color: var(--warning); }
 .migration-review-notice p { margin: 0; }
 .migration-review-notice ul { margin: 8px 0 0 20px; }
-.migration-review-notice code { color: #ffe9c7; }
+.migration-review-notice code { color: var(--warning-soft); }

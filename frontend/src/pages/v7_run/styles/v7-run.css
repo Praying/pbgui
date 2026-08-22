@@ -50,9 +50,9 @@ body {
   font-weight: 600;
   transition: all 0.3s;
 }
-.conn-ok      { background: var(--green); color: #000 /* black on colored bg */; display: none; }
+.conn-ok      { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; display: none; }
 .conn-lost    { background: var(--red);   color: #fff /* white on colored bg */; }
-.conn-waiting { background: var(--orange); color: #000 /* black on colored bg */; }
+.conn-waiting { background: var(--orange); color: var(--accent-contrast) /* dark ink on colored bg */; }
 
 /* ─── Page layout (sidebar + main content) ─────────────────── */
 #page-body {
@@ -188,15 +188,15 @@ tr.row-inactive td  { opacity: 0.45; }
 }
 .btn-panic { background: var(--red); color: #fff /* white on colored bg */; border-color: var(--red); }
 .btn-panic:hover { opacity: 0.85; }
-.btn-graceful { background: var(--orange); color: #000 /* black on colored bg */; border-color: var(--orange); }
+.btn-graceful { background: var(--orange); color: var(--accent-contrast) /* dark ink on colored bg */; border-color: var(--orange); }
 .btn-graceful:hover { opacity: 0.85; }
-.btn-tp-only { background: var(--green); color: #000 /* black on colored bg */; border-color: var(--green); }
+.btn-tp-only { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; border-color: var(--green); }
 .btn-tp-only:hover { opacity: 0.85; }
 
 /* Confirmation modal */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: var(--bg-backdrop);
   z-index: 10000;
   display: flex; align-items: center; justify-content: center;
 }
@@ -225,9 +225,9 @@ tr.row-inactive td  { opacity: 0.45; }
 .modal-btn-cancel:hover { background: var(--border); }
 .modal-btn-delete { background: var(--red); color: #fff /* white on colored bg */; border-color: var(--red); }
 .modal-btn-delete:hover { opacity: 0.85; }
-.modal-btn-graceful { background: var(--orange); color: #000 /* black on colored bg */; border-color: var(--orange); }
+.modal-btn-graceful { background: var(--orange); color: var(--accent-contrast) /* dark ink on colored bg */; border-color: var(--orange); }
 .modal-btn-graceful:hover { opacity: 0.85; }
-.modal-btn-tp-only { background: var(--green); color: #000 /* black on colored bg */; border-color: var(--green); }
+.modal-btn-tp-only { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; border-color: var(--green); }
 .modal-btn-tp-only:hover { opacity: 0.85; }
 .modal-btn-restore { background: var(--green); color: #fff /* white on colored bg */; border-color: var(--green); }
 .modal-btn-restore:hover { opacity: 0.85; }
@@ -337,7 +337,7 @@ tr.row-inactive td  { opacity: 0.45; }
 .backup-settings-row .num-stepper { display: flex; align-items: center; }
 .backup-settings-row .num-stepper input {
   width: 56px; text-align: center; border-radius: 0 !important;
-  background: var(--bg2); color: #4caf50; border: 1px solid var(--border);
+  background: var(--bg2); color: var(--success); border: 1px solid var(--border);
   padding: 2px 4px; font-size: var(--fs-sm); height: 26px;
   -moz-appearance: textfield;
 }
@@ -352,13 +352,13 @@ tr.row-inactive td  { opacity: 0.45; }
 }
 .backup-settings-row .stepper-btn:first-child { border-radius: 4px 0 0 4px; border-right: none; }
 .backup-settings-row .stepper-btn:last-child  { border-radius: 0 4px 4px 0; border-left: none; }
-.backup-settings-row .stepper-btn:hover { background: var(--accent); color: #000 /* black on colored bg */; border-color: var(--accent); }
+.backup-settings-row .stepper-btn:hover { background: var(--accent); color: var(--accent-contrast) /* dark ink on colored bg */; border-color: var(--accent); }
 .btn-save-retention {
   background: transparent; border: 1px solid var(--border); color: var(--text-dim);
   border-radius: 4px; cursor: pointer; padding: 2px 8px; font-size: 14px;
   display: flex; align-items: center; height: 26px;
 }
-.btn-save-retention:hover { background: rgba(76,175,80,0.15); color: #4caf50; }
+.btn-save-retention:hover { background: rgb(var(--success-rgb) / 0.15); color: var(--success); }
 .backup-panel-body {
   flex: 1; min-height: 0; overflow-y: auto; padding: var(--sp-md);
 }
@@ -376,7 +376,7 @@ tr.row-inactive td  { opacity: 0.45; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--bg-backdrop);
   z-index: 10020;
   padding: var(--sp-lg);
 }
@@ -462,7 +462,8 @@ tr.row-inactive td  { opacity: 0.45; }
   border-color: var(--accent-soft);
   color: var(--bg-page);
 }
-.backup-confirm-actions .btn-confirm:hover { background: #7cc4f5; }
+/* Hover deepens the accent-soft fill one step in the accent ramp. */
+.backup-confirm-actions .btn-confirm:hover { background: var(--accent); }
 
 /* Toast */
 #toast {
@@ -477,7 +478,7 @@ tr.row-inactive td  { opacity: 0.45; }
   display: none;
   transition: opacity 0.3s;
 }
-.toast-ok   { background: var(--green); color: #000 /* black on colored bg */; }
+.toast-ok   { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; }
 .toast-err  { background: var(--red); color: #fff /* white on colored bg */; }
 .toast-info { background: var(--blue); color: #fff /* white on colored bg */; }
 

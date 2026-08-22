@@ -350,7 +350,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(scenario, i) in model.scenarios" :key="i" :style="model.editIdx === i ? 'background: rgba(77,166,255,.06)' : ''">
+              <tr v-for="(scenario, i) in model.scenarios" :key="i" :style="model.editIdx === i ? 'background: rgb(var(--accent-rgb) / .06)' : ''">
                 <td style="font-weight: 600">{{ scenario.label || t('editor.suite.unnamed') }}</td>
                 <td><span style="color: var(--text-dim); font-size: var(--fs-xs)">{{ summary(scenario) }}</span></td>
                 <td>
@@ -364,7 +364,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
           </table>
         </div>
 
-        <div v-if="editing && draft" style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); background: rgba(77, 166, 255, 0.03)">
+        <div v-if="editing && draft" style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); background: rgb(var(--accent-rgb) / 0.03)">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-sm)">
             <span style="font-size: var(--fs-sm); font-weight: 600; color: var(--accent)">{{ t('editor.suite.editScenario', { label: draft.label }) }}</span>
             <button type="button" class="act-btn" data-test="suite-done" @click="done">{{ t('editor.suite.done') }}</button>

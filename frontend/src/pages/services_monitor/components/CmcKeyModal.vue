@@ -185,26 +185,26 @@ defineExpose({ clearSecretIfUnchanged });
 <!-- Styles ported from frontend/services_monitor.html (CMC modal + settings form). -->
 <style scoped>
 .form-field { display: flex; flex-direction: column; gap: 3px; }
-.form-label { font-size: var(--fs-xs); color: #716b75; text-transform: uppercase; letter-spacing: 0.04em; }
+.form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .form-input {
-  background: #1f1d21; color: #eae7ea; border: 1px solid #37333a; border-radius: 5px;
+  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px;
   padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
 }
-.form-input:focus { border-color: #4e4851; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #37333a; background: #1f1d21; color: #a29ca6; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: #4e4851; color: #eae7ea; }
-.form-btn.save { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
-.form-btn.save:hover { background: #1d4ed8; color: #fff; }
+.form-input:focus { border-color: var(--border-strong); }
+.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
+.form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
+.form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
+.form-btn.save:hover { background: var(--accent-deep); color: #fff; }
 .cmc-modal-backdrop { position: fixed; inset: 0; z-index: 19000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(2px); }
-.cmc-modal-card { width: min(480px, 94vw); background: #131b2b; border: 1px solid #37333a; border-radius: 14px; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9); overflow: hidden; }
-.cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid #29262c; background: #171619; }
-.cmc-modal-title { color: #eae7ea; font-size: var(--fs-md); font-weight: 700; }
-.cmc-modal-close { background: transparent; border: 0; color: #716b75; font-size: var(--fs-lg); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; }
-.cmc-modal-close:hover { color: #eae7ea; background: rgba(255, 255, 255, 0.06); }
+.cmc-modal-card { width: min(480px, 94vw); background: var(--bg-page); border: 1px solid var(--border-default); border-radius: 14px; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9); overflow: hidden; }
+.cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border-subtle); background: var(--surface-workspace); }
+.cmc-modal-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 700; }
+.cmc-modal-close { background: transparent; border: 0; color: var(--text-muted); font-size: var(--fs-lg); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; }
+.cmc-modal-close:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.06); }
 .cmc-modal-body { display: grid; gap: 0.8rem; padding: 1rem 1.1rem; }
-.cmc-modal-options { display: flex; gap: 1rem; flex-wrap: wrap; color: #a29ca6; font-size: var(--fs-sm); }
+.cmc-modal-options { display: flex; gap: 1rem; flex-wrap: wrap; color: var(--text-secondary); font-size: var(--fs-sm); }
 .cmc-modal-options label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; }
-.cmc-modal-options input { accent-color: #4da6ff; }
-.cmc-modal-error { min-height: 1rem; color: #fca5a5; font-size: var(--fs-xs); }
+.cmc-modal-options input { accent-color: var(--accent); }
+.cmc-modal-error { min-height: 1rem; color: var(--danger-soft); font-size: var(--fs-xs); }
 .cmc-modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0 1.1rem 1rem; }
 </style>

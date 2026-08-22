@@ -58,62 +58,20 @@ body {
   min-height: 0;
 }
 
-/* ── Sidebar (legacy :59-159; #sidebar-resize :72-86 NOT ported —
-      silent no-op in legacy, see SidebarNav.vue) ── */
-#sidebar {
-  width: 240px;
-  min-width: 170px;
-  max-width: 320px;
-  flex-shrink: 0;
-  background: var(--bg);
-  border-right: 1px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative;
-}
-
-#sidebar-sticky {
-  padding: 0.5rem 0.5rem 0;
-  flex-shrink: 0;
-}
-
-#sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.3rem 0.25rem 0.5rem;
-  gap: var(--sp-xs);
-  flex-wrap: wrap;
-}
-
-.sb-title {
-  font-size: var(--fs-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--text-muted);
-  font-weight: 700;
-}
-
+/* ── Sidebar (legacy :59-159) retired — the section buttons render as
+      workbench-rail children (AppShell sections API). The .sb-btn/.sb-sep
+      rules survive for the in-panel segmented controls that absorbed the
+      sidebar context blocks (settings subsection nav + save button,
+      inventory view tabs + actions, best-1m mode switch). ── */
 .sb-sep {
   border: none;
   border-top: 1px solid var(--border-subtle);
   margin: 2px 0;
 }
 
-#sidebar-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.2rem 0.1rem 0.6rem;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
 .sb-btn {
   display: inline-flex;
   align-items: center;
-  width: 100%;
-  text-align: left;
   padding: 0.38rem 0.65rem;
   border-radius: 6px;
   border: 1px solid var(--border-default);
@@ -132,13 +90,9 @@ body {
 }
 
 .sb-btn.active {
-  background: rgba(38, 166, 154, 0.13);
+  background: rgb(var(--success-rgb) / 0.13);
   border-color: var(--success);
   color: var(--success);
-}
-
-.sb-btn.sidebar-shortcut {
-  text-decoration: none;
 }
 
 .sb-btn:disabled {
@@ -187,7 +141,7 @@ body {
 }
 
 .panel-card {
-  background: linear-gradient(180deg, rgba(26, 34, 53, 0.98), rgba(12, 17, 26, 0.98));
+  background: linear-gradient(180deg, rgb(var(--bg-panel-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98));
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: var(--sp-lg);
@@ -213,7 +167,7 @@ select {
   height: var(--input-h);
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: rgba(12, 17, 26, 0.92);
+  background: rgb(var(--bg-page-rgb) / 0.92);
   color: var(--text);
   padding: 0 var(--sp-sm);
   font-size: var(--fs-base);
@@ -246,7 +200,7 @@ select {
 }
 
 .toast.success {
-  background: rgba(38, 166, 154, 0.96);
+  background: rgb(var(--success-rgb) / 0.96);
   border-color: rgb(var(--success-soft-rgb) / 0.28);
 }
 
@@ -256,13 +210,13 @@ select {
 }
 
 .toast.info {
-  background: rgba(29, 78, 216, 0.96);
+  background: rgb(var(--accent-rgb) / 0.96);
   border-color: rgb(var(--accent-soft-rgb) / 0.28);
 }
 
 .toast.warn {
   background: rgb(var(--warning-rgb) / 0.96);
-  border-color: rgba(253, 230, 138, 0.28);
+  border-color: rgb(var(--warning-soft-rgb) / 0.28);
   color: var(--bg-card);
 }
 

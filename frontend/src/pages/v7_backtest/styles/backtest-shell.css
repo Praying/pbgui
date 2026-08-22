@@ -26,9 +26,9 @@ a:hover { text-decoration: underline; }
 
 /* ── Connection banner (:36-40) ─────────────────── */
 #conn-banner { padding: var(--sp-sm) 16px; text-align: center; font-size: var(--fs-sm); font-weight: 600; transition: all .3s; }
-.conn-ok      { background: var(--green); color: #000 /* black on colored bg */; }
+.conn-ok      { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; }
 .conn-lost    { background: var(--red);   color: #fff /* white on colored bg */; }
-.conn-waiting { background: var(--orange); color: #000 /* black on colored bg */; }
+.conn-waiting { background: var(--orange); color: var(--accent-contrast) /* dark ink on colored bg */; }
 
 /* ── Page layout (:42-56 + backtest_shell.css:31-36) ── */
 #page-body { display: flex; height: calc(100vh - var(--nav-height)); height: calc(100dvh - var(--nav-height)); min-height: 0; overflow: hidden; }
@@ -119,8 +119,8 @@ a:hover { text-decoration: underline; }
 /* ── Status badges (:51-57) ──────────────────────── */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: var(--fs-xs);
          font-weight: 600; letter-spacing: .3px; }
-.badge-queued    { background: rgba(160,164,171,.15); color: var(--text-dim); }
-.badge-running   { background: rgba(31,119,255,.15);  color: var(--blue); }
+.badge-queued    { background: rgb(var(--text-secondary-rgb) / .15); color: var(--text-dim); }
+.badge-running   { background: rgb(var(--accent-rgb) / .15);  color: var(--blue); }
 .badge-backtesting { background: rgb(var(--warning-rgb) / .15); color: var(--orange); }
 .badge-complete  { background: rgb(var(--success-rgb) / .15);   color: var(--green); }
 .badge-error, .badge-stopped { background: rgb(var(--danger-rgb) / .15); color: var(--red); }
@@ -140,7 +140,7 @@ a:hover { text-decoration: underline; }
 /* v-if controls presence (the Vue port of showModal/closeModal), so the
  * overlay is a flex layer by default — the legacy `display:none` +
  * `.open` pair would have hidden every declarative modal. */
-#modal-root { display: flex; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.6);
+#modal-root { display: flex; position: fixed; inset: 0; z-index: 1000; background: var(--bg-backdrop);
               align-items: center; justify-content: center; }
 #modal-root.open { display: flex; }
 .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
@@ -169,7 +169,7 @@ a:hover { text-decoration: underline; }
          flex-direction: column; gap: var(--sp-sm); pointer-events: none; }
 .toast-msg { padding: 10px 16px; border-radius: 6px; font-size: var(--fs-sm); font-weight: 500;
              pointer-events: auto; animation: bt-fade-in .2s; }
-.toast-ok   { background: var(--green); color: #000 /* black on colored bg */; }
+.toast-ok   { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; }
 .toast-err  { background: var(--red); color: #fff /* white on colored bg */; }
 .toast-info { background: var(--blue); color: #fff /* white on colored bg */; }
 @keyframes bt-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -280,7 +280,7 @@ a:hover { text-decoration: underline; }
 }
 .stepper-btn:first-child { border-right: 0; border-radius: 4px 0 0 4px; }
 .stepper-btn:last-child { border-left: 0; border-radius: 0 4px 4px 0; }
-.stepper-btn:hover { border-color: var(--accent); background: var(--accent); color: #000; }
+.stepper-btn:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-contrast); }
 
 .ms-wrap {
   position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 3px;
@@ -299,7 +299,7 @@ a:hover { text-decoration: underline; }
   display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px;
   border: 1px solid var(--border); border-radius: 3px; background: var(--bg3); color: var(--text); font-size: var(--fs-xs);
 }
-.ms-tag.ms-tag-all { border-color: var(--green); background: var(--green); color: #000; font-weight: 600; }
+.ms-tag.ms-tag-all { border-color: var(--green); background: var(--green); color: var(--accent-contrast); font-weight: 600; }
 .ms-tag .ms-x { color: var(--text-dim); font-size: 11px; line-height: 1; cursor: pointer; }
 .ms-tag .ms-x:hover { color: var(--red); }
 .ms-dropdown {
@@ -324,7 +324,7 @@ a:hover { text-decoration: underline; }
 }
 .ohlcv-readiness-modal { width: min(760px, 92vw); }
 .ohlcv-readiness-json { max-height: 60vh; margin: 0; overflow: auto; white-space: pre-wrap; word-break: break-word; }
-.field-status-inline.error { margin-top: var(--sp-xs); padding: 6px 10px; border: 1px solid rgb(var(--danger-rgb) / .35); border-radius: 4px; background: rgba(55,20,20,.84); }
+.field-status-inline.error { margin-top: var(--sp-xs); padding: 6px 10px; border: 1px solid rgb(var(--danger-rgb) / .35); border-radius: 4px; background: rgb(var(--danger-deep-rgb) / .35); }
 
 /* ── New-config visual hierarchy ─────────────────────────────────────── */
 .config-editor-kicker {
@@ -469,7 +469,7 @@ body {
   padding: 24px clamp(16px, 2.5vw, 36px) 36px;
   background:
     radial-gradient(circle at 94% 0%, rgb(var(--accent-rgb) / 0.09), transparent 28rem),
-    radial-gradient(circle at 0% 84%, rgba(20, 184, 166, 0.05), transparent 24rem),
+    radial-gradient(circle at 0% 84%, rgb(var(--success-rgb) / 0.05), transparent 24rem),
     repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.016) 0 1px, transparent 1px 42px),
     var(--bg);
 }
@@ -580,7 +580,7 @@ body {
   border-radius: 10px;
   background:
     radial-gradient(circle at 100% 0%, rgb(var(--accent-deep-rgb) / 0.045), transparent 24rem),
-    linear-gradient(145deg, rgba(20, 29, 43, 0.98), rgba(13, 21, 34, 0.98));
+    linear-gradient(145deg, rgb(var(--bg-panel-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98));
   box-shadow: none;
 }
 
@@ -593,7 +593,7 @@ body {
 }
 
 .config-editor-section:nth-of-type(3)::before {
-  background: linear-gradient(90deg, rgba(45, 212, 191, 0.76), transparent 68%);
+  background: linear-gradient(90deg, rgb(var(--success-rgb) / 0.76), transparent 68%);
 }
 
 .config-editor-section:nth-of-type(4)::before {
@@ -601,7 +601,7 @@ body {
 }
 
 .config-editor-section:nth-of-type(5)::before {
-  background: linear-gradient(90deg, rgba(167, 139, 250, 0.76), transparent 68%);
+  background: linear-gradient(90deg, rgb(164 147 196 / 0.76), transparent 68%);
 }
 
 .config-editor-section-head {
@@ -680,7 +680,7 @@ body {
 #configs-editor .form-group select:hover,
 #configs-editor .ms-wrap:hover {
   border-color: rgb(var(--accent-rgb) / 0.34);
-  background: rgba(7, 16, 28, 0.82);
+  background: rgb(var(--bg-page-rgb) / 0.82);
 }
 
 #configs-editor .form-group input:focus,
@@ -854,7 +854,7 @@ body {
 }
 
 #configs-editor .bot-json-expander.error {
-  border-color: rgba(240, 165, 0, 0.38);
+  border-color: rgb(var(--warning-rgb) / 0.38);
 }
 
 #configs-editor .act-btn {
@@ -874,7 +874,7 @@ body {
 #sidebar-editor {
   padding: 16px 12px 0;
   background:
-    linear-gradient(180deg, rgba(18, 29, 46, 0.98), rgba(10, 16, 26, 0.98) 78%),
+    linear-gradient(180deg, rgb(var(--bg-panel-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98) 78%),
     var(--bg-page);
 }
 
@@ -927,8 +927,8 @@ body {
 
 #sidebar-editor .editor-save-group .sb-btn.info {
   border-color: rgb(var(--success-rgb) / 0.32);
-  background: rgba(16, 185, 129, 0.12);
-  color: #a7f3d0;
+  background: rgb(var(--success-rgb) / 0.12);
+  color: var(--success-soft);
 }
 
 #configs-editor button:focus-visible,

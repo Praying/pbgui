@@ -10,8 +10,8 @@ import type { PlotlyLayout } from './plotlyVendor';
  * ported as dead code.
  */
 
-const DARK_BG = '#131114';
-const TEXT = '#fafafa';
+const DARK_BG = '#16141a';
+const TEXT = '#e9e5ee';
 const GRID = 'rgba(255,255,255,0.12)';
 const ZEROLINE = 'rgba(255,255,255,0.18)';
 const POLAR_GRID = 'rgba(255,255,255,0.16)';

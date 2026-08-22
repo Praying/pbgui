@@ -256,7 +256,7 @@ input[type="range"]::-moz-range-thumb {
 .load-status-progress > div {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--blue), #8ec5ff);
+  background: linear-gradient(90deg, var(--accent), var(--accent-soft));
   transition: width .2s ease;
 }
 
@@ -281,13 +281,13 @@ input[type="range"]::-moz-range-thumb {
 .message.info {
   background: rgb(var(--accent-rgb) / .08);
   border-color: rgb(var(--accent-rgb) / .3);
-  color: #b8dbff;
+  color: var(--accent-soft);
 }
 
 .message.bad {
   background: rgb(var(--danger-rgb) / .08);
   border-color: rgb(var(--danger-rgb) / .3);
-  color: #ffc0c0;
+  color: var(--danger-soft);
 }
 
 .stack {
@@ -490,7 +490,7 @@ input[type="range"]::-moz-range-thumb {
 .projection-panel-title {
   margin: 0 0 8px 0;
   text-align: center;
-  color: #9fb3c8;
+  color: var(--text-secondary);
   font-size: var(--fs-sm);
   font-weight: 600;
 }

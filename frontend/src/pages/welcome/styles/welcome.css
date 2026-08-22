@@ -18,93 +18,6 @@ body {
             user-select: none;
         }
 
-        #sidebar {
-            width: 240px;
-            min-width: 180px;
-            max-width: 340px;
-            flex-shrink: 0;
-            background: var(--bg-page);
-            border-right: 1px solid var(--border-subtle);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-
-        #sidebar-resize {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 4px;
-            cursor: col-resize;
-            background: transparent;
-        }
-
-        #sidebar-resize:hover,
-        #sidebar-resize.active {
-            background: rgb(var(--accent-rgb) / 0.4);
-        }
-
-        #sidebar-sticky {
-            flex-shrink: 0;
-            padding: 0.5rem 0.5rem 0;
-        }
-
-        #sidebar-header {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: var(--sp-sm);
-            padding: 0.3rem 0.25rem 0.5rem;
-        }
-
-        .sb-title {
-            display: block;
-            font-size: var(--fs-sm);
-            text-transform: uppercase;
-            letter-spacing: 0.09em;
-            color: var(--text-muted);
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        #sidebar-toolbar {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-            padding: 0.3rem 0.1rem 0.45rem;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .sb-sep {
-            border: none;
-            border-top: 1px solid var(--border-subtle);
-            margin: 2px 0;
-        }
-
-        .sb-btn {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.38rem 0.65rem;
-            border-radius: 6px;
-            font-size: var(--fs-base);
-            cursor: pointer;
-            border: 1px solid var(--border-default);
-            background: var(--bg-card);
-            color: var(--text-secondary);
-            transition: background 0.12s, border-color 0.12s, color 0.12s;
-            width: 100%;
-            text-align: left;
-            height: auto;
-        }
-
-        .sb-btn:hover { background: var(--bg-elevated); color: var(--text-primary); border-color: var(--text-dim); }
-        .sb-btn.active { background: rgb(var(--accent-rgb) / 0.12); border-color: var(--accent); color: var(--accent-soft); }
-        .sb-btn.info { color: var(--accent-soft); border-color: rgb(var(--accent-rgb) / 0.27); }
-        .sb-btn.info:hover { background: rgb(var(--accent-rgb) / 0.1); border-color: rgb(var(--accent-rgb) / 0.5); }
-        .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
         .workbench-page-content {
             flex: 1;
             overflow-y: auto;
@@ -480,7 +393,7 @@ body {
 
         .banner.show { display: block; }
         .banner.error { background: rgb(var(--danger-deep-rgb) / 0.45); border: 1px solid rgb(var(--danger-rgb) / 0.28); color: var(--danger-soft); }
-        .banner.info { background: rgba(30, 64, 175, 0.25); border: 1px solid rgb(var(--accent-rgb) / 0.24); color: var(--accent-soft); }
+        .banner.info { background: rgb(var(--accent-deep-rgb) / 0.25); border: 1px solid rgb(var(--accent-rgb) / 0.24); color: var(--accent-soft); }
         .banner.success { background: rgb(var(--success-deep-rgb) / 0.34); border: 1px solid rgb(var(--success-rgb) / 0.24); color: var(--success-soft); }
 
         .field-grid {
@@ -610,7 +523,7 @@ body {
             color: var(--accent-contrast);
         }
 
-        .btn-primary:hover:not(:disabled) { background: #70b8ff; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-soft); }
 
         .btn-secondary {
             background: var(--bg-card);
@@ -770,7 +683,7 @@ body {
         }
 
         .issue.warning {
-            background: rgba(120, 53, 15, 0.38);
+            background: rgb(var(--warning-deep-rgb) / 0.38);
             border: 1px solid rgb(var(--warning-rgb) / 0.22);
             color: var(--warning-soft);
         }
@@ -995,10 +908,6 @@ body {
                 grid-template-columns: 1fr;
             }
 
-            #sidebar {
-                display: none;
-            }
-
             .workbench-page-content {
                 padding: 16px;
             }
@@ -1090,90 +999,6 @@ body {
         #page-body {
             position: relative;
             background: linear-gradient(135deg, rgb(var(--bg-page-rgb) / 0.98), rgb(var(--bg-panel-rgb) / 0.96));
-        }
-
-        #sidebar {
-            background:
-                linear-gradient(180deg, rgba(19, 29, 45, 0.96), rgb(var(--bg-panel-rgb) / 0.98) 72%),
-                var(--bg-page);
-            border-right-color: rgb(var(--accent-rgb) / 0.14);
-        }
-
-        #sidebar::before {
-            content: '';
-            position: absolute;
-            inset: 0 0 auto;
-            height: 132px;
-            pointer-events: none;
-            background: radial-gradient(circle at 26% 0%, rgb(var(--accent-rgb) / 0.13), transparent 68%);
-        }
-
-        #sidebar-sticky,
-        #sidebar-resize {
-            position: relative;
-            z-index: 1;
-        }
-
-        #sidebar-sticky {
-            padding: 18px 12px 0;
-        }
-
-        #sidebar-header {
-            position: relative;
-            gap: 3px;
-            padding: 6px 8px 18px;
-        }
-
-        #sidebar-header::before {
-            content: 'PB';
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            margin-bottom: 13px;
-            border: 1px solid rgb(var(--accent-rgb) / 0.36);
-            border-radius: 10px;
-            background: linear-gradient(145deg, rgb(var(--accent-rgb) / 0.85), rgb(var(--accent-deep-rgb) / 0.75));
-            box-shadow: 0 8px 22px rgb(var(--accent-deep-rgb) / 0.28), inset 0 1px rgba(255, 255, 255, 0.18);
-            color: var(--text-primary);
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.04em;
-        }
-
-        .sb-title {
-            color: var(--text-primary);
-            font-size: 12px;
-            letter-spacing: 0.13em;
-        }
-
-        #sidebar-toolbar {
-            gap: 6px;
-            padding: 4px 0 14px;
-            border-bottom-color: rgb(var(--text-secondary-rgb) / 0.12);
-        }
-
-        .sb-btn {
-            min-height: 38px;
-            padding: 0 12px;
-            border-color: transparent;
-            background: transparent;
-            color: var(--text-secondary);
-            transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
-        }
-
-        .sb-btn:hover:not(:disabled) {
-            transform: translateX(2px);
-            border-color: rgb(var(--accent-rgb) / 0.16);
-            background: rgb(var(--accent-rgb) / 0.08);
-        }
-
-        .sb-btn.active {
-            border-color: rgb(var(--accent-rgb) / 0.28);
-            background: linear-gradient(90deg, rgb(var(--accent-deep-rgb) / 0.2), rgb(var(--accent-deep-rgb) / 0.04));
-            color: var(--accent-soft);
-            box-shadow: inset 3px 0 var(--accent);
         }
 
         .workbench-page-content {
@@ -1414,7 +1239,7 @@ body {
         }
 
         #section-setup .runtime-group--pb8 {
-            --runtime-group-accent: #2dd4bf;
+            --runtime-group-accent: var(--success-soft);
         }
 
         #section-setup .group-heading {
@@ -1477,7 +1302,7 @@ body {
         #section-setup input:hover,
         #section-setup select:hover {
             border-color: rgb(var(--accent-rgb) / 0.34);
-            background: rgba(7, 16, 28, 0.84);
+            background: rgb(var(--bg-page-rgb) / 0.84);
         }
 
         #section-setup .field-browse {

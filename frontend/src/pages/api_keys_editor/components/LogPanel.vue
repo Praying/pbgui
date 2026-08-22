@@ -45,7 +45,7 @@ onBeforeUnmount(() => viewer?.close());
 
 <template>
   <div id="logPanel" class="hl-expiry-panel" v-show="visible" style="flex-direction:column; padding:0; gap:0; height:calc(100dvh - 120px);">
-    <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid #1e293b; flex-shrink:0;">
+    <div style="display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid var(--bg-panel); flex-shrink:0;">
       <BackButton @back="emit('back')" />
     </div>
     <div id="logViewerTarget" style="padding:10px 16px 16px; display:flex; flex-direction:column; flex:1; min-height:0;"></div>

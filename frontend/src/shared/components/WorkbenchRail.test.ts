@@ -54,12 +54,23 @@ const TEST_GROUPS: readonly NavigationGroup[] = [
   },
 ];
 
-function mountRail(activePage = 'system_services', collapsed = false) {
+const TEST_SECTIONS = [
+  { key: 'overview', label: 'Overview', tone: 'success' },
+  { key: 'setup', label: 'Setup', tone: 'danger' },
+  { key: 'credentials', label: 'Credentials' },
+] as const;
+
+function mountRail(
+  activePage = 'system_services',
+  collapsed = false,
+  extraProps: Record<string, unknown> = {},
+) {
   return mount(WorkbenchRail, {
     props: {
       groups: TEST_GROUPS,
       activePage,
       collapsed,
+      ...extraProps,
     },
     global: { plugins: [createI18n('en')] },
   });
@@ -113,5 +124,87 @@ describe('WorkbenchRail', () => {
 
     expect(wrapper.emitted('update:collapsed')).toEqual([[false]]);
     expect(localStorage.getItem('pbgui-workbench-rail-collapsed')).toBe('false');
+  });
+
+  it('renders section children only under the active page and emits selection', async () => {
+    const wrapper = mountRail('system_services', false, {
+      sections: TEST_SECTIONS,
+      activeSection: 'overview',
+    });
+
+    const lists = wrapper.findAll('.workbench-rail__subitems');
+    expect(lists).toHaveLength(1);
+
+    const buttons = wrapper.findAll('.workbench-rail__subitem');
+    expect(buttons.map((button) => button.text())).toEqual(['Overview', 'Setup', 'Credentials']);
+    expect(buttons[0]!.classes()).toContain('workbench-rail__subitem--active');
+    expect(buttons[0]!.attributes('aria-current')).toBe('location');
+    expect(wrapper.find('.workbench-rail__subitem-dot[data-tone="success"]').exists()).toBe(true);
+    expect(wrapper.find('.workbench-rail__subitem-dot[data-tone="danger"]').exists()).toBe(true);
+
+    await buttons[1]!.trigger('click');
+
+    expect(wrapper.emitted('update:section')).toEqual([['setup']]);
+  });
+
+  it('renders no section children when the page provides none', () => {
+    const wrapper = mountRail();
+
+    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(false);
+  });
+
+  it('temp-expands the collapsed rail from the active item, then collapses on selection', async () => {
+    const wrapper = mountRail('system_services', true, {
+      sections: TEST_SECTIONS,
+      activeSection: 'overview',
+    });
+    const nav = wrapper.get('nav#workbench-rail');
+
+    expect(nav.classes()).toContain('workbench-rail--collapsed');
+    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(false);
+
+    const activeLink = wrapper.get('a[aria-current="page"]');
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    await activeLink.element.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(nav.classes()).toContain('workbench-rail--temp-expanded');
+    expect(nav.classes()).not.toContain('workbench-rail--collapsed');
+    expect(wrapper.find('.workbench-rail__brand-name').exists()).toBe(true);
+    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(true);
+
+    await wrapper.findAll('.workbench-rail__subitem')[1]!.trigger('click');
+
+    expect(wrapper.emitted('update:section')).toEqual([['setup']]);
+    expect(nav.classes()).not.toContain('workbench-rail--temp-expanded');
+    expect(nav.classes()).toContain('workbench-rail--collapsed');
+    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(false);
+  });
+
+  it('keeps non-active collapsed items as plain navigation links', async () => {
+    const wrapper = mountRail('system_services', true, { sections: TEST_SECTIONS });
+
+    const welcomeLink = wrapper.get('a[href="/api/auth/main_page"]');
+    // Probe without the real destination: a non-prevented click would make
+    // jsdom attempt an actual navigation and log noise.
+    welcomeLink.element.removeAttribute('href');
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    await welcomeLink.element.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(wrapper.find('.workbench-rail--temp-expanded').exists()).toBe(false);
+  });
+
+  it('collapses the temporary expansion on an outside pointer press', async () => {
+    const wrapper = mountRail('system_services', true, { sections: TEST_SECTIONS });
+    const nav = wrapper.get('nav#workbench-rail');
+
+    await wrapper.get('a[aria-current="page"]').trigger('click');
+    expect(nav.classes()).toContain('workbench-rail--temp-expanded');
+
+    document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(nav.classes()).not.toContain('workbench-rail--temp-expanded');
   });
 });

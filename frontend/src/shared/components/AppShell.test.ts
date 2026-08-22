@@ -80,4 +80,30 @@ describe('AppShell', () => {
     expect(wrapper.get('[role="status"]').text()).toBe('Custom runtime status');
     expect(wrapper.text()).not.toContain('Fallback status');
   });
+
+  it('forwards page sections into the rail and re-emits selection', async () => {
+    const wrapper = mount(AppShell, {
+      props: {
+        pageKey: 'system_services',
+        pageTitle: 'Services',
+        sections: [
+          { key: 'overview', label: 'Overview' },
+          { key: 'logs', label: 'Logs', tone: 'warning' },
+        ],
+        activeSection: 'overview',
+      },
+      slots: {
+        default: '<section data-testid="primary-content">Workspace</section>',
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    const buttons = wrapper.findAll('.workbench-rail__subitem');
+    expect(buttons.map((button) => button.text())).toEqual(['Overview', 'Logs']);
+    expect(wrapper.find('.workbench-rail__subitem-dot[data-tone="warning"]').exists()).toBe(true);
+
+    await buttons[1]!.trigger('click');
+
+    expect(wrapper.emitted('update:section')).toEqual([['logs']]);
+  });
 });

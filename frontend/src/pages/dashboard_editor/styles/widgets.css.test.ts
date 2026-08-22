@@ -19,8 +19,10 @@ const widgetsCss = readFileSync(join(import.meta.dirname, 'widgets.css'), 'utf8'
    (hardcoded colors redirected to the shared @/styles/tokens.css), then at
    the viewport-hardening pass (100vh declarations gained 100dvh twins),
    then at the palette-consolidation pass (rgba literals routed through the
-   semantic -rgb token channels). */
-const FROZEN_WIDGETS_CSS_SHA256 = '495f39133fe5460ccfea0aebc47704d52657ca6697bd37f674b0e95037715731';
+   semantic -rgb token channels), then at the Morandi-palette pass (last
+   escaped hex literals — #276749/#2a3a5c/#8a4b05/#070b12/rgba(45,55,72) —
+   routed to success/accent/warning/bg-page/bg-elevated tokens). */
+const FROZEN_WIDGETS_CSS_SHA256 = 'dc7f32a22406693908fac5d29cfa3a4fa2e50ffcc80a6e6e240095dc58b824f8';
 
 function normalize(text: string): string {
   /* Comments are stripped (the legacy _CSS section headers were raw JS

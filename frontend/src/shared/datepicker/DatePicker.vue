@@ -185,7 +185,7 @@ const canToday = computed(() => {
       📅
     </button>
 
-    <div v-if="open" class="dp-popup" data-test="dp-popup" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; background: var(--bg2, #1e2030); border: 1px solid var(--border, #444); border-radius: 8px; padding: 10px 12px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); user-select: none; min-width: 230px">
+    <div v-if="open" class="dp-popup" data-test="dp-popup" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); user-select: none; min-width: 230px">
       <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px">
         <button type="button" data-test="dp-prev" :disabled="!canPrev" @click="shiftMonth(-1)">‹</button>
         <div style="position: relative; flex: 1">
@@ -204,7 +204,7 @@ const canToday = computed(() => {
       </div>
 
       <div style="display: grid; grid-template-columns: repeat(7, 30px); gap: 2px; text-align: center">
-        <div v-for="d in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="d" style="color: var(--text-dim, #888); font-size: var(--fs-xs); padding-bottom: 4px">{{ d }}</div>
+        <div v-for="d in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="d" style="color: var(--text-dim); font-size: var(--fs-xs); padding-bottom: 4px">{{ d }}</div>
         <template v-for="(week, wi) in weeks" :key="wi">
           <template v-for="(cell, ci) in week" :key="wi + '-' + ci">
             <div v-if="cell" class="dp-day" :class="{ 'dp-disabled': cell.disabled, selected: cell.selected, today: cell.today }" @click="pick(cell.day)">{{ cell.day }}</div>
@@ -225,7 +225,7 @@ const canToday = computed(() => {
 .dp-popup button {
   background: none;
   border: none;
-  color: var(--text, #ccc);
+  color: var(--text);
   cursor: pointer;
   font-size: var(--fs-xs);
 }
@@ -238,8 +238,8 @@ const canToday = computed(() => {
   top: calc(100% + 4px);
   z-index: 2;
   display: block;
-  background: var(--bg3, #2a2d40);
-  border: 1px solid var(--border, #444);
+  background: var(--bg3);
+  border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55);
   max-height: 220px;
@@ -254,28 +254,28 @@ const canToday = computed(() => {
   border-radius: 4px;
 }
 .dp-dd-item.selected {
-  background: var(--accent, #4a90d9);
+  background: var(--accent);
   color: #fff;
 }
 .dp-day {
   cursor: pointer;
   border-radius: 4px;
   padding: 4px 0;
-  color: var(--text, #ccc);
+  color: var(--text);
   font-size: var(--fs-sm);
 }
 .dp-day:hover {
   background: rgba(255, 255, 255, 0.15);
 }
 .dp-day.selected {
-  background: var(--accent, #4a90d9);
+  background: var(--accent);
   font-weight: 600;
 }
 .dp-day.today {
   background: rgba(255, 255, 255, 0.12);
 }
 .dp-day.dp-disabled {
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--text-disabled);
   cursor: not-allowed;
 }
 .dp-day.dp-disabled:hover {

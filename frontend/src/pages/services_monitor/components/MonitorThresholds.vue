@@ -86,7 +86,7 @@ function onInput(config: Record<string, string>, key: string, event: Event): voi
 .monitor-group { margin-top: 1rem; }
 .monitor-group-title {
   font-size: var(--fs-sm);
-  color: #93c5fd;
+  color: var(--accent-soft);
   font-weight: 600;
   margin-bottom: 0.4rem;
 }
@@ -96,11 +96,11 @@ function onInput(config: Record<string, string>, key: string, event: Event): voi
   gap: 0.5rem;
 }
 .monitor-cell { display: flex; flex-direction: column; gap: 2px; }
-.monitor-label { font-size: var(--fs-xs); color: #a29ca6; }
+.monitor-label { font-size: var(--fs-xs); color: var(--text-secondary); }
 .form-input {
-  background: #1f1d21; color: #eae7ea; border: 1px solid #37333a; border-radius: 5px;
+  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px;
   padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
   width: 100%;
 }
-.form-input:focus { border-color: #4e4851; }
+.form-input:focus { border-color: var(--border-strong); }
 </style>

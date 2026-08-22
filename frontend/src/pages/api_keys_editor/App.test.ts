@@ -186,7 +186,7 @@ describe('API Keys page shell', () => {
   it('validates required fields before create (:1822-1872)', async () => {
     const wrapper = await mountApp();
 
-    await wrapper.find('.sb-btn.primary').trigger('click');
+    await wrapper.find('[data-testid="add-user"]').trigger('click');
     expect(wrapper.find('#editPanel').isVisible()).toBe(true);
     expect(wrapper.find('#editPanelTitle').text()).toBe('New User');
 
@@ -204,7 +204,7 @@ describe('API Keys page shell', () => {
   it('saves a new user with the exact legacy payload (:1891-1914)', async () => {
     const wrapper = await mountApp();
 
-    await wrapper.find('.sb-btn.primary').trigger('click');
+    await wrapper.find('[data-testid="add-user"]').trigger('click');
     await wrapper.find('#editName').setValue('carol');
     await wrapper.find('#editKey').setValue('k1');
     await wrapper.find('#editSecret').setValue('s1');
@@ -319,7 +319,7 @@ describe('API Keys page shell', () => {
   it('returns to the list on Escape when a panel is open (:1167-1177)', async () => {
     const wrapper = await mountApp();
 
-    await wrapper.find('#btnComments').trigger('click');
+    await wrapper.find('[data-testid="rail-section-comments"]').trigger('click');
     await flushPromises();
     expect(wrapper.find('#commentsPanel').isVisible()).toBe(true);
 

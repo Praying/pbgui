@@ -172,11 +172,11 @@ describe('useOrdersChart — chart creation (render.js:3286-3363)', () => {
     expect(env.createChart.mock.calls[0]![0]).toBe(div);
     expect(env.createChart.mock.calls[0]![1]).toEqual({
       autoSize: true,
-      layout: { background: { type: 'solid', color: '#131114' }, textColor: '#a29ca6', fontSize: 12 },
-      grid: { vertLines: { color: '#1e2d3d' }, horzLines: { color: '#1e2d3d' } },
+      layout: { background: { type: 'solid', color: '#16141a' }, textColor: '#a59eaf', fontSize: 12 },
+      grid: { vertLines: { color: '#2c2836' }, horzLines: { color: '#2c2836' } },
       crosshair: { mode: 3 },
-      rightPriceScale: { borderColor: '#37333a', scaleMargins: { top: 0.1, bottom: 0.15 } },
-      timeScale: { borderColor: '#37333a', timeVisible: true, secondsVisible: false, rightOffset: 30 },
+      rightPriceScale: { borderColor: '#3a3545', scaleMargins: { top: 0.1, bottom: 0.15 } },
+      timeScale: { borderColor: '#3a3545', timeVisible: true, secondsVisible: false, rightOffset: 30 },
       handleScroll: true,
       handleScale: true,
     });
@@ -198,8 +198,8 @@ describe('useOrdersChart — chart creation (render.js:3286-3363)', () => {
       { time: 1720014400, open: 105, high: 115, low: 95, close: 108 },
     ]);
     expect(env.volSeries.setData).toHaveBeenCalledWith([
-      { time: 1720000000, value: 10, color: 'rgba(72,187,120,0.35)' },
-      { time: 1720014400, value: 20, color: 'rgba(72,187,120,0.35)' },
+      { time: 1720000000, value: 10, color: 'rgba(143,181,147,0.35)' },
+      { time: 1720014400, value: 20, color: 'rgba(143,181,147,0.35)' },
     ]);
     expect(env.chart.priceScale).toHaveBeenCalledWith('vol');
     expect(env.chart.volScaleApplyOptions).toHaveBeenCalledWith({
@@ -214,8 +214,8 @@ describe('useOrdersChart — chart creation (render.js:3286-3363)', () => {
       candles: [candle(1720000000000, 100, 110, 90, 95, 5), candle(1720014400000, 95, 115, 90, 108, 7)],
     }));
     expect(env.volSeries.setData).toHaveBeenCalledWith([
-      { time: 1720000000, value: 5, color: 'rgba(245,101,101,0.35)' },
-      { time: 1720014400, value: 7, color: 'rgba(72,187,120,0.35)' },
+      { time: 1720000000, value: 5, color: 'rgba(197,142,138,0.35)' },
+      { time: 1720014400, value: 7, color: 'rgba(143,181,147,0.35)' },
     ]);
   });
 
@@ -255,11 +255,11 @@ describe('useOrdersChart — chart creation (render.js:3286-3363)', () => {
       autoscaleInfoProvider: expect.any(Function),
     });
     expect((entry.autoscaleInfoProvider as () => unknown)()).toBeNull();
-    expect(positionEntryColor(108, 95, 'long')).toBe('#48bb78');
+    expect(positionEntryColor(108, 95, 'long')).toBe('#8fb593');
     const priceLine = env.series.createPriceLine.mock.calls[1]![0] as Record<string, unknown>;
     expect(priceLine).toEqual({
       price: 108,
-      color: '#a0aec0',
+      color: '#a59eaf',
       lineWidth: 1,
       lineStyle: 1,
       axisLabelVisible: true,
@@ -268,12 +268,12 @@ describe('useOrdersChart — chart creation (render.js:3286-3363)', () => {
     });
     const buy = env.series.createPriceLine.mock.calls[2]![0] as Record<string, unknown>;
     expect(buy.price).toBe(90);
-    expect(buy.color).toBe('#48bb78');
+    expect(buy.color).toBe('#8fb593');
     expect(buy.lineStyle).toBe(2);
     expect(buy.title).toBe('');
     const sell = env.series.createPriceLine.mock.calls[3]![0] as Record<string, unknown>;
     expect(sell.price).toBe(120);
-    expect(sell.color).toBe('#f56565');
+    expect(sell.color).toBe('#c58e8a');
   });
 
   it('skips the entry line without a position and the price line at close 0 (render.js:3373, 3387)', () => {
@@ -305,7 +305,7 @@ describe('useOrdersChart — updateCandle fast path (render.js:3473-3501)', () =
       time: 1720028800, open: 108, high: 120, low: 100, close: 115,
     });
     expect(env.volSeries.update).toHaveBeenCalledWith({
-      time: 1720028800, value: 30, color: 'rgba(72,187,120,0.35)',
+      time: 1720028800, value: 30, color: 'rgba(143,181,147,0.35)',
     });
     expect(env.series.setData).not.toHaveBeenCalled();
   });
@@ -316,7 +316,7 @@ describe('useOrdersChart — updateCandle fast path (render.js:3473-3501)', () =
     ctrl.updateCandle([1720028800000, 115, 120, 100, 105, 30]);
     expect(
       (env.volSeries.update.mock.calls[0]![0] as { color: string }).color
-    ).toBe('rgba(245,101,101,0.35)');
+    ).toBe('rgba(197,142,138,0.35)');
   });
 
   it('moves the market-price line to the new close (render.js:3485-3487)', () => {
@@ -339,7 +339,7 @@ describe('useOrdersChart — updateCandle fast path (render.js:3473-3501)', () =
     expect(env.series.createPriceLine).toHaveBeenCalledTimes(1);
     expect(env.series.createPriceLine.mock.calls[0]![0]).toMatchObject({
       price: 104,
-      color: '#a0aec0',
+      color: '#a59eaf',
       title: 'Price',
     });
   });
@@ -353,7 +353,7 @@ describe('useOrdersChart — updateCandle fast path (render.js:3473-3501)', () =
     expect(entryLine.applyOptions).toHaveBeenCalledWith({
       color: positionEntryColor(90, 95, 'long'),
     });
-    expect(positionEntryColor(90, 95, 'long')).toBe('#f56565');
+    expect(positionEntryColor(90, 95, 'long')).toBe('#c58e8a');
   });
 });
 
@@ -403,7 +403,7 @@ describe('useOrdersChart — updateOrders (render.js:3522-3547)', () => {
     const created = env.series.createPriceLine.mock.calls[
       env.series.createPriceLine.mock.calls.length - 1
     ]![0] as Record<string, unknown>;
-    expect(created).toMatchObject({ price: 70, color: '#48bb78', lineStyle: 2, title: '' });
+    expect(created).toMatchObject({ price: 70, color: '#8fb593', lineStyle: 2, title: '' });
   });
 
   it('clears the lines for an empty list (render.js:3533)', () => {
@@ -447,9 +447,9 @@ describe('useOrdersChart — prependData (render.js:3548-3569)', () => {
       { time: 1720014400, open: 105, high: 115, low: 95, close: 108 },
     ]);
     expect(env.volSeries.setData).toHaveBeenLastCalledWith([
-      { time: 1719985600, value: 8, color: 'rgba(72,187,120,0.35)' },
-      { time: 1720000000, value: 10, color: 'rgba(72,187,120,0.35)' },
-      { time: 1720014400, value: 20, color: 'rgba(72,187,120,0.35)' },
+      { time: 1719985600, value: 8, color: 'rgba(143,181,147,0.35)' },
+      { time: 1720000000, value: 10, color: 'rgba(143,181,147,0.35)' },
+      { time: 1720014400, value: 20, color: 'rgba(143,181,147,0.35)' },
     ]);
     /* R8: the visible range must survive — no fitContent on prepend */
     expect(env.ts.fitContent).not.toHaveBeenCalled();
@@ -609,7 +609,7 @@ describe('useOrdersChart — controller surface (render.js:3470-3609)', () => {
     expect(ctrl).not.toBeNull();
     expect(env.chart.addSeries).toHaveBeenCalledWith(
       CANDLESTICK_DEF,
-      expect.objectContaining({ upColor: '#48bb78' })
+      expect.objectContaining({ upColor: '#8fb593' })
     );
     expect(env.chart.addSeries).toHaveBeenCalledWith(
       HISTOGRAM_DEF,

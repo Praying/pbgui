@@ -48,10 +48,10 @@ describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', (
     return Promise.resolve(new Response('{"running":false}', { status: 200 }));
   }
 
-  it('refreshes the panel on enter through the shortcut (:9112-9115 → :9058)', async () => {
+  it('refreshes the panel on enter through the rail section (:9112-9115 → :9058)', async () => {
     fetchMock.mockImplementation(best1mFetchMock);
     const app = mountApp();
-    await app.find('#sidebar-best-1m-link').trigger('click');
+    await app.find('[data-testid="rail-section-best1m-panel"]').trigger('click');
     await flushPromises();
     expect(visiblePanelIds(app)).toEqual(['best1m-panel']);
     const infoCalls = fetchMock.mock.calls
@@ -72,7 +72,7 @@ describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', (
     window.localStorage.setItem(LS_KEY_EXCHANGE, 'bybit');
     fetchMock.mockImplementation(best1mFetchMock);
     const app = mountApp();
-    await app.find('#sidebar-best-1m-link').trigger('click');
+    await app.find('[data-testid="rail-section-best1m-panel"]').trigger('click');
     await flushPromises();
     expect(app.find('#best1m-generic-panel').attributes('hidden')).toBeUndefined();
     const monitor = app.find('#best1m-job-monitor-frame').element as HTMLIFrameElement;
@@ -112,7 +112,7 @@ describe('copy-data panel integration (M-data-7, :9059-9064, :5127-5153)', () =>
     try {
       fetchMock.mockImplementation(copyDataFetchMock);
       const app = mountApp();
-      await app.findAll('#sidebar-toolbar .sb-btn').find((b) => b.text() === 'Copy Data')!.trigger('click');
+      await app.find('[data-testid="rail-section-copy-data-panel"]').trigger('click');
       await vi.advanceTimersByTimeAsync(0);
       const scheduleCalls = fetchMock.mock.calls
         .map((call) => String(call[0]))
@@ -127,7 +127,7 @@ describe('copy-data panel integration (M-data-7, :9059-9064, :5127-5153)', () =>
         fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.endsWith('/copy-data/schedules'))
       ).toHaveLength(2); // 15 s chain
       // leaving the panel stops the chain (:9063)
-      await app.findAll('#sidebar-toolbar .sb-btn').find((b) => b.text() === 'Settings')!.trigger('click');
+      await app.find('[data-testid="rail-section-settings-panel"]').trigger('click');
       await vi.advanceTimersByTimeAsync(60_000);
       expect(
         fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.endsWith('/copy-data/schedules'))

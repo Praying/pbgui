@@ -202,7 +202,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
           <tr
             v-for="coin in sortedCoins"
             :key="coin"
-            :style="store.editCoin.value === coin ? 'background:rgba(77,166,255,.06)' : undefined"
+            :style="store.editCoin.value === coin ? 'background:rgb(var(--accent-rgb) / .06)' : undefined"
           >
             <td style="font-weight: 600" :title="coin">{{ coinLabel(coin) }}</td>
             <td>
@@ -258,7 +258,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
       <!-- Edit area (:1160-1290) -->
       <div
         v-if="store.editCoin.value"
-        style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-top: var(--sp-sm); background: rgba(77, 166, 255, 0.03)"
+        style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-top: var(--sp-sm); background: rgb(var(--accent-rgb) / 0.03)"
       >
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-sm)">
           <span style="font-size: var(--fs-sm); font-weight: 600; color: var(--accent)"

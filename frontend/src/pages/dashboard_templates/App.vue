@@ -146,7 +146,7 @@ onMounted(() => {
     ><PbIcon :icon="PhX" /></button>
   </div>
   <div id="content" class="tpl-content">
-    <div v-if="!loaded" style="color:#4e4851;padding:1rem">{{ t('dash.loading') }}</div>
+    <div v-if="!loaded" style="color:var(--text-disabled);padding:1rem">{{ t('dash.loading') }}</div>
     <template v-else>
       <SaveCard v-if="current" :current="current" @saved="onTemplateSaved" />
       <ManageCard :templates="templates" @deleted="onTemplatesDeleted" @renamed="onTemplateRenamed" />
@@ -402,8 +402,8 @@ body {
 }
 .msel-item:hover { background: var(--border-default); }
 .msel-item.selected {
-  background: rgba(77,166,255,.12);
-  box-shadow: inset 3px 0 0 #63b3ed;
+  background: rgb(var(--accent-rgb) / .12);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 .msel-sep { border-top: 1px solid var(--border-default); margin: 0.15rem 0; }
 </style>

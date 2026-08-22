@@ -79,9 +79,9 @@ describe('constants (legacy editor:501-510, 2373-2505)', () => {
 
 describe('widget metadata (editor:528-537)', () => {
   it('keeps legacy icons and colors byte-identical', () => {
-    expect(WIDGET_META.PNL).toEqual({ icon: '📊', color: '#90cdf4', label: 'PNL' });
-    expect(WIDGET_META.ADG).toEqual({ icon: '📈', color: '#9ae6b4', label: 'ADG' });
-    expect(WIDGET_META['P+L']).toEqual({ icon: '📉', color: '#d6bcfa', label: 'P+L' });
+    expect(WIDGET_META.PNL).toEqual({ icon: '📊', color: '#a9c0d6', label: 'PNL' });
+    expect(WIDGET_META.ADG).toEqual({ icon: '📈', color: '#accbab', label: 'ADG' });
+    expect(WIDGET_META['P+L']).toEqual({ icon: '📉', color: '#a493c4', label: 'P+L' });
     expect(WIDGET_META.INCOME.icon).toBe('💰');
     expect(WIDGET_META.TOP.icon).toBe('🏆');
     expect(WIDGET_META.BALANCE.icon).toBe('⚖️');

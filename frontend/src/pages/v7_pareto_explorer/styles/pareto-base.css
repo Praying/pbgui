@@ -318,7 +318,7 @@ button[data-tip] {
 }
 
 .inline-switch input:checked + .switch-track {
-  background: rgba(35,153,255,0.35);
+  background: rgb(var(--accent-rgb) / 0.35);
   border-color: var(--accent);
 }
 
@@ -363,7 +363,7 @@ button[data-tip] {
 
 .deep-chart-caption {
   font-size: 0.78rem;
-  color: var(--text-muted, #8a8a8a);
+  color: var(--text-muted);
   margin-bottom: 5px;
   line-height: 1.35;
 }
@@ -457,7 +457,7 @@ button[data-tip] {
 
 .chip,
 .badge {
-  background: rgba(160,164,171,.15);
+  background: rgb(var(--text-secondary-rgb) / .15);
   color: var(--text-dim);
 }
 

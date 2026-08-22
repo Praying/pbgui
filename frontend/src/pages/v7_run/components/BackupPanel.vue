@@ -36,8 +36,8 @@ const { t } = useI18n();
 
 const panel = useTemplateRef<HTMLElement>('panelEl');
 
-/** '#4caf50' saved / '#ff9800' dirty (:1242-1247). */
-const retentionColor = computed(() => (props.retention === props.retentionSaved ? '#4caf50' : '#ff9800'));
+/** var(--success) saved / var(--warning) dirty (:1242-1247). */
+const retentionColor = computed(() => (props.retention === props.retentionSaved ? 'var(--success)' : 'var(--warning)'));
 
 /* ── drag to move (:1159-1180) ── */
 

@@ -76,7 +76,7 @@ function formatAge(timestamp: unknown): string {
 
 function pctColor(value: unknown): string {
   const pct = numberValue(value);
-  return pct >= 90 ? '#ff4b4b' : pct >= 75 ? '#f4b942' : '#5dc4ff';
+  return pct >= 90 ? 'var(--danger)' : pct >= 75 ? 'var(--warning)' : 'var(--accent)';
 }
 
 function cpuDisplay(metrics: Metrics | undefined): { value: string; sub: string } {
@@ -326,9 +326,9 @@ onUnmounted(() => { disconnect(); closeViewer(); });
       <section class="vps-main">
         <div v-if="activeTab === 'dashboard'" class="vps-panel">
           <div class="summary-bar">
-            <span class="summary-item"><span class="summary-dot" style="background:#21c354"></span>{{ t('sysmon.connectedCount', { n: summary.connected }) }}</span>
-            <span class="summary-item"><span class="summary-dot" style="background:#f4b942"></span>{{ t('sysmon.connectingCount', { n: summary.connecting }) }}</span>
-            <span class="summary-item"><span class="summary-dot" style="background:#ff4b4b"></span>{{ t('sysmon.disconnectedCount', { n: summary.disconnected }) }}</span>
+            <span class="summary-item"><span class="summary-dot" style="background:var(--success)"></span>{{ t('sysmon.connectedCount', { n: summary.connected }) }}</span>
+            <span class="summary-item"><span class="summary-dot" style="background:var(--warning)"></span>{{ t('sysmon.connectingCount', { n: summary.connecting }) }}</span>
+            <span class="summary-item"><span class="summary-dot" style="background:var(--danger)"></span>{{ t('sysmon.disconnectedCount', { n: summary.disconnected }) }}</span>
           </div>
           <article v-for="host in hosts" :key="host" class="vps-card">
             <header class="vps-card-header" @click="toggleHost(host)">
@@ -367,7 +367,7 @@ onUnmounted(() => { disconnect(); closeViewer(); });
       </section>
     </div>
 
-    <div v-if="historyModal" data-modal="history" class="history-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><button data-close="history" class="modal-close" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="history-body"><ErrorState v-if="historyModal.error" class="result-message" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="result-message" :label="t('common.loading')" /><template v-else><div class="history-chart"><svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img"><polyline v-if="currentHistoryValues.length" :points="currentHistoryPolyline" fill="none" stroke="#5dc4ff" stroke-width="2" /></svg></div><div class="history-points"><span v-for="point in currentHistoryValues" :key="`${point.ts}:${point.value}`">{{ point.ts }}: {{ point.value }}</span></div></template></div></div></div>
+    <div v-if="historyModal" data-modal="history" class="history-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><button data-close="history" class="modal-close" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="history-body"><ErrorState v-if="historyModal.error" class="result-message" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="result-message" :label="t('common.loading')" /><template v-else><div class="history-chart"><svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img"><polyline v-if="currentHistoryValues.length" :points="currentHistoryPolyline" fill="none" stroke="#8ba7c2" stroke-width="2" /></svg></div><div class="history-points"><span v-for="point in currentHistoryValues" :key="`${point.ts}:${point.value}`">{{ point.ts }}: {{ point.value }}</span></div></template></div></div></div>
     <div v-if="resultModal" data-modal="result" class="result-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ resultModal.title }}</h2><button data-close="result" class="modal-close" @click="closeResult"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="result-message">{{ resultModal.message }}</div></div></div>
   </div>
   </AppShell>

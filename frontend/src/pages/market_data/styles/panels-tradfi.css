@@ -46,7 +46,7 @@
 .tradfi-feedback {
   border: 1px solid rgb(var(--accent-rgb) / 0.2);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.45);
+  background: rgb(var(--bg-page-rgb) / 0.45);
   padding: var(--sp-md);
   display: grid;
   gap: var(--sp-sm);
@@ -64,7 +64,7 @@
   height: var(--btn-h);
   border-radius: 8px;
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.18);
-  background: rgba(12, 17, 26, 0.3);
+  background: rgb(var(--bg-page-rgb) / 0.3);
   color: var(--text-dim);
   font-size: var(--fs-md);
   cursor: pointer;
@@ -81,7 +81,7 @@
 .tradfi-feedback-group {
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.32);
+  background: rgb(var(--bg-page-rgb) / 0.32);
   overflow: hidden;
 }
 
@@ -131,8 +131,8 @@
 }
 
 .tradfi-feedback.success {
-  border-color: rgba(16, 185, 129, 0.35);
-  background: rgba(16, 185, 129, 0.08);
+  border-color: rgb(var(--success-rgb) / 0.35);
+  background: rgb(var(--success-rgb) / 0.08);
 }
 
 .tradfi-feedback.warn {
@@ -153,7 +153,7 @@
 .tradfi-search-item {
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.45);
+  background: rgb(var(--bg-page-rgb) / 0.45);
   padding: var(--sp-md);
   display: flex;
   align-items: flex-start;
@@ -207,14 +207,14 @@
   font-size: var(--fs-sm);
   line-height: 1.45;
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
-  background: rgba(12, 17, 26, 0.48);
+  background: rgb(var(--bg-page-rgb) / 0.48);
   color: var(--text-dim);
 }
 
 .tradfi-search-window-status.success {
   border-color: rgb(var(--success-rgb) / 0.28);
-  background: rgba(21, 42, 31, 0.92);
-  color: #c6f6d5;
+  background: rgb(var(--success-deep-rgb) / 0.92);
+  color: var(--success-soft);
 }
 
 .tradfi-search-window-status.info {
@@ -225,7 +225,7 @@
 
 .tradfi-search-window-status.error {
   border-color: rgb(var(--danger-soft-rgb) / 0.24);
-  background: rgba(60, 18, 24, 0.92);
+  background: rgb(var(--danger-deep-rgb) / 0.92);
   color: var(--danger-soft);
 }
 
@@ -240,7 +240,7 @@
   border: 1px dashed rgb(var(--text-secondary-rgb) / 0.18);
   border-radius: 10px;
   padding: var(--sp-md);
-  background: rgba(12, 17, 26, 0.34);
+  background: rgb(var(--bg-page-rgb) / 0.34);
   color: var(--text-dim);
   font-size: var(--fs-sm);
   line-height: 1.5;
@@ -249,7 +249,7 @@
 .tradfi-specs-table-wrap {
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.48);
+  background: rgb(var(--bg-page-rgb) / 0.48);
   max-height: 360px;
   overflow: auto;
 }
@@ -390,7 +390,7 @@
 .tradfi-table-wrap {
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 10px;
-  background: rgba(12, 17, 26, 0.48);
+  background: rgb(var(--bg-page-rgb) / 0.48);
   max-height: 420px;
   overflow: auto;
 }
@@ -506,7 +506,7 @@
   border: 1px solid var(--bg-elevated);
   border-radius: 10px;
   padding: var(--sp-md);
-  background: rgba(12, 17, 26, 0.45);
+  background: rgb(var(--bg-page-rgb) / 0.45);
   display: grid;
   gap: var(--sp-xs);
 }

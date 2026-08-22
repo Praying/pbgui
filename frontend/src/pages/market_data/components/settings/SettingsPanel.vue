@@ -10,8 +10,14 @@
  * M-data-4: the tiingo (:3077-3103) and tradfi-map (:3105-3218) cards render
  * through their controllers, created in App.vue so the settings-payload
  * hooks (:7379-7401) reach them.
+ *
+ * Rail migration: the sidebar context block (:2950-2958 — dirty-state save
+ * button :5528-5533 + subsection nav :2953-2957, ids #sidebar-context-actions/
+ * #btn-save-settings-sidebar) moved here as an in-panel toolbar; the
+ * subsection nav is a segmented control over the cards below.
  */
 import { watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { SettingsController } from '../../composables/useSettings';
 import type { UseTiingo } from '../../composables/useTiingo';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
@@ -19,6 +25,7 @@ import ArchiveCard from './ArchiveCard.vue';
 import AwsCard from './AwsCard.vue';
 import CoinPicker from './CoinPicker.vue';
 import FieldsForm from './FieldsForm.vue';
+import SubsectionNav from './SubsectionNav.vue';
 import TiingoCard from '../tradfi/TiingoCard.vue';
 import TradfiMapCard from '../tradfi/TradfiMapCard.vue';
 
@@ -27,6 +34,8 @@ const props = defineProps<{
   tiingo: UseTiingo;
   map: UseTradfiMap;
 }>();
+
+const { t } = useI18n();
 
 /* setActiveSettingsSubsection tail (:6183-6184) — reset the panel scroll. */
 watch(
@@ -40,6 +49,21 @@ watch(
 
 <template>
   <article class="settings-shell">
+    <div id="settings-context-actions" class="settings-context-actions">
+      <SubsectionNav
+        :available="store.availableSubsections.value"
+        :active="store.resolvedSubsection.value"
+        @select="store.setActiveSubsection"
+      />
+      <button
+        id="btn-save-settings"
+        class="sb-btn save-settings-btn"
+        type="button"
+        :disabled="!store.isDirty.value"
+        :class="{ 'save-needed': store.isDirty.value }"
+        @click="store.saveSettings()"
+      >{{ t('market.saveSettings') }}</button>
+    </div>
     <div class="settings-layout">
       <template v-if="store.isHyperliquid.value">
         <FieldsForm

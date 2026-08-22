@@ -36,13 +36,14 @@
  *    strings contain markup by design).
  *  - No polling existed in legacy (verified) — none ported.
  */
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { PhArchive, PhClipboardText, PhPlus } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import type { PageSection } from '@/shared/navigation';
 import AlertModal from './components/AlertModal.vue';
 import BackupsPanel from './components/BackupsPanel.vue';
 import BybitExpiryPanel from './components/BybitExpiryPanel.vue';
@@ -65,6 +66,50 @@ const { t } = useI18n();
 type View = 'list' | 'edit' | 'hlExpiry' | 'bybitExpiry' | 'comments' | 'hlConfig' | 'tradfi' | 'backups' | 'logs';
 
 const view = ref<View>('list');
+
+/* Page sections live in the workbench rail (accordion under this page's
+   entry) — the legacy in-page sidebar column is retired. The expiry
+   entries keep their legacy action semantics: selecting one runs the
+   check (fetch) and lands on its results view. */
+const SECTION_VIEWS: ReadonlyArray<{ view: View; labelKey: string; hash: string | null }> = [
+  { view: 'list', labelKey: 'misc.apikeys.users', hash: null },
+  { view: 'hlExpiry', labelKey: 'misc.apikeys.hlExpiryCheck', hash: null },
+  { view: 'bybitExpiry', labelKey: 'misc.apikeys.bybitExpiryCheck', hash: null },
+  { view: 'hlConfig', labelKey: 'misc.apikeys.hlWarningConfig', hash: '#hl-config' },
+  { view: 'tradfi', labelKey: 'misc.apikeys.tradfi', hash: '#tradfi' },
+  { view: 'comments', labelKey: 'misc.apikeys.comments', hash: '#comments' },
+  { view: 'backups', labelKey: 'misc.apikeys.backups', hash: '#backups' },
+  { view: 'logs', labelKey: 'misc.apikeys.logs', hash: null },
+];
+
+const activeSection = computed<string>(() => (view.value === 'edit' ? 'list' : view.value));
+
+const sections = computed<PageSection[]>(() =>
+  SECTION_VIEWS.map((entry) => ({ key: entry.view, label: t(entry.labelKey) })),
+);
+
+function onSectionSelect(sectionKey: string): void {
+  const target = sectionKey as View;
+  if (target === 'list') {
+    void backToList();
+    return;
+  }
+  if (target === 'hlExpiry') {
+    void refreshHLExpiry();
+    return;
+  }
+  if (target === 'bybitExpiry') {
+    void refreshBybitExpiry();
+    return;
+  }
+  if (view.value === target) {
+    void backToList();
+    return;
+  }
+  const entry = SECTION_VIEWS.find((entry) => entry.view === target);
+  setPanelView(target as Exclude<View, 'list' | 'edit'>, entry?.hash ?? null);
+}
+
 const hlPanelData = ref<HlExpiryInfo[]>([]);
 const bybitPanelData = ref<BybitExpiryInfo[]>([]);
 const hlChecking = ref(false);
@@ -175,28 +220,6 @@ function onDocumentKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && view.value !== 'list') void backToList();
 }
 
-/* ── sidebar resize (:3466-3486) ── */
-
-const sidebarWidth = ref<number | null>(null);
-let resizing = false;
-
-function onResizeMove(event: MouseEvent): void {
-  if (!resizing) return;
-  sidebarWidth.value = Math.min(420, Math.max(160, event.clientX));
-}
-
-function onResizeUp(): void {
-  if (!resizing) return;
-  resizing = false;
-  document.getElementById('sidebar-resize')?.classList.remove('active');
-}
-
-function startResize(event: MouseEvent): void {
-  event.preventDefault();
-  resizing = true;
-  document.getElementById('sidebar-resize')?.classList.add('active');
-}
-
 /* ── pagehide secret hygiene (:1214, :2253-2259) ── */
 
 function onPageHide(): void {
@@ -208,8 +231,6 @@ let removeUnauthorizedListener: (() => void) | null = null;
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onDocumentKeydown);
-  document.removeEventListener('mousemove', onResizeMove);
-  document.removeEventListener('mouseup', onResizeUp);
   window.removeEventListener('pagehide', onPageHide);
   removeUnauthorizedListener?.();
   removeUnauthorizedListener = null;
@@ -224,8 +245,6 @@ onMounted(async () => {
   document.title = t('misc.apikeys.title');
   wireHelpOpener();
   document.addEventListener('keydown', onDocumentKeydown);
-  document.addEventListener('mousemove', onResizeMove);
-  document.addEventListener('mouseup', onResizeUp);
   window.addEventListener('pagehide', onPageHide);
   removeUnauthorizedListener = onUnauthorized(() => {
     tradfiStore.clearRevealedApiKey();
@@ -265,6 +284,9 @@ onMounted(async () => {
     class="data-page-shell data-page-shell--api-keys"
     page-key="system_api_keys"
     :page-title="t('misc.apikeys.title')"
+    :sections="sections"
+    :active-section="activeSection"
+    @update:section="onSectionSelect"
   >
     <MigrationWatermark />
     <template #status>
@@ -276,11 +298,12 @@ onMounted(async () => {
     </template>
 
     <div id="page-body">
-      <!-- Sidebar -->
-      <div id="sidebar" :style="sidebarWidth !== null ? { width: sidebarWidth + 'px' } : undefined">
-        <div id="sidebar-sticky">
-          <div id="sidebar-header">
-            <span class="sb-title">{{ t('misc.apikeys.apiKeys') }}</span>
+      <div id="main-content">
+        <!-- User list head: counts + primary action live with the list now
+             that the rail hosts the view sections. -->
+        <div v-show="view === 'list'" class="users-head">
+          <div class="users-head-meta">
+            <span class="users-head-title">{{ t('misc.apikeys.users') }}</span>
             <span class="sb-count" id="sb-count">
               {{ store.usersState.value === 'ready' ? t('misc.apikeys.usersCount', { count: store.users.value.length }) : store.usersState.value === 'error' ? t('common.error') : '…' }}
             </span>
@@ -288,37 +311,9 @@ onMounted(async () => {
               {{ t('misc.apikeys.inUseCount', { count: store.inUseCount.value }) }}
             </span>
           </div>
-          <div id="sidebar-toolbar">
-            <button class="sb-btn primary" @click="showCreateForm"><PbIcon :icon="PhPlus" /> {{ t('misc.apikeys.addUser') }}</button>
-            <hr class="sb-sep" />
-            <button class="sb-btn info" id="btnHLExpiry" :disabled="hlChecking" @click="refreshHLExpiry">
-              <span v-if="hlChecking" class="spinner"></span>{{ t('misc.apikeys.hlExpiryCheck') }}
-            </button>
-            <button class="sb-btn info" id="btnBybitExpiry" :disabled="bybitChecking" @click="refreshBybitExpiry">
-              <span v-if="bybitChecking" class="spinner"></span>{{ t('misc.apikeys.bybitExpiryCheck') }}
-            </button>
-            <button class="sb-btn" id="btnHLConfig" :class="{ active: view === 'hlConfig' }" @click="view === 'hlConfig' ? backToList() : setPanelView('hlConfig', '#hl-config')">
-              {{ t('misc.apikeys.hlWarningConfig') }}
-            </button>
-            <hr class="sb-sep" />
-            <button class="sb-btn" id="btnTradfi" :class="{ active: view === 'tradfi' }" @click="view === 'tradfi' ? backToList() : setPanelView('tradfi', '#tradfi')">
-              {{ t('misc.apikeys.tradfi') }}
-            </button>
-            <button class="sb-btn" id="btnComments" :class="{ active: view === 'comments' }" @click="view === 'comments' ? backToList() : setPanelView('comments', '#comments')">
-              {{ t('misc.apikeys.comments') }}
-            </button>
-            <button class="sb-btn" id="btnBackups" :class="{ active: view === 'backups' }" @click="view === 'backups' ? backToList() : setPanelView('backups', '#backups')">
-              <PbIcon :icon="PhArchive" /> {{ t('misc.apikeys.backups') }}
-            </button>
-            <button class="sb-btn" id="btnLogs" :class="{ active: view === 'logs' }" @click="view === 'logs' ? backToList() : setPanelView('logs', null)">
-              <PbIcon :icon="PhClipboardText" /> {{ t('misc.apikeys.logs') }}
-            </button>
-          </div>
+          <button class="pbgui-btn btn-primary" data-testid="add-user" @click="showCreateForm"><PbIcon :icon="PhPlus" /> {{ t('misc.apikeys.addUser') }}</button>
         </div>
-        <div id="sidebar-resize" @mousedown="startResize"></div>
-      </div>
 
-      <div id="main-content">
         <!-- User list -->
         <UserListTable v-show="view === 'list'" :store="store" @edit="onEditUser" @delete="onDeleteUser" />
 

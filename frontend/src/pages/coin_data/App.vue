@@ -6,7 +6,10 @@
  * ┌────────────────────────┬─ Legacy regions ─────────────────────────────┐
  * │ App (this shell)       │ DOM :1429-1665, bootstrap :3174-3180, title   │
  * │                        │ :3184, help opener :1964-1968                │
- * │ SidebarPanel           │ sidebar :1456-1476, buttons :3085-3111       │
+ * │ Rail sections          │ view buttons :3085-3111 (sidebar :1456-1476  │
+ * │                        │ retired into the workbench rail via the      │
+ * │                        │ AppShell sections API; refresh/CPT toolbar   │
+ * │                        │ actions moved to #header-actions)            │
  * │ FiltersPanel +         │ filters :1481-1511, steppers :2527-2567,     │
  * │ TagMultiselect         │ drafts :2402-2464, tags :2377-2400           │
  * │ SymbolTable ×3         │ main :1560-1604, unmatched :1532-1558,       │
@@ -28,11 +31,15 @@
  *    mdToHtml/renderHelpToc were only consumed by that dead path.
  *  - editor_shared.js multiselect controller — replaced by TagMultiselect
  *    (the only coin_data consumer of that script).
+ *  - In-page sidebar + PBGuiSidebarResize drag handle (:1456-1476,
+ *    :3177) — view switching moved into the workbench rail (AppShell
+ *    sections API); the refresh/CPT toolbar buttons moved to the shell's
+ *    header actions.
  *
  * Deliberate deviations (documented):
- *  - #action-status is actually rendered (legacy had no such element —
- *    setActionStatus's guard made every status message invisible; see
- *    SidebarPanel).
+ *  - setActionStatus messages surface through the header StatusStrip (the
+ *    legacy #action-status element did not exist in the DOM — the guard in
+ *    setActionStatus made every status message invisible).
  *  - Debounce/poll timers are disposed on unmount (legacy leaked them).
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
@@ -41,10 +48,10 @@ import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import type { PageSection } from '@/shared/navigation';
 import BusyOverlay from './components/BusyOverlay.vue';
 import FiltersPanel from './components/FiltersPanel.vue';
 import SelectedCard from './components/SelectedCard.vue';
-import SidebarPanel from './components/SidebarPanel.vue';
 import SymbolTable from './components/SymbolTable.vue';
 import { useCoinDataState, type NumberFilterKey } from './composables/useCoinDataState';
 import { useRefreshJobs, type RefreshPath } from './composables/useRefreshJobs';
@@ -86,7 +93,41 @@ const volMcapText = computed(() =>
 
 const counts = computed(() => store.serverState.value?.counts || { main: 0, unmatched_visible: 0, unmatched_all: 0, hip3: 0 });
 const meta = computed(() => store.serverState.value?.meta || { cmc_line: '', cmc_line_detail: '', exchange_line: '', exchange_line_detail: '', timestamps: {} });
-const sections = computed(() => store.serverState.value?.sections || { unmatched_title: '', main_title: '', hip3_title: '' });
+const sectionTitles = computed(() => store.serverState.value?.sections || { unmatched_title: '', main_title: '', hip3_title: '' });
+
+/* ── page sections in the rail (view buttons :3085-3111) ──
+   The legacy sidebar view buttons move under this page's rail entry.
+   Labels keep the retired buttons' i18n count text; hip3 lists only for
+   exchanges that support it (renderHip3ViewButton :2356). */
+
+const hip3CountLabel = computed(() =>
+  store.filters.value.hip3Dex
+    ? `${store.hip3VisibleCount.value} of ${counts.value.hip3}` // :2297-2299
+    : String(store.hip3VisibleCount.value)
+);
+
+const sections = computed<PageSection[]>(() => {
+  const items: PageSection[] = [
+    { key: 'main', label: t('market.matchedSymbolsCount', { count: counts.value.main }) },
+    { key: 'unmatched', label: t('market.cmcUnmatchedCount', { count: counts.value.unmatched_visible }) },
+  ];
+  if (store.supportsHip3.value) {
+    items.push({ key: 'hip3', label: t('market.hip3SymbolsCount', { count: hip3CountLabel.value }) });
+  }
+  return items;
+});
+
+function onSectionSelect(sectionKey: string): void {
+  if (sectionKey === 'main' || sectionKey === 'unmatched' || sectionKey === 'hip3') {
+    store.setActiveView(sectionKey);
+  }
+}
+
+/* ── refresh/CMC toolbar actions (renderSidebarMeta :2283-2291) ── */
+
+const cmcTitle = computed(() =>
+  store.hasMaterializedCmcKey.value ? undefined : store.cmcDisabledReason.value + t('market.cachedCoinDataReadable') // :2290
+);
 
 const mainPanelMeta = computed(() => meta.value.exchange_line + ' | ' + meta.value.cmc_line); // :2306
 const mainPanelMetaTitle = computed(() =>
@@ -107,7 +148,7 @@ const hip3SummaryTitle = computed(() =>
         total: counts.value.hip3,
         dex: store.filters.value.hip3Dex,
       }) // :2312-2314
-    : sections.value.hip3_title
+    : sectionTitles.value.hip3_title
 );
 
 const hip3DexFieldVisible = computed(
@@ -162,9 +203,6 @@ declare global {
     _openCoinDataHelp?: () => void;
     PBGUI_HELP_OPENER?: () => void;
     PBGuiSharedHelp?: { open?: (keyword: string, opts: { token: string }) => void };
-    PBGuiSidebarResize?: {
-      init: (options: { sidebarId: string; handleId: string; minWidth: number; maxWidth: number }) => void;
-    };
   }
 }
 
@@ -183,7 +221,6 @@ onMounted(() => {
   document.title = t('market.coinDataTitle');
   window._openCoinDataHelp = openCoinDataHelp;
   window.PBGUI_HELP_OPENER = window._openCoinDataHelp;
-  window.PBGuiSidebarResize?.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize', minWidth: 140, maxWidth: 300 }); // :3177
   window.addEventListener('resize', onWindowResize);
   void store.loadState(); // :3180
 });
@@ -201,6 +238,9 @@ onBeforeUnmount(() => {
     class="data-page-shell data-page-shell--coin-data"
     page-key="info_coin_data"
     :page-title="t('market.coinDataTitle')"
+    :sections="sections"
+    :active-section="store.activeView.value"
+    @update:section="onSectionSelect"
   >
     <template #status>
       <StatusStrip
@@ -210,27 +250,41 @@ onBeforeUnmount(() => {
       />
     </template>
 
+    <template #header-actions>
+      <!-- Legacy sidebar toolbar (:3085-3111): refresh actions + the CPT
+           filter toggle keep their ids and gating; only the position moved
+           (the view buttons became the rail sections above). -->
+      <button class="pbgui-action primary" id="btn-refresh-exchange" type="button" @click="onRefresh('/refresh/exchange', 'market.refreshingSelectedExchange', 'market.refreshedSelectedExchange')">{{ t('market.refreshSelectedExchange') }}</button>
+      <button class="pbgui-action" id="btn-refresh-all" type="button" @click="onRefresh('/refresh/all', 'market.refreshingAllExchanges', 'market.allExchangesRefreshed')">{{ t('market.refreshAllExchanges') }}</button>
+      <button
+        class="pbgui-action"
+        id="btn-refresh-cmc"
+        type="button"
+        :disabled="!store.hasMaterializedCmcKey.value"
+        :title="cmcTitle"
+        @click="onRefresh('/refresh/cmc', 'market.refreshingCmcSelected', 'market.cmcSelectedRefreshed')"
+      >{{ t('market.refreshCmcSelected') }}</button>
+      <button
+        class="pbgui-action"
+        id="btn-refresh-cmc-all"
+        type="button"
+        :disabled="!store.hasMaterializedCmcKey.value"
+        :title="cmcTitle"
+        @click="onRefresh('/refresh/cmc_all', 'market.refreshingCmcAll', 'market.cmcAllRefreshed')"
+      >{{ t('market.refreshCmcAll') }}</button>
+      <button
+        v-if="store.supportsCopyTradingFilter.value"
+        class="pbgui-action"
+        :class="{ primary: store.filters.value.onlyCpt }"
+        id="btn-only-cpt"
+        type="button"
+        :aria-pressed="store.filters.value.onlyCpt"
+        @click="store.toggleOnlyCpt()"
+      >{{ t('market.onlyCopyTrading') }}</button>
+    </template>
+
     <MigrationWatermark />
     <div id="page-body">
-    <SidebarPanel
-      :active-view="store.activeView.value"
-      :counts="counts"
-      :hip3-visible-count="store.hip3VisibleCount.value"
-      :hip3-dex="store.filters.value.hip3Dex"
-      :only-cpt="store.filters.value.onlyCpt"
-      :supports-hip3="store.supportsHip3.value"
-      :supports-copy-trading="store.supportsCopyTradingFilter.value"
-      :has-materialized-cmc-key="store.hasMaterializedCmcKey.value"
-      :cmc-disabled-reason="store.cmcDisabledReason.value"
-      :action-status="store.actionStatus.value"
-      @refresh-exchange="onRefresh('/refresh/exchange', 'market.refreshingSelectedExchange', 'market.refreshedSelectedExchange')"
-      @refresh-all="onRefresh('/refresh/all', 'market.refreshingAllExchanges', 'market.allExchangesRefreshed')"
-      @refresh-cmc="onRefresh('/refresh/cmc', 'market.refreshingCmcSelected', 'market.cmcSelectedRefreshed')"
-      @refresh-cmc-all="onRefresh('/refresh/cmc_all', 'market.refreshingCmcAll', 'market.cmcAllRefreshed')"
-      @set-view="store.setActiveView"
-      @toggle-only-cpt="store.toggleOnlyCpt"
-    />
-
     <div id="main-content" ref="mainContent">
       <div id="warning-box" class="warning-box" :class="{ hidden: !warnings.length }">
         <div v-for="warning in warnings" :key="warning">{{ warning }}</div>
@@ -268,7 +322,7 @@ onBeforeUnmount(() => {
         :class="{ hidden: store.activeView.value !== 'unmatched' }"
         :open="store.activeView.value === 'unmatched'"
       >
-        <summary id="unmatched-summary">{{ sections.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
+        <summary id="unmatched-summary">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
         <div class="panel-body">
           <SymbolTable
             table="unmatched"

@@ -53,8 +53,8 @@ const deleteLabel = computed(() => `${t('common.delete')} `);
 <style scoped>
 /* Legacy #del-ok inline style: red delete variant. */
 .del-danger {
-  color: #f56565;
-  border-color: rgba(245, 101, 101, 0.4);
-  background: rgba(245, 101, 101, 0.08);
+  color: var(--danger);
+  border-color: rgb(var(--danger-rgb) / 0.4);
+  background: rgb(var(--danger-rgb) / 0.08);
 }
 </style>

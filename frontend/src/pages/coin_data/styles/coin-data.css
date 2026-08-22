@@ -59,99 +59,9 @@
       min-height: 0;
     }
 
-    #sidebar {
-      flex-shrink: 0;
-      background: var(--bg-page);
-      border-right: 1px solid var(--border-subtle);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    #sidebar-sticky {
-      padding: 0.5rem 0.5rem 0;
-      flex-shrink: 0;
-    }
-
-    #sidebar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.3rem 0.25rem 0.5rem;
-      gap: var(--sp-xs);
-      flex-wrap: wrap;
-    }
-
-    .sb-title {
-      font-size: var(--fs-sm);
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-      color: var(--text-muted);
-      font-weight: 700;
-    }
-
-    .sb-count {
-      font-size: var(--fs-sm);
-      background: var(--bg-card);
-      border: 1px solid var(--border-default);
-      border-radius: 999px;
-      padding: 0.1rem 0.5rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
-
-    #sidebar-toolbar {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-      padding: 0.2rem 0.1rem 0.6rem;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .sb-sep {
-      border: none;
-      border-top: 1px solid var(--border-subtle);
-      margin: 4px 0;
-    }
-
-    .sb-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--sp-sm);
-      width: 100%;
-      padding: 0.42rem 0.65rem;
-      border-radius: 6px;
-      border: 1px solid var(--border-default);
-      background: var(--bg-card);
-      color: var(--text-secondary);
-      font-size: var(--fs-base);
-      cursor: pointer;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-      text-align: left;
-    }
-
-    .sb-btn:hover {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-      border-color: var(--text-dim);
-    }
-
-    .sb-btn.primary {
-      background: var(--accent-deep);
-      border-color: var(--accent-deep);
-      color: #fff /* white on colored bg */;
-    }
-
-    .sb-btn.primary:hover { background: var(--accent-deep); }
-    .sb-btn.info { color: var(--accent-soft); border-color: rgb(var(--accent-rgb) / 0.28); }
-    .sb-btn.info:hover { background: rgb(var(--accent-rgb) / 0.1); }
-    .sb-btn.active {
-      background: rgba(38, 166, 154, 0.12);
-      border-color: var(--success);
-      color: var(--success);
-    }
-    .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* The in-page sidebar (#sidebar/#sidebar-toolbar/.sb-* rules) retired
+       with the rail migration; view switching lives in the workbench rail
+       and the toolbar actions moved to the shell header. */
 
     #sidebar-meta {
       padding: 0.7rem 0.6rem 0.9rem;
@@ -183,13 +93,6 @@
     .meta-subtle {
       font-size: var(--fs-sm);
       color: var(--text-secondary);
-    }
-
-    #action-status {
-      min-height: 40px;
-      font-size: var(--fs-sm);
-      color: var(--text-secondary);
-      line-height: 1.5;
     }
 
     #main-content {
@@ -921,7 +824,7 @@
     td {
       padding: 0.28rem 0.6rem;
       border-bottom: 1px solid var(--bg-elevated);
-      color: #dbe4ee;
+      color: var(--text-primary);
       font-size: var(--fs-md);
       line-height: 1.08;
       vertical-align: middle;
@@ -953,9 +856,9 @@
     }
 
     .badge.ok {
-      background: rgba(38, 166, 154, 0.15);
-      border-color: rgba(38, 166, 154, 0.3);
-      color: #5eead4;
+      background: rgb(var(--success-rgb) / 0.15);
+      border-color: rgb(var(--success-rgb) / 0.3);
+      color: var(--success);
     }
 
     .badge.dim {
@@ -1038,7 +941,7 @@
       width: 100%;
       height: 10px;
       border-radius: 999px;
-      background: #1a2232;
+      background: var(--bg-page);
       border: 1px solid var(--border-default);
       box-shadow: inset 0 1px 2px rgb(var(--bg-page-rgb) / 0.45);
     }
@@ -1054,7 +957,7 @@
       inset: 1px auto 1px 1px;
       width: 0%;
       border-radius: 999px;
-      background: linear-gradient(90deg, #2c5282, var(--accent-soft) 55%, #90cdf4);
+      background: linear-gradient(90deg, var(--accent-deep), var(--accent-soft) 55%, var(--accent));
       box-shadow: 0 0 18px rgb(var(--accent-rgb) / 0.35);
       transition: width 0.18s ease;
     }
@@ -1126,16 +1029,6 @@
     @media (max-width: 980px) {
       #page-body { flex-direction: column; }
       #main-content { overflow-y: auto; }
-      #sidebar {
-        width: auto;
-        min-width: 0;
-        max-width: none;
-        border-right: none;
-        border-bottom: 1px solid var(--border-subtle);
-      }
-      #sidebar-resize {
-        display: none;
-      }
       #main-panel,
       details.panel[open] {
         flex: 0 0 auto;

@@ -9,9 +9,17 @@
  * The best1m feedback callout (:3348, setBest1mFeedback :5004-5021) and the
  * queue button (:3390, disabled while loading/queueing :7626, :7713) come
  * from the store.
+ *
+ * Rail migration: the sidebar shortcut links — #sidebar-best-1m-link
+ * (:2946, build) and the hyperliquid-only #sidebar-l2books-link (:2948,
+ * download) — became this in-panel mode switch. Selecting a mode emits to
+ * App's openBest1mPanel (:7687-7691: section normalize → panel switch →
+ * refresh); off hyperliquid only build applies (:7683), so the switch
+ * renders there as little as the l2books link did (:7422).
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import type { Best1mSection } from '../../composables/useContextExchange';
 import type { UseBest1m } from '../../composables/useBest1m';
 import AutoResizeFrame from './AutoResizeFrame.vue';
 import CoinPickerBest1m from './CoinPickerBest1m.vue';
@@ -19,9 +27,18 @@ import DistributedHosts from './DistributedHosts.vue';
 
 const props = defineProps<{
   store: UseBest1m;
+  /** Current best-1m section mode (uiState.best1mPanelSection). */
+  activeMode?: Best1mSection;
+}>();
+
+const emit = defineEmits<{
+  /** Mode switch → openBest1mPanel(mode). */
+  selectMode: [mode: Best1mSection];
 }>();
 
 const { t } = useI18n();
+
+const isDownloadMode = () => props.activeMode === 'download';
 
 const picker = ref<InstanceType<typeof CoinPickerBest1m> | null>(null);
 
@@ -33,6 +50,25 @@ const feedbackIsWarning = () =>
 </script>
 
 <template>
+  <!-- build/download mode switch (legacy sidebar shortcuts :2946/:2948) —
+       sits above both variants so either mode stays reachable -->
+  <div v-if="store.isHyperliquid.value" id="best1m-mode-switch" class="best1m-mode-switch">
+    <button
+      id="best1m-mode-build"
+      class="sb-btn"
+      type="button"
+      :class="{ active: !isDownloadMode() }"
+      @click="emit('selectMode', 'build')"
+    >{{ t('market.buildBest1mTitle') }}</button>
+    <button
+      id="best1m-mode-download"
+      class="sb-btn"
+      type="button"
+      :class="{ active: isDownloadMode() }"
+      @click="emit('selectMode', 'download')"
+    >{{ t('market.downloadL2books') }}</button>
+  </div>
+
   <article
     class="panel-card best1m-shell best1m-panel-generic"
     id="best1m-generic-panel"

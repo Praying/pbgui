@@ -8,8 +8,12 @@ import type { PanelId } from '../types';
  *
  *   setContextExchange      :7304-7333   normalize → persist → fan-out
  *   restore                 :9766-9771   read raw stored value, then fan out
- *   sidebar shortcuts       :7415-7446   l2books visibility + active states
  *   openBest1mPanel section :7687-7691   uiState.best1mPanelSection normalize
+ *
+ * The legacy sidebar shortcut state (:7415-7446 — l2books visibility +
+ * link highlights) retired with the #sidebar column; the hyperliquid-only
+ * visibility now gates Best1mPanel's in-panel mode switch and the active
+ * state is the rail/in-panel control's own.
  *
  * The panel-specific fan-out branches are injected hooks: loadSettings
  * belongs to M-data-3, the inventory pair to M-data-6, the best-1m refresh
@@ -56,8 +60,6 @@ export interface UseContextExchange {
   contextExchange: Ref<string>;
   /** The meta of the current context exchange. */
   contextMeta: ComputedRef<ExchangeOption>;
-  /** l2books sidebar shortcut visibility (:7422 — hyperliquid only). */
-  showL2booksShortcut: ComputedRef<boolean>;
   /** Current best-1m section (uiState.best1mPanelSection, default build). */
   best1mSection: Ref<Best1mSection>;
   /** Full legacy fan-out (:7304-7333). */
@@ -73,7 +75,6 @@ export function useContextExchange(options: UseContextExchangeOptions): UseConte
   const best1mSection = ref<Best1mSection>('build');
 
   const contextMeta = computed(() => getExchangeMeta(contextExchange.value));
-  const showL2booksShortcut = computed(() => contextMeta.value.key === 'hyperliquid');
 
   /** openBest1mPanel section normalize (:7688): 'download' or anything else → build. */
   function setBest1mSection(section: unknown): Best1mSection {
@@ -100,28 +101,8 @@ export function useContextExchange(options: UseContextExchangeOptions): UseConte
   return {
     contextExchange,
     contextMeta,
-    showL2booksShortcut,
     best1mSection,
     setContextExchange,
     setBest1mSection,
-  };
-}
-
-/**
- * Legacy syncSidebarShortcutState (:7427-7446): the two best-1m shortcut
- * links highlight depending on the open panel, the context exchange and
- * the active best-1m section. Pure — the sidebar consumes it from props.
- */
-export function computeSidebarShortcutState(
-  activePanel: PanelId,
-  exchangeKey: string,
-  section: Best1mSection
-): { best1mActive: boolean; l2booksActive: boolean } {
-  const isBest1mPanelActive = activePanel === 'best1m-panel';
-  const isHyperliquid = exchangeKey === 'hyperliquid';
-  const activeSection: Best1mSection = section === 'download' ? 'download' : 'build';
-  return {
-    best1mActive: isBest1mPanelActive && (!isHyperliquid || activeSection === 'build'),
-    l2booksActive: isBest1mPanelActive && isHyperliquid && activeSection === 'download',
   };
 }

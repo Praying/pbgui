@@ -110,16 +110,16 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
 <style scoped>
 .alert-routing-group {
   margin-top: 1rem;
-  border: 1px solid #29262c;
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
-  background: #171619;
+  background: var(--surface-workspace);
   overflow: hidden;
 }
 .alert-routing-title {
   padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid #29262c;
+  border-bottom: 1px solid var(--border-subtle);
   font-size: var(--fs-sm);
-  color: #93c5fd;
+  color: var(--accent-soft);
   font-weight: 600;
 }
 .alert-routing-grid {
@@ -133,7 +133,7 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
 .alert-routing-col.telegram-col { gap: 0.45rem; }
 .alert-routing-col-header {
   font-size: var(--fs-xs);
-  color: #4e4851;
+  color: var(--text-disabled);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -141,15 +141,15 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: #a29ca6;
+  color: var(--text-secondary);
   font-size: var(--fs-sm);
   cursor: pointer;
 }
 .alert-routing-check input {
-  accent-color: #4da6ff;
+  accent-color: var(--accent);
   cursor: pointer;
   width: 15px;
   height: 15px;
 }
-.alert-routing-check .label-hint { color: #4e4851; }
+.alert-routing-check .label-hint { color: var(--text-disabled); }
 </style>
