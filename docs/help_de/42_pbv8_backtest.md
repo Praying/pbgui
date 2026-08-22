@@ -58,6 +58,12 @@ Der **Results**-Button in der Editor-Sidebar ist immer verfügbar und öffnet di
 
 PB8 kann beim Backtest historische Daten herunterladen. Config, Exchanges, Coin-Auswahl, Zeitraum und Migrationsbericht sollten vor einem großen Backtest geprüft werden.
 
+**Calc Balance** unterstuetzt sowohl `entry.initial_qty_pct` von Trailing-Strategien als auch `base_qty_pct` von EMA Anchor. PB8-Result-Configs liefern inline daher dieselbe Empfehlung wie auf der eigenstaendigen Balance-Calculator-Seite.
+
+**Add to Run** oeffnet einen deaktivierten PB8-Draft. Besitzt der ausgewaehlte Exchange-User bereits eine Run-Config, laedt Save zuerst deren aktuelle Version und verlangt eine explizite **Replace and Save**-Bestaetigung. Das vorhandene Bundle wird gesichert und der Result-Draft danach ueber den normalen optimistischen Versionssprung und Cluster-Sync gespeichert, statt als doppelte neue Instanz abgewiesen zu werden.
+
+Exchange-Listen in Backtest-/Rebacktest-Dialogen verwenden eine modifier-freie Toggle-Auswahl: Ein Klick auf eine nicht ausgewaehlte Exchange fuegt sie hinzu, ohne bestehende Auswahlen zu leeren; ein Klick auf eine ausgewaehlte Exchange entfernt nur diese Exchange.
+
 Die Results-Toolbar besitzt einen persistenten **Columns**-Picker. **Defaults** stellt die bisherige Result-Tabelle wieder her; **All** zeigt zusaetzlich verfuegbare Werte fuer Final Equity und Equity/Balance Difference. Diese browserlokale Auswahl ist vom Archiv getrennt.
 
 Die Panel-Navigation schliesst die Config-Editor-Sidebar synchron, bevor Results-, Queue-, Archive- oder Refine-Aktionen angezeigt werden. Verzoegerter Editor-Zustand kann dadurch keine falsche Sidebar am aktiven Panel hinterlassen.

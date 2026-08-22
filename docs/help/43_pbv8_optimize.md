@@ -58,6 +58,8 @@ Running PB8 optimizer jobs survive an API restart. On Linux, each optimizer runs
 
 Permanent preparation errors move only their queue row to an actionable error state, while update or runtime-lock contention stays queued for retry. Startup reconciles queue snapshots, launch directories, PID, ready, and state records without signalling unverified processes. The PB8 controller is shown in **Services Monitor** and survives unexpected worker-loop errors.
 
+Strategy-specific optimizer overrides are removed when switching strategies and validated through the installed PB8 runtime before save, queue, and launch.
+
 **OHLCV Readiness** and preload run through PB8's own virtualenv, planner, cache paths, and native `passivbot download` command. Explicit read-only sources outside the approved PB8 or PBGui market-data roots are rejected instead of falling back to PB7.
 
 ## Results And Paretos
@@ -65,6 +67,8 @@ Permanent preparation errors move only their queue row to an actionable error st
 Results are read only from `<pb8dir>/optimize_results`. The Results table shows each run's configured PB8 strategy and can sort by that column. The Results and Paretos panels provide the shared PB7 workflow for result inspection, deletion, 3D plots, Pareto Dash, candidate JSON, metric summaries, and seed bundles.
 
 Switching Optimize result sets clears previous Pareto rows, metadata, and selections immediately before loading the new result. A late response from the earlier result cannot restore stale rows.
+
+The Results list uses bounded cold-start metadata: it enumerates each Pareto directory once, uses directory timestamps instead of stat-ing every candidate, and decodes only the first MessagePack record when no Pareto config exists. Full `all_results.bin` validation remains mandatory for Resume/Continue actions but never blocks the visual Results list after an API restart.
 
 PB8 result actions distinguish three different workflows:
 
@@ -76,7 +80,7 @@ The shared Pareto Explorer uses version-specific roots and understands PB8 neste
 
 In PB8 Pareto Explorer, **Strategy Explorer** opens the selected candidate with its sparse overrides. To compare two candidates, pin the first with **Pin Explorer Baseline**, select a different candidate from the same result, and open Strategy Explorer. Missing referenced override files block pinning or opening instead of being silently ignored.
 
-Suite summaries keep their configured objective and scenario names and support `mean`, `min`, `max`, `std`, and `median`. The **Columns** picker controls the sortable list metrics and remembers the PB8 selection. Defaults include canonical Gain, configured objectives, and canonical Drawdown; optional compact comparisons include ADG, Sharpe, Sortino, Omega, loss/profit ratio, and equity/balance divergence when persisted by PB8. Canonical values prefer the established PB8 aliases, for example `gain_usd` before `gain_strategy_eq` and `drawdown_worst_strategy_eq` before USD/fallback Drawdown. Statistics use the requested metric statistic when available and otherwise use the persisted scalar objective. Unrelated suite statistics are not sent to the browser. Compact file-signature caching keeps repeated large Pareto lists responsive while changed, deleted, malformed, or actively rewritten candidates are handled independently.
+Suite summaries keep their configured objective and scenario names and support `mean`, `min`, `max`, `std`, and `median`. The **Columns** picker controls the sortable list metrics and remembers the PB8 selection. It advertises every numeric metric persisted in the Pareto JSON, but the list API transfers values only for defaults and currently selected columns. Newly selected metrics are fetched in one debounced batch and then retained in the bounded file-signature LRU cache, so statistics changes and repeated views do not reread unchanged candidates. The picker DOM is also reused while the metric catalog is unchanged. Defaults include canonical Gain, configured objectives, and canonical Drawdown; canonical values prefer the established PB8 aliases, for example `gain_usd` before `gain_strategy_eq` and `drawdown_worst_strategy_eq` before USD/fallback Drawdown. **All (slower)** explicitly opts into a very wide table and larger response; normal views remain compact. Changed, deleted, malformed, or actively rewritten candidates are handled independently.
 
 Result actions are enabled only when their required artifacts exist. A verified optimizer blocks deletion only for the exact immediate result directory that it or one of its recursive children has open. Unrelated older results remain deletable. Continuation queue sources and Pareto Dash sessions remain exact deletion blockers, and uncertain active-process ownership is handled conservatively. Batch deletion preserves these conflict details and stages selected directories atomically. Pareto Dash runs through a credential-isolated, bounded PBGui proxy with idle cleanup and verified orphan recovery. Its PBGui window can be moved by its header and resized from every edge or corner, while the dashboard retains PB8's original native presentation.
 

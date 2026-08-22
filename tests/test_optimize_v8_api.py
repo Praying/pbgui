@@ -43,6 +43,7 @@ def optimize_v8_roots(tmp_path, monkeypatch):
     monkeypatch.setattr(optimize_v8, "prepare_pb8_config", lambda config, **kwargs: copy.deepcopy(config))
     monkeypatch.setattr(optimize_v8, "load_pb8_config", lambda path: json.loads(Path(path).read_text(encoding="utf-8")))
     monkeypatch.setattr(optimize_v8, "validate_pb8_override_bundle", lambda _path: None)
+    monkeypatch.setattr(optimize_v8, "validate_pb8_optimizer_overrides", lambda _config, **_kwargs: None)
     with optimize_v8._result_progress_cache_lock:
         optimize_v8._result_progress_cache.clear()
     with optimize_v8._backtest_count_cache_lock:
@@ -209,6 +210,50 @@ def test_config_bundle_round_trips_all_strategies_and_optimizer_options(optimize
     assert loaded["optimize"]["pymoo"]["algorithms"]["nsga3"]["ref_dirs"]["n_partitions"] == 8
     assert loaded["optimize"]["fixed_runtime_overrides"] == {"bot.short.risk.n_positions": 2}
     assert loaded["pbgui"]["additional_parameters"]["future_runtime_option"]["enabled"] is True
+
+
+def test_save_and_queue_reject_strategy_incompatible_optimizer_overrides(
+    optimize_v8_roots, monkeypatch
+) -> None:
+    """Invalid native optimizer helpers must fail before persistence or detached launch."""
+    config = _full_pb8_config()
+    config["optimize"]["enable_overrides"] = ["forward_tp_grid"]
+
+    def reject(candidate, **_kwargs):
+        if "forward_tp_grid" in candidate.get("optimize", {}).get("enable_overrides", []):
+            raise PB8ConfigurationError(
+                "optimizer override requires live.strategy_kind = 'trailing_grid_v7'; got 'ema_anchor'"
+            )
+
+    monkeypatch.setattr(optimize_v8, "validate_pb8_optimizer_overrides", reject)
+
+    with pytest.raises(HTTPException) as save_error:
+        optimize_v8.save_config("invalid-override", config, session=None)
+    assert save_error.value.status_code == 422
+    assert "trailing_grid_v7" in str(save_error.value.detail)
+
+    config_dir = optimize_v8._config_dir("legacy-invalid-override")
+    config_dir.mkdir(parents=True)
+    optimize_v8._write_json(config_dir / optimize_v8._CONFIG_FILENAME, config)
+    with pytest.raises(HTTPException) as queue_error:
+        optimize_v8.add_to_queue({"name": "legacy-invalid-override"}, session=None)
+    assert queue_error.value.status_code == 422
+    assert "trailing_grid_v7" in str(queue_error.value.detail)
+
+    monkeypatch.setattr(optimize_v8, "validate_pb8_optimizer_overrides", lambda _config, **_kwargs: None)
+    filename = optimize_v8.add_to_queue({"name": "legacy-invalid-override"}, session=None)["filename"]
+    released = []
+    monkeypatch.setattr(optimize_v8, "validate_pb8_optimizer_overrides", reject)
+    monkeypatch.setattr(
+        optimize_v8,
+        "acquire_master_runtime_lock",
+        lambda _root: SimpleNamespace(release=lambda: released.append(True)),
+    )
+    with pytest.raises(HTTPException) as launch_error:
+        optimize_v8._worker.launch(filename)
+    assert launch_error.value.status_code == 422
+    assert "trailing_grid_v7" in str(launch_error.value.detail)
+    assert released == [True]
 
 
 def test_pb81_scenario_bases_survive_config_and_queue_round_trip(optimize_v8_roots) -> None:
@@ -679,6 +724,40 @@ def test_large_result_listing_defers_full_stream_scan(optimize_v8_roots, monkeyp
     assert [item["name"] for item in listed_configs] == ["visible-config"]
 
 
+def test_result_listing_never_cold_decodes_streams_and_scans_each_pareto_dir_once(
+    optimize_v8_roots,
+    monkeypatch,
+) -> None:
+    """Cold Results metadata stays bounded for Pareto and checkpoint-only result sets."""
+    _configs, _queue, _logs, results = optimize_v8_roots
+    config = _full_pb8_config()
+    with_pareto = _make_resumable_result(results / "with-pareto", config)
+    pareto_dir = with_pareto / "pareto"
+    pareto_dir.mkdir()
+    (pareto_dir / "candidate.json").write_text(json.dumps(config), encoding="utf-8")
+    _make_resumable_result(results / "checkpoint-only", config)
+    original_listing = optimize_v8._pareto_files_for_listing
+    scans = []
+
+    def counted_listing(result_dir: Path):
+        scans.append(result_dir.name)
+        return original_listing(result_dir)
+
+    monkeypatch.setattr(optimize_v8, "_pareto_files_for_listing", counted_listing)
+    monkeypatch.setattr(
+        optimize_v8,
+        "_scan_all_results",
+        lambda _path: pytest.fail("Results listing must not fully decode all_results.bin"),
+    )
+
+    listed = optimize_v8.list_results(None)["results"]
+
+    assert {item["result"] for item in listed} == {"with-pareto", "checkpoint-only"}
+    assert all(item["progress"]["scan_deferred"] is True for item in listed)
+    assert all(item["has_config"] is True for item in listed)
+    assert sorted(scans) == ["checkpoint-only", "with-pareto"]
+
+
 def test_resume_compatibility_rejects_before_queue_mutation(optimize_v8_roots, monkeypatch) -> None:
     """A native-prepared incompatible checkpoint must not stop or alter the existing queue item."""
     _configs, _queue, _logs, results = optimize_v8_roots
@@ -1138,12 +1217,20 @@ def test_pareto_stats_projection_prefers_stats_and_adds_canonical_gain(
     }
     assert payload["meta"]["selected_statistic"] == statistic
     assert [spec["metric"] for spec in payload["meta"]["objectives"]] == ["quality", "risk"]
-    assert payload["meta"]["available_metrics"] == ["gain", "drawdown_worst", "quality", "risk"]
+    assert set(payload["meta"]["available_metrics"]) == {
+        "gain",
+        "drawdown_worst",
+        "drawdown_worst_strategy_eq",
+        "gain_strategy_eq",
+        "gain_usd",
+        "quality",
+        "risk",
+    }
     assert payload["meta"]["default_metrics"] == ["gain", "quality", "risk", "drawdown_worst"]
 
 
-def test_suite_pareto_projection_excludes_unrelated_metrics(optimize_v8_roots) -> None:
-    """Suite list rows contain configured objectives and canonical gain, not the complete metric suite."""
+def test_suite_pareto_projection_catalogs_all_metrics_but_loads_only_selected_values(optimize_v8_roots) -> None:
+    """The picker sees every metric while list rows retain only defaults and requested values."""
     _configs, _queue, _logs, results = optimize_v8_roots
     result = results / "large-suite"
     pareto = result / "pareto"
@@ -1179,7 +1266,26 @@ def test_suite_pareto_projection_excludes_unrelated_metrics(optimize_v8_roots) -
     }
     assert aggregated["meta"]["mode"] == "suite"
     assert aggregated["meta"]["scenario_labels"] == ["bear"]
-    assert "unrelated_149" not in json.dumps(aggregated)
+    assert "unrelated_149" not in aggregated["paretos"][0]["summary"]
+    assert "unrelated_149" in aggregated["meta"]["available_metrics"]
+
+    selected = optimize_v8.list_paretos(
+        str(result), "Aggregated", "median", None, "unrelated_149",
+    )
+    assert selected["paretos"][0]["summary"]["unrelated_149"] == 149.0
+
+
+@pytest.mark.parametrize("metrics", ("bad metric", "metric/path", "x" * 129))
+def test_pareto_metric_projection_rejects_invalid_names(optimize_v8_roots, metrics: str) -> None:
+    """Dynamic projection accepts only bounded metric identifiers from the advertised catalog."""
+    _configs, _queue, _logs, results = optimize_v8_roots
+    result = results / "invalid-projection"
+    (result / "pareto").mkdir(parents=True)
+
+    with pytest.raises(HTTPException) as error:
+        optimize_v8.list_paretos(str(result), "Aggregated", "mean", None, metrics)
+
+    assert error.value.status_code == 422
 
 
 def test_compact_pareto_cache_reuses_touches_prunes_and_clears(optimize_v8_roots, monkeypatch) -> None:
@@ -1190,7 +1296,10 @@ def test_compact_pareto_cache_reuses_touches_prunes_and_clears(optimize_v8_roots
     pareto.mkdir(parents=True)
     payload = {
         "optimize": {"scoring": [{"metric": "quality", "goal": "max"}]},
-        "metrics": {"stats": {"quality": {"mean": 1.0}}, "objectives": {"quality": 0.0}},
+        "metrics": {
+            "stats": {"quality": {"mean": 1.0}, "extra": {"mean": 2.0, "median": 3.0}},
+            "objectives": {"quality": 0.0},
+        },
     }
     paths = []
     for index in range(3):
@@ -1212,16 +1321,22 @@ def test_compact_pareto_cache_reuses_touches_prunes_and_clears(optimize_v8_roots
     assert len(optimize_v8.list_paretos(str(result), "Aggregated", "median", None)["paretos"]) == 3
     assert len(reads) == 3
 
+    projected = optimize_v8.list_paretos(str(result), "Aggregated", "mean", None, "extra")
+    assert all(row["summary"]["extra"] == 2.0 for row in projected["paretos"])
+    assert len(reads) == 6
+    optimize_v8.list_paretos(str(result), "Aggregated", "median", None, "extra")
+    assert len(reads) == 6
+
     touched_payload = copy.deepcopy(payload)
     touched_payload["unrelated_size_change"] = "force a new cache signature"
     paths[1].write_text(json.dumps(touched_payload), encoding="utf-8")
     optimize_v8.list_paretos(str(result), "Aggregated", "mean", None)
-    assert reads.count(paths[1].name) == 2
-    assert len(reads) == 4
+    assert reads.count(paths[1].name) == 3
+    assert len(reads) == 7
 
     paths[2].unlink()
     assert len(optimize_v8.list_paretos(str(result), "Aggregated", "mean", None)["paretos"]) == 2
-    assert len(reads) == 4
+    assert len(reads) == 7
 
     monkeypatch.setattr(optimize_v8, "_assert_result_deletable", lambda _path: None)
     optimize_v8.delete_result(str(result), None)
@@ -1242,6 +1357,29 @@ def test_compact_pareto_cache_has_bounded_lru_eviction(optimize_v8_roots, monkey
     optimize_v8.list_paretos(str(result), "Aggregated", "mean", None)
 
     assert len(optimize_v8._pareto_list_cache) == 2
+
+
+def test_pareto_cache_expiration_is_pruned_once_per_list_request(optimize_v8_roots, monkeypatch) -> None:
+    """Large fronts avoid the former per-candidate full-cache expiration scan."""
+    _configs, _queue, _logs, results = optimize_v8_roots
+    result = results / "single-prune"
+    pareto = result / "pareto"
+    pareto.mkdir(parents=True)
+    payload = {"metrics": {"stats": {"quality": {"mean": 1.0}}}}
+    for index in range(5):
+        (pareto / f"candidate-{index}.json").write_text(json.dumps(payload), encoding="utf-8")
+    original_prune = optimize_v8._prune_pareto_list_cache
+    calls = []
+
+    def counted_prune(now=None) -> None:
+        calls.append(now)
+        original_prune(now)
+
+    monkeypatch.setattr(optimize_v8, "_prune_pareto_list_cache", counted_prune)
+
+    optimize_v8.list_paretos(str(result), "Aggregated", "mean", None)
+
+    assert calls == [None]
 
 
 def test_pareto_list_skips_active_file_churn_and_malformed_json(optimize_v8_roots, monkeypatch) -> None:
@@ -1298,7 +1436,11 @@ def test_thousand_pareto_candidates_keep_structural_payload_bounded(optimize_v8_
         payload = {
             "optimize": {"scoring": [{"metric": "quality", "goal": "max"}]},
             "metrics": {
-                "stats": {"quality": {"mean": float(index)}, "gain_usd": {"mean": float(index + 1)}},
+                "stats": {
+                    "quality": {"mean": float(index)},
+                    "gain_usd": {"mean": float(index + 1)},
+                    "available_but_unselected": {"mean": float(index + 2)},
+                },
                 "objectives": {"unrelated": 999.0},
             },
         }
@@ -1308,6 +1450,7 @@ def test_thousand_pareto_candidates_keep_structural_payload_bounded(optimize_v8_
 
     assert len(response["paretos"]) == 1000
     assert all(set(row["summary"]) == {"quality", "gain"} for row in response["paretos"])
+    assert "available_but_unselected" in response["meta"]["available_metrics"]
     assert len(json.dumps(response)) < 500_000
 
 

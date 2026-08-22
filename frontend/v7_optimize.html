@@ -2372,7 +2372,7 @@ textarea.json-invalid:focus {
             <div id="pareto-columns-options" class="pareto-columns-options"></div>
             <div class="pareto-columns-actions">
               <button id="pareto-columns-defaults" class="act-btn" type="button">Defaults</button>
-              <button id="pareto-columns-all" class="act-btn" type="button">All</button>
+              <button id="pareto-columns-all" class="act-btn" type="button" title="Selecting every metric creates a much wider and slower table.">All (slower)</button>
               <button id="pareto-columns-done" class="act-btn" type="button">Done</button>
             </div>
           </div>
@@ -2727,6 +2727,7 @@ var state = {
   paretoDefaultMetrics: [],
   paretoMetricColumns: [],
   paretoMetricColumnsLoaded: false,
+  paretoMetricReloadTimer: null,
   paretoLoadSeq: 0,
   paretoSortKey: 'name',
   paretoSortDir: 'asc',
@@ -2895,7 +2896,20 @@ function toggleParetoMetricColumn(metric, enabled) {
   if (enabled && index < 0) selected.push(metric);
   if (!enabled && index >= 0 && selected.length > 1) selected.splice(index, 1);
   setParetoMetricColumns(selected, true);
-  renderParetos();
+  if (enabled) {
+    renderParetoColumnPicker();
+    scheduleParetoMetricReload();
+  } else {
+    renderParetos();
+  }
+}
+
+function scheduleParetoMetricReload() {
+  if (state.paretoMetricReloadTimer) clearTimeout(state.paretoMetricReloadTimer);
+  state.paretoMetricReloadTimer = setTimeout(function() {
+    state.paretoMetricReloadTimer = null;
+    loadParetos().catch(handleError);
+  }, 250);
 }
 
 function renderParetoColumnPicker() {
@@ -2905,23 +2919,34 @@ function renderParetoColumnPicker() {
   if (!picker || !summary || !options) return;
   picker.hidden = !state.selectedResultPath || !state.paretoAvailableMetrics.length;
   summary.textContent = 'Columns (' + String(state.paretoMetricColumns.length) + ')';
-  options.textContent = '';
-  state.paretoAvailableMetrics.forEach(function(metric) {
-    var label = document.createElement('label');
-    label.className = 'pareto-columns-option';
-    var input = document.createElement('input');
-    input.type = 'checkbox';
-    input.checked = state.paretoMetricColumns.indexOf(metric) >= 0;
-    input.addEventListener('change', function() {
-      toggleParetoMetricColumn(metric, input.checked);
+  var catalogSignature = state.paretoAvailableMetrics.join('\u001f');
+  if (options._paretoCatalogSignature !== catalogSignature) {
+    options.textContent = '';
+    var fragment = document.createDocumentFragment();
+    state.paretoAvailableMetrics.forEach(function(metric) {
+      var label = document.createElement('label');
+      label.className = 'pareto-columns-option';
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.setAttribute('data-pareto-metric', metric);
+      input.checked = state.paretoMetricColumns.indexOf(metric) >= 0;
+      input.addEventListener('change', function() {
+        toggleParetoMetricColumn(metric, input.checked);
+      });
+      var text = document.createElement('span');
+      var shortLabel = METRIC_PILL_LABELS[metric];
+      text.textContent = shortLabel && shortLabel !== metric ? shortLabel + ' (' + metric + ')' : metric;
+      label.appendChild(input);
+      label.appendChild(text);
+      fragment.appendChild(label);
     });
-    var text = document.createElement('span');
-    var shortLabel = METRIC_PILL_LABELS[metric];
-    text.textContent = shortLabel && shortLabel !== metric ? shortLabel + ' (' + metric + ')' : metric;
-    label.appendChild(input);
-    label.appendChild(text);
-    options.appendChild(label);
-  });
+    options.appendChild(fragment);
+    options._paretoCatalogSignature = catalogSignature;
+  } else {
+    options.querySelectorAll('input[data-pareto-metric]').forEach(function(input) {
+      input.checked = state.paretoMetricColumns.indexOf(input.getAttribute('data-pareto-metric')) >= 0;
+    });
+  }
   var defaults = el('pareto-columns-defaults');
   var all = el('pareto-columns-all');
   var done = el('pareto-columns-done');
@@ -2931,7 +2956,8 @@ function renderParetoColumnPicker() {
   };
   all.onclick = function() {
     setParetoMetricColumns(state.paretoAvailableMetrics, true);
-    renderParetos();
+    renderParetoColumnPicker();
+    scheduleParetoMetricReload();
   };
   done.onclick = function() { picker.open = false; };
 }
@@ -5058,6 +5084,7 @@ function changeOptimizeStrategyKind(nextStrategy) {
   editorConfig.live = editorConfig.live && typeof editorConfig.live === 'object' ? editorConfig.live : {};
   editorConfig.bot = editorConfig.bot && typeof editorConfig.bot === 'object' ? editorConfig.bot : {};
   editorConfig.live.strategy_kind = cleanNext;
+  syncOptimizeOverrideStrategyCompatibility(editorConfig, cleanNext);
   ['long', 'short'].forEach(function(side) {
     var node = el('opted-bot-' + side);
     var sideConfig = {};
@@ -5429,7 +5456,7 @@ function renderOptimizeLogDashboard(status) {
   var percent = progress.percent == null || !isFinite(Number(progress.percent)) ? null : Number(progress.percent);
   el('optlog-progress-fill').style.width = percent == null ? '0%' : Math.max(0, Math.min(100, percent)) + '%';
   var progressText = progress.eval == null ? PBGuiI18n.t('v7optimize.waitingForEvaluations') : PBGuiI18n.t('v7optimize.evalsCount', { count: progress.eval.toLocaleString() });
-  if (progress.target_iters != null) {
+  if (progress.target_iters != null && progress.eval != null) {
     progressText = PBGuiI18n.t('v7optimize.evalsOf', { current: progress.eval.toLocaleString(), target: progress.target_iters.toLocaleString() });
     if (percent != null) progressText += ' (' + percent.toFixed(1) + '%)';
   }
@@ -5651,6 +5678,46 @@ function normalizeOptimizeEnableOverrides(value) {
     seen[item] = true;
     return true;
   });
+}
+
+function optimizeOverrideRequiredStrategy(value) {
+  var requirements = {
+    lossless_close_trailing: 'trailing_martingale',
+    forward_tp_grid: 'trailing_grid_v7',
+    backward_tp_grid: 'trailing_grid_v7'
+  };
+  return requirements[String(value || '')] || '';
+}
+
+function filterOptimizeEnableOverridesForStrategy(value, strategyKind) {
+  var strategy = String(strategyKind || '').trim();
+  return normalizeOptimizeEnableOverrides(value).filter(function(item) {
+    var required = optimizeOverrideRequiredStrategy(item);
+    return !required || required === strategy;
+  });
+}
+
+function syncOptimizeOverrideStrategyCompatibility(config, strategyKind) {
+  var optimize = config && config.optimize && typeof config.optimize === 'object' ? config.optimize : {};
+  var enabled = filterOptimizeEnableOverridesForStrategy(optimize.enable_overrides, strategyKind);
+  optimize.enable_overrides = enabled;
+  if (config) config.optimize = optimize;
+  var lossless = enabled.indexOf('lossless_close_trailing') >= 0;
+  var tpDirection = getOptimizeTpGridDirection(enabled);
+  ['opted-enable-lossless-close-trailing', 'opted-runtime-lossless-close-trailing'].forEach(function(id) {
+    var node = el(id);
+    if (node) node.checked = lossless;
+  });
+  ['opted-enable-tp-grid-direction', 'opted-runtime-tp-grid-direction'].forEach(function(id) {
+    var node = el(id);
+    if (node) node.value = tpDirection;
+  });
+  if (typeof document !== 'undefined') {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pb8-enable-override]'), function(node) {
+      var value = String(node.getAttribute('data-pb8-enable-override') || '').trim();
+      node.checked = enabled.indexOf(value) >= 0;
+    });
+  }
 }
 
 function getOptimizeUnknownEnableOverrides(value) {
@@ -8808,7 +8875,8 @@ function buildOptimizeEditorHtml(config, name, sourceName) {
       pymooRefDirs.n_partitions
     )
     : optimize.population_size;
-  var enableOverrides = normalizeOptimizeEnableOverrides(optimize.enable_overrides);
+  var enableOverrides = filterOptimizeEnableOverridesForStrategy(optimize.enable_overrides, live.strategy_kind);
+  optimize.enable_overrides = enableOverrides;
   var strategyOptions = getOptimizeStrategyOptions(live.strategy_kind);
   var endDate = resolveOptimizeEditorEndDateValue(backtest.end_date);
   return '<div class="editor-shell">'
@@ -9139,7 +9207,8 @@ function populateOptimizeEditor(config, opts) {
   el('opted-vol-mcap').value = pbgui.vol_mcap == null ? '' : String(pbgui.vol_mcap);
   el('opted-min-coin-age').value = live.minimum_coin_age_days == null ? '' : String(live.minimum_coin_age_days);
   el('opted-hsl-signal-mode').value = normalizeOptimizeHslSignalModeValue(live.hsl_signal_mode);
-  var enableOverrides = normalizeOptimizeEnableOverrides(optimize.enable_overrides);
+  var enableOverrides = filterOptimizeEnableOverridesForStrategy(optimize.enable_overrides, live.strategy_kind);
+  optimize.enable_overrides = enableOverrides;
   el('opted-enable-lossless-close-trailing').checked = enableOverrides.indexOf('lossless_close_trailing') >= 0;
   el('opted-enable-tp-grid-direction').value = getOptimizeTpGridDirection(enableOverrides);
   el('opted-compress-results').checked = optimize.compress_results_file == null
@@ -9464,6 +9533,7 @@ function collectEditorConfig(baseConfig, opts) {
   }
   applyOptimizeSeedConfig(cfg, seedMode, seedPath);
   optimizeEditorAdapter.collectVersionRunSettings(cfg, el, strict);
+  optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(optimize.enable_overrides, live.strategy_kind);
   applyOptimizeExtraParamValues(cfg);
   return { name: name, config: cfg };
 }
@@ -12332,6 +12402,10 @@ function refreshOptimizePageOnReturn() {
 }
 
 async function loadParetos(path, name) {
+  if (state.paretoMetricReloadTimer) {
+    clearTimeout(state.paretoMetricReloadTimer);
+    state.paretoMetricReloadTimer = null;
+  }
   var loadSeq = ++state.paretoLoadSeq;
   if (path) {
     state.paretos = [];
@@ -12360,6 +12434,12 @@ async function loadParetos(path, name) {
   ];
   if (state.paretoMode === 'suite' || requestScenario !== 'Aggregated') {
     query.push('scenario=' + encodeURIComponent(requestScenario));
+  }
+  var requestedMetrics = state.paretoMetricColumnsLoaded
+    ? state.paretoMetricColumns
+    : readStoredParetoColumns();
+  if (requestedMetrics.length) {
+    query.push('metrics=' + encodeURIComponent(requestedMetrics.join(',')));
   }
   var data = await apiFetch(optimizeEditorAdapter.paretosPath(query.join('&')));
   if (loadSeq !== state.paretoLoadSeq || requestPath !== state.selectedResultPath) return;

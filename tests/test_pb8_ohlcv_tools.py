@@ -98,10 +98,27 @@ def test_preflight_uses_pb8_python_cwd_and_never_pb7(pb8_runtime, monkeypatch) -
 
     assert result["summary"]["overall_status"] == "ready"
     assert captured["command"][0] == str(python)
+    assert captured["command"][1] == "-I"
     assert captured["kwargs"]["cwd"] == str(pb8_dir)
-    assert captured["command"][1].endswith("pb8_ohlcv_runtime_helper.py")
+    assert captured["command"][2].endswith("pb8_ohlcv_runtime_helper.py")
     assert "pb7" not in " ".join(captured["command"]).lower()
     assert json.loads(captured["kwargs"]["input"])["pb8_dir"] == str(pb8_dir)
+
+
+def test_runtime_preserves_symlinked_virtualenv_python(pb8_runtime, tmp_path) -> None:
+    """A venv Python symlink must not move the expected CLI directory to the system bin path."""
+    _status, _pb8_dir, python, cli, _market_root = pb8_runtime
+    system_python = tmp_path / "system" / "python3.12"
+    system_python.parent.mkdir()
+    system_python.write_text("#!/bin/sh\n", encoding="utf-8")
+    system_python.chmod(0o700)
+    python.unlink()
+    python.symlink_to(system_python)
+
+    runtime = pb8_ohlcv_tools._runtime()
+
+    assert runtime["pb8venv"] == str(python.absolute())
+    assert runtime["cli_file"] == str(cli.resolve())
 
 
 def test_v8_routes_do_not_import_pb7_ohlcv_runtime() -> None:

@@ -3,6 +3,14 @@
 Release notes live in dedicated files under `releases/`.
 
 - [Unreleased](releases/unreleased.md)
+- [v1.98.36](releases/v1.98.36.md)
+- [v1.98.35](releases/v1.98.35.md)
+- [v1.98.34](releases/v1.98.34.md)
+- [v1.98.33](releases/v1.98.33.md)
+- [v1.98.32](releases/v1.98.32.md)
+- [v1.98.31](releases/v1.98.31.md)
+- [v1.98.30](releases/v1.98.30.md)
+- [v1.98.29](releases/v1.98.29.md)
 - [v1.98.28](releases/v1.98.28.md)
 - [v1.98.27](releases/v1.98.27.md)
 - [v1.98.26](releases/v1.98.26.md)

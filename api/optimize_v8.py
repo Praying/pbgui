@@ -50,6 +50,7 @@ from pb8_config import (
     migrate_pb7_config,
     prepare_pb8_config,
     validate_pb8_override_bundle,
+    validate_pb8_optimizer_overrides,
 )
 from pbgui_purefunc import PBGDIR, PBGUI_SERIAL, PBGUI_VERSION, load_ini_section, pb7dir, pb8_runtime_status, save_ini_section
 from secure_files import atomic_write_private_text, ensure_private_directory, ensure_private_directory_tree
@@ -61,6 +62,8 @@ _CONFIG_FILENAME = "optimize.json"
 _CONFIG_SECTIONS = ("backtest", "bot", "live", "optimize", "coin_overrides", "pbgui")
 _QUEUE_SETTINGS_SECTION = "optimize_v7"
 _PARETO_STATISTICS = ("mean", "min", "max", "std", "median")
+_PARETO_METRIC_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]{1,128}$")
+_PARETO_MAX_REQUESTED_METRICS = 256
 _PARETO_COMPARISON_METRICS = (
     ("adg", ("adg_strategy_eq_w", "adg_strategy_eq", "adg_w_usd", "adg_usd", "adg")),
     ("gain", ("gain_usd", "gain_strategy_eq", "gain")),
@@ -322,6 +325,14 @@ def _result_lock():
 def _configuration_error(operation: str, exc: Exception, status_code: int = 422) -> HTTPException:
     _log(SERVICE, f"{operation} failed: {exc}", level="WARNING")
     return HTTPException(status_code=int(getattr(exc, "status_code", status_code)), detail=str(exc))
+
+
+def _validate_optimizer_overrides(config: dict, *, base_config_path: str) -> None:
+    """Convert PB8-native optimizer override failures into an actionable API response."""
+    try:
+        validate_pb8_optimizer_overrides(config, base_config_path=base_config_path)
+    except PB8ConfigurationError as exc:
+        raise _configuration_error("Validating PB8 optimizer overrides", exc) from exc
 
 
 def _normalize_config(config: dict, name: str) -> dict:
@@ -595,6 +606,7 @@ def _save_config_bundle(
         resolved_overrides = _resolve_override_payloads(normalized, override_payloads, source_dir)
         _write_override_payloads(stage, resolved_overrides)
         prepared = prepare_pb8_config(normalized, base_config_path=str(stage / _CONFIG_FILENAME))
+        _validate_optimizer_overrides(prepared, base_config_path=str(stage / _CONFIG_FILENAME))
         if _override_filenames(prepared) != set(resolved_overrides):
             raise HTTPException(status_code=422, detail="PB8 preparation changed override-file references")
         _validate_forager_optimize_search_space(prepared)
@@ -962,7 +974,13 @@ def _result_override_payloads(result_dir: Path, config: dict) -> dict[str, dict]
     return _load_override_payloads(config, result_dir)
 
 
-def _checkpoint_resume_readiness(result_dir: Path, *, for_listing: bool = False) -> dict:
+def _checkpoint_resume_readiness(
+    result_dir: Path,
+    *,
+    for_listing: bool = False,
+    progress_hint: dict | None = None,
+    config_hint: dict | None = None,
+) -> dict:
     checkpoint = _safe_path(result_dir / "checkpoint.pkl", _results_root())
     all_results = _safe_path(result_dir / "all_results.bin", _results_root())
     reasons = []
@@ -976,7 +994,11 @@ def _checkpoint_resume_readiness(result_dir: Path, *, for_listing: bool = False)
     except OSError as exc:
         reasons.append(f"checkpoint.pkl is unreadable: {exc}")
 
-    progress = _all_results_progress_for_listing(all_results) if for_listing else _all_results_progress(all_results)
+    progress = (
+        progress_hint
+        if for_listing and isinstance(progress_hint, dict)
+        else _all_results_progress_for_listing(all_results) if for_listing else _all_results_progress(all_results)
+    )
     if not all_results.is_file() or all_results.is_symlink() or progress.get("bytes", 0) <= 0:
         reasons.append("all_results.bin is missing or empty")
     elif progress.get("error"):
@@ -986,7 +1008,9 @@ def _checkpoint_resume_readiness(result_dir: Path, *, for_listing: bool = False)
     ):
         reasons.append("all_results.bin does not strictly decode to complete result records")
 
-    config = _recover_result_config(result_dir)
+    config = _extract_result_config(config_hint)
+    if config is None:
+        config = _recover_result_config(result_dir)
     if config is None:
         reasons.append("base result config could not be recovered from native result artifacts")
     elif (config.get("optimize") or {}).get("write_all_results") is not True:
@@ -1412,6 +1436,23 @@ def _first_pareto_file(result_dir: Path) -> Path | None:
     return next((path for path in sorted(pareto_dir.glob("*.json")) if path.is_file() and not path.is_symlink()), None)
 
 
+def _pareto_files_for_listing(result_dir: Path) -> tuple[Path, list[Path]]:
+    """Enumerate regular Pareto JSON files once without per-file pathlib stat calls."""
+    pareto_dir = result_dir / "pareto"
+    if not pareto_dir.is_dir() or pareto_dir.is_symlink():
+        return pareto_dir, []
+    try:
+        with os.scandir(pareto_dir) as entries:
+            names = sorted(
+                entry.name
+                for entry in entries
+                if entry.name.endswith(".json") and entry.is_file(follow_symlinks=False)
+            )
+    except OSError:
+        return pareto_dir, []
+    return pareto_dir, [pareto_dir / name for name in names]
+
+
 def _apply_result_diff(base: dict, diff: dict) -> dict:
     result = {}
     for key in base.keys() | diff.keys():
@@ -1450,8 +1491,6 @@ def _all_results_progress_for_listing(path: Path) -> dict:
             raise OSError("not a regular file")
     except OSError:
         return {"evaluations": 0, "bytes": 0, "trailing_partial_entry": False, "latest": {}}
-    if stat_result.st_size <= _RESULT_LIST_SCAN_LIMIT_BYTES:
-        return _all_results_progress(path)
     key = str(path.resolve(strict=False))
     with _result_progress_cache_lock:
         cached = _result_progress_cache.get(key)
@@ -1596,19 +1635,53 @@ def _scan_all_results(path: Path) -> dict:
 
 
 def _all_results_first(path: Path) -> dict | None:
-    return _scan_all_results(path).get("first")
+    """Decode only the first bounded MessagePack record needed for result metadata."""
+    try:
+        stat_result = path.stat()
+        if path.is_symlink() or not path.is_file() or stat_result.st_size <= 0:
+            return None
+    except OSError:
+        return None
+    key = str(path.resolve(strict=False))
+    with _result_progress_cache_lock:
+        cached = _result_progress_cache.get(key)
+        if (
+            cached
+            and cached.get("device") == stat_result.st_dev
+            and cached.get("inode") == stat_result.st_ino
+            and cached.get("size") == stat_result.st_size
+            and cached.get("mtime_ns") == stat_result.st_mtime_ns
+            and isinstance(cached.get("first"), dict)
+        ):
+            return copy.deepcopy(cached["first"])
+    unpacker = msgpack.Unpacker(raw=False, strict_map_key=False, max_buffer_size=64 * 1024 * 1024)
+    remaining = min(stat_result.st_size, _RESULT_LIST_SCAN_LIMIT_BYTES)
+    try:
+        with path.open("rb") as handle:
+            while remaining > 0:
+                chunk = handle.read(min(1024 * 1024, remaining))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+                unpacker.feed(chunk)
+                for entry in unpacker:
+                    return copy.deepcopy(entry) if isinstance(entry, dict) else None
+    except (OSError, ValueError, msgpack.UnpackException):
+        return None
+    return None
 
 
-def _result_name(result_dir: Path) -> str:
-    first = _first_pareto_file(result_dir)
-    data = None
-    if first:
-        try:
-            data = _read_json(first)
-        except (RuntimeError, AttributeError):
-            pass
+def _result_name(result_dir: Path, data_hint: dict | None = None) -> str:
+    data = data_hint if isinstance(data_hint, dict) else None
     if data is None:
-        data = _all_results_first(result_dir / "all_results.bin")
+        first = _first_pareto_file(result_dir)
+        if first:
+            try:
+                data = _read_json(first)
+            except (RuntimeError, AttributeError):
+                pass
+        if data is None:
+            data = _all_results_first(result_dir / "all_results.bin")
     if isinstance(data, dict):
         base_dir = str((data.get("backtest") or {}).get("base_dir") or "")
         if base_dir:
@@ -1630,10 +1703,9 @@ def _latest_existing_mtime(paths: list[Path]) -> float | None:
 def _list_results() -> list[dict]:
     results = []
     for directory in _result_dirs() or []:
-        pareto_dir = directory / "pareto"
-        paretos = [path for path in pareto_dir.glob("*.json") if path.is_file() and not path.is_symlink()] if pareto_dir.is_dir() and not pareto_dir.is_symlink() else []
+        pareto_dir, paretos = _pareto_files_for_listing(directory)
         artifacts = [path for path in (directory / "all_results.bin", directory / "checkpoint.pkl") if path.is_file()]
-        modified_paths = [*paretos, *artifacts] or [directory]
+        modified_paths = [pareto_dir, *artifacts] if paretos else [*artifacts, directory]
         progress = _all_results_progress_for_listing(directory / "all_results.bin")
         first_data = None
         if paretos:
@@ -1644,7 +1716,12 @@ def _list_results() -> list[dict]:
         if first_data is None:
             first_data = _all_results_first(directory / "all_results.bin")
         contract = _pareto_contract(first_data or {})
-        readiness = _checkpoint_resume_readiness(directory, for_listing=True)
+        readiness = _checkpoint_resume_readiness(
+            directory,
+            for_listing=True,
+            progress_hint=progress,
+            config_hint=first_data,
+        )
         result_config = first_data if isinstance(first_data, dict) else {}
         recovered_config = readiness.get("config") if isinstance(readiness.get("config"), dict) else {}
         result_live = result_config.get("live") if isinstance(result_config.get("live"), dict) else {}
@@ -1665,7 +1742,7 @@ def _list_results() -> list[dict]:
             {
                 "path": str(directory),
                 "result": directory.name,
-                "name": _result_name(directory),
+                "name": _result_name(directory, first_data),
                 "pareto_count": len(paretos),
                 "has_pareto": has_pareto,
                 "checkpoint": checkpoint_present,
@@ -1821,6 +1898,55 @@ def _compact_metric_value(value):
     return compact or None
 
 
+def _requested_pareto_metrics(value) -> list[str]:
+    """Return one bounded, validated list of metric projections requested by the browser."""
+    if not isinstance(value, str) or not value.strip():
+        return []
+    result = []
+    for item in value.split(","):
+        metric = item.strip()
+        if not metric or metric in result:
+            continue
+        if not _PARETO_METRIC_NAME_RE.fullmatch(metric):
+            raise HTTPException(status_code=422, detail=f"Invalid Pareto metric: {metric[:128]}")
+        result.append(metric)
+        if len(result) > _PARETO_MAX_REQUESTED_METRICS:
+            raise HTTPException(status_code=422, detail="Too many Pareto metrics requested")
+    return result
+
+
+def _pareto_metric_catalog(data: dict) -> list[str]:
+    """Return all numeric metric names advertised by one result's stable metric schema."""
+    suite_metrics, _labels = _suite_metric_payload(data)
+    metrics = data.get("metrics") if isinstance(data.get("metrics"), dict) else {}
+    stats_root = metrics.get("stats") if isinstance(metrics.get("stats"), dict) else {}
+    roots = [suite_metrics, stats_root]
+    roots.extend(
+        root
+        for root in (
+            data.get("objectives"),
+            (data.get("result") or {}).get("objectives") if isinstance(data.get("result"), dict) else None,
+            metrics.get("objectives"),
+        )
+        if isinstance(root, dict)
+    )
+    raw_names = []
+    for root in roots:
+        if not isinstance(root, dict):
+            continue
+        for name, value in root.items():
+            normalized = str(name).strip()
+            if normalized and normalized not in raw_names and _compact_metric_value(value) is not None:
+                raw_names.append(normalized)
+    raw_set = set(raw_names)
+    canonical = [
+        summary_name
+        for summary_name, aliases in _PARETO_COMPARISON_METRICS
+        if any(alias in raw_set for alias in aliases)
+    ]
+    return list(dict.fromkeys([*canonical, *sorted(raw_names)]))
+
+
 def _pareto_list_objective_specs(data: dict) -> list[dict]:
     specs = _pareto_objective_specs(data)
     if specs:
@@ -1842,12 +1968,23 @@ def _pareto_list_objective_specs(data: dict) -> list[dict]:
     return [{"metric": name, "goal": "max"} for name in names]
 
 
-def _compact_pareto_data(data: dict) -> dict:
+def _compact_pareto_data(
+    data: dict,
+    requested_metrics: tuple[str, ...] = (),
+    *,
+    include_catalog: bool = False,
+) -> dict:
     contract = _pareto_contract(data)
     specs = _pareto_list_objective_specs(data)
     names = [spec["metric"] for spec in specs]
-    comparison_names = [name for _summary_name, aliases in _PARETO_COMPARISON_METRICS for name in aliases]
-    metric_names = list(dict.fromkeys([*names, *comparison_names]))
+    default_projection_names = list(dict.fromkeys(["gain", *names, "drawdown_worst"]))
+    projection_names = list(dict.fromkeys([*default_projection_names, *requested_metrics]))
+    comparison_by_name = dict(_PARETO_COMPARISON_METRICS)
+    metric_names = []
+    for name in projection_names:
+        for source_name in comparison_by_name.get(name, (name,)):
+            if source_name not in metric_names:
+                metric_names.append(source_name)
     suite_metrics, labels = _suite_metric_payload(data)
     metrics = data.get("metrics") if isinstance(data.get("metrics"), dict) else {}
     stats_root = metrics.get("stats") if isinstance(metrics.get("stats"), dict) else {}
@@ -1871,6 +2008,8 @@ def _compact_pareto_data(data: dict) -> dict:
         "scenario_labels": labels if suite_metrics else contract["scenario_labels"],
         "objectives": specs,
         "objective_names": names,
+        "default_projection_names": default_projection_names,
+        "available_metric_names": _pareto_metric_catalog(data) if include_catalog else [],
         "suite_values": {
             name: compact
             for name in metric_names
@@ -1885,7 +2024,12 @@ def _compact_pareto_data(data: dict) -> dict:
     }
 
 
-def _project_compact_pareto(compact: dict, statistic: str, scenario: str) -> dict:
+def _project_compact_pareto(
+    compact: dict,
+    statistic: str,
+    scenario: str,
+    requested_metrics: tuple[str, ...] = (),
+) -> dict:
     suite_values = compact["suite_values"]
     stats_values = compact["stats_values"]
     objective_values = compact["objective_values"]
@@ -1910,15 +2054,19 @@ def _project_compact_pareto(compact: dict, statistic: str, scenario: str) -> dic
         return _metric_value(objective_values.get(name), statistic, scenario)
 
     summary = {}
-    for name in compact["objective_names"]:
-        value = value_for(name)
-        if value is not None:
-            summary[name] = value
-    for summary_name, aliases in _PARETO_COMPARISON_METRICS:
+    comparison_by_name = dict(_PARETO_COMPARISON_METRICS)
+    projection_names = list(dict.fromkeys([*compact["default_projection_names"], *requested_metrics]))
+    for name in projection_names:
+        aliases = comparison_by_name.get(name)
+        if aliases is None:
+            value = value_for(name)
+            if value is not None:
+                summary[name] = value
+            continue
         for alias in aliases:
             value = value_for(alias)
             if value is not None:
-                summary[summary_name] = value
+                summary[name] = value
                 break
     return summary
 
@@ -1934,27 +2082,59 @@ def _pareto_file_signature(path: Path) -> tuple[tuple[str, int | None, int, int]
     return (resolved, inode, int(stat_result.st_mtime_ns), int(stat_result.st_size)), stat_result
 
 
-def _load_compact_pareto(path: Path) -> tuple[dict, os.stat_result]:
-    signature, stat_result = _pareto_file_signature(path)
-    now = time.monotonic()
+def _prune_pareto_list_cache(now: float | None = None) -> None:
+    """Expire compact projections once per list request instead of once per candidate."""
+    cutoff = time.monotonic() if now is None else now
     with _pareto_list_cache_lock:
         for key, entry in list(_pareto_list_cache.items()):
-            if now - entry["loaded_at"] > _PARETO_LIST_CACHE_TTL_SECONDS:
+            if cutoff - entry["loaded_at"] > _PARETO_LIST_CACHE_TTL_SECONDS:
                 _pareto_list_cache.pop(key, None)
+
+
+def _load_compact_pareto(
+    path: Path,
+    requested_metrics: tuple[str, ...] = (),
+    *,
+    include_catalog: bool = False,
+) -> tuple[dict, os.stat_result]:
+    signature, stat_result = _pareto_file_signature(path)
+    now = time.monotonic()
+    requested_set = set(requested_metrics)
+    cached = None
+    with _pareto_list_cache_lock:
         cached = _pareto_list_cache.get(signature)
-        if cached is not None:
+        if cached is not None and now - cached["loaded_at"] > _PARETO_LIST_CACHE_TTL_SECONDS:
+            _pareto_list_cache.pop(signature, None)
+            cached = None
+        if (
+            cached is not None
+            and requested_set.issubset(cached.get("loaded_metrics") or set())
+            and (not include_catalog or bool(cached["compact"].get("available_metric_names")))
+        ):
             _pareto_list_cache.move_to_end(signature)
             return cached["compact"], stat_result
-        data = _read_json(path)
-        final_signature, final_stat = _pareto_file_signature(path)
-        if final_signature != signature:
-            raise RuntimeError(f"{path.name} changed while being read")
-        compact = _compact_pareto_data(data)
+    loaded_metrics = set(cached.get("loaded_metrics") or set()) if cached is not None else set()
+    loaded_metrics.update(requested_set)
+    keep_catalog = include_catalog or bool((cached or {}).get("compact", {}).get("available_metric_names"))
+    data = _read_json(path)
+    final_signature, final_stat = _pareto_file_signature(path)
+    if final_signature != signature:
+        raise RuntimeError(f"{path.name} changed while being read")
+    compact = _compact_pareto_data(
+        data,
+        tuple(sorted(loaded_metrics)),
+        include_catalog=keep_catalog,
+    )
+    with _pareto_list_cache_lock:
         resolved = signature[0]
         for key in list(_pareto_list_cache):
             if key[0] == resolved and key != signature:
                 _pareto_list_cache.pop(key, None)
-        _pareto_list_cache[signature] = {"loaded_at": now, "compact": compact}
+        _pareto_list_cache[signature] = {
+            "loaded_at": now,
+            "compact": compact,
+            "loaded_metrics": loaded_metrics,
+        }
         _pareto_list_cache.move_to_end(signature)
         while len(_pareto_list_cache) > _PARETO_LIST_CACHE_MAX_ENTRIES:
             _pareto_list_cache.popitem(last=False)
@@ -2638,6 +2818,7 @@ class OptimizeV8Worker:
                     pbgui_data_path=pbgui_data_path,
                 )
                 prepared = prepare_pb8_config(launch_config, base_config_path=str(snapshot))
+                _validate_optimizer_overrides(prepared, base_config_path=str(snapshot))
                 _validate_forager_optimize_search_space(prepared)
                 runtime = pb8_runtime_status()
                 if not runtime.get("ready"):
@@ -3122,6 +3303,7 @@ def add_to_queue(body: dict, session: SessionToken = Depends(require_auth)) -> d
                 if not path.is_file() or path.is_symlink():
                     raise HTTPException(status_code=404, detail=f"Config '{name}' not found")
                 prepared = load_pb8_config(path)
+            _validate_optimizer_overrides(prepared, base_config_path=str(_config_file(name)))
             overrides = _load_override_payloads(prepared, _config_dir(name))
         options = _validate_launch_options((body or {}).get("launch_options") or _runtime_options_from_config(prepared))
     except PB8ConfigurationError as exc:
@@ -4081,10 +4263,12 @@ def list_paretos(
     scenario: str = Query("Aggregated"),
     statistic: str = Query("mean"),
     session: SessionToken = Depends(require_auth),
+    metrics: str = Query(""),
 ) -> dict:
     with _result_lock():
         result_dir = _resolve_result_path(result_path)
         selected_statistic = statistic if statistic in _PARETO_STATISTICS else "mean"
+        requested_metrics = tuple(_requested_pareto_metrics(metrics))
         pareto_dir = result_dir / "pareto"
         try:
             paths = sorted(pareto_dir.glob("*.json")) if pareto_dir.is_dir() and not pareto_dir.is_symlink() else []
@@ -4093,10 +4277,20 @@ def list_paretos(
             _log_pareto_skips(result_dir, 1, str(exc))
         candidates = []
         errors = []
+        metric_catalog = []
+        catalog_loaded = False
+        _prune_pareto_list_cache()
         for path in paths:
             try:
-                compact, stat_result = _load_compact_pareto(path)
+                compact, stat_result = _load_compact_pareto(
+                    path,
+                    requested_metrics,
+                    include_catalog=not catalog_loaded,
+                )
                 candidates.append((path, compact, stat_result))
+                if not catalog_loaded:
+                    metric_catalog = list(compact.get("available_metric_names") or [])
+                    catalog_loaded = True
             except (OSError, RuntimeError) as exc:
                 errors.append(f"{path.name}: {exc}")
                 continue
@@ -4114,15 +4308,24 @@ def list_paretos(
                 "path": str(path),
                 "name": path.stem,
                 "modified": datetime.datetime.fromtimestamp(stat_result.st_mtime).isoformat(),
-                "summary": _project_compact_pareto(compact, selected_statistic, selected_scenario),
+                "summary": _project_compact_pareto(
+                    compact,
+                    selected_statistic,
+                    selected_scenario,
+                    requested_metrics,
+                ),
             }
             for path, compact, stat_result in candidates
         ]
         available_set = {
             str(metric)
+            for metric in metric_catalog
+        }
+        available_set.update(
+            str(metric)
             for item in paretos
             for metric in (item.get("summary") or {})
-        }
+        )
         comparison_order = [name for name, _aliases in _PARETO_COMPARISON_METRICS]
         available_metrics = [name for name in comparison_order if name in available_set]
         available_metrics.extend(sorted(available_set - set(available_metrics)))

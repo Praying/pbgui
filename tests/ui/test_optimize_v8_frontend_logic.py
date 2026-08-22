@@ -74,6 +74,15 @@ def test_v7_and_v8_use_one_optimize_template() -> None:
         assert feature in page
 
 
+def test_optimize_log_waits_for_first_evaluation_when_target_is_known() -> None:
+    """A configured iteration target must not format a missing evaluation count."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    renderer = _page_function(page, "renderOptimizeLogDashboard")
+
+    assert "if (progress.target_iters != null && progress.eval != null)" in renderer
+    assert "progress.eval == null ? 'Waiting for evaluations...'" in renderer
+
+
 def test_adapter_preserves_v7_and_round_trips_nested_v8_paths() -> None:
     """The adapter must leave PB7 flat values alone and map PB8 nested bot and bound paths."""
     script = textwrap.dedent(
@@ -841,6 +850,10 @@ def test_multi_strategy_dom_switching_and_save_preserve_every_custom_block() -> 
         _page_function(page, name)
         for name in (
             "normalizeOptimizeEnableOverrides",
+            "optimizeOverrideRequiredStrategy",
+            "filterOptimizeEnableOverridesForStrategy",
+            "getOptimizeTpGridDirection",
+            "syncOptimizeOverrideStrategyCompatibility",
             "normalizeOptimizeFixedParamKeys",
             "getOptimizeStrategyOptions",
             "getOptimizeStrategyBotDefault",
@@ -1082,6 +1095,9 @@ def test_switching_result_sets_clears_stale_paretos_before_loading() -> None:
           paretoMode: 'normal',
           paretoScenario: 'Aggregated',
           paretoStatistic: 'mean',
+          paretoMetricReloadTimer: null,
+          paretoMetricColumnsLoaded: true,
+          paretoMetricColumns: [],
           selectedResultPath: '/old',
           selectedResultName: 'old',
           paretos: [{{path: '/old/pareto.json'}}],
@@ -1128,6 +1144,30 @@ def test_installed_override_helpers_and_backend_result_flags_are_visible() -> No
           assert.match(html, new RegExp('data-pb8-enable-override="' + helper + '"'));
         }
         assert.match(html, /mirror_short_from_long" checked/);
+        """
+    )
+    _run_node(script)
+
+
+def test_optimizer_overrides_are_filtered_for_the_active_strategy() -> None:
+    """Strategy changes must remove stale native optimizer overrides before save or queue."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n".join(
+        _page_function(page, name)
+        for name in (
+            "normalizeOptimizeEnableOverrides",
+            "optimizeOverrideRequiredStrategy",
+            "filterOptimizeEnableOverridesForStrategy",
+        )
+    )
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        {functions}
+        const overrides = ['lossless_close_trailing', 'forward_tp_grid', 'mirror_short_from_long'];
+        assert.deepEqual(filterOptimizeEnableOverridesForStrategy(overrides, 'ema_anchor'), ['mirror_short_from_long']);
+        assert.deepEqual(filterOptimizeEnableOverridesForStrategy(overrides, 'trailing_martingale'), ['lossless_close_trailing', 'mirror_short_from_long']);
+        assert.deepEqual(filterOptimizeEnableOverridesForStrategy(overrides, 'trailing_grid_v7'), ['forward_tp_grid', 'mirror_short_from_long']);
         """
     )
     _run_node(script)
@@ -1279,6 +1319,22 @@ def test_pareto_metric_columns_are_configurable_and_never_empty() -> None:
         """
     )
     _run_node(script)
+
+
+def test_pareto_metric_catalog_is_lazy_batched_and_dom_cached() -> None:
+    """All metric names are selectable without rebuilding the picker or eagerly loading values."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    picker = _page_function(page, "renderParetoColumnPicker")
+    scheduler = _page_function(page, "scheduleParetoMetricReload")
+    loader = _page_function(page, "loadParetos")
+
+    assert "options._paretoCatalogSignature !== catalogSignature" in picker
+    assert "document.createDocumentFragment()" in picker
+    assert "options.querySelectorAll('input[data-pareto-metric]')" in picker
+    assert "}, 250);" in scheduler
+    assert "requestedMetrics.join(',')" in loader
+    assert "metrics=" in loader
+    assert '>All (slower)</button>' in page
 
 
 def test_pareto_fallback_statistics_include_median_and_render_commits_once() -> None:
