@@ -148,13 +148,13 @@ describe('WidgetBalance', () => {
     expect(tds[1]!.text()).toBe('2025-01-01 10:00:00');
     expect(tds[2]!.text()).toBe('1000.00');
     expect(tds[3]!.text()).toBe('+12.50');
-    expect(tds[3]!.attributes('style')).toContain('rgb(143, 181, 147)'); /* #8fb593 */
+    expect(tds[3]!.attributes('style')).toContain('rgb(70, 200, 143)'); /* #46c88f */
     expect(tds[4]!.find('.db-twe-lbl').text()).toBe('95.00');
     expect(tds[4]!.find('.db-twe-fill').attributes('style')).toContain('31.7%');
     /* we 250 → 83.3% bar in red (tweBarPct cap only at 300; tweColor <100/<200) */
     const tds2 = trs[1]!.findAll('td');
     expect(tds2[4]!.find('.db-twe-fill').attributes('style')).toContain('83.3%');
-    expect(tds2[4]!.find('.db-twe-lbl').attributes('style')).toContain('rgb(197, 142, 138)'); /* #c58e8a */
+    expect(tds2[4]!.find('.db-twe-lbl').attributes('style')).toContain('rgb(229, 97, 92)'); /* #e5615c */
   });
 
   it('shows the no-data state for empty rows (render.js:557-564)', async () => {
@@ -222,7 +222,7 @@ describe('WidgetBalance', () => {
     /* live source colors the status line green (editor:1149, _setSourceStatus) */
     const status = wrapper.get('.db-status');
     expect(status.text()).toBe('Live: now');
-    expect(status.attributes('style')).toContain('rgb(143, 181, 147)'); /* #8fb593 */
+    expect(status.attributes('style')).toContain('rgb(70, 200, 143)'); /* #46c88f */
   });
 
   it('does not poll for ALL users (editor:1128)', async () => {

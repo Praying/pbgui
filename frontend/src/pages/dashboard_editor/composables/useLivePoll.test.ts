@@ -147,7 +147,7 @@ describe('useLivePositions (editor _connectLivePos:1084-1119)', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     expect(poll.statusText.value).toBe('Live: now');
-    expect(poll.statusColor.value).toBe('#8fb593');
+    expect(poll.statusColor.value).toBe('#46c88f');
   });
 
   it('clears the green color for mixed/db sources (legacy _setSourceStatus)', async () => {
@@ -266,7 +266,7 @@ describe('useLivePositions (editor _connectLivePos:1084-1119)', () => {
     poll.connect('1_1', ['u1']);
     await vi.advanceTimersByTimeAsync(0);
     expect(poll.statusText.value).toBe('Live: now');
-    expect(poll.statusColor.value).toBe('#8fb593');
+    expect(poll.statusColor.value).toBe('#46c88f');
 
     await vi.advanceTimersByTimeAsync(5000); // t=5s tick: ages the text, then the failed fetch runs
     expect(poll.statusColor.value).toBe(''); // color cleared…
@@ -376,7 +376,7 @@ describe('useLiveBalance (editor _connectLiveBal:1121-1159)', () => {
 
     expect(onData).toHaveBeenCalledWith(liveRows, 'live');
     expect(poll.statusText.value).toBe('Live: now');
-    expect(poll.statusColor.value).toBe('#8fb593');
+    expect(poll.statusColor.value).toBe('#46c88f');
   });
 
   it('ignores db-source responses (no rebuild, no status update) until the next tick', async () => {
@@ -417,7 +417,7 @@ describe('useLiveBalance (editor _connectLiveBal:1121-1159)', () => {
     await vi.advanceTimersByTimeAsync(0); // json() is invoked by the composable → resolve is armed
     d.resolve({ rows: [], source: 'live' });
     await vi.advanceTimersByTimeAsync(0);
-    expect(poll.statusColor.value).toBe('#8fb593');
+    expect(poll.statusColor.value).toBe('#46c88f');
 
     fetchFn.mockResolvedValueOnce({ ok: false, status: 502, json: () => Promise.resolve({}) });
     await vi.advanceTimersByTimeAsync(5000);

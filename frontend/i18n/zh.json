@@ -1347,7 +1347,7 @@
   "misc.apikeys.back": "返回",
   "misc.apikeys.backups": "备份",
   "misc.apikeys.backupsDesc": "每次保存前都会自动创建备份。存储于 <code>data/api-keys/</code>。恢复前会创建恢复前快照。",
-  "misc.apikeys.betterAlternativeDesc": "💡 <strong style=\"color:#68d391;\">完整股票永续历史的更佳替代方案：</strong> PBGui 的 <strong>Market Data</strong> 模块使用 <strong>Tiingo</strong>（IEX/FX 数据源）构建全面的本地 1m OHLCV 存档——比下面的提供商快得多且更完整。参见 <em>Setup → Market Data → Build best 1m OHLCV</em>。",
+  "misc.apikeys.betterAlternativeDesc": "💡 <strong style=\"color:#46c88f;\">完整股票永续历史的更佳替代方案：</strong> PBGui 的 <strong>Market Data</strong> 模块使用 <strong>Tiingo</strong>（IEX/FX 数据源）构建全面的本地 1m OHLCV 存档——比下面的提供商快得多且更完整。参见 <em>Setup → Market Data → Build best 1m OHLCV</em>。",
   "misc.apikeys.byPrefix": "由 {name}",
   "misc.apikeys.bybitApiKeyExpiry": "Bybit API 密钥到期",
   "misc.apikeys.bybitExpiryCheck": "Bybit 到期检查",

@@ -280,7 +280,7 @@ body {
 .btn.primary {
   background: var(--info);
   border-color: var(--accent);
-  color: #fff; /* white on colored bg */
+  color: #f2f5fb; /* white on colored bg */
 }
 .btn.primary:hover { background: var(--accent); }
 .btn.danger {
@@ -383,7 +383,7 @@ body {
   display: none; position: absolute; top: 100%; left: 0;
   background: var(--bg-card); border: 1px solid var(--text-dim); border-radius: 4px;
   min-width: 180px; max-height: 260px; overflow: hidden;
-  z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 200; box-shadow: 0 4px 12px rgba(5, 8, 14,0.5);
   margin-top: 2px; width: 100%;
 }
 .msel-drop.open { display: block; }

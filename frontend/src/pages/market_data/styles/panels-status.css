@@ -85,6 +85,6 @@
   white-space: pre-wrap;
   max-width: 520px;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(5, 8, 14, 0.5);
   pointer-events: none;
 }

@@ -145,7 +145,7 @@ body {
   white-space: pre-wrap;
   max-width: 480px;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(0,0,0,.5);
+  box-shadow: 0 4px 12px rgba(5, 8, 14,.5);
   pointer-events: none;
 }
 .form-group input, .form-group select, .form-group textarea {
@@ -300,8 +300,8 @@ textarea.json-invalid:focus {
   display: none; transition: opacity 0.3s;
 }
 .toast-ok   { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; }
-.toast-err  { background: var(--red); color: #fff /* white on colored bg */; }
-.toast-info { background: var(--blue); color: #fff /* white on colored bg */; }
+.toast-err  { background: var(--red); color: #f2f5fb /* white on colored bg */; }
+.toast-info { background: var(--blue); color: #f2f5fb /* white on colored bg */; }
 
 /* ─── Spinner ──────────────────────────────────────────────── */
 .spinner {
@@ -415,21 +415,21 @@ textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
   position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; right: 0;
   max-height: 220px; overflow-y: auto; padding: 4px;
   background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.48);
+  box-shadow: 0 12px 30px rgba(5, 8, 14, 0.48);
 }
 .user-combobox-option {
   display: block; width: 100%; padding: 7px 9px; color: var(--text);
   background: transparent; border: 0; border-radius: 4px; text-align: left; cursor: pointer;
 }
 .user-combobox-option:hover,
-.user-combobox-option.active { background: rgb(var(--accent-rgb) / 0.14); color: #fff /* white on colored bg */; }
+.user-combobox-option.active { background: rgb(var(--accent-rgb) / 0.14); color: #f2f5fb /* white on colored bg */; }
 .user-combobox-empty { padding: 8px 9px; color: var(--text-dim); font-size: var(--fs-xs); }
 
 /* Log panel (container only — content from LogViewerPanel) */
 #log-panel {
   display: none; position: fixed; top: 52px; right: 0; bottom: 0;
   background: var(--bg2); border-left: 1px solid var(--border);
-  box-shadow: -6px 0 24px rgba(0, 0, 0, 0.5);
+  box-shadow: -6px 0 24px rgba(5, 8, 14, 0.5);
   z-index: 150; flex-direction: column; overflow: hidden; width: min(560px, 92vw);
 }
 #log-panel.visible { display: flex; }

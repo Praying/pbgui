@@ -16,11 +16,11 @@
   --bg:var(--bg-page);
   --bg2:var(--bg-panel);
   --bg3:var(--bg-elevated);
-  --bg4: #171520;
+  --bg4: #131826;
   --border:var(--border-default);
   --text:var(--text-primary);
   --text-dim:var(--text-secondary);
-  --accent:#8ba7c2;
+  --accent:#72a0ee;
   --blue:var(--accent);
   --green:var(--success);
   --orange:var(--warning);
@@ -228,7 +228,7 @@ a:hover { text-decoration: underline; }
   cursor: help;
   text-decoration-line: underline;
   text-decoration-style: dotted;
-  text-decoration-color: #756d81;
+  text-decoration-color: #717b8e;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
 }
@@ -241,9 +241,9 @@ button[data-tip] {
   display: none;
   position: fixed;
   z-index: 9999;
-  background: #23202c;
-  color: var(--text-primary, #e9e5ee);
-  border: 1px solid #35313d;
+  background: #1b2231;
+  color: var(--text-primary, #e8ecf4);
+  border: 1px solid #333f5c;
   border-radius: 5px;
   font-size: var(--fs-xs);
   font-weight: normal;
@@ -251,7 +251,7 @@ button[data-tip] {
   white-space: pre-wrap;
   max-width: 480px;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(0,0,0,.5);
+  box-shadow: 0 4px 12px rgba(5, 8, 14,.5);
   pointer-events: none;
 }
 
@@ -299,7 +299,7 @@ button[data-tip] {
   border-radius: 50%;
   background: #fff;
   transition: transform .18s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  box-shadow: 0 1px 3px rgba(5, 8, 14,0.35);
 }
 
 .inline-switch input:checked + .switch-track {
@@ -448,7 +448,7 @@ button[data-tip] {
 
 .status-chip.good { background: rgb(var(--success-rgb, 63 186 111) / .15); color: var(--green); }
 .status-chip.warn { background: rgb(var(--warning-rgb, 227 164 74) / .15); color: var(--orange); }
-.status-chip.bad { background: rgb(var(--danger-rgb, 229 96 92) / .15); color: var(--red); }
+.status-chip.bad { background: rgb(var(--danger-rgb, 229 97 92) / .15); color: var(--red); }
 
 .sb-section,
 .sb-btn,
@@ -482,7 +482,7 @@ button[data-tip] {
 .stage-btn.active,
 .deep-tab-btn.active,
 .btn.primary {
-  color: #fff;
+  color: #f2f5fb;
   background: var(--blue);
   border-color: var(--blue);
 }
@@ -701,7 +701,7 @@ input[type="range"]::-moz-range-thumb {
 .load-status-progress > div {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--blue), #a9c0d6);
+  background: linear-gradient(90deg, var(--blue), #96b9f4);
   transition: width .2s ease;
 }
 
@@ -720,19 +720,19 @@ input[type="range"]::-moz-range-thumb {
 .message.warn {
   background: rgb(var(--warning-rgb, 227 164 74) / .08);
   border-color: rgb(var(--warning-rgb, 227 164 74) / .3);
-  color: #dbc4a2;
+  color: #ecc381;
 }
 
 .message.info {
   background: rgb(var(--accent-rgb, 91 156 245) / .08);
   border-color: rgb(var(--accent-rgb, 91 156 245) / .3);
-  color: #a9c0d6;
+  color: #96b9f4;
 }
 
 .message.bad {
-  background: rgb(var(--danger-rgb, 229 96 92) / .08);
-  border-color: rgb(var(--danger-rgb, 229 96 92) / .3);
-  color: #daadaa;
+  background: rgb(var(--danger-rgb, 229 97 92) / .08);
+  border-color: rgb(var(--danger-rgb, 229 97 92) / .3);
+  color: #ee8d84;
 }
 
 .stack {
@@ -901,7 +901,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .chart-wrap:fullscreen {
-  background: var(--bg-page, #16141a);
+  background: var(--bg-page, #10141d);
   display: flex;
   flex-direction: column;
 }
@@ -935,7 +935,7 @@ input[type="range"]::-moz-range-thumb {
 .projection-panel-title {
   margin: 0 0 8px 0;
   text-align: center;
-  color: #a59eaf;
+  color: #a3adc2;
   font-size: var(--fs-sm);
   font-weight: 600;
 }
@@ -989,7 +989,7 @@ input[type="range"]::-moz-range-thumb {
 .overlay-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.62);
+  background: rgba(5, 8, 14,.62);
   display: none;
   align-items: center;
   justify-content: center;
@@ -1030,7 +1030,7 @@ input[type="range"]::-moz-range-thumb {
   width: 100%;
   height: 100%;
   border: 0;
-  background: #fff;
+  background: #f2f5fb;
 }
 
 .mono { font-family: var(--mono); }
@@ -2581,63 +2581,63 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
 
   function darkPlotLayout(layout) {
     var base = Object.assign({}, layout || {});
-    base.paper_bgcolor = '#16141a';
-    base.plot_bgcolor = '#16141a';
-    base.font = Object.assign({ color: '#f2eff5' }, base.font || {});
-    base.legend = Object.assign({ font: { color: '#f2eff5' } }, base.legend || {});
+    base.paper_bgcolor = '#10141d';
+    base.plot_bgcolor = '#10141d';
+    base.font = Object.assign({ color: '#e8ecf4' }, base.font || {});
+    base.legend = Object.assign({ font: { color: '#e8ecf4' } }, base.legend || {});
     base.margin = Object.assign({ l: 80, r: 40, t: 60, b: 70 }, base.margin || {});
     if (Array.isArray(base.annotations)) {
       base.annotations = base.annotations.map(function(annotation) {
         return Object.assign({}, annotation || {}, {
-          font: Object.assign({ color: '#f2eff5' }, (annotation && annotation.font) || {})
+          font: Object.assign({ color: '#e8ecf4' }, (annotation && annotation.font) || {})
         });
       });
     }
     if (base.xaxis) {
       base.xaxis = Object.assign({
-        color: '#f2eff5',
+        color: '#e8ecf4',
         gridcolor: 'rgba(255,255,255,0.12)',
         zerolinecolor: 'rgba(255,255,255,0.18)'
       }, base.xaxis);
     }
     if (base.yaxis) {
       base.yaxis = Object.assign({
-        color: '#f2eff5',
+        color: '#e8ecf4',
         gridcolor: 'rgba(255,255,255,0.12)',
         zerolinecolor: 'rgba(255,255,255,0.18)'
       }, base.yaxis);
     }
     if (base.scene) {
       base.scene = Object.assign({}, base.scene, {
-        bgcolor: '#16141a',
-        xaxis: Object.assign({ backgroundcolor: '#16141a', gridcolor: 'rgba(255,255,255,0.12)', color: '#f2eff5' }, (base.scene || {}).xaxis || {}),
-        yaxis: Object.assign({ backgroundcolor: '#16141a', gridcolor: 'rgba(255,255,255,0.12)', color: '#f2eff5' }, (base.scene || {}).yaxis || {}),
-        zaxis: Object.assign({ backgroundcolor: '#16141a', gridcolor: 'rgba(255,255,255,0.12)', color: '#f2eff5' }, (base.scene || {}).zaxis || {})
+        bgcolor: '#10141d',
+        xaxis: Object.assign({ backgroundcolor: '#10141d', gridcolor: 'rgba(255,255,255,0.12)', color: '#e8ecf4' }, (base.scene || {}).xaxis || {}),
+        yaxis: Object.assign({ backgroundcolor: '#10141d', gridcolor: 'rgba(255,255,255,0.12)', color: '#e8ecf4' }, (base.scene || {}).yaxis || {}),
+        zaxis: Object.assign({ backgroundcolor: '#10141d', gridcolor: 'rgba(255,255,255,0.12)', color: '#e8ecf4' }, (base.scene || {}).zaxis || {})
       });
     }
     if (base.polar) {
       base.polar = Object.assign({}, base.polar, {
-        bgcolor: '#16141a',
+        bgcolor: '#10141d',
         radialaxis: Object.assign({
-          color: '#f2eff5',
+          color: '#e8ecf4',
           gridcolor: 'rgba(255,255,255,0.16)',
           linecolor: 'rgba(255,255,255,0.22)',
-          tickfont: { color: '#f2eff5' }
+          tickfont: { color: '#e8ecf4' }
         }, (base.polar || {}).radialaxis || {}),
         angularaxis: Object.assign({
-          color: '#f2eff5',
+          color: '#e8ecf4',
           gridcolor: 'rgba(255,255,255,0.16)',
           linecolor: 'rgba(255,255,255,0.22)',
-          tickfont: { color: '#f2eff5' }
+          tickfont: { color: '#e8ecf4' }
         }, (base.polar || {}).angularaxis || {})
       });
     }
     if (base.coloraxis && base.coloraxis.colorbar) {
       base.coloraxis = Object.assign({}, base.coloraxis, {
         colorbar: Object.assign({}, base.coloraxis.colorbar, {
-          tickfont: Object.assign({ color: '#f2eff5' }, (base.coloraxis.colorbar || {}).tickfont || {}),
+          tickfont: Object.assign({ color: '#e8ecf4' }, (base.coloraxis.colorbar || {}).tickfont || {}),
           title: Object.assign({}, (base.coloraxis.colorbar || {}).title || {}, {
-            font: Object.assign({ color: '#f2eff5' }, (((base.coloraxis || {}).colorbar || {}).title || {}).font || {})
+            font: Object.assign({ color: '#e8ecf4' }, (((base.coloraxis || {}).colorbar || {}).title || {}).font || {})
           })
         })
       });
@@ -2659,7 +2659,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
       xanchor: 'center',
       y: 0.98,
       yanchor: 'top',
-      font: { color: '#a59eaf', size: 13 }
+      font: { color: '#a3adc2', size: 13 }
     };
     if (base.xaxis && base.xaxis.title) {
       base.xaxis.title = Object.assign({}, base.xaxis.title, { standoff: 10 });
@@ -2673,7 +2673,7 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
           x: 1.01,
           thickness: 14,
           len: 0.78,
-          tickfont: Object.assign({ size: 10, color: '#f2eff5' }, (base.coloraxis.colorbar || {}).tickfont || {})
+          tickfont: Object.assign({ size: 10, color: '#e8ecf4' }, (base.coloraxis.colorbar || {}).tickfont || {})
         })
       });
     }

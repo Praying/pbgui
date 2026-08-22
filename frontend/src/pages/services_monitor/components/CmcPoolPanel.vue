@@ -586,6 +586,6 @@ async function deleteSelectedCmcKey(): Promise<void> {
 .form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
 .form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
 .form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
-.form-btn.save:hover { background: var(--accent-deep); color: #fff; }
+.form-btn.save:hover { background: var(--accent-deep); color: #f2f5fb; }
 .cmc-pool-toolbar .form-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 </style>

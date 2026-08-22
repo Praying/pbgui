@@ -45,12 +45,12 @@ export function fmtAge(ts: number | string | null | undefined): string {
 /**
  * Legacy ageCol: fresh <60s, stale <5m, old beyond, grey for missing.
  * JS-computed color strings (inline style bindings), so these stay literal
- * Morandi palette constants (var(--success)/--warning/--danger/--text-disabled).
+ * Palette constants (var(--success)/--warning/--danger/--text-disabled).
  */
 export function ageCol(ts: number | string | null | undefined): string {
   const s = ageSeconds(ts);
-  if (s == null) return '#524b60';
-  return s < 60 ? '#8fb593' : s < 300 ? '#c4a67e' : '#c58e8a';
+  if (s == null) return '#4d5c82';
+  return s < 60 ? '#46c88f' : s < 300 ? '#e0a458' : '#e5615c';
 }
 </script>
 
@@ -249,7 +249,7 @@ defineExpose({
   background: var(--bg-page);
   border: 1px solid var(--border-default);
   border-radius: 10px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 8px 40px rgba(5, 8, 14, 0.7);
   flex-direction: column;
   resize: both;
   overflow: hidden;

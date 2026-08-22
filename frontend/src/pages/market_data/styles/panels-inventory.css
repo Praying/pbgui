@@ -29,7 +29,7 @@
   border-color: rgb(var(--accent-rgb) / 0.22);
   color: var(--accent-soft);
 }
-.inventory-subsection-btn:hover { background: rgb(var(--accent-rgb) / 0.16); border-color: rgb(var(--accent-rgb) / 0.45); color: #fff; }
+.inventory-subsection-btn:hover { background: rgb(var(--accent-rgb) / 0.16); border-color: rgb(var(--accent-rgb) / 0.45); color: #f2f5fb; }
 .inventory-subsection-btn.active {
   background: rgb(var(--success-rgb) / 0.14);
   border-color: rgb(var(--success-rgb) / 0.75);
@@ -54,7 +54,7 @@
   background: var(--bg-page);
   border: 1px solid var(--border-default);
   border-radius: 12px;
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9);
   overflow: hidden;
 }
 .inventory-delete-date-body { display: grid; gap: var(--sp-md); padding: var(--sp-md); }

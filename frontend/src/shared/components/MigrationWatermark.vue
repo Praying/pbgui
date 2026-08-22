@@ -21,7 +21,7 @@ const visible = import.meta.env.VITE_MIGRATION_WATERMARK === 'on';
   font-size: 9vw;
   font-weight: 700;
   letter-spacing: 0.35em;
-  color: #ffffff;
+  color: #f2f5fb;
   opacity: 0.06;
   transform: rotate(-30deg);
   white-space: nowrap;

@@ -27,7 +27,7 @@ a:hover { text-decoration: underline; }
 /* ── Connection banner (:36-40) ─────────────────── */
 #conn-banner { padding: var(--sp-sm) 16px; text-align: center; font-size: var(--fs-sm); font-weight: 600; transition: all .3s; }
 .conn-ok      { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; }
-.conn-lost    { background: var(--red);   color: #fff /* white on colored bg */; }
+.conn-lost    { background: var(--red);   color: #f2f5fb /* white on colored bg */; }
 .conn-waiting { background: var(--orange); color: var(--accent-contrast) /* dark ink on colored bg */; }
 
 /* ── Page layout (:42-56 + backtest_shell.css:31-36) ── */
@@ -45,7 +45,7 @@ a:hover { text-decoration: underline; }
 /* PINNED (default): the panel fills the viewport; only the scroll area scrolls */
 #panel-results.active:not(.unpinned) { height: 100%; }
 #results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border);
-                     box-shadow: 0 4px 12px rgba(0,0,0,.6); margin-bottom: var(--sp-md); }
+                     box-shadow: 0 4px 12px rgba(5, 8, 14,.6); margin-bottom: var(--sp-md); }
 #results-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md);
                    flex-wrap: wrap; padding-top: var(--sp-sm); }
 #results-list-wrap { height: 25vh; min-height: 80px; overflow-y: auto;
@@ -68,7 +68,7 @@ a:hover { text-decoration: underline; }
 #archive-results-view { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 #archive-results-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: var(--sp-lg); }
 #archive-results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border);
-                             box-shadow: 0 4px 12px rgba(0,0,0,.6); margin-bottom: var(--sp-md); }
+                             box-shadow: 0 4px 12px rgba(5, 8, 14,.6); margin-bottom: var(--sp-md); }
 #archive-layout-status { font-size: var(--fs-sm); color: var(--text-dim); padding-top: var(--sp-sm); }
 #archive-results-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md);
                            flex-wrap: wrap; padding-top: var(--sp-sm); }
@@ -87,7 +87,7 @@ a:hover { text-decoration: underline; }
 #legacy-results-view { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 #legacy-results-scroll { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: var(--sp-lg); }
 #legacy-results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border);
-                            box-shadow: 0 4px 12px rgba(0,0,0,.6); margin-bottom: var(--sp-md); }
+                            box-shadow: 0 4px 12px rgba(5, 8, 14,.6); margin-bottom: var(--sp-md); }
 #legacy-results-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md);
                           margin-top: var(--sp-sm); flex-wrap: wrap; }
 #legacy-results-list-wrap { height: 25vh; min-height: 80px; overflow-y: auto;
@@ -159,9 +159,9 @@ a:hover { text-decoration: underline; }
 .modal-btn { height: var(--btn-h); padding: 0 16px; border-radius: 4px; font-size: var(--fs-base);
              cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
 .modal-btn:hover { background: rgba(255,255,255,.08); }
-.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #fff /* white on colored bg */; }
+.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #f2f5fb /* white on colored bg */; }
 .modal-btn-primary:hover { background: var(--accent-deep); }
-.modal-btn-danger { background: var(--red); border-color: var(--red); color: #fff /* white on colored bg */; }
+.modal-btn-danger { background: var(--red); border-color: var(--red); color: #f2f5fb /* white on colored bg */; }
 .modal-btn:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ── Toast (:103-107) ────────────────────────────── */
@@ -170,8 +170,8 @@ a:hover { text-decoration: underline; }
 .toast-msg { padding: 10px 16px; border-radius: 6px; font-size: var(--fs-sm); font-weight: 500;
              pointer-events: auto; animation: bt-fade-in .2s; }
 .toast-ok   { background: var(--green); color: var(--accent-contrast) /* dark ink on colored bg */; }
-.toast-err  { background: var(--red); color: #fff /* white on colored bg */; }
-.toast-info { background: var(--blue); color: #fff /* white on colored bg */; }
+.toast-err  { background: var(--red); color: #f2f5fb /* white on colored bg */; }
+.toast-info { background: var(--blue); color: #f2f5fb /* white on colored bg */; }
 @keyframes bt-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 /* ── Archive git modals (M-v7-12, legacy :396-406) ── */
@@ -601,7 +601,7 @@ body {
 }
 
 .config-editor-section:nth-of-type(5)::before {
-  background: linear-gradient(90deg, rgb(164 147 196 / 0.76), transparent 68%);
+  background: linear-gradient(90deg, rgb(155 142 222 / 0.76), transparent 68%);
 }
 
 .config-editor-section-head {

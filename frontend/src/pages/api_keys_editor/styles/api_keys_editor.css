@@ -182,7 +182,7 @@ body {
 }
 .badge-exchange.binance { color: #c9a961; }
 .badge-exchange.bybit { color: #c79a6b; }
-.badge-exchange.bitget { color: #7fb3a3; }
+.badge-exchange.bitget { color: #6fbc9f; }
 .badge-exchange.hyperliquid { color: var(--success); }
 .badge-exchange.okx { color: var(--text-secondary); }
 .badge-exchange.gateio { color: var(--accent); }
@@ -421,8 +421,8 @@ body {
   max-width: 400px;
 }
 .toast.show { opacity: 1; }
-.toast.success { background: var(--success); color: #fff /* white on colored bg */; }
-.toast.info { background: var(--accent-deep); color: #fff /* white on colored bg */; }
+.toast.success { background: var(--success); color: #f2f5fb /* white on colored bg */; }
+.toast.info { background: var(--accent-deep); color: #f2f5fb /* white on colored bg */; }
 
 /* ── Alert modal (error / warning / result) ────────────────────── */
 .alert-modal-overlay {

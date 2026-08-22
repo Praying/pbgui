@@ -2,11 +2,11 @@
   --bg: var(--bg-page);
   --bg2: var(--bg-panel);
   --bg3: var(--bg-elevated);
-  --border: #333640;
+  --border: #333f5c;
   --text: var(--text-primary);
   --text-dim: var(--text-secondary);
   --green: var(--success);
-  --orange: #ff8c00;
+  --orange: #e0a458;
   --red: var(--danger);
   --blue: #1f77ff;
   --accent: var(--accent);
@@ -74,7 +74,7 @@ button, input, select, textarea { font-family: var(--font); }
 .bt-editor-note { color: var(--text-dim); font-size: var(--fs-xs); margin-top: var(--sp-xs); line-height: 1.4; }
 .section-title { font-size: var(--fs-md); font-weight: 600; margin: var(--sp-lg) 0 var(--sp-sm); padding-bottom: var(--sp-xs); border-bottom: 1px solid var(--border); }
 
-#results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,.6); margin-bottom: var(--sp-md); }
+#results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border); box-shadow: 0 4px 12px rgba(5, 8, 14,.6); margin-bottom: var(--sp-md); }
 #results-toolbar { display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-md); flex-wrap: wrap; padding-top: var(--sp-sm); }
 #results-list-wrap { height: 25vh; min-height: 80px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; position: relative; }
 #results-resize-handle { height: 6px; cursor: row-resize; background: var(--border); border-radius: 0 0 4px 4px; display: flex; align-items: center; justify-content: center; user-select: none; }
@@ -88,7 +88,7 @@ button, input, select, textarea { font-family: var(--font); }
 .metric-label { font-size: var(--fs-xs); color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; }
 .metric-value { font-size: var(--fs-lg); font-weight: 600; margin-top: 2px; overflow-wrap: anywhere; }
 
-#modal-root { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.6); align-items: center; justify-content: center; }
+#modal-root { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(5, 8, 14,.6); align-items: center; justify-content: center; }
 #modal-root.open { display: flex; }
 .modal-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: var(--sp-lg); min-width: 160px; max-width: 760px; max-height: 85vh; overflow: hidden; resize: both; box-sizing: border-box; display: flex; flex-direction: column; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: var(--sp-sm); border-bottom: 1px solid var(--border); margin-bottom: var(--sp-md); }
@@ -98,13 +98,13 @@ button, input, select, textarea { font-family: var(--font); }
 .modal-body { flex: 1; overflow: auto; min-height: 0; }
 .modal-actions { display: flex; gap: var(--sp-sm); justify-content: flex-end; margin-top: var(--sp-lg); }
 .modal-btn { height: var(--btn-h); padding: 0 16px; border-radius: 4px; font-size: var(--fs-base); cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
-.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #f2f5fb; }
 
 #toast { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: var(--sp-sm); pointer-events: none; }
 .toast-msg { padding: 10px 16px; border-radius: 6px; font-size: var(--fs-sm); font-weight: 500; pointer-events: auto; }
-.toast-ok { background: var(--green); color: #000; }
-.toast-err { background: var(--red); color: #fff; }
-.toast-info { background: var(--blue); color: #fff; }
+.toast-ok { background: var(--green); color: #0b1526; }
+.toast-err { background: var(--red); color: #f2f5fb; }
+.toast-info { background: var(--blue); color: #f2f5fb; }
 
 #log-panel { position: fixed; bottom: 0; right: 0; width: 50%; height: 40vh; min-width: 240px; min-height: 150px; background: var(--bg2); border: 2px solid var(--accent); z-index: 500; display: none; flex-direction: column; overflow: hidden; border-radius: 6px 6px 0 0; }
 #log-panel.visible { display: flex; }

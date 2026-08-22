@@ -269,10 +269,10 @@ const hasChart = computed(() => candles.value.length > 0);
 
 /* the legend (render.js:3710-3728) */
 const legend = computed(() => [
-  { style: 'do-leg-solid', color: '#a59eaf', label: dashT('dash.entry', 'Entry') },
-  { style: 'do-leg-dotted', color: '#a59eaf', label: dashT('dash.price', 'Price') },
-  { style: 'do-leg-dashed', color: '#8fb593', label: dashT('dash.buyOrder', 'Buy Order') },
-  { style: 'do-leg-dashed', color: '#c58e8a', label: dashT('dash.sellOrder', 'Sell Order') },
+  { style: 'do-leg-solid', color: '#a3adc2', label: dashT('dash.entry', 'Entry') },
+  { style: 'do-leg-dotted', color: '#a3adc2', label: dashT('dash.price', 'Price') },
+  { style: 'do-leg-dashed', color: '#46c88f', label: dashT('dash.buyOrder', 'Buy Order') },
+  { style: 'do-leg-dashed', color: '#e5615c', label: dashT('dash.sellOrder', 'Sell Order') },
 ]);
 
 const icon = WIDGET_META.ORDERS.icon;

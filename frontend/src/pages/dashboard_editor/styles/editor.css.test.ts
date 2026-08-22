@@ -18,8 +18,9 @@ const editorMain = readFileSync(join(import.meta.dirname, '..', 'main.ts'), 'utf
    then at the palette-consolidation pass (rgba literals routed through the
    semantic -rgb token channels), then at the Morandi-palette pass (last
    escaped hex literals — #1a365d/#90cdf4/#2d2810/rgba(55,65,81) — routed
-   to accent/warning/bg-elevated tokens). */
-const FROZEN_EDITOR_CSS_SHA256 = 'e9205e8633685ffe497567c7c5e5856255f64a86c641918e0536b922204c9309';
+   to accent/warning/bg-elevated tokens), then at the deep-space-palette
+   pass (value-level swap onto the blue-slate terminal palette). */
+const FROZEN_EDITOR_CSS_SHA256 = '93b228679e9ada2ce3bb8420893524c08ea1b065bc123b448667d698e18f9468';
 
 function normalize(text: string): string {
   /* Comments are stripped; only the line breaks are removed — the legacy

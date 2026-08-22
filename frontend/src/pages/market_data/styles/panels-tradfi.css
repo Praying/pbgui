@@ -268,7 +268,7 @@
   background: var(--bg-page);
   border: 1px solid rgb(var(--accent-rgb) / 0.26);
   border-radius: 12px;
-  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 22px 72px rgba(5, 8, 14, 0.55);
   z-index: 2600;
 }
 

@@ -326,9 +326,9 @@ onUnmounted(() => {
   color: var(--danger);
 }
 .lvp-lvl-btn[data-lvl='CRITICAL'].on {
-  background: color-mix(in srgb, #a493c4 28%, var(--bg-card));
-  border-color: #a493c4;
-  color: #a493c4;
+  background: color-mix(in srgb, #9b8ede 28%, var(--bg-card));
+  border-color: #9b8ede;
+  color: #9b8ede;
 }
 .lvp-ctrl-btn {
   padding: 3px 9px;
@@ -384,7 +384,7 @@ onUnmounted(() => {
   color: var(--danger);
 }
 .lvp-log-critical {
-  color: #a493c4;
+  color: #9b8ede;
   font-weight: 600;
 }
 .lvp-level-hidden {
@@ -457,9 +457,9 @@ onUnmounted(() => {
 }
 
 .lvp-lvl-btn[data-lvl='CRITICAL'].on {
-  border-color: rgb(164 147 196 / 0.4);
-  background: rgb(164 147 196 / 0.18);
-  color: #a493c4;
+  border-color: rgb(155 142 222 / 0.4);
+  background: rgb(155 142 222 / 0.18);
+  color: #9b8ede;
 }
 
 .lvp-ctrl-btn {
@@ -509,7 +509,7 @@ onUnmounted(() => {
   background:
     linear-gradient(180deg, rgb(var(--bg-page-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98)),
     var(--bg-page);
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24), 0 1px rgba(255, 255, 255, 0.025) inset;
+  box-shadow: 0 16px 34px rgba(5, 8, 14, 0.24), 0 1px rgba(255, 255, 255, 0.025) inset;
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.55;
@@ -547,8 +547,8 @@ onUnmounted(() => {
 }
 
 .lvp-log-critical {
-  border-left-color: rgb(164 147 196 / 0.72) !important;
-  color: #a493c4;
+  border-left-color: rgb(155 142 222 / 0.72) !important;
+  color: #9b8ede;
   font-weight: 700;
 }
 

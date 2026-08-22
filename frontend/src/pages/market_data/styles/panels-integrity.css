@@ -22,7 +22,7 @@
   background: var(--bg-page);
   border: 1px solid var(--border-default);
   border-radius: 12px;
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9);
   overflow: hidden;
 }
 
@@ -245,7 +245,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--bg2);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+  box-shadow: 0 24px 80px rgba(5, 8, 14, .5);
 }
 .integrity-gap-controls { display: flex; align-items: end; gap: var(--sp-md); flex-wrap: wrap; }
 .integrity-gap-controls label { min-width: 180px; }

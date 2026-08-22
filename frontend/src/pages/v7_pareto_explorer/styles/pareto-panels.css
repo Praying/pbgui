@@ -37,7 +37,7 @@
 .stage-btn.active,
 .deep-tab-btn.active,
 .btn.primary {
-  color: #fff /* white on colored bg */;
+  color: #f2f5fb /* white on colored bg */;
   background: var(--blue);
   border-color: var(--blue);
 }
@@ -544,7 +544,7 @@ input[type="range"]::-moz-range-thumb {
 .overlay-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.62);
+  background: rgba(5, 8, 14,.62);
   display: none;
   align-items: center;
   justify-content: center;

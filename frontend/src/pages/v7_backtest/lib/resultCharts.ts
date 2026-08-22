@@ -27,12 +27,12 @@ export function chartTitle(result: BacktestResultItem, t: (iso: string) => strin
 }
 
 /**
- * Morandi dark-theme chart constants — mirror the tokens.css palette as
+ * Deep-space dark-theme chart constants — mirror the tokens.css palette as
  * literals because Plotly resolves colors directly (no CSS var support).
  */
-export const CHART_BG = '#16141a'; // var(--bg-page)
-export const CHART_TEXT = '#e9e5ee'; // var(--text-primary)
-export const CHART_GRID = '#3a3545'; // var(--border-default)
+export const CHART_BG = '#10141d'; // var(--bg-page)
+export const CHART_TEXT = '#e8ecf4'; // var(--text-primary)
+export const CHART_GRID = '#333f5c'; // var(--border-default)
 
 /** _chartLayout (:7212-7224). */
 export function chartLayout(title: string, yTitle: string): PlotlyLayout {
@@ -87,7 +87,7 @@ export function priceOverlayTrace(price: PricePayload): PlotlyTrace {
     name: `${price.exchange ?? ''} / ${price.coin ?? ''} close`,
     mode: 'lines',
     yaxis: 'y2',
-    line: { color: 'rgba(164, 147, 196, 0.7)', width: 1.25, dash: 'dot' }, // morandi purple (#a493c4 @ 0.7)
+    line: { color: 'rgba(155, 142, 222, 0.7)', width: 1.25, dash: 'dot' }, // soft violet (#9b8ede @ 0.7)
     hovertemplate: '%{y:.8g}<extra>Coin price</extra>',
   };
 }
@@ -188,17 +188,17 @@ export function tweTraces(csv: ParsedCsv, resolutionMinutes: number, result: Bac
 
 /* ── Compare (:7626-7634) ───────────────────────────────────────────── */
 
-/** Morandi categorical series palette: accent / success / warning / danger
+/** Categorical series palette: accent / success / warning / danger
  *  bases + purple + soft variants (mirrors tokens.css). */
 export const COMPARE_COLORS = [
-  '#8ba7c2', // accent
-  '#8fb593', // success
-  '#c4a67e', // warning
-  '#c58e8a', // danger
-  '#a493c4', // purple
-  '#a9c0d6', // accent-soft
-  '#accbab', // success-soft
-  '#daadaa', // danger-soft
+  '#72a0ee', // accent
+  '#46c88f', // success
+  '#e0a458', // warning
+  '#e5615c', // danger
+  '#9b8ede', // purple
+  '#96b9f4', // accent-soft
+  '#76d9ad', // success-soft
+  '#ee8d84', // danger-soft
 ] as const;
 
 export interface CompareItem {
@@ -282,13 +282,13 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
           { draw: [0.28, 0.50], prox: [0.0, 0.22] },
         ]
       : [{ draw: [0.30, 1.0], prox: [0.0, 0.22] }];
-  // Morandi series colors (tokens.css literals): long = accent/warning/
+  // Series colors (tokens.css literals): long = accent/warning/
   // success/success-soft; short = purple/warning-deep/danger-soft/accent-deep.
   const colors: Record<string, { raw: string; ema: string; score: string; prox: string }> = {
-    long: { raw: '#8ba7c2', ema: '#c4a67e', score: '#8fb593', prox: '#accbab' },
-    short: { raw: '#a493c4', ema: '#8a6d46', score: '#daadaa', prox: '#56748f' },
+    long: { raw: '#72a0ee', ema: '#e0a458', score: '#46c88f', prox: '#76d9ad' },
+    short: { raw: '#9b8ede', ema: '#9c7029', score: '#ee8d84', prox: '#3f63ad' },
   };
-  const thresholdColors = { yellow: '#dbc4a2', orange: '#c4a67e', red: '#c58e8a' };
+  const thresholdColors = { yellow: '#ecc381', orange: '#e0a458', red: '#e5615c' };
 
   sideConfigs.forEach((cfg, sideIdx) => {
     const axisNum = sideIdx * 2 + 1;
@@ -318,7 +318,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.yellowThreshold, cfg.yellowThreshold], name: `${prefix}Yellow Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.yellow, width: 1, dash: 'dot' }, opacity: 0.8 });
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.orangeThreshold, cfg.orangeThreshold], name: `${prefix}Orange Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.orange, width: 1, dash: 'dot' }, opacity: 0.8 });
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.redThreshold, cfg.redThreshold], name: `${prefix}RED Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.red, width: 1.2, dash: 'dash' }, opacity: 0.85 });
-    traces.push({ x: times, y: proximity, name: `${prefix}RED Proximity`, mode: 'lines', yaxis: proxAxisName, line: { color: colors[cfg.side]!.prox, width: 1.1 }, fill: 'tozeroy', fillcolor: 'rgba(172, 203, 171, 0.14)' }); // success-soft @ 0.14
+    traces.push({ x: times, y: proximity, name: `${prefix}RED Proximity`, mode: 'lines', yaxis: proxAxisName, line: { color: colors[cfg.side]!.prox, width: 1.1 }, fill: 'tozeroy', fillcolor: 'rgba(118, 217, 173, 0.14)' }); // success-soft @ 0.14
     traces.push({ x: [times[0], times[times.length - 1]], y: [100, 100], name: `${prefix}RED Hit`, mode: 'lines', yaxis: proxAxisName, line: { color: thresholdColors.red, width: 1.2, dash: 'dash' } });
     if (redTriggerIdx.length) {
       traces.push({
@@ -328,7 +328,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
         name: `${prefix}RED Trigger (${redTriggerIdx.length})`,
         mode: 'markers',
         yaxis: yAxisName,
-        marker: { color: thresholdColors.red, size: 9, symbol: 'diamond', line: { color: '#ffffff', width: 1 } },
+        marker: { color: thresholdColors.red, size: 9, symbol: 'diamond', line: { color: '#f2f5fb', width: 1 } },
         hovertemplate: '%{text}<extra></extra>',
       });
       traces.push({
@@ -338,7 +338,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
         name: `${prefix}RED Trigger %`,
         mode: 'markers',
         yaxis: proxAxisName,
-        marker: { color: thresholdColors.red, size: 8, symbol: 'triangle-up', line: { color: '#ffffff', width: 1 } },
+        marker: { color: thresholdColors.red, size: 8, symbol: 'triangle-up', line: { color: '#f2f5fb', width: 1 } },
         hovertemplate: '%{text}<extra></extra>',
         showlegend: false,
       });

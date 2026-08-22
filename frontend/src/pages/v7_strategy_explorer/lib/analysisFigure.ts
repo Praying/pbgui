@@ -174,7 +174,7 @@ export function buildAnalysisFigure(
     if (!ys.length) return null;
     return {
       x: xs, y: ys, text, mode: 'markers', name: name + ' (hover)', showlegend: false, legendgroup: group,
-      marker: { size: 8, color: 'rgba(0,0,0,0)' }, hovertemplate: '%{text}<extra></extra>',
+      marker: { size: 8, color: 'rgba(5, 8, 14,0)' }, hovertemplate: '%{text}<extra></extra>',
     };
   }
   function addHoverLine(prices: unknown[], name: string, group: string): void {
@@ -206,8 +206,8 @@ export function buildAnalysisFigure(
     });
     return {
       x: xs, y: ys, text, hovertext: hover, mode: 'markers+text', name,
-      marker: { color, size: 20, symbol: 'circle', opacity: 0.95, line: { color: '#16141a', width: 2 } },
-      textfont: { color: '#ffffff', size: 11, family: 'Arial Black, Arial, sans-serif' },
+      marker: { color, size: 20, symbol: 'circle', opacity: 0.95, line: { color: '#10141d', width: 2 } },
+      textfont: { color: '#f2f5fb', size: 11, family: 'Arial Black, Arial, sans-serif' },
       textposition: 'middle center', hovertemplate: '%{hovertext}<extra></extra>',
     };
   }
@@ -232,10 +232,10 @@ export function buildAnalysisFigure(
   const entryBounds = bounds(entryPrices);
   const closeBounds = bounds(closePrices);
   if (entryBounds) {
-    if (addBand(entryBounds[0], entryBounds[1], 'rgba(197, 142, 138, 0.16)')) legendBand('Entry Grid (Range)', 'rgba(197, 142, 138, 0.18)', 'entry_range');
+    if (addBand(entryBounds[0], entryBounds[1], 'rgba(229, 97, 92, 0.16)')) legendBand('Entry Grid (Range)', 'rgba(229, 97, 92, 0.18)', 'entry_range');
   }
   if (closeBounds) {
-    if (addBand(closeBounds[0], closeBounds[1], 'rgba(143, 181, 147, 0.14)')) legendBand('Close Grid (Area)', 'rgba(143, 181, 147, 0.18)', 'close_range');
+    if (addBand(closeBounds[0], closeBounds[1], 'rgba(70, 200, 143, 0.14)')) legendBand('Close Grid (Area)', 'rgba(70, 200, 143, 0.18)', 'close_range');
   }
 
   if (entryMode !== 'GridOnly') {
@@ -264,8 +264,8 @@ export function buildAnalysisFigure(
       }
     }
     if (rangeHasWidth(entryTrailingBounds)) {
-      if (addBand(entryTrailingBounds[0], entryTrailingBounds[1], 'rgba(196, 166, 126, 0.22)'))
-        legendBand('Entry Trailing (Conditional Zone)', 'rgba(196, 166, 126, 0.28)', 'entry_trailing');
+      if (addBand(entryTrailingBounds[0], entryTrailingBounds[1], 'rgba(224, 164, 88, 0.22)'))
+        legendBand('Entry Trailing (Conditional Zone)', 'rgba(224, 164, 88, 0.28)', 'entry_trailing');
     }
   }
 
@@ -283,21 +283,21 @@ export function buildAnalysisFigure(
           : bounds([Math.max(...closePrices), Math.max(...gridClosePrices)]);
     }
     if (closeTrailingBounds) {
-      addBand(closeTrailingBounds[0], closeTrailingBounds[1], 'rgba(139, 167, 194, 0.18)');
-      legendBand('Close Trailing (Conditional Zone)', 'rgba(139, 167, 194, 0.22)', 'close_trailing');
+      addBand(closeTrailingBounds[0], closeTrailingBounds[1], 'rgba(114, 160, 238, 0.18)');
+      legendBand('Close Trailing (Conditional Zone)', 'rgba(114, 160, 238, 0.22)', 'close_trailing');
     }
   }
 
-  traces.push(lineTrace(normalEntries, 'Entry Grid (Lines)', '#c58e8a', 'dash'));
+  traces.push(lineTrace(normalEntries, 'Entry Grid (Lines)', '#e5615c', 'dash'));
   addHoverLine(entryPrices, 'Entry Grid', 'entry');
-  traces.push(lineTrace(closes, 'Close Grid (Lines)', '#8fb593', 'dot'));
+  traces.push(lineTrace(closes, 'Close Grid (Lines)', '#46c88f', 'dot'));
   addHoverLine(closePrices, 'Close Grid', 'close');
   if (entryMode !== 'GridOnly' && shownTrailingPrices.length) {
-    traces.push(lineTrace(shownTrailingOrders as { index?: number; price?: number }[], shownTrailingName, '#c4a67e', 'dash'));
+    traces.push(lineTrace(shownTrailingOrders as { index?: number; price?: number }[], shownTrailingName, '#e0a458', 'dash'));
     addHoverLine(shownTrailingPrices, shownTrailingName, 'entry_trailing');
   }
-  addShapeLine(ref, '#a493c4', 'solid', 3);
-  legendLine('EMA Band', '#a493c4', 'solid', 3, 'ema');
+  addShapeLine(ref, '#9b8ede', 'solid', 3);
+  legendLine('EMA Band', '#9b8ede', 'solid', 3, 'ema');
   addHoverLine([ref], 'EMA Band', 'ema');
 
   const analysisTs =
@@ -313,8 +313,8 @@ export function buildAnalysisFigure(
     const entryRef = entryPrices.length ? entryPrices[0]! : ref;
     const eth = sideKey === 'long' ? entryRef * (1 - num(visualParams.entry_trailing_threshold_pct, 0)) : entryRef * (1 + num(visualParams.entry_trailing_threshold_pct, 0));
     if (num(visualParams.entry_trailing_threshold_pct, 0) > 0) {
-      addShapeLine(eth, 'rgba(196, 166, 126, 0.6)', 'dash', 1);
-      legendLine('Trailing Start (Threshold)', 'rgba(196, 166, 126, 0.6)', 'dash', 1, 'entry_trailing');
+      addShapeLine(eth, 'rgba(224, 164, 88, 0.6)', 'dash', 1);
+      legendLine('Trailing Start (Threshold)', 'rgba(224, 164, 88, 0.6)', 'dash', 1, 'entry_trailing');
       addHoverLine([eth], 'Trailing Start (Threshold)', 'entry_trailing');
     }
     if (num(visualParams.entry_trailing_retracement_pct, 0) > 0) {
@@ -326,12 +326,12 @@ export function buildAnalysisFigure(
           : sideKey === 'long'
             ? num(trailingBundle.min_since_open, entryRef) * (1 + num(visualParams.entry_trailing_retracement_pct, 0))
             : num(trailingBundle.max_since_open, entryRef) * (1 - num(visualParams.entry_trailing_retracement_pct, 0));
-      addShapeLine(retr, 'rgba(196, 166, 126, 0.35)', 'dot', 1);
-      legendLine('Trailing Trigger (Retracement, conditional)', 'rgba(196, 166, 126, 0.35)', 'dot', 1, 'entry_trailing');
+      addShapeLine(retr, 'rgba(224, 164, 88, 0.35)', 'dot', 1);
+      legendLine('Trailing Trigger (Retracement, conditional)', 'rgba(224, 164, 88, 0.35)', 'dot', 1, 'entry_trailing');
       addHoverLine([retr], 'Trailing Trigger (Retracement, conditional)', 'entry_trailing');
       if (num(visualParams.entry_trailing_threshold_pct, 0) > 0) {
-        addBand(eth, retr, 'rgba(196, 166, 126, 0.08)');
-        legendBand('Entry Trailing (Conditional Trigger Zone)', 'rgba(196, 166, 126, 0.12)', 'entry_trailing');
+        addBand(eth, retr, 'rgba(224, 164, 88, 0.08)');
+        legendBand('Entry Trailing (Conditional Trigger Zone)', 'rgba(224, 164, 88, 0.12)', 'entry_trailing');
       }
     }
   }
@@ -340,8 +340,8 @@ export function buildAnalysisFigure(
     const closeRef = num(deepGet<number>(side, ['debug', 'position_close', 'price'], 0), 0) || ref;
     if (num(visualParams.close_trailing_threshold_pct, 0) > 0) {
       const closeThr = sideKey === 'long' ? closeRef * (1 + num(visualParams.close_trailing_threshold_pct, 0)) : closeRef * (1 - num(visualParams.close_trailing_threshold_pct, 0));
-      addShapeLine(closeThr, 'rgba(139, 167, 194, 0.6)', 'dash', 1);
-      legendLine('Close Trailing Start (Threshold, conditional)', 'rgba(139, 167, 194, 0.6)', 'dash', 1, 'close_trailing');
+      addShapeLine(closeThr, 'rgba(114, 160, 238, 0.6)', 'dash', 1);
+      legendLine('Close Trailing Start (Threshold, conditional)', 'rgba(114, 160, 238, 0.6)', 'dash', 1, 'close_trailing');
       addHoverLine([closeThr], 'Close Trailing Start (Threshold, conditional)', 'close_trailing');
     }
     if (num(visualParams.close_trailing_retracement_pct, 0) > 0) {
@@ -349,15 +349,15 @@ export function buildAnalysisFigure(
         sideKey === 'long'
           ? num(trailingBundle.max_since_open, closeRef) * (1 - num(visualParams.close_trailing_retracement_pct, 0))
           : num(trailingBundle.min_since_open, closeRef) * (1 + num(visualParams.close_trailing_retracement_pct, 0));
-      addShapeLine(closeRetr, 'rgba(139, 167, 194, 0.35)', 'dot', 1);
-      legendLine('Close Trailing Trigger (Retracement, conditional)', 'rgba(139, 167, 194, 0.35)', 'dot', 1, 'close_trailing');
+      addShapeLine(closeRetr, 'rgba(114, 160, 238, 0.35)', 'dot', 1);
+      legendLine('Close Trailing Trigger (Retracement, conditional)', 'rgba(114, 160, 238, 0.35)', 'dot', 1, 'close_trailing');
       addHoverLine([closeRetr], 'Close Trailing Trigger (Retracement, conditional)', 'close_trailing');
     }
   }
 
   if (simEvents !== null) {
-    traces.push(fillTrace(simEvents, 'buy', 'Buy Fills', '#8fb593'));
-    traces.push(fillTrace(simEvents, 'sell', 'Sell Fills', '#c58e8a'));
+    traces.push(fillTrace(simEvents, 'buy', 'Buy Fills', '#46c88f'));
+    traces.push(fillTrace(simEvents, 'sell', 'Sell Fills', '#e5615c'));
   }
 
   let yRange: [number, number] | null = null;
@@ -377,9 +377,9 @@ export function analysisLayout(
   t: (key: string, params?: Record<string, unknown>) => string
 ): Record<string, unknown> {
   return {
-    paper_bgcolor: '#1d1a23',
-    plot_bgcolor: '#1d1a23',
-    font: { color: '#e9e5ee' },
+    paper_bgcolor: '#171c29',
+    plot_bgcolor: '#171c29',
+    font: { color: '#e8ecf4' },
     title: t('v7explore.entryCloseGridsVisualization', { side: sideKey.toUpperCase() }),
     margin: { l: 55, r: 25, t: 45, b: 35 },
     shapes: fig.shapes,
@@ -387,12 +387,12 @@ export function analysisLayout(
     xaxis: {
       type: 'date',
       title: t('v7explore.date'),
-      gridcolor: '#3a3545',
-      rangeslider: { visible: fig.plotInfo.bucketSize <= 1, bgcolor: '#16141a', bordercolor: '#3a3545', thickness: 0.16 },
+      gridcolor: '#333f5c',
+      rangeslider: { visible: fig.plotInfo.bucketSize <= 1, bgcolor: '#10141d', bordercolor: '#333f5c', thickness: 0.16 },
     },
-    yaxis: { title: t('v7explore.price'), gridcolor: '#3a3545', range: fig.yRange || undefined },
+    yaxis: { title: t('v7explore.price'), gridcolor: '#333f5c', range: fig.yRange || undefined },
     hovermode: 'closest',
     hoverdistance: 30,
-    legend: { orientation: 'h', bgcolor: 'rgba(0,0,0,0)', bordercolor: 'rgba(0,0,0,0)' },
+    legend: { orientation: 'h', bgcolor: 'rgba(5, 8, 14,0)', bordercolor: 'rgba(5, 8, 14,0)' },
   };
 }

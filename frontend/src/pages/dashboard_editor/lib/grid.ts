@@ -48,14 +48,14 @@ export interface WidgetMeta {
 }
 
 export const WIDGET_META: Record<RenderableWidgetType, WidgetMeta> = {
-  PNL: { icon: '📊', color: '#a9c0d6', label: 'PNL' },
-  ADG: { icon: '📈', color: '#accbab', label: 'ADG' },
-  'P+L': { icon: '📉', color: '#a493c4', label: 'P+L' },
-  INCOME: { icon: '💰', color: '#dbc4a2', labelKey: 'dash.widgetIncome', labelFallback: 'Income' },
-  TOP: { icon: '🏆', color: '#dbc4a2', labelKey: 'dash.widgetTop', labelFallback: 'Top' },
-  BALANCE: { icon: '⚖️', color: '#a9c0d6', labelKey: 'dash.widgetBalance', labelFallback: 'Balance' },
-  POSITIONS: { icon: '📋', color: '#a9c0d6', labelKey: 'dash.widgetPositions', labelFallback: 'Positions' },
-  ORDERS: { icon: '📝', color: '#a493c4', labelKey: 'dash.widgetOrders', labelFallback: 'Orders' },
+  PNL: { icon: '📊', color: '#96b9f4', label: 'PNL' },
+  ADG: { icon: '📈', color: '#76d9ad', label: 'ADG' },
+  'P+L': { icon: '📉', color: '#9b8ede', label: 'P+L' },
+  INCOME: { icon: '💰', color: '#ecc381', labelKey: 'dash.widgetIncome', labelFallback: 'Income' },
+  TOP: { icon: '🏆', color: '#ecc381', labelKey: 'dash.widgetTop', labelFallback: 'Top' },
+  BALANCE: { icon: '⚖️', color: '#96b9f4', labelKey: 'dash.widgetBalance', labelFallback: 'Balance' },
+  POSITIONS: { icon: '📋', color: '#96b9f4', labelKey: 'dash.widgetPositions', labelFallback: 'Positions' },
+  ORDERS: { icon: '📝', color: '#9b8ede', labelKey: 'dash.widgetOrders', labelFallback: 'Orders' },
 };
 
 /** Palette order = legacy WIDGET_META key insertion order (no NONE). */

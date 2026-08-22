@@ -113,16 +113,16 @@ describe('PricesOverlay table rendering (legacy renderTable/fmtPrice/fmtAge/ageC
     expect(cells[2]).toBe('binance');
     expect(cells[3]).toBe('120,000');
     expect(cells[4]).toBe('30s');
-    // Morandi ageCol constants #8fb593/#c4a67e/#c58e8a (jsdom normalizes hex to rgb()).
-    expect(rows[0]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(143, 181, 147)');
+    // ageCol constants #46c88f/#e0a458/#e5615c (jsdom normalizes hex to rgb()).
+    expect(rows[0]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(70, 200, 143)');
 
     expect(rows[1]!.findAll('td')[3]!.text()).toBe('0.012340');
     expect(rows[1]!.findAll('td')[4]!.text()).toBe('4m');
-    expect(rows[1]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(196, 166, 126)');
+    expect(rows[1]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(224, 164, 88)');
 
     expect(rows[2]!.findAll('td')[3]!.text()).toBe('0.0005678');
     expect(rows[2]!.findAll('td')[4]!.text()).toBe('1h');
-    expect(rows[2]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(197, 142, 138)');
+    expect(rows[2]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(229, 97, 92)');
 
     expect(rows[3]!.findAll('td')[3]!.text()).toBe('—');
     expect(rows[3]!.findAll('td')[4]!.text()).toBe('—');

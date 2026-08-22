@@ -848,7 +848,7 @@ body {
   display: flex;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(5, 8, 14, 0.65);
   z-index: 1000;
   align-items: center;
   justify-content: center;
@@ -860,7 +860,7 @@ body {
   padding: 1.5rem;
   width: 360px;
   max-width: 95vw;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 8px 40px rgba(5, 8, 14, 0.7);
 }
 .dlg-title {
   font-size: var(--fs-md);
@@ -940,7 +940,7 @@ body {
   display: flex;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(5, 8, 14, 0.65);
   z-index: 1000;
   align-items: center;
   justify-content: center;
@@ -969,7 +969,7 @@ body {
   min-height: 300px;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 8px 40px rgba(5, 8, 14, 0.85);
   border: 1px solid var(--border-strong);
   flex-direction: column;
   resize: both;

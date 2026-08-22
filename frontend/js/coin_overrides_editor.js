@@ -68,11 +68,11 @@ function _covEnsureValidationStyles() {
   var style = document.createElement('style');
   style.id = 'cov-json-validation-style';
   style.textContent = [
-    'textarea.cov-json-invalid,textarea.cov-json-invalid:focus{border-color:var(--red,#ff4b4b)!important;}',
+    'textarea.cov-json-invalid,textarea.cov-json-invalid:focus{border-color:var(--red,#e5615c)!important;}',
     '.cov-json-status{display:none;margin-top:4px;font-size:var(--fs-sm,13px);line-height:1.35;}',
-    '.cov-json-status.error{display:block;padding:6px 10px;border:1px solid rgba(255,75,75,.35);border-radius:4px;background:rgba(55,20,20,.84);color:var(--red,#ff4b4b);}',
+    '.cov-json-status.error{display:block;padding:6px 10px;border:1px solid rgba(255,75,75,.35);border-radius:4px;background:rgba(55,20,20,.84);color:var(--red,#e5615c);}',
     '.cov-json-status-main{font-weight:600;}',
-    '.cov-json-status-meta{margin-top:2px;color:#ffb3b3;}',
+    '.cov-json-status-meta{margin-top:2px;color:#ee8d84;}',
     '.cov-json-status-actions{margin-top:8px;}',
     '.cov-json-status-btn{height:26px;padding:0 10px;border:1px solid rgba(255,75,75,.45);border-radius:4px;background:rgba(255,255,255,.04);color:#ffe7e7;cursor:pointer;font-size:var(--fs-sm,13px);}',
     '.cov-json-status-btn:hover{background:rgba(255,255,255,.08);}',

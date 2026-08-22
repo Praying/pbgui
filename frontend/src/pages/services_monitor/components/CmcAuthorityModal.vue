@@ -123,9 +123,9 @@ function submit(): void {
 .form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
 .form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
 .form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
-.form-btn.save:hover { background: var(--accent-deep); color: #fff; }
-.cmc-modal-backdrop { position: fixed; inset: 0; z-index: 19000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(2px); }
-.cmc-modal-card { width: min(480px, 94vw); background: var(--bg-page); border: 1px solid var(--border-default); border-radius: 14px; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9); overflow: hidden; }
+.form-btn.save:hover { background: var(--accent-deep); color: #f2f5fb; }
+.cmc-modal-backdrop { position: fixed; inset: 0; z-index: 19000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(5, 8, 14, 0.72); backdrop-filter: blur(2px); }
+.cmc-modal-card { width: min(480px, 94vw); background: var(--bg-page); border: 1px solid var(--border-default); border-radius: 14px; box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9); overflow: hidden; }
 .cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border-subtle); background: var(--surface-workspace); }
 .cmc-modal-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 700; }
 .cmc-modal-close { background: transparent; border: 0; color: var(--text-muted); font-size: var(--fs-lg); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; }

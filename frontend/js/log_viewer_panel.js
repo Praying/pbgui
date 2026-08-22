@@ -112,7 +112,7 @@ class LogViewerPanel {
 /* sidebar */
 .lvp-sidebar{
     width:auto;min-width:140px;
-    background:#171619;border-right:1px solid #1e293b;
+    background:#10141d;border-right:1px solid #232b3d;
     display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
     position:relative;
 }
@@ -123,38 +123,38 @@ class LogViewerPanel {
     user-select:none;
 }
 .lvp-sidebar-header{
-    padding:4px 10px;border-bottom:1px solid #1e293b;
+    padding:4px 10px;border-bottom:1px solid #232b3d;
     flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:6px;
 }
 .lvp-sb-hdr-toggle{
     display:inline-flex;align-items:center;gap:4px;flex:1;min-width:0;padding:4px 0;
-    background:none;border:none;color:#716b75;
+    background:none;border:none;color:#717b8e;
     font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
     cursor:pointer;text-align:left;transition:color .15s;user-select:none;
 }
-.lvp-sb-hdr-toggle:hover{color:#eae7ea}
+.lvp-sb-hdr-toggle:hover{color:#e8ecf4}
 .lvp-sb-hdr-toggle-arrow{font-size:9px;margin-left:auto;opacity:.6}
 .lvp-sort-btn{
     display:inline-flex;align-items:center;justify-content:center;
     min-width:18px;height:18px;padding:0 4px;
-    background:#1e293b;border:1px solid #334155;border-radius:4px;
-    color:#a29ca6;font-size:10px;cursor:pointer;transition:all .15s;
+    background:#232b3d;border:1px solid #333f5c;border-radius:4px;
+    color:#a3adc2;font-size:10px;cursor:pointer;transition:all .15s;
 }
-.lvp-sort-btn:hover{border-color:#716b75;color:#eae7ea}
+.lvp-sort-btn:hover{border-color:#717b8e;color:#e8ecf4}
 .lvp-item-list{flex:1;overflow-y:auto;padding:4px 0}
 .lvp-item-btn{
     display:block;width:100%;text-align:left;padding:5px 10px;
     background:none;border:none;border-left:3px solid transparent;
-    color:#eae7ea;font-family:'Cascadia Code','Fira Code','Consolas',monospace;
+    color:#e8ecf4;font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     font-size:11px;cursor:pointer;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;transition:background .12s;
 }
-.lvp-item-btn.lvp-subitem{padding-left:26px;color:#cbd5e1;font-size:10px}
-.lvp-item-btn:hover{background:#1e293b}
+.lvp-item-btn.lvp-subitem{padding-left:26px;color:#e8ecf4;font-size:10px}
+.lvp-item-btn:hover{background:#232b3d}
 .lvp-item-btn.lvp-active{
-    background:#1e293b;border-left-color:#4da6ff;color:#4da6ff;font-weight:600;
+    background:#232b3d;border-left-color:#72a0ee;color:#72a0ee;font-weight:600;
 }
-.lvp-item-size{font-size:9px;color:#716b75;margin-left:6px}
+.lvp-item-size{font-size:9px;color:#717b8e;margin-left:6px}
 
 /* viewer */
 .lvp-viewer{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;overflow:hidden}
@@ -162,142 +162,142 @@ class LogViewerPanel {
 /* toolbar */
 .lvp-toolbar{display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:wrap}
 .lvp-host-sel,.lvp-lines-sel{
-    font-size:12px;background:#1e293b;color:#eae7ea;
-    border:1px solid #334155;border-radius:4px;padding:2px 4px;cursor:pointer;
+    font-size:12px;background:#232b3d;color:#e8ecf4;
+    border:1px solid #333f5c;border-radius:4px;padding:2px 4px;cursor:pointer;
 }
 .lvp-sb-toggle{
     display:inline-flex;align-items:center;gap:4px;padding:3px 8px;
-    background:#1e293b;border:1px solid #334155;border-radius:4px;
-    color:#a29ca6;font-size:11px;cursor:pointer;transition:all .15s;user-select:none;
+    background:#232b3d;border:1px solid #333f5c;border-radius:4px;
+    color:#a3adc2;font-size:11px;cursor:pointer;transition:all .15s;user-select:none;
 }
-.lvp-sb-toggle:hover{border-color:#716b75;color:#eae7ea}
+.lvp-sb-toggle:hover{border-color:#717b8e;color:#e8ecf4}
 .lvp-sb-arrow{transition:transform .18s;display:inline-block;font-size:9px;line-height:1}
 .lvp-sb-toggle.lvp-sb-open .lvp-sb-arrow{transform:rotate(90deg)}
 .lvp-item-badge{
-    font-size:11px;color:#a29ca6;
+    font-size:11px;color:#a3adc2;
     font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.lvp-sep{width:1px;height:18px;background:#334155;flex-shrink:0}
-.lvp-file-size{font-size:11px;color:#888;min-width:40px}
+.lvp-sep{width:1px;height:18px;background:#333f5c;flex-shrink:0}
+.lvp-file-size{font-size:11px;color:#717b8e;min-width:40px}
 .lvp-host-label{
-    font-size:12px;color:#a29ca6;display:flex;align-items:center;gap:4px;white-space:nowrap;
+    font-size:12px;color:#a3adc2;display:flex;align-items:center;gap:4px;white-space:nowrap;
 }
 .lvp-lines-label{
-    font-size:12px;color:#a29ca6;display:flex;align-items:center;gap:4px;white-space:nowrap;
+    font-size:12px;color:#a3adc2;display:flex;align-items:center;gap:4px;white-space:nowrap;
 }
 
 /* level buttons */
 .lvp-lvl-btn{
-    padding:3px 7px;border-radius:3px;border:1px solid #333640;
-    background:#28252b;font-size:11px;font-weight:700;cursor:pointer;
+    padding:3px 7px;border-radius:3px;border:1px solid #333f5c;
+    background:#232b3d;font-size:11px;font-weight:700;cursor:pointer;
     font-family:monospace;transition:all .15s;opacity:.4;color:#aaa;
 }
 .lvp-lvl-btn.on{opacity:1.0}
-.lvp-lvl-btn[data-lvl="DEBUG"].on   {background:#3a3f4b;border-color:#555;color:#eae7ea}
-.lvp-lvl-btn[data-lvl="INFO"].on    {background:#0d3b20;border-color:#21c354;color:#21c354}
-.lvp-lvl-btn[data-lvl="WARNING"].on {background:#3b2700;border-color:#ff8c00;color:#ff8c00}
-.lvp-lvl-btn[data-lvl="ERROR"].on   {background:#3b0d0d;border-color:#ff4b4b;color:#ff4b4b}
-.lvp-lvl-btn[data-lvl="CRITICAL"].on{background:#2d0040;border-color:#b39ddb;color:#b39ddb}
+.lvp-lvl-btn[data-lvl="DEBUG"].on   {background:#3a3f4b;border-color:#5d6575;color:#e8ecf4}
+.lvp-lvl-btn[data-lvl="INFO"].on    {background:#0d3b20;border-color:#46c88f;color:#46c88f}
+.lvp-lvl-btn[data-lvl="WARNING"].on {background:#3b2700;border-color:#e0a458;color:#e0a458}
+.lvp-lvl-btn[data-lvl="ERROR"].on   {background:#3b0d0d;border-color:#e5615c;color:#e5615c}
+.lvp-lvl-btn[data-lvl="CRITICAL"].on{background:#2d0040;border-color:#9b8ede;color:#9b8ede}
 
 /* control buttons */
 .lvp-ctrl-btn{
-    padding:3px 9px;background:#28252b;border:1px solid #333640;
-    border-radius:4px;color:#eae7ea;font-size:12px;cursor:pointer;
+    padding:3px 9px;background:#232b3d;border:1px solid #333f5c;
+    border-radius:4px;color:#e8ecf4;font-size:12px;cursor:pointer;
     white-space:nowrap;transition:all .15s;line-height:1.6;
 }
-.lvp-ctrl-btn:hover{background:#4da6ff;color:#000;border-color:#4da6ff}
-.lvp-ctrl-btn.lvp-stream-on{background:#21c354;color:#000;border-color:#21c354}
-.lvp-ctrl-btn.lvp-active{background:#4da6ff;color:#000}
+.lvp-ctrl-btn:hover{background:#72a0ee;color:#0b1526;border-color:#72a0ee}
+.lvp-ctrl-btn.lvp-stream-on{background:#46c88f;color:#0b1526;border-color:#46c88f}
+.lvp-ctrl-btn.lvp-active{background:#72a0ee;color:#0b1526}
 
 /* terminal */
 .lvp-terminal{
     overflow-y:auto;
     font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     font-size:12px;line-height:1.45;
-    background:#000;color:#b0b0b0;
-    padding:10px 12px;border:1px solid #1e293b;border-radius:5px;
+    background:#0a0d15;color:#a3adc2;
+    padding:10px 12px;border:1px solid #232b3d;border-radius:5px;
     white-space:pre-wrap;word-break:break-all;
     flex:1;min-height:0;
 }
 .lvp-terminal.show-line-nums > div{padding-left:52px;position:relative}
 .lvp-terminal.show-line-nums > div::before{
     content:attr(data-ln);position:absolute;left:0;width:44px;
-    text-align:right;color:#555;font-size:11px;user-select:none;pointer-events:none;
+    text-align:right;color:#5d6575;font-size:11px;user-select:none;pointer-events:none;
 }
 .lvp-terminal.show-line-nums > div.lvp-separator::before{content:''}
 
 /* log line classes */
 .lvp-log-debug   {color:#808080}
-.lvp-log-info    {color:#b0b0b0}
-.lvp-log-warning {color:#ff8c00}
-.lvp-log-error   {color:#ff4b4b}
-.lvp-log-critical{color:#b39ddb;font-weight:600}
+.lvp-log-info    {color:#a3adc2}
+.lvp-log-warning {color:#e0a458}
+.lvp-log-error   {color:#e5615c}
+.lvp-log-critical{color:#9b8ede;font-weight:600}
 .lvp-ansi-bold{font-weight:600}
 .lvp-ansi-fg-30{color:#8b95a7}
-.lvp-ansi-fg-31{color:#ff4b4b}
-.lvp-ansi-fg-32{color:#21c354}
+.lvp-ansi-fg-31{color:#e5615c}
+.lvp-ansi-fg-32{color:#46c88f}
 .lvp-ansi-fg-33{color:#f4b942}
 .lvp-ansi-fg-34{color:#7cc7ff}
 .lvp-ansi-fg-35{color:#d28cff}
 .lvp-ansi-fg-36{color:#58c7e6}
-.lvp-ansi-fg-37{color:#eae7ea}
-.lvp-ansi-fg-90{color:#716b75}
+.lvp-ansi-fg-37{color:#e8ecf4}
+.lvp-ansi-fg-90{color:#717b8e}
 .lvp-ansi-fg-91{color:#ff7a7a}
 .lvp-ansi-fg-92{color:#69e69c}
 .lvp-ansi-fg-93{color:#ffd36b}
 .lvp-ansi-fg-94{color:#9bd7ff}
 .lvp-ansi-fg-95{color:#ebb0ff}
 .lvp-ansi-fg-96{color:#86eaff}
-.lvp-ansi-fg-97{color:#f8fafc}
+.lvp-ansi-fg-97{color:#f2f5fb}
 .lvp-hidden      {display:none !important}
 .lvp-level-hidden{display:none !important}
 .lvp-highlight      {background:rgba(255,200,0,.18)}
-.lvp-highlight mark {background:#e8a620;color:#000;border-radius:2px;padding:0 1px}
-.lvp-current-match  {background:rgba(255,160,0,.40);outline:1px solid #e8a620}
+.lvp-highlight mark {background:#e0a458;color:#0b1526;border-radius:2px;padding:0 1px}
+.lvp-current-match  {background:rgba(255,160,0,.40);outline:1px solid #e0a458}
 
 /* context / blocks */
 .lvp-context{opacity:.5}
 .lvp-separator{
-    text-align:center;color:#716b75;font-size:11px;padding:2px 0;
-    user-select:none;border-top:1px dotted #334155;border-bottom:1px dotted #334155;margin:2px 0;
+    text-align:center;color:#717b8e;font-size:11px;padding:2px 0;
+    user-select:none;border-top:1px dotted #333f5c;border-bottom:1px dotted #333f5c;margin:2px 0;
 }
 .lvp-group-first{cursor:pointer;padding-left:20px !important;position:relative}
 .lvp-group-first .grp-arrow{
-    position:absolute;left:2px;top:0;color:#fff;font-size:11px;
-    text-shadow:0 0 2px rgba(0,0,0,.8);pointer-events:none;
+    position:absolute;left:2px;top:0;color:#f2f5fb;font-size:11px;
+    text-shadow:0 0 2px rgba(5, 8, 14,.8);pointer-events:none;
 }
 .lvp-terminal.show-line-nums .lvp-group-first{padding-left:72px !important}
 .lvp-terminal.show-line-nums .lvp-group-first .grp-arrow{left:52px}
-.lvp-group-first .grp-count{font-size:10px;color:#716b75;margin-left:8px}
+.lvp-group-first .grp-count{font-size:10px;color:#717b8e;margin-left:8px}
 
 /* search bar */
 .lvp-searchbar{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap}
 .lvp-searchbar select{
-    font-size:12px;background:#1e293b;color:#eae7ea;
-    border:1px solid #334155;border-radius:4px;padding:3px 6px;
+    font-size:12px;background:#232b3d;color:#e8ecf4;
+    border:1px solid #333f5c;border-radius:4px;padding:3px 6px;
 }
 .lvp-searchbar input[type="text"]{
-    flex:1;min-width:140px;font-size:12px;background:#1e293b;color:#eae7ea;
-    border:1px solid #334155;border-radius:4px;padding:4px 8px;
+    flex:1;min-width:140px;font-size:12px;background:#232b3d;color:#e8ecf4;
+    border:1px solid #333f5c;border-radius:4px;padding:4px 8px;
 }
 .lvp-searchbar label{
-    font-size:12px;color:#a29ca6;display:inline-flex;align-items:center;
+    font-size:12px;color:#a3adc2;display:inline-flex;align-items:center;
     gap:4px;cursor:pointer;white-space:nowrap;
 }
 .lvp-ctx-sel{padding:3px 6px;font-size:11px}
 .lvp-grp-link{
-    font-size:11px;color:#716b75;text-decoration:underline;cursor:pointer;
+    font-size:11px;color:#717b8e;text-decoration:underline;cursor:pointer;
     background:none;border:none;font-family:inherit;
 }
-.lvp-grp-link:hover{color:#eae7ea}
+.lvp-grp-link:hover{color:#e8ecf4}
 .lvp-nav-btn{
-    background:#28252b;border:1px solid #333640;border-radius:3px;
-    color:#a29ca6;cursor:pointer;font-size:12px;padding:2px 6px;line-height:1;
+    background:#232b3d;border:1px solid #333f5c;border-radius:3px;
+    color:#a3adc2;cursor:pointer;font-size:12px;padding:2px 6px;line-height:1;
 }
-.lvp-nav-btn:hover{color:#eae7ea;border-color:#a29ca6}
-.lvp-match-count{font-size:11px;color:#888;min-width:70px}
-.lvp-conn-badge{font-size:11px;color:#716b75}
+.lvp-nav-btn:hover{color:#e8ecf4;border-color:#a3adc2}
+.lvp-match-count{font-size:11px;color:#717b8e;min-width:70px}
+.lvp-conn-badge{font-size:11px;color:#717b8e}
 /* ── end LogViewerPanel v2 ─────────────────────────────────────────── */
 `;
         document.head.appendChild(s);
@@ -1908,7 +1908,7 @@ class LogViewerPanel {
         var rid = ++this._renderAbort;
         var idx = 0;
         var status = document.createElement('div');
-        status.style.cssText = 'color:#888;padding:8px;font-size:12px';
+        status.style.cssText = 'color:#717b8e;padding:8px;font-size:12px';
         status.textContent = _lvpT('shared.log.rendering', 'Rendering\u2026');
         term.appendChild(status);
 

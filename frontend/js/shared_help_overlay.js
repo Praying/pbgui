@@ -86,58 +86,58 @@
     style.textContent = [
       '#pbgui-shared-help-ovl{display:none;position:fixed;inset:0;z-index:3065;pointer-events:none;}',
       '#pbgui-shared-help-ovl.visible{display:block;}',
-      '#pbgui-shared-help-box{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(900px,95vw);height:min(700px,90vh);min-width:480px;min-height:300px;background:#131b2b;border:1px solid #37333a;border-radius:12px;box-shadow:0 20px 70px rgba(0,0,0,.9);overflow:hidden;resize:both;pointer-events:auto;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eae7ea;}',
+      '#pbgui-shared-help-box{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(900px,95vw);height:min(700px,90vh);min-width:480px;min-height:300px;background:#171c29;border:1px solid #333f5c;border-radius:12px;box-shadow:0 20px 70px rgba(5, 8, 14,.9);overflow:hidden;resize:both;pointer-events:auto;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e8ecf4;}',
       '#pbgui-shared-help-box.is-maximized{top:64px;left:12px;right:12px;bottom:12px;width:auto;height:auto;transform:none;max-width:none;max-height:none;resize:none;border-radius:14px;}',
       '#pbgui-shared-help-box,#pbgui-shared-help-box *{box-sizing:border-box;}',
       '#pbgui-shared-help-box button,#pbgui-shared-help-box input,#pbgui-shared-help-box label{font:inherit;letter-spacing:normal;text-transform:none;}',
       '#pbgui-shared-help-box button:hover{transform:none;}',
       '#pbgui-shared-help-drag{position:absolute;top:0;left:0;right:48px;height:46px;cursor:move;z-index:2;}',
       '#pbgui-shared-help-box.is-maximized #pbgui-shared-help-drag{cursor:default;pointer-events:none;}',
-      '#pbgui-shared-help-box .ovl-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem .85rem 1.25rem;border-bottom:1px solid #29262c;flex-shrink:0;background:#171619;}',
-      '#pbgui-shared-help-box .ovl-header-title{font-size:15px;font-weight:700;color:#eae7ea;display:flex;align-items:center;gap:.5rem;}',
+      '#pbgui-shared-help-box .ovl-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem .85rem 1.25rem;border-bottom:1px solid #262f45;flex-shrink:0;background:#10141d;}',
+      '#pbgui-shared-help-box .ovl-header-title{font-size:15px;font-weight:700;color:#e8ecf4;display:flex;align-items:center;gap:.5rem;}',
       '#pbgui-shared-help-box .ovl-header-actions{display:flex;align-items:center;gap:.5rem;position:relative;z-index:3;}',
-      '#pbgui-shared-help-box .lang-pill{display:flex;border:1px solid #37333a;border-radius:6px;overflow:hidden;flex-shrink:0;}',
-      '#pbgui-shared-help-box .lang-pill button{background:transparent;border:none;color:#716b75;font-size:11px;font-weight:600;letter-spacing:.05em;padding:.2rem .55rem;cursor:pointer;transition:all .12s;}',
-      '#pbgui-shared-help-box .lang-pill button.active{background:#1e3a5f;color:#63b3ed;}',
-      '#pbgui-shared-help-box .lang-pill button:hover:not(.active){background:rgba(255,255,255,.04);color:#eae7ea;}',
-      '#pbgui-shared-help-box .ovl-tool,#pbgui-shared-help-box .ovl-close{background:transparent;border:1px solid transparent;color:#716b75;font-size:15px;cursor:pointer;width:28px;height:28px;padding:0;border-radius:4px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:color .12s,background .12s,border-color .12s;}',
-      '#pbgui-shared-help-box .ovl-tool[aria-pressed="true"]{color:#eae7ea;border-color:rgba(162, 156, 166,.2);background:rgba(255,255,255,.06);}',
-      '#pbgui-shared-help-box .ovl-tool:hover,#pbgui-shared-help-box .ovl-close:hover{color:#eae7ea;border-color:rgba(162, 156, 166,.18);background:rgba(255,255,255,.06);}',
+      '#pbgui-shared-help-box .lang-pill{display:flex;border:1px solid #333f5c;border-radius:6px;overflow:hidden;flex-shrink:0;}',
+      '#pbgui-shared-help-box .lang-pill button{background:transparent;border:none;color:#717b8e;font-size:11px;font-weight:600;letter-spacing:.05em;padding:.2rem .55rem;cursor:pointer;transition:all .12s;}',
+      '#pbgui-shared-help-box .lang-pill button.active{background:#1e3a5f;color:#96b9f4;}',
+      '#pbgui-shared-help-box .lang-pill button:hover:not(.active){background:rgba(255,255,255,.04);color:#e8ecf4;}',
+      '#pbgui-shared-help-box .ovl-tool,#pbgui-shared-help-box .ovl-close{background:transparent;border:1px solid transparent;color:#717b8e;font-size:15px;cursor:pointer;width:28px;height:28px;padding:0;border-radius:4px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:color .12s,background .12s,border-color .12s;}',
+      '#pbgui-shared-help-box .ovl-tool[aria-pressed="true"]{color:#e8ecf4;border-color:rgba(162, 156, 166,.2);background:rgba(255,255,255,.06);}',
+      '#pbgui-shared-help-box .ovl-tool:hover,#pbgui-shared-help-box .ovl-close:hover{color:#e8ecf4;border-color:rgba(162, 156, 166,.18);background:rgba(255,255,255,.06);}',
       '#pbgui-shared-help-body{display:flex;flex:1;overflow:hidden;}',
-      '#pbgui-shared-help-toc{width:230px;min-width:170px;flex-shrink:0;border-right:1px solid #29262c;overflow-y:auto;padding:.5rem 0;background:#131114;}',
-      '#pbgui-shared-help-toc-filter{width:calc(100% - 1.2rem);margin:0 .6rem .4rem;background:#1f1d21;color:#eae7ea;border:1px solid #37333a;border-radius:5px;padding:.35rem .5rem;font-size:13px;outline:none;}',
-      '#pbgui-shared-help-search{background:#1f1d21;color:#eae7ea;border:1px solid #37333a;border-radius:5px;padding:.28rem .5rem;font-size:13px;outline:none;width:170px;}',
-      '#pbgui-shared-help-toc-filter:focus,#pbgui-shared-help-search:focus{border-color:#4e4851;}',
-      '#pbgui-shared-help-toc-filter::placeholder,#pbgui-shared-help-search::placeholder{color:#4e4851;}',
-      '.pbgui-shared-help-toc-item{display:block;padding:.42rem .9rem;color:#a29ca6;font-size:13px;cursor:pointer;border-left:3px solid transparent;transition:all .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-      '.pbgui-shared-help-toc-item:hover{background:rgba(99,179,237,.08);color:#eae7ea;}',
-      '.pbgui-shared-help-toc-item.active{background:rgba(99,179,237,.12);border-left-color:#63b3ed;color:#63b3ed;font-weight:600;}',
-      '#pbgui-shared-help-content{flex:1;min-width:0;overflow:auto;padding:1.2rem 1.3rem 1.4rem;line-height:1.7;color:#cbd5e1;}',
-      '#pbgui-shared-help-content h1,#pbgui-shared-help-content h2,#pbgui-shared-help-content h3{color:#f8fafc;margin:0 0 .75rem;}',
+      '#pbgui-shared-help-toc{width:230px;min-width:170px;flex-shrink:0;border-right:1px solid #262f45;overflow-y:auto;padding:.5rem 0;background:#0c1018;}',
+      '#pbgui-shared-help-toc-filter{width:calc(100% - 1.2rem);margin:0 .6rem .4rem;background:#171c29;color:#e8ecf4;border:1px solid #333f5c;border-radius:5px;padding:.35rem .5rem;font-size:13px;outline:none;}',
+      '#pbgui-shared-help-search{background:#171c29;color:#e8ecf4;border:1px solid #333f5c;border-radius:5px;padding:.28rem .5rem;font-size:13px;outline:none;width:170px;}',
+      '#pbgui-shared-help-toc-filter:focus,#pbgui-shared-help-search:focus{border-color:#4d5c82;}',
+      '#pbgui-shared-help-toc-filter::placeholder,#pbgui-shared-help-search::placeholder{color:#4d5c82;}',
+      '.pbgui-shared-help-toc-item{display:block;padding:.42rem .9rem;color:#a3adc2;font-size:13px;cursor:pointer;border-left:3px solid transparent;transition:all .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.pbgui-shared-help-toc-item:hover{background:rgba(99,179,237,.08);color:#e8ecf4;}',
+      '.pbgui-shared-help-toc-item.active{background:rgba(99,179,237,.12);border-left-color:#96b9f4;color:#96b9f4;font-weight:600;}',
+      '#pbgui-shared-help-content{flex:1;min-width:0;overflow:auto;padding:1.2rem 1.3rem 1.4rem;line-height:1.7;color:#e8ecf4;}',
+      '#pbgui-shared-help-content h1,#pbgui-shared-help-content h2,#pbgui-shared-help-content h3{color:#f2f5fb;margin:0 0 .75rem;}',
       '#pbgui-shared-help-content p,#pbgui-shared-help-content ul,#pbgui-shared-help-content ol,#pbgui-shared-help-content pre,#pbgui-shared-help-content blockquote,#pbgui-shared-help-content table{margin:0 0 .9rem;}',
-      '#pbgui-shared-help-content a{color:#63b3ed;text-decoration:none;}','#pbgui-shared-help-content a:hover{text-decoration:underline;}',
-      '#pbgui-shared-help-content code{background:#1f1d21;color:#f6ad55;padding:.1em .35em;border-radius:3px;font-size:11px;font-family:"Fira Code","Consolas",monospace;}',
-      '#pbgui-shared-help-content pre{background:#131114;border:1px solid #37333a;border-radius:6px;padding:.9rem 1rem;overflow-x:auto;}',
+      '#pbgui-shared-help-content a{color:#96b9f4;text-decoration:none;}','#pbgui-shared-help-content a:hover{text-decoration:underline;}',
+      '#pbgui-shared-help-content code{background:#171c29;color:#f6ad55;padding:.1em .35em;border-radius:3px;font-size:11px;font-family:"Fira Code","Consolas",monospace;}',
+      '#pbgui-shared-help-content pre{background:#0c1018;border:1px solid #333f5c;border-radius:6px;padding:.9rem 1rem;overflow-x:auto;}',
       '#pbgui-shared-help-content pre code{background:none;padding:0;color:#a0aec0;font-size:13px;}',
       '#pbgui-shared-help-content ul,#pbgui-shared-help-content ol{padding-left:1.5rem;}',
-      '#pbgui-shared-help-content blockquote{border-left:3px solid #63b3ed;padding:.4rem .9rem;background:rgba(99,179,237,.05);border-radius:0 5px 5px 0;color:#a29ca6;}',
+      '#pbgui-shared-help-content blockquote{border-left:3px solid #96b9f4;padding:.4rem .9rem;background:rgba(99,179,237,.05);border-radius:0 5px 5px 0;color:#a3adc2;}',
       '#pbgui-shared-help-content table{border-collapse:collapse;width:100%;}',
-      '#pbgui-shared-help-content th,#pbgui-shared-help-content td{border:1px solid #37333a;padding:.4rem .7rem;text-align:left;font-size:13px;}',
-      '#pbgui-shared-help-content th{background:#1f1d21;color:#eae7ea;font-weight:600;}',
-      '.pbgui-shared-help-loading{color:#4e4851;font-style:italic;padding:2rem;text-align:center;}',
+      '#pbgui-shared-help-content th,#pbgui-shared-help-content td{border:1px solid #333f5c;padding:.4rem .7rem;text-align:left;font-size:13px;}',
+      '#pbgui-shared-help-content th{background:#171c29;color:#e8ecf4;font-weight:600;}',
+      '.pbgui-shared-help-loading{color:#4d5c82;font-style:italic;padding:2rem;text-align:center;}',
       '#pbgui-shared-help-search-wrap{display:flex;align-items:center;gap:3px;}',
-      '.pbgui-shared-help-snav{background:#1f1d21;border:1px solid #37333a;border-radius:3px;color:#a29ca6;cursor:pointer;font-size:11px;padding:2px 5px;line-height:1.4;transition:color .1s,border-color .1s;}',
-      '.pbgui-shared-help-snav:hover{color:#eae7ea;border-color:#4e4851;}',
-      '#pbgui-shared-help-search-count{font-size:11px;color:#716b75;white-space:nowrap;min-width:44px;text-align:left;}',
+      '.pbgui-shared-help-snav{background:#171c29;border:1px solid #333f5c;border-radius:3px;color:#a3adc2;cursor:pointer;font-size:11px;padding:2px 5px;line-height:1.4;transition:color .1s,border-color .1s;}',
+      '.pbgui-shared-help-snav:hover{color:#e8ecf4;border-color:#4d5c82;}',
+      '#pbgui-shared-help-search-count{font-size:11px;color:#717b8e;white-space:nowrap;min-width:44px;text-align:left;}',
       '#pbgui-shared-help-content mark{background:rgba(255,200,0,.2);color:#fcd34d;border-radius:2px;}',
       '#pbgui-shared-help-content mark.current{background:rgba(251,146,60,.45);color:#fef08a;outline:1px solid #f59e0b;}',
-      '#pbgui-shared-help-search-global-lbl{display:flex;align-items:center;gap:3px;color:#a29ca6;font-size:11px;font-weight:400;cursor:pointer;white-space:nowrap;user-select:none;}',
-      '#pbgui-shared-help-search-global-lbl input[type=checkbox]{accent-color:#4da6ff;cursor:pointer;margin:0;}',
+      '#pbgui-shared-help-search-global-lbl{display:flex;align-items:center;gap:3px;color:#a3adc2;font-size:11px;font-weight:400;cursor:pointer;white-space:nowrap;user-select:none;}',
+      '#pbgui-shared-help-search-global-lbl input[type=checkbox]{accent-color:#72a0ee;cursor:pointer;margin:0;}',
       '.pbgui-shared-help-gs-results{display:flex;flex-direction:column;gap:8px;padding:4px 0;}',
-      '.pbgui-shared-help-gs-item{background:#1f1d21;border:1px solid #37333a;border-radius:6px;padding:10px 14px;cursor:pointer;transition:border-color .15s;}',
-      '.pbgui-shared-help-gs-item:hover{border-color:#4e4851;}',
+      '.pbgui-shared-help-gs-item{background:#171c29;border:1px solid #333f5c;border-radius:6px;padding:10px 14px;cursor:pointer;transition:border-color .15s;}',
+      '.pbgui-shared-help-gs-item:hover{border-color:#4d5c82;}',
       '.pbgui-shared-help-gs-topic{color:#93c5fd;font-weight:600;font-size:13px;margin-bottom:5px;}',
-      '.pbgui-shared-help-gs-snip{color:#a29ca6;font-size:11px;line-height:1.55;overflow:hidden;text-overflow:ellipsis;}'
+      '.pbgui-shared-help-gs-snip{color:#a3adc2;font-size:11px;line-height:1.55;overflow:hidden;text-overflow:ellipsis;}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -160,7 +160,7 @@
       +           '<span id="pbgui-shared-help-search-count"></span>'
       +           '<label id="pbgui-shared-help-search-global-lbl" title="' + _helpT('shared.help.searchAllTitle', 'Search across all topics') + '"><input type="checkbox" id="pbgui-shared-help-search-global"> ' + _helpT('common.all', 'All') + '</label>'
       +         '</div>'
-      +         '<div style="width:1px;height:16px;background:#37333a;flex-shrink:0;"></div>'
+      +         '<div style="width:1px;height:16px;background:#333f5c;flex-shrink:0;"></div>'
       +         '<div class="lang-pill">'
       +           '<button id="pbgui-shared-help-lang-en" type="button">EN</button>'
       +           '<button id="pbgui-shared-help-lang-de" type="button">DE</button>'
@@ -298,7 +298,7 @@
     var expr;
     try { expr = new RegExp('(' + escapeRegExp(term) + ')', 'gi'); } catch (_) { return; }
     if (!results.length) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#716b75;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
       dom('pbgui-shared-help-search-count').textContent = _helpT('shared.help.zeroFound', '0 found');
       return;
     }
@@ -329,7 +329,7 @@
 
   function showGlobalResults(term) {
     if (!term) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#716b75;padding:8px 0;">' + _helpT('shared.help.searchPrompt', 'Type a search term to find across all topics.') + '</p>';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + _helpT('shared.help.searchPrompt', 'Type a search term to find across all topics.') + '</p>';
       dom('pbgui-shared-help-search-count').textContent = '';
       return;
     }
@@ -339,7 +339,7 @@
     var pending = state.topics.length;
     var results = [];
     if (!pending) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#716b75;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
       return;
     }
     state.topics.forEach(function (topic, index) {

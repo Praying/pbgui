@@ -327,6 +327,6 @@ const notReadyUnitsText = computed(() =>
 .migration-badge.err { color: var(--danger-soft); border-color: var(--danger-deep); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
 .migration-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .migration-primary { height: var(--btn-h); padding: 0 1rem; border-radius: 6px; border: 1px solid var(--accent); background: rgb(var(--accent-rgb) / 0.18); color: var(--accent-soft); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; }
-.migration-primary:hover:not(:disabled) { background: var(--accent-deep); color: #fff; }
+.migration-primary:hover:not(:disabled) { background: var(--accent-deep); color: #f2f5fb; }
 .migration-primary:disabled { cursor: not-allowed; opacity: 0.55; }
 </style>

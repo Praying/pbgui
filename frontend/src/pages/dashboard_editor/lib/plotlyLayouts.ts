@@ -39,12 +39,12 @@ export interface GdLike {
 
 /* ── shared pieces ── */
 
-const PAPER_BG = '#16141a';
-const AXIS_GRID = '#3a3545';
-const AXIS_TEXT = '#e9e5ee';
-const POS_COLOR = '#8fb593';
-const NEG_COLOR = '#c58e8a';
-const LINE_COLOR = '#8ba7c2';
+const PAPER_BG = '#10141d';
+const AXIS_GRID = '#333f5c';
+const AXIS_TEXT = '#e8ecf4';
+const POS_COLOR = '#46c88f';
+const NEG_COLOR = '#e5615c';
+const LINE_COLOR = '#72a0ee';
 
 function baseLayout(xaxis: AxisLayout, marginBottom: number): PlotlyLayout {
   return {
@@ -57,7 +57,7 @@ function baseLayout(xaxis: AxisLayout, marginBottom: number): PlotlyLayout {
       gridcolor: AXIS_GRID,
       color: AXIS_TEXT,
       zeroline: true,
-      zerolinecolor: '#524b60',
+      zerolinecolor: '#4d5c82',
     },
     bargap: 0.3,
     autosize: true,
@@ -180,7 +180,7 @@ export function pplTraces(bars: PplBar[]): PlotlyTrace[] {
       y: profits,
       type: 'bar',
       name: nameProfits,
-      marker: { color: '#8fb593' },
+      marker: { color: '#46c88f' },
       text: textOf(profits),
       textposition: 'outside',
       hovertemplate: `<b>%{x}</b><br>${nameProfits}: %{y:.2f}<extra></extra>`,
@@ -190,7 +190,7 @@ export function pplTraces(bars: PplBar[]): PlotlyTrace[] {
       y: losses,
       type: 'bar',
       name: nameLosses,
-      marker: { color: '#c58e8a' },
+      marker: { color: '#e5615c' },
       text: textOf(losses),
       textposition: 'outside',
       hovertemplate: `<b>%{x}</b><br>${nameLosses}: %{y:.2f}<extra></extra>`,
@@ -205,7 +205,7 @@ export function pplLayout(height: number | null, bars: PplBar[]): PlotlyLayout {
     gridcolor: AXIS_GRID,
     color: AXIS_TEXT,
     zeroline: true,
-    zerolinecolor: '#524b60',
+    zerolinecolor: '#4d5c82',
   };
   if (allVals.length > 0) {
     const yMin = Math.min(...allVals);
@@ -261,8 +261,8 @@ export function incomeLayout(height: number | null): PlotlyLayout {
     margin: { l: 55, r: 15, t: 40, b: 40 },
     autosize: true,
     xaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT },
-    yaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT, zeroline: true, zerolinecolor: '#524b60' },
-    legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: AXIS_TEXT } },
+    yaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT, zeroline: true, zerolinecolor: '#4d5c82' },
+    legend: { bgcolor: 'rgba(5, 8, 14,0)', font: { size: 10, color: AXIS_TEXT } },
     transition: { duration: 0, easing: 'linear' },
   };
   return withHeight(layout, height);

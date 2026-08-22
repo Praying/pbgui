@@ -89,7 +89,7 @@ const details = computed(() => {
   font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--mds-text-primary);
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 0 4px rgba(5, 8, 14, 0.8);
   pointer-events: none;
 }
 

@@ -1607,7 +1607,7 @@ button.pbgui-tab.pbgui-tab.active {
     position: fixed;
     inset: 0 0 0 var(--rail-expanded-width);
     z-index: calc(var(--z-navigation) - 1);
-    background: rgb(9 7 13 / 0.52);
+    background: rgb(5 8 14 / 0.52);
     content: '';
   }
 

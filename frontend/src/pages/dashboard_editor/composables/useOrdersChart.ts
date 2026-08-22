@@ -25,11 +25,11 @@ import { positionEntryColor } from '../lib/format';
 import { LOAD_MORE_EDGE_BARS } from '../lib/timeframes';
 import type { Candle, OrdersData } from '../types/widgets';
 
-const UP_COLOR = '#8fb593';
-const DOWN_COLOR = '#c58e8a';
-const VOL_UP = 'rgba(143,181,147,0.35)';
-const VOL_DOWN = 'rgba(197,142,138,0.35)';
-const PRICE_COLOR = '#a59eaf';
+const UP_COLOR = '#46c88f';
+const DOWN_COLOR = '#e5615c';
+const VOL_UP = 'rgba(70, 200, 143,0.35)';
+const VOL_DOWN = 'rgba(229, 97, 92,0.35)';
+const PRICE_COLOR = '#a3adc2';
 const FIT_SETTLE_MS = 200;
 
 /** Raw exchange candle: [t, o, h, l, c, v] (render.js:3473-3474). */
@@ -137,22 +137,22 @@ export function useOrdersChart(
   const chart = LWC.createChart(container, {
     autoSize: true, // fill container — no manual width/height needed
     layout: {
-      background: { type: 'solid', color: '#16141a' },
-      textColor: '#a59eaf',
+      background: { type: 'solid', color: '#10141d' },
+      textColor: '#a3adc2',
       fontSize: 12,
     },
     grid: {
-      vertLines: { color: '#2c2836' },
-      horzLines: { color: '#2c2836' },
+      vertLines: { color: '#262f45' },
+      horzLines: { color: '#262f45' },
     },
     crosshair: { mode: LWC.CrosshairMode.Normal },
     rightPriceScale: {
-      borderColor: '#3a3545',
+      borderColor: '#333f5c',
       // some bottom padding for volume without going negative on wide-range charts
       scaleMargins: { top: 0.1, bottom: 0.15 },
     },
     timeScale: {
-      borderColor: '#3a3545',
+      borderColor: '#333f5c',
       timeVisible: tfShowTime,
       secondsVisible: false,
       rightOffset: 30,

@@ -1347,7 +1347,7 @@
   "misc.apikeys.back": "Back",
   "misc.apikeys.backups": "Backups",
   "misc.apikeys.backupsDesc": "Backups are created automatically before every save. Stored in <code>data/api-keys/</code>. A pre-restore snapshot is created before any restore.",
-  "misc.apikeys.betterAlternativeDesc": "💡 <strong style=\"color:#68d391;\">Better alternative for full stock-perp history:</strong> PBGui's <strong>Market Data</strong> module uses <strong>Tiingo</strong> (IEX/FX feeds) to build comprehensive local 1m OHLCV archives — significantly faster and more complete than the providers below. See <em>Setup → Market Data → Build best 1m OHLCV</em>.",
+  "misc.apikeys.betterAlternativeDesc": "💡 <strong style=\"color:#46c88f;\">Better alternative for full stock-perp history:</strong> PBGui's <strong>Market Data</strong> module uses <strong>Tiingo</strong> (IEX/FX feeds) to build comprehensive local 1m OHLCV archives — significantly faster and more complete than the providers below. See <em>Setup → Market Data → Build best 1m OHLCV</em>.",
   "misc.apikeys.byPrefix": "by {name}",
   "misc.apikeys.bybitApiKeyExpiry": "Bybit API Key Expiry",
   "misc.apikeys.bybitExpiryCheck": "Bybit Expiry Check",

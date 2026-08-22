@@ -845,7 +845,7 @@ onUnmounted(() => {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 32px rgba(5, 8, 14, 0.6);
   resize: both;
   overflow: hidden;
 }
@@ -879,7 +879,7 @@ onUnmounted(() => {
 .result-modal-footer { padding: 0.5rem 1rem; border-top: 1px solid var(--border-subtle); text-align: right; flex-shrink: 0; }
 .result-modal-footer button {
   background: var(--accent);
-  color: #fff;
+  color: #f2f5fb;
   border: none;
   border-radius: 6px;
   padding: 0.35rem 1.2rem;
@@ -1010,7 +1010,7 @@ body {
   background:
     radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.07), transparent 68%),
     rgb(var(--bg-panel-rgb) / 0.82);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14), 0 1px rgba(255, 255, 255, 0.025) inset;
+  box-shadow: 0 14px 28px rgba(5, 8, 14, 0.14), 0 1px rgba(255, 255, 255, 0.025) inset;
   transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -1028,7 +1028,7 @@ body {
   background:
     radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.12), transparent 68%),
     rgb(var(--bg-panel-rgb) / 0.9);
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22), 0 0 0 1px rgb(var(--accent-rgb) / 0.04);
+  box-shadow: 0 18px 34px rgba(5, 8, 14, 0.22), 0 0 0 1px rgb(var(--accent-rgb) / 0.04);
 }
 
 #overview-grid .svc-card.running {
@@ -1114,7 +1114,7 @@ body {
   border-color: rgb(var(--accent-rgb) / 0.24);
   border-radius: 14px;
   background: linear-gradient(145deg, var(--bg-panel), var(--bg-page));
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.52), 0 1px rgba(255, 255, 255, 0.04) inset;
+  box-shadow: 0 24px 70px rgba(5, 8, 14, 0.52), 0 1px rgba(255, 255, 255, 0.04) inset;
 }
 
 .result-modal-header {

@@ -381,7 +381,7 @@
     .btn:hover {
       background: var(--bg-elevated);
       border-color: var(--text-dim);
-      color: #fff /* white on colored bg */;
+      color: #f2f5fb /* white on colored bg */;
     }
 
     .btn.secondary {
@@ -460,7 +460,7 @@
       overflow-y: auto;
       z-index: 120;
       display: none;
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 14px 36px rgba(5, 8, 14, 0.45);
     }
 
     .ms-dropdown.open { display: block; }
@@ -499,7 +499,7 @@
       overflow: hidden;
       flex-direction: column;
       z-index: 125;
-      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.38);
+      box-shadow: 0 24px 56px rgba(5, 8, 14, 0.38);
       backdrop-filter: blur(12px);
     }
 
@@ -928,7 +928,7 @@
       border-radius: 12px;
       border: 1px solid var(--border-default);
       background: var(--bg-card);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 20px 60px rgba(5, 8, 14, 0.45);
       display: grid;
       gap: var(--sp-sm);
       text-align: center;

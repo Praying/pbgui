@@ -67,7 +67,7 @@ html, body {
   background: var(--bg-page);
   border: 1px solid var(--border-default);
   border-radius: 12px;
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9);
   flex-direction: column;
   overflow: hidden;
   resize: both;

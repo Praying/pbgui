@@ -118,7 +118,7 @@ describe('WidgetPnl', () => {
         x: ['2025-01-01', '2025-01-02'],
         y: [1.5, -2],
         type: 'bar',
-        marker: { color: ['#8fb593', '#c58e8a'] },
+        marker: { color: ['#46c88f', '#e5615c'] },
         text: ['1.50', '-2.00'],
         textposition: 'auto',
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.2f}<extra></extra>',

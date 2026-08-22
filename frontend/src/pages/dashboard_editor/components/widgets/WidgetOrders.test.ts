@@ -317,7 +317,7 @@ describe('WidgetOrders — selection linkage (editor:2135-2151)', () => {
     expect(legend).toEqual(['Entry', 'Price', 'Buy Order', 'Sell Order']);
     const swatches = wrapper.findAll('.do-leg-solid, .do-leg-dotted, .do-leg-dashed');
     expect(swatches.map((s) => (s.element as HTMLElement).style.borderColor)).toEqual([
-      'rgb(165, 158, 175)', 'rgb(165, 158, 175)', 'rgb(143, 181, 147)', 'rgb(197, 142, 138)',
+      'rgb(163, 173, 194)', 'rgb(163, 173, 194)', 'rgb(70, 200, 143)', 'rgb(229, 97, 92)',
     ]);
     /* fullscreen toolbar (render.js:3743-3751) */
     expect(wrapper.get('.do-fs-btn').text()).toBe('⛶');
