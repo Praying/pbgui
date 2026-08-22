@@ -6,10 +6,10 @@
 
 /* legacy :161-166 — sidebar subsection nav buttons */
 .settings-subsection-btn.active {
-  background: rgba(99, 179, 237, 0.22);
-  border-color: rgba(99, 179, 237, 0.7);
+  background: rgb(var(--accent-rgb) / 0.22);
+  border-color: rgb(var(--accent-rgb) / 0.7);
   color: #f8fbff;
-  box-shadow: inset 0 0 0 1px rgba(99, 179, 237, 0.18);
+  box-shadow: inset 0 0 0 1px rgb(var(--accent-rgb) / 0.18);
 }
 
 /* legacy :168-172 — #settings-subsection-nav mirrors the inventory nav grid */
@@ -30,7 +30,7 @@
 #btn-save-settings-sidebar.save-needed:hover {
   background: #7c4a03;
   color: #fff /* white on colored bg */7ed;
-  border-color: #b45309;
+  border-color: var(--warning-deep);
 }
 
 /* legacy :758-765 — panel card heads (M-data-4 tiingo card uses it) */
@@ -80,13 +80,13 @@
 }
 
 .btn.secondary {
-  background: rgba(99, 179, 237, 0.08);
-  border-color: rgba(99, 179, 237, 0.25);
+  background: rgb(var(--accent-rgb) / 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.25);
   color: var(--text);
 }
 
 .btn.secondary:hover {
-  background: rgba(99, 179, 237, 0.16);
+  background: rgb(var(--accent-rgb) / 0.16);
   border-color: var(--accent);
 }
 
@@ -208,7 +208,7 @@ input::placeholder {
 .coin-picker-list {
   margin-top: var(--sp-md);
   border: none;
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
+  border-top: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 0;
   background: none;
   min-height: 0;
@@ -245,17 +245,17 @@ input::placeholder {
 }
 
 .coin-picker-row.coin-picker-button:focus-visible {
-  outline: 1px solid rgba(99, 179, 237, 0.42);
+  outline: 1px solid rgb(var(--accent-rgb) / 0.42);
   outline-offset: 1px;
 }
 
 .coin-picker-row:hover {
-  background: rgba(99, 179, 237, 0.08);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .coin-picker-row.selected {
-  border-color: rgba(99, 179, 237, 0.24);
-  background: rgba(99, 179, 237, 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.24);
+  background: rgb(var(--accent-rgb) / 0.12);
 }
 
 .coin-picker-row.disabled {

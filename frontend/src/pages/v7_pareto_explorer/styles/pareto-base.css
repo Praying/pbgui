@@ -7,7 +7,7 @@
   --bg: var(--bg-page);
   --bg2: var(--bg-panel);
   --bg3: var(--bg-elevated);
-  --bg4: #151922;
+  --bg4: var(--bg-elevated);
   --border: var(--border-default);
   --text: var(--text-primary);
   --text-dim: var(--text-secondary);
@@ -16,7 +16,7 @@
   --orange: var(--warning);
   --red: var(--danger);
   --font: var(--font-family);
-  --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --mono: var(--font-mono);
   --fs-xs: 11px;
   --fs-sm: 13px;
   --fs-base: 14px;
@@ -461,6 +461,6 @@ button[data-tip] {
   color: var(--text-dim);
 }
 
-.status-chip.good { background: rgba(33,195,84,.15); color: var(--green); }
-.status-chip.warn { background: rgba(255,140,0,.15); color: var(--orange); }
-.status-chip.bad { background: rgba(255,75,75,.15); color: var(--red); }
+.status-chip.good { background: rgb(var(--success-rgb) / .15); color: var(--green); }
+.status-chip.warn { background: rgb(var(--warning-rgb) / .15); color: var(--orange); }
+.status-chip.bad { background: rgb(var(--danger-rgb) / .15); color: var(--red); }

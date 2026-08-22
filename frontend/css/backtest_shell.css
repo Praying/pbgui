@@ -1,15 +1,15 @@
 :root {
-  --bg: #0e1117;
-  --bg2: #1a1d24;
-  --bg3: #262730;
+  --bg: var(--bg-page);
+  --bg2: var(--bg-panel);
+  --bg3: var(--bg-elevated);
   --border: #333640;
-  --text: #fafafa;
-  --text-dim: #a0a4ab;
-  --green: #21c354;
+  --text: var(--text-primary);
+  --text-dim: var(--text-secondary);
+  --green: var(--success);
   --orange: #ff8c00;
-  --red: #ff4b4b;
+  --red: var(--danger);
   --blue: #1f77ff;
-  --accent: #4da6ff;
+  --accent: var(--accent);
   --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   --fs-xs: 11px;
   --fs-sm: 13px;
@@ -43,7 +43,7 @@ button, input, select, textarea { font-family: var(--font); }
 .tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 .tbl tr:hover td { background: rgba(255,255,255,.03); }
 .tbl tbody tr { cursor: pointer; }
-.tbl tr.selected td { background: rgba(77,166,255,.12); }
+.tbl tr.selected td { background: rgb(var(--accent-rgb) / .12); }
 .tbl tr.selected td:first-child { border-left: 3px solid var(--accent); }
 .tbl td.actions-cell { white-space: nowrap; overflow: visible; padding: 4px 6px; }
 .sort-arrow { margin-left: 4px; font-size: var(--fs-xs); }
@@ -51,10 +51,10 @@ button, input, select, textarea { font-family: var(--font); }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .3px; }
 .badge-queued { background: rgba(160,164,171,.15); color: var(--text-dim); }
 .badge-running { background: rgba(31,119,255,.15); color: var(--blue); }
-.badge-backtesting { background: rgba(255,140,0,.15); color: var(--orange); }
-.badge-complete { background: rgba(33,195,84,.15); color: var(--green); }
-.badge-error, .badge-stopped { background: rgba(255,75,75,.15); color: var(--red); }
-.badge-unknown { background: rgba(255,140,0,.15); color: var(--orange); }
+.badge-backtesting { background: rgb(var(--warning-rgb) / .15); color: var(--orange); }
+.badge-complete { background: rgb(var(--success-rgb) / .15); color: var(--green); }
+.badge-error, .badge-stopped { background: rgb(var(--danger-rgb) / .15); color: var(--red); }
+.badge-unknown { background: rgb(var(--warning-rgb) / .15); color: var(--orange); }
 
 .act-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); cursor: pointer; padding: 3px 8px; font-size: var(--fs-xs); transition: all .15s; }
 .act-btn:hover { color: var(--text); border-color: var(--accent); }
@@ -70,7 +70,7 @@ button, input, select, textarea { font-family: var(--font); }
 .form-group label { font-size: var(--fs-xs); color: var(--text-dim); letter-spacing: .03em; margin-bottom: 2px; }
 .form-group input, .form-group select, .form-group textarea { min-height: var(--input-h); padding: var(--sp-sm); background: var(--bg2); color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: var(--fs-sm); outline: none; width: 100%; }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
-.json-editor { width: 100%; min-height: 58vh; font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: var(--fs-xs); line-height: 1.4; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: var(--sp-sm); resize: vertical; color: var(--text); tab-size: 4; }
+.json-editor { width: 100%; min-height: 58vh; font-family: var(--font-mono); font-size: var(--fs-xs); line-height: 1.4; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: var(--sp-sm); resize: vertical; color: var(--text); tab-size: 4; }
 .bt-editor-note { color: var(--text-dim); font-size: var(--fs-xs); margin-top: var(--sp-xs); line-height: 1.4; }
 .section-title { font-size: var(--fs-md); font-weight: 600; margin: var(--sp-lg) 0 var(--sp-sm); padding-bottom: var(--sp-xs); border-bottom: 1px solid var(--border); }
 
@@ -112,7 +112,7 @@ button, input, select, textarea { font-family: var(--font); }
 #log-panel-close { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: var(--fs-lg); }
 
 .bt-runtime-status { margin-top: var(--sp-md); padding: var(--sp-sm); border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); font-size: var(--fs-xs); line-height: 1.4; overflow-wrap: anywhere; }
-.bt-runtime-status.ready { border-color: rgba(33,195,84,.35); color: var(--green); }
+.bt-runtime-status.ready { border-color: rgb(var(--success-rgb) / .35); color: var(--green); }
 
 @media (max-width: 760px) {
   #page-body { position: relative; }

@@ -165,14 +165,14 @@ watch(
   align-items: center;
   gap: 0.75rem;
   padding: 0.55rem 1rem;
-  border-bottom: 1px solid #1e2736;
+  border-bottom: 1px solid #29262c;
   flex-shrink: 0;
-  background: #111827;
+  background: #171619;
 }
 .ctrl-title {
   font-size: var(--fs-md);
   font-weight: 700;
-  color: #e2e8f0;
+  color: #eae7ea;
 }
 .ctrl-status {
   display: flex;
@@ -183,7 +183,7 @@ watch(
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #4a5568;
+  background: #4e4851;
   flex-shrink: 0;
 }
 .status-dot.running { background: #21c354; }
@@ -191,22 +191,22 @@ watch(
 .status-dot.warn { background: #f59e0b; }
 .status-label {
   font-size: var(--fs-xs);
-  color: #64748b;
+  color: #716b75;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 .ctrl-btn {
   padding: 0.25rem 0.75rem;
   border-radius: 5px;
-  border: 1px solid #2d3748;
-  background: #1a202c;
-  color: #94a3b8;
+  border: 1px solid #37333a;
+  background: #1f1d21;
+  color: #a29ca6;
   cursor: pointer;
   font-size: var(--fs-sm);
   font-family: inherit;
   transition: all 0.12s;
 }
-.ctrl-btn:hover:not(:disabled) { border-color: #4a5568; color: #e2e8f0; }
+.ctrl-btn:hover:not(:disabled) { border-color: #4e4851; color: #eae7ea; }
 .ctrl-btn:disabled { cursor: default; opacity: 0.6; }
 .ctrl-btn.start { border-color: #166534; color: #4ade80; background: #052e16; }
 .ctrl-btn.stop { border-color: #7f1d1d; color: #fca5a5; background: #2d1515; }
@@ -217,15 +217,15 @@ watch(
   display: flex;
   gap: 2px;
   padding: 0.25rem 1rem 0;
-  border-bottom: 1px solid #1e2736;
+  border-bottom: 1px solid #29262c;
   flex-shrink: 0;
-  background: #0e1117;
+  background: #131114;
 }
 .tab-btn {
   padding: 0.3rem 0.75rem;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #716b75;
   cursor: pointer;
   font-size: var(--fs-sm);
   font-family: inherit;
@@ -233,7 +233,7 @@ watch(
   transition: all 0.12s;
 }
 .tab-btn.active { color: #63b3ed; border-bottom-color: #63b3ed; }
-.tab-btn:hover:not(.active) { color: #94a3b8; }
+.tab-btn:hover:not(.active) { color: #a29ca6; }
 .tab-pane { display: none; flex: 1; overflow: hidden; flex-direction: column; }
 .tab-pane.active { display: flex; }
 .log-wrap { flex: 1; overflow: hidden; }
@@ -242,11 +242,11 @@ watch(
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #716b75;
 }
 .tab-placeholder-hint {
   font-size: var(--fs-sm);
-  color: #4a5568;
+  color: #4e4851;
 }
 
 /* ── Shared service-log workspace refinement ────────────────────────────── */
@@ -254,10 +254,10 @@ watch(
   min-height: 58px;
   padding: 10px clamp(14px, 2vw, 24px);
   gap: 12px;
-  border-bottom-color: rgba(148, 163, 184, 0.14);
+  border-bottom-color: rgba(162, 156, 166, 0.14);
   background:
     linear-gradient(90deg, rgba(21, 38, 61, 0.9), rgba(14, 23, 37, 0.9)),
-    #111827;
+    #171619;
   box-shadow: 0 1px rgba(255, 255, 255, 0.025) inset;
 }
 
@@ -271,7 +271,7 @@ watch(
   gap: 7px;
   min-width: 0;
   padding: 5px 9px;
-  border: 1px solid rgba(148, 163, 184, 0.13);
+  border: 1px solid rgba(162, 156, 166, 0.13);
   border-radius: 999px;
   background: rgba(6, 13, 24, 0.34);
 }
@@ -312,9 +312,9 @@ watch(
 .ctrl-btn {
   min-height: 31px;
   padding: 0 10px;
-  border-color: rgba(148, 163, 184, 0.17);
+  border-color: rgba(162, 156, 166, 0.17);
   border-radius: 7px;
-  background: rgba(148, 163, 184, 0.08);
+  background: rgba(162, 156, 166, 0.08);
   color: #b7c6d8;
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
@@ -353,7 +353,7 @@ watch(
 .tab-bar {
   gap: 4px;
   padding: 7px clamp(14px, 2vw, 24px) 0;
-  border-bottom-color: rgba(148, 163, 184, 0.14);
+  border-bottom-color: rgba(162, 156, 166, 0.14);
   background: rgba(9, 16, 27, 0.86);
 }
 
@@ -375,8 +375,8 @@ watch(
 }
 
 .tab-btn:hover:not(.active) {
-  border-color: rgba(148, 163, 184, 0.12);
-  background: rgba(148, 163, 184, 0.06);
+  border-color: rgba(162, 156, 166, 0.12);
+  background: rgba(162, 156, 166, 0.06);
   color: #cbd5e1;
 }
 
@@ -387,9 +387,9 @@ watch(
 
 .tab-placeholder {
   margin: 12px clamp(14px, 2vw, 24px) 18px;
-  border: 1px dashed rgba(148, 163, 184, 0.18);
+  border: 1px dashed rgba(162, 156, 166, 0.18);
   border-radius: 10px;
-  background: rgba(148, 163, 184, 0.035);
+  background: rgba(162, 156, 166, 0.035);
 }
 
 @media (max-width: 720px) {

@@ -110,14 +110,14 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
 <style scoped>
 .alert-routing-group {
   margin-top: 1rem;
-  border: 1px solid #1e2736;
+  border: 1px solid #29262c;
   border-radius: 8px;
-  background: #111827;
+  background: #171619;
   overflow: hidden;
 }
 .alert-routing-title {
   padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid #1e2736;
+  border-bottom: 1px solid #29262c;
   font-size: var(--fs-sm);
   color: #93c5fd;
   font-weight: 600;
@@ -133,7 +133,7 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
 .alert-routing-col.telegram-col { gap: 0.45rem; }
 .alert-routing-col-header {
   font-size: var(--fs-xs);
-  color: #4a5568;
+  color: #4e4851;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -141,7 +141,7 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  color: #94a3b8;
+  color: #a29ca6;
   font-size: var(--fs-sm);
   cursor: pointer;
 }
@@ -151,5 +151,5 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
   width: 15px;
   height: 15px;
 }
-.alert-routing-check .label-hint { color: #4a5568; }
+.alert-routing-check .label-hint { color: #4e4851; }
 </style>

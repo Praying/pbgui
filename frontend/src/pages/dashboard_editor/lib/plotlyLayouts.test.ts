@@ -59,14 +59,14 @@ describe('topTraces (render.js:600-605)', () => {
 describe('topLayout (render.js:606-618, 659)', () => {
   it('matches the legacy layout skeleton', () => {
     expect(topLayout(300)).toEqual({
-      paper_bgcolor: '#0e1117',
-      plot_bgcolor: '#0e1117',
-      font: { color: '#e2e8f0', size: 11 },
+      paper_bgcolor: '#131114',
+      plot_bgcolor: '#131114',
+      font: { color: '#eae7ea', size: 11 },
       margin: { l: 50, r: 20, t: 40, b: 60 },
-      xaxis: { tickangle: -45, gridcolor: '#2d3748', color: '#e2e8f0' },
+      xaxis: { tickangle: -45, gridcolor: '#37333a', color: '#eae7ea' },
       yaxis: {
-        gridcolor: '#2d3748', color: '#e2e8f0',
-        zeroline: true, zerolinecolor: '#4a5568',
+        gridcolor: '#37333a', color: '#eae7ea',
+        zeroline: true, zerolinecolor: '#4e4851',
       },
       bargap: 0.3,
       autosize: true,
@@ -125,7 +125,7 @@ describe('pnlLayout (render.js:1644-1656)', () => {
     const layout = pnlLayout(280);
     expect(layout.margin).toEqual({ l: 50, r: 20, t: 40, b: 50 });
     expect(layout.xaxis).toEqual({
-      tickangle: -45, gridcolor: '#2d3748', color: '#e2e8f0', type: 'date',
+      tickangle: -45, gridcolor: '#37333a', color: '#eae7ea', type: 'date',
     });
     expect(layout.height).toBe(280);
     expect(layout.transition).toEqual({ duration: 0, easing: 'linear' });
@@ -188,7 +188,7 @@ describe('pplLayout y-range padding (render.js:1903-1911)', () => {
     expect(layout.barmode).toBe('relative');
     expect((layout.xaxis as PlotlyLayout).type).toBe('category');
     expect((layout.xaxis as PlotlyLayout).nticks).toBe(20);
-    expect(layout.legend).toEqual({ font: { color: '#e2e8f0' } });
+    expect(layout.legend).toEqual({ font: { color: '#eae7ea' } });
   });
 
   it('guards a zero data range with the 20%-or-1 fallback (yRange=0)', () => {
@@ -359,14 +359,14 @@ describe('incomeTraces (render.js:866-868 / 1501-1510)', () => {
 describe('incomeLayout (render.js:869-877 / 1513-1524)', () => {
   it('matches the legacy income layout skeleton (margins l55 r15 t40 b40, transparent legend)', () => {
     expect(incomeLayout(null)).toEqual({
-      paper_bgcolor: '#0e1117',
-      plot_bgcolor: '#0e1117',
-      font: { color: '#e2e8f0', size: 11 },
+      paper_bgcolor: '#131114',
+      plot_bgcolor: '#131114',
+      font: { color: '#eae7ea', size: 11 },
       margin: { l: 55, r: 15, t: 40, b: 40 },
       autosize: true,
-      xaxis: { gridcolor: '#2d3748', color: '#e2e8f0' },
-      yaxis: { gridcolor: '#2d3748', color: '#e2e8f0', zeroline: true, zerolinecolor: '#4a5568' },
-      legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: '#e2e8f0' } },
+      xaxis: { gridcolor: '#37333a', color: '#eae7ea' },
+      yaxis: { gridcolor: '#37333a', color: '#eae7ea', zeroline: true, zerolinecolor: '#4e4851' },
+      legend: { bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: '#eae7ea' } },
       transition: { duration: 0, easing: 'linear' },
     });
   });

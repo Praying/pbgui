@@ -29,8 +29,8 @@ export function chartTitle(result: BacktestResultItem, t: (iso: string) => strin
 /** _chartLayout (:7212-7224). */
 export function chartLayout(title: string, yTitle: string): PlotlyLayout {
   return {
-    paper_bgcolor: '#0e1117',
-    plot_bgcolor: '#0e1117',
+    paper_bgcolor: '#131114',
+    plot_bgcolor: '#131114',
     font: { color: '#fafafa', size: 12, family: 'Source Sans Pro, sans-serif' },
     margin: { l: 60, r: 20, t: 40, b: 40 },
     title: { text: title, x: 0.5, font: { size: 14 } },
@@ -239,8 +239,8 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
 
   const traces: PlotlyTrace[] = [];
   const layout: PlotlyLayout = {
-    paper_bgcolor: '#0e1117',
-    plot_bgcolor: '#0e1117',
+    paper_bgcolor: '#131114',
+    plot_bgcolor: '#131114',
     font: { color: '#fafafa', size: 12, family: 'Source Sans Pro, sans-serif' },
     margin: { l: 70, r: 30, t: 70, b: 50 },
     title: {

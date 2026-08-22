@@ -116,20 +116,20 @@ function submit(): void {
 <!-- Styles ported from frontend/services_monitor.html (CMC modal + settings form). -->
 <style scoped>
 .form-field { display: flex; flex-direction: column; gap: 3px; }
-.form-label { font-size: var(--fs-xs); color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
-.form-hint { font-size: var(--fs-xs); color: #4a5568; }
-.form-select { background: #1a202c; color: #e2e8f0; border: 1px solid #2d3748; border-radius: 5px; padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none; cursor: pointer; }
-.form-select:focus { border-color: #4a5568; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #2d3748; background: #1a202c; color: #94a3b8; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: #4a5568; color: #e2e8f0; }
+.form-label { font-size: var(--fs-xs); color: #716b75; text-transform: uppercase; letter-spacing: 0.04em; }
+.form-hint { font-size: var(--fs-xs); color: #4e4851; }
+.form-select { background: #1f1d21; color: #eae7ea; border: 1px solid #37333a; border-radius: 5px; padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none; cursor: pointer; }
+.form-select:focus { border-color: #4e4851; }
+.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #37333a; background: #1f1d21; color: #a29ca6; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
+.form-btn:hover { border-color: #4e4851; color: #eae7ea; }
 .form-btn.save { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
 .form-btn.save:hover { background: #1d4ed8; color: #fff; }
 .cmc-modal-backdrop { position: fixed; inset: 0; z-index: 19000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(2px); }
-.cmc-modal-card { width: min(480px, 94vw); background: #131b2b; border: 1px solid #2d3748; border-radius: 14px; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9); overflow: hidden; }
-.cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid #1e2736; background: #111827; }
-.cmc-modal-title { color: #e2e8f0; font-size: var(--fs-md); font-weight: 700; }
-.cmc-modal-close { background: transparent; border: 0; color: #64748b; font-size: var(--fs-lg); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; }
-.cmc-modal-close:hover { color: #e2e8f0; background: rgba(255, 255, 255, 0.06); }
+.cmc-modal-card { width: min(480px, 94vw); background: #131b2b; border: 1px solid #37333a; border-radius: 14px; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9); overflow: hidden; }
+.cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid #29262c; background: #171619; }
+.cmc-modal-title { color: #eae7ea; font-size: var(--fs-md); font-weight: 700; }
+.cmc-modal-close { background: transparent; border: 0; color: #716b75; font-size: var(--fs-lg); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; }
+.cmc-modal-close:hover { color: #eae7ea; background: rgba(255, 255, 255, 0.06); }
 .cmc-modal-body { display: grid; gap: 0.8rem; padding: 1rem 1.1rem; }
 .cmc-modal-error { min-height: 1rem; color: #fca5a5; font-size: var(--fs-xs); }
 .cmc-modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0 1.1rem 1rem; }

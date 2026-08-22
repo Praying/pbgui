@@ -67,7 +67,7 @@ async function save(): Promise<void> {
     </div>
     <p
       id="hlWarningConfigStatus"
-      :style="{ fontSize: 'var(--fs-sm)', marginTop: '8px', color: configured ? '#26a69a' : '#ecc94b' }"
+      :style="{ fontSize: 'var(--fs-sm)', marginTop: '8px', color: configured ? 'var(--success)' : 'var(--warning)' }"
     >
       {{
         configured
@@ -78,7 +78,7 @@ async function save(): Promise<void> {
           : t('misc.apikeys.hlConfigNotConfigured')
       }}
     </p>
-    <p style="font-size:var(--fs-sm); color:#94a3b8; margin-top:8px;">
+    <p style="font-size:var(--fs-sm); color:#a29ca6; margin-top:8px;">
       {{ t('misc.apikeys.telegramWarningDesc') }}
     </p>
   </div>

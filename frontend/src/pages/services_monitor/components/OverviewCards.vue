@@ -184,7 +184,7 @@ const cards = computed<Card[]>(() => {
 }
 .svc-card {
   background: #131b2b;
-  border: 1px solid #1e2736;
+  border: 1px solid #29262c;
   border-radius: 10px;
   padding: 1rem;
   display: flex;
@@ -193,12 +193,12 @@ const cards = computed<Card[]>(() => {
   cursor: pointer;
   transition: border-color 0.12s;
 }
-.svc-card:hover { border-color: #2d3748; }
+.svc-card:hover { border-color: #37333a; }
 .svc-card.running { border-color: rgba(33, 195, 84, 0.45); }
 .svc-card.stopped { border-color: rgba(255, 75, 75, 0.35); }
-.card-name { font-size: var(--fs-sm); font-weight: 700; color: #e2e8f0; }
-.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: #64748b; }
-.card-dot { width: 7px; height: 7px; border-radius: 50%; background: #4a5568; flex-shrink: 0; }
+.card-name { font-size: var(--fs-sm); font-weight: 700; color: #eae7ea; }
+.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: #716b75; }
+.card-dot { width: 7px; height: 7px; border-radius: 50%; background: #4e4851; flex-shrink: 0; }
 .card-dot.running { background: #21c354; }
 .card-dot.stopped { background: #ff4b4b; }
 .card-dot.warn { background: #f59e0b; }
@@ -208,15 +208,15 @@ const cards = computed<Card[]>(() => {
   align-self: flex-start;
   padding: 0.2rem 0.65rem;
   border-radius: 4px;
-  border: 1px solid #2d3748;
-  background: #1a202c;
-  color: #94a3b8;
+  border: 1px solid #37333a;
+  background: #1f1d21;
+  color: #a29ca6;
   cursor: pointer;
   font-size: var(--fs-xs);
   font-family: inherit;
   transition: all 0.12s;
 }
-.card-btn:hover:not(:disabled) { border-color: #4a5568; color: #e2e8f0; }
+.card-btn:hover:not(:disabled) { border-color: #4e4851; color: #eae7ea; }
 .card-btn.start { border-color: #166534; color: #4ade80; background: #052e16; }
 .card-btn.stop { border-color: #7f1d1d; color: #fca5a5; background: #2d1515; }
 .card-btn.restart { border-color: #b45309; color: #fcd34d; background: #1c1a08; }

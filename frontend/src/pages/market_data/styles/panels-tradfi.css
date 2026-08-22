@@ -44,7 +44,7 @@
 }
 
 .tradfi-feedback {
-  border: 1px solid rgba(99, 179, 237, 0.2);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.45);
   padding: var(--sp-md);
@@ -63,7 +63,7 @@
   width: var(--btn-h);
   height: var(--btn-h);
   border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.18);
   background: rgba(12, 17, 26, 0.3);
   color: var(--text-dim);
   font-size: var(--fs-md);
@@ -73,13 +73,13 @@
 }
 
 .tradfi-feedback-close:hover {
-  background: rgba(99, 179, 237, 0.14);
-  border-color: rgba(99, 179, 237, 0.35);
+  background: rgb(var(--accent-rgb) / 0.14);
+  border-color: rgb(var(--accent-rgb) / 0.35);
   color: var(--text);
 }
 
 .tradfi-feedback-group {
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.32);
   overflow: hidden;
@@ -100,7 +100,7 @@
 }
 
 .tradfi-feedback-group[open] > summary {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
 }
 
 .tradfi-feedback-group-title {
@@ -136,13 +136,13 @@
 }
 
 .tradfi-feedback.warn {
-  border-color: rgba(245, 158, 11, 0.35);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: rgb(var(--warning-rgb) / 0.35);
+  background: rgb(var(--warning-rgb) / 0.08);
 }
 
 .tradfi-feedback.error {
-  border-color: rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.08);
+  border-color: rgb(var(--danger-rgb) / 0.35);
+  background: rgb(var(--danger-rgb) / 0.08);
 }
 
 .tradfi-search-list {
@@ -151,7 +151,7 @@
 }
 
 .tradfi-search-item {
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.45);
   padding: var(--sp-md);
@@ -206,27 +206,27 @@
   padding: var(--sp-sm) var(--sp-md);
   font-size: var(--fs-sm);
   line-height: 1.45;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   background: rgba(12, 17, 26, 0.48);
   color: var(--text-dim);
 }
 
 .tradfi-search-window-status.success {
-  border-color: rgba(72, 187, 120, 0.28);
+  border-color: rgb(var(--success-rgb) / 0.28);
   background: rgba(21, 42, 31, 0.92);
   color: #c6f6d5;
 }
 
 .tradfi-search-window-status.info {
-  border-color: rgba(99, 179, 237, 0.24);
-  background: rgba(15, 23, 42, 0.92);
+  border-color: rgb(var(--accent-rgb) / 0.24);
+  background: rgb(var(--bg-page-rgb) / 0.92);
   color: var(--accent-soft);
 }
 
 .tradfi-search-window-status.error {
-  border-color: rgba(252, 129, 129, 0.24);
+  border-color: rgb(var(--danger-soft-rgb) / 0.24);
   background: rgba(60, 18, 24, 0.92);
-  color: #fecaca;
+  color: var(--danger-soft);
 }
 
 .tradfi-search-item-main {
@@ -237,7 +237,7 @@
 }
 
 .tradfi-search-window-empty {
-  border: 1px dashed rgba(148, 163, 184, 0.18);
+  border: 1px dashed rgb(var(--text-secondary-rgb) / 0.18);
   border-radius: 10px;
   padding: var(--sp-md);
   background: rgba(12, 17, 26, 0.34);
@@ -247,7 +247,7 @@
 }
 
 .tradfi-specs-table-wrap {
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.48);
   max-height: 360px;
@@ -266,7 +266,7 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-page);
-  border: 1px solid rgba(99, 179, 237, 0.26);
+  border: 1px solid rgb(var(--accent-rgb) / 0.26);
   border-radius: 12px;
   box-shadow: 0 22px 72px rgba(0, 0, 0, 0.55);
   z-index: 2600;
@@ -317,7 +317,7 @@
   min-height: 0;
   overflow: auto;
   padding: var(--sp-md);
-  background: rgba(14, 17, 23, 0.94);
+  background: rgb(var(--bg-page-rgb) / 0.94);
 }
 
 .tradfi-specs-window-content {
@@ -374,7 +374,7 @@
 .tradfi-specs-table thead {
   position: sticky;
   top: 0;
-  background: #121826;
+  background: var(--bg-page);
   z-index: 1;
 }
 
@@ -382,13 +382,13 @@
 .tradfi-specs-table td {
   padding: 0.7rem 0.8rem;
   text-align: left;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   font-size: var(--fs-sm);
   vertical-align: top;
 }
 
 .tradfi-table-wrap {
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.48);
   max-height: 420px;
@@ -403,7 +403,7 @@
 .tradfi-map-table thead {
   position: sticky;
   top: 0;
-  background: #121826;
+  background: var(--bg-page);
   z-index: 1;
 }
 
@@ -411,7 +411,7 @@
 .tradfi-map-table td {
   padding: 0.7rem 0.8rem;
   text-align: left;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   font-size: var(--fs-sm);
   vertical-align: top;
 }
@@ -427,11 +427,11 @@
 }
 
 .tradfi-map-table tbody tr:hover {
-  background: rgba(99, 179, 237, 0.08);
+  background: rgb(var(--accent-rgb) / 0.08);
 }
 
 .tradfi-map-table tbody tr.is-selected {
-  background: rgba(99, 179, 237, 0.14);
+  background: rgb(var(--accent-rgb) / 0.14);
 }
 
 .tradfi-pill {
@@ -439,8 +439,8 @@
   align-items: center;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(99, 179, 237, 0.12);
-  border: 1px solid rgba(99, 179, 237, 0.2);
+  background: rgb(var(--accent-rgb) / 0.12);
+  border: 1px solid rgb(var(--accent-rgb) / 0.2);
   color: var(--text);
   white-space: nowrap;
 }
@@ -485,7 +485,7 @@
 .tradfi-editor-shell {
   margin-top: var(--sp-md);
   padding-top: var(--sp-md);
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-top: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   display: grid;
   gap: var(--sp-md);
 }
@@ -503,7 +503,7 @@
 }
 
 .usage-card {
-  border: 1px solid #1f2a3a;
+  border: 1px solid var(--bg-elevated);
   border-radius: 10px;
   padding: var(--sp-md);
   background: rgba(12, 17, 26, 0.45);

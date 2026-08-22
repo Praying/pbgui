@@ -35,14 +35,14 @@ onMounted(() => {
       <BackButton @back="emit('back')" />
       <h3 style="margin:0;">{{ t('misc.apikeys.tradfiDataProvider') }}</h3>
     </div>
-    <p style="font-size:var(--fs-sm); color:#94a3b8; margin-bottom:8px;" v-html="t('misc.apikeys.stockPerpBacktestsDesc')"></p>
+    <p style="font-size:var(--fs-sm); color:#a29ca6; margin-bottom:8px;" v-html="t('misc.apikeys.stockPerpBacktestsDesc')"></p>
     <p
-      style="font-size:var(--fs-sm); background:#1a2744; border-left:3px solid #26a69a; padding:8px 10px; border-radius:4px; margin-bottom:16px; color:#a0aec0;"
+      style="font-size:var(--fs-sm); background:var(--bg-elevated); border-left:3px solid var(--accent); padding:8px 10px; border-radius:4px; margin-bottom:16px; color:var(--text-secondary);"
       v-html="t('misc.apikeys.betterAlternativeDesc')"
     ></p>
 
     <!-- yfinance section -->
-    <div style="border:1px solid #2d3748; border-radius:6px; padding:12px; margin-bottom:16px;">
+    <div style="border:1px solid #37333a; border-radius:6px; padding:12px; margin-bottom:16px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <span>{{ t('misc.apikeys.yfinanceDesc') }}</span>
@@ -55,7 +55,7 @@ onMounted(() => {
                 : store.yfError.value
                   ? '#ef4444'
                   : store.yfInstalled.value
-                    ? '#26a69a'
+                    ? 'var(--success)'
                     : '#d69e2e',
             }"
           >
@@ -85,10 +85,10 @@ onMounted(() => {
     </div>
 
     <!-- Extended provider section -->
-    <div style="border:1px solid #2d3748; border-radius:6px; padding:12px;">
+    <div style="border:1px solid #37333a; border-radius:6px; padding:12px;">
       <span>{{ t('misc.apikeys.extendedProviderDesc') }}</span>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
-        <span style="font-size:var(--fs-sm);color:#94a3b8;">{{ t('misc.apikeys.selectExactVaultProfile') }}</span>
+        <span style="font-size:var(--fs-sm);color:#a29ca6;">{{ t('misc.apikeys.selectExactVaultProfile') }}</span>
         <button class="btn pbgui-btn btn-sm btn-secondary" type="button" @click="store.newProfile()">{{ t('misc.apikeys.newProfile') }}</button>
       </div>
       <div class="tradfi-profile-wrap">
@@ -114,7 +114,7 @@ onMounted(() => {
               <td colspan="12" style="color:#ef4444;cursor:default;">{{ store.profilesError.value }}</td>
             </tr>
             <tr v-else-if="!store.profiles.value.length">
-              <td colspan="12" style="color:#94a3b8;cursor:default;">{{ t('misc.apikeys.noTradfiProfiles') }}</td>
+              <td colspan="12" style="color:#a29ca6;cursor:default;">{{ t('misc.apikeys.noTradfiProfiles') }}</td>
             </tr>
             <tr
               v-else
@@ -178,7 +178,7 @@ onMounted(() => {
             :href="store.providerLink.value ? store.providerLink.value.url : '#'"
             target="_blank"
             rel="noopener noreferrer"
-            :style="{ display: store.providerLink.value ? 'flex' : 'none', alignItems: 'center', gap: '4px', fontSize: 'var(--fs-sm)', color: '#26a69a', textDecoration: 'none', marginTop: '4px' }"
+            :style="{ display: store.providerLink.value ? 'flex' : 'none', alignItems: 'center', gap: '4px', fontSize: 'var(--fs-sm)', color: 'var(--accent)', textDecoration: 'none', marginTop: '4px' }"
           >
             <PbIcon :icon="PhLinkSimple" />
             <span id="tradfiProviderLinkLabel">{{ store.providerLink.value ? store.providerLink.value.label || t('misc.apikeys.getApiKey') : '' }}</span>
@@ -237,8 +237,8 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;">{{ store.providerNote.value }}</p>
-      <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#94a3b8; margin:4px 0 12px;">{{ store.profileStatus.value }}</p>
+      <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:#a29ca6; margin:4px 0 12px;">{{ store.providerNote.value }}</p>
+      <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:#a29ca6; margin:4px 0 12px;">{{ store.profileStatus.value }}</p>
       <div id="tradfiActions" style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn pbgui-btn btn-sm btn-info" :disabled="store.actionBusy.value" @click="store.tradfiTest()">
           <span v-if="store.testing.value === 'test'" class="spinner"></span>

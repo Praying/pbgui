@@ -293,7 +293,7 @@ onUnmounted(() => {
   padding: 3px 7px;
   border-radius: 3px;
   border: 1px solid #333640;
-  background: #262730;
+  background: #28252b;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -308,7 +308,7 @@ onUnmounted(() => {
 .lvp-lvl-btn[data-lvl='DEBUG'].on {
   background: #3a3f4b;
   border-color: #555;
-  color: #e2e8f0;
+  color: #eae7ea;
 }
 .lvp-lvl-btn[data-lvl='INFO'].on {
   background: #0d3b20;
@@ -332,10 +332,10 @@ onUnmounted(() => {
 }
 .lvp-ctrl-btn {
   padding: 3px 9px;
-  background: #262730;
+  background: #28252b;
   border: 1px solid #333640;
   border-radius: 4px;
-  color: #e2e8f0;
+  color: #eae7ea;
   font-size: 12px;
   cursor: pointer;
   white-space: nowrap;
@@ -354,7 +354,7 @@ onUnmounted(() => {
 }
 .lvp-conn-badge {
   font-size: 11px;
-  color: #64748b;
+  color: #716b75;
 }
 .lvp-terminal {
   overflow-y: auto;
@@ -400,11 +400,11 @@ onUnmounted(() => {
   min-height: 40px;
   gap: 6px;
   padding: 6px 8px;
-  border: 1px solid rgba(148, 163, 184, 0.13);
+  border: 1px solid rgba(162, 156, 166, 0.13);
   border-radius: 9px;
   background:
     linear-gradient(90deg, rgba(24, 38, 59, 0.76), rgba(14, 23, 37, 0.72)),
-    #111827;
+    #171619;
   box-shadow: 0 1px rgba(255, 255, 255, 0.025) inset;
 }
 
@@ -412,9 +412,9 @@ onUnmounted(() => {
   min-width: 39px;
   min-height: 27px;
   padding: 0 8px;
-  border-color: rgba(148, 163, 184, 0.17);
+  border-color: rgba(162, 156, 166, 0.17);
   border-radius: 6px;
-  background: rgba(148, 163, 184, 0.07);
+  background: rgba(162, 156, 166, 0.07);
   color: #8fa5be;
   opacity: 0.48;
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
@@ -422,8 +422,8 @@ onUnmounted(() => {
 
 .lvp-lvl-btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(148, 163, 184, 0.36);
-  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(162, 156, 166, 0.36);
+  background: rgba(162, 156, 166, 0.14);
   color: #edf4fc;
   opacity: 0.9;
 }
@@ -433,8 +433,8 @@ onUnmounted(() => {
 }
 
 .lvp-lvl-btn[data-lvl='DEBUG'].on {
-  border-color: rgba(148, 163, 184, 0.35);
-  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(162, 156, 166, 0.35);
+  background: rgba(162, 156, 166, 0.14);
   color: #cbd5e1;
 }
 
@@ -465,9 +465,9 @@ onUnmounted(() => {
 .lvp-ctrl-btn {
   min-height: 29px;
   padding: 0 10px;
-  border-color: rgba(148, 163, 184, 0.17);
+  border-color: rgba(162, 156, 166, 0.17);
   border-radius: 7px;
-  background: rgba(148, 163, 184, 0.08);
+  background: rgba(162, 156, 166, 0.08);
   color: #b7c6d8;
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
 }
@@ -494,7 +494,7 @@ onUnmounted(() => {
 .lvp-conn-badge {
   margin-left: auto;
   padding: 4px 9px;
-  border: 1px solid rgba(148, 163, 184, 0.13);
+  border: 1px solid rgba(162, 156, 166, 0.13);
   border-radius: 999px;
   background: rgba(6, 13, 24, 0.4);
   color: #8fa5be;
@@ -513,7 +513,7 @@ onUnmounted(() => {
   color: #bdc9d8;
   font-size: 12px;
   line-height: 1.55;
-  scrollbar-color: rgba(96, 165, 250, 0.32) rgba(148, 163, 184, 0.04);
+  scrollbar-color: rgba(96, 165, 250, 0.32) rgba(162, 156, 166, 0.04);
 }
 
 .lvp-terminal > div {

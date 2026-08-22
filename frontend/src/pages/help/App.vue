@@ -405,7 +405,7 @@ onBeforeUnmount(() => {
               <input id="help-search-global" v-model="globalMode" type="checkbox"> <span>{{ t('common.all') }}</span>
             </label>
           </div>
-          <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
+          <div style="width:1px;height:16px;background:#37333a;flex-shrink:0;"></div>
           <div class="lang-pill">
             <button id="help-lang-en" :class="{ active: store.lang.value === 'EN' }" @click="store.switchLang('EN')">EN</button>
             <button id="help-lang-de" :class="{ active: store.lang.value === 'DE' }" @click="store.switchLang('DE')">DE</button>
@@ -432,7 +432,7 @@ onBeforeUnmount(() => {
         <div id="help-content" ref="contentEl">
           <template v-if="globalMode">
             <div v-if="globalStatus === 'searching'" class="help-loading">{{ t('misc.help.searching') }}</div>
-            <p v-else-if="globalMessage" style="color:#64748b;padding:8px 0;">{{ globalMessage }}</p>
+            <p v-else-if="globalMessage" style="color:#716b75;padding:8px 0;">{{ globalMessage }}</p>
             <div v-else-if="globalResults.length" class="gs-results">
               <div
                 v-for="result in globalResults"

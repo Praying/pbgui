@@ -11,8 +11,8 @@ import { darkPlotLayout, previewPlotLayout } from './plotLayout';
 describe('darkPlotLayout (:2580-2644)', () => {
   it('applies the dark theme defaults to an empty layout', () => {
     const layout = darkPlotLayout({});
-    expect(layout.paper_bgcolor).toBe('#0e1117');
-    expect(layout.plot_bgcolor).toBe('#0e1117');
+    expect(layout.paper_bgcolor).toBe('#131114');
+    expect(layout.plot_bgcolor).toBe('#131114');
     expect(layout.font).toEqual({ color: '#fafafa' });
     expect(layout.legend).toEqual({ font: { color: '#fafafa' } });
     expect(layout.margin).toEqual({ l: 80, r: 40, t: 60, b: 70 });
@@ -45,9 +45,9 @@ describe('darkPlotLayout (:2580-2644)', () => {
       scene: { xaxis: { title: 'x' }, camera: { eye: 1 } },
     }) as Record<string, Record<string, unknown>>;
     const scene = layout.scene as Record<string, unknown>;
-    expect(scene.bgcolor).toBe('#0e1117');
+    expect(scene.bgcolor).toBe('#131114');
     expect(scene.camera).toEqual({ eye: 1 });
-    expect(scene.xaxis).toEqual({ backgroundcolor: '#0e1117', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa', title: 'x' });
+    expect(scene.xaxis).toEqual({ backgroundcolor: '#131114', gridcolor: 'rgba(255,255,255,0.12)', color: '#fafafa', title: 'x' });
   });
 
   it('darkens polar axes and colorbar fonts', () => {
@@ -56,7 +56,7 @@ describe('darkPlotLayout (:2580-2644)', () => {
       coloraxis: { colorbar: { title: { text: 'adg' }, thickness: 20 } },
     }) as Record<string, Record<string, unknown>>;
     const polar = layout.polar as Record<string, Record<string, unknown>>;
-    expect(polar.bgcolor).toBe('#0e1117');
+    expect(polar.bgcolor).toBe('#131114');
     expect(polar.radialaxis).toEqual({ color: '#fafafa', gridcolor: 'rgba(255,255,255,0.16)', linecolor: 'rgba(255,255,255,0.22)', tickfont: { color: '#fafafa' }, range: [0, 1] });
     const coloraxis = layout.coloraxis as Record<string, Record<string, unknown>>;
     expect(coloraxis.colorbar!.thickness).toBe(20);

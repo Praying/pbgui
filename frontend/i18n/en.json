@@ -1831,6 +1831,8 @@
   "misc.help.topics": "topics",
   "misc.help.typeSearchTerm": "Type a search term to find across all topics.",
   "misc.login.password": "Password",
+  "misc.login.signingIn": "Signing in\u2026",
+  "misc.login.submit": "Sign in",
   "misc.login.title": "PBGui - Login",
   "misc.mds.actionFailed": "Action failed",
   "misc.mds.cancelQueuedRefresh": "Cancel Queued Refresh",

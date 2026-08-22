@@ -46,7 +46,7 @@ function backupLabel(fn: string): string {
     <div class="diff-modal-header">
       <div style="display:flex; align-items:center; gap:12px;">
         <button class="btn pbgui-btn btn-sm btn-secondary" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</button>
-        <span id="diffTitle" style="font-size:var(--fs-sm); color:#94a3b8; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;">
+        <span id="diffTitle" style="font-size:var(--fs-sm); color:#a29ca6; font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;">
           {{ data ? backupLabel(data.filename1) + '  →  ' + backupLabel(data.filename2) : '' }}
         </span>
       </div>
@@ -58,13 +58,13 @@ function backupLabel(fn: string): string {
     <div class="diff-legend">
       <span style="color:#86efac;">&#9608; {{ t('misc.apikeys.added') }}</span>
       <span style="color:#fca5a5;">&#9608; {{ t('misc.apikeys.removed') }}</span>
-      <span style="color:#94a3b8;">&#9608; {{ t('misc.apikeys.unchanged') }}</span>
+      <span style="color:#a29ca6;">&#9608; {{ t('misc.apikeys.unchanged') }}</span>
     </div>
     <div id="diffContent" style="flex:1; overflow:auto;">
-      <div v-if="identical" style="text-align:center;padding:40px 20px;color:#26a69a;font-size:var(--fs-md);">
+      <div v-if="identical" style="text-align:center;padding:40px 20px;color:var(--success);font-size:var(--fs-md);">
         <span style="font-size:var(--fs-xl);">&#10003;</span><br />
         <strong>{{ t('misc.apikeys.filesIdentical') }}</strong><br />
-        <span style="font-size:var(--fs-sm);color:#94a3b8;margin-top:6px;display:block;">
+        <span style="font-size:var(--fs-sm);color:#a29ca6;margin-top:6px;display:block;">
           {{ data ? t('misc.apikeys.identicalContent', { lines: data.lines1.length }) : '' }}
         </span>
       </div>

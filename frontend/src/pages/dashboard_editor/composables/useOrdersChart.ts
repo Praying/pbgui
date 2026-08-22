@@ -137,8 +137,8 @@ export function useOrdersChart(
   const chart = LWC.createChart(container, {
     autoSize: true, // fill container — no manual width/height needed
     layout: {
-      background: { type: 'solid', color: '#0e1117' },
-      textColor: '#94a3b8',
+      background: { type: 'solid', color: '#131114' },
+      textColor: '#a29ca6',
       fontSize: 12,
     },
     grid: {
@@ -147,12 +147,12 @@ export function useOrdersChart(
     },
     crosshair: { mode: LWC.CrosshairMode.Normal },
     rightPriceScale: {
-      borderColor: '#2d3748',
+      borderColor: '#37333a',
       // some bottom padding for volume without going negative on wide-range charts
       scaleMargins: { top: 0.1, bottom: 0.15 },
     },
     timeScale: {
-      borderColor: '#2d3748',
+      borderColor: '#37333a',
       timeVisible: tfShowTime,
       secondsVisible: false,
       rightOffset: 30,

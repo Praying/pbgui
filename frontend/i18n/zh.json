@@ -1831,6 +1831,8 @@
   "misc.help.topics": "个主题",
   "misc.help.typeSearchTerm": "输入搜索词以在所有主题中查找。",
   "misc.login.password": "密码",
+  "misc.login.signingIn": "正在登录\u2026",
+  "misc.login.submit": "登录",
   "misc.login.title": "PBGui - 登录",
   "misc.mds.actionFailed": "操作失败",
   "misc.mds.cancelQueuedRefresh": "取消排队的刷新",

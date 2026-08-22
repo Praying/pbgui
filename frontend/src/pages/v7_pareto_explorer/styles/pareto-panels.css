@@ -153,7 +153,7 @@ input[type="range"]::-webkit-slider-thumb {
   background: var(--accent);
   border: 0;
   margin-top: -5px;
-  box-shadow: 0 0 0 2px rgba(14,17,23,0.9);
+  box-shadow: 0 0 0 2px rgb(var(--bg-page-rgb) / 0.9);
 }
 
 input[type="range"]::-moz-range-track {
@@ -176,7 +176,7 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 50%;
   background: var(--accent);
   border: 0;
-  box-shadow: 0 0 0 2px rgba(14,17,23,0.9);
+  box-shadow: 0 0 0 2px rgb(var(--bg-page-rgb) / 0.9);
 }
 
 .range-number {
@@ -273,20 +273,20 @@ input[type="range"]::-moz-range-thumb {
 }
 
 .message.warn {
-  background: rgba(255,140,0,.08);
-  border-color: rgba(255,140,0,.3);
-  color: #ffd08a;
+  background: rgb(var(--warning-rgb) / .08);
+  border-color: rgb(var(--warning-rgb) / .3);
+  color: var(--warning-soft);
 }
 
 .message.info {
-  background: rgba(77,166,255,.08);
-  border-color: rgba(77,166,255,.3);
+  background: rgb(var(--accent-rgb) / .08);
+  border-color: rgb(var(--accent-rgb) / .3);
   color: #b8dbff;
 }
 
 .message.bad {
-  background: rgba(255,75,75,.08);
-  border-color: rgba(255,75,75,.3);
+  background: rgb(var(--danger-rgb) / .08);
+  border-color: rgb(var(--danger-rgb) / .3);
   color: #ffc0c0;
 }
 
@@ -324,7 +324,7 @@ input[type="range"]::-moz-range-thumb {
 
 .champion-item.active {
   border-color: var(--accent);
-  background: rgba(77,166,255,.08);
+  background: rgb(var(--accent-rgb) / .08);
 }
 
 .champion-head,

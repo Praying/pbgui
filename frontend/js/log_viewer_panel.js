@@ -112,7 +112,7 @@ class LogViewerPanel {
 /* sidebar */
 .lvp-sidebar{
     width:auto;min-width:140px;
-    background:#111827;border-right:1px solid #1e293b;
+    background:#171619;border-right:1px solid #1e293b;
     display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
     position:relative;
 }
@@ -128,24 +128,24 @@ class LogViewerPanel {
 }
 .lvp-sb-hdr-toggle{
     display:inline-flex;align-items:center;gap:4px;flex:1;min-width:0;padding:4px 0;
-    background:none;border:none;color:#64748b;
+    background:none;border:none;color:#716b75;
     font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
     cursor:pointer;text-align:left;transition:color .15s;user-select:none;
 }
-.lvp-sb-hdr-toggle:hover{color:#e2e8f0}
+.lvp-sb-hdr-toggle:hover{color:#eae7ea}
 .lvp-sb-hdr-toggle-arrow{font-size:9px;margin-left:auto;opacity:.6}
 .lvp-sort-btn{
     display:inline-flex;align-items:center;justify-content:center;
     min-width:18px;height:18px;padding:0 4px;
     background:#1e293b;border:1px solid #334155;border-radius:4px;
-    color:#94a3b8;font-size:10px;cursor:pointer;transition:all .15s;
+    color:#a29ca6;font-size:10px;cursor:pointer;transition:all .15s;
 }
-.lvp-sort-btn:hover{border-color:#64748b;color:#e2e8f0}
+.lvp-sort-btn:hover{border-color:#716b75;color:#eae7ea}
 .lvp-item-list{flex:1;overflow-y:auto;padding:4px 0}
 .lvp-item-btn{
     display:block;width:100%;text-align:left;padding:5px 10px;
     background:none;border:none;border-left:3px solid transparent;
-    color:#e2e8f0;font-family:'Cascadia Code','Fira Code','Consolas',monospace;
+    color:#eae7ea;font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     font-size:11px;cursor:pointer;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;transition:background .12s;
 }
@@ -154,7 +154,7 @@ class LogViewerPanel {
 .lvp-item-btn.lvp-active{
     background:#1e293b;border-left-color:#4da6ff;color:#4da6ff;font-weight:600;
 }
-.lvp-item-size{font-size:9px;color:#64748b;margin-left:6px}
+.lvp-item-size{font-size:9px;color:#716b75;margin-left:6px}
 
 /* viewer */
 .lvp-viewer{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;overflow:hidden}
@@ -162,39 +162,39 @@ class LogViewerPanel {
 /* toolbar */
 .lvp-toolbar{display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:wrap}
 .lvp-host-sel,.lvp-lines-sel{
-    font-size:12px;background:#1e293b;color:#e2e8f0;
+    font-size:12px;background:#1e293b;color:#eae7ea;
     border:1px solid #334155;border-radius:4px;padding:2px 4px;cursor:pointer;
 }
 .lvp-sb-toggle{
     display:inline-flex;align-items:center;gap:4px;padding:3px 8px;
     background:#1e293b;border:1px solid #334155;border-radius:4px;
-    color:#94a3b8;font-size:11px;cursor:pointer;transition:all .15s;user-select:none;
+    color:#a29ca6;font-size:11px;cursor:pointer;transition:all .15s;user-select:none;
 }
-.lvp-sb-toggle:hover{border-color:#64748b;color:#e2e8f0}
+.lvp-sb-toggle:hover{border-color:#716b75;color:#eae7ea}
 .lvp-sb-arrow{transition:transform .18s;display:inline-block;font-size:9px;line-height:1}
 .lvp-sb-toggle.lvp-sb-open .lvp-sb-arrow{transform:rotate(90deg)}
 .lvp-item-badge{
-    font-size:11px;color:#94a3b8;
+    font-size:11px;color:#a29ca6;
     font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .lvp-sep{width:1px;height:18px;background:#334155;flex-shrink:0}
 .lvp-file-size{font-size:11px;color:#888;min-width:40px}
 .lvp-host-label{
-    font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:4px;white-space:nowrap;
+    font-size:12px;color:#a29ca6;display:flex;align-items:center;gap:4px;white-space:nowrap;
 }
 .lvp-lines-label{
-    font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:4px;white-space:nowrap;
+    font-size:12px;color:#a29ca6;display:flex;align-items:center;gap:4px;white-space:nowrap;
 }
 
 /* level buttons */
 .lvp-lvl-btn{
     padding:3px 7px;border-radius:3px;border:1px solid #333640;
-    background:#262730;font-size:11px;font-weight:700;cursor:pointer;
+    background:#28252b;font-size:11px;font-weight:700;cursor:pointer;
     font-family:monospace;transition:all .15s;opacity:.4;color:#aaa;
 }
 .lvp-lvl-btn.on{opacity:1.0}
-.lvp-lvl-btn[data-lvl="DEBUG"].on   {background:#3a3f4b;border-color:#555;color:#e2e8f0}
+.lvp-lvl-btn[data-lvl="DEBUG"].on   {background:#3a3f4b;border-color:#555;color:#eae7ea}
 .lvp-lvl-btn[data-lvl="INFO"].on    {background:#0d3b20;border-color:#21c354;color:#21c354}
 .lvp-lvl-btn[data-lvl="WARNING"].on {background:#3b2700;border-color:#ff8c00;color:#ff8c00}
 .lvp-lvl-btn[data-lvl="ERROR"].on   {background:#3b0d0d;border-color:#ff4b4b;color:#ff4b4b}
@@ -202,8 +202,8 @@ class LogViewerPanel {
 
 /* control buttons */
 .lvp-ctrl-btn{
-    padding:3px 9px;background:#262730;border:1px solid #333640;
-    border-radius:4px;color:#e2e8f0;font-size:12px;cursor:pointer;
+    padding:3px 9px;background:#28252b;border:1px solid #333640;
+    border-radius:4px;color:#eae7ea;font-size:12px;cursor:pointer;
     white-space:nowrap;transition:all .15s;line-height:1.6;
 }
 .lvp-ctrl-btn:hover{background:#4da6ff;color:#000;border-color:#4da6ff}
@@ -241,8 +241,8 @@ class LogViewerPanel {
 .lvp-ansi-fg-34{color:#7cc7ff}
 .lvp-ansi-fg-35{color:#d28cff}
 .lvp-ansi-fg-36{color:#58c7e6}
-.lvp-ansi-fg-37{color:#e2e8f0}
-.lvp-ansi-fg-90{color:#64748b}
+.lvp-ansi-fg-37{color:#eae7ea}
+.lvp-ansi-fg-90{color:#716b75}
 .lvp-ansi-fg-91{color:#ff7a7a}
 .lvp-ansi-fg-92{color:#69e69c}
 .lvp-ansi-fg-93{color:#ffd36b}
@@ -259,7 +259,7 @@ class LogViewerPanel {
 /* context / blocks */
 .lvp-context{opacity:.5}
 .lvp-separator{
-    text-align:center;color:#64748b;font-size:11px;padding:2px 0;
+    text-align:center;color:#716b75;font-size:11px;padding:2px 0;
     user-select:none;border-top:1px dotted #334155;border-bottom:1px dotted #334155;margin:2px 0;
 }
 .lvp-group-first{cursor:pointer;padding-left:20px !important;position:relative}
@@ -269,35 +269,35 @@ class LogViewerPanel {
 }
 .lvp-terminal.show-line-nums .lvp-group-first{padding-left:72px !important}
 .lvp-terminal.show-line-nums .lvp-group-first .grp-arrow{left:52px}
-.lvp-group-first .grp-count{font-size:10px;color:#64748b;margin-left:8px}
+.lvp-group-first .grp-count{font-size:10px;color:#716b75;margin-left:8px}
 
 /* search bar */
 .lvp-searchbar{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap}
 .lvp-searchbar select{
-    font-size:12px;background:#1e293b;color:#e2e8f0;
+    font-size:12px;background:#1e293b;color:#eae7ea;
     border:1px solid #334155;border-radius:4px;padding:3px 6px;
 }
 .lvp-searchbar input[type="text"]{
-    flex:1;min-width:140px;font-size:12px;background:#1e293b;color:#e2e8f0;
+    flex:1;min-width:140px;font-size:12px;background:#1e293b;color:#eae7ea;
     border:1px solid #334155;border-radius:4px;padding:4px 8px;
 }
 .lvp-searchbar label{
-    font-size:12px;color:#94a3b8;display:inline-flex;align-items:center;
+    font-size:12px;color:#a29ca6;display:inline-flex;align-items:center;
     gap:4px;cursor:pointer;white-space:nowrap;
 }
 .lvp-ctx-sel{padding:3px 6px;font-size:11px}
 .lvp-grp-link{
-    font-size:11px;color:#64748b;text-decoration:underline;cursor:pointer;
+    font-size:11px;color:#716b75;text-decoration:underline;cursor:pointer;
     background:none;border:none;font-family:inherit;
 }
-.lvp-grp-link:hover{color:#e2e8f0}
+.lvp-grp-link:hover{color:#eae7ea}
 .lvp-nav-btn{
-    background:#262730;border:1px solid #333640;border-radius:3px;
-    color:#94a3b8;cursor:pointer;font-size:12px;padding:2px 6px;line-height:1;
+    background:#28252b;border:1px solid #333640;border-radius:3px;
+    color:#a29ca6;cursor:pointer;font-size:12px;padding:2px 6px;line-height:1;
 }
-.lvp-nav-btn:hover{color:#e2e8f0;border-color:#94a3b8}
+.lvp-nav-btn:hover{color:#eae7ea;border-color:#a29ca6}
 .lvp-match-count{font-size:11px;color:#888;min-width:70px}
-.lvp-conn-badge{font-size:11px;color:#64748b}
+.lvp-conn-badge{font-size:11px;color:#716b75}
 /* ── end LogViewerPanel v2 ─────────────────────────────────────────── */
 `;
         document.head.appendChild(s);

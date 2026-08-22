@@ -11,15 +11,15 @@
 .inventory-subsection-btn {
   font-size: var(--fs-sm);
   padding-left: calc(var(--sp-lg) + var(--sp-xs));
-  background: rgba(77, 166, 255, 0.08);
-  border-color: rgba(77, 166, 255, 0.22);
+  background: rgb(var(--accent-rgb) / 0.08);
+  border-color: rgb(var(--accent-rgb) / 0.22);
   color: #d7e8ff;
 }
-.inventory-subsection-btn:hover { background: rgba(77, 166, 255, 0.16); border-color: rgba(99, 179, 237, 0.45); color: #fff /* white on colored bg */fff; }
+.inventory-subsection-btn:hover { background: rgb(var(--accent-rgb) / 0.16); border-color: rgb(var(--accent-rgb) / 0.45); color: #fff /* white on colored bg */fff; }
 .inventory-subsection-btn.active {
   background: rgba(38, 166, 154, 0.14);
   border-color: rgba(38, 166, 154, 0.75);
-  color: #dffaf6;
+  color: var(--success-soft);
   box-shadow: inset 0 0 0 1px rgba(38, 166, 154, 0.16);
 }
 #sidebar-inventory-delete { display: grid; gap: var(--sp-xs); padding-left: var(--sp-sm); }
@@ -64,7 +64,7 @@
   max-height: min(132px, 22vh);
   overflow-y: auto;
   padding: var(--sp-xs);
-  border: 1px solid rgba(99, 179, 237, 0.12);
+  border: 1px solid rgb(var(--accent-rgb) / 0.12);
   border-radius: 8px;
   background: rgba(12, 17, 26, 0.42);
 }
@@ -74,8 +74,8 @@
   min-height: 24px;
   padding: 1px 8px;
   border-radius: 999px;
-  background: rgba(99, 179, 237, 0.12);
-  border: 1px solid rgba(99, 179, 237, 0.24);
+  background: rgb(var(--accent-rgb) / 0.12);
+  border: 1px solid rgb(var(--accent-rgb) / 0.24);
   color: var(--text);
   font-size: var(--fs-xs);
   white-space: nowrap;
@@ -156,7 +156,7 @@
 .inventory-table-toolbar .act-btn[aria-pressed="true"] {
   color: var(--text);
   border-color: var(--accent);
-  background: rgba(99, 179, 237, 0.10);
+  background: rgb(var(--accent-rgb) / 0.10);
 }
 .inventory-table-toolbar .act-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .inventory-table-wrap {
@@ -171,7 +171,7 @@
 .inventory-table th,
 .inventory-table td {
   padding: 0.55rem 0.75rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   text-align: left;
   vertical-align: top;
   font-size: var(--fs-sm);
@@ -199,11 +199,11 @@
   cursor: pointer;
 }
 .inventory-sort-btn:hover { color: var(--text); }
-.inventory-sort-btn.is-active { color: #dffaf6; }
+.inventory-sort-btn.is-active { color: var(--success-soft); }
 .inventory-sort-indicator { font-size: var(--fs-xs); color: var(--accent); letter-spacing: normal; }
 .inventory-table tbody tr { cursor: pointer; transition: background 0.12s ease; }
-.inventory-table tbody tr:hover { background: rgba(99, 179, 237, 0.08); }
-.inventory-table tbody tr.is-selected td { background: rgba(77, 166, 255, 0.12); }
+.inventory-table tbody tr:hover { background: rgb(var(--accent-rgb) / 0.08); }
+.inventory-table tbody tr.is-selected td { background: rgb(var(--accent-rgb) / 0.12); }
 .inventory-table tbody tr.is-selected td:first-child { border-left: 3px solid var(--accent); }
 .inventory-empty { padding: var(--sp-lg); color: var(--text-dim); font-size: var(--fs-base); }
 .inventory-heatmap-toolbar { display: flex; gap: var(--sp-sm); flex-wrap: wrap; align-items: center; }
@@ -223,14 +223,14 @@
 }
 .inventory-plot {
   min-height: 220px;
-  border: 1px solid rgba(99, 179, 237, 0.12);
+  border: 1px solid rgb(var(--accent-rgb) / 0.12);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.36);
   padding: var(--sp-xs);
 }
 .inventory-minute-shell { display: grid; gap: var(--sp-sm); }
 .inventory-ohlcv-details {
-  border: 1px solid rgba(99, 179, 237, 0.12);
+  border: 1px solid rgb(var(--accent-rgb) / 0.12);
   border-radius: 10px;
   background: rgba(12, 17, 26, 0.36);
   padding: 0;

@@ -559,32 +559,32 @@ async function deleteSelectedCmcKey(): Promise<void> {
 <style scoped>
 .cmc-pool-wrap { padding: 1rem 1.5rem 1.5rem; overflow-y: auto; flex: 1; }
 .cmc-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; margin-bottom: 0.8rem; }
-.cmc-summary-card { background: #131b2b; border: 1px solid #1e2736; border-radius: 8px; padding: 0.55rem 0.7rem; min-width: 0; }
-.cmc-summary-label { color: #64748b; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.05em; }
-.cmc-summary-value { color: #e2e8f0; font-size: var(--fs-md); font-weight: 700; margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; }
+.cmc-summary-card { background: #131b2b; border: 1px solid #29262c; border-radius: 8px; padding: 0.55rem 0.7rem; min-width: 0; }
+.cmc-summary-label { color: #716b75; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.05em; }
+.cmc-summary-value { color: #eae7ea; font-size: var(--fs-md); font-weight: 700; margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; }
 .cmc-pool-toolbar { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
-.cmc-pool-message { color: #64748b; font-size: var(--fs-xs); margin-left: auto; }
+.cmc-pool-message { color: #716b75; font-size: var(--fs-xs); margin-left: auto; }
 .cmc-pool-message.error { color: #fca5a5; }
 .cmc-pool-warnings { display: grid; gap: 0.35rem; margin-bottom: 0.7rem; }
 .cmc-pool-warning { color: #fbbf24; background: #2d220d; border: 1px solid #713f12; border-radius: 6px; padding: 0.45rem 0.6rem; font-size: var(--fs-xs); }
-.cmc-table-wrap { overflow: auto; border: 1px solid #1e2736; border-radius: 8px; }
+.cmc-table-wrap { overflow: auto; border: 1px solid #29262c; border-radius: 8px; }
 .cmc-table { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); min-width: 1500px; }
-.cmc-table th { position: sticky; top: 0; z-index: 1; background: #111827; color: #64748b; padding: 0.45rem 0.6rem; text-align: left; border-bottom: 2px solid #1e2736; white-space: nowrap; }
-.cmc-table td { padding: 0.42rem 0.6rem; border-bottom: 1px solid #1e2736; color: #cbd5e1; white-space: nowrap; }
+.cmc-table th { position: sticky; top: 0; z-index: 1; background: #171619; color: #716b75; padding: 0.45rem 0.6rem; text-align: left; border-bottom: 2px solid #29262c; white-space: nowrap; }
+.cmc-table td { padding: 0.42rem 0.6rem; border-bottom: 1px solid #29262c; color: #cbd5e1; white-space: nowrap; }
 .cmc-table tbody tr { cursor: pointer; }
 .cmc-table tbody tr:hover td { background: #131b2b; }
 .cmc-table tbody tr.selected td { background: rgba(77, 166, 255, 0.12); }
 .cmc-table tbody tr.selected td:first-child { border-left: 3px solid #4da6ff; padding-left: calc(0.6rem - 3px); }
-.cmc-empty { color: #64748b; cursor: default; }
+.cmc-empty { color: #716b75; cursor: default; }
 .cmc-lease-title { margin-top: 1rem; }
 .cmc-leases-wrap .cmc-table { min-width: 1050px; }
 .cmc-leases-wrap tbody tr { cursor: default; }
-.cmc-state { display: inline-flex; align-items: center; padding: 0.1rem 0.42rem; border-radius: 999px; border: 1px solid #2d3748; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+.cmc-state { display: inline-flex; align-items: center; padding: 0.1rem 0.42rem; border-radius: 999px; border: 1px solid #37333a; color: #a29ca6; font-weight: 700; text-transform: uppercase; }
 .cmc-state.active { color: #4ade80; border-color: rgba(33, 195, 84, 0.45); background: #052e16; }
 .cmc-state.disabled, .cmc-state.invalid { color: #fca5a5; border-color: #7f1d1d; background: #2d1515; }
-.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: #94a3b8; margin: 0 0 0.5rem; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #2d3748; background: #1a202c; color: #94a3b8; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: #4a5568; color: #e2e8f0; }
+.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: #a29ca6; margin: 0 0 0.5rem; }
+.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid #37333a; background: #1f1d21; color: #a29ca6; cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
+.form-btn:hover { border-color: #4e4851; color: #eae7ea; }
 .form-btn.save { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
 .form-btn.save:hover { background: #1d4ed8; color: #fff; }
 .cmc-pool-toolbar .form-btn:disabled { opacity: 0.45; cursor: not-allowed; }

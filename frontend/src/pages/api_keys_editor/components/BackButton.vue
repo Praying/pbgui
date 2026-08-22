@@ -11,7 +11,7 @@ const { t } = useI18n();
 <template>
   <button
     class="back-btn"
-    style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid #26a69a; background:transparent; color:#26a69a; font-size:var(--fs-sm); cursor:pointer; font-weight:600;"
+    style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--accent); background:transparent; color:var(--accent); font-size:var(--fs-sm); cursor:pointer; font-weight:600;"
     @click="emit('back')"
   >
     <PbIcon :icon="PhArrowLeft" /> <slot>{{ t('misc.apikeys.back') }}</slot>

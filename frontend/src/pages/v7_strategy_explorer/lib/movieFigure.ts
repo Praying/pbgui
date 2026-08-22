@@ -370,8 +370,8 @@ export function buildMovieFigureSpec(
   const playFrameNames = plotFrames.slice(activeFrame).map((frame) => frame.name);
   const layout: PlotlyLayout & { xaxis: Record<string, unknown> } = {
     title: t('v7explore.animationTitle', { coin: deepGet<string>(data, ['metadata', 'coin'], ''), frames: frames.length }),
-    paper_bgcolor: '#1a1d24',
-    plot_bgcolor: '#1a1d24',
+    paper_bgcolor: '#1b191d',
+    plot_bgcolor: '#1b191d',
     font: { color: '#fafafa' },
     height: 760,
     hovermode: 'closest',
