@@ -130,7 +130,7 @@ describe('route state (stage / deep_tab)', () => {
   it('switching stages from the sidebar updates the location query', async () => {
     stubFetch({ result_valid: true, messages: [] });
     const wrapper = await mountApp('/api/pareto-explorer/main_page');
-    await wrapper.get('[data-stage="pareto_playground"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-pareto_playground"]').trigger('click');
     expect(wrapper.get('#stage-pareto-playground').isVisible()).toBe(true);
     expect(window.location.search).toContain('stage=pareto_playground');
     wrapper.unmount();

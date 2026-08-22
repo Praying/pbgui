@@ -5,7 +5,6 @@
  * responsive rules. (Split from one block to keep files < 800 lines.)
  */
 
-.sb-section,
 .sb-btn,
 .stage-btn,
 .deep-tab-btn,
@@ -601,20 +600,12 @@ input[type="range"]::-moz-range-thumb {
     flex-direction: column;
     height: calc(100vh - 52px); height: calc(100dvh - 52px);
   }
-  #sidebar {
-    width: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
   .detail-block.half {
     grid-column: span 12;
   }
 }
 
 @media (max-width: 900px) {
-  #sidebar {
-    display: none;
-  }
   .metric-grid {
     grid-template-columns: 1fr;
   }

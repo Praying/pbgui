@@ -57,6 +57,8 @@ import QueuePanel from './components/QueuePanel.vue';
 import ResultsPanel from './components/ResultsPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import { useBacktestPage } from './composables/useBacktestPage';
+import type { PageSection } from '@/shared/navigation';
+import type { BacktestPanel } from './types';
 
 const { t } = useI18n();
 const boot = getBoot();
@@ -107,6 +109,20 @@ const bannerText = computed(() =>
 const editorOpen = computed(() => store.editor.editingName.value !== null);
 const editorHasSavedConfig = computed(() => !!store.editor.editingName.value && store.editor.editingName.value !== '__new__');
 const importOpen = ref(false);
+
+/* Converged navigation: the five panels are rail sections under the active
+   Backtest page item; the queue count rides along as the section badge. */
+const railSections = computed<PageSection[]>(() =>
+  store.nav.map((item) => ({
+    key: item.panel,
+    label: t(item.labelKey),
+    badge: item.badge ? store.queueBadge.value || undefined : undefined,
+  })),
+);
+
+function onRailSection(key: string): void {
+  store.selectPanel(key as BacktestPanel);
+}
 const importName = ref('');
 const importJson = ref('');
 const importError = ref('');
@@ -291,17 +307,8 @@ function onTemplateExchanges(needed: readonly string[]): void {
   store.toast.show(t('editor.suite.addedExchanges', { ex: added.join(', ') }), 'ok');
 }
 
-declare global {
-  interface Window {
-    PBGuiSidebarResize?: {
-      init(options: { sidebarId: string; handleId: string; minWidth: number; maxWidth: number }): void;
-    };
-  }
-}
-
 onMounted(() => {
   document.title = t(store.adapter.titleKey, store.adapter.titleParams);
-  window.PBGuiSidebarResize?.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize', minWidth: 140, maxWidth: 300 });
   store.boot();
 });
 </script>
@@ -315,6 +322,9 @@ onMounted(() => {
     :page-family="store.adapter.label"
     :status-text="bannerText"
     :status-tone="bannerClass === 'conn-ok' ? 'success' : bannerClass === 'conn-lost' ? 'danger' : 'warning'"
+    :sections="railSections"
+    :active-section="store.view.state.panel"
+    @update:section="onRailSection"
   >
     <template #header-actions>
       <IconButton
@@ -328,11 +338,12 @@ onMounted(() => {
     <div id="conn-banner" :class="bannerClass" data-i18n="v7backtest.connecting">{{ bannerText }}</div>
 
     <div id="page-body">
+
+    <div class="workbench-page-content">
     <PanelShell
       :items="store.nav"
       :active="store.view.state.panel"
-      :queue-badge="store.queueBadge.value"
-      @select="store.selectPanel"
+      :editor-open="editorOpen"
     >
       <template #ctx-configs>
         <button type="button" class="sb-btn accent" data-test="ctx-new-config" @click="store.editor.newConfig()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7backtest.newConfig') }}</button>
@@ -422,39 +433,37 @@ onMounted(() => {
         <button type="button" class="sb-btn danger" data-test="legacy-delete" @click="legacyPanel?.openDelete()"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7backtest.deleteSelected') }}</button>
       </template>
 
-      <!-- Editor sidebar (:782-804, setEditorMode :211-222) — handoff buttons land in M-v7-12 -->
+      <!-- Editor toolbar (:782-804, setEditorMode :211-222) — replaces the
+           panel actions while a config session is open -->
       <template #editor>
-        <div v-if="editorOpen" id="sidebar-editor" class="sidebar-sticky">
-          <div class="sidebar-header"><span class="sb-title">{{ t('v7backtest.editBacktest') }}</span></div>
-          <div class="sidebar-toolbar">
-            <div class="editor-nav-group" data-test="editor-nav-group">
-              <div class="editor-action-label">{{ t('v7backtest.editorNavigation') }}</div>
-              <button type="button" class="sb-btn" data-test="editor-home" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()"><PbIcon :icon="PhHouse" /> {{ actionLabel('v7backtest.home') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-import" @click="openImport"><PbIcon :icon="PhDownloadSimple" /> {{ actionLabel('v7backtest.import') }}</button>
-            </div>
-            <div class="editor-analysis-group" data-test="editor-analysis-group">
-              <div class="editor-action-label">{{ t('v7backtest.editorAnalysis') }}</div>
-              <button type="button" class="sb-btn" data-test="editor-results" :disabled="!editorHasSavedConfig" @click="editorResults"><PbIcon :icon="PhChartBar" /> {{ actionLabel('v7backtest.results') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-strategy-explorer" @click="openStrategyExplorer">{{ t('v7backtest.strategyExplorer') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-balance-calc" @click="openBalanceCalculator"><PbIcon :icon="PhWallet" /> {{ actionLabel('v7backtest.balanceCalculator') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-ohlcv" @click="openOhlcvReadiness"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7backtest.ohlcvReadiness') }}</button>
-            </div>
-            <div class="editor-config-group" data-test="editor-config-group">
-              <div class="editor-action-label">{{ t('v7backtest.editorConfigActions') }}</div>
-              <button v-if="!store.adapter.isV8" type="button" class="sb-btn" data-test="editor-convert-v8" :disabled="!editorHasSavedConfig" @click="convertEditorToV8">{{ t('v7backtest.convertToV8') }}</button>
-              <button type="button" class="sb-btn" data-test="editor-add-run" :disabled="!editorHasSavedConfig" @click="addEditorToRun"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.addToRun') }}</button>
-            </div>
-            <div class="editor-save-group" data-test="editor-save-group">
-              <div class="editor-action-label">{{ t('v7backtest.editorSaveActions') }}</div>
-              <button type="button" class="sb-btn primary" data-test="editor-save" :title="t('v7backtest.saveConfig')" @click="store.editor.save()"><PbIcon :icon="PhFloppyDisk" /> {{ actionLabel('v7backtest.save') }}</button>
-              <button type="button" class="sb-btn info" data-test="editor-save-queue" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.saveQueue') }}</button>
-            </div>
+        <div v-if="editorOpen" id="editor-toolbar" class="editor-toolbar">
+          <span class="tb-title">{{ t('v7backtest.editBacktest') }}</span>
+          <div class="editor-nav-group" data-test="editor-nav-group">
+            <div class="editor-action-label">{{ t('v7backtest.editorNavigation') }}</div>
+            <button type="button" class="sb-btn" data-test="editor-home" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()"><PbIcon :icon="PhHouse" /> {{ actionLabel('v7backtest.home') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-import" @click="openImport"><PbIcon :icon="PhDownloadSimple" /> {{ actionLabel('v7backtest.import') }}</button>
+          </div>
+          <div class="editor-analysis-group" data-test="editor-analysis-group">
+            <div class="editor-action-label">{{ t('v7backtest.editorAnalysis') }}</div>
+            <button type="button" class="sb-btn" data-test="editor-results" :disabled="!editorHasSavedConfig" @click="editorResults"><PbIcon :icon="PhChartBar" /> {{ actionLabel('v7backtest.results') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-strategy-explorer" @click="openStrategyExplorer">{{ t('v7backtest.strategyExplorer') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-balance-calc" @click="openBalanceCalculator"><PbIcon :icon="PhWallet" /> {{ actionLabel('v7backtest.balanceCalculator') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-ohlcv" @click="openOhlcvReadiness"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7backtest.ohlcvReadiness') }}</button>
+          </div>
+          <div class="editor-config-group" data-test="editor-config-group">
+            <div class="editor-action-label">{{ t('v7backtest.editorConfigActions') }}</div>
+            <button v-if="!store.adapter.isV8" type="button" class="sb-btn" data-test="editor-convert-v8" :disabled="!editorHasSavedConfig" @click="convertEditorToV8">{{ t('v7backtest.convertToV8') }}</button>
+            <button type="button" class="sb-btn" data-test="editor-add-run" :disabled="!editorHasSavedConfig" @click="addEditorToRun"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.addToRun') }}</button>
+          </div>
+          <div class="editor-save-group" data-test="editor-save-group">
+            <div class="editor-action-label">{{ t('v7backtest.editorSaveActions') }}</div>
+            <button type="button" class="sb-btn primary" data-test="editor-save" :title="t('v7backtest.saveConfig')" @click="store.editor.save()"><PbIcon :icon="PhFloppyDisk" /> {{ actionLabel('v7backtest.save') }}</button>
+            <button type="button" class="sb-btn info" data-test="editor-save-queue" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.saveQueue') }}</button>
           </div>
         </div>
       </template>
     </PanelShell>
 
-    <div class="workbench-page-content">
       <!-- CONFIGS panel (:812-821) -->
       <div id="panel-configs" class="view-panel" :class="{ active: store.view.state.panel === 'configs' }">
         <ConfigsPanel

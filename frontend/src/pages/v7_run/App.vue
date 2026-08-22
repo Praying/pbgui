@@ -87,17 +87,8 @@ watch(
   }
 );
 
-declare global {
-  interface Window {
-    PBGuiSidebarResize?: {
-      init: (options: { sidebarId: string; handleId: string; minWidth: number; maxWidth: number }) => void;
-    };
-  }
-}
-
 onMounted(() => {
   document.title = t(adapter.titleKey); // :1449
-  window.PBGuiSidebarResize?.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize', minWidth: 140, maxWidth: 300 }); // :1461
   void store.loadInstances(); // :1452 — initial REST fetch for immediate data
   ws.connect(); // :1453 — then switch to real-time WebSocket
 });
@@ -128,31 +119,24 @@ onBeforeUnmount(() => {
     <!-- Connection banner (:508) -->
     <div id="conn-banner" :class="'conn-' + store.banner.value">{{ t('v7run.connecting') }}</div>
 
-    <!-- Page body: sidebar + main content (:511) -->
+    <!-- Page body: filter/action toolbar + main content (:511). The filters
+         and instance actions left the sidebar for a top strip; navigation
+         lives in the workbench rail. -->
     <div id="page-body">
-    <div id="sidebar">
-      <div id="sidebar-sticky">
-        <div id="sidebar-header">
-          <span class="sb-title">{{ t('v7run.instances') }}</span>
-          <span class="sb-count" id="instance-count">{{ store.countText.value }}</span>
-        </div>
-        <div id="sidebar-toolbar">
-          <div class="sb-label">{{ t('common.search') }}</div>
-          <input type="text" id="f-search" class="sb-input" v-model="store.filterSearch.value" :placeholder="t('v7run.searchPlaceholder')" />
-          <div class="sb-label" style="margin-top:4px">{{ t('v7run.status') }}</div>
-          <select id="f-status" class="sb-input" v-model="store.filterStatus.value">
-            <option v-for="filter in STATUS_FILTERS" :key="filter.value" :value="filter.value">{{ t(filter.key) }}</option>
-          </select>
-          <hr class="sb-sep">
-          <button class="sb-btn" @click="store.loadInstances()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('common.refresh') }}</button>
-          <button class="sb-btn" id="add-instance-btn" @click="store.addInstance()"><PbIcon :icon="PhPlus" /> {{ t(adapter.addInstanceKey) }}</button>
-          <button class="sb-btn" @click="backups.open()"><PbIcon :icon="PhFloppyDisk" /> {{ t('v7run.backups') }}</button>
-        </div>
-      </div>
-      <div id="sidebar-resize"></div>
-    </div>
-
     <div class="workbench-page-content">
+      <!-- Filters + instance actions: a top strip, not a sidebar. -->
+      <div class="page-toolbar" role="toolbar">
+        <span class="sb-label">{{ t('v7run.instances') }}&nbsp;<span class="sb-count" id="instance-count">{{ store.countText.value }}</span></span>
+        <input type="text" id="f-search" class="sb-input" v-model="store.filterSearch.value" :placeholder="t('v7run.searchPlaceholder')" />
+        <span class="sb-label">{{ t('v7run.status') }}</span>
+        <select id="f-status" class="sb-input" v-model="store.filterStatus.value">
+          <option v-for="filter in STATUS_FILTERS" :key="filter.value" :value="filter.value">{{ t(filter.key) }}</option>
+        </select>
+        <hr class="sb-sep">
+        <button class="sb-btn" @click="store.loadInstances()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('common.refresh') }}</button>
+        <button class="sb-btn" id="add-instance-btn" @click="store.addInstance()"><PbIcon :icon="PhPlus" /> {{ t(adapter.addInstanceKey) }}</button>
+        <button class="sb-btn" @click="backups.open()"><PbIcon :icon="PhFloppyDisk" /> {{ t('v7run.backups') }}</button>
+      </div>
       <Pb8UpdateWarning :hosts="store.pb8Hosts.value" />
       <InstanceTable
         :rows="store.rows.value"

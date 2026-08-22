@@ -22,9 +22,9 @@ describe('v7_optimize App', () => {
     expect(wrapper.findAll('main')).toHaveLength(1);
     expect(wrapper.find('main#app-shell-main').exists()).toBe(true);
     expect(wrapper.find('div.workbench-page-content').exists()).toBe(true);
-    expect(wrapper.find('#sidebar').exists()).toBe(true);
+    expect(wrapper.find('.page-toolbar').exists()).toBe(true); /* in-page sidebar retired: nav converged to the rail */
     expect(wrapper.text()).toContain('Configs');
-    await wrapper.find('button.opt-side-action.primary').trigger('click');
+    await wrapper.find('button.sb-btn.primary').trigger('click');
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
   });
@@ -33,7 +33,7 @@ describe('v7_optimize App', () => {
     const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
     await flushPromises();
 
-    const actionButtons = () => wrapper.findAll('button.opt-side-action');
+    const actionButtons = () => wrapper.findAll('button.sb-btn');
     const actionTexts = () => actionButtons().map((button) => button.text());
     expect(actionTexts()).toEqual([
       'New Config',
@@ -53,12 +53,12 @@ describe('v7_optimize App', () => {
     expect(actionButtons()[6]!.find('svg').exists()).toBe(true);
     expect(actionButtons()[0]!.find('svg').exists()).toBe(true);
 
-    await wrapper.findAll('button.opt-side-item')[1]!.trigger('click');
+    await wrapper.find('[data-testid="rail-section-queue"]').trigger('click');
     expect(actionTexts()).toEqual(['Delete Selected', 'Settings']);
     expect(actionButtons()[0]!.find('svg').exists()).toBe(true);
     expect(actionButtons()[1]!.find('svg').exists()).toBe(true);
 
-    await wrapper.find('[data-test="nav-results"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-results"]').trigger('click');
     expect(actionTexts()).toEqual([
       'Paretos',
       'Pareto Explorer',
@@ -76,7 +76,7 @@ describe('v7_optimize App', () => {
     expect(actionButtons()[5]!.find('svg').exists()).toBe(true);
     expect(actionButtons()[6]!.find('svg').exists()).toBe(true);
 
-    await wrapper.find('[data-test="nav-paretos"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-paretos"]').trigger('click');
     expect(actionTexts()).toEqual([
       'Pareto Explorer',
       'Backtest',
@@ -92,11 +92,11 @@ describe('v7_optimize App', () => {
   it('renders the OHLCV readiness icon once in editor actions', async () => {
     const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
     await flushPromises();
-    await wrapper.find('button.opt-side-action.primary').trigger('click');
+    await wrapper.find('button.sb-btn.primary').trigger('click');
     await flushPromises();
 
-    expect(wrapper.findAll('button.opt-side-action').at(-1)?.text()).toBe('OHLCV Readiness');
-    expect(wrapper.findAll('button.opt-side-action').at(-1)?.find('svg').exists()).toBe(true);
+    expect(wrapper.findAll('button.sb-btn').at(-1)?.text()).toBe('OHLCV Readiness');
+    expect(wrapper.findAll('button.sb-btn').at(-1)?.find('svg').exists()).toBe(true);
   });
 
   it('keeps the PB8 workbench visible with an update warning when runtime metadata is unavailable', async () => {
@@ -126,7 +126,7 @@ describe('v7_optimize App', () => {
 
     expect(wrapper.find('[data-test="duplicate-selected"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="select-all-configs"]').exists()).toBe(true);
-    await wrapper.find('[data-test="nav-paretos"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-paretos"]').trigger('click');
     expect(wrapper.find('[data-test="backtest-paretos"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="select-all-paretos"]').exists()).toBe(true);
   });
@@ -134,7 +134,7 @@ describe('v7_optimize App', () => {
   it('disables sidebar result actions until the selected result advertises support', async () => {
     const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
     await flushPromises();
-    await wrapper.find('[data-test="nav-results"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-results"]').trigger('click');
     expect(wrapper.find('[data-test="result-paretos"]').attributes('disabled')).toBeDefined();
     expect(wrapper.find('[data-test="result-dash"]').attributes('disabled')).toBeDefined();
     expect(wrapper.find('[data-test="result-config"]').attributes('disabled')).toBeDefined();
@@ -143,7 +143,7 @@ describe('v7_optimize App', () => {
   it('closes the active editor when Escape is pressed', async () => {
     const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
     await flushPromises();
-    await wrapper.find('button.opt-side-action.primary').trigger('click');
+    await wrapper.find('button.sb-btn.primary').trigger('click');
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));

@@ -263,6 +263,162 @@
   background: var(--danger);
 }
 
+/* Trailing count badge (e.g. queue length) — the label flexes, the badge
+   pins right. */
+.workbench-rail__subitem-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workbench-rail__subitem-badge {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 18px;
+}
+
+.workbench-rail__subitem--active .workbench-rail__subitem-badge {
+  background: rgb(var(--accent-rgb) / 0.18);
+  color: var(--accent-soft);
+}
+
+/* ── Page toolbar ────────────────────────────────────────────── */
+/* Converged-navigation layout: panel/tab switching lives in the
+   workbench rail (AppShell sections), so the page shows only a single
+   horizontal strip of contextual actions above the content. Replaces
+   the legacy in-page sidebar (css/sidebar.css) on migrated pages. */
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-sm);
+  margin-bottom: var(--panel-gap);
+  padding: var(--sp-sm) var(--sp-md);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  /* Pages whose content scrolls (v7_run, pareto) keep the strip on top. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.page-toolbar .ctx-actions {
+  display: contents; /* the active panel's slot buttons join the flex row */
+}
+
+/* Buttons — the sidebar.css .sb-btn chrome, horizontal variant. */
+.page-toolbar .sb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  min-height: var(--btn-h);
+  padding: 0 var(--sp-md);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
+}
+
+.page-toolbar .sb-btn:hover:not(:disabled) {
+  background: var(--border-default);
+}
+
+.page-toolbar .sb-btn.primary,
+.page-toolbar .sb-btn.info {
+  background: var(--accent-bg);
+  border-color: rgb(var(--accent-rgb) / 0.35);
+  color: var(--accent-soft);
+}
+
+.page-toolbar .sb-btn.primary:hover:not(:disabled),
+.page-toolbar .sb-btn.info:hover:not(:disabled) {
+  background: rgb(var(--accent-rgb) / 0.2);
+}
+
+.page-toolbar .sb-btn.danger {
+  background: var(--danger-bg);
+  border-color: rgb(var(--danger-rgb) / 0.35);
+  color: var(--danger-soft);
+}
+
+.page-toolbar .sb-btn.danger:hover:not(:disabled) {
+  background: rgb(var(--danger-rgb) / 0.2);
+}
+
+/* Filled accent CTA — accent-deep keeps near-white text at 5.3:1 (AA),
+   the raw accent fill would fail at 2.6:1. */
+.page-toolbar .sb-btn.accent {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #f2f5fb; /* near-white on colored fill */
+  font-weight: 600;
+}
+
+.page-toolbar .sb-btn.accent:hover:not(:disabled) {
+  filter: brightness(1.14);
+}
+
+.page-toolbar .sb-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Vertical divider between button groups (pages emit <hr class="sb-sep">). */
+.page-toolbar .sb-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--sp-xs);
+  border: none;
+  background: var(--border-default);
+}
+
+/* Filter inputs/selects inside a toolbar (v7_run search + status). */
+.page-toolbar .sb-input {
+  width: auto;
+  min-width: 160px;
+  height: var(--input-h);
+  padding: 0 var(--sp-sm);
+  font-size: var(--fs-sm);
+}
+
+.page-toolbar .sb-label {
+  margin: 0 var(--sp-xs) 0 0;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Inline count chip in toolbar labels (v7_run instance count). */
+.page-toolbar .sb-count {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 /* ── Temporary expansion of the collapsed rail ─────────────────
    The shell grid keeps the collapsed column width, so the expanded
    rail overlays the workspace instead of pushing content around. */

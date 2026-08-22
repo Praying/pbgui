@@ -194,9 +194,9 @@ describe('stage switching (:3066-3079)', () => {
   it('activates the requested stage section and sidebar button', async () => {
     stubFetch();
     const wrapper = await mountApp('/api/strategy-explorer/main_page');
-    await wrapper.findAll('.sb-section').find((b) => b.text() === 'Movie Builder')!.trigger('click');
+    await wrapper.find('[data-testid="rail-section-movie"]').trigger('click');
     expect((wrapper.get('#stage-movie').element as HTMLElement).classList.contains('active')).toBe(true);
-    await wrapper.findAll('.sb-section').find((b) => b.text() === 'Analysis')!.trigger('click');
+    await wrapper.find('[data-testid="rail-section-analysis"]').trigger('click');
     expect((wrapper.get('#stage-analysis').element as HTMLElement).classList.contains('active')).toBe(true);
     wrapper.unmount();
   });

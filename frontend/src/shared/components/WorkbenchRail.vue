@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { PhSidebarSimple } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import type { NavigationGroup, NavigationItem, PageSection } from '@/shared/navigation';
@@ -88,6 +88,24 @@ function onDocumentKeydown(event: KeyboardEvent): void {
 onMounted(() => {
   document.addEventListener('pointerdown', onDocumentPointerdown);
   document.addEventListener('keydown', onDocumentKeydown);
+  scrollActiveIntoView();
+});
+
+/* The rail groups overflow scroll; the pbv7/pbv8 groups sit below the fold
+   on shorter viewports, so the active page (and its section children) must
+   be scrolled into view on load and on cross-page navigation. Instant on
+   purpose — a smooth scroll on every page load reads as lag. */
+function scrollActiveIntoView(): void {
+  void nextTick(() => {
+    railEl.value
+      ?.querySelector('.workbench-rail__item--active')
+      /* jsdom lacks scrollIntoView — optional call keeps tests quiet. */
+      ?.scrollIntoView?.({ block: 'nearest' });
+  });
+}
+
+watch(() => [props.activePage, visuallyCollapsed.value], () => {
+  if (!visuallyCollapsed.value) scrollActiveIntoView();
 });
 
 onBeforeUnmount(() => {
@@ -168,6 +186,11 @@ onBeforeUnmount(() => {
                     aria-hidden="true"
                   ></span>
                   <span class="workbench-rail__subitem-label">{{ section.label }}</span>
+                  <span
+                    v-if="section.badge"
+                    class="workbench-rail__subitem-badge"
+                    :data-testid="`rail-section-badge-${section.key}`"
+                  >{{ section.badge }}</span>
                 </button>
               </li>
             </ul>

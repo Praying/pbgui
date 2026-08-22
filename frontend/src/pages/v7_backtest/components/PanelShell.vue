@@ -1,43 +1,26 @@
 <script setup lang="ts">
 /**
- * Panel shell — the backtest_shell.js sidebar chrome (create :82-161 +
- * adopt.selectPanel :194-227): section nav with the queue badge, one
- * ctx-actions block per panel (only the active one visible) and the
- * shared resize handle. The editor sidebar (setEditorMode :211-222)
- * mounts here in M-v7-9 via the `editor` slot.
+ * Action toolbar — converged-navigation layout. Panel switching moved to the
+ * workbench rail (AppShell `sections`); this strip carries only the active
+ * panel's contextual actions, or the editor actions while a config is open.
+ * (Was: the backtest_shell.js sidebar chrome, create :82-161.)
  */
-import { useI18n } from 'vue-i18n';
 import type { BacktestPanel, NavItem } from '../types';
 
 defineProps<{
   items: NavItem[];
-  /** The active view panel (nav highlight follows the mapped panel, :1447). */
+  /** The active view panel — selects which ctx slot is visible. */
   active: BacktestPanel;
-  queueBadge?: string;
+  /** While a config editor session is open, the editor slot replaces the
+      panel actions (the editor has its own Home button to come back). */
+  editorOpen: boolean;
 }>();
-const emit = defineEmits<{ select: [panel: BacktestPanel] }>();
-
-const { t } = useI18n();
 </script>
 
 <template>
-  <aside id="sidebar">
-    <div id="sidebar-inner">
-      <button
-        v-for="item in items"
-        :key="item.panel"
-        type="button"
-        class="sb-section"
-        :class="{ active: item.panel === active }"
-        :data-panel="item.panel"
-        @click="emit('select', item.panel)"
-      >
-        <span class="sb-icon">{{ item.icon }}</span> <span>{{ t(item.labelKey) }}</span>
-        <span v-if="item.badge" id="queue-count-badge" style="margin-left: auto; font-size: var(--fs-xs); color: var(--text-dim)">{{ queueBadge }}</span>
-      </button>
-
-      <hr class="sb-sep" />
-
+  <div class="page-toolbar" role="toolbar">
+    <slot v-if="editorOpen" name="editor" />
+    <template v-else>
       <div
         v-for="item in items"
         :key="'ctx-' + item.panel"
@@ -47,10 +30,6 @@ const { t } = useI18n();
       >
         <slot :name="'ctx-' + item.panel" />
       </div>
-
-      <!-- M-v7-9: the configs editor sidebar replaces the nav (setEditorMode) -->
-      <slot name="editor" />
-    </div>
-    <div id="sidebar-resize"></div>
-  </aside>
+    </template>
+  </div>
 </template>

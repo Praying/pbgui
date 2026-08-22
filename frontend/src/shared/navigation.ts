@@ -40,6 +40,8 @@ export interface PageSection {
   label: string;
   /** Optional live-status dot tone (e.g. services_monitor panel health). */
   tone?: SectionTone;
+  /** Optional trailing count badge (e.g. queue length). */
+  badge?: string;
   /** Disabled sections stay visible but inert (e.g. password before login). */
   disabled?: boolean;
 }

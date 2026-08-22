@@ -31,7 +31,15 @@ function createMemoryStorage(): StorageShim {
 }
 
 const desc = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
-if (desc?.get && typeof (desc.get as () => unknown)() === 'undefined') {
+/* Node 25.5+ can also hand back a half-initialized Storage object (methods
+   missing) when --localstorage-file is passed without a valid path — probe
+   the API surface, not just undefined. */
+const probe = desc?.get ? (desc.get as () => unknown)() : undefined;
+const broken =
+  probe === undefined ||
+  probe === null ||
+  typeof (probe as Partial<Storage>).clear !== 'function';
+if (desc?.get && broken) {
   Object.defineProperty(globalThis, 'localStorage', {
     value: createMemoryStorage(),
     writable: true,

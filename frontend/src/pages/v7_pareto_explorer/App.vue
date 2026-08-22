@@ -77,6 +77,7 @@ import { buildLoadSummary } from './lib/loadSummary';
 import { currentRangeMax, buildDisplayRangeLoadingSummary, normalizeViewRange } from './lib/viewRange';
 import { getPlotly } from './lib/plotlyVendor';
 import type { DeepTab, LoadData, ParetoStage, ParetoSession } from './types';
+import type { PageSection } from '@/shared/navigation';
 
 const { t } = useI18n();
 
@@ -111,6 +112,12 @@ const STAGE_META: Record<ParetoStage, { icon: Component; labelKey: string }> = {
   deep_intelligence: { icon: PhBrain, labelKey: 'v7explore.deepIntelligence' },
   settings: { icon: PhGear, labelKey: 'v7explore.settings' },
 };
+
+/* Converged navigation: the four stages are rail sections under the active
+   Pareto Explorer page item. */
+const railSections = computed<PageSection[]>(() =>
+  VALID_STAGES.map((stage) => ({ key: stage, label: t(STAGE_META[stage].labelKey) })),
+);
 
 function openParetoHelp(): void {
   const sharedHelp = (window as Window & {
@@ -300,21 +307,11 @@ function commandLoad(): void {
   store.loadParetoData().catch(() => {});
 }
 
-declare global {
-  interface Window {
-    PBGuiSidebarResize?: {
-      init(options: { sidebarId: string; handleId: string; minWidth: number; maxWidth: number }): void;
-    };
-  }
-}
-
 /** The page-level fullscreen relayout listener (:2768-2779). */
 const fullscreenListener = useFullscreenRelayout(() => getPlotly());
 
 onMounted(() => {
   document.title = t('v7explore.pageTitle');
-  // initSidebarResize (:4497-4500) — after mount, when #sidebar exists
-  window.PBGuiSidebarResize?.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize', minWidth: 140, maxWidth: 300 });
   fullscreenListener.install();
   void store.bootstrapSession();
 });
@@ -335,6 +332,9 @@ onBeforeUnmount(() => {
     :page-title="t('v7explore.paretoExplorer')"
     :page-description="t('v7explore.pageSubtitle')"
     :page-family="readSeedOptimizeVersion() === 'v8' ? 'PBv8' : 'PBv7'"
+    :sections="railSections"
+    :active-section="store.state.stage"
+    @update:section="store.selectStage($event as ParetoStage)"
   >
     <template #status>
       <div class="status-row">
@@ -353,53 +353,37 @@ onBeforeUnmount(() => {
     </template>
 
     <div id="page-body">
-    <aside id="sidebar">
-      <div id="sidebar-inner">
-        <button
-          v-for="stage in VALID_STAGES"
-          :key="stage"
-          class="sb-section"
-          :class="{ active: store.state.stage === stage }"
-          :data-stage="stage"
-          @click="store.selectStage(stage)"
-        >
-          <PbIcon class="sb-icon" :icon="STAGE_META[stage].icon" /> <span>{{ t(STAGE_META[stage].labelKey) }}</span>
-        </button>
-
-        <hr class="sb-sep" />
-
-        <div class="ctx-actions" style="display: block">
-          <button class="sb-btn" id="btn-back-optimize" @click="goBackToOptimize">
-            <span>{{ t('v7explore.backToOptimize') }}</span>
-          </button>
-          <button class="sb-btn" id="btn-run-backtest" @click="requireSelectedConfig">
-            <span>{{ t('v7explore.runBacktest') }}</span>
-          </button>
-          <button
-            v-show="store.isV8.value"
-            class="sb-btn"
-            id="btn-pin-strategy-baseline"
-            :disabled="!store.isV8.value"
-            @click="requireSelectedConfig"
-          >
-            {{ t('v7explore.pinExplorerBaseline') }}
-          </button>
-          <button class="sb-btn" id="btn-open-strategy-explorer" @click="requireSelectedConfig">
-            <span>{{ t('v7explore.strategyExplorer') }}</span>
-          </button>
-          <button class="sb-btn" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
-            <PbIcon v-if="!store.state.fullLoadPending" :icon="PhFolderOpen" />
-            {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : 'Scan all_results' }}
-          </button>
-          <button v-show="store.state.allResultsLoaded" class="sb-btn" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
-            <span>{{ t('v7explore.showPassivbotParetos') }}</span>
-          </button>
-        </div>
-      </div>
-      <div id="sidebar-resize"></div>
-    </aside>
-
     <div class="workbench-page-content">
+    <!-- Stage nav lives in the workbench rail; this strip carries only the
+         session actions (legacy ctx-actions :767-777). -->
+    <div class="page-toolbar" role="toolbar">
+      <button class="sb-btn" id="btn-back-optimize" @click="goBackToOptimize">
+        <span>{{ t('v7explore.backToOptimize') }}</span>
+      </button>
+      <button class="sb-btn" id="btn-run-backtest" @click="requireSelectedConfig">
+        <span>{{ t('v7explore.runBacktest') }}</span>
+      </button>
+      <button
+        v-show="store.isV8.value"
+        class="sb-btn"
+        id="btn-pin-strategy-baseline"
+        :disabled="!store.isV8.value"
+        @click="requireSelectedConfig"
+      >
+        {{ t('v7explore.pinExplorerBaseline') }}
+      </button>
+      <button class="sb-btn" id="btn-open-strategy-explorer" @click="requireSelectedConfig">
+        <span>{{ t('v7explore.strategyExplorer') }}</span>
+      </button>
+      <button class="sb-btn" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
+        <PbIcon v-if="!store.state.fullLoadPending" :icon="PhFolderOpen" />
+        {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : 'Scan all_results' }}
+      </button>
+      <button v-show="store.state.allResultsLoaded" class="sb-btn" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
+        <span>{{ t('v7explore.showPassivbotParetos') }}</span>
+      </button>
+    </div>
+
       <section class="page-title sr-only">
         <div>
           <h1>{{ t('v7explore.paretoExplorer') }}</h1>

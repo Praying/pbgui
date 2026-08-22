@@ -96,8 +96,14 @@ describe('boot chain (:10012-10024)', () => {
     await nextTick();
     expect(wrapper.findAll('main')).toHaveLength(1);
     expect(wrapper.find('main#app-shell-main').exists()).toBe(true);
-    const navButtons = wrapper.findAll('.sb-section[data-panel]');
-    expect(navButtons.map((b) => b.attributes('data-panel'))).toEqual(['configs', 'queue', 'results', 'archive', 'legacy']);
+    const navButtons = wrapper.findAll('[data-testid^="rail-section-"]');
+    expect(navButtons.map((b) => b.attributes('data-testid'))).toEqual([
+      'rail-section-configs',
+      'rail-section-queue',
+      'rail-section-results',
+      'rail-section-archive',
+      'rail-section-legacy',
+    ]);
     expect(wrapper.find('#panel-configs').classes()).toContain('active');
     // boot loads settings + configs and opens the WS (:10015-10018)
     expect(fetchMock.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('/api/backtest'))).toEqual(
@@ -181,11 +187,11 @@ describe('boot chain (:10012-10024)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    expect(wrapper.findAll('.sb-section[data-panel]').map((b) => b.attributes('data-panel'))).toEqual([
-      'configs',
-      'queue',
-      'results',
-      'archive',
+    expect(wrapper.findAll('[data-testid^="rail-section-"]').map((b) => b.attributes('data-testid'))).toEqual([
+      'rail-section-configs',
+      'rail-section-queue',
+      'rail-section-results',
+      'rail-section-archive',
     ]);
     expect(wrapper.find('#panel-legacy').exists()).toBe(false);
     expect(sockets[0]!.url).toBe('ws://h:8000/api/backtest-v8/ws/bt7');
@@ -253,15 +259,15 @@ describe('boot chain (:10012-10024)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    expect(wrapper.find('#sidebar-editor').exists()).toBe(false);
+    expect(wrapper.find('#editor-toolbar').exists()).toBe(false);
     await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
     await flush();
     await nextTick();
-    expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
+    expect(wrapper.find('#editor-toolbar').exists()).toBe(true);
     expect(wrapper.find('[data-test="configs-editor"]').exists()).toBe(true);
-    await wrapper.find('#sidebar-editor .sb-btn').trigger('click'); // Home
+    await wrapper.find('#editor-toolbar .sb-btn').trigger('click'); // Home
     await nextTick();
-    expect(wrapper.find('#sidebar-editor').exists()).toBe(false);
+    expect(wrapper.find('#editor-toolbar').exists()).toBe(false);
     wrapper.unmount();
   });
 
@@ -309,7 +315,7 @@ describe('boot chain (:10012-10024)', () => {
     await wrapper.find('#ms-cfg-exchanges-input').trigger('focusin');
     expect(exchangeDropdown.classes()).toContain('open');
 
-    expect(wrapper.findAll('#sidebar-editor button[data-test]').map((button) => button.attributes('data-test'))).toEqual([
+    expect(wrapper.findAll('#editor-toolbar button[data-test]').map((button) => button.attributes('data-test'))).toEqual([
       'editor-home',
       'editor-import',
       'editor-results',
@@ -505,7 +511,7 @@ describe('boot chain (:10012-10024)', () => {
     await nextTick();
     expect(wrapper.find('#panel-results').classes()).toContain('active');
 
-    await wrapper.find('.sb-section[data-panel="configs"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-configs"]').trigger('click');
     await nextTick();
     await wrapper.find('[data-test="cfg-edit"]').trigger('click');
     await flush();
@@ -588,7 +594,7 @@ describe('boot chain (:10012-10024)', () => {
     await wrapper.find('[data-test="cfg-edit"]').trigger('click');
     await flush();
     await nextTick();
-    expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
+    expect(wrapper.find('#editor-toolbar').exists()).toBe(true);
     const nameInput = wrapper.find('[data-test="cfg-name"]').element as HTMLInputElement;
     expect(nameInput.value).toBe('alpha');
     const pbguiDataButton = wrapper.find('button[title="Use PBGui market data directory"]');
@@ -624,7 +630,7 @@ describe('boot chain (:10012-10024)', () => {
     await wrapper.find('[data-test="suite-sc-label"]').setValue('typed mid-flight');
     await nextTick();
     calls.length = 0;
-    await wrapper.findAll('#sidebar-editor .sb-btn').find((b) => b.text().includes('Save') && !b.text().includes('Queue'))!.trigger('click');
+    await wrapper.findAll('#editor-toolbar .sb-btn').find((b) => b.text().includes('Save') && !b.text().includes('Queue'))!.trigger('click');
     await flush();
     await nextTick();
     const put = fetchMock.mock.calls.find((call) => call[1]?.method === 'PUT');
@@ -703,7 +709,7 @@ describe('queue live updates (:1267-1330)', () => {
     await nextTick();
     await nextTick();
     expect(wrapper.findAll('#queue-list tbody tr')).toHaveLength(3);
-    expect(wrapper.find('#queue-count-badge').text()).toBe('1/2');
+    expect(wrapper.find('[data-testid="rail-section-badge-queue"]').text()).toBe('1/2');
     wrapper.unmount();
   });
 
@@ -716,7 +722,8 @@ describe('queue live updates (:1267-1330)', () => {
     });
     await nextTick();
     await nextTick();
-    expect(wrapper.find('#queue-count-badge').text()).toBe('');
+    // empty queueBadge folds to undefined — the rail badge unmounts
+    expect(wrapper.find('[data-testid="rail-section-badge-queue"]').exists()).toBe(false);
     wrapper.unmount();
   });
 
@@ -783,7 +790,7 @@ describe('queue panel actions (App wiring, :5190-5226)', () => {
   it('stop-all posts a stop for every running/backtesting item (:5220-5226)', async () => {
     const wrapper = mountApp();
     await flush();
-    await wrapper.find('.sb-section[data-panel="queue"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-queue"]').trigger('click');
     await nextTick();
     sockets[0]!.readyState = 1;
     sockets[0]!.onmessage?.({
@@ -811,7 +818,7 @@ describe('queue panel actions (App wiring, :5190-5226)', () => {
   it('clear-finished posts the bulk endpoint (:5214-5218)', async () => {
     const wrapper = mountApp();
     await flush();
-    await wrapper.find('.sb-section[data-panel="queue"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-queue"]').trigger('click');
     await nextTick();
     await wrapper.find('[data-test="clear-finished"]').trigger('click');
     await flush();
@@ -835,7 +842,7 @@ describe('queue panel actions (App wiring, :5190-5226)', () => {
     });
     await nextTick();
     await nextTick();
-    await wrapper.find('.sb-section[data-panel="queue"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-queue"]').trigger('click');
     await nextTick();
     await wrapper.find('[data-test="queue-select-all"]').trigger('click');
     await wrapper.find('[data-test="delete-selected"]').trigger('click');
@@ -917,7 +924,7 @@ describe('results panel (M-v7-10, :834-869)', () => {
     await flush();
     await nextTick();
     expect(fetchMock.mock.calls.some((c) =>  /\/results(?:\?|$)/.test(String(c[0])))).toBe(false);
-    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-results"]').trigger('click');
     await flush();
     await nextTick();
     expect(fetchMock.mock.calls.some((c) =>  /\/api\/backtest-v7\/results(?:\?|$)/.test(String(c[0])))).toBe(true);
@@ -1000,7 +1007,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await flush();
     await nextTick();
     fetchMock.mockClear();
-    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();
     expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/archives'))).toBe(true);
@@ -1029,7 +1036,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();
     expect(wrapper.find('[data-test="archive-add"]').exists()).toBe(true);
@@ -1049,17 +1056,17 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await flush();
     await nextTick();
     // load the archive list once, then leave the panel
-    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();
     expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(1);
-    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-results"]').trigger('click');
     await nextTick();
     sockets[0]!.onmessage!({ data: JSON.stringify({ type: 'archive_update' }) });
     await nextTick();
     // no fetch fires while away; the cleared cache forces a refetch on return
     expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(1);
-    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();
     expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(2);
@@ -1078,7 +1085,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-results"]').trigger('click');
     await flush();
     await nextTick();
     // version filter starts at the page flavor — the button is enabled
@@ -1090,7 +1097,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await flush();
     await nextTick();
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('/results/config?path=p1'))).toBe(true);
-    expect(wrapper.find('#sidebar-editor').exists()).toBe(true);
+    expect(wrapper.find('#editor-toolbar').exists()).toBe(true);
     wrapper.unmount();
   });
 
@@ -1106,7 +1113,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     });
     const wrapper = mountApp();
     await flush();
-    await wrapper.find('.sb-section[data-panel="results"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-results"]').trigger('click');
     await flush();
     await nextTick();
     await wrapper.find('#results-list tbody tr').trigger('click');
@@ -1122,7 +1129,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await flush();
     await nextTick();
     fetchMock.mockClear();
-    await wrapper.find('.sb-section[data-panel="legacy"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-legacy"]').trigger('click');
     await flush();
     await nextTick();
     expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/legacy/results'))).toBe(true);
@@ -1138,7 +1145,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();
     expect(wrapper.find('#panel-archive').exists()).toBe(true);
@@ -1177,7 +1184,7 @@ describe('archive git maintenance (M-v7-12)', () => {
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    await wrapper.find('.sb-section[data-panel="archive"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();
     return wrapper;

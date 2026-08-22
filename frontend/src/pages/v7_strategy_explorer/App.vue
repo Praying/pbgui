@@ -56,6 +56,7 @@ import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import type { PageSection } from '@/shared/navigation';
 import AnalysisControls from './components/AnalysisControls.vue';
 import ComparePanel from './components/ComparePanel.vue';
 import ExchangeStatePanel from './components/ExchangeStatePanel.vue';
@@ -91,6 +92,12 @@ const STAGES = [
   { key: 'compare', labelKey: 'v7explore.compare' },
   { key: 'movie', labelKey: 'v7explore.movieBuilder' },
 ] as const;
+
+/* Converged navigation: the six stages are rail sections under the active
+   Strategy Explorer page item. */
+const railSections = computed<PageSection[]>(() =>
+  STAGES.map((stage) => ({ key: stage.key, label: t(stage.labelKey) })),
+);
 
 const subtitle = computed(() => t(adapter.subtitleKey));
 const moviePanel = useTemplateRef<{ stepMovieFrame(direction: number): boolean }>('moviePanel');
@@ -246,6 +253,9 @@ onBeforeUnmount(() => {
     :page-title="adapter.isV8 ? t('v7explore.titleV8', { label: store.strategyLabel.value }) : t('v7explore.titleV7')"
     :page-description="subtitle"
     :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
+    :sections="railSections"
+    :active-section="store.controls.stage"
+    @update:section="selectStage"
   >
     <template #status>
       <div class="toolbar">
@@ -271,21 +281,6 @@ onBeforeUnmount(() => {
 
     <div id="data-tip-tooltip"></div>
     <div id="page-body">
-    <aside id="sidebar">
-      <div id="sidebar-inner">
-        <button
-          v-for="stage in STAGES"
-          :key="stage.key"
-          class="sb-section"
-          :class="{ active: store.controls.stage === stage.key }"
-          @click="selectStage(stage.key)"
-        >
-          {{ t(stage.labelKey) }}
-        </button>
-      </div>
-      <div id="sidebar-resize"></div>
-    </aside>
-
     <div class="workbench-page-content" ref="mainContent" @scroll.passive="onScroll">
       <section class="page-title sr-only">
         <div>

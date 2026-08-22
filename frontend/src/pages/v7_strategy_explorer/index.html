@@ -15,12 +15,11 @@
   <!-- Legacy i18n remains available to the vendored date picker and help. -->
   <script src="/app/i18n.js?v=1"></script>
   <title>PBGui - Strategy Explorer</title>
-  <!-- resizable sidebar chrome, same files as legacy v7_strategy_explorer.html:8-10 -->
-  <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
+  <!-- Stage nav converged into the workbench rail; the legacy resizable
+       sidebar chrome (sidebar.css + sidebar_resize.js) is no longer loaded. -->
   <!-- Plotly stays a vendored script global (legacy :9); typed access via
        lib/plotlyVendor.ts, never bundled -->
   <script src="/static/plotly.min.js"></script>
-  <script src="/app/js/sidebar_resize.js?v=1"></script>
   <!-- shared JSON panel global for the Raw Config stage (legacy :376) -->
   <script src="/app/js/json_panel.js?v=2"></script>
 </head>
