@@ -103,7 +103,7 @@ watch(model, (raw) => {
     </header>
     <div class="form-row cols-2 bot-side-primary" style="margin-bottom: var(--sp-sm)">
       <div class="form-group">
-        <label>total_wallet_exposure_limit</label>
+        <label :data-tip="t('v7backtest.tip.totalWalletExposureLimit')">total_wallet_exposure_limit</label>
         <div class="num-stepper">
           <button type="button" class="stepper-btn" aria-label="Decrease total_wallet_exposure_limit" title="Decrease total_wallet_exposure_limit" @click="step('total_wallet_exposure_limit', -tweStep, 10)"><PbIcon :icon="PhMinus" /></button>
           <input type="number" :value="twe" step="0.05" @input="syncField('total_wallet_exposure_limit', ($event.target as HTMLInputElement).value)" />
@@ -111,7 +111,7 @@ watch(model, (raw) => {
         </div>
       </div>
       <div class="form-group">
-        <label>n_positions</label>
+        <label :data-tip="t(side === 'long' ? 'v7backtest.tip.nPositionsLong' : 'v7backtest.tip.nPositionsShort')">n_positions</label>
         <div class="num-stepper">
           <button type="button" class="stepper-btn" aria-label="Decrease n_positions" title="Decrease n_positions" @click="step('n_positions', -1, 10)"><PbIcon :icon="PhMinus" /></button>
           <input type="number" :value="npos" step="1" @input="syncField('n_positions', ($event.target as HTMLInputElement).value)" />
@@ -134,7 +134,7 @@ watch(model, (raw) => {
       </button>
       <div :id="'bot-json-content-' + side" class="expander-body">
         <div v-if="jsonOpen" class="form-group">
-          <label>
+          <label :data-tip="t('v7backtest.tip.fullConfigJson')">
             {{ t('v7backtest.fullConfigJson') }}
             <span v-if="hasStatus" style="font-size: var(--fs-xs, 11px); font-weight: 400; opacity: 0.8">
               ■ <span style="color: var(--warning)">{{ t('v7backtest.neutralized') }}</span>

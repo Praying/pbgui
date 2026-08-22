@@ -21,8 +21,10 @@ const props = withDefaults(
     placeholder?: string;
     allowAll?: boolean;
     selectAllButton?: boolean;
+    /** Tooltip text for the field label (data-tip layer). */
+    tip?: string;
   }>(),
-  { labels: () => ({}), placeholder: '', allowAll: false, selectAllButton: false }
+  { labels: () => ({}), placeholder: '', allowAll: false, selectAllButton: false, tip: '' }
 );
 
 const { t } = useI18n();
@@ -66,7 +68,7 @@ function clear(): void {
 
 <template>
   <div class="form-group">
-    <label>
+    <label :data-tip="tip || undefined">
       <slot name="label" />
       <button v-if="allowAll" type="button" class="ms-all-btn" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.includes('all')" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="setAll">all</button>
       <button v-else-if="selectAllButton" type="button" class="ms-all-btn" :title="t('v7backtest.selectAll')" :aria-label="t('v7backtest.selectAll')" :aria-pressed="model.length === props.options.length - (props.options.includes('all') ? 1 : 0)" style="border: 0; background: transparent; font: inherit; cursor: pointer" @click="selectAll">all</button>

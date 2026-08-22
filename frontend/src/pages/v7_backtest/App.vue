@@ -41,6 +41,7 @@ import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import { replaceTopLocation } from '@/shared/nav';
 import AppShell from '@/shared/components/AppShell.vue';
+import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -315,6 +316,7 @@ onMounted(() => {
 
 <template>
   <MigrationWatermark />
+  <DataTipTooltip />
   <AppShell
     class="core-workbench-shell core-workbench-shell--backtest"
     :page-key="store.adapter.navCurrent"

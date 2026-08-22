@@ -106,11 +106,13 @@ export const PB8_ADVANCED_BT_PARAMS: readonly string[] = ['market_settings', 'vi
 /** Per-key hints for the Additional Parameters expander (:1110-1120). */
 export const EXTRA_BT_META: Record<string, { tip: string; fmt: string; options?: string[] }> = {
   hlcvs_data_dir: {
-    tip: 'Optional PB8 server path to a verified prepared HLCVS dataset. Leave null for normal automatic dataset resolution.',
+    /** i18n key — resolved by the editor label's data-tip. */
+    tip: 'v7backtest.tip.hlcvsDataDir',
     fmt: 'Expert option: requires an existing PB8 dataset directory with a valid manifest.json.',
   },
   hlcvs_data_override_mode: {
-    tip: 'intersection clips the current config to the prepared dataset. dataset replays the dataset coin universe and timestamp window.',
+    /** i18n key — resolved by the editor label's data-tip. */
+    tip: 'v7backtest.tip.hlcvsDataOverrideMode',
     fmt: 'intersection | dataset',
     options: ['intersection', 'dataset'],
   },

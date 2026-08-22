@@ -1034,3 +1034,27 @@ body {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Document-delegated tooltip layer (DataTipTooltip.vue) — restores the
+ * legacy data-tip pattern of v7_backtest.html:2817+ on the Vue editor.
+ * z-index continues the page scale (100 < 500 < 1000 < 2000 < this). */
+#data-tip-tooltip {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3000;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  font-size: var(--fs-xs);
+  font-weight: normal;
+  padding: 6px 10px;
+  white-space: pre-wrap;
+  max-width: 480px;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(5, 8, 14, 0.5);
+  pointer-events: none;
+  will-change: transform;
+}

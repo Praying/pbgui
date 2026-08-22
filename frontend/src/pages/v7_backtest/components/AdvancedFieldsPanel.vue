@@ -37,6 +37,15 @@ const emit = defineEmits<{ 'retry-metrics': [] }>();
 
 const marketError = computed(() => validateMarketSettings(props.marketSettings));
 
+/** i18n keys for the MARKET_FIELDS column tooltips. */
+const MARKET_FIELD_TIPS: Record<string, string> = {
+  qty_step: 'v7backtest.tip.qtyStep',
+  price_step: 'v7backtest.tip.priceStep',
+  min_qty: 'v7backtest.tip.minQty',
+  min_cost: 'v7backtest.tip.minCost',
+  c_mult: 'v7backtest.tip.cMult',
+};
+
 function setRow(index: number, patch: Partial<{ scope: 'global' | 'exchange'; exchange: string; coin: string }>): void {
   const rows = props.marketSettings.rows.slice();
   const row = { ...rows[index]!, ...patch };
@@ -102,7 +111,7 @@ const groupedMetrics = computed(() => {
 
 <template>
   <div class="expander" id="exp-market-settings">
-    <div class="expander-header"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.marketSettingsOverrides') }} ({{ marketSettings.rows.length }} {{ t('v7backtest.configured') }})</div>
+    <div class="expander-header" :data-tip="t('v7backtest.tip.marketSettingsOverrides')"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.marketSettingsOverrides') }} ({{ marketSettings.rows.length }} {{ t('v7backtest.configured') }})</div>
     <div class="expander-body">
       <div class="advanced-help">
         Override historical exchange metadata after <code>market_settings_sources</code> is resolved. Blank values inherit from the selected source. Exchange-specific rows take
@@ -112,10 +121,10 @@ const groupedMetrics = computed(() => {
         <table class="advanced-table">
           <thead>
             <tr>
-              <th>Scope</th>
-              <th>Exchange</th>
-              <th>Coin</th>
-              <th v-for="field in MARKET_FIELDS" :key="field">{{ field }}</th>
+              <th :data-tip="t('v7backtest.tip.msScope')">Scope</th>
+              <th :data-tip="t('v7backtest.tip.msExchange')">Exchange</th>
+              <th :data-tip="t('v7backtest.tip.msCoin')">Coin</th>
+              <th v-for="field in MARKET_FIELDS" :key="field" :data-tip="t(MARKET_FIELD_TIPS[field] ?? '')">{{ field }}</th>
               <th></th>
             </tr>
           </thead>
@@ -162,13 +171,13 @@ const groupedMetrics = computed(() => {
   </div>
 
   <div class="expander" id="exp-result-metrics">
-    <div class="expander-header"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.resultMetrics') }}</div>
+    <div class="expander-header" :data-tip="t('v7backtest.tip.resultMetrics')"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.resultMetrics') }}</div>
     <div class="expander-body">
       <div class="advanced-help">Controls terminal result visibility only. All metrics are still computed and saved. Optimize scoring and limit metrics are always included in Default and Custom modes.</div>
       <div class="metric-mode-row">
-        <label class="metric-mode-button"><input type="radio" name="result-metrics-mode" value="default" :checked="resultMetrics.mode === 'default'" @change="setMode('default')" /> {{ t('v7backtest.default') }}</label>
-        <label class="metric-mode-button"><input type="radio" name="result-metrics-mode" value="all" :checked="resultMetrics.mode === 'all'" @change="setMode('all')" /> {{ t('common.all') }}</label>
-        <label class="metric-mode-button"><input type="radio" name="result-metrics-mode" value="custom" :checked="resultMetrics.mode === 'custom'" @change="setMode('custom')" /> {{ t('v7backtest.customAdditions') }}</label>
+        <label class="metric-mode-button" :data-tip="t('v7backtest.tip.metricsDefaultMode')"><input type="radio" name="result-metrics-mode" value="default" :checked="resultMetrics.mode === 'default'" @change="setMode('default')" /> {{ t('v7backtest.default') }}</label>
+        <label class="metric-mode-button" :data-tip="t('v7backtest.tip.metricsAllMode')"><input type="radio" name="result-metrics-mode" value="all" :checked="resultMetrics.mode === 'all'" @change="setMode('all')" /> {{ t('common.all') }}</label>
+        <label class="metric-mode-button" :data-tip="t('v7backtest.tip.metricsCustomMode')"><input type="radio" name="result-metrics-mode" value="custom" :checked="resultMetrics.mode === 'custom'" @change="setMode('custom')" /> {{ t('v7backtest.customAdditions') }}</label>
       </div>
       <div v-if="resultMetrics.mode === 'custom'" data-test="result-metrics-custom">
         <div class="metric-picker-toolbar">
