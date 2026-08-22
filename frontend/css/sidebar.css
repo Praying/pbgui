@@ -57,8 +57,8 @@
 .sb-btn.info:hover    { background: rgb(var(--accent-rgb, 91 156 245) / .2); }
 .sb-btn.danger  { background: var(--danger-bg); color: var(--danger-soft); border-color: rgb(var(--danger-rgb, 229 97 92) / .35); }
 .sb-btn.danger:hover  { background: rgb(var(--danger-rgb, 229 97 92) / .2); }
-.sb-btn.accent  { background: var(--blue); border-color: var(--blue); color: #f2f5fb; font-weight: 600; }
-.sb-btn.accent:hover  { background: var(--accent-deep, #3f63ad); }
+.sb-btn.accent  { background: var(--accent-deep, #3f63ad); border-color: var(--accent-deep, #3f63ad); color: #f2f5fb; font-weight: 600; }
+.sb-btn.accent:hover  { background: var(--accent-deep, #3f63ad); filter: brightness(1.14); }
 .sb-btn.active  { background: var(--bg); border-color: var(--accent); color: var(--accent); }
 .sb-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .sb-btn:disabled:hover { background: var(--bg3); }
@@ -468,7 +468,7 @@
   width: min(820px, calc(100vw - 260px));
   max-width: calc(100vw - 32px);
   height: 60vh;
-  max-height: calc(100vh - 104px);
+  max-height: calc(100dvh - 104px);
   min-width: 360px;
   min-height: 220px;
   background: var(--bg2);

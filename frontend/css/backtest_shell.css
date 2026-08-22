@@ -2,15 +2,15 @@
   --bg: var(--bg-page);
   --bg2: var(--bg-panel);
   --bg3: var(--bg-elevated);
-  --border: #333f5c;
+  --border: var(--border-default, #333f5c);
   --text: var(--text-primary);
   --text-dim: var(--text-secondary);
   --green: var(--success);
-  --orange: #e0a458;
+  --orange: var(--warning, #e0a458);
   --red: var(--danger);
-  --blue: #1f77ff;
+  --blue: var(--accent, #72a0ee);
   --accent: var(--accent);
-  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font: var(--font-family, 'Avenir Next', 'Segoe UI', -apple-system, sans-serif);
   --fs-xs: 11px;
   --fs-sm: 13px;
   --fs-base: 14px;
@@ -28,7 +28,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; font-family: var(--font); font-size: var(--fs-base); color: var(--text); background: var(--bg); overflow: hidden; }
 button, input, select, textarea { font-family: var(--font); }
-#page-body { display: flex; height: calc(100vh - 52px); overflow: hidden; }
+#page-body { display: flex; height: calc(100dvh - var(--nav-height, 52px)); overflow: hidden; }
 #main-content { flex: 1; overflow: hidden; background: var(--bg); padding: var(--sp-lg); display: flex; flex-direction: column; }
 .view-panel { display: none; }
 .view-panel.active { display: flex !important; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
@@ -50,7 +50,7 @@ button, input, select, textarea { font-family: var(--font); }
 
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: var(--fs-xs); font-weight: 600; letter-spacing: .3px; }
 .badge-queued { background: rgba(160,164,171,.15); color: var(--text-dim); }
-.badge-running { background: rgba(31,119,255,.15); color: var(--blue); }
+.badge-running { background: rgb(var(--accent-rgb, 114 160 238) / .15); color: var(--blue); }
 .badge-backtesting { background: rgb(var(--warning-rgb) / .15); color: var(--orange); }
 .badge-complete { background: rgb(var(--success-rgb) / .15); color: var(--green); }
 .badge-error, .badge-stopped { background: rgb(var(--danger-rgb) / .15); color: var(--red); }
@@ -98,13 +98,13 @@ button, input, select, textarea { font-family: var(--font); }
 .modal-body { flex: 1; overflow: auto; min-height: 0; }
 .modal-actions { display: flex; gap: var(--sp-sm); justify-content: flex-end; margin-top: var(--sp-lg); }
 .modal-btn { height: var(--btn-h); padding: 0 16px; border-radius: 4px; font-size: var(--fs-base); cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text); }
-.modal-btn-primary { background: var(--blue); border-color: var(--blue); color: #f2f5fb; }
+.modal-btn-primary { background: var(--accent-deep, #3f63ad); border-color: var(--accent-deep, #3f63ad); color: #f2f5fb; }
 
 #toast { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: var(--sp-sm); pointer-events: none; }
 .toast-msg { padding: 10px 16px; border-radius: 6px; font-size: var(--fs-sm); font-weight: 500; pointer-events: auto; }
 .toast-ok { background: var(--green); color: #0b1526; }
 .toast-err { background: var(--red); color: #f2f5fb; }
-.toast-info { background: var(--blue); color: #f2f5fb; }
+.toast-info { background: var(--accent-deep, #3f63ad); color: #f2f5fb; }
 
 #log-panel { position: fixed; bottom: 0; right: 0; width: 50%; height: 40vh; min-width: 240px; min-height: 150px; background: var(--bg2); border: 2px solid var(--accent); z-index: 500; display: none; flex-direction: column; overflow: hidden; border-radius: 6px 6px 0 0; }
 #log-panel.visible { display: flex; }

@@ -44,7 +44,7 @@ header {
 }
 
 h1 {
-    font-size: 28px; /* intentionally large page heading — not tokenized */
+    font-size: var(--text-title);
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -139,7 +139,7 @@ h1 {
 }
 
 .job-card:hover {
-    background: #30333f;
+    background: rgb(var(--accent-rgb, 114 160 238) / 0.08);
 }
 
 .job-card.simple {
@@ -199,13 +199,13 @@ h1 {
 }
 
 .btn-danger {
-    background: var(--danger);
-    color: white;
+    background: var(--danger-deep, #a83a35);
+    color: #f2f5fb;
 }
 
 .btn-danger:hover {
-    background: var(--danger-soft, var(--danger-soft));
-    color: var(--accent-contrast);
+    background: var(--danger-deep, #a83a35);
+    filter: brightness(1.14);
 }
 
 .job-details {
