@@ -195,7 +195,7 @@
 
   .workbench-rail__items {
     display: grid;
-    gap: 2px;
+    gap: var(--sp-xs);
     margin: 0;
     padding: 0;
     list-style: none;
@@ -256,7 +256,7 @@
   .workbench-rail__subitems {
     display: grid;
     gap: 2px;
-    margin: 2px 0 var(--sp-xs);
+    margin: var(--sp-xs) 0;
     padding: 0;
     list-style: none;
   }
@@ -1388,6 +1388,10 @@
     .workbench-rail--collapsed .workbench-rail__brand {
       flex: 1;
       min-width: 0;
+      /* Desktop collapsed centers the lone toggle in the 68px rail; on the
+         full-width mobile bar that reads as floating in dead space — pin
+         the toggle to the trailing edge instead. */
+      padding: 0 var(--sp-md);
     }
 
     .workbench-rail--collapsed .workbench-rail__groups {
@@ -1398,12 +1402,11 @@
       overflow-y: auto;
     }
 
-    .workbench-rail__toggle {
-      align-self: flex-end;
-    }
-
+    /* An auto margin outranks the collapsed brand row's
+       justify-content: center, so the toggle pins right. */
     .workbench-rail--collapsed .workbench-rail__toggle {
       align-self: center;
+      margin-left: auto;
     }
 
     .workspace-header {

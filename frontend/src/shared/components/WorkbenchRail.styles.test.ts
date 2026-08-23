@@ -74,6 +74,10 @@ describe('WorkbenchRail responsive CSS contracts', () => {
     expect_declaration(collapsed_brand, 'min-width', '0');
     expect_declaration(collapsed_groups, 'display', 'none');
     expect_declaration(collapsed_toggle, 'align-self', 'center');
+    /* The mobile collapsed bar spans the viewport; the lone toggle pins to
+       its trailing edge (auto margin beats the desktop rule's centered
+       justify-content) instead of floating mid-screen. */
+    expect_declaration(collapsed_toggle, 'margin-left', 'auto');
     expect(mobile_rules.toString()).not.toMatch(
       /\.app-shell--rail-collapsed\s+\.app-shell__workspace\s*\{[^}]*padding-top/s,
     );
