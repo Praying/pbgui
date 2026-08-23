@@ -1,5 +1,10 @@
 # Unreleased
 
+## Optimize — Config Editor Tab Bar & Bounds Layout
+
+- Fixed the Optimize "New Config" editor modal: on content-heavy tabs (Bounds / Optimizer / Scoring & Limits) the tab bar was crushed to a sliver with a vertical scrollbar, because its `overflow-x: auto` zeroed its automatic minimum height inside the height-capped flex modal. Pinned the tab bar with `flex-shrink: 0` (explicit on the modal header/footer too), so long tab contents now scroll inside the body while the tab bar stays intact.
+- Gave the previously unstyled Bounds tab a proper grid layout: parameter keys get a flexible wrap-anywhere column, the min/max/step inputs are equal-width and aligned across rows, and the fixed checkbox plus delete button sit at the row end. Below 600px each row stacks in two lines (key full-width, then the three inputs with fixed/delete), hiding the range arrow.
+
 ## Optimize — Config Editor Modal Polish
 
 - Refined the Optimize "New Config" editor modal: removed the redundant close button in the header (the footer Cancel remains), turned the bare version label into an accent badge, enlarged the title, and gave the editor modal a wider 1100px / 85vh frame so the nine-tab form has room. Added a hover state and transition to the tab bar.
