@@ -27,7 +27,7 @@ import { useJsonSync, type UseJsonSync } from './useJsonSync';
 import { useCoinOverrides, type CoinOverridesStore } from '@/shared/coinOverrides/useCoinOverrides';
 import { validateJsonText, type JsonValidationError } from '@/shared/jsonValidation';
 import { serverMsg } from '@/shared/i18n';
-import { dialogsAlert } from '../lib/dialogs';
+import { dialogsAlert, dialogsConfirm } from '../lib/dialogs';
 
 /**
  * Page orchestration — the Vue port of init() (v7_edit.html:1797-1908) and
@@ -513,6 +513,50 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
     return true;
   }
 
+  /**
+   * resolveRunSaveTarget (v1.98.33, :3038-3066) — a PB8 "new" draft must
+   * first probe the target name: an existing instance needs a versioned
+   * Replace-and-Save confirmation (back up, bump version, sync), so the
+   * draft can no longer silently die as a rejected create_only PUT.
+   */
+  async function resolveSaveTarget(
+    name: string,
+    wasNew: boolean,
+    config: Record<string, unknown>,
+  ): Promise<{ createOnly: boolean; expectedVersion: number } | null> {
+    if (!adapter.isV8 || !wasNew) {
+      return { createOnly: wasNew, expectedVersion: intVal(state.version) };
+    }
+    const existing = await fetch(apiBase + '/instances/' + encodeURIComponent(name) + '/config', {
+      credentials: 'same-origin',
+    });
+    if (existing.status === 404) {
+      return { createOnly: true, expectedVersion: intVal(state.version) };
+    }
+    const payload = (await existing.json().catch(() => ({}))) as {
+      config?: Record<string, unknown>;
+      detail?: unknown;
+    };
+    if (!existing.ok) {
+      throw new Error(
+        typeof payload.detail === 'string'
+          ? payload.detail
+          : `Could not inspect existing PB8 instance: HTTP ${existing.status}`
+      );
+    }
+    const existingConfig = object(payload.config);
+    const currentVersion = Number(object(existingConfig.pbgui).version || 0);
+    const enabledOn = String(object(config.pbgui).enabled_on || 'disabled');
+    const confirmed = await dialogsConfirm({
+      title: t('v7run.replaceInstanceTitle'),
+      message: t('v7run.replaceInstanceMessage', { name, version: currentVersion, enabledOn }),
+      confirmText: t('v7run.replaceAndSave'),
+    });
+    if (!confirmed) return null;
+    state.version = String(currentVersion); // setVal('f-version', currentVersion)
+    return { createOnly: false, expectedVersion: currentVersion };
+  }
+
   async function save(): Promise<void> {
     if (saving.value) return;
     saving.value = true;
@@ -527,9 +571,11 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
         return;
       }
       const overrideSnapshot = adapter.isV8 ? coinOverrides.snapshotPendingFiles() : {};
-      const body = adapter.saveBody(config, overrideSnapshot, intVal(state.version));
+      const saveTarget = await resolveSaveTarget(name, wasNew, config);
+      if (!saveTarget) return;
+      const body = adapter.saveBody(config, overrideSnapshot, saveTarget.expectedVersion);
       const resp = await fetch(
-        apiBase + '/instances/' + encodeURIComponent(name) + '/config' + adapter.saveQuery(wasNew),
+        apiBase + '/instances/' + encodeURIComponent(name) + '/config' + adapter.saveQuery(saveTarget.createOnly),
         {
           method: 'PUT',
           credentials: 'same-origin',

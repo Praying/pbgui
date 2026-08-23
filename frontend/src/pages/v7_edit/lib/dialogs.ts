@@ -14,7 +14,10 @@ interface AlertOptions {
 }
 
 type DialogsGlobal = typeof globalThis & {
-  PBGuiDialogs?: { alert?: (options: AlertOptions) => void };
+  PBGuiDialogs?: {
+    alert?: (options: AlertOptions) => void;
+    confirm?: (options: AlertOptions) => Promise<boolean>;
+  };
 };
 
 /** PBGuiDialogs.alert — returns false when the global is unavailable. */
@@ -23,6 +26,16 @@ export function dialogsAlert(options: AlertOptions): boolean {
   if (!dialogs || typeof dialogs.alert !== 'function') return false;
   dialogs.alert(options);
   return true;
+}
+
+/**
+ * PBGuiDialogs.confirm — resolves false when the global is unavailable so
+ * destructive save paths degrade to "cancelled" instead of proceeding.
+ */
+export async function dialogsConfirm(options: AlertOptions): Promise<boolean> {
+  const dialogs = (window as DialogsGlobal).PBGuiDialogs;
+  if (!dialogs || typeof dialogs.confirm !== 'function') return false;
+  return await dialogs.confirm(options);
 }
 
 /** i18n serverMsg bridge (PBGuiI18n.serverMsg parity). */

@@ -400,3 +400,73 @@ describe('Edit page completion (M-v7-2)', () => {
     wrapper.unmount();
   });
 });
+
+describe('PB8 replace-and-save confirmation (v1.98.33)', () => {
+  const typePut = (c: unknown): boolean =>
+    String((c as unknown[])[0]).includes('/instances/alice/config')
+    && ((c as unknown[])[1] as RequestInit | undefined)?.method === 'PUT';
+
+  it('confirms before replacing an existing instance and saves against its version', async () => {
+    stubFetch({ flavor: 'v8' });
+    const confirm = vi.fn().mockResolvedValue(true);
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm };
+
+    const wrapper = await mountApp('/api/v8/edit_page?new=1');
+    await wrapper.get('#f-user').setValue('alice');
+    await wrapper.get('#btn-save').trigger('click');
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(confirm).toHaveBeenCalledTimes(1);
+    const options = confirm.mock.calls[0]![0] as { title: string; message: string; confirmText: string };
+    expect(options.title).toBe('Replace existing PB8 instance?');
+    expect(options.message).toContain('alice');
+    expect(options.message).toContain('v4');
+    expect(options.confirmText).toBe('Replace and Save');
+
+    const put = fetchMock.mock.calls.find(typePut)!;
+    expect(String(put[0])).not.toContain('create_only');
+    const body = JSON.parse(String(put[1]!.body)) as { expected_version: number };
+    expect(body.expected_version).toBe(4);
+    delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
+    wrapper.unmount();
+  });
+
+  it('cancels the replace without sending a PUT', async () => {
+    stubFetch({ flavor: 'v8' });
+    const confirm = vi.fn().mockResolvedValue(false);
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm };
+
+    const wrapper = await mountApp('/api/v8/edit_page?new=1');
+    await wrapper.get('#f-user').setValue('alice');
+    await wrapper.get('#btn-save').trigger('click');
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.find(typePut)).toBeUndefined();
+    delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
+    wrapper.unmount();
+  });
+
+  it('keeps create_only when the target name is free', async () => {
+    stubFetch({ flavor: 'v8' });
+    const baseImpl = fetchMock.getMockImplementation()!;
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      if (String(url).includes('/instances/alice/config') && (init?.method ?? 'GET') === 'GET')
+        return Promise.resolve(new Response(JSON.stringify({ detail: 'not found' }), { status: 404 }));
+      return baseImpl(url, init);
+    });
+    const confirm = vi.fn().mockResolvedValue(true);
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm };
+
+    const wrapper = await mountApp('/api/v8/edit_page?new=1');
+    await wrapper.get('#f-user').setValue('alice');
+    await wrapper.get('#btn-save').trigger('click');
+    for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(confirm).not.toHaveBeenCalled();
+    const put = fetchMock.mock.calls.find(typePut)!;
+    expect(String(put[0])).toContain('create_only=true');
+    delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
+    wrapper.unmount();
+  });
+});
