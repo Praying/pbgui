@@ -237,7 +237,12 @@
 
 .workbench-rail__toggle {
   flex: 0 0 auto;
-  margin: var(--sp-sm);
+  margin-left: auto;
+}
+
+.workbench-rail--collapsed .workbench-rail__toggle {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 /* ── Rail section children (accordion under the active page) ── */

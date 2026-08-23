@@ -1,5 +1,9 @@
 # Unreleased
 
+## Workbench Rail — Toggle Relocation
+
+- Moved the rail collapse/expand toggle from the bottom of the workbench rail into the brand row: when expanded it sits on the right beside the PBGui logo, and when collapsed the logo/name hide and the toggle takes their place, centered. Shared across all Vue workbench pages.
+
 ## Backtest — Import Dialog Sizing
 
 - Gave the config-import dialog a fixed readable width (`min(760px, 92vw)`) instead of the generic `fit-content` modal box, and a taller JSON paste area (`min-height: 320px`, `max-height: 60vh`), matching the legacy import dialog proportions.

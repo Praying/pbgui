@@ -126,8 +126,19 @@ onBeforeUnmount(() => {
     :aria-label="t('nav.primaryNavigation')"
   >
     <div class="workbench-rail__brand" aria-label="PBGui">
-      <span class="workbench-rail__brand-mark" aria-hidden="true">PB</span>
+      <span v-if="!visuallyCollapsed" class="workbench-rail__brand-mark" aria-hidden="true">PB</span>
       <span v-if="!visuallyCollapsed" class="workbench-rail__brand-name">PBGui</span>
+      <IconButton
+        class="pbgui-icon-button workbench-rail__toggle"
+        data-testid="rail-toggle"
+        :icon="PhSidebarSimple"
+        :label="t(props.collapsed ? 'nav.expandRail' : 'nav.collapseRail')"
+        :aria-expanded="String(!visuallyCollapsed)"
+        aria-controls="workbench-nav-list"
+        @click="toggleCollapsed"
+        @keydown.enter.prevent="toggleCollapsed"
+        @keydown.space.prevent="toggleCollapsed"
+      />
     </div>
 
     <div id="workbench-nav-list" class="workbench-rail__groups">
@@ -198,17 +209,5 @@ onBeforeUnmount(() => {
         </ul>
       </section>
     </div>
-
-    <IconButton
-      class="pbgui-icon-button workbench-rail__toggle"
-      data-testid="rail-toggle"
-      :icon="PhSidebarSimple"
-      :label="t(props.collapsed ? 'nav.expandRail' : 'nav.collapseRail')"
-      :aria-expanded="String(!visuallyCollapsed)"
-      aria-controls="workbench-nav-list"
-      @click="toggleCollapsed"
-      @keydown.enter.prevent="toggleCollapsed"
-      @keydown.space.prevent="toggleCollapsed"
-    />
   </nav>
 </template>
