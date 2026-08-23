@@ -12,6 +12,10 @@
  *  - merges pending types and debounces the rebuild by 300 ms;
  *  - skips the rebuild while any multi-select dropdown is open
  *    (mselRegistry.isMselOpen — the legacy `.msel-drop.open` query);
+ *  - defers the rebuild of a cell whose form control is focused
+ *    (v1.98.32 deferDashboardCellRefreshWhileInteracting): the pending
+ *    types collect on the control and one blur flushes a single rebuild,
+ *    so period dropdowns no longer close mid-selection;
  *  - skips POSITIONS cells whose live poll is active (legacy
  *    `_liveState['pos_' + r + '_' + c].timer`; D-editor-5 supplies the check).
  *
@@ -33,6 +37,9 @@ import { wsDashboardUrl } from '../config';
 export const WS_RECONNECT_INITIAL_MS = 1000;
 export const WS_RECONNECT_MAX_MS = 30000;
 export const WS_REBUILD_DEBOUNCE_MS = 300;
+
+/** Controls whose focus defers an in-cell rebuild (v1.98.32, editor:2745). */
+const INTERACTIVE_TAGS = new Set(['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON']);
 
 /** The legacy dispatch table (editor:2797-2803). */
 export function wsTypesForMessage(msg: unknown): RenderableWidgetType[] | null {
@@ -104,9 +111,50 @@ export function useDashboardWs(options: DashboardWsOptions): DashboardWsControll
         const type = store.cellType(r, c);
         if (!(types as readonly string[]).includes(type)) continue;
         if (type === 'POSITIONS' && isPositionsLive(r + '_' + c)) continue;
+        if (deferRebuildWhileInteracting(r, c, type)) continue;
         store.rebuildCell(r, c);
       }
     }
+  }
+
+  /* ── defer-while-interacting (v1.98.32, editor
+     deferDashboardCellRefreshWhileInteracting) — a focused form control
+     inside an affected cell must not be remounted out from under the user
+     (Income & co. period dropdowns kept closing mid-selection). The
+     pending types collect on the control; one blur listener flushes a
+     single deferred rebuild after the interaction ends. ── */
+
+  const deferredTypes = new WeakMap<HTMLElement, Set<string>>();
+  const armedControls = new WeakSet<HTMLElement>();
+
+  function deferRebuildWhileInteracting(row: number, col: number, type: string): boolean {
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return false;
+    if (!INTERACTIVE_TAGS.has(active.tagName)) return false;
+    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    if (!(cell instanceof HTMLElement) || !cell.contains(active)) return false;
+    let pending = deferredTypes.get(active);
+    if (!pending) {
+      pending = new Set<string>();
+      deferredTypes.set(active, pending);
+    }
+    pending.add(type);
+    if (!armedControls.has(active)) {
+      armedControls.add(active);
+      active.addEventListener(
+        'blur',
+        () => {
+          const flushed = [...(deferredTypes.get(active) ?? [])] as RenderableWidgetType[];
+          deferredTypes.delete(active);
+          armedControls.delete(active);
+          setTimeout(() => {
+            if (flushed.length) rebuildCellsOfTypes(flushed);
+          }, 0);
+        },
+        { once: true }
+      );
+    }
+    return true;
   }
 
   /* ── debounced pending merge (editor:2804-2814) ── */

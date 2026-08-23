@@ -201,6 +201,74 @@ describe('rebuild dispatch (editor:2760-2815)', () => {
     expect(store2.rebuilds).toEqual(['1_1']);
   });
 
+
+  it('defers an in-cell rebuild while its control is focused and flushes on blur (v1.98.32)', () => {
+    const store = makeStore(GRID);
+    useDashboardWs({ apiBase: '/api', store });
+    /* cell 1_1 (INCOME) hosts a focused period select */
+    const cell = document.createElement('div');
+    cell.setAttribute('data-row', '1');
+    cell.setAttribute('data-col', '1');
+    const select = document.createElement('select');
+    cell.appendChild(select);
+    document.body.appendChild(cell);
+    select.focus();
+    expect(document.activeElement).toBe(select);
+
+    lastSocket().emit({ type: 'income_updated' });
+    vi.advanceTimersByTime(300);
+    /* INCOME (1_1) deferred; the other income-updated cells still rebuild */
+    expect(store.rebuilds).toEqual(['2_1', '2_2']);
+
+    /* blur flushes exactly the deferred type through one rebuild pass */
+    select.blur();
+    vi.advanceTimersByTime(0);
+    expect(store.rebuilds).toEqual(['2_1', '2_2', '1_1']);
+    cell.remove();
+  });
+
+  it('does not defer when the focused control lives outside the affected cell', () => {
+    const store = makeStore(GRID);
+    useDashboardWs({ apiBase: '/api', store });
+    const other = document.createElement('div');
+    other.setAttribute('data-row', '2');
+    other.setAttribute('data-col', '2');
+    const input = document.createElement('input');
+    other.appendChild(input);
+    document.body.appendChild(other);
+    input.focus();
+
+    lastSocket().emit({ type: 'balance_updated' }); // only 1_2 is BALANCE
+    vi.advanceTimersByTime(300);
+    expect(store.rebuilds).toEqual(['1_2']);
+    other.remove();
+  });
+
+  it('merges deferred types across events and flushes them once per blur', () => {
+    const store = makeStore([['INCOME', 'BALANCE']]);
+    useDashboardWs({ apiBase: '/api', store });
+    const cell = document.createElement('div');
+    cell.setAttribute('data-row', '1');
+    cell.setAttribute('data-col', '1');
+    const select = document.createElement('select');
+    cell.appendChild(select);
+    document.body.appendChild(cell);
+    select.focus();
+
+    lastSocket().emit({ type: 'income_updated' });
+    vi.advanceTimersByTime(300);
+    lastSocket().emit({ type: 'balance_updated' });
+    vi.advanceTimersByTime(300);
+    /* both passes deferred 1_1; only 1_2 (BALANCE) rebuilt directly */
+    expect(store.rebuilds).toEqual(['1_2']);
+
+    select.blur();
+    vi.advanceTimersByTime(0);
+    /* one blur flush → one rebuild pass for the deferred cell, no duplicates */
+    expect(store.rebuilds).toEqual(['1_2', '1_1']);
+    cell.remove();
+  });
+
   it('merges rapid events into one debounced rebuild (editor:2804-2814)', () => {
     const store = makeStore(GRID);
     useDashboardWs({ apiBase: '/api', store });
