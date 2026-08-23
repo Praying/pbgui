@@ -169,7 +169,7 @@ def get_main_page(
 
     The legacy frontend/market_data_main.html template was removed with the
     Vue migration (M-data-8); the page reads token/origin values from
-    /api/boot.js at runtime. A missing build fails loudly with the npm build
+    /api/boot.js at runtime. A missing build fails loudly with the pnpm build
     hint.
     """
     vue_path = _frontend_dist_path("market_data")
@@ -178,7 +178,7 @@ def get_main_page(
 
     raise HTTPException(
         status_code=500,
-        detail="market_data page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+        detail="market_data page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
 
 
@@ -1240,7 +1240,7 @@ def _serve_market_data_status_page(request: Request, exchange: str) -> HTMLRespo
     same-origin iframe, so the built page serves every consumer — the exchange
     is injected into the mount element's data-exchange attribute the same way
     the legacy renderer did — and a checkout without a build fails loudly with
-    the npm build hint.
+    the pnpm build hint.
     """
     vue_path = _frontend_dist_path("market_data_status")
     if vue_path.is_file():
@@ -1250,7 +1250,7 @@ def _serve_market_data_status_page(request: Request, exchange: str) -> HTMLRespo
 
     raise HTTPException(
         status_code=500,
-        detail="market_data_status page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+        detail="market_data_status page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
 
 

@@ -45,7 +45,7 @@ def test_root_login_prefers_built_vue_page(tmp_path: Path, client: TestClient, m
 def test_root_login_falls_back_to_legacy_template_without_build(
     tmp_path: Path, client: TestClient, monkeypatch
 ) -> None:
-    """A clone that never ran `npm run build` still gets a working login page."""
+    """A clone that never ran `pnpm run build` still gets a working login page."""
     monkeypatch.setattr(auth, "_frontend_dist_path", lambda page: tmp_path / "missing" / "index.html")
     legacy = tmp_path / "root_login.html"
     legacy.write_text('<script>var API_ORIGIN = "%%API_ORIGIN%%";</script>', encoding="utf-8")
@@ -68,4 +68,4 @@ def test_root_login_errors_clearly_when_no_frontend_exists(
     resp = client.get("/")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text

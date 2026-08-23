@@ -11,7 +11,7 @@
  * them to the cell's explicit height.
  *
  * R2: Plotly stays a window global (loaded via the legacy `/app/plotly.min.js`
- * script tag) — no npm dependency.
+ * script tag) — no package-manager dependency.
  */
 
 export interface PlotlyGlobal {

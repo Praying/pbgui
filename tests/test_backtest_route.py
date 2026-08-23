@@ -156,5 +156,5 @@ def test_backtest_page_errors_clearly_when_no_build_and_no_legacy(
     resp = v7_client.get("/api/backtest-v7/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "v7_backtest" in resp.text

@@ -1,7 +1,7 @@
 """Market data main page route: built Vue page only (M-data-8 retirement).
 
 /api/market-data/main_page serves the built market_data Vue page directly and
-fails with the npm build hint when the bundle is missing (services_monitor and
+fails with the pnpm build hint when the bundle is missing (services_monitor and
 dashboard precedent). The legacy market_data_main.html template — and its
 %%TOKEN%%/%%API_BASE%%/%%VERSION%%/%%SERIAL%%/%%NAV_HASH%% server-side
 injections — was removed with the Vue migration; the page reads token/origin
@@ -60,5 +60,5 @@ def test_errors_clearly_when_no_build_exists(
     resp = client.get("/api/market-data/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "market_data" in resp.text

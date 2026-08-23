@@ -43,4 +43,4 @@ def test_main_page_errors_clearly_when_no_frontend_exists(
     resp = client.get("/api/services/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text

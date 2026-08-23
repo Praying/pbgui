@@ -15,7 +15,7 @@ and re-injecting the Vue document would have left every remount after the
 first blank (documented here since the migration). With market_data_main.html
 retired, the Vue market_data page embeds this URL as a same-origin iframe
 (useStatusMonitor), so the built page serves every consumer — and a checkout
-without a build fails loudly with the npm build hint.
+without a build fails loudly with the pnpm build hint.
 """
 
 from pathlib import Path
@@ -88,7 +88,7 @@ def test_errors_clearly_when_no_build_exists(
     resp = client.get("/api/market-data/status-monitor/binance")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
 
 
 def test_unknown_exchange_returns_404(client: TestClient) -> None:

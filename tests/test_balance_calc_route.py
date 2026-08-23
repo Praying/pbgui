@@ -2,7 +2,7 @@
 
 /api/balance-calc/main_page serves the built balance_calc Vue page when the
 dist output exists, falls back to the legacy template with its server-side
-injections for checkouts without a build, and fails with the npm build hint
+injections for checkouts without a build, and fails with the pnpm build hint
 when neither file exists. Also locks the Vue exchange mirror against the API
 constant (the legacy %%EXCHANGES%% injection's successor).
 """
@@ -106,7 +106,7 @@ def test_errors_clearly_when_no_build_and_no_legacy(
     resp = client.get("/api/balance-calc/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "balance_calc" in resp.text
 
 

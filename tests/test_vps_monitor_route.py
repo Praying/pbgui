@@ -66,5 +66,5 @@ def test_vps_page_reports_missing_build_and_fallback(client: TestClient, tmp_pat
     _set_files(monkeypatch, tmp_path, None, None)
     response = client.get("/api/vps/main_page")
     assert response.status_code == 500
-    assert "npm run build" in response.text
+    assert "pnpm run build" in response.text
     assert "vps_monitor" in response.text

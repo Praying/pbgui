@@ -63,5 +63,5 @@ def test_editor_page_errors_clearly_when_no_build_exists(
     resp = client.get("/api/dashboard/editor_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "legacy editor" not in resp.text

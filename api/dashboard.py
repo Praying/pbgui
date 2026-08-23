@@ -1927,7 +1927,7 @@ def get_editor_page(
     dashboard_render.js engine) was removed with the Vue migration; the page
     reads name/view_only/standalone from the URL query string and derives the
     API base from /api/boot.js at runtime. A missing build fails loudly with
-    the npm build hint.
+    the pnpm build hint.
     """
     vue_path = _frontend_dist_path("dashboard_editor")
     if vue_path.is_file():
@@ -1935,7 +1935,7 @@ def get_editor_page(
 
     raise HTTPException(
         status_code=500,
-        detail="dashboard_editor page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+        detail="dashboard_editor page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
 
 
@@ -1952,7 +1952,7 @@ def get_main_page(
     The legacy frontend/dashboard_main.html template was removed with the Vue
     migration; the page reads `current` from the URL query string, the
     dashboards list from the API, and boot values from /api/boot.js at
-    runtime. A missing build fails loudly with the npm build hint.
+    runtime. A missing build fails loudly with the pnpm build hint.
     """
     vue_path = _frontend_dist_path("dashboard_main")
     if vue_path.is_file():
@@ -1960,7 +1960,7 @@ def get_main_page(
 
     raise HTTPException(
         status_code=500,
-        detail="dashboard_main page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+        detail="dashboard_main page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
 
 
@@ -1978,7 +1978,7 @@ def get_templates_page(
     The legacy frontend/dashboard_templates.html template was removed with the
     Vue migration; the page reads `current` from the URL query string and
     derives the API base from /api/boot.js at runtime. A missing build fails
-    loudly with the npm build hint.
+    loudly with the pnpm build hint.
     """
     vue_path = _frontend_dist_path("dashboard_templates")
     if vue_path.is_file():
@@ -1986,7 +1986,7 @@ def get_templates_page(
 
     raise HTTPException(
         status_code=500,
-        detail="dashboard_templates page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+        detail="dashboard_templates page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
 
 

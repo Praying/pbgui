@@ -106,5 +106,5 @@ def test_welcome_errors_clearly_when_no_build_and_no_legacy(
     resp = welcome_client.get("/api/auth/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "welcome" in resp.text

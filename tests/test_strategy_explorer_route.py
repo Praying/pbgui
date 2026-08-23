@@ -153,6 +153,6 @@ def test_explorer_page_errors_clearly_when_no_build_and_no_legacy(
     resp8 = v8_client.get("/api/strategy-explorer-v8/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "v7_strategy_explorer" in resp.text
     assert resp8.status_code == 500

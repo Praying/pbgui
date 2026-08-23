@@ -101,5 +101,5 @@ def test_help_errors_clearly_when_no_build_and_no_legacy(
     resp = help_client.get("/api/help/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "help" in resp.text

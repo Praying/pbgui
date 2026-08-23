@@ -158,7 +158,7 @@ SSE /api/live/stream → delta applies on top of DB snapshot
 - PB7 integration requires `-m external_pb7 --run-external-pb7`; local PBGui runtime reads require `-m local_runtime --run-local-runtime` and remain read-only.
 - Keep `pytest.ini`, `tests/conftest.py`, test dependencies, and active tests versioned. Never hide the test tree with `.git/info/exclude` or project ignore rules.
 - Pytest 7.0+, discovery: `test_*.py`, `Test*` classes, `test_*` functions.
-- Frontend (Vue 3 workspace under `frontend/`): run `cd frontend && npm test` for component tests, and `cd frontend && npm run build` before manual server runs. Built pages are served from `frontend/dist/` (gitignored); without it the affected routes return HTTP 500 with a build hint. CI runs the typecheck/test/build gate automatically.
+- Frontend (Vue 3 workspace under `frontend/`, pnpm-managed — has `packageManager` pinned in `frontend/package.json`): run `cd frontend && pnpm install` once, then `pnpm test` for component tests, and `pnpm run build` before manual server runs. Built pages are served from `frontend/dist/` (gitignored); without it the affected routes return HTTP 500 with a build hint. CI runs the typecheck/test/build gate automatically.
 - Use `@pytest.mark.parametrize` for multiple cases.
 - Module/class/function docstrings required.
 

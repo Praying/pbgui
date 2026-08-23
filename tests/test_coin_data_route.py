@@ -3,7 +3,7 @@
 /api/coin-data/main_page and /api/market-data/data-actions/hyperliquid serve
 the built Vue pages (frontend/src/pages/{coin_data,hl_data_actions}) when the
 dist output exists, fall back to the legacy templates with their server-side
-injections for checkouts without a build, and fail with the npm build hint
+injections for checkouts without a build, and fail with the pnpm build hint
 when neither file exists.
 """
 
@@ -100,7 +100,7 @@ def test_coin_data_errors_clearly_when_no_build_and_no_legacy(
     resp = coin_client.get("/api/coin-data/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "coin_data" in resp.text
 
 
@@ -150,5 +150,5 @@ def test_hlda_errors_clearly_when_no_build_and_no_legacy(
     resp = hlda_client.get("/api/market-data/data-actions/hyperliquid")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "hl_data_actions" in resp.text

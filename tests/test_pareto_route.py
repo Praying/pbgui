@@ -143,5 +143,5 @@ def test_pareto_page_errors_clearly_when_no_build_and_no_legacy(
     resp = pareto_client.get("/api/pareto-explorer/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "v7_pareto_explorer" in resp.text

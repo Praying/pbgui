@@ -147,9 +147,9 @@ For manual development runs only, you can still start the API directly from an a
 python PBApiServer.py
 ```
 
-Some UI pages (starting with the login page) are Vue bundles served from `frontend/dist/` (gitignored). After cloning or pulling, run `cd frontend && npm run build` once before starting the server — without `dist/`, the affected routes return HTTP 500 with a message pointing to the build command. CI runs this frontend build gate automatically on every change.
+Some UI pages (starting with the login page) are Vue bundles served from `frontend/dist/` (gitignored). After cloning or pulling, run `cd frontend && pnpm install && pnpm run build` once before starting the server — without `dist/`, the affected routes return HTTP 500 with a message pointing to the build command. CI runs this frontend build gate automatically on every change.
 
-Migrated Vue pages carry a diagonal "VUE MIGRATION PREVIEW" watermark during the rollout. To hide it (e.g. once every page is migrated), build with `VITE_MIGRATION_WATERMARK=off npm run build`.
+Migrated Vue pages carry a diagonal "VUE MIGRATION PREVIEW" watermark during the rollout. To hide it (e.g. once every page is migrated), build with `VITE_MIGRATION_WATERMARK=off pnpm run build`.
 
 ## PBRun Instance Manager
 

@@ -56,5 +56,5 @@ def test_templates_page_errors_clearly_when_no_build_exists(
     resp = client.get("/api/dashboard/templates_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "legacy templates" not in resp.text

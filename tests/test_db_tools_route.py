@@ -2,7 +2,7 @@
 
 /api/db-tools/main_page serves the built db_tools Vue page when the dist
 output exists, falls back to the legacy template with its server-side
-injections for checkouts without a build, and fails with the npm build hint
+injections for checkouts without a build, and fails with the pnpm build hint
 when neither file exists.
 """
 
@@ -88,5 +88,5 @@ def test_errors_clearly_when_no_build_and_no_legacy(
     resp = client.get("/api/db-tools/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "db_tools" in resp.text

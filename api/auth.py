@@ -416,7 +416,7 @@ def _frontend_template_path(name: str) -> Path:
 
 
 def _frontend_dist_path(page: str) -> Path:
-    """Built Vue page entry (frontend/dist is gitignored; produced by `npm run build`)."""
+    """Built Vue page entry (frontend/dist is gitignored; produced by `pnpm run build`)."""
     return Path(__file__).parent.parent / "frontend" / "dist" / page / "index.html"
 
 
@@ -443,7 +443,7 @@ def serve_vue_or_legacy_page(
 ) -> FileResponse | HTMLResponse:
     """Serve a migrated page: built Vue entry first, legacy template fallback.
 
-    `frontend/dist` is gitignored and produced by `npm run build`, so a clone
+    `frontend/dist` is gitignored and produced by `pnpm run build`, so a clone
     without a build must still get the legacy HTML (`inject` performs the old
     server-side placeholder replacements). A missing legacy file means the
     checkout is broken — fail loudly with a build hint.
@@ -461,7 +461,7 @@ def serve_vue_or_legacy_page(
 
     raise HTTPException(
         status_code=500,
-        detail=f"{page} page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+        detail=f"{page} page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
 
 

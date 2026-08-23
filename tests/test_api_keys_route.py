@@ -104,5 +104,5 @@ def test_api_keys_page_errors_clearly_when_no_build_and_no_legacy(
     resp = api_keys_client.get("/api/api-keys/main_page")
 
     assert resp.status_code == 500
-    assert "npm run build" in resp.text
+    assert "pnpm run build" in resp.text
     assert "api_keys_editor" in resp.text

@@ -56,7 +56,7 @@ def test_missing_build_and_legacy_returns_build_hint(clients, tmp_path, monkeypa
     set_files(monkeypatch, tmp_path, None, None)
     response = clients[0].get('/api/optimize-v7/main_page')
     assert response.status_code == 500
-    assert 'npm run build' in response.text and 'v7_optimize' in response.text
+    assert 'pnpm run build' in response.text and 'v7_optimize' in response.text
 
 def test_v7_metadata_exposes_limits_contract(monkeypatch):
     """Vue editor receives the same limits metadata that legacy HTML injection used."""

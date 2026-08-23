@@ -62,12 +62,12 @@ export default defineConfig({
     // scan to src/ so both src/shared/* and src/pages/* tests are discovered
     dir: fileURLToPath(new URL('./src', import.meta.url)),
     include: [fileURLToPath(new URL('./src/**/*.test.ts', import.meta.url))],
-    // CLI filters (`npm test -- <filter>`) match by substring against test
+    // CLI filters (`pnpm test -- <filter>`) match by substring against test
     // paths relative to `dir` above. Verified filter forms (vitest 3.2.7,
     // pinned in package.json):
-    //   npm test -- root_login            page name
-    //   npm test -- pages/root_login      dir-relative path
-    //   npm test -- shared/utils          shared module
+    //   pnpm test -- root_login           page name
+    //   pnpm test -- pages/root_login     dir-relative path
+    //   pnpm test -- shared/utils         shared module
     // Avoid repo-root prefixes (frontend/src/...) — they match nothing.
     // If vitest is upgraded, re-verify one filter before mass-migrating pages.
   },

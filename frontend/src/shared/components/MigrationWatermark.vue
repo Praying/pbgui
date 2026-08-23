@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Migration watermark: marks pages migrated to Vue 3 during the rollout.
 // Visibility is a BUILD-TIME flag. It is disabled by default across every Vue
-// page; use `VITE_MIGRATION_WATERMARK=on npm run build` only for migration QA.
+// page; use `VITE_MIGRATION_WATERMARK=on pnpm run build` only for migration QA.
 const visible = import.meta.env.VITE_MIGRATION_WATERMARK === 'on';
 </script>
 

@@ -2912,7 +2912,7 @@ def get_main_page(
 
     The legacy frontend/services_monitor.html template was removed with the
     Vue migration; the page now reads token/origin values from /api/boot.js
-    at runtime. A missing build fails loudly with the npm build hint.
+    at runtime. A missing build fails loudly with the pnpm build hint.
     """
     vue_path = _frontend_dist_path("services_monitor")
     if vue_path.is_file():
@@ -2920,5 +2920,5 @@ def get_main_page(
 
     raise HTTPException(
         status_code=500,
-        detail="services_monitor page unavailable: run `cd frontend && npm run build` to produce the Vue bundle",
+        detail="services_monitor page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
