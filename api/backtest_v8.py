@@ -1306,10 +1306,6 @@ def _list_results(analysis_paths: Optional[list[Path]] = None) -> list[dict]:
             parts = relative.parts
             result_dir = resolved.parent
             config = _result_config(result_dir)
-            if not config:
-                # Nested per-symbol/suite analysis.json without a result config
-                # is not an independent result — skip it (mirrors v7).
-                continue
             backtest = config.get("backtest") if isinstance(config.get("backtest"), dict) else {}
             live = config.get("live") if isinstance(config.get("live"), dict) else {}
             approved = live.get("approved_coins") if isinstance(live.get("approved_coins"), dict) else {}
@@ -1985,13 +1981,7 @@ def list_configs(session: SessionToken = Depends(require_auth)) -> dict:
                 approved = live.get("approved_coins") if isinstance(live.get("approved_coins"), dict) else {}
                 coins = set((approved.get("long") or []) + (approved.get("short") or []))
                 bot = config.get("bot") if isinstance(config.get("bot"), dict) else {}
-                result_count = 0
-                results_path = _results_root() / directory.name
-                if results_path.exists():
-                    for analysis_file in results_path.glob("**/analysis.json"):
-                        result_dir = analysis_file.parent
-                        if (result_dir / "config.json").exists() or (result_dir / "backtest.json").exists():
-                            result_count += 1
+                result_count = len(list((_results_root() / directory.name).glob("**/analysis.json")))
                 configs.append(
                     {
                         "name": directory.name,
