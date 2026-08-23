@@ -121,16 +121,22 @@ describe('paramValue / setParamValue (:1780-1792)', () => {
     live: { hsl_signal_mode: 'pside' },
   };
 
-  it('reads side params for non-global fields', () => {
-    expect(paramValue(config, { entry_qty: 5 }, 'entry_qty', 'long')).toBe(5);
-    // legacy fallback for a missing side param is undefined (:1783), and the
-    // global fallback for a missing config path is '' (:1782)
-    expect(paramValue(config, {}, 'entry_qty', 'long')).toBeUndefined();
-    expect(paramValue({}, {}, 'live.hsl_signal_mode', 'long')).toBe('');
+  it('reads side fields from config.bot.<side> for non-global fields', () => {
+    expect(paramValue(config, 'entry_qty', 'long')).toBe(5);
+    expect(paramValue(config, 'entry_qty', 'short')).toBe(7);
+    // missing side field is undefined, missing global path falls back to ''
+    expect(paramValue({}, 'entry_qty', 'long')).toBeUndefined();
+    expect(paramValue({}, 'live.hsl_signal_mode', 'long')).toBe('');
   });
 
   it('reads global fields from the config root', () => {
-    expect(paramValue(config, {}, 'live.hsl_signal_mode', 'long')).toBe('pside');
+    expect(paramValue(config, 'live.hsl_signal_mode', 'long')).toBe('pside');
+  });
+
+  it('round-trips: setParamValue then paramValue reads the new side value', () => {
+    const cfg: Record<string, unknown> = { bot: { long: { entry_qty: 5 } } };
+    setParamValue(cfg, 'long', 'entry_qty', 9);
+    expect(paramValue(cfg, 'entry_qty', 'long')).toBe(9);
   });
 
   it('setParamValue writes under bot.<side> for side fields', () => {

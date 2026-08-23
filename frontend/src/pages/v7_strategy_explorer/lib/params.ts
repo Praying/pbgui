@@ -177,17 +177,21 @@ export function paramFieldPath(sideKey: string, name: string, meta?: ParamFieldM
   return { global, path, side: sideKey };
 }
 
-/** Current value of a param: global fields read the config root (:1780-1784). */
+/**
+ * Current value of a param: global fields read the config root, side fields
+ * read config.bot.<side>.* — the same path setParamValue writes — so the
+ * reactive editor reflects slider/select/bool/text edits immediately instead
+ * of reading the stale snapshot (:1780-1784, :1772-1779).
+ */
 export function paramValue(
   config: Record<string, unknown>,
-  params: Record<string, unknown> | undefined,
   name: string,
   sideKey: string,
   meta?: ParamFieldMeta
 ): unknown {
   const field = paramFieldPath(sideKey, name, meta);
   if (field.global) return deepGet<unknown>(config || {}, field.path, '');
-  return deepGet<unknown>(params || {}, field.path, undefined);
+  return deepGet<unknown>(config || {}, ['bot', sideKey].concat(field.path), undefined);
 }
 
 /**

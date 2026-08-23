@@ -20,7 +20,6 @@ const prefix = props.prefix ?? '';
 
 const segmentKey = computed(() => (props.sideKey === 'long' ? store.state.longSegment : store.state.shortSegment));
 const segment = computed(() => store.segments.value.find((s) => s.key === segmentKey.value) || store.segments.value[0]!);
-const params = computed(() => deepGet<Record<string, unknown>>(store.state.snapshot, ['sides', props.sideKey, 'params'], {}));
 
 interface FieldView {
   name: string;
@@ -37,7 +36,7 @@ interface FieldView {
 function fieldViews(): FieldView[] {
   return (segment.value.fields || []).map((name) => {
     const meta: ParamFieldMeta = store.fieldMeta(name);
-    const value = store.paramValueFor(params.value, name, props.sideKey);
+    const value = store.paramValueFor(name, props.sideKey);
     const kind = meta.type === 'bool' || meta.type === 'boolean' ? 'bool' : meta.type === 'select' ? 'select' : meta.type === 'string' || meta.type === 'text' ? 'text' : 'number';
     let options: string[] = [];
     if (kind === 'select') {

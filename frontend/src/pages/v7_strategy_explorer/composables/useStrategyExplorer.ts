@@ -357,9 +357,9 @@ export function useStrategyExplorer(deps: StoreDeps) {
       invalidateConfigRequests();
     }
   }
-  function paramValueFor(params: Record<string, unknown> | undefined, name: string, sideKey: string): unknown {
+  function paramValueFor(name: string, sideKey: string): unknown {
     if (!state.config) return undefined;
-    return paramValueOf(state.config, params, name, sideKey, fieldMeta(name));
+    return paramValueOf(state.config, name, sideKey, fieldMeta(name));
   }
 
   /* -------------------------------------------------- markets (:1121-1147) */
