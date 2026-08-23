@@ -1,5 +1,11 @@
 # Unreleased
 
+## Strategy Explorer — Polish
+
+- Added hover states (accent border/background shift with a transition) to the Strategy Explorer tab/stage/action buttons, including a danger hover for destructive actions.
+- Normalized the floating data-tip tooltip's hardcoded `z-index: 9999` to the `--z-help` token.
+- Removed dead `.page-title` CSS: the in-page title is now `sr-only` (the shared WorkspaceHeader owns the visible title), so the legacy title styling, accent bar, and their responsive rules no longer applied.
+
 ## Workbench Rail — Toggle Relocation
 
 - Moved the rail collapse/expand toggle from the bottom of the workbench rail into the brand row: when expanded it sits on the right beside the PBGui logo, and when collapsed the logo/name hide and the toggle takes their place, centered. Shared across all Vue workbench pages.
