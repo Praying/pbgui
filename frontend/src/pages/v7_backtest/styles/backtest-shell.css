@@ -21,8 +21,6 @@
 html, body { height: 100%; font-family: var(--font); font-size: var(--fs-base);
              color: var(--text); background: var(--bg); overflow: hidden; }
 button, input, select, textarea { font-family: var(--font); }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
 
 /* ── Connection banner (:36-40) ─────────────────── */
 #conn-banner { padding: var(--sp-sm) 16px; text-align: center; font-size: var(--fs-sm); font-weight: 600; transition: all .3s; }
