@@ -64,6 +64,14 @@ describe('empty state (:3851-3861)', () => {
     expect(wrapper.get('#detail-full-config').text()).toBe('No config selected');
     wrapper.unmount();
   });
+
+  it('titles the loading placeholder while the selection is pending (v1.98.37, :4086-4090)', () => {
+    const store = makeStore();
+    store.state.selectedConfigIndex = 5;
+    const { wrapper } = mountDetail(store);
+    expect(wrapper.get('#detail-title').text()).toBe('Loading #5...');
+    wrapper.unmount();
+  });
 });
 
 describe('detail render (:3863-3893)', () => {

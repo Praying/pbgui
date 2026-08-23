@@ -3509,6 +3509,7 @@
   "v7explore.loading": "加载中",
   "v7explore.loadingDisplayRange": "正在加载显示范围：{loaded} / {target} 个配置（排名 {start}-{end}）",
   "v7explore.loadingFullResult": "正在加载完整结果...",
+  "v7explore.loadingConfigDetail": "正在加载 #{config}...",
   "v7explore.long": "多头",
   "v7explore.longCompareRows": "LONG 对比行",
   "v7explore.longFills": "LONG 成交",

@@ -156,11 +156,16 @@ export interface DetailViewModel {
   fullConfigText: string;
 }
 
-/** renderDetail's whole data layer (:3849-3893). */
-export function detailViewModel(detail: ConfigDetailPayload | null, t: Translate): DetailViewModel {
+/**
+ * renderDetail's whole data layer (:3849-3893). selectedConfigIndex drives the
+ * loading placeholder title (v1.98.37, :4086-4090): a clicked champion clears
+ * the detail but keeps the index, so the title reads "Loading #N..." until
+ * the response lands instead of falling back to "No config selected".
+ */
+export function detailViewModel(detail: ConfigDetailPayload | null, t: Translate, selectedConfigIndex: number | null = null): DetailViewModel {
   if (!detail) {
     return {
-      title: t('v7explore.noConfigSelected'),
+      title: selectedConfigIndex == null ? t('v7explore.noConfigSelected') : t('v7explore.loadingConfigDetail', { config: selectedConfigIndex }),
       topMetrics: [],
       riskProfile: [],
       styleRows: [],

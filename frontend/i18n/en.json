@@ -3509,6 +3509,7 @@
   "v7explore.loading": "Loading",
   "v7explore.loadingDisplayRange": "Loading display range: {loaded} / {target} configs (Rank {start}-{end})",
   "v7explore.loadingFullResult": "Loading full result...",
+  "v7explore.loadingConfigDetail": "Loading #{config}...",
   "v7explore.long": "Long",
   "v7explore.longCompareRows": "LONG Compare Rows",
   "v7explore.longFills": "LONG Fills",

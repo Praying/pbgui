@@ -156,6 +156,12 @@ describe('detailViewModel (:3849-3893)', () => {
     expect(detailViewModel(null, t).title).toBe('No config selected');
   });
 
+  it('shows the loading placeholder while a selection is pending (v1.98.37, :4086-4090)', () => {
+    expect(detailViewModel(null, t, 7).title).toBe('Loading #7...');
+    expect(detailViewModel(null, t, null).title).toBe('No config selected');
+    expect(detailViewModel(detail, t, 7).title).toBe('#3');
+  });
+
   it('renders top metrics and the risk profile as mini metrics', () => {
     const vm = detailViewModel(detail, t);
     expect(vm.topMetrics).toEqual([

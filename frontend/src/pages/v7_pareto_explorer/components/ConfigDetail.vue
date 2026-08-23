@@ -28,7 +28,7 @@ const store = props.store;
 const container = ref<HTMLElement | null>(null);
 
 const detail = computed(() => store.state.selectedDetail);
-const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, params ?? {})));
+const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, params ?? {}), store.state.selectedConfigIndex));
 
 function panel(): JsonPanelGlobal | undefined {
   return (window as unknown as { PBGuiJsonPanel?: JsonPanelGlobal }).PBGuiJsonPanel;
