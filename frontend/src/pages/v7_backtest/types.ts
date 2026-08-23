@@ -74,6 +74,7 @@ export interface ConfigSummary {
   exchanges?: string | string[];
   strategy?: string;
   coins?: number;
+  coin_list?: string[];
   twe_long?: number | null;
   twe_short?: number | null;
   start_date?: string;

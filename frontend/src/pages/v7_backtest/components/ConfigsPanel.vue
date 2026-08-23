@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { PhChartBar, PhPencilSimple, PhPlay } from '@phosphor-icons/vue';
+import { PhChartBar, PhCopy, PhPencilSimple, PhPlay } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import type { ConfigSummary, SortSpec } from '../types';
 
 /**
- * ConfigsPanel — the configs list of renderConfigs (:1654-1712) with the
- * toolbar (filter + select all/deselect, :813-818), sortable headers
- * (thSort/setSort/sortFn :1714-1737), row selection and the per-row
- * edit/queue/results actions. The v7 Convert-to-V8 button (:1685-1686)
- * lands with the M-v7-12 migration flows.
+ * ConfigsPanel — the configs list of renderConfigs (:1654-1712): name /
+ * exchange / strategy filters, sortable headers (thSort/setSort :1714-1737),
+ * a checkbox column with select-all, per-row edit / queue / results /
+ * duplicate actions, and the delete confirm flow (:5109-5123).
  */
 
 const props = withDefaults(
@@ -27,6 +26,7 @@ const emit = defineEmits<{
   edit: [name: string];
   queue: [name: string];
   'view-results': [name: string];
+  duplicate: [name: string];
   'delete-selected': [names: string[]];
   'new-config': [];
   filter: [value: string];
@@ -36,28 +36,61 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const filter = ref('');
+const exchangeFilter = ref('');
+const strategyFilter = ref('');
 const selected = ref<string[]>([]);
+
+const exchangeOptions = computed(() => {
+  const set = new Set<string>();
+  for (const entry of props.configs) {
+    const ex = entry.exchanges;
+    if (Array.isArray(ex)) ex.forEach((value) => set.add(String(value)));
+    else if (ex) set.add(String(ex));
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+});
+
+const strategyOptions = computed(() => {
+  const set = new Set<string>();
+  for (const entry of props.configs) if (entry.strategy) set.add(entry.strategy);
+  return [...set].sort((a, b) => a.localeCompare(b));
+});
 
 const visible = computed(() => {
   const needle = filter.value.trim().toLowerCase();
-  const sorted = props.configs.slice().sort((a, b) => compare(a, b));
-  return needle ? sorted.filter((entry) => (entry.name || '').toLowerCase().includes(needle)) : sorted;
+  let list = props.configs.slice().sort((a, b) => compare(a, b));
+  if (needle) list = list.filter((entry) => (entry.name || '').toLowerCase().includes(needle));
+  if (exchangeFilter.value) {
+    list = list.filter((entry) => {
+      const ex = entry.exchanges;
+      const values = Array.isArray(ex) ? ex.map(String) : ex ? [String(ex)] : [];
+      return values.includes(exchangeFilter.value);
+    });
+  }
+  if (strategyFilter.value) list = list.filter((entry) => (entry.strategy || '') === strategyFilter.value);
+  return list;
 });
 
-/** sortFn (:1726-1737). */
+const allSelected = computed(() => visible.value.length > 0 && visible.value.every((entry) => selected.value.includes(entry.name)));
+
+/* Numeric columns must sort by value, not lexically (:1714-1737). */
+const NUMERIC_COLS = new Set(['results', 'coins', 'twe_long', 'twe_short']);
 function compare(a: ConfigSummary, b: ConfigSummary): number {
   const col = props.sort.col;
-  let va: string | number = String((a as unknown as Record<string, unknown>)[col] ?? '');
-  let vb: string | number = String((b as unknown as Record<string, unknown>)[col] ?? '');
-  if (typeof va === 'string') va = va.toLowerCase();
-  if (typeof vb === 'string') vb = vb.toLowerCase();
-  if (va < vb) return props.sort.asc ? -1 : 1;
-  if (va > vb) return props.sort.asc ? 1 : -1;
-  return 0;
+  const va = (a as unknown as Record<string, unknown>)[col];
+  const vb = (b as unknown as Record<string, unknown>)[col];
+  const cmp = NUMERIC_COLS.has(col)
+    ? Number(va ?? 0) - Number(vb ?? 0)
+    : String(va ?? '').toLowerCase().localeCompare(String(vb ?? '').toLowerCase());
+  return props.sort.asc ? cmp : -cmp;
 }
 
 function toggleRow(name: string): void {
   selected.value = selected.value.includes(name) ? selected.value.filter((entry) => entry !== name) : [...selected.value, name];
+}
+
+function toggleAll(): void {
+  selected.value = allSelected.value ? [] : visible.value.map((entry) => entry.name);
 }
 
 function selectAll(): void {
@@ -99,8 +132,29 @@ function num(value: number | null | undefined, decimals: number): string {
   return value === null || value === undefined ? '—' : Number(value).toFixed(decimals);
 }
 
-function dateText(value: string | undefined): string {
-  return value || '—';
+/** Trim the noisy ISO microseconds (:47.207418) to YYYY-MM-DD HH:MM. */
+function formatDateTime(value: string | undefined): string {
+  if (!value) return '—';
+  const withTime = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (withTime) return `${withTime[1]}-${withTime[2]}-${withTime[3]} ${withTime[4]}:${withTime[5]}`;
+  const dateOnly = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnly) return `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}`;
+  return String(value);
+}
+
+/** Coin symbols (from the backend coin_list), falling back to the count. */
+function coinsText(entry: ConfigSummary): string {
+  const list = entry.coin_list;
+  if (Array.isArray(list) && list.length) {
+    const shown = list.slice(0, 3).join(', ');
+    return list.length > 3 ? `${shown} +${list.length - 3}` : shown;
+  }
+  return entry.coins != null ? String(entry.coins) : '—';
+}
+
+function coinsTitle(entry: ConfigSummary): string {
+  const list = entry.coin_list;
+  return Array.isArray(list) && list.length ? list.join(', ') : coinsText(entry);
 }
 
 /** The ctx-sidebar Delete target (App passes store.deleteConfigs). */
@@ -110,22 +164,33 @@ function bindRun(run: (names: readonly string[], removeResults: boolean) => void
   openDeleteConfirm();
 }
 
-defineExpose({ deleteSelectedFlow: bindRun });
+defineExpose({
+  deleteSelectedFlow: bindRun,
+  selectedCount: computed(() => selected.value.length),
+});
 </script>
 
 <template>
   <div>
-    <div id="configs-toolbar" style="display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-sm)">
+    <div id="configs-toolbar" class="configs-toolbar">
       <input
         v-model="filter"
         type="text"
         class="sb-input"
-        style="max-width: 240px"
         :placeholder="t('v7backtest.searchName')"
         data-test="configs-filter"
         @input="emit('filter', filter)"
       />
-      <span style="flex: 1"></span>
+      <select v-model="exchangeFilter" class="sb-input" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')">
+        <option value="">{{ t('v7backtest.filterExchange') }}</option>
+        <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
+      </select>
+      <select v-if="isV8" v-model="strategyFilter" class="sb-input" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')">
+        <option value="">{{ t('v7backtest.filterStrategy') }}</option>
+        <option v-for="strategy in strategyOptions" :key="strategy" :value="strategy">{{ strategy }}</option>
+      </select>
+      <span class="configs-count">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
+      <span class="configs-spacer"></span>
       <button type="button" class="act-btn" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</button>
       <button type="button" class="act-btn" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</button>
     </div>
@@ -134,43 +199,58 @@ defineExpose({ deleteSelectedFlow: bindRun });
       <div class="empty-icon">📋</div>
       <p>{{ t('v7backtest.emptyConfigsHtml') }}</p>
     </div>
-    <table v-else class="tbl">
+    <table v-else class="tbl configs-tbl">
       <thead>
         <tr>
+          <th class="check-col">
+            <input
+              type="checkbox"
+              :checked="allSelected"
+              :aria-label="t('v7backtest.selectAll')"
+              data-test="configs-select-all-check"
+              @change="toggleAll"
+            />
+          </th>
           <th data-col="name" @click="emit('sort', 'name')">{{ t('v7backtest.name') }}</th>
           <th data-col="exchanges" @click="emit('sort', 'exchanges')">{{ t('v7backtest.exchange') }}</th>
           <th v-if="isV8" data-col="strategy" @click="emit('sort', 'strategy')"><span data-test="strategy-col-header">{{ t('v7backtest.strategy') }}</span></th>
           <th data-col="coins" @click="emit('sort', 'coins')">{{ t('v7backtest.coins') }}</th>
-          <th data-col="twe_long" @click="emit('sort', 'twe_long')">TWE L/S</th>
+          <th data-col="twe_long" :title="t('v7backtest.tweTooltip')" @click="emit('sort', 'twe_long')">TWE L/S</th>
           <th data-col="start_date" @click="emit('sort', 'start_date')">{{ t('v7backtest.start') }}</th>
           <th data-col="end_date" @click="emit('sort', 'end_date')">{{ t('v7backtest.end') }}</th>
-          <th data-col="results" @click="emit('sort', 'results')">{{ t('v7backtest.results') }}</th>
+          <th data-col="results" @click="emit('sort', 'results')">{{ t('v7backtest.resultCountHeader') }}</th>
           <th data-col="modified" @click="emit('sort', 'modified')">{{ t('v7backtest.modified') }}</th>
           <th>{{ t('v7backtest.actions') }}</th>
         </tr>
       </thead>
       <tbody>
         <tr v-if="visible.length === 0">
-          <td colspan="10" class="empty-state">{{ t('v7backtest.noConfigsMatch') }}</td>
+          <td :colspan="isV8 ? 11 : 10" class="empty-state">{{ t('v7backtest.noConfigsMatch') }}</td>
         </tr>
         <tr v-for="entry in visible" :key="entry.name" :class="{ selected: selected.includes(entry.name) }" @click="toggleRow(entry.name)">
+          <td class="check-col">
+            <input type="checkbox" :checked="selected.includes(entry.name)" :aria-label="entry.name" @click.stop="toggleRow(entry.name)" />
+          </td>
           <td :title="entry.name">{{ entry.name }}</td>
           <td>{{ exchangeText(entry) }}</td>
           <td v-if="isV8">{{ entry.strategy || '-' }}</td>
-          <td>{{ entry.coins ?? '' }}</td>
+          <td :title="coinsTitle(entry)">{{ coinsText(entry) }}</td>
           <td>{{ num(entry.twe_long, 2) }} / {{ num(entry.twe_short, 2) }}</td>
-          <td>{{ dateText(entry.start_date) }}</td>
-          <td>{{ dateText(entry.end_date) }}</td>
-          <td style="cursor: pointer; color: var(--accent-soft); font-weight: 600" @click.stop="emit('view-results', entry.name)">{{ entry.results ?? 0 }}</td>
-          <td>{{ dateText(entry.modified) }}</td>
+          <td>{{ formatDateTime(entry.start_date) }}</td>
+          <td>{{ formatDateTime(entry.end_date) }}</td>
+          <td class="results-cell" :class="{ 'no-results': !entry.results }" @click.stop="entry.results ? emit('view-results', entry.name) : undefined">{{ entry.results ?? 0 }}</td>
+          <td :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
           <td class="actions-cell" @click.stop>
             <button type="button" class="act-btn" data-test="cfg-edit" :title="t('v7backtest.edit')" :aria-label="t('v7backtest.edit')" @click="emit('edit', entry.name)"><PbIcon :icon="PhPencilSimple" :size="18" /></button>
             <button type="button" class="act-btn" data-test="cfg-queue" :title="t('v7backtest.addToQueueTitle')" :aria-label="t('v7backtest.addToQueueTitle')" @click="emit('queue', entry.name)"><PbIcon :icon="PhPlay" :size="18" /></button>
-            <button type="button" class="act-btn" data-test="cfg-results" :title="t('v7backtest.viewResults')" :aria-label="t('v7backtest.viewResults')" @click="emit('view-results', entry.name)"><PbIcon :icon="PhChartBar" :size="18" /></button>
+            <button type="button" class="act-btn" data-test="cfg-results" :title="t('v7backtest.viewResults')" :aria-label="t('v7backtest.viewResults')" :disabled="!entry.results" @click="emit('view-results', entry.name)"><PbIcon :icon="PhChartBar" :size="18" /></button>
+            <button type="button" class="act-btn" data-test="cfg-duplicate" :title="t('v7backtest.duplicateConfig')" :aria-label="t('v7backtest.duplicateConfig')" @click="emit('duplicate', entry.name)"><PbIcon :icon="PhCopy" :size="18" /></button>
           </td>
         </tr>
       </tbody>
     </table>
+
+    <div v-if="configs.length > 0" class="configs-footer">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</div>
 
     <div v-if="deleteConfirmOpen" id="modal-root" data-test="configs-delete-modal">
       <div class="modal-box">

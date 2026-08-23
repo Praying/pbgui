@@ -17,7 +17,7 @@
  * FLAVOR: pathname-derived (/api/backtest-v8/ → v8, config.ts) — both
  * routers serve this one build; v8 drops the legacy panel.
  */
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
   PhArchive,
   PhArrowsClockwise,
@@ -91,6 +91,7 @@ function openBacktestHelp(): void {
 
 const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
 const configsPanel = ref<InstanceType<typeof ConfigsPanel> | null>(null);
+const configsSelectedCount = computed(() => configsPanel.value?.selectedCount ?? 0);
 const editorPanel = ref<InstanceType<typeof BacktestConfigEditor> | null>(null);
 const resultsPanel = ref<InstanceType<typeof ResultsPanel> | null>(null);
 const archivePanel = ref<InstanceType<typeof ArchivePanel> | null>(null);
@@ -105,6 +106,15 @@ const legacyPinned = ref(true);
 const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
   store.banner.value === 'ok' ? t('v7backtest.connected') : store.banner.value === 'lost' ? t('v7backtest.connectionLost') : t('v7backtest.connecting')
+);
+/* Connection success is quiet: a transient toast, while the persistent banner
+   only appears on disconnect/error (the header status strip covers the ok
+   state). Avoids the old always-on green strip duplicating the status dot. */
+watch(
+  () => store.banner.value,
+  (next, previous) => {
+    if (next === 'ok' && previous !== 'ok') store.toast.show(t('v7backtest.connected'), 'ok');
+  }
 );
 
 const editorOpen = computed(() => store.editor.editingName.value !== null);
@@ -337,7 +347,7 @@ onMounted(() => {
       />
     </template>
 
-    <div id="conn-banner" :class="bannerClass" data-i18n="v7backtest.connecting">{{ bannerText }}</div>
+    <div v-if="store.banner.value !== 'ok'" id="conn-banner" :class="bannerClass" data-i18n="v7backtest.connecting">{{ bannerText }}</div>
 
     <div id="page-body">
 
@@ -349,9 +359,9 @@ onMounted(() => {
     >
       <template #ctx-configs>
         <button type="button" class="sb-btn accent" data-test="ctx-new-config" @click="store.editor.newConfig()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7backtest.newConfig') }}</button>
-        <button type="button" class="sb-btn danger" data-test="ctx-delete-configs" @click="configsPanel?.deleteSelectedFlow(store.deleteConfigs)">
+        <button type="button" class="sb-btn danger" data-test="ctx-delete-configs" :disabled="configsSelectedCount === 0" @click="configsPanel?.deleteSelectedFlow(store.deleteConfigs)">
           <PbIcon :icon="PhTrash" />
-          {{ actionLabel('v7backtest.deleteSelected') }}
+          {{ actionLabel('v7backtest.deleteSelected') }} ({{ configsSelectedCount }})
         </button>
       </template>
       <template #ctx-queue>
@@ -478,6 +488,7 @@ onMounted(() => {
           @edit="store.editor.editConfig"
           @queue="store.addConfigToQueue"
           @view-results="onQueueViewResults"
+          @duplicate="store.duplicateConfig"
           @new-config="store.editor.newConfig()"
         />
         <BacktestConfigEditor

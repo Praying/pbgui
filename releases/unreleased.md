@@ -1,5 +1,12 @@
 # Unreleased
 
+## PBv8 Backtest — Config List Polish
+
+- Quieted the backtest connection status: the always-on green banner is gone — the header status dot owns the connected state, connection success surfaces as a transient toast, and the full-width strip now appears only on disconnect/error.
+- Reworked the configs list for scanability: timestamps render as `YYYY-MM-DD HH:MM` (full ISO kept in the tooltip), the results column reads as a count with `0` greyed out, coin symbols come from the backend `coin_list` (full set on hover), the TWE L/S header carries a tooltip, numeric columns sort by value, zebra striping aids row scanning, and a footer shows the visible total.
+- Added a checkbox column with a header select-all, a Delete Selected button that shows its count and is truly disabled when nothing is selected, a per-row Duplicate action (backend `/configs/{name}/duplicate`), and a disabled view-results icon when a config has zero results.
+- Merged the configs toolbar into one row: name search, exchange and (v8) strategy filters, visible-count, and select-all/deselect.
+
 ## VPS / Logging Navigation Convergence
 
 - Converged the VPS Manager, VPS Monitor, and Logging Monitor pages onto the shared left workbench rail, retiring their legacy in-page sidebars. Each page now maps its view/tab switching to AppShell `sections` (rail children with active-state highlighting): Logging Monitor exposes the Logs/Settings views, VPS Monitor exposes Dashboard/Instances/Services/Logs tabs (its hide-IP/compact/debug-logging toggles moved into an inline options row above the content), and VPS Manager maps its six top-level sections plus the host-scoped Setup/Task-log/Host-logs/PBGui/PB7/PB8-branch/UFW sub-navigation to dynamic rail sections (sub-items appear only while a host context is active, mirroring the old conditional subnav). Removed the now-dead sidebar CSS and updated the parity/page tests to drive the rail sections. Verified: typecheck, production build, full Vitest suite (328 files, 4187 tests).

@@ -122,7 +122,7 @@ describe('boot chain (:10012-10024)', () => {
 
     expect(wrapper.find('[data-test="ctx-new-config"]').text()).toBe('New Config');
     expect(wrapper.find('[data-test="ctx-new-config"] svg').exists()).toBe(true);
-    expect(wrapper.find('[data-test="ctx-delete-configs"]').text()).toBe('Delete Selected');
+    expect(wrapper.find('[data-test="ctx-delete-configs"]').text()).toBe('Delete Selected (0)');
     expect(wrapper.find('[data-test="ctx-delete-configs"] svg').exists()).toBe(true);
     expect(wrapper.find('[data-test="queue-compare"]').text()).toBe('Compare');
     expect(wrapper.find('[data-test="queue-compare"] svg').exists()).toBe(true);
@@ -671,19 +671,20 @@ describe('boot chain (:10012-10024)', () => {
 });
 
 describe('connection banner (:1256-1262)', () => {
-  it('starts waiting, turns ok on open and lost on close', async () => {
+  it('starts waiting, hides on ok and shows on disconnect', async () => {
     const wrapper = mountApp();
     await flush();
-    const banner = wrapper.find('#conn-banner');
+    let banner = wrapper.find('#conn-banner');
     expect(banner.classes()).toContain('conn-waiting');
     expect(banner.text()).toBe('Connecting…');
     sockets[0]!.readyState = 1;
     sockets[0]!.onopen?.();
     await nextTick();
-    expect(banner.classes()).toContain('conn-ok');
-    expect(banner.text()).toBe('Connected');
+    // Connected is quiet: the persistent strip hides (a transient toast fires).
+    expect(wrapper.find('#conn-banner').exists()).toBe(false);
     sockets[0]!.onclose?.();
     await nextTick();
+    banner = wrapper.find('#conn-banner');
     expect(banner.classes()).toContain('conn-lost');
     expect(banner.text()).toBe('Connection lost — reconnecting…');
     wrapper.unmount();

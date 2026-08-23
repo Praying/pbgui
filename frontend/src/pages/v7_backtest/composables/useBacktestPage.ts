@@ -78,6 +78,7 @@ export interface BacktestPageStore {
   viewConfigResults(name: string): void;
   addConfigToQueue(name: string): Promise<void>;
   deleteConfigs(names: readonly string[], removeResults: boolean): Promise<void>;
+  duplicateConfig(name: string): Promise<void>;
   setConfigsSort(column: string): void;
   selectPanel(panel: BacktestPanel, options?: { persist?: boolean }): void;
   startQueueItem(filename: string): Promise<void>;
@@ -542,6 +543,26 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     }
   }
 
+  async function duplicateConfig(name: string): Promise<void> {
+    const newName = `${name} copy`;
+    try {
+      const resp = await fetch(apiBase + `/configs/${encodeURIComponent(name)}/duplicate`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_name: newName }),
+      });
+      if (!resp.ok) {
+        notifyError(t('v7backtest.duplicateFailed', { msg: await resp.text().catch(() => '') }));
+        return;
+      }
+      toast.show(t('v7backtest.duplicated', { name: newName }), 'ok');
+      await configsStore.loadConfigs();
+    } catch (error) {
+      notifyError(t('v7backtest.duplicateFailed', { msg: errorMessage(error) }));
+    }
+  }
+
   function setConfigsSort(column: string): void {
     view.setSort('configs', column);
   }
@@ -589,6 +610,7 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     settingsCleaning,
     addConfigToQueue,
     deleteConfigs,
+    duplicateConfig,
     setConfigsSort,
     selectPanel,
     startQueueItem,

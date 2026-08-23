@@ -124,6 +124,20 @@ a:hover { text-decoration: underline; }
 .tbl td.actions-cell { white-space: nowrap; overflow: visible; padding: 4px 6px; }
 .sort-arrow { margin-left: 4px; font-size: var(--fs-xs); }
 
+/* ── Configs list (checkbox column, zebra, counts) ─────────── */
+.configs-toolbar { display: flex; flex-wrap: wrap; gap: var(--sp-sm); align-items: center; margin-bottom: var(--sp-sm); }
+.configs-toolbar .sb-input { height: var(--input-h); min-height: var(--input-h); }
+.configs-toolbar input[type="text"] { max-width: 220px; }
+.configs-toolbar select { max-width: 180px; }
+.configs-spacer { flex: 1; }
+.configs-count { color: var(--text-dim); font-size: var(--fs-sm); white-space: nowrap; }
+.check-col { width: 34px; padding-left: 8px !important; }
+.check-col input { accent-color: var(--accent); width: 14px; height: 14px; vertical-align: middle; cursor: pointer; }
+.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td { background: rgb(var(--text-secondary-rgb) / 0.04); }
+.results-cell { cursor: pointer; color: var(--accent-soft); font-weight: 600; }
+.results-cell.no-results { color: var(--text-disabled); font-weight: 400; cursor: default; }
+.configs-footer { padding: var(--sp-sm) 2px 0; color: var(--text-dim); font-size: var(--fs-sm); }
+
 /* ── Status badges (:51-57) ──────────────────────── */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: var(--fs-xs);
          font-weight: 600; letter-spacing: .3px; }
