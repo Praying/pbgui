@@ -512,6 +512,7 @@
   margin: 0;
   color: var(--text-primary);
   font-size: var(--text-title);
+  font-weight: 650;
   line-height: 1.2;
 }
 

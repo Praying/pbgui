@@ -1,5 +1,9 @@
 # Unreleased
 
+## Typography — Self-hosted Space Grotesk
+
+- Replaced the font stack's macOS-only `Avenir Next` / generic `Segoe UI` lead with a self-hosted Space Grotesk variable font (SIL OFL 1.1, wght 300–700, latin subset) bundled at `frontend/vendor/fonts/` and served at `/app/vendor/fonts/...` by the existing `/app` static mount. `tokens.css` now declares the `@font-face` (with `font-display: swap`) and leads `--font-family` with `'Space Grotesk'`, keeping the existing system CJK fallbacks so Simplified Chinese keeps rendering through the platform faces. This gives the existing `500`/`600`/`650` weight hierarchy a real interpolated weight range instead of rounding to the nearest static system weight, and sets the shared workspace header title to `font-weight: 650`. Font and license only — no palette, markup, JS, or behavior change. Verified: typecheck, production build, and the full Vitest suite (328 files, 4183 tests) pass.
+
 ## Frontend Palette — Warm Graphite
 
 - Rebased the entire frontend palette onto a warm-graphite scheme (approved option A of the palette review): surfaces moved from cool blue-gray to neutral warm graphite, the accent refined to `#5b9cf5`, semantic success/warning/danger tones re-harmonized, shadows retinted to the warm ground. Because the palette lives entirely in `tokens.css` ramps, the change is one authoritative token edit plus a mechanical sweep of fallback literals, Plotly JS color constants (with their test expectations), the favicon, and legacy HTML `:root` accents; red/green trading semantics, i18n, and layout are unchanged. Verified: typecheck, full Vitest suite (zero regressions vs. the clean-tree baseline), production build.

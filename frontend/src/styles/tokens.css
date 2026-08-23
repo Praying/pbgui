@@ -9,6 +9,19 @@
    Import order: tokens.css → base.css → components.css
    ═══════════════════════════════════════════════════════════════ */
 
+/* ── Self-hosted typeface ────────────────────────────────────────
+   Space Grotesk variable (wght 300–700), latin subset, served from
+   frontend/vendor/fonts/ at /app/vendor/... by FastAPI. SIL OFL 1.1 —
+   see frontend/vendor/fonts/LICENSE.txt. CJK and missing glyphs fall
+   through to the system faces in --font-family. */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/app/vendor/fonts/space-grotesk-var.woff2') format('woff2');
+}
+
 :root {
   /* Native form controls, scrollbars and pickers follow the dark theme
      instead of rendering in the OS light scheme. */
@@ -16,9 +29,11 @@
 
   /* ── Typography ─────────────────────────────────────────────── */
   /* Self-hosted stack (no external font CDN — FastAPI serves offline):
-     prefer characterful system grotesques over the Segoe UI default. */
-  --font-family: 'Avenir Next', 'Segoe UI Variable Text', 'Segoe UI',
-    -apple-system, system-ui, 'PingFang SC', 'Hiragino Sans GB',
+     'Space Grotesk' (SIL OFL 1.1, variable wght 300–700) is bundled in
+     frontend/vendor/fonts/ for a characterful terminal grotesque; CJK
+     glyphs fall through to the system faces listed below. */
+  --font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI Variable Text',
+    'Segoe UI', -apple-system, system-ui, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'JetBrains Mono',
     'Fira Code', 'Consolas', 'Noto Sans Mono CJK SC', monospace;
