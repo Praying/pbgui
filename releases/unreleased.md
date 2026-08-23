@@ -1,5 +1,9 @@
 # Unreleased
 
+## VPS / Logging Navigation Convergence
+
+- Converged the VPS Manager, VPS Monitor, and Logging Monitor pages onto the shared left workbench rail, retiring their legacy in-page sidebars. Each page now maps its view/tab switching to AppShell `sections` (rail children with active-state highlighting): Logging Monitor exposes the Logs/Settings views, VPS Monitor exposes Dashboard/Instances/Services/Logs tabs (its hide-IP/compact/debug-logging toggles moved into an inline options row above the content), and VPS Manager maps its six top-level sections plus the host-scoped Setup/Task-log/Host-logs/PBGui/PB7/PB8-branch/UFW sub-navigation to dynamic rail sections (sub-items appear only while a host context is active, mirroring the old conditional subnav). Removed the now-dead sidebar CSS and updated the parity/page tests to drive the rail sections. Verified: typecheck, production build, full Vitest suite (328 files, 4187 tests).
+
 ## DB Tools — Title + Calendar Fixes
 
 - Fixed two regressions on the Vue DB Tools page. (1) The page title/subtitle rendered twice — once in the shared `WorkspaceHeader` and again in the ported legacy `.page-head` block — so the in-page `.page-head` markup and its now-dead CSS were removed; the title now comes only from the AppShell header. (2) The cutoff-date calendar button never opened the legacy `__dp` picker: the shared datepicker's document click-guard hides the panel on the very click that opens it unless the trigger carries `data-dp`, but the Vue button renders a Phosphor `<svg>`, so `event.target` had no `data-dp` and the guard ran `hide()` immediately after `show()`. The handler now stops propagation and anchors on the button (`event.currentTarget`) instead of the svg. Added regression tests for both. Verified: typecheck, production build, full Vitest suite (328 files, 4187 tests).

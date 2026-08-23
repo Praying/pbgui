@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { PhFileText, PhGear, PhTrash } from '@phosphor-icons/vue';
+import { PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch, ApiError } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
 import AppShell from '@/shared/components/AppShell.vue';
+import type { PageSection } from '@/shared/navigation';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
@@ -19,6 +20,13 @@ type ViewerCtor = new (options: Record<string, unknown>) => Viewer;
 
 const { t } = useI18n();
 const view = ref<PageView>('logs');
+const sections = computed<PageSection[]>(() => [
+  { key: 'logs', label: t('sysmon.logViewer') },
+  { key: 'settings', label: t('sysmon.settings') },
+]);
+function onSectionSelect(key: string): void {
+  if (key === 'logs' || key === 'settings') view.value = key;
+}
 const files = ref<LogFilesPayload>({ files: [], sizes: {}, rotated: {} });
 const rotation = ref<RotationPayload>({ default: { max_mb: 10, backup_count: 0 }, per_service: {}, managed_scopes: {} });
 const currentFile = ref('');
@@ -149,6 +157,9 @@ onBeforeUnmount(() => {
     page-key="system_logging"
     :page-title="t('sysmon.loggingTitle')"
     :page-description="t('sysmon.logging')"
+    :sections="sections"
+    :active-section="view"
+    @update:section="onSectionSelect"
   >
     <template #status>
       <StatusStrip
@@ -159,12 +170,6 @@ onBeforeUnmount(() => {
     </template>
 
   <div id="page-body" class="logging-page">
-    <aside class="logging-sidebar">
-      <div class="logging-sidebar-title">{{ t('sysmon.logging') }}</div>
-      <button class="logging-nav-btn" :class="{ active: view === 'logs' }" data-view="logs" @click="view = 'logs'"><PbIcon :icon="PhFileText" /> {{ t('sysmon.logViewer') }}</button>
-      <button class="logging-nav-btn" :class="{ active: view === 'settings' }" data-view="settings" @click="view = 'settings'"><PbIcon :icon="PhGear" /> {{ t('sysmon.settings') }}</button>
-    </aside>
-
     <div class="logging-main">
       <section v-show="view === 'logs'" class="logging-view">
         <div v-if="currentFile" class="logging-toolbar">

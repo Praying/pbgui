@@ -92,7 +92,7 @@ describe('VPS Monitor Vue page', () => {
     expect(wrapper.get('[role="status"]').text()).toContain('Connected');
     await wrapper.get('[data-option="compact"]').setValue(false);
     expect(wrapper.text()).toContain('42.5');
-    await wrapper.get('[data-tab="instances"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-instances"]').trigger('click');
     expect(wrapper.text()).toContain('bot-a');
     expect(wrapper.find('[data-ip="alpha"]').exists()).toBe(false);
   });
@@ -103,17 +103,17 @@ describe('VPS Monitor Vue page', () => {
     ws.state(state);
     await wrapper.vm.$nextTick();
 
-    await wrapper.get('[data-tab="instances"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-instances"]').trigger('click');
     await wrapper.get('[data-action="kill-instance"]').trigger('click');
     expect(wrapper.get('[data-action="kill-instance"]').text()).toContain('Restart (kill)');
     expect(wrapper.get('[data-action="kill-instance"]').find('svg').exists()).toBe(true);
     expect(JSON.parse(ws.sent.at(-1)!)).toMatchObject({ cmd: 'kill_instance', host: 'alpha', name: 'bot-a', pb_version: '7' });
 
-    await wrapper.get('[data-tab="services"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-services"]').trigger('click');
     await wrapper.get('[data-action="restart-service"]').trigger('click');
     expect(JSON.parse(ws.sent.at(-1)!)).toMatchObject({ cmd: 'restart_service', host: 'alpha', service: 'PBRun' });
 
-    await wrapper.get('[data-tab="dashboard"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-dashboard"]').trigger('click');
     await wrapper.get('[data-history-host="alpha"][data-history-metric="cpu"]').trigger('click');
     expect(JSON.parse(ws.sent.at(-1)!)).toMatchObject({ cmd: 'get_cpu_history', host: 'alpha', metric: 'cpu' });
     ws.message({ type: 'cpu_history', host: 'alpha', metric: 'cpu', data: { points: [{ ts: 1, value: 10 }, { ts: 2, value: 20 }] } });
@@ -121,7 +121,7 @@ describe('VPS Monitor Vue page', () => {
     expect(wrapper.get('[data-modal="history"]').text()).toContain('20');
     await wrapper.get('[data-close="history"]').trigger('click');
 
-    await wrapper.get('[data-tab="logs"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-logs"]').trigger('click');
     expect(ViewerMock.instances).toHaveLength(1);
     expect(ViewerMock.instances[0]!.options).toMatchObject({ defaultHost: 'local', presets: 'trading', showRestart: true });
   });
@@ -156,7 +156,7 @@ describe('VPS Monitor Vue page', () => {
     const wrapper = mountApp();
     const ws = WebSocketMock.instances[0]!;
     await flushPromises();
-    await wrapper.get('[data-tab="logs"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-logs"]').trigger('click');
     wrapper.unmount();
     expect(ws.close).toHaveBeenCalled();
     expect(ViewerMock.instances[0]!.close).toHaveBeenCalled();

@@ -146,20 +146,20 @@ beforeEach(() => {
 describe('VPS Manager legacy parity', () => {
   it('prompts for the VPS user password before settings reads or remote config apply', async () => {
     const { wrapper, ws } = await mountVps();
-    await wrapper.get('[data-action="open-view"][data-view="vps-setup"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-vps-setup"]').trigger('click');
     await wrapper.get('[data-action="read-vps-settings"]').trigger('click');
     expect(wrapper.find('[data-modal="password"]').exists()).toBe(true);
     await wrapper.get('[data-field="deploy-password"]').setValue('user-secret');
     await wrapper.get('[data-action="password-confirm"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'read_vps_settings', hostname: 'alpha' });
-    await wrapper.get('[data-action="open-view"][data-view="vps"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-vps"]').trigger('click');
     await wrapper.get('[data-action="save-vps-config"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'save_vps_config', hostname: 'alpha' });
   });
 
   it('provides VPS setup, task logs, host logs, package details, systemd migration, and Cluster onboarding', async () => {
     const { wrapper, ws } = await mountVps();
-    await wrapper.get('[data-action="open-view"][data-view="vps-setup"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-vps-setup"]').trigger('click');
     await wrapper.get('[data-action="read-vps-settings"]').trigger('click');
     if (wrapper.find('[data-modal="password"]').exists()) {
       await wrapper.get('[data-field="deploy-password"]').setValue('user-secret');
@@ -168,9 +168,9 @@ describe('VPS Manager legacy parity', () => {
     expect(lastSent(ws)).toMatchObject({ cmd: 'read_vps_settings', hostname: 'alpha' });
     await wrapper.get('[data-action="preview-systemd-migration"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'preview_vps_systemd_migration', hostname: 'alpha' });
-    await wrapper.get('[data-action="open-view"][data-view="vps-task-log"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-task-log"]').trigger('click');
     expect(wrapper.text()).toContain('safe <task log>');
-    await wrapper.get('[data-action="open-view"][data-view="vps-host-logs"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-host-logs"]').trigger('click');
     await wrapper.get('[data-action="fetch-host-log"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'fetch_vps_log', hostname: 'alpha', filename: 'PBRun.log' });
     await wrapper.get('[data-action="open-package-updates"]').trigger('click');
@@ -226,7 +226,7 @@ describe('VPS Manager legacy parity', () => {
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: state });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="open-view"][data-view="master"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-master"]').trigger('click');
     const generation = Number(lastSent(ws).context_generation || 0);
     ws.message({ type: 'detail', context_generation: generation, data: { kind: 'master', status: { online: true }, branches: detail.branches, monitor: detail.monitor, progress: { log: 'master log' } } });
     await wrapper.vm.$nextTick();
@@ -244,7 +244,7 @@ describe('VPS Manager legacy parity', () => {
 
   it('supports UFW read, pending rules, preview, and explicit apply confirmation', async () => {
     const { wrapper, ws } = await mountVps();
-    await wrapper.get('[data-action="open-view"][data-view="vps-ufw"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-ufw"]').trigger('click');
     await wrapper.get('[data-field="ufw-sudo-password"]').setValue('sudo-secret');
     await wrapper.get('[data-action="ufw-read"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'read_ufw_rules', hostname: 'alpha', sudo_pw: 'sudo-secret' });
@@ -265,7 +265,7 @@ describe('VPS Manager legacy parity', () => {
   it('supports PBGui, PB7, and PB8 remote branch discovery and update actions', async () => {
     const { wrapper, ws } = await mountVps();
     for (const repo of ['pbgui', 'pb7', 'pb8']) {
-      await wrapper.get(`[data-action="open-view"][data-view="vps-${repo}-branch"]`).trigger('click');
+      await wrapper.get(`[data-testid="rail-section-${repo}-branch"]`).trigger('click');
       await wrapper.get('[data-action="load-remote-branches"]').trigger('click');
       expect(lastSent(ws)).toMatchObject({ cmd: 'load_remote_branches' });
       ws.message({ type: 'remote_branches', request_id: String(lastSent(ws).request_id), remote_url: String(lastSent(ws).remote_url), branches: ['main', 'dev'] });
@@ -311,7 +311,7 @@ describe('VPS Manager legacy parity', () => {
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: state });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="open-view"][data-view="add-vps"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-add-vps"]').trigger('click');
     await wrapper.get('[data-field="add-hostname"]').setValue('new-vps');
     await wrapper.get('[data-field="add-ip"]').setValue('203.0.113.40');
     await wrapper.get('[data-field="add-user"]').setValue('bot');
@@ -333,7 +333,7 @@ describe('VPS Manager legacy parity', () => {
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: state });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="open-view"][data-view="add-vps"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-add-vps"]').trigger('click');
     await wrapper.get('[data-action="open-existing-import"]').trigger('click');
     await wrapper.get('[data-field="existing-import-hostname"]').setValue('legacy');
     await wrapper.get('[data-action="probe-existing-import"]').trigger('click');
@@ -351,7 +351,7 @@ describe('VPS Manager legacy parity', () => {
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: state });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="open-view"][data-view="add-vps"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-add-vps"]').trigger('click');
     await wrapper.get('[data-action="open-existing-import"]').trigger('click');
     await wrapper.get('[data-field="existing-import-hostname"]').setValue('legacy');
     await wrapper.get('[data-action="resolve-existing-import"]').trigger('click');
@@ -377,7 +377,7 @@ describe('VPS Manager legacy parity', () => {
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: state });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="open-view"][data-view="deploys-vps-logging"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-deploys-vps-logging"]').trigger('click');
     await wrapper.get('[data-field="deploy-action"]').setValue('vps-update-linux');
     await wrapper.get('[data-action="run-deploy"]').trigger('click');
     await wrapper.get('[data-field="deploy-password"]').setValue('vps-secret');
@@ -408,7 +408,7 @@ describe('VPS Manager legacy parity', () => {
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: withHistory });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="open-view"][data-view="deploys-vps-logging"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-deploys-vps-logging"]').trigger('click');
     await wrapper.get('[data-action="open-deploy-log"]').trigger('click');
     await flushPromises();
     expect(calls).toContainEqual(['host', 'alpha']);
@@ -422,13 +422,13 @@ describe('VPS Manager legacy parity', () => {
     const ws = WebSocketMock.instances[0]!;
     ws.message({ type: 'state', data: state });
     await wrapper.vm.$nextTick();
-    await wrapper.get('[data-action="open-view"][data-view="settings-vps-logging"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-settings-vps-logging"]').trigger('click');
     await wrapper.get('[data-field="logging-limit-PBRun"]').setValue('12');
     await wrapper.get('[data-action="save-logging-settings"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'save_vps_logging_config' });
     await wrapper.get('[data-action="deploy-logging"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'deploy_vps_logging', hostnames: ['alpha'] });
-    await wrapper.get('[data-action="open-view"][data-view="deploys-vps-logging"]').trigger('click');
+    await wrapper.get('[data-testid="rail-section-deploys-vps-logging"]').trigger('click');
     await wrapper.get('[data-field="deploy-action"]').setValue('vps-update-linux');
     await wrapper.get('[data-action="run-deploy"]').trigger('click');
     expect(wrapper.find('[data-modal="deploy-password"]').exists()).toBe(true);

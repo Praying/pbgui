@@ -5,12 +5,7 @@
 .vps-banner { padding: 8px 14px; color: var(--warning-soft); text-align: center; background: var(--warning-deep); }
 .vps-banner.connected { display: none; }
 .vps-page-body { min-height: 0; flex: 1; display: flex; }
-.vps-sidebar { position: relative; width: 220px; flex: 0 0 auto; padding: 14px 10px; border-right: 1px solid var(--border-default); background: var(--bg-card); }
-.vps-title { margin: 0 8px 14px; font-size: 1.05rem; font-weight: 700; }
-.vps-nav { display: grid; gap: 5px; }
-.vps-nav button { border: 0; border-radius: 5px; padding: 9px 10px; color: var(--text-primary); text-align: left; background: transparent; cursor: pointer; }
-.vps-nav button.active, .vps-nav button:hover { color: var(--text-primary); background: var(--border-strong); }
-.vps-options { display: grid; gap: 10px; margin: 20px 8px; color: var(--text-secondary); font-size: .82rem; }
+.vps-options { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 12px; color: var(--text-secondary); font-size: .82rem; }
 .vps-options label { display: flex; gap: 7px; align-items: center; }
 .vps-main { min-width: 0; flex: 1; display: flex; flex-direction: column; padding: 14px; }
 .vps-panel { min-height: 0; flex: 1; overflow: auto; }
@@ -46,4 +41,4 @@
 .vps-action.danger { background: var(--danger-deep); }.vps-action.secondary { background: var(--text-dim); }
 .service-grid { display: grid; gap: 10px; }.service-host { border: 1px solid var(--border-default); border-radius: 7px; overflow: hidden; }.service-head { display: flex; justify-content: space-between; padding: 10px 12px; color: var(--text-primary); background: var(--bg-card); cursor: pointer; }.service-list { display: grid; gap: 6px; padding: 10px; }.service-row { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px; border-radius: 5px; background: var(--bg-card); }.service-name { font-weight: 600; }.service-status { color: var(--text-secondary); font-size: .78rem; }.service-status.running { color: var(--success-soft); }.service-status.stopped, .service-status.error { color: var(--danger-soft); }
 .log-panel { height: 100%; min-height: 420px; }.history-modal, .result-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; background: var(--bg-backdrop); }.modal-card { width: min(1000px, calc(100vw - 40px)); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow: hidden; display: flex; flex-direction: column; padding: 18px; border-radius: 8px; background: var(--bg-card); }.modal-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-default); }.modal-head h2 { margin: 0; font-size: 1.05rem; }.history-body { overflow: auto; padding-top: 12px; }.history-chart { width: 100%; min-height: 120px; padding: 8px; border-radius: 5px; background: var(--bg-page); }.history-points { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; color: var(--text-primary); font-size: .78rem; }.result-message { padding-top: 14px; color: var(--text-primary); white-space: pre-wrap; word-break: break-word; }
-@media (max-width: 780px) { .vps-sidebar { width: 165px; }.vps-card-header { flex-wrap: wrap; }.vps-table { min-width: 850px; } }
+@media (max-width: 780px) { .vps-card-header { flex-wrap: wrap; }.vps-table { min-width: 850px; } }

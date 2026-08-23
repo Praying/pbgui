@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { PhCaretDown, PhCaretRight, PhCheckCircle, PhDesktop, PhFileText, PhGear, PhList, PhStop, PhX, PhXCircle } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretRight, PhCheckCircle, PhGear, PhStop, PhX, PhXCircle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
+import type { PageSection } from '@/shared/navigation';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
@@ -16,9 +17,16 @@ const { t } = useI18n();
 const query = new URLSearchParams(window.location.search);
 const hideIpMode = ref(query.get('hide_ip') === '1');
 const queryCompact = query.get('compact') === '1';
-const tabIcons = { dashboard: PhDesktop, instances: PhList, services: PhGear, logs: PhFileText } as const;
-
 const activeTab = ref<'dashboard' | 'instances' | 'services' | 'logs'>('dashboard');
+const sections = computed<PageSection[]>(() => [
+  { key: 'dashboard', label: t('sysmon.dashboard') },
+  { key: 'instances', label: t('sysmon.instances') },
+  { key: 'services', label: t('sysmon.services') },
+  { key: 'logs', label: t('sysmon.liveLogs') },
+]);
+function onSectionSelect(key: string): void {
+  if (key === 'dashboard' || key === 'instances' || key === 'services' || key === 'logs') switchTab(key);
+}
 const state = ref<VpsState | null>(null);
 const connection = ref<'connecting' | 'connected' | 'lost'>('connecting');
 const compactMode = ref(queryCompact);
@@ -297,6 +305,9 @@ onUnmounted(() => { disconnect(); closeViewer(); });
     page-key="system_vps_monitor"
     :page-title="t('sysmon.vpsMonitor')"
     :page-description="t('sysmon.vpsMonitorSubtitle')"
+    :sections="sections"
+    :active-section="activeTab"
+    @update:section="onSectionSelect"
   >
     <template #status>
       <StatusStrip
@@ -311,19 +322,12 @@ onUnmounted(() => { disconnect(); closeViewer(); });
       {{ connection === 'connected' ? t('sysmon.connected') : connection === 'lost' ? t('sysmon.connectionLost') : t('sysmon.connectingVpsMonitor') }}
     </div>
     <div class="vps-page-body">
-      <aside class="vps-sidebar">
-        <div class="vps-title">{{ t('sysmon.vpsMonitor') }}</div>
-        <nav class="vps-nav">
-          <button v-for="tab in (['dashboard', 'instances', 'services', 'logs'] as const)" :key="tab" :data-tab="tab" :class="{ active: activeTab === tab }" @click="switchTab(tab)"><PbIcon :icon="tabIcons[tab]" /> {{ tab === 'dashboard' ? t('sysmon.dashboard') : tab === 'instances' ? t('sysmon.instances') : tab === 'services' ? t('sysmon.services') : t('sysmon.liveLogs') }}</button>
-        </nav>
+      <section class="vps-main">
         <div class="vps-options">
           <label><input data-option="hide-ip" v-model="hideIpMode" type="checkbox"> {{ t('sysmon.hideIp') }}</label>
           <label><input data-option="compact" v-model="compactMode" type="checkbox" @change="setSetting('compact', compactMode)"> {{ t('sysmon.compact') }}</label>
           <label><input v-model="debugLogging" type="checkbox" @change="setSetting('debug_logging', debugLogging)"> {{ t('sysmon.debugLog') }}</label>
         </div>
-      </aside>
-
-      <section class="vps-main">
         <div v-if="activeTab === 'dashboard'" class="vps-panel">
           <div class="summary-bar">
             <span class="summary-item"><span class="summary-dot" style="background:var(--success)"></span>{{ t('sysmon.connectedCount', { n: summary.connected }) }}</span>

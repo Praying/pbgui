@@ -4,6 +4,7 @@ import { PhArrowClockwise, PhFile, PhFolder, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import AppShell from '@/shared/components/AppShell.vue';
+import type { PageSection } from '@/shared/navigation';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { managerApiBase, managerWsUrl } from './config';
@@ -81,6 +82,49 @@ const config = computed(() => state.value.config || {});
 const deployHistory = computed(() => Array.isArray(state.value.deploys?.history) ? state.value.deploys.history : []);
 const currentRepo = computed<Repo>(() => view.value.includes('pb8') ? 'pb8' : view.value.includes('pb7') ? 'pb7' : 'pbgui');
 const isMasterContext = computed(() => view.value.startsWith('master-') || view.value === 'master');
+const sections = computed<PageSection[]>(() => {
+  const items: PageSection[] = [
+    { key: 'overview', label: t('vpsmgr.overview') },
+    { key: 'master', label: t('vpsmgr.masterLabel') },
+    { key: 'vps', label: t('vpsmgr.vps') },
+    { key: 'add-vps', label: t('vpsmgr.addVps') },
+    { key: 'deploys-vps-logging', label: t('vpsmgr.deploymentsLabel') },
+    { key: 'settings-vps-logging', label: t('vpsmgr.settings') },
+  ];
+  if (hostname.value) {
+    if (!isMasterContext.value) items.push({ key: 'vps-setup', label: t('vpsmgr.setup') });
+    items.push({ key: 'task-log', label: t('vpsmgr.taskLogLabel') });
+    items.push({ key: 'host-logs', label: t('vpsmgr.hostLogs') });
+    items.push({ key: 'pbgui-branch', label: t('vpsmgr.pbguiBranch') });
+    items.push({ key: 'pb7-branch', label: t('vpsmgr.pb7Branch') });
+    items.push({ key: 'pb8-branch', label: t('vpsmgr.pb8Branch') });
+    items.push({ key: 'ufw', label: t('vpsmgr.ufwLabel') });
+  }
+  return items;
+});
+const activeSection = computed<string>(() => {
+  const v = view.value;
+  if (v.endsWith('task-log')) return 'task-log';
+  if (v.endsWith('host-logs')) return 'host-logs';
+  if (v.endsWith('pbgui-branch')) return 'pbgui-branch';
+  if (v.endsWith('pb7-branch')) return 'pb7-branch';
+  if (v.endsWith('pb8-branch')) return 'pb8-branch';
+  if (v.endsWith('ufw')) return 'ufw';
+  return v;
+});
+function onSectionSelect(key: string): void {
+  if (key === 'overview' || key === 'add-vps' || key === 'deploys-vps-logging' || key === 'settings-vps-logging') { setContext(key as ManagerView); return; }
+  if (key === 'master') { setContext('master', String(config.value.master_name || '')); return; }
+  if (key === 'vps') { setContext('vps', hostname.value); return; }
+  if (key === 'vps-setup') { openView('vps-setup'); return; }
+  const prefix = isMasterContext.value ? 'master' : 'vps';
+  if (key === 'task-log') { openView(prefix + '-task-log'); return; }
+  if (key === 'host-logs') { openHostLogs(); return; }
+  if (key === 'pbgui-branch') { openView(prefix + '-pbgui-branch'); return; }
+  if (key === 'pb7-branch') { openView(prefix + '-pb7-branch'); return; }
+  if (key === 'pb8-branch') { openView(prefix + '-pb8-branch'); return; }
+  if (key === 'ufw') { openUfw(); return; }
+}
 const currentTarget = computed(() => isMasterContext.value ? String(config.value.master_name || '') : hostname.value);
 const currentBranches = computed(() => detail.value?.branches?.[currentRepo.value] || {});
 const currentUfwHost = computed(() => isMasterContext.value ? String(config.value.master_name || '') : hostname.value);
@@ -523,6 +567,9 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
     page-key="system_vps_manager_fastapi"
     :page-title="t('vpsmgr.vpsManager')"
     :page-description="t('vpsmgr.vueSubtitle')"
+    :sections="sections"
+    :active-section="activeSection"
+    @update:section="onSectionSelect"
   >
     <template #status>
       <StatusStrip
@@ -538,33 +585,6 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
 
   <div class="vps-manager">
     <div class="manager-layout">
-      <aside class="manager-sidebar">
-        <div class="manager-sidebar-title">{{ t('vpsmgr.vpsManager') }}</div>
-        <nav class="manager-nav">
-          <button :class="{ active: view === 'overview' }" data-action="open-view" data-view="overview" @click="setContext('overview')">{{ t('vpsmgr.overview') }}</button>
-          <button :class="{ active: view.startsWith('master') }" data-action="open-view" data-view="master" @click="setContext('master', String(config.master_name || ''))">{{ t('vpsmgr.masterLabel') }}</button>
-          <button :class="{ active: view.startsWith('vps') && view !== 'vps-setup' && view !== 'vps-task-log' && view !== 'vps-host-logs' && view !== 'vps-ufw' && !view.includes('branch') }" data-action="open-view" data-view="vps" @click="setContext('vps', hostname)">{{ t('vpsmgr.vps') }}</button>
-          <button :class="{ active: view === 'add-vps' }" data-action="open-view" data-view="add-vps" @click="setContext('add-vps')">{{ t('vpsmgr.addVps') }}</button>
-          <button :class="{ active: view === 'deploys-vps-logging' }" data-action="open-view" data-view="deploys-vps-logging" @click="setContext('deploys-vps-logging')">{{ t('vpsmgr.deploymentsLabel') }}</button>
-          <button :class="{ active: view === 'settings-vps-logging' }" data-action="open-view" data-view="settings-vps-logging" @click="setContext('settings-vps-logging')">{{ t('vpsmgr.settings') }}</button>
-        </nav>
-        <div v-if="hostname" class="manager-sidebar-subnav">
-          <div class="manager-sidebar-caption">{{ hostname }}</div>
-          <button v-if="!isMasterContext" data-action="open-view" data-view="vps-setup" @click="openView('vps-setup')">{{ t('vpsmgr.setup') }}</button>
-          <button data-action="open-view" data-view="vps-task-log" @click="openView(isMasterContext ? 'master-task-log' : 'vps-task-log')">{{ t('vpsmgr.taskLogLabel') }}</button>
-          <button data-action="open-view" data-view="vps-host-logs" @click="openHostLogs">{{ t('vpsmgr.hostLogs') }}</button>
-          <button data-action="open-view" :data-view="isMasterContext ? 'master-pbgui-branch' : 'vps-pbgui-branch'" @click="openView(isMasterContext ? 'master-pbgui-branch' : 'vps-pbgui-branch')">{{ t('vpsmgr.pbguiBranch') }}</button>
-          <button data-action="open-view" :data-view="isMasterContext ? 'master-pb7-branch' : 'vps-pb7-branch'" @click="openView(isMasterContext ? 'master-pb7-branch' : 'vps-pb7-branch')">{{ t('vpsmgr.pb7Branch') }}</button>
-          <button data-action="open-view" :data-view="isMasterContext ? 'master-pb8-branch' : 'vps-pb8-branch'" @click="openView(isMasterContext ? 'master-pb8-branch' : 'vps-pb8-branch')">{{ t('vpsmgr.pb8Branch') }}</button>
-          <button data-action="open-view" :data-view="isMasterContext ? 'master-ufw' : 'vps-ufw'" @click="openUfw">{{ t('vpsmgr.ufwLabel') }}</button>
-        </div>
-        <div class="manager-sidebar-footer">
-          <button data-action="select-all-vps" class="manager-btn small" @click="selectAllVps">{{ t('vpsmgr.selectAll') }}</button>
-          <button data-action="clear-selected-vps" class="manager-btn small" @click="clearSelectedVps">{{ t('vpsmgr.clearSelection') }}</button>
-          <span>{{ selectedHosts.length }} {{ t('vpsmgr.selectedLower') }}</span>
-        </div>
-      </aside>
-
       <section class="manager-main">
         <div v-if="notice" class="manager-status visible" :class="notice.kind">{{ notice.text }}</div>
 

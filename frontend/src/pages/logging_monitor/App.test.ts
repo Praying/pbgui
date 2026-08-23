@@ -83,7 +83,7 @@ describe('Logging Monitor Vue page', () => {
   it('loads and saves default, managed, and per-log rotation settings', async () => {
     const wrapper = mountApp();
     await flushPromises();
-    await wrapper.find('[data-view="settings"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-settings"]').trigger('click');
     expect(wrapper.text()).toContain('Default Rotation');
     expect(wrapper.text()).toContain('API console');
     expect(wrapper.text()).toContain('PBGui');
@@ -115,7 +115,7 @@ describe('Logging Monitor Vue page', () => {
 
     const wrapper = mountApp();
     await flushPromises();
-    await wrapper.find('[data-view="settings"]').trigger('click');
+    await wrapper.find('[data-testid="rail-section-settings"]').trigger('click');
 
     const emptyState = wrapper.get('[data-state="empty"]');
     expect(emptyState.attributes('role')).toBe('status');

@@ -51,75 +51,6 @@
   display: flex;
 }
 
-.manager-sidebar {
-  width: 244px;
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  padding: 14px 10px;
-  border-right: 1px solid var(--manager-border-soft);
-  background: var(--manager-bg2);
-}
-
-.manager-sidebar-title {
-  margin: 0 8px 14px;
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-weight: 750;
-}
-
-.manager-nav,
-.manager-sidebar-subnav {
-  display: grid;
-  gap: 5px;
-}
-
-.manager-sidebar-subnav {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--manager-border-soft);
-}
-
-.manager-sidebar-caption {
-  padding: 0 9px 5px;
-  color: var(--manager-muted);
-  font-size: .73rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  overflow-wrap: anywhere;
-  text-transform: uppercase;
-}
-
-.manager-nav button,
-.manager-sidebar-subnav button {
-  width: 100%;
-  border: 0;
-  border-radius: 6px;
-  padding: 9px 10px;
-  color: var(--text-primary);
-  text-align: left;
-  background: transparent;
-  cursor: pointer;
-}
-
-.manager-nav button.active,
-.manager-nav button:hover,
-.manager-sidebar-subnav button:hover {
-  color: var(--text-primary);
-  background: var(--border-strong);
-}
-
-.manager-sidebar-footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  margin-top: auto;
-  padding: 14px 7px 2px;
-  color: var(--manager-muted);
-  font-size: .72rem;
-}
-
 .manager-main {
   min-width: 0;
   flex: 1;
@@ -462,22 +393,12 @@
 }
 
 @media (max-width: 900px) {
-  .manager-sidebar { width: 196px; }
   .manager-main { padding: 12px; }
   .manager-grid.two { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 680px) {
   .manager-layout { display: block; }
-  .manager-sidebar {
-    position: static;
-    width: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--manager-border-soft);
-  }
-  .manager-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .manager-sidebar-subnav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .manager-sidebar-footer { margin-top: 10px; }
   .manager-hero { flex-direction: column; }
   .manager-actions { justify-content: flex-start; }
   .manager-form-grid { grid-template-columns: 1fr; }
