@@ -161,7 +161,13 @@ declare global {
 }
 
 function openCleanupCalendar(event: MouseEvent): void {
-  window.__dp?.show('cleanup-date', event.target);
+  // The legacy __dp document click-guard hides the panel on the same click
+  // that opens it: it only recognises a data-dp trigger, and PbIcon renders
+  // an <svg>, so event.target carries no data-dp and the guard runs hide()
+  // right after show(). Stop propagation so the panel stays open, and anchor
+  // on the button (event.currentTarget) instead of the svg.
+  event.stopPropagation();
+  window.__dp?.show('cleanup-date', event.currentTarget);
 }
 
 function shortSyncTimeText(value: unknown): string {
@@ -204,13 +210,6 @@ onBeforeUnmount(() => store.teardown());
 
   <div id="page-body">
     <div id="main-content">
-      <div class="page-head">
-        <div>
-          <h1 class="page-title">{{ t('misc.dbtools.pageTitle') }}</h1>
-          <div class="page-sub">{{ t('misc.dbtools.pageSub') }}</div>
-        </div>
-      </div>
-
       <!-- Cleanup -->
       <section class="panel" id="panel-cleanup" :class="{ active: store.activePanel.value === 'cleanup' }">
         <div class="panel-head">

@@ -130,4 +130,33 @@ describe('DB Tools page shell', () => {
     expect(wrapper.find('#sync-editor').classes()).toContain('visible');
     expect(wrapper.find('#sync-editor-title').text()).toBe('New Sync Job');
   });
+
+  it('does not duplicate the page title inside the content area', async () => {
+    const wrapper = await mountApp();
+
+    // The title renders once in the shared WorkspaceHeader, not again in the
+    // legacy .page-head block that the Vue port used to carry alongside it.
+    expect(wrapper.findAll('#main-content .page-title')).toHaveLength(0);
+    expect(wrapper.findAll('.workspace-header__title')).toHaveLength(1);
+  });
+
+  it('opens the cleanup calendar through __dp and keeps the open-click off the document', async () => {
+    const show = vi.fn();
+    vi.stubGlobal('__dp', { show });
+    const documentClick = vi.fn();
+    document.addEventListener('click', documentClick);
+    const wrapper = await mountApp();
+
+    const button = wrapper.find('.calendar-trigger');
+    await button.trigger('click');
+
+    expect(show).toHaveBeenCalledTimes(1);
+    expect(show.mock.calls[0]?.[0]).toBe('cleanup-date');
+    // Anchor is the button, not the Phosphor <svg> the legacy data-dp guard fails on.
+    expect(show.mock.calls[0]?.[1]).toBe(button.element);
+    // stopPropagation keeps the legacy __dp document click-guard from hiding the panel.
+    expect(documentClick).not.toHaveBeenCalled();
+
+    document.removeEventListener('click', documentClick);
+  });
 });

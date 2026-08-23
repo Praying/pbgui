@@ -1,5 +1,9 @@
 # Unreleased
 
+## DB Tools — Title + Calendar Fixes
+
+- Fixed two regressions on the Vue DB Tools page. (1) The page title/subtitle rendered twice — once in the shared `WorkspaceHeader` and again in the ported legacy `.page-head` block — so the in-page `.page-head` markup and its now-dead CSS were removed; the title now comes only from the AppShell header. (2) The cutoff-date calendar button never opened the legacy `__dp` picker: the shared datepicker's document click-guard hides the panel on the very click that opens it unless the trigger carries `data-dp`, but the Vue button renders a Phosphor `<svg>`, so `event.target` had no `data-dp` and the guard ran `hide()` immediately after `show()`. The handler now stops propagation and anchors on the button (`event.currentTarget`) instead of the svg. Added regression tests for both. Verified: typecheck, production build, full Vitest suite (328 files, 4187 tests).
+
 ## Backtest Results Panel — Scroll Fix
 
 - Fixed the PBv7/PBv8 backtest results panel clipping its charts with no scrollbar. During the Vue migration the `ResultsPanel` root `<div>` became an extra box between the `#panel-results` flex column and `#results-scroll-area`, breaking the height chain: `#results-scroll-area`'s `flex: 1` no longer applied (its parent became a plain block), so the charts grew past the panel and were clipped by `#panel-results`'s `overflow: hidden`. The root element now carries `results-panel-root` with `display: contents`, restoring `#results-fixed-top` and `#results-scroll-area` as direct flex children of `#panel-results` exactly as in the legacy DOM, so the pinned scroll area fills and scrolls again. Added a CSS contract test locking the boxless wrapper and the scroll-area flex/overflow declarations. Verified: typecheck, production build, full Vitest suite (328 files, 4185 tests).
