@@ -1,5 +1,9 @@
 # Unreleased
 
+## Backtest Results Panel — Scroll Fix
+
+- Fixed the PBv7/PBv8 backtest results panel clipping its charts with no scrollbar. During the Vue migration the `ResultsPanel` root `<div>` became an extra box between the `#panel-results` flex column and `#results-scroll-area`, breaking the height chain: `#results-scroll-area`'s `flex: 1` no longer applied (its parent became a plain block), so the charts grew past the panel and were clipped by `#panel-results`'s `overflow: hidden`. The root element now carries `results-panel-root` with `display: contents`, restoring `#results-fixed-top` and `#results-scroll-area` as direct flex children of `#panel-results` exactly as in the legacy DOM, so the pinned scroll area fills and scrolls again. Added a CSS contract test locking the boxless wrapper and the scroll-area flex/overflow declarations. Verified: typecheck, production build, full Vitest suite (328 files, 4185 tests).
+
 ## Strategy Explorer — Param Slider Fix
 
 - Fixed the PBv7/PBv8 Strategy Explorer tuning sliders not updating their parameter value while dragging. `paramValue` now reads side fields from `config.bot.<side>.*` — the exact path `setParamValue` writes — instead of the stale `snapshot.sides.<side>.params`, so slider/select/bool/text edits reflect immediately through the reactive store instead of only after a server round-trip. The two structures are identical after a snapshot (`sides[side]["params"]` is a deep copy of `config.bot.<side>`), so initial values are unchanged; the aligned `paramValue`/`paramValueFor` signatures drop the now-dead snapshot `params` argument, and a write→read round-trip regression test was added. Verified: typecheck, production build, full Vitest suite (328 files, 4184 tests).

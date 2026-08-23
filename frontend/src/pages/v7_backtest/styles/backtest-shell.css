@@ -44,6 +44,12 @@ a:hover { text-decoration: underline; }
 .bt-toolbar-spacer { flex: 1; }
 
 /* ── Results panel chrome (:57-65, :118, :836-859, :6415-6419) ── */
+/* ResultsPanel's root <div> must not generate a box: the legacy page kept
+   #results-fixed-top and #results-scroll-area as direct children of the
+   #panel-results flex column, so #results-scroll-area's `flex: 1` filled the
+   remaining height and scrolled. A box-generating wrapper breaks that chain
+   and clips the charts with no scrollbar. */
+.results-panel-root { display: contents; }
 /* PINNED (default): the panel fills the viewport; only the scroll area scrolls */
 #panel-results.active:not(.unpinned) { height: 100%; }
 #results-fixed-top { background: var(--bg); padding-bottom: var(--sp-sm); border-bottom: 2px solid var(--border);

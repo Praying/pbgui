@@ -105,7 +105,12 @@ defineExpose({ deleteSelectedFlow });
 </script>
 
 <template>
-  <div>
+  <!-- results-panel-root must not generate a box: in the legacy page
+       #results-fixed-top and #results-scroll-area were direct children of
+       the #panel-results flex column, so #results-scroll-area's flex:1
+       made it fill + scroll. A wrapping <div> here would sit between them,
+       collapse the flex chain and clip the charts with no scrollbar. -->
+  <div class="results-panel-root">
     <div id="results-fixed-top">
       <div id="results-toolbar">
         <label style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.version') }}</label>

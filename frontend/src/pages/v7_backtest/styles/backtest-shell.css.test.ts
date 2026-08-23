@@ -119,3 +119,14 @@ describe('PBv7 config editor CSS contracts', () => {
     expect(css).not.toContain('.bot-side-panel > h3');
   });
 });
+
+describe('results panel flex chain', () => {
+  it('keeps the results wrapper boxless so #results-scroll-area stays a flex child', () => {
+    // A box-generating <ResultsPanel> root would sit between #panel-results
+    // and #results-scroll-area, collapsing the flex chain and clipping charts.
+    expectDeclaration(findRule(root, '.results-panel-root'), 'display', 'contents');
+    expectDeclaration(findRule(root, '#results-scroll-area'), 'flex', '1');
+    expectDeclaration(findRule(root, '#results-scroll-area'), 'min-height', '0');
+    expectDeclaration(findRule(root, '#results-scroll-area'), 'overflow-y', 'auto');
+  });
+});
