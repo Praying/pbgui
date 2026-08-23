@@ -3,6 +3,7 @@ import { PhFolderOpen, PhMinus, PhPlus } from '@phosphor-icons/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { onToggleMultiSelectMousedown } from '../composables/useToggleMultiSelect';
 
 /**
  * QueueDraftModal — the port of showInitialBacktestQueueDraftModal
@@ -149,7 +150,7 @@ async function submit(): Promise<void> {
         </div>
         <div>
           <div class="sb-label">{{ t('v7backtest.exchanges') }}</div>
-          <select v-model="exchanges" class="sb-input" multiple style="height: auto; min-height: var(--input-h)" data-test="rbt-exchanges">
+          <select v-model="exchanges" class="sb-input" multiple style="height: auto; min-height: var(--input-h)" data-test="rbt-exchanges" @mousedown="onToggleMultiSelectMousedown">
             <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
           </select>
         </div>

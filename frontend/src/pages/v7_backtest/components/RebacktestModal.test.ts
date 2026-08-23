@@ -75,4 +75,28 @@ describe('RebacktestModal (:7895-7956)', () => {
     const wrapper = mountModal({ open: false });
     expect(wrapper.find('[data-test="rebacktest-modal"]').exists()).toBe(false);
   });
+
+  it('toggles one exchange per click without clearing the other selections (v1.98.31)', async () => {
+    const wrapper = mountModal();
+    const select = wrapper.find('[data-test="rbt-exchanges"]').element as HTMLSelectElement;
+    const bybit = Array.from(select.options).find((o) => o.value === 'bybit') as HTMLOptionElement;
+    const binance = Array.from(select.options).find((o) => o.value === 'binance') as HTMLOptionElement;
+    // 已选 bybit + okx；单击已选的 bybit → 仅移除 bybit，okx 保留
+    bybit.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    await wrapper.vm.$nextTick();
+    let selected = Array.from(select.selectedOptions).map((o) => o.value);
+    expect(selected).toEqual(['okx']);
+    // 单击未选的 binance → 追加，okx 保留
+    binance.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    await wrapper.vm.$nextTick();
+    selected = Array.from(select.selectedOptions).map((o) => o.value);
+    expect(selected).toEqual(['binance', 'okx']); // selectedOptions 按 DOM 顺序
+    // v-model 同步了 change 派发
+    expect((wrapper.vm as unknown as { exchanges: string[] }).exchanges).toEqual(['binance', 'okx']);
+    // 非左键不拦截
+    bybit.dispatchEvent(new MouseEvent('mousedown', { button: 2, bubbles: true }));
+    await wrapper.vm.$nextTick();
+    expect(Array.from(select.selectedOptions).map((o) => o.value)).toEqual(['binance', 'okx']);
+  });
+
 });
