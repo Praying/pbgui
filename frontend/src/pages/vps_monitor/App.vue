@@ -93,9 +93,30 @@ function cpuDisplay(metrics: Metrics | undefined): { value: string; sub: string 
   return { value: `${live.toFixed(1)}%`, sub: window >= 60 ? `1m ${numberValue(metrics?.cpu_60s).toFixed(1)}%` : window > 0 ? `${Math.floor(Math.min(60, window))}s/60s` : '' };
 }
 
-function statusClass(status: unknown): string {
+/* Status → Tailwind utility mapping (the former vps-monitor.css carried the
+   same green/orange/red ramps as .vps-badge/.service-status/.agent-file
+   variants). Each helper returns the FULL colour set including the neutral
+   default, so the static class never fights a dynamic one. */
+function badgeStatusClass(status: unknown): string {
   const value = String(status || '').toLowerCase();
-  return value === 'running' || value === 'connected' || value === 'ok' ? 'green' : value === 'connecting' || value === 'restarting' || value === 'stale' ? 'orange' : value === 'stopped' || value === 'error' || value === 'missing' ? 'red' : '';
+  if (value === 'running' || value === 'connected' || value === 'ok') return 'bg-success-deep text-success-soft';
+  if (value === 'connecting' || value === 'restarting' || value === 'stale') return 'bg-warning-deep text-warning-soft';
+  if (value === 'stopped' || value === 'error' || value === 'missing') return 'bg-danger-deep text-danger-soft';
+  return 'bg-border-strong';
+}
+
+function serviceStatusClass(status: unknown): string {
+  const value = String(status || '').toLowerCase();
+  if (value === 'running' || value === 'connected' || value === 'ok') return 'text-success-soft';
+  if (value === 'stopped' || value === 'error' || value === 'missing') return 'text-danger-soft';
+  return 'text-secondary';
+}
+
+function agentFileClass(state: string): string {
+  if (state === 'ok') return 'bg-success-deep text-success-soft';
+  if (state === 'stale') return 'bg-warning-deep text-warning-soft';
+  if (state === 'error' || state === 'missing') return 'bg-danger-deep text-danger-soft';
+  return 'bg-border-strong';
 }
 
 function stateMessage(message: unknown): string {
@@ -317,62 +338,94 @@ onUnmounted(() => { disconnect(); closeViewer(); });
       />
     </template>
 
-  <div class="vps-monitor" :class="{ compact: compactMode }">
-    <div class="vps-banner" :class="{ connected: connection === 'connected' }" data-status="connection">
+  <div class="vps-monitor flex min-h-0 flex-1 flex-col bg-page text-primary" :class="{ compact: compactMode }">
+    <div
+      class="bg-warning-deep px-3.5 py-2 text-center text-warning-soft"
+      :class="{ hidden: connection === 'connected' }"
+      data-status="connection"
+    >
       {{ connection === 'connected' ? t('sysmon.connected') : connection === 'lost' ? t('sysmon.connectionLost') : t('sysmon.connectingVpsMonitor') }}
     </div>
-    <div class="vps-page-body">
-      <section class="vps-main">
-        <div class="vps-options">
-          <label><input data-option="hide-ip" v-model="hideIpMode" type="checkbox"> {{ t('sysmon.hideIp') }}</label>
-          <label><input data-option="compact" v-model="compactMode" type="checkbox" @change="setSetting('compact', compactMode)"> {{ t('sysmon.compact') }}</label>
-          <label><input v-model="debugLogging" type="checkbox" @change="setSetting('debug_logging', debugLogging)"> {{ t('sysmon.debugLog') }}</label>
+    <div class="flex min-h-0 flex-1">
+      <section class="flex min-w-0 flex-1 flex-col p-3.5">
+        <div class="mb-3 flex flex-wrap gap-3.5 text-[0.82rem] text-secondary">
+          <label class="flex items-center gap-1.75"><input data-option="hide-ip" v-model="hideIpMode" type="checkbox"> {{ t('sysmon.hideIp') }}</label>
+          <label class="flex items-center gap-1.75"><input data-option="compact" v-model="compactMode" type="checkbox" @change="setSetting('compact', compactMode)"> {{ t('sysmon.compact') }}</label>
+          <label class="flex items-center gap-1.75"><input v-model="debugLogging" type="checkbox" @change="setSetting('debug_logging', debugLogging)"> {{ t('sysmon.debugLog') }}</label>
         </div>
-        <div v-if="activeTab === 'dashboard'" class="vps-panel">
-          <div class="summary-bar">
-            <span class="summary-item"><span class="summary-dot" style="background:var(--success)"></span>{{ t('sysmon.connectedCount', { n: summary.connected }) }}</span>
-            <span class="summary-item"><span class="summary-dot" style="background:var(--warning)"></span>{{ t('sysmon.connectingCount', { n: summary.connecting }) }}</span>
-            <span class="summary-item"><span class="summary-dot" style="background:var(--danger)"></span>{{ t('sysmon.disconnectedCount', { n: summary.disconnected }) }}</span>
+        <div v-if="activeTab === 'dashboard'" class="min-h-0 flex-1 overflow-auto">
+          <div class="mb-3.5 flex flex-wrap gap-3.75 text-[0.85rem] text-primary">
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--success)"></span>{{ t('sysmon.connectedCount', { n: summary.connected }) }}</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--warning)"></span>{{ t('sysmon.connectingCount', { n: summary.connecting }) }}</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--danger)"></span>{{ t('sysmon.disconnectedCount', { n: summary.disconnected }) }}</span>
           </div>
-          <article v-for="host in hosts" :key="host" class="vps-card">
-            <header class="vps-card-header" @click="toggleHost(host)">
-              <span class="vps-card-title"><PbIcon :icon="connectionMap[host]?.status === 'connected' ? PhCheckCircle : PhXCircle" /> {{ host }}</span>
-              <span v-if="!hideIpMode" :data-ip="host" class="vps-badge">{{ connectionMap[host]?.ip || '?' }}</span>
-              <span class="vps-badge" :class="statusClass(monitorAgent(host).state)">{{ t('sysmon.monitorAgentLabel', { label: monitorAgentLabel(host) }) }}</span>
-              <span class="vps-badge" :class="statusClass(connectionMap[host]?.status)">{{ serviceLabel(connectionMap[host]?.status) }}</span>
+          <article v-for="host in hosts" :key="host" class="mb-2.5 overflow-hidden rounded-[7px] border border-border-default bg-card">
+            <header class="flex max-[780px]:flex-wrap cursor-pointer items-center gap-2.25 px-3.25 py-2.75 hover:bg-accent/20" @click="toggleHost(host)">
+              <span class="flex-1 font-bold"><PbIcon :icon="connectionMap[host]?.status === 'connected' ? PhCheckCircle : PhXCircle" /> {{ host }}</span>
+              <span v-if="!hideIpMode" :data-ip="host" class="rounded-full bg-border-strong px-1.75 py-0.75 text-[0.73rem]">{{ connectionMap[host]?.ip || '?' }}</span>
+              <span class="rounded-full px-1.75 py-0.75 text-[0.73rem]" :class="badgeStatusClass(monitorAgent(host).state)">{{ t('sysmon.monitorAgentLabel', { label: monitorAgentLabel(host) }) }}</span>
+              <span class="rounded-full px-1.75 py-0.75 text-[0.73rem]" :class="badgeStatusClass(connectionMap[host]?.status)">{{ serviceLabel(connectionMap[host]?.status) }}</span>
               <PbIcon :icon="collapsedHosts[host] ? PhCaretRight : PhCaretDown" aria-label="Toggle host details" />
             </header>
-            <div v-if="!isHostCollapsed(host)" class="vps-card-body">
-              <div v-if="Object.keys(monitorAgent(host)).length" class="agent-details"><div>{{ t('sysmon.collectorHeartbeat') }} {{ formatAge((monitorAgent(host).collector as Record<string, unknown>)?.generated_at || monitorAgent(host).generated_at) }}</div><div class="agent-files"><span v-for="file in agentFiles(host)" :key="file.name" class="agent-file" :class="file.state">{{ file.name }}: {{ file.state }}</span></div></div>
-              <div v-if="connectionMap[host]?.status !== 'connected'" class="result-message">{{ serviceLabel(connectionMap[host]?.status) }}<span v-if="connectionMap[host]?.error">: {{ connectionMap[host]?.error }}</span></div>
-              <div v-else-if="!state?.system?.[host]" class="result-message">{{ t('sysmon.waitingSystemMetrics') }}</div>
-              <div v-else class="metric-grid">
-                <div v-for="metric in (['cpu', 'memory', 'disk', 'swap'] as const)" v-show="metric !== 'swap' || numberValue(state?.system?.[host]?.swap_total) > 0" :key="metric" class="metric-card" :data-history-host="host" :data-history-metric="metric" @click="openHistory(host, metric)">
-                  <div class="metric-label">{{ metricLabel(metric) }}</div><div class="metric-value" :style="{ color: pctColor(metricValue(state?.system?.[host], metric)) }">{{ metric === 'cpu' ? cpuDisplay(state?.system?.[host]).value : formatBytes(metric === 'memory' ? state?.system?.[host]?.mem_used : metric === 'disk' ? state?.system?.[host]?.disk_used : state?.system?.[host]?.swap_used) }}</div><div class="metric-sub">{{ metric === 'cpu' ? cpuDisplay(state?.system?.[host]).sub : `${metricValue(state?.system?.[host], metric).toFixed(1)}%` }}</div><div class="progress-track"><div class="progress-fill" :style="{ width: `${Math.min(100, metricValue(state?.system?.[host], metric))}%`, background: pctColor(metricValue(state?.system?.[host], metric)) }"></div></div>
+            <div v-if="!isHostCollapsed(host)" class="border-t border-border-default p-3">
+              <div v-if="Object.keys(monitorAgent(host)).length" class="mb-3 grid gap-1.75 rounded-[5px] bg-card p-2.25 text-[0.8rem] text-primary"><div>{{ t('sysmon.collectorHeartbeat') }} {{ formatAge((monitorAgent(host).collector as Record<string, unknown>)?.generated_at || monitorAgent(host).generated_at) }}</div><div class="flex flex-wrap gap-1.5"><span v-for="file in agentFiles(host)" :key="file.name" class="rounded-[3px] px-1.25 py-0.5" :class="agentFileClass(file.state)">{{ file.name }}: {{ file.state }}</span></div></div>
+              <div v-if="connectionMap[host]?.status !== 'connected'" class="pt-3.5 whitespace-pre-wrap break-words text-primary">{{ serviceLabel(connectionMap[host]?.status) }}<span v-if="connectionMap[host]?.error">: {{ connectionMap[host]?.error }}</span></div>
+              <div v-else-if="!state?.system?.[host]" class="pt-3.5 whitespace-pre-wrap break-words text-primary">{{ t('sysmon.waitingSystemMetrics') }}</div>
+              <div v-else class="grid grid-cols-[repeat(auto-fit,minmax(165px,1fr))] gap-2.25">
+                <div v-for="metric in (['cpu', 'memory', 'disk', 'swap'] as const)" v-show="metric !== 'swap' || numberValue(state?.system?.[host]?.swap_total) > 0" :key="metric" class="cursor-pointer rounded-md border border-border-default bg-card p-2.5 hover:border-accent" :data-history-host="host" :data-history-metric="metric" @click="openHistory(host, metric)">
+                  <div class="text-[0.76rem] text-secondary">{{ metricLabel(metric) }}</div><div class="mt-0.75 text-[1.2rem] font-bold" :style="{ color: pctColor(metricValue(state?.system?.[host], metric)) }">{{ metric === 'cpu' ? cpuDisplay(state?.system?.[host]).value : formatBytes(metric === 'memory' ? state?.system?.[host]?.mem_used : metric === 'disk' ? state?.system?.[host]?.disk_used : state?.system?.[host]?.swap_used) }}</div><div class="text-[0.72rem] text-secondary">{{ metric === 'cpu' ? cpuDisplay(state?.system?.[host]).sub : `${metricValue(state?.system?.[host], metric).toFixed(1)}%` }}</div><div class="mt-1.75 h-1.25 overflow-hidden rounded-full bg-border-strong"><div class="h-full" :style="{ width: `${Math.min(100, metricValue(state?.system?.[host], metric))}%`, background: pctColor(metricValue(state?.system?.[host], metric)) }"></div></div>
                 </div>
               </div>
             </div>
           </article>
           <EmptyState
             v-if="!hosts.length"
-            class="result-message"
+            class="pt-3.5 whitespace-pre-wrap break-words text-primary"
             :title="t('sysmon.noVpsConfigured')"
           />
         </div>
 
-        <div v-else-if="activeTab === 'instances'" class="vps-panel">
-          <div class="summary-bar"><label>Server <select v-model="instanceServerFilter"><option>All</option><option v-for="host in hosts" :key="host">{{ host }}</option></select></label><label>{{ t('sysmon.version') }} <select v-model="instanceVersionFilter"><option>All</option><option>7</option><option>8</option><option>V7</option><option>V8</option></select></label><label><input v-model="instanceErrorsOnly" type="checkbox"> {{ t('sysmon.onlyWithErrors') }}</label><label><input v-model="instanceShowOther" type="checkbox"> {{ t('sysmon.showOther') }}</label></div>
-          <table class="vps-table"><thead><tr><th>Host</th><th>{{ t('sysmon.name') }}</th><th>{{ t('sysmon.version') }}</th><th>{{ t('sysmon.cpu') }}</th><th>{{ t('sysmon.totalPnl') }}</th><th>{{ t('sysmon.totalFills') }}</th><th>{{ t('sysmon.status') }}</th><th>{{ t('sysmon.action') }}</th></tr></thead><tbody><tr v-for="entry in visibleInstanceRows" :key="`${entry.host}:${instanceName(entry.row)}`"><td>{{ entry.host }}</td><td>{{ instanceName(entry.row) }}</td><td>{{ instanceVersion(entry.row) }}</td><td :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="cpu" @click="openHistory(entry.host, 'cpu', instanceName(entry.row))">{{ numberValue(entry.row.c || entry.row.cpu).toFixed(1) }}%</td><td :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="pnl" @click="openHistory(entry.host, 'pnl', instanceName(entry.row))">{{ numberValue(entry.row.pt || entry.row.pnlToday || entry.row.pnl_hist_total).toFixed(2) }}</td><td>{{ numberValue(entry.row.ct || entry.row.fillsToday).toLocaleString() }}</td><td><span class="vps-badge" :class="statusClass(entry.row.status || 'running')">{{ entry.row.status || t('sysmon.running') }}</span></td><td><button data-action="view-instance-log" class="vps-action secondary" @click="viewInstanceLog(entry.host, entry.row)">{{ t('sysmon.viewLog') }}</button> <button data-action="kill-instance" class="vps-action danger" @click="killInstance(entry.host, entry.row)"><PbIcon :icon="PhStop" /> {{ t('sysmon.restartKill') }}</button></td></tr></tbody></table><EmptyState v-if="!visibleInstanceRows.length" class="result-message" :title="t('sysmon.noInstances')" />
+        <div v-else-if="activeTab === 'instances'" class="min-h-0 flex-1 overflow-auto">
+          <div class="mb-3.5 flex flex-wrap gap-3.75 text-[0.85rem] text-primary"><label>Server <select v-model="instanceServerFilter"><option>All</option><option v-for="host in hosts" :key="host">{{ host }}</option></select></label><label>{{ t('sysmon.version') }} <select v-model="instanceVersionFilter"><option>All</option><option>7</option><option>8</option><option>V7</option><option>V8</option></select></label><label><input v-model="instanceErrorsOnly" type="checkbox"> {{ t('sysmon.onlyWithErrors') }}</label><label><input v-model="instanceShowOther" type="checkbox"> {{ t('sysmon.showOther') }}</label></div>
+          <table class="w-full max-[780px]:min-w-[850px] border-collapse text-[0.78rem]"><thead><tr><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">Host</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.name') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.version') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.cpu') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.totalPnl') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.totalFills') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.status') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.action') }}</th></tr></thead><tbody><tr class="group" v-for="entry in visibleInstanceRows" :key="`${entry.host}:${instanceName(entry.row)}`"><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ entry.host }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ instanceName(entry.row) }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ instanceVersion(entry.row) }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8" :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="cpu" @click="openHistory(entry.host, 'cpu', instanceName(entry.row))">{{ numberValue(entry.row.c || entry.row.cpu).toFixed(1) }}%</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8" :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="pnl" @click="openHistory(entry.host, 'pnl', instanceName(entry.row))">{{ numberValue(entry.row.pt || entry.row.pnlToday || entry.row.pnl_hist_total).toFixed(2) }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ numberValue(entry.row.ct || entry.row.fillsToday).toLocaleString() }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8"><span class="rounded-full px-1.75 py-0.75 text-[0.73rem]" :class="badgeStatusClass(entry.row.status || 'running')">{{ entry.row.status || t('sysmon.running') }}</span></td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8"><button data-action="view-instance-log" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border-0 bg-secondary px-2 py-1.25 text-primary" @click="viewInstanceLog(entry.host, entry.row)">{{ t('sysmon.viewLog') }}</button> <button data-action="kill-instance" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border-0 bg-danger-deep px-2 py-1.25 text-primary" @click="killInstance(entry.host, entry.row)"><PbIcon :icon="PhStop" /> {{ t('sysmon.restartKill') }}</button></td></tr></tbody></table><EmptyState v-if="!visibleInstanceRows.length" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('sysmon.noInstances')" />
         </div>
 
-        <div v-else-if="activeTab === 'services'" class="vps-panel"><div class="service-grid"><section v-for="host in serviceHosts" :key="host" class="service-host"><header class="service-head" @click="toggleServices(host)"><span>{{ host }}</span><PbIcon :icon="isServiceCollapsed(host) ? PhCaretRight : PhCaretDown" aria-label="Toggle service details" /></header><div v-if="!isServiceCollapsed(host)" class="service-list"><div v-for="(check, service) in services[host]" :key="service" class="service-row"><div><div class="service-name">{{ service }}</div><div class="service-status" :class="statusClass(check.status)">{{ serviceLabel(check.status) }}<span v-if="check.pid"> (PID: {{ check.pid }})</span></div><div v-if="check.reason" class="service-status">{{ check.reason }}</div><div v-if="check.error" class="service-status error">{{ check.error }}</div></div><button v-if="check.expected !== false && check.status !== 'disabled'" data-action="restart-service" class="service-action" @click="restartService(host, String(service))"><PbIcon :icon="PhGear" /> {{ t('sysmon.restart') }}</button></div></div></section></div><EmptyState v-if="!serviceHosts.length" class="result-message" :title="t('sysmon.noServices')" /></div>
+        <div v-else-if="activeTab === 'services'" class="min-h-0 flex-1 overflow-auto"><div class="grid gap-2.5"><section v-for="host in serviceHosts" :key="host" class="overflow-hidden rounded-[7px] border border-border-default"><header class="flex cursor-pointer justify-between bg-card px-3 py-2.5 text-primary" @click="toggleServices(host)"><span>{{ host }}</span><PbIcon :icon="isServiceCollapsed(host) ? PhCaretRight : PhCaretDown" aria-label="Toggle service details" /></header><div v-if="!isServiceCollapsed(host)" class="grid gap-1.5 p-2.5"><div v-for="(check, service) in services[host]" :key="service" class="flex items-center justify-between gap-2.5 rounded-[5px] bg-card p-2"><div><div class="font-semibold">{{ service }}</div><div class="text-[0.78rem]" :class="serviceStatusClass(check.status)">{{ serviceLabel(check.status) }}<span v-if="check.pid"> (PID: {{ check.pid }})</span></div><div v-if="check.reason" class="text-[0.78rem] text-secondary">{{ check.reason }}</div><div v-if="check.error" class="text-[0.78rem] text-danger-soft">{{ check.error }}</div></div><button v-if="check.expected !== false && check.status !== 'disabled'" data-action="restart-service" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border-0 bg-accent-deep px-2 py-1.25 text-primary" @click="restartService(host, String(service))"><PbIcon :icon="PhGear" /> {{ t('sysmon.restart') }}</button></div></div></section></div><EmptyState v-if="!serviceHosts.length" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('sysmon.noServices')" /></div>
 
-        <div v-else class="vps-panel log-panel"><div id="vps-log-viewer"></div></div>
+        <div v-else class="min-h-0 flex-1 overflow-auto"><div id="vps-log-viewer" class="h-full min-h-[420px]"></div></div>
       </section>
     </div>
 
-    <div v-if="historyModal" data-modal="history" class="history-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><button data-close="history" class="modal-close" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="history-body"><ErrorState v-if="historyModal.error" class="result-message" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="result-message" :label="t('common.loading')" /><template v-else><div class="history-chart"><svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img"><polyline v-if="currentHistoryValues.length" :points="currentHistoryPolyline" fill="none" stroke="#72a0ee" stroke-width="2" /></svg></div><div class="history-points"><span v-for="point in currentHistoryValues" :key="`${point.ts}:${point.value}`">{{ point.ts }}: {{ point.value }}</span></div></template></div></div></div>
-    <div v-if="resultModal" data-modal="result" class="result-modal" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><h2>{{ resultModal.title }}</h2><button data-close="result" class="modal-close" @click="closeResult"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="result-message">{{ resultModal.message }}</div></div></div>
+    <div v-if="historyModal" data-modal="history" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true"><div class="flex max-h-[calc(100vh-40px)] max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg bg-card p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-[1.05rem]">{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><button data-close="history" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border-0 bg-accent-deep px-2 py-1.25 text-primary" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="overflow-auto pt-3"><ErrorState v-if="historyModal.error" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :label="t('common.loading')" /><template v-else><div class="w-full min-h-[120px] rounded-[5px] bg-page p-2"><svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img"><polyline v-if="currentHistoryValues.length" :points="currentHistoryPolyline" fill="none" stroke="#72a0ee" stroke-width="2" /></svg></div><div class="mt-2.5 flex flex-wrap gap-2 text-[0.78rem] text-primary"><span v-for="point in currentHistoryValues" :key="`${point.ts}:${point.value}`">{{ point.ts }}: {{ point.value }}</span></div></template></div></div></div>
+    <div v-if="resultModal" data-modal="result" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true"><div class="flex max-h-[calc(100vh-40px)] max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg bg-card p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-[1.05rem]">{{ resultModal.title }}</h2><button data-close="result" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border-0 bg-accent-deep px-2 py-1.25 text-primary" @click="closeResult"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="pt-3.5 whitespace-pre-wrap break-words text-primary">{{ resultModal.message }}</div></div></div>
   </div>
   </AppShell>
 </template>
+
+<style scoped>
+/* Page-level AppShell overrides for the fixed-height workbench layout —
+   ported from styles/vps-monitor.css at the Tailwind migration. These
+   target AppShell internals (the classes live on elements the shared
+   component renders), so they stay as CSS instead of utilities. */
+.operations-shell--vps-monitor :deep(.app-shell__workspace) {
+  display: flex;
+  height: 100dvh;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.operations-shell--vps-monitor :deep(.app-shell__main) {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  flex: 1;
+  padding: 0;
+}
+
+.operations-shell--vps-monitor :deep(.app-shell__primary) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+</style>

@@ -43,9 +43,8 @@ describe('editor.css — frozen port of the legacy editor <style> (15-454)', () 
     expect(sha256(normalized)).toBe(FROZEN_EDITOR_CSS_SHA256);
   });
 
-  it('loads the shared color tokens before the standalone editor styles', () => {
-    expect(editorMain).toContain("import '@/styles/tokens.css';");
-    expect(editorMain).toContain("import '@/styles/base.css';");
+  it('loads the shared Tailwind theme before the standalone editor styles', () => {
+    expect(editorMain).toContain("import '@/styles/tailwind.css';");
   });
 
   it('keeps the grid/cell/resize rules the grid engine depends on', () => {

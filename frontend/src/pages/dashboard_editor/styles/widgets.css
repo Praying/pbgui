@@ -291,7 +291,6 @@
 .do-chart-toolbar{position:absolute;top:4px;left:4px;z-index:20;display:none;gap:2px;background:rgb(var(--bg-page-rgb) / 0.85);border:1px solid var(--border-default);border-radius:5px;padding:3px 4px;}
 .do-chart-wrap:hover .do-chart-toolbar{display:flex;}
 .do-fs-btn{background:transparent;color:var(--text-secondary);border:none;padding:2px 5px;font-size:15px;cursor:pointer;line-height:1;border-radius:3px;}
-  border:1px solid var(--text-dim);border-radius:4px;padding:0.2rem 0.5rem;font-size:0.75rem;cursor:pointer;}
 .do-fs-btn:hover{color:var(--text-primary);background:var(--bg-elevated);}
 .dt-pos{color:var(--success);}
 .dt-neg{color:var(--danger);}

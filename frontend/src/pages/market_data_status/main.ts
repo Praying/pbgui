@@ -1,9 +1,7 @@
 import { createApp } from 'vue';
 import { createI18n, detectLang } from '@/shared/i18n';
 import App from './App.vue';
-import '@/styles/tokens.css';
-import '@/styles/base.css';
-import '@/styles/components.css';
+import '@/styles/tailwind.css';
 
 /*
  * The still-legacy market_data_main.html injects this page as a fragment and

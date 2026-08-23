@@ -11,10 +11,16 @@ function normalize(value: string): string {
 }
 
 function find_at_rule(container: Container, name: string, params: string): AtRule {
-  const matching_rule = container.nodes?.find(
-    (node): node is AtRule =>
-      node.type === 'atrule' && node.name === name && normalize(node.params) === params,
-  );
+  /* components.css lives inside `@layer components` since the Tailwind v4
+     migration, so the @media blocks nest one level down — walk recursively
+     instead of only scanning top-level nodes. */
+  let matching_rule: AtRule | undefined;
+
+  container.walkAtRules((rule) => {
+    if (!matching_rule && rule.name === name && normalize(rule.params) === params) {
+      matching_rule = rule;
+    }
+  });
 
   expect(matching_rule, `missing @${name} ${params}`).toBeDefined();
   return matching_rule as AtRule;

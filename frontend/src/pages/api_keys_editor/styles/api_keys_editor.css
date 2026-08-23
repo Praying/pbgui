@@ -17,7 +17,7 @@
  * App.vue / components/*.vue): .sb-btn.warning/.danger, .user-table
  * tr.selected, .dry-run-table, and the whole #sidebar/.sb-* rule group.
  *
- * Omitted since the Vue port: the #help-ovl/.ovl-*/.toc-*/.gs-*/.lang-pill/
+ * Omitted since the Vue port: the #help-ovl plus the .ovl-x/.toc-x/.gs-x/
  * .help-* rules — the embedded help overlay was dead markup in legacy
  * (never opened; the nav Guide button goes through PBGuiSharedHelp).
  */

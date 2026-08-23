@@ -508,7 +508,7 @@ onUnmounted(() => {
      intentionally NOT scoped: pbgui_nav.js targets these ids/classes). The
      in-page #help-ovl / #about-ovl / #rename-dialog CSS was dropped with the
      dead markup (see the script mapping comment). Base styles and tokens come
-     from @/styles/tokens.css + base.css. -->
+     from @/styles/tailwind.css. -->
 <style>
 html,
 body {

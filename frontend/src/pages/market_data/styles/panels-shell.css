@@ -7,7 +7,7 @@
  */
 
 :root {
-  /* legacy :10-18 (fs-*/sp-*/--input-h/--btn-h already come from tokens.css
+  /* legacy :10-18 (the fs/sp/input-h/btn-h tokens already come from tokens.css
      with identical values; --accent matches too) */
   --bg: var(--bg-page);
   --bg2: var(--bg-panel);

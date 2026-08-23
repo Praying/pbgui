@@ -1,6 +1,5 @@
 import { createApp } from 'vue';
-import '@/styles/tokens.css';
-import '@/styles/base.css';
+import '@/styles/tailwind.css';
 import { createI18n, detectLang } from '@/shared/i18n';
 import App from './App.vue';
 /* D-editor-4: swap the EmptyCell stubs for the real Plotly widgets */
@@ -9,7 +8,7 @@ import { setDashTranslator } from './lib/i18n';
 
 /* The editor page is a standalone document (like the legacy
    dashboard_editor.html): its own editor.css (imported by EditorGrid) carries
-   the document-level rules, so tokens/base.css are not needed here. */
+   the document-level rules on top of the shared tailwind.css entry. */
 
 const i18n = createI18n(detectLang());
 /* Wire the page's vue-i18n instance into dashT so every dash.* key resolves

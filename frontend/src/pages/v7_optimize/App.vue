@@ -45,8 +45,7 @@ import type { OptimizePanel } from './config';
 import type { ParetoItem, QueueItem, ResultSummary } from './types';
 import type { PageSection } from '@/shared/navigation';
 import { applyOptimizeSeed, buildEditorDraft, collectEditorConfig, type OptimizeEditorDraft } from './lib/configModel';
-import '@/styles/tokens.css';
-import '@/styles/base.css';
+import '@/styles/tailwind.css';
 import './styles/optimize.css';
 
 const { t } = useI18n();

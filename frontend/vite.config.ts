@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 import { readdirSync, statSync } from 'node:fs';
 
@@ -24,7 +25,11 @@ export default defineConfig({
   // pages from frontend/dist, so asset URLs must be /app/dist/... — the default
   // absolute /assets/... would 404 at the page's own route.
   base: '/app/dist/',
-  plugins: [vue()],
+  // tailwindcss() compiles src/styles/tailwind.css (theme + preflight +
+  // utilities) during dev/build. Skip it under vitest: tests never render
+  // styles (CSS imports are stubbed), and the strict lightningcss parse
+  // would otherwise fail suites on legacy stylesheets browsers tolerate.
+  plugins: [vue(), ...(process.env.VITEST ? [] : [tailwindcss()])],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   build: {
     outDir: '../../dist',

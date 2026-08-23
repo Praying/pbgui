@@ -23,8 +23,10 @@ const widgetsCss = readFileSync(join(import.meta.dirname, 'widgets.css'), 'utf8'
    escaped hex literals — #276749/#2a3a5c/#8a4b05/#070b12/rgba(45,55,72) —
    routed to success/accent/warning/bg-page/bg-elevated tokens), then at the
    deep-space-palette pass (value-level swap onto the blue-slate terminal
-   palette). */
-const FROZEN_WIDGETS_CSS_SHA256 = '8c1bf31750076914c0b570f273c50c70ca88ad15f2cd71b2f0d253dcecc57ecb';
+   palette), then at the Tailwind-v4 pass (a stray orphaned declaration +
+   dangling `}` after .do-fs-btn — dropped by browsers, rejected by
+   lightningcss — was removed; no rendered rule changed). */
+const FROZEN_WIDGETS_CSS_SHA256 = 'ecf47295dbad908582d6fdfd758f2cfbdf66c59d9df66d01d3c0fa90db025753';
 
 function normalize(text: string): string {
   /* Comments are stripped (the legacy _CSS section headers were raw JS

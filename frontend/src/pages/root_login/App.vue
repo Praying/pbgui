@@ -104,7 +104,7 @@ async function submitLogin(): Promise<void> {
 </template>
 
 <!-- Ported from frontend/root_login.html; :root vars, reset and html/body base
-     styles live in @/styles/tokens.css and @/styles/base.css. -->
+     styles live in @/styles/tailwind.css. -->
 <style scoped>
 .page {
   min-height: 100vh;

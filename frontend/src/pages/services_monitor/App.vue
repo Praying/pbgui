@@ -773,7 +773,7 @@ onUnmounted(() => {
 
 <!-- Layout scaffolding ported from frontend/services_monitor.html (page-level,
      intentionally NOT scoped because panel components target these ids/classes).
-     Base styles and tokens come from @/styles/tokens.css +
+     Base styles and tokens come from @/styles/tailwind.css and
      base.css; panel-specific styles arrive with each panel component. -->
 <style>
 #page-body {

@@ -157,11 +157,11 @@ onMounted(() => {
 
 <!-- Page CSS ported verbatim from frontend/dashboard_templates.html
      (page-level, intentionally NOT scoped: the legacy ids/classes are the
-     contract). The :root font-size block repeats tokens.css values exactly
-     like the legacy page did; body rules override @/styles/base.css. -->
+     contract). The :root font-size block repeats the tailwind.css theme values exactly
+     like the legacy page did; body rules override the shared tailwind.css base layer. -->
 <style>
 /* Layout scaffolding ported from frontend/dashboard_templates.html.
-   Tokens, reset, and base styles come from @/styles/tokens.css + base.css. */
+   Tokens, reset, and base styles come from @/styles/tailwind.css. */
 
 body {
   background: var(--bg-page);

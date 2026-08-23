@@ -3,8 +3,8 @@
  * (:10-507). ids/classes unchanged.
  *
  * Dropped (dead duplication): the legacy :root variable block (:11-24) —
- * tokens.css (imported first) defines the identical --fs-*/--sp-*/--input-h/
- * --btn-h values for every Vue page. Everything else is kept byte-for-byte,
+ * tokens.css (imported first) defines the identical fs/sp/input-h/
+ * btn-h token values for every Vue page. Everything else is kept byte-for-byte,
  * including the html/body overrides on top of shared base.css.
  */
 
