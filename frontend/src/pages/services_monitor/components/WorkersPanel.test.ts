@@ -57,12 +57,52 @@ const WORKERS: WorkersStatus = {
   ],
 };
 
+/** Mirror of the real backend payload (api/services.py) for the zh translation tests. */
+const BACKEND_WORKERS: WorkersStatus = {
+  counts: { total: 2, running: 1 },
+  groups: [
+    {
+      id: 'queue',
+      label: 'Queue Workers',
+      items: [
+        {
+          id: 'market-data-task',
+          label: 'Market Data Queue',
+          type: 'process worker',
+          running: true,
+          summary: '3 pending, 2 active',
+          description: 'Processes queued Market Data and Heatmap jobs from the shared task queue.',
+          note: 'Stop sends SIGTERM to the worker process. If pending jobs remain, the PBAPIServer watchdog may start it again.',
+          stats: [
+            { label: 'PID', value: '4321' },
+            { label: 'Pending', value: '3' },
+            { label: 'Autostart', value: 'On' },
+          ],
+          monitor_path: '/api/jobs/main_page?embed=1',
+        },
+        {
+          id: 'hlcvs-cleanup',
+          label: 'HLCVS Cleanup',
+          type: 'periodic task',
+          running: false,
+          summary: 'Maintains 2 cache target(s)',
+          description: 'Periodically removes expired PB7 cache materialization data from configured cleanup targets.',
+          stats: [
+            { label: 'Running', value: 'No' },
+            { label: 'Targets', value: '2' },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
 type DialogsGlobal = typeof globalThis & { PBGuiDialogs?: { confirm: ReturnType<typeof vi.fn> } };
 
-function mountPanel(props: { workers?: WorkersStatus; loadError?: boolean } = {}) {
+function mountPanel(props: { workers?: WorkersStatus; loadError?: boolean; lang?: 'en' | 'zh' } = {}) {
   return mount(WorkersPanel, {
     props: { workers: props.workers ?? WORKERS, loadError: props.loadError ?? false },
-    global: { plugins: [createI18n('en')] },
+    global: { plugins: [createI18n(props.lang ?? 'en')] },
   });
 }
 
@@ -223,17 +263,6 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
 
     expect(wrapper.emitted('refresh')).toHaveLength(1);
   });
-
-  it('emits refresh from the ctrl strip refresh button', async () => {
-    const wrapper = mountPanel();
-
-    const refreshButton = wrapper.find('.ctrl-strip .ctrl-btn.refresh');
-    expect(refreshButton.text()).toContain('Refresh');
-    expect(refreshButton.find('svg').exists()).toBe(true);
-    await refreshButton.trigger('click');
-
-    expect(wrapper.emitted('refresh')).toHaveLength(1);
-  });
 });
 
 describe('WorkersPanel log section (legacy updateWorkerLog)', () => {
@@ -265,5 +294,59 @@ describe('WorkersPanel log section (legacy updateWorkerLog)', () => {
     expect(wrapper.find('.worker-log-empty').text()).toContain(
       'No dedicated local log is configured for this worker.'
     );
+  });
+});
+
+describe('WorkersPanel worker metadata i18n (backend English text)', () => {
+  it('translates known groups, workers, stats and values for the zh locale', () => {
+    const wrapper = mountPanel({ workers: BACKEND_WORKERS, lang: 'zh' });
+
+    expect(wrapper.find('.worker-group-title').text()).toBe('队列工作节点');
+    const card = cardById(wrapper, 'market-data-task');
+    expect(card.find('.card-name').text()).toBe('市场数据队列');
+    expect(card.find('.worker-type').text()).toBe('进程工作节点');
+    expect(card.find('.worker-summary').text()).toBe('3 待处理，2 活跃');
+    // Card pills translate label and value.
+    expect(card.findAll('.worker-pill').map((pill) => pill.text())).toEqual(['PID: 4321', '待处理: 3', '自动启动: 开']);
+    // Detail pane translates title/subtitle/description/note.
+    expect(wrapper.find('.worker-detail-title').text()).toBe('市场数据队列');
+    expect(wrapper.find('.worker-detail-subtitle').text()).toBe('进程工作节点 • 3 待处理，2 活跃');
+    expect(wrapper.find('.worker-detail-desc').text()).toBe('处理共享任务队列中的市场数据与热力图任务。');
+    expect(wrapper.find('.worker-detail-note').text()).toContain('停止会向工作节点进程发送 SIGTERM');
+    expect(wrapper.findAll('.worker-stat-label').map((el) => el.text())).toEqual(['PID', '待处理', '自动启动']);
+    expect(wrapper.findAll('.worker-stat-value').map((el) => el.text())).toEqual(['4321', '3', '开']);
+  });
+
+  it('translates pattern summaries and the monitor title for the zh locale', async () => {
+    const wrapper = mountPanel({ workers: BACKEND_WORKERS, lang: 'zh' });
+
+    // market-data-task is selected by default and embeds its monitor page.
+    expect(wrapper.find('.worker-monitor-frame').attributes('title')).toBe('市场数据队列 监控');
+
+    await cardById(wrapper, 'hlcvs-cleanup').trigger('click');
+
+    expect(wrapper.find('.worker-detail-title').text()).toBe('HLCVS 缓存清理');
+    expect(wrapper.find('.worker-detail-subtitle').text()).toBe('周期任务 • 维护 2 个缓存清理目标');
+  });
+
+  it('renders the backend English verbatim for the en locale', () => {
+    const wrapper = mountPanel({ workers: BACKEND_WORKERS });
+
+    expect(wrapper.find('.worker-group-title').text()).toBe('Queue Workers');
+    expect(wrapper.find('.worker-detail-title').text()).toBe('Market Data Queue');
+    expect(wrapper.find('.worker-detail-subtitle').text()).toBe('process worker • 3 pending, 2 active');
+    expect(wrapper.find('.worker-detail-desc').text()).toBe(
+      'Processes queued Market Data and Heatmap jobs from the shared task queue.'
+    );
+  });
+
+  it('falls back to the backend text for unknown workers in the zh locale', () => {
+    const wrapper = mountPanel({ lang: 'zh' });
+
+    expect(wrapper.find('.worker-group-title').text()).toBe('Web');
+    expect(cardById(wrapper, 'w1').find('.card-name').text()).toBe('Frontend');
+    expect(cardById(wrapper, 'w1').find('.worker-type').text()).toBe('uvicorn');
+    expect(wrapper.find('.worker-detail-subtitle').text()).toBe('uvicorn • serving on :8080');
+    expect(wrapper.findAll('.worker-stat-label').map((el) => el.text())).toEqual(['CPU', 'MEM', 'UP', 'HIDDEN']);
   });
 });

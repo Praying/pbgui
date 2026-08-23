@@ -363,6 +363,12 @@ async function fetchWorkers(): Promise<void> {
 /** Legacy poll arm: the timer only runs while the workers panel is visible. */
 const workersPolling = usePolling(fetchWorkers, WORKERS_POLL_INTERVAL_MS);
 
+/** Header refresh: services + worker status in one go (the workers strip no longer carries its own button). */
+function refreshAll(): void {
+  void fetchStatus();
+  void fetchWorkers();
+}
+
 /* ── CMC pool (legacy loadCmcPool + _cmcLoad* state) ── */
 
 /** Legacy _cmcPool (also the usage source: day / soft_credit_limit). */
@@ -671,7 +677,7 @@ onUnmounted(() => {
     </template>
 
     <template #header-actions>
-      <button class="pbgui-action" type="button" @click="fetchStatus"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
+      <button class="pbgui-action" type="button" @click="refreshAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
     </template>
 
   <div id="page-body">

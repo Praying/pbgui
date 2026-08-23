@@ -1,5 +1,10 @@
 # Unreleased
 
+## Services Monitor — Workers Panel Refresh & Localization
+
+- Deduplicated the Workers panel refresh controls: the page-header Refresh button now refreshes both the service status and the worker status in one go, and the panel's own ctrl-strip refresh button (which previously sat next to it as a second, visually identical button) is gone. Per-worker actions still trigger an immediate refresh after they complete.
+- Localized the worker metadata: group names, worker names, types, descriptions, notes, stat labels/values, dynamic summaries ("3 pending, 2 active" …) and the monitor iframe title now resolve through `sysmon.worker*` i18n keys instead of showing the backend's English verbatim. Unknown workers (e.g. ones added on the backend later) fall back to the backend text unchanged, and the English locale keeps the exact backend wording.
+
 ## Optimize — Config Editor Tab Bar & Bounds Layout
 
 - Fixed the Optimize "New Config" editor modal: on content-heavy tabs (Bounds / Optimizer / Scoring & Limits) the tab bar was crushed to a sliver with a vertical scrollbar, because its `overflow-x: auto` zeroed its automatic minimum height inside the height-capped flex modal. Pinned the tab bar with `flex-shrink: 0` (explicit on the modal header/footer too), so long tab contents now scroll inside the body while the tab bar stays intact.

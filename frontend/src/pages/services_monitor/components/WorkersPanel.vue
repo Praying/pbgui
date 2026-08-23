@@ -28,7 +28,108 @@ const props = withDefaults(defineProps<Props>(), { loadError: false });
 
 const emit = defineEmits<{ refresh: [] }>();
 
-const { t } = useI18n();
+const { t, te } = useI18n();
+
+/* ── Worker metadata i18n ──
+ * The backend returns English text (label/type/summary/description/note/stats).
+ * Known ids/labels map to sysmon.worker* keys; anything unknown (e.g. a worker
+ * added on the backend later) falls back to the backend text verbatim. */
+
+const WORKER_TYPE_KEYS: Record<string, string> = {
+  'process worker': 'sysmon.workerType.processWorker',
+  'scheduler task': 'sysmon.workerType.schedulerTask',
+  'periodic task': 'sysmon.workerType.periodicTask',
+};
+
+const WORKER_GROUP_KEYS: Record<string, string> = {
+  queue: 'sysmon.workerGroup.queue',
+  internal: 'sysmon.workerGroup.internal',
+};
+
+/** Dynamic summaries built on the backend ("3 pending, 1 active" …). */
+const SUMMARY_PATTERNS: { re: RegExp; key: string; params: (match: RegExpMatchArray) => Record<string, string> }[] = [
+  { re: /^(\d+) pending, (\d+) active$/, key: 'sysmon.workerSummary.pendingActive', params: (m) => ({ pending: m[1]!, active: m[2]! }) },
+  { re: /^(\d+) queued, (\d+) active$/, key: 'sysmon.workerSummary.queuedActive', params: (m) => ({ queued: m[1]!, active: m[2]! }) },
+  { re: /^Maintains (\d+) cache target\(s\)$/, key: 'sysmon.workerSummary.hlcvsTargets', params: (m) => ({ count: m[1]! }) },
+];
+
+const SUMMARY_EXACT: Record<string, string> = {
+  'Auto-pulls configured backtest archives': 'sysmon.workerSummary.archiveSync',
+};
+
+const STAT_LABEL_KEYS: Record<string, string> = {
+  PID: 'sysmon.workerStat.pid',
+  Pending: 'sysmon.workerStat.pending',
+  Active: 'sysmon.workerStat.active',
+  Done: 'sysmon.workerStat.done',
+  Failed: 'sysmon.workerStat.failed',
+  Queued: 'sysmon.workerStat.queued',
+  Running: 'sysmon.workerStat.running',
+  Backtesting: 'sysmon.workerStat.backtesting',
+  Complete: 'sysmon.workerStat.complete',
+  Error: 'sysmon.workerStat.error',
+  Autostart: 'sysmon.workerStat.autostart',
+  'Autostart CPU': 'sysmon.workerStat.autostartCpu',
+  'CPU limit': 'sysmon.workerStat.cpuLimit',
+  'CPU override': 'sysmon.workerStat.cpuOverride',
+  Health: 'sysmon.workerStat.health',
+  Targets: 'sysmon.workerStat.targets',
+  'Auto pull': 'sysmon.workerStat.autoPull',
+};
+
+const STAT_VALUE_KEYS: Record<string, string> = {
+  On: 'sysmon.workerStatValue.on',
+  Off: 'sysmon.workerStatValue.off',
+  Yes: 'sysmon.workerStatValue.yes',
+  No: 'sysmon.workerStatValue.no',
+  running: 'sysmon.workerStatValue.running',
+  stopped: 'sysmon.workerStatValue.stopped',
+  failed: 'sysmon.workerStatValue.failed',
+};
+
+/** Translate when the key exists; otherwise keep the backend text. */
+function tr(key: string, fallback: string, params?: Record<string, string>): string {
+  return te(key) ? t(key, params ?? {}) : fallback;
+}
+
+function workerText(item: Worker, field: 'label' | 'description' | 'note'): string {
+  const fallback = field === 'label' ? item.label || item.id : item[field] || '';
+  return tr(`sysmon.worker.${item.id}.${field}`, fallback);
+}
+
+function workerTypeText(item: Worker): string {
+  const fallback = item.type || 'worker';
+  const key = WORKER_TYPE_KEYS[fallback];
+  return key ? tr(key, fallback) : fallback;
+}
+
+function groupLabel(group: { id?: string; label?: string }): string {
+  const fallback = group.label || group.id || t('sysmon.workers');
+  const key = group.id ? WORKER_GROUP_KEYS[group.id] : undefined;
+  return key ? tr(key, fallback) : fallback;
+}
+
+function workerSummaryText(item: Worker): string {
+  const raw = item.summary || '';
+  if (!raw) return '';
+  const exact = SUMMARY_EXACT[raw];
+  if (exact) return tr(exact, raw);
+  for (const pattern of SUMMARY_PATTERNS) {
+    const match = raw.match(pattern.re);
+    if (match) return tr(pattern.key, raw, pattern.params(match));
+  }
+  return raw;
+}
+
+function statLabelText(label: string): string {
+  const key = STAT_LABEL_KEYS[label];
+  return key ? tr(key, label) : label;
+}
+
+function statValueText(value: string): string {
+  const key = STAT_VALUE_KEYS[value];
+  return key ? tr(key, value) : value;
+}
 
 const groups = computed(() => props.workers.groups ?? []);
 const counts = computed(() => props.workers.counts ?? { total: 0, running: 0 });
@@ -161,8 +262,6 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
       <div class="status-dot" :class="summaryClass"></div>
       <span class="status-label">{{ summaryText }}</span>
     </div>
-    <span style="flex: 1"></span>
-    <button class="ctrl-btn refresh" type="button" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
   </div>
 
   <div class="workers-shell">
@@ -176,7 +275,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
       <template v-else>
         <section v-for="group in groups" :key="group.id ?? group.label" class="worker-group">
           <div>
-            <div class="worker-group-title">{{ group.label || group.id || t('sysmon.workers') }}</div>
+            <div class="worker-group-title">{{ groupLabel(group) }}</div>
             <div class="worker-group-subtitle">{{ (group.items ?? []).length }} {{ t('sysmon.itemCount') }}</div>
           </div>
           <div class="worker-grid">
@@ -188,14 +287,14 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
               :data-worker="item.id"
               @click="selectedWorkerId = item.id"
             >
-              <div class="worker-type">{{ item.type || 'worker' }}</div>
-              <div class="card-name">{{ item.label || item.id }}</div>
+              <div class="worker-type">{{ workerTypeText(item) }}</div>
+              <div class="card-name">{{ workerText(item, 'label') }}</div>
               <div class="card-status-row">
                 <span class="card-dot" :class="item.running ? 'running' : 'stopped'"></span>{{ item.running ? t('sysmon.running') : t('sysmon.stopped') }}
               </div>
-              <div class="worker-summary">{{ item.summary || '' }}</div>
+              <div class="worker-summary">{{ workerSummaryText(item) }}</div>
               <div v-if="cardStats(item).length" class="worker-stats-inline">
-                <span v-for="stat in cardStats(item)" :key="stat.label" class="worker-pill">{{ stat.label }}: {{ stat.value }}</span>
+                <span v-for="stat in cardStats(item)" :key="stat.label" class="worker-pill">{{ statLabelText(stat.label) }}: {{ statValueText(stat.value) }}</span>
               </div>
               <div class="worker-btnrow">
                 <button
@@ -219,15 +318,15 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
         <template v-else>
           <div class="worker-detail-top">
             <div>
-              <div class="worker-detail-title">{{ selectedWorker.label || selectedWorker.id }}</div>
-              <div class="worker-detail-subtitle">{{ selectedWorker.type || 'worker' }} • {{ selectedWorker.summary || '' }}</div>
+              <div class="worker-detail-title">{{ workerText(selectedWorker, 'label') }}</div>
+              <div class="worker-detail-subtitle">{{ workerTypeText(selectedWorker) }} • {{ workerSummaryText(selectedWorker) }}</div>
             </div>
             <span class="worker-state-badge" :class="selectedWorker.running ? 'running' : 'stopped'">
               {{ selectedWorker.running ? t('sysmon.running') : t('sysmon.stopped') }}
             </span>
           </div>
-          <div class="worker-detail-desc">{{ selectedWorker.description || '' }}</div>
-          <div v-if="selectedWorker.note" class="worker-detail-note">{{ selectedWorker.note }}</div>
+          <div class="worker-detail-desc">{{ workerText(selectedWorker, 'description') }}</div>
+          <div v-if="selectedWorker.note" class="worker-detail-note">{{ workerText(selectedWorker, 'note') }}</div>
           <div class="worker-detail-actions">
             <button
               v-for="b in actionButtons(selectedWorker)"
@@ -240,8 +339,8 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
           </div>
           <div v-if="(selectedWorker.stats ?? []).length" class="worker-stats-grid">
             <div v-for="stat in selectedWorker.stats" :key="stat.label" class="worker-stat-card">
-              <div class="worker-stat-label">{{ stat.label }}</div>
-              <div class="worker-stat-value">{{ stat.value }}</div>
+              <div class="worker-stat-label">{{ statLabelText(stat.label) }}</div>
+              <div class="worker-stat-value">{{ statValueText(stat.value) }}</div>
             </div>
           </div>
         </template>
@@ -257,7 +356,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
             v-else-if="selectedWorker.monitor_path"
             class="worker-monitor-frame"
             :src="selectedWorker.monitor_path"
-            :title="(selectedWorker.label || selectedWorker.id) + ' monitor'"
+            :title="t('sysmon.workerMonitorTitle', { label: workerText(selectedWorker, 'label') })"
           ></iframe>
           <template v-else>
             <div>{{ t('sysmon.noDedicatedWorkerLog') }}</div>
