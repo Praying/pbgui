@@ -69,15 +69,17 @@ function reveal(side: 'long' | 'short'): void {
 </script>
 
 <template>
-  <div class="section-title section-title-with-control">
-    <span>{{ t('v7run.botConfiguration') }}</span>
-    <div class="form-group section-title-control" v-show="page.fieldVisible('strategyKind')">
-      <label><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
-      <select id="f-strategy-kind" v-model="state.strategyKind" @change="page.changeStrategyKind(state.strategyKind)">
-        <option v-for="kind in strategyOptions" :key="kind.value" :value="kind.value">{{ kind.value }}</option>
-      </select>
-    </div>
-  </div>
+  <section class="edit-section">
+    <header class="edit-section-head">
+      <h3 class="edit-section-title">{{ t('v7run.botConfiguration') }}</h3>
+      <div class="form-group edit-section-head-control" v-show="page.fieldVisible('strategyKind')">
+        <label><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
+        <select id="f-strategy-kind" v-model="state.strategyKind" @change="page.changeStrategyKind(state.strategyKind)">
+          <option v-for="kind in strategyOptions" :key="kind.value" :value="kind.value">{{ kind.value }}</option>
+        </select>
+      </div>
+    </header>
+    <div class="edit-section-body">
   <div class="form-row cols-4">
     <FieldNumber id="f-long-twe" v-model="state.longTwe" :label="t('v7run.longTwe')" min="0" max="100" step="0.05" @change="onBotInputs('long')" />
     <FieldNumber id="f-long-npos" v-model="state.longNpos" :label="t('v7run.longNpositions')" min="0" max="100" step="1" @change="onBotInputs('long')" />
@@ -140,4 +142,6 @@ function reveal(side: 'long' | 'short'): void {
       </div>
     </div>
   </div>
+    </div>
+  </section>
 </template>

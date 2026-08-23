@@ -4393,6 +4393,7 @@
   "v7run.backToList": "返回列表",
   "v7run.backtest": "回测",
   "v7run.backupDeleted": "备份 {name}/{ts} 已删除",
+  "v7run.basicSettings": "基本设置",
   "v7run.backupRunningWarning": "该实例正在 {hosts} 上运行。恢复后的配置将同步到正在运行的目标。",
   "v7run.backups": "备份",
   "v7run.balanceCalculator": "盈亏平衡计算器",

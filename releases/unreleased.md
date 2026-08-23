@@ -1,5 +1,11 @@
 # Unreleased
 
+## Run Editor — PBv8 Edit Page Panel Redesign
+
+- Reworked the shared PBv7/PBv8 run editor (reached from Run → "Add PB8 instance") into a unified panel column: the form content is capped at 1420px and centred instead of stretching edge-to-edge on wide screens, and every top-level block (Basic — now with its own "Basic Settings" header — Filters, Bot Configuration, plus the collapsible Advanced / Additional Parameters / Raw JSON / Coin Overrides blocks) shares one card chrome and header treatment, replacing the previous mix of a bare grid, underlined titles and expanders. The in-page action sidebar is unchanged.
+- The collapsible section headers are now real `<button>`s with `aria-expanded` (keyboard focusable, with a visible focus ring), a Phosphor caret that rotates to the accent colour when open, hover and pressed feedback.
+- Form controls gained a proper state layer: a 3px accent focus ring (also on the coin multiselect), hover border emphasis, a muted read-only treatment for the locked v8 config-version field, and tabular figures in numeric inputs; action buttons received pressed feedback.
+
 ## Services Monitor — Workers Panel Refresh & Localization
 
 - Deduplicated the Workers panel refresh controls: the page-header Refresh button now refreshes both the service status and the worker status in one go, and the panel's own ctrl-strip refresh button (which previously sat next to it as a second, visually identical button) is gone. Per-worker actions still trigger an immediate refresh after they complete.

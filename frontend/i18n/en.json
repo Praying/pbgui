@@ -4393,6 +4393,7 @@
   "v7run.backToList": "Back to list",
   "v7run.backtest": "Backtest",
   "v7run.backupDeleted": "Backup {name}/{ts} deleted",
+  "v7run.basicSettings": "Basic Settings",
   "v7run.backupRunningWarning": "This instance is running on {hosts}. The restored config will be synced to the running target.",
   "v7run.backups": "Backups",
   "v7run.balanceCalculator": "Balance Calculator",

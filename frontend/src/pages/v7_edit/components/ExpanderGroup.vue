@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { PhCaretRight } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 /** The .expander primitive (:672-676 / :1127-1140) — click header toggles. */
 defineProps<{ id: string; title: string }>();
@@ -11,10 +13,11 @@ function toggle(): void {
 
 <template>
   <div :id="id" class="expander" :class="{ open }">
-    <div class="expander-header" @click="toggle">
-      <span class="arrow">&#x25B6;</span> <span>{{ title }}</span>
+    <button type="button" class="expander-header" :aria-expanded="open" @click="toggle">
+      <PbIcon class="arrow" :icon="PhCaretRight" :size="14" />
+      <span>{{ title }}</span>
       <slot name="header-extra"></slot>
-    </div>
+    </button>
     <!-- Body stays in the DOM, hidden by CSS — legacy .expander-body parity
          (fields remain addressable like the run-version-hidden fields). -->
     <div class="expander-body">

@@ -22,7 +22,10 @@ const loggingLevelOptions = [
 </script>
 
 <template>
-  <div class="form-row cols-8" style="margin-bottom: var(--sp-lg)">
+  <section class="edit-section">
+    <header class="edit-section-head"><h3 class="edit-section-title">{{ t('v7run.basicSettings') }}</h3></header>
+    <div class="edit-section-body">
+      <div class="form-row cols-8">
     <!-- Row 1: Configuration & Identity -->
     <div class="form-group" style="grid-column: span 2">
       <label><span data-tip="Fetch API key/secret from api-keys.json.">{{ t('v7run.user') }}</span></label>
@@ -194,5 +197,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
         tip="Automatically enable graceful stop for positions on disapproved coins instead of manual mode."
       />
     </div>
-  </div>
+      </div>
+    </div>
+  </section>
 </template>

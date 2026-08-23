@@ -45,7 +45,9 @@ async function onApplyFilters(): Promise<void> {
 </script>
 
 <template>
-  <div class="section-title">{{ t('v7run.filters') }}</div>
+  <section class="edit-section">
+    <header class="edit-section-head"><h3 class="edit-section-title">{{ t('v7run.filters') }}</h3></header>
+    <div class="edit-section-body">
   <div class="form-row cols-8">
     <FieldNumber
       id="f-market-cap"
@@ -125,4 +127,6 @@ async function onApplyFilters(): Promise<void> {
     <div class="form-group"></div>
     <div class="form-group"></div>
   </div>
+    </div>
+  </section>
 </template>
