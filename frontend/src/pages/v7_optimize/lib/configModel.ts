@@ -393,3 +393,39 @@ export function readStoredParetoColumns(raw: string | null): string[] {
     return [];
   }
 }
+
+/* ── Strategy-dependent optimizer overrides (legacy v7_optimize.html:5675-5695, v1.98.36) ── */
+
+/** Overrides that only apply to one strategy kind. */
+export const OPTIMIZE_OVERRIDE_STRATEGY_REQUIREMENTS: Record<string, string> = {
+  lossless_close_trailing: 'trailing_martingale',
+  forward_tp_grid: 'trailing_grid_v7',
+  backward_tp_grid: 'trailing_grid_v7',
+};
+
+/** normalizeOptimizeEnableOverrides — trim, drop empties, dedupe (string input splits on commas). */
+export function normalizeOptimizeEnableOverrides(value: unknown): string[] {
+  let items: unknown[];
+  if (Array.isArray(value)) items = value.slice();
+  else if (typeof value === 'string') items = value.split(',');
+  else if (value != null) items = [value];
+  else items = [];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const item of items) {
+    const normalized = String(item ?? '').trim();
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    result.push(normalized);
+  }
+  return result;
+}
+
+/** filterOptimizeEnableOverridesForStrategy — drop overrides the strategy cannot apply. */
+export function filterOptimizeEnableOverridesForStrategy(value: unknown, strategyKind: unknown): string[] {
+  const strategy = String(strategyKind ?? '').trim();
+  return normalizeOptimizeEnableOverrides(value).filter((item) => {
+    const required = OPTIMIZE_OVERRIDE_STRATEGY_REQUIREMENTS[item];
+    return !required || required === strategy;
+  });
+}

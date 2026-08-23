@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyOptimizeSeed,
+  filterOptimizeEnableOverridesForStrategy,
   buildEditorDraft,
   collectEditorConfig,
   flattenBounds,
@@ -135,6 +136,21 @@ describe('optimize config model', () => {
     expect(readStoredParetoColumns('not json')).toEqual([]);
     expect(readStoredParetoColumns('{"gain":true}')).toEqual([]);
     expect(readStoredParetoColumns('[" gain ", "", "adg"]')).toEqual(['gain', 'adg']);
+  });
+
+
+  it('filters optimizer overrides by the strategy they require (v1.98.36)', () => {
+    const overrides = ['lossless_close_trailing', 'forward_tp_grid', 'backward_tp_grid', 'hsl_enabled'];
+    expect(filterOptimizeEnableOverridesForStrategy(overrides, 'trailing_martingale'))
+      .toEqual(['lossless_close_trailing', 'hsl_enabled']);
+    expect(filterOptimizeEnableOverridesForStrategy(overrides, 'trailing_grid_v7'))
+      .toEqual(['forward_tp_grid', 'backward_tp_grid', 'hsl_enabled']);
+    expect(filterOptimizeEnableOverridesForStrategy(overrides, 'neat'))
+      .toEqual(['hsl_enabled']);
+    // 字符串输入按逗号拆分（旧版 normalize 语义）
+    expect(filterOptimizeEnableOverridesForStrategy(' lossless_close_trailing , hsl_enabled ', 'neat'))
+      .toEqual(['hsl_enabled']);
+    expect(filterOptimizeEnableOverridesForStrategy(null, 'neat')).toEqual([]);
   });
 
 });

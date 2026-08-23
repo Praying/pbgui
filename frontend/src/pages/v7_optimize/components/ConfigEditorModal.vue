@@ -12,6 +12,7 @@ import {
   cloneValue,
   cleanupOptimizeBackendFields,
   collectEditorConfig,
+  filterOptimizeEnableOverridesForStrategy,
   getPath,
   isObject,
   migrateOptimizeBackend,
@@ -144,6 +145,8 @@ function load(source: OptimizeEditorDraft | null): void {
   scoringJson.value = json(local.value.scoring);
   limitsJson.value = json(local.value.limits);
   pymooJson.value = json(local.value.optimize.pymoo);
+  // v1.98.36: drop overrides the current strategy cannot apply on load
+  local.value.optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(local.value.optimize.enable_overrides, local.value.live.strategy_kind);
   enableOverridesJson.value = json(local.value.optimize.enable_overrides);
   coinSourcesJson.value = json(local.value.backtest.coin_sources ?? local.value.pbgui.coin_sources);
   runtimeJson.value = json(local.value.runtimeOverrides);
@@ -351,6 +354,18 @@ function setNumber(sectionName: SectionName, key: string, value: string): void {
   const parsed = Number(value);
   target[key] = Number.isFinite(parsed) ? parsed : value;
 }
+/**
+ * changeOptimizeStrategyKind (v1.98.36 syncOptimizeOverrideStrategyCompatibility):
+ * switching the strategy drops overrides the new kind cannot apply and
+ * mirrors the filtered list back into the enable_overrides textarea.
+ */
+function onStrategyKindChange(value: string): void {
+  setText('live', 'strategy_kind', value);
+  if (!local.value) return;
+  local.value.optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(local.value.optimize.enable_overrides, value);
+  enableOverridesJson.value = json(local.value.optimize.enable_overrides);
+}
+
 function setText(sectionName: SectionName, key: string, value: string): void {
   const target = section(sectionName);
   if (target) target[key] = value;
@@ -479,7 +494,8 @@ function applyTextSections(): void {
   try { parsedEnableOverrides = JSON.parse(enableOverridesJson.value || '[]'); }
   catch (error) { throw new Error(`Enable overrides: ${error instanceof Error ? error.message : String(error)}`); }
   if (!Array.isArray(parsedEnableOverrides) && (parsedEnableOverrides === null || typeof parsedEnableOverrides !== 'object')) throw new Error('Enable overrides: JSON value must be an array or object');
-  local.value.optimize.enable_overrides = cloneValue(parsedEnableOverrides);
+  // v1.98.36: apply the strategy filter before save/queue/launch
+  local.value.optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(cloneValue(parsedEnableOverrides), local.value.live.strategy_kind);
   local.value.backtest.coin_sources = parseJsonObject(coinSourcesJson.value, 'Coin sources');
   local.value.runtimeOverrides = parseJsonObject(runtimeJson.value, 'Runtime overrides');
   local.value.overrideConfigs = parseJsonObject(overrideJson.value, 'Override configs');
@@ -560,7 +576,7 @@ function preflight(): void {
           <label class="opt-form-label" data-field="btc-collateral-cap">btc_collateral_cap<input class="opt-input" type="number" step="any" :value="numberField('backtest', 'btc_collateral_cap', 0)" @input="setNumber('backtest', 'btc_collateral_cap', ($event.target as HTMLInputElement).value)" /></label>
           <label class="opt-form-label">btc_collateral_ltv_cap<input class="opt-input" type="number" step="any" :value="numberField('backtest', 'btc_collateral_ltv_cap', 0)" @input="setNumber('backtest', 'btc_collateral_ltv_cap', ($event.target as HTMLInputElement).value)" /></label>
           <label class="opt-form-label">hsl_signal_mode<select class="opt-input" :value="String(local.live.hsl_signal_mode || '')" @change="setText('live', 'hsl_signal_mode', ($event.target as HTMLSelectElement).value)"><option v-for="mode in availableHslModes" :key="mode" :value="mode">{{ mode }}</option></select></label>
-          <label v-if="version === 'v8'" class="opt-form-label">strategy_kind<select class="opt-input" :value="String(local.live.strategy_kind || '')" @change="setText('live', 'strategy_kind', ($event.target as HTMLSelectElement).value)"><option v-for="strategy in availableStrategies" :key="strategy" :value="strategy">{{ strategy }}</option></select></label>
+          <label v-if="version === 'v8'" class="opt-form-label">strategy_kind<select class="opt-input" :value="String(local.live.strategy_kind || '')" @change="onStrategyKindChange(($event.target as HTMLSelectElement).value)"><option v-for="strategy in availableStrategies" :key="strategy" :value="strategy">{{ strategy }}</option></select></label>
           <label class="opt-form-label span-4">ohlcv_source_dir<div class="opt-inline-control"><input class="opt-input opt-grow" :value="String(local.backtest.ohlcv_source_dir || '')" @input="setText('backtest', 'ohlcv_source_dir', ($event.target as HTMLInputElement).value)" /><button class="opt-btn small" type="button" :title="t('v7optimize.clearPath')" :aria-label="t('v7optimize.clearPath')" @click="setText('backtest', 'ohlcv_source_dir', '')"><PbIcon :icon="PhX" :size="18" /></button><button v-if="pbguiDataPath" class="opt-btn small" type="button" @click="setText('backtest', 'ohlcv_source_dir', pbguiDataPath)">{{ t('v7optimize.pbguiData') }}</button></div></label>
           <label class="opt-form-label">market_cap<input class="opt-input" type="number" step="any" :value="numberField('pbgui', 'market_cap', 0)" @input="setNumber('pbgui', 'market_cap', ($event.target as HTMLInputElement).value)" /></label>
           <label class="opt-form-label">vol_mcap<input class="opt-input" type="number" step="any" :value="numberField('pbgui', 'vol_mcap', 0)" @input="setNumber('pbgui', 'vol_mcap', ($event.target as HTMLInputElement).value)" /></label>
@@ -644,7 +660,7 @@ function preflight(): void {
             <label class="opt-form-label">mutation_eta<input class="opt-input" type="number" step="any" :value="numberField('optimize', 'mutation_eta', 20)" @input="setNumber('optimize', 'mutation_eta', ($event.target as HTMLInputElement).value)" /></label>
             <label class="opt-form-label">mutation_indpb<input class="opt-input" type="number" step="any" :value="numberField('optimize', 'mutation_indpb', 0.1)" @input="setNumber('optimize', 'mutation_indpb', ($event.target as HTMLInputElement).value)" /></label>
           </template>
-          <label class="opt-form-label span-4">enable_overrides<textarea v-model="enableOverridesJson" class="opt-json small" /></label>
+          <label class="opt-form-label span-4">enable_overrides<textarea v-model="enableOverridesJson" class="opt-json small" data-field="enable-overrides" /></label>
           <div class="opt-editor-stack span-4">
             <div>
               <strong>{{ t('v7optimize.additionalParameters') }}</strong>

@@ -286,14 +286,33 @@ describe('ConfigEditorModal', () => {
   });
 
   it('round trips array-based enable overrides', async () => {
-    const draft = buildEditorDraft({ backtest: { exchanges: ['bybit'] }, optimize: { enable_overrides: ['lossless_close_trailing'] } }, 'v7', 'overrides');
+    const draft = buildEditorDraft({ backtest: { exchanges: ['bybit'] }, optimize: { enable_overrides: ['mirror_short_from_long'] } }, 'v7', 'overrides');
     const wrapper = mount(ConfigEditorModal, {
       props: { open: true, draft, version: 'v7', error: '' },
       global: { plugins: [createI18n('en')] },
     });
     await wrapper.find('button[data-save="config"]').trigger('click');
     const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
-    expect(saved.optimize.enable_overrides).toEqual(['lossless_close_trailing']);
+    expect(saved.optimize.enable_overrides).toEqual(['mirror_short_from_long']);
+  });
+
+  it('drops strategy-incompatible optimizer overrides on load and save (v1.98.36)', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'] },
+      live: { strategy_kind: 'neat' },
+      optimize: { enable_overrides: ['lossless_close_trailing', 'forward_tp_grid', 'mirror_short_from_long'] },
+    }, 'v8', 'overrides');
+    const wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v8', error: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+    // 加载即过滤：textarea 反映剩余项
+    await wrapper.find('[data-tab="optimizer"]').trigger('click');
+    expect((wrapper.find('[data-field="enable-overrides"]').element as HTMLTextAreaElement).value.trim())
+      .toBe(JSON.stringify(['mirror_short_from_long'], null, 2).trim());
+    await wrapper.find('button[data-save="config"]').trigger('click');
+    const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
+    expect(saved.optimize.enable_overrides).toEqual(['mirror_short_from_long']);
   });
 
   it('uses runtime pymoo options and resolves auto to NSGA-III for four objectives', async () => {
