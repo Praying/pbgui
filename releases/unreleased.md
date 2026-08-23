@@ -1,5 +1,17 @@
 # Unreleased
 
+## Backtest — Import Dialog Sizing
+
+- Gave the config-import dialog a fixed readable width (`min(760px, 92vw)`) instead of the generic `fit-content` modal box, and a taller JSON paste area (`min-height: 320px`, `max-height: 60vh`), matching the legacy import dialog proportions.
+
+## Backtest — Results Selection Checkboxes
+
+- Added a visible checkbox column to the backtest results table with a header select-all, so row selection (previously click-only) has an explicit affordance. Rows still support click and click-drag range selection.
+
+## Backtest — TWE Header Tooltip
+
+- Added the missing TWE tooltip to the backtest results table header (the configs list already had it), so the abbreviation is explained on hover via `v7backtest.tweTooltip`.
+
 ## PBv8 Backtest — Config List Polish
 
 - Quieted the backtest connection status: the always-on green banner is gone — the header status dot owns the connected state, connection success surfaces as a transient toast, and the full-width strip now appears only on disconnect/error.

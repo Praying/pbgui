@@ -76,6 +76,12 @@ function headerTitle(label: string): string {
   return t('v7backtest.sortBy', { label });
 }
 
+/** Header checkbox selects/deselects every visible row (:816-818). */
+const allSelected = computed(() => props.rows.length > 0 && props.rows.every((row) => props.selected.has(row.path)));
+function toggleAll(): void {
+  emit('select-paths', props.rows.map((row) => row.path), !allSelected.value);
+}
+
 /** fmt (:6490-6493). */
 function fmt(value: number | null | undefined, decimals: number): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';
@@ -137,6 +143,15 @@ onBeforeUnmount(() => dragSelect.dispose());
     <table class="tbl">
       <thead>
         <tr>
+          <th class="check-col" style="text-align: center">
+            <input
+              type="checkbox"
+              :checked="allSelected"
+              :aria-label="t('v7backtest.selectAll')"
+              data-test="results-select-all-check"
+              @change="toggleAll"
+            />
+          </th>
           <th
             v-for="header in headers"
             :key="header.col"
@@ -147,7 +162,7 @@ onBeforeUnmount(() => dragSelect.dispose());
           >
             {{ header.label }}<span class="sort-arrow">{{ arrowFor(header.col) }}</span>
           </th>
-          <th>TWE</th>
+          <th :title="t('v7backtest.tweTooltip')">TWE</th>
           <th>POS</th>
           <th style="text-align: center">{{ t('v7backtest.actions') }}</th>
         </tr>
@@ -162,6 +177,14 @@ onBeforeUnmount(() => dragSelect.dispose());
           :style="row.liquidated ? { background: 'rgb(var(--danger-rgb) / .10)' } : undefined"
           @click="emit('toggle-select', row.path)"
         >
+          <td class="check-col" @click.stop>
+            <input
+              type="checkbox"
+              :checked="selected.has(row.path)"
+              :aria-label="row.path"
+              @change="emit('toggle-select', row.path)"
+            />
+          </td>
           <td v-if="showVersion">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
           <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" style="max-width: 250px">
             <span v-if="row.liquidated" style="color: var(--red)" :title="t('v7backtest.liquidated')">⚠️</span>

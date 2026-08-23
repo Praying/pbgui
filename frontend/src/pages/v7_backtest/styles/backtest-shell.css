@@ -169,6 +169,10 @@ a:hover { text-decoration: underline; }
              padding: var(--sp-lg); min-width: 160px; max-width: 760px; max-height: 85vh;
              overflow: hidden; resize: both; box-sizing: border-box;
              display: flex; flex-direction: column; }
+/* The config-import dialog is a wide paste surface (mirrors legacy
+   .import-modal-box) — a fixed readable width instead of fit-content. */
+.import-config-modal { width: min(760px, 92vw); }
+.import-config-modal textarea { min-height: 320px; max-height: 60vh; }
 .modal-header { display: flex; align-items: center; justify-content: space-between;
                 padding-bottom: var(--sp-sm); border-bottom: 1px solid var(--border);
                 margin-bottom: var(--sp-md); }

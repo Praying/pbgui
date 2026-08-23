@@ -597,7 +597,7 @@ onMounted(() => {
   />
 
   <div v-if="importOpen" id="modal-root" data-test="config-import-modal">
-    <div class="modal-box">
+    <div class="modal-box import-config-modal">
       <div class="modal-title">{{ t('v7backtest.importJsonConfig') }}</div>
       <div class="modal-body">
         <div class="form-group">
