@@ -560,8 +560,8 @@ function preflight(): void {
   <div v-if="open && local" class="opt-modal-backdrop">
     <section class="opt-modal opt-editor-modal" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
       <header class="opt-modal-head">
-        <div><h2 id="opt-editor-title">{{ t('v7optimize.editOptimize') }}</h2><small>{{ version.toUpperCase() }}</small></div>
-        <div class="opt-actions"><button class="opt-btn" data-action="preflight" type="button" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</button><button class="opt-btn" @click="emit('close')">{{ t('common.close') }}</button></div>
+        <div class="opt-modal-title-wrap"><h2 id="opt-editor-title">{{ t('v7optimize.editOptimize') }}</h2><span class="opt-version-badge">{{ version.toUpperCase() }}</span></div>
+        <div class="opt-actions"><button class="opt-btn" data-action="preflight" type="button" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</button></div>
       </header>
       <nav class="opt-editor-tabs">
         <button v-for="item in tabs" :key="item.id" type="button" :data-tab="item.id" :class="{ active: tab === item.id }" @click="tab = item.id">{{ t(item.label) }}</button>

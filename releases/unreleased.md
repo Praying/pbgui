@@ -1,5 +1,9 @@
 # Unreleased
 
+## Optimize — Config Editor Modal Polish
+
+- Refined the Optimize "New Config" editor modal: removed the redundant close button in the header (the footer Cancel remains), turned the bare version label into an accent badge, enlarged the title, and gave the editor modal a wider 1100px / 85vh frame so the nine-tab form has room. Added a hover state and transition to the tab bar.
+
 ## Strategy Explorer — Polish
 
 - Added hover states (accent border/background shift with a transition) to the Strategy Explorer tab/stage/action buttons, including a danger hover for destructive actions.
