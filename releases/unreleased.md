@@ -1,5 +1,9 @@
 # Unreleased
 
+## Backtest — Result Count Fix
+
+- Fixed inflated result counts on the backtest configs list (and the PBv8 results list). The counters used a recursive `**/analysis.json` glob, which also matched nested per-symbol/suite `analysis.json` files inside a single result directory, turning one result into many. `list_configs` (PBv7 and PBv8) now counts only result directories that carry a `config.json` (PBv7) or `config.json`/`backtest.json` (PBv8), matching the results-list logic; the PBv8 results list additionally skips nested `analysis.json` entries without a result config. Bumped `api/serial.txt`.
+
 ## PBv8 Backtest — Config List Polish
 
 - Quieted the backtest connection status: the always-on green banner is gone — the header status dot owns the connected state, connection success surfaces as a transient toast, and the full-width strip now appears only on disconnect/error.

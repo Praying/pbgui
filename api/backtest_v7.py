@@ -3182,9 +3182,16 @@ def list_configs(session: SessionToken = Depends(require_auth)):
                 try:
                     with open(cfg_file, "r", encoding="utf-8") as f:
                         cfg = json.load(f)
-                    # Count results
+                    # Count results — only result directories carrying a
+                    # config.json count as a result (mirrors _list_results), so
+                    # nested per-symbol/suite analysis.json files are not
+                    # double-counted.
                     results_path = Path(_bt_results_base()) / p.name
-                    result_count = len(list(results_path.glob("**/analysis.json"))) if results_path.exists() else 0
+                    result_count = 0
+                    if results_path.exists():
+                        for analysis_file in results_path.glob("**/analysis.json"):
+                            if (analysis_file.parent / "config.json").exists():
+                                result_count += 1
                     # Extract key info
                     bt = cfg.get("backtest", {})
                     bot = cfg.get("bot", {})
