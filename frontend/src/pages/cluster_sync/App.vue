@@ -4,6 +4,7 @@ import { PhArrowClockwise, PhWrench, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch, ApiError } from '@/shared/api';
 import AppShell from '@/shared/components/AppShell.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -81,10 +82,38 @@ function statusClass(value: unknown): string {
 }
 
 function noticeKindClass(kind: 'ok' | 'err' | 'warn'): string {
-  if (kind === 'ok') return 'border border-success/30 text-success-soft';
-  if (kind === 'err') return 'border border-danger/30 text-danger-soft';
-  return '';
+  if (kind === 'ok') return 'border border-success/30 bg-success-deep/12 text-success-soft';
+  if (kind === 'err') return 'border border-danger/30 bg-danger-deep/12 text-danger-soft';
+  return 'border border-warning/30 bg-warning-deep/12 text-warning-soft';
 }
+
+/* ── Class kits ─────────────────────────────────────────────────────────
+   Shared shapes so the page keeps one hover/active/focus-visible contract.
+   Status colours are deliberately absent from the structural pieces —
+   dynamic helpers above always return the full colour set. */
+const btnBase = 'inline-flex min-h-8 cursor-pointer items-center gap-1.25 rounded-md border px-2.5 py-1.5 transition-colors duration-150 ease-standard active:translate-y-px focus-visible:outline-2 focus-visible:outline-accent/70 disabled:cursor-not-allowed disabled:opacity-50';
+const btnAccent = `${btnBase} border-accent/42 bg-accent/8 text-accent-soft hover:border-accent/60 hover:bg-accent/14`;
+const btnWarning = `${btnBase} border-warning/38 bg-warning/8 text-warning-soft hover:border-warning/55 hover:bg-warning/14`;
+const btnDanger = `${btnBase} border-danger/38 bg-danger/8 text-danger-soft hover:border-danger/55 hover:bg-danger/14`;
+const btnNeutral = `${btnBase} border-border-default bg-card text-primary hover:border-border-strong hover:bg-elevated`;
+/* Compact in-table actions — tertiary weight, no min-height. */
+const btnCell = 'inline-flex cursor-pointer items-center gap-1 rounded-sm border border-border-default/70 px-2 py-1 text-[0.78rem] text-secondary transition-colors duration-150 ease-standard hover:border-accent/50 hover:bg-accent/8 hover:text-accent-soft active:translate-y-px focus-visible:outline-2 focus-visible:outline-accent/70 disabled:cursor-not-allowed disabled:opacity-50';
+const btnCellDanger = 'inline-flex cursor-pointer items-center gap-1 rounded-sm border border-danger/45 bg-danger/8 px-2 py-1 text-[0.78rem] text-danger-soft transition-colors duration-150 ease-standard hover:border-danger/65 hover:bg-danger/14 active:translate-y-px focus-visible:outline-2 focus-visible:outline-danger/70 disabled:cursor-not-allowed disabled:opacity-50';
+
+const cardClass = 'overflow-hidden rounded-[9px] border border-border-default bg-card';
+const cardHeadClass = 'flex items-center justify-between gap-2.5 border-b border-border-default px-4 py-3';
+const cardTitleClass = 'text-[0.9rem] font-semibold tracking-[0.01em]';
+const pillClass = 'inline-block rounded-full px-2 py-0.5 text-[0.72rem] font-medium';
+/* Stat wells sink to the page tone so cards read as one raised surface. */
+const statClass = 'rounded-md bg-page p-2.75';
+const statValueClass = 'mt-1 text-[1.25rem] font-semibold leading-tight tabular-nums';
+const statMonoClass = 'mt-1 break-all font-mono text-[0.95rem] font-semibold leading-tight';
+const preClass = 'm-0 overflow-auto whitespace-pre-wrap rounded-md bg-page p-2.5 font-mono text-[0.75rem] leading-[1.5] text-primary';
+const fieldClass = 'grid gap-1 text-secondary text-[0.8rem]';
+const inputClass = 'w-full min-h-[33px] rounded-md border border-border-strong bg-input px-2.5 py-1.5 text-primary transition-colors duration-150 focus:border-accent focus:outline-none';
+const thClass = 'sticky top-0 z-[1] border-b border-border-default bg-card px-2.5 py-2.25 text-left align-middle text-[0.72rem] font-semibold tracking-[0.04em] text-secondary';
+const tdClass = 'border-b border-border-default px-2.5 py-2.25 text-left align-top';
+const tdHoverClass = `${tdClass} transition-colors group-hover:bg-accent/8`;
 
 async function loadAll(): Promise<void> {
   loading.value = true;
@@ -165,56 +194,378 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
     </template>
 
     <template #header-actions>
-      <button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-accent/42 bg-accent/8 text-accent-soft" @click="loadAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
-      <button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-warning/38 bg-warning/8 text-warning-soft" @click="section = 'setup'"><PbIcon :icon="PhWrench" /> {{ t('sysmon.setup') }}</button>
+      <button :class="btnAccent" @click="loadAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
+      <button :class="btnWarning" @click="section = 'setup'"><PbIcon :icon="PhWrench" /> {{ t('sysmon.setup') }}</button>
     </template>
 
-  <div class="flex min-h-0 flex-1 flex-col bg-page text-primary">
-    <div class="flex min-h-0 flex-1">
-      <section class="flex min-w-0 flex-1 overflow-auto p-4.5">
-        <div
-          v-if="notice"
-          class="block whitespace-pre-line rounded-[7px] bg-card px-3 py-2.25 mb-3 text-primary"
-          :class="noticeKindClass(notice.kind)"
-          :role="notice.kind === 'err' ? 'alert' : 'status'"
-          :aria-live="notice.kind === 'err' ? 'assertive' : 'polite'"
-        >{{ notice.text }}</div>
-        <LoadingSkeleton v-if="loading" class="p-4.5 text-center text-secondary" :label="t('common.loading')" />
-        <ErrorState
-          v-else-if="notice?.kind === 'err' && !Object.keys(status).length"
-          class=""
-          :title="t('common.error')"
-          :message="notice.text"
-          :retry-label="t('common.refresh')"
-          @retry="loadAll"
-        />
+    <div class="flex min-h-0 flex-1 flex-col bg-page text-primary">
+      <div class="flex min-h-0 flex-1">
+        <section class="flex min-w-0 flex-1 flex-col overflow-auto p-5">
+          <div
+            v-if="notice"
+            class="mb-4 block whitespace-pre-line rounded-md px-3.5 py-2.5 text-[0.85rem] font-medium"
+            :class="noticeKindClass(notice.kind)"
+            :role="notice.kind === 'err' ? 'alert' : 'status'"
+            :aria-live="notice.kind === 'err' ? 'assertive' : 'polite'"
+          >{{ notice.text }}</div>
 
-        <section v-else-if="section === 'overview'" data-section="overview" class="grid gap-3.5">
-          <div class="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(310px,1fr))]"><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.localIdentity') }}</span><span class="inline-block rounded-full bg-success-deep px-1.5 py-0.5 text-[0.72rem] text-success-soft">{{ display(identity.role) }}</span></div><div class="p-3.25"><div class="grid grid-cols-[repeat(auto-fit,minmax(115px,1fr))] gap-2"><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">Cluster ID</div><div class="mt-0.75 text-[1.2rem] font-bold" data-field="cluster-id">{{ display(identity.cluster_id) }}</div></div><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">Node ID</div><div class="mt-0.75 text-[1.2rem] font-bold">{{ display(identity.node_id) }}</div></div><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">Generation</div><div class="mt-0.75 text-[1.2rem] font-bold">{{ counts.oplog || 0 }}</div></div></div></div></article><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.summary') }}</span></div><div class="p-3.25"><div class="grid grid-cols-[repeat(auto-fit,minmax(115px,1fr))] gap-2"><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">Nodes</div><div class="mt-0.75 text-[1.2rem] font-bold" data-count="nodes">{{ counts.nodes || 0 }}</div></div><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">V7</div><div class="mt-0.75 text-[1.2rem] font-bold">{{ counts.instances || 0 }}</div></div><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">Conflicts</div><div class="mt-0.75 text-[1.2rem] font-bold">{{ counts.conflicts || 0 }}</div></div></div><div v-for="warning in warnings" :key="warning" class="text-secondary leading-[1.45]">{{ warning }}</div></div></article></div>
-          <article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ 'Checkpoint' }}</span></div><div class="p-3.25"><span class="inline-block rounded-full bg-border-strong px-1.5 py-0.5 text-[0.72rem] text-primary" :class="statusClass(status.checkpoint?.status)">{{ display(status.checkpoint?.status) }}</span><span class="text-secondary leading-[1.45]"> {{ display(status.sync_status?.healthy ? t('common.ok') : t('sysmon.unknownState')) }}</span></div></article>
+          <LoadingSkeleton v-if="loading" class="p-4.5 text-center text-secondary" :label="t('common.loading')" />
+          <ErrorState
+            v-else-if="notice?.kind === 'err' && !Object.keys(status).length"
+            :title="t('common.error')"
+            :message="notice.text"
+            :retry-label="t('common.refresh')"
+            @retry="loadAll"
+          />
+
+          <!-- ── Overview ─────────────────────────────────────────── -->
+          <section v-else-if="section === 'overview'" data-section="overview" class="grid gap-4">
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4">
+              <article :class="cardClass">
+                <header :class="cardHeadClass">
+                  <span :class="cardTitleClass">{{ t('sysmon.localIdentity') }}</span>
+                  <span :class="pillClass" class="bg-success-deep text-success-soft">{{ display(identity.role) }}</span>
+                </header>
+                <div class="p-4">
+                  <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
+                    <div :class="statClass">
+                      <div class="text-[0.72rem] text-secondary">Cluster ID</div>
+                      <div :class="statMonoClass" data-field="cluster-id">{{ display(identity.cluster_id) }}</div>
+                    </div>
+                    <div :class="statClass">
+                      <div class="text-[0.72rem] text-secondary">Node ID</div>
+                      <div :class="statMonoClass">{{ display(identity.node_id) }}</div>
+                    </div>
+                    <div :class="statClass">
+                      <div class="text-[0.72rem] text-secondary">Generation</div>
+                      <div :class="statValueClass">{{ counts.oplog || 0 }}</div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+              <article :class="cardClass">
+                <header :class="cardHeadClass">
+                  <span :class="cardTitleClass">{{ t('sysmon.summary') }}</span>
+                </header>
+                <div class="p-4">
+                  <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
+                    <div :class="statClass">
+                      <div class="text-[0.72rem] text-secondary">Nodes</div>
+                      <div :class="statValueClass" data-count="nodes">{{ counts.nodes || 0 }}</div>
+                    </div>
+                    <div :class="statClass">
+                      <div class="text-[0.72rem] text-secondary">V7</div>
+                      <div :class="statValueClass">{{ counts.instances || 0 }}</div>
+                    </div>
+                    <div :class="statClass">
+                      <div class="text-[0.72rem] text-secondary">Conflicts</div>
+                      <div :class="statValueClass">{{ counts.conflicts || 0 }}</div>
+                    </div>
+                  </div>
+                  <div v-if="warnings.length" class="mt-3 grid gap-1">
+                    <div v-for="warning in warnings" :key="warning" class="text-[0.78rem] leading-[1.5] text-warning-soft">{{ warning }}</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <article :class="cardClass">
+              <header :class="cardHeadClass">
+                <span :class="cardTitleClass">{{ 'Checkpoint' }}</span>
+              </header>
+              <div class="flex flex-wrap items-center gap-2.5 p-4">
+                <span :class="[pillClass, statusClass(status.checkpoint?.status)]">{{ display(status.checkpoint?.status) }}</span>
+                <span class="text-[0.82rem] text-secondary">{{ display(status.sync_status?.healthy ? t('common.ok') : t('sysmon.unknownState')) }}</span>
+              </div>
+            </article>
+          </section>
+
+          <!-- ── Setup ────────────────────────────────────────────── -->
+          <section v-else-if="section === 'setup'" data-section="setup" class="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
+            <article :class="cardClass">
+              <header :class="cardHeadClass">
+                <span :class="cardTitleClass">{{ t('sysmon.bootstrapClusterState') }}</span>
+                <button :class="btnWarning" :disabled="!bootstrap.items?.length" @click="applyBootstrap">{{ t('sysmon.applyBootstrap') }}</button>
+              </header>
+              <div class="p-4">
+                <p class="m-0 text-[0.82rem] leading-[1.55] text-secondary">{{ t('sysmon.bootstrapClusterStateNote') }}</p>
+                <div v-if="bootstrap.items?.length" class="mt-3 overflow-auto">
+                  <table class="w-full border-collapse text-[0.78rem]">
+                    <thead>
+                      <tr>
+                        <th :class="thClass">Type</th>
+                        <th :class="thClass">Name</th>
+                        <th :class="thClass">Action</th>
+                        <th :class="thClass"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in bootstrap.items" :key="`${item.type}:${item.name || item.hostname}`" class="group">
+                        <td :class="tdHoverClass">{{ item.type }}</td>
+                        <td :class="tdHoverClass">{{ display(item.name || item.hostname) }}</td>
+                        <td :class="tdHoverClass">{{ item.action }}</td>
+                        <td :class="tdHoverClass">
+                          <button v-if="item.type === 'node'" :class="btnCell" @click="bootstrapNode(String(item.hostname || item.name))">{{ t('sysmon.bootstrap') }}</button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <EmptyState v-else :title="t('sysmon.noData')" />
+              </div>
+            </article>
+            <article :class="cardClass">
+              <header :class="cardHeadClass">
+                <span :class="cardTitleClass">{{ t('sysmon.selfJoin') }}</span>
+                <button :class="btnWarning" @click="startSelfJoin">{{ t('sysmon.joinExistingCluster') }}</button>
+              </header>
+              <div class="grid gap-3 p-4">
+                <label :class="fieldClass">Hostname<input v-model="selfJoinForm.hostname" :class="inputClass"></label>
+                <label :class="fieldClass">SSH Host<input v-model="selfJoinForm.ssh_host" :class="inputClass"></label>
+                <label :class="fieldClass">SSH User<input v-model="selfJoinForm.ssh_user" :class="inputClass"></label>
+                <label :class="fieldClass">SSH Port<input v-model.number="selfJoinForm.ssh_port" type="number" :class="inputClass"></label>
+                <label class="flex items-center gap-1.75 text-[0.8rem] text-secondary"><input v-model="selfJoinForm.reset" type="checkbox"> {{ t('sysmon.recovery') }}</label>
+              </div>
+            </article>
+          </section>
+
+          <!-- ── Nodes ────────────────────────────────────────────── -->
+          <section v-else-if="section === 'nodes'" data-section="nodes" :class="cardClass">
+            <header :class="cardHeadClass">
+              <span :class="cardTitleClass">{{ t('sysmon.clusterNodes') }}</span>
+              <span class="text-[0.78rem] tabular-nums text-secondary">{{ nodes.length }} nodes</span>
+            </header>
+            <div class="overflow-auto p-4">
+              <table class="w-full border-collapse text-[0.78rem]">
+                <thead>
+                  <tr>
+                    <th :class="thClass">Node</th>
+                    <th :class="thClass">Role</th>
+                    <th :class="thClass">Sync</th>
+                    <th :class="thClass">SSH</th>
+                    <th :class="thClass">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="node in nodes" :key="node.node_id" class="group">
+                    <td :class="tdHoverClass">
+                      <strong>{{ nodeLabel(node) }}</strong>
+                      <div class="font-mono text-[0.72rem] text-secondary">{{ node.node_id }}</div>
+                    </td>
+                    <td :class="tdHoverClass">{{ display(node.role) }}</td>
+                    <td :class="tdHoverClass">
+                      <span :class="[pillClass, statusClass(node.sync_enabled === false ? 'disabled' : 'synced')]">{{ node.sync_enabled === false ? t('sysmon.disabled') : t('common.enabled') }}</span>
+                    </td>
+                    <td class="font-mono text-[0.75rem]" :class="tdHoverClass">{{ display(node.ssh_host) }}:{{ node.ssh_port || 22 }}</td>
+                    <td class="flex flex-wrap justify-end gap-1.75 border-b border-border-default px-2.5 py-2.25 max-[760px]:justify-start">
+                      <button data-action="toggle-sync" :data-node-id="node.node_id" :class="btnCell" :disabled="node.node_id === localNodeId" @click="toggleSync(node)">{{ node.sync_enabled === false ? t('sysmon.enable') : t('sysmon.disable') }}</button>
+                      <button :class="btnCell" @click="openSettings(node)">{{ t('sysmon.editClusterNode') }}</button>
+                      <button :class="btnCell" @click="joinRemote(node)">{{ t('sysmon.joinRemoteClusterNode') }}</button>
+                      <button :class="btnCell" @click="repairNode(node)">{{ t('sysmon.repairAllSsh') }}</button>
+                      <button data-action="remove-node" :data-node-id="node.node_id" :class="btnCellDanger" :disabled="node.node_id === localNodeId" @click="openRemove(node)">{{ t('sysmon.removeNode') }}</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <EmptyState v-if="!nodes.length" :title="t('sysmon.noClusterNodes')" />
+            </div>
+          </section>
+
+          <!-- ── V7 instances ─────────────────────────────────────── -->
+          <section v-else-if="section === 'instances'" data-section="instances" :class="cardClass">
+            <header :class="cardHeadClass">
+              <span :class="cardTitleClass">{{ t('sysmon.v7State') }}</span>
+            </header>
+            <div class="overflow-auto p-4">
+              <table class="w-full border-collapse text-[0.78rem]">
+                <thead>
+                  <tr>
+                    <th :class="thClass">Instance</th>
+                    <th :class="thClass">Current</th>
+                    <th :class="thClass">Desired</th>
+                    <th :class="thClass">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in desired.instances || []" :key="item.instance || item.name" class="group">
+                    <td :class="tdHoverClass">{{ display(item.instance || item.name) }}</td>
+                    <td class="font-mono" :class="tdHoverClass">{{ display(item.current_version) }}</td>
+                    <td class="font-mono" :class="tdHoverClass">{{ display(item.desired_version) }}</td>
+                    <td :class="tdHoverClass">
+                      <span :class="[pillClass, statusClass(item.conflicted ? 'conflict' : 'synced')]">{{ item.conflicted ? t('sysmon.conflict') : t('sysmon.synced') }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ── Tombstones ───────────────────────────────────────── -->
+          <section v-else-if="section === 'tombstones'" data-section="tombstones" :class="cardClass">
+            <header :class="cardHeadClass">
+              <span :class="cardTitleClass">{{ t('sysmon.tombstones') }}</span>
+            </header>
+            <div class="overflow-auto p-4">
+              <table class="w-full border-collapse text-[0.78rem]">
+                <thead>
+                  <tr>
+                    <th :class="thClass">Instance</th>
+                    <th :class="thClass">Created</th>
+                    <th :class="thClass">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in desired.tombstones || []" :key="item.instance" class="group">
+                    <td :class="tdHoverClass">{{ display(item.instance || item.name) }}</td>
+                    <td class="font-mono text-[0.75rem] text-secondary" :class="tdHoverClass">{{ timeText(item.created_at) }}</td>
+                    <td class="text-secondary" :class="tdHoverClass">{{ display(item.reason) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ── Oplog ────────────────────────────────────────────── -->
+          <section v-else-if="section === 'operations'" data-section="operations" :class="cardClass">
+            <header :class="cardHeadClass">
+              <span :class="cardTitleClass">{{ t('sysmon.oplog') }}</span>
+            </header>
+            <div class="overflow-auto p-4">
+              <table class="w-full border-collapse text-[0.78rem]">
+                <thead>
+                  <tr>
+                    <th :class="thClass">Created</th>
+                    <th :class="thClass">Operation</th>
+                    <th :class="thClass">Target</th>
+                    <th :class="thClass">Seq</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="op in oplog" :key="op.op_id || `${op.seq}:${op.created_at}`" class="group">
+                    <td class="font-mono text-[0.75rem] text-secondary" :class="tdHoverClass">{{ timeText(op.created_at) }}</td>
+                    <td :class="tdHoverClass">
+                      <span :class="pillClass" class="bg-elevated">{{ display(op.op) }}</span>
+                    </td>
+                    <td :class="tdHoverClass">{{ display(op.instance || op.node_id || (op.api_serial ? 'api-keys' : 'cluster')) }}</td>
+                    <td class="tabular-nums" :class="tdHoverClass">{{ display(op.seq) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <EmptyState v-if="!oplog.length" :title="t('sysmon.noOplog')" />
+            </div>
+          </section>
+
+          <!-- ── Credentials ──────────────────────────────────────── -->
+          <section v-else-if="section === 'credentials'" data-section="credentials" class="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
+            <article :class="cardClass">
+              <header :class="cardHeadClass">
+                <span :class="cardTitleClass">{{ t('sysmon.credentials') }}</span>
+                <div class="flex flex-wrap justify-end gap-1.75 max-[760px]:justify-start">
+                  <button :class="btnAccent" @click="rewrapCredentials">{{ t('sysmon.clusterCredentialRewrap') }}</button>
+                  <button :class="btnWarning" @click="rotateCredentialKey">{{ t('sysmon.rotateLocalClusterKey') }}</button>
+                </div>
+              </header>
+              <div class="p-4">
+                <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
+                  <div :class="statClass">
+                    <div class="text-[0.72rem] text-secondary">Active</div>
+                    <div :class="statValueClass">{{ credentials.active || 0 }}</div>
+                  </div>
+                  <div :class="statClass">
+                    <div class="text-[0.72rem] text-secondary">Conflicts</div>
+                    <div :class="statValueClass">{{ (credentials.conflicts || []).length }}</div>
+                  </div>
+                </div>
+                <pre :class="preClass" class="mt-3">{{ jsonText(credentials.nodes) }}</pre>
+              </div>
+            </article>
+            <article :class="cardClass">
+              <header :class="cardHeadClass">
+                <span :class="cardTitleClass">{{ t('sysmon.localClusterSsh') }}</span>
+              </header>
+              <div class="p-4">
+                <div class="text-[0.72rem] text-secondary">Fingerprint</div>
+                <div class="mt-1 break-all font-mono text-[0.82rem]">{{ display(localClusterSsh.fingerprint) }}</div>
+              </div>
+            </article>
+          </section>
+
+          <!-- ── Retention ────────────────────────────────────────── -->
+          <section v-else data-section="retention" class="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
+            <article :class="cardClass">
+              <header :class="cardHeadClass">
+                <span :class="cardTitleClass">{{ t('sysmon.clusterHistoryRetention') }}</span>
+                <button data-action="save-retention" :class="btnAccent" @click="saveRetention">{{ t('common.save') }}</button>
+              </header>
+              <div class="grid gap-3 p-4">
+                <label :class="fieldClass">Mode
+                  <select v-model="retentionMode" :class="inputClass">
+                    <option value="report_only">Report only</option>
+                    <option value="automatic">Automatic retention</option>
+                  </select>
+                </label>
+                <label :class="fieldClass">History days<input data-field="history-days" v-model.number="retentionDays" type="number" min="1" max="3650" :class="inputClass"></label>
+                <p class="m-0 text-[0.82rem] leading-[1.55] text-secondary">{{ t('sysmon.clusterHistoryRetentionNote') }}</p>
+              </div>
+            </article>
+            <article :class="cardClass">
+              <header :class="cardHeadClass">
+                <span :class="cardTitleClass">{{ t('sysmon.retentionReport') }}</span>
+              </header>
+              <div class="p-4"><pre :class="preClass">{{ jsonText(retentionReport) }}</pre></div>
+            </article>
+          </section>
         </section>
+      </div>
 
-        <section v-else-if="section === 'setup'" data-section="setup" class="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(310px,1fr))]"><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.bootstrapClusterState') }}</span><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-warning/38 bg-warning/8 text-warning-soft" :disabled="!bootstrap.items?.length" @click="applyBootstrap">{{ t('sysmon.applyBootstrap') }}</button></div><div class="p-3.25"><div class="text-secondary leading-[1.45]">{{ t('sysmon.bootstrapClusterStateNote') }}</div><div v-if="bootstrap.items?.length" class="overflow-auto"><table class="w-full border-collapse text-[0.78rem]"><thead><tr><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Type</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Name</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Action</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top"></th></tr></thead><tbody><tr v-for="item in bootstrap.items" :key="`${item.type}:${item.name || item.hostname}`"><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ item.type }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(item.name || item.hostname) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ item.action }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top"><button v-if="item.type === 'node'" class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="bootstrapNode(String(item.hostname || item.name))">{{ t('sysmon.bootstrap') }}</button></td></tr></tbody></table></div><div v-else class="p-4.5 text-center text-secondary">{{ t('sysmon.noData') }}</div></div></article><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.selfJoin') }}</span><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-warning/38 bg-warning/8 text-warning-soft" @click="startSelfJoin">{{ t('sysmon.joinExistingCluster') }}</button></div><div class="p-3.25 grid gap-2.25"><label class="grid gap-1 text-secondary text-[0.8rem]">Hostname<input v-model="selfJoinForm.hostname" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><label class="grid gap-1 text-secondary text-[0.8rem]">SSH Host<input v-model="selfJoinForm.ssh_host" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><label class="grid gap-1 text-secondary text-[0.8rem]">SSH User<input v-model="selfJoinForm.ssh_user" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><label class="grid gap-1 text-secondary text-[0.8rem]">SSH Port<input v-model.number="selfJoinForm.ssh_port" type="number" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><label class="grid gap-1 text-secondary text-[0.8rem]"><input v-model="selfJoinForm.reset" type="checkbox"> {{ t('sysmon.recovery') }}</label></div></article></section>
+      <!-- ── Remove-node modal ───────────────────────────────────── -->
+      <div v-if="removeNode" data-modal="remove" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
+        <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
+          <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
+            <h2 class="m-0 text-[1.05rem] font-semibold">{{ t('sysmon.removeNode') }}</h2>
+            <button data-close="remove" :class="btnNeutral" @click="closeRemove"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button>
+          </div>
+          <p class="m-0 mt-3.5 text-[0.85rem] leading-[1.55]">{{ t('sysmon.removeNodeMsg', { node: `${nodeLabel(removeNode)} (${removeNode.node_id})` }) }}</p>
+          <div class="mt-4 flex justify-end gap-1.75">
+            <button :class="btnNeutral" @click="closeRemove">{{ t('common.cancel') }}</button>
+            <button :class="btnDanger" @click="confirmRemove">{{ t('sysmon.removeNode') }}</button>
+          </div>
+        </div>
+      </div>
 
-        <section v-else-if="section === 'nodes'" data-section="nodes" class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.clusterNodes') }}</span><span class="text-secondary leading-[1.45]">{{ nodes.length }} nodes</span></div><div class="p-3.25 overflow-auto"><table class="w-full border-collapse text-[0.78rem]"><thead><tr><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Node</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Role</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Sync</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">SSH</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Actions</th></tr></thead><tbody><tr v-for="node in nodes" :key="node.node_id"><td class="px-1.75 py-2 border-b border-border-default text-left align-top"><strong>{{ nodeLabel(node) }}</strong><div class="text-secondary leading-[1.45]">{{ node.node_id }}</div></td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(node.role) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top"><span class="inline-block rounded-full bg-border-strong px-1.5 py-0.5 text-[0.72rem] text-primary" :class="statusClass(node.sync_enabled === false ? 'disabled' : 'synced')">{{ node.sync_enabled === false ? t('sysmon.disabled') : t('common.enabled') }}</span></td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(node.ssh_host) }}:{{ node.ssh_port || 22 }}</td><td class="flex flex-wrap justify-end gap-1.75 max-[760px]:justify-start"><button data-action="toggle-sync" :data-node-id="node.node_id" class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" :disabled="node.node_id === localNodeId" @click="toggleSync(node)">{{ node.sync_enabled === false ? t('sysmon.enable') : t('sysmon.disable') }}</button><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="openSettings(node)">{{ t('sysmon.editClusterNode') }}</button><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="joinRemote(node)">{{ t('sysmon.joinRemoteClusterNode') }}</button><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="repairNode(node)">{{ t('sysmon.repairAllSsh') }}</button><button data-action="remove-node" :data-node-id="node.node_id" class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-danger/38 bg-danger/8 text-danger-soft" :disabled="node.node_id === localNodeId" @click="openRemove(node)">{{ t('sysmon.removeNode') }}</button></td></tr></tbody></table><div v-if="!nodes.length" class="p-4.5 text-center text-secondary">{{ t('sysmon.noClusterNodes') }}</div></div></section>
-
-        <section v-else-if="section === 'instances'" data-section="instances" class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.v7State') }}</span></div><div class="p-3.25 overflow-auto"><table class="w-full border-collapse text-[0.78rem]"><thead><tr><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Instance</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Current</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Desired</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Status</th></tr></thead><tbody><tr v-for="item in desired.instances || []" :key="item.instance || item.name"><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(item.instance || item.name) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(item.current_version) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(item.desired_version) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top"><span class="inline-block rounded-full bg-border-strong px-1.5 py-0.5 text-[0.72rem] text-primary" :class="statusClass(item.conflicted ? 'conflict' : 'synced')">{{ item.conflicted ? t('sysmon.conflict') : t('sysmon.synced') }}</span></td></tr></tbody></table></div></section>
-        <section v-else-if="section === 'tombstones'" data-section="tombstones" class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.tombstones') }}</span></div><div class="p-3.25 overflow-auto"><table class="w-full border-collapse text-[0.78rem]"><thead><tr><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Instance</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Created</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Reason</th></tr></thead><tbody><tr v-for="item in desired.tombstones || []" :key="item.instance"><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(item.instance || item.name) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ timeText(item.created_at) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(item.reason) }}</td></tr></tbody></table></div></section>
-        <section v-else-if="section === 'operations'" data-section="operations" class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.oplog') }}</span></div><div class="p-3.25 overflow-auto"><table class="w-full border-collapse text-[0.78rem]"><thead><tr><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Created</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Operation</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Target</th><th class="sticky top-0 z-[1] bg-card text-primary px-1.75 py-2 border-b border-border-default text-left align-top">Seq</th></tr></thead><tbody><tr v-for="op in oplog" :key="op.op_id || `${op.seq}:${op.created_at}`"><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ timeText(op.created_at) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top"><span class="inline-block rounded-full bg-border-strong px-1.5 py-0.5 text-[0.72rem] text-primary">{{ display(op.op) }}</span></td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(op.instance || op.node_id || (op.api_serial ? 'api-keys' : 'cluster')) }}</td><td class="px-1.75 py-2 border-b border-border-default text-left align-top">{{ display(op.seq) }}</td></tr></tbody></table><div v-if="!oplog.length" class="p-4.5 text-center text-secondary">{{ t('sysmon.noOplog') }}</div></div></section>
-        <section v-else-if="section === 'credentials'" data-section="credentials" class="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(310px,1fr))]"><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.credentials') }}</span><div class="flex flex-wrap justify-end gap-1.75 max-[760px]:justify-start"><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-accent/42 bg-accent/8 text-accent-soft" @click="rewrapCredentials">{{ t('sysmon.clusterCredentialRewrap') }}</button><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-warning/38 bg-warning/8 text-warning-soft" @click="rotateCredentialKey">{{ t('sysmon.rotateLocalClusterKey') }}</button></div></div><div class="p-3.25"><div class="grid grid-cols-[repeat(auto-fit,minmax(115px,1fr))] gap-2"><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">Active</div><div class="mt-0.75 text-[1.2rem] font-bold">{{ credentials.active || 0 }}</div></div><div class="rounded-md bg-card p-2.25"><div class="text-secondary text-[0.76rem]">Conflicts</div><div class="mt-0.75 text-[1.2rem] font-bold">{{ (credentials.conflicts || []).length }}</div></div></div><pre class="m-0 overflow-auto whitespace-pre-wrap rounded-[5px] bg-page p-2.5 font-mono text-[0.75rem] leading-[1.4] text-primary">{{ jsonText(credentials.nodes) }}</pre></div></article><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.localClusterSsh') }}</span></div><div class="p-3.25"><div class="text-secondary leading-[1.45]">Fingerprint</div><div>{{ display(localClusterSsh.fingerprint) }}</div></div></article></section>
-        <section v-else data-section="retention" class="grid gap-3.5 grid-cols-[repeat(auto-fit,minmax(310px,1fr))]"><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.clusterHistoryRetention') }}</span><button data-action="save-retention" class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-accent/42 bg-accent/8 text-accent-soft" @click="saveRetention">{{ t('common.save') }}</button></div><div class="p-3.25 grid gap-2.25"><label class="grid gap-1 text-secondary text-[0.8rem]">Mode<select v-model="retentionMode" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"><option value="report_only">Report only</option><option value="automatic">Automatic retention</option></select></label><label class="grid gap-1 text-secondary text-[0.8rem]">History days<input data-field="history-days" v-model.number="retentionDays" type="number" min="1" max="3650" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><div class="text-secondary leading-[1.45]">{{ t('sysmon.clusterHistoryRetentionNote') }}</div></div></article><article class="overflow-hidden rounded-[9px] border border-border-default bg-card"><div class="flex items-center justify-between gap-2.5 border-b border-border-default px-3.25 py-2.75"><span class="font-bold">{{ t('sysmon.retentionReport') }}</span></div><div class="p-3.25"><pre class="m-0 overflow-auto whitespace-pre-wrap rounded-[5px] bg-page p-2.5 font-mono text-[0.75rem] leading-[1.4] text-primary">{{ jsonText(retentionReport) }}</pre></div></article></section>
-      </section>
+      <!-- ── Node settings modal ─────────────────────────────────── -->
+      <div v-if="settingsNode" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
+        <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
+          <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
+            <h2 class="m-0 text-[1.05rem] font-semibold">{{ t('sysmon.editClusterNode') }}</h2>
+            <button :class="btnNeutral" @click="closeSettings"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button>
+          </div>
+          <div class="grid gap-3 pt-3.5">
+            <label :class="fieldClass">Remote PBGui Dir<input v-model="settingsForm.remote_pbgui_dir" :class="inputClass"></label>
+            <label :class="fieldClass">Sync mode
+              <select v-model="settingsForm.sync_mode" :class="inputClass">
+                <option value="reachable">Reachable</option>
+                <option value="outbound_only">Outbound only</option>
+                <option value="disabled">Disabled</option>
+              </select>
+            </label>
+            <label :class="fieldClass">SSH Host<input v-model="settingsForm.ssh_host" :class="inputClass"></label>
+            <label :class="fieldClass">SSH User<input v-model="settingsForm.ssh_user" :class="inputClass"></label>
+            <label :class="fieldClass">SSH Port<input v-model.number="settingsForm.ssh_port" type="number" :class="inputClass"></label>
+          </div>
+          <div class="mt-4 flex justify-end gap-1.75">
+            <button :class="btnNeutral" @click="closeSettings">{{ t('common.cancel') }}</button>
+            <button :class="btnAccent" @click="saveSettings">{{ t('common.save') }}</button>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div v-if="removeNode" data-modal="remove" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true" @click.stop><div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-[1.05rem]">{{ t('sysmon.removeNode') }}</h2><button data-close="remove" class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="closeRemove"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><p>{{ t('sysmon.removeNodeMsg', { node: `${nodeLabel(removeNode)} (${removeNode.node_id})` }) }}</p><div class="mt-3.75 flex justify-end gap-1.75"><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="closeRemove">{{ t('common.cancel') }}</button><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-danger/38 bg-danger/8 text-danger-soft" @click="confirmRemove">{{ t('sysmon.removeNode') }}</button></div></div></div>
-    <div v-if="settingsNode" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true" @click.stop><div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-[1.05rem]">{{ t('sysmon.editClusterNode') }}</h2><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="closeSettings"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="grid gap-2.25"><label class="grid gap-1 text-secondary text-[0.8rem]">Remote PBGui Dir<input v-model="settingsForm.remote_pbgui_dir" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><label class="grid gap-1 text-secondary text-[0.8rem]">Sync mode<select v-model="settingsForm.sync_mode" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"><option value="reachable">Reachable</option><option value="outbound_only">Outbound only</option><option value="disabled">Disabled</option></select></label><label class="grid gap-1 text-secondary text-[0.8rem]">SSH Host<input v-model="settingsForm.ssh_host" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><label class="grid gap-1 text-secondary text-[0.8rem]">SSH User<input v-model="settingsForm.ssh_user" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label><label class="grid gap-1 text-secondary text-[0.8rem]">SSH Port<input v-model.number="settingsForm.ssh_port" type="number" class="w-full min-h-[33px] rounded-[5px] border border-border-strong bg-page px-2 py-1.5 text-primary"></label></div><div class="mt-3.75 flex justify-end gap-1.75"><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-border-default bg-card text-primary" @click="closeSettings">{{ t('common.cancel') }}</button><button class="inline-flex items-center gap-1.25 min-h-8 rounded-md border px-2.5 py-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-accent/42 bg-accent/8 text-accent-soft" @click="saveSettings">{{ t('common.save') }}</button></div></div></div>
-  </div>
   </AppShell>
 </template>
 
 <style scoped>
 /* Page-level AppShell overrides for the fixed-height workbench layout —
-   ported from styles/cluster-sync.css at the Tailwind migration. These
+   ported from the pre-Tailwind cluster page stylesheet. These
    target AppShell internals, so they stay as CSS instead of utilities. */
 .operations-shell--cluster :deep(.app-shell__workspace) {
   display: flex;
