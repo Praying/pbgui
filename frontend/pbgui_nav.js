@@ -24,6 +24,92 @@
   var _restartRetryTimer = null;
   var _restartPollTimer = null;
   var _restartStatus = {};
+  var _aiDrawerLoading = false;
+  var _aiContextProviders = {};
+
+  function aiContextText(value, limit) {
+    var text = String(value == null ? '' : value).trim().replace(/[\x00-\x1f\x7f]/g, ' ');
+    return text.slice(0, limit);
+  }
+
+  function aiContextSensitiveName(value) {
+    return /(^|[._\s-])(password|passwd|secret|token|api[_ -]?key|private[_ -]?key|credential|session|cookie|log|ssh)([._\s-]|$)/i.test(String(value || ''));
+  }
+
+  function aiContextEntity(value) {
+    if (!value || typeof value !== 'object') return null;
+    var entity = {
+      kind: aiContextText(value.kind, 128),
+      version: aiContextText(value.version, 128),
+      name: aiContextText(value.name, 128)
+    };
+    if (!entity.kind || !entity.name || aiContextSensitiveName(entity.kind)) return null;
+    return entity;
+  }
+
+  function aiContextFocusedField(value) {
+    if (!value || typeof value !== 'object') return null;
+    var path = aiContextText(value.path, 256);
+    var label = aiContextText(value.label, 256);
+    if (!path || aiContextSensitiveName(path) || aiContextSensitiveName(label)) return null;
+    var field = { path: path };
+    if (label) field.label = label;
+    var fieldValue = aiContextText(value.value, 256);
+    var validation = aiContextText(value.validation, 256);
+    if (fieldValue) field.value = fieldValue;
+    if (validation) field.validation = validation;
+    return field;
+  }
+
+  function collectAIContext() {
+    var c = cfg();
+    var context = {
+      schema_version: 1,
+      page_key: String(c.current || '').slice(0, 128),
+      title: String(c.subtitle || '').slice(0, 128),
+      guide_topic: String(GUIDE_TOPICS[c.current] || '').slice(0, 128),
+      entities: []
+    };
+    Object.keys(_aiContextProviders).sort().forEach(function (id) {
+      try {
+        var value = _aiContextProviders[id]();
+        if (!value || typeof value !== 'object') return;
+        if (value.section && !context.section) context.section = aiContextText(value.section, 128);
+        if (Array.isArray(value.entities)) {
+          value.entities.slice(0, 8).forEach(function (entity) {
+            var projected = aiContextEntity(entity);
+            if (projected) context.entities.push(projected);
+          });
+        }
+        if (value.focused_field && !context.focused_field) context.focused_field = aiContextFocusedField(value.focused_field);
+      } catch (_) {}
+    });
+    context.entities = context.entities.slice(0, 8);
+    return context;
+  }
+
+  window.PBGuiAI = window.PBGuiAI || {};
+  window.PBGuiAI.registerPageContext = function (registration) {
+    if (!registration || typeof registration.id !== 'string' || typeof registration.getContext !== 'function') return function () {};
+    var id = registration.id.slice(0, 64);
+    _aiContextProviders[id] = registration.getContext;
+    return function () { delete _aiContextProviders[id]; };
+  };
+  window.PBGuiAI.collectContext = collectAIContext;
+  window.PBGuiAI.focusedField = function (allowlist) {
+    var active = document.activeElement;
+    var descriptor = active && allowlist && allowlist[active.id];
+    if (!descriptor || active.type === 'password') return null;
+    return aiContextFocusedField({
+      path: descriptor.path,
+      label: descriptor.label,
+      value: active.value,
+      validation: descriptor.validation
+    });
+  };
+  if (typeof window.PBGUI_AI_PAGE_CONTEXT === 'function') {
+    window.PBGuiAI.registerPageContext({ id: 'productive-page', getContext: window.PBGUI_AI_PAGE_CONTEXT });
+  }
 
   /* ── config (read at runtime so global vars are already set) ── */
   function cfg() {
@@ -84,6 +170,7 @@
       { page: 'info_coin_data',       icon: 'database',  label: 'Coin Data'           },
       { page: 'info_market_data_fastapi', icon: 'desktop', label: 'Market Data'       },
       { page: 'info_balance_calc',    icon: 'wallet',     label: 'Balance Calculator' },
+      { page: 'info_ai_chat',         icon: 'sparkle',    label: 'AI Chat'             },
       { page: 'help',                 icon: 'file-text',  label: 'Help'                }
     ]},
     { id: 'pbv7', label: 'PBv7', items: [
@@ -372,6 +459,7 @@
     /* spacer + right buttons */
     var notificationIcon = window.PBGuiIcons.create('bell', { size: 16 });
     var alertsIcon = window.PBGuiIcons.create('shield-warning', { size: 16 });
+    var aiIcon = window.PBGuiIcons.create('sparkle', { size: 16 });
     var guideIcon = window.PBGuiIcons.create('book-open', { size: 16 });
     var aboutIcon = window.PBGuiIcons.create('info', { size: 16 });
     var logoutIcon = window.PBGuiIcons.create('sign-out', { size: 16 });
@@ -383,6 +471,7 @@
           + '<button class="nav-action-btn notify" id="pbgui-notify-btn" title="' + esc(navT('nav.notification_log', 'Notification log')) + '" aria-label="' + esc(navT('nav.notification_log', 'Notification log')) + '">' + notificationIcon + '</button>'
           + '<span class="nav-divider" aria-hidden="true"></span>'
           + '<button class="nav-action-btn alerts" id="pbgui-alert-btn" title="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '" aria-label="' + esc(navT('nav.vpsmonitor_alerts', 'VPSMonitor alerts')) + '">' + alertsIcon + ' <span class="nav-badge" id="pbgui-alert-badge">0/0</span></button>'
+          + '<button class="nav-action-btn accent" id="pbgui-ai-btn" title="' + esc(navT('nav.open_ai_assistant', 'Open AI assistant')) + '" aria-label="' + esc(navT('nav.open_ai_assistant', 'Open AI assistant')) + '" aria-expanded="false" aria-controls="pbgui-ai-drawer" style="display:none">' + aiIcon + ' ' + esc(navT('nav.ai', 'AI')) + '</button>'
           + '<button class="nav-action-btn" id="pbgui-lang-btn" title="' + esc(navT('nav.switch_language', 'Switch language')) + '">' + ((window.PBGuiI18n && window.PBGuiI18n.lang === 'zh') ? 'English' : '中文') + '</button>'
           + '<button class="nav-action-btn accent" id="pbgui-guide-btn">' + guideIcon + ' ' + esc(navT('nav.guide', 'Guide')) + '</button>'
           + '<button class="nav-action-btn" id="pbgui-about-btn">' + aboutIcon + ' ' + esc(navT('nav.about', 'About')) + '</button>'
@@ -1026,6 +1115,7 @@
     'dashboards':        '/api/dashboard/main_page',
     'info_coin_data':    '/api/coin-data/main_page',
     'info_market_data_fastapi': '/api/market-data/main_page',
+    'info_ai_chat':      '/api/ai/main_page',
     'system_api_keys':   '/api/api-keys/main_page',
     'system_cluster':    '/api/cluster/main_page',
     'system_vps_manager_fastapi': '/api/vps-manager/main_page',
@@ -1053,6 +1143,7 @@
     'dashboards':                  '33_dashboard',
     'info_coin_data':              '27_coin_data',
     'info_market_data_fastapi':    '26_market_data',
+    'info_ai_chat':                 '45_ai_chat',
     'system_api_keys':             '20_api_keys',
     'system_cluster':              '39_cluster_sync',
     'system_vps_manager_fastapi':  '32_vps_manager',
@@ -1328,6 +1419,25 @@
     if (alertBtn) alertBtn.addEventListener('click', function () { openAlertOverlay(); });
     fetchAlerts();
     scheduleAlerts();
+
+    var aiBtn = document.getElementById('pbgui-ai-btn');
+    if (aiBtn) aiBtn.addEventListener('click', function () {
+      if (window.PBGuiAI && typeof window.PBGuiAI.toggle === 'function') {
+        window.PBGuiAI.toggle();
+        return;
+      }
+      if (_aiDrawerLoading) return;
+      _aiDrawerLoading = true;
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/app/css/ai_drawer.css?v=11';
+      document.head.appendChild(link);
+      var script = document.createElement('script');
+      script.src = '/app/js/ai_drawer.js?v=24';
+      script.onload = function () { _aiDrawerLoading = false; if (window.PBGuiAI && window.PBGuiAI.open) window.PBGuiAI.open(); };
+      script.onerror = function () { _aiDrawerLoading = false; };
+      document.head.appendChild(script);
+    });
 
     /* About button → show overlay */
     var aboutBtn = document.getElementById('pbgui-about-btn');
@@ -1701,7 +1811,8 @@
       if (_authRedirecting) return;
       _origFetch(tokenRefreshUrl(), authOptions(c.token, { method: 'POST' }))
         .then(function (r) {
-          if (r.status === 401) { redirectToLogin(); }
+          if (r.status === 401) { redirectToLogin(); return; }
+          if (r.ok) { var ai = document.getElementById('pbgui-ai-btn'); if (ai) ai.style.display = 'inline-flex'; }
         })
         .catch(function () { /* network error — ignore, will retry next cycle */ });
     }

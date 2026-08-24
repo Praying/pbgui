@@ -5623,5 +5623,8 @@
   "market.hideAwsAccessKey": "Hide AWS access key",
   "market.showAwsSecretKey": "Show AWS secret access key",
   "market.hideAwsSecretKey": "Hide AWS secret access key",
-  "misc.apikeys.users": "Users"
+  "misc.apikeys.users": "Users",
+  "nav.page.info_ai_chat": "AI Chat",
+  "nav.ai": "AI",
+  "nav.open_ai_assistant": "Open AI assistant"
 }

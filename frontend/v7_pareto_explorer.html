@@ -4086,7 +4086,9 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
     var resultPath = state.resultPath;
     var contextGeneration = state.resultContextGeneration;
     state.selectedConfigIndex = configIndex;
+    renderChampions(state.commandCenter);
     renderDetail(null);
+    el('detail-title').textContent = 'Loading #' + String(configIndex) + '...';
     return apiFetch('/config-detail', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -4728,6 +4730,16 @@ window.PBGUI_SERIAL = "%%SERIAL%%";
   }
 
   window.PBGUI_HELP_OPENER = openGuide;
+  window.PBGUI_AI_PAGE_CONTEXT = function () {
+    return {
+      section: state.stage,
+      entities: state.selectedConfigIndex == null ? [] : [{
+        kind: 'pareto_config',
+        version: optimizeVersion(),
+        name: 'config #' + String(state.selectedConfigIndex)
+      }]
+    };
+  };
 
   document.title = PBGuiI18n.t('v7explore.pageTitle');
   window.PBGUI_NAV_CONFIG = {

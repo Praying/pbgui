@@ -1222,7 +1222,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <div id="data-tip-tooltip"></div>
 
 <script src="/app/js/editor_shared.js?v=14"></script>
-<script src="/app/js/pbgui_dialogs.js?v=6"></script>
+<script src="/app/js/pbgui_dialogs.js?v=8"></script>
 <script src="/app/js/run_editor_adapter.js?v=9"></script>
 <script src="/app/js/log_viewer_panel.js?v=30"></script>
 <script src="/app/js/coin_overrides_editor.js?v=26"></script>
@@ -4053,6 +4053,12 @@ _editorInitPromise = init();
 document.title = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.titleEditV8' : 'v7run.titleEdit');
 var _sbTitle = document.querySelector('.sb-title');
 if (_sbTitle) _sbTitle.textContent = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.editPb8Instance' : 'v7run.editInstance');
+window.PBGUI_AI_PAGE_CONTEXT = function () {
+  return {
+    section: 'Run config editor',
+    entities: INSTANCE_NAME ? [{ kind: 'run_config', version: runEditorAdapter.version, name: INSTANCE_NAME }] : []
+  };
+};
 </script>
 
 <!-- ── Shared nav bar ── -->

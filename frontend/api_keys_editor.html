@@ -1077,7 +1077,7 @@
         <div id="diffContent" style="flex:1; overflow:auto;"></div>
     </div>
 
-    <script src="/app/js/pbgui_dialogs.js?v=6"></script>
+    <script src="/app/js/pbgui_dialogs.js?v=8"></script>
     <script>
     // ── Config ──────────────────────────────────────────────
     document.title = PBGuiI18n.t('misc.apikeys.title');
@@ -3765,6 +3765,12 @@
         window.PBGuiSharedHelp.open('api_keys');
       };
             window.PBGUI_HELP_OPENER = window._openApiKeysHelp;
+            window.PBGUI_AI_PAGE_CONTEXT = function () {
+                return {
+                    section: 'Credential management',
+                    entities: editingName ? [{ kind: 'pbgui_user', name: editingName }] : []
+                };
+            };
     }());
     </script>
 

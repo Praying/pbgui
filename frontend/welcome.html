@@ -921,7 +921,7 @@
         </div>
     </div>
 
-    <script src="/app/js/pbgui_dialogs.js?v=6"></script>
+    <script src="/app/js/pbgui_dialogs.js?v=8"></script>
     <script>
         document.title = PBGuiI18n.t('misc.welcome.title');
         var TOKEN = "%%TOKEN%%";
@@ -1586,6 +1586,9 @@
             });
         }());
 
+        window.PBGUI_AI_PAGE_CONTEXT = function () {
+            return { section: state.activeSection === 'password' ? 'Authentication settings' : state.activeSection };
+        };
         loadBootstrap();
     </script>
     <script>
