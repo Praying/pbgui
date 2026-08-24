@@ -195,12 +195,10 @@
   --sp-lg: var(--spacing-lg);
   --sp-2xl: var(--spacing-2xl);
   --sp-3xl: var(--spacing-3xl);
-  --sp-4xl: var(--spacing-4xl);
 
   --page-padding: 24px;
   --panel-gap: 16px;
   --section-gap: 20px;
-  --field-gap: 8px;
 
   /* ── Sizing ─────────────────────────────────────────────────── */
   --control-height-sm: 28px;
@@ -255,7 +253,6 @@
   --success-deep: var(--color-success-deep);
   --success-bg: rgb(70 200 143 / 0.13);
   --success-rgb: 70 200 143;
-  --success-soft-rgb: 118 217 173;
   --success-deep-rgb: 38 122 84;
 
   --warning: var(--color-warning);
@@ -263,20 +260,15 @@
   --warning-deep: var(--color-warning-deep);
   --warning-bg: rgb(224 164 88 / 0.14);
   --warning-rgb: 224 164 88;
-  --warning-soft-rgb: 236 195 129;
-  --warning-deep-rgb: 156 112 41;
 
   --danger: var(--color-danger);
   --danger-soft: var(--color-danger-soft);
   --danger-deep: var(--color-danger-deep);
   --danger-bg: rgb(229 97 92 / 0.13);
   --danger-rgb: 229 97 92;
-  --danger-soft-rgb: 238 141 132;
   --danger-deep-rgb: 168 58 53;
 
   --info: var(--accent);     /* informational — same family as accent */
-  --info-soft: var(--accent-soft);
-  --info-bg: var(--accent-bg);
 
   /* Channel triplets for alpha variants of neutral text and surfaces —
      use rgb(var(--text-secondary-rgb) / α) instead of raw rgba literals. */
