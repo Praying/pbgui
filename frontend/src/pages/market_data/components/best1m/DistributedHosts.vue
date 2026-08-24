@@ -9,6 +9,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { best1mHostRowClass, noteClass, settingsToggleClass } from '../../lib/uiClasses';
 import type { UseBest1m } from '../../composables/useBest1m';
 
 const props = defineProps<{
@@ -39,10 +40,11 @@ function onKeydown(event: KeyboardEvent, hostname: string): void {
 </script>
 
 <template>
-  <div class="best1m-distributed-card" id="best1m-distributed-card" :hidden="!cardVisible">
-    <label class="settings-toggle">
+  <div class="best1m-distributed-card grid gap-2 rounded-[10px] border border-accent/16 bg-page/45 p-3" id="best1m-distributed-card" :hidden="!cardVisible">
+    <label :class="settingsToggleClass">
       <input
         id="best1m-distributed-enabled"
+        class="h-4 w-4 m-0"
         type="checkbox"
         :disabled="toggleDisabled"
         :checked="store.distributedEnabled.value && !!hosts.length"
@@ -50,25 +52,24 @@ function onKeydown(event: KeyboardEvent, hostname: string): void {
       />
       <span>{{ t('market.distributeBitgetBackfill') }}</span>
     </label>
-    <div class="best1m-host-list" id="best1m-distributed-hosts">
+    <div class="best1m-host-list grid grid-cols-[repeat(auto-fit,minmax(210px,1fr))] gap-2" id="best1m-distributed-hosts">
       <button
         v-for="host in store.hostRows.value"
         :key="host.hostname"
-        class="best1m-host-row"
-        :class="{ selected: host.selected }"
+        :class="best1mHostRowClass(host.selected)"
         type="button"
         :data-best1m-host="host.hostname"
         :aria-pressed="host.selected ? 'true' : 'false'"
         @click="store.toggleDistributedHost(host.hostname)"
         @keydown="onKeydown($event, host.hostname)"
       >
-        <span class="best1m-host-name">{{ host.hostname }}</span>
-        <span class="best1m-host-target">{{ host.target }}</span>
+        <span class="best1m-host-name font-bold">{{ host.hostname }}</span>
+        <span class="best1m-host-target overflow-hidden text-ellipsis whitespace-nowrap text-xs text-secondary">{{ host.target }}</span>
       </button>
-      <div v-if="isBitget && !hosts.length" class="coin-picker-empty">
+      <div v-if="isBitget && !hosts.length" class="coin-picker-empty col-span-full p-3 text-base text-secondary">
         {{ t('market.noBitgetDownloaders') }}
       </div>
     </div>
-    <span class="note" id="best1m-distributed-note">{{ note }}</span>
+    <span :class="noteClass" id="best1m-distributed-note">{{ note }}</span>
   </div>
 </template>

@@ -9,6 +9,16 @@
  */
 import { nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  btnClass,
+  calloutClass,
+  contextDayClass,
+  contextHourClass,
+  gapCellClass,
+  inputClass,
+  noteClass,
+  panelHeadClass,
+} from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import SummaryCards from './SummaryCards.vue';
 
@@ -33,26 +43,29 @@ watch(
 function onDayChange(event: Event): void {
   void props.store.loadGapDay(String((event.target as HTMLSelectElement).value ?? '')); // :9200-9202
 }
+
+const thClass =
+  'sticky top-0 z-[1] border-b-2 border-border-default bg-panel p-2 text-left';
 </script>
 
 <template>
   <div
     v-if="store.gapOpen.value"
-    class="integrity-gap-backdrop"
+    class="integrity-gap-backdrop fixed inset-0 z-[20000] flex items-center justify-center bg-page/82 p-5 backdrop-blur-[3px] max-[760px]:p-2"
     id="integrity-gap-modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="integrity-gap-title"
   >
-    <div class="integrity-gap-dialog">
-      <div class="panel-head">
+    <div class="integrity-gap-dialog w-[min(1080px,100%)] max-h-[calc(100dvh-40px)] overflow-auto rounded-[10px] border border-border-default bg-panel p-5 shadow-[0_24px_80px_rgba(5,8,14,0.5)] max-[760px]:max-h-[calc(100dvh-16px)] max-[760px]:p-3">
+      <div :class="panelHeadClass">
         <div>
           <div class="eyebrow">{{ t('market.minuteCoverage') }}</div>
           <h2 id="integrity-gap-title">{{ t('market.gapDetailsTitle') }}</h2>
-          <p class="note" id="integrity-gap-subtitle">{{ store.gapSubtitle.value }}</p>
+          <p :class="noteClass" id="integrity-gap-subtitle">{{ store.gapSubtitle.value }}</p>
         </div>
         <button
-          class="btn pbgui-btn btn-secondary secondary"
+          :class="btnClass('secondary')"
           id="btn-integrity-gap-close"
           ref="closeEl"
           type="button"
@@ -61,10 +74,10 @@ function onDayChange(event: Event): void {
           {{ t('common.close') }}
         </button>
       </div>
-      <div class="integrity-gap-controls">
-        <label>
+      <div class="integrity-gap-controls flex flex-wrap items-end gap-3">
+        <label class="min-w-[180px]">
           <span>{{ t('market.damagedDay') }}</span>
-          <select id="integrity-gap-day" :value="store.gapSelectedDay.value" @change="onDayChange">
+          <select id="integrity-gap-day" :class="inputClass" :value="store.gapSelectedDay.value" @change="onDayChange">
             <option v-for="option in store.gapDayOptions.value" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
@@ -73,36 +86,33 @@ function onDayChange(event: Event): void {
       </div>
       <div
         v-if="store.gapFeedback.value.message"
-        class="callout"
-        :class="{ warning: store.gapFeedback.value.level === 'error' }"
+        :class="calloutClass(store.gapFeedback.value.level === 'error')"
         id="integrity-gap-feedback"
       >
         {{ store.gapFeedback.value.message }}
       </div>
-      <SummaryCards id="integrity-gap-summary" class="integrity-gap-summary" :cards="store.gapSummaryCards.value" />
+      <SummaryCards id="integrity-gap-summary" class="integrity-gap-summary my-3" :cards="store.gapSummaryCards.value" />
       <div>
         <div class="eyebrow">{{ t('market.surroundingDays') }}</div>
-        <p class="note">{{ t('market.surroundingDaysNote') }}</p>
-        <div class="integrity-day-context-wrap">
-          <div class="integrity-day-context" id="integrity-day-context">
+        <p :class="noteClass">{{ t('market.surroundingDaysNote') }}</p>
+        <div class="integrity-day-context-wrap my-3 overflow-x-auto">
+          <div class="integrity-day-context grid min-w-[720px] gap-[3px]" id="integrity-day-context">
             <button
               v-for="day in store.gapDayContext.value"
               :key="day.day"
               type="button"
-              class="integrity-context-day"
-              :class="{ selected: day.selected }"
+              :class="contextDayClass(day.selected)"
               :disabled="day.disabled"
               :data-integrity-context-day="day.day"
               :title="day.title"
               @click="store.loadGapDay(day.day)"
             >
               <span>{{ day.day }}</span>
-              <span class="integrity-context-hours">
+              <span class="integrity-context-hours grid grid-cols-[repeat(24,minmax(5px,1fr))] gap-[2px]">
                 <i
                   v-for="(hour, index) in day.hours"
                   :key="index"
-                  class="integrity-context-hour"
-                  :class="hour.cls"
+                  :class="contextHourClass(hour.cls)"
                   :title="hour.title"
                 ></i>
               </span>
@@ -112,44 +122,43 @@ function onDayChange(event: Event): void {
           </div>
         </div>
       </div>
-      <div class="integrity-gap-legend">
-        <span><i class="integrity-gap-swatch integrity-gap-cell"></i><span>{{ t('market.present') }}</span></span>
-        <span><i class="integrity-gap-swatch integrity-gap-cell leading"></i><span>{{ t('market.leadingPossibleInception') }}</span></span>
-        <span><i class="integrity-gap-swatch integrity-gap-cell internal"></i><span>{{ t('market.internalGap') }}</span></span>
-        <span><i class="integrity-gap-swatch integrity-gap-cell trailing"></i><span>{{ t('market.trailingGap') }}</span></span>
+      <div class="integrity-gap-legend mb-2 flex flex-wrap gap-3">
+        <span class="inline-flex items-center gap-1"><i class="integrity-gap-swatch w-3" :class="gapCellClass('')"></i><span>{{ t('market.present') }}</span></span>
+        <span class="inline-flex items-center gap-1"><i class="integrity-gap-swatch w-3" :class="gapCellClass('leading')"></i><span>{{ t('market.leadingPossibleInception') }}</span></span>
+        <span class="inline-flex items-center gap-1"><i class="integrity-gap-swatch w-3" :class="gapCellClass('internal')"></i><span>{{ t('market.internalGap') }}</span></span>
+        <span class="inline-flex items-center gap-1"><i class="integrity-gap-swatch w-3" :class="gapCellClass('trailing')"></i><span>{{ t('market.trailingGap') }}</span></span>
       </div>
-      <div class="integrity-gap-chart-wrap">
-        <div class="integrity-gap-chart" id="integrity-gap-chart">
-          <div v-for="row in store.gapChart.value" :key="row.label" class="integrity-gap-hour">
+      <div class="integrity-gap-chart-wrap overflow-x-auto pb-2">
+        <div class="integrity-gap-chart grid min-w-[650px] gap-[3px]" id="integrity-gap-chart">
+          <div v-for="row in store.gapChart.value" :key="row.label" class="integrity-gap-hour grid items-center gap-px grid-cols-[42px_repeat(60,minmax(4px,1fr))]">
             <span class="integrity-gap-hour-label">{{ row.label }}</span>
             <span
               v-for="(cell, index) in row.cells"
               :key="index"
-              class="integrity-gap-cell"
-              :class="cell.cls"
+              :class="[gapCellClass(cell.cls), 'h-[9px]']"
               :title="cell.title"
             ></span>
           </div>
         </div>
       </div>
-      <div class="integrity-table-wrap integrity-gap-ranges">
-        <table class="integrity-table">
+      <div class="integrity-table-wrap integrity-gap-ranges mt-3 max-h-[52vh] overflow-auto rounded-md border border-border-default">
+        <table class="integrity-table w-full border-collapse max-[760px]:min-w-[720px]">
           <thead>
             <tr>
-              <th>{{ t('market.kind') }}</th>
-              <th>{{ t('market.start') }}</th>
-              <th>{{ t('market.end') }}</th>
-              <th>{{ t('market.minutes') }}</th>
-              <th>{{ t('market.assessment') }}</th>
+              <th :class="thClass">{{ t('market.kind') }}</th>
+              <th :class="thClass">{{ t('market.start') }}</th>
+              <th :class="thClass">{{ t('market.end') }}</th>
+              <th :class="thClass">{{ t('market.minutes') }}</th>
+              <th :class="thClass">{{ t('market.assessment') }}</th>
             </tr>
           </thead>
           <tbody id="integrity-gap-ranges">
             <tr v-for="(range, index) in store.gapRanges.value" :key="index">
-              <td>{{ range.kind }}</td>
-              <td>{{ range.start }}</td>
-              <td>{{ range.end }}</td>
-              <td>{{ range.minutes }}</td>
-              <td>{{ range.assessment }}</td>
+              <td class="border-l-[3px] border-l-transparent border-b border-border-default p-2">{{ range.kind }}</td>
+              <td class="border-l-[3px] border-l-transparent border-b border-border-default p-2">{{ range.start }}</td>
+              <td class="border-l-[3px] border-l-transparent border-b border-border-default p-2">{{ range.end }}</td>
+              <td class="border-l-[3px] border-l-transparent border-b border-border-default p-2">{{ range.minutes }}</td>
+              <td class="border-l-[3px] border-l-transparent border-b border-border-default p-2">{{ range.assessment }}</td>
             </tr>
           </tbody>
         </table>

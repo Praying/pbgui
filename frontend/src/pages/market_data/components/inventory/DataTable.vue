@@ -12,6 +12,7 @@
  * (toggleInventorySort :7967-7977 lives in the store).
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { inventorySortBtnClass } from '../../lib/uiClasses';
 import type { InventoryColumn } from '../../lib/inventoryColumns';
 import { formatInventoryTableValue } from '../../lib/inventoryColumns';
 import type { InventoryRow } from '../../lib/inventoryTypes';
@@ -125,18 +126,17 @@ function cellText(columnKey: string, row: InventoryRow): string {
 </script>
 
 <template>
-  <div ref="root" class="inventory-table-wrap" id="inventory-table-wrap">
-    <table v-if="rows.length" class="inventory-table">
+  <div ref="root" class="inventory-table-wrap max-h-[33vh] overflow-auto rounded-[10px] border border-border-default bg-page/42" id="inventory-table-wrap">
+    <table v-if="rows.length" class="inventory-table w-full min-w-[1180px] border-separate border-spacing-0">
       <thead>
         <tr>
-          <th v-for="column in columns" :key="column.key">
+          <th v-for="column in columns" :key="column.key" class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel py-[0.55rem] px-[0.75rem] text-left align-top text-xs font-semibold uppercase tracking-[0.08em] text-secondary">
             <button
-              class="inventory-sort-btn"
-              :class="{ 'is-active': column.key === sortKey }"
+              :class="inventorySortBtnClass(column.key === sortKey)"
               type="button"
               :data-sort-key="column.key"
               @click="emit('sort', column.key)"
-            >{{ column.label }}<span v-if="column.key === sortKey" class="inventory-sort-indicator">{{ sortDirection === 'desc' ? 'DESC' : 'ASC' }}</span></button>
+            >{{ column.label }}<span v-if="column.key === sortKey" class="inventory-sort-indicator text-xs tracking-normal text-accent">{{ sortDirection === 'desc' ? 'DESC' : 'ASC' }}</span></button>
           </th>
         </tr>
       </thead>
@@ -145,14 +145,35 @@ function cellText(columnKey: string, row: InventoryRow): string {
           v-for="row in rows"
           :key="String(row.row_id ?? '')"
           :data-row-id="String(row.row_id ?? '')"
+          class="cursor-pointer transition-[background-color] duration-[120ms]"
           :class="{ 'is-selected': selectedIds.includes(String(row.row_id ?? '')) }"
         >
-          <td v-for="column in columns" :key="column.key" :title="cellText(column.key, row)">
+          <td v-for="column in columns" :key="column.key" class="border-b border-secondary/12 py-[0.55rem] px-[0.75rem] text-left align-top text-sm whitespace-nowrap" :title="cellText(column.key, row)">
             {{ cellText(column.key, row) }}
           </td>
         </tr>
       </tbody>
     </table>
-    <div v-else class="inventory-empty">{{ emptyText }}</div>
+    <div v-else class="inventory-empty p-5 text-base text-secondary">{{ emptyText }}</div>
   </div>
 </template>
+
+<style scoped>
+/* Row-state rules (legacy :1714-1717) — the drag-select handlers mutate
+   the rows' is-selected class directly at runtime (classList add/remove/
+   toggle), so the cell paints must stay CSS-keyed on the row state; the
+   hover rule keeps the is-selected paint on top exactly like the legacy
+   cascade order. 'inventory-table' / 'is-selected' remain the JS/test
+   hooks (useDragSelect reads them back at mouseup). */
+.inventory-table tbody tr:hover {
+  background: rgb(var(--accent-rgb) / 0.08);
+}
+
+.inventory-table tbody tr.is-selected td {
+  background: rgb(var(--accent-rgb) / 0.12);
+}
+
+.inventory-table tbody tr.is-selected td:first-child {
+  border-left: 3px solid var(--accent);
+}
+</style>

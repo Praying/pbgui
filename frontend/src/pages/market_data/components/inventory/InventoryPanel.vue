@@ -20,6 +20,16 @@
  * switches exactly like legacy's static #inventory-*-plot divs.
  */
 import { useI18n } from 'vue-i18n';
+import {
+  actBtnClass,
+  calloutClass,
+  fieldLabelClass,
+  inputClass,
+  noteClass,
+  panelCardClass,
+  panelHeadClass,
+  settingsFieldClass,
+} from '../../lib/uiClasses';
 import type { InventoryController } from '../../composables/useInventory';
 import type { InventorySubsection } from '../../types';
 import SummaryCards from '../integrity/SummaryCards.vue';
@@ -51,10 +61,10 @@ function onSelectView(view: InventorySubsection): void {
 </script>
 
 <template>
-  <div class="inventory-layout">
+  <div class="inventory-layout grid gap-3">
     <!-- legacy sidebar context blocks (:2929-2945) — relocated above the
          columns; visibility flags stay the store's active-panel checks -->
-    <div id="inventory-panel-actions" class="inventory-panel-actions">
+    <div id="inventory-panel-actions" class="inventory-panel-actions flex flex-wrap items-center gap-3">
       <SidebarActions
         :nav-visible="store.subsectionNavVisible.value"
         :available-views="store.availableViews.value"
@@ -73,28 +83,28 @@ function onSelectView(view: InventorySubsection): void {
         @clear-dataset="store.actions.runClearDataset()"
       />
     </div>
-    <article class="panel-card inventory-shell">
-      <div class="panel-head">
+    <article :class="[panelCardClass, 'inventory-shell grid gap-3']">
+      <div :class="panelHeadClass">
         <div>
           <div class="eyebrow">{{ t('market.ohlcvData') }}</div>
           <h3 id="inventory-title">{{ store.title.value }}</h3>
-          <p class="note" id="inventory-helper-note">{{ store.helperNote.value }}</p>
+          <p :class="noteClass" id="inventory-helper-note">{{ store.helperNote.value }}</p>
         </div>
       </div>
       <div
         v-if="store.feedback.value.message"
-        class="callout"
         id="inventory-feedback"
-        :class="{ warning: store.feedback.value.level === 'error' }"
+        :class="calloutClass(store.feedback.value.level === 'error')"
       >{{ store.feedback.value.message }}</div>
       <!-- renderInventoryMetrics :7851-7866 — same .summary-grid markup as
            the integrity cards -->
       <SummaryCards id="inventory-summary-grid" :cards="store.metrics.value" />
-      <div class="inventory-filter-grid">
-        <label class="settings-field">
-          <span class="field-label">{{ t('market.filterByCoin') }}</span>
+      <div class="inventory-filter-grid grid gap-3 grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)] max-[980px]:grid-cols-1">
+        <label :class="settingsFieldClass">
+          <span :class="fieldLabelClass">{{ t('market.filterByCoin') }}</span>
           <input
             id="inventory-coin-filter"
+            :class="inputClass"
             type="text"
             :placeholder="'e.g. GOOGL or BTC'"
             autocomplete="off"
@@ -102,10 +112,11 @@ function onSelectView(view: InventorySubsection): void {
             @input="store.setCoinFilter(String(($event.target as HTMLInputElement).value || ''))"
           />
         </label>
-        <label class="settings-field">
-          <span class="field-label">{{ t('market.filterByType') }}</span>
+        <label :class="settingsFieldClass">
+          <span :class="fieldLabelClass">{{ t('market.filterByType') }}</span>
           <select
             id="inventory-kind-filter"
+            :class="inputClass"
             :value="store.currentViewState.value.kindFilter"
             @change="store.setKindFilter(String(($event.target as HTMLSelectElement).value || 'all'))"
           >
@@ -119,27 +130,27 @@ function onSelectView(view: InventorySubsection): void {
           </select>
         </label>
       </div>
-      <div class="inventory-table-toolbar">
+      <div class="inventory-table-toolbar mb-1 flex flex-wrap items-center gap-1">
         <button
-          class="act-btn"
+          :class="actBtnClass(false)"
           id="btn-inventory-select-all"
           type="button"
           :disabled="store.selectAllDisabled.value"
           @click="store.selectAll()"
         >{{ t('market.selectAll') }}</button>
         <button
-          class="act-btn"
+          :class="actBtnClass(false)"
           id="btn-inventory-deselect-all"
           type="button"
           :disabled="store.deselectAllDisabled.value"
           @click="store.deselectAll()"
         >{{ t('market.deselect') }}</button>
-        <div class="inventory-timeframe-filter" id="inventory-timeframe-filter" v-if="store.timeframeFilterSupported.value">
-          <span class="inventory-timeframe-filter-label">TF</span>
+        <div class="inventory-timeframe-filter flex items-center gap-1" id="inventory-timeframe-filter" v-if="store.timeframeFilterSupported.value">
+          <span class="inventory-timeframe-filter-label text-xs uppercase tracking-[0.06em] text-secondary">TF</span>
           <button
             v-for="timeframe in timeframeButtons()"
             :key="timeframe"
-            class="act-btn"
+            :class="actBtnClass(store.currentViewState.value.timeframeFilter === timeframe)"
             :id="timeframe === 'all' ? 'btn-inventory-timeframe-all' : `btn-inventory-timeframe-${timeframe}`"
             type="button"
             :data-timeframe-filter="timeframe"
@@ -149,15 +160,14 @@ function onSelectView(view: InventorySubsection): void {
         </div>
         <button
           v-if="store.missingToggleSupported.value"
-          class="act-btn"
           id="btn-inventory-toggle-missing"
           type="button"
-          :class="{ active: store.missingTogglePressed.value }"
+          :class="actBtnClass(store.missingTogglePressed.value)"
           :aria-pressed="store.missingTogglePressed.value ? 'true' : 'false'"
           :title="store.missingToggleTitle.value"
           @click="store.toggleIncludeMissing()"
         >{{ store.missingToggleText.value }}</button>
-        <span class="note" id="inventory-selection-count">{{ store.selectionCountText.value }}</span>
+        <span :class="noteClass" id="inventory-selection-count">{{ store.selectionCountText.value }}</span>
       </div>
       <DataTable
         :columns="store.columns.value"
@@ -173,30 +183,30 @@ function onSelectView(view: InventorySubsection): void {
       />
     </article>
 
-    <article class="panel-card inventory-heatmap-shell" id="inventory-heatmap-card">
+    <article :class="[panelCardClass, 'inventory-heatmap-shell grid gap-3']" id="inventory-heatmap-card">
       <div>
         <div class="eyebrow">{{ t('market.coverage') }}</div>
         <h3 id="inventory-heatmap-title">{{ store.heatmap.heatmapTitle.value }}</h3>
-        <p class="note" id="inventory-heatmap-caption">{{ store.heatmap.heatmapCaption.value }}</p>
+        <p :class="noteClass" id="inventory-heatmap-caption">{{ store.heatmap.heatmapCaption.value }}</p>
       </div>
       <div
         v-if="store.heatmap.heatmapFeedback.value.message"
-        class="callout"
         id="inventory-heatmap-feedback"
-        :class="{ warning: store.heatmap.heatmapFeedback.value.level === 'error' }"
+        :class="calloutClass(store.heatmap.heatmapFeedback.value.level === 'error')"
       >{{ store.heatmap.heatmapFeedback.value.message }}</div>
-      <div class="inventory-heatmap-toolbar" id="inventory-heatmap-toolbar" v-if="store.heatmap.toolbarVisible.value">
-        <label class="settings-field" id="inventory-month-field" v-if="store.heatmap.monthFieldVisible.value">
-          <span class="field-label">{{ t('market.selectMonthForMinute') }}</span>
+      <div class="inventory-heatmap-toolbar flex flex-wrap items-center gap-2" id="inventory-heatmap-toolbar" v-if="store.heatmap.toolbarVisible.value">
+        <label :class="settingsFieldClass" id="inventory-month-field" v-if="store.heatmap.monthFieldVisible.value">
+          <span :class="fieldLabelClass">{{ t('market.selectMonthForMinute') }}</span>
           <select
             id="inventory-month-select"
+            :class="inputClass"
             :value="store.currentViewState.value.selectedMonth"
             @change="store.heatmap.setMonth(String(($event.target as HTMLSelectElement).value || ''))"
           >
             <option v-for="month in store.heatmap.months.value" :key="month" :value="month">{{ month }}</option>
           </select>
         </label>
-        <label class="inventory-toggle" id="inventory-holiday-toggle" v-if="store.heatmap.holidayToggleVisible.value">
+        <label class="inventory-toggle inline-flex items-center gap-1 text-sm text-secondary" id="inventory-holiday-toggle" v-if="store.heatmap.holidayToggleVisible.value">
           <input
             id="inventory-show-holiday"
             type="checkbox"
@@ -205,7 +215,7 @@ function onSelectView(view: InventorySubsection): void {
           />
           <span>{{ t('market.highlightMarketHolidays') }}</span>
         </label>
-        <label class="inventory-toggle" id="inventory-oos-toggle" v-if="store.heatmap.oosToggleVisible.value">
+        <label class="inventory-toggle inline-flex items-center gap-1 text-sm text-secondary" id="inventory-oos-toggle" v-if="store.heatmap.oosToggleVisible.value">
           <input
             id="inventory-show-oos"
             type="checkbox"
@@ -216,21 +226,21 @@ function onSelectView(view: InventorySubsection): void {
         </label>
       </div>
       <!-- server legend_html parsed to structured items — never v-html -->
-      <div class="inventory-legend" id="inventory-heatmap-legend">
+      <div class="inventory-legend flex flex-wrap gap-1" id="inventory-heatmap-legend">
         <span
           v-for="item in store.heatmap.overviewLegend.value"
           :key="item.label"
-          class="inventory-legend-item"
+          class="inventory-legend-item inline-flex min-h-5 items-center whitespace-nowrap rounded-md py-[1px] px-2 text-xs text-primary"
           :style="legendStyle(item.color)"
         >{{ item.label }}</span>
       </div>
       <HeatmapPlot id="inventory-overview-plot" plot-key="overview" :register="store.registerPlot" />
-      <div class="inventory-minute-shell" id="inventory-minute-shell" v-if="store.heatmap.minuteShellVisible.value">
-        <div class="inventory-legend" id="inventory-minute-legend">
+      <div class="inventory-minute-shell grid gap-2" id="inventory-minute-shell" v-if="store.heatmap.minuteShellVisible.value">
+        <div class="inventory-legend flex flex-wrap gap-1" id="inventory-minute-legend">
           <span
             v-for="item in store.heatmap.minuteLegend.value"
             :key="item.label"
-            class="inventory-legend-item"
+            class="inventory-legend-item inline-flex min-h-5 items-center whitespace-nowrap rounded-md py-[1px] px-2 text-xs text-primary"
             :style="legendStyle(item.color)"
           >{{ item.label }}</span>
         </div>

@@ -12,6 +12,14 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  btnSecondaryClass,
+  coinPickerRowClass,
+  fieldLabelClass,
+  inputClass,
+  noteClass,
+  settingsFieldClass,
+} from '../../lib/uiClasses';
 import type { UseBest1m } from '../../composables/useBest1m';
 import { useDragSelect } from '@/shared/composables/useDragSelect';
 
@@ -64,15 +72,16 @@ defineExpose({ install, uninstall: drag.uninstall });
 </script>
 
 <template>
-  <div class="best1m-selector-stack">
-    <label class="settings-field">
-      <span class="field-label">{{ t('market.coinsForBuild') }}</span>
-      <span class="note best1m-selection-note">{{ t('market.best1mSelectionNote') }}</span>
+  <div class="best1m-selector-stack grid gap-3">
+    <label :class="settingsFieldClass">
+      <span :class="fieldLabelClass">{{ t('market.coinsForBuild') }}</span>
+      <span :class="[noteClass, 'best1m-selection-note mt-2 inline-block']">{{ t('market.best1mSelectionNote') }}</span>
     </label>
-    <div class="coin-picker-toolbar">
-      <div class="coin-filter-wrap">
+    <div class="coin-picker-toolbar flex flex-wrap items-center gap-2">
+      <div class="coin-filter-wrap min-w-[220px] flex-[1_1_360px]">
         <input
           id="best1m-coin-filter"
+          :class="inputClass"
           type="text"
           :placeholder="t('market.filterAvailableCoinList')"
           :value="store.coinFilter.value"
@@ -80,52 +89,55 @@ defineExpose({ install, uninstall: drag.uninstall });
         />
       </div>
       <button
-        class="btn secondary"
+        :class="btnSecondaryClass"
         id="btn-best1m-select-visible"
         type="button"
         :disabled="store.visibleCoins.value.length === 0"
         @click="store.selectVisibleCoins()"
       >{{ t('market.selectVisible') }}</button>
       <button
-        class="btn secondary"
+        :class="btnSecondaryClass"
         id="btn-best1m-clear-selection"
         type="button"
         :disabled="store.selectedCoins.value.size === 0"
         @click="store.clearAllCoins()"
       >{{ t('market.clearAll') }}</button>
-      <span class="note" id="best1m-selected-count">{{
+      <span :class="noteClass" id="best1m-selected-count">{{
         t('market.selectedTotal', {
           selected: store.selectedCoins.value.size,
           total: store.enabledCoins.value.length,
         })
       }}</span>
-      <span class="note" id="best1m-filtered-count">{{
+      <span :class="noteClass" id="best1m-filtered-count">{{
         t('market.visibleCount', { visible: store.visibleCoins.value.length })
       }}</span>
     </div>
-    <div class="coin-picker-list" id="best1m-coin-picker" @keydown="onKeydown">
+    <div
+      class="coin-picker-list mt-3 grid content-start grid-cols-[repeat(8,minmax(0,1fr))] gap-1 border-t border-secondary/14 pt-2"
+      id="best1m-coin-picker"
+      @keydown="onKeydown"
+    >
       <template v-if="store.isLoading.value">
-        <div class="coin-picker-empty">{{ t('market.loadingAvailableCoins') }}</div>
+        <div class="coin-picker-empty col-span-full p-3 text-base text-secondary">{{ t('market.loadingAvailableCoins') }}</div>
       </template>
       <template v-else>
         <button
           v-for="coin in store.renderedCoins.value"
           :key="coin"
-          class="coin-picker-row coin-picker-button"
-          :class="{ selected: store.isCoinSelected(coin) }"
+          :class="coinPickerRowClass(store.isCoinSelected(coin), false)"
           type="button"
           :data-best1m-coin-row="coin"
           :aria-pressed="store.isCoinSelected(coin) ? 'true' : 'false'"
           @mousedown="drag.handleRowMouseDown($event, coin)"
         >
-          <span class="coin-picker-coin">{{ coin }}</span>
+          <span class="coin-picker-coin min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-base leading-[1.4] text-primary">{{ coin }}</span>
         </button>
-        <div v-if="store.renderedCoins.value.length === 0" class="coin-picker-empty">
+        <div v-if="store.renderedCoins.value.length === 0" class="coin-picker-empty col-span-full p-3 text-base text-secondary">
           {{ t('market.noCoinsMatch') }}
         </div>
       </template>
     </div>
-    <span class="note" id="best1m-coin-count">{{
+    <span :class="noteClass" id="best1m-coin-count">{{
       store.isLoading.value
         ? t('market.loading')
         : store.loadFailed.value

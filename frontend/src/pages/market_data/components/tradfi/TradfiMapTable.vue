@@ -7,6 +7,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { fieldLabelClass, inputClass, noteClass, settingsFieldClass } from '../../lib/uiClasses';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import { buildTradfiSymbol, type TradfiRow } from '../../lib/tradfiFilters';
 import { formatTradfiPrice, formatTradfiTimestamp } from '../../lib/tradfiFormat';
@@ -51,29 +52,30 @@ function onStatusChange(event: Event): void {
 
 <template>
   <div>
-    <div class="tradfi-filter-grid">
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.filterBySymbol') }}</span>
+    <div class="tradfi-filter-grid mb-3 grid gap-3 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.filterBySymbol') }}</span>
         <input
           id="tradfi-filter-symbol"
+          :class="inputClass"
           type="text"
           placeholder="e.g. TSLA or XAUUSD"
           :value="map.filters.symbol"
           @input="onSymbolInput"
         >
       </label>
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.filterByType') }}</span>
-        <select id="tradfi-filter-type" :value="map.filters.type" @change="onTypeChange">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.filterByType') }}</span>
+        <select id="tradfi-filter-type" :class="inputClass" :value="map.filters.type" @change="onTypeChange">
           <option value="all">{{ t('market.allTypes') }}</option>
           <option v-for="value in map.optionLists.value.typeValues" :key="value" :value="value">
             {{ value }}
           </option>
         </select>
       </label>
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.filterByStatus') }}</span>
-        <select id="tradfi-filter-status" :value="map.filters.status" @change="onStatusChange">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.filterByStatus') }}</span>
+        <select id="tradfi-filter-status" :class="inputClass" :value="map.filters.status" @change="onStatusChange">
           <option value="all">{{ t('market.allStatuses') }}</option>
           <option v-for="value in map.optionLists.value.statusValues" :key="value" :value="value">
             {{ value }}
@@ -81,60 +83,80 @@ function onStatusChange(event: Event): void {
         </select>
       </label>
     </div>
-    <div class="note" id="tradfi-map-count">
+    <div :class="noteClass" id="tradfi-map-count">
       {{ map.hasRendered.value ? map.countText.value : t('market.waitingForTradfiMap') }}
     </div>
-    <div class="tradfi-table-wrap" id="tradfi-table-wrap">
-      <div v-if="map.loadError.value" class="tradfi-empty">{{ map.loadError.value }}</div>
-      <div v-else-if="!map.filteredRows.value.length" class="tradfi-empty">
+    <div class="tradfi-table-wrap max-h-[420px] overflow-auto rounded-[10px] border border-secondary/14 bg-page/48" id="tradfi-table-wrap">
+      <div v-if="map.loadError.value" class="tradfi-empty p-3 text-secondary">{{ map.loadError.value }}</div>
+      <div v-else-if="!map.filteredRows.value.length" class="tradfi-empty p-3 text-secondary">
         {{ t('market.noTradfiMatch') }}
       </div>
-      <table v-else class="tradfi-map-table">
-        <thead>
+      <table v-else class="tradfi-map-table w-full border-collapse">
+        <thead class="sticky top-0 z-[1] bg-page">
           <tr>
-            <th v-for="column in columns" :key="column">{{ column }}</th>
+            <th
+              v-for="column in columns"
+              :key="column"
+              class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm font-semibold uppercase tracking-[0.04em] text-primary"
+            >{{ column }}</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="row in map.filteredRows.value"
             :key="row.xyz_coin"
+            class="cursor-pointer"
             :class="{ 'is-selected': row.xyz_coin === map.selectedCoin.value }"
             :data-tradfi-xyz="row.xyz_coin"
             @click="map.selectCoin(row.xyz_coin ?? '')"
           >
-            <td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">
               <a
                 v-if="row.hl_link"
-                class="tradfi-table-link"
+                class="tradfi-table-link font-semibold text-accent no-underline hover:underline"
                 :href="row.hl_link"
                 target="_blank"
                 rel="noopener noreferrer"
               >XYZ:{{ row.xyz_coin }}</a>
               <strong v-else>{{ row.xyz_coin }}</strong>
             </td>
-            <td class="tradfi-price-cell">{{ formatTradfiPrice(row.hl_price) }}</td>
-            <td class="tradfi-price-cell">{{ formatTradfiPrice(row.tiingo_price) }}</td>
-            <td>{{ row.description }}</td>
-            <td>
+            <td class="tradfi-price-cell whitespace-nowrap border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm tabular-nums">{{ formatTradfiPrice(row.hl_price) }}</td>
+            <td class="tradfi-price-cell whitespace-nowrap border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm tabular-nums">{{ formatTradfiPrice(row.tiingo_price) }}</td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">{{ row.description }}</td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">
               <a
                 v-if="row.pyth_link"
-                class="tradfi-table-link-muted"
+                class="tradfi-table-link-muted text-sm font-semibold text-secondary no-underline hover:text-primary hover:underline"
                 :href="row.pyth_link"
                 target="_blank"
                 rel="noopener noreferrer"
               >{{ t('market.open') }}</a>
             </td>
-            <td>{{ row.canonical_type }}</td>
-            <td>{{ tiingoSymbolOf(row) }}</td>
-            <td><span class="tradfi-pill">{{ row.status }}</span></td>
-            <td>{{ row.tiingo_start_date }}</td>
-            <td>{{ row.tiingo_fetch_start }}</td>
-            <td>{{ formatTradfiTimestamp(row.last_verified) }}</td>
-            <td class="tradfi-note-cell" :title="row.note">{{ row.note }}</td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">{{ row.canonical_type }}</td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">{{ tiingoSymbolOf(row) }}</td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm"><span class="tradfi-pill inline-flex items-center whitespace-nowrap rounded-full border border-accent/20 bg-accent/12 py-[0.2rem] px-[0.55rem] text-primary">{{ row.status }}</span></td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">{{ row.tiingo_start_date }}</td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">{{ row.tiingo_fetch_start }}</td>
+            <td class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm">{{ formatTradfiTimestamp(row.last_verified) }}</td>
+            <td class="tradfi-note-cell max-w-[320px] border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm text-secondary" :title="row.note">{{ row.note }}</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Row-state rules (legacy :2204-2210) — the hover/selected paints come
+   from the row's state, and .is-selected must outrank :hover exactly like
+   the legacy cascade order. 'tradfi-map-table' / 'is-selected' remain the
+   inert anchors (the store toggles is-selected, the suite selects
+   `.tradfi-map-table tbody tr`). */
+.tradfi-map-table tbody tr:hover {
+  background: rgb(var(--accent-rgb) / 0.08);
+}
+
+.tradfi-map-table tbody tr.is-selected {
+  background: rgb(var(--accent-rgb) / 0.14);
+}
+</style>

@@ -7,6 +7,7 @@
 import { useI18n } from 'vue-i18n';
 import { PhEye, PhEyeSlash } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { inputPwClass } from '../../lib/uiClasses';
 import type { UseTiingo } from '../../composables/useTiingo';
 
 defineProps<{
@@ -15,12 +16,17 @@ defineProps<{
 
 const { t } = useI18n();
 
+/** The former .pw-wrap / .pw-eye-btn rules (36px eye gutter + overlay). */
+const pwWrapClass = 'pw-wrap relative flex w-full items-center';
+const pwEyeBtnClass =
+  'pw-eye-btn absolute right-2 cursor-pointer border-none bg-transparent p-0 text-md leading-none text-muted select-none hover:text-secondary';
 </script>
 
 <template>
-  <div class="pw-wrap">
+  <div :class="pwWrapClass">
     <input
       id="settings-tiingo-token"
+      :class="inputPwClass"
       v-model="tiingo.tokenValue.value"
       :type="tiingo.visible.value ? 'text' : 'password'"
       autocomplete="new-password"
@@ -31,7 +37,7 @@ const { t } = useI18n();
     >
     <button
       type="button"
-      class="pw-eye-btn"
+      :class="pwEyeBtnClass"
       :aria-label="t('market.showHideTiingoToken')"
       :title="t('market.showHideTiingoToken')"
       :disabled="tiingo.revealLoading.value"

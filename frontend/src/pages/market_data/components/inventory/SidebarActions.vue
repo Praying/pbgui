@@ -6,6 +6,7 @@
  * SidebarNav after the integrity button; the store computes every flag.
  */
 import { useI18n } from 'vue-i18n';
+import { inventorySubsectionBtnClass, sbBtnClass, sbSepClass } from '../../lib/uiClasses';
 import type { InventorySubsection } from '../../types';
 
 defineProps<{
@@ -47,48 +48,51 @@ function label(view: InventorySubsection): string {
   const labelKey = VIEW_LABEL[view];
   return view === 'pb7_cache' ? t(labelKey) : labelKey;
 }
+
+/** The former block layout (:168-219 tail) — flex-wrap row, seps dropped
+ *  from view (legacy #sidebar-*-build .sb-sep { display: none }). */
+const blockClass = 'flex flex-wrap items-center gap-1';
 </script>
 
 <template>
-  <div id="inventory-subsection-nav" :hidden="!navVisible">
+  <div id="inventory-subsection-nav" :class="blockClass" :hidden="!navVisible">
     <button
       v-for="view in availableViews"
       :key="view"
-      class="sb-btn inventory-subsection-btn"
+      :class="inventorySubsectionBtnClass(view === activeView)"
       type="button"
-      :class="{ active: view === activeView }"
       @click="emit('selectView', view)"
     >{{ label(view) }}</button>
   </div>
-  <div id="sidebar-inventory-build" :hidden="!buildVisible">
-    <hr class="sb-sep" />
+  <div id="sidebar-inventory-build" :class="blockClass" :hidden="!buildVisible">
+    <hr :class="[sbSepClass, 'hidden']" />
     <button
-      class="sb-btn"
+      :class="sbBtnClass(false)"
       id="btn-inventory-build-best1m"
       type="button"
       :disabled="buildDisabled"
       @click="emit('build')"
     >{{ buildText }}</button>
   </div>
-  <div id="sidebar-inventory-delete" :hidden="!deleteVisible">
-    <hr class="sb-sep" />
+  <div id="sidebar-inventory-delete" :class="blockClass" :hidden="!deleteVisible">
+    <hr :class="[sbSepClass, 'hidden']" />
     <button
-      class="sb-btn"
+      :class="sbBtnClass(false)"
       id="btn-inventory-delete-selected"
       type="button"
       :disabled="deleteDisabled"
       @click="emit('deleteSelected')"
     >{{ deleteText }}</button>
     <button
-      class="sb-btn"
+      :class="sbBtnClass(false)"
       id="btn-inventory-delete-older"
       type="button"
       :disabled="olderDisabled"
       @click="emit('deleteOlder')"
     >{{ t('market.deleteByDateTitle') }}</button>
-    <hr class="sb-sep" />
+    <hr :class="[sbSepClass, 'hidden']" />
     <button
-      class="sb-btn"
+      :class="sbBtnClass(false)"
       id="btn-inventory-clear-dataset"
       type="button"
       @click="emit('clearDataset')"

@@ -19,6 +19,18 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  best1mFrameClass,
+  btnPrimaryClass,
+  calloutClass,
+  fieldLabelClass,
+  jobMonitorFrameClass,
+  noteClass,
+  panelHeadClass,
+  sbBtnClass,
+  settingsFieldClass,
+  settingsToggleClass,
+} from '../../lib/uiClasses';
 import type { Best1mSection } from '../../composables/useContextExchange';
 import type { UseBest1m } from '../../composables/useBest1m';
 import AutoResizeFrame from './AutoResizeFrame.vue';
@@ -52,37 +64,35 @@ const feedbackIsWarning = () =>
 <template>
   <!-- build/download mode switch (legacy sidebar shortcuts :2946/:2948) —
        sits above both variants so either mode stays reachable -->
-  <div v-if="store.isHyperliquid.value" id="best1m-mode-switch" class="best1m-mode-switch">
+  <div v-if="store.isHyperliquid.value" id="best1m-mode-switch" class="best1m-mode-switch flex flex-none flex-wrap gap-1">
     <button
       id="best1m-mode-build"
-      class="sb-btn"
+      :class="sbBtnClass(!isDownloadMode())"
       type="button"
-      :class="{ active: !isDownloadMode() }"
       @click="emit('selectMode', 'build')"
     >{{ t('market.buildBest1mTitle') }}</button>
     <button
       id="best1m-mode-download"
-      class="sb-btn"
+      :class="sbBtnClass(isDownloadMode())"
       type="button"
-      :class="{ active: isDownloadMode() }"
       @click="emit('selectMode', 'download')"
     >{{ t('market.downloadL2books') }}</button>
   </div>
 
   <article
-    class="panel-card best1m-shell best1m-panel-generic"
+    class="panel-card best1m-shell best1m-panel-generic flex min-h-0 flex-1 flex-col gap-3"
     id="best1m-generic-panel"
     :hidden="store.isHyperliquid.value"
   >
-    <div v-if="store.feedback.value" id="best1m-feedback" class="callout" :class="{ warning: feedbackIsWarning() }">
+    <div v-if="store.feedback.value" id="best1m-feedback" :class="calloutClass(feedbackIsWarning())">
       {{ store.feedback.value.message }}
     </div>
     <div id="best1m-generic-wrap" :hidden="store.isHyperliquid.value">
-      <div class="best1m-form-grid">
+      <div class="best1m-form-grid grid gap-3">
         <CoinPickerBest1m ref="picker" :store="store" />
-        <div class="best1m-fields">
-          <label class="settings-field">
-            <span class="field-label">{{ t('market.startDateOptional') }}</span>
+        <div class="best1m-fields grid gap-3 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+          <label :class="settingsFieldClass">
+            <span :class="fieldLabelClass">{{ t('market.startDateOptional') }}</span>
             <input
               id="best1m-start-date"
               type="date"
@@ -90,8 +100,8 @@ const feedbackIsWarning = () =>
               @input="store.setStartDate(($event.target as HTMLInputElement).value)"
             />
           </label>
-          <label class="settings-field">
-            <span class="field-label">{{ t('market.endDateOptional') }}</span>
+          <label :class="settingsFieldClass">
+            <span :class="fieldLabelClass">{{ t('market.endDateOptional') }}</span>
             <input
               id="best1m-end-date"
               type="date"
@@ -100,9 +110,10 @@ const feedbackIsWarning = () =>
             />
           </label>
         </div>
-        <label class="settings-toggle">
+        <label :class="settingsToggleClass">
           <input
             id="best1m-refetch"
+            class="h-4 w-4 m-0"
             type="checkbox"
             :checked="store.refetch.value"
             @change="store.setRefetch(($event.target as HTMLInputElement).checked)"
@@ -110,32 +121,32 @@ const feedbackIsWarning = () =>
           <span id="best1m-refetch-label">{{ store.refetchLabel.value || t('market.refetchAllDays') }}</span>
         </label>
         <DistributedHosts :store="store" />
-        <div class="best1m-actions">
+        <div class="best1m-actions flex flex-wrap items-center gap-3">
           <button
-            class="btn primary"
+            :class="btnPrimaryClass"
             id="btn-best1m-queue"
             type="button"
             :disabled="store.isQueueDisabled.value"
             @click="store.queueBest1m()"
           >{{ t('market.buildBest1m') }}</button>
         </div>
-        <p class="note" id="best1m-hint">{{ store.hint.value }}</p>
+        <p :class="noteClass" id="best1m-hint">{{ store.hint.value }}</p>
       </div>
       <article
-        class="best1m-job-monitor-shell"
+        class="best1m-job-monitor-shell mt-3 grid gap-3 border-t border-secondary/12 pt-3"
         id="best1m-job-monitor-card"
         :hidden="!store.jobMonitorVisible.value"
       >
-        <div class="panel-head">
+        <div :class="panelHeadClass">
           <div>
             <div class="eyebrow">{{ t('market.queue') }}</div>
             <h3>{{ t('market.jobMonitor') }}</h3>
-            <p class="note">{{ t('market.jobMonitorNote') }}</p>
+            <p :class="noteClass">{{ t('market.jobMonitorNote') }}</p>
           </div>
         </div>
         <AutoResizeFrame
           v-if="store.jobMonitorSrc.value"
-          frame-class="best1m-job-monitor-frame"
+          :frame-class="jobMonitorFrameClass"
           frame-id="best1m-job-monitor-frame"
           :title="t('market.best1mJobMonitorTitle')"
           :src="store.jobMonitorSrc.value"
@@ -145,10 +156,10 @@ const feedbackIsWarning = () =>
     </div>
   </article>
 
-  <div class="best1m-panel-flat" id="best1m-hyperliquid-wrap" :hidden="!store.isHyperliquid.value">
+  <div class="best1m-panel-flat min-h-0 flex-1 pr-0" id="best1m-hyperliquid-wrap" :hidden="!store.isHyperliquid.value">
     <AutoResizeFrame
       v-if="store.isHyperliquid.value && store.hyperliquidSrc.value"
-      frame-class="best1m-frame"
+      :frame-class="best1mFrameClass"
       frame-id="best1m-hyperliquid-frame"
       :title="t('market.hyperliquidDataActionsTitle')"
       :src="store.hyperliquidSrc.value"

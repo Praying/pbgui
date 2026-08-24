@@ -28,15 +28,15 @@ const { t } = useI18n();
 <template>
   <details
     v-if="visible"
-    class="inventory-ohlcv-details"
+    class="inventory-ohlcv-details overflow-hidden rounded-[10px] border border-accent/12 bg-page/36"
     id="inventory-ohlcv-details"
     :open="open"
     @toggle="emit('toggle', ($event.target as HTMLDetailsElement).open)"
   >
-    <summary id="inventory-ohlcv-summary">{{ summary }}</summary>
+    <summary class="cursor-pointer list-none bg-panel/70 p-3 font-semibold text-primary [&::-webkit-details-marker]:hidden" id="inventory-ohlcv-summary">{{ summary }}</summary>
     <iframe
       v-if="open && src"
-      class="inventory-ohlcv-frame"
+      class="inventory-ohlcv-frame block h-[630px] w-full border-0 bg-transparent"
       id="inventory-ohlcv-frame"
       :title="t('market.inventoryOhlcvChart')"
       :src="src"

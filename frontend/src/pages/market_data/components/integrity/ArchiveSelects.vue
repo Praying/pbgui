@@ -6,6 +6,16 @@
  * the save/publish/reference actions (:4607-4636, :9172-9177).
  */
 import { useI18n } from 'vue-i18n';
+import {
+  btnClass,
+  fieldLabelClass,
+  inputClass,
+  noteClass,
+  panelCardClass,
+  panelHeadClass,
+  settingsFieldClass,
+  settingsToggleClass,
+} from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 
 defineProps<{
@@ -16,30 +26,30 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <article class="panel-card">
-    <div class="panel-head">
+  <article :class="panelCardClass">
+    <div :class="panelHeadClass">
       <div>
         <div class="eyebrow">{{ t('market.checksumSharing') }}</div>
         <h3>{{ t('market.archiveSettings') }}</h3>
-        <p class="note">{{ t('market.checksumPublishNote') }}</p>
+        <p :class="noteClass">{{ t('market.checksumPublishNote') }}</p>
       </div>
     </div>
-    <div class="integrity-settings-grid">
-      <label class="settings-toggle">
-        <input id="integrity-publish-enabled" v-model="store.form.publishEnabled.value" type="checkbox" />
+    <div class="integrity-settings-grid grid grid-cols-[repeat(2,minmax(240px,1fr))] gap-3 max-[760px]:grid-cols-1">
+      <label :class="settingsToggleClass">
+        <input class="h-4 w-4 m-0" id="integrity-publish-enabled" v-model="store.form.publishEnabled.value" type="checkbox" />
         <span>{{ t('market.publishChecksumDaily') }}</span>
       </label>
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.publishArchive') }}</span>
-        <select id="integrity-publish-archive" v-model="store.form.publishArchive.value">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.publishArchive') }}</span>
+        <select id="integrity-publish-archive" :class="inputClass" v-model="store.form.publishArchive.value">
           <option v-for="option in store.archiveOptions.value.publish" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
         </select>
       </label>
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.referenceArchive') }}</span>
-        <select id="integrity-reference-archive" v-model="store.form.referenceArchive.value">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.referenceArchive') }}</span>
+        <select id="integrity-reference-archive" :class="inputClass" v-model="store.form.referenceArchive.value">
           <option v-for="option in store.archiveOptions.value.reference" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -48,7 +58,7 @@ const { t } = useI18n();
     </div>
     <div class="panel-actions">
       <button
-        class="btn pbgui-btn btn-primary primary"
+        :class="btnClass('primary')"
         id="btn-integrity-save"
         type="button"
         :disabled="store.isSaving.value"
@@ -57,7 +67,7 @@ const { t } = useI18n();
         {{ t('market.saveArchiveSettings') }}
       </button>
       <button
-        class="btn pbgui-btn btn-secondary secondary"
+        :class="btnClass('secondary')"
         id="btn-integrity-publish"
         type="button"
         :disabled="store.publishDisabled.value"
@@ -66,7 +76,7 @@ const { t } = useI18n();
         {{ t('market.publishNow') }}
       </button>
       <button
-        class="btn pbgui-btn btn-secondary secondary"
+        :class="btnClass('secondary')"
         id="btn-integrity-reference"
         type="button"
         :disabled="store.referenceDisabled.value"

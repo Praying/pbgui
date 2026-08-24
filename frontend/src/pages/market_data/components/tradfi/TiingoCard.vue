@@ -5,6 +5,17 @@
  * callout (:7390-7395) and the usage host (:3102 → UsagePanel).
  */
 import { useI18n } from 'vue-i18n';
+import {
+  btnClass,
+  calloutClass,
+  fieldLabelClass,
+  noteClass,
+  panelCardClass,
+  panelHeadClass,
+  settingsFieldClass,
+  settingsGridWideClass,
+  stackClass,
+} from '../../lib/uiClasses';
 import type { UseTiingo } from '../../composables/useTiingo';
 import TokenRevealField from './TokenRevealField.vue';
 import UsagePanel from './UsagePanel.vue';
@@ -17,31 +28,31 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <article class="panel-card" id="settings-hyperliquid-tiingo" data-settings-subsection="tradfi">
-    <div class="panel-head">
+  <article :class="panelCardClass" id="settings-hyperliquid-tiingo" data-settings-subsection="tradfi">
+    <div :class="panelHeadClass">
       <div>
         <div class="eyebrow">{{ t('market.tiingoSettingsStockPerp') }}</div>
       </div>
       <div class="panel-actions">
         <button
-          class="btn pbgui-btn btn-secondary secondary"
+          :class="btnClass('secondary')"
           id="btn-test-tiingo"
           type="button"
           @click="tiingo.test()"
         >{{ t('market.testTiingo') }}</button>
       </div>
     </div>
-    <div class="callout" id="settings-tiingo-credential-status">
+    <div :class="calloutClass(false)" id="settings-tiingo-credential-status">
       {{ tiingo.configured.value ? t('market.tiingoActiveProfile') : t('market.tiingoNoProfile') }}
     </div>
-    <div class="settings-grid settings-grid-wide">
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.newTiingoApiToken') }}</span>
+    <div :class="settingsGridWideClass">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.newTiingoApiToken') }}</span>
         <TokenRevealField :tiingo="tiingo" />
       </label>
-      <div class="settings-field" style="align-self: end;">
+      <div :class="[settingsFieldClass, 'self-end']">
         <button
-          class="btn pbgui-btn btn-primary primary"
+          :class="btnClass('primary')"
           id="btn-save-tiingo-token"
           type="button"
           :disabled="tiingo.saveLoading.value"
@@ -49,8 +60,8 @@ const { t } = useI18n();
         >{{ t('market.saveTokenToVault') }}</button>
       </div>
     </div>
-    <div class="note">{{ t('market.tiingoEyeNote') }}</div>
-    <div id="settings-tiingo-usage" class="stack">
+    <div :class="noteClass">{{ t('market.tiingoEyeNote') }}</div>
+    <div id="settings-tiingo-usage" :class="stackClass">
       <UsagePanel :usage="tiingo.usage.value" :configured="tiingo.usageConfigured.value" />
     </div>
   </article>

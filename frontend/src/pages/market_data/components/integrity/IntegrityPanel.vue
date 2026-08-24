@@ -12,6 +12,7 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { btnClass, calloutClass, noteClass, panelCardClass, panelHeadClass, stackClass } from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import type { IntegrityPollingController } from '../../composables/useIntegrityPolling';
 import ArchiveSelects from './ArchiveSelects.vue';
@@ -45,25 +46,25 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="stack">
-    <article class="panel-card">
-      <div class="panel-head">
+  <div :class="stackClass">
+    <article :class="panelCardClass">
+      <div :class="panelHeadClass">
         <div>
           <div class="eyebrow">{{ t('market.dailyChecksums') }}</div>
           <h2>{{ t('market.ohlcvIntegrity') }}</h2>
-          <p class="note" id="integrity-description">{{ store.descriptionText.value }}</p>
+          <p :class="noteClass" id="integrity-description">{{ store.descriptionText.value }}</p>
         </div>
         <div class="panel-actions">
           <button
             v-if="store.isHyperliquid.value"
-            class="btn pbgui-btn btn-secondary secondary"
+            :class="btnClass('secondary')"
             id="btn-integrity-normalize-hl"
             type="button"
             @click="store.queueNormalizeFallback()"
           >
             {{ t('market.normalizeFallbackCandles') }}
           </button>
-          <button class="btn pbgui-btn btn-primary primary" id="btn-integrity-scan" type="button" @click="store.queueScan()">
+          <button :class="btnClass('primary')" id="btn-integrity-scan" type="button" @click="store.queueScan()">
             {{ t('market.runFullScan') }}
           </button>
         </div>
@@ -71,8 +72,7 @@ onBeforeUnmount(() => {
       <div
         v-if="store.feedback.value.message"
         id="integrity-feedback"
-        class="callout"
-        :class="{ warning: store.feedback.value.level === 'error' }"
+        :class="calloutClass(store.feedback.value.level === 'error')"
       >
         {{ store.feedback.value.message }}
       </div>

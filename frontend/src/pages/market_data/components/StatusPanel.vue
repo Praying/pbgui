@@ -18,6 +18,7 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { calloutClass } from '../lib/uiClasses';
 import { useFrameAutoResize } from '../composables/useFrameAutoResize';
 import type { StatusMonitorController } from '../composables/useStatusMonitor';
 
@@ -54,19 +55,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <article class="context-shell status-panel-shell">
-    <div v-if="monitor.phase.value === 'loading'" class="callout">
+  <article class="context-shell status-panel-shell flex w-full flex-1 min-h-0 flex-col gap-3 self-stretch border-0 bg-transparent p-0 rounded-none shadow-none">
+    <div v-if="monitor.phase.value === 'loading'" :class="calloutClass(false)">
       <div class="eyebrow">{{ t('market.statusMonitor') }}</div>
       <p>{{ t('market.loadingStatus') }}</p>
     </div>
-    <div v-else-if="monitor.phase.value === 'error'" class="callout warning">
+    <div v-else-if="monitor.phase.value === 'error'" :class="calloutClass(true)">
       <div class="eyebrow">{{ t('market.statusMonitor') }}</div>
       <p>{{ monitor.errorMessage.value || t('market.failedStatusMonitor') }}</p>
     </div>
     <iframe
       id="status-monitor-host"
       ref="frameEl"
-      class="status-monitor-host"
+      class="status-monitor-host block w-full flex-1 min-h-0 border-0"
       :title="t('market.statusMonitor')"
       scrolling="no"
       @load="onFrameLoad"

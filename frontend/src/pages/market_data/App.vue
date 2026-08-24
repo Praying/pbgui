@@ -500,8 +500,8 @@ onMounted(() => {
     </template>
 
     <MigrationWatermark />
-    <div id="page-body">
-    <div id="main-content">
+    <div id="page-body" class="flex min-h-0 flex-1 overflow-hidden">
+    <div id="main-content" class="flex min-w-0 min-h-0 flex-1 flex-col gap-3 overflow-hidden p-5">
       <ExchangeSelect
         :model-value="contextExchange.contextExchange.value"
         :options="exchangeOptions"
@@ -549,3 +549,102 @@ onMounted(() => {
   />
 </AppShell>
 </template>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ported from styles/panels-*.css (7 files deleted at the Tailwind
+   migration). Everything expressible as utilities moved onto the
+   templates (App.vue + the 45 components; shared sets in
+   lib/uiClasses.ts); the rules below stay as CSS for the documented
+   reasons. This block is unscoped on purpose — the old stylesheets
+   were page-global and the html/body/:root rules have no component
+   root to scope to.
+
+   Dropped outright: the :root alias block (--bg/--bg2/--border/--text/
+   --text-dim/--accent-2 — every one of those variables except --font is
+   provided identically by the legacy alias block in src/styles/
+   tailwind.css, and --accent-2 was referenced nowhere), the [hidden]
+   rule (the shared base layer provides it), the .activity-log-shell twin
+   of .context-shell (no template emits it), .settings-shell >
+   .panel-head (dead since the rail migration — no panel-head is a
+   direct child of .settings-shell), .settings-field.compact-field (no
+   template emits it), and the html/body margin/padding/height/background
+   declarations the shared base layer + preflight already cover.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page root chrome ──────────────────────────────────────────
+   The page-local font stack (legacy --font on :root — 'Source Sans
+   Pro'-led, NOT the shared Space Grotesk stack) plus the overflow lock
+   and the column body layout; the date input in the inventory overlay
+   also reads --font. */
+:root {
+  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif,
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+
+html,
+body {
+  overflow: hidden;
+  font-family: var(--font);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── data-tip tooltip affordance (panels-status.css) ───────────
+   Attribute selector spanning every component that emits data-tip
+   (SshForm field labels; the shared CoinOverridesPanel renders
+   [data-tip] spans too), and the shared DataTipTooltip.vue root
+   carries no classes — same pattern as v7_backtest/v7_edit. */
+[data-tip] {
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+#data-tip-tooltip {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  padding: 6px 10px;
+  white-space: pre-wrap;
+  max-width: 520px;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(5, 8, 14, 0.5);
+  pointer-events: none;
+}
+
+/* ── placeholder tint (panels-settings.css) ────────────────────
+   Pseudo-element; the shared base layer's --text-placeholder tint is
+   slightly darker than the legacy --text-muted this page showed. */
+input::placeholder {
+  color: var(--text-muted);
+}
+</style>
+
+<style scoped>
+/* Page-level AppShell overrides — ported from panels-shell.css at the
+   Tailwind migration. The :deep() rules target AppShell internals, so
+   they stay as CSS instead of utilities (coin_data pattern). */
+.data-page-shell--market-data :deep(.app-shell__main) {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.data-page-shell--market-data :deep(.app-shell__primary) {
+  min-height: 0;
+}
+</style>

@@ -7,6 +7,7 @@
  */
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { btnSecondaryClass, fieldLabelClass, inputClass, settingsFieldClass } from '../../lib/uiClasses';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import { formatTradfiPrice, formatTradfiTimestamp } from '../../lib/tradfiFormat';
 
@@ -67,6 +68,18 @@ function priceMeta(item: {
   return timestamp ? `${label} · ${timestamp} UTC` : label;
 }
 
+/** The former .tradfi-search-window-status + .{success,info,error} rules. */
+const STATUS_TONE: Record<string, string> = {
+  success: 'success border-success/28 bg-success-deep/92 text-success-soft',
+  info: 'info border-accent/24 bg-page/92 text-accent-soft',
+  error: 'error border-danger-soft/24 bg-danger-deep/92 text-danger-soft',
+};
+
+function statusClass(level: string): string {
+  const tone = STATUS_TONE[level] ?? 'border-secondary/14 bg-page/48 text-secondary';
+  return `tradfi-search-window-status ${level} rounded-[10px] border px-3 py-2 text-sm leading-[1.45] ${tone}`;
+}
+
 function run(): void {
   void props.map.runSearch(String(inputEl.value ? inputEl.value.value : '')); // :6660 — live input text
 }
@@ -94,20 +107,21 @@ watch(
 </script>
 
 <template>
-  <div v-if="!row" class="tradfi-search-window-content">
-    <div class="tradfi-search-window-empty">{{ t('market.selectTradfiRow') }}</div>
+  <div v-if="!row" class="tradfi-search-window-content flex min-h-full flex-col gap-3">
+    <div class="tradfi-search-window-empty rounded-[10px] border border-dashed border-secondary/18 bg-page/34 p-3 text-sm leading-[1.5] text-secondary">{{ t('market.selectTradfiRow') }}</div>
   </div>
-  <div v-else class="tradfi-search-window-content">
-    <div class="tradfi-search-window-header-block">
-      <div class="tradfi-search-title">{{ t('market.searchTiingoTickerFor', { coin: rowCoin }) }}</div>
-      <div class="tradfi-search-window-caption">{{ t('market.tiingoSearchCaption') }}</div>
+  <div v-else class="tradfi-search-window-content flex min-h-full flex-col gap-3">
+    <div class="tradfi-search-window-header-block grid gap-1">
+      <div class="tradfi-search-title text-base font-bold text-primary">{{ t('market.searchTiingoTickerFor', { coin: rowCoin }) }}</div>
+      <div class="tradfi-search-window-caption text-sm text-secondary">{{ t('market.tiingoSearchCaption') }}</div>
     </div>
-    <div class="tradfi-search-window-controls">
-      <label class="settings-field tradfi-search-window-query-field">
-        <span class="field-label">{{ t('market.query') }}</span>
+    <div class="tradfi-search-window-controls grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 max-[700px]:grid-cols-1">
+      <label :class="[settingsFieldClass, 'tradfi-search-window-query-field']">
+        <span :class="fieldLabelClass">{{ t('market.query') }}</span>
         <input
           id="tradfi-search-window-query"
           ref="inputEl"
+          :class="inputClass"
           type="text"
           :value="effectiveQuery"
           :placeholder="t('market.tickerOrCompany')"
@@ -115,7 +129,7 @@ watch(
         >
       </label>
       <button
-        class="btn secondary"
+        :class="[btnSecondaryClass, 'self-end']"
         id="btn-tradfi-search-window-run"
         type="button"
         :disabled="isSearching"
@@ -124,27 +138,26 @@ watch(
     </div>
     <div
       v-if="message"
-      class="tradfi-search-window-status"
-      :class="messageLevel"
+      :class="statusClass(messageLevel)"
     >{{ message }}</div>
-    <div v-if="results.length" class="tradfi-search-list">
-      <div v-for="(item, index) in results" :key="index" class="tradfi-search-item">
-        <div class="tradfi-search-item-main">
-          <div class="tradfi-search-title">{{ item.ticker }} · {{ item.name }}</div>
-          <div class="tradfi-search-meta">
+    <div v-if="results.length" class="tradfi-search-list grid gap-2">
+      <div v-for="(item, index) in results" :key="index" class="tradfi-search-item flex flex-wrap items-start justify-between gap-3 rounded-[10px] border border-secondary/14 bg-page/45 p-3">
+        <div class="tradfi-search-item-main grid min-w-0 flex-[1_1_320px] gap-1">
+          <div class="tradfi-search-title text-base font-bold text-primary">{{ item.ticker }} · {{ item.name }}</div>
+          <div class="tradfi-search-meta text-sm text-secondary">
             {{ (item.asset_type || 'unknown') + ' · ' + (item.is_active ? t('market.active') : t('market.inactive')) }}
           </div>
-          <div class="tradfi-search-meta">{{ priceMeta(item) }}</div>
-          <div class="tradfi-search-meta">{{ hlPriceMeta }}</div>
+          <div class="tradfi-search-meta text-sm text-secondary">{{ priceMeta(item) }}</div>
+          <div class="tradfi-search-meta text-sm text-secondary">{{ hlPriceMeta }}</div>
         </div>
         <button
-          class="btn secondary"
+          :class="btnSecondaryClass"
           type="button"
           :data-tradfi-search-index="index"
           @click="map.applySearchResult(index)"
         >{{ t('market.apply') }}</button>
       </div>
     </div>
-    <div v-else class="tradfi-search-window-empty">{{ emptyMessage }}</div>
+    <div v-else class="tradfi-search-window-empty rounded-[10px] border border-dashed border-secondary/18 bg-page/34 p-3 text-sm leading-[1.5] text-secondary">{{ emptyMessage }}</div>
   </div>
 </template>

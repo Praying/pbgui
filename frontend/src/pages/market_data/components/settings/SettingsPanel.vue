@@ -18,6 +18,7 @@
  */
 import { watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { saveSettingsBtnClass } from '../../lib/uiClasses';
 import type { SettingsController } from '../../composables/useSettings';
 import type { UseTiingo } from '../../composables/useTiingo';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
@@ -48,8 +49,8 @@ watch(
 </script>
 
 <template>
-  <article class="settings-shell">
-    <div id="settings-context-actions" class="settings-context-actions">
+  <article class="settings-shell flex flex-col gap-3">
+    <div id="settings-context-actions" class="settings-context-actions flex flex-wrap items-center justify-between gap-3">
       <SubsectionNav
         :available="store.availableSubsections.value"
         :active="store.resolvedSubsection.value"
@@ -57,38 +58,37 @@ watch(
       />
       <button
         id="btn-save-settings"
-        class="sb-btn save-settings-btn"
         type="button"
         :disabled="!store.isDirty.value"
-        :class="{ 'save-needed': store.isDirty.value }"
+        :class="saveSettingsBtnClass(store.isDirty.value)"
         @click="store.saveSettings()"
       >{{ t('market.saveSettings') }}</button>
     </div>
-    <div class="settings-layout">
+    <div class="settings-layout mt-3 flex flex-col gap-3">
       <template v-if="store.isHyperliquid.value">
         <FieldsForm
           :fields="store.fields"
-          :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'normal' }"
+          :class="{ 'settings-subsection-hidden hidden': store.resolvedSubsection.value !== 'normal' }"
         />
         <CoinPicker
           :store="store"
-          :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'normal' }"
+          :class="{ 'settings-subsection-hidden hidden': store.resolvedSubsection.value !== 'normal' }"
         />
         <AwsCard
           :fields="store.fields"
-          :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'aws' }"
+          :class="{ 'settings-subsection-hidden hidden': store.resolvedSubsection.value !== 'aws' }"
         />
         <ArchiveCard
           :fields="store.fields"
-          :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'aws' }"
+          :class="{ 'settings-subsection-hidden hidden': store.resolvedSubsection.value !== 'aws' }"
         />
         <TiingoCard
           :tiingo="tiingo"
-          :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'tradfi' }"
+          :class="{ 'settings-subsection-hidden hidden': store.resolvedSubsection.value !== 'tradfi' }"
         />
         <TradfiMapCard
           :map="map"
-          :class="{ 'settings-subsection-hidden': store.resolvedSubsection.value !== 'tradfi' }"
+          :class="{ 'settings-subsection-hidden hidden': store.resolvedSubsection.value !== 'tradfi' }"
         />
       </template>
       <template v-else>

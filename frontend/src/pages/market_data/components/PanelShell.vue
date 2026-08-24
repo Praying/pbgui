@@ -19,8 +19,8 @@ defineProps<{
     v-for="panel in panels"
     :id="panel.id"
     :key="panel.id"
-    class="content-panel"
-    :class="{ 'active-panel': panel.id === active }"
+    class="content-panel flex flex-1 min-h-0 flex-col gap-5 overflow-y-auto"
+    :class="[panel.id === active ? 'active-panel' : '', panel.id === 'status-panel' ? 'pr-0' : 'pr-1']"
     :hidden="panel.id !== active"
   >
     <slot :panel="panel" />

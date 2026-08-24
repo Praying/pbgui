@@ -4,6 +4,7 @@
  * editor's EmptyCell pattern). Removed as each panel lands.
  */
 import { useI18n } from 'vue-i18n';
+import { panelCardClass } from '../lib/uiClasses';
 import type { PanelDef } from '../types';
 
 defineProps<{
@@ -16,8 +17,8 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <article class="panel-card panel-placeholder">
-    <div class="panel-placeholder-name">{{ t(panel.labelKey) }}</div>
-    <div class="panel-placeholder-hint">#{{ panel.id }} · {{ task }}</div>
+  <article :class="panelCardClass" class="panel-placeholder flex flex-none flex-col items-center gap-2 my-auto text-center text-muted">
+    <div class="panel-placeholder-name text-lg font-bold">{{ t(panel.labelKey) }}</div>
+    <div class="panel-placeholder-hint text-sm text-secondary">#{{ panel.id }} · {{ task }}</div>
   </article>
 </template>

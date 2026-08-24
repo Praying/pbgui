@@ -8,6 +8,7 @@
  */
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { btnClass } from '../lib/uiClasses';
 import type { ConfirmDialogController } from '../composables/useConfirmDialog';
 
 const props = defineProps<{
@@ -43,33 +44,34 @@ watch(
 <template>
   <div
     id="confirm-ovl"
-    :class="{ visible: dialog.visible.value }"
+    class="fixed inset-0 z-[3002] items-center justify-center bg-page/72 p-5"
+    :class="dialog.visible.value ? 'visible flex' : 'hidden'"
     :aria-hidden="dialog.visible.value ? 'false' : 'true'"
   >
-    <div class="ovl-panel" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-      <div class="ovl-header">
-        <div class="ovl-header-title" id="confirm-title">{{ dialog.state.value.title }}</div>
-        <div class="ovl-header-actions">
-          <button class="ovl-close" id="confirm-close" type="button" aria-label="close" @click="dialog.cancel()">✕</button>
+    <div class="ovl-panel w-[min(520px,94vw)] overflow-hidden rounded-[12px] border border-border-default bg-page shadow-[0_20px_70px_rgba(5,8,14,0.9)]" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="ovl-header flex flex-shrink-0 items-center justify-between border-b border-border-subtle bg-card pt-[0.85rem] pr-[1.1rem] pb-[0.85rem] pl-[1.25rem]">
+        <div class="ovl-header-title flex items-center gap-[0.5rem] text-md font-bold text-primary" id="confirm-title">{{ dialog.state.value.title }}</div>
+        <div class="ovl-header-actions relative z-[3] flex items-center gap-[0.5rem]">
+          <button class="ovl-close cursor-pointer rounded-[5px] border-none bg-transparent py-[0.2rem] px-[0.35rem] text-md leading-none text-muted transition-[color,background-color] duration-[120ms] hover:bg-white/6 hover:text-primary" id="confirm-close" type="button" aria-label="close" @click="dialog.cancel()">✕</button>
         </div>
       </div>
-      <div class="confirm-body">
-        <div class="confirm-message" id="confirm-message">{{ dialog.state.value.message }}</div>
-        <div class="confirm-detail" id="confirm-detail" :hidden="!dialog.state.value.detail">
+      <div class="confirm-body grid gap-3 p-3">
+        <div class="confirm-message text-base leading-[1.5] text-primary" id="confirm-message">{{ dialog.state.value.message }}</div>
+        <div class="confirm-detail text-sm leading-[1.45] text-secondary" id="confirm-detail" :hidden="!dialog.state.value.detail">
           {{ dialog.state.value.detail }}
         </div>
-        <div class="confirm-list-wrap" id="confirm-list-wrap" :hidden="!dialog.state.value.items.length">
-          <div class="confirm-list-label" id="confirm-list-label">{{ dialog.state.value.listLabel }}</div>
-          <div class="confirm-list" id="confirm-list">
-            <span v-for="item in dialog.state.value.items" :key="item" class="confirm-list-item">{{ item }}</span>
+        <div class="confirm-list-wrap grid gap-1" id="confirm-list-wrap" :hidden="!dialog.state.value.items.length">
+          <div class="confirm-list-label text-xs uppercase tracking-[0.04em] text-secondary" id="confirm-list-label">{{ dialog.state.value.listLabel }}</div>
+          <div class="confirm-list flex max-h-[min(140px,24vh)] flex-wrap gap-1 overflow-y-auto rounded-lg border border-accent/12 bg-page/42 p-1" id="confirm-list">
+            <span v-for="item in dialog.state.value.items" :key="item" class="confirm-list-item inline-flex min-h-6 items-center whitespace-nowrap rounded-full border border-accent/24 bg-accent/12 py-[1px] px-2 text-xs text-primary">{{ item }}</span>
           </div>
         </div>
-        <div class="confirm-warning" id="confirm-warning">{{ t('market.actionCannotBeUndone') }}</div>
-        <div class="confirm-actions">
-          <button class="btn pbgui-btn btn-secondary secondary" id="btn-confirm-cancel" type="button" @click="dialog.cancel()">
+        <div class="confirm-warning text-sm leading-[1.45] text-warning" id="confirm-warning">{{ t('market.actionCannotBeUndone') }}</div>
+        <div class="confirm-actions flex flex-wrap justify-end gap-2">
+          <button :class="btnClass('secondary')" id="btn-confirm-cancel" type="button" @click="dialog.cancel()">
             {{ t('common.cancel') }}
           </button>
-          <button class="btn pbgui-btn btn-primary primary" id="btn-confirm-accept" type="button" @click="dialog.accept()">
+          <button :class="btnClass('primary')" id="btn-confirm-accept" type="button" @click="dialog.accept()">
             {{ dialog.state.value.confirmText || t('common.confirm') }}
           </button>
         </div>

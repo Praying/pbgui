@@ -8,6 +8,14 @@ import { ref } from 'vue';
 import { PhEye, PhEyeSlash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import {
+  fieldLabelClass,
+  inputClass,
+  inputPwClass,
+  panelCardClass,
+  settingsFieldClass,
+  settingsGridWideClass,
+} from '../../lib/uiClasses';
 import { SETTINGS_FIELD_IDS, type SettingsFieldValues } from '../../lib/settingsFields';
 
 defineProps<{
@@ -19,63 +27,61 @@ const IDS = SETTINGS_FIELD_IDS;
 
 const accessKeyVisible = ref(false);
 const secretKeyVisible = ref(false);
+
+/** The former .pw-wrap / .pw-eye-btn rules (36px eye gutter + overlay). */
+const pwWrapClass = 'pw-wrap relative flex w-full items-center';
+const pwEyeBtnClass =
+  'pw-eye-btn absolute right-2 cursor-pointer border-none bg-transparent p-0 text-md leading-none text-muted select-none hover:text-secondary';
 </script>
 
 <template>
-  <article class="panel-card" id="settings-hyperliquid-aws" data-settings-subsection="aws">
+  <article :class="panelCardClass" id="settings-hyperliquid-aws" data-settings-subsection="aws">
     <div class="eyebrow">{{ t('market.awsSettingsL2book') }}</div>
-    <div class="settings-grid settings-grid-wide">
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.awsProfileName') }}</span>
-        <input :id="IDS.awsProfile" v-model="fields.awsProfile" type="text">
+    <div :class="settingsGridWideClass">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.awsProfileName') }}</span>
+        <input :id="IDS.awsProfile" :class="inputClass" v-model="fields.awsProfile" type="text">
       </label>
-      <label class="settings-field">
-        <span class="field-label">aws_access_key_id</span>
-        <div class="pw-wrap">
-          <input :id="IDS.awsAccessKeyId" v-model="fields.awsAccessKeyId" :type="accessKeyVisible ? 'text' : 'password'">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">aws_access_key_id</span>
+        <div :class="pwWrapClass">
+          <input :id="IDS.awsAccessKeyId" :class="inputPwClass" v-model="fields.awsAccessKeyId" :type="accessKeyVisible ? 'text' : 'password'">
           <button
             type="button"
-            class="pw-eye-btn"
+            :class="pwEyeBtnClass"
             :aria-label="t(accessKeyVisible ? 'market.hideAwsAccessKey' : 'market.showAwsAccessKey')"
             :title="t(accessKeyVisible ? 'market.hideAwsAccessKey' : 'market.showAwsAccessKey')"
             @click="accessKeyVisible = !accessKeyVisible"
           ><PbIcon :icon="accessKeyVisible ? PhEyeSlash : PhEye" /></button>
         </div>
-        <span class="aws-credential-status">{{ t(fields.awsAccessKeyConfigured ? 'market.awsCredentialConfigured' : 'market.awsCredentialNotConfigured') }}</span>
+        <span class="aws-credential-status text-xs text-muted">{{ t(fields.awsAccessKeyConfigured ? 'market.awsCredentialConfigured' : 'market.awsCredentialNotConfigured') }}</span>
       </label>
-      <label class="settings-field">
-        <span class="field-label">aws_secret_access_key</span>
-        <div class="pw-wrap">
-          <input :id="IDS.awsSecretAccessKey" v-model="fields.awsSecretAccessKey" :type="secretKeyVisible ? 'text' : 'password'">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">aws_secret_access_key</span>
+        <div :class="pwWrapClass">
+          <input :id="IDS.awsSecretAccessKey" :class="inputPwClass" v-model="fields.awsSecretAccessKey" :type="secretKeyVisible ? 'text' : 'password'">
           <button
             type="button"
-            class="pw-eye-btn"
+            :class="pwEyeBtnClass"
             :aria-label="t(secretKeyVisible ? 'market.hideAwsSecretKey' : 'market.showAwsSecretKey')"
             :title="t(secretKeyVisible ? 'market.hideAwsSecretKey' : 'market.showAwsSecretKey')"
             @click="secretKeyVisible = !secretKeyVisible"
           ><PbIcon :icon="secretKeyVisible ? PhEyeSlash : PhEye" /></button>
         </div>
-        <span class="aws-credential-status">{{ t(fields.awsSecretAccessKeyConfigured ? 'market.awsCredentialConfigured' : 'market.awsCredentialNotConfigured') }}</span>
+        <span class="aws-credential-status text-xs text-muted">{{ t(fields.awsSecretAccessKeyConfigured ? 'market.awsCredentialConfigured' : 'market.awsCredentialNotConfigured') }}</span>
       </label>
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.awsRegion') }}</span>
-        <input :id="IDS.awsRegion" v-model="fields.awsRegion" type="text">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.awsRegion') }}</span>
+        <input :id="IDS.awsRegion" :class="inputClass" v-model="fields.awsRegion" type="text">
       </label>
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.scanTimeoutSeconds') }}</span>
-        <input :id="IDS.scanTimeout" :value="fields.scanTimeout" type="number" min="0.1" max="60" step="0.5" @input="fields.scanTimeout = ($event.target as HTMLInputElement).value">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.scanTimeoutSeconds') }}</span>
+        <input :id="IDS.scanTimeout" :class="inputClass" :value="fields.scanTimeout" type="number" min="0.1" max="60" step="0.5" @input="fields.scanTimeout = ($event.target as HTMLInputElement).value">
       </label>
-      <label class="settings-field">
-        <span class="field-label">{{ t('market.workers') }}</span>
-        <input :id="IDS.scanWorkers" :value="fields.scanWorkers" type="number" min="1" max="64" step="1" @input="fields.scanWorkers = ($event.target as HTMLInputElement).value">
+      <label :class="settingsFieldClass">
+        <span :class="fieldLabelClass">{{ t('market.workers') }}</span>
+        <input :id="IDS.scanWorkers" :class="inputClass" :value="fields.scanWorkers" type="number" min="1" max="64" step="1" @input="fields.scanWorkers = ($event.target as HTMLInputElement).value">
       </label>
     </div>
   </article>
 </template>
-
-<style scoped>
-.aws-credential-status {
-  color: var(--text-muted);
-  font-size: var(--fs-xs);
-}
-</style>

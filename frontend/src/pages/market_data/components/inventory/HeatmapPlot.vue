@@ -28,5 +28,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div :id="id" ref="el" class="inventory-plot"></div>
+  <div :id="id" ref="el" class="inventory-plot min-h-[220px] rounded-[10px] border border-accent/12 bg-page/36 p-1"></div>
 </template>
