@@ -87,6 +87,8 @@ defineExpose({
   formDirty,
   clearRevealedApiKey,
   clearSecretInputs,
+  /** Currently edited user name — read by the AI page context (null = create form). */
+  editingName,
 });
 
 /* ── open / populate (:1494-1604) ── */

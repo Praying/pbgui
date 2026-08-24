@@ -40,6 +40,7 @@
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
 import { PhArrowsClockwise, PhFloppyDisk, PhPlus, PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -72,6 +73,18 @@ const toastEl = useTemplateRef<HTMLElement>('toastEl');
 const toast = createToast(() => toastEl.value); // :1390-1407
 
 const store = useRunInstances({ t: (key, params) => t(key, params ?? {}), adapter, toast });
+
+/* AI drawer page context — Vue port of the legacy instances registration. */
+useAiPageContext({
+  id: 'v7-run',
+  getContext: () => ({
+    section: 'Instances',
+    entities: [],
+    focused_field: aiFocusedField({
+      'f-search': { path: 'run.instances.filter', label: 'Instance filter' },
+    }),
+  }),
+});
 const backups = useBackups({ t: (key, params) => t(key, params ?? {}), adapter, toast });
 
 const ws = useRunWs({

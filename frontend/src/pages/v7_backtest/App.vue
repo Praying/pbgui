@@ -60,6 +60,7 @@ import SettingsModal from './components/SettingsModal.vue';
 import { useBacktestPage } from './composables/useBacktestPage';
 import { modalBackdropClass, modalBoxClass, modalBtnClass } from './lib/uiClasses';
 import type { PageSection } from '@/shared/navigation';
+import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import type { BacktestPanel } from './types';
 
 const { t } = useI18n();
@@ -133,6 +134,31 @@ watch(
 );
 
 const editorOpen = computed(() => store.editor.editingName.value !== null);
+
+/* AI drawer page context — Vue port of the legacy backtest registration
+   (panel section, editing config / open archive entities, filter focus). */
+useAiPageContext({
+  id: 'backtest',
+  getContext: () => {
+    const entities: Array<{ kind: string; version?: string; name: string }> = [];
+    const editing = store.editor.editingName.value;
+    if (editing && editing !== '__new__') {
+      entities.push({ kind: 'backtest_config', version: store.adapter.version, name: editing });
+    }
+    if (store.view.state.panel === 'archive' && store.archive.selectedName.value) {
+      entities.push({ kind: 'backtest_archive', version: store.adapter.version, name: store.archive.selectedName.value });
+    }
+    return {
+      section: store.view.state.panel,
+      entities,
+      focused_field: aiFocusedField({
+        'configs-filter': { path: 'backtest.configs.filter', label: 'Config Filter' },
+        'results-filter': { path: 'backtest.results.filter', label: 'Result Filter' },
+        'cfg-name': { path: 'backtest.config.name', label: 'Config name' },
+      }),
+    };
+  },
+});
 const editorHasSavedConfig = computed(() => !!store.editor.editingName.value && store.editor.editingName.value !== '__new__');
 const importOpen = ref(false);
 

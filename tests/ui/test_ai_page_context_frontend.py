@@ -23,19 +23,21 @@ def test_shared_context_boundary_projects_only_the_backend_schema() -> None:
 
 
 def test_productive_pages_register_explicit_context_adapters() -> None:
-    """Productive pages should expose their own state instead of relying on DOM scraping."""
-    pages = (
+    """Productive pages should expose their own state instead of relying on DOM scraping.
+
+    Pages deleted on the Vue3-migration branch (dashboard_main,
+    services_monitor, market_data_main) ported their adapter to the Vue
+    page, so their check targets the App.vue useAiPageContext call.
+    """
+    legacy_pages = (
         "welcome.html",
-        "dashboard_main.html",
         "api_keys_editor.html",
         "cluster.html",
         "vps_manager.html",
         "vps_monitor.html",
-        "services_monitor.html",
         "db_tools.html",
         "logging_monitor.html",
         "ai_chat.html",
-        "market_data_main.html",
         "coin_data.html",
         "balance_calc.html",
         "v7_run.html",
@@ -45,9 +47,18 @@ def test_productive_pages_register_explicit_context_adapters() -> None:
         "v7_strategy_explorer.html",
         "v7_pareto_explorer.html",
     )
-    for name in pages:
+    for name in legacy_pages:
         source = (FRONTEND / name).read_text(encoding="utf-8")
         assert "PBGUI_AI_PAGE_CONTEXT" in source or "registerPageContext" in source, name
+
+    vue_pages = (
+        "dashboard_main",
+        "services_monitor",
+        "market_data",
+    )
+    for page in vue_pages:
+        source = (FRONTEND / "src" / "pages" / page / "App.vue").read_text(encoding="utf-8")
+        assert "useAiPageContext" in source, page
 
 
 def test_sensitive_pages_never_register_sensitive_values() -> None:

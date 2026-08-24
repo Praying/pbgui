@@ -144,6 +144,8 @@ const workerIndex = computed<Record<string, Worker>>(() => {
 });
 
 const selectedWorkerId = ref('');
+/** Exposed for the page's AI drawer context (workers panel selection). */
+defineExpose({ selectedWorkerId });
 
 /** Legacy renderWorkers selection repair: keep selection or fall back to first. */
 watch(

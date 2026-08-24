@@ -44,6 +44,7 @@
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -59,6 +60,26 @@ import { useRefreshJobs, type RefreshPath } from './composables/useRefreshJobs';
 const { t } = useI18n();
 
 const store = useCoinDataState({ t: (key, params) => t(key, params ?? {}) });
+
+/* AI drawer page context — Vue port of the legacy coin-data registration
+   (selected row as coin entity, filter fields as focused input). */
+useAiPageContext({
+  id: 'coin-data',
+  getContext: () => {
+    const selected = store.selectedRow.value;
+    const name = selected ? String((selected as { symbol?: string; coin?: string; name?: string }).symbol || (selected as { coin?: string }).coin || (selected as { name?: string }).name || '') : '';
+    return {
+      section: store.selectedTable.value === 'hip3' ? 'HIP-3' : 'Coin data',
+      entities: name ? [{ kind: 'coin', name }] : [],
+      focused_field: aiFocusedField({
+        'filter-exchange': { path: 'coin_data.filters.exchange', label: 'Exchange' },
+        'filter-market-cap': { path: 'coin_data.filters.market_cap', label: 'Market cap filter' },
+        'filter-vol-mcap': { path: 'coin_data.filters.volume_market_cap', label: 'Volume/market cap filter' },
+        'filter-hip3-dex': { path: 'coin_data.filters.hip3_dex', label: 'HIP-3 DEX' },
+      }),
+    };
+  },
+});
 
 const refresh = useRefreshJobs({
   t: (key, params) => t(key, params ?? {}),

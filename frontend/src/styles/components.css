@@ -251,6 +251,44 @@
     margin-right: 0;
   }
 
+  /* ── AI assistant drawer opener (bottom of the rail) ── */
+
+  .workbench-rail__ai {
+    flex: 0 0 auto;
+    padding: var(--sp-sm);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .workbench-rail__ai-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-md);
+    width: 100%;
+    min-height: 40px;
+    padding: 0 var(--sp-md);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--accent-bg);
+    color: var(--accent-soft);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color var(--motion-fast) var(--ease-standard),
+      border-color var(--motion-fast) var(--ease-standard);
+  }
+
+  .workbench-rail__ai-btn:hover {
+    border-color: var(--accent);
+    background: var(--surface-panel);
+  }
+
+  .workbench-rail--collapsed .workbench-rail__ai-btn {
+    padding: 0;
+  }
+
   /* ── Rail section children (accordion under the active page) ── */
 
   .workbench-rail__subitems {

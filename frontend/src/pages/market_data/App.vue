@@ -139,6 +139,7 @@ import { useStatusSummaries } from './composables/useStatusSummaries';
 import type { PanelDef, PanelId } from './types';
 
 const { t } = useI18n();
+import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 
 /* ── panel router (setActivePanel/restorePanel :9032-9107, :9736-9746) ──
       The hooks object is filled in as the panel controllers are created;
@@ -357,6 +358,32 @@ function onOlderCutoff(value: string): void {
       (first call = the onMounted :9771 fan-out, after every controller
       exists). useBest1m's openBest1mPanel closure is the hoisted function
       declaration below. ── */
+
+
+/* AI drawer page context — Vue port of the legacy market-data registration
+   (active section label, context exchange, best-1m coin selections, and
+   the coin-filter inputs as focused fields). */
+useAiPageContext({
+  id: 'market-data',
+  getContext: () => {
+    const entities: Array<{ kind: string; name: string }> = [{ kind: 'exchange', name: contextExchange.contextExchange.value }];
+    if (activePanel.value === 'best1m-panel') {
+      Array.from(best1m.selectedCoins.value || [])
+        .slice(0, 7)
+        .forEach((coin) => entities.push({ kind: 'coin', name: coin }));
+    }
+    const activeDef = PANELS.find((panel) => panel.id === activePanel.value);
+    return {
+      section: activeDef ? t(activeDef.labelKey) : 'Settings',
+      entities,
+      focused_field: aiFocusedField({
+        'settings-coin-filter': { path: 'market_data.settings.coin_filter', label: 'Coin filter' },
+        'best1m-coin-filter': { path: 'market_data.best_1m.coin_filter', label: 'Coin filter' },
+        'inventory-coin-filter': { path: 'market_data.inventory.coin_filter', label: 'Coin filter' },
+      }),
+    };
+  },
+});
 
 const best1m = useBest1m({
   api,

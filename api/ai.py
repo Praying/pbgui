@@ -7,12 +7,12 @@ from pathlib import Path
 import traceback
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from ai_chat import AIChatError, get_ai_chat_service, owner_key
 from ai_capabilities import AICapabilityError, get_ai_capability_service
-from api.auth import SessionToken, require_auth
+from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
 from logging_helpers import human_log as _log
 
 
@@ -120,26 +120,27 @@ def _provider_error(operation: str, exc: Exception) -> HTTPException:
     )
 
 
-@router.get("/main_page", response_class=HTMLResponse)
-def main_page(request: Request, session: SessionToken = Depends(require_auth)) -> HTMLResponse:
-    """Serve the cookie-authenticated full AI chat page."""
+@router.get("/main_page", response_class=HTMLResponse, response_model=None)
+def main_page(request: Request, session: SessionToken = Depends(require_auth)) -> FileResponse | HTMLResponse:
+    """Serve the cookie-authenticated full AI chat page: Vue entry first, legacy fallback."""
     del session
-    html_path = Path(__file__).parent.parent / "frontend" / "ai_chat.html"
-    html = html_path.read_text(encoding="utf-8")
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/ai"))
 
-    from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
+    def _inject(html: str, req: Request) -> str:
+        scheme = req.url.scheme
+        host = req.url.hostname or "127.0.0.1"
+        port = req.url.port
+        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
+        html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/ai"))
 
-    html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-    html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
-    nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
-    nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
-    html = html.replace("%%NAV_HASH%%", nav_hash)
-    return HTMLResponse(content=html, headers={"Cache-Control": "no-store"})
+        from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
+
+        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
+        nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
+        return html.replace("%%NAV_HASH%%", nav_hash)
+
+    return serve_vue_or_legacy_page("ai_chat", "ai_chat.html", request, inject=_inject)
 
 
 @router.get("/status")

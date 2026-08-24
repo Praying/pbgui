@@ -52,6 +52,7 @@
 import { computed, onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
 import { PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -71,6 +72,18 @@ import { installDatePicker } from './lib/datePicker';
 import { getPlotly } from './lib/plotlyVendor';
 
 const { t } = useI18n();
+
+/* AI drawer page context — Vue port of the legacy strategy-explorer
+   registration (stage section, exchange + coin entities). */
+useAiPageContext({
+  id: 'strategy-explorer',
+  getContext: () => {
+    const entities: Array<{ kind: string; version?: string; name: string }> = [];
+    if (store.controls.exchange) entities.push({ kind: 'exchange', version: adapter.isV8 ? 'v8' : 'v7', name: store.controls.exchange });
+    if (store.controls.coin) entities.push({ kind: 'coin', version: adapter.isV8 ? 'v8' : 'v7', name: store.controls.coin });
+    return { section: store.controls.stage, entities };
+  },
+});
 
 const { adapter, origin } = currentExplorerAdapter();
 const page = useExplorerPage({

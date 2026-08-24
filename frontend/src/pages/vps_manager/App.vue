@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { PhArrowClockwise, PhFile, PhFolder, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import { apiFetch } from '@/shared/api';
 import AppShell from '@/shared/components/AppShell.vue';
 import type { PageSection } from '@/shared/navigation';
@@ -23,6 +24,20 @@ type JsonRecord = Record<string, any>;
 type SharedLogViewer = { open(): void; close(): void; setHost(host: string): void; setFile(file: string): void };
 
 const view = ref<ManagerView>('overview');
+
+/* AI drawer page context — Vue port of the legacy vps-manager registration
+   (overview selections first, else the form's current hostname). */
+useAiPageContext({
+  id: 'vps-manager',
+  getContext: () => {
+    let hosts = (selectedHosts.value || []).slice(0, 8);
+    if (!hosts.length && hostname.value) hosts = [hostname.value];
+    return {
+      section: view.value,
+      entities: hosts.map((host: string) => ({ kind: 'vps_host', name: host })),
+    };
+  },
+});
 const hostname = ref('');
 const state = ref<JsonRecord>({ config: {}, overview: { rows: [] }, deploys: { history: [], progress_rows: [] } });
 const detail = ref<JsonRecord | null>(null);

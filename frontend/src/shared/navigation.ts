@@ -11,6 +11,7 @@ import {
   PhHouse,
   PhKey,
   PhPlay,
+  PhSparkle,
   PhStar,
   PhTarget,
   PhWallet,
@@ -139,6 +140,13 @@ export const WORKBENCH_NAVIGATION = [
         labelKey: 'nav.page.info_balance_calc',
         href: '/api/balance-calc/main_page',
         icon: PhWallet,
+        groupId: 'information',
+      },
+      {
+        pageKey: 'info_ai_chat',
+        labelKey: 'nav.page.info_ai_chat',
+        href: '/api/ai/main_page',
+        icon: PhSparkle,
         groupId: 'information',
       },
       {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -32,8 +33,16 @@ def test_ai_routes_require_auth_dependency() -> None:
         assert require_auth in dependency_calls
 
 
-def test_main_page_is_cookie_only_and_no_store() -> None:
+def test_main_page_is_cookie_only_and_no_store(monkeypatch: pytest.MonkeyPatch) -> None:
     """The AI page must not render or inspect the HttpOnly session token."""
+    import api.auth as auth
+
+    # Force the legacy-template branch so the injection contract stays
+    # testable regardless of a locally built frontend/dist (the Vue entry
+    # is a static file with no placeholders; same pattern as
+    # test_api_keys_route.py).
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda name: Path("/nonexistent") / "dist" / name / "index.html")
+
     class CookieOnlySession:
         """Fail if page rendering reads a session field."""
 

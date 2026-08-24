@@ -50,6 +50,7 @@ import { computed, onBeforeUnmount, onMounted } from 'vue';
 import type { Component } from 'vue';
 import { PhBank, PhBrain, PhFolderOpen, PhGear, PhQuestion, PhTarget } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import { getBoot } from '@/shared/boot';
 import { replaceTopLocation } from '@/shared/nav';
 import AppShell from '@/shared/components/AppShell.vue';
@@ -105,6 +106,18 @@ onSessionApplied = () => surfaces.afterSession(); // legacy tail ignores the ses
 
 /** The shared config-detail section (:4141-4145). */
 const showSharedDetail = computed(() => store.state.stage === 'command_center' || store.state.stage === 'pareto_playground');
+
+/* AI drawer page context — Vue port of the legacy pareto registration. */
+useAiPageContext({
+  id: 'pareto-explorer',
+  getContext: () => ({
+    section: store.state.stage,
+    entities:
+      store.state.selectedConfigIndex == null
+        ? []
+        : [{ kind: 'pareto_config', version: store.optimizeVersion.value, name: 'config #' + String(store.state.selectedConfigIndex) }],
+  }),
+});
 
 const STAGE_META: Record<ParetoStage, { icon: Component; labelKey: string }> = {
   command_center: { icon: PhBank, labelKey: 'v7explore.overview' },

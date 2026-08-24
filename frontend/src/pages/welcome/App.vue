@@ -37,6 +37,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -56,6 +57,14 @@ import {
 } from './lib/uiClasses';
 
 const { t } = useI18n();
+
+/* AI drawer page context — Vue port of the legacy welcome registration. */
+useAiPageContext({
+  id: 'welcome',
+  getContext: () => ({
+    section: store.activeSection.value === 'password' ? 'Authentication settings' : store.activeSection.value,
+  }),
+});
 
 const store = useWelcome({ t: (key, params) => t(key, params ?? {}) });
 

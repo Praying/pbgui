@@ -56,6 +56,7 @@ import {
   PhX,
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
@@ -83,6 +84,22 @@ const editMode = ref(false);
 const viewDirty = ref(false);
 /** Legacy selectedDashboards. */
 const selected = ref<string[]>(currentDash.value ? [currentDash.value] : []);
+
+/* AI drawer page context — Vue port of the legacy dashboards registration
+   (selected/viewed dashboards as entities, list filter as focused field). */
+useAiPageContext({
+  id: 'dashboards',
+  getContext: () => {
+    const names = selected.value.length ? selected.value : currentDash.value ? [currentDash.value] : [];
+    return {
+      section: 'Dashboards',
+      entities: names.slice(0, 8).map((name) => ({ kind: 'dashboard', name })),
+      focused_field: aiFocusedField({
+        'sidebar-search': { path: 'dashboard.filter', label: 'Dashboard filter' },
+      }),
+    };
+  },
+});
 const frameLoading = ref(true);
 const frameVisible = ref(false);
 const frameSrc = ref('');

@@ -9,6 +9,7 @@ const EXPECTED_NAVIGATION_ROUTES = {
   '/': '/api/auth/main_page',
   dashboards: '/api/dashboard/main_page',
   help: '/api/help/main_page',
+  info_ai_chat: '/api/ai/main_page',
   info_balance_calc: '/api/balance-calc/main_page',
   info_coin_data: '/api/coin-data/main_page',
   info_market_data_fastapi: '/api/market-data/main_page',

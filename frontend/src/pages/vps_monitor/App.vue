@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { PhCaretDown, PhCaretRight, PhCheckCircle, PhGear, PhStop, PhX, PhXCircle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
 import type { PageSection } from '@/shared/navigation';
@@ -18,6 +19,18 @@ const query = new URLSearchParams(window.location.search);
 const hideIpMode = ref(query.get('hide_ip') === '1');
 const queryCompact = query.get('compact') === '1';
 const activeTab = ref<'dashboard' | 'instances' | 'services' | 'logs'>('dashboard');
+
+/* AI drawer page context — Vue port of the legacy vps-monitor registration. */
+useAiPageContext({
+  id: 'vps-monitor',
+  getContext: () => ({
+    section: activeTab.value,
+    entities:
+      activeTab.value === 'instances' && instanceServerFilter.value !== 'All'
+        ? [{ kind: 'vps_host', name: instanceServerFilter.value }]
+        : [],
+  }),
+});
 const sections = computed<PageSection[]>(() => [
   { key: 'dashboard', label: t('sysmon.dashboard') },
   { key: 'instances', label: t('sysmon.instances') },

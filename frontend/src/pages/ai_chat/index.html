@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="/app/favicon.svg">
+<!-- boot.js must run before the bundle: useAiChat derives the /api/ai base
+       and the Bearer token from window.__BOOT__ at mount time. -->
+  <script src="/api/boot.js"></script>
+  <!-- legacy i18n engine remains available to shared scripts -->
+  <script src="/app/i18n.js?v=1"></script>
+  <!-- shared confirm dialogs for rewind/delete/approve flows -->
+  <script src="/app/js/pbgui_dialogs.js?v=8"></script>
+  <title>AI Chat - PBGui</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>

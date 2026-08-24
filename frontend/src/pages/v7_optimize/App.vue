@@ -23,6 +23,7 @@ import {
   PhTrash,
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
 import IconButton from '@/shared/components/IconButton.vue';
@@ -112,6 +113,35 @@ function handleKeydown(event: KeyboardEvent): void {
 async function safely(action: () => Promise<void>): Promise<void> { try { await action(); } catch (error) { notify(detail(error), 'error'); } }
 
 const page = useOptimizePage({ adapter, notify, search: window.location.search });
+
+/* AI drawer page context — Vue port of the legacy optimize registration:
+   the live editor-name wins (renames after drawer open stay visible),
+   falling back to the selected configs; results/paretos panels expose the
+   selected run instead. */
+useAiPageContext({
+  id: 'optimize',
+  getContext: () => {
+    const panel = page.panel.value;
+    const editorName = String(page.editorName.value || '').trim();
+    const names =
+      editorName && editorName !== '__new__'
+        ? [editorName]
+        : Array.from(page.selectedConfigs.value).slice(0, 8);
+    const entities = (panel === 'results' || panel === 'paretos' ? [] : names).map((name) => ({
+      kind: 'optimizer_config',
+      version: adapter.version,
+      name,
+    }));
+    if (page.selectedResultName.value && (panel === 'results' || panel === 'paretos')) {
+      entities.push({
+        kind: 'optimizer_run',
+        version: adapter.version,
+        name: page.selectedResultName.value,
+      });
+    }
+    return { section: panel, entities };
+  },
+});
 const actions = useOptimizeActions({ adapter, notify });
 const panelTitle = computed(() => page.panel.value === 'queue' ? t('v7optimize.panelQueueTitle') : page.panel.value === 'results' ? t('v7optimize.panelResultsTitle') : page.panel.value === 'paretos' ? t('v7optimize.panelParetosTitle') : t('v7optimize.panelConfigsTitle'));
 const panelSubtitle = computed(() => page.panel.value === 'queue' ? t('v7optimize.panelQueueSubtitle') : page.panel.value === 'results' ? t('v7optimize.panelResultsSubtitle') : page.panel.value === 'paretos' ? t('v7optimize.panelParetosSubtitle') : t('v7optimize.panelConfigsSubtitle'));

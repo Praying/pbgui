@@ -11,6 +11,7 @@ import ErrorState from '@/shared/components/ErrorState.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { useAiPageContext } from '@/shared/ai/context';
 import { loggingApiBase, loggingWsBase } from './config';
 import type { LogFilesPayload, ManagedRotationRule, RotationPayload, RotationRule } from './types';
 
@@ -20,6 +21,9 @@ type ViewerCtor = new (options: Record<string, unknown>) => Viewer;
 
 const { t } = useI18n();
 const view = ref<PageView>('logs');
+
+/* AI drawer page context — Vue port of the legacy logging registration. */
+useAiPageContext({ id: 'logging', getContext: () => ({ section: 'Logging' }) });
 const sections = computed<PageSection[]>(() => [
   { key: 'logs', label: t('sysmon.logViewer') },
   { key: 'settings', label: t('sysmon.settings') },

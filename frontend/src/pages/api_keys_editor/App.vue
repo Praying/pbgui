@@ -39,6 +39,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { PhArchive, PhClipboardText, PhPlus } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -83,6 +84,18 @@ const SECTION_VIEWS: ReadonlyArray<{ view: View; labelKey: string; hash: string 
 ];
 
 const activeSection = computed<string>(() => (view.value === 'edit' ? 'list' : view.value));
+
+/* AI drawer page context — Vue port of the legacy credential-management
+   registration (editing user becomes a pbgui_user entity). */
+useAiPageContext({
+  id: 'api-keys',
+  getContext: () => ({
+    section: 'Credential management',
+    entities: view.value === 'edit' && editRef.value?.editingName
+      ? [{ kind: 'pbgui_user', name: String(editRef.value.editingName) }]
+      : [],
+  }),
+});
 
 const sections = computed<PageSection[]>(() =>
   SECTION_VIEWS.map((entry) => ({ key: entry.view, label: t(entry.labelKey) })),

@@ -130,6 +130,7 @@ const SERVICE_TABS: Record<string, ServiceTab[]> = {
 const DEFAULT_PANEL = 'overview';
 
 const { t } = useI18n();
+import { useAiPageContext } from '@/shared/ai/context';
 const tt: Translate = (key, named) => (named ? t(key, named) : t(key));
 
 /* ── Status polling + service actions (legacy fetchStatus/svcAction) ── */
@@ -425,6 +426,21 @@ function panelFromHash(): string {
 
 const activePanel = ref(panelFromHash());
 
+/* AI drawer page context — Vue port of the legacy services registration
+   (active panel, selected worker on the workers panel). */
+const workersPanelRef = ref<InstanceType<typeof WorkersPanel> | null>(null);
+useAiPageContext({
+  id: 'services',
+  getContext: () => ({
+    section: activePanel.value,
+    entities:
+      activePanel.value === 'workers' && workersPanelRef.value?.selectedWorkerId
+        ? [{ kind: 'service_worker', name: String(workersPanelRef.value.selectedWorkerId) }]
+        : [],
+  }),
+});
+
+
 /** Legacy selectPanel: swap the visible panel, track the guide keyword, persist the hash. */
 function selectPanel(panelId: string): void {
   activePanel.value = panelId;
@@ -702,6 +718,7 @@ onUnmounted(() => {
         />
         <WorkersPanel
           v-else-if="panel.id === 'workers'"
+          ref="workersPanelRef"
           :workers="workers"
           :load-error="workersLoadError && activePanel === 'workers'"
           @refresh="fetchWorkers"

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { PhArrowClockwise, PhWrench, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import { apiFetch, ApiError } from '@/shared/api';
 import AppShell from '@/shared/components/AppShell.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
@@ -16,6 +17,12 @@ const { t } = useI18n();
 const apiBase = clusterApiBase();
 type Section = 'overview' | 'setup' | 'nodes' | 'instances' | 'tombstones' | 'operations' | 'credentials' | 'retention';
 const section = ref<Section>('overview');
+
+/* AI drawer page context — Vue port of the legacy cluster registration. */
+useAiPageContext({
+  id: 'cluster',
+  getContext: () => ({ section: section.value }),
+});
 
 /* Page sections live in the workbench rail (accordion under this page's
    entry) — the legacy in-page cluster-sidebar column is retired. */

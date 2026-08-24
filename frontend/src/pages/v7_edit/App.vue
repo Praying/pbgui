@@ -82,6 +82,7 @@ import ImportModal from './components/ImportModal.vue';
 import LogPanel from './components/LogPanel.vue';
 import RawJsonEditor from './components/RawJsonEditor.vue';
 import { provideEditPage, useEditPage } from './composables/useEditPage';
+import { useAiPageContext } from '@/shared/ai/context';
 import { useDraftHandoffs } from './composables/useDraftHandoffs';
 import { currentEditAdapter, editApiBase, readEditPageParams, runListUrl } from './config';
 import { createToast } from './lib/toast';
@@ -101,6 +102,16 @@ const page = useEditPage({
   params,
   t: (key, args) => t(key, args ?? {}),
   toast: (msg, kind) => toast.show(msg, kind ?? 'info'),
+});
+
+/* AI drawer page context — Vue port of the legacy run-config-editor
+   registration (open instance as run_config entity). */
+useAiPageContext({
+  id: 'run-config-editor',
+  getContext: () => ({
+    section: 'Run config editor',
+    entities: page.instanceName.value ? [{ kind: 'run_config', version: adapter.version, name: page.instanceName.value }] : [],
+  }),
 });
 
 const migrationReviewFields = computed(() => {

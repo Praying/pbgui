@@ -30,6 +30,7 @@ import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import type { PageSection } from '@/shared/navigation';
 import type { StatusKind } from './composables/useDbTools';
 import LogPanel from './components/LogPanel.vue';
@@ -69,6 +70,18 @@ const sections = computed<PageSection[]>(() =>
 function onSectionSelect(panelKey: string): void {
   store.activePanel.value = panelKey;
 }
+
+/* AI drawer page context — Vue port of the legacy db-tools registration
+   (active panel + sync-job name focus). */
+useAiPageContext({
+  id: 'db-tools',
+  getContext: () => ({
+    section: store.activePanel.value,
+    focused_field: aiFocusedField({
+      'sync-name': { path: 'db_tools.sync_job.name', label: 'Sync job name' },
+    }),
+  }),
+});
 
 /* ── list row adapters (renderChecks semantics :356-364) ── */
 

@@ -20,6 +20,7 @@
  */
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import ResultsPanel from './components/ResultsPanel.vue';
@@ -30,6 +31,19 @@ import { instanceLabel } from './lib/format';
 const { t } = useI18n();
 
 const init = readInitParams();
+
+/* AI drawer page context — Vue port of the legacy balance-calculator
+   registration (selected instance + exchange as entities). */
+useAiPageContext({
+  id: 'balance-calculator',
+  getContext: () => ({
+    section: 'Calculator',
+    entities: [
+      ...(store.selectedInstance.value ? [{ kind: 'run_config', version: store.selectedInstance.value.version || 'v7', name: store.selectedInstance.value.name }] : []),
+      ...(store.exchange.value ? [{ kind: 'exchange', name: store.exchange.value }] : []),
+    ],
+  }),
+});
 
 const store = useBalanceCalc({
   t: (key, params) => t(key, params ?? {}),

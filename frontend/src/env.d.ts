@@ -20,5 +20,20 @@ interface Window {
     lang: 'en' | 'zh';
     toggleLang(): void;
   };
+  /**
+   * PBGui AI bridge. Legacy pages get it from pbgui_nav.js; Vue pages
+   * install the same facade from shared/ai/context.ts. The drawer script
+   * (js/ai_drawer.js) extends it with open/close/toggle when it loads.
+   */
+  PBGuiAI?: {
+    registerPageContext?(registration: unknown): () => void;
+    collectContext?(): unknown;
+    focusedField?(allowlist: unknown): unknown;
+    open?(): void;
+    close?(): void;
+    toggle?(): void;
+  };
+  /** Legacy pages may assign a page-context function before nav.js loads. */
+  PBGUI_AI_PAGE_CONTEXT?: () => unknown;
 }
 
