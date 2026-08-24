@@ -56,10 +56,14 @@ function fillRows(): FillRow[] {
 </script>
 
 <template>
-  <section class="main-column" :id="(prefix || '') + (simMode ? 'sim-' : '') + sideKey + '-workspace'">
-    <div class="side-title">
-      <h3>{{ sideKey.toUpperCase() }}</h3>
-      <span :id="(prefix || '') + (simMode ? 'sim-' : '') + sideKey + '-active-chip'" class="chip" :class="active ? 'ok' : 'warn'">
+  <section class="flex min-w-0 flex-col gap-3.5" :id="(prefix || '') + (simMode ? 'sim-' : '') + sideKey + '-workspace'">
+    <div class="flex items-center justify-between gap-3 border border-secondary/13 rounded-t-[10px] bg-page/84 py-2.25 px-3">
+      <h3 class="m-0 text-primary text-md tracking-[0.08em]">{{ sideKey.toUpperCase() }}</h3>
+      <span
+        :id="(prefix || '') + (simMode ? 'sim-' : '') + sideKey + '-active-chip'"
+        class="inline-flex min-h-[25px] items-center gap-1.5 rounded-full border bg-elevated px-2 py-0.75 text-[10px]"
+        :class="active ? 'border-success/35 text-success' : 'border-warning/35 text-warning'"
+      >
         {{ active ? t('v7explore.active') : t('v7explore.inactive') }}
       </span>
     </div>
@@ -72,8 +76,8 @@ function fillRows(): FillRow[] {
       :snapshot-override="simSnapshot"
     />
     <template v-if="simMode">
-      <section class="panel-card">
-        <h4>{{ sideKey === 'long' ? t('v7explore.longFills') : t('v7explore.shortFills') }}</h4>
+      <section class="border border-border-default rounded-xl bg-panel p-3.5">
+        <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ sideKey === 'long' ? t('v7explore.longFills') : t('v7explore.shortFills') }}</h4>
         <div :id="'sim-' + sideKey">
           <table v-if="fillRows().length" class="orders">
             <thead><tr><th>#</th><th>Time</th><th>Event</th><th>Qty</th><th>Price</th><th>Pos Size</th></tr></thead>
@@ -81,7 +85,7 @@ function fillRows(): FillRow[] {
               <tr v-for="row in fillRows()" :key="row.idx"><td>{{ row.idx }}</td><td>{{ row.time }}</td><td>{{ row.event }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.posSize }}</td></tr>
             </tbody>
           </table>
-          <table v-else class="orders"><tbody><tr><td class="muted" style="text-align:left">{{ t('v7explore.noFills') }}</td></tr></tbody></table>
+          <table v-else class="orders"><tbody><tr><td class="text-secondary" style="text-align:left">{{ t('v7explore.noFills') }}</td></tr></tbody></table>
         </div>
       </section>
     </template>

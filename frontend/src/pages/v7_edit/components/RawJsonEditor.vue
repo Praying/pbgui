@@ -76,23 +76,31 @@ watch(
 function onScroll(): void {
   if (overlay.value && textarea.value) overlay.value.scrollTop = textarea.value.scrollTop;
 }
+
+/** Error state → full utility set (the former .field-status/.error/
+ *  .field-status-inline.error rules — display and tint change together). */
+function fieldStatusClass(hasError: boolean): string {
+  return hasError
+    ? 'mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-danger'
+    : 'hidden';
+}
 </script>
 
 <template>
   <ExpanderGroup id="exp-raw" :title="t('v7run.rawJson')">
     <div class="form-group">
-      <div class="raw-json-wrap" id="cfg-raw-json-wrap">
+      <div class="relative w-full min-w-0" id="cfg-raw-json-wrap">
         <div
           id="cfg-raw-json-status"
-          class="field-status"
-          :class="{ error: !!error, 'field-status-inline': true }"
+          class="text-sm leading-[1.35]"
+          :class="fieldStatusClass(!!error)"
           aria-live="polite"
         >
           <template v-if="error">
-            <div class="field-status-main">{{ summary }}</div>
-            <div v-if="error.message" class="field-status-meta">{{ error.message }}</div>
-            <div v-if="errorLines" class="field-status-actions">
-              <button type="button" class="field-status-btn" @click="reveal()">
+            <div class="font-semibold">{{ summary }}</div>
+            <div v-if="error.message" class="mt-0.5 text-danger-soft">{{ error.message }}</div>
+            <div v-if="errorLines" class="mt-2">
+              <button type="button" class="h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-0 text-sm text-danger-soft [transition:background-color_150ms,transform_100ms] hover:bg-white/8 active:translate-y-px" @click="reveal()">
                 {{ t('v7run.revealLineInEditor') }}
               </button>
             </div>
@@ -102,20 +110,20 @@ function onScroll(): void {
           v-if="error"
           id="cfg-raw-json-highlight"
           ref="rawOverlay"
-          class="raw-json-highlight visible"
+          class="pointer-events-none absolute inset-0 m-0 overflow-hidden border border-transparent bg-transparent p-2 font-mono text-xs leading-[1.4] text-transparent whitespace-pre-wrap break-words [tab-size:4] z-[2]"
           aria-hidden="true"
           @scroll="onScroll"
         ><span
           v-for="(line, index) in page.state.rawJson.split('\n')"
           :key="index"
-          class="raw-json-highlight-line"
-          :class="{ 'raw-json-highlight-error': errorLines === index + 1 }"
+          class="block"
+          :class="errorLines === index + 1 ? 'rounded-[2px] bg-danger/16 shadow-[inset_3px_0_0_rgb(var(--danger-rgb)/0.95)]' : ''"
         >{{ line }}</span></pre>
         <textarea
           id="cfg-raw-json"
           ref="rawTextarea"
           v-model="page.state.rawJson"
-          class="json-editor"
+          class="json-editor block w-full min-w-0"
           :class="{ 'json-invalid': !!error }"
           style="overflow: hidden; resize: vertical"
           @input="page.jsonSync.scheduleRaw()"

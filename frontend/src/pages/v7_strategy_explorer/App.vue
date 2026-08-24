@@ -102,6 +102,18 @@ const railSections = computed<PageSection[]>(() =>
 const subtitle = computed(() => t(adapter.subtitleKey));
 const moviePanel = useTemplateRef<{ stepMovieFrame(direction: number): boolean }>('moviePanel');
 
+/* Status chip colour sets — the former #source-chip/#ohlcv-chip/#engine-chip
+   ok/warn/err variants of styles/explorer.css. Each branch (neutral default
+   included) returns the FULL colour set so the static utilities on the
+   element never fight a dynamic one; the anchor ok/warn/err names ride
+   along on store.sourceChip.cls. */
+function statusChipClass(cls: string): string {
+  if (cls.includes('err')) return 'border-danger/36 bg-danger-deep/13 text-danger-soft';
+  if (cls.includes('warn')) return 'border-warning/32 bg-warning-deep/12 text-warning-soft';
+  if (cls.includes('ok')) return 'border-success/32 bg-success/10 text-success-soft';
+  return 'border-secondary/16 bg-secondary/7 text-secondary';
+}
+
 function openStrategyHelp(): void {
   const sharedHelp = (window as Window & {
     PBGuiSharedHelp?: { open?: (topic: string) => void };
@@ -258,16 +270,16 @@ onBeforeUnmount(() => {
     @update:section="selectStage"
   >
     <template #status>
-      <div class="toolbar">
-        <span id="source-chip" class="sr-only" :class="store.sourceChip.value.cls" :title="store.sourceChip.value.title">{{ store.sourceChip.value.text }}</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <span id="source-chip" class="sr-only inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.25 py-1 text-xs max-[640px]:max-w-full max-[640px]:truncate" :class="[store.sourceChip.value.cls, statusChipClass(store.sourceChip.value.cls)]" :title="store.sourceChip.value.title">{{ store.sourceChip.value.text }}</span>
         <StatusStrip
           :label="t('v7explore.source')"
           :value="store.sourceChip.value.text"
           :tone="store.sourceChip.value.cls.includes('err') ? 'danger' : store.sourceChip.value.cls.includes('warn') ? 'warning' : store.sourceChip.value.cls.includes('ok') ? 'success' : 'neutral'"
         />
-        <span id="ohlcv-chip" :class="store.ohlcvChip.value.cls" :title="store.ohlcvChip.value.title">OHLCV: {{ store.ohlcvChip.value.text }}</span>
-        <span id="engine-chip" :class="store.engineChip.value.cls">{{ store.engineChip.value.text }}</span>
-        <span id="market-chip" class="chip">{{ store.marketChip.value }}</span>
+        <span id="ohlcv-chip" class="inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.25 py-1 text-xs max-[640px]:max-w-full max-[640px]:truncate" :class="[store.ohlcvChip.value.cls, statusChipClass(store.ohlcvChip.value.cls)]" :title="store.ohlcvChip.value.title">OHLCV: {{ store.ohlcvChip.value.text }}</span>
+        <span id="engine-chip" class="inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.25 py-1 text-xs max-[640px]:max-w-full max-[640px]:truncate" :class="[store.engineChip.value.cls, statusChipClass(store.engineChip.value.cls)]">{{ store.engineChip.value.text }}</span>
+        <span id="market-chip" class="inline-flex items-center gap-1.5 rounded-full border border-border-default bg-elevated px-2.5 py-1 text-sm text-secondary">{{ store.marketChip.value }}</span>
       </div>
     </template>
     <template #header-actions>
@@ -279,9 +291,13 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="data-tip-tooltip"></div>
-    <div id="page-body">
-    <div class="workbench-page-content" ref="mainContent" @scroll.passive="onScroll">
+    <div id="data-tip-tooltip" class="pointer-events-none fixed left-0 top-0 z-[var(--z-help)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)] [will-change:transform]"></div>
+    <div id="page-body" class="flex min-h-0 flex-1 h-[calc(100dvh_-_var(--nav-height))]">
+    <div
+      class="workbench-page-content flex min-w-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain [scrollbar-gutter:stable] pt-6 px-[clamp(16px,2.5vw,38px)] pb-9.5 max-[900px]:pt-4.5 max-[900px]:px-3.5 max-[900px]:pb-7 bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.1),transparent_29rem),radial-gradient(circle_at_0%_82%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)]"
+      ref="mainContent"
+      @scroll.passive="onScroll"
+    >
       <section class="page-title sr-only">
         <div>
           <h1 id="strategy-explorer-title">
@@ -294,8 +310,8 @@ onBeforeUnmount(() => {
       <MessagesBar :store="store" />
       <AnalysisControls :store="store" />
 
-      <section id="stage-analysis" class="stage-view" :class="{ active: store.controls.stage === 'analysis' }">
-        <div class="main-layout">
+      <section id="stage-analysis" :class="store.controls.stage === 'analysis' ? 'active block' : 'hidden'">
+        <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] items-start gap-4 max-[900px]:grid-cols-[1fr]">
           <SideWorkspace :store="store" side-key="long" />
           <SideWorkspace :store="store" side-key="short" />
         </div>
@@ -310,3 +326,195 @@ onBeforeUnmount(() => {
     </div>
   </AppShell>
 </template>
+
+<style>
+/* The rules of styles/explorer.css that cannot be Tailwind utilities,
+   kept verbatim (merged where the legacy refinement block overrode the
+   base block) at the CSS→utilities migration:
+   - html/body root rules and the body radial-gradient wash (root rules
+     must live in an unscoped block to reach the document root);
+   - [data-tip] dotted help underline (attribute selector spanning every
+     child component of this page);
+   - the .orders table cell/zebra/sticky group (th/td descendants plus
+     nth-child striping, shared by SideWorkspace/StatsPanel/ComparePanel/
+     MoviePanel — the .opt-table pattern of v7_optimize);
+   - the accordion chevron pseudo-element and collapsed-body state
+     (pseudo-elements; the class names stay as state anchors);
+   - Plotly :fullscreen sizing and the scroll-lock pointer-events rule
+     (pseudo-class + descendant selectors into Plotly's own DOM);
+   - #raw-config-panel rules targeting the json_panel.js-injected DOM;
+   - the range-slider track/thumb pseudo-elements of ParamTuning.
+   Everything else from the stylesheet became utilities in the templates. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  color: var(--text);
+  background: var(--bg);
+  font: var(--fs-base) / 1.45 var(--font);
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 0%, rgb(var(--accent-deep-rgb) / 0.1), transparent 26rem),
+    var(--bg);
+}
+
+[data-tip] {
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+.orders {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.orders th,
+.orders td {
+  border-bottom: 1px solid var(--border);
+  padding: 7px 6px;
+  text-align: right;
+}
+
+.orders th:first-child,
+.orders td:first-child,
+.orders th:nth-child(2),
+.orders td:nth-child(2) {
+  text-align: left;
+}
+
+.orders th {
+  color: var(--text-dim);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.orders.compare-grid th,
+.orders.compare-grid td {
+  border: 1px solid var(--border);
+}
+
+.orders.compare-grid tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.orders.compare-grid th {
+  position: sticky;
+  top: 0;
+  background: var(--bg2);
+  z-index: 1;
+}
+
+.accordion-head::before {
+  content: '›';
+  transform: rotate(90deg);
+  color: var(--text-dim);
+}
+
+.accordion-card.collapsed .accordion-head::before {
+  transform: rotate(0deg);
+}
+
+.accordion-card.collapsed .accordion-body {
+  display: none;
+}
+
+.workbench-page-content.is-scrolling .js-plotly-plot {
+  pointer-events: none;
+}
+
+.plot:fullscreen {
+  width: 100vw;
+  height: 100dvh !important;
+  min-height: 100dvh;
+  background: var(--bg);
+  padding: 8px;
+}
+
+.plot:fullscreen > div {
+  height: 100% !important;
+}
+
+.movie-plot:fullscreen {
+  width: 100vw;
+  height: 100dvh !important;
+  min-height: 100dvh;
+  background: var(--bg);
+  padding: 8px;
+}
+
+.movie-plot:fullscreen > div {
+  height: 100% !important;
+}
+
+#raw-config-panel .json-panel-wrap {
+  margin-top: 0;
+}
+
+#raw-config-panel .json-pre[contenteditable='true'] {
+  outline: none;
+  cursor: text;
+}
+
+#raw-config-panel .json-pre.raw-invalid {
+  border-color: rgb(var(--danger-rgb) / 0.55);
+  color: var(--danger-soft);
+}
+
+input.param-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent-deep) 0%,
+    var(--accent-deep) var(--range-fill, 50%),
+    rgb(var(--text-secondary-rgb) / 0.16) var(--range-fill, 50%),
+    rgb(var(--text-secondary-rgb) / 0.16) 100%
+  );
+}
+
+input.param-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  margin-top: -4px;
+  border: 2px solid var(--text-primary);
+  border-radius: 50%;
+  background: var(--accent-deep);
+  box-shadow:
+    0 0 0 3px rgb(var(--accent-rgb) / 0.16),
+    0 0 12px rgb(var(--accent-rgb) / 0.38);
+}
+
+input.param-slider::-moz-range-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  border: 0;
+}
+
+input.param-slider::-moz-range-progress {
+  height: 4px;
+  background: var(--accent);
+  border-radius: 999px;
+  border: 0;
+}
+
+input.param-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 0;
+  box-shadow: 0 0 0 1px rgb(var(--bg-page-rgb) / 0.95);
+}
+</style>

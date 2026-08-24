@@ -83,9 +83,9 @@ defineExpose({ show });
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="modal-overlay open" id="bc-modal" @mousedown.self="open = false">
-      <div class="modal-box" style="max-width: 560px">
-        <h3>{{ t('v7run.calculateBalance') }}</h3>
+    <div v-if="open" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop" id="bc-modal" @mousedown.self="open = false">
+      <div class="flex w-[90%] max-w-[800px] max-h-[80vh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5" style="max-width: 560px">
+        <h3 class="text-lg">{{ t('v7run.calculateBalance') }}</h3>
         <div v-if="loading" style="color: var(--text-dim); font-size: var(--fs-sm); margin-bottom: var(--sp-md)">
           {{ t('v7run.calculating') }}
         </div>
@@ -119,8 +119,8 @@ defineExpose({ show });
           </div>
         </template>
         <div v-if="errorText" style="color: var(--red); font-size: var(--fs-sm)">{{ errorText }}</div>
-        <div class="modal-actions">
-          <button class="btn btn-cancel" @click="open = false">{{ t('common.close') }}</button>
+        <div class="flex justify-end gap-2">
+          <button class="btn px-4 [transition:background-color_150ms,transform_100ms] hover:bg-border-default active:translate-y-px" @click="open = false">{{ t('common.close') }}</button>
         </div>
       </div>
     </div>

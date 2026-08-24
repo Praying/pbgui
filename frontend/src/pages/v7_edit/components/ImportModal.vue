@@ -132,16 +132,23 @@ async function doImport(): Promise<void> {
 }
 
 defineExpose({ show, jsonEl });
+
+/** Combobox option state → full utility colour set (the former
+ *  .user-combobox-option/.active rules; hover is handled by the static
+ *  hover: utilities on the button). */
+function userOptionClass(active: boolean): string {
+  return active ? 'bg-accent/14 text-[#f2f5fb]' : 'text-primary';
+}
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="modal-overlay open" id="import-modal" @mousedown.self="close">
-      <div class="modal-box">
-        <h3>{{ t('v7run.pasteConfig') }}</h3>
+    <div v-if="open" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop" id="import-modal" @mousedown.self="close">
+      <div class="flex w-[90%] max-w-[800px] max-h-[80vh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
+        <h3 class="text-lg">{{ t('v7run.pasteConfig') }}</h3>
         <div class="form-group">
           <label>{{ t('v7run.user') }}</label>
-          <div class="user-combobox">
+          <div class="user-combobox relative">
             <input
               id="import-user"
               ref="userEl"
@@ -162,7 +169,7 @@ defineExpose({ show, jsonEl });
               @keydown.esc.prevent="optionsOpen = false"
             />
             <button
-              class="user-combobox-toggle"
+              class="absolute top-0 right-0 z-[2] h-8 w-8 cursor-pointer rounded-r-sm border border-border-default bg-elevated p-0 text-secondary hover:border-accent hover:text-primary"
               id="import-user-toggle"
               type="button"
               :aria-label="t('v7run.showConfiguredUsers')"
@@ -172,19 +179,19 @@ defineExpose({ show, jsonEl });
             >&#x25BE;</button>
             <div
               v-if="optionsOpen"
-              class="user-combobox-options"
+              class="absolute top-[calc(100%+4px)] left-0 right-0 z-30 max-h-[220px] overflow-y-auto rounded-md border border-border-default bg-panel p-1 shadow-[0_12px_30px_rgba(5,8,14,0.48)]"
               id="import-user-options"
               role="listbox"
               @mousedown.prevent
             >
-              <div v-if="!matches.length" class="user-combobox-empty">{{ t('v7run.noMatchingUsers') }}</div>
+              <div v-if="!matches.length" class="px-[9px] py-2 text-xs text-secondary">{{ t('v7run.noMatchingUsers') }}</div>
               <button
                 v-for="(match, index) in matches"
                 :key="match.name"
                 type="button"
-                class="user-combobox-option"
+                class="block w-full cursor-pointer rounded-sm border-0 bg-transparent px-[7px] py-[9px] text-left hover:bg-accent/14 hover:text-[#f2f5fb]"
                 role="option"
-                :class="{ active: index === activeIndex }"
+                :class="userOptionClass(index === activeIndex)"
                 :aria-selected="index === activeIndex ? 'true' : 'false'"
                 @click="pick(match.name)"
               >{{ match.name }}</button>
@@ -200,13 +207,13 @@ defineExpose({ show, jsonEl });
           rows="18"
           :placeholder="t('v7run.pasteFullJsonConfig')"
         ></textarea>
-        <div v-if="error || validation.error" class="field-status field-status-inline error" aria-live="polite">
-          <div class="field-status-main">{{ error?.summary ?? t('v7run.fieldIsInvalid', { label: t('v7run.importJson') }) }}</div>
-          <div v-if="error?.message || validation.error?.message" class="field-status-meta">{{ error?.message ?? validation.error?.message }}</div>
+        <div v-if="error || validation.error" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
+          <div class="font-semibold">{{ error?.summary ?? t('v7run.fieldIsInvalid', { label: t('v7run.importJson') }) }}</div>
+          <div v-if="error?.message || validation.error?.message" class="mt-0.5 text-danger-soft">{{ error?.message ?? validation.error?.message }}</div>
         </div>
-        <div class="modal-actions">
-          <button class="btn btn-ok" @click="doImport()">{{ t('common.ok') }}</button>
-          <button class="btn btn-cancel" @click="close()">{{ t('common.cancel') }}</button>
+        <div class="flex justify-end gap-2">
+          <button class="btn border-success bg-success px-4 text-accent-contrast [transition:background-color_150ms,transform_100ms] hover:bg-success-deep active:translate-y-px" @click="doImport()">{{ t('common.ok') }}</button>
+          <button class="btn px-4 [transition:background-color_150ms,transform_100ms] hover:bg-border-default active:translate-y-px" @click="close()">{{ t('common.cancel') }}</button>
         </div>
       </div>
     </div>

@@ -46,7 +46,7 @@ const syncBounds = computed(() => executionSyncBounds(state));
     v-show="page.fieldVisible('advanced')"
     :title="t('v7run.advancedSettings')"
   >
-    <div class="subsection-title">{{ t('v7run.modesPolicies') }}</div>
+    <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.modesPolicies') }}</div>
     <div class="form-row cols-8">
       <FieldSelect
         id="f-forced-long"
@@ -124,7 +124,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
       </div>
     </div>
 
-    <div class="subsection-title">{{ t('v7run.executionExchangeSync') }}</div>
+    <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.executionExchangeSync') }}</div>
     <div class="form-row cols-8">
       <FieldNumber
         id="f-max-cancel"
@@ -209,7 +209,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
     </div>
 
     <template v-if="page.isV8">
-      <div class="subsection-title">{{ t('v7run.feesOrderChurn') }}</div>
+      <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.feesOrderChurn') }}</div>
       <div class="form-row cols-8">
         <FieldNumber id="f-fee-conversion-age" v-show="page.fieldVisible('fee_conversion_max_age_ms')" v-model="state.feeConversionAge" label="fee_conversion_max_age_ms" tip="Maximum age in milliseconds for cached fee-currency conversion prices." min="0" step="1000" />
         <FieldNumber id="f-fee-pct-fallback" v-show="page.fieldVisible('fee_pct_fallback')" v-model="state.feePctFallback" label="fee_pct_fallback" tip="Fallback trading-fee fraction used when the exchange does not provide a usable value." min="0" step="0.00001" />
@@ -221,7 +221,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
       </div>
     </template>
 
-    <div class="subsection-title">{{ t('v7run.warmupCandleFetch') }}</div>
+    <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.warmupCandleFetch') }}</div>
     <div class="form-row cols-8">
       <FieldNumber id="f-max-warmup-min" v-show="page.fieldVisible('max_warmup_minutes')" v-model="state.maxWarmupMin" label="max_warmup_minutes" tip="Hard ceiling for the historical warm-up window (minutes). Use 0 to disable the cap; values above 0 clamp the per-symbol warmup calculated from EMA spans." min="0" step="100" />
       <FieldNumber id="f-warmup-jitter" v-show="page.fieldVisible('warmup_jitter_seconds')" v-model="state.warmupJitter" label="warmup_jitter_seconds" tip="Random startup delay spread (seconds) before warm-up begins. Helps multiple bots on the same machine avoid hitting the same files/APIs simultaneously." min="0" step="1" />
@@ -237,7 +237,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
       <FieldSelect id="f-market-snapshot-strategy" v-show="page.fieldVisible('market_snapshot_ticker_strategy')" v-model="state.marketSnapshotStrategy" label="market_snapshot_ticker_strategy" :options="marketSnapshotOptions" tip="Choose how market snapshots fetch tickers. auto lets Passivbot choose per exchange, bulk uses multi-symbol ticker endpoints, symbols fetches one symbol at a time." />
     </div>
 
-    <div class="subsection-title">Forager</div>
+    <div class="mb-2 mt-3 text-sm font-semibold text-accent">Forager</div>
     <div class="form-row cols-8">
       <FieldNumber id="f-forager-hysteresis" v-show="page.fieldVisible('forager_score_hysteresis_pct')" v-model="state.foragerHysteresis" label="forager_score_hysteresis_pct" tip="Hysteresis applied to forager scores so Passivbot does not swap symbols too eagerly on tiny ranking changes." min="0" step="0.001" />
       <FieldNumber id="f-max-forager-stale" v-show="page.fieldVisible('max_forager_candle_staleness_minutes')" v-model="state.maxForagerStale" label="max_forager_candle_staleness_minutes" tip="Optional cap for how stale forager candidate candles may be before Passivbot refreshes them. Leave blank to use the runtime default." min="0" step="1" placeholder="auto" />
@@ -248,7 +248,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
       <FieldNumber id="f-forager-ws-audit" v-show="page.fieldVisible('forager_ws_candle_rest_audit_minutes')" v-model="state.foragerWsAudit" label="forager_ws_candle_rest_audit_minutes" tip="Minutes between REST audits of PB8 forager candles received over WebSocket." min="0.000001" max="60" step="1" />
     </div>
 
-    <div class="subsection-title">{{ t('v7run.storageFreshnessRuntime') }}</div>
+    <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.storageFreshnessRuntime') }}</div>
     <div class="form-row cols-8" style="margin-bottom: 0">
       <FieldNumber id="f-max-disk-candles" v-show="page.fieldVisible('max_disk_candles_per_symbol_per_tf')" v-model="state.maxDiskCandles" label="max_disk_candles_per_symbol_per_tf" tip="Maximum candles persisted on disk per symbol and timeframe. Oldest shards are pruned once this limit is hit. Default 2,000,000." min="0" step="10000" />
       <FieldNumber id="f-max-mem-candles" v-show="page.fieldVisible('max_memory_candles_per_symbol')" v-model="state.maxMemCandles" label="max_memory_candles_per_symbol" tip="Maximum 1m candles retained in RAM per symbol. Older entries are trimmed once this cap is exceeded. Default 200,000." min="0" step="10000" />
@@ -261,18 +261,18 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
     </div>
 
     <template v-if="page.isV8">
-      <div class="subsection-title">{{ t('v7run.pb8Runtime') }}</div>
+      <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.pb8Runtime') }}</div>
       <div class="form-row cols-8">
         <FieldNumber id="f-exchange-symbol-cooldown" v-show="page.fieldVisible('exchange_symbol_unavailable_cooldown_hours')" v-model="state.exchangeSymbolCooldown" label="exchange_symbol_unavailable_cooldown_hours" tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts." min="0" max="876600" step="0.1" style="grid-column: span 2" />
         <FieldText id="f-custom-endpoints-path" v-show="page.fieldVisible('custom_endpoints_path')" v-model="state.customEndpointsPath" label="custom_endpoints_path" tip="Optional path to a PB8 custom-endpoints definition. Leave blank to use built-in endpoints." placeholder="default" style="grid-column: span 2" />
         <div class="form-group" v-show="page.fieldVisible('startup_phase_budgets')" style="grid-column: span 4">
           <label><span data-tip="Expert diagnostic reporting thresholds only; these values do not gate startup or trading. Use canonical phase names with elapsed_ms and/or since_previous_ms non-negative integer values. An empty object uses runtime defaults.">startup_phase_budgets (Expert/Diagnostic)</span></label>
           <textarea id="f-startup-phase-budgets" v-model="state.startupPhaseBudgets" class="json-editor" rows="4"></textarea>
-          <div id="f-startup-phase-budgets-status" class="field-status field-status-inline" aria-live="polite"></div>
+          <div id="f-startup-phase-budgets-status" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
         </div>
       </div>
 
-      <div class="subsection-title">{{ t('v7run.logging') }}</div>
+      <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.logging') }}</div>
       <div class="form-row cols-8">
         <FieldText id="f-log-dir" v-show="page.fieldVisible('dir')" v-model="state.logDir" label="logging.dir" tip="Directory used by PB8 for its own log files." />
         <FieldNumber id="f-log-max-bytes" v-show="page.fieldVisible('max_bytes_mb')" v-model="state.logMaxBytes" label="logging.max_bytes_mb" tip="Maximum size in MiB of one PB8 log file before rotation." min="0" step="1" />
@@ -286,11 +286,11 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
         <div class="form-group" v-show="page.fieldVisible('live_event_debug_profiles')" style="grid-column: span 3">
           <label><span data-tip="PB8 live-event debug profiles as a JSON array.">logging.live_event_debug_profiles</span></label>
           <textarea id="f-log-debug-profiles" v-model="state.logDebugProfiles" class="json-editor" rows="4"></textarea>
-          <div id="f-log-debug-profiles-status" class="field-status field-status-inline" aria-live="polite"></div>
+          <div id="f-log-debug-profiles-status" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
         </div>
       </div>
 
-      <div class="subsection-title" v-show="page.fieldVisible('monitorEnabled')">{{ t('v7run.monitoring') }}</div>
+      <div class="mb-2 mt-3 text-sm font-semibold text-accent" v-show="page.fieldVisible('monitorEnabled')">{{ t('v7run.monitoring') }}</div>
       <div class="form-row cols-8" v-show="page.fieldVisible('monitorEnabled')">
         <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-enabled" v-show="page.fieldVisible('monitorEnabled')" v-model="state.monitorEnabled" label="monitor.enabled" /></div>
         <FieldText id="f-monitor-root-dir" v-show="page.fieldVisible('root_dir')" v-model="state.monitorRootDir" label="monitor.root_dir" />

@@ -86,42 +86,63 @@ function sliderDisplay(field: FieldView): string {
 function onSliderChange(): void {
   void store.recalculate();
 }
+
+/* Segment tab colour sets — the former .segment-tabs button base/active
+   rules of styles/explorer.css (the active branch keeps the plain :hover
+   tint, matching the legacy cascade where :hover beat .active). Full
+   colour set per branch; the neutral branch never fights the static
+   utilities. */
+function segmentTabClass(isActive: boolean): string {
+  return isActive
+    ? 'active bg-accent-deep/22 text-primary outline-1 outline-accent/75 -outline-offset-1 hover:bg-accent/8 hover:text-primary'
+    : 'bg-transparent text-muted hover:bg-secondary/8 hover:text-primary';
+}
 </script>
 
 <template>
-  <div :id="prefix + sideKey + '-tuning'">
-    <div class="field"><label>{{ t('v7explore.segment') }}</label></div>
-    <div class="segment-tabs pbgui-tab-bar">
-      <button v-for="seg in store.segments.value" :key="seg.key" class="pbgui-tab" type="button" :class="seg.key === segmentKey ? 'active' : ''" @click="setSegment(seg.key)">
+  <div
+    :id="prefix + sideKey + '-tuning'"
+    :class="prefix ? '' : 'p-3 border border-secondary/13 border-t-0 rounded-b-[10px] bg-page/74'"
+  >
+    <div class="flex flex-col gap-1"><label class="text-secondary text-xs uppercase tracking-[0.04em]">{{ t('v7explore.segment') }}</label></div>
+    <div class="pbgui-tab-bar grid grid-cols-[repeat(auto-fit,minmax(92px,1fr))] gap-0 mt-1.25 mb-3.5 overflow-hidden rounded-lg border border-secondary/15 bg-page/60">
+      <button
+        v-for="seg in store.segments.value"
+        :key="seg.key"
+        class="pbgui-tab min-w-0 min-h-[31px] cursor-pointer border-0 border-r border-r-secondary/12 bg-transparent px-2 py-1.25 text-xs transition-[color,background-color] duration-150 ease-[ease] last:border-r-0"
+        type="button"
+        :class="segmentTabClass(seg.key === segmentKey)"
+        @click="setSegment(seg.key)"
+      >
         {{ seg.label ?? t(seg.labelKey || '') }}
       </button>
     </div>
-    <div v-for="field in fieldViews()" :key="field.name" :class="'slider-field' + (field.nearBound ? ' near-bound' : '')">
-      <div class="slider-label">
-        <span class="slider-name" :data-tip="field.tip">{{ field.label }}</span>
-        <span class="slider-meta">
-          <span v-if="field.nearBound" class="near-bound-badge">{{ field.nearBound === 'lower' ? t('v7explore.nearLowerBound') : t('v7explore.nearUpperBound') }}</span>
-          <span v-if="field.kind === 'select'" class="slider-value">{{ field.value || '-' }}</span>
-          <span v-else-if="field.kind === 'number'" class="slider-value">{{ sliderDisplay(field) }}</span>
-          <span class="help" :data-tip="field.tip">?</span>
+    <div v-for="field in fieldViews()" :key="field.name" class="pt-2 pb-2.5 mb-3 border-b border-b-secondary/8 last:border-b-0" :class="field.nearBound ? 'border-l-[3px] border-l-warning pl-2' : ''">
+      <div class="flex min-h-[22px] items-center justify-between gap-2 text-sm">
+        <span class="min-w-0 truncate text-secondary text-xs" :data-tip="field.tip">{{ field.label }}</span>
+        <span class="inline-flex flex-none items-center gap-1.5">
+          <span v-if="field.nearBound" class="px-1.5 py-0.5 rounded-full border border-warning/32 bg-warning-deep/13 text-warning-soft text-[9px] font-bold uppercase tracking-[0.04em]">{{ field.nearBound === 'lower' ? t('v7explore.nearLowerBound') : t('v7explore.nearUpperBound') }}</span>
+          <span v-if="field.kind === 'select'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-[10px] font-bold text-accent-soft">{{ field.value || '-' }}</span>
+          <span v-else-if="field.kind === 'number'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-[10px] font-bold text-accent-soft">{{ sliderDisplay(field) }}</span>
+          <span class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border-default text-accent-soft text-xs" :data-tip="field.tip">?</span>
         </span>
       </div>
-      <label v-if="field.kind === 'bool'" class="param-check">
-        <input class="param-bool" type="checkbox" :checked="!!field.value" :aria-label="field.label" @change="store.setParam(sideKey, field.name, ($event.target as HTMLInputElement).checked); store.recalculate()">
+      <label v-if="field.kind === 'bool'" class="mt-1.5 flex min-h-[30px] items-center gap-2 rounded-[7px] border border-secondary/12 bg-secondary/[0.045] px-2 py-1.5 text-secondary text-sm">
+        <input class="param-bool w-auto accent-accent" type="checkbox" :checked="!!field.value" :aria-label="field.label" @change="store.setParam(sideKey, field.name, ($event.target as HTMLInputElement).checked); store.recalculate()">
         {{ t('common.enabled') }}
       </label>
-      <select v-else-if="field.kind === 'select'" class="param-select" :aria-label="field.label" :data-tip="field.tip" :value="String(field.value ?? '')" @change="store.setParam(sideKey, field.name, ($event.target as HTMLSelectElement).value); store.recalculate()">
+      <select v-else-if="field.kind === 'select'" class="mt-1.5 w-full min-h-[31px] rounded-[7px] border border-secondary/15 bg-page/68 px-2 py-1.75 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" :aria-label="field.label" :data-tip="field.tip" :value="String(field.value ?? '')" @change="store.setParam(sideKey, field.name, ($event.target as HTMLSelectElement).value); store.recalculate()">
         <option v-for="opt in field.options" :key="opt" :value="opt" :selected="String(opt) === String(field.value)">{{ opt }}</option>
       </select>
-      <input v-else-if="field.kind === 'text'" class="param-text" type="text" :aria-label="field.label" :data-tip="field.tip" :value="field.value === undefined || field.value === null ? '' : String(field.value)" @change="store.setParam(sideKey, field.name, ($event.target as HTMLInputElement).value); store.recalculate()">
+      <input v-else-if="field.kind === 'text'" class="mt-1.5 w-full min-h-[31px] rounded-[7px] border border-secondary/15 bg-page/68 px-2 py-1.75 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" type="text" :aria-label="field.label" :data-tip="field.tip" :value="field.value === undefined || field.value === null ? '' : String(field.value)" @change="store.setParam(sideKey, field.name, ($event.target as HTMLInputElement).value); store.recalculate()">
       <template v-else>
-        <input class="param-slider" type="range" :aria-label="field.label" :data-tip="field.tip" :min="field.bounds!.min" :max="field.bounds!.max" :step="field.bounds!.step" :value="field.value === undefined ? 0 : Number(field.value)" :style="{ '--range-fill': rangeFill(field) }" @input="onSliderInput(field, $event)" @change="onSliderChange">
+        <input class="param-slider h-[18px] w-full cursor-pointer appearance-none bg-transparent accent-accent" type="range" :aria-label="field.label" :data-tip="field.tip" :min="field.bounds!.min" :max="field.bounds!.max" :step="field.bounds!.step" :value="field.value === undefined ? 0 : Number(field.value)" :style="{ '--range-fill': rangeFill(field) }" @input="onSliderInput(field, $event)" @change="onSliderChange">
       </template>
     </div>
-    <div v-if="segmentKey === 'entry_grid'" class="inline-note">
+    <div v-if="segmentKey === 'entry_grid'" class="mt-2.25 mb-2.5 border-l-2 border-l-accent rounded-r-[7px] bg-accent-deep/8 py-2 px-2.5 text-secondary text-xs">
       {{ t('v7explore.theoreticalMaxGridOrders', { count: deepGet(store.state.snapshot, ['sides', sideKey, 'summary', 'entry_orders'], 0), label: store.strategyLabel.value }) }}
     </div>
-    <div v-if="segmentKey === 'entry_grid' || segmentKey === 'entry_trailing'" class="inline-note">
+    <div v-if="segmentKey === 'entry_grid' || segmentKey === 'entry_trailing'" class="mt-2.25 mb-2.5 border-l-2 border-l-accent rounded-r-[7px] bg-accent-deep/8 py-2 px-2.5 text-secondary text-xs">
       {{ t('v7explore.injectedVolatility', { value: fmt(deepGet(store.state.snapshot, ['sides', sideKey, 'debug', 'state_params', 'entry_volatility_logrange_ema_1h'], 0), 8) }) }}
     </div>
   </div>

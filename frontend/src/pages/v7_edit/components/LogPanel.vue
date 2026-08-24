@@ -65,6 +65,15 @@ function isLocalBotLogFile(file: string): boolean {
   return value.indexOf(page.isV8 ? 'pb8/logs/' : 'pb7/logs/') === 0 && value.indexOf(page.instanceName.value) >= 0;
 }
 
+/** Host badge state → full utility colour set (the former
+ *  #log-panel-host.connected/.disabled rules; 'disabled' is the neutral
+ *  default while the host is being resolved). */
+function logHostClass(state: string): string {
+  if (state === 'connected') return 'border-success text-success';
+  if (state === 'disabled') return 'border-warning text-warning';
+  return 'border-border-default text-secondary';
+}
+
 function initViewer(host: string): void {
   viewer.value?.close();
   const Ctor = (window as Window & { LogViewerPanel?: LogViewerCtor }).LogViewerPanel;
@@ -150,11 +159,19 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div id="log-panel" :class="{ visible: open }">
-    <div id="log-panel-header">
-      <span id="log-panel-title">&#x1F4CB; {{ t('v7run.passivbotLog') }}</span>
-      <span id="log-panel-host" :class="hostClass">{{ hostBadge }}</span>
-      <button class="log-close" :title="t('common.close')" @click="open = false">&#x00D7;</button>
+  <div
+    id="log-panel"
+    class="fixed top-[52px] right-0 bottom-0 z-[150] w-[min(560px,92vw)] flex-col overflow-hidden border-l border-border-default bg-panel shadow-[-6px_0_24px_rgba(5,8,14,0.5)]"
+    :class="open ? 'flex' : 'hidden'"
+  >
+    <div id="log-panel-header" class="flex shrink-0 items-center gap-2 border-b border-border-default bg-elevated px-3 py-2">
+      <span id="log-panel-title" class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-bold">&#x1F4CB; {{ t('v7run.passivbotLog') }}</span>
+      <span
+        id="log-panel-host"
+        class="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] border bg-page px-1.5 py-px text-xs"
+        :class="logHostClass(hostClass)"
+      >{{ hostBadge }}</span>
+      <button class="cursor-pointer rounded-sm border-0 bg-transparent px-1.5 py-0.5 text-md leading-none text-secondary hover:bg-white/6 hover:text-primary" :title="t('common.close')" @click="open = false">&#x00D7;</button>
     </div>
     <div id="log-viewer-target" style="flex: 1; overflow: hidden; min-height: 0"></div>
   </div>

@@ -505,37 +505,38 @@ async function testConnection(): Promise<void> {
 </script>
 
 <template>
-  <div id="editPanel" class="edit-panel" @input="formDirty = true" @change="formDirty = true">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+  <div id="editPanel" class="edit-panel mx-auto mb-5 w-[min(100%,1500px)] rounded-lg border border-border-subtle bg-panel p-4 max-[768px]:p-3" @input="formDirty = true" @change="formDirty = true">
+    <div class="border-b border-border-subtle pb-3" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <BackButton @back="emit('back')" />
-      <h3 id="editPanelTitle" style="margin:0;">{{ title }}</h3>
+      <h3 id="editPanelTitle" class="text-lg tracking-tight text-primary" style="margin:0;">{{ title }}</h3>
     </div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>{{ t('misc.apikeys.username') }}</label>
-        <input type="text" id="editName" v-model="name" maxlength="32" :disabled="lockedByInUse" />
+    <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1">
+      <div class="form-group flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.username') }}</label>
+        <input type="text" id="editName" class="min-h-[34px] px-2.5 py-1.5 disabled:cursor-not-allowed disabled:opacity-50" v-model="name" maxlength="32" :disabled="lockedByInUse" />
       </div>
-      <div class="form-group">
-        <label>{{ t('misc.apikeys.exchange') }}</label>
-        <select id="editExchange" v-model="exchange" :disabled="lockedByInUse" @change="onExchangeChange">
+      <div class="form-group flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.exchange') }}</label>
+        <select id="editExchange" class="min-h-[34px] px-2.5 py-1.5 disabled:cursor-not-allowed disabled:opacity-50" v-model="exchange" :disabled="lockedByInUse" @change="onExchangeChange">
           <option v-for="ex in store.exchanges.value" :key="ex" :value="ex">{{ ex }}</option>
         </select>
       </div>
-      <div class="form-group" id="testBtnGroup" style="padding-top:20px;">
+      <div class="form-group flex flex-col gap-1.5" id="testBtnGroup" style="padding-top:20px;">
         <button class="btn pbgui-btn btn-info" id="btnTest" :disabled="testing" @click="testConnection">
-          <span v-if="testing" class="spinner"></span>
+          <span v-if="testing" class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>
           {{ t('misc.apikeys.testConnection') }}
         </button>
       </div>
     </div>
 
     <!-- Standard fields (non-HL) -->
-    <div class="form-grid" id="standardFields" v-show="!isHL">
-      <div class="form-group">
-        <label>{{ t('misc.apikeys.apiKey') }}</label>
-        <div class="pw-wrap">
+    <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1" id="standardFields" v-show="!isHL">
+      <div class="form-group flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.apiKey') }}</label>
+        <div class="pw-wrap relative flex items-center">
           <input
             id="editKey"
+            class="min-h-[34px] flex-1 py-1.5 pl-2.5 pr-9"
             v-model="keyField.value"
             :type="keyField.visible ? 'text' : 'password'"
             :placeholder="keyField.masked ? '••••••••••• ' + savedLeaveBlank : ''"
@@ -543,30 +544,30 @@ async function testConnection(): Promise<void> {
           />
           <button
             type="button"
-            class="pw-eye-btn"
+            class="pw-eye-btn absolute right-2 border-none bg-transparent p-0 text-md leading-none text-muted cursor-pointer select-none hover:text-secondary"
             :aria-label="t('misc.apikeys.showHideStoredApiKey')"
             :title="t('misc.apikeys.showHideStoredApiKey')"
             @click="toggleApiKeyVisible"
           ><PbIcon :icon="keyField.visible ? PhEyeSlash : PhEye" /></button>
         </div>
       </div>
-      <div class="form-group">
-        <label>{{ t('misc.apikeys.apiSecret') }}</label>
-        <div class="pw-wrap">
-          <input id="editSecret" v-model="secretField.value" :type="secretVisible ? 'text' : 'password'" :placeholder="secretField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
+      <div class="form-group flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.apiSecret') }}</label>
+        <div class="pw-wrap relative flex items-center">
+          <input id="editSecret" class="min-h-[34px] flex-1 py-1.5 pl-2.5 pr-9" v-model="secretField.value" :type="secretVisible ? 'text' : 'password'" :placeholder="secretField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
           <button
             type="button"
-            class="pw-eye-btn"
+            class="pw-eye-btn absolute right-2 border-none bg-transparent p-0 text-md leading-none text-muted cursor-pointer select-none hover:text-secondary"
             :aria-label="t('misc.apikeys.showHideStoredApiKey')"
             :title="t('misc.apikeys.showHideStoredApiKey')"
             @click="secretVisible = !secretVisible"
           ><PbIcon :icon="secretVisible ? PhEyeSlash : PhEye" /></button>
         </div>
       </div>
-      <div class="form-group" id="passphraseGroup" v-show="needsPassphrase">
-        <label>{{ t('misc.apikeys.passphrasePassword') }}</label>
-        <div class="pw-wrap">
-          <input type="password" id="editPassphrase" v-model="passphraseField.value" :placeholder="passphraseField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
+      <div class="form-group flex flex-col gap-1.5" id="passphraseGroup" v-show="needsPassphrase">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.passphrasePassword') }}</label>
+        <div class="pw-wrap relative flex items-center">
+          <input type="password" id="editPassphrase" class="min-h-[34px] flex-1 py-1.5 pl-2.5 pr-9" v-model="passphraseField.value" :placeholder="passphraseField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
         </div>
       </div>
     </div>
@@ -615,68 +616,69 @@ async function testConnection(): Promise<void> {
     </div>
 
     <!-- Hyperliquid fields -->
-    <div class="form-grid" id="hlFields" v-show="isHL">
-      <div class="form-group">
-        <label>{{ t('misc.apikeys.walletAddress') }}</label>
-        <input type="text" id="editWallet" v-model="wallet" />
+    <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1" id="hlFields" v-show="isHL">
+      <div class="form-group flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.walletAddress') }}</label>
+        <input type="text" id="editWallet" class="min-h-[34px] px-2.5 py-1.5" v-model="wallet" />
       </div>
-      <div class="form-group" style="grid-column: span 2;">
-        <label>{{ t('misc.apikeys.privateKey') }}</label>
-        <div class="pw-wrap">
+      <div class="form-group flex flex-col gap-1.5" style="grid-column: span 2;">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.privateKey') }}</label>
+        <div class="pw-wrap relative flex items-center">
           <input
             id="editPrivateKey"
+            class="min-h-[34px] flex-1 py-1.5 pl-2.5 pr-9"
             v-model="privateKeyField.value"
             type="password"
             :placeholder="privateKeyField.masked ? '••••••••••• ' + savedLeaveBlank : ''"
           />
         </div>
       </div>
-      <div class="form-checkbox">
-        <input type="checkbox" id="editIsVault" v-model="isVault" />
+      <div class="form-checkbox flex items-center gap-2 pt-5">
+        <input type="checkbox" id="editIsVault" class="h-4 w-4" v-model="isVault" />
         <label for="editIsVault" style="text-transform:none; font-size:var(--fs-base); color:var(--text-primary);">{{ t('misc.apikeys.vault') }}</label>
       </div>
     </div>
 
     <!-- Advanced (collapsible) -->
-    <div class="expander">
-      <button class="expander-toggle" @click="advancedOpen = !advancedOpen">
+    <div class="expander mt-3">
+      <button class="expander-toggle w-full cursor-pointer rounded-md border border-border-subtle bg-secondary/5 px-3 py-1.75 text-left text-sm text-secondary hover:border-border-strong hover:text-primary" @click="advancedOpen = !advancedOpen">
         <PbIcon id="advancedToggleIcon" :icon="advancedOpen ? PhCaretDown : PhCaretRight" /> {{ t('misc.apikeys.advancedOptional') }}
       </button>
-      <div class="expander-content" :class="{ open: advancedOpen }">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>{{ t('misc.apikeys.quote') }}</label>
-            <input type="text" id="editQuote" v-model="quote" placeholder="e.g. USDT" />
+      <div class="expander-content py-3" :class="advancedOpen ? 'open block' : 'hidden'">
+        <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1">
+          <div class="form-group flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.quote') }}</label>
+            <input type="text" id="editQuote" class="min-h-[34px] px-2.5 py-1.5" v-model="quote" placeholder="e.g. USDT" />
           </div>
         </div>
-        <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
-          <div class="form-group">
-            <label>{{ t('misc.apikeys.optionsJson') }}</label>
-            <textarea id="editOptions" v-model="optionsText" rows="3" placeholder='{"key": "value"}'></textarea>
+        <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1" style="grid-template-columns: 1fr 1fr;">
+          <div class="form-group flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.optionsJson') }}</label>
+            <textarea id="editOptions" class="min-h-[60px] resize-y px-2.5 py-2 font-mono text-sm" v-model="optionsText" rows="3" placeholder='{"key": "value"}'></textarea>
           </div>
-          <div class="form-group">
-            <label>{{ t('misc.apikeys.extraJson') }}</label>
-            <textarea id="editExtra" v-model="extraText" rows="3" placeholder='{"key": "value"}'></textarea>
+          <div class="form-group flex flex-col gap-1.5">
+            <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.extraJson') }}</label>
+            <textarea id="editExtra" class="min-h-[60px] resize-y px-2.5 py-2 font-mono text-sm" v-model="extraText" rows="3" placeholder='{"key": "value"}'></textarea>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Balance display (after test) -->
-    <div id="balanceDisplay" class="balance-display" v-show="balance.visible">
-      <div class="balance-box">
-        <div class="label">{{ balance.success ? t('misc.apikeys.futuresBalance') : t('misc.apikeys.connectionTest') }}</div>
-        <div v-if="balance.success" class="value">{{ balance.value !== null ? balance.value.toFixed(2) : 'N/A' }}</div>
-        <div v-else class="error">{{ balance.error }}</div>
+    <div id="balanceDisplay" class="balance-display mt-3 flex flex-wrap gap-5" v-show="balance.visible">
+      <div class="balance-box min-w-[200px] rounded-md border border-border-subtle bg-card p-3 text-center">
+        <div class="label mb-1 text-xs uppercase tracking-label text-secondary">{{ balance.success ? t('misc.apikeys.futuresBalance') : t('misc.apikeys.connectionTest') }}</div>
+        <div v-if="balance.success" class="value text-xl font-semibold text-success">{{ balance.value !== null ? balance.value.toFixed(2) : 'N/A' }}</div>
+        <div v-else class="error text-base text-danger">{{ balance.error }}</div>
       </div>
     </div>
 
-    <div class="form-actions">
-      <button class="btn pbgui-btn btn-danger" id="btnDelete" v-show="deleteVisible" @click="editingName && confirmDelete(editingName)">
+    <div class="form-actions mt-5 flex items-center justify-end gap-2 border-t border-border-subtle pt-3 max-[768px]:flex-col max-[768px]:items-stretch">
+      <button class="btn pbgui-btn btn-danger max-[768px]:w-full" id="btnDelete" v-show="deleteVisible" @click="editingName && confirmDelete(editingName)">
         {{ t('common.delete') }}
       </button>
-      <button class="btn pbgui-btn btn-primary" id="btnSave" :disabled="saving" @click="save">
-        <span v-if="saving" class="spinner"></span>
+      <button class="btn pbgui-btn btn-primary max-[768px]:w-full" id="btnSave" :disabled="saving" @click="save">
+        <span v-if="saving" class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>
         {{ t('common.save') }}
       </button>
     </div>

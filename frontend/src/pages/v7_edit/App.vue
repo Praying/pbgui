@@ -205,7 +205,7 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="page-body">
+    <div id="page-body" class="flex h-[calc(100dvh-52px)] overflow-hidden max-[700px]:flex-col">
     <!-- Sidebar (:545-565) -->
     <div id="sidebar">
       <div id="sidebar-sticky">
@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
             :title="t('v7run.saveConfigSync')"
             @click="page.save()"
           >
-            <span v-if="page.saving.value" class="spinner"></span>
+            <span v-if="page.saving.value" class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-default border-t-accent"></span>
             <PbIcon v-else :icon="PhFloppyDisk" />
             {{ page.saving.value ? t('v7run.saving') : t('common.save') }}
           </button>
@@ -236,16 +236,21 @@ onBeforeUnmount(() => {
           <button class="sb-btn" id="btn-log" :class="{ active: logOpen }" :title="t('v7run.livePassivbotLog')" @click="logOpen = !logOpen"><PbIcon :icon="PhFileText" /> {{ t('v7run.log') }}</button>
         </div>
       </div>
-      <div id="sidebar-resize"></div>
+      <div id="sidebar-resize" class="max-[700px]:hidden"></div>
     </div>
 
     <!-- Main content (:568) -->
-    <div class="workbench-page-content">
-      <section v-if="migrationReviewFields.length" class="migration-review-notice" data-test="migration-review-notice" role="status">
-        <strong>{{ t('v7run.migrationReviewTitle') }}</strong>
+    <div class="workbench-page-content flex-1 overflow-y-auto p-5 max-[700px]:p-2">
+      <section
+        v-if="migrationReviewFields.length"
+        class="mb-4 rounded-md border border-l-4 border-l-warning border-warning/48 bg-warning/10 px-3.5 py-3 leading-[1.45] text-warning-soft"
+        data-test="migration-review-notice"
+        role="status"
+      >
+        <strong class="mb-1 block text-warning">{{ t('v7run.migrationReviewTitle') }}</strong>
         <p>{{ page.migrationMessage.value || t('v7run.migrationReviewMessage') }}</p>
-        <ul>
-          <li v-for="field in migrationReviewFields" :key="field"><code>{{ field }}<template v-if="Object.prototype.hasOwnProperty.call(page.migrationReviewValues.value, field)"> = {{ JSON.stringify(page.migrationReviewValues.value[field]) }}</template></code></li>
+        <ul class="mt-2 ml-5 list-disc">
+          <li v-for="field in migrationReviewFields" :key="field"><code class="text-warning-soft">{{ field }}<template v-if="Object.prototype.hasOwnProperty.call(page.migrationReviewValues.value, field)"> = {{ JSON.stringify(page.migrationReviewValues.value[field]) }}</template></code></li>
         </ul>
       </section>
       <BasicSection />
@@ -267,6 +272,303 @@ onBeforeUnmount(() => {
   <ImportModal ref="importModal" v-model="importOpen" />
   <BalanceCalcModal ref="balanceModal" v-model="balanceOpen" />
 
-  <div ref="toastEl" id="toast"></div>
+  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[9999] hidden rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
   <DataTipLayer />
 </template>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ported from styles/v7-edit.css (deleted at the Tailwind migration).
+   Everything expressible as utilities moved onto the templates; the
+   rules below stay as CSS for the documented reasons. This block is
+   unscoped on purpose — the old stylesheet was page-global, and the
+   html/body and sidebar rules have no component root to scope to.
+
+   Dropped outright: the *, ::before/::after reset, [hidden], the :root
+   legacy alias block and the body font/background defaults — the base
+   layer + alias block in src/styles/tailwind.css already provide them
+   identically — plus .run-version-hidden, .toast-ok/.toast-err/
+   .toast-info and #btn-log.active (dead or superseded; toast.ts adds
+   Tailwind colour utilities itself and the shared sidebar.css already
+   styles .sb-btn.active).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page root chrome ──────────────────────────────────────────
+   html/body carry no scope attribute; the base layer covers height,
+   font and colours, so only the page's overflow lock and the legacy
+   body flex column remain. */
+html,
+body {
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Legacy sidebar chrome supplement (max-width: 700px) ───────
+   #sidebar/#sidebar-toolbar come from /app/css/sidebar.css (un-layered,
+   loaded by index.html), so these overrides must stay un-layered CSS —
+   utilities in @layer utilities would lose the cascade — and the width
+   needs !important to beat the inline width sidebar_resize.js sets. */
+@media (max-width: 700px) {
+  #sidebar {
+    width: 100% !important;
+    min-width: 0;
+    max-width: none;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  #sidebar-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #sidebar-toolbar .sb-sep {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── Wide-screen form column centring ──────────────────────────
+   Child selector, and the CoinOverridesPanel child is a shared
+   component that cannot carry this page's utilities. */
+.workbench-page-content > * {
+  width: 100%;
+  max-width: 1420px;
+  margin-inline: auto;
+}
+
+/* ── Shared editor form system ─────────────────────────────────
+   src/shared/coinOverrides/components/CoinOverridesPanel.vue renders
+   .expander / .form-group / .form-row / .ms-* / .json-editor /
+   .cov-* / .act-btn markup whose class names are a cross-page
+   contract (v7_backtest styles the same classes from its own
+   stylesheet), so they cannot become this page's utilities. The
+   page-local field primitives (Field*.vue, MultiSelectField,
+   ExpanderGroup) reuse the identical contract. Un-layered like the
+   old v7-edit.css so the rules outrank the layered base-layer form
+   defaults; utilities must therefore not fight these on the same
+   properties (the reason #cfg-raw-json and .user-combobox input
+   tweaks live here too). */
+
+/* data-tip tooltip affordance — attribute selector, and the shared
+   CoinOverridesPanel also renders [data-tip] spans. */
+[data-tip] {
+  cursor: help;
+  border-bottom: none;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+/* Form grid */
+.form-row {
+  display: grid;
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-md);
+}
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.cols-8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.span-4 { grid-column: span 4; }
+@media (max-width: 1400px) { .cols-8 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .cols-8 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cols-4, .cols-3, .cols-2 { grid-template-columns: 1fr; }
+  .span-4 { grid-column: 1 / -1; }
+}
+
+.form-group { display: flex; flex-direction: column; min-width: 0; }
+.form-group label {
+  font-size: var(--fs-xs); color: var(--text-dim); margin-bottom: 2px;
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap; white-space: normal; overflow: visible; line-height: 1.2; min-width: 0;
+  min-height: 2.4em; align-content: flex-start;
+}
+.form-group label,
+.chk-row label {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.form-group label span,
+.chk-row label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.form-group input, .form-group select, .form-group textarea {
+  height: var(--input-h); padding: 0 var(--sp-sm);
+  /* section panels sit on --bg2, so inputs carve back to the page tone */
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 4px; font-size: var(--fs-sm); font-family: var(--font);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-group input:hover, .form-group select:hover, .form-group textarea:hover {
+  border-color: var(--border-strong);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.22);
+}
+.form-group input:read-only {
+  background: var(--bg3); color: var(--text-dim); cursor: default;
+}
+.form-group input[type="number"] { font-variant-numeric: tabular-nums; }
+.form-group textarea { height: auto; padding: var(--sp-sm); resize: vertical; }
+
+/* Checkbox row */
+.chk-row { display: flex; align-items: flex-start; gap: 6px; min-height: var(--input-h); height: auto; min-width: 0; }
+.chk-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
+.chk-row label {
+  font-size: var(--fs-sm); color: var(--text); margin: 0; cursor: pointer;
+  white-space: normal; overflow: visible; line-height: 1.2; min-width: 0; flex: 1 1 auto;
+}
+
+/* Expanders — shared panel + the page's ExpanderGroup primitive */
+.expander {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg2);
+  overflow: hidden;
+}
+.expander-header {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 10px var(--sp-lg); cursor: pointer;
+  background: var(--bg3); color: var(--text);
+  border: none; border-bottom: 1px solid transparent;
+  font-size: var(--fs-md); font-weight: 700; font-family: var(--font);
+  letter-spacing: 0.01em; text-align: left;
+  user-select: none;
+  transition: background 0.15s;
+}
+.expander.open .expander-header { border-bottom-color: var(--border); }
+.expander-header:hover { background: var(--bg-elevated); }
+.expander-header:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: -2px;
+}
+.expander-header:active { transform: translateY(1px); }
+.expander-header .arrow {
+  transition: transform 0.18s ease; color: var(--text-dim);
+  font-size: 11px; flex-shrink: 0;
+}
+.expander.open .expander-header .arrow { transform: rotate(90deg); color: var(--accent); }
+.expander-body { display: none; padding: var(--sp-lg); }
+.expander.open .expander-body { display: block; }
+.expander-body > .form-row:last-child { margin-bottom: 0; }
+/* page sections keep the edit-section-body anchor class for this reset */
+.edit-section-body > .form-row:last-child,
+.edit-section-body > div:last-child > .form-row:last-child { margin-bottom: 0; }
+
+/* Multiselect (tag-input) */
+.ms-wrap {
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg); min-height: var(--input-h); padding: 2px 4px;
+  display: flex; flex-wrap: wrap; gap: 3px; align-items: center;
+  cursor: text; position: relative;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ms-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.22);
+}
+.form-group .ms-wrap input.ms-input {
+  border: none; background: transparent; padding: 0; height: 24px; width: auto;
+}
+.ms-clear-btn {
+  cursor: pointer; color: var(--text-dim); font-size: 11px; padding: 0 3px;
+  border-radius: 3px; margin-left: 2px;
+}
+.ms-clear-btn:hover { color: var(--red); background: rgb(var(--danger-rgb) / 0.15); }
+.ms-all-btn {
+  cursor: pointer; color: var(--text-dim); font-size: 11px; padding: 0 3px;
+  border-radius: 3px; margin-left: 2px;
+}
+.ms-all-btn:hover { color: var(--accent); background: rgb(var(--accent-rgb) / 0.15); }
+.ms-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 3px;
+  padding: 1px 6px; font-size: var(--fs-xs); color: var(--text);
+}
+.ms-tag .ms-x {
+  cursor: pointer; color: var(--text-dim); font-size: 11px; line-height: 1;
+}
+.ms-tag .ms-x:hover { color: var(--red); }
+.ms-input {
+  border: none; background: transparent; color: var(--text);
+  font-size: var(--fs-sm); outline: none; min-width: 60px; flex: 1;
+  height: 24px; font-family: var(--font);
+}
+.ms-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 0 0 4px 4px; max-height: 200px; overflow-y: auto;
+  z-index: 100; display: none;
+}
+.ms-dropdown.open { display: block; }
+.ms-option {
+  padding: 4px 8px; font-size: var(--fs-sm); cursor: pointer;
+}
+.ms-option:hover, .ms-option.highlight, .ms-option.highlighted { background: var(--bg3); }
+.ms-option.selected { color: var(--accent); }
+
+/* JSON editor */
+.json-editor {
+  width: 100%; min-height: 200px; max-height: 500px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs); line-height: 1.4;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: var(--sp-sm); resize: vertical;
+  color: var(--text); tab-size: 4;
+}
+textarea.json-invalid,
+textarea.json-invalid:focus {
+  border-color: var(--red);
+}
+/* overlays render behind this textarea — background must stay transparent,
+   which a utility cannot win against the un-layered .json-editor rule */
+#cfg-raw-json { position: relative; z-index: 3; background: transparent; }
+
+/* Import modal combobox input — tweaks the .form-group input padding */
+.user-combobox input { width: 100%; padding-right: 34px; }
+
+/* Coin Overrides (shared CoinOverridesPanel; tooltip renders as rows) */
+.cov-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: var(--fs-xs); background: var(--bg3); color: var(--text-dim);
+  border: 1px solid var(--border); cursor: default;
+}
+.cov-badge:hover { border-color: var(--accent); color: var(--text); }
+.cov-tt-tbl {
+  display: flex; flex-direction: column; gap: 2px; margin: var(--sp-xs) 0;
+  padding: var(--sp-xs); background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; font-size: var(--fs-xs); color: var(--text-dim);
+}
+.cov-tt-row { display: flex; gap: var(--sp-sm); word-break: break-all; }
+.cov-tt-key { color: var(--accent); white-space: nowrap; }
+.cov-param-input {
+  height: 24px; font-size: var(--fs-xs); background: var(--bg2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 4px; padding: 0 var(--sp-xs);
+  outline: none; font-family: var(--font); width: 100px;
+}
+.cov-param-select { width: 140px; }
+.cov-cfg-ta { min-height: 100px; max-height: none; }
+.cov-json-status { display: none; margin-top: 4px; font-size: var(--fs-sm); line-height: 1.35; }
+.cov-json-status.error {
+  display: block; padding: 6px 10px; border: 1px solid rgb(var(--danger-rgb) / 0.35);
+  border-radius: 4px; background: rgb(var(--danger-deep-rgb) / 0.35); color: var(--red);
+}
+textarea.cov-json-invalid,
+textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
+.act-btn {
+  height: 24px; padding: 0 10px; font-size: var(--fs-xs); background: var(--bg3);
+  color: var(--text); border: 1px solid var(--border); border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, transform 0.1s;
+}
+.act-btn:hover { border-color: var(--accent); color: var(--accent); }
+.act-btn:active { transform: translateY(1px); }
+.act-btn-danger:hover { border-color: var(--red); color: var(--red); }
+</style>

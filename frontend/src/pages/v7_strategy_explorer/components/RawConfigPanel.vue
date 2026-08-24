@@ -109,10 +109,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="panel-card">
+  <div class="border border-border-default rounded-xl bg-panel p-3.5">
     <div id="raw-config-panel">
       <div ref="container"></div>
-      <div v-if="status" :class="'raw-config-status' + (status.error ? ' error' : '')">{{ status.text }}</div>
+      <div v-if="status" class="mt-2 text-xs" :class="status.error ? 'text-danger-soft' : 'text-secondary'">{{ status.text }}</div>
     </div>
   </div>
 </template>

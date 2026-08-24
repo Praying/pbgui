@@ -32,6 +32,22 @@ const metaByText = computed(() => {
   return by ? t('misc.apikeys.byPrefix', { name: by }) : '';
 });
 
+/** Exchange → badge tint (the former .badge-exchange.<name> colour rules).
+ *  Each branch returns the complete border/background/text colour set so the
+ *  static layout utilities on the span never fight a dynamic colour. */
+function exchangeClass(exchange: string | undefined): string {
+  switch (exchange) {
+    case 'binance': return 'border border-secondary/14 bg-secondary/7 text-[#c9a961]';
+    case 'bybit': return 'border border-secondary/14 bg-secondary/7 text-[#c79a6b]';
+    case 'bitget': return 'border border-secondary/14 bg-secondary/7 text-[#6fbc9f]';
+    case 'hyperliquid': return 'border border-secondary/14 bg-secondary/7 text-success';
+    case 'okx': return 'border border-secondary/14 bg-secondary/7 text-secondary';
+    case 'gateio': return 'border border-secondary/14 bg-secondary/7 text-accent';
+    case 'kucoin': return 'border border-secondary/14 bg-secondary/7 text-[#86ad9e]';
+    default: return 'border border-secondary/14 bg-secondary/7 text-secondary';
+  }
+}
+
 /** Credentials summary per exchange type (:1370-1380). */
 function credsFor(u: UserSummary): string[] {
   const creds: string[] = [];
@@ -120,26 +136,26 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
 </script>
 
 <template>
-  <div id="userListView">
+  <div id="userListView" class="mx-auto w-[min(100%,1500px)]">
     <!-- API keys metadata bar -->
     <div
       id="apiMetaBar"
-      style="display:flex; align-items:center; gap:6px; margin-bottom:8px; padding:4px 8px; background:var(--bg-page); border:1px solid var(--bg-panel); border-radius:5px; font-size:var(--fs-xs); color:var(--text-secondary);"
+      class="mb-3 flex min-h-[34px] items-center gap-1.5 rounded-md border border-border-subtle bg-card px-3 py-1.5 text-xs text-secondary"
     >
       <span>{{ t('misc.apikeys.serial') }}</span>
       <span id="metaSerial" style="color:var(--text-primary); font-weight:700;">{{ store.meta.value?.api_serial || '—' }}</span>
       <span id="metaTs" style="color:var(--text-secondary);">{{ metaTsText }}</span>
-      <span id="metaBy" style="color:var(--text-muted);">{{ metaByText }}</span>
+      <span id="metaBy" class="max-[768px]:hidden" style="color:var(--text-muted);">{{ metaByText }}</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
       <input
         type="text"
         id="userFilter"
+        class="flex-1 rounded-sm border border-border-default bg-page px-2.5 py-1.5 text-sm text-primary focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(114,160,238,0.3)]"
         :value="store.filterText.value"
         :placeholder="t('misc.apikeys.filterByNameOrExchange')"
         @input="store.setFilter(($event.target as HTMLInputElement).value)"
         @keydown="onFilterKeydown"
-        style="flex:1; background:var(--bg-page); border:1px solid var(--border-default); border-radius:4px; padding:6px 10px; color:var(--text-primary); font-size:var(--fs-sm);"
       />
       <button
         class="btn pbgui-btn btn-sm btn-secondary"
@@ -150,37 +166,37 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         <PbIcon :icon="PhX" />
       </button>
     </div>
-    <table class="user-table">
+    <table class="user-table mb-5 w-full max-[768px]:block max-[768px]:overflow-x-auto max-[768px]:whitespace-nowrap overflow-hidden rounded-lg border border-border-subtle border-separate border-spacing-0 bg-panel">
       <thead>
         <tr>
-          <th class="sortable" :class="sortClass('name')" id="th-name" @click="store.setSort('name')">
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('name')" id="th-name" @click="store.setSort('name')">
             <span>{{ t('misc.apikeys.user') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
-          <th class="sortable" :class="sortClass('exchange')" id="th-exchange" @click="store.setSort('exchange')">
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('exchange')" id="th-exchange" @click="store.setSort('exchange')">
             <span>{{ t('misc.apikeys.exchange') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
-          <th>{{ t('misc.apikeys.credentials') }}</th>
-          <th class="sortable" :class="sortClass('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
+          <th class="border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.credentials') }}</th>
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
             <span>{{ t('misc.apikeys.keyExpiry') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
-          <th class="sortable" :class="sortClass('status')" id="th-status" @click="store.setSort('status')">
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('status')" id="th-status" @click="store.setSort('status')">
             <span>{{ t('misc.apikeys.status') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
           </th>
-          <th>{{ t('misc.apikeys.actions') }}</th>
+          <th class="border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.actions') }}</th>
         </tr>
       </thead>
       <tbody id="userTableBody">
         <tr v-if="store.usersState.value === 'loading'" class="loading-row">
-          <td colspan="6"><span class="spinner"></span> {{ t('misc.apikeys.loadingUsers') }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><span class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span> {{ t('misc.apikeys.loadingUsers') }}</td>
         </tr>
         <tr v-else-if="store.usersState.value === 'error'" class="loading-row">
-          <td colspan="6" style="color:var(--danger);">{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary" style="color:var(--danger);">{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</td>
         </tr>
         <tr v-else-if="store.users.value.length === 0" class="loading-row">
-          <td colspan="6">{{ t('misc.apikeys.noApiKeysConfigured') }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary">{{ t('misc.apikeys.noApiKeysConfigured') }}</td>
         </tr>
         <tr v-else-if="store.filteredSortedUsers.value.length === 0" class="loading-row">
-          <td colspan="6" style="color:var(--text-secondary);">{{ t('misc.apikeys.noUsersMatchFilter') }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary" style="color:var(--text-secondary);">{{ t('misc.apikeys.noUsersMatchFilter') }}</td>
         </tr>
         <tr
           v-else
@@ -188,24 +204,25 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
           :key="u.name"
           tabindex="0"
           :data-user-name="u.name"
+          class="cursor-pointer transition-colors duration-[120ms] ease-standard hover:bg-secondary/5 focus-visible:outline-2 focus-visible:outline-accent-soft focus-visible:-outline-offset-2"
           style="cursor:pointer;"
           @click="emit('edit', u.name)"
           @keydown="onRowKeydown($event, u.name)"
         >
-          <td><strong>{{ u.name }}</strong></td>
-          <td><span class="badge-exchange" :class="u.exchange || ''">{{ u.exchange }}</span></td>
-          <td>
+          <td class="border-b border-border-subtle px-3 py-2.5 text-base"><strong class="text-primary">{{ u.name }}</strong></td>
+          <td class="border-b border-border-subtle px-3 py-2.5 text-base"><span class="badge-exchange inline-block rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="exchangeClass(u.exchange)">{{ u.exchange }}</span></td>
+          <td class="border-b border-border-subtle px-3 py-2.5 text-base">
             <template v-if="credsFor(u).length">{{ credsFor(u).join(', ') }}</template>
             <span v-else style="color:var(--danger);">{{ t('misc.apikeys.none') }}</span>
           </td>
-          <td>
+          <td class="border-b border-border-subtle px-3 py-2.5 text-base">
             <ExpiryBadge v-if="expiryFor(u)" :exp="expiryFor(u)!" />
             <template v-else>-</template>
           </td>
-          <td>
-            <span class="badge-in-use" :class="{ active: u.in_use }">{{ u.in_use ? t('misc.apikeys.inUse') : t('misc.apikeys.unused') }}</span>
+          <td class="border-b border-border-subtle px-3 py-2.5 text-base">
+            <span class="badge-in-use inline-block rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="u.in_use ? 'border-success/30 bg-success/10 text-success' : 'border border-secondary/14 bg-secondary/7 text-secondary'">{{ u.in_use ? t('misc.apikeys.inUse') : t('misc.apikeys.unused') }}</span>
           </td>
-          <td>
+          <td class="border-b border-border-subtle px-3 py-2.5 text-base">
             <button class="btn pbgui-btn btn-sm btn-info" data-user-action="edit" @click.stop="emit('edit', u.name)">{{ t('misc.apikeys.edit') }}</button>
             <button
               v-if="!u.in_use"
@@ -221,3 +238,26 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
     </table>
   </div>
 </template>
+
+<style scoped>
+/* Sort affordances + last-row rule ported from styles/api_keys_editor.css at
+   the Tailwind migration — pseudo-elements and the parent-relative last-row
+   descendant are not expressible as utilities. 'user-table', 'sort-icon',
+   'sort-asc' and 'sort-desc' remain as inert anchors. */
+.user-table th.sort-asc .sort-icon::after {
+  content: " ▲";
+  color: var(--accent-soft);
+}
+.user-table th.sort-desc .sort-icon::after {
+  content: " ▼";
+  color: var(--accent-soft);
+}
+.user-table th.sort-asc .sort-icon,
+.user-table th.sort-desc .sort-icon {
+  display: none;
+}
+
+.user-table tbody tr:last-child td {
+  border-bottom: none;
+}
+</style>

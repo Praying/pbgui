@@ -36,6 +36,16 @@ function onBotInputs(side: 'long' | 'short'): void {
   page.syncBotInputs(side);
 }
 
+/** Highlight line → full utility tint set (the former .bot-json-error-line/
+ *  .bot-json-neutralized/.bot-json-pb-default rules). Error keeps the CSS
+ *  cascade precedence it had — it wins over a status tint on the same line. */
+function botLineClass(line: { error: boolean; status: string | null }): string {
+  if (line.error) return 'rounded-[2px] bg-danger/16 shadow-[inset_3px_0_0_rgb(var(--danger-rgb)/0.95)]';
+  if (line.status === 'neutralized') return 'rounded-[2px] bg-[color-mix(in_srgb,var(--warning)_16%,transparent)]';
+  if (line.status === 'pb_default') return 'rounded-[2px] bg-[color-mix(in_srgb,var(--danger)_16%,transparent)]';
+  return '';
+}
+
 /** blur half (:3516-3522) — JSON edits flow back into the inputs. */
 function onBotBlur(side: 'long' | 'short'): void {
   page.readBotInputsFromJson(side);
@@ -69,17 +79,17 @@ function reveal(side: 'long' | 'short'): void {
 </script>
 
 <template>
-  <section class="edit-section">
-    <header class="edit-section-head">
-      <h3 class="edit-section-title">{{ t('v7run.botConfiguration') }}</h3>
-      <div class="form-group edit-section-head-control" v-show="page.fieldVisible('strategyKind')">
+  <section class="overflow-hidden rounded-xl border border-border-default bg-panel">
+    <header class="flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2">
+      <h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.botConfiguration') }}</h3>
+      <div class="form-group ml-auto w-[min(280px,45%)] max-[700px]:ml-0 max-[700px]:w-full" v-show="page.fieldVisible('strategyKind')">
         <label><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
         <select id="f-strategy-kind" v-model="state.strategyKind" @change="page.changeStrategyKind(state.strategyKind)">
           <option v-for="kind in strategyOptions" :key="kind.value" :value="kind.value">{{ kind.value }}</option>
         </select>
       </div>
     </header>
-    <div class="edit-section-body">
+    <div class="edit-section-body p-5">
   <div class="form-row cols-4">
     <FieldNumber id="f-long-twe" v-model="state.longTwe" :label="t('v7run.longTwe')" min="0" max="100" step="0.05" @change="onBotInputs('long')" />
     <FieldNumber id="f-long-npos" v-model="state.longNpos" :label="t('v7run.longNpositions')" min="0" max="100" step="1" @change="onBotInputs('long')" />
@@ -89,55 +99,55 @@ function reveal(side: 'long' | 'short'): void {
   <div class="form-row cols-2">
     <div class="form-group">
       <label id="lbl-long-json">{{ t('v7run.longConfigJson') }}<template v-if="page.paramLegendLong.value"> &#x25A0; <span style="color: var(--warning)">{{ t('v7run.paramNeutralized') }}</span> / &#x25A0; <span style="color: var(--danger)">{{ t('v7run.paramReview') }}</span></template></label>
-      <div class="bot-json-highlight-wrap">
-        <pre v-if="longError" class="bot-json-highlight-pre" aria-hidden="true"><span
+      <div class="relative w-full min-w-0">
+        <pre v-if="longError" class="pointer-events-none absolute inset-0 m-0 overflow-hidden border border-transparent bg-transparent p-2 font-mono text-xs leading-[1.4] text-transparent whitespace-pre-wrap break-words z-0" aria-hidden="true"><span
           v-for="(line, index) in longLines"
           :key="index"
-          class="bot-json-line"
-          :class="{ 'bot-json-error-line': line.error, 'bot-json-neutralized': line.status === 'neutralized', 'bot-json-pb-default': line.status === 'pb_default' }"
+          class="block"
+          :class="botLineClass(line)"
         >{{ line.text }}
 </span></pre>
         <textarea
           id="f-long-json"
           v-model="state.longJson"
-          class="json-editor"
+          class="json-editor relative z-[1] block w-full min-w-0"
           :class="{ 'json-invalid': !!longError }"
           rows="24"
           @blur="onBotBlur('long')"
         ></textarea>
       </div>
-      <div v-if="longError" class="field-status field-status-inline error" aria-live="polite">
-        <div class="field-status-main">{{ sideSummary('long') }}</div>
-        <div v-if="longError.message" class="field-status-meta">{{ longError.message }}</div>
-        <div v-if="longError.line != null" class="field-status-actions">
-          <button type="button" class="field-status-btn" @click="reveal('long')">{{ t('v7run.revealLineInEditor') }}</button>
+      <div v-if="longError" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
+        <div class="font-semibold">{{ sideSummary('long') }}</div>
+        <div v-if="longError.message" class="mt-0.5 text-danger-soft">{{ longError.message }}</div>
+        <div v-if="longError.line != null" class="mt-2">
+          <button type="button" class="h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-0 text-sm text-danger-soft [transition:background-color_150ms,transform_100ms] hover:bg-white/8 active:translate-y-px" @click="reveal('long')">{{ t('v7run.revealLineInEditor') }}</button>
         </div>
       </div>
     </div>
     <div class="form-group">
       <label id="lbl-short-json">{{ t('v7run.shortConfigJson') }}<template v-if="page.paramLegendShort.value"> &#x25A0; <span style="color: var(--warning)">{{ t('v7run.paramNeutralized') }}</span> / &#x25A0; <span style="color: var(--danger)">{{ t('v7run.paramReview') }}</span></template></label>
-      <div class="bot-json-highlight-wrap">
-        <pre v-if="shortError" class="bot-json-highlight-pre" aria-hidden="true"><span
+      <div class="relative w-full min-w-0">
+        <pre v-if="shortError" class="pointer-events-none absolute inset-0 m-0 overflow-hidden border border-transparent bg-transparent p-2 font-mono text-xs leading-[1.4] text-transparent whitespace-pre-wrap break-words z-0" aria-hidden="true"><span
           v-for="(line, index) in shortLines"
           :key="index"
-          class="bot-json-line"
-          :class="{ 'bot-json-error-line': line.error, 'bot-json-neutralized': line.status === 'neutralized', 'bot-json-pb-default': line.status === 'pb_default' }"
+          class="block"
+          :class="botLineClass(line)"
         >{{ line.text }}
 </span></pre>
         <textarea
           id="f-short-json"
           v-model="state.shortJson"
-          class="json-editor"
+          class="json-editor relative z-[1] block w-full min-w-0"
           :class="{ 'json-invalid': !!shortError }"
           rows="24"
           @blur="onBotBlur('short')"
         ></textarea>
       </div>
-      <div v-if="shortError" class="field-status field-status-inline error" aria-live="polite">
-        <div class="field-status-main">{{ sideSummary('short') }}</div>
-        <div v-if="shortError.message" class="field-status-meta">{{ shortError.message }}</div>
-        <div v-if="shortError.line != null" class="field-status-actions">
-          <button type="button" class="field-status-btn" @click="reveal('short')">{{ t('v7run.revealLineInEditor') }}</button>
+      <div v-if="shortError" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
+        <div class="font-semibold">{{ sideSummary('short') }}</div>
+        <div v-if="shortError.message" class="mt-0.5 text-danger-soft">{{ shortError.message }}</div>
+        <div v-if="shortError.line != null" class="mt-2">
+          <button type="button" class="h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-0 text-sm text-danger-soft [transition:background-color_150ms,transform_100ms] hover:bg-white/8 active:translate-y-px" @click="reveal('short')">{{ t('v7run.revealLineInEditor') }}</button>
         </div>
       </div>
     </div>

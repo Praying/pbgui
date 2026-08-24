@@ -148,15 +148,15 @@ async function openDiffSelected(): Promise<void> {
 </script>
 
 <template>
-  <div id="backupsPanel" class="hl-expiry-panel">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+  <div id="backupsPanel" class="hl-expiry-panel mx-auto mb-5 w-[min(100%,1500px)] rounded-lg border border-border-subtle bg-panel p-4 max-[768px]:p-3">
+    <div class="border-b border-border-subtle pb-3" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <BackButton @back="emit('back')" />
-      <h3 style="margin:0;">{{ t('misc.apikeys.apiKeyBackups') }}</h3>
+      <h3 class="text-lg tracking-tight text-primary" style="margin:0;">{{ t('misc.apikeys.apiKeyBackups') }}</h3>
     </div>
     <p style="font-size:var(--fs-sm); color:var(--text-secondary); margin:0 0 12px;" v-html="t('misc.apikeys.backupsDesc')"></p>
     <div id="backupsList">
       <div v-if="state === 'loading'" style="text-align:center;color:var(--text-secondary);padding:20px;">
-        <span class="spinner"></span> {{ t('common.loading') }}
+        <span class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span> {{ t('common.loading') }}
       </div>
       <div v-else-if="state === 'empty'" style="text-align:center;color:var(--text-secondary);padding:20px;">
         {{ t('misc.apikeys.noBackupsFound') }}
@@ -172,24 +172,24 @@ async function openDiffSelected(): Promise<void> {
             :style="{ opacity: selected.length === 2 ? '1' : '0.4' }"
             @click="openDiffSelected"
           >
-            <span v-if="comparing" class="spinner"></span>&#9654; {{ t('misc.apikeys.compareSelected') }}
+            <span v-if="comparing" class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>&#9654; {{ t('misc.apikeys.compareSelected') }}
           </button>
         </div>
-        <table class="hl-expiry-table backup-compare-table">
+        <table class="hl-expiry-table backup-compare-table w-full overflow-hidden rounded-md border border-border-subtle border-separate border-spacing-0">
           <thead>
             <tr>
-              <th>{{ t('misc.apikeys.file') }}</th>
-              <th>{{ t('misc.apikeys.dateTime') }}</th>
-              <th>{{ t('misc.apikeys.target') }}</th>
-              <th>{{ t('misc.apikeys.size') }}</th>
-              <th style="width:80px;"></th>
+              <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.file') }}</th>
+              <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.dateTime') }}</th>
+              <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.target') }}</th>
+              <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.size') }}</th>
+              <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary" style="width:80px;"></th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="b in backups"
               :key="b.filename"
-              class="backup-row"
+              class="backup-row cursor-pointer"
               :class="{ selected: selected.includes(b.filename) }"
               :data-backup-fn="b.filename"
               tabindex="0"
@@ -198,11 +198,11 @@ async function openDiffSelected(): Promise<void> {
               @mousedown="onRowMousedown($event, b.filename)"
               @keydown="onRowKeydown($event, b.filename)"
             >
-              <td style="font-size:var(--fs-xs);font-family:monospace;color:var(--text-secondary);word-break:break-all;">{{ b.filename }}</td>
-              <td>{{ b.ts.replace('T', ' ') }}</td>
-              <td><span class="badge-exchange">{{ b.target }}</span></td>
-              <td>{{ b.size_kb }} KB</td>
-              <td>
+              <td class="border-b border-border-subtle px-2.5 py-2 text-sm" style="font-size:var(--fs-xs);font-family:monospace;color:var(--text-secondary);word-break:break-all;">{{ b.filename }}</td>
+              <td class="border-b border-border-subtle px-2.5 py-2 text-sm">{{ b.ts.replace('T', ' ') }}</td>
+              <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><span class="badge-exchange inline-block rounded-full border border-secondary/14 bg-secondary/7 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-secondary">{{ b.target }}</span></td>
+              <td class="border-b border-border-subtle px-2.5 py-2 text-sm">{{ b.size_kb }} KB</td>
+              <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
                 <button class="btn pbgui-btn btn-sm btn-warning backup-restore-btn" type="button" @click.stop="restore(b.filename)">
                   {{ t('misc.apikeys.restore') }}
                 </button>
@@ -215,3 +215,23 @@ async function openDiffSelected(): Promise<void> {
     <DiffModal :data="diffData" @close="diffData = null" />
   </div>
 </template>
+
+<style scoped>
+/* Row interactions ported from styles/api_keys_editor.css — hover/selected
+   paint the td cells from the row state (a descendant relationship utilities
+   cannot express), and the selected row gets its accent rail on the first
+   cell. Declaration order keeps .selected above :hover as before.
+   'backup-compare-table' / 'backup-row' / 'selected' remain as inert
+   anchors. */
+.backup-compare-table .backup-row:hover td {
+  background: rgb(var(--text-secondary-rgb) / 0.05);
+}
+
+.backup-compare-table .backup-row.selected td {
+  background: rgb(var(--accent-rgb) / 0.14);
+}
+
+.backup-compare-table .backup-row.selected td:first-child {
+  border-left: 3px solid var(--accent);
+}
+</style>

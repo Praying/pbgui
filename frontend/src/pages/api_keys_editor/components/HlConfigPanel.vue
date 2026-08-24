@@ -53,15 +53,15 @@ async function save(): Promise<void> {
 </script>
 
 <template>
-  <div id="hlConfigPanel" class="hl-expiry-panel">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+  <div id="hlConfigPanel" class="hl-expiry-panel mx-auto mb-5 w-[min(100%,1500px)] rounded-lg border border-border-subtle bg-panel p-4 max-[768px]:p-3">
+    <div class="border-b border-border-subtle pb-3" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <BackButton @back="emit('back')" />
-      <h3 style="margin:0;">{{ t('misc.apikeys.hlExpiryTelegramWarning') }}</h3>
+      <h3 class="text-lg tracking-tight text-primary" style="margin:0;">{{ t('misc.apikeys.hlExpiryTelegramWarning') }}</h3>
     </div>
     <div style="display:flex; gap:12px; align-items:flex-end;">
-      <div class="form-group">
-        <label>{{ t('misc.apikeys.warningThresholdDays') }}</label>
-        <input type="number" id="hlWarningDays" v-model.number="days" min="1" max="365" style="width:100px;" />
+      <div class="form-group flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.warningThresholdDays') }}</label>
+        <input type="number" id="hlWarningDays" class="min-h-[34px] px-2.5 py-1.5" v-model.number="days" min="1" max="365" style="width:100px;" />
       </div>
       <button class="btn pbgui-btn btn-sm btn-primary" @click="save">{{ t('common.save') }}</button>
     </div>

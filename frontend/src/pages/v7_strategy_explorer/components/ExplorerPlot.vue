@@ -98,5 +98,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div :id="plotId" ref="el" class="plot"></div>
+  <div :id="plotId" ref="el" class="plot h-[520px] min-h-[360px] overflow-hidden rounded-xl border border-secondary/14 bg-page/74 shadow-[0_14px_30px_rgba(5,8,14,0.14)] [content-visibility:auto] [contain-intrinsic-size:520px] max-[1250px]:h-[420px] max-[640px]:h-[360px] max-[640px]:min-h-[300px]"></div>
 </template>

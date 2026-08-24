@@ -95,47 +95,47 @@ async function remove(key: string): Promise<void> {
 </script>
 
 <template>
-  <div id="commentsPanel" class="hl-expiry-panel">
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+  <div id="commentsPanel" class="hl-expiry-panel mx-auto mb-5 w-[min(100%,1500px)] rounded-lg border border-border-subtle bg-panel p-4 max-[768px]:p-3">
+    <div class="border-b border-border-subtle pb-3" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <BackButton @back="emit('back')" />
-      <h3 style="margin:0; flex:1;">{{ t('misc.apikeys.commentFields') }}</h3>
+      <h3 class="text-lg tracking-tight text-primary" style="margin:0; flex:1;">{{ t('misc.apikeys.commentFields') }}</h3>
       <button class="btn pbgui-btn btn-sm btn-primary" @click="showAdd">+ {{ t('misc.apikeys.add') }}</button>
     </div>
     <div id="addCommentForm" v-show="addVisible" style="margin-bottom:12px; padding:12px; background:var(--bg-page); border-radius:4px; border:1px solid var(--border-default);">
       <div style="display:flex; gap:8px; align-items:flex-end;">
-        <div class="form-group" style="flex:1;">
-          <label>{{ t('misc.apikeys.keyWithoutCommentPrefix') }}</label>
-          <input type="text" id="newCommentKey" v-model="newKey" placeholder="e.g. notes" />
+        <div class="form-group flex flex-col gap-1.5" style="flex:1;">
+          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.keyWithoutCommentPrefix') }}</label>
+          <input type="text" id="newCommentKey" class="min-h-[34px] px-2.5 py-1.5" v-model="newKey" placeholder="e.g. notes" />
         </div>
-        <div class="form-group" style="flex:2;">
-          <label>{{ t('misc.apikeys.value') }}</label>
-          <input type="text" id="newCommentValue" v-model="newValue" placeholder="Comment text" />
+        <div class="form-group flex flex-col gap-1.5" style="flex:2;">
+          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.value') }}</label>
+          <input type="text" id="newCommentValue" class="min-h-[34px] px-2.5 py-1.5" v-model="newValue" placeholder="Comment text" />
         </div>
         <button class="btn pbgui-btn btn-sm btn-primary" style="margin-bottom:0;" @click="create">{{ t('common.save') }}</button>
         <button class="btn pbgui-btn btn-sm btn-secondary" style="margin-bottom:0;" @click="addVisible = false">{{ t('common.cancel') }}</button>
       </div>
     </div>
-    <table class="hl-expiry-table" id="commentsTable">
+    <table class="hl-expiry-table w-full overflow-hidden rounded-md border border-border-subtle border-separate border-spacing-0" id="commentsTable">
       <thead>
         <tr>
-          <th>{{ t('misc.apikeys.key') }}</th>
-          <th>{{ t('misc.apikeys.value') }}</th>
-          <th style="width:120px;">{{ t('misc.apikeys.actions') }}</th>
+          <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.key') }}</th>
+          <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.value') }}</th>
+          <th class="border-b border-border-default bg-card px-2.5 py-2 text-left text-xs font-semibold uppercase tracking-label text-secondary" style="width:120px;">{{ t('misc.apikeys.actions') }}</th>
         </tr>
       </thead>
       <tbody id="commentsBody">
         <tr v-if="state === 'loading'">
-          <td colspan="3" style="text-align:center;color:var(--text-secondary);">{{ t('common.loading') }}</td>
+          <td colspan="3" class="border-b border-border-subtle px-2.5 py-2 text-sm" style="text-align:center;color:var(--text-secondary);">{{ t('common.loading') }}</td>
         </tr>
         <tr v-else-if="state === 'empty'">
-          <td colspan="3" style="text-align:center;color:var(--text-secondary);">{{ t('misc.apikeys.noCommentFields') }}</td>
+          <td colspan="3" class="border-b border-border-subtle px-2.5 py-2 text-sm" style="text-align:center;color:var(--text-secondary);">{{ t('misc.apikeys.noCommentFields') }}</td>
         </tr>
         <tr v-else-if="state === 'error'">
-          <td colspan="3" style="color:var(--danger);">{{ errorText }}</td>
+          <td colspan="3" class="border-b border-border-subtle px-2.5 py-2 text-sm" style="color:var(--danger);">{{ errorText }}</td>
         </tr>
         <tr v-else v-for="c in comments" :key="c.key">
-          <td><code>{{ c.key }}</code></td>
-          <td>
+          <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><code>{{ c.key }}</code></td>
+          <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
             <input
               type="text"
               class="comment-val"
@@ -143,7 +143,7 @@ async function remove(key: string): Promise<void> {
               style="width:100%;background:var(--bg-page);border:1px solid var(--border-default);border-radius:4px;padding:6px 8px;color:var(--text-primary);font-size:var(--fs-sm);"
             />
           </td>
-          <td>
+          <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
             <button class="btn pbgui-btn btn-sm btn-primary" @click="update(c.key)">{{ t('common.save') }}</button>
             <button class="btn pbgui-btn btn-sm btn-danger" @click="remove(c.key)">{{ t('common.delete') }}</button>
           </td>

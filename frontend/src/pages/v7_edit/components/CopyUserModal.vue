@@ -111,9 +111,9 @@ defineExpose({ show });
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="modal-overlay open" id="copy-user-modal" @mousedown.self="close">
-      <div class="modal-box" style="max-width: 520px">
-        <h3>{{ t('v7run.copyConfigToUser') }}</h3>
+    <div v-if="open" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop" id="copy-user-modal" @mousedown.self="close">
+      <div class="flex w-[90%] max-w-[800px] max-h-[80vh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5" style="max-width: 520px">
+        <h3 class="text-lg">{{ t('v7run.copyConfigToUser') }}</h3>
         <div style="color: var(--text-dim); font-size: var(--fs-sm); line-height: 1.45">
           {{ t('v7run.copyConfigToUserDesc') }}
         </div>
@@ -123,15 +123,15 @@ defineExpose({ show });
             <option v-for="user in targetOptions" :key="user" :value="user">{{ user }}</option>
           </select>
         </div>
-        <div v-if="error" class="field-status field-status-inline error" aria-live="polite">
-          <div class="field-status-main">{{ error.summary }}</div>
-          <div class="field-status-meta">{{ error.message }}</div>
+        <div v-if="error" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
+          <div class="font-semibold">{{ error.summary }}</div>
+          <div class="mt-0.5 text-danger-soft">{{ error.message }}</div>
         </div>
-        <div class="modal-actions">
-          <button class="btn btn-ok" id="btn-copy-user-ok" :disabled="!canSubmit" @click="copy()">
-            <span v-if="busy" class="spinner"></span> {{ busy ? t('v7run.copying') : t('v7run.copy') }}
+        <div class="flex justify-end gap-2">
+          <button class="btn border-success bg-success px-4 text-accent-contrast [transition:background-color_150ms,transform_100ms] hover:bg-success-deep active:translate-y-px" id="btn-copy-user-ok" :disabled="!canSubmit" @click="copy()">
+            <span v-if="busy" class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-default border-t-accent"></span> {{ busy ? t('v7run.copying') : t('v7run.copy') }}
           </button>
-          <button class="btn btn-cancel" @click="close()">{{ t('common.cancel') }}</button>
+          <button class="btn px-4 [transition:background-color_150ms,transform_100ms] hover:bg-border-default active:translate-y-px" @click="close()">{{ t('common.cancel') }}</button>
         </div>
       </div>
     </div>

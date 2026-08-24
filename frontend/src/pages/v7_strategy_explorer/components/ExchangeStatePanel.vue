@@ -91,28 +91,28 @@ const debugJson = computed(() => JSON.stringify(metadata.value, null, 2));
 </script>
 
 <template>
-  <div class="panel-card pbgui-card">
-    <h3>{{ t('v7explore.exchangeState') }}</h3>
-    <div class="control-group">
-      <p class="muted" style="margin:0 0 8px">{{ t('v7explore.exchangeParameters') }}</p>
-      <div class="check-row">
-        <input id="auto-exchange-params" v-model="store.state.autoExchangeParams" type="checkbox" @change="store.recalculate()">
+  <div class="pbgui-card border border-border-default rounded-xl bg-panel p-3.5">
+    <h3 class="m-0 mb-2.5">{{ t('v7explore.exchangeState') }}</h3>
+    <div class="flex flex-col gap-2 rounded-lg border border-border-default bg-elevated p-2.5">
+      <p class="text-secondary" style="margin:0 0 8px">{{ t('v7explore.exchangeParameters') }}</p>
+      <div class="flex items-center gap-2 text-secondary text-sm">
+        <input id="auto-exchange-params" class="w-auto" v-model="store.state.autoExchangeParams" type="checkbox" @change="store.recalculate()">
         <label for="auto-exchange-params">{{ t('v7explore.autoFillExchangeParams') }}</label>
       </div>
-      <button class="action-btn pbgui-action" id="btn-reset-exchange-params" type="button" @click="resetExchangeParams">{{ t('v7explore.resetExchangeParams') }}</button>
-      <section class="accordion-card collapsed" style="margin-top:8px">
-        <button class="accordion-head" type="button" @click="debugOpen = !debugOpen">{{ t('v7explore.debugDataSources') }}</button>
-        <div class="accordion-body"><pre id="exchange-state-json" class="debug-json">{{ debugJson }}</pre></div>
+      <button class="action-btn pbgui-action border border-border-default rounded-[7px] bg-elevated py-1.75 px-2.75 text-primary transition-[border-color,background-color,color] duration-150 ease-[ease] hover:border-accent/45 hover:bg-accent/10" id="btn-reset-exchange-params" type="button" @click="resetExchangeParams">{{ t('v7explore.resetExchangeParams') }}</button>
+      <section class="accordion-card collapsed overflow-hidden rounded-lg border border-border-default bg-panel" style="margin-top:8px">
+        <button class="accordion-head flex w-full items-center gap-2.5 border-0 bg-panel px-3 py-2.5 text-left text-primary" type="button" @click="debugOpen = !debugOpen">{{ t('v7explore.debugDataSources') }}</button>
+        <div class="accordion-body border-t border-border-default p-3"><pre id="exchange-state-json" class="w-full max-h-[460px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border-default bg-page p-2.5 font-mono text-xs">{{ debugJson }}</pre></div>
       </section>
-      <div class="grid" style="margin-top:12px" id="exchange-state-controls">
-        <div v-for="def in steppers" :key="def.id" class="field half">
-          <label :for="def.id" :data-tip="FIELD_TOOLTIPS[def.key] || ''">{{ def.label }}</label>
-          <div class="num-stepper">
-            <button type="button" @click="step(def, -1)">&minus;</button>
-            <input :id="def.id" type="number" :step="def.step" :value="def.value" :data-tip="FIELD_TOOLTIPS[def.key] || ''" @change="onStepperChange(def, $event)">
-            <button type="button" @click="step(def, 1)">+</button>
+      <div class="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 max-[1250px]:grid-cols-[1fr]" style="margin-top:12px" id="exchange-state-controls">
+        <div v-for="def in steppers" :key="def.id" class="flex flex-col gap-1 col-span-6 max-[1250px]:col-span-full">
+          <label class="text-secondary text-xs uppercase tracking-[0.04em]" :for="def.id" :data-tip="FIELD_TOOLTIPS[def.key] || ''">{{ def.label }}</label>
+          <div class="flex">
+            <button type="button" class="w-[34px] rounded-l-md border-r-0 border border-border-default bg-elevated text-primary" @click="step(def, -1)">&minus;</button>
+            <input class="w-full min-w-0 min-h-8 rounded-none border border-border-default bg-page px-2 py-1.75 text-primary" :id="def.id" type="number" :step="def.step" :value="def.value" :data-tip="FIELD_TOOLTIPS[def.key] || ''" @change="onStepperChange(def, $event)">
+            <button type="button" class="w-[34px] rounded-r-md border-l-0 border border-border-default bg-elevated text-primary" @click="step(def, 1)">+</button>
           </div>
-          <div class="source-note">{{ def.sourceText }}</div>
+          <div class="mt-1 mb-2.5 text-secondary text-xs">{{ def.sourceText }}</div>
         </div>
       </div>
     </div>

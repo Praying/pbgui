@@ -31,45 +31,45 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
 </script>
 
 <template>
-  <section id="stage-compare" class="stage-view" :class="{ active: store.controls.stage === 'compare' }">
-    <section class="panel-card pbgui-card">
-      <h3>{{ t('v7explore.compare') }}</h3>
-      <div class="grid">
-        <div class="field full">
-          <label>{{ t('v7explore.compareMode') }}</label>
-          <div class="toolbar">
-            <label class="check-row" id="compare-mode-primary">
-              <input v-model="store.controls.compareMode" type="radio" name="compare-mode" value="pb7_b_c" @change="store.invalidateCompareRequest()">
+  <section id="stage-compare" :class="store.controls.stage === 'compare' ? 'active block' : 'hidden'">
+    <section class="pbgui-card border border-border-default rounded-xl bg-panel p-3.5">
+      <h3 class="m-0 mb-2.5">{{ t('v7explore.compare') }}</h3>
+      <div class="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 max-[1250px]:grid-cols-[1fr]">
+        <div class="flex flex-col gap-1 col-span-full">
+          <label class="text-secondary text-xs uppercase tracking-[0.04em]">{{ t('v7explore.compareMode') }}</label>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="flex items-center gap-2 text-secondary text-sm" id="compare-mode-primary">
+              <input class="w-auto" v-model="store.controls.compareMode" type="radio" name="compare-mode" value="pb7_b_c" @change="store.invalidateCompareRequest()">
               {{ store.compareModePrimaryText.value || (store.adapter.isV8 ? t('v7explore.compareModePrimaryV8') : t('v7explore.compareModePrimary')) }}
             </label>
-            <label class="check-row" id="compare-mode-secondary" v-show="!store.adapter.isV8">
-              <input v-model="store.controls.compareMode" type="radio" name="compare-mode" value="b_c" @change="store.invalidateCompareRequest()">
+            <label class="flex items-center gap-2 text-secondary text-sm" id="compare-mode-secondary" v-show="!store.adapter.isV8">
+              <input class="w-auto" v-model="store.controls.compareMode" type="radio" name="compare-mode" value="b_c" @change="store.invalidateCompareRequest()">
               <span>{{ t('v7explore.compareModeSecondary') }}</span>
             </label>
           </div>
         </div>
-        <div class="field third"><label for="compare-max-candles">{{ t('v7explore.compareMaxCandles') }}</label><input id="compare-max-candles" v-model.number="store.controls.compareMaxCandles" type="number" min="10" max="20000" step="50" @change="store.invalidateCompareRequest()"></div>
-        <div class="field full compare-pb7-only" v-show="showPb7Only">
-          <label for="compare-pb7-folder">{{ store.adapter.isV8 ? t('v7explore.storedPb8Result') : t('v7explore.pb7BacktestFolder') }}</label>
-          <input id="compare-pb7-folder" v-model="store.controls.comparePb7Folder" type="text" :readonly="store.adapter.isV8" :placeholder="store.adapter.isV8 ? t('v7explore.storedResultHandoff') : '/path/to/backtest/result'" @change="store.invalidateCompareRequest()">
+        <div class="flex flex-col gap-1 col-span-4 max-[1250px]:col-span-full"><label class="text-secondary text-xs uppercase tracking-[0.04em]" for="compare-max-candles">{{ t('v7explore.compareMaxCandles') }}</label><input id="compare-max-candles" class="w-full min-h-8 rounded-md border border-border-default bg-page px-2 py-1.75 text-primary" v-model.number="store.controls.compareMaxCandles" type="number" min="10" max="20000" step="50" @change="store.invalidateCompareRequest()"></div>
+        <div class="flex flex-col gap-1 col-span-full compare-pb7-only" v-show="showPb7Only">
+          <label class="text-secondary text-xs uppercase tracking-[0.04em]" for="compare-pb7-folder">{{ store.adapter.isV8 ? t('v7explore.storedPb8Result') : t('v7explore.pb7BacktestFolder') }}</label>
+          <input id="compare-pb7-folder" class="w-full min-h-8 rounded-md border border-border-default bg-page px-2 py-1.75 text-primary" v-model="store.controls.comparePb7Folder" type="text" :readonly="store.adapter.isV8" :placeholder="store.adapter.isV8 ? t('v7explore.storedResultHandoff') : '/path/to/backtest/result'" @change="store.invalidateCompareRequest()">
         </div>
-        <label class="check-row full compare-pb7-only" v-show="showPb7Only && !store.adapter.isV8">
-          <input id="compare-use-fills-range" v-model="store.controls.compareUseFillsRange" type="checkbox" @change="store.invalidateCompareRequest()">
+        <label class="flex items-center gap-2 text-secondary text-sm col-span-full compare-pb7-only" v-show="showPb7Only && !store.adapter.isV8">
+          <input id="compare-use-fills-range" class="w-auto" v-model="store.controls.compareUseFillsRange" type="checkbox" @change="store.invalidateCompareRequest()">
           <span>{{ t('v7explore.useFillsRange') }}</span>
         </label>
-        <label class="check-row full">
-          <input id="compare-mismatches-only" v-model="store.controls.compareMismatchesOnly" type="checkbox" @change="store.invalidateCompareRequest()">
+        <label class="flex items-center gap-2 text-secondary text-sm col-span-full">
+          <input id="compare-mismatches-only" class="w-auto" v-model="store.controls.compareMismatchesOnly" type="checkbox" @change="store.invalidateCompareRequest()">
           <span>{{ t('v7explore.mismatchesOnly') }}</span>
         </label>
       </div>
-      <button class="action-btn pbgui-action primary" id="btn-run-compare" type="button" style="margin-top:14px;width:100%" :disabled="compare.running.value" @click="compare.runCompare()">
+      <button class="action-btn pbgui-action primary border rounded-[7px] py-1.75 px-2.75 text-primary transition-[border-color,background-color,color] duration-150 ease-[ease] border-accent bg-accent/15 hover:border-accent hover:bg-accent/15" id="btn-run-compare" type="button" style="margin-top:14px;width:100%" :disabled="compare.running.value" @click="compare.runCompare()">
         {{ compare.running.value ? t('v7explore.compareRunning') : t('v7explore.startCompare') }}
       </button>
     </section>
-    <section class="panel-card pbgui-card" style="margin-top:var(--sp-md)">
-      <h3>{{ t('v7explore.compareResult') }}</h3>
-      <div id="compare-summary" class="hint">
-        <span v-if="compare.summaryText.value" class="muted">{{ compare.summaryText.value }}</span>
+    <section class="pbgui-card border border-border-default rounded-xl bg-panel p-3.5" style="margin-top:var(--sp-md)">
+      <h3 class="m-0 mb-2.5">{{ t('v7explore.compareResult') }}</h3>
+      <div id="compare-summary" class="text-secondary">
+        <span v-if="compare.summaryText.value" class="text-secondary">{{ compare.summaryText.value }}</span>
         <template v-else-if="data && data.ok">
           <table class="orders">
             <thead><tr><th>{{ t('v7explore.source') }}</th><th>{{ t('v7explore.long') }}</th><th>{{ t('v7explore.short') }}</th><th>{{ t('v7explore.total') }}</th></tr></thead>
@@ -89,30 +89,30 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
             </table>
           </div>
         </template>
-        <span v-else-if="data && !data.ok" class="muted">{{ data.message || t('v7explore.compareFailed') }}</span>
+        <span v-else-if="data && !data.ok" class="text-secondary">{{ data.message || t('v7explore.compareFailed') }}</span>
         <template v-else>{{ t('v7explore.configureCompareHint') }}</template>
       </div>
-      <div id="compare-progress" class="movie-progress" :class="{ active: compare.progress.value.pct >= 0 }">
-        <div class="movie-progress-bar"><div id="compare-progress-fill" class="movie-progress-fill" :style="{ width: compare.progress.value.pct + '%' }"></div></div>
-        <div id="compare-progress-text" class="movie-progress-text">{{ compare.progress.value.message || t('v7explore.waiting') }}</div>
+      <div id="compare-progress" class="mt-2.5" :class="compare.progress.value.pct >= 0 ? 'block' : 'hidden'">
+        <div class="h-2.5 overflow-hidden rounded-full border border-border-default bg-page"><div id="compare-progress-fill" class="h-full w-0 bg-[linear-gradient(90deg,var(--accent),var(--success))] transition-[width] duration-200 ease-[ease]" :style="{ width: compare.progress.value.pct + '%' }"></div></div>
+        <div id="compare-progress-text" class="mt-1.5 text-secondary text-sm">{{ compare.progress.value.message || t('v7explore.waiting') }}</div>
       </div>
       <div id="compare-result" style="margin-top:12px" v-if="data && data.ok">
-        <h4>{{ t('v7explore.longCompareRows') }}</h4>
+        <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.longCompareRows') }}</h4>
         <div style="overflow:auto">
           <table class="orders compare-grid">
             <thead><tr><th v-for="[key, label] in columns" :key="key">{{ label }}</th></tr></thead>
             <tbody>
-              <tr v-if="!sideRows('long').length"><td class="muted" style="text-align:left">{{ t('v7explore.noRows') }}</td></tr>
+              <tr v-if="!sideRows('long').length"><td class="text-secondary" style="text-align:left">{{ t('v7explore.noRows') }}</td></tr>
               <tr v-for="(row, idx) in sideRows('long')" :key="'l' + idx"><td v-for="[key] in columns" :key="key">{{ compareCellText(row, key, idx, statusModel.labels) }}</td></tr>
             </tbody>
           </table>
         </div>
-        <h4>{{ t('v7explore.shortCompareRows') }}</h4>
+        <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.shortCompareRows') }}</h4>
         <div style="overflow:auto">
           <table class="orders compare-grid">
             <thead><tr><th v-for="[key, label] in columns" :key="key">{{ label }}</th></tr></thead>
             <tbody>
-              <tr v-if="!sideRows('short').length"><td class="muted" style="text-align:left">{{ t('v7explore.noRows') }}</td></tr>
+              <tr v-if="!sideRows('short').length"><td class="text-secondary" style="text-align:left">{{ t('v7explore.noRows') }}</td></tr>
               <tr v-for="(row, idx) in sideRows('short')" :key="'s' + idx"><td v-for="[key] in columns" :key="key">{{ compareCellText(row, key, idx, statusModel.labels) }}</td></tr>
             </tbody>
           </table>

@@ -37,7 +37,7 @@ const page = useEditPageContext();
         />
         <template v-else-if="field.kind === 'json'">
           <textarea :id="'extra-live-' + field.key" v-model="field.text" class="json-editor" rows="4" style="overflow: hidden; resize: vertical"></textarea>
-          <div :id="'extra-live-' + field.key + '-status'" class="field-status field-status-inline" aria-live="polite"></div>
+          <div :id="'extra-live-' + field.key + '-status'" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
         </template>
         <input v-else :id="'extra-live-' + field.key" v-model="field.text" type="text" class="form-input" />
       </div>

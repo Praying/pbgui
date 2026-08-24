@@ -78,7 +78,7 @@ function render(initialFrameIdx?: number): void {
     props.movie.currentFrame.value
   );
   if (!spec) {
-    if (el.value) el.value.innerHTML = '<p class="hint">' + t('v7explore.noFramesToPlot') + '</p>';
+    if (el.value) el.value.innerHTML = '<p class="text-secondary">' + t('v7explore.noFramesToPlot') + '</p>';
     return;
   }
   props.movie.currentFrame.value = spec.activeFrame;
@@ -115,5 +115,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div id="movie-plot" ref="el" class="movie-plot"></div>
+  <div id="movie-plot" ref="el" class="movie-plot h-[760px] min-h-[760px] [content-visibility:auto] [contain-intrinsic-size:760px]"></div>
 </template>

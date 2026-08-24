@@ -297,17 +297,17 @@ onMounted(async () => {
       />
     </template>
 
-    <div id="page-body">
-      <div id="main-content">
+    <div id="page-body" class="flex h-[calc(100dvh-112px)] min-h-0 gap-4 overflow-hidden p-4 select-none">
+      <div id="main-content" class="min-h-0 min-w-0 flex-1 select-text overflow-y-auto pt-5 pb-8 px-[clamp(20px,3vw,40px)] max-[768px]:p-3">
         <!-- User list head: counts + primary action live with the list now
              that the rail hosts the view sections. -->
-        <div v-show="view === 'list'" class="users-head">
-          <div class="users-head-meta">
-            <span class="users-head-title">{{ t('misc.apikeys.users') }}</span>
-            <span class="sb-count" id="sb-count">
+        <div v-show="view === 'list'" class="users-head mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div class="users-head-meta flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <span class="users-head-title text-xs font-bold uppercase tracking-label text-muted">{{ t('misc.apikeys.users') }}</span>
+            <span class="sb-count rounded-full bg-secondary/8 px-2 py-px text-xs font-semibold text-secondary" id="sb-count">
               {{ store.usersState.value === 'ready' ? t('misc.apikeys.usersCount', { count: store.users.value.length }) : store.usersState.value === 'error' ? t('common.error') : '…' }}
             </span>
-            <span class="sb-count" id="sb-inuse" v-show="store.inUseCount.value > 0">
+            <span class="sb-count rounded-full bg-secondary/8 px-2 py-px text-xs font-semibold text-secondary" id="sb-inuse" v-show="store.inUseCount.value > 0">
               {{ t('misc.apikeys.inUseCount', { count: store.inUseCount.value }) }}
             </span>
           </div>
@@ -352,3 +352,49 @@ onMounted(async () => {
     <AlertModal />
   </AppShell>
 </template>
+
+<style>
+/* Root overflow rule ported from styles/api_keys_editor.css (html/body carry
+   no scope attribute — unscoped block). */
+body {
+  overflow: hidden;
+}
+
+/* Panel fade-in + shared expiry-table row rules, also ported from
+   styles/api_keys_editor.css. They target elements rendered by several child
+   components, so they live in this unscoped block; 'edit-panel',
+   'hl-expiry-panel' and 'hl-expiry-table' remain as inert anchors. */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.edit-panel,
+.hl-expiry-panel {
+  animation: fadeIn 0.18s ease;
+}
+
+.hl-expiry-table tbody tr:hover td {
+  background: rgb(var(--text-secondary-rgb) / 0.05);
+}
+
+.hl-expiry-table tbody tr:last-child td {
+  border-bottom: none;
+}
+</style>
+
+<style scoped>
+/* Page-level AppShell overrides — ported from styles/api_keys_editor.css at
+   the Tailwind migration. The :deep() rules target AppShell internals, so
+   they stay as CSS instead of utilities. */
+.data-page-shell :deep(.app-shell__main) {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.data-page-shell :deep(.app-shell__primary) {
+  min-height: 0;
+}
+</style>
