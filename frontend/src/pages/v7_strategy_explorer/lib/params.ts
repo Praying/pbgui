@@ -1,7 +1,7 @@
 import { deepEnsure, deepGet } from './format';
 import type { ParamFieldMeta, ParamGroup } from '../types';
 
-/** Static field tooltips (:414-430). */
+/** Static field tooltips (:414-430) — English fallback for FIELD_TIP_KEYS. */
 export const FIELD_TOOLTIPS: Record<string, string> = {
   ohlcv_source: 'Select which local 1m OHLCV store should be used for the chart and candle-backed state injection.',
   exchange: 'Exchange / market namespace used to load markets.json metadata and OHLCV candles.',
@@ -19,6 +19,25 @@ export const FIELD_TOOLTIPS: Record<string, string> = {
   state_balance: 'Current wallet balance in StateParams sent to Rust.',
   state_volatility:
     'entry_volatility_logrange_ema_1h injected from candles. Used only when volatility-weighted entry parameters are non-zero.',
+};
+
+/** Field name → i18n key for the localized tooltip (v7explore.*Tip). */
+export const FIELD_TIP_KEYS: Record<string, string> = {
+  ohlcv_source: 'v7explore.ohlcvSourceTip',
+  exchange: 'v7explore.exchangeTip',
+  coin: 'v7explore.coinTip',
+  start_date: 'v7explore.startDateTip',
+  start_time: 'v7explore.startTimeTip',
+  reference_price: 'v7explore.referencePriceTip',
+  balance: 'v7explore.balanceTip',
+  context_days: 'v7explore.chartContextTip',
+  min_cost: 'v7explore.minCostTip',
+  price_step: 'v7explore.priceStepTip',
+  min_qty: 'v7explore.minQtyTip',
+  qty_step: 'v7explore.qtyStepTip',
+  c_mult: 'v7explore.cMultTip',
+  state_balance: 'v7explore.stateBalanceTip',
+  state_volatility: 'v7explore.stateVolatilityTip',
 };
 
 /** Static segment list — the v7 default (:431-439; labels via i18n keys). */
@@ -129,6 +148,12 @@ export function paramTooltip(
 ): string {
   const metaTip = meta.tooltip;
   if (metaTip) return String(metaTip);
+  const tipKey = FIELD_TIP_KEYS[name];
+  if (tipKey) {
+    // Missing translation falls back to the English FIELD_TOOLTIPS entry.
+    const translated = t(tipKey);
+    if (translated && translated !== tipKey) return translated;
+  }
   const specific = FIELD_TOOLTIPS[name];
   if (specific) return specific;
   if (name.indexOf('forager_score_weights.') === 0) return t('v7explore.tipForagerScoreWeights', { label: strategyLabel });
