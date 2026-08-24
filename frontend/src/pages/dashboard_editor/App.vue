@@ -26,7 +26,7 @@
  * │ - #standalone-toolbar div: permanently empty in legacy (editor:472,     │
  * │   328) — dead DOM, not emitted.                                         │
  * │ - %%EDIT_ONLY_STYLE%% inline hides: body.view-mode CSS rules already    │
- * │   hide the sticky top + grid footer (editor.css:311-312).               │
+ * │   hide the sticky top + grid footer (App.vue's style block).             │
  * │ - The legacy page kept its document click listener and WebSocket IIFE   │
  * │   forever; Vue removes both on unmount (R4-style leak fix).             │
  * └─────────────────────────────────────────────────────────────────────────┘
@@ -224,13 +224,134 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <div class="editor-wrapper">
-    <div class="editor-sticky-top">
+  <div class="editor-wrapper flex h-[85vh] flex-col overflow-hidden p-[0.75rem]">
+    <div class="editor-sticky-top mb-[0.5rem] shrink-0">
       <EditorHeader :msg="statusMsg" :cls="statusCls" :config-revision="configRevision" />
     </div>
-    <div class="editor-scroll-area">
+    <div class="editor-scroll-area min-h-0 flex-1 overflow-y-auto">
       <EditorGrid />
       <GridFooter />
     </div>
   </div>
 </template>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ported from styles/editor.css + styles/widgets.css (both deleted
+   at the Tailwind migration). Everything expressible as utilities
+   moved onto the component templates; the rules below stay CSS for
+   the documented reasons. The block is unscoped on purpose — the
+   old stylesheets were page-global, and the body/html rules have
+   no component root.
+
+   Dropped outright (dead DOM — the Vue port never renders it):
+   .hdr-sep, .cell-header/.drag-handle/.cell-cfg (display:none in
+   legacy), .cfg-row/.cfg-grid, the .orders-link-* link-chip picker,
+   .type-badge.type-*, .cell-trash, #standalone-toolbar, the legacy
+   .db-msel-* dropdown duplicates and .db-sort-arrow/.db-sorted.
+   Dropped as duplicates of the shared src/styles/tailwind.css: the
+   :root fs/sp/input/btn aliases, the * reset, the body font-size/
+   background/colour defaults (only the legacy font stack differs,
+   kept below), and the empty .editor-grid.cols-1/cols-2 rules.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* The legacy editor page used the plain system stack, not the shared
+   Space Grotesk face — keep that difference (un-layered CSS beats the
+   base layer's font-family). */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+
+/* ── Standalone mode (App toggles body.standalone-mode) ────────── */
+body.standalone-mode .editor-wrapper {
+  height: 100dvh;
+}
+
+/* ── View-only mode: hide editing chrome (legacy editor.css:311-322) ──
+   Un-layered CSS beats the templates' utilities, so the gap:0 and
+   padding overrides below win over the cell/wrapper utilities. */
+body.view-mode .editor-sticky-top,
+body.view-mode #grid-footer {
+  display: none !important;
+}
+body.view-mode .editor-wrapper {
+  height: 100dvh;
+  padding: 0.5rem;
+}
+body.view-mode .cell-inline-preview {
+  min-height: 320px;
+}
+body.view-mode .editor-cell {
+  cursor: default !important;
+  gap: 0;
+  min-height: 360px;
+}
+
+/* ── Plotly modebar — shared rule covering both widget roots ─────
+   Targets DOM that Plotly injects inside the chart divs; no utility
+   form exists. */
+.dt-root .modebar-container .modebar,
+.di-root .modebar-container .modebar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+}
+.dt-root .modebar-container .modebar-group,
+.di-root .modebar-container .modebar-group {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+}
+.dt-root .modebar-container,
+.di-root .modebar-container {
+  position: absolute !important;
+  right: 0 !important;
+  top: 0 !important;
+}
+
+/* ── Fullscreen — shared (no :fullscreen utility variant) ──────── */
+.dt-root:fullscreen,
+.di-root:fullscreen {
+  border-radius: 0;
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.dt-root:fullscreen .dt-chart,
+.di-root:fullscreen .di-chart {
+  flex: 1;
+}
+.dt-root:-webkit-full-screen,
+.di-root:-webkit-full-screen {
+  border-radius: 0;
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.dt-root:-webkit-full-screen .dt-chart,
+.di-root:-webkit-full-screen .di-chart {
+  flex: 1;
+}
+/* the orders chart inside a fullscreened widget root. The wrap's own
+   :fullscreen twin is kept from the legacy sheet — the .do-fullscreen
+   class (WidgetOrders' chartWrapClass) covers the class-driven half. */
+.dt-root:fullscreen .do-chart-wrap,
+.dt-root:-webkit-full-screen .do-chart-wrap {
+  flex: 1;
+  height: auto !important;
+  position: relative !important;
+}
+.do-chart-wrap:fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100dvh !important;
+  z-index: 99999;
+  border-radius: 0;
+  background: var(--bg-page);
+}
+</style>

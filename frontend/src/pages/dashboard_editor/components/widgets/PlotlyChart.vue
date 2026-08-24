@@ -37,6 +37,7 @@ import {
   type PlotlyTrace,
 } from '../../lib/plotlyLayouts';
 import { getPlotly } from '../../lib/plotlyVendor';
+import { dtChartClass, dtStatusClass } from './uiClasses';
 import {
   dropFracRange,
   getSavedZoom,
@@ -191,20 +192,21 @@ const heightStyle = computed<{ height: string } | undefined>(() =>
 </script>
 
 <template>
-  <div ref="chartEl" class="dt-chart" :style="heightStyle">
+  <div ref="chartEl" :class="dtChartClass" :style="heightStyle">
     <!-- explicit 'block'/'none' inline display, byte-parity with the legacy
          handler (render.js:650 closeBtn.style.display); v-show would restore
-         an empty string and lose to the widgets.css .dt-fs-close{display:none}
-         base rule, leaving the button invisible in real browsers -->
+         an empty string and lose to the button's `hidden` base utility (the
+         former widgets.css .dt-fs-close{display:none} rule), leaving the
+         button invisible in real browsers -->
     <button
-      class="dt-fs-close"
+      class="dt-fs-close absolute left-2 top-2 z-[9999] hidden cursor-pointer rounded-sm border border-border-strong bg-elevated px-[0.55rem] py-[0.2rem] text-[0.82rem] leading-[1.5] text-primary hover:border-danger-deep hover:bg-danger-deep hover:text-[#f2f5fb]"
       :style="{ display: fs.isFullscreen.value ? 'block' : 'none' }"
       :title="dashT('dash.exitFullscreen', 'Exit Fullscreen')"
       @click="fs.exitFullscreen()"
     >
       ✕
     </button>
-    <div v-if="plotlyMissing" class="dt-status">
+    <div v-if="plotlyMissing" :class="dtStatusClass">
       {{ dashT('dash.plotlyNotLoaded', 'Plotly not loaded') }}
     </div>
   </div>

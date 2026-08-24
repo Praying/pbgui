@@ -47,7 +47,18 @@ import {
   type ManageControlState,
 } from '../../lib/manageLogic';
 import type { PositionRow, PositionsData } from '../../types/widgets';
-import '../../styles/widgets.css';
+import {
+  dtHeaderClass,
+  dtIconClass,
+  dtMetaClass,
+  dtMetaControlsClass,
+  dtMetaLblClass,
+  dtNodataClass,
+  dtRootClass,
+  dtStatusClass,
+  dtTitleClass,
+  dtTrashClass,
+} from './uiClasses';
 import MultiSelectDropdown from '../MultiSelectDropdown.vue';
 import PositionsManageModal from './PositionsManageModal.vue';
 
@@ -227,50 +238,55 @@ function onDelete(): void {
 </script>
 
 <template>
-  <div v-if="!data && !error" class="dt-status">
+  <div v-if="!data && !error" :class="dtStatusClass">
     {{ dashT('dash.loading', 'Loading…') }}
   </div>
-  <div v-else-if="error" class="dt-status">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
-  <div v-else ref="rootEl" class="dt-root">
+  <div v-else-if="error" :class="dtStatusClass">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
+  <div v-else ref="rootEl" :class="dtRootClass">
     <div
-      class="dt-header"
+      :class="dtHeaderClass"
       draggable="true"
       @dragstart="drag?.onHeaderDragStart($event)"
       @dragend="drag?.onHeaderDragEnd()"
     >
-      <span class="dt-icon">📋</span>
-      <span class="dt-title">{{ dashT('dash.positions', 'Positions') }}</span>
+      <span :class="dtIconClass">📋</span>
+      <span :class="dtTitleClass">{{ dashT('dash.positions', 'Positions') }}</span>
       <button
         type="button"
-        class="dp-manage-btn"
+        class="dp-manage-btn cursor-pointer rounded-sm border border-accent/35 bg-accent/12 px-[0.45rem] py-[0.12rem] text-[0.68rem] font-semibold leading-[1.35] text-accent-soft hover:border-accent-soft hover:bg-accent/20 hover:text-primary"
         :title="dashT('dash.manageSelectedPosition', 'Manage selected position')"
         @click="onManageClick"
       >
         {{ dashT('dash.manage', 'Manage') }}
       </button>
-      <div class="dt-meta dt-meta-controls">
-        <span class="dt-meta-lbl">{{ dashT('dash.users', 'Users') }}</span>
+      <div :class="[dtMetaClass, dtMetaControlsClass]">
+        <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
         <MultiSelectDropdown :model-value="users" :users="allUsers" @update:model-value="onUsersChange" />
       </div>
       <button
         v-if="editMode"
-        class="dt-trash"
+        :class="dtTrashClass"
         :title="dashT('dash.removeWidget', 'Remove widget')"
         @click.stop="onDelete"
       >
         &#128465;
       </button>
     </div>
-    <div class="dt-status" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
-    <div v-if="positions.length === 0" class="dt-nodata">
+    <div :class="dtStatusClass" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
+    <div v-if="positions.length === 0" :class="dtNodataClass">
       {{ dashT('dash.noOpenPositions', 'No open positions.') }}
     </div>
-    <div v-else class="dp-table-wrap">
-      <table class="dp-table">
+    <div v-else class="dp-table-wrap max-h-[70vh] overflow-x-auto overflow-y-auto">
+      <table class="dp-table w-full border-collapse text-[0.78rem]">
         <thead>
           <tr>
-            <th v-for="c in COLS" :key="c.key" @click="onSortClick(c.key)">
-              {{ dashT(c.i18nKey, c.fallback) }}<span class="dp-sort">{{ sortArrow(c.key) }}</span>
+            <th
+            v-for="c in COLS"
+            :key="c.key"
+            class="sticky top-0 cursor-pointer select-none border-b border-b-border-default bg-card px-[0.5rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary hover:text-primary"
+            @click="onSortClick(c.key)"
+          >
+              {{ dashT(c.i18nKey, c.fallback) }}<span class="dp-sort ml-[0.2rem] text-[0.65rem] text-muted">{{ sortArrow(c.key) }}</span>
             </th>
           </tr>
         </thead>
@@ -278,10 +294,16 @@ function onDelete(): void {
           <tr
             v-for="r in sortedRows"
             :key="rowKey(r)"
+            class="cursor-pointer"
             :class="{ 'dp-sel': rowKey(r) === selectedKey }"
             @click="onRowClick(r)"
           >
-            <td v-for="c in COLS" :key="c.key" :class="c.key === 'upnl' ? (Number(r.upnl || 0) >= 0 ? 'dp-upnl-pos' : 'dp-upnl-neg') : undefined">
+            <td
+              v-for="c in COLS"
+              :key="c.key"
+              class="border-b border-b-card px-[0.5rem] py-[0.3rem] whitespace-nowrap"
+              :class="c.key === 'upnl' ? (Number(r.upnl || 0) >= 0 ? 'dp-upnl-pos text-success-soft' : 'dp-upnl-neg text-danger-soft') : undefined"
+            >
               {{ positionCellText(r, c) }}
             </td>
           </tr>
@@ -301,3 +323,15 @@ function onDelete(): void {
     />
   </div>
 </template>
+
+<style scoped>
+/* Row states paint the td descendants (ported from styles/widgets.css at
+   the Tailwind migration — a descendant relationship utilities cannot
+   express). Cascade order preserved from the legacy sheet. */
+.dp-table tr:hover td {
+  background: var(--bg-elevated);
+}
+.dp-table tr.dp-sel td {
+  background: rgb(var(--accent-rgb) / 0.22);
+}
+</style>

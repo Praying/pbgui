@@ -13,7 +13,7 @@
  * rewrote `hdrName.value` ONCE, after the init config load (editor:2688).
  * App bumps `configRevision` after store.loadConfig so the input re-syncs at
  * exactly that moment. The whole header is hidden in view mode by
- * body.view-mode CSS (editor.css:311) — the class is applied by App.
+ * body.view-mode CSS (App.vue's style block) — the class is applied by App.
  */
 import { ref, watch } from 'vue';
 import { useDashboardStore } from '../stores/dashboardStore';
@@ -51,26 +51,27 @@ watch(
 </script>
 
 <template>
-  <div class="editor-header">
-    <div class="hdr-left">
-      <div class="hdr-field">
-        <label>{{ dashT('dash.dashboardName', 'Dashboard Name') }}</label>
+  <div class="editor-header flex flex-wrap items-center gap-[0.5rem] rounded-md border border-border-default bg-card px-[0.75rem] py-[0.6rem]">
+    <div class="hdr-left flex flex-initial flex-wrap items-center gap-[0.6rem]">
+      <div class="hdr-field flex flex-col gap-[0.2rem]">
+        <label class="text-xs uppercase tracking-[0.05em] text-secondary">{{ dashT('dash.dashboardName', 'Dashboard Name') }}</label>
         <input
           id="hdr-name"
           type="text"
           maxlength="32"
+          class="w-[180px] min-w-[120px] rounded-sm border px-[0.5rem] py-[0.3rem] text-sm text-primary outline-none focus:border-accent-soft bg-border-default"
+          :class="nameValue.trim() ? 'border-secondary' : 'empty border-danger-soft'"
           :value="nameValue"
           :placeholder="dashT('dash.enterName', 'Enter name...')"
-          :class="{ empty: !nameValue.trim() }"
           @input="onNameInput"
         >
       </div>
-      <div class="hdr-field">
+      <div class="hdr-field flex flex-col gap-[0.2rem]">
         <LayoutPicker />
       </div>
       <StatusBadge :msg="props.msg" :cls="props.cls" />
     </div>
-    <div class="hdr-right">
+    <div class="hdr-right flex min-w-0 flex-1 items-center gap-[0.5rem]">
       <!-- editor:2690 — the palette is only built outside view mode -->
       <PaletteBar v-if="!store.config.viewOnly" />
     </div>

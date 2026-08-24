@@ -57,8 +57,8 @@ import {
   type ManageControlState,
 } from '../../lib/manageLogic';
 import type { ManageActionsController } from '../../composables/useManageActions';
+import { dpModalChrome } from './uiClasses';
 import type { PositionRow } from '../../types/widgets';
-import '../../styles/widgets.css';
 import PositionsConfigPreviewModal from './PositionsConfigPreviewModal.vue';
 
 const props = defineProps<{
@@ -254,8 +254,32 @@ const preview = ref<{ title: string; config: unknown } | null>(null);
 
 /* ── row rendering (render.js:2693-2879) ── */
 
+/* Tailwind tone mappings (the former .dp-upnl-pos/.dp-upnl-neg,
+   .dp-status-msg.ok/.err and .dp-resize-* rules of styles/widgets.css) —
+   every branch returns the complete colour/geometry set; the legacy class
+   names ride along as inert anchors the tests select. */
 function upnlClass(r: PositionRow): string {
-  return Number(r.upnl || 0) >= 0 ? 'dp-upnl-pos' : 'dp-upnl-neg';
+  return Number(r.upnl || 0) >= 0 ? 'dp-upnl-pos text-success-soft' : 'dp-upnl-neg text-danger-soft';
+}
+
+function statusToneClass(kind: '' | 'ok' | 'err'): string {
+  if (kind === 'ok') return 'ok text-success-soft';
+  if (kind === 'err') return 'err text-danger-soft';
+  return '';
+}
+
+function resizeHandleClass(dir: string): string {
+  const base = 'dp-resize-handle dp-resize-' + dir + ' absolute z-[5]';
+  switch (dir) {
+    case 'n': return base + ' -top-1 left-2.5 right-2.5 h-2 cursor-ns-resize';
+    case 's': return base + ' -bottom-1 left-2.5 right-2.5 h-2 cursor-ns-resize';
+    case 'e': return base + ' -right-1 top-2.5 bottom-2.5 w-2 cursor-ew-resize';
+    case 'w': return base + ' -left-1 top-2.5 bottom-2.5 w-2 cursor-ew-resize';
+    case 'ne': return base + ' -top-1.25 -right-1.25 h-3 w-3 cursor-nesw-resize';
+    case 'nw': return base + ' -top-1.25 -left-1.25 h-3 w-3 cursor-nwse-resize';
+    case 'se': return base + ' -bottom-1.25 -right-1.25 h-3 w-3 cursor-nwse-resize';
+    default: return base + ' -bottom-1.25 -left-1.25 h-3 w-3 cursor-nesw-resize'; /* sw */
+  }
 }
 
 function ctl(r: PositionRow): ReturnType<typeof manageRowControls> {
@@ -419,30 +443,33 @@ watch(() => props.rows, () => {
 
 <template>
   <Teleport to="body">
-    <div id="dp-manage-modal" class="dp-modal-ovl">
-      <div ref="modalEl" class="dp-modal" :style="modalStyle" :data-user-moved="userMoved ? '1' : undefined" :data-user-resized="userResized ? '1' : undefined">
-        <div class="dp-modal-head" @mousedown="onHeadMouseDown">
-          <div class="dp-modal-title">{{ dashT('dash.managePositions', 'Manage positions') }}</div>
-          <button ref="closeBtnEl" type="button" class="dp-modal-close" @click="emit('close')">&#x2715;</button>
+    <div id="dp-manage-modal" :class="dpModalChrome.ovl">
+      <div
+        ref="modalEl"
+        class="dp-modal fixed flex h-auto w-[calc(100vw-32px)] min-h-[220px] min-w-[640px] max-h-[calc(100dvh-24px)] max-w-[calc(100vw-16px)] flex-col overflow-visible rounded-[12px] border border-border-default bg-page font-sans text-primary shadow-[0_20px_70px_rgba(5,8,14,0.85)]"
+        :style="modalStyle" :data-user-moved="userMoved ? '1' : undefined" :data-user-resized="userResized ? '1' : undefined">
+        <div :class="dpModalChrome.head" @mousedown="onHeadMouseDown">
+          <div :class="dpModalChrome.title">{{ dashT('dash.managePositions', 'Manage positions') }}</div>
+          <button ref="closeBtnEl" type="button" :class="dpModalChrome.close" @click="emit('close')">&#x2715;</button>
         </div>
-        <div class="dp-modal-body">
-          <div class="dp-manage-wrap" :style="{ maxHeight: tableHeight + 'px' }">
-            <table class="dp-manage-table">
+        <div :class="dpModalChrome.body">
+          <div class="dp-manage-wrap min-h-0 flex-none overflow-auto rounded-lg border border-border-default bg-page" :style="{ maxHeight: tableHeight + 'px' }">
+            <table class="dp-manage-table w-full min-w-[1320px] border-collapse text-[0.76rem]">
               <thead>
                 <tr>
-                  <th v-for="c in cols" :key="c.key">{{ dashT(c.i18nKey, c.fallback) }}</th>
-                  <th>{{ dashT('dash.action', 'Action') }}</th>
-                  <th>{{ dashT('dash.amount', 'Amount') }}</th>
-                  <th>USDT/USDC</th>
-                  <th class="dp-quick-col">{{ dashT('dash.quick', 'Quick') }}</th>
-                  <th class="dp-exec-col">{{ dashT('dash.execute', 'Execute') }}</th>
+                  <th v-for="c in cols" :key="c.key" class="sticky top-0 z-[1] border-b border-b-border-default bg-card px-[0.45rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary">{{ dashT(c.i18nKey, c.fallback) }}</th>
+                  <th class="sticky top-0 z-[1] border-b border-b-border-default bg-card px-[0.45rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary">{{ dashT('dash.action', 'Action') }}</th>
+                  <th class="sticky top-0 z-[1] border-b border-b-border-default bg-card px-[0.45rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary">{{ dashT('dash.amount', 'Amount') }}</th>
+                  <th class="sticky top-0 z-[1] border-b border-b-border-default bg-card px-[0.45rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary">USDT/USDC</th>
+                  <th class="dp-quick-col sticky top-0 z-[1] w-[142px] min-w-[142px] overflow-hidden border-b border-b-border-default bg-card px-[0.45rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary">{{ dashT('dash.quick', 'Quick') }}</th>
+                  <th class="dp-exec-col sticky top-0 z-[1] w-[124px] min-w-[124px] border-b border-b-border-default bg-card px-[0.45rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary">{{ dashT('dash.execute', 'Execute') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="rows.length === 0">
                   <td
                     :colspan="cols.length + 5"
-                    style="color: var(--db-text-muted); text-align: center; padding: 1.25rem"
+                    style="color: var(--text-secondary); text-align: center; padding: 1.25rem"
                   >
                     {{ dashT('dash.noOpenPositions', 'No open positions.') }}
                   </td>
@@ -456,13 +483,14 @@ watch(() => props.rows, () => {
                   <td
                     v-for="c in cols"
                     :key="c.key"
+                    class="border-b border-b-card px-[0.45rem] py-[0.35rem] align-middle whitespace-nowrap"
                     :class="c.key === 'upnl' ? upnlClass(r) : undefined"
                   >
                     {{ positionCellText(r, c) }}
                   </td>
                   <td>
                     <select
-                      class="dp-manage-action"
+                      class="dp-manage-action h-7 min-w-[176px] rounded-md border border-border-default bg-page px-[0.4rem] py-0 text-[0.75rem] text-primary outline-none focus:border-accent-soft focus:shadow-[0_0_0_1px_rgb(var(--accent-rgb)/0.35)]"
                       :value="state(r).action"
                       @click.stop
                       @change="onActionChange(r, $event)"
@@ -479,7 +507,7 @@ watch(() => props.rows, () => {
                   </td>
                   <td>
                     <input
-                      class="dp-manage-amount"
+                      class="dp-manage-amount h-7 w-[86px] rounded-md border border-border-default bg-page px-[0.4rem] py-0 text-[0.75rem] text-primary outline-none focus:border-accent-soft focus:shadow-[0_0_0_1px_rgb(var(--accent-rgb)/0.35)] disabled:cursor-not-allowed disabled:opacity-45"
                       type="text"
                       inputmode="decimal"
                       :value="amountDisplay(r)"
@@ -490,7 +518,7 @@ watch(() => props.rows, () => {
                   </td>
                   <td>
                     <input
-                      class="dp-manage-amount dp-manage-quote"
+                      class="dp-manage-amount dp-manage-quote h-7 w-[86px] rounded-md border border-border-default bg-page px-[0.4rem] py-0 text-[0.75rem] text-primary outline-none focus:border-accent-soft focus:shadow-[0_0_0_1px_rgb(var(--accent-rgb)/0.35)] disabled:cursor-not-allowed disabled:opacity-45"
                       type="text"
                       inputmode="decimal"
                       :value="quoteDisplay(r)"
@@ -501,14 +529,14 @@ watch(() => props.rows, () => {
                       @input="onQuoteInput(r, $event)"
                     />
                   </td>
-                  <td class="dp-quick-col">
-                    <div class="dp-quick" :style="{ visibility: ctl(r).quickVisible ? 'visible' : 'hidden' }">
+                  <td class="dp-quick-col w-[142px] min-w-[142px] overflow-hidden border-b border-b-card px-[0.45rem] py-[0.35rem] align-middle whitespace-nowrap">
+                    <div class="dp-quick flex min-w-[132px] flex-nowrap gap-[0.25rem]" :style="{ visibility: ctl(r).quickVisible ? 'visible' : 'hidden' }">
                       <button v-for="pct in [25, 50, 100]" :key="pct" type="button" @click.stop="onQuick(r, pct)">
                         {{ pct }}%
                       </button>
                     </div>
                   </td>
-                  <td class="dp-exec-col">
+                  <td class="dp-exec-col w-[124px] min-w-[124px] border-b border-b-card px-[0.45rem] py-[0.35rem] align-middle whitespace-nowrap">
                     <button
                       type="button"
                       :class="ctl(r).runClass"
@@ -523,11 +551,11 @@ watch(() => props.rows, () => {
               </tbody>
             </table>
           </div>
-          <div class="dp-note">
+          <div class="dp-note text-[0.74rem] leading-[1.45] text-secondary">
             {{ dashT('dash.manageNote', 'Market close sends a direct reduce-only market order only for exchange contracts verified by PBGui; unavailable contracts remain visibly disabled. Panic, Graceful Stop and Take Profit Only actions save the Passivbot config and sync it. Use preview to inspect all-position configs without saving or syncing.') }}
           </div>
-          <div class="dp-status-msg" :class="status.kind || undefined">{{ status.msg }}</div>
-          <div class="dp-modal-actions">
+          <div :class="[dpModalChrome.statusMsg, statusToneClass(status.kind)]">{{ status.msg }}</div>
+          <div :class="dpModalChrome.actions">
             <button type="button" :disabled="footer.previewPanic.disabled" :title="footer.previewPanic.title" @click="runAll('panic_all', true)">
               {{ footer.previewPanic.text }}
             </button>
@@ -546,14 +574,14 @@ watch(() => props.rows, () => {
             <button type="button" class="ok" :disabled="footer.tpOnly.disabled" :title="footer.tpOnly.title" @click="runAll('tp_only_all', false)">
               {{ footer.tpOnly.text }}
             </button>
-            <span class="spacer"></span>
+            <span class="spacer flex-1"></span>
             <button type="button" @click="emit('close')">{{ dashT('common.close', 'Close') }}</button>
           </div>
         </div>
         <div
           v-for="dir in RESIZE_DIRS"
           :key="dir"
-          :class="'dp-resize-handle dp-resize-' + dir"
+          :class="resizeHandleClass(dir)"
           :data-dir="dir"
           @mousedown="onHandleMouseDown($event, dir)"
         ></div>
@@ -567,3 +595,103 @@ watch(() => props.rows, () => {
     @close="preview = null"
   />
 </template>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   The manage-modal button system, ported from styles/widgets.css
+   (deleted at the Tailwind migration). Kept as CSS because:
+   - the tests pin the run button's className to exactly
+     'dp-row-run' + tone, so no utility may ride along;
+   - the bare <button> elements (quick %, footer) are styled through
+     descendant selectors;
+   - the .danger/.warn/.ok tone classes are legacy anchors bound as
+     static class names by lib/manageLogic's runClass string.
+   Unscoped on purpose — PositionsConfigPreviewModal's footer shares
+   the .dp-modal-actions rules. */
+.dp-quick button,
+.dp-modal-actions button,
+.dp-row-run {
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--border-default);
+  color: var(--text-primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0.45rem;
+}
+.dp-quick button {
+  min-width: 40px;
+  padding: 0 0.35rem;
+}
+.dp-quick button:hover,
+.dp-modal-actions button:hover,
+.dp-row-run:hover {
+  background: var(--border-strong);
+}
+.dp-row-run {
+  min-width: 104px;
+}
+.dp-row-run.danger {
+  background: var(--danger-deep);
+  border-color: var(--danger-deep);
+  color: #f2f5fb;
+}
+.dp-row-run.danger:hover {
+  background: var(--danger-deep);
+}
+.dp-row-run.warn {
+  background: var(--warning-deep);
+  border-color: var(--warning-deep);
+  color: #f2f5fb;
+}
+.dp-row-run.warn:hover {
+  background: var(--warning-deep);
+}
+.dp-row-run.ok {
+  background: var(--success-deep);
+  border-color: var(--success);
+  color: #f2f5fb;
+}
+.dp-row-run.ok:hover {
+  background: var(--success-deep);
+}
+.dp-row-run:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dp-modal-actions .danger {
+  background: var(--danger-deep);
+  border-color: var(--danger-deep);
+  color: #f2f5fb;
+}
+.dp-modal-actions .danger:hover {
+  background: var(--danger-deep);
+}
+.dp-modal-actions .warn {
+  background: var(--warning-deep);
+  border-color: var(--warning-deep);
+  color: #f2f5fb;
+}
+.dp-modal-actions .warn:hover {
+  background: var(--warning-deep);
+}
+.dp-modal-actions .ok {
+  background: var(--success-deep);
+  border-color: var(--success);
+  color: #f2f5fb;
+}
+.dp-modal-actions .ok:hover {
+  background: var(--success-deep);
+}
+
+/* Row states paint the td descendants (a relationship utilities cannot
+   express; cascade order preserved from the legacy sheet). */
+.dp-manage-table tr:hover td {
+  background: var(--bg-elevated);
+}
+.dp-manage-table tr.dp-sel td {
+  background: rgb(var(--accent-rgb) / 0.22);
+}
+</style>

@@ -29,7 +29,17 @@ import {
 import { clearSavedZoom, type SavedZoom } from '../../lib/savedZoom';
 import { periodFromSelect, PPL_SUM } from '../../composables/usePeriodControls';
 import type { PplData } from '../../types/widgets';
-import '../../styles/widgets.css';
+import {
+  dtCtrlSelClass,
+  dtDaterangeClass,
+  dtMetaClass,
+  dtMetaControlsClass,
+  dtMetaLblClass,
+  dtMetaSepClass,
+  dtNodataClass,
+  dtRootClass,
+  dtStatusClass,
+} from './uiClasses';
 import MultiSelectDropdown from '../MultiSelectDropdown.vue';
 import PeriodControls from './PeriodControls.vue';
 import PlotlyChart from './PlotlyChart.vue';
@@ -112,19 +122,19 @@ const allUsers = useDashboardUsers().users;
 </script>
 
 <template>
-  <div v-if="!data && !error" class="dt-status">{{ dashT('dash.loading', 'Loading…') }}</div>
-  <div v-else-if="error" class="dt-status">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
-  <div v-else class="dt-root">
+  <div v-if="!data && !error" :class="dtStatusClass">{{ dashT('dash.loading', 'Loading…') }}</div>
+  <div v-else-if="error" :class="dtStatusClass">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
+  <div v-else :class="dtRootClass">
     <WidgetHeader :title="dashT('dash.profitsAndLosses', 'Profits and Losses')" :icon="'📉'">
-      <div class="dt-meta dt-meta-controls">
-        <span class="dt-meta-lbl">{{ dashT('dash.sumPeriod', 'Sum Period') }}</span>
-        <select class="dt-ctrl-sel" :value="sumPeriod" @change="onSumPeriodChange">
+      <div :class="[dtMetaClass, dtMetaControlsClass]">
+        <span :class="dtMetaLblClass">{{ dashT('dash.sumPeriod', 'Sum Period') }}</span>
+        <select :class="dtCtrlSelClass" :value="sumPeriod" @change="onSumPeriodChange">
           <option v-for="s in PPL_SUM" :key="s" :value="s">{{ s }}</option>
         </select>
-        <span class="dt-meta-sep">·</span>
+        <span :class="dtMetaSepClass">·</span>
         <PeriodControls :period="period" @update:period="onPeriodChange" />
-        <span class="dt-meta-sep">·</span>
-        <span class="dt-meta-lbl">{{ dashT('dash.users', 'Users') }}</span>
+        <span :class="dtMetaSepClass">·</span>
+        <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
         <MultiSelectDropdown
           :model-value="users"
           :users="allUsers"
@@ -132,10 +142,10 @@ const allUsers = useDashboardUsers().users;
         />
       </div>
     </WidgetHeader>
-    <div v-if="data && data.from_date && data.to_date" class="dt-daterange">
+    <div v-if="data && data.from_date && data.to_date" :class="dtDaterangeClass">
       {{ dateRangeText(data.from_date, data.to_date) }}
     </div>
-    <div v-if="bars.length === 0" class="dt-nodata">
+    <div v-if="bars.length === 0" :class="dtNodataClass">
       {{ dashT('dash.noDataPeriod', 'No data for the selected period.') }}
     </div>
     <PlotlyChart

@@ -7,8 +7,10 @@ import './components/widgets/register';
 import { setDashTranslator } from './lib/i18n';
 
 /* The editor page is a standalone document (like the legacy
-   dashboard_editor.html): its own editor.css (imported by EditorGrid) carries
-   the document-level rules on top of the shared tailwind.css entry. */
+   dashboard_editor.html): App.vue's unscoped <style> block carries the
+   document-level rules (body font stack, standalone/view-mode chrome) on
+   top of the shared tailwind.css entry — the former styles/editor.css and
+   styles/widgets.css were deleted at the Tailwind migration. */
 
 const i18n = createI18n(detectLang());
 /* Wire the page's vue-i18n instance into dashT so every dash.* key resolves

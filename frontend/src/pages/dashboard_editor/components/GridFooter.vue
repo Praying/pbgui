@@ -13,16 +13,16 @@ const store = useDashboardStore();
 </script>
 
 <template>
-  <div id="grid-footer" class="grid-footer">
+  <div id="grid-footer" class="grid-footer mt-[0.75rem] flex justify-center gap-[0.5rem]">
     <button
-      class="grid-footer-btn"
+      class="grid-footer-btn cursor-pointer rounded-sm border border-secondary bg-border-default px-[0.9rem] py-[0.3rem] text-sm text-secondary [transition:border-color_.15s,color_.15s] enabled:hover:border-accent-soft enabled:hover:text-primary disabled:cursor-default disabled:opacity-30"
       :disabled="store.rows <= 1"
       @click="store.setLayout(store.rows - 1, store.cols)"
     >
       {{ dashT('dash.removeRow', '− Row') }}
     </button>
     <button
-      class="grid-footer-btn"
+      class="grid-footer-btn cursor-pointer rounded-sm border border-secondary bg-border-default px-[0.9rem] py-[0.3rem] text-sm text-secondary [transition:border-color_.15s,color_.15s] enabled:hover:border-accent-soft enabled:hover:text-primary disabled:cursor-default disabled:opacity-30"
       :disabled="store.rows >= 10"
       @click="store.setLayout(store.rows + 1, store.cols)"
     >

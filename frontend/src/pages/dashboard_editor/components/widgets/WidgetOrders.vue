@@ -46,8 +46,50 @@ import { onPositionSelected, rememberedPosition } from '../../lib/positionsBus';
 import { useUpnlTracker } from '../../lib/ordersUpnl';
 import { cellPos, WIDGET_META } from '../../lib/grid';
 import { PERSISTED_CELL_KEYS, type OrdersData, type PositionRow } from '../../types/widgets';
-import '../../styles/widgets.css';
+import {
+  dtMetaClass,
+  dtMetaControlsClass,
+  dtMetaLblClass,
+  dtMetaSepClass,
+  dtMetaUserClass,
+  dtNodataClass,
+  dtRootClass,
+  dtStatusClass,
+} from './uiClasses';
 import WidgetHeader from './WidgetHeader.vue';
+
+/* ── Tailwind class sets (the former .do-* rules of styles/widgets.css,
+   deleted at the Tailwind migration). Every branch returns the COMPLETE
+   colour set — the legacy .do-tf-active variant replaced the base tone
+   wholesale, so it must never combine with the default tone on the same
+   element. The legacy class names ride along as inert anchors. */
+function tfBtnClass(active: boolean): string {
+  return active
+    ? 'do-tf-btn do-tf-active cursor-pointer whitespace-nowrap rounded-sm border border-accent bg-accent px-[0.5rem] py-[0.15rem] text-[0.78rem] text-[#f2f5fb] [transition:all_.15s]'
+    : 'do-tf-btn cursor-pointer whitespace-nowrap rounded-sm border border-border-strong bg-border-default px-[0.5rem] py-[0.15rem] text-[0.78rem] text-muted hover:bg-border-strong hover:text-primary [transition:all_.15s]';
+}
+
+/** The former .do-leg-solid/.do-leg-dotted/.do-leg-dashed swatches — the
+ *  visible border colour comes from the inline style (borderColor). */
+function legSwatchClass(style: string): string {
+  if (style === 'do-leg-solid') return 'do-leg-solid inline-block w-[18px] border-b-2';
+  if (style === 'do-leg-dotted') return 'do-leg-dotted inline-block w-[18px] [border-bottom:1px_dotted]';
+  return 'do-leg-dashed inline-block w-[18px] [border-bottom:1px_dashed]';
+}
+
+/** The former .dt-pos/.dt-neg uPnL tint (lib/ordersUpnl keeps the legacy
+ *  class names; this maps them onto the complete colour set). */
+function upnlToneClass(cls: string | undefined): string {
+  return cls === 'dt-pos' ? 'dt-pos text-success' : 'dt-neg text-danger';
+}
+
+/* .do-chart-wrap vs .do-chart-wrap.do-fullscreen (render.js:3824-3831):
+   position and radius flip wholesale, so each state carries its own set. */
+function chartWrapClass(fullscreen: boolean): string {
+  return fullscreen
+    ? 'do-chart-wrap group fixed left-0 top-0 z-[99999] w-screen! h-dvh! overflow-hidden rounded-none bg-page'
+    : 'do-chart-wrap group relative h-[580px] w-full overflow-hidden rounded-md bg-page';
+}
 
 const store = useDashboardStore();
 const ctx = inject(cellContextKey, null);
@@ -279,49 +321,48 @@ const icon = WIDGET_META.ORDERS.icon;
 </script>
 
 <template>
-  <div v-if="!linked" class="dt-status">
+  <div v-if="!linked" :class="dtStatusClass">
     {{ dashT('dash.linkPositionsForOrders', 'Link a POSITIONS widget above to see Orders preview.') }}
   </div>
-  <div v-else ref="rootEl" class="dt-root" :class="{ 'do-fullscreen': fs.isFullscreen.value }">
+  <div v-else ref="rootEl" :class="[dtRootClass, { 'do-fullscreen': fs.isFullscreen.value }]">
     <WidgetHeader :title="dashT('dash.orders', 'Orders')" :icon="icon">
-      <span v-if="statusMessage" class="dt-meta">{{ statusMessage }}</span>
-      <div v-else-if="payload" class="dt-meta dt-meta-controls">
-        <span class="dt-meta-lbl">{{ dashT('dash.timeframe', 'Timeframe') }}</span>
-        <div class="do-tf-bar">
+      <span v-if="statusMessage" :class="dtMetaClass">{{ statusMessage }}</span>
+      <div v-else-if="payload" :class="[dtMetaClass, dtMetaControlsClass]">
+        <span :class="dtMetaLblClass">{{ dashT('dash.timeframe', 'Timeframe') }}</span>
+        <div class="do-tf-bar flex flex-wrap items-center gap-[0.25rem]">
           <button
             v-for="tf in TIMEFRAMES"
             :key="tf"
             type="button"
-            class="do-tf-btn"
-            :class="{ 'do-tf-active': tf === currentTimeframe }"
+            :class="tfBtnClass(tf === currentTimeframe)"
             @click="onTfClick(tf)"
           >
             {{ tf }}
           </button>
         </div>
-        <span class="dt-meta-sep">·</span>
-        <span class="dt-meta">{{ dashT('dash.user', 'User') }}:&nbsp;<span class="dt-meta-user">{{ payload.user || '' }}</span>&nbsp;·&nbsp;{{ dashT('dash.symbol', 'Symbol') }}:&nbsp;<span class="dt-meta-user">{{ payload.symbol || '' }}</span>&nbsp;·&nbsp;<span class="do-clock">{{ clockText }}</span><span v-if="upnl.text.value" class="do-pos-info">{{ ' · uPnL: ' }}<span :class="upnl.cls.value">{{ upnl.text.value }}</span></span></span>
+        <span :class="dtMetaSepClass">·</span>
+        <span :class="dtMetaClass">{{ dashT('dash.user', 'User') }}:&nbsp;<span :class="dtMetaUserClass">{{ payload.user || '' }}</span>&nbsp;·&nbsp;{{ dashT('dash.symbol', 'Symbol') }}:&nbsp;<span :class="dtMetaUserClass">{{ payload.symbol || '' }}</span>&nbsp;·&nbsp;<span class="do-clock">{{ clockText }}</span><span v-if="upnl.text.value" class="do-pos-info">{{ ' · uPnL: ' }}<span :class="upnlToneClass(upnl.cls.value)">{{ upnl.text.value }}</span></span></span>
       </div>
     </WidgetHeader>
-    <div v-if="statusMessage" class="dt-nodata">{{ statusMessage }}</div>
+    <div v-if="statusMessage" :class="dtNodataClass">{{ statusMessage }}</div>
     <template v-else-if="payload">
-      <div v-if="!hasChart" class="dt-nodata">
+      <div v-if="!hasChart" :class="dtNodataClass">
         {{ dashT('dash.noCandleSymbol', 'No candle data for this symbol.') }}
       </div>
-      <div v-else ref="chartWrapEl" class="do-chart-wrap">
-        <div class="do-chart-toolbar">
+      <div v-else ref="chartWrapEl" :class="chartWrapClass(fs.isFullscreen.value)">
+        <div class="do-chart-toolbar absolute left-1 top-1 z-[20] hidden gap-0.5 rounded-[5px] border border-border-default bg-page/85 px-1 py-0.75 group-hover:flex">
           <button
             type="button"
-            class="do-fs-btn"
+            class="do-fs-btn cursor-pointer rounded-[3px] border-0 bg-transparent px-1.25 py-0.5 text-[15px] leading-none text-secondary hover:bg-elevated hover:text-primary"
             :title="dashT('dash.fullscreen', 'Fullscreen')"
             @click="fs.toggleFullscreen()"
           >
             {{ fs.isFullscreen.value ? '✕' : '⛶' }}
           </button>
         </div>
-        <div class="do-legend">
-          <span v-for="li in legend" :key="li.label" class="do-leg-item">
-            <span :class="li.style" :style="{ borderColor: li.color }"></span>{{ li.label }}
+        <div class="do-legend pointer-events-none absolute left-10 top-1.5 z-10 flex gap-[0.75rem] text-[0.65rem] text-secondary">
+          <span v-for="li in legend" :key="li.label" class="do-leg-item inline-flex items-center gap-1">
+            <span :class="legSwatchClass(li.style)" :style="{ borderColor: li.color }"></span>{{ li.label }}
           </span>
         </div>
       </div>

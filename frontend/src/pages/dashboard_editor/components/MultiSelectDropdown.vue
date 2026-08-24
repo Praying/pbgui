@@ -202,13 +202,22 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="msel-wrap">
-    <div ref="btnEl" class="msel-btn" @click="onBtnClick">
+  <div class="msel-wrap relative w-full">
+    <div
+      ref="btnEl"
+      class="msel-btn flex w-full cursor-pointer items-center justify-between truncate rounded-sm border border-secondary bg-border-default px-[0.5rem] py-[0.25rem] text-left text-sm text-primary hover:border-accent-soft"
+      @click="onBtnClick"
+    >
       <span>{{ label }}</span>
-      <span class="msel-arrow">▼</span>
+      <span class="msel-arrow ml-[0.4rem] shrink-0 text-[0.55rem]">▼</span>
     </div>
     <Teleport to="body">
-      <div v-if="isOpen" class="msel-drop open" :style="dropStyle" @click.stop>
+      <div
+        v-if="isOpen"
+        class="msel-drop open fixed z-[60000] mt-[2px] min-w-[180px] max-h-[260px] overflow-hidden rounded-sm border border-secondary bg-card shadow-[0_10px_28px_rgba(5,8,14,0.65)]"
+        :style="dropStyle"
+        @click.stop
+      >
         <input
           ref="filterEl"
           v-model="filter"
@@ -216,24 +225,25 @@ onBeforeUnmount(() => {
           class="msel-filter"
           :placeholder="dashT('dash.filterDots', 'Filter...')"
         />
-        <div class="msel-list" :style="listStyle">
+        <div class="msel-list max-h-[220px] overflow-y-auto" :style="listStyle">
           <template v-for="u in options" :key="u">
             <div
               v-show="matchesFilter(u)"
-              class="msel-item"
-              :class="{ selected: selected.indexOf(u) >= 0 }"
+              class="msel-item flex cursor-pointer items-center gap-[0.4rem] px-[0.6rem] py-[0.3rem] text-sm whitespace-nowrap"
+              :class="selected.indexOf(u) >= 0 ? 'selected bg-accent/12 text-[#f2f5fb] hover:bg-accent/18' : 'text-primary hover:bg-border-default'"
               :data-u="u.toLowerCase()"
               @click="onItemClick(u, $event)"
             >
               <input
                 type="checkbox"
+                class="m-0 cursor-pointer accent-accent-soft"
                 :value="u"
                 :checked="selected.indexOf(u) >= 0"
                 @change="toggleValue(u, ($event.target as HTMLInputElement).checked)"
               />
               <span>{{ u }}</span>
             </div>
-            <div v-if="u === 'ALL'" class="msel-sep"></div>
+            <div v-if="u === 'ALL'" class="msel-sep my-[0.15rem] border-t border-t-border-default"></div>
           </template>
         </div>
       </div>
@@ -242,7 +252,40 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Layout for the button internals only — the .msel-* visual rules live in
-   styles/editor.css (ported verbatim from the legacy <style> block). */
-.msel-btn { display: flex; justify-content: space-between; align-items: center; }
+/* The .msel-filter rules stay CSS — the tests pin the input's className to
+   exactly 'msel-filter', so no utility may ride along (the rule set is
+   ported from styles/editor.css, deleted at the Tailwind migration). */
+.msel-filter {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--border-default);
+  color: var(--text-primary);
+  border: none;
+  border-bottom: 1px solid var(--text-dim);
+  padding: 0.35rem 0.5rem;
+  font-size: var(--fs-sm);
+  outline: none;
+}
+.msel-filter::placeholder {
+  color: var(--text-muted);
+}
+</style>
+
+<style>
+/* Host-context sizing (the legacy .dt-meta-controls .msel-* rules of
+   styles/widgets.css): the compact widget header hosts shrink the
+   dropdown. Unscoped on purpose — the hosts render this component's
+   root element, so a scoped selector could never match. Un-layered CSS
+   also beats the component's w-full utility, which is what the legacy
+   `width:auto !important` accomplished. */
+.dt-meta-controls .msel-wrap {
+  width: auto;
+  flex-shrink: 0;
+}
+.dt-meta-controls .msel-btn {
+  min-width: 80px;
+  max-width: 120px;
+  font-size: 0.73rem;
+  padding: 0.2rem 0.35rem;
+}
 </style>

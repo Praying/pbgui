@@ -16,6 +16,7 @@ import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { WIDGET_META, widgetLabel, type RenderableWidgetType } from '../../lib/grid';
 import { dashT } from '../../lib/i18n';
 import type { WidgetType } from '../../types/widgets';
+import { dtHeaderClass, dtIconClass, dtTitleClass, dtTrashClass } from './uiClasses';
 
 const store = useDashboardStore();
 const ctx = inject(cellContextKey, null);
@@ -40,16 +41,16 @@ function onDelete(): void {
 
 <template>
   <div
-    class="dt-header"
+    :class="dtHeaderClass"
     draggable="true"
     @dragstart="drag?.onHeaderDragStart($event)"
     @dragend="drag?.onHeaderDragEnd()"
   >
-    <span class="dt-icon">{{ icon }}</span>
-    <span class="dt-title">{{ label }}</span>
+    <span :class="dtIconClass">{{ icon }}</span>
+    <span :class="dtTitleClass">{{ label }}</span>
     <button
       v-if="editMode"
-      class="dt-trash"
+      :class="dtTrashClass"
       :title="dashT('dash.removeWidget', 'Remove widget')"
       @click.stop="onDelete"
     >

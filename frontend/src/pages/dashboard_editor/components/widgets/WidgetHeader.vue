@@ -15,6 +15,7 @@ import { computed, inject } from 'vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { dashT } from '../../lib/i18n';
+import { dtHeaderClass, dtIconClass, dtTitleClass, dtTrashClass } from './uiClasses';
 
 defineProps<{
   title: string;
@@ -37,17 +38,17 @@ function onDelete(): void {
 
 <template>
   <div
-    class="dt-header"
+    :class="dtHeaderClass"
     draggable="true"
     @dragstart="drag?.onHeaderDragStart($event)"
     @dragend="drag?.onHeaderDragEnd()"
   >
-    <span v-if="icon" class="dt-icon">{{ icon }}</span>
-    <span class="dt-title">{{ title }}</span>
+    <span v-if="icon" :class="dtIconClass">{{ icon }}</span>
+    <span :class="dtTitleClass">{{ title }}</span>
     <slot />
     <button
       v-if="editMode"
-      class="dt-trash"
+      :class="dtTrashClass"
       :title="dashT('dash.removeWidget', 'Remove widget')"
       @click.stop="onDelete"
     >

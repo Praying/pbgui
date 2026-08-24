@@ -4,10 +4,15 @@
  * (dashboard_render.js:2394-2451): the dry-run config preview overlay with
  * the note, the pretty-printed JSON and a Close action. Geometry from
  * previewModalGeometry (legacy 2402-2407 viewport math).
+ *
+ * The shared modal chrome utilities live in ./uiClasses (dpModalChrome);
+ * the footer button rules live in PositionsManageModal's unscoped style
+ * block (the legacy widgets.css sheet styled both modals).
  */
 import { computed } from 'vue';
 import { dashT } from '../../lib/i18n';
 import { previewModalGeometry } from '../../lib/manageLogic';
+import { dpModalChrome } from './uiClasses';
 
 const props = defineProps<{
   title: string;
@@ -31,19 +36,22 @@ const configText = computed<string>(() => JSON.stringify(props.config ?? {}, nul
 
 <template>
   <Teleport to="body">
-    <div class="dp-modal-ovl" style="z-index: 30001">
-      <div class="dp-preview-modal" :style="style">
-        <div class="dp-modal-head">
-          <div class="dp-modal-title">{{ title }}</div>
-          <button type="button" class="dp-modal-close" @click="emit('close')">&#x2715;</button>
+    <div :class="dpModalChrome.ovl" style="z-index: 30001">
+      <div
+        class="dp-preview-modal fixed flex h-[min(760px,calc(100dvh-72px))] w-[min(1200px,calc(100vw-48px))] min-h-[320px] min-w-[560px] max-h-[calc(100dvh-24px)] max-w-[calc(100vw-16px)] flex-col overflow-visible rounded-[12px] border border-border-default bg-page font-sans text-primary shadow-[0_20px_70px_rgba(5,8,14,0.85)]"
+        :style="style"
+      >
+        <div :class="dpModalChrome.head">
+          <div :class="dpModalChrome.title">{{ title }}</div>
+          <button type="button" :class="dpModalChrome.close" @click="emit('close')">&#x2715;</button>
         </div>
-        <div class="dp-preview-body">
-          <div class="dp-status-msg ok">
+        <div class="dp-preview-body flex min-h-0 flex-1 flex-col gap-[0.55rem] overflow-hidden p-[0.85rem]">
+          <div :class="[dpModalChrome.statusMsg, 'ok text-success-soft']">
             {{ dashT('dash.previewOnly', 'Preview only. No config was saved and no SSH sync was started.') }}
           </div>
-          <pre class="dp-preview">{{ configText }}</pre>
-          <div class="dp-modal-actions">
-            <span class="spacer"></span>
+          <pre class="dp-preview min-h-0 flex-auto overflow-auto rounded-md border border-border-default bg-page p-[0.6rem] text-[0.68rem] leading-[1.35] whitespace-pre-wrap text-primary">{{ configText }}</pre>
+          <div :class="dpModalChrome.actions">
+            <span class="spacer flex-1"></span>
             <button type="button" @click="emit('close')">{{ dashT('common.close', 'Close') }}</button>
           </div>
         </div>

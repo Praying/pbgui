@@ -31,7 +31,16 @@ import { dateRangeText } from '../../lib/format';
 import { incomeDataUrl } from '../../lib/endpoints';
 import { periodFromSelect } from '../../composables/usePeriodControls';
 import type { IncomeData } from '../../types/widgets';
-import '../../styles/widgets.css';
+import {
+  diRootClass,
+  dtCtrlNumClass,
+  dtDaterangeClass,
+  dtMetaClass,
+  dtMetaControlsClass,
+  dtMetaLblClass,
+  dtMetaSepClass,
+  dtStatusClass,
+} from './uiClasses';
 import MultiSelectDropdown from '../MultiSelectDropdown.vue';
 import IncomeChart from './IncomeChart.vue';
 import IncomeTable from './IncomeTable.vue';
@@ -149,36 +158,36 @@ watch(
 </script>
 
 <template>
-  <div v-if="!data && !error" ref="hostEl" class="dt-status">{{ dashT('dash.loading', 'Loading…') }}</div>
-  <div v-else-if="error" ref="hostEl" class="dt-status">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
-  <div v-else ref="hostEl" class="di-root">
+  <div v-if="!data && !error" ref="hostEl" :class="dtStatusClass">{{ dashT('dash.loading', 'Loading…') }}</div>
+  <div v-else-if="error" ref="hostEl" :class="dtStatusClass">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
+  <div v-else ref="hostEl" :class="diRootClass">
     <WidgetHeader :title="dashT('dash.income', 'Income')" :icon="'💰'">
-      <div class="dt-meta dt-meta-controls">
+      <div :class="[dtMetaClass, dtMetaControlsClass]">
         <PeriodControls :period="period" @update:period="onPeriodChange" />
-        <span class="dt-meta-sep">·</span>
-        <span class="dt-meta-lbl">{{ dashT('dash.lastN', 'Last N') }}</span>
+        <span :class="dtMetaSepClass">·</span>
+        <span :class="dtMetaLblClass">{{ dashT('dash.lastN', 'Last N') }}</span>
         <input
           type="number"
           min="0"
           max="9999"
           step="10"
-          class="dt-ctrl-num"
+          :class="dtCtrlNumClass"
           :value="lastN"
           @change="onLastNChange"
         />
-        <span class="dt-meta-sep">·</span>
-        <span class="dt-meta-lbl">{{ dashT('dash.filterVal', 'Filter') }}</span>
+        <span :class="dtMetaSepClass">·</span>
+        <span :class="dtMetaLblClass">{{ dashT('dash.filterVal', 'Filter') }}</span>
         <input
           type="number"
           min="0"
           step="0.01"
-          class="dt-ctrl-num"
+          :class="dtCtrlNumClass"
           style="width:68px"
           :value="filterVal"
           @change="onFilterChange"
         />
-        <span class="dt-meta-sep">·</span>
-        <span class="dt-meta-lbl">{{ dashT('dash.users', 'Users') }}</span>
+        <span :class="dtMetaSepClass">·</span>
+        <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
         <MultiSelectDropdown
           :model-value="users"
           :users="allUsers"
@@ -186,7 +195,7 @@ watch(
         />
       </div>
     </WidgetHeader>
-    <div v-if="data && data.from_date && data.to_date" class="dt-daterange">
+    <div v-if="data && data.from_date && data.to_date" :class="dtDaterangeClass">
       {{ dateRangeText(data.from_date, data.to_date) }}
     </div>
     <IncomeTable

@@ -15,7 +15,7 @@ const store = useDashboardStore();
 </script>
 
 <template>
-  <div class="editor-grid-col">
+  <div class="editor-grid-col flex min-w-0 flex-1 flex-col gap-[0.75rem]">
     <GridCell v-for="r in store.rows" :key="'grid-cell-' + r + '-' + col" :row="r" :col="col" />
   </div>
 </template>

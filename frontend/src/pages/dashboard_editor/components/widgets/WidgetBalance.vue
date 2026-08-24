@@ -34,7 +34,7 @@ import { positionsStatusText, signedFmt, tweBarPct, tweColor, upnlColor } from '
 import { balanceUrl } from '../../lib/endpoints';
 import { cellPos } from '../../lib/grid';
 import type { BalanceData, BalanceRow } from '../../types/widgets';
-import '../../styles/widgets.css';
+import { dtIconClass, dtTrashClass } from './uiClasses';
 import MultiSelectDropdown from '../MultiSelectDropdown.vue';
 
 const store = useDashboardStore();
@@ -149,73 +149,73 @@ function onDelete(): void {
 </script>
 
 <template>
-  <div v-if="!data && !error" class="db-status">{{ dashT('dash.loading', 'Loading…') }}</div>
-  <div v-else-if="error" class="db-status">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
-  <div v-else ref="rootEl" class="db-root">
+  <div v-if="!data && !error" class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-[0.68rem] text-muted">{{ dashT('dash.loading', 'Loading…') }}</div>
+  <div v-else-if="error" class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-[0.68rem] text-muted">{{ dashT('dash.dataUnavailable', '⚠ Data unavailable') }}</div>
+  <div v-else ref="rootEl" class="db-root bg-page font-sans text-[0.875rem] text-primary">
     <div
-      class="db-header"
+      class="db-header flex flex-nowrap items-center justify-start gap-[0.5rem] rounded-t-md border-b border-b-border-default bg-card px-[0.75rem] py-[0.5rem]"
       draggable="true"
       @dragstart="drag?.onHeaderDragStart($event)"
       @dragend="drag?.onHeaderDragEnd()"
     >
-      <span class="dt-icon">⚖️</span>
-      <div class="db-totals">
+      <span :class="dtIconClass">⚖️</span>
+      <div class="db-totals flex flex-wrap gap-[1.5rem]">
         <div class="db-total-item">
-          <label>{{ dashT('dash.totalBalance', 'Total Balance') }}</label>
-          <span class="db-green">${{ num(totals.balance).toFixed(2) }} USDT</span>
+          <label class="block text-[0.68rem] uppercase tracking-[0.05em] text-muted">{{ dashT('dash.totalBalance', 'Total Balance') }}</label>
+          <span class="db-green text-[0.88rem] font-semibold text-success">${{ num(totals.balance).toFixed(2) }} USDT</span>
         </div>
         <div class="db-total-item">
-          <label>{{ dashT('dash.totalUPnl', 'Total uPnl') }}</label>
-          <span :style="{ color: upnlColor(num(totals.upnl)) }">{{ signedFmt(num(totals.upnl)) }}</span>
+          <label class="block text-[0.68rem] uppercase tracking-[0.05em] text-muted">{{ dashT('dash.totalUPnl', 'Total uPnl') }}</label>
+          <span class="text-[0.88rem] font-semibold" :style="{ color: upnlColor(num(totals.upnl)) }">{{ signedFmt(num(totals.upnl)) }}</span>
         </div>
         <div class="db-total-item">
-          <label>{{ dashT('dash.totalTwe', 'Total TWE') }}</label>
-          <span :style="{ color: tweColor(num(totals.we)) }">{{ num(totals.we).toFixed(2) }} %</span>
+          <label class="block text-[0.68rem] uppercase tracking-[0.05em] text-muted">{{ dashT('dash.totalTwe', 'Total TWE') }}</label>
+          <span class="text-[0.88rem] font-semibold" :style="{ color: tweColor(num(totals.we)) }">{{ num(totals.we).toFixed(2) }} %</span>
         </div>
       </div>
-      <div class="db-user-sel">
-        <label>{{ dashT('dash.usersColon', 'Users:') }}</label>
+      <div class="db-user-sel relative ml-auto flex items-center gap-[0.4rem]">
+        <label class="text-[0.73rem] text-secondary">{{ dashT('dash.usersColon', 'Users:') }}</label>
         <MultiSelectDropdown :model-value="users" :users="allUsers" @update:model-value="onUsersChange" />
       </div>
       <button
         v-if="editMode"
-        class="dt-trash"
+        :class="dtTrashClass"
         :title="dashT('dash.removeWidget', 'Remove widget')"
         @click.stop="onDelete"
       >
         &#128465;
       </button>
     </div>
-    <div class="db-status" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
-    <div v-if="rows.length === 0" class="db-nodata">
+    <div class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-[0.68rem] text-muted" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
+    <div v-if="rows.length === 0" class="db-nodata p-[1.5rem] text-center text-[0.85rem] text-border-strong">
       {{ dashT('dash.noBalanceData', 'No balance data.') }}
     </div>
-    <div v-else class="db-table-wrap">
-      <table class="db-table">
+    <div v-else class="db-table-wrap overflow-x-auto">
+      <table class="db-table w-full border-collapse">
         <thead>
           <tr>
-            <th>{{ dashT('dash.user', 'User') }}</th>
-            <th>{{ dashT('dash.date', 'Date') }}</th>
-            <th>{{ dashT('dash.balanceUsdt', 'Balance USDT') }}</th>
-            <th>{{ dashT('dash.upnl', 'uPnl') }}</th>
-            <th>{{ dashT('dash.twePct', 'TWE %') }}</th>
+            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-[0.75rem] font-medium uppercase tracking-[0.04em] text-secondary hover:text-primary">{{ dashT('dash.user', 'User') }}</th>
+            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-[0.75rem] font-medium uppercase tracking-[0.04em] text-secondary hover:text-primary">{{ dashT('dash.date', 'Date') }}</th>
+            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-[0.75rem] font-medium uppercase tracking-[0.04em] text-secondary hover:text-primary">{{ dashT('dash.balanceUsdt', 'Balance USDT') }}</th>
+            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-[0.75rem] font-medium uppercase tracking-[0.04em] text-secondary hover:text-primary">{{ dashT('dash.upnl', 'uPnl') }}</th>
+            <th class="cursor-pointer select-none border-b border-b-border-default bg-card px-[0.7rem] py-[0.4rem] text-left text-[0.75rem] font-medium uppercase tracking-[0.04em] text-secondary hover:text-primary">{{ dashT('dash.twePct', 'TWE %') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="r in rows" :key="r.user + '|' + r.date">
-            <td>{{ r.user }}</td>
-            <td class="db-muted">{{ r.date }}</td>
-            <td>{{ num(r.balance).toFixed(2) }}</td>
-            <td :style="{ color: upnlColor(num(r.upnl)) }">{{ signedFmt(num(r.upnl)) }}</td>
-            <td>
-              <div class="db-twe-cell">
-                <div class="db-twe-track">
+            <td class="border-b border-b-card px-[0.7rem] py-[0.35rem]">{{ r.user }}</td>
+            <td class="db-muted border-b border-b-card px-[0.7rem] py-[0.35rem] text-[0.76rem] text-secondary">{{ r.date }}</td>
+            <td class="border-b border-b-card px-[0.7rem] py-[0.35rem]">{{ num(r.balance).toFixed(2) }}</td>
+            <td class="border-b border-b-card px-[0.7rem] py-[0.35rem]" :style="{ color: upnlColor(num(r.upnl)) }">{{ signedFmt(num(r.upnl)) }}</td>
+            <td class="border-b border-b-card px-[0.7rem] py-[0.35rem]">
+              <div class="db-twe-cell flex items-center gap-[0.4rem]">
+                <div class="db-twe-track h-[7px] min-w-[50px] flex-1 overflow-hidden rounded-[3px] bg-border-default">
                   <div
-                    class="db-twe-fill"
+                    class="db-twe-fill h-full rounded-[3px] [transition:width_.3s,background_.3s]"
                     :style="{ width: tweBarPct(num(r.we)) + '%', background: tweColor(num(r.we)) }"
                   ></div>
                 </div>
-                <span class="db-twe-lbl" :style="{ color: tweColor(num(r.we)) }">{{
+                <span class="db-twe-lbl min-w-[44px] text-right text-[0.76rem]" :style="{ color: tweColor(num(r.we)) }">{{
                   num(r.we).toFixed(2)
                 }}</span>
               </div>
@@ -226,3 +226,12 @@ function onDelete(): void {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Row hover paints the td descendants (ported from styles/widgets.css —
+   a descendant relationship utilities cannot express; un-layered scoped
+   CSS beats the td utilities, exactly like the legacy cascade). */
+.db-table tbody tr:hover td {
+  background: var(--bg-elevated);
+}
+</style>

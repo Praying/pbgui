@@ -28,6 +28,14 @@ import {
   todayIso,
 } from '../../composables/usePeriodControls';
 import { dashT } from '../../lib/i18n';
+import {
+  dtCtrlDateClass,
+  dtCtrlNowCheckboxClass,
+  dtCtrlNowWrapClass,
+  dtCtrlSelClass,
+  dtMetaLblClass,
+  dtMetaSepClass,
+} from './uiClasses';
 
 const props = defineProps<{
   /** Legacy state[pKey] — 'THIS_MONTH' | 'CUSTOM:from:to' | … */
@@ -56,24 +64,24 @@ function onNowChange(e: Event): void {
 </script>
 
 <template>
-  <span class="dt-meta-lbl">{{ dashT('dash.period', 'Period') }}</span>
-  <select class="dt-ctrl-sel" :value="parsed.displayPeriod" @change="onSelectChange">
+  <span :class="dtMetaLblClass">{{ dashT('dash.period', 'Period') }}</span>
+  <select :class="dtCtrlSelClass" :value="parsed.displayPeriod" @change="onSelectChange">
     <option v-for="p in PERIODS_TOP" :key="p" :value="p">{{ p }}</option>
   </select>
   <template v-if="parsed.isCustom">
-    <span class="dt-meta-sep">·</span>
-    <span class="dt-meta-lbl">{{ dashT('dash.from', 'From') }}</span>
-    <input type="date" class="dt-ctrl-date" :value="parsed.from" @change="onFromChange" />
-    <span class="dt-meta-lbl">{{ dashT('dash.to', 'To') }}</span>
+    <span :class="dtMetaSepClass">·</span>
+    <span :class="dtMetaLblClass">{{ dashT('dash.from', 'From') }}</span>
+    <input type="date" :class="dtCtrlDateClass" :value="parsed.from" @change="onFromChange" />
+    <span :class="dtMetaLblClass">{{ dashT('dash.to', 'To') }}</span>
     <input
       type="date"
-      class="dt-ctrl-date"
+      :class="dtCtrlDateClass"
       :value="parsed.toNow ? todayIso() : parsed.to"
       :disabled="parsed.toNow"
       @change="onToChange"
     />
-    <label class="dt-ctrl-now-wrap">
-      <input type="checkbox" :checked="parsed.toNow" @change="onNowChange" />Now
+    <label :class="dtCtrlNowWrapClass">
+      <input type="checkbox" :class="dtCtrlNowCheckboxClass" :checked="parsed.toNow" @change="onNowChange" />Now
     </label>
   </template>
 </template>

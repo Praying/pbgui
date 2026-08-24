@@ -53,6 +53,8 @@ function setCellRoot(el: unknown): void {
 
 const pos = cellPos(props.row, props.col);
 
+const viewOnly = computed<boolean>(() => store.config.viewOnly);
+
 const cellType = computed<string>(() => store.cellType(props.row, props.col));
 
 const widgetComp = computed<Component | null>(() =>
@@ -64,6 +66,38 @@ const widgetComp = computed<Component | null>(() =>
 const isOver = computed<boolean>(() => drag.dragOverCells.has(pos));
 const isDragging = computed<boolean>(() => drag.isCellDragging(props.row, props.col));
 const isAutoHeight = computed<boolean>(() => store.isAutoHeight(props.row, props.col));
+
+/* ── Tailwind class sets (the former .editor-cell state rules of
+   styles/editor.css, deleted at the Tailwind migration). Every branch
+   returns the COMPLETE colour/border/size set — Tailwind emits
+   same-property utilities in its own fixed order, so a state class
+   must never be combined with a conflicting base one. The legacy
+   state class names (drag-over/dragging/auto-height) ride along as
+   inert anchors — the tests select them. */
+const cellStateClass = computed<string>(() => {
+  const over = isOver.value;
+  const dragging = isDragging.value;
+  const parts = [
+    /* border-color: dragging and drag-over both paint the accent (editor:130-139) */
+    over || dragging ? 'border-accent-soft' : 'border-border-default',
+    dragging ? 'dragging opacity-40 cursor-grabbing' : 'cursor-default',
+    /* min-height: the auto-height reset needs !important — it must beat
+       the un-layered body.view-mode .editor-cell rule (editor:317-321) */
+    isAutoHeight.value ? 'auto-height min-h-0!' : 'min-h-[360px]',
+  ];
+  if (over) parts.push('drag-over border-dashed [transform:scale(1.01)]');
+  return parts.join(' ');
+});
+
+/* .cell-inline-preview min-height ladder (editor:297-303 + 313-322):
+   edit mode 120px; view mode 320px unless auto-height forces 0. */
+const previewMinHeightClass = computed<string>(() =>
+  viewOnly.value
+    ? isAutoHeight.value
+      ? 'min-h-0!'
+      : 'min-h-[320px]'
+    : 'min-h-[120px]'
+);
 
 /* editor:2375-2376 (stored) + 2452-2459 (live drag suppression) */
 const heightStyle = computed(
@@ -128,8 +162,8 @@ provide(widgetDragKey, {
 <template>
   <div
     :ref="setCellRoot"
-    class="editor-cell"
-    :class="{ 'drag-over': isOver, dragging: isDragging, 'auto-height': isAutoHeight }"
+    class="editor-cell relative flex min-w-0 flex-col gap-[0.5rem] overflow-x-auto rounded-md border bg-card p-[0.75rem] [transition:opacity_.2s,border-color_.2s,transform_.15s]"
+    :class="cellStateClass"
     :data-row="row"
     :data-col="col"
     :style="heightStyle"
@@ -137,12 +171,20 @@ provide(widgetDragKey, {
     @dragleave="onDragLeave"
     @drop="onDrop"
   >
-    <div class="drop-hint">{{ dashT('dash.dropWidgetHere', 'Drop widget here') }}</div>
-    <div class="cell-inline-preview">
+    <div
+      class="drop-hint pointer-events-none absolute inset-0 z-10 items-center justify-center rounded-md border-2 border-dashed border-accent-soft bg-accent/8 text-sm text-accent-soft"
+      :class="isOver ? 'flex' : 'hidden'"
+    >
+      {{ dashT('dash.dropWidgetHere', 'Drop widget here') }}
+    </div>
+    <div
+      class="cell-inline-preview flex flex-1 flex-col overflow-hidden"
+      :class="previewMinHeightClass"
+    >
       <component :is="widgetComp" v-if="widgetComp" :key="store.epochOf(row, col)" />
       <div
-        v-else-if="!store.config.viewOnly"
-        class="dt-status"
+        v-else-if="!viewOnly"
+        class="dt-status min-h-[1.1em] px-[0.75rem] py-[0.2rem] text-[0.68rem] text-muted"
         style="text-align:center;padding:2rem;color:var(--text-disabled);"
       >
         {{ dashT('dash.dragWidgetHere', 'Drag a widget here') }}
@@ -156,3 +198,37 @@ provide(widgetDragKey, {
     />
   </div>
 </template>
+
+<style scoped>
+/* ── Grid-engine structural rules (ported from styles/editor.css) ──
+   Kept as CSS: descendant selectors reaching into the widget
+   components' DOM — no utility form exists. :deep() because the
+   .dt-root / .db-header / .di-root elements belong to child
+   components. */
+
+/* flex chain so Plotly charts fill the available cell height when
+   resized (legacy editor.css:325-338) */
+.cell-inline-preview > :deep(.dt-root),
+.cell-inline-preview > :deep(.di-root) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* allow shrinking below content size */
+}
+.cell-inline-preview :deep(.dt-chart),
+.cell-inline-preview :deep(.di-chart) {
+  flex: 1;
+  min-height: 0; /* allow flex to shrink the chart below Plotly SVG height */
+  overflow: hidden; /* clip SVG overflow during resize drag */
+}
+
+/* dt-header/db-header are always draggable for cell swap (legacy editor.css:307-309) */
+:deep(.dt-header),
+:deep(.db-header) {
+  cursor: grab;
+}
+.editor-cell.dragging :deep(.dt-header),
+.editor-cell.dragging :deep(.db-header) {
+  cursor: grabbing;
+}
+</style>

@@ -47,7 +47,29 @@ import {
 } from '../../lib/incomeLogic';
 import { useIncomeActions } from '../../composables/useIncomeActions';
 import type { IncomeRow } from '../../types/widgets';
-import '../../styles/widgets.css';
+import { dtMetaLblClass, dtNodataClass } from './uiClasses';
+
+/* ── Tailwind class sets (the former .di-btn* rules of styles/widgets.css,
+   deleted at the Tailwind migration). Every branch returns the COMPLETE
+   colour set — the legacy .di-btn-danger/.di-btn-yes/.di-btn-no variants
+   replaced the base tone wholesale, and two same-property colour utilities
+   in one class list would render in Tailwind's fixed order, not the
+   template's. The legacy variant class names ride along as inert anchors. */
+type DiBtnVariant = 'default' | 'danger' | 'yes' | 'no';
+
+function diBtnClass(variant: DiBtnVariant = 'default'): string {
+  const base =
+    'di-btn cursor-pointer whitespace-nowrap rounded-sm border px-[0.7rem] py-[0.3rem] text-[0.76rem] disabled:cursor-not-allowed disabled:opacity-40';
+  const tone =
+    variant === 'danger'
+      ? 'di-btn-danger border-danger-deep bg-danger-deep text-primary hover:bg-danger-deep'
+      : variant === 'yes'
+        ? 'di-btn-yes border-success-deep bg-success-deep text-[#f2f5fb] hover:bg-success-deep'
+        : variant === 'no'
+          ? 'di-btn-no border-danger-deep bg-danger-deep text-[#f2f5fb] hover:bg-danger-deep'
+          : 'border-border-strong bg-border-default text-primary hover:bg-border-strong';
+  return `${base} ${tone}`;
+}
 
 const props = defineProps<{
   /** data.rows from /dashboard/income_data (server order: date_ms desc). */
@@ -457,20 +479,30 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="!hasRows" class="dt-nodata">
+  <div v-if="!hasRows" :class="dtNodataClass">
     {{ dashT('dash.noDataPeriod', 'No data for the selected period.') }}
   </div>
   <template v-else>
-    <div ref="wrapEl" class="di-table-wrap">
-      <table ref="tableEl" class="di-table" @mousedown="onTableMouseDown" @keydown="onTableKeydown">
+    <div ref="wrapEl" class="di-table-wrap min-h-0 flex-1 overflow-x-auto overflow-y-auto">
+      <table
+        ref="tableEl"
+        class="di-table w-full select-none border-separate border-spacing-0 text-[0.78rem]"
+        @mousedown="onTableMouseDown"
+        @keydown="onTableKeydown"
+      >
         <thead>
           <tr>
-            <th v-for="c in INCOME_COLUMNS" :key="c.key" @click="onSortClick(c.key)">
-              {{ dashT(c.labelKey, c.fallback) }}<span class="di-sort">{{ sortArrow(c.key) }}</span>
+            <th
+              v-for="c in INCOME_COLUMNS"
+              :key="c.key"
+              class="sticky top-0 cursor-pointer select-none border-b-2 border-b-border-default bg-card px-[0.5rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary hover:text-primary"
+              @click="onSortClick(c.key)"
+            >
+              {{ dashT(c.labelKey, c.fallback) }}<span class="di-sort ml-[0.2rem] text-[0.65rem] text-muted">{{ sortArrow(c.key) }}</span>
               <input
                 v-if="c.key === 'date'"
                 type="date"
-                class="di-jump-input"
+                class="di-jump-input ml-[0.4rem] w-[108px] cursor-pointer rounded-sm border border-border-strong bg-border-default px-[0.25rem] py-[0.1rem] text-[0.72rem] font-normal text-primary outline-none"
                 :title="dashT('dash.goToDate', 'Go to date')"
                 @click.stop
                 @change="onJumpChange"
@@ -482,35 +514,39 @@ onBeforeUnmount(() => {
           <tr
             v-for="r in sortedRows"
             :key="r.id"
+            class="cursor-pointer"
             :data-income-id="String(r.id)"
             :tabindex="0"
             :aria-selected="isSelected(r.id) ? 'true' : 'false'"
             :class="{ 'di-sel': isSelected(r.id) }"
           >
-            <td>{{ r.date }}</td>
-            <td>{{ r.user }}</td>
-            <td>{{ r.symbol }}</td>
-            <td :class="r.income >= 0 ? 'di-inc-pos' : 'di-inc-neg'">{{ r.income.toFixed(2) }}</td>
+            <td class="border-b border-b-card px-[0.5rem] py-[0.3rem] whitespace-nowrap">{{ r.date }}</td>
+            <td class="border-b border-b-card px-[0.5rem] py-[0.3rem] whitespace-nowrap">{{ r.user }}</td>
+            <td class="border-b border-b-card px-[0.5rem] py-[0.3rem] whitespace-nowrap">{{ r.symbol }}</td>
+            <td
+              class="border-b border-b-card px-[0.5rem] py-[0.3rem] whitespace-nowrap"
+              :class="r.income >= 0 ? 'di-inc-pos text-success-soft' : 'di-inc-neg text-danger-soft'"
+            >{{ r.income.toFixed(2) }}</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- action bar (render.js:1271-1323) -->
-    <div v-show="selectedCount > 0" class="di-actions">
-      <button type="button" class="di-btn di-btn-danger" @click="onDeleteSelected">
+    <div v-show="selectedCount > 0" class="di-actions flex flex-wrap items-center gap-[0.5rem] border-t border-t-card bg-page px-[0.75rem] py-[0.4rem]">
+      <button type="button" :class="diBtnClass('danger')" @click="onDeleteSelected">
         {{ dashT('dash.deleteSelected', 'Delete selected…') }}
       </button>
-      <button type="button" class="di-btn di-btn-danger" @click="onDeleteOlder">
+      <button type="button" :class="diBtnClass('danger')" @click="onDeleteOlder">
         {{ dashT('dash.deleteOlder', 'Delete older than selected…') }}
       </button>
-      <button type="button" class="di-btn" @click="loadBackups">
+      <button type="button" :class="diBtnClass()" @click="loadBackups">
         {{ dashT('dash.backupRestore', 'Backup / Restore…') }}
       </button>
     </div>
 
     <!-- backup panel (render.js:1325-1329, 1403-1469) -->
-    <div v-show="selectedCount > 0 && backupOpen" class="di-backup">
+    <div v-show="selectedCount > 0 && backupOpen" class="di-backup border-t border-t-border-default bg-card px-[0.75rem] py-[0.5rem]">
       <span v-if="backupsLoading" style="color:var(--text-secondary);font-size:0.73rem;">{{
         dashT('dash.loadingBackups', 'Loading backups…')
       }}</span>
@@ -521,33 +557,52 @@ onBeforeUnmount(() => {
         dashT('dash.noBackups', 'No backups available.')
       }}</span>
       <template v-else>
-        <span class="dt-meta-lbl">{{ dashT('dash.restoreFrom', 'Restore from:') }}</span>
-        <select v-model="selectedPath">
+        <span :class="dtMetaLblClass">{{ dashT('dash.restoreFrom', 'Restore from:') }}</span>
+        <select
+          v-model="selectedPath"
+          class="mx-[0.4rem] w-full rounded-sm border border-border-strong bg-border-default px-[0.4rem] py-[0.25rem] text-[0.76rem] text-primary outline-none focus:border-accent-soft"
+        >
           <option v-for="b in backups" :key="b.path" :value="b.path">{{ backupLabel(b) }}</option>
         </select>
-        <button type="button" class="di-btn" @click="onRestoreClick">
+        <button type="button" :class="diBtnClass()" @click="onRestoreClick">
           {{ dashT('dash.restore', 'Restore') }}
         </button>
-        <button type="button" class="di-btn" style="margin-left:0.3rem;" @click="backupOpen = false">
+        <button type="button" :class="diBtnClass()" style="margin-left:0.3rem;" @click="backupOpen = false">
           &#10005;
         </button>
       </template>
     </div>
 
     <!-- confirm overlay (render.js:1331-1335, 1351-1376) -->
-    <div v-show="confirmMsg !== ''" class="di-confirm">
-      <div class="di-confirm-msg">{{ confirmMsg }}</div>
-      <div class="di-confirm-btns">
-        <button type="button" class="di-btn di-btn-yes" @click="onConfirmYes">
+    <div v-show="confirmMsg !== ''" class="di-confirm absolute inset-0 z-[100] flex flex-col items-center justify-center gap-[0.8rem] bg-[rgba(5,8,14,0.85)] p-[1.5rem] text-center">
+      <div class="di-confirm-msg max-w-[90%] text-[0.85rem] text-warning-soft">{{ confirmMsg }}</div>
+      <div class="di-confirm-btns flex gap-[0.8rem]">
+        <button type="button" :class="diBtnClass('yes')" @click="onConfirmYes">
           {{ dashT('common.yes', 'Yes') }}
         </button>
-        <button type="button" class="di-btn di-btn-no" @click="onConfirmNo">
+        <button type="button" :class="diBtnClass('no')" @click="onConfirmNo">
           {{ dashT('common.no', 'No') }}
         </button>
       </div>
     </div>
 
     <!-- status line (render.js:1337-1341, 1378-1382) -->
-    <div v-show="statusMsg !== ''" class="di-status">{{ statusMsg }}</div>
+    <div v-show="statusMsg !== ''" class="di-status px-[0.75rem] py-[0.3rem] text-[0.73rem] text-success-soft">{{ statusMsg }}</div>
   </template>
 </template>
+
+<style scoped>
+/* Row states paint the td descendants (ported from styles/widgets.css at
+   the Tailwind migration — a descendant relationship utilities cannot
+   express). Cascade order preserved from the legacy sheet: hover first,
+   the selected tint after it. */
+.di-table tbody tr:hover td {
+  background: var(--bg-card);
+}
+.di-table tr.di-sel td {
+  background: rgb(var(--accent-rgb) / 0.12);
+}
+.di-table tr.di-sel td:first-child {
+  border-left: 3px solid var(--accent-soft);
+}
+</style>

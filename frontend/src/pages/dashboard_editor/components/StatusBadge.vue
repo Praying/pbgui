@@ -16,3 +16,22 @@ defineProps<{
 <template>
   <div id="status" class="status" :class="cls">{{ msg }}</div>
 </template>
+
+<style scoped>
+/* Ported from styles/editor.css (deleted at the Tailwind migration).
+   The status classes stay CSS — the tests pin the element's class list
+   to exactly ['status', cls], so no utility may ride along; the tone
+   variants are the legacy .status.saved/.status.error rules. */
+.status {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  align-self: flex-end;
+  padding-bottom: 0.15rem;
+}
+.status.saved {
+  color: var(--success-soft);
+}
+.status.error {
+  color: var(--danger-soft);
+}
+</style>

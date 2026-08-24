@@ -133,14 +133,14 @@ onBeforeUnmount(() => {
 
 <template>
   <div
-    class="resize-handle"
-    :class="{ active: isDragging }"
+    class="resize-handle absolute inset-x-0 bottom-0 z-[5] h-4 cursor-ns-resize hover:bg-accent/30 [transition:background_.15s]"
+    :class="isDragging ? 'active bg-accent/30' : 'bg-transparent'"
     :title="dashT('dash.dragToResize', 'Drag to resize')"
     @mousedown="onMouseDown"
     @dblclick="onDblClick"
   >
     <button
-      class="resize-btn resize-btn-min"
+      class="resize-btn resize-btn-min absolute left-1.5 top-px z-[6] h-[13px] cursor-pointer select-none rounded-[3px] border border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
       :title="dashT('dash.collapseCompact', 'Collapse to compact (scrollable)')"
       @mousedown.stop
       @click="onMin"
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
       {{ '⋖ ' + dashT('dash.min', 'min') }}
     </button>
     <button
-      class="resize-btn resize-btn-max"
+      class="resize-btn resize-btn-max absolute right-1.5 top-px z-[6] h-[13px] cursor-pointer select-none rounded-[3px] border border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
       :title="dashT('dash.expandAllRows', 'Expand to show all rows')"
       @mousedown.stop
       @click="onMax"
@@ -157,3 +157,29 @@ onBeforeUnmount(() => {
     </button>
   </div>
 </template>
+
+<style scoped>
+/* ── Ported from styles/editor.css (deleted at the Tailwind migration) ──
+   The ::after grip is a pseudo-element (no utility form), and the
+   hover/active reveal of the Min/Max buttons is a parent-state rule —
+   both stay CSS. */
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--text-secondary);
+}
+.resize-handle:hover::after,
+.resize-handle.active::after {
+  background: var(--accent-soft);
+}
+.resize-handle:hover .resize-btn,
+.resize-handle.active .resize-btn {
+  opacity: 1;
+}
+</style>

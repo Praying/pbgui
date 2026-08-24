@@ -21,7 +21,7 @@ import { dashT } from '../../lib/i18n';
 import { applyRangeZoom, incomeLayout, incomeTraces } from '../../lib/plotlyLayouts';
 import { clearSavedZoom } from '../../lib/savedZoom';
 import type { IncomeTrace } from '../../types/widgets';
-import '../../styles/widgets.css';
+import { dtNodataClass } from './uiClasses';
 import PlotlyChart from './PlotlyChart.vue';
 
 const props = defineProps<{
@@ -46,7 +46,7 @@ watch(
 </script>
 
 <template>
-  <div v-if="traces.length === 0" class="dt-nodata">
+  <div v-if="traces.length === 0" :class="dtNodataClass">
     {{ dashT('dash.noDataPeriod', 'No data for the selected period.') }}
   </div>
   <PlotlyChart
