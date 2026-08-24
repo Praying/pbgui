@@ -60,41 +60,41 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="opt-toolbar">
-    <span class="opt-muted">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
-    <label v-if="(meta.scenario_labels || []).length" class="opt-inline-field">{{ t('v7optimize.scenario') }}<select :value="meta.selected_scenario || 'Aggregated'" class="opt-input" @change="emit('update:scenario', ($event.target as HTMLSelectElement).value)"><option v-for="scenario in meta.scenario_labels" :key="scenario" :value="scenario">{{ scenario }}</option></select></label>
-    <label class="opt-inline-field">{{ t('v7optimize.statistic') }}<select :value="meta.selected_statistic || 'mean'" class="opt-input" @change="emit('update:statistic', ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.available_statistics || ['mean']" :key="stat" :value="stat">{{ stat }}</option></select></label>
-    <details ref="picker" class="pareto-columns-picker" data-test="pareto-columns-picker">
-      <summary class="opt-btn pbgui-action small" :title="t('v7optimize.columns')">{{ t('v7optimize.columnsCount', { count: columns.length }) }}</summary>
-      <div class="pareto-columns-menu">
-        <div class="pareto-columns-options">
-          <label v-for="metric in availableMetrics" :key="metric" class="pareto-columns-option">
+  <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
+    <span class="text-xs text-secondary">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
+    <label v-if="(meta.scenario_labels || []).length" class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.scenario') }}<select :value="meta.selected_scenario || 'Aggregated'" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" @change="emit('update:scenario', ($event.target as HTMLSelectElement).value)"><option v-for="scenario in meta.scenario_labels" :key="scenario" :value="scenario">{{ scenario }}</option></select></label>
+    <label class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.statistic') }}<select :value="meta.selected_statistic || 'mean'" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" @change="emit('update:statistic', ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.available_statistics || ['mean']" :key="stat" :value="stat">{{ stat }}</option></select></label>
+    <details ref="picker" class="relative" data-test="pareto-columns-picker">
+      <summary class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" :title="t('v7optimize.columns')">{{ t('v7optimize.columnsCount', { count: columns.length }) }}</summary>
+      <div class="absolute top-[calc(100%+6px)] right-0 z-[80] max-h-[360px] w-[min(360px,calc(100vw-32px))] overflow-auto rounded-lg border border-border-default bg-panel p-2.5 shadow-[0_12px_28px_rgb(0_0_0/0.35)]">
+        <div class="grid gap-1 mb-2">
+          <label v-for="metric in availableMetrics" :key="metric" class="flex min-w-0 items-center gap-2 rounded-[5px] px-[7px] py-[5px] text-xs text-primary hover:bg-accent/10">
             <input type="checkbox" :data-pareto-metric="metric" :checked="columns.includes(metric)" @change="emit('toggleColumn', metric, ($event.target as HTMLInputElement).checked)" />
             <span>{{ pillLabel(metric) }}</span>
           </label>
         </div>
-        <div class="pareto-columns-actions">
-          <button class="opt-btn pbgui-action small" type="button" data-test="pareto-columns-defaults" @click="emit('resetColumns')">{{ t('v7optimize.columnsDefaults') }}</button>
-          <button class="opt-btn pbgui-action small" type="button" :title="t('v7optimize.columnsAllTitle')" @click="emit('selectAllColumns')">{{ t('v7optimize.columnsAll') }}</button>
-          <button class="opt-btn pbgui-action small" type="button" @click="closePicker">{{ t('v7optimize.columnsDone') }}</button>
+        <div class="flex justify-end gap-1.5">
+          <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" type="button" data-test="pareto-columns-defaults" @click="emit('resetColumns')">{{ t('v7optimize.columnsDefaults') }}</button>
+          <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" type="button" :title="t('v7optimize.columnsAllTitle')" @click="emit('selectAllColumns')">{{ t('v7optimize.columnsAll') }}</button>
+          <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" type="button" @click="closePicker">{{ t('v7optimize.columnsDone') }}</button>
         </div>
       </div>
     </details>
-    <span class="opt-grow"></span>
-    <button class="opt-btn pbgui-action small" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
-    <button class="opt-btn pbgui-action small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
+    <span class="flex-1"></span>
+    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
+    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
   </div>
-  <div ref="wrap" class="opt-table-wrap">
-    <table class="opt-table">
+  <div ref="wrap" class="min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><template v-if="summaryKeys.length"><th v-for="key in summaryKeys" :key="key" :data-sort-key="`summary:${key}`" @click="emit('sort', `summary:${key}`)">{{ key }}</th></template><th v-else>{{ t('v7optimize.thSummary') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr v-for="row in rows" :key="row.path" :data-path="row.path" :class="{ selected: selected.has(row.path) }">
-          <td class="opt-mono">{{ row.name }}</td>
-          <template v-if="summaryKeys.length"><td v-for="key in summaryKeys" :key="key" :data-metric="key">{{ summaryValue(row, key) }}</td></template><td v-else class="opt-ellipsis">{{ inlineSummary(row) }}</td>
+          <td class="font-mono">{{ row.name }}</td>
+          <template v-if="summaryKeys.length"><td v-for="key in summaryKeys" :key="key" :data-metric="key">{{ summaryValue(row, key) }}</td></template><td v-else class="max-w-[460px]">{{ inlineSummary(row) }}</td>
           <td>{{ row.modified || '—' }}</td>
-          <td class="opt-actions actions-cell" @click.stop><button class="opt-btn pbgui-action small" @click="emit('view', row)">{{ t('v7optimize.viewJson') }}</button><button class="opt-btn pbgui-action small" @click="emit('seed', row)">{{ t('v7optimize.useAsSeed') }}</button><button v-if="!isV8" class="opt-btn pbgui-action small" @click="emit('migrate', row)">{{ t('v7optimize.convertParetoToPb8') }}</button></td>
+          <td class="whitespace-nowrap! overflow-visible!" @click.stop><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('view', row)">{{ t('v7optimize.viewJson') }}</button><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('seed', row)">{{ t('v7optimize.useAsSeed') }}</button><button v-if="!isV8" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('migrate', row)">{{ t('v7optimize.convertParetoToPb8') }}</button></td>
         </tr>
-        <tr v-if="!rows.length"><td :colspan="summaryKeys.length + 3" class="opt-empty">{{ t('v7optimize.noParetoFilesFound') }}</td></tr>
+        <tr v-if="!rows.length"><td :colspan="summaryKeys.length + 3" class="p-[30px]! text-center text-secondary">{{ t('v7optimize.noParetoFilesFound') }}</td></tr>
       </tbody>
     </table>
   </div>

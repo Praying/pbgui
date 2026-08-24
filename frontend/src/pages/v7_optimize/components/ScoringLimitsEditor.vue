@@ -137,52 +137,52 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 </script>
 
 <template>
-  <div class="opt-objective-editor">
+  <div class="grid grid-cols-[1fr_1fr] gap-3.5 max-[600px]:grid-cols-1">
     <section>
-      <header class="opt-subhead"><strong>{{ t('v7optimize.scoring') }}</strong><button class="opt-btn small" type="button" @click="addScoring">{{ t('editor.suite.add') }}</button></header>
+      <header class="mb-2 flex items-center justify-between text-primary"><strong>{{ t('v7optimize.scoring') }}</strong><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" type="button" @click="addScoring">{{ t('editor.suite.add') }}</button></header>
       <template v-if="hasMetadata">
-        <div v-for="(row, index) in scoringRows" :key="`score-${index}`" class="opt-objective-row opt-objective-row-advanced">
-          <select class="opt-input" data-field="scoring-metric" :value="rowValue(row, 'metric')" @change="updateScoring(index, 'metric', ($event.target as HTMLSelectElement).value)"><option value="">{{ t('v7optimize.selectMetricForScoring') }}</option><option v-for="metric in metricOptions" :key="metric" :value="metric">{{ metric }}</option></select>
-          <select class="opt-input" data-field="scoring-goal" :value="canonicalGoal(row.goal)" @change="updateScoring(index, 'goal', ($event.target as HTMLSelectElement).value)"><option v-for="goal in meta.goal_options" :key="goal" :value="goal">{{ goal }}</option></select>
-          <select v-if="scenarioLabels.length && version === 'v8'" class="opt-input" data-field="scoring-scenario" :value="scenarioMode(row)" @change="updateScoringScenario(index, ($event.target as HTMLSelectElement).value)"><option value="inherit">inherit objective scenario</option><option value="aggregate">Aggregated</option><option v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</option></select>
-          <select v-if="meta.scoring_basis_field" class="opt-input" data-field="scoring-aggregate" :value="rowValue(row, meta.scoring_basis_field)" @change="updateScoringAggregate(index, ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.stat_options" :key="stat" :value="stat">{{ stat || 'default' }}</option></select>
-          <button class="opt-btn danger small" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeScoring(index)"><PbIcon :icon="PhX" :size="18" /></button>
+        <div v-for="(row, index) in scoringRows" :key="`score-${index}`" class="opt-objective-row-advanced grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
+          <select class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="scoring-metric" :value="rowValue(row, 'metric')" @change="updateScoring(index, 'metric', ($event.target as HTMLSelectElement).value)"><option value="">{{ t('v7optimize.selectMetricForScoring') }}</option><option v-for="metric in metricOptions" :key="metric" :value="metric">{{ metric }}</option></select>
+          <select class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="scoring-goal" :value="canonicalGoal(row.goal)" @change="updateScoring(index, 'goal', ($event.target as HTMLSelectElement).value)"><option v-for="goal in meta.goal_options" :key="goal" :value="goal">{{ goal }}</option></select>
+          <select v-if="scenarioLabels.length && version === 'v8'" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="scoring-scenario" :value="scenarioMode(row)" @change="updateScoringScenario(index, ($event.target as HTMLSelectElement).value)"><option value="inherit">inherit objective scenario</option><option value="aggregate">Aggregated</option><option v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</option></select>
+          <select v-if="meta.scoring_basis_field" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="scoring-aggregate" :value="rowValue(row, meta.scoring_basis_field)" @change="updateScoringAggregate(index, ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.stat_options" :key="stat" :value="stat">{{ stat || 'default' }}</option></select>
+          <button class="min-h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-[7px] py-[3px] text-xs text-danger" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeScoring(index)"><PbIcon :icon="PhX" :size="18" /></button>
         </div>
       </template>
       <template v-else>
-        <div v-for="(row, index) in scoringRows" :key="`score-${index}`" class="opt-objective-row">
-          <input class="opt-input" :value="rowValue(row, 'metric')" placeholder="metric" @input="updateScoring(index, 'metric', ($event.target as HTMLInputElement).value)" />
-          <select class="opt-input" :value="canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize'" @change="updateScoring(index, 'goal', ($event.target as HTMLSelectElement).value)"><option value="maximize">maximize</option><option value="minimize">minimize</option></select>
-          <select v-if="scenarioLabels.length" class="opt-input" :value="rowValue(row, 'scenario') || 'Aggregated'" @change="updateScoring(index, 'scenario', ($event.target as HTMLSelectElement).value)"><option value="Aggregated">Aggregated</option><option v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</option></select>
-          <button class="opt-btn danger small" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeScoring(index)"><PbIcon :icon="PhX" :size="18" /></button>
+        <div v-for="(row, index) in scoringRows" :key="`score-${index}`" class="grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
+          <input class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" :value="rowValue(row, 'metric')" placeholder="metric" @input="updateScoring(index, 'metric', ($event.target as HTMLInputElement).value)" />
+          <select class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" :value="canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize'" @change="updateScoring(index, 'goal', ($event.target as HTMLSelectElement).value)"><option value="maximize">maximize</option><option value="minimize">minimize</option></select>
+          <select v-if="scenarioLabels.length" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" :value="rowValue(row, 'scenario') || 'Aggregated'" @change="updateScoring(index, 'scenario', ($event.target as HTMLSelectElement).value)"><option value="Aggregated">Aggregated</option><option v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</option></select>
+          <button class="min-h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-[7px] py-[3px] text-xs text-danger" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeScoring(index)"><PbIcon :icon="PhX" :size="18" /></button>
         </div>
       </template>
-      <p v-if="!scoringRows.length" class="opt-muted">{{ t('v7optimize.noEntries') }}</p>
+      <p v-if="!scoringRows.length" class="text-xs text-secondary">{{ t('v7optimize.noEntries') }}</p>
     </section>
     <section>
-      <header class="opt-subhead"><strong>{{ t('v7optimize.limits') }}</strong><button class="opt-btn small" type="button" @click="addLimit">{{ t('editor.suite.add') }}</button></header>
+      <header class="mb-2 flex items-center justify-between text-primary"><strong>{{ t('v7optimize.limits') }}</strong><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" type="button" @click="addLimit">{{ t('editor.suite.add') }}</button></header>
       <template v-if="hasMetadata && Array.isArray(limits)">
-        <div v-for="(row, index) in limitRows" :key="`limit-${index}`" class="opt-objective-row opt-objective-row-advanced">
-          <select class="opt-input" data-field="limit-metric" :value="rowValue(row, 'metric')" @change="updateLimit(index, 'metric', ($event.target as HTMLSelectElement).value)"><option value="">{{ t('v7optimize.selectMetricForLimit') }}</option><option v-for="metric in metricOptions" :key="metric" :value="metric">{{ metric }}</option></select>
-          <select class="opt-input" data-field="limit-penalize-if" :value="rowValue(row, 'penalize_if') || 'greater_than'" @change="updateLimit(index, 'penalize_if', ($event.target as HTMLSelectElement).value)"><option v-for="operator in meta.penalize_if_options" :key="operator" :value="operator">{{ operator }}</option></select>
-          <select class="opt-input" data-field="limit-stat" :value="rowValue(row, meta.limit_basis_field)" @change="updateLimit(index, meta.limit_basis_field, ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.stat_options" :key="stat" :value="stat">{{ stat || 'default' }}</option></select>
-          <label class="opt-inline-field"><input type="checkbox" :checked="row.enabled !== false" @change="updateLimit(index, 'enabled', ($event.target as HTMLInputElement).checked)" /> enabled</label>
-          <button class="opt-btn danger small" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)"><PbIcon :icon="PhX" :size="18" /></button>
-          <template v-if="isRange(row)"><input class="opt-input" data-field="limit-range-low" type="number" step="any" :value="rangeValue(row, 0)" @input="updateRange(index, index, 0, ($event.target as HTMLInputElement).value)" /><input class="opt-input" data-field="limit-range-high" type="number" step="any" :value="rangeValue(row, 1)" @input="updateRange(index, index, 1, ($event.target as HTMLInputElement).value)" /></template>
-          <input v-else class="opt-input" data-field="limit-value" type="number" step="any" :value="rowValue(row, 'value')" @input="updateLimitNumber(index, 'value', ($event.target as HTMLInputElement).value)" />
-          <select v-if="scenarioLabels.length && version === 'v8'" class="opt-input" data-field="limit-scenario" :value="scenarioMode(row)" @change="updateLimitScenario(index, ($event.target as HTMLSelectElement).value)"><option value="inherit">inherit objective scenario</option><option value="aggregate">Aggregated</option><option v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</option></select>
+        <div v-for="(row, index) in limitRows" :key="`limit-${index}`" class="opt-objective-row-advanced grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
+          <select class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="limit-metric" :value="rowValue(row, 'metric')" @change="updateLimit(index, 'metric', ($event.target as HTMLSelectElement).value)"><option value="">{{ t('v7optimize.selectMetricForLimit') }}</option><option v-for="metric in metricOptions" :key="metric" :value="metric">{{ metric }}</option></select>
+          <select class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="limit-penalize-if" :value="rowValue(row, 'penalize_if') || 'greater_than'" @change="updateLimit(index, 'penalize_if', ($event.target as HTMLSelectElement).value)"><option v-for="operator in meta.penalize_if_options" :key="operator" :value="operator">{{ operator }}</option></select>
+          <select class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="limit-stat" :value="rowValue(row, meta.limit_basis_field)" @change="updateLimit(index, meta.limit_basis_field, ($event.target as HTMLSelectElement).value)"><option v-for="stat in meta.stat_options" :key="stat" :value="stat">{{ stat || 'default' }}</option></select>
+          <label class="inline-flex items-center gap-1.5 text-xs text-secondary"><input type="checkbox" :checked="row.enabled !== false" @change="updateLimit(index, 'enabled', ($event.target as HTMLInputElement).checked)" /> enabled</label>
+          <button class="min-h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-[7px] py-[3px] text-xs text-danger" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)"><PbIcon :icon="PhX" :size="18" /></button>
+          <template v-if="isRange(row)"><input class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="limit-range-low" type="number" step="any" :value="rangeValue(row, 0)" @input="updateRange(index, index, 0, ($event.target as HTMLInputElement).value)" /><input class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="limit-range-high" type="number" step="any" :value="rangeValue(row, 1)" @input="updateRange(index, index, 1, ($event.target as HTMLInputElement).value)" /></template>
+          <input v-else class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="limit-value" type="number" step="any" :value="rowValue(row, 'value')" @input="updateLimitNumber(index, 'value', ($event.target as HTMLInputElement).value)" />
+          <select v-if="scenarioLabels.length && version === 'v8'" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" data-field="limit-scenario" :value="scenarioMode(row)" @change="updateLimitScenario(index, ($event.target as HTMLSelectElement).value)"><option value="inherit">inherit objective scenario</option><option value="aggregate">Aggregated</option><option v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</option></select>
         </div>
       </template>
       <template v-else-if="Array.isArray(limits)">
-        <div v-for="(row, index) in limitRows" :key="`limit-${index}`" class="opt-objective-row">
-          <input class="opt-input" :value="rowValue(row, 'metric')" placeholder="metric" @input="updateLimit(index, 'metric', ($event.target as HTMLInputElement).value)" />
-          <input class="opt-input" :value="rowValue(row, 'min')" placeholder="min" @input="updateLimit(index, 'min', ($event.target as HTMLInputElement).value)" />
-          <input class="opt-input" :value="rowValue(row, 'max')" placeholder="max" @input="updateLimit(index, 'max', ($event.target as HTMLInputElement).value)" />
-          <button class="opt-btn danger small" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)"><PbIcon :icon="PhX" :size="18" /></button>
+        <div v-for="(row, index) in limitRows" :key="`limit-${index}`" class="grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
+          <input class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" :value="rowValue(row, 'metric')" placeholder="metric" @input="updateLimit(index, 'metric', ($event.target as HTMLInputElement).value)" />
+          <input class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" :value="rowValue(row, 'min')" placeholder="min" @input="updateLimit(index, 'min', ($event.target as HTMLInputElement).value)" />
+          <input class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" :value="rowValue(row, 'max')" placeholder="max" @input="updateLimit(index, 'max', ($event.target as HTMLInputElement).value)" />
+          <button class="min-h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-[7px] py-[3px] text-xs text-danger" type="button" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)"><PbIcon :icon="PhX" :size="18" /></button>
         </div>
       </template>
-      <p v-if="!Array.isArray(limits)" class="opt-muted">{{ t('v7optimize.legacyLimitsRawJson') }}</p>
-      <p v-else-if="!limitRows.length" class="opt-muted">{{ t('v7optimize.noEntries') }}</p>
+      <p v-if="!Array.isArray(limits)" class="text-xs text-secondary">{{ t('v7optimize.legacyLimitsRawJson') }}</p>
+      <p v-else-if="!limitRows.length" class="text-xs text-secondary">{{ t('v7optimize.noEntries') }}</p>
     </section>
   </div>
 </template>

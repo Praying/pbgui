@@ -169,67 +169,67 @@ onBeforeUnmount(() => {
       />
     </template>
 
-  <div id="page-body" class="logging-page">
-    <div class="logging-main">
-      <section v-show="view === 'logs'" class="logging-view">
-        <div v-if="currentFile" class="logging-toolbar">
-          <label v-if="variants.length">{{ t('sysmon.version') }}
-            <select data-field="rotation-version" :value="selectedVariant" @change="selectVariant(($event.target as HTMLSelectElement).value)">
+  <div id="page-body" class="flex flex-1 min-h-0 overflow-hidden">
+    <div class="flex flex-1 min-w-0 min-h-0 overflow-hidden">
+      <section v-show="view === 'logs'" class="flex flex-1 min-h-0 flex-col overflow-hidden">
+        <div v-if="currentFile" class="flex shrink-0 items-center gap-2.5 px-3.5 pt-1.75">
+          <label v-if="variants.length" class="flex items-center gap-1.5 text-xs text-secondary">{{ t('sysmon.version') }}
+            <select class="h-8 rounded-sm border border-border-default bg-elevated px-2 py-1 text-primary" data-field="rotation-version" :value="selectedVariant" @change="selectVariant(($event.target as HTMLSelectElement).value)">
               <option value="current">{{ t('sysmon.current') }}</option>
               <option v-for="variant in variants" :key="variant" :value="variant">{{ variant.slice(currentFile.length) }}</option>
             </select>
           </label>
-          <button data-action="purge" class="logging-btn danger" @click="purgeOpen = true"><PbIcon :icon="PhTrash" /> {{ t('sysmon.purge') }}</button>
+          <button data-action="purge" class="inline-flex items-center gap-1.5 min-h-8 rounded-[5px] border border-border-strong bg-elevated px-[11px] py-1 text-primary cursor-pointer hover:border-accent disabled:opacity-55 disabled:cursor-not-allowed border-danger bg-danger-deep text-[#f2f5fb]" @click="purgeOpen = true"><PbIcon :icon="PhTrash" /> {{ t('sysmon.purge') }}</button>
         </div>
         <ErrorState
           v-if="viewerUnavailable"
-          class="logging-error"
+          class="mx-3.5 my-2 text-danger-soft"
           :title="t('common.error')"
           :message="t('sysmon.logViewerUnavailable', { v: 'LogViewerPanel' })"
         />
-        <div id="logging-viewer-target" class="logging-viewer-target"></div>
+        <div id="logging-viewer-target" class="flex flex-1 min-h-0 overflow-hidden"></div>
       </section>
 
-      <section v-show="view === 'settings'" class="logging-settings">
-        <LoadingSkeleton v-if="loading" class="logging-muted" :label="t('sysmon.loading')" />
+      <section v-show="view === 'settings'" class="flex-1 min-h-0 overflow-y-auto px-6 py-5 max-[700px]:p-3">
+        <LoadingSkeleton v-if="loading" class="text-sm text-secondary" :label="t('sysmon.loading')" />
         <ErrorState
           v-if="error"
-          class="logging-error"
+          class="mx-3.5 my-2 text-danger-soft"
           :title="t('common.error')"
           :message="error"
           :retry-label="t('common.refresh')"
           @retry="initialize"
         />
 
-        <article class="logging-card">
-          <h2>{{ t('sysmon.defaultRotation') }}</h2>
-          <div class="logging-form-row">
-            <label>{{ t('sysmon.maxFileSizeMb') }}<input v-model.number="rotation.default.max_mb" data-field="default-max-mb" type="number" min="1" max="10240" /></label>
-            <label>{{ t('sysmon.rotatedCopies') }}<input v-model.number="rotation.default.backup_count" data-field="default-backup-count" type="number" min="0" max="20" /></label>
-            <button class="logging-btn primary" data-save-scope="default" :disabled="savingScope === 'default'" @click="saveRule('default', rotation.default)">{{ t('common.save') }}</button>
-            <span class="logging-saved">{{ messages.default || '' }}</span>
+        <article class="mb-5 rounded-lg border border-border-default bg-panel px-5 py-4 max-[700px]:p-3">
+          <h2 class="mb-3 border-b border-border-default pb-2 text-md font-semibold text-primary">{{ t('sysmon.defaultRotation') }}</h2>
+          <div class="flex flex-wrap items-end gap-3">
+            <label>{{ t('sysmon.maxFileSizeMb') }}<input class="h-8 rounded-sm border border-border-default bg-elevated px-2 py-1 text-primary" v-model.number="rotation.default.max_mb" data-field="default-max-mb" type="number" min="1" max="10240" /></label>
+            <label>{{ t('sysmon.rotatedCopies') }}<input class="h-8 rounded-sm border border-border-default bg-elevated px-2 py-1 text-primary" v-model.number="rotation.default.backup_count" data-field="default-backup-count" type="number" min="0" max="20" /></label>
+            <button class="inline-flex items-center gap-1.5 min-h-8 rounded-[5px] border border-border-strong bg-elevated px-[11px] py-1 text-primary cursor-pointer hover:border-accent disabled:opacity-55 disabled:cursor-not-allowed border-accent-deep bg-accent-deep text-[#f2f5fb]" data-save-scope="default" :disabled="savingScope === 'default'" @click="saveRule('default', rotation.default)">{{ t('common.save') }}</button>
+            <span class="text-xs text-success-soft">{{ messages.default || '' }}</span>
           </div>
         </article>
 
-        <article class="logging-card">
-          <h2>{{ t('sysmon.managedLogs') }}</h2>
-          <p class="logging-muted">{{ t('sysmon.managedLogsHint') }}</p>
-          <div class="logging-table-wrap"><table class="logging-table"><thead><tr><th>{{ t('sysmon.scope') }}</th><th>{{ t('sysmon.path') }}</th><th>{{ t('sysmon.maxMb') }}</th><th>{{ t('sysmon.copies') }}</th><th>{{ t('sysmon.action') }}</th><th></th></tr></thead><tbody>
+        <article class="mb-5 rounded-lg border border-border-default bg-panel px-5 py-4 max-[700px]:p-3">
+          <h2 class="mb-3 border-b border-border-default pb-2 text-md font-semibold text-primary">{{ t('sysmon.managedLogs') }}</h2>
+          <p class="text-sm text-secondary">{{ t('sysmon.managedLogsHint') }}</p>
+          <div class="overflow-x-auto"><table class="w-full border-collapse"><thead><tr><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.scope') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.path') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.maxMb') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.copies') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.action') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary"></th></tr></thead><tbody>
             <tr v-for="[scopeId, rule] in managedRows" :key="scopeId">
-              <td class="logging-name">{{ (rule as ManagedRotationRule).label || scopeId }}</td><td>{{ (rule as ManagedRotationRule).description }}</td>
-              <td><input v-model.number="rule.max_mb" type="number" min="1" max="10240" /></td><td><input v-model.number="rule.backup_count" type="number" min="0" max="20" /></td>
-              <td><button class="logging-btn" :data-save-scope="`managed:${scopeId}`" @click="saveRule(`managed:${scopeId}`, rule)">{{ t('common.save') }}</button></td><td class="logging-saved">{{ messages[`managed:${scopeId}`] || '' }}</td>
+              <td class="font-mono text-primary">{{ (rule as ManagedRotationRule).label || scopeId }}</td><td class="px-2.5 py-2 border-b border-border-subtle">{{ (rule as ManagedRotationRule).description }}</td>
+              <td class="px-2.5 py-2 border-b border-border-subtle"><input class="h-8 rounded-sm border border-border-default bg-elevated px-2 py-1 text-primary w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240" /></td><td class="px-2.5 py-2 border-b border-border-subtle"><input class="h-8 rounded-sm border border-border-default bg-elevated px-2 py-1 text-primary w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20" /></td>
+              <td class="px-2.5 py-2 border-b border-border-subtle"><button class="inline-flex items-center gap-1.5 min-h-8 rounded-[5px] border border-border-strong bg-elevated px-[11px] py-1 text-primary cursor-pointer hover:border-accent disabled:opacity-55 disabled:cursor-not-allowed" :data-save-scope="`managed:${scopeId}`" @click="saveRule(`managed:${scopeId}`, rule)">{{ t('common.save') }}</button></td><td class="text-xs text-success-soft">{{ messages[`managed:${scopeId}`] || '' }}</td>
             </tr>
           </tbody></table></div>
         </article>
 
-        <article class="logging-card">
-          <h2>{{ t('sysmon.perLogRotation') }}</h2>
-          <p class="logging-muted">{{ t('sysmon.perLogRotationHint') }}</p>
-          <div class="logging-table-wrap"><table v-if="serviceRows.length" class="logging-table"><thead><tr><th>{{ t('sysmon.logFile') }}</th><th>{{ t('sysmon.maxMb') }}</th><th>{{ t('sysmon.copies') }}</th><th>{{ t('sysmon.action') }}</th><th></th></tr></thead><tbody>
+        <article class="mb-5 rounded-lg border border-border-default bg-panel px-5 py-4 max-[700px]:p-3">
+          <h2 class="mb-3 border-b border-border-default pb-2 text-md font-semibold text-primary">{{ t('sysmon.perLogRotation') }}</h2>
+          <p class="text-sm text-secondary">{{ t('sysmon.perLogRotationHint') }}</p>
+          <div class="overflow-x-auto"><table v-if="serviceRows.length" class="w-full border-collapse"><thead><tr><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.logFile') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.maxMb') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.copies') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary">{{ t('sysmon.action') }}</th><th class="sticky top-0 border-b-2 border-border-default bg-elevated px-2.5 py-2 text-left text-xs text-secondary"></th></tr></thead><tbody>
             <tr v-for="[service, rule] in serviceRows" :key="service">
-              <td class="logging-name">{{ service }}</td><td><input v-model.number="rule.max_mb" type="number" min="1" max="10240" /></td><td><input v-model.number="rule.backup_count" type="number" min="0" max="20" /></td>
-              <td><button class="logging-btn" :data-save-scope="service" @click="saveRule(service, rule)">{{ t('common.save') }}</button></td><td class="logging-saved">{{ messages[service] || '' }}</td>
+              <td class="font-mono text-primary">{{ service }}</td><td class="px-2.5 py-2 border-b border-border-subtle"><input class="h-8 rounded-sm border border-border-default bg-elevated px-2 py-1 text-primary w-[90px]" v-model.number="rule.max_mb" type="number" min="1" max="10240" /></td><td class="px-2.5 py-2 border-b border-border-subtle"><input class="h-8 rounded-sm border border-border-default bg-elevated px-2 py-1 text-primary w-[90px]" v-model.number="rule.backup_count" type="number" min="0" max="20" /></td>
+              <td class="px-2.5 py-2 border-b border-border-subtle"><button class="inline-flex items-center gap-1.5 min-h-8 rounded-[5px] border border-border-strong bg-elevated px-[11px] py-1 text-primary cursor-pointer hover:border-accent disabled:opacity-55 disabled:cursor-not-allowed" :data-save-scope="service" @click="saveRule(service, rule)">{{ t('common.save') }}</button></td><td class="text-xs text-success-soft">{{ messages[service] || '' }}</td>
             </tr>
           </tbody></table><EmptyState v-else-if="!loading" :title="t('sysmon.noLogFilesFound')" /></div>
         </article>
@@ -237,13 +237,58 @@ onBeforeUnmount(() => {
     </div>
   </div>
 
-  <div v-if="purgeOpen" class="log-modal-backdrop">
-    <section class="log-modal" role="dialog" aria-modal="true" aria-labelledby="purge-title">
-      <h2 id="purge-title">{{ t('sysmon.purgeLogFile') }}</h2>
-      <p>{{ t('sysmon.purgeConfirmMsg', { file: currentFile }) }}</p>
-      <p class="logging-muted">{{ t('sysmon.purgeConfirmDetail') }}</p>
-      <div class="log-modal-actions"><button class="logging-btn" data-action="cancel-purge" @click="purgeOpen = false">{{ t('common.cancel') }}</button><button class="logging-btn danger" data-confirm="purge" :disabled="purging" @click="confirmPurge">{{ t('sysmon.purge') }}</button></div>
+  <div v-if="purgeOpen" class="log-modal-backdrop fixed inset-0 z-[2500] grid place-items-center bg-backdrop">
+    <section class="w-[min(480px,calc(100vw-32px))] rounded-xl border border-border-strong bg-panel p-5 shadow-[0_20px_60px_rgba(5,8,14,0.55)]" role="dialog" aria-modal="true" aria-labelledby="purge-title">
+      <h2 id="purge-title" class="m-0 mb-3">{{ t('sysmon.purgeLogFile') }}</h2>
+      <p class="my-2">{{ t('sysmon.purgeConfirmMsg', { file: currentFile }) }}</p>
+      <p class="text-sm text-secondary">{{ t('sysmon.purgeConfirmDetail') }}</p>
+      <div class="mt-4.5 flex justify-end gap-2"><button class="inline-flex items-center gap-1.5 min-h-8 rounded-[5px] border border-border-strong bg-elevated px-[11px] py-1 text-primary cursor-pointer hover:border-accent disabled:opacity-55 disabled:cursor-not-allowed" data-action="cancel-purge" @click="purgeOpen = false">{{ t('common.cancel') }}</button><button class="inline-flex items-center gap-1.5 min-h-8 rounded-[5px] border border-border-strong bg-elevated px-[11px] py-1 text-primary cursor-pointer hover:border-accent disabled:opacity-55 disabled:cursor-not-allowed border-danger bg-danger-deep text-[#f2f5fb]" data-confirm="purge" :disabled="purging" @click="confirmPurge">{{ t('sysmon.purge') }}</button></div>
     </section>
   </div>
 </AppShell>
 </template>
+
+<style>
+/* Root rules ported from styles/logging-monitor.css — html/body/#app have no
+   scope attribute, so these must live in an unscoped block. */
+html, body, #app {
+  height: 100%;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+}
+</style>
+
+<style scoped>
+/* Page-level AppShell overrides for the fixed-height workbench layout —
+   ported from styles/logging-monitor.css at the Tailwind migration. */
+.operations-shell--logging {
+  height: 100%;
+  min-height: 0;
+}
+
+.operations-shell--logging :deep(.app-shell__workspace) {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.operations-shell--logging :deep(.app-shell__main) {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  flex: 1;
+  padding: 0;
+}
+
+.operations-shell--logging :deep(.app-shell__primary) {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+</style>

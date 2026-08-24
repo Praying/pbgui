@@ -178,7 +178,8 @@ function onResizeMousedown(event: MouseEvent, dir: string): void {
   <div
     ref="panel"
     id="dbtools-log-panel"
-    :class="{ visible: visible }"
+    class="fixed bottom-0 right-0 z-[950] hidden h-[62vh] w-1/2 min-w-[360px] min-h-[260px] flex-col overflow-hidden rounded-t-md border-2 border-accent bg-page"
+    :class="visible ? 'flex' : 'hidden'"
   >
     <div class="lp-resize lp-resize-n" data-dir="n" @mousedown="onResizeMousedown($event, 'n')"></div>
     <div class="lp-resize lp-resize-s" data-dir="s" @mousedown="onResizeMousedown($event, 's')"></div>
@@ -188,10 +189,28 @@ function onResizeMousedown(event: MouseEvent, dir: string): void {
     <div class="lp-resize lp-resize-ne" data-dir="ne" @mousedown="onResizeMousedown($event, 'ne')"></div>
     <div class="lp-resize lp-resize-sw" data-dir="sw" @mousedown="onResizeMousedown($event, 'sw')"></div>
     <div class="lp-resize lp-resize-se" data-dir="se" @mousedown="onResizeMousedown($event, 'se')"></div>
-    <div ref="header" id="dbtools-log-panel-header" @mousedown="onHeaderMousedown">
-      <span id="dbtools-log-panel-title">{{ title || t('misc.dbtools.dbToolsLog') }}</span>
-      <button id="dbtools-log-panel-close" :title="t('common.close')" @click="emit('close')">✕</button>
+    <div ref="header" id="dbtools-log-panel-header" class="flex shrink-0 cursor-move select-none items-center justify-between gap-2 border-b border-border-subtle bg-card px-3 py-2" @mousedown="onHeaderMousedown">
+      <span id="dbtools-log-panel-title" class="truncate text-sm font-extrabold">{{ title || t('misc.dbtools.dbToolsLog') }}</span>
+      <button id="dbtools-log-panel-close" class="cursor-pointer border-none bg-none text-lg leading-none text-secondary hover:text-primary" :title="t('common.close')" @click="emit('close')">✕</button>
     </div>
-    <div id="dbtools-log-viewer-target"></div>
+    <div id="dbtools-log-viewer-target" class="min-h-0 flex-1 overflow-hidden p-2"></div>
   </div>
 </template>
+
+<style scoped>
+/* Resize handles ported from styles/db-tools.css — eight absolutely
+   positioned hit areas; too dense for utilities. */
+.lp-resize {
+  position: absolute;
+  z-index: 2;
+}
+
+.lp-resize-n  { top: -4px; left: 6px; right: 6px; height: 8px; cursor: n-resize; }
+.lp-resize-s  { bottom: -4px; left: 6px; right: 6px; height: 8px; cursor: s-resize; }
+.lp-resize-w  { left: -4px; top: 6px; bottom: 6px; width: 8px; cursor: w-resize; }
+.lp-resize-e  { right: -4px; top: 6px; bottom: 6px; width: 8px; cursor: e-resize; }
+.lp-resize-nw { top: -4px; left: -4px; width: 12px; height: 12px; cursor: nw-resize; }
+.lp-resize-ne { top: -4px; right: -4px; width: 12px; height: 12px; cursor: ne-resize; }
+.lp-resize-sw { bottom: -4px; left: -4px; width: 12px; height: 12px; cursor: sw-resize; }
+.lp-resize-se { bottom: -4px; right: -4px; width: 12px; height: 12px; cursor: se-resize; }
+</style>

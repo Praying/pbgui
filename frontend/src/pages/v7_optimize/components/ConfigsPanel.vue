@@ -42,21 +42,21 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="opt-toolbar">
+  <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
     <input
-      class="opt-input opt-search"
+      class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary min-w-60"
       :value="search"
       :placeholder="t('v7optimize.searchOptimizeName')"
       @input="emit('update:search', ($event.target as HTMLInputElement).value)"
     />
-    <span class="opt-muted">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
-    <span v-if="selectedCount" class="opt-muted">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
-    <span class="opt-grow"></span>
-    <button class="opt-btn pbgui-action small" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
-    <button class="opt-btn pbgui-action small" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
+    <span class="text-xs text-secondary">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
+    <span v-if="selectedCount" class="text-xs text-secondary">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
+    <span class="flex-1"></span>
+    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
+    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
   </div>
-  <div ref="wrap" class="opt-table-wrap">
-    <table class="opt-table">
+  <div ref="wrap" class="min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><th @click="emit('sort', 'exchange')">{{ t('v7optimize.thExchange') }}</th><th v-if="isV8" @click="emit('sort', 'strategy')">{{ t('v7optimize.thStrategy') }}</th><th @click="emit('sort', 'backtest_count')">{{ t('v7optimize.thBacktests') }}</th><th @click="emit('sort', 'start')">{{ t('v7optimize.thStart') }}</th><th @click="emit('sort', 'end')">{{ t('v7optimize.thEnd') }}</th><th>{{ t('v7optimize.thFlags') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr
@@ -66,7 +66,7 @@ onBeforeUnmount(() => dragSelect.dispose());
           :class="{ selected: selected.has(rowName(row)) }"
           @dblclick="emit('edit', rowName(row))"
         >
-          <td class="opt-mono">{{ rowName(row) }}</td>
+          <td class="font-mono">{{ rowName(row) }}</td>
           <td>{{ exchange(row) }}</td>
           <td v-if="isV8">{{ row.strategy || '—' }}</td>
           <td>{{ row.backtest_count ?? 0 }}</td>
@@ -74,12 +74,12 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td>{{ value(row, 'end', 'end_date') }}</td>
           <td>{{ flags(row) }}</td>
           <td>{{ row.modified || '—' }}</td>
-          <td class="opt-actions actions-cell" @click.stop>
-            <button class="opt-btn pbgui-action small" @click="emit('edit', rowName(row))">{{ t('v7optimize.editConfig') }}</button>
-            <button class="opt-btn pbgui-action small" @click="emit('duplicate', rowName(row))">{{ t('v7optimize.duplicate') }}</button>
+          <td class="whitespace-nowrap! overflow-visible!" @click.stop>
+            <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('edit', rowName(row))">{{ t('v7optimize.editConfig') }}</button>
+            <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('duplicate', rowName(row))">{{ t('v7optimize.duplicate') }}</button>
           </td>
         </tr>
-        <tr v-if="!rows.length"><td :colspan="isV8 ? 9 : 8" class="opt-empty">{{ t('v7optimize.noOptimizeConfigsFound') }}</td></tr>
+        <tr v-if="!rows.length"><td :colspan="isV8 ? 9 : 8" class="p-[30px]! text-center text-secondary">{{ t('v7optimize.noOptimizeConfigsFound') }}</td></tr>
       </tbody>
     </table>
   </div>

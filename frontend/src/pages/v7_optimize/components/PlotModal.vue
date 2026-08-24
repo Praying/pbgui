@@ -76,11 +76,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="plot.open" class="opt-modal-backdrop">
+  <div v-if="plot.open" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
     <section ref="modal" class="opt-modal opt-plot-modal" :class="{ 'is-maximized': maximized }" role="dialog" aria-modal="true">
       <div v-for="direction in ['n', 's', 'w', 'e', 'nw', 'ne', 'sw', 'se']" :key="direction" class="pnr" :class="`pnr-${direction}`" :data-dir="direction" @mousedown="beginResize(direction, $event)"></div>
-      <header data-test="plot-header" class="opt-modal-head" @mousedown="beginDrag"><h2>{{ plot.title }}</h2><div class="opt-actions"><button class="opt-btn small" @click="maximized = !maximized">{{ maximized ? t('common.restore') : t('common.maximize') }}</button><button class="opt-btn" @click="emit('close')">{{ t('common.close') }}</button></div></header>
-      <div class="opt-plot-body">
+      <header data-test="plot-header" class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3" @mousedown="beginDrag"><h2>{{ plot.title }}</h2><div class="whitespace-nowrap! overflow-visible!"><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="maximized = !maximized">{{ maximized ? t('common.restore') : t('common.maximize') }}</button><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="emit('close')">{{ t('common.close') }}</button></div></header>
+      <div class="min-h-0 flex-1 overflow-hidden p-0">
         <iframe v-if="plot.kind === 'html'" :srcdoc="plot.html" sandbox="allow-scripts allow-same-origin" :title="t('v7optimize.plot3d')"></iframe>
         <iframe v-else-if="plot.kind === 'url'" :src="plot.url" sandbox="allow-scripts allow-same-origin allow-forms" :title="t('v7optimize.pdParetoDash')"></iframe>
         <pre v-else>{{ plot.text }}</pre>
@@ -88,3 +88,39 @@ onBeforeUnmount(() => {
     </section>
   </div>
 </template>
+
+<style scoped>
+/* Plot modal chrome ported from styles/optimize.css — drag-resize handles
+   and maximized state are dense absolute positioning, not utilities. */
+.opt-plot-modal.is-maximized {
+  inset: 16px;
+  width: auto;
+  height: auto;
+  transform: none;
+}
+
+.opt-plot-modal > :deep(.opt-modal-head) { cursor: move; }
+
+.opt-plot-body iframe { width: 100%; height: 100%; border: 0; }
+
+.opt-plot-body pre {
+  height: 100%;
+  margin: 0;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+.pnr { position: absolute; z-index: 4; }
+.pnr-n, .pnr-s { left: 10px; right: 10px; height: 8px; }
+.pnr-n { top: -4px; cursor: n-resize; }
+.pnr-s { bottom: -4px; cursor: s-resize; }
+.pnr-w, .pnr-e { top: 10px; bottom: 10px; width: 8px; }
+.pnr-w { left: -4px; cursor: w-resize; }
+.pnr-e { right: -4px; cursor: e-resize; }
+.pnr-nw, .pnr-ne, .pnr-sw, .pnr-se { width: 12px; height: 12px; }
+.pnr-nw { left: -5px; top: -5px; cursor: nw-resize; }
+.pnr-ne { right: -5px; top: -5px; cursor: ne-resize; }
+.pnr-sw { left: -5px; bottom: -5px; cursor: sw-resize; }
+.pnr-se { right: -5px; bottom: -5px; cursor: se-resize; }
+</style>

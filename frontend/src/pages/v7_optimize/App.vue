@@ -46,7 +46,6 @@ import type { ParetoItem, QueueItem, ResultSummary } from './types';
 import type { PageSection } from '@/shared/navigation';
 import { applyOptimizeSeed, buildEditorDraft, collectEditorConfig, type OptimizeEditorDraft } from './lib/configModel';
 import '@/styles/tailwind.css';
-import './styles/optimize.css';
 
 const { t } = useI18n();
 const adapter = currentOptimizeAdapter();
@@ -413,9 +412,9 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="opt-conn-banner" :class="page.connected.value ? 'connected' : 'disconnected'">{{ page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue') }}</div>
-    <div id="page-body">
-    <div class="workbench-page-content">
+    <div id="opt-conn-banner" class="h-[30px] px-4 py-1.5 text-center text-xs font-semibold" :class="page.connected.value ? 'bg-success/20 text-success' : 'bg-warning/20 text-[#d0a36f]'">{{ page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue') }}</div>
+    <div id="page-body" class="flex h-[calc(100dvh-82px)] flex-col overflow-hidden">
+    <div class="workbench-page-content min-h-0 min-w-0 flex-1 overflow-hidden bg-page p-[18px]">
     <!-- Converged navigation: panel switching lives in the workbench rail
          (AppShell sections); this strip carries only the active panel's
          contextual actions. -->
@@ -454,25 +453,25 @@ onBeforeUnmount(() => {
       <button v-if="page.editorOpen.value" class="sb-btn" @click="runPreflight()"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7optimize.ohlcvReadiness') }}</button>
     </div>
 
-      <div v-if="page.runtimeWarning.value" class="opt-runtime-warning" data-test="pb8-runtime-warning" role="status" aria-live="polite">
+      <div v-if="page.runtimeWarning.value" class="mb-3 grid gap-1.25 rounded-md border border-warning/55 border-l-4 border-l-[#d0a36f] bg-warning/12 px-3.5 py-3 text-primary" data-test="pb8-runtime-warning" role="status" aria-live="polite">
         <strong>{{ t('v7optimize.pb8UpdateRequired') }}</strong>
         <span>{{ page.runtimeWarning.value }}</span>
         <a href="/api/vps-manager/main_page">{{ t('v7optimize.openVpsManagerUpdatePb8') }}</a>
       </div>
       <ErrorState
         v-if="page.error.value"
-        class="opt-error opt-error-banner"
+        class="text-danger-soft mb-3 rounded-[5px] border border-danger/40 bg-danger/10 px-3 py-2.5"
         :title="t('common.error')"
         :message="page.error.value"
         :retry-label="t('common.refresh')"
         @retry="page.loadAll"
       />
-      <LoadingSkeleton v-if="page.loading.value" class="opt-loading" :label="t('common.loading')" />
+      <LoadingSkeleton v-if="page.loading.value" class="p-[30px] text-secondary" :label="t('common.loading')" />
       <template v-else>
-        <section v-if="page.panel.value === 'configs'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
-        <section v-else-if="page.panel.value === 'queue'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" /></section>
-        <section v-else-if="page.panel.value === 'results'" class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" /></section>
-        <section v-else class="opt-panel-wrap"><header class="opt-panel-head"><div><h1>{{ panelTitle }}</h1><p>{{ panelSubtitle }}</p></div></header><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" :columns="page.paretoMetricColumns.value" :available-metrics="page.paretoAvailableMetrics.value" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @toggle-column="onToggleParetoColumn" @reset-columns="onResetParetoColumns" @select-all-columns="onSelectAllParetoColumns" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
+        <section v-if="page.panel.value === 'configs'" class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
+        <section v-else-if="page.panel.value === 'queue'" class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" /></section>
+        <section v-else-if="page.panel.value === 'results'" class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" /></section>
+        <section v-else class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" :columns="page.paretoMetricColumns.value" :available-metrics="page.paretoAvailableMetrics.value" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @toggle-column="onToggleParetoColumn" @reset-columns="onResetParetoColumns" @select-all-columns="onSelectAllParetoColumns" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
       </template>
     </div>
   </div>
@@ -484,17 +483,17 @@ onBeforeUnmount(() => {
   <PlotModal :plot="actions.plot.value" @close="actions.closePlot" />
   <QueueLogPanel :open="logOpen" :filename="logFilename" :title="logTitle" :adapter="adapter" @close="logOpen = false" />
 
-  <div v-if="page.queueConfigChoice.value" class="opt-modal-backdrop">
-    <section class="opt-modal opt-modal-small" role="dialog" aria-modal="true">
-      <header class="opt-modal-head"><h2>{{ t('v7optimize.repairQueuedConfig') }}</h2><button class="opt-btn" @click="page.closeQueueConfigChoice">{{ t('common.close') }}</button></header>
-      <div class="opt-modal-body">
+  <div v-if="page.queueConfigChoice.value" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
+    <section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true">
+      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.repairQueuedConfig') }}</h2><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="page.closeQueueConfigChoice">{{ t('common.close') }}</button></header>
+      <div class="grid min-h-0 gap-3 overflow-auto p-3.5">
         <p>{{ page.queueConfigChoice.value.message || t('v7optimize.queueConfigPathMissing') }}</p>
-        <code class="opt-path-block">{{ page.queueConfigChoice.value.configPath }}</code>
-        <p class="opt-muted">{{ t('v7optimize.queueConfigRepairNote') }}</p>
-        <div class="opt-choice-list">
-          <div v-for="candidate in page.queueConfigChoice.value.candidates" :key="candidate.path" class="opt-choice-row">
+        <code class="block rounded-md border border-border-default bg-page p-2 [overflow-wrap:anywhere]">{{ page.queueConfigChoice.value.configPath }}</code>
+        <p class="text-xs text-secondary">{{ t('v7optimize.queueConfigRepairNote') }}</p>
+        <div class="flex flex-col gap-2">
+          <div v-for="candidate in page.queueConfigChoice.value.candidates" :key="candidate.path" class="flex items-center justify-between gap-3 rounded-lg border border-border-default bg-panel p-2.5">
             <div><strong>{{ candidate.name }}</strong><small>{{ candidate.path }}</small></div>
-            <div class="opt-actions"><button class="opt-btn small primary" @click="safely(() => page.repairQueueConfigCandidate(candidate.name))">{{ page.queueConfigChoice.value.intent === 'edit' ? t('v7optimize.useAndOpen') : t('v7optimize.useAndRepair') }}</button><button class="opt-btn small" @click="safely(() => page.openQueueConfigCandidate(candidate.name))">{{ t('v7optimize.open') }}</button></div>
+            <div class="whitespace-nowrap! overflow-visible!"><button class="min-h-[26px] cursor-pointer rounded-sm border border-accent/55 bg-accent/18 px-[7px] py-[3px] text-xs text-accent" @click="safely(() => page.repairQueueConfigCandidate(candidate.name))">{{ page.queueConfigChoice.value.intent === 'edit' ? t('v7optimize.useAndOpen') : t('v7optimize.useAndRepair') }}</button><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="safely(() => page.openQueueConfigCandidate(candidate.name))">{{ t('v7optimize.open') }}</button></div>
           </div>
         </div>
       </div>
@@ -502,7 +501,49 @@ onBeforeUnmount(() => {
   </div>
 
   <OhlcvPreflightModal :open="preflightOpen" :loading="preflightLoading" :error="preflightError" :payload="preflightData" :job="preflightJob" @close="closePreflight" @refresh="refreshPreflightData" @preload="startPreload" @stop="stopPreload" />
-  <div v-if="duplicateSource" class="opt-modal-backdrop"><section class="opt-modal opt-modal-small" role="dialog" aria-modal="true"><header class="opt-modal-head"><h2>{{ t('v7optimize.duplicateConfig') }}</h2><button class="opt-btn" @click="duplicateSource = ''">{{ t('common.close') }}</button></header><div class="opt-modal-body"><label class="opt-form-label">{{ t('v7optimize.duplicateConfigAs') }}<input v-model="duplicateName" class="opt-input" /></label></div><footer class="opt-modal-actions"><button class="opt-btn" @click="duplicateSource = ''">{{ t('common.cancel') }}</button><button class="opt-btn primary" @click="duplicate">{{ t('common.save') }}</button></footer></section></div>
-  <div v-if="confirmAction" class="opt-modal-backdrop"><section class="opt-modal opt-modal-small" role="dialog" aria-modal="true"><header class="opt-modal-head"><h2>{{ confirmAction.title }}</h2></header><div class="opt-modal-body"><p>{{ confirmAction.message }}</p></div><footer class="opt-modal-actions"><button class="opt-btn" @click="confirmAction = null">{{ t('common.cancel') }}</button><button class="opt-btn danger" @click="acceptConfirm">{{ t('common.confirm') }}</button></footer></section></div>
-  <div v-if="toast" class="opt-toast" :class="`opt-toast-${toast.kind}`">{{ toast.message }}</div>
+  <div v-if="duplicateSource" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.duplicateConfig') }}</h2><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="duplicateSource = ''">{{ t('common.close') }}</button></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.duplicateConfigAs') }}<input v-model="duplicateName" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" /></label></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="duplicateSource = ''">{{ t('common.cancel') }}</button><button class="min-h-[30px] cursor-pointer rounded-sm border border-accent/55 bg-accent/18 px-2.5 py-1.25 text-accent" @click="duplicate">{{ t('common.save') }}</button></footer></section></div>
+  <div v-if="confirmAction" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ confirmAction.title }}</h2></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><p>{{ confirmAction.message }}</p></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="confirmAction = null">{{ t('common.cancel') }}</button><button class="min-h-[30px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-1.25 text-danger" @click="acceptConfirm">{{ t('common.confirm') }}</button></footer></section></div>
+  <div v-if="toast" class="fixed right-[18px] bottom-[18px] z-[1200] max-w-[min(520px,calc(100vw-36px))] rounded-md border border-border-default bg-panel px-3.5 py-2.5 shadow-[0_8px_20px_rgba(5,8,14,0.3)]" :class="`opt-toast-${toast.kind}`">{{ toast.message }}</div>
 </template>
+
+
+<style>
+/* Table interaction states ported from styles/optimize.css — row tinting
+   targets td descendants (not expressible as utilities) and the .opt-table
+   class is shared by the four panel components, so these live in an
+   unscoped block. */
+body { overflow: hidden; }
+
+.opt-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 10px;
+  background: var(--bg-panel);
+  border-bottom: 2px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.opt-table td {
+  max-width: 300px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-default);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opt-table tbody tr { cursor: pointer; }
+.opt-table tbody tr:hover td { background: rgba(255, 255, 255, 0.035); }
+.opt-table tbody tr.selected td { background: rgb(var(--accent-rgb) / 0.12); }
+.opt-table tbody tr.selected td:first-child {
+  border-left: 3px solid var(--accent);
+  padding-left: 7px;
+}
+.opt-table tbody tr.is-open td { background: rgb(var(--success-rgb) / 0.08); }
+</style>

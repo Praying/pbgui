@@ -119,31 +119,31 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="list-card">
-    <div class="list-head">
+  <div class="overflow-hidden rounded-[10px] border border-border-subtle bg-page">
+    <div class="flex items-center justify-between gap-2 border-b border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
       <slot name="title"></slot>
-      <div class="list-actions">
+      <div class="flex gap-1">
         <slot name="summary"></slot>
-        <button class="btn pbgui-btn btn-secondary btn-sm secondary mini" type="button" @click="emit('set-all', allValues())">{{ t('common.all') }}</button>
-        <button class="btn pbgui-btn btn-secondary btn-sm secondary mini" type="button" @click="emit('set-all', [])">{{ t('common.none') }}</button>
+        <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" type="button" @click="emit('set-all', allValues())">{{ t('common.all') }}</button>
+        <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" type="button" @click="emit('set-all', [])">{{ t('common.none') }}</button>
       </div>
     </div>
-    <div class="select-list" :id="id">
-      <div v-if="!rows.length" class="select-row" aria-disabled="true">{{ t('misc.dbtools.noItemsFound') }}</div>
-      <div v-if="rows.length === 1 && rows[0]!.loading" class="select-row loading" aria-disabled="true">{{ rows[0]!.loading }}</div>
+    <div class="block max-h-[300px] select-none overflow-auto p-0" :id="id">
+      <div v-if="!rows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noItemsFound') }}</div>
+      <div v-if="rows.length === 1 && rows[0]!.loading" class="select-row w-full min-h-[34px] appearance-none cursor-wait border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left italic text-secondary" aria-disabled="true">{{ rows[0]!.loading }}</div>
       <template v-else>
         <button
           v-for="row in rows"
           :key="row.value"
-          class="select-row"
+          class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3"
           type="button"
-          :class="{ selected: isSelected(row.value) }"
+          :class="isSelected(row.value) ? 'selected bg-accent/12 text-[#f2f5fb] shadow-[inset_3px_0_0_#72a0ee]' : ''"
           :data-value="row.value"
           :aria-pressed="isSelected(row.value) ? 'true' : 'false'"
           @mousedown="onRowMousedown($event, row.value)"
         >
           <span>{{ row.value }}</span>
-          <span v-if="showTotals && row.total !== undefined" class="row-meta">{{ t('misc.dbtools.rows', { count: row.total }) }}</span>
+          <span v-if="showTotals && row.total !== undefined" class="ml-auto text-xs text-muted">{{ t('misc.dbtools.rows', { count: row.total }) }}</span>
         </button>
       </template>
     </div>

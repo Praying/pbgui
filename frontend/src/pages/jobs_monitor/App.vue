@@ -387,8 +387,14 @@ function ensureDownloaderLogFallbacks(jobs: JobRecord[]): void {
   }
 }
 
+/* Status → Tailwind utility mapping (the former jobs-monitor.css carried the
+   same connected/running · connecting/pending · error/failed badge tints).
+   Returns the FULL colour set so the static pbgui-badge base never fights
+   a dynamic class. */
 function statusClass(job: JobRecord): string {
-  return job.status === 'running' ? 'running' : job.status === 'failed' ? 'failed' : 'pending';
+  if (job.status === 'running') return 'border-success/28 bg-success/13 text-success-soft';
+  if (job.status === 'failed') return 'border-danger/28 bg-danger/13 text-danger-soft';
+  return 'border-warning/28 bg-warning/14 text-warning-soft';
 }
 
 const visibleHistory = computed(() => currentTab.value === 'running' ? [] : historyJobs.value[currentTab.value]);
@@ -457,7 +463,7 @@ onUnmounted(() => {
     :page-title="t('sysmon.jobMonitor')"
   >
     <template #status>
-      <div class="jobs-status">
+      <div class="flex flex-wrap gap-2">
         <StatusStrip
           data-status="connection"
           :label="t('sysmon.status')"
@@ -473,24 +479,24 @@ onUnmounted(() => {
       </div>
     </template>
 
-  <div class="jobs-monitor" :class="{ 'is-embedded': embedMode }">
-    <div class="jobs-shell">
-      <nav class="jobs-tabs pbgui-tab-bar" aria-label="Job tabs">
-        <button v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" :key="tab" class="jobs-tab pbgui-tab" :class="{ active: currentTab === tab }" :data-tab="tab" @click="switchTab(tab)">
+  <div class="min-h-0 bg-page p-6 text-primary max-[760px]:p-3.5" :class="embedMode ? 'p-3' : ''">
+    <div class="mx-auto max-w-[1400px]">
+      <nav class="pbgui-tab-bar mb-4 gap-1.5" aria-label="Job tabs">
+        <button v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" :key="tab" class="pbgui-tab px-3.5 py-2.5" :class="{ active: currentTab === tab }" :data-tab="tab" @click="switchTab(tab)">
           {{ tab === 'running' ? t('sysmon.active') : tab === 'done' ? t('sysmon.done') : t('sysmon.failedTab') }}
         </button>
       </nav>
 
       <section v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" v-show="currentTab === tab" :key="tab" class="jobs-tab-panel" :class="{ active: currentTab === tab }">
-        <div v-if="tab !== 'running'" class="jobs-tab-actions"><button data-action="delete-all" class="job-btn danger" @click="deleteAll(tab)">{{ tab === 'done' ? t('sysmon.deleteAllDoneJobs') : t('sysmon.deleteAllFailedJobs') }}</button></div>
+        <div v-if="tab !== 'running'" class="mb-2.5 flex justify-end"><button data-action="delete-all" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-danger/35 bg-danger/13 px-2.5 py-1.25 text-xs font-semibold text-danger-soft transition-colors duration-[120ms] ease-standard hover:border-danger hover:bg-danger/20" @click="deleteAll(tab)">{{ tab === 'done' ? t('sysmon.deleteAllDoneJobs') : t('sysmon.deleteAllFailedJobs') }}</button></div>
         <LoadingSkeleton
           v-if="currentTab === tab && tab !== 'running' && historyLoading"
-          class="jobs-empty"
+          class="px-6 p-12 text-center text-secondary"
           :label="t('common.loading')"
         />
         <ErrorState
           v-else-if="currentTab === tab && tab !== 'running' && historyError"
-          class="jobs-error"
+          class="px-6 p-12 text-center text-danger-soft"
           :title="t('sysmon.failedLoadJobs', { state: tab })"
           :message="historyError"
           :retry-label="t('common.refresh')"
@@ -498,43 +504,43 @@ onUnmounted(() => {
         />
         <EmptyState
           v-else-if="currentTab === tab && !((tab === 'running' ? activeJobs : historyJobs[tab]).length)"
-          class="jobs-empty"
+          class="px-6 p-12 text-center text-secondary"
           :title="t('sysmon.noJobs', { state: tab === 'running' ? t('sysmon.active') : tab })"
         />
-        <div v-else class="jobs-list">
-          <article v-for="job in (tab === 'running' ? activeJobs : historyJobs[tab])" :key="job.id" class="job-card">
-            <div class="job-header">
-              <div class="job-info">
-                <strong class="job-id">{{ job.id }}</strong>
-                <span class="jobs-badge pbgui-badge" :class="statusClass(job)">{{ job.status }}</span>
-                <span class="job-type">{{ job.type }}</span>
-                <span v-if="formatJobDuration(job)" class="job-detail">{{ formatJobDuration(job) }}</span>
+        <div v-else class="grid gap-2.5">
+          <article v-for="job in (tab === 'running' ? activeJobs : historyJobs[tab])" :key="job.id" class="rounded-lg border border-border-default bg-card p-3.5 transition-colors duration-[120ms] ease-standard hover:border-border-strong">
+            <div class="flex items-start justify-between gap-3 max-[760px]:flex-col">
+              <div class="flex min-w-0 flex-wrap items-center gap-2">
+                <strong class="break-all font-mono text-sm text-primary">{{ job.id }}</strong>
+                <span class="pbgui-badge border-secondary/20 bg-secondary/10 px-2.5 py-0.75 text-secondary" :class="statusClass(job)">{{ job.status }}</span>
+                <span class="text-sm text-secondary">{{ job.type }}</span>
+                <span v-if="formatJobDuration(job)" class="text-sm text-secondary">{{ formatJobDuration(job) }}</span>
               </div>
-              <div class="job-actions">
-                <button v-if="tab === 'running' && job.status === 'pending'" data-action="run" class="job-btn run" @click="runJob(job)"><PbIcon :icon="PhPlay" /> {{ t('sysmon.run') }}</button>
-                <button v-if="tab === 'running' && job.status === 'running'" data-action="cancel" class="job-btn danger" @click="cancelJob(job)">{{ t('sysmon.cancelJob') }}</button>
-                <button data-action="details" class="job-btn view" @click="showDetails(job)">{{ t('sysmon.view') }}</button>
-                <button data-action="log" class="job-btn" @click="showLog(job)">{{ t('sysmon.log') }}</button>
-                <button v-if="tab === 'failed'" data-action="retry" class="job-btn secondary" @click="retryJob(job)">{{ t('sysmon.retry') }}</button>
-                <button v-if="tab === 'done'" data-action="requeue" class="job-btn secondary" @click="requeueJob(job)">{{ t('sysmon.requeue') }}</button>
-                <button data-action="delete" class="job-btn danger" @click="deleteJob(job)">{{ t('common.delete') }}</button>
+              <div class="flex flex-wrap justify-end gap-1.5 max-[760px]:justify-start">
+                <button v-if="tab === 'running' && job.status === 'pending'" data-action="run" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-success/35 bg-success/13 px-2.5 py-1.25 text-xs font-semibold text-success-soft transition-colors duration-[120ms] ease-standard hover:border-success hover:bg-success/20" @click="runJob(job)"><PbIcon :icon="PhPlay" /> {{ t('sysmon.run') }}</button>
+                <button v-if="tab === 'running' && job.status === 'running'" data-action="cancel" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-danger/35 bg-danger/13 px-2.5 py-1.25 text-xs font-semibold text-danger-soft transition-colors duration-[120ms] ease-standard hover:border-danger hover:bg-danger/20" @click="cancelJob(job)">{{ t('sysmon.cancelJob') }}</button>
+                <button data-action="details" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-border-default bg-elevated px-2.5 py-1.25 text-xs font-semibold text-secondary transition-colors duration-[120ms] ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary" @click="showDetails(job)">{{ t('sysmon.view') }}</button>
+                <button data-action="log" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-accent/35 bg-accent/14 px-2.5 py-1.25 text-xs font-semibold text-accent-soft transition-colors duration-[120ms] ease-standard hover:border-accent hover:bg-accent/20 hover:text-primary" @click="showLog(job)">{{ t('sysmon.log') }}</button>
+                <button v-if="tab === 'failed'" data-action="retry" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-border-default bg-elevated px-2.5 py-1.25 text-xs font-semibold text-secondary transition-colors duration-[120ms] ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary" @click="retryJob(job)">{{ t('sysmon.retry') }}</button>
+                <button v-if="tab === 'done'" data-action="requeue" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-border-default bg-elevated px-2.5 py-1.25 text-xs font-semibold text-secondary transition-colors duration-[120ms] ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary" @click="requeueJob(job)">{{ t('sysmon.requeue') }}</button>
+                <button data-action="delete" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-danger/35 bg-danger/13 px-2.5 py-1.25 text-xs font-semibold text-danger-soft transition-colors duration-[120ms] ease-standard hover:border-danger hover:bg-danger/20" @click="deleteJob(job)">{{ t('common.delete') }}</button>
               </div>
             </div>
             <div class="job-meta"><span>{{ formatTimestamp(job.updated_ts) }}</span><span v-if="job.exchange">{{ job.exchange }}</span></div>
-            <div v-if="job.error" class="job-error">{{ job.error }}</div>
-            <div v-if="job.progress?.total" class="job-progress">
-              <div class="job-progress-track"><div class="job-progress-fill" :style="{ width: `${calculateProgress(job.progress)}%` }"></div></div>
-              <div class="job-progress-label">{{ t('sysmon.progress') }}: {{ calculateProgress(job.progress) }}% <span v-if="job.progress.stage">· {{ job.progress.stage }}</span><span v-if="job.progress.coin">· {{ job.progress.coin }}</span></div>
+            <div v-if="job.error" class="mt-2 whitespace-pre-wrap break-words text-sm text-danger-soft">{{ job.error }}</div>
+            <div v-if="job.progress?.total" class="mt-3">
+              <div class="h-1.75 overflow-hidden rounded-full bg-secondary/16"><div class="h-full rounded-full bg-accent transition-[width] duration-[260ms] ease-standard" :style="{ width: `${calculateProgress(job.progress)}%` }"></div></div>
+              <div class="mt-1.25 text-xs text-primary">{{ t('sysmon.progress') }}: {{ calculateProgress(job.progress) }}% <span v-if="job.progress.stage">· {{ job.progress.stage }}</span><span v-if="job.progress.coin">· {{ job.progress.coin }}</span></div>
             </div>
-            <div v-if="job.payload || job.progress" class="job-expander">
-              <button :aria-expanded="expandedJobs.has(job.id)" @click="toggleExpanded(job.id)"><PbIcon :icon="expandedJobs.has(job.id) ? PhCaretDown : PhCaretRight" /> {{ t('sysmon.details') }}</button>
-              <div class="job-expander-body" :class="{ open: expandedJobs.has(job.id) }">
+            <div v-if="job.payload || job.progress" class="mt-2.5">
+              <button class="cursor-pointer border-0 bg-transparent p-0 text-sm text-accent-soft hover:text-accent hover:underline" :aria-expanded="expandedJobs.has(job.id)" @click="toggleExpanded(job.id)"><PbIcon :icon="expandedJobs.has(job.id) ? PhCaretDown : PhCaretRight" /> {{ t('sysmon.details') }}</button>
+              <div class="mt-2 rounded-md border border-border-subtle bg-page p-2.5" :class="expandedJobs.has(job.id) ? 'grid gap-1.25' : 'hidden'">
                 <div v-if="payloadCoins(job)">{{ t('sysmon.coinsLabel') }} {{ payloadCoins(job) }}</div>
                 <div v-if="job.progress?.chunk_start">{{ t('sysmon.chunk') }} {{ job.progress.chunk_start }} → {{ job.progress.chunk_end }}</div>
                 <div>{{ t('sysmon.downloadsLabel') }} {{ formatCount(job.progress?.downloaded_total) }} · {{ formatBytes(job.progress?.downloaded_bytes_total) }}</div>
                 <div>{{ t('sysmon.skippedLabel') }} {{ formatCount(job.progress?.skipped_existing_total) }} · {{ formatBytes(job.progress?.skipped_existing_bytes_total) }}</div>
                 <div>{{ t('sysmon.failedLabel') }} {{ formatCount(job.progress?.failed_total) }} · {{ formatBytes(job.progress?.failed_bytes_total) }}</div>
-                <div v-if="downloaderRows(job).length" class="downloader-list"><div v-for="row in downloaderRows(job)" :key="row.host" class="downloader-card"><div class="downloader-head"><span class="downloader-name">{{ row.host }}</span><span class="downloader-badge">{{ row.status || row.mode }}</span></div><div class="downloader-meter"><div class="downloader-meter-fill" :style="{ width: `${Math.max(3, Math.min(100, row.payloadBytes || row.rows || row.pages || row.segments))}%` }"></div></div><div class="downloader-stats"><span><span class="downloader-stat-label">{{ t('sysmon.payload') }}</span> {{ formatBytes(row.payloadBytes) }}</span><span><span class="downloader-stat-label">{{ t('sysmon.rows') }}</span> {{ formatCount(row.rows) }}</span><span><span class="downloader-stat-label">{{ t('sysmon.pages') }}</span> {{ formatCount(row.pages) }}</span><span><span class="downloader-stat-label">{{ t('sysmon.segments') }}</span> {{ formatCount(row.segments) }}</span><span><span class="downloader-stat-label">{{ t('sysmon.written') }}</span> {{ formatDaysFromMinutes(row.minutesWritten) }} {{ t('sysmon.days') }}</span><span v-if="row.currentCoin" class="downloader-current">{{ t('sysmon.currentLabel', { v: `${row.currentCoin} ${row.currentRange}` }) }}</span></div></div></div>
+                <div v-if="downloaderRows(job).length" class="mt-2.5 grid gap-2"><div v-for="row in downloaderRows(job)" :key="row.host" class="rounded-md border border-border-subtle bg-page p-2.5"><div class="flex justify-between gap-2"><span class="font-semibold">{{ row.host }}</span><span class="text-xs tabular-nums text-primary">{{ row.status || row.mode }}</span></div><div class="h-1.75 overflow-hidden rounded-full bg-secondary/16"><div class="h-full rounded-full bg-accent transition-[width] duration-[260ms] ease-standard" :style="{ width: `${Math.max(3, Math.min(100, row.payloadBytes || row.rows || row.pages || row.segments))}%` }"></div></div><div class="mt-2 grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-1.5 text-xs tabular-nums"><span><span class="text-secondary">{{ t('sysmon.payload') }}</span> {{ formatBytes(row.payloadBytes) }}</span><span><span class="text-secondary">{{ t('sysmon.rows') }}</span> {{ formatCount(row.rows) }}</span><span><span class="text-secondary">{{ t('sysmon.pages') }}</span> {{ formatCount(row.pages) }}</span><span><span class="text-secondary">{{ t('sysmon.segments') }}</span> {{ formatCount(row.segments) }}</span><span><span class="text-secondary">{{ t('sysmon.written') }}</span> {{ formatDaysFromMinutes(row.minutesWritten) }} {{ t('sysmon.days') }}</span><span v-if="row.currentCoin" class="col-span-full text-accent-soft">{{ t('sysmon.currentLabel', { v: `${row.currentCoin} ${row.currentRange}` }) }}</span></div></div></div>
               </div>
             </div>
           </article>
@@ -542,17 +548,47 @@ onUnmounted(() => {
       </section>
     </div>
 
-    <div v-if="logModal" data-modal="log" class="modal" role="dialog" aria-modal="true">
-      <div class="modal-card"><div class="modal-header"><h2>{{ t('sysmon.jobLog') }} {{ logModal.jobId }}</h2><button data-close="log" class="job-btn danger" @click="logModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="modal-body"><pre class="log-body">{{ logModal.text }}</pre></div></div>
+    <div v-if="logModal" data-modal="log" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true">
+      <div class="flex max-h-[calc(100vh-40px)] max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(900px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ t('sysmon.jobLog') }} {{ logModal.jobId }}</h2><button data-close="log" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-danger/35 bg-danger/13 px-2.5 py-1.25 text-xs font-semibold text-danger-soft transition-colors duration-[120ms] ease-standard hover:border-danger hover:bg-danger/20" @click="logModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="overflow-auto pt-3.5"><pre class="min-h-[240px] whitespace-pre-wrap break-words rounded-sm bg-page p-3 font-mono text-[0.82rem] leading-[1.45] text-primary">{{ logModal.text }}</pre></div></div>
     </div>
 
-    <div v-if="detailsModal" data-modal="details" class="modal" role="dialog" aria-modal="true">
-      <div class="modal-card"><div class="modal-header"><h2>{{ t('sysmon.jobDetails') }} {{ detailsModal.jobId }}</h2><button data-close="details" class="job-btn danger" @click="detailsModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="modal-body"><ErrorState v-if="detailsModal.error" class="jobs-error" :title="t('common.error')" :message="detailsModal.error" /><LoadingSkeleton v-else-if="!detailsModal.job" class="jobs-empty" :label="t('common.loading')" /><template v-else><section class="details-section"><h3>{{ t('sysmon.summary') }}</h3><div class="details-kv"><template v-for="row in detailRows(detailsModal.job)" :key="row.label"><span class="details-key">{{ row.label }}</span><span class="details-value">{{ row.value }}</span></template></div></section><section v-if="downloaderRows(detailsModal.job).length" class="details-section"><h3>{{ t('sysmon.downloaderTraffic') }}</h3><div class="downloader-list"><div v-for="row in downloaderRows(detailsModal.job)" :key="row.host" class="downloader-card"><div class="downloader-head"><span class="downloader-name">{{ row.host }}</span><span>{{ row.status }}</span></div><div class="downloader-stats"><span>{{ t('sysmon.payload') }} {{ formatBytes(row.payloadBytes) }}</span><span>{{ t('sysmon.rows') }} {{ formatCount(row.rows) }}</span><span>{{ t('sysmon.pages') }} {{ formatCount(row.pages) }}</span></div></div></div></section><section class="details-section"><h3>{{ t('sysmon.payload') }}</h3><pre class="json-block">{{ jsonText(detailsModal.job.payload) }}</pre></section><section class="details-section"><h3>{{ t('sysmon.progress') }}</h3><pre class="json-block">{{ jsonText(detailsModal.job.progress) }}</pre></section></template></div></div>
+    <div v-if="detailsModal" data-modal="details" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true">
+      <div class="flex max-h-[calc(100vh-40px)] max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(900px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ t('sysmon.jobDetails') }} {{ detailsModal.jobId }}</h2><button data-close="details" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-danger/35 bg-danger/13 px-2.5 py-1.25 text-xs font-semibold text-danger-soft transition-colors duration-[120ms] ease-standard hover:border-danger hover:bg-danger/20" @click="detailsModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button></div><div class="overflow-auto pt-3.5"><ErrorState v-if="detailsModal.error" class="px-6 p-12 text-center text-danger-soft" :title="t('common.error')" :message="detailsModal.error" /><LoadingSkeleton v-else-if="!detailsModal.job" class="px-6 p-12 text-center text-secondary" :label="t('common.loading')" /><template v-else><section class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.summary') }}</h3><div class="grid grid-cols-[minmax(120px,max-content)_1fr] gap-x-2.5 gap-y-1.25 text-sm"><template v-for="row in detailRows(detailsModal.job)" :key="row.label"><span class="font-semibold text-secondary">{{ row.label }}</span><span class="min-w-0 break-words">{{ row.value }}</span></template></div></section><section v-if="downloaderRows(detailsModal.job).length" class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.downloaderTraffic') }}</h3><div class="mt-2.5 grid gap-2"><div v-for="row in downloaderRows(detailsModal.job)" :key="row.host" class="rounded-md border border-border-subtle bg-page p-2.5"><div class="flex justify-between gap-2"><span class="font-semibold">{{ row.host }}</span><span>{{ row.status }}</span></div><div class="mt-2 grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-1.5 text-xs tabular-nums"><span>{{ t('sysmon.payload') }} {{ formatBytes(row.payloadBytes) }}</span><span>{{ t('sysmon.rows') }} {{ formatCount(row.rows) }}</span><span>{{ t('sysmon.pages') }} {{ formatCount(row.pages) }}</span></div></div></div></section><section class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.payload') }}</h3><pre class="m-0 overflow-auto whitespace-pre-wrap break-words rounded-sm bg-page p-2.5 font-mono text-[0.78rem] leading-[1.4] text-primary">{{ jsonText(detailsModal.job.payload) }}</pre></section><section class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.progress') }}</h3><pre class="m-0 overflow-auto whitespace-pre-wrap break-words rounded-sm bg-page p-2.5 font-mono text-[0.78rem] leading-[1.4] text-primary">{{ jsonText(detailsModal.job.progress) }}</pre></section></template></div></div>
     </div>
 
-    <div v-if="confirmModal" data-modal="confirm" class="modal" role="dialog" aria-modal="true" @click.stop>
-      <div class="modal-card confirm-card"><div class="modal-header"><h2>{{ confirmModal.title }}</h2><button data-confirm="cancel" class="job-btn secondary" @click="closeConfirm">{{ t('common.cancel') }}</button></div><div class="modal-body"><p>{{ confirmModal.message }}</p><div class="confirm-actions"><button data-confirm="cancel" class="job-btn secondary" @click="closeConfirm">{{ t('common.cancel') }}</button><button data-confirm="accept" class="job-btn" @click="acceptConfirm">{{ t('common.confirm') }}</button></div></div></div>
+    <div v-if="confirmModal" data-modal="confirm" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
+      <div class="flex max-h-[calc(100vh-40px)] max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(520px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ confirmModal.title }}</h2><button data-confirm="cancel" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-border-default bg-elevated px-2.5 py-1.25 text-xs font-semibold text-secondary transition-colors duration-[120ms] ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary" @click="closeConfirm">{{ t('common.cancel') }}</button></div><div class="overflow-auto pt-3.5"><p>{{ confirmModal.message }}</p><div class="mt-4.5 flex justify-end gap-2"><button data-confirm="cancel" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-border-default bg-elevated px-2.5 py-1.25 text-xs font-semibold text-secondary transition-colors duration-[120ms] ease-standard hover:border-border-strong hover:bg-border-default hover:text-primary" @click="closeConfirm">{{ t('common.cancel') }}</button><button data-confirm="accept" class="inline-flex cursor-pointer items-center gap-1.25 rounded-sm border border-accent/35 bg-accent/14 px-2.5 py-1.25 text-xs font-semibold text-accent-soft transition-colors duration-[120ms] ease-standard hover:border-accent hover:bg-accent/20 hover:text-primary" @click="acceptConfirm">{{ t('common.confirm') }}</button></div></div></div>
     </div>
   </div>
   </AppShell>
 </template>
+
+<style>
+/* Embed-mode rules ported from styles/jobs-monitor.css — the is-embedded
+   class lands on <html>/<body>, which carry no scope attribute, so these
+   must live in an unscoped block. */
+html.is-embedded .operations-shell--jobs {
+  display: block;
+  min-height: 0;
+}
+
+html.is-embedded .operations-shell--jobs .workbench-rail,
+html.is-embedded .operations-shell--jobs .workspace-header,
+html.is-embedded .operations-shell--jobs .pbgui-skip-link {
+  display: none;
+}
+
+html.is-embedded .operations-shell--jobs .app-shell__main {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+</style>
+
+<style scoped>
+/* The status strip shares the row with the badges — ported from
+   styles/jobs-monitor.css (`.jobs-status .pbgui-status-strip`). */
+.jobs-status :deep(.pbgui-status-strip) {
+  flex: 1 1 220px;
+}
+</style>
