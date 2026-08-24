@@ -8,7 +8,8 @@
  * query string.
  *
  * ┌────────────────────────┬─ Legacy regions ─────────────────────────────┐
- * │ App (this shell)       │ markup :516-565 sidebar, :567-568 content,   │
+ * │ App (this shell)       │ markup :516-568 (sidebar :545-565 became a    │
+ * │                        │ top page-toolbar strip, v7_run precedent),   │
  * │                        │ init :1797-1908, title :3924-3926            │
  * │ BasicSection           │ rows 1-3 :571-669                            │
  * │ AdvancedSection        │ exp-advanced :672-990                        │
@@ -205,42 +206,42 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="page-body" class="flex h-[calc(100dvh-52px)] overflow-hidden max-[700px]:flex-col">
-    <!-- Sidebar (:545-565) -->
-    <div id="sidebar">
-      <div id="sidebar-sticky">
-        <div id="sidebar-header">
-          <span class="sb-title">{{ t(adapter.sidebarTitleKey) }}</span>
-        </div>
-        <div id="sidebar-toolbar">
-          <button class="sb-btn" :title="t('v7run.backToList')" @click="goBack()"><PbIcon :icon="PhHouse" /> {{ t('v7run.home') }}</button>
-          <button
-            class="sb-btn primary"
-            id="btn-save"
-            :disabled="page.saving.value"
-            :title="t('v7run.saveConfigSync')"
-            @click="page.save()"
-          >
-            <span v-if="page.saving.value" class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-default border-t-accent"></span>
-            <PbIcon v-else :icon="PhFloppyDisk" />
-            {{ page.saving.value ? t('v7run.saving') : t('common.save') }}
-          </button>
-          <button class="sb-btn info" :title="t('v7run.importJsonConfig')" @click="openImport()"><PbIcon :icon="PhUploadSimple" /> {{ t('v7run.import') }}</button>
-          <button class="sb-btn info" :title="t('v7run.copyCurrentConfig')" @click="openCopy()"><PbIcon :icon="PhCopy" /> {{ t('v7run.copy') }}</button>
-          <hr class="sb-sep" />
-          <button class="sb-btn" :title="t('v7run.openInBacktest')" @click="handoffs.goBacktest()"><PbIcon :icon="PhChartBar" /> {{ t('v7run.backtest') }}</button>
-          <button class="sb-btn" :title="t('v7run.openStrategyExplorer')" @click="handoffs.goStrategyExplorer()"><PbIcon :icon="PhMagnifyingGlass" /> {{ t('v7run.strategyExplorer') }}</button>
-          <button class="sb-btn" :title="t('v7run.openBalanceCalculatorPage')" @click="handoffs.goBalanceCalc()"><PbIcon :icon="PhWallet" /> {{ t('v7run.balanceCalculator') }}</button>
-          <button class="sb-btn" :title="t('v7run.calcBalanceTitle')" @click="openBalanceCalc()"><PbIcon :icon="PhLightning" /> {{ t('v7run.calcBalance') }}</button>
-          <hr class="sb-sep" />
-          <button class="sb-btn" id="btn-log" :class="{ active: logOpen }" :title="t('v7run.livePassivbotLog')" @click="logOpen = !logOpen"><PbIcon :icon="PhFileText" /> {{ t('v7run.log') }}</button>
-        </div>
-      </div>
-      <div id="sidebar-resize" class="max-[700px]:hidden"></div>
-    </div>
-
-    <!-- Main content (:568) -->
+    <div id="page-body" class="flex h-[calc(100dvh-52px)] flex-col overflow-hidden">
+    <!-- Main content (:568). The legacy sidebar column (:545-565) became a
+         top strip (v7_run precedent): same buttons, ids and gating; the
+         drag-resize handle left with the column. -->
     <div class="workbench-page-content flex-1 overflow-y-auto p-5 max-[700px]:p-2">
+      <div class="page-toolbar" role="toolbar" :aria-label="t(adapter.sidebarTitleKey)">
+        <span class="sb-label">{{ t(adapter.sidebarTitleKey) }}</span>
+        <hr class="sb-sep" />
+        <button class="sb-btn" :title="t('v7run.backToList')" @click="goBack()"><PbIcon :icon="PhHouse" /> {{ t('v7run.home') }}</button>
+        <button
+          class="sb-btn primary"
+          id="btn-save"
+          :disabled="page.saving.value"
+          :title="t('v7run.saveConfigSync')"
+          @click="page.save()"
+        >
+          <span v-if="page.saving.value" class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-default border-t-accent"></span>
+          <PbIcon v-else :icon="PhFloppyDisk" />
+          {{ page.saving.value ? t('v7run.saving') : t('common.save') }}
+        </button>
+        <button class="sb-btn info" :title="t('v7run.importJsonConfig')" @click="openImport()"><PbIcon :icon="PhUploadSimple" /> {{ t('v7run.import') }}</button>
+        <button class="sb-btn info" :title="t('v7run.copyCurrentConfig')" @click="openCopy()"><PbIcon :icon="PhCopy" /> {{ t('v7run.copy') }}</button>
+        <hr class="sb-sep" />
+        <button class="sb-btn" :title="t('v7run.openInBacktest')" @click="handoffs.goBacktest()"><PbIcon :icon="PhChartBar" /> {{ t('v7run.backtest') }}</button>
+        <button class="sb-btn" :title="t('v7run.openStrategyExplorer')" @click="handoffs.goStrategyExplorer()"><PbIcon :icon="PhMagnifyingGlass" /> {{ t('v7run.strategyExplorer') }}</button>
+        <button class="sb-btn" :title="t('v7run.openBalanceCalculatorPage')" @click="handoffs.goBalanceCalc()"><PbIcon :icon="PhWallet" /> {{ t('v7run.balanceCalculator') }}</button>
+        <button class="sb-btn" :title="t('v7run.calcBalanceTitle')" @click="openBalanceCalc()"><PbIcon :icon="PhLightning" /> {{ t('v7run.calcBalance') }}</button>
+        <hr class="sb-sep" />
+        <button
+          class="sb-btn"
+          id="btn-log"
+          :class="logOpen ? 'border-accent bg-accent/10 text-accent' : ''"
+          :title="t('v7run.livePassivbotLog')"
+          @click="logOpen = !logOpen"
+        ><PbIcon :icon="PhFileText" /> {{ t('v7run.log') }}</button>
+      </div>
       <section
         v-if="migrationReviewFields.length"
         class="mb-4 rounded-md border border-l-4 border-l-warning border-warning/48 bg-warning/10 px-3.5 py-3 leading-[1.45] text-warning-soft"
@@ -272,7 +273,7 @@ onBeforeUnmount(() => {
   <ImportModal ref="importModal" v-model="importOpen" />
   <BalanceCalcModal ref="balanceModal" v-model="balanceOpen" />
 
-  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[9999] hidden rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
+  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[2000] hidden rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
   <DataTipLayer />
 </template>
 
@@ -282,15 +283,15 @@ onBeforeUnmount(() => {
    Everything expressible as utilities moved onto the templates; the
    rules below stay as CSS for the documented reasons. This block is
    unscoped on purpose — the old stylesheet was page-global, and the
-   html/body and sidebar rules have no component root to scope to.
+   html/body rules have no component root to scope to.
 
    Dropped outright: the *, ::before/::after reset, [hidden], the :root
    legacy alias block and the body font/background defaults — the base
    layer + alias block in src/styles/tailwind.css already provide them
    identically — plus .run-version-hidden, .toast-ok/.toast-err/
-   .toast-info and #btn-log.active (dead or superseded; toast.ts adds
-   Tailwind colour utilities itself and the shared sidebar.css already
-   styles .sb-btn.active).
+   .toast-info and #btn-log.active (the sidebar.css rule went with the
+   sidebar; the open state is now Tailwind utilities bound in the
+   template, which outrank the components-layer .sb-btn).
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Page root chrome ──────────────────────────────────────────
@@ -305,28 +306,6 @@ body {
 body {
   display: flex;
   flex-direction: column;
-}
-
-/* ── Legacy sidebar chrome supplement (max-width: 700px) ───────
-   #sidebar/#sidebar-toolbar come from /app/css/sidebar.css (un-layered,
-   loaded by index.html), so these overrides must stay un-layered CSS —
-   utilities in @layer utilities would lose the cascade — and the width
-   needs !important to beat the inline width sidebar_resize.js sets. */
-@media (max-width: 700px) {
-  #sidebar {
-    width: 100% !important;
-    min-width: 0;
-    max-width: none;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  #sidebar-toolbar {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  #sidebar-toolbar .sb-sep {
-    grid-column: 1 / -1;
-  }
 }
 
 /* ── Wide-screen form column centring ──────────────────────────
