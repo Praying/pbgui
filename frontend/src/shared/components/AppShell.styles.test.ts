@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import postcss, { type Container, type Declaration, type Rule } from 'postcss';
 import { describe, expect, it } from 'vitest';
@@ -82,6 +82,9 @@ describe('AppShell core-workbench-shell height chain', () => {
       'src/pages/welcome/styles/welcome.css',
     ];
     for (const sheet of page_sheets) {
+      /* Migrated pages delete their stylesheet outright — skip the ones
+         that no longer exist; the guard still covers every survivor. */
+      if (!existsSync(resolve(process.cwd(), sheet))) continue;
       const css = readFileSync(resolve(process.cwd(), sheet), 'utf8');
       expect(
         css.includes('core-workbench-shell'),
