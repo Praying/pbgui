@@ -2017,6 +2017,7 @@
   "nav.github_repo": "GitHub 仓库",
   "nav.guide": "指南",
   "nav.information": "信息",
+  "nav.itemDisabled": "暂不可用",
   "nav.logout": "退出登录",
   "nav.master": "主控",
   "nav.master_of": "主控：{name}",

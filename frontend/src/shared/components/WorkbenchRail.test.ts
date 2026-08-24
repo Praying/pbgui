@@ -1,8 +1,8 @@
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { PhHouse, PhWrench } from '@phosphor-icons/vue';
+import { PhHouse, PhSparkle, PhWrench } from '@phosphor-icons/vue';
 import { createI18n } from '@/shared/i18n';
-import { WORKBENCH_NAVIGATION, type NavigationGroup } from '@/shared/navigation';
+import { WORKBENCH_NAVIGATION, type NavigationGroup, type NavigationItem } from '@/shared/navigation';
 import WorkbenchRail from './WorkbenchRail.vue';
 
 const EXPECTED_NAVIGATION_ROUTES = {
@@ -50,6 +50,14 @@ const TEST_GROUPS: readonly NavigationGroup[] = [
         href: '/api/services/main_page',
         icon: PhWrench,
         groupId: 'system',
+      },
+      {
+        pageKey: 'info_ai_chat',
+        labelKey: 'nav.page.info_ai_chat',
+        href: '/api/ai/main_page',
+        icon: PhSparkle,
+        groupId: 'system',
+        disabled: true,
       },
     ],
   },
@@ -99,6 +107,30 @@ describe('WorkbenchRail', () => {
     );
 
     expect(actualRoutes).toEqual(EXPECTED_NAVIGATION_ROUTES);
+  });
+
+  it('renders disabled items as inert with an unavailable note', async () => {
+    const wrapper = mountRail();
+    const link = wrapper.get('a[aria-disabled="true"]');
+
+    expect(link.attributes('href')).toBeUndefined();
+    expect(link.classes()).toContain('workbench-rail__item--disabled');
+    expect(link.attributes('title')).toBe('AI Chat — Unavailable');
+    expect(link.attributes('aria-current')).toBeUndefined();
+
+    // Collapsed-mode temp expansion never opens for a disabled item.
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    await link.element.dispatchEvent(event);
+
+    expect(wrapper.find('.workbench-rail--temp-expanded').exists()).toBe(false);
+  });
+
+  it('disables the AI chat entry until its Vue page works', () => {
+    const aiChat = WORKBENCH_NAVIGATION.flatMap(
+      (group): NavigationItem[] => [...group.items],
+    ).find((item) => item.pageKey === 'info_ai_chat');
+
+    expect(aiChat?.disabled).toBe(true);
   });
 
   it('persists and emits the collapsed preference from mouse activation', async () => {

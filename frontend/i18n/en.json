@@ -2017,6 +2017,7 @@
   "nav.github_repo": "GitHub Repository",
   "nav.guide": "Guide",
   "nav.information": "Information",
+  "nav.itemDisabled": "Unavailable",
   "nav.logout": "Logout",
   "nav.master": "Master",
   "nav.master_of": "Master: {name}",

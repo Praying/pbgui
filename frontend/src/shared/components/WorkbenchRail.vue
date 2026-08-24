@@ -59,13 +59,21 @@ function toggleCollapsed(): void {
 function hasChildren(item: NavigationItem): boolean {
   return Boolean(
     item.pageKey === props.activePage &&
+      !item.disabled &&
       props.sections &&
       props.sections.length > 0 &&
       !visuallyCollapsed.value,
   );
 }
 
+/** Collapsed-rail tooltips carry the unavailable note for disabled items. */
+function itemTitle(item: NavigationItem): string {
+  const label = t(item.labelKey);
+  return item.disabled ? `${label} — ${t('nav.itemDisabled')}` : label;
+}
+
 function onItemClick(event: MouseEvent, item: NavigationItem): void {
+  if (item.disabled) return;
   if (!props.collapsed || tempExpanded.value) return;
   if (item.pageKey !== props.activePage || !props.sections?.length) return;
   event.preventDefault();
@@ -166,11 +174,15 @@ onBeforeUnmount(() => {
           <li v-for="item in group.items" :key="item.pageKey">
             <a
               class="workbench-rail__item"
-              :class="{ 'workbench-rail__item--active': item.pageKey === props.activePage }"
-              :href="item.href"
-              :aria-current="item.pageKey === props.activePage ? 'page' : undefined"
-              :aria-label="visuallyCollapsed ? t(item.labelKey) : undefined"
-              :title="visuallyCollapsed ? t(item.labelKey) : undefined"
+              :class="{
+                'workbench-rail__item--active': item.pageKey === props.activePage && !item.disabled,
+                'workbench-rail__item--disabled': item.disabled,
+              }"
+              :href="item.disabled ? undefined : item.href"
+              :aria-current="item.pageKey === props.activePage && !item.disabled ? 'page' : undefined"
+              :aria-disabled="item.disabled ? 'true' : undefined"
+              :aria-label="visuallyCollapsed ? itemTitle(item) : undefined"
+              :title="visuallyCollapsed ? itemTitle(item) : item.disabled ? itemTitle(item) : undefined"
               @click="onItemClick($event, item)"
             >
               <PbIcon class="pbgui-icon" :icon="item.icon" :size="18" />
