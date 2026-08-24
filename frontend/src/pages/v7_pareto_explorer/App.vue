@@ -356,7 +356,7 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <DataTipTooltip class="pointer-events-none fixed z-[9999] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
+  <DataTipTooltip class="pointer-events-none fixed z-[4000] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
   <AppShell
     class="core-workbench-shell core-workbench-shell--pareto"
     :page-key="readSeedOptimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer'"

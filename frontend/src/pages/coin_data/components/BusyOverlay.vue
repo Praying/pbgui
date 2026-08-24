@@ -21,7 +21,7 @@ const percentLabel = computed(() => {
 </script>
 
 <template>
-  <div id="busy-overlay" class="fixed top-[52px] right-0 bottom-0 left-0 bg-page/45 backdrop-blur-[2px] items-center justify-center z-[2600]" :class="busy.visible ? 'visible flex' : 'hidden'">
+  <div id="busy-overlay" class="fixed top-[52px] right-0 bottom-0 left-0 bg-page/45 backdrop-blur-[2px] items-center justify-center z-[1000]" :class="busy.visible ? 'visible flex' : 'hidden'">
     <div class="busy-card grid min-w-[280px] py-[1rem] px-[1.1rem] rounded-[12px] border border-border-default bg-card shadow-[0_20px_60px_rgba(5,8,14,0.45)] gap-2 text-center">
       <div class="busy-title text-md font-bold text-primary" id="busy-title">{{ busy.title || t('market.working') }}</div>
       <div class="busy-progress-row flex items-center gap-2">

@@ -56,7 +56,7 @@ onBeforeUnmount(() => {
   <div
     ref="tip"
     id="data-tip-tooltip"
-    class="pointer-events-none fixed z-[9999] max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]"
+    class="pointer-events-none fixed z-[4000] max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]"
     :style="{ display: visible ? 'block' : 'none', left: position.left, top: position.top }"
   ></div>
 </template>

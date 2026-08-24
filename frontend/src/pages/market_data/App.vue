@@ -610,7 +610,7 @@ body {
 #data-tip-tooltip {
   display: none;
   position: fixed;
-  z-index: 9999;
+  z-index: var(--z-tooltip);
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-strong);

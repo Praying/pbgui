@@ -35,7 +35,7 @@ function toastClass(toast: ToastItem): string {
 <template>
   <div
     id="toast-stack"
-    class="pointer-events-none fixed top-[68px] right-5 z-[10000] flex w-[min(420px,calc(100vw-40px))] flex-col gap-2"
+    class="pointer-events-none fixed top-[68px] right-5 z-[2000] flex w-[min(420px,calc(100vw-40px))] flex-col gap-2"
   >
     <div
       v-for="toast in toasts"

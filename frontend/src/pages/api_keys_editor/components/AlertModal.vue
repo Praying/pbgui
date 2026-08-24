@@ -46,7 +46,7 @@ function alertTitleClass(kind: 'error' | 'warning' | 'success' | 'info'): string
     </div>
   </div>
 
-  <div id="alertModalOverlay" class="fixed inset-0 z-[3000] flex items-center justify-center bg-backdrop" v-show="toasts.alert.value.visible">
+  <div id="alertModalOverlay" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop" v-show="toasts.alert.value.visible">
     <div
       id="alertModalBox"
       class="alert-modal flex w-[90%] max-w-[500px] flex-col gap-3 rounded-lg border border-border-default bg-panel px-8 py-7 shadow-modal"

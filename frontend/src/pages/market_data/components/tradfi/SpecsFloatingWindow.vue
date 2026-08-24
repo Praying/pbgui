@@ -199,7 +199,7 @@ function resizeHandleClass(direction: ResizeDirection): string {
     v-if="isVisible"
     id="tradfi-specs-window"
     ref="panelEl"
-    class="tradfi-specs-window visible fixed top-[84px] right-[18px] z-[2600] flex h-[min(72vh,760px)] min-h-[320px] w-[min(1080px,calc(100vw-36px))] min-w-[520px] flex-col overflow-hidden rounded-xl border border-accent/26 bg-page shadow-[0_22px_72px_rgba(5,8,14,0.55)] max-[700px]:top-[62px] max-[700px]:right-2 max-[700px]:left-2 max-[700px]:h-[calc(100dvh-76px)] max-[700px]:max-h-none max-[700px]:w-auto max-[700px]:min-h-0 max-[700px]:min-w-0"
+    class="tradfi-specs-window visible fixed top-[84px] right-[18px] z-[300] flex h-[min(72vh,760px)] min-h-[320px] w-[min(1080px,calc(100vw-36px))] min-w-[520px] flex-col overflow-hidden rounded-xl border border-accent/26 bg-page shadow-[0_22px_72px_rgba(5,8,14,0.55)] max-[700px]:top-[62px] max-[700px]:right-2 max-[700px]:left-2 max-[700px]:h-[calc(100dvh-76px)] max-[700px]:max-h-none max-[700px]:w-auto max-[700px]:min-h-0 max-[700px]:min-w-0"
     :style="windowStyle"
     aria-hidden="false"
   >

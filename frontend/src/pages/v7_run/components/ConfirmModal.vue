@@ -21,7 +21,7 @@ defineEmits<{ cancel: []; confirm: [] }>();
 </script>
 
 <template>
-  <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-backdrop" id="modal-overlay">
+  <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop" id="modal-overlay">
     <div class="min-w-[340px] max-w-[460px] rounded-lg border border-border-default bg-panel px-7 py-5 text-center" role="dialog" aria-modal="true">
       <h3 class="mb-3 text-lg">{{ title }}</h3>
       <p class="font-semibold text-warning">&#x26A0; {{ warn }}</p>

@@ -109,7 +109,7 @@ function bodyClass(kind: string): string {
 
 <template>
   <div
-    class="hlda-modal fixed inset-0 z-[10000] items-center justify-center overflow-y-auto bg-backdrop px-5 pt-[calc(var(--hlda-modal-visible-top-offset,0px)_+_20px)] pb-[calc(var(--hlda-modal-visible-bottom-offset,0px)_+_20px)]"
+    class="hlda-modal fixed inset-0 z-[1000] items-center justify-center overflow-y-auto bg-backdrop px-5 pt-[calc(var(--hlda-modal-visible-top-offset,0px)_+_20px)] pb-[calc(var(--hlda-modal-visible-bottom-offset,0px)_+_20px)]"
     :class="modal.active ? 'active flex' : 'hidden'"
   >
     <div class="hlda-modal-box flex max-h-[calc(var(--hlda-modal-visible-height,100dvh)-40px)] w-[min(800px,calc(100vw-40px))] max-w-[800px] flex-col overflow-hidden rounded-lg border border-border-default bg-page">

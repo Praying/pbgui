@@ -839,6 +839,7 @@
   .btn-primary:disabled:hover {
     background: var(--accent);
     border-color: var(--accent);
+    box-shadow: none;
   }
 
   button.pbgui-btn.pbgui-btn.btn-info,
@@ -1121,126 +1122,6 @@
   button.pbgui-tab.pbgui-tab.active {
     border-bottom-color: var(--accent);
     color: var(--accent-soft);
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--sp-xs);
-    height: var(--btn-h);
-    padding: 0 var(--sp-md);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-sm);
-    background: var(--surface-elevated);
-    color: var(--text-primary);
-    font-size: var(--fs-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition:
-      background-color var(--motion-fast) var(--ease-standard),
-      border-color var(--motion-fast) var(--ease-standard),
-      color var(--motion-fast) var(--ease-standard),
-      transform var(--motion-fast) var(--ease-standard);
-    white-space: nowrap;
-    user-select: none;
-  }
-
-  .btn:hover:not(:disabled) {
-    background: var(--border-strong);
-    border-color: var(--border-strong);
-    transform: translateY(-1px);
-  }
-
-  .btn:active:not(:disabled) {
-    transform: translateY(0) scale(0.985);
-  }
-
-  .btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-
-  .btn:disabled:hover {
-    background: var(--surface-elevated);
-    border-color: var(--border-default);
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--accent-contrast);
-    font-weight: 600;
-    box-shadow: 0 2px 10px rgb(var(--accent-rgb) / 0.22);
-  }
-
-  .btn-primary:disabled:hover {
-    background: var(--accent);
-    border-color: var(--accent);
-    box-shadow: none;
-  }
-
-  .btn-success {
-    background: var(--success-bg);
-    border-color: rgb(var(--success-rgb) / 0.35);
-    color: var(--success);
-  }
-
-  .btn-success:hover {
-    background: rgb(var(--success-rgb) / 0.2);
-    border-color: var(--success);
-  }
-
-  .btn-danger {
-    background: var(--danger-bg);
-    border-color: rgb(var(--danger-rgb) / 0.35);
-    color: var(--danger-soft);
-  }
-
-  .btn-danger:hover {
-    background: rgb(var(--danger-rgb) / 0.2);
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-
-  .btn-danger:disabled:hover {
-    background: var(--danger-bg);
-    border-color: rgb(var(--danger-rgb) / 0.35);
-    color: var(--danger-soft);
-  }
-
-  .btn-secondary {
-    background: var(--surface-card);
-    border-color: var(--border-default);
-    color: var(--text-secondary);
-  }
-
-  .btn-secondary:hover {
-    background: var(--border-default);
-    color: var(--text-primary);
-  }
-
-  .btn-ghost {
-    background: transparent;
-    border-color: transparent;
-    color: var(--text-secondary);
-  }
-
-  .btn-ghost:hover {
-    background: var(--surface-card);
-    color: var(--text-primary);
-  }
-
-  .btn-sm {
-    height: 28px;
-    padding: 0 var(--sp-sm);
-    font-size: var(--fs-xs);
-    border-radius: var(--radius-sm);
-  }
-
-  .btn-icon {
-    width: var(--btn-h);
-    padding: 0;
   }
 
   /* ── Panels / Cards ─────────────────────────────────────────── */
@@ -1637,33 +1518,6 @@
     opacity: 0.35;
   }
 
-  /* ── Skeleton loader (matches layout shape; prefer over spinners) ── */
-
-  .skeleton {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-sm);
-    background: rgb(var(--text-secondary-rgb) / 0.09);
-  }
-
-  .skeleton::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(90deg, transparent, rgb(var(--text-secondary-rgb) / 0.08), transparent);
-    animation: skeleton-shimmer 1.6s var(--ease-standard) infinite;
-  }
-
-  @keyframes skeleton-shimmer {
-    to { transform: translateX(100%); }
-  }
-
-  .skeleton-line {
-    height: 12px;
-    margin-bottom: var(--sp-sm);
-  }
-
   /* ── Notices / Banners / Toasts ─────────────────────────────── */
 
   .notice {
@@ -1809,12 +1663,6 @@
   .status-dot-muted   { background: var(--text-disabled); }
 
   /* ── Responsive ─────────────────────────────────────────────── */
-
-  @media (max-width: 1100px) {
-    .app-shell__main:has(.app-shell__supporting) {
-      grid-template-columns: minmax(0, 1fr);
-    }
-  }
 
   @media (min-width: 721px) and (max-width: 768px) {
     /* Keep content aligned to the compact column while the expanded rail opens

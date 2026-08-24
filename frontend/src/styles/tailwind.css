@@ -287,6 +287,7 @@
   --z-modal: 1000;
   --z-toast: 2000;
   --z-help: 3200;
+  --z-tooltip: 4000; /* pointer-following tips sit above every layer but the migration watermark */
 
   /* ── Legacy aliases (backtest_shell.css compatibility) ──────── */
   --bg: var(--bg-page);
