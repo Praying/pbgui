@@ -86,10 +86,10 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
 </script>
 
 <template>
-  <div id="panel-legacy" class="view-panel" :class="{ active, 'leg-unpinned': !pinned }">
-    <div id="legacy-results-view">
-      <div id="legacy-results-fixed-top">
-        <div id="legacy-results-toolbar">
+  <div id="panel-legacy" class="view-panel min-h-0 flex-1 flex-col overflow-hidden" :class="[active ? 'flex' : 'hidden', { active, 'leg-unpinned': !pinned }]">
+    <div id="legacy-results-view" class="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div id="legacy-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
+        <div id="legacy-results-toolbar" class="mb-3 mt-2 flex flex-wrap items-center gap-2">
           <label style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</label>
           <select id="legacy-results-config-filter" v-model="store.configFilter.value" class="sb-input" style="max-width: 200px">
             <option value="">{{ t('v7backtest.allConfigs') }}</option>
@@ -101,11 +101,22 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             {{ t('v7backtest.selectAll') }}
           </button>
           <button type="button" class="act-btn" data-test="legacy-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</button>
-          <button id="legacy-results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" :aria-label="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned"><PbIcon :icon="PhPushPin" :size="18" /></button>
+          <button
+            id="legacy-results-pin-btn"
+            type="button"
+            class="act-btn"
+            :class="pinned ? '' : 'unpinned opacity-40'"
+            :title="t('v7backtest.pinTable')"
+            :aria-label="t('v7backtest.pinTable')"
+            style="font-size: 15px; padding: 0 6px"
+            @click="pinned = !pinned"
+          >
+            <PbIcon :icon="PhPushPin" :size="18" />
+          </button>
         </div>
-        <div id="legacy-results-list-wrap" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+        <div id="legacy-results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="legacy-results-table">
-            <div v-if="store.visible.value.length === 0" class="empty-state">{{ t('v7backtest.noLegacyResults') }}</div>
+            <div v-if="store.visible.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noLegacyResults') }}</div>
             <ResultsTable
               v-else
               :rows="store.visible.value"
@@ -122,11 +133,11 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             />
           </div>
         </div>
-        <div id="legacy-results-resize-handle" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
-          <span></span>
+        <div id="legacy-results-resize-handle" class="flex h-1.5 cursor-row-resize select-none items-center justify-center rounded-b-sm bg-border-default" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
+          <span class="h-0.5 w-8 rounded-[2px] bg-secondary opacity-50"></span>
         </div>
       </div>
-      <div id="legacy-results-scroll">
+      <div id="legacy-results-scroll" class="min-h-0 flex-1 overflow-y-auto pb-5">
         <CompareModal area-id="legacy-compare-chart-area" plot-id="legacy-compare-chart-div" :open="store.compareOpen.value" :traces="compareTraces" :layout="compareLayout" />
         <ResultCharts charts-id="legacy-charts" :sections="sections" version="v7" :data-api="store.dataApi" />
       </div>

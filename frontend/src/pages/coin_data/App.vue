@@ -284,9 +284,9 @@ onBeforeUnmount(() => {
     </template>
 
     <MigrationWatermark />
-    <div id="page-body">
-    <div id="main-content" ref="mainContent">
-      <div id="warning-box" class="warning-box" :class="{ hidden: !warnings.length }">
+    <div id="page-body" class="flex h-[calc(100dvh-112px)] overflow-hidden max-[980px]:flex-col">
+    <div id="main-content" ref="mainContent" class="flex min-w-0 min-h-0 flex-1 flex-col gap-3 overflow-hidden p-5 max-[980px]:overflow-y-auto">
+      <div id="warning-box" class="warning-box border border-warning/35 bg-warning/8 text-warning rounded-[10px] px-[0.95rem] py-[0.8rem] text-sm leading-[1.6]" :class="warnings.length ? '' : 'hidden'">
         <div v-for="warning in warnings" :key="warning">{{ warning }}</div>
       </div>
 
@@ -317,13 +317,13 @@ onBeforeUnmount(() => {
       />
 
       <details
-        class="panel"
+        class="panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-[12px] border border-elevated bg-card"
         id="unmatched-panel"
-        :class="{ hidden: store.activeView.value !== 'unmatched' }"
+        :class="store.activeView.value === 'unmatched' ? 'flex' : 'hidden'"
         :open="store.activeView.value === 'unmatched'"
       >
-        <summary id="unmatched-summary">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
-        <div class="panel-body">
+        <summary id="unmatched-summary" class="flex items-center justify-between gap-3 py-2 px-3 text-sm font-semibold text-primary bg-page border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
+        <div class="panel-body flex flex-1 flex-col min-h-0 p-[1rem]">
           <SymbolTable
             table="unmatched"
             :rows="store.sortedUnmatchedRows.value"
@@ -334,13 +334,17 @@ onBeforeUnmount(() => {
         </div>
       </details>
 
-      <section class="panel" id="main-panel" :class="{ hidden: store.activeView.value !== 'main' }">
-        <div class="panel-head">
-          <div class="panel-title-wrap">
-            <div class="panel-title" id="main-panel-title">{{ t('market.matchedSymbolsLowerCount', { count: counts.main }) }}</div>
-            <span class="panel-meta" id="main-panel-meta" :title="mainPanelMetaTitle">{{ mainPanelMeta }}</span>
+      <section
+        class="panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-[12px] border border-elevated bg-card"
+        id="main-panel"
+        :class="store.activeView.value === 'main' ? 'flex' : 'hidden'"
+      >
+        <div class="panel-head flex items-center justify-between gap-2 py-2 px-3 border-b border-border-default bg-page">
+          <div class="panel-title-wrap flex items-center gap-2 min-w-0 flex-wrap">
+            <div class="panel-title text-md font-semibold text-primary" id="main-panel-title">{{ t('market.matchedSymbolsLowerCount', { count: counts.main }) }}</div>
+            <span class="panel-meta text-sm text-secondary whitespace-nowrap overflow-hidden text-ellipsis max-w-[min(52vw,760px)]" id="main-panel-meta" :title="mainPanelMetaTitle">{{ mainPanelMeta }}</span>
           </div>
-          <span class="pill" id="main-sort-pill">{{ sortPill }}</span>
+          <span class="pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.6rem] rounded-full border border-border-default bg-card text-primary text-sm whitespace-nowrap" id="main-sort-pill">{{ sortPill }}</span>
         </div>
         <SymbolTable
           table="main"
@@ -352,20 +356,24 @@ onBeforeUnmount(() => {
       </section>
 
       <details
-        class="panel"
+        class="panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-[12px] border border-elevated bg-card"
         id="hip3-panel"
-        :class="[{ hidden: store.activeView.value !== 'hip3' }, { 'active-panel': store.activeView.value === 'hip3' }]"
+        :class="store.activeView.value === 'hip3' ? 'active-panel flex h-0' : 'hidden'"
         :open="store.activeView.value === 'hip3'"
       >
-        <summary id="hip3-summary">
-          <span class="summary-title">
-            <span class="summary-title-text" id="hip3-summary-title">{{ hip3SummaryTitle || t('market.hip3SummaryTitle') }}</span>
+        <summary id="hip3-summary" class="flex items-center justify-between gap-3 py-2 px-3 text-sm font-semibold text-primary bg-page border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">
+          <span class="summary-title inline-flex items-center min-w-0">
+            <span class="summary-title-text min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" id="hip3-summary-title">{{ hip3SummaryTitle || t('market.hip3SummaryTitle') }}</span>
           </span>
-          <span class="summary-inline-actions" :class="{ hidden: !hip3DexFieldVisible }">
-            <label class="summary-field" id="field-hip3-dex" @mousedown.stop @click.stop>
-              <span class="summary-field-label">{{ t('market.dex') }}</span>
+          <span
+            class="summary-inline-actions items-center gap-2 ml-auto min-w-0 max-[980px]:ml-0 max-[980px]:w-full"
+            :class="hip3DexFieldVisible ? 'flex' : 'hidden'"
+          >
+            <label class="summary-field inline-flex items-center gap-2 min-w-0 cursor-default max-[980px]:w-full" id="field-hip3-dex" @mousedown.stop @click.stop>
+              <span class="summary-field-label text-sm text-secondary whitespace-nowrap">{{ t('market.dex') }}</span>
               <select
                 id="filter-hip3-dex"
+                class="w-full h-8 px-[0.75rem] rounded-lg border border-border-default bg-card text-primary text-base outline-none focus:border-secondary min-w-[160px] max-[980px]:min-w-0"
                 :disabled="!store.hip3DexOptions.value.length"
                 @mousedown.stop
                 @click.stop
@@ -382,7 +390,7 @@ onBeforeUnmount(() => {
             </label>
           </span>
         </summary>
-        <div class="panel-body">
+        <div class="panel-body flex flex-1 flex-col min-h-0 p-0 overflow-hidden">
           <SymbolTable
             table="hip3"
             :rows="store.sortedHip3Rows.value"
@@ -398,3 +406,74 @@ onBeforeUnmount(() => {
     <BusyOverlay :busy="refresh.busy.value" />
   </AppShell>
 </template>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ported from styles/coin-data.css (deleted at the Tailwind
+   migration). Everything expressible as utilities moved onto the
+   templates (App.vue + the five components); the rules below stay as
+   CSS for the documented reasons. This block is unscoped on purpose —
+   the old stylesheet was page-global and the html/body rules have no
+   component root to scope to.
+
+   Dropped outright: the :root alias block (every variable it defined
+   is provided identically by the legacy alias block in
+   src/styles/tailwind.css; its --accent/--bg2/--blue/--font overrides
+   were referenced nowhere except --accent in the busy-progress-fill
+   gradient, translated inline as --accent-soft — the value it aliased
+   on this page), the * and html/body resets (preflight + the shared
+   base layer provide them), and the retired sidebar/meta/summary
+   rules whose markup left with the rail migration.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page root chrome ──────────────────────────────────────────
+   Only the declarations that differ from the shared base layer stay:
+   the page's overflow lock and its Segoe-UI-led font stack. */
+html,
+body {
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+}
+</style>
+
+<style scoped>
+/* Page-level AppShell overrides — ported from styles/coin-data.css at
+   the Tailwind migration. The :deep() rules target AppShell internals,
+   so they stay as CSS instead of utilities. */
+.data-page-shell :deep(.app-shell__main) {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.data-page-shell :deep(.app-shell__primary) {
+  min-height: 0;
+}
+
+/* details.panel summary chrome — the ::-webkit-details-marker hide, the
+   ">" ::before arrow and its [open] rotation, and the [open]
+   border-bottom-colour flip are pseudo-element / attribute-state rules
+   utilities cannot express. 'panel' remains the inert anchor these
+   selectors key on; every other summary declaration is a utility on the
+   two <summary> elements. */
+details.panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.panel > summary::before {
+  content: ">";
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 10px;
+  transition: transform 0.12s;
+}
+
+details.panel[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.panel[open] > summary {
+  border-bottom-color: var(--border-default);
+}
+</style>

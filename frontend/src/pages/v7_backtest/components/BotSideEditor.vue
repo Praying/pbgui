@@ -89,16 +89,16 @@ watch(model, (raw) => {
 
 <template>
   <section
-    class="bot-side-panel"
-    :class="{ long, short: !long }"
+    class="bot-side-panel min-w-0 rounded-[9px] border-x border-b border-secondary/14 bg-page/30 p-3"
+    :class="long ? 'long border-t-2 border-t-success' : 'short border-t-2 border-t-danger'"
     :data-test="'bot-side-' + side"
     role="region"
     :aria-labelledby="'bot-side-title-' + side"
   >
-    <header class="bot-side-head">
-      <h3 :id="'bot-side-title-' + side" class="bot-side-title">
-        <span class="bot-side-direction">{{ t(side === 'long' ? 'v7backtest.long' : 'v7backtest.short') }}</span>
-        <span class="bot-side-role">{{ side.toUpperCase() }}</span>
+    <header class="bot-side-head mb-2.5 flex min-w-0 items-center justify-between gap-2 border-b border-secondary/12 pb-2">
+      <h3 :id="'bot-side-title-' + side" class="bot-side-title flex min-w-0 items-center justify-between gap-2">
+        <span class="bot-side-direction min-w-0 font-bold text-primary [overflow-wrap:anywhere]">{{ t(side === 'long' ? 'v7backtest.long' : 'v7backtest.short') }}</span>
+        <span class="bot-side-role shrink-0 font-mono text-[10px] leading-none tracking-[0.12em] text-secondary">{{ side.toUpperCase() }}</span>
       </h3>
     </header>
     <div class="form-row cols-2 bot-side-primary" style="margin-bottom: var(--sp-sm)">
@@ -130,7 +130,7 @@ watch(model, (raw) => {
       >
         <PbIcon class="arrow" :icon="PhCaretRight" />
         <span>{{ t('v7backtest.fullConfigJson') }}</span>
-        <span v-if="needsReview" class="bot-json-review">{{ t('v7backtest.review') }}</span>
+        <span v-if="needsReview" class="bot-json-review ml-auto text-xs font-semibold text-warning">{{ t('v7backtest.review') }}</span>
       </button>
       <div :id="'bot-json-content-' + side" class="expander-body">
         <div v-if="jsonOpen" class="form-group">

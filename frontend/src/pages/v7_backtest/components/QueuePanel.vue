@@ -11,6 +11,7 @@ import { PhChartBar, PhFileText, PhPlay, PhStop, PhTrash } from '@phosphor-icons
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
 import type { QueueItem } from '../types';
 
 const props = defineProps<{ items: QueueItem[]; active?: boolean }>();
@@ -163,13 +164,26 @@ const emptyLines = computed<string[]>(() =>
     .map((line) => line.trim())
 );
 
+/* Queue status → badge tint (the former .badge-queued/running/backtesting/
+   complete/error/stopped/unknown rules). Every branch returns the complete
+   colour set; the badge-<status> class names stay on the element as inert
+   anchors (the tests assert them). */
+function badgeToneClass(status: string): string {
+  if (status === 'queued') return 'bg-secondary/15 text-secondary';
+  if (status === 'running') return 'bg-accent/15 text-accent';
+  if (status === 'backtesting') return 'bg-warning/15 text-warning';
+  if (status === 'complete') return 'bg-success/15 text-success';
+  if (status === 'error' || status === 'stopped') return 'bg-danger/15 text-danger';
+  return 'bg-warning/15 text-warning'; // unknown
+}
+
 defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
 </script>
 
 <template>
-  <div id="panel-queue" class="view-panel" :class="{ active: props.active }">
-    <div id="queue-toolbar" class="bt-panel-toolbar">
-      <span class="bt-toolbar-spacer"></span>
+  <div id="panel-queue" class="view-panel min-h-0 flex-1 flex-col overflow-hidden" :class="[props.active ? 'flex' : 'hidden', { active: props.active }]">
+    <div id="queue-toolbar" class="mb-2 flex items-center gap-2 max-[760px]:flex-wrap">
+      <span class="flex-1 max-[760px]:hidden"></span>
       <button type="button" class="act-btn" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">
         {{ t('v7backtest.selectAll') }}
       </button>
@@ -177,9 +191,9 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
         {{ t('v7backtest.deselect') }}
       </button>
     </div>
-    <div id="queue-list" @mousemove="onListMouseMove">
-      <div v-if="!items.length" class="empty-state">
-        <div class="empty-icon">⏳</div>
+    <div id="queue-list" class="min-h-0 flex-1 overflow-y-auto" @mousemove="onListMouseMove">
+      <div v-if="!items.length" class="empty-state px-5 py-15 text-center text-md text-secondary">
+        <div class="mb-3 text-[48px] opacity-40">⏳</div>
         <template v-for="(line, index) in emptyLines" :key="index">
           <br v-if="index > 0" />
           <span>{{ line }}</span>
@@ -204,7 +218,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
             @mouseenter="onMouseEnter(item)"
             @mouseup="onMouseUp(item)"
           >
-            <td><span class="badge pbgui-badge" :class="'badge-' + String(item.status || 'unknown').toLowerCase()">{{ item.status }}</span></td>
+            <td><span class="badge pbgui-badge inline-block rounded-[10px] tracking-[0.3px]" :class="['badge-' + String(item.status || 'unknown').toLowerCase(), badgeToneClass(String(item.status || 'unknown').toLowerCase())]">{{ item.status }}</span></td>
             <td :title="item.filename" style="cursor: pointer" @dblclick="emit('editConfig', item.name ?? '')">
               {{ item.name }}
             </td>
@@ -262,15 +276,15 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
     </div>
 
     <!-- deleteSelectedQueue confirm (:5860-5870) -->
-    <div v-if="confirmOpen" id="modal-root" class="open">
-      <div class="modal-box pbgui-modal">
-        <div class="modal-header">
-          <span class="modal-title">{{ t('v7backtest.deleteQueueItems') }}</span>
+    <div v-if="confirmOpen" id="modal-root" class="open" :class="modalBackdropClass">
+      <div :class="[modalBoxClass, 'shadow-modal']">
+        <div class="mb-3 flex items-center justify-between border-b border-border-default pb-2">
+          <span class="text-lg font-semibold">{{ t('v7backtest.deleteQueueItems') }}</span>
         </div>
-        <div class="modal-body"><p>{{ t('v7backtest.removeQueueConfirm', { n: selectedFilenames().length }) }}</p></div>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn pbgui-action" @click="confirmOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="modal-btn pbgui-action danger" @click="confirmDelete">{{ t('common.delete') }}</button>
+        <div class="min-h-0 flex-1 overflow-auto"><p>{{ t('v7backtest.removeQueueConfirm', { n: selectedFilenames().length }) }}</p></div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" class="pbgui-action" :class="modalBtnClass()" @click="confirmOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" class="pbgui-action danger" :class="modalBtnClass()" @click="confirmDelete">{{ t('common.delete') }}</button>
         </div>
       </div>
     </div>

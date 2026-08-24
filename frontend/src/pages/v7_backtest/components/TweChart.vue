@@ -63,7 +63,7 @@ function toggleCoins(): void {
         <span style="font-size: var(--fs-sm)">Show coins</span>
       </label>
     </div>
-    <div v-if="!csv || csv.rows.length === 0" class="empty-state" style="color: var(--text-dim); padding: var(--sp-md)">No fills data</div>
+    <div v-if="!csv || csv.rows.length === 0" class="empty-state text-center text-md" style="color: var(--text-dim); padding: var(--sp-md)">No fills data</div>
     <div v-else class="chart-wrap">
       <PlotlyDiv ref="plot" :plot-id="chartId" :traces="traces" :layout="layout" />
     </div>

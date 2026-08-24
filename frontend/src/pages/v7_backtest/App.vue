@@ -58,6 +58,7 @@ import QueuePanel from './components/QueuePanel.vue';
 import ResultsPanel from './components/ResultsPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import { useBacktestPage } from './composables/useBacktestPage';
+import { modalBackdropClass, modalBoxClass, modalBtnClass } from './lib/uiClasses';
 import type { PageSection } from '@/shared/navigation';
 import type { BacktestPanel } from './types';
 
@@ -107,6 +108,20 @@ const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
   store.banner.value === 'ok' ? t('v7backtest.connected') : store.banner.value === 'lost' ? t('v7backtest.connectionLost') : t('v7backtest.connecting')
 );
+/* Banner tone (the former .conn-ok/.conn-lost/.conn-waiting rules): every
+   branch returns the complete colour set; the conn-* class names stay on
+   the element as inert anchors (the tests assert them). */
+function bannerToneClass(state: string): string {
+  if (state === 'conn-ok') return 'bg-success text-accent-contrast';
+  if (state === 'conn-lost') return 'bg-danger text-[#f2f5fb]';
+  return 'bg-warning text-accent-contrast';
+}
+/* Toast tone (the former .toast-ok/.toast-err/.toast-info rules). */
+function toastToneClass(kind: string): string {
+  if (kind === 'ok') return 'bg-success text-accent-contrast';
+  if (kind === 'err') return 'bg-danger text-[#f2f5fb]';
+  return 'bg-accent text-[#f2f5fb]';
+}
 /* Connection success is quiet: a transient toast, while the persistent banner
    only appears on disconnect/error (the header status strip covers the ok
    state). Avoids the old always-on green strip duplicating the status dot. */
@@ -347,11 +362,21 @@ onMounted(() => {
       />
     </template>
 
-    <div v-if="store.banner.value !== 'ok'" id="conn-banner" :class="bannerClass" data-i18n="v7backtest.connecting">{{ bannerText }}</div>
+    <div
+      v-if="store.banner.value !== 'ok'"
+      id="conn-banner"
+      class="px-4 py-2 text-center text-sm font-semibold transition-all duration-300"
+      :class="[bannerClass, bannerToneClass(bannerClass)]"
+      data-i18n="v7backtest.connecting"
+    >
+      {{ bannerText }}
+    </div>
 
-    <div id="page-body">
+    <div id="page-body" class="flex h-[calc(100dvh_-_var(--nav-height))] min-h-0 flex-col overflow-hidden max-[760px]:relative">
 
-    <div class="workbench-page-content">
+    <div
+      class="workbench-page-content flex min-h-0 flex-1 flex-col overflow-hidden bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.09),transparent_28rem),radial-gradient(circle_at_0%_84%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)] px-[clamp(16px,2.5vw,36px)] pb-9 pt-6 max-[900px]:px-4 max-[900px]:pb-7 max-[900px]:pt-4.5"
+    >
     <PanelShell
       :items="store.nav"
       :active="store.view.state.panel"
@@ -448,36 +473,56 @@ onMounted(() => {
       <!-- Editor toolbar (:782-804, setEditorMode :211-222) — replaces the
            panel actions while a config session is open -->
       <template #editor>
-        <div v-if="editorOpen" id="editor-toolbar" class="editor-toolbar">
-          <span class="tb-title">{{ t('v7backtest.editBacktest') }}</span>
-          <div class="editor-nav-group" data-test="editor-nav-group">
-            <div class="editor-action-label">{{ t('v7backtest.editorNavigation') }}</div>
+        <div v-if="editorOpen" id="editor-toolbar" class="editor-toolbar flex w-full flex-wrap items-center gap-x-5 gap-y-2">
+          <span class="tb-title text-xs font-bold uppercase tracking-[0.13em] text-primary">{{ t('v7backtest.editBacktest') }}</span>
+          <div class="editor-nav-group flex flex-wrap items-center gap-1.5" data-test="editor-nav-group">
+            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorNavigation') }}</div>
             <button type="button" class="sb-btn" data-test="editor-home" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()"><PbIcon :icon="PhHouse" /> {{ actionLabel('v7backtest.home') }}</button>
             <button type="button" class="sb-btn" data-test="editor-import" @click="openImport"><PbIcon :icon="PhDownloadSimple" /> {{ actionLabel('v7backtest.import') }}</button>
           </div>
-          <div class="editor-analysis-group" data-test="editor-analysis-group">
-            <div class="editor-action-label">{{ t('v7backtest.editorAnalysis') }}</div>
+          <div class="editor-analysis-group flex flex-wrap items-center gap-1.5" data-test="editor-analysis-group">
+            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorAnalysis') }}</div>
             <button type="button" class="sb-btn" data-test="editor-results" :disabled="!editorHasSavedConfig" @click="editorResults"><PbIcon :icon="PhChartBar" /> {{ actionLabel('v7backtest.results') }}</button>
             <button type="button" class="sb-btn" data-test="editor-strategy-explorer" @click="openStrategyExplorer">{{ t('v7backtest.strategyExplorer') }}</button>
             <button type="button" class="sb-btn" data-test="editor-balance-calc" @click="openBalanceCalculator"><PbIcon :icon="PhWallet" /> {{ actionLabel('v7backtest.balanceCalculator') }}</button>
             <button type="button" class="sb-btn" data-test="editor-ohlcv" @click="openOhlcvReadiness"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7backtest.ohlcvReadiness') }}</button>
           </div>
-          <div class="editor-config-group" data-test="editor-config-group">
-            <div class="editor-action-label">{{ t('v7backtest.editorConfigActions') }}</div>
+          <div class="editor-config-group flex flex-wrap items-center gap-1.5" data-test="editor-config-group">
+            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorConfigActions') }}</div>
             <button v-if="!store.adapter.isV8" type="button" class="sb-btn" data-test="editor-convert-v8" :disabled="!editorHasSavedConfig" @click="convertEditorToV8">{{ t('v7backtest.convertToV8') }}</button>
             <button type="button" class="sb-btn" data-test="editor-add-run" :disabled="!editorHasSavedConfig" @click="addEditorToRun"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.addToRun') }}</button>
           </div>
-          <div class="editor-save-group" data-test="editor-save-group">
-            <div class="editor-action-label">{{ t('v7backtest.editorSaveActions') }}</div>
-            <button type="button" class="sb-btn primary" data-test="editor-save" :title="t('v7backtest.saveConfig')" @click="store.editor.save()"><PbIcon :icon="PhFloppyDisk" /> {{ actionLabel('v7backtest.save') }}</button>
-            <button type="button" class="sb-btn info" data-test="editor-save-queue" :title="t('v7backtest.saveAndQueueTitle')" @click="store.editor.saveAndQueue()"><PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.saveQueue') }}</button>
+          <div class="editor-save-group ml-auto flex flex-wrap items-center gap-1.5" data-test="editor-save-group">
+            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorSaveActions') }}</div>
+            <button
+              type="button"
+              class="sb-btn primary border-accent/44 bg-accent-deep font-bold text-[#f2f5fb] shadow-[0_8px_18px_rgb(var(--accent-deep-rgb)/0.18)]"
+              data-test="editor-save"
+              :title="t('v7backtest.saveConfig')"
+              @click="store.editor.save()"
+            >
+              <PbIcon :icon="PhFloppyDisk" /> {{ actionLabel('v7backtest.save') }}
+            </button>
+            <button
+              type="button"
+              class="sb-btn info border-success/32 bg-success/12 font-bold text-success-soft"
+              data-test="editor-save-queue"
+              :title="t('v7backtest.saveAndQueueTitle')"
+              @click="store.editor.saveAndQueue()"
+            >
+              <PbIcon :icon="PhPlay" /> {{ actionLabel('v7backtest.saveQueue') }}
+            </button>
           </div>
         </div>
       </template>
     </PanelShell>
 
       <!-- CONFIGS panel (:812-821) -->
-      <div id="panel-configs" class="view-panel" :class="{ active: store.view.state.panel === 'configs' }">
+      <div
+        id="panel-configs"
+        class="view-panel min-h-0 flex-1 flex-col overflow-hidden"
+        :class="[store.view.state.panel === 'configs' ? 'flex' : 'hidden', { active: store.view.state.panel === 'configs' }]"
+      >
         <ConfigsPanel
           v-show="!editorOpen"
           ref="configsPanel"
@@ -539,8 +584,8 @@ onMounted(() => {
       <!-- RESULTS panel (:834-869) — toolbar + table + compare + charts -->
       <div
         id="panel-results"
-        class="view-panel"
-        :class="{ active: store.view.state.panel === 'results', unpinned: !resultsPinned }"
+        class="view-panel min-h-0 flex-1 flex-col overflow-hidden"
+        :class="[store.view.state.panel === 'results' ? 'flex' : 'hidden', { active: store.view.state.panel === 'results', unpinned: !resultsPinned }]"
       >
         <ResultsPanel
           ref="resultsPanel"
@@ -572,8 +617,15 @@ onMounted(() => {
     </div>
   </AppShell>
 
-  <div id="toast">
-    <div v-for="item in store.toasts.value" :key="item.id" class="toast-msg" :class="'toast-' + item.kind">{{ item.msg }}</div>
+  <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-[2000] flex flex-col gap-2">
+    <div
+      v-for="item in store.toasts.value"
+      :key="item.id"
+      class="toast-msg pointer-events-auto animate-[bt-fade-in_0.2s] rounded-md px-4 py-2.5 text-sm font-medium"
+      :class="['toast-' + item.kind, toastToneClass(item.kind)]"
+    >
+      {{ item.msg }}
+    </div>
   </div>
 
   <QueueDraftModal
@@ -596,37 +648,37 @@ onMounted(() => {
     @close="store.settingsOpen.value = false"
   />
 
-  <div v-if="importOpen" id="modal-root" data-test="config-import-modal">
-    <div class="modal-box import-config-modal">
-      <div class="modal-title">{{ t('v7backtest.importJsonConfig') }}</div>
-      <div class="modal-body">
+  <div v-if="importOpen" id="modal-root" :class="modalBackdropClass" data-test="config-import-modal">
+    <div :class="[modalBoxClass, 'w-[min(760px,92vw)]']">
+      <div class="text-lg font-semibold">{{ t('v7backtest.importJsonConfig') }}</div>
+      <div class="min-h-0 flex-1 overflow-auto">
         <div class="form-group">
           <label>{{ t('v7backtest.configName') }}</label>
           <input v-model="importName" type="text" data-test="config-import-name" />
         </div>
         <div class="form-group">
           <label>{{ t('v7backtest.importJson') }}</label>
-          <textarea v-model="importJson" rows="18" :placeholder="t('v7backtest.pasteJsonHere')" data-test="config-import-json"></textarea>
+          <textarea v-model="importJson" rows="18" :placeholder="t('v7backtest.pasteJsonHere')" data-test="config-import-json" class="min-h-[320px]! max-h-[60vh]"></textarea>
         </div>
         <div v-if="importError" class="field-status field-status-inline error" data-test="config-import-error">{{ importError }}</div>
       </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn" :disabled="importLoading" @click="importOpen = false">{{ t('common.cancel') }}</button>
-        <button type="button" class="modal-btn modal-btn-primary" data-test="config-import-submit" :disabled="importLoading" @click="submitImport">{{ t('v7backtest.importShort') }}</button>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" :class="modalBtnClass()" :disabled="importLoading" @click="importOpen = false">{{ t('common.cancel') }}</button>
+        <button type="button" :class="modalBtnClass('primary')" data-test="config-import-submit" :disabled="importLoading" @click="submitImport">{{ t('v7backtest.importShort') }}</button>
       </div>
     </div>
   </div>
 
-  <div v-if="ohlcvOpen" id="modal-root" data-test="ohlcv-readiness-modal">
-    <div class="modal-box ohlcv-readiness-modal">
-      <div class="modal-title">{{ t('v7backtest.ohlcvReadinessTitle') }}</div>
-      <div class="modal-body">
-        <div v-if="ohlcvLoading" class="muted-line">{{ t('editor.preflight.running') }}</div>
+  <div v-if="ohlcvOpen" id="modal-root" :class="modalBackdropClass" data-test="ohlcv-readiness-modal">
+    <div :class="[modalBoxClass, 'w-[min(760px,92vw)]']">
+      <div class="text-lg font-semibold">{{ t('v7backtest.ohlcvReadinessTitle') }}</div>
+      <div class="min-h-0 flex-1 overflow-auto">
+        <div v-if="ohlcvLoading" class="text-secondary">{{ t('editor.preflight.running') }}</div>
         <div v-else-if="ohlcvError" class="field-status field-status-inline error">{{ ohlcvError }}</div>
-        <pre v-else class="ohlcv-readiness-json">{{ JSON.stringify(ohlcvData, null, 2) }}</pre>
+        <pre v-else class="m-0 max-h-[60vh] overflow-auto whitespace-pre-wrap break-words">{{ JSON.stringify(ohlcvData, null, 2) }}</pre>
       </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn modal-btn-primary" data-test="ohlcv-readiness-close" @click="ohlcvOpen = false">{{ t('common.close') }}</button>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" :class="modalBtnClass('primary')" data-test="ohlcv-readiness-close" @click="ohlcvOpen = false">{{ t('common.close') }}</button>
       </div>
     </div>
   </div>
@@ -644,3 +696,560 @@ onMounted(() => {
   <ArchiveGitModals :git="store.archiveGit" />
   <ArchiveLogPanel ref="archiveLogPanel" />
 </template>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ported from styles/backtest-shell.css (deleted at the Tailwind
+   migration). Everything expressible as utilities moved onto the
+   templates; the rules below stay as CSS for the documented reasons.
+   The block is unscoped on purpose — the old stylesheet was
+   page-global, and the html/body rules have no component root.
+
+   Dropped outright (identical values live in the src/styles/
+   tailwind.css base + alias layers, or are superseded): the :root
+   alias block, the * reset, the html/body font/colour/height
+   defaults, the reduced-motion block, #modal-root.open (v-if
+   controls presence), #log-panel/.visible (class binding + display
+   ternary in ArchiveLogPanel), the page .sb-sep override (the shared
+   components.css chrome owns .sb-sep), @keyframes archive-spin
+   (animate-spin) and the dead #configs-editor .bot-side-primary
+   margin (BotSideEditor's inline style always won).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Root chrome ─────────────────────────────────────────────── */
+html,
+body {
+  overflow: hidden;
+}
+
+/* New-config command surface: the page-level accent glow. */
+body {
+  background:
+    radial-gradient(circle at 7% 0%, rgb(var(--accent-deep-rgb) / 0.09), transparent 25rem),
+    var(--bg);
+}
+
+/* ── Shell scroll release (:has() — no utility form) ─────────── */
+/* When a results panel is unpinned, main-content scrolls everything. */
+.workbench-page-content:has(#panel-results.active.unpinned) { overflow-y: auto; }
+.workbench-page-content:has(#panel-archive.active.arc-unpinned) { overflow-y: auto; }
+.workbench-page-content:has(#panel-legacy.active.leg-unpinned) { overflow-y: auto; }
+/* The editor is a long-form document, unlike the fixed-height queue/
+   results workspaces — the main content owns the vertical scroll here. */
+.workbench-page-content:has(#configs-editor) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+#panel-configs.active:has(#configs-editor) {
+  min-width: 0;
+}
+#panel-configs.active:has(#configs-editor) {
+  display: block !important;
+  flex: none;
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+}
+
+/* ── Panel pin states ──────────────────────────────────────────
+   State combos over the panels' flex/overflow utilities (un-layered
+   CSS outranks @layer utilities, so the unpinned release wins). */
+#panel-results.active:not(.unpinned) { height: 100%; }
+#panel-results.active.unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
+#panel-results.unpinned #results-scroll-area { flex: none; min-height: unset; overflow-y: visible; }
+#panel-archive.active:not(.arc-unpinned) { height: 100%; }
+#panel-archive.active.arc-unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
+#panel-archive.arc-unpinned #archive-results-view { overflow: visible; flex: none; min-height: unset; }
+#panel-archive.arc-unpinned #archive-results-scroll { flex: none; min-height: unset; overflow-y: visible; }
+#panel-legacy.active:not(.leg-unpinned) { height: 100%; }
+#panel-legacy.active.leg-unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
+#panel-legacy.leg-unpinned #legacy-results-view { overflow: visible; flex: none; min-height: unset; }
+#panel-legacy.leg-unpinned #legacy-results-scroll { flex: none; min-height: unset; overflow-y: visible; }
+
+/* ── Shared table system (.tbl) ────────────────────────────────
+   Cross-page contract: src/shared/coinOverrides/components/
+   CoinOverridesPanel.vue renders .tbl markup too, and the row hover/
+   selected states paint td descendants — a relationship utilities
+   cannot express. .check-col/.actions-cell/.sort-arrow stay with it
+   because .tbl's own th/td padding would outrank any utility placed
+   on those cells (un-layered CSS beats @layer utilities). */
+.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-base); user-select: none; }
+.tbl th { position: sticky; top: 0; z-index: 2; background: var(--bg2); font-size: var(--fs-sm);
+          text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim);
+          padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--border);
+          cursor: pointer; user-select: none; white-space: nowrap; }
+.tbl th:hover { color: var(--text); }
+.tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.tbl tr:hover td { background: rgba(255,255,255,.03); }
+.tbl tbody tr { cursor: pointer; }
+.tbl tr.selected td { background: rgb(var(--accent-rgb) / .12); }
+.tbl tr.selected td:first-child { border-left: 3px solid var(--accent); }
+.tbl td.actions-cell { white-space: nowrap; overflow: visible; padding: 4px 6px; }
+.sort-arrow { margin-left: 4px; font-size: var(--fs-xs); }
+/* Configs list: checkbox column + zebra. */
+.check-col { width: 34px; padding-left: 8px !important; }
+.check-col input { accent-color: var(--accent); width: 14px; height: 14px; vertical-align: middle; cursor: pointer; }
+.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td { background: rgb(var(--text-secondary-rgb) / 0.04); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Shared editor form system — CROSS-PAGE CONTRACT.
+   src/shared/coinOverrides/components/CoinOverridesPanel.vue renders
+   .expander / .form-group / .form-row / .cols-4 / .ms-* / .act-btn
+   markup whose class names are shared with v7_edit (see
+   src/pages/v7_edit/App.vue, which styles the same contract), so
+   these cannot become this page's utilities. The page-local editor
+   primitives (BacktestConfigEditor, BotSideEditor, CoinMultiSelect,
+   AdvancedFieldsPanel) reuse the identical contract. Un-layered like
+   the old backtest-shell.css.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Form grid */
+.form-row { display: grid; gap: var(--sp-sm); margin: var(--sp-sm) 0; }
+.cols-2 { grid-template-columns: 1fr 1fr; }
+
+.form-group { display: flex; flex-direction: column; min-width: 0; margin-bottom: var(--sp-sm); }
+.form-group label { font-size: var(--fs-xs); color: var(--text-dim); letter-spacing: .03em; margin-bottom: 2px; }
+.form-group input, .form-group select, .form-group textarea { min-height: var(--input-h); padding: var(--sp-sm); background: var(--bg2);
+    color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: var(--fs-sm); outline: none; width: 100%; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+.form-group textarea { height: auto; min-height: 140px; font-family: var(--mono, ui-monospace, monospace); resize: vertical; }
+
+/* Action buttons — shared with CoinOverridesPanel */
+.act-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim);
+           cursor: pointer; padding: 3px 8px; font-size: var(--fs-xs); transition: all .15s; }
+.act-btn:hover { color: var(--text); border-color: var(--accent); }
+.act-btn-danger:hover { color: var(--red); border-color: var(--red); }
+.act-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Checkbox row */
+.chk-row { display: flex; align-items: flex-start; gap: 6px; min-height: var(--input-h); height: auto; min-width: 0; }
+.chk-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
+.chk-row label { margin: 0; min-width: 0; flex: 1 1 auto; color: var(--text); font-size: var(--fs-sm); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; word-break: break-word; cursor: pointer; }
+.section-title { margin: var(--sp-lg) 0 var(--sp-sm); padding-bottom: var(--sp-xs); border-bottom: 1px solid var(--border); font-size: var(--fs-md); font-weight: 600; }
+
+/* Expanders */
+.expander { margin: var(--sp-sm) 0 var(--sp-md); border: 1px solid var(--border); border-radius: 6px; }
+.expander-header {
+  display: flex; align-items: center; gap: 6px; width: 100%; padding: var(--sp-sm) var(--sp-md);
+  border: 0; border-radius: 6px; background: var(--bg2); color: var(--text); font: inherit;
+  font-size: var(--fs-sm); font-weight: 600; text-align: left; cursor: pointer; user-select: none;
+}
+.expander.open .expander-header { border-radius: 6px 6px 0 0; }
+.expander-header:hover { background: var(--bg3); }
+.expander-header .arrow { font-size: 10px; transition: transform .2s; }
+.expander.open .expander-header .arrow { transform: rotate(90deg); }
+.expander-body { display: none; padding: var(--sp-md); }
+.expander.open .expander-body { display: block; }
+
+/* Number stepper */
+.num-stepper { display: flex; align-items: center; }
+.num-stepper input { flex: 1; min-width: 0; border-radius: 0 !important; text-align: center; }
+.num-stepper input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+.num-stepper input[type="number"]::-webkit-inner-spin-button,
+.num-stepper input[type="number"]::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
+.stepper-btn {
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 28px; height: var(--input-h); padding: 0; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--text); font-size: 16px; line-height: 1; cursor: pointer;
+}
+.stepper-btn:first-child { border-right: 0; border-radius: 4px 0 0 4px; }
+.stepper-btn:last-child { border-left: 0; border-radius: 0 4px 4px 0; }
+.stepper-btn:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-contrast); }
+
+/* Multiselect (tag-input) */
+.ms-wrap {
+  position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 3px;
+  min-height: var(--input-h); padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg2); cursor: text;
+}
+.ms-wrap:focus-within { border-color: var(--accent); }
+.form-group .ms-wrap input.ms-input {
+  flex: 1; width: auto; min-width: 60px; height: 24px; min-height: 24px; padding: 0;
+  border: 0; background: transparent; color: var(--text); font-family: var(--font); font-size: var(--fs-sm); outline: 0;
+}
+.ms-clear-btn, .ms-all-btn { margin-left: 2px; padding: 0 3px; border-radius: 3px; color: var(--text-dim); font-size: 11px; cursor: pointer; }
+.ms-clear-btn:hover { background: rgb(var(--danger-rgb) / .15); color: var(--red); }
+.ms-all-btn:hover { background: rgb(var(--accent-rgb) / .15); color: var(--accent); }
+.ms-tag {
+  display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px;
+  border: 1px solid var(--border); border-radius: 3px; background: var(--bg3); color: var(--text); font-size: var(--fs-xs);
+}
+.ms-tag.ms-tag-all { border-color: var(--green); background: var(--green); color: var(--accent-contrast); font-weight: 600; }
+.ms-tag .ms-x { color: var(--text-dim); font-size: 11px; line-height: 1; cursor: pointer; }
+.ms-tag .ms-x:hover { color: var(--red); }
+.ms-dropdown {
+  position: absolute; z-index: 100; top: 100%; right: 0; left: 0; display: none;
+  max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0 0 4px 4px; background: var(--bg2);
+}
+.ms-dropdown.open { display: block; }
+.ms-option { padding: 4px 8px; font-size: var(--fs-sm); cursor: pointer; }
+.ms-option:hover, .ms-option.highlight, .ms-option.highlighted { background: var(--bg3); }
+.ms-option.selected { color: var(--accent); }
+.raw-json-wrap { position: relative; width: 100%; min-width: 0; }
+.raw-json-wrap textarea { display: block; width: 100%; min-width: 0; }
+.field-status { display: none; font-size: var(--fs-sm); line-height: 1.35; }
+.field-status.error { display: block; color: var(--red); }
+.field-status-inline.error { margin-top: var(--sp-xs); padding: 6px 10px; border: 1px solid rgb(var(--danger-rgb) / .35); border-radius: 4px; background: rgb(var(--danger-deep-rgb) / .35); }
+
+/* ── PBv7 config editor grids (container-query machinery) ───────
+   The 12-column editor grid and the cols-* ladders are targeted by
+   named-container queries below, so the classes stay. */
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cols-8 { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.span-4 { grid-column: span 4; }
+.config-editor-12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.editor-span-1 { grid-column: span 1; }
+.editor-span-2 { grid-column: span 2; }
+.editor-span-4 { grid-column: span 4; }
+.editor-span-6 { grid-column: span 6; }
+.editor-span-12 { grid-column: span 12; }
+@media (max-width: 760px) {
+  .cols-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 1400px) {
+  .cols-8 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .config-editor-12 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .editor-span-12 { grid-column: span 6; }
+  .editor-span-6 { grid-column: span 6; }
+  .editor-span-4 { grid-column: span 3; }
+  .editor-span-2 { grid-column: span 2; }
+  .editor-span-1 { grid-column: span 1; }
+}
+@media (max-width: 700px) {
+  .cols-3, .cols-4, .cols-5, .cols-6, .cols-7, .cols-8 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .span-4 { grid-column: span 2; }
+  .config-editor-12 { grid-template-columns: 1fr; }
+  .editor-span-1, .editor-span-2, .editor-span-4, .editor-span-6, .editor-span-12 { grid-column: span 1; }
+}
+
+/* ── #configs-editor surface refinements ────────────────────────
+   These restyle the shared contract classes inside the editor —
+   including CoinOverridesPanel's markup, which mounts inside
+   #configs-editor — so they must stay CSS. */
+#configs-editor .form-group { margin-bottom: 0; }
+#configs-editor .form-group label span,
+#configs-editor .chk-row label span { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+#configs-editor .form-group input,
+#configs-editor .form-group select { height: var(--input-h); min-height: var(--input-h); padding: 0 var(--sp-sm); font-family: var(--font); }
+#configs-editor .form-group textarea { height: auto; padding: var(--sp-sm); }
+#configs-editor .form-row {
+  gap: 10px 12px;
+  margin: 0 0 12px;
+}
+#configs-editor .form-group > label {
+  display: flex;
+  align-content: flex-start;
+  align-items: flex-start;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
+  min-height: 2.25em;
+  overflow: visible;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.035em;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+#configs-editor .form-group input,
+#configs-editor .form-group select,
+#configs-editor .form-group textarea,
+#configs-editor .ms-wrap {
+  border-color: rgb(var(--text-secondary-rgb) / 0.15);
+  border-radius: 8px;
+  background: rgb(var(--bg-page-rgb) / 0.68);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
+}
+#configs-editor .form-group input,
+#configs-editor .form-group select {
+  height: 36px;
+  min-height: 36px;
+}
+#configs-editor .form-group input:hover,
+#configs-editor .form-group select:hover,
+#configs-editor .ms-wrap:hover {
+  border-color: rgb(var(--accent-rgb) / 0.34);
+  background: rgb(var(--bg-page-rgb) / 0.82);
+}
+#configs-editor .form-group input:focus,
+#configs-editor .form-group select:focus,
+#configs-editor .form-group textarea:focus,
+#configs-editor .ms-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.13);
+  outline: none;
+}
+#configs-editor .form-group input::placeholder {
+  color: var(--text-muted);
+}
+#configs-editor .form-group input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  accent-color: var(--accent);
+}
+#configs-editor .chk-row {
+  min-height: 36px;
+  align-items: center;
+  padding: 7px 9px;
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
+  border-radius: 8px;
+  background: rgb(var(--text-secondary-rgb) / 0.045);
+}
+#configs-editor .chk-row label {
+  min-height: 0;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+#configs-editor .chk-row,
+#configs-editor .ms-wrap,
+#configs-editor .ms-tag {
+  min-width: 0;
+  max-width: 100%;
+}
+#configs-editor .ms-tag {
+  overflow-wrap: anywhere;
+}
+#configs-editor .form-group .ms-wrap input.ms-input {
+  flex: 1 1 60px;
+  min-width: 0;
+  max-width: 100%;
+}
+#configs-editor .num-stepper {
+  height: 36px;
+}
+#configs-editor .stepper-btn {
+  width: 34px;
+  height: 36px;
+  border-color: rgb(var(--text-secondary-rgb) / 0.16);
+  background: rgb(var(--text-secondary-rgb) / 0.09);
+  color: var(--text-secondary);
+}
+#configs-editor .stepper-btn:hover {
+  border-color: rgb(var(--accent-rgb) / 0.48);
+  background: rgb(var(--accent-deep-rgb) / 0.22);
+  color: var(--text-primary);
+}
+#configs-editor .expander {
+  margin: 12px 0 14px;
+  border-color: rgb(var(--text-secondary-rgb) / 0.14);
+  border-radius: 9px;
+  background: rgb(var(--bg-page-rgb) / 0.26);
+}
+#configs-editor .expander-header {
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: rgb(var(--text-secondary-rgb) / 0.055);
+  color: var(--text-secondary);
+}
+#configs-editor .expander-header:hover {
+  background: rgb(var(--accent-deep-rgb) / 0.1);
+  color: var(--text-primary);
+}
+#configs-editor .expander.open .expander-header {
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
+  border-radius: 8px 8px 0 0;
+  background: rgb(var(--accent-deep-rgb) / 0.1);
+}
+#configs-editor .expander-body {
+  padding: 14px;
+}
+#configs-editor .bot-json-expander {
+  margin-bottom: 0;
+}
+#configs-editor .bot-json-expander.error {
+  border-color: rgb(var(--warning-rgb) / 0.38);
+}
+#configs-editor .act-btn {
+  min-height: 36px;
+  padding: 0 10px;
+  border-color: rgb(var(--accent-rgb) / 0.25);
+  border-radius: 8px;
+  background: rgb(var(--accent-deep-rgb) / 0.08);
+  color: var(--accent-soft);
+}
+#configs-editor .act-btn:hover {
+  border-color: rgb(var(--accent-rgb) / 0.48);
+  background: rgb(var(--accent-deep-rgb) / 0.18);
+}
+@media (max-width: 700px) {
+  #configs-editor .form-row {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+}
+
+/* ── Editor chrome pseudo-elements (no utility form) ─────────── */
+.config-editor-intro::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 42px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent));
+  box-shadow: 0 0 18px rgb(var(--accent-rgb) / 0.46);
+}
+.config-editor-section::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, rgb(var(--accent-rgb) / 0.76), transparent 68%);
+}
+.config-editor-section:nth-of-type(3)::before {
+  background: linear-gradient(90deg, rgb(var(--success-rgb) / 0.76), transparent 68%);
+}
+.config-editor-section:nth-of-type(4)::before {
+  background: linear-gradient(90deg, rgb(var(--warning-rgb) / 0.76), transparent 68%);
+}
+.config-editor-section:nth-of-type(5)::before {
+  background: linear-gradient(90deg, rgb(155 142 222 / 0.76), transparent 68%);
+}
+
+/* ── Container queries: the editor trading grids ─────────────── */
+@container backtest-editor (min-width: 701px) and (max-width: 1180px) {
+  .config-editor-trading-primary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .config-editor-trading-primary > .editor-span-2 {
+    grid-column: span 1;
+  }
+
+  .config-editor-trading-primary > .editor-span-12 {
+    grid-column: span 3;
+  }
+
+  .config-editor-trading-advanced > .editor-span-2,
+  .config-editor-trading-advanced > .editor-span-4 {
+    grid-column: span 4;
+  }
+
+  .config-editor-trading-primary .form-group > label {
+    min-height: 2.5em;
+    align-items: flex-start;
+  }
+}
+
+@container backtest-editor (max-width: 700px) {
+  .config-editor-12,
+  .config-editor-trading-primary,
+  #configs-editor .cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-span-1,
+  .editor-span-2,
+  .editor-span-4,
+  .editor-span-6,
+  .editor-span-12 {
+    grid-column: span 1;
+  }
+
+  .bot-side-head,
+  .bot-side-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+/* The default 200px shell sidebar plus up to 72px of main-content
+   horizontal padding leaves about 1164px for the editor at a 1440px
+   viewport. These viewport ranges approximate the 701–1180px container
+   contract for browsers without container-query support. */
+@supports not (container-type: inline-size) {
+  @media (min-width: 952px) and (max-width: 1460px) {
+    .config-editor-trading-primary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .config-editor-trading-primary > .editor-span-2 {
+      grid-column: span 1;
+    }
+
+    .config-editor-trading-primary > .editor-span-12 {
+      grid-column: span 3;
+    }
+
+    .config-editor-trading-advanced > .editor-span-2,
+    .config-editor-trading-advanced > .editor-span-4 {
+      grid-column: span 4;
+    }
+
+    .config-editor-trading-primary .form-group > label {
+      min-height: 2.5em;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 951px) {
+    .config-editor-12,
+    .config-editor-trading-primary,
+    #configs-editor .cols-2 {
+      grid-template-columns: 1fr;
+    }
+
+    .editor-span-1,
+    .editor-span-2,
+    .editor-span-4,
+    .editor-span-6,
+    .editor-span-12 {
+      grid-column: span 1;
+    }
+
+    .bot-side-head,
+    .bot-side-title {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+  }
+}
+
+/* ── Keyframes ───────────────────────────────────────────────── */
+@keyframes bt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes archive-pull-bar { 0% { left: -35%; } 100% { left: 100%; } }
+
+/* ── Archive pull progress bar (pseudo-element sweep) ─────────── */
+.archive-pull-bar::before { content: ''; position: absolute; top: 0; bottom: 0; left: -35%; width: 35%;
+                             background: linear-gradient(90deg, transparent, var(--accent), transparent);
+                             animation: archive-pull-bar 1.4s ease-in-out infinite; }
+
+/* ── Document-delegated tooltip layer (DataTipTooltip.vue) ──────
+   Shared component (also used by market_data) — its root carries no
+   classes, so this page styles it here. z-index continues the page
+   scale (100 < 500 < 1000 < 2000 < this). */
+#data-tip-tooltip {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3000;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  font-size: var(--fs-xs);
+  font-weight: normal;
+  padding: 6px 10px;
+  white-space: pre-wrap;
+  max-width: 480px;
+  line-height: 1.5;
+  box-shadow: 0 4px 12px rgba(5, 8, 14, 0.5);
+  pointer-events: none;
+  will-change: transform;
+}
+</style>

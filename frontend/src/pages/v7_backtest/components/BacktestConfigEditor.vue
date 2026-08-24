@@ -107,20 +107,31 @@ defineExpose({ foldSuiteDraft });
 </script>
 
 <template>
-  <div id="configs-editor" class="config-editor-grid" data-test="configs-editor" @input="touch" @change="touch">
-    <div class="config-editor-intro">
+  <div
+    id="configs-editor"
+    class="config-editor-grid flex min-h-max min-w-0 flex-none flex-col gap-3 overflow-visible pb-4.5 [container-type:inline-size] [container-name:backtest-editor] [scrollbar-color:rgb(var(--accent-rgb)/0.32)_rgb(var(--text-secondary-rgb)/0.04)]"
+    data-test="configs-editor"
+    @input="touch"
+    @change="touch"
+  >
+    <div class="config-editor-intro relative flex min-h-[72px] items-start justify-between gap-5 border-b border-secondary/15 px-1 pb-3 pt-2 max-[900px]:flex-col max-[900px]:gap-2 max-[700px]:gap-3">
       <div>
-        <div class="config-editor-kicker">{{ isV8 ? 'PBv8' : 'PBv7' }}</div>
-        <h1>{{ state.name ? t('v7backtest.editBacktest') : t('v7backtest.newBacktestConfig', { version: isV8 ? 'PBv8' : 'PBv7' }) }}</h1>
-        <p>{{ t('v7backtest.editorIntro') }}</p>
+        <div class="pt-[7px] text-xs font-bold uppercase tracking-[0.16em] text-accent-soft">{{ isV8 ? 'PBv8' : 'PBv7' }}</div>
+        <h1 class="mt-1.5 text-[clamp(24px,2.4vw,34px)] leading-[1.15] tracking-[-0.035em] text-primary">{{ state.name ? t('v7backtest.editBacktest') : t('v7backtest.newBacktestConfig', { version: isV8 ? 'PBv8' : 'PBv7' }) }}</h1>
+        <p class="mt-2 max-w-[760px] text-sm leading-[1.55] text-secondary">{{ t('v7backtest.editorIntro') }}</p>
       </div>
-      <div class="config-editor-status"><span class="config-editor-status-dot"></span>{{ state.name || t('v7backtest.editorDraftStatus') }}</div>
+      <div class="mt-[7px] inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-accent/28 bg-accent-deep/10 px-[11px] py-[7px] text-xs text-accent-soft shadow-[0_0_0_3px_rgb(var(--accent-deep-rgb)/0.04)] max-[900px]:self-start max-[700px]:mt-0">
+        <span class="h-[7px] w-[7px] rounded-full bg-accent shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.14),0_0_12px_rgb(var(--accent-rgb)/0.4)]"></span>{{ state.name || t('v7backtest.editorDraftStatus') }}
+      </div>
     </div>
 
-    <section class="config-editor-section" data-test="editor-section-basics">
-      <header class="config-editor-section-head">
-        <div><h2>{{ t('v7backtest.editorBasics') }}</h2><p>{{ t('v7backtest.editorBasicsHint') }}</p></div>
-        <span class="config-editor-section-index">01</span>
+    <section
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      data-test="editor-section-basics"
+    >
+      <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
+        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorBasics') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorBasicsHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">01</span>
       </header>
       <!-- Row 1: Identity & Time (:2599-2613) -->
     <div class="form-row config-editor-12">
@@ -145,10 +156,13 @@ defineExpose({ foldSuiteDraft });
     </div>
     </section>
 
-    <section class="config-editor-section" data-test="editor-section-trading">
-      <header class="config-editor-section-head">
-        <div><h2>{{ t('v7backtest.editorTrading') }}</h2><p>{{ t('v7backtest.editorTradingHint') }}</p></div>
-        <span class="config-editor-section-index">02</span>
+    <section
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      data-test="editor-section-trading"
+    >
+      <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
+        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorTrading') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorTradingHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">02</span>
       </header>
       <!-- Row 2: Balance, Collateral & Behavior (:2615-2634) -->
     <div class="form-row config-editor-12 config-editor-trading-primary">
@@ -209,7 +223,7 @@ defineExpose({ foldSuiteDraft });
               <button type="button" class="stepper-btn" aria-label="Increase market_order_slippage_pct" title="Increase market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))"><PbIcon :icon="PhPlus" /></button>
             </div>
           </div>
-          <div class="form-group editor-span-2 config-editor-toggle-field">
+          <div class="form-group editor-span-2 config-editor-toggle-field justify-end">
             <div class="chk-row"><input id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" type="checkbox" /><label for="cfg-filter-cost" :data-tip="t('v7backtest.tip.filterByMinEffectiveCost')">filter_by_min_effective_cost</label></div>
           </div>
           <div class="form-group editor-span-2">
@@ -225,10 +239,13 @@ defineExpose({ foldSuiteDraft });
     </div>
     </section>
 
-    <section class="config-editor-section" data-test="editor-section-market-data">
-      <header class="config-editor-section-head">
-        <div><h2>{{ t('v7backtest.editorMarketData') }}</h2><p>{{ t('v7backtest.editorMarketDataHint') }}</p></div>
-        <span class="config-editor-section-index">03</span>
+    <section
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      data-test="editor-section-market-data"
+    >
+      <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
+        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorMarketData') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorMarketDataHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">03</span>
       </header>
       <!-- Row 4: Data Source (:2681-2698) -->
     <div class="form-row config-editor-12">
@@ -244,8 +261,8 @@ defineExpose({ foldSuiteDraft });
       </div>
       <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.candleIntervalMinutes')">candle_interval_minutes</label><input v-model="state.candleIntervalMinutes" type="number" min="1" /></div>
       <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.gapToleranceOhlcvsMinutes')">gap_tolerance_ohlcvs_minutes</label><input v-model="state.gapToleranceOhlcvsMinutes" type="number" min="1" /></div>
-      <div class="form-group editor-span-1 config-editor-toggle-field"><div class="chk-row"><input id="cfg-compress" v-model="state.compressCache" type="checkbox" /><label for="cfg-compress" :data-tip="t('v7backtest.tip.compressCache')">compress_cache</label></div></div>
-      <div class="form-group editor-span-1 config-editor-toggle-field"><div class="chk-row"><input id="cfg-vol-norm" v-model="state.volumeNormalization" type="checkbox" /><label for="cfg-vol-norm" :data-tip="t('v7backtest.tip.volumeNormalization')">volume_normalization</label></div></div>
+      <div class="form-group editor-span-1 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-compress" v-model="state.compressCache" type="checkbox" /><label for="cfg-compress" :data-tip="t('v7backtest.tip.compressCache')">compress_cache</label></div></div>
+      <div class="form-group editor-span-1 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-vol-norm" v-model="state.volumeNormalization" type="checkbox" /><label for="cfg-vol-norm" :data-tip="t('v7backtest.tip.volumeNormalization')">volume_normalization</label></div></div>
     </div>
 
     <!-- coin_sources + market_settings_sources (:2700-2750) -->
@@ -261,11 +278,14 @@ defineExpose({ foldSuiteDraft });
     <AdvancedFieldsPanel v-if="isV8" :market-settings="marketSettings" :result-metrics="resultMetrics" :exchanges="exchangeOptions" :coins="marketCoins" />
     </section>
 
-    <section class="config-editor-section" data-test="editor-section-filters">
-      <header class="config-editor-section-head">
-        <div><h2>{{ t('v7backtest.coinsAndFilters') }}</h2><p>{{ t('v7backtest.editorFiltersHint') }}</p></div>
-        <div class="config-editor-section-tools" data-test="editor-filter-toolbar">
-          <span class="config-editor-section-index">04</span>
+    <section
+      class="config-editor-section relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      data-test="editor-section-filters"
+    >
+      <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
+        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.coinsAndFilters') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorFiltersHint') }}</p></div>
+        <div class="flex shrink-0 items-center gap-2 max-[700px]:w-full max-[700px]:justify-between" data-test="editor-filter-toolbar">
+          <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">04</span>
           <button type="button" class="act-btn" :title="t('v7backtest.applyFiltersTitle')" @click="applyFilters">{{ t('v7backtest.applyFilters') }}</button>
         </div>
       </header>
@@ -277,8 +297,8 @@ defineExpose({ foldSuiteDraft });
         <label>tags</label>
         <CoinMultiSelect id="ms-cfg-tags" v-model="state.tags" :options="tagOptions" :placeholder="t('v7backtest.selectTags')" :tip="t('v7backtest.tip.tags')" select-all-button />
       </div>
-      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt" :data-tip="t('v7backtest.tip.onlyCpt')">only_cpt</label></div></div>
-      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore" :data-tip="t('v7backtest.tip.noticesIgnore')">notices_ignore</label></div></div>
+      <div class="form-group editor-span-2 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt" :data-tip="t('v7backtest.tip.onlyCpt')">only_cpt</label></div></div>
+      <div class="form-group editor-span-2 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore" :data-tip="t('v7backtest.tip.noticesIgnore')">notices_ignore</label></div></div>
     </div>
     <div class="form-row cols-2">
       <CoinMultiSelect id="ms-cfg-app-long" v-model="state.approvedLong" :options="coinOptions" :labels="coinLabels" :tip="t('v7backtest.tip.approvedCoinsLong')" allow-all>
@@ -298,10 +318,13 @@ defineExpose({ foldSuiteDraft });
     </div>
     </section>
 
-    <section class="config-editor-section config-editor-section-bot" data-test="editor-section-bot">
-      <header class="config-editor-section-head">
-        <div><h2>{{ t('v7backtest.editorBot') }}</h2><p>{{ t('v7backtest.editorBotHint') }}</p></div>
-        <span class="config-editor-section-index">05</span>
+    <section
+      class="config-editor-section config-editor-section-bot relative min-w-0 overflow-visible rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.045),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] px-4 pb-4 pt-3.5"
+      data-test="editor-section-bot"
+    >
+      <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
+        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorBot') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorBotHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">05</span>
       </header>
 
     <!-- Bot Configuration (:2812-2871) -->

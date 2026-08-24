@@ -23,6 +23,7 @@ import ResultCharts from './ResultCharts.vue';
 import ResultsTable from './ResultsTable.vue';
 import RetestModal from './RetestModal.vue';
 import { plainLegacyHtml, resultsCountLabel } from '../lib/archiveModel';
+import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
 import { archiveRemoteBrowserUrl } from '../lib/readmePreview';
 import type { PlotlyLayout, PlotlyTrace } from '../lib/plotlyVendor';
 import type { ArchiveCleanupItem, ArchiveOptimizeConfigItem, ArchiveSummary, ResultActionKind } from '../types';
@@ -323,12 +324,12 @@ defineExpose({
 </script>
 
 <template>
-  <div id="panel-archive" class="view-panel" :class="{ active, 'arc-unpinned': !pinned }">
+  <div id="panel-archive" class="view-panel min-h-0 flex-1 flex-col overflow-hidden" :class="[active ? 'flex' : 'hidden', { active, 'arc-unpinned': !pinned }]">
     <!-- list view (:876-878) -->
-    <div v-if="!store.selectedName.value" id="archive-list-view">
+    <div v-if="!store.selectedName.value" id="archive-list-view" class="min-h-0 flex-1 overflow-y-auto">
       <div id="archive-list-container">
-        <div v-if="store.archives.value.length === 0" class="empty-state" data-test="archive-empty">
-          <div class="empty-icon">🗄️</div>
+        <div v-if="store.archives.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary" data-test="archive-empty">
+          <div class="mb-3 text-[48px] opacity-40">🗄️</div>
           <span style="white-space: pre-line">{{ plainLegacyHtml(t('v7backtest.emptyArchivesHtml')) }}</span>
         </div>
         <table v-else class="tbl">
@@ -354,7 +355,7 @@ defineExpose({
               <td style="font-size: var(--fs-xs); color: var(--text-dim); word-break: break-all">{{ entry.url ?? '' }}</td>
               <td>{{ entry.results ?? entry.configs ?? 0 }}</td>
               <td>{{ entry.optimize_configs ?? 0 }}</td>
-              <td class="muted-line">{{ entry.migration_status?.label ?? '' }}</td>
+              <td class="text-secondary">{{ entry.migration_status?.label ?? '' }}</td>
               <td class="actions-cell" @click.stop>
                 <button type="button" class="act-btn act-btn-danger" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="18" /></button>
               </td>
@@ -365,10 +366,10 @@ defineExpose({
     </div>
 
     <!-- results view (:879-913) -->
-    <div v-else id="archive-results-view">
-      <div id="archive-results-fixed-top">
-        <div id="archive-layout-status" data-test="archive-layout-status">{{ store.statusLine.value }}</div>
-        <div id="archive-results-toolbar">
+    <div v-else id="archive-results-view" class="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div id="archive-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
+        <div id="archive-layout-status" class="pt-2 text-sm text-secondary" data-test="archive-layout-status">{{ store.statusLine.value }}</div>
+        <div id="archive-results-toolbar" class="mb-3 flex flex-wrap items-center gap-2 pt-2">
           <button type="button" class="act-btn" data-test="arc-tab-backtests" :style="{ opacity: isBacktests ? '1' : '.55' }" @click="store.setMode('backtests')">
             {{ t('v7backtest.backtestResults') }}
           </button>
@@ -395,7 +396,7 @@ defineExpose({
             <option v-for="coin in store.coinOptions.value" :key="coin" :value="coin">{{ coin }}</option>
           </select>
           <input id="arc-results-filter" v-model="store.textFilter.value" type="text" class="sb-input" style="max-width: 200px" :placeholder="textPlaceholder" />
-          <span v-show="isBacktests" id="archive-results-count-label" class="results-count-label">{{ countLabel }}</span>
+          <span v-show="isBacktests" id="archive-results-count-label" class="whitespace-nowrap text-sm text-secondary">{{ countLabel }}</span>
           <span style="flex: 1"></span>
           <button v-show="isBacktests" type="button" class="act-btn" data-test="arc-btn-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">
             {{ t('v7backtest.selectAll') }}
@@ -403,14 +404,25 @@ defineExpose({
           <button v-show="isBacktests" type="button" class="act-btn" data-test="arc-btn-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">
             {{ t('v7backtest.deselect') }}
           </button>
-          <button id="archive-results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" :aria-label="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned"><PbIcon :icon="PhPushPin" :size="18" /></button>
+          <button
+            id="archive-results-pin-btn"
+            type="button"
+            class="act-btn"
+            :class="pinned ? '' : 'unpinned opacity-40'"
+            :title="t('v7backtest.pinTable')"
+            :aria-label="t('v7backtest.pinTable')"
+            style="font-size: 15px; padding: 0 6px"
+            @click="pinned = !pinned"
+          >
+            <PbIcon :icon="PhPushPin" :size="18" />
+          </button>
         </div>
-        <div id="archive-results-list-wrap" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+        <div id="archive-results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="archive-results-table">
             <ArchiveSchedulesTable v-if="store.mode.value === 'schedules'" :schedules="store.schedulesVisible.value" :own="store.isOwn.value" @run="store.runSchedule" @toggle="store.toggleSchedule" @remove="store.deleteSchedule" />
             <ArchiveOptimizeTable v-else-if="isOptimize" :configs="store.optimizeVisible.value" :selected="store.selectedOptimize.value" @select="onOptimizeSelect" @open="onOptimizeOpen" />
             <template v-else>
-              <div v-if="store.visible.value.length === 0" class="empty-state">{{ t('v7backtest.noResultsInArchive') }}</div>
+              <div v-if="store.visible.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noResultsInArchive') }}</div>
               <ResultsTable
                 v-else
                 :rows="store.visible.value"
@@ -426,29 +438,29 @@ defineExpose({
             </template>
           </div>
         </div>
-        <div id="archive-results-resize-handle" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
-          <span></span>
+        <div id="archive-results-resize-handle" class="flex h-1.5 cursor-row-resize select-none items-center justify-center rounded-b-sm bg-border-default" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
+          <span class="h-0.5 w-8 rounded-[2px] bg-secondary opacity-50"></span>
         </div>
       </div>
-      <div id="archive-results-scroll">
+      <div id="archive-results-scroll" class="min-h-0 flex-1 overflow-y-auto pb-5">
         <CompareModal area-id="archive-compare-chart-area" plot-id="arc-compare-chart-div" :open="store.compareOpen.value" :traces="compareTraces" :layout="compareLayout" />
         <ResultCharts charts-id="archive-charts" :sections="sections" :version="version" :data-api="store.dataApi as ResultDataApi" />
       </div>
     </div>
 
     <!-- modals -->
-    <div v-if="addOpen" id="modal-root" data-test="add-archive-modal">
-      <div class="modal-box">
+    <div v-if="addOpen" id="modal-root" :class="modalBackdropClass" data-test="add-archive-modal">
+      <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.addArchiveModal') }}</h3>
-        <div class="modal-body">
-          <div class="sb-label">{{ t('v7backtest.archiveName') }}</div>
+        <div class="min-h-0 flex-1 overflow-auto">
+          <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.archiveName') }}</div>
           <input v-model="addName" class="sb-input" placeholder="my_archive" data-test="arc-name" />
-          <div class="sb-label" style="margin-top: var(--sp-sm)">{{ t('v7backtest.gitUrl') }}</div>
+          <div class="mt-2 text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitUrl') }}</div>
           <input v-model="addUrl" class="sb-input" placeholder="https://github.com/..." data-test="arc-url" />
         </div>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="addOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="modal-btn modal-btn-primary" data-test="arc-clone" @click="confirmAddArchive">{{ t('v7backtest.clone') }}</button>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" :class="modalBtnClass()" @click="addOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" :class="modalBtnClass('primary')" data-test="arc-clone" @click="confirmAddArchive">{{ t('v7backtest.clone') }}</button>
         </div>
       </div>
     </div>
@@ -461,19 +473,19 @@ defineExpose({
       <p style="white-space: pre-line">{{ plainLegacyHtml(t('v7backtest.deleteArchiveResultsConfirm', { n: store.getSelected().length, archive: store.selectedName.value })) }}</p>
     </ConfirmModal>
 
-    <div v-if="renameOpen" id="modal-root" data-test="rename-modal">
-      <div class="modal-box">
+    <div v-if="renameOpen" id="modal-root" :class="modalBackdropClass" data-test="rename-modal">
+      <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.renameArchiveConfig') }}</h3>
-        <div class="modal-body">
+        <div class="min-h-0 flex-1 overflow-auto">
           <p>Rename archive config <b>{{ renameValue }}</b>. All results in this config group will move to the new name.</p>
           <div class="form-group">
             <label>New name</label>
             <input v-model="renameValue" class="sb-input" style="width: 100%" data-test="rename-input" />
           </div>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="renameOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="modal-btn modal-btn-primary" data-test="rename-ok" @click="confirmRename">{{ t('v7backtest.rename') }}</button>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" :class="modalBtnClass()" @click="renameOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" :class="modalBtnClass('primary')" data-test="rename-ok" @click="confirmRename">{{ t('v7backtest.rename') }}</button>
         </div>
       </div>
     </div>
@@ -482,54 +494,54 @@ defineExpose({
       <p>{{ plainLegacyHtml(t(cleanup.kind === 'liquidated' ? 'v7backtest.removeLiquidatedConfirm' : 'v7backtest.removeDuplicatesConfirm', { n: cleanup.items.length, archive: store.selectedName.value })) }}</p>
       <ul style="max-height: 40vh; overflow: auto">
         <li v-for="(item, i) in cleanup.items.slice(0, 20)" :key="i">
-          {{ cleanupPath(item.path) }} <span class="muted-line">{{ cleanup.kind === 'liquidated' ? item.reason : t('v7backtest.keeps', { name: cleanupPath(item.keep_path) }) }}</span>
+          {{ cleanupPath(item.path) }} <span class="text-secondary">{{ cleanup.kind === 'liquidated' ? item.reason : t('v7backtest.keeps', { name: cleanupPath(item.keep_path) }) }}</span>
         </li>
         <li v-if="cleanup.items.length > 20">{{ t('v7backtest.andMore', { n: cleanup.items.length - 20 }) }}</li>
       </ul>
     </ConfirmModal>
 
-    <div v-if="store.scorePreview.value" id="modal-root" data-test="score-preview-modal">
-      <div class="modal-box score-preview-modal">
+    <div v-if="store.scorePreview.value" id="modal-root" :class="modalBackdropClass" data-test="score-preview-modal">
+      <div class="score-preview-modal" :class="modalBoxClass">
         <h3>{{ t('v7backtest.readmePreview', { name: store.selectedName.value }) }}</h3>
-        <div class="modal-body">
-          <p class="muted-line" style="margin: 0">
+        <div class="min-h-0 flex-1 overflow-auto">
+          <p class="text-secondary" style="margin: 0">
             {{ store.scorePreview.value.rebuilt ? 'Manifest and README were updated. This is the generated README.md preview.' : 'Read-only README.md preview. Git Push updates manifest and README automatically before committing.' }}
           </p>
           <div class="score-preview-meta" style="display: flex; gap: var(--sp-lg); margin: var(--sp-sm) 0">
-            <div><div class="sb-label">Score Version</div><b>{{ store.scorePreview.value.payload.score_version ?? '' }}</b></div>
-            <div><div class="sb-label">Results</div><b>{{ store.scorePreview.value.payload.scored ?? 0 }} / {{ store.scorePreview.value.payload.total ?? 0 }}</b></div>
-            <div><div class="sb-label">Generated</div><b>{{ store.scorePreview.value.payload.generated_at ?? '' }}</b></div>
+            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Score Version</div><b>{{ store.scorePreview.value.payload.score_version ?? '' }}</b></div>
+            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Results</div><b>{{ store.scorePreview.value.payload.scored ?? 0 }} / {{ store.scorePreview.value.payload.total ?? 0 }}</b></div>
+            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Generated</div><b>{{ store.scorePreview.value.payload.generated_at ?? '' }}</b></div>
           </div>
           <ReadmePreview :markdown="scoreReadme" :remote-base="remoteBase" />
         </div>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="store.scorePreview.value = null">{{ t('common.close') }}</button>
-          <button v-if="store.isOwn.value" type="button" class="modal-btn modal-btn-primary" @click="store.rebuildScores()">{{ t('v7backtest.updateManifestReadme') }}</button>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" :class="modalBtnClass()" @click="store.scorePreview.value = null">{{ t('common.close') }}</button>
+          <button v-if="store.isOwn.value" type="button" :class="modalBtnClass('primary')" @click="store.rebuildScores()">{{ t('v7backtest.updateManifestReadme') }}</button>
         </div>
       </div>
     </div>
 
-    <div v-if="store.optimizeViewOpen.value" id="modal-root" data-test="optimize-view-modal">
-      <div class="modal-box">
+    <div v-if="store.optimizeViewOpen.value" id="modal-root" :class="modalBackdropClass" data-test="optimize-view-modal">
+      <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.optimizeConfigPrefix', { name: store.selectedOptimize.value?.name ?? '' }) }}</h3>
-        <div class="modal-body"><pre class="json-pre" data-test="optimize-json">{{ JSON.stringify(store.optimizeConfigJson.value ?? {}, null, 2) }}</pre></div>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="store.optimizeViewOpen.value = false">{{ t('common.close') }}</button>
+        <div class="min-h-0 flex-1 overflow-auto"><pre class="json-pre" data-test="optimize-json">{{ JSON.stringify(store.optimizeConfigJson.value ?? {}, null, 2) }}</pre></div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" :class="modalBtnClass()" @click="store.optimizeViewOpen.value = false">{{ t('common.close') }}</button>
         </div>
       </div>
     </div>
 
-    <div v-if="importNameOpen" id="modal-root" data-test="import-optimize-modal">
-      <div class="modal-box">
+    <div v-if="importNameOpen" id="modal-root" :class="modalBackdropClass" data-test="import-optimize-modal">
+      <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.importOptimizeConfig') }}</h3>
-        <div class="modal-body">
-          <div class="sb-label">{{ t('v7backtest.importAs') }}</div>
+        <div class="min-h-0 flex-1 overflow-auto">
+          <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.importAs') }}</div>
           <input v-model="importNameValue" class="sb-input" data-test="import-name" />
-          <p class="muted-line">{{ t('v7backtest.importOverwriteHint') }}</p>
+          <p class="text-secondary">{{ t('v7backtest.importOverwriteHint') }}</p>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="importNameOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="modal-btn modal-btn-primary" data-test="import-ok" @click="confirmImportOptimize">{{ t('v7backtest.importShort') }}</button>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" :class="modalBtnClass()" @click="importNameOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" :class="modalBtnClass('primary')" data-test="import-ok" @click="confirmImportOptimize">{{ t('v7backtest.importShort') }}</button>
         </div>
       </div>
     </div>

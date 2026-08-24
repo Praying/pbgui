@@ -28,7 +28,7 @@ function statusText(item: ArchiveRetestScheduleItem): string {
 
 <template>
   <div>
-    <div v-if="schedules.length === 0" class="empty-state">{{ t('v7backtest.noRetestSchedules') }}</div>
+    <div v-if="schedules.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noRetestSchedules') }}</div>
     <table v-else class="tbl">
       <thead>
         <tr>
@@ -48,7 +48,7 @@ function statusText(item: ArchiveRetestScheduleItem): string {
           <td>{{ (item.targets ?? []).length }}</td>
           <td>{{ scheduleModeLabel(item, tt) }}</td>
           <td>{{ item.next_run_at ?? '' }}</td>
-          <td class="muted-line" style="max-width: 320px; word-break: break-word">{{ statusText(item) }}</td>
+          <td class="text-secondary" style="max-width: 320px; word-break: break-word">{{ statusText(item) }}</td>
           <td v-if="own" class="actions-cell" @click.stop>
             <button type="button" class="icon-btn good" data-test="archive-sched-run" :title="t('v7backtest.runNow')" :aria-label="t('v7backtest.runNow')" @click="emit('run', item.id)"><PbIcon :icon="PhPlay" :size="18" /></button>
             <button type="button" class="icon-btn" data-test="archive-sched-toggle" :title="t('v7backtest.enableDisable')" :aria-label="t('v7backtest.enableDisable')" @click="emit('toggle', item.id)"><PbIcon :icon="item.enabled === false ? PhCheckCircle : PhPause" :size="18" /></button>

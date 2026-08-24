@@ -300,8 +300,8 @@ defineExpose({ fitToContent, resetLayout });
   <section
     ref="card"
     id="selected-card"
-    class="details-card"
-    :class="{ visible: visible && !!row }"
+    class="details-card fixed top-1/2 left-1/2 [transform:translate(-50%,-50%)] w-[min(640px,calc(100vw-2rem))] h-[min(440px,calc(100dvh-110px))] min-w-[520px] min-h-[280px] max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-88px)] border border-accent/20 bg-page/70 rounded-[12px] overflow-hidden flex-col z-[125] shadow-[0_24px_56px_rgba(5,8,14,0.38)] backdrop-blur-[12px] max-[980px]:top-[72px] max-[980px]:left-[1rem] max-[980px]:right-[1rem] max-[980px]:[transform:none] max-[980px]:w-auto max-[980px]:h-auto max-[980px]:min-w-0"
+    :class="visible && !!row ? 'visible flex' : 'hidden'"
   >
     <div class="details-resize-handle side-top" data-resize="top" @mousedown="onResizeMousedown($event, 'top')"></div>
     <div class="details-resize-handle side-right" data-resize="right" @mousedown="onResizeMousedown($event, 'right')"></div>
@@ -311,12 +311,12 @@ defineExpose({ fitToContent, resetLayout });
     <div class="details-resize-handle corner corner-top-right" data-resize="top-right" @mousedown="onResizeMousedown($event, 'top-right')"></div>
     <div class="details-resize-handle corner corner-bottom-right" data-resize="bottom-right" @mousedown="onResizeMousedown($event, 'bottom-right')"></div>
     <div class="details-resize-handle corner corner-bottom-left" data-resize="bottom-left" @mousedown="onResizeMousedown($event, 'bottom-left')"></div>
-    <div ref="head" class="details-head" @mousedown="onHeadMousedown">
-      <div class="details-title" id="selected-title">{{ title || t('market.selectedSymbol') }}</div>
-      <div class="details-actions">
+    <div ref="head" class="details-head flex items-center justify-between gap-2 py-[0.85rem] px-[1rem] border-b border-accent/16 shrink-0 cursor-move select-none" @mousedown="onHeadMousedown">
+      <div class="details-title text-md font-bold text-primary" id="selected-title">{{ title || t('market.selectedSymbol') }}</div>
+      <div class="details-actions flex items-center gap-2 relative z-[1]">
         <a
           v-if="cmcLink"
-          class="details-link"
+          class="details-link inline-flex items-center justify-center min-h-8 px-3 rounded-md border border-accent/28 bg-accent/8 text-accent-soft text-base font-semibold no-underline [transition:background_0.12s,border-color_0.12s,color_0.12s] hover:bg-accent/16 hover:border-accent/45 hover:text-accent-soft"
           id="selected-cmc-link"
           :href="cmcLink"
           target="_blank"
@@ -324,15 +324,96 @@ defineExpose({ fitToContent, resetLayout });
           :title="t('market.openOnCoinMarketCap')"
           @click="openCmcLink"
         >{{ t('market.openCmc') }}</a>
-        <button class="details-close" id="btn-close-details" type="button" :title="t('market.closeDetails')" @click="emit('close')">&#x2715;</button>
+        <button class="details-close inline-flex items-center justify-center w-7 h-7 p-0 rounded-md border border-border-default bg-card text-secondary text-md cursor-pointer [transition:background_0.12s,border-color_0.12s,color_0.12s] hover:bg-elevated hover:border-secondary hover:text-primary" id="btn-close-details" type="button" :title="t('market.closeDetails')" @click="emit('close')">&#x2715;</button>
       </div>
     </div>
-    <div ref="grid" class="details-grid" id="selected-grid">
-      <div v-for="field in fields" :key="field.label" :class="field.wide ? 'kv wide' : 'kv'">
-        <div class="kv-label">{{ field.label }}</div>
-        <div :class="field.wrap ? 'kv-value wrap' : 'kv-value'" :title="field.value">{{ field.value }}</div>
+    <div ref="grid" class="details-grid grid pt-[0.95rem] px-[1rem] pb-[1rem] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 overflow-auto flex-1 min-h-0 content-start max-[980px]:grid-cols-1" id="selected-grid">
+      <div v-for="field in fields" :key="field.label" class="grid gap-[0.2rem] min-w-0" :class="field.wide ? 'kv wide col-span-full' : 'kv'">
+        <div class="kv-label text-xs text-muted uppercase tracking-[0.06em]">{{ field.label }}</div>
+        <div class="text-base text-primary" :class="field.wrap ? 'kv-value wrap whitespace-normal overflow-visible text-clip break-words leading-[1.55]' : 'kv-value whitespace-nowrap overflow-hidden text-ellipsis'" :title="field.value">{{ field.value }}</div>
       </div>
-      <div v-if="notice" class="notice-box"><strong>{{ t('market.notice') }}</strong><br>{{ notice }}</div>
+      <div v-if="notice" class="notice-box col-span-full border border-warning/28 bg-warning/8 rounded-[10px] px-[0.9rem] py-[0.75rem] text-warning-soft text-sm leading-[1.55] whitespace-pre-wrap"><strong>{{ t('market.notice') }}</strong><br>{{ notice }}</div>
     </div>
   </section>
 </template>
+
+<style scoped>
+/* Resize handles — ported from styles/coin-data.css at the Tailwind
+   migration. The eight per-side geometry/cursor rules and their shared
+   max-980px suppression stay as one CSS group (the playbook's
+   drag-handle pattern); the handle elements keep their legacy class
+   names as the selectors' anchors. */
+.details-resize-handle {
+  position: absolute;
+  z-index: 3;
+}
+
+.details-resize-handle.side-top,
+.details-resize-handle.side-bottom {
+  left: 12px;
+  right: 12px;
+  height: 10px;
+}
+
+.details-resize-handle.side-left,
+.details-resize-handle.side-right {
+  top: 12px;
+  bottom: 12px;
+  width: 10px;
+}
+
+.details-resize-handle.side-top {
+  top: 0;
+  cursor: ns-resize;
+}
+
+.details-resize-handle.side-right {
+  right: 0;
+  cursor: ew-resize;
+}
+
+.details-resize-handle.side-bottom {
+  bottom: 0;
+  cursor: ns-resize;
+}
+
+.details-resize-handle.side-left {
+  left: 0;
+  cursor: ew-resize;
+}
+
+.details-resize-handle.corner {
+  width: 18px;
+  height: 18px;
+}
+
+.details-resize-handle.corner-top-left {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.details-resize-handle.corner-top-right {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.details-resize-handle.corner-bottom-right {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}
+
+.details-resize-handle.corner-bottom-left {
+  left: 0;
+  bottom: 0;
+  cursor: nesw-resize;
+}
+
+@media (max-width: 980px) {
+  .details-resize-handle {
+    display: none;
+  }
+}
+</style>

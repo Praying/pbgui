@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { onToggleMultiSelectMousedown } from '../composables/useToggleMultiSelect';
+import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
 
 /**
  * QueueDraftModal — the port of showInitialBacktestQueueDraftModal
@@ -128,20 +129,20 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <div v-if="open" id="modal-root" data-test="queue-draft-modal">
-    <div class="modal-box">
+  <div v-if="open" id="modal-root" :class="modalBackdropClass" data-test="queue-draft-modal">
+    <div :class="modalBoxClass">
       <h3>{{ t('v7backtest.selectBacktestParams') }}</h3>
       <div style="display: flex; flex-direction: column; gap: var(--sp-md)">
         <div>
-          <div class="sb-label">start_date</div>
+          <div class="text-xs uppercase tracking-[0.5px] text-secondary">start_date</div>
           <input v-model="startDate" class="sb-input" type="text" data-test="rbt-start" />
         </div>
         <div>
-          <div class="sb-label">end_date</div>
+          <div class="text-xs uppercase tracking-[0.5px] text-secondary">end_date</div>
           <input v-model="endDate" class="sb-input" type="text" data-test="rbt-end" />
         </div>
         <div>
-          <div class="sb-label">{{ t('v7backtest.startingBalance') }}</div>
+          <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
           <div style="display: flex; align-items: center; gap: var(--sp-xs)">
             <input v-model="balance" class="sb-input" style="flex: 1; text-align: right" type="number" min="1" step="100" data-test="rbt-balance" />
             <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></button>
@@ -149,7 +150,7 @@ async function submit(): Promise<void> {
           </div>
         </div>
         <div>
-          <div class="sb-label">{{ t('v7backtest.exchanges') }}</div>
+          <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.exchanges') }}</div>
           <select v-model="exchanges" class="sb-input" multiple style="height: auto; min-height: var(--input-h)" data-test="rbt-exchanges" @mousedown="onToggleMultiSelectMousedown">
             <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
           </select>
@@ -159,9 +160,9 @@ async function submit(): Promise<void> {
           <label for="rbt-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
         </div>
       </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn" @click="emit('close')">{{ t('common.cancel') }}</button>
-        <button type="button" class="modal-btn modal-btn-primary" data-test="rbt-ok" @click="submit">{{ t('common.ok') }}</button>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" :class="modalBtnClass()" @click="emit('close')">{{ t('common.cancel') }}</button>
+        <button type="button" :class="modalBtnClass('primary')" data-test="rbt-ok" @click="submit">{{ t('common.ok') }}</button>
       </div>
     </div>
   </div>

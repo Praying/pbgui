@@ -14,6 +14,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import CompareModal from './CompareModal.vue';
 import ResultCharts from './ResultCharts.vue';
 import ResultsTable from './ResultsTable.vue';
+import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
 import type { ResultsStore } from '../composables/useResults';
 import type { PlotlyLayout, PlotlyTrace } from '../lib/plotlyVendor';
 import type { ResultActionKind } from '../types';
@@ -110,9 +111,9 @@ defineExpose({ deleteSelectedFlow });
        the #panel-results flex column, so #results-scroll-area's flex:1
        made it fill + scroll. A wrapping <div> here would sit between them,
        collapse the flex chain and clip the charts with no scrollbar. -->
-  <div class="results-panel-root">
-    <div id="results-fixed-top">
-      <div id="results-toolbar">
+  <div class="results-panel-root contents">
+    <div id="results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
+      <div id="results-toolbar" class="mb-3 flex flex-wrap items-center gap-2 pt-2">
         <label style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.version') }}</label>
         <select
           id="results-version-filter"
@@ -131,17 +132,26 @@ defineExpose({ deleteSelectedFlow });
           <option v-for="name in store.configNames.value" :key="name" :value="name">{{ name }}</option>
         </select>
         <input id="results-filter" v-model="store.textFilter.value" type="text" class="sb-input" style="max-width: 200px" :placeholder="t('v7backtest.searchName')" />
-        <span id="results-count-label" class="results-count-label">{{ countLabel }}</span>
+        <span id="results-count-label" class="whitespace-nowrap text-sm text-secondary">{{ countLabel }}</span>
         <span style="flex: 1"></span>
         <button type="button" class="act-btn" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</button>
         <button type="button" class="act-btn" data-test="results-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</button>
-        <button id="results-pin-btn" type="button" class="act-btn" :class="{ unpinned: !pinned }" :title="t('v7backtest.pinTable')" :aria-label="t('v7backtest.pinTable')" style="font-size: 15px; padding: 0 6px" @click="pinned = !pinned">
+        <button
+          id="results-pin-btn"
+          type="button"
+          class="act-btn"
+          :class="pinned ? '' : 'unpinned opacity-40'"
+          :title="t('v7backtest.pinTable')"
+          :aria-label="t('v7backtest.pinTable')"
+          style="font-size: 15px; padding: 0 6px"
+          @click="pinned = !pinned"
+        >
           <PbIcon :icon="PhPushPin" :size="18" />
         </button>
       </div>
-      <div id="results-list-wrap" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+      <div id="results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
         <div id="results-list">
-          <div v-if="store.checking.value" class="empty-state">{{ t('v7backtest.checkingForResults') }}</div>
+          <div v-if="store.checking.value" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.checkingForResults') }}</div>
           <ResultsTable
             v-else
             :rows="store.visible.value"
@@ -155,23 +165,23 @@ defineExpose({ deleteSelectedFlow });
           />
         </div>
       </div>
-      <div id="results-resize-handle" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
-        <span></span>
+      <div id="results-resize-handle" class="flex h-1.5 cursor-row-resize select-none items-center justify-center rounded-b-sm bg-border-default" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
+        <span class="h-0.5 w-8 rounded-[2px] bg-secondary opacity-50"></span>
       </div>
     </div>
 
-    <div id="results-scroll-area">
+    <div id="results-scroll-area" class="min-h-0 flex-1 overflow-y-auto pb-5">
       <CompareModal :open="store.compareOpen.value" :traces="compareTraces" :layout="compareLayout" />
       <ResultCharts :sections="store.activeResults.value" :version="store.version" :data-api="store.dataApi" />
     </div>
 
-    <div v-if="deleteConfirmOpen" id="modal-root" data-test="results-delete-modal">
-      <div class="modal-box">
+    <div v-if="deleteConfirmOpen" id="modal-root" :class="modalBackdropClass" data-test="results-delete-modal">
+      <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.deleteResults') }}</h3>
         <p>{{ t('v7backtest.deleteResultsConfirm', { n: store.getSelected().length }) }}</p>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="deleteConfirmOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="modal-btn modal-btn-danger" data-test="results-delete-confirm" @click="confirmDelete">{{ t('common.delete') }}</button>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" :class="modalBtnClass()" @click="deleteConfirmOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" :class="modalBtnClass('danger')" data-test="results-delete-confirm" @click="confirmDelete">{{ t('common.delete') }}</button>
         </div>
       </div>
     </div>

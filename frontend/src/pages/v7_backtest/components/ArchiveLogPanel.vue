@@ -71,10 +71,14 @@ defineExpose({ open: openPanel });
 </script>
 
 <template>
-  <div id="log-panel" :class="{ visible: open }">
-    <div id="log-panel-header">
-      <span id="log-panel-title"><PbIcon :icon="PhClipboardText" /> {{ title }}</span>
-      <button id="log-panel-close" title="Close" aria-label="Close" @click="open = false"><PbIcon :icon="PhX" :size="18" /></button>
+  <div
+    id="log-panel"
+    class="fixed bottom-0 right-0 z-[500] min-h-[150px] w-1/2 min-w-[240px] flex-col overflow-hidden rounded-t-md border-2 border-accent bg-panel h-[40vh] max-[760px]:w-full"
+    :class="open ? 'visible flex' : 'hidden'"
+  >
+    <div id="log-panel-header" class="flex shrink-0 items-center justify-between border-b border-border-default bg-elevated px-3 py-2">
+      <span id="log-panel-title" class="text-sm font-semibold"><PbIcon :icon="PhClipboardText" /> {{ title }}</span>
+      <button id="log-panel-close" class="cursor-pointer border-0 bg-transparent text-lg text-secondary hover:text-primary" title="Close" aria-label="Close" @click="open = false"><PbIcon :icon="PhX" :size="18" /></button>
     </div>
     <div id="log-viewer-target" style="flex: 1; min-height: 0; overflow: hidden"></div>
   </div>

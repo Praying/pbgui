@@ -135,8 +135,8 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div v-if="rows.length === 0" class="empty-state">
-    <div class="empty-icon">📊</div>
+  <div v-if="rows.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">
+    <div class="mb-3 text-[48px] opacity-40">📊</div>
     {{ t('v7backtest.noResultsFound') }}
   </div>
   <div v-else ref="wrap" style="position: relative">

@@ -40,6 +40,20 @@ const placeholder = computed(() => {
   return t('market.selectTags');
 });
 
+/* The former .ms-option rules — every branch returns the complete colour
+   set (the legacy .selected tint vs the neutral text colour) because
+   Tailwind emits same-property utilities in its own fixed order.
+   'ms-option' / 'selected' / 'highlighted' remain the legacy anchors. */
+function msOptionClass(selected: boolean, highlighted: boolean): string {
+  return [
+    'ms-option cursor-pointer py-1.5 px-2 text-sm hover:bg-card',
+    selected ? 'selected text-accent-soft' : 'text-primary',
+    highlighted ? 'highlighted bg-card' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
 function toggle(value: string): void {
   const next = props.modelValue.includes(value)
     ? props.modelValue.filter((tag) => tag !== value)
@@ -111,19 +125,19 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
 <template>
   <div
     ref="wrap"
-    class="ms-wrap"
+    class="ms-wrap relative flex flex-wrap items-center gap-[3px] min-h-8 cursor-text border border-border-default rounded-lg bg-card px-1 py-0.5 focus-within:border-secondary"
     id="tag-filter-wrap"
     @mousedown="onWrapMousedown"
   >
     <span
       v-for="tag in modelValue"
       :key="tag"
-      class="ms-tag"
+      class="ms-tag inline-flex items-center gap-[3px] bg-card border border-border-default rounded-sm px-1.5 py-px text-xs text-primary"
       :title="tag"
-    >{{ tag }} <span class="ms-x" :data-val="tag" @click.stop="remove(tag)">×</span></span>
+    >{{ tag }} <span class="ms-x cursor-pointer text-secondary text-xs leading-none hover:text-danger" :data-val="tag" @click.stop="remove(tag)">×</span></span>
     <input
       ref="input"
-      class="ms-input"
+      class="ms-input min-w-20 h-6 w-auto flex-1 border-0 bg-transparent p-0 text-base text-primary outline-none placeholder:text-muted [font-family:inherit]"
       id="tag-filter-input"
       type="text"
       autocomplete="off"
@@ -134,15 +148,15 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
       @input="onInput"
       @keydown="onKeydown"
     />
-    <div class="ms-dropdown" id="tag-options" :class="{ open: open && !disabled }">
+    <div
+      class="ms-dropdown absolute top-[calc(100%+6px)] left-0 right-0 bg-card border border-border-default rounded-[10px] max-h-[280px] overflow-y-auto z-[120] shadow-[0_14px_36px_rgba(5,8,14,0.45)]"
+      id="tag-options"
+      :class="open && !disabled ? 'open block' : 'hidden'"
+    >
       <div
         v-for="(option, index) in visibleOptions"
         :key="option"
-        class="ms-option"
-        :class="{
-          selected: modelValue.includes(option),
-          highlighted: index === highlightIndex && !modelValue.includes(option),
-        }"
+        :class="msOptionClass(modelValue.includes(option), index === highlightIndex && !modelValue.includes(option))"
         :data-val="option"
         @mousedown.prevent="pick(option)"
       >{{ option }}</div>

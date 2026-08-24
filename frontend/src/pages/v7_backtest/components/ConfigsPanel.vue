@@ -3,6 +3,7 @@ import { PhChartBar, PhCopy, PhPencilSimple, PhPlay } from '@phosphor-icons/vue'
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
 import type { ConfigSummary, SortSpec } from '../types';
 
 /**
@@ -172,31 +173,31 @@ defineExpose({
 
 <template>
   <div>
-    <div id="configs-toolbar" class="configs-toolbar">
+    <div id="configs-toolbar" class="mb-2 flex flex-wrap items-center gap-2">
       <input
         v-model="filter"
         type="text"
-        class="sb-input"
+        class="sb-input h-8 min-h-8 max-w-[220px]"
         :placeholder="t('v7backtest.searchName')"
         data-test="configs-filter"
         @input="emit('filter', filter)"
       />
-      <select v-model="exchangeFilter" class="sb-input" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')">
+      <select v-model="exchangeFilter" class="sb-input h-8 min-h-8 max-w-[180px]" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')">
         <option value="">{{ t('v7backtest.filterExchange') }}</option>
         <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
       </select>
-      <select v-if="isV8" v-model="strategyFilter" class="sb-input" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')">
+      <select v-if="isV8" v-model="strategyFilter" class="sb-input h-8 min-h-8 max-w-[180px]" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')">
         <option value="">{{ t('v7backtest.filterStrategy') }}</option>
         <option v-for="strategy in strategyOptions" :key="strategy" :value="strategy">{{ strategy }}</option>
       </select>
-      <span class="configs-count">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
-      <span class="configs-spacer"></span>
+      <span class="whitespace-nowrap text-sm text-secondary">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
+      <span class="flex-1"></span>
       <button type="button" class="act-btn" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</button>
       <button type="button" class="act-btn" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</button>
     </div>
 
-    <div v-if="configs.length === 0" class="empty-state">
-      <div class="empty-icon">📋</div>
+    <div v-if="configs.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">
+      <div class="mb-3 text-[48px] opacity-40">📋</div>
       <p>{{ t('v7backtest.emptyConfigsHtml') }}</p>
     </div>
     <table v-else class="tbl configs-tbl">
@@ -225,7 +226,7 @@ defineExpose({
       </thead>
       <tbody>
         <tr v-if="visible.length === 0">
-          <td :colspan="isV8 ? 11 : 10" class="empty-state">{{ t('v7backtest.noConfigsMatch') }}</td>
+          <td :colspan="isV8 ? 11 : 10" class="empty-state px-5! py-15! text-center text-md text-secondary">{{ t('v7backtest.noConfigsMatch') }}</td>
         </tr>
         <tr v-for="entry in visible" :key="entry.name" :class="{ selected: selected.includes(entry.name) }" @click="toggleRow(entry.name)">
           <td class="check-col">
@@ -238,7 +239,12 @@ defineExpose({
           <td>{{ num(entry.twe_long, 2) }} / {{ num(entry.twe_short, 2) }}</td>
           <td>{{ formatDateTime(entry.start_date) }}</td>
           <td>{{ formatDateTime(entry.end_date) }}</td>
-          <td class="results-cell" :class="{ 'no-results': !entry.results }" @click.stop="entry.results ? emit('view-results', entry.name) : undefined">{{ entry.results ?? 0 }}</td>
+          <td
+            :class="entry.results ? 'cursor-pointer font-semibold text-accent-soft' : 'cursor-default font-normal text-disabled'"
+            @click.stop="entry.results ? emit('view-results', entry.name) : undefined"
+          >
+            {{ entry.results ?? 0 }}
+          </td>
           <td :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
           <td class="actions-cell" @click.stop>
             <button type="button" class="act-btn" data-test="cfg-edit" :title="t('v7backtest.edit')" :aria-label="t('v7backtest.edit')" @click="emit('edit', entry.name)"><PbIcon :icon="PhPencilSimple" :size="18" /></button>
@@ -250,16 +256,16 @@ defineExpose({
       </tbody>
     </table>
 
-    <div v-if="configs.length > 0" class="configs-footer">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</div>
+    <div v-if="configs.length > 0" class="px-0.5 pt-2 text-sm text-secondary">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</div>
 
-    <div v-if="deleteConfirmOpen" id="modal-root" data-test="configs-delete-modal">
-      <div class="modal-box">
+    <div v-if="deleteConfirmOpen" id="modal-root" :class="modalBackdropClass" data-test="configs-delete-modal">
+      <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.deleteConfigs') }}</h3>
         <p>{{ t('v7backtest.deleteConfigsConfirm', { n: selected.length }) }}</p>
         <label class="sb-toggle"><input v-model="deleteAlsoResults" type="checkbox" /><span>{{ t('v7backtest.alsoDeleteResults') }}</span></label>
-        <div class="modal-actions">
-          <button type="button" class="modal-btn" @click="deleteConfirmOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="modal-btn modal-btn-danger" data-test="configs-delete-confirm" @click="deleteSelectedFlow(runDelete)">{{ t('common.delete') }}</button>
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" :class="modalBtnClass()" @click="deleteConfirmOpen = false">{{ t('common.cancel') }}</button>
+          <button type="button" :class="modalBtnClass('danger')" data-test="configs-delete-confirm" @click="deleteSelectedFlow(runDelete)">{{ t('common.delete') }}</button>
         </div>
       </div>
     </div>

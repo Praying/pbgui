@@ -21,16 +21,18 @@ const percentLabel = computed(() => {
 </script>
 
 <template>
-  <div id="busy-overlay" :class="{ visible: busy.visible }">
-    <div class="busy-card">
-      <div class="busy-title" id="busy-title">{{ busy.title || t('market.working') }}</div>
-      <div class="busy-progress-row">
-        <div class="busy-progress" aria-hidden="true">
-          <div class="busy-progress-fill" id="busy-progress-fill" :style="{ width: busy.percent + '%' }"></div>
+  <div id="busy-overlay" class="fixed top-[52px] right-0 bottom-0 left-0 bg-page/45 backdrop-blur-[2px] items-center justify-center z-[2600]" :class="busy.visible ? 'visible flex' : 'hidden'">
+    <div class="busy-card grid min-w-[280px] py-[1rem] px-[1.1rem] rounded-[12px] border border-border-default bg-card shadow-[0_20px_60px_rgba(5,8,14,0.45)] gap-2 text-center">
+      <div class="busy-title text-md font-bold text-primary" id="busy-title">{{ busy.title || t('market.working') }}</div>
+      <div class="busy-progress-row flex items-center gap-2">
+        <div class="busy-progress relative overflow-hidden flex-1 w-full h-2.5 rounded-full bg-page border border-border-default shadow-[inset_0_1px_2px_rgb(var(--bg-page-rgb)/0.45)]" aria-hidden="true">
+          <!-- The legacy page :root aliased --accent to --accent-soft, so
+               the gradient's third stop renders accent-soft to this day. -->
+          <div class="busy-progress-fill absolute top-px right-auto bottom-px left-px w-0 rounded-full bg-[linear-gradient(90deg,var(--accent-deep),var(--accent-soft)_55%,var(--accent-soft))] shadow-[0_0_18px_rgb(var(--accent-rgb)/0.35)] [transition:width_0.18s_ease]" id="busy-progress-fill" :style="{ width: busy.percent + '%' }"></div>
         </div>
-        <div class="busy-progress-label" id="busy-progress-label">{{ percentLabel }}</div>
+        <div class="busy-progress-label min-w-[3.3rem] text-right text-sm font-bold text-accent-soft" id="busy-progress-label">{{ percentLabel }}</div>
       </div>
-      <div class="busy-subtle" id="busy-subtle">{{ busy.subtle || t('market.pleaseWait') }}</div>
+      <div class="busy-subtle text-sm text-secondary" id="busy-subtle">{{ busy.subtle || t('market.pleaseWait') }}</div>
     </div>
   </div>
 </template>

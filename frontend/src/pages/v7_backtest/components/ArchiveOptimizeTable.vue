@@ -37,7 +37,7 @@ function isSelected(item: ArchiveOptimizeConfigItem): boolean {
 
 <template>
   <div>
-    <div v-if="configs.length === 0" class="empty-state">{{ t('v7backtest.noOptimizeSettings') }}</div>
+    <div v-if="configs.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noOptimizeSettings') }}</div>
     <table v-else class="tbl">
       <thead>
         <tr>
@@ -66,7 +66,7 @@ function isSelected(item: ArchiveOptimizeConfigItem): boolean {
           <td>{{ item.config_version ?? item.pb7_config_version ?? '' }}</td>
           <td>{{ item.pbgui_version ?? '' }}</td>
           <td>{{ fmtDate(item.modified) }}</td>
-          <td class="muted-line" style="max-width: 360px; word-break: break-all">{{ item.relative_path ?? item.path }}</td>
+          <td class="text-secondary" style="max-width: 360px; word-break: break-all">{{ item.relative_path ?? item.path }}</td>
         </tr>
       </tbody>
     </table>

@@ -11,6 +11,7 @@ import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { onToggleMultiSelectMousedown } from '../composables/useToggleMultiSelect';
+import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
 import type { RebacktestFields } from '../types';
 
 const props = defineProps<{
@@ -68,21 +69,21 @@ function onConfirm(): void {
 </script>
 
 <template>
-  <div v-if="open && defaults" id="modal-root" data-test="rebacktest-modal">
-    <div class="modal-box">
+  <div v-if="open && defaults" id="modal-root" :class="modalBackdropClass" data-test="rebacktest-modal">
+    <div :class="modalBoxClass">
       <h3>{{ t('v7backtest.selectBacktestParams') }}</h3>
-      <div class="modal-body">
+      <div class="min-h-0 flex-1 overflow-auto">
         <div style="display: flex; flex-direction: column; gap: var(--sp-md); height: 100%; min-width: 0">
           <div>
-            <div class="sb-label">start_date</div>
+            <div class="text-xs uppercase tracking-[0.5px] text-secondary">start_date</div>
             <input v-model="start" class="sb-input" type="text" data-test="rbt-start" />
           </div>
           <div>
-            <div class="sb-label">end_date</div>
+            <div class="text-xs uppercase tracking-[0.5px] text-secondary">end_date</div>
             <input v-model="end" class="sb-input" type="text" data-test="rbt-end" />
           </div>
           <div>
-            <div class="sb-label">{{ t('v7backtest.startingBalance') }}</div>
+            <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
             <div style="display: flex; align-items: center; gap: var(--sp-xs)">
               <input v-model="balance" class="sb-input" style="flex: 1; text-align: right" type="number" min="1" step="100" data-test="rbt-balance" />
               <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></button>
@@ -90,7 +91,7 @@ function onConfirm(): void {
             </div>
           </div>
           <div style="flex: 1; display: flex; flex-direction: column; min-height: 60px">
-            <div class="sb-label">{{ t('v7backtest.exchanges') }}</div>
+            <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.exchanges') }}</div>
             <select v-model="exchanges" class="sb-input" multiple style="flex: 1; height: auto; min-height: var(--input-h)" data-test="rbt-exchanges" @mousedown="onToggleMultiSelectMousedown">
               <option v-for="exchange in ALL_EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
             </select>
@@ -101,9 +102,9 @@ function onConfirm(): void {
           </div>
         </div>
       </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn" @click="emit('close')">{{ t('common.cancel') }}</button>
-        <button type="button" class="modal-btn modal-btn-primary" data-test="rbt-ok" @click="onConfirm">{{ t('common.ok') }}</button>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" :class="modalBtnClass()" @click="emit('close')">{{ t('common.cancel') }}</button>
+        <button type="button" :class="modalBtnClass('primary')" data-test="rbt-ok" @click="onConfirm">{{ t('common.ok') }}</button>
       </div>
     </div>
   </div>
