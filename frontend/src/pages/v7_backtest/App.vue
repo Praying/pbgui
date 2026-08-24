@@ -1051,9 +1051,57 @@ body {
   flex: 1 1 60px;
   min-width: 0;
   max-width: 100%;
+  /* restores the shared contract height — #configs-editor .form-group
+     input (height: 36px) out-specifies .form-group .ms-wrap
+     input.ms-input and used to stretch the tag box to ~42px. */
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+}
+#configs-editor .ms-wrap {
+  min-height: 36px;
+}
+#configs-editor .ms-label-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+#configs-editor .ms-label-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+#configs-editor .ms-label-actions .ms-clear-btn,
+#configs-editor .ms-label-actions .ms-all-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 0;
+  padding: 0;
 }
 #configs-editor .num-stepper {
   height: 36px;
+}
+/* Advanced-execution and filters rows: fields where a checkbox sits where
+   the other columns carry a label must occupy the same first-line height,
+   and must not slide down when a neighbouring multi-select (tags chips)
+   grows the row. The chk-row keeps its boxed look everywhere else. */
+#configs-editor .config-editor-trading-advanced .chk-row,
+#configs-editor .config-editor-filters .chk-row {
+  min-height: 2.25em;
+  align-items: center;
+  margin-bottom: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+#configs-editor .config-editor-trading-advanced .chk-row label,
+#configs-editor .config-editor-filters .chk-row label {
+  line-height: 1.2;
 }
 #configs-editor .stepper-btn {
   width: 34px;

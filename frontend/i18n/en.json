@@ -563,6 +563,7 @@
   "editor.suite.defaultMethod": "default method",
   "editor.suite.defaultMethodTip": "Default aggregation method for all metrics.\nmean = average across scenarios.\nmin = lowest value across scenarios.\nmax = highest value across scenarios.",
   "editor.suite.details": "Details",
+  "editor.suite.disabledHint": "Not enabled. Check \"Enable Suite Mode\" to define multiple scenarios (parameters, coin sets, date ranges or exchanges) and compare aggregated results.",
   "editor.suite.done": "Done",
   "editor.suite.edit": "Edit",
   "editor.suite.editScenario": "Edit Scenario: {label}",

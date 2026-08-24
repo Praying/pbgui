@@ -63,6 +63,11 @@ interface ScenarioDraft {
 const draft = ref<ScenarioDraft | null>(null);
 let internalUpdate = false;
 
+/* The expander folds independently of the enabled flag: the toggle
+   lives in the header, so unchecking keeps the card (and the toggle)
+   visible instead of collapsing the whole editor away. */
+const open = ref(model.value.enabled);
+
 const editing = computed(() => model.value.enabled && model.value.editIdx >= 0 && draft.value !== null);
 
 function emptyDraft(scenario: SuiteScenario): ScenarioDraft {
@@ -130,6 +135,7 @@ function toggleEnabled(on: boolean): void {
   const committed = { ...next, enabled: on, scenarios };
   commit(committed);
   loadDraft(committed);
+  if (on) open.value = true;
 }
 
 /* ── templates (:518-546) ── */
@@ -299,19 +305,20 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 </script>
 
 <template>
-  <div class="expander" :class="{ open: model.enabled }" data-test="suite-expander">
-    <div class="expander-header" data-test="suite-header" @click="toggleEnabled(!model.enabled)">
+  <div class="expander" :class="{ open }" data-test="suite-expander">
+    <div class="expander-header" data-test="suite-header" @click="open = !open">
       <span class="arrow">▶</span> {{ t('editor.suite.mode') }}
       <span v-if="model.enabled" style="color: var(--green); font-size: var(--fs-xs); margin-left: 6px">
         {{ t('editor.suite.enabled') }} ({{ t('editor.suite.scenario', { n: model.scenarios.length, s: model.scenarios.length !== 1 ? 's' : '' }) }})
       </span>
+      <div class="chk-row" style="margin-left: auto; min-height: 0; padding: 0; border: 0; background: none" @click.stop>
+        <input id="suite-enabled" type="checkbox" :checked="model.enabled" :data-tip="t('editor.suite.enableModeTip')" @change="toggleEnabled(($event.target as HTMLInputElement).checked)" />
+        <label for="suite-enabled">{{ t('editor.suite.enableMode') }}</label>
+      </div>
     </div>
     <div class="expander-body">
-      <div style="display: flex; align-items: center; gap: var(--sp-md); margin-bottom: var(--sp-md)">
-        <div class="chk-row">
-          <input id="suite-enabled" type="checkbox" :checked="model.enabled" @change="toggleEnabled(($event.target as HTMLInputElement).checked)" />
-          <label for="suite-enabled">{{ t('editor.suite.enableMode') }}</label>
-        </div>
+      <div v-if="!model.enabled" style="padding: var(--sp-sm); margin-bottom: var(--sp-md); border: 1px dashed var(--border); border-radius: 6px; color: var(--text-dim); font-size: var(--fs-sm)">
+        {{ t('editor.suite.disabledHint') }}
       </div>
 
       <template v-if="model.enabled">

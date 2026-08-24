@@ -309,7 +309,8 @@ describe('boot chain (:10012-10024)', () => {
     const exchangeWrap = wrapper.find('#ms-cfg-exchanges');
     const exchangeGroup = exchangeWrap.element.closest('.form-group');
     expect(exchangeGroup?.querySelector('label')?.textContent).toContain('exchanges');
-    expect(basics.findAll('.ms-clear-btn')).toHaveLength(1);
+    // the clear button only appears once something is selected
+    expect(basics.findAll('.ms-clear-btn')).toHaveLength(0);
     const exchangeDropdown = wrapper.find('#ms-cfg-exchanges-dd');
     expect(exchangeDropdown.classes()).not.toContain('open');
     await wrapper.find('#ms-cfg-exchanges-input').trigger('focusin');

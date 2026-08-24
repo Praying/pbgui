@@ -563,6 +563,7 @@
   "editor.suite.defaultMethod": "默认方法",
   "editor.suite.defaultMethodTip": "所有指标的默认聚合方法。\nmean = 跨场景求平均。\nmin = 跨场景取最低值。\nmax = 跨场景取最高值。",
   "editor.suite.details": "详情",
+  "editor.suite.disabledHint": "未启用。勾选\"启用套件模式\"后，可定义多个场景（不同参数、币种集合、日期区间或交易所）并对比聚合结果。",
   "editor.suite.done": "完成",
   "editor.suite.edit": "编辑",
   "editor.suite.editScenario": "编辑场景：{label}",

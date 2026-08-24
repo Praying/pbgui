@@ -61,6 +61,29 @@ describe('enable toggle (:508-516)', () => {
     await fresh.find('#suite-enabled').setValue(true);
     expect(current(fresh).scenarios).toEqual([{ label: 'base' }]);
   });
+
+  it('unchecking stays unchecked and visible: the header only folds, it never re-enables', async () => {
+    const wrapper = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }) });
+    expect(wrapper.find('[data-test="suite-expander"]').classes()).toContain('open');
+
+    await wrapper.find('#suite-enabled').setValue(false);
+    expect(current(wrapper).enabled).toBe(false);
+    // unchecking no longer folds the card away with the toggle inside it
+    expect(wrapper.find('[data-test="suite-expander"]').classes()).toContain('open');
+    expect((wrapper.find('#suite-enabled').element as HTMLInputElement).checked).toBe(false);
+
+    // the header is a pure fold toggle now — it never flips enabled
+    await wrapper.find('[data-test="suite-header"]').trigger('click');
+    expect(wrapper.find('[data-test="suite-expander"]').classes()).not.toContain('open');
+    expect(current(wrapper).enabled).toBe(false);
+    await wrapper.find('[data-test="suite-header"]').trigger('click');
+    expect(wrapper.find('[data-test="suite-expander"]').classes()).toContain('open');
+    expect(current(wrapper).enabled).toBe(false);
+
+    // re-checking works through the same header toggle
+    await wrapper.find('#suite-enabled').setValue(true);
+    expect(current(wrapper).enabled).toBe(true);
+  });
 });
 
 describe('templates (:518-546)', () => {

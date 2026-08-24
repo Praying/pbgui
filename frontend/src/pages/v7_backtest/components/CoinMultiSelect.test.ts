@@ -35,3 +35,56 @@ describe('CoinMultiSelect accessibility', () => {
     expect(wrapper.findAll('.ms-tag')).toHaveLength(0);
   });
 });
+
+describe('CoinMultiSelect dropdown interaction', () => {
+  it('selects an option via a real mouse click (mousedown keeps the dropdown open)', async () => {
+    const Harness = defineComponent({
+      setup() {
+        const selected = ref<string[]>([]);
+        return () => h(CoinMultiSelect, {
+          id: 'exchanges',
+          modelValue: selected.value,
+          'onUpdate:modelValue': (value: string[]) => (selected.value = value),
+          options: ['binance', 'bybit'],
+        });
+      },
+    });
+    const wrapper = mount(Harness, { global: { plugins: [createI18n('en')] } });
+
+    await wrapper.find('#exchanges-input').trigger('focusin');
+    expect(wrapper.find('#exchanges-dd').classes()).toContain('open');
+
+    // focusout alone would hide the dropdown before the click lands;
+    // the option buttons swallow the mousedown so the search input keeps focus
+    const option = wrapper.findAll('button.ms-option')[0]!;
+    await option.trigger('mousedown');
+    await option.trigger('click');
+    await nextTick();
+
+    expect(wrapper.find('.ms-tag').text()).toContain('binance');
+    expect(wrapper.find('#exchanges-dd').classes()).toContain('open');
+  });
+
+  it('hides the clear button while nothing is selected', async () => {
+    const Harness = defineComponent({
+      setup() {
+        const selected = ref<string[]>([]);
+        return () => h(CoinMultiSelect, {
+          id: 'exchanges',
+          modelValue: selected.value,
+          'onUpdate:modelValue': (value: string[]) => (selected.value = value),
+          options: ['binance'],
+        });
+      },
+    });
+    const wrapper = mount(Harness, { global: { plugins: [createI18n('en')] } });
+    expect(wrapper.find('button.ms-clear-btn').exists()).toBe(false);
+
+    await wrapper.find('#exchanges-input').trigger('focusin');
+    const option = wrapper.find('button.ms-option');
+    await option.trigger('mousedown');
+    await option.trigger('click');
+    await nextTick();
+    expect(wrapper.find('button.ms-clear-btn').exists()).toBe(true);
+  });
+});

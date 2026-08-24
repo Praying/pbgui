@@ -201,7 +201,7 @@ defineExpose({ foldSuiteDraft });
         <div v-if="advancedExecutionOpen" class="form-row config-editor-12 config-editor-trading-advanced">
           <div class="form-group editor-span-2">
             <div class="chk-row"><input id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" type="checkbox" /><label for="cfg-maker-fee-enabled" :data-tip="t('v7backtest.tip.makerFeeOverride')">maker_fee_override</label></div>
-            <div class="num-stepper" style="margin-top: 4px">
+            <div class="num-stepper">
               <button type="button" class="stepper-btn" aria-label="Decrease maker_fee_override" title="Decrease maker_fee_override" @click="state.makerFeeVal = String(Math.max(0, +(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></button>
               <input v-model="state.makerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.makerFeeEnabled" />
               <button type="button" class="stepper-btn" aria-label="Increase maker_fee_override" title="Increase maker_fee_override" @click="state.makerFeeVal = String(Math.min(0.01, +(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></button>
@@ -209,7 +209,7 @@ defineExpose({ foldSuiteDraft });
           </div>
           <div class="form-group editor-span-2">
             <div class="chk-row"><input id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" type="checkbox" /><label for="cfg-taker-fee-enabled" :data-tip="t('v7backtest.tip.takerFeeOverride')">taker_fee_override</label></div>
-            <div class="num-stepper" style="margin-top: 4px">
+            <div class="num-stepper">
               <button type="button" class="stepper-btn" aria-label="Decrease taker_fee_override" title="Decrease taker_fee_override" @click="state.takerFeeVal = String(Math.max(0, +(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></button>
               <input v-model="state.takerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.takerFeeEnabled" />
               <button type="button" class="stepper-btn" aria-label="Increase taker_fee_override" title="Increase taker_fee_override" @click="state.takerFeeVal = String(Math.min(0.01, +(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></button>
@@ -223,7 +223,7 @@ defineExpose({ foldSuiteDraft });
               <button type="button" class="stepper-btn" aria-label="Increase market_order_slippage_pct" title="Increase market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))"><PbIcon :icon="PhPlus" /></button>
             </div>
           </div>
-          <div class="form-group editor-span-2 config-editor-toggle-field justify-end">
+          <div class="form-group editor-span-2 config-editor-toggle-field">
             <div class="chk-row"><input id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" type="checkbox" /><label for="cfg-filter-cost" :data-tip="t('v7backtest.tip.filterByMinEffectiveCost')">filter_by_min_effective_cost</label></div>
           </div>
           <div class="form-group editor-span-2">
@@ -290,15 +290,14 @@ defineExpose({ foldSuiteDraft });
         </div>
       </header>
       <!-- Coins & Filters (:2753-2804) -->
-    <div class="form-row config-editor-12">
+    <div class="form-row config-editor-12 config-editor-filters">
       <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.marketCap')">market_cap (min M$)</label><input v-model="state.marketCap" type="number" step="50" /></div>
       <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.volMcap')">vol/mcap</label><input v-model="state.volMcap" type="number" step="0.05" /></div>
-      <div class="form-group editor-span-4">
-        <label>tags</label>
-        <CoinMultiSelect id="ms-cfg-tags" v-model="state.tags" :options="tagOptions" :placeholder="t('v7backtest.selectTags')" :tip="t('v7backtest.tip.tags')" select-all-button />
-      </div>
-      <div class="form-group editor-span-2 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt" :data-tip="t('v7backtest.tip.onlyCpt')">only_cpt</label></div></div>
-      <div class="form-group editor-span-2 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore" :data-tip="t('v7backtest.tip.noticesIgnore')">notices_ignore</label></div></div>
+      <CoinMultiSelect id="ms-cfg-tags" v-model="state.tags" class="editor-span-4" :options="tagOptions" :placeholder="t('v7backtest.selectTags')" :tip="t('v7backtest.tip.tags')" select-all-button>
+        <template #label>tags</template>
+      </CoinMultiSelect>
+      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt" :data-tip="t('v7backtest.tip.onlyCpt')">only_cpt</label></div></div>
+      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore" :data-tip="t('v7backtest.tip.noticesIgnore')">notices_ignore</label></div></div>
     </div>
     <div class="form-row cols-2">
       <CoinMultiSelect id="ms-cfg-app-long" v-model="state.approvedLong" :options="coinOptions" :labels="coinLabels" :tip="t('v7backtest.tip.approvedCoinsLong')" allow-all>
@@ -356,14 +355,14 @@ defineExpose({ foldSuiteDraft });
     <div v-if="state.extraBt.length > 0" class="expander" :class="{ open: additionalOpen }" data-test="additional-params-expander">
       <button type="button" class="expander-header" :aria-expanded="additionalOpen" data-test="additional-params-expander-toggle" :data-tip="t('v7backtest.tip.additionalParameters')" @click="additionalOpen = !additionalOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.additionalParameters') }}</button>
       <div class="expander-body">
-        <div class="form-group" style="grid-column: span 3">
+        <div class="form-group">
           <label :data-tip="t('v7backtest.tip.baseDir')">base_dir</label>
           <input type="text" :value="'backtests/pbgui/' + (state.name || '{config-name}')" readonly />
         </div>
         <div class="form-row cols-3">
           <div v-for="field in state.extraBt" :key="field.key" class="form-group" :style="field.kind === 'json' ? 'grid-column: span 3' : ''">
             <label :data-tip="t(EXTRA_BT_META[field.key]?.tip ?? '')">{{ field.key }}</label>
-            <input v-if="field.kind === 'boolean'" v-model="field.checked" type="checkbox" style="width: auto" />
+            <div v-if="field.kind === 'boolean'" class="chk-row"><input v-model="field.checked" type="checkbox" :aria-label="field.key" /></div>
             <input v-else-if="field.kind === 'number'" v-model="field.text" type="number" class="form-input" />
             <textarea v-else-if="field.kind === 'json'" v-model="field.text" :data-test="'extra-bt-' + field.key" style="overflow: hidden; resize: vertical"></textarea>
             <input v-else v-model="field.text" type="text" class="form-input" :placeholder="field.kind === 'null' ? 'null' : ''" />
