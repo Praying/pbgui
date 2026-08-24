@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue';
+import { PhPlus } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 /**
  * Legacy #new-dash-dialog (dashboard_main.html openNewDashDialog + OK/cancel/
@@ -64,11 +66,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div id="new-dash-dialog" v-show="visible">
+  <div id="new-dash-dialog" v-show="visible" role="dialog" aria-labelledby="new-dash-title">
     <div class="dlg-box">
-      <div class="dlg-title">+ {{ t('dash.newDashboard') }}</div>
+      <div class="dlg-heading">
+        <span class="dlg-icon" aria-hidden="true"><PbIcon :icon="PhPlus" /></span>
+        <div id="new-dash-title" class="dlg-title">{{ t('dash.newDashboard') }}</div>
+      </div>
       <div class="dlg-field">
-        <label>{{ t('dash.dashboardName') }}</label>
+        <label for="new-dash-name">{{ t('dash.dashboardName') }}</label>
         <input
           id="new-dash-name"
           ref="nameInput"

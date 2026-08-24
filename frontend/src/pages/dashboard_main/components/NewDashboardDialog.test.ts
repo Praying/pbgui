@@ -35,10 +35,11 @@ describe('NewDashboardDialog', () => {
     expect(wrapper.find('#new-dash-dialog').isVisible()).toBe(false);
   });
 
-  it('renders the legacy dialog chrome with i18n labels', () => {
+  it('renders the redesigned dialog chrome with i18n labels', () => {
     const wrapper = mountDialog({ visible: true });
 
-    expect(wrapper.find('.dlg-title').text()).toBe('+ New Dashboard');
+    expect(wrapper.find('.dlg-title').text()).toBe('New Dashboard');
+    expect(wrapper.find('.dlg-icon').exists()).toBe(true);
     expect(wrapper.find('label').text()).toBe('Dashboard Name');
     expect(wrapper.find('#new-dash-name').attributes('maxlength')).toBe('32');
     expect(wrapper.find('#new-dash-name').attributes('placeholder')).toBe('e.g. My Portfolio');
@@ -134,7 +135,7 @@ describe('NewDashboardDialog', () => {
       attachTo: host,
     });
 
-    expect(wrapper.find('.dlg-title').text()).toBe('+ 新建仪表盘');
+    expect(wrapper.find('.dlg-title').text()).toBe('新建仪表盘');
     expect(wrapper.find('#new-dash-ok').text()).toBe('创建并编辑');
   });
 });

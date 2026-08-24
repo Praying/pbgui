@@ -57,6 +57,6 @@ onUnmounted(onDragUp);
   <div id="tpl-overlay" ref="overlay" v-show="visible">
     <div id="tpl-drag-handle" @mousedown="onDragDown"></div>
     <button id="tpl-close-btn" :title="t('common.close')" @click="emit('close')">✕</button>
-    <iframe id="tpl-iframe" :src="url"></iframe>
+    <iframe id="tpl-iframe" :src="url" :title="t('dash.templates')"></iframe>
   </div>
 </template>
