@@ -63,6 +63,33 @@ import { highlightMarks, highlightSnippet } from './lib/search';
 const { t } = useI18n();
 const store = useHelpContent();
 
+/* ── Tailwind colour mappings (the former help.css state rules) ──
+   Each helper returns the COMPLETE colour set per branch — including the
+   neutral default — because Tailwind emits same-property utilities in its
+   own fixed order (a neutral + variant pair in one class list renders
+   neutral). 'active' stays as the inert state anchor the page tests
+   assert. */
+
+/* .ovl-tool[aria-pressed="true"] tint; the neutral branch doubles as the
+   .ovl-close default colours. */
+function ovlToolColorClass(pressed: boolean): string {
+  return pressed
+    ? 'border-[rgb(var(--text-secondary-rgb)/0.2)] bg-white/6 text-primary'
+    : 'border-transparent bg-transparent text-muted';
+}
+
+/* .lang-pill button colours (.active tint + the :hover:not(.active) lift —
+   the lift must live on the inactive branch only, exactly like the legacy
+   :not(.active) selector). */
+function langBtnClass(active: boolean): string {
+  return [
+    'cursor-pointer border-0 text-xs font-semibold tracking-[0.05em] py-[0.2rem] px-[0.55rem] transition-all duration-120',
+    active
+      ? 'active bg-border-default text-accent-soft'
+      : 'bg-transparent text-muted hover:bg-white/4 hover:text-primary',
+  ].join(' ');
+}
+
 /* ── bootstrap (legacy :548, :551-557, :1086-1092) ── */
 
 const TOPIC = new URLSearchParams(window.location.search).get('topic') || '';
@@ -361,8 +388,16 @@ onBeforeUnmount(() => {
     :page-title="t('misc.help.title')"
   >
     <MigrationWatermark />
-    <div id="page-content" aria-hidden="true"></div>
-    <div id="help-backdrop" :class="{ visible: overlayVisible }"></div>
+    <div
+      id="page-content"
+      aria-hidden="true"
+      class="relative h-full overflow-hidden [background:radial-gradient(circle_at_top_right,rgb(var(--accent-deep-rgb)/0.12),transparent_28%),radial-gradient(circle_at_bottom_left,rgb(var(--accent-rgb)/0.08),transparent_22%),var(--bg-page)]"
+    ></div>
+    <div
+      id="help-backdrop"
+      class="fixed inset-0 z-[150] bg-[radial-gradient(circle_at_top_right,rgb(var(--accent-deep-rgb)/0.10),transparent_35%),linear-gradient(180deg,rgb(var(--bg-page-rgb)/0.32),rgb(var(--bg-page-rgb)/0.66))] backdrop-blur-[3px]"
+      :class="overlayVisible ? 'visible block' : 'hidden'"
+    ></div>
 
   <div
     id="help-ovl"
@@ -370,58 +405,61 @@ onBeforeUnmount(() => {
     role="dialog"
     aria-modal="true"
     aria-labelledby="help-dialog-title"
-    :class="{ visible: overlayVisible, 'is-maximized': maximized }"
+    class="fixed top-1/2 left-1/2 [transform:translate(-50%,-50%)] z-[3000] w-[min(900px,95vw)] h-[min(700px,90vh)] min-w-[480px] min-h-[300px] bg-page border border-border-default rounded-[12px] shadow-[0_20px_70px_rgba(5,8,14,0.9)] flex-col overflow-hidden max-[720px]:w-[calc(100vw-14px)] max-[720px]:h-[calc(100dvh-66px)] max-[720px]:min-w-0 max-[720px]:min-h-0 max-[720px]:top-[59px] max-[720px]:left-[7px] max-[720px]:[transform:none] max-[720px]:resize-none"
+    :class="[overlayVisible ? 'visible flex' : 'hidden', maximized ? 'is-maximized max-w-none max-h-none resize-none' : 'resize']"
   >
-    <div class="ovl-panel">
-      <div id="help-drag-handle" @mousedown="onDragStart"></div>
-      <div class="ovl-header">
-        <div id="help-dialog-title" class="ovl-header-title"><PbIcon :icon="PhBookOpen" /> <span>{{ t('misc.help.guideHelp') }}</span></div>
-        <div class="ovl-header-actions">
-          <div id="help-search-wrap">
+    <div class="ovl-panel flex-1 flex flex-col overflow-hidden relative">
+      <div id="help-drag-handle" class="absolute top-0 left-0 right-12 h-[46px] z-[2]" :class="maximized ? 'cursor-default' : 'cursor-move'" @mousedown="onDragStart"></div>
+      <div class="ovl-header flex items-center justify-between py-[0.85rem] pr-[1.1rem] pl-[1.25rem] border-b border-border-subtle shrink-0 bg-card max-[720px]:flex-col max-[720px]:items-start max-[720px]:gap-2.5">
+        <div id="help-dialog-title" class="ovl-header-title flex items-center gap-1.75 text-md font-bold text-primary"><PbIcon :icon="PhBookOpen" /> <span>{{ t('misc.help.guideHelp') }}</span></div>
+        <div class="ovl-header-actions flex items-center gap-1.75 relative z-[3] max-[720px]:flex-wrap max-[720px]:w-full">
+          <div id="help-search-wrap" class="flex items-center gap-[3px]">
             <input
               id="help-search"
               v-model="searchTermRaw"
               type="text"
+              class="w-[170px] bg-card text-primary border border-border-default rounded-[5px] py-[0.28rem] px-[0.5rem] text-sm outline-none focus:border-secondary placeholder:text-secondary max-[720px]:w-[140px]"
               :placeholder="searchPlaceholder"
               autocomplete="off"
               @keydown="onSearchKeydown"
             >
             <button
-              class="help-snav-btn"
+              class="help-snav-btn bg-card border border-border-default rounded-[3px] text-secondary cursor-pointer text-xs px-[5px] py-[2px] leading-[1.4] transition-[color,border-color] duration-100 hover:text-primary hover:border-secondary"
               id="help-search-up"
               :title="t('misc.help.previousMatch')"
               :aria-label="t('misc.help.previousMatch')"
               @click="gotoMark(searchIndex - 1)"
             ><PbIcon :icon="PhArrowUp" /></button>
             <button
-              class="help-snav-btn"
+              class="help-snav-btn bg-card border border-border-default rounded-[3px] text-secondary cursor-pointer text-xs px-[5px] py-[2px] leading-[1.4] transition-[color,border-color] duration-100 hover:text-primary hover:border-secondary"
               id="help-search-dn"
               :title="t('misc.help.nextMatch')"
               :aria-label="t('misc.help.nextMatch')"
               @click="gotoMark(searchIndex + 1)"
             ><PbIcon :icon="PhArrowDown" /></button>
-            <span id="help-search-count">{{ searchCountText }}</span>
-            <label id="help-search-global-lbl" :title="t('misc.help.searchAcrossAll')">
-              <input id="help-search-global" v-model="globalMode" type="checkbox"> <span>{{ t('common.all') }}</span>
+            <span id="help-search-count" class="text-xs text-muted whitespace-nowrap min-w-[44px] text-left">{{ searchCountText }}</span>
+            <label id="help-search-global-lbl" class="flex items-center gap-[3px] text-secondary text-xs cursor-pointer whitespace-nowrap select-none" :title="t('misc.help.searchAcrossAll')">
+              <input id="help-search-global" v-model="globalMode" type="checkbox" class="cursor-pointer"> <span>{{ t('common.all') }}</span>
             </label>
           </div>
           <div style="width:1px;height:16px;background:var(--border-default);flex-shrink:0;"></div>
-          <div class="lang-pill">
-            <button id="help-lang-en" :class="{ active: store.lang.value === 'EN' }" @click="store.switchLang('EN')">EN</button>
-            <button id="help-lang-de" :class="{ active: store.lang.value === 'DE' }" @click="store.switchLang('DE')">DE</button>
+          <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0">
+            <button id="help-lang-en" :class="langBtnClass(store.lang.value === 'EN')" @click="store.switchLang('EN')">EN</button>
+            <button id="help-lang-de" :class="langBtnClass(store.lang.value === 'DE')" @click="store.switchLang('DE')">DE</button>
           </div>
           <button
-            class="ovl-tool"
+            class="ovl-tool inline-flex items-center justify-center cursor-pointer text-md w-7 h-7 p-0 rounded-sm leading-none border transition-[color,background-color] duration-120 hover:text-primary hover:border-[rgb(var(--text-secondary-rgb)/0.18)] hover:bg-white/6"
+            :class="ovlToolColorClass(maximized)"
             id="help-maximize"
             :title="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
             :aria-label="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
             :aria-pressed="maximized ? 'true' : 'false'"
             @click="setMaximized(!maximized)"
             ><PbIcon :icon="maximized ? PhArrowsIn : PhArrowsOut" /></button>
-          <button class="ovl-close" id="help-close" :aria-label="t('common.close')" @click="closeLocalHelp"><PbIcon :icon="PhX" /></button>
+          <button class="ovl-close inline-flex items-center justify-center cursor-pointer text-md w-7 h-7 p-0 rounded-sm leading-none border border-transparent bg-transparent text-muted transition-[color,background-color] duration-120 hover:text-primary hover:border-[rgb(var(--text-secondary-rgb)/0.18)] hover:bg-white/6" id="help-close" :aria-label="t('common.close')" @click="closeLocalHelp"><PbIcon :icon="PhX" /></button>
         </div>
       </div>
-      <div id="help-body">
+      <div id="help-body" class="flex flex-1 overflow-hidden max-[720px]:flex-col">
         <HelpToc
           v-model:filter="store.filter.value"
           :entries="store.filteredTopics.value"
@@ -429,33 +467,33 @@ onBeforeUnmount(() => {
           :status="store.indexStatus.value"
           @select="store.loadTopic"
         />
-        <div id="help-content" ref="contentEl">
+        <div id="help-content" ref="contentEl" class="flex-1 overflow-y-auto py-[1.5rem] px-[1.8rem] leading-[1.7] text-primary text-base">
           <template v-if="globalMode">
-            <div v-if="globalStatus === 'searching'" class="help-loading">{{ t('misc.help.searching') }}</div>
+            <div v-if="globalStatus === 'searching'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.searching') }}</div>
             <p v-else-if="globalMessage" style="color:var(--text-muted);padding:8px 0;">{{ globalMessage }}</p>
-            <div v-else-if="globalResults.length" class="gs-results">
+            <div v-else-if="globalResults.length" class="gs-results flex flex-col gap-2 py-1">
               <div
                 v-for="result in globalResults"
                 :key="result.idx"
-                class="gs-item"
+                class="gs-item bg-card border border-border-default rounded-md px-3.5 py-2.5 cursor-pointer transition-[border-color] duration-150 hover:border-secondary"
                 :data-idx="result.idx"
                 @click="openGlobalResult(result.idx)"
               >
-                <div class="gs-topic">{{ result.title }}</div>
+                <div class="gs-topic text-accent-soft font-semibold text-sm mb-[5px]">{{ result.title }}</div>
                 <!-- escaped + <mark>-wrapped in lib/search.highlightSnippet (never raw server text) -->
                 <div
                   v-for="(snippet, i) in result.snippets"
                   :key="i"
-                  class="gs-snip"
+                  class="gs-snip text-secondary text-xs leading-[1.55] overflow-hidden text-ellipsis"
                   v-html="highlightSnippet(snippet, appliedTerm)"
                 ></div>
               </div>
             </div>
           </template>
           <template v-else>
-            <div v-if="store.contentStatus.value === 'loading'" class="help-loading">{{ t('common.loading') }}</div>
-            <div v-else-if="store.contentStatus.value === 'error'" class="help-loading">{{ t('misc.help.failedLoadContent') }}</div>
-            <div v-else-if="store.indexStatus.value === 'empty'" class="help-loading">{{ t('misc.help.noHelpTopics') }}</div>
+            <div v-if="store.contentStatus.value === 'loading'" class="help-loading text-secondary italic p-7 text-center">{{ t('common.loading') }}</div>
+            <div v-else-if="store.contentStatus.value === 'error'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.failedLoadContent') }}</div>
+            <div v-else-if="store.indexStatus.value === 'empty'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.noHelpTopics') }}</div>
             <!-- markdown: DOMPurify-sanitized in lib/markdown.renderMarkdown before v-html (never raw) -->
             <div v-else-if="store.topicHtml.value !== null" v-html="displayHtml"></div>
           </template>
@@ -465,3 +503,168 @@ onBeforeUnmount(() => {
   </div>
   </AppShell>
 </template>
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   Ported from styles/help.css (deleted at the Tailwind migration).
+   Everything expressible as utilities moved onto the templates
+   (App.vue + HelpToc.vue); the rules below stay as CSS for the
+   documented reasons. This block is unscoped on purpose — the old
+   stylesheet was page-global, and the html/body and injected-markdown
+   rules have no component root to scope to.
+
+   Dropped outright: the * reset and the html/body height/width/
+   font-size/background/colour defaults — preflight and the base layer
+   in src/styles/tailwind.css already provide them identically — plus
+   #help-search-global-lbl input[type="checkbox"] accent-color/margin
+   (base layer + preflight provide those too). Only the html/body
+   declarations that differ from the shared base stay: the legacy
+   CJK-first font stack (the shared stack is Space Grotesk-led) and the
+   page's overflow lock.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page root chrome ────────────────────────────────────────── */
+html,
+body {
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+}
+
+/* ── Markdown content (#help-content) ──────────────────────────
+   The topic body is markdown rendered via v-html (lib/markdown.ts) and
+   the global-search snippets carry <mark> highlights from lib/search.ts
+   — none of that DOM carries this component's scope attribute, so
+   utilities cannot reach it. Every descendant selector stays right
+   here, anchored on the #help-content id exactly like the legacy
+   stylesheet. */
+#help-content h1 {
+  font-size: var(--fs-xl);
+  color: var(--text-primary);
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+#help-content h2 {
+  font-size: var(--fs-lg);
+  color: var(--text-primary);
+  margin: 1.5rem 0 0.5rem;
+}
+
+#help-content h3 {
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  margin: 1.1rem 0 0.35rem;
+}
+
+#help-content p { margin: 0.5rem 0; }
+#help-content a { color: var(--accent-soft); text-decoration: none; }
+#help-content a:hover { text-decoration: underline; }
+#help-content strong { color: var(--text-primary); }
+#help-content em { color: var(--text-secondary); font-style: italic; }
+#help-content code {
+  background: var(--bg-card);
+  color: var(--warning-soft);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-size: var(--fs-xs);
+  font-family: 'Fira Code', 'Consolas', monospace;
+}
+
+#help-content pre {
+  background: var(--bg-page);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+#help-content pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+#help-content ul,
+#help-content ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+#help-content li { margin: 0.2rem 0; }
+
+#help-content blockquote {
+  border-left: 3px solid var(--accent-soft);
+  margin: 0.75rem 0;
+  padding: 0.4rem 0.9rem;
+  background: rgb(var(--accent-rgb) / 0.05);
+  border-radius: 0 5px 5px 0;
+  color: var(--text-secondary);
+}
+
+#help-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75rem 0;
+}
+
+#help-content th,
+#help-content td {
+  border: 1px solid var(--border-default);
+  padding: 0.4rem 0.7rem;
+  text-align: left;
+  font-size: var(--fs-sm);
+  vertical-align: top;
+}
+
+#help-content th {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+#help-content hr {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 1rem 0;
+}
+
+#help-content img {
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+
+#help-content mark {
+  background: rgb(var(--warning-rgb) / 0.2);
+  color: var(--warning-soft);
+  border-radius: 2px;
+}
+
+/* gotoMark() toggles .current on the injected <mark> nodes via
+   classList — utilities cannot reach that DOM either. */
+#help-content mark.current {
+  background: rgb(var(--warning-rgb) / 0.45);
+  color: var(--warning-soft);
+  outline: 1px solid var(--warning);
+}
+</style>
+
+<style scoped>
+/* Page-level AppShell overrides — ported from styles/help.css at the
+   Tailwind migration. The :deep() rules target AppShell internals (the
+   classes live on elements the shared component renders), so they stay
+   as CSS instead of utilities. */
+.support-page-shell :deep(.app-shell__main) {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.support-page-shell :deep(.app-shell__primary) {
+  min-height: 0;
+}
+</style>

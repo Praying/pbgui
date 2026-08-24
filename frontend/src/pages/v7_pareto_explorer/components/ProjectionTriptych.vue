@@ -32,6 +32,15 @@ const PANELS: { key: 'xy' | 'xz' | 'yz'; id: string; titleKey: string }[] = [
   { key: 'yz', id: 'playground-chart-proj-yz', titleKey: 'v7explore.yzProjection' },
 ];
 
+/** The .chart-stack / .chart-stack.projections-row pair — complete
+    independent layout sets ('projections-row' stays as the anchor the
+    layout-toggle test keys off). */
+function projectionStackClass(layout: string): string {
+  return layout === 'row'
+    ? 'chart-stack projections-row grid grid-cols-[repeat(3,minmax(0,1fr))] items-start gap-3 max-[1500px]:grid-cols-1'
+    : 'chart-stack flex flex-col gap-3';
+}
+
 /** resizeProjectionCharts (:2113-2119, :4396) — refit after the layout flip. */
 function refit(): void {
   const plotly = getPlotly();
@@ -64,12 +73,11 @@ onBeforeUnmount(() => {
 <template>
   <div
     id="playground-projections"
-    class="chart-stack"
-    :class="{ 'projections-row': store.state.playground.projectionLayout === 'row' }"
+    :class="projectionStackClass(store.state.playground.projectionLayout)"
   >
     <div v-for="panel in PANELS" :key="panel.key" class="projection-panel">
-      <div class="projection-panel-title">{{ t(panel.titleKey) }}</div>
-      <div class="chart-wrap projection-wrap">
+      <div class="projection-panel-title mb-2 text-center text-sm font-semibold text-secondary">{{ t(panel.titleKey) }}</div>
+      <div class="chart-wrap projection-wrap relative min-w-0 overflow-hidden h-[420px] min-h-[420px]">
         <ScatterChart
           :chart-id="panel.id"
           :spec="projections()?.[panel.key] ?? null"

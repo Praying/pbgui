@@ -211,7 +211,23 @@ const modeChip = computed(() => {
   }
   return t('v7explore.fastModeLoaded');
 });
-const modeChipClass = computed(() => 'status-chip ' + (store.state.modeChipOverride || !valid.value ? 'warn' : 'good'));
+/* Chip/badge variant → complete Tailwind colour set (the former .chip,
+   .status-chip and .badge rules). Every branch returns the full colour set
+   plus the legacy variant anchor (warn/good/bad/info) the tests and the
+   message level classes key off; the neutral branch carries no tint, exactly
+   like the variant-less .status-chip in the legacy stylesheet. */
+const CHIP_BASE = 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold tracking-[0.04em]';
+
+function statusChipClass(variant: 'good' | 'warn' | 'bad' | 'info'): string {
+  if (variant === 'good') return `status-chip good ${CHIP_BASE} bg-success/15 text-success`;
+  if (variant === 'warn') return `status-chip warn ${CHIP_BASE} bg-warning/15 text-warning`;
+  if (variant === 'bad') return `status-chip bad ${CHIP_BASE} bg-danger/15 text-danger`;
+  return `status-chip info ${CHIP_BASE}`;
+}
+
+const modeChipClass = computed(() =>
+  statusChipClass(store.state.modeChipOverride || !valid.value ? 'warn' : 'good')
+);
 
 /** Full-load status card (:2414-2451 label map). */
 const fullLoadLabels: Record<string, string> = {
@@ -220,9 +236,24 @@ const fullLoadLabels: Record<string, string> = {
   loaded: t('v7explore.loaded'),
   error: t('v7explore.error'),
 };
-const fullLoadChipClass = computed(
-  () => 'status-chip ' + (store.progress.fullLoad.stage === 'loaded' ? 'good' : store.progress.fullLoad.stage === 'error' ? 'bad' : 'warn')
+const fullLoadChipClass = computed(() =>
+  statusChipClass(store.progress.fullLoad.stage === 'loaded' ? 'good' : store.progress.fullLoad.stage === 'error' ? 'bad' : 'warn')
 );
+
+/** The .message info/warn/bad tints (:1917-1933) — full colour set per level. */
+function messageClass(level: string): string {
+  if (level === 'warning') return `message warn rounded-xl border border-warning/30 bg-warning/8 px-3.5 py-3 text-warning-soft`;
+  if (level === 'error') return `message bad rounded-xl border border-danger/30 bg-danger/8 px-3.5 py-3 text-danger-soft`;
+  return `message info rounded-xl border border-accent/30 bg-accent/8 px-3.5 py-3 text-accent-soft`;
+}
+
+/** The .deep-tab-btn / .active pair — complete independent colour sets. */
+function deepTabClass(active: boolean): string {
+  return active
+    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent bg-accent px-3 py-0 text-[#f2f5fb] transition-all duration-150'
+    : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-transparent px-3 py-0 text-secondary transition-all duration-150 hover:border-accent hover:text-primary';
+}
+
 const fullLoadBarStyle = computed(() => ({ width: String(store.progress.fullLoad.display) + '%' }));
 
 /** Result Context pre (:2557-2578). */
@@ -325,7 +356,7 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <DataTipTooltip />
+  <DataTipTooltip class="pointer-events-none fixed z-[9999] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
   <AppShell
     class="core-workbench-shell core-workbench-shell--pareto"
     :page-key="readSeedOptimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer'"
@@ -337,8 +368,8 @@ onBeforeUnmount(() => {
     @update:section="store.selectStage($event as ParetoStage)"
   >
     <template #status>
-      <div class="status-row">
-        <span id="result-chip" class="chip sr-only">{{ resultChip }}</span>
+      <div class="status-row flex flex-wrap gap-2">
+        <span id="result-chip" class="chip sr-only inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ resultChip }}</span>
         <StatusStrip :label="t('v7explore.result')" :value="resultChip" />
         <span id="mode-chip" :class="modeChipClass">{{ modeChip }}</span>
       </div>
@@ -352,8 +383,8 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="page-body">
-    <div class="workbench-page-content">
+    <div id="page-body" class="flex h-[calc(100dvh-52px)] overflow-hidden max-[1100px]:flex-col">
+    <div class="workbench-page-content flex min-w-0 flex-1 flex-col gap-5 overflow-auto p-5 max-[720px]:p-4">
     <!-- Stage nav lives in the workbench rail; this strip carries only the
          session actions (legacy ctx-actions :767-777). -->
     <div class="page-toolbar" role="toolbar">
@@ -384,36 +415,35 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-      <section class="page-title sr-only">
+      <section class="page-title sr-only flex items-start justify-between gap-5">
         <div>
-          <h1>{{ t('v7explore.paretoExplorer') }}</h1>
-          <p id="page-subtitle">{{ t('v7explore.pageSubtitle') }}</p>
+          <h1 class="mb-1 text-xl">{{ t('v7explore.paretoExplorer') }}</h1>
+          <p id="page-subtitle" class="text-secondary">{{ t('v7explore.pageSubtitle') }}</p>
         </div>
       </section>
 
-      <section id="messages" class="messages">
+      <section id="messages" class="messages flex flex-col gap-2">
         <div
           v-for="(message, index) in store.state.messages"
           :key="index"
-          class="message"
-          :class="message.level === 'warning' ? 'warn' : message.level === 'error' ? 'bad' : 'info'"
+          :class="messageClass(message.level)"
         >
           {{ message.text }}
         </div>
       </section>
 
-      <section v-if="rangeEnabled" id="display-range-card" class="panel-card range-card">
-        <div class="range-header">
+      <section v-if="rangeEnabled" id="display-range-card" class="panel-card range-card flex flex-col gap-3 rounded-xl border border-border-default bg-panel p-3.5">
+        <div class="range-header flex items-start justify-between gap-3">
           <div>
-            <h3>{{ t('v7explore.displayRange') }}</h3>
-            <p class="hint">{{ t('v7explore.filterRankedVisible') }}</p>
+            <h3 class="mb-2">{{ t('v7explore.displayRange') }}</h3>
+            <p class="hint text-secondary">{{ t('v7explore.filterRankedVisible') }}</p>
           </div>
-          <span id="display-range-total-chip" class="chip">{{ t('v7explore.selectedCount', { total: rangeTotal }) }}</span>
+          <span id="display-range-total-chip" class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ t('v7explore.selectedCount', { total: rangeTotal }) }}</span>
         </div>
-        <div class="range-controls">
+        <div class="range-controls grid grid-cols-[minmax(0,1fr)_88px_88px_auto] items-center gap-2.5 max-[900px]:grid-cols-1">
           <input
             id="display-range-end"
-            class="range-slider"
+            class="range-slider w-full"
             :class="{ 'range-loading': store.progress.displayRange.loading }"
             type="range"
             min="0"
@@ -426,7 +456,7 @@ onBeforeUnmount(() => {
           />
           <input
             id="display-range-start-input"
-            class="range-number"
+            class="range-number min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary"
             type="number"
             min="0"
             :max="rangeTotal"
@@ -436,7 +466,7 @@ onBeforeUnmount(() => {
           />
           <input
             id="display-range-end-input"
-            class="range-number"
+            class="range-number min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary"
             type="number"
             min="0"
             :max="rangeTotal"
@@ -445,86 +475,86 @@ onBeforeUnmount(() => {
             @change="updatePendingRange({ start: pendingRange?.start ?? 0, end: Number(($event.target as HTMLInputElement).value) || 0 }); applyDisplayRange()"
           />
         </div>
-        <div id="display-range-summary" class="range-summary">{{ rangeSummary }}</div>
+        <div id="display-range-summary" class="range-summary text-sm text-secondary">{{ rangeSummary }}</div>
       </section>
 
-      <section class="metric-grid" id="summary-metrics">
-        <div class="metric-card result-metric">
-          <div class="label">{{ t('v7explore.result') }}</div>
-          <div class="value" id="metric-result">{{ metricResult }}</div>
+      <section class="metric-grid grid grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))] gap-3 max-[1500px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[900px]:grid-cols-1" id="summary-metrics">
+        <div class="metric-card result-metric min-w-0 rounded-xl border border-border-default bg-panel p-3">
+          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.result') }}</div>
+          <div class="value text-[16px] font-bold leading-[1.25] [overflow-wrap:anywhere] break-words" id="metric-result">{{ metricResult }}</div>
         </div>
-        <div class="metric-card">
-          <div class="label">{{ t('v7explore.paretoFront') }}</div>
-          <div class="value" id="metric-paretos">{{ metricParetos }}</div>
+        <div class="metric-card min-w-0 rounded-xl border border-border-default bg-panel p-3">
+          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.paretoFront') }}</div>
+          <div class="value text-lg font-bold leading-[1.25] [overflow-wrap:anywhere] break-words" id="metric-paretos">{{ metricParetos }}</div>
         </div>
-        <div class="metric-card">
-          <div class="label">{{ t('v7explore.candidateSet') }}</div>
-          <div class="value">
+        <div class="metric-card min-w-0 rounded-xl border border-border-default bg-panel p-3">
+          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.candidateSet') }}</div>
+          <div class="value text-lg font-bold leading-[1.25] [overflow-wrap:anywhere] break-words">
             <span id="metric-all-results">{{ metricAllResults }}</span>
             <!-- shown only once the full load finished (:2436-2439, handoff 4) -->
             <span
               v-show="store.progress.fullLoad.stage === 'loaded'"
               id="metric-full-load-chip"
-              :class="fullLoadChipClass"
+              :class="[fullLoadChipClass, 'self-start']"
             >{{ fullLoadLabels[store.progress.fullLoad.stage] }}</span>
           </div>
-          <div v-if="store.progress.fullLoad.stage === 'loading' || store.progress.fullLoad.stage === 'error'" class="metric-inline-status" id="metric-full-load-panel">
-            <div id="metric-full-load-text" class="load-status-text">{{ store.progress.fullLoad.text }}</div>
-            <div class="load-status-progress"><div id="metric-full-load-bar" :style="fullLoadBarStyle"></div></div>
+          <div v-if="store.progress.fullLoad.stage === 'loading' || store.progress.fullLoad.stage === 'error'" class="metric-inline-status mt-2.5 flex flex-col gap-2" id="metric-full-load-panel">
+            <div id="metric-full-load-text" class="load-status-text min-h-[34px] text-sm text-secondary">{{ store.progress.fullLoad.text }}</div>
+            <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="metric-full-load-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-200 ease-[ease]" :style="fullLoadBarStyle"></div></div>
           </div>
         </div>
       </section>
 
       <section v-show="store.state.stage === 'settings'" id="stage-settings" class="stage-view">
-        <div class="stage-grid">
-          <div class="stage-block half panel-card">
-            <h3>{{ t('v7explore.loadControl') }}</h3>
-            <div class="form-grid" style="margin-top: 12px">
-              <div class="form-field wide">
-                <label for="result-path-input">{{ t('v7explore.resultPath') }}</label>
-                <input id="result-path-input" v-model="store.state.resultPathInput" type="text" placeholder="/path/to/optimize/result" />
+        <div class="stage-grid grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3">
+          <div class="stage-block half panel-card col-span-6 rounded-xl border border-border-default bg-panel p-3.5 max-[900px]:col-span-12">
+            <h3 class="mb-2">{{ t('v7explore.loadControl') }}</h3>
+            <div class="form-grid grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3" style="margin-top: 12px">
+              <div class="form-field wide col-span-8 flex flex-col gap-1.5 max-[900px]:col-span-12">
+                <label for="result-path-input" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.resultPath') }}</label>
+                <input id="result-path-input" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" v-model="store.state.resultPathInput" type="text" placeholder="/path/to/optimize/result" />
               </div>
-              <div class="form-field">
-                <label for="max-configs-input">{{ t('v7explore.maxConfigs') }}</label>
-                <input id="max-configs-input" v-model.number="store.state.maxConfigs" type="number" min="100" max="10000" step="100" />
+              <div class="form-field col-span-4 flex flex-col gap-1.5 max-[900px]:col-span-12">
+                <label for="max-configs-input" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.maxConfigs') }}</label>
+                <input id="max-configs-input" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" v-model.number="store.state.maxConfigs" type="number" min="100" max="10000" step="100" />
               </div>
-              <div class="form-field wide">
-                <label for="load-strategy-select">{{ t('v7explore.candidateSelection') }}</label>
-                <select id="load-strategy-select" v-model="store.state.loadStrategy" multiple size="7">
+              <div class="form-field wide col-span-8 flex flex-col gap-1.5 max-[900px]:col-span-12">
+                <label for="load-strategy-select" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.candidateSelection') }}</label>
+                <select id="load-strategy-select" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" v-model="store.state.loadStrategy" multiple size="7">
                   <option v-for="option in LOAD_STRATEGY_OPTIONS" :key="option" :value="option">{{ option }}</option>
                 </select>
               </div>
-              <div class="form-field">
-                <label>&nbsp;</label>
-                <div class="check-row">
-                  <input id="persist-defaults-toggle" v-model="store.state.persistDefaults" type="checkbox" />
-                  <label for="persist-defaults-toggle">{{ t('v7explore.persistDefaults') }}</label>
+              <div class="form-field col-span-4 flex flex-col gap-1.5 max-[900px]:col-span-12">
+                <label class="text-xs text-secondary uppercase tracking-[0.05em]">&nbsp;</label>
+                <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
+                  <input id="persist-defaults-toggle" class="h-4 w-4" v-model="store.state.persistDefaults" type="checkbox" />
+                  <label for="persist-defaults-toggle" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.persistDefaults') }}</label>
                 </div>
               </div>
-              <div class="form-field full">
-                <div class="button-row">
-                  <button class="btn primary" id="btn-command-load" @click="commandLoad">
+              <div class="form-field full col-span-12 flex flex-col gap-1.5">
+                <div class="button-row flex flex-wrap gap-2">
+                  <button class="h-8 cursor-pointer rounded-lg border border-accent bg-accent px-3 py-0 text-[#f2f5fb] transition-all duration-150" id="btn-command-load" @click="commandLoad">
                     {{ t('v7explore.loadResultContext') }}
                   </button>
                 </div>
               </div>
-              <div class="form-field full">
-                <div class="load-status-card" id="full-load-status-card">
-                  <div class="load-status-head">
+              <div class="form-field full col-span-12 flex flex-col gap-1.5">
+                <div class="load-status-card flex flex-col gap-2 rounded-xl border border-border-default bg-white/2 p-3" id="full-load-status-card">
+                  <div class="load-status-head flex items-center justify-between gap-2">
                     <strong>{{ t('v7explore.fullLoadStatus') }}</strong>
                     <span id="full-load-status-chip" :class="fullLoadChipClass">{{ fullLoadLabels[store.progress.fullLoad.stage] }}</span>
                   </div>
-                  <div id="full-load-status-text" class="load-status-text">
+                  <div id="full-load-status-text" class="load-status-text text-sm text-secondary">
                     {{ store.progress.fullLoad.text || t('v7explore.scanToSelectCandidates') }}
                   </div>
-                  <div class="load-status-progress"><div id="full-load-status-bar" :style="fullLoadBarStyle"></div></div>
+                  <div class="load-status-progress h-2 overflow-hidden rounded-full bg-white/8"><div id="full-load-status-bar" class="h-full w-0 bg-linear-to-r from-accent to-accent-soft transition-[width] duration-200 ease-[ease]" :style="fullLoadBarStyle"></div></div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="stage-block half panel-card">
-            <h3>{{ t('v7explore.resultContext') }}</h3>
-            <pre id="result-meta-json">{{ resultMetaJson }}</pre>
+          <div class="stage-block half panel-card col-span-6 rounded-xl border border-border-default bg-panel p-3.5 max-[900px]:col-span-12">
+            <h3 class="mb-2">{{ t('v7explore.resultContext') }}</h3>
+            <pre id="result-meta-json" class="whitespace-pre-wrap break-words font-mono text-xs text-secondary">{{ resultMetaJson }}</pre>
           </div>
         </div>
       </section>
@@ -533,24 +563,23 @@ onBeforeUnmount(() => {
       <Playground v-show="store.state.stage === 'pareto_playground'" :store="store" :surfaces="surfaces" />
 
       <!-- M-v7-7: deep-intelligence tab payloads + preset handoffs land here -->
-      <section v-show="store.state.stage === 'deep_intelligence'" id="stage-deep-intelligence" class="stage-view">
-        <div class="panel-card">
-          <div class="deep-tabs">
+      <section v-show="store.state.stage === 'deep_intelligence'" id="stage-deep-intelligence" class="stage-view flex flex-col gap-3">
+        <div class="panel-card rounded-xl border border-border-default bg-panel p-3.5">
+          <div class="deep-tabs flex flex-wrap gap-2">
             <button
               v-for="tab in VALID_DEEP_TABS"
               :key="tab"
-              class="deep-tab-btn"
-              :class="{ active: store.state.deepTab === tab }"
+              :class="deepTabClass(store.state.deepTab === tab)"
               :data-deep-tab="tab"
               @click="store.selectDeepTab(tab)"
             >
               {{ t(DEEP_TAB_LABEL[tab]) }}
             </button>
           </div>
-          <p class="hint" id="deep-tab-description">{{ t(DEEP_TAB_DESC[store.state.deepTab]) }}</p>
+          <p class="hint text-secondary" id="deep-tab-description">{{ t(DEEP_TAB_DESC[store.state.deepTab]) }}</p>
         </div>
-        <div class="panel-card" id="deep-tab-active-panel">
-          <div class="placeholder-chart" id="deep-tab-placeholder">{{ t('v7explore.tabPlaceholder', { tab: store.state.deepTab }) }}</div>
+        <div class="panel-card rounded-xl border border-border-default bg-panel p-3.5" id="deep-tab-active-panel">
+          <div class="placeholder-chart flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" id="deep-tab-placeholder">{{ t('v7explore.tabPlaceholder', { tab: store.state.deepTab }) }}</div>
         </div>
       </section>
 
@@ -559,3 +588,109 @@ onBeforeUnmount(() => {
     </div>
   </AppShell>
 </template>
+
+<style>
+/* Engine-level selectors ported from styles/pareto-base.css and
+   pareto-panels.css — none of these can be utilities:
+   - html/body are root rules (un-scopable);
+   - [data-tip] is an attribute selector spanning every component that emits
+     data-tip attributes (ConfigDetail metric names, later M-v7-7 panels);
+   - the range-slider rules style vendor pseudo-elements and drive their
+     gradient from the --range-* custom properties set inline;
+   - .range-loading flips the loaded-track colour while a range load is
+     in flight (the class is also the JS hook for the CSS variable swap);
+   - the fullscreen rules target ScatterChart's child element from the
+     .chart-wrap wrapper (a cross-component descendant relation).
+   'range-slider', 'chart-wrap', 'small-chart' and 'placeholder-chart'
+   remain as anchors for these rules and the useChartState/resizeCharts
+   classList checks. */
+html,
+body {
+  overflow: hidden;
+}
+
+[data-tip] {
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+button[data-tip] {
+  text-decoration: none;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  --range-fill: 50%;
+  --range-load-fill: var(--range-fill);
+  --range-loaded-color: var(--accent);
+  --range-active-color: var(--accent);
+  width: 100%;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  background: linear-gradient(to right, var(--range-loaded-color) 0%, var(--range-loaded-color) var(--range-load-fill, var(--range-fill, 50%)), var(--range-active-color) var(--range-load-fill, var(--range-fill, 50%)), var(--range-active-color) var(--range-fill, 50%), rgba(255,255,255,0.22) var(--range-fill, 50%), rgba(255,255,255,0.22) 100%);
+  border-radius: 999px;
+}
+
+.range-slider.range-loading {
+  --range-loaded-color: var(--success);
+  --range-active-color: var(--accent);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 0;
+  margin-top: -5px;
+  box-shadow: 0 0 0 2px rgb(var(--bg-page-rgb) / 0.9);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 8px;
+  background: rgba(255,255,255,0.22);
+  border-radius: 999px;
+  border: 0;
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 8px;
+  background: var(--range-loaded-color);
+  border-radius: 999px;
+  border: 0;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 0;
+  box-shadow: 0 0 0 2px rgb(var(--bg-page-rgb) / 0.9);
+}
+
+.chart-wrap:fullscreen {
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-wrap:fullscreen .small-chart,
+.chart-wrap:fullscreen .placeholder-chart {
+  flex: 1;
+  height: 100% !important;
+  min-height: 0;
+}
+</style>

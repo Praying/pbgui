@@ -42,6 +42,17 @@ const el = ref<HTMLElement | null>(null);
 
 const hasChart = computed(() => !!(props.spec && Array.isArray(props.spec.traces) && props.spec.traces.length));
 
+/* The former .small-chart / .placeholder-chart.small-chart pair — complete
+   independent sets. With both classes legacy resolved min-height to the
+   later .small-chart rule (420px), and 'placeholder-chart' stays as the
+   anchor resizeCharts' classList check (Playground.vue) and the fullscreen
+   rules (App.vue <style>) key off. */
+const chartClass = computed(() =>
+  hasChart.value
+    ? 'small-chart min-h-[420px]'
+    : 'placeholder-chart small-chart flex min-h-[420px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary'
+);
+
 function layout(): PlotlyLayout {
   const base = props.spec && props.spec.layout ? (props.spec.layout as PlotlyLayout) : {};
   return props.isPreview ? previewPlotLayout(base) : darkPlotLayout(base);
@@ -86,7 +97,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div :id="chartId" ref="el" :class="hasChart ? 'small-chart' : 'placeholder-chart small-chart'">
+  <div :id="chartId" ref="el" :class="chartClass">
     <span v-if="!hasChart">{{ t(placeholderKey) }}</span>
   </div>
 </template>
