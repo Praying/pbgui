@@ -58,6 +58,14 @@ import { createToast } from './lib/toast';
 
 const { t } = useI18n();
 
+/** Banner state → Tailwind utilities (the former v7-run.css .conn-* rules;
+    conn-ok was display:none in legacy). */
+function bannerClass(state: string): string {
+  if (state === 'ok') return 'hidden';
+  if (state === 'lost') return 'bg-danger text-[#f2f5fb]';
+  return 'bg-warning text-accent-contrast';
+}
+
 const adapter = currentRunAdapter(); // :574 (legacy RUN_VERSION injection)
 
 const toastEl = useTemplateRef<HTMLElement>('toastEl');
@@ -117,13 +125,13 @@ onBeforeUnmount(() => {
     </template>
 
     <!-- Connection banner (:508) -->
-    <div id="conn-banner" :class="'conn-' + store.banner.value">{{ t('v7run.connecting') }}</div>
+    <div id="conn-banner" class="px-4 py-2 text-center text-sm font-semibold transition-all duration-300" :class="bannerClass(store.banner.value)">{{ t('v7run.connecting') }}</div>
 
     <!-- Page body: filter/action toolbar + main content (:511). The filters
          and instance actions left the sidebar for a top strip; navigation
          lives in the workbench rail. -->
-    <div id="page-body">
-    <div class="workbench-page-content">
+    <div id="page-body" class="flex h-[calc(100dvh-52px)] flex-col overflow-hidden">
+    <div class="workbench-page-content min-w-0 flex-1 overflow-y-auto p-5 max-[760px]:p-2">
       <!-- Filters + instance actions: a top strip, not a sidebar. -->
       <div class="page-toolbar" role="toolbar">
         <span class="sb-label">{{ t('v7run.instances') }}&nbsp;<span class="sb-count" id="instance-count">{{ store.countText.value }}</span></span>
@@ -156,7 +164,7 @@ onBeforeUnmount(() => {
     </div><!-- /page-body -->
   </AppShell>
 
-  <div ref="toastEl" id="toast"></div>
+  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[9999] rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
   <div id="modal-root"></div>
 
   <Teleport to="#modal-root">
@@ -168,7 +176,7 @@ onBeforeUnmount(() => {
       :text="t('v7run.deleteInstanceWarning')"
       :cancel-text="t('common.cancel')"
       :confirm-text="t('common.delete')"
-      confirm-class="modal-btn-delete"
+      confirm-class="bg-danger text-[#f2f5fb] border-danger hover:opacity-85"
       :busy="store.deleteBusy.value"
       :busy-text="t('v7run.deleting')"
       @cancel="store.cancelDelete()"

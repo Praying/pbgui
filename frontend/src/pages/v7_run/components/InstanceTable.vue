@@ -78,6 +78,18 @@ function runningOn(row: RunInstance): string {
   return runOn;
 }
 
+/** Status → Tailwind utilities (the former v7-run.css .st-* tints). */
+function statusClass(status: string | null | undefined): string {
+  const st = String(status || 'disabled').replace(/[^a-z_]/g, '');
+  if (st === 'synced') return 'font-semibold text-success';
+  if (st === 'outdated') return 'font-semibold text-warning';
+  if (st === 'activate_needed') return 'text-warning';
+  if (st === 'stop_needed') return 'text-danger';
+  if (st === 'blocked' || st === 'conflicted' || st === 'tombstoned' || st === 'config_error') return 'font-semibold text-danger';
+  if (st === 'collecting') return 'italic text-secondary';
+  return 'text-secondary';
+}
+
 function orDash(value: unknown): string {
   return value != null && value !== '' ? String(value) : '\u2013';
 }
@@ -89,49 +101,48 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
 </script>
 
 <template>
-  <div class="tbl-wrap">
-    <table>
+  <div class="overflow-x-auto">
+    <table class="v7run-table w-full border-collapse text-base">
       <thead id="thead">
         <tr>
-          <th v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" @click="col.labelKey && emit('sort', col.key)">
+          <th class="sticky top-0 cursor-pointer select-none border-b-2 border-border-default bg-panel text-sm uppercase text-secondary hover:text-primary" v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" @click="col.labelKey && emit('sort', col.key)">
             <template v-if="col.labelKey">{{ t(col.labelKey) }}</template>
-            <span v-if="col.labelKey" class="sort-arrow">{{ arrow(col.key) }}</span>
+            <span v-if="col.labelKey" class="ml-0.5 text-[10px]">{{ arrow(col.key) }}</span>
           </th>
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr
+        <tr class="group cursor-pointer"
           v-for="row in rows"
           :key="row.name"
           :data-key="row.name"
-          :class="{ 'row-inactive': row.status === 'disabled' }"
+          :class="row.status === 'disabled' ? 'opacity-45' : ''"
           @dblclick="onRowDblClick(row, $event)"
         >
-          <td>{{ row.name }}</td>
-          <td>{{ orDash(row.user) }}</td>
-          <td v-if="isV8">{{ orDash(row.strategy) }}</td>
-          <td>{{ orDash(row.enabled_on) }}</td>
-          <td>
-            <span :class="'st-' + String(row.status || 'disabled').replace(/[^a-z_]/g, '')" :title="row.blocked_reason || undefined">
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.name }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.user) }}</td>
+          <td v-if="isV8" class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.strategy) }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.enabled_on) }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated"><span :class="statusClass(row.status)" :title="row.blocked_reason || undefined">
               {{ statusLabel(row) }}
             </span>
           </td>
-          <td>{{ row.version != null ? String(row.version) : '–' }}</td>
-          <td>{{ row.running_version != null ? String(row.running_version) : '–' }}</td>
-          <td>{{ orDash(row.twe) }}</td>
-          <td>{{ runningOn(row) }}</td>
-          <td>{{ orDash(row.desired_state) }}</td>
-          <td>{{ row.note || '' }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.version != null ? String(row.version) : '–' }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.running_version != null ? String(row.running_version) : '–' }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.twe) }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ runningOn(row) }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.desired_state) }}</td>
+          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.note || '' }}</td>
           <td>
             <template v-if="supportsForcedModes">
-              <button class="btn-panic" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')">P</button>
-              <button class="btn-graceful" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')">G</button>
-              <button class="btn-tp-only" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')">T</button>
+              <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-danger bg-danger p-0 text-sm font-bold text-[#f2f5fb] hover:opacity-85" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')">P</button>
+              <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-warning bg-warning p-0 text-sm font-bold text-accent-contrast hover:opacity-85" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')">G</button>
+              <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-success bg-success p-0 text-sm font-bold text-accent-contrast hover:opacity-85" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')">T</button>
             </template>
-            <button class="btn-edit" :data-edit="row.name" :title="t('v7run.edit')">&#x270E;</button>
-            <button class="btn-edit" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')">$</button>
-            <button v-if="supportsConversion" class="btn-v8" :data-convert-v8="row.name" :title="t('v7run.convertToV8')">V8</button>
-            <button class="btn-del" :data-delete="row.name" :title="t('common.delete')">&#x2716;</button>
+            <button class="h-6 w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel p-0 text-sm text-accent hover:bg-elevated" :data-edit="row.name" :title="t('v7run.edit')">&#x270E;</button>
+            <button class="h-6 w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel p-0 text-sm text-accent hover:bg-elevated" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')">$</button>
+            <button v-if="supportsConversion" class="ml-1 h-6 min-w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel px-1 text-xs text-accent hover:bg-elevated" :data-convert-v8="row.name" :title="t('v7run.convertToV8')">V8</button>
+            <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel p-0 text-sm text-danger hover:bg-elevated" :data-delete="row.name" :title="t('common.delete')">&#x2716;</button>
           </td>
         </tr>
         <tr v-if="!rows.length" id="instances-empty-row">

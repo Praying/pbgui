@@ -165,9 +165,9 @@ describe('forced-mode flow (:1030-1077)', () => {
   });
 
   it('FORCED_MODES matches the legacy modal table (:1031-1035)', () => {
-    expect(FORCED_MODES.panic!.cssClass).toBe('modal-btn-delete');
-    expect(FORCED_MODES.graceful_stop!.cssClass).toBe('modal-btn-graceful');
-    expect(FORCED_MODES.tp_only!.cssClass).toBe('modal-btn-tp-only');
+    expect(FORCED_MODES.panic!.cssClass).toContain('bg-danger');
+    expect(FORCED_MODES.graceful_stop!.cssClass).toContain('bg-warning');
+    expect(FORCED_MODES.tp_only!.cssClass).toContain('bg-success');
     expect(FORCED_MODES.panic!.value).toBe('panic');
   });
 });

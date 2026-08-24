@@ -75,34 +75,48 @@ onMounted(() => {
       />
     </template>
 
-  <div id="page-content">
-    <div class="toolbar">
-      <label for="sel-instance">{{ t('misc.balance.instanceLabel') }}</label>
-      <select id="sel-instance" :value="store.selectedInstance.value ? JSON.stringify(store.selectedInstance.value) : ''" @change="onInstanceChange">
+  <div id="page-content" class="h-[calc(100dvh-112px)] overflow-y-auto p-5">
+    <div class="toolbar flex flex-wrap items-center gap-3 border-b border-border-default pb-3 mb-5">
+      <label class="text-sm font-semibold text-secondary" for="sel-instance">{{ t('misc.balance.instanceLabel') }}</label>
+      <select id="sel-instance" class="h-8 cursor-pointer rounded-md border border-border-default bg-panel px-2 text-base text-primary min-w-[140px]" :value="store.selectedInstance.value ? JSON.stringify(store.selectedInstance.value) : ''" @change="onInstanceChange">
         <option value="">{{ t('misc.balance.loadFromInstance') }}</option>
         <option v-for="option in instanceOptions" :key="option.label" :value="option.value">{{ option.label }}</option>
       </select>
 
-      <label for="sel-exchange">{{ t('misc.balance.exchange') }}</label>
-      <select id="sel-exchange" v-model="store.exchange.value">
+      <label class="text-sm font-semibold text-secondary" for="sel-exchange">{{ t('misc.balance.exchange') }}</label>
+      <select id="sel-exchange" class="h-8 cursor-pointer rounded-md border border-border-default bg-panel px-2 text-base text-primary min-w-[140px]" v-model="store.exchange.value">
         <option v-for="exchange in EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
       </select>
 
-      <button id="btn-calc" :disabled="store.calculating.value" @click="store.calculate()">{{ t('misc.balance.calculate') }}</button>
+      <button id="btn-calc" class="h-8 cursor-pointer rounded-md border-none bg-accent px-5 text-base font-bold text-[#0b1526] transition-colors duration-150 hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50" :disabled="store.calculating.value" @click="store.calculate()">{{ t('misc.balance.calculate') }}</button>
       <span id="calc-status">
-        <template v-if="store.calculating.value"><span class="spinner"></span> {{ t('misc.balance.calculating') }}</template>
+        <template v-if="store.calculating.value"><span class="mr-1 inline-block h-4 w-4 animate-spin rounded-full border-2 border-border-default border-t-accent align-middle"></span> {{ t('misc.balance.calculating') }}</template>
       </span>
     </div>
 
-    <div class="main-grid">
+    <div class="grid grid-cols-[1fr_1fr] gap-5 max-[900px]:grid-cols-1">
       <div>
-        <textarea id="config-editor" spellcheck="false" v-model="store.configText.value"></textarea>
+        <textarea id="config-editor" class="w-full min-h-[420px] resize-y rounded-md border border-border-default bg-panel p-2 text-sm leading-normal text-primary focus:border-accent focus:outline-none font-[Fira_Code,Consolas,monospace] tab-4" spellcheck="false" v-model="store.configText.value"></textarea>
       </div>
 
-      <div class="results-panel" id="results-panel">
+      <div class="flex flex-col gap-3" id="results-panel">
         <ResultsPanel :results="store.results.value" :feedback="store.feedback.value" />
       </div>
     </div>
   </div>
   </AppShell>
 </template>
+
+<style scoped>
+/* Page-level AppShell overrides — ported from styles/balance-calc.css. */
+.data-page-shell :deep(.app-shell__main) {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.data-page-shell :deep(.app-shell__primary) {
+  min-height: 0;
+}
+</style>

@@ -21,13 +21,13 @@ defineEmits<{ cancel: []; confirm: [] }>();
 </script>
 
 <template>
-  <div class="modal-overlay" id="modal-overlay">
-    <div class="modal-box" role="dialog" aria-modal="true">
-      <h3>{{ title }}</h3>
-      <p class="warn">&#x26A0; {{ warn }}</p>
-      <p>{{ text }}</p>
-      <div class="modal-btns">
-        <button class="modal-btn-cancel" id="modal-cancel" @click="$emit('cancel')">{{ cancelText }}</button>
+  <div class="fixed inset-0 z-[10000] flex items-center justify-center bg-backdrop" id="modal-overlay">
+    <div class="min-w-[340px] max-w-[460px] rounded-lg border border-border-default bg-panel px-7 py-5 text-center" role="dialog" aria-modal="true">
+      <h3 class="mb-3 text-lg">{{ title }}</h3>
+      <p class="font-semibold text-warning">&#x26A0; {{ warn }}</p>
+      <p class="mb-5 text-base text-secondary">{{ text }}</p>
+      <div class="flex justify-center gap-2">
+        <button class="cursor-pointer rounded border border-border-default bg-elevated px-5 py-2 text-base font-semibold text-primary hover:bg-border-default" id="modal-cancel" @click="$emit('cancel')">{{ cancelText }}</button>
         <button :class="confirmClass" id="modal-confirm" :disabled="busy" @click="$emit('confirm')">
           {{ busy ? busyText : confirmText }}
         </button>
