@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onUnmounted, ref } from 'vue';
+import { PhPencilSimple } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 /**
  * Legacy #sidebar-list-wrap (dashboard_main.html buildList/renderList +
@@ -111,6 +113,7 @@ function onClick(event: MouseEvent): void {
 function onKeydown(event: KeyboardEvent): void {
   const target = event.target;
   if (!(target instanceof Element)) return;
+  if (target.closest('.sb-item-edit-icon')) return;
   const item = target.closest('.sb-item');
   if (!item) return;
   const name = item.getAttribute('data-name');
@@ -136,6 +139,8 @@ onUnmounted(() => {
   <div
     id="sidebar-list-wrap"
     ref="listWrap"
+    role="list"
+    :aria-label="t('dash.dashboards')"
     @click="onClick"
     @mousedown="onMousedown"
     @keydown="onKeydown"
@@ -146,15 +151,30 @@ onUnmounted(() => {
       <div
         v-for="name in names"
         :key="name"
-        class="sb-item"
-        :class="{ active: name === current, selected: selected.includes(name) }"
+        class="sb-item-row"
         :data-name="name"
-        tabindex="0"
-        role="option"
-        :aria-selected="selected.includes(name) ? 'true' : 'false'"
+        role="listitem"
       >
-        <span class="sb-item-name">{{ name }}</span>
-        <span v-if="name === current && !editMode" class="sb-item-edit-icon" :title="t('dash.edit')">✎</span>
+        <button
+          type="button"
+          class="sb-item"
+          :class="{ active: name === current, selected: selected.includes(name) }"
+          :data-name="name"
+          :aria-pressed="selected.includes(name) ? 'true' : 'false'"
+          :aria-current="name === current ? 'true' : undefined"
+        >
+          <span class="sb-item-mark" aria-hidden="true"></span>
+          <span class="sb-item-name">{{ name }}</span>
+        </button>
+        <button
+          v-if="name === current && !editMode"
+          type="button"
+          class="sb-item-edit-icon"
+          :title="t('dash.edit')"
+          :aria-label="t('dash.edit')"
+        >
+          <PbIcon :icon="PhPencilSimple" />
+        </button>
       </div>
     </template>
   </div>

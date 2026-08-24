@@ -31,10 +31,11 @@ describe('DeleteDialog', () => {
     expect(wrapper.find('#del-dash-dialog').isVisible()).toBe(false);
   });
 
-  it('renders the legacy dialog chrome with i18n labels', () => {
+  it('renders the redesigned dialog chrome with i18n labels', () => {
     const wrapper = mountDialog({ visible: true, names: ['X'] });
 
-    expect(wrapper.find('.dlg-title').text()).toBe('🗑 Delete Dashboard');
+    expect(wrapper.find('.dlg-title').text()).toBe('Delete Dashboard');
+    expect(wrapper.find('.dlg-icon--danger').exists()).toBe(true);
     expect(wrapper.find('#del-cancel').text()).toBe('Cancel');
     expect(wrapper.find('#del-ok').text()).toBe('Delete');
   });

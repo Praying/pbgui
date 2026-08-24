@@ -53,27 +53,28 @@ describe('DashboardList', () => {
     expect(item(wrapper, 'C').classes()).not.toContain('selected');
   });
 
-  it('sets aria-selected and role on items', () => {
+  it('exposes selection state on each dashboard button', () => {
     const wrapper = mountList({ selected: ['a'] });
 
     const first = item(wrapper, 'a');
-    expect(first.attributes('aria-selected')).toBe('true');
-    expect(first.attributes('role')).toBe('option');
-    expect(item(wrapper, 'B').attributes('aria-selected')).toBe('false');
+    expect(first.attributes('aria-pressed')).toBe('true');
+    expect(first.element.tagName).toBe('BUTTON');
+    expect(item(wrapper, 'B').attributes('aria-pressed')).toBe('false');
   });
 
   it('shows the edit icon only on the current dashboard outside edit mode', () => {
     const wrapper = mountList({ current: 'B' });
 
-    expect(item(wrapper, 'B').find('.sb-item-edit-icon').exists()).toBe(true);
-    expect(item(wrapper, 'B').find('.sb-item-edit-icon').attributes('title')).toBe('Edit');
-    expect(item(wrapper, 'a').find('.sb-item-edit-icon').exists()).toBe(false);
+    const editButton = wrapper.find('.sb-item-row[data-name="B"] .sb-item-edit-icon');
+    expect(editButton.exists()).toBe(true);
+    expect(editButton.attributes('title')).toBe('Edit');
+    expect(wrapper.find('.sb-item-row[data-name="a"] .sb-item-edit-icon').exists()).toBe(false);
   });
 
   it('hides the edit icon in edit mode', () => {
     const wrapper = mountList({ current: 'B', editMode: true });
 
-    expect(item(wrapper, 'B').find('.sb-item-edit-icon').exists()).toBe(false);
+    expect(wrapper.find('.sb-item-row[data-name="B"] .sb-item-edit-icon').exists()).toBe(false);
   });
 
   it('emits select when an item is clicked', async () => {
@@ -97,7 +98,7 @@ describe('DashboardList', () => {
   it('emits edit when the edit icon is clicked', async () => {
     const wrapper = mountList({ current: 'B' });
 
-    await item(wrapper, 'B').find('.sb-item-edit-icon').trigger('click');
+    await wrapper.find('.sb-item-row[data-name="B"] .sb-item-edit-icon').trigger('click');
 
     expect(wrapper.emitted('edit')).toHaveLength(1);
     expect(wrapper.emitted('select')).toBeUndefined();

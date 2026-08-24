@@ -1,5 +1,10 @@
 # Unreleased
 
+## Dashboard Manager — Workspace Redesign
+
+- Refined the Dashboard Manager into a clearer library-and-canvas workspace: the dashboard list now has stronger active, selected, hover, and keyboard-focus states; the command strip gives New Dashboard clear priority; and the empty/loading canvas uses a layout-matched skeleton treatment instead of a generic spinner.
+- Unified the new-dashboard and delete-confirmation dialogs with the shared graphite visual system, added explicit dialog semantics and labelled iframes, and polished the draggable templates window without changing dashboard APIs, selection behavior, or iframe messaging contracts.
+
 ## Frontend Tooling — pnpm Migration
 
 - Switched the frontend workspace (`frontend/`) from npm to pnpm: `package-lock.json` is replaced by `pnpm-lock.yaml`, and the toolchain is pinned via the `packageManager` field in `frontend/package.json`. `postcss` (used directly by the CSS-contract tests) is now an explicit devDependency instead of an implicit npm-flat transitive one.

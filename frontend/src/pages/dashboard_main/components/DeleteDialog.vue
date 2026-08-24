@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 /**
  * Legacy #del-dash-dialog (dashboard_main.html openDeleteDialog): a quoted
@@ -31,9 +33,12 @@ const deleteLabel = computed(() => `${t('common.delete')} `);
 </script>
 
 <template>
-  <div id="del-dash-dialog" v-show="visible">
+  <div id="del-dash-dialog" v-show="visible" role="dialog" aria-labelledby="delete-dash-title">
     <div class="dlg-box">
-      <div class="dlg-title">🗑 {{ t('dash.deleteDashboard') }}</div>
+      <div class="dlg-heading">
+        <span class="dlg-icon dlg-icon--danger" aria-hidden="true"><PbIcon :icon="PhTrash" /></span>
+        <div id="delete-dash-title" class="dlg-title">{{ t('dash.deleteDashboard') }}</div>
+      </div>
       <div id="del-confirm-text">
         <!-- the space after "Delete" lives inside the label span: Vue drops whitespace-only nodes between elements -->
         <span>{{ deleteLabel }}</span><span id="del-confirm-name">{{ confirmName }}</span><span>{{ t('dash.deleteConfirmSuffix') }}</span>
