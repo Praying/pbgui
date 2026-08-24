@@ -164,10 +164,18 @@ function sectionPhase(kind: 'dl' | 'build'): string {
   if (kind === 'build' && !sections.buildCoins.value.length) return 'no-coins';
   return 'ready';
 }
+
+/* Result-message kind → full utility set (the former .hlda-msg.success/
+   .error/.warning tints; keeps the kind test anchors). */
+function msgKindClass(kind: string): string {
+  if (kind === 'success') return 'success block bg-success/13 border border-success/33 text-success';
+  if (kind === 'error') return 'error block bg-danger/13 border border-danger/33 text-danger';
+  return 'warning block bg-warning/13 border border-warning/[33.3%] text-warning';
+}
 </script>
 
 <template>
-  <div ref="root" id="hlda-root" class="hlda-root" :class="{ 'show-only-section': !!showOnlySection }">
+  <div ref="root" id="hlda-root" class="hlda-root m-0 p-0 font-sans leading-[1.6] text-primary" :class="{ 'show-only-section': !!showOnlySection }">
     <SectionCard
       v-if="downloadVisible"
       id="download"
@@ -176,11 +184,11 @@ function sectionPhase(kind: 'dl' | 'build'): string {
       :active-jobs="dlMonitor.activeJobs.value"
       @toggle="saveSectionState('download', !sectionsOpen.download)"
     >
-      <div v-if="sectionPhase('dl') === 'loading'" style="color:var(--hlda-text3);font-size:13px;">{{ t('market.loading') }}</div>
-      <div v-else-if="sectionPhase('dl') === 'retrying'" class="hlda-empty">{{ initRetryLabel }}</div>
-      <div v-else-if="sectionPhase('dl') === 'failed'" class="hlda-msg error" style="display:block">{{ initFailedLabel }}</div>
-      <div v-else-if="sectionPhase('dl') === 'no-creds'" class="hlda-nocreds">{{ t('market.noAwsCreds', { settings: t('market.settingsL2book') }) }}</div>
-      <div v-else-if="sectionPhase('dl') === 'no-coins'" class="hlda-msg warning" style="display:block">{{ t('market.noDownloadableCoins') }}</div>
+      <div v-if="sectionPhase('dl') === 'loading'" class="text-sm text-muted">{{ t('market.loading') }}</div>
+      <div v-else-if="sectionPhase('dl') === 'retrying'" class="hlda-empty p-4 text-center text-sm text-muted">{{ initRetryLabel }}</div>
+      <div v-else-if="sectionPhase('dl') === 'failed'" class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" :class="msgKindClass('error')">{{ initFailedLabel }}</div>
+      <div v-else-if="sectionPhase('dl') === 'no-creds'" class="hlda-nocreds rounded-md border border-warning/[33.3%] bg-warning/13 px-3.5 py-2.5 text-sm text-warning">{{ t('market.noAwsCreds', { settings: t('market.settingsL2book') }) }}</div>
+      <div v-else-if="sectionPhase('dl') === 'no-coins'" class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" :class="msgKindClass('warning')">{{ t('market.noDownloadableCoins') }}</div>
       <template v-else>
         <CoinPickerGrid
           ref="dlGrid"
@@ -196,38 +204,38 @@ function sectionPhase(kind: 'dl' | 'build'): string {
           @apply-selection="sections.setDlSelected"
         >
           <template #label>
-            <span class="hlda-lbl">{{ t('market.coinsForDownload') }}</span>
-            <div class="hlda-hint">{{ t('market.dlSelectionHint') }}</div>
+            <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.coinsForDownload') }}</span>
+            <div class="hlda-hint mt-0.5 text-xs text-muted">{{ t('market.dlSelectionHint') }}</div>
           </template>
         </CoinPickerGrid>
-        <div class="hlda-dr">
-          <div class="hlda-fs">
-            <span class="hlda-lbl">{{ t('market.startDate') }}</span>
-            <input type="date" v-model="sections.dlStartDate.value">
-            <div class="hlda-hint">{{ t('market.archiveOldest', { date: dlOldest }) }}</div>
+        <div class="hlda-dr flex gap-3">
+          <div class="hlda-fs mb-3.5 flex-1">
+            <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.startDate') }}</span>
+            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.dlStartDate.value">
+            <div class="hlda-hint mt-0.5 text-xs text-muted">{{ t('market.archiveOldest', { date: dlOldest }) }}</div>
           </div>
-          <div class="hlda-fs">
-            <span class="hlda-lbl">{{ t('market.endDate') }}</span>
-            <input type="date" v-model="sections.dlEndDate.value">
-            <div class="hlda-hint">{{ t('market.archiveNewest', { date: dlNewest }) }}</div>
-          </div>
-        </div>
-        <div class="hlda-cb">
-          <input type="checkbox" id="dl-only" v-model="sections.dlOnlyMissing.value">
-          <label for="dl-only">{{ t('market.onlyMissing1mSrc') }}</label>
-        </div>
-        <div class="hlda-help">{{ t('market.dlOnlyHelp') }}</div>
-        <div class="hlda-ar">
-          <button class="hlda-btn" :disabled="sections.dlBusy.value" @click="sections.submitDownload()">{{ t('market.download') }}</button>
-          <div class="hlda-lo" :class="{ active: sections.dlBusy.value }">
-            <div class="hlda-spin"></div><span>{{ t('market.preflightCheck') }}</span>
+          <div class="hlda-fs mb-3.5 flex-1">
+            <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.endDate') }}</span>
+            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.dlEndDate.value">
+            <div class="hlda-hint mt-0.5 text-xs text-muted">{{ t('market.archiveNewest', { date: dlNewest }) }}</div>
           </div>
         </div>
-        <div class="hlda-msg" v-if="sections.dlMessage.value" :class="sections.dlMessage.value.kind" style="display:block">
+        <div class="hlda-cb mb-1.5 flex items-center gap-2">
+          <input type="checkbox" id="dl-only" class="h-4 w-4" v-model="sections.dlOnlyMissing.value">
+          <label for="dl-only" class="inline mb-0 cursor-pointer text-sm text-primary">{{ t('market.onlyMissing1mSrc') }}</label>
+        </div>
+        <div class="hlda-help mb-2.5 ml-6 mt-0.5 text-xs text-muted">{{ t('market.dlOnlyHelp') }}</div>
+        <div class="hlda-ar flex items-center gap-3.5">
+          <button class="hlda-btn cursor-pointer rounded-md border-0 bg-accent px-7 py-[9px] text-base font-medium text-white transition-[background] duration-200 hover:bg-accent-soft disabled:cursor-not-allowed disabled:bg-secondary disabled:opacity-70" :disabled="sections.dlBusy.value" @click="sections.submitDownload()">{{ t('market.download') }}</button>
+          <div class="hlda-lo mt-2 items-center gap-2 text-sm text-muted" :class="sections.dlBusy.value ? 'active inline-flex' : 'hidden'">
+            <div class="hlda-spin h-4 w-4 animate-spin rounded-full border-2 border-border-default border-t-accent"></div><span>{{ t('market.preflightCheck') }}</span>
+          </div>
+        </div>
+        <div class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" v-if="sections.dlMessage.value" :class="msgKindClass(sections.dlMessage.value.kind)">
           <template v-if="sections.dlMessage.value.parts">
             {{ sections.dlMessage.value.parts.prefix }}<strong>{{ sections.dlMessage.value.parts.jobId }}</strong>{{ sections.dlMessage.value.parts.suffix }}
             <br v-if="sections.dlMessage.value.parts.missingCoins.length">
-            <small v-if="sections.dlMessage.value.parts.missingCoins.length" style="color:var(--hlda-warn)">{{
+            <small v-if="sections.dlMessage.value.parts.missingCoins.length" class="text-warning">{{
               t('market.skippedNotInArchive', { coins: sections.dlMessage.value.parts.missingCoins.join(', ') })
             }}</small>
           </template>
@@ -245,10 +253,10 @@ function sectionPhase(kind: 'dl' | 'build'): string {
       :active-jobs="buildMonitor.activeJobs.value"
       @toggle="saveSectionState('build', !sectionsOpen.build)"
     >
-      <div v-if="sectionPhase('build') === 'loading'" style="color:var(--hlda-text3);font-size:13px;">{{ t('market.loading') }}</div>
-      <div v-else-if="sectionPhase('build') === 'retrying'" class="hlda-empty">{{ initRetryLabel }}</div>
-      <div v-else-if="sectionPhase('build') === 'failed'" class="hlda-msg error" style="display:block">{{ initFailedLabel }}</div>
-      <div v-else-if="sectionPhase('build') === 'no-coins'" class="hlda-msg warning" style="display:block">{{ t('market.noEligibleCoins') }}</div>
+      <div v-if="sectionPhase('build') === 'loading'" class="text-sm text-muted">{{ t('market.loading') }}</div>
+      <div v-else-if="sectionPhase('build') === 'retrying'" class="hlda-empty p-4 text-center text-sm text-muted">{{ initRetryLabel }}</div>
+      <div v-else-if="sectionPhase('build') === 'failed'" class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" :class="msgKindClass('error')">{{ initFailedLabel }}</div>
+      <div v-else-if="sectionPhase('build') === 'no-coins'" class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" :class="msgKindClass('warning')">{{ t('market.noEligibleCoins') }}</div>
       <template v-else>
         <CoinPickerGrid
           ref="buildGrid"
@@ -270,32 +278,32 @@ function sectionPhase(kind: 'dl' | 'build'): string {
           @apply-selection="sections.setBuildSelected"
         >
           <template #label>
-            <span class="hlda-lbl">{{ t('market.coinsForBuild') }}</span>
-            <div class="hlda-hint">{{ t('market.buildSelectionHint') }}</div>
+            <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.coinsForBuild') }}</span>
+            <div class="hlda-hint mt-0.5 text-xs text-muted">{{ t('market.buildSelectionHint') }}</div>
           </template>
         </CoinPickerGrid>
-        <div class="hlda-br">
-          <div class="hlda-fs">
-            <span class="hlda-lbl">{{ t('market.startDateOptional') }}</span>
-            <input type="date" v-model="sections.buildStartDate.value" @change="sections.ensureBuildDateOrder('start')">
+        <div class="hlda-br flex flex-wrap items-end gap-3">
+          <div class="hlda-fs mb-3.5 min-w-[140px] flex-1">
+            <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.startDateOptional') }}</span>
+            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.buildStartDate.value" @change="sections.ensureBuildDateOrder('start')">
           </div>
-          <div class="hlda-fs">
-            <span class="hlda-lbl">{{ t('market.endDateOptional') }}</span>
-            <input type="date" v-model="sections.buildEndDate.value" @change="sections.ensureBuildDateOrder('end')">
-          </div>
-        </div>
-        <div class="hlda-cb">
-          <input type="checkbox" id="build-refetch" v-model="sections.buildRefetch.value">
-          <label for="build-refetch">{{ t('market.refetchTradfi') }}</label>
-        </div>
-        <div class="hlda-help">{{ t('market.refetchHelp') }}</div>
-        <div class="hlda-ar">
-          <button class="hlda-btn" :disabled="sections.buildBusy.value" @click="sections.submitBuild()">{{ t('market.buildBest1m') }}</button>
-          <div class="hlda-lo" :class="{ active: sections.buildBusy.value }">
-            <div class="hlda-spin"></div><span>{{ t('market.queuing') }}</span>
+          <div class="hlda-fs mb-3.5 min-w-[140px] flex-1">
+            <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.endDateOptional') }}</span>
+            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.buildEndDate.value" @change="sections.ensureBuildDateOrder('end')">
           </div>
         </div>
-        <div class="hlda-msg" v-if="sections.buildMessage.value" :class="sections.buildMessage.value.kind" style="display:block">
+        <div class="hlda-cb mb-1.5 flex items-center gap-2">
+          <input type="checkbox" id="build-refetch" class="h-4 w-4" v-model="sections.buildRefetch.value">
+          <label for="build-refetch" class="inline mb-0 cursor-pointer text-sm text-primary">{{ t('market.refetchTradfi') }}</label>
+        </div>
+        <div class="hlda-help mb-2.5 ml-6 mt-0.5 text-xs text-muted">{{ t('market.refetchHelp') }}</div>
+        <div class="hlda-ar flex items-center gap-3.5">
+          <button class="hlda-btn cursor-pointer rounded-md border-0 bg-accent px-7 py-[9px] text-base font-medium text-white transition-[background] duration-200 hover:bg-accent-soft disabled:cursor-not-allowed disabled:bg-secondary disabled:opacity-70" :disabled="sections.buildBusy.value" @click="sections.submitBuild()">{{ t('market.buildBest1m') }}</button>
+          <div class="hlda-lo mt-2 items-center gap-2 text-sm text-muted" :class="sections.buildBusy.value ? 'active inline-flex' : 'hidden'">
+            <div class="hlda-spin h-4 w-4 animate-spin rounded-full border-2 border-border-default border-t-accent"></div><span>{{ t('market.queuing') }}</span>
+          </div>
+        </div>
+        <div class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" v-if="sections.buildMessage.value" :class="msgKindClass(sections.buildMessage.value.kind)">
           <template v-if="sections.buildMessage.value.parts">
             {{ sections.buildMessage.value.parts.prefix }}<strong>{{ sections.buildMessage.value.parts.jobId }}</strong>{{ sections.buildMessage.value.parts.suffix }}
           </template>
@@ -308,3 +316,53 @@ function sectionPhase(kind: 'dl' | 'build'): string {
     <JobModal :modal="modalState" @close="closeModal()" />
   </div>
 </template>
+
+<style>
+/* Root rules ported from styles/hlda.css — html/body carry no scope
+   attribute, so this block must stay unscoped. The .hlda-embedded class is
+   added by index.html when the page runs inside the market-data iframe. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow-x: hidden;
+}
+
+html.hlda-embedded,
+body.hlda-embedded {
+  overflow: hidden;
+}
+</style>
+
+<style scoped>
+/* Embedded single-section mode — ported from .hlda-root.show-only-section in
+   styles/hlda.css. A root-class toggle restyling descendants cannot be
+   expressed as utilities, and these unlayered rules also outrank the utility
+   layer, so the utilities below stay fully overridden in this mode. */
+.hlda-root.show-only-section :deep(.hlda-section) {
+  border: 0;
+  border-radius: 0;
+  margin-bottom: 0;
+  overflow: visible;
+}
+
+.hlda-root.show-only-section :deep(.hlda-sh) {
+  display: none;
+}
+
+.hlda-root.show-only-section :deep(.hlda-sb) {
+  display: block;
+  padding: 0;
+}
+
+.hlda-root.show-only-section :deep(.hlda-jm) {
+  margin-top: 20px;
+}
+
+/* Native date-picker icon tint — pseudo-element, not expressible as a
+   utility. */
+input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
+</style>

@@ -63,16 +63,32 @@ function onGridKeydown(event: KeyboardEvent): void {
    ready), so the engine installs from the component's own lifecycle. */
 onMounted(() => drag.install());
 onBeforeUnmount(() => drag.uninstall());
+
+/* Toggle-button state → full utility set (the former .hlda-mini-btn base +
+   .active tint). The bg/border/text colours live in the branches so the sets
+   never fight a static class — the legacy .active rule also outranked
+   :hover, which the branch split keeps true. */
+function miniBtnClass(active: boolean): string {
+  return active
+    ? 'active border-accent/70 bg-accent/16 text-accent'
+    : 'border-border-default bg-border-default text-secondary hover:bg-secondary hover:text-primary';
+}
+
+/* Coin-row selection → full utility set (the former .hlda-coin-row.selected
+   tint; keeps the `selected` test anchor). */
+function coinRowClass(selected: boolean): string {
+  return selected ? 'selected border-accent/24 bg-accent/12' : 'border-transparent hover:bg-accent/8';
+}
 </script>
 
 <template>
-  <div class="hlda-fs">
+  <div class="hlda-fs mb-3.5">
     <slot name="label"></slot>
-    <div class="hlda-picker-toolbar">
-      <div class="hlda-picker-filter-wrap">
+    <div class="hlda-picker-toolbar mt-2.5 flex flex-wrap items-center gap-2">
+      <div class="hlda-picker-filter-wrap min-w-[220px] flex-[1_1_280px]">
         <input
           type="text"
-          class="hlda-filter-input"
+          class="hlda-filter-input h-[38px] w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary"
           :placeholder="t('market.filterEnabledCoinList')"
           :value="filter"
           @input="emit('set-filter', ($event.target as HTMLInputElement).value)"
@@ -81,8 +97,8 @@ onBeforeUnmount(() => drag.uninstall());
       <button
         v-if="showTradfiToggle"
         type="button"
-        class="hlda-mini-btn pbgui-action"
-        :class="{ active: tradfiOnly }"
+        class="hlda-mini-btn pbgui-action h-[38px] cursor-pointer rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        :class="miniBtnClass(!!tradfiOnly)"
         :id="ns + '-tradfi-only'"
         :aria-pressed="tradfiOnly ? 'true' : 'false'"
         @click="emit('toggle-tradfi')"
@@ -90,31 +106,35 @@ onBeforeUnmount(() => drag.uninstall());
       <button
         v-if="showNoLocalToggle"
         type="button"
-        class="hlda-mini-btn pbgui-action"
-        :class="{ active: noLocalData }"
+        class="hlda-mini-btn pbgui-action h-[38px] cursor-pointer rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        :class="miniBtnClass(!!noLocalData)"
         :id="ns + '-no-local-data'"
         :aria-pressed="noLocalData ? 'true' : 'false'"
         @click="emit('toggle-no-local')"
       >{{ t('market.noDownloadedHistory') }}</button>
-      <button type="button" class="hlda-mini-btn pbgui-action" :id="ns + '-select-visible'" :disabled="visibleCount === 0" @click="emit('select-visible')">{{ t('market.selectVisible') }}</button>
-      <button type="button" class="hlda-mini-btn pbgui-action" :id="ns + '-clear-selection'" :disabled="selected.size === 0" @click="emit('clear-selection')">{{ t('market.clearAll') }}</button>
-      <span class="hlda-picker-meta">{{ t('market.selectedTotal', { selected: selected.size, total: totalCoins }) }}</span>
-      <span class="hlda-picker-meta">{{ t('market.visibleCount', { visible: visibleCount }) }}</span>
+      <button type="button" class="hlda-mini-btn pbgui-action h-[38px] cursor-pointer rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50" :class="miniBtnClass(false)" :id="ns + '-select-visible'" :disabled="visibleCount === 0" @click="emit('select-visible')">{{ t('market.selectVisible') }}</button>
+      <button type="button" class="hlda-mini-btn pbgui-action h-[38px] cursor-pointer rounded-md border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50" :class="miniBtnClass(false)" :id="ns + '-clear-selection'" :disabled="selected.size === 0" @click="emit('clear-selection')">{{ t('market.clearAll') }}</button>
+      <span class="hlda-picker-meta whitespace-nowrap text-xs text-muted">{{ t('market.selectedTotal', { selected: selected.size, total: totalCoins }) }}</span>
+      <span class="hlda-picker-meta whitespace-nowrap text-xs text-muted">{{ t('market.visibleCount', { visible: visibleCount }) }}</span>
     </div>
-    <div class="hlda-coin-grid" :id="'opts-' + ns" @keydown="onGridKeydown">
+    <div
+      class="hlda-coin-grid content-start mt-3 grid grid-cols-8 gap-1 border-t border-elevated pt-3 max-[1500px]:grid-cols-6 max-[1180px]:grid-cols-4 max-[760px]:grid-cols-2"
+      :id="'opts-' + ns"
+      @keydown="onGridKeydown"
+    >
       <button
         v-for="coin in renderedCoins"
         :key="coin"
-        class="hlda-coin-row hlda-coin-btn"
-        :class="{ selected: selected.has(coin) }"
+        class="hlda-coin-row hlda-coin-btn flex min-h-[34px] min-w-0 w-full cursor-pointer select-none items-center justify-start gap-2 rounded-lg border px-2 text-left text-primary focus-visible:outline-1 focus-visible:outline-accent/42 focus-visible:outline-offset-1"
+        :class="coinRowClass(selected.has(coin))"
         type="button"
         :data-coin-row="coin"
         :aria-pressed="selected.has(coin) ? 'true' : 'false'"
         @mousedown="drag.handleRowMouseDown($event, coin)"
       >
-        <span class="hlda-coin-name">{{ coin }}</span>
+        <span class="hlda-coin-name truncate min-w-0 text-sm">{{ coin }}</span>
       </button>
-      <div v-if="renderedCoins.length === 0" class="hlda-coin-empty">{{ t('market.noCoinsMatch') }}</div>
+      <div v-if="renderedCoins.length === 0" class="hlda-coin-empty col-span-full p-3 text-sm text-muted">{{ t('market.noCoinsMatch') }}</div>
     </div>
   </div>
 </template>

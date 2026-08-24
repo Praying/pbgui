@@ -81,7 +81,13 @@
   --tracking-label: 0.06em;
 
   /* ── Spacing ────────────────────────────────────────────────── */
-  /* Named spacing tokens alongside the default numeric scale.
+  /* The numeric scale is pinned to 4px per unit (p-3 = 12px, gap-2.25 =
+     9px). Tailwind's default --spacing is 0.25rem, and this project's base
+     layer sets html { font-size: 14px }, which would silently render the
+     scale at 3.5px/unit — 12.5% tighter than every ported page expects. */
+  --spacing: 4px;
+
+  /* Named spacing tokens alongside the numeric scale.
      NB: xl (16px) < lg (20px) is not monotonic — preserved verbatim
      from the pre-Tailwind tokens.css to keep legacy look intact. */
   --spacing-xs: 4px;

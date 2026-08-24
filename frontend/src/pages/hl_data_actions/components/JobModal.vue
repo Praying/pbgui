@@ -96,53 +96,65 @@ const scopeRows = computed<DetailRow[]>(() =>
     },
   ])
 );
+
+/* Modal body mode → full utility set (the former .hlda-modal-body base +
+   .is-details overrides). The font/size/whitespace/colour groups differ per
+   mode, so each branch carries its own complete set. */
+function bodyClass(kind: string): string {
+  return kind === 'details'
+    ? 'is-details grid gap-3 bg-page font-sans text-base whitespace-normal text-primary'
+    : "font-[Fira_Code,Consolas,monospace] text-xs whitespace-pre-wrap text-secondary";
+}
 </script>
 
 <template>
-  <div class="hlda-modal" :class="{ active: modal.active }">
-    <div class="hlda-modal-box">
-      <div class="hlda-modal-hd">
-        <h3>{{ modal.title || t('market.jobLog') }}</h3>
-        <button class="hlda-modal-close" @click="$emit('close')">✕</button>
+  <div
+    class="hlda-modal fixed inset-0 z-[10000] items-center justify-center overflow-y-auto bg-backdrop px-5 pt-[calc(var(--hlda-modal-visible-top-offset,0px)_+_20px)] pb-[calc(var(--hlda-modal-visible-bottom-offset,0px)_+_20px)]"
+    :class="modal.active ? 'active flex' : 'hidden'"
+  >
+    <div class="hlda-modal-box flex max-h-[calc(var(--hlda-modal-visible-height,100dvh)-40px)] w-[min(800px,calc(100vw-40px))] max-w-[800px] flex-col overflow-hidden rounded-lg border border-border-default bg-page">
+      <div class="hlda-modal-hd flex items-center justify-between border-b border-elevated px-4 py-3">
+        <h3 class="text-md font-semibold">{{ modal.title || t('market.jobLog') }}</h3>
+        <button class="hlda-modal-close cursor-pointer border-0 bg-transparent px-1 py-0 text-xl text-muted hover:text-primary" @click="$emit('close')">✕</button>
       </div>
-      <div class="hlda-modal-body" :class="{ 'is-details': modal.kind === 'details' }">
+      <div class="hlda-modal-body flex-1 overflow-y-auto px-4 py-3 leading-[1.5]" :class="bodyClass(modal.kind)">
         <template v-if="modal.kind === 'details' && job">
-          <div class="hlda-detail-section">
-            <h4>{{ t('market.summary') }}</h4>
-            <div class="hlda-detail-grid">
+          <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
+            <h4 class="m-0 text-md text-primary">{{ t('market.summary') }}</h4>
+            <div class="hlda-detail-grid grid items-start gap-x-2 gap-y-1 text-sm grid-cols-[minmax(120px,max-content)_1fr]">
               <template v-for="row in summaryRows" :key="row.label">
-                <div class="hlda-detail-key">{{ row.label }}</div>
-                <div class="hlda-detail-value">{{ row.value }}</div>
+                <div class="hlda-detail-key font-semibold text-muted">{{ row.label }}</div>
+                <div class="hlda-detail-value min-w-0 break-words text-secondary">{{ row.value }}</div>
               </template>
             </div>
           </div>
-          <div class="hlda-detail-section">
-            <h4>{{ t('market.scope') }}</h4>
-            <div class="hlda-detail-grid">
+          <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
+            <h4 class="m-0 text-md text-primary">{{ t('market.scope') }}</h4>
+            <div class="hlda-detail-grid grid items-start gap-x-2 gap-y-1 text-sm grid-cols-[minmax(120px,max-content)_1fr]">
               <template v-for="row in scopeRows" :key="row.label">
-                <div class="hlda-detail-key">{{ row.label }}</div>
-                <div class="hlda-detail-value">{{ row.value }}</div>
+                <div class="hlda-detail-key font-semibold text-muted">{{ row.label }}</div>
+                <div class="hlda-detail-value min-w-0 break-words text-secondary">{{ row.value }}</div>
               </template>
             </div>
           </div>
-          <div class="hlda-detail-section">
-            <h4>{{ t('market.payload') }}</h4>
-            <pre v-if="jsonBlock(payload)" class="hlda-json">{{ jsonBlock(payload) }}</pre>
-            <div v-else class="hlda-detail-empty">{{ t('market.noData') }}</div>
+          <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
+            <h4 class="m-0 text-md text-primary">{{ t('market.payload') }}</h4>
+            <pre v-if="jsonBlock(payload)" class="hlda-json m-0 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-secondary/14 bg-page p-3 text-sm leading-[1.5] text-secondary font-[Fira_Code,Consolas,monospace]">{{ jsonBlock(payload) }}</pre>
+            <div v-else class="hlda-detail-empty text-sm text-muted">{{ t('market.noData') }}</div>
           </div>
-          <div class="hlda-detail-section">
-            <h4>{{ t('market.progress') }}</h4>
-            <pre v-if="jsonBlock(progress)" class="hlda-json">{{ jsonBlock(progress) }}</pre>
-            <div v-else class="hlda-detail-empty">{{ t('market.noData') }}</div>
+          <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
+            <h4 class="m-0 text-md text-primary">{{ t('market.progress') }}</h4>
+            <pre v-if="jsonBlock(progress)" class="hlda-json m-0 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-secondary/14 bg-page p-3 text-sm leading-[1.5] text-secondary font-[Fira_Code,Consolas,monospace]">{{ jsonBlock(progress) }}</pre>
+            <div v-else class="hlda-detail-empty text-sm text-muted">{{ t('market.noData') }}</div>
           </div>
-          <div class="hlda-detail-section">
-            <h4>{{ t('market.lastResult') }}</h4>
-            <pre v-if="jsonBlock(lastResult)" class="hlda-json">{{ jsonBlock(lastResult) }}</pre>
-            <div v-else class="hlda-detail-empty">{{ t('market.noData') }}</div>
+          <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
+            <h4 class="m-0 text-md text-primary">{{ t('market.lastResult') }}</h4>
+            <pre v-if="jsonBlock(lastResult)" class="hlda-json m-0 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-secondary/14 bg-page p-3 text-sm leading-[1.5] text-secondary font-[Fira_Code,Consolas,monospace]">{{ jsonBlock(lastResult) }}</pre>
+            <div v-else class="hlda-detail-empty text-sm text-muted">{{ t('market.noData') }}</div>
           </div>
         </template>
         <template v-else-if="modal.kind === 'details'">
-          <div class="hlda-detail-empty">{{ t('market.loading') }}</div>
+          <div class="hlda-detail-empty text-sm text-muted">{{ t('market.loading') }}</div>
         </template>
         <template v-else>{{ modal.bodyText }}</template>
       </div>
