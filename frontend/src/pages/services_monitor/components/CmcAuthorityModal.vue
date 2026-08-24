@@ -118,8 +118,6 @@ function submit(): void {
 .form-field { display: flex; flex-direction: column; gap: 3px; }
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .form-hint { font-size: var(--fs-xs); color: var(--text-disabled); }
-.form-select { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px; padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none; cursor: pointer; }
-.form-select:focus { border-color: var(--border-strong); }
 .form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
 .form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
 .form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }

@@ -79,11 +79,6 @@ function toggle(option: string): void {
 
 <!-- Styles ported from frontend/services_monitor.html (filter input + tag wrap). -->
 <style scoped>
-.form-input {
-  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px;
-  padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
-}
-.form-input:focus { border-color: var(--border-strong); }
 .multiselect-filter { margin-bottom: 0.35rem; width: 220px; }
 .multiselect-wrap { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: 5px; padding: 0.3rem; min-height: 36px; max-height: 160px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; }
 .multiselect-empty { color: var(--text-disabled); font-size: var(--fs-xs); }

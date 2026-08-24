@@ -280,14 +280,7 @@ defineExpose({ load });
 .log-level-row { margin-bottom: 1rem; }
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .label-hint { color: var(--text-disabled); font-weight: 400; }
-.form-input {
-  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px;
-  padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
-}
-.form-input:focus { border-color: var(--border-strong); }
 .form-input.narrow { width: 90px; }
-.form-select { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px; padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none; cursor: pointer; }
-.form-select:focus { border-color: var(--border-strong); }
 .ex-pauses { margin-top: 1rem; border: 1px solid var(--border-subtle); border-radius: 6px; overflow: hidden; }
 .ex-pauses summary { padding: 0.5rem 0.75rem; cursor: pointer; background: var(--surface-workspace); color: var(--text-secondary); font-size: var(--fs-sm); font-weight: 600; user-select: none; }
 .ex-pauses-hint { padding: 0.6rem 0.9rem 0.4rem; font-size: var(--fs-xs); color: var(--text-disabled); border-bottom: 1px solid var(--border-subtle); }

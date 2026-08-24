@@ -1,5 +1,7 @@
 <script setup lang="ts">
-/** Numeric form-group primitive — the legacy <div class="form-group"> + input number (:583). */
+import { Input } from '@/shared/components/ui/input';
+
+/** Numeric form-group primitive — the legacy <div class="form-group"> + input number (:583), on the shared Input chrome. */
 const model = defineModel<string>({ required: true });
 withDefaults(
   defineProps<{
@@ -19,7 +21,7 @@ withDefaults(
 
 <template>
   <div class="form-group">
-    <label><span v-if="tip" :data-tip="tip">{{ label }}</span><template v-else>{{ label }}</template></label>
-    <input :id="id" v-model="model" type="number" :min="min" :max="max" :step="step" :placeholder="placeholder" :readonly="readonly || undefined" />
+    <label :for="id"><span v-if="tip" :data-tip="tip">{{ label }}</span><template v-else>{{ label }}</template></label>
+    <Input :id="id" v-model="model" type="number" :min="min" :max="max" :step="step" :placeholder="placeholder" :readonly="readonly || undefined" />
   </div>
 </template>

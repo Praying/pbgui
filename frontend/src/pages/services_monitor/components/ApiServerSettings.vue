@@ -271,11 +271,6 @@ defineExpose({ load });
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .label-hint { color: var(--text-disabled); font-weight: 400; }
 .form-hint { font-size: var(--fs-xs); color: var(--text-disabled); }
-.form-input {
-  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px;
-  padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
-}
-.form-input:focus { border-color: var(--border-strong); }
 .form-input.medium { width: 140px; }
 .form-input.narrow { width: 90px; }
 .auto-restart-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }

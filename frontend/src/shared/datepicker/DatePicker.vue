@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { PhCalendarBlank } from '@phosphor-icons/vue';
 
 /**
  * DatePicker — the Vue port of the custom __dp popup calendar
- * (v7_backtest.html:4090-4333): a text input with an overlaid 📅 button,
- * a month grid (Monday-first), prev/next month navigation, month/year
- * dropdowns, Today/Close footer and paired-field min/max bounds
+ * (v7_backtest.html:4090-4333): a text input with an overlaid calendar
+ * button, a month grid (Monday-first), prev/next month navigation, month/
+ * year dropdowns, Today/Close footer and paired-field min/max bounds
  * (_range :4146-4166). Shared by the backtest config editor and the
  * suite scenario editor.
+ *
+ * Styling follows the ui/ component layer: the popup is the elevated
+ * popover surface (bg-elevated + tinted shadow), the selected day uses
+ * the solid accent fill, hover uses the accent tint — same language as
+ * SelectContent/SelectItem.
  */
 
 const model = defineModel<string>({ required: true });
@@ -173,63 +179,83 @@ const canToday = computed(() => {
 </script>
 
 <template>
-  <div class="dp-field" style="position: relative">
-    <input v-model="model" type="text" class="form-input" style="width: 100%; box-sizing: border-box; padding-right: 26px" :placeholder="placeholder" />
+  <div class="dp-field relative">
+    <input v-model="model" type="text" class="form-input w-full pr-6.5" :placeholder="placeholder" />
     <button
       type="button"
       data-dp
       title="Open calendar"
-      style="position: absolute; right: 2px; top: 50%; transform: translateY(-50%); background: transparent; border: none; padding: 0 3px; font-size: var(--fs-sm); line-height: 1; cursor: pointer"
+      class="absolute top-1/2 right-0.5 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent p-0 text-secondary transition-colors duration-[120ms] ease-standard hover:text-accent-soft"
       @click="show"
     >
-      📅
+      <PhCalendarBlank class="size-4" aria-hidden="true" />
     </button>
 
-    <div v-if="open" class="dp-popup" data-test="dp-popup" style="position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; box-shadow: 0 6px 24px rgba(5, 8, 14, 0.7); user-select: none; min-width: 230px">
-      <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px">
-        <button type="button" data-test="dp-prev" :disabled="!canPrev" @click="shiftMonth(-1)">‹</button>
-        <div style="position: relative; flex: 1">
-          <button type="button" style="width: 100%" @click="menu = menu === 'month' ? '' : 'month'">{{ MONTHS[month] }} ▾</button>
-          <div v-if="menu === 'month'" class="dp-dd" style="left: 0; min-width: 140px">
+    <div
+      v-if="open"
+      class="dp-popup absolute top-[calc(100%+4px)] left-0 z-[var(--z-dropdown)] min-w-[230px] rounded-lg border border-border-default bg-elevated px-3 py-2.5 text-primary shadow-elevated select-none"
+      data-test="dp-popup"
+    >
+      <div class="mb-2 flex items-center gap-1">
+        <button type="button" data-test="dp-prev" class="dp-nav" :disabled="!canPrev" @click="shiftMonth(-1)">‹</button>
+        <div class="relative flex-1">
+          <button type="button" class="dp-nav w-full" @click="menu = menu === 'month' ? '' : 'month'">{{ MONTHS[month] }} ▾</button>
+          <div v-if="menu === 'month'" class="dp-dd left-0 min-w-[140px]">
             <button v-for="(name, m) in MONTHS" :key="name" type="button" class="dp-dd-item" :class="{ selected: m === month }" :disabled="!monthHasSelectableDays(year, m)" @click="setMonth(m)">{{ name }}</button>
           </div>
         </div>
-        <div style="position: relative; width: 72px">
-          <button type="button" style="width: 100%" @click="menu = menu === 'year' ? '' : 'year'">{{ year }} ▾</button>
-          <div v-if="menu === 'year'" class="dp-dd" style="right: 0; left: auto; min-width: 72px">
+        <div class="relative w-18">
+          <button type="button" class="dp-nav w-full" @click="menu = menu === 'year' ? '' : 'year'">{{ year }} ▾</button>
+          <div v-if="menu === 'year'" class="dp-dd right-0 left-auto min-w-[72px]">
             <button v-for="y in yearOptions" :key="y" type="button" class="dp-dd-item" :class="{ selected: y === year }" @click="setYear(y)">{{ y }}</button>
           </div>
         </div>
-        <button type="button" data-test="dp-next" :disabled="!canNext" @click="shiftMonth(1)">›</button>
+        <button type="button" data-test="dp-next" class="dp-nav" :disabled="!canNext" @click="shiftMonth(1)">›</button>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(7, 30px); gap: 2px; text-align: center">
-        <div v-for="d in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="d" style="color: var(--text-dim); font-size: var(--fs-xs); padding-bottom: 4px">{{ d }}</div>
+      <div class="grid grid-cols-7 gap-0.5 text-center">
+        <div v-for="d in ['M', 'T', 'W', 'T', 'F', 'S', 'S']" :key="d" class="grid h-7.5 place-items-center pb-1 text-xs text-secondary">{{ d }}</div>
         <template v-for="(week, wi) in weeks" :key="wi">
           <template v-for="(cell, ci) in week" :key="wi + '-' + ci">
-            <div v-if="cell" class="dp-day" :class="{ 'dp-disabled': cell.disabled, selected: cell.selected, today: cell.today }" @click="pick(cell.day)">{{ cell.day }}</div>
+            <div v-if="cell" class="dp-day grid h-7.5 cursor-pointer place-items-center rounded-sm text-sm text-primary transition-colors duration-[120ms] ease-standard" :class="{ 'dp-disabled': cell.disabled, selected: cell.selected, today: cell.today }" @click="pick(cell.day)">{{ cell.day }}</div>
             <div v-else></div>
           </template>
         </template>
       </div>
 
-      <div style="margin-top: 8px; display: flex; justify-content: space-between">
-        <button type="button" data-test="dp-close" @click="open = false">Close</button>
-        <button type="button" data-test="dp-today" :disabled="!canToday" @click="pickToday">Today</button>
+      <div class="mt-2 flex justify-between">
+        <button type="button" data-test="dp-close" class="dp-nav" @click="open = false">Close</button>
+        <button type="button" data-test="dp-today" class="dp-nav" :disabled="!canToday" @click="pickToday">Today</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.dp-popup button {
-  background: none;
+/* Popup chrome states — the markup carries the layout utilities; these
+   state hooks (selected/today/disabled) stay as classes because the
+   tests and the paired-field logic target them by name. */
+.dp-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 6px;
   border: none;
-  color: var(--text);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
   cursor: pointer;
   font-size: var(--fs-xs);
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard);
 }
-.dp-popup button:disabled {
+.dp-nav:hover:not(:disabled) {
+  background: var(--accent-bg);
+  color: var(--text-primary);
+}
+.dp-nav:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
@@ -238,41 +264,54 @@ const canToday = computed(() => {
   top: calc(100% + 4px);
   z-index: 2;
   display: block;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  box-shadow: 0 8px 18px rgba(5, 8, 14, 0.55);
   max-height: 220px;
   overflow: auto;
   padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-elevated);
 }
 .dp-dd-item {
   display: block;
   width: 100%;
-  text-align: left;
   padding: 6px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+.dp-dd-item:hover:not(:disabled) {
+  background: var(--accent-bg);
+  color: var(--text-primary);
+}
+.dp-dd-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .dp-dd-item.selected {
   background: var(--accent);
-  color: #f2f5fb;
-}
-.dp-day {
-  cursor: pointer;
-  border-radius: 4px;
-  padding: 4px 0;
-  color: var(--text);
-  font-size: var(--fs-sm);
+  color: var(--accent-contrast);
+  font-weight: 600;
 }
 .dp-day:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--accent-bg);
 }
 .dp-day.selected {
   background: var(--accent);
+  color: var(--accent-contrast);
   font-weight: 600;
+}
+.dp-day.selected:hover {
+  background: var(--accent);
 }
 .dp-day.today {
   background: rgba(255, 255, 255, 0.12);
+}
+.dp-day.today.selected {
+  background: var(--accent);
 }
 .dp-day.dp-disabled {
   color: var(--text-disabled);

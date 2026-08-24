@@ -46,3 +46,26 @@ if (desc?.get && broken) {
     configurable: true,
   });
 }
+
+// Reka UI primitives (shared/components/forms) rely on browser APIs jsdom
+// does not implement. Every stub is guarded so real browsers and newer
+// jsdom versions keep their own implementation.
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  class ResizeObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+  globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
+}
+
+if (typeof Element !== 'undefined') {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = (): boolean => false;
+    Element.prototype.setPointerCapture = (): void => {};
+    Element.prototype.releasePointerCapture = (): void => {};
+  }
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = (): void => {};
+  }
+}

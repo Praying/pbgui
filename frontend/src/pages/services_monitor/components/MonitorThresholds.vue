@@ -97,10 +97,4 @@ function onInput(config: Record<string, string>, key: string, event: Event): voi
 }
 .monitor-cell { display: flex; flex-direction: column; gap: 2px; }
 .monitor-label { font-size: var(--fs-xs); color: var(--text-secondary); }
-.form-input {
-  background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-default); border-radius: 5px;
-  padding: 0 0.5rem; height: var(--input-h); font-size: var(--fs-sm); font-family: inherit; outline: none;
-  width: 100%;
-}
-.form-input:focus { border-color: var(--border-strong); }
 </style>

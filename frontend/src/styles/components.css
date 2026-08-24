@@ -1514,6 +1514,27 @@
     border-color: var(--accent);
   }
 
+  /* Select twin of .form-input — one shared definition instead of the
+     per-page copies services_monitor used to carry. Pages migrating to
+     the ui/ Select component should drop the class entirely. */
+  .form-select {
+    height: var(--input-h);
+    padding: 0 var(--sp-sm);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    font-family: inherit;
+    outline: none;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .form-select:focus {
+    border-color: var(--accent);
+  }
+
   .form-input::placeholder {
     color: var(--text-placeholder);
   }
