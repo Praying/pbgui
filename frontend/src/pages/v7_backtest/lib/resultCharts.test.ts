@@ -46,12 +46,12 @@ describe('chartLayout (:7212-7224)', () => {
   it('builds the shared dark layout with unified hover', () => {
     const layout = chartLayout('T', 'Balance');
     expect(layout).toMatchObject({
-      paper_bgcolor: '#10141d', // --bg-page
-      plot_bgcolor: '#10141d', // --bg-page
+      paper_bgcolor: '#0b111b', // --bg-page
+      plot_bgcolor: '#0b111b', // --bg-page
       height: 800,
       hovermode: 'x unified',
       title: { text: 'T', x: 0.5 },
-      yaxis: { gridcolor: '#333f5c', title: 'Balance' }, // --border-default
+      yaxis: { gridcolor: '#26364a', title: 'Balance' }, // --border-default
     });
     expect((layout.margin as Record<string, number>).l).toBe(60);
   });

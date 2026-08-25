@@ -30,9 +30,9 @@ export function chartTitle(result: BacktestResultItem, t: (iso: string) => strin
  * Deep-space dark-theme chart constants — mirror the tokens.css palette as
  * literals because Plotly resolves colors directly (no CSS var support).
  */
-export const CHART_BG = '#10141d'; // var(--bg-page)
-export const CHART_TEXT = '#e8ecf4'; // var(--text-primary)
-export const CHART_GRID = '#333f5c'; // var(--border-default)
+export const CHART_BG = '#0b111b'; // var(--bg-page)
+export const CHART_TEXT = '#e7edf6'; // var(--text-primary)
+export const CHART_GRID = '#26364a'; // var(--border-default)
 
 /** _chartLayout (:7212-7224). */
 export function chartLayout(title: string, yTitle: string): PlotlyLayout {
@@ -191,14 +191,14 @@ export function tweTraces(csv: ParsedCsv, resolutionMinutes: number, result: Bac
 /** Categorical series palette: accent / success / warning / danger
  *  bases + purple + soft variants (mirrors tokens.css). */
 export const COMPARE_COLORS = [
-  '#72a0ee', // accent
-  '#46c88f', // success
-  '#e0a458', // warning
-  '#e5615c', // danger
+  '#5ea8ff', // accent
+  '#43c992', // success
+  '#e6b566', // warning
+  '#e56b74', // danger
   '#9b8ede', // purple
-  '#96b9f4', // accent-soft
-  '#76d9ad', // success-soft
-  '#ee8d84', // danger-soft
+  '#78b7ff', // accent-soft
+  '#62d7a9', // success-soft
+  '#ee9097', // danger-soft
 ] as const;
 
 export interface CompareItem {

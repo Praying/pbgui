@@ -1,5 +1,10 @@
 # Unreleased
 
+## PBv7/PBv8 Backtest — Color Palette
+
+- Recolored the backtest workspace with a page-local deep navy/slate palette: the page, rail, toolbar, panels, inputs, borders, and text now have clearer surface separation and contrast without changing layout, typography, spacing, or behavior. Ice blue consistently marks selection and primary actions, while green is reserved for success and execution actions such as Save & Queue.
+- Kept Plotly results charts aligned with the backtest workspace by updating their background, text, grid, and comparison-series colors to the same palette. Other frontend pages retain their existing theme.
+
 ## Dashboard Manager — Workspace Redesign
 
 - Refined the Dashboard Manager into a clearer library-and-canvas workspace: the dashboard list now has stronger active, selected, hover, and keyboard-focus states; the command strip gives New Dashboard clear priority; and the empty/loading canvas uses a layout-matched skeleton treatment instead of a generic spinner.
