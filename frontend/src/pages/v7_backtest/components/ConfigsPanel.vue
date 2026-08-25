@@ -3,7 +3,11 @@ import { PhChartBar, PhCopy, PhPencilSimple, PhPlay } from '@phosphor-icons/vue'
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { ConfigSummary, SortSpec } from '../types';
 
 /**
@@ -174,26 +178,37 @@ defineExpose({
 <template>
   <div>
     <div id="configs-toolbar" class="mb-2 flex flex-wrap items-center gap-2">
-      <input
+      <Input
         v-model="filter"
         type="text"
-        class="sb-input h-8 min-h-8 max-w-[220px]"
+        class="w-auto max-w-[220px]"
         :placeholder="t('v7backtest.searchName')"
         data-test="configs-filter"
         @input="emit('filter', filter)"
       />
-      <select v-model="exchangeFilter" class="sb-input h-8 min-h-8 max-w-[180px]" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')">
-        <option value="">{{ t('v7backtest.filterExchange') }}</option>
-        <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
-      </select>
-      <select v-if="isV8" v-model="strategyFilter" class="sb-input h-8 min-h-8 max-w-[180px]" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')">
-        <option value="">{{ t('v7backtest.filterStrategy') }}</option>
-        <option v-for="strategy in strategyOptions" :key="strategy" :value="strategy">{{ strategy }}</option>
-      </select>
+      <!-- ui-migration: the legacy <option value=""> placeholder rows have no
+           reka equivalent — the listboxes offer no reset row; the cleared
+           model ('') renders as the trigger label instead. -->
+      <SelectRoot v-model="exchangeFilter">
+        <SelectTrigger class="w-auto min-w-[120px] max-w-[180px]" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')" :aria-label="t('v7backtest.filterExchange')">
+          <span :class="exchangeFilter ? '' : 'text-placeholder'">{{ exchangeFilter || t('v7backtest.filterExchange') }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
+      <SelectRoot v-if="isV8" v-model="strategyFilter">
+        <SelectTrigger class="w-auto min-w-[120px] max-w-[180px]" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')" :aria-label="t('v7backtest.filterStrategy')">
+          <span :class="strategyFilter ? '' : 'text-placeholder'">{{ strategyFilter || t('v7backtest.filterStrategy') }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="strategy in strategyOptions" :key="strategy" :value="strategy">{{ strategy }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
       <span class="whitespace-nowrap text-sm text-secondary">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
       <span class="flex-1"></span>
-      <button type="button" class="act-btn" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</button>
-      <button type="button" class="act-btn" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</button>
+      <Button type="button" variant="default" class="act-btn h-auto" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
+      <Button type="button" variant="default" class="act-btn h-auto" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
     </div>
 
     <div v-if="configs.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">
@@ -204,12 +219,11 @@ defineExpose({
       <thead>
         <tr>
           <th class="check-col">
-            <input
-              type="checkbox"
-              :checked="allSelected"
+            <Checkbox
+              :model-value="allSelected"
               :aria-label="t('v7backtest.selectAll')"
               data-test="configs-select-all-check"
-              @change="toggleAll"
+              @update:model-value="toggleAll"
             />
           </th>
           <th data-col="name" @click="emit('sort', 'name')">{{ t('v7backtest.name') }}</th>
@@ -230,7 +244,7 @@ defineExpose({
         </tr>
         <tr v-for="entry in visible" :key="entry.name" :class="{ selected: selected.includes(entry.name) }" @click="toggleRow(entry.name)">
           <td class="check-col">
-            <input type="checkbox" :checked="selected.includes(entry.name)" :aria-label="entry.name" @click.stop="toggleRow(entry.name)" />
+            <Checkbox :model-value="selected.includes(entry.name)" :aria-label="entry.name" @click.stop @update:model-value="toggleRow(entry.name)" />
           </td>
           <td :title="entry.name">{{ entry.name }}</td>
           <td>{{ exchangeText(entry) }}</td>
@@ -247,10 +261,10 @@ defineExpose({
           </td>
           <td :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
           <td class="actions-cell" @click.stop>
-            <button type="button" class="act-btn" data-test="cfg-edit" :title="t('v7backtest.edit')" :aria-label="t('v7backtest.edit')" @click="emit('edit', entry.name)"><PbIcon :icon="PhPencilSimple" :size="18" /></button>
-            <button type="button" class="act-btn" data-test="cfg-queue" :title="t('v7backtest.addToQueueTitle')" :aria-label="t('v7backtest.addToQueueTitle')" @click="emit('queue', entry.name)"><PbIcon :icon="PhPlay" :size="18" /></button>
-            <button type="button" class="act-btn" data-test="cfg-results" :title="t('v7backtest.viewResults')" :aria-label="t('v7backtest.viewResults')" :disabled="!entry.results" @click="emit('view-results', entry.name)"><PbIcon :icon="PhChartBar" :size="18" /></button>
-            <button type="button" class="act-btn" data-test="cfg-duplicate" :title="t('v7backtest.duplicateConfig')" :aria-label="t('v7backtest.duplicateConfig')" @click="emit('duplicate', entry.name)"><PbIcon :icon="PhCopy" :size="18" /></button>
+            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-edit" :title="t('v7backtest.edit')" :aria-label="t('v7backtest.edit')" @click="emit('edit', entry.name)"><PbIcon :icon="PhPencilSimple" :size="18" /></Button>
+            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-queue" :title="t('v7backtest.addToQueueTitle')" :aria-label="t('v7backtest.addToQueueTitle')" @click="emit('queue', entry.name)"><PbIcon :icon="PhPlay" :size="18" /></Button>
+            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-results" :title="t('v7backtest.viewResults')" :aria-label="t('v7backtest.viewResults')" :disabled="!entry.results" @click="emit('view-results', entry.name)"><PbIcon :icon="PhChartBar" :size="18" /></Button>
+            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-duplicate" :title="t('v7backtest.duplicateConfig')" :aria-label="t('v7backtest.duplicateConfig')" @click="emit('duplicate', entry.name)"><PbIcon :icon="PhCopy" :size="18" /></Button>
           </td>
         </tr>
       </tbody>
@@ -262,10 +276,10 @@ defineExpose({
       <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.deleteConfigs') }}</h3>
         <p>{{ t('v7backtest.deleteConfigsConfirm', { n: selected.length }) }}</p>
-        <label class="sb-toggle"><input v-model="deleteAlsoResults" type="checkbox" /><span>{{ t('v7backtest.alsoDeleteResults') }}</span></label>
+        <label class="sb-toggle"><Checkbox v-model="deleteAlsoResults" /><span>{{ t('v7backtest.alsoDeleteResults') }}</span></label>
         <div class="mt-5 flex justify-end gap-2">
-          <button type="button" :class="modalBtnClass()" @click="deleteConfirmOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" :class="modalBtnClass('danger')" data-test="configs-delete-confirm" @click="deleteSelectedFlow(runDelete)">{{ t('common.delete') }}</button>
+          <Button type="button" variant="default" class="modal-btn" @click="deleteConfirmOpen = false">{{ t('common.cancel') }}</Button>
+          <Button type="button" variant="danger" class="modal-btn" data-test="configs-delete-confirm" @click="deleteSelectedFlow(runDelete)">{{ t('common.delete') }}</Button>
         </div>
       </div>
     </div>

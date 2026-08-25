@@ -2,6 +2,8 @@
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import type { ResultSummary } from '../types';
 
 const props = defineProps<{ rows: ResultSummary[]; selected: Set<string>; search: string; selectedPath: string; isV8: boolean }>();
@@ -43,12 +45,12 @@ onBeforeUnmount(() => dragSelect.dispose());
 
 <template>
   <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
-    <input class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary min-w-60" :value="search" :placeholder="t('v7optimize.searchOptimizeName')" @input="emit('update:search', ($event.target as HTMLInputElement).value)" />
+    <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
     <span class="text-xs text-secondary">{{ t('v7optimize.resultSetCount', { count: rows.length }) }}</span>
     <span v-if="selectedCount" class="text-xs text-secondary">{{ t('v7optimize.resultsSelected', { count: selectedCount }) }}</span>
     <span class="flex-1"></span>
-    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-test="select-all-results" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
-    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
+    <Button type="button" variant="default" size="sm" data-test="select-all-results" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
+    <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
   <div ref="wrap" class="min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
     <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
@@ -62,13 +64,13 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td>{{ mode(row) }}</td>
           <td>{{ row.modified || '—' }}</td>
           <td class="whitespace-nowrap! overflow-visible!" @click.stop>
-            <button v-if="hasPareto(row)" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-action="paretos" @click="emit('open', row)">{{ t('v7optimize.paretos') }}</button>
-            <button v-if="hasPareto(row)" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-action="explorer" @click="emit('action', row, 'explorer')">{{ t('v7optimize.paretoExplorer') }}</button>
-            <button v-if="supportsDash(row)" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-action="dash" @click="emit('action', row, 'dash')">{{ t('v7optimize.pdParetoDash') }}</button>
-            <button v-if="supports3d(row)" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-action="plot3d" @click="emit('action', row, 'plot3d')">{{ t('v7optimize.plot3d') }}</button>
-            <button v-if="hasPareto(row)" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-action="continue" @click="emit('action', row, 'continue')">{{ t('v7optimize.continueOptimize') }}</button>
-            <button v-if="resumable(row)" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-action="resume" @click="emit('action', row, 'resume')">{{ t('v7optimize.resumeCheckpoint') }}</button>
-            <button v-if="hasConfig(row)" class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-action="config" @click="emit('action', row, 'config')">{{ t('v7optimize.configDraft') }}</button>
+            <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="paretos" @click="emit('open', row)">{{ t('v7optimize.paretos') }}</Button>
+            <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="explorer" @click="emit('action', row, 'explorer')">{{ t('v7optimize.paretoExplorer') }}</Button>
+            <Button type="button" variant="default" size="sm" v-if="supportsDash(row)" data-action="dash" @click="emit('action', row, 'dash')">{{ t('v7optimize.pdParetoDash') }}</Button>
+            <Button type="button" variant="default" size="sm" v-if="supports3d(row)" data-action="plot3d" @click="emit('action', row, 'plot3d')">{{ t('v7optimize.plot3d') }}</Button>
+            <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="continue" @click="emit('action', row, 'continue')">{{ t('v7optimize.continueOptimize') }}</Button>
+            <Button type="button" variant="default" size="sm" v-if="resumable(row)" data-action="resume" @click="emit('action', row, 'resume')">{{ t('v7optimize.resumeCheckpoint') }}</Button>
+            <Button type="button" variant="default" size="sm" v-if="hasConfig(row)" data-action="config" @click="emit('action', row, 'config')">{{ t('v7optimize.configDraft') }}</Button>
           </td>
         </tr>
         <tr v-if="!rows.length"><td :colspan="isV8 ? 7 : 6" class="p-[30px]! text-center text-secondary">{{ t('v7optimize.noOptimizeResultsFound') }}</td></tr>

@@ -13,6 +13,7 @@
  *  - zoom preservation + empty-data wipe like PNL/ADG.
  */
 import { computed, inject, ref, watch } from 'vue';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -101,10 +102,10 @@ function applyZoomForData(l: PlotlyLayout, zoom: SavedZoom | null): PlotlyLayout
 
 const chartRef = ref<{ captureFracZoom: () => void } | null>(null);
 
-function onSumPeriodChange(e: Event): void {
+function onSumPeriodUpdate(value: unknown): void {
   /* dashboard_ppl.html:108-116 — arm the one-shot fractional zoom first */
   chartRef.value?.captureFracZoom();
-  store.state[sKey] = (e.target as HTMLSelectElement).value;
+  store.state[sKey] = String(value);
   store.scheduleSync();
 }
 
@@ -128,9 +129,14 @@ const allUsers = useDashboardUsers().users;
     <WidgetHeader :title="dashT('dash.profitsAndLosses', 'Profits and Losses')" :icon="'📉'">
       <div :class="[dtMetaClass, dtMetaControlsClass]">
         <span :class="dtMetaLblClass">{{ dashT('dash.sumPeriod', 'Sum Period') }}</span>
-        <select :class="dtCtrlSelClass" :value="sumPeriod" @change="onSumPeriodChange">
-          <option v-for="s in PPL_SUM" :key="s" :value="s">{{ s }}</option>
-        </select>
+        <SelectRoot :model-value="sumPeriod" @update:model-value="onSumPeriodUpdate">
+          <SelectTrigger :class="dtCtrlSelClass" :aria-label="dashT('dash.sumPeriod', 'Sum Period')">
+            <span>{{ sumPeriod }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="s in PPL_SUM" :key="s" :value="s">{{ s }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
         <span :class="dtMetaSepClass">·</span>
         <PeriodControls :period="period" @update:period="onPeriodChange" />
         <span :class="dtMetaSepClass">·</span>

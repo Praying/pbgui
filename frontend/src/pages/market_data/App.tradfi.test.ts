@@ -9,6 +9,7 @@ import {
   SETTINGS_PAYLOAD,
   TRADFI_MAP_PAYLOAD,
 } from './App.test-support';
+import { pickSelectOption } from '@/shared/testing/select';
 
 /* M-data-4 tiingo + tradfi integration (:7379-7401, :4924, :9734). */
 
@@ -57,7 +58,7 @@ describe('tiingo + tradfi integration (M-data-4, :7379-7401, :4924, :9734)', () 
   it('drops the cards and skips the map for other exchanges (:7362-7366, :7399-7401)', async () => {
     const app = mountApp();
     await flushPromises();
-    await app.find('#page-exchange').setValue('bybit');
+    await pickSelectOption(app, '#page-exchange', 'Bybit');
     await flushPromises();
     expect(app.find('#settings-hyperliquid-tiingo').exists()).toBe(false);
     expect(app.find('#settings-hyperliquid-tradfi-map').exists()).toBe(false);

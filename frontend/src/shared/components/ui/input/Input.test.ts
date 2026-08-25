@@ -39,6 +39,14 @@ describe('Input', () => {
     expect(input.attributes('disabled')).toBeDefined();
   });
 
+  it('scales with the Button-matching size variants', () => {
+    expect(mount(Input, { props: { size: 'sm' } }).get('input').classes()).toContain('h-7');
+    expect(mount(Input).get('input').classes()).toContain('h-8');
+    const lg = mount(Input, { props: { size: 'lg' } }).get('input').classes();
+    expect(lg).toContain('h-9.5');
+    expect(lg).not.toContain('h-8');
+  });
+
   it('merges caller classes after the base chrome', () => {
     const wrapper = mount(Input, { props: { class: 'h-7 font-mono' } });
     const classes = wrapper.get('input').classes();
@@ -46,5 +54,36 @@ describe('Input', () => {
     // tailwind-merge resolves the height conflict in favour of the caller
     expect(classes).toContain('h-7');
     expect(classes).not.toContain('h-8');
+  });
+
+  it('keeps native v-model.number semantics (looseToNumber)', async () => {
+    const value = ref<string | number | null>(22);
+    const wrapper = mount(
+      {
+        components: { Input },
+        template: '<Input v-model.number="value" type="number" />',
+        setup: () => ({ value }),
+      },
+    );
+
+    const input = wrapper.get('input');
+    await input.setValue('30');
+    expect(value.value).toBe(30); // numeric string parses to number
+    await input.setValue('');
+    expect(value.value).toBe(''); // empty stays empty string (native behavior)
+  });
+
+  it('passes non-numeric input through raw on v-model.number (type=text)', async () => {
+    const value = ref<string | number | null>('');
+    const wrapper = mount(
+      {
+        components: { Input },
+        template: '<Input v-model.number="value" type="text" />',
+        setup: () => ({ value }),
+      },
+    );
+
+    await wrapper.get('input').setValue('abc');
+    expect(value.value).toBe('abc'); // looseToNumber leaves non-numeric raw (native behavior)
   });
 });

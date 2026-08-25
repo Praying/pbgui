@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption, openSelect, selectOptionTexts } from '@/shared/testing/select';
 import PlotlyDiv from './PlotlyDiv.vue';
 import TweChart from './TweChart.vue';
 import ResultCharts from './ResultCharts.vue';
@@ -15,8 +16,6 @@ import type { ResultActionKind } from '../types';
  * (onResultActionsChanged :6576-6786). window.Plotly is faked like the
  * dashboard/pareto tests (never bundled, R2/R5).
  */
-
-enableAutoUnmount(afterEach);
 
 const newPlot = vi.fn();
 const react = vi.fn();
@@ -45,6 +44,11 @@ afterEach(() => {
   delete (window as unknown as { Plotly?: PlotlyVendor }).Plotly;
   document.body.innerHTML = '';
 });
+
+/* Registered AFTER the body-clearing hook so vitest's LIFO afterEach order
+   unmounts wrappers first — unmounting a reka select AFTER its teleported
+   anchors were wiped crashes removeFragment on null. */
+enableAutoUnmount(afterEach);
 
 describe('PlotlyDiv', () => {
   function mountPlot(props: { traces: PlotlyTrace[]; layout: PlotlyLayout }): ReturnType<typeof mount> {
@@ -118,16 +122,17 @@ describe('TweChart (:6670-6682, :7374-7513, :7516-7528)', () => {
 
   it('changing the resolution re-renders with resampled traces (:7363-7372)', async () => {
     const wrapper = mountTwe(1440);
-    await wrapper.find('[data-test="twe-res"]').setValue('60');
+    await pickSelectOption(wrapper, '[data-test="twe-res"]', '60');
     expect(react).toHaveBeenCalledTimes(1);
     const traces = react.mock.calls[0]![1] as Array<{ name: string }>;
     expect(traces[0]).toMatchObject({ name: 'Long TWE' });
-    expect(wrapper.find('[data-test="twe-res"]').attributes('value') ?? (wrapper.find('[data-test="twe-res"]').element as HTMLSelectElement).value).toBe('60');
+    // reka listbox: the closed-state trigger renders the model value as text
+    expect(wrapper.find('[data-test="twe-res"]').text()).toContain('60');
   });
 
   it('show-coins toggles restyle over the per-coin trace indices (:7516-7528)', async () => {
     const wrapper = mountTwe(1440);
-    await wrapper.find('[data-test="twe-showcoins"]').setValue(true);
+    await wrapper.find('[data-test="twe-showcoins"]').trigger('click');
     expect(restyle).toHaveBeenCalledTimes(1);
     const args = restyle.mock.calls[0]!;
     expect(args[1]).toEqual({ visible: [true, true] }); // traces 2..3
@@ -219,13 +224,11 @@ describe('ResultCharts (:6576-6786)', () => {
   });
 
   it('the log-scale checkbox relayouts only the yaxis type (:7206-7210, :6640)', async () => {
-    mountCharts(['view']);
+    const wrapper = mountCharts(['view']);
     await vi.waitFor(() => expect(newPlot).toHaveBeenCalled());
     relayout.mockClear();
-    const toggle = document.querySelector<HTMLInputElement>('[data-test="be-log-toggle"]');
-    expect(toggle).not.toBeNull();
-    toggle!.checked = true;
-    toggle!.dispatchEvent(new Event('change'));
+    // ui/ Checkbox renders a button with role="checkbox" — click toggles it
+    await wrapper.find('[data-test="be-log-toggle"]').trigger('click');
     await nextTick();
     expect(relayout).toHaveBeenCalledWith(expect.anything(), { 'yaxis.type': 'log' });
   });
@@ -250,8 +253,9 @@ describe('ResultCharts (:6576-6786)', () => {
   it('the price-market select renders when the result exposes markets (:6641-6649)', async () => {
     const wrapper = mountCharts(['view'], { coins: ['BTC'], exchange_dir: 'binance' });
     await vi.waitFor(() => expect(wrapper.find('[data-test="price-market"]').exists()).toBe(true));
-    // option values are exchange|coin with each side encoded, literal pipe (:6571-6573)
-    expect(wrapper.findAll('[data-test="price-market"] option').map((o) => (o.element as HTMLOptionElement).value)).toEqual(['binance|BTC']);
+    // reka listbox: options mount lazily into a body portal on open
+    await openSelect(wrapper, '[data-test="price-market"]');
+    expect(selectOptionTexts()).toEqual(['binance / BTC']);
   });
 });
 

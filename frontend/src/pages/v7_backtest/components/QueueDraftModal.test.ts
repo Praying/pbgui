@@ -139,7 +139,8 @@ describe('queue submit (:2099-2142)', () => {
     const marketDataLabel = wrapper.find('label[for="rbt-pbgui-data"]');
     expect(marketDataLabel.text()).toBe('Use PBGui Market Data');
     expect(marketDataLabel.find('svg').exists()).toBe(true);
-    await wrapper.find('[data-test="rbt-pbgui-data"]').setValue(true);
+    // ui/ Checkbox renders a button with role="checkbox" — click toggles it
+    await wrapper.find('[data-test="rbt-pbgui-data"]').trigger('click');
     await wrapper.find('[data-test="rbt-ok"]').trigger('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(postQueue).toHaveBeenCalledTimes(1); // one queue POST after the path fetch

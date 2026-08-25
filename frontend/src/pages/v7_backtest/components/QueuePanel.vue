@@ -11,7 +11,8 @@ import { PhChartBar, PhFileText, PhPlay, PhStop, PhTrash } from '@phosphor-icons
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { QueueItem } from '../types';
 
 const props = defineProps<{ items: QueueItem[]; active?: boolean }>();
@@ -184,12 +185,12 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
   <div id="panel-queue" class="view-panel min-h-0 flex-1 flex-col overflow-hidden" :class="[props.active ? 'flex' : 'hidden', { active: props.active }]">
     <div id="queue-toolbar" class="mb-2 flex items-center gap-2 max-[760px]:flex-wrap">
       <span class="flex-1 max-[760px]:hidden"></span>
-      <button type="button" class="act-btn" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">
+      <Button type="button" variant="default" class="act-btn h-auto" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">
         {{ t('v7backtest.selectAll') }}
-      </button>
-      <button type="button" class="act-btn" data-test="queue-deselect-all" :title="t('v7backtest.deselectAll')" @click="deselectAll">
+      </Button>
+      <Button type="button" variant="default" class="act-btn h-auto" data-test="queue-deselect-all" :title="t('v7backtest.deselectAll')" @click="deselectAll">
         {{ t('v7backtest.deselect') }}
-      </button>
+      </Button>
     </div>
     <div id="queue-list" class="min-h-0 flex-1 overflow-y-auto" @mousemove="onListMouseMove">
       <div v-if="!items.length" class="empty-state px-5 py-15 text-center text-md text-secondary">
@@ -225,50 +226,55 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
             <td>{{ exchangeText(item) }}</td>
             <td>{{ fmtDate(item.created) }}</td>
             <td class="actions-cell" @mousedown.stop>
-              <button
+              <Button
                 v-if="item.status === 'error'"
                 type="button"
-                class="act-btn"
+                variant="default"
+                class="act-btn h-auto"
                 :title="t('v7backtest.restart')"
                 :aria-label="t('v7backtest.restart')"
                 style="border-color: var(--warning); color: var(--warning)"
                 @click.stop="emit('restart', item.filename)"
-              ><PbIcon :icon="PhPlay" :size="18" /></button>
-              <button
+              ><PbIcon :icon="PhPlay" :size="18" /></Button>
+              <Button
                 v-if="item.status === 'queued'"
                 type="button"
-                class="act-btn"
+                variant="default"
+                class="act-btn h-auto"
                 :title="t('v7backtest.start')"
                 :aria-label="t('v7backtest.start')"
                 @click.stop="emit('start', item.filename)"
-              ><PbIcon :icon="PhPlay" :size="18" /></button>
-              <button
+              ><PbIcon :icon="PhPlay" :size="18" /></Button>
+              <Button
                 v-if="item.status === 'running' || item.status === 'backtesting'"
                 type="button"
-                class="act-btn act-btn-danger"
+                variant="default"
+                class="act-btn act-btn-danger h-auto"
                 :title="t('v7backtest.stop')"
                 :aria-label="t('v7backtest.stop')"
                 @click.stop="emit('stop', item.filename)"
-              ><PbIcon :icon="PhStop" :size="18" /></button>
-              <button
+              ><PbIcon :icon="PhStop" :size="18" /></Button>
+              <Button
                 v-if="item.status === 'complete'"
                 type="button"
-                class="act-btn"
+                variant="default"
+                class="act-btn h-auto"
                 :title="t('v7backtest.viewResults')"
                 :aria-label="t('v7backtest.viewResults')"
                 style="border-color: var(--green); color: var(--green)"
                 @click.stop="emit('viewResults', item.name ?? '')"
-              ><PbIcon :icon="PhChartBar" :size="18" /></button>
-              <button type="button" class="act-btn" :title="t('v7backtest.logAction')" :aria-label="t('v7backtest.logAction')" @click.stop="emit('showLog', item.filename)">
+              ><PbIcon :icon="PhChartBar" :size="18" /></Button>
+              <Button type="button" variant="default" class="act-btn h-auto" :title="t('v7backtest.logAction')" :aria-label="t('v7backtest.logAction')" @click.stop="emit('showLog', item.filename)">
                 <PbIcon :icon="PhFileText" :size="18" />
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                class="act-btn act-btn-danger"
+                variant="default"
+                class="act-btn act-btn-danger h-auto"
                 :title="t('v7backtest.remove')"
                 :aria-label="t('v7backtest.remove')"
                 @click.stop="emit('remove', item.filename)"
-              ><PbIcon :icon="PhTrash" :size="18" /></button>
+              ><PbIcon :icon="PhTrash" :size="18" /></Button>
             </td>
           </tr>
         </tbody>
@@ -283,8 +289,8 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
         </div>
         <div class="min-h-0 flex-1 overflow-auto"><p>{{ t('v7backtest.removeQueueConfirm', { n: selectedFilenames().length }) }}</p></div>
         <div class="mt-5 flex justify-end gap-2">
-          <button type="button" class="pbgui-action" :class="modalBtnClass()" @click="confirmOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" class="pbgui-action danger" :class="modalBtnClass()" @click="confirmDelete">{{ t('common.delete') }}</button>
+          <Button type="button" variant="default" class="modal-btn pbgui-action" @click="confirmOpen = false">{{ t('common.cancel') }}</Button>
+          <Button type="button" variant="danger" class="modal-btn pbgui-action danger" @click="confirmDelete">{{ t('common.delete') }}</Button>
         </div>
       </div>
     </div>

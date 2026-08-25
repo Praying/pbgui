@@ -9,6 +9,7 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 
 interface Row {
   value: string;
@@ -124,18 +125,22 @@ onBeforeUnmount(() => {
       <slot name="title"></slot>
       <div class="flex gap-1">
         <slot name="summary"></slot>
-        <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" type="button" @click="emit('set-all', allValues())">{{ t('common.all') }}</button>
-        <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" type="button" @click="emit('set-all', [])">{{ t('common.none') }}</button>
+        <Button type="button" variant="secondary" size="sm" @click="emit('set-all', allValues())">{{ t('common.all') }}</Button>
+        <Button type="button" variant="secondary" size="sm" @click="emit('set-all', [])">{{ t('common.none') }}</Button>
       </div>
     </div>
     <div class="block max-h-[300px] select-none overflow-auto p-0" :id="id">
       <div v-if="!rows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noItemsFound') }}</div>
       <div v-if="rows.length === 1 && rows[0]!.loading" class="select-row w-full min-h-[34px] appearance-none cursor-wait border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left italic text-secondary" aria-disabled="true">{{ rows[0]!.loading }}</div>
       <template v-else>
-        <button
+        <!-- Rows keep `block` (not the Button inline-flex): the legacy row
+             layout is inline text + an ml-auto total, and drag hit-testing
+             forbids the press scale. -->
+        <Button
           v-for="row in rows"
           :key="row.value"
-          class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3"
+          variant="ghost"
+          class="select-row block w-full min-h-[34px] rounded-none border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left font-normal whitespace-normal text-primary hover:bg-white/3 active:scale-100"
           type="button"
           :class="isSelected(row.value) ? 'selected bg-accent/12 text-[#f2f5fb] shadow-[inset_3px_0_0_#72a0ee]' : ''"
           :data-value="row.value"
@@ -144,7 +149,7 @@ onBeforeUnmount(() => {
         >
           <span>{{ row.value }}</span>
           <span v-if="showTotals && row.total !== undefined" class="ml-auto text-xs text-muted">{{ t('misc.dbtools.rows', { count: row.total }) }}</span>
-        </button>
+        </Button>
       </template>
     </div>
   </div>

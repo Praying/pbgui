@@ -6,7 +6,8 @@
  * buttons carry data-copy-schedule-action/:9283-9293.
  */
 import { useI18n } from 'vue-i18n';
-import { btnClass, btnDangerClass, noteClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { noteClass } from '../../lib/uiClasses';
 import type { UseCopyData } from '../../composables/useCopyData';
 
 defineProps<{
@@ -44,27 +45,27 @@ const { t } = useI18n();
         <div v-if="row.error" class="copy-data-schedule-detail text-xs text-secondary [overflow-wrap:anywhere]">{{ row.error }}</div>
       </div>
       <div class="copy-data-schedule-actions flex flex-wrap justify-end gap-2 max-[900px]:justify-start">
-        <button
-          :class="btnClass('secondary')"
+        <Button
+          variant="info"
           type="button"
           data-copy-schedule-action="run"
           :data-schedule-id="row.id"
           @click="$emit('run', row.id)"
-        >{{ t('market.runNow') }}</button>
-        <button
-          :class="btnClass('secondary')"
+        >{{ t('market.runNow') }}</Button>
+        <Button
+          variant="info"
           type="button"
           data-copy-schedule-action="edit"
           :data-schedule-id="row.id"
           @click="$emit('edit', row.id)"
-        >{{ t('market.edit') }}</button>
-        <button
-          :class="btnDangerClass"
+        >{{ t('market.edit') }}</Button>
+        <Button
+          variant="danger"
           type="button"
           data-copy-schedule-action="delete"
           :data-schedule-id="row.id"
           @click="$emit('remove', row.id)"
-        >{{ t('common.delete') }}</button>
+        >{{ t('common.delete') }}</Button>
       </div>
     </div>
   </div>

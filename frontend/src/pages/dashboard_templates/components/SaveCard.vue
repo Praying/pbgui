@@ -10,6 +10,8 @@
 import { onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { dashboardsUrl, templatesUrl } from '../config';
 import type { DashboardConfigResponse, StatusResponse } from '../types';
 
@@ -74,15 +76,15 @@ onUnmounted(() => window.clearTimeout(msgTimer));
     <div class="tpl-card-title">{{ t('dash.saveCurrentAsTemplate') }}</div>
     <div class="tpl-label">{{ t('dash.current') }} <strong>{{ current }}</strong></div>
     <div class="input-row">
-      <input
+      <Input
         id="save-name"
         v-model="name"
-        class="tpl-input"
         type="text"
+        class="flex-1"
         :placeholder="t('dash.templateNamePlaceholder')"
         autocomplete="off"
-      >
-      <button id="btn-save" class="btn pbgui-action primary" @click="save">💾 {{ t('common.save') }}</button>
+      />
+      <Button id="btn-save" variant="info" size="sm" type="button" class="self-center" @click="save">💾 {{ t('common.save') }}</Button>
     </div>
     <div id="save-msg" class="msg" :class="msgType">{{ msg }}</div>
   </div>

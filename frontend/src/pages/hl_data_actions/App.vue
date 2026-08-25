@@ -43,6 +43,9 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import CoinPickerGrid from './components/CoinPickerGrid.vue';
 import JobModal from './components/JobModal.vue';
 import JobMonitorCard from './components/JobMonitorCard.vue';
@@ -211,22 +214,22 @@ function msgKindClass(kind: string): string {
         <div class="hlda-dr flex gap-3">
           <div class="hlda-fs mb-3.5 flex-1">
             <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.startDate') }}</span>
-            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.dlStartDate.value">
+            <Input type="date" size="lg" v-model="sections.dlStartDate.value" />
             <div class="hlda-hint mt-0.5 text-xs text-muted">{{ t('market.archiveOldest', { date: dlOldest }) }}</div>
           </div>
           <div class="hlda-fs mb-3.5 flex-1">
             <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.endDate') }}</span>
-            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.dlEndDate.value">
+            <Input type="date" size="lg" v-model="sections.dlEndDate.value" />
             <div class="hlda-hint mt-0.5 text-xs text-muted">{{ t('market.archiveNewest', { date: dlNewest }) }}</div>
           </div>
         </div>
-        <div class="hlda-cb mb-1.5 flex items-center gap-2">
-          <input type="checkbox" id="dl-only" class="h-4 w-4" v-model="sections.dlOnlyMissing.value">
-          <label for="dl-only" class="inline mb-0 cursor-pointer text-sm text-primary">{{ t('market.onlyMissing1mSrc') }}</label>
-        </div>
+        <label class="hlda-cb mb-1.5 flex cursor-pointer items-center gap-2 text-sm text-primary">
+          <Checkbox id="dl-only" v-model="sections.dlOnlyMissing.value" />
+          {{ t('market.onlyMissing1mSrc') }}
+        </label>
         <div class="hlda-help mb-2.5 ml-6 mt-0.5 text-xs text-muted">{{ t('market.dlOnlyHelp') }}</div>
         <div class="hlda-ar flex items-center gap-3.5">
-          <button class="hlda-btn cursor-pointer rounded-md border-0 bg-accent px-7 py-[9px] text-base font-medium text-white transition-[background] duration-200 hover:bg-accent-soft disabled:cursor-not-allowed disabled:bg-secondary disabled:opacity-70" :disabled="sections.dlBusy.value" @click="sections.submitDownload()">{{ t('market.download') }}</button>
+          <Button type="button" variant="primary" size="lg" class="hlda-btn" :disabled="sections.dlBusy.value" @click="sections.submitDownload()">{{ t('market.download') }}</Button>
           <div class="hlda-lo mt-2 items-center gap-2 text-sm text-muted" :class="sections.dlBusy.value ? 'active inline-flex' : 'hidden'">
             <div class="hlda-spin h-4 w-4 animate-spin rounded-full border-2 border-border-default border-t-accent"></div><span>{{ t('market.preflightCheck') }}</span>
           </div>
@@ -285,20 +288,20 @@ function msgKindClass(kind: string): string {
         <div class="hlda-br flex flex-wrap items-end gap-3">
           <div class="hlda-fs mb-3.5 min-w-[140px] flex-1">
             <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.startDateOptional') }}</span>
-            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.buildStartDate.value" @change="sections.ensureBuildDateOrder('start')">
+            <Input type="date" size="lg" v-model="sections.buildStartDate.value" @change="sections.ensureBuildDateOrder('start')" />
           </div>
           <div class="hlda-fs mb-3.5 min-w-[140px] flex-1">
             <span class="hlda-lbl mb-1 block text-sm font-medium text-secondary">{{ t('market.endDateOptional') }}</span>
-            <input type="date" class="w-full rounded-md border border-border-default bg-panel px-3 py-2 text-sm text-primary hover:border-secondary" v-model="sections.buildEndDate.value" @change="sections.ensureBuildDateOrder('end')">
+            <Input type="date" size="lg" v-model="sections.buildEndDate.value" @change="sections.ensureBuildDateOrder('end')" />
           </div>
         </div>
-        <div class="hlda-cb mb-1.5 flex items-center gap-2">
-          <input type="checkbox" id="build-refetch" class="h-4 w-4" v-model="sections.buildRefetch.value">
-          <label for="build-refetch" class="inline mb-0 cursor-pointer text-sm text-primary">{{ t('market.refetchTradfi') }}</label>
-        </div>
+        <label class="hlda-cb mb-1.5 flex cursor-pointer items-center gap-2 text-sm text-primary">
+          <Checkbox id="build-refetch" v-model="sections.buildRefetch.value" />
+          {{ t('market.refetchTradfi') }}
+        </label>
         <div class="hlda-help mb-2.5 ml-6 mt-0.5 text-xs text-muted">{{ t('market.refetchHelp') }}</div>
         <div class="hlda-ar flex items-center gap-3.5">
-          <button class="hlda-btn cursor-pointer rounded-md border-0 bg-accent px-7 py-[9px] text-base font-medium text-white transition-[background] duration-200 hover:bg-accent-soft disabled:cursor-not-allowed disabled:bg-secondary disabled:opacity-70" :disabled="sections.buildBusy.value" @click="sections.submitBuild()">{{ t('market.buildBest1m') }}</button>
+          <Button type="button" variant="primary" size="lg" class="hlda-btn" :disabled="sections.buildBusy.value" @click="sections.submitBuild()">{{ t('market.buildBest1m') }}</Button>
           <div class="hlda-lo mt-2 items-center gap-2 text-sm text-muted" :class="sections.buildBusy.value ? 'active inline-flex' : 'hidden'">
             <div class="hlda-spin h-4 w-4 animate-spin rounded-full border-2 border-border-default border-t-accent"></div><span>{{ t('market.queuing') }}</span>
           </div>

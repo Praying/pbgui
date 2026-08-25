@@ -10,6 +10,15 @@
  */
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import type { CoinOverridesStore } from '../useCoinOverrides';
 import { badgeSummary, flattenForAllowed, getNested, paramIsAllowed } from '../coinOvModel';
 
@@ -213,10 +222,10 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
               >{{ badgeSummary(store.overrides[coin] ?? {}) }}</span>
             </td>
             <td>
-              <button type="button" class="act-btn" @click="editCoin(coin)">
+              <Button type="button" variant="outline" size="sm" class="act-btn" @click="editCoin(coin)">
                 {{ store.editCoin.value === coin ? t('editor.overrides.editing') : t('editor.overrides.edit') }}
-              </button>
-              <button type="button" class="act-btn act-btn-danger" @click="store.removeCoin(coin)">&#x00D7;</button>
+              </Button>
+              <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" @click="store.removeCoin(coin)">&#x00D7;</Button>
             </td>
           </tr>
         </tbody>
@@ -236,6 +245,8 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
           <span data-tip="Select a coin to add per-coin overrides.&#10;Type to search the list.">{{ t('editor.overrides.addCoin') }}</span>
         </label>
         <div class="ms-wrap" id="cov-coin-picker" @focusin="coinDropdownOpen = true" @focusout="coinDropdownOpen = false">
+          <!-- ui-migration: blocked — the chip-filter input inside the custom
+               .ms-wrap dropdown (focusin/focusout drives its open state) -->
           <input
             id="cov-coin-input"
             v-model="coinFilter"
@@ -264,7 +275,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
           <span style="font-size: var(--fs-sm); font-weight: 600; color: var(--accent)"
             >{{ t('editor.overrides.editCoin', { coin: store.editCoin.value }) }}</span
           >
-          <button type="button" class="act-btn" @click="store.closeEdit()">{{ t('editor.overrides.done') }}</button>
+          <Button type="button" variant="outline" size="sm" class="act-btn" @click="store.closeEdit()">{{ t('editor.overrides.done') }}</Button>
         </div>
 
         <div v-if="store.allowedParams.value === null" style="margin-bottom: var(--sp-sm); color: var(--text-dim); font-size: var(--fs-sm)">
@@ -302,25 +313,33 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
               <tr v-for="param in sectionParams(section)" :key="section.key + param">
                 <td>{{ param }}</td>
                 <td>
-                  <select
+                  <SelectRoot
                     v-if="inputMode(section, param) === 'forced-mode'"
                     v-model="store.inlineValues[section.key + '.' + param]"
-                    class="cov-param-input cov-param-select"
                   >
-                    <option v-for="mode in FORCED_MODES" :key="mode" :value="mode">{{ mode }}</option>
-                  </select>
-                  <select
+                    <SelectTrigger class="h-7 w-[140px] px-2 text-xs">
+                      <span>{{ store.inlineValues[section.key + '.' + param] }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="mode in FORCED_MODES" :key="mode" :value="mode">{{ mode }}</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
+                  <SelectRoot
                     v-else-if="inputMode(section, param) === 'boolean'"
                     v-model="store.inlineValues[section.key + '.' + param]"
-                    class="cov-param-input cov-param-select"
                   >
-                    <option value="true">true</option>
-                    <option value="false">false</option>
-                  </select>
-                  <input v-else v-model="store.inlineValues[section.key + '.' + param]" type="text" class="cov-param-input" />
+                    <SelectTrigger class="h-7 w-[140px] px-2 text-xs">
+                      <span>{{ store.inlineValues[section.key + '.' + param] }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">true</SelectItem>
+                      <SelectItem value="false">false</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
+                  <Input v-else v-model="store.inlineValues[section.key + '.' + param]" type="text" size="sm" class="w-[100px]" />
                 </td>
                 <td>
-                  <button type="button" class="act-btn act-btn-danger" @click="removeParam(section, param)">&#x00D7;</button>
+                  <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" @click="removeParam(section, param)">&#x00D7;</Button>
                 </td>
               </tr>
             </tbody>
@@ -331,6 +350,8 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
             <div class="form-group" style="grid-column: span 2">
               <label>{{ t('editor.overrides.parameter') }}</label>
               <div class="ms-wrap" @focusin="paramDropdown = section.key" @focusout="paramDropdown = ''">
+                <!-- ui-migration: blocked — the chip-filter input inside the custom
+                     .ms-wrap dropdown (focusin/focusout drives its open state) -->
                 <input
                   v-model="pick(section).parameter"
                   class="ms-input"
@@ -350,10 +371,10 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
             </div>
             <div class="form-group">
               <label>{{ t('editor.overrides.value') }}</label>
-              <input v-model="pick(section).value" type="text" placeholder="0.5" @keydown.enter.prevent="addParam(section)" />
+              <Input v-model="pick(section).value" type="text" placeholder="0.5" @keydown.enter.prevent="addParam(section)" />
             </div>
             <div class="form-group">
-              <button type="button" class="act-btn" style="height: var(--input-h)" @click="addParam(section)">
+              <Button type="button" variant="outline" size="sm" class="act-btn" @click="addParam(section)">
                 {{ t('editor.overrides.add') }}
               </button>
             </div>
@@ -381,26 +402,26 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm)">
               <div class="form-group">
                 <label style="color: var(--green)">long</label>
-                <textarea
+                <Textarea
                   v-model="store.fileValues.long"
                   rows="12"
-                  class="json-editor cov-cfg-ta"
+                  class="json-editor cov-cfg-ta min-h-[100px] max-h-none"
                   :class="{ 'cov-json-invalid': store.fileSideError('long') }"
                   @paste="onFilePaste('long', $event)"
-                ></textarea>
+                />
                 <div v-if="store.fileSideError('long')" class="cov-json-status error" aria-live="polite">
                   {{ store.fileSideError('long') }}
                 </div>
               </div>
               <div class="form-group">
                 <label style="color: var(--red)">short</label>
-                <textarea
+                <Textarea
                   v-model="store.fileValues.short"
                   rows="12"
-                  class="json-editor cov-cfg-ta"
+                  class="json-editor cov-cfg-ta min-h-[100px] max-h-none"
                   :class="{ 'cov-json-invalid': store.fileSideError('short') }"
                   @paste="onFilePaste('short', $event)"
-                ></textarea>
+                />
                 <div v-if="store.fileSideError('short')" class="cov-json-status error" aria-live="polite">
                   {{ store.fileSideError('short') }}
                 </div>

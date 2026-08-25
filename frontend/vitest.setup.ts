@@ -59,6 +59,23 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 }
 
+// jsdom also lacks IntersectionObserver. floating-ui's autoUpdate
+// layoutShift path constructs one whenever a ui/ select popper opens and
+// the page mocks getBoundingClientRect to non-zero rects — without this
+// stub those pages crash on open. (Individual tests that stub it locally
+// keep working; the local stub simply replaces this one.)
+if (typeof globalThis.IntersectionObserver === 'undefined') {
+  class IntersectionObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  }
+  globalThis.IntersectionObserver = IntersectionObserverStub as unknown as typeof IntersectionObserver;
+}
+
 if (typeof Element !== 'undefined') {
   if (!Element.prototype.hasPointerCapture) {
     Element.prototype.hasPointerCapture = (): boolean => false;

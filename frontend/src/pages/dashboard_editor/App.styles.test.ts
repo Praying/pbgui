@@ -13,12 +13,14 @@ import { describe, expect, it } from 'vitest';
      GridCell.vue (scoped)   the cell→widget flex chain + header drag cursor
      ResizeHandle.vue        the ::after grip + hover/active button reveal
      StatusBadge.vue         the .status tone rules (class list pinned by tests)
-     MultiSelectDropdown.vue .msel-filter (class list pinned by tests) + the
-                             .dt-meta-controls host-sizing contract
+     MultiSelectDropdown.vue the .dt-meta-controls host-sizing contract
      WidgetBalance / WidgetPositions / IncomeTable / PositionsManageModal
                              the tr:hover/tr.selected td row-state groups
-     PositionsManageModal    the .dp-row-run/.dp-modal-actions button system
-                             (runClass strings pinned by tests)
+
+   Form controls (buttons, inputs, selects, checkboxes) migrated to the
+   shared ui/ layer: the legacy chrome utilities left uiClasses.ts and the
+   modal button CSS left PositionsManageModal; the legacy class names ride
+   along as inert anchors the tests select.
 
    This suite replaces the SHA freeze: it pins the migration's structural
    contracts — the engine class names the tests select, the token mapping
@@ -134,8 +136,8 @@ describe('widgets styles migration — token mapping contracts', () => {
     const uiClasses = readWidget('uiClasses.ts');
     expect(uiClasses).toContain('bg-page'); // --db-bg / widget backgrounds
     expect(uiClasses).toContain('bg-card'); // --db-surface (header fills)
-    expect(uiClasses).toContain('bg-border-default'); // --db-surface2 (control fills)
-    expect(uiClasses).toContain('border-border-strong'); // --db-surface3 (control borders)
+    /* --db-surface2/--db-surface3 (control fills/borders) moved into the
+       shared ui/ control chrome with the button/input/select migration */
     expect(uiClasses).toContain('text-primary'); // --db-text
     expect(uiClasses).toContain('text-secondary'); // --db-text-muted
     expect(uiClasses).toContain('text-muted'); // --db-text-dim
@@ -178,7 +180,6 @@ describe('widgets styles migration — token mapping contracts', () => {
     const dropdown = readComponent('MultiSelectDropdown.vue');
     expect(styleBlocks(dropdown)).toContain('.dt-meta-controls .msel-wrap');
     expect(styleBlocks(dropdown)).toContain('.dt-meta-controls .msel-btn');
-    expect(styleBlocks(dropdown)).toContain('.msel-filter');
   });
 
   it('keeps the row-state groups that paint td descendants', () => {
@@ -195,14 +196,18 @@ describe('widgets styles migration — token mapping contracts', () => {
     );
   });
 
-  it('keeps the modal button system the tests pin (dp-row-run + tone classes)', () => {
-    const modalStyles = styleBlocks(readWidget('PositionsManageModal.vue'));
-    expect(modalStyles).toContain('.dp-quick button');
-    expect(modalStyles).toContain('.dp-modal-actions button');
-    expect(modalStyles).toContain('.dp-row-run.danger');
-    expect(modalStyles).toContain('.dp-row-run.warn');
-    expect(modalStyles).toContain('.dp-row-run.ok');
-    expect(modalStyles).toContain('.dp-modal-actions .danger');
+  it('keeps the modal run-button tone anchors as inert classes on ui/Button', () => {
+    /* The .dp-row-run/.dp-quick/.dp-modal-actions CSS system left with the
+       ui/Button migration; lib/manageLogic's runClass strings (and the
+       footer's danger/warn/ok) ride on the components as test anchors. */
+    const modal = readWidget('PositionsManageModal.vue');
+    expect(modal).toContain('dp-row-run');
+    expect(modal).toContain('runVariant');
+    expect(modal).toContain('class="danger"');
+    expect(modal).toContain('class="warn"');
+    expect(modal).toContain('class="ok"');
+    /* the row-state group stays CSS */
+    expect(styleBlocks(modal)).toContain('.dp-manage-table tr.dp-sel td');
   });
 
   it('keeps the Plotly modebar and fullscreen rules as document CSS', () => {
@@ -218,12 +223,16 @@ describe('widgets styles migration — token mapping contracts', () => {
   it('keeps the dynamic tone mappings as complete class sets', () => {
     /* The dynamic class strings must come from mapping helpers that return
        the FULL colour set per branch (Tailwind emits same-property
-       utilities in its own fixed order). */
+       utilities in its own fixed order). Control-tone helpers (diBtnClass,
+       tfBtnClass) left with the ui/Button migration — the legacy tone class
+       names ride on the components as inert anchors. */
     const income = readWidget('IncomeTable.vue');
-    expect(income).toContain("diBtnClass('danger')");
-    expect(income).toContain("variant === 'danger'");
+    expect(income).toContain("'di-inc-pos text-success-soft'");
+    expect(income).toContain("'di-inc-neg text-danger-soft'");
+    expect(income).toContain('di-btn-danger');
+    expect(income).toContain('di-btn-yes');
     const orders = readWidget('WidgetOrders.vue');
-    expect(orders).toContain('function tfBtnClass(active: boolean)');
+    expect(orders).toContain('do-tf-btn');
     expect(orders).toContain('do-tf-active');
     expect(orders).toContain('function upnlToneClass(cls: string | undefined)');
     expect(orders).toContain("'dt-pos text-success'");

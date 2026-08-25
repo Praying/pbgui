@@ -7,6 +7,9 @@
  */
 import { computed, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
 import { useEditPageContext } from '../composables/useEditPage';
 import { validateJsonText } from '@/shared/jsonValidation';
 
@@ -149,7 +152,10 @@ function userOptionClass(active: boolean): string {
         <div class="form-group">
           <label>{{ t('v7run.user') }}</label>
           <div class="user-combobox relative">
-            <input
+            <!-- the un-layered .user-combobox input rule (padding-right for the
+                 toggle) stays in App.vue — a utility cannot outrank it next to
+                 the un-layered .form-group input padding shorthand. -->
+            <Input
               id="import-user"
               ref="userEl"
               v-model="user"
@@ -168,15 +174,15 @@ function userOptionClass(active: boolean): string {
               @keydown.enter.prevent="matches[activeIndex] ? pick(matches[activeIndex]!.name) : undefined"
               @keydown.esc.prevent="optionsOpen = false"
             />
-            <button
-              class="absolute top-0 right-0 z-[2] h-8 w-8 cursor-pointer rounded-r-sm border border-border-default bg-elevated p-0 text-secondary hover:border-accent hover:text-primary"
+            <Button
+              class="absolute top-0 right-0 z-[2] w-8 rounded-l-none border-l-0 px-0"
               id="import-user-toggle"
               type="button"
               :aria-label="t('v7run.showConfiguredUsers')"
               aria-controls="import-user-options"
               @mousedown.prevent
               @click="optionsOpen ? (optionsOpen = false) : ((optionsOpen = true), userEl?.focus())"
-            >&#x25BE;</button>
+            >&#x25BE;</Button>
             <div
               v-if="optionsOpen"
               class="absolute top-[calc(100%+4px)] left-0 right-0 z-30 max-h-[220px] overflow-y-auto rounded-md border border-border-default bg-panel p-1 shadow-[0_12px_30px_rgba(5,8,14,0.48)]"
@@ -185,6 +191,9 @@ function userOptionClass(active: boolean): string {
               @mousedown.prevent
             >
               <div v-if="!matches.length" class="px-[9px] py-2 text-xs text-secondary">{{ t('v7run.noMatchingUsers') }}</div>
+              <!-- ui-migration: blocked — listbox option rows of the custom
+                   user combobox (full-bleed, left-aligned, role="option");
+                   ui/Button chrome cannot express option rows. -->
               <button
                 v-for="(match, index) in matches"
                 :key="match.name"
@@ -198,7 +207,7 @@ function userOptionClass(active: boolean): string {
             </div>
           </div>
         </div>
-        <textarea
+        <Textarea
           id="import-json"
           ref="jsonEl"
           v-model="json"
@@ -206,14 +215,14 @@ function userOptionClass(active: boolean): string {
           :class="{ 'json-invalid': !!validation.error }"
           rows="18"
           :placeholder="t('v7run.pasteFullJsonConfig')"
-        ></textarea>
+        />
         <div v-if="error || validation.error" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
           <div class="font-semibold">{{ error?.summary ?? t('v7run.fieldIsInvalid', { label: t('v7run.importJson') }) }}</div>
           <div v-if="error?.message || validation.error?.message" class="mt-0.5 text-danger-soft">{{ error?.message ?? validation.error?.message }}</div>
         </div>
         <div class="flex justify-end gap-2">
-          <button class="btn border-success bg-success px-4 text-accent-contrast [transition:background-color_150ms,transform_100ms] hover:bg-success-deep active:translate-y-px" @click="doImport()">{{ t('common.ok') }}</button>
-          <button class="btn px-4 [transition:background-color_150ms,transform_100ms] hover:bg-border-default active:translate-y-px" @click="close()">{{ t('common.cancel') }}</button>
+          <Button variant="success" type="button" @click="doImport()">{{ t('common.ok') }}</Button>
+          <Button type="button" @click="close()">{{ t('common.cancel') }}</Button>
         </div>
       </div>
     </div>

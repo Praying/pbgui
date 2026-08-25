@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { DOMWrapper, enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import IncomeTable from './IncomeTable.vue';
+import { openSelect, selectOptionElements, selectOptionTexts } from '@/shared/testing/select';
 import { resetIncomeScroll } from '../../lib/incomeLogic';
 import type { IncomeRow } from '../../types/widgets';
 
@@ -14,6 +15,15 @@ import type { IncomeRow } from '../../types/widgets';
 enableAutoUnmount(afterEach);
 
 vi.useFakeTimers();
+
+/* jsdom lacks IntersectionObserver — floating-ui's autoUpdate layoutShift
+   path constructs one when the backup listbox opens. (Installed in
+   beforeEach — afterEach's unstubAllGlobals clears module-level stubs.) */
+class IntersectionObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
 
 const ROWS: IncomeRow[] = [
   { id: 3, date_ms: 1706230000000, date: '2024-01-26 00:46:40', symbol: 'BTC', income: 12.345, user: 'alice' },
@@ -81,6 +91,7 @@ beforeEach(() => {
   resetIncomeScroll();
   fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ deleted: 2 }) });
   vi.stubGlobal('fetch', fetchMock);
+  vi.stubGlobal('IntersectionObserver', IntersectionObserverStub);
 });
 
 afterEach(() => {
@@ -394,20 +405,30 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
       }),
     });
     const onReload = vi.fn();
+    /* the backup picker is the ui/ listbox now — options render in a body
+       portal, and reka's open gesture misbehaves when the clock switches
+       mid-test, so this test runs on real timers until the reload-delay
+       assertion at the end (the rest of the file runs fake) */
+    vi.useRealTimers();
     const wrapper = mountTable({ onReload });
     await clickRow(wrapper, 3);
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
     expect(fetchMock).toHaveBeenCalledWith('/api/dashboard/income/backups');
     await flushPromises();
-    const options = wrapper.findAll('.di-backup option');
-    expect(options.map((o) => o.text())).toEqual([
+    await openSelect(wrapper, '.di-backup-select');
+    expect(selectOptionTexts()).toEqual([
       'pbgui-a.db — 2024-01-01 10:00:00',
       'pbgui-b.db — 2024-01-02 11:00:00',
     ]);
-    await wrapper.get('.di-backup select').setValue('/db/pbgui-b.db');
+    const option = selectOptionElements().find((el) => el.textContent?.trim() === 'pbgui-b.db — 2024-01-02 11:00:00')!;
+    await new DOMWrapper(option).trigger('pointerup');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    /* back to the fake clock before the restore flow — reloadSoon's 500 ms
+       delay must be scheduled on the fake timers the assertion advances */
+    vi.useFakeTimers();
     fetchMock.mockClear();
     fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true }) });
-    await wrapper.get('.di-backup .di-btn:nth-of-type(1)').trigger('click');
+    await wrapper.findAll('.di-backup .di-btn')[0]!.trigger('click');
     expect(wrapper.get('.di-confirm-msg').text()).toBe(
       '⚠️ Restore database from pbgui-b.db — 2024-01-02 11:00:00?'
     );
@@ -466,7 +487,7 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     await flushPromises();
     fetchMock.mockClear();
     fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: false }) });
-    await wrapper.get('.di-backup .di-btn:nth-of-type(1)').trigger('click');
+    await wrapper.findAll('.di-backup .di-btn')[0]!.trigger('click');
     await wrapper.get('.di-btn-yes').trigger('click');
     await flushPromises();
     expect(wrapper.get('.di-status').text()).toBe('Restore failed.');
@@ -479,7 +500,7 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');
     await flushPromises();
     expect(wrapper.get('.di-backup').isVisible()).toBe(true);
-    await wrapper.get('.di-backup .di-btn:nth-of-type(2)').trigger('click');
+    await wrapper.findAll('.di-backup .di-btn')[1]!.trigger('click');
     expect(wrapper.find('.di-backup').isVisible()).toBe(false);
     /* reopening then clearing the selection also hides it (updateActions) */
     await wrapper.get('.di-actions .di-btn:nth-of-type(3)').trigger('click');

@@ -206,7 +206,7 @@ describe('Help page shell', () => {
   it('renders global-search result cards with highlighted snippets', async () => {
     const w = await mountApp();
 
-    await w.find('#help-search-global').setValue(true);
+    await w.find('#help-search-global').trigger('click');
     await flush();
     expect(w.find('#help-content').text()).toContain('Type a search term'); // legacy :774 empty-term hint
 
@@ -223,7 +223,7 @@ describe('Help page shell', () => {
   it('shows the no-results message for a global search without hits', async () => {
     const w = await mountApp();
 
-    await w.find('#help-search-global').setValue(true);
+    await w.find('#help-search-global').trigger('click');
     await w.find('#help-search').setValue('zzzz');
     await waitForDebounce();
 
@@ -235,7 +235,7 @@ describe('Help page shell', () => {
   it('opens the clicked global result topic and leaves global mode', async () => {
     const w = await mountApp();
 
-    await w.find('#help-search-global').setValue(true);
+    await w.find('#help-search-global').trigger('click');
     await w.find('#help-search').setValue('database');
     await waitForDebounce();
     expect(w.findAll('.gs-item')).toHaveLength(1);
@@ -243,7 +243,7 @@ describe('Help page shell', () => {
     await w.findAll('.gs-item')[0]!.trigger('click');
     await flush();
 
-    expect((w.find('#help-search-global').element as HTMLInputElement).checked).toBe(false);
+    expect(w.find('#help-search-global').attributes('aria-checked')).toBe('false');
     expect(w.find('#help-content').text()).toContain('Database tools topic');
     expect(w.findAll('.toc-item')[2]!.classes()).toContain('active');
   });

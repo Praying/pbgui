@@ -27,6 +27,7 @@
  *    cfg-refresh handoff) and reportHeight() (R12).
  */
 import { computed, inject, nextTick, onScopeDispose, ref, shallowRef, watch } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch, currentGeneration } from '../../composables/useDashboardFetch';
 import { useOrdersChart, type OrdersChartController, type RawCandle } from '../../composables/useOrdersChart';
@@ -58,16 +59,9 @@ import {
 } from './uiClasses';
 import WidgetHeader from './WidgetHeader.vue';
 
-/* ── Tailwind class sets (the former .do-* rules of styles/widgets.css,
-   deleted at the Tailwind migration). Every branch returns the COMPLETE
-   colour set — the legacy .do-tf-active variant replaced the base tone
-   wholesale, so it must never combine with the default tone on the same
-   element. The legacy class names ride along as inert anchors. */
-function tfBtnClass(active: boolean): string {
-  return active
-    ? 'do-tf-btn do-tf-active cursor-pointer whitespace-nowrap rounded-sm border border-accent bg-accent px-[0.5rem] py-[0.15rem] text-[0.78rem] text-[#f2f5fb] [transition:all_.15s]'
-    : 'do-tf-btn cursor-pointer whitespace-nowrap rounded-sm border border-border-strong bg-border-default px-[0.5rem] py-[0.15rem] text-[0.78rem] text-muted hover:bg-border-strong hover:text-primary [transition:all_.15s]';
-}
+/* The .do-tf-btn timeframe toggle renders ui/Button now (active → info, idle
+   → default); the legacy class names ride along as inert anchors — the tests
+   select .do-tf-btn / .do-tf-active. */
 
 /** The former .do-leg-solid/.do-leg-dotted/.do-leg-dashed swatches — the
  *  visible border colour comes from the inline style (borderColor). */
@@ -330,15 +324,17 @@ const icon = WIDGET_META.ORDERS.icon;
       <div v-else-if="payload" :class="[dtMetaClass, dtMetaControlsClass]">
         <span :class="dtMetaLblClass">{{ dashT('dash.timeframe', 'Timeframe') }}</span>
         <div class="do-tf-bar flex flex-wrap items-center gap-[0.25rem]">
-          <button
+          <Button
             v-for="tf in TIMEFRAMES"
             :key="tf"
             type="button"
-            :class="tfBtnClass(tf === currentTimeframe)"
+            size="sm"
+            :variant="tf === currentTimeframe ? 'info' : 'default'"
+            :class="tf === currentTimeframe ? 'do-tf-btn do-tf-active' : 'do-tf-btn'"
             @click="onTfClick(tf)"
           >
             {{ tf }}
-          </button>
+          </Button>
         </div>
         <span :class="dtMetaSepClass">·</span>
         <span :class="dtMetaClass">{{ dashT('dash.user', 'User') }}:&nbsp;<span :class="dtMetaUserClass">{{ payload.user || '' }}</span>&nbsp;·&nbsp;{{ dashT('dash.symbol', 'Symbol') }}:&nbsp;<span :class="dtMetaUserClass">{{ payload.symbol || '' }}</span>&nbsp;·&nbsp;<span class="do-clock">{{ clockText }}</span><span v-if="upnl.text.value" class="do-pos-info">{{ ' · uPnL: ' }}<span :class="upnlToneClass(upnl.cls.value)">{{ upnl.text.value }}</span></span></span>
@@ -351,14 +347,16 @@ const icon = WIDGET_META.ORDERS.icon;
       </div>
       <div v-else ref="chartWrapEl" :class="chartWrapClass(fs.isFullscreen.value)">
         <div class="do-chart-toolbar absolute left-1 top-1 z-[20] hidden gap-0.5 rounded-[5px] border border-border-default bg-page/85 px-1 py-0.75 group-hover:flex">
-          <button
+          <Button
             type="button"
-            class="do-fs-btn cursor-pointer rounded-[3px] border-0 bg-transparent px-1.25 py-0.5 text-[15px] leading-none text-secondary hover:bg-elevated hover:text-primary"
+            variant="ghost"
+            size="sm"
+            class="do-fs-btn px-1.25 py-0.5 text-[15px] leading-none hover:bg-elevated"
             :title="dashT('dash.fullscreen', 'Fullscreen')"
             @click="fs.toggleFullscreen()"
           >
             {{ fs.isFullscreen.value ? '✕' : '⛶' }}
-          </button>
+          </Button>
         </div>
         <div class="do-legend pointer-events-none absolute left-10 top-1.5 z-10 flex gap-[0.75rem] text-[0.65rem] text-secondary">
           <span v-for="li in legend" :key="li.label" class="do-leg-item inline-flex items-center gap-1">

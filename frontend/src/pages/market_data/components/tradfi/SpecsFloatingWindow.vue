@@ -10,6 +10,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import {
   RESIZE_DIRECTIONS,
@@ -219,13 +220,15 @@ function resizeHandleClass(direction: ResizeDirection): string {
         <div class="tradfi-specs-window-title text-md font-bold text-primary" id="tradfi-specs-window-title">{{ title }}</div>
         <div class="tradfi-specs-window-subtitle text-sm text-secondary" id="tradfi-specs-window-subtitle">{{ subtitle }}</div>
       </div>
-      <button
-        class="tradfi-specs-window-close cursor-pointer rounded-md border-none bg-transparent py-[0.15rem] px-[0.35rem] text-lg leading-none text-muted hover:bg-white/6 hover:text-primary"
+      <Button
+        class="tradfi-specs-window-close text-lg leading-none"
+        variant="ghost"
+        size="sm"
         id="btn-tradfi-specs-close"
         type="button"
         :aria-label="t('market.closeSpecsWindow')"
         @click="map.closeWindow()"
-      >✕</button>
+      >✕</Button>
     </div>
     <div id="tradfi-specs-view" class="tradfi-specs-window-body min-h-0 flex-1 overflow-auto bg-page/94 p-3 max-[700px]:p-2">
       <SearchResults v-if="map.windowMode.value === 'search'" :map="map" />

@@ -9,6 +9,8 @@
  */
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import PlotlyDiv from './PlotlyDiv.vue';
 import TweChart from './TweChart.vue';
 import {
@@ -267,10 +269,17 @@ function fmtDate(iso: string | undefined): string {
 const bePlot = ref<InstanceType<typeof PlotlyDiv> | null>(null);
 const pnlPlot = ref<InstanceType<typeof PlotlyDiv> | null>(null);
 
-/** toggleLogScale (:7206-7210). */
-function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, event: Event): void {
-  plot?.relayout({ 'yaxis.type': (event.target as HTMLInputElement).checked ? 'log' : 'linear' });
+/** toggleLogScale (:7206-7210) — the Checkbox payload replaces the legacy
+ *  event-target read. */
+function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, checked: boolean | 'indeterminate'): void {
+  plot?.relayout({ 'yaxis.type': checked === true ? 'log' : 'linear' });
 }
+
+/** Closed-state trigger label for the price-market listbox. */
+const priceMarketLabel = computed(() => {
+  const market = markets.value.find((m) => priceMarketOptionValue(m) === state.priceMarket);
+  return market ? `${market.exchange} / ${market.coin}` : state.priceMarket;
+});
 </script>
 
 <template>
@@ -283,16 +292,21 @@ function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, event: Event): v
       <!-- 1. Balance & Equity + price overlay (:6636-6652) -->
       <div style="margin-bottom: var(--sp-xs); display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap">
         <label class="sb-toggle">
-          <input type="checkbox" data-test="be-log-toggle" @change="toggleLog(bePlot, $event)" />
+          <Checkbox data-test="be-log-toggle" @update:model-value="toggleLog(bePlot, $event)" />
           <span style="font-size: var(--fs-sm)">logarithmic</span>
         </label>
         <label v-if="markets.length" style="font-size: var(--fs-sm); color: var(--text-dim)">
           Price (PBGui MarketData)
-          <select v-model="state.priceMarket" class="sb-input" style="max-width: 220px" data-test="price-market" @change="onPriceMarketChange">
-            <option v-for="market in markets" :key="market.exchange + market.coin" :value="priceMarketOptionValue(market)">
-              {{ market.exchange }} / {{ market.coin }}
-            </option>
-          </select>
+          <SelectRoot :model-value="state.priceMarket" @update:model-value="state.priceMarket = String($event ?? ''); void onPriceMarketChange()">
+            <SelectTrigger class="ml-1 w-auto min-w-[140px] max-w-[220px]" data-test="price-market" aria-label="Price (PBGui MarketData)">
+              <span>{{ priceMarketLabel }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="market in markets" :key="market.exchange + market.coin" :value="priceMarketOptionValue(market)">
+                {{ market.exchange }} / {{ market.coin }}
+              </SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </label>
         <span
           v-if="markets.length"
@@ -312,7 +326,7 @@ function toggleLog(plot: InstanceType<typeof PlotlyDiv> | null, event: Event): v
       <!-- 2. PnL per symbol (:6654-6658) -->
       <div style="margin-bottom: var(--sp-xs)">
         <label class="sb-toggle">
-          <input type="checkbox" data-test="pnl-log-toggle" @change="toggleLog(pnlPlot, $event)" />
+          <Checkbox data-test="pnl-log-toggle" @update:model-value="toggleLog(pnlPlot, $event)" />
           <span style="font-size: var(--fs-sm)">logarithmic</span>
         </label>
       </div>

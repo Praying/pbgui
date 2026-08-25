@@ -9,6 +9,7 @@
 import { onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
+import { Button } from '@/shared/components/ui/button';
 import { useEditPageContext } from '../composables/useEditPage';
 
 interface LogViewer {
@@ -171,7 +172,7 @@ onBeforeUnmount(() => {
         class="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap rounded-[3px] border bg-page px-1.5 py-px text-xs"
         :class="logHostClass(hostClass)"
       >{{ hostBadge }}</span>
-      <button class="cursor-pointer rounded-sm border-0 bg-transparent px-1.5 py-0.5 text-md leading-none text-secondary hover:bg-white/6 hover:text-primary" :title="t('common.close')" @click="open = false">&#x00D7;</button>
+      <Button variant="ghost" size="icon" class="h-7 w-7 text-md" :title="t('common.close')" :aria-label="t('common.close')" @click="open = false">&#x00D7;</Button>
     </div>
     <div id="log-viewer-target" style="flex: 1; overflow: hidden; min-height: 0"></div>
   </div>

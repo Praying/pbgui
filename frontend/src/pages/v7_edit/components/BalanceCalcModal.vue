@@ -8,6 +8,7 @@
  */
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { useEditPageContext } from '../composables/useEditPage';
 import { requestBalanceCalculation } from '../composables/useDraftHandoffs';
 import { serverMsg } from '@/shared/i18n';
@@ -120,7 +121,7 @@ defineExpose({ show });
         </template>
         <div v-if="errorText" style="color: var(--red); font-size: var(--fs-sm)">{{ errorText }}</div>
         <div class="flex justify-end gap-2">
-          <button class="btn px-4 [transition:background-color_150ms,transform_100ms] hover:bg-border-default active:translate-y-px" @click="open = false">{{ t('common.close') }}</button>
+          <Button type="button" @click="open = false">{{ t('common.close') }}</Button>
         </div>
       </div>
     </div>

@@ -10,8 +10,11 @@ import { PhMinus, PhPlus, PhX } from '@phosphor-icons/vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import { effectiveCpuMax } from '../composables/useSettings';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { BacktestSettings, SettingsPatch } from '../types';
 
 const props = defineProps<{
@@ -118,32 +121,32 @@ function cleanupNow(): void {
     <div :class="[modalBoxClass, 'shadow-modal']">
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold">{{ t('v7backtest.settingsTitle') }}</span>
-        <button type="button" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="18" /></button>
+        <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <div style="display: flex; flex-direction: column; gap: var(--sp-md); min-width: 320px">
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.settingsCpuSlots') }}</div>
           <div class="sb-stepper">
             <span class="sb-stepper-label">CPU</span>
-            <button type="button" data-test="cpu-minus" aria-label="Decrease CPU" title="Decrease CPU" @click="adjustCpu(-1)"><PbIcon :icon="PhMinus" /></button>
-            <input id="set-cpu-val" type="text" :value="draft.cpu" readonly />
-            <button type="button" data-test="cpu-plus" aria-label="Increase CPU" title="Increase CPU" @click="adjustCpu(1)"><PbIcon :icon="PhPlus" /></button>
+            <Button type="button" variant="default" size="sm" data-test="cpu-minus" aria-label="Decrease CPU" title="Decrease CPU" @click="adjustCpu(-1)"><PbIcon :icon="PhMinus" /></Button>
+            <Input id="set-cpu-val" type="text" class="w-auto" :model-value="draft.cpu" readonly />
+            <Button type="button" variant="default" size="sm" data-test="cpu-plus" aria-label="Increase CPU" title="Increase CPU" @click="adjustCpu(1)"><PbIcon :icon="PhPlus" /></Button>
             <span id="set-cpu-max" style="color: var(--text-dim); font-size: var(--fs-xs); margin-left: var(--sp-sm)">
               {{ t('v7backtest.maxCpu', { n: cpuMax }) }}
             </span>
           </div>
           <label class="sb-toggle">
-            <input id="set-autostart" v-model="draft.autostart" type="checkbox" @change="dirty = true" />
+            <Checkbox id="set-autostart" v-model="draft.autostart" @update:model-value="dirty = true" />
             <span>{{ t('v7backtest.autostart') }}</span>
           </label>
           <label class="sb-toggle">
-            <input id="set-pbgui-market-data" v-model="draft.usePbguiMarketData" type="checkbox" @change="dirty = true" />
+            <Checkbox id="set-pbgui-market-data" v-model="draft.usePbguiMarketData" @update:model-value="dirty = true" />
             <span>{{ t('v7backtest.usePbguiMarketData') }}</span>
           </label>
           <hr class="sb-sep" />
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.hlcvsCacheCleanup') }}</div>
           <label class="sb-toggle">
-            <input id="set-cleanup-enabled" v-model="draft.cleanupEnabled" type="checkbox" @change="dirty = true" />
+            <Checkbox id="set-cleanup-enabled" v-model="draft.cleanupEnabled" @update:model-value="dirty = true" />
             <span>{{ t('common.enabled') }}</span>
           </label>
           <div style="color: var(--text-dim); font-size: var(--fs-xs)">{{ t('v7backtest.hlcvsCleanupHelp') }}</div>
@@ -151,7 +154,7 @@ function cleanupNow(): void {
             <div style="display: flex; gap: var(--sp-md); align-items: center">
               <div style="flex: 1">
                 <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.retentionDays') }}</div>
-                <input
+                <Input
                   id="set-cleanup-days"
                   v-model="draft.cleanupDays"
                   type="number"
@@ -163,7 +166,7 @@ function cleanupNow(): void {
               </div>
               <div style="flex: 1">
                 <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.checkIntervalH') }}</div>
-                <input
+                <Input
                   id="set-cleanup-interval"
                   v-model="draft.cleanupInterval"
                   type="number"
@@ -176,15 +179,15 @@ function cleanupNow(): void {
             </div>
           </div>
           <div style="margin-top: var(--sp-sm)">
-            <button id="clean-now-btn" type="button" class="pbgui-action" :class="modalBtnClass()" style="font-size: var(--fs-sm)" :disabled="cleaning" @click="cleanupNow">
+            <Button id="clean-now-btn" type="button" variant="default" class="modal-btn pbgui-action" style="font-size: var(--fs-sm)" :disabled="cleaning" @click="cleanupNow">
               {{ cleaning ? t('v7backtest.cleaning') : t('v7backtest.cleanNow') }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" class="pbgui-action" :class="modalBtnClass()" @click="emit('close')">{{ t('common.cancel') }}</button>
-        <button type="button" class="pbgui-action primary" :class="modalBtnClass()" @click="save">{{ t('common.save') }}</button>
+        <Button type="button" variant="default" class="modal-btn pbgui-action" @click="emit('close')">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="primary" class="modal-btn pbgui-action primary" @click="save">{{ t('common.save') }}</Button>
       </div>
     </div>
   </div>

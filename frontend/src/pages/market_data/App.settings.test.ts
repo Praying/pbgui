@@ -8,6 +8,7 @@ import {
   visiblePanelIds,
   BASE,
 } from './App.test-support';
+import { pickSelectOption } from '@/shared/testing/select';
 
 /* M-data-3 settings panel integration (:2979-3085, :8881-8948, :7314). */
 
@@ -43,7 +44,7 @@ describe('settings panel integration (M-data-3, :2979-3085, :8881-8948, :7314)',
   it('reloads settings when the exchange changes (:9611-9613 → :7314)', async () => {
     const app = mountApp();
     await flushPromises();
-    await app.find('#page-exchange').setValue('bybit');
+    await pickSelectOption(app, '#page-exchange', 'Bybit');
     await flushPromises();
     const settingsCalls = fetchMock.mock.calls
       .map((call) => String(call[0]))

@@ -44,6 +44,7 @@ import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
 import type { PageSection } from '@/shared/navigation';
 import AlertModal from './components/AlertModal.vue';
 import BackupsPanel from './components/BackupsPanel.vue';
@@ -324,7 +325,7 @@ onMounted(async () => {
               {{ t('misc.apikeys.inUseCount', { count: store.inUseCount.value }) }}
             </span>
           </div>
-          <button class="pbgui-btn btn-primary" data-testid="add-user" @click="showCreateForm"><PbIcon :icon="PhPlus" /> {{ t('misc.apikeys.addUser') }}</button>
+          <Button type="button" variant="primary" data-testid="add-user" @click="showCreateForm"><PbIcon :icon="PhPlus" /> {{ t('misc.apikeys.addUser') }}</Button>
         </div>
 
         <!-- User list -->

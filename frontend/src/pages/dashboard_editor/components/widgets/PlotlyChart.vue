@@ -26,6 +26,7 @@
  * the epoch-rebuild contract requires the remount to keep it).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 import { useFullscreen } from '../../composables/useFullscreen';
 import { dashT } from '../../lib/i18n';
 import {
@@ -198,14 +199,17 @@ const heightStyle = computed<{ height: string } | undefined>(() =>
          an empty string and lose to the button's `hidden` base utility (the
          former widgets.css .dt-fs-close{display:none} rule), leaving the
          button invisible in real browsers -->
-    <button
-      class="dt-fs-close absolute left-2 top-2 z-[9999] hidden cursor-pointer rounded-sm border border-border-strong bg-elevated px-[0.55rem] py-[0.2rem] text-[0.82rem] leading-[1.5] text-primary hover:border-danger-deep hover:bg-danger-deep hover:text-[#f2f5fb]"
+    <Button
+      type="button"
+      variant="default"
+      size="sm"
+      class="dt-fs-close absolute left-2 top-2 z-[9999] hidden px-[0.55rem] text-[0.82rem] leading-[1.5] hover:border-danger-deep hover:bg-danger-deep hover:text-[#f2f5fb]"
       :style="{ display: fs.isFullscreen.value ? 'block' : 'none' }"
       :title="dashT('dash.exitFullscreen', 'Exit Fullscreen')"
       @click="fs.exitFullscreen()"
     >
       ✕
-    </button>
+    </Button>
     <div v-if="plotlyMissing" :class="dtStatusClass">
       {{ dashT('dash.plotlyNotLoaded', 'Plotly not loaded') }}
     </div>

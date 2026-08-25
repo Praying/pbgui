@@ -8,7 +8,7 @@
  */
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { btnClass } from '../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
 import type { ConfirmDialogController } from '../composables/useConfirmDialog';
 
 const props = defineProps<{
@@ -52,7 +52,7 @@ watch(
       <div class="ovl-header flex flex-shrink-0 items-center justify-between border-b border-border-subtle bg-card pt-[0.85rem] pr-[1.1rem] pb-[0.85rem] pl-[1.25rem]">
         <div class="ovl-header-title flex items-center gap-[0.5rem] text-md font-bold text-primary" id="confirm-title">{{ dialog.state.value.title }}</div>
         <div class="ovl-header-actions relative z-[3] flex items-center gap-[0.5rem]">
-          <button class="ovl-close cursor-pointer rounded-[5px] border-none bg-transparent py-[0.2rem] px-[0.35rem] text-md leading-none text-muted transition-[color,background-color] duration-[120ms] hover:bg-white/6 hover:text-primary" id="confirm-close" type="button" aria-label="close" @click="dialog.cancel()">✕</button>
+          <Button class="ovl-close text-md leading-none" variant="ghost" size="sm" id="confirm-close" type="button" aria-label="close" @click="dialog.cancel()">✕</Button>
         </div>
       </div>
       <div class="confirm-body grid gap-3 p-3">
@@ -68,12 +68,12 @@ watch(
         </div>
         <div class="confirm-warning text-sm leading-[1.45] text-warning" id="confirm-warning">{{ t('market.actionCannotBeUndone') }}</div>
         <div class="confirm-actions flex flex-wrap justify-end gap-2">
-          <button :class="btnClass('secondary')" id="btn-confirm-cancel" type="button" @click="dialog.cancel()">
+          <Button variant="info" id="btn-confirm-cancel" type="button" @click="dialog.cancel()">
             {{ t('common.cancel') }}
-          </button>
-          <button :class="btnClass('primary')" id="btn-confirm-accept" type="button" @click="dialog.accept()">
+          </Button>
+          <Button variant="primary" id="btn-confirm-accept" type="button" @click="dialog.accept()">
             {{ dialog.state.value.confirmText || t('common.confirm') }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

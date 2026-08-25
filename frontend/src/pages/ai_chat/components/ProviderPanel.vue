@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import type { ProviderInfo } from '../composables/useAiChat';
 
 interface ProviderPanelProps {
@@ -59,35 +61,34 @@ function onGoConnect(): void {
       </div>
       <p class="mb-2.5 text-xs text-secondary">{{ t('ai.chat.chatgptHelp') }}</p>
       <div class="flex gap-2">
-        <button
+        <Button
           type="button"
-          class="h-8 cursor-pointer rounded-md border-none bg-accent px-3 text-sm font-bold text-[#07111f] transition-colors hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-45"
+          variant="primary"
           :disabled="transitioning || chatgpt.connected || !chatgpt.available"
           @click="emit('chatgptLogin', 'browser')"
-        >{{ t('ai.chat.browserLogin') }}</button>
-        <button
+        >{{ t('ai.chat.browserLogin') }}</Button>
+        <Button
           type="button"
-          class="h-8 cursor-pointer rounded-md border border-border-default bg-elevated px-3 text-sm text-primary transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-45"
           :disabled="transitioning || chatgpt.connected || !chatgpt.available"
           @click="emit('chatgptLogin', 'device')"
-        >{{ t('ai.chat.deviceCode') }}</button>
-        <button
+        >{{ t('ai.chat.deviceCode') }}</Button>
+        <Button
           v-if="chatgpt.connected"
           type="button"
-          class="h-8 cursor-pointer rounded-md border border-[rgba(248,113,113,.35)] bg-transparent px-3 text-sm text-[#fecaca] transition-colors hover:border-danger disabled:cursor-not-allowed disabled:opacity-45"
+          variant="danger"
           :disabled="transitioning"
           @click="emit('chatgptDisconnect')"
-        >{{ t('ai.chat.disconnect') }}</button>
+        >{{ t('ai.chat.disconnect') }}</Button>
       </div>
       <div v-if="loginVisible" class="mt-2.5 rounded-lg border border-border-default bg-[#0b1320] p-2.5">
         <div>{{ loginInstructions }}</div>
         <a class="mt-1.5 block break-all text-accent" :href="loginUrl" target="_blank" rel="noopener noreferrer">{{ loginUrl }}</a>
         <div v-if="loginCode" class="my-1.5 font-mono text-xl font-bold tracking-[0.08em] text-[#bfdbfe]">{{ loginCode }}</div>
-        <button
+        <Button
           type="button"
-          class="mt-1.5 h-8 cursor-pointer rounded-md border border-border-default bg-elevated px-3 text-sm text-primary transition-colors hover:border-accent"
+          class="mt-1.5"
           @click="emit('chatgptCancel')"
-        >{{ t('ai.chat.cancelLogin') }}</button>
+        >{{ t('ai.chat.cancelLogin') }}</Button>
       </div>
     </section>
 
@@ -102,20 +103,21 @@ function onGoConnect(): void {
       </div>
       <p class="mb-2.5 text-xs text-secondary">{{ t('ai.chat.goHelp') }}</p>
       <div v-if="!go.connected" class="flex gap-2">
-        <input
+        <Input
           v-model="goKey"
           type="password"
           autocomplete="new-password"
           :placeholder="t('ai.chat.goKeyPlaceholder')"
           :aria-label="t('ai.chat.goKeyPlaceholder')"
-          class="h-8 min-w-0 flex-1 rounded-md border border-border-default bg-[#0b1320] px-2 text-sm text-primary outline-none focus:border-accent"
+          class="min-w-0 flex-1"
         />
-        <button
+        <Button
           type="button"
-          class="h-8 shrink-0 cursor-pointer rounded-md border-none bg-accent px-3 text-sm font-bold text-[#07111f] transition-colors hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-45"
+          variant="primary"
+          class="shrink-0"
           :disabled="transitioning"
           @click="onGoConnect"
-        >{{ t('ai.chat.connect') }}</button>
+        >{{ t('ai.chat.connect') }}</Button>
       </div>
       <div v-if="!go.connected" class="mt-1.5 flex gap-2">
         <a
@@ -125,13 +127,14 @@ function onGoConnect(): void {
           rel="noopener noreferrer"
         >{{ t('ai.chat.getGo') }}</a>
       </div>
-      <button
+      <Button
         v-if="go.connected"
         type="button"
-        class="mt-1.5 h-8 cursor-pointer rounded-md border border-[rgba(248,113,113,.35)] bg-transparent px-3 text-sm text-[#fecaca] transition-colors hover:border-danger disabled:cursor-not-allowed disabled:opacity-45"
+        variant="danger"
+        class="mt-1.5"
         :disabled="transitioning"
         @click="emit('goDisconnect')"
-      >{{ t('ai.chat.disconnect') }}</button>
+      >{{ t('ai.chat.disconnect') }}</Button>
     </section>
   </div>
 </template>

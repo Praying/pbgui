@@ -10,6 +10,8 @@
  */
 import { computed, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import type { BackupGroup } from '../composables/useBackups';
 
 const props = defineProps<{
@@ -38,6 +40,18 @@ const panel = useTemplateRef<HTMLElement>('panelEl');
 
 /** var(--success) saved / var(--warning) dirty (:1242-1247). */
 const retentionColor = computed(() => (props.retention === props.retentionSaved ? 'var(--success)' : 'var(--warning)'));
+
+/* The ui/ Input is v-model-only; these adapters keep the legacy one-way
+   flow (prop renders, input event emits) unchanged. */
+const retentionModel = computed<string | number | null>({
+  get: () => props.retention,
+  set: (value) => emit('update:retention', Number(value)),
+});
+
+const filterModel = computed<string | number | null>({
+  get: () => props.filterText,
+  set: (value) => emit('update:filterText', String(value ?? '')),
+});
 
 /* ── drag to move (:1159-1180) ── */
 
@@ -111,37 +125,35 @@ function onRetentionWheel(event: WheelEvent): void {
     <div ref="dragEl" class="absolute top-0 left-0 right-10 z-[2] h-11 cursor-move" id="backup-drag" @mousedown="bindDragMove"></div>
     <div class="relative flex shrink-0 items-center justify-between rounded-t-lg border-b border-border-default bg-elevated px-3 py-2">
       <h3 class="m-0 text-lg">{{ t('v7run.instanceBackups') }}</h3>
-      <button class="relative z-[3] cursor-pointer rounded-sm border-none bg-transparent px-1.5 py-0.5 text-lg leading-none text-secondary hover:bg-white/6 hover:text-primary" id="backup-close" @click="$emit('close')">&#x2715;</button>
+      <Button class="relative z-[3] text-lg leading-none" variant="ghost" size="sm" id="backup-close" type="button" @click="$emit('close')">&#x2715;</Button>
     </div>
     <div class="flex shrink-0 flex-wrap items-center gap-2 border-b border-border-default px-3 py-1.5 text-sm">
       <label class="whitespace-nowrap text-secondary">{{ t('v7run.retentionLimit') }} </label>
       <div class="num-stepper flex items-center">
-        <button type="button" class="flex h-[26px] w-6 shrink-0 cursor-pointer select-none items-center justify-center border border-border-default bg-elevated p-0 text-sm leading-none text-primary hover:border-accent hover:bg-accent hover:text-accent-contrast" id="ret-minus" @click="$emit('step', -1)">&#x2212;</button>
-        <input
-          ref="retentionInput"
+        <Button type="button" class="h-[26px] w-6 shrink-0 p-0 leading-none" id="ret-minus" @click="$emit('step', -1)">&#x2212;</Button>
+        <Input
+          v-model="retentionModel"
           type="number"
           id="backup-retention"
           min="1"
           step="1"
-          :value="retention"
           :style="{ color: retentionColor }"
-          @input="$emit('update:retention', Number(($event.target as HTMLInputElement).value))"
           @wheel="onRetentionWheel"
         />
-        <button type="button" class="flex h-[26px] w-6 shrink-0 cursor-pointer select-none items-center justify-center border border-border-default bg-elevated p-0 text-sm leading-none text-primary hover:border-accent hover:bg-accent hover:text-accent-contrast" id="ret-plus" @click="$emit('step', 1)">+</button>
+        <Button type="button" class="h-[26px] w-6 shrink-0 p-0 leading-none" id="ret-plus" @click="$emit('step', 1)">+</Button>
       </div>
-      <button id="backup-retention-save" class="flex h-[26px] cursor-pointer items-center rounded-sm border border-border-default bg-transparent px-2 text-sm text-secondary hover:bg-success/15 hover:text-success" :title="t('v7run.saveRetentionLimit')" @click="$emit('saveRetention')">&#xD83D;&#xDCBE;</button>
+      <Button id="backup-retention-save" variant="outline" type="button" class="h-[26px] px-2" :title="t('v7run.saveRetentionLimit')" @click="$emit('saveRetention')">&#xD83D;&#xDCBE;</Button>
       <span id="backup-retention-msg" v-if="retentionMsg" :style="{ marginLeft: '6px', fontSize: '0.85em', color: retentionMsg.color }">
         {{ retentionMsg.text }}
       </span>
       <div class="ml-auto w-full min-w-[220px] max-w-[320px]">
-        <input
+        <Input
+          v-model="filterModel"
           type="search"
           id="backup-filter"
+          size="sm"
           :placeholder="t('v7run.filterInstancesOrBackups')"
           autocomplete="off"
-          :value="filterText"
-          @input="$emit('update:filterText', ($event.target as HTMLInputElement).value)"
         />
       </div>
     </div>
@@ -163,23 +175,27 @@ function onRetentionWheel(event: WheelEvent): void {
           <div v-for="item in group.items" :key="item.id" class="my-0.5 flex items-center gap-2 rounded-sm bg-white/3 px-2 py-1 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_3px_rgba(5,8,14,0.3)]">
             <span class="min-w-[68px] text-primary tabular-nums">{{ item.id }}</span>
             <span class="flex-1 text-secondary tabular-nums">{{ item.created_at || '-' }}</span>
-            <button
+            <Button
               v-if="group.backup.can_restore !== false"
-              class="cursor-pointer rounded-[3px] border border-success bg-success px-2 py-0.5 text-xs font-semibold text-[#f2f5fb] hover:opacity-85"
+              variant="success"
+              size="sm"
+              type="button"
               :data-restore-name="group.backup.name"
               :data-restore-ts="item.id"
               @click="$emit('restore', group.backup.name, item.id)"
             >
               {{ t('v7run.loadInEditor') }}
-            </button>
-            <button
-              class="cursor-pointer rounded-[3px] border border-danger bg-transparent px-2 py-0.5 text-xs font-semibold text-danger hover:bg-danger hover:text-[#f2f5fb]"
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              type="button"
               :data-del-name="group.backup.name"
               :data-del-ts="item.id"
               @click="$emit('deleteBackup', group.backup.name, item.id)"
             >
               &#x2716;
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -190,8 +206,10 @@ function onRetentionWheel(event: WheelEvent): void {
 
 <style scoped>
 /* Number stepper ported from styles/v7-run.css — hidden native spinners
-   (::-webkit-* pseudo-elements) and joined first/last radii cannot be
-   expressed as utilities. */
+   (::-webkit-* pseudo-elements) and the fixed 56px/26px input geometry
+   cannot be expressed as utilities. (The legacy .stepper-btn join rules
+   never matched — the buttons carried no stepper-btn class — so they are
+   dropped with the button migration.) */
 .num-stepper input {
   width: 56px;
   text-align: center;
@@ -210,7 +228,4 @@ function onRetentionWheel(event: WheelEvent): void {
   -webkit-appearance: none;
   margin: 0;
 }
-
-.stepper-btn:first-child { border-radius: 4px 0 0 4px; border-right: none; }
-.stepper-btn:last-child { border-radius: 0 4px 4px 0; border-left: none; }
 </style>

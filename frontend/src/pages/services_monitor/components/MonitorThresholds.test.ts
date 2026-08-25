@@ -55,7 +55,7 @@ describe('MonitorThresholds rendering (legacy renderMonitorSettingsFields)', () 
     for (const input of wrapper.findAll('input')) {
       expect(input.attributes('type')).toBe('number');
       expect(input.attributes('step')).toBe('any');
-      expect(input.classes()).toContain('form-input');
+      expect(input.attributes('data-slot')).toBe('input');
     }
   });
 

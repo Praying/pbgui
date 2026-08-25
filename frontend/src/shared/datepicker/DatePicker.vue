@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { PhCalendarBlank } from '@phosphor-icons/vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 
 /**
  * DatePicker — the Vue port of the custom __dp popup calendar
@@ -180,16 +182,17 @@ const canToday = computed(() => {
 
 <template>
   <div class="dp-field relative">
-    <input v-model="model" type="text" class="form-input w-full pr-6.5" :placeholder="placeholder" />
-    <button
+    <Input v-model="model" type="text" class="w-full pr-6.5" :placeholder="placeholder" />
+    <Button
       type="button"
       data-dp
       title="Open calendar"
-      class="absolute top-1/2 right-0.5 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-sm border-none bg-transparent p-0 text-secondary transition-colors duration-[120ms] ease-standard hover:text-accent-soft"
+      variant="ghost"
+      class="absolute top-1/2 right-0.5 size-6 -translate-y-1/2 px-0"
       @click="show"
     >
       <PhCalendarBlank class="size-4" aria-hidden="true" />
-    </button>
+    </Button>
 
     <div
       v-if="open"
@@ -197,20 +200,20 @@ const canToday = computed(() => {
       data-test="dp-popup"
     >
       <div class="mb-2 flex items-center gap-1">
-        <button type="button" data-test="dp-prev" class="dp-nav" :disabled="!canPrev" @click="shiftMonth(-1)">‹</button>
+        <Button type="button" data-test="dp-prev" variant="ghost" size="sm" class="dp-nav" :disabled="!canPrev" @click="shiftMonth(-1)">‹</Button>
         <div class="relative flex-1">
-          <button type="button" class="dp-nav w-full" @click="menu = menu === 'month' ? '' : 'month'">{{ MONTHS[month] }} ▾</button>
+          <Button type="button" variant="ghost" size="sm" class="dp-nav w-full" @click="menu = menu === 'month' ? '' : 'month'">{{ MONTHS[month] }} ▾</Button>
           <div v-if="menu === 'month'" class="dp-dd left-0 min-w-[140px]">
             <button v-for="(name, m) in MONTHS" :key="name" type="button" class="dp-dd-item" :class="{ selected: m === month }" :disabled="!monthHasSelectableDays(year, m)" @click="setMonth(m)">{{ name }}</button>
           </div>
         </div>
         <div class="relative w-18">
-          <button type="button" class="dp-nav w-full" @click="menu = menu === 'year' ? '' : 'year'">{{ year }} ▾</button>
+          <Button type="button" variant="ghost" size="sm" class="dp-nav w-full" @click="menu = menu === 'year' ? '' : 'year'">{{ year }} ▾</Button>
           <div v-if="menu === 'year'" class="dp-dd right-0 left-auto min-w-[72px]">
             <button v-for="y in yearOptions" :key="y" type="button" class="dp-dd-item" :class="{ selected: y === year }" @click="setYear(y)">{{ y }}</button>
           </div>
         </div>
-        <button type="button" data-test="dp-next" class="dp-nav" :disabled="!canNext" @click="shiftMonth(1)">›</button>
+        <Button type="button" data-test="dp-next" variant="ghost" size="sm" class="dp-nav" :disabled="!canNext" @click="shiftMonth(1)">›</Button>
       </div>
 
       <div class="grid grid-cols-7 gap-0.5 text-center">
@@ -224,8 +227,8 @@ const canToday = computed(() => {
       </div>
 
       <div class="mt-2 flex justify-between">
-        <button type="button" data-test="dp-close" class="dp-nav" @click="open = false">Close</button>
-        <button type="button" data-test="dp-today" class="dp-nav" :disabled="!canToday" @click="pickToday">Today</button>
+        <Button type="button" data-test="dp-close" variant="ghost" size="sm" class="dp-nav" @click="open = false">Close</Button>
+        <Button type="button" data-test="dp-today" variant="ghost" size="sm" class="dp-nav" :disabled="!canToday" @click="pickToday">Today</Button>
       </div>
     </div>
   </div>
@@ -235,30 +238,6 @@ const canToday = computed(() => {
 /* Popup chrome states — the markup carries the layout utilities; these
    state hooks (selected/today/disabled) stay as classes because the
    tests and the paired-field logic target them by name. */
-.dp-nav {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  padding: 0 6px;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--fs-xs);
-  transition:
-    background-color var(--motion-fast) var(--ease-standard),
-    color var(--motion-fast) var(--ease-standard);
-}
-.dp-nav:hover:not(:disabled) {
-  background: var(--accent-bg);
-  color: var(--text-primary);
-}
-.dp-nav:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
 .dp-dd {
   position: absolute;
   top: calc(100% + 4px);

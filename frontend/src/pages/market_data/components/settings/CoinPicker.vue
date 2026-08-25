@@ -14,10 +14,11 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import {
-  btnClass,
   coinPickerRowClass,
-  inputClass,
   noteClass,
   panelCardClass,
 } from '../../lib/uiClasses';
@@ -61,13 +62,11 @@ function onKeydown(event: KeyboardEvent): void {
 <template>
   <article :class="[panelCardClass, 'coin-picker-card']" id="settings-enabled-coins-card" data-settings-subsection="normal">
     <div class="eyebrow">{{ t('market.enabledCoins') }}</div>
-    <label class="settings-toggle coin-picker-auto-toggle mt-1 flex min-h-8 items-center gap-2 text-base text-primary">
-      <input
+    <label class="settings-toggle coin-picker-auto-toggle mt-1 flex min-h-8 cursor-pointer items-center gap-2 text-base text-primary">
+      <Checkbox
         id="settings-auto-enable-new-coins"
-        class="h-4 w-4 m-0"
-        type="checkbox"
-        :checked="store.autoEnableNewCoins.value"
-        @change="store.setAutoEnableNewCoins(($event.target as HTMLInputElement).checked)"
+        :model-value="store.autoEnableNewCoins.value"
+        @update:model-value="store.setAutoEnableNewCoins($event === true)"
       />
       <span>{{ t('market.autoEnableNewCoins') }}</span>
     </label>
@@ -80,29 +79,28 @@ function onKeydown(event: KeyboardEvent): void {
     </div>
     <div class="coin-picker-toolbar flex flex-wrap items-center gap-2">
       <div class="coin-filter-wrap min-w-[220px] flex-[1_1_360px]">
-        <input
+        <Input
           id="settings-coin-filter"
-          :class="inputClass"
           type="text"
           :placeholder="t('market.filterEnabledCoinList')"
-          :value="store.coinFilter.value"
-          @input="store.setCoinFilter(($event.target as HTMLInputElement).value)"
+          :model-value="store.coinFilter.value"
+          @update:model-value="store.setCoinFilter(String($event ?? ''))"
         />
       </div>
-      <button
-        :class="btnClass('secondary')"
+      <Button
+        variant="info"
         id="btn-select-all-coins"
         type="button"
         :disabled="store.autoEnableNewCoins.value"
         @click="store.selectVisibleCoins()"
-      >{{ t('market.selectVisible') }}</button>
-      <button
-        :class="btnClass('secondary')"
+      >{{ t('market.selectVisible') }}</Button>
+      <Button
+        variant="info"
         id="btn-clear-all-coins"
         type="button"
         :disabled="store.autoEnableNewCoins.value"
         @click="store.clearAllCoins()"
-      >{{ t('market.clearAll') }}</button>
+      >{{ t('market.clearAll') }}</Button>
       <span :class="[noteClass, 'whitespace-nowrap']" id="settings-enabled-count">{{
         t('market.selectedTotal', {
           selected: store.selectedCoins.value.size,

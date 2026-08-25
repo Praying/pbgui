@@ -11,6 +11,7 @@ import { computed, ref, watch } from 'vue';
 import { PhArrowClockwise, PhChartBar, PhFileText, PhGear, PhPlay, PhStop, PhToggleLeft, PhToggleRight } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { serviceButtons, serviceStatusClass, serviceStatusText, serviceStatusTitle, type Translate } from '../status';
 import type { ServiceAction, ServiceStatusMap } from '../types';
 import LogViewer from './LogViewer.vue';
@@ -62,6 +63,15 @@ const actionIcons = {
   enable: PhToggleRight,
   disable: PhToggleLeft,
 } as const;
+/** ui/ Button variant per action — mirrors the legacy .ctrl-btn.<action> tones
+   (start=green, stop=red, restart=amber, enable=accent, disable=neutral). */
+const actionVariants = {
+  start: 'success',
+  stop: 'danger',
+  restart: 'warning',
+  enable: 'info',
+  disable: 'default',
+} as const;
 const tabIcons = { log: PhFileText, settings: PhGear, status: PhChartBar } as const;
 
 /** Legacy restoreFromHash: `#svcId/tab`. */
@@ -107,15 +117,17 @@ watch(
     </div>
     <span style="flex: 1"></span>
     <span class="ctrl-btns">
-      <button
+      <Button
         v-for="b in buttons"
         :key="b.action"
-        class="ctrl-btn pbgui-action"
+        class="ctrl-btn"
         :class="b.action"
+        :variant="actionVariants[b.action]"
+        size="sm"
         type="button"
         :disabled="b.disabled"
         @click="emit('action', svcId, b.action)"
-      ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</button>
+      ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</Button>
     </span>
   </div>
 
@@ -195,24 +207,6 @@ watch(
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.ctrl-btn {
-  padding: 0.25rem 0.75rem;
-  border-radius: 5px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--fs-sm);
-  font-family: inherit;
-  transition: all 0.12s;
-}
-.ctrl-btn:hover:not(:disabled) { border-color: var(--border-strong); color: var(--text-primary); }
-.ctrl-btn:disabled { cursor: default; opacity: 0.6; }
-.ctrl-btn.start { border-color: var(--success-deep); color: var(--success); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
-.ctrl-btn.stop { border-color: var(--danger-deep); color: var(--danger-soft); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
-.ctrl-btn.restart { border-color: var(--warning-deep); color: var(--warning-soft); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); }
-.ctrl-btn.enable { border-color: var(--accent-deep); color: var(--accent-soft); background: color-mix(in srgb, var(--accent-deep) 28%, var(--bg-card)); }
-.ctrl-btn.disable { border-color: var(--border-strong); color: var(--text-secondary); background: var(--bg-panel); }
 .tab-bar {
   display: flex;
   gap: 2px;
@@ -307,47 +301,6 @@ watch(
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-}
-
-.ctrl-btn {
-  min-height: 31px;
-  padding: 0 10px;
-  border-color: rgb(var(--text-secondary-rgb) / 0.17);
-  border-radius: 7px;
-  background: rgb(var(--text-secondary-rgb) / 0.08);
-  color: var(--text-secondary);
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
-}
-
-.ctrl-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: rgb(var(--accent-rgb) / 0.38);
-  background: rgb(var(--accent-rgb) / 0.16);
-  color: var(--text-secondary);
-}
-
-.ctrl-btn.start {
-  border-color: rgb(var(--success-rgb) / 0.32);
-  background: rgb(var(--success-rgb) / 0.12);
-  color: var(--success-soft);
-}
-
-.ctrl-btn.stop {
-  border-color: rgb(var(--danger-rgb) / 0.32);
-  background: rgb(var(--danger-rgb) / 0.15);
-  color: var(--danger-soft);
-}
-
-.ctrl-btn.restart {
-  border-color: rgb(var(--warning-rgb) / 0.32);
-  background: rgb(var(--warning-rgb) / 0.14);
-  color: var(--warning-soft);
-}
-
-.ctrl-btn.enable {
-  border-color: rgb(var(--accent-rgb) / 0.32);
-  background: rgb(var(--accent-rgb) / 0.14);
-  color: var(--accent-soft);
 }
 
 .tab-bar {

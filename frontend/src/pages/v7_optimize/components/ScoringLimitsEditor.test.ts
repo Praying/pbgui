@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption } from '@/shared/testing/select';
 import ScoringLimitsEditor from './ScoringLimitsEditor.vue';
 
 describe('ScoringLimitsEditor', () => {
@@ -33,13 +34,14 @@ describe('ScoringLimitsEditor', () => {
       global: { plugins: [createI18n('en')] },
     });
 
-    const scoringGoal = wrapper.findAll('section').at(0)!.find('select[data-field="scoring-goal"]');
-    expect((scoringGoal.element as HTMLSelectElement).value).toBe('max');
-    await scoringGoal.setValue('min');
+    const scoringGoal = wrapper.findAll('section').at(0)!.find('[data-field="scoring-goal"]');
+    expect(scoringGoal.text()).toBe('max');
+    await pickSelectOption(wrapper, '[data-field="scoring-goal"]', 'min');
     expect(wrapper.emitted('update:scoring')?.at(-1)?.[0]).toEqual([{ metric: 'adg_usd', goal: 'min' }]);
-    expect(wrapper.find('select[data-field="limit-penalize-if"]').exists()).toBe(true);
+    expect(wrapper.find('[data-field="limit-penalize-if"]').exists()).toBe(true);
     expect(wrapper.find('input[data-field="limit-range-low"]').exists()).toBe(true);
-    await wrapper.find('input[type="checkbox"]').setValue(false);
+    // ui/Checkbox renders a button with role="checkbox" — click flips it
+    await wrapper.find('[role="checkbox"]').trigger('click');
     expect(wrapper.emitted('update:limits')?.at(-1)?.[0]).toMatchObject([{ enabled: false }]);
   });
 

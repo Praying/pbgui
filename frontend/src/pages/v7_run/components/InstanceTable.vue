@@ -10,6 +10,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { STATUS_LABEL_KEYS, type RunInstance, type SortState } from '../lib/table';
 
 const props = defineProps<{
@@ -135,14 +136,14 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
           <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.note || '' }}</td>
           <td>
             <template v-if="supportsForcedModes">
-              <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-danger bg-danger p-0 text-sm font-bold text-[#f2f5fb] hover:opacity-85" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')">P</button>
-              <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-warning bg-warning p-0 text-sm font-bold text-accent-contrast hover:opacity-85" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')">G</button>
-              <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-success bg-success p-0 text-sm font-bold text-accent-contrast hover:opacity-85" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')">T</button>
+              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')">P</Button>
+              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')">G</Button>
+              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')">T</Button>
             </template>
-            <button class="h-6 w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel p-0 text-sm text-accent hover:bg-elevated" :data-edit="row.name" :title="t('v7run.edit')">&#x270E;</button>
-            <button class="h-6 w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel p-0 text-sm text-accent hover:bg-elevated" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')">$</button>
-            <button v-if="supportsConversion" class="ml-1 h-6 min-w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel px-1 text-xs text-accent hover:bg-elevated" :data-convert-v8="row.name" :title="t('v7run.convertToV8')">V8</button>
-            <button class="ml-1 h-6 w-7 cursor-pointer rounded-[3px] border border-border-default bg-panel p-0 text-sm text-danger hover:bg-elevated" :data-delete="row.name" :title="t('common.delete')">&#x2716;</button>
+            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-edit="row.name" :title="t('v7run.edit')">&#x270E;</Button>
+            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')">$</Button>
+            <Button v-if="supportsConversion" class="ml-1 h-6 min-w-7 px-1" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')">V8</Button>
+            <Button class="ml-1 h-6 w-7 p-0 text-sm" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')">&#x2716;</Button>
           </td>
         </tr>
         <tr v-if="!rows.length" id="instances-empty-row">

@@ -8,7 +8,8 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { btnDangerClass, noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 
 const props = defineProps<{
@@ -45,24 +46,24 @@ const tdClass =
       </div>
       <div class="panel-actions">
         <span :class="noteClass" id="integrity-removed-count">{{ store.removedCountText.value }}</span>
-        <button
-          :class="btnDangerClass"
+        <Button
+          variant="danger"
           id="btn-integrity-remove-selected"
           type="button"
           :disabled="store.removeSelectedDisabled.value"
           @click="store.removeSelectedRemovedCoins()"
         >
           {{ store.removeSelectedLabelText.value }}
-        </button>
-        <button
-          :class="btnDangerClass"
+        </Button>
+        <Button
+          variant="danger"
           id="btn-integrity-remove-all"
           type="button"
           :disabled="store.removeAllDisabled.value"
           @click="store.removeAllRemovedCoins()"
         >
           {{ t('market.removeAll') }}
-        </button>
+        </Button>
       </div>
     </div>
     <div class="integrity-table-wrap max-h-[52vh] overflow-auto rounded-md border border-border-default">
@@ -104,9 +105,9 @@ const tdClass =
               <td :class="tdClass">{{ row.toDay }}</td>
               <td :class="tdClass">{{ row.reason }}</td>
               <td :class="tdClass">
-                <button
+                <Button
                   v-if="row.removable"
-                  :class="btnDangerClass"
+                  variant="danger"
                   type="button"
                   data-integrity-remove-coin="1"
                   :data-exchange="row.exchange"
@@ -114,7 +115,7 @@ const tdClass =
                   @click="store.removeUnavailableIntegrityCoin(row.exchange, row.coin)"
                 >
                   {{ t('market.removeCoinData') }}
-                </button>
+                </Button>
                 <span v-else>{{ t('market.readOnly') }}</span>
               </td>
             </tr>

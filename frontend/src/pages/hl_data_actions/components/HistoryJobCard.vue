@@ -7,6 +7,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { fmtBytes, fmtDay, fmtTS, formatJobDuration } from '../lib/jobsFormat';
 import type { JobRecord } from '../types';
 
@@ -51,15 +52,6 @@ const hasStats = computed(() => stats.value.downloaded + stats.value.skipped + s
 const isDone = computed(() => props.job.status === 'done');
 const isFailed = computed(() => props.job.status === 'failed');
 const duration = computed(() => formatJobDuration(props.job));
-
-/* Job action button variant → full utility set (the former .hlda-jbtn base +
-   .view/.danger tints). Colours per-branch: the legacy variant rules
-   outranked the plain :hover colour, which the branch split keeps true. */
-function jbtnClass(variant: '' | 'view' | 'danger'): string {
-  if (variant === 'view') return 'view border-accent/42 bg-accent/16 text-accent-soft hover:bg-accent/26';
-  if (variant === 'danger') return 'danger border-danger/33 text-danger hover:bg-danger/13';
-  return 'border-border-default bg-transparent text-secondary hover:bg-border-default hover:text-primary';
-}
 </script>
 
 <template>
@@ -71,11 +63,11 @@ function jbtnClass(variant: '' | 'view' | 'danger'): string {
         <span v-if="duration" class="jdur text-[12px] text-muted">{{ duration }}</span>
       </div>
       <div class="hlda-ja flex gap-1.5">
-        <button class="hlda-jbtn cursor-pointer rounded-sm border px-2.5 py-[3px] text-xs" :class="jbtnClass('view')" @click="$emit('view')">{{ t('market.view') }}</button>
-        <button class="hlda-jbtn cursor-pointer rounded-sm border px-2.5 py-[3px] text-xs" :class="jbtnClass('')" @click="$emit('log')">{{ t('market.log') }}</button>
-        <button v-if="isFailed" class="hlda-jbtn cursor-pointer rounded-sm border px-2.5 py-[3px] text-xs" :class="jbtnClass('')" @click="$emit('retry')">{{ t('market.retry') }}</button>
-        <button v-if="isDone" class="hlda-jbtn cursor-pointer rounded-sm border px-2.5 py-[3px] text-xs" :class="jbtnClass('')" @click="$emit('requeue')">{{ t('market.requeue') }}</button>
-        <button class="hlda-jbtn cursor-pointer rounded-sm border px-2.5 py-[3px] text-xs" :class="jbtnClass('danger')" @click="$emit('delete')">{{ t('common.delete') }}</button>
+        <Button type="button" variant="info" size="sm" class="hlda-jbtn" @click="$emit('view')">{{ t('market.view') }}</Button>
+        <Button type="button" variant="secondary" size="sm" class="hlda-jbtn" @click="$emit('log')">{{ t('market.log') }}</Button>
+        <Button v-if="isFailed" type="button" variant="secondary" size="sm" class="hlda-jbtn" @click="$emit('retry')">{{ t('market.retry') }}</Button>
+        <Button v-if="isDone" type="button" variant="secondary" size="sm" class="hlda-jbtn" @click="$emit('requeue')">{{ t('market.requeue') }}</Button>
+        <Button type="button" variant="danger" size="sm" class="hlda-jbtn" @click="$emit('delete')">{{ t('common.delete') }}</Button>
       </div>
     </div>
     <div class="hlda-jd mt-1 flex flex-wrap gap-1.5 text-[12px] text-muted">
@@ -84,7 +76,7 @@ function jbtnClass(variant: '' | 'view' | 'danger'): string {
     </div>
     <div class="hlda-jerr mt-1 text-[12px] text-danger" v-if="job.error">{{ job.error }}</div>
     <div class="hlda-exp mt-1.5" v-if="hasStats || coinPreview">
-      <button class="hlda-exp-toggle cursor-pointer border-0 bg-transparent px-0 py-0.5 text-xs text-muted hover:text-primary" @click="$emit('expand')">{{ expanded ? '▼' : '▶' }} {{ t('market.details') }}</button>
+      <Button type="button" variant="ghost" size="sm" class="hlda-exp-toggle h-auto border-0 px-0 py-0.5 font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('expand')">{{ expanded ? '▼' : '▶' }} {{ t('market.details') }}</Button>
       <div class="hlda-exp-body pt-1.5 pl-2 text-xs text-secondary" :class="expanded ? 'open block' : 'hidden'">
         <div class="dr mb-0.5" v-if="coinPreview">{{ t('market.coinsLabel', { coins: coinPreview }) }}</div>
         <div class="dr mb-0.5" v-if="onlyMissing !== undefined">{{

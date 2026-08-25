@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import type { ConversationSummary } from '../composables/useAiChat';
 
 interface ConversationListProps {
@@ -30,17 +31,17 @@ function meta(conversation: ConversationSummary): string {
       <span class="text-[11px] text-secondary">{{ conversations.length }}</span>
     </div>
     <div class="grid min-h-0 content-start gap-1.5 overflow-y-auto">
-      <button
+      <Button
         v-for="conversation in conversations"
         :key="conversation.conversation_id"
         type="button"
-        class="min-h-[42px] cursor-pointer rounded-md border border-border-default bg-elevated p-2 text-left transition-colors hover:border-accent"
+        class="h-auto min-h-[42px] w-full flex-col items-stretch gap-0 whitespace-normal p-2"
         :class="{ 'border-accent! bg-[rgba(96,165,250,.12)]': conversation.conversation_id === conversationId }"
         @click="emit('select', conversation.conversation_id)"
       >
         <span class="block text-sm text-primary">{{ conversation.title || t('ai.chat.newChat') }}</span>
         <small class="block overflow-hidden text-ellipsis whitespace-nowrap text-xs text-secondary">{{ meta(conversation) }}</small>
-      </button>
+      </Button>
       <p v-if="!conversations.length" class="m-0 text-xs text-secondary">{{ t('ai.chat.noConversations') }}</p>
     </div>
   </section>

@@ -232,20 +232,20 @@ describe('PbDataStatus fetch summary rendering (legacy renderFetchSummary)', () 
   it('toggles column visibility from the legacy filter checkboxes', async () => {
     const wrapper = await mountedStatus();
 
-    await wrapper.find('#fs-f-balances').setValue(false);
+    await wrapper.find('#fs-f-balances').trigger('click');
     expect((wrapper.find('#fs-table .fs-col-balances').element as HTMLElement).style.display).toBe('none');
 
-    await wrapper.find('#fs-f-balances').setValue(true);
+    await wrapper.find('#fs-f-balances').trigger('click');
     expect((wrapper.find('#fs-table .fs-col-balances').element as HTMLElement).style.display).toBe('');
 
-    await wrapper.find('#fs-f-history').setValue(false);
+    await wrapper.find('#fs-f-history').trigger('click');
     expect((wrapper.find('#fs-table .fs-col-history').element as HTMLElement).style.display).toBe('none');
   });
 
   it('hides non-WS rows when the WS-only filter is enabled', async () => {
     const wrapper = await mountedStatus();
 
-    await wrapper.find('#fs-f-wsonly').setValue(true);
+    await wrapper.find('#fs-f-wsonly').trigger('click');
     const rows = wrapper.findAll('#fs-table tbody tr');
     expect(rows).toHaveLength(1);
     expect(rows[0]!.find('td').text()).toBe('alice');
@@ -255,13 +255,13 @@ describe('PbDataStatus fetch summary rendering (legacy renderFetchSummary)', () 
     vi.useFakeTimers();
     try {
       const wrapper = await mountedStatus();
-      await wrapper.find('#fs-f-balances').setValue(false);
+      await wrapper.find('#fs-f-balances').trigger('click');
 
       fetchMock.mockClear();
       await vi.advanceTimersByTimeAsync(5000);
       await flushPromises();
 
-      expect((wrapper.find('#fs-f-balances').element as HTMLInputElement).checked).toBe(false);
+      expect(wrapper.find('#fs-f-balances').attributes('data-state')).toBe('unchecked');
       expect((wrapper.find('#fs-table .fs-col-balances').element as HTMLElement).style.display).toBe('none');
     } finally {
       vi.useRealTimers();

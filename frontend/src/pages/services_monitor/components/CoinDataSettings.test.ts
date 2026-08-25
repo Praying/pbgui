@@ -130,15 +130,15 @@ describe('CoinDataSettings rendering (legacy static interval markup)', () => {
   it('renders the save button with the legacy disk icon', async () => {
     const wrapper = await mountedSettings();
 
-    expect(wrapper.find('button.form-btn.save').text()).toBe('Save');
-    expect(wrapper.find('button.form-btn.save svg').exists()).toBe(true);
+    expect(wrapper.find('button.save').text()).toBe('Save');
+    expect(wrapper.find('button.save svg').exists()).toBe(true);
   });
 });
 
 describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
   async function saveAndGetBody(wrapper: ReturnType<typeof mountSettings>): Promise<Record<string, unknown>> {
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
     const [url, init] = fetchMock.mock.calls.at(-1)!;
     expect(url).toBe('http://pbgui.test:8000/api/services/settings/pbcoindata');
@@ -191,7 +191,7 @@ describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: true, apply: { message: 'restart pbcoindata to apply' } }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     const msg = wrapper.find('#coindata-save-msg');
@@ -204,7 +204,7 @@ describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#coindata-save-msg').text()).toBe('Saved');
@@ -214,7 +214,7 @@ describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: false, detail: 'interval out of range' }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     const msg = wrapper.find('#coindata-save-msg');
@@ -226,7 +226,7 @@ describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: false }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#coindata-save-msg').text()).toBe('Error');
@@ -236,7 +236,7 @@ describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ detail: 'boom' }, 500));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#coindata-save-msg').text()).toBe('boom');
@@ -247,7 +247,7 @@ describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockRejectedValue(new TypeError('network down'));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#coindata-save-msg').text()).toBe('Error: network down');
@@ -260,7 +260,7 @@ describe('CoinDataSettings save (legacy saveCoinDataSettings/_post)', () => {
       const wrapper = await mountedSettings();
       fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
 
-      await wrapper.find('button.form-btn.save').trigger('click');
+      await wrapper.find('button.save').trigger('click');
       await flushPromises();
       await vi.advanceTimersByTimeAsync(2900);
       expect(wrapper.find('#coindata-save-msg').classes()).toContain('visible');

@@ -13,6 +13,7 @@ import { PhArrowClockwise, PhPlay, PhStop } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { apiBase } from '../config';
 import { showResultPopup } from '../resultPopup';
 import type { Worker, WorkersStatus } from '../types';
@@ -194,6 +195,14 @@ const actionIcons = {
   restart: PhArrowClockwise,
 } as const;
 
+/** ui/ Button variant per action — mirrors the legacy .card-btn/.ctrl-btn tones
+   (start=green, stop=red, restart=amber). */
+const actionVariants = {
+  start: 'success',
+  stop: 'danger',
+  restart: 'warning',
+} as const;
+
 function cardStats(item: Worker) {
   return (item.stats ?? []).slice(0, 3);
 }
@@ -299,14 +308,16 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
                 <span v-for="stat in cardStats(item)" :key="stat.label" class="worker-pill">{{ statLabelText(stat.label) }}: {{ statValueText(stat.value) }}</span>
               </div>
               <div class="worker-btnrow">
-                <button
+                <Button
                   v-for="b in actionButtons(item)"
                   :key="b.action"
                   class="card-btn"
                   :class="b.action"
+                  :variant="actionVariants[b.action]"
+                  size="sm"
                   type="button"
                   @click.stop="onWorkerButton(item.id, b.action)"
-                ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</button>
+                ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</Button>
               </div>
             </article>
           </div>
@@ -330,14 +341,16 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
           <div class="worker-detail-desc">{{ workerText(selectedWorker, 'description') }}</div>
           <div v-if="selectedWorker.note" class="worker-detail-note">{{ workerText(selectedWorker, 'note') }}</div>
           <div class="worker-detail-actions">
-            <button
+            <Button
               v-for="b in actionButtons(selectedWorker)"
               :key="b.action"
               class="ctrl-btn"
               :class="b.action"
+              :variant="actionVariants[b.action]"
+              size="sm"
               type="button"
               @click.stop="onWorkerButton(selectedWorker.id, b.action)"
-            ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</button>
+            ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</Button>
           </div>
           <div v-if="(selectedWorker.stats ?? []).length" class="worker-stats-grid">
             <div v-for="stat in selectedWorker.stats" :key="stat.label" class="worker-stat-card">
@@ -408,21 +421,6 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.ctrl-btn {
-  padding: 0.25rem 0.75rem;
-  border-radius: 5px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--fs-sm);
-  font-family: inherit;
-  transition: all 0.12s;
-}
-.ctrl-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.ctrl-btn.start { border-color: var(--success-deep); color: var(--success); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
-.ctrl-btn.stop { border-color: var(--danger-deep); color: var(--danger-soft); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
-.ctrl-btn.restart { border-color: var(--warning-deep); color: var(--warning-soft); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); }
 
 .workers-shell {
   display: grid;
@@ -490,22 +488,6 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   background: var(--surface-workspace);
 }
 .worker-btnrow { display: flex; flex-wrap: wrap; gap: var(--sp-xs); margin-top: var(--sp-xs); }
-.card-btn {
-  align-self: flex-start;
-  padding: 0.2rem 0.65rem;
-  border-radius: 4px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--fs-xs);
-  font-family: inherit;
-  transition: all 0.12s;
-}
-.card-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.card-btn.start { border-color: var(--success-deep); color: var(--success); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
-.card-btn.stop { border-color: var(--danger-deep); color: var(--danger-soft); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
-.card-btn.restart { border-color: var(--warning-deep); color: var(--warning-soft); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); }
 .worker-detail {
   display: flex;
   flex-direction: column;

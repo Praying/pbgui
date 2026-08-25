@@ -5,6 +5,7 @@
  * warning messages open the modal instead.
  */
 import { injectToasts } from '../composables/useToasts';
+import { Button } from '@/shared/components/ui/button';
 
 const toasts = injectToasts();
 
@@ -55,7 +56,7 @@ function alertTitleClass(kind: 'error' | 'warning' | 'success' | 'info'): string
       <div id="alertModalTitle" class="text-md font-bold" :class="alertTitleClass(toasts.alert.value.kind)">{{ toasts.alert.value.title }}</div>
       <div id="alertModalBody" class="text-sm leading-[1.5] text-secondary break-words">{{ toasts.alert.value.message }}</div>
       <div class="flex justify-end">
-        <button class="btn pbgui-btn btn-primary min-w-[80px]" @click="toasts.closeAlert()">OK</button>
+        <Button type="button" variant="primary" class="min-w-[80px]" @click="toasts.closeAlert()">OK</Button>
       </div>
     </div>
   </div>

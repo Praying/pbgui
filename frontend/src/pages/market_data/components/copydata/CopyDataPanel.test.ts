@@ -80,7 +80,7 @@ describe('the SSH form (:3425-3456)', () => {
       'okx',
       'hyperliquid',
     ]);
-    const checked = checks.filter((c) => (c.element as HTMLInputElement).checked);
+    const checked = checks.filter((c) => c.attributes('aria-checked') === 'true');
     expect(checked.map((c) => c.attributes('data-copy-data-exchange'))).toEqual([
       'binance',
       'bybit',
@@ -222,7 +222,7 @@ describe('the schedules section (:3458-3488)', () => {
     await panel.find('#copy-data-target').setValue('user@host');
     await panel.find('#copy-data-schedule-name').setValue('Optimizer');
     await panel.find('#copy-data-schedule-interval').setValue('12');
-    await panel.find('#copy-data-schedule-enabled').setValue(false);
+    await panel.find('#copy-data-schedule-enabled').trigger('click');
     rawFetch.mockResolvedValue(json({ success: true, schedule: { name: 'Optimizer' } }));
     await panel.find('#btn-copy-data-schedule-save').trigger('click');
     await flush();

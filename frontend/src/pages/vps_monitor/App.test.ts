@@ -90,7 +90,7 @@ describe('VPS Monitor Vue page', () => {
     expect(wrapper.text()).toContain('alpha');
     expect(wrapper.get('.vps-monitor').classes()).toContain('compact');
     expect(wrapper.get('[role="status"]').text()).toContain('Connected');
-    await wrapper.get('[data-option="compact"]').setValue(false);
+    await wrapper.get('[data-option="compact"]').trigger('click');
     expect(wrapper.text()).toContain('42.5');
     await wrapper.get('[data-testid="rail-section-instances"]').trigger('click');
     expect(wrapper.text()).toContain('bot-a');

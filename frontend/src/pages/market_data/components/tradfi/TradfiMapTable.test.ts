@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { enableAutoUnmount } from '@vue/test-utils';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import TradfiMapTable from './TradfiMapTable.vue';
 import {
   useTradfiMap,
@@ -75,18 +77,22 @@ function makeTable(handler: () => TradfiActionResponse = () => ({
 afterEach(() => {
   document.body.innerHTML = '';
 });
+// Unmount before the body clear above (LIFO): clearing first destroys the
+// reka select teleport anchors and the deferred unmount then throws
+// removeFragment/insertBefore on null parents.
+enableAutoUnmount(afterEach);
 
 describe('the map table (:3111-3130, :6553-6595)', () => {
   it('renders the filter grid with the legacy ids and option lists (:6529-6530)', async () => {
     const { map, wrapper } = makeTable();
     await map.loadMappings();
-    const type = wrapper.find('#tradfi-filter-type');
-    expect(
-      type.findAll('option').map((o) => o.element.value)
-    ).toEqual(['all', 'equity_us', 'fx']);
-    expect(
-      wrapper.find('#tradfi-filter-status').findAll('option').map((o) => o.element.value)
-    ).toEqual(['all', 'ok', 'alias']);
+    await openSelect(wrapper, '#tradfi-filter-type');
+    expect(selectOptionTexts()).toEqual(['All types', 'equity_us', 'fx']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await openSelect(wrapper, '#tradfi-filter-status');
+    expect(selectOptionTexts()).toEqual(['All statuses', 'ok', 'alias']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(wrapper.find('#tradfi-filter-symbol').exists()).toBe(true);
   });
 
@@ -147,7 +153,7 @@ describe('the map table (:3111-3130, :6553-6595)', () => {
     await wrapper.find('#tradfi-filter-symbol').setValue('xau');
     expect(map.filters.symbol).toBe('xau');
     expect(map.filteredRows.value.map((r) => r.xyz_coin)).toEqual(['XAU']);
-    await wrapper.find('#tradfi-filter-type').setValue('equity_us');
+    await pickSelectOption(wrapper, '#tradfi-filter-type', 'equity_us');
     expect(map.filters.type).toBe('equity_us');
     expect(map.filteredRows.value).toEqual([]);
   });

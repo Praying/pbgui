@@ -7,15 +7,20 @@
  * the missing-ranges table. v-if replaces the legacy hidden toggling; the
  * backdrop is position: fixed so nesting under the panel section is safe.
  */
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import {
-  btnClass,
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
+import {
   calloutClass,
   contextDayClass,
   contextHourClass,
   gapCellClass,
-  inputClass,
   noteClass,
   panelHeadClass,
 } from '../../lib/uiClasses';
@@ -28,20 +33,19 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const closeEl = ref<HTMLButtonElement | null>(null);
-
-// :4802 — focus the close button when the modal opens
+// :4802 — focus the close button when the modal opens (by id: the ui/
+// Button component instance has no focus()).
 watch(
   () => props.store.gapOpen.value,
   (open) => {
     if (!open) return;
-    void nextTick(() => closeEl.value?.focus());
+    void nextTick(() => document.getElementById('btn-integrity-gap-close')?.focus());
   },
   { flush: 'post' }
 );
 
-function onDayChange(event: Event): void {
-  void props.store.loadGapDay(String((event.target as HTMLSelectElement).value ?? '')); // :9200-9202
+function onDaySelect(value: unknown): void {
+  void props.store.loadGapDay(String(value ?? '')); // :9200-9202
 }
 
 const thClass =
@@ -64,24 +68,28 @@ const thClass =
           <h2 id="integrity-gap-title">{{ t('market.gapDetailsTitle') }}</h2>
           <p :class="noteClass" id="integrity-gap-subtitle">{{ store.gapSubtitle.value }}</p>
         </div>
-        <button
-          :class="btnClass('secondary')"
+        <Button
+          variant="info"
           id="btn-integrity-gap-close"
-          ref="closeEl"
           type="button"
           @click="store.closeGapDetails()"
         >
           {{ t('common.close') }}
-        </button>
+        </Button>
       </div>
       <div class="integrity-gap-controls flex flex-wrap items-end gap-3">
         <label class="min-w-[180px]">
-          <span>{{ t('market.damagedDay') }}</span>
-          <select id="integrity-gap-day" :class="inputClass" :value="store.gapSelectedDay.value" @change="onDayChange">
-            <option v-for="option in store.gapDayOptions.value" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
+          <span id="integrity-gap-day-label">{{ t('market.damagedDay') }}</span>
+          <SelectRoot :model-value="store.gapSelectedDay.value" @update:model-value="onDaySelect">
+            <SelectTrigger id="integrity-gap-day" aria-labelledby="integrity-gap-day-label">
+              <span>{{ store.gapDayOptions.value.find((option) => option.value === store.gapSelectedDay.value)?.label ?? store.gapSelectedDay.value }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="option in store.gapDayOptions.value" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </label>
       </div>
       <div

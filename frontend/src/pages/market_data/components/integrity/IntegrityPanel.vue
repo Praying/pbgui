@@ -12,7 +12,8 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { btnClass, calloutClass, noteClass, panelCardClass, panelHeadClass, stackClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { calloutClass, noteClass, panelCardClass, panelHeadClass, stackClass } from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import type { IntegrityPollingController } from '../../composables/useIntegrityPolling';
 import ArchiveSelects from './ArchiveSelects.vue';
@@ -55,18 +56,18 @@ onBeforeUnmount(() => {
           <p :class="noteClass" id="integrity-description">{{ store.descriptionText.value }}</p>
         </div>
         <div class="panel-actions">
-          <button
+          <Button
             v-if="store.isHyperliquid.value"
-            :class="btnClass('secondary')"
+            variant="info"
             id="btn-integrity-normalize-hl"
             type="button"
             @click="store.queueNormalizeFallback()"
           >
             {{ t('market.normalizeFallbackCandles') }}
-          </button>
-          <button :class="btnClass('primary')" id="btn-integrity-scan" type="button" @click="store.queueScan()">
+          </Button>
+          <Button variant="primary" id="btn-integrity-scan" type="button" @click="store.queueScan()">
             {{ t('market.runFullScan') }}
-          </button>
+          </Button>
         </div>
       </div>
       <div

@@ -9,7 +9,7 @@
  * subsection — the parent wires both on the `select` event.
  */
 import { useI18n } from 'vue-i18n';
-import { settingsSubsectionBtnClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
 import { SETTINGS_SUBSECTION_BUTTONS } from '../../composables/usePanels';
 import type { SettingsSubsection } from '../../types';
 
@@ -29,14 +29,17 @@ const { t } = useI18n();
 
 <template>
   <div id="settings-subsection-nav" class="flex flex-wrap gap-1">
-    <button
+    <Button
       v-for="item in SETTINGS_SUBSECTION_BUTTONS"
       :id="item.buttonId"
       :key="item.key"
       type="button"
+      variant="ghost"
+      size="sm"
       :hidden="!available.includes(item.key)"
-      :class="settingsSubsectionBtnClass(available.includes(item.key) && item.key === active)"
+      class="settings-subsection-btn"
+      :class="{ 'active border-accent/70 bg-accent/22 text-primary shadow-[inset_0_0_0_1px_rgb(var(--accent-rgb)/0.18)]': available.includes(item.key) && item.key === active }"
       @click="emit('select', item.key)"
-    >{{ t(item.labelKey) }}</button>
+    >{{ t(item.labelKey) }}</Button>
   </div>
 </template>

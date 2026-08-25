@@ -389,7 +389,11 @@ describe('WidgetOrders — selection linkage (editor:2135-2151)', () => {
     });
     emitPositionSelected('1_1', BOB);
     await settle();
-    expect(env.fetch).toHaveBeenLastCalledWith(BOB_URL);
+    /* not "last called": the auto-link's scheduleSync debounce (a real 400 ms
+       timer) can fire while vi.waitFor polls under parallel-suite load, so a
+       pending_full POST may land after the orders fetch — the contract is
+       that the reselection refetches with the new user's URL. */
+    expect(env.fetch).toHaveBeenCalledWith(BOB_URL);
     await vi.waitFor(() => {
       /* a new selection is a full rebuild (legacy buildOrders innerHTML='') */
       expect(env.lwc.createChart).toHaveBeenCalledTimes(2);

@@ -16,6 +16,8 @@
  * body.view-mode CSS (App.vue's style block) — the class is applied by App.
  */
 import { ref, watch } from 'vue';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
 import { useDashboardStore } from '../stores/dashboardStore';
 import { dashT } from '../lib/i18n';
 import LayoutPicker from './LayoutPicker.vue';
@@ -54,17 +56,18 @@ watch(
   <div class="editor-header flex flex-wrap items-center gap-[0.5rem] rounded-md border border-border-default bg-card px-[0.75rem] py-[0.6rem]">
     <div class="hdr-left flex flex-initial flex-wrap items-center gap-[0.6rem]">
       <div class="hdr-field flex flex-col gap-[0.2rem]">
-        <label class="text-xs uppercase tracking-[0.05em] text-secondary">{{ dashT('dash.dashboardName', 'Dashboard Name') }}</label>
-        <input
+        <Label for="hdr-name">{{ dashT('dash.dashboardName', 'Dashboard Name') }}</Label>
+        <Input
           id="hdr-name"
           type="text"
           maxlength="32"
-          class="w-[180px] min-w-[120px] rounded-sm border px-[0.5rem] py-[0.3rem] text-sm text-primary outline-none focus:border-accent-soft bg-border-default"
-          :class="nameValue.trim() ? 'border-secondary' : 'empty border-danger-soft'"
-          :value="nameValue"
+          class="w-[180px] min-w-[120px]"
+          :class="nameValue.trim() ? '' : 'empty'"
+          :aria-invalid="nameValue.trim() ? undefined : true"
+          :model-value="nameValue"
           :placeholder="dashT('dash.enterName', 'Enter name...')"
           @input="onNameInput"
-        >
+        />
       </div>
       <div class="hdr-field flex flex-col gap-[0.2rem]">
         <LayoutPicker />

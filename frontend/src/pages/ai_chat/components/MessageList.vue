@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { detectedQuickReplies } from '../lib/proposal';
 import type { ChatMessage, UiAction } from '../composables/useAiChat';
 
@@ -66,28 +67,28 @@ function onQuickReply(actionId: string, value: string): void {
           : 'bg-panel rounded-tl-[3px]'"
       >{{ message.content }}
         <div v-if="message.role !== 'user' && quickReplies(message.content).length" class="mt-2 flex flex-wrap gap-1 opacity-100">
-          <button
+          <Button
             v-for="choice in quickReplies(message.content)"
             :key="choice"
             type="button"
-            class="h-7 cursor-pointer rounded-md border border-border-default bg-elevated px-1.5 text-[11px] text-primary transition-colors hover:border-accent"
+            size="sm"
             :title="choice"
             @click="emit('quickReply', '', choice.length > 80 ? choice.slice(0, 77) + '...' : choice)"
-          >{{ choice.length > 80 ? choice.slice(0, 77) + '...' : choice }}</button>
+          >{{ choice.length > 80 ? choice.slice(0, 77) + '...' : choice }}</Button>
         </div>
       </div>
       <div class="flex gap-1 opacity-35 transition-opacity focus-within:opacity-100 hover:opacity-100">
-        <button
+        <Button
           type="button"
-          class="h-[26px] cursor-pointer rounded-md border border-border-default bg-elevated px-1.5 text-[11px] text-primary transition-colors hover:border-accent"
+          size="sm"
           @click="emit('copy', message.content || '')"
-        >{{ t('ai.chat.copy') }}</button>
-        <button
+        >{{ t('ai.chat.copy') }}</Button>
+        <Button
           v-if="message.role === 'user'"
           type="button"
-          class="h-[26px] cursor-pointer rounded-md border border-border-default bg-elevated px-1.5 text-[11px] text-primary transition-colors hover:border-accent"
+          size="sm"
           @click="emit('rewind', index)"
-        >{{ t('ai.chat.rewind') }}</button>
+        >{{ t('ai.chat.rewind') }}</Button>
       </div>
     </div>
 
@@ -96,14 +97,14 @@ function onQuickReply(actionId: string, value: string): void {
       <div class="max-w-[min(760px,88%)] rounded-xl rounded-tl-[3px] border border-border-default bg-panel p-3">
         <div>{{ quickReplyAction.payload.question || t('ai.chat.chooseOption') }}</div>
         <div class="mt-2 flex flex-wrap gap-1 opacity-100">
-          <button
+          <Button
             v-for="choice in quickReplyAction.payload.choices || []"
             :key="String(choice?.value || '')"
             type="button"
-            class="h-7 cursor-pointer rounded-md border border-border-default bg-elevated px-1.5 text-[11px] text-primary transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-45"
+            size="sm"
             :disabled="quickReplyPending"
             @click="onQuickReply(quickReplyAction.action_id, String(choice?.value || '').trim())"
-          >{{ choice?.label || '' }}</button>
+          >{{ choice?.label || '' }}</Button>
         </div>
       </div>
     </div>

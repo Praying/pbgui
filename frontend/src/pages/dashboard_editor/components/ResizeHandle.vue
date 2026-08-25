@@ -19,6 +19,7 @@
  * (legacy never cleaned up its document-level handlers).
  */
 import { nextTick, onBeforeUnmount, ref } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 import { useDashboardStore } from '../stores/dashboardStore';
 import { RESIZE_MIN_BUTTON_HEIGHT, RESIZE_MIN_HEIGHT } from '../lib/grid';
 import { resizePlotsInCell } from '../lib/plotlyResize';
@@ -139,22 +140,26 @@ onBeforeUnmount(() => {
     @mousedown="onMouseDown"
     @dblclick="onDblClick"
   >
-    <button
-      class="resize-btn resize-btn-min absolute left-1.5 top-px z-[6] h-[13px] cursor-pointer select-none rounded-[3px] border border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
+    <Button
+      type="button"
+      variant="outline"
+      class="resize-btn resize-btn-min absolute left-1.5 top-px z-[6] h-[13px] select-none rounded-[3px] border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
       :title="dashT('dash.collapseCompact', 'Collapse to compact (scrollable)')"
       @mousedown.stop
       @click="onMin"
     >
       {{ '⋖ ' + dashT('dash.min', 'min') }}
-    </button>
-    <button
-      class="resize-btn resize-btn-max absolute right-1.5 top-px z-[6] h-[13px] cursor-pointer select-none rounded-[3px] border border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
+    </Button>
+    <Button
+      type="button"
+      variant="outline"
+      class="resize-btn resize-btn-max absolute right-1.5 top-px z-[6] h-[13px] select-none rounded-[3px] border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
       :title="dashT('dash.expandAllRows', 'Expand to show all rows')"
       @mousedown.stop
       @click="onMax"
     >
       {{ dashT('dash.max', 'max') + ' ⋗' }}
-    </button>
+    </Button>
   </div>
 </template>
 

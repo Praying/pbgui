@@ -13,6 +13,9 @@ import { PhPushPin, PhTrash } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import ArchiveOptimizeTable from './ArchiveOptimizeTable.vue';
 import ArchiveSchedulesTable from './ArchiveSchedulesTable.vue';
 import ConfirmModal from './ConfirmModal.vue';
@@ -23,7 +26,7 @@ import ResultCharts from './ResultCharts.vue';
 import ResultsTable from './ResultsTable.vue';
 import RetestModal from './RetestModal.vue';
 import { plainLegacyHtml, resultsCountLabel } from '../lib/archiveModel';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import { archiveRemoteBrowserUrl } from '../lib/readmePreview';
 import type { PlotlyLayout, PlotlyTrace } from '../lib/plotlyVendor';
 import type { ArchiveCleanupItem, ArchiveOptimizeConfigItem, ArchiveSummary, ResultActionKind } from '../types';
@@ -357,7 +360,7 @@ defineExpose({
               <td>{{ entry.optimize_configs ?? 0 }}</td>
               <td class="text-secondary">{{ entry.migration_status?.label ?? '' }}</td>
               <td class="actions-cell" @click.stop>
-                <button type="button" class="act-btn act-btn-danger" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="18" /></button>
+                <Button type="button" variant="danger" class="act-btn act-btn-danger h-auto" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="18" /></Button>
               </td>
             </tr>
           </tbody>
@@ -370,44 +373,57 @@ defineExpose({
       <div id="archive-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
         <div id="archive-layout-status" class="pt-2 text-sm text-secondary" data-test="archive-layout-status">{{ store.statusLine.value }}</div>
         <div id="archive-results-toolbar" class="mb-3 flex flex-wrap items-center gap-2 pt-2">
-          <button type="button" class="act-btn" data-test="arc-tab-backtests" :style="{ opacity: isBacktests ? '1' : '.55' }" @click="store.setMode('backtests')">
+          <Button type="button" variant="default" class="act-btn h-auto" data-test="arc-tab-backtests" :style="{ opacity: isBacktests ? '1' : '.55' }" @click="store.setMode('backtests')">
             {{ t('v7backtest.backtestResults') }}
-          </button>
-          <button type="button" class="act-btn" data-test="arc-tab-optimize" :style="{ opacity: isOptimize ? '1' : '.55' }" @click="store.setMode('optimize')">
+          </Button>
+          <Button type="button" variant="default" class="act-btn h-auto" data-test="arc-tab-optimize" :style="{ opacity: isOptimize ? '1' : '.55' }" @click="store.setMode('optimize')">
             {{ t('v7backtest.optimizeSettings') }}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            class="act-btn"
+            variant="default"
+            class="act-btn h-auto"
             data-test="arc-tab-schedules"
             :style="{ display: store.isOwn.value ? '' : 'none', opacity: store.mode.value === 'schedules' ? '1' : '.55' }"
             @click="store.setMode('schedules')"
           >
             {{ t('v7backtest.retestSchedules') }}
-          </button>
-          <label v-show="isBacktests" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</label>
-          <select id="arc-results-config-filter" v-show="isBacktests" v-model="store.configFilter.value" class="sb-input" style="max-width: 200px">
-            <option value="">{{ t('v7backtest.allConfigs') }}</option>
-            <option v-for="name in store.configOptions.value" :key="name" :value="name">{{ name }}</option>
-          </select>
-          <label v-show="isBacktests" id="arc-results-coin-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.coinLabel') }}</label>
-          <select id="arc-results-coin-filter" v-show="isBacktests" v-model="store.coinFilter.value" class="sb-input" style="max-width: 160px">
-            <option value="">{{ t('v7backtest.allCoins') }}</option>
-            <option v-for="coin in store.coinOptions.value" :key="coin" :value="coin">{{ coin }}</option>
-          </select>
-          <input id="arc-results-filter" v-model="store.textFilter.value" type="text" class="sb-input" style="max-width: 200px" :placeholder="textPlaceholder" />
+          </Button>
+          <span v-show="isBacktests" id="arc-results-config-filter-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</span>
+          <!-- ui-migration: the legacy <option value="">All configs/All coins</option>
+               rows have no reka equivalent — the listboxes offer no reset row;
+               the cleared model ('') renders as the trigger label instead. -->
+          <SelectRoot v-model="store.configFilter.value">
+            <SelectTrigger v-show="isBacktests" id="arc-results-config-filter" class="w-auto min-w-[100px] max-w-[200px]" aria-labelledby="arc-results-config-filter-label">
+              <span>{{ store.configFilter.value || t('v7backtest.allConfigs') }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="name in store.configOptions.value" :key="name" :value="name">{{ name }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
+          <span v-show="isBacktests" id="arc-results-coin-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.coinLabel') }}</span>
+          <SelectRoot v-model="store.coinFilter.value">
+            <SelectTrigger v-show="isBacktests" id="arc-results-coin-filter" class="w-auto min-w-[100px] max-w-[160px]" aria-labelledby="arc-results-coin-label">
+              <span>{{ store.coinFilter.value || t('v7backtest.allCoins') }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="coin in store.coinOptions.value" :key="coin" :value="coin">{{ coin }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
+          <Input v-show="isBacktests" id="arc-results-filter" v-model="store.textFilter.value" type="text" class="w-auto max-w-[200px]" :placeholder="textPlaceholder" />
           <span v-show="isBacktests" id="archive-results-count-label" class="whitespace-nowrap text-sm text-secondary">{{ countLabel }}</span>
           <span style="flex: 1"></span>
-          <button v-show="isBacktests" type="button" class="act-btn" data-test="arc-btn-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">
+          <Button v-show="isBacktests" type="button" variant="default" class="act-btn h-auto" data-test="arc-btn-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">
             {{ t('v7backtest.selectAll') }}
-          </button>
-          <button v-show="isBacktests" type="button" class="act-btn" data-test="arc-btn-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">
+          </Button>
+          <Button v-show="isBacktests" type="button" variant="default" class="act-btn h-auto" data-test="arc-btn-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">
             {{ t('v7backtest.deselect') }}
-          </button>
-          <button
+          </Button>
+          <Button
             id="archive-results-pin-btn"
             type="button"
-            class="act-btn"
+            variant="default"
+            class="act-btn h-auto"
             :class="pinned ? '' : 'unpinned opacity-40'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
@@ -415,7 +431,7 @@ defineExpose({
             @click="pinned = !pinned"
           >
             <PbIcon :icon="PhPushPin" :size="18" />
-          </button>
+          </Button>
         </div>
         <div id="archive-results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="archive-results-table">
@@ -454,13 +470,13 @@ defineExpose({
         <h3>{{ t('v7backtest.addArchiveModal') }}</h3>
         <div class="min-h-0 flex-1 overflow-auto">
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.archiveName') }}</div>
-          <input v-model="addName" class="sb-input" placeholder="my_archive" data-test="arc-name" />
+          <Input v-model="addName" placeholder="my_archive" data-test="arc-name" />
           <div class="mt-2 text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitUrl') }}</div>
-          <input v-model="addUrl" class="sb-input" placeholder="https://github.com/..." data-test="arc-url" />
+          <Input v-model="addUrl" placeholder="https://github.com/..." data-test="arc-url" />
         </div>
         <div class="mt-5 flex justify-end gap-2">
-          <button type="button" :class="modalBtnClass()" @click="addOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" :class="modalBtnClass('primary')" data-test="arc-clone" @click="confirmAddArchive">{{ t('v7backtest.clone') }}</button>
+          <Button type="button" variant="default" class="modal-btn" @click="addOpen = false">{{ t('common.cancel') }}</Button>
+          <Button type="button" variant="primary" class="modal-btn" data-test="arc-clone" @click="confirmAddArchive">{{ t('v7backtest.clone') }}</Button>
         </div>
       </div>
     </div>
@@ -480,12 +496,12 @@ defineExpose({
           <p>Rename archive config <b>{{ renameValue }}</b>. All results in this config group will move to the new name.</p>
           <div class="form-group">
             <label>New name</label>
-            <input v-model="renameValue" class="sb-input" style="width: 100%" data-test="rename-input" />
+            <Input v-model="renameValue" data-test="rename-input" />
           </div>
         </div>
         <div class="mt-5 flex justify-end gap-2">
-          <button type="button" :class="modalBtnClass()" @click="renameOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" :class="modalBtnClass('primary')" data-test="rename-ok" @click="confirmRename">{{ t('v7backtest.rename') }}</button>
+          <Button type="button" variant="default" class="modal-btn" @click="renameOpen = false">{{ t('common.cancel') }}</Button>
+          <Button type="button" variant="primary" class="modal-btn" data-test="rename-ok" @click="confirmRename">{{ t('v7backtest.rename') }}</Button>
         </div>
       </div>
     </div>
@@ -515,8 +531,8 @@ defineExpose({
           <ReadmePreview :markdown="scoreReadme" :remote-base="remoteBase" />
         </div>
         <div class="mt-5 flex justify-end gap-2">
-          <button type="button" :class="modalBtnClass()" @click="store.scorePreview.value = null">{{ t('common.close') }}</button>
-          <button v-if="store.isOwn.value" type="button" :class="modalBtnClass('primary')" @click="store.rebuildScores()">{{ t('v7backtest.updateManifestReadme') }}</button>
+          <Button type="button" variant="default" class="modal-btn" @click="store.scorePreview.value = null">{{ t('common.close') }}</Button>
+          <Button v-if="store.isOwn.value" type="button" variant="primary" class="modal-btn" @click="store.rebuildScores()">{{ t('v7backtest.updateManifestReadme') }}</Button>
         </div>
       </div>
     </div>
@@ -526,7 +542,7 @@ defineExpose({
         <h3>{{ t('v7backtest.optimizeConfigPrefix', { name: store.selectedOptimize.value?.name ?? '' }) }}</h3>
         <div class="min-h-0 flex-1 overflow-auto"><pre class="json-pre" data-test="optimize-json">{{ JSON.stringify(store.optimizeConfigJson.value ?? {}, null, 2) }}</pre></div>
         <div class="mt-5 flex justify-end gap-2">
-          <button type="button" :class="modalBtnClass()" @click="store.optimizeViewOpen.value = false">{{ t('common.close') }}</button>
+          <Button type="button" variant="default" class="modal-btn" @click="store.optimizeViewOpen.value = false">{{ t('common.close') }}</Button>
         </div>
       </div>
     </div>
@@ -536,12 +552,12 @@ defineExpose({
         <h3>{{ t('v7backtest.importOptimizeConfig') }}</h3>
         <div class="min-h-0 flex-1 overflow-auto">
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.importAs') }}</div>
-          <input v-model="importNameValue" class="sb-input" data-test="import-name" />
+          <Input v-model="importNameValue" data-test="import-name" />
           <p class="text-secondary">{{ t('v7backtest.importOverwriteHint') }}</p>
         </div>
         <div class="mt-5 flex justify-end gap-2">
-          <button type="button" :class="modalBtnClass()" @click="importNameOpen = false">{{ t('common.cancel') }}</button>
-          <button type="button" :class="modalBtnClass('primary')" data-test="import-ok" @click="confirmImportOptimize">{{ t('v7backtest.importShort') }}</button>
+          <Button type="button" variant="default" class="modal-btn" @click="importNameOpen = false">{{ t('common.cancel') }}</Button>
+          <Button type="button" variant="primary" class="modal-btn" data-test="import-ok" @click="confirmImportOptimize">{{ t('v7backtest.importShort') }}</Button>
         </div>
       </div>
     </div>

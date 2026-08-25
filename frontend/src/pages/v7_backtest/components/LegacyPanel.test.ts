@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption } from '@/shared/testing/select';
 import LegacyPanel from './LegacyPanel.vue';
 import { useLegacyResults } from '../composables/useLegacyResults';
 import { useViewState } from '../composables/useViewState';
@@ -15,7 +16,6 @@ import type { BacktestResultItem } from '../types';
  * area (:941) and the shared charts host (:942). v8 never mounts it.
  */
 
-enableAutoUnmount(afterEach);
 
 const fetchMock = vi.fn();
 const notify = vi.fn();
@@ -77,6 +77,11 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+/* Registered AFTER the body-clearing hook so vitest's LIFO afterEach order
+   unmounts wrappers first — unmounting a reka select AFTER its teleported
+   anchors were wiped crashes removeFragment on null. */
+enableAutoUnmount(afterEach);
+
 describe('LegacyPanel (:918-945)', () => {
   it('renders the toolbar + table without the version column', () => {
     const store = makeStore();
@@ -100,9 +105,10 @@ describe('LegacyPanel (:918-945)', () => {
     const store = makeStore();
     store.rows.value = [row('p1', { config_name: 'a' }), row('p2', { config_name: 'b', result_name: 'needle' })];
     const wrapper = mountPanel(store);
-    await wrapper.find('#legacy-results-config-filter').setValue('b');
+    await pickSelectOption(wrapper, '#legacy-results-config-filter', 'b');
     expect(wrapper.findAll('#legacy-results-table tbody tr')).toHaveLength(1);
-    await wrapper.find('#legacy-results-config-filter').setValue('');
+    // the legacy <option value=""> reset row has no reka equivalent — the
+    // config filter stays 'b' and the text filter narrows on top
     await wrapper.find('#legacy-results-filter').setValue('needle');
     expect(wrapper.findAll('#legacy-results-table tbody tr')).toHaveLength(1);
   });

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
 import { detectedQuickReplies, proposalActionLabel, proposalDetail, proposalReviewText, proposalDiffValue } from './lib/proposal';
 
@@ -104,10 +105,12 @@ describe('AI Chat page shell', () => {
     expect(wrapper.text()).toContain('Optimizer talk');
 
     // Provider/model selects are populated from /status + /models.
-    const providerOptions = wrapper.findAll('#provider-select option');
-    expect(providerOptions.map((option) => option.text())).toEqual(['ChatGPT', 'OpenCode Go']);
-    const modelOptions = wrapper.findAll('#model-select option');
-    expect(modelOptions.map((option) => (option.element as HTMLOptionElement).value)).toEqual(['zen-free', 'gpt-x']);
+    await openSelect(wrapper, '#provider-select');
+    expect(selectOptionTexts()).toEqual(['ChatGPT', 'OpenCode Go']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await openSelect(wrapper, '#model-select');
+    expect(selectOptionTexts().map((text) => text.split(' · ')[0])).toEqual(['Zen Free', 'GPT X']);
     expect(document.title).toBe('AI Chat - PBGui');
   });
 

@@ -9,6 +9,7 @@ import {
   BASE,
   SETTINGS_PAYLOAD,
 } from './App.test-support';
+import { pickSelectOption } from '@/shared/testing/select';
 
 /* M-data-7 best-1m + copy-data panel integration (:9058-9064, :7321-7323,
    :7662-7685, :5127-5153). */
@@ -83,7 +84,7 @@ describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', (
       .map((call) => String(call[0]))
       .filter((url) => url.includes('/best-1m/info/'));
     expect(infoCalls).toEqual([`${BASE}/api/market-data/best-1m/info/bybit`]);
-    await app.find('#page-exchange').setValue('okx');
+    await pickSelectOption(app, '#page-exchange', 'OKX');
     await flushPromises();
     const okxCalls = fetchMock.mock.calls
       .map((call) => String(call[0]))

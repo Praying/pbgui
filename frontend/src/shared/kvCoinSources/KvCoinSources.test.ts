@@ -3,6 +3,7 @@ import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import KvCoinSources from './KvCoinSources.vue';
+import { pickSelectOption } from '@/shared/testing/select';
 
 /*
  * KvCoinSources — the kv chip editor port (v7_backtest.html:3808-4012):
@@ -107,7 +108,7 @@ describe('symbol loading (:3881-3940)', () => {
     await wrapper.find('.ms-input').setValue('do');
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(calls).toEqual(['binance']);
-    await wrapper.find('select').setValue('bybit');
+    await pickSelectOption(wrapper, 'select, [data-slot="select-trigger"]', 'bybit');
     await wrapper.find('.ms-input').setValue('dog');
     await new Promise((resolve) => setTimeout(resolve, 0));
     await nextTick();

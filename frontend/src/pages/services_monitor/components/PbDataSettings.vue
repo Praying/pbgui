@@ -16,6 +16,9 @@ import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { apiBase } from '../config';
 import type { PbDataSaveResponse, PbDataSettingsData } from '../types';
 import MultiselectTags from './MultiselectTags.vue';
@@ -213,9 +216,14 @@ defineExpose({ load });
       <div class="form-section-title">{{ t('sysmon.logLevel') }}</div>
       <div class="form-row log-level-row">
         <div class="form-field">
-          <select class="form-select" id="pbdata-log-level" v-model="logLevel">
-            <option v-for="level in LOG_LEVELS" :key="level" :value="level">{{ level }}</option>
-          </select>
+          <SelectRoot v-model="logLevel">
+            <SelectTrigger id="pbdata-log-level" class="w-auto min-w-[140px]">
+              <span>{{ logLevel }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="level in LOG_LEVELS" :key="level" :value="level">{{ level }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </div>
       </div>
 
@@ -224,8 +232,8 @@ defineExpose({ load });
       <div class="form-row" v-for="row in TIMER_ROWS" :key="row[0]!.id">
         <div class="form-field" v-for="field in row" :key="field.id">
           <span class="form-label">{{ t(field.labelKey) }}</span>
-          <input
-            class="form-input narrow"
+          <Input
+            class="narrow"
             type="number"
             :id="field.id"
             :min="field.min"
@@ -242,8 +250,8 @@ defineExpose({ load });
         <div class="form-row ex-pauses-row">
           <div class="form-field" v-for="ex in EX_LIST" :key="ex">
             <span class="form-label">{{ ex }} {{ t('sysmon.secondsShort') }}</span>
-            <input
-              class="form-input narrow"
+            <Input
+              class="narrow"
               type="number"
               :id="`pbdata-ex-${ex}`"
               min="0"
@@ -256,7 +264,7 @@ defineExpose({ load });
         </div>
       </details>
 
-      <button class="form-btn save" type="button" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</button>
+      <Button class="save" type="button" variant="primary" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</Button>
       <span
         class="inline-msg"
         id="pbdata-save-msg"
@@ -280,15 +288,11 @@ defineExpose({ load });
 .log-level-row { margin-bottom: 1rem; }
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .label-hint { color: var(--text-disabled); font-weight: 400; }
-.form-input.narrow { width: 90px; }
+.narrow { width: 90px; }
 .ex-pauses { margin-top: 1rem; border: 1px solid var(--border-subtle); border-radius: 6px; overflow: hidden; }
 .ex-pauses summary { padding: 0.5rem 0.75rem; cursor: pointer; background: var(--surface-workspace); color: var(--text-secondary); font-size: var(--fs-sm); font-weight: 600; user-select: none; }
 .ex-pauses-hint { padding: 0.6rem 0.9rem 0.4rem; font-size: var(--fs-xs); color: var(--text-disabled); border-bottom: 1px solid var(--border-subtle); }
 .ex-pauses-row { padding: 0.75rem; flex-wrap: wrap; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
-.form-btn.save:hover { background: var(--accent-deep); color: #f2f5fb; }
 .inline-msg { font-size: var(--fs-xs); color: var(--success); margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
 .inline-msg.visible { opacity: 1; }
 .inline-msg.error { color: var(--danger-soft); }

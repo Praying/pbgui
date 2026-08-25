@@ -6,6 +6,7 @@ import {
   mountApp,
   BASE,
 } from './App.test-support';
+import { pickSelectOption } from '@/shared/testing/select';
 
 /* M-data-2 + M-data-8: the status-monitor mount (:3223-3227, :4102-4174,
    :7406-7413). The retired innerHTML fragment became the built
@@ -55,7 +56,7 @@ describe('status monitor iframe mount (:3223-3227, :4142-4174, :7406-7413, M-dat
     const app = mountApp();
     await flushPromises();
     const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
-    await app.find('#page-exchange').setValue('bybit');
+    await pickSelectOption(app, '#page-exchange', 'Bybit');
     await flushPromises();
     expect(frame.src).toBe(`${BASE}/api/market-data/status-monitor/bybit`);
     expect(frame.dataset.exchange).toBe('bybit');
@@ -66,7 +67,7 @@ describe('status monitor iframe mount (:3223-3227, :4142-4174, :7406-7413, M-dat
     await flushPromises();
     const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
     const srcBefore = frame.src;
-    await app.find('#page-exchange').setValue('hyperliquid');
+    await pickSelectOption(app, '#page-exchange', 'Hyperliquid');
     await flushPromises();
     expect(frame.src).toBe(srcBefore);
   });

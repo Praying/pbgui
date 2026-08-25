@@ -220,6 +220,9 @@ onUnmounted(() => {
       <span class="msel-arrow">▼</span>
     </div>
     <div class="msel-drop" :class="{ open: isOpen }" @click.stop>
+      <!-- ui-migration: blocked — the dropdown filter input is chrome-free by
+           design (borderless inside .msel-drop); the ui/ Input owns the
+           bordered/h-8 chrome and cannot express this. -->
       <input
         ref="filterInput"
         v-model="filterQ"

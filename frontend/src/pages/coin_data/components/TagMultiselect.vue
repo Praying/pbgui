@@ -135,6 +135,9 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
       class="ms-tag inline-flex items-center gap-[3px] bg-card border border-border-default rounded-sm px-1.5 py-px text-xs text-primary"
       :title="tag"
     >{{ tag }} <span class="ms-x cursor-pointer text-secondary text-xs leading-none hover:text-danger" :data-val="tag" @click.stop="remove(tag)">×</span></span>
+    <!-- ui-migration: blocked — the chip-row filter input is chrome-free by
+         design (borderless, transparent, h-6 inside the ms-wrap box); the
+         ui/ Input owns the bordered/h-8 chrome and cannot express this. -->
     <input
       ref="input"
       class="ms-input min-w-20 h-6 w-auto flex-1 border-0 bg-transparent p-0 text-base text-primary outline-none placeholder:text-muted [font-family:inherit]"

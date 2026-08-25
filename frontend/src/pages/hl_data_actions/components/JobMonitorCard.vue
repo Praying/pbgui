@@ -8,6 +8,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import ActiveJobCard from './ActiveJobCard.vue';
 import HistoryJobCard from './HistoryJobCard.vue';
 import type { JobRecord } from '../types';
@@ -60,13 +61,15 @@ function tabClass(active: boolean): string {
       }}</span>
     </div>
     <div class="hlda-tabs pbgui-tab-bar mb-2.5 flex gap-0 border-b border-elevated">
-      <button
+      <Button
         v-for="tab in TABS"
         :key="tab"
-        class="hlda-tab pbgui-tab cursor-pointer border-0 border-b-2 bg-transparent px-4 py-1.5 text-sm transition-all duration-150"
+        type="button"
+        variant="ghost"
+        class="hlda-tab pbgui-tab h-auto rounded-none border-0 border-b-2 bg-transparent px-4 py-1.5 font-normal duration-150 hover:bg-transparent"
         :class="tabClass(monitor.currentTab.value === tab)"
         @click="monitor.switchTab(tab)"
-      >{{ tab === 'running' ? t('market.activeTab') : tab === 'done' ? t('market.done') : t('market.failed') }}</button>
+      >{{ tab === 'running' ? t('market.activeTab') : tab === 'done' ? t('market.done') : t('market.failed') }}</Button>
     </div>
     <div class="hlda-tp block" v-if="monitor.currentTab.value === 'running'">
       <div v-if="!monitor.activeJobs.value.length" class="hlda-empty p-4 text-center text-sm text-muted">{{ t('market.noActiveJobs') }}</div>

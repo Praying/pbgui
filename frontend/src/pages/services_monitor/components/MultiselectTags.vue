@@ -13,6 +13,7 @@
  */
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Input } from '@/shared/components/ui/input';
 
 interface Props {
   options: string[];
@@ -56,9 +57,9 @@ function toggle(option: string): void {
 </script>
 
 <template>
-  <input
+  <Input
     v-if="filterable"
-    class="form-input multiselect-filter"
+    class="multiselect-filter"
     type="text"
     :placeholder="t(filterPlaceholderKey)"
     v-model="query"

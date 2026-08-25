@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { Textarea } from '@/shared/components/ui/textarea';
 import type { ArchiveConfig, ArchiveSummary } from '../composables/useOptimizeActions';
 
 const props = defineProps<{ open: boolean; archives: ArchiveSummary[]; configs: ArchiveConfig[]; archiveName: string; busy: boolean }>();
@@ -61,22 +65,24 @@ function submit(): void {
 <template>
   <div v-if="open" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
     <section class="flex w-[min(900px,calc(100vw-30px))] max-h-[min(760px,calc(100vh-30px))] max-h-[min(760px,calc(100dvh-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)]" role="dialog" aria-modal="true">
-      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2>{{ t('v7optimize.importOptimizeConfig') }}</h2><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="emit('close')">{{ t('common.close') }}</button></header>
+      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2>{{ t('v7optimize.importOptimizeConfig') }}</h2><Button type="button" variant="default" @click="emit('close')">{{ t('common.close') }}</Button></header>
+      <!-- ui-migration: out of scope — source tab strip (tabs excluded;
+           .opt-source-tabs button scoped rules stay). -->
       <div class="opt-source-tabs flex gap-1"><button :class="{ active: source === 'local' }" @click="source = 'local'">{{ t('v7optimize.pasteOrFile') }}</button><button :class="{ active: source === 'archive' }" @click="source = 'archive'">{{ t('v7optimize.backtestArchive') }}</button></div>
       <div class="grid min-h-0 gap-3 overflow-auto p-3.5">
-        <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.configName') }}<input v-model="name" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" /></label>
+        <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.configName') }}<Input v-model="name" /></label>
         <template v-if="source === 'local'">
-          <input type="file" accept="application/json,.json" @change="readFile" />
-          <textarea v-model="raw" class="w-full min-h-[220px] resize-y rounded-sm border border-border-default bg-page p-2.5 font-mono text-xs leading-[1.45] text-primary" :placeholder="t('editor.optimize.importPlaceholder', { version: 'PB' })" />
+          <Input type="file" accept="application/json,.json" @change="readFile" />
+          <Textarea v-model="raw" class="min-h-[220px]" :placeholder="t('editor.optimize.importPlaceholder', { version: 'PB' })" />
         </template>
         <template v-else>
-          <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.backtestArchive') }}<select class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" :value="selectedArchive" @change="chooseArchive(($event.target as HTMLSelectElement).value)"><option value="">{{ t('v7optimize.chooseArchive') }}</option><option v-for="archive in archives" :key="archive.name" :value="archive.name">{{ archive.name }} ({{ archive.optimize_configs || 0 }})</option></select></label>
-          <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.archivedConfig') }}<select v-model="selectedPath" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary"><option value="">{{ t('v7optimize.chooseConfig') }}</option><option v-for="item in configs" :key="item.path" :value="item.path">{{ item.name || item.relative_path || item.path }}</option></select></label>
-          <label class="grid gap-1.5 text-xs text-secondary">Collision<select v-model="collision" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary"><option value="error">Ask on conflict</option><option value="copy">{{ t('v7optimize.importAsCopy') }}</option><option value="overwrite">{{ t('v7optimize.overwrite') }}</option></select></label>
+          <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.backtestArchive') }}<SelectRoot :model-value="selectedArchive" @update:model-value="chooseArchive(String($event))"><SelectTrigger :aria-label="t('v7optimize.backtestArchive')"><span :class="selectedArchive ? undefined : 'text-placeholder'">{{ selectedArchive || t('v7optimize.chooseArchive') }}</span></SelectTrigger><SelectContent><SelectItem v-for="archive in archives" :key="archive.name" :value="archive.name">{{ archive.name }} ({{ archive.optimize_configs || 0 }})</SelectItem></SelectContent></SelectRoot></label>
+          <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.archivedConfig') }}<SelectRoot v-model="selectedPath"><SelectTrigger :aria-label="t('v7optimize.archivedConfig')"><span :class="selectedPath ? undefined : 'text-placeholder'">{{ selectedPath ? (configs.find((item) => item.path === selectedPath)?.name || configs.find((item) => item.path === selectedPath)?.relative_path || selectedPath) : t('v7optimize.chooseConfig') }}</span></SelectTrigger><SelectContent><SelectItem v-for="item in configs" :key="item.path" :value="item.path">{{ item.name || item.relative_path || item.path }}</SelectItem></SelectContent></SelectRoot></label>
+          <label class="grid gap-1.5 text-xs text-secondary">Collision<SelectRoot v-model="collision"><SelectTrigger aria-label="Collision"><span>{{ collision === 'error' ? 'Ask on conflict' : collision === 'copy' ? t('v7optimize.importAsCopy') : t('v7optimize.overwrite') }}</span></SelectTrigger><SelectContent><SelectItem value="error">Ask on conflict</SelectItem><SelectItem value="copy">{{ t('v7optimize.importAsCopy') }}</SelectItem><SelectItem value="overwrite">{{ t('v7optimize.overwrite') }}</SelectItem></SelectContent></SelectRoot></label>
         </template>
         <p v-if="error" class="text-danger-soft">{{ error }}</p>
       </div>
-      <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="emit('close')">{{ t('common.cancel') }}</button><button class="min-h-[30px] cursor-pointer rounded-sm border border-accent/55 bg-accent/18 px-2.5 py-1.25 text-accent" :disabled="busy" @click="submit">{{ t('v7optimize.importToEditor') }}</button></footer>
+      <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="emit('close')">{{ t('common.cancel') }}</Button><Button type="button" variant="info" :disabled="busy" @click="submit">{{ t('v7optimize.importToEditor') }}</Button></footer>
     </section>
   </div>
 </template>

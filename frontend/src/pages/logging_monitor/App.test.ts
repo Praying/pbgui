@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
 
 const apiFetchMock = vi.fn();
@@ -69,7 +70,8 @@ describe('Logging Monitor Vue page', () => {
     (viewer.options.onFileChange as (name: string) => void)('PBGui.log');
     await wrapper.vm.$nextTick();
     expect(wrapper.find('[data-field="rotation-version"]').exists()).toBe(true);
-    expect(wrapper.find('[data-field="rotation-version"] option[value="PBGui.log.1"]').exists()).toBe(true);
+    await openSelect(wrapper, '[data-field="rotation-version"]');
+    expect(selectOptionTexts()).toEqual(['Current', '.1']); // "PBGui.log.1".slice("PBGui.log".length)
 
     await wrapper.find('[data-action="purge"]').trigger('click');
     expect(wrapper.get('[data-action="purge"]').find('svg').exists()).toBe(true);

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import ConfirmDialog from '../ConfirmDialog.vue';
 import IntegrityPanel from './IntegrityPanel.vue';
 import { useIntegrity, type IntegrityController } from '../../composables/useIntegrity';
@@ -62,6 +63,8 @@ const ISSUES = {
 
 const T_TABLE: Record<string, string> = {
   'market.removedCount': '{count} removed markets',
+  'market.noPublishArchive': 'No publish archive',
+  'market.noReferenceArchive': 'No reference archive',
   'market.issueCount': '{coins} coins / {days} damaged days',
   'market.differenceCount': '{count} differences',
   'market.removeSelectedCount': 'Remove selected ({count})',
@@ -229,12 +232,15 @@ describe('integrity panel render (:3229-3345)', () => {
 
   it('renders the archive form with predicate-filtered options (:3276-3295)', async () => {
     const { wrapper } = await mountPanel();
-    const publish = wrapper.find('#integrity-publish-archive');
-    expect(publish.findAll('option').map((o) => o.attributes('value'))).toEqual(['', 'own']);
-    expect((publish.element as HTMLSelectElement).value).toBe('own');
-    const reference = wrapper.find('#integrity-reference-archive');
-    expect(reference.findAll('option').map((o) => o.attributes('value'))).toEqual(['', 'public']);
-    expect((wrapper.find('#integrity-publish-enabled').element as HTMLInputElement).checked).toBe(true);
+    await openSelect(wrapper, '#integrity-publish-archive');
+    expect(selectOptionTexts()).toEqual(['No publish archive', 'own (me/pbgui)']);
+    expect(wrapper.find('#integrity-publish-archive').text()).toContain('own (me/pbgui)');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await openSelect(wrapper, '#integrity-reference-archive');
+    expect(selectOptionTexts()).toEqual(['No reference archive', 'public (org/public)']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(wrapper.find('#integrity-publish-enabled').attributes('aria-checked')).toBe('true');
     expect(wrapper.find('#btn-integrity-publish').attributes('disabled')).toBeUndefined();
     expect(wrapper.find('#btn-integrity-reference').attributes('disabled')).toBeUndefined();
   });
@@ -272,7 +278,7 @@ describe('integrity panel actions (:9140-9283)', () => {
 
   it('PUTs the archive settings on save (:9169-9171)', async () => {
     const { wrapper } = await mountPanel();
-    await wrapper.find('#integrity-publish-enabled').setValue(false);
+    await wrapper.find('#integrity-publish-enabled').trigger('click');
     await wrapper.find('#btn-integrity-save').trigger('click');
     await flush();
     const put = calls().find((c) => c.method === 'PUT');
@@ -309,7 +315,7 @@ describe('integrity panel actions (:9140-9283)', () => {
     const { wrapper } = await mountPanel();
     await wrapper.find('[data-integrity-gap-details]').trigger('click');
     await flush();
-    await wrapper.find('#integrity-gap-day').setValue('2026-01-02');
+    await pickSelectOption(wrapper, '#integrity-gap-day', '2026-01-02');
     await flush();
     expect(
       calls().some((c) => c.path.endsWith('/integrity/day-details?exchange=bybit&coin=BTC&day=2026-01-02'))

@@ -21,6 +21,7 @@ import { computed, onUnmounted, ref, watch } from 'vue';
 import { PhPause, PhPlay, PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { wsBase } from '../config';
 
 const props = defineProps<{ file: string }>();
@@ -226,29 +227,33 @@ onUnmounted(() => {
   <div class="lvp-root lvp-vue">
     <div class="lvp-viewer">
       <div class="lvp-toolbar">
-        <button
+        <Button
           v-for="level in LOG_LEVELS"
           :key="level"
           class="lvp-lvl-btn"
           :class="{ on: visibleLevels.has(level) }"
           :data-lvl="level"
+          variant="ghost"
+          size="sm"
           type="button"
           @click="toggleLevel(level)"
         >
           {{ levelShort[level] }}
-        </button>
-        <button
-          class="lvp-ctrl-btn lvp-stream-btn"
+        </Button>
+        <Button
+          class="lvp-stream-btn"
           :class="{ 'lvp-stream-on': streaming }"
+          variant="ghost"
+          size="sm"
           type="button"
           @click="toggleStream"
         >
           <PbIcon :icon="streaming ? PhPause : PhPlay" />
           {{ streaming ? t('shared.log.pause') : t('shared.log.stream') }}
-        </button>
-        <button class="lvp-ctrl-btn lvp-clear-btn" type="button" @click="clearTerminal">
+        </Button>
+        <Button class="lvp-clear-btn" variant="ghost" size="sm" type="button" @click="clearTerminal">
           <PbIcon :icon="PhTrash" /> {{ t('shared.log.clear') }}
-        </button>
+        </Button>
         <span class="lvp-conn-badge">{{ conn }}</span>
       </div>
       <div class="lvp-terminal">
@@ -288,69 +293,6 @@ onUnmounted(() => {
   gap: 5px;
   flex-shrink: 0;
   flex-wrap: wrap;
-}
-.lvp-lvl-btn {
-  padding: 3px 7px;
-  border-radius: 3px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-elevated);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: monospace;
-  transition: all 0.15s;
-  opacity: 0.4;
-  color: var(--text-secondary);
-}
-.lvp-lvl-btn.on {
-  opacity: 1;
-}
-.lvp-lvl-btn[data-lvl='DEBUG'].on {
-  background: var(--bg-elevated);
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-}
-.lvp-lvl-btn[data-lvl='INFO'].on {
-  background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card));
-  border-color: var(--success);
-  color: var(--success);
-}
-.lvp-lvl-btn[data-lvl='WARNING'].on {
-  background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card));
-  border-color: var(--warning);
-  color: var(--warning);
-}
-.lvp-lvl-btn[data-lvl='ERROR'].on {
-  background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card));
-  border-color: var(--danger);
-  color: var(--danger);
-}
-.lvp-lvl-btn[data-lvl='CRITICAL'].on {
-  background: color-mix(in srgb, #9b8ede 28%, var(--bg-card));
-  border-color: #9b8ede;
-  color: #9b8ede;
-}
-.lvp-ctrl-btn {
-  padding: 3px 9px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-size: 12px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-  line-height: 1.6;
-}
-.lvp-ctrl-btn:hover {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: var(--accent);
-}
-.lvp-ctrl-btn.lvp-stream-on {
-  background: var(--success);
-  color: var(--accent-contrast);
-  border-color: var(--success);
 }
 .lvp-conn-badge {
   font-size: 11px;
@@ -408,24 +350,12 @@ onUnmounted(() => {
   box-shadow: 0 1px rgba(255, 255, 255, 0.025) inset;
 }
 
+/* Level-toggle state: the off-state dimming plus the per-level .on tones
+   (the single copy — the legacy base + refinement duplicates are merged). */
 .lvp-lvl-btn {
-  min-width: 39px;
-  min-height: 27px;
-  padding: 0 8px;
-  border-color: rgb(var(--text-secondary-rgb) / 0.17);
-  border-radius: 6px;
-  background: rgb(var(--text-secondary-rgb) / 0.07);
-  color: var(--text-secondary);
+  font-family: monospace;
+  font-weight: 700;
   opacity: 0.48;
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
-}
-
-.lvp-lvl-btn:hover {
-  transform: translateY(-1px);
-  border-color: rgb(var(--text-secondary-rgb) / 0.36);
-  background: rgb(var(--text-secondary-rgb) / 0.14);
-  color: var(--text-secondary);
-  opacity: 0.9;
 }
 
 .lvp-lvl-btn.on {
@@ -462,24 +392,7 @@ onUnmounted(() => {
   color: #9b8ede;
 }
 
-.lvp-ctrl-btn {
-  min-height: 29px;
-  padding: 0 10px;
-  border-color: rgb(var(--text-secondary-rgb) / 0.17);
-  border-radius: 7px;
-  background: rgb(var(--text-secondary-rgb) / 0.08);
-  color: var(--text-secondary);
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
-}
-
-.lvp-ctrl-btn:hover {
-  transform: translateY(-1px);
-  border-color: rgb(var(--accent-rgb) / 0.38);
-  background: rgb(var(--accent-rgb) / 0.16);
-  color: var(--text-secondary);
-}
-
-.lvp-ctrl-btn.lvp-stream-on {
+.lvp-stream-btn.lvp-stream-on {
   border-color: rgb(var(--success-rgb) / 0.4);
   background: rgb(var(--success-rgb) / 0.16);
   color: var(--success-soft);

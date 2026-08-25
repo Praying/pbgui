@@ -22,6 +22,7 @@
  *    plus the CUSTOM from/to/Now block.
  */
 import { computed, inject, onMounted, ref, watch } from 'vue';
+import { Input } from '@/shared/components/ui/input';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -166,24 +167,26 @@ watch(
         <PeriodControls :period="period" @update:period="onPeriodChange" />
         <span :class="dtMetaSepClass">·</span>
         <span :class="dtMetaLblClass">{{ dashT('dash.lastN', 'Last N') }}</span>
-        <input
+        <Input
           type="number"
+          size="sm"
           min="0"
           max="9999"
           step="10"
           :class="dtCtrlNumClass"
-          :value="lastN"
+          :model-value="lastN"
           @change="onLastNChange"
         />
         <span :class="dtMetaSepClass">·</span>
         <span :class="dtMetaLblClass">{{ dashT('dash.filterVal', 'Filter') }}</span>
-        <input
+        <Input
           type="number"
+          size="sm"
           min="0"
           step="0.01"
           :class="dtCtrlNumClass"
           style="width:68px"
-          :value="filterVal"
+          :model-value="filterVal"
           @change="onFilterChange"
         />
         <span :class="dtMetaSepClass">·</span>

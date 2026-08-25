@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption } from '@/shared/testing/select';
 import Playground from './Playground.vue';
 import { useParetoSession, type ParetoStore } from '../composables/useParetoSession';
 import { useSurfaces } from '../composables/useSurfaces';
@@ -120,7 +121,7 @@ describe('chart settings (:4357-4434)', () => {
   it('changing the visualization refetches with the new viz_type', async () => {
     const store = makeStore();
     const { wrapper } = mountPlayground(store);
-    await wrapper.get('#playground-viz-type').setValue('3D Scatter');
+    await pickSelectOption(wrapper, '#playground-viz-type', '3D Scatter (WebGL)');
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(store.state.playground.vizType).toBe('3D Scatter');
     const bodies = playgroundCalls();
@@ -132,7 +133,7 @@ describe('chart settings (:4357-4434)', () => {
     const store = makeStore();
     store.state.playground.quickView = 'Profit vs Risk';
     const { wrapper } = mountPlayground(store);
-    await wrapper.get('#playground-viz-type').setValue('Radar Chart');
+    await pickSelectOption(wrapper, '#playground-viz-type', 'Radar Chart');
     expect(store.state.playground.quickView).toBe('Top Comparison');
     expect(wrapper.get('#playground-show-all-wrap').isVisible()).toBe(false); // radar hides shared toggles
     wrapper.unmount();
@@ -144,7 +145,7 @@ describe('chart settings (:4357-4434)', () => {
     const { wrapper } = mountPlayground(store);
     // Custom controls hidden for the preset quick view (:2071)
     expect(wrapper.get('#playground-custom-controls').isVisible()).toBe(false);
-    await wrapper.get('#playground-quick-view').setValue('Custom...');
+    await pickSelectOption(wrapper, '#playground-quick-view', 'Custom...');
     expect(store.state.playground.customXMetric).toBe('adg_w_usd');
     expect(store.state.playground.customZMetric).toBe(''); // 2D Scatter clears z
     expect(wrapper.get('#playground-custom-controls').isVisible()).toBe(true);
@@ -165,16 +166,17 @@ describe('chart settings (:4357-4434)', () => {
 
   it('weight sliders update the store and debounce a single refresh (:4357-4369)', async () => {
     vi.useFakeTimers();
-    const store = makeStore();
+    const store = makeStore(); // perfWeight defaults to 80
     const { wrapper } = mountPlayground(store);
-    await wrapper.get('#playground-perf-weight').setValue('40');
-    await wrapper.get('#playground-perf-weight').trigger('input');
-    expect(store.state.playground.perfWeight).toBe(40);
-    expect(wrapper.get('#playground-perf-weight-value').text()).toBe('40');
+    // reka slider: keyboard on the thumb (ArrowRight → +step); jsdom resolves
+    // the thumb index only for the first step, so assert one step here.
+    await wrapper.get('#playground-perf-weight [role="slider"]').trigger('keydown', { key: 'ArrowRight' });
+    expect(store.state.playground.perfWeight).toBe(85);
+    expect(wrapper.get('#playground-perf-weight-value').text()).toBe('85');
     await vi.advanceTimersByTimeAsync(140);
     const bodies = playgroundCalls();
     expect(bodies).toHaveLength(1);
-    expect(bodies[0]!.perf_weight).toBe(40);
+    expect(bodies[0]!.perf_weight).toBe(85);
     wrapper.unmount();
   });
 
@@ -183,9 +185,8 @@ describe('chart settings (:4357-4434)', () => {
     store.state.playground.colorMetric = 'adg';
     store.state.playground.payload = { available_metrics: ['sharpe', 'cnc'] } as PlaygroundPayload;
     const { wrapper } = mountPlayground(store);
-    const select = wrapper.get('#playground-color-metric');
-    expect((select.element as HTMLSelectElement).value).toBe('None');
-    await select.setValue('sharpe');
+    expect(wrapper.get('#playground-color-metric').text()).toBe('None');
+    await pickSelectOption(wrapper, '#playground-color-metric', 'sharpe');
     expect(store.state.playground.colorMetric).toBe('sharpe');
     wrapper.unmount();
   });
@@ -195,9 +196,9 @@ describe('chart settings (:4357-4434)', () => {
     store.state.playground.vizType = '3D Projections';
     store.state.playground.payload = { viz_type: '3D Projections' } as PlaygroundPayload;
     const { wrapper } = mountPlayground(store);
-    const switchInput = wrapper.get('#playground-projection-layout-row');
+    const switchControl = wrapper.get('#playground-projection-layout-row');
     expect(wrapper.get('#playground-projections').classes()).not.toContain('projections-row');
-    await switchInput.setValue(true);
+    await switchControl.trigger('click');
     expect(store.state.playground.projectionLayout).toBe('row');
     expect(wrapper.get('#playground-projections').classes()).toContain('projections-row');
     wrapper.unmount();

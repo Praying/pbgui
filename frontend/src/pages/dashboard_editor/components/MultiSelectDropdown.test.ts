@@ -93,7 +93,8 @@ describe('opening and portal (editor:832-850)', () => {
   it('focuses the filter input on open', async () => {
     const w = mountDropdown();
     await clickBtn(w);
-    expect(document.activeElement?.className).toBe('msel-filter');
+    /* ui/Input renders the filter — the legacy hook class rides along */
+    expect(document.activeElement?.className).toContain('msel-filter');
   });
 
   it('closes on a second button click without emitting', async () => {

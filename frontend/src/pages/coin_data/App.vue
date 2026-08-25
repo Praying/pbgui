@@ -41,6 +41,10 @@
  *    legacy #action-status element did not exist in the DOM — the guard in
  *    setActionStatus made every status message invisible).
  *  - Debounce/poll timers are disposed on unmount (legacy leaked them).
+ *  - The hip3-dex picker (legacy :1640-1647) had an empty-value "All
+ *    DEXes" option to reset the filter; the reka listbox reserves "" for
+ *    the cleared state and has no reset row — "All DEXes" is now the
+ *    placeholder shown while no DEX is picked (ui-migration).
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -49,6 +53,13 @@ import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import type { PageSection } from '@/shared/navigation';
 import BusyOverlay from './components/BusyOverlay.vue';
 import FiltersPanel from './components/FiltersPanel.vue';
@@ -275,33 +286,35 @@ onBeforeUnmount(() => {
       <!-- Legacy sidebar toolbar (:3085-3111): refresh actions + the CPT
            filter toggle keep their ids and gating; only the position moved
            (the view buttons became the rail sections above). -->
-      <button class="pbgui-action primary" id="btn-refresh-exchange" type="button" @click="onRefresh('/refresh/exchange', 'market.refreshingSelectedExchange', 'market.refreshedSelectedExchange')">{{ t('market.refreshSelectedExchange') }}</button>
-      <button class="pbgui-action" id="btn-refresh-all" type="button" @click="onRefresh('/refresh/all', 'market.refreshingAllExchanges', 'market.allExchangesRefreshed')">{{ t('market.refreshAllExchanges') }}</button>
-      <button
-        class="pbgui-action"
+      <Button variant="info" size="sm" id="btn-refresh-exchange" type="button" @click="onRefresh('/refresh/exchange', 'market.refreshingSelectedExchange', 'market.refreshedSelectedExchange')">{{ t('market.refreshSelectedExchange') }}</Button>
+      <Button variant="secondary" size="sm" id="btn-refresh-all" type="button" @click="onRefresh('/refresh/all', 'market.refreshingAllExchanges', 'market.allExchangesRefreshed')">{{ t('market.refreshAllExchanges') }}</Button>
+      <Button
+        variant="secondary"
+        size="sm"
         id="btn-refresh-cmc"
         type="button"
         :disabled="!store.hasMaterializedCmcKey.value"
         :title="cmcTitle"
         @click="onRefresh('/refresh/cmc', 'market.refreshingCmcSelected', 'market.cmcSelectedRefreshed')"
-      >{{ t('market.refreshCmcSelected') }}</button>
-      <button
-        class="pbgui-action"
+      >{{ t('market.refreshCmcSelected') }}</Button>
+      <Button
+        variant="secondary"
+        size="sm"
         id="btn-refresh-cmc-all"
         type="button"
         :disabled="!store.hasMaterializedCmcKey.value"
         :title="cmcTitle"
         @click="onRefresh('/refresh/cmc_all', 'market.refreshingCmcAll', 'market.cmcAllRefreshed')"
-      >{{ t('market.refreshCmcAll') }}</button>
-      <button
+      >{{ t('market.refreshCmcAll') }}</Button>
+      <Button
         v-if="store.supportsCopyTradingFilter.value"
-        class="pbgui-action"
-        :class="{ primary: store.filters.value.onlyCpt }"
+        :variant="store.filters.value.onlyCpt ? 'info' : 'secondary'"
+        size="sm"
         id="btn-only-cpt"
         type="button"
         :aria-pressed="store.filters.value.onlyCpt"
         @click="store.toggleOnlyCpt()"
-      >{{ t('market.onlyCopyTrading') }}</button>
+      >{{ t('market.onlyCopyTrading') }}</Button>
     </template>
 
     <MigrationWatermark />
@@ -391,23 +404,29 @@ onBeforeUnmount(() => {
             :class="hip3DexFieldVisible ? 'flex' : 'hidden'"
           >
             <label class="summary-field inline-flex items-center gap-2 min-w-0 cursor-default max-[980px]:w-full" id="field-hip3-dex" @mousedown.stop @click.stop>
-              <span class="summary-field-label text-sm text-secondary whitespace-nowrap">{{ t('market.dex') }}</span>
-              <select
-                id="filter-hip3-dex"
-                class="w-full h-8 px-[0.75rem] rounded-lg border border-border-default bg-card text-primary text-base outline-none focus:border-secondary min-w-[160px] max-[980px]:min-w-0"
+              <span class="summary-field-label text-sm text-secondary whitespace-nowrap" id="filter-hip3-dex-label">{{ t('market.dex') }}</span>
+              <SelectRoot
+                :model-value="store.filters.value.hip3Dex"
                 :disabled="!store.hip3DexOptions.value.length"
-                @mousedown.stop
-                @click.stop
-                @change="store.setHip3Dex(($event.target as HTMLSelectElement).value)"
+                @update:model-value="(value: unknown) => store.setHip3Dex(String(value ?? ''))"
               >
-                <option value="" :selected="!store.filters.value.hip3Dex">{{ t('market.allDexes') }}</option>
-                <option
-                  v-for="dex in store.hip3DexOptions.value"
-                  :key="dex"
-                  :value="dex"
-                  :selected="dex === store.filters.value.hip3Dex"
-                >{{ dex }}</option>
-              </select>
+                <SelectTrigger
+                  id="filter-hip3-dex"
+                  class="min-w-[160px] max-[980px]:min-w-0"
+                  aria-labelledby="filter-hip3-dex-label"
+                  @mousedown.stop
+                  @click.stop
+                >
+                  <span :class="store.filters.value.hip3Dex ? undefined : 'text-placeholder'">{{ store.filters.value.hip3Dex || t('market.allDexes') }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="dex in store.hip3DexOptions.value"
+                    :key="dex"
+                    :value="dex"
+                  >{{ dex }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </label>
           </span>
         </summary>

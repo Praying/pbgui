@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -50,7 +51,7 @@ function entryTitle(entry: Record<string, unknown>): string {
 <template>
   <div v-if="open" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
     <section class="opt-modal opt-ohlcv-modal" role="dialog" aria-modal="true" aria-labelledby="opt-ohlcv-title">
-      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 id="opt-ohlcv-title">{{ t('editor.preflight.title') }}</h2><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" type="button" @click="emit('close')">{{ t('common.close') }}</button></header>
+      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 id="opt-ohlcv-title">{{ t('editor.preflight.title') }}</h2><Button type="button" @click="emit('close')">{{ t('common.close') }}</Button></header>
       <div class="grid min-h-0 gap-3 overflow-auto p-3.5 block">
         <p v-if="loading" class="text-xs text-secondary">{{ t('editor.preflight.running') }}</p>
         <p v-if="error" class="text-danger-soft">{{ error }}</p>
@@ -76,9 +77,9 @@ function entryTitle(entry: Record<string, unknown>): string {
         </section>
       </div>
       <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3">
-        <button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" data-action="refresh" type="button" :disabled="loading" @click="emit('refresh')">{{ t('editor.preflight.refreshBtn') }}</button>
-        <button v-if="jobRunning" class="min-h-[30px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-1.25 text-danger" data-action="stop" type="button" @click="emit('stop')">{{ t('editor.preflight.stopBtn') }}</button>
-        <button v-else class="min-h-[30px] cursor-pointer rounded-sm border border-accent/55 bg-accent/18 px-2.5 py-1.25 text-accent" data-action="preload" type="button" :disabled="!preloadSupported || loading" @click="emit('preload')">{{ String(summary.preload_label || t('editor.preflight.preloadDefault')) }}</button>
+        <Button data-action="refresh" type="button" :disabled="loading" @click="emit('refresh')">{{ t('editor.preflight.refreshBtn') }}</Button>
+        <Button v-if="jobRunning" variant="danger" data-action="stop" type="button" @click="emit('stop')">{{ t('editor.preflight.stopBtn') }}</Button>
+        <Button v-else variant="info" data-action="preload" type="button" :disabled="!preloadSupported || loading" @click="emit('preload')">{{ String(summary.preload_label || t('editor.preflight.preloadDefault')) }}</Button>
       </footer>
     </section>
   </div>

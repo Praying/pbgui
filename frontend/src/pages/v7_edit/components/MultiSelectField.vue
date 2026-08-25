@@ -71,6 +71,9 @@ function clear(): void {
         {{ value }}
         <span class="ms-x" @click="removeTag(value)">&#x2715;</span>
       </span>
+      <!-- ui-migration: blocked — the chip-row filter input is chrome-free by
+           design (borderless, transparent, h-6 inside the .ms-wrap box); the
+           ui/ Input owns the bordered/h-8 chrome and cannot express this. -->
       <input
         :id="id + '-input'"
         v-model="filter"

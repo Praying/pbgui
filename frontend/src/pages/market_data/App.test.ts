@@ -1,4 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { enableAutoUnmount } from '@vue/test-utils';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
 import {
   clearAppTestGlobals,
@@ -43,6 +45,11 @@ beforeEach(() => {
 afterEach(() => {
   clearAppTestGlobals();
 });
+// Unmount before the globals clear above (LIFO): clearing first destroys the
+// reka select teleport anchors and the deferred unmount then throws
+// removeFragment on a null parent (seen as the full-suite flake in the
+// exchange-context tests).
+enableAutoUnmount(afterEach);
 
 describe('page skeleton (legacy DOM :2836, :2917-2977)', () => {
   it('renders the shared shell, rail sections and main content', () => {
@@ -137,26 +144,26 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
 });
 
 describe('exchange context bar (:2965-2977, :7304-7313, :9766)', () => {
-  it('renders the five legacy exchange options in order', () => {
+  it('renders the five legacy exchange options in order', async () => {
     const app = mountApp();
-    const options = app.findAll('#page-exchange option').map((o) => o.text());
-    expect(options).toEqual(['Hyperliquid', 'Binance USDM', 'Bybit', 'Bitget', 'OKX']);
+    await openSelect(app, '#page-exchange');
+    expect(selectOptionTexts()).toEqual(['Hyperliquid', 'Binance USDM', 'Bybit', 'Bitget', 'OKX']);
   });
 
   it('selects hyperliquid by default', () => {
     const app = mountApp();
-    expect((app.find('#page-exchange').element as HTMLSelectElement).value).toBe('hyperliquid');
+    expect(app.find('#page-exchange').text()).toContain('Hyperliquid');
   });
 
   it('restores the persisted exchange (:9766)', () => {
     window.localStorage.setItem(LS_KEY_EXCHANGE, 'bybit');
     const app = mountApp();
-    expect((app.find('#page-exchange').element as HTMLSelectElement).value).toBe('bybit');
+    expect(app.find('#page-exchange').text()).toContain('Bybit');
   });
 
   it('persists the exchange on change (:7310)', async () => {
     const app = mountApp();
-    await app.find('#page-exchange').setValue('okx');
+    await pickSelectOption(app, '#page-exchange', 'OKX');
     expect(window.localStorage.getItem(LS_KEY_EXCHANGE)).toBe('okx');
   });
 
@@ -164,7 +171,7 @@ describe('exchange context bar (:2965-2977, :7304-7313, :9766)', () => {
     window.localStorage.setItem(LS_KEY_EXCHANGE, 'binanceusdm');
     const app = mountApp();
     await flushPromises();
-    expect((app.find('#page-exchange').element as HTMLSelectElement).value).toBe('binance');
+    expect(app.find('#page-exchange').text()).toContain('Binance USDM');
     expect(window.localStorage.getItem(LS_KEY_EXCHANGE)).toBe('binance');
     const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
     expect(frame.src).toBe(`${BASE}/api/market-data/status-monitor/binanceusdm`);
@@ -217,7 +224,7 @@ describe('best-1m entries (rail section :2946 + in-panel mode switch :2948)', ()
   it('shows the in-panel download control only on hyperliquid (:7422)', async () => {
     const app = mountApp();
     expect(app.find('#best1m-mode-switch').exists()).toBe(true);
-    await app.find('#page-exchange').setValue('bybit');
+    await pickSelectOption(app, '#page-exchange', 'Bybit');
     expect(app.find('#best1m-mode-switch').exists()).toBe(false);
   });
 });

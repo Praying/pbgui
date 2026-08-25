@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import ResultsPanel from './ResultsPanel.vue';
 import { useResults, type ResultsStore } from '../composables/useResults';
 
@@ -11,7 +13,6 @@ import { useResults, type ResultsStore } from '../composables/useResults';
  * results store as its single prop (App owns the store).
  */
 
-enableAutoUnmount(afterEach);
 
 const fetchMock = vi.fn();
 const notify = vi.fn();
@@ -65,14 +66,25 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+/* Registered AFTER the body-clearing hook so vitest's LIFO afterEach order
+   unmounts wrappers first — unmounting a reka select AFTER its teleported
+   anchors were wiped crashes removeFragment on null. */
+enableAutoUnmount(afterEach);
+
 describe('toolbar (:837-852)', () => {
   it('renders the version/config filters, search box and select-all controls', async () => {
     const store = await loadedStore();
     const wrapper = mountPanel(store);
-    const versionOptions = wrapper.findAll('#results-version-filter option');
-    expect(versionOptions.map((o) => o.attributes('value'))).toEqual(['v7', 'v8', 'both']);
-    const configOptions = wrapper.findAll('#results-config-filter option');
-    expect(configOptions.map((o) => o.attributes('value'))).toEqual(['', 'alpha', 'beta']);
+    // reka listbox: options mount lazily into a body portal on open
+    await openSelect(wrapper, '#results-version-filter');
+    expect(selectOptionTexts()).toEqual(['PBv7', 'PBv8', 'Both']);
+    // close the first listbox before opening the next (reka keeps it open)
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await nextTick();
+    // the legacy <option value="">All configs</option> has no reka item —
+    // the listbox carries only the config names
+    await openSelect(wrapper, '#results-config-filter');
+    expect(selectOptionTexts()).toEqual(['alpha', 'beta']);
     expect(wrapper.find('#results-filter').exists()).toBe(true);
     expect(wrapper.find('[data-test="results-select-all"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="results-deselect"]').exists()).toBe(true);
@@ -82,7 +94,7 @@ describe('toolbar (:837-852)', () => {
     const store = await loadedStore();
     fetchMock.mockClear();
     const wrapper = mountPanel(store);
-    await wrapper.find('#results-version-filter').setValue('both');
+    await pickSelectOption(wrapper, '#results-version-filter', 'Both');
     expect(store.versionFilter.value).toBe('both');
     const urls = fetchMock.mock.calls.map((c) => String(c[0]));
     expect(urls).toEqual(expect.arrayContaining([
@@ -96,7 +108,7 @@ describe('toolbar (:837-852)', () => {
     const wrapper = mountPanel(store);
     // legacy quirk kept: shown + ' ' + '{n} results' (:5499) doubles the count
     expect(wrapper.find('#results-count-label').text()).toBe('2 2 results');
-    await wrapper.find('#results-config-filter').setValue('alpha');
+    await pickSelectOption(wrapper, '#results-config-filter', 'alpha');
     expect(store.configFilter.value).toBe('alpha');
     expect(wrapper.find('#results-count-label').text()).toBe('Showing 1 of 2 2 results');
     await wrapper.find('#results-filter').setValue('zzz');
@@ -106,7 +118,7 @@ describe('toolbar (:837-852)', () => {
   it('select-all selects the visible rows only; deselect clears (:849-850)', async () => {
     const store = await loadedStore();
     const wrapper = mountPanel(store);
-    await wrapper.find('#results-config-filter').setValue('alpha');
+    await pickSelectOption(wrapper, '#results-config-filter', 'alpha');
     await wrapper.find('[data-test="results-select-all"]').trigger('click');
     expect(store.getSelected()).toEqual(['p1']);
     await wrapper.find('[data-test="results-deselect"]').trigger('click');

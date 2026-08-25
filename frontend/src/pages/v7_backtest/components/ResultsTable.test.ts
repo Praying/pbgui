@@ -12,7 +12,6 @@ import type { BacktestResultItem, ResultActionKind } from '../types';
  * selection.
  */
 
-enableAutoUnmount(afterEach);
 
 function row(partial: Partial<BacktestResultItem> & { path: string }): BacktestResultItem {
   return {
@@ -66,6 +65,11 @@ beforeEach(() => {
 afterEach(() => {
   document.body.innerHTML = '';
 });
+
+/* Registered AFTER the body-clearing hook so vitest's LIFO afterEach order
+   unmounts wrappers first — unmounting a reka select AFTER its teleported
+   anchors were wiped crashes removeFragment on null. */
+enableAutoUnmount(afterEach);
 
 describe('headers (:5532-5539)', () => {
   it('renders the sortable header set with arrows on the active column', () => {

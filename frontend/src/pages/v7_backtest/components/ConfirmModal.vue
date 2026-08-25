@@ -7,7 +7,8 @@
  * markup — no string-built innerHTML.
  */
 import { useI18n } from 'vue-i18n';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 
 withDefaults(
   defineProps<{
@@ -30,10 +31,10 @@ const { t } = useI18n();
       <h3>{{ title }}</h3>
       <div class="min-h-0 flex-1 overflow-auto"><slot /></div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" :class="modalBtnClass()" @click="emit('cancel')">{{ t('common.cancel') }}</button>
-        <button type="button" :class="modalBtnClass(danger ? 'danger' : 'primary')" :data-test="testId + '-ok'" @click="emit('confirm')">
+        <Button type="button" variant="default" class="modal-btn" @click="emit('cancel')">{{ t('common.cancel') }}</Button>
+        <Button type="button" :variant="danger ? 'danger' : 'primary'" class="modal-btn" :data-test="testId + '-ok'" @click="emit('confirm')">
           {{ confirmLabel ?? t('common.ok') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

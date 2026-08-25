@@ -8,6 +8,16 @@
  */
 import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Label } from '@/shared/components/ui/label';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
+import { Slider } from '@/shared/components/ui/slider';
+import { Switch } from '@/shared/components/ui/switch';
 import ProjectionTriptych from './ProjectionTriptych.vue';
 import ScatterChart from './ScatterChart.vue';
 import {
@@ -51,6 +61,15 @@ const mainSpec = computed<ChartSpec | null>(() => {
 
 const quickViewOptions = computed(() => quickViewOptionsFor(pg.vizType));
 
+/** The visualization listbox — labels carry the renderer hint (:1282-1287). */
+const VIZ_OPTIONS = [
+  { value: '2D Scatter', label: '2D Scatter' },
+  { value: '3D Scatter', label: '3D Scatter (WebGL)' },
+  { value: '3D Projections', label: '3D Projections (2D)' },
+  { value: 'Radar Chart', label: 'Radar Chart' },
+] as const;
+const vizTypeLabel = computed(() => VIZ_OPTIONS.find((option) => option.value === pg.vizType)?.label ?? pg.vizType);
+
 /** updatePlaygroundCustomUi's option lists (:2076-2079). */
 const customAvailable = computed(() =>
   filterCustomMetrics(availableMetrics.value, {
@@ -75,9 +94,8 @@ const metricSummary = computed(() =>
 const bestMatchLine = computed(() => (payload.value ? bestMatchText(payload.value, (key, params) => t(key, params ?? {})) : t('v7explore.loadToComputeBestMatch')));
 
 /** :4384-4391 — viz switch + radar quick-view reset. */
-function onVizTypeChange(event: Event): void {
-  const value = String((event.target as HTMLSelectElement).value || '2D Scatter');
-  pg.vizType = value;
+function onVizTypeChange(value: unknown): void {
+  pg.vizType = String(value || '2D Scatter');
   if (pg.vizType === 'Radar Chart' && !['Top Comparison', 'Risk Profile'].includes(pg.quickView)) {
     pg.quickView = 'Top Comparison';
   }
@@ -85,9 +103,9 @@ function onVizTypeChange(event: Event): void {
 }
 
 /** :4398-4407 — quick-view switch; entering Custom preserves the payload axes. */
-function onQuickViewChange(event: Event): void {
+function onQuickViewChange(value: unknown): void {
   const previous = pg.quickView;
-  pg.quickView = String((event.target as HTMLSelectElement).value || 'Profit vs Risk');
+  pg.quickView = String(value || 'Profit vs Risk');
   if (pg.quickView === 'Custom...' && previous !== 'Custom...') {
     const preserved = preservedCustomMetrics(payloadMetrics.value, pg.vizType);
     if (preserved.x) pg.customXMetric = preserved.x;
@@ -103,10 +121,18 @@ function onWeightInput(): void {
 }
 
 /** :4423-4434 — custom axes only refresh Custom quick views. */
-function onCustomMetricChange(field: 'customXMetric' | 'customYMetric' | 'customZMetric', event: Event): void {
-  pg[field] = String((event.target as HTMLSelectElement).value || '');
+function onCustomMetricChange(field: 'customXMetric' | 'customYMetric' | 'customZMetric', value: unknown): void {
+  pg[field] = String(value || '');
   if (pg.quickView === 'Custom...') props.surfaces.refreshPlaygroundFromSettings();
 }
+
+/** The side-by-side switch maps the projectionLayout enum onto a boolean. */
+const projectionLayoutRow = computed<boolean>({
+  get: () => pg.projectionLayout === 'row',
+  set: (value) => {
+    pg.projectionLayout = value ? 'row' : 'stacked';
+  },
+});
 
 /** resizePlaygroundCharts (:2233-2242, :4146-4150). */
 function resizeCharts(): void {
@@ -139,18 +165,13 @@ watch(
       <div class="chart-card panel-card min-w-0 rounded-xl border border-border-default bg-panel p-3.5" style="grid-column: span 2">
         <div class="title-row flex flex-wrap items-center justify-between gap-3">
           <h3 class="mb-2">{{ t('v7explore.explorer') }}</h3>
-          <label id="playground-projection-layout-wrap" v-show="isProjections" class="inline-switch inline-flex items-center gap-2.5 text-sm text-secondary select-none">
+          <label id="playground-projection-layout-wrap" v-show="isProjections" class="inline-flex cursor-pointer items-center gap-2.5 text-sm text-secondary select-none">
             <span>{{ t('v7explore.sideBySide') }}</span>
-            <input
+            <Switch
               id="playground-projection-layout-row"
-              class="absolute pointer-events-none opacity-0"
-              :checked="pg.projectionLayout === 'row'"
-              type="checkbox"
-              role="switch"
+              v-model="projectionLayoutRow"
               aria-label="Show projections side by side"
-              @change="pg.projectionLayout = ($event.target as HTMLInputElement).checked ? 'row' : 'stacked'"
             />
-            <span class="switch-track relative h-6 w-11 shrink-0 rounded-full border border-border-default bg-white/18 transition-[background-color,border-color] duration-180 ease-[ease]" aria-hidden="true"></span>
           </label>
         </div>
         <p class="muted-line text-secondary" id="playground-metric-summary">{{ metricSummary }}</p>
@@ -172,37 +193,44 @@ watch(
         <h3 class="mb-2">{{ t('v7explore.chartSettings') }}</h3>
         <div class="form-grid grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3" style="margin-top: 12px">
           <div class="form-field full col-span-12 flex flex-col gap-1.5">
-            <label for="playground-viz-type" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.visualization') }}</label>
-            <select id="playground-viz-type" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" :value="pg.vizType" @change="onVizTypeChange">
-              <option value="2D Scatter">2D Scatter</option>
-              <option value="3D Scatter">3D Scatter (WebGL)</option>
-              <option value="3D Projections">3D Projections (2D)</option>
-              <option value="Radar Chart">Radar Chart</option>
-            </select>
+            <Label id="playground-viz-type-label">{{ t('v7explore.visualization') }}</Label>
+            <SelectRoot :model-value="pg.vizType" @update:model-value="onVizTypeChange">
+              <SelectTrigger id="playground-viz-type" aria-labelledby="playground-viz-type-label">
+                <span>{{ vizTypeLabel }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in VIZ_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+              </SelectContent>
+            </SelectRoot>
           </div>
           <div id="playground-show-all-wrap" v-show="!isRadar" class="form-field full col-span-12 flex flex-col gap-1.5">
             <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
-              <input id="playground-show-all" class="h-4 w-4" v-model="pg.showAll" type="checkbox" @change="surfaces.refreshPlaygroundFromSettings()" />
-              <label for="playground-show-all" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.showAllConfigs') }}</label>
+              <Checkbox id="playground-show-all" v-model="pg.showAll" @update:model-value="surfaces.refreshPlaygroundFromSettings()" />
+              <Label for="playground-show-all">{{ t('v7explore.showAllConfigs') }}</Label>
             </div>
           </div>
           <div id="playground-use-weighted-wrap" v-show="!isRadar" class="form-field full col-span-12 flex flex-col gap-1.5">
             <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
-              <input id="playground-use-weighted" class="h-4 w-4" v-model="pg.useWeighted" type="checkbox" @change="surfaces.refreshPlaygroundFromSettings()" />
-              <label for="playground-use-weighted" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.useWeightedMetrics') }}</label>
+              <Checkbox id="playground-use-weighted" v-model="pg.useWeighted" @update:model-value="surfaces.refreshPlaygroundFromSettings()" />
+              <Label for="playground-use-weighted">{{ t('v7explore.useWeightedMetrics') }}</Label>
             </div>
           </div>
           <div id="playground-use-btc-wrap" v-show="!isRadar" class="form-field full col-span-12 flex flex-col gap-1.5">
             <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
-              <input id="playground-use-btc" class="h-4 w-4" v-model="pg.useBtc" type="checkbox" @change="surfaces.refreshPlaygroundFromSettings()" />
-              <label for="playground-use-btc" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.useBtcInsteadOfUsd') }}</label>
+              <Checkbox id="playground-use-btc" v-model="pg.useBtc" @update:model-value="surfaces.refreshPlaygroundFromSettings()" />
+              <Label for="playground-use-btc">{{ t('v7explore.useBtcInsteadOfUsd') }}</Label>
             </div>
           </div>
           <div class="form-field full col-span-12 flex flex-col gap-1.5">
-            <label for="playground-quick-view" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.quickViews') }}</label>
-            <select id="playground-quick-view" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" :value="pg.quickView" @change="onQuickViewChange">
-              <option v-for="option in quickViewOptions" :key="option" :value="option">{{ option }}</option>
-            </select>
+            <Label id="playground-quick-view-label">{{ t('v7explore.quickViews') }}</Label>
+            <SelectRoot :model-value="pg.quickView" @update:model-value="onQuickViewChange">
+              <SelectTrigger id="playground-quick-view" aria-labelledby="playground-quick-view-label">
+                <span>{{ pg.quickView }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in quickViewOptions" :key="option" :value="option">{{ option }}</SelectItem>
+              </SelectContent>
+            </SelectRoot>
           </div>
           <div id="playground-custom-controls" v-show="visibility.showCustom" class="form-field full col-span-12 flex flex-col gap-1.5">
             <div class="load-status-card flex flex-col gap-2 rounded-xl border border-border-default bg-white/2 p-3">
@@ -211,55 +239,75 @@ watch(
               </div>
               <div id="playground-custom-filters" v-show="visibility.showFilters" class="stack flex flex-col gap-3" style="gap: 8px">
                 <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
-                  <input id="playground-allow-mixed-weighted" class="h-4 w-4" v-model="pg.allowMixedWeighted" type="checkbox" @change="pg.quickView === 'Custom...' && surfaces.refreshPlaygroundFromSettings()" />
-                  <label for="playground-allow-mixed-weighted" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.allowMixedWeighted') }}</label>
+                  <Checkbox id="playground-allow-mixed-weighted" v-model="pg.allowMixedWeighted" @update:model-value="pg.quickView === 'Custom...' && surfaces.refreshPlaygroundFromSettings()" />
+                  <Label for="playground-allow-mixed-weighted">{{ t('v7explore.allowMixedWeighted') }}</Label>
                 </div>
                 <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
-                  <input id="playground-allow-mixed-currency" class="h-4 w-4" v-model="pg.allowMixedCurrency" type="checkbox" @change="pg.quickView === 'Custom...' && surfaces.refreshPlaygroundFromSettings()" />
-                  <label for="playground-allow-mixed-currency" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.allowMixedCurrency') }}</label>
+                  <Checkbox id="playground-allow-mixed-currency" v-model="pg.allowMixedCurrency" @update:model-value="pg.quickView === 'Custom...' && surfaces.refreshPlaygroundFromSettings()" />
+                  <Label for="playground-allow-mixed-currency">{{ t('v7explore.allowMixedCurrency') }}</Label>
                 </div>
               </div>
               <div class="stack flex flex-col gap-3" style="gap: 10px; margin-top: 8px">
                 <div class="form-field full col-span-12 flex flex-col gap-1.5" style="gap: 6px">
-                  <label for="playground-custom-x-metric" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.xAxis') }}</label>
-                  <select id="playground-custom-x-metric" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" :value="customX.value" @change="onCustomMetricChange('customXMetric', $event)">
-                    <option v-for="option in customX.options" :key="option" :value="option">{{ option }}</option>
-                  </select>
+                  <Label id="playground-custom-x-metric-label">{{ t('v7explore.xAxis') }}</Label>
+                  <SelectRoot :model-value="customX.value" @update:model-value="onCustomMetricChange('customXMetric', $event)">
+                    <SelectTrigger id="playground-custom-x-metric" aria-labelledby="playground-custom-x-metric-label">
+                      <span>{{ customX.value }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="option in customX.options" :key="option" :value="option">{{ option }}</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
                 </div>
                 <div class="form-field full col-span-12 flex flex-col gap-1.5" style="gap: 6px">
-                  <label for="playground-custom-y-metric" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.yAxis') }}</label>
-                  <select id="playground-custom-y-metric" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" :value="customY.value" @change="onCustomMetricChange('customYMetric', $event)">
-                    <option v-for="option in customY.options" :key="option" :value="option">{{ option }}</option>
-                  </select>
+                  <Label id="playground-custom-y-metric-label">{{ t('v7explore.yAxis') }}</Label>
+                  <SelectRoot :model-value="customY.value" @update:model-value="onCustomMetricChange('customYMetric', $event)">
+                    <SelectTrigger id="playground-custom-y-metric" aria-labelledby="playground-custom-y-metric-label">
+                      <span>{{ customY.value }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="option in customY.options" :key="option" :value="option">{{ option }}</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
                 </div>
                 <div id="playground-custom-z-wrap" v-show="visibility.showZ" class="form-field full col-span-12 flex flex-col gap-1.5" style="gap: 6px">
-                  <label for="playground-custom-z-metric" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.zAxis') }}</label>
-                  <select id="playground-custom-z-metric" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" :value="customZ.value" @change="onCustomMetricChange('customZMetric', $event)">
-                    <option v-for="option in customZ.options" :key="option" :value="option">{{ option }}</option>
-                  </select>
+                  <Label id="playground-custom-z-metric-label">{{ t('v7explore.zAxis') }}</Label>
+                  <SelectRoot :model-value="customZ.value" @update:model-value="onCustomMetricChange('customZMetric', $event)">
+                    <SelectTrigger id="playground-custom-z-metric" aria-labelledby="playground-custom-z-metric-label">
+                      <span>{{ customZ.value }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="option in customZ.options" :key="option" :value="option">{{ option }}</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
                 </div>
               </div>
             </div>
           </div>
           <div id="playground-color-metric-wrap" v-show="!isRadar" class="form-field full col-span-12 flex flex-col gap-1.5">
-            <label for="playground-color-metric" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.colorBy') }}</label>
-            <select id="playground-color-metric" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" :value="colorValue" @change="pg.colorMetric = String(($event.target as HTMLSelectElement).value || 'None'); surfaces.refreshPlaygroundFromSettings()">
-              <option v-for="option in colorOptions" :key="option" :value="option">{{ option === 'None' ? t('common.none') : option }}</option>
-            </select>
+            <Label id="playground-color-metric-label">{{ t('v7explore.colorBy') }}</Label>
+            <SelectRoot :model-value="colorValue" @update:model-value="pg.colorMetric = String($event || 'None'); surfaces.refreshPlaygroundFromSettings()">
+              <SelectTrigger id="playground-color-metric" aria-labelledby="playground-color-metric-label">
+                <span>{{ colorValue === 'None' ? t('common.none') : colorValue }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in colorOptions" :key="option" :value="option">{{ option === 'None' ? t('common.none') : option }}</SelectItem>
+              </SelectContent>
+            </SelectRoot>
           </div>
           <div class="form-field full col-span-12 flex flex-col gap-1.5">
-            <label for="playground-perf-weight" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.performancePriority') }}</label>
-            <input id="playground-perf-weight" class="min-h-8 rounded-lg border border-border-default px-2.5 py-1.5 text-primary" v-model.number="pg.perfWeight" type="range" min="0" max="100" step="5" @input="onWeightInput" />
+            <Label id="playground-perf-weight-label">{{ t('v7explore.performancePriority') }}</Label>
+            <Slider id="playground-perf-weight" v-model="pg.perfWeight" :label="t('v7explore.performancePriority')" :min="0" :max="100" :step="5" @update:model-value="onWeightInput" />
             <div class="muted-line text-secondary" id="playground-perf-weight-value">{{ pg.perfWeight }}</div>
           </div>
           <div class="form-field full col-span-12 flex flex-col gap-1.5">
-            <label for="playground-risk-weight" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.riskAversion') }}</label>
-            <input id="playground-risk-weight" class="min-h-8 rounded-lg border border-border-default px-2.5 py-1.5 text-primary" v-model.number="pg.riskWeight" type="range" min="0" max="100" step="5" @input="onWeightInput" />
+            <Label id="playground-risk-weight-label">{{ t('v7explore.riskAversion') }}</Label>
+            <Slider id="playground-risk-weight" v-model="pg.riskWeight" :label="t('v7explore.riskAversion')" :min="0" :max="100" :step="5" @update:model-value="onWeightInput" />
             <div class="muted-line text-secondary" id="playground-risk-weight-value">{{ pg.riskWeight }}</div>
           </div>
           <div class="form-field full col-span-12 flex flex-col gap-1.5">
-            <label for="playground-robust-weight" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.robustnessImportance') }}</label>
-            <input id="playground-robust-weight" class="min-h-8 rounded-lg border border-border-default px-2.5 py-1.5 text-primary" v-model.number="pg.robustWeight" type="range" min="0" max="100" step="5" @input="onWeightInput" />
+            <Label id="playground-robust-weight-label">{{ t('v7explore.robustnessImportance') }}</Label>
+            <Slider id="playground-robust-weight" v-model="pg.robustWeight" :label="t('v7explore.robustnessImportance')" :min="0" :max="100" :step="5" @update:model-value="onWeightInput" />
             <div class="muted-line text-secondary" id="playground-robust-weight-value">{{ pg.robustWeight }}</div>
           </div>
           <div class="form-field full col-span-12 flex flex-col gap-1.5"><div class="button-row flex flex-wrap gap-2"></div></div>
@@ -272,37 +320,3 @@ watch(
     </div>
   </section>
 </template>
-
-<style scoped>
-/* The switch knob pseudo-element and the :checked / :focus-visible sibling
-   states ported from styles/pareto-base.css — pseudo-elements and sibling
-   combinators can't be utilities. The track's static styling lives on the
-   element as utilities; these un-layered rules override them when the state
-   applies (un-layered CSS beats @layer utilities). */
-.switch-track::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #f2f5fb /* switch knob */;
-  transition: transform 0.18s ease;
-  box-shadow: 0 1px 3px rgba(5, 8, 14, 0.35);
-}
-
-.inline-switch input:checked + .switch-track {
-  background: rgb(var(--accent-rgb) / 0.35);
-  border-color: var(--accent);
-}
-
-.inline-switch input:checked + .switch-track::after {
-  transform: translateX(20px);
-}
-
-.inline-switch input:focus-visible + .switch-track {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-</style>

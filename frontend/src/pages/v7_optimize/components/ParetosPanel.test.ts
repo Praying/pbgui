@@ -41,9 +41,10 @@ describe('ParetosPanel', () => {
     // pill 标签 + 自定义指标回退
     expect(picker.text()).toContain('sharpe (sharpe_ratio)');
     expect(picker.text()).toContain('zzz_custom');
-    expect(picker.find('input[data-pareto-metric="gain"]').element).property('checked', true);
+    // ui/Checkbox renders a button with role="checkbox" — state via data-state
+    expect(picker.find('[data-pareto-metric="gain"]').attributes('data-state')).toBe('checked');
 
-    await picker.find('input[data-pareto-metric="sharpe_ratio"]').setValue(true);
+    await picker.find('[data-pareto-metric="sharpe_ratio"]').trigger('click');
     expect(wrapper.emitted('toggleColumn')?.[0]).toEqual(['sharpe_ratio', true]);
     await picker.find('[data-test="pareto-columns-defaults"]').trigger('click');
     expect(wrapper.emitted('resetColumns')).toHaveLength(1);

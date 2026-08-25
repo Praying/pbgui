@@ -47,7 +47,10 @@
  *    4152) is dropped in favour of the global shared_help_overlay.js +
  *    PBGUI_HELP_OPENER hook (R1, recon §2 recommendation);
  *  - legacy toasts with the undefined 'warn' class render as 'info';
- *  - the number-stepper auto-wrap (:4157-4182) is not ported.
+ *  - the number-stepper auto-wrap (:4157-4182) is not ported;
+ *  - the forced_mode_* selects' empty-value option ("no override") has no
+ *    listbox row in the ui/select migration (reka forbids value="") — the
+ *    model can still be empty, but resetting via the list is gone.
  */
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import {
@@ -68,6 +71,7 @@ import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import CoinOverridesPanel from '@/shared/coinOverrides/components/CoinOverridesPanel.vue';
 import AdvancedSection from './components/AdvancedSection.vue';
 import BasicSection from './components/BasicSection.vue';
@@ -225,33 +229,33 @@ onBeforeUnmount(() => {
       <div class="page-toolbar" role="toolbar" :aria-label="t(adapter.sidebarTitleKey)">
         <span class="sb-label">{{ t(adapter.sidebarTitleKey) }}</span>
         <hr class="sb-sep" />
-        <button class="sb-btn" :title="t('v7run.backToList')" @click="goBack()"><PbIcon :icon="PhHouse" /> {{ t('v7run.home') }}</button>
-        <button
-          class="sb-btn primary"
+        <Button type="button" :title="t('v7run.backToList')" @click="goBack()"><PbIcon :icon="PhHouse" /> {{ t('v7run.home') }}</Button>
+        <Button
+          variant="info"
+          type="button"
           id="btn-save"
-          :disabled="page.saving.value"
+          :loading="page.saving.value"
           :title="t('v7run.saveConfigSync')"
           @click="page.save()"
         >
-          <span v-if="page.saving.value" class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-default border-t-accent"></span>
-          <PbIcon v-else :icon="PhFloppyDisk" />
+          <PbIcon v-if="!page.saving.value" :icon="PhFloppyDisk" />
           {{ page.saving.value ? t('v7run.saving') : t('common.save') }}
-        </button>
-        <button class="sb-btn info" :title="t('v7run.importJsonConfig')" @click="openImport()"><PbIcon :icon="PhUploadSimple" /> {{ t('v7run.import') }}</button>
-        <button class="sb-btn info" :title="t('v7run.copyCurrentConfig')" @click="openCopy()"><PbIcon :icon="PhCopy" /> {{ t('v7run.copy') }}</button>
+        </Button>
+        <Button variant="info" type="button" :title="t('v7run.importJsonConfig')" @click="openImport()"><PbIcon :icon="PhUploadSimple" /> {{ t('v7run.import') }}</Button>
+        <Button variant="info" type="button" :title="t('v7run.copyCurrentConfig')" @click="openCopy()"><PbIcon :icon="PhCopy" /> {{ t('v7run.copy') }}</Button>
         <hr class="sb-sep" />
-        <button class="sb-btn" :title="t('v7run.openInBacktest')" @click="handoffs.goBacktest()"><PbIcon :icon="PhChartBar" /> {{ t('v7run.backtest') }}</button>
-        <button class="sb-btn" :title="t('v7run.openStrategyExplorer')" @click="handoffs.goStrategyExplorer()"><PbIcon :icon="PhMagnifyingGlass" /> {{ t('v7run.strategyExplorer') }}</button>
-        <button class="sb-btn" :title="t('v7run.openBalanceCalculatorPage')" @click="handoffs.goBalanceCalc()"><PbIcon :icon="PhWallet" /> {{ t('v7run.balanceCalculator') }}</button>
-        <button class="sb-btn" :title="t('v7run.calcBalanceTitle')" @click="openBalanceCalc()"><PbIcon :icon="PhLightning" /> {{ t('v7run.calcBalance') }}</button>
+        <Button type="button" :title="t('v7run.openInBacktest')" @click="handoffs.goBacktest()"><PbIcon :icon="PhChartBar" /> {{ t('v7run.backtest') }}</Button>
+        <Button type="button" :title="t('v7run.openStrategyExplorer')" @click="handoffs.goStrategyExplorer()"><PbIcon :icon="PhMagnifyingGlass" /> {{ t('v7run.strategyExplorer') }}</Button>
+        <Button type="button" :title="t('v7run.openBalanceCalculatorPage')" @click="handoffs.goBalanceCalc()"><PbIcon :icon="PhWallet" /> {{ t('v7run.balanceCalculator') }}</Button>
+        <Button type="button" :title="t('v7run.calcBalanceTitle')" @click="openBalanceCalc()"><PbIcon :icon="PhLightning" /> {{ t('v7run.calcBalance') }}</Button>
         <hr class="sb-sep" />
-        <button
-          class="sb-btn"
+        <Button
+          type="button"
           id="btn-log"
-          :class="logOpen ? 'border-accent bg-accent/10 text-accent' : ''"
+          :variant="logOpen ? 'info' : 'default'"
           :title="t('v7run.livePassivbotLog')"
           @click="logOpen = !logOpen"
-        ><PbIcon :icon="PhFileText" /> {{ t('v7run.log') }}</button>
+        ><PbIcon :icon="PhFileText" /> {{ t('v7run.log') }}</Button>
       </div>
       <section
         v-if="migrationReviewFields.length"
@@ -330,10 +334,12 @@ body {
 
 /* ── Shared editor form system ─────────────────────────────────
    src/shared/coinOverrides/components/CoinOverridesPanel.vue renders
-   .expander / .form-group / .form-row / .ms-* / .json-editor /
-   .cov-* / .act-btn markup whose class names are a cross-page
-   contract (v7_backtest styles the same classes from its own
-   stylesheet), so they cannot become this page's utilities. The
+   .expander / .form-group / .form-row / .ms-* / .json-editor markup
+   whose class names are a cross-page contract (v7_backtest styles
+   the same classes from its own stylesheet), so they cannot become
+   this page's utilities. Form controls themselves moved to the
+   shared ui/ layer; the .act-btn, .cov-param-input, .cov-param-select
+   and .chk-row input rules are retired (zero consumers). The
    page-local field primitives (Field*.vue, MultiSelectField,
    ExpanderGroup) reuse the identical contract. Un-layered like the
    old v7-edit.css so the rules outrank the layered base-layer form
@@ -411,7 +417,6 @@ body {
 
 /* Checkbox row */
 .chk-row { display: flex; align-items: flex-start; gap: 6px; min-height: var(--input-h); height: auto; min-width: 0; }
-.chk-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
 .chk-row label {
   font-size: var(--fs-sm); color: var(--text); margin: 0; cursor: pointer;
   white-space: normal; overflow: visible; line-height: 1.2; min-width: 0; flex: 1 1 auto;
@@ -538,12 +543,6 @@ textarea.json-invalid:focus {
 }
 .cov-tt-row { display: flex; gap: var(--sp-sm); word-break: break-all; }
 .cov-tt-key { color: var(--accent); white-space: nowrap; }
-.cov-param-input {
-  height: 24px; font-size: var(--fs-xs); background: var(--bg2); color: var(--text);
-  border: 1px solid var(--border); border-radius: 4px; padding: 0 var(--sp-xs);
-  outline: none; font-family: var(--font); width: 100px;
-}
-.cov-param-select { width: 140px; }
 .cov-cfg-ta { min-height: 100px; max-height: none; }
 .cov-json-status { display: none; margin-top: 4px; font-size: var(--fs-sm); line-height: 1.35; }
 .cov-json-status.error {
@@ -552,13 +551,4 @@ textarea.json-invalid:focus {
 }
 textarea.cov-json-invalid,
 textarea.cov-json-invalid:focus { border-color: var(--red) !important; }
-.act-btn {
-  height: 24px; padding: 0 10px; font-size: var(--fs-xs); background: var(--bg3);
-  color: var(--text); border: 1px solid var(--border); border-radius: 4px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, transform 0.1s;
-}
-.act-btn:hover { border-color: var(--accent); color: var(--accent); }
-.act-btn:active { transform: translateY(1px); }
-.act-btn-danger:hover { border-color: var(--red); color: var(--red); }
 </style>

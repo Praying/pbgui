@@ -9,7 +9,6 @@ import ReadmePreview from './ReadmePreview.vue';
  * NO v-html anywhere, links render only with scheme-whitelisted hrefs.
  */
 
-enableAutoUnmount(afterEach);
 
 function mountPreview(markdown: string, remoteBase = '') {
   return mount(ReadmePreview, { props: { markdown, remoteBase }, global: { plugins: [createI18n('en')] } });
@@ -22,6 +21,11 @@ beforeEach(() => {
 afterEach(() => {
   document.body.innerHTML = '';
 });
+
+/* Registered AFTER the body-clearing hook so vitest's LIFO afterEach order
+   unmounts wrappers first — unmounting a reka select AFTER its teleported
+   anchors were wiped crashes removeFragment on null. */
+enableAutoUnmount(afterEach);
 
 describe('ReadmePreview', () => {
   it('renders headings, paragraphs, bullets, code blocks and tables', () => {

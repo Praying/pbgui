@@ -24,6 +24,7 @@
  * interactive after its host widget was rebuilt.
  */
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { Input } from '@/shared/components/ui/input';
 import { dashT } from '../lib/i18n';
 import { mselPosition } from '../lib/mselPosition';
 import { closeMselDropdown, openMselDropdown } from '../lib/mselRegistry';
@@ -51,7 +52,11 @@ const dirty = ref(false);
 const isOpen = ref(false);
 const filter = ref('');
 const btnEl = ref<HTMLElement | null>(null);
-const filterEl = ref<HTMLInputElement | null>(null);
+/* ui/Input — the template ref exposes focus()/blur()/select(), not the
+   element, so the legacy `filter.offsetHeight` read moves to dropEl (the
+   teleported drop root) and queries the input by its anchor class. */
+const filterEl = ref<{ focus(): void } | null>(null);
+const dropEl = ref<HTMLElement | null>(null);
 const dropStyle = ref<Record<string, string>>({});
 const listStyle = ref<Record<string, string>>({});
 
@@ -150,10 +155,11 @@ function positionDrop(): void {
     return;
   }
   const rect = btnEl.value.getBoundingClientRect();
+  const filterInput = dropEl.value?.querySelector('.msel-filter') as HTMLElement | null;
   const pos = mselPosition({
     btnRect: { right: rect.right, bottom: rect.bottom, top: rect.top, width: rect.width },
     win: { innerWidth: window.innerWidth, innerHeight: window.innerHeight },
-    filterHeight: filterEl.value?.offsetHeight ?? 0,
+    filterHeight: filterInput?.offsetHeight ?? 0,
   });
   dropStyle.value = {
     left: pos.left + 'px',
@@ -214,11 +220,12 @@ onBeforeUnmount(() => {
     <Teleport to="body">
       <div
         v-if="isOpen"
+        ref="dropEl"
         class="msel-drop open fixed z-[60000] mt-[2px] min-w-[180px] max-h-[260px] overflow-hidden rounded-sm border border-secondary bg-card shadow-[0_10px_28px_rgba(5,8,14,0.65)]"
         :style="dropStyle"
         @click.stop
       >
-        <input
+        <Input
           ref="filterEl"
           v-model="filter"
           type="text"
@@ -234,6 +241,10 @@ onBeforeUnmount(() => {
               :data-u="u.toLowerCase()"
               @click="onItemClick(u, $event)"
             >
+              <!-- ui-migration: blocked — the option checkboxes are part of the
+                   teleported dropdown logic (the row-click guard keys on
+                   tagName === 'INPUT' and the tests drive native .checked +
+                   change events), not standalone form controls -->
               <input
                 type="checkbox"
                 class="m-0 cursor-pointer accent-accent-soft"
@@ -250,26 +261,6 @@ onBeforeUnmount(() => {
     </Teleport>
   </div>
 </template>
-
-<style scoped>
-/* The .msel-filter rules stay CSS — the tests pin the input's className to
-   exactly 'msel-filter', so no utility may ride along (the rule set is
-   ported from styles/editor.css, deleted at the Tailwind migration). */
-.msel-filter {
-  width: 100%;
-  box-sizing: border-box;
-  background: var(--border-default);
-  color: var(--text-primary);
-  border: none;
-  border-bottom: 1px solid var(--text-dim);
-  padding: 0.35rem 0.5rem;
-  font-size: var(--fs-sm);
-  outline: none;
-}
-.msel-filter::placeholder {
-  color: var(--text-muted);
-}
-</style>
 
 <style>
 /* Host-context sizing (the legacy .dt-meta-controls .msel-* rules of

@@ -13,6 +13,7 @@ import { computed, ref, watch } from 'vue';
 import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { cmcDuration, cmcNumber, cmcTimestamp, createCmcMutationControl, newCmcOperationId, type CmcMutationCandidate } from '../cmc';
 import type { CmcDomain, CmcKey, CmcKeyUsage, CmcLeasesResponse, CmcPool } from '../types';
 import CmcAuthorityModal, { type CmcAuthorityOption } from './CmcAuthorityModal.vue';
@@ -412,19 +413,18 @@ async function deleteSelectedCmcKey(): Promise<void> {
     </div>
 
     <div class="cmc-pool-toolbar">
-      <button class="form-btn save" id="cmc-add-key-btn" data-cmc-mutation type="button" :disabled="busy" @click="openKeyModal('add')">{{ t('sysmon.addKey') }}</button>
-      <button class="form-btn" id="cmc-rotate-btn" type="button" :disabled="busy || !selectedKey" @click="openKeyModal('rotate')">{{ t('sysmon.rotate') }}</button>
-      <button class="form-btn" id="cmc-edit-btn" type="button" :disabled="busy || !selectedKey" @click="openKeyModal('edit')">{{ t('sysmon.edit') }}</button>
-      <button class="form-btn" id="cmc-disable-btn" type="button" :disabled="busy || !selectedKey" @click="toggleSelectedCmcKey">{{ disableLabel }}</button>
-      <button class="form-btn" id="cmc-delete-btn" type="button" :disabled="busy || !selectedKey" @click="deleteSelectedCmcKey">{{ t('common.delete') }}</button>
-      <button
-        class="form-btn"
+      <Button id="cmc-add-key-btn" data-cmc-mutation variant="primary" type="button" :disabled="busy" @click="openKeyModal('add')">{{ t('sysmon.addKey') }}</Button>
+      <Button id="cmc-rotate-btn" type="button" :disabled="busy || !selectedKey" @click="openKeyModal('rotate')">{{ t('sysmon.rotate') }}</Button>
+      <Button id="cmc-edit-btn" type="button" :disabled="busy || !selectedKey" @click="openKeyModal('edit')">{{ t('sysmon.edit') }}</Button>
+      <Button id="cmc-disable-btn" type="button" :disabled="busy || !selectedKey" @click="toggleSelectedCmcKey">{{ disableLabel }}</Button>
+      <Button id="cmc-delete-btn" type="button" :disabled="busy || !selectedKey" @click="deleteSelectedCmcKey">{{ t('common.delete') }}</Button>
+      <Button
         id="cmc-authority-btn"
         type="button"
         :disabled="busy || !selectedKey || !selectedKey.quota_domain_id || !authorityTargets.length"
         @click="openAuthorityModal"
-      >{{ t('sysmon.transferAuthority') }}</button>
-      <button class="form-btn" id="cmc-refresh-btn" type="button" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
+      >{{ t('sysmon.transferAuthority') }}</Button>
+      <Button id="cmc-refresh-btn" type="button" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button>
       <span class="cmc-pool-message" :class="{ error: message?.error }">{{ message?.text ?? '' }}</span>
     </div>
 
@@ -583,9 +583,4 @@ async function deleteSelectedCmcKey(): Promise<void> {
 .cmc-state.active { color: var(--success); border-color: rgb(var(--success-rgb) / 0.45); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
 .cmc-state.disabled, .cmc-state.invalid { color: var(--danger-soft); border-color: var(--danger-deep); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
 .form-section-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-secondary); margin: 0 0 0.5rem; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
-.form-btn.save:hover { background: var(--accent-deep); color: #f2f5fb; }
-.cmc-pool-toolbar .form-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 </style>

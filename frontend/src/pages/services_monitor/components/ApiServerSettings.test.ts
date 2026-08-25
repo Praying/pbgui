@@ -182,14 +182,14 @@ describe('ApiServerSettings VPS Monitoring section (legacy renderVpsHosts + moni
   it('renders the auto-restart checkbox checked unless auto_restart === false', async () => {
     const wrapper = await mountedSettings();
 
-    expect((wrapper.find('#apiserver-auto-restart').element as HTMLInputElement).checked).toBe(false);
+    expect(wrapper.find('#apiserver-auto-restart').attributes('data-state')).toBe('unchecked');
     expect(wrapper.find('label[for="apiserver-auto-restart"]').text()).toBe('Auto-restart services');
 
     const on = await mountedSettings({ ...SETTINGS, auto_restart: true });
-    expect((on.find('#apiserver-auto-restart').element as HTMLInputElement).checked).toBe(true);
+    expect(on.find('#apiserver-auto-restart').attributes('data-state')).toBe('checked');
 
     const missing = await mountedSettings({ ...SETTINGS, auto_restart: undefined });
-    expect((missing.find('#apiserver-auto-restart').element as HTMLInputElement).checked).toBe(true);
+    expect(missing.find('#apiserver-auto-restart').attributes('data-state')).toBe('checked');
   });
 
   it('renders monitored host tags with active/inactive per enabled_hosts, no filter input', async () => {
@@ -271,25 +271,25 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
   it('renders the alert routing checkboxes with false flags unchecked', async () => {
     const wrapper = await mountedSettings();
 
-    expect((wrapper.find('#service_gui').element as HTMLInputElement).checked).toBe(false);
-    expect((wrapper.find('#ssh_lost_telegram').element as HTMLInputElement).checked).toBe(false);
-    expect((wrapper.find('#offline_gui').element as HTMLInputElement).checked).toBe(true);
-    expect((wrapper.find('#ssh_recovered_telegram').element as HTMLInputElement).checked).toBe(true);
+    expect(wrapper.find('#service_gui').attributes('data-state')).toBe('unchecked');
+    expect(wrapper.find('#ssh_lost_telegram').attributes('data-state')).toBe('unchecked');
+    expect(wrapper.find('#offline_gui').attributes('data-state')).toBe('checked');
+    expect(wrapper.find('#ssh_recovered_telegram').attributes('data-state')).toBe('checked');
     expect(wrapper.findAll('.alert-routing-group')).toHaveLength(4);
   });
 
   it('renders the save button with the legacy disk icon', async () => {
     const wrapper = await mountedSettings();
 
-    expect(wrapper.find('button.form-btn.save').text()).toBe('Save');
-    expect(wrapper.find('button.form-btn.save svg').exists()).toBe(true);
+    expect(wrapper.find('button.save').text()).toBe('Save');
+    expect(wrapper.find('button.save svg').exists()).toBe(true);
   });
 });
 
 describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
   async function saveAndGetBody(wrapper: ReturnType<typeof mountSettings>): Promise<Record<string, unknown>> {
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
     const [url, init] = fetchMock.mock.calls.at(-1)!;
     expect(url).toBe('http://pbgui.test:8000/api/services/settings/api-server');
@@ -317,7 +317,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
     const wrapper = await mountedSettings();
     await wrapper.find('#apiserver-host').setValue('127.0.0.1');
     await wrapper.find('#apiserver-port').setValue('9999');
-    await wrapper.find('#apiserver-auto-restart').setValue(true);
+    await wrapper.find('#apiserver-auto-restart').trigger('click');
     await wrapper.find('#apiserver-telegram-token').setValue('new-token');
     await wrapper.find('#apiserver-telegram-chat-id').setValue('-42');
 
@@ -362,8 +362,8 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
 
   it('collects toggled alert routing flags', async () => {
     const wrapper = await mountedSettings();
-    await wrapper.find('#system_gui').setValue(false);
-    await wrapper.find('#ssh_lost_telegram').setValue(true);
+    await wrapper.find('#system_gui').trigger('click');
+    await wrapper.find('#ssh_lost_telegram').trigger('click');
 
     const body = await saveAndGetBody(wrapper);
     expect(body.system_gui).toBe(false);
@@ -383,7 +383,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: true, apply: { message: 'restart api-server to apply' } }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     const msg = wrapper.find('#apiserver-save-msg');
@@ -396,7 +396,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#apiserver-save-msg').text()).toBe('Saved');
@@ -406,7 +406,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: false, detail: 'invalid host' }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     const msg = wrapper.find('#apiserver-save-msg');
@@ -418,7 +418,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ detail: 'boom' }, 500));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#apiserver-save-msg').text()).toBe('boom');
@@ -429,7 +429,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockRejectedValue(new TypeError('network down'));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#apiserver-save-msg').text()).toBe('Error: network down');
@@ -442,7 +442,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
       const wrapper = await mountedSettings();
       fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
 
-      await wrapper.find('button.form-btn.save').trigger('click');
+      await wrapper.find('button.save').trigger('click');
       await flushPromises();
       await vi.advanceTimersByTimeAsync(2900);
       expect(wrapper.find('#apiserver-save-msg').classes()).toContain('visible');

@@ -34,9 +34,11 @@ export const dtTitleClass =
 /** `.dt-icon` */
 export const dtIconClass = 'dt-icon shrink-0 text-[0.85rem] leading-none';
 
-/** `.dt-trash` (the legacy --db-text-dim colour resolved to text-muted). */
+/** `.dt-trash` — the edit-mode delete affordance. Rendered by ui/Button
+ *  (ghost/icon); the constant keeps the legacy hook class plus the dense
+ *  header sizing and the danger hover tone. */
 export const dtTrashClass =
-  'dt-trash ml-[0.25rem] inline-flex h-[22px] w-[22px] shrink-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-[0.85rem] leading-none text-muted [transition:color_.12s,background_.12s] hover:bg-danger-soft/10 hover:text-danger-soft';
+  'dt-trash ml-[0.25rem] size-[22px] shrink-0 p-0 text-[0.85rem] leading-none text-muted hover:bg-danger-soft/10 hover:text-danger-soft';
 
 /** `.dt-meta` */
 export const dtMetaClass = 'dt-meta ml-auto whitespace-nowrap text-[0.73rem] text-secondary';
@@ -57,29 +59,22 @@ export const dtMetaSepClass =
 export const dtMetaUserClass = 'dt-meta-user text-primary';
 
 /**
- * `.dt-meta-controls input.dt-ctrl-num` — width keeps its legacy
- * `!important` so it still wins over the 68px inline width on the income
- * filter input (the legacy cascade outcome).
+ * `.dt-meta-controls input.dt-ctrl-num` — the hook + width only (ui/Input owns
+ * the chrome now). The width keeps its legacy `!important` so it still wins
+ * over the 68px inline width on the income filter input (the legacy cascade
+ * outcome).
  */
-export const dtCtrlNumClass =
-  'dt-ctrl-num w-[52px]! shrink-0 rounded-sm border border-border-strong bg-border-default px-[0.3rem] py-[0.2rem] text-[0.76rem] text-primary outline-none focus:border-accent-soft';
+export const dtCtrlNumClass = 'dt-ctrl-num w-[52px]! shrink-0';
 
-/** `.dt-meta-controls select.dt-ctrl-sel` */
-export const dtCtrlSelClass =
-  'dt-ctrl-sel w-auto max-w-[160px] shrink-0 cursor-pointer rounded-sm border border-border-strong bg-border-default px-[0.3rem] py-[0.2rem] text-[0.76rem] text-primary outline-none focus:border-accent-soft';
+/** `.dt-meta-controls select.dt-ctrl-sel` — hook + sizing on SelectTrigger. */
+export const dtCtrlSelClass = 'dt-ctrl-sel w-auto max-w-[160px] shrink-0';
 
-/** `.dt-meta-controls input.dt-ctrl-date` (+ its :disabled rule). NB: no
- *  focus:border-* utility — the legacy global focus rule only covered
- *  select/number inputs, so date inputs keep the base layer's accent. */
-export const dtCtrlDateClass =
-  'dt-ctrl-date w-[112px]! shrink-0 cursor-pointer rounded-sm border border-border-strong bg-border-default px-[0.3rem] py-[0.2rem] text-[0.76rem] text-primary outline-none disabled:cursor-not-allowed disabled:opacity-40';
+/** `.dt-meta-controls input.dt-ctrl-date` — hook + sizing on ui/Input. */
+export const dtCtrlDateClass = 'dt-ctrl-date w-[112px]! shrink-0';
 
 /** `.dt-ctrl-now-wrap` */
 export const dtCtrlNowWrapClass =
   'dt-ctrl-now-wrap flex shrink-0 cursor-pointer select-none items-center gap-[0.25rem] whitespace-nowrap text-[0.73rem] text-secondary';
-
-/** `.dt-ctrl-now-wrap input[type=checkbox]` */
-export const dtCtrlNowCheckboxClass = 'h-[13px] w-[13px] shrink-0 cursor-pointer accent-accent';
 
 /** `.dt-status` */
 export const dtStatusClass =
@@ -105,9 +100,9 @@ export const dpModalChrome = {
   head: 'dp-modal-head flex cursor-move select-none items-center justify-between gap-[0.5rem] border-b border-b-border-subtle bg-card px-[1rem] py-[0.75rem]',
   /** `.dp-modal-title` */
   title: 'dp-modal-title text-[0.9rem] font-bold text-primary',
-  /** `.dp-modal-close` (+ hover) */
-  close:
-    'dp-modal-close cursor-pointer rounded-[5px] border-0 bg-transparent px-[0.35rem] py-[0.2rem] text-[1rem] text-muted hover:bg-white/6 hover:text-primary',
+  /** `.dp-modal-close` — rendered by ui/Button (ghost); the constant keeps
+   *  the legacy hook class plus the glyph sizing. */
+  close: 'dp-modal-close px-[0.35rem] py-0 text-[1rem] leading-none text-muted hover:text-primary',
   /** `.dp-modal-body` */
   body: 'dp-modal-body flex min-h-0 flex-1 flex-col gap-[0.7rem] overflow-hidden p-[0.85rem]',
   /** `.dp-modal-actions` */

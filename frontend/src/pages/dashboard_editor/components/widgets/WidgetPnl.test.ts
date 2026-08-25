@@ -3,6 +3,7 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
+import { pickSelectOption } from '@/shared/testing/select';
 import { resetSavedZoom } from '../../lib/savedZoom';
 import { applyRangeZoom } from '../../lib/plotlyLayouts';
 import type { PlotlyVendor } from '../../lib/plotlyVendor';
@@ -135,7 +136,7 @@ describe('WidgetPnl', () => {
   it('writes the mode state and refetches on the mode select (editor:1554-1557)', async () => {
     const { wrapper, env } = mountPnl();
     await flushPromises();
-    await wrapper.get('select.dt-ctrl-sel').setValue('line');
+    await pickSelectOption(wrapper, '.dt-ctrl-sel', 'line');
     expect(env.store.state['dashboard_pnl_mode_1_2']).toBe('line');
     await flushPromises();
     expect(env.fetch).toHaveBeenLastCalledWith('/api/dashboard/pnl_data?users=ALL&period=THIS_MONTH&mode=line');

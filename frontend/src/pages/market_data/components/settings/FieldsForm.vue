@@ -6,9 +6,9 @@
  * dirty tracking reactively, so no per-input events are needed).
  */
 import { useI18n } from 'vue-i18n';
+import { Input } from '@/shared/components/ui/input';
 import {
   fieldLabelClass,
-  inputClass,
   panelCardClass,
   settingsFieldClass,
   settingsGridClass,
@@ -28,23 +28,23 @@ const IDS = SETTINGS_FIELD_IDS;
     <div :class="settingsGridClass">
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.cycleIntervalSeconds') }}</span>
-        <input :id="IDS.intervalSeconds" :class="inputClass" :value="fields.intervalSeconds" type="number" min="60" step="30" @input="fields.intervalSeconds = ($event.target as HTMLInputElement).value">
+        <Input :id="IDS.intervalSeconds" :model-value="fields.intervalSeconds" @update:model-value="fields.intervalSeconds = String($event ?? '')" type="number" min="60" step="30" />
       </label>
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.pauseBetweenCoinsSeconds') }}</span>
-        <input :id="IDS.coinPauseSeconds" :class="inputClass" :value="fields.coinPauseSeconds" type="number" min="0" max="10" step="0.1" @input="fields.coinPauseSeconds = ($event.target as HTMLInputElement).value">
+        <Input :id="IDS.coinPauseSeconds" :model-value="fields.coinPauseSeconds" @update:model-value="fields.coinPauseSeconds = String($event ?? '')" type="number" min="0" max="10" step="0.1" />
       </label>
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.apiTimeoutPerCoinSeconds') }}</span>
-        <input :id="IDS.apiTimeoutSeconds" :class="inputClass" :value="fields.apiTimeoutSeconds" type="number" min="10" max="120" step="5" @input="fields.apiTimeoutSeconds = ($event.target as HTMLInputElement).value">
+        <Input :id="IDS.apiTimeoutSeconds" :model-value="fields.apiTimeoutSeconds" @update:model-value="fields.apiTimeoutSeconds = String($event ?? '')" type="number" min="10" max="120" step="5" />
       </label>
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.minLookbackDays') }}</span>
-        <input :id="IDS.minLookbackDays" :class="inputClass" :value="fields.minLookbackDays" type="number" min="1" max="10" step="1" @input="fields.minLookbackDays = ($event.target as HTMLInputElement).value">
+        <Input :id="IDS.minLookbackDays" :model-value="fields.minLookbackDays" @update:model-value="fields.minLookbackDays = String($event ?? '')" type="number" min="1" max="10" step="1" />
       </label>
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.maxLookbackDays') }}</span>
-        <input :id="IDS.maxLookbackDays" :class="inputClass" :value="fields.maxLookbackDays" type="number" min="1" max="30" step="1" @input="fields.maxLookbackDays = ($event.target as HTMLInputElement).value">
+        <Input :id="IDS.maxLookbackDays" :model-value="fields.maxLookbackDays" @update:model-value="fields.maxLookbackDays = String($event ?? '')" type="number" min="1" max="30" step="1" />
       </label>
     </div>
   </article>

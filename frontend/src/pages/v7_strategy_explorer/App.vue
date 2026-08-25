@@ -355,8 +355,9 @@ onBeforeUnmount(() => {
      (pseudo-elements; the class names stay as state anchors);
    - Plotly :fullscreen sizing and the scroll-lock pointer-events rule
      (pseudo-class + descendant selectors into Plotly's own DOM);
-   - #raw-config-panel rules targeting the json_panel.js-injected DOM;
-   - the range-slider track/thumb pseudo-elements of ParamTuning.
+   - #raw-config-panel rules targeting the json_panel.js-injected DOM.
+     (The range-slider track/thumb pseudo-elements of ParamTuning left with
+     the range inputs — ui/Slider renders its own track/fill/thumb.)
    Everything else from the stylesheet became utilities in the templates. */
 html,
 body {
@@ -480,54 +481,5 @@ body {
 #raw-config-panel .json-pre.raw-invalid {
   border-color: rgb(var(--danger-rgb) / 0.55);
   color: var(--danger-soft);
-}
-
-input.param-slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--accent-deep) 0%,
-    var(--accent-deep) var(--range-fill, 50%),
-    rgb(var(--text-secondary-rgb) / 0.16) var(--range-fill, 50%),
-    rgb(var(--text-secondary-rgb) / 0.16) 100%
-  );
-}
-
-input.param-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 13px;
-  height: 13px;
-  margin-top: -4px;
-  border: 2px solid var(--text-primary);
-  border-radius: 50%;
-  background: var(--accent-deep);
-  box-shadow:
-    0 0 0 3px rgb(var(--accent-rgb) / 0.16),
-    0 0 12px rgb(var(--accent-rgb) / 0.38);
-}
-
-input.param-slider::-moz-range-track {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.22);
-  border-radius: 999px;
-  border: 0;
-}
-
-input.param-slider::-moz-range-progress {
-  height: 4px;
-  background: var(--accent);
-  border-radius: 999px;
-  border: 0;
-}
-
-input.param-slider::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 0;
-  box-shadow: 0 0 0 1px rgb(var(--bg-page-rgb) / 0.95);
 }
 </style>

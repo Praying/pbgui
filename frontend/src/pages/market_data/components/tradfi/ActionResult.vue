@@ -5,6 +5,7 @@
  * controller (setActionResult); this renders the normalized shape.
  */
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import type { TradfiActionResult } from '../../composables/useTradfiMap';
 
 defineProps<{
@@ -34,12 +35,13 @@ function feedbackClass(level: string): string {
   <div :class="feedbackClass(result.level)">
     <div class="tradfi-feedback-header flex flex-wrap items-start justify-between gap-2">
       <div class="tradfi-search-title text-base font-bold text-primary">{{ result.title }}</div>
-      <button
-        class="tradfi-feedback-close flex-none h-8 w-8 cursor-pointer rounded-lg border border-secondary/18 bg-page/30 text-md text-secondary transition-[background-color,border-color,color] duration-[120ms] hover:border-accent/35 hover:bg-accent/14 hover:text-primary"
+      <Button
+        class="tradfi-feedback-close flex-none h-8 w-8 p-0 text-md"
+        variant="outline"
         type="button"
         :aria-label="t('market.closeActionResult')"
         @click="emit('close')"
-      >✕</button>
+      >✕</Button>
     </div>
     <div v-for="(line, index) in result.details" :key="index" class="tradfi-search-meta text-sm text-secondary">
       {{ line }}

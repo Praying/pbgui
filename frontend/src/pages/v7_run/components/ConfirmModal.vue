@@ -6,13 +6,16 @@
  * .warn, and a busy state that disables the confirm button and swaps its
  * label ('Deleting…' :971 / 'Syncing…' :1059).
  */
+import { Button } from '@/shared/components/ui/button';
+
 defineProps<{
   title: string;
   warn: string;
   text: string;
   cancelText: string;
   confirmText: string;
-  confirmClass: string;
+  /** ui-migration: the legacy confirmClass css string is a Button variant. */
+  confirmVariant: 'danger' | 'warning' | 'success';
   busy: boolean;
   busyText: string;
 }>();
@@ -27,10 +30,10 @@ defineEmits<{ cancel: []; confirm: [] }>();
       <p class="font-semibold text-warning">&#x26A0; {{ warn }}</p>
       <p class="mb-5 text-base text-secondary">{{ text }}</p>
       <div class="flex justify-center gap-2">
-        <button class="cursor-pointer rounded border border-border-default bg-elevated px-5 py-2 text-base font-semibold text-primary hover:bg-border-default" id="modal-cancel" @click="$emit('cancel')">{{ cancelText }}</button>
-        <button :class="confirmClass" id="modal-confirm" :disabled="busy" @click="$emit('confirm')">
+        <Button size="lg" id="modal-cancel" type="button" @click="$emit('cancel')">{{ cancelText }}</Button>
+        <Button :variant="confirmVariant" size="lg" id="modal-confirm" type="button" :disabled="busy" @click="$emit('confirm')">
           {{ busy ? busyText : confirmText }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

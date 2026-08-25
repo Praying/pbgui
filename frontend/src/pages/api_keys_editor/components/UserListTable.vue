@@ -8,6 +8,8 @@ import { computed } from 'vue';
 import { PhArrowsDownUp, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import ExpiryBadge from './ExpiryBadge.vue';
 import type { ApiKeysStore } from '../composables/useApiKeysStore';
 import type { BybitExpiryInfo, HlExpiryInfo, UserSummary } from '../types';
@@ -148,23 +150,25 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
       <span id="metaBy" class="max-[768px]:hidden" style="color:var(--text-muted);">{{ metaByText }}</span>
     </div>
     <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-      <input
+      <Input
         type="text"
         id="userFilter"
-        class="flex-1 rounded-sm border border-border-default bg-page px-2.5 py-1.5 text-sm text-primary focus:border-accent focus:outline-none focus:shadow-[0_0_0_3px_rgb(114,160,238,0.3)]"
-        :value="store.filterText.value"
+        class="flex-1"
+        :model-value="store.filterText.value"
         :placeholder="t('misc.apikeys.filterByNameOrExchange')"
-        @input="store.setFilter(($event.target as HTMLInputElement).value)"
+        @update:model-value="store.setFilter(String($event ?? ''))"
         @keydown="onFilterKeydown"
       />
-      <button
-        class="btn pbgui-btn btn-sm btn-secondary"
+      <Button
+        type="button"
+        variant="secondary"
+        size="icon"
         :title="t('misc.apikeys.clearFilter')"
         :aria-label="t('misc.apikeys.clearFilter')"
         @click="clearFilterAndFocus"
       >
         <PbIcon :icon="PhX" />
-      </button>
+      </Button>
     </div>
     <table class="user-table mb-5 w-full max-[768px]:block max-[768px]:overflow-x-auto max-[768px]:whitespace-nowrap overflow-hidden rounded-lg border border-border-subtle border-separate border-spacing-0 bg-panel">
       <thead>
@@ -223,15 +227,17 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
             <span class="badge-in-use inline-block rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="u.in_use ? 'border-success/30 bg-success/10 text-success' : 'border border-secondary/14 bg-secondary/7 text-secondary'">{{ u.in_use ? t('misc.apikeys.inUse') : t('misc.apikeys.unused') }}</span>
           </td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base">
-            <button class="btn pbgui-btn btn-sm btn-info" data-user-action="edit" @click.stop="emit('edit', u.name)">{{ t('misc.apikeys.edit') }}</button>
-            <button
+            <Button variant="info" size="sm" type="button" data-user-action="edit" @click.stop="emit('edit', u.name)">{{ t('misc.apikeys.edit') }}</Button>
+            <Button
               v-if="!u.in_use"
-              class="btn pbgui-btn btn-sm btn-danger"
+              variant="danger"
+              size="sm"
+              type="button"
               data-user-action="delete"
               @click.stop="emit('delete', u.name)"
             >
               {{ t('common.delete') }}
-            </button>
+            </Button>
           </td>
         </tr>
       </tbody>

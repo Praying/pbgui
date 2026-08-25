@@ -23,6 +23,14 @@ import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Textarea } from '@/shared/components/ui/textarea';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import ResultsPanel from './components/ResultsPanel.vue';
 import { useBalanceCalc } from './composables/useBalanceCalc';
 import { EXCHANGES, readInitParams } from './config';
@@ -52,17 +60,27 @@ const store = useBalanceCalc({
 });
 
 const instanceOptions = computed(() =>
-  store.instances.value.map((inst) => ({ inst, label: instanceLabel(inst), value: JSON.stringify(inst) }))
+  store.instances.value.map((inst) => ({ label: instanceLabel(inst), value: JSON.stringify(inst) }))
 );
 
-function onInstanceChange(event: Event): void {
-  const value = (event.target as HTMLSelectElement).value;
-  if (!value) {
-    void store.selectInstance(null);
-    return;
-  }
+/* The instance Select carries the JSON-encoded {name, version} as the item
+   value (legacy parsed the same payload out of the native option, :353-356).
+   The legacy empty option ("load from instance…") is the listbox placeholder
+   now — reka reserves "" for the cleared state, so there is no selectable
+   reset row; once picked, switching instances stays possible. */
+const selectedInstanceValue = computed(() =>
+  store.selectedInstance.value ? JSON.stringify(store.selectedInstance.value) : '',
+);
+
+const instanceTriggerLabel = computed(() => {
+  if (!selectedInstanceValue.value) return '';
+  return instanceOptions.value.find((option) => option.value === selectedInstanceValue.value)?.label ?? '';
+});
+
+function onInstanceSelect(value: unknown): void {
+  if (typeof value !== 'string' || !value) return;
   try {
-    void store.selectInstance(JSON.parse(value) as { name: string; version: string }); // :353-356
+    void store.selectInstance(JSON.parse(value) as { name: string; version: string });
   } catch {
     /* ignore malformed option values like legacy */
   }
@@ -91,26 +109,32 @@ onMounted(() => {
 
   <div id="page-content" class="h-[calc(100dvh-112px)] overflow-y-auto p-5">
     <div class="toolbar flex flex-wrap items-center gap-3 border-b border-border-default pb-3 mb-5">
-      <label class="text-sm font-semibold text-secondary" for="sel-instance">{{ t('misc.balance.instanceLabel') }}</label>
-      <select id="sel-instance" class="h-8 cursor-pointer rounded-md border border-border-default bg-panel px-2 text-base text-primary min-w-[140px]" :value="store.selectedInstance.value ? JSON.stringify(store.selectedInstance.value) : ''" @change="onInstanceChange">
-        <option value="">{{ t('misc.balance.loadFromInstance') }}</option>
-        <option v-for="option in instanceOptions" :key="option.label" :value="option.value">{{ option.label }}</option>
-      </select>
+      <span id="sel-instance-label" class="text-sm font-semibold text-secondary">{{ t('misc.balance.instanceLabel') }}</span>
+      <SelectRoot :model-value="selectedInstanceValue" @update:model-value="onInstanceSelect">
+        <SelectTrigger id="sel-instance" class="w-auto min-w-[140px]" aria-labelledby="sel-instance-label">
+          <span :class="instanceTriggerLabel ? undefined : 'text-placeholder'">{{ instanceTriggerLabel || t('misc.balance.loadFromInstance') }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="option in instanceOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
 
-      <label class="text-sm font-semibold text-secondary" for="sel-exchange">{{ t('misc.balance.exchange') }}</label>
-      <select id="sel-exchange" class="h-8 cursor-pointer rounded-md border border-border-default bg-panel px-2 text-base text-primary min-w-[140px]" v-model="store.exchange.value">
-        <option v-for="exchange in EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
-      </select>
+      <span id="sel-exchange-label" class="text-sm font-semibold text-secondary">{{ t('misc.balance.exchange') }}</span>
+      <SelectRoot v-model="store.exchange.value">
+        <SelectTrigger id="sel-exchange" class="w-auto min-w-[140px]" aria-labelledby="sel-exchange-label">
+          <span>{{ store.exchange.value }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="exchange in EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
 
-      <button id="btn-calc" class="h-8 cursor-pointer rounded-md border-none bg-accent px-5 text-base font-bold text-[#0b1526] transition-colors duration-150 hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-50" :disabled="store.calculating.value" @click="store.calculate()">{{ t('misc.balance.calculate') }}</button>
-      <span id="calc-status">
-        <template v-if="store.calculating.value"><span class="mr-1 inline-block h-4 w-4 animate-spin rounded-full border-2 border-border-default border-t-accent align-middle"></span> {{ t('misc.balance.calculating') }}</template>
-      </span>
+      <Button id="btn-calc" variant="primary" :loading="store.calculating.value" @click="store.calculate()">{{ t('misc.balance.calculate') }}</Button>
     </div>
 
     <div class="grid grid-cols-[1fr_1fr] gap-5 max-[900px]:grid-cols-1">
       <div>
-        <textarea id="config-editor" class="w-full min-h-[420px] resize-y rounded-md border border-border-default bg-panel p-2 text-sm leading-normal text-primary focus:border-accent focus:outline-none font-[Fira_Code,Consolas,monospace] tab-4" spellcheck="false" v-model="store.configText.value"></textarea>
+        <Textarea id="config-editor" class="min-h-[420px] tab-4" spellcheck="false" v-model="store.configText.value" />
       </div>
 
       <div class="flex flex-col gap-3" id="results-panel">

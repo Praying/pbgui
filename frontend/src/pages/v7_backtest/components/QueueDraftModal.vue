@@ -3,8 +3,11 @@ import { PhFolderOpen, PhMinus, PhPlus } from '@phosphor-icons/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import { onToggleMultiSelectMousedown } from '../composables/useToggleMultiSelect';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 
 /**
  * QueueDraftModal — the port of showInitialBacktestQueueDraftModal
@@ -135,34 +138,37 @@ async function submit(): Promise<void> {
       <div style="display: flex; flex-direction: column; gap: var(--sp-md)">
         <div>
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">start_date</div>
-          <input v-model="startDate" class="sb-input" type="text" data-test="rbt-start" />
+          <Input v-model="startDate" type="text" data-test="rbt-start" />
         </div>
         <div>
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">end_date</div>
-          <input v-model="endDate" class="sb-input" type="text" data-test="rbt-end" />
+          <Input v-model="endDate" type="text" data-test="rbt-end" />
         </div>
         <div>
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
           <div style="display: flex; align-items: center; gap: var(--sp-xs)">
-            <input v-model="balance" class="sb-input" style="flex: 1; text-align: right" type="number" min="1" step="100" data-test="rbt-balance" />
-            <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></button>
-            <button type="button" class="act-btn" style="width: 28px; padding: 0" data-test="rbt-balance-plus" aria-label="Increase starting balance" title="Increase starting balance" @click="adjustBalance(100)"><PbIcon :icon="PhPlus" /></button>
+            <Input v-model="balance" class="text-right" type="number" min="1" step="100" data-test="rbt-balance" />
+            <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></Button>
+            <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-plus" aria-label="Increase starting balance" title="Increase starting balance" @click="adjustBalance(100)"><PbIcon :icon="PhPlus" /></Button>
           </div>
         </div>
         <div>
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.exchanges') }}</div>
+          <!-- ui-migration: blocked — the reka listbox is single-value; the
+               legacy multi-select (ctrl-free toggle via useToggleMultiSelect)
+               stays native. -->
           <select v-model="exchanges" class="sb-input" multiple style="height: auto; min-height: var(--input-h)" data-test="rbt-exchanges" @mousedown="onToggleMultiSelectMousedown">
             <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
           </select>
         </div>
         <div style="display: flex; align-items: center; gap: var(--sp-sm)">
-          <input id="rbt-pbgui-data" v-model="usePbguiData" type="checkbox" style="width: auto; margin: 0" data-test="rbt-pbgui-data" />
+          <Checkbox id="rbt-pbgui-data" v-model="usePbguiData" style="margin: 0" data-test="rbt-pbgui-data" />
           <label for="rbt-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" :class="modalBtnClass()" @click="emit('close')">{{ t('common.cancel') }}</button>
-        <button type="button" :class="modalBtnClass('primary')" data-test="rbt-ok" @click="submit">{{ t('common.ok') }}</button>
+        <Button type="button" variant="default" class="modal-btn" @click="emit('close')">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="primary" class="modal-btn" data-test="rbt-ok" @click="submit">{{ t('common.ok') }}</Button>
       </div>
     </div>
   </div>

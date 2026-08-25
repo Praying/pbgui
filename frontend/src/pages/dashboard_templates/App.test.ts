@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { DOMWrapper, enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { ApiError, apiFetch } from '@/shared/api';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
 
 enableAutoUnmount(afterEach);
@@ -230,7 +231,8 @@ describe('save current dashboard as template', () => {
     expect((wrapper.find('#save-name').element as HTMLInputElement).value).toBe('B');
     // the saved name joins the template multi-select
     expect(wrapper.find('#tpl-manage-msel').text()).toContain('NewTpl');
-    expect(wrapper.find('#tpl-select').text()).toContain('NewTpl');
+    await openSelect(wrapper, '#tpl-select');
+    expect(selectOptionTexts()).toContain('NewTpl');
   });
 
   it('requires a template name', async () => {
@@ -413,7 +415,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#dash-name').setValue('Fresh');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
@@ -433,7 +435,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
 
@@ -459,7 +461,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#dash-name').setValue('Fresh');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
@@ -480,7 +482,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#dash-name').setValue('Fresh');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
@@ -495,7 +497,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#dash-name').setValue('Fresh');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
@@ -510,7 +512,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
 
@@ -539,7 +541,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#dash-name').setValue('Shared');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
@@ -559,7 +561,7 @@ describe('create dashboards from template', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
 
@@ -579,7 +581,7 @@ describe('create dashboards from template', () => {
     await usersMsel.find('.msel-item[data-value="bob"]').trigger('mousedown', { button: 0, clientX: 5, clientY: 5 });
     document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
-    await wrapper.find('#tpl-select').setValue('T1');
+    await pickSelectOption(wrapper, '#tpl-select', 'T1');
     await wrapper.find('#btn-create').trigger('click');
     await flushPromises();
 

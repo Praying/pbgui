@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import DatePicker from '@/shared/datepicker/DatePicker.vue';
 import KvCoinSources from '@/shared/kvCoinSources/KvCoinSources.vue';
 import {
@@ -312,7 +321,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
         {{ t('editor.suite.enabled') }} ({{ t('editor.suite.scenario', { n: model.scenarios.length, s: model.scenarios.length !== 1 ? 's' : '' }) }})
       </span>
       <div class="chk-row" style="margin-left: auto; min-height: 0; padding: 0; border: 0; background: none" @click.stop>
-        <input id="suite-enabled" type="checkbox" :checked="model.enabled" :data-tip="t('editor.suite.enableModeTip')" @change="toggleEnabled(($event.target as HTMLInputElement).checked)" />
+        <Checkbox id="suite-enabled" :model-value="model.enabled" :data-tip="t('editor.suite.enableModeTip')" @update:model-value="toggleEnabled($event === true)" />
         <label for="suite-enabled">{{ t('editor.suite.enableMode') }}</label>
       </div>
     </div>
@@ -324,25 +333,27 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
       <template v-if="model.enabled">
         <div style="display: flex; gap: var(--sp-sm); flex-wrap: wrap; margin-bottom: var(--sp-md)">
           <span style="font-size: var(--fs-xs); color: var(--text-dim); align-self: center">{{ t('editor.suite.templates') }}:</span>
-          <button
+          <Button
             v-for="name in TEMPLATE_NAMES"
             :key="name"
             type="button"
+            variant="outline"
+            size="sm"
             class="act-btn"
             :data-test="'suite-template-' + name"
             @click="applyTemplate(name)"
           >
             {{ t('editor.suite.template' + (name === 'Exchange Comparison' ? 'ExchangeComparison' : name === 'Date Windows' ? 'DateWindows' : name === 'TWE Sensitivity' ? 'TweSensitivity' : 'NposSensitivity')) }}
-          </button>
-          <button type="button" class="act-btn" data-test="suite-reset" :title="t('editor.suite.resetToBaseTitle')" style="border-color: var(--orange); color: var(--orange)" @click="resetToBase">
+          </Button>
+          <Button type="button" variant="warning" size="sm" class="act-btn" data-test="suite-reset" :title="t('editor.suite.resetToBaseTitle')" @click="resetToBase">
             {{ t('editor.suite.resetToBase') }}
-          </button>
+          </Button>
         </div>
 
         <div style="margin-bottom: var(--sp-md)">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-sm)">
             <span style="font-size: var(--fs-sm); font-weight: 600">{{ t('editor.suite.scenariosCount', { n: model.scenarios.length }) }}</span>
-            <button type="button" class="act-btn" data-test="suite-add-scenario" @click="addScenario">{{ t('editor.suite.addScenario') }}</button>
+            <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-add-scenario" @click="addScenario">{{ t('editor.suite.addScenario') }}</Button>
           </div>
 
           <div v-if="model.scenarios.length === 0" style="color: var(--text-dim); font-size: var(--fs-sm); padding: var(--sp-sm)">
@@ -361,10 +372,10 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                 <td style="font-weight: 600">{{ scenario.label || t('editor.suite.unnamed') }}</td>
                 <td><span style="color: var(--text-dim); font-size: var(--fs-xs)">{{ summary(scenario) }}</span></td>
                 <td>
-                  <button type="button" class="act-btn" @click="editScenario(i)">{{ model.editIdx === i ? t('editor.suite.editing') : t('editor.suite.edit') }}</button>
-                  <button type="button" class="act-btn act-btn-danger" :data-test="'suite-remove'" @click="removeScenario(i)">×</button>
-                  <button v-if="i > 0" type="button" class="act-btn" :data-test="'suite-move-up-' + i" :title="t('editor.suite.moveUp')" @click="moveScenario(i, -1)">↑</button>
-                  <button v-if="i < model.scenarios.length - 1" type="button" class="act-btn" :data-test="'suite-move-down-' + i" :title="t('editor.suite.moveDown')" @click="moveScenario(i, 1)">↓</button>
+                  <Button type="button" variant="outline" size="sm" class="act-btn" @click="editScenario(i)">{{ model.editIdx === i ? t('editor.suite.editing') : t('editor.suite.edit') }}</Button>
+                  <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" :data-test="'suite-remove'" @click="removeScenario(i)">×</Button>
+                  <Button v-if="i > 0" type="button" variant="outline" size="sm" class="act-btn" :data-test="'suite-move-up-' + i" :title="t('editor.suite.moveUp')" @click="moveScenario(i, -1)">↑</Button>
+                  <Button v-if="i < model.scenarios.length - 1" type="button" variant="outline" size="sm" class="act-btn" :data-test="'suite-move-down-' + i" :title="t('editor.suite.moveDown')" @click="moveScenario(i, 1)">↓</Button>
                 </td>
               </tr>
             </tbody>
@@ -374,13 +385,13 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
         <div v-if="editing && draft" style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); background: rgb(var(--accent-rgb) / 0.03)">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-sm)">
             <span style="font-size: var(--fs-sm); font-weight: 600; color: var(--accent)">{{ t('editor.suite.editScenario', { label: draft.label }) }}</span>
-            <button type="button" class="act-btn" data-test="suite-done" @click="done">{{ t('editor.suite.done') }}</button>
+            <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-done" @click="done">{{ t('editor.suite.done') }}</Button>
           </div>
 
           <div class="form-row cols-4">
             <div class="form-group">
               <label>label</label>
-              <input v-model="draft.label" type="text" data-test="suite-sc-label" />
+              <Input v-model="draft.label" type="text" data-test="suite-sc-label" />
             </div>
             <div class="form-group">
               <label>start_date</label>
@@ -396,12 +407,11 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
             <label>exchanges</label>
             <div style="display: flex; gap: var(--sp-md); flex-wrap: wrap">
               <div v-for="exchange in exchanges" :key="exchange" class="chk-row">
-                <input
+                <Checkbox
                   :id="'suite-sc-ex-' + exchange"
-                  type="checkbox"
                   :data-test="'suite-sc-ex-' + exchange"
-                  :checked="draft.exchanges.includes(exchange)"
-                  @change="toggleDraftExchange(exchange, ($event.target as HTMLInputElement).checked)"
+                  :model-value="draft.exchanges.includes(exchange)"
+                  @update:model-value="toggleDraftExchange(exchange, $event === true)"
                 />
                 <label :for="'suite-sc-ex-' + exchange">{{ exchange }}</label>
               </div>
@@ -413,6 +423,8 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               <label>coins</label>
               <div class="ms-wrap">
                 <span v-for="coin in draft.coins" :key="coin" class="ms-tag">{{ coin }} <span class="ms-x" @click="toggleDraftCoin('coins', coin)">×</span></span>
+                <!-- ui-migration: blocked — chrome-free chip-row filter input inside the custom
+                     multi-select dropdown (same precedent as coin_data TagMultiselect). -->
                 <input class="ms-input" :placeholder="t('editor.suite.typeToSearch')" @keydown.enter.prevent="draftCoinOptions('coins').length ? toggleDraftCoin('coins', draftCoinOptions('coins').find((c) => !draft!.coins.includes(c))!) : undefined" />
                 <div class="ms-dropdown open" style="position: static; max-height: 160px">
                   <div v-for="coin in draftCoinOptions('coins')" :key="coin" class="ms-option" :class="{ selected: draft.coins.includes(coin) }" @mousedown.prevent="toggleDraftCoin('coins', coin)">{{ coin }}</div>
@@ -423,6 +435,8 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               <label>ignored_coins</label>
               <div class="ms-wrap">
                 <span v-for="coin in draft.ignoredCoins" :key="coin" class="ms-tag">{{ coin }} <span class="ms-x" @click="toggleDraftCoin('ignoredCoins', coin)">×</span></span>
+                <!-- ui-migration: blocked — chrome-free chip-row filter input inside the custom
+                     multi-select dropdown (same precedent as coin_data TagMultiselect). -->
                 <input class="ms-input" :placeholder="t('editor.suite.typeToSearch')" />
                 <div class="ms-dropdown open" style="position: static; max-height: 160px">
                   <div v-for="coin in draftCoinOptions('ignoredCoins')" :key="coin" class="ms-option" :class="{ selected: draft.ignoredCoins.includes(coin) }" @mousedown.prevent="toggleDraftCoin('ignoredCoins', coin)">{{ coin }}</div>
@@ -457,32 +471,42 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                 <tr v-for="[key, value] in overrideEntries" :key="key">
                   <td>{{ splitOverrideKey(key).side }}</td>
                   <td>{{ splitOverrideKey(key).param }}</td>
-                  <td><input type="text" :value="String(value)" style="width: 100px" @change="setOverrideValue(key, ($event.target as HTMLInputElement).value)" /></td>
-                  <td><button type="button" class="act-btn act-btn-danger" data-test="suite-ov-remove" @click="removeOverride(key)">×</button></td>
+                  <td><Input type="text" :model-value="String(value)" class="w-[100px]" @change="setOverrideValue(key, ($event.target as HTMLInputElement).value)" /></td>
+                  <td><Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" data-test="suite-ov-remove" @click="removeOverride(key)">×</Button></td>
                 </tr>
               </tbody>
             </table>
 
             <div v-if="overrideRowOpen" style="display: flex; gap: var(--sp-sm); align-items: end; margin-top: var(--sp-xs)">
               <div class="form-group">
-                <label>{{ t('editor.suite.side') }}</label>
-                <select v-model="overrideSide" data-test="suite-ov-side">
-                  <option value="long">long</option>
-                  <option value="short">short</option>
-                </select>
+                <label id="suite-ov-side-label">{{ t('editor.suite.side') }}</label>
+                <SelectRoot v-model="overrideSide">
+                  <SelectTrigger data-test="suite-ov-side" aria-labelledby="suite-ov-side-label">
+                    <span>{{ overrideSide }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="long">long</SelectItem>
+                    <SelectItem value="short">short</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </div>
               <div class="form-group">
-                <label>{{ t('editor.suite.parameter') }}</label>
-                <select v-model="overrideParam" data-test="suite-ov-param">
-                  <option v-for="param in botParams" :key="param" :value="param">{{ param }}</option>
-                </select>
+                <label id="suite-ov-param-label">{{ t('editor.suite.parameter') }}</label>
+                <SelectRoot v-model="overrideParam">
+                  <SelectTrigger data-test="suite-ov-param" aria-labelledby="suite-ov-param-label">
+                    <span>{{ overrideParam }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="param in botParams" :key="param" :value="param">{{ param }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </div>
               <div class="form-group">
                 <label>{{ t('editor.suite.value') }}</label>
-                <input v-model="overrideValue" type="text" placeholder="0.5" data-test="suite-ov-value" />
+                <Input v-model="overrideValue" type="text" placeholder="0.5" data-test="suite-ov-value" />
               </div>
               <div class="form-group">
-                <button type="button" class="act-btn" data-test="suite-ov-confirm" @click="addOverride">{{ t('editor.suite.add') }}</button>
+                <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-ov-confirm" @click="addOverride">{{ t('editor.suite.add') }}</Button>
               </div>
             </div>
           </div>
@@ -493,12 +517,17 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
           <div class="expander-body">
             <div class="form-row cols-4" style="margin-bottom: var(--sp-sm)">
               <div class="form-group">
-                <label>{{ t('editor.suite.defaultMethod') }}</label>
-                <select :value="model.aggregate.default" data-test="suite-agg-default" @change="setAggregateDefault(($event.target as HTMLSelectElement).value)">
-                  <option value="mean">mean</option>
-                  <option value="min">min</option>
-                  <option value="max">max</option>
-                </select>
+                <label id="suite-agg-default-label">{{ t('editor.suite.defaultMethod') }}</label>
+                <SelectRoot :model-value="model.aggregate.default" @update:model-value="setAggregateDefault(String($event ?? ''))">
+                  <SelectTrigger data-test="suite-agg-default" aria-labelledby="suite-agg-default-label">
+                    <span>{{ model.aggregate.default }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mean">mean</SelectItem>
+                    <SelectItem value="min">min</SelectItem>
+                    <SelectItem value="max">max</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </div>
             </div>
 
@@ -509,31 +538,46 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               </div>
               <div v-for="key in aggregateKeys" :key="key" style="display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: 2px">
                 <span style="font-size: var(--fs-xs); flex: 1">{{ key }}</span>
-                <select style="width: 90px" :value="model.aggregate[key]" @change="setAggregateMetric(key, ($event.target as HTMLSelectElement).value)">
-                  <option value="mean">mean</option>
-                  <option value="min">min</option>
-                  <option value="max">max</option>
-                </select>
-                <button type="button" class="act-btn act-btn-danger" data-test="suite-agg-remove" @click="removeAggregateMetric(key)">×</button>
+                <SelectRoot :model-value="model.aggregate[key]" @update:model-value="setAggregateMetric(key, String($event ?? ''))">
+                  <SelectTrigger class="w-[90px]">
+                    <span>{{ model.aggregate[key] }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mean">mean</SelectItem>
+                    <SelectItem value="min">min</SelectItem>
+                    <SelectItem value="max">max</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+                <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" data-test="suite-agg-remove" @click="removeAggregateMetric(key)">×</Button>
               </div>
 
               <div v-if="aggregateAddOpen" style="display: flex; gap: var(--sp-sm); align-items: end; margin-top: var(--sp-xs)">
                 <div class="form-group" style="flex: 1">
-                  <label>{{ t('editor.suite.metric') }}</label>
-                  <select v-model="aggregateMetric" data-test="suite-agg-sel">
-                    <option v-for="metric in aggregateMetricOptions" :key="metric" :value="metric">{{ metric }}</option>
-                  </select>
+                  <label id="suite-agg-sel-label">{{ t('editor.suite.metric') }}</label>
+                  <SelectRoot v-model="aggregateMetric">
+                    <SelectTrigger data-test="suite-agg-sel" aria-labelledby="suite-agg-sel-label">
+                      <span>{{ aggregateMetric }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="metric in aggregateMetricOptions" :key="metric" :value="metric">{{ metric }}</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
                 </div>
                 <div class="form-group">
-                  <label>{{ t('editor.suite.method') }}</label>
-                  <select v-model="aggregateMethod" data-test="suite-agg-method">
-                    <option value="mean">mean</option>
-                    <option value="min">min</option>
-                    <option value="max">max</option>
-                  </select>
+                  <label id="suite-agg-method-label">{{ t('editor.suite.method') }}</label>
+                  <SelectRoot v-model="aggregateMethod">
+                    <SelectTrigger data-test="suite-agg-method" aria-labelledby="suite-agg-method-label">
+                      <span>{{ aggregateMethod }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mean">mean</SelectItem>
+                      <SelectItem value="min">min</SelectItem>
+                      <SelectItem value="max">max</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
                 </div>
                 <div class="form-group">
-                  <button type="button" class="act-btn" data-test="suite-agg-confirm" @click="addAggregateMetric">{{ t('editor.suite.add') }}</button>
+                  <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-agg-confirm" @click="addAggregateMetric">{{ t('editor.suite.add') }}</Button>
                 </div>
               </div>
             </div>

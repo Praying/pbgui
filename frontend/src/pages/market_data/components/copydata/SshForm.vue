@@ -8,10 +8,11 @@
  * owns the values, this component only binds them.
  */
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import {
-  btnClass,
   fieldLabelClass,
-  inputClass,
   noteClass,
   settingsFieldClass,
   settingsGridWideClass,
@@ -35,14 +36,13 @@ const { t } = useI18n();
           :class="fieldLabelClass"
           data-tip="Remote shell command only. Do not include the final target here. Examples: ssh, ssh -p 2222, ssh -J user@jump-host, ssh -J user@jump-host -p 2222."
         >{{ t('market.sshCommandWithoutTarget') }}</span>
-        <input
+        <Input
           id="copy-data-ssh-command"
-          :class="inputClass"
           type="text"
           placeholder="ssh -J user@jump-host -p 2222"
           autocomplete="off"
-          :value="store.sshCommand.value"
-          @input="store.setSshCommand(($event.target as HTMLInputElement).value)"
+          :model-value="store.sshCommand.value"
+          @update:model-value="store.setSshCommand(String($event ?? ''))"
         />
       </label>
       <label :class="settingsFieldClass">
@@ -50,14 +50,13 @@ const { t } = useI18n();
           :class="fieldLabelClass"
           data-tip="Final SSH target for rsync. Examples: user@target-host, target-host, localhost for a reverse tunnel, or an SSH config alias."
         >{{ t('market.remoteTarget') }}</span>
-        <input
+        <Input
           id="copy-data-target"
-          :class="inputClass"
           type="text"
           placeholder="localhost or user@host"
           autocomplete="off"
-          :value="store.target.value"
-          @input="store.setTarget(($event.target as HTMLInputElement).value)"
+          :model-value="store.target.value"
+          @update:model-value="store.setTarget(String($event ?? ''))"
         />
       </label>
       <label :class="settingsFieldClass">
@@ -65,54 +64,51 @@ const { t } = useI18n();
           :class="fieldLabelClass"
           data-tip="Absolute data/ohlcv root on the remote host. Leave empty when the target PBGui uses the same path as this machine. The copy job creates missing exchange subdirectories below this root."
         >{{ t('market.destinationDataRoot') }}</span>
-        <input
+        <Input
           id="copy-data-destination-root"
-          :class="inputClass"
           type="text"
           placeholder="Leave empty to use this PBGui path on the target"
           autocomplete="off"
-          :value="store.destinationRoot.value"
-          @input="store.setDestinationRoot(($event.target as HTMLInputElement).value)"
+          :model-value="store.destinationRoot.value"
+          @update:model-value="store.setDestinationRoot(String($event ?? ''))"
         />
       </label>
     </div>
     <div>
       <div :class="fieldLabelClass">{{ t('market.exchanges') }}</div>
       <div class="copy-data-exchange-grid grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-2">
-        <label v-for="item in COPY_DATA_EXCHANGES" :key="item.key" :class="settingsToggleClass">
-          <input
-            type="checkbox"
-            class="h-4 w-4 m-0"
+        <label v-for="item in COPY_DATA_EXCHANGES" :key="item.key" :class="[settingsToggleClass, 'cursor-pointer']">
+          <Checkbox
             :data-copy-data-exchange="item.key"
-            :checked="store.isExchangeSelected(item.key)"
-            @change="store.setExchangeSelected(item.key, ($event.target as HTMLInputElement).checked)"
+            :model-value="store.isExchangeSelected(item.key)"
+            @update:model-value="store.setExchangeSelected(item.key, $event === true)"
           />
           {{ item.label }}
         </label>
       </div>
     </div>
     <div class="copy-data-actions flex flex-wrap items-center gap-3">
-      <button
-        :class="btnClass('secondary')"
+      <Button
+        variant="info"
         id="btn-copy-data-test"
         type="button"
         :disabled="store.isQueueDisabled.value"
         @click="store.testConnection()"
-      >{{ t('market.testConnection') }}</button>
-      <button
-        :class="btnClass('secondary')"
+      >{{ t('market.testConnection') }}</Button>
+      <Button
+        variant="info"
         id="btn-copy-data-dry-run"
         type="button"
         :disabled="store.isQueueDisabled.value"
         @click="store.queueJob(true)"
-      >{{ t('market.dryRun') }}</button>
-      <button
-        :class="btnClass('primary')"
+      >{{ t('market.dryRun') }}</Button>
+      <Button
+        variant="primary"
         id="btn-copy-data-queue"
         type="button"
         :disabled="store.isQueueDisabled.value"
         @click="store.queueJob(false)"
-      >{{ t('market.queueCopyJob') }}</button>
+      >{{ t('market.queueCopyJob') }}</Button>
       <span :class="noteClass">{{ t('market.copyDataProgressNote') }}</span>
     </div>
   </div>

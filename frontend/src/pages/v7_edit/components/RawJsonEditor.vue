@@ -8,6 +8,8 @@
  */
 import { computed, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Textarea } from '@/shared/components/ui/textarea';
 import ExpanderGroup from './ExpanderGroup.vue';
 import { useEditPageContext } from '../composables/useEditPage';
 import { getJsonLineDetail } from '@/shared/jsonValidation';
@@ -15,7 +17,11 @@ import { getJsonLineDetail } from '@/shared/jsonValidation';
 const { t } = useI18n();
 const page = useEditPageContext();
 
-const textarea = useTemplateRef<HTMLTextAreaElement>('rawTextarea');
+/* The ui/Textarea exposes only focus/blur/select, so the reveal/auto-resize
+   DOM surgery resolves the element by id (useJsonSync's rawElement pattern). */
+function rawEl(): HTMLTextAreaElement | null {
+  return document.getElementById('cfg-raw-json') as HTMLTextAreaElement | null;
+}
 const overlay = useTemplateRef<HTMLElement>('rawOverlay');
 const open = ref(false);
 
@@ -37,7 +43,7 @@ const errorLines = computed(() => {
 
 /** focusJsonErrorLocation (editor_shared :503-523). */
 function reveal(): void {
-  const el = textarea.value;
+  const el = rawEl();
   if (!el || !error.value) return;
   const detail = getJsonLineDetail(el.value || '', error.value.line, error.value.column);
   el.focus();
@@ -55,7 +61,7 @@ function reveal(): void {
 
 /** autoResizeTextarea (editor_shared :45-52). */
 function autoResize(): void {
-  const el = textarea.value;
+  const el = rawEl();
   if (!el) return;
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
@@ -74,7 +80,8 @@ watch(
 );
 
 function onScroll(): void {
-  if (overlay.value && textarea.value) overlay.value.scrollTop = textarea.value.scrollTop;
+  const el = rawEl();
+  if (overlay.value && el) overlay.value.scrollTop = el.scrollTop;
 }
 
 /** Error state → full utility set (the former .field-status/.error/
@@ -100,9 +107,9 @@ function fieldStatusClass(hasError: boolean): string {
             <div class="font-semibold">{{ summary }}</div>
             <div v-if="error.message" class="mt-0.5 text-danger-soft">{{ error.message }}</div>
             <div v-if="errorLines" class="mt-2">
-              <button type="button" class="h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-0 text-sm text-danger-soft [transition:background-color_150ms,transform_100ms] hover:bg-white/8 active:translate-y-px" @click="reveal()">
+              <Button type="button" variant="danger" size="sm" @click="reveal()">
                 {{ t('v7run.revealLineInEditor') }}
-              </button>
+              </Button>
             </div>
           </template>
         </div>
@@ -119,16 +126,19 @@ function fieldStatusClass(hasError: boolean): string {
           class="block"
           :class="errorLines === index + 1 ? 'rounded-[2px] bg-danger/16 shadow-[inset_3px_0_0_rgb(var(--danger-rgb)/0.95)]' : ''"
         >{{ line }}</span></pre>
-        <textarea
+        <!-- ui-migration: Textarea + the legacy json-editor class — the
+             un-layered page rules still own the geometry (the highlight
+             overlay aligns to it; #cfg-raw-json keeps the transparent
+             background over the overlay). DOM access resolves by id. -->
+        <Textarea
           id="cfg-raw-json"
-          ref="rawTextarea"
           v-model="page.state.rawJson"
           class="json-editor block w-full min-w-0"
           :class="{ 'json-invalid': !!error }"
           style="overflow: hidden; resize: vertical"
           @input="page.jsonSync.scheduleRaw()"
           @scroll="onScroll"
-        ></textarea>
+        />
       </div>
     </div>
   </ExpanderGroup>

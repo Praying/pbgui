@@ -29,6 +29,8 @@ import ErrorState from '@/shared/components/ErrorState.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { currentOptimizeAdapter, readIncomingDraft } from './config';
 import ConfigEditorModal from './components/ConfigEditorModal.vue';
 import ConfigsPanel from './components/ConfigsPanel.vue';
@@ -450,37 +452,37 @@ onBeforeUnmount(() => {
          contextual actions. -->
     <div class="page-toolbar" role="toolbar">
       <template v-if="page.panel.value === 'configs'">
-        <button class="sb-btn primary" @click="page.openEditor()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7optimize.newConfig') }}</button>
-        <button class="sb-btn" @click="importOpen = true"><PbIcon :icon="PhDownloadSimple" /> {{ actionLabel('v7optimize.importConfig') }}</button>
-        <button class="sb-btn" :disabled="page.selectedConfigs.value.size !== 1" @click="page.openEditor([...page.selectedConfigs.value][0])"><PbIcon :icon="PhPencilSimple" /> {{ actionLabel('v7optimize.editSelected') }}</button>
-        <button class="sb-btn" data-test="duplicate-selected" :disabled="page.selectedConfigs.value.size !== 1" @click="openDuplicate([...page.selectedConfigs.value][0] || '')"><PbIcon :icon="PhCopy" /> {{ actionLabel('v7optimize.duplicate') }}</button>
-        <button class="sb-btn" :disabled="!page.selectedConfigs.value.size" @click="queueSelected"><PbIcon :icon="PhArrowRight" /> {{ actionLabel('v7optimize.queueSelected') }}</button>
-        <button class="sb-btn" :disabled="!page.selectedConfigs.value.size" @click="archiveSelected"><PbIcon :icon="PhArchive" /> {{ actionLabel('v7optimize.addToArchive') }}</button>
-        <button v-if="!adapter.isV8" class="sb-btn" :disabled="page.selectedConfigs.value.size !== 1" @click="migrateSelected"><PbIcon :icon="PhArrowRight" /> {{ actionLabel('v7optimize.convertToPb8Optimize') }}</button>
-        <button class="sb-btn danger" :disabled="!page.selectedConfigs.value.size" @click="askDeleteConfigs"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</button>
+        <Button type="button" variant="info" data-test="new-config" @click="page.openEditor()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7optimize.newConfig') }}</Button>
+        <Button type="button" variant="default" @click="importOpen = true"><PbIcon :icon="PhDownloadSimple" /> {{ actionLabel('v7optimize.importConfig') }}</Button>
+        <Button type="button" variant="default" :disabled="page.selectedConfigs.value.size !== 1" @click="page.openEditor([...page.selectedConfigs.value][0])"><PbIcon :icon="PhPencilSimple" /> {{ actionLabel('v7optimize.editSelected') }}</Button>
+        <Button type="button" variant="default" data-test="duplicate-selected" :disabled="page.selectedConfigs.value.size !== 1" @click="openDuplicate([...page.selectedConfigs.value][0] || '')"><PbIcon :icon="PhCopy" /> {{ actionLabel('v7optimize.duplicate') }}</Button>
+        <Button type="button" variant="default" :disabled="!page.selectedConfigs.value.size" @click="queueSelected"><PbIcon :icon="PhArrowRight" /> {{ actionLabel('v7optimize.queueSelected') }}</Button>
+        <Button type="button" variant="default" :disabled="!page.selectedConfigs.value.size" @click="archiveSelected"><PbIcon :icon="PhArchive" /> {{ actionLabel('v7optimize.addToArchive') }}</Button>
+        <Button type="button" variant="default" v-if="!adapter.isV8" :disabled="page.selectedConfigs.value.size !== 1" @click="migrateSelected"><PbIcon :icon="PhArrowRight" /> {{ actionLabel('v7optimize.convertToPb8Optimize') }}</Button>
+        <Button type="button" variant="danger" :disabled="!page.selectedConfigs.value.size" @click="askDeleteConfigs"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</Button>
       </template>
       <template v-else-if="page.panel.value === 'queue'">
-        <button class="sb-btn danger" :disabled="!page.selectedQueue.value.size" @click="askDeleteQueue"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</button>
-        <button class="sb-btn" @click="page.settingsOpen.value = true"><PbIcon :icon="PhGear" /> {{ actionLabel('v7optimize.settings') }}</button>
+        <Button type="button" variant="danger" :disabled="!page.selectedQueue.value.size" @click="askDeleteQueue"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</Button>
+        <Button type="button" variant="default" @click="page.settingsOpen.value = true"><PbIcon :icon="PhGear" /> {{ actionLabel('v7optimize.settings') }}</Button>
       </template>
       <template v-else-if="page.panel.value === 'results'">
-        <button class="sb-btn" data-test="result-paretos" :disabled="!selectedResultCapabilities.hasPareto" @click="openResult(selectedResult)"><PbIcon :icon="PhChartBar" /> {{ actionLabel('v7optimize.paretos') }}</button>
-        <button class="sb-btn" :disabled="!selectedResultCapabilities.hasPareto" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</button>
-        <button class="sb-btn" data-test="result-dash" :disabled="!selectedResultCapabilities.supportsDash" @click="runSelectedResult('dash')"><PbIcon :icon="PhChartBar" /> {{ t('v7optimize.pdParetoDash') }}</button>
-        <button class="sb-btn" :disabled="!selectedResultCapabilities.supports3d" @click="runSelectedResult('plot3d')"><PbIcon :icon="PhCube" /> {{ t('v7optimize.plot3d') }}</button>
-        <button class="sb-btn" :disabled="!selectedResultCapabilities.hasPareto" @click="runSelectedResult('continue')"><PbIcon :icon="PhPlant" /> {{ actionLabel('v7optimize.continueOptimize') }}</button>
-        <button v-if="adapter.isV8" class="sb-btn" :disabled="!selectedResultCapabilities.resumable" @click="runSelectedResult('resume')"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.resumeCheckpoint') }}</button>
-        <button class="sb-btn" data-test="result-config" :disabled="!selectedResultCapabilities.hasConfig" @click="runSelectedResult('config')"><PbIcon :icon="PhFileText" /> {{ actionLabel('v7optimize.configDraft') }}</button>
-        <button class="sb-btn danger" :disabled="!page.selectedResults.value.size" @click="askDeleteResults"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</button>
+        <Button type="button" variant="default" data-test="result-paretos" :disabled="!selectedResultCapabilities.hasPareto" @click="openResult(selectedResult)"><PbIcon :icon="PhChartBar" /> {{ actionLabel('v7optimize.paretos') }}</Button>
+        <Button type="button" variant="default" :disabled="!selectedResultCapabilities.hasPareto" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</Button>
+        <Button type="button" variant="default" data-test="result-dash" :disabled="!selectedResultCapabilities.supportsDash" @click="runSelectedResult('dash')"><PbIcon :icon="PhChartBar" /> {{ t('v7optimize.pdParetoDash') }}</Button>
+        <Button type="button" variant="default" :disabled="!selectedResultCapabilities.supports3d" @click="runSelectedResult('plot3d')"><PbIcon :icon="PhCube" /> {{ t('v7optimize.plot3d') }}</Button>
+        <Button type="button" variant="default" :disabled="!selectedResultCapabilities.hasPareto" @click="runSelectedResult('continue')"><PbIcon :icon="PhPlant" /> {{ actionLabel('v7optimize.continueOptimize') }}</Button>
+        <Button type="button" variant="default" v-if="adapter.isV8" :disabled="!selectedResultCapabilities.resumable" @click="runSelectedResult('resume')"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.resumeCheckpoint') }}</Button>
+        <Button type="button" variant="default" data-test="result-config" :disabled="!selectedResultCapabilities.hasConfig" @click="runSelectedResult('config')"><PbIcon :icon="PhFileText" /> {{ actionLabel('v7optimize.configDraft') }}</Button>
+        <Button type="button" variant="danger" :disabled="!page.selectedResults.value.size" @click="askDeleteResults"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7optimize.deleteSelected') }}</Button>
       </template>
       <template v-else>
-        <button class="sb-btn" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</button>
-        <button class="sb-btn" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.backtest') }}</button>
-        <button class="sb-btn" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos"><PbIcon :icon="PhDna" /> {{ actionLabel('v7optimize.seedSelected') }}</button>
-        <button class="sb-btn" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')"><PbIcon :icon="PhFolderOpen" /> {{ actionLabel('v7optimize.seedWholeResult') }}</button>
+        <Button type="button" variant="default" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</Button>
+        <Button type="button" variant="default" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.backtest') }}</Button>
+        <Button type="button" variant="default" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos"><PbIcon :icon="PhDna" /> {{ actionLabel('v7optimize.seedSelected') }}</Button>
+        <Button type="button" variant="default" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')"><PbIcon :icon="PhFolderOpen" /> {{ actionLabel('v7optimize.seedWholeResult') }}</Button>
       </template>
       <hr v-if="page.editorOpen.value" class="sb-sep" />
-      <button v-if="page.editorOpen.value" class="sb-btn" @click="runPreflight()"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7optimize.ohlcvReadiness') }}</button>
+      <Button type="button" variant="default" v-if="page.editorOpen.value" @click="runPreflight()"><PbIcon :icon="PhCompassTool" /> {{ actionLabel('v7optimize.ohlcvReadiness') }}</Button>
     </div>
 
       <div v-if="page.runtimeWarning.value" class="mb-3 grid gap-1.25 rounded-md border border-warning/55 border-l-4 border-l-[#d0a36f] bg-warning/12 px-3.5 py-3 text-primary" data-test="pb8-runtime-warning" role="status" aria-live="polite">
@@ -515,7 +517,7 @@ onBeforeUnmount(() => {
 
   <div v-if="page.queueConfigChoice.value" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
     <section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true">
-      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.repairQueuedConfig') }}</h2><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="page.closeQueueConfigChoice">{{ t('common.close') }}</button></header>
+      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.repairQueuedConfig') }}</h2><Button type="button" variant="default" @click="page.closeQueueConfigChoice">{{ t('common.close') }}</Button></header>
       <div class="grid min-h-0 gap-3 overflow-auto p-3.5">
         <p>{{ page.queueConfigChoice.value.message || t('v7optimize.queueConfigPathMissing') }}</p>
         <code class="block rounded-md border border-border-default bg-page p-2 [overflow-wrap:anywhere]">{{ page.queueConfigChoice.value.configPath }}</code>
@@ -523,7 +525,7 @@ onBeforeUnmount(() => {
         <div class="flex flex-col gap-2">
           <div v-for="candidate in page.queueConfigChoice.value.candidates" :key="candidate.path" class="flex items-center justify-between gap-3 rounded-lg border border-border-default bg-panel p-2.5">
             <div><strong>{{ candidate.name }}</strong><small>{{ candidate.path }}</small></div>
-            <div class="whitespace-nowrap! overflow-visible!"><button class="min-h-[26px] cursor-pointer rounded-sm border border-accent/55 bg-accent/18 px-[7px] py-[3px] text-xs text-accent" @click="safely(() => page.repairQueueConfigCandidate(candidate.name))">{{ page.queueConfigChoice.value.intent === 'edit' ? t('v7optimize.useAndOpen') : t('v7optimize.useAndRepair') }}</button><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="safely(() => page.openQueueConfigCandidate(candidate.name))">{{ t('v7optimize.open') }}</button></div>
+            <div class="whitespace-nowrap! overflow-visible!"><Button type="button" variant="info" size="sm" @click="safely(() => page.repairQueueConfigCandidate(candidate.name))">{{ page.queueConfigChoice.value.intent === 'edit' ? t('v7optimize.useAndOpen') : t('v7optimize.useAndRepair') }}</Button><Button type="button" variant="default" size="sm" @click="safely(() => page.openQueueConfigCandidate(candidate.name))">{{ t('v7optimize.open') }}</Button></div>
           </div>
         </div>
       </div>
@@ -531,8 +533,8 @@ onBeforeUnmount(() => {
   </div>
 
   <OhlcvPreflightModal :open="preflightOpen" :loading="preflightLoading" :error="preflightError" :payload="preflightData" :job="preflightJob" @close="closePreflight" @refresh="refreshPreflightData" @preload="startPreload" @stop="stopPreload" />
-  <div v-if="duplicateSource" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.duplicateConfig') }}</h2><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="duplicateSource = ''">{{ t('common.close') }}</button></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.duplicateConfigAs') }}<input v-model="duplicateName" class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary" /></label></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="duplicateSource = ''">{{ t('common.cancel') }}</button><button class="min-h-[30px] cursor-pointer rounded-sm border border-accent/55 bg-accent/18 px-2.5 py-1.25 text-accent" @click="duplicate">{{ t('common.save') }}</button></footer></section></div>
-  <div v-if="confirmAction" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ confirmAction.title }}</h2></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><p>{{ confirmAction.message }}</p></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="confirmAction = null">{{ t('common.cancel') }}</button><button class="min-h-[30px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-1.25 text-danger" @click="acceptConfirm">{{ t('common.confirm') }}</button></footer></section></div>
+  <div v-if="duplicateSource" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.duplicateConfig') }}</h2><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.close') }}</Button></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.duplicateConfigAs') }}<Input v-model="duplicateName" /></label></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.cancel') }}</Button><Button type="button" variant="info" @click="duplicate">{{ t('common.save') }}</Button></footer></section></div>
+  <div v-if="confirmAction" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ confirmAction.title }}</h2></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><p>{{ confirmAction.message }}</p></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="confirmAction = null">{{ t('common.cancel') }}</Button><Button type="button" variant="danger" @click="acceptConfirm">{{ t('common.confirm') }}</Button></footer></section></div>
   <div v-if="toast" class="fixed right-[18px] bottom-[18px] z-[1200] max-w-[min(520px,calc(100vw-36px))] rounded-md border border-border-default bg-panel px-3.5 py-2.5 shadow-[0_8px_20px_rgba(5,8,14,0.3)]" :class="`opt-toast-${toast.kind}`">{{ toast.message }}</div>
 </template>
 

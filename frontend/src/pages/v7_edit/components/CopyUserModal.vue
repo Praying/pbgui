@@ -8,6 +8,13 @@
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import { useEditPageContext } from '../composables/useEditPage';
 import { serverMsg } from '@/shared/i18n';
 import { dialogsAlert } from '../lib/dialogs';
@@ -118,20 +125,25 @@ defineExpose({ show });
           {{ t('v7run.copyConfigToUserDesc') }}
         </div>
         <div class="form-group">
-          <label>{{ t('v7run.targetUser') }}</label>
-          <select id="copy-user" v-model="targetUser" :disabled="unavailable">
-            <option v-for="user in targetOptions" :key="user" :value="user">{{ user }}</option>
-          </select>
+          <label id="copy-user-label">{{ t('v7run.targetUser') }}</label>
+          <SelectRoot v-model="targetUser">
+            <SelectTrigger id="copy-user" aria-labelledby="copy-user-label" :disabled="unavailable">
+              <span :class="targetUser ? undefined : 'text-placeholder'">{{ targetUser }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="user in targetOptions" :key="user" :value="user">{{ user }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </div>
         <div v-if="error" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
           <div class="font-semibold">{{ error.summary }}</div>
           <div class="mt-0.5 text-danger-soft">{{ error.message }}</div>
         </div>
         <div class="flex justify-end gap-2">
-          <button class="btn border-success bg-success px-4 text-accent-contrast [transition:background-color_150ms,transform_100ms] hover:bg-success-deep active:translate-y-px" id="btn-copy-user-ok" :disabled="!canSubmit" @click="copy()">
-            <span v-if="busy" class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-border-default border-t-accent"></span> {{ busy ? t('v7run.copying') : t('v7run.copy') }}
-          </button>
-          <button class="btn px-4 [transition:background-color_150ms,transform_100ms] hover:bg-border-default active:translate-y-px" @click="close()">{{ t('common.cancel') }}</button>
+          <Button variant="success" id="btn-copy-user-ok" type="button" :disabled="!canSubmit" :loading="busy" @click="copy()">
+            {{ busy ? t('v7run.copying') : t('v7run.copy') }}
+          </Button>
+          <Button type="button" @click="close()">{{ t('common.cancel') }}</Button>
         </div>
       </div>
     </div>

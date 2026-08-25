@@ -9,6 +9,7 @@ import {
   BASE,
   SETTINGS_PAYLOAD,
 } from './App.test-support';
+import { pickSelectOption } from '@/shared/testing/select';
 
 /* M-data-5 integrity panel integration (:9066-9071, :7324-7332, :4562-4605). */
 
@@ -118,7 +119,7 @@ describe('integrity panel integration (M-data-5, :9066-9071, :7324-7332, :4562-4
     fetchMock.mockImplementation(integrityFetchMock);
     const app = mountApp();
     await flushPromises();
-    await app.find('#page-exchange').setValue('bybit');
+    await pickSelectOption(app, '#page-exchange', 'Bybit');
     await flushPromises();
     expect(urlsOf().filter((url) => url.includes('/integrity/status?exchange=bybit'))).toHaveLength(1);
     const frame = app.find('#integrity-job-monitor-frame').element as HTMLIFrameElement;

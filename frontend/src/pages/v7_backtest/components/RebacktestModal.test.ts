@@ -35,7 +35,7 @@ describe('RebacktestModal (:7895-7956)', () => {
     expect((wrapper.find('[data-test="rbt-balance"]').element as HTMLInputElement).value).toBe('500');
     const selected = Array.from((wrapper.find('[data-test="rbt-exchanges"]').element as HTMLSelectElement).selectedOptions).map((o) => o.value);
     expect(selected).toEqual(['bybit', 'okx']);
-    expect((wrapper.find('[data-test="rbt-pbgui-data"]').element as HTMLInputElement).checked).toBe(false);
+    expect(wrapper.find('[data-test="rbt-pbgui-data"]').attributes('aria-checked')).toBe('false');
     const marketDataLabel = wrapper.find('label[for="rbt-pbgui-data"]');
     expect(marketDataLabel.text()).toBe('Use PBGui Market Data');
     expect(marketDataLabel.find('svg').exists()).toBe(true);
@@ -58,7 +58,8 @@ describe('RebacktestModal (:7895-7956)', () => {
     const wrapper = mountModal({ onError: error });
     await wrapper.find('[data-test="rbt-end"]').setValue('2024-06-01');
     await wrapper.find('[data-test="rbt-balance"]').setValue('9000');
-    await wrapper.find('[data-test="rbt-pbgui-data"]').setValue(true);
+    // ui/ Checkbox renders a button with role="checkbox" — click toggles it
+    await wrapper.find('[data-test="rbt-pbgui-data"]').trigger('click');
     await wrapper.find('[data-test="rbt-ok"]').trigger('click');
     expect(wrapper.emitted('confirm')).toEqual([[{ start: '2023-01-01', end: '2024-06-01', balance: 9000, exchanges: ['bybit', 'okx'], usePbguiData: true }]]);
     expect(wrapper.emitted('close')).toBeTruthy();

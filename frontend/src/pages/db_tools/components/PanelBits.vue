@@ -8,6 +8,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import type { PanelStatus, ProgressState, StatusKind } from '../composables/useDbTools';
 
 const props = defineProps<{
@@ -70,8 +71,8 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
         <div id="confirm-msg" class="leading-[1.45] text-primary">{{ confirm.message }}</div>
         <div id="confirm-detail" class="text-sm leading-[1.45] text-secondary">{{ confirm.detail }}</div>
         <div id="confirm-actions" class="flex justify-end gap-2">
-          <button id="confirm-cancel" class="pbgui-btn btn-secondary rounded-lg font-bold hover:opacity-90" @click="emit('confirm', false)">{{ t('common.cancel') }}</button>
-          <button id="confirm-ok" class="pbgui-btn rounded-lg font-bold hover:opacity-90" :class="confirm.danger ? 'pbgui-btn btn-danger rounded-lg font-bold hover:opacity-90 border-danger-deep bg-danger-deep text-danger-soft' : 'pbgui-btn btn-warning rounded-lg font-bold hover:opacity-90 border-warning-deep bg-warning-deep text-warning-soft'" @click="emit('confirm', true)">{{ t('common.confirm') }}</button>
+          <Button id="confirm-cancel" type="button" variant="secondary" @click="emit('confirm', false)">{{ t('common.cancel') }}</Button>
+          <Button id="confirm-ok" type="button" :variant="confirm.danger ? 'danger' : 'warning'" @click="emit('confirm', true)">{{ t('common.confirm') }}</Button>
         </div>
       </div>
     </div>

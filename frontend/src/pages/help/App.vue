@@ -56,6 +56,9 @@ import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import HelpToc from './components/HelpToc.vue';
 import { useHelpContent, type GlobalSearchResult } from './composables/useHelpContent';
 import { highlightMarks, highlightSnippet } from './lib/search';
@@ -64,11 +67,11 @@ const { t } = useI18n();
 const store = useHelpContent();
 
 /* ── Tailwind colour mappings (the former help.css state rules) ──
-   Each helper returns the COMPLETE colour set per branch — including the
+   The helper returns the COMPLETE colour set per branch — including the
    neutral default — because Tailwind emits same-property utilities in its
    own fixed order (a neutral + variant pair in one class list renders
-   neutral). 'active' stays as the inert state anchor the page tests
-   assert. */
+   neutral). Control chrome itself lives on the shared ui/ components;
+   what stays here is only the pressed/active state tint. */
 
 /* .ovl-tool[aria-pressed="true"] tint; the neutral branch doubles as the
    .ovl-close default colours. */
@@ -78,17 +81,9 @@ function ovlToolColorClass(pressed: boolean): string {
     : 'border-transparent bg-transparent text-muted';
 }
 
-/* .lang-pill button colours (.active tint + the :hover:not(.active) lift —
-   the lift must live on the inactive branch only, exactly like the legacy
-   :not(.active) selector). */
-function langBtnClass(active: boolean): string {
-  return [
-    'cursor-pointer border-0 text-xs font-semibold tracking-[0.05em] py-[0.2rem] px-[0.55rem] transition-all duration-120',
-    active
-      ? 'active bg-border-default text-accent-soft'
-      : 'bg-transparent text-muted hover:bg-white/4 hover:text-primary',
-  ].join(' ');
-}
+/* .lang-pill active-segment tint — the former .lang-pill button.active
+   rule. 'active' stays as the inert state anchor the page tests assert. */
+const LANG_ACTIVE_CLASS = 'active bg-border-default text-accent-soft';
 
 /* ── bootstrap (legacy :548, :551-557, :1086-1092) ── */
 
@@ -414,49 +409,58 @@ onBeforeUnmount(() => {
         <div id="help-dialog-title" class="ovl-header-title flex items-center gap-1.75 text-md font-bold text-primary"><PbIcon :icon="PhBookOpen" /> <span>{{ t('misc.help.guideHelp') }}</span></div>
         <div class="ovl-header-actions flex items-center gap-1.75 relative z-[3] max-[720px]:flex-wrap max-[720px]:w-full">
           <div id="help-search-wrap" class="flex items-center gap-[3px]">
-            <input
+            <Input
               id="help-search"
               v-model="searchTermRaw"
               type="text"
-              class="w-[170px] bg-card text-primary border border-border-default rounded-[5px] py-[0.28rem] px-[0.5rem] text-sm outline-none focus:border-secondary placeholder:text-secondary max-[720px]:w-[140px]"
+              class="w-[170px] max-[720px]:w-[140px]"
               :placeholder="searchPlaceholder"
               autocomplete="off"
               @keydown="onSearchKeydown"
-            >
-            <button
-              class="help-snav-btn bg-card border border-border-default rounded-[3px] text-secondary cursor-pointer text-xs px-[5px] py-[2px] leading-[1.4] transition-[color,border-color] duration-100 hover:text-primary hover:border-secondary"
+            />
+            <Button
+              class="help-snav-btn"
               id="help-search-up"
+              type="button"
+              variant="secondary"
+              size="sm"
               :title="t('misc.help.previousMatch')"
               :aria-label="t('misc.help.previousMatch')"
               @click="gotoMark(searchIndex - 1)"
-            ><PbIcon :icon="PhArrowUp" /></button>
-            <button
-              class="help-snav-btn bg-card border border-border-default rounded-[3px] text-secondary cursor-pointer text-xs px-[5px] py-[2px] leading-[1.4] transition-[color,border-color] duration-100 hover:text-primary hover:border-secondary"
+            ><PbIcon :icon="PhArrowUp" /></Button>
+            <Button
+              class="help-snav-btn"
               id="help-search-dn"
+              type="button"
+              variant="secondary"
+              size="sm"
               :title="t('misc.help.nextMatch')"
               :aria-label="t('misc.help.nextMatch')"
               @click="gotoMark(searchIndex + 1)"
-            ><PbIcon :icon="PhArrowDown" /></button>
+            ><PbIcon :icon="PhArrowDown" /></Button>
             <span id="help-search-count" class="text-xs text-muted whitespace-nowrap min-w-[44px] text-left">{{ searchCountText }}</span>
             <label id="help-search-global-lbl" class="flex items-center gap-[3px] text-secondary text-xs cursor-pointer whitespace-nowrap select-none" :title="t('misc.help.searchAcrossAll')">
-              <input id="help-search-global" v-model="globalMode" type="checkbox" class="cursor-pointer"> <span>{{ t('common.all') }}</span>
+              <Checkbox id="help-search-global" v-model="globalMode" /> <span>{{ t('common.all') }}</span>
             </label>
           </div>
           <div style="width:1px;height:16px;background:var(--border-default);flex-shrink:0;"></div>
           <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0">
-            <button id="help-lang-en" :class="langBtnClass(store.lang.value === 'EN')" @click="store.switchLang('EN')">EN</button>
-            <button id="help-lang-de" :class="langBtnClass(store.lang.value === 'DE')" @click="store.switchLang('DE')">DE</button>
+            <Button id="help-lang-en" type="button" variant="ghost" size="sm" :class="store.lang.value === 'EN' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('EN')">EN</Button>
+            <Button id="help-lang-de" type="button" variant="ghost" size="sm" :class="store.lang.value === 'DE' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('DE')">DE</Button>
           </div>
-          <button
-            class="ovl-tool inline-flex items-center justify-center cursor-pointer text-md w-7 h-7 p-0 rounded-sm leading-none border transition-[color,background-color] duration-120 hover:text-primary hover:border-[rgb(var(--text-secondary-rgb)/0.18)] hover:bg-white/6"
+          <Button
+            class="ovl-tool"
             :class="ovlToolColorClass(maximized)"
             id="help-maximize"
+            type="button"
+            variant="ghost"
+            size="icon"
             :title="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
             :aria-label="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
             :aria-pressed="maximized ? 'true' : 'false'"
             @click="setMaximized(!maximized)"
-            ><PbIcon :icon="maximized ? PhArrowsIn : PhArrowsOut" /></button>
-          <button class="ovl-close inline-flex items-center justify-center cursor-pointer text-md w-7 h-7 p-0 rounded-sm leading-none border border-transparent bg-transparent text-muted transition-[color,background-color] duration-120 hover:text-primary hover:border-[rgb(var(--text-secondary-rgb)/0.18)] hover:bg-white/6" id="help-close" :aria-label="t('common.close')" @click="closeLocalHelp"><PbIcon :icon="PhX" /></button>
+            ><PbIcon :icon="maximized ? PhArrowsIn : PhArrowsOut" /></Button>
+          <Button class="ovl-close" :class="ovlToolColorClass(false)" id="help-close" type="button" variant="ghost" size="icon" :aria-label="t('common.close')" @click="closeLocalHelp"><PbIcon :icon="PhX" /></Button>
         </div>
       </div>
       <div id="help-body" class="flex flex-1 overflow-hidden max-[720px]:flex-col">

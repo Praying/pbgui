@@ -5,8 +5,8 @@
  * callout (:7390-7395) and the usage host (:3102 → UsagePanel).
  */
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import {
-  btnClass,
   calloutClass,
   fieldLabelClass,
   noteClass,
@@ -34,12 +34,12 @@ const { t } = useI18n();
         <div class="eyebrow">{{ t('market.tiingoSettingsStockPerp') }}</div>
       </div>
       <div class="panel-actions">
-        <button
-          :class="btnClass('secondary')"
+        <Button
+          variant="info"
           id="btn-test-tiingo"
           type="button"
           @click="tiingo.test()"
-        >{{ t('market.testTiingo') }}</button>
+        >{{ t('market.testTiingo') }}</Button>
       </div>
     </div>
     <div :class="calloutClass(false)" id="settings-tiingo-credential-status">
@@ -51,13 +51,13 @@ const { t } = useI18n();
         <TokenRevealField :tiingo="tiingo" />
       </label>
       <div :class="[settingsFieldClass, 'self-end']">
-        <button
-          :class="btnClass('primary')"
+        <Button
+          variant="primary"
           id="btn-save-tiingo-token"
           type="button"
           :disabled="tiingo.saveLoading.value"
           @click="tiingo.saveToken()"
-        >{{ t('market.saveTokenToVault') }}</button>
+        >{{ t('market.saveTokenToVault') }}</Button>
       </div>
     </div>
     <div :class="noteClass">{{ t('market.tiingoEyeNote') }}</div>

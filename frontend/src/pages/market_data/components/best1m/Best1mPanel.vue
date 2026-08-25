@@ -19,15 +19,16 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import {
   best1mFrameClass,
-  btnPrimaryClass,
   calloutClass,
   fieldLabelClass,
   jobMonitorFrameClass,
   noteClass,
   panelHeadClass,
-  sbBtnClass,
   settingsFieldClass,
   settingsToggleClass,
 } from '../../lib/uiClasses';
@@ -65,18 +66,22 @@ const feedbackIsWarning = () =>
   <!-- build/download mode switch (legacy sidebar shortcuts :2946/:2948) —
        sits above both variants so either mode stays reachable -->
   <div v-if="store.isHyperliquid.value" id="best1m-mode-switch" class="best1m-mode-switch flex flex-none flex-wrap gap-1">
-    <button
+    <Button
       id="best1m-mode-build"
-      :class="sbBtnClass(!isDownloadMode())"
+      class="sb-btn"
+      :class="{ active: !isDownloadMode() }"
+      :variant="!isDownloadMode() ? 'success' : 'secondary'"
       type="button"
       @click="emit('selectMode', 'build')"
-    >{{ t('market.buildBest1mTitle') }}</button>
-    <button
+    >{{ t('market.buildBest1mTitle') }}</Button>
+    <Button
       id="best1m-mode-download"
-      :class="sbBtnClass(isDownloadMode())"
+      class="sb-btn"
+      :class="{ active: isDownloadMode() }"
+      :variant="isDownloadMode() ? 'success' : 'secondary'"
       type="button"
       @click="emit('selectMode', 'download')"
-    >{{ t('market.downloadL2books') }}</button>
+    >{{ t('market.downloadL2books') }}</Button>
   </div>
 
   <article
@@ -93,42 +98,40 @@ const feedbackIsWarning = () =>
         <div class="best1m-fields grid gap-3 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
           <label :class="settingsFieldClass">
             <span :class="fieldLabelClass">{{ t('market.startDateOptional') }}</span>
-            <input
+            <Input
               id="best1m-start-date"
               type="date"
-              :value="store.startDate.value"
-              @input="store.setStartDate(($event.target as HTMLInputElement).value)"
+              :model-value="store.startDate.value"
+              @update:model-value="store.setStartDate(String($event ?? ''))"
             />
           </label>
           <label :class="settingsFieldClass">
             <span :class="fieldLabelClass">{{ t('market.endDateOptional') }}</span>
-            <input
+            <Input
               id="best1m-end-date"
               type="date"
-              :value="store.endDate.value"
-              @input="store.setEndDate(($event.target as HTMLInputElement).value)"
+              :model-value="store.endDate.value"
+              @update:model-value="store.setEndDate(String($event ?? ''))"
             />
           </label>
         </div>
-        <label :class="settingsToggleClass">
-          <input
+        <label :class="[settingsToggleClass, 'cursor-pointer']">
+          <Checkbox
             id="best1m-refetch"
-            class="h-4 w-4 m-0"
-            type="checkbox"
-            :checked="store.refetch.value"
-            @change="store.setRefetch(($event.target as HTMLInputElement).checked)"
+            :model-value="store.refetch.value"
+            @update:model-value="store.setRefetch($event === true)"
           />
           <span id="best1m-refetch-label">{{ store.refetchLabel.value || t('market.refetchAllDays') }}</span>
         </label>
         <DistributedHosts :store="store" />
         <div class="best1m-actions flex flex-wrap items-center gap-3">
-          <button
-            :class="btnPrimaryClass"
+          <Button
+            variant="primary"
             id="btn-best1m-queue"
             type="button"
             :disabled="store.isQueueDisabled.value"
             @click="store.queueBest1m()"
-          >{{ t('market.buildBest1m') }}</button>
+          >{{ t('market.buildBest1m') }}</Button>
         </div>
         <p :class="noteClass" id="best1m-hint">{{ store.hint.value }}</p>
       </div>

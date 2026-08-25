@@ -22,6 +22,14 @@ import { PhClipboardText } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import { dashboardsUrl, fromTemplateUrl } from '../config';
 import { dialogsConfirm } from '../dialogs';
 import type { DashboardConfigResponse, StatusResponse } from '../types';
@@ -178,11 +186,17 @@ onUnmounted(() => window.clearTimeout(msgTimer));
     <div class="tpl-card-title">{{ t('dash.createFromTemplate') }}</div>
     <div v-if="templates.length === 0" class="tpl-empty">{{ t('dash.saveTemplateFirst') }}</div>
     <template v-else>
-      <div class="tpl-label">{{ t('dash.template') }}</div>
-      <select id="tpl-select" v-model="tplSelect" class="tpl-select">
-        <option value="">{{ t('dash.selectTemplate') }}</option>
-        <option v-for="tpl in templates" :key="tpl" :value="tpl">{{ tpl }}</option>
-      </select>
+      <div class="tpl-label" id="tpl-select-label">{{ t('dash.template') }}</div>
+      <div style="margin-bottom:0.5rem">
+        <SelectRoot v-model="tplSelect">
+          <SelectTrigger id="tpl-select" aria-labelledby="tpl-select-label">
+            <span :class="tplSelect ? undefined : 'text-placeholder'">{{ tplSelect || t('dash.selectTemplate') }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="tpl in templates" :key="tpl" :value="tpl">{{ tpl }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
+      </div>
 
       <div class="tpl-label">{{ t('dash.users') }}</div>
       <div id="users-msel" style="margin-bottom:0.5rem">
@@ -190,19 +204,18 @@ onUnmounted(() => window.clearTimeout(msgTimer));
       </div>
 
       <div class="tpl-label">{{ t('dash.dashboardName') }}</div>
-      <input
+      <Input
         id="dash-name"
         v-model="nameValue"
-        class="tpl-input"
         type="text"
         :placeholder="namePlaceholder"
         autocomplete="off"
-      >
+      />
 
       <div class="action-row">
-        <button id="btn-create" class="btn pbgui-action primary" :disabled="creating" @click="create">
+        <Button id="btn-create" variant="info" size="sm" type="button" :disabled="creating" @click="create">
           <PbIcon :icon="PhClipboardText" /> {{ t('dash.createDashboards') }}
-        </button>
+        </Button>
       </div>
       <div id="create-msg" class="msg" :class="msgType">{{ msg }}</div>
     </template>

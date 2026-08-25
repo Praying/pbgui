@@ -18,6 +18,9 @@
  * disabled to-input.
  */
 import { computed } from 'vue';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import {
   PERIODS_TOP,
   parseCustomPeriod,
@@ -30,7 +33,6 @@ import {
 import { dashT } from '../../lib/i18n';
 import {
   dtCtrlDateClass,
-  dtCtrlNowCheckboxClass,
   dtCtrlNowWrapClass,
   dtCtrlSelClass,
   dtMetaLblClass,
@@ -46,8 +48,10 @@ const emit = defineEmits<{ 'update:period': [value: string] }>();
 
 const parsed = computed(() => parseCustomPeriod(props.period));
 
-function onSelectChange(e: Event): void {
-  emit('update:period', periodFromSelect((e.target as HTMLSelectElement).value));
+/* The legacy <select> change event carried the value through
+   e.target.value; the reka listbox delivers it as the update payload. */
+function onPeriodUpdate(value: unknown): void {
+  emit('update:period', periodFromSelect(String(value)));
 }
 
 function onFromChange(e: Event): void {
@@ -58,30 +62,36 @@ function onToChange(e: Event): void {
   emit('update:period', periodWithTo(props.period, (e.target as HTMLInputElement).value));
 }
 
-function onNowChange(e: Event): void {
-  emit('update:period', periodWithNow(props.period, (e.target as HTMLInputElement).checked));
+function onNowUpdate(checked: boolean | 'indeterminate'): void {
+  emit('update:period', periodWithNow(props.period, checked === true));
 }
 </script>
 
 <template>
   <span :class="dtMetaLblClass">{{ dashT('dash.period', 'Period') }}</span>
-  <select :class="dtCtrlSelClass" :value="parsed.displayPeriod" @change="onSelectChange">
-    <option v-for="p in PERIODS_TOP" :key="p" :value="p">{{ p }}</option>
-  </select>
+  <SelectRoot :model-value="parsed.displayPeriod" @update:model-value="onPeriodUpdate">
+    <SelectTrigger :class="dtCtrlSelClass" :aria-label="dashT('dash.period', 'Period')">
+      <span>{{ parsed.displayPeriod }}</span>
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem v-for="p in PERIODS_TOP" :key="p" :value="p">{{ p }}</SelectItem>
+    </SelectContent>
+  </SelectRoot>
   <template v-if="parsed.isCustom">
     <span :class="dtMetaSepClass">·</span>
     <span :class="dtMetaLblClass">{{ dashT('dash.from', 'From') }}</span>
-    <input type="date" :class="dtCtrlDateClass" :value="parsed.from" @change="onFromChange" />
+    <Input type="date" size="sm" :class="dtCtrlDateClass" :model-value="parsed.from" @change="onFromChange" />
     <span :class="dtMetaLblClass">{{ dashT('dash.to', 'To') }}</span>
-    <input
+    <Input
       type="date"
+      size="sm"
       :class="dtCtrlDateClass"
-      :value="parsed.toNow ? todayIso() : parsed.to"
+      :model-value="parsed.toNow ? todayIso() : parsed.to"
       :disabled="parsed.toNow"
       @change="onToChange"
     />
     <label :class="dtCtrlNowWrapClass">
-      <input type="checkbox" :class="dtCtrlNowCheckboxClass" :checked="parsed.toNow" @change="onNowChange" />Now
+      <Checkbox :model-value="parsed.toNow" @update:model-value="onNowUpdate" />Now
     </label>
   </template>
 </template>

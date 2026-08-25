@@ -6,6 +6,9 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
 import BackButton from './BackButton.vue';
 import { pageFetch } from '../lib/pageApi';
 import { injectToasts } from '../composables/useToasts';
@@ -16,7 +19,7 @@ const emit = defineEmits<{ (e: 'back'): void }>();
 const { t } = useI18n();
 const toasts = injectToasts();
 
-const days = ref(7);
+const days = ref<number | string>(7);
 const configured = ref(false);
 
 function applyStatus(data: HlExpiryConfig): void {
@@ -60,10 +63,10 @@ async function save(): Promise<void> {
     </div>
     <div style="display:flex; gap:12px; align-items:flex-end;">
       <div class="form-group flex flex-col gap-1.5">
-        <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.warningThresholdDays') }}</label>
-        <input type="number" id="hlWarningDays" class="min-h-[34px] px-2.5 py-1.5" v-model.number="days" min="1" max="365" style="width:100px;" />
+        <Label for="hlWarningDays">{{ t('misc.apikeys.warningThresholdDays') }}</Label>
+        <Input type="number" id="hlWarningDays" v-model.number="days" min="1" max="365" class="w-[100px]" />
       </div>
-      <button class="btn pbgui-btn btn-sm btn-primary" @click="save">{{ t('common.save') }}</button>
+      <Button type="button" variant="primary" size="sm" @click="save">{{ t('common.save') }}</Button>
     </div>
     <p
       id="hlWarningConfigStatus"

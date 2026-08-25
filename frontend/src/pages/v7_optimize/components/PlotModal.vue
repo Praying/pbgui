@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import type { PlotState } from '../composables/useOptimizeActions';
 
 defineProps<{ plot: PlotState }>();
@@ -79,7 +80,7 @@ onBeforeUnmount(() => {
   <div v-if="plot.open" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
     <section ref="modal" class="opt-modal opt-plot-modal" :class="{ 'is-maximized': maximized }" role="dialog" aria-modal="true">
       <div v-for="direction in ['n', 's', 'w', 'e', 'nw', 'ne', 'sw', 'se']" :key="direction" class="pnr" :class="`pnr-${direction}`" :data-dir="direction" @mousedown="beginResize(direction, $event)"></div>
-      <header data-test="plot-header" class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3" @mousedown="beginDrag"><h2>{{ plot.title }}</h2><div class="whitespace-nowrap! overflow-visible!"><button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="maximized = !maximized">{{ maximized ? t('common.restore') : t('common.maximize') }}</button><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" @click="emit('close')">{{ t('common.close') }}</button></div></header>
+      <header data-test="plot-header" class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3" @mousedown="beginDrag"><h2>{{ plot.title }}</h2><div class="whitespace-nowrap! overflow-visible!"><Button variant="default" size="sm" type="button" @click="maximized = !maximized">{{ maximized ? t('common.restore') : t('common.maximize') }}</Button><Button variant="default" type="button" @click="emit('close')">{{ t('common.close') }}</Button></div></header>
       <div class="min-h-0 flex-1 overflow-hidden p-0">
         <iframe v-if="plot.kind === 'html'" :srcdoc="plot.html" sandbox="allow-scripts allow-same-origin" :title="t('v7optimize.plot3d')"></iframe>
         <iframe v-else-if="plot.kind === 'url'" :src="plot.url" sandbox="allow-scripts allow-same-origin allow-forms" :title="t('v7optimize.pdParetoDash')"></iframe>

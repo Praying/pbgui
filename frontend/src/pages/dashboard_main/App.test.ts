@@ -356,7 +356,7 @@ describe('edit mode', () => {
     await wrapper.find('#new-dash-ok').trigger('click');
 
     expect(wrapper.find('#new-dash-dialog').isVisible()).toBe(true);
-    expect(wrapper.find('.dlg-err').text()).toBe('A dashboard with this name already exists.');
+    expect(wrapper.find('#new-dash-dialog [role="alert"]').text()).toBe('A dashboard with this name already exists.');
     expect(frameSrc(wrapper)).toBe('');
   });
 });

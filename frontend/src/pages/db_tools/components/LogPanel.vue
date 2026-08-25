@@ -7,6 +7,7 @@
  */
 import { onBeforeUnmount, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { getBoot } from '@/shared/boot';
 import { wsBase } from '../config';
 
@@ -191,7 +192,7 @@ function onResizeMousedown(event: MouseEvent, dir: string): void {
     <div class="lp-resize lp-resize-se" data-dir="se" @mousedown="onResizeMousedown($event, 'se')"></div>
     <div ref="header" id="dbtools-log-panel-header" class="flex shrink-0 cursor-move select-none items-center justify-between gap-2 border-b border-border-subtle bg-card px-3 py-2" @mousedown="onHeaderMousedown">
       <span id="dbtools-log-panel-title" class="truncate text-sm font-extrabold">{{ title || t('misc.dbtools.dbToolsLog') }}</span>
-      <button id="dbtools-log-panel-close" class="cursor-pointer border-none bg-none text-lg leading-none text-secondary hover:text-primary" :title="t('common.close')" @click="emit('close')">✕</button>
+      <Button id="dbtools-log-panel-close" type="button" variant="ghost" class="h-auto border-0 bg-transparent px-1 py-0 text-lg font-normal leading-none text-secondary hover:bg-transparent hover:text-primary" :title="t('common.close')" @click="emit('close')">✕</Button>
     </div>
     <div id="dbtools-log-viewer-target" class="min-h-0 flex-1 overflow-hidden p-2"></div>
   </div>

@@ -6,6 +6,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Textarea } from '@/shared/components/ui/textarea';
 import ExpanderGroup from './ExpanderGroup.vue';
 import FieldCheck from './FieldCheck.vue';
 import FieldNumber from './FieldNumber.vue';
@@ -267,7 +268,10 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
         <FieldText id="f-custom-endpoints-path" v-show="page.fieldVisible('custom_endpoints_path')" v-model="state.customEndpointsPath" label="custom_endpoints_path" tip="Optional path to a PB8 custom-endpoints definition. Leave blank to use built-in endpoints." placeholder="default" style="grid-column: span 2" />
         <div class="form-group" v-show="page.fieldVisible('startup_phase_budgets')" style="grid-column: span 4">
           <label><span data-tip="Expert diagnostic reporting thresholds only; these values do not gate startup or trading. Use canonical phase names with elapsed_ms and/or since_previous_ms non-negative integer values. An empty object uses runtime defaults.">startup_phase_budgets (Expert/Diagnostic)</span></label>
-          <textarea id="f-startup-phase-budgets" v-model="state.startupPhaseBudgets" class="json-editor" rows="4"></textarea>
+          <!-- ui-migration: Textarea + the legacy json-editor class — the
+               un-layered page rules still own the geometry (shared with
+               CoinOverridesPanel's .json-editor textareas). -->
+          <Textarea id="f-startup-phase-budgets" v-model="state.startupPhaseBudgets" class="json-editor" rows="4" />
           <div id="f-startup-phase-budgets-status" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
         </div>
       </div>
@@ -285,7 +289,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
         </div>
         <div class="form-group" v-show="page.fieldVisible('live_event_debug_profiles')" style="grid-column: span 3">
           <label><span data-tip="PB8 live-event debug profiles as a JSON array.">logging.live_event_debug_profiles</span></label>
-          <textarea id="f-log-debug-profiles" v-model="state.logDebugProfiles" class="json-editor" rows="4"></textarea>
+          <Textarea id="f-log-debug-profiles" v-model="state.logDebugProfiles" class="json-editor" rows="4" />
           <div id="f-log-debug-profiles-status" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
         </div>
       </div>

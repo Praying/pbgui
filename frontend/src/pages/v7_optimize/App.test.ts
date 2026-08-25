@@ -24,7 +24,7 @@ describe('v7_optimize App', () => {
     expect(wrapper.find('div.workbench-page-content').exists()).toBe(true);
     expect(wrapper.find('.page-toolbar').exists()).toBe(true); /* in-page sidebar retired: nav converged to the rail */
     expect(wrapper.text()).toContain('Configs');
-    await wrapper.find('button.sb-btn.primary').trigger('click');
+    await wrapper.find('[data-test="new-config"]').trigger('click');
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
   });
@@ -33,7 +33,7 @@ describe('v7_optimize App', () => {
     const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
     await flushPromises();
 
-    const actionButtons = () => wrapper.findAll('button.sb-btn');
+    const actionButtons = () => wrapper.findAll('.page-toolbar [data-slot="button"]');
     const actionTexts = () => actionButtons().map((button) => button.text());
     expect(actionTexts()).toEqual([
       'New Config',
@@ -92,11 +92,11 @@ describe('v7_optimize App', () => {
   it('renders the OHLCV readiness icon once in editor actions', async () => {
     const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
     await flushPromises();
-    await wrapper.find('button.sb-btn.primary').trigger('click');
+    await wrapper.find('[data-test="new-config"]').trigger('click');
     await flushPromises();
 
-    expect(wrapper.findAll('button.sb-btn').at(-1)?.text()).toBe('OHLCV Readiness');
-    expect(wrapper.findAll('button.sb-btn').at(-1)?.find('svg').exists()).toBe(true);
+    expect(wrapper.findAll('.page-toolbar [data-slot="button"]').at(-1)?.text()).toBe('OHLCV Readiness');
+    expect(wrapper.findAll('.page-toolbar [data-slot="button"]').at(-1)?.find('svg').exists()).toBe(true);
   });
 
   it('keeps the PB8 workbench visible with an update warning when runtime metadata is unavailable', async () => {
@@ -143,7 +143,7 @@ describe('v7_optimize App', () => {
   it('closes the active editor when Escape is pressed', async () => {
     const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
     await flushPromises();
-    await wrapper.find('button.sb-btn.primary').trigger('click');
+    await wrapper.find('[data-test="new-config"]').trigger('click');
     await flushPromises();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));

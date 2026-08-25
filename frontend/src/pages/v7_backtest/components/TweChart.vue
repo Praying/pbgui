@@ -7,6 +7,8 @@
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import PlotlyDiv from './PlotlyDiv.vue';
 import { chartTitle, tweLayout, tweTraces } from '../lib/resultCharts';
 import type { BacktestResultItem, ParsedCsv } from '../types';
@@ -55,11 +57,16 @@ function toggleCoins(): void {
       <label style="font-size: var(--fs-sm); color: var(--text-dim)" title="Small resolutions with many symbols generate a lot of data and can take a long time to render">
         Resolution (min) <span style="cursor: help; opacity: 0.6">(i)</span>:
       </label>
-      <select v-model.number="resolution" class="sb-input" style="max-width: 100px" data-test="twe-res">
-        <option v-for="value in RESOLUTIONS" :key="value" :value="value">{{ value }}</option>
-      </select>
+      <SelectRoot v-model="resolution">
+        <SelectTrigger class="w-auto max-w-[100px]" data-test="twe-res" aria-label="Resolution (min)">
+          <span>{{ resolution }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="value in RESOLUTIONS" :key="value" :value="value">{{ value }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
       <label class="sb-toggle" title="Show all per-coin traces (double-click a legend entry to isolate one coin)">
-        <input v-model="showCoins" type="checkbox" data-test="twe-showcoins" @change="toggleCoins" />
+        <Checkbox v-model="showCoins" data-test="twe-showcoins" @update:model-value="toggleCoins" />
         <span style="font-size: var(--fs-sm)">Show coins</span>
       </label>
     </div>

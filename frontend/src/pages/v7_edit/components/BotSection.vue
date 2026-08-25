@@ -9,6 +9,14 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Textarea } from '@/shared/components/ui/textarea';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import FieldNumber from './FieldNumber.vue';
 import { useEditPageContext } from '../composables/useEditPage';
 import { botHighlightLines } from '@/shared/botHighlight';
@@ -83,10 +91,15 @@ function reveal(side: 'long' | 'short'): void {
     <header class="flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2">
       <h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.botConfiguration') }}</h3>
       <div class="form-group ml-auto w-[min(280px,45%)] max-[700px]:ml-0 max-[700px]:w-full" v-show="page.fieldVisible('strategyKind')">
-        <label><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
-        <select id="f-strategy-kind" v-model="state.strategyKind" @change="page.changeStrategyKind(state.strategyKind)">
-          <option v-for="kind in strategyOptions" :key="kind.value" :value="kind.value">{{ kind.value }}</option>
-        </select>
+        <label id="f-strategy-kind-label"><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
+        <SelectRoot v-model="state.strategyKind" @update:model-value="page.changeStrategyKind(state.strategyKind)">
+          <SelectTrigger id="f-strategy-kind" aria-labelledby="f-strategy-kind-label">
+            <span>{{ state.strategyKind }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="kind in strategyOptions" :key="kind.value" :value="kind.value">{{ kind.value }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
       </div>
     </header>
     <div class="edit-section-body p-5">
@@ -107,20 +120,24 @@ function reveal(side: 'long' | 'short'): void {
           :class="botLineClass(line)"
         >{{ line.text }}
 </span></pre>
-        <textarea
+        <!-- ui-migration: Textarea + the legacy json-editor class — the
+             page-global un-layered rules (.json-editor/.form-group textarea)
+             still own the geometry (the shared CoinOverridesPanel renders the
+             same classes), and the highlight overlay aligns to that cascade. -->
+        <Textarea
           id="f-long-json"
           v-model="state.longJson"
           class="json-editor relative z-[1] block w-full min-w-0"
           :class="{ 'json-invalid': !!longError }"
           rows="24"
           @blur="onBotBlur('long')"
-        ></textarea>
+        />
       </div>
       <div v-if="longError" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
         <div class="font-semibold">{{ sideSummary('long') }}</div>
         <div v-if="longError.message" class="mt-0.5 text-danger-soft">{{ longError.message }}</div>
         <div v-if="longError.line != null" class="mt-2">
-          <button type="button" class="h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-0 text-sm text-danger-soft [transition:background-color_150ms,transform_100ms] hover:bg-white/8 active:translate-y-px" @click="reveal('long')">{{ t('v7run.revealLineInEditor') }}</button>
+          <Button type="button" variant="danger" size="sm" @click="reveal('long')">{{ t('v7run.revealLineInEditor') }}</Button>
         </div>
       </div>
     </div>
@@ -134,20 +151,20 @@ function reveal(side: 'long' | 'short'): void {
           :class="botLineClass(line)"
         >{{ line.text }}
 </span></pre>
-        <textarea
+        <Textarea
           id="f-short-json"
           v-model="state.shortJson"
           class="json-editor relative z-[1] block w-full min-w-0"
           :class="{ 'json-invalid': !!shortError }"
           rows="24"
           @blur="onBotBlur('short')"
-        ></textarea>
+        />
       </div>
       <div v-if="shortError" class="mt-1 block rounded-sm border border-danger/35 bg-danger-deep/35 px-2.5 py-1.5 text-sm leading-[1.35] text-danger" aria-live="polite">
         <div class="font-semibold">{{ sideSummary('short') }}</div>
         <div v-if="shortError.message" class="mt-0.5 text-danger-soft">{{ shortError.message }}</div>
         <div v-if="shortError.line != null" class="mt-2">
-          <button type="button" class="h-[26px] cursor-pointer rounded-sm border border-danger/45 bg-white/4 px-2.5 py-0 text-sm text-danger-soft [transition:background-color_150ms,transform_100ms] hover:bg-white/8 active:translate-y-px" @click="reveal('short')">{{ t('v7run.revealLineInEditor') }}</button>
+          <Button type="button" variant="danger" size="sm" @click="reveal('short')">{{ t('v7run.revealLineInEditor') }}</Button>
         </div>
       </div>
     </div>

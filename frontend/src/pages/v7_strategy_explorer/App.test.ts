@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
 
 /*
@@ -129,11 +130,13 @@ describe('Strategy Explorer page shell (v8 flavour)', () => {
     expect(document.title).toBe('PBGui - PB8 Strategy Explorer');
     expect(wrapper.get('#strategy-explorer-title').text()).toBe('PB8 Strategy Explorer');
     // ohlcv select reduced to the PB8 native candles option (:516)
-    const sources = wrapper.findAll('#ohlcv-source-select option');
-    expect(sources.map((o) => o.text())).toEqual(['PB8 native candles']);
+    await openSelect(wrapper, '#ohlcv-source-select');
+    expect(selectOptionTexts()).toEqual(['PB8 native candles']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
     // movie engine reduced to pb8_engine (:527)
-    const engines = wrapper.findAll('#movie-engine-select option');
-    expect(engines.map((o) => o.attributes('value'))).toEqual(['pb8_engine']);
+    await openSelect(wrapper, '#movie-engine-select');
+    expect(selectOptionTexts()).toEqual(['PB8 Native Replay']);
     // compare folder read-only, secondary mode hidden (:519-525)
     expect(wrapper.get('#compare-pb7-folder').attributes('readonly')).toBeDefined();
     expect(wrapper.find('#compare-mode-secondary').isVisible()).toBe(false);

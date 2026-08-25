@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption } from '@/shared/testing/select';
 import TradfiPanel from './TradfiPanel.vue';
 import { TOASTS_KEY, useToasts } from '../composables/useToasts';
 import { useTradfi } from '../composables/useTradfi';
@@ -96,17 +97,18 @@ describe('TradfiPanel', () => {
     await wrapper.findAll('#tradfiProfilesBody tr[data-profile-id]')[1]!.trigger('click');
     await flushPromises();
     expect((wrapper.find('#tradfiProfileId').element as HTMLInputElement).value).toBe('p2');
-    expect((wrapper.find('#tradfiProvider').element as HTMLSelectElement).value).toBe('polygon');
+    // reka listbox: the closed-state trigger renders the model value as text
+    expect(wrapper.find('#tradfiProvider').text()).toBe('polygon');
     expect((wrapper.find('#tradfiLabel').element as HTMLInputElement).value).toBe('backup');
     expect(wrapper.find('#tradfiProviderNote').text()).toContain('Polygon: 2y free');
     // provider link hidden for polygon (no link registered)
     expect(wrapper.find('#tradfiProviderLink').isVisible()).toBe(false);
 
-    await wrapper.find('#tradfiProvider').setValue('alpaca');
+    await pickSelectOption(wrapper, '#tradfiProvider', 'alpaca');
     expect(wrapper.find('#tradfiProviderLink').attributes('href')).toBe('https://app.alpaca.markets/x');
     expect((wrapper.find('#tradfiApiSecret').element as HTMLInputElement).disabled).toBe(false);
 
-    await wrapper.find('#tradfiProvider').setValue('polygon');
+    await pickSelectOption(wrapper, '#tradfiProvider', 'polygon');
     expect((wrapper.find('#tradfiApiSecret').element as HTMLInputElement).disabled).toBe(true);
     expect((wrapper.find('#tradfiApiSecret').element as HTMLInputElement).placeholder).toBe('not required');
   });
@@ -161,7 +163,7 @@ describe('TradfiPanel', () => {
     await flushPromises();
 
     await wrapper.findAll('#tradfiProfilesBody tr[data-profile-id]')[1]!.trigger('click'); // p2 has no key
-    const save = wrapper.findAll('#tradfiActions .btn-primary')[0]!;
+    const save = wrapper.find('#btnTradfiSave');
     await save.trigger('click');
     await flushPromises();
 

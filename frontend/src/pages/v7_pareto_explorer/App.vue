@@ -59,6 +59,11 @@ import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Slider } from '@/shared/components/ui/slider';
 import CommandCenter from './components/CommandCenter.vue';
 import ConfigDetail from './components/ConfigDetail.vue';
 import Playground from './components/Playground.vue';
@@ -309,9 +314,11 @@ const rangeSummary = computed(() => {
     // legacy default string (v7_pareto_explorer.html:1156, no i18n key)
     : 'Scan all_results to select candidates and enable visible-range filtering.';
 });
-const rangeSliderStyle = computed(() => ({
-  '--range-load-fill': String(store.progress.displayRange.loading ? store.progress.displayRange.display : store.progress.displayRangePercent(pendingRange.value?.end ?? 0, rangeTotal.value)) + '%',
-}));
+/** Single-value Slider adapter for the display-range end thumb (number[] → number). */
+const pendingRangeEnd = computed<number>({
+  get: () => pendingRange.value?.end ?? 0,
+  set: (value) => updatePendingRange({ start: pendingRange.value?.start ?? 0, end: value }),
+});
 
 function updatePendingRange(next: { start: number; end: number }): void {
   const normalized = normalizeViewRange({ ...next, max: rangeTotal.value }, rangeTotal.value, true);
@@ -401,31 +408,31 @@ onBeforeUnmount(() => {
     <!-- Stage nav lives in the workbench rail; this strip carries only the
          session actions (legacy ctx-actions :767-777). -->
     <div class="page-toolbar" role="toolbar">
-      <button class="sb-btn" id="btn-back-optimize" @click="goBackToOptimize">
+      <Button type="button" id="btn-back-optimize" @click="goBackToOptimize">
         <span>{{ t('v7explore.backToOptimize') }}</span>
-      </button>
-      <button class="sb-btn" id="btn-run-backtest" @click="requireSelectedConfig">
+      </Button>
+      <Button type="button" id="btn-run-backtest" @click="requireSelectedConfig">
         <span>{{ t('v7explore.runBacktest') }}</span>
-      </button>
-      <button
+      </Button>
+      <Button
         v-show="store.isV8.value"
-        class="sb-btn"
+        type="button"
         id="btn-pin-strategy-baseline"
         :disabled="!store.isV8.value"
         @click="requireSelectedConfig"
       >
         {{ t('v7explore.pinExplorerBaseline') }}
-      </button>
-      <button class="sb-btn" id="btn-open-strategy-explorer" @click="requireSelectedConfig">
+      </Button>
+      <Button type="button" id="btn-open-strategy-explorer" @click="requireSelectedConfig">
         <span>{{ t('v7explore.strategyExplorer') }}</span>
-      </button>
-      <button class="sb-btn" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
+      </Button>
+      <Button type="button" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
         <PbIcon v-if="!store.state.fullLoadPending" :icon="PhFolderOpen" />
         {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : 'Scan all_results' }}
-      </button>
-      <button v-show="store.state.allResultsLoaded" class="sb-btn" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
+      </Button>
+      <Button v-show="store.state.allResultsLoaded" type="button" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
         <span>{{ t('v7explore.showPassivbotParetos') }}</span>
-      </button>
+      </Button>
     </div>
 
       <section class="page-title sr-only flex items-start justify-between gap-5">
@@ -454,37 +461,36 @@ onBeforeUnmount(() => {
           <span id="display-range-total-chip" class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ t('v7explore.selectedCount', { total: rangeTotal }) }}</span>
         </div>
         <div class="range-controls grid grid-cols-[minmax(0,1fr)_88px_88px_auto] items-center gap-2.5 max-[900px]:grid-cols-1">
-          <input
+          <!-- ui/Slider owns the track/thumb chrome now; the legacy gradient
+               fill (--range-load-fill, .range-loading green flash) has no
+               component equivalent and went with the vendor pseudo rules. -->
+          <Slider
             id="display-range-end"
-            class="range-slider w-full"
-            :class="{ 'range-loading': store.progress.displayRange.loading }"
-            type="range"
-            min="0"
+            v-model="pendingRangeEnd"
+            :label="t('v7explore.displayRange')"
+            :min="0"
             :max="rangeTotal"
-            step="10"
-            :value="pendingRange?.end ?? 0"
-            :style="rangeSliderStyle"
-            @input="updatePendingRange({ start: pendingRange?.start ?? 0, end: Number(($event.target as HTMLInputElement).value) || 0 })"
-            @change="applyDisplayRange()"
+            :step="10"
+            @value-commit="applyDisplayRange()"
           />
-          <input
+          <Input
             id="display-range-start-input"
-            class="range-number min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary"
+            class="range-number"
             type="number"
-            min="0"
+            :min="0"
             :max="rangeTotal"
-            step="10"
-            :value="pendingRange?.start ?? 0"
+            :step="10"
+            :model-value="pendingRange?.start ?? 0"
             @change="updatePendingRange({ start: Number(($event.target as HTMLInputElement).value) || 0, end: pendingRange?.end ?? 0 }); applyDisplayRange()"
           />
-          <input
+          <Input
             id="display-range-end-input"
-            class="range-number min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary"
+            class="range-number"
             type="number"
-            min="0"
+            :min="0"
             :max="rangeTotal"
-            step="10"
-            :value="pendingRange?.end ?? 0"
+            :step="10"
+            :model-value="pendingRange?.end ?? 0"
             @change="updatePendingRange({ start: pendingRange?.start ?? 0, end: Number(($event.target as HTMLInputElement).value) || 0 }); applyDisplayRange()"
           />
         </div>
@@ -524,15 +530,17 @@ onBeforeUnmount(() => {
             <h3 class="mb-2">{{ t('v7explore.loadControl') }}</h3>
             <div class="form-grid grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3" style="margin-top: 12px">
               <div class="form-field wide col-span-8 flex flex-col gap-1.5 max-[900px]:col-span-12">
-                <label for="result-path-input" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.resultPath') }}</label>
-                <input id="result-path-input" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" v-model="store.state.resultPathInput" type="text" placeholder="/path/to/optimize/result" />
+                <Label for="result-path-input">{{ t('v7explore.resultPath') }}</Label>
+                <Input id="result-path-input" v-model="store.state.resultPathInput" type="text" placeholder="/path/to/optimize/result" />
               </div>
               <div class="form-field col-span-4 flex flex-col gap-1.5 max-[900px]:col-span-12">
-                <label for="max-configs-input" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.maxConfigs') }}</label>
-                <input id="max-configs-input" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" v-model.number="store.state.maxConfigs" type="number" min="100" max="10000" step="100" />
+                <Label for="max-configs-input">{{ t('v7explore.maxConfigs') }}</Label>
+                <Input id="max-configs-input" v-model.number="store.state.maxConfigs" type="number" min="100" max="10000" step="100" />
               </div>
               <div class="form-field wide col-span-8 flex flex-col gap-1.5 max-[900px]:col-span-12">
-                <label for="load-strategy-select" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.candidateSelection') }}</label>
+                <Label for="load-strategy-select">{{ t('v7explore.candidateSelection') }}</Label>
+                <!-- ui-migration: blocked — ui/select (reka listbox) is
+                     single-value; it cannot express multiple + size="7". -->
                 <select id="load-strategy-select" class="min-h-8 rounded-lg border border-border-default bg-elevated px-2.5 py-1.5 text-primary focus:border-accent focus:outline-none" v-model="store.state.loadStrategy" multiple size="7">
                   <option v-for="option in LOAD_STRATEGY_OPTIONS" :key="option" :value="option">{{ option }}</option>
                 </select>
@@ -540,15 +548,15 @@ onBeforeUnmount(() => {
               <div class="form-field col-span-4 flex flex-col gap-1.5 max-[900px]:col-span-12">
                 <label class="text-xs text-secondary uppercase tracking-[0.05em]">&nbsp;</label>
                 <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
-                  <input id="persist-defaults-toggle" class="h-4 w-4" v-model="store.state.persistDefaults" type="checkbox" />
-                  <label for="persist-defaults-toggle" class="text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.persistDefaults') }}</label>
+                  <Checkbox id="persist-defaults-toggle" v-model="store.state.persistDefaults" />
+                  <label for="persist-defaults-toggle" class="text-xs text-secondary uppercase tracking-[0.05em] cursor-pointer">{{ t('v7explore.persistDefaults') }}</label>
                 </div>
               </div>
               <div class="form-field full col-span-12 flex flex-col gap-1.5">
                 <div class="button-row flex flex-wrap gap-2">
-                  <button class="h-8 cursor-pointer rounded-lg border border-accent bg-accent px-3 py-0 text-[#f2f5fb] transition-all duration-150" id="btn-command-load" @click="commandLoad">
+                  <Button variant="primary" type="button" id="btn-command-load" @click="commandLoad">
                     {{ t('v7explore.loadResultContext') }}
-                  </button>
+                  </Button>
                 </div>
               </div>
               <div class="form-field full col-span-12 flex flex-col gap-1.5">
@@ -579,6 +587,9 @@ onBeforeUnmount(() => {
       <section v-show="store.state.stage === 'deep_intelligence'" id="stage-deep-intelligence" class="stage-view flex flex-col gap-3">
         <div class="panel-card rounded-xl border border-border-default bg-panel p-3.5">
           <div class="deep-tabs flex flex-wrap gap-2">
+            <!-- ui-migration: out of scope — stage tab switcher (tabs are
+                 excluded from the control migration; .deep-tab-btn/.active
+                 anchors stay). -->
             <button
               v-for="tab in VALID_DEEP_TABS"
               :key="tab"
@@ -608,15 +619,12 @@ onBeforeUnmount(() => {
    - html/body are root rules (un-scopable);
    - [data-tip] is an attribute selector spanning every component that emits
      data-tip attributes (ConfigDetail metric names, later M-v7-7 panels);
-   - the range-slider rules style vendor pseudo-elements and drive their
-     gradient from the --range-* custom properties set inline;
-   - .range-loading flips the loaded-track colour while a range load is
-     in flight (the class is also the JS hook for the CSS variable swap);
    - the fullscreen rules target ScatterChart's child element from the
      .chart-wrap wrapper (a cross-component descendant relation).
-   'range-slider', 'chart-wrap', 'small-chart' and 'placeholder-chart'
-   remain as anchors for these rules and the useChartState/resizeCharts
-   classList checks. */
+   The range-slider vendor pseudo-element rules left with the migration to
+   ui/Slider (the green range-loading flash has no component equivalent).
+   'chart-wrap', 'small-chart' and 'placeholder-chart' remain as anchors for
+   these rules and the useChartState/resizeCharts classList checks. */
 html,
 body {
   overflow: hidden;
@@ -633,65 +641,6 @@ body {
 
 button[data-tip] {
   text-decoration: none;
-}
-
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  --range-fill: 50%;
-  --range-load-fill: var(--range-fill);
-  --range-loaded-color: var(--accent);
-  --range-active-color: var(--accent);
-  width: 100%;
-  height: 18px;
-  background: transparent;
-  cursor: pointer;
-}
-
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 8px;
-  background: linear-gradient(to right, var(--range-loaded-color) 0%, var(--range-loaded-color) var(--range-load-fill, var(--range-fill, 50%)), var(--range-active-color) var(--range-load-fill, var(--range-fill, 50%)), var(--range-active-color) var(--range-fill, 50%), rgba(255,255,255,0.22) var(--range-fill, 50%), rgba(255,255,255,0.22) 100%);
-  border-radius: 999px;
-}
-
-.range-slider.range-loading {
-  --range-loaded-color: var(--success);
-  --range-active-color: var(--accent);
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 0;
-  margin-top: -5px;
-  box-shadow: 0 0 0 2px rgb(var(--bg-page-rgb) / 0.9);
-}
-
-input[type="range"]::-moz-range-track {
-  height: 8px;
-  background: rgba(255,255,255,0.22);
-  border-radius: 999px;
-  border: 0;
-}
-
-input[type="range"]::-moz-range-progress {
-  height: 8px;
-  background: var(--range-loaded-color);
-  border-radius: 999px;
-  border: 0;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 0;
-  box-shadow: 0 0 0 2px rgb(var(--bg-page-rgb) / 0.9);
 }
 
 .chart-wrap:fullscreen {

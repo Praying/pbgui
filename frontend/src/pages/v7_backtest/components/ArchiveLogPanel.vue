@@ -8,6 +8,7 @@
 import { PhClipboardText, PhX } from '@phosphor-icons/vue';
 import { onBeforeUnmount, ref, watch } from 'vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 
 interface LogViewer {
   open(): void;
@@ -78,7 +79,7 @@ defineExpose({ open: openPanel });
   >
     <div id="log-panel-header" class="flex shrink-0 items-center justify-between border-b border-border-default bg-elevated px-3 py-2">
       <span id="log-panel-title" class="text-sm font-semibold"><PbIcon :icon="PhClipboardText" /> {{ title }}</span>
-      <button id="log-panel-close" class="cursor-pointer border-0 bg-transparent text-lg text-secondary hover:text-primary" title="Close" aria-label="Close" @click="open = false"><PbIcon :icon="PhX" :size="18" /></button>
+      <Button id="log-panel-close" type="button" variant="ghost" class="h-auto border-0 px-1 py-0 text-lg text-secondary hover:bg-transparent hover:text-primary" title="Close" aria-label="Close" @click="open = false"><PbIcon :icon="PhX" :size="18" /></Button>
     </div>
     <div id="log-viewer-target" style="flex: 1; min-height: 0; overflow: hidden"></div>
   </div>

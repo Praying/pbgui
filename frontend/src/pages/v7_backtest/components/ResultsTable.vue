@@ -12,6 +12,8 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import { useRowDragSelect } from '../composables/useRowDragSelect';
 import type { BacktestResultItem, ResultActionKind, SortSpec } from '../types';
 
@@ -144,12 +146,11 @@ onBeforeUnmount(() => dragSelect.dispose());
       <thead>
         <tr>
           <th class="check-col" style="text-align: center">
-            <input
-              type="checkbox"
-              :checked="allSelected"
+            <Checkbox
+              :model-value="allSelected"
               :aria-label="t('v7backtest.selectAll')"
               data-test="results-select-all-check"
-              @change="toggleAll"
+              @update:model-value="toggleAll"
             />
           </th>
           <th
@@ -178,11 +179,10 @@ onBeforeUnmount(() => dragSelect.dispose());
           @click="emit('toggle-select', row.path)"
         >
           <td class="check-col" @click.stop>
-            <input
-              type="checkbox"
-              :checked="selected.has(row.path)"
+            <Checkbox
+              :model-value="selected.has(row.path)"
               :aria-label="row.path"
-              @change="emit('toggle-select', row.path)"
+              @update:model-value="emit('toggle-select', row.path)"
             />
           </td>
           <td v-if="showVersion">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
@@ -203,11 +203,12 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td>{{ fmt(row.twe_long, 2) }} / {{ fmt(row.twe_short, 2) }}</td>
           <td>{{ fmt(row.pos_long, 0) }} / {{ fmt(row.pos_short, 0) }}</td>
           <td class="actions-cell" @click.stop>
-            <button
+            <Button
               v-for="action in ACTION_BUTTONS"
               :key="action.kind"
               type="button"
-              class="icon-btn"
+              variant="ghost"
+              class="icon-btn h-auto border-0 p-0.5"
               :class="{ active: activeActions[row.path]?.has(action.kind) }"
               :data-action="action.kind"
               :data-path="row.path"
@@ -216,18 +217,19 @@ onBeforeUnmount(() => dragSelect.dispose());
               @click="emit('toggle-action', row.path, action.kind)"
             >
               <PbIcon :icon="action.icon" :size="18" />
-            </button>
-            <button
+            </Button>
+            <Button
               v-if="allowV8Convert && row.backtest_version === 'v7'"
               type="button"
-              class="icon-btn"
+              variant="ghost"
+              class="icon-btn h-auto border-0 p-0.5"
               data-action="convert"
               :data-path="row.path"
               :title="t('v7backtest.convertResultToV8')"
               @click="emit('convert', row.path)"
             >
               V8
-            </button>
+            </Button>
           </td>
         </tr>
       </tbody>

@@ -52,15 +52,15 @@ describe('NewDashboardDialog', () => {
 
     await wrapper.setProps({ visible: true });
     await wrapper.find('#new-dash-ok').trigger('click'); // empty name → error state
-    expect(wrapper.find('.dlg-err').isVisible()).toBe(true);
-    expect(nameInput(wrapper).classes()).toContain('err');
+    expect(wrapper.find('[role="alert"]').isVisible()).toBe(true);
+    expect(nameInput(wrapper).attributes('aria-invalid')).toBe('true');
 
     await wrapper.setProps({ visible: false });
     await wrapper.setProps({ visible: true });
 
     expect((nameInput(wrapper).element as HTMLInputElement).value).toBe('');
-    expect(wrapper.find('.dlg-err').isVisible()).toBe(false);
-    expect(nameInput(wrapper).classes()).not.toContain('err');
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false);
+    expect(nameInput(wrapper).attributes('aria-invalid')).toBeUndefined();
   });
 
   it('focuses the name input 50ms after opening (legacy setTimeout focus)', async () => {
@@ -81,9 +81,10 @@ describe('NewDashboardDialog', () => {
 
     await wrapper.find('#new-dash-ok').trigger('click');
 
-    expect(wrapper.find('.dlg-err').isVisible()).toBe(true);
-    expect(wrapper.find('.dlg-err').text()).toBe('Please enter a name.');
-    expect(nameInput(wrapper).classes()).toContain('err');
+    const alert = wrapper.find('[role="alert"]');
+    expect(alert.isVisible()).toBe(true);
+    expect(alert.text()).toBe('Please enter a name.');
+    expect(nameInput(wrapper).attributes('aria-invalid')).toBe('true');
     expect(wrapper.emitted('create')).toBeUndefined();
   });
 
@@ -93,7 +94,7 @@ describe('NewDashboardDialog', () => {
     await nameInput(wrapper).setValue('Taken');
     await wrapper.find('#new-dash-ok').trigger('click');
 
-    expect(wrapper.find('.dlg-err').text()).toBe('A dashboard with this name already exists.');
+    expect(wrapper.find('[role="alert"]').text()).toBe('A dashboard with this name already exists.');
     expect(wrapper.emitted('create')).toBeUndefined();
   });
 

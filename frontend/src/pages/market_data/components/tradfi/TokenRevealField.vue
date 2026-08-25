@@ -7,7 +7,8 @@
 import { useI18n } from 'vue-i18n';
 import { PhEye, PhEyeSlash } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
-import { inputPwClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import type { UseTiingo } from '../../composables/useTiingo';
 
 defineProps<{
@@ -24,9 +25,9 @@ const pwEyeBtnClass =
 
 <template>
   <div :class="pwWrapClass">
-    <input
+    <Input
       id="settings-tiingo-token"
-      :class="inputPwClass"
+      class="pr-9"
       v-model="tiingo.tokenValue.value"
       :type="tiingo.visible.value ? 'text' : 'password'"
       autocomplete="new-password"
@@ -34,14 +35,16 @@ const pwEyeBtnClass =
       spellcheck="false"
       :placeholder="tiingo.configured.value ? t('market.storedInVault') : t('market.enterTiingoToken')"
       :disabled="tiingo.inputDisabled.value"
-    >
-    <button
+    />
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       :class="pwEyeBtnClass"
       :aria-label="t('market.showHideTiingoToken')"
       :title="t('market.showHideTiingoToken')"
       :disabled="tiingo.revealLoading.value"
       @click="tiingo.toggleVisible()"
-    ><PbIcon :icon="tiingo.visible.value ? PhEyeSlash : PhEye" /></button>
+    ><PbIcon :icon="tiingo.visible.value ? PhEyeSlash : PhEye" /></Button>
   </div>
 </template>

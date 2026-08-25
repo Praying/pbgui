@@ -11,6 +11,7 @@ import { onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
+import { Button } from '@/shared/components/ui/button';
 import { dialogsConfirm } from './lib/dialogs';
 import { proposalActionLabel } from './lib/proposal';
 import { useAiChat } from './composables/useAiChat';
@@ -179,12 +180,13 @@ function onQuickReply(actionId: string, value: string): void {
             <span v-if="store.notice.value.working" class="inline-block h-2 w-2 animate-spin rounded-full border-2 border-border-default border-t-accent"></span>
             {{ store.notice.value.message }}
           </div>
-          <button
+          <Button
             v-if="store.conversationLastError.value && store.retryMessage.value && !store.busy.value"
             type="button"
-            class="h-7 cursor-pointer rounded-md border border-[rgba(248,113,113,.35)] bg-transparent px-2 text-xs text-[#fecaca] transition-colors hover:border-danger"
+            variant="danger"
+            size="sm"
             @click="store.sendMessage(store.retryMessage.value)"
-          >{{ t('ai.chat.retry') }}</button>
+          >{{ t('ai.chat.retry') }}</Button>
         </div>
 
         <Composer

@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption } from '@/shared/testing/select';
 import App from './App.vue';
 
 const apiFetchMock = vi.fn();
@@ -356,7 +357,8 @@ describe('VPS Manager legacy parity', () => {
     await wrapper.get('[data-field="existing-import-hostname"]').setValue('legacy');
     await wrapper.get('[data-action="resolve-existing-import"]').trigger('click');
     await flushPromises();
-    expect(wrapper.get('[data-field="existing-import-ip"]').attributes('value')).toBe('203.0.113.30');
+    // ui/ Input is v-model-driven (value lives on the property, not the attribute)
+    expect((wrapper.get('[data-field="existing-import-ip"]').element as HTMLInputElement).value).toBe('203.0.113.30');
     await wrapper.get('[data-action="probe-existing-import"]').trigger('click');
     await flushPromises();
     expect(apiFetchMock).toHaveBeenCalledWith(expect.stringContaining('/import/probe'), expect.objectContaining({ method: 'POST' }));
@@ -378,7 +380,7 @@ describe('VPS Manager legacy parity', () => {
     ws.message({ type: 'state', data: state });
     await wrapper.vm.$nextTick();
     await wrapper.get('[data-testid="rail-section-deploys-vps-logging"]').trigger('click');
-    await wrapper.get('[data-field="deploy-action"]').setValue('vps-update-linux');
+    await pickSelectOption(wrapper, '[data-field="deploy-action"]', 'Update Linux');
     await wrapper.get('[data-action="run-deploy"]').trigger('click');
     await wrapper.get('[data-field="deploy-password"]').setValue('vps-secret');
     await wrapper.get('[data-action="stage-deploy-host"]').trigger('click');
@@ -429,7 +431,7 @@ describe('VPS Manager legacy parity', () => {
     await wrapper.get('[data-action="deploy-logging"]').trigger('click');
     expect(lastSent(ws)).toMatchObject({ cmd: 'deploy_vps_logging', hostnames: ['alpha'] });
     await wrapper.get('[data-testid="rail-section-deploys-vps-logging"]').trigger('click');
-    await wrapper.get('[data-field="deploy-action"]').setValue('vps-update-linux');
+    await pickSelectOption(wrapper, '[data-field="deploy-action"]', 'Update Linux');
     await wrapper.get('[data-action="run-deploy"]').trigger('click');
     expect(wrapper.find('[data-modal="deploy-password"]').exists()).toBe(true);
     await wrapper.get('[data-field="deploy-password"]').setValue('vps-secret');

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption } from '@/shared/testing/select';
 import ResultSection from './ResultSection.vue';
-import { priceMarketOptionValue } from '../lib/resultsModel';
 import type { ResultDataApi, ResultsSection } from '../composables/useResults';
 import type { BacktestResultItem, BeSeries, PricePayload } from '../types';
 
@@ -13,7 +13,6 @@ import type { BacktestResultItem, BeSeries, PricePayload } from '../types';
  * must never overwrite the newer one.
  */
 
-enableAutoUnmount(afterEach);
 
 function be(times: number): BeSeries {
   return {
@@ -97,6 +96,11 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
+/* Registered AFTER the body-clearing hook so vitest's LIFO afterEach order
+   unmounts wrappers first — unmounting a reka select AFTER its teleported
+   anchors were wiped crashes removeFragment on null. */
+enableAutoUnmount(afterEach);
+
 describe('applyPrice stale-response guard (:6791, :6853/:6884)', () => {
   it('drops a superseded slow price response', async () => {
     const { dataApi, pending } = makeDataApi();
@@ -106,7 +110,7 @@ describe('applyPrice stale-response guard (:6791, :6853/:6884)', () => {
     const bybit = pending.get('bybit|BTC')!;
 
     // switch to okx manually (gen 2, single candidate) and resolve it FIRST
-    await wrapper.find('[data-test="price-market"]').setValue(priceMarketOptionValue({ exchange: 'okx', coin: 'BTC' }));
+    await pickSelectOption(wrapper, '[data-test="price-market"]', 'okx / BTC');
     const okx = pending.get('okx|BTC')!;
     okx.resolve(price(3, 'okx'));
     await vi.waitFor(() => expect(wrapper.find('[data-test="price-status"]').text()).toContain('3 price points'));

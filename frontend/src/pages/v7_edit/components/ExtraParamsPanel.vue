@@ -5,6 +5,9 @@
  * text) with the legacy kind semantics; collectConfig reads them back.
  */
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
 import ExpanderGroup from './ExpanderGroup.vue';
 import { useEditPageContext } from '../composables/useEditPage';
 
@@ -26,20 +29,21 @@ const page = useEditPageContext();
       >
         <label>{{ field.key }}</label>
         <div v-if="field.kind === 'boolean'" class="chk-row">
-          <input :id="'extra-live-' + field.key" v-model="field.checked" type="checkbox" />
+          <Checkbox :id="'extra-live-' + field.key" v-model="field.checked" />
         </div>
-        <input
+        <Input
           v-else-if="field.kind === 'number'"
           :id="'extra-live-' + field.key"
           v-model="field.text"
           type="number"
-          class="form-input"
         />
         <template v-else-if="field.kind === 'json'">
-          <textarea :id="'extra-live-' + field.key" v-model="field.text" class="json-editor" rows="4" style="overflow: hidden; resize: vertical"></textarea>
+          <!-- ui-migration: Textarea + json-editor — un-layered page rules own
+               the geometry (shared with CoinOverridesPanel). -->
+          <Textarea :id="'extra-live-' + field.key" v-model="field.text" class="json-editor" rows="4" style="overflow: hidden; resize: vertical" />
           <div :id="'extra-live-' + field.key + '-status'" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
         </template>
-        <input v-else :id="'extra-live-' + field.key" v-model="field.text" type="text" class="form-input" />
+        <Input v-else :id="'extra-live-' + field.key" v-model="field.text" type="text" />
       </div>
     </div>
   </ExpanderGroup>

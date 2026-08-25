@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
-import { mount } from '@vue/test-utils';
+import { DOMWrapper, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, selectOptionElements, selectOptionTexts } from '@/shared/testing/select';
 import ArchiveGitModals from './ArchiveGitModals.vue';
 import ArchiveLogPanel from './ArchiveLogPanel.vue';
 import { createArchiveGitFlows, type ArchiveGitStore } from '../composables/useArchiveGit';
@@ -225,10 +226,13 @@ describe('setup modal (:9750-9812)', () => {
     const wrapper = mountModals(store);
     const modal = wrapper.find('[data-test="archive-setup"]');
     expect(modal.exists()).toBe(true);
-    const options = modal.findAll('[data-test="setup-arc-name"] option');
-    expect(options.map((o) => o.attributes('value'))).toEqual(['', 'mine', 'other']);
-    expect(options[0]!.text()).toBe('(none)');
-    expect((modal.find('[data-test="setup-arc-name"]').element as HTMLSelectElement).value).toBe('mine');
+    // reka listbox: options live in a body portal; the legacy value="" reset
+    // row is gone (the cleared model renders as the trigger label instead).
+    // The pick happens on this same open — re-opening an open listbox
+    // toggles it shut.
+    await openSelect(wrapper, '[data-test="setup-arc-name"]');
+    expect(selectOptionTexts()).toEqual(['mine', 'other']);
+    expect(modal.find('[data-test="setup-arc-name"]').text()).toContain('mine');
     expect((modal.find('[data-test="setup-arc-user"]').element as HTMLInputElement).value).toBe('u');
     expect((modal.find('[data-test="setup-arc-email"]').element as HTMLInputElement).value).toBe('e@x');
     expect((modal.find('[data-test="setup-arc-token"]').element as HTMLInputElement).value).toBe('tok');
@@ -238,7 +242,9 @@ describe('setup modal (:9750-9812)', () => {
     expect((modal.find('[data-test="setup-arc-readme-static"]').element as HTMLTextAreaElement).value).toBe('notes');
     expect(modal.text()).toContain('Archive paths are generated automatically');
 
-    await modal.find('[data-test="setup-arc-name"]').setValue('other');
+    const option = selectOptionElements().find((el) => el.textContent?.trim() === 'other');
+    await new DOMWrapper(option!).trigger('pointerup');
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(loadSpy).toHaveBeenCalledWith('other');
     await modal.find('[data-test="setup-test-push"]').trigger('click');
     expect(testSpy).toHaveBeenCalledTimes(1);

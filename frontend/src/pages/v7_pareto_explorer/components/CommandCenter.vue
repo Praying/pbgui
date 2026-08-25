@@ -7,6 +7,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import ScatterChart from './ScatterChart.vue';
 import { bestMatchText, championRows, insightRows, previewSummaries } from '../lib/viewModels';
 import type { ParetoStore } from '../composables/useParetoSession';
@@ -70,6 +71,9 @@ function onPlotClick(configIndex: number): void {
         <h3 class="mb-2">{{ t('v7explore.topChampions') }}</h3>
         <div id="champion-list" class="champion-list flex flex-col gap-2">
           <div v-if="!champions.length" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary">{{ t('v7explore.noChampions') }}</div>
+          <!-- ui-migration: out of scope — clickable champion cards (card
+               content, not a form control; .champion-item/.active anchors
+               stay for the tests). -->
           <button
             v-for="champion in champions"
             :key="String(champion.configIndex)"
@@ -105,11 +109,11 @@ function onPlotClick(configIndex: number): void {
         <h3 class="mb-2">{{ t('v7explore.paretoFrontPreview') }}</h3>
         <div class="toolbar flex flex-wrap gap-2" style="margin-bottom: 12px">
           <div class="check-row flex min-h-8 items-center gap-2 text-secondary" style="max-width: 280px">
-            <input id="preview-use-weighted" class="h-4 w-4" v-model="store.state.previewUseWeighted" type="checkbox" @change="surfaces.refreshPreviewFromSettings()" />
+            <Checkbox id="preview-use-weighted" v-model="store.state.previewUseWeighted" @update:model-value="surfaces.refreshPreviewFromSettings()" />
             <label for="preview-use-weighted">{{ t('v7explore.useWeightedMetrics') }}</label>
           </div>
           <div class="check-row flex min-h-8 items-center gap-2 text-secondary" style="max-width: 260px">
-            <input id="preview-show-all" class="h-4 w-4" v-model="store.state.previewShowAll" type="checkbox" @change="surfaces.refreshPreviewFromSettings()" />
+            <Checkbox id="preview-show-all" v-model="store.state.previewShowAll" @update:model-value="surfaces.refreshPreviewFromSettings()" />
             <label for="preview-show-all">{{ t('v7explore.showAllConfigs') }}</label>
           </div>
         </div>

@@ -18,6 +18,8 @@ import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { dialogsConfirm } from '../dialogs';
 import { templatesUrl } from '../config';
 import type { StatusResponse } from '../types';
@@ -35,7 +37,8 @@ const { t } = useI18n();
 const selTpl = ref<string[]>([]);
 const renameOpen = ref(false);
 const renameValue = ref('');
-const renameInput = ref<HTMLInputElement | null>(null);
+/* ui-migration: the ui/ Input component instance exposes focus/select. */
+const renameInput = ref<{ focus: () => void; select: () => void } | null>(null);
 const msg = ref('');
 const msgType = ref<'ok' | 'err' | ''>('');
 let msgTimer: number | undefined;
@@ -147,37 +150,43 @@ onUnmounted(() => window.clearTimeout(msgTimer));
         <div id="tpl-manage-msel" style="flex:1">
           <MultiSelect uid="msel1" :options="templates" v-model:selected="selTpl" />
         </div>
-        <button
+        <Button
           v-show="renameVisible"
           id="btn-rename-tpl"
-          class="btn pbgui-action"
+          variant="secondary"
+          size="sm"
+          type="button"
+          class="self-center"
           :title="t('dash.rename')"
           :aria-label="t('dash.rename')"
           @click="openRename"
-        ><PbIcon :icon="PhNotePencil" /></button>
-        <button
+        ><PbIcon :icon="PhNotePencil" /></Button>
+        <Button
           v-show="delVisible"
           id="btn-del-tpl"
-          class="btn pbgui-action danger"
+          variant="danger"
+          size="sm"
+          type="button"
+          class="self-center"
           :title="t('common.delete')"
           :aria-label="t('common.delete')"
           @click="deleteTemplates"
-        ><PbIcon :icon="PhTrash" /></button>
+        ><PbIcon :icon="PhTrash" /></Button>
       </div>
       <div id="rename-wrap" v-show="renameRowVisible" style="margin-top:0.5rem">
         <div class="input-row">
-          <input
+          <Input
             ref="renameInput"
             id="rename-input"
             v-model="renameValue"
-            class="tpl-input"
             type="text"
+            class="flex-1"
             autocomplete="off"
-          >
-          <button id="btn-rename-confirm" class="btn pbgui-action primary" @click="confirmRename">
+          />
+          <Button id="btn-rename-confirm" variant="info" size="sm" type="button" class="self-center" @click="confirmRename">
             <PbIcon :icon="PhCheck" /> {{ t('dash.rename') }}
-          </button>
-          <button id="btn-rename-cancel" class="btn pbgui-action" :title="t('common.cancel')" :aria-label="t('common.cancel')" @click="cancelRename"><PbIcon :icon="PhX" /></button>
+          </Button>
+          <Button id="btn-rename-cancel" variant="secondary" size="sm" type="button" class="self-center" :title="t('common.cancel')" :aria-label="t('common.cancel')" @click="cancelRename"><PbIcon :icon="PhX" /></Button>
         </div>
       </div>
     </template>

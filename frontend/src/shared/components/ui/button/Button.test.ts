@@ -62,4 +62,13 @@ describe('Button', () => {
     expect(classes).toContain('bg-accent');
     expect(classes).toContain('w-full');
   });
+
+  it('exposes focus/blur for imperative call sites', () => {
+    const wrapper = mount(Button, { attachTo: document.body });
+    const vm = wrapper.vm as unknown as { focus: () => void; blur: () => void };
+    vm.focus();
+    expect(document.activeElement).toBe(wrapper.get('button').element);
+    vm.blur();
+    expect(document.activeElement).not.toBe(wrapper.get('button').element);
+  });
 });

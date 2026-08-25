@@ -12,6 +12,7 @@
  * in the save handler, exactly where the old code had them.
  */
 import { useI18n } from 'vue-i18n';
+import { Input } from '@/shared/components/ui/input';
 
 /** Legacy groups table: field order and prefixes are contract-level. */
 const MONITOR_GROUPS = [
@@ -56,8 +57,8 @@ function valueOf(config: Record<string, string>, key: string): string {
 }
 
 /** Emit the edited cell; the parent owns the map (immutable update). */
-function onInput(config: Record<string, string>, key: string, event: Event): void {
-  emit('update:monitorConfig', { ...config, [key]: (event.target as HTMLInputElement).value });
+function onUpdate(config: Record<string, string>, key: string, value: string | number | null | undefined): void {
+  emit('update:monitorConfig', { ...config, [key]: value == null ? '' : String(value) });
 }
 </script>
 
@@ -67,13 +68,12 @@ function onInput(config: Record<string, string>, key: string, event: Event): voi
     <div class="monitor-grid">
       <div v-for="cell in cellsOf(group)" :key="cell.id" class="monitor-cell">
         <span class="monitor-label">{{ t(cell.labelKey) }} {{ t(cell.suffixKey) }}</span>
-        <input
-          class="form-input"
+        <Input
           type="number"
           step="any"
           :id="cell.id"
-          :value="valueOf(monitorConfig, cell.key)"
-          @input="onInput(monitorConfig, cell.key, $event)"
+          :model-value="valueOf(monitorConfig, cell.key)"
+          @update:model-value="onUpdate(monitorConfig, cell.key, $event)"
         />
       </div>
     </div>

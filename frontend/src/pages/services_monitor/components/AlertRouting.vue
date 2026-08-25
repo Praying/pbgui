@@ -13,6 +13,7 @@
  * `update:routing` with the target's new state.
  */
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 
 /** Legacy groups table — order, ids and labels are contract-level. */
 const ROUTING_GROUPS = [
@@ -68,8 +69,8 @@ function isChecked(routing: Record<string, boolean>, id: string): boolean {
 }
 
 /** Emit the flipped box; the parent owns the map (immutable update). */
-function onToggle(routing: Record<string, boolean>, id: string, event: Event): void {
-  emit('update:routing', { ...routing, [id]: (event.target as HTMLInputElement).checked });
+function onToggle(routing: Record<string, boolean>, id: string, value: boolean | 'indeterminate'): void {
+  emit('update:routing', { ...routing, [id]: value === true });
 }
 </script>
 
@@ -80,11 +81,10 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
       <div class="alert-routing-col">
         <div class="alert-routing-col-header">GUI</div>
         <label class="alert-routing-check">
-          <input
-            type="checkbox"
+          <Checkbox
             :id="group.guiId"
-            :checked="isChecked(routing, group.guiId)"
-            @change="onToggle(routing, group.guiId, $event)"
+            :model-value="isChecked(routing, group.guiId)"
+            @update:model-value="onToggle(routing, group.guiId, $event)"
           />
           <span>{{ t('sysmon.showActiveAlarmsGui') }} <span class="label-hint">{{ t('sysmon.activeAlertsOnly') }}</span></span>
         </label>
@@ -92,11 +92,10 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
       <div class="alert-routing-col">
         <div class="alert-routing-col-header">Telegram</div>
         <label v-for="row in group.telegram" :key="row.id" class="alert-routing-check">
-          <input
-            type="checkbox"
+          <Checkbox
             :id="row.id"
-            :checked="isChecked(routing, row.id)"
-            @change="onToggle(routing, row.id, $event)"
+            :model-value="isChecked(routing, row.id)"
+            @update:model-value="onToggle(routing, row.id, $event)"
           />
           <span>{{ t(row.labelKey) }} <span class="label-hint">{{ t('sysmon.toTelegram') }}</span></span>
         </label>
@@ -144,12 +143,6 @@ function onToggle(routing: Record<string, boolean>, id: string, event: Event): v
   color: var(--text-secondary);
   font-size: var(--fs-sm);
   cursor: pointer;
-}
-.alert-routing-check input {
-  accent-color: var(--accent);
-  cursor: pointer;
-  width: 15px;
-  height: 15px;
 }
 .alert-routing-check .label-hint { color: var(--text-disabled); }
 </style>

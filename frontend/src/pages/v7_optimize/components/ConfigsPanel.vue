@@ -2,6 +2,8 @@
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import type { ConfigSummary } from '../types';
 
 const props = defineProps<{
@@ -43,17 +45,16 @@ onBeforeUnmount(() => dragSelect.dispose());
 
 <template>
   <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
-    <input
-      class="min-h-8 rounded-sm border border-border-default bg-panel px-[9px] py-1.5 text-primary min-w-60"
-      :value="search"
+    <Input class="min-w-60"
+      :model-value="search"
       :placeholder="t('v7optimize.searchOptimizeName')"
-      @input="emit('update:search', ($event.target as HTMLInputElement).value)"
+      @update:model-value="emit('update:search', String($event ?? ''))"
     />
     <span class="text-xs text-secondary">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
     <span v-if="selectedCount" class="text-xs text-secondary">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
     <span class="flex-1"></span>
-    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</button>
-    <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</button>
+    <Button type="button" variant="default" size="sm" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
+    <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
   <div ref="wrap" class="min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
     <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
@@ -75,8 +76,8 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td>{{ flags(row) }}</td>
           <td>{{ row.modified || '—' }}</td>
           <td class="whitespace-nowrap! overflow-visible!" @click.stop>
-            <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('edit', rowName(row))">{{ t('v7optimize.editConfig') }}</button>
-            <button class="min-h-[26px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-[7px] py-[3px] text-xs text-primary hover:border-accent" @click="emit('duplicate', rowName(row))">{{ t('v7optimize.duplicate') }}</button>
+            <Button type="button" variant="default" size="sm" @click="emit('edit', rowName(row))">{{ t('v7optimize.editConfig') }}</Button>
+            <Button type="button" variant="default" size="sm" @click="emit('duplicate', rowName(row))">{{ t('v7optimize.duplicate') }}</Button>
           </td>
         </tr>
         <tr v-if="!rows.length"><td :colspan="isV8 ? 9 : 8" class="p-[30px]! text-center text-secondary">{{ t('v7optimize.noOptimizeConfigsFound') }}</td></tr>

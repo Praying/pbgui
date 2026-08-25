@@ -3,6 +3,7 @@ import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import { getSavedZoom, resetSavedZoom } from '../../lib/savedZoom';
 import type { PlotlyVendor } from '../../lib/plotlyVendor';
 import WidgetPpl from './WidgetPpl.vue';
@@ -135,9 +136,9 @@ describe('WidgetPpl', () => {
   it('renders the sum-period select with DAY/WEEK/MONTH (editor:1807-1817)', async () => {
     const { wrapper } = mountPpl();
     await flushPromises();
-    const select = wrapper.get('select.dt-ctrl-sel');
-    expect(select.findAll('option').map((o) => o.text())).toEqual(['DAY', 'WEEK', 'MONTH']);
-    expect((select.element as HTMLSelectElement).value).toBe('MONTH');
+    await openSelect(wrapper, '.dt-ctrl-sel');
+    expect(selectOptionTexts()).toEqual(['DAY', 'WEEK', 'MONTH']);
+    expect(wrapper.get('.dt-ctrl-sel').text()).toContain('MONTH');
   });
 
   it('captures the fractional zoom, writes the state and refetches on a sum-period switch', async () => {
@@ -154,7 +155,7 @@ describe('WidgetPpl', () => {
     };
     gd.data = [{ x: [0, 1, 2, 3] }];
 
-    await wrapper.get('select.dt-ctrl-sel').setValue('WEEK');
+    await pickSelectOption(wrapper, '.dt-ctrl-sel', 'WEEK');
     expect(env.store.state['dashboard_ppl_sum_period_1_2']).toBe('WEEK');
     expect(getSavedZoom('1_2')).toEqual({
       xrange: null, yrange: [9, 10], fracRange: [0.25, 0.75],
@@ -188,7 +189,7 @@ describe('WidgetPpl', () => {
         sum_period: 'WEEK',
       }),
     });
-    await wrapper.get('select.dt-ctrl-sel').setValue('WEEK');
+    await pickSelectOption(wrapper, '.dt-ctrl-sel', 'WEEK');
     await flushPromises();
     const layout = react.mock.calls[1]![2] as Record<string, unknown>;
     expect((layout.xaxis as Record<string, unknown>).range).toEqual([2, 6]);

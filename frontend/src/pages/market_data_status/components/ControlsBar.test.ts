@@ -80,12 +80,13 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
     expect(queued.emitted('cancel')).toHaveLength(1);
   });
 
-  it('renders the legacy button classes', () => {
+  it('renders the kept hook class and icons', () => {
     const { refresh, cancel, stop } = buttons(mountBar({ queued: false, running: false, received: true }));
 
-    expect(refresh.classes()).toContain('primary');
-    expect(cancel.classes()).toContain('danger');
-    expect(stop.classes()).toContain('danger');
+    expect(refresh.classes()).toContain('mds-btn');
+    expect(cancel.classes()).toContain('mds-btn');
+    expect(stop.classes()).toContain('mds-btn');
+    expect(refresh.attributes('data-slot')).toBe('button');
     expect(refresh.find('svg').exists()).toBe(true);
     expect(cancel.find('svg').exists()).toBe(true);
     expect(stop.find('svg').exists()).toBe(true);

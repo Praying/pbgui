@@ -20,11 +20,18 @@
  * switches exactly like legacy's static #inventory-*-plot divs.
  */
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import {
-  actBtnClass,
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
+import {
   calloutClass,
   fieldLabelClass,
-  inputClass,
   noteClass,
   panelCardClass,
   panelHeadClass,
@@ -102,71 +109,82 @@ function onSelectView(view: InventorySubsection): void {
       <div class="inventory-filter-grid grid gap-3 grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)] max-[980px]:grid-cols-1">
         <label :class="settingsFieldClass">
           <span :class="fieldLabelClass">{{ t('market.filterByCoin') }}</span>
-          <input
+          <Input
             id="inventory-coin-filter"
-            :class="inputClass"
             type="text"
             :placeholder="'e.g. GOOGL or BTC'"
             autocomplete="off"
-            :value="store.currentViewState.value.coinFilter"
-            @input="store.setCoinFilter(String(($event.target as HTMLInputElement).value || ''))"
+            :model-value="store.currentViewState.value.coinFilter"
+            @update:model-value="store.setCoinFilter(String($event ?? ''))"
           />
         </label>
         <label :class="settingsFieldClass">
-          <span :class="fieldLabelClass">{{ t('market.filterByType') }}</span>
-          <select
-            id="inventory-kind-filter"
-            :class="inputClass"
-            :value="store.currentViewState.value.kindFilter"
-            @change="store.setKindFilter(String(($event.target as HTMLSelectElement).value || 'all'))"
+          <span :class="fieldLabelClass" id="inventory-kind-filter-label">{{ t('market.filterByType') }}</span>
+          <SelectRoot
+            :model-value="store.currentViewState.value.kindFilter"
+            @update:model-value="store.setKindFilter(String($event ?? 'all') || 'all')"
           >
-            <option
-              v-for="option in store.kindOptions.value"
-              :key="option.value"
-              :value="option.value"
-              :disabled="option.disabled"
-              :hidden="option.disabled"
-            >{{ option.label }}</option>
-          </select>
+            <SelectTrigger id="inventory-kind-filter" aria-labelledby="inventory-kind-filter-label">
+              <span>{{ store.kindOptions.value.find((option) => option.value === store.currentViewState.value.kindFilter)?.label ?? store.currentViewState.value.kindFilter }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <!-- legacy hid disabled options (:hidden) — filtered out here -->
+              <SelectItem
+                v-for="option in store.kindOptions.value.filter((option) => !option.disabled)"
+                :key="option.value"
+                :value="option.value"
+              >{{ option.label }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </label>
       </div>
       <div class="inventory-table-toolbar mb-1 flex flex-wrap items-center gap-1">
-        <button
-          :class="actBtnClass(false)"
+        <Button
+          variant="outline"
+          size="sm"
+          class="act-btn"
           id="btn-inventory-select-all"
           type="button"
           :disabled="store.selectAllDisabled.value"
           @click="store.selectAll()"
-        >{{ t('market.selectAll') }}</button>
-        <button
-          :class="actBtnClass(false)"
+        >{{ t('market.selectAll') }}</Button>
+        <Button
+          variant="outline"
+          size="sm"
+          class="act-btn"
           id="btn-inventory-deselect-all"
           type="button"
           :disabled="store.deselectAllDisabled.value"
           @click="store.deselectAll()"
-        >{{ t('market.deselect') }}</button>
+        >{{ t('market.deselect') }}</Button>
         <div class="inventory-timeframe-filter flex items-center gap-1" id="inventory-timeframe-filter" v-if="store.timeframeFilterSupported.value">
           <span class="inventory-timeframe-filter-label text-xs uppercase tracking-[0.06em] text-secondary">TF</span>
-          <button
+          <Button
             v-for="timeframe in timeframeButtons()"
             :key="timeframe"
-            :class="actBtnClass(store.currentViewState.value.timeframeFilter === timeframe)"
+            variant="outline"
+            size="sm"
+            class="act-btn"
+            :class="{ 'active border-accent bg-accent/10 text-primary': store.currentViewState.value.timeframeFilter === timeframe }"
             :id="timeframe === 'all' ? 'btn-inventory-timeframe-all' : `btn-inventory-timeframe-${timeframe}`"
             type="button"
             :data-timeframe-filter="timeframe"
             :aria-pressed="store.currentViewState.value.timeframeFilter === timeframe ? 'true' : 'false'"
             @click="store.setTimeframeFilter(timeframe)"
-          >{{ timeframe === 'all' ? t('common.all') : timeframe }}</button>
+          >{{ timeframe === 'all' ? t('common.all') : timeframe }}</Button>
         </div>
-        <button
+        <Button
           v-if="store.missingToggleSupported.value"
           id="btn-inventory-toggle-missing"
           type="button"
-          :class="actBtnClass(store.missingTogglePressed.value)"
+          variant="outline"
+          size="sm"
+          class="act-btn"
+          :class="{ 'active border-accent bg-accent/10 text-primary': store.missingTogglePressed.value }"
           :aria-pressed="store.missingTogglePressed.value ? 'true' : 'false'"
           :title="store.missingToggleTitle.value"
           @click="store.toggleIncludeMissing()"
-        >{{ store.missingToggleText.value }}</button>
+        >{{ store.missingToggleText.value }}</Button>
         <span :class="noteClass" id="inventory-selection-count">{{ store.selectionCountText.value }}</span>
       </div>
       <DataTable
@@ -196,31 +214,32 @@ function onSelectView(view: InventorySubsection): void {
       >{{ store.heatmap.heatmapFeedback.value.message }}</div>
       <div class="inventory-heatmap-toolbar flex flex-wrap items-center gap-2" id="inventory-heatmap-toolbar" v-if="store.heatmap.toolbarVisible.value">
         <label :class="settingsFieldClass" id="inventory-month-field" v-if="store.heatmap.monthFieldVisible.value">
-          <span :class="fieldLabelClass">{{ t('market.selectMonthForMinute') }}</span>
-          <select
-            id="inventory-month-select"
-            :class="inputClass"
-            :value="store.currentViewState.value.selectedMonth"
-            @change="store.heatmap.setMonth(String(($event.target as HTMLSelectElement).value || ''))"
+          <span :class="fieldLabelClass" id="inventory-month-select-label">{{ t('market.selectMonthForMinute') }}</span>
+          <SelectRoot
+            :model-value="store.currentViewState.value.selectedMonth"
+            @update:model-value="store.heatmap.setMonth(String($event ?? ''))"
           >
-            <option v-for="month in store.heatmap.months.value" :key="month" :value="month">{{ month }}</option>
-          </select>
+            <SelectTrigger id="inventory-month-select" aria-labelledby="inventory-month-select-label">
+              <span>{{ store.currentViewState.value.selectedMonth }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="month in store.heatmap.months.value" :key="month" :value="month">{{ month }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </label>
-        <label class="inventory-toggle inline-flex items-center gap-1 text-sm text-secondary" id="inventory-holiday-toggle" v-if="store.heatmap.holidayToggleVisible.value">
-          <input
+        <label class="inventory-toggle inline-flex cursor-pointer items-center gap-1 text-sm text-secondary" id="inventory-holiday-toggle" v-if="store.heatmap.holidayToggleVisible.value">
+          <Checkbox
             id="inventory-show-holiday"
-            type="checkbox"
-            :checked="store.currentViewState.value.showHoliday !== false"
-            @change="store.heatmap.setShowHoliday(($event.target as HTMLInputElement).checked)"
+            :model-value="store.currentViewState.value.showHoliday !== false"
+            @update:model-value="store.heatmap.setShowHoliday($event === true)"
           />
           <span>{{ t('market.highlightMarketHolidays') }}</span>
         </label>
-        <label class="inventory-toggle inline-flex items-center gap-1 text-sm text-secondary" id="inventory-oos-toggle" v-if="store.heatmap.oosToggleVisible.value">
-          <input
+        <label class="inventory-toggle inline-flex cursor-pointer items-center gap-1 text-sm text-secondary" id="inventory-oos-toggle" v-if="store.heatmap.oosToggleVisible.value">
+          <Checkbox
             id="inventory-show-oos"
-            type="checkbox"
-            :checked="store.currentViewState.value.showOos !== false"
-            @change="store.heatmap.setShowOos(($event.target as HTMLInputElement).checked)"
+            :model-value="store.currentViewState.value.showOos !== false"
+            @update:model-value="store.heatmap.setShowOos($event === true)"
           />
           <span>{{ t('market.highlightExpectedGaps') }}</span>
         </label>

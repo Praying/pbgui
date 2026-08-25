@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import { buildEditorDraft } from '../lib/configModel';
 import ConfigEditorModal from './ConfigEditorModal.vue';
 
@@ -87,15 +88,15 @@ describe('ConfigEditorModal', () => {
     expect(wrapper.find('[data-field="pymoo-ref-dir-method"]').exists()).toBe(true);
     expect(wrapper.find('[data-field="pymoo-ref-dir-partitions"]').exists()).toBe(true);
     await wrapper.find('[data-field="pymoo-ref-dir-partitions"]').setValue('6');
-    await wrapper.find('[data-field="pymoo-population-mode"]').setValue('auto');
+    await pickSelectOption(wrapper, '[data-field="pymoo-population-mode"]', 'auto');
 
     await wrapper.find('[data-tab="objectives"]').trigger('click');
     expect(wrapper.find('[data-field="objective-scenario"]').exists()).toBe(true);
-    await wrapper.find('[data-field="objective-scenario"]').setValue('aggregate');
+    await pickSelectOption(wrapper, '[data-field="objective-scenario"]', 'suite aggregate');
 
     await wrapper.find('[data-tab="runtime"]').trigger('click');
     expect(wrapper.find('[data-field="runtime-bot-long-hsl-enabled"]').exists()).toBe(true);
-    await wrapper.find('[data-field="runtime-bot-long-hsl-enabled"]').setValue(false);
+    await wrapper.find('[data-field="runtime-bot-long-hsl-enabled"]').trigger('click'); // starts checked → unchecks
     await wrapper.find('button[data-save="config"]').trigger('click');
 
     const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
@@ -126,7 +127,7 @@ describe('ConfigEditorModal', () => {
     });
 
     await wrapper.find('[data-tab="optimizer"]').trigger('click');
-    await wrapper.find('[data-field="optimizer-backend"]').setValue('pymoo');
+    await pickSelectOption(wrapper, '[data-field="optimizer-backend"]', 'pymoo');
     await wrapper.find('button[data-save="config"]').trigger('click');
 
     const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
@@ -161,7 +162,7 @@ describe('ConfigEditorModal', () => {
     });
 
     await wrapper.find('[data-tab="optimizer"]').trigger('click');
-    await wrapper.find('[data-field="optimizer-backend"]').setValue('deap');
+    await pickSelectOption(wrapper, '[data-field="optimizer-backend"]', 'deap');
     await wrapper.find('button[data-save="config"]').trigger('click');
 
     const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
@@ -196,14 +197,14 @@ describe('ConfigEditorModal', () => {
     });
 
     await wrapper.find('[data-tab="optimizer"]').trigger('click');
-    expect(wrapper.find('[data-extra-param="custom_boolean"][type="checkbox"]').exists()).toBe(true);
+    expect(wrapper.find('[data-extra-param="custom_boolean"][role="checkbox"]').exists()).toBe(true);
     expect(wrapper.find('[data-extra-param="custom_number"][type="number"]').exists()).toBe(true);
     expect(wrapper.find('[data-extra-param="custom_string"][type="text"]').exists()).toBe(true);
     expect(wrapper.find('textarea[data-extra-param="custom_json"]').exists()).toBe(true);
     expect(wrapper.find('[data-extra-param="custom_null"][type="text"]').exists()).toBe(true);
     expect(wrapper.find('[data-extra-param="iters"]').exists()).toBe(false);
 
-    await wrapper.find('[data-extra-param="custom_boolean"]').setValue(false);
+    await wrapper.find('[data-extra-param="custom_boolean"]').trigger('click'); // starts true → false
     await wrapper.find('[data-extra-param="custom_number"]').setValue('42');
     await wrapper.find('[data-extra-param="custom_string"]').setValue('beta');
     await wrapper.find('textarea[data-extra-param="custom_json"]').setValue('{"nested":[3]}');
@@ -264,7 +265,7 @@ describe('ConfigEditorModal', () => {
     expect(wrapper.find('[data-field="fine-tune-params"]').exists()).toBe(true);
     await wrapper.find('[data-field="fine-tune-params"]').setValue('long.risk, short.strategy');
     await wrapper.find('[data-field="polish-percentage"]').setValue('30');
-    await wrapper.find('[data-field="polish-bounds-mode"]').setValue('override-tunable');
+    await pickSelectOption(wrapper, '[data-field="polish-bounds-mode"]', 'override-tunable');
     await wrapper.find('button[data-save="config"]').trigger('click');
 
     const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
@@ -333,9 +334,10 @@ describe('ConfigEditorModal', () => {
       global: { plugins: [createI18n('en')] },
     });
     await wrapper.find('[data-tab="optimizer"]').trigger('click');
-    expect(wrapper.find('[data-field="pymoo-effective-algorithm"]').element.getAttribute('value')).toBe('nsga3');
-    expect(wrapper.find('[data-field="pymoo-ref-dir-method"] option[value="incremental"]').exists()).toBe(true);
-    expect((wrapper.find('[data-field="pymoo-ref-dir-partitions-mode"]').element as HTMLSelectElement).value).toBe('auto');
+    expect((wrapper.find('[data-field="pymoo-effective-algorithm"]').element as HTMLInputElement).value).toBe('nsga3');
+    await openSelect(wrapper, '[data-field="pymoo-ref-dir-method"]');
+    expect(selectOptionTexts()).toContain('incremental');
+    expect(wrapper.find('[data-field="pymoo-ref-dir-partitions-mode"]').text()).toBe('auto');
   });
 
 });

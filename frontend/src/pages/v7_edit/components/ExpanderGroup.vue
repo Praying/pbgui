@@ -13,6 +13,9 @@ function toggle(): void {
 
 <template>
   <div :id="id" class="expander" :class="{ open }">
+    <!-- ui-migration: blocked — accordion panel header (out-of-scope panel
+         structure); its chrome is the page-global .expander-header rule the
+         shared CoinOverridesPanel expanders also render. -->
     <button type="button" class="expander-header" :aria-expanded="open" @click="toggle">
       <PbIcon class="arrow" :icon="PhCaretRight" :size="14" />
       <span>{{ title }}</span>

@@ -16,7 +16,6 @@ import type { ArchiveStore } from '../composables/useArchive';
  * visibility (:8969-8997, :9131-9146).
  */
 
-enableAutoUnmount(afterEach);
 
 const fetchMock = vi.fn();
 const notify = vi.fn();
@@ -94,6 +93,11 @@ beforeEach(() => {
 afterEach(() => {
   document.body.innerHTML = '';
 });
+
+/* Registered AFTER the body-clearing hook so vitest's LIFO afterEach order
+   unmounts wrappers first — unmounting a reka select AFTER its teleported
+   anchors were wiped crashes removeFragment on null. */
+enableAutoUnmount(afterEach);
 
 describe('archive list view (:8864-8888)', () => {
   it('renders the empty state with flattened legacy html (no v-html)', async () => {

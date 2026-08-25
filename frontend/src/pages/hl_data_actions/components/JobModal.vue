@@ -8,6 +8,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { fmtDay, fmtTS, formatJobDuration } from '../lib/jobsFormat';
 import type { ModalState } from '../composables/useJobsMonitor';
 
@@ -115,7 +116,7 @@ function bodyClass(kind: string): string {
     <div class="hlda-modal-box flex max-h-[calc(var(--hlda-modal-visible-height,100dvh)-40px)] w-[min(800px,calc(100vw-40px))] max-w-[800px] flex-col overflow-hidden rounded-lg border border-border-default bg-page">
       <div class="hlda-modal-hd flex items-center justify-between border-b border-elevated px-4 py-3">
         <h3 class="text-md font-semibold">{{ modal.title || t('market.jobLog') }}</h3>
-        <button class="hlda-modal-close cursor-pointer border-0 bg-transparent px-1 py-0 text-xl text-muted hover:text-primary" @click="$emit('close')">✕</button>
+        <Button type="button" variant="ghost" class="hlda-modal-close h-auto border-0 px-1 py-0 text-xl font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('close')">✕</Button>
       </div>
       <div class="hlda-modal-body flex-1 overflow-y-auto px-4 py-3 leading-[1.5]" :class="bodyClass(modal.kind)">
         <template v-if="modal.kind === 'details' && job">

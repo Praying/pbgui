@@ -18,7 +18,7 @@
  */
 import { watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { saveSettingsBtnClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
 import type { SettingsController } from '../../composables/useSettings';
 import type { UseTiingo } from '../../composables/useTiingo';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
@@ -56,13 +56,14 @@ watch(
         :active="store.resolvedSubsection.value"
         @select="store.setActiveSubsection"
       />
-      <button
+      <Button
         id="btn-save-settings"
         type="button"
+        :variant="store.isDirty.value ? 'warning' : 'secondary'"
+        :class="['save-settings-btn flex-none', { 'save-needed': store.isDirty.value }]"
         :disabled="!store.isDirty.value"
-        :class="saveSettingsBtnClass(store.isDirty.value)"
         @click="store.saveSettings()"
-      >{{ t('market.saveSettings') }}</button>
+      >{{ t('market.saveSettings') }}</Button>
     </div>
     <div class="settings-layout mt-3 flex flex-col gap-3">
       <template v-if="store.isHyperliquid.value">

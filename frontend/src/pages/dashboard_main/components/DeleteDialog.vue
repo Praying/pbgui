@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 
 /**
  * Legacy #del-dash-dialog (dashboard_main.html openDeleteDialog): a quoted
@@ -44,22 +45,13 @@ const deleteLabel = computed(() => `${t('common.delete')} `);
         <span>{{ deleteLabel }}</span><span id="del-confirm-name">{{ confirmName }}</span><span>{{ t('dash.deleteConfirmSuffix') }}</span>
       </div>
       <div class="dlg-actions">
-        <button class="dlg-btn secondary" id="del-cancel" @click="emit('close')">
+        <Button variant="secondary" id="del-cancel" type="button" @click="emit('close')">
           {{ t('common.cancel') }}
-        </button>
-        <button class="dlg-btn primary del-danger" id="del-ok" @click="emit('confirm')">
+        </Button>
+        <Button variant="danger" id="del-ok" type="button" @click="emit('confirm')">
           {{ t('common.delete') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Legacy #del-ok inline style: red delete variant. */
-.del-danger {
-  color: var(--danger);
-  border-color: rgb(var(--danger-rgb) / 0.4);
-  background: rgb(var(--danger-rgb) / 0.08);
-}
-</style>

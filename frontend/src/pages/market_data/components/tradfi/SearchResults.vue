@@ -7,7 +7,9 @@
  */
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { btnSecondaryClass, fieldLabelClass, inputClass, settingsFieldClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { fieldLabelClass, settingsFieldClass } from '../../lib/uiClasses';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import { formatTradfiPrice, formatTradfiTimestamp } from '../../lib/tradfiFormat';
 
@@ -80,8 +82,17 @@ function statusClass(level: string): string {
   return `tradfi-search-window-status ${level} rounded-[10px] border px-3 py-2 text-sm leading-[1.45] ${tone}`;
 }
 
+/* The legacy input was uncontrolled: it displayed effectiveQuery and run()
+   read the live DOM text (:6660). The ui/ Input is model-driven, so a local
+   shadow tracks keystrokes and re-syncs whenever the displayed query
+   changes — the same moments the legacy :value binding repainted. */
+const queryText = ref('');
+watch(effectiveQuery, (value) => {
+  queryText.value = value;
+}, { immediate: true });
+
 function run(): void {
-  void props.map.runSearch(String(inputEl.value ? inputEl.value.value : '')); // :6660 — live input text
+  void props.map.runSearch(queryText.value); // :6660 — live input text
 }
 
 function onQueryKeydown(event: KeyboardEvent): void {
@@ -90,16 +101,18 @@ function onQueryKeydown(event: KeyboardEvent): void {
   run();
 }
 
-/* legacy refocuses the query input after every render (:5891-5901) */
-const inputEl = ref<HTMLInputElement | null>(null);
+/* legacy refocuses the query input after every render (:5891-5901);
+   $el reaches the rendered input for the activeElement guard (the ui/ Input
+   exposes focus/select only). */
+const inputEl = ref<{ focus: () => void; select: () => void; $el: HTMLElement } | null>(null);
 watch(
   () => [props.map.searchCoin.value, props.map.searchQuery.value, props.map.searchLoading.value],
   () => {
     void nextTick(() => {
-      const input = inputEl.value;
-      if (!input || document.activeElement === input) return;
-      input.focus();
-      input.select();
+      const el = inputEl.value?.$el;
+      if (!el || document.activeElement === el) return;
+      inputEl.value?.focus();
+      inputEl.value?.select();
     });
   },
   { immediate: true }
@@ -118,23 +131,24 @@ watch(
     <div class="tradfi-search-window-controls grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 max-[700px]:grid-cols-1">
       <label :class="[settingsFieldClass, 'tradfi-search-window-query-field']">
         <span :class="fieldLabelClass">{{ t('market.query') }}</span>
-        <input
+        <Input
           id="tradfi-search-window-query"
           ref="inputEl"
-          :class="inputClass"
           type="text"
-          :value="effectiveQuery"
+          :model-value="queryText"
           :placeholder="t('market.tickerOrCompany')"
+          @update:model-value="queryText = String($event ?? '')"
           @keydown="onQueryKeydown"
-        >
+        />
       </label>
-      <button
-        :class="[btnSecondaryClass, 'self-end']"
+      <Button
+        variant="info"
+        class="self-end"
         id="btn-tradfi-search-window-run"
         type="button"
         :disabled="isSearching"
         @click="run"
-      >{{ isSearching ? t('market.searching') : t('common.search') }}</button>
+      >{{ isSearching ? t('market.searching') : t('common.search') }}</Button>
     </div>
     <div
       v-if="message"
@@ -150,12 +164,12 @@ watch(
           <div class="tradfi-search-meta text-sm text-secondary">{{ priceMeta(item) }}</div>
           <div class="tradfi-search-meta text-sm text-secondary">{{ hlPriceMeta }}</div>
         </div>
-        <button
-          :class="btnSecondaryClass"
+        <Button
+          variant="info"
           type="button"
           :data-tradfi-search-index="index"
           @click="map.applySearchResult(index)"
-        >{{ t('market.apply') }}</button>
+        >{{ t('market.apply') }}</Button>
       </div>
     </div>
     <div v-else class="tradfi-search-window-empty rounded-[10px] border border-dashed border-secondary/18 bg-page/34 p-3 text-sm leading-[1.5] text-secondary">{{ emptyMessage }}</div>

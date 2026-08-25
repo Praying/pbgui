@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import SuiteEditor from './SuiteEditor.vue';
 import type { SuiteState } from './suiteModel';
+import { pickSelectOption } from '@/shared/testing/select';
 
 /*
  * SuiteEditor — the component port of js/suite_editor.js (975 L): the
@@ -58,7 +59,7 @@ describe('enable toggle (:508-516)', () => {
     expect(wrapper.find('[data-test="suite-header"]').text()).toContain('1');
     expect(wrapper.find('[data-test="suite-header"]').text()).toContain('ENABLED');
     const fresh = mountSuite();
-    await fresh.find('#suite-enabled').setValue(true);
+    await fresh.find('#suite-enabled').trigger('click');
     expect(current(fresh).scenarios).toEqual([{ label: 'base' }]);
   });
 
@@ -66,11 +67,11 @@ describe('enable toggle (:508-516)', () => {
     const wrapper = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }) });
     expect(wrapper.find('[data-test="suite-expander"]').classes()).toContain('open');
 
-    await wrapper.find('#suite-enabled').setValue(false);
+    await wrapper.find('#suite-enabled').trigger('click');
     expect(current(wrapper).enabled).toBe(false);
     // unchecking no longer folds the card away with the toggle inside it
     expect(wrapper.find('[data-test="suite-expander"]').classes()).toContain('open');
-    expect((wrapper.find('#suite-enabled').element as HTMLInputElement).checked).toBe(false);
+    expect(wrapper.find('#suite-enabled').attributes('data-state')).toBe('unchecked');
 
     // the header is a pure fold toggle now — it never flips enabled
     await wrapper.find('[data-test="suite-header"]').trigger('click');
@@ -81,7 +82,7 @@ describe('enable toggle (:508-516)', () => {
     expect(current(wrapper).enabled).toBe(false);
 
     // re-checking works through the same header toggle
-    await wrapper.find('#suite-enabled').setValue(true);
+    await wrapper.find('#suite-enabled').trigger('click');
     expect(current(wrapper).enabled).toBe(true);
   });
 });
@@ -134,7 +135,7 @@ describe('scenario editor (:650-696, :800-859)', () => {
     });
     expect((wrapper.find('[data-test="suite-sc-label"]').element as HTMLInputElement).value).toBe('s1');
     await wrapper.find('[data-test="suite-sc-label"]').setValue('renamed');
-    await wrapper.find('[data-test="suite-sc-ex-binance"]').setValue(true);
+    await wrapper.find('[data-test="suite-sc-ex-binance"]').trigger('click');
     await wrapper.find('[data-test="suite-done"]').trigger('click');
     const next = current(wrapper);
     expect(next.scenarios[0]).toMatchObject({ label: 'renamed', exchanges: ['binance'], start_date: '2024-01-01' });
@@ -161,8 +162,8 @@ describe('overrides (:698-798)', () => {
   it('adds an override with the parsed value and the dotted bot path (:763-783)', async () => {
     const wrapper = editingWrapper();
     await wrapper.find('[data-test="suite-add-override"]').trigger('click');
-    await wrapper.find('[data-test="suite-ov-side"]').setValue('short');
-    await wrapper.find('[data-test="suite-ov-param"]').setValue('n_positions');
+    await pickSelectOption(wrapper, '[data-test="suite-ov-side"]', 'short');
+    await pickSelectOption(wrapper, '[data-test="suite-ov-param"]', 'n_positions');
     await wrapper.find('[data-test="suite-ov-value"]').setValue('7');
     await wrapper.find('[data-test="suite-ov-confirm"]').trigger('click');
     expect(current(wrapper).scenarios[0]!.overrides).toEqual({ 'bot.short.n_positions': 7 });
@@ -171,13 +172,13 @@ describe('overrides (:698-798)', () => {
   it('parses true/false and keeps strings (:771-775)', async () => {
     const wrapper = editingWrapper();
     await wrapper.find('[data-test="suite-add-override"]').trigger('click');
-    await wrapper.find('[data-test="suite-ov-param"]').setValue('total_wallet_exposure_limit');
+    await pickSelectOption(wrapper, '[data-test="suite-ov-param"]', 'total_wallet_exposure_limit');
     await wrapper.find('[data-test="suite-ov-value"]').setValue('true');
     await wrapper.find('[data-test="suite-ov-confirm"]').trigger('click');
     expect(current(wrapper).scenarios[0]!.overrides).toEqual({ 'bot.long.total_wallet_exposure_limit': true });
 
     await wrapper.find('[data-test="suite-add-override"]').trigger('click');
-    await wrapper.find('[data-test="suite-ov-param"]').setValue('n_positions');
+    await pickSelectOption(wrapper, '[data-test="suite-ov-param"]', 'n_positions');
     await wrapper.find('[data-test="suite-ov-value"]').setValue('custom');
     await wrapper.find('[data-test="suite-ov-confirm"]').trigger('click');
     expect(current(wrapper).scenarios[0]!.overrides).toMatchObject({ 'bot.long.n_positions': 'custom' });
@@ -218,12 +219,12 @@ describe('foldDraft — suiteCollect auto-save (:183-184, called at :4769)', () 
 describe('aggregate (:861-953)', () => {
   it('changes the default method and adds/removes per-metric overrides', async () => {
     const wrapper = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }) });
-    await wrapper.find('[data-test="suite-agg-default"]').setValue('max');
+    await pickSelectOption(wrapper, '[data-test="suite-agg-default"]', 'max');
     expect(current(wrapper).aggregate).toEqual({ default: 'max' });
 
     await wrapper.find('[data-test="suite-agg-add"]').trigger('click');
-    await wrapper.find('[data-test="suite-agg-sel"]').setValue('drawdown_worst_strategy_eq');
-    await wrapper.find('[data-test="suite-agg-method"]').setValue('min');
+    await pickSelectOption(wrapper, '[data-test="suite-agg-sel"]', 'drawdown_worst_strategy_eq');
+    await pickSelectOption(wrapper, '[data-test="suite-agg-method"]', 'min');
     await wrapper.find('[data-test="suite-agg-confirm"]').trigger('click');
     expect(current(wrapper).aggregate).toEqual({ default: 'max', drawdown_worst_strategy_eq: 'min' });
 

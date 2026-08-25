@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { enableAutoUnmount } from '@vue/test-utils';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import TradfiEditor from './TradfiEditor.vue';
 import { useTradfiMap, type TradfiMapPayload } from '../../composables/useTradfiMap';
 import type { TradfiRow } from '../../lib/tradfiFilters';
@@ -41,6 +43,10 @@ function makeEditor(rows: TradfiRow[]) {
 afterEach(() => {
   document.body.innerHTML = '';
 });
+// Unmount before the body clear above (LIFO): clearing first destroys the
+// reka select teleport anchors and the deferred unmount then throws
+// removeFragment/insertBefore on null parents.
+enableAutoUnmount(afterEach);
 
 describe('the mapping editor (:3168-3217)', () => {
   it('stays hidden until opened (:5741-5745)', async () => {
@@ -72,10 +78,13 @@ describe('the mapping editor (:3168-3217)', () => {
     ]) {
       expect(wrapper.find(`#${id}`).exists(), id).toBe(true);
     }
-    expect(wrapper.find('#tradfi-editor-canonical-type').findAll('option').map((o) => o.element.value))
-      .toEqual(['equity_us', 'fx']);
-    expect(wrapper.find('#tradfi-editor-status').findAll('option').map((o) => o.element.value))
-      .toEqual(['ok', 'alias', 'pending']);
+    await openSelect(wrapper, '#tradfi-editor-canonical-type');
+    expect(selectOptionTexts()).toEqual(['equity_us', 'fx']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await openSelect(wrapper, '#tradfi-editor-status');
+    expect(selectOptionTexts()).toEqual(['ok', 'alias', 'pending']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   });
 
   it('shows the editingSavedMapping mode note for an in-map row (:6462)', async () => {
@@ -122,7 +131,7 @@ describe('the mapping editor (:3168-3217)', () => {
     await wrapper.find('#tradfi-editor-description').setValue('Tesla, Inc.');
     expect(map.editor.description).toBe('Tesla, Inc.');
     const invert = wrapper.find('#tradfi-editor-tiingo-fx-invert');
-    await invert.setValue(true);
+    await invert.trigger('click'); // fxInvert defaults to false — one click sets it
     expect(map.editor.fxInvert).toBe(true);
   });
 

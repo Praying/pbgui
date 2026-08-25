@@ -9,6 +9,11 @@ import { PhEye, PhEyeSlash, PhLinkSimple } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import BackButton from './BackButton.vue';
 import { useTradfi, type TradfiStore } from '../composables/useTradfi';
 import { injectToasts } from '../composables/useToasts';
@@ -66,20 +71,19 @@ onMounted(() => {
           </span>
         </div>
         <div style="display:flex; gap:8px;">
-          <button
-            class="btn pbgui-btn btn-sm"
-            :class="store.yfInstalled.value ? 'btn-danger' : 'btn-primary'"
+          <Button
+            type="button"
+            size="sm"
+            :variant="store.yfInstalled.value ? 'danger' : 'primary'"
             id="btnYfInstall"
-            :disabled="store.yfBusy.value"
+            :loading="store.yfBusy.value"
             @click="store.yfInstallToggle()"
           >
-            <span v-if="store.yfBusy.value" class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>
             {{ store.yfInstalled.value ? t('misc.apikeys.uninstall') : t('misc.apikeys.install') }}
-          </button>
-        <button class="btn pbgui-btn btn-sm btn-info" id="btnYfTest" v-show="store.yfInstalled.value" :disabled="store.yfBusy.value" @click="store.yfTest()">
-            <span v-if="store.yfBusy.value" class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>
+          </Button>
+        <Button type="button" variant="info" size="sm" id="btnYfTest" v-show="store.yfInstalled.value" :loading="store.yfBusy.value" @click="store.yfTest()">
             {{ t('misc.apikeys.test') }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -89,7 +93,7 @@ onMounted(() => {
       <span>{{ t('misc.apikeys.extendedProviderDesc') }}</span>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;">
         <span style="font-size:var(--fs-sm);color:var(--text-secondary);">{{ t('misc.apikeys.selectExactVaultProfile') }}</span>
-        <button class="btn pbgui-btn btn-sm btn-secondary" type="button" @click="store.newProfile()">{{ t('misc.apikeys.newProfile') }}</button>
+        <Button type="button" variant="secondary" size="sm" @click="store.newProfile()">{{ t('misc.apikeys.newProfile') }}</Button>
       </div>
       <div class="tradfi-profile-wrap my-3 overflow-x-auto rounded-md border border-border-subtle max-[768px]:max-w-full">
         <table class="tradfi-profile-table w-full min-w-[980px] border-collapse text-sm">
@@ -154,26 +158,32 @@ onMounted(() => {
       </div>
       <div class="tradfi-projection-status my-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-border-subtle bg-card px-3 py-2.5">
         <div class="tradfi-projection-copy min-w-0 text-sm text-secondary [overflow-wrap:anywhere]" id="tradfiProjectionStatus">{{ store.projectionText.value }}</div>
-        <button
-          class="btn pbgui-btn btn-sm btn-secondary"
+        <Button
+          variant="secondary"
+          size="sm"
           id="btnTradfiProjectionRetry"
           type="button"
           :disabled="store.actionBusy.value"
           @click="store.retryProjection()"
         >
           {{ t('misc.apikeys.retryPb7Projection') }}
-        </button>
+        </Button>
       </div>
       <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1" style="margin-top:12px;">
         <div class="form-group flex flex-col gap-1.5">
-          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.selectedProfileId') }}</label>
-          <input type="text" id="tradfiProfileId" class="min-h-[34px] px-2.5 py-1.5" readonly :value="store.profileId.value" :placeholder="t('misc.apikeys.newProfile')" />
+          <Label for="tradfiProfileId">{{ t('misc.apikeys.selectedProfileId') }}</Label>
+          <Input type="text" id="tradfiProfileId" readonly :model-value="store.profileId.value" :placeholder="t('misc.apikeys.newProfile')" />
         </div>
         <div class="form-group flex flex-col gap-1.5">
-          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.provider') }}</label>
-          <select id="tradfiProvider" class="min-h-[34px] px-2.5 py-1.5" v-model="store.provider.value" @change="store.onProviderChange()">
-            <option v-for="p in store.providers.value" :key="p" :value="p">{{ p }}</option>
-          </select>
+          <span id="tradfiProvider-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.provider') }}</span>
+          <SelectRoot :model-value="store.provider.value" @update:model-value="store.provider.value = $event; store.onProviderChange()">
+            <SelectTrigger id="tradfiProvider" aria-labelledby="tradfiProvider-label">
+              <span :class="store.provider.value ? undefined : 'text-placeholder'">{{ store.provider.value }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="p in store.providers.value" :key="p" :value="p">{{ p }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
           <a
             id="tradfiProviderLink"
             :href="store.providerLink.value ? store.providerLink.value.url : '#'"
@@ -186,78 +196,80 @@ onMounted(() => {
           </a>
         </div>
         <div class="form-group flex flex-col gap-1.5">
-          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.label') }}</label>
-          <input type="text" id="tradfiLabel" class="min-h-[34px] px-2.5 py-1.5" v-model="store.label.value" maxlength="120" :placeholder="t('misc.apikeys.profileLabel')" />
+          <Label for="tradfiLabel">{{ t('misc.apikeys.label') }}</Label>
+          <Input type="text" id="tradfiLabel" v-model="store.label.value" maxlength="120" :placeholder="t('misc.apikeys.profileLabel')" />
         </div>
         <div class="form-group flex flex-col gap-1.5" style="display:flex;gap:18px;align-items:center;padding-top:24px;">
-          <label style="display:flex;gap:6px;align-items:center;">
-            <input type="checkbox" id="tradfiShared" v-model="store.shared.value" />
+          <label style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+            <Checkbox id="tradfiShared" v-model="store.shared.value" />
             <span>{{ t('misc.apikeys.shared') }}</span>
           </label>
-          <label style="display:flex;gap:6px;align-items:center;">
-            <input type="checkbox" id="tradfiActive" v-model="store.active.value" />
+          <label style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+            <Checkbox id="tradfiActive" v-model="store.active.value" />
             <span>{{ t('misc.apikeys.active') }}</span>
           </label>
         </div>
         <div class="form-group flex flex-col gap-1.5">
-          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.apiKey') }}</label>
+          <Label for="tradfiApiKey">{{ t('misc.apikeys.apiKey') }}</Label>
           <div class="pw-wrap relative flex items-center">
-            <input id="tradfiApiKey" class="min-h-[34px] flex-1 py-1.5 pl-2.5 pr-9" v-model="store.apiKeyValue.value" :type="store.apiKeyVisible.value ? 'text' : 'password'" autocomplete="new-password" />
-            <button
+            <Input id="tradfiApiKey" class="flex-1 pr-9" v-model="store.apiKeyValue.value" :type="store.apiKeyVisible.value ? 'text' : 'password'" autocomplete="new-password" />
+            <Button
               type="button"
-              class="pw-eye-btn absolute right-2 border-none bg-transparent p-0 text-md leading-none text-muted cursor-pointer select-none hover:text-secondary"
+              variant="ghost"
+              class="pw-eye-btn absolute right-2 h-auto border-0 bg-transparent p-0 text-md leading-none font-normal text-muted hover:bg-transparent hover:text-secondary active:scale-100"
               :disabled="store.revealBusy.value"
               :aria-label="t('misc.apikeys.showHideStoredApiKey')"
               :title="t('misc.apikeys.showHideStoredApiKey')"
               @click="store.toggleApiKeyVisible()"
             >
               <PbIcon :icon="store.apiKeyVisible.value ? PhEyeSlash : PhEye" />
-            </button>
+            </Button>
           </div>
           <div style="font-size:var(--fs-xs);color:var(--text-secondary);margin-top:4px;">{{ t('misc.apikeys.clickEyeToReveal') }}</div>
         </div>
         <div class="form-group flex flex-col gap-1.5" id="tradfiSecretGroup">
-          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.apiSecret') }}</label>
+          <Label for="tradfiApiSecret">{{ t('misc.apikeys.apiSecret') }}</Label>
           <div class="pw-wrap relative flex items-center">
-            <input
+            <Input
               id="tradfiApiSecret"
-              class="min-h-[34px] flex-1 py-1.5 pl-2.5 pr-9 disabled:cursor-not-allowed disabled:opacity-50"
+              class="flex-1 pr-9"
               v-model="store.apiSecretValue.value"
               :type="secretVisible ? 'text' : 'password'"
               :disabled="!store.needsSecretNow.value"
               :placeholder="store.apiSecretPlaceholder.value"
             />
-            <button
+            <Button
               type="button"
-              class="pw-eye-btn absolute right-2 border-none bg-transparent p-0 text-md leading-none text-muted cursor-pointer select-none hover:text-secondary"
+              variant="ghost"
+              class="pw-eye-btn absolute right-2 h-auto border-0 bg-transparent p-0 text-md leading-none font-normal text-muted hover:bg-transparent hover:text-secondary active:scale-100"
               :aria-label="t('misc.apikeys.showHideStoredApiKey')"
               :title="t('misc.apikeys.showHideStoredApiKey')"
               @click="secretVisible = !secretVisible"
             >
               <PbIcon :icon="secretVisible ? PhEyeSlash : PhEye" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
       <p id="tradfiProviderNote" style="font-size:var(--fs-sm); color:var(--text-secondary); margin:4px 0 12px;">{{ store.providerNote.value }}</p>
       <p id="tradfiProfileStatus" style="font-size:var(--fs-sm); color:var(--text-secondary); margin:4px 0 12px;">{{ store.profileStatus.value }}</p>
       <div id="tradfiActions" class="max-[768px]:items-stretch" style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn pbgui-btn btn-sm btn-info max-[768px]:flex-[1_1_150px]" :disabled="store.actionBusy.value" @click="store.tradfiTest()">
+        <Button type="button" variant="info" size="sm" class="max-[768px]:flex-[1_1_150px]" :disabled="store.actionBusy.value" @click="store.tradfiTest()">
           <span v-if="store.testing.value === 'test'" class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>
           {{ t('misc.apikeys.testConnection') }}
-        </button>
-        <button class="btn pbgui-btn btn-sm btn-primary max-[768px]:flex-[1_1_150px]" :disabled="store.actionBusy.value" @click="store.tradfiSave(false)">
+        </Button>
+        <Button type="button" variant="primary" size="sm" id="btnTradfiSave" class="max-[768px]:flex-[1_1_150px]" :disabled="store.actionBusy.value" @click="store.tradfiSave(false)">
           {{ t('misc.apikeys.createUpdate') }}
-        </button>
-        <button class="btn pbgui-btn btn-sm btn-secondary max-[768px]:flex-[1_1_150px]" id="btnTradfiRotate" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiSave(true)">
+        </Button>
+        <Button type="button" variant="secondary" size="sm" class="max-[768px]:flex-[1_1_150px]" id="btnTradfiRotate" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiSave(true)">
           {{ t('misc.apikeys.rotateReplacement') }}
-        </button>
-        <button class="btn pbgui-btn btn-sm btn-secondary max-[768px]:flex-[1_1_150px]" id="btnTradfiToggle" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiToggleActive()">
+        </Button>
+        <Button type="button" variant="secondary" size="sm" class="max-[768px]:flex-[1_1_150px]" id="btnTradfiToggle" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiToggleActive()">
           {{ store.toggleLabel.value }}
-        </button>
-        <button class="btn pbgui-btn btn-sm btn-danger max-[768px]:flex-[1_1_150px]" id="btnTradfiDelete" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiClear()">
+        </Button>
+        <Button type="button" variant="danger" size="sm" class="max-[768px]:flex-[1_1_150px]" id="btnTradfiDelete" :disabled="store.actionBusy.value || !store.selectedProfile.value" @click="store.tradfiClear()">
           {{ t('misc.apikeys.deleteProfile') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

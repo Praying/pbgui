@@ -17,6 +17,8 @@ import { PhCaretDown, PhCaretRight } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import { apiBase } from '../config';
 import type { FetchSummaryData, PollerMetricsData } from '../types';
 
@@ -337,12 +339,12 @@ onUnmounted(stopPolling);
         </div>
 
         <div class="fs-filters">
-          <label class="fs-filter-label"><input type="checkbox" id="fs-f-balances" v-model="fBal">Balances</label>
-          <label class="fs-filter-label"><input type="checkbox" id="fs-f-positions" v-model="fPos">Positions</label>
-          <label class="fs-filter-label"><input type="checkbox" id="fs-f-orders" v-model="fOrd">Orders</label>
-          <label class="fs-filter-label"><input type="checkbox" id="fs-f-history" v-model="fHist">History</label>
-          <label class="fs-filter-label"><input type="checkbox" id="fs-f-execs" v-model="fExec">Executions</label>
-          <label class="fs-filter-label"><input type="checkbox" id="fs-f-wsonly" v-model="fWsOnly">WS only</label>
+          <label class="fs-filter-label"><Checkbox id="fs-f-balances" v-model="fBal" />Balances</label>
+          <label class="fs-filter-label"><Checkbox id="fs-f-positions" v-model="fPos" />Positions</label>
+          <label class="fs-filter-label"><Checkbox id="fs-f-orders" v-model="fOrd" />Orders</label>
+          <label class="fs-filter-label"><Checkbox id="fs-f-history" v-model="fHist" />History</label>
+          <label class="fs-filter-label"><Checkbox id="fs-f-execs" v-model="fExec" />Executions</label>
+          <label class="fs-filter-label"><Checkbox id="fs-f-wsonly" v-model="fWsOnly" />WS only</label>
         </div>
 
         <div class="fs-table-wrap" id="fs-table-wrap">
@@ -386,7 +388,7 @@ onUnmounted(stopPolling);
       <template v-else>
         <div class="pm-header">
           <span class="pm-title">Poller Metrics<span v-if="metrics.timestamp" class="fs-ts">{{ tsNote(metrics.timestamp) }} ago</span></span>
-          <button class="pm-toggle" @click="pmCollapsed = !pmCollapsed" id="pm-toggle-btn" type="button"><PbIcon :icon="pmCollapsed ? PhCaretRight : PhCaretDown" /> {{ pmCollapsed ? 'Show' : 'Hide' }}</button>
+          <Button variant="secondary" size="sm" @click="pmCollapsed = !pmCollapsed" id="pm-toggle-btn" type="button"><PbIcon :icon="pmCollapsed ? PhCaretRight : PhCaretDown" /> {{ pmCollapsed ? 'Show' : 'Hide' }}</Button>
         </div>
         <div id="pm-body" :style="pmCollapsed ? { display: 'none' } : {}">
           <div class="pm-section">
@@ -540,8 +542,6 @@ onUnmounted(stopPolling);
 .poller-metrics { padding: 0.5rem 1.5rem 1rem; }
 .pm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; margin-top: 0.5rem; }
 .pm-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 600; }
-.pm-toggle { background: var(--border-subtle); border: 1px solid var(--border-default); border-radius: 6px; color: var(--text-secondary); cursor: pointer; padding: 0.25rem 0.55rem; font-size: var(--fs-sm); }
-.pm-toggle:hover { background: var(--border-default); color: var(--text-primary); }
 .pm-section { margin-bottom: 0.75rem; }
 .pm-section-title { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
 .pm-table { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); }

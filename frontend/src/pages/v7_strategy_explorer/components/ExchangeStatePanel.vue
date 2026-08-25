@@ -7,6 +7,10 @@
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
 import { paramTooltip } from '../lib/params';
 import { deepGet, fmt } from '../lib/format';
 import type { ExplorerStore } from '../composables/useStrategyExplorer';
@@ -101,23 +105,25 @@ function fieldTip(key: StepperDef['key']): string {
       <h3 class="m-0">{{ t('v7explore.exchangeState') }}</h3>
       <div class="flex flex-wrap items-center gap-2.5">
         <span class="flex items-center gap-2 text-secondary text-sm">
-          <input id="auto-exchange-params" class="w-auto" v-model="store.state.autoExchangeParams" type="checkbox" @change="store.recalculate()">
+          <Checkbox id="auto-exchange-params" v-model="store.state.autoExchangeParams" @update:model-value="store.recalculate()" />
           <label for="auto-exchange-params">{{ t('v7explore.autoFillExchangeParams') }}</label>
         </span>
-        <button class="action-btn pbgui-action border border-border-default rounded-[7px] bg-elevated py-1.75 px-2.75 text-primary transition-[border-color,background-color,color] duration-150 ease-[ease] hover:border-accent/45 hover:bg-accent/10" id="btn-reset-exchange-params" type="button" @click="resetExchangeParams">{{ t('v7explore.resetExchangeParams') }}</button>
+        <Button class="action-btn" variant="default" id="btn-reset-exchange-params" type="button" @click="resetExchangeParams">{{ t('v7explore.resetExchangeParams') }}</Button>
       </div>
     </div>
+    <!-- ui-migration: out of scope — accordion disclosure chrome (the .accordion-head
+         pseudo-element chevron in App.vue's style block), not a form control -->
     <section class="accordion-card overflow-hidden rounded-lg border border-border-default bg-panel mt-2.5" :class="{ collapsed: !debugOpen }">
       <button class="accordion-head flex w-full items-center gap-2.5 border-0 bg-panel px-3 py-2.5 text-left text-primary" type="button" @click="debugOpen = !debugOpen">{{ t('v7explore.debugDataSources') }}</button>
       <div class="accordion-body border-t border-border-default p-3"><pre id="exchange-state-json" class="w-full max-h-[460px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border-default bg-page p-2.5 font-mono text-xs">{{ debugJson }}</pre></div>
     </section>
     <div class="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 mt-3 max-[1250px]:grid-cols-[1fr]" id="exchange-state-controls">
       <div v-for="def in steppers" :key="def.id" class="flex flex-col gap-1 col-span-6 max-[1250px]:col-span-full">
-        <label class="text-secondary text-xs uppercase tracking-[0.04em]" :for="def.id" :data-tip="fieldTip(def.key)">{{ def.label }}</label>
+        <Label :for="def.id" :data-tip="fieldTip(def.key)">{{ def.label }}</Label>
         <div class="flex">
-          <button type="button" class="w-[34px] rounded-l-md border-r-0 border border-border-default bg-elevated text-primary" @click="step(def, -1)">&minus;</button>
-          <input class="w-full min-w-0 min-h-8 rounded-none border border-border-default bg-page px-2 py-1.75 text-primary" :id="def.id" type="number" :step="def.step" :value="def.value" :data-tip="fieldTip(def.key)" @change="onStepperChange(def, $event)">
-          <button type="button" class="w-[34px] rounded-r-md border-l-0 border border-border-default bg-elevated text-primary" @click="step(def, 1)">+</button>
+          <Button type="button" class="w-[34px] shrink-0 rounded-r-none border-r-0 px-0" @click="step(def, -1)">&minus;</Button>
+          <Input class="rounded-none" :id="def.id" type="number" :step="def.step" :model-value="def.value" :data-tip="fieldTip(def.key)" @change="onStepperChange(def, $event)" />
+          <Button type="button" class="w-[34px] shrink-0 rounded-l-none border-l-0 px-0" @click="step(def, 1)">+</Button>
         </div>
         <div class="mt-1 mb-2.5 text-secondary text-xs">{{ def.sourceText }}</div>
       </div>

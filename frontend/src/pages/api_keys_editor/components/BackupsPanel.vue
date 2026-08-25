@@ -7,6 +7,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
+import { Button } from '@/shared/components/ui/button';
 import BackButton from './BackButton.vue';
 import DiffModal from './DiffModal.vue';
 import { pageFetch } from '../lib/pageApi';
@@ -165,15 +166,16 @@ async function openDiffSelected(): Promise<void> {
       <template v-else>
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
           <span style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ t('misc.apikeys.selectTwoToCompare') }}</span>
-          <button
-            class="btn pbgui-btn btn-sm btn-secondary"
+          <Button
+            variant="secondary"
+            size="sm"
+            type="button"
             id="btnDiffSelected"
             :disabled="selected.length !== 2"
-            :style="{ opacity: selected.length === 2 ? '1' : '0.4' }"
             @click="openDiffSelected"
           >
             <span v-if="comparing" class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>&#9654; {{ t('misc.apikeys.compareSelected') }}
-          </button>
+          </Button>
         </div>
         <table class="hl-expiry-table backup-compare-table w-full overflow-hidden rounded-md border border-border-subtle border-separate border-spacing-0">
           <thead>
@@ -203,9 +205,9 @@ async function openDiffSelected(): Promise<void> {
               <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><span class="badge-exchange inline-block rounded-full border border-secondary/14 bg-secondary/7 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-secondary">{{ b.target }}</span></td>
               <td class="border-b border-border-subtle px-2.5 py-2 text-sm">{{ b.size_kb }} KB</td>
               <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
-                <button class="btn pbgui-btn btn-sm btn-warning backup-restore-btn" type="button" @click.stop="restore(b.filename)">
+                <Button variant="warning" size="sm" class="backup-restore-btn" type="button" @click.stop="restore(b.filename)">
                   {{ t('misc.apikeys.restore') }}
-                </button>
+                </Button>
               </td>
             </tr>
           </tbody>

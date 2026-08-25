@@ -45,6 +45,14 @@ import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import BackupConfirmOverlay from './components/BackupConfirmOverlay.vue';
 import BackupPanel from './components/BackupPanel.vue';
 import ConfirmModal from './components/ConfirmModal.vue';
@@ -148,15 +156,20 @@ onBeforeUnmount(() => {
       <!-- Filters + instance actions: a top strip, not a sidebar. -->
       <div class="page-toolbar" role="toolbar">
         <span class="sb-label">{{ t('v7run.instances') }}&nbsp;<span class="sb-count" id="instance-count">{{ store.countText.value }}</span></span>
-        <input type="text" id="f-search" class="sb-input" v-model="store.filterSearch.value" :placeholder="t('v7run.searchPlaceholder')" />
-        <span class="sb-label">{{ t('v7run.status') }}</span>
-        <select id="f-status" class="sb-input" v-model="store.filterStatus.value">
-          <option v-for="filter in STATUS_FILTERS" :key="filter.value" :value="filter.value">{{ t(filter.key) }}</option>
-        </select>
+        <Input type="text" id="f-search" class="w-auto min-w-[160px]" v-model="store.filterSearch.value" :placeholder="t('v7run.searchPlaceholder')" />
+        <span class="sb-label" id="f-status-label">{{ t('v7run.status') }}</span>
+        <SelectRoot v-model="store.filterStatus.value">
+          <SelectTrigger id="f-status" class="w-auto min-w-[160px]" aria-labelledby="f-status-label">
+            <span>{{ t(STATUS_FILTERS.find((filter) => filter.value === store.filterStatus.value)?.key ?? STATUS_FILTERS[0]!.key) }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="filter in STATUS_FILTERS" :key="filter.value" :value="filter.value">{{ t(filter.key) }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
         <hr class="sb-sep">
-        <button class="sb-btn" @click="store.loadInstances()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('common.refresh') }}</button>
-        <button class="sb-btn" id="add-instance-btn" @click="store.addInstance()"><PbIcon :icon="PhPlus" /> {{ t(adapter.addInstanceKey) }}</button>
-        <button class="sb-btn" @click="backups.open()"><PbIcon :icon="PhFloppyDisk" /> {{ t('v7run.backups') }}</button>
+        <Button class="sb-btn" type="button" @click="store.loadInstances()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('common.refresh') }}</Button>
+        <Button class="sb-btn" id="add-instance-btn" type="button" @click="store.addInstance()"><PbIcon :icon="PhPlus" /> {{ t(adapter.addInstanceKey) }}</Button>
+        <Button class="sb-btn" type="button" @click="backups.open()"><PbIcon :icon="PhFloppyDisk" /> {{ t('v7run.backups') }}</Button>
       </div>
       <Pb8UpdateWarning :hosts="store.pb8Hosts.value" />
       <InstanceTable
@@ -189,7 +202,7 @@ onBeforeUnmount(() => {
       :text="t('v7run.deleteInstanceWarning')"
       :cancel-text="t('common.cancel')"
       :confirm-text="t('common.delete')"
-      confirm-class="bg-danger text-[#f2f5fb] border-danger hover:opacity-85"
+      confirm-variant="danger"
       :busy="store.deleteBusy.value"
       :busy-text="t('v7run.deleting')"
       @cancel="store.cancelDelete()"
@@ -204,7 +217,7 @@ onBeforeUnmount(() => {
       :text="t('v7run.forcedModeDetail', { mode: FORCED_MODES[store.pendingForced.value.mode]!.value })"
       :cancel-text="t('common.cancel')"
       :confirm-text="t(FORCED_MODES[store.pendingForced.value.mode]!.textKey)"
-      :confirm-class="FORCED_MODES[store.pendingForced.value.mode]!.cssClass"
+      :confirm-variant="FORCED_MODES[store.pendingForced.value.mode]!.variant"
       :busy="store.forcedBusy.value"
       :busy-text="t('v7run.syncing')"
       @cancel="store.cancelForcedMode()"

@@ -9,6 +9,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import { best1mHostRowClass, noteClass, settingsToggleClass } from '../../lib/uiClasses';
 import type { UseBest1m } from '../../composables/useBest1m';
 
@@ -41,14 +42,12 @@ function onKeydown(event: KeyboardEvent, hostname: string): void {
 
 <template>
   <div class="best1m-distributed-card grid gap-2 rounded-[10px] border border-accent/16 bg-page/45 p-3" id="best1m-distributed-card" :hidden="!cardVisible">
-    <label :class="settingsToggleClass">
-      <input
+    <label :class="[settingsToggleClass, 'cursor-pointer']">
+      <Checkbox
         id="best1m-distributed-enabled"
-        class="h-4 w-4 m-0"
-        type="checkbox"
         :disabled="toggleDisabled"
-        :checked="store.distributedEnabled.value && !!hosts.length"
-        @change="store.setDistributedEnabled(($event.target as HTMLInputElement).checked)"
+        :model-value="store.distributedEnabled.value && !!hosts.length"
+        @update:model-value="store.setDistributedEnabled($event === true)"
       />
       <span>{{ t('market.distributeBitgetBackfill') }}</span>
     </label>

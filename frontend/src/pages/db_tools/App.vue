@@ -30,6 +30,10 @@ import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import type { PageSection } from '@/shared/navigation';
 import type { StatusKind } from './composables/useDbTools';
@@ -102,6 +106,12 @@ function stringRows(values: string[], loadingKey?: string): Array<{ value: strin
 }
 
 /* ── target select helper ── */
+
+/** Closed-state trigger label for the target selects (the listbox options
+   mount lazily, so the trigger renders the text from the model). */
+function targetOptionText(id: string): string {
+  return store.targetOptions.value.find((option) => option.id === id)?.text ?? '';
+}
 
 function onTargetChange(source: 'users' | 'db' | 'dash', side: 'source' | 'target'): void {
   const pairs = {
@@ -241,23 +251,33 @@ onBeforeUnmount(() => store.teardown());
         <div class="grid gap-5 p-5">
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="cleanup-target">{{ t('misc.dbtools.targetMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="cleanup-target" v-model="store.cleanupTarget.value" @change="store.cleanupPreview.value = null; store.loadUsers(store.cleanupTarget.value, 'cleanup')">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="cleanup-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <SelectRoot :model-value="store.cleanupTarget.value" @update:model-value="store.cleanupTarget.value = $event; store.cleanupPreview.value = null; store.loadUsers(store.cleanupTarget.value, 'cleanup')">
+                <SelectTrigger id="cleanup-target" aria-labelledby="cleanup-target-label">
+                  <span :class="store.cleanupTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.cleanupTarget.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="cleanup-mode">{{ t('misc.dbtools.cleanupMode') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="cleanup-mode" v-model="store.cleanupMode.value">
-                <option value="all">{{ t('misc.dbtools.removeAllData') }}</option>
-                <option value="older">{{ t('misc.dbtools.removeOlderThan') }}</option>
-              </select>
+              <span id="cleanup-mode-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.cleanupMode') }}</span>
+              <SelectRoot v-model="store.cleanupMode.value">
+                <SelectTrigger id="cleanup-mode" aria-labelledby="cleanup-mode-label">
+                  <span>{{ store.cleanupMode.value === 'older' ? t('misc.dbtools.removeOlderThan') : t('misc.dbtools.removeAllData') }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{{ t('misc.dbtools.removeAllData') }}</SelectItem>
+                  <SelectItem value="older">{{ t('misc.dbtools.removeOlderThan') }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="cleanup-date">{{ t('misc.dbtools.cutoffDate') }}</label>
-              <div class="date-input-wrap">
-                <input id="cleanup-date" v-model="store.cleanupDate.value" type="text" placeholder="YYYY-MM-DD" autocomplete="off">
-                <button type="button" class="calendar-trigger" :title="t('misc.dbtools.openCalendar')" :aria-label="t('misc.dbtools.openCalendar')" @click="openCleanupCalendar"><PbIcon :icon="PhCalendar" /></button>
+              <span id="cleanup-date-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.cutoffDate') }}</span>
+              <div class="date-input-wrap flex items-center gap-1">
+                <Input id="cleanup-date" v-model="store.cleanupDate.value" type="text" placeholder="YYYY-MM-DD" autocomplete="off" aria-labelledby="cleanup-date-label" />
+                <Button type="button" variant="ghost" size="icon" class="calendar-trigger shrink-0" :title="t('misc.dbtools.openCalendar')" :aria-label="t('misc.dbtools.openCalendar')" @click="openCleanupCalendar"><PbIcon :icon="PhCalendar" /></Button>
               </div>
             </div>
           </div>
@@ -272,9 +292,9 @@ onBeforeUnmount(() => store.teardown());
             <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.users') }}</div></template>
           </SelectList>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="pbgui-btn btn-secondary rounded-lg font-bold hover:opacity-90" id="cleanup-refresh" @click="store.loadUsers(store.cleanupTarget.value, 'cleanup')">{{ t('misc.dbtools.refreshUsers') }}</button>
-            <button class="pbgui-btn btn-primary rounded-lg font-bold hover:opacity-90 border-accent bg-accent text-accent-contrast" id="cleanup-preview" @click="store.previewCleanup()">{{ t('misc.dbtools.preview') }}</button>
-            <button class="btn pbgui-btn btn-danger danger" id="cleanup-run" :disabled="!store.cleanupPreview.value" @click="store.runCleanup()">{{ t('misc.dbtools.runCleanup') }}</button>
+            <Button type="button" variant="secondary" id="cleanup-refresh" @click="store.loadUsers(store.cleanupTarget.value, 'cleanup')">{{ t('misc.dbtools.refreshUsers') }}</Button>
+            <Button type="button" variant="primary" id="cleanup-preview" @click="store.previewCleanup()">{{ t('misc.dbtools.preview') }}</Button>
+            <Button type="button" variant="danger" id="cleanup-run" :disabled="!store.cleanupPreview.value" @click="store.runCleanup()">{{ t('misc.dbtools.runCleanup') }}</Button>
           </div>
           <PanelBits
             status-id="cleanup-status"
@@ -295,23 +315,38 @@ onBeforeUnmount(() => store.teardown());
         <div class="grid gap-5 p-5">
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="users-source">{{ t('misc.dbtools.sourceMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="users-source" v-model="store.usersSource.value" @change="onTargetChange('users', 'source')">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="users-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+              <SelectRoot :model-value="store.usersSource.value" @update:model-value="store.usersSource.value = $event; onTargetChange('users', 'source')">
+                <SelectTrigger id="users-source" aria-labelledby="users-source-label">
+                  <span :class="store.usersSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.usersSource.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="users-target">{{ t('misc.dbtools.targetMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="users-target" v-model="store.usersTarget.value" @change="onTargetChange('users', 'target')">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="users-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <SelectRoot :model-value="store.usersTarget.value" @update:model-value="store.usersTarget.value = $event; onTargetChange('users', 'target')">
+                <SelectTrigger id="users-target" aria-labelledby="users-target-label">
+                  <span :class="store.usersTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.usersTarget.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="users-mode">{{ t('misc.dbtools.copyMode') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="users-mode" v-model="store.usersMode.value">
-                <option value="add_missing">{{ t('misc.dbtools.addOnlyMissing') }}</option>
-                <option value="replace">{{ t('misc.dbtools.replaceUserData') }}</option>
-              </select>
+              <span id="users-mode-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.copyMode') }}</span>
+              <SelectRoot v-model="store.usersMode.value">
+                <SelectTrigger id="users-mode" aria-labelledby="users-mode-label">
+                  <span>{{ store.usersMode.value === 'replace' ? t('misc.dbtools.replaceUserData') : t('misc.dbtools.addOnlyMissing') }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add_missing">{{ t('misc.dbtools.addOnlyMissing') }}</SelectItem>
+                  <SelectItem value="replace">{{ t('misc.dbtools.replaceUserData') }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
           </div>
           <SelectList
@@ -325,9 +360,9 @@ onBeforeUnmount(() => store.teardown());
             <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.usersFromSource') }}</div></template>
           </SelectList>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="pbgui-btn btn-secondary rounded-lg font-bold hover:opacity-90" id="users-refresh" @click="store.loadUsers(store.usersSource.value, 'copy')">{{ t('misc.dbtools.refreshSourceUsers') }}</button>
-            <button class="pbgui-btn btn-primary rounded-lg font-bold hover:opacity-90 border-accent bg-accent text-accent-contrast" id="users-preview" @click="store.previewCopyUsers()">{{ t('misc.dbtools.preview') }}</button>
-            <button class="pbgui-btn btn-warning rounded-lg font-bold hover:opacity-90 border-warning-deep bg-warning-deep text-warning-soft" id="users-run" :disabled="!store.usersPreview.value" @click="store.runCopyUsers()">{{ t('misc.dbtools.copyUsers') }}</button>
+            <Button type="button" variant="secondary" id="users-refresh" @click="store.loadUsers(store.usersSource.value, 'copy')">{{ t('misc.dbtools.refreshSourceUsers') }}</Button>
+            <Button type="button" variant="primary" id="users-preview" @click="store.previewCopyUsers()">{{ t('misc.dbtools.preview') }}</Button>
+            <Button type="button" variant="warning" id="users-run" :disabled="!store.usersPreview.value" @click="store.runCopyUsers()">{{ t('misc.dbtools.copyUsers') }}</Button>
           </div>
           <PanelBits
             status-id="users-status"
@@ -350,21 +385,31 @@ onBeforeUnmount(() => store.teardown());
           <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft" v-html="t('misc.dbtools.copyDbNotice')"></div>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="db-source">{{ t('misc.dbtools.sourceMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="db-source" v-model="store.dbSource.value" @change="onTargetChange('db', 'source')">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="db-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+              <SelectRoot :model-value="store.dbSource.value" @update:model-value="store.dbSource.value = $event; onTargetChange('db', 'source')">
+                <SelectTrigger id="db-source" aria-labelledby="db-source-label">
+                  <span :class="store.dbSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dbSource.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="db-target">{{ t('misc.dbtools.targetMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="db-target" v-model="store.dbTarget.value" @change="onTargetChange('db', 'target')">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="db-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <SelectRoot :model-value="store.dbTarget.value" @update:model-value="store.dbTarget.value = $event; onTargetChange('db', 'target')">
+                <SelectTrigger id="db-target" aria-labelledby="db-target-label">
+                  <span :class="store.dbTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dbTarget.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="pbgui-btn btn-primary rounded-lg font-bold hover:opacity-90 border-accent bg-accent text-accent-contrast" id="db-preview" @click="store.previewCopyDb()">{{ t('misc.dbtools.preview') }}</button>
-            <button class="pbgui-btn btn-danger rounded-lg font-bold hover:opacity-90 border-danger-deep bg-danger-deep text-danger-soft" id="db-run" :disabled="!store.dbPreview.value" @click="store.runCopyDb()">{{ t('misc.dbtools.copyDatabase') }}</button>
+            <Button type="button" variant="primary" id="db-preview" @click="store.previewCopyDb()">{{ t('misc.dbtools.preview') }}</Button>
+            <Button type="button" variant="danger" id="db-run" :disabled="!store.dbPreview.value" @click="store.runCopyDb()">{{ t('misc.dbtools.copyDatabase') }}</Button>
           </div>
           <PanelBits
             status-id="db-status"
@@ -388,8 +433,8 @@ onBeforeUnmount(() => store.teardown());
             <div class="flex items-center justify-between gap-2 border-b border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
               <div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.configuredSyncJobs') }}</div>
               <div class="flex gap-1">
-                <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" id="sync-reload" @click="store.loadSyncJobs()">{{ t('misc.dbtools.reload') }}</button>
-                <button class="pbgui-btn btn-primary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90 border-accent bg-accent text-accent-contrast" id="sync-new" @click="store.newSyncJob()">{{ t('misc.dbtools.newJob') }}</button>
+                <Button type="button" variant="secondary" size="sm" id="sync-reload" @click="store.loadSyncJobs()">{{ t('misc.dbtools.reload') }}</Button>
+                <Button type="button" variant="primary" size="sm" id="sync-new" @click="store.newSyncJob()">{{ t('misc.dbtools.newJob') }}</Button>
               </div>
             </div>
             <div class="block max-h-[300px] select-none overflow-auto p-0" id="sync-job-list">
@@ -424,7 +469,7 @@ onBeforeUnmount(() => store.teardown());
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ shortSyncTimeText(row.job.next_run) }}</span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ (row.job.users || []).length }}</span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                  <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" type="button" :data-log-job="row.job.id" @click.stop="openJobLog(row.job.id)">{{ t('misc.dbtools.log') }}</button>
+                  <Button variant="secondary" size="sm" type="button" :data-log-job="row.job.id" @click.stop="openJobLog(row.job.id)">{{ t('misc.dbtools.log') }}</Button>
                 </span>
               </div>
             </div>
@@ -433,27 +478,32 @@ onBeforeUnmount(() => store.teardown());
           <div class="hidden gap-5" id="sync-editor" :class="store.syncEditorVisible.value ? 'visible grid gap-5' : 'hidden'">
             <div class="flex items-center justify-between gap-3 rounded-[10px] border border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
               <div class="font-black text-primary" id="sync-editor-title">{{ store.syncEditorTitle.value || t('misc.dbtools.newSyncJob') }}</div>
-              <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" id="sync-close" @click="store.closeSyncEditor()">{{ t('misc.dbtools.closeEditor') }}</button>
+              <Button type="button" variant="secondary" size="sm" id="sync-close" @click="store.closeSyncEditor()">{{ t('misc.dbtools.closeEditor') }}</Button>
             </div>
             <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
               <div class="grid gap-1.5">
                 <label class="text-sm font-bold text-secondary" for="sync-name">{{ t('misc.dbtools.jobName') }}</label>
-                <input id="sync-name" v-model="store.syncName.value" type="text" placeholder="e.g. manibot01 to replicas">
+                <Input id="sync-name" v-model="store.syncName.value" type="text" placeholder="e.g. manibot01 to replicas" />
               </div>
               <div class="grid gap-1.5">
-                <label class="text-sm font-bold text-secondary" for="sync-source">{{ t('misc.dbtools.sourceMaster') }}</label>
-                <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="sync-source" v-model="store.syncSource.value" @change="store.loadUsers(store.syncSource.value, 'sync')">
-                  <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-                </select>
+                <span id="sync-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+                <SelectRoot :model-value="store.syncSource.value" @update:model-value="store.syncSource.value = $event; store.loadUsers(store.syncSource.value, 'sync')">
+                  <SelectTrigger id="sync-source" aria-labelledby="sync-source-label">
+                    <span :class="store.syncSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.syncSource.value) }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </div>
               <div class="grid gap-1.5">
                 <label class="text-sm font-bold text-secondary" for="sync-interval">{{ t('misc.dbtools.intervalSeconds') }}</label>
-                <input id="sync-interval" v-model="store.syncInterval.value" type="number" min="30" step="30">
+                <Input id="sync-interval" v-model="store.syncInterval.value" type="number" min="30" step="30" />
               </div>
               <div class="grid gap-1.5">
                 <label>{{ t('misc.dbtools.status') }}</label>
-                <label class="inline-flex min-h-8 items-center gap-2 font-bold text-primary">
-                  <input id="sync-enabled" v-model="store.syncEnabled.value" type="checkbox">
+                <label class="inline-flex min-h-8 cursor-pointer items-center gap-2 font-bold text-primary">
+                  <Checkbox id="sync-enabled" v-model="store.syncEnabled.value" />
                   <span>{{ t('common.enabled') }}</span>
                 </label>
               </div>
@@ -480,11 +530,11 @@ onBeforeUnmount(() => store.teardown());
               </SelectList>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <button class="pbgui-btn btn-secondary rounded-lg font-bold hover:opacity-90" id="sync-refresh-users" @click="store.loadUsers(store.syncSource.value, 'sync')">{{ t('misc.dbtools.refreshUsers') }}</button>
-              <button class="pbgui-btn btn-primary rounded-lg font-bold hover:opacity-90 border-accent bg-accent text-accent-contrast" id="sync-safety" @click="store.checkSyncSafety()">{{ t('misc.dbtools.checkSafety') }}</button>
-              <button class="pbgui-btn btn-warning rounded-lg font-bold hover:opacity-90 border-warning-deep bg-warning-deep text-warning-soft" id="sync-save" @click="store.saveSyncJob()">{{ t('misc.dbtools.saveJob') }}</button>
-              <button class="pbgui-btn btn-primary rounded-lg font-bold hover:opacity-90 border-accent bg-accent text-accent-contrast" id="sync-run" @click="store.runSyncJobNow()">{{ t('misc.dbtools.runNow') }}</button>
-              <button class="pbgui-btn btn-danger rounded-lg font-bold hover:opacity-90 border-danger-deep bg-danger-deep text-danger-soft" id="sync-delete" @click="store.deleteSyncJob()">{{ t('misc.dbtools.deleteJob') }}</button>
+              <Button type="button" variant="secondary" id="sync-refresh-users" @click="store.loadUsers(store.syncSource.value, 'sync')">{{ t('misc.dbtools.refreshUsers') }}</Button>
+              <Button type="button" variant="primary" id="sync-safety" @click="store.checkSyncSafety()">{{ t('misc.dbtools.checkSafety') }}</Button>
+              <Button type="button" variant="warning" id="sync-save" @click="store.saveSyncJob()">{{ t('misc.dbtools.saveJob') }}</Button>
+              <Button type="button" variant="primary" id="sync-run" @click="store.runSyncJobNow()">{{ t('misc.dbtools.runNow') }}</Button>
+              <Button type="button" variant="danger" id="sync-delete" @click="store.deleteSyncJob()">{{ t('misc.dbtools.deleteJob') }}</Button>
             </div>
           </div>
 
@@ -513,10 +563,15 @@ onBeforeUnmount(() => store.teardown());
           <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft">{{ t('misc.dbtools.restoreNotice') }}</div>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="backup-target">{{ t('misc.dbtools.backupMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="backup-target" v-model="store.backupTarget.value" @change="store.loadBackups()">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="backup-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.backupMaster') }}</span>
+              <SelectRoot :model-value="store.backupTarget.value" @update:model-value="store.backupTarget.value = $event; store.loadBackups()">
+                <SelectTrigger id="backup-target" aria-labelledby="backup-target-label">
+                  <span :class="store.backupTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.backupTarget.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
           </div>
           <div class="flex min-h-0 flex-col overflow-hidden rounded-[10px] border border-border-subtle bg-page">
@@ -524,23 +579,24 @@ onBeforeUnmount(() => store.teardown());
               <div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.databaseBackups') }}</div>
               <div class="flex gap-1">
                 <span class="mr-2 self-center text-xs font-extrabold text-secondary" id="backup-total-summary">{{ backupSummary }}</span>
-                <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" @click="store.backupSelected.value = backupRows.map((row) => row.name)">{{ t('common.all') }}</button>
-                <button class="pbgui-btn btn-secondary h-6 rounded-md px-2 text-xs font-bold hover:opacity-90" @click="store.backupSelected.value = []">{{ t('common.none') }}</button>
+                <Button type="button" variant="secondary" size="sm" @click="store.backupSelected.value = backupRows.map((row) => row.name)">{{ t('common.all') }}</Button>
+                <Button type="button" variant="secondary" size="sm" @click="store.backupSelected.value = []">{{ t('common.none') }}</Button>
               </div>
             </div>
             <div id="backup-list" class="min-h-[360px] flex-1 select-none overflow-auto p-0">
               <div class="grid min-w-[980px] grid-cols-[180px_150px_120px_110px_minmax(300px,1fr)] items-center gap-3 sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-extrabold tracking-[0.06em] text-secondary uppercase">
-                <button type="button" @click="store.toggleBackupSort('created')">{{ t('misc.dbtools.created') }}{{ sortMark('created') }}</button>
-                <button type="button" @click="store.toggleBackupSort('label')">{{ t('misc.dbtools.operation') }}{{ sortMark('label') }}</button>
-                <button type="button" @click="store.toggleBackupSort('db')">{{ t('misc.dbtools.file') }}{{ sortMark('db') }}</button>
-                <button type="button" @click="store.toggleBackupSort('size')">{{ t('misc.dbtools.size') }}{{ sortMark('size') }}</button>
-                <button type="button" @click="store.toggleBackupSort('name')">{{ t('misc.dbtools.backupName') }}{{ sortMark('name') }}</button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('created')">{{ t('misc.dbtools.created') }}{{ sortMark('created') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('label')">{{ t('misc.dbtools.operation') }}{{ sortMark('label') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('db')">{{ t('misc.dbtools.file') }}{{ sortMark('db') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('size')">{{ t('misc.dbtools.size') }}{{ sortMark('size') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('name')">{{ t('misc.dbtools.backupName') }}{{ sortMark('name') }}</Button>
               </div>
               <div v-if="!backupRows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noBackupsFound') }}</div>
-              <button
+              <Button
                 v-for="row in backupRows"
                 :key="row.name"
-                class="backup-row grid min-w-[980px] min-h-[42px] grid-cols-[180px_150px_120px_110px_minmax(300px,1fr)] items-center gap-3 w-full cursor-pointer border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left text-primary font-inherit hover:bg-white/3"
+                variant="ghost"
+                class="backup-row grid min-w-[980px] min-h-[42px] grid-cols-[180px_150px_120px_110px_minmax(300px,1fr)] items-center gap-3 w-full justify-start rounded-none border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left font-normal text-primary font-inherit hover:bg-white/3"
                 type="button"
                 :class="store.backupSelected.value.includes(row.name) ? 'selected bg-accent/12 text-[#f2f5fb] shadow-[inset_3px_0_0_#72a0ee] pl-2' : ''"
                 :data-value="row.name"
@@ -552,13 +608,13 @@ onBeforeUnmount(() => store.teardown());
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"><span class="inline-flex items-center rounded-full border border-accent/24 bg-accent/9 px-2 py-px text-xs font-extrabold text-accent-soft">{{ row.dbLabel }}</span></span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-right font-extrabold text-primary">{{ row.sizeLabel }}</span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-secondary">{{ row.name }}</span>
-              </button>
+              </Button>
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="pbgui-btn btn-secondary rounded-lg font-bold hover:opacity-90" id="backup-refresh" @click="store.loadBackups()">{{ t('misc.dbtools.refreshBackups') }}</button>
-            <button class="pbgui-btn btn-warning rounded-lg font-bold hover:opacity-90 border-warning-deep bg-warning-deep text-warning-soft" id="backup-restore" @click="store.runBackupRestore()">{{ t('misc.dbtools.restoreSelected') }}</button>
-            <button class="pbgui-btn btn-danger rounded-lg font-bold hover:opacity-90 border-danger-deep bg-danger-deep text-danger-soft" id="backup-delete" @click="store.runBackupDelete()">{{ t('misc.dbtools.deleteSelected') }}</button>
+            <Button type="button" variant="secondary" id="backup-refresh" @click="store.loadBackups()">{{ t('misc.dbtools.refreshBackups') }}</Button>
+            <Button type="button" variant="warning" id="backup-restore" @click="store.runBackupRestore()">{{ t('misc.dbtools.restoreSelected') }}</Button>
+            <Button type="button" variant="danger" id="backup-delete" @click="store.runBackupDelete()">{{ t('misc.dbtools.deleteSelected') }}</Button>
           </div>
           <PanelBits
             status-id="backup-status"
@@ -579,23 +635,38 @@ onBeforeUnmount(() => store.teardown());
         <div class="grid gap-5 p-5">
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="dash-source">{{ t('misc.dbtools.sourceMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="dash-source" v-model="store.dashSource.value" @change="onTargetChange('dash', 'source'); store.loadDashboards()">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="dash-source-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.sourceMaster') }}</span>
+              <SelectRoot :model-value="store.dashSource.value" @update:model-value="store.dashSource.value = $event; onTargetChange('dash', 'source'); store.loadDashboards()">
+                <SelectTrigger id="dash-source" aria-labelledby="dash-source-label">
+                  <span :class="store.dashSource.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dashSource.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="dash-target">{{ t('misc.dbtools.targetMaster') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="dash-target" v-model="store.dashTarget.value" @change="onTargetChange('dash', 'target')">
-                <option v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</option>
-              </select>
+              <span id="dash-target-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.targetMaster') }}</span>
+              <SelectRoot :model-value="store.dashTarget.value" @update:model-value="store.dashTarget.value = $event; onTargetChange('dash', 'target')">
+                <SelectTrigger id="dash-target" aria-labelledby="dash-target-label">
+                  <span :class="store.dashTarget.value ? undefined : 'text-placeholder'">{{ targetOptionText(store.dashTarget.value) }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in store.targetOptions.value" :key="option.id" :value="option.id">{{ option.text }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div class="grid gap-1.5">
-              <label class="text-sm font-bold text-secondary" for="dash-mode">{{ t('misc.dbtools.copyMode') }}</label>
-              <select class="h-8 w-full rounded-lg border border-border-default bg-page px-[0.65rem]" id="dash-mode" v-model="store.dashMode.value">
-                <option value="add_missing">{{ t('misc.dbtools.addOnlyMissing') }}</option>
-                <option value="replace_all">{{ t('misc.dbtools.replaceAllSelected') }}</option>
-              </select>
+              <span id="dash-mode-label" class="text-sm font-bold text-secondary">{{ t('misc.dbtools.copyMode') }}</span>
+              <SelectRoot v-model="store.dashMode.value">
+                <SelectTrigger id="dash-mode" aria-labelledby="dash-mode-label">
+                  <span>{{ store.dashMode.value === 'replace_all' ? t('misc.dbtools.replaceAllSelected') : t('misc.dbtools.addOnlyMissing') }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add_missing">{{ t('misc.dbtools.addOnlyMissing') }}</SelectItem>
+                  <SelectItem value="replace_all">{{ t('misc.dbtools.replaceAllSelected') }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
           </div>
           <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
@@ -619,9 +690,9 @@ onBeforeUnmount(() => store.teardown());
             </SelectList>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <button class="pbgui-btn btn-secondary rounded-lg font-bold hover:opacity-90" id="dash-refresh" @click="store.loadDashboards()">{{ t('misc.dbtools.refreshSourceItems') }}</button>
-            <button class="pbgui-btn btn-primary rounded-lg font-bold hover:opacity-90 border-accent bg-accent text-accent-contrast" id="dash-preview" @click="store.previewCopyDashboards()">{{ t('misc.dbtools.preview') }}</button>
-            <button class="pbgui-btn btn-warning rounded-lg font-bold hover:opacity-90 border-warning-deep bg-warning-deep text-warning-soft" id="dash-run" :disabled="!store.dashPreview.value" @click="store.runCopyDashboards()">{{ t('misc.dbtools.copyDashboards') }}</button>
+            <Button type="button" variant="secondary" id="dash-refresh" @click="store.loadDashboards()">{{ t('misc.dbtools.refreshSourceItems') }}</Button>
+            <Button type="button" variant="primary" id="dash-preview" @click="store.previewCopyDashboards()">{{ t('misc.dbtools.preview') }}</Button>
+            <Button type="button" variant="warning" id="dash-run" :disabled="!store.dashPreview.value" @click="store.runCopyDashboards()">{{ t('misc.dbtools.copyDashboards') }}</Button>
           </div>
           <PanelBits
             status-id="dash-status"

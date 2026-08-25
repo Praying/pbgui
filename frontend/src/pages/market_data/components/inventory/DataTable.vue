@@ -12,7 +12,7 @@
  * (toggleInventorySort :7967-7977 lives in the store).
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { inventorySortBtnClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
 import type { InventoryColumn } from '../../lib/inventoryColumns';
 import { formatInventoryTableValue } from '../../lib/inventoryColumns';
 import type { InventoryRow } from '../../lib/inventoryTypes';
@@ -131,12 +131,15 @@ function cellText(columnKey: string, row: InventoryRow): string {
       <thead>
         <tr>
           <th v-for="column in columns" :key="column.key" class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel py-[0.55rem] px-[0.75rem] text-left align-top text-xs font-semibold uppercase tracking-[0.08em] text-secondary">
-            <button
-              :class="inventorySortBtnClass(column.key === sortKey)"
+            <Button
+              variant="ghost"
+              size="sm"
+              class="inventory-sort-btn p-0"
+              :class="{ 'is-active text-success-soft': column.key === sortKey }"
               type="button"
               :data-sort-key="column.key"
               @click="emit('sort', column.key)"
-            >{{ column.label }}<span v-if="column.key === sortKey" class="inventory-sort-indicator text-xs tracking-normal text-accent">{{ sortDirection === 'desc' ? 'DESC' : 'ASC' }}</span></button>
+            >{{ column.label }}<span v-if="column.key === sortKey" class="inventory-sort-indicator text-xs tracking-normal text-accent">{{ sortDirection === 'desc' ? 'DESC' : 'ASC' }}</span></Button>
           </th>
         </tr>
       </thead>

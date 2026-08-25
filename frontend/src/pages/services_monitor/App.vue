@@ -71,6 +71,7 @@ import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import AppShell from '@/shared/components/AppShell.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
 import { SERVICES } from './services';
 import { apiBase } from './config';
 import { cmcFetch } from './cmc';
@@ -693,7 +694,7 @@ onUnmounted(() => {
     </template>
 
     <template #header-actions>
-      <button class="pbgui-action" type="button" @click="refreshAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
+      <Button type="button" size="sm" @click="refreshAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button>
     </template>
 
   <div id="page-body">
@@ -1090,47 +1091,6 @@ body {
 #overview-grid .card-buttons {
   margin-top: auto;
   gap: 6px;
-}
-
-#overview-grid .card-btn {
-  min-height: 29px;
-  padding: 0 10px;
-  border-color: rgb(var(--text-secondary-rgb) / 0.16);
-  border-radius: 7px;
-  background: rgb(var(--text-secondary-rgb) / 0.08);
-  color: var(--text-secondary);
-  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
-}
-
-#overview-grid .card-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: rgb(var(--accent-rgb) / 0.36);
-  background: rgb(var(--accent-rgb) / 0.16);
-  color: var(--text-secondary);
-}
-
-#overview-grid .card-btn.start {
-  border-color: rgb(var(--success-rgb) / 0.32);
-  background: rgb(var(--success-rgb) / 0.12);
-  color: var(--success-soft);
-}
-
-#overview-grid .card-btn.stop {
-  border-color: rgb(var(--danger-rgb) / 0.32);
-  background: rgb(var(--danger-rgb) / 0.15);
-  color: var(--danger-soft);
-}
-
-#overview-grid .card-btn.restart {
-  border-color: rgb(var(--warning-rgb) / 0.32);
-  background: rgb(var(--warning-rgb) / 0.14);
-  color: var(--warning-soft);
-}
-
-#overview-grid .card-btn.enable {
-  border-color: rgb(var(--accent-rgb) / 0.32);
-  background: rgb(var(--accent-rgb) / 0.14);
-  color: var(--accent-soft);
 }
 
 .result-modal {

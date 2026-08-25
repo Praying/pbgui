@@ -60,6 +60,8 @@ import { PhChartBar, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { apiBase } from '../config';
 import type { PriceRow } from '../types';
 
@@ -199,11 +201,11 @@ defineExpose({
     <div id="prices-overlay-title" @mousedown="onTitleMouseDown">
       <span><PbIcon :icon="PhChartBar" /> <span>{{ t('sysmon.priceSnapshot') }}</span></span>
       <div style="display: flex; gap: 0.4rem; align-items: center">
-        <button class="po-btn" type="button" :title="t('common.close')" :aria-label="t('common.close')" @click="closeOverlay"><PbIcon :icon="PhX" /></button>
+        <Button class="po-btn" variant="secondary" size="sm" type="button" :title="t('common.close')" :aria-label="t('common.close')" @click="closeOverlay"><PbIcon :icon="PhX" /></Button>
       </div>
     </div>
     <div style="padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0">
-      <label class="po-search-wrap" for="po-search"><PbIcon :icon="PhMagnifyingGlass" /><input type="text" class="po-search" id="po-search" :placeholder="t('sysmon.filterSymbols')" :aria-label="t('sysmon.filterSymbols')" v-model="query"></label>
+      <label class="po-search-wrap" for="po-search"><PbIcon :icon="PhMagnifyingGlass" /><Input type="text" id="po-search" :placeholder="t('sysmon.filterSymbols')" :aria-label="t('sysmon.filterSymbols')" v-model="query" /></label>
     </div>
     <div id="prices-overlay-body">
       <div v-if="loading && !rows.length" class="po-note">{{ t('sysmon.loading') }}</div>
@@ -274,20 +276,6 @@ defineExpose({
   font-weight: 600;
   color: var(--text-primary);
 }
-.po-btn {
-  background: var(--border-subtle);
-  border: 1px solid var(--border-default);
-  border-radius: 5px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0.2rem 0.5rem;
-  font-size: var(--fs-sm);
-  line-height: 1.4;
-}
-.po-btn:hover {
-  background: var(--border-default);
-  color: var(--text-primary);
-}
 #prices-overlay-body {
   flex: 1;
   overflow-y: auto;
@@ -316,25 +304,11 @@ defineExpose({
 .po-table tr:hover td {
   background: var(--bg-page);
 }
-.po-search {
-  width: 100%;
-  box-sizing: border-box;
-  background: var(--bg-page);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  color: var(--text-primary);
-  font-size: var(--fs-xs);
-  padding: 0.3rem 0.6rem;
-  outline: none;
-}
 .po-search-wrap {
   display: flex;
   align-items: center;
   gap: 0.45rem;
   color: var(--text-muted);
-}
-.po-search:focus {
-  border-color: var(--success);
 }
 .po-note {
   color: var(--text-disabled);

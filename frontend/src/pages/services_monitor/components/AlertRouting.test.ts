@@ -83,7 +83,7 @@ describe('AlertRouting rendering (legacy renderAlertRoutingSettings)', () => {
   it('renders exactly the 13 legacy checkbox ids (legacy ids array, any DOM order)', () => {
     const wrapper = mountRouting();
 
-    const ids = wrapper.findAll('input[type="checkbox"]').map((el) => el.attributes('id'));
+    const ids = wrapper.findAll('[role="checkbox"]').map((el) => el.attributes('id'));
     // The legacy collectAlertRoutingFromForm ids array only keys the payload;
     // the DOM renders gui + telegram per group. Assert the exact set.
     expect(ids).toHaveLength(13);
@@ -135,7 +135,7 @@ describe('AlertRouting rendering (legacy renderAlertRoutingSettings)', () => {
     const wrapper = mountRouting();
 
     for (const id of ALL_ROUTING_IDS) {
-      expect((checkbox(wrapper, id).element as HTMLInputElement).checked, id).toBe(true);
+      expect(checkbox(wrapper, id).attributes('data-state'), id).toBe('checked');
     }
   });
 
@@ -147,11 +147,11 @@ describe('AlertRouting rendering (legacy renderAlertRoutingSettings)', () => {
       instance_recovered_telegram: true,
     });
 
-    expect((checkbox(wrapper, 'offline_gui').element as HTMLInputElement).checked).toBe(false);
-    expect((checkbox(wrapper, 'service_restart_started_telegram').element as HTMLInputElement).checked).toBe(false);
+    expect(checkbox(wrapper, 'offline_gui').attributes('data-state')).toBe('unchecked');
+    expect(checkbox(wrapper, 'service_restart_started_telegram').attributes('data-state')).toBe('unchecked');
     for (const id of ALL_ROUTING_IDS) {
       if (id === 'offline_gui' || id === 'service_restart_started_telegram') continue;
-      expect((checkbox(wrapper, id).element as HTMLInputElement).checked, id).toBe(true);
+      expect(checkbox(wrapper, id).attributes('data-state'), id).toBe('checked');
     }
   });
 });
@@ -161,7 +161,7 @@ describe('AlertRouting editing (emit chain for collectAlertRoutingFromForm)', ()
     const original = { offline_gui: true, ssh_lost_telegram: false };
     const wrapper = mountRouting(original);
 
-    await checkbox(wrapper, 'ssh_lost_telegram').setValue(true);
+    await checkbox(wrapper, 'ssh_lost_telegram').trigger('click');
 
     const emitted = wrapper.emitted('update:routing');
     expect(emitted).toHaveLength(1);
@@ -173,7 +173,7 @@ describe('AlertRouting editing (emit chain for collectAlertRoutingFromForm)', ()
   it('toggles a default-checked box to false', async () => {
     const wrapper = mountRouting({});
 
-    await checkbox(wrapper, 'service_gui').setValue(false);
+    await checkbox(wrapper, 'service_gui').trigger('click');
 
     expect(wrapper.emitted('update:routing')![0]).toEqual([{ service_gui: false }]);
   });
@@ -181,7 +181,7 @@ describe('AlertRouting editing (emit chain for collectAlertRoutingFromForm)', ()
   it('toggles an unchecked box back to true', async () => {
     const wrapper = mountRouting({ system_problem_telegram: false });
 
-    await checkbox(wrapper, 'system_problem_telegram').setValue(true);
+    await checkbox(wrapper, 'system_problem_telegram').trigger('click');
 
     expect(wrapper.emitted('update:routing')![0]).toEqual([{ system_problem_telegram: true }]);
   });

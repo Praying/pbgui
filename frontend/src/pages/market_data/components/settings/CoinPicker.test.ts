@@ -207,7 +207,7 @@ describe('interactions', () => {
 
   it('auto-enable checkbox change drives the store (:9631-9635)', async () => {
     const { wrapper, store } = await mountPicker();
-    await wrapper.find('#settings-auto-enable-new-coins').setValue(true);
+    await wrapper.find('#settings-auto-enable-new-coins').trigger('click');
     expect(store.autoEnableNewCoins.value).toBe(true);
     expect(store.selectedCoins.value.size).toBe(3);
   });

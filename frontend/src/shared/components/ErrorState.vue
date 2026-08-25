@@ -2,6 +2,7 @@
 import { PhArrowClockwise, PhArrowLeft } from '@phosphor-icons/vue';
 import { useId } from 'vue';
 import PbIcon from './PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 interface ErrorStateProps {
   title: string;
   message: string;
@@ -33,24 +34,24 @@ const messageId = `${stateId}-message`;
     <h2 :id="titleId" class="pbgui-error-state__title">{{ props.title }}</h2>
     <p :id="messageId" class="pbgui-error-state__message">{{ props.message }}</p>
     <div v-if="props.retryLabel || props.backLabel" class="pbgui-error-state__actions">
-      <button
+      <Button
         v-if="props.retryLabel"
         type="button"
-        class="pbgui-btn btn-danger"
+        variant="danger"
         @click="emit('retry')"
       >
         <PbIcon :icon="PhArrowClockwise" :size="16" />
         {{ props.retryLabel }}
-      </button>
-      <button
+      </Button>
+      <Button
         v-if="props.backLabel"
         type="button"
-        class="pbgui-btn btn-secondary"
+        variant="secondary"
         @click="emit('back')"
       >
         <PbIcon :icon="PhArrowLeft" :size="16" />
         {{ props.backLabel }}
-      </button>
+      </Button>
     </div>
   </section>
 </template>

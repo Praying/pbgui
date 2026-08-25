@@ -31,6 +31,9 @@
  *    which stop updateManageDialogSize from re-centering.
  */
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { dashT, dashServerMsg } from '../../lib/i18n';
 import {
   ACTION_OPTIONS,
@@ -111,7 +114,9 @@ function state(r: PositionRow): ManageControlState {
 /* ── geometry / drag / resize (render.js:2263-2277, 2903-2909, 3074-3182) ── */
 
 const modalEl = ref<HTMLElement | null>(null);
-const closeBtnEl = ref<HTMLElement | null>(null);
+/* the close button is a ui/Button — the ref lands on the component, so the
+   drag exclusion compares the rendered root element ($el) */
+const closeBtnEl = ref<{ $el: HTMLElement } | null>(null);
 const userMoved = ref(false);
 const userResized = ref(false);
 const geometry = ref(
@@ -150,7 +155,7 @@ interface DragStart {
 let dragStart: DragStart | null = null;
 
 function onHeadMouseDown(e: MouseEvent): void {
-  if (e.target === closeBtnEl.value) return;
+  if (e.target === closeBtnEl.value?.$el) return;
   userMoved.value = true;
   dragStart = { x: e.clientX, y: e.clientY, left: geometry.value.left, top: geometry.value.top };
   e.preventDefault();
@@ -309,9 +314,25 @@ function selectRow(r: PositionRow): void {
    equivalent of legacy `row === selectedRowData` (render.js:2722). */
 const selectedKey = computed<string>(() => (props.selectedRow ? rowKey(props.selectedRow) : ''));
 
-function onActionChange(r: PositionRow, e: Event): void {
-  state(r).action = (e.target as HTMLSelectElement).value as ManageControlState['action'];
+function onActionChange(r: PositionRow, value: string): void {
+  state(r).action = value as ManageControlState['action'];
   status.value = { msg: '', kind: '' }; /* render.js:2763 */
+}
+
+/** The selected action option's label — the legacy <select> showed the
+ *  selected <option>'s text; the reka trigger renders it from the model. */
+function actionLabel(r: PositionRow): string {
+  const current = state(r).action;
+  return ACTION_OPTIONS(r).find((o) => o.value === current)?.label ?? current;
+}
+
+/** runClass keeps the legacy tone anchors (dp-row-run danger/warn/ok) as
+ *  inert classes; the Button variant carries the actual tone now. */
+function runVariant(runClass: string): 'danger' | 'warning' | 'success' | 'default' {
+  if (runClass.includes('danger')) return 'danger';
+  if (runClass.includes('warn')) return 'warning';
+  if (runClass.includes('ok')) return 'success';
+  return 'default';
 }
 
 function onAmountInput(r: PositionRow, e: Event): void {
@@ -450,7 +471,7 @@ watch(() => props.rows, () => {
         :style="modalStyle" :data-user-moved="userMoved ? '1' : undefined" :data-user-resized="userResized ? '1' : undefined">
         <div :class="dpModalChrome.head" @mousedown="onHeadMouseDown">
           <div :class="dpModalChrome.title">{{ dashT('dash.managePositions', 'Manage positions') }}</div>
-          <button ref="closeBtnEl" type="button" :class="dpModalChrome.close" @click="emit('close')">&#x2715;</button>
+          <Button ref="closeBtnEl" type="button" variant="ghost" :class="dpModalChrome.close" @click="emit('close')">&#x2715;</Button>
         </div>
         <div :class="dpModalChrome.body">
           <div class="dp-manage-wrap min-h-0 flex-none overflow-auto rounded-lg border border-border-default bg-page" :style="{ maxHeight: tableHeight + 'px' }">
@@ -489,39 +510,45 @@ watch(() => props.rows, () => {
                     {{ positionCellText(r, c) }}
                   </td>
                   <td>
-                    <select
-                      class="dp-manage-action h-7 min-w-[176px] rounded-md border border-border-default bg-page px-[0.4rem] py-0 text-[0.75rem] text-primary outline-none focus:border-accent-soft focus:shadow-[0_0_0_1px_rgb(var(--accent-rgb)/0.35)]"
-                      :value="state(r).action"
-                      @click.stop
-                      @change="onActionChange(r, $event)"
+                    <SelectRoot
+                      :model-value="state(r).action"
+                      @update:model-value="onActionChange(r, String($event))"
                     >
-                      <option
-                        v-for="o in ACTION_OPTIONS(r)"
-                        :key="o.value"
-                        :value="o.value"
-                        :disabled="o.disabled"
-                      >
-                        {{ o.label }}
-                      </option>
-                    </select>
+                      <SelectTrigger class="dp-manage-action h-7 min-w-[176px] text-xs" @click.stop>
+                        <span>{{ actionLabel(r) }}</span>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem
+                          v-for="o in ACTION_OPTIONS(r)"
+                          :key="o.value"
+                          :value="o.value"
+                          :disabled="o.disabled"
+                          :data-value="o.value"
+                        >
+                          {{ o.label }}
+                        </SelectItem>
+                      </SelectContent>
+                    </SelectRoot>
                   </td>
                   <td>
-                    <input
-                      class="dp-manage-amount h-7 w-[86px] rounded-md border border-border-default bg-page px-[0.4rem] py-0 text-[0.75rem] text-primary outline-none focus:border-accent-soft focus:shadow-[0_0_0_1px_rgb(var(--accent-rgb)/0.35)] disabled:cursor-not-allowed disabled:opacity-45"
+                    <Input
+                      class="dp-manage-amount w-[86px]"
+                      size="sm"
                       type="text"
                       inputmode="decimal"
-                      :value="amountDisplay(r)"
+                      :model-value="amountDisplay(r)"
                       :disabled="ctl(r).amountDisabled"
                       @click.stop
                       @input="onAmountInput(r, $event)"
                     />
                   </td>
                   <td>
-                    <input
-                      class="dp-manage-amount dp-manage-quote h-7 w-[86px] rounded-md border border-border-default bg-page px-[0.4rem] py-0 text-[0.75rem] text-primary outline-none focus:border-accent-soft focus:shadow-[0_0_0_1px_rgb(var(--accent-rgb)/0.35)] disabled:cursor-not-allowed disabled:opacity-45"
+                    <Input
+                      class="dp-manage-amount dp-manage-quote w-[86px]"
+                      size="sm"
                       type="text"
                       inputmode="decimal"
-                      :value="quoteDisplay(r)"
+                      :model-value="quoteDisplay(r)"
                       :disabled="ctl(r).quoteDisabled"
                       :title="dashT('dash.closeValueIn', 'Close value in {currency}; edits are converted to amount.', { currency: quoteCurrencyForRow(r) })"
                       :placeholder="quoteCurrencyForRow(r)"
@@ -531,21 +558,23 @@ watch(() => props.rows, () => {
                   </td>
                   <td class="dp-quick-col w-[142px] min-w-[142px] overflow-hidden border-b border-b-card px-[0.45rem] py-[0.35rem] align-middle whitespace-nowrap">
                     <div class="dp-quick flex min-w-[132px] flex-nowrap gap-[0.25rem]" :style="{ visibility: ctl(r).quickVisible ? 'visible' : 'hidden' }">
-                      <button v-for="pct in [25, 50, 100]" :key="pct" type="button" @click.stop="onQuick(r, pct)">
+                      <Button v-for="pct in [25, 50, 100]" :key="pct" type="button" size="sm" class="min-w-[40px] px-1.5" @click.stop="onQuick(r, pct)">
                         {{ pct }}%
-                      </button>
+                      </Button>
                     </div>
                   </td>
                   <td class="dp-exec-col w-[124px] min-w-[124px] border-b border-b-card px-[0.45rem] py-[0.35rem] align-middle whitespace-nowrap">
-                    <button
+                    <Button
                       type="button"
-                      :class="ctl(r).runClass"
+                      size="sm"
+                      :variant="runVariant(ctl(r).runClass)"
+                      :class="ctl(r).runClass + ' min-w-[104px]'"
                       :disabled="ctl(r).runDisabled"
                       :title="ctl(r).runTitle"
                       @click.stop="onRun(r)"
                     >
                       {{ ctl(r).runText }}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               </tbody>
@@ -556,26 +585,26 @@ watch(() => props.rows, () => {
           </div>
           <div :class="[dpModalChrome.statusMsg, statusToneClass(status.kind)]">{{ status.msg }}</div>
           <div :class="dpModalChrome.actions">
-            <button type="button" :disabled="footer.previewPanic.disabled" :title="footer.previewPanic.title" @click="runAll('panic_all', true)">
+            <Button type="button" size="sm" :disabled="footer.previewPanic.disabled" :title="footer.previewPanic.title" @click="runAll('panic_all', true)">
               {{ footer.previewPanic.text }}
-            </button>
-            <button type="button" class="danger" :disabled="footer.panic.disabled" :title="footer.panic.title" @click="runAll('panic_all', false)">
+            </Button>
+            <Button type="button" size="sm" variant="danger" class="danger" :disabled="footer.panic.disabled" :title="footer.panic.title" @click="runAll('panic_all', false)">
               {{ footer.panic.text }}
-            </button>
-            <button type="button" :disabled="footer.previewGraceful.disabled" :title="footer.previewGraceful.title" @click="runAll('graceful_stop_all', true)">
+            </Button>
+            <Button type="button" size="sm" :disabled="footer.previewGraceful.disabled" :title="footer.previewGraceful.title" @click="runAll('graceful_stop_all', true)">
               {{ footer.previewGraceful.text }}
-            </button>
-            <button type="button" class="warn" :disabled="footer.graceful.disabled" :title="footer.graceful.title" @click="runAll('graceful_stop_all', false)">
+            </Button>
+            <Button type="button" size="sm" variant="warning" class="warn" :disabled="footer.graceful.disabled" :title="footer.graceful.title" @click="runAll('graceful_stop_all', false)">
               {{ footer.graceful.text }}
-            </button>
-            <button type="button" :disabled="footer.previewTpOnly.disabled" :title="footer.previewTpOnly.title" @click="runAll('tp_only_all', true)">
+            </Button>
+            <Button type="button" size="sm" :disabled="footer.previewTpOnly.disabled" :title="footer.previewTpOnly.title" @click="runAll('tp_only_all', true)">
               {{ footer.previewTpOnly.text }}
-            </button>
-            <button type="button" class="ok" :disabled="footer.tpOnly.disabled" :title="footer.tpOnly.title" @click="runAll('tp_only_all', false)">
+            </Button>
+            <Button type="button" size="sm" variant="success" class="ok" :disabled="footer.tpOnly.disabled" :title="footer.tpOnly.title" @click="runAll('tp_only_all', false)">
               {{ footer.tpOnly.text }}
-            </button>
+            </Button>
             <span class="spacer flex-1"></span>
-            <button type="button" @click="emit('close')">{{ dashT('common.close', 'Close') }}</button>
+            <Button type="button" size="sm" @click="emit('close')">{{ dashT('common.close', 'Close') }}</Button>
           </div>
         </div>
         <div
@@ -597,96 +626,11 @@ watch(() => props.rows, () => {
 </template>
 
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   The manage-modal button system, ported from styles/widgets.css
-   (deleted at the Tailwind migration). Kept as CSS because:
-   - the tests pin the run button's className to exactly
-     'dp-row-run' + tone, so no utility may ride along;
-   - the bare <button> elements (quick %, footer) are styled through
-     descendant selectors;
-   - the .danger/.warn/.ok tone classes are legacy anchors bound as
-     static class names by lib/manageLogic's runClass string.
-   Unscoped on purpose — PositionsConfigPreviewModal's footer shares
-   the .dp-modal-actions rules. */
-.dp-quick button,
-.dp-modal-actions button,
-.dp-row-run {
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid var(--border-strong);
-  background: var(--border-default);
-  color: var(--text-primary);
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0 0.45rem;
-}
-.dp-quick button {
-  min-width: 40px;
-  padding: 0 0.35rem;
-}
-.dp-quick button:hover,
-.dp-modal-actions button:hover,
-.dp-row-run:hover {
-  background: var(--border-strong);
-}
-.dp-row-run {
-  min-width: 104px;
-}
-.dp-row-run.danger {
-  background: var(--danger-deep);
-  border-color: var(--danger-deep);
-  color: #f2f5fb;
-}
-.dp-row-run.danger:hover {
-  background: var(--danger-deep);
-}
-.dp-row-run.warn {
-  background: var(--warning-deep);
-  border-color: var(--warning-deep);
-  color: #f2f5fb;
-}
-.dp-row-run.warn:hover {
-  background: var(--warning-deep);
-}
-.dp-row-run.ok {
-  background: var(--success-deep);
-  border-color: var(--success);
-  color: #f2f5fb;
-}
-.dp-row-run.ok:hover {
-  background: var(--success-deep);
-}
-.dp-row-run:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.dp-modal-actions .danger {
-  background: var(--danger-deep);
-  border-color: var(--danger-deep);
-  color: #f2f5fb;
-}
-.dp-modal-actions .danger:hover {
-  background: var(--danger-deep);
-}
-.dp-modal-actions .warn {
-  background: var(--warning-deep);
-  border-color: var(--warning-deep);
-  color: #f2f5fb;
-}
-.dp-modal-actions .warn:hover {
-  background: var(--warning-deep);
-}
-.dp-modal-actions .ok {
-  background: var(--success-deep);
-  border-color: var(--success);
-  color: #f2f5fb;
-}
-.dp-modal-actions .ok:hover {
-  background: var(--success-deep);
-}
+/* The manage-modal button system moved to ui/Button (variants carry the
+   danger/warn/ok tones; the legacy .dp-row-run/.danger/.warn/.ok class names
+   ride along as inert anchors the tests select).
 
-/* Row states paint the td descendants (a relationship utilities cannot
+   Row states paint the td descendants (a relationship utilities cannot
    express; cascade order preserved from the legacy sheet). */
 .dp-manage-table tr:hover td {
   background: var(--bg-elevated);

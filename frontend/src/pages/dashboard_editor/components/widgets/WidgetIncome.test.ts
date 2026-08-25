@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { pickSelectOption } from '@/shared/testing/select';
 import type { VueWrapper } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
@@ -259,10 +260,12 @@ describe('WidgetIncome controls (editor:1391-1473)', () => {
   it('writes the period through PeriodControls and refetches (editor:1391-1411)', async () => {
     const { wrapper, env } = mountIncome();
     await flushPromises();
-    await wrapper.get('select.dt-ctrl-sel').setValue('TODAY');
+    await pickSelectOption(wrapper, '.dt-ctrl-sel', 'TODAY');
     expect(env.store.state['dashboard_income_period_1_2']).toBe('TODAY');
     await flushPromises();
-    expect(env.fetch).toHaveBeenLastCalledWith(
+    /* not LastCalledWith: the debounced scheduleSync POST may land after the
+       refetch now that the listbox interaction takes real-timer hops */
+    expect(env.fetch).toHaveBeenCalledWith(
       '/api/dashboard/income_data?users=ALL&period=TODAY&last_n=0&filter=0'
     );
   });

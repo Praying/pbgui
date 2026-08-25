@@ -8,6 +8,7 @@
  */
 import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { formatCompact, formatPrice, formatRatio } from '../lib/format';
 
 const props = defineProps<{
@@ -324,7 +325,7 @@ defineExpose({ fitToContent, resetLayout });
           :title="t('market.openOnCoinMarketCap')"
           @click="openCmcLink"
         >{{ t('market.openCmc') }}</a>
-        <button class="details-close inline-flex items-center justify-center w-7 h-7 p-0 rounded-md border border-border-default bg-card text-secondary text-md cursor-pointer [transition:background_0.12s,border-color_0.12s,color_0.12s] hover:bg-elevated hover:border-secondary hover:text-primary" id="btn-close-details" type="button" :title="t('market.closeDetails')" @click="emit('close')">&#x2715;</button>
+        <Button class="details-close w-7 p-0" id="btn-close-details" type="button" variant="secondary" size="sm" :title="t('market.closeDetails')" @click="emit('close')">&#x2715;</Button>
       </div>
     </div>
     <div ref="grid" class="details-grid grid pt-[0.95rem] px-[1rem] pb-[1rem] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 overflow-auto flex-1 min-h-0 content-start max-[980px]:grid-cols-1" id="selected-grid">

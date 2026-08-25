@@ -7,6 +7,7 @@
  * innerHTML placeholders from loadHelpIndex (:859, :888).
  */
 import { useI18n } from 'vue-i18n';
+import { Input } from '@/shared/components/ui/input';
 import type { HelpIndexStatus, HelpTopic } from '../composables/useHelpContent';
 
 defineProps<{
@@ -46,15 +47,15 @@ function tocItemClass(isActive: boolean): string {
     id="help-toc"
     class="w-[230px] min-w-[170px] shrink-0 border-r border-border-subtle overflow-y-auto py-1.75 bg-page max-[720px]:w-full max-[720px]:min-w-0 max-[720px]:max-h-[210px] max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-border-subtle"
   >
-    <input
+    <Input
       id="help-toc-filter"
       type="text"
-      class="w-[calc(100%-1.2rem)] mx-[0.6rem] mb-[0.4rem] bg-card text-primary border border-border-default rounded-[5px] py-[0.35rem] px-[0.5rem] text-sm outline-none focus:border-secondary placeholder:text-secondary"
-      :value="filter"
+      class="w-[calc(100%-1.2rem)] mx-[0.6rem] mb-[0.4rem]"
+      :model-value="filter"
       :placeholder="t('misc.help.filterTopics')"
       autocomplete="off"
-      @input="emit('update:filter', ($event.target as HTMLInputElement).value)"
-    >
+      @update:model-value="emit('update:filter', String($event ?? ''))"
+    />
     <div id="help-toc-list">
       <div v-if="status === 'loading'" class="help-loading text-secondary italic p-7 text-center">{{ t('common.loading') }}</div>
       <div v-else-if="status === 'error'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.failedLoadTopics') }}</div>

@@ -5,6 +5,10 @@
  * the OHLCV source swap repopulates markets (:1169-1178).
  */
 import { useI18n } from 'vue-i18n';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { Slider } from '@/shared/components/ui/slider';
 import type { ExplorerStore } from '../composables/useStrategyExplorer';
 
 const props = defineProps<{ store: ExplorerStore }>();
@@ -27,10 +31,6 @@ function onChangeSource(): void {
     void store.recalculate();
   });
 }
-function onContextDaysInput(event: Event): void {
-  const el = event.target as HTMLInputElement;
-  store.controls.contextDays = Number(el.value || 0);
-}
 </script>
 
 <template>
@@ -40,48 +40,65 @@ function onContextDaysInput(event: Event): void {
   >
     <div class="grid items-end gap-2.25 grid-cols-[minmax(170px,1.2fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)_minmax(130px,0.8fr)_minmax(105px,0.6fr)_minmax(120px,0.7fr)_minmax(100px,0.6fr)_minmax(150px,0.9fr)] max-[1250px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[1180px]:grid-cols-[repeat(4,minmax(0,1fr))] max-[640px]:grid-cols-[repeat(2,minmax(0,1fr))]">
       <div class="flex flex-col gap-0.75">
-        <label for="ohlcv-source-select" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.ohlcvSourceTip')" data-i18n-tip="v7explore.ohlcvSourceTip">{{ t('v7explore.ohlcvSource') }}</label>
-        <select id="ohlcv-source-select" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" v-model="store.controls.ohlcvSource" @change="onChangeSource">
-          <option v-if="store.adapter.isV8" value="PB8 native candles">{{ t('v7explore.pb8NativeCandles') }}</option>
-          <option v-for="source in OHLCV_SOURCES_V7" v-else :key="source" :value="source">{{ source }}</option>
-        </select>
+        <Label id="ohlcv-source-label" for="ohlcv-source-select" :data-tip="t('v7explore.ohlcvSourceTip')" data-i18n-tip="v7explore.ohlcvSourceTip">{{ t('v7explore.ohlcvSource') }}</Label>
+        <SelectRoot v-model="store.controls.ohlcvSource" @update:model-value="onChangeSource">
+          <SelectTrigger id="ohlcv-source-select" aria-labelledby="ohlcv-source-label">
+            <span>{{ store.adapter.isV8 && store.controls.ohlcvSource === 'PB8 native candles' ? t('v7explore.pb8NativeCandles') : store.controls.ohlcvSource }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-if="store.adapter.isV8" value="PB8 native candles">{{ t('v7explore.pb8NativeCandles') }}</SelectItem>
+            <SelectItem v-for="source in OHLCV_SOURCES_V7" v-else :key="source" :value="source">{{ source }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
       </div>
       <div class="flex flex-col gap-0.75">
-        <label for="exchange-select" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.exchangeTip')">{{ t('v7explore.exchange') }}</label>
-        <select id="exchange-select" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" v-model="store.controls.exchange" @change="store.updateCoinSelect(); store.invalidateConfigRequests(); store.recalculate()">
-          <option v-for="ex in store.exchangeOptions.value" :key="ex" :value="ex">{{ ex }}</option>
-        </select>
+        <Label id="exchange-select-label" for="exchange-select" :data-tip="t('v7explore.exchangeTip')">{{ t('v7explore.exchange') }}</Label>
+        <SelectRoot v-model="store.controls.exchange" @update:model-value="store.updateCoinSelect(); store.invalidateConfigRequests(); store.recalculate()">
+          <SelectTrigger id="exchange-select" aria-labelledby="exchange-select-label">
+            <span>{{ store.controls.exchange }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="ex in store.exchangeOptions.value" :key="ex" :value="ex">{{ ex }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
       </div>
       <div class="flex flex-col gap-0.75">
-        <label for="coin-select" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.coinTip')">{{ t('v7explore.coin') }}</label>
-        <select id="coin-select" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" v-model="store.controls.coin" :disabled="!store.coinOptions.value.length" @change="store.invalidateConfigRequests(); store.recalculate()">
-          <option v-for="coin in store.coinOptions.value" :key="coin" :value="coin">{{ coin }}</option>
-        </select>
+        <Label id="coin-select-label" for="coin-select" :data-tip="t('v7explore.coinTip')">{{ t('v7explore.coin') }}</Label>
+        <SelectRoot v-model="store.controls.coin" @update:model-value="store.invalidateConfigRequests(); store.recalculate()">
+          <SelectTrigger id="coin-select" aria-labelledby="coin-select-label" :disabled="!store.coinOptions.value.length">
+            <span>{{ store.controls.coin }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="coin in store.coinOptions.value" :key="coin" :value="coin">{{ coin }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
       </div>
       <div class="flex flex-col gap-0.75">
-        <label for="start-date-input" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.startDateTip')">{{ t('v7explore.startDate') }}</label>
+        <Label for="start-date-input" :data-tip="t('v7explore.startDateTip')">{{ t('v7explore.startDate') }}</Label>
         <div class="relative">
-          <input id="start-date-input" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 pr-7 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" v-model="store.controls.startDate" type="text" placeholder="YYYY-MM-DD" :data-tip="t('v7explore.startDateTip')">
+          <Input id="start-date-input" class="pr-7" v-model="store.controls.startDate" type="text" placeholder="YYYY-MM-DD" :data-tip="t('v7explore.startDateTip')" />
+          <!-- ui-migration: blocked — legacy window.__dp datepicker bridge (lib/datePicker.ts); the trigger stays raw -->
           <button type="button" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0.75 py-0 text-sm leading-none text-primary" data-dp="start-date-input" :title="t('v7explore.openCalendar')" @click="openDatePicker('start-date-input', $event.currentTarget as HTMLElement)">&#x1F4C5;</button>
         </div>
       </div>
       <div class="flex flex-col gap-0.75">
-        <label for="start-time-input" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.startTimeTip')">{{ t('v7explore.startTime') }}</label>
-        <input id="start-time-input" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" v-model="store.controls.startTime" type="time" @change="store.recalculate()">
+        <Label for="start-time-input" :data-tip="t('v7explore.startTimeTip')">{{ t('v7explore.startTime') }}</Label>
+        <Input id="start-time-input" v-model="store.controls.startTime" type="time" @change="store.recalculate()" />
       </div>
       <div class="flex flex-col gap-0.75">
-        <label for="reference-price-input" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.referencePriceTip')">{{ t('v7explore.referencePrice') }}</label>
-        <input id="reference-price-input" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" v-model.number="store.controls.referencePrice" type="number" step="0.000001" @change="store.recalculate()">
+        <Label for="reference-price-input" :data-tip="t('v7explore.referencePriceTip')">{{ t('v7explore.referencePrice') }}</Label>
+        <Input id="reference-price-input" v-model.number="store.controls.referencePrice" type="number" step="0.000001" @change="store.recalculate()" />
       </div>
       <div class="flex flex-col gap-0.75">
-        <label for="balance-input" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.balanceTip')">{{ t('v7explore.balance') }}</label>
-        <input id="balance-input" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" v-model.number="store.controls.balance" type="number" step="1" @change="store.recalculate()">
+        <Label for="balance-input" :data-tip="t('v7explore.balanceTip')">{{ t('v7explore.balance') }}</Label>
+        <Input id="balance-input" v-model.number="store.controls.balance" type="number" step="1" @change="store.recalculate()" />
       </div>
       <div class="flex flex-col gap-0.75">
-        <label for="context-days-input" class="text-secondary text-[10px] uppercase tracking-[0.075em]" :data-tip="t('v7explore.chartContextTip')">{{ t('v7explore.chartContext') }}</label>
-        <input id="context-days-input" class="w-full min-h-[34px] rounded-[7px] border border-secondary/15 bg-page/70 px-2 py-1.25 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" :value="store.controls.contextDays" type="range" min="0.5" max="60" step="0.5" :data-tip="t('v7explore.chartContextTip')" @input="onContextDaysInput" @change="store.recalculate()">
+        <Label for="context-days-input" :data-tip="t('v7explore.chartContextTip')">{{ t('v7explore.chartContext') }}</Label>
+        <Slider id="context-days-input" v-model="store.controls.contextDays" :min="0.5" :max="60" :step="0.5" :label="t('v7explore.chartContext')" :data-tip="t('v7explore.chartContextTip')" @value-commit="store.recalculate()" />
         <span class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-[10px] font-bold text-accent-soft" id="context-days-value">{{ Number(store.controls.contextDays || 0).toFixed(2) }}</span>
       </div>
+      <!-- ui-migration: blocked — hidden legacy dead control (display:none container, no model, nothing reads it) -->
       <div class="flex items-center gap-2 text-secondary text-sm" style="display:none"><input id="load-candles-toggle" class="w-auto" type="checkbox" checked><label for="load-candles-toggle">{{ t('v7explore.loadCandles') }}</label></div>
     </div>
   </section>

@@ -13,6 +13,7 @@
 import { useI18n } from 'vue-i18n';
 import { PhArrowClockwise, PhStop } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 
 defineProps<{ queued: boolean; running: boolean; received: boolean }>();
 defineEmits<{ refresh: []; cancel: []; stop: [] }>();
@@ -22,68 +23,26 @@ const { t } = useI18n();
 
 <template>
   <div class="mds-controls">
-    <button class="mds-btn pbgui-btn btn-primary primary" type="button" v-show="!queued" :disabled="queued || !received" @click="$emit('refresh')">
+    <Button class="mds-btn" variant="primary" type="button" v-show="!queued" :disabled="queued || !received" @click="$emit('refresh')">
       <PbIcon :icon="PhArrowClockwise" /> <span>{{ t('misc.mds.refreshNow') }}</span>
-    </button>
-    <button class="mds-btn pbgui-btn btn-danger danger" type="button" v-show="queued" :disabled="!queued" @click="$emit('cancel')">
+    </Button>
+    <Button class="mds-btn" variant="danger" type="button" v-show="queued" :disabled="!queued" @click="$emit('cancel')">
       <PbIcon :icon="PhStop" /> <span>{{ t('misc.mds.cancelQueuedRefresh') }}</span>
-    </button>
-    <button class="mds-btn pbgui-btn btn-danger danger" type="button" v-show="running" :disabled="!running" @click="$emit('stop')">
+    </Button>
+    <Button class="mds-btn" variant="danger" type="button" v-show="running" :disabled="!running" @click="$emit('stop')">
       <PbIcon :icon="PhStop" /> <span>{{ t('misc.mds.stopCurrentRun') }}</span>
-    </button>
+    </Button>
   </div>
 </template>
 
 <style scoped>
-/* Ported from .mds-root .mds-controls / .mds-btn (market_data_status.html:62-111). */
+/* Ported from .mds-root .mds-controls (market_data_status.html:62-66). The
+   .mds-btn chrome (html:67-111) is owned by the ui/Button variants now;
+   .mds-btn stays on the buttons as the inert hook the page suite selects. */
 .mds-controls {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
   flex-wrap: wrap;
-}
-
-.mds-btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.mds-btn.primary {
-  background: var(--mds-accent-info);
-  color: white;
-}
-
-.mds-btn.primary:hover:not(:disabled) {
-  background: var(--accent-deep);
-}
-
-.mds-btn.danger {
-  background: var(--mds-accent-danger);
-  color: white;
-}
-
-.mds-btn.danger:hover:not(:disabled) {
-  background: var(--danger-deep);
-}
-
-.mds-btn.secondary {
-  background: var(--mds-bg-tertiary);
-  color: var(--mds-text-primary);
-  border: 1px solid var(--mds-border-color);
-}
-
-.mds-btn.secondary:hover:not(:disabled) {
-  background: var(--mds-bg-secondary);
-}
-
-.mds-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>

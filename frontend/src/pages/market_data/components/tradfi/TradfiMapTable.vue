@@ -7,7 +7,14 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { fieldLabelClass, inputClass, noteClass, settingsFieldClass } from '../../lib/uiClasses';
+import { Input } from '@/shared/components/ui/input';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
+import { fieldLabelClass, noteClass, settingsFieldClass } from '../../lib/uiClasses';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import { buildTradfiSymbol, type TradfiRow } from '../../lib/tradfiFilters';
 import { formatTradfiPrice, formatTradfiTimestamp } from '../../lib/tradfiFormat';
@@ -37,16 +44,16 @@ function tiingoSymbolOf(row: TradfiRow): string {
   return row.tiingo_symbol || buildTradfiSymbol(row); // :6586 — payload symbol wins
 }
 
-function onSymbolInput(event: Event): void {
-  props.map.setFilterSymbol((event.target as HTMLInputElement).value); // :9637
+function onSymbolInput(value: string | number | null | undefined): void {
+  props.map.setFilterSymbol(String(value ?? '')); // :9637
 }
 
-function onTypeChange(event: Event): void {
-  props.map.setFilterType((event.target as HTMLSelectElement).value); // :9641
+function onTypeSelect(value: unknown): void {
+  props.map.setFilterType(String(value ?? '')); // :9641
 }
 
-function onStatusChange(event: Event): void {
-  props.map.setFilterStatus((event.target as HTMLSelectElement).value); // :9645
+function onStatusSelect(value: unknown): void {
+  props.map.setFilterStatus(String(value ?? '')); // :9645
 }
 </script>
 
@@ -55,32 +62,41 @@ function onStatusChange(event: Event): void {
     <div class="tradfi-filter-grid mb-3 grid gap-3 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
       <label :class="settingsFieldClass">
         <span :class="fieldLabelClass">{{ t('market.filterBySymbol') }}</span>
-        <input
+        <Input
           id="tradfi-filter-symbol"
-          :class="inputClass"
           type="text"
           placeholder="e.g. TSLA or XAUUSD"
-          :value="map.filters.symbol"
-          @input="onSymbolInput"
-        >
+          :model-value="map.filters.symbol"
+          @update:model-value="onSymbolInput"
+        />
       </label>
       <label :class="settingsFieldClass">
-        <span :class="fieldLabelClass">{{ t('market.filterByType') }}</span>
-        <select id="tradfi-filter-type" :class="inputClass" :value="map.filters.type" @change="onTypeChange">
-          <option value="all">{{ t('market.allTypes') }}</option>
-          <option v-for="value in map.optionLists.value.typeValues" :key="value" :value="value">
-            {{ value }}
-          </option>
-        </select>
+        <span :class="fieldLabelClass" id="tradfi-filter-type-label">{{ t('market.filterByType') }}</span>
+        <SelectRoot :model-value="map.filters.type" @update:model-value="onTypeSelect">
+          <SelectTrigger id="tradfi-filter-type" aria-labelledby="tradfi-filter-type-label">
+            <span>{{ map.filters.type === 'all' ? t('market.allTypes') : map.filters.type }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{{ t('market.allTypes') }}</SelectItem>
+            <SelectItem v-for="value in map.optionLists.value.typeValues" :key="value" :value="value">
+              {{ value }}
+            </SelectItem>
+          </SelectContent>
+        </SelectRoot>
       </label>
       <label :class="settingsFieldClass">
-        <span :class="fieldLabelClass">{{ t('market.filterByStatus') }}</span>
-        <select id="tradfi-filter-status" :class="inputClass" :value="map.filters.status" @change="onStatusChange">
-          <option value="all">{{ t('market.allStatuses') }}</option>
-          <option v-for="value in map.optionLists.value.statusValues" :key="value" :value="value">
-            {{ value }}
-          </option>
-        </select>
+        <span :class="fieldLabelClass" id="tradfi-filter-status-label">{{ t('market.filterByStatus') }}</span>
+        <SelectRoot :model-value="map.filters.status" @update:model-value="onStatusSelect">
+          <SelectTrigger id="tradfi-filter-status" aria-labelledby="tradfi-filter-status-label">
+            <span>{{ map.filters.status === 'all' ? t('market.allStatuses') : map.filters.status }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{{ t('market.allStatuses') }}</SelectItem>
+            <SelectItem v-for="value in map.optionLists.value.statusValues" :key="value" :value="value">
+              {{ value }}
+            </SelectItem>
+          </SelectContent>
+        </SelectRoot>
       </label>
     </div>
     <div :class="noteClass" id="tradfi-map-count">

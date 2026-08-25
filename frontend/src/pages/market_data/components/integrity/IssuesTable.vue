@@ -7,7 +7,8 @@
  * read-only branch stays unported.
  */
 import { useI18n } from 'vue-i18n';
-import { btnClass, noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import type { IssueGroup } from '../../lib/integrityView';
 
@@ -45,15 +46,15 @@ const tdClass =
       </div>
       <div class="panel-actions">
         <span :class="noteClass" id="integrity-issue-count">{{ store.issueCountText.value }}</span>
-        <button
-          :class="btnClass('primary')"
+        <Button
+          variant="primary"
           id="btn-integrity-repair-all"
           type="button"
           :disabled="store.repairAllDisabled.value"
           @click="store.queueRepairAll()"
         >
           {{ t('market.repairAll') }}
-        </button>
+        </Button>
       </div>
     </div>
     <div class="integrity-table-wrap max-h-[52vh] overflow-auto rounded-md border border-border-default">
@@ -83,8 +84,8 @@ const tdClass =
             <td :class="tdClass">{{ reasons(row) }}</td>
             <td :class="tdClass">
               <div class="integrity-action-group flex flex-wrap gap-1">
-                <button
-                  :class="btnClass('secondary')"
+                <Button
+                  variant="info"
                   type="button"
                   data-integrity-gap-details="1"
                   :data-exchange="row.exchange"
@@ -92,9 +93,9 @@ const tdClass =
                   @click="store.openGapDetails(row.exchange, row.coin)"
                 >
                   {{ t('market.details') }}
-                </button>
-                <button
-                  :class="btnClass('secondary')"
+                </Button>
+                <Button
+                  variant="info"
                   type="button"
                   data-integrity-repair-coin="1"
                   :data-exchange="row.exchange"
@@ -102,7 +103,7 @@ const tdClass =
                   @click="store.queueRepairCoin(row.exchange, row.coin)"
                 >
                   {{ t('market.repairCoin') }}
-                </button>
+                </Button>
               </div>
             </td>
           </tr>

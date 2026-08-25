@@ -11,6 +11,8 @@ import { ApiError, apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { replaceTopLocation } from '@/shared/nav';
 
 const { t, locale } = useI18n();
@@ -81,9 +83,11 @@ async function submitLogin(): Promise<void> {
       </div>
       <form id="login-form" @submit.prevent="submitLogin">
         <div class="field">
-          <input
+          <Input
             id="password"
             v-model="password"
+            size="lg"
+            class="rounded-md bg-page"
             type="password"
             autocomplete="current-password"
             autofocus
@@ -91,13 +95,13 @@ async function submitLogin(): Promise<void> {
             :aria-label="t('misc.login.password')"
           />
         </div>
-        <button id="login-submit" class="submit-btn" type="submit" :disabled="pending || !password">
+        <Button id="login-submit" class="submit-btn w-full" variant="primary" size="lg" type="submit" :loading="pending" :disabled="!password">
           {{ pending ? t('misc.login.signingIn') : t('misc.login.submit') }}
-        </button>
+        </Button>
       </form>
-      <button id="pbgui-lang-btn" class="lang-btn" type="button" @click="toggleLang">
+      <Button id="pbgui-lang-btn" class="lang-btn mt-3 w-full" variant="ghost" type="button" @click="toggleLang">
         {{ locale === 'zh' ? 'English' : '中文' }}
-      </button>
+      </Button>
       <div id="banner" class="banner" :class="{ show: banner }" role="alert">{{ banner }}</div>
     </main>
   </div>
@@ -186,83 +190,6 @@ form {
   flex-direction: column;
   gap: var(--sp-sm);
   width: 100%;
-}
-
-input,
-button {
-  font-size: var(--fs-base);
-}
-
-input {
-  width: 100%;
-  height: var(--control-height-lg);
-  padding: 0 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-default);
-  background: var(--bg-page);
-  color: var(--text-primary);
-  transition:
-    border-color var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard);
-}
-
-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: var(--focus-ring);
-}
-
-.submit-btn {
-  width: 100%;
-  height: var(--control-height-lg);
-  padding: 0 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard),
-    transform var(--motion-fast) var(--ease-standard);
-}
-
-.submit-btn:hover:not(:disabled) {
-  background: var(--accent-soft);
-  border-color: var(--accent-soft);
-  box-shadow: 0 4px 16px rgb(var(--accent-rgb) / 0.28);
-}
-
-.submit-btn:active:not(:disabled) {
-  transform: translateY(1px) scale(0.99);
-}
-
-.submit-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.lang-btn {
-  margin-top: var(--sp-md);
-  width: 100%;
-  height: var(--btn-h);
-  padding: 0 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  transition:
-    color var(--motion-fast) var(--ease-standard),
-    background-color var(--motion-fast) var(--ease-standard);
-}
-
-.lang-btn:hover {
-  color: var(--text-primary);
-  background: var(--surface-elevated);
 }
 
 .banner {

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import CmcPoolPanel from './CmcPoolPanel.vue';
 import type { CmcLeasesResponse, CmcPool } from '../types';
 
@@ -119,6 +120,9 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   delete (window as DialogsGlobal).PBGuiDialogs;
+  // The reka select portals its listbox into document.body — clear it so a
+  // stale list from a previous test cannot intercept option lookups.
+  document.body.innerHTML = '';
 });
 
 describe('CmcPoolPanel rendering (legacy renderCmcPool)', () => {
@@ -457,9 +461,8 @@ describe('CmcPoolPanel authority transfer (legacy openCmcAuthorityModal/submit)'
 
     await wrapper.find('#cmc-authority-btn').trigger('click');
 
-    const select = wrapper.find('#cmc-authority-target');
-    const options = select.findAll('option');
-    expect(options.map((o) => o.attributes('value'))).toEqual(['n2']); // n1 holds the authority
+    await openSelect(wrapper, '#cmc-authority-target');
+    expect(selectOptionTexts()).toEqual(['n2 (n2)']); // n1 holds the authority
     expect(wrapper.find('#cmc-authority-domain').text()).toBe('d1');
     expect(wrapper.find('#cmc-authority-current').text()).toBe('pb1 · epoch 3 · reachable yes');
 

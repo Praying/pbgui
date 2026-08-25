@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { proposalActionLabel, proposalDetail, proposalReviewText, proposalDiffValue, type AiProposal, type ProposalChange } from '../lib/proposal';
 
 interface ProposalListProps {
@@ -56,16 +57,15 @@ function changes(preview: { changes?: ProposalChange[] }): ProposalChange[] {
         </details>
       </div>
       <div class="sticky bottom-0 flex w-full flex-wrap gap-1.5 bg-[rgba(27,33,31,.96)] p-1.5 md:w-auto">
-        <button
+        <Button
           type="button"
-          class="h-8 cursor-pointer rounded-md border border-border-default bg-elevated px-3 text-sm text-primary transition-colors hover:border-accent"
           @click="emit('resolve', proposal, false)"
-        >{{ t('ai.proposal.reject') }}</button>
-        <button
+        >{{ t('ai.proposal.reject') }}</Button>
+        <Button
           type="button"
-          class="h-8 cursor-pointer rounded-md border-none bg-accent px-3 text-sm font-bold text-[#07111f] transition-colors hover:bg-accent-soft"
+          variant="primary"
           @click="emit('resolve', proposal, true)"
-        >{{ t('ai.proposal.reviewApprove') }}</button>
+        >{{ t('ai.proposal.reviewApprove') }}</Button>
       </div>
     </div>
   </div>

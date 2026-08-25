@@ -3,6 +3,11 @@ import { PhCaretRight, PhFolderOpen, PhMinus, PhPlus } from '@phosphor-icons/vue
 import { computed, ref, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { Textarea } from '@/shared/components/ui/textarea';
 import DatePicker from '@/shared/datepicker/DatePicker.vue';
 import KvCoinSources from '@/shared/kvCoinSources/KvCoinSources.vue';
 import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
@@ -140,7 +145,7 @@ defineExpose({ foldSuiteDraft });
       </CoinMultiSelect>
       <div class="form-group editor-span-2">
         <label :data-tip="t('v7backtest.tip.configName')">config_name</label>
-        <input v-model="state.name" type="text" data-test="cfg-name" />
+        <Input v-model="state.name" type="text" data-test="cfg-name" />
       </div>
       <div class="form-group editor-span-2">
         <label :data-tip="t('v7backtest.tip.startDate')">start_date</label>
@@ -150,7 +155,7 @@ defineExpose({ foldSuiteDraft });
         <label :data-tip="t('v7backtest.tip.endDate')">end_date</label>
         <DatePicker v-model="state.endDate" :min="state.startDate || undefined" />
         <label v-if="state.endDateIsNow" :data-tip="t('v7backtest.tip.endDateIsNow')" style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px; display: flex; gap: 4px; align-items: center">
-          <input v-model="state.endDateIsNow" type="checkbox" style="width: auto" /> semantic 'now'
+          <Checkbox v-model="state.endDateIsNow" /> semantic 'now'
         </label>
       </div>
     </div>
@@ -166,29 +171,30 @@ defineExpose({ foldSuiteDraft });
       </header>
       <!-- Row 2: Balance, Collateral & Behavior (:2615-2634) -->
     <div class="form-row config-editor-12 config-editor-trading-primary">
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.startingBalance')">starting_balance</label><input v-model="state.startingBalance" type="number" min="500" /></div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.balanceSampleDivider')">balance_sample_divider</label><input v-model="state.balanceSampleDivider" type="number" min="1" /></div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.btcCollateralCap')">btc_collateral_cap</label><input v-model="state.btcCollateralCap" type="number" step="0.1" min="0" /></div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.btcCollateralLtvCap')">btc_collateral_ltv_cap</label><input v-model="state.btcCollateralLtvCap" type="number" step="0.1" min="0" /></div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.minimumCoinAgeDays')">minimum_coin_age_days</label><input v-model="state.minimumCoinAgeDays" type="number" min="1" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.startingBalance')">starting_balance</label><Input v-model="state.startingBalance" type="number" min="500" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.balanceSampleDivider')">balance_sample_divider</label><Input v-model="state.balanceSampleDivider" type="number" min="1" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.btcCollateralCap')">btc_collateral_cap</label><Input v-model="state.btcCollateralCap" type="number" step="0.1" min="0" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.btcCollateralLtvCap')">btc_collateral_ltv_cap</label><Input v-model="state.btcCollateralLtvCap" type="number" step="0.1" min="0" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.minimumCoinAgeDays')">minimum_coin_age_days</label><Input v-model="state.minimumCoinAgeDays" type="number" min="1" /></div>
       <div class="form-group editor-span-2">
         <label :data-tip="t('v7backtest.tip.liquidationThreshold')">liquidation_threshold</label>
         <div class="num-stepper">
-          <button type="button" class="stepper-btn" aria-label="Decrease liquidation_threshold" title="Decrease liquidation_threshold" @click="state.liquidationThreshold = String(Math.max(0, +(parseFloat(state.liquidationThreshold) - 0.01).toFixed(2)))"><PbIcon :icon="PhMinus" /></button>
-          <input v-model="state.liquidationThreshold" type="number" step="0.01" min="0" max="0.99" />
-          <button type="button" class="stepper-btn" aria-label="Increase liquidation_threshold" title="Increase liquidation_threshold" @click="state.liquidationThreshold = String(Math.min(0.99, +(parseFloat(state.liquidationThreshold) + 0.01).toFixed(2)))"><PbIcon :icon="PhPlus" /></button>
+          <Button type="button" variant="default" class="stepper-btn" aria-label="Decrease liquidation_threshold" title="Decrease liquidation_threshold" @click="state.liquidationThreshold = String(Math.max(0, +(parseFloat(state.liquidationThreshold) - 0.01).toFixed(2)))"><PbIcon :icon="PhMinus" /></Button>
+          <Input v-model="state.liquidationThreshold" type="number" step="0.01" min="0" max="0.99" />
+          <Button type="button" variant="default" class="stepper-btn" aria-label="Increase liquidation_threshold" title="Increase liquidation_threshold" @click="state.liquidationThreshold = String(Math.min(0.99, +(parseFloat(state.liquidationThreshold) + 0.01).toFixed(2)))"><PbIcon :icon="PhPlus" /></Button>
         </div>
       </div>
       <div class="form-group editor-span-12 config-editor-toggle-row">
-        <div class="chk-row"><input id="cfg-dyn-wel" v-model="state.dynamicWelByTradability" type="checkbox" /><label for="cfg-dyn-wel" :data-tip="t('v7backtest.tip.dynamicWelByTradability')">dynamic_wel_by_tradability</label></div>
+        <div class="chk-row"><Checkbox id="cfg-dyn-wel" v-model="state.dynamicWelByTradability" /><label for="cfg-dyn-wel" :data-tip="t('v7backtest.tip.dynamicWelByTradability')">dynamic_wel_by_tradability</label></div>
       </div>
     </div>
 
       <!-- Row 3: Fees & Controls (:2636-2679) -->
     <div class="expander" :class="{ open: advancedExecutionOpen }" data-test="advanced-execution-expander">
-      <button
+      <Button
         type="button"
-        class="expander-header"
+        variant="ghost"
+        class="expander-header h-auto"
         :data-tip="t('v7backtest.tip.advancedExecution')"
         :aria-expanded="advancedExecutionOpen"
         aria-controls="advanced-execution-settings"
@@ -196,43 +202,57 @@ defineExpose({ foldSuiteDraft });
         @click="advancedExecutionOpen = !advancedExecutionOpen"
       >
         <PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.advancedExecutionSettings') }}
-      </button>
+      </Button>
       <div id="advanced-execution-settings" class="expander-body">
         <div v-if="advancedExecutionOpen" class="form-row config-editor-12 config-editor-trading-advanced">
           <div class="form-group editor-span-2">
-            <div class="chk-row"><input id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" type="checkbox" /><label for="cfg-maker-fee-enabled" :data-tip="t('v7backtest.tip.makerFeeOverride')">maker_fee_override</label></div>
+            <div class="chk-row"><Checkbox id="cfg-maker-fee-enabled" v-model="state.makerFeeEnabled" /><label for="cfg-maker-fee-enabled" :data-tip="t('v7backtest.tip.makerFeeOverride')">maker_fee_override</label></div>
             <div class="num-stepper">
-              <button type="button" class="stepper-btn" aria-label="Decrease maker_fee_override" title="Decrease maker_fee_override" @click="state.makerFeeVal = String(Math.max(0, +(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></button>
-              <input v-model="state.makerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.makerFeeEnabled" />
-              <button type="button" class="stepper-btn" aria-label="Increase maker_fee_override" title="Increase maker_fee_override" @click="state.makerFeeVal = String(Math.min(0.01, +(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></button>
+              <Button type="button" variant="default" class="stepper-btn" aria-label="Decrease maker_fee_override" title="Decrease maker_fee_override" @click="state.makerFeeVal = String(Math.max(0, +(parseFloat(state.makerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></Button>
+              <Input v-model="state.makerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.makerFeeEnabled" />
+              <Button type="button" variant="default" class="stepper-btn" aria-label="Increase maker_fee_override" title="Increase maker_fee_override" @click="state.makerFeeVal = String(Math.min(0.01, +(parseFloat(state.makerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></Button>
             </div>
           </div>
           <div class="form-group editor-span-2">
-            <div class="chk-row"><input id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" type="checkbox" /><label for="cfg-taker-fee-enabled" :data-tip="t('v7backtest.tip.takerFeeOverride')">taker_fee_override</label></div>
+            <div class="chk-row"><Checkbox id="cfg-taker-fee-enabled" v-model="state.takerFeeEnabled" /><label for="cfg-taker-fee-enabled" :data-tip="t('v7backtest.tip.takerFeeOverride')">taker_fee_override</label></div>
             <div class="num-stepper">
-              <button type="button" class="stepper-btn" aria-label="Decrease taker_fee_override" title="Decrease taker_fee_override" @click="state.takerFeeVal = String(Math.max(0, +(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></button>
-              <input v-model="state.takerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.takerFeeEnabled" />
-              <button type="button" class="stepper-btn" aria-label="Increase taker_fee_override" title="Increase taker_fee_override" @click="state.takerFeeVal = String(Math.min(0.01, +(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></button>
+              <Button type="button" variant="default" class="stepper-btn" aria-label="Decrease taker_fee_override" title="Decrease taker_fee_override" @click="state.takerFeeVal = String(Math.max(0, +(parseFloat(state.takerFeeVal) - 0.00001).toFixed(5)))"><PbIcon :icon="PhMinus" /></Button>
+              <Input v-model="state.takerFeeVal" type="number" step="0.00001" min="0" max="0.01" :disabled="!state.takerFeeEnabled" />
+              <Button type="button" variant="default" class="stepper-btn" aria-label="Increase taker_fee_override" title="Increase taker_fee_override" @click="state.takerFeeVal = String(Math.min(0.01, +(parseFloat(state.takerFeeVal) + 0.00001).toFixed(5)))"><PbIcon :icon="PhPlus" /></Button>
             </div>
           </div>
           <div class="form-group editor-span-2">
             <label :data-tip="t('v7backtest.tip.marketOrderSlippagePct')">market_order_slippage_pct</label>
             <div class="num-stepper">
-              <button type="button" class="stepper-btn" aria-label="Decrease market_order_slippage_pct" title="Decrease market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))"><PbIcon :icon="PhMinus" /></button>
-              <input v-model="state.marketOrderSlippagePct" type="number" step="0.0001" min="0" />
-              <button type="button" class="stepper-btn" aria-label="Increase market_order_slippage_pct" title="Increase market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))"><PbIcon :icon="PhPlus" /></button>
+              <Button type="button" variant="default" class="stepper-btn" aria-label="Decrease market_order_slippage_pct" title="Decrease market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(Math.max(0, +(parseFloat(state.marketOrderSlippagePct) - 0.0001).toFixed(4)))"><PbIcon :icon="PhMinus" /></Button>
+              <Input v-model="state.marketOrderSlippagePct" type="number" step="0.0001" min="0" />
+              <Button type="button" variant="default" class="stepper-btn" aria-label="Increase market_order_slippage_pct" title="Increase market_order_slippage_pct" @click="state.marketOrderSlippagePct = String(+(parseFloat(state.marketOrderSlippagePct) + 0.0001).toFixed(4))"><PbIcon :icon="PhPlus" /></Button>
             </div>
           </div>
           <div class="form-group editor-span-2 config-editor-toggle-field">
-            <div class="chk-row"><input id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" type="checkbox" /><label for="cfg-filter-cost" :data-tip="t('v7backtest.tip.filterByMinEffectiveCost')">filter_by_min_effective_cost</label></div>
+            <div class="chk-row"><Checkbox id="cfg-filter-cost" v-model="state.filterByMinEffectiveCost" /><label for="cfg-filter-cost" :data-tip="t('v7backtest.tip.filterByMinEffectiveCost')">filter_by_min_effective_cost</label></div>
           </div>
           <div class="form-group editor-span-2">
-            <label :data-tip="t('v7backtest.tip.hslSignalMode')">hsl_signal_mode</label>
-            <select v-model="state.hslSignalMode"><option v-for="mode in hslOptions" :key="mode" :value="mode">{{ mode }}</option></select>
+            <label id="cfg-hsl-signal-mode-label" :data-tip="t('v7backtest.tip.hslSignalMode')">hsl_signal_mode</label>
+            <SelectRoot v-model="state.hslSignalMode">
+              <SelectTrigger aria-labelledby="cfg-hsl-signal-mode-label">
+                <span>{{ state.hslSignalMode }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="mode in hslOptions" :key="mode" :value="mode">{{ mode }}</SelectItem>
+              </SelectContent>
+            </SelectRoot>
           </div>
           <div class="form-group editor-span-2">
-            <label :data-tip="t('v7backtest.tip.loggingLevel')">logging_level</label>
-            <select v-model="state.loggingLevel"><option v-for="option in loggingOptions" :key="option.value" :value="option.value">{{ option.label }}</option></select>
+            <label id="cfg-logging-level-label" :data-tip="t('v7backtest.tip.loggingLevel')">logging_level</label>
+            <SelectRoot v-model="state.loggingLevel">
+              <SelectTrigger aria-labelledby="cfg-logging-level-label">
+                <span>{{ loggingOptions.find((option) => option.value === state.loggingLevel)?.label ?? state.loggingLevel }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in loggingOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+              </SelectContent>
+            </SelectRoot>
           </div>
         </div>
       </div>
@@ -252,26 +272,26 @@ defineExpose({ foldSuiteDraft });
       <div class="form-group editor-span-6">
         <label :data-tip="t('v7backtest.tip.ohlcvSourceDir')">ohlcv_source_dir</label>
         <div style="display: flex; gap: var(--sp-xs)">
-          <input v-model="state.ohlcvSourceDir" type="text" :placeholder="t('v7backtest.leaveEmptyForDefault')" />
-          <button type="button" class="act-btn" style="white-space: nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">
+          <Input v-model="state.ohlcvSourceDir" type="text" :placeholder="t('v7backtest.leaveEmptyForDefault')" />
+          <Button type="button" variant="default" class="act-btn h-auto" style="white-space: nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">
             <PbIcon :icon="PhFolderOpen" />
             PBGui Data
-          </button>
+          </Button>
         </div>
       </div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.candleIntervalMinutes')">candle_interval_minutes</label><input v-model="state.candleIntervalMinutes" type="number" min="1" /></div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.gapToleranceOhlcvsMinutes')">gap_tolerance_ohlcvs_minutes</label><input v-model="state.gapToleranceOhlcvsMinutes" type="number" min="1" /></div>
-      <div class="form-group editor-span-1 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-compress" v-model="state.compressCache" type="checkbox" /><label for="cfg-compress" :data-tip="t('v7backtest.tip.compressCache')">compress_cache</label></div></div>
-      <div class="form-group editor-span-1 config-editor-toggle-field justify-end"><div class="chk-row"><input id="cfg-vol-norm" v-model="state.volumeNormalization" type="checkbox" /><label for="cfg-vol-norm" :data-tip="t('v7backtest.tip.volumeNormalization')">volume_normalization</label></div></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.candleIntervalMinutes')">candle_interval_minutes</label><Input v-model="state.candleIntervalMinutes" type="number" min="1" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.gapToleranceOhlcvsMinutes')">gap_tolerance_ohlcvs_minutes</label><Input v-model="state.gapToleranceOhlcvsMinutes" type="number" min="1" /></div>
+      <div class="form-group editor-span-1 config-editor-toggle-field justify-end"><div class="chk-row"><Checkbox id="cfg-compress" v-model="state.compressCache" /><label for="cfg-compress" :data-tip="t('v7backtest.tip.compressCache')">compress_cache</label></div></div>
+      <div class="form-group editor-span-1 config-editor-toggle-field justify-end"><div class="chk-row"><Checkbox id="cfg-vol-norm" v-model="state.volumeNormalization" /><label for="cfg-vol-norm" :data-tip="t('v7backtest.tip.volumeNormalization')">volume_normalization</label></div></div>
     </div>
 
     <!-- coin_sources + market_settings_sources (:2700-2750) -->
     <div class="expander" :class="{ open: coinSourcesOpen }">
-      <button type="button" class="expander-header" :aria-expanded="coinSourcesOpen" :data-tip="t('v7backtest.tip.coinSources')" @click="coinSourcesOpen = !coinSourcesOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> coin_sources ({{ Object.keys(state.coinSources).length }} configured)</button>
+      <Button type="button" variant="ghost" class="expander-header h-auto" :aria-expanded="coinSourcesOpen" :data-tip="t('v7backtest.tip.coinSources')" @click="coinSourcesOpen = !coinSourcesOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> coin_sources ({{ Object.keys(state.coinSources).length }} configured)</Button>
       <div class="expander-body"><KvCoinSources v-model="state.coinSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
     </div>
     <div class="expander" :class="{ open: marketSourcesOpen }">
-      <button type="button" class="expander-header" :aria-expanded="marketSourcesOpen" :data-tip="t('v7backtest.tip.marketSettingsSources')" @click="marketSourcesOpen = !marketSourcesOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> market_settings_sources ({{ Object.keys(state.marketSettingsSources).length }} configured)</button>
+      <Button type="button" variant="ghost" class="expander-header h-auto" :aria-expanded="marketSourcesOpen" :data-tip="t('v7backtest.tip.marketSettingsSources')" @click="marketSourcesOpen = !marketSourcesOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> market_settings_sources ({{ Object.keys(state.marketSettingsSources).length }} configured)</Button>
       <div class="expander-body"><KvCoinSources v-model="state.marketSettingsSources" :exchange-options="exchangeOptions" :preserve-case="isV8" :load-symbols="loadSymbols" /></div>
     </div>
 
@@ -286,18 +306,18 @@ defineExpose({ foldSuiteDraft });
         <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.coinsAndFilters') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorFiltersHint') }}</p></div>
         <div class="flex shrink-0 items-center gap-2 max-[700px]:w-full max-[700px]:justify-between" data-test="editor-filter-toolbar">
           <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">04</span>
-          <button type="button" class="act-btn" :title="t('v7backtest.applyFiltersTitle')" @click="applyFilters">{{ t('v7backtest.applyFilters') }}</button>
+          <Button type="button" variant="default" class="act-btn h-auto" :title="t('v7backtest.applyFiltersTitle')" @click="applyFilters">{{ t('v7backtest.applyFilters') }}</Button>
         </div>
       </header>
       <!-- Coins & Filters (:2753-2804) -->
     <div class="form-row config-editor-12 config-editor-filters">
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.marketCap')">market_cap (min M$)</label><input v-model="state.marketCap" type="number" step="50" /></div>
-      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.volMcap')">vol/mcap</label><input v-model="state.volMcap" type="number" step="0.05" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.marketCap')">market_cap (min M$)</label><Input v-model="state.marketCap" type="number" step="50" /></div>
+      <div class="form-group editor-span-2"><label :data-tip="t('v7backtest.tip.volMcap')">vol/mcap</label><Input v-model="state.volMcap" type="number" step="0.05" /></div>
       <CoinMultiSelect id="ms-cfg-tags" v-model="state.tags" class="editor-span-4" :options="tagOptions" :placeholder="t('v7backtest.selectTags')" :tip="t('v7backtest.tip.tags')" select-all-button>
         <template #label>tags</template>
       </CoinMultiSelect>
-      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-only-cpt" v-model="state.onlyCpt" type="checkbox" /><label for="cfg-only-cpt" :data-tip="t('v7backtest.tip.onlyCpt')">only_cpt</label></div></div>
-      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><input id="cfg-notices-ignore" v-model="state.noticesIgnore" type="checkbox" /><label for="cfg-notices-ignore" :data-tip="t('v7backtest.tip.noticesIgnore')">notices_ignore</label></div></div>
+      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><Checkbox id="cfg-only-cpt" v-model="state.onlyCpt" /><label for="cfg-only-cpt" :data-tip="t('v7backtest.tip.onlyCpt')">only_cpt</label></div></div>
+      <div class="form-group editor-span-2 config-editor-toggle-field"><div class="chk-row"><Checkbox id="cfg-notices-ignore" v-model="state.noticesIgnore" /><label for="cfg-notices-ignore" :data-tip="t('v7backtest.tip.noticesIgnore')">notices_ignore</label></div></div>
     </div>
     <div class="form-row cols-2">
       <CoinMultiSelect id="ms-cfg-app-long" v-model="state.approvedLong" :options="coinOptions" :labels="coinLabels" :tip="t('v7backtest.tip.approvedCoinsLong')" allow-all>
@@ -353,19 +373,19 @@ defineExpose({ foldSuiteDraft });
 
     <!-- Additional (unknown) backtest parameters (:2873-2876) -->
     <div v-if="state.extraBt.length > 0" class="expander" :class="{ open: additionalOpen }" data-test="additional-params-expander">
-      <button type="button" class="expander-header" :aria-expanded="additionalOpen" data-test="additional-params-expander-toggle" :data-tip="t('v7backtest.tip.additionalParameters')" @click="additionalOpen = !additionalOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.additionalParameters') }}</button>
+      <Button type="button" variant="ghost" class="expander-header h-auto" :aria-expanded="additionalOpen" data-test="additional-params-expander-toggle" :data-tip="t('v7backtest.tip.additionalParameters')" @click="additionalOpen = !additionalOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.additionalParameters') }}</Button>
       <div class="expander-body">
         <div class="form-group">
           <label :data-tip="t('v7backtest.tip.baseDir')">base_dir</label>
-          <input type="text" :value="'backtests/pbgui/' + (state.name || '{config-name}')" readonly />
+          <Input type="text" :model-value="'backtests/pbgui/' + (state.name || '{config-name}')" readonly />
         </div>
         <div class="form-row cols-3">
           <div v-for="field in state.extraBt" :key="field.key" class="form-group" :style="field.kind === 'json' ? 'grid-column: span 3' : ''">
             <label :data-tip="t(EXTRA_BT_META[field.key]?.tip ?? '')">{{ field.key }}</label>
-            <div v-if="field.kind === 'boolean'" class="chk-row"><input v-model="field.checked" type="checkbox" :aria-label="field.key" /></div>
-            <input v-else-if="field.kind === 'number'" v-model="field.text" type="number" class="form-input" />
-            <textarea v-else-if="field.kind === 'json'" v-model="field.text" :data-test="'extra-bt-' + field.key" style="overflow: hidden; resize: vertical"></textarea>
-            <input v-else v-model="field.text" type="text" class="form-input" :placeholder="field.kind === 'null' ? 'null' : ''" />
+            <div v-if="field.kind === 'boolean'" class="chk-row"><Checkbox v-model="field.checked" :aria-label="field.key" /></div>
+            <Input v-else-if="field.kind === 'number'" v-model="field.text" type="number" />
+            <Textarea v-else-if="field.kind === 'json'" v-model="field.text" :data-test="'extra-bt-' + field.key" style="overflow: hidden; resize: vertical" />
+            <Input v-else v-model="field.text" type="text" :placeholder="field.kind === 'null' ? 'null' : ''" />
             <div v-if="EXTRA_BT_META[field.key]?.fmt" style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px">{{ EXTRA_BT_META[field.key]!.fmt }}</div>
           </div>
         </div>
@@ -374,12 +394,12 @@ defineExpose({ foldSuiteDraft });
 
     <!-- Raw JSON expander (:2878-2892) -->
     <div class="expander" :class="{ open: rawJsonOpen }" data-test="raw-json-expander">
-      <button type="button" class="expander-header" :aria-expanded="rawJsonOpen" data-test="raw-json-expander-toggle" :data-tip="t('v7backtest.tip.rawJson')" @click="rawJsonOpen = !rawJsonOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.rawJson') }}</button>
+      <Button type="button" variant="ghost" class="expander-header h-auto" :aria-expanded="rawJsonOpen" data-test="raw-json-expander-toggle" :data-tip="t('v7backtest.tip.rawJson')" @click="rawJsonOpen = !rawJsonOpen"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.rawJson') }}</Button>
       <div class="expander-body">
         <div class="form-group">
           <div class="raw-json-wrap">
             <div class="field-status" :class="{ error: rawErrorLine }" aria-live="polite" data-test="cfg-raw-json-status"></div>
-            <textarea v-model="state.rawJson" data-test="cfg-raw-json" style="overflow: hidden; resize: vertical"></textarea>
+            <Textarea v-model="state.rawJson" data-test="cfg-raw-json" style="overflow: hidden; resize: vertical" />
           </div>
         </div>
       </div>

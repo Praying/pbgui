@@ -7,6 +7,7 @@
 import { PhCheckCircle, PhPause, PhPlay, PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { scheduleCadenceLabel, scheduleModeLabel, scheduleStatusLabel } from '../lib/archiveModel';
 import type { ArchiveRetestScheduleItem } from '../types';
 import type { I18nT } from '../types.i18n';
@@ -50,9 +51,9 @@ function statusText(item: ArchiveRetestScheduleItem): string {
           <td>{{ item.next_run_at ?? '' }}</td>
           <td class="text-secondary" style="max-width: 320px; word-break: break-word">{{ statusText(item) }}</td>
           <td v-if="own" class="actions-cell" @click.stop>
-            <button type="button" class="icon-btn good" data-test="archive-sched-run" :title="t('v7backtest.runNow')" :aria-label="t('v7backtest.runNow')" @click="emit('run', item.id)"><PbIcon :icon="PhPlay" :size="18" /></button>
-            <button type="button" class="icon-btn" data-test="archive-sched-toggle" :title="t('v7backtest.enableDisable')" :aria-label="t('v7backtest.enableDisable')" @click="emit('toggle', item.id)"><PbIcon :icon="item.enabled === false ? PhCheckCircle : PhPause" :size="18" /></button>
-            <button type="button" class="icon-btn danger" data-test="archive-sched-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="emit('remove', item.id)"><PbIcon :icon="PhTrash" :size="18" /></button>
+            <Button type="button" variant="success" size="icon" data-test="archive-sched-run" :title="t('v7backtest.runNow')" :aria-label="t('v7backtest.runNow')" @click="emit('run', item.id)"><PbIcon :icon="PhPlay" :size="18" /></Button>
+            <Button type="button" variant="default" size="icon" data-test="archive-sched-toggle" :title="t('v7backtest.enableDisable')" :aria-label="t('v7backtest.enableDisable')" @click="emit('toggle', item.id)"><PbIcon :icon="item.enabled === false ? PhCheckCircle : PhPause" :size="18" /></Button>
+            <Button type="button" variant="danger" size="icon" data-test="archive-sched-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="emit('remove', item.id)"><PbIcon :icon="PhTrash" :size="18" /></Button>
           </td>
         </tr>
       </tbody>

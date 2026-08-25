@@ -156,7 +156,8 @@ describe('pareto front preview (:2890-2942)', () => {
   it('toggling a preview setting refetches the playground (:4435-4444)', async () => {
     const store = makeStore();
     const { wrapper } = mountStage(store);
-    await wrapper.get('#preview-show-all').setValue(true);
+    // ui/Checkbox renders a button with role="checkbox" — click flips it
+    await wrapper.get('#preview-show-all').trigger('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
     const call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/playground'));
     expect(call).toBeTruthy();

@@ -11,6 +11,8 @@ import { ref, watch } from 'vue';
 import { PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 
 defineOptions({ name: 'CmcAuthorityModal' });
 
@@ -79,6 +81,11 @@ function submit(): void {
   if (props.busy || !selectedNodeId.value) return;
   emit('submit', selectedNodeId.value);
 }
+
+/** Trigger label: the selected option's text (the listbox is lazily mounted). */
+function selectedText(options: CmcAuthorityOption[], nodeId: string): string {
+  return options.find((option) => option.nodeId === nodeId)?.text ?? '';
+}
 </script>
 
 <template>
@@ -86,7 +93,7 @@ function submit(): void {
     <div class="cmc-modal-card" role="dialog" aria-modal="true" aria-labelledby="cmc-authority-modal-title">
       <div class="cmc-modal-head">
         <div class="cmc-modal-title" id="cmc-authority-modal-title">{{ t('sysmon.transferCmcAuthority') }}</div>
-        <button class="cmc-modal-close" type="button" :aria-label="t('common.close')" @click="requestClose"><PbIcon :icon="PhX" /></button>
+        <Button class="cmc-modal-close" variant="ghost" size="icon" type="button" :aria-label="t('common.close')" @click="requestClose"><PbIcon :icon="PhX" /></Button>
       </div>
       <div class="cmc-modal-body">
         <div class="form-field">
@@ -98,16 +105,21 @@ function submit(): void {
           <div id="cmc-authority-current" class="form-hint">{{ currentText }}</div>
         </div>
         <div class="form-field">
-          <label class="form-label" for="cmc-authority-target">{{ t('sysmon.eligibleTargetNode') }}</label>
-          <select class="form-select" id="cmc-authority-target" v-model="selectedNodeId">
-            <option v-for="option in options" :key="option.nodeId" :value="option.nodeId">{{ option.text }}</option>
-          </select>
+          <span class="form-label" id="cmc-authority-target-label">{{ t('sysmon.eligibleTargetNode') }}</span>
+          <SelectRoot v-model="selectedNodeId">
+            <SelectTrigger id="cmc-authority-target" aria-labelledby="cmc-authority-target-label">
+              <span>{{ selectedText(options, selectedNodeId) }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="option in options" :key="option.nodeId" :value="option.nodeId">{{ option.text }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </div>
         <div class="cmc-modal-error">{{ localError }}</div>
       </div>
       <div class="cmc-modal-actions">
-        <button class="form-btn" type="button" @click="requestClose">{{ t('common.cancel') }}</button>
-        <button class="form-btn save" id="cmc-authority-submit" type="button" :disabled="busy" @click="submit">{{ t('sysmon.transferAuthority') }}</button>
+        <Button type="button" @click="requestClose">{{ t('common.cancel') }}</Button>
+        <Button class="save" id="cmc-authority-submit" variant="primary" type="button" :disabled="busy" @click="submit">{{ t('sysmon.transferAuthority') }}</Button>
       </div>
     </div>
   </div>
@@ -118,16 +130,10 @@ function submit(): void {
 .form-field { display: flex; flex-direction: column; gap: 3px; }
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .form-hint { font-size: var(--fs-xs); color: var(--text-disabled); }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
-.form-btn.save:hover { background: var(--accent-deep); color: #f2f5fb; }
 .cmc-modal-backdrop { position: fixed; inset: 0; z-index: 19000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(5, 8, 14, 0.72); backdrop-filter: blur(2px); }
 .cmc-modal-card { width: min(480px, 94vw); background: var(--bg-page); border: 1px solid var(--border-default); border-radius: 14px; box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9); overflow: hidden; }
 .cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border-subtle); background: var(--surface-workspace); }
 .cmc-modal-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 700; }
-.cmc-modal-close { background: transparent; border: 0; color: var(--text-muted); font-size: var(--fs-lg); cursor: pointer; padding: 0.2rem 0.35rem; border-radius: 5px; }
-.cmc-modal-close:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.06); }
 .cmc-modal-body { display: grid; gap: 0.8rem; padding: 1rem 1.1rem; }
 .cmc-modal-error { min-height: 1rem; color: var(--danger-soft); font-size: var(--fs-xs); }
 .cmc-modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0 1.1rem 1rem; }

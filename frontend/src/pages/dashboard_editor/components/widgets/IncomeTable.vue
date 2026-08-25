@@ -26,6 +26,9 @@
  *    document drag handlers on every rebuild).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { dashT } from '../../lib/i18n';
 import {
   DRAG_THRESHOLD_PX,
@@ -49,27 +52,9 @@ import { useIncomeActions } from '../../composables/useIncomeActions';
 import type { IncomeRow } from '../../types/widgets';
 import { dtMetaLblClass, dtNodataClass } from './uiClasses';
 
-/* ── Tailwind class sets (the former .di-btn* rules of styles/widgets.css,
-   deleted at the Tailwind migration). Every branch returns the COMPLETE
-   colour set — the legacy .di-btn-danger/.di-btn-yes/.di-btn-no variants
-   replaced the base tone wholesale, and two same-property colour utilities
-   in one class list would render in Tailwind's fixed order, not the
-   template's. The legacy variant class names ride along as inert anchors. */
-type DiBtnVariant = 'default' | 'danger' | 'yes' | 'no';
-
-function diBtnClass(variant: DiBtnVariant = 'default'): string {
-  const base =
-    'di-btn cursor-pointer whitespace-nowrap rounded-sm border px-[0.7rem] py-[0.3rem] text-[0.76rem] disabled:cursor-not-allowed disabled:opacity-40';
-  const tone =
-    variant === 'danger'
-      ? 'di-btn-danger border-danger-deep bg-danger-deep text-primary hover:bg-danger-deep'
-      : variant === 'yes'
-        ? 'di-btn-yes border-success-deep bg-success-deep text-[#f2f5fb] hover:bg-success-deep'
-        : variant === 'no'
-          ? 'di-btn-no border-danger-deep bg-danger-deep text-[#f2f5fb] hover:bg-danger-deep'
-          : 'border-border-strong bg-border-default text-primary hover:bg-border-strong';
-  return `${base} ${tone}`;
-}
+/* The former .di-btn* tone variants of styles/widgets.css are ui/Button
+   variants now; the legacy class names ride along as inert anchors the
+   tests select (di-btn, di-btn-danger/di-btn-yes/di-btn-no). */
 
 const props = defineProps<{
   /** data.rows from /dashboard/income_data (server order: date_ms desc). */
@@ -405,6 +390,13 @@ function backupLabel(b: BackupEntry): string {
   return b.name + ' — ' + b.date;
 }
 
+/** The listbox trigger label — the legacy <select> showed the selected
+ *  option's text. */
+const selectedBackupLabel = computed<string>(() => {
+  const chosen = backups.value.find((b) => b.path === selectedPath.value);
+  return chosen ? backupLabel(chosen) : '';
+});
+
 function onRestoreClick(): void {
   const chosen = backups.value.find((b) => b.path === selectedPath.value);
   showConfirm(
@@ -499,10 +491,11 @@ onBeforeUnmount(() => {
               @click="onSortClick(c.key)"
             >
               {{ dashT(c.labelKey, c.fallback) }}<span class="di-sort ml-[0.2rem] text-[0.65rem] text-muted">{{ sortArrow(c.key) }}</span>
-              <input
+              <Input
                 v-if="c.key === 'date'"
                 type="date"
-                class="di-jump-input ml-[0.4rem] w-[108px] cursor-pointer rounded-sm border border-border-strong bg-border-default px-[0.25rem] py-[0.1rem] text-[0.72rem] font-normal text-primary outline-none"
+                size="sm"
+                class="di-jump-input ml-[0.4rem] w-[108px]"
                 :title="dashT('dash.goToDate', 'Go to date')"
                 @click.stop
                 @change="onJumpChange"
@@ -534,15 +527,15 @@ onBeforeUnmount(() => {
 
     <!-- action bar (render.js:1271-1323) -->
     <div v-show="selectedCount > 0" class="di-actions flex flex-wrap items-center gap-[0.5rem] border-t border-t-card bg-page px-[0.75rem] py-[0.4rem]">
-      <button type="button" :class="diBtnClass('danger')" @click="onDeleteSelected">
+      <Button type="button" size="sm" variant="danger" class="di-btn di-btn-danger" @click="onDeleteSelected">
         {{ dashT('dash.deleteSelected', 'Delete selected…') }}
-      </button>
-      <button type="button" :class="diBtnClass('danger')" @click="onDeleteOlder">
+      </Button>
+      <Button type="button" size="sm" variant="danger" class="di-btn di-btn-danger" @click="onDeleteOlder">
         {{ dashT('dash.deleteOlder', 'Delete older than selected…') }}
-      </button>
-      <button type="button" :class="diBtnClass()" @click="loadBackups">
+      </Button>
+      <Button type="button" size="sm" class="di-btn" @click="loadBackups">
         {{ dashT('dash.backupRestore', 'Backup / Restore…') }}
-      </button>
+      </Button>
     </div>
 
     <!-- backup panel (render.js:1325-1329, 1403-1469) -->
@@ -558,18 +551,20 @@ onBeforeUnmount(() => {
       }}</span>
       <template v-else>
         <span :class="dtMetaLblClass">{{ dashT('dash.restoreFrom', 'Restore from:') }}</span>
-        <select
-          v-model="selectedPath"
-          class="mx-[0.4rem] w-full rounded-sm border border-border-strong bg-border-default px-[0.4rem] py-[0.25rem] text-[0.76rem] text-primary outline-none focus:border-accent-soft"
-        >
-          <option v-for="b in backups" :key="b.path" :value="b.path">{{ backupLabel(b) }}</option>
-        </select>
-        <button type="button" :class="diBtnClass()" @click="onRestoreClick">
+        <SelectRoot v-model="selectedPath">
+          <SelectTrigger class="di-backup-select mx-[0.4rem]" :aria-label="dashT('dash.restoreFrom', 'Restore from:')">
+            <span>{{ selectedBackupLabel }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="b in backups" :key="b.path" :value="b.path">{{ backupLabel(b) }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
+        <Button type="button" size="sm" class="di-btn" @click="onRestoreClick">
           {{ dashT('dash.restore', 'Restore') }}
-        </button>
-        <button type="button" :class="diBtnClass()" style="margin-left:0.3rem;" @click="backupOpen = false">
+        </Button>
+        <Button type="button" size="sm" class="di-btn" style="margin-left:0.3rem;" @click="backupOpen = false">
           &#10005;
-        </button>
+        </Button>
       </template>
     </div>
 
@@ -577,12 +572,12 @@ onBeforeUnmount(() => {
     <div v-show="confirmMsg !== ''" class="di-confirm absolute inset-0 z-[100] flex flex-col items-center justify-center gap-[0.8rem] bg-[rgba(5,8,14,0.85)] p-[1.5rem] text-center">
       <div class="di-confirm-msg max-w-[90%] text-[0.85rem] text-warning-soft">{{ confirmMsg }}</div>
       <div class="di-confirm-btns flex gap-[0.8rem]">
-        <button type="button" :class="diBtnClass('yes')" @click="onConfirmYes">
+        <Button type="button" size="sm" variant="success" class="di-btn di-btn-yes" @click="onConfirmYes">
           {{ dashT('common.yes', 'Yes') }}
-        </button>
-        <button type="button" :class="diBtnClass('no')" @click="onConfirmNo">
+        </Button>
+        <Button type="button" size="sm" variant="danger" class="di-btn di-btn-no" @click="onConfirmNo">
           {{ dashT('common.no', 'No') }}
-        </button>
+        </Button>
       </div>
     </div>
 

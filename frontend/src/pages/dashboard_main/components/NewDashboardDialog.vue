@@ -3,6 +3,9 @@ import { onUnmounted, ref, watch } from 'vue';
 import { PhPlus } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Field } from '@/shared/components/ui/field';
+import { Input } from '@/shared/components/ui/input';
 
 /**
  * Legacy #new-dash-dialog (dashboard_main.html openNewDashDialog + OK/cancel/
@@ -73,27 +76,27 @@ onUnmounted(() => {
         <div id="new-dash-title" class="dlg-title">{{ t('dash.newDashboard') }}</div>
       </div>
       <div class="dlg-field">
-        <label for="new-dash-name">{{ t('dash.dashboardName') }}</label>
-        <input
-          id="new-dash-name"
-          ref="nameInput"
-          v-model="name"
-          type="text"
-          maxlength="32"
-          :placeholder="t('dash.dashboardNamePlaceholder')"
-          :class="{ err: error }"
-          autocomplete="off"
-          @keydown="onKeydown"
-        >
-        <div class="dlg-err" v-show="error">{{ error }}</div>
+        <Field :label="t('dash.dashboardName')" :error="error">
+          <Input
+            id="new-dash-name"
+            ref="nameInput"
+            v-model="name"
+            size="lg"
+            type="text"
+            maxlength="32"
+            :placeholder="t('dash.dashboardNamePlaceholder')"
+            autocomplete="off"
+            @keydown="onKeydown"
+          />
+        </Field>
       </div>
       <div class="dlg-actions">
-        <button class="dlg-btn secondary" id="new-dash-cancel" @click="emit('close')">
+        <Button variant="secondary" id="new-dash-cancel" type="button" @click="emit('close')">
           {{ t('common.cancel') }}
-        </button>
-        <button class="dlg-btn primary" id="new-dash-ok" @click="submit">
+        </Button>
+        <Button variant="primary" id="new-dash-ok" type="button" @click="submit">
           {{ t('dash.createEdit') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

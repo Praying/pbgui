@@ -3,7 +3,15 @@
  * Rows 1-3 of the shared 8-column grid — v7_edit.html:571-669. Field
  * visibility via the page store (data-v7-only/data-v8-only parity).
  */
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Input } from '@/shared/components/ui/input';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import FieldCheck from './FieldCheck.vue';
 import FieldNumber from './FieldNumber.vue';
 import FieldSelect from './FieldSelect.vue';
@@ -19,6 +27,9 @@ const marginModeOptions = [
 const loggingLevelOptions = [
   { value: '0', label: 'warning' }, { value: '1', label: 'info' }, { value: '2', label: 'debug' }, { value: '3', label: 'trace' },
 ];
+
+/** Trigger label for the enabled_on listbox — the gate's decorated label. */
+const enabledOnLabel = computed(() => page.hosts.gate.label(state.enabledOn, page.hosts.capabilities.value));
 </script>
 
 <template>
@@ -28,26 +39,35 @@ const loggingLevelOptions = [
       <div class="form-row cols-8">
     <!-- Row 1: Configuration & Identity -->
     <div class="form-group" style="grid-column: span 2">
-      <label><span data-tip="Fetch API key/secret from api-keys.json.">{{ t('v7run.user') }}</span></label>
-      <select id="f-user" v-model="state.user" @change="page.onUserChange()">
-        <option v-for="user in page.users.value" :key="user.name" :value="user.name">{{ user.name }}</option>
-      </select>
+      <label id="f-user-label"><span data-tip="Fetch API key/secret from api-keys.json.">{{ t('v7run.user') }}</span></label>
+      <SelectRoot v-model="state.user" @update:model-value="page.onUserChange()">
+        <SelectTrigger id="f-user" aria-labelledby="f-user-label">
+          <span>{{ state.user }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="user in page.users.value" :key="user.name" :value="user.name">{{ user.name }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
     </div>
     <div class="form-group" style="grid-column: span 2">
-      <label>{{ t('v7run.enabledOn') }}</label>
-      <select
-        id="f-enabled-on"
-        v-model="state.enabledOn"
-        @focus="page.hosts.refresh()"
-        @change="page.onEnabledOnChange()"
-      >
-        <option
-          v-for="host in page.renderedHostOptions.value"
-          :key="host"
-          :value="host"
-          :disabled="page.hosts.gate.isDisabled(host, page.hosts.capabilities.value)"
-        >{{ page.hosts.gate.label(host, page.hosts.capabilities.value) }}</option>
-      </select>
+      <label id="f-enabled-on-label">{{ t('v7run.enabledOn') }}</label>
+      <SelectRoot v-model="state.enabledOn" @update:model-value="page.onEnabledOnChange()">
+        <SelectTrigger
+          id="f-enabled-on"
+          aria-labelledby="f-enabled-on-label"
+          @focus="page.hosts.refresh()"
+        >
+          <span>{{ enabledOnLabel }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="host in page.renderedHostOptions.value"
+            :key="host"
+            :value="host"
+            :disabled="page.hosts.gate.isDisabled(host, page.hosts.capabilities.value)"
+          >{{ page.hosts.gate.label(host, page.hosts.capabilities.value) }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
     </div>
     <FieldNumber
       id="f-version"
@@ -133,8 +153,8 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
       step="0.01"
     />
     <div class="form-group span-4">
-      <label><span data-tip="Personal note for organising instances">{{ t('v7run.note') }}</span></label>
-      <input id="f-note" v-model="state.note" type="text" placeholder="" />
+      <label for="f-note"><span data-tip="Personal note for organising instances">{{ t('v7run.note') }}</span></label>
+      <Input id="f-note" v-model="state.note" type="text" placeholder="" />
     </div>
 
     <!-- Row 3: Execution & Flags -->

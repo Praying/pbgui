@@ -81,6 +81,9 @@ const DEBUG_BLOCKS = [
       </tbody>
     </table>
     <section class="accordion-card overflow-hidden rounded-lg border border-border-default bg-panel" :class="{ collapsed: !debugOpen }" style="margin-top:14px">
+      <!-- ui-migration: out of scope — accordion disclosure chrome (the
+           .accordion-head pseudo-element chevron in App.vue's style block),
+           not a form control -->
       <button class="accordion-head flex w-full items-center gap-2.5 border-0 bg-panel px-3 py-2.5 text-left text-primary" type="button" @click="debugOpen = !debugOpen">
         {{ t('v7explore.debugRustInterface', { side: sideKey.toUpperCase() }) }}
       </button>

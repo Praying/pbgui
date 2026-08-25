@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createI18n } from '@/shared/i18n';
+import { pickSelectOption } from '@/shared/testing/select';
 import RetestModal from './RetestModal.vue';
 
 /*
@@ -33,11 +34,12 @@ beforeEach(() => error.mockClear());
 describe('RetestModal (:8095-8159)', () => {
   it('seeds the form from the config-derived defaults', () => {
     const wrapper = mountModal();
-    expect((wrapper.find('[data-test="arr-date-mode"]').element as HTMLSelectElement).value).toBe('until_yesterday');
+    // reka listbox: the closed-state trigger renders the model's option text
+    expect(wrapper.find('[data-test="arr-date-mode"]').text()).toContain('Same duration, end yesterday');
     expect((wrapper.find('[data-test="arr-last-days"]').element as HTMLInputElement).value).toBe('10');
     expect((wrapper.find('[data-test="arr-balance"]').element as HTMLInputElement).value).toBe('750');
     expect((wrapper.find('[data-test="arr-exchanges"]').element as HTMLSelectElement).selectedOptions[0]?.value).toBe('bybit');
-    expect((wrapper.find('[data-test="arr-skip-liquidated"]').element as HTMLInputElement).checked).toBe(true);
+    expect(wrapper.find('[data-test="arr-skip-liquidated"]').attributes('aria-checked')).toBe('true');
     const marketDataLabel = wrapper.find('label[for="arr-pbgui-data"]');
     expect(marketDataLabel.text()).toBe('Use PBGui Market Data');
     expect(marketDataLabel.find('svg').exists()).toBe(true);
@@ -46,13 +48,13 @@ describe('RetestModal (:8095-8159)', () => {
   it('shows the weekday select only for weekly cadence (:8054-8058)', async () => {
     const wrapper = mountModal();
     expect(wrapper.find('[data-test="arr-weekday-wrap"]').attributes('style')).toContain('display: none');
-    await wrapper.find('[data-test="arr-cadence"]').setValue('weekly');
+    await pickSelectOption(wrapper, '[data-test="arr-cadence"]', 'Weekly');
     expect(wrapper.find('[data-test="arr-weekday-wrap"]').attributes('style')).not.toContain('display: none');
   });
 
   it('emits queue-now with the collected payload (:8126-8139)', async () => {
     const wrapper = mountModal({ onError: error });
-    await wrapper.find('[data-test="arr-date-mode"]').setValue('last_x_days');
+    await pickSelectOption(wrapper, '[data-test="arr-date-mode"]', 'Last X days, end yesterday');
     await wrapper.find('[data-test="arr-last-days"]').setValue('30');
     await wrapper.find('[data-test="arr-balance"]').setValue('2500');
     await wrapper.find('[data-test="arr-ok"]').trigger('click');
@@ -74,9 +76,9 @@ describe('RetestModal (:8095-8159)', () => {
 
   it('emits create-schedule with cadence/time/weekday attached (:8140-8156)', async () => {
     const wrapper = mountModal();
-    await wrapper.find('[data-test="arr-cadence"]').setValue('weekly');
+    await pickSelectOption(wrapper, '[data-test="arr-cadence"]', 'Weekly');
     await wrapper.find('[data-test="arr-time"]').setValue('03:30');
-    await wrapper.find('[data-test="arr-weekday"]').setValue('4');
+    await pickSelectOption(wrapper, '[data-test="arr-weekday"]', 'Friday');
     await wrapper.find('[data-test="arr-schedule"]').trigger('click');
     expect(wrapper.emitted('create-schedule')).toEqual([
       [

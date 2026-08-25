@@ -50,6 +50,10 @@
  *   create branch only; a self-post is a no-op, so App posts unconditionally.
  * - The users-dropdown ALL defaulting lives in MultiSelect (legacy factory
  *   default); CreateCard passes ['ALL'] explicitly like the legacy page.
+ * - The template picker's empty option ("Select template…") is the reka
+ *   listbox placeholder now — "" is the cleared state, so there is no
+ *   selectable reset row (ui-migration; the page-local .btn/.tpl-input/
+ *   .tpl-select/.tpl-close redefinitions left with the controls).
  */
 import { onMounted, ref } from 'vue';
 import { PhX } from '@phosphor-icons/vue';
@@ -57,6 +61,7 @@ import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import CreateCard from './components/CreateCard.vue';
 import ManageCard from './components/ManageCard.vue';
 import SaveCard from './components/SaveCard.vue';
@@ -136,14 +141,17 @@ onMounted(() => {
   <MigrationWatermark />
   <div class="tpl-header">
     <div class="tpl-title"><span class="icon">📋</span> <span>{{ t('dash.dashboardTemplates') }}</span></div>
-    <button
+    <Button
       id="btn-close"
       class="tpl-close"
+      variant="outline"
+      size="sm"
+      type="button"
       :title="t('common.close')"
       :aria-label="t('common.close')"
       style="display:none"
       @click="onClose"
-    ><PbIcon :icon="PhX" /></button>
+    ><PbIcon :icon="PhX" /></Button>
   </div>
   <div id="content" class="tpl-content">
     <div v-if="!loaded" style="color:var(--text-disabled);padding:1rem">{{ t('dash.loading') }}</div>
@@ -193,18 +201,6 @@ body {
   gap: 0.5rem;
 }
 .tpl-title span.icon { font-size: var(--fs-lg); }
-.tpl-close {
-  background: transparent;
-  border: 1px solid var(--text-dim);
-  border-radius: 4px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--fs-md);
-  padding: 0.25rem 0.6rem;
-  line-height: 1;
-  transition: background 0.15s, color 0.15s;
-}
-.tpl-close:hover { background: var(--border-default); color: var(--text-primary); }
 
 /* ── Content area ── */
 .tpl-content {
@@ -238,83 +234,8 @@ body {
   gap: 0.5rem;
   align-items: stretch;
 }
-.tpl-input {
-  flex: 1;
-  background: var(--border-default);
-  border: 1px solid var(--text-dim);
-  border-radius: 5px;
-  color: var(--text-primary);
-  font-size: var(--fs-base);
-  padding: 0.4rem 0.6rem;
-  outline: none;
-  min-width: 0;
-}
-.tpl-input:focus { border-color: var(--accent-soft); }
-.tpl-select {
-  width: 100%;
-  background: var(--border-default);
-  border: 1px solid var(--text-dim);
-  border-radius: 5px;
-  color: var(--text-primary);
-  font-size: var(--fs-base);
-  padding: 0.4rem 0.6rem;
-  outline: none;
-  cursor: pointer;
-  margin-bottom: 0.5rem;
-}
-.tpl-select:focus { border-color: var(--accent-soft); }
-
-/* ── Buttons ── */
-.btn {
-  background: var(--border-default);
-  border: 1px solid var(--text-dim);
-  border-radius: 5px;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: var(--fs-sm);
-  padding: 0.4rem 0.75rem;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-.btn:hover { background: var(--border-strong); }
-.btn.primary {
-  background: var(--info);
-  border-color: var(--accent);
-  color: #f2f5fb; /* white on colored bg */
-}
-.btn.primary:hover { background: var(--accent); }
-.btn.danger {
-  background: var(--danger-bg);
-  border-color: var(--danger);
-  color: var(--danger-soft);
-}
-.btn.danger:hover { background: var(--danger); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── Template list ── */
-.tpl-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-.tpl-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--border-default);
-  border: 1px solid var(--text-dim);
-  border-radius: 5px;
-  padding: 0.4rem 0.6rem;
-  gap: 0.5rem;
-}
-.tpl-item-name {
-  flex: 1;
-  font-size: var(--fs-base);
-  color: var(--text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .tpl-empty {
   color: var(--text-dim);
   font-size: var(--fs-sm);
@@ -349,22 +270,12 @@ body {
   margin-bottom: 0.35rem;
 }
 
-/* ── Preview text ── */
-.tpl-preview {
-  font-size: var(--fs-sm);
-  color: var(--text-muted);
-  margin-top: 0.25rem;
-  min-height: 1.1rem;
-  font-style: italic;
-}
-
 /* ── Template manage row ── */
 .tpl-mgmt-row {
   display: flex;
   gap: 0.4rem;
   align-items: stretch;
 }
-.tpl-mgmt-row .tpl-select { flex: 1; margin: 0; }
 .tpl-mgmt-row .msel-wrap   { flex: 1; }
 
 /* ── Multi-select dropdown ── */

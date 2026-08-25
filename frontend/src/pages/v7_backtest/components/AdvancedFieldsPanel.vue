@@ -3,6 +3,10 @@ import { PhCaretRight } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { RadioGroup, RadioItem } from '@/shared/components/ui/radio-group';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import {
   MARKET_FIELDS,
   METRIC_CATEGORY_ORDER,
@@ -134,29 +138,35 @@ const groupedMetrics = computed(() => {
             </tr>
             <tr v-for="(row, index) in marketSettings.rows" :key="index">
               <td>
-                <select :value="row.scope" @change="setRow(index, { scope: ($event.target as HTMLSelectElement).value as 'global' | 'exchange' })">
-                  <option value="global">All exchanges</option>
-                  <option value="exchange">Specific exchange</option>
-                </select>
+                <SelectRoot :model-value="row.scope" @update:model-value="setRow(index, { scope: String($event) as 'global' | 'exchange' })">
+                  <SelectTrigger :aria-label="t('v7backtest.tip.msScope')"><span>{{ row.scope === 'exchange' ? 'Specific exchange' : 'All exchanges' }}</span></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="global">All exchanges</SelectItem>
+                    <SelectItem value="exchange">Specific exchange</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </td>
               <td>
-                <select :disabled="row.scope === 'global'" :value="row.exchange" @change="setRow(index, { exchange: ($event.target as HTMLSelectElement).value })">
-                  <option v-for="exchange in rowExchangeOptions(row.exchange)" :key="exchange" :value="exchange">{{ exchange }}</option>
-                </select>
+                <SelectRoot :disabled="row.scope === 'global'" :model-value="row.exchange" @update:model-value="setRow(index, { exchange: String($event ?? '') })">
+                  <SelectTrigger :aria-label="t('v7backtest.tip.msExchange')"><span>{{ row.exchange }}</span></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="exchange in rowExchangeOptions(row.exchange)" :key="exchange" :value="exchange">{{ exchange }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </td>
-              <td><input :value="row.coin" list="market-settings-coin-list" placeholder="BTC" @input="setRow(index, { coin: ($event.target as HTMLInputElement).value })" /></td>
+              <td><Input :model-value="row.coin" list="market-settings-coin-list" placeholder="BTC" @update:model-value="setRow(index, { coin: String($event ?? '') })" /></td>
               <td v-for="field in MARKET_FIELDS" :key="field">
-                <input
+                <Input
                   type="number"
                   step="any"
                   :min="field === 'min_cost' ? 0 : 0.000000000001"
-                  :value="row.values[field] === undefined ? '' : String(row.values[field])"
+                  :model-value="row.values[field] === undefined ? '' : String(row.values[field])"
                   placeholder="inherit"
-                  @input="setCell(index, field, ($event.target as HTMLInputElement).value)"
+                  @update:model-value="setCell(index, field, String($event ?? ''))"
                 />
               </td>
               <td style="white-space: nowrap">
-                <button type="button" class="act-btn danger" @click="removeRow(index)">{{ t('v7backtest.delete') }}</button>
+                <Button type="button" variant="danger" class="act-btn h-auto" @click="removeRow(index)">{{ t('v7backtest.delete') }}</Button>
               </td>
             </tr>
           </tbody>
@@ -166,7 +176,7 @@ const groupedMetrics = computed(() => {
         <option v-for="coin in coins" :key="coin" :value="coin" />
       </datalist>
       <div class="field-status field-status-inline" data-test="market-settings-status">{{ marketError }}</div>
-      <button type="button" class="act-btn" style="margin-top: var(--sp-sm)" @click="addRow">{{ t('v7backtest.addOverride') }}</button>
+      <Button type="button" variant="default" class="act-btn h-auto" style="margin-top: var(--sp-sm)" @click="addRow">{{ t('v7backtest.addOverride') }}</Button>
     </div>
   </div>
 
@@ -174,35 +184,36 @@ const groupedMetrics = computed(() => {
     <div class="expander-header" :data-tip="t('v7backtest.tip.resultMetrics')"><PbIcon class="arrow" :icon="PhCaretRight" /> {{ t('v7backtest.resultMetrics') }}</div>
     <div class="expander-body">
       <div class="advanced-help">Controls terminal result visibility only. All metrics are still computed and saved. Optimize scoring and limit metrics are always included in Default and Custom modes.</div>
-      <div class="metric-mode-row">
-        <label class="metric-mode-button" :data-tip="t('v7backtest.tip.metricsDefaultMode')"><input type="radio" name="result-metrics-mode" value="default" :checked="resultMetrics.mode === 'default'" @change="setMode('default')" /> {{ t('v7backtest.default') }}</label>
-        <label class="metric-mode-button" :data-tip="t('v7backtest.tip.metricsAllMode')"><input type="radio" name="result-metrics-mode" value="all" :checked="resultMetrics.mode === 'all'" @change="setMode('all')" /> {{ t('common.all') }}</label>
-        <label class="metric-mode-button" :data-tip="t('v7backtest.tip.metricsCustomMode')"><input type="radio" name="result-metrics-mode" value="custom" :checked="resultMetrics.mode === 'custom'" @change="setMode('custom')" /> {{ t('v7backtest.customAdditions') }}</label>
-      </div>
+      <RadioGroup class="metric-mode-row flex gap-3" :model-value="resultMetrics.mode" @update:model-value="setMode(String($event) as ResultMetricsState['mode'])">
+        <label class="metric-mode-button flex cursor-pointer items-center gap-1.5" :data-tip="t('v7backtest.tip.metricsDefaultMode')"><RadioItem value="default" /> {{ t('v7backtest.default') }}</label>
+        <label class="metric-mode-button flex cursor-pointer items-center gap-1.5" :data-tip="t('v7backtest.tip.metricsAllMode')"><RadioItem value="all" /> {{ t('common.all') }}</label>
+        <label class="metric-mode-button flex cursor-pointer items-center gap-1.5" :data-tip="t('v7backtest.tip.metricsCustomMode')"><RadioItem value="custom" /> {{ t('v7backtest.customAdditions') }}</label>
+      </RadioGroup>
       <div v-if="resultMetrics.mode === 'custom'" data-test="result-metrics-custom">
         <div class="metric-picker-toolbar">
-          <input v-model="metricFilter" class="metric-picker-search" type="search" :placeholder="t('v7backtest.searchInstalledMetrics')" />
+          <Input v-model="metricFilter" class="metric-picker-search" type="search" :placeholder="t('v7backtest.searchInstalledMetrics')" />
           <span class="metric-selected-summary">{{ resultMetrics.selected.length }} selected</span>
         </div>
         <div data-test="result-metrics-list">
           <div v-if="resultMetrics.error" class="advanced-empty">
-            {{ resultMetrics.error }} <button type="button" class="act-btn" @click="emit('retry-metrics')">{{ t('v7backtest.retry') }}</button>
+            {{ resultMetrics.error }} <Button type="button" variant="default" class="act-btn h-auto" @click="emit('retry-metrics')">{{ t('v7backtest.retry') }}</Button>
           </div>
           <div v-else-if="groupedMetrics.length === 0" class="advanced-empty">{{ t('v7backtest.noMatchingMetrics') }}</div>
           <div v-for="group in groupedMetrics" :key="group.category" class="metric-category">
             <div class="metric-category-title">{{ group.category }}</div>
             <div class="metric-picker-grid">
-              <button
+              <Button
                 v-for="metric in group.metrics"
                 :key="metric"
                 type="button"
-                class="metric-picker-row metric-picker-button"
+                variant="ghost"
+                class="metric-picker-row metric-picker-button h-auto justify-start text-left font-normal"
                 :class="{ selected: resultMetrics.selected.includes(metric) }"
                 :title="metric"
                 @click="toggleMetric(metric)"
               >
                 {{ metric }}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

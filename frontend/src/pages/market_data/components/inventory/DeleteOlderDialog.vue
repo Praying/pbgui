@@ -6,9 +6,10 @@
  * view model arrives pre-computed (lib/inventoryOlderPreview) — pure props
  * in, events out.
  */
-import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { btnPrimaryClass, btnSecondaryClass, fieldLabelClass, noteClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { fieldLabelClass, noteClass } from '../../lib/uiClasses';
 import type { OlderPreviewView } from '../../lib/inventoryOlderPreview';
 
 defineProps<{
@@ -27,11 +28,13 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-const input = ref<HTMLInputElement | null>(null);
 
-/** Legacy openInventoryDeleteDatePicker (:8120-8132). */
-function openPicker(): void {
-  const el = input.value;
+/** Legacy openInventoryDeleteDatePicker (:8120-8132). The ui/ Input exposes
+ *  focus/blur/select only, so the picker path resolves the element from the
+ *  picker button's own wrap (id lookups would hit stale dialog instances). */
+function openPicker(event: MouseEvent): void {
+  const wrap = (event.currentTarget as HTMLElement).closest('.inventory-delete-date-input-wrap');
+  const el = wrap?.querySelector<HTMLInputElement>('input') ?? null;
   if (!el) return;
   el.focus();
   if (typeof el.showPicker === 'function') {
@@ -47,13 +50,14 @@ function openPicker(): void {
 
 /** The former .inventory-delete-date-field input[type="date"] rule — the
  *  native webkit calendar indicator stays invisible (pseudo-element, the
- *  picker button drives the click) and hover/focus re-tint the border. */
+ *  picker button drives the click); the ui/ Input owns the rest. */
 const dateInputClass =
-  'inventory-delete-date-input w-full h-8 rounded-md border border-border-default bg-panel pl-2 pr-[34px] text-sm text-primary font-sans outline-none hover:border-secondary focus:border-accent [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0';
+  'inventory-delete-date-input pr-[34px] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0';
 
-/** The former .inventory-delete-date-picker-btn rule. */
+/** The former .inventory-delete-date-picker-btn rule — the absolute
+ *  positioning geometry stays; the chrome is the ghost variant's. */
 const pickerBtnClass =
-  'inventory-delete-date-picker-btn absolute top-1/2 right-[2px] inline-flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border-none bg-transparent text-sm leading-none text-secondary hover:bg-white/6 hover:text-primary focus-visible:text-primary focus-visible:outline focus-visible:outline-1 focus-visible:outline-accent focus-visible:outline-offset-1';
+  'inventory-delete-date-picker-btn absolute top-1/2 right-[2px] h-7 w-7 -translate-y-1/2 p-0 text-sm leading-none';
 </script>
 
 <template>
@@ -67,7 +71,7 @@ const pickerBtnClass =
       <div class="ovl-header flex flex-shrink-0 items-center justify-between border-b border-border-subtle bg-card pt-[0.85rem] pr-[1.1rem] pb-[0.85rem] pl-[1.25rem]">
         <div class="ovl-header-title flex items-center gap-[0.5rem] text-md font-bold text-primary">{{ t('market.deleteByDateTitle') }}</div>
         <div class="ovl-header-actions relative z-[3] flex items-center gap-[0.5rem]">
-          <button class="ovl-close cursor-pointer rounded-[5px] border-none bg-transparent py-[0.2rem] px-[0.35rem] text-md leading-none text-muted transition-[color,background-color] duration-[120ms] hover:bg-white/6 hover:text-primary" id="inventory-delete-date-close" type="button" @click="emit('close')">✕</button>
+          <Button class="ovl-close text-md leading-none" variant="ghost" size="sm" id="inventory-delete-date-close" type="button" @click="emit('close')">✕</Button>
         </div>
       </div>
       <div class="inventory-delete-date-body grid gap-3 p-3">
@@ -91,39 +95,39 @@ const pickerBtnClass =
         <label class="inventory-delete-date-field grid gap-1 text-sm">
           <span :class="[fieldLabelClass, 'font-medium']">{{ t('market.deleteOlderThan') }}</span>
           <div class="inventory-delete-date-input-wrap relative">
-            <input
+            <Input
               id="inventory-delete-date-input"
-              ref="input"
               :class="dateInputClass"
               type="date"
-              :value="cutoffDay"
-              @change="emit('setCutoff', String(($event.target as HTMLInputElement).value || ''))"
+              :model-value="cutoffDay"
+              @update:model-value="emit('setCutoff', String($event ?? ''))"
             />
-            <button
+            <Button
+              variant="ghost"
               :class="pickerBtnClass"
               id="btn-inventory-delete-date-picker"
               type="button"
               :title="t('market.openCalendar')"
               @click="openPicker"
-            >📅</button>
+            >📅</Button>
           </div>
         </label>
         <div class="inventory-preview-list grid gap-1 text-sm text-secondary" id="inventory-delete-date-preview">
           <div :class="noteClass">{{ view.noteText }}</div>
         </div>
         <div class="inventory-delete-date-actions flex flex-wrap justify-end gap-2">
-          <button :class="btnSecondaryClass" id="btn-inventory-delete-date-cancel" type="button" @click="emit('close')">
+          <Button variant="info" id="btn-inventory-delete-date-cancel" type="button" @click="emit('close')">
             {{ t('common.cancel') }}
-          </button>
-          <button
-            :class="btnPrimaryClass"
+          </Button>
+          <Button
+            variant="primary"
             id="btn-inventory-delete-by-date-confirm"
             type="button"
             :disabled="!view.canDelete"
             @click="emit('delete')"
           >
             {{ t('market.deleteFiles') }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

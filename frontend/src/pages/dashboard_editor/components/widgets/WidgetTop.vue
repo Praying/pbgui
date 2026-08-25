@@ -13,6 +13,7 @@
  *  - the Now-checkbox label is the untranslated legacy literal.
  */
 import { computed, inject, watch } from 'vue';
+import { Input } from '@/shared/components/ui/input';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -106,13 +107,14 @@ const allUsers = useDashboardUsers().users;
     <WidgetHeader :title="dashT('dash.topSymbols', 'Top Symbols')" :icon="'🏆'">
       <div :class="[dtMetaClass, dtMetaControlsClass]">
         <span :class="dtMetaLblClass">{{ dashT('dash.top', 'Top') }}</span>
-        <input
+        <Input
           type="number"
+          size="sm"
           min="1"
           max="500"
           step="1"
           :class="dtCtrlNumClass"
-          :value="topN"
+          :model-value="topN"
           @change="onTopNChange"
         />
         <span :class="dtMetaSepClass">·</span>

@@ -7,6 +7,9 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
 import BackButton from './BackButton.vue';
 import { pageFetch } from '../lib/pageApi';
 import { confirmDialog } from '../lib/dialogs';
@@ -99,20 +102,20 @@ async function remove(key: string): Promise<void> {
     <div class="border-b border-border-subtle pb-3" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <BackButton @back="emit('back')" />
       <h3 class="text-lg tracking-tight text-primary" style="margin:0; flex:1;">{{ t('misc.apikeys.commentFields') }}</h3>
-      <button class="btn pbgui-btn btn-sm btn-primary" @click="showAdd">+ {{ t('misc.apikeys.add') }}</button>
+      <Button type="button" variant="primary" size="sm" id="btnCommentAdd" @click="showAdd">+ {{ t('misc.apikeys.add') }}</Button>
     </div>
     <div id="addCommentForm" v-show="addVisible" style="margin-bottom:12px; padding:12px; background:var(--bg-page); border-radius:4px; border:1px solid var(--border-default);">
       <div style="display:flex; gap:8px; align-items:flex-end;">
         <div class="form-group flex flex-col gap-1.5" style="flex:1;">
-          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.keyWithoutCommentPrefix') }}</label>
-          <input type="text" id="newCommentKey" class="min-h-[34px] px-2.5 py-1.5" v-model="newKey" placeholder="e.g. notes" />
+          <Label for="newCommentKey">{{ t('misc.apikeys.keyWithoutCommentPrefix') }}</Label>
+          <Input type="text" id="newCommentKey" v-model="newKey" placeholder="e.g. notes" />
         </div>
         <div class="form-group flex flex-col gap-1.5" style="flex:2;">
-          <label class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.value') }}</label>
-          <input type="text" id="newCommentValue" class="min-h-[34px] px-2.5 py-1.5" v-model="newValue" placeholder="Comment text" />
+          <Label for="newCommentValue">{{ t('misc.apikeys.value') }}</Label>
+          <Input type="text" id="newCommentValue" v-model="newValue" placeholder="Comment text" />
         </div>
-        <button class="btn pbgui-btn btn-sm btn-primary" style="margin-bottom:0;" @click="create">{{ t('common.save') }}</button>
-        <button class="btn pbgui-btn btn-sm btn-secondary" style="margin-bottom:0;" @click="addVisible = false">{{ t('common.cancel') }}</button>
+        <Button type="button" variant="primary" size="sm" id="btnCommentSave" @click="create">{{ t('common.save') }}</Button>
+        <Button type="button" variant="secondary" size="sm" @click="addVisible = false">{{ t('common.cancel') }}</Button>
       </div>
     </div>
     <table class="hl-expiry-table w-full overflow-hidden rounded-md border border-border-subtle border-separate border-spacing-0" id="commentsTable">
@@ -136,16 +139,15 @@ async function remove(key: string): Promise<void> {
         <tr v-else v-for="c in comments" :key="c.key">
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><code>{{ c.key }}</code></td>
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
-            <input
+            <Input
               type="text"
               class="comment-val"
               v-model="values[c.key]"
-              style="width:100%;background:var(--bg-page);border:1px solid var(--border-default);border-radius:4px;padding:6px 8px;color:var(--text-primary);font-size:var(--fs-sm);"
             />
           </td>
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
-            <button class="btn pbgui-btn btn-sm btn-primary" @click="update(c.key)">{{ t('common.save') }}</button>
-            <button class="btn pbgui-btn btn-sm btn-danger" @click="remove(c.key)">{{ t('common.delete') }}</button>
+            <Button type="button" variant="primary" size="sm" @click="update(c.key)">{{ t('common.save') }}</Button>
+            <Button type="button" variant="danger" size="sm" @click="remove(c.key)">{{ t('common.delete') }}</Button>
           </td>
         </tr>
       </tbody>

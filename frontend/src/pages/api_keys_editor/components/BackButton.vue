@@ -3,17 +3,14 @@
 import { PhArrowLeft } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 
 const emit = defineEmits<{ (e: 'back'): void }>();
 const { t } = useI18n();
 </script>
 
 <template>
-  <button
-    class="back-btn"
-    style="width:auto; flex-shrink:0; padding:6px 14px; border-radius:5px; border:1px solid var(--accent); background:transparent; color:var(--accent); font-size:var(--fs-sm); cursor:pointer; font-weight:600;"
-    @click="emit('back')"
-  >
+  <Button type="button" variant="info" size="sm" class="back-btn shrink-0" @click="emit('back')">
     <PbIcon :icon="PhArrowLeft" /> <slot>{{ t('misc.apikeys.back') }}</slot>
-  </button>
+  </Button>
 </template>

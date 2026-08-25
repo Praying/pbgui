@@ -41,18 +41,22 @@ import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import type { PageSection } from '@/shared/navigation';
 import { useWelcome } from './composables/useWelcome';
 import { apiOrigin, bootSerial, bootVersion } from './config';
 import {
   bannerClass,
   browserEntryClass,
-  btnClass,
-  inputClass,
   issueToneClass,
-  labelClass,
-  setupInputClass,
-  setupLabelClass,
   statusBadgeToneClass,
 } from './lib/uiClasses';
 
@@ -209,13 +213,14 @@ onBeforeUnmount(() => {
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">PB7</span>
               <strong id="summary-pb7" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb7 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb7-copy">{{ store.summaryView.value.pb7Copy }}</p>
-              <button
+              <Button
                 v-if="store.summaryView.value.pb7Tone !== 'success'"
                 type="button"
-                class="btn pbgui-btn btn-secondary summary-action"
-                :class="btnClass('summary-action')"
+                variant="secondary"
+                size="sm"
+                class="summary-action mt-auto"
                 @click="store.focusSection('setup')"
-              >{{ t('misc.welcome.configurePb7') }}</button>
+              >{{ t('misc.welcome.configurePb7') }}</Button>
             </div>
             <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-[12px] border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">PB8</span>
@@ -250,9 +255,9 @@ onBeforeUnmount(() => {
           <div class="issues grid gap-3.5 mt-4.5" id="issues">
             <div v-if="store.loginSecurityBanner.value.showAck" class="issue warning login-security-warning flex items-center justify-between gap-3 py-3 px-3.5 rounded-[12px] text-base leading-[1.5] border border-warning/22 bg-warning-deep/38 text-warning-soft">
               <span class="min-w-0">{{ store.loginSecurityBanner.value.summary }}</span>
-              <button type="button" class="btn pbgui-btn btn-secondary login-security-ack shrink-0" :class="btnClass('secondary')" @click="store.acknowledgeLoginSecurity()">{{
+              <Button type="button" variant="secondary" class="login-security-ack shrink-0" @click="store.acknowledgeLoginSecurity()">{{
                 t('misc.welcome.acknowledge')
-              }}</button>
+              }}</Button>
             </div>
             <div
               v-for="(issue, index) in store.issues.value"
@@ -284,17 +289,17 @@ onBeforeUnmount(() => {
               </div>
               <div class="field-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
                 <div class="field full flex flex-col gap-1.75 col-span-full">
-                  <label for="pb7dir" :class="setupLabelClass">{{ t('misc.welcome.passivbotV7Path') }}</label>
+                  <Label for="pb7dir">{{ t('misc.welcome.passivbotV7Path') }}</Label>
                   <div class="field-browse grid grid-cols-[minmax(0,1fr)_62px] gap-2 items-center max-[640px]:grid-cols-1">
-                    <input id="pb7dir" v-model="store.pb7dir.value" type="text" placeholder="/path/to/pb7" :class="setupInputClass">
-                    <button id="browse-pb7dir-btn" class="btn btn-secondary browse-btn" :class="btnClass('browse')" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb7dir', 'directory')">{{ t('misc.welcome.browse') }}</button>
+                    <Input id="pb7dir" v-model="store.pb7dir.value" type="text" placeholder="/path/to/pb7" />
+                    <Button id="browse-pb7dir-btn" variant="info" class="browse-btn min-w-[62px]" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb7dir', 'directory')">{{ t('misc.welcome.browse') }}</Button>
                   </div>
                 </div>
                 <div class="field full flex flex-col gap-1.75 col-span-full">
-                  <label for="pb7venv" :class="setupLabelClass">{{ t('misc.welcome.passivbotV7Python') }}</label>
+                  <Label for="pb7venv">{{ t('misc.welcome.passivbotV7Python') }}</Label>
                   <div class="field-browse grid grid-cols-[minmax(0,1fr)_62px] gap-2 items-center max-[640px]:grid-cols-1">
-                    <input id="pb7venv" v-model="store.pb7venv.value" type="text" placeholder="/path/to/venv/bin/python" :class="setupInputClass">
-                    <button id="browse-pb7venv-btn" class="btn btn-secondary browse-btn" :class="btnClass('browse')" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb7venv', 'python')">{{ t('misc.welcome.browse') }}</button>
+                    <Input id="pb7venv" v-model="store.pb7venv.value" type="text" placeholder="/path/to/venv/bin/python" />
+                    <Button id="browse-pb7venv-btn" variant="info" class="browse-btn min-w-[62px]" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb7venv', 'python')">{{ t('misc.welcome.browse') }}</Button>
                   </div>
                 </div>
               </div>
@@ -307,17 +312,17 @@ onBeforeUnmount(() => {
               </div>
               <div class="field-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
                 <div class="field full flex flex-col gap-1.75 col-span-full">
-                  <label for="pb8dir" :class="setupLabelClass">{{ t('misc.welcome.passivbotV8Path') }}</label>
+                  <Label for="pb8dir">{{ t('misc.welcome.passivbotV8Path') }}</Label>
                   <div class="field-browse grid grid-cols-[minmax(0,1fr)_62px] gap-2 items-center max-[640px]:grid-cols-1">
-                    <input id="pb8dir" v-model="store.pb8dir.value" type="text" placeholder="/path/to/pb8" :class="setupInputClass">
-                    <button id="browse-pb8dir-btn" class="btn btn-secondary browse-btn" :class="btnClass('browse')" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb8dir', 'directory')">{{ t('misc.welcome.browse') }}</button>
+                    <Input id="pb8dir" v-model="store.pb8dir.value" type="text" placeholder="/path/to/pb8" />
+                    <Button id="browse-pb8dir-btn" variant="info" class="browse-btn min-w-[62px]" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb8dir', 'directory')">{{ t('misc.welcome.browse') }}</Button>
                   </div>
                 </div>
                 <div class="field full flex flex-col gap-1.75 col-span-full">
-                  <label for="pb8venv" :class="setupLabelClass">{{ t('misc.welcome.passivbotV8Python') }}</label>
+                  <Label for="pb8venv">{{ t('misc.welcome.passivbotV8Python') }}</Label>
                   <div class="field-browse grid grid-cols-[minmax(0,1fr)_62px] gap-2 items-center max-[640px]:grid-cols-1">
-                    <input id="pb8venv" v-model="store.pb8venv.value" type="text" placeholder="/path/to/venv_pb8/bin/python" :class="setupInputClass">
-                    <button id="browse-pb8venv-btn" class="btn btn-secondary browse-btn" :class="btnClass('browse')" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb8venv', 'python')">{{ t('misc.welcome.browse') }}</button>
+                    <Input id="pb8venv" v-model="store.pb8venv.value" type="text" placeholder="/path/to/venv_pb8/bin/python" />
+                    <Button id="browse-pb8venv-btn" variant="info" class="browse-btn min-w-[62px]" type="button" :disabled="!store.canSave.value" @click="store.openFileBrowser('pb8venv', 'python')">{{ t('misc.welcome.browse') }}</Button>
                   </div>
                 </div>
               </div>
@@ -330,22 +335,27 @@ onBeforeUnmount(() => {
             </div>
             <div class="field-grid identity-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
               <div class="field flex flex-col gap-1.75">
-                <label for="pbname" :class="setupLabelClass">{{ t('misc.welcome.botName') }}</label>
-                <input id="pbname" v-model="store.pbname.value" type="text" maxlength="32" :class="setupInputClass">
+                <Label for="pbname">{{ t('misc.welcome.botName') }}</Label>
+                <Input id="pbname" v-model="store.pbname.value" type="text" maxlength="32" />
               </div>
               <div class="field flex flex-col gap-1.75">
-                <label for="role" :class="setupLabelClass">{{ t('misc.welcome.role') }}</label>
-                <select id="role" v-model="store.role.value" :class="setupInputClass">
-                  <option value="slave">{{ t('misc.welcome.slave') }}</option>
-                  <option value="master">{{ t('misc.welcome.master') }}</option>
-                </select>
+                <Label id="role-label" for="role">{{ t('misc.welcome.role') }}</Label>
+                <SelectRoot v-model="store.role.value">
+                  <SelectTrigger id="role" aria-labelledby="role-label">
+                    <span>{{ store.role.value === 'master' ? t('misc.welcome.master') : t('misc.welcome.slave') }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="slave">{{ t('misc.welcome.slave') }}</SelectItem>
+                    <SelectItem value="master">{{ t('misc.welcome.master') }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </div>
             </div>
           </section>
 
           <div class="actions settings-actions flex flex-wrap gap-2 items-center justify-end mt-6 pt-4.5 border-t border-t-secondary/14 max-[640px]:flex-col max-[640px]:items-stretch">
             <span class="settings-action-note mr-auto max-w-[62ch] text-muted text-sm leading-[1.45] max-[640px]:mr-0">{{ t('misc.welcome.saveSetupHint') }}</span>
-            <button id="save-setup-btn" class="btn btn-primary" :class="btnClass('save-setup')" :disabled="!store.canSave.value" @click="store.saveSetup()">{{ t('misc.welcome.saveSetup') }}</button>
+            <Button id="save-setup-btn" variant="primary" size="lg" class="min-w-24" :disabled="!store.canSave.value" @click="store.saveSetup()">{{ t('misc.welcome.saveSetup') }}</Button>
           </div>
         </div>
       </section>
@@ -365,31 +375,31 @@ onBeforeUnmount(() => {
           }}</p>
           <div class="field-grid password-field-grid grid grid-cols-1 gap-3.5 mt-4.5">
             <div class="field flex flex-col gap-1.5">
-              <label for="current-password" :class="labelClass">{{ t('misc.welcome.currentPassword') }}</label>
+              <Label for="current-password">{{ t('misc.welcome.currentPassword') }}</Label>
               <div class="pw-wrap relative flex items-center">
-                <input id="current-password" v-model="store.currentPassword.value" :type="currentPwVisible ? 'text' : 'password'" autocomplete="current-password" :disabled="store.authDisabled.value" :class="`${inputClass} flex-1 pr-[74px]`">
-                <button type="button" class="pw-eye-btn absolute right-1.25 top-1 bottom-1 inline-flex items-center justify-center px-2 rounded-md bg-transparent text-muted text-xs leading-none cursor-pointer select-none font-bold transition-[background,border-color,transform,color] duration-[0.14s] ease-[ease] active:transform-none hover:bg-secondary/8 hover:text-primary" :aria-label="t('misc.welcome.showHideCurrentPassword')" @click="currentPwVisible = !currentPwVisible">{{ currentPwVisible ? t('misc.welcome.hidePassword') : t('misc.welcome.showPassword') }}</button>
+                <Input id="current-password" v-model="store.currentPassword.value" :type="currentPwVisible ? 'text' : 'password'" autocomplete="current-password" :disabled="store.authDisabled.value" class="flex-1 pr-[74px]" />
+                <Button type="button" variant="ghost" size="sm" class="pw-eye-btn absolute right-1.25 top-1 bottom-1 px-2 text-xs font-bold" :aria-label="t('misc.welcome.showHideCurrentPassword')" @click="currentPwVisible = !currentPwVisible">{{ currentPwVisible ? t('misc.welcome.hidePassword') : t('misc.welcome.showPassword') }}</Button>
               </div>
             </div>
             <div class="field flex flex-col gap-1.5">
-              <label for="new-password" :class="labelClass">{{ t('misc.welcome.newPassword') }}</label>
+              <Label for="new-password">{{ t('misc.welcome.newPassword') }}</Label>
               <div class="pw-wrap relative flex items-center">
-                <input id="new-password" v-model="store.newPassword.value" :type="newPwVisible ? 'text' : 'password'" autocomplete="new-password" @keydown.enter="store.changePassword()" :class="`${inputClass} flex-1 pr-[74px]`">
-                <button type="button" class="pw-eye-btn absolute right-1.25 top-1 bottom-1 inline-flex items-center justify-center px-2 rounded-md bg-transparent text-muted text-xs leading-none cursor-pointer select-none font-bold transition-[background,border-color,transform,color] duration-[0.14s] ease-[ease] active:transform-none hover:bg-secondary/8 hover:text-primary" :aria-label="t('misc.welcome.showHideNewPassword')" @click="newPwVisible = !newPwVisible">{{ newPwVisible ? t('misc.welcome.hidePassword') : t('misc.welcome.showPassword') }}</button>
+                <Input id="new-password" v-model="store.newPassword.value" :type="newPwVisible ? 'text' : 'password'" autocomplete="new-password" class="flex-1 pr-[74px]" @keydown.enter="store.changePassword()" />
+                <Button type="button" variant="ghost" size="sm" class="pw-eye-btn absolute right-1.25 top-1 bottom-1 px-2 text-xs font-bold" :aria-label="t('misc.welcome.showHideNewPassword')" @click="newPwVisible = !newPwVisible">{{ newPwVisible ? t('misc.welcome.hidePassword') : t('misc.welcome.showPassword') }}</Button>
               </div>
             </div>
           </div>
           <div class="actions password-actions flex flex-wrap gap-2 mt-5">
-            <button id="change-password-btn" class="btn btn-primary" :class="btnClass('primary')" @click="store.changePassword()">{{
+            <Button id="change-password-btn" variant="primary" @click="store.changePassword()">{{
               store.authDisabled.value ? t('misc.welcome.enablePasswordAuthentication') : t('misc.welcome.changePassword')
-            }}</button>
+            }}</Button>
           </div>
           <div v-if="!store.authDisabled.value" class="password-danger-zone flex items-center justify-between gap-5 mt-6 pt-4.5 border-t border-t-danger/20 max-[640px]:flex-col max-[640px]:items-stretch">
             <div>
               <h3 class="danger-zone-title m-0 mb-1.25 text-danger-soft text-md">{{ t('misc.welcome.disableAuthentication') }}</h3>
               <p class="danger-zone-copy m-0 max-w-[58ch] text-secondary leading-[1.45]">{{ t('misc.welcome.disableAuthenticationCopy') }}</p>
             </div>
-            <button id="disable-auth-btn" class="btn btn-danger" :class="btnClass('danger')" type="button" @click="onDisableAuth()">{{ t('misc.welcome.disableAuthentication') }}</button>
+            <Button id="disable-auth-btn" variant="danger" type="button" @click="onDisableAuth()">{{ t('misc.welcome.disableAuthentication') }}</Button>
           </div>
         </div>
       </section>
@@ -402,14 +412,14 @@ onBeforeUnmount(() => {
     <div class="panel browser-dialog flex flex-col gap-3 w-[min(860px,calc(100vw_-_40px))] max-h-[calc(100dvh_-_48px)] rounded-[14px] border border-secondary/13 bg-card shadow-[0_18px_42px_rgba(5,8,14,0.18),0_1px_rgba(255,255,255,0.025)_inset] p-5 max-[640px]:p-4" role="dialog" aria-modal="true" aria-labelledby="file-browser-title">
       <div class="browser-head flex items-center justify-between gap-3">
         <h2 id="file-browser-title" class="panel-title m-0 mb-2 text-lg text-primary">{{ browserTitle }}</h2>
-        <button id="file-browser-close" class="btn btn-secondary" :class="btnClass('secondary')" type="button" @click="store.closeFileBrowser()">{{ t('common.close') }}</button>
+        <Button id="file-browser-close" variant="secondary" type="button" @click="store.closeFileBrowser()">{{ t('common.close') }}</Button>
       </div>
       <div class="browser-toolbar flex flex-wrap gap-2 items-center">
-        <button id="file-browser-up" class="btn btn-secondary" :class="btnClass('secondary')" type="button" :disabled="!store.fileBrowser.value.parentPath || store.fileBrowser.value.parentPath === store.fileBrowser.value.currentPath" @click="store.loadFileBrowser(store.fileBrowser.value.parentPath)">{{ t('misc.welcome.up') }}</button>
-        <button id="file-browser-select" class="btn btn-primary" :class="btnClass('primary')" type="button" :disabled="store.fileBrowser.value.mode === 'python' && !store.fileBrowser.value.selectedPath" @click="store.applyFileBrowserSelection()">{{
+        <Button id="file-browser-up" variant="secondary" type="button" :disabled="!store.fileBrowser.value.parentPath || store.fileBrowser.value.parentPath === store.fileBrowser.value.currentPath" @click="store.loadFileBrowser(store.fileBrowser.value.parentPath)">{{ t('misc.welcome.up') }}</Button>
+        <Button id="file-browser-select" variant="primary" type="button" :disabled="store.fileBrowser.value.mode === 'python' && !store.fileBrowser.value.selectedPath" @click="store.applyFileBrowserSelection()">{{
           store.fileBrowser.value.mode === 'directory' ? t('misc.welcome.selectThisFolder') : t('misc.welcome.selectSelectedFile')
-        }}</button>
-        <input id="file-browser-path" class="browser-path flex-1 min-w-[280px]" :class="inputClass" type="text" readonly :value="store.fileBrowser.value.currentPath">
+        }}</Button>
+        <Input id="file-browser-path" class="browser-path flex-1 min-w-[280px]" type="text" readonly :model-value="store.fileBrowser.value.currentPath" />
       </div>
       <div id="file-browser-list" class="browser-list grid gap-1 min-h-60 max-h-[420px] overflow-y-auto p-1 rounded-[12px] border border-border-subtle bg-page">
         <div v-if="!store.fileBrowser.value.entries.length" class="browser-empty py-3 px-3.5 rounded-[10px] border border-dashed border-secondary/22 text-secondary text-center">{{ t('misc.welcome.noMatchingEntries') }}</div>

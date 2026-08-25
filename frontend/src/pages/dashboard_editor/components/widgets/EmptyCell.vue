@@ -11,6 +11,7 @@
  * (legacy onDelete → clearCell, editor:1021-1024).
  */
 import { computed, inject } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { WIDGET_META, widgetLabel, type RenderableWidgetType } from '../../lib/grid';
@@ -48,13 +49,16 @@ function onDelete(): void {
   >
     <span :class="dtIconClass">{{ icon }}</span>
     <span :class="dtTitleClass">{{ label }}</span>
-    <button
+    <Button
       v-if="editMode"
+      type="button"
+      variant="ghost"
+      size="icon"
       :class="dtTrashClass"
       :title="dashT('dash.removeWidget', 'Remove widget')"
       @click.stop="onDelete"
     >
       &#128465;
-    </button>
+    </Button>
   </div>
 </template>

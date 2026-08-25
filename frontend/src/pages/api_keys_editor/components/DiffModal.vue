@@ -6,6 +6,7 @@
  */
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
 import { diffAllEqual, sideDiffRows, unifiedDiffRows, type DiffRow } from '../lib/diffRows';
 import type { DiffResponse } from '../types';
 
@@ -59,14 +60,14 @@ function rowClass(kind: DiffRow['kind']): string {
   <div id="diffModal" class="diff-modal fixed inset-0 z-[999] flex flex-col overflow-hidden bg-page" v-show="data">
     <div class="diff-modal-header flex shrink-0 items-center justify-between border-b border-border-subtle bg-panel px-4 py-2.5">
       <div style="display:flex; align-items:center; gap:12px;">
-        <button class="btn pbgui-btn btn-sm btn-secondary" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</button>
+        <Button type="button" variant="secondary" size="sm" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</Button>
         <span id="diffTitle" style="font-size:var(--fs-sm); color:var(--text-secondary); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;">
           {{ data ? backupLabel(data.filename1) + '  →  ' + backupLabel(data.filename2) : '' }}
         </span>
       </div>
       <div style="display:flex; gap:6px;">
-        <button class="btn pbgui-btn btn-sm btn-secondary" id="btnDiffUnified" :class="{ active: mode === 'unified' }" @click="mode = 'unified'">{{ t('misc.apikeys.unified') }}</button>
-        <button class="btn pbgui-btn btn-sm btn-secondary" id="btnDiffSide" :class="{ active: mode === 'side' }" @click="mode = 'side'">{{ t('misc.apikeys.sideBySide') }}</button>
+        <Button type="button" :variant="mode === 'unified' ? 'info' : 'secondary'" size="sm" id="btnDiffUnified" @click="mode = 'unified'">{{ t('misc.apikeys.unified') }}</Button>
+        <Button type="button" :variant="mode === 'side' ? 'info' : 'secondary'" size="sm" id="btnDiffSide" @click="mode = 'side'">{{ t('misc.apikeys.sideBySide') }}</Button>
       </div>
     </div>
     <div class="diff-legend flex shrink-0 gap-3 border-b border-border-subtle bg-card px-3.5 py-1.25 text-xs">

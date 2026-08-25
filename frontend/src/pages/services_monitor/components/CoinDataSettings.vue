@@ -19,6 +19,8 @@ import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { apiBase } from '../config';
 import type { CoinDataSettingsData, PbDataSaveResponse } from '../types';
 
@@ -104,22 +106,22 @@ defineExpose({ load });
       <div class="form-row">
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.fetchInterval') }}</span>
-          <input class="form-input narrow" type="number" id="coindata-fetch-interval" min="1" max="24" step="1" v-model="fetchInterval" />
+          <Input class="narrow" type="number" id="coindata-fetch-interval" min="1" max="24" step="1" v-model="fetchInterval" />
         </div>
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.fetchLimit') }}</span>
-          <input class="form-input narrow" type="number" id="coindata-fetch-limit" min="200" max="5000" step="200" v-model="fetchLimit" />
+          <Input class="narrow" type="number" id="coindata-fetch-limit" min="200" max="5000" step="200" v-model="fetchLimit" />
         </div>
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.metadataInterval') }}</span>
-          <input class="form-input narrow" type="number" id="coindata-metadata-interval" min="1" max="7" step="1" v-model="metadataInterval" />
+          <Input class="narrow" type="number" id="coindata-metadata-interval" min="1" max="7" step="1" v-model="metadataInterval" />
         </div>
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.mappingInterval') }}</span>
-          <input class="form-input narrow" type="number" id="coindata-mapping-interval" min="1" max="168" step="1" v-model="mappingInterval" />
+          <Input class="narrow" type="number" id="coindata-mapping-interval" min="1" max="168" step="1" v-model="mappingInterval" />
         </div>
       </div>
-      <button class="form-btn save" type="button" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</button>
+      <Button class="save" type="button" variant="primary" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</Button>
       <span
         class="inline-msg"
         id="coindata-save-msg"
@@ -138,11 +140,7 @@ defineExpose({ load });
 .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .form-field { display: flex; flex-direction: column; gap: 3px; }
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.form-input.narrow { width: 90px; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
-.form-btn.save:hover { background: var(--accent-deep); color: #f2f5fb; }
+.narrow { width: 90px; }
 .inline-msg { font-size: var(--fs-xs); color: var(--success); margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
 .inline-msg.visible { opacity: 1; }
 .inline-msg.error { color: var(--danger-soft); }

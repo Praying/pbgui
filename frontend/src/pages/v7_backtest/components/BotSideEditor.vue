@@ -3,6 +3,9 @@ import { PhCaretRight, PhMinus, PhPlus } from '@phosphor-icons/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
 import { botHighlightLines } from '@/shared/botHighlight';
 import { getSideValue } from '../lib/sideValues';
 import type { BacktestVersion } from '../types';
@@ -105,24 +108,25 @@ watch(model, (raw) => {
       <div class="form-group">
         <label :data-tip="t('v7backtest.tip.totalWalletExposureLimit')">total_wallet_exposure_limit</label>
         <div class="num-stepper">
-          <button type="button" class="stepper-btn" aria-label="Decrease total_wallet_exposure_limit" title="Decrease total_wallet_exposure_limit" @click="step('total_wallet_exposure_limit', -tweStep, 10)"><PbIcon :icon="PhMinus" /></button>
-          <input type="number" :value="twe" step="0.05" @input="syncField('total_wallet_exposure_limit', ($event.target as HTMLInputElement).value)" />
-          <button type="button" class="stepper-btn" aria-label="Increase total_wallet_exposure_limit" title="Increase total_wallet_exposure_limit" @click="step('total_wallet_exposure_limit', tweStep, 10)"><PbIcon :icon="PhPlus" /></button>
+          <Button type="button" variant="default" class="stepper-btn" aria-label="Decrease total_wallet_exposure_limit" title="Decrease total_wallet_exposure_limit" @click="step('total_wallet_exposure_limit', -tweStep, 10)"><PbIcon :icon="PhMinus" /></Button>
+          <Input type="number" :model-value="twe" step="0.05" @update:model-value="syncField('total_wallet_exposure_limit', String($event ?? ''))" />
+          <Button type="button" variant="default" class="stepper-btn" aria-label="Increase total_wallet_exposure_limit" title="Increase total_wallet_exposure_limit" @click="step('total_wallet_exposure_limit', tweStep, 10)"><PbIcon :icon="PhPlus" /></Button>
         </div>
       </div>
       <div class="form-group">
         <label :data-tip="t(side === 'long' ? 'v7backtest.tip.nPositionsLong' : 'v7backtest.tip.nPositionsShort')">n_positions</label>
         <div class="num-stepper">
-          <button type="button" class="stepper-btn" aria-label="Decrease n_positions" title="Decrease n_positions" @click="step('n_positions', -1, 10)"><PbIcon :icon="PhMinus" /></button>
-          <input type="number" :value="npos" step="1" @input="syncField('n_positions', ($event.target as HTMLInputElement).value)" />
-          <button type="button" class="stepper-btn" aria-label="Increase n_positions" title="Increase n_positions" @click="step('n_positions', 1, 10)"><PbIcon :icon="PhPlus" /></button>
+          <Button type="button" variant="default" class="stepper-btn" aria-label="Decrease n_positions" title="Decrease n_positions" @click="step('n_positions', -1, 10)"><PbIcon :icon="PhMinus" /></Button>
+          <Input type="number" :model-value="npos" step="1" @update:model-value="syncField('n_positions', String($event ?? ''))" />
+          <Button type="button" variant="default" class="stepper-btn" aria-label="Increase n_positions" title="Increase n_positions" @click="step('n_positions', 1, 10)"><PbIcon :icon="PhPlus" /></Button>
         </div>
       </div>
     </div>
     <div class="expander bot-json-expander" :class="{ open: jsonOpen, error: needsReview }" :data-test="'bot-json-expander-' + side">
-      <button
+      <Button
         type="button"
-        class="expander-header"
+        variant="ghost"
+        class="expander-header h-auto"
         :aria-expanded="jsonOpen"
         :aria-controls="'bot-json-content-' + side"
         :data-test="'bot-json-expander-toggle-' + side"
@@ -131,7 +135,7 @@ watch(model, (raw) => {
         <PbIcon class="arrow" :icon="PhCaretRight" />
         <span>{{ t('v7backtest.fullConfigJson') }}</span>
         <span v-if="needsReview" class="bot-json-review ml-auto text-xs font-semibold text-warning">{{ t('v7backtest.review') }}</span>
-      </button>
+      </Button>
       <div :id="'bot-json-content-' + side" class="expander-body">
         <div v-if="jsonOpen" class="form-group">
           <label :data-tip="t('v7backtest.tip.fullConfigJson')">
@@ -159,11 +163,11 @@ watch(model, (raw) => {
                 boxShadow: line.error ? 'inset 3px 0 0 rgb(var(--danger-rgb) / 0.95)' : undefined,
               }"
               >{{ line.text }}</span></pre>
-            <textarea
+            <Textarea
               v-model="model"
               style="position: relative; z-index: 1; background: transparent; overflow: hidden; resize: vertical"
               :data-test="'cfg-bot-' + side"
-            ></textarea>
+            />
           </div>
           <div :id="'cfg-bot-' + side + '-status'" class="field-status field-status-inline" aria-live="polite"></div>
         </div>

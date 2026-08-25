@@ -10,6 +10,16 @@ import ErrorState from '@/shared/components/ErrorState.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import type { PageSection } from '@/shared/navigation';
 import { clusterApiBase } from './config';
 
@@ -64,6 +74,9 @@ const retentionDays = ref(7);
 const retentionMode = ref('report_only');
 const selfJoinForm = ref({ hostname: '', remote_pbgui_dir: '', ssh_host: '', ssh_user: '', ssh_port: 22, reset: false });
 
+const SYNC_MODE_LABELS: Record<string, string> = { reachable: 'Reachable', outbound_only: 'Outbound only', disabled: 'Disabled' };
+const syncModeLabel = computed(() => SYNC_MODE_LABELS[settingsForm.value.sync_mode] ?? settingsForm.value.sync_mode);
+
 const counts = computed(() => status.value.counts || {});
 const identity = computed(() => status.value.identity || {});
 const credentials = computed(() => status.value.credentials || desired.value.credentials || {});
@@ -95,18 +108,8 @@ function noticeKindClass(kind: 'ok' | 'err' | 'warn'): string {
 }
 
 /* ── Class kits ─────────────────────────────────────────────────────────
-   Shared shapes so the page keeps one hover/active/focus-visible contract.
-   Status colours are deliberately absent from the structural pieces —
-   dynamic helpers above always return the full colour set. */
-const btnBase = 'inline-flex min-h-8 cursor-pointer items-center gap-1.25 rounded-md border px-2.5 py-1.5 transition-colors duration-150 ease-standard active:translate-y-px focus-visible:outline-2 focus-visible:outline-accent/70 disabled:cursor-not-allowed disabled:opacity-50';
-const btnAccent = `${btnBase} border-accent/42 bg-accent/8 text-accent-soft hover:border-accent/60 hover:bg-accent/14`;
-const btnWarning = `${btnBase} border-warning/38 bg-warning/8 text-warning-soft hover:border-warning/55 hover:bg-warning/14`;
-const btnDanger = `${btnBase} border-danger/38 bg-danger/8 text-danger-soft hover:border-danger/55 hover:bg-danger/14`;
-const btnNeutral = `${btnBase} border-border-default bg-card text-primary hover:border-border-strong hover:bg-elevated`;
-/* Compact in-table actions — tertiary weight, no min-height. */
-const btnCell = 'inline-flex cursor-pointer items-center gap-1 rounded-sm border border-border-default/70 px-2 py-1 text-[0.78rem] text-secondary transition-colors duration-150 ease-standard hover:border-accent/50 hover:bg-accent/8 hover:text-accent-soft active:translate-y-px focus-visible:outline-2 focus-visible:outline-accent/70 disabled:cursor-not-allowed disabled:opacity-50';
-const btnCellDanger = 'inline-flex cursor-pointer items-center gap-1 rounded-sm border border-danger/45 bg-danger/8 px-2 py-1 text-[0.78rem] text-danger-soft transition-colors duration-150 ease-standard hover:border-danger/65 hover:bg-danger/14 active:translate-y-px focus-visible:outline-2 focus-visible:outline-danger/70 disabled:cursor-not-allowed disabled:opacity-50';
-
+   Structural classes only — form controls moved to the shared ui/ layer
+   (Button/Input/Label/Select/Checkbox), which owns their chrome. */
 const cardClass = 'overflow-hidden rounded-[9px] border border-border-default bg-card';
 const cardHeadClass = 'flex items-center justify-between gap-2.5 border-b border-border-default px-4 py-3';
 const cardTitleClass = 'text-[0.9rem] font-semibold tracking-[0.01em]';
@@ -116,8 +119,6 @@ const statClass = 'rounded-md bg-page p-2.75';
 const statValueClass = 'mt-1 text-[1.25rem] font-semibold leading-tight tabular-nums';
 const statMonoClass = 'mt-1 break-all font-mono text-[0.95rem] font-semibold leading-tight';
 const preClass = 'm-0 overflow-auto whitespace-pre-wrap rounded-md bg-page p-2.5 font-mono text-[0.75rem] leading-[1.5] text-primary';
-const fieldClass = 'grid gap-1 text-secondary text-[0.8rem]';
-const inputClass = 'w-full min-h-[33px] rounded-md border border-border-strong bg-input px-2.5 py-1.5 text-primary transition-colors duration-150 focus:border-accent focus:outline-none';
 const thClass = 'sticky top-0 z-[1] border-b border-border-default bg-card px-2.5 py-2.25 text-left align-middle text-[0.72rem] font-semibold tracking-[0.04em] text-secondary';
 const tdClass = 'border-b border-border-default px-2.5 py-2.25 text-left align-top';
 const tdHoverClass = `${tdClass} transition-colors group-hover:bg-accent/8`;
@@ -201,8 +202,8 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
     </template>
 
     <template #header-actions>
-      <button :class="btnAccent" @click="loadAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
-      <button :class="btnWarning" @click="section = 'setup'"><PbIcon :icon="PhWrench" /> {{ t('sysmon.setup') }}</button>
+      <Button variant="info" type="button" @click="loadAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button>
+      <Button variant="warning" type="button" @click="section = 'setup'"><PbIcon :icon="PhWrench" /> {{ t('sysmon.setup') }}</Button>
     </template>
 
     <div class="flex min-h-0 flex-1 flex-col bg-page text-primary">
@@ -292,7 +293,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
             <article :class="cardClass">
               <header :class="cardHeadClass">
                 <span :class="cardTitleClass">{{ t('sysmon.bootstrapClusterState') }}</span>
-                <button :class="btnWarning" :disabled="!bootstrap.items?.length" @click="applyBootstrap">{{ t('sysmon.applyBootstrap') }}</button>
+                <Button variant="warning" type="button" :disabled="!bootstrap.items?.length" @click="applyBootstrap">{{ t('sysmon.applyBootstrap') }}</Button>
               </header>
               <div class="p-4">
                 <p class="m-0 text-[0.82rem] leading-[1.55] text-secondary">{{ t('sysmon.bootstrapClusterStateNote') }}</p>
@@ -312,7 +313,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                         <td :class="tdHoverClass">{{ display(item.name || item.hostname) }}</td>
                         <td :class="tdHoverClass">{{ item.action }}</td>
                         <td :class="tdHoverClass">
-                          <button v-if="item.type === 'node'" :class="btnCell" @click="bootstrapNode(String(item.hostname || item.name))">{{ t('sysmon.bootstrap') }}</button>
+                          <Button v-if="item.type === 'node'" variant="outline" size="sm" type="button" @click="bootstrapNode(String(item.hostname || item.name))">{{ t('sysmon.bootstrap') }}</Button>
                         </td>
                       </tr>
                     </tbody>
@@ -324,14 +325,14 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
             <article :class="cardClass">
               <header :class="cardHeadClass">
                 <span :class="cardTitleClass">{{ t('sysmon.selfJoin') }}</span>
-                <button :class="btnWarning" @click="startSelfJoin">{{ t('sysmon.joinExistingCluster') }}</button>
+                <Button variant="warning" type="button" @click="startSelfJoin">{{ t('sysmon.joinExistingCluster') }}</Button>
               </header>
               <div class="grid gap-3 p-4">
-                <label :class="fieldClass">Hostname<input v-model="selfJoinForm.hostname" :class="inputClass"></label>
-                <label :class="fieldClass">SSH Host<input v-model="selfJoinForm.ssh_host" :class="inputClass"></label>
-                <label :class="fieldClass">SSH User<input v-model="selfJoinForm.ssh_user" :class="inputClass"></label>
-                <label :class="fieldClass">SSH Port<input v-model.number="selfJoinForm.ssh_port" type="number" :class="inputClass"></label>
-                <label class="flex items-center gap-1.75 text-[0.8rem] text-secondary"><input v-model="selfJoinForm.reset" type="checkbox"> {{ t('sysmon.recovery') }}</label>
+                <Label class="grid gap-1">Hostname<Input v-model="selfJoinForm.hostname" /></Label>
+                <Label class="grid gap-1">SSH Host<Input v-model="selfJoinForm.ssh_host" /></Label>
+                <Label class="grid gap-1">SSH User<Input v-model="selfJoinForm.ssh_user" /></Label>
+                <Label class="grid gap-1">SSH Port<Input v-model.number="selfJoinForm.ssh_port" type="number" /></Label>
+                <label class="flex items-center gap-1.75 text-[0.8rem] text-secondary"><Checkbox v-model="selfJoinForm.reset" /> {{ t('sysmon.recovery') }}</label>
               </div>
             </article>
           </section>
@@ -365,11 +366,11 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                     </td>
                     <td class="font-mono text-[0.75rem]" :class="tdHoverClass">{{ display(node.ssh_host) }}:{{ node.ssh_port || 22 }}</td>
                     <td class="flex flex-wrap justify-end gap-1.75 border-b border-border-default px-2.5 py-2.25 max-[760px]:justify-start">
-                      <button data-action="toggle-sync" :data-node-id="node.node_id" :class="btnCell" :disabled="node.node_id === localNodeId" @click="toggleSync(node)">{{ node.sync_enabled === false ? t('sysmon.enable') : t('sysmon.disable') }}</button>
-                      <button :class="btnCell" @click="openSettings(node)">{{ t('sysmon.editClusterNode') }}</button>
-                      <button :class="btnCell" @click="joinRemote(node)">{{ t('sysmon.joinRemoteClusterNode') }}</button>
-                      <button :class="btnCell" @click="repairNode(node)">{{ t('sysmon.repairAllSsh') }}</button>
-                      <button data-action="remove-node" :data-node-id="node.node_id" :class="btnCellDanger" :disabled="node.node_id === localNodeId" @click="openRemove(node)">{{ t('sysmon.removeNode') }}</button>
+                      <Button data-action="toggle-sync" :data-node-id="node.node_id" variant="outline" size="sm" type="button" :disabled="node.node_id === localNodeId" @click="toggleSync(node)">{{ node.sync_enabled === false ? t('sysmon.enable') : t('sysmon.disable') }}</Button>
+                      <Button variant="outline" size="sm" type="button" @click="openSettings(node)">{{ t('sysmon.editClusterNode') }}</Button>
+                      <Button variant="outline" size="sm" type="button" @click="joinRemote(node)">{{ t('sysmon.joinRemoteClusterNode') }}</Button>
+                      <Button variant="outline" size="sm" type="button" @click="repairNode(node)">{{ t('sysmon.repairAllSsh') }}</Button>
+                      <Button data-action="remove-node" :data-node-id="node.node_id" variant="danger" size="sm" type="button" :disabled="node.node_id === localNodeId" @click="openRemove(node)">{{ t('sysmon.removeNode') }}</Button>
                     </td>
                   </tr>
                 </tbody>
@@ -468,8 +469,8 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <header :class="cardHeadClass">
                 <span :class="cardTitleClass">{{ t('sysmon.credentials') }}</span>
                 <div class="flex flex-wrap justify-end gap-1.75 max-[760px]:justify-start">
-                  <button :class="btnAccent" @click="rewrapCredentials">{{ t('sysmon.clusterCredentialRewrap') }}</button>
-                  <button :class="btnWarning" @click="rotateCredentialKey">{{ t('sysmon.rotateLocalClusterKey') }}</button>
+                  <Button variant="info" type="button" @click="rewrapCredentials">{{ t('sysmon.clusterCredentialRewrap') }}</Button>
+                  <Button variant="warning" type="button" @click="rotateCredentialKey">{{ t('sysmon.rotateLocalClusterKey') }}</Button>
                 </div>
               </header>
               <div class="p-4">
@@ -502,16 +503,21 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
             <article :class="cardClass">
               <header :class="cardHeadClass">
                 <span :class="cardTitleClass">{{ t('sysmon.clusterHistoryRetention') }}</span>
-                <button data-action="save-retention" :class="btnAccent" @click="saveRetention">{{ t('common.save') }}</button>
+                <Button data-action="save-retention" variant="info" type="button" @click="saveRetention">{{ t('common.save') }}</Button>
               </header>
               <div class="grid gap-3 p-4">
-                <label :class="fieldClass">Mode
-                  <select v-model="retentionMode" :class="inputClass">
-                    <option value="report_only">Report only</option>
-                    <option value="automatic">Automatic retention</option>
-                  </select>
-                </label>
-                <label :class="fieldClass">History days<input data-field="history-days" v-model.number="retentionDays" type="number" min="1" max="3650" :class="inputClass"></label>
+                <Label class="grid gap-1">Mode
+                  <SelectRoot v-model="retentionMode">
+                    <SelectTrigger>
+                      <span>{{ retentionMode === 'automatic' ? 'Automatic retention' : 'Report only' }}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="report_only">Report only</SelectItem>
+                      <SelectItem value="automatic">Automatic retention</SelectItem>
+                    </SelectContent>
+                  </SelectRoot>
+                </Label>
+                <Label class="grid gap-1">History days<Input data-field="history-days" v-model.number="retentionDays" type="number" min="1" max="3650" /></Label>
                 <p class="m-0 text-[0.82rem] leading-[1.55] text-secondary">{{ t('sysmon.clusterHistoryRetentionNote') }}</p>
               </div>
             </article>
@@ -530,12 +536,12 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
         <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
           <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
             <h2 class="m-0 text-[1.05rem] font-semibold">{{ t('sysmon.removeNode') }}</h2>
-            <button data-close="remove" :class="btnNeutral" @click="closeRemove"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button>
+            <Button data-close="remove" variant="secondary" type="button" @click="closeRemove"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button>
           </div>
           <p class="m-0 mt-3.5 text-[0.85rem] leading-[1.55]">{{ t('sysmon.removeNodeMsg', { node: `${nodeLabel(removeNode)} (${removeNode.node_id})` }) }}</p>
           <div class="mt-4 flex justify-end gap-1.75">
-            <button :class="btnNeutral" @click="closeRemove">{{ t('common.cancel') }}</button>
-            <button :class="btnDanger" @click="confirmRemove">{{ t('sysmon.removeNode') }}</button>
+            <Button variant="secondary" type="button" @click="closeRemove">{{ t('common.cancel') }}</Button>
+            <Button variant="danger" type="button" @click="confirmRemove">{{ t('sysmon.removeNode') }}</Button>
           </div>
         </div>
       </div>
@@ -545,24 +551,29 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
         <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
           <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
             <h2 class="m-0 text-[1.05rem] font-semibold">{{ t('sysmon.editClusterNode') }}</h2>
-            <button :class="btnNeutral" @click="closeSettings"><PbIcon :icon="PhX" /> {{ t('common.close') }}</button>
+            <Button variant="secondary" type="button" @click="closeSettings"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button>
           </div>
           <div class="grid gap-3 pt-3.5">
-            <label :class="fieldClass">Remote PBGui Dir<input v-model="settingsForm.remote_pbgui_dir" :class="inputClass"></label>
-            <label :class="fieldClass">Sync mode
-              <select v-model="settingsForm.sync_mode" :class="inputClass">
-                <option value="reachable">Reachable</option>
-                <option value="outbound_only">Outbound only</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </label>
-            <label :class="fieldClass">SSH Host<input v-model="settingsForm.ssh_host" :class="inputClass"></label>
-            <label :class="fieldClass">SSH User<input v-model="settingsForm.ssh_user" :class="inputClass"></label>
-            <label :class="fieldClass">SSH Port<input v-model.number="settingsForm.ssh_port" type="number" :class="inputClass"></label>
+            <Label class="grid gap-1">Remote PBGui Dir<Input v-model="settingsForm.remote_pbgui_dir" /></Label>
+            <Label class="grid gap-1">Sync mode
+              <SelectRoot v-model="settingsForm.sync_mode">
+                <SelectTrigger>
+                  <span>{{ syncModeLabel }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reachable">Reachable</SelectItem>
+                  <SelectItem value="outbound_only">Outbound only</SelectItem>
+                  <SelectItem value="disabled">Disabled</SelectItem>
+                </SelectContent>
+              </SelectRoot>
+            </Label>
+            <Label class="grid gap-1">SSH Host<Input v-model="settingsForm.ssh_host" /></Label>
+            <Label class="grid gap-1">SSH User<Input v-model="settingsForm.ssh_user" /></Label>
+            <Label class="grid gap-1">SSH Port<Input v-model.number="settingsForm.ssh_port" type="number" /></Label>
           </div>
           <div class="mt-4 flex justify-end gap-1.75">
-            <button :class="btnNeutral" @click="closeSettings">{{ t('common.cancel') }}</button>
-            <button :class="btnAccent" @click="saveSettings">{{ t('common.save') }}</button>
+            <Button variant="secondary" type="button" @click="closeSettings">{{ t('common.cancel') }}</Button>
+            <Button variant="info" type="button" @click="saveSettings">{{ t('common.save') }}</Button>
           </div>
         </div>
       </div>

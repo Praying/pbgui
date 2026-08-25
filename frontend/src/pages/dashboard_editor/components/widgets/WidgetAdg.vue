@@ -11,6 +11,7 @@
  *  - zoom preservation + empty-data wipe like PNL.
  */
 import { computed, inject, watch } from 'vue';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -90,8 +91,8 @@ const hasSummary = computed<boolean>(() => data.value?.starting_balance !== unde
 
 /* ── controls ── */
 
-function onModeChange(e: Event): void {
-  store.state[mKey] = (e.target as HTMLSelectElement).value;
+function onModeUpdate(value: unknown): void {
+  store.state[mKey] = String(value);
   store.scheduleSync();
 }
 
@@ -115,9 +116,14 @@ const allUsers = useDashboardUsers().users;
     <WidgetHeader :title="'ADG'" :icon="'📈'">
       <div :class="[dtMetaClass, dtMetaControlsClass]">
         <span :class="dtMetaLblClass">{{ dashT('dash.mode', 'Mode') }}</span>
-        <select :class="dtCtrlSelClass" :value="mode" @change="onModeChange">
-          <option v-for="m in MODES" :key="m" :value="m">{{ m }}</option>
-        </select>
+        <SelectRoot :model-value="mode" @update:model-value="onModeUpdate">
+          <SelectTrigger :class="dtCtrlSelClass" :aria-label="dashT('dash.mode', 'Mode')">
+            <span>{{ mode }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="m in MODES" :key="m" :value="m">{{ m }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
         <span :class="dtMetaSepClass">·</span>
         <PeriodControls :period="period" @update:period="onPeriodChange" />
         <span :class="dtMetaSepClass">·</span>

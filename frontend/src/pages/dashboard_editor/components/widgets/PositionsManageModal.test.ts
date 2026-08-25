@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
+import { DOMWrapper, enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { computed, defineComponent, reactive, ref } from 'vue';
 import { useManageActions, type ManageFetch } from '../../composables/useManageActions';
 import { rowKey, type ManageControlState } from '../../lib/manageLogic';
@@ -104,8 +104,30 @@ function inputAt(tr: HTMLElement, selector: string): HTMLInputElement {
   return tr.querySelector<HTMLInputElement>(selector)!;
 }
 
-function selectAt(tr: HTMLElement): HTMLSelectElement {
-  return tr.querySelector<HTMLSelectElement>('.dp-manage-action')!;
+function actionTriggerAt(tr: HTMLElement): HTMLElement {
+  return tr.querySelector<HTMLElement>('.dp-manage-action')!;
+}
+
+/* the action picker is the ui/ listbox now — options render in a body portal.
+   Mirrors shared/testing/select.ts, scoped to the teleported modal (the
+   wrapper cannot reach it). */
+async function openActionSelect(tr: HTMLElement): Promise<HTMLElement[]> {
+  await new DOMWrapper(actionTriggerAt(tr)).trigger('keydown', { key: 'Enter' });
+  await flushPromises();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  document.body.dispatchEvent(new Event('pointerup', { bubbles: true, cancelable: true }));
+  await flushPromises();
+  const content = document.body.querySelector('[data-slot="select-content"]');
+  return content ? Array.from(content.querySelectorAll<HTMLElement>('[role="option"]')) : [];
+}
+
+async function pickRowAction(tr: HTMLElement, label: string): Promise<void> {
+  const options = await openActionSelect(tr);
+  const option = options.find((el) => el.textContent?.trim() === label);
+  if (!option) throw new Error(`action option "${label}" not found among ${options.map((el) => el.textContent?.trim())}`);
+  await new DOMWrapper(option).trigger('pointerup');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await flushPromises();
 }
 
 function runBtnAt(tr: HTMLElement): HTMLButtonElement {
@@ -124,12 +146,6 @@ async function click(el: Element): Promise<void> {
 async function input(el: HTMLInputElement, value: string): Promise<void> {
   el.value = value;
   el.dispatchEvent(new Event('input', { bubbles: true }));
-  await flushPromises();
-}
-
-async function change(el: HTMLSelectElement, value: string): Promise<void> {
-  el.value = value;
-  el.dispatchEvent(new Event('change', { bubbles: true }));
   await flushPromises();
 }
 
@@ -184,11 +200,11 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
     const { env } = mountModal();
     await flushPromises();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
-    expect(selectAt(tr).value).toBe('market_close');
+    expect(actionTriggerAt(tr).textContent).toBe('Market close amount');
     expect(inputAt(tr, '.dp-manage-amount:not(.dp-manage-quote)').value).toBe('2');
     expect(inputAt(tr, '.dp-manage-quote').value).toBe('220'); /* 2 × 110 */
     expect(runBtnAt(tr).textContent).toBe('Market Close');
-    expect(runBtnAt(tr).className).toBe('dp-row-run danger');
+    expect(runBtnAt(tr).className).toContain('dp-row-run danger');
     expect(runBtnAt(tr).disabled).toBe(false);
   });
 
@@ -203,8 +219,8 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
     mountModal({ rows: [{ ...ROWS[0]!, market_close_supported: false, market_close_reason: 'Not verified' }] });
     await flushPromises();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
-    const opts = Array.from(selectAt(tr).options);
-    expect(opts.map((o) => [o.value, o.textContent, o.disabled])).toEqual([
+    const opts = await openActionSelect(tr);
+    expect(opts.map((o) => [o.dataset.value, o.textContent?.trim(), o.hasAttribute('data-disabled')])).toEqual([
       ['market_close', 'Market close amount (unavailable)', true],
       ['panic_symbol', 'Panic symbol', false],
       ['graceful_stop_symbol', 'Graceful stop symbol', false],
@@ -220,15 +236,15 @@ describe('PositionsManageModal — row controls (render.js:2693-2879)', () => {
     mountModal();
     await flushPromises();
     const tr = document.querySelectorAll<HTMLElement>('#dp-manage-modal .dp-manage-table tbody tr')[0]!;
-    await change(selectAt(tr), 'panic_symbol');
+    await pickRowAction(tr, 'Panic symbol');
     expect(runBtnAt(tr).textContent).toBe('Panic');
-    expect(runBtnAt(tr).className).toBe('dp-row-run danger');
-    await change(selectAt(tr), 'graceful_stop_symbol');
+    expect(runBtnAt(tr).className).toContain('dp-row-run danger');
+    await pickRowAction(tr, 'Graceful stop symbol');
     expect(runBtnAt(tr).textContent).toBe('Graceful stop');
-    expect(runBtnAt(tr).className).toBe('dp-row-run warn');
-    await change(selectAt(tr), 'tp_only_symbol');
+    expect(runBtnAt(tr).className).toContain('dp-row-run warn');
+    await pickRowAction(tr, 'Take profit only symbol');
     expect(runBtnAt(tr).textContent).toBe('Take Profit Only');
-    expect(runBtnAt(tr).className).toBe('dp-row-run ok');
+    expect(runBtnAt(tr).className).toContain('dp-row-run ok');
   });
 
   it('applies the 25/50/100% quick buttons to amount and quote (render.js:2816-2831)', async () => {

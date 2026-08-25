@@ -10,6 +10,9 @@ import { PhPushPin } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import CompareModal from './CompareModal.vue';
 import ConfirmModal from './ConfirmModal.vue';
 import RebacktestModal from './RebacktestModal.vue';
@@ -90,21 +93,29 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
     <div id="legacy-results-view" class="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div id="legacy-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
         <div id="legacy-results-toolbar" class="mb-3 mt-2 flex flex-wrap items-center gap-2">
-          <label style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</label>
-          <select id="legacy-results-config-filter" v-model="store.configFilter.value" class="sb-input" style="max-width: 200px">
-            <option value="">{{ t('v7backtest.allConfigs') }}</option>
-            <option v-for="name in store.configOptions.value" :key="name" :value="name">{{ name }}</option>
-          </select>
-          <input id="legacy-results-filter" v-model="store.textFilter.value" type="text" class="sb-input" style="max-width: 200px" :placeholder="t('v7backtest.searchName')" />
+          <span id="legacy-results-config-filter-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</span>
+          <!-- ui-migration: the legacy <option value="">All configs</option> has no
+               reka equivalent — the listbox offers no reset row; the cleared model
+               ('' = all configs) renders as the trigger label instead. -->
+          <SelectRoot v-model="store.configFilter.value">
+            <SelectTrigger id="legacy-results-config-filter" class="w-auto min-w-[100px] max-w-[200px]" aria-labelledby="legacy-results-config-filter-label">
+              <span>{{ store.configFilter.value || t('v7backtest.allConfigs') }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="name in store.configOptions.value" :key="name" :value="name">{{ name }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
+          <Input id="legacy-results-filter" v-model="store.textFilter.value" type="text" class="w-auto max-w-[200px]" :placeholder="t('v7backtest.searchName')" />
           <span style="flex: 1"></span>
-          <button type="button" class="act-btn" data-test="legacy-select-all" :title="t('v7backtest.selectAllVisible')" @click="store.selectAll(store.visible.value.map((row) => row.path))">
+          <Button type="button" variant="default" class="act-btn h-auto" data-test="legacy-select-all" :title="t('v7backtest.selectAllVisible')" @click="store.selectAll(store.visible.value.map((row) => row.path))">
             {{ t('v7backtest.selectAll') }}
-          </button>
-          <button type="button" class="act-btn" data-test="legacy-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</button>
-          <button
+          </Button>
+          <Button type="button" variant="default" class="act-btn h-auto" data-test="legacy-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</Button>
+          <Button
             id="legacy-results-pin-btn"
             type="button"
-            class="act-btn"
+            variant="default"
+            class="act-btn h-auto"
             :class="pinned ? '' : 'unpinned opacity-40'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
@@ -112,7 +123,7 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             @click="pinned = !pinned"
           >
             <PbIcon :icon="PhPushPin" :size="18" />
-          </button>
+          </Button>
         </div>
         <div id="legacy-results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="legacy-results-table">

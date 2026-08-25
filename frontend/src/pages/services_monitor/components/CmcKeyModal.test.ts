@@ -63,17 +63,17 @@ describe('CmcKeyModal (legacy openCmcKeyModal/submitCmcKey)', () => {
 
     await nextTick();
     expect((wrapper.find('#cmc-key-label').element as HTMLInputElement).value).toBe('Primary');
-    expect((wrapper.find('#cmc-key-imported').element as HTMLInputElement).checked).toBe(true);
-    expect((wrapper.find('#cmc-key-shared').element as HTMLInputElement).checked).toBe(false);
-    expect((wrapper.find('#cmc-key-active').element as HTMLInputElement).checked).toBe(false);
+    expect(wrapper.find('#cmc-key-imported').attributes('data-state')).toBe('checked');
+    expect(wrapper.find('#cmc-key-shared').attributes('data-state')).toBe('unchecked');
+    expect(wrapper.find('#cmc-key-active').attributes('data-state')).toBe('unchecked');
   });
 
   it('defaults add-mode checkboxes to imported/shared off and active on', async () => {
     const wrapper = mountModal();
     await nextTick();
 
-    expect((wrapper.find('#cmc-key-imported').element as HTMLInputElement).checked).toBe(false);
-    expect((wrapper.find('#cmc-key-active').element as HTMLInputElement).checked).toBe(true);
+    expect(wrapper.find('#cmc-key-imported').attributes('data-state')).toBe('unchecked');
+    expect(wrapper.find('#cmc-key-active').attributes('data-state')).toBe('checked');
   });
 
   it('resets the fields when reopened (legacy per-open reinit)', async () => {
@@ -114,7 +114,7 @@ describe('CmcKeyModal (legacy openCmcKeyModal/submitCmcKey)', () => {
     const wrapper = mountModal();
     await wrapper.find('#cmc-key-secret').setValue('abc123');
     await wrapper.find('#cmc-key-label').setValue('My key');
-    await wrapper.find('#cmc-key-shared').setValue(true);
+    await wrapper.find('#cmc-key-shared').trigger('click');
 
     await wrapper.find('#cmc-key-submit').trigger('click');
 
@@ -136,7 +136,7 @@ describe('CmcKeyModal (legacy openCmcKeyModal/submitCmcKey)', () => {
     expect(wrapper.emitted('update:open')).toEqual([[false]]);
 
     await wrapper.setProps({ busy: true });
-    await wrapper.find('button.form-btn:not(.save)').trigger('click'); // Cancel
+    await wrapper.find('.cmc-modal-actions button:not(.save)').trigger('click'); // Cancel
     expect(wrapper.emitted('update:open')).toHaveLength(1); // no new close while busy
     expect((wrapper.find('#cmc-key-submit').element as HTMLButtonElement).disabled).toBe(true);
   });
@@ -149,6 +149,7 @@ describe('CmcKeyModal (legacy openCmcKeyModal/submitCmcKey)', () => {
     expect((wrapper.find('#cmc-key-secret').element as HTMLInputElement).value).toBe('abc');
 
     wrapper.vm.clearSecretIfUnchanged('abc');
+    await nextTick(); // v-model clear re-renders the input
     expect((wrapper.find('#cmc-key-secret').element as HTMLInputElement).value).toBe('');
   });
 

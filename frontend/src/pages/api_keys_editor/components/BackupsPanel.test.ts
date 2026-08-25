@@ -122,7 +122,7 @@ describe('BackupsPanel', () => {
     expect(wrapper.findAll('#diffContent .diff-side-col')).toHaveLength(2);
     expect(wrapper.find('#diffContent .diff-side-hdr').text()).toContain('_current_pb7');
 
-    await wrapper.find('#diffModal .btn-secondary').trigger('click'); // Back closes
+    await wrapper.find('#diffModal [data-slot="button"]').trigger('click'); // Back closes (first button in the header)
     expect(wrapper.find('#diffModal').isVisible()).toBe(false);
   });
 

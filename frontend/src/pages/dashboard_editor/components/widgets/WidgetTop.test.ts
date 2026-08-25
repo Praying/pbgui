@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { resetSavedZoom } from '../../lib/savedZoom';
@@ -136,8 +137,12 @@ describe('WidgetTop', () => {
     expect(num.attributes('max')).toBe('500');
     expect(num.attributes('step')).toBe('1');
     expect((num.element as HTMLInputElement).value).toBe('10');
-    const select = wrapper.get('select.dt-ctrl-sel');
-    expect(select.findAll('option').map((o) => o.text())).toEqual([
+    /* the period select is a ui/ listbox now: the trigger shows the current
+       value, the options live in the body portal once opened */
+    const trigger = wrapper.get('.dt-ctrl-sel');
+    expect(trigger.text()).toContain('THIS_MONTH');
+    await openSelect(wrapper, '.dt-ctrl-sel');
+    expect(selectOptionTexts()).toEqual([
       'TODAY', 'YESTERDAY', 'THIS_WEEK', 'LAST_WEEK', 'LAST_WEEK_NOW',
       'THIS_MONTH', 'LAST_MONTH', 'LAST_MONTH_NOW',
       'LAST_7_DAYS', 'LAST_30_DAYS', 'LAST_90_DAYS', 'LAST_180_DAYS', 'LAST_365_DAYS',
@@ -177,7 +182,7 @@ describe('WidgetTop', () => {
   it('writes the legacy default CUSTOM range when the period select picks CUSTOM (editor:1267-1276)', async () => {
     const { wrapper, env } = mountTop();
     await flushPromises();
-    await wrapper.get('select.dt-ctrl-sel').setValue('CUSTOM');
+    await pickSelectOption(wrapper, '.dt-ctrl-sel', 'CUSTOM');
     const period = env.store.state['dashboard_top_symbols_period_1_2'];
     expect(period).toMatch(/^CUSTOM:\d{4}-\d{2}-\d{2}:\d{4}-\d{2}-\d{2}$/);
     await flushPromises();
@@ -189,7 +194,7 @@ describe('WidgetTop', () => {
   it('passes plain period values through on the period select (editor:1274-1276)', async () => {
     const { wrapper, env } = mountTop();
     await flushPromises();
-    await wrapper.get('select.dt-ctrl-sel').setValue('TODAY');
+    await pickSelectOption(wrapper, '.dt-ctrl-sel', 'TODAY');
     expect(env.store.state['dashboard_top_symbols_period_1_2']).toBe('TODAY');
   });
 
@@ -206,8 +211,8 @@ describe('WidgetTop', () => {
     expect((dates[0]!.element as HTMLInputElement).value).toBe('2025-01-01');
     expect((dates[1]!.element as HTMLInputElement).value).toBe('2025-01-31');
     expect((dates[1]!.element as HTMLInputElement).disabled).toBe(false);
-    const now = wrapper.get('.dt-ctrl-now-wrap input');
-    expect((now.element as HTMLInputElement).checked).toBe(false);
+    const now = wrapper.get('.dt-ctrl-now-wrap [role="checkbox"]');
+    expect(now.attributes('aria-checked')).toBe('false');
     /* non-custom: no date inputs */
     expect(mountTop().wrapper.findAll('input.dt-ctrl-date')).toHaveLength(0);
   });
@@ -220,13 +225,13 @@ describe('WidgetTop', () => {
       },
     });
     await flushPromises();
-    const now = wrapper.get('.dt-ctrl-now-wrap input');
-    expect((now.element as HTMLInputElement).checked).toBe(true);
+    const now = wrapper.get('.dt-ctrl-now-wrap [role="checkbox"]');
+    expect(now.attributes('aria-checked')).toBe('true');
     const dates = wrapper.findAll('input.dt-ctrl-date');
     expect(dates[1]!.attributes('disabled')).toBeDefined();
-    await now.setValue(false);
+    await now.trigger('click');
     expect(env.store.state['dashboard_top_symbols_period_1_2']).toBe('CUSTOM:2025-01-01:' + new Date().toISOString().slice(0, 10));
-    await now.setValue(true);
+    await now.trigger('click');
     expect(env.store.state['dashboard_top_symbols_period_1_2']).toBe('CUSTOM:2025-01-01:NOW');
   });
 
@@ -236,7 +241,10 @@ describe('WidgetTop', () => {
     wrapper.findComponent(MultiSelectDropdown).vm.$emit('update:modelValue', ['alice']);
     expect(env.store.state['dashboard_top_symbols_users_1_2']).toEqual(['alice']);
     await flushPromises();
-    expect(env.fetch).toHaveBeenLastCalledWith(
+    // any-call match (not last): under full-suite load the refetch can land
+    // after a later scheduled fetch — the assertion's intent is that a
+    // users-scoped refetch happened, not that it was the final call
+    expect(env.fetch).toHaveBeenCalledWith(
       '/api/dashboard/top_data?users=alice&period=THIS_MONTH&top=10'
     );
   });

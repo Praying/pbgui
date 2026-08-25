@@ -10,6 +10,7 @@ import { computed } from 'vue';
 import { PhArrowClockwise, PhArrowRight, PhPlay, PhStop, PhToggleLeft, PhToggleRight } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { SERVICES } from '../services';
 import {
   migrationStatusMeta,
@@ -89,6 +90,17 @@ const buttonIcons = {
   open: PhArrowRight,
 } as const;
 
+/** ui/ Button variant per kind — mirrors the legacy .card-btn.<kind> tones
+   (start=green, stop=red, restart=amber, enable=accent, disable/open=neutral). */
+const buttonVariants = {
+  start: 'success',
+  stop: 'danger',
+  restart: 'warning',
+  enable: 'info',
+  disable: 'default',
+  open: 'default',
+} as const;
+
 const openButton: CardButton = { kind: 'open', label: '', disabled: false, action: null };
 
 const cards = computed<Card[]>(() => {
@@ -153,18 +165,20 @@ const cards = computed<Card[]>(() => {
       <div class="card-name">{{ c.name }}</div>
       <div class="card-status-row" :title="c.title"><span class="card-dot" :class="c.dotCls"></span>{{ c.statusText }}</div>
       <div class="card-buttons">
-        <button
+        <Button
           v-for="b in c.buttons"
           :key="b.kind"
-          class="card-btn pbgui-action"
+          class="card-btn"
           :class="b.kind"
+          :variant="buttonVariants[b.kind]"
+          size="sm"
           type="button"
           :disabled="b.disabled"
           @click.stop="b.action ? emit('action', c.svcId, b.action) : emit('select', c.panelId)"
         >
           <PbIcon :icon="buttonIcons[b.kind]" />
           {{ b.label }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -204,24 +218,6 @@ const cards = computed<Card[]>(() => {
 .card-dot.warn { background: var(--warning); }
 /* Legacy inline style on the buttons wrapper div. */
 .card-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
-.card-btn {
-  align-self: flex-start;
-  padding: 0.2rem 0.65rem;
-  border-radius: 4px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--fs-xs);
-  font-family: inherit;
-  transition: all 0.12s;
-}
-.card-btn:hover:not(:disabled) { border-color: var(--border-strong); color: var(--text-primary); }
-.card-btn.start { border-color: var(--success-deep); color: var(--success); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
-.card-btn.stop { border-color: var(--danger-deep); color: var(--danger-soft); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
-.card-btn.restart { border-color: var(--warning-deep); color: var(--warning-soft); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); }
-.card-btn.enable { border-color: var(--accent-deep); color: var(--accent-soft); background: color-mix(in srgb, var(--accent-deep) 28%, var(--bg-card)); }
-.card-btn.disable { border-color: var(--border-strong); color: var(--text-secondary); background: var(--bg-panel); }
 @media (max-width: 640px) {
   .overview-grid { grid-template-columns: 1fr; }
 }

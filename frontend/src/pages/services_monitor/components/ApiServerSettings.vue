@@ -19,6 +19,9 @@ import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
 import { apiBase } from '../config';
 import type { AlertRoutingId, ApiServerSettingsData, PbDataSaveResponse } from '../types';
 import MultiselectTags from './MultiselectTags.vue';
@@ -176,13 +179,13 @@ defineExpose({ load });
       <div class="form-row">
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.bindAddress') }}</span>
-          <input class="form-input medium" type="text" id="apiserver-host" placeholder="0.0.0.0" v-model="host" />
+          <Input class="medium" type="text" id="apiserver-host" placeholder="0.0.0.0" v-model="host" />
           <span class="form-hint">{{ t('sysmon.requiresRestart') }}</span>
         </div>
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.port') }}</span>
-          <input
-            class="form-input narrow"
+          <Input
+            class="narrow"
             type="number"
             id="apiserver-port"
             min="1024"
@@ -197,7 +200,7 @@ defineExpose({ load });
       <hr class="form-divider" />
       <div class="form-section-title">{{ t('sysmon.vpsMonitoring') }}</div>
       <div class="auto-restart-row">
-        <input type="checkbox" id="apiserver-auto-restart" v-model="autoRestart" />
+        <Checkbox id="apiserver-auto-restart" v-model="autoRestart" />
         <label for="apiserver-auto-restart">{{ t('sysmon.autoRestartServices') }}</label>
       </div>
       <div class="form-field hosts-field">
@@ -217,28 +220,30 @@ defineExpose({ load });
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.botToken') }}</span>
           <div class="pw-wrap">
-            <input
-              class="form-input token-input"
+            <Input
+              class="token-input"
               :type="tokenVisible ? 'text' : 'password'"
               id="apiserver-telegram-token"
               :placeholder="t('sysmon.pasteToken')"
               autocomplete="off"
               v-model="telegramToken"
             />
-            <button
+            <Button
               class="pw-eye"
+              variant="ghost"
+              size="icon"
               type="button"
               :title="t('sysmon.showHide')"
               :aria-label="t('sysmon.showHide')"
               :style="tokenVisible ? 'color: var(--accent-soft)' : undefined"
               @click="toggleTokenVisibility"
-            ><PbIcon :icon="PhEye" /></button>
+            ><PbIcon :icon="PhEye" /></Button>
           </div>
         </div>
         <div class="form-field">
           <span class="form-label">{{ t('sysmon.chatId') }}</span>
-          <input
-            class="form-input medium"
+          <Input
+            class="medium"
             type="text"
             id="apiserver-telegram-chat-id"
             :placeholder="t('sysmon.chatIdExample')"
@@ -248,7 +253,7 @@ defineExpose({ load });
       </div>
       <AlertRouting v-model:routing="routing" />
       <div class="save-row">
-        <button class="form-btn save" type="button" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</button>
+        <Button class="save" type="button" variant="primary" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</Button>
         <span
           class="inline-msg"
           id="apiserver-save-msg"
@@ -271,23 +276,17 @@ defineExpose({ load });
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .label-hint { color: var(--text-disabled); font-weight: 400; }
 .form-hint { font-size: var(--fs-xs); color: var(--text-disabled); }
-.form-input.medium { width: 140px; }
-.form-input.narrow { width: 90px; }
+.medium { width: 140px; }
+.narrow { width: 90px; }
 .auto-restart-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
-.auto-restart-row input { accent-color: var(--accent); cursor: pointer; width: 15px; height: 15px; }
 .auto-restart-row label { color: var(--text-secondary); font-size: var(--fs-sm); cursor: pointer; }
 .hosts-field { margin-bottom: 0; }
 .telegram-row { margin-bottom: 0; }
 .pw-wrap { position: relative; display: inline-flex; align-items: center; }
 .pw-wrap input { padding-right: 2rem; }
 .token-input { width: 370px; }
-.pw-eye { position: absolute; right: 0.4rem; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; line-height: 1; padding: 0; }
-.pw-eye:hover { color: var(--text-secondary); }
+.pw-eye { position: absolute; right: 0.4rem; }
 .save-row { margin-top: 1rem; }
-.form-btn { padding: 0 1rem; height: var(--btn-h); border-radius: 5px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; transition: all 0.12s; }
-.form-btn:hover { border-color: var(--border-strong); color: var(--text-primary); }
-.form-btn.save { background: rgb(var(--accent-rgb) / 0.18); border-color: var(--accent); color: var(--accent-soft); }
-.form-btn.save:hover { background: var(--accent-deep); color: #f2f5fb; }
 .inline-msg { font-size: var(--fs-xs); color: var(--success); margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
 .inline-msg.visible { opacity: 1; }
 .inline-msg.error { color: var(--danger-soft); }

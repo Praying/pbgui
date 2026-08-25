@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionElements, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
 
 /*
@@ -118,6 +119,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Dismiss an open listbox (reka DismissableLayer listens on document). */
+async function closeSelect(): Promise<void> {
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 async function mountApp(path: string): Promise<ReturnType<typeof mount>> {
   window.history.replaceState({}, '', path);
   const wrapper = mount(App, { global: { plugins: [createI18n('en')] }, attachTo: document.body });
@@ -142,21 +149,23 @@ describe('Edit page shell (v7 flavour)', () => {
     const wrapper = await mountApp('/api/v7/edit_page?name=alice');
 
     expect(document.title).toBe('PBv7 Edit');
-    // user dropdown from /users
-    const userOptions = wrapper.findAll('#f-user option');
-    expect(userOptions.map((o) => o.attributes('value'))).toEqual(['alice', 'bob']);
-    expect((wrapper.get('#f-user').element as HTMLSelectElement).value).toBe('alice');
+    // user listbox from /users
+    await openSelect(wrapper, '#f-user');
+    expect(selectOptionTexts()).toEqual(['alice', 'bob']);
+    await closeSelect();
+    expect(wrapper.get('#f-user').text()).toBe('alice');
     // structured form values from the instance config
     expect((wrapper.get('#f-leverage').element as HTMLInputElement).value).toBe('20');
     expect((wrapper.get('#f-note').element as HTMLInputElement).value).toBe('hello');
     expect((wrapper.get('#f-long-twe').element as HTMLInputElement).value).toBe('2');
     expect((wrapper.get('#f-version').element as HTMLInputElement).value).toBe('3');
     // host list with capability gating (hostA pb7-capable, hostB not)
-    const hostOptions = wrapper.findAll('#f-enabled-on option');
-    expect(hostOptions.map((o) => o.attributes('value'))).toEqual(['disabled', 'hostA', 'hostB']);
-    expect(hostOptions[1]!.attributes('disabled')).toBeUndefined();
-    expect(hostOptions[2]!.attributes('disabled')).toBeDefined();
-    expect(hostOptions[2]!.text()).toContain('PB7 capability unconfirmed');
+    await openSelect(wrapper, '#f-enabled-on');
+    const hostOptions = selectOptionElements();
+    expect(hostOptions.map((o) => o.textContent?.trim())).toEqual(['disabled', 'hostA', 'hostB (PB7 capability unconfirmed)']);
+    expect(hostOptions[1]!.hasAttribute('data-disabled')).toBe(false);
+    expect(hostOptions[2]!.hasAttribute('data-disabled')).toBe(true);
+    await closeSelect();
     // approved long multiselect shows the fetched symbols with all
     expect(wrapper.get('#ms-approved-long').text()).toContain('all');
     wrapper.unmount();
@@ -194,9 +203,10 @@ describe('Edit page shell (v8 flavour)', () => {
 
     expect(document.title).toBe('PBv8 Edit');
     // strategy kinds from /editor/metadata (legacy appends only, :1809-1813)
-    const strategyOptions = wrapper.findAll('#f-strategy-kind option');
-    expect(strategyOptions.map((o) => o.attributes('value'))).toEqual(['neat', 'recursive_mc']);
-    expect((wrapper.get('#f-strategy-kind').element as HTMLSelectElement).value).toBe('neat');
+    await openSelect(wrapper, '#f-strategy-kind');
+    expect(selectOptionTexts()).toEqual(['neat', 'recursive_mc']);
+    await closeSelect();
+    expect(wrapper.get('#f-strategy-kind').text()).toBe('neat');
     // open the Advanced expander so its fields are addressable (:672-676)
     await wrapper.get('#exp-advanced .expander-header').trigger('click');
     // managed live fields visible, unmanaged shared fields hidden
@@ -391,12 +401,14 @@ describe('Edit page completion (M-v7-2)', () => {
     const wrapper = await mountApp('/api/v8/edit_page?name=alice');
 
     // ensureSelectOption parity (:2336/:2338) — now AFTER populate (dead-branch fix)
-    expect(wrapper.findAll('#f-user option').map((o) => o.attributes('value'))).toContain('carol');
-    expect((wrapper.get('#f-user').element as HTMLSelectElement).value).toBe('carol');
-    expect(wrapper.findAll('#f-strategy-kind option').map((o) => o.attributes('value'))).toEqual(
-      expect.arrayContaining(['exotic', 'neat', 'recursive_mc'])
-    );
-    expect((wrapper.get('#f-strategy-kind').element as HTMLSelectElement).value).toBe('exotic');
+    await openSelect(wrapper, '#f-user');
+    expect(selectOptionTexts()).toContain('carol');
+    await closeSelect();
+    expect(wrapper.get('#f-user').text()).toBe('carol');
+    await openSelect(wrapper, '#f-strategy-kind');
+    expect(selectOptionTexts()).toEqual(expect.arrayContaining(['exotic', 'neat', 'recursive_mc']));
+    await closeSelect();
+    expect(wrapper.get('#f-strategy-kind').text()).toBe('exotic');
     wrapper.unmount();
   });
 });
@@ -412,7 +424,7 @@ describe('PB8 replace-and-save confirmation (v1.98.33)', () => {
     (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm };
 
     const wrapper = await mountApp('/api/v8/edit_page?new=1');
-    await wrapper.get('#f-user').setValue('alice');
+    await pickSelectOption(wrapper, '#f-user', 'alice');
     await wrapper.get('#btn-save').trigger('click');
     for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -437,7 +449,7 @@ describe('PB8 replace-and-save confirmation (v1.98.33)', () => {
     (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm };
 
     const wrapper = await mountApp('/api/v8/edit_page?new=1');
-    await wrapper.get('#f-user').setValue('alice');
+    await pickSelectOption(wrapper, '#f-user', 'alice');
     await wrapper.get('#btn-save').trigger('click');
     for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -459,7 +471,7 @@ describe('PB8 replace-and-save confirmation (v1.98.33)', () => {
     (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm };
 
     const wrapper = await mountApp('/api/v8/edit_page?new=1');
-    await wrapper.get('#f-user').setValue('alice');
+    await pickSelectOption(wrapper, '#f-user', 'alice');
     await wrapper.get('#btn-save').trigger('click');
     for (let i = 0; i < 6; i++) await new Promise((resolve) => setTimeout(resolve, 0));
 

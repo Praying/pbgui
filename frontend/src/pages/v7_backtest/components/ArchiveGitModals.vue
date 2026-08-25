@@ -7,13 +7,21 @@
  * the setup modal with its README config editor (:9750-9812). All state
  * lives in composables/useArchiveGit.ts; legacy modal bodies are
  * re-rendered as template markup (NO v-html).
+ *
+ * ui-migration: the setup modal's legacy <option value="">(none)</option>
+ * reset row has no reka-listbox equivalent — the listbox offers no reset
+ * row; the cleared model ('') renders as the trigger label instead.
  */
 import { PhX } from '@phosphor-icons/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { Textarea } from '@/shared/components/ui/textarea';
 import { archivePullResultBody, archivePullResultStatus } from '../lib/archiveGitModel';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { ArchiveGitStore } from '../composables/useArchiveGit';
 
 const props = defineProps<{ git: ArchiveGitStore }>();
@@ -31,7 +39,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     >
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold" data-test="archive-pull-title">{{ git.pullTitle.value }}</span>
-        <button type="button" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.hidePull()"><PbIcon :icon="PhX" :size="18" /></button>
+        <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.hidePull()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <div class="flex h-full min-h-0 flex-col gap-3">
@@ -48,7 +56,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" class="pbgui-action" :class="modalBtnClass()" data-test="archive-pull-hide" @click="git.hidePull()">{{ t('v7backtest.hide') }}</button>
+        <Button type="button" variant="default" class="modal-btn pbgui-action" data-test="archive-pull-hide" @click="git.hidePull()">{{ t('v7backtest.hide') }}</Button>
       </div>
     </div>
   </div>
@@ -58,7 +66,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div :class="[modalBoxClass, 'shadow-modal']">
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold">{{ git.pullResults.value.title }}</span>
-        <button type="button" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closePullResults()"><PbIcon :icon="PhX" :size="18" /></button>
+        <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closePullResults()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <div v-if="git.pullResults.value.items.length === 0">No archives.</div>
@@ -68,7 +76,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         </details>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" class="pbgui-action" :class="modalBtnClass()" data-test="archive-pull-results-close" @click="git.closePullResults()">{{ t('common.close') }}</button>
+        <Button type="button" variant="default" class="modal-btn pbgui-action" data-test="archive-pull-results-close" @click="git.closePullResults()">{{ t('common.close') }}</Button>
       </div>
     </div>
   </div>
@@ -78,11 +86,11 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div :class="[modalBoxClass, 'shadow-modal']">
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold">{{ git.pushOutput.value.title }}</span>
-        <button type="button" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closePushOutput()"><PbIcon :icon="PhX" :size="18" /></button>
+        <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closePushOutput()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto"><pre class="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default bg-page p-2 text-xs">{{ git.pushOutput.value.output }}</pre></div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" :class="modalBtnClass()" data-test="archive-push-close" @click="git.closePushOutput()">{{ t('common.close') }}</button>
+        <Button type="button" variant="default" class="modal-btn" data-test="archive-push-close" @click="git.closePushOutput()">{{ t('common.close') }}</Button>
       </div>
     </div>
   </div>
@@ -92,7 +100,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div :class="modalBoxClass">
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold">{{ t('v7backtest.compactArchiveHistory') }}</span>
-        <button type="button" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeCompactPreview()"><PbIcon :icon="PhX" :size="18" /></button>
+        <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeCompactPreview()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <p><b>This rewrites remote Git history.</b> It replaces archive history with one root commit and force-pushes using <code>--force-with-lease</code>.</p>
@@ -127,10 +135,10 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         <pre class="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default bg-page p-2 text-xs">{{ git.compactPreview.value.view.sizeText }}</pre>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" :class="modalBtnClass()" data-test="archive-compact-cancel" @click="git.closeCompactPreview()">{{ t('common.cancel') }}</button>
-        <button type="button" :class="modalBtnClass('danger')" data-test="archive-compact-confirm" @click="git.confirmCompact()">
+        <Button type="button" variant="default" class="modal-btn" data-test="archive-compact-cancel" @click="git.closeCompactPreview()">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="danger" class="modal-btn" data-test="archive-compact-confirm" @click="git.confirmCompact()">
           {{ t('v7backtest.compactForcePush') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -139,11 +147,11 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div :class="modalBoxClass">
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold">{{ git.compactOutput.value.title }}</span>
-        <button type="button" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeCompactOutput()"><PbIcon :icon="PhX" :size="18" /></button>
+        <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeCompactOutput()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto"><pre class="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default bg-page p-2 text-xs">{{ git.compactOutput.value.output }}</pre></div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" :class="modalBtnClass()" data-test="archive-compact-output-close" @click="git.closeCompactOutput()">{{ t('common.close') }}</button>
+        <Button type="button" variant="default" class="modal-btn" data-test="archive-compact-output-close" @click="git.closeCompactOutput()">{{ t('common.close') }}</Button>
       </div>
     </div>
   </div>
@@ -153,56 +161,59 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
     <div :class="modalBoxClass">
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold">{{ t('v7backtest.setupMyArchive') }}</span>
-        <button type="button" class="cursor-pointer rounded-sm border-0 bg-transparent px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeSetup()"><PbIcon :icon="PhX" :size="18" /></button>
+        <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeSetup()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <div class="form-group">
-          <label title="Which of your cloned archives is your own (will be used for Git Push).">My Archive</label>
-          <select v-model="git.setupForm.value.my_archive" class="sb-input" data-test="setup-arc-name" @change="git.loadReadmeSetup(git.setupForm.value.my_archive)">
-            <option value="">(none)</option>
-            <option v-for="name in git.setupArchiveNames.value" :key="name" :value="name">{{ name }}</option>
-          </select>
+          <label id="setup-arc-name-label" title="Which of your cloned archives is your own (will be used for Git Push).">My Archive</label>
+          <SelectRoot v-model="git.setupForm.value.my_archive" @update:model-value="git.loadReadmeSetup($event)">
+            <SelectTrigger data-test="setup-arc-name" aria-labelledby="setup-arc-name-label">
+              <span :class="git.setupForm.value.my_archive ? '' : 'text-placeholder'">{{ git.setupForm.value.my_archive || '(none)' }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="name in git.setupArchiveNames.value" :key="name" :value="name">{{ name }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
         </div>
         <p class="text-secondary">Archive paths are generated automatically from each configuration's config_version.</p>
         <div class="form-row cols-2">
           <div class="form-group">
             <label title="Git commit author name.">Username</label>
-            <input v-model="git.setupForm.value.username" type="text" class="sb-input" data-test="setup-arc-user" />
+            <Input v-model="git.setupForm.value.username" type="text" data-test="setup-arc-user" />
           </div>
           <div class="form-group">
             <label title="Git commit author email.">Email</label>
-            <input v-model="git.setupForm.value.email" type="text" class="sb-input" data-test="setup-arc-email" />
+            <Input v-model="git.setupForm.value.email" type="text" data-test="setup-arc-email" />
           </div>
         </div>
         <div class="form-group">
           <label title="GitHub / GitLab personal access token for HTTPS push authentication. Leave empty if SSH keys are used.">Access Token</label>
-          <input v-model="git.setupForm.value.access_token" type="password" class="sb-input" placeholder="ghp_..." data-test="setup-arc-token" />
+          <Input v-model="git.setupForm.value.access_token" type="password" placeholder="ghp_..." data-test="setup-arc-token" />
         </div>
         <div class="form-group">
           <label title="Automatically pull all archives in the background every N minutes. Set to 0 to disable.">Auto Pull Interval (min, 0 = off)</label>
-          <input v-model="git.setupForm.value.auto_pull_interval" type="number" min="0" step="1" class="sb-input" data-test="setup-arc-interval" style="width: 120px" />
+          <Input v-model="git.setupForm.value.auto_pull_interval" type="number" min="0" step="1" class="w-[120px]" data-test="setup-arc-interval" />
         </div>
         <hr class="sb-sep" />
         <div class="form-group">
           <label title="Title written to the archive README.md on GitHub.">README Title</label>
-          <input v-model="git.setupForm.value.readme_title" type="text" class="sb-input" data-test="setup-arc-readme-title" />
+          <Input v-model="git.setupForm.value.readme_title" type="text" data-test="setup-arc-readme-title" />
         </div>
         <div class="form-group">
           <label title="Static Markdown kept above PBGui generated score tables in README.md.">README Static Markdown</label>
-          <textarea
+          <Textarea
             v-model="git.setupForm.value.readme_static_markdown"
-            class="sb-input"
             rows="7"
             placeholder="Describe this archive, strategy rules, exchanges, notes…"
             data-test="setup-arc-readme-static"
-          ></textarea>
+          />
           <p class="text-secondary">Saved in <code>pbgui/readme_config.json</code> and written to <code>README.md</code>. The generated score block stays separate.</p>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" :class="modalBtnClass()" data-test="setup-cancel" @click="git.closeSetup()">{{ t('common.cancel') }}</button>
-        <button type="button" :class="modalBtnClass()" data-test="setup-test-push" @click="git.testPush()">{{ t('v7backtest.testPush') }}</button>
-        <button type="button" :class="modalBtnClass('primary')" data-test="setup-save" @click="git.saveSetup()">{{ t('common.save') }}</button>
+        <Button type="button" variant="default" class="modal-btn" data-test="setup-cancel" @click="git.closeSetup()">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="default" class="modal-btn" data-test="setup-test-push" @click="git.testPush()">{{ t('v7backtest.testPush') }}</Button>
+        <Button type="button" variant="primary" class="modal-btn" data-test="setup-save" @click="git.saveSetup()">{{ t('common.save') }}</Button>
       </div>
     </div>
   </div>

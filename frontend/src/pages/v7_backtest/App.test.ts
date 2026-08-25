@@ -424,7 +424,8 @@ describe('boot chain (:10012-10024)', () => {
     const increaseButton = feeStepper.get(`[aria-label="Increase ${fieldName}"]`);
 
     expect(feeInput.element.disabled).toBe(true);
-    await trading.get(checkboxSelector).setValue(true);
+    // ui/ Checkbox is a button — click toggles it (no setValue).
+    await trading.get(checkboxSelector).trigger('click');
     expect(feeInput.element.disabled).toBe(false);
 
     await increaseButton.trigger('click');
@@ -440,7 +441,7 @@ describe('boot chain (:10012-10024)', () => {
     await decreaseButton.trigger('click');
     expect(feeInput.element.value).toBe('0.00999');
 
-    await trading.get(checkboxSelector).setValue(false);
+    await trading.get(checkboxSelector).trigger('click');
     expect(feeInput.element.disabled).toBe(true);
 
     wrapper.unmount();
@@ -623,7 +624,7 @@ describe('boot chain (:10012-10024)', () => {
     await wrapper.find('[data-test="cfg-edit"]').trigger('click');
     await flush();
     await nextTick();
-    await wrapper.find('#suite-enabled').setValue(true);
+    await wrapper.find('#suite-enabled').trigger('click');
     await nextTick();
     await wrapper.find('[data-test="suite-add-scenario"]').trigger('click');
     await nextTick();
@@ -764,7 +765,8 @@ describe('queue live updates (:1267-1330)', () => {
     await wrapper.find('[data-test="open-settings"]').trigger('click');
     await nextTick();
     expect((wrapper.find('#set-cpu-val').element as HTMLInputElement).value).toBe('3');
-    expect((wrapper.find('#set-autostart').element as HTMLInputElement).checked).toBe(true);
+    // ui/ Checkbox exposes state through aria-checked, not .checked
+    expect(wrapper.find('#set-autostart').attributes('aria-checked')).toBe('true');
     expect((wrapper.find('#set-cleanup-days').element as HTMLInputElement).value).toBe('10');
     wrapper.unmount();
   });
@@ -983,7 +985,8 @@ describe('results panel (M-v7-10, :834-869)', () => {
     await flush();
     await nextTick();
     expect(wrapper.find('#panel-results').classes()).toContain('active');
-    expect((wrapper.find('#results-config-filter').element as HTMLSelectElement).value).toBe('alpha');
+    // reka listbox: the closed-state trigger renders the model as its text
+    expect(wrapper.find('#results-config-filter').text()).toContain('alpha');
     expect(wrapper.findAll('#results-list tbody tr')).toHaveLength(1);
     wrapper.unmount();
   });
@@ -1215,7 +1218,8 @@ describe('archive git maintenance (M-v7-12)', () => {
     expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/archives/settings'))).toBe(true);
     const modal = wrapper.find('[data-test="archive-setup"]');
     expect(modal.exists()).toBe(true);
-    expect((modal.find('[data-test="setup-arc-name"]').element as HTMLSelectElement).value).toBe('mine');
+    // reka listbox: the closed-state trigger renders the model as its text
+    expect(modal.find('[data-test="setup-arc-name"]').text()).toContain('mine');
     expect((modal.find('[data-test="setup-arc-user"]').element as HTMLInputElement).value).toBe('u');
     expect(wrapper.text()).toContain('Setup My Archive');
     wrapper.unmount();

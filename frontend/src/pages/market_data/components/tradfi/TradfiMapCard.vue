@@ -8,7 +8,8 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { btnSecondaryClass, noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
+import { Button } from '@/shared/components/ui/button';
+import { noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
 import type { UseTradfiMap } from '../../composables/useTradfiMap';
 import ActionResult from './ActionResult.vue';
 import SpecsFloatingWindow from './SpecsFloatingWindow.vue';
@@ -34,38 +35,38 @@ const buttons = computed(() => props.map.actionButtons.value);
     <TradfiMapTable :map="map" />
     <div class="tradfi-actions-stack mt-3 grid gap-3">
       <div class="tradfi-actions-grid grid gap-3 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
-        <button :class="btnSecondaryClass" id="btn-tradfi-search-ticker" type="button" :disabled="buttons.searchTicker" @click="map.searchTicker()">
+        <Button variant="info" id="btn-tradfi-search-ticker" type="button" :disabled="buttons.searchTicker" @click="map.searchTicker()">
           {{ t('market.searchTicker') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-edit-selected" type="button" :disabled="buttons.editSelected" @click="map.editSelected()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-edit-selected" type="button" :disabled="buttons.editSelected" @click="map.editSelected()">
           {{ t('market.edit') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-test-resolve" type="button" :disabled="buttons.testResolve" @click="map.testResolve()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-test-resolve" type="button" :disabled="buttons.testResolve" @click="map.testResolve()">
           {{ t('market.testResolve') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-fetch-start-date" type="button" :disabled="buttons.fetchStartDate" @click="map.fetchStartDate()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-fetch-start-date" type="button" :disabled="buttons.fetchStartDate" @click="map.fetchStartDate()">
           {{ t('market.fetchStartDate') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-spec-refresh" type="button" :disabled="buttons.specRefresh" @click="map.refreshSpecs()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-spec-refresh" type="button" :disabled="buttons.specRefresh" @click="map.refreshSpecs()">
           {{ t('market.refreshSpec') }}
-        </button>
+        </Button>
       </div>
       <div class="tradfi-actions-grid grid gap-3 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
-        <button :class="btnSecondaryClass" id="btn-tradfi-auto-map" type="button" :disabled="buttons.autoMap" @click="map.autoMap()">
+        <Button variant="info" id="btn-tradfi-auto-map" type="button" :disabled="buttons.autoMap" @click="map.autoMap()">
           {{ t('market.autoMap') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-fetch-all-start-dates" type="button" :disabled="buttons.fetchAllStartDates" @click="map.fetchAllStartDates()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-fetch-all-start-dates" type="button" :disabled="buttons.fetchAllStartDates" @click="map.fetchAllStartDates()">
           {{ t('market.fetchAllStartDates') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-refresh-metadata" type="button" :disabled="buttons.refreshMetadata" @click="map.refreshMetadata()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-refresh-metadata" type="button" :disabled="buttons.refreshMetadata" @click="map.refreshMetadata()">
           {{ t('market.refreshMetadata') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-refresh-prices" type="button" :disabled="buttons.refreshPrices" @click="map.refreshPrices()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-refresh-prices" type="button" :disabled="buttons.refreshPrices" @click="map.refreshPrices()">
           {{ t('market.refreshPrices') }}
-        </button>
-        <button :class="btnSecondaryClass" id="btn-tradfi-view-specs" type="button" :disabled="buttons.viewSpecs" @click="map.loadSpecsView()">
+        </Button>
+        <Button variant="info" id="btn-tradfi-view-specs" type="button" :disabled="buttons.viewSpecs" @click="map.loadSpecsView()">
           {{ t('market.viewSpecs') }}
-        </button>
+        </Button>
       </div>
       <div :class="[noteClass, 'tradfi-cache-note']" id="tradfi-cache-note">{{ map.cacheNote.value }}</div>
       <div id="tradfi-action-result">

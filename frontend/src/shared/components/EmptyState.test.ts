@@ -21,7 +21,7 @@ describe('EmptyState', () => {
     expect(state.text()).toContain('No jobs found');
     expect(state.text()).toContain('Try another filter.');
     expect(wrapper.get('button').text()).toBe('Refresh jobs');
-    expect(wrapper.get('button').classes()).toContain('pbgui-btn');
+    expect(wrapper.get('button').attributes('data-slot')).toBe('button');
 
     await wrapper.get('button').trigger('click');
 

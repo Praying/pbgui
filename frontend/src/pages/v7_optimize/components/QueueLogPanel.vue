@@ -4,6 +4,7 @@ import { onBeforeUnmount, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import type { OptimizeAdapter } from '../config';
 interface Viewer { open(): void; close(): void; setHost?(host: string): void; setFile?(file: string): void }
 type ViewerCtor = new (options: Record<string, unknown>) => Viewer;
@@ -22,4 +23,4 @@ function show(): void {
 watch(() => [props.open, props.filename] as const, ([open]) => { if (open) show(); else viewer?.close(); });
 onBeforeUnmount(() => viewer?.close());
 </script>
-<template><aside v-if="open" class="fixed bottom-0 right-0 z-[1100] flex h-[46vh] w-[420px] max-w-[90vw] flex-col border-l border-t border-border-default bg-page"><header><strong>{{ title }}</strong><button class="min-h-[30px] cursor-pointer rounded-sm border border-border-default bg-white/4 px-2.5 py-1.25 text-primary hover:border-accent" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="18" /></button></header><div id="optimize-log-viewer-target"></div></aside></template>
+<template><aside v-if="open" class="fixed bottom-0 right-0 z-[1100] flex h-[46vh] w-[420px] max-w-[90vw] flex-col border-l border-t border-border-default bg-page"><header><strong>{{ title }}</strong><Button variant="ghost" size="icon" class="h-7 w-7" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="18" /></Button></header><div id="optimize-log-viewer-target"></div></aside></template>

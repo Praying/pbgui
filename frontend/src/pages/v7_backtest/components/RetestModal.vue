@@ -13,8 +13,12 @@ import { PhFolderOpen } from '@phosphor-icons/vue';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { onToggleMultiSelectMousedown } from '../composables/useToggleMultiSelect';
-import { modalBackdropClass, modalBoxClass, modalBtnClass } from '../lib/uiClasses';
+import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 
 const props = defineProps<{
   open: boolean;
@@ -110,61 +114,79 @@ function onCreateSchedule(): void {
         <div style="display: flex; flex-direction: column; gap: var(--sp-md); height: 100%; min-width: 0">
           <p class="text-secondary" style="margin: 0">The new backtest always ends at yesterday. Replacement happens only after the new result finished successfully; Git Push stays manual.</p>
           <div>
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">Date Mode</div>
-            <select v-model="dateMode" class="sb-input" style="width: 100%" data-test="arr-date-mode">
-              <option value="until_yesterday" selected>Same duration, end yesterday</option>
-              <option value="last_x_days">Last X days, end yesterday</option>
-            </select>
+            <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-date-mode-label">Date Mode</div>
+            <SelectRoot v-model="dateMode">
+              <SelectTrigger class="w-full" data-test="arr-date-mode" aria-labelledby="arr-date-mode-label">
+                <span>{{ dateMode === 'last_x_days' ? 'Last X days, end yesterday' : 'Same duration, end yesterday' }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="until_yesterday">Same duration, end yesterday</SelectItem>
+                <SelectItem value="last_x_days">Last X days, end yesterday</SelectItem>
+              </SelectContent>
+            </SelectRoot>
           </div>
           <div>
             <div class="text-xs uppercase tracking-[0.5px] text-secondary">Last X days / fallback window</div>
-            <input v-model="lastDays" class="sb-input" style="width: 100%; text-align: right" type="number" min="1" max="3650" step="1" data-test="arr-last-days" />
+            <Input v-model="lastDays" class="text-right" type="number" min="1" max="3650" step="1" data-test="arr-last-days" />
             <div class="text-secondary">Used directly in Last X days mode, and as fallback when the old result has no valid dates.</div>
           </div>
           <div>
             <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
-            <input v-model="balance" class="sb-input" style="width: 100%; text-align: right" type="number" min="1" step="100" data-test="arr-balance" />
+            <Input v-model="balance" class="text-right" type="number" min="1" step="100" data-test="arr-balance" />
           </div>
           <div style="flex: 1; display: flex; flex-direction: column; min-height: 60px">
             <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.exchanges') }}</div>
+            <!-- ui-migration: blocked — the reka listbox is single-value; the
+                 legacy multi-select (ctrl-free toggle via useToggleMultiSelect)
+                 stays native. -->
             <select v-model="exchanges" class="sb-input" multiple style="flex: 1; height: auto; min-height: var(--input-h)" data-test="arr-exchanges" @mousedown="onToggleMultiSelectMousedown">
               <option v-for="exchange in ALL_EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
             </select>
           </div>
           <div style="display: flex; align-items: center; gap: var(--sp-sm)">
-            <input id="arr-pbgui-data" v-model="usePbguiData" type="checkbox" style="width: auto; margin: 0" data-test="arr-pbgui-data" />
+            <Checkbox id="arr-pbgui-data" v-model="usePbguiData" style="margin: 0" data-test="arr-pbgui-data" />
             <label for="arr-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
           </div>
           <div style="display: flex; align-items: center; gap: var(--sp-sm)">
-            <input id="arr-skip-liquidated" v-model="skipLiquidated" type="checkbox" checked style="width: auto; margin: 0" data-test="arr-skip-liquidated" />
+            <Checkbox id="arr-skip-liquidated" v-model="skipLiquidated" style="margin: 0" data-test="arr-skip-liquidated" />
             <label for="arr-skip-liquidated" style="font-size: var(--fs-sm); cursor: pointer">Do not replace when the new result is liquidated</label>
           </div>
           <hr class="sb-sep" />
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm)">
             <div>
-              <div class="text-xs uppercase tracking-[0.5px] text-secondary">Schedule</div>
-              <select v-model="cadence" class="sb-input" data-test="arr-cadence">
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-              </select>
+              <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-cadence-label">Schedule</div>
+              <SelectRoot v-model="cadence">
+                <SelectTrigger class="w-full" data-test="arr-cadence" aria-labelledby="arr-cadence-label">
+                  <span>{{ cadence === 'weekly' ? 'Weekly' : 'Daily' }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
             <div>
               <div class="text-xs uppercase tracking-[0.5px] text-secondary">Time</div>
-              <input v-model="time" class="sb-input" type="time" data-test="arr-time" />
+              <Input v-model="time" type="time" data-test="arr-time" />
             </div>
             <div v-show="cadence === 'weekly'" id="arr-weekday-wrap" style="grid-column: span 2" data-test="arr-weekday-wrap">
-              <div class="text-xs uppercase tracking-[0.5px] text-secondary">Weekday</div>
-              <select v-model="weekday" class="sb-input" data-test="arr-weekday">
-                <option v-for="option in weekdayOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-              </select>
+              <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-weekday-label">Weekday</div>
+              <SelectRoot v-model="weekday">
+                <SelectTrigger class="w-full" data-test="arr-weekday" aria-labelledby="arr-weekday-label">
+                  <span>{{ weekdayOptions.find((option) => option.value === weekday)?.label ?? weekday }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in weekdayOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
             </div>
           </div>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button type="button" :class="modalBtnClass()" @click="emit('close')">{{ t('common.cancel') }}</button>
-        <button type="button" :class="modalBtnClass('primary')" data-test="arr-ok" @click="onQueueNow">{{ t('v7backtest.queueNow') }}</button>
-        <button type="button" :class="modalBtnClass('primary')" data-test="arr-schedule" @click="onCreateSchedule">{{ t('v7backtest.createSchedule') }}</button>
+        <Button type="button" variant="default" class="modal-btn" @click="emit('close')">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="primary" class="modal-btn" data-test="arr-ok" @click="onQueueNow">{{ t('v7backtest.queueNow') }}</Button>
+        <Button type="button" variant="primary" class="modal-btn" data-test="arr-schedule" @click="onCreateSchedule">{{ t('v7backtest.createSchedule') }}</Button>
       </div>
     </div>
   </div>

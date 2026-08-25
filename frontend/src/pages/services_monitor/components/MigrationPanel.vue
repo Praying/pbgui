@@ -15,6 +15,7 @@ import { computed } from 'vue';
 import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { migrationStatusMeta, type Translate } from '../status';
 import type { MigrationStatus } from '../types';
 
@@ -91,7 +92,7 @@ const notReadyUnitsText = computed(() =>
       <span class="status-label">{{ meta.label }}</span>
     </div>
     <span style="flex: 1"></span>
-    <button class="ctrl-btn" type="button" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</button>
+    <Button class="ctrl-btn" type="button" size="sm" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button>
   </div>
 
   <div class="settings-wrap" id="migration-wrap">
@@ -231,20 +232,20 @@ const notReadyUnitsText = computed(() =>
       <div class="migration-section">
         <div class="migration-section-title"><span>{{ t('sysmon.action') }}</span></div>
         <div class="migration-actions">
-          <button
-            class="migration-primary"
+          <Button
             id="migration-test-btn"
+            variant="primary"
             type="button"
             :disabled="props.busy === 'test'"
             @click="emit('test')"
-          >{{ props.busy === 'test' ? t('sysmon.testing') : t('sysmon.testMigration') }}</button>
-          <button
-            class="migration-primary"
+          >{{ props.busy === 'test' ? t('sysmon.testing') : t('sysmon.testMigration') }}</Button>
+          <Button
             id="migration-run-btn"
+            variant="primary"
             type="button"
             :disabled="!props.status!.migration_needed || props.busy === 'run'"
             @click="emit('run')"
-          >{{ props.busy === 'run' ? t('sysmon.migrating') : t('sysmon.migrateMasterToSystemd') }}</button>
+          >{{ props.busy === 'run' ? t('sysmon.migrating') : t('sysmon.migrateMasterToSystemd') }}</Button>
           <span class="migration-note">{{ t('sysmon.apiRestartNote') }}</span>
         </div>
       </div>
@@ -290,18 +291,6 @@ const notReadyUnitsText = computed(() =>
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.ctrl-btn {
-  padding: 0.25rem 0.75rem;
-  border-radius: 5px;
-  border: 1px solid var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--fs-sm);
-  font-family: inherit;
-  transition: all 0.12s;
-}
-.ctrl-btn:hover:not(:disabled) { border-color: var(--border-strong); color: var(--text-primary); }
 .settings-wrap { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
 .migration-loading { color: var(--text-disabled); font-style: italic; }
 .migration-hero { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
@@ -326,7 +315,4 @@ const notReadyUnitsText = computed(() =>
 .migration-badge.warn { color: var(--warning-soft); border-color: rgb(var(--warning-rgb) / 0.5); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); }
 .migration-badge.err { color: var(--danger-soft); border-color: var(--danger-deep); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
 .migration-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.migration-primary { height: var(--btn-h); padding: 0 1rem; border-radius: 6px; border: 1px solid var(--accent); background: rgb(var(--accent-rgb) / 0.18); color: var(--accent-soft); cursor: pointer; font-size: var(--fs-sm); font-family: inherit; }
-.migration-primary:hover:not(:disabled) { background: var(--accent-deep); color: #f2f5fb; }
-.migration-primary:disabled { cursor: not-allowed; opacity: 0.55; }
 </style>

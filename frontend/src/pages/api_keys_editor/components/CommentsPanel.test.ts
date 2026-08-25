@@ -58,11 +58,11 @@ describe('CommentsPanel', () => {
     const { wrapper, toasts } = mountPanel();
     await flushPromises();
 
-    await wrapper.find('#commentsPanel .btn-primary.btn-sm').trigger('click'); // + Add
+    await wrapper.find('#btnCommentAdd').trigger('click'); // + Add
     expect(wrapper.find('#addCommentForm').isVisible()).toBe(true);
     await wrapper.find('#newCommentKey').setValue('notes');
     await wrapper.find('#newCommentValue').setValue('my note');
-    await wrapper.find('#addCommentForm .btn-primary').trigger('click');
+    await wrapper.find('#btnCommentSave').trigger('click');
     await flushPromises();
 
     const post = fetchMock.mock.calls.find(([u, i]) => String(u).endsWith('/comments/list') && i?.method === 'POST');
@@ -76,7 +76,8 @@ describe('CommentsPanel', () => {
     await flushPromises();
 
     await wrapper.findAll('input.comment-val')[0]!.setValue('changed');
-    await wrapper.findAll('#commentsBody .btn-primary')[0]!.trigger('click');
+    // Per row the save button is the first ui/ button (delete follows).
+    await wrapper.findAll('#commentsBody [data-slot="button"]')[0]!.trigger('click');
     await flushPromises();
 
     const put = fetchMock.mock.calls.find(([u, i]) => String(u).includes('/comments/list/_comment_a') && i?.method === 'PUT');
@@ -87,7 +88,8 @@ describe('CommentsPanel', () => {
     const { wrapper, toasts } = mountPanel();
     await flushPromises();
 
-    await wrapper.findAll('#commentsBody .btn-danger')[0]!.trigger('click');
+    // Per row the delete button is the second ui/ button (save comes first).
+    await wrapper.findAll('#commentsBody [data-slot="button"]')[1]!.trigger('click');
     await flushPromises();
 
     expect((window as Window & { PBGuiDialogs?: { confirm: ReturnType<typeof vi.fn> } }).PBGuiDialogs!.confirm).toHaveBeenCalled();

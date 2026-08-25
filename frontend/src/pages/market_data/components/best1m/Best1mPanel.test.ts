@@ -183,7 +183,7 @@ describe('the generic variant (:3347-3405)', () => {
     await flush();
     await panel.find('#best1m-start-date').setValue('2026-08-01');
     await panel.find('#best1m-end-date').setValue('2026-08-15');
-    await panel.find('#best1m-refetch').setValue(true);
+    await panel.find('#best1m-refetch').trigger('click'); // refetch defaults to false — one click sets it
     fetchJson.mockResolvedValueOnce({ success: true, job_id: 'job-1' });
     await panel.find('#btn-best1m-queue').trigger('click');
     await flush();

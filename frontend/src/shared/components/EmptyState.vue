@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useId } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 interface EmptyStateProps {
   title: string;
   message?: string;
@@ -31,13 +32,13 @@ const messageId = `${stateId}-message`;
       {{ props.message }}
     </p>
     <div v-if="props.actionLabel" class="pbgui-empty-state__actions">
-      <button
+      <Button
         type="button"
-        class="pbgui-btn btn-secondary"
+        variant="secondary"
         @click="emit('action')"
       >
         {{ props.actionLabel }}
-      </button>
+      </Button>
     </div>
   </section>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue';
+import type { ComponentPublicInstance, HTMLAttributes } from 'vue';
+import { ref } from 'vue';
 import { Primitive, type PrimitiveProps } from 'reka-ui';
 import { cn } from '@/shared/lib/utils';
 import { type ButtonVariants, buttonVariants } from '.';
@@ -9,6 +10,10 @@ import { type ButtonVariants, buttonVariants } from '.';
  *
  * `variant` maps onto the old `.btn-*` classes one-to-one (default→.btn,
  * primary→.btn-primary, …) so migrating pages is a mechanical swap.
+ *
+ * The template ref exposes focus()/blur() for legacy call sites that
+ * drove focus imperatively (dialog close-refocus, scroll-into-view
+ * flows) — same contract as ui/Input.
  */
 interface Props extends PrimitiveProps {
   variant?: ButtonVariants['variant'];
@@ -24,10 +29,17 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   loading: false,
 });
+
+const primitive = ref<ComponentPublicInstance | null>(null);
+defineExpose({
+  focus: () => (primitive.value?.$el as HTMLElement | undefined)?.focus(),
+  blur: () => (primitive.value?.$el as HTMLElement | undefined)?.blur(),
+});
 </script>
 
 <template>
   <Primitive
+    ref="primitive"
     data-slot="button"
     :as="as"
     :as-child="asChild"

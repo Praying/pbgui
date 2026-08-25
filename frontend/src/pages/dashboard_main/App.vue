@@ -63,6 +63,8 @@ import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import DashboardList from './components/DashboardList.vue';
 import DeleteDialog from './components/DeleteDialog.vue';
 import NewDashboardDialog from './components/NewDashboardDialog.vue';
@@ -414,67 +416,76 @@ onUnmounted(() => {
         </div>
         <div id="sidebar-toolbar">
           <template v-if="editMode">
-            <button
-              class="sb-btn edit-mode-save"
+            <Button
+              variant="success"
+              size="icon"
               id="sb-save"
               :title="t('dash.saveDashboard')"
               :aria-label="t('dash.saveDashboard')"
               @click="postToFrame({ type: 'pbgui_trigger_save' })"
-            ><PbIcon :icon="PhFloppyDisk" /></button>
-            <button
-              class="sb-btn"
+            ><PbIcon :icon="PhFloppyDisk" /></Button>
+            <Button
+              variant="ghost"
+              size="icon"
               id="sb-cancel"
               :title="t('dash.cancelEdit')"
               :aria-label="t('dash.cancelEdit')"
               @click="postToFrame({ type: 'pbgui_trigger_cancel' })"
-            ><PbIcon :icon="PhX" /></button>
-            <button
-              class="sb-btn danger"
+            ><PbIcon :icon="PhX" /></Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="hover:border-danger/35 hover:bg-danger/13 hover:text-danger-soft"
               id="sb-delete"
               :title="t('dash.deleteDashboard')"
               :aria-label="t('dash.deleteDashboard')"
               @click="openDeleteDialog(currentDash ? [currentDash] : [])"
-            ><PbIcon :icon="PhTrash" /></button>
+            ><PbIcon :icon="PhTrash" /></Button>
           </template>
           <template v-else>
-            <button class="sb-btn" id="sb-refresh" :title="t('dash.refreshList')" :aria-label="t('dash.refreshList')" @click="refreshList()"><PbIcon :icon="PhArrowClockwise" /></button>
-            <button class="sb-btn sb-btn--primary" id="sb-new" :title="t('dash.newDashboard')" :aria-label="t('dash.newDashboard')" @click="newDialogVisible = true"><PbIcon :icon="PhPlus" /><span class="sb-btn-label">{{ t('dash.newDashboard') }}</span></button>
-            <button
+            <Button variant="ghost" size="icon" id="sb-refresh" :title="t('dash.refreshList')" :aria-label="t('dash.refreshList')" @click="refreshList()"><PbIcon :icon="PhArrowClockwise" /></Button>
+            <Button variant="primary" size="sm" class="mr-auto" id="sb-new" :title="t('dash.newDashboard')" :aria-label="t('dash.newDashboard')" @click="newDialogVisible = true"><PbIcon :icon="PhPlus" /><span class="text-xs whitespace-nowrap">{{ t('dash.newDashboard') }}</span></Button>
+            <Button
               v-if="currentDash"
-              class="sb-btn"
+              variant="ghost"
+              size="icon"
               id="sb-edit"
               :title="t('dash.editCurrentDashboard')"
               :aria-label="t('dash.editCurrentDashboard')"
               @click="loadEditor(currentDash)"
-            ><PbIcon :icon="PhPencilSimple" /></button>
-            <button
+            ><PbIcon :icon="PhPencilSimple" /></Button>
+            <Button
               v-if="getDeleteTargets().length"
-              class="sb-btn danger"
+              variant="ghost"
+              size="icon"
+              class="hover:border-danger/35 hover:bg-danger/13 hover:text-danger-soft"
               id="sb-del"
               :title="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
               :aria-label="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
               @click="openDeleteDialog(getDeleteTargets())"
-            ><PbIcon :icon="PhTrash" /></button>
-            <button class="sb-btn" id="sb-templates" :title="t('dash.templates')" :aria-label="t('dash.templates')" @click="openTemplates()"><PbIcon :icon="PhArchive" /></button>
-            <button
+            ><PbIcon :icon="PhTrash" /></Button>
+            <Button variant="ghost" size="icon" id="sb-templates" :title="t('dash.templates')" :aria-label="t('dash.templates')" @click="openTemplates()"><PbIcon :icon="PhArchive" /></Button>
+            <Button
               v-if="showViewSave"
-              class="sb-btn view-save"
+              variant="info"
+              size="icon"
               id="sb-view-save"
               :title="t('dash.saveViewLayout')"
               :aria-label="t('dash.saveViewLayout')"
               @click="postToFrame({ type: 'pbgui_trigger_view_save' })"
-            ><PbIcon :icon="PhFloppyDisk" /></button>
+            ><PbIcon :icon="PhFloppyDisk" /></Button>
           </template>
         </div>
         <div id="sidebar-search-wrap" :class="{ visible: showSearch }">
           <span class="sb-search-icon" aria-hidden="true"><PbIcon :icon="PhMagnifyingGlass" /></span>
-          <input
+          <Input
             id="sidebar-search"
             v-model="query"
             type="text"
+            class="rounded-lg pl-[1.9rem]"
             :placeholder="t('dash.filter')"
             autocomplete="off"
-          >
+          />
         </div>
       </div>
       <DashboardList
@@ -651,78 +662,6 @@ body {
   flex-wrap: wrap;
   padding: 0 12px 12px;
 }
-.sb-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-  height: 30px;
-  padding: 0 7px;
-  border-radius: var(--radius-md);
-  font-size: var(--fs-sm);
-  cursor: pointer;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  transition:
-    transform var(--motion-fast) var(--ease-standard),
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
-    color var(--motion-fast) var(--ease-standard);
-}
-.sb-btn:hover {
-  background: var(--surface-elevated);
-  border-color: var(--border-default);
-  color: var(--text-primary);
-}
-.sb-btn:active {
-  transform: translateY(1px) scale(0.98);
-}
-.sb-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-.sb-btn--primary {
-  gap: 5px;
-  margin-right: auto;
-  padding: 0 10px;
-  background: var(--accent-deep);
-  border-color: var(--accent-deep);
-  color: #f2f5fb;
-  font-weight: 600;
-}
-.sb-btn--primary:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-}
-.sb-btn-label {
-  font-size: var(--fs-xs);
-  white-space: nowrap;
-}
-.sb-btn.danger:hover {
-  background: var(--danger-bg);
-  border-color: rgb(var(--danger-rgb) / 0.35);
-  color: var(--danger-soft);
-}
-.sb-btn.edit-mode-save {
-  background: var(--success-bg);
-  color: var(--success-soft);
-  border-color: rgb(var(--success-rgb) / 0.35);
-}
-.sb-btn.edit-mode-save:hover {
-  background: rgb(var(--success-rgb) / 0.2);
-  border-color: var(--success-soft);
-}
-.sb-btn.view-save {
-  background: var(--accent-bg);
-  color: var(--accent-soft);
-  border-color: rgb(var(--accent-rgb) / 0.35);
-}
-.sb-btn.view-save:hover {
-  background: rgb(var(--accent-rgb) / 0.2);
-  border-color: var(--accent-soft);
-}
 
 /* Edit-mode banner: a full-width status strip fused with the panel header. */
 #edit-mode-banner {
@@ -768,24 +707,6 @@ body {
 }
 #sidebar-search-wrap.visible {
   display: block;
-}
-#sidebar-search {
-  width: 100%;
-  height: 34px;
-  background: var(--bg-input);
-  color: var(--text-primary);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: 0 0.6rem 0 1.9rem;
-  font-size: var(--fs-sm);
-  outline: none;
-}
-#sidebar-search:focus {
-  border-color: rgb(var(--accent-rgb) / 0.55);
-  box-shadow: var(--focus-ring);
-}
-#sidebar-search::placeholder {
-  color: var(--text-placeholder);
 }
 .sb-search-icon {
   position: absolute;
@@ -1057,85 +978,11 @@ body {
 .dlg-field {
   margin-bottom: 14px;
 }
-.dlg-field label {
-  display: block;
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 7px;
-}
-.dlg-field input[type='text'] {
-  width: 100%;
-  height: var(--control-height-lg);
-  background: var(--bg-input);
-  color: var(--text-primary);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: 0 11px;
-  font-size: var(--fs-base);
-  outline: none;
-  transition:
-    border-color var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard);
-}
-.dlg-field input:focus {
-  border-color: var(--accent-soft);
-  box-shadow: var(--focus-ring);
-}
-.dlg-field input.err {
-  border-color: var(--danger-soft);
-  box-shadow: 0 0 0 3px rgb(var(--danger-rgb) / 0.16);
-}
-/* visibility via v-show (inline display:none) */
-.dlg-err {
-  color: var(--danger-soft);
-  font-size: var(--fs-sm);
-  margin-top: 0.35rem;
-  display: block;
-}
 .dlg-actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
   margin-top: 22px;
-}
-.dlg-btn {
-  min-height: 34px;
-  padding: 0 14px;
-  border-radius: var(--radius-md);
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid;
-  transition:
-    transform var(--motion-fast) var(--ease-standard),
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
-    color var(--motion-fast) var(--ease-standard);
-}
-.dlg-btn.primary {
-  background: var(--accent-deep);
-  color: #f2f5fb;
-  border-color: var(--accent-deep);
-}
-.dlg-btn.primary:hover {
-  filter: brightness(1.14);
-}
-.dlg-btn.secondary {
-  background: transparent;
-  color: var(--text-secondary);
-  border-color: var(--border-default);
-}
-.dlg-btn.secondary:hover {
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-.dlg-btn:active {
-  transform: translateY(1px) scale(0.98);
-}
-.dlg-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 
 /* ── Delete confirm dialog ── (visibility via v-show inline display:none) */
@@ -1191,33 +1038,11 @@ body {
   z-index: 2;
 }
 #tpl-close-btn {
+  /* positioning only — chrome comes from Button variant="ghost" size="icon" */
   position: absolute;
   top: 8px;
   right: 10px;
   z-index: 10;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-secondary);
-  font-size: var(--fs-md);
-  line-height: 1;
-  cursor: pointer;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border-radius: var(--radius-md);
-  transition:
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard),
-    color var(--motion-fast) var(--ease-standard);
-}
-#tpl-close-btn:hover {
-  border-color: var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-#tpl-close-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 #tpl-iframe {
   width: 100%;
@@ -1237,13 +1062,8 @@ body {
     min-width: 190px;
   }
 
-  .sb-btn-label,
   .sb-subtitle {
     display: none;
-  }
-
-  .sb-btn--primary {
-    margin-right: 0;
   }
 }
 
@@ -1253,9 +1073,7 @@ body {
     animation: none;
   }
 
-  .sb-item:hover,
-  .sb-btn:active,
-  .dlg-btn:active {
+  .sb-item:hover {
     transform: none;
   }
 }

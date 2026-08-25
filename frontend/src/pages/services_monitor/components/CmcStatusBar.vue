@@ -9,6 +9,7 @@ import { computed } from 'vue';
 import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Button } from '@/shared/components/ui/button';
 import { cmcNumber } from '../cmc';
 import type { CmcPool } from '../types';
 
@@ -48,7 +49,7 @@ const statusText = computed(() => {
 
 <template>
   <div class="cmc-status-bar" :class="statusBarClass" id="cmc-status-bar">
-    <button class="cmc-refresh-btn" type="button" :title="t('common.refresh')" :aria-label="t('common.refresh')" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /></button>
+    <Button class="cmc-refresh-btn text-current opacity-70 hover:bg-transparent hover:text-current hover:opacity-100" variant="ghost" size="icon" type="button" :title="t('common.refresh')" :aria-label="t('common.refresh')" @click="emit('refresh')"><PbIcon :icon="PhArrowClockwise" /></Button>
     <span class="cmc-status-text" id="cmc-status-text">{{ statusText }}</span>
   </div>
 </template>
@@ -64,6 +65,4 @@ const statusText = computed(() => {
 .cmc-status-bar.error { background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); border-color: var(--danger-deep); color: var(--danger-soft); }
 .cmc-status-bar.loading { background: var(--bg-page); color: var(--text-disabled); }
 .cmc-status-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cmc-refresh-btn { background: none; border: none; color: inherit; cursor: pointer; font-size: 1rem; opacity: 0.7; padding: 0 2px; flex-shrink: 0; }
-.cmc-refresh-btn:hover { opacity: 1; }
 </style>

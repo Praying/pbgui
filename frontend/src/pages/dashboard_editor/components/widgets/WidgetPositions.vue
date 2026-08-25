@@ -27,6 +27,7 @@
  *    legacy editor never passes height to buildPositions (editor:1949-1953).
  */
 import { computed, inject, onScopeDispose, ref, watch } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -251,26 +252,31 @@ function onDelete(): void {
     >
       <span :class="dtIconClass">📋</span>
       <span :class="dtTitleClass">{{ dashT('dash.positions', 'Positions') }}</span>
-      <button
+      <Button
         type="button"
-        class="dp-manage-btn cursor-pointer rounded-sm border border-accent/35 bg-accent/12 px-[0.45rem] py-[0.12rem] text-[0.68rem] font-semibold leading-[1.35] text-accent-soft hover:border-accent-soft hover:bg-accent/20 hover:text-primary"
+        variant="info"
+        size="sm"
+        class="dp-manage-btn"
         :title="dashT('dash.manageSelectedPosition', 'Manage selected position')"
         @click="onManageClick"
       >
         {{ dashT('dash.manage', 'Manage') }}
-      </button>
+      </Button>
       <div :class="[dtMetaClass, dtMetaControlsClass]">
         <span :class="dtMetaLblClass">{{ dashT('dash.users', 'Users') }}</span>
         <MultiSelectDropdown :model-value="users" :users="allUsers" @update:model-value="onUsersChange" />
       </div>
-      <button
+      <Button
         v-if="editMode"
+        type="button"
+        variant="ghost"
+        size="icon"
         :class="dtTrashClass"
         :title="dashT('dash.removeWidget', 'Remove widget')"
         @click.stop="onDelete"
       >
         &#128465;
-      </button>
+      </Button>
     </div>
     <div :class="dtStatusClass" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
     <div v-if="positions.length === 0" :class="dtNodataClass">

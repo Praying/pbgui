@@ -24,6 +24,7 @@
  * throw on a malformed row; server data is numeric so this is equivalent.
  */
 import { computed, inject, onScopeDispose, ref, watch } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -177,14 +178,17 @@ function onDelete(): void {
         <label class="text-[0.73rem] text-secondary">{{ dashT('dash.usersColon', 'Users:') }}</label>
         <MultiSelectDropdown :model-value="users" :users="allUsers" @update:model-value="onUsersChange" />
       </div>
-      <button
+      <Button
         v-if="editMode"
+        type="button"
+        variant="ghost"
+        size="icon"
         :class="dtTrashClass"
         :title="dashT('dash.removeWidget', 'Remove widget')"
         @click.stop="onDelete"
       >
         &#128465;
-      </button>
+      </Button>
     </div>
     <div class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-[0.68rem] text-muted" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>
     <div v-if="rows.length === 0" class="db-nodata p-[1.5rem] text-center text-[0.85rem] text-border-strong">

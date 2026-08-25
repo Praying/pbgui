@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 
 /**
  * KvCoinSources — the kv chip editor port (v7_backtest.html:3808-4012):
@@ -107,10 +113,15 @@ function onEnter(): void {
     </div>
     <div style="display: flex; gap: var(--sp-sm); align-items: end; margin-top: var(--sp-xs)">
       <div class="form-group" style="width: 140px">
-        <label>{{ t('v7backtest.exchange') }}</label>
-        <select v-model="exchange" class="form-input">
-          <option v-for="option in exchangeOptions" :key="option" :value="option">{{ option }}</option>
-        </select>
+        <label id="kv-exchange-label">{{ t('v7backtest.exchange') }}</label>
+        <SelectRoot v-model="exchange">
+          <SelectTrigger aria-labelledby="kv-exchange-label">
+            <span>{{ exchange }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="option in exchangeOptions" :key="option" :value="option">{{ option }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
       </div>
       <div class="form-group" style="flex: 1">
         <label>
@@ -118,6 +129,8 @@ function onEnter(): void {
           <span class="ms-clear-btn" data-test="kv-clear-all" :title="t('v7backtest.clearAll')" @click="clearAll">× all</span>
         </label>
         <div class="ms-wrap" @focusin="open = true" @focusout="open = false">
+          <!-- ui-migration: blocked — the chip-filter input inside the custom
+               .ms-wrap dropdown (focusin/focusout drives its open state) -->
           <input
             v-model="filter"
             class="ms-input"

@@ -12,6 +12,7 @@
  * store.clearCell: clearCellKeys + epoch bump + sync).
  */
 import { computed, inject } from 'vue';
+import { Button } from '@/shared/components/ui/button';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { dashT } from '../../lib/i18n';
@@ -46,13 +47,16 @@ function onDelete(): void {
     <span v-if="icon" :class="dtIconClass">{{ icon }}</span>
     <span :class="dtTitleClass">{{ title }}</span>
     <slot />
-    <button
+    <Button
       v-if="editMode"
+      type="button"
+      variant="ghost"
+      size="icon"
       :class="dtTrashClass"
       :title="dashT('dash.removeWidget', 'Remove widget')"
       @click.stop="onDelete"
     >
       &#128465;
-    </button>
+    </Button>
   </div>
 </template>

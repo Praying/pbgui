@@ -1,13 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import CmcAuthorityModal from './CmcAuthorityModal.vue';
 
 const OPTIONS = [
   { nodeId: 'node-a', text: 'Alpha (node-a)' },
   { nodeId: 'node-b', text: 'Bravo (node-b)' },
 ];
+
+afterEach(() => {
+  // The reka select portals its listbox into document.body — clear it so a
+  // stale list from a previous test cannot intercept option lookups.
+  document.body.innerHTML = '';
+});
 
 function mountModal(props: {
   open?: boolean;
@@ -31,32 +38,33 @@ function mountModal(props: {
 }
 
 describe('CmcAuthorityModal (legacy openCmcAuthorityModal markup)', () => {
-  it('renders the domain, current assignment and eligible nodes', () => {
+  it('renders the domain, current assignment and eligible nodes', async () => {
     const wrapper = mountModal();
 
     expect(wrapper.find('.cmc-modal-title').text()).toBe('Transfer CMC Authority');
     expect(wrapper.find('#cmc-authority-domain').text()).toBe('cmc-main');
     expect(wrapper.find('#cmc-authority-current').text()).toBe('pb1 · epoch 3 · reachable yes');
-    const options = wrapper.findAll('#cmc-authority-target option');
-    expect(options.map((o) => o.text())).toEqual(['Alpha (node-a)', 'Bravo (node-b)']);
-    expect((wrapper.find('#cmc-authority-target').element as HTMLSelectElement).value).toBe('node-a');
+    await openSelect(wrapper, '#cmc-authority-target');
+    expect(selectOptionTexts()).toEqual(['Alpha (node-a)', 'Bravo (node-b)']);
+    // The first eligible node is preselected (legacy openCmcAuthorityModal).
+    expect(wrapper.find('#cmc-authority-target').text()).toContain('Alpha (node-a)');
   });
 
   it('defaults the selection to the first option on each open', async () => {
     const wrapper = mountModal();
 
-    await wrapper.find('#cmc-authority-target').setValue('node-b');
+    await pickSelectOption(wrapper, '#cmc-authority-target', 'Bravo (node-b)');
     await wrapper.setProps({ open: false });
     await wrapper.setProps({ open: true });
     await nextTick();
 
-    expect((wrapper.find('#cmc-authority-target').element as HTMLSelectElement).value).toBe('node-a');
+    expect(wrapper.find('#cmc-authority-target').text()).toContain('Alpha (node-a)');
   });
 
   it('emits submit with the selected node id', async () => {
     const wrapper = mountModal();
 
-    await wrapper.find('#cmc-authority-target').setValue('node-b');
+    await pickSelectOption(wrapper, '#cmc-authority-target', 'Bravo (node-b)');
     await wrapper.find('#cmc-authority-submit').trigger('click');
 
     expect(wrapper.emitted('submit')).toEqual([['node-b']]);
@@ -85,7 +93,7 @@ describe('CmcAuthorityModal (legacy openCmcAuthorityModal markup)', () => {
   it('requests closing via v-model when idle', async () => {
     const wrapper = mountModal();
 
-    await wrapper.find('button.form-btn:not(.save)').trigger('click'); // Cancel
+    await wrapper.find('.cmc-modal-actions button:not(.save)').trigger('click'); // Cancel
 
     expect(wrapper.emitted('update:open')).toEqual([[false]]);
   });

@@ -1,6 +1,24 @@
 <script setup lang="ts">
+/*
+ * Chat toolbar — provider/model/effort selectors + conversation actions.
+ *
+ * ui-migration: the legacy effort <select> carried an empty-value option
+ * ("Standard") to reset the effort; the reka listbox reserves "" for the
+ * cleared state and has no reset row, so Standard is now the placeholder
+ * shown while no effort variant is picked (re-picking Standard after
+ * choosing a variant is no longer possible — modern listbox UX).
+ */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import {
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import type { ModelInfo, ReasoningVariant } from '../composables/useAiChat';
 
 interface ChatToolbarProps {
@@ -53,74 +71,125 @@ function modelLabel(model: ModelInfo): string {
     health
   );
 }
+
+/* Trigger labels render from the model — the listbox options are lazily
+   mounted, so a programmatically set value has no option text to read. */
+const providerTriggerLabel = computed(() => PROVIDER_LABELS.find(([id]) => id === props.providerId)?.[1] ?? '');
+
+const modelTriggerLabel = computed(() => {
+  const model = props.models.find((m) => m.id === props.modelId);
+  return model ? modelLabel(model) : '';
+});
+
+const effortTriggerLabel = computed(() => {
+  const variant = props.effortVariants.find((v) => v.id === props.effort);
+  return variant ? variant.label || variant.id : '';
+});
+
+function onProviderSelect(value: unknown): void {
+  emit('update:providerId', String(value ?? ''));
+  emit('providerChange');
+}
+
+function onModelSelect(value: unknown): void {
+  emit('update:modelId', String(value ?? ''));
+  emit('modelChange');
+}
+
+function onEffortSelect(value: unknown): void {
+  emit('update:effort', String(value ?? ''));
+}
 </script>
 
 <template>
   <div class="flex flex-wrap items-center gap-2.5 border-b border-border-default bg-panel/90 px-4 py-3">
-    <label class="text-xs text-secondary" for="provider-select">{{ t('ai.chat.provider') }}</label>
-    <select
-      id="provider-select"
-      class="h-8 w-[145px] rounded-md border border-border-default bg-[#0b1320] px-2 text-sm text-primary outline-none focus:border-accent disabled:cursor-not-allowed disabled:opacity-50"
-      :value="providerId"
+    <span id="provider-select-label" class="text-xs text-secondary">{{ t('ai.chat.provider') }}</span>
+    <SelectRoot
+      :model-value="providerId"
       :disabled="transitioning || busy || !connectedProviders.length"
-      @change="emit('update:providerId', ($event.target as HTMLSelectElement).value); emit('providerChange')"
+      @update:model-value="onProviderSelect"
     >
-      <option v-for="[id, label] in connectedProviders" :key="id" :value="id">{{ label }}</option>
-    </select>
+      <SelectTrigger id="provider-select" class="w-[145px]" aria-labelledby="provider-select-label">
+        <span>{{ providerTriggerLabel }}</span>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem v-for="[id, label] in connectedProviders" :key="id" :value="id">{{ label }}</SelectItem>
+      </SelectContent>
+    </SelectRoot>
 
-    <label class="text-xs text-secondary" for="model-select">{{ t('ai.chat.model') }}</label>
-    <select
-      id="model-select"
-      class="h-8 min-w-[180px] max-w-[330px] rounded-md border border-border-default bg-[#0b1320] px-2 text-sm text-primary outline-none focus:border-accent disabled:cursor-not-allowed disabled:opacity-50"
-      :value="modelId"
+    <span id="model-select-label" class="text-xs text-secondary">{{ t('ai.chat.model') }}</span>
+    <SelectRoot
+      :model-value="modelId"
       :disabled="transitioning || busy || !models.length"
-      @change="emit('update:modelId', ($event.target as HTMLSelectElement).value); emit('modelChange')"
+      @update:model-value="onModelSelect"
     >
-      <optgroup v-if="freeModels.length" :label="t('ai.chat.free')">
-        <option v-for="model in freeModels" :key="model.id" :value="model.id" :title="model.retention ? t('ai.chat.retention', { retention: model.retention }) : ''">
-          {{ modelLabel(model) }}
-        </option>
-      </optgroup>
-      <optgroup :label="t('ai.chat.models')">
-        <option v-for="model in standardModels" :key="model.id" :value="model.id" :title="model.retention ? t('ai.chat.retention', { retention: model.retention }) : ''">
-          {{ modelLabel(model) }}
-        </option>
-      </optgroup>
-    </select>
+      <SelectTrigger id="model-select" class="min-w-[180px] max-w-[330px]" aria-labelledby="model-select-label">
+        <span>{{ modelTriggerLabel }}</span>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup v-if="freeModels.length">
+          <SelectLabel class="px-2 py-1.5 text-xs font-semibold uppercase tracking-label text-secondary">{{ t('ai.chat.free') }}</SelectLabel>
+          <SelectItem
+            v-for="model in freeModels"
+            :key="model.id"
+            :value="model.id"
+            :title="model.retention ? t('ai.chat.retention', { retention: model.retention }) : ''"
+          >
+            {{ modelLabel(model) }}
+          </SelectItem>
+        </SelectGroup>
+        <SelectGroup>
+          <SelectLabel class="px-2 py-1.5 text-xs font-semibold uppercase tracking-label text-secondary">{{ t('ai.chat.models') }}</SelectLabel>
+          <SelectItem
+            v-for="model in standardModels"
+            :key="model.id"
+            :value="model.id"
+            :title="model.retention ? t('ai.chat.retention', { retention: model.retention }) : ''"
+          >
+            {{ modelLabel(model) }}
+          </SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </SelectRoot>
 
     <template v-if="effortSupported">
-      <label class="text-xs text-secondary" for="effort-select">{{ t('ai.chat.effort') }}</label>
-      <select
-        id="effort-select"
-        class="h-8 w-[105px] rounded-md border border-border-default bg-[#0b1320] px-2 text-sm text-primary outline-none focus:border-accent disabled:cursor-not-allowed disabled:opacity-50"
-        :value="effort"
+      <span id="effort-select-label" class="text-xs text-secondary">{{ t('ai.chat.effort') }}</span>
+      <SelectRoot
+        :model-value="effort"
         :disabled="transitioning || busy"
-        @change="emit('update:effort', ($event.target as HTMLSelectElement).value)"
+        @update:model-value="onEffortSelect"
       >
-        <option value="">{{ t('ai.chat.standardEffort') }}</option>
-        <option v-for="variant in effortVariants" :key="variant.id" :value="variant.id" :title="String(variant.description || '')">
-          {{ variant.label || variant.id }}
-        </option>
-      </select>
+        <SelectTrigger id="effort-select" class="w-[105px]" aria-labelledby="effort-select-label">
+          <span :class="effortTriggerLabel ? undefined : 'text-placeholder'">{{ effortTriggerLabel || t('ai.chat.standardEffort') }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            v-for="variant in effortVariants"
+            :key="variant.id"
+            :value="variant.id"
+            :title="String(variant.description || '')"
+          >
+            {{ variant.label || variant.id }}
+          </SelectItem>
+        </SelectContent>
+      </SelectRoot>
     </template>
 
     <span class="flex-1"></span>
-    <button
+    <Button
       type="button"
-      class="h-8 cursor-pointer rounded-md border border-border-default bg-elevated px-3 text-sm text-primary transition-colors hover:border-accent"
       @click="emit('refreshHealth')"
-    >{{ t('ai.chat.checkFreeModels') }}</button>
-    <button
+    >{{ t('ai.chat.checkFreeModels') }}</Button>
+    <Button
       type="button"
-      class="h-8 cursor-pointer rounded-md border border-border-default bg-elevated px-3 text-sm text-primary transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
       :disabled="transitioning"
       @click="emit('newChat')"
-    >{{ t('ai.chat.newChat') }}</button>
-    <button
+    >{{ t('ai.chat.newChat') }}</Button>
+    <Button
       type="button"
-      class="h-8 cursor-pointer rounded-md border border-[rgba(248,113,113,.35)] bg-transparent px-3 text-sm text-[#fecaca] transition-colors hover:border-danger disabled:cursor-not-allowed disabled:opacity-50"
+      variant="danger"
       :disabled="transitioning || !conversationId"
       @click="emit('deleteChat')"
-    >{{ t('ai.chat.delete') }}</button>
+    >{{ t('ai.chat.delete') }}</Button>
   </div>
 </template>

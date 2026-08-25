@@ -12,11 +12,11 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import {
-  btnSecondaryClass,
   coinPickerRowClass,
   fieldLabelClass,
-  inputClass,
   noteClass,
   settingsFieldClass,
 } from '../../lib/uiClasses';
@@ -79,29 +79,28 @@ defineExpose({ install, uninstall: drag.uninstall });
     </label>
     <div class="coin-picker-toolbar flex flex-wrap items-center gap-2">
       <div class="coin-filter-wrap min-w-[220px] flex-[1_1_360px]">
-        <input
+        <Input
           id="best1m-coin-filter"
-          :class="inputClass"
           type="text"
           :placeholder="t('market.filterAvailableCoinList')"
-          :value="store.coinFilter.value"
-          @input="store.setCoinFilter(($event.target as HTMLInputElement).value)"
+          :model-value="store.coinFilter.value"
+          @update:model-value="store.setCoinFilter(String($event ?? ''))"
         />
       </div>
-      <button
-        :class="btnSecondaryClass"
+      <Button
+        variant="info"
         id="btn-best1m-select-visible"
         type="button"
         :disabled="store.visibleCoins.value.length === 0"
         @click="store.selectVisibleCoins()"
-      >{{ t('market.selectVisible') }}</button>
-      <button
-        :class="btnSecondaryClass"
+      >{{ t('market.selectVisible') }}</Button>
+      <Button
+        variant="info"
         id="btn-best1m-clear-selection"
         type="button"
         :disabled="store.selectedCoins.value.size === 0"
         @click="store.clearAllCoins()"
-      >{{ t('market.clearAll') }}</button>
+      >{{ t('market.clearAll') }}</Button>
       <span :class="noteClass" id="best1m-selected-count">{{
         t('market.selectedTotal', {
           selected: store.selectedCoins.value.size,

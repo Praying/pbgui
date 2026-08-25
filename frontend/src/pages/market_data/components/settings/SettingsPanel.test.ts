@@ -199,11 +199,11 @@ describe('archive card (:3063-3075)', () => {
   it('renders and binds the archive toggle + directory', async () => {
     const { wrapper, store } = await mountPanel();
     const toggle = wrapper.find('#settings-archive-enabled');
-    expect((toggle.element as HTMLInputElement).checked).toBe(true);
+    expect(store.fields.archiveEnabled).toBe(true);
     expect((wrapper.find('#settings-archive-dir').element as HTMLInputElement).value).toBe(
       '/mnt/nas/ohlcv/l2books'
     );
-    await toggle.setValue(false);
+    await toggle.trigger('click');
     expect(store.fields.archiveEnabled).toBe(false);
     expect(store.isDirty.value).toBe(true);
   });

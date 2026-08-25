@@ -49,15 +49,17 @@ export type ForcedMode = 'panic' | 'graceful_stop' | 'tp_only';
 export interface ForcedModeInfo {
   titleKey: string;
   textKey: string;
-  cssClass: string;
+  /** ui-migration: the legacy modal-button cssClass strings became ui/ Button
+      variants (solid danger/warning/success tones → the tinted variants). */
+  variant: 'danger' | 'warning' | 'success';
   value: ForcedMode;
 }
 
 /** The legacy forced-mode modal table (:1031-1035). */
 export const FORCED_MODES: Record<ForcedMode, ForcedModeInfo> = {
-  panic: { titleKey: 'v7run.panicTitle', textKey: 'v7run.panic', cssClass: 'bg-danger text-[#f2f5fb] border-danger hover:opacity-85', value: 'panic' },
-  graceful_stop: { titleKey: 'v7run.gracefulStopTitle', textKey: 'v7run.gracefulStop', cssClass: 'bg-warning text-accent-contrast border-warning hover:opacity-85', value: 'graceful_stop' },
-  tp_only: { titleKey: 'v7run.takeProfitOnlyTitle', textKey: 'v7run.takeProfitOnly', cssClass: 'bg-success text-accent-contrast border-success hover:opacity-85', value: 'tp_only' },
+  panic: { titleKey: 'v7run.panicTitle', textKey: 'v7run.panic', variant: 'danger', value: 'panic' },
+  graceful_stop: { titleKey: 'v7run.gracefulStopTitle', textKey: 'v7run.gracefulStop', variant: 'warning', value: 'graceful_stop' },
+  tp_only: { titleKey: 'v7run.takeProfitOnlyTitle', textKey: 'v7run.takeProfitOnly', variant: 'success', value: 'tp_only' },
 };
 
 export interface UseRunInstances {

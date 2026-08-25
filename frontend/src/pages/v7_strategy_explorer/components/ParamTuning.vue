@@ -5,8 +5,13 @@
  * texts write through setParamValue and recalculate on change; the live
  * value span (sv-<prefix><side>-<name>) is reactive here.
  */
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { Slider } from '@/shared/components/ui/slider';
 import { fmt } from '../lib/format';
 import { paramBounds, paramLabel, paramNearBound, paramTooltip } from '../lib/params';
 import { deepGet } from '../lib/format';
@@ -47,7 +52,7 @@ function fieldViews(): FieldView[] {
       if (val !== undefined && val !== null && String(val) !== '' && !optionValues.includes(String(val))) list.unshift(String(val));
       options = list.map((opt) => (opt && typeof opt === 'object' ? String((opt as { value: unknown }).value) : String(opt)));
     }
-    const bounds = kind === 'number' ? paramBounds(name, Number(value || 0), meta) : undefined;
+    const bounds = kind === 'number' ? boundsFor(name, value, meta) : undefined;
     const numVal = Number(value || 0);
     return {
       name,
@@ -67,17 +72,32 @@ function setSegment(key: string): void {
   if (props.sideKey === 'long') store.state.longSegment = key;
   else store.state.shortSegment = key;
 }
-/** updateSliderFill (:572-579) — the --range-fill CSS var as a percentage. */
-function rangeFill(field: FieldView): string {
-  const b = field.bounds!;
-  const value = Number(field.value || 0);
-  const pct = b.max > b.min ? Math.max(0, Math.min(100, ((value - b.min) / (b.max - b.min)) * 100)) : 0;
-  return pct.toFixed(2) + '%';
+
+/* Slider bounds freeze — legacy semantics. The imperative explorer rendered
+   each field once (renderParamField :1814) with paramBounds(name, value-at-
+   render-time) and never re-derived min/max during drags. fieldViews()
+   re-runs on every value change, and several paramBounds branches scale max
+   to the CURRENT value (max: v*2) — every click on the right end doubled
+   the cap, so the value could grow without bound (entry_grid_spacing_pct,
+   entry_grid_spacing_we_weight and every other value-relative field).
+   Freeze each field's bounds at first sight and re-derive only when a
+   fresh snapshot loads (the legacy re-rendered the tuning panel there). */
+let boundsCache: Record<string, { min: number; max: number; step: number }> = {};
+watch(
+  () => store.state.snapshot,
+  () => {
+    boundsCache = {};
+  },
+);
+function boundsFor(name: string, value: unknown, meta: ParamFieldMeta): { min: number; max: number; step: number } {
+  const key = segmentKey.value + ':' + name;
+  if (!boundsCache[key]) boundsCache[key] = paramBounds(name, Number(value || 0), meta);
+  return boundsCache[key]!;
 }
-function onSliderInput(field: FieldView, event: Event): void {
-  const el = event.target as HTMLInputElement;
-  const val = Number(el.value || 0);
-  store.setParam(props.sideKey, field.name!, val);
+/** Slider drag writes — the former range-input @input (:572-579 fill var is
+ *  gone with the native slider; ui/Slider renders its own accent fill). */
+function onSliderInput(field: FieldView, value: number | undefined): void {
+  store.setParam(props.sideKey, field.name!, Number(value || 0));
 }
 function sliderDisplay(field: FieldView): string {
   const b = field.bounds!;
@@ -104,7 +124,9 @@ function segmentTabClass(isActive: boolean): string {
     :id="prefix + sideKey + '-tuning'"
     :class="prefix ? '' : 'p-3 border border-secondary/13 border-t-0 rounded-b-[10px] bg-page/74'"
   >
-    <div class="flex flex-col gap-1"><label class="text-secondary text-xs uppercase tracking-[0.04em]">{{ t('v7explore.segment') }}</label></div>
+    <div class="flex flex-col gap-1"><Label>{{ t('v7explore.segment') }}</Label></div>
+    <!-- ui-migration: out of scope — the segment tabs are a tab bar (the live
+         .pbgui-tab/.pbgui-tab-bar rules of styles/components.css), not form controls -->
     <div class="pbgui-tab-bar grid grid-cols-[repeat(auto-fit,minmax(92px,1fr))] gap-0 mt-1.25 mb-3.5 overflow-hidden rounded-lg border border-secondary/15 bg-page/60">
       <button
         v-for="seg in store.segments.value"
@@ -128,15 +150,20 @@ function segmentTabClass(isActive: boolean): string {
         </span>
       </div>
       <label v-if="field.kind === 'bool'" class="mt-1.5 flex min-h-[30px] items-center gap-2 rounded-[7px] border border-secondary/12 bg-secondary/[0.045] px-2 py-1.5 text-secondary text-sm">
-        <input class="param-bool w-auto accent-accent" type="checkbox" :checked="!!field.value" :aria-label="field.label" @change="store.setParam(sideKey, field.name, ($event.target as HTMLInputElement).checked); store.recalculate()">
+        <Checkbox class="param-bool" :model-value="!!field.value" :aria-label="field.label" @update:model-value="store.setParam(sideKey, field.name, $event === true); store.recalculate()" />
         {{ t('common.enabled') }}
       </label>
-      <select v-else-if="field.kind === 'select'" class="mt-1.5 w-full min-h-[31px] rounded-[7px] border border-secondary/15 bg-page/68 px-2 py-1.75 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" :aria-label="field.label" :data-tip="field.tip" :value="String(field.value ?? '')" @change="store.setParam(sideKey, field.name, ($event.target as HTMLSelectElement).value); store.recalculate()">
-        <option v-for="opt in field.options" :key="opt" :value="opt" :selected="String(opt) === String(field.value)">{{ opt }}</option>
-      </select>
-      <input v-else-if="field.kind === 'text'" class="mt-1.5 w-full min-h-[31px] rounded-[7px] border border-secondary/15 bg-page/68 px-2 py-1.75 text-primary focus:border-accent focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.13)] focus:outline-none" type="text" :aria-label="field.label" :data-tip="field.tip" :value="field.value === undefined || field.value === null ? '' : String(field.value)" @change="store.setParam(sideKey, field.name, ($event.target as HTMLInputElement).value); store.recalculate()">
+      <SelectRoot v-else-if="field.kind === 'select'" :model-value="String(field.value ?? '')" @update:model-value="store.setParam(sideKey, field.name, String($event)); store.recalculate()">
+        <SelectTrigger class="mt-1.5" :aria-label="field.label" :data-tip="field.tip">
+          <span :class="String(field.value ?? '') === '' ? 'text-placeholder' : ''">{{ String(field.value ?? '') }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
+      <Input v-else-if="field.kind === 'text'" class="mt-1.5" type="text" :aria-label="field.label" :data-tip="field.tip" :model-value="field.value === undefined || field.value === null ? '' : String(field.value)" @change="store.setParam(sideKey, field.name, ($event.target as HTMLInputElement).value); store.recalculate()" />
       <template v-else>
-        <input class="param-slider h-[18px] w-full cursor-pointer appearance-none bg-transparent accent-accent" type="range" :aria-label="field.label" :data-tip="field.tip" :min="field.bounds!.min" :max="field.bounds!.max" :step="field.bounds!.step" :value="field.value === undefined ? 0 : Number(field.value)" :style="{ '--range-fill': rangeFill(field) }" @input="onSliderInput(field, $event)" @change="onSliderChange">
+        <Slider class="mt-1.5" :label="field.label" :data-tip="field.tip" :min="field.bounds!.min" :max="field.bounds!.max" :step="field.bounds!.step" :model-value="field.value === undefined ? 0 : Number(field.value)" @update:model-value="onSliderInput(field, $event)" @value-commit="onSliderChange" />
       </template>
     </div>
     <div v-if="segmentKey === 'entry_grid'" class="mt-2.25 mb-2.5 border-l-2 border-l-accent rounded-r-[7px] bg-accent-deep/8 py-2 px-2.5 text-secondary text-xs">

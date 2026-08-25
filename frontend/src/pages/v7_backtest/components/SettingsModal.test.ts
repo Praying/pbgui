@@ -49,9 +49,9 @@ describe('render (:1482-1540)', () => {
   it('seeds every field from the settings prop', () => {
     const wrapper = mountModal({ settings: settings({ cpu: 3, autostart: true, use_pbgui_market_data: true, hlcvs_cleanup_enabled: true, hlcvs_cleanup_days: 21, hlcvs_cleanup_interval_h: 6 }) });
     expect((wrapper.find('#set-cpu-val').element as HTMLInputElement).value).toBe('3');
-    expect((wrapper.find('#set-autostart').element as HTMLInputElement).checked).toBe(true);
-    expect((wrapper.find('#set-pbgui-market-data').element as HTMLInputElement).checked).toBe(true);
-    expect((wrapper.find('#set-cleanup-enabled').element as HTMLInputElement).checked).toBe(true);
+    expect(wrapper.find('#set-autostart').attributes('aria-checked')).toBe('true');
+    expect(wrapper.find('#set-pbgui-market-data').attributes('aria-checked')).toBe('true');
+    expect(wrapper.find('#set-cleanup-enabled').attributes('aria-checked')).toBe('true');
     expect((wrapper.find('#set-cleanup-days').element as HTMLInputElement).value).toBe('21');
     expect((wrapper.find('#set-cleanup-interval').element as HTMLInputElement).value).toBe('6');
     expect(wrapper.text()).toContain('max 8');
@@ -107,7 +107,7 @@ describe('live sync (:1542-1558 syncOpenSettingsModal)', () => {
     const wrapper = mountModal({ settings: settings({ cpu: 2, cpu_max: 8 }) });
     await wrapper.setProps({ settings: settings({ cpu: 5, autostart: true }) });
     expect((wrapper.find('#set-cpu-val').element as HTMLInputElement).value).toBe('5');
-    expect((wrapper.find('#set-autostart').element as HTMLInputElement).checked).toBe(true);
+    expect(wrapper.find('#set-autostart').attributes('aria-checked')).toBe('true');
     wrapper.unmount();
   });
 
@@ -151,7 +151,8 @@ describe('live sync (:1542-1558 syncOpenSettingsModal)', () => {
 
   it('toggling cleanup re-enables its options (:1579-1585)', async () => {
     const wrapper = mountModal();
-    await wrapper.find('#set-cleanup-enabled').setValue(true);
+    // ui/ Checkbox: role="checkbox" button — click toggles
+    await wrapper.find('#set-cleanup-enabled').trigger('click');
     const style = wrapper.find('#cleanup-opts').attributes('style') ?? '';
     expect(style).not.toContain('pointer-events: none');
     wrapper.unmount();
@@ -162,8 +163,9 @@ describe('save + clean now (:1587-1642)', () => {
   it('save emits the six-field patch (:1602-1612)', async () => {
     const wrapper = mountModal();
     await wrapper.find('[data-test="cpu-plus"]').trigger('click');
-    await wrapper.find('#set-autostart').setValue(true);
-    await wrapper.find('#set-cleanup-enabled').setValue(true);
+    await wrapper.find('#set-autostart').trigger('click');
+    // ui/ Checkbox: role="checkbox" button — click toggles
+    await wrapper.find('#set-cleanup-enabled').trigger('click');
     await wrapper.find('#set-cleanup-days').setValue('30');
     const save = wrapper.findAll('.modal-btn').find((b) => b.text() === 'Save')!;
     await save.trigger('click');

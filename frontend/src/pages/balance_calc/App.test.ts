@@ -2,10 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import { getBoot } from '@/shared/boot';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
 
 /* Page-shell integration: mount, instance/exchange selects, calculate flow
-   and result rendering (the contract the legacy HTML-string pytest asserted). */
+   and result rendering (the contract the legacy HTML-string pytest asserted).
+
+   The selects are the shared ui/ listbox (reka-ui) — interaction goes through
+   src/shared/testing/select.ts (keyboard open + pointerup selection). */
 
 vi.mock('@/shared/boot', () => ({
   getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
@@ -61,8 +65,8 @@ describe('Balance Calculator page shell', () => {
   it('renders the toolbar with exchanges and the intro message', async () => {
     const wrapper = await mountApp();
 
-    const options = wrapper.findAll('#sel-exchange option');
-    expect(options.map((option) => option.text())).toEqual([
+    await openSelect(wrapper, '#sel-exchange');
+    expect(selectOptionTexts()).toEqual([
       'binance', 'bybit', 'bitget', 'gateio', 'hyperliquid', 'kucoin', 'okx',
     ]);
     expect(wrapper.find('#results-panel .msg-info').text()).toContain('Calculate');
@@ -72,18 +76,14 @@ describe('Balance Calculator page shell', () => {
   it('loads the instance list and loads its config on selection', async () => {
     const wrapper = await mountApp();
 
-    const instanceOptions = wrapper.findAll('#sel-instance option');
-    expect(instanceOptions.at(-1)!.text()).toBe('[PB7] main');
-
-    await instanceOptions.at(-1)!.setValue(JSON.stringify({ name: 'main', version: 'v7' }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await pickSelectOption(wrapper, '#sel-instance', '[PB7] main');
     expect((wrapper.find('#config-editor').element as HTMLTextAreaElement).value).toBe(JSON.stringify({ bot: true }, null, 4));
   });
 
   it('calculates and renders all result cards', async () => {
     const wrapper = await mountApp();
     await wrapper.find('#config-editor').setValue('{"x":1}');
-    await wrapper.findAll('#sel-exchange option')[1]!.setValue('bybit');
+    await pickSelectOption(wrapper, '#sel-exchange', 'bybit');
     await wrapper.find('#btn-calc').trigger('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -118,7 +118,7 @@ describe('Balance Calculator page shell', () => {
     });
     const wrapper = await mountApp();
     await wrapper.find('#config-editor').setValue('{}');
-    await wrapper.findAll('#sel-exchange option')[0]!.setValue('binance');
+    await pickSelectOption(wrapper, '#sel-exchange', 'binance');
     await wrapper.find('#btn-calc').trigger('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
 

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import PbDataSettings from './PbDataSettings.vue';
 import type { PbDataSettingsData } from '../types';
 
@@ -86,6 +87,9 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // The reka select portals its listbox into document.body — clear it so a
+  // stale list from a previous test cannot intercept option lookups.
+  document.body.innerHTML = '';
 });
 
 describe('PbDataSettings loading (legacy loadSettings/applySettings)', () => {
@@ -151,8 +155,8 @@ describe('PbDataSettings rendering (legacy renderPBDataSettings)', () => {
   it('renders the log level select with the six legacy options and the payload value', async () => {
     const wrapper = await mountedSettings();
 
-    const select = wrapper.find('#pbdata-log-level');
-    expect(select.findAll('option').map((o) => o.text())).toEqual([
+    await openSelect(wrapper, '#pbdata-log-level');
+    expect(selectOptionTexts()).toEqual([
       'DEBUG',
       'INFO',
       'WARNING',
@@ -160,13 +164,13 @@ describe('PbDataSettings rendering (legacy renderPBDataSettings)', () => {
       'CRITICAL',
       'NONE',
     ]);
-    expect((select.element as HTMLSelectElement).value).toBe('WARNING');
+    expect(wrapper.find('#pbdata-log-level').text()).toContain('WARNING');
   });
 
   it('defaults the log level to INFO when the payload omits it', async () => {
     const wrapper = await mountedSettings({ ...SETTINGS, log_level: '' });
 
-    expect((wrapper.find('#pbdata-log-level').element as HTMLSelectElement).value).toBe('INFO');
+    expect(wrapper.find('#pbdata-log-level').text()).toContain('INFO');
   });
 
   it('renders the ten timer fields with legacy ids, labels and min/max/step', async () => {
@@ -245,15 +249,15 @@ describe('PbDataSettings rendering (legacy renderPBDataSettings)', () => {
   it('renders the save button with the legacy disk icon', async () => {
     const wrapper = await mountedSettings();
 
-    expect(wrapper.find('button.form-btn.save').text()).toBe('Save');
-    expect(wrapper.find('button.form-btn.save svg').exists()).toBe(true);
+    expect(wrapper.find('button.save').text()).toBe('Save');
+    expect(wrapper.find('button.save svg').exists()).toBe(true);
   });
 });
 
 describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
   async function saveAndGetBody(wrapper: ReturnType<typeof mountSettings>): Promise<Record<string, unknown>> {
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
     const [url, init] = fetchMock.mock.calls.at(-1)!;
     expect(url).toBe('http://pbgui.test:8000/api/services/settings/pbdata');
@@ -338,7 +342,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     await wrapper.find('#pbdata-combined').setValue('45');
     await wrapper.find('#pbdata-rest-pause').setValue('1.25');
     await wrapper.find('#pbdata-1m-coin-pause').setValue('3');
-    await wrapper.find('#pbdata-log-level').setValue('NONE');
+    await pickSelectOption(wrapper, '#pbdata-log-level', 'NONE');
 
     const body = await saveAndGetBody(wrapper);
     expect(body).toMatchObject({
@@ -354,7 +358,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: true, apply: { message: 'restart pbdata to apply' } }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     const msg = wrapper.find('#pbdata-save-msg');
@@ -367,7 +371,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#pbdata-save-msg').text()).toBe('Saved');
@@ -377,7 +381,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: false, detail: 'bad value' }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     const msg = wrapper.find('#pbdata-save-msg');
@@ -390,7 +394,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ ok: false }));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#pbdata-save-msg').text()).toBe('Error');
@@ -400,7 +404,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValue(jsonResponse({ detail: 'boom' }, 500));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#pbdata-save-msg').text()).toBe('boom');
@@ -411,7 +415,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     const wrapper = await mountedSettings();
     fetchMock.mockRejectedValue(new TypeError('network down'));
 
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     expect(wrapper.find('#pbdata-save-msg').text()).toBe('Error: network down');
@@ -424,7 +428,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
       const wrapper = await mountedSettings();
       fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
 
-      await wrapper.find('button.form-btn.save').trigger('click');
+      await wrapper.find('button.save').trigger('click');
       await flushPromises();
       await vi.advanceTimersByTimeAsync(2900);
       expect(wrapper.find('#pbdata-save-msg').classes()).toContain('visible');
@@ -440,11 +444,11 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
   it('replaces a previous flash with the latest result', async () => {
     const wrapper = await mountedSettings();
     fetchMock.mockResolvedValueOnce(jsonResponse({ ok: true }));
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     fetchMock.mockResolvedValueOnce(jsonResponse({ ok: false, detail: 'nope' }));
-    await wrapper.find('button.form-btn.save').trigger('click');
+    await wrapper.find('button.save').trigger('click');
     await flushPromises();
 
     const msg = wrapper.find('#pbdata-save-msg');
