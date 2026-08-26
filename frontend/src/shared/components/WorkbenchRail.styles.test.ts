@@ -46,6 +46,41 @@ function expect_declaration(rule: Rule, property: string, value: string): void {
 }
 
 describe('WorkbenchRail responsive CSS contracts', () => {
+  it('defines the engineering surface elevation and motion fallback', () => {
+    expect(stylesheet).toContain('var(--shadow-panel)');
+    expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+    expect(stylesheet).toContain('.workbench-rail--temp-expanded');
+  });
+
+  it('keeps compact rail controls available without changing the shell grid', () => {
+    const collapsed_controls = find_exact_rule(
+      stylesheet_root,
+      '.workbench-rail--collapsed .workbench-rail__item, .workbench-rail--collapsed .workbench-rail__ai-btn',
+    );
+    const temporary_rail = find_exact_rule(stylesheet_root, '.workbench-rail--temp-expanded');
+
+    expect_declaration(collapsed_controls, 'min-width', 'var(--rail-collapsed-width)');
+    expect_declaration(collapsed_controls, 'justify-content', 'center');
+    expect_declaration(temporary_rail, 'position', 'fixed');
+    expect_declaration(temporary_rail, 'width', 'var(--rail-expanded-width)');
+  });
+
+  it('defines shared panel and icon-button interaction states', () => {
+    const icon_button_focus = find_exact_rule(
+      stylesheet_root,
+      '.pbgui-icon-button:focus-visible, .workbench-rail__item:focus-visible, .workbench-rail__ai-btn:focus-visible',
+    );
+    const icon_button_pressed = find_exact_rule(
+      stylesheet_root,
+      '.workbench-rail__item:active, .workbench-rail__ai-btn:active, .pbgui-icon-button:active',
+    );
+
+    expect_declaration(icon_button_focus, 'outline', 'none');
+    expect_declaration(icon_button_focus, 'box-shadow', 'var(--focus-ring)');
+    expect_declaration(icon_button_pressed, 'transform', 'scale(0.98)');
+    expect(stylesheet).toContain('box-shadow: var(--shadow-panel)');
+  });
+
   it('keeps the collapsed mobile toggle in the visible brand row', () => {
     const mobile_rules = find_at_rule(stylesheet_root, 'media', '(max-width: 720px)');
     const mobile_rail = find_exact_rule(
