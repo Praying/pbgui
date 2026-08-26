@@ -412,7 +412,7 @@ onUnmounted(() => {
 
 <template>
   <AppShell
-    class="data-page-shell data-page-shell--dashboard-main"
+    class="core-workbench-shell data-page-shell data-page-shell--dashboard-main"
     page-key="dashboards"
     :page-title="t('dash.dashboards')"
   >
@@ -427,68 +427,66 @@ onUnmounted(() => {
   <MigrationWatermark />
   <div id="page-body">
     <!-- ── Sidebar ── -->
-    <div id="sidebar" ref="sidebarEl">
+    <aside id="sidebar" ref="sidebarEl" aria-labelledby="dashboard-library-title">
       <div id="sidebar-sticky">
         <div id="edit-mode-banner" :class="{ visible: editMode }" role="status">
           <span class="em-dot" aria-hidden="true"></span><span>{{ t('dash.editMode') }}</span>
         </div>
         <div id="sidebar-header">
           <div class="sb-heading">
-            <span class="sb-title">{{ t('dash.dashboards') }}</span>
+            <span class="sb-eyebrow">{{ t('dash.dashboard') }}</span>
+            <h2 id="dashboard-library-title" class="sb-title">{{ t('dash.dashboards') }}</h2>
             <span class="sb-subtitle">{{ t('dash.selectDashboard') }}</span>
           </div>
           <span class="sb-count" id="sb-count" :aria-label="countText">{{ countText }}</span>
         </div>
         <div id="sidebar-toolbar">
           <template v-if="editMode">
-            <Button
-              variant="success"
-              size="icon"
-              id="sb-save"
-              :title="t('dash.saveDashboard')"
-              :aria-label="t('dash.saveDashboard')"
-              @click="postToFrame({ type: 'pbgui_trigger_save' })"
-            ><PbIcon :icon="PhFloppyDisk" /></Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              id="sb-cancel"
-              :title="t('dash.cancelEdit')"
-              :aria-label="t('dash.cancelEdit')"
-              @click="postToFrame({ type: 'pbgui_trigger_cancel' })"
-            ><PbIcon :icon="PhX" /></Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              class="hover:border-danger/35 hover:bg-danger/13 hover:text-danger-soft"
-              id="sb-delete"
-              :title="t('dash.deleteDashboard')"
-              :aria-label="t('dash.deleteDashboard')"
-              @click="openDeleteDialog(currentDash ? [currentDash] : [])"
-            ><PbIcon :icon="PhTrash" /></Button>
+            <div class="toolbar-group toolbar-group--primary">
+              <Button
+                variant="success"
+                size="icon"
+                id="sb-save"
+                :title="t('dash.saveDashboard')"
+                :aria-label="t('dash.saveDashboard')"
+                @click="postToFrame({ type: 'pbgui_trigger_save' })"
+              ><PbIcon :icon="PhFloppyDisk" /></Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                id="sb-cancel"
+                :title="t('dash.cancelEdit')"
+                :aria-label="t('dash.cancelEdit')"
+                @click="postToFrame({ type: 'pbgui_trigger_cancel' })"
+              ><PbIcon :icon="PhX" /></Button>
+            </div>
+            <div class="toolbar-group toolbar-group--danger">
+              <Button
+                variant="ghost"
+                size="icon"
+                class="hover:border-danger/35 hover:bg-danger/13 hover:text-danger-soft"
+                id="sb-delete"
+                :title="t('dash.deleteDashboard')"
+                :aria-label="t('dash.deleteDashboard')"
+                @click="openDeleteDialog(currentDash ? [currentDash] : [])"
+              ><PbIcon :icon="PhTrash" /></Button>
+            </div>
           </template>
           <template v-else>
-            <Button variant="ghost" size="icon" id="sb-refresh" :title="t('dash.refreshList')" :aria-label="t('dash.refreshList')" @click="refreshList()"><PbIcon :icon="PhArrowClockwise" /></Button>
-            <Button variant="primary" size="sm" class="mr-auto" id="sb-new" :title="t('dash.newDashboard')" :aria-label="t('dash.newDashboard')" @click="newDialogVisible = true"><PbIcon :icon="PhPlus" /><span class="text-xs whitespace-nowrap">{{ t('dash.newDashboard') }}</span></Button>
-            <Button
-              v-if="currentDash"
-              variant="ghost"
-              size="icon"
-              id="sb-edit"
-              :title="t('dash.editCurrentDashboard')"
-              :aria-label="t('dash.editCurrentDashboard')"
-              @click="loadEditor(currentDash)"
-            ><PbIcon :icon="PhPencilSimple" /></Button>
-            <Button
-              v-if="getDeleteTargets().length"
-              variant="ghost"
-              size="icon"
-              class="hover:border-danger/35 hover:bg-danger/13 hover:text-danger-soft"
-              id="sb-del"
-              :title="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
-              :aria-label="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
-              @click="openDeleteDialog(getDeleteTargets())"
-            ><PbIcon :icon="PhTrash" /></Button>
+            <div class="toolbar-group toolbar-group--primary">
+              <Button variant="primary" size="sm" id="sb-new" :title="t('dash.newDashboard')" :aria-label="t('dash.newDashboard')" @click="newDialogVisible = true"><PbIcon :icon="PhPlus" /><span class="text-xs whitespace-nowrap">{{ t('dash.newDashboard') }}</span></Button>
+              <Button variant="ghost" size="icon" id="sb-refresh" :title="t('dash.refreshList')" :aria-label="t('dash.refreshList')" @click="refreshList()"><PbIcon :icon="PhArrowClockwise" /></Button>
+            </div>
+            <div v-if="currentDash" class="toolbar-group toolbar-group--contextual">
+              <Button
+                variant="ghost"
+                size="icon"
+                id="sb-edit"
+                :title="t('dash.editCurrentDashboard')"
+                :aria-label="t('dash.editCurrentDashboard')"
+                @click="loadEditor(currentDash)"
+              ><PbIcon :icon="PhPencilSimple" /></Button>
+            </div>
             <Button variant="ghost" size="icon" id="sb-templates" :title="t('dash.templates')" :aria-label="t('dash.templates')" @click="openTemplates()"><PbIcon :icon="PhArchive" /></Button>
             <Button
               v-if="showViewSave"
@@ -499,6 +497,17 @@ onUnmounted(() => {
               :aria-label="t('dash.saveViewLayout')"
               @click="postToFrame({ type: 'pbgui_trigger_view_save' })"
             ><PbIcon :icon="PhFloppyDisk" /></Button>
+            <div v-if="getDeleteTargets().length" class="toolbar-group toolbar-group--danger">
+              <Button
+                variant="ghost"
+                size="icon"
+                class="hover:border-danger/35 hover:bg-danger/13 hover:text-danger-soft"
+                id="sb-del"
+                :title="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
+                :aria-label="getDeleteTargets().length > 1 ? t('dash.deleteSelectedDashboards') : t('dash.deleteSelectedDashboard')"
+                @click="openDeleteDialog(getDeleteTargets())"
+              ><PbIcon :icon="PhTrash" /></Button>
+            </div>
           </template>
         </div>
         <div id="sidebar-search-wrap" :class="{ visible: showSearch }">
@@ -525,16 +534,31 @@ onUnmounted(() => {
         @edit="loadEditor(currentDash)"
       />
       <div id="sidebar-resize" :class="{ active: resizeActive }" @mousedown="onSidebarResizeDown"></div>
-    </div>
+    </aside>
 
     <!-- ── Main content ── -->
-    <div id="main-content">
-      <div id="content-loading" :style="{ display: frameLoading ? 'flex' : 'none' }">
+    <section id="main-content" aria-labelledby="dashboard-workspace-title">
+      <header class="canvas-header">
+        <div class="canvas-heading">
+          <span class="canvas-eyebrow">{{ t('shared.workspace') }}</span>
+          <h2 id="dashboard-workspace-title" class="canvas-title">
+            {{ currentDash || t('dash.selectDashboard') }}
+          </h2>
+        </div>
+        <span class="canvas-mode" :class="{ 'canvas-mode--editing': editMode, 'canvas-mode--ready': frameVisible }">
+          <span class="canvas-mode__dot" aria-hidden="true"></span>
+          {{ editMode ? t('dash.editMode') : frameVisible ? t('dash.dashboard') : t('common.ok') }}
+        </span>
+      </header>
+      <div id="content-loading" :class="{ 'content-loading--empty': !frameSrc }" :style="{ display: frameLoading ? 'flex' : 'none' }" role="status" aria-live="polite">
         <div class="content-loading__visual" aria-hidden="true">
           <span></span><span></span><span></span>
         </div>
         <strong>{{ frameSrc ? t('common.loading') : t('dash.selectDashboard') }}</strong>
         <span class="content-loading__hint">{{ frameSrc ? currentDash : t('dash.dashboards') }}</span>
+        <Button v-if="!frameSrc" variant="primary" size="sm" class="content-empty-action" @click="newDialogVisible = true">
+          <PbIcon :icon="PhPlus" />{{ t('dash.newDashboard') }}
+        </Button>
       </div>
       <iframe
         id="content-frame"
@@ -545,7 +569,7 @@ onUnmounted(() => {
         allowfullscreen
         @load="onFrameLoad"
       ></iframe>
-    </div>
+    </section>
   </div>
 
   <NewDashboardDialog
@@ -580,8 +604,8 @@ body {
   display: flex;
   gap: 18px;
   padding: 18px 20px 22px;
-  height: calc(100vh - 112px);
-  height: calc(100dvh - 112px);
+  height: auto;
+  flex: 1;
   overflow: hidden;
   user-select: none;
   background:
@@ -606,6 +630,7 @@ body {
   min-width: 220px;
   max-width: 420px;
   flex-shrink: 0;
+  min-height: 0;
   background: rgb(var(--bg-panel-rgb) / 0.92);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
@@ -647,6 +672,15 @@ body {
   gap: var(--sp-md);
   padding: 18px 16px 12px;
 }
+.sb-eyebrow,
+.canvas-eyebrow {
+  color: var(--accent-soft);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
 .sb-heading {
   display: grid;
   min-width: 0;
@@ -686,6 +720,23 @@ body {
   gap: 5px;
   flex-wrap: wrap;
   padding: 0 12px 12px;
+}
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 6px;
+  border-left: 1px solid var(--border-subtle);
+}
+.toolbar-group:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.toolbar-group--primary {
+  margin-right: auto;
+}
+.toolbar-group--danger {
+  border-left-color: rgb(var(--danger-rgb) / 0.25);
 }
 
 /* Edit-mode banner: a full-width status strip fused with the panel header. */
@@ -874,6 +925,7 @@ body {
 #main-content {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -885,11 +937,74 @@ body {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-panel);
 }
+.canvas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-lg);
+  min-height: 68px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: linear-gradient(180deg, rgb(var(--accent-rgb) / 0.06), transparent);
+}
+.canvas-heading {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+.canvas-title {
+  overflow: hidden;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-lg);
+  font-weight: 650;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.canvas-mode {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 7px;
+  padding: 5px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+.canvas-mode__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.canvas-mode--ready {
+  border-color: rgb(var(--success-rgb) / 0.24);
+  color: var(--success-soft);
+}
+.canvas-mode--ready .canvas-mode__dot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgb(var(--success-rgb) / 0.12);
+}
+.canvas-mode--editing {
+  border-color: rgb(var(--accent-rgb) / 0.28);
+  color: var(--accent-soft);
+}
+.canvas-mode--editing .canvas-mode__dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.12);
+}
 #content-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  height: auto;
   color: var(--text-primary);
   font-size: var(--fs-base);
   flex-direction: column;
@@ -898,6 +1013,13 @@ body {
     radial-gradient(circle at 50% 42%, rgb(var(--accent-rgb) / 0.09), transparent 15rem),
     linear-gradient(135deg, transparent 0 49.5%, rgb(var(--text-secondary-rgb) / 0.025) 49.5% 50.5%, transparent 50.5% 100%);
   background-size: auto, 28px 28px;
+}
+.content-loading--empty {
+  gap: 8px;
+  padding: 24px;
+}
+.content-empty-action {
+  margin-top: 10px;
 }
 .content-loading__visual {
   display: grid;
@@ -939,8 +1061,10 @@ body {
 }
 
 #content-frame {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
   border: none;
   display: none;
   background: var(--bg-page);
@@ -1085,6 +1209,22 @@ body {
   #sidebar {
     width: 220px;
     min-width: 190px;
+  }
+
+  .canvas-header {
+    padding-inline: 14px;
+  }
+
+  .canvas-mode {
+    padding-inline: 7px;
+  }
+
+  .canvas-mode:not(.canvas-mode--editing) {
+    font-size: 0;
+  }
+
+  .canvas-mode:not(.canvas-mode--editing) .canvas-mode__dot {
+    margin: 1px;
   }
 
   .sb-subtitle {
