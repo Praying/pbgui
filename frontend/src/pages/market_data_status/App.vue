@@ -212,13 +212,6 @@ async function onStopRun(): Promise<void> {
   --mds-accent-success: var(--success);
   --mds-accent-warning: var(--warning);
   --mds-accent-danger: var(--danger);
-  --fs-xs: 11px;
-  --fs-sm: 13px;
-  --fs-base: 14px;
-  --fs-md: 15px;
-  --fs-lg: 18px;
-  --fs-xl: 22px;
-
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;

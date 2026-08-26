@@ -1,5 +1,13 @@
 # Unreleased
 
+## Frontend — Unified Typography Scale
+
+- Unified the Vue and legacy frontend pages around one shared type scale: 12px captions, 14px secondary/control text, 15px body text, 16px emphasized labels, 19px section headings, 23px page-level headings, 26px titles, and 34px display headings. Existing font families, weights, line heights, spacing, colors, control dimensions, behavior, and API contracts remain unchanged.
+
+## PBv7/PBv8 Backtest — Typography Scale
+
+- Improved the backtest configuration page's type hierarchy through the shared frontend font-size scale: labels and helper text now use 12px, controls and actions 14px, body/table text 15px, and section headings use the shared 19px section size. The change is limited to font sizes and does not alter layout, spacing, colors, control dimensions, or behavior.
+
 ## PBv7/PBv8 Backtest — Color Palette
 
 - Recolored the backtest workspace with a page-local deep navy/slate palette: the page, rail, toolbar, panels, inputs, borders, and text now have clearer surface separation and contrast without changing layout, typography, spacing, or behavior. Ice blue consistently marks selection and primary actions, while green is reserved for success and execution actions such as Save & Queue.

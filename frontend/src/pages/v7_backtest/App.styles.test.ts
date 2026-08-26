@@ -16,6 +16,7 @@ const pageRoot = import.meta.dirname;
 const appVue = readFileSync(resolve(pageRoot, 'App.vue'), 'utf8');
 const css = appVue.match(/<style>([\s\S]*)<\/style>/)?.[1] ?? '';
 const root = postcss.parse(css);
+const sharedCss = readFileSync(resolve(pageRoot, '../../styles/tailwind.css'), 'utf8');
 
 function readComponent(name: string): string {
   return readFileSync(resolve(pageRoot, 'components', name), 'utf8');
@@ -61,6 +62,30 @@ function expectDeclaration(rule: Rule, property: string, value: string): void {
 
 /** Regression contracts for the shared editor form contract + grids. */
 describe('PBv7 config editor CSS contracts', () => {
+  it('keeps the shared frontend typography scale canonical', () => {
+    expect(sharedCss).toContain('--text-xs: 12px;');
+    expect(sharedCss).toContain('--text-sm: 14px;');
+    expect(sharedCss).toContain('--text-base: 15px;');
+    expect(sharedCss).toContain('--text-md: 16px;');
+    expect(sharedCss).toContain('--text-lg: 19px;');
+    expect(sharedCss).toContain('--text-xl: 23px;');
+    expect(sharedCss).toContain('--text-display: 34px;');
+    expect(sharedCss).toContain('--text-title: 26px;');
+    expect(sharedCss).toContain('--text-section: 19px;');
+    expect(sharedCss).toContain('--text-body: 15px;');
+    expect(sharedCss).toContain('--text-small: 14px;');
+    expect(sharedCss).toContain('--text-caption: 12px;');
+  });
+
+  it('uses the shared typography scale across the backtest page', () => {
+    expect(css).not.toContain('.core-workbench-shell--backtest {');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest #configs-editor .config-editor-intro h1'), 'font-size', 'clamp(var(--text-title), 2.6vw, var(--text-display))');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest #configs-editor .config-editor-section header h2'), 'font-size', 'var(--text-section)');
+    expectDeclaration(findRule(root, '#configs-editor .form-group > label'), 'font-size', '12px');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest .ms-clear-btn'), 'font-size', '12px');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest .ms-tag .ms-x'), 'font-size', '12px');
+  });
+
   it('keeps the compact grid, multiselect, stepper, expander and raw JSON surfaces', () => {
     expect(css).toContain('.cols-8');
     expect(css).toContain('grid-template-columns: repeat(8, minmax(0, 1fr))');

@@ -840,6 +840,15 @@ body {
   border-color: var(--success-soft);
 }
 
+/* Keep the editor's prominent headings on the shared semantic type scale. */
+.core-workbench-shell--backtest #configs-editor .config-editor-intro h1 {
+  font-size: clamp(var(--text-title), 2.6vw, var(--text-display));
+}
+
+.core-workbench-shell--backtest #configs-editor .config-editor-section header h2 {
+  font-size: var(--text-section);
+}
+
 /* ── Shell scroll release (:has() — no utility form) ─────────── */
 /* When a results panel is unpinned, main-content scrolls everything. */
 .workbench-page-content:has(#panel-results.active.unpinned) { overflow-y: auto; }
@@ -979,7 +988,8 @@ body {
   flex: 1; width: auto; min-width: 60px; height: 24px; min-height: 24px; padding: 0;
   border: 0; background: transparent; color: var(--text); font-family: var(--font); font-size: var(--fs-sm); outline: 0;
 }
-.ms-clear-btn, .ms-all-btn { margin-left: 2px; padding: 0 3px; border-radius: 3px; color: var(--text-dim); font-size: 11px; cursor: pointer; }
+.core-workbench-shell--backtest .ms-clear-btn,
+.core-workbench-shell--backtest .ms-all-btn { margin-left: 2px; padding: 0 3px; border-radius: 3px; color: var(--text-dim); font-size: 12px; cursor: pointer; }
 .ms-clear-btn:hover { background: rgb(var(--danger-rgb) / .15); color: var(--red); }
 .ms-all-btn:hover { background: rgb(var(--accent-rgb) / .15); color: var(--accent); }
 .ms-tag {
@@ -987,7 +997,7 @@ body {
   border: 1px solid var(--border); border-radius: 3px; background: var(--bg3); color: var(--text); font-size: var(--fs-xs);
 }
 .ms-tag.ms-tag-all { border-color: var(--green); background: var(--green); color: var(--accent-contrast); font-weight: 600; }
-.ms-tag .ms-x { color: var(--text-dim); font-size: 11px; line-height: 1; cursor: pointer; }
+.core-workbench-shell--backtest .ms-tag .ms-x { color: var(--text-dim); font-size: 12px; line-height: 1; cursor: pointer; }
 .ms-tag .ms-x:hover { color: var(--red); }
 .ms-dropdown {
   position: absolute; z-index: 100; top: 100%; right: 0; left: 0; display: none;
@@ -1062,7 +1072,7 @@ body {
   min-height: 2.25em;
   overflow: visible;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.2;
   letter-spacing: 0.035em;
   white-space: normal;
