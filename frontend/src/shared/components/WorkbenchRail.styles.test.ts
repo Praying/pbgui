@@ -88,6 +88,13 @@ describe('WorkbenchRail responsive CSS contracts', () => {
     expect(get_declaration(temporary_rail, 'transition')).toBeUndefined();
   });
 
+  it('does not animate the app shell grid columns', () => {
+    const app_shell = find_exact_rule(stylesheet_root, '.app-shell');
+    const transition = get_declaration(app_shell, 'transition');
+
+    expect(transition?.value ?? '').not.toContain('grid-template-columns');
+  });
+
   it('defines shared panel and icon-button interaction states', () => {
     const shared_material_rules = find_exact_rules(
       stylesheet_root,
