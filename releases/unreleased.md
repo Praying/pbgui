@@ -1,5 +1,9 @@
 # Unreleased
 
+## Frontend - Precision Engineering Visual Tokens
+
+- Established the shared deep blue-grey surface hierarchy and precision-engineering semantic colors for Vue workbench pages, including panel/elevated shadows and accent-based focus treatment. Preserved legacy aliases and the offline Space Grotesk font setup, with a focused token contract test.
+
 ## Cluster Sync — Localization
 
 - Localized the Cluster Sync page's remaining hardcoded field labels, table headers, retention and sync-mode options, and node-count text through the shared English and Simplified Chinese dictionaries. API behavior and data rendering remain unchanged.

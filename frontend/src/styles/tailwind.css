@@ -108,8 +108,8 @@
 
   /* ── Elevation ──────────────────────────────────────────────── */
   /* Shadows are tinted toward the blue-slate ground, never pure black. */
-  --shadow-panel: 0 12px 28px rgba(5, 8, 14, 0.48), 0 1px 0 rgba(163, 173, 194, 0.04) inset;
-  --shadow-elevated: 0 18px 42px rgba(5, 8, 14, 0.55);
+  --shadow-panel: 0 18px 34px rgb(2 8 14 / 0.25), 0 1px 0 rgb(224 241 255 / 0.08) inset;
+  --shadow-elevated: 0 24px 52px rgb(2 8 14 / 0.34), 0 1px 0 rgb(224 241 255 / 0.1) inset;
   --shadow-modal: 0 24px 70px rgba(5, 8, 14, 0.68);
 
   /* ── Motion ─────────────────────────────────────────────────── */
@@ -119,13 +119,13 @@
   /* ── Surfaces (deep-space terminal palette) ─────────────────── */
   /* Every neutral shares one cool blue-slate undertone (hue ~222°,
      low saturation) so panels read as a single instrument cluster. */
-  --color-page: #10141d;        /* main page background */
-  --color-panel: #171c29;       /* panel / card background */
-  --color-card: #1b2231;        /* alternative card background */
-  --color-elevated: #232b3d;    /* elevated surface (modals, popovers) */
+  --color-page: #0d151e;        /* main page background */
+  --color-panel: #1a2a38;       /* panel / card background */
+  --color-card: #203344;        /* alternative card background */
+  --color-elevated: #263b4d;    /* elevated surface (modals, popovers) */
   --color-input: #1b2231;       /* input / select background */
-  --color-workspace: #131826;   /* workspace / sidebar */
-  --color-sidebar: #131826;
+  --color-workspace: #111c27;   /* workspace / sidebar */
+  --color-sidebar: #101a24;
   --color-backdrop: rgb(5 8 14 / 0.66); /* modal/overlay backdrop */
 
   /* ── Borders ────────────────────────────────────────────────── */
@@ -149,20 +149,20 @@
        -soft  light text/icons on dark surfaces
      Alpha variants use the utility syntax (bg-accent/14); the legacy
      -rgb channel-triplet variables stay in the alias block below. */
-  --color-accent: #72a0ee;        /* primary accent — sky blue */
-  --color-accent-soft: #96b9f4;   /* softer accent (hover, subtle highlights) */
+  --color-accent: #9bbfff;        /* primary accent — sky blue */
+  --color-accent-soft: #b5d0ff;   /* softer accent (hover, subtle highlights) */
   --color-accent-deep: #3f63ad;   /* deep accent (logo marks, solid fills) */
   --color-accent-contrast: #0b1526; /* text/icons on top of accent fills */
 
-  --color-success: #46c88f;       /* success / positive — emerald green */
+  --color-success: #72d5b3;       /* success / positive — emerald green */
   --color-success-soft: #76d9ad;
   --color-success-deep: #267a54;
 
-  --color-warning: #e0a458;       /* warning / caution — amber */
+  --color-warning: #efbd72;       /* warning / caution — amber */
   --color-warning-soft: #ecc381;
   --color-warning-deep: #9c7029;
 
-  --color-danger: #e5615c;        /* error / danger — coral red */
+  --color-danger: #e9817c;        /* error / danger — coral red */
   --color-danger-soft: #ee8d84;
   --color-danger-deep: #a83a35;
 }
@@ -243,29 +243,29 @@
   --accent-soft: var(--color-accent-soft);
   --accent-deep: var(--color-accent-deep);
   --accent-contrast: var(--color-accent-contrast);
-  --accent-bg: rgb(114 160 238 / 0.14); /* accent background tint */
-  --accent-rgb: 114 160 238;
-  --accent-soft-rgb: 150 185 244;
+  --accent-bg: rgb(155 191 255 / 0.14); /* accent background tint */
+  --accent-rgb: 155 191 255;
+  --accent-soft-rgb: 181 208 255;
   --accent-deep-rgb: 63 99 173;
 
   --success: var(--color-success);
   --success-soft: var(--color-success-soft);
   --success-deep: var(--color-success-deep);
-  --success-bg: rgb(70 200 143 / 0.13);
-  --success-rgb: 70 200 143;
+  --success-bg: rgb(114 213 179 / 0.13);
+  --success-rgb: 114 213 179;
   --success-deep-rgb: 38 122 84;
 
   --warning: var(--color-warning);
   --warning-soft: var(--color-warning-soft);
   --warning-deep: var(--color-warning-deep);
-  --warning-bg: rgb(224 164 88 / 0.14);
-  --warning-rgb: 224 164 88;
+  --warning-bg: rgb(239 189 114 / 0.14);
+  --warning-rgb: 239 189 114;
 
   --danger: var(--color-danger);
   --danger-soft: var(--color-danger-soft);
   --danger-deep: var(--color-danger-deep);
-  --danger-bg: rgb(229 97 92 / 0.13);
-  --danger-rgb: 229 97 92;
+  --danger-bg: rgb(233 129 124 / 0.13);
+  --danger-rgb: 233 129 124;
   --danger-deep-rgb: 168 58 53;
 
   --info: var(--accent);     /* informational — same family as accent */
@@ -273,14 +273,14 @@
   /* Channel triplets for alpha variants of neutral text and surfaces —
      use rgb(var(--text-secondary-rgb) / α) instead of raw rgba literals. */
   --text-secondary-rgb: 163 173 194;
-  --bg-page-rgb: 16 20 29;
-  --bg-panel-rgb: 23 28 41;
+  --bg-page-rgb: 13 21 30;
+  --bg-panel-rgb: 26 42 56;
 
   /* ── Motion, focus and layering ─────────────────────────────── */
   --motion-fast: 120ms;
   --motion-normal: 180ms;
   --motion-slow: 260ms;
-  --focus-ring: 0 0 0 3px rgb(114 160 238 / 0.3);
+  --focus-ring: 0 0 0 3px rgb(155 191 255 / 0.3);
   --focus-ring-offset: 2px;
   --z-navigation: 200;
   --z-dropdown: 300;
