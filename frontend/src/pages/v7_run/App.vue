@@ -40,7 +40,7 @@
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
 import { PhArrowsClockwise, PhFloppyDisk, PhPlus, PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
-import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
+import { aiFocusedField, continuePageAction, useAiPageAction, useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -61,7 +61,7 @@ import Pb8UpdateWarning from './components/Pb8UpdateWarning.vue';
 import { FORCED_MODES, useRunInstances } from './composables/useRunInstances';
 import { useRunWs } from './composables/useRunWs';
 import { useBackups } from './composables/useBackups';
-import { currentRunAdapter, wsUrl } from './config';
+import { currentRunAdapter, editPageUrl, wsUrl } from './config';
 import { STATUS_FILTERS } from './lib/table';
 import { createToast } from './lib/toast';
 
@@ -82,16 +82,29 @@ const toast = createToast(() => toastEl.value); // :1390-1407
 
 const store = useRunInstances({ t: (key, params) => t(key, params ?? {}), adapter, toast });
 
-/* AI drawer page context — Vue port of the legacy instances registration. */
+/* AI drawer page context — Vue port of the legacy instances registration
+   (v1.99.2: active instances as run_config entities so the assistant can
+   act on them) plus the show_log action that continues into the editor. */
 useAiPageContext({
   id: 'v7-run',
   getContext: () => ({
     section: 'Instances',
-    entities: [],
+    entities: store.instances.value
+      .filter((instance) => instance.status !== 'disabled' || (instance.running_on || []).length > 0)
+      .slice(0, 8)
+      .map((instance) => ({ kind: 'run_config', version: adapter.version, name: String(instance.name) })),
     focused_field: aiFocusedField({
       'f-search': { path: 'run.instances.filter', label: 'Instance filter' },
     }),
   }),
+});
+useAiPageAction({
+  id: 'show_log',
+  entity_kind: 'run_config',
+  run: (name) => {
+    if (!store.instances.value.some((instance) => instance.name === name)) return;
+    return continuePageAction(editPageUrl(adapter, name));
+  },
 });
 const backups = useBackups({ t: (key, params) => t(key, params ?? {}), adapter, toast });
 

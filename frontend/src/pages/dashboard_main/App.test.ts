@@ -294,6 +294,38 @@ describe('view loading', () => {
     expect(wrapper.find('#content-frame').classes()).toContain('visible');
     expect((wrapper.find('#content-loading').element as HTMLElement).style.display).toBe('none');
   });
+
+  it('reloads with a cache-busting param after an AI create_dashboard action', async () => {
+    dashboardsApi(['a', 'B']);
+    const wrapper = mountApp();
+    await flushPromises();
+
+    window.dispatchEvent(
+      new CustomEvent('pbgui:ai-action-completed', { detail: { action: 'create_dashboard', name: 'B' } }),
+    );
+    await flushPromises();
+
+    // Generation-safe reload: same name, but the iframe src gains refresh=.
+    const src = frameSrc(wrapper);
+    expect(src).toContain('name=B');
+    expect(src).toContain('view_only=1');
+    expect(src).toMatch(/refresh=\d+/);
+  });
+
+  it('ignores AI actions for other entities', async () => {
+    dashboardsApi(['a', 'B']);
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.find('.sb-item[data-name="B"]').trigger('click');
+    const before = frameSrc(wrapper);
+
+    window.dispatchEvent(
+      new CustomEvent('pbgui:ai-action-completed', { detail: { action: 'save_something', name: 'B' } }),
+    );
+    await flushPromises();
+
+    expect(frameSrc(wrapper)).toBe(before);
+  });
 });
 
 describe('edit mode', () => {

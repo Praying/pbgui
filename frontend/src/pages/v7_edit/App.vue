@@ -86,7 +86,7 @@ import ImportModal from './components/ImportModal.vue';
 import LogPanel from './components/LogPanel.vue';
 import RawJsonEditor from './components/RawJsonEditor.vue';
 import { provideEditPage, useEditPage } from './composables/useEditPage';
-import { useAiPageContext } from '@/shared/ai/context';
+import { useAiPageAction, useAiPageContext } from '@/shared/ai/context';
 import { useDraftHandoffs } from './composables/useDraftHandoffs';
 import { currentEditAdapter, editApiBase, readEditPageParams, runListUrl } from './config';
 import { createToast } from './lib/toast';
@@ -137,6 +137,17 @@ const copyOpen = ref(false);
 const importOpen = ref(false);
 const balanceOpen = ref(false);
 const logOpen = ref(false);
+
+/* AI drawer action (v1.99.2): show_log opens this instance's live-log
+   panel through the generic page-action bridge (legacy openLogPanel). */
+useAiPageAction({
+  id: 'show_log',
+  entity_kind: 'run_config',
+  run: (name) => {
+    if (name !== page.instanceName.value) return;
+    logOpen.value = true;
+  },
+});
 const copyModal = useTemplateRef<InstanceType<typeof CopyUserModal>>('copyModal');
 const importModal = useTemplateRef<InstanceType<typeof ImportModal>>('importModal');
 const balanceModal = useTemplateRef<InstanceType<typeof BalanceCalcModal>>('balanceModal');

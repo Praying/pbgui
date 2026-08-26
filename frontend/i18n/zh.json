@@ -3957,6 +3957,7 @@
   "v7explore.zAxis": "Z 轴",
   "v7explore.zAxisTip": "3D 自定义快速视图中显示在深度轴上的指标。",
   "v7optimize.activeQueuedCount": "{active}个运行中，{queued}个排队",
+  "v7optimize.aiQueueItemGone": "所选的 Optimize 队列项已不存在。",
   "v7optimize.addToArchive": "🗄加入存档",
   "v7optimize.additionalParameterJsonError": "附加优化参数 {key}：{error}",
   "v7optimize.additionalParameters": "附加参数",

@@ -182,8 +182,8 @@ function selectSingleDashboard(name: string): void {
 
 /* ── Iframe view/editor (legacy loadView/loadEditor) ── */
 
-/** Legacy loadView: view-only iframe for a dashboard. */
-function loadView(name: string): void {
+/** Legacy loadView: view-only iframe for a dashboard (forceReload busts the iframe cache). */
+function loadView(name: string, forceReload = false): void {
   if (!name) return;
   currentDash.value = name;
   if (selected.value.length <= 1) selected.value = [name];
@@ -192,7 +192,7 @@ function loadView(name: string): void {
   frameLoading.value = true;
   frameVisible.value = false;
   frameStarted = true;
-  frameSrc.value = editorPageUrl(name, 'view');
+  frameSrc.value = editorPageUrl(name, 'view', forceReload);
 }
 
 /** Legacy loadEditor: standalone editor iframe. */
@@ -366,10 +366,34 @@ function openDashboardHelp(): void {
   sharedHelp.open('dashboard', { token: getBoot().token });
 }
 
+/* ── AI drawer completion (v1.99.4): reload the view when the AI creates or
+   saves a dashboard. The generation counter plus the previous-dashboard
+   guard keep a late list refresh from overriding navigation the user did
+   in the meantime (legacy aiDashboardRefreshGeneration). ─────────────── */
+let aiDashboardRefreshGeneration = 0;
+
+function onAiActionCompleted(event: Event): void {
+  const result =
+    (event as CustomEvent).detail && typeof (event as CustomEvent).detail === 'object'
+      ? ((event as CustomEvent).detail as { action?: string; name?: string })
+      : {};
+  if (result.action !== 'create_dashboard' && result.action !== 'save_dashboard_layout') return;
+  const name = String(result.name || '').trim();
+  if (!name) return;
+  const previousDashboard = currentDash.value;
+  const generation = ++aiDashboardRefreshGeneration;
+  void refreshList(() => {
+    if (generation !== aiDashboardRefreshGeneration || currentDash.value !== previousDashboard) return;
+    selected.value = [name];
+    loadView(name, true);
+  });
+}
+
 onMounted(() => {
   document.title = t('dash.pageTitle');
   window.PBGUI_HELP_OPENER = openDashboardHelp;
   window.addEventListener('message', onWindowMessage);
+  window.addEventListener('pbgui:ai-action-completed', onAiActionCompleted);
   document.addEventListener('mousemove', onSidebarResizeMove);
   document.addEventListener('mouseup', onSidebarResizeUp);
   // Legacy initial render: refreshList(() => { if (CURRENT in list) loadView(CURRENT) })
@@ -380,6 +404,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('message', onWindowMessage);
+  window.removeEventListener('pbgui:ai-action-completed', onAiActionCompleted);
   document.removeEventListener('mousemove', onSidebarResizeMove);
   document.removeEventListener('mouseup', onSidebarResizeUp);
 });

@@ -139,7 +139,10 @@ watch(
 const editorOpen = computed(() => store.editor.editingName.value !== null);
 
 /* AI drawer page context — Vue port of the legacy backtest registration
-   (panel section, editing config / open archive entities, filter focus). */
+   (panel section, editing config / open archive entities, filter focus;
+   v1.99.2 adds the queue selection plus running queue items as
+   backtest_queue_item entities). The legacy show_log page action lands
+   with the M-v7-10 queue log surface (onQueueShowLog is still a stub). */
 useAiPageContext({
   id: 'backtest',
   getContext: () => {
@@ -150,6 +153,23 @@ useAiPageContext({
     }
     if (store.view.state.panel === 'archive' && store.archive.selectedName.value) {
       entities.push({ kind: 'backtest_archive', version: store.adapter.version, name: store.archive.selectedName.value });
+    }
+    if (store.view.state.panel === 'queue') {
+      for (const filename of (queuePanel.value?.selectedFilenames() ?? []).slice(0, 8)) {
+        if (store.queueItems.value.some((item) => item.filename === filename)) {
+          entities.push({ kind: 'backtest_queue_item', version: store.adapter.version, name: filename });
+        }
+      }
+    }
+    if (entities.length < 8) {
+      for (const item of store.queueItems.value
+        .filter((entry) => entry.status === 'running' || entry.status === 'backtesting')
+        .slice(0, 8 - entities.length)) {
+        const name = String(item.filename);
+        if (!entities.some((entity) => entity.kind === 'backtest_queue_item' && entity.name === name)) {
+          entities.push({ kind: 'backtest_queue_item', version: store.adapter.version, name });
+        }
+      }
     }
     return {
       section: store.view.state.panel,

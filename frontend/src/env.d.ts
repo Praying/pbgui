@@ -27,6 +27,9 @@ interface Window {
    */
   PBGuiAI?: {
     registerPageContext?(registration: unknown): () => void;
+    registerPageAction?(registration: unknown): () => void;
+    continuePageAction?(url: string): boolean;
+    tryLocalCommand?(message: string): { handled: boolean; message?: string };
     collectContext?(): unknown;
     focusedField?(allowlist: unknown): unknown;
     open?(): void;
@@ -35,5 +38,7 @@ interface Window {
   };
   /** Legacy pages may assign a page-context function before nav.js loads. */
   PBGUI_AI_PAGE_CONTEXT?: () => unknown;
+  /** Legacy pages may assign page actions before nav.js loads (v1.99.2+). */
+  PBGUI_AI_PAGE_ACTIONS?: unknown[];
 }
 

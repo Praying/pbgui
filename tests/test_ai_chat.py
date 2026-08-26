@@ -725,6 +725,60 @@ def test_persistent_conversation_history_reloads_owner_safe_messages(tmp_path: P
     asyncio.run(scenario())
 
 
+def test_generic_page_ui_action_is_captured_and_restored(tmp_path: Path) -> None:
+    """Typed page actions should remain pending until an advertising page handles them."""
+    async def scenario() -> None:
+        owner = "a" * 32
+        service = AIChatService(tmp_path / "ai")
+        conversation = await service._conversation(owner, "opencode-go", "model", None)
+        await service._capture_ui_action(
+            owner,
+            conversation.id,
+            {
+                "ui_action": {
+                    "type": "page.perform_action",
+                    "target": {"page_key": "v8_optimize"},
+                    "payload": {
+                        "action": "show_log",
+                        "entity": {"kind": "optimizer_queue_item", "name": "optimize_123"},
+                    },
+                }
+            },
+        )
+
+        snapshot = await service.get_conversation(owner, conversation.id)
+        restored = AIChatService._restore_ui_actions(snapshot["ui_actions"])
+
+        assert restored[0]["type"] == "page.perform_action"
+        assert restored[0]["payload"]["action"] == "show_log"
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+def test_local_browser_action_is_persisted_without_provider_turn(tmp_path: Path) -> None:
+    """A browser-completed action should add one durable turn without becoming busy."""
+    async def scenario() -> None:
+        owner = "a" * 32
+        service = AIChatService(tmp_path / "ai")
+        conversation = await service._conversation(owner, "opencode-go", "model", None)
+
+        snapshot = await service.record_local_action(
+            owner,
+            conversation.id,
+            "Close the log window",
+            {"schema_version": 1, "page_key": "v8_optimize"},
+        )
+
+        assert snapshot["busy"] is False
+        assert snapshot["messages"][-2] == {"role": "user", "content": "Close the log window"}
+        assert snapshot["messages"][-1]["content"] == "PBGui completed the requested interface action locally."
+        assert conversation.id not in service.active_tasks
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
 def test_detached_turn_completes_without_request_owned_task(tmp_path: Path, monkeypatch) -> None:
     """A server-owned turn should persist its result independently of the start request."""
     async def scenario() -> None:
@@ -1027,6 +1081,17 @@ def test_page_context_is_bounded_and_marked_untrusted() -> None:
             "guide_topic": "43_pbv8_optimize",
             "section": "Scoring",
             "entities": [{"kind": "optimizer_config", "version": "v8", "name": "demo"}],
+            "actions": [{"id": "show_log", "entity_kind": "optimizer_queue_item"}],
+            "controls": [
+                {
+                    "id": "control_1",
+                    "role": "button",
+                    "label": "Close",
+                    "context": "Optimize log",
+                    "operations": ["activate"],
+                    "options": [],
+                }
+            ],
         }
     )
 
@@ -1034,21 +1099,27 @@ def test_page_context_is_bounded_and_marked_untrusted() -> None:
 
     assert "Untrusted PBGui page context" in suffix
     assert '"guide_topic":"43_pbv8_optimize"' in suffix
+    assert context["actions"] == [{"id": "show_log", "entity_kind": "optimizer_queue_item"}]
+    assert context["controls"][0]["label"] == "Close"
     with pytest.raises(AIChatError, match="Invalid page context"):
         AIChatService._validate_page_context({"secret": "value"})
 
 
-def test_ai_drawer_width_preferences_are_private_persistent_and_bounded(tmp_path: Path) -> None:
-    """Drawer width should persist server-side without browser storage."""
+def test_ai_drawer_preferences_are_private_persistent_merged_and_bounded(tmp_path: Path) -> None:
+    """Drawer width and open state should merge server-side without browser storage."""
     service = AIChatService(tmp_path / "ai")
     owner = "a" * 32
 
-    assert service.get_preferences(owner) == {"drawer_width": 460}
-    assert service.save_preferences(owner, 612) == {"drawer_width": 612}
-    assert AIChatService(tmp_path / "ai").get_preferences(owner) == {"drawer_width": 612}
-    assert service.save_preferences(owner, 4000) == {"drawer_width": 4000}
+    assert service.get_preferences(owner) == {"drawer_width": 460, "drawer_open": False}
+    assert service.save_preferences(owner, 612) == {"drawer_width": 612, "drawer_open": False}
+    assert service.save_preferences(owner, drawer_open=True) == {"drawer_width": 612, "drawer_open": True}
+    assert AIChatService(tmp_path / "ai").get_preferences(owner) == {"drawer_width": 612, "drawer_open": True}
+    assert service.save_preferences(owner, 4000) == {"drawer_width": 4000, "drawer_open": True}
+    assert service.save_preferences(owner, drawer_open=False) == {"drawer_width": 4000, "drawer_open": False}
     with pytest.raises(AIChatError, match="browser range"):
         service.save_preferences(owner, 100_001)
+    with pytest.raises(AIChatError, match="No AI preferences"):
+        service.save_preferences(owner)
     if os.name == "posix":
         assert (service.preference_root / f"{owner}.json").stat().st_mode & 0o777 == 0o600
 

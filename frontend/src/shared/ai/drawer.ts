@@ -11,7 +11,12 @@
  */
 import { ref } from 'vue';
 
+import { apiFetch } from '@/shared/api';
+import { getBoot } from '@/shared/boot';
+
 let loading = false;
+/** Set on a real user click so auto-open never overrides a manual toggle. */
+let userInteracted = false;
 
 /**
  * Open the AI drawer, loading js/ai_drawer.js + css/ai_drawer.css on first
@@ -29,11 +34,11 @@ export function openAiDrawer(): void {
 
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/app/css/ai_drawer.css?v=11';
+  link.href = '/app/css/ai_drawer.css?v=12';
   document.head.appendChild(link);
 
   const script = document.createElement('script');
-  script.src = '/app/js/ai_drawer.js?v=24';
+  script.src = '/app/js/ai_drawer.js?v=27';
   script.onload = () => {
     loading = false;
     window.PBGuiAI?.open?.();
@@ -42,6 +47,51 @@ export function openAiDrawer(): void {
     loading = false;
   };
   document.head.appendChild(script);
+}
+
+/** Record that the user opened/closed the drawer themselves (legacy isTrusted gate). */
+export function markAiUserInteraction(): void {
+  userInteracted = true;
+}
+
+let autoOpenConfigured = false;
+
+/**
+ * Vue port of the pbgui_nav.js drawer auto-open boot logic (v1.99.4):
+ * a URL carrying ?pbgui_ai_action=1 (a continuePageAction navigation)
+ * strips the flag and opens the drawer; otherwise the saved preference
+ * re-opens the drawer unless the user already interacted with it.
+ * AppShell calls this once per page mount.
+ */
+export function setupAiDrawerAutoOpen(): void {
+  if (autoOpenConfigured) return;
+  autoOpenConfigured = true;
+  try {
+    if (!getBoot().token) return;
+  } catch {
+    // boot.js missing — same graceful skip as useAiDrawerAvailable: never
+    // advertise drawer behaviour the session cannot authenticate.
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('pbgui_ai_action') === '1') {
+    url.searchParams.delete('pbgui_ai_action');
+    window.history.replaceState(
+      window.history.state,
+      '',
+      url.pathname + url.search + url.hash,
+    );
+    openAiDrawer();
+    return;
+  }
+  apiFetch<{ drawer_open?: boolean }>(`${getBoot().origin}/api/ai/preferences`)
+    .then((preferences) => {
+      if (preferences?.drawer_open === true && !userInteracted) openAiDrawer();
+    })
+    .catch(() => {
+      // Preferences are optional — auto-open silently skips on failure.
+    });
 }
 
 /**

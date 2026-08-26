@@ -135,7 +135,9 @@ describe('AI Chat page shell', () => {
     expect(turnBody.message).toBe('what optimizer configs exist?');
     expect(turnBody.provider).toBe('chatgpt');
     expect(turnBody.model).toBe('gpt-x');
-    expect(turnBody.context).toEqual({
+    // v1.99.2 extends the context with actions/controls; the core page
+    // identity fields stay the contract under test here.
+    expect(turnBody.context).toMatchObject({
       schema_version: 1,
       page_key: 'info_ai_chat',
       title: 'AI Chat',
@@ -143,6 +145,7 @@ describe('AI Chat page shell', () => {
       section: 'Conversations',
       entities: [],
     });
+    expect(turnBody.context.actions).toContainEqual({ id: 'activate', entity_kind: 'ui_control' });
   });
 
   it('creates a conversation when none exists yet', async () => {

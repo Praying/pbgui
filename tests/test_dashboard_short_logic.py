@@ -13,6 +13,7 @@ components/widgets/WidgetOrders.test.ts.
 """
 
 import asyncio
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -20,6 +21,8 @@ from fastapi.responses import FileResponse
 
 from api import cluster, dashboard, live, v7_instances
 import pb7_config
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_dashboard_pages_use_cookie_auth_without_rendering_session_token() -> None:
@@ -57,6 +60,28 @@ def test_dashboard_pages_use_cookie_auth_without_rendering_session_token() -> No
         assert "Authorization" not in html
         assert "Bearer " not in html
         assert response.headers["cache-control"] == "no-store"
+
+
+def test_dashboard_refreshes_generation_safe_after_approved_ai_layout() -> None:
+    """An approved AI dashboard save should reload its iframe without overriding later navigation.
+
+    Vue port (frontend/src/pages/dashboard_main) of the v1.99.4 legacy
+    dashboard_main.html behaviour: the pbgui:ai-action-completed listener
+    guards its refreshList callback with a generation counter and the
+    pre-navigation dashboard so a stale AI reload never hijacks the view.
+    """
+    source = (ROOT / "frontend" / "src" / "pages" / "dashboard_main" / "App.vue").read_text(encoding="utf-8")
+
+    assert "pbgui:ai-action-completed" in source
+    assert "result.action !== 'create_dashboard' && result.action !== 'save_dashboard_layout'" in source
+    assert "const previousDashboard = currentDash.value" in source
+    assert "generation !== aiDashboardRefreshGeneration || currentDash.value !== previousDashboard" in source
+    assert "loadView(name, true)" in source
+    assert "selected.value = [name]" in source
+
+    config = (ROOT / "frontend" / "src" / "pages" / "dashboard_main" / "config.ts").read_text(encoding="utf-8")
+    assert "forceReload" in config
+    assert "params.set('refresh', String(Date.now()))" in config
 
 
 class _TickerExchange:

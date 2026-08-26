@@ -23,7 +23,7 @@ import {
   PhTrash,
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
-import { useAiPageContext } from '@/shared/ai/context';
+import { useAiPageAction, useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
 import IconButton from '@/shared/components/IconButton.vue';
@@ -119,7 +119,9 @@ const page = useOptimizePage({ adapter, notify, search: window.location.search }
 /* AI drawer page context — Vue port of the legacy optimize registration:
    the live editor-name wins (renames after drawer open stay visible),
    falling back to the selected configs; results/paretos panels expose the
-   selected run instead. */
+   selected run instead. v1.99.2 swaps config entities for queue items on
+   the queue panel (selection first, then running items up to 8) and adds
+   the show_log action over the queue log panel. */
 useAiPageContext({
   id: 'optimize',
   getContext: () => {
@@ -129,11 +131,19 @@ useAiPageContext({
       editorName && editorName !== '__new__'
         ? [editorName]
         : Array.from(page.selectedConfigs.value).slice(0, 8);
-    const entities = (panel === 'results' || panel === 'paretos' ? [] : names).map((name) => ({
+    const showConfigEntities = !!editorName || ['queue', 'results', 'paretos'].indexOf(panel) < 0;
+    const entities = (showConfigEntities ? names : []).map((name) => ({
       kind: 'optimizer_config',
       version: adapter.version,
       name,
     }));
+    if (!editorName && panel === 'queue' && page.selectedQueue.value.size) {
+      for (const filename of Array.from(page.selectedQueue.value).slice(0, 8)) {
+        const queueItem = page.queue.value.find((item) => item.filename === filename);
+        if (!queueItem) continue;
+        entities.push({ kind: 'optimizer_queue_item', version: adapter.version, name: String(queueItem.filename) });
+      }
+    }
     if (page.selectedResultName.value && (panel === 'results' || panel === 'paretos')) {
       entities.push({
         kind: 'optimizer_run',
@@ -141,7 +151,29 @@ useAiPageContext({
         name: page.selectedResultName.value,
       });
     }
+    if (!editorName && entities.length < 8) {
+      for (const item of page.queue.value
+        .filter((entry) => entry.status === 'running' || entry.status === 'optimizing')
+        .slice(0, 8 - entities.length)) {
+        const name = String(item.filename);
+        if (!entities.some((entity) => entity.kind === 'optimizer_queue_item' && entity.name === name)) {
+          entities.push({ kind: 'optimizer_queue_item', version: adapter.version, name });
+        }
+      }
+    }
     return { section: panel, entities };
+  },
+});
+useAiPageAction({
+  id: 'show_log',
+  entity_kind: 'optimizer_queue_item',
+  run: (filename) => {
+    const queueItem = page.queue.value.find((item) => item.filename === filename);
+    if (!queueItem) {
+      notify(t('v7optimize.aiQueueItemGone'), 'error');
+      return;
+    }
+    openQueueLog(queueItem);
   },
 });
 const actions = useOptimizeActions({ adapter, notify });

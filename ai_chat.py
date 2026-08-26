@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import time
 from typing import Any, Awaitable, Callable
@@ -122,6 +123,7 @@ _CAPABILITY_ACTIVITY = {
     "present_user_choices": "Preparing clarification choices",
     "list_backtests": "Reading backtest summaries",
     "select_pareto_candidates": "Selecting Pareto candidates in PBGui",
+    "perform_page_action": "Controlling the current PBGui page",
     "list_dashboard_templates": "Listing dashboard templates",
     "get_dashboard_layout": "Reading dashboard layout",
     "propose_pb8_optimizer_config": "Preparing a PB8 configuration proposal",
@@ -149,6 +151,7 @@ _CAPABILITY_RESULT_ACTIVITY = {
     "present_user_choices": "Clarification choices ready",
     "list_backtests": "Backtest summaries loaded; model is processing results",
     "select_pareto_candidates": "Pareto selection sent to the open PBGui page",
+    "perform_page_action": "Page action sent to the open PBGui page",
     "list_dashboard_templates": "Dashboard templates loaded; model is processing results",
     "get_dashboard_layout": "Dashboard layout loaded; model is processing results",
     "propose_pb8_optimizer_config": "PB8 proposal prepared; model is processing results",
@@ -1332,7 +1335,11 @@ class AIChatService:
             return []
         restored = []
         for item in value[-20:]:
-            if not isinstance(item, dict) or item.get("type") not in {"optimize.select_paretos", "chat.quick_replies"}:
+            if not isinstance(item, dict) or item.get("type") not in {
+                "optimize.select_paretos",
+                "page.perform_action",
+                "chat.quick_replies",
+            }:
                 continue
             action_id = str(item.get("action_id") or "")
             if len(action_id) != 32 or any(char not in "0123456789abcdef" for char in action_id):
@@ -1473,31 +1480,58 @@ class AIChatService:
     def get_preferences(self, owner: str) -> dict[str, Any]:
         """Return bounded owner-scoped AI UI preferences."""
         path = self._preference_path(owner)
-        if not path.is_file() or path.is_symlink():
-            return {"drawer_width": 460}
         with advisory_file_lock(self.preference_lock_target):
-            try:
-                raw = read_regular_file_nofollow(path, self.preference_root)
-                if len(raw) > 16 * 1024:
-                    raise AIChatError("AI preferences are invalid")
-                payload = json.loads(raw.decode("utf-8"))
-                width = int(payload.get("drawer_width") or 460)
-            except (OSError, RuntimeError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
-                width = 460
-        return {"drawer_width": max(180, min(100_000, width))}
+            return self._read_preferences_unlocked(path)
 
-    def save_preferences(self, owner: str, drawer_width: int) -> dict[str, Any]:
-        """Atomically save bounded owner-scoped AI UI preferences."""
+    def _read_preferences_unlocked(self, path: Path) -> dict[str, Any]:
+        """Read one preference file while the cross-process lock is held."""
+        if not path.is_file() or path.is_symlink():
+            return {"drawer_width": 460, "drawer_open": False}
         try:
-            width = int(drawer_width)
-        except (TypeError, ValueError) as exc:
-            raise AIChatError("Invalid AI drawer width") from exc
-        if width < 180 or width > 100_000:
-            raise AIChatError("AI drawer width is outside the supported browser range")
-        payload = {"drawer_width": width}
+            raw = read_regular_file_nofollow(path, self.preference_root)
+            if len(raw) > 16 * 1024:
+                raise AIChatError("AI preferences are invalid")
+            stored = json.loads(raw.decode("utf-8"))
+            if not isinstance(stored, dict):
+                raise AIChatError("AI preferences are invalid")
+            width = int(stored.get("drawer_width") or 460)
+            drawer_open = stored.get("drawer_open") is True
+        except (OSError, RuntimeError, UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
+            width = 460
+            drawer_open = False
+        return {
+            "drawer_width": max(180, min(100_000, width)),
+            "drawer_open": drawer_open,
+        }
+
+    def save_preferences(
+        self,
+        owner: str,
+        drawer_width: int | None = None,
+        drawer_open: bool | None = None,
+    ) -> dict[str, Any]:
+        """Atomically save bounded owner-scoped AI UI preferences."""
+        if drawer_width is None and drawer_open is None:
+            raise AIChatError("No AI preferences supplied")
+        width = None
+        if drawer_width is not None:
+            try:
+                width = int(drawer_width)
+            except (TypeError, ValueError) as exc:
+                raise AIChatError("Invalid AI drawer width") from exc
+            if width < 180 or width > 100_000:
+                raise AIChatError("AI drawer width is outside the supported browser range")
+        if drawer_open is not None and not isinstance(drawer_open, bool):
+            raise AIChatError("Invalid AI drawer state")
+        path = self._preference_path(owner)
         with advisory_file_lock(self.preference_lock_target):
+            payload = self._read_preferences_unlocked(path)
+            if width is not None:
+                payload["drawer_width"] = width
+            if drawer_open is not None:
+                payload["drawer_open"] = drawer_open
             atomic_write_private_text(
-                self._preference_path(owner), json.dumps(payload, indent=4, allow_nan=False) + "\n"
+                path, json.dumps(payload, indent=4, allow_nan=False) + "\n"
             )
         return payload
 
@@ -1535,7 +1569,11 @@ class AIChatService:
     ) -> None:
         """Persist one typed browser action emitted by a trusted capability handler."""
         action = result.get("ui_action") if isinstance(result, dict) else None
-        if not isinstance(action, dict) or action.get("type") not in {"optimize.select_paretos", "chat.quick_replies"}:
+        if not isinstance(action, dict) or action.get("type") not in {
+            "optimize.select_paretos",
+            "page.perform_action",
+            "chat.quick_replies",
+        }:
             return
         target = action.get("target")
         payload = action.get("payload")
@@ -1638,6 +1676,44 @@ class AIChatService:
             "revision": conversation.revision,
         }
 
+    async def record_local_action(
+        self,
+        owner: str,
+        conversation_id: str,
+        message: str,
+        context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Persist one browser-completed UI action without contacting a provider."""
+        await self._ensure_owner_loaded(owner)
+        clean_message = self._validate_message(message)
+        async with self.state_lock:
+            conversation = self._owned_conversation(owner, conversation_id)
+            if conversation.busy or conversation.id in self.active_tasks:
+                raise AIChatError("Conversation is busy")
+            if context is not None:
+                conversation.context = self._validate_page_context(context)
+            conversation.messages.extend(
+                [
+                    {
+                        "role": "user",
+                        "content": clean_message + self._context_prompt_suffix(conversation.context),
+                        "display_content": clean_message,
+                    },
+                    {
+                        "role": "assistant",
+                        "content": "PBGui completed the requested interface action locally.",
+                    },
+                ]
+            )
+            self._trim_history(conversation.messages, _MAX_HISTORY_MESSAGES)
+            conversation.last_error = ""
+            conversation.reasoning_summary = ""
+            conversation.activity = ""
+            conversation.updated_at = time.time()
+            conversation.revision += 1
+            self._persist_conversation(conversation)
+            return self._conversation_projection(conversation, include_messages=True)
+
     async def _run_detached_turn(
         self, conversation: Conversation, message: str, turn_id: str
     ) -> None:
@@ -1695,7 +1771,17 @@ class AIChatService:
             return {}
         if not isinstance(context, dict):
             raise AIChatError("Invalid page context")
-        allowed = {"schema_version", "page_key", "title", "guide_topic", "section", "entities", "focused_field"}
+        allowed = {
+            "schema_version",
+            "page_key",
+            "title",
+            "guide_topic",
+            "section",
+            "entities",
+            "actions",
+            "controls",
+            "focused_field",
+        }
         if set(context) - allowed:
             raise AIChatError("Invalid page context")
         result: dict[str, Any] = {"schema_version": 1}
@@ -1718,6 +1804,81 @@ class AIChatService:
             safe_entities.append(projected)
         if safe_entities:
             result["entities"] = safe_entities
+        actions = context.get("actions") or []
+        if not isinstance(actions, list) or len(actions) > 16:
+            raise AIChatError("Invalid page context")
+        safe_actions = []
+        for item in actions:
+            if not isinstance(item, dict) or set(item) - {"id", "entity_kind"}:
+                raise AIChatError("Invalid page context")
+            action_id = str(item.get("id") or "").strip()
+            entity_kind = str(item.get("entity_kind") or "").strip()
+            if not re.fullmatch(r"[a-z][a-z0-9_.-]{0,63}", action_id) or not re.fullmatch(
+                r"[A-Za-z0-9_.-]{1,128}", entity_kind
+            ):
+                raise AIChatError("Invalid page context")
+            safe_actions.append({"id": action_id, "entity_kind": entity_kind})
+        if safe_actions:
+            result["actions"] = safe_actions
+        controls = context.get("controls") or []
+        if not isinstance(controls, list) or len(controls) > 96:
+            raise AIChatError("Invalid page context")
+        safe_controls = []
+        for item in controls:
+            if not isinstance(item, dict) or set(item) - {
+                "id",
+                "role",
+                "label",
+                "context",
+                "operations",
+                "options",
+            }:
+                raise AIChatError("Invalid page context")
+            control_id = str(item.get("id") or "").strip()
+            role = str(item.get("role") or "").strip()
+            label = str(item.get("label") or "").strip()
+            control_context = str(item.get("context") or "").strip()
+            operations = item.get("operations") or []
+            options = item.get("options") or []
+            if (
+                not re.fullmatch(r"control_[0-9]{1,12}", control_id)
+                or not re.fullmatch(r"[a-z][a-z0-9_-]{0,31}", role)
+                or not label
+                or len(label) > 160
+                or len(control_context) > 160
+                or any(ord(char) < 32 for char in label + control_context)
+                or not isinstance(operations, list)
+                or not operations
+                or len(operations) > 2
+                or any(operation not in {"activate", "set_value"} for operation in operations)
+                or not isinstance(options, list)
+                or len(options) > 32
+            ):
+                raise AIChatError("Invalid page context")
+            safe_options = []
+            for option in options:
+                if not isinstance(option, dict) or set(option) - {"value", "label"}:
+                    raise AIChatError("Invalid page context")
+                option_value = str(option.get("value") or "")
+                option_label = str(option.get("label") or "").strip()
+                if len(option_value) > 160 or not option_label or len(option_label) > 160 or any(
+                    ord(char) < 32 for char in option_value + option_label
+                ):
+                    raise AIChatError("Invalid page context")
+                safe_options.append({"value": option_value, "label": option_label})
+            safe_control = {
+                "id": control_id,
+                "role": role,
+                "label": label,
+                "operations": list(dict.fromkeys(operations)),
+            }
+            if control_context:
+                safe_control["context"] = control_context
+            if safe_options:
+                safe_control["options"] = safe_options
+            safe_controls.append(safe_control)
+        if safe_controls:
+            result["controls"] = safe_controls
         focused = context.get("focused_field")
         if focused:
             if not isinstance(focused, dict) or set(focused) - {"path", "label", "value", "validation"}:
@@ -1731,7 +1892,7 @@ class AIChatService:
                     safe_focused[key] = value
             if safe_focused:
                 result["focused_field"] = safe_focused
-        if len(json.dumps(result, allow_nan=False).encode("utf-8")) > 8192:
+        if len(json.dumps(result, allow_nan=False).encode("utf-8")) > 48 * 1024:
             raise AIChatError("Page context is too large")
         return result
 

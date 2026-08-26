@@ -22,10 +22,12 @@ export function dashboardsUrl(): string {
  * Legacy loadView/loadEditor iframe URLs:
  *   /api/dashboard/editor_page?name=..&api_base=..&view_only=1   (view)
  *   /api/dashboard/editor_page?name=..&api_base=..&standalone=1  (editor)
+ * `forceReload` appends a cache-busting refresh param (v1.99.4 AI reload).
  */
-export function editorPageUrl(name: string, mode: 'view' | 'editor'): string {
+export function editorPageUrl(name: string, mode: 'view' | 'editor', forceReload = false): string {
   const params = new URLSearchParams({ name, api_base: apiBase() });
   params.set(mode === 'view' ? 'view_only' : 'standalone', '1');
+  if (forceReload) params.set('refresh', String(Date.now()));
   return `${apiBase()}/dashboard/editor_page?${params.toString()}`;
 }
 

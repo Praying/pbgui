@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, wa
 import { PhSidebarSimple, PhSparkle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import type { NavigationGroup, NavigationItem, PageSection } from '@/shared/navigation';
-import { openAiDrawer, useAiDrawerAvailable } from '@/shared/ai/drawer';
+import { markAiUserInteraction, openAiDrawer, useAiDrawerAvailable } from '@/shared/ai/drawer';
 import IconButton from './IconButton.vue';
 import PbIcon from './PbIcon.vue';
 
@@ -28,8 +28,14 @@ const { t } = useI18n();
 
 /* AI assistant drawer: same lazy-load contract as the legacy topnav —
    js/ai_drawer.js (+css) is fetched on the first open and only shown for
-   token-authenticated sessions. */
+   token-authenticated sessions. A real user click also cancels the
+   preference-based auto-open (legacy isTrusted gate). */
 const { available: aiAvailable } = useAiDrawerAvailable();
+
+function onAiButtonClick(): void {
+  markAiUserInteraction();
+  openAiDrawer();
+}
 
 const railEl = useTemplateRef<HTMLElement>('rail');
 
@@ -237,7 +243,7 @@ onBeforeUnmount(() => {
         :aria-label="t('nav.open_ai_assistant')"
         aria-expanded="false"
         aria-controls="pbgui-ai-drawer"
-        @click="openAiDrawer"
+        @click="onAiButtonClick"
       >
         <PbIcon :icon="PhSparkle" :size="18" />
         <span v-if="!visuallyCollapsed" class="workbench-rail__ai-label">{{ t('nav.ai') }}</span>

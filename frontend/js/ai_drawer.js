@@ -15,6 +15,7 @@
     proposalGeneration: 0,
     history: false,
     busy: false,
+    resizing: false,
     drawerWidth: 460,
     retryMessages: {},
     uiActionIds: new Set(),
@@ -215,7 +216,7 @@
   async function refreshAll() {
     try {
       var preferences = await api('/preferences');
-      applyWidth(preferences.drawer_width);
+      if (!state.resizing) applyWidth(preferences.drawer_width);
       var status = await api('/status');
       state.providers = status.providers || {};
       rebuildProviders();
@@ -229,26 +230,49 @@
     root.style.width = Math.round(Math.min(state.drawerWidth, window.innerWidth)) + 'px';
   }
 
+  function saveDrawerPreferences(drawerOpen) {
+    var width = root ? root.getBoundingClientRect().width : state.drawerWidth;
+    return api('/preferences', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        drawer_width: Math.round(width),
+        drawer_open: drawerOpen == null ? state.open : !!drawerOpen
+      })
+    });
+  }
+
   function bindResize(handle) {
     handle.addEventListener('mousedown', function (event) {
-      if (window.innerWidth <= 760) return;
+      if (window.innerWidth <= 760 || event.button !== 0 || state.resizing) return;
       event.preventDefault();
+      event.stopPropagation();
+      state.resizing = true;
       handle.classList.add('active');
+      var shield = el('div', 'pai-resize-shield');
+      shield.style.cssText = 'position:fixed;inset:0;z-index:2399;cursor:ew-resize;background:transparent;';
+      document.body.appendChild(shield);
+      var previousUserSelect = document.body.style.userSelect;
+      document.body.style.userSelect = 'none';
+      var finished = false;
       function move(moveEvent) { applyWidth(window.innerWidth - moveEvent.clientX); }
-      async function up() {
+      async function finish() {
+        if (finished) return;
+        finished = true;
         document.removeEventListener('mousemove', move);
-        document.removeEventListener('mouseup', up);
+        document.removeEventListener('mouseup', finish);
+        window.removeEventListener('blur', finish);
+        shield.remove();
+        document.body.style.userSelect = previousUserSelect;
+        state.resizing = false;
         handle.classList.remove('active');
         try {
-          await api('/preferences', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ drawer_width: Math.round(root.getBoundingClientRect().width) })
-          });
+          await saveDrawerPreferences();
         } catch (error) { setStatus(error.message, true); }
       }
       document.addEventListener('mousemove', move);
-      document.addEventListener('mouseup', up);
+      document.addEventListener('mouseup', finish);
+      window.addEventListener('blur', finish);
     });
   }
 
@@ -360,7 +384,8 @@
       renderMessages(conversation.messages || []);
       renderReasoningSummary(conversation.reasoning_summary || '');
       renderActivityHistory(conversation.activity_history || []);
-      dispatchUiActions(id, conversation.ui_actions || []);
+      var uiActions = conversation.ui_actions || [];
+      dispatchUiActions(id, uiActions);
       if (conversation.retry_message) state.retryMessages[id] = conversation.retry_message;
       renderContext(conversation.context && Object.keys(conversation.context).length ? conversation.context : collectContext());
       setBusy(!!conversation.busy);
@@ -376,7 +401,10 @@
       if (id !== state.current || generation !== state.requestGeneration) return;
       rebuildEfforts(conversation.effort || '');
       await reconcileProposals(id, generation);
-      if (conversation.busy) schedulePoll(id); else stopPoll();
+      var pendingPageAction = uiActions.some(function (action) {
+        return action && action.type === 'page.perform_action';
+      });
+      if (conversation.busy || pendingPageAction) schedulePoll(id); else stopPoll();
       if (!conversation.busy && !conversation.last_error) delete state.retryMessages[id];
       var summary = state.conversations.find(function (item) { return item.conversation_id === id; });
       if (summary) Object.assign(summary, conversation);
@@ -796,9 +824,31 @@
     var conversationId = state.current;
     state.retryMessages[conversationId] = message;
     if (override == null) prompt.value = '';
-    setBusy(true);
     var turnContext = root.querySelector('#pai-context-toggle').checked ? collectContext() : null;
     renderContext(turnContext || {});
+    var localResult = window.PBGuiAI && typeof window.PBGuiAI.tryLocalCommand === 'function'
+      ? window.PBGuiAI.tryLocalCommand(message)
+      : { handled: false };
+    if (localResult.handled) {
+      setBusy(true);
+      setStatus(localResult.message || 'PBGui action completed.', false);
+      try {
+        await api('/conversations/' + encodeURIComponent(conversationId) + '/local-action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message, context: turnContext })
+        });
+        delete state.retryMessages[conversationId];
+        if (conversationId === state.current) await loadConversation(conversationId);
+      } catch (error) {
+        if (conversationId === state.current) {
+          setBusy(false);
+          setStatus('PBGui completed the action, but could not record it: ' + error.message, true);
+        }
+      }
+      return;
+    }
+    setBusy(true);
     setStatus('Starting model...', false);
     try {
       await api('/conversations/' + encodeURIComponent(conversationId) + '/turns', {
@@ -886,6 +936,7 @@
     startContextWatch();
     var button = document.getElementById('pbgui-ai-btn');
     if (button) button.setAttribute('aria-expanded', 'true');
+    saveDrawerPreferences(true).catch(function (error) { setStatus(error.message, true); });
     loadConversations();
   }
 
@@ -898,6 +949,7 @@
     root.setAttribute('aria-hidden', 'true');
     var button = document.getElementById('pbgui-ai-btn');
     if (button) { button.setAttribute('aria-expanded', 'false'); button.focus(); }
+    saveDrawerPreferences(false).catch(function (error) { setStatus(error.message, true); });
   }
 
   var facade = window.PBGuiAI || {};

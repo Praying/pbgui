@@ -3957,6 +3957,7 @@
   "v7explore.zAxis": "Z-Axis",
   "v7explore.zAxisTip": "Metric shown on the depth axis for 3D Custom quick views.",
   "v7optimize.activeQueuedCount": "{active} active, {queued} queued",
+  "v7optimize.aiQueueItemGone": "The selected Optimize queue item is no longer available.",
   "v7optimize.addToArchive": "🗄 Add to Archive",
   "v7optimize.additionalParameterJsonError": "Additional optimize parameter {key}: {error}",
   "v7optimize.additionalParameters": "Additional Parameters",

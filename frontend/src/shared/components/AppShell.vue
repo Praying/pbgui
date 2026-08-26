@@ -3,6 +3,7 @@ import { onMounted, ref, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WORKBENCH_NAVIGATION, type PageSection } from '@/shared/navigation';
 import { initAiPageMeta } from '@/shared/ai/context';
+import { setupAiDrawerAutoOpen } from '@/shared/ai/drawer';
 import StatusStrip from './StatusStrip.vue';
 import WorkbenchRail from './WorkbenchRail.vue';
 import WorkspaceHeader from './WorkspaceHeader.vue';
@@ -46,9 +47,11 @@ const railCollapsed = ref(readCollapsedPreference());
 
 /* Install the window.PBGuiAI bridge (page meta + context facade) so the
    shared AI drawer can collect this page's context the same way it does
-   on legacy pages. */
+   on legacy pages, and run the drawer auto-open boot logic
+   (?pbgui_ai_action=1 continuation / saved drawer_open preference). */
 onMounted(() => {
   initAiPageMeta(props.pageKey, props.pageTitle);
+  setupAiDrawerAutoOpen();
 });
 </script>
 
