@@ -1,5 +1,9 @@
 # Unreleased
 
+## Workbench Rail — Task 2 Review Fixes
+
+- Corrected the shared panel material cascade so the intended surface, border, and shadow declarations win over later legacy panel rules. The icon-button transform now uses the spring easing at its effective specificity, rail width changes are no longer animated, disabled navigation entries do not receive pressed scaling, and mobile temporary overlays contain scroll chaining while retaining the existing explicit outside-pointer and Escape dismissal behavior.
+
 ## Frontend - Precision Engineering Visual Tokens
 
 - Established the shared deep blue-grey surface hierarchy and precision-engineering semantic colors for Vue workbench pages, including panel/elevated shadows and accent-based focus treatment. Preserved legacy aliases and the offline Space Grotesk font setup, with a focused token contract test.

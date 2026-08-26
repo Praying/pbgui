@@ -130,7 +130,6 @@
     overflow: hidden;
     border-right: 1px solid var(--border-subtle);
     background: var(--surface-sidebar);
-    transition: width var(--motion-normal) var(--ease-standard);
   }
 
   .workbench-rail--collapsed {
@@ -555,15 +554,6 @@
     transform: translateX(0);
   }
 
-  .panel,
-  #main-content .pbgui-panel,
-  .page-toolbar,
-  .pbgui-status-strip {
-    border-color: var(--border-default);
-    background: var(--surface-panel);
-    box-shadow: var(--shadow-panel);
-  }
-
   .workspace-header {
     box-shadow: 0 1px 0 rgb(224 241 255 / 0.06) inset;
   }
@@ -646,7 +636,7 @@
       background-color var(--motion-fast) var(--ease-standard),
       border-color var(--motion-fast) var(--ease-standard),
       color var(--motion-fast) var(--ease-standard),
-      transform var(--motion-fast) var(--ease-standard);
+      transform var(--motion-fast) var(--ease-spring);
   }
 
   button.pbgui-icon-button.pbgui-icon-button:hover:not(:disabled) {
@@ -672,9 +662,9 @@
       transform var(--motion-fast) var(--ease-spring);
   }
 
-  .workbench-rail__item:active,
-  .workbench-rail__ai-btn:active,
-  .pbgui-icon-button:active {
+  .workbench-rail__item:not(.workbench-rail__item--disabled):active,
+  .workbench-rail__ai-btn:active:not(:disabled),
+  .pbgui-icon-button:active:not(:disabled) {
     transform: scale(0.98);
   }
 
@@ -1250,6 +1240,17 @@
     margin: 0 0 var(--sp-md);
   }
 
+  /* Keep shared material declarations after legacy panel rules so the
+     intended surface treatment wins the actual cascade. */
+  .panel,
+  #main-content .pbgui-panel,
+  .page-toolbar,
+  .pbgui-status-strip {
+    border-color: var(--border-default);
+    background: var(--surface-panel);
+    box-shadow: var(--shadow-panel);
+  }
+
   .card {
     background: var(--surface-card);
     border: 1px solid var(--border-default);
@@ -1377,6 +1378,7 @@
       z-index: var(--z-navigation);
       width: min(var(--rail-expanded-width), calc(100vw - var(--sp-lg)));
       max-height: none;
+      overscroll-behavior: contain;
       box-shadow: var(--shadow-elevated);
     }
 
