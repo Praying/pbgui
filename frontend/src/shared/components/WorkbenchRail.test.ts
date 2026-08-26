@@ -73,6 +73,7 @@ function mountRail(
   activePage = 'system_services',
   collapsed = false,
   extraProps: Record<string, unknown> = {},
+  attachToDocument = false,
 ) {
   return mount(WorkbenchRail, {
     props: {
@@ -82,6 +83,7 @@ function mountRail(
       ...extraProps,
     },
     global: { plugins: [createI18n('en')] },
+    attachTo: attachToDocument ? document.body : undefined,
   });
 }
 
@@ -151,12 +153,61 @@ describe('WorkbenchRail', () => {
     expect(toggle.attributes('aria-expanded')).toBe('false');
     expect(toggle.attributes('aria-controls')).toBe('workbench-nav-list');
     expect(wrapper.get('nav#workbench-rail').attributes('aria-label')).toBe('Primary navigation');
+    expect(wrapper.get('a[href="/api/services/main_page"]').attributes('aria-label')).toBe(
+      'PBGUI Services',
+    );
     expect(wrapper.get('a[href="/api/services/main_page"]').attributes('title')).toBe('PBGUI Services');
 
     await toggle.trigger('keydown', { key: 'Enter' });
 
     expect(wrapper.emitted('update:collapsed')).toEqual([[false]]);
     expect(localStorage.getItem('pbgui-workbench-rail-collapsed')).toBe('false');
+  });
+
+  it('keeps explicit expansion after the pointer leaves the rail', async () => {
+    const wrapper = mountRail('system_services', true);
+    const nav = wrapper.get('nav#workbench-rail');
+
+    await wrapper.get('[data-testid="rail-toggle"]').trigger('click');
+    await wrapper.setProps({ collapsed: false });
+
+    expect(nav.classes()).not.toContain('workbench-rail--collapsed');
+    expect(localStorage.getItem('pbgui-workbench-rail-collapsed')).toBe('false');
+
+    document.body.dispatchEvent(new MouseEvent('pointerout', { bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(nav.classes()).not.toContain('workbench-rail--collapsed');
+    expect(nav.classes()).not.toContain('workbench-rail--temp-expanded');
+  });
+
+  it('dismisses temporary expansion with Escape from a focused rail item', async () => {
+    const wrapper = mountRail('system_services', true, { sections: TEST_SECTIONS }, true);
+    const nav = wrapper.get('nav#workbench-rail');
+    const activeLink = wrapper.get('a[aria-current="page"]');
+
+    await activeLink.trigger('click');
+    expect(nav.classes()).toContain('workbench-rail--temp-expanded');
+
+    const activeLinkElement = activeLink.element as HTMLAnchorElement;
+    activeLinkElement.focus();
+    expect(document.activeElement).toBe(activeLinkElement);
+    activeLinkElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(nav.classes()).not.toContain('workbench-rail--temp-expanded');
+    expect(nav.classes()).toContain('workbench-rail--collapsed');
+  });
+
+  it('labels the temporary expanded toggle as a collapse action', async () => {
+    const wrapper = mountRail('system_services', true, { sections: TEST_SECTIONS });
+    const toggle = wrapper.get('[data-testid="rail-toggle"]');
+
+    await wrapper.get('a[aria-current="page"]').trigger('click');
+
+    expect(toggle.attributes('aria-expanded')).toBe('true');
+    expect(toggle.attributes('aria-label')).toBe('Collapse navigation');
+    expect(toggle.attributes('title')).toBe('Collapse navigation');
   });
 
   it('renders section children only under the active page and emits selection', async () => {
