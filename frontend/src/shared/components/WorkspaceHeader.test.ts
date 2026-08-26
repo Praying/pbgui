@@ -17,6 +17,7 @@ describe('WorkspaceHeader', () => {
     });
 
     expect(wrapper.element.tagName).toBe('HEADER');
+    expect(wrapper.get('h1').attributes('class')).toContain('workspace-header__title');
     expect(wrapper.get('.workspace-header__family').text()).toBe('System');
     expect(wrapper.get('h1').text()).toBe('Services');
     expect(wrapper.get('.workspace-header__description').text()).toBe('Control PBGui runtime services.');

@@ -42,6 +42,19 @@ function expect_declaration(rule: Rule, property: string, value: string): void {
 }
 
 describe('AppShell core-workbench-shell height chain', () => {
+  it('keeps shared shell surfaces on the engineering material hierarchy', () => {
+    const header = find_exact_rule(stylesheet_root, '.workspace-header');
+    const state_surfaces = find_exact_rule(
+      stylesheet_root,
+      '.pbgui-empty-state, .pbgui-error-state',
+    );
+
+    expect_declaration(header, 'background', 'var(--surface-workspace)');
+    expect_declaration(header, 'box-shadow', '0 1px 0 rgb(224 241 255 / 0.06) inset');
+    expect_declaration(state_surfaces, 'background', 'var(--surface-panel)');
+    expect_declaration(state_surfaces, 'box-shadow', 'var(--shadow-panel)');
+  });
+
   it('pins the shell to the viewport', () => {
     const shell = find_exact_rule(stylesheet_root, '.core-workbench-shell');
     expect_declaration(shell, 'height', '100dvh');

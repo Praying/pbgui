@@ -1,5 +1,9 @@
 # Unreleased
 
+## Frontend — Shared Workbench Surface Layer
+
+- Aligned the shared workspace header, empty state, and error state with the precision-engineering surface tokens and panel elevation while preserving AppShell, status, slot, event, and accessibility contracts.
+
 ## Workbench Rail — Task 3 Interaction Contract
 
 - Kept rail expansion explicitly click-locked, preserved temporary active-page expansion in collapsed mode, and ensured pointer exit cannot collapse the persisted preference. Collapsed navigation entries retain complete accessible labels and titles, while temporary expansion continues to dismiss through outside pointer presses or Escape without changing public props or emitted event contracts.

@@ -553,10 +553,6 @@
     transform: translateX(0);
   }
 
-  .workspace-header {
-    box-shadow: 0 1px 0 rgb(224 241 255 / 0.06) inset;
-  }
-
   /* ── Workspace header ────────────────────────────────────────── */
 
   .workspace-header {
@@ -567,7 +563,8 @@
     min-height: 112px;
     padding: var(--sp-2xl) var(--page-padding) var(--sp-lg);
     border-bottom: 1px solid var(--border-subtle);
-    background: rgb(var(--bg-page-rgb) / 0.44);
+    background: var(--surface-workspace);
+    box-shadow: 0 1px 0 rgb(224 241 255 / 0.06) inset;
   }
 
   .workspace-header__identity {
@@ -809,6 +806,7 @@
     border: 1px dashed var(--border-default);
     border-radius: var(--radius-lg);
     background: var(--surface-panel);
+    box-shadow: var(--shadow-panel);
     color: var(--text-secondary);
     text-align: center;
   }
