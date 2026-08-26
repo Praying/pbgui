@@ -74,8 +74,15 @@ const retentionDays = ref(7);
 const retentionMode = ref('report_only');
 const selfJoinForm = ref({ hostname: '', remote_pbgui_dir: '', ssh_host: '', ssh_user: '', ssh_port: 22, reset: false });
 
-const SYNC_MODE_LABELS: Record<string, string> = { reachable: 'Reachable', outbound_only: 'Outbound only', disabled: 'Disabled' };
-const syncModeLabel = computed(() => SYNC_MODE_LABELS[settingsForm.value.sync_mode] ?? settingsForm.value.sync_mode);
+const SYNC_MODE_LABEL_KEYS: Record<string, string> = {
+  reachable: 'sysmon.reachable',
+  outbound_only: 'sysmon.outboundOnly',
+  disabled: 'common.disabled',
+};
+const syncModeLabel = computed(() => {
+  const labelKey = SYNC_MODE_LABEL_KEYS[settingsForm.value.sync_mode];
+  return labelKey ? t(labelKey) : settingsForm.value.sync_mode;
+});
 
 const counts = computed(() => status.value.counts || {});
 const identity = computed(() => status.value.identity || {});
@@ -237,15 +244,15 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <div class="p-4">
                   <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">Cluster ID</div>
+                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.clusterId') }}</div>
                       <div :class="statMonoClass" data-field="cluster-id">{{ display(identity.cluster_id) }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">Node ID</div>
+                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.nodeId') }}</div>
                       <div :class="statMonoClass">{{ display(identity.node_id) }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">Generation</div>
+                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.generation') }}</div>
                       <div :class="statValueClass">{{ counts.oplog || 0 }}</div>
                     </div>
                   </div>
@@ -258,15 +265,15 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <div class="p-4">
                   <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">Nodes</div>
+                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.nodes') }}</div>
                       <div :class="statValueClass" data-count="nodes">{{ counts.nodes || 0 }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">V7</div>
+                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.v7') }}</div>
                       <div :class="statValueClass">{{ counts.instances || 0 }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">Conflicts</div>
+                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.conflicts') }}</div>
                       <div :class="statValueClass">{{ counts.conflicts || 0 }}</div>
                     </div>
                   </div>
@@ -279,7 +286,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
 
             <article :class="cardClass">
               <header :class="cardHeadClass">
-                <span :class="cardTitleClass">{{ 'Checkpoint' }}</span>
+                <span :class="cardTitleClass">{{ t('sysmon.checkpoint') }}</span>
               </header>
               <div class="flex flex-wrap items-center gap-2.5 p-4">
                 <span :class="[pillClass, statusClass(status.checkpoint?.status)]">{{ display(status.checkpoint?.status) }}</span>
@@ -301,9 +308,9 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                   <table class="w-full border-collapse text-[0.78rem]">
                     <thead>
                       <tr>
-                        <th :class="thClass">Type</th>
-                        <th :class="thClass">Name</th>
-                        <th :class="thClass">Action</th>
+                        <th :class="thClass">{{ t('sysmon.type') }}</th>
+                        <th :class="thClass">{{ t('sysmon.name') }}</th>
+                        <th :class="thClass">{{ t('sysmon.action') }}</th>
                         <th :class="thClass"></th>
                       </tr>
                     </thead>
@@ -328,10 +335,10 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <Button variant="warning" type="button" @click="startSelfJoin">{{ t('sysmon.joinExistingCluster') }}</Button>
               </header>
               <div class="grid gap-3 p-4">
-                <Label class="grid gap-1">Hostname<Input v-model="selfJoinForm.hostname" /></Label>
-                <Label class="grid gap-1">SSH Host<Input v-model="selfJoinForm.ssh_host" /></Label>
-                <Label class="grid gap-1">SSH User<Input v-model="selfJoinForm.ssh_user" /></Label>
-                <Label class="grid gap-1">SSH Port<Input v-model.number="selfJoinForm.ssh_port" type="number" /></Label>
+                <Label class="grid gap-1">{{ t('sysmon.hostname') }}<Input v-model="selfJoinForm.hostname" /></Label>
+                <Label class="grid gap-1">{{ t('sysmon.sshHost') }}<Input v-model="selfJoinForm.ssh_host" /></Label>
+                <Label class="grid gap-1">{{ t('sysmon.sshUser') }}<Input v-model="selfJoinForm.ssh_user" /></Label>
+                <Label class="grid gap-1">{{ t('sysmon.sshPort') }}<Input v-model.number="selfJoinForm.ssh_port" type="number" /></Label>
                 <label class="flex items-center gap-1.75 text-[0.8rem] text-secondary"><Checkbox v-model="selfJoinForm.reset" /> {{ t('sysmon.recovery') }}</label>
               </div>
             </article>
@@ -341,17 +348,17 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
           <section v-else-if="section === 'nodes'" data-section="nodes" :class="cardClass">
             <header :class="cardHeadClass">
               <span :class="cardTitleClass">{{ t('sysmon.clusterNodes') }}</span>
-              <span class="text-[0.78rem] tabular-nums text-secondary">{{ nodes.length }} nodes</span>
+              <span class="text-[0.78rem] tabular-nums text-secondary">{{ t('sysmon.nodesCount', { count: nodes.length }) }}</span>
             </header>
             <div class="overflow-auto p-4">
               <table class="w-full border-collapse text-[0.78rem]">
                 <thead>
                   <tr>
-                    <th :class="thClass">Node</th>
-                    <th :class="thClass">Role</th>
-                    <th :class="thClass">Sync</th>
-                    <th :class="thClass">SSH</th>
-                    <th :class="thClass">Actions</th>
+                    <th :class="thClass">{{ t('sysmon.node') }}</th>
+                    <th :class="thClass">{{ t('sysmon.role') }}</th>
+                    <th :class="thClass">{{ t('sysmon.sync') }}</th>
+                    <th :class="thClass">{{ t('sysmon.ssh') }}</th>
+                    <th :class="thClass">{{ t('sysmon.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -388,10 +395,10 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <table class="w-full border-collapse text-[0.78rem]">
                 <thead>
                   <tr>
-                    <th :class="thClass">Instance</th>
-                    <th :class="thClass">Current</th>
-                    <th :class="thClass">Desired</th>
-                    <th :class="thClass">Status</th>
+                    <th :class="thClass">{{ t('sysmon.instance') }}</th>
+                    <th :class="thClass">{{ t('sysmon.current') }}</th>
+                    <th :class="thClass">{{ t('sysmon.desired') }}</th>
+                    <th :class="thClass">{{ t('sysmon.status') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -417,9 +424,9 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <table class="w-full border-collapse text-[0.78rem]">
                 <thead>
                   <tr>
-                    <th :class="thClass">Instance</th>
-                    <th :class="thClass">Created</th>
-                    <th :class="thClass">Reason</th>
+                    <th :class="thClass">{{ t('sysmon.instance') }}</th>
+                    <th :class="thClass">{{ t('sysmon.created') }}</th>
+                    <th :class="thClass">{{ t('sysmon.reason') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -442,10 +449,10 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <table class="w-full border-collapse text-[0.78rem]">
                 <thead>
                   <tr>
-                    <th :class="thClass">Created</th>
-                    <th :class="thClass">Operation</th>
-                    <th :class="thClass">Target</th>
-                    <th :class="thClass">Seq</th>
+                    <th :class="thClass">{{ t('sysmon.created') }}</th>
+                    <th :class="thClass">{{ t('sysmon.operation') }}</th>
+                    <th :class="thClass">{{ t('sysmon.target') }}</th>
+                    <th :class="thClass">{{ t('sysmon.sequence') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -454,7 +461,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                     <td :class="tdHoverClass">
                       <span :class="pillClass" class="bg-elevated">{{ display(op.op) }}</span>
                     </td>
-                    <td :class="tdHoverClass">{{ display(op.instance || op.node_id || (op.api_serial ? 'api-keys' : 'cluster')) }}</td>
+                    <td :class="tdHoverClass">{{ display(op.instance || op.node_id || (op.api_serial ? t('sysmon.apiKeysTarget') : t('sysmon.clusterTarget'))) }}</td>
                     <td class="tabular-nums" :class="tdHoverClass">{{ display(op.seq) }}</td>
                   </tr>
                 </tbody>
@@ -476,11 +483,11 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <div class="p-4">
                 <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
                   <div :class="statClass">
-                    <div class="text-[0.72rem] text-secondary">Active</div>
+                    <div class="text-[0.72rem] text-secondary">{{ t('sysmon.active') }}</div>
                     <div :class="statValueClass">{{ credentials.active || 0 }}</div>
                   </div>
                   <div :class="statClass">
-                    <div class="text-[0.72rem] text-secondary">Conflicts</div>
+                    <div class="text-[0.72rem] text-secondary">{{ t('sysmon.conflicts') }}</div>
                     <div :class="statValueClass">{{ (credentials.conflicts || []).length }}</div>
                   </div>
                 </div>
@@ -492,7 +499,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <span :class="cardTitleClass">{{ t('sysmon.localClusterSsh') }}</span>
               </header>
               <div class="p-4">
-                <div class="text-[0.72rem] text-secondary">Fingerprint</div>
+                <div class="text-[0.72rem] text-secondary">{{ t('sysmon.fingerprint') }}</div>
                 <div class="mt-1 break-all font-mono text-[0.82rem]">{{ display(localClusterSsh.fingerprint) }}</div>
               </div>
             </article>
@@ -506,18 +513,18 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <Button data-action="save-retention" variant="info" type="button" @click="saveRetention">{{ t('common.save') }}</Button>
               </header>
               <div class="grid gap-3 p-4">
-                <Label class="grid gap-1">Mode
+                <Label class="grid gap-1">{{ t('sysmon.modeLabel') }}
                   <SelectRoot v-model="retentionMode">
                     <SelectTrigger>
-                      <span>{{ retentionMode === 'automatic' ? 'Automatic retention' : 'Report only' }}</span>
+                      <span>{{ retentionMode === 'automatic' ? t('sysmon.automaticRetention') : t('sysmon.reportOnly') }}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="report_only">Report only</SelectItem>
-                      <SelectItem value="automatic">Automatic retention</SelectItem>
+                    <SelectItem value="report_only">{{ t('sysmon.reportOnly') }}</SelectItem>
+                    <SelectItem value="automatic">{{ t('sysmon.automaticRetention') }}</SelectItem>
                     </SelectContent>
                   </SelectRoot>
                 </Label>
-                <Label class="grid gap-1">History days<Input data-field="history-days" v-model.number="retentionDays" type="number" min="1" max="3650" /></Label>
+                <Label class="grid gap-1">{{ t('sysmon.historyDays') }}<Input data-field="history-days" v-model.number="retentionDays" type="number" min="1" max="3650" /></Label>
                 <p class="m-0 text-[0.82rem] leading-[1.55] text-secondary">{{ t('sysmon.clusterHistoryRetentionNote') }}</p>
               </div>
             </article>
@@ -554,22 +561,22 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
             <Button variant="secondary" type="button" @click="closeSettings"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button>
           </div>
           <div class="grid gap-3 pt-3.5">
-            <Label class="grid gap-1">Remote PBGui Dir<Input v-model="settingsForm.remote_pbgui_dir" /></Label>
-            <Label class="grid gap-1">Sync mode
+            <Label class="grid gap-1">{{ t('sysmon.remotePbguiDir') }}<Input v-model="settingsForm.remote_pbgui_dir" /></Label>
+            <Label class="grid gap-1">{{ t('sysmon.syncMode') }}
               <SelectRoot v-model="settingsForm.sync_mode">
                 <SelectTrigger>
                   <span>{{ syncModeLabel }}</span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="reachable">Reachable</SelectItem>
-                  <SelectItem value="outbound_only">Outbound only</SelectItem>
-                  <SelectItem value="disabled">Disabled</SelectItem>
+                  <SelectItem value="reachable">{{ t('sysmon.reachable') }}</SelectItem>
+                  <SelectItem value="outbound_only">{{ t('sysmon.outboundOnly') }}</SelectItem>
+                  <SelectItem value="disabled">{{ t('common.disabled') }}</SelectItem>
                 </SelectContent>
               </SelectRoot>
             </Label>
-            <Label class="grid gap-1">SSH Host<Input v-model="settingsForm.ssh_host" /></Label>
-            <Label class="grid gap-1">SSH User<Input v-model="settingsForm.ssh_user" /></Label>
-            <Label class="grid gap-1">SSH Port<Input v-model.number="settingsForm.ssh_port" type="number" /></Label>
+            <Label class="grid gap-1">{{ t('sysmon.sshHost') }}<Input v-model="settingsForm.ssh_host" /></Label>
+            <Label class="grid gap-1">{{ t('sysmon.sshUser') }}<Input v-model="settingsForm.ssh_user" /></Label>
+            <Label class="grid gap-1">{{ t('sysmon.sshPort') }}<Input v-model.number="settingsForm.ssh_port" type="number" /></Label>
           </div>
           <div class="mt-4 flex justify-end gap-1.75">
             <Button variant="secondary" type="button" @click="closeSettings">{{ t('common.cancel') }}</Button>

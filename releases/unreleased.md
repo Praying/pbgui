@@ -1,5 +1,9 @@
 # Unreleased
 
+## Cluster Sync — Localization
+
+- Localized the Cluster Sync page's remaining hardcoded field labels, table headers, retention and sync-mode options, and node-count text through the shared English and Simplified Chinese dictionaries. API behavior and data rendering remain unchanged.
+
 ## Frontend — Unified Typography Scale
 
 - Unified the Vue and legacy frontend pages around one shared type scale: 12px captions, 14px secondary/control text, 15px body text, 16px emphasized labels, 19px section headings, 23px page-level headings, 26px titles, and 34px display headings. Existing font families, weights, line heights, spacing, colors, control dimensions, behavior, and API contracts remain unchanged.
