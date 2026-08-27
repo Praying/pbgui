@@ -73,13 +73,13 @@ function onExchangeSelect(value: unknown): void {
 </script>
 
 <template>
-  <section class="panel flex-none overflow-visible rounded-[12px] border border-elevated bg-card" id="filters-panel">
+  <section class="panel coin-filter-panel flex-none overflow-visible rounded-xl border" id="filters-panel">
     <div class="panel-body p-[1rem] overflow-visible">
       <div class="filters-grid grid grid-cols-[minmax(180px,1fr)_minmax(130px,0.7fr)_minmax(130px,0.7fr)_minmax(240px,1.45fr)_auto_auto] gap-2 items-end max-[1280px]:grid-cols-[repeat(3,minmax(0,1fr))] max-[980px]:grid-cols-1">
         <label class="field grid gap-[0.35rem] min-w-0">
           <span class="field-label text-sm text-secondary font-semibold" id="filter-exchange-label">{{ t('market.exchange') }}</span>
           <SelectRoot :model-value="exchange" @update:model-value="onExchangeSelect">
-            <SelectTrigger id="filter-exchange" aria-labelledby="filter-exchange-label">
+            <SelectTrigger id="filter-exchange" class="coin-filter-control" aria-labelledby="filter-exchange-label">
               <span>{{ exchange }}</span>
             </SelectTrigger>
             <SelectContent>
@@ -90,28 +90,28 @@ function onExchangeSelect(value: unknown): void {
         <label class="field grid gap-[0.35rem] min-w-0">
           <span class="field-label text-sm text-secondary font-semibold">market_cap</span>
           <div class="num-stepper flex items-center">
-            <Button class="stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', -1)">−</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', -1)">−</Button>
             <Input
               id="filter-market-cap"
               v-model="marketCapModel"
-              class="rounded-none text-center"
+              class="coin-filter-input rounded-none text-center"
               type="number"
               min="0"
               step="250"
               @wheel.prevent="emit('step-number', 'market_cap', ($event as WheelEvent).deltaY < 0 ? 1 : -1)"
               @change="emit('number-change', 'market_cap')"
             />
-            <Button class="stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', 1)">+</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', 1)">+</Button>
           </div>
         </label>
         <label class="field grid gap-[0.35rem] min-w-0">
           <span class="field-label text-sm text-secondary font-semibold">vol/mcap</span>
           <div class="num-stepper flex items-center">
-            <Button class="stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', -1)">−</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', -1)">−</Button>
             <Input
               id="filter-vol-mcap"
               v-model="volMcapModel"
-              class="rounded-none text-center"
+              class="coin-filter-input rounded-none text-center"
               type="text"
               inputmode="decimal"
               autocomplete="off"
@@ -119,7 +119,7 @@ function onExchangeSelect(value: unknown): void {
               @wheel.prevent="emit('step-number', 'vol_mcap', ($event as WheelEvent).deltaY < 0 ? 1 : -1)"
               @change="emit('number-change', 'vol_mcap')"
             />
-            <Button class="stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', 1)">+</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', 1)">+</Button>
           </div>
         </label>
         <div class="field grid gap-[0.35rem] min-w-0">
@@ -132,7 +132,7 @@ function onExchangeSelect(value: unknown): void {
           />
         </div>
         <div class="filters-status flex items-center justify-end gap-2 min-w-0 max-[980px]:justify-start">
-          <span class="pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.6rem] rounded-full border border-border-default bg-card text-primary text-sm whitespace-nowrap max-w-full overflow-hidden text-ellipsis" id="quotes-pill">{{ quotesLabel }}</span>
+          <span class="coin-filter-pill pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.65rem] rounded-full border text-secondary text-sm whitespace-nowrap max-w-full overflow-hidden text-ellipsis" id="quotes-pill">{{ quotesLabel }}</span>
         </div>
         <div class="filters-reset flex items-end justify-end max-[980px]:justify-start">
           <Button variant="secondary" id="btn-reset-filters" type="button" @click="emit('reset')">{{ t('market.reset') }}</Button>
@@ -143,6 +143,42 @@ function onExchangeSelect(value: unknown): void {
 </template>
 
 <style scoped>
+.coin-filter-panel {
+  border-color: var(--coin-border);
+  background: var(--coin-control);
+  box-shadow:
+    0 14px 28px rgb(2 8 14 / 0.17),
+    0 1px 0 rgb(224 241 255 / 0.05) inset;
+}
+
+.coin-filter-control,
+.coin-filter-input,
+.coin-stepper-btn {
+  border-color: var(--coin-border-strong);
+  background: var(--coin-input);
+}
+
+.coin-stepper-btn {
+  color: var(--text-secondary);
+}
+
+.coin-stepper-btn:hover:not(:disabled) {
+  border-color: rgb(var(--accent-rgb) / 0.38);
+  background: color-mix(in srgb, var(--coin-input) 88%, var(--accent) 12%);
+  color: var(--accent-soft);
+}
+
+.coin-filter-input:focus-visible,
+.coin-filter-control:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.coin-filter-pill {
+  border-color: var(--coin-border);
+  background: rgb(155 191 255 / 0.045);
+}
+
 /* Number-stepper spinners — ported from styles/coin-data.css at the
    Tailwind migration. The ::-webkit-*-spin-button pseudo-elements (and
    the Firefox appearance pair that belongs with them) cannot be

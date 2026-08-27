@@ -81,6 +81,10 @@ describe('Coin Data page shell', () => {
     expect(mainRows[0]!.text()).toContain('0.0100x');
     expect(wrapper.find('#main-panel-title').text()).toContain('Matched symbols (2)');
     expect(wrapper.find('#quotes-pill').text()).toBe('Quotes: USDT');
+    expect(wrapper.get('#filters-panel').classes()).toContain('coin-filter-panel');
+    expect(wrapper.get('#main-panel').classes()).toContain('coin-data-panel');
+    expect(wrapper.get('#main-panel .table-wrap').classes()).toContain('coin-data-table-wrap');
+    expect(wrapper.get('#main-panel th').classes()).toContain('coin-table-header');
   });
 
   it('switches views through the rail sections and renders the unmatched table', async () => {
@@ -165,6 +169,17 @@ describe('Coin Data page shell', () => {
 
     expect(wrapper.find('#warning-box').classes()).not.toContain('hidden');
     expect(wrapper.find('#warning-box').text()).toContain('No mapping data available');
+    expect(wrapper.find('#warning-box svg').exists()).toBe(true);
+  });
+
+  it('renders a structured empty table on the dark data surface', async () => {
+    installState(stateFixture({ rows: [], counts: { main: 0, unmatched_visible: 1, unmatched_all: 3, hip3: 0 } }));
+    const wrapper = await mountApp();
+
+    const emptyState = wrapper.get('#main-empty');
+    expect(emptyState.classes()).toContain('coin-table-empty');
+    expect(emptyState.find('svg').exists()).toBe(true);
+    expect(emptyState.text()).toContain('No symbols match');
   });
 
   it('exposes the hip3 view only for hyperliquid and the CPT toggle only for supported exchanges', async () => {

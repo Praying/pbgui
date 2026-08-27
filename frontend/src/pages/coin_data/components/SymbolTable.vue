@@ -8,6 +8,8 @@
  * targets those structures (#hip3-panel > .panel-body …).
  */
 import { useI18n } from 'vue-i18n';
+import { PhDatabase } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { columnsForTable, type ColumnDef } from '../lib/columns';
 import { formatCompact, formatPrice, formatRatio, rowKey } from '../lib/format';
 import type { TableViewName } from '../types';
@@ -43,7 +45,7 @@ function tableClass(): string {
  *  equivalent of #hip3-panel.active-panel .table-wrap winning over the
  *  generic .table-wrap overflow. */
 function tableWrapClass(): string {
-  const base = 'flex-1 min-h-0 [scrollbar-width:thin] [scrollbar-color:var(--border-strong)_var(--bg-card)] max-[980px]:flex-none max-[980px]:max-h-none';
+  const base = 'coin-data-table-wrap flex-1 min-h-0 [scrollbar-width:thin] [scrollbar-color:var(--border-strong)_transparent] max-[980px]:flex-none max-[980px]:max-h-none';
   return props.table === 'hip3'
     ? `${base} overflow-x-auto overflow-y-scroll overscroll-contain [scrollbar-gutter:stable_both-edges] pt-0 px-[1rem] pb-[1rem]`
     : `${base} overflow-auto`;
@@ -54,7 +56,7 @@ function tableWrapClass(): string {
  *  row keeps its tint on hover); the neutral branch carries the hover
  *  lift. 'data-row' / 'selected' remain the legacy anchors. */
 function rowClass(selected: boolean): string {
-  return selected ? 'selected bg-accent/12' : 'hover:bg-white/3';
+  return selected ? 'selected' : '';
 }
 
 function headerLabel(column: ColumnDef): string {
@@ -99,7 +101,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           <th
             v-for="column in columns"
             :key="column.key"
-            class="sortable cursor-pointer hover:text-primary sticky top-0 z-[2] bg-page text-secondary text-base uppercase tracking-[0.04em] font-bold text-left px-[0.6rem] py-[0.48rem] leading-[1.05] border-b border-elevated whitespace-nowrap"
+            class="coin-table-header sortable cursor-pointer sticky top-0 z-[2] text-secondary text-sm uppercase tracking-[0.055em] font-bold text-left px-[0.65rem] py-[0.6rem] leading-[1.05] border-b whitespace-nowrap"
             :data-table="table"
             :data-key="column.key"
             @click="emit('sort', table, column.key)"
@@ -116,7 +118,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           :data-key="rowKey(row, table)"
           @click="emit('select', table, rowKey(row, table))"
         >
-          <td v-for="column in columns" :key="column.key" class="px-[0.6rem] py-[0.28rem] border-b border-elevated text-primary leading-[1.08] align-middle overflow-hidden text-ellipsis whitespace-nowrap" :class="column.mono ? 'mono text-sm' : 'text-md'" :title="cellText(row, column)">
+          <td v-for="column in columns" :key="column.key" class="coin-table-cell px-[0.65rem] py-[0.38rem] border-b text-primary leading-[1.12] align-middle overflow-hidden text-ellipsis whitespace-nowrap" :class="column.mono ? 'mono text-sm' : 'text-md'" :title="cellText(row, column)">
             <template v-if="column.render === 'cpt'">
               <span v-if="row[column.key]" class="badge pbgui-badge badge-success ok inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-success/15 border-success/30 text-success">{{ t('common.yes') }}</span>
               <span v-else class="badge pbgui-badge badge-muted dim inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-secondary/12 border-secondary/20 text-primary">{{ t('common.no') }}</span>
@@ -138,7 +140,12 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
       </tbody>
     </table>
   </div>
-  <div class="empty-state py-[2rem] px-[1rem] text-center text-muted text-md" :id="table + '-empty'" :class="rows.length > 0 ? 'hidden' : ''">{{ emptyMessage() }}</div>
+  <div class="coin-table-empty empty-state flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center" :id="table + '-empty'" :class="rows.length > 0 ? 'hidden' : ''">
+    <span class="grid h-12 w-12 place-items-center rounded-xl border text-secondary">
+      <PbIcon :icon="PhDatabase" :size="23" />
+    </span>
+    <span class="max-w-[46ch] text-sm leading-relaxed text-muted">{{ emptyMessage() }}</span>
+  </div>
 </template>
 
 <style scoped>
@@ -147,21 +154,64 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
    be utilities; the scrollbar-width / scrollbar-color declarations live
    on the element itself as arbitrary utilities (see tableWrapClass). */
 .table-wrap::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 5px;
+  height: 5px;
 }
 
 .table-wrap::-webkit-scrollbar-track {
-  background: var(--bg-card);
+  background: transparent;
 }
 
 .table-wrap::-webkit-scrollbar-thumb {
   background: var(--border-strong);
   border-radius: 999px;
-  border: 2px solid var(--bg-card);
 }
 
 .table-wrap::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+.coin-data-table-wrap {
+  background: var(--coin-data);
+}
+
+.coin-table-header {
+  border-color: var(--coin-border);
+  background: var(--coin-header);
+}
+
+.coin-table-header:hover {
+  background: color-mix(in srgb, var(--coin-header) 90%, var(--accent) 10%);
+  color: var(--text-primary);
+}
+
+.coin-table-cell {
+  border-color: rgb(157 191 226 / 0.075);
+}
+
+.data-row {
+  transition: background-color var(--motion-fast) var(--ease-standard);
+}
+
+.data-row:hover {
+  background: var(--coin-row-hover);
+}
+
+.data-row.selected,
+.data-row.selected:hover {
+  background: var(--coin-row-selected);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.coin-table-empty {
+  min-height: 180px;
+  background:
+    radial-gradient(circle at 50% 38%, rgb(var(--accent-rgb) / 0.045), transparent 12rem),
+    var(--coin-data);
+}
+
+.coin-table-empty > span:first-child {
+  border-color: var(--coin-border);
+  background: rgb(155 191 255 / 0.04);
 }
 </style>

@@ -1,5 +1,9 @@
 # Unreleased
 
+## Coin Data — Precision Data Workbench Palette
+
+- Unified Coin Data around a deeper blue-grey control/data hierarchy: filters now sit on a softly lifted control surface, tables use a darker data surface with a matching header, warnings use a restrained amber treatment, disabled actions are neutral, selected rows keep an ice-blue locator, and empty tables receive a structured local-icon state. The table scrollbar is reduced to 5px and the refresh/detail overlays use the same page-local palette without changing data, filtering, sorting, or refresh behavior.
+
 ## Frontend — Final Review Blocker Fixes
 
 - Made WorkbenchRail outside-pointer dismissal yield to the same visible higher-priority dialog, modal, help, and AI layers used by Escape handling; added coverage proving dialog focus and rail state remain unchanged. Replaced the BusyOverlay and WidgetBalance geometry width transitions with transform-based progress fills, while leaving unrelated pre-existing `transition-all` uses outside this focused scope.

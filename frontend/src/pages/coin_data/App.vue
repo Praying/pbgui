@@ -47,11 +47,13 @@
  *    placeholder shown while no DEX is picked (ui-migration).
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
+import { PhWarningCircle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -318,10 +320,13 @@ onBeforeUnmount(() => {
     </template>
 
     <MigrationWatermark />
-    <div id="page-body" class="flex h-[calc(100dvh-112px)] overflow-hidden max-[980px]:flex-col">
-    <div id="main-content" ref="mainContent" class="flex min-w-0 min-h-0 flex-1 flex-col gap-3 overflow-hidden p-5 max-[980px]:overflow-y-auto">
-      <div id="warning-box" class="warning-box border border-warning/35 bg-warning/8 text-warning rounded-[10px] px-[0.95rem] py-[0.8rem] text-sm leading-[1.6]" :class="warnings.length ? '' : 'hidden'">
-        <div v-for="warning in warnings" :key="warning">{{ warning }}</div>
+    <div id="page-body" class="coin-data-page-body flex h-[calc(100dvh-112px)] overflow-hidden max-[980px]:flex-col">
+    <div id="main-content" ref="mainContent" class="coin-data-workspace flex min-w-0 min-h-0 flex-1 flex-col gap-3 overflow-hidden p-5 max-[980px]:overflow-y-auto">
+      <div id="warning-box" class="warning-box rounded-xl border px-4 py-3 text-sm leading-[1.55]" :class="warnings.length ? 'flex' : 'hidden'">
+        <PbIcon class="mt-0.5 shrink-0 text-warning" :icon="PhWarningCircle" :size="18" />
+        <div class="grid min-w-0 gap-1 text-warning-soft">
+          <div v-for="warning in warnings" :key="warning">{{ warning }}</div>
+        </div>
       </div>
 
       <FiltersPanel
@@ -351,12 +356,12 @@ onBeforeUnmount(() => {
       />
 
       <details
-        class="panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-[12px] border border-elevated bg-card"
+        class="panel coin-data-panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-xl border"
         id="unmatched-panel"
         :class="store.activeView.value === 'unmatched' ? 'flex' : 'hidden'"
         :open="store.activeView.value === 'unmatched'"
       >
-        <summary id="unmatched-summary" class="flex items-center justify-between gap-3 py-2 px-3 text-sm font-semibold text-primary bg-page border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
+        <summary id="unmatched-summary" class="coin-data-panel-head flex items-center justify-between gap-3 py-2.5 px-3.5 text-sm font-semibold text-primary border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
         <div class="panel-body flex flex-1 flex-col min-h-0 p-[1rem]">
           <SymbolTable
             table="unmatched"
@@ -369,16 +374,16 @@ onBeforeUnmount(() => {
       </details>
 
       <section
-        class="panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-[12px] border border-elevated bg-card"
+        class="panel coin-data-panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-xl border"
         id="main-panel"
         :class="store.activeView.value === 'main' ? 'flex' : 'hidden'"
       >
-        <div class="panel-head flex items-center justify-between gap-2 py-2 px-3 border-b border-border-default bg-page">
+        <div class="panel-head coin-data-panel-head flex items-center justify-between gap-2 py-2.5 px-3.5 border-b">
           <div class="panel-title-wrap flex items-center gap-2 min-w-0 flex-wrap">
             <div class="panel-title text-md font-semibold text-primary" id="main-panel-title">{{ t('market.matchedSymbolsLowerCount', { count: counts.main }) }}</div>
             <span class="panel-meta text-sm text-secondary whitespace-nowrap overflow-hidden text-ellipsis max-w-[min(52vw,760px)]" id="main-panel-meta" :title="mainPanelMetaTitle">{{ mainPanelMeta }}</span>
           </div>
-          <span class="pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.6rem] rounded-full border border-border-default bg-card text-primary text-sm whitespace-nowrap" id="main-sort-pill">{{ sortPill }}</span>
+          <span class="coin-data-sort-pill pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.65rem] rounded-full border text-secondary text-sm whitespace-nowrap" id="main-sort-pill">{{ sortPill }}</span>
         </div>
         <SymbolTable
           table="main"
@@ -390,12 +395,12 @@ onBeforeUnmount(() => {
       </section>
 
       <details
-        class="panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-[12px] border border-elevated bg-card"
+        class="panel coin-data-panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-xl border"
         id="hip3-panel"
         :class="store.activeView.value === 'hip3' ? 'active-panel flex h-0' : 'hidden'"
         :open="store.activeView.value === 'hip3'"
       >
-        <summary id="hip3-summary" class="flex items-center justify-between gap-3 py-2 px-3 text-sm font-semibold text-primary bg-page border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">
+        <summary id="hip3-summary" class="coin-data-panel-head flex items-center justify-between gap-3 py-2.5 px-3.5 text-sm font-semibold text-primary border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">
           <span class="summary-title inline-flex items-center min-w-0">
             <span class="summary-title-text min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" id="hip3-summary-title">{{ hip3SummaryTitle || t('market.hip3SummaryTitle') }}</span>
           </span>
@@ -480,6 +485,74 @@ body {
 /* Page-level AppShell overrides — ported from styles/coin-data.css at
    the Tailwind migration. The :deep() rules target AppShell internals,
    so they stay as CSS instead of utilities. */
+.data-page-shell--coin-data {
+  --coin-page: #0d151e;
+  --coin-workspace: #111c27;
+  --coin-control: #172634;
+  --coin-data: #13212d;
+  --coin-header: #0e1924;
+  --coin-input: #142331;
+  --coin-border: rgb(157 191 226 / 0.14);
+  --coin-border-strong: rgb(157 191 226 / 0.24);
+  --coin-row-hover: rgb(155 191 255 / 0.055);
+  --coin-row-selected: rgb(155 191 255 / 0.11);
+}
+
+.data-page-shell--coin-data :deep(.app-shell__workspace) {
+  background: var(--coin-workspace);
+}
+
+.data-page-shell--coin-data :deep(.workspace-header) {
+  background: linear-gradient(180deg, #13202c, var(--coin-workspace));
+}
+
+.coin-data-page-body,
+.coin-data-workspace {
+  background: var(--coin-workspace);
+}
+
+.coin-data-workspace {
+  background-image:
+    radial-gradient(circle at 88% 4%, rgb(var(--accent-rgb) / 0.045), transparent 24rem),
+    repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.012) 0 1px, transparent 1px 42px);
+}
+
+.warning-box {
+  gap: var(--sp-sm);
+  border-color: rgb(var(--warning-rgb) / 0.22);
+  background: color-mix(in srgb, var(--coin-control) 92%, var(--warning) 8%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.035) inset;
+}
+
+.coin-data-panel {
+  border-color: var(--coin-border);
+  background: var(--coin-data);
+  box-shadow:
+    0 18px 34px rgb(2 8 14 / 0.2),
+    0 1px 0 rgb(224 241 255 / 0.045) inset;
+}
+
+.coin-data-panel-head {
+  border-color: var(--coin-border);
+  background: var(--coin-header);
+  box-shadow: 0 1px 0 rgb(224 241 255 / 0.035) inset;
+}
+
+.coin-data-sort-pill {
+  border-color: var(--coin-border);
+  background: rgb(155 191 255 / 0.055);
+}
+
+.data-page-shell--coin-data :deep(.workspace-header__actions button:disabled) {
+  border-color: var(--coin-border);
+  background: rgb(var(--text-secondary-rgb) / 0.035);
+  color: var(--text-disabled);
+}
+
+.data-page-shell--coin-data :deep(#btn-refresh-exchange:not(:disabled)) {
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.06);
+}
+
 .data-page-shell :deep(.app-shell__main) {
   width: 100%;
   max-width: none;

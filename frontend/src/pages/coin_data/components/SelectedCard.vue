@@ -301,7 +301,7 @@ defineExpose({ fitToContent, resetLayout });
   <section
     ref="card"
     id="selected-card"
-    class="details-card fixed top-1/2 left-1/2 [transform:translate(-50%,-50%)] w-[min(640px,calc(100vw-2rem))] h-[min(440px,calc(100dvh-110px))] min-w-[520px] min-h-[280px] max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-88px)] border border-accent/20 bg-page/70 rounded-[12px] overflow-hidden flex-col z-[125] shadow-[0_24px_56px_rgba(5,8,14,0.38)] backdrop-blur-[12px] max-[980px]:top-[72px] max-[980px]:left-[1rem] max-[980px]:right-[1rem] max-[980px]:[transform:none] max-[980px]:w-auto max-[980px]:h-auto max-[980px]:min-w-0"
+    class="details-card fixed top-1/2 left-1/2 [transform:translate(-50%,-50%)] w-[min(640px,calc(100vw-2rem))] h-[min(440px,calc(100dvh-110px))] min-w-[520px] min-h-[280px] max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-88px)] border rounded-xl overflow-hidden flex-col z-[125] shadow-modal [background:var(--coin-control,var(--surface-panel))] [border-color:var(--coin-border-strong,var(--border-default))] max-[980px]:top-[72px] max-[980px]:left-[1rem] max-[980px]:right-[1rem] max-[980px]:[transform:none] max-[980px]:w-auto max-[980px]:h-auto max-[980px]:min-w-0"
     :class="visible && !!row ? 'visible flex' : 'hidden'"
   >
     <div class="details-resize-handle side-top" data-resize="top" @mousedown="onResizeMousedown($event, 'top')"></div>

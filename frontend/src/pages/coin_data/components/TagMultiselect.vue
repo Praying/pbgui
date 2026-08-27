@@ -46,7 +46,7 @@ const placeholder = computed(() => {
    'ms-option' / 'selected' / 'highlighted' remain the legacy anchors. */
 function msOptionClass(selected: boolean, highlighted: boolean): string {
   return [
-    'ms-option cursor-pointer py-1.5 px-2 text-sm hover:bg-card',
+    'ms-option cursor-pointer py-1.5 px-2 text-sm',
     selected ? 'selected text-accent-soft' : 'text-primary',
     highlighted ? 'highlighted bg-card' : '',
   ]
@@ -125,14 +125,14 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
 <template>
   <div
     ref="wrap"
-    class="ms-wrap relative flex flex-wrap items-center gap-[3px] min-h-8 cursor-text border border-border-default rounded-lg bg-card px-1 py-0.5 focus-within:border-secondary"
+    class="ms-wrap coin-tags-control relative flex flex-wrap items-center gap-[3px] min-h-8 cursor-text border rounded-lg px-1 py-0.5"
     id="tag-filter-wrap"
     @mousedown="onWrapMousedown"
   >
     <span
       v-for="tag in modelValue"
       :key="tag"
-      class="ms-tag inline-flex items-center gap-[3px] bg-card border border-border-default rounded-sm px-1.5 py-px text-xs text-primary"
+      class="ms-tag inline-flex items-center gap-[3px] rounded-md border px-1.5 py-px text-xs text-accent-soft"
       :title="tag"
     >{{ tag }} <span class="ms-x cursor-pointer text-secondary text-xs leading-none hover:text-danger" :data-val="tag" @click.stop="remove(tag)">×</span></span>
     <!-- ui-migration: blocked — the chip-row filter input is chrome-free by
@@ -152,7 +152,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
       @keydown="onKeydown"
     />
     <div
-      class="ms-dropdown absolute top-[calc(100%+6px)] left-0 right-0 bg-card border border-border-default rounded-[10px] max-h-[280px] overflow-y-auto z-[120] shadow-[0_14px_36px_rgba(5,8,14,0.45)]"
+      class="ms-dropdown coin-tags-dropdown absolute top-[calc(100%+6px)] left-0 right-0 border rounded-xl max-h-[280px] overflow-y-auto z-[120] shadow-elevated"
       id="tag-options"
       :class="open && !disabled ? 'open block' : 'hidden'"
     >
@@ -167,3 +167,35 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
     </div>
   </div>
 </template>
+
+<style scoped>
+.coin-tags-control {
+  border-color: var(--coin-border-strong);
+  background: var(--coin-input);
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+
+.coin-tags-control:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.ms-tag {
+  border-color: rgb(var(--accent-rgb) / 0.2);
+  background: rgb(var(--accent-deep-rgb) / 0.12);
+}
+
+.coin-tags-dropdown {
+  border-color: var(--coin-border-strong);
+  background: var(--coin-control);
+}
+
+.ms-option:hover,
+.ms-option.highlighted {
+  background: rgb(var(--accent-rgb) / 0.08);
+}
+
+.ms-option.selected {
+  background: rgb(var(--accent-deep-rgb) / 0.12);
+}
+</style>
