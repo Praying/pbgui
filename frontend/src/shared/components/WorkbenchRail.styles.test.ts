@@ -90,6 +90,7 @@ describe('WorkbenchRail responsive CSS contracts', () => {
 
   it('does not animate the app shell grid columns', () => {
     const app_shell = find_exact_rule(stylesheet_root, '.app-shell');
+    const rail_slot = find_exact_rule(stylesheet_root, '.app-shell__rail-slot');
     const workspace = find_exact_rule(stylesheet_root, '.app-shell__workspace');
     const transition = get_declaration(app_shell, 'transition');
 
@@ -98,6 +99,8 @@ describe('WorkbenchRail responsive CSS contracts', () => {
       'grid-template-columns',
       'var(--rail-collapsed-width) minmax(0, 1fr)',
     );
+    expect_declaration(rail_slot, 'grid-column', '1');
+    expect_declaration(rail_slot, 'width', 'var(--rail-collapsed-width)');
     expect_declaration(workspace, 'grid-column', '2');
     expect(transition?.value ?? '').not.toContain('grid-template-columns');
   });
@@ -145,6 +148,7 @@ describe('WorkbenchRail responsive CSS contracts', () => {
 
   it('keeps the collapsed mobile toggle in the visible brand row', () => {
     const mobile_rules = find_at_rule(stylesheet_root, 'media', '(max-width: 720px)');
+    const mobile_rail_slot = find_exact_rule(mobile_rules, '.app-shell__rail-slot');
     const mobile_rail = find_exact_rule(
       mobile_rules,
       '.workbench-rail, .workbench-rail--collapsed',
@@ -163,6 +167,8 @@ describe('WorkbenchRail responsive CSS contracts', () => {
       '.workbench-rail--collapsed .workbench-rail__toggle',
     );
 
+    expect_declaration(mobile_rail_slot, 'width', '100%');
+    expect_declaration(mobile_rail_slot, 'height', '64px');
     expect_declaration(mobile_rail, 'position', 'relative');
     expect_declaration(collapsed_rail, 'max-height', '64px');
     expect_declaration(collapsed_rail, 'flex-direction', 'row');

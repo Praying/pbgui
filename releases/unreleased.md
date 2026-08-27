@@ -2,6 +2,8 @@
 
 ## Frontend — Final Rail Review Fixes
 
+- Preserved a stable 64px mobile rail reservation while expanded navigation floats above the workspace, so opening or closing the drawer no longer shifts page geometry. The mobile drawer now exposes modal semantics and marks the workspace inert while open.
+- Made rail Escape dismissal yield to visible page dialogs, modals, help overlays, and the AI drawer, preserving both the expanded rail and the current dialog focus until the higher-priority layer handles Escape.
 - Made the desktop workbench rail compact by default and kept the workspace on a stable compact grid column while all explicit expansion renders as a floating overlay. Persistent and mobile expanded overlays now dismiss on outside pointer presses or Escape without changing the saved preference, while active-item temporary section expansion remains available.
 - Replaced the market-data status progress bar's animated width with a transform-based fill and removed the remaining shared width transition from the touched component stylesheet.
 

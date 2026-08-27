@@ -8,6 +8,7 @@ import IconButton from './IconButton.vue';
 import PbIcon from './PbIcon.vue';
 
 const RAIL_STORAGE_KEY = 'pbgui-workbench-rail-collapsed';
+const MOBILE_DRAWER_QUERY = '(max-width: 720px)';
 
 interface WorkbenchRailProps {
   groups: readonly NavigationGroup[];
@@ -38,6 +39,23 @@ function onAiButtonClick(): void {
 }
 
 const railEl = useTemplateRef<HTMLElement>('rail');
+const mobileViewport = ref(false);
+let mobileViewportQuery: MediaQueryList | undefined;
+let isolatedWorkspace: HTMLElement | undefined;
+let workspaceWasAlreadyInert = false;
+
+const HIGHER_LAYER_SELECTOR = [
+  'dialog[open]',
+  '[role="dialog"]',
+  '[aria-modal="true"]',
+  '.modal.open',
+  '.modal.visible',
+  '.overlay.open',
+  '.overlay.visible',
+  '#help-ovl.visible',
+  '#pbgui-ai-drawer.open',
+  '#pbgui-ai-drawer.visible',
+].join(',');
 
 /* Collapsed-rail reveal: clicking the active page's icon temporarily expands
    the whole rail as an overlay so its section children become reachable.
@@ -53,6 +71,7 @@ const visuallyCollapsed = computed(
     (!props.collapsed && persistentOverlayDismissed.value),
 );
 const floatingExpanded = computed(() => !visuallyCollapsed.value);
+const mobileDrawerExpanded = computed(() => mobileViewport.value && floatingExpanded.value);
 
 function toggleCollapsed(): void {
   if (!props.collapsed && persistentOverlayDismissed.value) {
@@ -116,8 +135,23 @@ function onDocumentPointerdown(event: PointerEvent): void {
   if (!el || !event.target || !el.contains(event.target as Node)) dismissExpandedOverlay();
 }
 
+function isElementVisible(element: HTMLElement): boolean {
+  if (element.closest('[hidden], [aria-hidden="true"]')) return false;
+
+  const elementStyle = window.getComputedStyle(element);
+  return elementStyle.display !== 'none' && elementStyle.visibility !== 'hidden';
+}
+
+function hasActiveHigherLayer(): boolean {
+  const rail = railEl.value;
+
+  return Array.from(document.querySelectorAll<HTMLElement>(HIGHER_LAYER_SELECTOR)).some(
+    (element) => !rail?.contains(element) && isElementVisible(element),
+  );
+}
+
 function onDocumentKeydown(event: KeyboardEvent): void {
-  if (event.key !== 'Escape' || !floatingExpanded.value) return;
+  if (event.key !== 'Escape' || !floatingExpanded.value || hasActiveHigherLayer()) return;
 
   dismissExpandedOverlay();
   void nextTick(() => {
@@ -126,10 +160,32 @@ function onDocumentKeydown(event: KeyboardEvent): void {
 }
 
 onMounted(() => {
+  mobileViewportQuery = window.matchMedia?.(MOBILE_DRAWER_QUERY);
+  mobileViewport.value = mobileViewportQuery?.matches ?? false;
+  mobileViewportQuery?.addEventListener('change', onMobileViewportChange);
   document.addEventListener('pointerdown', onDocumentPointerdown);
   document.addEventListener('keydown', onDocumentKeydown);
   scrollActiveIntoView();
 });
+
+function onMobileViewportChange(event: MediaQueryListEvent): void {
+  mobileViewport.value = event.matches;
+}
+
+function updateWorkspaceIsolation(shouldIsolate: boolean): void {
+  if (shouldIsolate) {
+    isolatedWorkspace = railEl.value
+      ?.closest<HTMLElement>('.app-shell')
+      ?.querySelector<HTMLElement>('.app-shell__workspace') ?? undefined;
+    workspaceWasAlreadyInert = isolatedWorkspace?.hasAttribute('inert') ?? false;
+    isolatedWorkspace?.setAttribute('inert', '');
+    return;
+  }
+
+  if (!workspaceWasAlreadyInert) isolatedWorkspace?.removeAttribute('inert');
+  isolatedWorkspace = undefined;
+  workspaceWasAlreadyInert = false;
+}
 
 /* The rail groups overflow scroll; the pbv7/pbv8 groups sit below the fold
    on shorter viewports, so the active page (and its section children) must
@@ -153,7 +209,11 @@ watch(() => props.collapsed, () => {
   persistentOverlayDismissed.value = false;
 });
 
+watch(mobileDrawerExpanded, updateWorkspaceIsolation);
+
 onBeforeUnmount(() => {
+  updateWorkspaceIsolation(false);
+  mobileViewportQuery?.removeEventListener('change', onMobileViewportChange);
   document.removeEventListener('pointerdown', onDocumentPointerdown);
   document.removeEventListener('keydown', onDocumentKeydown);
 });
@@ -170,6 +230,8 @@ onBeforeUnmount(() => {
       'workbench-rail--temp-expanded': tempExpanded,
     }"
     :aria-label="t('nav.primaryNavigation')"
+    :role="mobileDrawerExpanded ? 'dialog' : undefined"
+    :aria-modal="mobileDrawerExpanded ? 'true' : undefined"
   >
     <div class="workbench-rail__brand" aria-label="PBGui">
       <span v-if="!visuallyCollapsed" class="workbench-rail__brand-mark" aria-hidden="true">PB</span>

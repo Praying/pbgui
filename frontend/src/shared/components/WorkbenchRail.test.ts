@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PhHouse, PhSparkle, PhWrench } from '@phosphor-icons/vue';
 import { createI18n } from '@/shared/i18n';
 import { WORKBENCH_NAVIGATION, type NavigationGroup, type NavigationItem } from '@/shared/navigation';
@@ -217,6 +217,68 @@ describe('WorkbenchRail', () => {
     expect(document.activeElement).toBe(toggle.element);
     expect(wrapper.emitted('update:collapsed')).toBeUndefined();
     outsideButton.remove();
+  });
+
+  it('leaves Escape and focus with an active page dialog', async () => {
+    const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS }, true);
+    const nav = wrapper.get('nav#workbench-rail');
+    const dialog = document.createElement('section');
+    const dialogButton = document.createElement('button');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.append(dialogButton);
+    document.body.append(dialog);
+    dialogButton.focus();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(nav.classes()).toContain('workbench-rail--floating-expanded');
+    expect(nav.classes()).not.toContain('workbench-rail--collapsed');
+    expect(document.activeElement).toBe(dialogButton);
+    dialog.remove();
+    wrapper.unmount();
+  });
+
+  it('exposes modal drawer semantics only while expanded on mobile', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(max-width: 720px)',
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    const wrapper = mountRail('system_services', true);
+    const nav = wrapper.get('nav#workbench-rail');
+    const appShell = document.createElement('div');
+    const railSlot = document.createElement('div');
+    const workspace = document.createElement('main');
+    appShell.className = 'app-shell';
+    railSlot.className = 'app-shell__rail-slot';
+    workspace.className = 'app-shell__workspace';
+    document.body.append(appShell);
+    appShell.append(railSlot, workspace);
+    railSlot.append(wrapper.element);
+
+    expect(nav.attributes('role')).toBeUndefined();
+    expect(nav.attributes('aria-modal')).toBeUndefined();
+    expect(workspace.hasAttribute('inert')).toBe(false);
+
+    await wrapper.get('[data-testid="rail-toggle"]').trigger('click');
+    await wrapper.setProps({ collapsed: false });
+
+    expect(nav.attributes('role')).toBe('dialog');
+    expect(nav.attributes('aria-modal')).toBe('true');
+    expect(workspace.hasAttribute('inert')).toBe(true);
+
+    wrapper.unmount();
+    expect(workspace.hasAttribute('inert')).toBe(false);
+    appShell.remove();
+    vi.unstubAllGlobals();
   });
 
   it('uses the accessible toggle to reopen a dismissed drawer', async () => {

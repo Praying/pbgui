@@ -24,6 +24,12 @@
     grid-template-columns: var(--rail-collapsed-width) minmax(0, 1fr);
   }
 
+  .app-shell__rail-slot {
+    grid-column: 1;
+    width: var(--rail-collapsed-width);
+    min-width: 0;
+  }
+
   .app-shell__workspace {
     grid-column: 2;
     min-width: 0;
@@ -1357,6 +1363,11 @@
   @media (max-width: 720px) {
     .app-shell {
       display: block;
+    }
+
+    .app-shell__rail-slot {
+      width: 100%;
+      height: 64px;
     }
 
     .workbench-rail,

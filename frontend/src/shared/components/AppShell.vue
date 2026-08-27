@@ -59,15 +59,17 @@ onMounted(() => {
   <div class="app-shell" :class="{ 'app-shell--rail-collapsed': railCollapsed }">
     <a class="pbgui-skip-link" href="#app-shell-main">{{ t('nav.skipToMain') }}</a>
 
-    <WorkbenchRail
-      :groups="WORKBENCH_NAVIGATION"
-      :active-page="props.pageKey"
-      :collapsed="railCollapsed"
-      :sections="props.sections"
-      :active-section="props.activeSection"
-      @update:collapsed="railCollapsed = $event"
-      @update:section="emit('update:section', $event)"
-    />
+    <div class="app-shell__rail-slot">
+      <WorkbenchRail
+        :groups="WORKBENCH_NAVIGATION"
+        :active-page="props.pageKey"
+        :collapsed="railCollapsed"
+        :sections="props.sections"
+        :active-section="props.activeSection"
+        @update:collapsed="railCollapsed = $event"
+        @update:section="emit('update:section', $event)"
+      />
+    </div>
 
     <div class="app-shell__workspace">
       <WorkspaceHeader
