@@ -92,6 +92,18 @@ describe('WorkbenchRail responsive CSS contracts', () => {
     const app_shell = find_exact_rule(stylesheet_root, '.app-shell');
     const rail_slot = find_exact_rule(stylesheet_root, '.app-shell__rail-slot');
     const workspace = find_exact_rule(stylesheet_root, '.app-shell__workspace');
+    const expanded_shell = find_exact_rule(
+      stylesheet_root,
+      '.app-shell:has(.workbench-rail--persistent-expanded)',
+    );
+    const expanded_rail_slot = find_exact_rule(
+      stylesheet_root,
+      '.app-shell:has(.workbench-rail--persistent-expanded) .app-shell__rail-slot',
+    );
+    const persistent_rail = find_exact_rule(
+      stylesheet_root,
+      '.workbench-rail--persistent-expanded',
+    );
     const transition = get_declaration(app_shell, 'transition');
 
     expect_declaration(
@@ -102,6 +114,13 @@ describe('WorkbenchRail responsive CSS contracts', () => {
     expect_declaration(rail_slot, 'grid-column', '1');
     expect_declaration(rail_slot, 'width', 'var(--rail-collapsed-width)');
     expect_declaration(workspace, 'grid-column', '2');
+    expect_declaration(
+      expanded_shell,
+      'grid-template-columns',
+      'var(--rail-expanded-width) minmax(0, 1fr)',
+    );
+    expect_declaration(expanded_rail_slot, 'width', 'var(--rail-expanded-width)');
+    expect_declaration(persistent_rail, 'position', 'relative');
     expect(transition?.value ?? '').not.toContain('grid-template-columns');
   });
 

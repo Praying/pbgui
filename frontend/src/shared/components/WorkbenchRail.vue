@@ -130,7 +130,7 @@ function dismissExpandedOverlay(): void {
 }
 
 function onDocumentPointerdown(event: PointerEvent): void {
-  if (!floatingExpanded.value) return;
+  if (!floatingExpanded.value || hasActiveHigherLayer()) return;
   const el = railEl.value;
   if (!el || !event.target || !el.contains(event.target as Node)) dismissExpandedOverlay();
 }
@@ -227,6 +227,7 @@ onBeforeUnmount(() => {
     :class="{
       'workbench-rail--collapsed': visuallyCollapsed,
       'workbench-rail--floating-expanded': floatingExpanded,
+      'workbench-rail--persistent-expanded': !props.collapsed && !persistentOverlayDismissed,
       'workbench-rail--temp-expanded': tempExpanded,
     }"
     :aria-label="t('nav.primaryNavigation')"

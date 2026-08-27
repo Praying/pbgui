@@ -1,5 +1,9 @@
 # Unreleased
 
+## Frontend — Final Review Blocker Fixes
+
+- Made WorkbenchRail outside-pointer dismissal yield to the same visible higher-priority dialog, modal, help, and AI layers used by Escape handling; added coverage proving dialog focus and rail state remain unchanged. Replaced the BusyOverlay and WidgetBalance geometry width transitions with transform-based progress fills, while leaving unrelated pre-existing `transition-all` uses outside this focused scope.
+
 ## Frontend — Final Rail Review Fixes
 
 - Preserved a stable 64px mobile rail reservation while expanded navigation floats above the workspace, so opening or closing the drawer no longer shifts page geometry. The mobile drawer now exposes modal semantics and marks the workspace inert while open.

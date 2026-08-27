@@ -215,8 +215,8 @@ function onDelete(): void {
               <div class="db-twe-cell flex items-center gap-[0.4rem]">
                 <div class="db-twe-track h-[7px] min-w-[50px] flex-1 overflow-hidden rounded-[3px] bg-border-default">
                   <div
-                    class="db-twe-fill h-full rounded-[3px] [transition:width_.3s,background_.3s]"
-                    :style="{ width: tweBarPct(num(r.we)) + '%', background: tweColor(num(r.we)) }"
+                    class="db-twe-fill h-full w-full origin-left rounded-[3px] [transition:transform_.3s,background_.3s]"
+                    :style="{ transform: `scaleX(${Number(tweBarPct(num(r.we))) / 100})`, background: tweColor(num(r.we)) }"
                   ></div>
                 </div>
                 <span class="db-twe-lbl min-w-[44px] text-right text-[0.76rem]" :style="{ color: tweColor(num(r.we)) }">{{

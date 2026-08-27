@@ -18,6 +18,11 @@ const percentLabel = computed(() => {
   const safePercent = Math.max(0, Math.min(100, props.busy.percent));
   return safePercent.toFixed(1).replace(/\.0$/, '') + '%';
 });
+
+const progressScale = computed(() => {
+  const safePercent = Math.max(0, Math.min(100, props.busy.percent));
+  return `scaleX(${safePercent / 100})`;
+});
 </script>
 
 <template>
@@ -28,7 +33,7 @@ const percentLabel = computed(() => {
         <div class="busy-progress relative overflow-hidden flex-1 w-full h-2.5 rounded-full bg-page border border-border-default shadow-[inset_0_1px_2px_rgb(var(--bg-page-rgb)/0.45)]" aria-hidden="true">
           <!-- The legacy page :root aliased --accent to --accent-soft, so
                the gradient's third stop renders accent-soft to this day. -->
-          <div class="busy-progress-fill absolute top-px right-auto bottom-px left-px w-0 rounded-full bg-[linear-gradient(90deg,var(--accent-deep),var(--accent-soft)_55%,var(--accent-soft))] shadow-[0_0_18px_rgb(var(--accent-rgb)/0.35)] [transition:width_0.18s_ease]" id="busy-progress-fill" :style="{ width: busy.percent + '%' }"></div>
+          <div class="busy-progress-fill absolute top-px right-px bottom-px left-px origin-left rounded-full bg-[linear-gradient(90deg,var(--accent-deep),var(--accent-soft)_55%,var(--accent-soft))] shadow-[0_0_18px_rgb(var(--accent-rgb)/0.35)] [transition:transform_0.18s_ease]" id="busy-progress-fill" :style="{ transform: progressScale }"></div>
         </div>
         <div class="busy-progress-label min-w-[3.3rem] text-right text-sm font-bold text-accent-soft" id="busy-progress-label">{{ percentLabel }}</div>
       </div>

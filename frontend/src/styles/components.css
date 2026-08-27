@@ -36,6 +36,23 @@
     background: var(--surface-workspace);
   }
 
+  @media (min-width: 721px) {
+    .app-shell:has(.workbench-rail--persistent-expanded) {
+      grid-template-columns: var(--rail-expanded-width) minmax(0, 1fr);
+    }
+
+    .app-shell:has(.workbench-rail--persistent-expanded) .app-shell__rail-slot {
+      width: var(--rail-expanded-width);
+    }
+
+    .workbench-rail--persistent-expanded {
+      position: relative;
+      width: var(--rail-expanded-width);
+      box-shadow: none;
+      transform: none;
+    }
+  }
+
   .app-shell__main {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -562,6 +579,14 @@
     width: var(--rail-expanded-width);
     box-shadow: var(--shadow-elevated);
     transform: translateX(0);
+  }
+
+  @media (min-width: 721px) {
+    .workbench-rail--floating-expanded.workbench-rail--persistent-expanded {
+      position: relative;
+      width: var(--rail-expanded-width);
+      box-shadow: none;
+    }
   }
 
   /* ── Workspace header ────────────────────────────────────────── */

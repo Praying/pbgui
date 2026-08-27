@@ -62,6 +62,7 @@ describe('AppShell', () => {
 
     expect(wrapper.classes()).not.toContain('app-shell--rail-collapsed');
     expect(wrapper.get('nav').classes()).toContain('workbench-rail--floating-expanded');
+    expect(wrapper.get('nav').classes()).toContain('workbench-rail--persistent-expanded');
   });
 
   it('opens the floating rail when compact navigation is explicitly expanded', async () => {
@@ -71,6 +72,7 @@ describe('AppShell', () => {
 
     expect(wrapper.classes()).not.toContain('app-shell--rail-collapsed');
     expect(wrapper.get('nav').classes()).toContain('workbench-rail--floating-expanded');
+    expect(wrapper.get('nav').classes()).toContain('workbench-rail--persistent-expanded');
   });
 
   it('renders an explicit status slot instead of the fallback status', () => {

@@ -240,6 +240,29 @@ describe('WorkbenchRail', () => {
     wrapper.unmount();
   });
 
+  it('leaves rail state and focus with an active page dialog on outside pointerdown', async () => {
+    const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS }, true);
+    const nav = wrapper.get('nav#workbench-rail');
+    const dialog = document.createElement('section');
+    const dialogButton = document.createElement('button');
+    dialog.setAttribute('role', 'dialog');
+    dialog.append(dialogButton);
+    document.body.append(dialog);
+    dialogButton.focus();
+
+    try {
+      dialogButton.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      await wrapper.vm.$nextTick();
+
+      expect(nav.classes()).toContain('workbench-rail--floating-expanded');
+      expect(nav.classes()).not.toContain('workbench-rail--collapsed');
+      expect(document.activeElement).toBe(dialogButton);
+    } finally {
+      dialog.remove();
+      wrapper.unmount();
+    }
+  });
+
   it('exposes modal drawer semantics only while expanded on mobile', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({
       matches: query === '(max-width: 720px)',

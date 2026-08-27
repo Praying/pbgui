@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import { getBoot } from '@/shared/boot';
 import App from './App.vue';
+import BusyOverlay from './components/BusyOverlay.vue';
 import type { CoinDataState } from './types';
 
 /* Page-shell integration: mount, /state render, view switching, CMC button
@@ -193,6 +194,17 @@ describe('Coin Data page shell', () => {
   it('keeps the busy overlay hidden until a refresh starts', async () => {
     const wrapper = await mountApp();
     expect(wrapper.find('#busy-overlay').classes()).not.toContain('visible');
+  });
+
+  it('renders busy progress with a transform instead of width geometry', () => {
+    const wrapper = mount(BusyOverlay, {
+      props: { busy: { visible: true, title: 'Refreshing', percent: 42.5, subtle: 'Working' } },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    const progressFill = wrapper.find('#busy-progress-fill');
+    expect(progressFill.attributes('style')).toContain('transform: scaleX(0.425)');
+    expect(progressFill.attributes('style')).not.toContain('width:');
   });
 
   it('sets the document title and registers the help opener', async () => {

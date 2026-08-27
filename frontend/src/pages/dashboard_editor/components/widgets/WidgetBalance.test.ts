@@ -150,10 +150,10 @@ describe('WidgetBalance', () => {
     expect(tds[3]!.text()).toBe('+12.50');
     expect(tds[3]!.attributes('style')).toContain('rgb(70, 200, 143)'); /* #46c88f */
     expect(tds[4]!.find('.db-twe-lbl').text()).toBe('95.00');
-    expect(tds[4]!.find('.db-twe-fill').attributes('style')).toContain('31.7%');
+    expect(tds[4]!.find('.db-twe-fill').attributes('style')).toContain('scaleX(0.317)');
     /* we 250 → 83.3% bar in red (tweBarPct cap only at 300; tweColor <100/<200) */
     const tds2 = trs[1]!.findAll('td');
-    expect(tds2[4]!.find('.db-twe-fill').attributes('style')).toContain('83.3%');
+    expect(tds2[4]!.find('.db-twe-fill').attributes('style')).toContain('scaleX(0.833)');
     expect(tds2[4]!.find('.db-twe-lbl').attributes('style')).toContain('rgb(229, 97, 92)'); /* #e5615c */
   });
 
