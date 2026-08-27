@@ -69,6 +69,7 @@ function dashIfFalsy(value: string | number): string {
   background: var(--mds-bg-secondary);
   border-radius: 8px;
   border: 1px solid var(--mds-border-color);
+  box-shadow: var(--shadow-panel);
   overflow: hidden;
   flex: 1 1 auto;
   min-height: 0;

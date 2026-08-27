@@ -1,5 +1,9 @@
 # Unreleased
 
+## Frontend — Representative Workbench Page Alignment
+
+- Aligned the representative services, logging, and market-data status page-local surfaces with the shared precision-engineering shell. Service cards and status panels now use the shared elevation and font treatment, while the logging legacy fallback keeps its existing behavior with the updated deep blue-grey palette. Dashboard Manager already matched the shared baseline and required no page-local changes.
+
 ## Frontend — Shared Workbench Surface Layer
 
 - Aligned the shared workspace header, empty state, and error state with the precision-engineering surface tokens and panel elevation while preserving AppShell, status, slot, event, and accessibility contracts.

@@ -309,4 +309,9 @@ html, body, #app {
   min-height: 0;
   flex-direction: column;
 }
+
+/* Keep settings cards at the same elevation as the shared workbench panels. */
+.operations-shell--logging article {
+  box-shadow: var(--shadow-panel);
+}
 </style>

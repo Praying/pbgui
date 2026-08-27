@@ -449,7 +449,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 .worker-group-subtitle { font-size: var(--fs-xs); color: var(--text-muted); }
 .worker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-md); }
 .worker-card {
-  background: var(--bg-page);
+  background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: var(--sp-md);
@@ -457,10 +457,19 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   flex-direction: column;
   gap: var(--sp-sm);
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
+  box-shadow: var(--shadow-panel);
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-spring);
 }
-.worker-card:hover { border-color: var(--border-default); }
-.worker-card.selected { border-color: rgb(var(--accent-rgb) / 0.55); background: var(--bg-panel); }
+.worker-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-1px);
+}
+.worker-card.selected { border-color: rgb(var(--accent-rgb) / 0.55); background: var(--surface-panel); }
 .worker-card.running { border-color: rgb(var(--success-rgb) / 0.4); }
 .worker-card.stopped { border-color: rgb(var(--danger-rgb) / 0.3); }
 .worker-type {

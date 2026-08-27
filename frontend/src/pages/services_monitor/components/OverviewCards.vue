@@ -197,7 +197,7 @@ const cards = computed<Card[]>(() => {
   align-content: start;
 }
 .svc-card {
-  background: var(--bg-page);
+  background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 1rem;
@@ -205,9 +205,16 @@ const cards = computed<Card[]>(() => {
   flex-direction: column;
   gap: 0.6rem;
   cursor: pointer;
-  transition: border-color 0.12s;
+  box-shadow: var(--shadow-panel);
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-spring);
 }
-.svc-card:hover { border-color: var(--border-default); }
+.svc-card:hover {
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+}
 .svc-card.running { border-color: rgb(var(--success-rgb) / 0.45); }
 .svc-card.stopped { border-color: rgb(var(--danger-rgb) / 0.35); }
 .card-name { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary); }

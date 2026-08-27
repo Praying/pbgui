@@ -58,6 +58,7 @@ const details = computed(() => {
   background: var(--mds-bg-secondary);
   border-radius: 8px;
   border: 1px solid var(--mds-border-color);
+  box-shadow: var(--shadow-panel);
 }
 
 .mds-progress-bar-container {
@@ -73,7 +74,7 @@ const details = computed(() => {
 .mds-progress-bar {
   height: 100%;
   background: linear-gradient(90deg, var(--mds-accent-info), var(--mds-accent-success));
-  transition: width 0.3s ease;
+  transition: width 0.3s var(--ease-standard);
   border-radius: 10px;
 }
 
