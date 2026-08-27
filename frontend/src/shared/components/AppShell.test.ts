@@ -48,20 +48,29 @@ describe('AppShell', () => {
     expect(status.attributes('data-tone')).toBe('warning');
   });
 
-  it('restores the persisted rail preference', () => {
-    localStorage.setItem('pbgui-workbench-rail-collapsed', 'true');
-
+  it('uses the compact rail by default', () => {
     const wrapper = mountShell();
 
+    expect(wrapper.classes()).toContain('app-shell--rail-collapsed');
     expect(wrapper.get('nav').classes()).toContain('workbench-rail--collapsed');
   });
 
-  it('updates the shell layout when the rail emits a collapse change', async () => {
+  it('restores the persisted expanded rail preference', () => {
+    localStorage.setItem('pbgui-workbench-rail-collapsed', 'false');
+
+    const wrapper = mountShell();
+
+    expect(wrapper.classes()).not.toContain('app-shell--rail-collapsed');
+    expect(wrapper.get('nav').classes()).toContain('workbench-rail--floating-expanded');
+  });
+
+  it('opens the floating rail when compact navigation is explicitly expanded', async () => {
     const wrapper = mountShell();
 
     await wrapper.get('[data-testid="rail-toggle"]').trigger('click');
 
-    expect(wrapper.classes()).toContain('app-shell--rail-collapsed');
+    expect(wrapper.classes()).not.toContain('app-shell--rail-collapsed');
+    expect(wrapper.get('nav').classes()).toContain('workbench-rail--floating-expanded');
   });
 
   it('renders an explicit status slot instead of the fallback status', () => {
@@ -97,6 +106,8 @@ describe('AppShell', () => {
       },
       global: { plugins: [createI18n('en')] },
     });
+
+    await wrapper.get('a[aria-current="page"]').trigger('click');
 
     const buttons = wrapper.findAll('.workbench-rail__subitem');
     expect(buttons.map((button) => button.text())).toEqual(['Overview', 'Logs']);

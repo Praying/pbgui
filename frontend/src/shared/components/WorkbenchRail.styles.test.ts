@@ -69,7 +69,7 @@ describe('WorkbenchRail responsive CSS contracts', () => {
   it('defines the engineering surface elevation and motion fallback', () => {
     expect(stylesheet).toContain('var(--shadow-panel)');
     expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
-    expect(stylesheet).toContain('.workbench-rail--temp-expanded');
+    expect(stylesheet).toContain('.workbench-rail--floating-expanded');
   });
 
   it('keeps compact rail controls available without changing the shell grid', () => {
@@ -78,20 +78,27 @@ describe('WorkbenchRail responsive CSS contracts', () => {
       stylesheet_root,
       '.workbench-rail--collapsed .workbench-rail__item, .workbench-rail--collapsed .workbench-rail__ai-btn',
     );
-    const temporary_rail = find_exact_rule(stylesheet_root, '.workbench-rail--temp-expanded');
+    const floating_rail = find_exact_rule(stylesheet_root, '.workbench-rail--floating-expanded');
 
     expect_declaration(collapsed_controls, 'min-width', 'var(--rail-collapsed-width)');
     expect_declaration(collapsed_controls, 'justify-content', 'center');
-    expect_declaration(temporary_rail, 'position', 'fixed');
-    expect_declaration(temporary_rail, 'width', 'var(--rail-expanded-width)');
+    expect_declaration(floating_rail, 'position', 'fixed');
+    expect_declaration(floating_rail, 'width', 'var(--rail-expanded-width)');
     expect(get_declaration(rail, 'transition')).toBeUndefined();
-    expect(get_declaration(temporary_rail, 'transition')).toBeUndefined();
+    expect(get_declaration(floating_rail, 'transition')).toBeUndefined();
   });
 
   it('does not animate the app shell grid columns', () => {
     const app_shell = find_exact_rule(stylesheet_root, '.app-shell');
+    const workspace = find_exact_rule(stylesheet_root, '.app-shell__workspace');
     const transition = get_declaration(app_shell, 'transition');
 
+    expect_declaration(
+      app_shell,
+      'grid-template-columns',
+      'var(--rail-collapsed-width) minmax(0, 1fr)',
+    );
+    expect_declaration(workspace, 'grid-column', '2');
     expect(transition?.value ?? '').not.toContain('grid-template-columns');
   });
 
@@ -170,9 +177,15 @@ describe('WorkbenchRail responsive CSS contracts', () => {
     expect_declaration(collapsed_toggle, 'margin-left', 'auto');
     const mobile_overlay = find_exact_rule(
       mobile_rules,
-      '.workbench-rail:not(.workbench-rail--collapsed)',
+      '.workbench-rail--floating-expanded',
     );
     expect_declaration(mobile_overlay, 'overscroll-behavior', 'contain');
+    const mobile_backdrop = find_exact_rule(
+      mobile_rules,
+      '.app-shell:has(.workbench-rail--floating-expanded)::after',
+    );
+    expect_declaration(mobile_backdrop, 'position', 'fixed');
+    expect_declaration(mobile_backdrop, 'inset', '0');
     expect(mobile_rules.toString()).not.toMatch(
       /\.app-shell--rail-collapsed\s+\.app-shell__workspace\s*\{[^}]*padding-top/s,
     );

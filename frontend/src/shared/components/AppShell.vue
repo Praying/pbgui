@@ -37,9 +37,9 @@ const { t } = useI18n();
 
 function readCollapsedPreference(): boolean {
   try {
-    return localStorage.getItem(RAIL_STORAGE_KEY) === 'true';
+    return localStorage.getItem(RAIL_STORAGE_KEY) !== 'false';
   } catch {
-    return false;
+    return true;
   }
 }
 

@@ -18,11 +18,11 @@ const { t } = useI18n();
 
 const running = computed(() => props.status?.running === true);
 
-const barWidth = computed(() => {
+const barScale = computed(() => {
   const s = props.status;
-  if (!s || !s.running) return '0%';
-  if (s.coins_total > 0) return `${Math.round((s.coins_done / s.coins_total) * 100)}%`;
-  return '100%';
+  if (!s || !s.running) return 0;
+  if (s.coins_total > 0) return Math.round((s.coins_done / s.coins_total) * 100) / 100;
+  return 1;
 });
 
 const label = computed(() => {
@@ -43,7 +43,7 @@ const details = computed(() => {
 <template>
   <div class="mds-progress-section" v-show="running">
     <div class="mds-progress-bar-container">
-      <div class="mds-progress-bar" :style="{ width: barWidth }"></div>
+      <div class="mds-progress-bar" :style="{ transform: `scaleX(${barScale})` }"></div>
       <span class="mds-progress-label">{{ label }}</span>
     </div>
     <div class="mds-progress-text">{{ details }}</div>
@@ -72,9 +72,11 @@ const details = computed(() => {
 }
 
 .mds-progress-bar {
+  width: 100%;
   height: 100%;
   background: linear-gradient(90deg, var(--mds-accent-info), var(--mds-accent-success));
-  transition: width 0.3s var(--ease-standard);
+  transform-origin: left center;
+  transition: transform 0.3s var(--ease-standard);
   border-radius: 10px;
 }
 

@@ -1,5 +1,10 @@
 # Unreleased
 
+## Frontend — Final Rail Review Fixes
+
+- Made the desktop workbench rail compact by default and kept the workspace on a stable compact grid column while all explicit expansion renders as a floating overlay. Persistent and mobile expanded overlays now dismiss on outside pointer presses or Escape without changing the saved preference, while active-item temporary section expansion remains available.
+- Replaced the market-data status progress bar's animated width with a transform-based fill and removed the remaining shared width transition from the touched component stylesheet.
+
 ## Frontend — Workers Motion Contract
 
 - Restricted the Workers panel card transition to permitted background, border, and transform properties. The hover shadow remains a static visual state, with worker behavior unchanged.

@@ -181,6 +181,61 @@ describe('WorkbenchRail', () => {
     expect(nav.classes()).not.toContain('workbench-rail--temp-expanded');
   });
 
+  it('visually closes persistent expansion outside without changing its preference', async () => {
+    const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS });
+    const nav = wrapper.get('nav#workbench-rail');
+
+    expect(nav.classes()).toContain('workbench-rail--floating-expanded');
+
+    document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(nav.classes()).toContain('workbench-rail--collapsed');
+    expect(wrapper.emitted('update:collapsed')).toBeUndefined();
+    expect(localStorage.getItem('pbgui-workbench-rail-collapsed')).toBeNull();
+
+    await wrapper.get('[data-testid="rail-toggle"]').trigger('click');
+
+    expect(nav.classes()).toContain('workbench-rail--floating-expanded');
+    expect(nav.classes()).not.toContain('workbench-rail--collapsed');
+    expect(wrapper.emitted('update:collapsed')).toBeUndefined();
+  });
+
+  it('dismisses a persistent expanded overlay with Escape from outside the rail', async () => {
+    const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS }, true);
+    const nav = wrapper.get('nav#workbench-rail');
+    const outsideButton = document.createElement('button');
+    document.body.append(outsideButton);
+    outsideButton.focus();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(nav.classes()).toContain('workbench-rail--collapsed');
+    const toggle = wrapper.get('[data-testid="rail-toggle"]');
+    expect(toggle.attributes('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(toggle.element);
+    expect(wrapper.emitted('update:collapsed')).toBeUndefined();
+    outsideButton.remove();
+  });
+
+  it('uses the accessible toggle to reopen a dismissed drawer', async () => {
+    const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS });
+    const toggle = wrapper.get('[data-testid="rail-toggle"]');
+
+    document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(toggle.attributes('aria-expanded')).toBe('false');
+    expect(toggle.attributes('aria-label')).toBe('Expand navigation');
+
+    await toggle.trigger('keydown', { key: 'Enter' });
+
+    expect(toggle.attributes('aria-expanded')).toBe('true');
+    expect(toggle.attributes('aria-label')).toBe('Collapse navigation');
+    expect(wrapper.emitted('update:collapsed')).toBeUndefined();
+  });
+
   it('dismisses temporary expansion with Escape from a focused rail item', async () => {
     const wrapper = mountRail('system_services', true, { sections: TEST_SECTIONS }, true);
     const nav = wrapper.get('nav#workbench-rail');
@@ -245,7 +300,7 @@ describe('WorkbenchRail', () => {
     const nav = wrapper.get('nav#workbench-rail');
 
     expect(nav.classes()).toContain('workbench-rail--collapsed');
-    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(false);
+    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(true);
 
     const activeLink = wrapper.get('a[aria-current="page"]');
     const event = new MouseEvent('click', { bubbles: true, cancelable: true });
@@ -262,7 +317,7 @@ describe('WorkbenchRail', () => {
     expect(wrapper.emitted('update:section')).toEqual([['setup']]);
     expect(nav.classes()).not.toContain('workbench-rail--temp-expanded');
     expect(nav.classes()).toContain('workbench-rail--collapsed');
-    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(false);
+    expect(wrapper.find('.workbench-rail__subitems').exists()).toBe(true);
   });
 
   it('keeps non-active collapsed items as plain navigation links', async () => {

@@ -15,7 +15,7 @@
 
   .app-shell {
     display: grid;
-    grid-template-columns: var(--rail-expanded-width) minmax(0, 1fr);
+    grid-template-columns: var(--rail-collapsed-width) minmax(0, 1fr);
     min-height: 100dvh;
     background: var(--surface-page);
   }
@@ -25,6 +25,7 @@
   }
 
   .app-shell__workspace {
+    grid-column: 2;
     min-width: 0;
     background: var(--surface-workspace);
   }
@@ -258,6 +259,10 @@
   .workbench-rail--collapsed .workbench-rail__ai-btn {
     min-width: var(--rail-collapsed-width);
     justify-content: center;
+  }
+
+  .workbench-rail--collapsed .workbench-rail__subitems {
+    display: none;
   }
 
   .workbench-rail__toggle {
@@ -543,7 +548,7 @@
      The shell grid keeps the collapsed column width, so the expanded
      rail overlays the workspace instead of pushing content around. */
 
-  .workbench-rail--temp-expanded {
+  .workbench-rail--floating-expanded {
     position: fixed;
     inset-block: 0;
     inset-inline-start: 0;
@@ -1368,7 +1373,7 @@
       align-items: center;
     }
 
-    .workbench-rail:not(.workbench-rail--collapsed) {
+    .workbench-rail--floating-expanded {
       position: fixed;
       inset-block: 0;
       inset-inline-start: 0;
@@ -1377,6 +1382,14 @@
       max-height: none;
       overscroll-behavior: contain;
       box-shadow: var(--shadow-elevated);
+    }
+
+    .app-shell:has(.workbench-rail--floating-expanded)::after {
+      position: fixed;
+      inset: 0;
+      z-index: calc(var(--z-navigation) - 1);
+      background: rgb(5 8 14 / 0.52);
+      content: '';
     }
 
     .workbench-rail--collapsed .workbench-rail__brand {
@@ -1625,7 +1638,6 @@
     height: 100%;
     border-radius: var(--radius-full);
     background: var(--accent);
-    transition: width var(--motion-slow) var(--ease-standard);
     min-width: 0;
   }
 
@@ -1810,14 +1822,9 @@
   @media (min-width: 721px) and (max-width: 768px) {
     /* Keep content aligned to the compact column while the expanded rail opens
        above it as a drawer. The rail toggle remains the explicit close action. */
-    .app-shell,
-    .app-shell--rail-collapsed {
-      grid-template-columns: var(--rail-collapsed-width) minmax(0, 1fr);
-    }
-
-    .app-shell:not(.app-shell--rail-collapsed)::after {
+    .app-shell:has(.workbench-rail--floating-expanded)::after {
       position: fixed;
-      inset: 0 0 0 var(--rail-expanded-width);
+      inset: 0;
       z-index: calc(var(--z-navigation) - 1);
       background: rgb(5 8 14 / 0.52);
       content: '';

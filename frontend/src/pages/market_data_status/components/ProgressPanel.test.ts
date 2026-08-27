@@ -33,7 +33,9 @@ describe('ProgressPanel (legacy mds-progress-section states)', () => {
     const section = panel.find('.mds-progress-section');
 
     expect(section.isVisible()).toBe(true);
-    expect((panel.find('.mds-progress-bar').element as HTMLElement).style.width).toBe('50%');
+    expect((panel.find('.mds-progress-bar').element as HTMLElement).style.transform).toBe(
+      'scaleX(0.5)',
+    );
     expect(panel.find('.mds-progress-label').text()).toBe('2 / 4');
     expect(panel.find('.mds-progress-text').text()).toBe('Current: BTC');
   });
@@ -49,7 +51,9 @@ describe('ProgressPanel (legacy mds-progress-section states)', () => {
     const section = panel.find('.mds-progress-section');
 
     expect(section.isVisible()).toBe(true);
-    expect((panel.find('.mds-progress-bar').element as HTMLElement).style.width).toBe('100%');
+    expect((panel.find('.mds-progress-bar').element as HTMLElement).style.transform).toBe(
+      'scaleX(1)',
+    );
     expect(panel.find('.mds-progress-label').text()).toBe('Running...');
     expect(panel.find('.mds-progress-text').text()).toBe('Starting...');
   });

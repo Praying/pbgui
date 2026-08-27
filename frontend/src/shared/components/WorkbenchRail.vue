@@ -41,15 +41,25 @@ const railEl = useTemplateRef<HTMLElement>('rail');
 
 /* Collapsed-rail reveal: clicking the active page's icon temporarily expands
    the whole rail as an overlay so its section children become reachable.
-   Selecting a section, Escape (while focus is in the rail), or a click
-   outside collapses it back — the collapsed preference itself is never
-   touched. Other icons keep navigating directly: cross-page jumps stay
-   one click. */
+   Selecting a section, Escape, or an outside click collapses it back — the
+   collapsed preference itself is never touched. Other icons keep navigating
+   directly: cross-page jumps stay one click. */
 const tempExpanded = ref(false);
+const persistentOverlayDismissed = ref(false);
 
-const visuallyCollapsed = computed(() => props.collapsed && !tempExpanded.value);
+const visuallyCollapsed = computed(
+  () =>
+    (props.collapsed && !tempExpanded.value) ||
+    (!props.collapsed && persistentOverlayDismissed.value),
+);
+const floatingExpanded = computed(() => !visuallyCollapsed.value);
 
 function toggleCollapsed(): void {
+  if (!props.collapsed && persistentOverlayDismissed.value) {
+    persistentOverlayDismissed.value = false;
+    return;
+  }
+
   const nextCollapsed = !props.collapsed;
 
   try {
@@ -58,7 +68,8 @@ function toggleCollapsed(): void {
     // The controlled state still updates when storage is unavailable.
   }
 
-  if (!nextCollapsed) tempExpanded.value = false;
+  tempExpanded.value = false;
+  persistentOverlayDismissed.value = false;
   emit('update:collapsed', nextCollapsed);
 }
 
@@ -67,8 +78,7 @@ function hasChildren(item: NavigationItem): boolean {
     item.pageKey === props.activePage &&
       !item.disabled &&
       props.sections &&
-      props.sections.length > 0 &&
-      !visuallyCollapsed.value,
+      props.sections.length > 0,
   );
 }
 
@@ -91,18 +101,28 @@ function selectSection(sectionKey: string): void {
   emit('update:section', sectionKey);
 }
 
+function dismissExpandedOverlay(): void {
+  if (tempExpanded.value) {
+    tempExpanded.value = false;
+    return;
+  }
+
+  if (!props.collapsed) persistentOverlayDismissed.value = true;
+}
+
 function onDocumentPointerdown(event: PointerEvent): void {
-  if (!tempExpanded.value) return;
+  if (!floatingExpanded.value) return;
   const el = railEl.value;
-  if (!el || !event.target || !el.contains(event.target as Node)) tempExpanded.value = false;
+  if (!el || !event.target || !el.contains(event.target as Node)) dismissExpandedOverlay();
 }
 
 function onDocumentKeydown(event: KeyboardEvent): void {
-  if (event.key !== 'Escape' || !tempExpanded.value) return;
-  // Only claim Escape while focus lives in the rail; otherwise let the
-  // page's own dialogs (file browser etc.) handle it.
-  const el = railEl.value;
-  if (el && el.contains(document.activeElement)) tempExpanded.value = false;
+  if (event.key !== 'Escape' || !floatingExpanded.value) return;
+
+  dismissExpandedOverlay();
+  void nextTick(() => {
+    railEl.value?.querySelector<HTMLButtonElement>('[data-testid="rail-toggle"]')?.focus();
+  });
 }
 
 onMounted(() => {
@@ -128,6 +148,11 @@ watch(() => [props.activePage, visuallyCollapsed.value], () => {
   if (!visuallyCollapsed.value) scrollActiveIntoView();
 });
 
+watch(() => props.collapsed, () => {
+  tempExpanded.value = false;
+  persistentOverlayDismissed.value = false;
+});
+
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onDocumentPointerdown);
   document.removeEventListener('keydown', onDocumentKeydown);
@@ -141,6 +166,7 @@ onBeforeUnmount(() => {
     class="workbench-rail"
     :class="{
       'workbench-rail--collapsed': visuallyCollapsed,
+      'workbench-rail--floating-expanded': floatingExpanded,
       'workbench-rail--temp-expanded': tempExpanded,
     }"
     :aria-label="t('nav.primaryNavigation')"
@@ -197,8 +223,8 @@ onBeforeUnmount(() => {
               </span>
             </a>
 
-            <!-- Accordion: section children render only under the active
-                 page and only while the rail is visually expanded. -->
+            <!-- Accordion: section children belong only to the active page.
+                 Compact rail CSS hides them until the rail expands. -->
             <ul
               v-if="hasChildren(item)"
               class="workbench-rail__subitems"
