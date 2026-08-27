@@ -53,6 +53,7 @@
   "Disabled cluster nodes cannot be enabled for sync": "已禁用的集群节点无法启用同步",
   "Draft not found or expired": "草稿不存在或已过期",
   "Enter a new password or explicitly disable authentication": "请输入新密码或显式禁用身份验证",
+  "Entry orders use a supplied flat state; close orders use a representative hypothetical position and are not a live account forecast.": "入场订单使用所提供的空仓状态；平仓订单使用具有代表性的假设仓位，并非实盘账户预测。",
   "Every referenced override config must be supplied": "必须提供所有被引用的覆盖配置",
   "Exchange is not connected": "交易所未连接",
   "Exchange user catalog is unavailable": "交易所用户目录不可用",

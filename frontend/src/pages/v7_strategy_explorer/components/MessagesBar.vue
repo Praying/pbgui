@@ -4,6 +4,7 @@
  * (:993-1003): the candle-load info filter lives in the store.
  */
 import type { ExplorerStore } from '../composables/useStrategyExplorer';
+import { serverMsg } from '@/shared/i18n';
 
 const props = defineProps<{ store: ExplorerStore }>();
 const list = () => props.store.messages.value;
@@ -22,6 +23,6 @@ function messageClass(level: string): string {
 
 <template>
   <section id="messages" class="flex flex-col gap-2" :hidden="!list().length">
-    <div v-for="(msg, i) in list()" :key="i" class="border rounded-[9px] px-3.25 py-2.5" :class="messageClass(String(msg.level || 'info'))">{{ msg.text || msg.message || '' }}</div>
+    <div v-for="(msg, i) in list()" :key="i" class="border rounded-[9px] px-3.25 py-2.5" :class="messageClass(String(msg.level || 'info'))">{{ serverMsg(String(msg.text || msg.message || '')) }}</div>
   </section>
 </template>
