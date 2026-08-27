@@ -461,7 +461,6 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   transition:
     background-color var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard),
-    box-shadow var(--motion-fast) var(--ease-standard),
     transform var(--motion-fast) var(--ease-spring);
 }
 .worker-card:hover {
