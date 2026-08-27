@@ -87,15 +87,61 @@
     syncExpandButton(el);
   }
 
+  function setCopyButtonStatus(btn, text, original) {
+    if (!btn) return;
+    btn.textContent = text;
+    window.setTimeout(function() { btn.textContent = original; }, 1400);
+  }
+
+  function fallbackCopyText(text) {
+    if (!document.body || typeof document.execCommand !== 'function') return false;
+    var active = document.activeElement;
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.inset = '0 auto auto -9999px';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    var copied = false;
+    try {
+      copied = document.execCommand('copy');
+    } catch (_) {
+      copied = false;
+    }
+    textarea.remove();
+    if (active && typeof active.focus === 'function') active.focus();
+    return copied;
+  }
+
+  function writeClipboardText(text) {
+    var clipboard = navigator.clipboard;
+    if (clipboard && typeof clipboard.writeText === 'function') {
+      try {
+        return Promise.resolve(clipboard.writeText(text)).catch(function() {
+          if (fallbackCopyText(text)) return;
+          throw new Error('Clipboard write failed');
+        });
+      } catch (_) {
+        if (fallbackCopyText(text)) return Promise.resolve();
+        return Promise.reject(new Error('Clipboard write failed'));
+      }
+    }
+    if (fallbackCopyText(text)) return Promise.resolve();
+    return Promise.reject(new Error('Clipboard API unavailable'));
+  }
+
   function copyJsonPanel(preId, btn) {
     var el = document.getElementById(preId);
-    if (!el) return;
-    navigator.clipboard.writeText(el.textContent || '').then(function() {
-      if (!btn) return;
-      var original = btn.textContent;
-      btn.textContent = _jsonT('shared.json.copied', '✓ Copied');
-      window.setTimeout(function() { btn.textContent = original; }, 1400);
-    }).catch(function() {});
+    if (!el) return Promise.resolve();
+    var original = btn ? btn.textContent : '';
+    return writeClipboardText(el.textContent || '').then(function() {
+      setCopyButtonStatus(btn, _jsonT('shared.json.copied', '✓ Copied'), original);
+    }).catch(function() {
+      setCopyButtonStatus(btn, _jsonT('shared.json.copyFailed', 'Copy failed'), original);
+    });
   }
 
   function expandJsonPanel(preId, btn) {

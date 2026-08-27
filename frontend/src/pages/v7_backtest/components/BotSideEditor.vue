@@ -7,7 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { botHighlightLines } from '@/shared/botHighlight';
-import { getSideValue } from '../lib/sideValues';
+import { getSideValue, setSideValue } from '../lib/sideValues';
 import type { BacktestVersion } from '../types';
 
 /**
@@ -56,7 +56,7 @@ function syncField(field: 'total_wallet_exposure_limit' | 'n_positions', raw: st
   if (Object.keys(obj).length === 0) return;
   const value = field === 'total_wallet_exposure_limit' ? parseFloat(raw) : parseInt(raw, 10);
   if (Number.isNaN(value)) return;
-  obj[field] = value;
+  setSideValue(props.version, obj, field, value);
   model.value = JSON.stringify(obj, null, 2);
 }
 

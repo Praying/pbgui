@@ -41,6 +41,7 @@ import { useI18n } from 'vue-i18n';
 import { getBoot } from '@/shared/boot';
 import { replaceTopLocation } from '@/shared/nav';
 import AppShell from '@/shared/components/AppShell.vue';
+import ConnectionNotice from '@/shared/components/ConnectionNotice.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -112,14 +113,6 @@ const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
   store.banner.value === 'ok' ? t('v7backtest.connected') : store.banner.value === 'lost' ? t('v7backtest.connectionLost') : t('v7backtest.connecting')
 );
-/* Banner tone (the former .conn-ok/.conn-lost/.conn-waiting rules): every
-   branch returns the complete colour set; the conn-* class names stay on
-   the element as inert anchors (the tests assert them). */
-function bannerToneClass(state: string): string {
-  if (state === 'conn-ok') return 'bg-success text-accent-contrast';
-  if (state === 'conn-lost') return 'bg-danger text-[#f2f5fb]';
-  return 'bg-warning text-accent-contrast';
-}
 /* Toast tone (the former .toast-ok/.toast-err/.toast-info rules). */
 function toastToneClass(kind: string): string {
   if (kind === 'ok') return 'bg-success text-accent-contrast';
@@ -397,7 +390,7 @@ onMounted(() => {
     :page-title="t(store.adapter.titleKey, store.adapter.titleParams)"
     :page-family="store.adapter.label"
     :status-text="bannerText"
-    :status-tone="bannerClass === 'conn-ok' ? 'success' : bannerClass === 'conn-lost' ? 'danger' : 'warning'"
+    :status-tone="bannerClass === 'conn-ok' ? 'success' : bannerClass === 'conn-lost' ? 'danger' : 'neutral'"
     :sections="railSections"
     :active-section="store.view.state.panel"
     @update:section="onRailSection"
@@ -411,15 +404,11 @@ onMounted(() => {
       />
     </template>
 
-    <div
-      v-if="store.banner.value !== 'ok'"
-      id="conn-banner"
-      class="px-4 py-2 text-center text-sm font-semibold transition-all duration-300"
-      :class="[bannerClass, bannerToneClass(bannerClass)]"
-      data-i18n="v7backtest.connecting"
-    >
-      {{ bannerText }}
-    </div>
+    <ConnectionNotice
+      :state="store.banner.value"
+      :waiting-text="t('v7backtest.connecting')"
+      :lost-text="t('v7backtest.connectionLost')"
+    />
 
     <div id="page-body" class="flex h-[calc(100dvh_-_var(--nav-height))] min-h-0 flex-col overflow-hidden max-[760px]:relative">
 

@@ -42,6 +42,7 @@ import { PhArrowsClockwise, PhFloppyDisk, PhPlus, PhQuestion } from '@phosphor-i
 import { useI18n } from 'vue-i18n';
 import { aiFocusedField, continuePageAction, useAiPageAction, useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
+import ConnectionNotice from '@/shared/components/ConnectionNotice.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -66,14 +67,6 @@ import { STATUS_FILTERS } from './lib/table';
 import { createToast } from './lib/toast';
 
 const { t } = useI18n();
-
-/** Banner state → Tailwind utilities (the former v7-run.css .conn-* rules;
-    conn-ok was display:none in legacy). */
-function bannerClass(state: string): string {
-  if (state === 'ok') return 'hidden';
-  if (state === 'lost') return 'bg-danger text-[#f2f5fb]';
-  return 'bg-warning text-accent-contrast';
-}
 
 const adapter = currentRunAdapter(); // :574 (legacy RUN_VERSION injection)
 
@@ -158,8 +151,11 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <!-- Connection banner (:508) -->
-    <div id="conn-banner" class="px-4 py-2 text-center text-sm font-semibold transition-all duration-300" :class="bannerClass(store.banner.value)">{{ t('v7run.connecting') }}</div>
+    <ConnectionNotice
+      :state="store.banner.value"
+      :waiting-text="t('v7run.connecting')"
+      :lost-text="t('v7backtest.connectionLost')"
+    />
 
     <!-- Page body: filter/action toolbar + main content (:511). The filters
          and instance actions left the sidebar for a top strip; navigation

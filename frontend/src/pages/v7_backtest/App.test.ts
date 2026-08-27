@@ -673,12 +673,10 @@ describe('boot chain (:10012-10024)', () => {
 });
 
 describe('connection banner (:1256-1262)', () => {
-  it('starts waiting, hides on ok and shows on disconnect', async () => {
+  it('suppresses transient waiting, stays quiet on ok and shows disconnect immediately', async () => {
     const wrapper = mountApp();
     await flush();
-    let banner = wrapper.find('#conn-banner');
-    expect(banner.classes()).toContain('conn-waiting');
-    expect(banner.text()).toBe('Connecting…');
+    expect(wrapper.find('#conn-banner').exists()).toBe(false);
     sockets[0]!.readyState = 1;
     sockets[0]!.onopen?.();
     await nextTick();
@@ -686,7 +684,7 @@ describe('connection banner (:1256-1262)', () => {
     expect(wrapper.find('#conn-banner').exists()).toBe(false);
     sockets[0]!.onclose?.();
     await nextTick();
-    banner = wrapper.find('#conn-banner');
+    const banner = wrapper.find('#conn-banner');
     expect(banner.classes()).toContain('conn-lost');
     expect(banner.text()).toBe('Connection lost — reconnecting…');
     wrapper.unmount();

@@ -153,10 +153,14 @@ describe('WorkbenchRail', () => {
     expect(toggle.attributes('aria-expanded')).toBe('false');
     expect(toggle.attributes('aria-controls')).toBe('workbench-nav-list');
     expect(wrapper.get('nav#workbench-rail').attributes('aria-label')).toBe('Primary navigation');
+    expect(wrapper.get('[data-testid="rail-compact-mark"]').text()).toBe('PB');
     expect(wrapper.get('a[href="/api/services/main_page"]').attributes('aria-label')).toBe(
       'PBGUI Services',
     );
-    expect(wrapper.get('a[href="/api/services/main_page"]').attributes('title')).toBe('PBGUI Services');
+    expect(wrapper.get('a[href="/api/services/main_page"]').attributes('title')).toBe(
+      'System / PBGUI Services',
+    );
+    expect(wrapper.get('a[href="/api/services/main_page"] svg').attributes('width')).toBe('20');
 
     await toggle.trigger('keydown', { key: 'Enter' });
 
@@ -181,7 +185,7 @@ describe('WorkbenchRail', () => {
     expect(nav.classes()).not.toContain('workbench-rail--temp-expanded');
   });
 
-  it('visually closes persistent expansion outside without changing its preference', async () => {
+  it('keeps persistent expansion open after an outside pointerdown', async () => {
     const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS });
     const nav = wrapper.get('nav#workbench-rail');
 
@@ -190,18 +194,14 @@ describe('WorkbenchRail', () => {
     document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
     await wrapper.vm.$nextTick();
 
-    expect(nav.classes()).toContain('workbench-rail--collapsed');
-    expect(wrapper.emitted('update:collapsed')).toBeUndefined();
-    expect(localStorage.getItem('pbgui-workbench-rail-collapsed')).toBeNull();
-
-    await wrapper.get('[data-testid="rail-toggle"]').trigger('click');
-
     expect(nav.classes()).toContain('workbench-rail--floating-expanded');
+    expect(nav.classes()).toContain('workbench-rail--persistent-expanded');
     expect(nav.classes()).not.toContain('workbench-rail--collapsed');
     expect(wrapper.emitted('update:collapsed')).toBeUndefined();
+    expect(localStorage.getItem('pbgui-workbench-rail-collapsed')).toBeNull();
   });
 
-  it('dismisses a persistent expanded overlay with Escape from outside the rail', async () => {
+  it('keeps persistent expansion open after Escape outside the rail', async () => {
     const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS }, true);
     const nav = wrapper.get('nav#workbench-rail');
     const outsideButton = document.createElement('button');
@@ -211,10 +211,12 @@ describe('WorkbenchRail', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await wrapper.vm.$nextTick();
 
-    expect(nav.classes()).toContain('workbench-rail--collapsed');
+    expect(nav.classes()).toContain('workbench-rail--floating-expanded');
+    expect(nav.classes()).toContain('workbench-rail--persistent-expanded');
+    expect(nav.classes()).not.toContain('workbench-rail--collapsed');
     const toggle = wrapper.get('[data-testid="rail-toggle"]');
-    expect(toggle.attributes('aria-expanded')).toBe('false');
-    expect(document.activeElement).toBe(toggle.element);
+    expect(toggle.attributes('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(outsideButton);
     expect(wrapper.emitted('update:collapsed')).toBeUndefined();
     outsideButton.remove();
   });
@@ -304,21 +306,15 @@ describe('WorkbenchRail', () => {
     vi.unstubAllGlobals();
   });
 
-  it('uses the accessible toggle to reopen a dismissed drawer', async () => {
+  it('uses the accessible toggle to collapse persistent navigation', async () => {
     const wrapper = mountRail('system_services', false, { sections: TEST_SECTIONS });
     const toggle = wrapper.get('[data-testid="rail-toggle"]');
 
-    document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
-    await wrapper.vm.$nextTick();
-
-    expect(toggle.attributes('aria-expanded')).toBe('false');
-    expect(toggle.attributes('aria-label')).toBe('Expand navigation');
-
     await toggle.trigger('keydown', { key: 'Enter' });
 
-    expect(toggle.attributes('aria-expanded')).toBe('true');
+    expect(wrapper.emitted('update:collapsed')).toEqual([[true]]);
+    expect(localStorage.getItem('pbgui-workbench-rail-collapsed')).toBe('true');
     expect(toggle.attributes('aria-label')).toBe('Collapse navigation');
-    expect(wrapper.emitted('update:collapsed')).toBeUndefined();
   });
 
   it('dismisses temporary expansion with Escape from a focused rail item', async () => {
@@ -341,10 +337,10 @@ describe('WorkbenchRail', () => {
 
   it('labels the temporary expanded toggle as a collapse action', async () => {
     const wrapper = mountRail('system_services', true, { sections: TEST_SECTIONS });
-    const toggle = wrapper.get('[data-testid="rail-toggle"]');
 
     await wrapper.get('a[aria-current="page"]').trigger('click');
 
+    const toggle = wrapper.get('[data-testid="rail-toggle"]');
     expect(toggle.attributes('aria-expanded')).toBe('true');
     expect(toggle.attributes('aria-label')).toBe('Collapse navigation');
     expect(toggle.attributes('title')).toBe('Collapse navigation');

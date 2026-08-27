@@ -195,12 +195,50 @@
     letter-spacing: var(--tracking-tight);
   }
 
+  .workbench-rail__compact-mark {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  .workbench-rail__compact-glyph {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    padding: 2px;
+    border-radius: var(--radius-full);
+    background: var(--surface-elevated);
+    color: var(--text-secondary);
+    box-shadow: 0 0 0 1px var(--border-subtle);
+  }
+
   .workbench-rail__groups {
     flex: 1;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
     padding: var(--sp-md) var(--sp-sm);
+    scrollbar-color: var(--border-strong) transparent;
+    scrollbar-width: thin;
+  }
+
+  .workbench-rail__groups::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .workbench-rail__groups::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .workbench-rail__groups::-webkit-scrollbar-thumb {
+    border-radius: var(--radius-full);
+    background: var(--border-strong);
+  }
+
+  .workbench-rail__groups::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
   }
 
   .workbench-rail__group + .workbench-rail__group {
@@ -280,8 +318,58 @@
 
   .workbench-rail--collapsed .workbench-rail__item,
   .workbench-rail--collapsed .workbench-rail__ai-btn {
-    min-width: var(--rail-collapsed-width);
+    position: relative;
+    width: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    margin-right: auto;
+    margin-left: auto;
+    border-width: 1px;
+    border-radius: var(--radius-xl);
     justify-content: center;
+  }
+
+  .workbench-rail--collapsed .workbench-rail__item:not(.workbench-rail__item--disabled):hover {
+    border-color: var(--border-default);
+    background: var(--surface-card);
+    transform: translateY(-1px);
+  }
+
+  .workbench-rail--collapsed .workbench-rail__item--active {
+    border-color: rgb(var(--accent-rgb) / 0.34);
+    background: rgb(var(--accent-deep-rgb) / 0.2);
+    color: var(--accent-soft);
+    box-shadow:
+      0 0 0 3px rgb(var(--accent-rgb) / 0.05),
+      0 1px 0 rgb(224 241 255 / 0.1) inset;
+  }
+
+  .workbench-rail--collapsed .workbench-rail__item--active::before {
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 2px;
+    width: 2px;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    content: '';
+  }
+
+  .workbench-rail--collapsed .workbench-rail__group + .workbench-rail__group {
+    position: relative;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .workbench-rail--collapsed .workbench-rail__group + .workbench-rail__group::before {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 24px;
+    height: 1px;
+    background: rgb(var(--text-secondary-rgb) / 0.12);
+    content: '';
+    transform: translateX(-50%);
   }
 
   .workbench-rail--collapsed .workbench-rail__subitems {
@@ -675,6 +763,27 @@
     border-color: var(--border-strong);
     background: var(--surface-elevated);
     color: var(--text-primary);
+  }
+
+  button.pbgui-icon-button.pbgui-icon-button.workbench-rail__compact-toggle {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    place-items: center;
+    border-radius: var(--radius-xl);
+    background: var(--surface-panel);
+    color: var(--accent-soft);
+    box-shadow:
+      0 8px 18px rgb(2 8 14 / 0.18),
+      0 1px 0 rgb(224 241 255 / 0.08) inset;
+  }
+
+  button.pbgui-icon-button.pbgui-icon-button.workbench-rail__compact-toggle:hover:not(:disabled) {
+    border-color: var(--accent-deep);
+    background: var(--surface-card);
+    color: var(--accent);
+    transform: translateY(-1px);
   }
 
   .pbgui-icon-button:focus-visible,
@@ -1447,7 +1556,8 @@
 
     /* An auto margin outranks the collapsed brand row's
        justify-content: center, so the toggle pins right. */
-    .workbench-rail--collapsed .workbench-rail__toggle {
+    .workbench-rail--collapsed .workbench-rail__toggle,
+    .workbench-rail--collapsed .workbench-rail__compact-toggle {
       align-self: center;
       margin-left: auto;
     }

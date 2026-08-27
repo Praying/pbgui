@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhChartBar, PhCopy, PhPencilSimple, PhPlay } from '@phosphor-icons/vue';
+import { PhChartBar, PhClipboardText, PhCopy, PhPencilSimple, PhPlay, PhPlus } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -38,7 +38,21 @@ const emit = defineEmits<{
   'nothing-selected': [];
 }>();
 
-const { t } = useI18n();
+const { t, tm } = useI18n();
+
+function stripLegacyMarkup(value: string): string {
+  return value.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+const emptyCopy = computed(() => {
+  const [title = '', message = ''] = String(tm('v7backtest.emptyConfigsHtml')).split(/<br\s*\/?\s*>/i);
+  return {
+    title: stripLegacyMarkup(title),
+    message: stripLegacyMarkup(message),
+  };
+});
+
+const newConfigLabel = computed(() => t('v7backtest.newConfig').replace(/^\s*\+\s*/, ''));
 
 const filter = ref('');
 const exchangeFilter = ref('');
@@ -177,7 +191,7 @@ defineExpose({
 
 <template>
   <div>
-    <div id="configs-toolbar" class="mb-2 flex flex-wrap items-center gap-2">
+    <div v-if="configs.length > 0" id="configs-toolbar" class="mb-2 flex flex-wrap items-center gap-2">
       <Input
         v-model="filter"
         type="text"
@@ -211,10 +225,28 @@ defineExpose({
       <Button type="button" variant="default" class="act-btn h-auto" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
     </div>
 
-    <div v-if="configs.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">
-      <div class="mb-3 text-[48px] opacity-40">📋</div>
-      <p>{{ t('v7backtest.emptyConfigsHtml') }}</p>
-    </div>
+    <section
+      v-if="configs.length === 0"
+      class="empty-state configs-empty-state mx-auto mt-[clamp(20px,7vh,72px)] grid w-[min(720px,calc(100%_-_32px))] grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-accent/18 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--accent-rgb)/0.11),transparent_18rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel max-[640px]:grid-cols-1"
+      data-test="configs-empty"
+      aria-live="polite"
+    >
+      <div class="relative grid min-h-[210px] place-items-center border-r border-accent/14 bg-accent-deep/8 max-[640px]:min-h-[104px] max-[640px]:border-b max-[640px]:border-r-0">
+        <div class="grid h-16 w-16 place-items-center rounded-2xl border border-accent/24 bg-page/70 text-accent-soft shadow-[0_14px_32px_rgb(2_8_14/0.3),inset_0_1px_0_rgb(224_241_255/0.1)]">
+          <PbIcon :icon="PhClipboardText" :size="30" />
+        </div>
+        <span class="absolute bottom-4 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-secondary/65 max-[640px]:bottom-2">{{ isV8 ? 'PBv8' : 'PBv7' }} / 00</span>
+      </div>
+      <div class="flex min-w-0 flex-col items-start justify-center px-[clamp(24px,5vw,52px)] py-[clamp(28px,5vw,46px)] text-left">
+        <span class="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-accent-soft">{{ isV8 ? 'PBv8' : 'PBv7' }} · {{ t('v7backtest.configs') }}</span>
+        <h2 class="text-[clamp(20px,2.4vw,27px)] font-semibold leading-tight tracking-[-0.035em] text-primary" data-test="configs-empty-title">{{ emptyCopy.title }}</h2>
+        <p class="mt-3 max-w-[48ch] text-sm leading-relaxed text-secondary" data-test="configs-empty-message">{{ emptyCopy.message }}</p>
+        <Button type="button" variant="primary" class="group mt-6 rounded-full px-5" data-test="configs-empty-new" @click="emit('new-config')">
+          <PbIcon :icon="PhPlus" :size="17" />
+          {{ newConfigLabel }}
+        </Button>
+      </div>
+    </section>
     <table v-else class="tbl configs-tbl">
       <thead>
         <tr>

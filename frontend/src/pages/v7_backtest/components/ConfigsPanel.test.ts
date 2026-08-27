@@ -50,10 +50,20 @@ describe('rendering (:1677-1705)', () => {
     expect(v8.find('[data-test="strategy-col-header"]').exists()).toBe(true);
   });
 
-  it('shows the empty state when there are no configs (:1667-1670)', async () => {
-    const wrapper = mountPanel({ configs: [] });
+  it('shows a structured PBv8 empty state with a working create action', async () => {
+    const wrapper = mountPanel({ configs: [], isV8: true });
     await nextTick();
-    expect(wrapper.find('.empty-state').exists()).toBe(true);
+    const emptyState = wrapper.get('[data-test="configs-empty"]');
+    expect(wrapper.find('#configs-toolbar').exists()).toBe(false);
+    expect(emptyState.find('svg').exists()).toBe(true);
+    expect(wrapper.get('[data-test="configs-empty-title"]').text()).toBe('No saved configs yet.');
+    expect(wrapper.get('[data-test="configs-empty-message"]').text()).toBe('Click + New Config to create one.');
+    expect(emptyState.text()).not.toContain('<br>');
+    expect(emptyState.text()).not.toContain('<b>');
+    expect(emptyState.text()).toContain('PBv8 / 00');
+
+    await wrapper.get('[data-test="configs-empty-new"]').trigger('click');
+    expect(wrapper.emitted('new-config')).toEqual([[]]);
   });
 });
 

@@ -37,6 +37,59 @@ function mountEditors(shortParamStatus: Record<string, string> = {}) {
 
 /** Focused behavior contracts for the Long/Short JSON disclosure panels. */
 describe('BotSideEditor', () => {
+  it('increments both PBv8 risk steppers repeatedly for long and short sides', async () => {
+    const longJson = ref(JSON.stringify({ risk: { total_wallet_exposure_limit: 1, n_positions: 2 } }, null, 2));
+    const shortJson = ref(JSON.stringify({ risk: { total_wallet_exposure_limit: 0.5, n_positions: 1 } }, null, 2));
+    const longTwe = ref('1');
+    const longNpos = ref('2');
+    const shortTwe = ref('0.5');
+    const shortNpos = ref('1');
+    const Harness = defineComponent({
+      setup() {
+        return () => h('div', [
+          h(BotSideEditor, {
+            modelValue: longJson.value,
+            'onUpdate:modelValue': (value: string) => (longJson.value = value),
+            'onUpdate:twe': (value: string) => (longTwe.value = value),
+            'onUpdate:npos': (value: string) => (longNpos.value = value),
+            side: 'long',
+            twe: longTwe.value,
+            npos: longNpos.value,
+            version: 'v8',
+          }),
+          h(BotSideEditor, {
+            modelValue: shortJson.value,
+            'onUpdate:modelValue': (value: string) => (shortJson.value = value),
+            'onUpdate:twe': (value: string) => (shortTwe.value = value),
+            'onUpdate:npos': (value: string) => (shortNpos.value = value),
+            side: 'short',
+            twe: shortTwe.value,
+            npos: shortNpos.value,
+            version: 'v8',
+          }),
+        ]);
+      },
+    });
+    const wrapper = mount(Harness, { global: { plugins: [createI18n('en')] } });
+
+    const longButtons = wrapper.get('[data-test="bot-side-long"]').findAll('.stepper-btn');
+    const shortButtons = wrapper.get('[data-test="bot-side-short"]').findAll('.stepper-btn');
+    await longButtons[1]!.trigger('click');
+    await longButtons[1]!.trigger('click');
+    await longButtons[3]!.trigger('click');
+    await shortButtons[1]!.trigger('click');
+    await shortButtons[1]!.trigger('click');
+    await shortButtons[3]!.trigger('click');
+
+    expect(JSON.parse(longJson.value)).toEqual({ risk: { total_wallet_exposure_limit: 1.1, n_positions: 3 } });
+    expect(JSON.parse(shortJson.value)).toEqual({ risk: { total_wallet_exposure_limit: 0.6, n_positions: 2 } });
+    expect(longTwe.value).toBe('1.1');
+    expect(longNpos.value).toBe('3');
+    expect(shortTwe.value).toBe('0.6');
+    expect(shortNpos.value).toBe('2');
+    wrapper.unmount();
+  });
+
   it('uses the approved semantic hooks, aria-controls and independent per-side state', async () => {
     const wrapper = mountEditors({ strategy: 'pb_default' });
     const longPanel = wrapper.get('[data-test="bot-side-long"]');

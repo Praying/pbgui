@@ -74,14 +74,39 @@ describe('WorkbenchRail responsive CSS contracts', () => {
 
   it('keeps compact rail controls available without changing the shell grid', () => {
     const rail = find_exact_rule(stylesheet_root, '.workbench-rail');
+    const groups = find_exact_rule(stylesheet_root, '.workbench-rail__groups');
+    const webkit_scrollbar = find_exact_rule(
+      stylesheet_root,
+      '.workbench-rail__groups::-webkit-scrollbar',
+    );
     const collapsed_controls = find_exact_rule(
       stylesheet_root,
       '.workbench-rail--collapsed .workbench-rail__item, .workbench-rail--collapsed .workbench-rail__ai-btn',
     );
+    const compact_toggle = find_exact_rule(
+      stylesheet_root,
+      'button.pbgui-icon-button.pbgui-icon-button.workbench-rail__compact-toggle',
+    );
+    const active_indicator = find_exact_rule(
+      stylesheet_root,
+      '.workbench-rail--collapsed .workbench-rail__item--active::before',
+    );
+    const group_separator = find_exact_rule(
+      stylesheet_root,
+      '.workbench-rail--collapsed .workbench-rail__group + .workbench-rail__group::before',
+    );
     const floating_rail = find_exact_rule(stylesheet_root, '.workbench-rail--floating-expanded');
 
-    expect_declaration(collapsed_controls, 'min-width', 'var(--rail-collapsed-width)');
+    expect_declaration(groups, 'scrollbar-width', 'thin');
+    expect_declaration(webkit_scrollbar, 'width', '4px');
+    expect_declaration(collapsed_controls, 'width', '42px');
+    expect_declaration(collapsed_controls, 'min-width', '42px');
+    expect_declaration(collapsed_controls, 'min-height', '42px');
     expect_declaration(collapsed_controls, 'justify-content', 'center');
+    expect_declaration(compact_toggle, 'width', '42px');
+    expect_declaration(compact_toggle, 'height', '42px');
+    expect_declaration(active_indicator, 'width', '2px');
+    expect_declaration(group_separator, 'width', '24px');
     expect_declaration(floating_rail, 'position', 'fixed');
     expect_declaration(floating_rail, 'width', 'var(--rail-expanded-width)');
     expect(get_declaration(rail, 'transition')).toBeUndefined();
@@ -183,7 +208,7 @@ describe('WorkbenchRail responsive CSS contracts', () => {
     );
     const collapsed_toggle = find_exact_rule(
       mobile_rules,
-      '.workbench-rail--collapsed .workbench-rail__toggle',
+      '.workbench-rail--collapsed .workbench-rail__toggle, .workbench-rail--collapsed .workbench-rail__compact-toggle',
     );
 
     expect_declaration(mobile_rail_slot, 'width', '100%');
