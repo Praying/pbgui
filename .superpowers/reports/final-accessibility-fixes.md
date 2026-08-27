@@ -4,7 +4,7 @@ Complete.
 
 # Commit
 
-Pending final fix commit.
+`fe8f3144ae235dced855a395d25753d043466f6e` (`fix(frontend): stabilize mobile rail accessibility`)
 
 # Tests
 
