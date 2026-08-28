@@ -1,6 +1,40 @@
 /* PBGui Job Monitor Styles */
 
 :root {
+    /* The static job monitor still loads this stylesheet from an iframe.
+       Keep its surfaces aligned with the Vue workbench after tokens.css was
+       retired during the frontend migration. */
+    --font-family: 'Space Grotesk', 'Avenir Next', 'Segoe UI', -apple-system, system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --bg-page: #0d151e;
+    --bg-panel: #1a2a38;
+    --bg-card: #203344;
+    --bg-elevated: #263b4d;
+    --surface-sidebar: #101a24;
+    --text-primary: #e8ecf4;
+    --text-secondary: #a3adc2;
+    --text-muted: #717b8e;
+    --text-disabled: #4a5364;
+    --border-subtle: #262f45;
+    --border-default: #333f5c;
+    --border-strong: #4d5c82;
+    --accent: #9bbfff;
+    --accent-soft: #b5d0ff;
+    --accent-deep: #3f63ad;
+    --accent-rgb: 155 191 255;
+    --accent-soft-rgb: 181 208 255;
+    --success: #72d5b3;
+    --success-soft: #76d9ad;
+    --success-rgb: 114 213 179;
+    --success-bg: rgb(114 213 179 / 0.13);
+    --warning: #efbd72;
+    --warning-soft: #ecc381;
+    --warning-rgb: 239 189 114;
+    --danger: #e9817c;
+    --danger-soft: #ee8d84;
+    --danger-rgb: 233 129 124;
+    --danger-bg: rgb(233 129 124 / 0.13);
+    --bg-page-rgb: 13 21 30;
+    --text-secondary-rgb: 163 173 194;
     --fs-xs: 11px;
     --fs-sm: 13px;
     --fs-base: 14px;
@@ -300,5 +334,199 @@ h1 {
     
     .btn {
         flex: 1;
+    }
+}
+
+/* ── Embedded workbench treatment ───────────────────────────────
+   The integrity page mounts this legacy monitor in an iframe. Keep the
+   complete embedded canvas dark rather than relying on the retired
+   tokens.css stylesheet or browser defaults for empty regions. */
+html.is-embedded,
+body.is-embedded {
+    min-height: 100%;
+    background: var(--bg-page) !important;
+    color: var(--text-primary) !important;
+}
+
+body.is-embedded {
+    padding: 0 !important;
+}
+
+body.is-embedded .container {
+    width: 100%;
+    max-width: none;
+    min-height: 100%;
+    margin: 0;
+    padding: 14px;
+    background: var(--bg-page) !important;
+}
+
+body.is-embedded header {
+    display: none;
+}
+
+body.is-embedded .tabs {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    margin: 0 0 12px;
+    padding: 4px;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    background: var(--bg-panel);
+    box-shadow: 0 1px 0 rgb(224 241 255 / 0.06) inset;
+}
+
+body.is-embedded .tab-btn {
+    min-height: 36px;
+    padding: 8px 18px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+body.is-embedded .tab-btn:hover {
+    background: rgb(var(--accent-rgb) / 0.08);
+    color: var(--text-primary);
+}
+
+body.is-embedded .tab-btn.active {
+    border-color: rgb(var(--accent-rgb) / 0.24);
+    background: rgb(var(--accent-rgb) / 0.13);
+    color: var(--accent-soft);
+    box-shadow: 0 1px 0 rgb(224 241 255 / 0.08) inset;
+}
+
+body.is-embedded .tab-content {
+    min-height: 180px;
+    padding: 0;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: var(--bg-panel) !important;
+    box-shadow: 0 16px 34px rgb(2 8 14 / 0.22), 0 1px 0 rgb(224 241 255 / 0.05) inset;
+}
+
+body.is-embedded .jobs-list {
+    min-height: 180px;
+    padding: 12px;
+    background: transparent !important;
+}
+
+body.is-embedded .no-jobs,
+body.is-embedded .loading,
+body.is-embedded .error {
+    min-height: 150px;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    border: 1px dashed rgb(var(--text-secondary-rgb) / 0.2);
+    border-radius: 8px;
+    background: rgb(var(--bg-page-rgb) / 0.42) !important;
+    color: var(--text-muted);
+}
+
+body.is-embedded .job-card {
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    background: var(--bg-card) !important;
+    box-shadow: 0 8px 18px rgb(2 8 14 / 0.16), 0 1px 0 rgb(224 241 255 / 0.06) inset;
+    transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+body.is-embedded .job-card:hover {
+    border-color: var(--border-strong);
+    background: rgb(var(--accent-rgb) / 0.08) !important;
+    transform: translateY(-1px);
+}
+
+body.is-embedded .job-header {
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgb(var(--border-default) / 0.72);
+}
+
+body.is-embedded .job-info,
+body.is-embedded .job-details,
+body.is-embedded .progress-details {
+    color: var(--text-secondary);
+}
+
+body.is-embedded .job-id {
+    color: var(--text-primary);
+}
+
+body.is-embedded .job-type,
+body.is-embedded .detail {
+    color: var(--text-muted);
+}
+
+body.is-embedded .progress-bar {
+    height: 8px;
+    margin-top: 14px;
+    background: rgb(var(--text-secondary-rgb) / 0.16);
+}
+
+body.is-embedded .progress-fill {
+    min-width: 0;
+    background: linear-gradient(90deg, var(--accent-deep), var(--accent));
+}
+
+body.is-embedded .progress-text {
+    display: none;
+}
+
+body.is-embedded .tab-header-actions {
+    margin: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: rgb(var(--bg-page-rgb) / 0.26);
+}
+
+body.is-embedded .expander-content,
+body.is-embedded .downloader-details,
+body.is-embedded .downloader-card {
+    border-color: rgb(var(--border-default) / 0.82);
+    background: rgb(var(--bg-page-rgb) / 0.62) !important;
+}
+
+body.is-embedded .modal {
+    background: rgb(5 8 14 / 0.78) !important;
+}
+
+body.is-embedded .modal-content,
+body.is-embedded .action-modal-card {
+    border: 1px solid var(--border-default);
+    background: var(--bg-panel) !important;
+    box-shadow: 0 24px 70px rgb(2 8 14 / 0.68);
+}
+
+body.is-embedded .modal-header,
+body.is-embedded .action-modal-header {
+    border-color: var(--border-subtle);
+    background: var(--surface-sidebar) !important;
+}
+
+body.is-embedded .modal-body,
+body.is-embedded .job-details-modal-body {
+    background: var(--bg-page) !important;
+}
+
+@media (max-width: 600px) {
+    body.is-embedded .container {
+        padding: 10px;
+    }
+
+    body.is-embedded .tabs {
+        overflow-x: auto;
+    }
+
+    body.is-embedded .tab-btn {
+        flex: 0 0 auto;
+        padding-inline: 14px;
+    }
+
+    body.is-embedded .job-actions {
+        width: 100%;
     }
 }

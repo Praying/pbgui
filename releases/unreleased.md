@@ -1,5 +1,12 @@
 # Unreleased
 
+## Market Data — OHLCV Integrity Workbench Refresh
+
+- Redesigned the OHLCV Integrity page with a clearer data-quality hero, exchange context chip, grouped scan actions, live-job guidance, and a stronger catalog-health snapshot while preserving existing scan, repair, archive, table, modal, and job-monitor behavior.
+- Refined integrity summary cards and table containers with the shared deep blue-grey palette, intentional elevation, compact scrollbars, hover feedback, responsive stacking, and a restrained accent rail to replace the previous flat/empty visual hierarchy.
+- Restored the shared deep blue-grey theme inside the legacy job-monitor iframe by supplying the retired surface, text, border, accent, and status tokens, and added a matching themed boundary around the integrity monitor.
+- Completed the embedded job-monitor restyle by removing the transparent iframe canvas, defining dark surfaces for tabs, content, empty states, job cards, progress bars, and dialogs, and refreshing the static stylesheet cache key.
+
 ## Merge origin/main — Vue3 Migration Parity
 
 - Merged the four remote release commits through v1.99.8, preserving the existing Vue3 workbench changes and syncing V7/V8 migration drafts, AI queue proposals, and result conversion handoffs into the Vue3 pages.

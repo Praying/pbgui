@@ -16,7 +16,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <article class="best1m-job-monitor-shell mt-3 grid gap-3 border-t border-secondary/12 pt-3">
+  <article class="best1m-job-monitor-shell integrity-job-monitor-shell mt-3 grid gap-3 rounded-[10px] border border-border-default bg-page/55 p-4 pt-4 shadow-[0_12px_28px_rgba(2,8,14,0.18)]">
     <div :class="panelHeadClass">
       <div>
         <div class="eyebrow">{{ t('market.queue') }}</div>
@@ -33,3 +33,10 @@ const { t } = useI18n();
     ></iframe>
   </article>
 </template>
+
+<style scoped>
+.integrity-job-monitor-shell :deep(iframe) {
+  display: block;
+  background: var(--surface-page);
+}
+</style>

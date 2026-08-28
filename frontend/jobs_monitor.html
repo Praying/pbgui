@@ -7,7 +7,7 @@
 <script src="/app/i18n.js?v=1"></script>
     <title>Job Monitor - PBGui</title>
     <link rel="stylesheet" href="/app/src/styles/tokens.css">
-    <link rel="stylesheet" href="/app/css/app.css">
+        <link rel="stylesheet" href="/app/css/app.css?v=3">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; }
         /* Additional styles for new features */
@@ -394,7 +394,8 @@
         html.is-embedded,
         body.is-embedded {
             padding: 0;
-            background: transparent;
+            background: var(--bg-page, #0d151e);
+            color: var(--text-primary, #e8ecf4);
             overflow: hidden;
         }
         body.is-embedded .container {
