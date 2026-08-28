@@ -1,9 +1,9 @@
-import { computed, ref } from 'vue';
+import { computed, getCurrentScope, onScopeDispose, ref } from 'vue';
 import { replaceTopLocation } from '@/shared/nav';
 import { createBacktestAdapter, backtestApiBaseFrom, detectBacktestVersion, navItems, viewStateKeyFor, wsUrl, type BacktestAdapter } from '../config';
 import { createToastQueue, type ToastItem, type ToastQueue } from '../lib/toast';
 import { loadStoredBacktestViewState } from '../lib/viewState';
-import { compareSelected, compareSelectedQueue } from './useCompare';
+import { compareSelected, compareSelectedQueue, openAiBacktestCompare, type AiBacktestCompareAction } from './useCompare';
 import { useConfigEditor, type ConfigEditorStore } from './useConfigEditor';
 import { useConfigs } from './useConfigs';
 import { useLegacyResults, type LegacyResultsStore } from './useLegacyResults';
@@ -483,6 +483,33 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
 
   function compareQueue(selectedFilenames: readonly string[], queueItems: readonly QueueItem[]): Promise<void> {
     return runCompareQueue(selectedFilenames, queueItems);
+  }
+
+  /* ── AI-triggered compare (v1.99.9 :10698-10701) — the drawer dispatches
+   * model-approved backtest.compare_results actions as pbgui:ai-ui-action
+   * events; only actions targeting this page's flavour are handled. ── */
+  const runAiBacktestCompare = openAiBacktestCompare({
+    results,
+    version,
+    t,
+    notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
+    selectPanel: () => selectPanel('results'),
+  });
+
+  function onAiUiAction(event: Event): void {
+    const detail = (event as CustomEvent).detail;
+    if (!detail || typeof detail !== 'object' || (detail as { type?: string }).type !== 'backtest.compare_results') return;
+    const target = (detail as AiBacktestCompareAction).target;
+    if (String(target?.version || '') !== version) return;
+    event.preventDefault();
+    runAiBacktestCompare(detail as AiBacktestCompareAction).catch((error: unknown) => {
+      toast.show(t('v7backtest.aiCompareFailed', { msg: error instanceof Error ? error.message : String(error) }), 'err');
+    });
+  }
+
+  window.addEventListener('pbgui:ai-ui-action', onAiUiAction);
+  if (getCurrentScope()) {
+    onScopeDispose(() => window.removeEventListener('pbgui:ai-ui-action', onAiUiAction));
   }
 
   function viewConfigResults(name: string): void {

@@ -1,6 +1,6 @@
 import { chartLayout, compareTraces } from '../lib/resultCharts';
 import { parseIsoMillis } from '../lib/resultsModel';
-import type { BacktestResultItem, QueueItem } from '../types';
+import type { BacktestResultItem, BacktestVersion, QueueItem } from '../types';
 import type { ResultsStore } from './useResults';
 import type { I18nT } from '../types.i18n';
 
@@ -190,6 +190,81 @@ export function compareSelected(options: CompareFlowOptions): () => Promise<void
       return;
     }
     await renderCompare(results, selected);
+  };
+}
+
+/* ── AI-triggered compare (v1.99.9 :10659-10701) ── */
+
+/** select_backtest_results' selector payload (ai_capabilities.py). */
+export interface AiBacktestCompareSelector {
+  config_name?: string;
+  result_name?: string;
+  exchange_dir?: string;
+  modified?: string;
+}
+
+/** The drawer's backtest.compare_results ui_action detail. */
+export interface AiBacktestCompareAction {
+  target?: { page_key?: string; version?: string };
+  payload?: { selectors?: AiBacktestCompareSelector[] };
+}
+
+/** aiBacktestSelectorMatches (:10659-10666) — a selector matches a row when
+ * the version tag matches and every field present on the selector matches. */
+export function aiBacktestSelectorMatches(
+  result: BacktestResultItem | null | undefined,
+  selector: AiBacktestCompareSelector | null | undefined,
+  version: string,
+): boolean {
+  if (!result || !selector || String(result.backtest_version || '') !== String(version || '')) return false;
+  return (['config_name', 'result_name', 'exchange_dir', 'modified'] as const).every(
+    (key) =>
+      !Object.prototype.hasOwnProperty.call(selector, key) ||
+      String(result[key] == null ? '' : result[key]) === String(selector[key] == null ? '' : selector[key]),
+  );
+}
+
+export interface AiCompareFlowOptions extends CompareFlowOptions {
+  /** The page flavour — the action's target.version must match it. */
+  version: BacktestVersion;
+}
+
+/**
+ * openAIBacktestCompare (:10667-10696): gate on the page flavour and ≥2
+ * selectors, pin the version filter, reload, resolve every selector to
+ * exactly one row, select the rows and plot the compare chart.
+ */
+export function openAiBacktestCompare(options: AiCompareFlowOptions): (action: AiBacktestCompareAction) => Promise<void> {
+  return async (action) => {
+    const target = action && typeof action.target === 'object' ? action.target : {};
+    const payload = action && typeof action.payload === 'object' ? action.payload : {};
+    const version = String(target.version || '');
+    const selectors = Array.isArray(payload.selectors) ? payload.selectors : [];
+    if (version !== options.version || selectors.length < 2) {
+      throw new Error(options.t('v7backtest.aiCompareInvalid'));
+    }
+    // results-version-filter pin + _clearResultsFilters (:10672-10676), then
+    // the reload order compareSelectedQueue already ported (:7744-7776).
+    options.results.versionFilter.value = options.version;
+    options.results.configFilter.value = '';
+    options.results.textFilter.value = '';
+    try {
+      await options.results.loadResults('');
+    } catch {
+      return; // loadResults already toasted (:5414)
+    }
+    const rows = options.results.results.value;
+    const paths: string[] = [];
+    for (const selector of selectors) {
+      const matches = rows.filter((row) => aiBacktestSelectorMatches(row, selector, version));
+      if (matches.length !== 1) throw new Error(options.t('v7backtest.aiCompareAmbiguous'));
+      paths.push(matches[0]!.path);
+    }
+    if (new Set(paths).size !== paths.length) throw new Error(options.t('v7backtest.aiCompareDuplicate'));
+    options.selectPanel();
+    options.results.setSelected(paths);
+    await renderCompare(options.results, paths);
+    options.notify(options.t('v7backtest.aiCompareOpened', { n: paths.length }), 'ok');
   };
 }
 

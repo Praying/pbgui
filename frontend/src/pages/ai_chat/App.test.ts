@@ -201,6 +201,63 @@ describe('AI Chat page shell', () => {
 
     delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
   });
+
+  it('hides the proposal card the moment its approve request leaves (v1.99.9)', async () => {
+    const wrapper = await mountApp();
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm: vi.fn(() => Promise.resolve(true)) };
+
+    let releaseApprove!: (response: Response) => void;
+    fetchMock.mockImplementation((url: string | URL) => {
+      const u = String(url);
+      if (u.endsWith('/p1/approve')) {
+        return new Promise<Response>((resolve) => {
+          releaseApprove = resolve;
+        });
+      }
+      if (u.includes('/proposals?')) return Promise.resolve(jsonResponse(PROPOSALS));
+      return Promise.resolve(jsonResponse({}));
+    });
+
+    const approveButton = wrapper.findAll('button').filter((button) => button.text() === 'Review & approve')[0]!;
+    await approveButton.trigger('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // request in flight: the card is hidden, not just its buttons disabled
+    expect(wrapper.text()).not.toContain('Save PB8 optimizer config');
+
+    releaseApprove(jsonResponse({ status: 'executed', action: 'save' }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
+  });
+
+  it('restores the proposal card when the approve request fails (v1.99.9)', async () => {
+    const wrapper = await mountApp();
+    (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm: vi.fn(() => Promise.resolve(true)) };
+
+    fetchMock.mockImplementation((url: string | URL) => {
+      const u = String(url);
+      if (u.endsWith('/p1/approve')) {
+        return Promise.resolve(new Response(JSON.stringify({ detail: 'boom' }), { status: 500 }));
+      }
+      if (u.includes('/proposals?')) return Promise.resolve(jsonResponse(PROPOSALS));
+      return Promise.resolve(jsonResponse({}));
+    });
+
+    const approveButton = wrapper.findAll('button').filter((button) => button.text() === 'Review & approve')[0]!;
+    await approveButton.trigger('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // the failure surfaces in the notice AND restores the card so the user can retry
+    expect(wrapper.text()).toContain('API 500: boom');
+    expect(wrapper.text()).toContain('Save PB8 optimizer config: cfg-v8');
+    const retryButtons = wrapper.findAll('button').filter((button) => button.text() === 'Review & approve');
+    expect(retryButtons.length).toBe(1);
+
+    delete (window as typeof window & { PBGuiDialogs?: unknown }).PBGuiDialogs;
+  });
 });
 
 describe('AI proposal pure helpers', () => {

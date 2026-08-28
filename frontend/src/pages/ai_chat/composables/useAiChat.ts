@@ -99,6 +99,9 @@ export function useAiChat(t: Translate) {
   const conversationId = ref('');
   const conversation = shallowRef<ConversationSummary | null>(null);
   const proposals = ref<AiProposal[]>([]);
+  /** Proposal cards whose approve/reject request is in flight — hidden
+   * immediately (legacy card.hidden = true, v1.99.9) and restored on error. */
+  const resolvingProposalIds = ref<Set<string>>(new Set());
   const transitioning = ref(false);
   const busy = ref(false);
   const pendingMessage = ref('');
@@ -141,6 +144,10 @@ export function useAiChat(t: Translate) {
   });
   const quickReplyAction = computed(() =>
     (conversation.value?.ui_actions || []).find((item) => item && item.type === 'chat.quick_replies') || null,
+  );
+  /** ProposalList binds this — cards in flight are hidden until they resolve or error. */
+  const visibleProposals = computed(() =>
+    proposals.value.filter((proposal) => !resolvingProposalIds.value.has(proposal.proposal_id)),
   );
   const retryMessage = computed(() => retryMessages.value[conversationId.value || '__new__'] || '');
   const reasoningSummary = computed(() => String(conversation.value?.reasoning_summary || ''));
@@ -286,16 +293,21 @@ export function useAiChat(t: Translate) {
   async function reconcileProposals(id: string): Promise<void> {
     if (!id || id !== conversationId.value) {
       proposals.value = [];
+      resolvingProposalIds.value = new Set();
       return;
     }
     const generation = ++proposalGeneration;
     if (busy.value) {
       proposals.value = [];
+      resolvingProposalIds.value = new Set();
       return;
     }
     try {
       const pending = await api<{ proposals?: AiProposal[] }>('/proposals?conversation_id=' + encodeURIComponent(id));
-      if (generation === proposalGeneration && id === conversationId.value && !busy.value) proposals.value = pending.proposals || [];
+      if (generation === proposalGeneration && id === conversationId.value && !busy.value) {
+        proposals.value = pending.proposals || [];
+        resolvingProposalIds.value = new Set();
+      }
     } catch (error) {
       if (id === conversationId.value) setNotice((error as Error).message, true);
     }
@@ -366,6 +378,7 @@ export function useAiChat(t: Translate) {
     pendingMessage.value = '';
     delete retryMessages.value.__new__;
     proposals.value = [];
+    resolvingProposalIds.value = new Set();
     setNotice('', false);
     if (!keepTransition) transitioning.value = false;
   }
@@ -472,6 +485,12 @@ export function useAiChat(t: Translate) {
   async function resolveProposal(proposal: AiProposal, approve: boolean): Promise<void> {
     const preview = (proposal.preview || {}) as ProposalPreview;
     const id = conversationId.value;
+    // v1.99.9 (ai_chat.html / ai_drawer.js): hide the card and show a working
+    // notice the moment the request leaves; only an error restores it.
+    const resolving = new Set(resolvingProposalIds.value);
+    resolving.add(proposal.proposal_id);
+    resolvingProposalIds.value = resolving;
+    setNotice(approve ? t('ai.chat.applyingAction') : t('ai.chat.rejectingProposal'), false, true);
     try {
       const suffix = approve ? '/approve' : '/reject';
       const result = await api<{ status?: string; action?: string }>(
@@ -491,6 +510,11 @@ export function useAiChat(t: Translate) {
           : t('ai.chat.proposalStatus', { status: String(result.status || 'rejected') }),
       );
     } catch (error) {
+      if (id === conversationId.value) {
+        const restored = new Set(resolvingProposalIds.value);
+        restored.delete(proposal.proposal_id);
+        resolvingProposalIds.value = restored;
+      }
       setNotice((error as Error).message, true);
     } finally {
       if (id === conversationId.value) await reconcileProposals(id);
@@ -682,6 +706,7 @@ export function useAiChat(t: Translate) {
     messages,
     quickReplyAction,
     proposals,
+    visibleProposals,
     transitioning,
     busy,
     pendingMessage,

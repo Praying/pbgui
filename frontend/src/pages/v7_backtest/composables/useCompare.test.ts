@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resolveQueueComparePaths } from './useCompare';
+import { aiBacktestSelectorMatches, openAiBacktestCompare, resolveQueueComparePaths } from './useCompare';
 import { useResults } from './useResults';
 import type { BacktestResultItem, QueueItem } from '../types';
 
@@ -281,5 +281,112 @@ describe('compareSelected (:7778-7791)', () => {
     // table order: p2 (v7, newest) first, then p1 (v8-tagged → v8 router)
     expect(equityUrls[0]).toBe('http://h:8000/api/backtest-v7/results/equity?path=p2');
     expect(equityUrls[1]).toBe('http://h:8000/api/backtest-v8/results/equity?path=p1');
+  });
+});
+
+/* ── AI-triggered compare (v1.99.9 :10659-10701) ── */
+
+describe('aiBacktestSelectorMatches (:10659-10666)', () => {
+  it('requires the row version tag to match', () => {
+    const selector = { config_name: 'cfg', result_name: 'res' };
+    expect(aiBacktestSelectorMatches(resultItem({ path: 'p1' }), selector, 'v7')).toBe(true);
+    expect(aiBacktestSelectorMatches(resultItem({ path: 'p1', backtest_version: 'v8' }), selector, 'v7')).toBe(false);
+    expect(aiBacktestSelectorMatches(null, selector, 'v7')).toBe(false);
+    expect(aiBacktestSelectorMatches(resultItem({ path: 'p1' }), null, 'v7')).toBe(false);
+  });
+
+  it('matches only the fields the selector provides', () => {
+    const row = resultItem({ path: 'p1', result_name: 'r1', exchange_dir: 'bybit', modified: '2024-01-11T00:00:00Z' });
+    expect(aiBacktestSelectorMatches(row, { config_name: 'cfg' }, 'v7')).toBe(true);
+    expect(aiBacktestSelectorMatches(row, { config_name: 'cfg', result_name: 'r1', exchange_dir: 'bybit', modified: '2024-01-11T00:00:00Z' }, 'v7')).toBe(true);
+    expect(aiBacktestSelectorMatches(row, { config_name: 'other' }, 'v7')).toBe(false);
+    expect(aiBacktestSelectorMatches(row, { result_name: 'r1', exchange_dir: 'binance' }, 'v7')).toBe(false);
+  });
+});
+
+describe('openAiBacktestCompare (:10667-10701)', () => {
+  it('rejects mismatched flavours and short selector lists', async () => {
+    const results = await loadedResultsStore();
+    const compare = openAiBacktestCompare({ results, version: 'v7', t, notify, selectPanel: () => selectResults() });
+    const selectors = [{ config_name: 'cfg', result_name: 'r1' }, { config_name: 'cfg', result_name: 'r2' }];
+    await expect(compare({ target: { version: 'v8' }, payload: { selectors } })).rejects.toThrow('v7backtest.aiCompareInvalid');
+    await expect(compare({ target: { version: 'v7' }, payload: { selectors: [selectors[0]!] } })).rejects.toThrow('v7backtest.aiCompareInvalid');
+    await expect(compare({})).rejects.toThrow('v7backtest.aiCompareInvalid');
+    expect(selectResults).not.toHaveBeenCalled();
+  });
+
+  it('pins the version filter, selects the resolved rows and plots the compare', async () => {
+    const results = await loadedResultsStore();
+    results.versionFilter.value = 'both';
+    results.textFilter.value = 'junk';
+    fetchMock
+      .mockImplementationOnce(() =>
+        ok({
+          results: [
+            { path: 'p1', config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T00:00:00Z' },
+            { path: 'p2', config_name: 'cfg', result_name: 'r2', modified: '2024-01-12T00:00:00Z' },
+          ],
+        })
+      )
+      .mockImplementation((url: unknown) => (String(url).includes('/results/equity') ? csvResponse() : ok({})));
+    const compare = openAiBacktestCompare({ results, version: 'v7', t, notify, selectPanel: () => selectResults() });
+    await compare({
+      target: { page_key: 'v7_backtest', version: 'v7' },
+      payload: { selectors: [{ config_name: 'cfg', result_name: 'r1' }, { config_name: 'cfg', result_name: 'r2' }] },
+    });
+    expect(results.versionFilter.value).toBe('v7');
+    expect(results.textFilter.value).toBe('');
+    expect(results.configFilter.value).toBe('');
+    expect(results.getSelected()).toEqual(['p2', 'p1']); // table order, like the queue flow
+    expect(results.compareOpen.value).toBe(true);
+    expect(selectResults).toHaveBeenCalled();
+    expect(notify.mock.calls.some((call) => String(call[0]).includes('v7backtest.aiCompareOpened'))).toBe(true);
+  });
+
+  it('rejects selectors that resolve to zero or multiple rows (:10680-10683)', async () => {
+    const results = await loadedResultsStore();
+    const compare = openAiBacktestCompare({ results, version: 'v7', t, notify, selectPanel: () => selectResults() });
+    // zero matches
+    fetchMock.mockImplementationOnce(() =>
+      ok({
+        results: [
+          { path: 'p1', config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T00:00:00Z' },
+          { path: 'p2', config_name: 'cfg', result_name: 'r2', modified: '2024-01-12T00:00:00Z' },
+        ],
+      })
+    );
+    await expect(
+      compare({ target: { version: 'v7' }, payload: { selectors: [{ config_name: 'cfg', result_name: 'missing' }, { config_name: 'cfg', result_name: 'r1' }] } })
+    ).rejects.toThrow('v7backtest.aiCompareAmbiguous');
+    // two matches for one selector
+    fetchMock.mockImplementationOnce(() =>
+      ok({
+        results: [
+          { path: 'p1', config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T00:00:00Z' },
+          { path: 'p1b', config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T06:00:00Z' },
+        ],
+      })
+    );
+    await expect(
+      compare({ target: { version: 'v7' }, payload: { selectors: [{ config_name: 'cfg', result_name: 'r1' }, { config_name: 'cfg', result_name: 'r2' }] } })
+    ).rejects.toThrow('v7backtest.aiCompareAmbiguous');
+  });
+
+  it('rejects duplicate resolved paths (:10684-10685)', async () => {
+    const results = await loadedResultsStore();
+    fetchMock.mockImplementationOnce(() => ok({ results: [{ path: 'p1', config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T00:00:00Z' }] }));
+    const compare = openAiBacktestCompare({ results, version: 'v7', t, notify, selectPanel: () => selectResults() });
+    // both selectors resolve to the same row — the paths resolve duplicate
+    await expect(
+      compare({
+        target: { version: 'v7' },
+        payload: {
+          selectors: [
+            { config_name: 'cfg', result_name: 'r1', modified: '2024-01-11T00:00:00Z' },
+            { config_name: 'cfg', result_name: 'r1' },
+          ],
+        },
+      })
+    ).rejects.toThrow('v7backtest.aiCompareDuplicate');
   });
 });

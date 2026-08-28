@@ -38,7 +38,7 @@ export function openAiDrawer(): void {
   document.head.appendChild(link);
 
   const script = document.createElement('script');
-  script.src = '/app/js/ai_drawer.js?v=27';
+  script.src = '/app/js/ai_drawer.js?v=31';
   script.onload = () => {
     loading = false;
     window.PBGuiAI?.open?.();

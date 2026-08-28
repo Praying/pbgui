@@ -157,7 +157,7 @@ function onQuickReply(actionId: string, value: string): void {
           @quick-reply="onQuickReply"
         />
 
-        <ProposalList :proposals="store.proposals.value" @resolve="onResolveProposal" />
+        <ProposalList :proposals="store.visibleProposals.value" @resolve="onResolveProposal" />
 
         <details v-if="store.reasoningSummary.value" class="mx-4 rounded-md border border-border-default bg-[#0b1320] p-2 text-xs text-[#bfdbfe]">
           <summary class="cursor-pointer">{{ t('ai.chat.reasoningSummary') }}</summary>
