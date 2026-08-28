@@ -480,7 +480,7 @@ onUnmounted(() => {
       </div>
     </template>
 
-  <div class="min-h-0 bg-page p-6 text-primary max-[760px]:p-3.5" :class="embedMode ? 'p-3' : ''">
+  <div class="min-h-0 bg-page text-primary" :class="embedMode ? 'p-3' : ''">
     <div class="mx-auto max-w-[1400px]">
       <nav class="pbgui-tab-bar mb-4 gap-1.5" aria-label="Job tabs">
         <button v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" :key="tab" class="pbgui-tab px-3.5 py-2.5" :class="{ active: currentTab === tab }" :data-tab="tab" @click="switchTab(tab)">
@@ -585,4 +585,3 @@ html.is-embedded .operations-shell--jobs .app-shell__main {
   padding: 0;
 }
 </style>
-

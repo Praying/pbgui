@@ -1,5 +1,9 @@
 # Unreleased
 
+## Frontend — Unified Vue Page Spacing
+
+- Unified Vue 3 page edges around a shared responsive contract: 24px on desktop, 20px on medium viewports, and 16px on mobile. Standardized top-level section, component, and compact control spacing at 20px, 16px, and 8px while preserving fixed-height workbench scroll chains and compact table, button, badge, modal, and embedded-fragment internals.
+
 ## Coin Data — Precision Data Workbench Palette
 
 - Unified Coin Data around a deeper blue-grey control/data hierarchy: filters now sit on a softly lifted control surface, tables use a darker data surface with a matching header, warnings use a restrained amber treatment, disabled actions are neutral, selected rows keep an ice-blue locator, and empty tables receive a structured local-icon state. The table scrollbar is reduced to 5px and the refresh/detail overlays use the same page-local palette without changing data, filtering, sorting, or refresh behavior.

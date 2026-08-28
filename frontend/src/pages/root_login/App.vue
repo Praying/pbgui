@@ -116,7 +116,7 @@ async function submitLogin(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-lg);
+  padding: var(--page-padding);
   background:
     radial-gradient(ellipse 60% 45% at 50% -8%, rgb(var(--accent-rgb) / 0.1), transparent 70%),
     radial-gradient(ellipse 45% 40% at 88% 108%, rgb(var(--success-rgb) / 0.05), transparent 70%);

@@ -215,7 +215,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
 
     <div class="flex min-h-0 flex-1 flex-col bg-page text-primary">
       <div class="flex min-h-0 flex-1">
-        <section class="flex min-w-0 flex-1 flex-col overflow-auto p-5">
+        <section class="flex min-w-0 flex-1 flex-col overflow-auto p-[var(--page-padding)]">
           <div
             v-if="notice"
             class="mb-4 block whitespace-pre-line rounded-md px-3.5 py-2.5 text-[0.85rem] font-medium"
@@ -234,8 +234,8 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
           />
 
           <!-- ── Overview ─────────────────────────────────────────── -->
-          <section v-else-if="section === 'overview'" data-section="overview" class="grid gap-4">
-            <div class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4">
+          <section v-else-if="section === 'overview'" data-section="overview" class="grid gap-[var(--component-gap)]">
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-[var(--component-gap)]">
               <article :class="cardClass">
                 <header :class="cardHeadClass">
                   <span :class="cardTitleClass">{{ t('sysmon.localIdentity') }}</span>

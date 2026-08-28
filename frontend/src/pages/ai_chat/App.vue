@@ -101,9 +101,9 @@ function onQuickReply(actionId: string, value: string): void {
       <span class="text-xs text-secondary">{{ store.notice.value.message }}</span>
     </template>
 
-    <div class="grid h-[calc(100dvh-112px)] grid-cols-[minmax(260px,330px)_1fr] max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
+    <div class="grid h-[calc(100dvh-112px)] grid-cols-[minmax(260px,330px)_1fr] gap-[var(--component-gap)] p-[var(--page-padding)] max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
       <!-- Left pane: providers + conversations -->
-      <aside class="min-h-0 overflow-y-auto border-r border-border-default bg-[#0d1521] p-4 max-[780px]:max-h-[min(220px,35dvh)] max-[780px]:border-r-0 max-[780px]:border-b">
+      <aside class="min-h-0 overflow-y-auto border-r border-border-default bg-[#0d1521] p-[var(--component-gap)] max-[780px]:max-h-[min(220px,35dvh)] max-[780px]:border-r-0 max-[780px]:border-b">
         <ProviderPanel
           :chatgpt="store.chatgpt.value"
           :go="store.go.value"

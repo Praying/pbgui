@@ -602,8 +602,8 @@ body {
 /* Dashboard library and active canvas share one restrained work surface. */
 #page-body {
   display: flex;
-  gap: 18px;
-  padding: 18px 20px 22px;
+  gap: var(--component-gap);
+  padding: var(--page-padding);
   height: auto;
   flex: 1;
   overflow: hidden;

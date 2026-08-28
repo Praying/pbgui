@@ -161,7 +161,7 @@ onBeforeUnmount(() => {
          and instance actions left the sidebar for a top strip; navigation
          lives in the workbench rail. -->
     <div id="page-body" class="flex h-[calc(100dvh-52px)] flex-col overflow-hidden">
-    <div class="workbench-page-content min-w-0 flex-1 overflow-y-auto p-5 max-[760px]:p-2">
+    <div class="workbench-page-content min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
       <!-- Filters + instance actions: a top strip, not a sidebar. -->
       <div class="page-toolbar" role="toolbar">
         <span class="sb-label">{{ t('v7run.instances') }}&nbsp;<span class="sb-count" id="instance-count">{{ store.countText.value }}</span></span>

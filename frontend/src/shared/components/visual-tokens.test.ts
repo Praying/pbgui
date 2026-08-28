@@ -33,6 +33,19 @@ describe('precision engineering visual tokens', () => {
     expect(stylesheet).toContain('--success: var(--color-success);');
   });
 
+  it('defines one responsive page and component spacing contract', () => {
+    expect(stylesheet).toContain('--page-padding: 24px;');
+    expect(stylesheet).toContain('--section-gap: 20px;');
+    expect(stylesheet).toContain('--component-gap: 16px;');
+    expect(stylesheet).toContain('--control-gap: 8px;');
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*1100px\)[\s\S]*?--page-padding:\s*20px;/,
+    );
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*720px\)[\s\S]*?--page-padding:\s*16px;/,
+    );
+  });
+
   it('keeps the offline Space Grotesk font setup', () => {
     expect(stylesheet).toContain("font-family: 'Space Grotesk';");
     expect(stylesheet).toContain("url('/app/vendor/fonts/space-grotesk-var.woff2')");

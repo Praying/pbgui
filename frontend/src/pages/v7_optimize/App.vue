@@ -478,7 +478,7 @@ onBeforeUnmount(() => {
 
     <div id="opt-conn-banner" class="h-[30px] px-4 py-1.5 text-center text-xs font-semibold" :class="page.connected.value ? 'bg-success/20 text-success' : 'bg-warning/20 text-[#d0a36f]'">{{ page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue') }}</div>
     <div id="page-body" class="flex h-[calc(100dvh-82px)] flex-col overflow-hidden">
-    <div class="workbench-page-content min-h-0 min-w-0 flex-1 overflow-hidden bg-page p-[18px]">
+    <div class="workbench-page-content min-h-0 min-w-0 flex-1 overflow-hidden bg-page p-[var(--page-padding)]">
     <!-- Converged navigation: panel switching lives in the workbench rail
          (AppShell sections); this strip carries only the active panel's
          contextual actions. -->

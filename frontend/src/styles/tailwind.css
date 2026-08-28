@@ -199,6 +199,8 @@
   --page-padding: 24px;
   --panel-gap: 16px;
   --section-gap: 20px;
+  --component-gap: 16px;
+  --control-gap: 8px;
 
   /* ── Sizing ─────────────────────────────────────────────────── */
   --control-height-sm: 28px;
@@ -301,6 +303,24 @@
   --red: var(--danger);
   --blue: var(--info);
   --font: var(--font-family);
+}
+
+/* Keep page-level whitespace predictable across viewport sizes. Component
+   internals can remain compact, while every page root uses this same edge. */
+:root {
+  --page-padding: 24px;
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --page-padding: 20px;
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --page-padding: 16px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════

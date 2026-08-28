@@ -851,7 +851,6 @@ onUnmounted(() => {
 /* Overview panel container (legacy #panel-overview); the grid's own padding
    mirrors the legacy inline style, so the page keeps both like the old file. */
 #panel-overview {
-  padding: 1.5rem;
   overflow-y: auto;
 }
 

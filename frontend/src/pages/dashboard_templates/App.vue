@@ -206,10 +206,10 @@ body {
 .tpl-content {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: var(--page-padding);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--component-gap);
 }
 
 /* ── Cards ── */

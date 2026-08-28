@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
     <div id="data-tip-tooltip" class="pointer-events-none fixed left-0 top-0 z-[var(--z-help)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)] [will-change:transform]"></div>
     <div id="page-body" class="flex min-h-0 flex-1 h-[calc(100dvh_-_var(--nav-height))]">
     <div
-      class="workbench-page-content flex min-w-0 flex-1 flex-col gap-4 overflow-auto overscroll-contain [scrollbar-gutter:stable] pt-6 px-[clamp(16px,2.5vw,38px)] pb-9.5 max-[900px]:pt-4.5 max-[900px]:px-3.5 max-[900px]:pb-7 bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.1),transparent_29rem),radial-gradient(circle_at_0%_82%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)]"
+      class="workbench-page-content flex min-w-0 flex-1 flex-col gap-[var(--component-gap)] overflow-auto overscroll-contain [scrollbar-gutter:stable] p-[var(--page-padding)] bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.1),transparent_29rem),radial-gradient(circle_at_0%_82%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)]"
       ref="mainContent"
       @scroll.passive="onScroll"
     >

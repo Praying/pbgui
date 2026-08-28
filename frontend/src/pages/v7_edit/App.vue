@@ -236,7 +236,7 @@ onBeforeUnmount(() => {
     <!-- Main content (:568). The legacy sidebar column (:545-565) became a
          top strip (v7_run precedent): same buttons, ids and gating; the
          drag-resize handle left with the column. -->
-    <div class="workbench-page-content flex-1 overflow-y-auto p-5 max-[700px]:p-2">
+    <div class="workbench-page-content flex-1 overflow-y-auto p-[var(--page-padding)]">
       <div class="page-toolbar" role="toolbar" :aria-label="t(adapter.sidebarTitleKey)">
         <span class="sb-label">{{ t(adapter.sidebarTitleKey) }}</span>
         <hr class="sb-sep" />

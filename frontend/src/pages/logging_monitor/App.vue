@@ -208,7 +208,7 @@ onBeforeUnmount(() => {
         <div id="logging-viewer-target" class="flex flex-1 min-h-0 overflow-hidden"></div>
       </section>
 
-      <section v-show="view === 'settings'" class="flex-1 min-h-0 overflow-y-auto px-6 py-5 max-[700px]:p-3">
+      <section v-show="view === 'settings'" class="flex-1 min-h-0 overflow-y-auto p-[var(--page-padding)]">
         <LoadingSkeleton v-if="loading" class="text-sm text-secondary" :label="t('sysmon.loading')" />
         <ErrorState
           v-if="error"

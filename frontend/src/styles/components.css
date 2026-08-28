@@ -1576,7 +1576,7 @@
     }
 
     .app-shell__main {
-      padding: var(--sp-md);
+      padding: var(--page-padding);
     }
 
     .pbgui-loading-skeleton,

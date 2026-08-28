@@ -241,7 +241,7 @@ onBeforeUnmount(() => store.teardown());
     </template>
 
   <div id="page-body" class="flex h-[calc(100dvh-112px)] overflow-hidden max-[760px]:flex-col">
-    <div id="main-content" class="min-w-0 flex-1 overflow-y-auto p-5">
+    <div id="main-content" class="min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
       <!-- Cleanup -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-[0_12px_40px_rgba(5,8,14,0.25)]" id="panel-cleanup" :class="store.activePanel.value === 'cleanup' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">

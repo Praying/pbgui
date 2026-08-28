@@ -42,6 +42,13 @@ function expect_declaration(rule: Rule, property: string, value: string): void {
 }
 
 describe('AppShell core-workbench-shell height chain', () => {
+  it('uses the shared page edge and section rhythm', () => {
+    const main = find_exact_rule(stylesheet_root, '.app-shell__main');
+
+    expect_declaration(main, 'gap', 'var(--section-gap)');
+    expect_declaration(main, 'padding', 'var(--page-padding)');
+  });
+
   it('keeps shared shell surfaces on the engineering material hierarchy', () => {
     const header = find_exact_rule(stylesheet_root, '.workspace-header');
     const state_surfaces = find_exact_rule(

@@ -368,7 +368,7 @@ onUnmounted(() => { disconnect(); closeViewer(); });
       {{ connection === 'connected' ? t('sysmon.connected') : connection === 'lost' ? t('sysmon.connectionLost') : t('sysmon.connectingVpsMonitor') }}
     </div>
     <div class="flex min-h-0 flex-1">
-      <section class="flex min-w-0 flex-1 flex-col p-3.5">
+      <section class="flex min-w-0 flex-1 flex-col p-[var(--page-padding)]">
         <div class="mb-3 flex flex-wrap gap-3.5 text-[0.82rem] text-secondary">
           <label class="flex items-center gap-1.75"><Checkbox data-option="hide-ip" v-model="hideIpMode" /> {{ t('sysmon.hideIp') }}</label>
           <label class="flex items-center gap-1.75"><Checkbox data-option="compact" v-model="compactMode" @update:model-value="setSetting('compact', $event === true)" /> {{ t('sysmon.compact') }}</label>

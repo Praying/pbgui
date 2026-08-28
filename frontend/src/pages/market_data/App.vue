@@ -528,7 +528,7 @@ onMounted(() => {
 
     <MigrationWatermark />
     <div id="page-body" class="flex min-h-0 flex-1 overflow-hidden">
-    <div id="main-content" class="flex min-w-0 min-h-0 flex-1 flex-col gap-3 overflow-hidden p-5">
+    <div id="main-content" class="flex min-w-0 min-h-0 flex-1 flex-col gap-[var(--component-gap)] overflow-hidden p-[var(--page-padding)]">
       <ExchangeSelect
         :model-value="contextExchange.contextExchange.value"
         :options="exchangeOptions"

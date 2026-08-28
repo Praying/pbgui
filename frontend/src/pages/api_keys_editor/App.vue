@@ -311,8 +311,8 @@ onMounted(async () => {
       />
     </template>
 
-    <div id="page-body" class="flex h-[calc(100dvh-112px)] min-h-0 gap-4 overflow-hidden p-4 select-none">
-      <div id="main-content" class="min-h-0 min-w-0 flex-1 select-text overflow-y-auto pt-5 pb-8 px-[clamp(20px,3vw,40px)] max-[768px]:p-3">
+    <div id="page-body" class="flex h-[calc(100dvh-112px)] min-h-0 gap-[var(--component-gap)] overflow-hidden select-none">
+      <div id="main-content" class="min-h-0 min-w-0 flex-1 select-text overflow-y-auto p-[var(--page-padding)]">
         <!-- User list head: counts + primary action live with the list now
              that the rail hosts the view sections. -->
         <div v-show="view === 'list'" class="users-head mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">

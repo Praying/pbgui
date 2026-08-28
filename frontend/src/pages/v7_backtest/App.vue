@@ -413,7 +413,7 @@ onMounted(() => {
     <div id="page-body" class="flex h-[calc(100dvh_-_var(--nav-height))] min-h-0 flex-col overflow-hidden max-[760px]:relative">
 
     <div
-      class="workbench-page-content flex min-h-0 flex-1 flex-col overflow-hidden bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.09),transparent_28rem),radial-gradient(circle_at_0%_84%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)] px-[clamp(16px,2.5vw,36px)] pb-9 pt-6 max-[900px]:px-4 max-[900px]:pb-7 max-[900px]:pt-4.5"
+      class="workbench-page-content flex min-h-0 flex-1 flex-col overflow-hidden bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.09),transparent_28rem),radial-gradient(circle_at_0%_84%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)] px-[var(--page-padding)] pb-[var(--page-padding)] pt-[var(--page-padding)]"
     >
     <PanelShell
       :items="store.nav"

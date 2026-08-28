@@ -184,7 +184,7 @@ onBeforeUnmount(() => {
     </template>
 
     <div id="page-body" class="relative flex h-[calc(100dvh_-_var(--nav-height))] min-h-0 overflow-hidden select-none bg-[linear-gradient(135deg,rgb(var(--bg-page-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.96))]">
-    <div class="workbench-page-content min-w-0 min-h-0 flex-1 overflow-y-auto select-text bg-page bg-[radial-gradient(circle_at_92%_0%,rgb(var(--accent-rgb)/0.1),transparent_28rem),radial-gradient(circle_at_4%_78%,rgb(var(--accent-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.018)_0_1px,transparent_1px_42px)] pt-7 px-[clamp(18px,3vw,42px)] pb-10.5">
+    <div class="workbench-page-content min-w-0 min-h-0 flex-1 overflow-y-auto select-text bg-page bg-[radial-gradient(circle_at_92%_0%,rgb(var(--accent-rgb)/0.1),transparent_28rem),radial-gradient(circle_at_4%_78%,rgb(var(--accent-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.018)_0_1px,transparent_1px_42px)] p-[var(--page-padding)]">
       <div id="banner" class="banner mb-3 rounded-[12px] py-3 px-3.5 text-base leading-[1.5]" :class="bannerClass(store.banner.value.message, store.banner.value.kind)">
         {{ store.banner.value.message }}
       </div>

@@ -189,21 +189,21 @@ const cards = computed<Card[]>(() => {
 <style scoped>
 .overview-grid {
   flex: 1;
-  padding: 1.5rem;
+  padding: var(--page-padding);
   overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 1rem;
+  gap: var(--component-gap);
   align-content: start;
 }
 .svc-card {
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  padding: 1rem;
+  padding: var(--component-gap);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--control-gap);
   cursor: pointer;
   box-shadow: var(--shadow-panel);
   transition:
