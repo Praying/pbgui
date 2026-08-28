@@ -10416,11 +10416,11 @@
       const sourceRef = selectedRemoteName && sourceBranch ? (selectedRemoteName + '/' + sourceBranch) : sourceBranch;
       const targetRef = effectiveBranch ? PBGuiI18n.t('vpsmgr.localBranchRef', { branch: effectiveBranch }) : PBGuiI18n.t('vpsmgr.localBranchFallback');
       const sourceMissing = model.sourceBranchKnown && !model.sourceBranchExists;
-      const remoteCommitSetter = isMaster ? `setMasterField('${keys.manualCommit}', this.value); syncBranchViewPanel();` : `setVpsUiField(${js(scope)}, '${keys.manualCommit}', this.value); syncBranchViewPanel();`;
-      const branchFieldSetter = `setPb7LocalBranch(${js(scope)}, this.value, '${keys.repo}')`;
-      const remoteNameSetter = `setPb7RemoteName(${js(scope)}, this.value, '${keys.repo}')`;
-      const remoteUrlSetter = `setPb7RemoteUrl(${js(scope)}, this.value, '${keys.repo}')`;
-      const manualBranchSetter = `setPb7ManualBranch(${js(scope)}, this.value, '${keys.repo}')`;
+      const remoteCommitSetter = isMaster ? `setMasterField(${js(keys.manualCommit)}, this.value); syncBranchViewPanel();` : `setVpsUiField(${js(scope)}, ${js(keys.manualCommit)}, this.value); syncBranchViewPanel();`;
+      const branchFieldSetter = `setPb7LocalBranch(${js(scope)}, this.value, ${js(keys.repo)})`;
+      const remoteNameSetter = `setPb7RemoteName(${js(scope)}, this.value, ${js(keys.repo)})`;
+      const remoteUrlSetter = `setPb7RemoteUrl(${js(scope)}, this.value, ${js(keys.repo)})`;
+      const manualBranchSetter = `setPb7ManualBranch(${js(scope)}, this.value, ${js(keys.repo)})`;
       const interactionField = keys.repo + 'BranchSelectInteracting';
       return `
         <div class='panel'>
@@ -10872,8 +10872,8 @@
           </div>
           <button class='sb-btn ok' type='button' ${disabledAttr} onclick='deploySelectedVpsAction("vps-update", "Update Linux")'>${PBGuiI18n.t('vpsmgr.updateLinux')}</button>
           <button class='sb-btn ok' type='button' ${disabledAttr} onclick='deploySelectedVpsAction("vps-update-pbgui", "Update PBGui")'>${PBGuiI18n.t('vpsmgr.updatePbgui')}</button>
-          <button class='sb-btn ok' type='button' ${disabledAttr} onclick='deploySelectedVpsAction("vps-update-runtime", "Update Runtime by Profile")'>${PBGuiI18n.t('vpsmgr.updateRuntimeByProfile')}</button>
-          <button class='sb-btn ok' type='button' ${disabledAttr} onclick='deploySelectedVpsAction("vps-update-pbgui-runtime", "Update PBGui and Runtime by Profile")'>${PBGuiI18n.t('vpsmgr.updatePbguiAndRuntime')}</button>
+          <button class='sb-btn ok' type='button' title='Updates PB7, PB8, or both according to what is installed on each selected VPS.' ${disabledAttr} onclick='deploySelectedVpsAction("vps-update-runtime", "Update Passivbot (PB7/PB8)")'>${PBGuiI18n.t('vpsmgr.updateRuntimeByProfile')}</button>
+          <button class='sb-btn ok' type='button' title='Updates PBGui plus PB7, PB8, or both according to what is installed on each selected VPS.' ${disabledAttr} onclick='deploySelectedVpsAction("vps-update-pbgui-runtime", "Update PBGui + Passivbot (PB7/PB8)")'>${PBGuiI18n.t('vpsmgr.updatePbguiAndRuntime')}</button>
           <button class='sb-btn ok' type='button' ${disabledAttr} onclick='deploySelectedVpsAction("vps-cleanup", "Cleanup VPS")'>${PBGuiI18n.t('vpsmgr.cleanupVps')}</button>`;
       } else {
         html = '';

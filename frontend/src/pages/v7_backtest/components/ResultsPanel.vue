@@ -22,10 +22,15 @@ import type { ResultsStore } from '../composables/useResults';
 import type { PlotlyLayout, PlotlyTrace } from '../lib/plotlyVendor';
 import type { ResultActionKind } from '../types';
 
+const emit = defineEmits<{
+  convert: [path: string];
+}>();
+
 const props = defineProps<{
   results: ResultsStore;
   /** updateVersionBoundResultActions (:5349-5355) — the ctx-bar gate. */
   versionBoundActions?: boolean;
+  allowV8Convert?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -52,6 +57,10 @@ function onSort(column: string): void {
 
 function onToggleSelect(path: string): void {
   store.toggleSelected(path);
+}
+
+function onConvert(path: string): void {
+  emit('convert', path);
 }
 
 function onSelectPaths(paths: string[], selected: boolean): void {
@@ -168,7 +177,9 @@ defineExpose({ deleteSelectedFlow });
             :selected="store.selectedPaths.value"
             :sort="store.sort.value"
             :active-actions="store.actionsByPath.value"
+            :allow-v8-convert="props.allowV8Convert"
             @sort="onSort"
+            @convert="onConvert"
             @toggle-select="onToggleSelect"
             @select-paths="onSelectPaths"
             @toggle-action="onToggleAction"

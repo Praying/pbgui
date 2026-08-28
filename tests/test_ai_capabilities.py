@@ -31,6 +31,7 @@ def test_tool_catalog_separates_reads_from_proposals(tmp_path: Path) -> None:
         "get_optimizer_config",
         "get_optimizer_metadata",
         "list_optimizer_runs",
+        "list_pb8_optimizer_queue",
         "list_backtests",
         "get_optimizer_run_analysis",
         "rank_optimizer_run_candidates",
@@ -48,6 +49,7 @@ def test_tool_catalog_separates_reads_from_proposals(tmp_path: Path) -> None:
         "propose_pb8_optimizer_config",
         "propose_pb8_config_patch",
         "propose_queue_pb8_config",
+        "propose_start_pb8_optimizer_queue",
         "propose_pareto_backtests",
         "propose_dashboard_from_template",
         "propose_dashboard_layout",
@@ -209,6 +211,22 @@ def test_generic_page_capability_returns_exact_browser_action() -> None:
         }
     )
     assert value_result["ui_action"]["payload"]["value"] == "running"
+    cross_page = AICapabilityService._perform_page_action(
+        {
+            "page_key": "v8_backtest",
+            "action": "activate_by_label",
+            "entity_kind": "ui_control_label",
+            "entity_name": "Git Push",
+        }
+    )
+    assert cross_page["ui_action"] == {
+        "type": "page.perform_action",
+        "target": {"page_key": "v8_backtest"},
+        "payload": {
+            "action": "activate_by_label",
+            "entity": {"kind": "ui_control_label", "name": "Git Push"},
+        },
+    }
 
 
 def test_proposal_diff_only_includes_changed_array_entries() -> None:
@@ -545,12 +563,115 @@ def test_save_and_queue_proposal_is_new_config_only(tmp_path: Path, monkeypatch)
     asyncio.run(scenario())
 
 
+def test_pb8_queue_start_is_exact_approval_gated_and_idempotent(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Exact queued IDs should start only after approval and not restart on replay."""
+    from api import optimize_v8
+
+    async def scenario() -> None:
+        owner = "a" * 32
+        conversation = "c" * 32
+        now = time.time()
+        items = [
+            {
+                "filename": "1" * 36,
+                "name": "martingale_compare",
+                "status": "queued",
+                "exchange": ["binance", "bybit"],
+                "created": "2026-08-27T19:00:00",
+                "started_at": None,
+            },
+            {
+                "filename": "2" * 36,
+                "name": "grid_compare",
+                "status": "queued",
+                "exchange": ["binance", "bybit"],
+                "created": "2026-08-27T19:01:00",
+                "started_at": None,
+            },
+        ]
+        starts = []
+
+        monkeypatch.setattr(optimize_v8, "get_queue", lambda session: {"items": copy.deepcopy(items)})
+        monkeypatch.setattr(ai_capabilities, "load_ini_section", lambda section: {"autostart": "False"})
+
+        def start_queue_item(filename, body, session):
+            starts.append(filename)
+            item = next(item for item in items if item["filename"] == filename)
+            item["status"] = "running"
+            item["started_at"] = now + 1
+            return {"ok": True, "pid": 1000 + len(starts)}
+
+        monkeypatch.setattr(optimize_v8, "start_queue_item", start_queue_item)
+        service = AICapabilityService(tmp_path / "capabilities")
+
+        listed = service._list_pb8_optimizer_queue({"limit": 10})
+        created = await service._propose_start_pb8_optimizer_queue(
+            owner,
+            conversation,
+            {"queue_ids": [items[0]["filename"], items[1]["filename"]]},
+        )
+
+        assert listed["autostart"] is False
+        assert [item["queue_id"] for item in listed["items"]] == [items[0]["filename"], items[1]["filename"]]
+        assert created["preview"]["job_count"] == 2
+        assert starts == []
+        proposal = service.proposals[created["proposal_id"]]
+        result = await service.approve(owner, proposal.id, proposal.payload_digest, conversation)
+        replay = await service.approve(owner, proposal.id, proposal.payload_digest, conversation)
+
+        assert starts == [items[0]["filename"], items[1]["filename"]]
+        assert result["action"] == "start_optimize_queue"
+        assert result["started_count"] == 2
+        assert replay == result
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+def test_pb8_queue_start_revalidates_status_before_any_launch(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A reviewed queue batch must fail before launching if any exact item changed."""
+    from api import optimize_v8
+
+    async def scenario() -> None:
+        owner = "a" * 32
+        conversation = "c" * 32
+        items = [
+            {"filename": "1" * 36, "name": "first", "status": "queued", "started_at": None},
+            {"filename": "2" * 36, "name": "second", "status": "queued", "started_at": None},
+        ]
+        starts = []
+        monkeypatch.setattr(optimize_v8, "get_queue", lambda session: {"items": copy.deepcopy(items)})
+        monkeypatch.setattr(optimize_v8, "start_queue_item", lambda filename, body, session: starts.append(filename))
+        service = AICapabilityService(tmp_path / "capabilities")
+        created = await service._propose_start_pb8_optimizer_queue(
+            owner,
+            conversation,
+            {"queue_ids": [items[0]["filename"], items[1]["filename"]]},
+        )
+        items[1]["status"] = "error"
+        items[1]["started_at"] = time.time() + 1
+        proposal = service.proposals[created["proposal_id"]]
+
+        with pytest.raises(AICapabilityError, match="queue changed"):
+            await service.approve(owner, proposal.id, proposal.payload_digest, conversation)
+
+        assert starts == []
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
 def test_passivbot_source_search_and_read_are_root_confined(tmp_path: Path, monkeypatch) -> None:
     """Source tools should return bounded exact-version excerpts and skip runtime data."""
     root = tmp_path / "passivbot"
     (root / "src").mkdir(parents=True)
     (root / "docs").mkdir()
     (root / "data").mkdir()
+    (root / "passivbot-rust" / "target" / "generated").mkdir(parents=True)
     (root / "src" / "strategy.py").write_text(
         "def calculate_entry():\n    return 'needle'\n", encoding="utf-8"
     )
@@ -558,6 +679,9 @@ def test_passivbot_source_search_and_read_are_root_confined(tmp_path: Path, monk
         "# Optimizer\nThe needle is documented here.\n", encoding="utf-8"
     )
     (root / "data" / "secret.py").write_text("needle = 'secret'\n", encoding="utf-8")
+    (root / "passivbot-rust" / "target" / "generated" / "ignored.py").write_text(
+        "needle = 'build artifact'\n", encoding="utf-8"
+    )
     service = AICapabilityService(tmp_path / "capabilities")
     monkeypatch.setattr(service, "_passivbot_root", lambda version: root)
     monkeypatch.setattr(
@@ -567,6 +691,15 @@ def test_passivbot_source_search_and_read_are_root_confined(tmp_path: Path, monk
     )
     monkeypatch.setattr(service, "_checkout_is_clean", lambda selected: True)
     monkeypatch.setattr(service, "_source_is_clean", lambda selected, relative: True)
+    walked = []
+    real_walk = ai_capabilities.os.walk
+
+    def tracked_walk(*args, **kwargs):
+        for current, directories, filenames in real_walk(*args, **kwargs):
+            walked.append(Path(current).relative_to(root).as_posix())
+            yield current, directories, filenames
+
+    monkeypatch.setattr(ai_capabilities.os, "walk", tracked_walk)
 
     source = service._search_passivbot_source({"version": "v8", "query": "needle"})
     docs = service._search_passivbot_docs({"version": "v8", "query": "needle"})
@@ -580,6 +713,7 @@ def test_passivbot_source_search_and_read_are_root_confined(tmp_path: Path, monk
     ]
     assert [match["path"] for match in docs["matches"]] == ["docs/optimizer.md"]
     assert "data/secret.py" not in str(source)
+    assert "passivbot-rust/target" not in walked
     assert content["content"] == "1: def calculate_entry():\n2:     return 'needle'"
     assert content["source_url"].endswith("src/strategy.py#L1-L2")
 
@@ -632,6 +766,7 @@ def test_registry_exposes_effects_resources_fingerprints_and_global_limits(
     assert effects["propose_pb8_optimizer_config"] == "write"
     assert effects["propose_pb8_config_patch"] == "write"
     assert effects["propose_queue_pb8_config"] == "execute"
+    assert effects["propose_start_pb8_optimizer_queue"] == "execute"
     assert effects["select_pareto_candidates"] == "ui"
     assert effects["present_user_choices"] == "ui"
     assert effects["propose_pareto_backtests"] == "execute"
@@ -821,15 +956,40 @@ def test_dirty_source_file_never_receives_a_commit_citation(tmp_path: Path, monk
         lambda selected: ("a" * 40, "https://github.com/enarjord/passivbot"),
     )
     monkeypatch.setattr(service, "_checkout_is_clean", lambda selected: False)
-    monkeypatch.setattr(service, "_source_is_clean", lambda selected, relative: False)
+    source_checks = []
+    monkeypatch.setattr(
+        service,
+        "_source_is_clean",
+        lambda selected, relative: source_checks.append(relative) or False,
+    )
 
     searched = service._search_passivbot_source({"version": "v8", "query": "needle"})
+    assert source_checks == []
     read = service._read_passivbot_source({"version": "v8", "path": "src/strategy.py"})
 
     assert searched["source_state"] == "dirty"
     assert searched["matches"][0]["source_url"] == ""
     assert read["matches_runtime"] is False
     assert read["source_url"] == ""
+    assert source_checks == [Path("src/strategy.py")]
+
+
+def test_passivbot_source_search_has_cooperative_total_deadline(tmp_path: Path, monkeypatch) -> None:
+    """A large source tree must return a truncated result once its total budget expires."""
+    root = tmp_path / "passivbot"
+    (root / "src").mkdir(parents=True)
+    (root / "src" / "strategy.py").write_text("needle = True\n", encoding="utf-8")
+    service = AICapabilityService(tmp_path / "capabilities")
+    monkeypatch.setattr(service, "_passivbot_root", lambda version: root)
+    monkeypatch.setattr(service, "_passivbot_git_info", lambda selected: ("a" * 40, ""))
+    monkeypatch.setattr(service, "_checkout_is_clean", lambda selected: True)
+    moments = iter((0.0, 16.0))
+    monkeypatch.setattr(ai_capabilities.time, "monotonic", lambda: next(moments, 16.0))
+
+    result = service._search_passivbot_source({"version": "v8", "query": "needle"})
+
+    assert result["matches"] == []
+    assert result["truncated"] is True
 
 
 def test_backtest_csv_projection_is_bounded_and_path_free(tmp_path: Path) -> None:

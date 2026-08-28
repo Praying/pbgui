@@ -11,6 +11,8 @@
     pollGeneration: 0,
     requestGeneration: 0,
     modelGeneration: 0,
+    modelsLoading: false,
+    selectionDirty: false,
     listGeneration: 0,
     proposalGeneration: 0,
     history: false,
@@ -79,14 +81,15 @@
     var toolbar = el('div', 'pai-toolbar');
     var provider = el('select');
     provider.id = 'pai-provider';
-    provider.addEventListener('change', function () { loadModels(); });
+    provider.addEventListener('change', function () { state.selectionDirty = true; loadModels(); });
     toolbar.appendChild(provider);
     var model = el('select');
     model.id = 'pai-model';
-    model.addEventListener('change', function () { rebuildEfforts(); });
+    model.addEventListener('change', function () { state.selectionDirty = true; rebuildEfforts(); });
     toolbar.appendChild(model);
     var effort = el('select');
     effort.id = 'pai-effort';
+    effort.addEventListener('change', function () { state.selectionDirty = true; });
     toolbar.appendChild(effort);
     var fresh = el('button', 'pai-new', 'New');
     fresh.type = 'button';
@@ -151,12 +154,16 @@
     root.appendChild(body);
     document.body.appendChild(root);
     document.body.appendChild(buildReviewOverlay());
-    renderContext(collectContext());
+    renderContext(collectDisplayContext());
     refreshAll();
   }
 
-  function collectContext() {
-    return window.PBGuiAI && typeof window.PBGuiAI.collectContext === 'function' ? window.PBGuiAI.collectContext() : {};
+  function collectContext(options) {
+    return window.PBGuiAI && typeof window.PBGuiAI.collectContext === 'function' ? window.PBGuiAI.collectContext(options) : {};
+  }
+
+  function collectDisplayContext() {
+    return collectContext({ include_controls: false });
   }
 
   function renderContext(context) {
@@ -176,7 +183,7 @@
   }
 
   function refreshLiveContext() {
-    var context = collectContext();
+    var context = collectDisplayContext();
     var signature = '';
     try { signature = JSON.stringify(context); } catch (_) {}
     if (signature === state.contextSignature) return;
@@ -208,8 +215,8 @@
     root.querySelector('textarea').disabled = busy;
     root.querySelector('.pai-retry').disabled = busy;
     root.querySelector('#pai-provider').disabled = busy || !root.querySelector('#pai-provider').options.length;
-    root.querySelector('#pai-model').disabled = busy || !root.querySelector('#pai-model').options.length;
-    root.querySelector('#pai-effort').disabled = busy || root.querySelector('#pai-effort').hidden;
+    root.querySelector('#pai-model').disabled = busy || state.modelsLoading || !Object.keys(state.models).length;
+    root.querySelector('#pai-effort').disabled = busy || state.modelsLoading || root.querySelector('#pai-effort').hidden;
     root.querySelector('.pai-new').disabled = busy;
   }
 
@@ -219,7 +226,7 @@
       if (!state.resizing) applyWidth(preferences.drawer_width);
       var status = await api('/status');
       state.providers = status.providers || {};
-      rebuildProviders();
+      await rebuildProviders();
       await loadConversations();
     } catch (error) { setStatus(error.message, true); }
   }
@@ -276,7 +283,7 @@
     });
   }
 
-  function rebuildProviders(preferred) {
+  function rebuildProviders(preferred, preferredModel) {
     var select = root.querySelector('#pai-provider');
     var current = preferred || select.value;
     select.textContent = '';
@@ -287,7 +294,7 @@
       select.appendChild(option);
     });
     if (current && Array.from(select.options).some(function (option) { return option.value === current; })) select.value = current;
-    loadModels();
+    return loadModels(preferredModel);
   }
 
   async function loadModels(preferred) {
@@ -295,12 +302,26 @@
     var select = root.querySelector('#pai-model');
     var current = preferred || select.value;
     var generation = ++state.modelGeneration;
+    var effort = root.querySelector('#pai-effort');
+    state.modelsLoading = true;
+    state.models = {};
     select.textContent = '';
-    if (!provider) return;
+    var loading = el('option', '', 'Loading models...');
+    loading.value = '';
+    loading.disabled = true;
+    loading.selected = true;
+    select.appendChild(loading);
+    select.disabled = true;
+    effort.disabled = true;
+    if (!provider) {
+      state.modelsLoading = false;
+      setBusy(state.busy);
+      return;
+    }
     try {
       var data = await api('/models?provider=' + encodeURIComponent(provider));
       if (generation !== state.modelGeneration || provider !== root.querySelector('#pai-provider').value) return;
-      state.models = {};
+      select.textContent = '';
       (data.models || []).forEach(function (model) {
         state.models[model.id] = model;
         var healthStatus = model.health && model.health.status ? ' - ' + String(model.health.status).replace(/_/g, ' ') : '';
@@ -309,9 +330,28 @@
         if (model.default) option.selected = true;
         select.appendChild(option);
       });
+      if (!select.options.length) {
+        var empty = el('option', '', 'No models available');
+        empty.value = '';
+        empty.disabled = true;
+        select.appendChild(empty);
+      }
       if (current && Array.from(select.options).some(function (option) { return option.value === current; })) select.value = current;
       rebuildEfforts();
-    } catch (error) { setStatus(error.message, true); }
+      state.modelsLoading = false;
+      setBusy(state.busy);
+    } catch (error) {
+      if (generation !== state.modelGeneration || provider !== root.querySelector('#pai-provider').value) return;
+      state.models = {};
+      select.textContent = '';
+      var unavailable = el('option', '', 'Models unavailable');
+      unavailable.value = '';
+      unavailable.disabled = true;
+      select.appendChild(unavailable);
+      state.modelsLoading = false;
+      setBusy(state.busy);
+      setStatus(error.message, true);
+    }
   }
 
   function rebuildEfforts(preferred) {
@@ -349,7 +389,7 @@
         renderReasoningSummary('');
         renderActivityHistory([]);
         renderProposals([]);
-        renderContext(collectContext());
+        renderContext(collectDisplayContext());
         setBusy(false);
         setStatus('', false);
       }
@@ -368,6 +408,7 @@
       else if (conversation.last_error) meta += ' - needs attention';
       button.appendChild(el('small', '', meta));
       button.addEventListener('click', function () {
+        state.selectionDirty = false;
         state.current = conversation.conversation_id;
         renderHistory();
         loadConversation(state.current);
@@ -387,19 +428,20 @@
       var uiActions = conversation.ui_actions || [];
       dispatchUiActions(id, uiActions);
       if (conversation.retry_message) state.retryMessages[id] = conversation.retry_message;
-      renderContext(conversation.context && Object.keys(conversation.context).length ? conversation.context : collectContext());
+      renderContext(conversation.context && Object.keys(conversation.context).length ? conversation.context : collectDisplayContext());
       setBusy(!!conversation.busy);
       var retry = root.querySelector('.pai-retry');
       retry.hidden = !conversation.last_error || !state.retryMessages[id] || conversation.busy;
       setStatus(conversation.busy ? (conversation.activity || 'Model is working...') : (conversation.last_error || ''), !!conversation.last_error);
-      if (root.querySelector('#pai-provider').value !== conversation.provider) {
-        rebuildProviders(conversation.provider);
-        await loadModels(conversation.model);
-      } else if (root.querySelector('#pai-model').value !== conversation.model) {
-        await loadModels(conversation.model);
+      if (!state.selectionDirty) {
+        if (root.querySelector('#pai-provider').value !== conversation.provider) {
+          await rebuildProviders(conversation.provider, conversation.model);
+        } else if (root.querySelector('#pai-model').value !== conversation.model) {
+          await loadModels(conversation.model);
+        }
       }
       if (id !== state.current || generation !== state.requestGeneration) return;
-      rebuildEfforts(conversation.effort || '');
+      if (!state.selectionDirty) rebuildEfforts(conversation.effort || '');
       await reconcileProposals(id, generation);
       var pendingPageAction = uiActions.some(function (action) {
         return action && action.type === 'page.perform_action';
@@ -552,6 +594,7 @@
       var result = await api('/conversations/' + encodeURIComponent(state.current) + '/rewind', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message_index: messageIndex }) });
       root.querySelector('textarea').value = String(result.restored_prompt || '');
       delete state.retryMessages[state.current];
+      state.selectionDirty = true;
       await loadConversation(state.current);
       setStatus('Chat rewound. Edit or resend the restored prompt.', false);
     } catch (error) { setStatus(error.message, true); }
@@ -559,9 +602,10 @@
 
   async function reconcileProposals(conversationId, generation) {
     var proposalGeneration = ++state.proposalGeneration;
+    if (state.busy) { renderProposals([]); return; }
     try {
       var data = await api('/proposals?conversation_id=' + encodeURIComponent(conversationId));
-      if (proposalGeneration !== state.proposalGeneration || conversationId !== state.current || (generation != null && generation !== state.requestGeneration)) return;
+      if (proposalGeneration !== state.proposalGeneration || conversationId !== state.current || state.busy || (generation != null && generation !== state.requestGeneration)) return;
       renderProposals(data.proposals || []);
     } catch (error) {
       if (conversationId === state.current) setStatus(error.message, true);
@@ -572,6 +616,7 @@
     if (action === 'save') return 'Save PB8 optimizer config';
     if (action === 'save_and_queue') return 'Save PB8 config and add to queue';
     if (action === 'queue') return 'Add PB8 config to optimizer queue';
+    if (action === 'start_optimize_queue') return 'Start PB8 optimizer queue jobs';
     if (action === 'queue_backtests') return 'Queue PB8 Pareto backtests';
     if (action === 'create_dashboard') return 'Create PBGui dashboard';
     if (action === 'save_dashboard_layout') return 'Save PBGui dashboard layout';
@@ -582,6 +627,7 @@
   function proposalDetail(preview) {
     if (preview.action === 'python_analysis') return String(preview.code_bytes || 0) + ' bytes of code - ' + String((preview.input_summary || {}).bytes || 0) + ' bytes of sanitized JSON input';
     if (preview.action === 'queue_backtests') return String(preview.job_count || 0) + ' backtest jobs across ' + String((preview.exchanges || []).length) + ' exchanges' + (preview.may_start_immediately ? ' - may start immediately' : '');
+    if (preview.action === 'start_optimize_queue') return String(preview.job_count || 0) + ' exact queued PB8 optimizer jobs - starts immediately';
     if (preview.action === 'create_dashboard') return 'Create from template ' + String(preview.template || '');
     if (preview.action === 'save_dashboard_layout') return String((preview.layout || {}).rows || 0) + ' rows x ' + String((preview.layout || {}).columns || 0) + ' columns - ' + String(preview.changed_count || 0) + ' changes';
     return String(preview.changed_count || 0) + ' changes' + (preview.may_start_immediately ? ' - may start immediately' : '');
@@ -773,6 +819,8 @@
     if (approve) {
       var approvalDetail = preview.action === 'python_analysis'
         ? 'The reviewed code and sanitized input will run without network or host-data access. Proposal integrity is verified before execution.'
+        : preview.action === 'start_optimize_queue'
+          ? 'Start ' + String(preview.job_count || 0) + ' exact reviewed PB8 optimizer queue jobs immediately. Proposal integrity and current queued status are verified before execution.'
         : 'Apply ' + String(preview.changed_count || 0) + ' reviewed changes. ' + (preview.may_start_immediately ? 'Queue autostart is enabled; this may start immediately. ' : '') + 'Proposal integrity is verified before execution.';
       var confirmed = typeof window.PBGuiConfirm === 'function' && await window.PBGuiConfirm({
         title: 'Approve PBGui action',
@@ -793,7 +841,15 @@
       if (result.status === 'executed') {
         window.dispatchEvent(new CustomEvent('pbgui:ai-action-completed', { detail: result }));
       }
-      setStatus(result.status === 'executed' ? 'Approved action completed.' : 'Proposal ' + String(result.status || 'resolved') + '.', false);
+      var continuationStatus = String((result.continuation || {}).status || '');
+      if (continuationStatus === 'queued' || continuationStatus === 'running') {
+        setStatus('Approved action completed. Continuing requested workflow...', false);
+        await loadConversation(conversationId);
+      } else if (continuationStatus === 'not_started') {
+        setStatus('Approved action completed, but the AI continuation could not start.', true);
+      } else {
+        setStatus(result.status === 'executed' ? 'Approved action completed.' : 'Proposal ' + String(result.status || 'resolved') + '.', false);
+      }
     } catch (error) { setStatus(error.message, true); }
     finally { await reconcileProposals(conversationId); }
   }
@@ -809,6 +865,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: provider, model: model, effort: root.querySelector('#pai-effort').value, context: context })
       });
+      state.selectionDirty = false;
       state.current = data.conversation_id;
       await loadConversations(state.current);
       root.querySelector('textarea').focus();
@@ -862,6 +919,7 @@
           provider: root.querySelector('#pai-provider').value
         })
       });
+      state.selectionDirty = false;
       if (conversationId === state.current) {
         schedulePoll(conversationId);
         await loadConversation(conversationId);
@@ -932,7 +990,7 @@
     state.open = true;
     root.classList.add('open');
     root.setAttribute('aria-hidden', 'false');
-    renderContext(collectContext());
+    renderContext(collectDisplayContext());
     startContextWatch();
     var button = document.getElementById('pbgui-ai-btn');
     if (button) button.setAttribute('aria-expanded', 'true');

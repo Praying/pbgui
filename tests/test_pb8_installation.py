@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import pytest
 
 from setup.installer import core
+import pb8_live_stop
 import vps_manager_core as core_mod
 import vps_manager_service as service_mod
 from vps_manager_service import VPSManagerService
@@ -28,6 +29,28 @@ from vps_manager_service import VPSManagerService
 def test_bulk_runtime_update_resolves_each_host_profile(logical_command: str, profile: str, expected: str) -> None:
     """Mixed bulk selections dispatch the correct playbook per persisted host profile."""
     assert service_mod._profile_aware_vps_update_command(logical_command, profile) == expected
+
+
+@pytest.mark.parametrize(
+    ("pb7_installed", "pb8_installed", "expected"),
+    [
+        (True, True, "vps-update-pb7-pb8"),
+        (True, False, "vps-update-pb7"),
+        (False, True, "vps-update-pb8"),
+    ],
+)
+def test_bulk_runtime_update_prefers_confirmed_installs_over_stale_profile(
+    pb7_installed: bool,
+    pb8_installed: bool,
+    expected: str,
+) -> None:
+    """Legacy PB7 profiles must not suppress a confirmed installed PB8 runtime."""
+    assert service_mod._profile_aware_vps_update_command(
+        "vps-update-runtime",
+        "pb7",
+        pb7_installed=pb7_installed,
+        pb8_installed=pb8_installed,
+    ) == expected
 
 
 def test_combined_runtime_playbooks_compose_existing_safe_updates() -> None:
@@ -135,8 +158,8 @@ def test_master_updates_migrate_missing_legacy_master_role(playbook_path: str) -
 
 
 @pytest.mark.parametrize("playbook_path", ["master-update-pb8.yml", "vps-update-pb8.yml"])
-def test_pb8_playbooks_gate_role_validate_and_leave_processes_running(playbook_path: str) -> None:
-    """PB8 updates validate host role before writes and never signal bot processes."""
+def test_pb8_playbooks_validate_before_restarting_live_processes(playbook_path: str) -> None:
+    """PB8 updates restart managed live bots only after complete runtime validation."""
     source = Path(playbook_path).read_text(encoding="utf-8")
 
     role_index = source.index("Read ")
@@ -155,13 +178,17 @@ def test_pb8_playbooks_gate_role_validate_and_leave_processes_running(playbook_p
     assert "import passivbot_rust" in source
     assert "Save PB8 runtime paths after validation" in source
     assert source.index("Mark PB8 runtime unavailable") < checkout_index
-    assert source.index("Mark validated PB8 runtime available") > source.index("Validate PB8 Rust module")
+    assert "Validate PB8 Rust module and config schema" not in source
     stamp_task = source.split("- name: Stamp and validate PB8 Rust source fingerprint", 1)[1]
     stamp_task = stamp_task.split("\n    - name:", 1)[0]
     assert "stamp_compiled_extensions(source_fingerprint())" in stamp_task
     assert "check_and_maybe_compile(fail_on_stale=True)" in stamp_task
     assert "\n      when:" not in stamp_task
     assert source.index("Stamp and validate PB8 Rust source fingerprint") < source.index("Mark validated PB8 runtime available")
+    assert source.index("Mark validated PB8 runtime available") < source.index(
+        "Restart managed PB8 live bots after successful update"
+    )
+    assert "pb8_live_stop.py" in source
     assert "pb8-runtime-invalid" in source
     assert "Acquire PB8 update writer ownership" in source
     assert "Release PB8 update writer ownership" in source
@@ -182,6 +209,47 @@ def test_pb8_playbooks_gate_role_validate_and_leave_processes_running(playbook_p
     assert "stop-processes" not in source
     assert "kill all" not in source
     assert "starter.py" not in source
+
+
+def test_pb8_live_stop_targets_only_exact_managed_config_directories(tmp_path: Path) -> None:
+    """The update helper must delegate exact process matching to PBRun's PB8 runner."""
+    pbgdir = tmp_path / "pbgui"
+    run_root = pbgdir / "data" / "run_v8"
+    managed = run_root / "alice"
+    managed.mkdir(parents=True)
+    (managed / "config.json").write_text("{}", encoding="utf-8")
+    ignored = run_root / "incomplete"
+    ignored.mkdir()
+    calls: list[tuple] = []
+
+    class FakeRunV8:
+        """Capture the identity fields supplied to PBRun's exact matcher."""
+
+        def pid(self):
+            calls.append((self.path, self.user, self.pb8dir, self.pb8venv, self.pbgdir))
+            return SimpleNamespace(pid=321)
+
+        def stop(self, process) -> None:
+            calls.append(("stop", process.pid))
+
+    stopped = pb8_live_stop.stop_managed_pb8_live_processes(
+        pbgdir,
+        tmp_path / "pb8",
+        tmp_path / "venv_pb8" / "bin" / "python",
+        run_v8_class=FakeRunV8,
+    )
+
+    assert stopped == [321]
+    assert calls == [
+        (
+            str(managed),
+            "alice",
+            str(tmp_path / "pb8"),
+            str(tmp_path / "venv_pb8" / "bin" / "python"),
+            str(pbgdir),
+        ),
+        ("stop", 321),
+    ]
 
 
 def test_pb8_runtime_info_requires_source_schema_interpreter_and_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

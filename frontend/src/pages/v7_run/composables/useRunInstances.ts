@@ -246,11 +246,20 @@ export function useRunInstances(options: {
   async function convertInstanceToV8(name: string): Promise<void> {
     const targetName = convertTargetName(name); // :911
     try {
-      const payload = (await apiFetch<{ name?: string }>(migrateV7Url(), {
+      const payload = (await apiFetch<{ name?: string; draft_id?: string; editor?: string }>(migrateV7Url(), {
         method: 'POST',
         credentials: 'same-origin',
-        body: JSON.stringify({ source_type: 'run_config', source_name: name, target_name: targetName }), // :917
-      })) as { name?: string };
+        body: JSON.stringify({
+          source_type: 'run_config',
+          source_name: name,
+          target_name: targetName,
+          allow_manual_review_output: true,
+        }), // :917
+      })) as { name?: string; draft_id?: string; editor?: string };
+      if (payload.editor === 'run' && payload.draft_id) {
+        navigate(`${getBoot().origin}/api/v8/edit_page?new=1&draft_id=${encodeURIComponent(payload.draft_id)}`);
+        return;
+      }
       navigate(backtestV8PageUrl(payload.name || targetName)); // :931
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {

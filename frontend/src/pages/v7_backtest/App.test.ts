@@ -521,7 +521,9 @@ describe('boot chain (:10012-10024)', () => {
     await wrapper.find('[data-test="editor-convert-v8"]').trigger('click');
     await flush();
     const migrateCall = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/api/backtest-v8/migrate-v7'));
-    expect(JSON.parse(String(migrateCall?.[1]?.body))).toEqual({ source_type: 'backtest_config', source_name: 'alpha', target_name: 'alpha_v8' });
+    expect(JSON.parse(String(migrateCall?.[1]?.body))).toEqual({
+      source_type: 'backtest_config', source_name: 'alpha', target_name: 'alpha_v8', allow_manual_review_output: true,
+    });
     expect(replaceTopLocationMock).toHaveBeenCalledWith('http://h:8000/api/backtest-v8/main_page?config=alpha_v8');
 
     replaceTopLocationMock.mockReset();

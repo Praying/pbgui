@@ -101,7 +101,27 @@ body {
   padding: var(--sp-xs) var(--sp-sm);
   background: rgb(var(--warning-rgb, 227 164 74) / 0.14);
 }
-.pb8-update-warning a:hover { background: rgb(var(--warning-rgb, 227 164 74) / 0.24); }
+
+.pb8-update-warning a:hover { background: rgba(255, 140, 0, 0.24); }
+.v8-conversion-status {
+  position: fixed;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2200;
+  min-width: min(520px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border: 1px solid rgba(77, 166, 255, .55);
+  border-radius: 6px;
+  background: rgba(20, 45, 75, .96);
+  color: #dbeeff;
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+}
+
 
 /* ─── Table ────────────────────────────────────────────────── */
 .tbl-wrap {
@@ -928,14 +948,73 @@ function addInstance() {
   window.location.href = url;
 }
 
+
+function v8RunMigrationError(payload, status) {
+  var detail = payload && payload.detail;
+  var message = typeof detail === 'string'
+    ? detail
+    : (detail && typeof detail.message === 'string' && detail.message.trim()) || ('HTTP ' + status);
+  var error = new Error(message);
+  error.detail = detail;
+  return error;
+}
+
+function v8RunMigrationDetail(error) {
+  var detail = error && error.detail;
+  var report = detail && typeof detail === 'object' && detail.report && typeof detail.report === 'object'
+    ? detail.report
+    : null;
+  var fields = [];
+  if (report) {
+    [report.manual_review_fields, report.dropped_unsupported_fields].forEach(function(items) {
+      if (!Array.isArray(items)) return;
+      items.forEach(function(item) {
+        var value = String(item || '').trim();
+        if (value && fields.indexOf(value) < 0) fields.push(value);
+      });
+    });
+  }
+  var lines = ['The V7 run config was not changed and no runnable V8 config was published.'];
+  if (fields.length) {
+    lines.push('', 'Fields requiring manual review:');
+    fields.slice(0, 20).forEach(function(field) { lines.push('- ' + field); });
+    if (fields.length > 20) lines.push('- … and ' + (fields.length - 20) + ' more');
+  }
+  return lines.join('\n');
+}
+
+function setV8RunConversionStatus(message) {
+  var status = document.getElementById('v8-conversion-status');
+  if (!message) {
+    if (status) status.remove();
+    return;
+  }
+  if (!status) {
+    status = document.createElement('div');
+    status.id = 'v8-conversion-status';
+    status.className = 'v8-conversion-status';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    document.body.appendChild(status);
+  }
+  status.textContent = message;
+}
+
+
 async function convertInstanceToV8(name) {
   var targetName = String(name || '').replace(/[\\/\x00-\x1f]/g, '_').slice(0, 120) + '_v8';
+  setV8RunConversionStatus('Converting V7 Run config with PB8...');
   try {
     var response = await fetch(window.location.origin + '/api/backtest-v8/migrate-v7', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source_type: 'run_config', source_name: name, target_name: targetName })
+      body: JSON.stringify({
+        source_type: 'run_config',
+        source_name: name,
+        target_name: targetName,
+        allow_manual_review_output: true
+      })
     });
     var payload = await response.json().catch(function() { return {}; });
     if (response.status === 409) {
@@ -948,10 +1027,18 @@ async function convertInstanceToV8(name) {
       window.location.href = window.location.origin + '/api/backtest-v8/main_page?config=' + encodeURIComponent(targetName);
       return;
     }
-    if (!response.ok) throw new Error(payload.detail ? PBGuiI18n.serverMsg(payload.detail) : ('HTTP ' + response.status));
+
+    if (!response.ok) throw v8RunMigrationError(payload, response.status);
+    if (payload.editor === 'run' && payload.draft_id) {
+      setV8RunConversionStatus('Opening unsaved PB8 Run preview...');
+      window.location.href = window.location.origin + '/api/v8/edit_page?new=1&draft_id=' + encodeURIComponent(payload.draft_id);
+      return;
+    }
     window.location.href = window.location.origin + '/api/backtest-v8/main_page?config=' + encodeURIComponent(payload.name || targetName);
   } catch (error) {
-    toast(PBGuiI18n.t('v7run.v8ConversionFailed') + ': ' + error.message, 'err');
+    setV8RunConversionStatus('');
+    toast('V8 conversion failed: ' + error.message, 'err');
+
     await window.PBGuiDialogs.alert({
       title: PBGuiI18n.t('v7run.v8ConversionFailed'),
       message: error.message,

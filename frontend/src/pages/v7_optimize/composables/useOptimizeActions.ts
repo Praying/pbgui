@@ -250,13 +250,15 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
     return request<{ symbols?: string[]; catalog?: Record<string, string> }>(`${adapter.metadataApiBase}/symbols?exchange=${encodeURIComponent(exchange)}`) as Promise<{ symbols: string[]; catalog?: Record<string, string> }>;
   }
 
-  async function loadIncomingDraft(draftId: string, suggestedName = ''): Promise<ConfigPayload & { name: string }> {
-    const draft = await request<{ config?: Record<string, unknown>; override_configs?: Record<string, unknown>; name?: string }>(
-      `${adapter.backtestApiBase}/optimize-draft/${encodeURIComponent(draftId)}`,
+  async function loadIncomingDraft(draftId: string, suggestedName = '', kind: 'optimize' | 'migration' = 'optimize'): Promise<ConfigPayload & { name: string }> {
+    const draft = await request<{ config?: Record<string, unknown>; override_configs?: Record<string, unknown>; name?: string; migration_report?: Record<string, unknown> }>(
+      kind === 'migration'
+        ? `${adapter.apiBase.replace(/\/optimize-v[78]$/, '/optimize-v8')}/migration-draft/${encodeURIComponent(draftId)}`
+        : `${adapter.backtestApiBase}/optimize-draft/${encodeURIComponent(draftId)}`,
     );
     if (!isObject(draft.config)) throw new Error('Incoming optimize draft did not contain a config');
     const prepared = await prepareImport(draft.config, suggestedName || String(draft.name || 'incoming_optimize'));
-    return { ...prepared, override_configs: objectValue(draft.override_configs) };
+    return { ...prepared, override_configs: objectValue(draft.override_configs), migration_report: draft.migration_report };
   }
 
   async function ohlcvPreflight(config: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -275,10 +277,10 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
     return request<Record<string, unknown>>(`${adapter.apiBase}/ohlcv-preload/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
   }
 
-  async function migrateV7(source: { name?: string; path?: string }, targetName: string): Promise<string> {
+  async function migrateV7(source: { name?: string; path?: string }, targetName: string): Promise<{ name: string; draftId: string }> {
     const body = source.path ? { source_path: source.path, target_name: targetName } : { source_name: source.name, target_name: targetName };
-    const data = await request<{ name?: string }>(`${adapter.apiBase.replace(/\/optimize-v[78]$/, '/optimize-v8')}/migrate-v7`, { method: 'POST', body: JSON.stringify(body) });
-    return String(data.name || targetName);
+    const data = await request<{ name?: string; draft_id?: string }>(`${adapter.apiBase.replace(/\/optimize-v[78]$/, '/optimize-v8')}/migrate-v7`, { method: 'POST', body: JSON.stringify(body) });
+    return { name: String(data.name || targetName), draftId: String(data.draft_id || '') };
   }
 
   function paretoExplorerUrl(resultPath: string, paretoPath = ''): string {

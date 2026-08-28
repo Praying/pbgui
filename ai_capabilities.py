@@ -48,6 +48,7 @@ _ACTION_RETENTION_SECONDS = 30 * 24 * 60 * 60
 _MAX_SOURCE_FILE_BYTES = 1024 * 1024
 _MAX_SOURCE_SCAN_BYTES = 32 * 1024 * 1024
 _MAX_SOURCE_FILES = 5000
+_SOURCE_SEARCH_TIMEOUT_SECONDS = 5
 _MAX_ANALYSIS_CODE_BYTES = 32 * 1024
 _MAX_ANALYSIS_INPUT_BYTES = 1024 * 1024
 _MAX_ANALYSIS_STDOUT_BYTES = 128 * 1024
@@ -181,6 +182,7 @@ class AICapabilityService:
             "virtual_resources": [
                 "pbgui://optimizer-config/{version}/{name}",
                 "pbgui://optimizer-run/{version}/{opaque-id}",
+                "pbgui://optimizer-queue/v8/{opaque-id}",
                 "pbgui://pareto/{version}/{opaque-id}",
                 "pbgui://backtest/{version}/{opaque-id}",
                 "pbgui://draft/{version}/{opaque-id}",
@@ -268,6 +270,7 @@ class AICapabilityService:
             "get_optimizer_config": self._get_optimizer_config,
             "get_optimizer_metadata": self._get_optimizer_metadata,
             "list_optimizer_runs": self._list_optimizer_runs,
+            "list_pb8_optimizer_queue": self._list_pb8_optimizer_queue,
             "list_backtests": self._list_backtests,
             "get_optimizer_run_analysis": self._get_optimizer_run_analysis,
             "rank_optimizer_run_candidates": self._rank_optimizer_run_candidates,
@@ -285,6 +288,7 @@ class AICapabilityService:
             "propose_pb8_optimizer_config": self._propose_pb8_optimizer_config,
             "propose_pb8_config_patch": self._propose_pb8_config_patch,
             "propose_queue_pb8_config": self._propose_queue_pb8_config,
+            "propose_start_pb8_optimizer_queue": self._propose_start_pb8_optimizer_queue,
             "propose_pareto_backtests": self._propose_pareto_backtests,
             "propose_dashboard_from_template": self._propose_dashboard_from_template,
             "propose_dashboard_layout": self._propose_dashboard_layout,
@@ -1178,59 +1182,80 @@ class AICapabilityService:
             raise AICapabilityError("Search query must contain 2 to 128 characters")
         limit = self._limit(args, maximum=50)
         root = self._passivbot_root(version)
+        deadline = time.monotonic() + _SOURCE_SEARCH_TIMEOUT_SECONDS
         commit, repository = self._passivbot_git_info(root)
         checkout_clean = self._checkout_is_clean(root)
         needle = query.casefold()
         matches: list[dict[str, Any]] = []
         scanned_bytes = 0
         scanned_files = 0
-        for path in sorted(root.rglob("*")):
-            if len(matches) >= limit or scanned_files >= _MAX_SOURCE_FILES:
+        stop_scan = False
+        timed_out = False
+        for current, directories, filenames in os.walk(root, topdown=True, followlinks=False):
+            if time.monotonic() >= deadline:
+                timed_out = True
                 break
-            try:
-                relative = path.relative_to(root)
-            except ValueError:
-                continue
-            if any(part in _SOURCE_EXCLUDED_PARTS or part.startswith(".") for part in relative.parts):
-                continue
-            if path.is_symlink() or not path.is_file() or path.suffix.lower() not in _SOURCE_EXTENSIONS:
-                continue
-            if docs_only and not (
-                path.suffix.lower() == ".md"
-                or "docs" in {part.lower() for part in relative.parts}
-                or path.name.lower().startswith("readme")
-            ):
-                continue
-            try:
-                size = path.stat().st_size
-            except OSError:
-                continue
-            if size > _MAX_SOURCE_FILE_BYTES or scanned_bytes + size > _MAX_SOURCE_SCAN_BYTES:
-                continue
-            scanned_files += 1
-            scanned_bytes += size
-            try:
-                raw = read_regular_file_nofollow(path, root)
-                if len(raw) > _MAX_SOURCE_FILE_BYTES:
-                    continue
-                text = raw.decode("utf-8")
-            except (OSError, RuntimeError, UnicodeDecodeError):
-                continue
-            for line_number, line in enumerate(text.splitlines(), start=1):
-                if needle not in line.casefold():
-                    continue
-                matches.append(
-                    {
-                        "path": relative.as_posix(),
-                        "line": line_number,
-                        "excerpt": line.strip()[:1000],
-                        "source_url": self._source_url(repository, commit, relative)
-                        if self._source_is_clean(root, relative)
-                        else "",
-                    }
-                )
-                if len(matches) >= limit:
+            current_path = Path(current)
+            directories[:] = sorted(
+                name
+                for name in directories
+                if name not in _SOURCE_EXCLUDED_PARTS
+                and not name.startswith(".")
+                and not (current_path / name).is_symlink()
+            )
+            for filename in sorted(filenames):
+                if time.monotonic() >= deadline:
+                    timed_out = True
+                    stop_scan = True
                     break
+                if len(matches) >= limit or scanned_files >= _MAX_SOURCE_FILES:
+                    stop_scan = True
+                    break
+                path = current_path / filename
+                try:
+                    relative = path.relative_to(root)
+                except ValueError:
+                    continue
+                if path.is_symlink() or not path.is_file() or path.suffix.lower() not in _SOURCE_EXTENSIONS:
+                    continue
+                if docs_only and not (
+                    path.suffix.lower() == ".md"
+                    or "docs" in {part.lower() for part in relative.parts}
+                    or path.name.lower().startswith("readme")
+                ):
+                    continue
+                try:
+                    size = path.stat().st_size
+                except OSError:
+                    continue
+                if size > _MAX_SOURCE_FILE_BYTES or scanned_bytes + size > _MAX_SOURCE_SCAN_BYTES:
+                    continue
+                scanned_files += 1
+                scanned_bytes += size
+                try:
+                    raw = read_regular_file_nofollow(path, root)
+                    if len(raw) > _MAX_SOURCE_FILE_BYTES:
+                        continue
+                    text = raw.decode("utf-8")
+                except (OSError, RuntimeError, UnicodeDecodeError):
+                    continue
+                for line_number, line in enumerate(text.splitlines(), start=1):
+                    if needle not in line.casefold():
+                        continue
+                    matches.append(
+                        {
+                            "path": relative.as_posix(),
+                            "line": line_number,
+                            "excerpt": line.strip()[:1000],
+                            "source_url": self._source_url(repository, commit, relative)
+                            if checkout_clean
+                            else "",
+                        }
+                    )
+                    if len(matches) >= limit:
+                        break
+            if stop_scan:
+                break
         return {
             "version": version,
             "commit": commit,
@@ -1238,7 +1263,7 @@ class AICapabilityService:
             "source_state": "clean" if checkout_clean else "dirty",
             "matches": matches,
             "returned": len(matches),
-            "truncated": len(matches) >= limit or scanned_files >= _MAX_SOURCE_FILES,
+            "truncated": timed_out or len(matches) >= limit or scanned_files >= _MAX_SOURCE_FILES,
         }
 
     def _read_passivbot_source(self, args: dict[str, Any]) -> dict[str, Any]:
@@ -1692,6 +1717,91 @@ class AICapabilityService:
         """Create an approval proposal to queue one existing PB8 config."""
         name = self._name(args.get("name"))
         return await self._create_proposal(owner, conversation_id, "queue", name, None)
+
+    def _list_pb8_optimizer_queue(self, args: dict[str, Any]) -> dict[str, Any]:
+        """List bounded path-free PB8 optimizer queue records for exact follow-up actions."""
+        from api import optimize_v8
+
+        limit = self._limit(args, maximum=100)
+        items = optimize_v8.get_queue(session=object()).get("items", [])[:limit]
+        settings = load_ini_section("optimize_v7")
+        return {
+            "items": [
+                {
+                    "queue_id": str(item.get("filename") or ""),
+                    "name": str(item.get("name") or ""),
+                    "status": str(item.get("status") or "unknown"),
+                    "exchanges": list(item.get("exchange") or [])[:10],
+                    "created": item.get("created"),
+                    "started_at": item.get("started_at"),
+                    "error_code": str(item.get("error_code") or ""),
+                    "error_reason": self._path_free_error(item.get("error_reason"))
+                    if item.get("error_reason")
+                    else "",
+                }
+                for item in items
+            ],
+            "autostart": str(settings.get("autostart", "False")).lower() == "true",
+        }
+
+    async def _propose_start_pb8_optimizer_queue(
+        self,
+        owner: str,
+        conversation_id: str,
+        args: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Create an exact approval proposal to start existing queued PB8 optimizers."""
+        from api import optimize_v8
+
+        raw_ids = args.get("queue_ids")
+        if not isinstance(raw_ids, list) or not 1 <= len(raw_ids) <= 4:
+            raise AICapabilityError("queue_ids must contain 1 to 4 PB8 queue IDs")
+        queue_ids = [optimize_v8._validate_name(str(item or "")) for item in raw_ids]
+        if len(set(queue_ids)) != len(queue_ids):
+            raise AICapabilityError("PB8 queue IDs must not contain duplicates")
+        current = {
+            str(item.get("filename") or ""): item
+            for item in optimize_v8.get_queue(session=object()).get("items", [])
+        }
+        jobs = []
+        for queue_id in queue_ids:
+            item = current.get(queue_id)
+            if item is None:
+                raise AICapabilityError("PB8 optimizer queue item does not exist")
+            if item.get("status") != "queued":
+                raise AICapabilityError(
+                    f"PB8 optimizer queue item {self._name(item.get('name'))} is already {item.get('status')}"
+                )
+            jobs.append({"queue_id": queue_id, "name": self._name(item.get("name"))})
+        preview = {
+            "action": "start_optimize_queue",
+            "version": "v8",
+            "name": jobs[0]["name"] if len(jobs) == 1 else "PB8 optimizer queue batch",
+            "job_count": len(jobs),
+            "jobs": copy.deepcopy(jobs),
+            "changed_count": len(jobs),
+            "changes": [
+                {
+                    "path": f"queue[{index}].status",
+                    "kind": "changed",
+                    "item": job["name"],
+                    "before": "queued",
+                    "after": "running",
+                }
+                for index, job in enumerate(jobs)
+            ],
+            "may_start_immediately": True,
+        }
+        return await self._create_custom_proposal(
+            owner,
+            conversation_id,
+            "start_optimize_queue",
+            preview["name"],
+            {"jobs": jobs},
+            preview,
+            expected_digest=self._digest(jobs),
+            create_only=False,
+        )
 
     def _list_dashboard_templates(self, unused: dict[str, Any]) -> dict[str, Any]:
         """List dashboard templates and existing names without exposing files."""
@@ -2727,13 +2837,15 @@ class AICapabilityService:
 
     def _execute_proposal(self, proposal: ActionProposal) -> dict[str, Any]:
         """Revalidate config state and execute one already approved PB8 action."""
-        if proposal.action in {"queue_backtests", "create_dashboard", "save_dashboard_layout"}:
+        if proposal.action in {"queue_backtests", "create_dashboard", "save_dashboard_layout", "start_optimize_queue"}:
             journal = self._load_journal(proposal.id) or self._journal_payload(proposal, phase="prepared")
             self._write_private_json(self.journal_root / f"{proposal.id}.json", journal)
             if proposal.action == "queue_backtests":
                 result = self._execute_pareto_backtests(proposal)
             elif proposal.action == "create_dashboard":
                 result = self._execute_dashboard_create(proposal)
+            elif proposal.action == "start_optimize_queue":
+                result = self._execute_optimizer_queue_start(proposal, journal)
             else:
                 result = self._execute_dashboard_layout_save(proposal)
             self._complete_journal(journal, result)
@@ -2851,6 +2963,65 @@ class AICapabilityService:
             "action": "queue_backtests",
             "queued_count": len(queued),
             "queued": queued,
+        }
+
+    def _execute_optimizer_queue_start(
+        self, proposal: ActionProposal, journal: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Start exact reviewed PB8 queue records with durable per-item recovery."""
+        from api import optimize_v8
+
+        jobs = (proposal.config or {}).get("jobs")
+        if not isinstance(jobs, list) or not 1 <= len(jobs) <= 4:
+            raise AICapabilityError("PB8 optimizer start proposal is invalid")
+        current = {
+            str(item.get("filename") or ""): item
+            for item in optimize_v8.get_queue(session=object()).get("items", [])
+        }
+        completed = set(journal.get("started_queue_ids") or [])
+        for job in jobs:
+            if not isinstance(job, dict):
+                raise AICapabilityError("PB8 optimizer start proposal is invalid")
+            queue_id = optimize_v8._validate_name(str(job.get("queue_id") or ""))
+            expected_name = self._name(job.get("name"))
+            item = current.get(queue_id)
+            if item is None or self._name(item.get("name")) != expected_name:
+                raise AICapabilityError("PB8 optimizer queue changed after proposal creation")
+            already_started = (
+                queue_id in completed
+                or (
+                    item.get("status") in {"running", "complete"}
+                    and float(item.get("started_at") or 0) >= proposal.created_at
+                )
+            )
+            if item.get("status") != "queued" and not already_started:
+                raise AICapabilityError("PB8 optimizer queue changed after proposal creation")
+        started = []
+        for job in jobs:
+            queue_id = str(job["queue_id"])
+            if queue_id not in completed:
+                item = current[queue_id]
+                if item.get("status") == "queued":
+                    response = optimize_v8.start_queue_item(queue_id, None, session=object())
+                    started.append(
+                        {"queue_id": queue_id, "name": str(job["name"]), "pid": response.get("pid")}
+                    )
+                else:
+                    started.append({"queue_id": queue_id, "name": str(job["name"]), "already_started": True})
+                completed.add(queue_id)
+                journal["started_queue_ids"] = sorted(completed)
+                journal["phase"] = "starting_jobs"
+                journal["updated_at"] = time.time()
+                self._write_private_json(self.journal_root / f"{proposal.id}.json", journal)
+            else:
+                started.append({"queue_id": queue_id, "name": str(job["name"]), "already_started": True})
+        return {
+            "proposal_id": proposal.id,
+            "status": "executed",
+            "action": "start_optimize_queue",
+            "name": proposal.name,
+            "started_count": len(started),
+            "started": started,
         }
 
     @staticmethod
@@ -3472,6 +3643,15 @@ class AICapabilityService:
                 "resources": ["pbgui://optimizer-run/{version}/{opaque-id}"],
             },
             {
+                "name": "list_pb8_optimizer_queue",
+                "description": "List current PB8 optimizer queue IDs, names, statuses, exchanges, errors, and autostart state before queue follow-up actions.",
+                "schema": self._object_schema(
+                    {"limit": {"type": "integer", "minimum": 1, "maximum": 100}}, []
+                ),
+                "resources": ["pbgui://optimizer-queue/v8/{opaque-id}"],
+                "versions": ["v8"],
+            },
+            {
                 "name": "list_backtests",
                 "description": "List recent completed backtest summaries without filesystem paths.",
                 "schema": AICapabilityService._object_schema(
@@ -3730,11 +3910,29 @@ class AICapabilityService:
             },
             {
                 "name": "propose_queue_pb8_config",
-                "description": "Propose queueing an existing PB8 optimizer config. Never executes without user approval.",
+                "description": "Propose queueing an existing PB8 optimizer config. Queueing does not mean the job started. Never executes without user approval.",
                 "schema": AICapabilityService._object_schema(
                     {"name": {"type": "string", "maxLength": 128}}, ["name"]
                 ),
                 "effect": "execute",
+                "versions": ["v8"],
+            },
+            {
+                "name": "propose_start_pb8_optimizer_queue",
+                "description": "Propose immediately starting 1-4 exact existing queued PB8 optimizer jobs by IDs obtained from list_pb8_optimizer_queue. Never starts without user approval.",
+                "schema": self._object_schema(
+                    {
+                        "queue_ids": {
+                            "type": "array",
+                            "minItems": 1,
+                            "maxItems": 4,
+                            "items": {"type": "string", "maxLength": 128},
+                        }
+                    },
+                    ["queue_ids"],
+                ),
+                "effect": "execute",
+                "resources": ["pbgui://optimizer-queue/v8/{opaque-id}"],
                 "versions": ["v8"],
             },
             {

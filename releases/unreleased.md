@@ -1,5 +1,9 @@
 # Unreleased
 
+## Merge origin/main — Vue3 Migration Parity
+
+- Merged the four remote release commits through v1.99.8, preserving the existing Vue3 workbench changes and syncing V7/V8 migration drafts, AI queue proposals, and result conversion handoffs into the Vue3 pages.
+
 ## Frontend — Unified Vue Page Spacing
 
 - Unified Vue 3 page edges around a shared responsive contract: 24px on desktop, 20px on medium viewports, and 16px on mobile. Standardized top-level section, component, and compact control spacing at 20px, 16px, and 8px while preserving fixed-height workbench scroll chains and compact table, button, badge, modal, and embedded-fragment internals.

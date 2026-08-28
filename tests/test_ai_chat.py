@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import os
 from pathlib import Path
@@ -13,8 +14,13 @@ from ai_chat import (
     AICredentialStore,
     AIChatError,
     AIChatService,
+    _COMPARE_KEEP_SOURCE_RISK,
+    _COMPARE_PB7_TRAILING_VS_PB8_MARTINGALE,
     _GO_FALLBACK_MODELS,
     _MAX_CAPABILITY_ROUNDS,
+    _MAX_HISTORY_CHARS,
+    _MAX_PROVIDER_HANDOFF_CHARS,
+    _go_instructions,
     owner_key,
 )
 
@@ -74,6 +80,21 @@ def test_response_text_extracts_openai_responses_payload(tmp_path: Path) -> None
     }
 
     assert service._response_text(payload) == "Hello"
+
+
+def test_response_text_uses_only_last_structured_message(tmp_path: Path) -> None:
+    """Responses planning messages must not be concatenated into the visible final answer."""
+    service = AIChatService(tmp_path / "ai")
+    payload = {
+        "output_text": "Planning retry\nFinal answer",
+        "output": [
+            {"type": "message", "content": [{"type": "output_text", "text": "Planning retry"}]},
+            {"type": "reasoning", "summary": [{"type": "summary_text", "text": "Private plan"}]},
+            {"type": "message", "content": [{"type": "output_text", "text": "Final answer"}]},
+        ],
+    }
+
+    assert service._response_text(payload) == "Final answer"
 
 
 def test_go_fallback_catalog_covers_all_documented_subscription_models() -> None:
@@ -583,6 +604,153 @@ def test_responses_agent_executes_native_tools_and_replays_results(
     asyncio.run(scenario())
 
 
+def test_responses_agent_turns_excess_parallel_calls_into_final_answer(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Grok-style parallel calls beyond the budget must not abort the whole turn."""
+    class ResponseContext:
+        async def __aenter__(self):
+            return object()
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self.requests = []
+
+        def post(self, url, **kwargs):
+            self.requests.append(copy.deepcopy(kwargs["json"]))
+            return ResponseContext()
+
+    class FakeCapabilities:
+        def __init__(self) -> None:
+            self.calls = []
+
+        @staticmethod
+        def responses_tools():
+            return [{"type": "function", "name": "search_passivbot_docs", "parameters": {}}]
+
+        async def dispatch(self, owner, conversation_id, name, arguments):
+            self.calls.append(arguments["query"])
+            return {"matches": []}
+
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+        capabilities = FakeCapabilities()
+        service.capabilities = capabilities
+        session = FakeSession()
+        calls = [
+            {
+                "type": "function_call",
+                "call_id": f"call-{index}",
+                "name": "search_passivbot_docs",
+                "arguments": json.dumps({"version": "v8", "query": f"query-{index}"}),
+            }
+            for index in range(18)
+        ]
+        payloads = [
+            {"output": calls},
+            {"output": [{"type": "message", "content": [{"type": "output_text", "text": "Final answer"}]}]},
+        ]
+
+        async def fake_http_session():
+            return session
+
+        async def fake_read_response(response, **kwargs):
+            return payloads.pop(0)
+
+        monkeypatch.setattr(service, "_http_session", fake_http_session)
+        monkeypatch.setattr(service, "_read_json_response", fake_read_response)
+        conversation = await service._conversation("a" * 32, "opencode-go", "grok-4.6", None)
+
+        reply = await service._go_responses_agent_inner(
+            "a" * 32,
+            conversation.id,
+            "https://example.test/v1",
+            "grok-4.6",
+            "sk-test",
+            [{"role": "user", "content": "Compare strategies"}],
+            None,
+        )
+
+        assert reply == "Final answer"
+        assert len(capabilities.calls) == 16
+        assert "tools" in session.requests[0]
+        assert "tools" not in session.requests[1]
+        outputs = [item for item in session.requests[1]["input"] if item.get("type") == "function_call_output"]
+        assert len(outputs) == 18
+        assert all(json.loads(item["output"])["success"] is False for item in outputs[-2:])
+        assert all("budget exhausted" in json.loads(item["output"])["error"] for item in outputs[-2:])
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+def test_responses_agent_retries_one_transient_connection_failure(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A dropped Grok Responses connection should retry once within a bounded request budget."""
+    class ResponseContext:
+        def __init__(self, fail: bool) -> None:
+            self.fail = fail
+
+        async def __aenter__(self):
+            if self.fail:
+                raise ConnectionResetError("provider disconnected")
+            return object()
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def post(self, url, **kwargs):
+            self.calls += 1
+            return ResponseContext(self.calls == 1)
+
+    class FakeCapabilities:
+        @staticmethod
+        def responses_tools():
+            return []
+
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+        service.capabilities = FakeCapabilities()
+        session = FakeSession()
+
+        async def fake_http_session():
+            return session
+
+        async def fake_read_response(response, **kwargs):
+            return {"output": [{"type": "message", "content": [{"type": "output_text", "text": "Recovered"}]}]}
+
+        monkeypatch.setattr(service, "_http_session", fake_http_session)
+        monkeypatch.setattr(service, "_read_json_response", fake_read_response)
+        conversation = await service._conversation("a" * 32, "opencode-go", "grok-4.6", None)
+
+        reply = await service._go_responses_agent_inner(
+            "a" * 32,
+            conversation.id,
+            "https://example.test/v1",
+            "grok-4.6",
+            "sk-test",
+            [{"role": "user", "content": "Compare strategies"}],
+            None,
+        )
+
+        assert reply == "Recovered"
+        assert session.calls == 2
+        assert conversation.activity_history[-1]["message"] == (
+            "OpenCode connection interrupted; retrying model request"
+        )
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
 def test_messages_agent_executes_native_tools_and_replays_results(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -1080,12 +1248,18 @@ def test_page_context_is_bounded_and_marked_untrusted() -> None:
             "page_key": "v8_optimize",
             "guide_topic": "43_pbv8_optimize",
             "section": "Scoring",
+            "pages": [
+                {"key": "/", "title": "Welcome"},
+                {"key": "v7_backtest", "title": "Backtest"},
+                {"key": "v8_optimize", "title": "Optimize"},
+            ],
             "entities": [{"kind": "optimizer_config", "version": "v8", "name": "demo"}],
             "actions": [{"id": "show_log", "entity_kind": "optimizer_queue_item"}],
             "controls": [
                 {
                     "id": "control_1",
                     "role": "button",
+                    "name": "Optimize log :: Close",
                     "label": "Close",
                     "context": "Optimize log",
                     "operations": ["activate"],
@@ -1099,10 +1273,13 @@ def test_page_context_is_bounded_and_marked_untrusted() -> None:
 
     assert "Untrusted PBGui page context" in suffix
     assert '"guide_topic":"43_pbv8_optimize"' in suffix
+    assert context["pages"][0] == {"key": "/", "title": "Welcome"}
     assert context["actions"] == [{"id": "show_log", "entity_kind": "optimizer_queue_item"}]
     assert context["controls"][0]["label"] == "Close"
     with pytest.raises(AIChatError, match="Invalid page context"):
         AIChatService._validate_page_context({"secret": "value"})
+    with pytest.raises(AIChatError, match="Invalid page context"):
+        AIChatService._validate_page_context({"pages": [{"key": "/evil", "title": "Invalid"}]})
 
 
 def test_ai_drawer_preferences_are_private_persistent_merged_and_bounded(tmp_path: Path) -> None:
@@ -1195,8 +1372,169 @@ def test_action_requests_receive_extended_bounded_capability_rounds() -> None:
         [{"role": "user", "content": "Markiere mir die drei stabilsten Pareto-Kandidaten"}]
     ) == 10
     assert AIChatService._capability_round_limit(
+        [{"role": "user", "content": "Queue die beiden PB8 Jobs und starte sie direkt"}]
+    ) == 10
+    assert AIChatService._capability_round_limit(
         [{"role": "user", "content": "Erkläre mir diese Metrik"}]
-    ) == 6
+    ) == 3
+    assert "do not repeat searches with minor query variations" in _go_instructions(
+        "kimi-k3", tools_enabled=True
+    )
+
+
+def test_vague_comparison_setup_uses_local_clarification_without_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A vague comparison confirmation should produce choices without a slow model turn."""
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+
+        async def fake_models(provider):
+            return [{
+                "id": "grok-4.6",
+                "protocol": "responses",
+                "tools": True,
+                "reasoning_variants": [],
+            }]
+
+        monkeypatch.setattr(service, "_go_models", fake_models)
+        monkeypatch.setattr(
+            service.credentials,
+            "load_go_key",
+            lambda owner: (_ for _ in ()).throw(AssertionError("provider must not be called")),
+        )
+        conversation = await service._conversation("a" * 32, "opencode-go", "grok-4.6", None)
+        history = [
+            {"role": "assistant", "content": "I can set up a fair comparison if you want."},
+            {"role": "user", "content": "yes setup the compare"},
+        ]
+
+        reply = await service._go_chat(
+            "a" * 32,
+            "grok-4.6",
+            history,
+            "opencode-go",
+            conversation.id,
+            "",
+        )
+        snapshot = await service.get_conversation("a" * 32, conversation.id)
+
+        assert reply == "Which comparison should PBGui set up? PB7 and PB8 remain separate runtimes."
+        assert snapshot["ui_actions"][0]["type"] == "chat.quick_replies"
+        choices = snapshot["ui_actions"][0]["payload"]["choices"]
+        assert [item["label"] for item in choices] == [
+            "PB7 trailing vs PB8 martingale",
+            "PB8 martingale vs PB8 grid",
+            "Custom comparison",
+        ]
+        assert "Do not substitute PB8 trailing_grid_v7" in choices[0]["value"]
+        assert service._comparison_setup_clarification([
+            {"role": "user", "content": "setup compare configs alpha and beta with TWEL 1.0"}
+        ]) is None
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+def test_cross_version_comparison_scope_asks_risk_without_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A real PB7/PB8 scope should retain both generations before risk alignment."""
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+
+        async def fake_models(provider):
+            return [{"id": "grok-4.6", "protocol": "responses", "tools": True, "reasoning_variants": []}]
+
+        monkeypatch.setattr(service, "_go_models", fake_models)
+        monkeypatch.setattr(
+            service.credentials,
+            "load_go_key",
+            lambda owner: (_ for _ in ()).throw(AssertionError("provider must not be called")),
+        )
+        conversation = await service._conversation("a" * 32, "opencode-go", "grok-4.6", None)
+
+        reply = await service._go_chat(
+            "a" * 32,
+            "grok-4.6",
+            [{"role": "user", "content": _COMPARE_PB7_TRAILING_VS_PB8_MARTINGALE}],
+            "opencode-go",
+            conversation.id,
+            "",
+        )
+        snapshot = await service.get_conversation("a" * 32, conversation.id)
+
+        assert reply.startswith("For the real PB7 trailing vs PB8 trailing_martingale comparison")
+        assert [item["label"] for item in snapshot["ui_actions"][0]["payload"]["choices"]] == [
+            "Keep source risk",
+            "Normalize risk",
+            "Custom values",
+        ]
+        await service.shutdown()
+
+    asyncio.run(scenario())
+
+
+def test_cross_version_risk_choice_lists_real_pb7_sources_without_provider(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """A risk choice should list real PB7 sources rather than PB8 compatibility configs."""
+    async def scenario() -> None:
+        service = AIChatService(tmp_path / "ai")
+
+        async def fake_models(provider):
+            return [{
+                "id": "grok-4.6",
+                "protocol": "responses",
+                "tools": True,
+                "reasoning_variants": [],
+            }]
+
+        monkeypatch.setattr(service, "_go_models", fake_models)
+        monkeypatch.setattr(
+            service.credentials,
+            "load_go_key",
+            lambda owner: (_ for _ in ()).throw(AssertionError("provider must not be called")),
+        )
+        monkeypatch.setattr(
+            service.capabilities,
+            "_list_optimizer_configs",
+            lambda args: {
+                "version": "v7",
+                "configs": [{"name": "HYPE_v7"}, {"name": "HYPE_v7_safe"}],
+                "returned": 2,
+            },
+        )
+        conversation = await service._conversation("a" * 32, "opencode-go", "grok-4.6", None)
+        history = [
+            {"role": "user", "content": _COMPARE_PB7_TRAILING_VS_PB8_MARTINGALE},
+            {"role": "assistant", "content": "How should risk align?"},
+            {"role": "user", "content": _COMPARE_KEEP_SOURCE_RISK},
+        ]
+
+        reply = await service._go_chat(
+            "a" * 32,
+            "grok-4.6",
+            history,
+            "opencode-go",
+            conversation.id,
+            "",
+        )
+        snapshot = await service.get_conversation("a" * 32, conversation.id)
+
+        assert reply == "Which PB7 optimizer config should PBGui use as the real V7 trailing source?"
+        choices = snapshot["ui_actions"][0]["payload"]["choices"]
+        assert [item["label"] for item in choices] == [
+            "HYPE_v7",
+            "HYPE_v7_safe",
+            "Choose another config",
+        ]
+        assert "real PB7 trailing source" in choices[0]["value"]
+        assert "never convert it to PB8 trailing_grid_v7" in choices[0]["value"]
+        assert "PB7 mutation, queueing, and starting remain manual" in choices[0]["value"]
+        await service.shutdown()
+
+    asyncio.run(scenario())
 
 
 @pytest.mark.parametrize(
@@ -1483,6 +1821,28 @@ def test_history_trimming_preserves_complete_turns(tmp_path: Path) -> None:
     assert len(messages) == 24
     assert messages[0]["role"] == "user"
     assert messages[-1] == {"role": "assistant", "content": "a13"}
+
+
+def test_history_trimming_supports_large_contexts_and_keeps_complete_turns(tmp_path: Path) -> None:
+    """Long tool conversations should retain recent complete turns within the larger budget."""
+    service = AIChatService(tmp_path / "ai")
+    messages = []
+    for index in range(4):
+        messages.extend(
+            [
+                {"role": "user", "content": f"u{index}" + "x" * 99_998},
+                {"role": "assistant", "content": f"a{index}" + "y" * 49_998},
+            ]
+        )
+
+    service._trim_history(messages, 24)
+
+    assert sum(len(item["content"]) for item in messages) <= _MAX_HISTORY_CHARS
+    assert len(messages) == 6
+    assert messages[0]["role"] == "user"
+    assert messages[-1]["role"] == "assistant"
+    assert _MAX_HISTORY_CHARS == 512_000
+    assert _MAX_PROVIDER_HANDOFF_CHARS == 256_000
 
 
 def test_overlapping_conversation_turn_is_rejected(tmp_path: Path) -> None:

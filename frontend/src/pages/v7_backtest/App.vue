@@ -207,6 +207,32 @@ const editorSettings = computed(() => ({
   exchangeOptions: store.editor.exchangeOptions(),
 }));
 
+async function convertResultToV8(path: string): Promise<void> {
+  const result = store.results.results.value.find((item) => item.path === path);
+  if (!result || store.adapter.isV8) return;
+  const targetName = `${String(result.config_name || result.result_name || 'result').slice(0, 100)}_v8`;
+  try {
+    const data = await requestJson(`${boot.origin}/api/backtest-v8/migrate-v7`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source_type: 'backtest_result',
+        source_name: String(result.config_name || result.result_name || 'result'),
+        source_path: path,
+        target_name: targetName,
+        allow_manual_review_output: true,
+      }),
+    });
+    if (data.draft_id) {
+      replaceTopLocation(`${boot.origin}/api/backtest-v8/main_page?opt_draft_id=${encodeURIComponent(String(data.draft_id))}&draft_name=${encodeURIComponent(String(data.name || targetName))}`);
+      return;
+    }
+    replaceTopLocation(`${boot.origin}/api/backtest-v8/main_page?config=${encodeURIComponent(String(data.name || targetName))}`);
+  } catch (error) {
+    store.notifyError(t('v7backtest.v8ConversionFailed', { msg: error instanceof Error ? error.message : String(error) }));
+  }
+}
+
 function onQueueViewResults(name: string): void {
   store.viewConfigResults(name);
 }
@@ -275,8 +301,17 @@ async function convertEditorToV8(): Promise<void> {
     const data = await requestJson(`${boot.origin}/api/backtest-v8/migrate-v7`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source_type: 'backtest_config', source_name: name, target_name: targetName }),
+      body: JSON.stringify({
+        source_type: 'backtest_config',
+        source_name: name,
+        target_name: targetName,
+        allow_manual_review_output: true,
+      }),
     });
+    if (data.draft_id) {
+      replaceTopLocation(`${boot.origin}/api/backtest-v8/main_page?opt_draft_id=${encodeURIComponent(String(data.draft_id))}&draft_name=${encodeURIComponent(String(data.name || targetName))}`);
+      return;
+    }
     replaceTopLocation(`${boot.origin}/api/backtest-v8/main_page?config=${encodeURIComponent(String(data.name || targetName))}`);
   } catch (error) {
     store.notifyError(t('v7backtest.v8ConversionFailed', { msg: error instanceof Error ? error.message : String(error) }));
@@ -634,6 +669,8 @@ onMounted(() => {
           v-model:pinned="resultsPinned"
           :results="store.results"
           :version-bound-actions="store.results.versionFilter.value !== store.adapter.version"
+          :allow-v8-convert="!store.adapter.isV8"
+          @convert="convertResultToV8"
         />
       </div>
 

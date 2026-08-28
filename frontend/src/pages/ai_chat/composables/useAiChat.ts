@@ -289,9 +289,13 @@ export function useAiChat(t: Translate) {
       return;
     }
     const generation = ++proposalGeneration;
+    if (busy.value) {
+      proposals.value = [];
+      return;
+    }
     try {
       const pending = await api<{ proposals?: AiProposal[] }>('/proposals?conversation_id=' + encodeURIComponent(id));
-      if (generation === proposalGeneration && id === conversationId.value) proposals.value = pending.proposals || [];
+      if (generation === proposalGeneration && id === conversationId.value && !busy.value) proposals.value = pending.proposals || [];
     } catch (error) {
       if (id === conversationId.value) setNotice((error as Error).message, true);
     }

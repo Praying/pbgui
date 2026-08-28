@@ -64,11 +64,15 @@ export function readOpenConfig(search: string = window.location.search): string 
   return new URLSearchParams(search).get('open_config') || '';
 }
 
-export function readIncomingDraft(search: string = window.location.search): { id: string; name: string } | null {
+export function readIncomingDraft(search: string = window.location.search): { id: string; name: string; kind?: 'optimize' | 'migration' } | null {
   const params = new URLSearchParams(search);
-  const id = String(params.get('opt_draft_id') || '').trim();
+  const migrationId = String(params.get('migration_draft_id') || '').trim();
+  const optimizeId = String(params.get('opt_draft_id') || '').trim();
+  const id = migrationId || optimizeId;
   if (!id) return null;
-  return { id, name: String(params.get('draft_name') || '').trim() };
+  return migrationId
+    ? { id, name: String(params.get('draft_name') || '').trim(), kind: 'migration' }
+    : { id, name: String(params.get('draft_name') || '').trim() };
 }
 
 export function readInitialPanel(search: string = window.location.search): OptimizePanel {

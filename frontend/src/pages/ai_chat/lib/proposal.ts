@@ -52,6 +52,8 @@ export function proposalActionLabel(action: string | undefined, t: (key: string)
       return t('ai.proposal.actionSaveAndQueue');
     case 'queue':
       return t('ai.proposal.actionQueue');
+    case 'start_optimize_queue':
+      return t('ai.proposal.actionStartOptimizeQueue');
     case 'queue_backtests':
       return t('ai.proposal.actionQueueBacktests');
     case 'create_dashboard':
@@ -79,6 +81,9 @@ export function proposalDetail(preview: ProposalPreview, t: (key: string, params
         exchanges: String((preview.exchanges || []).length),
       }) + (preview.may_start_immediately ? ' · ' + t('ai.proposal.mayStart') : '')
     );
+  }
+  if (preview.action === 'start_optimize_queue') {
+    return t('ai.proposal.detailStartOptimizeQueue', { jobs: String(preview.job_count || 0) });
   }
   if (preview.action === 'create_dashboard') {
     return t('ai.proposal.detailCreateDashboard', { template: String(preview.template || '') });

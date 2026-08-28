@@ -229,7 +229,8 @@ async function migratePareto(row: ParetoItem): Promise<void> {
   await safely(async () => {
     const target = `${String(row.name || 'pareto').trim()}_v8`.slice(0, 120);
     const migrated = await actions.migrateV7({ path: row.path }, target);
-    window.location.href = `${window.location.origin}/api/optimize-v8/main_page?open_config=${encodeURIComponent(migrated)}`;
+    if (!migrated.draftId) throw new Error('PB8 migration did not return an editor preview.');
+    window.location.href = `${window.location.origin}/api/optimize-v8/main_page?migration_draft_id=${encodeURIComponent(migrated.draftId)}&draft_name=${encodeURIComponent(migrated.name)}`;
   });
 }
 
@@ -282,7 +283,8 @@ async function migrateSelected(): Promise<void> {
   const target = `${name}_v8`.slice(0, 120);
   await safely(async () => {
     const migrated = await actions.migrateV7({ name }, target);
-    window.location.href = `${window.location.origin}/api/optimize-v8/main_page?open_config=${encodeURIComponent(migrated)}`;
+    if (!migrated.draftId) throw new Error('PB8 migration did not return an editor preview.');
+    window.location.href = `${window.location.origin}/api/optimize-v8/main_page?migration_draft_id=${encodeURIComponent(migrated.draftId)}&draft_name=${encodeURIComponent(migrated.name)}`;
   });
 }
 
@@ -422,12 +424,13 @@ async function handleIncomingDraft(): Promise<void> {
   const incoming = readIncomingDraft(window.location.search);
   if (!incoming) return;
   await safely(async () => {
-    const payload = await actions.loadIncomingDraft(incoming.id, incoming.name);
+    const payload = await actions.loadIncomingDraft(incoming.id, incoming.name, incoming.kind);
     const seededConfig = applyOptimizeSeed(payload.config, 'self');
     page.openEditorPayload({ ...payload, config: seededConfig }, incoming.name || payload.name, '');
     notify(t('v7optimize.loadedBacktestResultWithSelfSeeds'), 'success');
     const url = new URL(window.location.href);
     url.searchParams.delete('opt_draft_id');
+    url.searchParams.delete('migration_draft_id');
     url.searchParams.delete('draft_name');
     window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
   });

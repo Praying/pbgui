@@ -183,6 +183,7 @@ describe('V8 conversion (:910-941)', () => {
       source_type: 'run_config',
       source_name: 'main',
       target_name: 'main_v8',
+      allow_manual_review_output: true,
     });
     expect(navigate).toHaveBeenLastCalledWith('http://pbgui.test:8000/api/backtest-v8/main_page?config=main_v8');
   });

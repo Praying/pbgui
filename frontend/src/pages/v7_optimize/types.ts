@@ -17,6 +17,7 @@ export interface ConfigPayload {
   param_status?: Record<string, unknown>;
   backend_hint?: string;
   override_configs?: Record<string, unknown>;
+  migration_report?: Record<string, unknown>;
 }
 
 export interface QueueItem {
