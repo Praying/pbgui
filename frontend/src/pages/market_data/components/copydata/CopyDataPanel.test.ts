@@ -207,13 +207,71 @@ describe('the schedules section (:3458-3488)', () => {
     await flush();
     expect((panel.find('#copy-data-schedule-name').element as HTMLInputElement).value).toBe('Paused');
     expect(panel.find('#btn-copy-data-schedule-cancel').exists()).toBe(true);
-    expect(panel.find('#btn-copy-data-schedule-save').text()).toBe('Update schedule');
+    expect(panel.find('#btn-copy-data-schedule-save').text()).toContain('Update schedule');
     await panel.find('[data-copy-schedule-action="delete"]').trigger('click');
     await flush();
     expect(rawFetch).toHaveBeenCalledWith(
       'http://h:8/api/market-data/copy-data/schedules/s1',
       expect.objectContaining({ method: 'DELETE' })
     );
+  });
+
+  it('routes deletes through the confirm prop — cancel skips the request', async () => {
+    rawFetch.mockImplementation(async () => json(SCHEDULES));
+    const store = makeStore();
+    await store.loadSchedules(true);
+    const confirm = vi.fn(async () => false);
+    const panel = mount(CopyDataPanel, {
+      props: { store, confirm },
+      global: { plugins: [createI18n('en')] },
+    });
+    await flush();
+    await panel.find('[data-copy-schedule-action="delete"]').trigger('click');
+    await flush();
+    expect(confirm).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Delete copy schedule', confirmText: 'Delete' })
+    );
+    expect(confirm).toHaveBeenCalledTimes(1);
+    const deletes = rawFetch.mock.calls.filter(
+      (call) => (call[1] as RequestInit | undefined)?.method === 'DELETE'
+    );
+    expect(deletes).toHaveLength(0);
+  });
+
+  it('routes deletes through the confirm prop — accept sends the request', async () => {
+    rawFetch.mockImplementation(async () => json(SCHEDULES));
+    const store = makeStore();
+    await store.loadSchedules(true);
+    const confirm = vi.fn(async () => true);
+    const panel = mount(CopyDataPanel, {
+      props: { store, confirm },
+      global: { plugins: [createI18n('en')] },
+    });
+    await flush();
+    await panel.find('[data-copy-schedule-action="delete"]').trigger('click');
+    await flush();
+    expect(rawFetch).toHaveBeenCalledWith(
+      'http://h:8/api/market-data/copy-data/schedules/s1',
+      expect.objectContaining({ method: 'DELETE' })
+    );
+  });
+
+  it('shows the loading note while the first schedules load is in flight', async () => {
+    const gate = { release: null as null | (() => void) };
+    rawFetch.mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          gate.release = () => resolve(json(SCHEDULES));
+        })
+    );
+    const store = makeStore();
+    const pending = store.loadSchedules(true);
+    const panel = mountPanel(store);
+    expect(panel.find('#copy-data-schedule-list .note').text()).toBe('Loading copy schedules…');
+    gate.release?.();
+    await pending;
+    await flush();
+    expect(panel.findAll('.copy-data-schedule-row')).toHaveLength(2);
   });
 
   it('saves a new schedule from the editor fields (:5184-5223)', async () => {

@@ -8,9 +8,11 @@
  * owns the values, this component only binds them.
  */
 import { useI18n } from 'vue-i18n';
+import { PhFlask, PhPlugsConnected, PhUploadSimple } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import {
   fieldLabelClass,
   noteClass,
@@ -89,26 +91,29 @@ const { t } = useI18n();
     </div>
     <div class="copy-data-actions flex flex-wrap items-center gap-3">
       <Button
-        variant="info"
+        variant="secondary"
         id="btn-copy-data-test"
         type="button"
+        :loading="store.isTesting.value"
         :disabled="store.isQueueDisabled.value"
         @click="store.testConnection()"
-      >{{ t('market.testConnection') }}</Button>
+      ><PbIcon v-if="!store.isTesting.value" :icon="PhPlugsConnected" /> {{ t('market.testConnection') }}</Button>
       <Button
         variant="info"
         id="btn-copy-data-dry-run"
         type="button"
+        :loading="store.isQueueing.value"
         :disabled="store.isQueueDisabled.value"
         @click="store.queueJob(true)"
-      >{{ t('market.dryRun') }}</Button>
+      ><PbIcon v-if="!store.isQueueing.value" :icon="PhFlask" /> {{ t('market.dryRun') }}</Button>
       <Button
         variant="primary"
         id="btn-copy-data-queue"
         type="button"
+        :loading="store.isQueueing.value"
         :disabled="store.isQueueDisabled.value"
         @click="store.queueJob(false)"
-      >{{ t('market.queueCopyJob') }}</Button>
+      ><PbIcon v-if="!store.isQueueing.value" :icon="PhUploadSimple" /> {{ t('market.queueCopyJob') }}</Button>
       <span :class="noteClass">{{ t('market.copyDataProgressNote') }}</span>
     </div>
   </div>

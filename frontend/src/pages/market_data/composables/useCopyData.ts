@@ -71,6 +71,12 @@ export interface UseCopyData {
   collectRequest(): CopyDataRequest;
   feedback: Ref<CopyDataFeedback>;
   isQueueDisabled: ComputedRef<boolean>;
+  /** True while a copy/dry-run job request is in flight. */
+  isQueueing: ComputedRef<boolean>;
+  /** True while the SSH connection test is in flight. */
+  isTesting: ComputedRef<boolean>;
+  /** True while a schedules load (initial or post-CRUD) is in flight. */
+  isLoadingSchedules: Ref<boolean>;
   /* job monitor */
   jobMonitorSrc: Ref<string>;
   mountJobMonitor(forceReload: boolean): void;
@@ -121,9 +127,13 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
   const scheduleEnabled = ref(true);
   const editingId = ref('');
   const editingUpdatedAt = ref(''); // copyDataScheduleState.editingUpdatedAt :3809
-  let queueing = false;
-  let testing = false;
-  let saving = false;
+  /* Busy flags as refs — SshForm/ScheduleEditor drive their buttons'
+   * loading spinners per action (test vs queue vs save) instead of the
+   * shared isQueueDisabled dim. */
+  const queueing = ref(false);
+  const testing = ref(false);
+  const saving = ref(false);
+  const isLoadingSchedules = ref(false);
 
   function setFeedback(message: string, level: 'info' | 'error' | 'warning'): void {
     const text = String(message ?? '').trim();
@@ -163,7 +173,9 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
     });
   }
 
-  const isQueueDisabled = computed(() => queueing || testing);
+  const isQueueDisabled = computed(() => queueing.value || testing.value);
+  const isQueueing = computed(() => queueing.value);
+  const isTesting = computed(() => testing.value);
 
   /* ── job monitor (:4215-4232) ── */
 
@@ -234,7 +246,12 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
   });
 
   function loadSchedules(showErrors = true): Promise<void> {
-    return schedulePoll.load(showErrors); // :5127
+    const pending = schedulePoll.load(showErrors); // :5127
+    // Loading flag for the list's loading-vs-empty state split.
+    isLoadingSchedules.value = true;
+    return pending.finally(() => {
+      isLoadingSchedules.value = false;
+    });
   }
 
   function stopSchedulePoll(): void {
@@ -248,7 +265,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
 
   const isEditing = computed(() => editingId.value !== '');
 
-  const isSaveBusy = computed(() => saving);
+  const isSaveBusy = computed(() => saving.value);
 
   /** resetCopyDataScheduleEditor (:5155-5163) — editor only, form stays. */
   function resetEditor(): void {
@@ -309,7 +326,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
       intervalHours, // :5200
       enabled: scheduleEnabled.value, // :5201
     });
-    saving = true; // :5202
+    saving.value = true; // :5202
     try {
       const result = await fetchScheduleJson<{
         success?: boolean;
@@ -334,7 +351,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
       setFeedback(message, 'error');
       options.showToast(message, 'error');
     } finally {
-      saving = false; // :5221
+      saving.value = false; // :5221
     }
   }
 
@@ -396,7 +413,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
       options.showToast(validationError, 'error'); // :7748-7751
       return;
     }
-    queueing = true; // :7754-7755
+    queueing.value = true; // :7754-7755
     if (dryRun) resetDryRunSummary(); // :7756
     setFeedback(dryRun ? t('market.queueingDryRun') : t('market.queueingCopyJob'), 'info'); // :7757
     try {
@@ -429,7 +446,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
       setFeedback(message, 'error');
       options.showToast(message, 'error');
     } finally {
-      queueing = false; // :7776-7777
+      queueing.value = false; // :7776-7777
     }
   }
 
@@ -445,7 +462,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
       options.showToast(validationError, 'error'); // :7785-7789
       return;
     }
-    testing = true; // :7791
+    testing.value = true; // :7791
     setFeedback(t('market.testingSsh'), 'info'); // :7792
     try {
       const result = (await options.api.fetchJson('/copy-data/test', {
@@ -471,7 +488,7 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
       setFeedback(message, 'error');
       options.showToast(message, 'error');
     } finally {
-      testing = false; // :7809
+      testing.value = false; // :7809
     }
   }
 
@@ -487,6 +504,9 @@ export function useCopyData(options: UseCopyDataOptions): UseCopyData {
     collectRequest,
     feedback,
     isQueueDisabled,
+    isQueueing,
+    isTesting,
+    isLoadingSchedules,
     jobMonitorSrc,
     mountJobMonitor,
     dryRunSummary,

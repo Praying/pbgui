@@ -510,8 +510,11 @@ onMounted(() => {
 </script>
 
 <template>
+  <!-- core-workbench-shell threads the viewport height down to PanelShell's
+       overflow-y-auto sections — without it the legacy html/body overflow
+       lock (below) clips everything past the fold with nothing scrollable. -->
   <AppShell
-    class="data-page-shell data-page-shell--market-data"
+    class="core-workbench-shell data-page-shell data-page-shell--market-data"
     page-key="info_market_data_fastapi"
     :page-title="t('market.title')"
     :sections="sections"
@@ -556,7 +559,11 @@ onMounted(() => {
           :active-mode="contextExchange.best1mSection.value"
           @select-mode="openBest1mPanel"
         />
-        <CopyDataPanel v-else-if="panel.id === 'copy-data-panel'" :store="copyData" />
+        <CopyDataPanel
+          v-else-if="panel.id === 'copy-data-panel'"
+          :store="copyData"
+          :confirm="confirmDialog.confirm"
+        />
         <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
       </PanelShell>
     </div>
