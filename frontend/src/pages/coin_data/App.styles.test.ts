@@ -56,6 +56,14 @@ describe('Coin Data visual role contract', () => {
     );
   });
 
+  it('keeps the CMC unmatched panel on the shared panel and data surfaces', () => {
+    expect(pageSource).toContain('coin-data-panel coin-data-panel--unmatched');
+    expect(pageSource).toContain(
+      '.coin-data-panel--unmatched > .panel-body {\n  background: var(--coin-data);\n}'
+    );
+    expect(pageSource).toContain('panel-title-mark panel-title-mark--unmatched');
+  });
+
   it('inherits the shared font while retaining the page overflow lock', () => {
     expect(pageSource).toContain('overflow: hidden;');
     expect(pageSource).not.toContain("font-family: 'Segoe UI'");

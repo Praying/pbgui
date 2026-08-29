@@ -47,7 +47,7 @@
  *    placeholder shown while no DEX is picked (ui-migration).
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
-import { PhWarningCircle } from '@phosphor-icons/vue';
+import { PhQuestion, PhWarningCircle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import { getBoot } from '@/shared/boot';
@@ -361,21 +361,26 @@ onBeforeUnmount(() => {
       />
 
       <details
-        class="panel coin-data-panel min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-xl border"
+        class="panel coin-data-panel coin-data-panel--unmatched min-h-0 flex-1 flex-col max-[980px]:flex-none overflow-hidden rounded-xl border"
         id="unmatched-panel"
         :class="store.activeView.value === 'unmatched' ? 'flex' : 'hidden'"
         :open="store.activeView.value === 'unmatched'"
       >
-        <summary id="unmatched-summary" class="coin-data-panel-head flex items-center justify-between gap-3 py-2.5 px-3.5 text-sm font-semibold text-primary border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
-        <div class="panel-body flex flex-1 flex-col min-h-0 p-[1rem]">
-        <SymbolTable
-          table="unmatched"
-          :rows="store.sortedUnmatchedRows.value"
-          :selected-key="store.selectedKey.value"
-          :sort-state="store.sortStates.value.unmatched"
-          @sort="store.handleSortClick"
-          @select="store.selectRow"
-        />
+        <summary id="unmatched-summary" class="coin-data-panel-head flex items-center justify-between gap-3 py-2.5 px-3.5 text-sm font-semibold text-primary border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">
+          <span class="panel-title-wrap flex items-center gap-2 min-w-0">
+            <span class="panel-title-mark panel-title-mark--unmatched" aria-hidden="true"><PbIcon :icon="PhQuestion" :size="14" /></span>
+            <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</span>
+          </span>
+        </summary>
+        <div class="panel-body flex flex-1 flex-col min-h-0 p-0">
+          <SymbolTable
+            table="unmatched"
+            :rows="store.sortedUnmatchedRows.value"
+            :selected-key="store.selectedKey.value"
+            :sort-state="store.sortStates.value.unmatched"
+            @sort="store.handleSortClick"
+            @select="store.selectRow"
+          />
         </div>
       </details>
 
@@ -536,6 +541,10 @@ body {
   background: var(--coin-header);
 }
 
+.coin-data-panel--unmatched > .panel-body {
+  background: var(--coin-data);
+}
+
 .coin-data-sort-pill {
   border-color: var(--coin-border);
   background: var(--accent-bg);
@@ -587,6 +596,10 @@ body {
   font-weight: 700;
 }
 
+.panel-title-mark--unmatched {
+  color: var(--accent-soft);
+}
+
 @media (max-width: 980px) {
   .coin-header-action-group {
     padding-right: 0;
@@ -619,11 +632,13 @@ details.panel > summary::before {
   content: ">";
   display: inline-block;
   margin-right: 6px;
+  color: var(--text-muted);
   font-size: 10px;
   transition: transform 0.12s;
 }
 
 details.panel[open] > summary::before {
+  color: var(--accent-soft);
   transform: rotate(90deg);
 }
 

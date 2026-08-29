@@ -3,6 +3,7 @@
 ## Coin Data - Matched Symbols UI Refresh
 
 - Refined the matched-symbols workbench with clearer page context, grouped refresh actions, a labeled filter surface, stronger table hierarchy, aligned numeric columns, visible sort affordances, keyboard-friendly sortable headers, and English/Simplified Chinese copy without changing data or refresh behavior. Unified its workspace, panels, headers, inputs, borders, highlights, warnings, dropdowns, and empty states with the shared graphite theme tokens instead of page-specific color effects.
+- Aligned the CMC Unmatched view with the same themed panel header, content surface, borders, selection accent, and compact table treatment used by Matched Symbols while preserving its data and navigation behavior.
 
 ## API Keys - Discard Changes Dialog Theme
 
