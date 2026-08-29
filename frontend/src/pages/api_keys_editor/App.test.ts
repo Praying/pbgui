@@ -202,6 +202,10 @@ describe('API Keys page shell', () => {
     await wrapper.find('[data-testid="add-user"]').trigger('click');
     expect(wrapper.find('#editPanel').isVisible()).toBe(true);
     expect(wrapper.find('#editPanelTitle').text()).toBe('New User');
+    expect(wrapper.find('[data-test="user-identity-section"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="user-credentials-section"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="user-advanced-section"]').exists()).toBe(true);
+    expect(wrapper.find('.expander-toggle').attributes('aria-expanded')).toBe('false');
 
     await wrapper.find('#btnSave').trigger('click');
     await flushPromises();

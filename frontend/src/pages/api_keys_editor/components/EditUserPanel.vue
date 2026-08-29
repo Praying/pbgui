@@ -7,7 +7,19 @@
  * Legacy logic :1493-2259.
  */
 import { computed, reactive, ref } from 'vue';
-import { PhArrowClockwise, PhCaretDown, PhCaretRight, PhEye, PhEyeSlash } from '@phosphor-icons/vue';
+import {
+  PhArrowClockwise,
+  PhCaretDown,
+  PhCaretRight,
+  PhEye,
+  PhEyeSlash,
+  PhFloppyDisk,
+  PhIdentificationCard,
+  PhKey,
+  PhPlugsConnected,
+  PhSlidersHorizontal,
+  PhTrash,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { serverMsg } from '@/shared/i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -513,191 +525,219 @@ async function testConnection(): Promise<void> {
 </script>
 
 <template>
-  <div id="editPanel" class="edit-panel mx-auto mb-5 w-[min(100%,1500px)] rounded-lg border border-border-subtle bg-panel p-4 max-[768px]:p-3" @input="formDirty = true" @change="formDirty = true">
-    <div class="border-b border-border-subtle pb-3" style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+  <div
+    id="editPanel"
+    class="edit-panel mx-auto mb-5 w-[min(100%,1180px)] overflow-hidden rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-rgb)/0.07),transparent_26rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel"
+    @input="formDirty = true"
+    @change="formDirty = true"
+  >
+    <header class="flex min-h-16 flex-wrap items-center gap-3 border-b border-secondary/12 px-5 py-3.5 max-[640px]:px-4">
       <BackButton @back="emit('back')" />
-      <h3 id="editPanelTitle" class="text-lg tracking-tight text-primary" style="margin:0;">{{ title }}</h3>
-    </div>
-    <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1">
-      <div class="form-group flex flex-col gap-1.5">
-        <Label for="editName">{{ t('misc.apikeys.username') }}</Label>
-        <Input type="text" id="editName" v-model="name" maxlength="32" :disabled="lockedByInUse" />
+      <div class="min-w-0 flex-1">
+        <h3 id="editPanelTitle" class="m-0 truncate text-lg font-semibold tracking-tight text-primary">{{ title }}</h3>
+        <div class="mt-0.5 text-xs text-muted">{{ t('misc.apikeys.credentials') }}</div>
       </div>
-      <div class="form-group flex flex-col gap-1.5">
-        <span id="editExchange-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.exchange') }}</span>
-        <SelectRoot
-          :model-value="exchange"
-          :disabled="lockedByInUse"
-          @update:model-value="exchange = $event; onExchangeChange(); formDirty = true"
+      <span class="rounded-full border border-accent/18 bg-accent/8 px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-accent-soft">
+        {{ exchange || t('misc.apikeys.notSelected') }}
+      </span>
+    </header>
+
+    <div class="grid grid-cols-[minmax(260px,0.78fr)_minmax(0,1.42fr)] gap-4 p-5 max-[900px]:grid-cols-1 max-[640px]:p-4">
+      <section class="min-w-0 rounded-lg border border-secondary/12 bg-page/38 p-4" data-test="user-identity-section">
+        <div class="mb-4 flex items-center gap-2.5 border-b border-secondary/10 pb-3">
+          <div class="grid size-8 shrink-0 place-items-center rounded-md border border-accent/16 bg-accent/7 text-accent-soft">
+            <PbIcon :icon="PhIdentificationCard" :size="17" />
+          </div>
+          <h4 class="m-0 text-sm font-semibold text-primary">{{ t('misc.apikeys.user') }}</h4>
+        </div>
+
+        <div class="grid gap-4">
+          <div class="form-group flex flex-col gap-1.5">
+            <Label for="editName">{{ t('misc.apikeys.username') }}</Label>
+            <Input type="text" id="editName" v-model="name" maxlength="32" :disabled="lockedByInUse" />
+          </div>
+          <div class="form-group flex flex-col gap-1.5">
+            <span id="editExchange-label" class="text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.exchange') }}</span>
+            <SelectRoot
+              :model-value="exchange"
+              :disabled="lockedByInUse"
+              @update:model-value="exchange = $event; onExchangeChange(); formDirty = true"
+            >
+              <SelectTrigger id="editExchange" aria-labelledby="editExchange-label">
+                <span :class="exchange ? undefined : 'text-placeholder'">{{ exchange }}</span>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="ex in store.exchanges.value" :key="ex" :value="ex">{{ ex }}</SelectItem>
+              </SelectContent>
+            </SelectRoot>
+          </div>
+        </div>
+      </section>
+
+      <section class="min-w-0 rounded-lg border border-secondary/12 bg-page/38 p-4" data-test="user-credentials-section">
+        <div class="mb-4 flex flex-wrap items-center gap-3 border-b border-secondary/10 pb-3">
+          <div class="flex min-w-0 flex-1 items-center gap-2.5">
+            <div class="grid size-8 shrink-0 place-items-center rounded-md border border-accent/16 bg-accent/7 text-accent-soft">
+              <PbIcon :icon="PhKey" :size="17" />
+            </div>
+            <h4 class="m-0 text-sm font-semibold text-primary">{{ t('misc.apikeys.credentials') }}</h4>
+          </div>
+          <div id="testBtnGroup">
+            <Button type="button" variant="info" size="sm" id="btnTest" :loading="testing" @click="testConnection">
+              <PbIcon :icon="PhPlugsConnected" /> {{ t('misc.apikeys.testConnection') }}
+            </Button>
+          </div>
+        </div>
+
+        <!-- Standard fields (non-HL) -->
+        <div class="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1" id="standardFields" v-show="!isHL">
+          <div class="form-group flex min-w-0 flex-col gap-1.5">
+            <Label for="editKey">{{ t('misc.apikeys.apiKey') }}</Label>
+            <div class="pw-wrap relative flex items-center">
+              <Input
+                id="editKey"
+                class="flex-1 pr-9"
+                v-model="keyField.value"
+                :type="keyField.visible ? 'text' : 'password'"
+                :placeholder="keyField.masked ? '••••••••••• ' + savedLeaveBlank : ''"
+                @input="onKeyInput"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                class="pw-eye-btn absolute right-2 h-auto border-0 bg-transparent p-0 text-md leading-none font-normal text-muted hover:bg-transparent hover:text-secondary active:scale-100"
+                :aria-label="t('misc.apikeys.showHideStoredApiKey')"
+                :title="t('misc.apikeys.showHideStoredApiKey')"
+                @click="toggleApiKeyVisible"
+              ><PbIcon :icon="keyField.visible ? PhEyeSlash : PhEye" /></Button>
+            </div>
+          </div>
+          <div class="form-group flex min-w-0 flex-col gap-1.5">
+            <Label for="editSecret">{{ t('misc.apikeys.apiSecret') }}</Label>
+            <div class="pw-wrap relative flex items-center">
+              <Input id="editSecret" class="flex-1 pr-9" v-model="secretField.value" :type="secretVisible ? 'text' : 'password'" :placeholder="secretField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
+              <Button
+                type="button"
+                variant="ghost"
+                class="pw-eye-btn absolute right-2 h-auto border-0 bg-transparent p-0 text-md leading-none font-normal text-muted hover:bg-transparent hover:text-secondary active:scale-100"
+                :aria-label="t('misc.apikeys.showHideStoredApiKey')"
+                :title="t('misc.apikeys.showHideStoredApiKey')"
+                @click="secretVisible = !secretVisible"
+              ><PbIcon :icon="secretVisible ? PhEyeSlash : PhEye" /></Button>
+            </div>
+          </div>
+          <div class="form-group col-span-2 flex min-w-0 flex-col gap-1.5 max-[640px]:col-span-1" id="passphraseGroup" v-show="needsPassphrase">
+            <Label for="editPassphrase">{{ t('misc.apikeys.passphrasePassword') }}</Label>
+            <Input type="password" id="editPassphrase" v-model="passphraseField.value" :placeholder="passphraseField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
+          </div>
+        </div>
+
+        <!-- Hyperliquid fields -->
+        <div class="grid grid-cols-2 gap-4 max-[640px]:grid-cols-1" id="hlFields" v-show="isHL">
+          <div class="form-group flex min-w-0 flex-col gap-1.5">
+            <Label for="editWallet">{{ t('misc.apikeys.walletAddress') }}</Label>
+            <Input type="text" id="editWallet" v-model="wallet" />
+          </div>
+          <div class="form-group flex min-w-0 flex-col gap-1.5">
+            <Label for="editPrivateKey">{{ t('misc.apikeys.privateKey') }}</Label>
+            <Input id="editPrivateKey" v-model="privateKeyField.value" type="password" :placeholder="privateKeyField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
+          </div>
+          <label class="form-checkbox col-span-2 flex cursor-pointer items-center gap-2 rounded-md border border-secondary/12 bg-secondary/5 px-3 py-2.5 text-sm text-primary max-[640px]:col-span-1">
+            <Checkbox id="editIsVault" :model-value="isVault" @update:model-value="isVault = $event === true; formDirty = true" />
+            {{ t('misc.apikeys.vault') }}
+          </label>
+        </div>
+
+        <!-- HL Expiry (edit mode, hyperliquid only) -->
+        <div id="hlExpiryInline" class="mt-4 flex flex-wrap items-center gap-2.5 rounded-md border border-secondary/12 bg-secondary/5 px-3 py-2.5" :style="{ display: isHL && isEdit ? 'flex' : 'none' }">
+          <span class="text-xs font-semibold text-secondary">{{ t('misc.apikeys.hlKeyExpiry') }}</span>
+          <span id="hlExpiryInlineBadge" :class="hlInline.errorText ? 'text-danger-soft' : ''">
+            <template v-if="hlInline.errorText">{{ hlInline.errorText }}</template>
+            <ExpiryBadge v-else-if="hlInline.exp" :exp="hlInline.exp" />
+            <template v-else>—</template>
+          </span>
+          <span id="hlExpiryInlineDate" class="text-xs text-secondary">{{ hlInline.dateText }}</span>
+          <Button type="button" variant="secondary" size="sm" id="btnHLExpiryInline" :disabled="checkingHl" class="ml-auto" @click="checkSingleHlExpiry">
+            <PbIcon :icon="PhArrowClockwise" /> {{ checkingHl ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiry') }}
+          </Button>
+        </div>
+
+        <!-- Bybit Expiry (edit mode, bybit only) -->
+        <div id="bybitExpiryInline" class="mt-4 flex flex-wrap items-center gap-2.5 rounded-md border border-secondary/12 bg-secondary/5 px-3 py-2.5" :style="{ display: isBybit && isEdit ? 'flex' : 'none' }">
+          <span class="text-xs font-semibold text-secondary">{{ t('misc.apikeys.bybitKeyExpiry') }}</span>
+          <span id="bybitExpiryInlineBadge" :class="bybitInline.errorText ? 'text-danger-soft' : ''">
+            <template v-if="bybitInline.errorText">{{ bybitInline.errorText }}</template>
+            <ExpiryBadge v-else-if="bybitInline.exp" :exp="bybitInline.exp" />
+            <template v-else>—</template>
+          </span>
+          <span id="bybitExpiryInlineDate" class="text-xs text-secondary">{{ bybitInline.dateText }}</span>
+          <Button type="button" variant="secondary" size="sm" id="btnBybitExpiryInline" :disabled="checkingBybit" class="ml-auto" @click="checkSingleBybitExpiry">
+            <PbIcon :icon="PhArrowClockwise" /> {{ checkingBybit ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiryAndIps') }}
+          </Button>
+          <div id="bybitIPList" v-show="bybitInline.ips !== null" class="mt-1 w-full border-t border-secondary/10 pt-2">
+            <span class="mb-1 block text-xs text-secondary">{{ t('misc.apikeys.whitelistedIps') }}</span>
+            <div id="bybitIPListContent" class="font-mono text-sm leading-relaxed text-primary">
+              <template v-if="bybitInline.ips && bybitInline.ips.length > 0">
+                <span v-for="ip in bybitInline.ips" :key="ip" class="mr-3">{{ ip }}</span>
+              </template>
+              <template v-else-if="bybitInline.ips !== null">{{ t('misc.apikeys.noIpsUnrestricted') }}</template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Balance display (after test) -->
+        <div id="balanceDisplay" class="mt-4" v-show="balance.visible" aria-live="polite">
+          <div class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-secondary/12 bg-secondary/5 px-3 py-2.5">
+            <div class="text-xs font-semibold uppercase tracking-label text-secondary">{{ balance.success ? t('misc.apikeys.futuresBalance') : t('misc.apikeys.connectionTest') }}</div>
+            <div v-if="balance.success" class="font-mono text-lg font-semibold tabular-nums text-success">{{ balance.value !== null ? balance.value.toFixed(2) : 'N/A' }}</div>
+            <div v-else class="text-sm text-danger">{{ balance.error }}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advanced (collapsible) -->
+      <section class="col-span-2 overflow-hidden rounded-lg border border-secondary/12 bg-page/30 max-[900px]:col-span-1" data-test="user-advanced-section">
+        <Button
+          type="button"
+          variant="ghost"
+          class="expander-toggle h-auto w-full justify-start rounded-none border-0 bg-transparent px-4 py-3 text-left text-sm font-semibold text-secondary hover:bg-secondary/5 hover:text-primary active:scale-100"
+          :aria-expanded="advancedOpen"
+          @click="advancedOpen = !advancedOpen"
         >
-          <SelectTrigger id="editExchange" aria-labelledby="editExchange-label">
-            <span :class="exchange ? undefined : 'text-placeholder'">{{ exchange }}</span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem v-for="ex in store.exchanges.value" :key="ex" :value="ex">{{ ex }}</SelectItem>
-          </SelectContent>
-        </SelectRoot>
-      </div>
-      <div class="form-group flex flex-col gap-1.5" id="testBtnGroup" style="padding-top:20px;">
-        <Button type="button" variant="info" id="btnTest" :loading="testing" @click="testConnection">
-          {{ t('misc.apikeys.testConnection') }}
+          <span class="mr-1 grid size-7 place-items-center rounded-md border border-secondary/12 bg-secondary/5 text-accent-soft">
+            <PbIcon :icon="PhSlidersHorizontal" :size="15" />
+          </span>
+          {{ t('misc.apikeys.advancedOptional') }}
+          <PbIcon id="advancedToggleIcon" class="ml-auto" :icon="advancedOpen ? PhCaretDown : PhCaretRight" />
         </Button>
-      </div>
-    </div>
-
-    <!-- Standard fields (non-HL) -->
-    <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1" id="standardFields" v-show="!isHL">
-      <div class="form-group flex flex-col gap-1.5">
-        <Label for="editKey">{{ t('misc.apikeys.apiKey') }}</Label>
-        <div class="pw-wrap relative flex items-center">
-          <Input
-            id="editKey"
-            class="flex-1 pr-9"
-            v-model="keyField.value"
-            :type="keyField.visible ? 'text' : 'password'"
-            :placeholder="keyField.masked ? '••••••••••• ' + savedLeaveBlank : ''"
-            @input="onKeyInput"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            class="pw-eye-btn absolute right-2 h-auto border-0 bg-transparent p-0 text-md leading-none font-normal text-muted hover:bg-transparent hover:text-secondary active:scale-100"
-            :aria-label="t('misc.apikeys.showHideStoredApiKey')"
-            :title="t('misc.apikeys.showHideStoredApiKey')"
-            @click="toggleApiKeyVisible"
-          ><PbIcon :icon="keyField.visible ? PhEyeSlash : PhEye" /></Button>
-        </div>
-      </div>
-      <div class="form-group flex flex-col gap-1.5">
-        <Label for="editSecret">{{ t('misc.apikeys.apiSecret') }}</Label>
-        <div class="pw-wrap relative flex items-center">
-          <Input id="editSecret" class="flex-1 pr-9" v-model="secretField.value" :type="secretVisible ? 'text' : 'password'" :placeholder="secretField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
-          <Button
-            type="button"
-            variant="ghost"
-            class="pw-eye-btn absolute right-2 h-auto border-0 bg-transparent p-0 text-md leading-none font-normal text-muted hover:bg-transparent hover:text-secondary active:scale-100"
-            :aria-label="t('misc.apikeys.showHideStoredApiKey')"
-            :title="t('misc.apikeys.showHideStoredApiKey')"
-            @click="secretVisible = !secretVisible"
-          ><PbIcon :icon="secretVisible ? PhEyeSlash : PhEye" /></Button>
-        </div>
-      </div>
-      <div class="form-group flex flex-col gap-1.5" id="passphraseGroup" v-show="needsPassphrase">
-        <Label for="editPassphrase">{{ t('misc.apikeys.passphrasePassword') }}</Label>
-        <div class="pw-wrap relative flex items-center">
-          <Input type="password" id="editPassphrase" class="flex-1 pr-9" v-model="passphraseField.value" :placeholder="passphraseField.masked ? '••••••••••• ' + savedLeaveBlank : ''" />
-        </div>
-      </div>
-    </div>
-
-    <!-- HL Expiry (edit mode, hyperliquid only) -->
-    <div
-      id="hlExpiryInline"
-      :style="{ display: isHL && isEdit ? 'flex' : 'none', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px', padding: '10px 14px', background: 'var(--bg-page)', border: '1px solid var(--border-default)', borderRadius: '6px' }"
-    >
-      <span style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ t('misc.apikeys.hlKeyExpiry') }}</span>
-      <span id="hlExpiryInlineBadge" :style="{ color: hlInline.errorText ? 'var(--danger-soft)' : '' }">
-        <template v-if="hlInline.errorText">{{ hlInline.errorText }}</template>
-        <ExpiryBadge v-else-if="hlInline.exp" :exp="hlInline.exp" />
-        <template v-else>—</template>
-      </span>
-      <span id="hlExpiryInlineDate" style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ hlInline.dateText }}</span>
-      <Button type="button" variant="secondary" size="sm" id="btnHLExpiryInline" :disabled="checkingHl" style="margin-left:auto;" @click="checkSingleHlExpiry">
-        <PbIcon :icon="PhArrowClockwise" /> {{ checkingHl ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiry') }}
-      </Button>
-    </div>
-
-    <!-- Bybit Expiry (edit mode, bybit only) -->
-    <div
-      id="bybitExpiryInline"
-      :style="{ display: isBybit && isEdit ? 'flex' : 'none', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px', padding: '10px 14px', background: 'var(--bg-page)', border: '1px solid var(--border-default)', borderRadius: '6px' }"
-    >
-      <span style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ t('misc.apikeys.bybitKeyExpiry') }}</span>
-      <span id="bybitExpiryInlineBadge" :style="{ color: bybitInline.errorText ? 'var(--danger-soft)' : '' }">
-        <template v-if="bybitInline.errorText">{{ bybitInline.errorText }}</template>
-        <ExpiryBadge v-else-if="bybitInline.exp" :exp="bybitInline.exp" />
-        <template v-else>—</template>
-      </span>
-      <span id="bybitExpiryInlineDate" style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ bybitInline.dateText }}</span>
-      <Button type="button" variant="secondary" size="sm" id="btnBybitExpiryInline" :disabled="checkingBybit" style="margin-left:auto;" @click="checkSingleBybitExpiry">
-        <PbIcon :icon="PhArrowClockwise" /> {{ checkingBybit ? t('misc.apikeys.checkingEllipsis') : t('misc.apikeys.checkExpiryAndIps') }}
-      </Button>
-      <div id="bybitIPList" v-show="bybitInline.ips !== null" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--border-default); width:100%;">
-        <span style="font-size:var(--fs-xs); color:var(--text-secondary); display:block; margin-bottom:4px;">{{ t('misc.apikeys.whitelistedIps') }}</span>
-        <div id="bybitIPListContent" style="font-size:var(--fs-sm); color:var(--text-primary); line-height:1.8;">
-          <template v-if="bybitInline.ips && bybitInline.ips.length > 0">
-            <span v-for="ip in bybitInline.ips" :key="ip" style="font-family:monospace; margin-right:12px;">{{ ip }}</span>
-          </template>
-          <template v-else-if="bybitInline.ips !== null">{{ t('misc.apikeys.noIpsUnrestricted') }}</template>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hyperliquid fields -->
-    <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1" id="hlFields" v-show="isHL">
-      <div class="form-group flex flex-col gap-1.5">
-        <Label for="editWallet">{{ t('misc.apikeys.walletAddress') }}</Label>
-        <Input type="text" id="editWallet" v-model="wallet" />
-      </div>
-      <div class="form-group flex flex-col gap-1.5" style="grid-column: span 2;">
-        <Label for="editPrivateKey">{{ t('misc.apikeys.privateKey') }}</Label>
-        <div class="pw-wrap relative flex items-center">
-          <Input
-            id="editPrivateKey"
-            class="flex-1 pr-9"
-            v-model="privateKeyField.value"
-            type="password"
-            :placeholder="privateKeyField.masked ? '••••••••••• ' + savedLeaveBlank : ''"
-          />
-        </div>
-      </div>
-      <label class="form-checkbox flex cursor-pointer items-center gap-2 pt-5 text-base text-primary">
-        <Checkbox id="editIsVault" :model-value="isVault" @update:model-value="isVault = $event === true; formDirty = true" />
-        {{ t('misc.apikeys.vault') }}
-      </label>
-    </div>
-
-    <!-- Advanced (collapsible) -->
-    <div class="expander mt-3">
-      <Button type="button" variant="ghost" class="expander-toggle h-auto w-full justify-start border-border-subtle bg-secondary/5 px-3 py-1.75 text-left text-sm font-normal text-secondary hover:border-border-strong hover:bg-secondary/5 hover:text-primary active:scale-100" @click="advancedOpen = !advancedOpen">
-        <PbIcon id="advancedToggleIcon" :icon="advancedOpen ? PhCaretDown : PhCaretRight" /> {{ t('misc.apikeys.advancedOptional') }}
-      </Button>
-      <div class="expander-content py-3" :class="advancedOpen ? 'open block' : 'hidden'">
-        <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1">
-          <div class="form-group flex flex-col gap-1.5">
-            <Label for="editQuote">{{ t('misc.apikeys.quote') }}</Label>
-            <Input type="text" id="editQuote" v-model="quote" placeholder="e.g. USDT" />
+        <div class="expander-content border-t border-secondary/10 p-4" :class="advancedOpen ? 'open block' : 'hidden'">
+          <div class="mb-4 max-w-[280px]">
+            <div class="form-group flex flex-col gap-1.5">
+              <Label for="editQuote">{{ t('misc.apikeys.quote') }}</Label>
+              <Input type="text" id="editQuote" v-model="quote" placeholder="e.g. USDT" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 max-[768px]:grid-cols-1">
+            <div class="form-group flex min-w-0 flex-col gap-1.5">
+              <Label for="editOptions">{{ t('misc.apikeys.optionsJson') }}</Label>
+              <Textarea id="editOptions" v-model="optionsText" rows="4" class="font-mono text-sm" placeholder='{"key": "value"}' />
+            </div>
+            <div class="form-group flex min-w-0 flex-col gap-1.5">
+              <Label for="editExtra">{{ t('misc.apikeys.extraJson') }}</Label>
+              <Textarea id="editExtra" v-model="extraText" rows="4" class="font-mono text-sm" placeholder='{"key": "value"}' />
+            </div>
           </div>
         </div>
-        <div class="form-grid mb-3 grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[768px]:grid-cols-1" style="grid-template-columns: 1fr 1fr;">
-          <div class="form-group flex flex-col gap-1.5">
-            <Label for="editOptions">{{ t('misc.apikeys.optionsJson') }}</Label>
-            <Textarea id="editOptions" v-model="optionsText" rows="3" placeholder='{"key": "value"}' />
-          </div>
-          <div class="form-group flex flex-col gap-1.5">
-            <Label for="editExtra">{{ t('misc.apikeys.extraJson') }}</Label>
-            <Textarea id="editExtra" v-model="extraText" rows="3" placeholder='{"key": "value"}' />
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
 
-    <!-- Balance display (after test) -->
-    <div id="balanceDisplay" class="balance-display mt-3 flex flex-wrap gap-5" v-show="balance.visible">
-      <div class="balance-box min-w-[200px] rounded-md border border-border-subtle bg-card p-3 text-center">
-        <div class="label mb-1 text-xs uppercase tracking-label text-secondary">{{ balance.success ? t('misc.apikeys.futuresBalance') : t('misc.apikeys.connectionTest') }}</div>
-        <div v-if="balance.success" class="value text-xl font-semibold text-success">{{ balance.value !== null ? balance.value.toFixed(2) : 'N/A' }}</div>
-        <div v-else class="error text-base text-danger">{{ balance.error }}</div>
-      </div>
-    </div>
-
-    <div class="form-actions mt-5 flex items-center justify-end gap-2 border-t border-border-subtle pt-3 max-[768px]:flex-col max-[768px]:items-stretch">
-      <Button type="button" variant="danger" class="max-[768px]:w-full" id="btnDelete" v-show="deleteVisible" @click="editingName && confirmDelete(editingName)">
-        {{ t('common.delete') }}
+    <footer class="form-actions flex items-center gap-2 border-t border-secondary/12 bg-page/42 px-5 py-3.5 max-[640px]:flex-col max-[640px]:items-stretch max-[640px]:px-4">
+      <Button type="button" variant="danger" class="mr-auto max-[640px]:mr-0 max-[640px]:w-full" id="btnDelete" v-show="deleteVisible" @click="editingName && confirmDelete(editingName)">
+        <PbIcon :icon="PhTrash" /> {{ t('common.delete') }}
       </Button>
-      <Button type="button" variant="primary" class="max-[768px]:w-full" id="btnSave" :loading="saving" @click="save">
-        {{ t('common.save') }}
+      <Button type="button" variant="primary" class="min-w-24 max-[640px]:w-full" id="btnSave" :loading="saving" @click="save">
+        <PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}
       </Button>
-    </div>
+    </footer>
   </div>
 </template>

@@ -47,6 +47,8 @@ Benutzernamen werden strikt als Text gerendert und Zeilenaktionen verwenden dele
 
 Klick auf eine User-Zeile öffnet das Formular, oder **+ Add User** verwenden. Der URL-Hash wechselt auf `#edit/username`, sodass ein Browser-Refresh denselben User wiederherstellt.
 
+Der Editor trennt Username und Exchange-Identitaet von den Exchange-Credentials. **Test Connection** bleibt bei den Credential-Feldern und zeigt das Ergebnis direkt dort an. Optionale Werte fuer Quote, Options und Extra bleiben im eingeklappten Bereich **Advanced (optional)**; Save und Delete stehen im Formular-Footer.
+
 **Escape** schließt ohne Speichern (mit Rückfrage bei ungespeicherten Änderungen).
 
 ### Felder im Bearbeitungsformular

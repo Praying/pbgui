@@ -47,6 +47,8 @@ Usernames are rendered strictly as text and row actions use delegated browser ev
 
 Click a user row to open, or use **+ Add User**. The URL hash updates to `#edit/username` so a browser refresh reopens the same user.
 
+The editor groups username and exchange identity separately from exchange credentials. **Test Connection** stays with the credential controls and reports its result inline. Optional Quote, Options, and Extra values remain in the collapsed **Advanced (optional)** section, while Save and Delete stay in the form footer.
+
 Press **Escape** to close without saving (confirms if there are unsaved changes).
 
 ### Edit form fields

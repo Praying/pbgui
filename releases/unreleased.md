@@ -1,5 +1,9 @@
 # Unreleased
 
+## API Keys - User Editor Layout Refresh
+
+- Reorganized the exchange-user create/edit form into separate identity and credential surfaces, moved connection testing and its result beside the credential fields, clarified the optional advanced settings disclosure, and anchored save/delete actions in a stable responsive footer without changing credential handling or API behavior.
+
 ## PBv7/PBv8 Backtest - Results Workbench Refresh
 
 - Refined the Backtest Results view with a contained results surface, clearer count and selection feedback, grouped version/config/search filters, a taller resizable data viewport, full-row click and drag selection, sticky row actions, aligned numeric metrics, and responsive horizontal scrolling while preserving sorting, chart actions, comparison, conversion, and bulk workflows.
