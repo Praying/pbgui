@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, useSlots } from 'vue';
+import { computed, onMounted, ref, useSlots } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { WORKBENCH_NAVIGATION, type PageSection } from '@/shared/navigation';
 import { initAiPageMeta } from '@/shared/ai/context';
@@ -24,6 +24,11 @@ interface AppShellProps {
   activeSection?: string;
 }
 
+interface WorkspaceBreadcrumb {
+  label: string;
+  href?: string;
+}
+
 const props = withDefaults(defineProps<AppShellProps>(), {
   statusTone: 'neutral',
 });
@@ -34,6 +39,37 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 const { t } = useI18n();
+
+const headerBreadcrumbs = computed<readonly WorkspaceBreadcrumb[]>(() => {
+  for (const navigationGroup of WORKBENCH_NAVIGATION) {
+    const navigationItem = navigationGroup.items.find((item) => item.pageKey === props.pageKey);
+    if (!navigationItem) continue;
+
+    const pageLabel = t(navigationItem.labelKey);
+    const activePageSection = props.sections?.find(
+      (section) => section.key === props.activeSection,
+    );
+    const hasDistinctActiveSection = Boolean(
+      activePageSection && activePageSection.label !== pageLabel,
+    );
+
+    return [
+      { label: t(navigationGroup.labelKey) },
+      {
+        label: pageLabel,
+        href: hasDistinctActiveSection ? navigationItem.href : undefined,
+      },
+      ...(hasDistinctActiveSection ? [{ label: activePageSection!.label }] : []),
+    ];
+  }
+
+  return [
+    ...(props.pageFamily && props.pageFamily !== props.pageTitle
+      ? [{ label: props.pageFamily }]
+      : []),
+    { label: props.pageTitle },
+  ];
+});
 
 function readCollapsedPreference(): boolean {
   try {
@@ -76,6 +112,7 @@ onMounted(() => {
         :family="props.pageFamily"
         :title="props.pageTitle"
         :description="props.pageDescription"
+        :breadcrumbs="headerBreadcrumbs"
       >
         <template v-if="slots.status || props.statusText" #status>
           <slot name="status">
