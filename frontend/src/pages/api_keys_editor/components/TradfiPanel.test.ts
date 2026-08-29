@@ -75,6 +75,19 @@ afterEach(() => {
 });
 
 describe('TradfiPanel', () => {
+  it('renders the themed data-source and vault-profile hierarchy', async () => {
+    const { wrapper } = mountPanel();
+    await flushPromises();
+
+    expect(wrapper.find('.tradfi-page-head').exists()).toBe(true);
+    expect(wrapper.find('#tradfi-recent-title').text()).toBe('Recent backtests');
+    expect(wrapper.find('#tradfi-vault-title').text()).toBe('Long-history vault profiles');
+    expect(wrapper.find('.tradfi-editor-head').text()).toContain('Profile configuration');
+    expect(wrapper.find('#tradfiActions').classes()).toContain('bg-card');
+    expect(wrapper.find('.tradfi-recommendation').text()).toContain('Better alternative');
+    expect(wrapper.find('.tradfi-recommendation').html()).not.toContain('#46c88f');
+  });
+
   it('renders profiles and selects the explicit-active one on load (:2649-2653)', async () => {
     const { wrapper } = mountPanel();
     await flushPromises();
@@ -111,6 +124,16 @@ describe('TradfiPanel', () => {
     await pickSelectOption(wrapper, '#tradfiProvider', 'polygon');
     expect((wrapper.find('#tradfiApiSecret').element as HTMLInputElement).disabled).toBe(true);
     expect((wrapper.find('#tradfiApiSecret').element as HTMLInputElement).placeholder).toBe('not required');
+  });
+
+  it('selects profiles from the keyboard', async () => {
+    const { wrapper } = mountPanel();
+    await flushPromises();
+
+    const rows = wrapper.findAll('#tradfiProfilesBody tr[data-profile-id]');
+    expect(rows[1]!.attributes('tabindex')).toBe('0');
+    await rows[1]!.trigger('keydown', { key: 'Enter' });
+    expect((wrapper.find('#tradfiProfileId').element as HTMLInputElement).value).toBe('p2');
   });
 
   it('reveals the stored vault key through the eye toggle and clears it on reselect (:2697-2740)', async () => {

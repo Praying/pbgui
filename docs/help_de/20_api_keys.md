@@ -129,6 +129,8 @@ TradFi-Profile verwenden stattdessen Sealed Envelopes aus Credential Protocol v2
 
 Öffnen über **HL Warning Config** in der Sidebar.
 
+- Die linke Statuskarte zeigt, ob der Wert explizit in `pbgui.ini` konfiguriert ist, sowie das aktuell wirksame Warnfenster.
+- Die rechte Einstellungskarte enthaelt den beschrifteten Schwellenwert von 1 bis 365 Tagen, die Erklaerung der taeglichen Wiederholung und die Save-Aktion. Beim Speichern zeigt der Button den laufenden Zustand an.
 - Wenn `hl_expiry.telegram_warning_days` bereits in `pbgui.ini` vorhanden ist, zeigt das Panel den Wert als **configured** an.
 - Wenn der INI-Eintrag noch fehlt, zeigt das Panel jetzt **Not configured** und weist explizit darauf hin, dass PBAPIServer aktuell mit dem Default von **7 Tagen** arbeitet.
 - Ein Klick auf **Save** schreibt den gewählten Schwellenwert in `pbgui.ini` und der Panel-Status wechselt auf configured.
@@ -175,6 +177,8 @@ Verwaltet `_comment_*`-Einträge auf oberster Ebene in `api-keys.json` — freie
 Öffnen über **TradFi** in der Sidebar (URL-Hash: `#tradfi`).
 
 Für Hyperliquid-XYZ-Symbol-Backtests werden 1-Minuten-OHLCV-Daten traditioneller Assets (Aktien, FX) benötigt.
+
+Die Ansicht ist in drei thematisch einheitliche Bereiche gegliedert: **Recent backtests** fuer yfinance-Paketstatus und Tests, **Long-history vault profiles** zur Auswahl gespeicherter Provider-Metadaten und **Profile configuration** fuer Credentials und Lifecycle-Aktionen. Profilzeilen lassen sich per Maus auswaehlen oder per Tastatur fokussieren und mit **Enter** beziehungsweise **Leertaste** aktivieren.
 
 > 💡 **Empfohlen für vollständige Stock-Perp-Historie:** Hier ein **Tiingo**-Profil anlegen und danach im **Market Data**-Modul mit **Build best 1m OHLCV** ein vollständiges lokales 1-Minuten-OHLCV-Archiv aufbauen.
 

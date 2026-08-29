@@ -129,6 +129,8 @@ TradFi profiles use credential protocol v2 sealed envelopes instead. They are ad
 
 Open via **HL Warning Config** in the sidebar.
 
+- The left status card shows whether the value is explicitly configured in `pbgui.ini` and the currently effective warning window.
+- The right settings card contains the labeled 1–365 day threshold, the daily-reminder explanation, and the Save action. Save shows an in-progress state while the request is running.
 - If `hl_expiry.telegram_warning_days` is already present in `pbgui.ini`, the panel shows it as **configured**.
 - If the INI entry is still missing, the panel now shows **Not configured** and makes it explicit that PBAPIServer currently falls back to the default **7-day** warning window.
 - Clicking **Save** writes the chosen threshold to `pbgui.ini` and switches the panel state to configured.
@@ -175,6 +177,8 @@ Manages `_comment_*` top-level entries in `api-keys.json` — free-text notes no
 Open via **TradFi** in the sidebar (URL hash: `#tradfi`).
 
 Stock-perp backtests for Hyperliquid XYZ symbols require 1-minute OHLCV data for traditional assets (stocks, FX).
+
+The view is organized into three themed areas: **Recent backtests** for yfinance package status and testing, **Long-history vault profiles** for selecting stored provider metadata, and **Profile configuration** for credentials and lifecycle actions. Profile rows can be selected with a pointer or focused with the keyboard and activated with **Enter** or **Space**.
 
 > 💡 **Recommended for full stock-perp history:** Add a **Tiingo** profile here, then use PBGui's **Market Data** module to build a comprehensive local 1-minute OHLCV archive with **Build best 1m OHLCV**.
 

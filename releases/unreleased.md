@@ -1,5 +1,13 @@
 # Unreleased
 
+## API Keys - HL Warning Configuration Layout
+
+- Reorganized the Hyperliquid Telegram warning settings into separate current-status and warning-window cards with shared graphite surfaces, semantic configured/unconfigured states, a labeled bounded input, daily-reminder guidance, responsive stacking, and save-in-progress feedback without changing the underlying configuration API or fallback behavior.
+
+## API Keys - TradFi Workbench Refresh
+
+- Reorganized the TradFi provider page into themed recent-backtest, vault-profile, and profile-configuration sections with consistent graphite surfaces, clearer status badges, grouped credential controls, stable action hierarchy, responsive layouts, and keyboard-selectable profile rows while preserving all vault, reveal, projection, test, and save behavior.
+
 ## Coin Data - Matched Symbols UI Refresh
 
 - Refined the matched-symbols workbench with clearer page context, grouped refresh actions, a labeled filter surface, stronger table hierarchy, aligned numeric columns, visible sort affordances, keyboard-friendly sortable headers, and English/Simplified Chinese copy without changing data or refresh behavior. Unified its workspace, panels, headers, inputs, borders, highlights, warnings, dropdowns, and empty states with the shared graphite theme tokens instead of page-specific color effects.
