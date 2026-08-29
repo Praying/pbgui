@@ -1,9 +1,9 @@
 # Unreleased
 
-## Market Data — Precision Job Monitor
+## Market Data — Vue Job Monitor Embeds
 
-- Aligned the shared static Job Monitor iframe used by OHLCV Integrity, Best 1m, and Copy Data with the Precision Terminal 2.0 graphite surfaces, ice-blue signals, semantic states, progress meters, details, logs, and dialogs while preserving queue APIs and controls.
-- Removed the retired `tokens.css` dependency, made the iframe stylesheet self-contained, neutralized its parent Integrity shadow, and bumped the static stylesheet cache key so embedded queues do not retain the old blue-grey theme.
+- Switched the OHLCV Integrity, Best 1m, and Copy Data queue iframes from the static legacy monitor to the existing Vue 3 `/api/jobs/main_page` entry while preserving embed mode, exchange/job-type filters, serial cache busting, queue actions, logs, details, and confirmations.
+- Made the Jobs Monitor route Vue-only, removed the duplicate `frontend/jobs_monitor.html` and `frontend/css/app.css` implementations, migrated their security/action contracts to the Vue source, and retained the shared Precision Terminal parent elevation.
 
 ## Frontend — Dashboard Editor Style Audit Review Fix
 

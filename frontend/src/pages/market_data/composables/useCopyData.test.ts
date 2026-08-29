@@ -327,7 +327,7 @@ describe('job monitor (:4215-4232)', () => {
     const store = makeStore();
     store.mountJobMonitor(false);
     expect(store.jobMonitorSrc.value).toBe(
-      '/app/jobs_monitor.html?v=S7&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run'
+      '/api/jobs/main_page?v=S7&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run'
     );
     const first = store.jobMonitorSrc.value;
     store.mountJobMonitor(false);

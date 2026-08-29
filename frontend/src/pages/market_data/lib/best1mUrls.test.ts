@@ -53,23 +53,23 @@ describe('buildBest1mJobMonitorUrl (:4185-4195)', () => {
         now: () => 1_000,
       })
     ).toBe(
-      '/app/jobs_monitor.html?v=S9&embed=1&exchange=bitget&job_type=bitget_best_1m%2Cbitget_best_1m_distributed'
+      '/api/jobs/main_page?v=S9&embed=1&exchange=bitget&job_type=bitget_best_1m%2Cbitget_best_1m_distributed'
     );
   });
 
   it('uses binanceusdm as the monitor exchange for binance', () => {
     expect(
       buildBest1mJobMonitorUrl({ exchangeKey: 'binance', serial: 'S9', now: () => 0 })
-    ).toBe('/app/jobs_monitor.html?v=S9&embed=1&exchange=binanceusdm&job_type=binance_best_1m');
+    ).toBe('/api/jobs/main_page?v=S9&embed=1&exchange=binanceusdm&job_type=binance_best_1m');
   });
 
   it('appends the _ts cache-bust only on forceReload', () => {
     expect(
       buildBest1mJobMonitorUrl({ exchangeKey: 'okx', serial: 'S9', forceReload: true, now: () => 42 })
-    ).toBe('/app/jobs_monitor.html?v=S9&embed=1&exchange=okx&job_type=okx_best_1m&_ts=42');
+    ).toBe('/api/jobs/main_page?v=S9&embed=1&exchange=okx&job_type=okx_best_1m&_ts=42');
     expect(
       buildBest1mJobMonitorUrl({ exchangeKey: 'okx', serial: 'S9', forceReload: false, now: () => 42 })
-    ).toBe('/app/jobs_monitor.html?v=S9&embed=1&exchange=okx&job_type=okx_best_1m');
+    ).toBe('/api/jobs/main_page?v=S9&embed=1&exchange=okx&job_type=okx_best_1m');
   });
 
   it('falls back to serial 0 for a falsy serial (:4189 guard)', () => {
@@ -88,7 +88,7 @@ describe('buildBest1mJobMonitorUrl (:4185-4195)', () => {
 describe('buildCopyDataJobMonitorUrl (:4215-4222)', () => {
   it('embeds the ohlcv exchange with both copy job types', () => {
     expect(buildCopyDataJobMonitorUrl({ serial: 'S9', now: () => 0 })).toBe(
-      '/app/jobs_monitor.html?v=S9&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run'
+      '/api/jobs/main_page?v=S9&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run'
     );
   });
 
@@ -115,13 +115,13 @@ describe('buildHyperliquidDataActionsUrl (:7581-7582)', () => {
 
 describe('resolveJobMonitorSrc — mount idempotence (:4197-4213)', () => {
   it('returns the next src when it differs or when forced', () => {
-    expect(resolveJobMonitorSrc('', '/app/jobs_monitor.html?v=1')).toBe('/app/jobs_monitor.html?v=1');
+    expect(resolveJobMonitorSrc('', '/api/jobs/main_page?v=1')).toBe('/api/jobs/main_page?v=1');
     expect(
-      resolveJobMonitorSrc('/app/jobs_monitor.html?v=1', '/app/jobs_monitor.html?v=1', true)
-    ).toBe('/app/jobs_monitor.html?v=1');
+      resolveJobMonitorSrc('/api/jobs/main_page?v=1', '/api/jobs/main_page?v=1', true)
+    ).toBe('/api/jobs/main_page?v=1');
   });
 
   it('keeps the current src when unchanged and not forced', () => {
-    expect(resolveJobMonitorSrc('/app/jobs_monitor.html?v=1', '/app/jobs_monitor.html?v=1')).toBeNull();
+    expect(resolveJobMonitorSrc('/api/jobs/main_page?v=1', '/api/jobs/main_page?v=1')).toBeNull();
   });
 });

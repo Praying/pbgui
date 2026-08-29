@@ -56,7 +56,7 @@ export function buildBest1mJobMonitorUrl(options: BuildBest1mJobMonitorUrlOption
   const jobMeta = BEST1M_JOB_MONITOR_META[meta.key];
   if (!jobMeta) return ''; // :4188
   const url =
-    '/app/jobs_monitor.html?v=' +
+    '/api/jobs/main_page?v=' +
     encodeURIComponent(options.serial || '0') +
     '&embed=1' +
     '&exchange=' +
@@ -76,7 +76,7 @@ export interface BuildCopyDataJobMonitorUrlOptions {
 /** Legacy URL assembly :4215-4222 — the ohlcv copy monitor is exchange-fixed. */
 export function buildCopyDataJobMonitorUrl(options: BuildCopyDataJobMonitorUrlOptions): string {
   const url =
-    '/app/jobs_monitor.html?v=' +
+    '/api/jobs/main_page?v=' +
     encodeURIComponent(options.serial || '0') +
     '&embed=1' +
     '&exchange=ohlcv' +

@@ -937,15 +937,16 @@ def test_session_tokens_are_absent_from_browser_and_backend_urls() -> None:
     )
     offenders = []
     for path in sorted(frontend_root.rglob("*")):
-        if path.suffix not in {".html", ".js"}:
+        if path.suffix not in {".html", ".js", ".ts", ".vue"}:
             continue
         if forbidden.search(path.read_text(encoding="utf-8")):
             offenders.append(str(path))
     assert offenders == []
 
-    jobs_monitor = Path("frontend/jobs_monitor.html").read_text(encoding="utf-8")
+    jobs_monitor = Path("frontend/src/pages/jobs_monitor/App.vue").read_text(encoding="utf-8")
     assert "No authentication token provided" not in jobs_monitor
     assert "Bearer ${API_TOKEN" not in jobs_monitor
+    assert "v-html" not in jobs_monitor
 
     nav_source = Path("frontend/pbgui_nav.js").read_text(encoding="utf-8")
     help_source = Path("frontend/help.html").read_text(encoding="utf-8")

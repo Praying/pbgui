@@ -308,7 +308,7 @@ describe('the job monitor (:3489-3498, :4215-4232)', () => {
     const frame = panel.find('#copy-data-job-monitor-frame');
     expect(frame.exists()).toBe(true);
     expect(frame.attributes('src')).toBe(
-      '/app/jobs_monitor.html?v=S1&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run'
+      '/api/jobs/main_page?v=S1&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run'
     );
   });
 });

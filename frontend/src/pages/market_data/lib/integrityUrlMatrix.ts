@@ -5,7 +5,7 @@ import type { ExchangeOption } from '../types';
  * The integrity job-monitor iframe URL matrix — legacy
  * mountIntegrityJobMonitor (market_data_main.html:4234-4250).
  *
- * The frame always embeds /app/jobs_monitor.html in embed mode with the
+ * The frame always embeds the Vue /api/jobs/main_page in embed mode with the
  * SERIAL cache-bust version; the job_type CSV varies by exchange:
  *
  *   every exchange :4238  scan + repair + repair_all + the two
@@ -52,7 +52,7 @@ export interface BuildIntegrityJobMonitorUrlOptions {
 /** Legacy URL assembly :4241-4245. */
 export function buildIntegrityJobMonitorUrl(options: BuildIntegrityJobMonitorUrlOptions): string {
   const url =
-    '/app/jobs_monitor.html?v=' +
+    '/api/jobs/main_page?v=' +
     encodeURIComponent(options.serial || '0') +
     '&embed=1' +
     '&exchange=' +

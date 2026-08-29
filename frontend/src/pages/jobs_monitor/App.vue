@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, type CSSProperties } from 'vue';
 import { PhCaretDown, PhCaretRight, PhPlay, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
@@ -11,6 +11,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { Button } from '@/shared/components/ui/button';
 import { jobsApiBase, jobsWsUrl } from './config';
+import { calculateEmbeddedVisibleRegion, type RectLike } from './lib/embedViewport';
 import type { DownloaderRow, JobRecord, JobsTab } from './types';
 
 const { t } = useI18n();
@@ -44,6 +45,54 @@ const confirmModal = ref<{
   message: string;
   action: () => Promise<void>;
 } | null>(null);
+const embeddedModalRegion = ref({ top: 0, height: window.innerHeight });
+
+const embeddedModalStyle = computed<CSSProperties | undefined>(() =>
+  embedMode
+    ? {
+        top: `${embeddedModalRegion.value.top}px`,
+        bottom: 'auto',
+        height: `${embeddedModalRegion.value.height}px`,
+      }
+    : undefined,
+);
+
+function isClippingAncestor(element: Element, ownerWindow: Window): boolean {
+  const style = ownerWindow.getComputedStyle(element);
+  return /(auto|scroll|hidden|clip)/.test(
+    `${style.overflow} ${style.overflowX} ${style.overflowY}`,
+  );
+}
+
+function syncEmbeddedModalRegion(): void {
+  if (!embedMode) return;
+  try {
+    const ownerWindow = window.parent;
+    if (ownerWindow === window) {
+      embeddedModalRegion.value = { top: 0, height: window.innerHeight };
+      return;
+    }
+    const frame = [...ownerWindow.document.querySelectorAll('iframe')].find(
+      (candidate) => candidate.contentWindow === window,
+    );
+    if (!frame) return;
+    const clippingAncestorRects: RectLike[] = [];
+    let ancestor = frame.parentElement;
+    while (ancestor && ancestor !== ownerWindow.document.body) {
+      if (isClippingAncestor(ancestor, ownerWindow)) {
+        clippingAncestorRects.push(ancestor.getBoundingClientRect());
+      }
+      ancestor = ancestor.parentElement;
+    }
+    embeddedModalRegion.value = calculateEmbeddedVisibleRegion(
+      frame.getBoundingClientRect(),
+      ownerWindow.innerHeight,
+      clippingAncestorRects,
+    );
+  } catch {
+    embeddedModalRegion.value = { top: 0, height: window.innerHeight };
+  }
+}
 
 function numberValue(value: unknown): number {
   const n = Number(value || 0);
@@ -246,6 +295,7 @@ function toggleExpanded(id: string): void {
 }
 
 function openConfirm(title: string, message: string, action: () => Promise<void>): void {
+  syncEmbeddedModalRegion();
   confirmModal.value = { title, message, action };
 }
 
@@ -316,6 +366,7 @@ function deleteAll(tab: Exclude<JobsTab, 'running'>): void {
 }
 
 async function showLog(job: JobRecord): Promise<void> {
+  syncEmbeddedModalRegion();
   logModal.value = { jobId: job.id, text: t('common.loading') };
   try {
     const data = await apiFetch<{ log?: string[] }>(`${apiBase}/${encodeURIComponent(job.id)}/log?lines=500`);
@@ -326,6 +377,7 @@ async function showLog(job: JobRecord): Promise<void> {
 }
 
 async function showDetails(job: JobRecord): Promise<void> {
+  syncEmbeddedModalRegion();
   detailsModal.value = { jobId: job.id, job: null, error: '' };
   try {
     const data = await apiFetch<JobRecord>(`${apiBase}/${encodeURIComponent(job.id)}`);
@@ -444,11 +496,19 @@ onMounted(() => {
     document.body.classList.add('is-embedded');
   }
   window.addEventListener('keydown', handleKeydown);
+  if (embedMode && window.parent !== window) {
+    window.parent.addEventListener('scroll', syncEmbeddedModalRegion, true);
+    window.parent.addEventListener('resize', syncEmbeddedModalRegion);
+  }
   connectSocket();
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeydown);
+  if (embedMode && window.parent !== window) {
+    window.parent.removeEventListener('scroll', syncEmbeddedModalRegion, true);
+    window.parent.removeEventListener('resize', syncEmbeddedModalRegion);
+  }
   if (embedMode) {
     document.documentElement.classList.remove('is-embedded');
     document.body.classList.remove('is-embedded');
@@ -519,7 +579,7 @@ onUnmounted(() => {
               </div>
               <div class="flex flex-wrap justify-end gap-1.5 max-[760px]:justify-start">
                 <Button v-if="tab === 'running' && job.status === 'pending'" data-action="run" type="button" variant="success" size="sm" @click="runJob(job)"><PbIcon :icon="PhPlay" /> {{ t('sysmon.run') }}</Button>
-                <Button v-if="tab === 'running' && job.status === 'running'" data-action="cancel" type="button" variant="danger" size="sm" @click="cancelJob(job)">{{ t('sysmon.cancelJob') }}</Button>
+                <Button v-if="tab === 'running' && (job.status === 'pending' || job.status === 'running')" data-action="cancel" type="button" variant="danger" size="sm" @click="cancelJob(job)">{{ t('sysmon.cancelJob') }}</Button>
                 <Button data-action="details" type="button" variant="default" size="sm" @click="showDetails(job)">{{ t('sysmon.view') }}</Button>
                 <Button data-action="log" type="button" variant="info" size="sm" @click="showLog(job)">{{ t('sysmon.log') }}</Button>
                 <Button v-if="tab === 'failed'" data-action="retry" type="button" variant="default" size="sm" @click="retryJob(job)">{{ t('sysmon.retry') }}</Button>
@@ -549,15 +609,15 @@ onUnmounted(() => {
       </section>
     </div>
 
-    <div v-if="logModal" data-modal="log" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true">
+    <div v-if="logModal" data-modal="log" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" :style="embeddedModalStyle" role="dialog" aria-modal="true">
       <div class="flex max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(900px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ t('sysmon.jobLog') }} {{ logModal.jobId }}</h2><Button data-close="log" type="button" variant="danger" size="sm" @click="logModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3.5"><pre class="min-h-[240px] whitespace-pre-wrap break-words rounded-sm bg-page p-3 font-mono text-[0.82rem] leading-[1.45] text-primary">{{ logModal.text }}</pre></div></div>
     </div>
 
-    <div v-if="detailsModal" data-modal="details" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true">
+    <div v-if="detailsModal" data-modal="details" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" :style="embeddedModalStyle" role="dialog" aria-modal="true">
       <div class="flex max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(900px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ t('sysmon.jobDetails') }} {{ detailsModal.jobId }}</h2><Button data-close="details" type="button" variant="danger" size="sm" @click="detailsModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3.5"><ErrorState v-if="detailsModal.error" class="px-6 p-12 text-center text-danger-soft" :title="t('common.error')" :message="detailsModal.error" /><LoadingSkeleton v-else-if="!detailsModal.job" class="px-6 p-12 text-center text-secondary" :label="t('common.loading')" /><template v-else><section class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.summary') }}</h3><div class="grid grid-cols-[minmax(120px,max-content)_1fr] gap-x-2.5 gap-y-1.25 text-sm"><template v-for="row in detailRows(detailsModal.job)" :key="row.label"><span class="font-semibold text-secondary">{{ row.label }}</span><span class="min-w-0 break-words">{{ row.value }}</span></template></div></section><section v-if="downloaderRows(detailsModal.job).length" class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.downloaderTraffic') }}</h3><div class="mt-2.5 grid gap-2"><div v-for="row in downloaderRows(detailsModal.job)" :key="row.host" class="rounded-md border border-border-subtle bg-page p-2.5"><div class="flex justify-between gap-2"><span class="font-semibold">{{ row.host }}</span><span>{{ row.status }}</span></div><div class="mt-2 grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-1.5 text-xs tabular-nums"><span>{{ t('sysmon.payload') }} {{ formatBytes(row.payloadBytes) }}</span><span>{{ t('sysmon.rows') }} {{ formatCount(row.rows) }}</span><span>{{ t('sysmon.pages') }} {{ formatCount(row.pages) }}</span></div></div></div></section><section class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.payload') }}</h3><pre class="m-0 overflow-auto whitespace-pre-wrap break-words rounded-sm bg-page p-2.5 font-mono text-[0.78rem] leading-[1.4] text-primary">{{ jsonText(detailsModal.job.payload) }}</pre></section><section class="mb-3 grid gap-2 rounded-md border border-border-subtle bg-card p-3"><h3 class="m-0 text-md">{{ t('sysmon.progress') }}</h3><pre class="m-0 overflow-auto whitespace-pre-wrap break-words rounded-sm bg-page p-2.5 font-mono text-[0.78rem] leading-[1.4] text-primary">{{ jsonText(detailsModal.job.progress) }}</pre></section></template></div></div>
     </div>
 
-    <div v-if="confirmModal" data-modal="confirm" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
+    <div v-if="confirmModal" data-modal="confirm" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop p-5" :style="embeddedModalStyle" role="dialog" aria-modal="true" @click.stop>
       <div class="flex max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(520px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ confirmModal.title }}</h2><Button data-confirm="cancel" type="button" variant="default" size="sm" @click="closeConfirm">{{ t('common.cancel') }}</Button></div><div class="overflow-auto pt-3.5"><p>{{ confirmModal.message }}</p><div class="mt-4.5 flex justify-end gap-2"><Button data-confirm="cancel" type="button" variant="default" size="sm" @click="closeConfirm">{{ t('common.cancel') }}</Button><Button data-confirm="accept" type="button" variant="info" size="sm" @click="acceptConfirm">{{ t('common.confirm') }}</Button></div></div></div>
     </div>
   </div>

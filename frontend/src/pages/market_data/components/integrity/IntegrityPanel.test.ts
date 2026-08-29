@@ -222,7 +222,7 @@ describe('integrity panel render (:3229-3345)', () => {
     // job monitor iframe
     const frame = wrapper.find('#integrity-job-monitor-frame');
     expect(frame.exists()).toBe(true);
-    expect(frame.attributes('src')).toContain('/app/jobs_monitor.html?v=S1&embed=1&exchange=bybit&job_type=');
+    expect(frame.attributes('src')).toContain('/api/jobs/main_page?v=S1&embed=1&exchange=bybit&job_type=');
   });
 
   it('hides the normalize button off hyperliquid (:4309)', async () => {

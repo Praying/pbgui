@@ -40,7 +40,7 @@ describe('integrityJobTypes (:4238-4240)', () => {
 describe('buildIntegrityJobMonitorUrl (:4241-4245)', () => {
   it('assembles the embed URL with serial, exchange and encoded job types', () => {
     expect(buildIntegrityJobMonitorUrl({ statusKey: 'bybit', serial: 'S42' })).toBe(
-      '/app/jobs_monitor.html?v=S42&embed=1&exchange=bybit' +
+      '/api/jobs/main_page?v=S42&embed=1&exchange=bybit' +
         '&job_type=' +
         encodeURIComponent(
           'ohlcv_integrity_scan,ohlcv_integrity_repair,ohlcv_integrity_repair_all,ohlcv_removed_coin_delete,ohlcv_removed_coins_delete,ohlcv_checksum_publish,ohlcv_checksum_reference'
@@ -50,7 +50,7 @@ describe('buildIntegrityJobMonitorUrl (:4241-4245)', () => {
 
   it('falls back to serial 0 like the legacy PBGUI_SERIAL guard (:4241)', () => {
     const url = buildIntegrityJobMonitorUrl({ statusKey: 'okx', serial: '' });
-    expect(url.startsWith('/app/jobs_monitor.html?v=0&embed=1&exchange=okx&job_type=')).toBe(true);
+    expect(url.startsWith('/api/jobs/main_page?v=0&embed=1&exchange=okx&job_type=')).toBe(true);
   });
 
   it('appends the _ts cache-bust only on forceReload (:4245)', () => {

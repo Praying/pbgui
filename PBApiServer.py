@@ -4,7 +4,7 @@ PBApiServer — FastAPI REST + WebSocket server for PBGui.
 Provides:
 - REST API for job operations (list, cancel, delete, retry, requeue)
 - WebSocket endpoint for real-time job updates
-- Static file serving for Vanilla JS frontend
+- Vue frontend page delivery and static asset serving
 - Token-based authentication
 
 Runs as a background daemon, following the same pattern as PBRun etc.
@@ -1921,7 +1921,7 @@ if __name__ == "__main__":
 
     _log(SERVICE, f"Starting PBGui API Server on {host}:{port}")
     _log(SERVICE, f"Docs: http://{host}:{port}/docs")
-    _log(SERVICE, f"Frontend: http://{host}:{port}/app/jobs_monitor.html")
+    _log(SERVICE, f"Frontend: http://{host}:{port}/api/jobs/main_page")
 
     _setup_api_logging()
 

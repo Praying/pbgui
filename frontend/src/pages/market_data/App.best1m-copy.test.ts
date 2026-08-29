@@ -78,7 +78,7 @@ describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', (
     expect(app.find('#best1m-generic-panel').attributes('hidden')).toBeUndefined();
     const monitor = app.find('#best1m-job-monitor-frame').element as HTMLIFrameElement;
     expect(monitor.getAttribute('src')).toBe(
-      `/app/jobs_monitor.html?v=S1&embed=1&exchange=bybit&job_type=bybit_best_1m`
+      `/api/jobs/main_page?v=S1&embed=1&exchange=bybit&job_type=bybit_best_1m`
     );
     const infoCalls = fetchMock.mock.calls
       .map((call) => String(call[0]))
@@ -121,7 +121,7 @@ describe('copy-data panel integration (M-data-7, :9059-9064, :5127-5153)', () =>
       expect(scheduleCalls).toEqual([`${BASE}/api/market-data/copy-data/schedules`]);
       const frame = app.find('#copy-data-job-monitor-frame').element as HTMLIFrameElement;
       expect(frame.getAttribute('src')).toBe(
-        `/app/jobs_monitor.html?v=S1&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run`
+        `/api/jobs/main_page?v=S1&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run`
       );
       await vi.advanceTimersByTimeAsync(15_000);
       expect(

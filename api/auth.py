@@ -462,6 +462,19 @@ def serve_vue_or_legacy_page(
     raise HTTPException(
         status_code=500,
         detail=f"{page} page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+def serve_vue_page(page: str) -> FileResponse:
+    """Serve a Vue-only page and fail clearly when its build is missing."""
+    vue_path = _frontend_dist_path(page)
+    if vue_path.is_file():
+        return FileResponse(vue_path, headers={"Cache-Control": "no-store"})
+    raise HTTPException(
+        status_code=500,
+        detail=f"{page} page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
+        headers={"Cache-Control": "no-store"},
     )
 
 

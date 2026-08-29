@@ -4,9 +4,7 @@ Job Queue API endpoints.
 Provides REST API for job management (list, cancel, delete, retry).
 """
 
-import json
-
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 
@@ -19,20 +17,16 @@ from task_queue import (
     read_worker_pid,
     is_pid_running,
 )
-from api.auth import require_auth, SessionToken, get_token_from_request, serve_vue_or_legacy_page
+from api.auth import require_auth, SessionToken, serve_vue_page
 from task_worker import start_pending_job
 
 router = APIRouter()
 
 
 @router.get("/main_page", include_in_schema=False)
-def main_page(request: Request, session: SessionToken = Depends(require_auth)):
-    """Serve the Vue Jobs Monitor, falling back to the legacy page."""
-    def _inject(html: str, req: Request) -> str:
-        origin = f"{req.url.scheme}://{req.url.netloc}"
-        return html.replace('"%%API_BASE%%"', json.dumps(f"{origin}/api"))
-
-    return serve_vue_or_legacy_page("jobs_monitor", "jobs_monitor.html", request, inject=_inject)
+def main_page(session: SessionToken = Depends(require_auth)):
+    """Serve the Vue-only Jobs Monitor."""
+    return serve_vue_page("jobs_monitor")
 
 
 class CancelJobRequest(BaseModel):

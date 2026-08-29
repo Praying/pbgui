@@ -84,7 +84,7 @@ describe('refreshBest1mPanel — the dual-path (:7662-7685)', () => {
     store.refreshPanel(false);
     expect(store.isHyperliquid.value).toBe(false);
     expect(store.jobMonitorSrc.value).toBe(
-      '/app/jobs_monitor.html?v=S7&embed=1&exchange=bybit&job_type=bybit_best_1m'
+      '/api/jobs/main_page?v=S7&embed=1&exchange=bybit&job_type=bybit_best_1m'
     );
     expect(fetchJson).toHaveBeenCalledWith('/best-1m/info/bybit');
   });

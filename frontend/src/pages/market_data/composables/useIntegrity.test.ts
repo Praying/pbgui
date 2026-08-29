@@ -269,7 +269,7 @@ describe('loadIntegrityPanel (:4521-4555)', () => {
     const { controller } = makeStore();
     await controller.loadIntegrityPanel(false);
     const idle = controller.jobMonitorSrc.value;
-    expect(idle.startsWith('/app/jobs_monitor.html?v=S1&embed=1&exchange=bybit&job_type=')).toBe(true);
+    expect(idle.startsWith('/api/jobs/main_page?v=S1&embed=1&exchange=bybit&job_type=')).toBe(true);
     expect(idle.includes('_ts')).toBe(false);
     await controller.loadIntegrityPanel(true);
     expect(controller.jobMonitorSrc.value).toContain('&_ts=1111');
@@ -707,5 +707,4 @@ describe('onExchangeChange (:7324-7332)', () => {
     expect(controller.jobMonitorSrc.value).toContain('exchange=okx');
   });
 });
-
 

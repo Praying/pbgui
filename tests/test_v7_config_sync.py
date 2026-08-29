@@ -317,90 +317,32 @@ def test_hl_expiry_preview_sends_unsaved_key_only_in_post_body() -> None:
 
 
 def test_jobs_monitor_escapes_job_data_and_uses_delegated_actions() -> None:
-    """Main job cards preserve markup while treating all job fields as text."""
-    bootstrap = r"""
-        global.document = {
-          createElement: function() {
-            let text = '';
-            return {
-              set textContent(value) { text = String(value == null ? '' : value); },
-              get innerHTML() { return encodeText(text); }
-            };
-          }
-        };
-        const expandedJobs = new Set();
-        const expandedDownloaderJobs = new Set();
-        const downloaderLogCache = new Map();
-        function calculateProgress() { return 42; }
-        function formatJobDuration() { return '1m 02s'; }
-        function formatBytes(value) { return String(value || 0) + ' B'; }
-        function formatTimestamp(value) { return String(value || ''); }
-        function fmtDayCompact(value) { return String(value || ''); }
-        function renderDownloaderDetails() { return ''; }
-    """
-    assertions = r"""
-        const attack = '<img src=x onerror=globalThis.pwned=true>';
-        const idAttack = '&apos;);globalThis.pwned=true;//\\\n' + attack;
-        const job = {
-          id: idAttack,
-          type: attack,
-          status: attack,
-          updated_ts: attack,
-          error: attack,
-          payload: { coins: [attack], start_day: attack, end_day: attack },
-          progress: {
-            coin: attack, chunk_start: attack, chunk_end: attack,
-            stage: attack, mode: attack, step: attack, total: 1,
-            downloaded_total: 1, skipped_existing_total: 1, failed_total: 1
-          }
-        };
-        const active = renderActiveJob(job);
-        const history = renderJob(job);
-        [active, history].forEach(function(html) {
-          assert.equal(html.includes('<img'), false);
-          assert.equal(html.includes('onclick='), false);
-          assert.match(html, /data-job-action=/);
-          assert.match(html, /&lt;img/);
-          assert.match(html, /&amp;apos;/);
-        });
-    """
-    _run_frontend_node(
-        "frontend/jobs_monitor.html",
-        ["escapeHtml", "escapeAttr", "renderActiveJob", "renderJob"],
-        bootstrap,
-        assertions,
-    )
+    """Vue job cards treat every backend field as text interpolation."""
+    source = _read("frontend/src/pages/jobs_monitor/App.vue")
+    assert "v-html" not in source
+    assert ".innerHTML" not in source
+    for interpolation in (
+        "{{ job.id }}",
+        "{{ job.status }}",
+        "{{ job.type }}",
+        "{{ job.error }}",
+        "{{ row.value }}",
+        "{{ logModal.text }}",
+    ):
+        assert interpolation in source
 
 
 def test_jobs_monitor_delegation_preserves_all_job_actions() -> None:
-    """Delegated job buttons dispatch every existing action with the raw job ID."""
-    bootstrap = r"""
-        const calls = [];
-        function runJob(id) { calls.push(['run', id]); }
-        function showJobDetails(id) { calls.push(['view', id]); }
-        function showLog(id) { calls.push(['log', id]); }
-        function cancelJob(id) { calls.push(['cancel', id]); }
-        function retryJob(id) { calls.push(['retry', id]); }
-        function requeueJob(id) { calls.push(['requeue', id]); }
-        function deleteJob(id) { calls.push(['delete', id]); }
-        function toggleExpander(id) { calls.push(['toggle', id]); }
-    """
-    assertions = r"""
-        const id = "job');attack();//";
-        ['run','view','log','cancel','retry','requeue','delete','toggle'].forEach(function(action) {
-          handleJobActionClick({ target: { closest: function() { return { dataset: { jobAction: action, jobId: id } }; } } });
-        });
-        assert.deepEqual(calls, [
-          ['run',id], ['view',id], ['log',id], ['cancel',id],
-          ['retry',id], ['requeue',id], ['delete',id], ['toggle',id]
-        ]);
-    """
-    _run_frontend_node(
-        "frontend/jobs_monitor.html",
-        ["handleJobActionClick"],
-        bootstrap,
-        assertions,
-    )
+    """Vue job cards preserve every action and the stable button order."""
+    source = _read("frontend/src/pages/jobs_monitor/App.vue")
+    action_positions = {
+        action: source.index(f'data-action="{action}"')
+        for action in ("run", "cancel", "details", "log", "retry", "requeue", "delete")
+    }
+    assert all(position >= 0 for position in action_positions.values())
+    assert action_positions["run"] < action_positions["details"] < action_positions["log"]
+    assert action_positions["cancel"] < action_positions["details"]
+    assert action_positions["details"] < action_positions["retry"] < action_positions["requeue"] < action_positions["delete"]
 
 
 def test_hyperliquid_job_monitor_escapes_jobs_and_error_messages() -> None:
@@ -457,8 +399,7 @@ def test_hyperliquid_success_message_keeps_existing_structure_without_inner_html
 def test_xss_hardening_preserves_job_and_api_key_visual_contract() -> None:
     """Security changes retain the existing classes, labels, and button order."""
     api_keys = _read("frontend/api_keys_editor.html")
-    jobs = _extract_js_function(_read("frontend/jobs_monitor.html"), "renderActiveJob")
-    history = _extract_js_function(_read("frontend/jobs_monitor.html"), "renderJob")
+    jobs = _read("frontend/src/pages/jobs_monitor/App.vue")
     hl_page = ROOT / "frontend" / "src" / "pages" / "hl_data_actions"
     hl_jobs = (hl_page / "components/ActiveJobCard.vue").read_text(encoding="utf-8")  # renderActiveJob successor
 
@@ -466,9 +407,9 @@ def test_xss_hardening_preserves_job_and_api_key_visual_contract() -> None:
     assert_text_present(api_keys, "Edit")
     assert 'class="btn btn-sm btn-danger" data-user-action="delete"' in api_keys
     assert_text_present(api_keys, "Delete")
-    assert jobs.index('data-job-action="run"') < jobs.index('data-job-action="view"') < jobs.index('data-job-action="log"') < jobs.index('data-job-action="cancel"')
-    assert history.index('data-job-action="view"') < history.index('data-job-action="log"') < history.index('data-job-action="retry"') < history.index('data-job-action="requeue"') < history.index('data-job-action="delete"')
-    assert 'class="job-card"' in jobs
-    assert 'class="progress-bar"' in jobs
-    assert '"hlda-jc"' in hl_jobs
-    assert '"hlda-pb"' in hl_jobs
+    assert jobs.index('data-action="run"') < jobs.index('data-action="details"') < jobs.index('data-action="log"')
+    assert jobs.index('data-action="details"') < jobs.index('data-action="retry"') < jobs.index('data-action="requeue"') < jobs.index('data-action="delete"')
+    assert 'v-for="job in' in jobs
+    assert 'job.progress?.total' in jobs
+    assert 'class="hlda-jc ' in hl_jobs
+    assert 'class="hlda-pb ' in hl_jobs

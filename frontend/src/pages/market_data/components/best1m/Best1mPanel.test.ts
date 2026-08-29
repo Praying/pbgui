@@ -106,7 +106,7 @@ describe('the generic variant (:3347-3405)', () => {
     const frame = panel.find('#best1m-job-monitor-frame');
     expect(frame.exists()).toBe(true);
     expect(frame.attributes('src')).toBe(
-      '/app/jobs_monitor.html?v=S1&embed=1&exchange=bybit&job_type=bybit_best_1m'
+      '/api/jobs/main_page?v=S1&embed=1&exchange=bybit&job_type=bybit_best_1m'
     );
   });
 

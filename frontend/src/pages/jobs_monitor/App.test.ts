@@ -1,5 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createI18n } from '@/shared/i18n';
 import App from './App.vue';
 
@@ -84,6 +86,12 @@ beforeEach(() => {
 });
 
 describe('Shared Jobs Monitor Vue page', () => {
+  it('keeps the retired legacy monitor assets removed', () => {
+    const frontendRoot = resolve(import.meta.dirname, '../../..');
+    expect(existsSync(resolve(frontendRoot, 'jobs_monitor.html'))).toBe(false);
+    expect(existsSync(resolve(frontendRoot, 'css/app.css'))).toBe(false);
+  });
+
   it('renders filtered live jobs and worker connection state from the cookie-authenticated WebSocket', async () => {
     const wrapper = mountApp('?embed=1&exchange=bitget&job_type=bitget_best_1m_distributed');
     expect(document.documentElement.classList.contains('is-embedded')).toBe(true);
@@ -111,6 +119,19 @@ describe('Shared Jobs Monitor Vue page', () => {
     const runButton = wrapper.get('[data-action="run"]');
     expect(runButton.text()).toContain('Run');
     expect(runButton.find('svg').exists()).toBe(true);
+    expect(wrapper.get('[data-action="cancel"]').text()).toContain('Cancel');
+  });
+
+  it('positions embedded confirmations inside the iframe visible region', async () => {
+    const wrapper = mountApp('?embed=1&exchange=bitget');
+    WebSocketMock.instances[0]!.jobs([{ ...activeJobs[0], status: 'pending' }]);
+    await wrapper.vm.$nextTick();
+
+    await wrapper.get('[data-action="cancel"]').trigger('click');
+    const modal = wrapper.get('[data-modal="confirm"]');
+    expect(modal.attributes('style')).toContain('top: 0px');
+    expect(modal.attributes('style')).toContain(`height: ${window.innerHeight}px`);
+    wrapper.unmount();
   });
 
   it('renders empty history copy after a successful empty response', async () => {
