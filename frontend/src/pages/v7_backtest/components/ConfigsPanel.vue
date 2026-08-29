@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { ConfigSummary, SortSpec } from '../types';
 
@@ -267,7 +268,7 @@ defineExpose({
           <th data-col="end_date" @click="emit('sort', 'end_date')">{{ t('v7backtest.end') }}</th>
           <th data-col="results" @click="emit('sort', 'results')">{{ t('v7backtest.resultCountHeader') }}</th>
           <th data-col="modified" @click="emit('sort', 'modified')">{{ t('v7backtest.modified') }}</th>
-          <th>{{ t('v7backtest.actions') }}</th>
+          <th class="actions-column text-center!">{{ t('v7backtest.actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -293,10 +294,12 @@ defineExpose({
           </td>
           <td :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
           <td class="actions-cell" @click.stop>
-            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-edit" :title="t('v7backtest.edit')" :aria-label="t('v7backtest.edit')" @click="emit('edit', entry.name)"><PbIcon :icon="PhPencilSimple" :size="18" /></Button>
-            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-queue" :title="t('v7backtest.addToQueueTitle')" :aria-label="t('v7backtest.addToQueueTitle')" @click="emit('queue', entry.name)"><PbIcon :icon="PhPlay" :size="18" /></Button>
-            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-results" :title="t('v7backtest.viewResults')" :aria-label="t('v7backtest.viewResults')" :disabled="!entry.results" @click="emit('view-results', entry.name)"><PbIcon :icon="PhChartBar" :size="18" /></Button>
-            <Button type="button" variant="default" class="act-btn h-auto" data-test="cfg-duplicate" :title="t('v7backtest.duplicateConfig')" :aria-label="t('v7backtest.duplicateConfig')" @click="emit('duplicate', entry.name)"><PbIcon :icon="PhCopy" :size="18" /></Button>
+            <div class="backtest-row-actions">
+              <BacktestRowActionButton :icon="PhPencilSimple" :label="t('v7backtest.edit')" data-test="cfg-edit" @click="emit('edit', entry.name)" />
+              <BacktestRowActionButton :icon="PhPlay" :label="t('v7backtest.addToQueueTitle')" tone="accent" data-test="cfg-queue" @click="emit('queue', entry.name)" />
+              <BacktestRowActionButton :icon="PhChartBar" :label="t('v7backtest.viewResults')" tone="success" :disabled="!entry.results" data-test="cfg-results" @click="emit('view-results', entry.name)" />
+              <BacktestRowActionButton :icon="PhCopy" :label="t('v7backtest.duplicateConfig')" data-test="cfg-duplicate" @click="emit('duplicate', entry.name)" />
+            </div>
           </td>
         </tr>
       </tbody>

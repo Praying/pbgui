@@ -890,7 +890,19 @@ body {
 .tbl tbody tr { cursor: pointer; }
 .tbl tr.selected td { background: rgb(var(--accent-rgb) / .12); }
 .tbl tr.selected td:first-child { border-left: 3px solid var(--accent); }
-.tbl td.actions-cell { white-space: nowrap; overflow: visible; padding: 4px 6px; }
+.tbl td.actions-cell { white-space: nowrap; overflow: visible; padding: 6px 8px; }
+.actions-column { min-width: 84px; }
+.backtest-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--control-gap);
+}
+.backtest-row-action:focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
+}
 .sort-arrow { margin-left: 4px; font-size: var(--fs-xs); }
 /* Configs list: checkbox column + zebra. The checkboxes themselves are
    ui/ Checkbox now — the former .check-col input sizing rule is dead. */

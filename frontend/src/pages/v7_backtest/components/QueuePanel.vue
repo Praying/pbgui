@@ -23,6 +23,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { QueueItem } from '../types';
 
@@ -248,7 +249,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
             <th v-for="column in COLUMNS" :key="column.key" class="sticky top-0 z-[2] cursor-pointer border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" @click="setSort(column.key)">
               {{ t(column.labelKey) }}<span class="sort-arrow">{{ sortCol === column.key ? (sortAsc ? ' ▲' : ' ▼') : '' }}</span>
             </th>
-            <th class="sticky top-0 z-[2] border-b border-border-default bg-card px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-label text-secondary">{{ t('v7backtest.actions') }}</th>
+            <th class="sticky top-0 z-[2] border-b border-border-default bg-card px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-label text-secondary">{{ t('v7backtest.actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -271,59 +272,42 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
             <td class="border-b border-border-subtle px-3 py-3 align-middle text-secondary">{{ exchangeText(item) }}</td>
             <td class="border-b border-border-subtle px-3 py-3 align-middle font-mono text-xs text-secondary">{{ fmtDate(item.created) }}</td>
             <td class="actions-cell border-b border-border-subtle px-3 py-2 align-middle" @mousedown.stop>
-              <div class="flex justify-end gap-1.5">
-              <Button
+              <div class="backtest-row-actions justify-end">
+              <BacktestRowActionButton
                 v-if="item.status === 'error'"
-                type="button"
-                variant="warning"
-                size="icon"
-                class="size-7"
-                :title="t('v7backtest.restart')"
-                :aria-label="t('v7backtest.restart')"
+                :icon="PhPlay"
+                :label="t('v7backtest.restart')"
+                tone="warning"
                 @click.stop="emit('restart', item.filename)"
-              ><PbIcon :icon="PhPlay" :size="18" /></Button>
-              <Button
+              />
+              <BacktestRowActionButton
                 v-if="item.status === 'queued'"
-                type="button"
-                variant="success"
-                size="icon"
-                class="size-7"
-                :title="t('v7backtest.start')"
-                :aria-label="t('v7backtest.start')"
+                :icon="PhPlay"
+                :label="t('v7backtest.start')"
+                tone="success"
                 @click.stop="emit('start', item.filename)"
-              ><PbIcon :icon="PhPlay" :size="18" /></Button>
-              <Button
+              />
+              <BacktestRowActionButton
                 v-if="item.status === 'running' || item.status === 'backtesting'"
-                type="button"
-                variant="danger"
-                size="icon"
-                class="size-7"
-                :title="t('v7backtest.stop')"
-                :aria-label="t('v7backtest.stop')"
+                :icon="PhStop"
+                :label="t('v7backtest.stop')"
+                tone="danger"
                 @click.stop="emit('stop', item.filename)"
-              ><PbIcon :icon="PhStop" :size="18" /></Button>
-              <Button
+              />
+              <BacktestRowActionButton
                 v-if="item.status === 'complete'"
-                type="button"
-                variant="success"
-                size="icon"
-                class="size-7"
-                :title="t('v7backtest.viewResults')"
-                :aria-label="t('v7backtest.viewResults')"
+                :icon="PhChartBar"
+                :label="t('v7backtest.viewResults')"
+                tone="success"
                 @click.stop="emit('viewResults', item.name ?? '')"
-              ><PbIcon :icon="PhChartBar" :size="18" /></Button>
-              <Button type="button" variant="secondary" size="icon" class="size-7" :title="t('v7backtest.logAction')" :aria-label="t('v7backtest.logAction')" @click.stop="emit('showLog', item.filename)">
-                <PbIcon :icon="PhFileText" :size="18" />
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                size="icon"
-                class="size-7"
-                :title="t('v7backtest.remove')"
-                :aria-label="t('v7backtest.remove')"
+              />
+              <BacktestRowActionButton :icon="PhFileText" :label="t('v7backtest.logAction')" @click.stop="emit('showLog', item.filename)" />
+              <BacktestRowActionButton
+                :icon="PhTrash"
+                :label="t('v7backtest.remove')"
+                tone="danger"
                 @click.stop="emit('remove', item.filename)"
-              ><PbIcon :icon="PhTrash" :size="18" /></Button>
+              />
               </div>
             </td>
           </tr>

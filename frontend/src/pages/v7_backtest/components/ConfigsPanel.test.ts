@@ -120,6 +120,8 @@ describe('row actions (:1697-1702)', () => {
       const button = wrapper.find(`[data-test="${action}"]`);
       expect(button.attributes('aria-label')).toBe(button.attributes('title'));
       expect(button.find('svg').exists()).toBe(true);
+      expect(button.classes()).toContain('backtest-row-action');
+      expect(button.classes()).toContain('size-7');
     }
     await wrapper.find('[data-test="cfg-edit"]').trigger('click');
     await wrapper.find('[data-test="cfg-queue"]').trigger('click');

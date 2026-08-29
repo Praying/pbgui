@@ -1,5 +1,9 @@
 # Unreleased
 
+## PBv7/PBv8 Backtest - Unified Row Actions
+
+- Unified configuration, result, and queue row actions across the shared PBv7/PBv8 Backtest workbench with consistent compact controls, spacing, borders, focus treatment, semantic tones, and pressed-state accessibility while preserving every existing action and workflow.
+
 ## PBv8 Backtest - Queue and Settings Workbench
 
 - Refined the shared PBv7/PBv8 Backtest Queue with themed job-status summaries, selected-row feedback, a sticky responsive table, semantic row actions, keyboard selection, and a structured empty state. Reorganized the Settings dialog into queue-concurrency, automatic-behavior, and protected-cache-cleanup sections with consistent graphite surfaces, typography, focus treatment, responsive controls, and unchanged queue/runtime settings behavior.

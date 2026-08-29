@@ -177,7 +177,11 @@ describe('actions cell (:5565-5572)', () => {
       expect(button.attributes('aria-label')).toBe(button.attributes('title'));
       expect(button.find('svg').exists()).toBe(true);
       expect(button.text()).toBe('');
+      expect(button.classes()).toContain('backtest-row-action');
+      expect(button.classes()).toContain('size-7');
     }
+    expect(view.attributes('aria-pressed')).toBe('true');
+    expect(config.attributes('aria-pressed')).toBe('false');
   });
 
   it('emits toggle-action on icon click', async () => {

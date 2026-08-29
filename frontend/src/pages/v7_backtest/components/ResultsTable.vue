@@ -12,7 +12,7 @@ import { computed, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
-import { Button } from '@/shared/components/ui/button';
+import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { useRowDragSelect } from '../composables/useRowDragSelect';
 import type { BacktestResultItem, ResultActionKind, SortSpec } from '../types';
 
@@ -185,33 +185,28 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td class="font-mono tabular-nums">{{ fmt(row.twe_long, 2) }} / {{ fmt(row.twe_short, 2) }}</td>
           <td class="font-mono tabular-nums">{{ fmt(row.pos_long, 0) }} / {{ fmt(row.pos_short, 0) }}</td>
           <td class="actions-cell sticky right-0 z-1 bg-[var(--bg-page)] shadow-[-8px_0_12px_-12px_rgb(0_0_0/0.8)]" @click.stop>
-            <Button
-              v-for="action in ACTION_BUTTONS"
-              :key="action.kind"
-              type="button"
-              variant="ghost"
-              class="icon-btn h-auto border-0 p-0.5"
-              :class="{ active: activeActions[row.path]?.has(action.kind) }"
-              :data-action="action.kind"
-              :data-path="row.path"
-              :title="action.kind === 'plot' ? t('v7backtest.plotImages', { version: String(row.backtest_version || 'v7').toUpperCase() }) : t(action.titleKey)"
-              :aria-label="action.kind === 'plot' ? t('v7backtest.plotImages', { version: String(row.backtest_version || 'v7').toUpperCase() }) : t(action.titleKey)"
-              @click="emit('toggle-action', row.path, action.kind)"
-            >
-              <PbIcon :icon="action.icon" :size="18" />
-            </Button>
-            <Button
-              v-if="allowV8Convert && row.backtest_version === 'v7'"
-              type="button"
-              variant="ghost"
-              class="icon-btn h-auto border-0 p-0.5"
-              data-action="convert"
-              :data-path="row.path"
-              :title="t('v7backtest.convertResultToV8')"
-              @click="emit('convert', row.path)"
-            >
-              V8
-            </Button>
+            <div class="backtest-row-actions">
+              <BacktestRowActionButton
+                v-for="action in ACTION_BUTTONS"
+                :key="action.kind"
+                :icon="action.icon"
+                :label="action.kind === 'plot' ? t('v7backtest.plotImages', { version: String(row.backtest_version || 'v7').toUpperCase() }) : t(action.titleKey)"
+                :pressed="activeActions[row.path]?.has(action.kind)"
+                :data-action="action.kind"
+                :data-path="row.path"
+                @click="emit('toggle-action', row.path, action.kind)"
+              />
+              <BacktestRowActionButton
+                v-if="allowV8Convert && row.backtest_version === 'v7'"
+                :label="t('v7backtest.convertResultToV8')"
+                tone="accent"
+                data-action="convert"
+                :data-path="row.path"
+                @click="emit('convert', row.path)"
+              >
+                <span class="font-mono text-[10px] font-bold tracking-tight">V8</span>
+              </BacktestRowActionButton>
+            </div>
           </td>
         </tr>
       </tbody>
