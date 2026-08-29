@@ -1,5 +1,9 @@
 # Unreleased
 
+## API Keys — User List UI Cleanup
+
+- Tightened the Users view search control to a compact 280px field with an in-field clear action, unified exchange badges on the shared accent palette, and reduced sortable-header noise to one active direction indicator without changing filtering or sorting behavior.
+
 ## Market Data — Vue Job Monitor Embeds
 
 - Switched the OHLCV Integrity, Best 1m, and Copy Data queue iframes from the static legacy monitor to the existing Vue 3 `/api/jobs/main_page` entry while preserving embed mode, exchange/job-type filters, serial cache busting, queue actions, logs, details, and confirmations.

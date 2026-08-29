@@ -6,7 +6,7 @@ Manage exchange API credentials and TradFi provider profiles. Exchange users rem
 
 ## Page layout
 
-The page runs as a standalone FastAPI page with a full topnav for navigating to all PBGui sections. It consists of a **sidebar** (left) and a **main panel** (right).
+The page runs as a standalone FastAPI page with the shared PBGui workbench navigation. The header shows the current path as **System / API Keys / Users**, while the compact rail contains the page sections and the main panel contains the selected view.
 
 ### Sidebar buttons
 
@@ -29,8 +29,8 @@ The page runs as a standalone FastAPI page with a full topnav for navigating to 
 
 Displays all entries from `api-keys.json`.
 
-- **Filter box** — type to search by name or exchange; state is preserved in the URL (`?filter=`)
-- **Column headers** — click to sort; sort direction persists in the URL (`?sort=`, `?dir=`)
+- **Filter box** — type to search by name or exchange; the compact 280px field keeps its clear button inside the right edge; state is preserved in the URL (`?filter=`)
+- **Column headers** — click to sort; only the active column shows its direction indicator, and sort direction persists in the URL (`?sort=`, `?dir=`)
 - **Keyboard navigation** — ArrowDown from the filter box selects the first row; ArrowUp/ArrowDown move between rows; Enter opens the selected user
 - **In Use badge** — shown when the user is referenced by a live bot
 

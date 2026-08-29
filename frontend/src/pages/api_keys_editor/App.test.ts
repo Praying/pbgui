@@ -115,6 +115,8 @@ describe('API Keys page shell', () => {
     expect(wrapper.find('tr[data-user-name="bob"] .badge-expiry').text()).toContain('5d');
     expect(wrapper.find('tr[data-user-name="hl1"]').text()).toContain('wallet');
     expect(wrapper.find('tr[data-user-name="hl1"]').text()).toContain('vault');
+    expect(wrapper.find('tr[data-user-name="alice"] .badge-exchange').classes()).toContain('text-accent-soft');
+    expect(wrapper.find('tr[data-user-name="bob"] .badge-exchange').classes()).toContain('text-accent-soft');
     expect(wrapper.find('#sb-count').text()).toBe('3 users');
     expect(wrapper.find('#sb-inuse').text()).toBe('1 in use');
     expect(wrapper.find('#metaSerial').text()).toBe('SER-1');
@@ -127,9 +129,15 @@ describe('API Keys page shell', () => {
   it('filters by name/exchange and persists ?filter= in the URL (:1317-1322, :1131-1137)', async () => {
     const wrapper = await mountApp();
 
+    expect(wrapper.find('#userFilterClear').exists()).toBe(false);
     await wrapper.find('#userFilter').setValue('byb');
     expect(rowNames(wrapper)).toEqual(['bob']);
     expect(window.location.search).toContain('filter=byb');
+    expect(wrapper.find('#userFilterClear').exists()).toBe(true);
+
+    await wrapper.find('#userFilterClear').trigger('click');
+    expect(wrapper.find('#userFilter').element).toBe(document.activeElement);
+    expect(wrapper.find('#userFilterClear').exists()).toBe(false);
 
     await wrapper.find('#userFilter').setValue('zzz');
     expect(wrapper.text()).toContain('No users match the filter.');
@@ -141,14 +149,19 @@ describe('API Keys page shell', () => {
   it('sorts by name asc then desc and persists sort/dir (:1324-1353)', async () => {
     const wrapper = await mountApp();
 
+    expect(wrapper.find('#th-name .sort-icon').exists()).toBe(false);
     await wrapper.find('#th-name').trigger('click');
     expect(rowNames(wrapper)).toEqual(['alice', 'bob', 'hl1']);
     expect(window.location.search).toContain('sort=name');
     expect(window.location.search).toContain('dir=1');
+    expect(wrapper.find('#th-name').attributes('aria-sort')).toBe('ascending');
+    expect(wrapper.find('#th-name .sort-icon').exists()).toBe(true);
+    expect(wrapper.find('#th-exchange .sort-icon').exists()).toBe(false);
 
     await wrapper.find('#th-name').trigger('click');
     expect(rowNames(wrapper)).toEqual(['hl1', 'bob', 'alice']);
     expect(window.location.search).toContain('dir=-1');
+    expect(wrapper.find('#th-name').attributes('aria-sort')).toBe('descending');
   });
 
   it('opens the edit panel for a user with masked placeholders and delete (:1493-1604)', async () => {

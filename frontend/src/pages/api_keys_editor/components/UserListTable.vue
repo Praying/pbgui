@@ -5,7 +5,7 @@
  * expiry badges, in-use state and row actions.
  */
 import { computed } from 'vue';
-import { PhArrowsDownUp, PhX } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -34,20 +34,9 @@ const metaByText = computed(() => {
   return by ? t('misc.apikeys.byPrefix', { name: by }) : '';
 });
 
-/** Exchange → badge tint (the former .badge-exchange.<name> colour rules).
- *  Each branch returns the complete border/background/text colour set so the
- *  static layout utilities on the span never fight a dynamic colour. */
-function exchangeClass(exchange: string | undefined): string {
-  switch (exchange) {
-    case 'binance': return 'border border-secondary/14 bg-secondary/7 text-[#c9a961]';
-    case 'bybit': return 'border border-secondary/14 bg-secondary/7 text-[#c79a6b]';
-    case 'bitget': return 'border border-secondary/14 bg-secondary/7 text-[#6fbc9f]';
-    case 'hyperliquid': return 'border border-secondary/14 bg-secondary/7 text-success';
-    case 'okx': return 'border border-secondary/14 bg-secondary/7 text-secondary';
-    case 'gateio': return 'border border-secondary/14 bg-secondary/7 text-accent';
-    case 'kucoin': return 'border border-secondary/14 bg-secondary/7 text-[#86ad9e]';
-    default: return 'border border-secondary/14 bg-secondary/7 text-secondary';
-  }
+/** Exchange badges use one accent treatment so the table keeps one visual focus. */
+function exchangeClass(_exchange: string | undefined): string {
+  return 'border border-accent/25 bg-accent/8 text-accent-soft';
 }
 
 /** Credentials summary per exchange type (:1370-1380). */
@@ -102,6 +91,11 @@ function sortClass(col: string): string[] {
   return [store.sortDir.value === 1 ? 'sort-asc' : 'sort-desc'];
 }
 
+function sortAriaValue(col: string): 'ascending' | 'descending' | 'none' {
+  if (store.sortCol.value !== col) return 'none';
+  return store.sortDir.value === 1 ? 'ascending' : 'descending';
+}
+
 function clearFilterAndFocus(): void {
   store.clearFilter();
   document.getElementById('userFilter')?.focus();
@@ -149,42 +143,51 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
       <span id="metaTs" style="color:var(--text-secondary);">{{ metaTsText }}</span>
       <span id="metaBy" class="max-[768px]:hidden" style="color:var(--text-muted);">{{ metaByText }}</span>
     </div>
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-      <Input
-        type="text"
-        id="userFilter"
-        class="flex-1"
-        :model-value="store.filterText.value"
-        :placeholder="t('misc.apikeys.filterByNameOrExchange')"
-        @update:model-value="store.setFilter(String($event ?? ''))"
-        @keydown="onFilterKeydown"
-      />
-      <Button
-        type="button"
-        variant="secondary"
-        size="icon"
-        :title="t('misc.apikeys.clearFilter')"
-        :aria-label="t('misc.apikeys.clearFilter')"
-        @click="clearFilterAndFocus"
-      >
-        <PbIcon :icon="PhX" />
-      </Button>
+    <div class="user-list-toolbar">
+      <div class="user-filter-control">
+        <Input
+          type="text"
+          id="userFilter"
+          class="w-full pr-9"
+          :model-value="store.filterText.value"
+          :placeholder="t('misc.apikeys.filterByNameOrExchange')"
+          @update:model-value="store.setFilter(String($event ?? ''))"
+          @keydown="onFilterKeydown"
+        />
+        <Button
+          v-if="store.filterText.value"
+          id="userFilterClear"
+          class="user-filter-clear"
+          type="button"
+          variant="ghost"
+          size="icon"
+          :title="t('misc.apikeys.clearFilter')"
+          :aria-label="t('misc.apikeys.clearFilter')"
+          @click="clearFilterAndFocus"
+        >
+          <PbIcon :icon="PhX" :size="14" />
+        </Button>
+      </div>
     </div>
     <table class="user-table mb-5 w-full max-[768px]:block max-[768px]:overflow-x-auto max-[768px]:whitespace-nowrap overflow-hidden rounded-lg border border-border-subtle border-separate border-spacing-0 bg-panel">
       <thead>
         <tr>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('name')" id="th-name" @click="store.setSort('name')">
-            <span>{{ t('misc.apikeys.user') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('name')" :aria-sort="sortAriaValue('name')" id="th-name" @click="store.setSort('name')">
+            <span>{{ t('misc.apikeys.user') }}</span>
+            <PbIcon v-if="store.sortCol.value === 'name'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('exchange')" id="th-exchange" @click="store.setSort('exchange')">
-            <span>{{ t('misc.apikeys.exchange') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('exchange')" :aria-sort="sortAriaValue('exchange')" id="th-exchange" @click="store.setSort('exchange')">
+            <span>{{ t('misc.apikeys.exchange') }}</span>
+            <PbIcon v-if="store.sortCol.value === 'exchange'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
           <th class="border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.credentials') }}</th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
-            <span>{{ t('misc.apikeys.keyExpiry') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('hl_expiry')" :aria-sort="sortAriaValue('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
+            <span>{{ t('misc.apikeys.keyExpiry') }}</span>
+            <PbIcon v-if="store.sortCol.value === 'hl_expiry'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('status')" id="th-status" @click="store.setSort('status')">
-            <span>{{ t('misc.apikeys.status') }}</span> <PbIcon class="sort-icon" :icon="PhArrowsDownUp" />
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('status')" :aria-sort="sortAriaValue('status')" id="th-status" @click="store.setSort('status')">
+            <span>{{ t('misc.apikeys.status') }}</span>
+            <PbIcon v-if="store.sortCol.value === 'status'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
           <th class="border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.actions') }}</th>
         </tr>
@@ -250,17 +253,41 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
    the Tailwind migration — pseudo-elements and the parent-relative last-row
    descendant are not expressible as utilities. 'user-table', 'sort-icon',
    'sort-asc' and 'sort-desc' remain as inert anchors. */
-.user-table th.sort-asc .sort-icon::after {
-  content: " ▲";
-  color: var(--accent-soft);
+.user-list-toolbar {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  margin-bottom: 10px;
 }
-.user-table th.sort-desc .sort-icon::after {
-  content: " ▼";
-  color: var(--accent-soft);
+
+.user-filter-control {
+  position: relative;
+  width: 280px;
+  max-width: 100%;
 }
-.user-table th.sort-asc .sort-icon,
-.user-table th.sort-desc .sort-icon {
-  display: none;
+
+.user-filter-clear {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  transform: translateY(-50%);
+}
+
+.user-table .sort-icon {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--accent-soft);
+  vertical-align: -2px;
+}
+
+@media (max-width: 480px) {
+  .user-filter-control {
+    width: 100%;
+  }
 }
 
 .user-table tbody tr:last-child td {
