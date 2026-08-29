@@ -130,6 +130,8 @@ watch(
 );
 
 const editorOpen = computed(() => store.editor.editingName.value !== null);
+/** The editor command bar belongs only to the configuration workbench. */
+const editorToolbarOpen = computed(() => editorOpen.value && store.view.state.panel === 'configs');
 
 /* AI drawer page context — Vue port of the legacy backtest registration
    (panel section, editing config / open archive entities, filter focus;
@@ -453,7 +455,7 @@ onMounted(() => {
     <PanelShell
       :items="store.nav"
       :active="store.view.state.panel"
-      :editor-open="editorOpen"
+      :editor-open="editorToolbarOpen"
     >
       <template #ctx-configs>
         <Button type="button" variant="primary" class="sb-btn" data-test="ctx-new-config" @click="store.editor.newConfig()"><PbIcon :icon="PhPlus" /> {{ actionLabel('v7backtest.newConfig') }}</Button>

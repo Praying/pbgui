@@ -44,15 +44,19 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
-    <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
-    <span class="text-xs text-secondary">{{ t('v7optimize.resultSetCount', { count: rows.length }) }}</span>
-    <span v-if="selectedCount" class="text-xs text-secondary">{{ t('v7optimize.resultsSelected', { count: selectedCount }) }}</span>
+  <div class="opt-panel-controls mb-2.5 flex flex-wrap items-center gap-2.5">
+    <div class="opt-panel-search">
+      <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
+    </div>
+    <div class="opt-panel-counts">
+      <span class="opt-panel-count">{{ t('v7optimize.resultSetCount', { count: rows.length }) }}</span>
+      <span v-if="selectedCount" class="opt-panel-count opt-panel-count--selected">{{ t('v7optimize.resultsSelected', { count: selectedCount }) }}</span>
+    </div>
     <span class="flex-1"></span>
     <Button type="button" variant="default" size="sm" data-test="select-all-results" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+  <div ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
     <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><th @click="emit('sort', 'result')">{{ t('v7optimize.thResult') }}</th><th v-if="isV8" @click="emit('sort', 'strategy')">{{ t('v7optimize.thStrategy') }}</th><th @click="emit('sort', 'pareto_count')">{{ t('v7optimize.thParetos') }}</th><th @click="emit('sort', 'mode')">{{ t('v7optimize.thMode') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">

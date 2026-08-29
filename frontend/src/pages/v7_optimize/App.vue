@@ -535,10 +535,10 @@ onBeforeUnmount(() => {
       />
       <LoadingSkeleton v-if="page.loading.value" class="p-[30px] text-secondary" :label="t('common.loading')" />
       <template v-else>
-        <section v-if="page.panel.value === 'configs'" class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
-        <section v-else-if="page.panel.value === 'queue'" class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" /></section>
-        <section v-else-if="page.panel.value === 'results'" class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" /></section>
-        <section v-else class="flex min-h-0 flex-col h-full"><header class="mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" :columns="page.paretoMetricColumns.value" :available-metrics="page.paretoAvailableMetrics.value" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @toggle-column="onToggleParetoColumn" @reset-columns="onResetParetoColumns" @select-all-columns="onSelectAllParetoColumns" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
+        <section v-if="page.panel.value === 'configs'" class="opt-panel-view flex min-h-0 flex-col h-full"><header class="opt-panel-heading mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
+        <section v-else-if="page.panel.value === 'queue'" class="opt-panel-view flex min-h-0 flex-col h-full"><header class="opt-panel-heading mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" /></section>
+        <section v-else-if="page.panel.value === 'results'" class="opt-panel-view flex min-h-0 flex-col h-full"><header class="opt-panel-heading mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" /></section>
+        <section v-else class="opt-panel-view flex min-h-0 flex-col h-full"><header class="opt-panel-heading mb-3.5 flex items-start justify-between gap-4"><div><h1 class="m-0 text-xl">{{ panelTitle }}</h1><p class="mt-1 text-sm text-secondary">{{ panelSubtitle }}</p></div></header><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" :columns="page.paretoMetricColumns.value" :available-metrics="page.paretoAvailableMetrics.value" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @toggle-column="onToggleParetoColumn" @reset-columns="onResetParetoColumns" @select-all-columns="onSelectAllParetoColumns" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
       </template>
     </div>
   </div>
@@ -586,7 +586,7 @@ body { overflow: hidden; }
   top: 0;
   z-index: 1;
   padding: 9px 10px;
-  background: var(--bg-panel);
+  background: var(--bg-card);
   border-bottom: 2px solid var(--border-default);
   color: var(--text-secondary);
   font-size: 11px;
@@ -598,7 +598,8 @@ body { overflow: hidden; }
 
 .opt-table td {
   max-width: 300px;
-  padding: 8px 10px;
+  min-height: 46px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border-default);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -606,11 +607,165 @@ body { overflow: hidden; }
 }
 
 .opt-table tbody tr { cursor: pointer; }
-.opt-table tbody tr:hover td { background: rgba(255, 255, 255, 0.035); }
+.opt-table tbody tr:hover td { background: rgb(var(--accent-rgb) / 0.05); }
 .opt-table tbody tr.selected td { background: rgb(var(--accent-rgb) / 0.12); }
 .opt-table tbody tr.selected td:first-child {
   border-left: 3px solid var(--accent);
-  padding-left: 7px;
+  padding-left: 9px;
 }
 .opt-table tbody tr.is-open td { background: rgb(var(--success-rgb) / 0.08); }
+
+.core-workbench-shell--optimize .workbench-page-content {
+  background: var(--surface-workspace);
+}
+
+.core-workbench-shell--optimize .page-toolbar {
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 8px;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.core-workbench-shell--optimize .page-toolbar [data-slot='button'] {
+  min-height: 30px;
+}
+
+.opt-panel-view {
+  min-width: 0;
+}
+
+.opt-panel-heading {
+  position: relative;
+  padding-left: 12px;
+}
+
+.opt-panel-heading::before {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 0;
+  width: 3px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  content: '';
+}
+
+.opt-panel-heading h1 {
+  font-size: var(--text-section);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.opt-panel-heading p {
+  max-width: 70ch;
+  line-height: 1.5;
+}
+
+.opt-panel-controls {
+  min-height: 38px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgb(var(--text-secondary-rgb) / 0.035);
+}
+
+.opt-panel-search {
+  width: min(100%, 360px);
+}
+
+.opt-panel-search [data-slot='input'] {
+  background: var(--bg-input);
+}
+
+.opt-panel-counts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.opt-panel-count,
+.opt-result-context {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.15);
+  border-radius: var(--radius-full);
+  background: rgb(var(--text-secondary-rgb) / 0.06);
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.opt-panel-count--selected {
+  border-color: rgb(var(--accent-rgb) / 0.3);
+  background: rgb(var(--accent-rgb) / 0.1);
+  color: var(--accent-soft);
+}
+
+.opt-result-context {
+  max-width: min(420px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+}
+
+.opt-table-wrap {
+  border-color: var(--border-subtle);
+  background: var(--surface-deep);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.opt-table-wrap::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.opt-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.opt-table-wrap::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+}
+
+.opt-table td:last-child {
+  min-width: max-content;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap !important;
+}
+
+.opt-table td:last-child > [data-slot='button'] {
+  margin: 2px 4px 2px 0;
+}
+
+.opt-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 720px) {
+  .core-workbench-shell--optimize .page-toolbar {
+    position: relative;
+    top: auto;
+  }
+
+  .opt-panel-controls {
+    align-items: stretch;
+  }
+
+  .opt-panel-search {
+    width: 100%;
+  }
+
+  .opt-panel-controls > .flex-1 {
+    display: none;
+  }
+}
 </style>

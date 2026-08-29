@@ -63,8 +63,8 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
-    <span class="text-xs text-secondary">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
+  <div class="opt-panel-controls mb-2.5 flex flex-wrap items-center gap-2.5">
+    <span class="opt-result-context">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
     <label v-if="(meta.scenario_labels || []).length" class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.scenario') }}<SelectRoot :model-value="meta.selected_scenario || 'Aggregated'" @update:model-value="emit('update:scenario', String($event))"><SelectTrigger class="w-auto min-w-[120px]" :aria-label="t('v7optimize.scenario')"><span>{{ meta.selected_scenario || 'Aggregated' }}</span></SelectTrigger><SelectContent><SelectItem v-for="scenario in meta.scenario_labels" :key="scenario" :value="scenario">{{ scenario }}</SelectItem></SelectContent></SelectRoot></label>
     <label class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.statistic') }}<SelectRoot :model-value="meta.selected_statistic || 'mean'" @update:model-value="emit('update:statistic', String($event))"><SelectTrigger class="w-auto min-w-[120px]" :aria-label="t('v7optimize.statistic')"><span>{{ meta.selected_statistic || 'mean' }}</span></SelectTrigger><SelectContent><SelectItem v-for="stat in meta.available_statistics || ['mean']" :key="stat" :value="stat">{{ stat }}</SelectItem></SelectContent></SelectRoot></label>
     <details ref="picker" class="relative" data-test="pareto-columns-picker">
@@ -87,7 +87,7 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+  <div ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
     <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><template v-if="summaryKeys.length"><th v-for="key in summaryKeys" :key="key" :data-sort-key="`summary:${key}`" @click="emit('sort', `summary:${key}`)">{{ key }}</th></template><th v-else>{{ t('v7optimize.thSummary') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">

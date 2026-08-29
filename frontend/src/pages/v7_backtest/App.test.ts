@@ -162,6 +162,30 @@ describe('boot chain (:10012-10024)', () => {
     wrapper.unmount();
   });
 
+  it('hides the editor command bar when switching to the queue panel', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+
+    await wrapper.find('[data-test="ctx-new-config"]').trigger('click');
+    await flush();
+    await nextTick();
+    expect(wrapper.find('[data-test="editor-save"]').exists()).toBe(true);
+
+    await wrapper.find('[data-testid="rail-section-queue"]').trigger('click');
+    await nextTick();
+
+    expect(wrapper.find('[data-test="editor-save"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test="queue-compare"]').exists()).toBe(true);
+    expect(wrapper.find('#panel-queue').classes()).toContain('active');
+
+    await wrapper.find('[data-testid="rail-section-configs"]').trigger('click');
+    await nextTick();
+    expect(wrapper.find('[data-test="editor-save"]').exists()).toBe(true);
+
+    wrapper.unmount();
+  });
+
   it('restores the panel from the URL hash (:10013, :10023)', async () => {
     window.history.replaceState({}, '', '/api/backtest-v7/main_page#queue');
     const wrapper = mountApp();

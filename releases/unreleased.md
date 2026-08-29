@@ -1,5 +1,9 @@
 # Unreleased
 
+## PBv8 Optimize - Unified Workbench Layout
+
+- Refined the PBv8 Optimize configuration, queue, results, and Pareto views with a shared panel heading, compact context controls, clearer count states, stronger table surfaces, improved row spacing, and responsive scrolling while preserving existing actions, selection, sorting, and data flows.
+
 ## API Keys - User List Layout Refresh
 
 - Refined the API Keys user list with a clearer metadata strip, larger search target, sticky table headers, stronger row hover and focus affordances, exchange and credential chips, compact action grouping, and responsive horizontal table scrolling without changing filtering, sorting, or credential behavior.
