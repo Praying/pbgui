@@ -58,6 +58,17 @@ describe('render (:1482-1540)', () => {
     wrapper.unmount();
   });
 
+  it('renders the themed settings hierarchy with shared typography', () => {
+    const wrapper = mountModal();
+    expect(wrapper.find('.settings-modal').attributes('role')).toBe('dialog');
+    expect(wrapper.find('.settings-modal').attributes('aria-labelledby')).toBe('backtest-settings-title');
+    expect(wrapper.find('#settings-concurrency-title').text()).toBe('Queue concurrency');
+    expect(wrapper.find('#settings-behavior-title').text()).toBe('Automatic behavior');
+    expect(wrapper.find('#settings-cleanup-title').text()).toBe('HLCVS Cache Cleanup');
+    expect(wrapper.find('.settings-modal-body').classes()).toContain('bg-panel');
+    wrapper.unmount();
+  });
+
   it('hides entirely while closed', () => {
     const wrapper = mountModal({ open: false });
     expect(wrapper.find('#modal-root').exists()).toBe(false);
@@ -67,8 +78,9 @@ describe('render (:1482-1540)', () => {
   it('disables the cleanup options visually when cleanup is off (:1519)', () => {
     const wrapper = mountModal();
     const opts = wrapper.find('#cleanup-opts');
-    expect(opts.attributes('style')).toContain('opacity: 0.4');
-    expect(opts.attributes('style')).toContain('pointer-events: none');
+    expect(opts.classes()).toContain('opacity-40');
+    expect(opts.classes()).toContain('pointer-events-none');
+    expect(opts.attributes('aria-disabled')).toBe('true');
     wrapper.unmount();
   });
 });
@@ -77,9 +89,9 @@ describe('cpu stepper (:1568-1577)', () => {
   it('steps ±1 within [1, cpu_max]', async () => {
     const wrapper = mountModal();
     expect(wrapper.find('[data-test="cpu-minus"] svg').exists()).toBe(true);
-    expect(wrapper.find('[data-test="cpu-minus"]').attributes('aria-label')).toBe('Decrease CPU');
+    expect(wrapper.find('[data-test="cpu-minus"]').attributes('aria-label')).toBe('Decrease CPU slots');
     expect(wrapper.find('[data-test="cpu-plus"] svg').exists()).toBe(true);
-    expect(wrapper.find('[data-test="cpu-plus"]').attributes('aria-label')).toBe('Increase CPU');
+    expect(wrapper.find('[data-test="cpu-plus"]').attributes('aria-label')).toBe('Increase CPU slots');
     await wrapper.find('[data-test="cpu-plus"]').trigger('click');
     expect((wrapper.find('#set-cpu-val').element as HTMLInputElement).value).toBe('3');
     await wrapper.find('[data-test="cpu-minus"]').trigger('click');
@@ -153,8 +165,9 @@ describe('live sync (:1542-1558 syncOpenSettingsModal)', () => {
     const wrapper = mountModal();
     // ui/ Checkbox: role="checkbox" button — click toggles
     await wrapper.find('#set-cleanup-enabled').trigger('click');
-    const style = wrapper.find('#cleanup-opts').attributes('style') ?? '';
-    expect(style).not.toContain('pointer-events: none');
+    const options = wrapper.find('#cleanup-opts');
+    expect(options.classes()).not.toContain('pointer-events-none');
+    expect(options.attributes('aria-disabled')).toBe('false');
     wrapper.unmount();
   });
 });

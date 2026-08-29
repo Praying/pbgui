@@ -65,6 +65,23 @@ describe('Cluster Sync Vue page', () => {
     expect(wrapper.get('[data-count="nodes"]').text()).toContain('2');
   });
 
+  it('renders the themed cluster-node hierarchy and operational summary', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    await wrapper.get('[data-testid="rail-section-nodes"]').trigger('click');
+
+    const nodeSection = wrapper.get('[data-section="nodes"]');
+    expect(nodeSection.find('.cluster-nodes-head').text()).toContain('Review cluster membership');
+    expect(nodeSection.find('[data-node-stat="total"]').text()).toBe('2');
+    expect(nodeSection.find('[data-node-stat="sync-enabled"]').text()).toBe('2');
+    expect(nodeSection.find('[data-node-stat="masters"]').text()).toBe('2');
+    expect(nodeSection.find('[data-node-stat="ssh-configured"]').text()).toBe('2');
+    expect(nodeSection.find('.cluster-node-table').classes()).toContain('min-w-[980px]');
+    expect(nodeSection.text()).toContain('Local');
+    expect(nodeSection.find('[data-action="toggle-sync"][data-node-id="node-local"]').attributes('disabled')).toBeDefined();
+    expect(nodeSection.find('[data-action="remove-node"][data-node-id="node-local"]').attributes('disabled')).toBeDefined();
+  });
+
   it('switches sections and performs retention/node actions through authenticated JSON endpoints', async () => {
     const wrapper = mountApp();
     await flushPromises();

@@ -107,6 +107,8 @@ After adjusting them click **Apply Filters** to update the approved/ignored list
 
 Shows all pending, running and finished backtest jobs with live status updates.
 
+The Queue view starts with counters for queued, active, complete, and attention-needed jobs. Its themed table keeps the header visible, scrolls horizontally on narrow screens, shows the current selected-row count, and supports click, click-drag, **Enter**, or **Space** selection. Per-row actions use the shared semantic button colors.
+
 ### Table columns
 
 | Column | Description |
@@ -148,6 +150,8 @@ When you select multiple completed queue rows and click **📈 Compare**, PBGui 
 ### Settings modal
 
 PB7 and PB8 use one shared queue settings configuration. Saving it on either Backtest page updates both workers. The CPU value is one global automatic PB7/PB8 process limit, not a separate allowance per version. The dialog renders immediately from its current state and refreshes authoritative host values in the background without overwriting edits.
+
+The dialog groups controls into **Queue concurrency**, **Automatic behavior**, and **HLCVS Cache Cleanup** sections. Cleanup fields remain visibly disabled until cleanup is enabled, and **Clean Now** retains its protected in-progress state.
 
 The queue settings dialog also includes `Use PBGui Market Data`. When that setting is enabled, PBGui rewrites `backtest.ohlcv_source_dir` to the current PBGui market-data root immediately before each queued or manual backtest launch, regardless of the path stored in the config editor.
 

@@ -482,7 +482,7 @@ onMounted(() => {
           {{ actionLabel('v7backtest.deleteSelected') }}
         </Button>
         <hr class="sb-sep" />
-        <Button type="button" variant="default" class="sb-btn" data-test="open-settings" @click="store.openSettingsModal">{{ t('v7backtest.settings') }}</Button>
+        <Button type="button" variant="default" class="sb-btn" data-test="open-settings" @click="store.openSettingsModal"><PbIcon :icon="PhGear" />{{ actionLabel('v7backtest.settings') }}</Button>
       </template>
       <template #ctx-results>
         <!-- Backtest (:733) is version-bound (:5349-5355); Compare + Delete are

@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { PhArrowClockwise, PhWrench, PhX } from '@phosphor-icons/vue';
+import {
+  PhArrowClockwise,
+  PhArrowsLeftRight,
+  PhDesktopTower,
+  PhGear,
+  PhLinkSimple,
+  PhPlugsConnected,
+  PhShieldCheck,
+  PhTrash,
+  PhWrench,
+  PhX,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import { apiFetch, ApiError } from '@/shared/api';
@@ -90,6 +101,9 @@ const credentials = computed(() => status.value.credentials || desired.value.cre
 const localNodeId = computed(() => String(identity.value.node_id || ''));
 const nodeIds = computed(() => nodes.value.map((node) => String(node.node_id || '')).filter(Boolean));
 const warnings = computed(() => Array.isArray(status.value.warnings) ? status.value.warnings : []);
+const syncEnabledNodeCount = computed(() => nodes.value.filter((node) => node.sync_enabled !== false).length);
+const masterNodeCount = computed(() => nodes.value.filter((node) => String(node.role || '').toLowerCase() === 'master').length);
+const sshConfiguredNodeCount = computed(() => nodes.value.filter((node) => String(node.ssh_host || '').trim()).length);
 
 function safeText(value: unknown): string { return String(value ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim(); }
 function display(value: unknown): string { return safeText(value) || '—'; }
@@ -345,45 +359,97 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
           </section>
 
           <!-- ── Nodes ────────────────────────────────────────────── -->
-          <section v-else-if="section === 'nodes'" data-section="nodes" :class="cardClass">
-            <header :class="cardHeadClass">
-              <span :class="cardTitleClass">{{ t('sysmon.clusterNodes') }}</span>
-              <span class="text-[0.78rem] tabular-nums text-secondary">{{ t('sysmon.nodesCount', { count: nodes.length }) }}</span>
+          <section v-else-if="section === 'nodes'" data-section="nodes" class="cluster-nodes-workbench grid gap-4">
+            <header class="cluster-nodes-head flex items-start justify-between gap-4 rounded-lg border border-border-subtle bg-panel px-4 py-3.5 shadow-panel max-[760px]:flex-col">
+              <div class="flex min-w-0 items-start gap-3">
+                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-accent/30 bg-accent/10 text-accent-soft" aria-hidden="true">
+                  <PbIcon :icon="PhDesktopTower" :size="18" />
+                </span>
+                <div class="min-w-0">
+                  <h2 class="m-0 text-xl font-semibold tracking-tight text-primary">{{ t('sysmon.clusterNodes') }}</h2>
+                  <p class="mt-1 max-w-[78ch] text-sm leading-relaxed text-secondary">{{ t('sysmon.clusterNodesOverview') }}</p>
+                </div>
+              </div>
+              <span class="inline-flex shrink-0 items-center rounded-full border border-border-default bg-card px-2.5 py-1 text-xs font-semibold tabular-nums text-secondary">
+                {{ t('sysmon.nodesCount', { count: nodes.length }) }}
+              </span>
             </header>
-            <div class="overflow-auto p-4">
-              <table class="w-full border-collapse text-[0.78rem]">
+
+            <div class="cluster-node-stats grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-2 max-[520px]:grid-cols-1">
+              <article class="cluster-node-stat rounded-lg border border-border-subtle bg-panel px-3.5 py-3 shadow-panel">
+                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-label text-muted"><PbIcon class="text-accent-soft" :icon="PhDesktopTower" :size="15" />{{ t('sysmon.nodes') }}</div>
+                <div class="mt-2 text-2xl font-semibold tabular-nums text-primary" data-node-stat="total">{{ nodes.length }}</div>
+              </article>
+              <article class="cluster-node-stat rounded-lg border border-border-subtle bg-panel px-3.5 py-3 shadow-panel">
+                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-label text-muted"><PbIcon class="text-success-soft" :icon="PhArrowsLeftRight" :size="15" />{{ t('sysmon.syncEnabledNodes') }}</div>
+                <div class="mt-2 text-2xl font-semibold tabular-nums text-primary" data-node-stat="sync-enabled">{{ syncEnabledNodeCount }}</div>
+              </article>
+              <article class="cluster-node-stat rounded-lg border border-border-subtle bg-panel px-3.5 py-3 shadow-panel">
+                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-label text-muted"><PbIcon class="text-accent-soft" :icon="PhShieldCheck" :size="15" />{{ t('sysmon.masterNodes') }}</div>
+                <div class="mt-2 text-2xl font-semibold tabular-nums text-primary" data-node-stat="masters">{{ masterNodeCount }}</div>
+              </article>
+              <article class="cluster-node-stat rounded-lg border border-border-subtle bg-panel px-3.5 py-3 shadow-panel">
+                <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-label text-muted"><PbIcon class="text-warning-soft" :icon="PhPlugsConnected" :size="15" />{{ t('sysmon.sshConfiguredNodes') }}</div>
+                <div class="mt-2 text-2xl font-semibold tabular-nums text-primary" data-node-stat="ssh-configured">{{ sshConfiguredNodeCount }}</div>
+              </article>
+            </div>
+
+            <article class="cluster-node-table-card overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
+              <div class="flex items-start justify-between gap-4 border-b border-border-subtle bg-card px-4 py-3 max-[720px]:flex-col">
+                <div>
+                  <h3 class="m-0 text-md font-semibold text-primary">{{ t('sysmon.nodeMembership') }}</h3>
+                  <p class="mt-0.5 text-sm text-muted">{{ t('sysmon.nodeMembershipHint') }}</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/8 px-2.5 py-1 text-xs font-semibold text-accent-soft">
+                  <PbIcon :icon="PhLinkSimple" :size="14" />{{ display(identity.cluster_id) }}
+                </span>
+              </div>
+              <div class="cluster-node-table-wrap overflow-x-auto">
+                <table class="cluster-node-table w-full min-w-[980px] border-collapse text-sm">
                 <thead>
                   <tr>
-                    <th :class="thClass">{{ t('sysmon.node') }}</th>
-                    <th :class="thClass">{{ t('sysmon.role') }}</th>
-                    <th :class="thClass">{{ t('sysmon.sync') }}</th>
-                    <th :class="thClass">{{ t('sysmon.ssh') }}</th>
-                    <th :class="thClass">{{ t('sysmon.actions') }}</th>
+                    <th class="sticky top-0 z-[1] border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('sysmon.node') }}</th>
+                    <th class="sticky top-0 z-[1] border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('sysmon.role') }}</th>
+                    <th class="sticky top-0 z-[1] border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('sysmon.sync') }}</th>
+                    <th class="sticky top-0 z-[1] border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('sysmon.syncMode') }}</th>
+                    <th class="sticky top-0 z-[1] border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('sysmon.ssh') }}</th>
+                    <th class="sticky top-0 z-[1] border-b border-border-default bg-card px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-label text-secondary">{{ t('sysmon.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="node in nodes" :key="node.node_id" class="group">
-                    <td :class="tdHoverClass">
-                      <strong>{{ nodeLabel(node) }}</strong>
-                      <div class="font-mono text-[0.72rem] text-secondary">{{ node.node_id }}</div>
+                  <tr v-for="node in nodes" :key="node.node_id" class="cluster-node-row group">
+                    <td class="border-b border-border-subtle px-3 py-3 align-middle transition-colors group-hover:bg-accent/6">
+                      <div class="flex items-center gap-2">
+                        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border-default bg-card text-secondary" aria-hidden="true"><PbIcon :icon="PhDesktopTower" :size="15" /></span>
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-2"><strong class="text-primary">{{ nodeLabel(node) }}</strong><span v-if="node.node_id === localNodeId" class="rounded-full border border-accent/25 bg-accent/8 px-1.5 py-px text-[0.68rem] font-semibold text-accent-soft">{{ t('sysmon.local') }}</span></div>
+                          <div class="font-mono text-xs text-muted">{{ node.node_id }}</div>
+                        </div>
+                      </div>
                     </td>
-                    <td :class="tdHoverClass">{{ display(node.role) }}</td>
-                    <td :class="tdHoverClass">
-                      <span :class="[pillClass, statusClass(node.sync_enabled === false ? 'disabled' : 'synced')]">{{ node.sync_enabled === false ? t('sysmon.disabled') : t('common.enabled') }}</span>
+                    <td class="border-b border-border-subtle px-3 py-3 align-middle transition-colors group-hover:bg-accent/6"><span class="inline-flex rounded-full border border-border-default bg-card px-2 py-0.5 text-xs font-semibold text-secondary">{{ display(node.role) }}</span></td>
+                    <td class="border-b border-border-subtle px-3 py-3 align-middle transition-colors group-hover:bg-accent/6">
+                      <span class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold" :class="node.sync_enabled === false ? 'border-danger/30 bg-danger/10 text-danger-soft' : 'border-success/30 bg-success/10 text-success-soft'">
+                        <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>{{ node.sync_enabled === false ? t('sysmon.disabled') : t('common.enabled') }}
+                      </span>
                     </td>
-                    <td class="font-mono text-[0.75rem]" :class="tdHoverClass">{{ display(node.ssh_host) }}:{{ node.ssh_port || 22 }}</td>
-                    <td class="flex flex-wrap justify-end gap-1.75 border-b border-border-default px-2.5 py-2.25 max-[760px]:justify-start">
-                      <Button data-action="toggle-sync" :data-node-id="node.node_id" variant="outline" size="sm" type="button" :disabled="node.node_id === localNodeId" @click="toggleSync(node)">{{ node.sync_enabled === false ? t('sysmon.enable') : t('sysmon.disable') }}</Button>
-                      <Button variant="outline" size="sm" type="button" @click="openSettings(node)">{{ t('sysmon.editClusterNode') }}</Button>
-                      <Button variant="outline" size="sm" type="button" @click="joinRemote(node)">{{ t('sysmon.joinRemoteClusterNode') }}</Button>
-                      <Button variant="outline" size="sm" type="button" @click="repairNode(node)">{{ t('sysmon.repairAllSsh') }}</Button>
-                      <Button data-action="remove-node" :data-node-id="node.node_id" variant="danger" size="sm" type="button" :disabled="node.node_id === localNodeId" @click="openRemove(node)">{{ t('sysmon.removeNode') }}</Button>
+                    <td class="border-b border-border-subtle px-3 py-3 align-middle transition-colors group-hover:bg-accent/6"><span class="text-sm text-secondary">{{ node.sync_mode === 'outbound_only' ? t('sysmon.outboundOnly') : node.sync_mode === 'disabled' ? t('common.disabled') : t('sysmon.reachable') }}</span></td>
+                    <td class="border-b border-border-subtle px-3 py-3 align-middle font-mono text-xs text-secondary transition-colors group-hover:bg-accent/6"><div>{{ display(node.ssh_host) }}:{{ node.ssh_port || 22 }}</div><div class="mt-0.5 text-muted">{{ display(node.ssh_user) }}</div></td>
+                    <td class="border-b border-border-subtle px-3 py-3 align-middle transition-colors group-hover:bg-accent/6">
+                      <div class="flex flex-wrap justify-end gap-1.5">
+                        <Button data-action="toggle-sync" :data-node-id="node.node_id" variant="outline" size="sm" type="button" :disabled="node.node_id === localNodeId" @click="toggleSync(node)"><PbIcon :icon="PhArrowsLeftRight" :size="13" />{{ node.sync_enabled === false ? t('sysmon.enable') : t('sysmon.disable') }}</Button>
+                        <Button variant="secondary" size="sm" type="button" @click="openSettings(node)"><PbIcon :icon="PhGear" :size="13" />{{ t('sysmon.edit') }}</Button>
+                        <Button variant="secondary" size="sm" type="button" @click="joinRemote(node)"><PbIcon :icon="PhLinkSimple" :size="13" />{{ t('sysmon.joinSync') }}</Button>
+                        <Button variant="warning" size="sm" type="button" @click="repairNode(node)"><PbIcon :icon="PhWrench" :size="13" />{{ t('sysmon.repairAllSsh') }}</Button>
+                        <Button data-action="remove-node" :data-node-id="node.node_id" variant="danger" size="sm" type="button" :disabled="node.node_id === localNodeId" @click="openRemove(node)"><PbIcon :icon="PhTrash" :size="13" />{{ t('sysmon.removeNode') }}</Button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>
               </table>
-              <EmptyState v-if="!nodes.length" :title="t('sysmon.noClusterNodes')" />
-            </div>
+                <EmptyState v-if="!nodes.length" :title="t('sysmon.noClusterNodes')" />
+              </div>
+            </article>
           </section>
 
           <!-- ── V7 instances ─────────────────────────────────────── -->
@@ -612,5 +678,34 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
   display: flex;
   min-height: 0;
   flex-direction: column;
+}
+
+.cluster-nodes-workbench {
+  color: var(--text-primary);
+}
+
+.cluster-node-table-wrap {
+  background: var(--surface-panel);
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.cluster-node-table-wrap::-webkit-scrollbar {
+  height: 6px;
+}
+
+.cluster-node-table-wrap::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+}
+
+.cluster-node-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .cluster-nodes-head > span:last-child {
+    align-self: flex-start;
+  }
 }
 </style>

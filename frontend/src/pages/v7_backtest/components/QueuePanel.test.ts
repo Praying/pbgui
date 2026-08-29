@@ -52,6 +52,18 @@ afterEach(() => {
 });
 
 describe('renderQueue (:5136-5177)', () => {
+  it('renders the themed queue hierarchy and status summary', () => {
+    const wrapper = mountPanel();
+    expect(wrapper.find('.queue-workbench-head').text()).toContain('Backtest Queue');
+    expect(wrapper.find('[data-queue-stat="queued"]').text()).toBe('1');
+    expect(wrapper.find('[data-queue-stat="active"]').text()).toBe('2');
+    expect(wrapper.find('[data-queue-stat="complete"]').text()).toBe('1');
+    expect(wrapper.find('[data-queue-stat="attention"]').text()).toBe('1');
+    expect(wrapper.find('.queue-table').classes()).toContain('min-w-[820px]');
+    expect(wrapper.find('[data-test="queue-selected-count"]').text()).toBe('0');
+    wrapper.unmount();
+  });
+
   it('renders one row per item with status badges', () => {
     const wrapper = mountPanel();
     const badges = wrapper.findAll('#queue-list .badge');
@@ -178,6 +190,16 @@ describe('row selection (:5787-5855)', () => {
     await nextTick();
     expect(row.classes()).toContain('selected');
     expect(wrapper.vm.selectedFilenames()).toEqual(['b.json']);
+    wrapper.unmount();
+  });
+
+  it('Enter toggles a focused queue row', async () => {
+    const wrapper = mountPanel();
+    const row = rowByFilename(wrapper, 'b.json');
+    expect(row.attributes('tabindex')).toBe('0');
+    await row.trigger('keydown', { key: 'Enter' });
+    expect(row.classes()).toContain('selected');
+    expect(wrapper.find('[data-test="queue-selected-count"]').text()).toBe('1');
     wrapper.unmount();
   });
 

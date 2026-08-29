@@ -42,6 +42,8 @@ Häufig verwendete PB8-spezifische Backtest-Felder besitzen strukturierte Contro
 
 Die V8-Queue liegt separat unter `data/bt_v8_queue`. **Start** startet `<venv_pb8>/bin/passivbot backtest <snapshot>`. **Stop**, **Restart**, **Delete** und **Clear Finished** betreffen nur V8-Queue-Einträge.
 
+Die Queue-Ansicht beginnt mit Zaehlern fuer wartende, aktive, abgeschlossene und zu pruefende Jobs. Die thematisch einheitliche Tabelle behaelt ihren Kopf sichtbar, scrollt auf schmalen Bildschirmen horizontal, zeigt die aktuelle Anzahl ausgewaehlter Zeilen und unterstuetzt Auswahl per Klick, Klick-Ziehen, **Enter** oder **Leertaste**. Start, Stop, Restart, Results, Log und Remove verwenden die gemeinsamen semantischen Button-Farben.
+
 Laufende Backtests sind unabhängige Jobs. Ein Neustart von PBGui oder ein PB8-Update stoppt sie nicht, und sie blockieren kein Update. Neue Starts bleiben während einer PB8-Installation oder eines Updates in der Queue und laufen danach weiter. Jeder neue Start verwendet die zu diesem Zeitpunkt installierte PB8-Version; Version und Git-Commit werden am Queue-Eintrag gespeichert.
 
 Die Log-Aktion einer Queue-Zeile öffnet `data/logs/backtests_v8/<queue-id>.log`. Fuer einen exakt ausgewaehlten oder laufenden Queue-Eintrag kann PBGui AI die von der Seite angebotene Aktion `show_log` ausfuehren; sie ruft dieselbe vorhandene Log-Funktion auf. Seitenuebergreifende Aktionen navigieren zu PB8 Backtest und warten vor der Ausfuehrung auf dessen Queue-Daten. Die Glocke oben rechts öffnet `PBGui.log`; dort werden die kurzen GUI-Meldungen und Fehler dauerhaft angezeigt, die sonst nach wenigen Sekunden verschwinden. Technische PB8-Backend-Diagnosen bleiben getrennt in `BacktestV8.log` verfügbar.
@@ -49,6 +51,8 @@ Die Log-Aktion einer Queue-Zeile öffnet `data/logs/backtests_v8/<queue-id>.log`
 **Settings** wird über die Queue-Aktionen in der Sidebar geöffnet. Dort können **Start queued jobs automatically**, die Anzahl paralleler Jobs und **Use PBGui Market Data** eingestellt werden. PB7 und PB8 lesen und schreiben diese eine gemeinsame Konfiguration. Der CPU-Wert begrenzt automatische Jobs versionsuebergreifend. Die Marktdatenoption wird unmittelbar vor jedem Start oder Restart auf eine frische Kopie des unveränderlichen Queue-Snapshots angewendet und verändert deshalb nie die gespeicherte Config.
 
 Der Settings-Dialog erscheint sofort mit dem aktuellen Zustand. Verbindliche Host-Werte werden im Hintergrund aktualisiert und nur dann in die sichtbaren Felder uebernommen, wenn sie noch nicht bearbeitet wurden.
+
+Der Dialog gruppiert die Controls in **Queue concurrency**, **Automatic behavior** und **HLCVS Cache Cleanup**. PB7/PB8-CPU-Limit, Autostart und PBGui Market Data bleiben gemeinsame Einstellungen; Cleanup-Optionen bleiben sichtbar deaktiviert, bis Cleanup aktiviert wird, und **Clean Now** behaelt seinen geschuetzten In-Progress-Zustand.
 
 PB8 speichert wiederverwendbare Datensaetze unter `pb8/caches/hlcvs_data` und temporaere materialisierte Runs unter `pb8/caches/ohlcvs/materialized`. Der Cleanup koordiniert sich mit PB8s Root-Operations-Lock und schuetzt aktive lokale Runs, Locks fremder Hosts sowie beschaedigte Locks, deren Sicherheit nicht festgestellt werden kann. Nur alte nicht gesperrte Runs oder Runs mit einem bestaetigt beendeten lokalen Besitzer werden entfernt. Das Ergebnis von **Clean Now** meldet, wie viele gesperrte Verzeichnisse erhalten blieben.
 

@@ -107,6 +107,8 @@ Nach dem Anpassen **Apply Filters** klicken, um die Approved/Ignored-Listen zu a
 
 Zeigt alle ausstehenden, laufenden und abgeschlossenen Backtest-Jobs mit Echtzeit-Updates.
 
+Die Queue-Ansicht beginnt mit Zaehlern fuer wartende, aktive, abgeschlossene und zu pruefende Jobs. Die thematisch einheitliche Tabelle behaelt den Kopf sichtbar, scrollt auf schmalen Bildschirmen horizontal, zeigt die aktuelle Anzahl ausgewaehlter Zeilen und unterstuetzt Auswahl per Klick, Klick-Ziehen, **Enter** oder **Leertaste**. Zeilenaktionen verwenden die gemeinsamen semantischen Button-Farben.
+
 ### Tabellenspalten
 
 | Spalte | Beschreibung |
@@ -148,6 +150,8 @@ Wenn du mehrere abgeschlossene Queue-Zeilen auswählst und **📈 Compare** klic
 ### Einstellungs-Modal
 
 PB7 und PB8 verwenden eine gemeinsame Queue-Settings-Konfiguration. Speichern auf einer der beiden Backtest-Seiten aktualisiert beide Worker. Der CPU-Wert ist ein globales automatisches PB7/PB8-Prozesslimit und keine separate Freigabe pro Version. Der Dialog erscheint sofort mit dem aktuellen Zustand und aktualisiert verbindliche Host-Werte im Hintergrund, ohne Eingaben zu ueberschreiben.
+
+Der Dialog gruppiert die Controls in **Queue concurrency**, **Automatic behavior** und **HLCVS Cache Cleanup**. Cleanup-Felder bleiben sichtbar deaktiviert, bis Cleanup aktiviert wird, und **Clean Now** behaelt seinen geschuetzten In-Progress-Zustand.
 
 Der Queue-Settings-Dialog enthält zusätzlich `Use PBGui Market Data`. Wenn diese Option aktiv ist, setzt PBGui `backtest.ohlcv_source_dir` unmittelbar vor jedem gequeueeten oder manuell gestarteten Backtest auf das aktuelle PBGui-Market-Data-Root um, unabhängig davon, welcher Pfad im Config-Editor gespeichert ist.
 

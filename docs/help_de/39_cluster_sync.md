@@ -294,6 +294,8 @@ Die dedizierte **Cluster Sync**-Seite ist der zentrale Ort zur Überwachung von 
 
 Die Seite ist in Overview, Setup, Nodes, Credentials, V7 State, Tombstones, Retention und Oplog aufgeteilt. Sie aktualisiert lokalen Status, Nodes, Desired State und aktuelle Oplog-Einträge im Hintergrund und ersetzt nur geänderte Karten und Node-Tabellenfelder, statt die ganze Seite neu zu laden.
 
+Die Ansicht **Nodes** beginnt mit Kennzahlen fuer gesamte Mitgliedschaft, Nodes mit aktiviertem Sync, Master-Nodes und Nodes mit SSH-Metadaten. Die Mitgliedstabelle behaelt den Tabellenkopf sichtbar, scrollt auf schmalen Bildschirmen horizontal, markiert den lokalen Node explizit und trennt normale Sync-/Einstellungsaktionen von SSH-Repair und Node-Entfernung. Sync-Umschaltung und Entfernen bleiben fuer den lokalen Node deaktiviert.
+
 Die Seite zeigt:
 
 - Cluster-Identität und lokale Node-Identität

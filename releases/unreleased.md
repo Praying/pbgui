@@ -1,5 +1,13 @@
 # Unreleased
 
+## PBv8 Backtest - Queue and Settings Workbench
+
+- Refined the shared PBv7/PBv8 Backtest Queue with themed job-status summaries, selected-row feedback, a sticky responsive table, semantic row actions, keyboard selection, and a structured empty state. Reorganized the Settings dialog into queue-concurrency, automatic-behavior, and protected-cache-cleanup sections with consistent graphite surfaces, typography, focus treatment, responsive controls, and unchanged queue/runtime settings behavior.
+
+## Cluster Sync - Cluster Nodes Workbench
+
+- Refined the Cluster Nodes view with a themed membership header, operational summary cards, a sticky horizontally scrollable node table, explicit local-node labeling, clearer role/sync-mode/SSH presentation, and grouped maintenance actions while preserving all existing sync, join, repair, settings, and removal behavior.
+
 ## API Keys - HL Warning Configuration Layout
 
 - Reorganized the Hyperliquid Telegram warning settings into separate current-status and warning-window cards with shared graphite surfaces, semantic configured/unconfigured states, a labeled bounded input, daily-reminder guidance, responsive stacking, and save-in-progress feedback without changing the underlying configuration API or fallback behavior.
