@@ -19,6 +19,7 @@
  * degrades to the English fallback literals — the legacy `_t` fallback path.
  */
 import { dashT } from './i18n';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import type { SavedZoom } from './savedZoom';
 import type { IncomeTrace, TopRow } from '../types/widgets';
 
@@ -39,12 +40,22 @@ export interface GdLike {
 
 /* ── shared pieces ── */
 
-const PAPER_BG = '#10141d';
-const AXIS_GRID = '#333f5c';
-const AXIS_TEXT = '#e8ecf4';
-const POS_COLOR = '#46c88f';
-const NEG_COLOR = '#e5615c';
-const LINE_COLOR = '#72a0ee';
+const PAPER_BG = PRECISION_PALETTE.surface.deep;
+const AXIS_GRID = PRECISION_PALETTE.border.default;
+const AXIS_TEXT = PRECISION_PALETTE.text.primary;
+const POS_COLOR = PRECISION_PALETTE.success.base;
+const NEG_COLOR = PRECISION_PALETTE.danger.base;
+const LINE_COLOR = PRECISION_PALETTE.accent.base;
+const INCOME_LINE_COLORS = [
+  PRECISION_PALETTE.accent.base,
+  PRECISION_PALETTE.success.base,
+  PRECISION_PALETTE.warning.base,
+  PRECISION_PALETTE.danger.base,
+  PRECISION_PALETTE.accent.soft,
+  PRECISION_PALETTE.success.soft,
+  PRECISION_PALETTE.warning.soft,
+  PRECISION_PALETTE.danger.soft,
+] as const;
 
 function baseLayout(xaxis: AxisLayout, marginBottom: number): PlotlyLayout {
   return {
@@ -57,7 +68,7 @@ function baseLayout(xaxis: AxisLayout, marginBottom: number): PlotlyLayout {
       gridcolor: AXIS_GRID,
       color: AXIS_TEXT,
       zeroline: true,
-      zerolinecolor: '#4d5c82',
+      zerolinecolor: PRECISION_PALETTE.border.strong,
     },
     bargap: 0.3,
     autosize: true,
@@ -180,7 +191,7 @@ export function pplTraces(bars: PplBar[]): PlotlyTrace[] {
       y: profits,
       type: 'bar',
       name: nameProfits,
-      marker: { color: '#46c88f' },
+      marker: { color: POS_COLOR },
       text: textOf(profits),
       textposition: 'outside',
       hovertemplate: `<b>%{x}</b><br>${nameProfits}: %{y:.2f}<extra></extra>`,
@@ -190,7 +201,7 @@ export function pplTraces(bars: PplBar[]): PlotlyTrace[] {
       y: losses,
       type: 'bar',
       name: nameLosses,
-      marker: { color: '#e5615c' },
+      marker: { color: NEG_COLOR },
       text: textOf(losses),
       textposition: 'outside',
       hovertemplate: `<b>%{x}</b><br>${nameLosses}: %{y:.2f}<extra></extra>`,
@@ -205,7 +216,7 @@ export function pplLayout(height: number | null, bars: PplBar[]): PlotlyLayout {
     gridcolor: AXIS_GRID,
     color: AXIS_TEXT,
     zeroline: true,
-    zerolinecolor: '#4d5c82',
+    zerolinecolor: PRECISION_PALETTE.border.strong,
   };
   if (allVals.length > 0) {
     const yMin = Math.min(...allVals);
@@ -236,13 +247,14 @@ export function pplLayout(height: number | null, bars: PplBar[]): PlotlyLayout {
  * initial build): scatter/lines/showlegend, name from the server.
  */
 export function incomeTraces(traces: IncomeTrace[]): PlotlyTrace[] {
-  return traces.map((t) => ({
-    x: t.x,
-    y: t.y,
-    name: t.name,
+  return traces.map((trace, index) => ({
+    x: trace.x,
+    y: trace.y,
+    name: trace.name,
     type: 'scatter',
     mode: 'lines',
     showlegend: true,
+    line: { color: INCOME_LINE_COLORS[index % INCOME_LINE_COLORS.length] },
   }));
 }
 
@@ -261,7 +273,7 @@ export function incomeLayout(height: number | null): PlotlyLayout {
     margin: { l: 55, r: 15, t: 40, b: 40 },
     autosize: true,
     xaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT },
-    yaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT, zeroline: true, zerolinecolor: '#4d5c82' },
+    yaxis: { gridcolor: AXIS_GRID, color: AXIS_TEXT, zeroline: true, zerolinecolor: PRECISION_PALETTE.border.strong },
     legend: { bgcolor: 'rgba(5, 8, 14,0)', font: { size: 10, color: AXIS_TEXT } },
     transition: { duration: 0, easing: 'linear' },
   };

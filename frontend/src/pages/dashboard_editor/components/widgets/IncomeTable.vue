@@ -569,7 +569,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- confirm overlay (render.js:1331-1335, 1351-1376) -->
-    <div v-show="confirmMsg !== ''" class="di-confirm absolute inset-0 z-[100] flex flex-col items-center justify-center gap-[0.8rem] bg-[rgba(5,8,14,0.85)] p-[1.5rem] text-center">
+    <div v-show="confirmMsg !== ''" class="di-confirm absolute inset-0 z-[100] flex flex-col items-center justify-center gap-[0.8rem] bg-[var(--bg-backdrop)] p-[1.5rem] text-center">
       <div class="di-confirm-msg max-w-[90%] text-[0.85rem] text-warning-soft">{{ confirmMsg }}</div>
       <div class="di-confirm-btns flex gap-[0.8rem]">
         <Button type="button" size="sm" variant="success" class="di-btn di-btn-yes" @click="onConfirmYes">

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import {
   liveAgeText,
   liveBadgeText,
@@ -15,44 +16,44 @@ import { setDashTranslator } from './i18n';
 
 describe('tweColor (render.js:372)', () => {
   it('is green below 100', () => {
-    expect(tweColor(-50)).toBe('#46c88f');
-    expect(tweColor(0)).toBe('#46c88f');
-    expect(tweColor(99.99)).toBe('#46c88f');
+    expect(tweColor(-50)).toBe(PRECISION_PALETTE.success.base);
+    expect(tweColor(0)).toBe(PRECISION_PALETTE.success.base);
+    expect(tweColor(99.99)).toBe(PRECISION_PALETTE.success.base);
   });
 
   it('is orange from 100 up to 200', () => {
-    expect(tweColor(100)).toBe('#e0a458');
-    expect(tweColor(199.99)).toBe('#e0a458');
+    expect(tweColor(100)).toBe(PRECISION_PALETTE.warning.base);
+    expect(tweColor(199.99)).toBe(PRECISION_PALETTE.warning.base);
   });
 
   it('is red from 200 up', () => {
-    expect(tweColor(200)).toBe('#e5615c');
-    expect(tweColor(1000)).toBe('#e5615c');
+    expect(tweColor(200)).toBe(PRECISION_PALETTE.danger.base);
+    expect(tweColor(1000)).toBe(PRECISION_PALETTE.danger.base);
   });
 
   it('treats NaN as red (legacy: all comparisons false)', () => {
-    expect(tweColor(Number.NaN)).toBe('#e5615c');
+    expect(tweColor(Number.NaN)).toBe(PRECISION_PALETTE.danger.base);
   });
 
   it('treats Infinity as red', () => {
-    expect(tweColor(Number.POSITIVE_INFINITY)).toBe('#e5615c');
+    expect(tweColor(Number.POSITIVE_INFINITY)).toBe(PRECISION_PALETTE.danger.base);
   });
 });
 
 describe('upnlColor (render.js:373)', () => {
   it('is green for zero and positive', () => {
-    expect(upnlColor(0)).toBe('#46c88f');
-    expect(upnlColor(-0)).toBe('#46c88f');
-    expect(upnlColor(12.34)).toBe('#46c88f');
+    expect(upnlColor(0)).toBe(PRECISION_PALETTE.success.base);
+    expect(upnlColor(-0)).toBe(PRECISION_PALETTE.success.base);
+    expect(upnlColor(12.34)).toBe(PRECISION_PALETTE.success.base);
   });
 
   it('is red for negative', () => {
-    expect(upnlColor(-0.01)).toBe('#e5615c');
-    expect(upnlColor(-500)).toBe('#e5615c');
+    expect(upnlColor(-0.01)).toBe(PRECISION_PALETTE.danger.base);
+    expect(upnlColor(-500)).toBe(PRECISION_PALETTE.danger.base);
   });
 
   it('treats NaN as red (NaN >= 0 is false)', () => {
-    expect(upnlColor(Number.NaN)).toBe('#e5615c');
+    expect(upnlColor(Number.NaN)).toBe(PRECISION_PALETTE.danger.base);
   });
 });
 
@@ -100,36 +101,36 @@ describe('signedFmt (render.js:398)', () => {
 
 describe('positionEntryColor (render.js:375-382)', () => {
   it('is gray when entryPrice is falsy', () => {
-    expect(positionEntryColor(100, undefined)).toBe('#a3adc2');
-    expect(positionEntryColor(100, null)).toBe('#a3adc2');
-    expect(positionEntryColor(100, 0)).toBe('#a3adc2');
+    expect(positionEntryColor(100, undefined)).toBe(PRECISION_PALETTE.text.secondary);
+    expect(positionEntryColor(100, null)).toBe(PRECISION_PALETTE.text.secondary);
+    expect(positionEntryColor(100, 0)).toBe(PRECISION_PALETTE.text.secondary);
   });
 
   it('long: profit when last >= entry', () => {
-    expect(positionEntryColor(101, 100, 'long')).toBe('#46c88f');
-    expect(positionEntryColor(100, 100, 'long')).toBe('#46c88f');
-    expect(positionEntryColor(99, 100, 'long')).toBe('#e5615c');
+    expect(positionEntryColor(101, 100, 'long')).toBe(PRECISION_PALETTE.success.base);
+    expect(positionEntryColor(100, 100, 'long')).toBe(PRECISION_PALETTE.success.base);
+    expect(positionEntryColor(99, 100, 'long')).toBe(PRECISION_PALETTE.danger.base);
   });
 
   it('defaults to long when side is missing or empty', () => {
-    expect(positionEntryColor(101, 100)).toBe('#46c88f');
-    expect(positionEntryColor(99, 100, '')).toBe('#e5615c');
+    expect(positionEntryColor(101, 100)).toBe(PRECISION_PALETTE.success.base);
+    expect(positionEntryColor(99, 100, '')).toBe(PRECISION_PALETTE.danger.base);
   });
 
   it('short: profit when last <= entry', () => {
-    expect(positionEntryColor(99, 100, 'short')).toBe('#46c88f');
-    expect(positionEntryColor(100, 100, 'short')).toBe('#46c88f');
-    expect(positionEntryColor(101, 100, 'short')).toBe('#e5615c');
+    expect(positionEntryColor(99, 100, 'short')).toBe(PRECISION_PALETTE.success.base);
+    expect(positionEntryColor(100, 100, 'short')).toBe(PRECISION_PALETTE.success.base);
+    expect(positionEntryColor(101, 100, 'short')).toBe(PRECISION_PALETTE.danger.base);
   });
 
   it('normalizes side case', () => {
-    expect(positionEntryColor(99, 100, 'SHORT')).toBe('#46c88f');
-    expect(positionEntryColor(101, 100, 'Long')).toBe('#46c88f');
+    expect(positionEntryColor(99, 100, 'SHORT')).toBe(PRECISION_PALETTE.success.base);
+    expect(positionEntryColor(101, 100, 'Long')).toBe(PRECISION_PALETTE.success.base);
   });
 
   it('treats unknown side values as long (loss when last < entry)', () => {
-    expect(positionEntryColor(101, 100, 'sideways')).toBe('#46c88f');
-    expect(positionEntryColor(99, 100, 'sideways')).toBe('#e5615c');
+    expect(positionEntryColor(101, 100, 'sideways')).toBe(PRECISION_PALETTE.success.base);
+    expect(positionEntryColor(99, 100, 'sideways')).toBe(PRECISION_PALETTE.danger.base);
   });
 });
 

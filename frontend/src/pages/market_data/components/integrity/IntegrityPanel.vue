@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
   background:
     radial-gradient(circle at 92% 0%, rgb(var(--accent-rgb) / 0.12), transparent 30%),
     linear-gradient(135deg, rgb(var(--bg-panel-rgb) / 1), rgb(var(--bg-page-rgb) / 0.96));
-  box-shadow: 0 22px 46px rgb(2 8 14 / 0.3), 0 1px 0 rgb(224 241 255 / 0.1) inset;
+  box-shadow: 0 22px 46px rgb(0 0 0 / 0.3), 0 1px 0 rgb(255 255 255 / 0.1) inset;
 }
 
 .integrity-overview-card::before {
@@ -204,7 +204,7 @@ onBeforeUnmount(() => {
   border: 1px solid rgb(var(--accent-rgb) / 0.18);
   border-radius: var(--radius-lg);
   background: rgb(var(--bg-page-rgb) / 0.38);
-  box-shadow: 0 1px 0 rgb(224 241 255 / 0.06) inset;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset;
 }
 
 .integrity-command-label,

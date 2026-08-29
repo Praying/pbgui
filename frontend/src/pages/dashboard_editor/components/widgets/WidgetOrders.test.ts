@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
@@ -49,6 +50,13 @@ interface LwcEnv {
     subscribeVisibleLogicalRangeChange: ReturnType<typeof vi.fn>;
     unsubscribeVisibleLogicalRangeChange: ReturnType<typeof vi.fn>;
   };
+}
+
+function cssRgb(hexColor: string): string {
+  const red = Number.parseInt(hexColor.slice(1, 3), 16);
+  const green = Number.parseInt(hexColor.slice(3, 5), 16);
+  const blue = Number.parseInt(hexColor.slice(5, 7), 16);
+  return `rgb(${red}, ${green}, ${blue})`;
 }
 
 function installLwc(): LwcEnv {
@@ -317,7 +325,8 @@ describe('WidgetOrders — selection linkage (editor:2135-2151)', () => {
     expect(legend).toEqual(['Entry', 'Price', 'Buy Order', 'Sell Order']);
     const swatches = wrapper.findAll('.do-leg-solid, .do-leg-dotted, .do-leg-dashed');
     expect(swatches.map((s) => (s.element as HTMLElement).style.borderColor)).toEqual([
-      'rgb(163, 173, 194)', 'rgb(163, 173, 194)', 'rgb(70, 200, 143)', 'rgb(229, 97, 92)',
+      cssRgb(PRECISION_PALETTE.text.secondary), cssRgb(PRECISION_PALETTE.text.secondary),
+      cssRgb(PRECISION_PALETTE.success.base), cssRgb(PRECISION_PALETTE.danger.base),
     ]);
     /* fullscreen toolbar (render.js:3743-3751) */
     expect(wrapper.get('.do-fs-btn').text()).toBe('⛶');

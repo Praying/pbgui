@@ -22,6 +22,9 @@ function readComponent(name: string): string {
   return readFileSync(resolve(pageRoot, 'components', name), 'utf8');
 }
 
+const legacyPanel = readComponent('LegacyPanel.vue');
+const archivePanel = readComponent('ArchivePanel.vue');
+
 function normalize(value: string): string {
   return value.replace(/\s+/g, ' ').trim();
 }
@@ -62,6 +65,33 @@ function expectDeclaration(rule: Rule, property: string, value: string): void {
 
 /** Regression contracts for the shared editor form contract + grids. */
 describe('PBv7 config editor CSS contracts', () => {
+  it('uses neutral shared elevation for Legacy and Archive fixed headers', () => {
+    expect(legacyPanel).toContain('shadow-[var(--shadow-panel)]');
+    expect(archivePanel).toContain('shadow-[var(--shadow-panel)]');
+    expect(legacyPanel).not.toContain('shadow-[0_4px_12px_rgba(5,8,14,0.6)]');
+    expect(archivePanel).not.toContain('shadow-[0_4px_12px_rgba(5,8,14,0.6)]');
+  });
+
+  it('uses the shared palette without a Backtest-wide color override', () => {
+    expect(css).not.toContain(':root {');
+    expect(css).not.toContain('#0b111b');
+    expect(css).not.toContain('#141e2b');
+    expect(css).not.toContain('#26364a');
+    expect(css).not.toContain('#e7edf6');
+    expect(css).toContain('color: var(--accent-contrast)');
+    expect(css).toContain('background: var(--success)');
+  });
+
+  it('uses shared elevation for the active data-tip tooltip', () => {
+    expectDeclaration(
+      findRule(root, '#data-tip-tooltip'),
+      'box-shadow',
+      'var(--shadow-elevated)',
+    );
+    expect(css).not.toContain('rgba(5, 8, 14');
+    expect(css).not.toContain('rgba(5,8,14');
+  });
+
   it('keeps the shared frontend typography scale canonical', () => {
     expect(sharedCss).toContain('--text-xs: 12px;');
     expect(sharedCss).toContain('--text-sm: 14px;');

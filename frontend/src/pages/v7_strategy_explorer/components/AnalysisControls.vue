@@ -36,7 +36,7 @@ function onChangeSource(): void {
 <template>
   <section
     id="shared-analysis-controls"
-    class="pbgui-card border border-accent/16 rounded-[11px] bg-panel bg-[linear-gradient(90deg,rgb(var(--bg-panel-rgb)/0.76),rgb(var(--bg-page-rgb)/0.72))] py-3.25 px-3.5 shadow-[0_12px_28px_rgba(5,8,14,0.14),0_1px_rgba(255,255,255,0.025)_inset]"
+    class="pbgui-card border border-accent/16 rounded-[11px] bg-panel bg-[linear-gradient(90deg,rgb(var(--bg-panel-rgb)/0.76),rgb(var(--bg-page-rgb)/0.72))] py-3.25 px-3.5 shadow-[var(--shadow-panel)]"
   >
     <div class="grid items-end gap-2.25 grid-cols-[minmax(170px,1.2fr)_minmax(120px,0.8fr)_minmax(120px,0.8fr)_minmax(130px,0.8fr)_minmax(105px,0.6fr)_minmax(120px,0.7fr)_minmax(100px,0.6fr)_minmax(150px,0.9fr)] max-[1250px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[1180px]:grid-cols-[repeat(4,minmax(0,1fr))] max-[640px]:grid-cols-[repeat(2,minmax(0,1fr))]">
       <div class="flex flex-col gap-0.75">

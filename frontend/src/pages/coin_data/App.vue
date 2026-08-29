@@ -473,11 +473,10 @@ onBeforeUnmount(() => {
 
 /* ── Page root chrome ──────────────────────────────────────────
    Only the declarations that differ from the shared base layer stay:
-   the page's overflow lock and its Segoe-UI-led font stack. */
+   the page's overflow lock. Typography inherits from the shared base. */
 html,
 body {
   overflow: hidden;
-  font-family: 'Segoe UI', system-ui, sans-serif, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
 }
 </style>
 
@@ -486,16 +485,16 @@ body {
    the Tailwind migration. The :deep() rules target AppShell internals,
    so they stay as CSS instead of utilities. */
 .data-page-shell--coin-data {
-  --coin-page: #0d151e;
-  --coin-workspace: #111c27;
-  --coin-control: #172634;
-  --coin-data: #13212d;
-  --coin-header: #0e1924;
-  --coin-input: #142331;
-  --coin-border: rgb(157 191 226 / 0.14);
-  --coin-border-strong: rgb(157 191 226 / 0.24);
-  --coin-row-hover: rgb(155 191 255 / 0.055);
-  --coin-row-selected: rgb(155 191 255 / 0.11);
+  --coin-page: var(--surface-page);
+  --coin-workspace: var(--surface-workspace);
+  --coin-control: var(--surface-card);
+  --coin-data: var(--surface-panel);
+  --coin-header: var(--color-deep);
+  --coin-input: var(--bg-input);
+  --coin-border: var(--border-subtle);
+  --coin-border-strong: var(--border-strong);
+  --coin-row-hover: rgb(var(--accent-rgb) / 0.055);
+  --coin-row-selected: rgb(var(--accent-rgb) / 0.11);
 }
 
 .data-page-shell--coin-data :deep(.app-shell__workspace) {
@@ -503,7 +502,7 @@ body {
 }
 
 .data-page-shell--coin-data :deep(.workspace-header) {
-  background: linear-gradient(180deg, #13202c, var(--coin-workspace));
+  background: linear-gradient(180deg, var(--color-deep), var(--coin-workspace));
 }
 
 .coin-data-page-body,
@@ -528,19 +527,19 @@ body {
   border-color: var(--coin-border);
   background: var(--coin-data);
   box-shadow:
-    0 18px 34px rgb(2 8 14 / 0.2),
-    0 1px 0 rgb(224 241 255 / 0.045) inset;
+    0 18px 34px rgb(0 0 0 / 0.2),
+    0 1px 0 rgb(255 255 255 / 0.045) inset;
 }
 
 .coin-data-panel-head {
   border-color: var(--coin-border);
   background: var(--coin-header);
-  box-shadow: 0 1px 0 rgb(224 241 255 / 0.035) inset;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.035) inset;
 }
 
 .coin-data-sort-pill {
   border-color: var(--coin-border);
-  background: rgb(155 191 255 / 0.055);
+  background: rgb(var(--accent-rgb) / 0.055);
 }
 
 .data-page-shell--coin-data :deep(.workspace-header__actions button:disabled) {

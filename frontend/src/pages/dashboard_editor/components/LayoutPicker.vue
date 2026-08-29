@@ -53,12 +53,12 @@ function pick(lt: LayoutPreset): void {
             v-for="i in lt.cols * lt.rows"
             :key="i"
             class="lt-cell min-h-0 rounded-[1px]"
-            :class="isActive(lt) ? 'bg-accent-soft' : 'bg-secondary'"
+            :class="isActive(lt) ? 'bg-accent/60' : 'bg-border-default'"
           ></div>
         </div>
       </div>
     </div>
-    <div class="lt-sep mx-[0.1rem] w-px self-stretch bg-secondary"></div>
+    <div class="lt-sep mx-[0.1rem] w-px self-stretch bg-border-default"></div>
     <div class="lt-group flex flex-col gap-[0.25rem]">
       <div class="lt-lbl pb-[0.1rem] text-xs uppercase tracking-[0.04em] text-secondary whitespace-nowrap">{{ dashT('dash.twoCols', '2 COLS') }}</div>
       <div class="lt-thumbs flex gap-[0.3rem]">
@@ -77,7 +77,7 @@ function pick(lt: LayoutPreset): void {
             v-for="i in lt.cols * lt.rows"
             :key="i"
             class="lt-cell min-h-0 rounded-[1px]"
-            :class="isActive(lt) ? 'bg-accent-soft' : 'bg-secondary'"
+            :class="isActive(lt) ? 'bg-accent/60' : 'bg-border-default'"
           ></div>
         </div>
       </div>

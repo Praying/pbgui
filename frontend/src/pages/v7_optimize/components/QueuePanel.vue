@@ -32,7 +32,7 @@ function statusClass(row: QueueItem): string {
   const status = String(row.status || 'queued').toLowerCase();
   if (status === 'complete') return 'bg-success/15 text-success';
   if (status === 'error') return 'bg-danger/15 text-danger';
-  if (status === 'running' || status === 'optimizing') return 'bg-warning/15 text-[#d0a36f]';
+  if (status === 'running' || status === 'optimizing') return 'bg-warning/15 text-warning-soft';
   return 'bg-secondary/15 text-secondary';
 }
 const wrap = ref<HTMLElement | null>(null);

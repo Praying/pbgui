@@ -1,4 +1,6 @@
 <script lang="ts">
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
+
 /*
  * Page-global prices overlay, ported 1:1 from the Prices Overlay IIFE of
  * frontend/services_monitor.html (openPricesOverlay/closePricesOverlay/
@@ -49,8 +51,8 @@ export function fmtAge(ts: number | string | null | undefined): string {
  */
 export function ageCol(ts: number | string | null | undefined): string {
   const s = ageSeconds(ts);
-  if (s == null) return '#4d5c82';
-  return s < 60 ? '#46c88f' : s < 300 ? '#e0a458' : '#e5615c';
+  if (s == null) return PRECISION_PALETTE.text.muted;
+  return s < 60 ? PRECISION_PALETTE.success.base : s < 300 ? PRECISION_PALETTE.warning.base : PRECISION_PALETTE.danger.base;
 }
 </script>
 
@@ -251,7 +253,7 @@ defineExpose({
   background: var(--bg-page);
   border: 1px solid var(--border-default);
   border-radius: 10px;
-  box-shadow: 0 8px 40px rgba(5, 8, 14, 0.7);
+  box-shadow: var(--shadow-modal);
   flex-direction: column;
   resize: both;
   overflow: hidden;

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createI18n } from '@/shared/i18n';
 import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
@@ -16,6 +18,11 @@ vi.mock('@/shared/boot', () => ({
 }));
 
 const fetchMock = vi.fn();
+
+const appSource = readFileSync(resolve(import.meta.dirname, 'App.vue'), 'utf8');
+const analysisControlsSource = readFileSync(resolve(import.meta.dirname, 'components/AnalysisControls.vue'), 'utf8');
+const explorerPlotSource = readFileSync(resolve(import.meta.dirname, 'components/ExplorerPlot.vue'), 'utf8');
+const datePickerSource = readFileSync(resolve(import.meta.dirname, 'lib/datePicker.ts'), 'utf8');
 
 const SNAPSHOT = {
   title: 'My Config',
@@ -202,5 +209,31 @@ describe('stage switching (:3066-3079)', () => {
     await wrapper.find('[data-testid="rail-section-analysis"]').trigger('click');
     expect((wrapper.get('#stage-analysis').element as HTMLElement).classList.contains('active')).toBe(true);
     wrapper.unmount();
+  });
+});
+
+describe('Strategy Explorer precision palette source contracts', () => {
+  it('uses shared panel and elevated shadow roles', () => {
+    expect(analysisControlsSource).toContain('shadow-[var(--shadow-panel)]');
+    expect(explorerPlotSource).toContain('shadow-[var(--shadow-panel)]');
+    expect(appSource).toContain('shadow-[var(--shadow-elevated)]');
+
+    for (const source of [analysisControlsSource, explorerPlotSource, appSource]) {
+      expect(source).not.toContain('rgba(5,8,14');
+      expect(source).not.toContain('rgba(5, 8, 14');
+    }
+  });
+
+  it('uses canonical date-picker roles and approved neutral shadows', () => {
+    expect(datePickerSource).toContain('var(--bg-panel)');
+    expect(datePickerSource).toContain('var(--bg-elevated)');
+    expect(datePickerSource).toContain('var(--border-default)');
+    expect(datePickerSource).toContain('var(--text-primary)');
+    expect(datePickerSource).toContain('var(--text-muted)');
+    expect(datePickerSource).toContain('var(--accent)');
+    expect(datePickerSource).toContain('var(--accent-contrast)');
+    expect(datePickerSource).toContain('box-shadow:0 8px 18px rgb(0 0 0 / 0.55)');
+    expect(datePickerSource).toContain('box-shadow:0 6px 24px rgb(0 0 0 / 0.7)');
+    expect(datePickerSource).not.toContain('#72a0ee');
   });
 });

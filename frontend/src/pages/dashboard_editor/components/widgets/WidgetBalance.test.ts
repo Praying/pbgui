@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
@@ -30,6 +31,13 @@ const PAYLOAD = {
 };
 
 const attached: HTMLElement[] = [];
+
+function rgbColorFromHex(hexColor: string): string {
+  const red = Number.parseInt(hexColor.slice(1, 3), 16);
+  const green = Number.parseInt(hexColor.slice(3, 5), 16);
+  const blue = Number.parseInt(hexColor.slice(5, 7), 16);
+  return `rgb(${red}, ${green}, ${blue})`;
+}
 
 function mountBalance(options: {
   config?: Record<string, unknown>;
@@ -148,13 +156,15 @@ describe('WidgetBalance', () => {
     expect(tds[1]!.text()).toBe('2025-01-01 10:00:00');
     expect(tds[2]!.text()).toBe('1000.00');
     expect(tds[3]!.text()).toBe('+12.50');
-    expect(tds[3]!.attributes('style')).toContain('rgb(70, 200, 143)'); /* #46c88f */
+    expect(tds[3]!.attributes('style')).toContain(rgbColorFromHex(PRECISION_PALETTE.success.base));
     expect(tds[4]!.find('.db-twe-lbl').text()).toBe('95.00');
     expect(tds[4]!.find('.db-twe-fill').attributes('style')).toContain('scaleX(0.317)');
     /* we 250 → 83.3% bar in red (tweBarPct cap only at 300; tweColor <100/<200) */
     const tds2 = trs[1]!.findAll('td');
     expect(tds2[4]!.find('.db-twe-fill').attributes('style')).toContain('scaleX(0.833)');
-    expect(tds2[4]!.find('.db-twe-lbl').attributes('style')).toContain('rgb(229, 97, 92)'); /* #e5615c */
+    expect(tds2[4]!.find('.db-twe-lbl').attributes('style')).toContain(
+      rgbColorFromHex(PRECISION_PALETTE.danger.base)
+    );
   });
 
   it('shows the no-data state for empty rows (render.js:557-564)', async () => {
@@ -222,7 +232,7 @@ describe('WidgetBalance', () => {
     /* live source colors the status line green (editor:1149, _setSourceStatus) */
     const status = wrapper.get('.db-status');
     expect(status.text()).toBe('Live: now');
-    expect(status.attributes('style')).toContain('rgb(70, 200, 143)'); /* #46c88f */
+    expect(status.attributes('style')).toContain(rgbColorFromHex(PRECISION_PALETTE.success.base));
   });
 
   it('does not poll for ALL users (editor:1128)', async () => {

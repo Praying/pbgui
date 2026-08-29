@@ -59,7 +59,7 @@ function syncScroll(event: Event): void {
       <!-- ui-migration: Textarea keeps the overlay-critical metrics
            (p-2.5 / text-xs / leading-[1.45] / whitespace-pre-wrap /
            bg-transparent) — the highlight <pre> behind it aligns to them. -->
-      <Textarea class="opt-bot-json-input absolute inset-0 z-[1] box-border h-full min-h-0 resize-y overflow-auto whitespace-pre-wrap bg-transparent p-2.5 text-xs leading-[1.45] caret-[#e8ecf4]" :aria-label="label" :model-value="modelValue" spellcheck="false" @update:model-value="emit('update:modelValue', String($event ?? ''))" @scroll="syncScroll" /></div>
+      <Textarea class="opt-bot-json-input absolute inset-0 z-[1] box-border h-full min-h-0 resize-y overflow-auto whitespace-pre-wrap bg-transparent p-2.5 text-xs leading-[1.45] caret-primary" :aria-label="label" :model-value="modelValue" spellcheck="false" @update:model-value="emit('update:modelValue', String($event ?? ''))" @scroll="syncScroll" /></div>
   </div>
 </template>
 
@@ -81,6 +81,6 @@ function syncScroll(event: Event): void {
   border-radius: 2px;
 }
 
-.opt-bot-json-legend [data-status='neutralized'] { color: #d0a36f; }
+.opt-bot-json-legend [data-status='neutralized'] { color: var(--warning-soft); }
 .opt-bot-json-legend [data-status='pb_default'] { color: var(--danger); }
 </style>

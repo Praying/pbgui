@@ -10,15 +10,16 @@
  * fallback literals — the exact legacy fallback path.
  */
 import { dashT } from './i18n';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 
 /** TWE value → color: <100 green, <200 orange, else red. */
 export function tweColor(v: number): string {
-  return v < 100 ? '#46c88f' : v < 200 ? '#e0a458' : '#e5615c';
+  return v < 100 ? PRECISION_PALETTE.success.base : v < 200 ? PRECISION_PALETTE.warning.base : PRECISION_PALETTE.danger.base;
 }
 
 /** uPnL ≥ 0 green, else red. */
 export function upnlColor(v: number): string {
-  return v >= 0 ? '#46c88f' : '#e5615c';
+  return v >= 0 ? PRECISION_PALETTE.success.base : PRECISION_PALETTE.danger.base;
 }
 
 /** Entry-price line color: gray without an entry, profit/loss aware with one. */
@@ -27,10 +28,10 @@ export function positionEntryColor(
   entryPrice: number | null | undefined,
   side?: string | null
 ): string {
-  if (!entryPrice) return '#a3adc2';
+  if (!entryPrice) return PRECISION_PALETTE.text.secondary;
   const normalizedSide = String(side || 'long').toLowerCase();
   const isProfit = normalizedSide === 'short' ? lastPrice <= entryPrice : lastPrice >= entryPrice;
-  return isProfit ? '#46c88f' : '#e5615c';
+  return isProfit ? PRECISION_PALETTE.success.base : PRECISION_PALETTE.danger.base;
 }
 
 /** "now" / "5s ago" / "2m ago" / "1h ago" — legacy ts || now quirk preserved. */
@@ -98,7 +99,7 @@ export function liveBadgeText(lastTs: number, now: number = Date.now()): string 
 
 /** editor _setSourceStatus color rule: green only for live sources. */
 export function liveStatusColor(source?: string | null): string {
-  return String(source || '').toLowerCase() === 'live' ? '#46c88f' : '';
+  return String(source || '').toLowerCase() === 'live' ? PRECISION_PALETTE.success.base : '';
 }
 
 /**

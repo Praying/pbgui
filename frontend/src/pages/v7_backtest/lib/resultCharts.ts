@@ -10,6 +10,7 @@ import {
   rollingDrawdown,
 } from './resultsModel';
 import { plotlyFullscreenConfig, type PlotlyConfig, type PlotlyLayout, type PlotlyTrace } from './plotlyVendor';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import type { BacktestResultItem, BacktestVersion, BeSeries, ParsedCsv, PricePayload } from '../types';
 
 /**
@@ -27,19 +28,34 @@ export function chartTitle(result: BacktestResultItem, t: (iso: string) => strin
 }
 
 /**
- * Deep-space dark-theme chart constants — mirror the tokens.css palette as
- * literals because Plotly resolves colors directly (no CSS var support).
+ * Plotly resolves colors directly, so chart constants come from the shared
+ * static bridge rather than runtime CSS parsing.
  */
-export const CHART_BG = '#0b111b'; // var(--bg-page)
-export const CHART_TEXT = '#e7edf6'; // var(--text-primary)
-export const CHART_GRID = '#26364a'; // var(--border-default)
+export const CHART_BG = PRECISION_PALETTE.surface.deep;
+export const CHART_TEXT = PRECISION_PALETTE.text.primary;
+export const CHART_GRID = PRECISION_PALETTE.border.default;
+const CHART_FONT_FAMILY = "'Space Grotesk', 'Segoe UI', system-ui, sans-serif";
+const SERIES_COLORS = [
+  PRECISION_PALETTE.accent.base,
+  PRECISION_PALETTE.success.base,
+  PRECISION_PALETTE.warning.base,
+  PRECISION_PALETTE.danger.base,
+  PRECISION_PALETTE.accent.soft,
+  PRECISION_PALETTE.success.soft,
+  PRECISION_PALETTE.warning.soft,
+  PRECISION_PALETTE.danger.soft,
+] as const;
+
+function seriesColor(index: number): string {
+  return SERIES_COLORS[index % SERIES_COLORS.length]!;
+}
 
 /** _chartLayout (:7212-7224). */
 export function chartLayout(title: string, yTitle: string): PlotlyLayout {
   return {
     paper_bgcolor: CHART_BG,
     plot_bgcolor: CHART_BG,
-    font: { color: CHART_TEXT, size: 12, family: 'Source Sans Pro, sans-serif' },
+    font: { color: CHART_TEXT, size: 12, family: CHART_FONT_FAMILY },
     margin: { l: 60, r: 20, t: 40, b: 40 },
     title: { text: title, x: 0.5, font: { size: 14 } },
     xaxis: { gridcolor: CHART_GRID, griddash: 'dot', showgrid: true },
@@ -68,15 +84,15 @@ export function beChartTraces(be: BeSeries, options: { isBtc: boolean }): Plotly
   const balance = options.isBtc ? be.balance_btc : be.balance;
   const equity = options.isBtc ? be.equity_btc : be.equity;
   return [
-    { x: be.time, y: equity, name: options.isBtc ? 'equity_btc' : 'equity', line: { width: 0.75 } },
-    { x: be.time, y: balance, name: options.isBtc ? 'balance_btc' : 'balance', line: { width: 2.5 } },
+    { x: be.time, y: equity, name: options.isBtc ? 'equity_btc' : 'equity', line: { color: PRECISION_PALETTE.accent.base, width: 0.75 } },
+    { x: be.time, y: balance, name: options.isBtc ? 'balance_btc' : 'balance', line: { color: PRECISION_PALETTE.success.base, width: 2.5 } },
   ];
 }
 
 /** renderBEChart's drawdown traces (:6990). */
 export function drawdownTraces(be: BeSeries, options: { isBtc: boolean }): PlotlyTrace[] {
   const equity = options.isBtc ? be.equity_btc : be.equity;
-  return [{ x: be.time, y: drawdownSeries(equity), name: 'Drawdown', line: { width: 1.5 }, showlegend: true }];
+  return [{ x: be.time, y: drawdownSeries(equity), name: 'Drawdown', line: { color: PRECISION_PALETTE.danger.base, width: 1.5 }, showlegend: true }];
 }
 
 /** The close-price overlay trace (:7005-7013). */
@@ -87,7 +103,7 @@ export function priceOverlayTrace(price: PricePayload): PlotlyTrace {
     name: `${price.exchange ?? ''} / ${price.coin ?? ''} close`,
     mode: 'lines',
     yaxis: 'y2',
-    line: { color: 'rgba(155, 142, 222, 0.7)', width: 1.25, dash: 'dot' }, // soft violet (#9b8ede @ 0.7)
+    line: { color: PRECISION_PALETTE.accent.soft, width: 1.25, dash: 'dot' },
     hovertemplate: '%{y:.8g}<extra>Coin price</extra>',
   };
 }
@@ -129,11 +145,12 @@ export function pnlTraces(csv: ParsedCsv, result: BacktestResultItem): PlotlyTra
     entry.pnl.push(entry.cumPnl);
   });
 
-  return Object.keys(coins).map((coin) => ({
-    x: coins[coin]!.times,
-    y: coins[coin]!.pnl,
+  return Object.entries(coins).map(([coin, coinData], index) => ({
+    x: coinData.times,
+    y: coinData.pnl,
     name: coin,
     mode: 'lines',
+    line: { color: seriesColor(index) },
   }));
 }
 
@@ -172,10 +189,10 @@ export function tweTraces(csv: ParsedCsv, resolutionMinutes: number, result: Bac
 
   const traces: PlotlyTrace[] = [];
   if (longExposure.twe.length) {
-    traces.push({ x: longExposure.times, y: longExposure.twe, name: 'Long TWE', line: { width: 2.5 } });
+    traces.push({ x: longExposure.times, y: longExposure.twe, name: 'Long TWE', line: { color: PRECISION_PALETTE.success.base, width: 2.5 } });
   }
   if (shortExposure.twe.length) {
-    traces.push({ x: shortExposure.times, y: shortExposure.twe, name: 'Short TWE', line: { width: 2.5 } });
+    traces.push({ x: shortExposure.times, y: shortExposure.twe, name: 'Short TWE', line: { color: PRECISION_PALETTE.danger.base, width: 2.5 } });
   }
   for (const coin of Object.keys(longExposure.coins)) {
     traces.push({ x: longExposure.times, y: longExposure.coins[coin], name: `${coin} Long WE`, line: { width: 0.75 }, visible: 'legendonly' });
@@ -188,17 +205,16 @@ export function tweTraces(csv: ParsedCsv, resolutionMinutes: number, result: Bac
 
 /* ── Compare (:7626-7634) ───────────────────────────────────────────── */
 
-/** Categorical series palette: accent / success / warning / danger
- *  bases + purple + soft variants (mirrors tokens.css). */
+/** Categorical series palette: approved semantic bases followed by soft variants. */
 export const COMPARE_COLORS = [
-  '#5ea8ff', // accent
-  '#43c992', // success
-  '#e6b566', // warning
-  '#e56b74', // danger
-  '#9b8ede', // purple
-  '#78b7ff', // accent-soft
-  '#62d7a9', // success-soft
-  '#ee9097', // danger-soft
+  PRECISION_PALETTE.accent.base,
+  PRECISION_PALETTE.success.base,
+  PRECISION_PALETTE.warning.base,
+  PRECISION_PALETTE.danger.base,
+  PRECISION_PALETTE.accent.soft,
+  PRECISION_PALETTE.success.soft,
+  PRECISION_PALETTE.warning.soft,
+  PRECISION_PALETTE.danger.soft,
 ] as const;
 
 export interface CompareItem {
@@ -260,7 +276,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
   const layout: PlotlyLayout = {
     paper_bgcolor: CHART_BG,
     plot_bgcolor: CHART_BG,
-    font: { color: CHART_TEXT, size: 12, family: 'Source Sans Pro, sans-serif' },
+    font: { color: CHART_TEXT, size: 12, family: CHART_FONT_FAMILY },
     margin: { l: 70, r: 30, t: 70, b: 50 },
     title: {
       text:
@@ -282,13 +298,13 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
           { draw: [0.28, 0.50], prox: [0.0, 0.22] },
         ]
       : [{ draw: [0.30, 1.0], prox: [0.0, 0.22] }];
-  // Series colors (tokens.css literals): long = accent/warning/
-  // success/success-soft; short = purple/warning-deep/danger-soft/accent-deep.
+  // Long and short retain distinct semantic colors while using the shared
+  // palette for all drawdown, threshold, and proximity signals.
   const colors: Record<string, { raw: string; ema: string; score: string; prox: string }> = {
-    long: { raw: '#72a0ee', ema: '#e0a458', score: '#46c88f', prox: '#76d9ad' },
-    short: { raw: '#9b8ede', ema: '#9c7029', score: '#ee8d84', prox: '#3f63ad' },
+    long: { raw: PRECISION_PALETTE.accent.base, ema: PRECISION_PALETTE.warning.base, score: PRECISION_PALETTE.success.base, prox: PRECISION_PALETTE.success.soft },
+    short: { raw: PRECISION_PALETTE.accent.soft, ema: PRECISION_PALETTE.warning.deep, score: PRECISION_PALETTE.danger.base, prox: PRECISION_PALETTE.accent.deep },
   };
-  const thresholdColors = { yellow: '#ecc381', orange: '#e0a458', red: '#e5615c' };
+  const thresholdColors = { yellow: PRECISION_PALETTE.warning.soft, orange: PRECISION_PALETTE.warning.base, red: PRECISION_PALETTE.danger.base };
 
   sideConfigs.forEach((cfg, sideIdx) => {
     const axisNum = sideIdx * 2 + 1;
@@ -318,7 +334,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.yellowThreshold, cfg.yellowThreshold], name: `${prefix}Yellow Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.yellow, width: 1, dash: 'dot' }, opacity: 0.8 });
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.orangeThreshold, cfg.orangeThreshold], name: `${prefix}Orange Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.orange, width: 1, dash: 'dot' }, opacity: 0.8 });
     traces.push({ x: [times[0], times[times.length - 1]], y: [cfg.redThreshold, cfg.redThreshold], name: `${prefix}RED Threshold`, mode: 'lines', yaxis: yAxisName, line: { color: thresholdColors.red, width: 1.2, dash: 'dash' }, opacity: 0.85 });
-    traces.push({ x: times, y: proximity, name: `${prefix}RED Proximity`, mode: 'lines', yaxis: proxAxisName, line: { color: colors[cfg.side]!.prox, width: 1.1 }, fill: 'tozeroy', fillcolor: 'rgba(118, 217, 173, 0.14)' }); // success-soft @ 0.14
+    traces.push({ x: times, y: proximity, name: `${prefix}RED Proximity`, mode: 'lines', yaxis: proxAxisName, line: { color: colors[cfg.side]!.prox, width: 1.1 }, fill: 'tozeroy', fillcolor: PRECISION_PALETTE.alpha.successBackground });
     traces.push({ x: [times[0], times[times.length - 1]], y: [100, 100], name: `${prefix}RED Hit`, mode: 'lines', yaxis: proxAxisName, line: { color: thresholdColors.red, width: 1.2, dash: 'dash' } });
     if (redTriggerIdx.length) {
       traces.push({
@@ -328,7 +344,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
         name: `${prefix}RED Trigger (${redTriggerIdx.length})`,
         mode: 'markers',
         yaxis: yAxisName,
-        marker: { color: thresholdColors.red, size: 9, symbol: 'diamond', line: { color: '#f2f5fb', width: 1 } },
+        marker: { color: thresholdColors.red, size: 9, symbol: 'diamond', line: { color: PRECISION_PALETTE.text.primary, width: 1 } },
         hovertemplate: '%{text}<extra></extra>',
       });
       traces.push({
@@ -338,7 +354,7 @@ export function hardStopChartSpec(version: BacktestVersion, be: BeSeries, config
         name: `${prefix}RED Trigger %`,
         mode: 'markers',
         yaxis: proxAxisName,
-        marker: { color: thresholdColors.red, size: 8, symbol: 'triangle-up', line: { color: '#f2f5fb', width: 1 } },
+        marker: { color: thresholdColors.red, size: 8, symbol: 'triangle-up', line: { color: PRECISION_PALETTE.text.primary, width: 1 } },
         hovertemplate: '%{text}<extra></extra>',
         showlegend: false,
       });

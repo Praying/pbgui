@@ -45,12 +45,12 @@ export function installDatePicker(): void {
       '#__dp .dp-nav:hover{background:rgba(255,255,255,.15)!important}' +
       '#__dp .dp-nav{transition:background .1s;border-radius:4px}' +
       '#__dp .dp-ctl{transition:background .1s,border-color .1s;border-radius:4px}' +
-      '#__dp .dp-ctl:hover{background:rgba(255,255,255,.08)!important;border-color:var(--accent,#72a0ee)!important}' +
-      '#__dp .dp-dd{position:absolute;top:calc(100% + 4px);z-index:2;display:none;background:var(--bg3,#232b3d);border:1px solid var(--border,#333f5c);border-radius:6px;box-shadow:0 8px 18px rgba(5, 8, 14,.55);max-height:220px;overflow:auto;padding:4px}' +
+      '#__dp .dp-ctl:hover{background:rgba(255,255,255,.08)!important;border-color:var(--accent)!important}' +
+      '#__dp .dp-dd{position:absolute;top:calc(100% + 4px);z-index:2;display:none;background:var(--bg-elevated);border:1px solid var(--border-default);border-radius:6px;box-shadow:0 8px 18px rgb(0 0 0 / 0.55);max-height:220px;overflow:auto;padding:4px}' +
       '#__dp .dp-dd.open{display:block}' +
-      '#__dp .dp-dd-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text,#e8ecf4);font-size:var(--fs-xs);padding:6px 8px;border-radius:4px;cursor:pointer}' +
+      '#__dp .dp-dd-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text-primary);font-size:var(--fs-xs);padding:6px 8px;border-radius:4px;cursor:pointer}' +
       '#__dp .dp-dd-item:hover{background:rgba(255,255,255,.10)!important}' +
-      '#__dp .dp-dd-item.selected{background:var(--accent,#72a0ee);color:#f2f5fb}' +
+      '#__dp .dp-dd-item.selected{background:var(--accent);color:var(--accent-contrast)}' +
       '#__dp .dp-foot:hover{background:rgba(255,255,255,.15)!important}' +
       '#__dp .dp-foot{transition:background .1s;border-radius:4px}';
     document.head.appendChild(s);
@@ -61,7 +61,7 @@ export function installDatePicker(): void {
       e = document.createElement('div');
       e.id = '__dp';
       e.style.cssText =
-        'display:none;position:fixed;z-index:99999;background:var(--bg2,#171c29);border:1px solid var(--border,#333f5c);border-radius:8px;padding:10px 12px;box-shadow:0 6px 24px rgba(5, 8, 14,.7);user-select:none;min-width:220px;color-scheme:dark';
+        'display:none;position:fixed;z-index:99999;background:var(--bg-panel);border:1px solid var(--border-default);border-radius:8px;padding:10px 12px;box-shadow:0 6px 24px rgb(0 0 0 / 0.7);user-select:none;min-width:220px;color-scheme:dark';
       document.body.appendChild(e);
       document.addEventListener(
         'pointerdown',
@@ -118,9 +118,9 @@ export function installDatePicker(): void {
     const nextMonth = _shiftMonth(_y, _m, 1);
     void prevMonth;
     void nextMonth;
-    const btnS = 'background:none;border:none;color:var(--text,#e8ecf4);cursor:pointer;font-size:1.3em;padding:0 6px;line-height:1';
+    const btnS = 'background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.3em;padding:0 6px;line-height:1';
     const ctlS =
-      'background:var(--bg3,#232b3d);border:1px solid var(--border,#333f5c);color:var(--text,#e8ecf4);border-radius:4px;padding:2px 6px;font-size:var(--fs-xs);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px';
+      'background:var(--bg-elevated);border:1px solid var(--border-default);color:var(--text-primary);border-radius:4px;padding:2px 6px;font-size:var(--fs-xs);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px';
     let h =
       '<div style="display:flex;align-items:center;gap:4px;margin-bottom:8px">' +
       '<button type="button" class="dp-nav" onclick="window.__dp.pm()" style="' +
@@ -149,28 +149,28 @@ export function installDatePicker(): void {
       '">&#8250;</button></div>';
     h += '<div style="display:grid;grid-template-columns:repeat(7,30px);gap:2px;text-align:center">';
     ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach((d) => {
-      h += '<div style="color:var(--text-dim,#a3adc2);font-size:var(--fs-xs);padding-bottom:4px">' + d + '</div>';
+      h += '<div style="color:var(--text-muted);font-size:var(--fs-xs);padding-bottom:4px">' + d + '</div>';
     });
     for (let i = 0; i < sdow; i++) h += '<div></div>';
     for (let day = 1; day <= dim; day++) {
       const isT = td.getFullYear() === _y && td.getMonth() === _m && td.getDate() === day;
       const isS = !!selOk && sel!.getFullYear() === _y && sel!.getMonth() === _m && sel!.getDate() === day;
-      const bg = isS ? 'var(--accent,#72a0ee)' : isT ? 'rgba(255,255,255,.12)' : 'transparent';
+      const bg = isS ? 'var(--accent)' : isT ? 'rgba(255,255,255,.12)' : 'transparent';
       h +=
         '<div class="dp-day" onclick="window.__dp.pick(' +
         day +
         ')" style="cursor:pointer;border-radius:4px;padding:4px 0;background:' +
         bg +
-        ';color:var(--text,#e8ecf4);font-weight:' +
+        ';color:var(--text-primary);font-weight:' +
         (isS || isT ? '600' : '400') +
         ';font-size:var(--fs-sm)">' +
         day +
         '</div>';
     }
     h +=
-      '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-dim,#a3adc2);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' +
+      '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' +
       t('common.close') +
-      '</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent,#72a0ee);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' +
+      '</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' +
       t('v7explore.today') +
       '</button></div>';
     e.innerHTML = h;

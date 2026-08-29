@@ -28,6 +28,7 @@
  */
 import { computed, inject, nextTick, onScopeDispose, ref, shallowRef, watch } from 'vue';
 import { Button } from '@/shared/components/ui/button';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch, currentGeneration } from '../../composables/useDashboardFetch';
 import { useOrdersChart, type OrdersChartController, type RawCandle } from '../../composables/useOrdersChart';
@@ -305,10 +306,10 @@ const hasChart = computed(() => candles.value.length > 0);
 
 /* the legend (render.js:3710-3728) */
 const legend = computed(() => [
-  { style: 'do-leg-solid', color: '#a3adc2', label: dashT('dash.entry', 'Entry') },
-  { style: 'do-leg-dotted', color: '#a3adc2', label: dashT('dash.price', 'Price') },
-  { style: 'do-leg-dashed', color: '#46c88f', label: dashT('dash.buyOrder', 'Buy Order') },
-  { style: 'do-leg-dashed', color: '#e5615c', label: dashT('dash.sellOrder', 'Sell Order') },
+  { style: 'do-leg-solid', color: PRECISION_PALETTE.text.secondary, label: dashT('dash.entry', 'Entry') },
+  { style: 'do-leg-dotted', color: PRECISION_PALETTE.text.secondary, label: dashT('dash.price', 'Price') },
+  { style: 'do-leg-dashed', color: PRECISION_PALETTE.success.base, label: dashT('dash.buyOrder', 'Buy Order') },
+  { style: 'do-leg-dashed', color: PRECISION_PALETTE.danger.base, label: dashT('dash.sellOrder', 'Sell Order') },
 ]);
 
 const icon = WIDGET_META.ORDERS.icon;

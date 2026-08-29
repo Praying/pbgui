@@ -77,7 +77,7 @@ onBeforeUnmount(clearWaitingTimer);
   color: var(--warning-soft);
   font-size: var(--fs-sm);
   font-weight: 600;
-  box-shadow: 0 1px 0 rgb(224 241 255 / 0.04) inset;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset;
 }
 
 .pbgui-connection-notice--lost {

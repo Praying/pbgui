@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
@@ -22,6 +24,7 @@ vi.mock('@/shared/api', () => ({
 
 const apiFetchMock = vi.mocked(apiFetch);
 const DASHBOARDS_URL = 'http://pbgui.test:8000/api/dashboards';
+const appSource = readFileSync(resolve(import.meta.dirname, 'App.vue'), 'utf8');
 
 interface DialogsStub {
   alert: ReturnType<typeof vi.fn>;
@@ -100,6 +103,10 @@ afterEach(() => {
 });
 
 describe('dashboard_main App shell', () => {
+  it('uses the shared deep surface for the iframe loading canvas', () => {
+    expect(appSource).toContain('background: var(--surface-deep);');
+  });
+
   it('renders the shared shell, sidebar and main content layout', async () => {
     dashboardsApi(['a']);
     const wrapper = mountApp();

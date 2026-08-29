@@ -55,13 +55,13 @@ const thClass =
 <template>
   <div
     v-if="store.gapOpen.value"
-    class="integrity-gap-backdrop fixed inset-0 z-[20000] flex items-center justify-center bg-page/82 p-5 backdrop-blur-[3px] max-[760px]:p-2"
+    class="integrity-gap-backdrop fixed inset-0 z-[20000] flex items-center justify-center bg-backdrop p-5 backdrop-blur-[3px] max-[760px]:p-2"
     id="integrity-gap-modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="integrity-gap-title"
   >
-    <div class="integrity-gap-dialog w-[min(1080px,100%)] max-h-[calc(100dvh-40px)] overflow-auto rounded-[10px] border border-border-default bg-panel p-5 shadow-[0_24px_80px_rgba(5,8,14,0.5)] max-[760px]:max-h-[calc(100dvh-16px)] max-[760px]:p-3">
+    <div class="integrity-gap-dialog w-[min(1080px,100%)] max-h-[calc(100dvh-40px)] overflow-auto rounded-[10px] border border-border-default bg-panel p-5 shadow-[var(--shadow-modal)] max-[760px]:max-h-[calc(100dvh-16px)] max-[760px]:p-3">
       <div :class="panelHeadClass">
         <div>
           <div class="eyebrow">{{ t('market.minuteCoverage') }}</div>

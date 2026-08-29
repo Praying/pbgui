@@ -341,7 +341,7 @@
     color: var(--accent-soft);
     box-shadow:
       0 0 0 3px rgb(var(--accent-rgb) / 0.05),
-      0 1px 0 rgb(224 241 255 / 0.1) inset;
+      0 1px 0 rgb(255 255 255 / 0.1) inset;
   }
 
   .workbench-rail--collapsed .workbench-rail__item--active::before {
@@ -598,12 +598,11 @@
     background: rgb(var(--danger-rgb) / 0.2);
   }
 
-  /* Filled accent CTA — accent-deep keeps near-white text at 5.3:1 (AA),
-     the raw accent fill would fail at 2.6:1. */
+  /* Filled accent CTA uses the approved dark contrast text role. */
   .page-toolbar .sb-btn.accent {
     background: var(--accent-deep);
     border-color: var(--accent-deep);
-    color: #f2f5fb; /* near-white on colored fill */
+    color: var(--accent-contrast);
     font-weight: 600;
   }
 
@@ -688,7 +687,7 @@
     padding: var(--sp-2xl) var(--page-padding) var(--sp-lg);
     border-bottom: 1px solid var(--border-subtle);
     background: var(--surface-workspace);
-    box-shadow: 0 1px 0 rgb(224 241 255 / 0.06) inset;
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset;
   }
 
   .workspace-header__identity {
@@ -775,8 +774,8 @@
     background: var(--surface-panel);
     color: var(--accent-soft);
     box-shadow:
-      0 8px 18px rgb(2 8 14 / 0.18),
-      0 1px 0 rgb(224 241 255 / 0.08) inset;
+      0 8px 18px rgb(0 0 0 / 0.18),
+      0 1px 0 rgb(255 255 255 / 0.08) inset;
   }
 
   button.pbgui-icon-button.pbgui-icon-button.workbench-rail__compact-toggle:hover:not(:disabled) {
@@ -1533,7 +1532,7 @@
       position: fixed;
       inset: 0;
       z-index: calc(var(--z-navigation) - 1);
-      background: rgb(5 8 14 / 0.52);
+      background: var(--color-backdrop);
       content: '';
     }
 
@@ -1972,7 +1971,7 @@
       position: fixed;
       inset: 0;
       z-index: calc(var(--z-navigation) - 1);
-      background: rgb(5 8 14 / 0.52);
+      background: var(--color-backdrop);
       content: '';
     }
 

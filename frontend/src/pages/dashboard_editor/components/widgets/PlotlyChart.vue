@@ -203,7 +203,7 @@ const heightStyle = computed<{ height: string } | undefined>(() =>
       type="button"
       variant="default"
       size="sm"
-      class="dt-fs-close absolute left-2 top-2 z-[9999] hidden px-[0.55rem] text-[0.82rem] leading-[1.5] hover:border-danger-deep hover:bg-danger-deep hover:text-[#f2f5fb]"
+      class="dt-fs-close absolute left-2 top-2 z-[9999] hidden px-[0.55rem] text-[0.82rem] leading-[1.5] hover:border-danger-deep hover:bg-danger-deep hover:text-primary"
       :style="{ display: fs.isFullscreen.value ? 'block' : 'none' }"
       :title="dashT('dash.exitFullscreen', 'Exit Fullscreen')"
       @click="fs.exitFullscreen()"

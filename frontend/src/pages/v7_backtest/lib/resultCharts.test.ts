@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import {
   applyPriceOverlay,
   beChartTraces,
@@ -46,13 +47,14 @@ describe('chartLayout (:7212-7224)', () => {
   it('builds the shared dark layout with unified hover', () => {
     const layout = chartLayout('T', 'Balance');
     expect(layout).toMatchObject({
-      paper_bgcolor: '#0b111b', // --bg-page
-      plot_bgcolor: '#0b111b', // --bg-page
+      paper_bgcolor: PRECISION_PALETTE.surface.deep,
+      plot_bgcolor: PRECISION_PALETTE.surface.deep,
       height: 800,
       hovermode: 'x unified',
       title: { text: 'T', x: 0.5 },
-      yaxis: { gridcolor: '#26364a', title: 'Balance' }, // --border-default
+      yaxis: { gridcolor: PRECISION_PALETTE.border.default, title: 'Balance' },
     });
+    expect(layout.font).toMatchObject({ color: PRECISION_PALETTE.text.primary, family: "'Space Grotesk', 'Segoe UI', system-ui, sans-serif" });
     expect((layout.margin as Record<string, number>).l).toBe(60);
   });
 });
@@ -136,6 +138,8 @@ describe('pnlTraces (:7243-7282)', () => {
     const eth = traces.find((tr) => tr.name === 'ETH');
     expect(btc?.y).toEqual([9, 14]);
     expect(eth?.y).toEqual([-2]);
+    expect(btc?.line).toEqual({ color: PRECISION_PALETTE.accent.base });
+    expect(eth?.line).toEqual({ color: PRECISION_PALETTE.success.base });
   });
 
   it('uses the symbol column when coin is absent (:7252)', () => {
@@ -186,15 +190,31 @@ describe('tweTraces (:7484-7503)', () => {
 });
 
 describe('compareTraces (:7626-7634)', () => {
-  it('labels each pair with version + last three path segments and cycles the palette', () => {
+  it('labels each pair and assigns colors in emitted-result order', () => {
     const items = [
       { path: 'backtests_v8/cfg/bybit/r1', version: 'v8' as BacktestVersion, be: be() },
-      { path: 'backtests/cfg2/binance/r2', version: 'v7' as BacktestVersion, be: { ...be(), time: [] } },
+      { path: 'backtests/cfg2/binance/r2', version: 'v7' as BacktestVersion, be: be() },
+      { path: 'backtests/cfg3/okx/r3', version: 'v7' as BacktestVersion, be: be() },
+      { path: 'backtests/cfg4/kraken/r4', version: 'v7' as BacktestVersion, be: { ...be(), time: [] } },
     ];
     const traces = compareTraces(items);
-    expect(traces).toHaveLength(2); // the empty-BE item is dropped
+    expect(traces).toHaveLength(6); // the empty-BE item is dropped
     expect(traces[0]).toMatchObject({ name: 'eq PBV8 cfg/bybit/r1', line: { width: 0.75, color: COMPARE_COLORS[0] } });
     expect(traces[1]).toMatchObject({ name: 'bal PBV8 cfg/bybit/r1', line: { width: 2.5, color: COMPARE_COLORS[0], dash: 'dot' } });
+    expect(traces[2]).toMatchObject({ name: 'eq PBV7 cfg2/binance/r2', line: { color: COMPARE_COLORS[1] } });
+    expect(traces[3]).toMatchObject({ name: 'bal PBV7 cfg2/binance/r2', line: { color: COMPARE_COLORS[1], dash: 'dot' } });
+    expect(traces[4]).toMatchObject({ name: 'eq PBV7 cfg3/okx/r3', line: { color: COMPARE_COLORS[2] } });
+    expect(traces[5]).toMatchObject({ name: 'bal PBV7 cfg3/okx/r3', line: { color: COMPARE_COLORS[2], dash: 'dot' } });
+    expect(COMPARE_COLORS).toEqual([
+      PRECISION_PALETTE.accent.base,
+      PRECISION_PALETTE.success.base,
+      PRECISION_PALETTE.warning.base,
+      PRECISION_PALETTE.danger.base,
+      PRECISION_PALETTE.accent.soft,
+      PRECISION_PALETTE.success.soft,
+      PRECISION_PALETTE.warning.soft,
+      PRECISION_PALETTE.danger.soft,
+    ]);
   });
 });
 

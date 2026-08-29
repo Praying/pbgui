@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import {
   adgTraces,
   applyPplZoom,
@@ -44,7 +45,7 @@ describe('topTraces (render.js:600-605)', () => {
         x: ['BTC', 'ETH', 'SOL'],
         y: [1.5, -2, 0],
         type: 'bar',
-        marker: { color: ['#46c88f', '#e5615c', '#46c88f'] },
+        marker: { color: [PRECISION_PALETTE.success.base, PRECISION_PALETTE.danger.base, PRECISION_PALETTE.success.base] },
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.4f}<extra></extra>',
       },
     ]);
@@ -59,14 +60,14 @@ describe('topTraces (render.js:600-605)', () => {
 describe('topLayout (render.js:606-618, 659)', () => {
   it('matches the legacy layout skeleton', () => {
     expect(topLayout(300)).toEqual({
-      paper_bgcolor: '#10141d',
-      plot_bgcolor: '#10141d',
-      font: { color: '#e8ecf4', size: 11 },
+      paper_bgcolor: PRECISION_PALETTE.surface.deep,
+      plot_bgcolor: PRECISION_PALETTE.surface.deep,
+      font: { color: PRECISION_PALETTE.text.primary, size: 11 },
       margin: { l: 50, r: 20, t: 40, b: 60 },
-      xaxis: { tickangle: -45, gridcolor: '#333f5c', color: '#e8ecf4' },
+      xaxis: { tickangle: -45, gridcolor: PRECISION_PALETTE.border.default, color: PRECISION_PALETTE.text.primary },
       yaxis: {
-        gridcolor: '#333f5c', color: '#e8ecf4',
-        zeroline: true, zerolinecolor: '#4d5c82',
+        gridcolor: PRECISION_PALETTE.border.default, color: PRECISION_PALETTE.text.primary,
+        zeroline: true, zerolinecolor: PRECISION_PALETTE.border.strong,
       },
       bargap: 0.3,
       autosize: true,
@@ -93,7 +94,7 @@ describe('pnlTraces (render.js:1595-1642)', () => {
         x: ['2025-01-01', '2025-01-02'],
         y: [1.5, -2],
         type: 'bar',
-        marker: { color: ['#46c88f', '#e5615c'] },
+        marker: { color: [PRECISION_PALETTE.success.base, PRECISION_PALETTE.danger.base] },
         text: ['1.50', '-2.00'],
         textposition: 'auto',
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.2f}<extra></extra>',
@@ -108,8 +109,8 @@ describe('pnlTraces (render.js:1595-1642)', () => {
         y: [1.5, -2],
         type: 'scatter',
         mode: 'lines+markers',
-        line: { color: '#72a0ee', width: 1 },
-        marker: { color: ['#46c88f', '#e5615c'], size: 6 },
+        line: { color: PRECISION_PALETTE.accent.base, width: 1 },
+        marker: { color: [PRECISION_PALETTE.success.base, PRECISION_PALETTE.danger.base], size: 6 },
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.2f}<extra></extra>',
       },
     ]);
@@ -125,7 +126,7 @@ describe('pnlLayout (render.js:1644-1656)', () => {
     const layout = pnlLayout(280);
     expect(layout.margin).toEqual({ l: 50, r: 20, t: 40, b: 50 });
     expect(layout.xaxis).toEqual({
-      tickangle: -45, gridcolor: '#333f5c', color: '#e8ecf4', type: 'date',
+      tickangle: -45, gridcolor: PRECISION_PALETTE.border.default, color: PRECISION_PALETTE.text.primary, type: 'date',
     });
     expect(layout.height).toBe(280);
     expect(layout.transition).toEqual({ duration: 0, easing: 'linear' });
@@ -144,7 +145,7 @@ describe('adgTraces (render.js:3871-3889)', () => {
   it('line mode matches PNL line styling', () => {
     const bars = [{ date: '2025-01-01', adg: 1.5 }];
     expect(adgTraces(bars, 'line')[0]!.type).toBe('scatter');
-    expect(adgTraces(bars, 'line')[0]!.line).toEqual({ color: '#72a0ee', width: 1 });
+    expect(adgTraces(bars, 'line')[0]!.line).toEqual({ color: PRECISION_PALETTE.accent.base, width: 1 });
   });
 });
 
@@ -161,7 +162,7 @@ describe('pplTraces (render.js:1878-1900)', () => {
         y: [10.5, 0],
         type: 'bar',
         name: 'Profits',
-        marker: { color: '#46c88f' },
+        marker: { color: PRECISION_PALETTE.success.base },
         text: ['10.50', ''],
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Profits: %{y:.2f}<extra></extra>',
@@ -171,7 +172,7 @@ describe('pplTraces (render.js:1878-1900)', () => {
         y: [0, 3.25],
         type: 'bar',
         name: 'Losses',
-        marker: { color: '#e5615c' },
+        marker: { color: PRECISION_PALETTE.danger.base },
         text: ['', '3.25'],
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Losses: %{y:.2f}<extra></extra>',
@@ -188,7 +189,7 @@ describe('pplLayout y-range padding (render.js:1903-1911)', () => {
     expect(layout.barmode).toBe('relative');
     expect((layout.xaxis as PlotlyLayout).type).toBe('category');
     expect((layout.xaxis as PlotlyLayout).nticks).toBe(20);
-    expect(layout.legend).toEqual({ font: { color: '#e8ecf4' } });
+    expect(layout.legend).toEqual({ font: { color: PRECISION_PALETTE.text.primary } });
   });
 
   it('guards a zero data range with the 20%-or-1 fallback (yRange=0)', () => {
@@ -343,8 +344,17 @@ describe('incomeTraces (render.js:866-868 / 1501-1510)', () => {
         type: 'scatter',
         mode: 'lines',
         showlegend: true,
+        line: { color: PRECISION_PALETTE.accent.base },
       },
-      { x: ['2024-01-01 00:00:00'], y: [10], name: 'BTC', type: 'scatter', mode: 'lines', showlegend: true },
+      {
+        x: ['2024-01-01 00:00:00'],
+        y: [10],
+        name: 'BTC',
+        type: 'scatter',
+        mode: 'lines',
+        showlegend: true,
+        line: { color: PRECISION_PALETTE.success.base },
+      },
     ]);
   });
 
@@ -359,14 +369,14 @@ describe('incomeTraces (render.js:866-868 / 1501-1510)', () => {
 describe('incomeLayout (render.js:869-877 / 1513-1524)', () => {
   it('matches the legacy income layout skeleton (margins l55 r15 t40 b40, transparent legend)', () => {
     expect(incomeLayout(null)).toEqual({
-      paper_bgcolor: '#10141d',
-      plot_bgcolor: '#10141d',
-      font: { color: '#e8ecf4', size: 11 },
+      paper_bgcolor: PRECISION_PALETTE.surface.deep,
+      plot_bgcolor: PRECISION_PALETTE.surface.deep,
+      font: { color: PRECISION_PALETTE.text.primary, size: 11 },
       margin: { l: 55, r: 15, t: 40, b: 40 },
       autosize: true,
-      xaxis: { gridcolor: '#333f5c', color: '#e8ecf4' },
-      yaxis: { gridcolor: '#333f5c', color: '#e8ecf4', zeroline: true, zerolinecolor: '#4d5c82' },
-      legend: { bgcolor: 'rgba(5, 8, 14,0)', font: { size: 10, color: '#e8ecf4' } },
+      xaxis: { gridcolor: PRECISION_PALETTE.border.default, color: PRECISION_PALETTE.text.primary },
+      yaxis: { gridcolor: PRECISION_PALETTE.border.default, color: PRECISION_PALETTE.text.primary, zeroline: true, zerolinecolor: PRECISION_PALETTE.border.strong },
+      legend: { bgcolor: 'rgba(5, 8, 14,0)', font: { size: 10, color: PRECISION_PALETTE.text.primary } },
       transition: { duration: 0, easing: 'linear' },
     });
   });

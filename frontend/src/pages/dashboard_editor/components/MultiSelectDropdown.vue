@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
       <div
         v-if="isOpen"
         ref="dropEl"
-        class="msel-drop open fixed z-[60000] mt-[2px] min-w-[180px] max-h-[260px] overflow-hidden rounded-sm border border-secondary bg-card shadow-[0_10px_28px_rgba(5,8,14,0.65)]"
+        class="msel-drop open fixed z-[60000] mt-[2px] min-w-[180px] max-h-[260px] overflow-hidden rounded-sm border border-secondary bg-card shadow-[var(--shadow-modal)]"
         :style="dropStyle"
         @click.stop
       >
@@ -237,7 +237,7 @@ onBeforeUnmount(() => {
             <div
               v-show="matchesFilter(u)"
               class="msel-item flex cursor-pointer items-center gap-[0.4rem] px-[0.6rem] py-[0.3rem] text-sm whitespace-nowrap"
-              :class="selected.indexOf(u) >= 0 ? 'selected bg-accent/12 text-[#f2f5fb] hover:bg-accent/18' : 'text-primary hover:bg-border-default'"
+              :class="selected.indexOf(u) >= 0 ? 'selected bg-accent/12 text-primary hover:bg-accent/18' : 'text-primary hover:bg-border-default'"
               :data-u="u.toLowerCase()"
               @click="onItemClick(u, $event)"
             >

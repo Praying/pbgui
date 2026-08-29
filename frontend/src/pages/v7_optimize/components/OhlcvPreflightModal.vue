@@ -19,7 +19,7 @@ const overallStatusClass = computed(() => {
   const status = String(summary.value?.overall_status || '').toLowerCase();
   if (status === 'pass' || status === 'ok' || status === 'complete') return 'bg-success/15 text-success';
   if (status === 'error' || status === 'fail') return 'bg-danger/15 text-danger';
-  if (status === 'running') return 'bg-warning/15 text-[#d0a36f]';
+  if (status === 'running') return 'bg-warning/15 text-warning-soft';
   return 'bg-secondary/15 text-secondary';
 });
 function object(value: unknown): Record<string, unknown> { return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}; }

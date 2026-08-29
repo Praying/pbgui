@@ -147,8 +147,8 @@ function onExchangeSelect(value: unknown): void {
   border-color: var(--coin-border);
   background: var(--coin-control);
   box-shadow:
-    0 14px 28px rgb(2 8 14 / 0.17),
-    0 1px 0 rgb(224 241 255 / 0.05) inset;
+    0 14px 28px rgb(0 0 0 / 0.17),
+    0 1px 0 rgb(255 255 255 / 0.05) inset;
 }
 
 .coin-filter-control,
@@ -176,7 +176,7 @@ function onExchangeSelect(value: unknown): void {
 
 .coin-filter-pill {
   border-color: var(--coin-border);
-  background: rgb(155 191 255 / 0.045);
+  background: rgb(var(--accent-rgb) / 0.045);
 }
 
 /* Number-stepper spinners — ported from styles/coin-data.css at the

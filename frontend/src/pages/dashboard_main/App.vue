@@ -1012,6 +1012,7 @@ body {
   background:
     radial-gradient(circle at 50% 42%, rgb(var(--accent-rgb) / 0.09), transparent 15rem),
     linear-gradient(135deg, transparent 0 49.5%, rgb(var(--text-secondary-rgb) / 0.025) 49.5% 50.5%, transparent 50.5% 100%);
+  background-color: var(--surface-deep);
   background-size: auto, 28px 28px;
 }
 .content-loading--empty {
@@ -1067,7 +1068,7 @@ body {
   height: auto;
   border: none;
   display: none;
-  background: var(--bg-page);
+  background: var(--surface-deep);
 }
 #content-frame.visible {
   display: block;

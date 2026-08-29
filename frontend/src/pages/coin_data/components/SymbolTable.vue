@@ -186,7 +186,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
 }
 
 .coin-table-cell {
-  border-color: rgb(157 191 226 / 0.075);
+  border-color: var(--coin-border);
 }
 
 .data-row {
@@ -212,6 +212,6 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
 
 .coin-table-empty > span:first-child {
   border-color: var(--coin-border);
-  background: rgb(155 191 255 / 0.04);
+  background: rgb(var(--accent-rgb) / 0.04);
 }
 </style>

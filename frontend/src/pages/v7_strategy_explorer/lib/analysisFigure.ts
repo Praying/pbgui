@@ -1,5 +1,6 @@
 import { plotCandleInfo, plotCandlePayload } from './candles';
 import { deepGet, esc, fmt } from './format';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import type { PlotlyTrace } from './plotlyVendor';
 import type { CandlePlotInfo } from './candles';
 import type { FillEvent, StrategySnapshot } from '../types';
@@ -21,6 +22,30 @@ export interface AnalysisFigure {
 }
 
 type Shape = Record<string, unknown>;
+
+const ANALYSIS_SURFACE_COLOR = PRECISION_PALETTE.surface.deep;
+const ANALYSIS_GRID_COLOR = PRECISION_PALETTE.border.default;
+const ANALYSIS_TEXT_COLOR = PRECISION_PALETTE.text.primary;
+const ANALYSIS_ACCENT_COLOR = PRECISION_PALETTE.accent.base;
+const ANALYSIS_ACCENT_SOFT_COLOR = PRECISION_PALETTE.accent.soft;
+const ANALYSIS_SUCCESS_COLOR = PRECISION_PALETTE.success.base;
+const ANALYSIS_WARNING_COLOR = PRECISION_PALETTE.warning.base;
+const ANALYSIS_DANGER_COLOR = PRECISION_PALETTE.danger.base;
+const ANALYSIS_ACCENT_BACKGROUND = PRECISION_PALETTE.alpha.accentBackground;
+const ANALYSIS_SUCCESS_BACKGROUND = PRECISION_PALETTE.alpha.successBackground;
+const ANALYSIS_WARNING_BACKGROUND = PRECISION_PALETTE.alpha.warningBackground;
+const ANALYSIS_DANGER_BACKGROUND = PRECISION_PALETTE.alpha.dangerBackground;
+const TRANSPARENT_MARKER_COLOR = 'transparent';
+
+const TRANSPARENT_CHART_COLOR = 'rgba(0, 0, 0, 0)';
+const DANGER_AREA_COLOR = 'rgb(217 128 128 / 0.16)';
+const DANGER_LEGEND_COLOR = 'rgb(217 128 128 / 0.18)';
+const SUCCESS_AREA_COLOR = 'rgb(123 200 165 / 0.14)';
+const SUCCESS_LEGEND_COLOR = 'rgb(123 200 165 / 0.18)';
+const WARNING_ZONE_COLOR = 'rgb(216 174 111 / 0.22)';
+const WARNING_ZONE_LEGEND_COLOR = 'rgb(216 174 111 / 0.28)';
+const ACCENT_ZONE_COLOR = 'rgb(143 207 242 / 0.18)';
+const ACCENT_ZONE_LEGEND_COLOR = 'rgb(143 207 242 / 0.22)';
 
 export function buildAnalysisFigure(
   sideKey: 'long' | 'short',
@@ -174,7 +199,7 @@ export function buildAnalysisFigure(
     if (!ys.length) return null;
     return {
       x: xs, y: ys, text, mode: 'markers', name: name + ' (hover)', showlegend: false, legendgroup: group,
-      marker: { size: 8, color: 'rgba(5, 8, 14,0)' }, hovertemplate: '%{text}<extra></extra>',
+      marker: { size: 8, color: TRANSPARENT_CHART_COLOR }, hovertemplate: '%{text}<extra></extra>',
     };
   }
   function addHoverLine(prices: unknown[], name: string, group: string): void {
@@ -206,8 +231,8 @@ export function buildAnalysisFigure(
     });
     return {
       x: xs, y: ys, text, hovertext: hover, mode: 'markers+text', name,
-      marker: { color, size: 20, symbol: 'circle', opacity: 0.95, line: { color: '#10141d', width: 2 } },
-      textfont: { color: '#f2f5fb', size: 11, family: 'Arial Black, Arial, sans-serif' },
+      marker: { color, size: 20, symbol: 'circle', opacity: 0.95, line: { color: PRECISION_PALETTE.surface.deep, width: 2 } },
+      textfont: { color: PRECISION_PALETTE.text.primary, size: 11, family: 'Arial Black, Arial, sans-serif' },
       textposition: 'middle center', hovertemplate: '%{hovertext}<extra></extra>',
     };
   }
@@ -232,10 +257,10 @@ export function buildAnalysisFigure(
   const entryBounds = bounds(entryPrices);
   const closeBounds = bounds(closePrices);
   if (entryBounds) {
-    if (addBand(entryBounds[0], entryBounds[1], 'rgba(229, 97, 92, 0.16)')) legendBand('Entry Grid (Range)', 'rgba(229, 97, 92, 0.18)', 'entry_range');
+    if (addBand(entryBounds[0], entryBounds[1], DANGER_AREA_COLOR)) legendBand('Entry Grid (Range)', DANGER_LEGEND_COLOR, 'entry_range');
   }
   if (closeBounds) {
-    if (addBand(closeBounds[0], closeBounds[1], 'rgba(70, 200, 143, 0.14)')) legendBand('Close Grid (Area)', 'rgba(70, 200, 143, 0.18)', 'close_range');
+    if (addBand(closeBounds[0], closeBounds[1], SUCCESS_AREA_COLOR)) legendBand('Close Grid (Area)', SUCCESS_LEGEND_COLOR, 'close_range');
   }
 
   if (entryMode !== 'GridOnly') {
@@ -264,8 +289,8 @@ export function buildAnalysisFigure(
       }
     }
     if (rangeHasWidth(entryTrailingBounds)) {
-      if (addBand(entryTrailingBounds[0], entryTrailingBounds[1], 'rgba(224, 164, 88, 0.22)'))
-        legendBand('Entry Trailing (Conditional Zone)', 'rgba(224, 164, 88, 0.28)', 'entry_trailing');
+      if (addBand(entryTrailingBounds[0], entryTrailingBounds[1], WARNING_ZONE_COLOR))
+        legendBand('Entry Trailing (Conditional Zone)', WARNING_ZONE_LEGEND_COLOR, 'entry_trailing');
     }
   }
 
@@ -283,21 +308,21 @@ export function buildAnalysisFigure(
           : bounds([Math.max(...closePrices), Math.max(...gridClosePrices)]);
     }
     if (closeTrailingBounds) {
-      addBand(closeTrailingBounds[0], closeTrailingBounds[1], 'rgba(114, 160, 238, 0.18)');
-      legendBand('Close Trailing (Conditional Zone)', 'rgba(114, 160, 238, 0.22)', 'close_trailing');
+      addBand(closeTrailingBounds[0], closeTrailingBounds[1], ACCENT_ZONE_COLOR);
+      legendBand('Close Trailing (Conditional Zone)', ACCENT_ZONE_LEGEND_COLOR, 'close_trailing');
     }
   }
 
-  traces.push(lineTrace(normalEntries, 'Entry Grid (Lines)', '#e5615c', 'dash'));
+  traces.push(lineTrace(normalEntries, 'Entry Grid (Lines)', PRECISION_PALETTE.danger.base, 'dash'));
   addHoverLine(entryPrices, 'Entry Grid', 'entry');
-  traces.push(lineTrace(closes, 'Close Grid (Lines)', '#46c88f', 'dot'));
+  traces.push(lineTrace(closes, 'Close Grid (Lines)', PRECISION_PALETTE.success.base, 'dot'));
   addHoverLine(closePrices, 'Close Grid', 'close');
   if (entryMode !== 'GridOnly' && shownTrailingPrices.length) {
-    traces.push(lineTrace(shownTrailingOrders as { index?: number; price?: number }[], shownTrailingName, '#e0a458', 'dash'));
+    traces.push(lineTrace(shownTrailingOrders as { index?: number; price?: number }[], shownTrailingName, PRECISION_PALETTE.warning.base, 'dash'));
     addHoverLine(shownTrailingPrices, shownTrailingName, 'entry_trailing');
   }
-  addShapeLine(ref, '#9b8ede', 'solid', 3);
-  legendLine('EMA Band', '#9b8ede', 'solid', 3, 'ema');
+  addShapeLine(ref, PRECISION_PALETTE.accent.base, 'solid', 3);
+  legendLine('EMA Band', PRECISION_PALETTE.accent.base, 'solid', 3, 'ema');
   addHoverLine([ref], 'EMA Band', 'ema');
 
   const analysisTs =
@@ -305,16 +330,16 @@ export function buildAnalysisFigure(
     deepGet<string>(market, ['metadata', 'ohlcv', 'selected_start'], '') ||
     x1;
   if (candles.length && analysisTs) {
-    shapes.push({ type: 'line', xref: 'x', x0: analysisTs, x1: analysisTs, yref: 'paper', y0: 0, y1: 1, line: { color: 'cyan', dash: 'dot', width: 2 }, layer: 'above' });
-    annotations.push({ x: analysisTs, y: 1, xref: 'x', yref: 'paper', text: t('v7explore.analysisTime'), showarrow: false, xanchor: 'left', yanchor: 'bottom', font: { color: 'cyan', size: 11 } });
+    shapes.push({ type: 'line', xref: 'x', x0: analysisTs, x1: analysisTs, yref: 'paper', y0: 0, y1: 1, line: { color: PRECISION_PALETTE.accent.base, dash: 'dot', width: 2 }, layer: 'above' });
+    annotations.push({ x: analysisTs, y: 1, xref: 'x', yref: 'paper', text: t('v7explore.analysisTime'), showarrow: false, xanchor: 'left', yanchor: 'bottom', font: { color: PRECISION_PALETTE.accent.base, size: 11 } });
   }
 
   if (entryMode !== 'GridOnly') {
     const entryRef = entryPrices.length ? entryPrices[0]! : ref;
     const eth = sideKey === 'long' ? entryRef * (1 - num(visualParams.entry_trailing_threshold_pct, 0)) : entryRef * (1 + num(visualParams.entry_trailing_threshold_pct, 0));
     if (num(visualParams.entry_trailing_threshold_pct, 0) > 0) {
-      addShapeLine(eth, 'rgba(224, 164, 88, 0.6)', 'dash', 1);
-      legendLine('Trailing Start (Threshold)', 'rgba(224, 164, 88, 0.6)', 'dash', 1, 'entry_trailing');
+      addShapeLine(eth, 'rgb(216 174 111 / 0.6)', 'dash', 1);
+      legendLine('Trailing Start (Threshold)', 'rgb(216 174 111 / 0.6)', 'dash', 1, 'entry_trailing');
       addHoverLine([eth], 'Trailing Start (Threshold)', 'entry_trailing');
     }
     if (num(visualParams.entry_trailing_retracement_pct, 0) > 0) {
@@ -326,12 +351,12 @@ export function buildAnalysisFigure(
           : sideKey === 'long'
             ? num(trailingBundle.min_since_open, entryRef) * (1 + num(visualParams.entry_trailing_retracement_pct, 0))
             : num(trailingBundle.max_since_open, entryRef) * (1 - num(visualParams.entry_trailing_retracement_pct, 0));
-      addShapeLine(retr, 'rgba(224, 164, 88, 0.35)', 'dot', 1);
-      legendLine('Trailing Trigger (Retracement, conditional)', 'rgba(224, 164, 88, 0.35)', 'dot', 1, 'entry_trailing');
+      addShapeLine(retr, 'rgb(216 174 111 / 0.35)', 'dot', 1);
+      legendLine('Trailing Trigger (Retracement, conditional)', 'rgb(216 174 111 / 0.35)', 'dot', 1, 'entry_trailing');
       addHoverLine([retr], 'Trailing Trigger (Retracement, conditional)', 'entry_trailing');
       if (num(visualParams.entry_trailing_threshold_pct, 0) > 0) {
-        addBand(eth, retr, 'rgba(224, 164, 88, 0.08)');
-        legendBand('Entry Trailing (Conditional Trigger Zone)', 'rgba(224, 164, 88, 0.12)', 'entry_trailing');
+        addBand(eth, retr, 'rgb(216 174 111 / 0.08)');
+        legendBand('Entry Trailing (Conditional Trigger Zone)', 'rgb(216 174 111 / 0.12)', 'entry_trailing');
       }
     }
   }
@@ -340,8 +365,8 @@ export function buildAnalysisFigure(
     const closeRef = num(deepGet<number>(side, ['debug', 'position_close', 'price'], 0), 0) || ref;
     if (num(visualParams.close_trailing_threshold_pct, 0) > 0) {
       const closeThr = sideKey === 'long' ? closeRef * (1 + num(visualParams.close_trailing_threshold_pct, 0)) : closeRef * (1 - num(visualParams.close_trailing_threshold_pct, 0));
-      addShapeLine(closeThr, 'rgba(114, 160, 238, 0.6)', 'dash', 1);
-      legendLine('Close Trailing Start (Threshold, conditional)', 'rgba(114, 160, 238, 0.6)', 'dash', 1, 'close_trailing');
+      addShapeLine(closeThr, 'rgb(143 207 242 / 0.6)', 'dash', 1);
+      legendLine('Close Trailing Start (Threshold, conditional)', 'rgb(143 207 242 / 0.6)', 'dash', 1, 'close_trailing');
       addHoverLine([closeThr], 'Close Trailing Start (Threshold, conditional)', 'close_trailing');
     }
     if (num(visualParams.close_trailing_retracement_pct, 0) > 0) {
@@ -349,15 +374,15 @@ export function buildAnalysisFigure(
         sideKey === 'long'
           ? num(trailingBundle.max_since_open, closeRef) * (1 - num(visualParams.close_trailing_retracement_pct, 0))
           : num(trailingBundle.min_since_open, closeRef) * (1 + num(visualParams.close_trailing_retracement_pct, 0));
-      addShapeLine(closeRetr, 'rgba(114, 160, 238, 0.35)', 'dot', 1);
-      legendLine('Close Trailing Trigger (Retracement, conditional)', 'rgba(114, 160, 238, 0.35)', 'dot', 1, 'close_trailing');
+      addShapeLine(closeRetr, 'rgb(143 207 242 / 0.35)', 'dot', 1);
+      legendLine('Close Trailing Trigger (Retracement, conditional)', 'rgb(143 207 242 / 0.35)', 'dot', 1, 'close_trailing');
       addHoverLine([closeRetr], 'Close Trailing Trigger (Retracement, conditional)', 'close_trailing');
     }
   }
 
   if (simEvents !== null) {
-    traces.push(fillTrace(simEvents, 'buy', 'Buy Fills', '#46c88f'));
-    traces.push(fillTrace(simEvents, 'sell', 'Sell Fills', '#e5615c'));
+    traces.push(fillTrace(simEvents, 'buy', 'Buy Fills', PRECISION_PALETTE.success.base));
+    traces.push(fillTrace(simEvents, 'sell', 'Sell Fills', PRECISION_PALETTE.danger.base));
   }
 
   let yRange: [number, number] | null = null;
@@ -377,9 +402,9 @@ export function analysisLayout(
   t: (key: string, params?: Record<string, unknown>) => string
 ): Record<string, unknown> {
   return {
-    paper_bgcolor: '#171c29',
-    plot_bgcolor: '#171c29',
-    font: { color: '#e8ecf4' },
+    paper_bgcolor: PRECISION_PALETTE.surface.deep,
+    plot_bgcolor: PRECISION_PALETTE.surface.deep,
+    font: { color: PRECISION_PALETTE.text.primary },
     title: t('v7explore.entryCloseGridsVisualization', { side: sideKey.toUpperCase() }),
     margin: { l: 55, r: 25, t: 45, b: 35 },
     shapes: fig.shapes,
@@ -387,12 +412,12 @@ export function analysisLayout(
     xaxis: {
       type: 'date',
       title: t('v7explore.date'),
-      gridcolor: '#333f5c',
-      rangeslider: { visible: fig.plotInfo.bucketSize <= 1, bgcolor: '#10141d', bordercolor: '#333f5c', thickness: 0.16 },
+      gridcolor: PRECISION_PALETTE.border.default,
+      rangeslider: { visible: fig.plotInfo.bucketSize <= 1, bgcolor: PRECISION_PALETTE.surface.input, bordercolor: PRECISION_PALETTE.border.default, thickness: 0.16 },
     },
-    yaxis: { title: t('v7explore.price'), gridcolor: '#333f5c', range: fig.yRange || undefined },
+    yaxis: { title: t('v7explore.price'), gridcolor: PRECISION_PALETTE.border.default, range: fig.yRange || undefined },
     hovermode: 'closest',
     hoverdistance: 30,
-    legend: { orientation: 'h', bgcolor: 'rgba(5, 8, 14,0)', bordercolor: 'rgba(5, 8, 14,0)' },
+    legend: { orientation: 'h', bgcolor: TRANSPARENT_CHART_COLOR, bordercolor: TRANSPARENT_CHART_COLOR },
   };
 }

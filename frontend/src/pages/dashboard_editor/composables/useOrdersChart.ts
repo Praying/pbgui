@@ -20,16 +20,17 @@
  * destroy() on unmount — the R4 leak fix the legacy destroy patch attempted.
  */
 import { getLightweightCharts, type LwCandle, type LwChart, type LwPriceLine, type LwSeries, type LwVolume } from '../lib/lwcVendor';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { dashT } from '../lib/i18n';
 import { positionEntryColor } from '../lib/format';
 import { LOAD_MORE_EDGE_BARS } from '../lib/timeframes';
 import type { Candle, OrdersData } from '../types/widgets';
 
-const UP_COLOR = '#46c88f';
-const DOWN_COLOR = '#e5615c';
-const VOL_UP = 'rgba(70, 200, 143,0.35)';
-const VOL_DOWN = 'rgba(229, 97, 92,0.35)';
-const PRICE_COLOR = '#a3adc2';
+const UP_COLOR = PRECISION_PALETTE.success.base;
+const DOWN_COLOR = PRECISION_PALETTE.danger.base;
+const VOL_UP = PRECISION_PALETTE.alpha.volumeUp;
+const VOL_DOWN = PRECISION_PALETTE.alpha.volumeDown;
+const PRICE_COLOR = PRECISION_PALETTE.text.secondary;
 const FIT_SETTLE_MS = 200;
 
 /** Raw exchange candle: [t, o, h, l, c, v] (render.js:3473-3474). */
@@ -137,22 +138,22 @@ export function useOrdersChart(
   const chart = LWC.createChart(container, {
     autoSize: true, // fill container — no manual width/height needed
     layout: {
-      background: { type: 'solid', color: '#10141d' },
-      textColor: '#a3adc2',
+      background: { type: 'solid', color: PRECISION_PALETTE.surface.deep },
+      textColor: PRECISION_PALETTE.text.primary,
       fontSize: 12,
     },
     grid: {
-      vertLines: { color: '#262f45' },
-      horzLines: { color: '#262f45' },
+      vertLines: { color: PRECISION_PALETTE.border.default },
+      horzLines: { color: PRECISION_PALETTE.border.default },
     },
     crosshair: { mode: LWC.CrosshairMode.Normal },
     rightPriceScale: {
-      borderColor: '#333f5c',
+      borderColor: PRECISION_PALETTE.border.strong,
       // some bottom padding for volume without going negative on wide-range charts
       scaleMargins: { top: 0.1, bottom: 0.15 },
     },
     timeScale: {
-      borderColor: '#333f5c',
+      borderColor: PRECISION_PALETTE.border.strong,
       timeVisible: tfShowTime,
       secondsVisible: false,
       rightOffset: 30,

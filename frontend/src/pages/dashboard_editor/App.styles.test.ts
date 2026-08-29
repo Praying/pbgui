@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -38,6 +38,90 @@ function readComponent(relative: string): string {
 
 function readWidget(relative: string): string {
   return read(join('components', 'widgets', relative));
+}
+
+function enumerateProductionSourcePaths(directory: string, relativeDirectory = ''): string[] {
+  const sourcePaths: string[] = [];
+
+  for (const directoryEntry of readdirSync(directory, { withFileTypes: true })) {
+    const relativePath = join(relativeDirectory, directoryEntry.name);
+    if (directoryEntry.isDirectory()) {
+      sourcePaths.push(...enumerateProductionSourcePaths(join(directory, directoryEntry.name), relativePath));
+      continue;
+    }
+    if (
+      !directoryEntry.isFile() ||
+      !/\.(vue|ts)$/.test(directoryEntry.name) ||
+      directoryEntry.name.endsWith('.test.ts') ||
+      directoryEntry.name.endsWith('.d.ts')
+    ) {
+      continue;
+    }
+    sourcePaths.push(relativePath);
+  }
+
+  return sourcePaths.sort();
+}
+
+const dashboardEditorProductionSourcePaths = enumerateProductionSourcePaths(pageRoot);
+
+type SourceFile = { path: string; source: string };
+
+const dashboardEditorProductionSourceFiles: SourceFile[] =
+  dashboardEditorProductionSourcePaths.map((path) => ({ path, source: read(path) }));
+
+const task9ProductionSources = dashboardEditorProductionSourceFiles
+  .map(({ source }) => source)
+  .join('\n');
+
+const legacyLiteralAllowlist: Record<string, Readonly<Record<string, number>>> = {
+  'components/widgets/PlotlyChart.test.ts': { '#333f5c': 1 },
+  'lib/grid.ts': {
+    '#96b9f4': 3,
+    '#76d9ad': 1,
+    '#9b8ede': 2,
+    '#ecc381': 2,
+  },
+  'lib/plotlyLayouts.test.ts': {
+    'rgba(5, 8, 14': 1,
+    'rgba(5, 8, 14,0)': 1,
+  },
+  'lib/plotlyLayouts.ts': {
+    'rgba(5, 8, 14': 1,
+    'rgba(5, 8, 14,0)': 1,
+  },
+};
+
+const legacyLiterals = [
+  '#10141d',
+  '#333f5c',
+  '#e8ecf4',
+  '#46c88f',
+  '#e5615c',
+  '#72a0ee',
+  '#a3adc2',
+  '#262f45',
+  '#4d5c82',
+  '#e0a458',
+  '#f2f5fb',
+  '#96b9f4',
+  '#76d9ad',
+  '#9b8ede',
+  '#ecc381',
+  'rgba(5,8,14',
+  'rgba(5, 8, 14',
+];
+
+function countOccurrences(source: string, literal: string): number {
+  return source.split(literal).length - 1;
+}
+
+function getAuditSources(): SourceFile[] {
+  return [
+    ...dashboardEditorProductionSourceFiles,
+    { path: 'components/widgets/PlotlyChart.test.ts', source: readWidget('PlotlyChart.test.ts') },
+    { path: 'lib/plotlyLayouts.test.ts', source: read('lib/plotlyLayouts.test.ts') },
+  ];
 }
 
 /** The <style> blocks of a Vue SFC (scoped and unscoped alike). */
@@ -128,6 +212,113 @@ describe('editor styles migration — engine class anchors', () => {
 });
 
 describe('widgets styles migration — token mapping contracts', () => {
+  it('rejects active editor legacy palette literals', () => {
+    for (const { path, source } of getAuditSources()) {
+      const allowedLiterals = legacyLiteralAllowlist[path] ?? {};
+      for (const legacyLiteral of legacyLiterals) {
+        const occurrenceCount = countOccurrences(source, legacyLiteral);
+        const allowedOccurrenceCount = allowedLiterals[legacyLiteral] ?? 0;
+        expect(
+          occurrenceCount,
+          `${path} contains ${legacyLiteral} outside its explicit audit contract`,
+        ).toBe(allowedOccurrenceCount);
+      }
+    }
+  });
+
+  it('proves widget metadata colors are not rendered styling', () => {
+    const metadataSource = dashboardEditorProductionSourceFiles.find(
+      ({ path }) => path === 'lib/grid.ts',
+    )!.source;
+    const metadataColors = ['#96b9f4', '#76d9ad', '#9b8ede', '#ecc381'];
+    const renderedSource = dashboardEditorProductionSourceFiles
+      .filter(({ path }) => path !== 'lib/grid.ts')
+      .map(({ source }) => source)
+      .join('\n');
+
+    for (const metadataColor of metadataColors) {
+      expect(metadataSource).toContain(`color: '${metadataColor}'`);
+      expect(renderedSource).not.toContain(metadataColor);
+    }
+    const metadataConsumers = dashboardEditorProductionSourceFiles.filter(
+      ({ path, source }) => path !== 'lib/grid.ts' && /\bWIDGET_META\b/.test(source),
+    );
+    const metadataImportAliases = /\bimport\s*\{[\s\S]*?\bWIDGET_META\s+as\s+([A-Za-z_$][\w$]*)[\s\S]*?\}\s*from/g;
+
+    for (const { path, source } of metadataConsumers) {
+      const metadataReferenceNames = new Set(['WIDGET_META']);
+      for (const importMatch of source.matchAll(metadataImportAliases)) {
+        metadataReferenceNames.add(importMatch[1]!);
+      }
+
+      let foundMetadataAlias = true;
+      while (foundMetadataAlias) {
+        foundMetadataAlias = false;
+        const escapedMetadataNames = [...metadataReferenceNames]
+          .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+          .join('|');
+        const metadataAliasPattern = new RegExp(
+          `\\b(?:const|let|var)\\s+([A-Za-z_$][\\w$]*)\\s*=\\s*(?:${escapedMetadataNames})\\b`,
+          'g',
+        );
+        for (const aliasMatch of source.matchAll(metadataAliasPattern)) {
+          if (!metadataReferenceNames.has(aliasMatch[1]!)) {
+            metadataReferenceNames.add(aliasMatch[1]!);
+            foundMetadataAlias = true;
+          }
+        }
+      }
+
+      const escapedMetadataNames = [...metadataReferenceNames]
+        .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('|');
+      const metadataPropertyChain =
+        `(?:${escapedMetadataNames})(?:\\s*(?:\\?\\.|\\.)\\s*[A-Za-z_$][\\w$]*|\\s*\\[[^\\]]+\\])*`;
+      const metadataColorAccessPatterns = [
+        new RegExp(`${metadataPropertyChain}\\s*(?:\\?\\.|\\.)\\s*color\\b`),
+        new RegExp(`${metadataPropertyChain}\\s*\\[\\s*['"]color['"]\\s*\\]`),
+        new RegExp(
+          `\\b(?:const|let|var)\\s*\\{[\\s\\S]*?\\bcolor(?:\\s*:\\s*[A-Za-z_$][\\w$]*)?(?:\\s*,|\\s*\\})[\\s\\S]*?\\}\\s*=\\s*${metadataPropertyChain}`,
+        ),
+      ];
+
+      for (const metadataColorAccessPattern of metadataColorAccessPatterns) {
+        expect(
+          source,
+          `${path} reads a WIDGET_META color property`,
+        ).not.toMatch(metadataColorAccessPattern);
+      }
+    }
+  });
+
+  it('keeps the synthetic Plotly fixture isolated from production sources', () => {
+    const fixtureSource = readWidget('PlotlyChart.test.ts');
+    expect(fixtureSource).toContain(
+      "env.layout.value = { autosize: true, xaxis: { gridcolor: '#333f5c' } };",
+    );
+    expect(fixtureSource).toContain('does not capture or apply zoom when zoomPos is null');
+    expect(task9ProductionSources).not.toContain('#333f5c');
+  });
+
+  it('keeps the zero-alpha income legend literal limited to the legend background', () => {
+    const plotlySource = dashboardEditorProductionSourceFiles.find(
+      ({ path }) => path === 'lib/plotlyLayouts.ts',
+    )!.source;
+    const transparentLegendLiteral = 'rgba(5, 8, 14,0)';
+
+    expect(plotlySource).toContain(
+      `legend: { bgcolor: '${transparentLegendLiteral}', font:`,
+    );
+    expect(countOccurrences(task9ProductionSources, transparentLegendLiteral)).toBe(1);
+    expect(
+      dashboardEditorProductionSourceFiles
+        .filter(({ source }) => source.includes(transparentLegendLiteral))
+        .map(({ path }) => path),
+    ).toEqual(['lib/plotlyLayouts.ts']);
+    expect(countOccurrences(plotlySource, transparentLegendLiteral)).toBe(1);
+    expect(transparentLegendLiteral.endsWith(',0)')).toBe(true);
+  });
+
   it('maps the widget chrome onto the shared token utilities (the --db-* aliases)', () => {
     /* The legacy :root{--db-*} block aliased the global tokens
        (--db-bg:var(--bg-page), --db-surface:var(--bg-card), …). With the

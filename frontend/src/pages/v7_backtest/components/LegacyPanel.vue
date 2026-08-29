@@ -91,7 +91,7 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
 <template>
   <div id="panel-legacy" class="view-panel min-h-0 flex-1 flex-col overflow-hidden" :class="[active ? 'flex' : 'hidden', { active, 'leg-unpinned': !pinned }]">
     <div id="legacy-results-view" class="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div id="legacy-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
+      <div id="legacy-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[var(--shadow-panel)]">
         <div id="legacy-results-toolbar" class="mb-3 mt-2 flex flex-wrap items-center gap-2">
           <span id="legacy-results-config-filter-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</span>
           <!-- ui-migration: the legacy <option value="">All configs</option> has no

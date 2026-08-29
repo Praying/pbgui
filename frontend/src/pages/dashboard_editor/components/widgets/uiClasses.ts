@@ -95,7 +95,7 @@ export const dtChartClass = 'dt-chart relative w-full';
  *  PositionsConfigPreviewModal. */
 export const dpModalChrome = {
   /** `.dp-modal-ovl` (the preview overlay overrides z-index inline). */
-  ovl: 'dp-modal-ovl fixed inset-0 z-[30000] block bg-[rgba(5,8,14,0.72)] p-4 backdrop-blur-[2px]',
+  ovl: 'dp-modal-ovl fixed inset-0 z-[30000] block bg-[var(--bg-backdrop)] p-4 backdrop-blur-[2px]',
   /** `.dp-modal-head` (drag handle of the manage modal). */
   head: 'dp-modal-head flex cursor-move select-none items-center justify-between gap-[0.5rem] border-b border-b-border-subtle bg-card px-[1rem] py-[0.75rem]',
   /** `.dp-modal-title` */

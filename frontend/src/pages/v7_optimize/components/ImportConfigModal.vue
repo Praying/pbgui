@@ -64,7 +64,7 @@ function submit(): void {
 
 <template>
   <div v-if="open" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
-    <section class="flex w-[min(900px,calc(100vw-30px))] max-h-[min(760px,calc(100vh-30px))] max-h-[min(760px,calc(100dvh-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)]" role="dialog" aria-modal="true">
+    <section class="flex w-[min(900px,calc(100vw-30px))] max-h-[min(760px,calc(100vh-30px))] max-h-[min(760px,calc(100dvh-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)]" role="dialog" aria-modal="true">
       <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2>{{ t('v7optimize.importOptimizeConfig') }}</h2><Button type="button" variant="default" @click="emit('close')">{{ t('common.close') }}</Button></header>
       <!-- ui-migration: out of scope — source tab strip (tabs excluded;
            .opt-source-tabs button scoped rules stay). -->

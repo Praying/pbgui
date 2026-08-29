@@ -370,7 +370,7 @@ defineExpose({
 
     <!-- results view (:879-913) -->
     <div v-else id="archive-results-view" class="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div id="archive-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
+      <div id="archive-results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[var(--shadow-panel)]">
         <div id="archive-layout-status" class="pt-2 text-sm text-secondary" data-test="archive-layout-status">{{ store.statusLine.value }}</div>
         <div id="archive-results-toolbar" class="mb-3 flex flex-wrap items-center gap-2 pt-2">
           <Button type="button" variant="default" class="act-btn h-auto" data-test="arc-tab-backtests" :style="{ opacity: isBacktests ? '1' : '.55' }" @click="store.setMode('backtests')">

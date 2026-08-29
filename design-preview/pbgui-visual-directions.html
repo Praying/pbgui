@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en" data-theme="precision">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>PBGui Visual Direction Lab</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --sans: "Space Grotesk", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      --page: #161616;
+      --deep: #0f0f0f;
+      --rail: #1b1b1b;
+      --panel: #222222;
+      --raised: #2b2b2b;
+      --glass: rgb(34 34 34 / 0.88);
+      --border: rgb(224 224 224 / 0.14);
+      --border-strong: rgb(224 224 224 / 0.29);
+      --grid: rgb(224 224 224 / 0.03);
+      --text: #f0f0f0;
+      --soft: #bdbdbd;
+      --muted: #999999;
+      --accent: #8fcff2;
+      --accent-strong: #4fa8d3;
+      --accent-ink: #081216;
+      --success: #7bc8a5;
+      --warning: #d8ae6f;
+      --danger: #d98080;
+      --chart-two: #8d9fd1;
+      --glow: rgb(79 168 211 / 0.16);
+      --shadow: 0 22px 60px rgb(0 0 0 / 0.34);
+      --radius: 14px;
+      --control-radius: 8px;
+      --ease: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    html[data-theme="luxury"] {
+      --page: #0c0e10;
+      --deep: #070809;
+      --rail: #101214;
+      --panel: #17191c;
+      --raised: #202225;
+      --glass: rgb(22 24 26 / 0.92);
+      --border: rgb(223 209 176 / 0.13);
+      --border-strong: rgb(223 209 176 / 0.3);
+      --grid: rgb(230 216 182 / 0.025);
+      --text: #f1eee8;
+      --soft: #b2aca1;
+      --muted: #9c978d;
+      --accent: #d7c08d;
+      --accent-strong: #a78a52;
+      --accent-ink: #17140e;
+      --success: #8ec9aa;
+      --warning: #d7b071;
+      --danger: #d9867d;
+      --chart-two: #8e9ab5;
+      --glow: rgb(208 185 133 / 0.12);
+      --shadow: 0 28px 80px rgb(0 0 0 / 0.52);
+      --radius: 4px;
+      --control-radius: 3px;
+    }
+
+    html[data-theme="glass"] {
+      --page: #080c1d;
+      --deep: #040713;
+      --rail: rgb(10 13 31 / 0.82);
+      --panel: rgb(22 27 58 / 0.64);
+      --raised: rgb(38 43 81 / 0.76);
+      --glass: rgb(19 24 51 / 0.64);
+      --border: rgb(205 215 255 / 0.16);
+      --border-strong: rgb(205 215 255 / 0.32);
+      --grid: rgb(202 214 255 / 0.035);
+      --text: #f4f6ff;
+      --soft: #b9c2e4;
+      --muted: #7d87ad;
+      --accent: #9e9cff;
+      --accent-strong: #706bf3;
+      --accent-ink: #0c0c25;
+      --success: #65e0c1;
+      --warning: #f3c477;
+      --danger: #ff8f9b;
+      --chart-two: #64d3ef;
+      --glow: rgb(130 112 255 / 0.32);
+      --shadow: 0 30px 86px rgb(2 4 17 / 0.48);
+      --radius: 20px;
+      --control-radius: 12px;
+    }
+
+    html[data-theme="cyber"] {
+      --page: #030b0d;
+      --deep: #010506;
+      --rail: #051113;
+      --panel: #081719;
+      --raised: #0c2022;
+      --glass: rgb(5 20 22 / 0.92);
+      --border: rgb(72 240 207 / 0.2);
+      --border-strong: rgb(72 240 207 / 0.48);
+      --grid: rgb(72 240 207 / 0.055);
+      --text: #e9fff9;
+      --soft: #8fbdb4;
+      --muted: #79a99f;
+      --accent: #43f4cf;
+      --accent-strong: #11bfa0;
+      --accent-ink: #001713;
+      --success: #72ff8e;
+      --warning: #ffdc61;
+      --danger: #ff5577;
+      --chart-two: #ff4fd8;
+      --glow: rgb(52 244 204 / 0.28);
+      --shadow: 0 0 44px rgb(23 218 181 / 0.09);
+      --radius: 0;
+      --control-radius: 0;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-width: 320px;
+      background: var(--deep);
+      font-family: var(--sans);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 84% -10%, var(--glow), transparent 34rem),
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        var(--page);
+      background-size: auto, 42px 42px, 42px 42px, auto;
+      color: var(--text);
+    }
+
+    button { color: inherit; font: inherit; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    .comparison-bar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(190px, .7fr) minmax(520px, 1.6fr) auto;
+      align-items: center;
+      gap: 20px;
+      min-height: 76px;
+      padding: 12px clamp(14px, 2vw, 28px);
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--deep) 88%, transparent);
+      backdrop-filter: blur(20px) saturate(125%);
+    }
+
+    .kicker,
+    .eyebrow,
+    .metric-label,
+    .panel-kicker,
+    .rail-label {
+      color: var(--muted);
+      font: 700 10px/1 var(--mono);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .lab-title { margin: 5px 0 0; font-size: 17px; font-weight: 680; letter-spacing: -.02em; }
+
+    .theme-switcher {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      padding: 5px;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--control-radius) + 4px);
+      background: rgb(0 0 0 / .18);
+    }
+
+    .theme-button {
+      min-height: 42px;
+      padding: 7px 10px;
+      border: 1px solid transparent;
+      border-radius: var(--control-radius);
+      background: transparent;
+      color: var(--soft);
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1.15;
+      transition: var(--ease);
+    }
+
+    .theme-button:hover { border-color: var(--border); background: var(--panel); color: var(--text); transform: translateY(-1px); }
+    .theme-button[aria-pressed="true"] { border-color: var(--border-strong); background: var(--raised); color: var(--accent); }
+    .key-hint { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+    kbd { padding: 3px 6px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--panel); font: 10px var(--mono); }
+
+    .app-shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100vh - 76px); }
+    .rail { position: sticky; top: 76px; display: flex; height: calc(100vh - 76px); min-height: 600px; flex-direction: column; border-right: 1px solid var(--border); background: var(--rail); }
+    .brand { display: flex; min-height: 72px; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--border); }
+
+    .brand-mark {
+      position: relative;
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--control-radius);
+      background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+      color: var(--accent);
+      box-shadow: 0 0 22px var(--glow);
+      font: 800 12px var(--mono);
+    }
+
+    .brand-mark::after { position: absolute; right: -2px; bottom: -2px; width: 7px; height: 7px; border: 2px solid var(--rail); border-radius: 50%; background: var(--success); content: ""; }
+    .brand-copy strong, .brand-copy span { display: block; }
+    .brand-copy strong { font-size: 15px; }
+    .brand-copy span { margin-top: 3px; color: var(--muted); font: 9px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .rail-content { flex: 1; overflow-y: auto; padding: 20px 11px; }
+    .rail-group + .rail-group { margin-top: 24px; }
+    .rail-label { display: block; margin: 0 9px 7px; }
+
+    .rail-item {
+      position: relative;
+      display: flex;
+      width: 100%;
+      min-height: 40px;
+      align-items: center;
+      gap: 11px;
+      margin: 3px 0;
+      padding: 0 11px;
+      border: 1px solid transparent;
+      border-radius: var(--control-radius);
+      background: transparent;
+      color: var(--soft);
+      cursor: pointer;
+      font-size: 13px;
+      text-align: left;
+      transition: var(--ease);
+    }
+
+    .rail-item:hover { border-color: var(--border); background: var(--panel); color: var(--text); transform: translateX(2px); }
+    .rail-item.active { border-color: var(--border); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent); color: var(--accent); }
+    .rail-item.active::before { position: absolute; top: 9px; bottom: 9px; left: -1px; width: 2px; background: var(--accent); box-shadow: 0 0 12px var(--accent); content: ""; }
+    .rail-icon { display: grid; width: 18px; place-items: center; font: 11px var(--mono); }
+    .rail-footer { padding: 13px; border-top: 1px solid var(--border); }
+
+    .ai-button,
+    .action-button {
+      min-height: 38px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--control-radius);
+      background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 680;
+      transition: var(--ease);
+    }
+
+    .ai-button { width: 100%; }
+    .action-button { padding: 0 14px; }
+    .action-button:hover, .ai-button:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .action-button.primary { border-color: transparent; background: var(--accent); color: var(--accent-ink); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 18%, transparent); }
+
+    .workspace { min-width: 0; }
+    .workspace-header { display: flex; min-height: 104px; align-items: center; justify-content: space-between; gap: 24px; padding: 18px clamp(16px, 2vw, 26px); border-bottom: 1px solid var(--border); }
+    .eyebrow { margin: 0 0 7px; color: var(--accent); }
+    .page-title { margin: 0; font-size: clamp(24px, 2.3vw, 34px); font-weight: 620; letter-spacing: -.045em; line-height: 1; }
+    .page-description { margin: 9px 0 0; color: var(--soft); font-size: 13px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    .status-pill,
+    .tag,
+    .mini-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 1px solid var(--border);
+      border-radius: var(--control-radius);
+    }
+
+    .status-pill { min-height: 38px; padding: 0 12px; background: var(--glass); color: var(--soft); font: 11px var(--mono); }
+    .status-dot, .service-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 12px var(--success); }
+    .workspace-content { display: grid; gap: 16px; width: min(100%, 1620px); margin: 0 auto; padding: clamp(16px, 2vw, 26px); }
+
+    .direction-caption {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 24px;
+      padding: 17px 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--glass);
+      box-shadow: var(--shadow);
+    }
+
+    .direction-caption h2 { margin: 0; color: var(--accent); font-size: 15px; }
+    .direction-caption p { max-width: 76ch; margin: 6px 0 0; color: var(--soft); font-size: 12px; line-height: 1.55; }
+    .direction-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+    .tag { min-height: 25px; padding: 0 8px; background: var(--raised); color: var(--muted); font: 8px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+
+    .overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .panel, .metric-card { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: linear-gradient(145deg, color-mix(in srgb, var(--raised) 58%, var(--panel)), var(--panel)); box-shadow: var(--shadow); }
+    .metric-card { min-height: 132px; padding: 17px 18px; transition: var(--ease); }
+    .metric-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+    .metric-topline, .metric-meta, .panel-header, .allocation-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .metric-delta { color: var(--success); font: 700 10px var(--mono); }
+    .metric-value { margin-top: 16px; font-size: clamp(23px, 2vw, 30px); font-weight: 620; letter-spacing: -.04em; }
+    .metric-meta { margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .positive { color: var(--success); }
+    .negative { color: var(--danger); }
+    .sparkline { width: 66px; height: 22px; overflow: visible; }
+    .sparkline polyline { fill: none; stroke: var(--accent); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+
+    .main-grid { display: grid; grid-template-columns: minmax(0, 1.72fr) minmax(270px, .7fr); gap: 16px; }
+    .chart-panel, .service-panel, .table-panel, .allocation-panel { padding: 20px; }
+    .chart-panel, .service-panel { min-height: 374px; }
+    .panel-title { margin: 5px 0 0; font-size: 17px; font-weight: 630; letter-spacing: -.025em; }
+    .range-tabs { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgb(0 0 0 / .16); }
+    .range-tab { min-width: 34px; min-height: 27px; border: 0; border-radius: var(--control-radius); background: transparent; color: var(--muted); cursor: pointer; font: 9px var(--mono); }
+    .range-tab.active { background: var(--raised); color: var(--accent); }
+
+    .chart-wrap { position: relative; height: 260px; margin-top: 26px; }
+    .chart-wrap::before { position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px 25%); opacity: .56; content: ""; }
+    .chart-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .chart-area { fill: url(#chart-area-gradient); }
+    .chart-line { fill: none; stroke: var(--accent); stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; filter: drop-shadow(0 0 7px var(--glow)); vector-effect: non-scaling-stroke; }
+    .chart-line-secondary { fill: none; opacity: .62; stroke: var(--chart-two); stroke-dasharray: 5 7; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+    .chart-marker { fill: var(--panel); stroke: var(--accent); stroke-width: 3; }
+    .chart-labels { position: absolute; right: 0; bottom: -17px; left: 0; display: flex; justify-content: space-between; color: var(--muted); font: 9px var(--mono); }
+
+    .health-orbit { position: relative; display: grid; width: 108px; height: 108px; margin: 24px auto; place-items: center; border: 1px solid var(--border-strong); border-radius: 50%; background: conic-gradient(var(--success) 0 92%, var(--border) 92%); box-shadow: 0 0 34px color-mix(in srgb, var(--success) 12%, transparent); }
+    .health-orbit::before { position: absolute; inset: 8px; border-radius: inherit; background: var(--panel); content: ""; }
+    .health-value { position: relative; font: 760 21px var(--mono); }
+    .service-list { display: grid; gap: 8px; }
+    .service-row { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 9px; min-height: 38px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--glass); }
+    .service-row strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .service-row span:last-child { color: var(--muted); font: 9px var(--mono); }
+    .service-dot { width: 6px; height: 6px; }
+    .mini-status { min-height: 22px; padding: 0 7px; background: color-mix(in srgb, var(--success) 8%, transparent); color: var(--success); font: 750 8px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+
+    .bottom-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .62fr); gap: 16px; }
+    .table-panel, .allocation-panel { min-height: 308px; }
+    .table-scroll { overflow-x: auto; margin: 16px -20px -20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 12px 16px; border-top: 1px solid var(--border); text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { padding-left: 20px; text-align: left; }
+    th { color: var(--muted); font: 700 9px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+    .symbol-cell { display: flex; align-items: center; gap: 9px; color: var(--text); font-weight: 680; }
+    .symbol-mark { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid var(--border-strong); border-radius: 50%; background: var(--raised); color: var(--accent); font: 8px var(--mono); }
+    .allocation-list { display: grid; gap: 16px; margin-top: 22px; }
+    .allocation-row { display: grid; gap: 7px; }
+    .allocation-meta { color: var(--soft); font-size: 11px; }
+    .allocation-meta strong { color: var(--text); font: 10px var(--mono); }
+    .progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: var(--border); }
+    .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-strong), var(--accent)); box-shadow: 0 0 12px var(--glow); }
+    .allocation-note { margin-top: 22px; padding: 12px; border-left: 2px solid var(--warning); background: color-mix(in srgb, var(--warning) 7%, transparent); color: var(--soft); font-size: 11px; line-height: 1.55; }
+
+    html[data-theme="glass"] .panel,
+    html[data-theme="glass"] .metric-card { backdrop-filter: blur(22px) saturate(130%); }
+
+    html[data-theme="luxury"] .page-title,
+    html[data-theme="luxury"] .metric-value,
+    html[data-theme="luxury"] .brand-copy strong { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+
+    html[data-theme="cyber"] .panel,
+    html[data-theme="cyber"] .metric-card { clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px)); }
+
+    html[data-theme="cyber"] .panel::before,
+    html[data-theme="cyber"] .metric-card::before { position: absolute; top: 0; left: 0; width: 36%; height: 1px; background: var(--accent); box-shadow: 0 0 10px var(--accent); content: ""; }
+
+    .scanline { display: none; }
+    html[data-theme="cyber"] .scanline { position: fixed; z-index: 19; top: 76px; right: 0; left: 220px; display: block; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); box-shadow: 0 0 12px var(--accent); opacity: .3; pointer-events: none; animation: scan 8s linear infinite; }
+    @keyframes scan { to { transform: translateY(calc(100vh - 77px)); } }
+
+    @media (max-width: 1100px) {
+      .comparison-bar { position: relative; grid-template-columns: 1fr; gap: 9px; }
+      .key-hint { display: none; }
+      .app-shell { grid-template-columns: 68px minmax(0, 1fr); }
+      .rail { top: 0; height: 100vh; }
+      .brand { justify-content: center; padding: 0; }
+      .brand-copy, .rail-label, .rail-item span:last-child { display: none; }
+      .rail-item { justify-content: center; padding: 0; }
+      html[data-theme="cyber"] .scanline { display: none; }
+    }
+
+    @media (max-width: 860px) {
+      .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .main-grid, .bottom-grid { grid-template-columns: 1fr; }
+      .direction-caption { grid-template-columns: 1fr; }
+      .direction-tags { justify-content: flex-start; }
+    }
+
+    @media (max-width: 640px) {
+      .theme-switcher { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .app-shell { display: block; }
+      .rail { display: none; }
+      .workspace-header { align-items: flex-start; flex-direction: column; }
+      .header-actions { width: 100%; flex-wrap: wrap; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .panel-header { align-items: flex-start; flex-direction: column; }
+      .range-tabs { width: 100%; }
+      .range-tab { flex: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="comparison-bar">
+    <div><span class="kicker">Visual Direction Lab</span><p class="lab-title">PBGui Interface Concepts</p></div>
+    <div class="theme-switcher" role="group" aria-label="Visual direction">
+      <button class="theme-button" type="button" aria-pressed="true" data-theme-option="precision">Precision Terminal 2.0</button>
+      <button class="theme-button" type="button" aria-pressed="false" data-theme-option="luxury">Dark Finance Luxury</button>
+      <button class="theme-button" type="button" aria-pressed="false" data-theme-option="glass">Modern Glass Terminal</button>
+      <button class="theme-button" type="button" aria-pressed="false" data-theme-option="cyber">Cyber Operations</button>
+    </div>
+    <div class="key-hint" aria-hidden="true"><kbd>1</kbd><span>to</span><kbd>4</kbd><span>switch</span></div>
+  </header>
+  <div class="scanline" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <aside class="rail" aria-label="Workbench navigation">
+      <div class="brand"><div class="brand-mark">PB</div><div class="brand-copy"><strong>PBGui</strong><span>Trading Workbench</span></div></div>
+      <div class="rail-content">
+        <nav>
+          <div class="rail-group"><span class="rail-label">Overview</span><button class="rail-item active" type="button"><span class="rail-icon">01</span><span>Command Center</span></button><button class="rail-item" type="button"><span class="rail-icon">02</span><span>Dashboards</span></button><button class="rail-item" type="button"><span class="rail-icon">03</span><span>Service Monitor</span></button></div>
+          <div class="rail-group"><span class="rail-label">Trading</span><button class="rail-item" type="button"><span class="rail-icon">04</span><span>Run Instances</span></button><button class="rail-item" type="button"><span class="rail-icon">05</span><span>Backtest</span></button><button class="rail-item" type="button"><span class="rail-icon">06</span><span>Optimize</span></button><button class="rail-item" type="button"><span class="rail-icon">07</span><span>Strategy Lab</span></button></div>
+          <div class="rail-group"><span class="rail-label">Infrastructure</span><button class="rail-item" type="button"><span class="rail-icon">08</span><span>VPS Manager</span></button><button class="rail-item" type="button"><span class="rail-icon">09</span><span>Market Data</span></button><button class="rail-item" type="button"><span class="rail-icon">10</span><span>API Keys</span></button></div>
+        </nav>
+      </div>
+      <div class="rail-footer"><button class="ai-button" type="button">✦ Ask PBGui AI</button></div>
+    </aside>
+
+    <div class="workspace">
+      <header class="workspace-header">
+        <div><p class="eyebrow">Overview / Live Operations</p><h1 class="page-title">Command Center</h1><p class="page-description">Portfolio health, execution status, and infrastructure telemetry.</p></div>
+        <div class="header-actions"><div class="status-pill"><span class="status-dot"></span><span>All systems nominal</span></div><button class="action-button" type="button">Export</button><button class="action-button primary" type="button">New Instance</button></div>
+      </header>
+
+      <main class="workspace-content">
+        <section class="direction-caption" aria-live="polite">
+          <div><h2 id="direction-title">Precision Trading Terminal 2.0</h2><p id="direction-description">A brighter neutral-graphite foundation with calm silver text and ice-blue telemetry, balancing financial comfort with crisp operational hierarchy for long sessions.</p></div>
+          <div class="direction-tags" id="direction-tags"><span class="tag">Operational</span><span class="tag">Precise</span><span class="tag">Low fatigue</span></div>
+        </section>
+
+        <section class="overview-grid" aria-label="Portfolio overview">
+          <article class="metric-card"><div class="metric-topline"><span class="metric-label">Portfolio Equity</span><span class="metric-delta">+4.82%</span></div><div class="metric-value">$248,630.42</div><div class="metric-meta"><span>24h net change</span><svg class="sparkline" viewBox="0 0 66 22" aria-hidden="true"><polyline points="1,18 10,16 18,17 27,10 36,13 45,7 55,9 65,2" /></svg></div></article>
+          <article class="metric-card"><div class="metric-topline"><span class="metric-label">Live Instances</span><span class="metric-delta">12 / 12</span></div><div class="metric-value">12</div><div class="metric-meta"><span>Across 4 exchanges</span><span class="positive">Healthy</span></div></article>
+          <article class="metric-card"><div class="metric-topline"><span class="metric-label">Unrealized PNL</span><span class="metric-delta">+1.16%</span></div><div class="metric-value positive">+$2,846.18</div><div class="metric-meta"><span>Long +$3.2k</span><span class="negative">Short -$384</span></div></article>
+          <article class="metric-card"><div class="metric-topline"><span class="metric-label">Margin Usage</span><span class="metric-delta">Safe</span></div><div class="metric-value">28.4%</div><div class="metric-meta"><span>71.6% available</span><svg class="sparkline" viewBox="0 0 66 22" aria-hidden="true"><polyline points="1,8 10,7 18,11 27,10 36,13 45,12 55,16 65,15" /></svg></div></article>
+        </section>
+
+        <section class="main-grid">
+          <article class="panel chart-panel">
+            <div class="panel-header"><div><span class="panel-kicker">Portfolio Telemetry</span><h2 class="panel-title">Equity Performance</h2></div><div class="range-tabs" role="group" aria-label="Chart range"><button class="range-tab" type="button">1D</button><button class="range-tab active" type="button">1W</button><button class="range-tab" type="button">1M</button><button class="range-tab" type="button">3M</button></div></div>
+            <div class="chart-wrap">
+              <svg class="chart-svg" viewBox="0 0 800 250" preserveAspectRatio="none" role="img" aria-label="Portfolio equity increased over seven days">
+                <defs><linearGradient id="chart-area-gradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".24" /><stop offset="1" stop-color="var(--accent)" stop-opacity="0" /></linearGradient></defs>
+                <path class="chart-area" d="M0,214 C55,205 86,183 132,190 C182,198 213,150 264,158 C320,166 350,117 404,125 C462,134 500,91 551,99 C609,108 634,63 684,70 C730,77 758,37 800,30 L800,250 L0,250 Z" />
+                <path class="chart-line-secondary" d="M0,190 C70,173 95,181 148,167 C202,153 240,168 301,139 C357,112 405,142 461,116 C523,87 583,110 640,76 C697,45 746,61 800,46" />
+                <path class="chart-line" d="M0,214 C55,205 86,183 132,190 C182,198 213,150 264,158 C320,166 350,117 404,125 C462,134 500,91 551,99 C609,108 634,63 684,70 C730,77 758,37 800,30" />
+                <circle class="chart-marker" cx="800" cy="30" r="5" />
+              </svg>
+              <div class="chart-labels"><span>MON 22</span><span>TUE 23</span><span>WED 24</span><span>THU 25</span><span>FRI 26</span><span>SAT 27</span><span>NOW</span></div>
+            </div>
+          </article>
+
+          <aside class="panel service-panel">
+            <div class="panel-header"><div><span class="panel-kicker">Infrastructure</span><h2 class="panel-title">System Health</h2></div><span class="mini-status">Live</span></div>
+            <div class="health-orbit" aria-label="System health 92 percent"><span class="health-value">92%</span></div>
+            <div class="service-list"><div class="service-row"><span class="service-dot" aria-hidden="true"></span><strong>API Server</strong><span>Healthy · 24 ms</span></div><div class="service-row"><span class="service-dot" aria-hidden="true"></span><strong>Market Data</strong><span>Healthy · 8 streams</span></div><div class="service-row"><span class="service-dot" aria-hidden="true"></span><strong>PBRun Controller</strong><span>Healthy · 12 jobs</span></div><div class="service-row"><span class="service-dot" aria-hidden="true"></span><strong>Database</strong><span>Healthy · 3.1 ms</span></div></div>
+          </aside>
+        </section>
+
+        <section class="bottom-grid">
+          <article class="panel table-panel">
+            <div class="panel-header"><div><span class="panel-kicker">Execution Layer</span><h2 class="panel-title">Active Strategies</h2></div><button class="action-button" type="button">View all</button></div>
+            <div class="table-scroll"><table><thead><tr><th>Market</th><th>Strategy</th><th>Position</th><th>PNL</th><th>Exposure</th><th>Status</th></tr></thead><tbody>
+              <tr><td><span class="symbol-cell"><span class="symbol-mark">BT</span>BTC / USDT</span></td><td>Recursive Grid</td><td>Long 0.82</td><td class="positive">+$1,284.20</td><td>$58,430</td><td><span class="mini-status">Running</span></td></tr>
+              <tr><td><span class="symbol-cell"><span class="symbol-mark">ET</span>ETH / USDT</span></td><td>Clock Grid</td><td>Short 7.24</td><td class="negative">-$184.32</td><td>$23,104</td><td><span class="mini-status">Running</span></td></tr>
+              <tr><td><span class="symbol-cell"><span class="symbol-mark">SO</span>SOL / USDT</span></td><td>Recursive Grid</td><td>Long 142.8</td><td class="positive">+$896.74</td><td>$19,842</td><td><span class="mini-status">Running</span></td></tr>
+              <tr><td><span class="symbol-cell"><span class="symbol-mark">BN</span>BNB / USDT</span></td><td>Neat Grid</td><td>Long 18.2</td><td class="positive">+$411.62</td><td>$10,208</td><td><span class="mini-status">Running</span></td></tr>
+            </tbody></table></div>
+          </article>
+
+          <aside class="panel allocation-panel">
+            <div><span class="panel-kicker">Risk Distribution</span><h2 class="panel-title">Capital Allocation</h2></div>
+            <div class="allocation-list">
+              <div class="allocation-row"><div class="allocation-meta"><span>Directional long</span><strong>42%</strong></div><div class="progress-track"><div class="progress-fill" style="width:42%"></div></div></div>
+              <div class="allocation-row"><div class="allocation-meta"><span>Directional short</span><strong>18%</strong></div><div class="progress-track"><div class="progress-fill" style="width:18%"></div></div></div>
+              <div class="allocation-row"><div class="allocation-meta"><span>Hedged capital</span><strong>24%</strong></div><div class="progress-track"><div class="progress-fill" style="width:24%"></div></div></div>
+              <div class="allocation-row"><div class="allocation-meta"><span>Available margin</span><strong>16%</strong></div><div class="progress-track"><div class="progress-fill" style="width:16%"></div></div></div>
+            </div>
+            <div class="allocation-note">Risk remains inside the configured envelope. BTC long exposure is approaching the 45% soft limit.</div>
+          </aside>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const visualDirections = {
+      precision: { title: 'Precision Trading Terminal 2.0', description: 'A brighter neutral-graphite foundation with calm silver text and ice-blue telemetry, balancing financial comfort with crisp operational hierarchy for long sessions.', tags: ['Neutral graphite', 'Ice-blue signal', 'Low fatigue'] },
+      luxury: { title: 'Dark Finance Luxury', description: 'An institutional, restrained direction built from charcoal layers, champagne-metal highlights, serif display details, and generous visual pacing without sacrificing dashboard density.', tags: ['Institutional', 'Refined', 'Quiet confidence'] },
+      glass: { title: 'Modern Glass Terminal', description: 'A layered, atmospheric interface using translucent indigo surfaces, soft violet illumination, and broader radii to create depth while keeping critical data crisp and readable.', tags: ['Layered', 'Atmospheric', 'Contemporary'] },
+      cyber: { title: 'Cyber Operations Center', description: 'A high-energy command surface with mint telemetry, magenta comparison data, cut-corner geometry, scan effects, and visibly technical framing for a stronger sci-fi identity.', tags: ['High contrast', 'Technical', 'Expressive'] },
+    };
+
+    const themeButtons = [...document.querySelectorAll('[data-theme-option]')];
+    const directionTitle = document.getElementById('direction-title');
+    const directionDescription = document.getElementById('direction-description');
+    const directionTags = document.getElementById('direction-tags');
+
+    function selectVisualDirection(themeName, focusButton = false) {
+      const direction = visualDirections[themeName];
+      if (!direction) return;
+      document.documentElement.dataset.theme = themeName;
+      directionTitle.textContent = direction.title;
+      directionDescription.textContent = direction.description;
+      directionTags.replaceChildren(...direction.tags.map((tagText) => {
+        const tagElement = document.createElement('span');
+        tagElement.className = 'tag';
+        tagElement.textContent = tagText;
+        return tagElement;
+      }));
+      themeButtons.forEach((button) => {
+        const selected = button.dataset.themeOption === themeName;
+        button.setAttribute('aria-pressed', String(selected));
+        if (selected && focusButton) button.focus();
+      });
+    }
+
+    themeButtons.forEach((button, buttonIndex) => {
+      button.addEventListener('click', () => selectVisualDirection(button.dataset.themeOption));
+      button.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const offset = event.key === 'ArrowRight' ? 1 : -1;
+        const nextIndex = (buttonIndex + offset + themeButtons.length) % themeButtons.length;
+        selectVisualDirection(themeButtons[nextIndex].dataset.themeOption, true);
+      });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const selectedIndex = Number(event.key) - 1;
+      if (selectedIndex >= 0 && selectedIndex < themeButtons.length) {
+        selectVisualDirection(themeButtons[selectedIndex].dataset.themeOption, true);
+      }
+    });
+  </script>
+</body>
+</html>

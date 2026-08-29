@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
     <Button
       type="button"
       variant="outline"
-      class="resize-btn resize-btn-min absolute left-1.5 top-px z-[6] h-[13px] select-none rounded-[3px] border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
+      class="resize-btn resize-btn-min absolute left-1.5 top-px z-[6] h-[13px] select-none rounded-[3px] border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-accent-contrast"
       :title="dashT('dash.collapseCompact', 'Collapse to compact (scrollable)')"
       @mousedown.stop
       @click="onMin"
@@ -153,7 +153,7 @@ onBeforeUnmount(() => {
     <Button
       type="button"
       variant="outline"
-      class="resize-btn resize-btn-max absolute right-1.5 top-px z-[6] h-[13px] select-none rounded-[3px] border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-[#f2f5fb]"
+      class="resize-btn resize-btn-max absolute right-1.5 top-px z-[6] h-[13px] select-none rounded-[3px] border-secondary bg-elevated px-[5px] py-0 text-[9px] leading-[13px] text-secondary opacity-0 [transition:opacity_.15s,color_.15s,background_.15s] hover:border-accent-soft hover:bg-accent/80 hover:text-accent-contrast"
       :title="dashT('dash.expandAllRows', 'Expand to show all rows')"
       @mousedown.stop
       @click="onMax"

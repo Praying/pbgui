@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { resetDashboardStore, useDashboardStore } from '../../stores/dashboardStore';
@@ -115,7 +116,7 @@ describe('WidgetPpl', () => {
         y: [10.5, 0],
         type: 'bar',
         name: 'Profits',
-        marker: { color: '#46c88f' },
+        marker: { color: PRECISION_PALETTE.success.base },
         text: ['10.50', ''],
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Profits: %{y:.2f}<extra></extra>',
@@ -125,7 +126,7 @@ describe('WidgetPpl', () => {
         y: [0, 3.25],
         type: 'bar',
         name: 'Losses',
-        marker: { color: '#e5615c' },
+        marker: { color: PRECISION_PALETTE.danger.base },
         text: ['', '3.25'],
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Losses: %{y:.2f}<extra></extra>',

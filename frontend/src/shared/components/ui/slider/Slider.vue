@@ -59,7 +59,7 @@ const thumbValues = computed<number[] | undefined>({
     <SliderThumb
       data-slot="slider-thumb"
       :aria-label="props.label"
-      class="block size-4 cursor-pointer rounded-full border-2 border-accent bg-elevated shadow-[0_1px_3px_rgba(5,8,14,0.6)] outline-none transition-[border-color,transform] duration-[120ms] ease-standard hover:border-accent-soft focus-visible:border-accent-soft focus-visible:outline-2 focus-visible:outline-accent-soft focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-45"
+      class="block size-4 cursor-pointer rounded-full border-2 border-accent bg-elevated shadow-[0_1px_3px_rgb(0_0_0_/_0.6)] outline-none transition-[border-color,transform] duration-[120ms] ease-standard hover:border-accent-soft focus-visible:border-accent-soft focus-visible:outline-2 focus-visible:outline-accent-soft focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-45"
     />
   </SliderRoot>
 </template>

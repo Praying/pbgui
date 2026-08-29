@@ -124,7 +124,7 @@ defineExpose({ deleteSelectedFlow });
        made it fill + scroll. A wrapping <div> here would sit between them,
        collapse the flex chain and clip the charts with no scrollbar. -->
   <div class="results-panel-root contents">
-    <div id="results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgba(5,8,14,0.6)]">
+    <div id="results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgb(0_0_0/0.6)]">
       <div id="results-toolbar" class="mb-3 flex flex-wrap items-center gap-2 pt-2">
         <span id="results-version-filter-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.version') }}</span>
         <SelectRoot :model-value="store.versionFilter.value" @update:model-value="store.setVersionFilter(String($event ?? '') as 'v7' | 'v8' | 'both')">

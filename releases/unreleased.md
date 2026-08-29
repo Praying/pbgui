@@ -1,5 +1,35 @@
 # Unreleased
 
+## Frontend — Dashboard Editor Style Audit Review Fix
+
+- Expanded the Dashboard Editor legacy-literal contract across all active Vue, widget-style, formatter, Plotly, Lightweight Charts, and grid metadata sources, with tested allowlists for metadata-only colors, synthetic fixtures, and the zero-alpha income legend.
+
+## Frontend — Shared RGB Companion Review Fix
+
+- Added CSS-to-`PRECISION_PALETTE` synchronization coverage for all defined accent, semantic, surface, and text RGB companions, including optional checks for future warning-deep and text-channel declarations without changing production behavior.
+
+## Frontend — Precision Terminal 2.0 Production Migration
+
+- Migrated the production Vue workbench to neutral graphite surfaces with distinct inset inputs, silver text, ice-blue interaction and telemetry signals, calm semantic ramps, synchronized static chart palettes, and neutral shared shell elevation effects.
+- Applied the production visual contract across PBv7/PBv8 Backtest, Coin Data, Services Monitor, Market Data, Optimize, Strategy Explorer, Welcome, Dashboard Manager, and the Dashboard Editor iframe/standalone entry while preserving existing workflows, chart behavior, polling, navigation, and iframe messaging. This migration adds no external assets or hosted dependencies.
+- The standalone four-direction visual direction lab remains a separate related design artifact for comparison and is not production runtime behavior.
+
+## Frontend — Task 5 Coin Data Contract Fix
+
+- Added direct source-contract coverage for the Coin Data sort pill, quotes pill, and empty-state icon accent backgrounds without changing production behavior or layout.
+
+## Frontend — Task 7 Optimize Warning Review Fix
+
+- Included the OHLCV preflight modal in the Optimize warning-style contract and replaced its remaining active amber warning text with the shared Warning soft token without changing modal behavior.
+
+## Frontend - Task 2 Backdrop Token Fix
+
+- Replaced the remaining floating mobile rail backdrop literals with the shared `--color-backdrop` token and extended the visual rejection contract to prevent their return.
+
+## Frontend — Visual Direction Comparison Prototype
+
+- Added a standalone, production-isolated PBGui visual direction lab that presents Precision Terminal 2.0, Dark Finance Luxury, Modern Glass Terminal, and Cyber Operations against the same synthetic trading dashboard content. Refined Precision Terminal 2.0 with a brighter neutral-graphite surface ladder, silver text, ice-blue signals, and calmer semantic colors. The responsive prototype supports mouse, number-key, and arrow-key switching, visible focus states, and reduced-motion preferences without loading external assets or accessing runtime data.
+
 ## Market Data — OHLCV Integrity Workbench Refresh
 
 - Redesigned the OHLCV Integrity page with a clearer data-quality hero, exchange context chip, grouped scan actions, live-job guidance, and a stronger catalog-health snapshot while preserving existing scan, repair, archive, table, modal, and job-monitor behavior.

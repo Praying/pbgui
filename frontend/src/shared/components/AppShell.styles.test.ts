@@ -57,7 +57,7 @@ describe('AppShell core-workbench-shell height chain', () => {
     );
 
     expect_declaration(header, 'background', 'var(--surface-workspace)');
-    expect_declaration(header, 'box-shadow', '0 1px 0 rgb(224 241 255 / 0.06) inset');
+    expect_declaration(header, 'box-shadow', '0 1px 0 rgb(255 255 255 / 0.06) inset');
     expect_declaration(state_surfaces, 'background', 'var(--surface-panel)');
     expect_declaration(state_surfaces, 'box-shadow', 'var(--shadow-panel)');
   });

@@ -116,8 +116,8 @@ const bannerText = computed(() =>
 /* Toast tone (the former .toast-ok/.toast-err/.toast-info rules). */
 function toastToneClass(kind: string): string {
   if (kind === 'ok') return 'bg-success text-accent-contrast';
-  if (kind === 'err') return 'bg-danger text-[#f2f5fb]';
-  return 'bg-accent text-[#f2f5fb]';
+  if (kind === 'err') return 'bg-danger text-accent-contrast';
+  return 'bg-accent text-accent-contrast';
 }
 /* Connection success is quiet: a transient toast, while the persistent banner
    only appears on disconnect/error (the header status strip covers the ok
@@ -795,69 +795,6 @@ onMounted(() => {
    margin (BotSideEditor's inline style always won).
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Backtest palette ──────────────────────────────────────────
-   Blue marks selection and primary actions; green remains reserved
-   for successful or execution-related states. */
-:root {
-  --color-page: #0b111b;
-  --color-panel: #141e2b;
-  --color-card: #111a27;
-  --color-elevated: #182536;
-  --color-input: #101925;
-  --color-workspace: #0b111b;
-  --color-sidebar: #0e1623;
-  --color-backdrop: rgb(4 10 18 / 0.68);
-
-  --color-border-subtle: #1d2a3a;
-  --color-border-default: #26364a;
-  --color-border-strong: #344a62;
-
-  --color-primary: #e7edf6;
-  --color-secondary: #b8c4d3;
-  --color-muted: #8191a6;
-  --color-disabled: #59687b;
-  --color-placeholder: #6f8095;
-
-  --color-accent: #5ea8ff;
-  --color-accent-soft: #78b7ff;
-  --color-accent-deep: #438fe8;
-  --color-accent-contrast: #07111e;
-
-  --color-success: #43c992;
-  --color-success-soft: #62d7a9;
-  --color-success-deep: #287b5a;
-
-  --color-warning: #e6b566;
-  --color-warning-soft: #f0ca87;
-  --color-warning-deep: #9a722d;
-
-  --color-danger: #e56b74;
-  --color-danger-soft: #ee9097;
-  --color-danger-deep: #a5424b;
-
-  --accent-bg: rgb(94 168 255 / 0.12);
-  --accent-rgb: 94 168 255;
-  --accent-soft-rgb: 120 183 255;
-  --accent-deep-rgb: 67 143 232;
-
-  --success-bg: rgb(67 201 146 / 0.1);
-  --success-rgb: 67 201 146;
-  --success-deep-rgb: 40 123 90;
-
-  --warning-bg: rgb(230 181 102 / 0.1);
-  --warning-rgb: 230 181 102;
-
-  --danger-bg: rgb(229 107 116 / 0.1);
-  --danger-rgb: 229 107 116;
-  --danger-deep-rgb: 165 66 75;
-
-  --info: #68b8d7;
-  --text-secondary-rgb: 184 196 211;
-  --bg-page-rgb: 11 17 27;
-  --bg-panel-rgb: 20 30 43;
-  --focus-ring: 0 0 0 3px rgb(94 168 255 / 0.14);
-}
-
 /* ── Root chrome ─────────────────────────────────────────────── */
 html,
 body {
@@ -878,7 +815,7 @@ body {
 .page-toolbar [data-test="editor-save-queue"] {
   background: var(--success);
   border-color: var(--success);
-  color: #071711;
+  color: var(--accent-contrast);
 }
 
 .page-toolbar [data-test="editor-save-queue"]:hover:not(:disabled) {
@@ -1463,7 +1400,7 @@ body {
   white-space: pre-wrap;
   max-width: 480px;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(5, 8, 14, 0.5);
+  box-shadow: var(--shadow-elevated);
   pointer-events: none;
   will-change: transform;
 }

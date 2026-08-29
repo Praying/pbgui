@@ -607,19 +607,11 @@ onMounted(() => {
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Page root chrome ──────────────────────────────────────────
-   The page-local font stack (legacy --font on :root — 'Source Sans
-   Pro'-led, NOT the shared Space Grotesk stack) plus the overflow lock
-   and the column body layout; the date input in the inventory overlay
-   also reads --font. */
-:root {
-  --font: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif,
-    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
-}
-
+   The overflow lock and column body layout remain page-global because
+   html/body have no component root to scope to. */
 html,
 body {
   overflow: hidden;
-  font-family: var(--font);
 }
 
 body {
@@ -655,7 +647,7 @@ body {
   white-space: pre-wrap;
   max-width: 520px;
   line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(5, 8, 14, 0.5);
+  box-shadow: var(--shadow-elevated);
   pointer-events: none;
 }
 

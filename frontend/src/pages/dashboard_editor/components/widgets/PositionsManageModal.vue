@@ -467,7 +467,7 @@ watch(() => props.rows, () => {
     <div id="dp-manage-modal" :class="dpModalChrome.ovl">
       <div
         ref="modalEl"
-        class="dp-modal fixed flex h-auto w-[calc(100vw-32px)] min-h-[220px] min-w-[640px] max-h-[calc(100dvh-24px)] max-w-[calc(100vw-16px)] flex-col overflow-visible rounded-[12px] border border-border-default bg-page font-sans text-primary shadow-[0_20px_70px_rgba(5,8,14,0.85)]"
+        class="dp-modal fixed flex h-auto w-[calc(100vw-32px)] min-h-[220px] min-w-[640px] max-h-[calc(100dvh-24px)] max-w-[calc(100vw-16px)] flex-col overflow-visible rounded-[12px] border border-border-default bg-page font-sans text-primary shadow-[var(--shadow-modal)]"
         :style="modalStyle" :data-user-moved="userMoved ? '1' : undefined" :data-user-resized="userResized ? '1' : undefined">
         <div :class="dpModalChrome.head" @mousedown="onHeadMouseDown">
           <div :class="dpModalChrome.title">{{ dashT('dash.managePositions', 'Manage positions') }}</div>

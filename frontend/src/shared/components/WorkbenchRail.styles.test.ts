@@ -70,6 +70,9 @@ describe('WorkbenchRail responsive CSS contracts', () => {
     expect(stylesheet).toContain('var(--shadow-panel)');
     expect(stylesheet).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
     expect(stylesheet).toContain('.workbench-rail--floating-expanded');
+    expect(stylesheet).not.toContain('rgb(2 8 14');
+    expect(stylesheet).not.toContain('rgb(5 8 14');
+    expect(stylesheet).not.toContain('rgb(224 241 255');
   });
 
   it('keeps compact rail controls available without changing the shell grid', () => {

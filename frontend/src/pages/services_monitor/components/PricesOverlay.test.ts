@@ -1,8 +1,41 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import PricesOverlay from './PricesOverlay.vue';
 import type { PriceRow } from '../types';
+
+const componentRoot = resolve(import.meta.dirname);
+const appSource = readFileSync(resolve(componentRoot, '../App.vue'), 'utf8');
+const logViewerSource = readFileSync(resolve(componentRoot, 'LogViewer.vue'), 'utf8');
+const cmcKeyModalSource = readFileSync(resolve(componentRoot, 'CmcKeyModal.vue'), 'utf8');
+const cmcAuthorityModalSource = readFileSync(resolve(componentRoot, 'CmcAuthorityModal.vue'), 'utf8');
+
+/** Extract complete CSS blocks for an exact selector from a Vue SFC source. */
+function extractSelectorBlocks(source: string, selector: string): string[] {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const selectorPattern = new RegExp(`(?:^|\\n)[ \\t]*${escapedSelector}[ \\t]*\\{`, 'g');
+  const blocks: string[] = [];
+
+  for (const match of source.matchAll(selectorPattern)) {
+    const matchStart = match.index ?? 0;
+    const openingBraceIndex = matchStart + match[0].lastIndexOf('{');
+    let braceDepth = 0;
+
+    for (let sourceIndex = openingBraceIndex; sourceIndex < source.length; sourceIndex += 1) {
+      if (source[sourceIndex] === '{') braceDepth += 1;
+      if (source[sourceIndex] !== '}') continue;
+      braceDepth -= 1;
+      if (braceDepth === 0) {
+        blocks.push(source.slice(matchStart, sourceIndex + 1));
+        break;
+      }
+    }
+  }
+
+  return blocks;
+}
 
 vi.mock('@/shared/boot', () => ({
   getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
@@ -113,19 +146,20 @@ describe('PricesOverlay table rendering (legacy renderTable/fmtPrice/fmtAge/ageC
     expect(cells[2]).toBe('binance');
     expect(cells[3]).toBe('120,000');
     expect(cells[4]).toBe('30s');
-    // ageCol constants #46c88f/#e0a458/#e5615c (jsdom normalizes hex to rgb()).
-    expect(rows[0]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(70, 200, 143)');
+    // jsdom normalizes the shared palette's hex colors to rgb().
+    expect(rows[0]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(123, 200, 165)');
 
     expect(rows[1]!.findAll('td')[3]!.text()).toBe('0.012340');
     expect(rows[1]!.findAll('td')[4]!.text()).toBe('4m');
-    expect(rows[1]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(224, 164, 88)');
+    expect(rows[1]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(216, 174, 111)');
 
     expect(rows[2]!.findAll('td')[3]!.text()).toBe('0.0005678');
     expect(rows[2]!.findAll('td')[4]!.text()).toBe('1h');
-    expect(rows[2]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(229, 97, 92)');
+    expect(rows[2]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(217, 128, 128)');
 
     expect(rows[3]!.findAll('td')[3]!.text()).toBe('—');
     expect(rows[3]!.findAll('td')[4]!.text()).toBe('—');
+    expect(rows[3]!.findAll('td')[4]!.attributes('style')).toContain('color: rgb(153, 153, 153)');
   });
 
   it('renders the header labels from the legacy keys', async () => {
@@ -217,5 +251,51 @@ describe('PricesOverlay filtering + auto refresh (legacy filterPricesOverlay/sta
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('Services Monitor precision style contracts', () => {
+  it('uses the Danger ramp for CRITICAL log controls and lines', () => {
+    const criticalLineBlocks = extractSelectorBlocks(logViewerSource, '.lvp-log-critical');
+    const criticalControlBlocks = extractSelectorBlocks(logViewerSource, ".lvp-lvl-btn[data-lvl='CRITICAL'].on");
+
+    expect(criticalLineBlocks).toHaveLength(2);
+    expect(criticalLineBlocks[0]).toContain('color: var(--danger-soft);');
+    expect(criticalLineBlocks[0]).toContain('font-weight: 600;');
+    expect(criticalLineBlocks[1]).toContain('border-left-color: rgb(var(--danger-rgb) / 0.72) !important;');
+    expect(criticalLineBlocks[1]).toContain('color: var(--danger-soft);');
+    expect(criticalLineBlocks[1]).toContain('font-weight: 700;');
+
+    expect(criticalControlBlocks).toHaveLength(1);
+    expect(criticalControlBlocks[0]).toContain('border-color: rgb(var(--danger-rgb) / 0.42);');
+    expect(criticalControlBlocks[0]).toContain('background: rgb(var(--danger-rgb) / 0.17);');
+    expect(criticalControlBlocks[0]).toContain('color: var(--danger-soft);');
+  });
+
+  it('uses shared modal shadow and backdrop declarations', () => {
+    const resultModalBlocks = extractSelectorBlocks(appSource, '.result-modal');
+
+    expect(resultModalBlocks).toHaveLength(2);
+    expect(resultModalBlocks[0]).toContain('box-shadow: var(--shadow-modal);');
+    expect(resultModalBlocks[1]).toContain('box-shadow: var(--shadow-modal);');
+
+    for (const modalSource of [cmcKeyModalSource, cmcAuthorityModalSource]) {
+      const modalBackdropBlocks = extractSelectorBlocks(modalSource, '.cmc-modal-backdrop');
+      const modalCardBlocks = extractSelectorBlocks(modalSource, '.cmc-modal-card');
+
+      expect(modalBackdropBlocks).toHaveLength(1);
+      expect(modalBackdropBlocks[0]).toContain('background: var(--bg-backdrop);');
+      expect(modalCardBlocks).toHaveLength(1);
+      expect(modalCardBlocks[0]).toContain('box-shadow: var(--shadow-modal);');
+    }
+  });
+
+  it('uses Accent Contrast for the result-modal button foreground', () => {
+    const resultButtonBlocks = extractSelectorBlocks(appSource, '.result-modal-footer button');
+
+    expect(resultButtonBlocks).toHaveLength(2);
+    expect(resultButtonBlocks[0]).toContain('background: var(--accent);');
+    expect(resultButtonBlocks[0]).toContain('color: var(--accent-contrast);');
+    expect(resultButtonBlocks[1]).toContain('background: linear-gradient(135deg, var(--accent), var(--accent-deep));');
   });
 });

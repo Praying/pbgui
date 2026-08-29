@@ -326,7 +326,7 @@ onUnmounted(() => {
   color: var(--danger);
 }
 .lvp-log-critical {
-  color: #9b8ede;
+  color: var(--danger-soft);
   font-weight: 600;
 }
 .lvp-level-hidden {
@@ -387,9 +387,9 @@ onUnmounted(() => {
 }
 
 .lvp-lvl-btn[data-lvl='CRITICAL'].on {
-  border-color: rgb(155 142 222 / 0.4);
-  background: rgb(155 142 222 / 0.18);
-  color: #9b8ede;
+  border-color: rgb(var(--danger-rgb) / 0.42);
+  background: rgb(var(--danger-rgb) / 0.17);
+  color: var(--danger-soft);
 }
 
 .lvp-stream-btn.lvp-stream-on {
@@ -422,7 +422,7 @@ onUnmounted(() => {
   background:
     linear-gradient(180deg, rgb(var(--bg-page-rgb) / 0.98), rgb(var(--bg-page-rgb) / 0.98)),
     var(--bg-page);
-  box-shadow: 0 16px 34px rgba(5, 8, 14, 0.24), 0 1px rgba(255, 255, 255, 0.025) inset;
+  box-shadow: 0 16px 34px rgb(0 0 0 / 0.24), 0 1px rgb(255 255 255 / 0.025) inset;
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.55;
@@ -460,8 +460,8 @@ onUnmounted(() => {
 }
 
 .lvp-log-critical {
-  border-left-color: rgb(155 142 222 / 0.72) !important;
-  color: #9b8ede;
+  border-left-color: rgb(var(--danger-rgb) / 0.72) !important;
+  color: var(--danger-soft);
   font-weight: 700;
 }
 

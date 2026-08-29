@@ -232,7 +232,7 @@ defineExpose({
       aria-live="polite"
     >
       <div class="relative grid min-h-[210px] place-items-center border-r border-accent/14 bg-accent-deep/8 max-[640px]:min-h-[104px] max-[640px]:border-b max-[640px]:border-r-0">
-        <div class="grid h-16 w-16 place-items-center rounded-2xl border border-accent/24 bg-page/70 text-accent-soft shadow-[0_14px_32px_rgb(2_8_14/0.3),inset_0_1px_0_rgb(224_241_255/0.1)]">
+        <div class="grid h-16 w-16 place-items-center rounded-2xl border border-accent/24 bg-page/70 text-accent-soft shadow-[0_14px_32px_rgb(0_0_0/0.3),inset_0_1px_0_rgb(255_255_255/0.1)]">
           <PbIcon :icon="PhClipboardText" :size="30" />
         </div>
         <span class="absolute bottom-4 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-secondary/65 max-[640px]:bottom-2">{{ isV8 ? 'PBv8' : 'PBv7' }} / 00</span>

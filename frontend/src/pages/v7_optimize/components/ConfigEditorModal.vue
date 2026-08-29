@@ -563,7 +563,7 @@ function preflight(): void {
 
 <template>
   <div v-if="open && local" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
-    <section class="flex w-[min(1100px,calc(100vw-30px))] max-h-[min(85vh,820px)] max-h-[min(85dvh,820px)] flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_50px_rgba(5,8,14,0.45)]" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
+    <section class="flex w-[min(1100px,calc(100vw-30px))] max-h-[min(85vh,820px)] max-h-[min(85dvh,820px)] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)]" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
       <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3">
         <div class="flex items-center gap-[9px]"><h2 id="opt-editor-title">{{ t('v7optimize.editOptimize') }}</h2><span class="rounded-full whitespace-nowrap border border-accent/35 bg-accent/12 px-2 py-0.5 text-xs font-semibold tracking-[0.04em] text-accent">{{ version.toUpperCase() }}</span></div>
         <div class="whitespace-nowrap! overflow-visible!"><Button type="button" variant="default" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button></div>

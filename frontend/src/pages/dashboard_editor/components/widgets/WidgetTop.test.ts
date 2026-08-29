@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { defineComponent } from 'vue';
 import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
@@ -123,7 +124,7 @@ describe('WidgetTop', () => {
         x: ['BTC', 'ETH'],
         y: [1.5, -2],
         type: 'bar',
-        marker: { color: ['#46c88f', '#e5615c'] },
+        marker: { color: [PRECISION_PALETTE.success.base, PRECISION_PALETTE.danger.base] },
         hovertemplate: '<b>%{x}</b><br>Income: %{y:.4f}<extra></extra>',
       },
     ]);
