@@ -75,7 +75,14 @@ function onExchangeSelect(value: unknown): void {
 <template>
   <section class="panel coin-filter-panel flex-none overflow-visible rounded-xl border" id="filters-panel">
     <div class="panel-body p-[1rem] overflow-visible">
-      <div class="filters-grid grid grid-cols-[minmax(180px,1fr)_minmax(130px,0.7fr)_minmax(130px,0.7fr)_minmax(240px,1.45fr)_auto_auto] gap-2 items-end max-[1280px]:grid-cols-[repeat(3,minmax(0,1fr))] max-[980px]:grid-cols-1">
+      <div class="filter-panel-heading flex items-center justify-between gap-3 mb-3">
+        <div>
+          <h2 class="filter-panel-title text-md font-semibold text-primary">{{ t('market.filterData') }}</h2>
+          <p class="filter-panel-hint text-sm text-muted">{{ t('market.filterDataHint') }}</p>
+        </div>
+        <span class="filter-panel-context inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold text-secondary" id="quotes-pill">{{ quotesLabel }}</span>
+      </div>
+      <div class="filters-grid grid grid-cols-[minmax(180px,1fr)_minmax(130px,0.7fr)_minmax(130px,0.7fr)_minmax(240px,1.45fr)_auto] gap-3 items-end max-[1280px]:grid-cols-[repeat(3,minmax(0,1fr))] max-[980px]:grid-cols-1">
         <label class="field grid gap-[0.35rem] min-w-0">
           <span class="field-label text-sm text-secondary font-semibold" id="filter-exchange-label">{{ t('market.exchange') }}</span>
           <SelectRoot :model-value="exchange" @update:model-value="onExchangeSelect">
@@ -131,9 +138,6 @@ function onExchangeSelect(value: unknown): void {
             @update:model-value="emit('set-tags', $event)"
           />
         </div>
-        <div class="filters-status flex items-center justify-end gap-2 min-w-0 max-[980px]:justify-start">
-          <span class="coin-filter-pill pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.65rem] rounded-full border text-secondary text-sm whitespace-nowrap max-w-full overflow-hidden text-ellipsis" id="quotes-pill">{{ quotesLabel }}</span>
-        </div>
         <div class="filters-reset flex items-end justify-end max-[980px]:justify-start">
           <Button variant="secondary" id="btn-reset-filters" type="button" @click="emit('reset')">{{ t('market.reset') }}</Button>
         </div>
@@ -146,9 +150,7 @@ function onExchangeSelect(value: unknown): void {
 .coin-filter-panel {
   border-color: var(--coin-border);
   background: var(--coin-control);
-  box-shadow:
-    0 14px 28px rgb(0 0 0 / 0.17),
-    0 1px 0 rgb(255 255 255 / 0.05) inset;
+  box-shadow: var(--shadow-panel);
 }
 
 .coin-filter-control,
@@ -163,8 +165,8 @@ function onExchangeSelect(value: unknown): void {
 }
 
 .coin-stepper-btn:hover:not(:disabled) {
-  border-color: rgb(var(--accent-rgb) / 0.38);
-  background: color-mix(in srgb, var(--coin-input) 88%, var(--accent) 12%);
+  border-color: var(--accent);
+  background: var(--accent-bg);
   color: var(--accent-soft);
 }
 
@@ -174,9 +176,24 @@ function onExchangeSelect(value: unknown): void {
   box-shadow: var(--focus-ring);
 }
 
-.coin-filter-pill {
-  border-color: var(--coin-border);
-  background: rgb(var(--accent-rgb) / 0.045);
+.filter-panel-heading {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--coin-border);
+}
+
+.filter-panel-title {
+  margin: 0;
+}
+
+.filter-panel-hint {
+  margin: 0.2rem 0 0;
+}
+
+.filter-panel-context {
+  border-color: rgb(var(--accent-rgb) / 0.35);
+  background: var(--accent-bg);
+  color: var(--accent-soft);
+  white-space: nowrap;
 }
 
 /* Number-stepper spinners — ported from styles/coin-data.css at the

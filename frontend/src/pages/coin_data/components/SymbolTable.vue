@@ -8,16 +8,19 @@
  * targets those structures (#hip3-panel > .panel-body …).
  */
 import { useI18n } from 'vue-i18n';
-import { PhDatabase } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhDatabase } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { columnsForTable, type ColumnDef } from '../lib/columns';
 import { formatCompact, formatPrice, formatRatio, rowKey } from '../lib/format';
-import type { TableViewName } from '../types';
+import type { SortState, TableViewName } from '../types';
+
+const DEFAULT_SORT_STATE: SortState = { key: 'market_cap', dir: 'desc' };
 
 const props = defineProps<{
   table: TableViewName;
   rows: Array<Record<string, unknown>>;
   selectedKey: string;
+  sortState?: SortState;
 }>();
 
 const emit = defineEmits<{
@@ -63,6 +66,19 @@ function headerLabel(column: ColumnDef): string {
   return column.labelKey ? t(column.labelKey) : column.key;
 }
 
+function isSortedColumn(column: ColumnDef): boolean {
+  return (props.sortState ?? DEFAULT_SORT_STATE).key === column.key;
+}
+
+function sortLabel(column: ColumnDef): string {
+  if (!isSortedColumn(column)) return t('market.sortColumn', { column: headerLabel(column) });
+  const sortState = props.sortState ?? DEFAULT_SORT_STATE;
+  return t('market.sortColumnDirection', {
+    column: headerLabel(column),
+    direction: sortState.dir === 'asc' ? t('market.ascending') : t('market.descending'),
+  });
+}
+
 /** Cell text (:2637-2648, :2673-2677, :2706-2713); badge/chip columns render in-template. */
 function cellText(row: Record<string, unknown>, column: ColumnDef): string {
   const value = row[column.key];
@@ -101,11 +117,25 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           <th
             v-for="column in columns"
             :key="column.key"
-            class="coin-table-header sortable cursor-pointer sticky top-0 z-[2] text-secondary text-sm uppercase tracking-[0.055em] font-bold text-left px-[0.65rem] py-[0.6rem] leading-[1.05] border-b whitespace-nowrap"
+            class="coin-table-header sortable sticky top-0 z-[2] text-secondary text-sm uppercase tracking-[0.055em] font-bold text-left px-[0.65rem] py-[0.6rem] leading-[1.05] border-b whitespace-nowrap"
+            :class="column.centered ? 'text-center' : column.numeric ? 'text-right' : ''"
             :data-table="table"
             :data-key="column.key"
+            :aria-sort="isSortedColumn(column) ? ((sortState ?? DEFAULT_SORT_STATE).dir === 'asc' ? 'ascending' : 'descending') : 'none'"
             @click="emit('sort', table, column.key)"
-          >{{ headerLabel(column) }}</th>
+          >
+          <button
+            class="coin-table-sort-button inline-flex items-center gap-1.5 min-h-7 max-w-full text-left text-inherit"
+            :class="column.centered ? 'justify-center' : column.numeric ? 'justify-end' : ''"
+            type="button"
+            :aria-label="sortLabel(column)"
+            @click.stop="emit('sort', table, column.key)"
+          >
+            <span class="overflow-hidden text-ellipsis">{{ headerLabel(column) }}</span>
+            <PbIcon v-if="isSortedColumn(column)" class="coin-table-sort-icon shrink-0 text-accent-soft" :icon="(sortState ?? DEFAULT_SORT_STATE).dir === 'asc' ? PhCaretUp : PhCaretDown" :size="13" aria-hidden="true" />
+            <span v-else class="coin-table-sort-icon coin-table-sort-icon--idle shrink-0" aria-hidden="true">↕</span>
+          </button>
+          </th>
         </tr>
       </thead>
       <tbody :id="table + '-body'">
@@ -118,7 +148,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           :data-key="rowKey(row, table)"
           @click="emit('select', table, rowKey(row, table))"
         >
-          <td v-for="column in columns" :key="column.key" class="coin-table-cell px-[0.65rem] py-[0.38rem] border-b text-primary leading-[1.12] align-middle overflow-hidden text-ellipsis whitespace-nowrap" :class="column.mono ? 'mono text-sm' : 'text-md'" :title="cellText(row, column)">
+          <td v-for="column in columns" :key="column.key" class="coin-table-cell px-[0.65rem] py-[0.38rem] border-b text-primary leading-[1.12] align-middle overflow-hidden text-ellipsis whitespace-nowrap" :class="[column.mono ? 'mono text-sm' : 'text-md', column.centered ? 'text-center' : column.numeric ? 'text-right' : '']" :title="cellText(row, column)">
             <template v-if="column.render === 'cpt'">
               <span v-if="row[column.key]" class="badge pbgui-badge badge-success ok inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-success/15 border-success/30 text-success">{{ t('common.yes') }}</span>
               <span v-else class="badge pbgui-badge badge-muted dim inline-flex items-center justify-center min-w-[22px] py-[0.03rem] px-[0.35rem] rounded-full border text-xs font-bold leading-none bg-secondary/12 border-secondary/20 text-primary">{{ t('common.no') }}</span>
@@ -181,8 +211,28 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
 }
 
 .coin-table-header:hover {
-  background: color-mix(in srgb, var(--coin-header) 90%, var(--accent) 10%);
+  background: var(--surface-elevated);
   color: var(--text-primary);
+}
+
+.coin-table-sort-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.coin-table-sort-button:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.coin-table-sort-icon--idle {
+  color: var(--text-disabled);
+  opacity: 0.72;
 }
 
 .coin-table-cell {
@@ -205,13 +255,11 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
 
 .coin-table-empty {
   min-height: 180px;
-  background:
-    radial-gradient(circle at 50% 38%, rgb(var(--accent-rgb) / 0.045), transparent 12rem),
-    var(--coin-data);
+  background: var(--coin-data);
 }
 
 .coin-table-empty > span:first-child {
   border-color: var(--coin-border);
-  background: rgb(var(--accent-rgb) / 0.04);
+  background: var(--surface-card);
 }
 </style>

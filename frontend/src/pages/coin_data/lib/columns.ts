@@ -14,6 +14,8 @@ export interface ColumnDef {
   /** Cell renderer kind; default renders the raw field value. */
   render?: 'cpt' | 'rank' | 'price' | 'compact' | 'ratio' | 'tags' | 'notice';
   mono?: boolean;
+  numeric?: boolean;
+  centered?: boolean;
 }
 
 export const MAIN_COLUMNS: ColumnDef[] = [
@@ -21,12 +23,12 @@ export const MAIN_COLUMNS: ColumnDef[] = [
   { key: 'ccxt_symbol', labelKey: 'market.ccxtSymbol', width: '12%', mono: true },
   { key: 'base', labelKey: 'market.base', width: '6%' },
   { key: 'quote', labelKey: 'market.quote', width: '6%' },
-  { key: 'copy_trading', labelKey: 'market.cpt', width: '5%', render: 'cpt' },
-  { key: 'cmc_rank', labelKey: 'market.rank', width: '5%', render: 'rank' },
-  { key: 'price', labelKey: 'market.price', width: '8%', render: 'price' },
-  { key: 'market_cap', labelKey: 'market.marketCapLabel', width: '9%', render: 'compact' },
-  { key: 'volume_24h', labelKey: 'market.volume24h', width: '9%', render: 'compact' },
-  { key: 'vol_mcap', labelKey: '', width: '8%', render: 'ratio' },
+  { key: 'copy_trading', labelKey: 'market.cpt', width: '5%', render: 'cpt', centered: true },
+  { key: 'cmc_rank', labelKey: 'market.rank', width: '5%', render: 'rank', numeric: true },
+  { key: 'price', labelKey: 'market.price', width: '8%', render: 'price', numeric: true },
+  { key: 'market_cap', labelKey: 'market.marketCapLabel', width: '9%', render: 'compact', numeric: true },
+  { key: 'volume_24h', labelKey: 'market.volume24h', width: '9%', render: 'compact', numeric: true },
+  { key: 'vol_mcap', labelKey: '', width: '8%', render: 'ratio', numeric: true },
   { key: 'tags', labelKey: 'market.tags', width: '18%', render: 'tags' },
   { key: 'notice', labelKey: 'market.notice', width: '8%', render: 'notice' },
 ];
@@ -44,9 +46,9 @@ export const HIP3_COLUMNS: ColumnDef[] = [
   { key: 'coin', labelKey: 'market.coin', width: '12%' },
   { key: 'ccxt_symbol', labelKey: 'market.ccxtSymbol', width: '18%', mono: true },
   { key: 'quote', labelKey: 'market.quote', width: '10%' },
-  { key: 'price', labelKey: 'market.price', width: '12%', render: 'price' },
-  { key: 'volume_24h', labelKey: 'market.volume24h', width: '14%', render: 'compact' },
-  { key: 'copy_trading', labelKey: 'market.cpt', width: '8%', render: 'cpt' },
+  { key: 'price', labelKey: 'market.price', width: '12%', render: 'price', numeric: true },
+  { key: 'volume_24h', labelKey: 'market.volume24h', width: '14%', render: 'compact', numeric: true },
+  { key: 'copy_trading', labelKey: 'market.cpt', width: '8%', render: 'cpt', centered: true },
   { key: 'notice', labelKey: 'market.notice', width: '16%', render: 'notice' },
 ];
 

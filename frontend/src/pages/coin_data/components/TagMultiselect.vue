@@ -181,8 +181,8 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
 }
 
 .ms-tag {
-  border-color: rgb(var(--accent-rgb) / 0.2);
-  background: rgb(var(--accent-deep-rgb) / 0.12);
+  border-color: rgb(var(--accent-rgb) / 0.35);
+  background: var(--accent-bg);
 }
 
 .coin-tags-dropdown {
@@ -192,10 +192,10 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
 
 .ms-option:hover,
 .ms-option.highlighted {
-  background: rgb(var(--accent-rgb) / 0.08);
+  background: var(--surface-elevated);
 }
 
 .ms-option.selected {
-  background: rgb(var(--accent-deep-rgb) / 0.12);
+  background: var(--accent-bg);
 }
 </style>

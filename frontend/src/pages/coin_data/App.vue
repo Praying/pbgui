@@ -272,6 +272,7 @@ onBeforeUnmount(() => {
     class="data-page-shell data-page-shell--coin-data"
     page-key="info_coin_data"
     :page-title="t('market.coinDataTitle')"
+    :page-description="t('market.coinDataDescription')"
     :sections="sections"
     :active-section="store.activeView.value"
     @update:section="onSectionSelect"
@@ -288,26 +289,30 @@ onBeforeUnmount(() => {
       <!-- Legacy sidebar toolbar (:3085-3111): refresh actions + the CPT
            filter toggle keep their ids and gating; only the position moved
            (the view buttons became the rail sections above). -->
-      <Button variant="info" size="sm" id="btn-refresh-exchange" type="button" @click="onRefresh('/refresh/exchange', 'market.refreshingSelectedExchange', 'market.refreshedSelectedExchange')">{{ t('market.refreshSelectedExchange') }}</Button>
-      <Button variant="secondary" size="sm" id="btn-refresh-all" type="button" @click="onRefresh('/refresh/all', 'market.refreshingAllExchanges', 'market.allExchangesRefreshed')">{{ t('market.refreshAllExchanges') }}</Button>
-      <Button
-        variant="secondary"
-        size="sm"
-        id="btn-refresh-cmc"
-        type="button"
-        :disabled="!store.hasMaterializedCmcKey.value"
-        :title="cmcTitle"
-        @click="onRefresh('/refresh/cmc', 'market.refreshingCmcSelected', 'market.cmcSelectedRefreshed')"
-      >{{ t('market.refreshCmcSelected') }}</Button>
-      <Button
-        variant="secondary"
-        size="sm"
-        id="btn-refresh-cmc-all"
-        type="button"
-        :disabled="!store.hasMaterializedCmcKey.value"
-        :title="cmcTitle"
-        @click="onRefresh('/refresh/cmc_all', 'market.refreshingCmcAll', 'market.cmcAllRefreshed')"
-      >{{ t('market.refreshCmcAll') }}</Button>
+      <div class="coin-header-action-group" role="group" :aria-label="t('market.exchangeDataActions')">
+        <Button variant="info" size="sm" id="btn-refresh-exchange" type="button" @click="onRefresh('/refresh/exchange', 'market.refreshingSelectedExchange', 'market.refreshedSelectedExchange')">{{ t('market.refreshSelectedExchange') }}</Button>
+        <Button variant="secondary" size="sm" id="btn-refresh-all" type="button" @click="onRefresh('/refresh/all', 'market.refreshingAllExchanges', 'market.allExchangesRefreshed')">{{ t('market.refreshAllExchanges') }}</Button>
+      </div>
+      <div class="coin-header-action-group coin-header-action-group--cmc" role="group" :aria-label="t('market.coinMarketCapActions')">
+        <Button
+          variant="secondary"
+          size="sm"
+          id="btn-refresh-cmc"
+          type="button"
+          :disabled="!store.hasMaterializedCmcKey.value"
+          :title="cmcTitle"
+          @click="onRefresh('/refresh/cmc', 'market.refreshingCmcSelected', 'market.cmcSelectedRefreshed')"
+        >{{ t('market.refreshCmcSelected') }}</Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          id="btn-refresh-cmc-all"
+          type="button"
+          :disabled="!store.hasMaterializedCmcKey.value"
+          :title="cmcTitle"
+          @click="onRefresh('/refresh/cmc_all', 'market.refreshingCmcAll', 'market.cmcAllRefreshed')"
+        >{{ t('market.refreshCmcAll') }}</Button>
+      </div>
       <Button
         v-if="store.supportsCopyTradingFilter.value"
         :variant="store.filters.value.onlyCpt ? 'info' : 'secondary'"
@@ -363,13 +368,14 @@ onBeforeUnmount(() => {
       >
         <summary id="unmatched-summary" class="coin-data-panel-head flex items-center justify-between gap-3 py-2.5 px-3.5 text-sm font-semibold text-primary border-b border-transparent cursor-pointer select-none list-none max-[980px]:items-start max-[980px]:flex-col">{{ sectionTitles.unmatched_title || t('market.cmcUnmatchedSummary') }}</summary>
         <div class="panel-body flex flex-1 flex-col min-h-0 p-[1rem]">
-          <SymbolTable
-            table="unmatched"
-            :rows="store.sortedUnmatchedRows.value"
-            :selected-key="store.selectedKey.value"
-            @sort="store.handleSortClick"
-            @select="store.selectRow"
-          />
+        <SymbolTable
+          table="unmatched"
+          :rows="store.sortedUnmatchedRows.value"
+          :selected-key="store.selectedKey.value"
+          :sort-state="store.sortStates.value.unmatched"
+          @sort="store.handleSortClick"
+          @select="store.selectRow"
+        />
         </div>
       </details>
 
@@ -380,15 +386,17 @@ onBeforeUnmount(() => {
       >
         <div class="panel-head coin-data-panel-head flex items-center justify-between gap-2 py-2.5 px-3.5 border-b">
           <div class="panel-title-wrap flex items-center gap-2 min-w-0 flex-wrap">
+            <span class="panel-title-mark" aria-hidden="true">↗</span>
             <div class="panel-title text-md font-semibold text-primary" id="main-panel-title">{{ t('market.matchedSymbolsLowerCount', { count: counts.main }) }}</div>
             <span class="panel-meta text-sm text-secondary whitespace-nowrap overflow-hidden text-ellipsis max-w-[min(52vw,760px)]" id="main-panel-meta" :title="mainPanelMetaTitle">{{ mainPanelMeta }}</span>
           </div>
-          <span class="coin-data-sort-pill pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.65rem] rounded-full border text-secondary text-sm whitespace-nowrap" id="main-sort-pill">{{ sortPill }}</span>
+          <span class="coin-data-sort-pill pill inline-flex items-center gap-[0.35rem] py-[0.28rem] px-[0.65rem] rounded-full border text-secondary text-sm whitespace-nowrap" id="main-sort-pill"><span aria-hidden="true">↕</span>{{ sortPill }}</span>
         </div>
         <SymbolTable
           table="main"
           :rows="store.sortedMainRows.value"
           :selected-key="store.selectedKey.value"
+          :sort-state="store.sortStates.value.main"
           @sort="store.handleSortClick"
           @select="store.selectRow"
         />
@@ -440,6 +448,7 @@ onBeforeUnmount(() => {
             table="hip3"
             :rows="store.sortedHip3Rows.value"
             :selected-key="store.selectedKey.value"
+            :sort-state="store.sortStates.value.hip3"
             @sort="store.handleSortClick"
             @select="store.selectRow"
           />
@@ -487,14 +496,14 @@ body {
 .data-page-shell--coin-data {
   --coin-page: var(--surface-page);
   --coin-workspace: var(--surface-workspace);
-  --coin-control: var(--surface-card);
+  --coin-control: var(--surface-panel);
   --coin-data: var(--surface-panel);
-  --coin-header: var(--color-deep);
+  --coin-header: var(--surface-card);
   --coin-input: var(--bg-input);
   --coin-border: var(--border-subtle);
-  --coin-border-strong: var(--border-strong);
+  --coin-border-strong: var(--border-default);
   --coin-row-hover: rgb(var(--accent-rgb) / 0.055);
-  --coin-row-selected: rgb(var(--accent-rgb) / 0.11);
+  --coin-row-selected: var(--accent-bg);
 }
 
 .data-page-shell--coin-data :deep(.app-shell__workspace) {
@@ -502,7 +511,7 @@ body {
 }
 
 .data-page-shell--coin-data :deep(.workspace-header) {
-  background: linear-gradient(180deg, var(--color-deep), var(--coin-workspace));
+  background: var(--surface-workspace);
 }
 
 .coin-data-page-body,
@@ -510,46 +519,79 @@ body {
   background: var(--coin-workspace);
 }
 
-.coin-data-workspace {
-  background-image:
-    radial-gradient(circle at 88% 4%, rgb(var(--accent-rgb) / 0.045), transparent 24rem),
-    repeating-linear-gradient(135deg, rgb(var(--text-secondary-rgb) / 0.012) 0 1px, transparent 1px 42px);
-}
-
 .warning-box {
   gap: var(--sp-sm);
-  border-color: rgb(var(--warning-rgb) / 0.22);
-  background: color-mix(in srgb, var(--coin-control) 92%, var(--warning) 8%);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.035) inset;
+  border-color: rgb(var(--warning-rgb) / 0.35);
+  background: var(--warning-bg);
 }
 
 .coin-data-panel {
   border-color: var(--coin-border);
   background: var(--coin-data);
-  box-shadow:
-    0 18px 34px rgb(0 0 0 / 0.2),
-    0 1px 0 rgb(255 255 255 / 0.045) inset;
+  box-shadow: var(--shadow-panel);
 }
 
 .coin-data-panel-head {
   border-color: var(--coin-border);
   background: var(--coin-header);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.035) inset;
 }
 
 .coin-data-sort-pill {
   border-color: var(--coin-border);
-  background: rgb(var(--accent-rgb) / 0.055);
+  background: var(--accent-bg);
+  color: var(--accent-soft);
 }
 
 .data-page-shell--coin-data :deep(.workspace-header__actions button:disabled) {
   border-color: var(--coin-border);
-  background: rgb(var(--text-secondary-rgb) / 0.035);
+  background: var(--surface-card);
   color: var(--text-disabled);
 }
 
 .data-page-shell--coin-data :deep(#btn-refresh-exchange:not(:disabled)) {
-  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.06);
+  box-shadow: none;
+}
+
+.data-page-shell--coin-data :deep(.workspace-header__description) {
+  max-width: 58rem;
+  color: var(--text-muted);
+}
+
+.data-page-shell--coin-data :deep(.workspace-header__actions) {
+  align-items: center;
+  gap: 6px;
+}
+
+.coin-header-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-right: 1px solid var(--coin-border);
+}
+
+.coin-header-action-group--cmc {
+  padding-left: 2px;
+}
+
+.panel-title-mark {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid rgb(var(--accent-rgb) / 0.35);
+  border-radius: 7px;
+  background: var(--accent-bg);
+  color: var(--accent-soft);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .coin-header-action-group {
+    padding-right: 0;
+    border-right: 0;
+  }
 }
 
 .data-page-shell :deep(.app-shell__main) {
