@@ -5,7 +5,7 @@
  * expiry badges, in-use state and row actions.
  */
 import { computed } from 'vue';
-import { PhCaretDown, PhCaretUp, PhX } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhKey, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -26,7 +26,7 @@ const metaTsText = computed(() => {
   const ts = store.meta.value?.api_ts;
   if (!ts) return '';
   const d = new Date(ts);
-  return '— ' + d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return '/ ' + d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 });
 
 const metaByText = computed(() => {
@@ -136,19 +136,25 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
     <!-- API keys metadata bar -->
     <div
       id="apiMetaBar"
-      class="mb-3 flex min-h-[34px] items-center gap-1.5 rounded-md border border-border-subtle bg-card px-3 py-1.5 text-xs text-secondary"
+      class="api-meta-bar mb-4 flex min-h-[42px] items-center justify-between gap-3 rounded-md border border-border-subtle bg-card px-3 py-2 text-xs text-secondary"
     >
-      <span>{{ t('misc.apikeys.serial') }}</span>
-      <span id="metaSerial" style="color:var(--text-primary); font-weight:700;">{{ store.meta.value?.api_serial || '—' }}</span>
-      <span id="metaTs" style="color:var(--text-secondary);">{{ metaTsText }}</span>
-      <span id="metaBy" class="max-[768px]:hidden" style="color:var(--text-muted);">{{ metaByText }}</span>
+      <div class="api-meta-bar__identity flex items-center gap-2">
+        <span class="api-meta-bar__icon" aria-hidden="true"><PbIcon :icon="PhKey" :size="15" /></span>
+        <span class="api-meta-bar__label">{{ t('misc.apikeys.serial') }}</span>
+        <span id="metaSerial" class="api-meta-bar__serial">{{ store.meta.value?.api_serial || '-' }}</span>
+      </div>
+      <div class="api-meta-bar__details flex items-center gap-2">
+        <span id="metaTs">{{ metaTsText }}</span>
+        <span id="metaBy" class="max-[768px]:hidden">{{ metaByText }}</span>
+      </div>
     </div>
     <div class="user-list-toolbar">
       <div class="user-filter-control">
+        <PbIcon class="user-filter-icon" :icon="PhMagnifyingGlass" :size="15" />
         <Input
           type="text"
           id="userFilter"
-          class="w-full pr-9"
+          class="w-full pl-9 pr-9"
           :model-value="store.filterText.value"
           :placeholder="t('misc.apikeys.filterByNameOrExchange')"
           @update:model-value="store.setFilter(String($event ?? ''))"
@@ -169,41 +175,51 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         </Button>
       </div>
     </div>
-    <table class="user-table mb-5 w-full max-[768px]:block max-[768px]:overflow-x-auto max-[768px]:whitespace-nowrap overflow-hidden rounded-lg border border-border-subtle border-separate border-spacing-0 bg-panel">
-      <thead>
-        <tr>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('name')" :aria-sort="sortAriaValue('name')" id="th-name" @click="store.setSort('name')">
+    <div class="user-table-wrap">
+      <table class="user-table mb-0 w-full border-separate border-spacing-0 bg-panel">
+        <caption class="sr-only">{{ t('misc.apikeys.users') }}</caption>
+        <colgroup>
+          <col class="user-table__name-column">
+          <col class="user-table__exchange-column">
+          <col class="user-table__credentials-column">
+          <col class="user-table__expiry-column">
+          <col class="user-table__status-column">
+          <col class="user-table__actions-column">
+        </colgroup>
+        <thead>
+          <tr>
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('name')" :aria-sort="sortAriaValue('name')" id="th-name" @click="store.setSort('name')">
             <span>{{ t('misc.apikeys.user') }}</span>
             <PbIcon v-if="store.sortCol.value === 'name'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('exchange')" :aria-sort="sortAriaValue('exchange')" id="th-exchange" @click="store.setSort('exchange')">
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('exchange')" :aria-sort="sortAriaValue('exchange')" id="th-exchange" @click="store.setSort('exchange')">
             <span>{{ t('misc.apikeys.exchange') }}</span>
             <PbIcon v-if="store.sortCol.value === 'exchange'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
-          <th class="border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.credentials') }}</th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('hl_expiry')" :aria-sort="sortAriaValue('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
+          <th class="border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.credentials') }}</th>
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('hl_expiry')" :aria-sort="sortAriaValue('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
             <span>{{ t('misc.apikeys.keyExpiry') }}</span>
             <PbIcon v-if="store.sortCol.value === 'hl_expiry'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('status')" :aria-sort="sortAriaValue('status')" id="th-status" @click="store.setSort('status')">
+          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('status')" :aria-sort="sortAriaValue('status')" id="th-status" @click="store.setSort('status')">
             <span>{{ t('misc.apikeys.status') }}</span>
             <PbIcon v-if="store.sortCol.value === 'status'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
           </th>
-          <th class="border-b border-border-default bg-card px-3 py-2.25 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.actions') }}</th>
-        </tr>
-      </thead>
-      <tbody id="userTableBody">
+          <th class="border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.actions') }}</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
         <tr v-if="store.usersState.value === 'loading'" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><span class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span> {{ t('misc.apikeys.loadingUsers') }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state"><span class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span> {{ t('misc.apikeys.loadingUsers') }}</div></td>
         </tr>
         <tr v-else-if="store.usersState.value === 'error'" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary" style="color:var(--danger);">{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state table-state--error">{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</div></td>
         </tr>
         <tr v-else-if="store.users.value.length === 0" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary">{{ t('misc.apikeys.noApiKeysConfigured') }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state">{{ t('misc.apikeys.noApiKeysConfigured') }}</div></td>
         </tr>
         <tr v-else-if="store.filteredSortedUsers.value.length === 0" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary" style="color:var(--text-secondary);">{{ t('misc.apikeys.noUsersMatchFilter') }}</td>
+          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state">{{ t('misc.apikeys.noUsersMatchFilter') }}</div></td>
         </tr>
         <tr
           v-else
@@ -211,15 +227,16 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
           :key="u.name"
           tabindex="0"
           :data-user-name="u.name"
-          class="cursor-pointer transition-colors duration-[120ms] ease-standard hover:bg-secondary/5 focus-visible:outline-2 focus-visible:outline-accent-soft focus-visible:-outline-offset-2"
-          style="cursor:pointer;"
+          class="user-table__row cursor-pointer transition-colors duration-[120ms] ease-standard hover:bg-secondary/5 focus-visible:outline-2 focus-visible:outline-accent-soft focus-visible:-outline-offset-2"
           @click="emit('edit', u.name)"
           @keydown="onRowKeydown($event, u.name)"
         >
-          <td class="border-b border-border-subtle px-3 py-2.5 text-base"><strong class="text-primary">{{ u.name }}</strong></td>
+          <td class="user-table__name-cell border-b border-border-subtle px-3 py-3 text-base"><strong class="user-name text-primary">{{ u.name }}</strong></td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base"><span class="badge-exchange inline-block rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="exchangeClass(u.exchange)">{{ u.exchange }}</span></td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base">
-            <template v-if="credsFor(u).length">{{ credsFor(u).join(', ') }}</template>
+            <div v-if="credsFor(u).length" class="credential-list">
+              <span v-for="credential in credsFor(u)" :key="credential" class="credential-chip">{{ credential }}</span>
+            </div>
             <span v-else style="color:var(--danger);">{{ t('misc.apikeys.none') }}</span>
           </td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base">
@@ -230,21 +247,24 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
             <span class="badge-in-use inline-block rounded-full border px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="u.in_use ? 'border-success/30 bg-success/10 text-success' : 'border border-secondary/14 bg-secondary/7 text-secondary'">{{ u.in_use ? t('misc.apikeys.inUse') : t('misc.apikeys.unused') }}</span>
           </td>
           <td class="border-b border-border-subtle px-3 py-2.5 text-base">
-            <Button variant="info" size="sm" type="button" data-user-action="edit" @click.stop="emit('edit', u.name)">{{ t('misc.apikeys.edit') }}</Button>
-            <Button
-              v-if="!u.in_use"
-              variant="danger"
-              size="sm"
-              type="button"
-              data-user-action="delete"
-              @click.stop="emit('delete', u.name)"
-            >
-              {{ t('common.delete') }}
-            </Button>
+            <div class="action-group">
+              <Button variant="info" size="sm" type="button" data-user-action="edit" @click.stop="emit('edit', u.name)">{{ t('misc.apikeys.edit') }}</Button>
+              <Button
+                v-if="!u.in_use"
+                variant="danger"
+                size="sm"
+                type="button"
+                data-user-action="delete"
+                @click.stop="emit('delete', u.name)"
+              >
+                {{ t('common.delete') }}
+              </Button>
+            </div>
           </td>
         </tr>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -257,13 +277,23 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   display: flex;
   align-items: center;
   min-height: 32px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .user-filter-control {
   position: relative;
-  width: 280px;
+  width: min(100%, 420px);
   max-width: 100%;
+}
+
+.user-filter-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  color: var(--text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .user-filter-clear {
@@ -284,9 +314,149 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   vertical-align: -2px;
 }
 
+.api-meta-bar {
+  background: rgb(var(--accent-rgb) / 0.055);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.api-meta-bar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgb(var(--accent-rgb) / 0.24);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--accent-rgb) / 0.1);
+  color: var(--accent-soft);
+}
+
+.api-meta-bar__label,
+.api-meta-bar__details {
+  color: var(--text-muted);
+}
+
+.api-meta-bar__serial {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.user-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.user-table-wrap::-webkit-scrollbar {
+  height: 5px;
+}
+
+.user-table-wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.user-table-wrap::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+}
+
+.user-table {
+  min-width: 780px;
+}
+
+.user-table__name-column { width: 24%; }
+.user-table__exchange-column { width: 15%; }
+.user-table__credentials-column { width: 20%; }
+.user-table__expiry-column { width: 16%; }
+.user-table__status-column { width: 13%; }
+.user-table__actions-column { width: 12%; }
+
+.user-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.user-table__row td {
+  min-height: 48px;
+  transition: background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+}
+
+.user-table__row:hover td {
+  background: rgb(var(--accent-rgb) / 0.045);
+}
+
+.user-table__name-cell {
+  border-left: 3px solid transparent;
+}
+
+.user-table__row:hover .user-table__name-cell,
+.user-table__row:focus-visible .user-table__name-cell {
+  border-left-color: var(--accent);
+}
+
+.user-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.01em;
+}
+
+.credential-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.credential-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.16);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--text-secondary-rgb) / 0.07);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.2;
+}
+
+.action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.table-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+}
+
+.table-state--error {
+  color: var(--danger-soft);
+}
+
 @media (max-width: 480px) {
   .user-filter-control {
     width: 100%;
+  }
+
+  .api-meta-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .api-meta-bar__details {
+    padding-left: 34px;
   }
 }
 

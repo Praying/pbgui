@@ -1,5 +1,9 @@
 # Unreleased
 
+## API Keys - User List Layout Refresh
+
+- Refined the API Keys user list with a clearer metadata strip, larger search target, sticky table headers, stronger row hover and focus affordances, exchange and credential chips, compact action grouping, and responsive horizontal table scrolling without changing filtering, sorting, or credential behavior.
+
 ## API Keys — User List UI Cleanup
 
 - Tightened the Users view search control to a compact 280px field with an in-field clear action, unified exchange badges on the shared accent palette, and reduced sortable-header noise to one active direction indicator without changing filtering or sorting behavior.
