@@ -3246,6 +3246,7 @@
   "v7backtest.resultCountHeader": "Results",
   "v7backtest.results": "Results",
   "v7backtest.resultsCount": "{n} results",
+  "v7backtest.resultsSelected": "{n} selected",
   "v7backtest.retentionDays": "Retention (days)",
   "v7backtest.retestReplace": "♻ Retest & Replace",
   "v7backtest.retestReplaceArchiveResult": "Retest & Replace Archive Result",

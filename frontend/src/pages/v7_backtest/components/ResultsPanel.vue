@@ -7,7 +7,7 @@
  * deleteSelectedResults' confirm flow (:8509-8532). Takes the results
  * store as its single prop — App owns the store.
  */
-import { PhPushPin } from '@phosphor-icons/vue';
+import { PhChartLineUp, PhMagnifyingGlass, PhPushPin } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -44,9 +44,11 @@ const countLabel = computed<string>(() => {
   const total = store.results.value.filter((row) => store.versionFilter.value === 'both' || row.backtest_version === store.versionFilter.value).length;
   const shown = store.visible.value.length;
   return shown === total
-    ? `${shown} ${t('v7backtest.resultsCount', { n: shown })}`
-    : `${t('v7backtest.showingResultsOf', { shown, total })} ${t('v7backtest.resultsCount', { n: total })}`;
+    ? t('v7backtest.resultsCount', { n: shown })
+    : t('v7backtest.showingResultsOf', { shown, total });
 });
+
+const selectedCount = computed<number>(() => store.selectedPaths.value.size);
 
 const compareTraces = computed<PlotlyTrace[]>(() => store.compareTraces.value as PlotlyTrace[]);
 const compareLayout = computed<PlotlyLayout>(() => store.compareLayout.value as PlotlyLayout);
@@ -124,51 +126,89 @@ defineExpose({ deleteSelectedFlow });
        made it fill + scroll. A wrapping <div> here would sit between them,
        collapse the flex chain and clip the charts with no scrollbar. -->
   <div class="results-panel-root contents">
-    <div id="results-fixed-top" class="mb-3 border-b-2 border-border-default bg-page pb-2 shadow-[0_4px_12px_rgb(0_0_0/0.6)]">
-      <div id="results-toolbar" class="mb-3 flex flex-wrap items-center gap-2 pt-2">
-        <span id="results-version-filter-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.version') }}</span>
-        <SelectRoot :model-value="store.versionFilter.value" @update:model-value="store.setVersionFilter(String($event ?? '') as 'v7' | 'v8' | 'both')">
-          <SelectTrigger id="results-version-filter" class="w-auto max-w-[100px]" aria-labelledby="results-version-filter-label">
-            <span>{{ store.versionFilter.value === 'v7' ? 'PBv7' : store.versionFilter.value === 'v8' ? 'PBv8' : t('v7backtest.both') }}</span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="v7">PBv7</SelectItem>
-            <SelectItem value="v8">PBv8</SelectItem>
-            <SelectItem value="both">{{ t('v7backtest.both') }}</SelectItem>
-          </SelectContent>
-        </SelectRoot>
-        <span id="results-config-filter-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</span>
-        <!-- ui-migration: the legacy <option value="">All configs</option> has no
-             reka equivalent — the listbox offers no reset row; the cleared model
-             ('' = all configs) renders as the trigger label instead. -->
-        <SelectRoot v-model="store.configFilter.value">
-          <SelectTrigger id="results-config-filter" class="w-auto min-w-[100px] max-w-[200px]" aria-labelledby="results-config-filter-label">
-            <span>{{ store.configFilter.value || t('v7backtest.allConfigs') }}</span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem v-for="name in store.configNames.value" :key="name" :value="name">{{ name }}</SelectItem>
-          </SelectContent>
-        </SelectRoot>
-        <Input id="results-filter" v-model="store.textFilter.value" type="text" class="w-auto max-w-[200px]" :placeholder="t('v7backtest.searchName')" />
-        <span id="results-count-label" class="whitespace-nowrap text-sm text-secondary">{{ countLabel }}</span>
-        <span style="flex: 1"></span>
-        <Button type="button" variant="default" class="act-btn h-auto" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</Button>
-        <Button type="button" variant="default" class="act-btn h-auto" data-test="results-deselect" :title="t('v7backtest.deselectAll')" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</Button>
-        <Button
-          id="results-pin-btn"
-          type="button"
-          variant="default"
-          class="act-btn h-auto"
-          :class="pinned ? '' : 'unpinned opacity-40'"
-          :title="t('v7backtest.pinTable')"
-          :aria-label="t('v7backtest.pinTable')"
-          style="font-size: 15px; padding: 0 6px"
-          @click="pinned = !pinned"
-        >
-          <PbIcon :icon="PhPushPin" :size="18" />
-        </Button>
+    <div
+      id="results-fixed-top"
+      class="mb-4 overflow-hidden rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel"
+    >
+      <div class="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-secondary/12 px-4 py-3">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="grid size-8 shrink-0 place-items-center rounded-lg border border-accent/20 bg-accent/8 text-accent-soft">
+            <PbIcon :icon="PhChartLineUp" :size="18" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">{{ t('v7backtest.results') }}</div>
+            <div id="results-count-label" class="mt-0.5 truncate text-sm font-semibold text-primary" aria-live="polite">{{ countLabel }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span
+            class="rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums"
+            :class="selectedCount > 0 ? 'border-accent/24 bg-accent/10 text-accent-soft' : 'border-secondary/12 bg-page/35 text-muted'"
+            aria-live="polite"
+          >
+            {{ t('v7backtest.resultsSelected', { n: selectedCount }) }}
+          </span>
+          <Button
+            id="results-pin-btn"
+            type="button"
+            variant="ghost"
+            class="size-8 p-0 text-secondary hover:text-primary"
+            :class="pinned ? 'border border-accent/20 bg-accent/8 text-accent-soft' : 'unpinned border border-secondary/12 opacity-55'"
+            :title="t('v7backtest.pinTable')"
+            :aria-label="t('v7backtest.pinTable')"
+            :aria-pressed="pinned"
+            @click="pinned = !pinned"
+          >
+            <PbIcon :icon="PhPushPin" :size="17" />
+          </Button>
+        </div>
       </div>
-      <div id="results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+
+      <div id="results-toolbar" class="flex flex-wrap items-end gap-3 border-b border-secondary/12 bg-page/24 px-4 py-3">
+        <label class="grid min-w-[112px] gap-1.5">
+          <span id="results-version-filter-label" class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('v7backtest.version') }}</span>
+          <SelectRoot :model-value="store.versionFilter.value" @update:model-value="store.setVersionFilter(String($event ?? '') as 'v7' | 'v8' | 'both')">
+            <SelectTrigger id="results-version-filter" class="w-full border-secondary/16 bg-page/68" aria-labelledby="results-version-filter-label">
+              <span>{{ store.versionFilter.value === 'v7' ? 'PBv7' : store.versionFilter.value === 'v8' ? 'PBv8' : t('v7backtest.both') }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="v7">PBv7</SelectItem>
+              <SelectItem value="v8">PBv8</SelectItem>
+              <SelectItem value="both">{{ t('v7backtest.both') }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
+        </label>
+
+        <label class="grid min-w-[180px] max-w-[260px] flex-1 gap-1.5">
+          <span id="results-config-filter-label" class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('v7backtest.config') }}</span>
+          <!-- ui-migration: the legacy <option value="">All configs</option> has no
+               reka equivalent — the cleared model ('' = all configs) renders as
+               the trigger label instead. -->
+          <SelectRoot v-model="store.configFilter.value">
+            <SelectTrigger id="results-config-filter" class="w-full border-secondary/16 bg-page/68" aria-labelledby="results-config-filter-label">
+              <span>{{ store.configFilter.value || t('v7backtest.allConfigs') }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="name in store.configNames.value" :key="name" :value="name">{{ name }}</SelectItem>
+            </SelectContent>
+          </SelectRoot>
+        </label>
+
+        <label class="grid min-w-[220px] max-w-[360px] flex-[1.4] gap-1.5">
+          <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('common.search') }}</span>
+          <span class="relative block">
+            <PbIcon :icon="PhMagnifyingGlass" :size="15" class="pointer-events-none absolute left-2.5 top-1/2 z-1 -translate-y-1/2 text-muted" />
+            <Input id="results-filter" v-model="store.textFilter.value" type="search" class="w-full border-secondary/16 bg-page/68 pl-8" :placeholder="t('v7backtest.searchName')" />
+          </span>
+        </label>
+
+        <div class="ml-auto flex items-center gap-2 pb-px">
+          <Button type="button" variant="outline" size="sm" class="h-8 border-secondary/16 px-3" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</Button>
+          <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="results-deselect" :title="t('v7backtest.deselectAll')" :disabled="selectedCount === 0" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</Button>
+        </div>
+      </div>
+
+      <div id="results-list-wrap" class="relative h-[clamp(220px,34vh,400px)] min-h-36 overflow-auto bg-page/45" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
         <div id="results-list">
           <div v-if="store.checking.value" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.checkingForResults') }}</div>
           <ResultsTable
@@ -186,8 +226,8 @@ defineExpose({ deleteSelectedFlow });
           />
         </div>
       </div>
-      <div id="results-resize-handle" class="flex h-1.5 cursor-row-resize select-none items-center justify-center rounded-b-sm bg-border-default" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
-        <span class="h-0.5 w-8 rounded-[2px] bg-secondary opacity-50"></span>
+      <div id="results-resize-handle" class="flex h-2 cursor-row-resize select-none items-center justify-center border-t border-secondary/12 bg-page/55" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
+        <span class="h-0.5 w-10 rounded-full bg-secondary/35"></span>
       </div>
     </div>
 

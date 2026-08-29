@@ -117,6 +117,12 @@ describe('headers (:5532-5539)', () => {
 });
 
 describe('rows (:5541-5574)', () => {
+  it('uses full-row selection without a visible checkbox column', () => {
+    const wrapper = mountTable();
+    expect(wrapper.find('thead input[type="checkbox"]').exists()).toBe(false);
+    expect(wrapper.find('tbody input[type="checkbox"]').exists()).toBe(false);
+  });
+
   it('renders metric cells with legacy precision and the TWE/POS pairs', () => {
     const wrapper = mountTable();
     const cells = wrapper.findAll('tbody tr')[0]!.findAll('td');

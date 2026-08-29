@@ -106,13 +106,12 @@ describe('toolbar (:837-852)', () => {
   it('the config filter and search wire into the store and update the count label', async () => {
     const store = await loadedStore();
     const wrapper = mountPanel(store);
-    // legacy quirk kept: shown + ' ' + '{n} results' (:5499) doubles the count
-    expect(wrapper.find('#results-count-label').text()).toBe('2 2 results');
+    expect(wrapper.find('#results-count-label').text()).toBe('2 results');
     await pickSelectOption(wrapper, '#results-config-filter', 'alpha');
     expect(store.configFilter.value).toBe('alpha');
-    expect(wrapper.find('#results-count-label').text()).toBe('Showing 1 of 2 2 results');
+    expect(wrapper.find('#results-count-label').text()).toBe('Showing 1 of 2');
     await wrapper.find('#results-filter').setValue('zzz');
-    expect(wrapper.find('#results-count-label').text()).toBe('Showing 0 of 2 2 results');
+    expect(wrapper.find('#results-count-label').text()).toBe('Showing 0 of 2');
   });
 
   it('select-all selects the visible rows only; deselect clears (:849-850)', async () => {
@@ -121,8 +120,10 @@ describe('toolbar (:837-852)', () => {
     await pickSelectOption(wrapper, '#results-config-filter', 'alpha');
     await wrapper.find('[data-test="results-select-all"]').trigger('click');
     expect(store.getSelected()).toEqual(['p1']);
+    expect(wrapper.text()).toContain('1 selected');
     await wrapper.find('[data-test="results-deselect"]').trigger('click');
     expect(store.getSelected()).toEqual([]);
+    expect(wrapper.text()).toContain('0 selected');
   });
 
   it('the pin button dims and reports unpinned (:6415-6419, shell.js:326-334)', async () => {

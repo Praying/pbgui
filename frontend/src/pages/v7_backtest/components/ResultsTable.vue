@@ -7,13 +7,12 @@
  * convert button (:5547-5549) and click/drag row selection with wrap
  * auto-scroll (:5731-5785).
  */
-import { PhCopy, PhEye, PhFileText, PhFlask, PhImage } from '@phosphor-icons/vue';
+import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
-import { Checkbox } from '@/shared/components/ui/checkbox';
 import { useRowDragSelect } from '../composables/useRowDragSelect';
 import type { BacktestResultItem, ResultActionKind, SortSpec } from '../types';
 
@@ -78,12 +77,6 @@ function headerTitle(label: string): string {
   return t('v7backtest.sortBy', { label });
 }
 
-/** Header checkbox selects/deselects every visible row (:816-818). */
-const allSelected = computed(() => props.rows.length > 0 && props.rows.every((row) => props.selected.has(row.path)));
-function toggleAll(): void {
-  emit('select-paths', props.rows.map((row) => row.path), !allSelected.value);
-}
-
 /** fmt (:6490-6493). */
 function fmt(value: number | null | undefined, decimals: number): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';
@@ -137,35 +130,31 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div v-if="rows.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">
-    <div class="mb-3 text-[48px] opacity-40">📊</div>
-    {{ t('v7backtest.noResultsFound') }}
+  <div v-if="rows.length === 0" class="empty-state grid min-h-[220px] place-items-center px-5 py-12 text-center text-md text-secondary">
+    <div>
+      <div class="mx-auto mb-3 grid size-12 place-items-center rounded-xl border border-accent/16 bg-accent/7 text-accent-soft">
+        <PbIcon :icon="PhChartLineUp" :size="24" />
+      </div>
+      <div class="font-medium text-secondary">{{ t('v7backtest.noResultsFound') }}</div>
+    </div>
   </div>
   <div v-else ref="wrap" style="position: relative">
-    <table class="tbl">
+    <table class="tbl min-w-max">
       <thead>
         <tr>
-          <th class="check-col" style="text-align: center">
-            <Checkbox
-              :model-value="allSelected"
-              :aria-label="t('v7backtest.selectAll')"
-              data-test="results-select-all-check"
-              @update:model-value="toggleAll"
-            />
-          </th>
           <th
             v-for="header in headers"
             :key="header.col"
             :data-col="header.col"
-            style="cursor: pointer"
+            class="group"
             :title="headerTitle(header.label)"
             @click="emit('sort', header.col)"
           >
             {{ header.label }}<span class="sort-arrow">{{ arrowFor(header.col) }}</span>
           </th>
-          <th :title="t('v7backtest.tweTooltip')">TWE</th>
-          <th>POS</th>
-          <th style="text-align: center">{{ t('v7backtest.actions') }}</th>
+          <th :title="t('v7backtest.tweTooltip')" style="cursor: default">TWE</th>
+          <th style="cursor: default">POS</th>
+          <th class="actions-column sticky right-0 z-3 shadow-[-8px_0_12px_-12px_rgb(0_0_0/0.8)]" style="cursor: default; text-align: center">{{ t('v7backtest.actions') }}</th>
         </tr>
       </thead>
       <tbody ref="tbody">
@@ -178,31 +167,24 @@ onBeforeUnmount(() => dragSelect.dispose());
           :style="row.liquidated ? { background: 'rgb(var(--danger-rgb) / .10)' } : undefined"
           @click="emit('toggle-select', row.path)"
         >
-          <td class="check-col" @click.stop>
-            <Checkbox
-              :model-value="selected.has(row.path)"
-              :aria-label="row.path"
-              @update:model-value="emit('toggle-select', row.path)"
-            />
-          </td>
-          <td v-if="showVersion">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
-          <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" style="max-width: 250px">
+          <td v-if="showVersion" class="font-semibold text-secondary">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
+          <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" class="font-medium text-primary" style="max-width: 280px">
             <span v-if="row.liquidated" style="color: var(--red)" :title="t('v7backtest.liquidated')">⚠️</span>
             {{ row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}` }}
           </td>
           <td v-if="showStrategy" class="mono">{{ row.strategy || '-' }}</td>
           <td v-if="showCoins" :title="coinsText(row)" data-col="coins_text" style="max-width: 140px">{{ coinsText(row) }}</td>
           <td>{{ exchangesText(row) }}</td>
-          <td>{{ fmtDate(row.modified) }}</td>
-          <td>{{ fmt(row.adg, 4) }}</td>
-          <td>{{ fmt(row.gain, 2) }}</td>
-          <td>{{ fmt(row.drawdown_worst, 4) }}</td>
-          <td>{{ fmt(row.sharpe_ratio, 4) }}</td>
-          <td>{{ fmt(row.starting_balance, 0) }}</td>
-          <td>{{ fmt(row.final_balance, 0) }}</td>
-          <td>{{ fmt(row.twe_long, 2) }} / {{ fmt(row.twe_short, 2) }}</td>
-          <td>{{ fmt(row.pos_long, 0) }} / {{ fmt(row.pos_short, 0) }}</td>
-          <td class="actions-cell" @click.stop>
+          <td class="text-secondary">{{ fmtDate(row.modified) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.adg, 4) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.gain, 2) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.drawdown_worst, 4) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.sharpe_ratio, 4) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.starting_balance, 0) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.final_balance, 0) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.twe_long, 2) }} / {{ fmt(row.twe_short, 2) }}</td>
+          <td class="font-mono tabular-nums">{{ fmt(row.pos_long, 0) }} / {{ fmt(row.pos_short, 0) }}</td>
+          <td class="actions-cell sticky right-0 z-1 bg-[var(--bg-page)] shadow-[-8px_0_12px_-12px_rgb(0_0_0/0.8)]" @click.stop>
             <Button
               v-for="action in ACTION_BUTTONS"
               :key="action.kind"

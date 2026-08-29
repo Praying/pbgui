@@ -3246,6 +3246,7 @@
   "v7backtest.resultCountHeader": "结果数",
   "v7backtest.results": "结果",
   "v7backtest.resultsCount": "{n} 个结果",
+  "v7backtest.resultsSelected": "已选择 {n} 个",
   "v7backtest.retentionDays": "保留（天）",
   "v7backtest.retestReplace": "♻重新测试并替换",
   "v7backtest.retestReplaceArchiveResult": "重新测试并替换存档结果",

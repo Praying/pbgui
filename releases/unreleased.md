@@ -1,5 +1,9 @@
 # Unreleased
 
+## PBv7/PBv8 Backtest - Results Workbench Refresh
+
+- Refined the Backtest Results view with a contained results surface, clearer count and selection feedback, grouped version/config/search filters, a taller resizable data viewport, full-row click and drag selection, sticky row actions, aligned numeric metrics, and responsive horizontal scrolling while preserving sorting, chart actions, comparison, conversion, and bulk workflows.
+
 ## PBv8 Optimize - Unified Workbench Layout
 
 - Refined the PBv8 Optimize configuration, queue, results, and Pareto views with a shared panel heading, compact context controls, clearer count states, stronger table surfaces, improved row spacing, and responsive scrolling while preserving existing actions, selection, sorting, and data flows.
