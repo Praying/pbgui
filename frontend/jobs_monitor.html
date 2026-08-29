@@ -6,8 +6,7 @@
       <link rel="icon" type="image/svg+xml" href="/app/favicon.svg">
 <script src="/app/i18n.js?v=1"></script>
     <title>Job Monitor - PBGui</title>
-    <link rel="stylesheet" href="/app/src/styles/tokens.css">
-        <link rel="stylesheet" href="/app/css/app.css?v=3">
+    <link rel="stylesheet" href="/app/css/app.css?v=4">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif; }
         /* Additional styles for new features */
@@ -18,14 +17,14 @@
             align-items: center;
         }
         .job-actions button { margin-left: 0; }
-        .btn-secondary { background: var(--text-disabled, #4d5c82); }
-        .btn-secondary:hover { background: var(--border-default, #333f5c); }
-        .btn-view { background: #3f63ad; color: #e8ecf4; }
-        .btn-view:hover { background: #3f63ad; }
-        .btn-run { background: #267a54; color: #e8ecf4; }
-        .btn-run:hover { background: #267a54; }
-        .btn-info { background: var(--accent-deep, #3f63ad); }
-        .btn-info:hover { background: #333f5c; }
+        .btn-secondary { background: var(--bg-elevated); border: 1px solid var(--border-default); color: var(--text-primary); }
+        .btn-secondary:hover { border-color: var(--border-strong); background: var(--border-default); }
+        .btn-view { background: var(--accent-deep); color: var(--accent-contrast); }
+        .btn-view:hover { background: var(--accent); }
+        .btn-run { background: var(--success); color: var(--accent-contrast); }
+        .btn-run:hover { background: var(--success); color: var(--accent-contrast); }
+        .btn-info { background: var(--accent-deep); color: var(--accent-contrast); }
+        .btn-info:hover { background: var(--accent); }
         
         /* Log Modal */
         .modal {
@@ -40,11 +39,13 @@
             padding-bottom: calc(var(--modal-visible-bottom-offset, 0px) + var(--sp-lg, 20px));
             padding-left: var(--sp-lg, 20px);
             overflow-y: auto;
-            background-color: rgba(5, 8, 14,0.7);
+            background-color: var(--bg-backdrop);
         }
         .modal.active { display: flex; align-items: center; justify-content: center; }
         .modal-content {
-            background: var(--bg-card, #1b2231);
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-modal);
             border-radius: 8px;
             padding: 1.5rem;
             width: min(900px, calc(100vw - (var(--sp-lg) * 2)));
@@ -59,30 +60,30 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border-default, #333f5c);
+            border-bottom: 1px solid var(--border-default);
             padding-bottom: 0.75rem;
         }
         .modal-body {
             overflow-y: auto;
             flex: 1;
-            background: var(--bg-page, #10141d);
+            background: var(--bg-page);
             padding: 1rem;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
             font-size: var(--fs-sm);
         }
         .job-details-modal-body {
-            background: #10141d;
+            background: var(--bg-page);
             padding: var(--sp-md);
             font-family: inherit;
             font-size: var(--fs-base);
-            color: var(--text-primary, #e8ecf4);
+            color: var(--text-primary);
             display: grid;
             gap: var(--sp-md);
         }
         .details-section {
-            background: var(--surface-sidebar, #131826);
-            border: 1px solid #262230;
+            background: var(--surface-sidebar);
+            border: 1px solid var(--border-subtle);
             border-radius: 6px;
             padding: var(--sp-md);
             display: grid;
@@ -91,7 +92,7 @@
         .details-section h3 {
             margin: 0;
             font-size: var(--fs-md);
-            color: #e8ecf4;
+            color: var(--text-primary);
         }
         .details-kv {
             display: grid;
@@ -101,25 +102,25 @@
             font-size: var(--fs-sm);
         }
         .details-kv-key {
-            color: var(--text-secondary, #a3adc2);
+            color: var(--text-secondary);
             font-weight: 600;
         }
         .details-kv-value {
-            color: var(--text-primary, #e8ecf4);
+            color: var(--text-primary);
             min-width: 0;
             word-break: break-word;
         }
         .details-empty {
-            color: var(--text-secondary, #a3adc2);
+            color: var(--text-secondary);
             font-size: var(--fs-sm);
         }
         .json-block {
             margin: 0;
             padding: var(--sp-md);
             border-radius: 4px;
-            background: #0c1018;
-            border: 1px solid #1b2231;
-            color: var(--text-primary, #e8ecf4);
+            background: var(--bg-input);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
             font-family: 'Courier New', monospace;
             font-size: var(--fs-sm);
             white-space: pre-wrap;
@@ -128,25 +129,25 @@
         }
         .log-line {
             margin: 0.25rem 0;
-            color: #e8ecf4;
+            color: var(--text-primary);
             white-space: pre-wrap;
             word-break: break-all;
         }
         .close-btn {
-            background: #e5615c;
-            color: white;
+            background: var(--danger-deep);
+            color: var(--text-primary);
             border: none;
             padding: 0.5rem 1rem;
             border-radius: 4px;
             cursor: pointer;
             font-size: var(--fs-base);
         }
-        .close-btn:hover { background: #a83a35; }
+        .close-btn:hover { background: var(--danger); color: var(--accent-contrast); }
         
         /* Progress details */
         .progress-details {
             font-size: var(--fs-xs);
-            color: var(--text-secondary, #a3adc2);
+            color: var(--text-secondary);
             margin-top: 0.5rem;
         }
         .progress-details .detail { margin-right: 1rem; }
@@ -154,13 +155,13 @@
         /* Job expander */
         .job-expander {
             margin-top: 0.5rem;
-            border-top: 1px solid var(--border-default, #333f5c);
+            border-top: 1px solid var(--border-default);
             padding-top: 0.5rem;
         }
         .expander-toggle {
             background: transparent;
             border: none;
-            color: #72a0ee;
+            color: var(--accent);
             cursor: pointer;
             font-size: var(--fs-sm);
             padding: 0.25rem 0;
@@ -169,7 +170,7 @@
         .expander-content {
             display: none;
             padding: 0.75rem;
-            background: #10141d;
+            background: var(--bg-input);
             border-radius: 4px;
             margin-top: 0.5rem;
             font-size: var(--fs-sm);
@@ -178,16 +179,16 @@
         .detail-row { margin: 0.3rem 0; }
         .downloader-details {
             margin-top: 0.75rem;
-            border: 1px solid rgba(96,165,250,0.22);
+            border: 1px solid rgb(var(--accent-rgb) / 0.22);
             border-radius: 10px;
-            background: linear-gradient(135deg, rgb(var(--bg-page-rgb, 19 17 20) / 0.96), rgb(24, 21, 32,0.9));
+            background: linear-gradient(135deg, rgb(var(--bg-page-rgb) / 0.96), var(--bg-panel));
             overflow: hidden;
         }
         .downloader-details summary {
             cursor: pointer;
             list-style: none;
             padding: 0.75rem 0.9rem;
-            color: #96b9f4;
+            color: var(--accent-soft);
             font-weight: 700;
             display: flex;
             justify-content: space-between;
@@ -197,12 +198,12 @@
         .downloader-details summary::-webkit-details-marker { display: none; }
         .downloader-details summary::before {
             content: '▶';
-            color: #72a0ee;
+            color: var(--accent);
             margin-right: 0.2rem;
         }
         .downloader-details[open] summary::before { content: '▼'; }
         .downloader-total {
-            color: #96b9f4;
+            color: var(--accent-soft);
             font-size: var(--fs-xs);
             font-weight: 600;
             white-space: nowrap;
@@ -214,9 +215,9 @@
             padding: 0 0.9rem 0.9rem;
         }
         .downloader-card {
-            border: 1px solid rgb(163, 173, 194,0.16);
+            border: 1px solid rgb(var(--text-secondary-rgb) / 0.16);
             border-radius: 9px;
-            background: rgba(2,6,23,0.72);
+            background: var(--bg-input);
             padding: 0.75rem;
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
         }
@@ -228,53 +229,53 @@
             margin-bottom: 0.55rem;
         }
         .downloader-name {
-            color: #e8ecf4;
+            color: var(--text-primary);
             font-weight: 700;
             line-height: 1.25;
             word-break: break-word;
         }
         .downloader-badge {
-            border: 1px solid rgba(96,165,250,0.28);
+            border: 1px solid rgb(var(--accent-rgb) / 0.28);
             border-radius: 999px;
-            color: #96b9f4;
-            background: rgba(59,130,246,0.1);
+            color: var(--accent-soft);
+            background: rgb(var(--accent-rgb) / 0.1);
             padding: 0.12rem 0.45rem;
             font-size: var(--fs-xs);
             text-transform: uppercase;
             white-space: nowrap;
         }
         .downloader-badge.waiting {
-            border-color: rgb(163, 173, 194,0.22);
-            color: #a3adc2;
-            background: rgb(163, 173, 194,0.08);
+            border-color: rgb(var(--text-secondary-rgb) / 0.22);
+            color: var(--text-secondary);
+            background: rgb(var(--text-secondary-rgb) / 0.08);
         }
         .downloader-badge.failed {
-            border-color: rgb(var(--danger-soft-rgb, 236 143 140) / 0.35);
-            color: #ee8d84;
-            background: rgb(var(--danger-rgb, 229 97 92) / 0.12);
+            border-color: rgb(var(--danger-rgb) / 0.35);
+            color: var(--danger-soft);
+            background: rgb(var(--danger-rgb) / 0.12);
         }
         .downloader-badge.done {
-            border-color: rgb(var(--success-rgb, 63 186 111) / 0.32);
-            color: #76d9ad;
-            background: rgba(34,197,94,0.1);
+            border-color: rgb(var(--success-rgb) / 0.32);
+            color: var(--success-soft);
+            background: rgb(var(--success-rgb) / 0.1);
         }
         .downloader-meter {
             height: 7px;
             border-radius: 999px;
             overflow: hidden;
-            background: rgb(38, 34, 48,0.95);
+            background: var(--border-subtle);
             margin-bottom: 0.6rem;
         }
         .downloader-meter-fill {
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(90deg, #72a0ee, #46c88f);
+            background: linear-gradient(90deg, var(--accent-deep), var(--success));
             min-width: 2px;
         }
         .downloader-meter-fill.empty {
             width: 100%;
             min-width: 0;
-            background: repeating-linear-gradient(90deg, rgb(163, 173, 194,0.22), rgb(163, 173, 194,0.22) 8px, rgb(163, 173, 194,0.08) 8px, rgb(163, 173, 194,0.08) 16px);
+            background: repeating-linear-gradient(90deg, rgb(var(--text-secondary-rgb) / 0.22), rgb(var(--text-secondary-rgb) / 0.22) 8px, rgb(var(--text-secondary-rgb) / 0.08) 8px, rgb(var(--text-secondary-rgb) / 0.08) 16px);
         }
         .downloader-stats {
             display: grid;
@@ -282,11 +283,11 @@
             gap: 0.45rem 0.65rem;
             font-size: var(--fs-xs);
         }
-        .downloader-stat-label { color: var(--text-secondary, #a3adc2); display: block; }
-        .downloader-stat-value { color: var(--text-primary, #e8ecf4); font-weight: 700; }
+        .downloader-stat-label { color: var(--text-secondary); display: block; }
+        .downloader-stat-value { color: var(--text-primary); font-weight: 700; }
         .downloader-current {
             grid-column: 1 / -1;
-            color: #a3adc2;
+            color: var(--text-secondary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -298,20 +299,20 @@
             justify-content: flex-end;
             margin-bottom: 1rem;
             padding: 0.5rem;
-            border-bottom: 1px solid var(--border-default, #333f5c);
+            border-bottom: 1px solid var(--border-default);
         }
         .tab-header-actions button {
-            background: #e5615c;
-            color: white;
+            background: var(--danger-deep);
+            color: var(--text-primary);
             border: none;
             padding: 0.5rem 1rem;
             border-radius: 4px;
             cursor: pointer;
             font-size: var(--fs-sm);
         }
-        .tab-header-actions button:hover { background: #a83a35; }
+        .tab-header-actions button:hover { background: var(--danger); color: var(--accent-contrast); }
         .tab-header-actions button:disabled {
-            background: var(--text-disabled, #4d5c82);
+            background: var(--text-disabled);
             cursor: not-allowed;
             opacity: 0.5;
         }
@@ -322,7 +323,7 @@
             position: fixed;
             inset: 0;
             z-index: 1100;
-            background: rgba(5, 8, 14, 0.72);
+            background: var(--bg-backdrop);
             align-items: center;
             justify-content: center;
             padding: var(--sp-lg);
@@ -330,10 +331,10 @@
         .action-modal.active { display: flex; }
         .action-modal-card {
             width: min(460px, 92vw);
-            background: #10141d;
-            border: 1px solid var(--border-default, #333f5c);
+            background: var(--bg-panel);
+            border: 1px solid var(--border-default);
             border-radius: 12px;
-            box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9);
+            box-shadow: var(--shadow-modal);
             overflow: hidden;
         }
         .action-modal-header {
@@ -342,18 +343,18 @@
             align-items: center;
             gap: var(--sp-sm);
             padding: 0.85rem 1.1rem;
-            border-bottom: 1px solid var(--border-subtle, #262f45);
-            background: var(--surface-sidebar, #131826);
+            border-bottom: 1px solid var(--border-subtle);
+            background: var(--surface-sidebar);
         }
         .action-modal-title {
             font-size: var(--fs-md);
             font-weight: 700;
-            color: var(--text-primary, #e8ecf4);
+            color: var(--text-primary);
         }
         .action-modal-close {
             background: transparent;
             border: none;
-            color: #717b8e;
+            color: var(--text-muted);
             font-size: var(--fs-lg);
             cursor: pointer;
             padding: 0.2rem 0.35rem;
@@ -361,7 +362,7 @@
             line-height: 1;
         }
         .action-modal-close:hover {
-            color: var(--text-primary, #e8ecf4);
+            color: var(--text-primary);
             background: rgba(255, 255, 255, 0.06);
         }
         .action-modal-body {
@@ -371,12 +372,12 @@
         }
         .action-modal-message {
             font-size: var(--fs-base);
-            color: var(--text-primary, #e8ecf4);
+            color: var(--text-primary);
             line-height: 1.5;
         }
         .action-modal-detail {
             font-size: var(--fs-sm);
-            color: var(--text-secondary, #a3adc2);
+            color: var(--text-secondary);
             line-height: 1.45;
         }
         .action-modal-detail[hidden] { display: none !important; }
@@ -394,8 +395,8 @@
         html.is-embedded,
         body.is-embedded {
             padding: 0;
-            background: var(--bg-page, #0d151e);
-            color: var(--text-primary, #e8ecf4);
+            background: var(--bg-page);
+            color: var(--text-primary);
             overflow: hidden;
         }
         body.is-embedded .container {
@@ -877,7 +878,7 @@
                             <strong class="job-id">${escapeHtml(jobId)}</strong>
                             <span class="badge ${statusClass}">${escapeHtml(job.status || '')}</span>
                             <span class="job-type">${escapeHtml(job.type || '')}</span>
-                            ${durationStr ? `<span class="detail" style="color:#a3adc2;">${escapeHtml(durationStr)}</span>` : ''}
+                            ${durationStr ? `<span class="detail" style="color:var(--text-secondary);">${escapeHtml(durationStr)}</span>` : ''}
                         </div>
                         <div class="job-actions">
                             ${job.status === 'pending' ? `<button class="btn btn-run" data-job-action="run" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.run')}</button>` : ''}
@@ -964,7 +965,7 @@
                         <div class="job-info">
                             <strong class="job-id">${escapeHtml(jobId)}</strong>
                             <span class="job-type">${escapeHtml(job.type || '')}</span>
-                            ${durationStr ? `<span class="detail" style="color:#a3adc2;">${escapeHtml(durationStr)}</span>` : ''}
+                            ${durationStr ? `<span class="detail" style="color:var(--text-secondary);">${escapeHtml(durationStr)}</span>` : ''}
                         </div>
                         <div class="job-actions">
                             <button class="btn btn-view" data-job-action="view" data-job-id="${jobIdAttr}">${PBGuiI18n.t('sysmon.view')}</button>
@@ -978,7 +979,7 @@
                         <span class="detail">${escapeHtml(formatTimestamp(job.updated_ts))}</span>
                         ${rangeStr ? `<span class="detail" style="margin-left:0.8rem;">${PBGuiI18n.t('sysmon.range', {v: escapeHtml(rangeStr)})}</span>` : ''}
                     </div>
-                    ${job.error ? `<div class="job-error" style="margin-top:0.5rem;color:#e5615c;font-size:var(--fs-sm);">${escapeHtml(job.error)}</div>` : ''}
+                    ${job.error ? `<div class="job-error" style="margin-top:0.5rem;color:var(--danger);font-size:var(--fs-sm);">${escapeHtml(job.error)}</div>` : ''}
                     ${(hasStats || coinPreview) ? `
                         <div class="job-expander">
                             <button class="expander-toggle" data-job-action="toggle" data-job-id="${jobIdAttr}">
@@ -1497,7 +1498,7 @@
                 const data = await resp.json();
                 
                 if (!data.exists || !data.log || data.log.length === 0) {
-                    logContent.innerHTML = '<p style="color:#a3adc2;">' + PBGuiI18n.t('sysmon.noLogFileFound') + '</p>';
+                    logContent.innerHTML = '<p style="color:var(--text-secondary);">' + PBGuiI18n.t('sysmon.noLogFileFound') + '</p>';
                     return;
                 }
                 
@@ -1509,7 +1510,7 @@
                 logContent.scrollTop = logContent.scrollHeight;
             } catch (e) {
                 console.error('Log error:', e);
-                logContent.innerHTML = '<p style="color:#e5615c;">' + PBGuiI18n.t('sysmon.failedLoadLog') + '</p>';
+                logContent.innerHTML = '<p style="color:var(--danger);">' + PBGuiI18n.t('sysmon.failedLoadLog') + '</p>';
             }
         }
 
@@ -1674,7 +1675,7 @@
                 }
             } catch (e) {
                 console.error('Job details error:', e);
-                content.innerHTML = `<div class="details-empty" style="color:#e5615c;">${PBGuiI18n.t('sysmon.failedLoadJobDetailsMsg', {detail: escapeHtml((e && e.message) ? PBGuiI18n.serverMsg(String(e.message)) : PBGuiI18n.t('common.unknown'))})}</div>`;
+                content.innerHTML = `<div class="details-empty" style="color:var(--danger);">${PBGuiI18n.t('sysmon.failedLoadJobDetailsMsg', {detail: escapeHtml((e && e.message) ? PBGuiI18n.serverMsg(String(e.message)) : PBGuiI18n.t('common.unknown'))})}</div>`;
             }
         }
 

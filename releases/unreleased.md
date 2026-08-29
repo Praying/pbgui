@@ -1,5 +1,10 @@
 # Unreleased
 
+## Market Data — Precision Job Monitor
+
+- Aligned the shared static Job Monitor iframe used by OHLCV Integrity, Best 1m, and Copy Data with the Precision Terminal 2.0 graphite surfaces, ice-blue signals, semantic states, progress meters, details, logs, and dialogs while preserving queue APIs and controls.
+- Removed the retired `tokens.css` dependency, made the iframe stylesheet self-contained, neutralized its parent Integrity shadow, and bumped the static stylesheet cache key so embedded queues do not retain the old blue-grey theme.
+
 ## Frontend — Dashboard Editor Style Audit Review Fix
 
 - Expanded the Dashboard Editor legacy-literal contract across all active Vue, widget-style, formatter, Plotly, Lightweight Charts, and grid metadata sources, with tested allowlists for metadata-only colors, synthetic fixtures, and the zero-alpha income legend.
