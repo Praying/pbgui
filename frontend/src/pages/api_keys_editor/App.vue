@@ -395,6 +395,167 @@ body {
 .hl-expiry-table tbody tr:last-child td {
   border-bottom: none;
 }
+
+/* PBGuiDialogs injects its reusable DOM at document.body level. These
+   higher-specificity overrides keep this page's confirmations on the same
+   Precision Terminal surface, border, type, and control tokens as the Vue
+   credential editor without changing dialogs on unrelated pages. */
+body #pbgui-dialog-ovl {
+  padding: var(--spacing-lg);
+  background: var(--color-backdrop);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+body #pbgui-dialog-box {
+  width: min(460px, 100%);
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.18);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at 100% 0%, rgb(var(--accent-rgb) / 0.08), transparent 20rem),
+    linear-gradient(145deg, rgb(var(--bg-panel-rgb) / 0.99), rgb(var(--bg-page-rgb) / 0.99));
+  box-shadow: var(--shadow-modal), inset 0 1px 0 rgb(255 255 255 / 0.07);
+}
+
+body #pbgui-dialog-header {
+  min-height: 54px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
+  background: rgb(var(--bg-page-rgb) / 0.5);
+}
+
+body #pbgui-dialog-title {
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-section);
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+body #pbgui-dialog-close {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  transition: background-color 120ms var(--ease-standard), border-color 120ms var(--ease-standard), color 120ms var(--ease-standard);
+}
+
+body #pbgui-dialog-close:hover {
+  border-color: rgb(var(--text-secondary-rgb) / 0.16);
+  background: rgb(var(--text-secondary-rgb) / 0.08);
+  color: var(--text-primary);
+}
+
+body #pbgui-dialog-close:focus-visible,
+body .pbgui-dialog-btn:focus-visible {
+  outline: 2px solid rgb(var(--accent-rgb) / 0.72);
+  outline-offset: 2px;
+}
+
+body #pbgui-dialog-body {
+  gap: 18px;
+  padding: 20px;
+}
+
+body #pbgui-dialog-message {
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.6;
+}
+
+body #pbgui-dialog-detail {
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+}
+
+body #pbgui-dialog-actions {
+  gap: 8px;
+  padding-top: 2px;
+}
+
+body .pbgui-dialog-btn {
+  height: var(--control-height-md);
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: 600;
+  transition: background-color 120ms var(--ease-standard), border-color 120ms var(--ease-standard), color 120ms var(--ease-standard), transform 120ms var(--ease-standard);
+}
+
+body .pbgui-dialog-btn:active {
+  transform: scale(0.985);
+}
+
+body .pbgui-dialog-btn.secondary {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+body .pbgui-dialog-btn.secondary:hover {
+  border-color: var(--border-strong);
+  background: var(--border-default);
+}
+
+body .pbgui-dialog-btn.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 2px 10px rgb(var(--accent-rgb) / 0.2);
+}
+
+body .pbgui-dialog-btn.primary:hover {
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
+}
+
+body .pbgui-dialog-btn.danger {
+  border-color: rgb(var(--danger-rgb) / 0.4);
+  background: rgb(var(--danger-rgb) / 0.14);
+  color: var(--danger-soft);
+}
+
+body .pbgui-dialog-btn.danger:hover {
+  border-color: var(--danger);
+  background: rgb(var(--danger-rgb) / 0.22);
+  color: var(--danger-soft);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body #pbgui-dialog-ovl.visible #pbgui-dialog-box {
+    animation: api-keys-dialog-enter 150ms var(--ease-standard);
+  }
+}
+
+@keyframes api-keys-dialog-enter {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+  body #pbgui-dialog-ovl {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  body #pbgui-dialog-box {
+    width: 100%;
+  }
+
+  body #pbgui-dialog-actions,
+  body .pbgui-dialog-btn {
+    width: 100%;
+  }
+}
 </style>
 
 <style scoped>

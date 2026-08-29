@@ -1,5 +1,9 @@
 # Unreleased
 
+## API Keys - Discard Changes Dialog Theme
+
+- Aligned the API Keys unsaved-changes confirmation with the current Precision Terminal theme using the shared graphite surfaces, borders, typography, accent buttons, focus treatment, responsive mobile actions, and reduced-motion-aware entry feedback without changing its keyboard or confirmation behavior.
+
 ## API Keys - User Editor Layout Refresh
 
 - Reorganized the exchange-user create/edit form into separate identity and credential surfaces, moved connection testing and its result beside the credential fields, clarified the optional advanced settings disclosure, and anchored save/delete actions in a stable responsive footer without changing credential handling or API behavior.

@@ -278,23 +278,26 @@ describe('API Keys page shell', () => {
     expect(wrapper.find('#toastContainer').text()).toContain('User deleted: bob');
   });
 
-  it('blocks leaving a dirty edit panel until confirmed (:1789-1819)', async () => {
+  it('blocks leaving a dirty new-user panel until confirmed (:1789-1819)', async () => {
     const wrapper = await mountApp();
 
-    await wrapper.find('tr[data-user-name="bob"] [data-user-action="edit"]').trigger('click');
-    await flushPromises();
-    await wrapper.find('#editQuote').setValue('USDT'); // marks dirty
+    await wrapper.find('[data-testid="add-user"]').trigger('click');
+    await wrapper.find('#editName').setValue('carol'); // marks dirty
     await wrapper.find('#editPanel button.back-btn').trigger('click');
     await flushPromises();
     expect(dialogsWindow().PBGuiDialogs!.confirm).toHaveBeenCalledTimes(1);
+    expect(dialogsWindow().PBGuiDialogs!.confirm).toHaveBeenCalledWith({
+      title: 'Discard changes',
+      message: 'You have unsaved changes. Leave without saving?',
+      confirmText: 'Leave',
+    });
     expect(wrapper.find('#editPanel').isVisible()).toBe(false); // confirmed → leaves
     expect(wrapper.find('#userListView').isVisible()).toBe(true);
 
     // re-open, dirty again, but decline this time
     dialogsWindow().PBGuiDialogs!.confirm.mockResolvedValueOnce(false);
-    await wrapper.find('tr[data-user-name="bob"] [data-user-action="edit"]').trigger('click');
-    await flushPromises();
-    await wrapper.find('#editQuote').setValue('USDC');
+    await wrapper.find('[data-testid="add-user"]').trigger('click');
+    await wrapper.find('#editName').setValue('dana');
     await wrapper.find('#editPanel button.back-btn').trigger('click');
     await flushPromises();
     expect(wrapper.find('#editPanel').isVisible()).toBe(true); // stays

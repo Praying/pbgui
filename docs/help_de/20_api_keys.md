@@ -49,7 +49,7 @@ Klick auf eine User-Zeile öffnet das Formular, oder **+ Add User** verwenden. D
 
 Der Editor trennt Username und Exchange-Identitaet von den Exchange-Credentials. **Test Connection** bleibt bei den Credential-Feldern und zeigt das Ergebnis direkt dort an. Optionale Werte fuer Quote, Options und Extra bleiben im eingeklappten Bereich **Advanced (optional)**; Save und Delete stehen im Formular-Footer.
 
-**Escape** schließt ohne Speichern (mit Rückfrage bei ungespeicherten Änderungen).
+**Escape** schliesst ohne Speichern. Bei ungespeicherten Aenderungen zeigt PBGui einen zum System-Theme passenden Bestaetigungsdialog; **Cancel** setzt die Bearbeitung fort, **Leave** verwirft die Aenderungen.
 
 ### Felder im Bearbeitungsformular
 
