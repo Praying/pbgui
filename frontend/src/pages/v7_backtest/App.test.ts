@@ -994,6 +994,15 @@ describe('results panel (M-v7-10, :834-869)', () => {
     wrapper.unmount();
   });
 
+  it('exposes Vue3 batch archive export and pending archive push actions', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await nextTick();
+    expect(wrapper.find('[data-test="results-add-archive"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="results-push-archive"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
   it("a config's results-count cell opens the filtered results panel (:4983-5006)", async () => {
     fetchMock.mockImplementation((url: string) => {
       const target = String(url);
@@ -1093,8 +1102,9 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await nextTick();
     sockets[0]!.onmessage!({ data: JSON.stringify({ type: 'archive_update' }) });
     await nextTick();
-    // no fetch fires while away; the cleared cache forces a refetch on return
-    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(1);
+    // The results panel refreshes the archive list so pending Git changes can
+    // immediately control the results sidebar's Push action.
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(2);
     await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();

@@ -109,6 +109,14 @@ const resultsPinned = ref(true);
 const archivePinned = ref(true);
 const legacyPinned = ref(true);
 
+const hasPendingOwnArchiveChanges = computed(() => {
+  const ownArchive = store.archive.archives.value.find((archive) => archive?.is_own);
+  const migrationStatus = ownArchive?.migration_status;
+  if (!migrationStatus || typeof migrationStatus !== 'object') return false;
+  const gitStatus = (migrationStatus as { git?: unknown }).git;
+  return !!gitStatus && typeof gitStatus === 'object' && (gitStatus as { dirty?: unknown }).dirty === true;
+});
+
 const bannerClass = computed(() => 'conn-' + store.banner.value);
 const bannerText = computed(() =>
   store.banner.value === 'ok' ? t('v7backtest.connected') : store.banner.value === 'lost' ? t('v7backtest.connectionLost') : t('v7backtest.connecting')
@@ -504,6 +512,14 @@ onMounted(() => {
           {{ actionLabel('v7backtest.addToRun') }}
         </Button>
         <Button type="button" variant="default" class="sb-btn" data-test="results-compare" @click="store.compareResults"><PbIcon :icon="PhChartLineUp" /> {{ actionLabel('v7backtest.compare') }}</Button>
+        <Button type="button" variant="default" class="sb-btn" data-test="results-add-archive" :disabled="store.results.getSelected().length === 0 || store.resultsArchiveAdding.value" :aria-busy="store.resultsArchiveAdding.value" @click="store.addResultsToArchive">
+          <PbIcon :icon="PhArchive" />
+          {{ actionLabel('v7backtest.addToArchive') }}
+        </Button>
+        <Button v-if="hasPendingOwnArchiveChanges" type="button" variant="primary" class="sb-btn" data-test="results-push-archive" @click="store.archiveGit.push">
+          <PbIcon :icon="PhUploadSimple" />
+          {{ actionLabel('v7backtest.gitPush') }}
+        </Button>
         <Button type="button" variant="danger" class="sb-btn" data-test="results-delete" @click="resultsPanel?.deleteSelectedFlow()"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7backtest.deleteSelected') }}</Button>
       </template>
       <template #ctx-archive>

@@ -1,5 +1,9 @@
 # Unreleased
 
+## Merge origin/main - Vue3 Backtest Archive Parity
+
+- Merged the four remote release commits through v2.0.4, including the upstream release notification, VPS monitor, archive batching, restart serial, and backtest hardening changes. Adapted the new batch archive export, results-panel archive refresh, and pending-archive Git Push action to the Vue3 PBv7/PBv8 Backtest workbench while keeping the legacy page behavior in sync.
+
 ## PBv7/PBv8 Optimize - Pareto Dash Modal Fix
 
 - Restored the Pareto Dash modal frame and flexible iframe content sizing so the dashboard opens at a usable viewport size instead of rendering as a clipped, intrinsic-size popup. Added responsive bounds, modal elevation, title truncation, and a focused rendering regression check without changing the dashboard launch or session lifecycle.

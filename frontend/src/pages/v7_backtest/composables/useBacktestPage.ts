@@ -69,6 +69,9 @@ export interface BacktestPageStore {
   /** rebacktestSelected (:7864-7958) — the results ctx Backtest button. */
   startResultsRebacktest(): Promise<void>;
   addResultsToRun(): Promise<void>;
+  /** Batch-export the selected results into the configured own archive. */
+  resultsArchiveAdding: { value: boolean };
+  addResultsToArchive(): Promise<void>;
   confirmResultsRebacktest(fields: RebacktestFields): Promise<void>;
   /** compareSelected (:7778-7791) — the results ctx Compare button. */
   compareResults(): Promise<void>;
@@ -280,7 +283,10 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
   function selectPanel(panel: BacktestPanel, selectOptions?: { persist?: boolean }): void {
     view.selectPanel(panel, selectOptions);
     if (panel === 'configs') void configsStore.loadIfEmpty();
-    if (panel === 'results') results.loadIfEmpty();
+    if (panel === 'results') {
+      results.loadIfEmpty();
+      void archive.loadArchives();
+    }
     if (panel === 'archive') {
       // :1455 + :1459-1460 — lazy list load, fresh results on return
       void archive.loadIfEmpty();
@@ -440,6 +446,54 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
       replaceTopLocation(`${options.origin}/api/v7/edit_page?new=1&draft_id=${encodeURIComponent(String(draft.draft_id || ''))}`);
     } catch (error) {
       notifyError(t('v7backtest.failedWithMsg', { msg: errorMessage(error) }));
+    }
+  }
+
+  const resultsArchiveAdding = ref(false);
+
+  /**
+   * Batch-export selected results using the archive endpoint's batch
+   * operation, then refresh the archive list and its open result view.
+   */
+  async function addResultsToArchive(): Promise<void> {
+    const selectedPaths = results.getSelected();
+    if (selectedPaths.length === 0) {
+      notifyError(t('v7backtest.nothingSelected'));
+      return;
+    }
+
+    resultsArchiveAdding.value = true;
+    try {
+      toast.show(t('v7backtest.preparingArchiveExport', { n: selectedPaths.length }), 'info');
+      const settings = await requestJsonFrom(archiveGitBase, '/archives/settings');
+      const archiveName = String(settings.my_archive || '');
+      if (!archiveName) {
+        notifyError(t('v7backtest.noOwnArchive'));
+        return;
+      }
+
+      const batch = selectedPaths.map((path) => {
+        const result = results.results.value.find((entry) => entry.path === path);
+        return {
+          source_path: path,
+          backtest_version: result?.backtest_version || adapter.version,
+        };
+      });
+      await requestJsonFrom(archiveGitBase, `/archives/${encodeURIComponent(archiveName)}/add-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ results: batch }),
+      });
+
+      await archive.loadArchives();
+      if (view.state.panel === 'archive' && archive.selectedName.value === archiveName) {
+        await archive.viewArchive(archiveName);
+      }
+      toast.show(t('v7backtest.addedToArchive', { n: selectedPaths.length, name: archiveName }), 'ok');
+    } catch (error) {
+      notifyError(t('v7backtest.failedWithMsg', { msg: errorMessage(error) }));
+    } finally {
+      resultsArchiveAdding.value = false;
     }
   }
 
@@ -621,8 +675,10 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     legacy,
     resultsRebacktestOpen,
     resultsRebacktestDefaults,
+    resultsArchiveAdding,
     startResultsRebacktest,
     addResultsToRun,
+    addResultsToArchive,
     confirmResultsRebacktest,
     compareResults,
     compareQueue,
