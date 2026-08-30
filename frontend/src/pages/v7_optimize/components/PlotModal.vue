@@ -81,7 +81,7 @@ onBeforeUnmount(() => {
     <section ref="modal" class="opt-modal opt-plot-modal" :class="{ 'is-maximized': maximized }" role="dialog" aria-modal="true">
       <div v-for="direction in ['n', 's', 'w', 'e', 'nw', 'ne', 'sw', 'se']" :key="direction" class="pnr" :class="`pnr-${direction}`" :data-dir="direction" @mousedown="beginResize(direction, $event)"></div>
       <header data-test="plot-header" class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3" @mousedown="beginDrag"><h2>{{ plot.title }}</h2><div class="whitespace-nowrap! overflow-visible!"><Button variant="default" size="sm" type="button" @click="maximized = !maximized">{{ maximized ? t('common.restore') : t('common.maximize') }}</Button><Button variant="default" type="button" @click="emit('close')">{{ t('common.close') }}</Button></div></header>
-      <div class="min-h-0 flex-1 overflow-hidden p-0">
+      <div class="opt-plot-body min-h-0 flex-1 overflow-hidden p-0">
         <iframe v-if="plot.kind === 'html'" :srcdoc="plot.html" sandbox="allow-scripts allow-same-origin" :title="t('v7optimize.plot3d')"></iframe>
         <iframe v-else-if="plot.kind === 'url'" :src="plot.url" sandbox="allow-scripts allow-same-origin allow-forms" :title="t('v7optimize.pdParetoDash')"></iframe>
         <pre v-else>{{ plot.text }}</pre>
@@ -93,22 +93,68 @@ onBeforeUnmount(() => {
 <style scoped>
 /* Plot modal chrome ported from styles/optimize.css — drag-resize handles
    and maximized state are dense absolute positioning, not utilities. */
+.opt-plot-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1280px, calc(100vw - 48px));
+  height: min(780px, calc(100dvh - 48px));
+  min-width: min(480px, calc(100vw - 24px));
+  min-height: min(300px, calc(100dvh - 24px));
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-modal);
+}
+
+.opt-plot-modal > header {
+  cursor: move;
+  background: var(--bg-panel);
+}
+
+.opt-plot-modal > header h2 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opt-plot-body {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+
 .opt-plot-modal.is-maximized {
+  position: fixed;
   inset: 16px;
   width: auto;
   height: auto;
+  min-width: 0;
+  min-height: 0;
   transform: none;
 }
 
-.opt-plot-modal > :deep(.opt-modal-head) { cursor: move; }
-
-.opt-plot-body iframe { width: 100%; height: 100%; border: 0; }
+.opt-plot-body iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+}
 
 .opt-plot-body pre {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   height: 100%;
   margin: 0;
   overflow: auto;
   padding: 14px;
+  background: var(--bg-page);
+  color: var(--text-primary);
   white-space: pre-wrap;
 }
 
@@ -124,4 +170,17 @@ onBeforeUnmount(() => {
 .pnr-ne { right: -5px; top: -5px; cursor: ne-resize; }
 .pnr-sw { left: -5px; bottom: -5px; cursor: sw-resize; }
 .pnr-se { right: -5px; bottom: -5px; cursor: se-resize; }
+
+@media (max-width: 720px) {
+  .opt-plot-modal {
+    width: calc(100vw - 24px);
+    height: calc(100dvh - 24px);
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .opt-plot-modal.is-maximized {
+    inset: 12px;
+  }
+}
 </style>

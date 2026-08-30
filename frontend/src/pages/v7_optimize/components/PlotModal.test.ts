@@ -14,4 +14,15 @@ describe('PlotModal', () => {
       expect(wrapper.find(`[data-dir="${direction}"]`).exists()).toBe(true);
     }
   });
+
+  it('keeps embedded plots inside a full-size modal content frame', () => {
+    const wrapper = mount(PlotModal, {
+      props: { plot: { open: true, kind: 'url', title: 'Pareto Dash', html: '', url: '/dash/session', text: '', sessionId: 'session-1' } },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    expect(wrapper.find('.opt-plot-modal').classes()).toContain('opt-plot-modal');
+    expect(wrapper.find('.opt-plot-body').exists()).toBe(true);
+    expect(wrapper.find('.opt-plot-body iframe').attributes('src')).toBe('/dash/session');
+  });
 });

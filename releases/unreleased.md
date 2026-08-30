@@ -1,5 +1,9 @@
 # Unreleased
 
+## PBv7/PBv8 Optimize - Pareto Dash Modal Fix
+
+- Restored the Pareto Dash modal frame and flexible iframe content sizing so the dashboard opens at a usable viewport size instead of rendering as a clipped, intrinsic-size popup. Added responsive bounds, modal elevation, title truncation, and a focused rendering regression check without changing the dashboard launch or session lifecycle.
+
 ## PBv8 Optimize - Configuration Editor UI Refresh
 
 - Unified the Optimize connection banner with the shared connection notice so the persistent Connected state uses the same indicator, semantic colors, and transition behavior as other workbenches.
