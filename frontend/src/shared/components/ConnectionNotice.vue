@@ -7,10 +7,14 @@ interface ConnectionNoticeProps {
   state: ConnectionState;
   waitingText: string;
   lostText: string;
+  okText?: string;
+  showOk?: boolean;
   waitingDelayMs?: number;
 }
 
 const props = withDefaults(defineProps<ConnectionNoticeProps>(), {
+  okText: 'Connected',
+  showOk: false,
   waitingDelayMs: 600,
 });
 
@@ -32,7 +36,7 @@ watch(
       return;
     }
     if (state === 'ok') {
-      visible.value = false;
+      visible.value = props.showOk;
       return;
     }
     visible.value = false;
@@ -59,7 +63,7 @@ onBeforeUnmount(clearWaitingTimer);
       :aria-live="props.state === 'lost' ? 'assertive' : 'polite'"
     >
       <span class="pbgui-connection-notice__indicator" aria-hidden="true" />
-      <span>{{ props.state === 'lost' ? props.lostText : props.waitingText }}</span>
+      <span>{{ props.state === 'lost' ? props.lostText : props.state === 'ok' ? props.okText : props.waitingText }}</span>
     </section>
   </Transition>
 </template>
@@ -86,6 +90,12 @@ onBeforeUnmount(clearWaitingTimer);
   color: var(--danger-soft);
 }
 
+.pbgui-connection-notice--ok {
+  border-color: rgb(var(--success-rgb) / 0.2);
+  background: color-mix(in srgb, var(--surface-panel) 92%, var(--success) 8%);
+  color: var(--success-soft);
+}
+
 .pbgui-connection-notice__indicator {
   width: 7px;
   height: 7px;
@@ -98,6 +108,11 @@ onBeforeUnmount(clearWaitingTimer);
 .pbgui-connection-notice--lost .pbgui-connection-notice__indicator {
   background: var(--danger);
   box-shadow: 0 0 0 3px rgb(var(--danger-rgb) / 0.12);
+}
+
+.pbgui-connection-notice--ok .pbgui-connection-notice__indicator {
+  background: var(--success);
+  box-shadow: 0 0 0 3px rgb(var(--success-rgb) / 0.1);
 }
 
 .connection-notice-enter-active,

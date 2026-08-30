@@ -1,5 +1,10 @@
 # Unreleased
 
+## PBv8 Optimize - Configuration Editor UI Refresh
+
+- Unified the Optimize connection banner with the shared connection notice so the persistent Connected state uses the same indicator, semantic colors, and transition behavior as other workbenches.
+- Reorganized the new/edit configuration dialog into a clearer responsive layout with a stronger header, labeled section surfaces, grouped data and market controls, improved tab navigation, and stable mobile-friendly footer actions without changing configuration behavior or save flows.
+
 ## PBv7/PBv8 Backtest - Unified Row Actions
 
 - Unified configuration, result, and queue row actions across the shared PBv7/PBv8 Backtest workbench with consistent compact controls, spacing, borders, focus treatment, semantic tones, and pressed-state accessibility while preserving every existing action and workflow.

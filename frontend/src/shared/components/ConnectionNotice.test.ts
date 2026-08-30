@@ -59,4 +59,19 @@ describe('ConnectionNotice', () => {
     await wrapper.setProps({ state: 'ok' });
     expect(wrapper.find('#conn-banner').exists()).toBe(false);
   });
+
+  it('can keep a successful connection visible for workbench status banners', () => {
+    const wrapper = mount(ConnectionNotice, {
+      props: {
+        state: 'ok',
+        waitingText: 'Connecting…',
+        lostText: 'Connection lost — reconnecting…',
+        okText: 'Connected',
+        showOk: true,
+      },
+    });
+
+    expect(wrapper.get('#conn-banner').text()).toBe('Connected');
+    expect(wrapper.get('#conn-banner').classes()).toContain('pbgui-connection-notice--ok');
+  });
 });

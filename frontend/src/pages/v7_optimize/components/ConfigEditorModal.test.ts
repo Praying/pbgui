@@ -19,6 +19,9 @@ describe('ConfigEditorModal', () => {
     });
 
     expect(wrapper.find('[data-tab="general"]').exists()).toBe(true);
+    expect(wrapper.find('.opt-editor-header__icon').exists()).toBe(true);
+    expect(wrapper.findAll('.opt-editor-section')).toHaveLength(4);
+    expect(wrapper.find('.opt-editor-footer').exists()).toBe(true);
     expect(wrapper.find('[data-tab="bounds"]').exists()).toBe(true);
     await wrapper.find('[data-tab="bounds"]').trigger('click');
     expect(wrapper.text()).toContain('long_n_positions');

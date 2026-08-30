@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhPlus, PhX } from '@phosphor-icons/vue';
+import { PhGear, PhPlus, PhX } from '@phosphor-icons/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -562,42 +562,71 @@ function preflight(): void {
 </script>
 
 <template>
-  <div v-if="open && local" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop">
-    <section class="flex w-[min(1100px,calc(100vw-30px))] max-h-[min(85vh,820px)] max-h-[min(85dvh,820px)] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)]" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
-      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3">
-        <div class="flex items-center gap-[9px]"><h2 id="opt-editor-title">{{ t('v7optimize.editOptimize') }}</h2><span class="rounded-full whitespace-nowrap border border-accent/35 bg-accent/12 px-2 py-0.5 text-xs font-semibold tracking-[0.04em] text-accent">{{ version.toUpperCase() }}</span></div>
-        <div class="whitespace-nowrap! overflow-visible!"><Button type="button" variant="default" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button></div>
+  <div v-if="open && local" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop p-4 max-[600px]:p-0">
+    <section class="opt-editor-modal flex w-[min(1120px,100%)] max-h-[min(88vh,900px)] max-h-[min(88dvh,900px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)]" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
+      <header class="opt-editor-header flex shrink-0 items-center justify-between gap-4 border-b border-border-default px-5 py-4 max-[600px]:px-4">
+        <div class="flex min-w-0 items-center gap-3">
+          <div class="opt-editor-header__icon" aria-hidden="true"><PbIcon :icon="PhGear" :size="20" /></div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h2 id="opt-editor-title" class="m-0 truncate text-base font-semibold tracking-[0.01em]">{{ t('v7optimize.editOptimize') }}</h2>
+              <span class="opt-editor-version">{{ version.toUpperCase() }}</span>
+            </div>
+            <p class="m-0 mt-1 truncate text-xs text-secondary">{{ t('v7optimize.editorDescription') }}</p>
+          </div>
+        </div>
+        <Button type="button" variant="default" class="shrink-0" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button>
       </header>
-      <nav class="flex shrink-0 gap-1 overflow-x-auto border-b border-border-default px-3.5">
-        <!-- ui-migration: out of scope — editor tab strip (tabs excluded;
-             .opt-editor-tabs button scoped rules stay). -->
+      <nav class="opt-editor-tabs flex shrink-0 gap-1 overflow-x-auto border-b border-border-default px-5 max-[600px]:px-4" :aria-label="t('v7optimize.editorNavigation')">
         <button v-for="item in tabs" :key="item.id" type="button" :data-tab="item.id" :class="{ active: tab === item.id }" @click="tab = item.id">{{ t(item.label) }}</button>
       </nav>
-      <div class="grid min-h-0 gap-3 overflow-auto p-3.5 block overflow-auto">
-        <section v-if="tab === 'general'" class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-          <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">{{ t('v7optimize.configName') }}<Input v-model="local.name" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">start_date<Input type="date" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">end_date<Input type="date" :model-value="String(local.backtest.end_date || '')" @update:model-value="setText('backtest', 'end_date', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">starting_balance<Input type="number" :model-value="numberField('backtest', 'starting_balance', 1000)" @update:model-value="setNumber('backtest', 'starting_balance', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">candle_interval_minutes<Input type="number" :model-value="numberField('backtest', 'candle_interval_minutes', 60)" @update:model-value="setNumber('backtest', 'candle_interval_minutes', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary" data-field="btc-collateral-cap">btc_collateral_cap<Input type="number" step="any" :model-value="numberField('backtest', 'btc_collateral_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_cap', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">btc_collateral_ltv_cap<Input type="number" step="any" :model-value="numberField('backtest', 'btc_collateral_ltv_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_ltv_cap', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">hsl_signal_mode<SelectRoot :model-value="String(local.live.hsl_signal_mode || '')" @update:model-value="setText('live', 'hsl_signal_mode', String($event))"><SelectTrigger aria-label="hsl_signal_mode"><span>{{ String(local.live.hsl_signal_mode || '') }}</span></SelectTrigger><SelectContent><SelectItem v-for="mode in availableHslModes" :key="mode" :value="mode">{{ mode }}</SelectItem></SelectContent></SelectRoot></label>
-          <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary">strategy_kind<SelectRoot :model-value="String(local.live.strategy_kind || '')" @update:model-value="onStrategyKindChange(String($event))"><SelectTrigger aria-label="strategy_kind"><span>{{ String(local.live.strategy_kind || '') }}</span></SelectTrigger><SelectContent><SelectItem v-for="strategy in availableStrategies" :key="strategy" :value="strategy">{{ strategy }}</SelectItem></SelectContent></SelectRoot></label>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">ohlcv_source_dir<div class="flex items-center gap-1.5"><Input class="flex-1" :model-value="String(local.backtest.ohlcv_source_dir || '')" @update:model-value="setText('backtest', 'ohlcv_source_dir', String($event ?? ''))" /><Button type="button" variant="default" size="sm" :title="t('v7optimize.clearPath')" :aria-label="t('v7optimize.clearPath')" @click="setText('backtest', 'ohlcv_source_dir', '')"><PbIcon :icon="PhX" :size="18" /></Button><Button type="button" variant="default" size="sm" v-if="pbguiDataPath" @click="setText('backtest', 'ohlcv_source_dir', pbguiDataPath)">{{ t('v7optimize.pbguiData') }}</Button></div></label>
-          <label class="grid gap-1.5 text-xs text-secondary">market_cap<Input type="number" step="any" :model-value="numberField('pbgui', 'market_cap', 0)" @update:model-value="setNumber('pbgui', 'market_cap', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">vol_mcap<Input type="number" step="any" :model-value="numberField('pbgui', 'vol_mcap', 0)" @update:model-value="setNumber('pbgui', 'vol_mcap', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">minimum_coin_age_days<Input type="number" :model-value="numberField('live', 'minimum_coin_age_days', 0)" @update:model-value="setNumber('live', 'minimum_coin_age_days', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">tags<Input v-model="tagsText" /></label>
-          <label><Checkbox :model-value="booleanField('pbgui', 'only_cpt')" @update:model-value="setBoolean('pbgui', 'only_cpt', ($event === true))" /> only_cpt</label>
-          <label><Checkbox :model-value="booleanField('pbgui', 'notices_ignore')" @update:model-value="setBoolean('pbgui', 'notices_ignore', ($event === true))" /> notices_ignore</label>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">exchanges<Input v-model="exchangeText" @blur="applyExchangeText" /></label>
-          <div v-if="availableExchanges.length" class="flex flex-wrap gap-2 rounded-md border border-border-default bg-page p-2 col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2"><label v-for="exchange in availableExchanges" :key="exchange"><Checkbox :model-value="local.exchanges.includes(exchange)" @update:model-value="toggleExchange(exchange, ($event === true))" /> {{ exchange }}</label></div>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">approved_coins.long<Input v-model="approvedLongText" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">approved_coins.short<Input v-model="approvedShortText" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">ignored_coins.long<Input v-model="ignoredLongText" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">ignored_coins.short<Input v-model="ignoredShortText" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">coin_sources<Textarea v-model="coinSourcesJson" class="min-h-[120px]" /></label>
+      <div class="opt-editor-content grid min-h-0 gap-4 overflow-auto p-5 max-[600px]:gap-3 max-[600px]:p-4">
+        <section v-if="tab === 'general'" class="opt-editor-general grid gap-4">
+          <div class="opt-editor-section">
+            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorIdentitySection') }}</h3><p>{{ t('v7optimize.editorIdentityHint') }}</p></div>
+            <div class="opt-editor-fields opt-editor-fields--identity">
+              <label class="opt-editor-field opt-editor-field--wide">{{ t('v7optimize.configName') }}<Input v-model="local.name" /></label>
+              <label class="opt-editor-field">start_date<Input type="date" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" /></label>
+              <label class="opt-editor-field">end_date<Input type="date" :model-value="String(local.backtest.end_date || '')" @update:model-value="setText('backtest', 'end_date', String($event ?? ''))" /></label>
+            </div>
+          </div>
+
+          <div class="opt-editor-section">
+            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorDataSection') }}</h3><p>{{ t('v7optimize.editorDataHint') }}</p></div>
+            <div class="opt-editor-fields">
+              <label class="opt-editor-field">starting_balance<Input type="number" :model-value="numberField('backtest', 'starting_balance', 1000)" @update:model-value="setNumber('backtest', 'starting_balance', String($event ?? ''))" /></label>
+              <label class="opt-editor-field">candle_interval_minutes<Input type="number" :model-value="numberField('backtest', 'candle_interval_minutes', 60)" @update:model-value="setNumber('backtest', 'candle_interval_minutes', String($event ?? ''))" /></label>
+              <label class="opt-editor-field" data-field="btc-collateral-cap">btc_collateral_cap<Input type="number" step="any" :model-value="numberField('backtest', 'btc_collateral_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_cap', String($event ?? ''))" /></label>
+              <label class="opt-editor-field">btc_collateral_ltv_cap<Input type="number" step="any" :model-value="numberField('backtest', 'btc_collateral_ltv_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_ltv_cap', String($event ?? ''))" /></label>
+              <label class="opt-editor-field">hsl_signal_mode<SelectRoot :model-value="String(local.live.hsl_signal_mode || '')" @update:model-value="setText('live', 'hsl_signal_mode', String($event))"><SelectTrigger aria-label="hsl_signal_mode"><span>{{ String(local.live.hsl_signal_mode || '') }}</span></SelectTrigger><SelectContent><SelectItem v-for="mode in availableHslModes" :key="mode" :value="mode">{{ mode }}</SelectItem></SelectContent></SelectRoot></label>
+              <label v-if="version === 'v8'" class="opt-editor-field">strategy_kind<SelectRoot :model-value="String(local.live.strategy_kind || '')" @update:model-value="onStrategyKindChange(String($event))"><SelectTrigger aria-label="strategy_kind"><span>{{ String(local.live.strategy_kind || '') }}</span></SelectTrigger><SelectContent><SelectItem v-for="strategy in availableStrategies" :key="strategy" :value="strategy">{{ strategy }}</SelectItem></SelectContent></SelectRoot></label>
+              <label class="opt-editor-field opt-editor-field--wide">ohlcv_source_dir<div class="flex min-w-0 items-center gap-2"><Input class="min-w-0 flex-1" :model-value="String(local.backtest.ohlcv_source_dir || '')" @update:model-value="setText('backtest', 'ohlcv_source_dir', String($event ?? ''))" /><Button type="button" variant="default" size="sm" :title="t('v7optimize.clearPath')" :aria-label="t('v7optimize.clearPath')" @click="setText('backtest', 'ohlcv_source_dir', '')"><PbIcon :icon="PhX" :size="18" /></Button><Button type="button" variant="default" size="sm" v-if="pbguiDataPath" @click="setText('backtest', 'ohlcv_source_dir', pbguiDataPath)">{{ t('v7optimize.pbguiData') }}</Button></div></label>
+            </div>
+          </div>
+
+          <div class="opt-editor-section">
+            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorMarketsSection') }}</h3><p>{{ t('v7optimize.editorMarketsHint') }}</p></div>
+            <div class="opt-editor-fields">
+              <label class="opt-editor-field">market_cap<Input type="number" step="any" :model-value="numberField('pbgui', 'market_cap', 0)" @update:model-value="setNumber('pbgui', 'market_cap', String($event ?? ''))" /></label>
+              <label class="opt-editor-field">vol_mcap<Input type="number" step="any" :model-value="numberField('pbgui', 'vol_mcap', 0)" @update:model-value="setNumber('pbgui', 'vol_mcap', String($event ?? ''))" /></label>
+              <label class="opt-editor-field">minimum_coin_age_days<Input type="number" :model-value="numberField('live', 'minimum_coin_age_days', 0)" @update:model-value="setNumber('live', 'minimum_coin_age_days', String($event ?? ''))" /></label>
+              <label class="opt-editor-field opt-editor-field--wide">tags<Input v-model="tagsText" /></label>
+              <div class="opt-editor-checks"><label><Checkbox :model-value="booleanField('pbgui', 'only_cpt')" @update:model-value="setBoolean('pbgui', 'only_cpt', ($event === true))" /> only_cpt</label><label><Checkbox :model-value="booleanField('pbgui', 'notices_ignore')" @update:model-value="setBoolean('pbgui', 'notices_ignore', ($event === true))" /> notices_ignore</label></div>
+              <label class="opt-editor-field opt-editor-field--wide">exchanges<Input v-model="exchangeText" @blur="applyExchangeText" /></label>
+              <div v-if="availableExchanges.length" class="opt-editor-options opt-editor-field--wide"><label v-for="exchange in availableExchanges" :key="exchange"><Checkbox :model-value="local.exchanges.includes(exchange)" @update:model-value="toggleExchange(exchange, ($event === true))" /> {{ exchange }}</label></div>
+            </div>
+          </div>
+
+          <div class="opt-editor-section">
+            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorCoinsSection') }}</h3><p>{{ t('v7optimize.editorCoinsHint') }}</p></div>
+            <div class="opt-editor-fields">
+              <label class="opt-editor-field">approved_coins.long<Input v-model="approvedLongText" /></label>
+              <label class="opt-editor-field">approved_coins.short<Input v-model="approvedShortText" /></label>
+              <label class="opt-editor-field">ignored_coins.long<Input v-model="ignoredLongText" /></label>
+              <label class="opt-editor-field">ignored_coins.short<Input v-model="ignoredShortText" /></label>
+              <label class="opt-editor-field opt-editor-field--wide">coin_sources<Textarea v-model="coinSourcesJson" class="min-h-[120px]" /></label>
+            </div>
+          </div>
         </section>
 
         <section v-else-if="tab === 'bot-long'" class="flex min-h-0 flex-col gap-2.5">
@@ -719,7 +748,7 @@ function preflight(): void {
         <section v-else class="grid gap-2.5"><Textarea v-model="rawJson" class="opt-json min-h-[450px]" aria-label="Raw config JSON" /><Button type="button" variant="default" @click="applyRaw">{{ t('v7optimize.formatJson') }}</Button></section>
         <p v-if="displayedError" class="text-danger-soft">{{ displayedError }}</p>
       </div>
-      <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3">
+      <footer class="opt-editor-footer flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-5 py-3.5 max-[600px]:flex-wrap max-[600px]:px-4">
         <Button type="button" variant="default" @click="emit('close')">{{ t('common.cancel') }}</Button>
         <Button type="button" variant="info" data-save="config" @click="save(false)">{{ t('v7optimize.saveConfig') }}</Button>
         <Button type="button" variant="info" data-save="queue" @click="save(true)">{{ t('v7optimize.saveConfigAndQueue') }}</Button>
@@ -729,23 +758,142 @@ function preflight(): void {
 </template>
 
 <style scoped>
-/* Editor tab strip ported from styles/optimize.css — button hover/active
-   states use :not(.active) and border-bottom-color swaps. */
+/* The editor uses a quiet surface ladder so the modal reads as a workspace,
+   while the controls remain dense enough for advanced configuration work. */
+.opt-editor-header__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 1px solid rgb(var(--accent-rgb) / 0.25);
+  border-radius: 10px;
+  background: rgb(var(--accent-rgb) / 0.12);
+  color: var(--accent);
+}
+
+.opt-editor-version {
+  border: 1px solid rgb(var(--accent-rgb) / 0.28);
+  border-radius: var(--radius-full);
+  background: rgb(var(--accent-rgb) / 0.1);
+  color: var(--accent-soft);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.opt-editor-section {
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: rgb(var(--bg-panel-rgb) / 0.42);
+}
+
+.opt-editor-section__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-md);
+  padding: 14px 16px 11px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgb(var(--text-secondary-rgb) / 0.035);
+}
+
+.opt-editor-section__heading h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.opt-editor-section__heading p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.opt-editor-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px 12px;
+  padding: 16px;
+}
+
+.opt-editor-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  line-height: 1.25;
+}
+
+.opt-editor-field--wide { grid-column: span 2; }
+
+.opt-editor-checks {
+  display: flex;
+  min-height: var(--control-height-md);
+  align-items: center;
+  gap: 16px;
+  grid-column: span 2;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+}
+
+.opt-editor-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  min-height: var(--control-height-md);
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-deep);
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+}
+
 .opt-editor-tabs button {
+  min-height: 40px;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--text-secondary);
-  padding: 9px 10px;
-  white-space: nowrap;
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  font-size: var(--fs-xs);
+  padding: 0 10px;
+  white-space: nowrap;
+  transition: color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
 }
 
-.opt-editor-tabs button:hover { color: var(--text-primary); }
+.opt-editor-tabs button:hover { background: rgb(var(--accent-rgb) / 0.06); color: var(--text-primary); }
 
 .opt-editor-tabs button.active {
   border-bottom-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-soft);
+  font-weight: 700;
 }
+
+.opt-editor-footer :deep(button) { min-width: 112px; }
+
+@media (max-width: 900px) {
+  .opt-editor-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+  .opt-editor-fields { grid-template-columns: minmax(0, 1fr); padding: 13px; }
+  .opt-editor-field--wide,
+  .opt-editor-checks { grid-column: auto; }
+  .opt-editor-checks { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .opt-editor-section__heading { padding: 12px 13px 10px; }
+  .opt-editor-footer :deep(button) { flex: 1 1 auto; min-width: 0; }
+}
+
+/* Editor tab strip ported from styles/optimize.css — button hover/active
+   states use :not(.active) and border-bottom-color swaps. */
 </style>

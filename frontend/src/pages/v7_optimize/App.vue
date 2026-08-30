@@ -25,6 +25,7 @@ import {
 import { useI18n } from 'vue-i18n';
 import { useAiPageAction, useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
+import ConnectionNotice from '@/shared/components/ConnectionNotice.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
@@ -479,7 +480,13 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="opt-conn-banner" class="h-[30px] px-4 py-1.5 text-center text-xs font-semibold" :class="page.connected.value ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning-soft'">{{ page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue') }}</div>
+    <ConnectionNotice
+      :state="page.connected.value ? 'ok' : 'waiting'"
+      :waiting-text="t('v7optimize.connectingToQueue')"
+      :lost-text="t('v7optimize.connectionLost')"
+      :ok-text="t('v7optimize.connected')"
+      show-ok
+    />
     <div id="page-body" class="flex h-[calc(100dvh-82px)] flex-col overflow-hidden">
     <div class="workbench-page-content min-h-0 min-w-0 flex-1 overflow-hidden bg-page p-[var(--page-padding)]">
     <!-- Converged navigation: panel switching lives in the workbench rail

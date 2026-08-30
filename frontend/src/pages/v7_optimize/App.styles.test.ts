@@ -15,6 +15,7 @@ const importConfigModalSource = readFileSync(
   'utf8',
 );
 const ohlcvPreflightModalSource = readFileSync(resolve(pageRoot, 'components/OhlcvPreflightModal.vue'), 'utf8');
+const connectionNoticeSource = readFileSync(resolve(pageRoot, '../../shared/components/ConnectionNotice.vue'), 'utf8');
 const optimizeSources = [
   appSource,
   queuePanelSource,
@@ -22,6 +23,7 @@ const optimizeSources = [
   configEditorModalSource,
   importConfigModalSource,
   ohlcvPreflightModalSource,
+  connectionNoticeSource,
 ].join('\n');
 
 function countOccurrences(source: string, value: string): number {
@@ -34,11 +36,13 @@ describe('Optimize page warning style contracts', () => {
   });
 
   it('uses the shared Warning token for every migrated warning surface', () => {
-    expect(appSource).toContain("'bg-warning/20 text-warning-soft'");
+    expect(appSource).toContain('<ConnectionNotice');
+    expect(appSource).toContain('show-ok');
     expect(appSource).toContain('border-l-warning');
     expect(queuePanelSource).toContain('bg-warning/15 text-warning-soft');
     expect(editorSource).toContain('color: var(--warning-soft);');
     expect(ohlcvPreflightModalSource).toContain('bg-warning/15 text-warning-soft');
+    expect(connectionNoticeSource).toContain('pbgui-connection-notice--ok');
   });
 
   it('uses shared modal and elevated effects in the reviewed Optimize files', () => {
