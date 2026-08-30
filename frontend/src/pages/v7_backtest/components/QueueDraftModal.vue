@@ -53,7 +53,15 @@ watch(
     if (!props.open) return;
     const first = object(object(props.items[0]).config);
     const bt = object(first.backtest);
-    const defExchanges = Array.isArray(bt.exchanges) ? (bt.exchanges as string[]).map(String) : [];
+    const defExchanges: string[] = [];
+    for (const item of props.items) {
+      const itemBacktest = object(object(item).config).backtest;
+      const itemExchanges = object(itemBacktest).exchanges;
+      if (!Array.isArray(itemExchanges)) continue;
+      for (const exchange of itemExchanges.map(String)) {
+        if (ALL_EXCHANGES.includes(exchange) && !defExchanges.includes(exchange)) defExchanges.push(exchange);
+      }
+    }
     startDate.value = String(bt.start_date || '2020-01-01');
     endDate.value = new Date().toISOString().slice(0, 10);
     balance.value = String(bt.starting_balance || 1000);
@@ -106,7 +114,16 @@ async function submit(): Promise<void> {
     bt.start_date = startDate.value;
     bt.end_date = endDate.value;
     bt.starting_balance = parseFloat(balance.value) || 1000;
-    for (const exchange of exchanges.value) {
+    const scenarios = Array.isArray(bt.scenarios) ? bt.scenarios : [];
+    const scenarioExchangeValues = object(scenarios[0]).exchanges;
+    const scenarioExchanges =
+      bt.suite_enabled === true && scenarios.length === 1 && Array.isArray(scenarioExchangeValues)
+        ? scenarioExchangeValues
+            .map((exchange: unknown) => String(exchange))
+            .filter((exchange: string, index: number, values: string[]) => values.indexOf(exchange) === index)
+        : exchanges.value;
+    const itemExchanges = scenarioExchanges.filter((exchange) => exchanges.value.includes(exchange));
+    for (const exchange of itemExchanges) {
       const perExchange = JSON.parse(JSON.stringify(cfg)) as Record<string, unknown>;
       const perBt = object(perExchange.backtest);
       perBt.exchanges = [exchange];
@@ -120,6 +137,10 @@ async function submit(): Promise<void> {
         override_configs: object(item).override_configs ?? {},
       });
     }
+  }
+  if (bodies.length === 0) {
+    emit('error', t('v7backtest.noMatchingScenarioExchange'));
+    return;
   }
   try {
     await Promise.all(bodies.map((body) => props.postQueue(body)));

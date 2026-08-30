@@ -72,6 +72,13 @@ export const WORKBENCH_NAVIGATION = [
         groupId: 'system',
       },
       {
+        pageKey: 'system_profit_sweep',
+        labelKey: 'nav.page.system_profit_sweep',
+        href: '/api/profit-sweep/main_page',
+        icon: PhWallet,
+        groupId: 'system',
+      },
+      {
         pageKey: 'system_cluster',
         labelKey: 'nav.page.system_cluster',
         href: '/api/cluster/main_page',

@@ -237,7 +237,7 @@ async function migratePareto(row: ParetoItem): Promise<void> {
 async function backtestSelectedParetos(): Promise<void> {
   const items = page.paretos.value
     .filter((row) => page.selectedParetos.value.has(row.path))
-    .map((row) => ({ path: row.path, name: row.name }));
+    .map((row) => ({ path: row.path, name: row.name, scenario: page.paretoMeta.value.selected_scenario || 'Aggregated' }));
   if (!items.length) return notify(t('v7optimize.noParetosSelected'));
   window.location.href = await actions.backtestParetos(items);
 }

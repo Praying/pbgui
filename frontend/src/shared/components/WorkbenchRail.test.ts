@@ -14,6 +14,7 @@ const EXPECTED_NAVIGATION_ROUTES = {
   info_coin_data: '/api/coin-data/main_page',
   info_market_data_fastapi: '/api/market-data/main_page',
   system_api_keys: '/api/api-keys/main_page',
+  system_profit_sweep: '/api/profit-sweep/main_page',
   system_cluster: '/api/cluster/main_page',
   system_db_tools: '/api/db-tools/main_page',
   system_logging: '/api/logging/main_page',

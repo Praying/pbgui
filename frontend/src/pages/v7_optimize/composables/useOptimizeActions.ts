@@ -208,7 +208,22 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
     return `${adapter.backtestApiBase}/main_page?${search.toString()}`;
   }
 
-  async function backtestParetos(items: { path: string; name?: string }[]): Promise<string> {
+  function applyParetoScenario(config: Record<string, unknown>, scenarioLabel = 'Aggregated'): Record<string, unknown> {
+    const prepared = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
+    if (!scenarioLabel || scenarioLabel === 'Aggregated') return prepared;
+    const backtest = isObject(prepared.backtest) ? prepared.backtest : {};
+    const scenarios = Array.isArray(backtest.scenarios) ? backtest.scenarios.filter(isObject) : [];
+    const scenario = scenarios.find((item) => String(item.label || '') === scenarioLabel);
+    if (!scenario) throw new Error(`Selected Pareto scenario is no longer available: ${scenarioLabel}`);
+    const exchanges = Array.isArray(scenario.exchanges)
+      ? scenario.exchanges.map(String).filter((exchange, index, values) => values.indexOf(exchange) === index)
+      : [];
+    if (!exchanges.length) throw new Error(`Selected Pareto scenario has no exchanges: ${scenarioLabel}`);
+    prepared.backtest = { ...backtest, exchanges, scenarios: [scenario] };
+    return prepared;
+  }
+
+  async function backtestParetos(items: { path: string; name?: string; scenario?: string }[]): Promise<string> {
     if (!items.length) throw new Error('No paretos selected');
     const payloads = await Promise.all(items.map(async (item) => ({
       item,
@@ -219,7 +234,7 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
       const draft = await request<{ draft_id?: string }>(`${adapter.backtestApiBase}/optimize-draft`, {
         method: 'POST',
         body: JSON.stringify({
-          config: extractConfigSections(entry.payload.config),
+          config: extractConfigSections(applyParetoScenario(entry.payload.config, entry.item.scenario)),
           override_configs: objectValue(entry.payload.override_configs),
         }),
       });
@@ -233,7 +248,7 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
       body: JSON.stringify({
         items: payloads.map(({ item, payload }) => ({
           name: String(item.name || 'pareto_backtest'),
-          config: extractConfigSections(payload.config),
+          config: extractConfigSections(applyParetoScenario(payload.config, item.scenario)),
           override_configs: objectValue(payload.override_configs),
         })),
       }),
