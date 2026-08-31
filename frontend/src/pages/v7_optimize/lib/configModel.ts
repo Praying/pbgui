@@ -429,3 +429,132 @@ export function filterOptimizeEnableOverridesForStrategy(value: unknown, strateg
     return !required || required === strategy;
   });
 }
+
+/* ── GPU (Apple MPS) backend support (legacy v7_optimize.html v2.0.5) ── */
+
+export interface GpuContractItem {
+  recognized?: boolean;
+  available?: boolean;
+  metric_set?: string;
+  metric_eligibility_known?: boolean;
+  reason_code?: string;
+  reason?: string;
+  runtime?: JsonObject;
+  exact_only_metrics?: string[];
+  effective_defaults?: JsonObject;
+}
+
+export const GPU_HALVING_DEFAULT_FRACTIONS = [0.25, 0.5, 1.0];
+
+/** Resolve the backend-capability entry for a single backend from the additive contract. */
+export function gpuContractItem(contract: unknown, backend: string): GpuContractItem | null {
+  if (!isObject(contract) || !isObject(contract.items)) return null;
+  const item = contract.items[String(backend || '').trim().toLowerCase()];
+  return isObject(item) ? (item as unknown as GpuContractItem) : null;
+}
+
+/** GPU defaults from the optimize template metadata (optimize_defaults.gpu). */
+export function gpuDefaults(optimizeDefaults: unknown): JsonObject {
+  if (!isObject(optimizeDefaults)) return {};
+  return isObject(optimizeDefaults.gpu) ? cloneValue(optimizeDefaults.gpu) : {};
+}
+
+/** Proxy-metric set advertised for the GPU backend, or null when unknown. */
+export function gpuMetricSet(contract: unknown): string[] | null {
+  if (!isObject(contract) || !isObject(contract.metric_sets)) return null;
+  const set = contract.metric_sets.gpu_proxy;
+  return Array.isArray(set) ? set.map(String) : null;
+}
+
+/** Whether a base metric can be evaluated by the currently selected backend. */
+export function metricAvailableForBackend(baseMetric: unknown, backend: unknown, contract: unknown): boolean {
+  if (String(backend || '').trim().toLowerCase() !== 'gpu') return true;
+  const supported = gpuMetricSet(contract);
+  if (!supported) return true;
+  const base = String(baseMetric ?? '').trim();
+  return supported.includes(base) || supported.includes(`${base}_usd`) || supported.includes(`${base}_btc`);
+}
+
+export function gpuUnavailableMessage(capability: GpuContractItem | null): string {
+  if (!capability || capability.available !== false) return '';
+  const reason = String(capability.reason || 'This backend is unavailable on the current host.');
+  return `${reason} Editor preview and Save remain available; Queue and Start are blocked on this host.`;
+}
+
+export function gpuAutoPlaceholder(capability: GpuContractItem | null, key: string): string {
+  const defaults = capability && isObject(capability.effective_defaults) ? capability.effective_defaults : {};
+  const value = defaults[key];
+  return value == null ? 'auto' : `auto (${Number(value).toLocaleString()})`;
+}
+
+/** Parse successive-halving history fractions; invalid input falls back to defaults (or throws when strict). */
+export function parseGpuFractions(value: unknown, strict = false): number[] {
+  const raw = Array.isArray(value) ? value.map(String).join(', ') : String(value ?? '');
+  const values = raw.trim() ? raw.trim().split(',').map((item) => Number(item.trim())) : [];
+  const valid = values.length > 0
+    && values.every((item, index) => Number.isFinite(item) && item > 0 && item <= 1 && (index === 0 || item > values[index - 1]!))
+    && Math.abs(values[values.length - 1]! - 1) <= 1e-12;
+  if (!valid && strict) throw new Error('GPU successive-halving fractions must increase within (0, 1] and end at 1.0.');
+  return valid ? values : [...GPU_HALVING_DEFAULT_FRACTIONS];
+}
+
+/**
+ * Normalize and validate the GPU settings object the editor binds to.
+ * Mirrors collectOptimizeGpuSettings + populateOptimizeGpuSettings from the
+ * legacy editor: unsupported keys are dropped, blanks resolve to auto/null
+ * and invalid values throw when `strict` is set.
+ */
+export function normalizeGpuSettings(gpuValue: unknown, defaults: JsonObject, strict: boolean): JsonObject {
+  const gpu = isObject(gpuValue) ? cloneValue(gpuValue) : {};
+  const supports = (key: string): boolean =>
+    Object.prototype.hasOwnProperty.call(defaults, key) || Object.prototype.hasOwnProperty.call(gpu, key);
+  const effective = (key: string): unknown =>
+    Object.prototype.hasOwnProperty.call(gpu, key) ? gpu[key] : defaults[key];
+
+  const nullablePositiveInteger = (raw: unknown, label: string): number | null => {
+    if (raw == null || raw === '') return null;
+    const value = Number(raw);
+    if ((!Number.isInteger(value) || value <= 0) && strict) throw new Error(`${label} must be a positive integer or blank for auto.`);
+    return Math.max(1, Math.round(value));
+  };
+  const nonnegativeInteger = (raw: unknown, label: string): number => {
+    const value = raw == null || raw === '' ? 0 : Number(raw);
+    if ((!Number.isInteger(value) || value < 0) && strict) throw new Error(`${label} must be a non-negative integer.`);
+    return Math.max(0, Math.round(value));
+  };
+  const numberOr = (raw: unknown, fallback: number): number => {
+    const value = raw == null || raw === '' ? fallback : Number(raw);
+    return Number.isFinite(value) ? value : fallback;
+  };
+
+  if (supports('auto_lean_parallelism')) gpu.auto_lean_parallelism = effective('auto_lean_parallelism') !== false;
+  if (supports('population_size')) gpu.population_size = nullablePositiveInteger(effective('population_size'), 'GPU population_size');
+  if (supports('batch_size')) gpu.batch_size = nullablePositiveInteger(effective('batch_size'), 'GPU batch_size');
+  if (supports('max_dispatch_candidate_bars')) gpu.max_dispatch_candidate_bars = nullablePositiveInteger(effective('max_dispatch_candidate_bars'), 'GPU max_dispatch_candidate_bars');
+  if (supports('exact_workers')) gpu.exact_workers = nonnegativeInteger(effective('exact_workers'), 'GPU exact_workers');
+  if (supports('max_pending_exact')) gpu.max_pending_exact = nonnegativeInteger(effective('max_pending_exact'), 'GPU max_pending_exact');
+  if (supports('validate_per_generation')) gpu.validate_per_generation = nullablePositiveInteger(effective('validate_per_generation'), 'GPU validate_per_generation') || 8;
+  if (supports('checkpoint_interval_seconds')) gpu.checkpoint_interval_seconds = numberOr(effective('checkpoint_interval_seconds'), 5);
+  if (supports('drift_probes')) gpu.drift_probes = nonnegativeInteger(effective('drift_probes'), 'GPU drift_probes');
+  if (supports('drift_window')) gpu.drift_window = nullablePositiveInteger(effective('drift_window'), 'GPU drift_window') || 128;
+  if (supports('drift_min_samples')) gpu.drift_min_samples = nullablePositiveInteger(effective('drift_min_samples'), 'GPU drift_min_samples') || 32;
+  if (supports('drift_halt')) gpu.drift_halt = numberOr(effective('drift_halt'), 0.6);
+  if (strict && (Number(gpu.checkpoint_interval_seconds) <= 0 || Number(gpu.drift_halt) <= 0 || Number(gpu.drift_halt) > 1)) {
+    throw new Error('GPU checkpoint interval must be positive and drift_halt must be within (0, 1].');
+  }
+
+  if (supports('successive_halving')) {
+    const sourceHalving = isObject(effective('successive_halving')) ? effective('successive_halving') as JsonObject : {};
+    const halving = cloneValue(sourceHalving);
+    halving.enabled = !!halving.enabled;
+    halving.history_fractions = parseGpuFractions(halving.history_fractions, strict);
+    halving.survival_fraction = numberOr(halving.survival_fraction, 0.5);
+    halving.min_survivors = nullablePositiveInteger(halving.min_survivors, 'GPU min_survivors') || 64;
+    if (strict && (Number(halving.survival_fraction) <= 0 || Number(halving.survival_fraction) > 1)) {
+      throw new Error('GPU successive-halving survival_fraction must be within (0, 1].');
+    }
+    gpu.successive_halving = halving;
+  }
+  return gpu;
+}
+

@@ -5,9 +5,14 @@ import {
   buildEditorDraft,
   collectEditorConfig,
   flattenBounds,
+  gpuContractItem,
+  gpuDefaults,
   inflateBounds,
+  metricAvailableForBackend,
+  normalizeGpuSettings,
   normalizeParetoColumns,
   orderParetoMetrics,
+  parseGpuFractions,
   parseJsonObject,
   readStoredParetoColumns,
   validatePb8ScenarioBases,
@@ -154,3 +159,51 @@ describe('optimize config model', () => {
   });
 
 });
+
+describe('GPU backend support', () => {
+  const gpuContract = {
+    items: {
+      gpu: { available: false, reason: 'Apple MPS is unavailable in the PB8 process.', effective_defaults: { population_size: 512, batch_size: 128 } },
+      pymoo: { available: true },
+    },
+    metric_sets: { cpu: ['adg', 'gain', 'drawdown_worst'], gpu_proxy: ['adg', 'gain_usd', 'gain_btc'] },
+  };
+
+  it('resolves the backend capability entry and defaults', () => {
+    expect(gpuContractItem(gpuContract, 'gpu')?.available).toBe(false);
+    expect(gpuContractItem(gpuContract, 'pymoo')?.available).toBe(true);
+    expect(gpuContractItem(gpuContract, 'deap')).toBeNull();
+    expect(gpuDefaults({ gpu: { batch_size: 64 } })).toEqual({ batch_size: 64 });
+    expect(gpuDefaults({})).toEqual({});
+  });
+
+  it('filters metrics for the GPU backend using the proxy metric set', () => {
+    expect(metricAvailableForBackend('gain', 'gpu', gpuContract)).toBe(true);
+    expect(metricAvailableForBackend('gain_usd', 'gpu', gpuContract)).toBe(true);
+    expect(metricAvailableForBackend('drawdown_worst', 'gpu', gpuContract)).toBe(false);
+    expect(metricAvailableForBackend('drawdown_worst', 'pymoo', gpuContract)).toBe(true);
+    expect(metricAvailableForBackend('drawdown_worst', 'gpu', null)).toBe(true);
+  });
+
+  it('parses successive-halving fractions strictly and falls back on invalid input', () => {
+    expect(parseGpuFractions('0.25, 0.5, 1.0')).toEqual([0.25, 0.5, 1]);
+    expect(parseGpuFractions('0.5, 0.2, 1.0')).toEqual([0.25, 0.5, 1]);
+    expect(() => parseGpuFractions('0.5, 0.2, 1.0', true)).toThrow(/increase within \(0, 1\]/);
+  });
+
+  it('normalizes GPU settings and preserves unknown keys', () => {
+    const defaults = { population_size: 512, successive_halving: { enabled: false, survival_fraction: 0.5 } };
+    const normalized = normalizeGpuSettings({ population_size: '', drift_window: 0, unsupported: true }, defaults, false);
+    const halving = normalized.successive_halving as Record<string, unknown>;
+    expect(normalized.population_size).toBeNull();
+    expect(halving.enabled).toBe(false);
+    expect(halving.history_fractions).toEqual([0.25, 0.5, 1]);
+    expect(normalized.unsupported).toBe(true);
+  });
+
+  it('rejects invalid GPU settings in strict mode', () => {
+    expect(() => normalizeGpuSettings({ population_size: 0 }, { population_size: 512 }, true)).toThrow(/positive integer/);
+    expect(() => normalizeGpuSettings({ drift_halt: 2 }, { drift_halt: 0.6 }, true)).toThrow(/drift_halt/);
+  });
+});
+

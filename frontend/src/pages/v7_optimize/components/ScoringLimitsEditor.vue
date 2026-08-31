@@ -13,7 +13,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
-import { isObject, type JsonObject } from '../lib/configModel';
+import { isObject, metricAvailableForBackend, type JsonObject } from '../lib/configModel';
 
 type Row = JsonObject;
 type OptimizeVersion = 'v7' | 'v8';
@@ -34,6 +34,8 @@ const props = withDefaults(defineProps<{
   scenarioLabels: string[];
   version?: OptimizeVersion;
   metadata?: unknown;
+  backend?: string;
+  backendContract?: unknown;
 }>(), { version: 'v7', metadata: undefined });
 const { t } = useI18n();
 const emit = defineEmits<{ 'update:scoring': [value: unknown[]]; 'update:limits': [value: unknown[]] }>();
@@ -74,9 +76,12 @@ const meta = computed<LimitsMeta>(() => {
 });
 const hasMetadata = computed(() => meta.value.all_valid_metrics.length > 0 || Object.keys(meta.value.metrics_by_group).some((key) => (meta.value.metrics_by_group[key] || []).length > 0));
 const metricOptions = computed(() => {
-  const values = meta.value.all_valid_metrics.length ? [...meta.value.all_valid_metrics] : [...(meta.value.metrics_by_group.all || [])];
-  [...scoringRows.value, ...limitRows.value].forEach((row) => { if (row.metric != null) values.push(String(row.metric)); });
-  return [...new Set(values.map((value) => String(value).trim()).filter(Boolean))].sort();
+  const baseValues = meta.value.all_valid_metrics.length ? [...meta.value.all_valid_metrics] : [...(meta.value.metrics_by_group.all || [])];
+  const selectedValues: string[] = [];
+  [...scoringRows.value, ...limitRows.value].forEach((row) => { if (row.metric != null) selectedValues.push(String(row.metric)); });
+  const availableBase = baseValues.filter((metric) => metricAvailableForBackend(metric, props.backend, props.backendContract));
+  const merged = new Set([...availableBase, ...selectedValues].map((value) => String(value).trim()).filter(Boolean));
+  return [...merged].sort();
 });
 function rowValue(row: Row, key: string): string { return row[key] === undefined || row[key] === null ? '' : String(row[key]); }
 function canonicalGoal(value: unknown): string {

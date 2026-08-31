@@ -11,6 +11,7 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
 import ScoringLimitsEditor from './ScoringLimitsEditor.vue';
 import BotJsonEditor from './BotJsonEditor.vue';
+import GpuSettingsEditor from './GpuSettingsEditor.vue';
 import type { OptimizeVersion } from '../config';
 import {
   buildEditorDraft,
@@ -19,8 +20,11 @@ import {
   collectEditorConfig,
   filterOptimizeEnableOverridesForStrategy,
   getPath,
+  gpuContractItem,
+  gpuDefaults,
   isObject,
   migrateOptimizeBackend,
+  normalizeGpuSettings,
   parseJsonObject,
   scenarioLabels,
   setPath,
@@ -41,6 +45,7 @@ const props = defineProps<{
   botParams?: string[];
   hslModes?: string[];
   backendOptions?: string[];
+  backendContract?: unknown;
   optimizeDefaults?: Record<string, unknown>;
   pymooAlgorithmOptions?: string[];
   pymooRefDirMethodOptions?: string[];
@@ -138,6 +143,10 @@ function load(source: OptimizeEditorDraft | null): void {
   tab.value = 'general';
   if (!local.value) return;
   local.value.optimize.backend = inferOptimizeBackend(local.value.optimize);
+  if (local.value.optimize.backend === 'gpu' && props.version === 'v8') {
+    const existingGpu = isObject(local.value.optimize.gpu) ? local.value.optimize.gpu : {};
+    local.value.optimize.gpu = { ...gpuDefaults(props.optimizeDefaults), ...existingGpu };
+  }
   initializeAdditionalParams();
   exchangeText.value = local.value.exchanges.join(', ');
   tagsText.value = csv(local.value.pbgui.tags);
@@ -284,9 +293,15 @@ const availableExchanges = computed(() => {
   return [...values].filter(Boolean).sort();
 });
 const availableBackends = computed(() => {
-  const selected = String(local.value?.optimize.backend || '');
-  const values = new Set([...(props.backendOptions ?? []), selected, 'pymoo', 'deap']);
-  return [...values].filter(Boolean);
+  const selected = String(local.value?.optimize.backend || '').trim().toLowerCase();
+  const values = new Set([...(props.backendOptions ?? []), selected, 'pymoo', 'deap']
+    .map((value) => String(value).trim().toLowerCase())
+    .filter(Boolean));
+  return [...values].map((value) => {
+    const capability = gpuContractItem(props.backendContract, value);
+    const unavailable = !!(capability && capability.available === false);
+    return { value, label: value + (unavailable ? ' (unavailable on this host)' : '') };
+  });
 });
 const availableStrategies = computed(() => {
   const selected = String(local.value?.live.strategy_kind || '');
@@ -316,6 +331,10 @@ const additionalOptimizeEntries = computed(() => Object.entries(local.value?.opt
 function switchOptimizeBackend(nextBackend: string): void {
   if (!local.value) return;
   local.value.optimize = migrateOptimizeBackend(local.value.optimize, nextBackend, props.optimizeDefaults);
+  if (nextBackend === 'gpu') {
+    const existingGpu = isObject(local.value.optimize.gpu) ? local.value.optimize.gpu : {};
+    local.value.optimize.gpu = { ...gpuDefaults(props.optimizeDefaults), ...existingGpu };
+  }
   pymooJson.value = json(local.value.optimize.pymoo);
 }
 function setAdditionalBoolean(key: string, value: boolean): void { if (local.value) local.value.optimize[key] = value; }
@@ -510,6 +529,9 @@ function applyTextSections(): void {
     local.value.optimize.objective_scenario = objectiveScenarioMode.value === 'named' ? objectiveScenarioName.value.trim() : null;
   }
   cleanupOptimizeBackendFields(local.value.optimize);
+  if (props.version === 'v8') {
+    local.value.optimize.gpu = normalizeGpuSettings(local.value.optimize.gpu, gpuDefaults(props.optimizeDefaults), true);
+  }
   const limitRows = Array.isArray(local.value.limits) ? local.value.limits : [];
   if (props.version === 'v8') {
     const scenarioIssues = validatePb8ScenarioBases({
@@ -652,7 +674,7 @@ function preflight(): void {
         </section>
 
         <section v-else-if="tab === 'optimizer'" class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-          <label class="grid gap-1.5 text-xs text-secondary">backend<SelectRoot :model-value="currentBackend" @update:model-value="switchOptimizeBackend(String($event))"><SelectTrigger data-field="optimizer-backend" aria-label="backend"><span>{{ currentBackend }}</span></SelectTrigger><SelectContent><SelectItem v-for="backend in availableBackends" :key="backend" :value="backend">{{ backend }}</SelectItem></SelectContent></SelectRoot></label>
+          <label class="grid gap-1.5 text-xs text-secondary">backend<SelectRoot :model-value="currentBackend" @update:model-value="switchOptimizeBackend(String($event))"><SelectTrigger data-field="optimizer-backend" aria-label="backend"><span>{{ currentBackend }}</span></SelectTrigger><SelectContent><SelectItem v-for="item in availableBackends" :key="item.value" :value="item.value">{{ item.label }}</SelectItem></SelectContent></SelectRoot></label>
           <label class="grid gap-1.5 text-xs text-secondary">iters<Input type="number" min="1" :model-value="numberField('optimize', 'iters', 100000)" @update:model-value="setNumber('optimize', 'iters', String($event ?? ''))" /></label>
           <label class="grid gap-1.5 text-xs text-secondary">n_cpus<Input type="number" min="1" :model-value="numberField('optimize', 'n_cpus', 1)" @update:model-value="setNumber('optimize', 'n_cpus', String($event ?? ''))" /></label>
           <label class="grid gap-1.5 text-xs text-secondary">pareto_max_size<Input type="number" min="1" :model-value="numberField('optimize', 'pareto_max_size', 100)" @update:model-value="setNumber('optimize', 'pareto_max_size', String($event ?? ''))" /></label>
@@ -666,6 +688,7 @@ function preflight(): void {
           <label class="grid gap-1.5 text-xs text-secondary">seed_mode<SelectRoot v-model="seedMode"><SelectTrigger aria-label="seed_mode"><span>{{ seedMode }}</span></SelectTrigger><SelectContent><SelectItem value="none">none</SelectItem><SelectItem value="self">self</SelectItem><SelectItem value="path">path</SelectItem></SelectContent></SelectRoot></label>
           <label v-if="seedMode === 'path'" class="grid gap-1.5 text-xs text-secondary col-span-3 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="seed-path">seed_path<Input v-model="seedPath" /></label>
           <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary">rng_seed<Input type="number" min="0" :model-value="numberField('optimize', 'seed', 0)" @update:model-value="setNumber('optimize', 'seed', String($event ?? ''))" /></label>
+          <GpuSettingsEditor v-if="currentBackend === 'gpu' && version === 'v8'" :gpu="(local.optimize.gpu as JsonObject) || {}" :optimize-defaults="optimizeDefaults || {}" :contract="backendContract" @update:gpu="local.optimize.gpu = $event" />
           <template v-if="currentBackend === 'pymoo'">
             <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
               <label class="grid gap-1.5 text-xs text-secondary">algorithm<SelectRoot :model-value="pymooText('algorithm', 'auto')" @update:model-value="setPymooAlgorithm(String($event))"><SelectTrigger data-field="pymoo-algorithm" aria-label="algorithm"><span>{{ pymooText('algorithm', 'auto') }}</span></SelectTrigger><SelectContent><SelectItem v-for="algorithm in availablePymooAlgorithms" :key="algorithm" :value="algorithm">{{ algorithm }}</SelectItem></SelectContent></SelectRoot></label>
@@ -720,7 +743,7 @@ function preflight(): void {
             <label class="grid gap-1.5 text-xs text-secondary">objective scenario<SelectRoot :model-value="objectiveScenarioMode" @update:model-value="setObjectiveScenario(String($event))"><SelectTrigger data-field="objective-scenario" aria-label="objective scenario"><span>{{ objectiveScenarioMode === 'aggregate' ? 'suite aggregate' : 'named scenario' }}</span></SelectTrigger><SelectContent><SelectItem value="aggregate">suite aggregate</SelectItem><SelectItem value="named">named scenario</SelectItem></SelectContent></SelectRoot></label>
             <label v-if="objectiveScenarioMode === 'named'" class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">scenario label<Input :model-value="objectiveScenarioName" @update:model-value="setObjectiveScenarioName(String($event ?? ''))" /></label>
           </div>
-          <ScoringLimitsEditor :scoring="local.scoring" :limits="local.limits" :scenario-labels="scenarioLabels(local.suite)" :version="version" :metadata="limitsMeta" @update:scoring="local.scoring = $event; scoringJson = json($event)" @update:limits="local.limits = $event; limitsJson = json($event)" />
+          <ScoringLimitsEditor :scoring="local.scoring" :limits="local.limits" :scenario-labels="scenarioLabels(local.suite)" :version="version" :metadata="limitsMeta" :backend="currentBackend" :backend-contract="backendContract" @update:scoring="local.scoring = $event; scoringJson = json($event)" @update:limits="local.limits = $event; limitsJson = json($event)" />
           <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
             <label class="grid gap-1.5 text-xs text-secondary">scoring JSON<Textarea v-model="scoringJson" class="min-h-[220px]" /></label>
             <label class="grid gap-1.5 text-xs text-secondary">limits JSON<Textarea v-model="limitsJson" class="min-h-[220px]" /></label>
