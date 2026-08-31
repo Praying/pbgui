@@ -13,6 +13,7 @@ binance_markets.json
 todo.txt
 pbgui.log
 api_server.log
+nohup.out
 PBRun_test.py
 pbgui.code-workspace
 *.pyc
@@ -49,6 +50,7 @@ backup/
 .gitnexus/
 .claude/
 .opencode/
+.cursor/
 CLAUDE.md
 
 # Vue 3 frontend build tooling
