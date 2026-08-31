@@ -3,7 +3,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, wa
 import { PhSidebarSimple, PhSparkle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import type { NavigationGroup, NavigationItem, PageSection } from '@/shared/navigation';
-import { markAiUserInteraction, openAiDrawer, useAiDrawerAvailable } from '@/shared/ai/drawer';
+import { markAiUserInteraction, useAiDrawerAvailable } from '@/shared/ai/drawer';
+import { toggleAiDrawer, useAiDrawer } from '@/shared/ai/useAiDrawer';
 import IconButton from './IconButton.vue';
 import PbIcon from './PbIcon.vue';
 
@@ -27,15 +28,15 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
-/* AI assistant drawer: same lazy-load contract as the legacy topnav —
-   js/ai_drawer.js (+css) is fetched on the first open and only shown for
-   token-authenticated sessions. A real user click also cancels the
-   preference-based auto-open (legacy isTrusted gate). */
+/* AI assistant drawer: Vue pages mount it in AppShell and only show it for
+   token-authenticated sessions. Legacy pages keep their own lazy loader. A
+   real user click also cancels preference-based auto-open. */
 const { available: aiAvailable } = useAiDrawerAvailable();
+const { isOpen: aiDrawerOpen } = useAiDrawer();
 
 function onAiButtonClick(): void {
   markAiUserInteraction();
-  openAiDrawer();
+  toggleAiDrawer();
 }
 
 const railEl = useTemplateRef<HTMLElement>('rail');
@@ -333,7 +334,7 @@ onBeforeUnmount(() => {
         class="workbench-rail__ai-btn"
         :title="t('nav.open_ai_assistant')"
         :aria-label="t('nav.open_ai_assistant')"
-        aria-expanded="false"
+        :aria-expanded="aiDrawerOpen ? 'true' : 'false'"
         aria-controls="pbgui-ai-drawer"
         @click="onAiButtonClick"
       >

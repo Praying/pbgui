@@ -12,8 +12,8 @@ CSS = (ROOT / "frontend" / "css" / "ai_drawer.css").read_text(encoding="utf-8")
 def test_nav_lazy_loads_the_versioned_global_ai_drawer() -> None:
     """Every authenticated top-level page should receive one isolated drawer loader."""
     assert 'id="pbgui-ai-btn"' in NAV
-    assert "/app/js/ai_drawer.js?v=33" in NAV
-    assert "/app/css/ai_drawer.css?v=12" in NAV
+    assert "/app/js/ai_drawer.js?v=31" in NAV
+    assert "/app/css/ai_drawer.css?v=13" in NAV
     assert "registerPageContext" in NAV
     assert "collectAIContext" in NAV
 
@@ -127,11 +127,11 @@ def test_drawer_renders_untrusted_values_as_text_and_has_explicit_close() -> Non
     assert "window.confirm" not in DRAWER
     assert "window.alert" not in DRAWER
     assert "https://" not in DRAWER
-    assert "position:fixed" in CSS
-    assert "transform:translateX(100%)" in CSS
-    assert "@media(max-width:760px)" in CSS
+    assert "position: fixed" in CSS
+    assert "transform: translateX(100%)" in CSS
+    assert "@media (max-width: 760px)" in CSS
     assert "pai-resize" in CSS
-    assert "cursor:ew-resize" in CSS
-    assert "width:16px" in CSS
-    assert "touch-action:none" in CSS
+    assert "cursor: ew-resize" in CSS
+    assert "width: 16px" in CSS
+    assert "touch-action: none" in CSS
     assert ".pai-proposal" in CSS

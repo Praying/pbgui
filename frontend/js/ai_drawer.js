@@ -25,6 +25,110 @@
     contextSignature: ''
   };
   var root;
+  var DRAWER_TRANSLATIONS = {
+    en: {
+      'ai.drawer.requestFailed': 'AI request failed',
+      'ai.drawer.resize': 'Resize AI drawer',
+      'ai.drawer.history': 'History',
+      'ai.drawer.title': 'PBGui AI',
+      'ai.drawer.full': 'Full',
+      'ai.drawer.fullTitle': 'Open full AI Chat',
+      'ai.drawer.close': 'Collapse AI assistant',
+      'ai.drawer.health': 'Health',
+      'ai.drawer.healthTitle': 'Refresh free-model availability',
+      'ai.drawer.includeContext': 'Include page context',
+      'ai.drawer.placeholder': 'Ask about this page...',
+      'ai.drawer.section': 'Section: {section}',
+      'ai.drawer.entity': '{kind}: {name}',
+      'ai.drawer.evidence': '{title}: {count} lines',
+      'ai.drawer.visibleEvidence': 'Visible evidence',
+      'ai.drawer.field': 'Field: {field}',
+      'ai.drawer.currentPage': 'Current page',
+      'ai.drawer.empty': 'Ask about the current PBGui page, selected resource, or installed Passivbot source.',
+      'ai.drawer.loadingModels': 'Loading models...',
+      'ai.drawer.modelsUnavailable': 'Models unavailable',
+      'ai.drawer.value': 'Value',
+      'ai.drawer.notSet': 'Not set',
+      'ai.drawer.none': 'None',
+      'ai.drawer.added': 'Added',
+      'ai.drawer.removed': 'Removed',
+      'ai.drawer.changed': 'Changed',
+      'ai.drawer.before': 'Before',
+      'ai.drawer.after': 'After',
+      'ai.drawer.noDifferences': 'No field-level differences were returned.',
+      'ai.drawer.reviewTitle': 'Review proposed changes',
+      'ai.drawer.closeReview': 'Close proposal review',
+      'ai.drawer.analysisResult': 'Python analysis {status} (exit {code}).\n\n{output}',
+      'ai.drawer.stderr': 'stderr:',
+      'ai.drawer.outputTruncated': 'Output was truncated by PBGui limits.',
+      'ai.drawer.approveQueueDetail': 'Start {jobs} exact reviewed PB8 optimizer queue jobs immediately. Proposal integrity and current queued status are verified before execution.',
+      'ai.drawer.approveChangesDetail': 'Apply {count} reviewed changes. {autostart}Proposal integrity is verified before execution.',
+      'ai.drawer.boundInput': 'Bound PBGui input resource:',
+      'ai.drawer.sanitizedInput': 'Sanitized JSON input:',
+      'ai.drawer.code': 'Code:',
+      'ai.drawer.inputSummary': 'Input summary:',
+      'ai.drawer.payloadDigest': 'Payload digest:',
+      'ai.drawer.actionRecordFailed': 'PBGui completed the action, but could not record it: {error}',
+      'ai.drawer.startingModel': 'Starting model...',
+      'ai.drawer.pageActionFailed': 'PBGui page action failed.',
+      'ai.drawer.rejectingProposal': 'Rejecting proposal...',
+      'ai.drawer.continuingWorkflow': 'Approved action completed. Continuing requested workflow...',
+      'ai.drawer.continuationFailed': 'Approved action completed, but the AI continuation could not start.',
+      'ai.drawer.actionCompleted': 'Approved action completed.',
+      'ai.drawer.proposalResolved': 'Proposal {status}.'
+    },
+    zh: {
+      'ai.drawer.requestFailed': 'AI 请求失败',
+      'ai.drawer.resize': '调整 AI 对话框宽度',
+      'ai.drawer.history': '历史记录',
+      'ai.drawer.title': 'PBGui AI',
+      'ai.drawer.full': '完整页面',
+      'ai.drawer.fullTitle': '打开完整 AI 对话页',
+      'ai.drawer.close': '收起 AI 助手',
+      'ai.drawer.health': '健康检查',
+      'ai.drawer.healthTitle': '刷新免费模型可用性',
+      'ai.drawer.includeContext': '包含当前页面上下文',
+      'ai.drawer.placeholder': '询问当前页面...',
+      'ai.drawer.section': '区域：{section}',
+      'ai.drawer.entity': '{kind}：{name}',
+      'ai.drawer.evidence': '{title}：{count} 行',
+      'ai.drawer.visibleEvidence': '可见证据',
+      'ai.drawer.field': '字段：{field}',
+      'ai.drawer.currentPage': '当前页面',
+      'ai.drawer.empty': '可以询问当前 PBGui 页面、选中资源或已安装的 Passivbot 源码。',
+      'ai.drawer.loadingModels': '正在加载模型...',
+      'ai.drawer.modelsUnavailable': '模型不可用',
+      'ai.drawer.value': '值',
+      'ai.drawer.notSet': '未设置',
+      'ai.drawer.none': '无',
+      'ai.drawer.added': '新增',
+      'ai.drawer.removed': '删除',
+      'ai.drawer.changed': '变更',
+      'ai.drawer.before': '变更前',
+      'ai.drawer.after': '变更后',
+      'ai.drawer.noDifferences': '未返回字段级差异。',
+      'ai.drawer.reviewTitle': '审核提案变更',
+      'ai.drawer.closeReview': '关闭提案审核',
+      'ai.drawer.analysisResult': 'Python 分析 {status}（退出码 {code}）。\n\n{output}',
+      'ai.drawer.stderr': '标准错误：',
+      'ai.drawer.outputTruncated': '输出已达到 PBGui 限制并被截断。',
+      'ai.drawer.approveQueueDetail': '立即启动 {jobs} 个已审核的 PB8 优化器队列任务。执行前会验证提案完整性和当前排队状态。',
+      'ai.drawer.approveChangesDetail': '应用 {count} 处已审核的变更。{autostart}执行前会验证提案完整性。',
+      'ai.drawer.boundInput': '绑定的 PBGui 输入资源：',
+      'ai.drawer.sanitizedInput': '脱敏 JSON 输入：',
+      'ai.drawer.code': '代码：',
+      'ai.drawer.inputSummary': '输入摘要：',
+      'ai.drawer.payloadDigest': '载荷摘要：',
+      'ai.drawer.actionRecordFailed': 'PBGui 已完成操作，但无法记录结果：{error}',
+      'ai.drawer.startingModel': '正在启动模型...',
+      'ai.drawer.pageActionFailed': 'PBGui 页面操作失败。',
+      'ai.drawer.rejectingProposal': '正在拒绝提案...',
+      'ai.drawer.continuingWorkflow': '已完成批准的操作，正在继续请求的工作流...',
+      'ai.drawer.continuationFailed': '已完成批准的操作，但 AI 继续流程无法启动。',
+      'ai.drawer.actionCompleted': '已完成批准的操作。',
+      'ai.drawer.proposalResolved': '提案状态：{status}。'
+    }
+  };
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -33,11 +137,36 @@
     return node;
   }
 
+  function interpolate(text, params) {
+    if (!params) return String(text);
+    return String(text).replace(/\{(\w+)\}/g, function (match, name) {
+      return Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match;
+    });
+  }
+
+  /* The drawer is legacy DOM, but every Vue and legacy page loads this bridge. */
+  function translate(key, fallback, params) {
+    var bridge = window.PBGuiI18n;
+    var language = bridge && bridge.lang === 'zh' ? 'zh' : 'en';
+    var localTranslation = (DRAWER_TRANSLATIONS[language] || {})[key];
+    if (localTranslation) return interpolate(localTranslation, params);
+    if (bridge && typeof bridge.t === 'function') {
+      var translated = bridge.t(key, params);
+      if (translated && translated !== key) return translated;
+    }
+    return interpolate((DRAWER_TRANSLATIONS[language] || {})[key] || fallback, params);
+  }
+
+  function localizeMessage(text) {
+    var bridge = window.PBGuiI18n;
+    return bridge && typeof bridge.serverMsg === 'function' ? bridge.serverMsg(String(text || '')) : String(text || '');
+  }
+
   async function api(path, options) {
     var response = await fetch(apiBase + path, Object.assign({ credentials: 'same-origin', cache: 'no-store' }, options || {}));
     var data = {};
     try { data = await response.json(); } catch (_) {}
-    if (!response.ok) throw new Error(data.detail || 'AI request failed');
+    if (!response.ok) throw new Error(localizeMessage(data.detail || translate('ai.drawer.requestFailed', 'AI request failed')));
     return data;
   }
 
@@ -49,57 +178,61 @@
     var resize = el('div', 'pai-resize');
     resize.setAttribute('role', 'separator');
     resize.setAttribute('aria-orientation', 'vertical');
-    resize.setAttribute('aria-label', 'Resize AI drawer');
+    resize.setAttribute('aria-label', translate('ai.drawer.resize', 'Resize AI drawer'));
     root.appendChild(resize);
     bindResize(resize);
 
     var head = el('div', 'pai-head');
-    var history = el('button', '', 'History');
+    var history = el('button', '', translate('ai.drawer.history', 'History'));
     history.type = 'button';
     history.addEventListener('click', function () {
       state.history = !state.history;
       root.querySelector('.pai-body').classList.toggle('history-open', state.history);
     });
     head.appendChild(history);
-    head.appendChild(el('div', 'pai-title', 'PBGui AI'));
-    var full = el('button', '', 'Full');
+    head.appendChild(el('div', 'pai-title', translate('ai.drawer.title', 'PBGui AI')));
+    var full = el('button', '', translate('ai.drawer.full', 'Full'));
     full.type = 'button';
-    full.title = 'Open full AI Chat';
+    full.title = translate('ai.drawer.fullTitle', 'Open full AI Chat');
     full.addEventListener('click', function () { window.location.assign(window.location.origin + '/api/ai/main_page'); });
     head.appendChild(full);
-    var remove = el('button', '', 'Delete');
+    var remove = el('button', '', translate('ai.chat.delete', 'Delete'));
     remove.type = 'button';
     remove.addEventListener('click', deleteConversation);
     head.appendChild(remove);
     var close = el('button', '', 'X');
     close.type = 'button';
-    close.setAttribute('aria-label', 'Collapse AI assistant');
+    close.setAttribute('aria-label', translate('ai.drawer.close', 'Collapse AI assistant'));
     close.addEventListener('click', closeDrawer);
     head.appendChild(close);
     root.appendChild(head);
 
     var toolbar = el('div', 'pai-toolbar');
+    var toolbarFields = el('div', 'pai-toolbar-fields');
+    var toolbarActions = el('div', 'pai-toolbar-actions');
     var provider = el('select');
     provider.id = 'pai-provider';
     provider.addEventListener('change', function () { state.selectionDirty = true; loadModels(); });
-    toolbar.appendChild(provider);
+    toolbarFields.appendChild(provider);
     var model = el('select');
     model.id = 'pai-model';
     model.addEventListener('change', function () { state.selectionDirty = true; rebuildEfforts(); });
-    toolbar.appendChild(model);
+    toolbarFields.appendChild(model);
     var effort = el('select');
     effort.id = 'pai-effort';
     effort.addEventListener('change', function () { state.selectionDirty = true; });
-    toolbar.appendChild(effort);
-    var fresh = el('button', 'pai-new', 'New');
+    toolbarFields.appendChild(effort);
+    var fresh = el('button', 'pai-new', translate('ai.chat.newChat', 'New chat'));
     fresh.type = 'button';
     fresh.addEventListener('click', newConversation);
-    toolbar.appendChild(fresh);
-    var health = el('button', '', 'Health');
+    toolbarActions.appendChild(fresh);
+    var health = el('button', '', translate('ai.drawer.health', 'Health'));
     health.type = 'button';
-    health.title = 'Refresh free-model availability';
+    health.title = translate('ai.drawer.healthTitle', 'Refresh free-model availability');
     health.addEventListener('click', refreshHealth);
-    toolbar.appendChild(health);
+    toolbarActions.appendChild(health);
+    toolbar.appendChild(toolbarFields);
+    toolbar.appendChild(toolbarActions);
     root.appendChild(toolbar);
 
     var context = el('div', 'pai-context');
@@ -109,14 +242,14 @@
     include.checked = true;
     include.id = 'pai-context-toggle';
     contextToggle.appendChild(include);
-    contextToggle.appendChild(el('span', '', 'Include page context'));
+    contextToggle.appendChild(el('span', '', translate('ai.drawer.includeContext', 'Include page context')));
     context.appendChild(contextToggle);
     context.appendChild(el('div', 'pai-context-chips'));
     root.appendChild(context);
 
     var statusRow = el('div', 'pai-status-row');
     statusRow.appendChild(el('div', 'pai-status'));
-    var retry = el('button', 'pai-retry', 'Retry');
+    var retry = el('button', 'pai-retry', translate('ai.chat.retry', 'Retry'));
     retry.type = 'button';
     retry.hidden = true;
     retry.addEventListener('click', retryTurn);
@@ -129,22 +262,22 @@
     var chat = el('div', 'pai-chat');
     chat.appendChild(el('div', 'pai-messages'));
     chat.appendChild(el('div', 'pai-proposals'));
-    var reasoning = el('details', 'pai-reasoning'); reasoning.hidden = true; reasoning.appendChild(el('summary', '', 'Reasoning summary')); reasoning.appendChild(el('pre', 'pai-reasoning-text')); chat.appendChild(reasoning);
-    var activity = el('details', 'pai-reasoning'); activity.hidden = true; activity.appendChild(el('summary', '', 'Activity')); activity.appendChild(el('pre', 'pai-activity-history')); chat.appendChild(activity);
+    var reasoning = el('details', 'pai-reasoning'); reasoning.hidden = true; reasoning.appendChild(el('summary', '', translate('ai.chat.reasoningSummary', 'Reasoning summary'))); reasoning.appendChild(el('pre', 'pai-reasoning-text')); chat.appendChild(reasoning);
+    var activity = el('details', 'pai-reasoning'); activity.hidden = true; activity.appendChild(el('summary', '', translate('ai.chat.activity', 'Activity'))); activity.appendChild(el('pre', 'pai-activity-history')); chat.appendChild(activity);
     chat.appendChild(statusRow);
     var compose = el('div', 'pai-compose');
     var prompt = document.createElement('textarea');
     prompt.maxLength = 12000;
-    prompt.placeholder = 'Ask about this page...';
+    prompt.placeholder = translate('ai.drawer.placeholder', 'Ask about this page...');
     prompt.addEventListener('keydown', function (event) {
       if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }
     });
     compose.appendChild(prompt);
-    var send = el('button', 'primary', 'Send');
+    var send = el('button', 'primary', translate('ai.chat.send', 'Send'));
     send.type = 'button';
     send.addEventListener('click', function () { sendMessage(); });
     compose.appendChild(send);
-    var stop = el('button', 'danger', 'Stop');
+    var stop = el('button', 'danger', translate('ai.chat.stop', 'Stop'));
     stop.type = 'button';
     stop.hidden = true;
     stop.addEventListener('click', stopTurn);
@@ -173,16 +306,16 @@
     context = context || {};
     var values = [];
     if (context.title || context.page_key) values.push(context.title || context.page_key);
-    if (context.section) values.push('Section: ' + context.section);
+    if (context.section) values.push(translate('ai.drawer.section', 'Section: {section}', { section: context.section }));
     (context.entities || []).slice(0, 4).forEach(function (entity) {
-      values.push(String(entity.kind || 'item') + ': ' + String(entity.name || ''));
+      values.push(translate('ai.drawer.entity', '{kind}: {name}', { kind: String(entity.kind || 'item'), name: String(entity.name || '') }));
     });
     (context.evidence || []).slice(0, 2).forEach(function (item) {
       var lineCount = String(item.content || '').split('\n').filter(Boolean).length;
-      values.push(String(item.title || 'Visible evidence') + ': ' + lineCount + ' lines');
+      values.push(translate('ai.drawer.evidence', '{title}: {count} lines', { title: String(item.title || translate('ai.drawer.visibleEvidence', 'Visible evidence')), count: lineCount }));
     });
-    if (context.focused_field) values.push('Field: ' + String(context.focused_field.label || context.focused_field.path || ''));
-    if (!values.length) values.push('Current page');
+    if (context.focused_field) values.push(translate('ai.drawer.field', 'Field: {field}', { field: String(context.focused_field.label || context.focused_field.path || '') }));
+    if (!values.length) values.push(translate('ai.drawer.currentPage', 'Current page'));
     values.forEach(function (value) { chips.appendChild(el('span', 'pai-context-chip', value)); });
   }
 
@@ -310,7 +443,7 @@
     state.modelsLoading = true;
     state.models = {};
     select.textContent = '';
-    var loading = el('option', '', 'Loading models...');
+    var loading = el('option', '', translate('ai.drawer.loadingModels', 'Loading models...'));
     loading.value = '';
     loading.disabled = true;
     loading.selected = true;
@@ -329,13 +462,14 @@
       (data.models || []).forEach(function (model) {
         state.models[model.id] = model;
         var healthStatus = model.health && model.health.status ? ' - ' + String(model.health.status).replace(/_/g, ' ') : '';
-        var option = el('option', '', model.name + (model.tools ? ' - PBGui tools' : ' - Chat only') + healthStatus);
+        var capability = model.tools ? translate('ai.chat.pbGuiTools', 'PBGui tools') : translate('ai.chat.chatOnly', 'Chat only');
+        var option = el('option', '', model.name + ' - ' + capability + healthStatus);
         option.value = model.id;
         if (model.default) option.selected = true;
         select.appendChild(option);
       });
       if (!select.options.length) {
-        var empty = el('option', '', 'No models available');
+        var empty = el('option', '', translate('ai.chat.noModels', 'No supported models are currently available.'));
         empty.value = '';
         empty.disabled = true;
         select.appendChild(empty);
@@ -348,7 +482,7 @@
       if (generation !== state.modelGeneration || provider !== root.querySelector('#pai-provider').value) return;
       state.models = {};
       select.textContent = '';
-      var unavailable = el('option', '', 'Models unavailable');
+      var unavailable = el('option', '', translate('ai.drawer.modelsUnavailable', 'Models unavailable'));
       unavailable.value = '';
       unavailable.disabled = true;
       select.appendChild(unavailable);
@@ -363,7 +497,7 @@
     var select = root.querySelector('#pai-effort');
     var current = preferred == null ? select.value : preferred;
     select.textContent = '';
-    var standard = el('option', '', 'Standard' + (model.default_effort ? ' - ' + model.default_effort : ''));
+    var standard = el('option', '', translate('ai.chat.standardEffort', 'Standard') + (model.default_effort ? ' - ' + model.default_effort : ''));
     standard.value = '';
     select.appendChild(standard);
     (model.reasoning_variants || []).forEach(function (variant) {
@@ -408,8 +542,8 @@
       button.type = 'button';
       button.appendChild(el('span', '', conversation.title || 'New chat'));
       var meta = conversation.model || '';
-      if (conversation.busy) meta += ' - working';
-      else if (conversation.last_error) meta += ' - needs attention';
+      if (conversation.busy) meta += ' - ' + translate('ai.chat.working', 'working');
+      else if (conversation.last_error) meta += ' - ' + translate('ai.chat.needsAttention', 'needs attention');
       button.appendChild(el('small', '', meta));
       button.addEventListener('click', function () {
         state.selectionDirty = false;
@@ -436,7 +570,7 @@
       setBusy(!!conversation.busy);
       var retry = root.querySelector('.pai-retry');
       retry.hidden = !conversation.last_error || !state.retryMessages[id] || conversation.busy;
-      setStatus(conversation.busy ? (conversation.activity || 'Model is working...') : (conversation.last_error || ''), !!conversation.last_error);
+      setStatus(conversation.busy ? (conversation.activity || translate('ai.chat.modelWorking', 'Model is working...')) : (conversation.last_error || ''), !!conversation.last_error);
       if (!state.selectionDirty) {
         if (root.querySelector('#pai-provider').value !== conversation.provider) {
           await rebuildProviders(conversation.provider, conversation.model);
@@ -474,7 +608,7 @@
       });
       window.dispatchEvent(event);
       if (!event.defaultPrevented) {
-        if (action.browser_error) setStatus(action.browser_error.message || 'PBGui page action failed.', true);
+        if (action.browser_error) setStatus(action.browser_error.message || translate('ai.drawer.pageActionFailed', 'PBGui page action failed.'), true);
         return;
       }
       state.uiActionIds.add(actionId);
@@ -484,7 +618,7 @@
         });
       }).catch(function (error) {
         state.uiActionIds.delete(actionId);
-        setStatus(error && error.message ? error.message : 'PBGui page action failed.', true);
+        setStatus(error && error.message ? error.message : translate('ai.drawer.pageActionFailed', 'PBGui page action failed.'), true);
       });
     });
   }
@@ -499,7 +633,7 @@
     if (existing) existing.remove();
     var row = el('div', 'pai-message assistant pai-quick-replies');
     var content = el('div', 'pai-bubble');
-    content.appendChild(el('div', 'pai-quick-question', String(payload.question || 'Choose an option:')));
+    content.appendChild(el('div', 'pai-quick-question', String(payload.question || translate('ai.chat.chooseOption', 'Choose an option:'))));
     var options = el('div', 'pai-quick-options');
     choices.forEach(function (choice) {
       var button = el('button', '', String((choice || {}).label || ''));
@@ -530,7 +664,7 @@
     var box = root.querySelector('.pai-messages');
     box.textContent = '';
     if (!messages.length) {
-      box.appendChild(el('div', 'pai-empty', 'Ask about the current PBGui page, selected resource, or installed Passivbot source.'));
+      box.appendChild(el('div', 'pai-empty', translate('ai.drawer.empty', 'Ask about the current PBGui page, selected resource, or installed Passivbot source.')));
       return;
     }
     messages.forEach(function (message, index) {
@@ -539,9 +673,9 @@
       if (message.role !== 'user') appendDetectedQuickReplies(bubble, message.content || '');
       row.appendChild(bubble);
       var actions = el('div', 'pai-message-actions');
-      var copy = el('button', '', 'Copy'); copy.type = 'button'; copy.addEventListener('click', function () { copyMessage(message.content || ''); }); actions.appendChild(copy);
+      var copy = el('button', '', translate('ai.chat.copy', 'Copy')); copy.type = 'button'; copy.addEventListener('click', function () { copyMessage(message.content || ''); }); actions.appendChild(copy);
       if (message.role === 'user') {
-        var rewind = el('button', '', 'Rewind'); rewind.type = 'button'; rewind.addEventListener('click', function () { rewindMessage(index); }); actions.appendChild(rewind);
+        var rewind = el('button', '', translate('ai.chat.rewind', 'Rewind')); rewind.type = 'button'; rewind.addEventListener('click', function () { rewindMessage(index); }); actions.appendChild(rewind);
       }
       row.appendChild(actions);
       box.appendChild(row);
@@ -590,14 +724,14 @@
   }
 
   async function copyMessage(text) {
-    try { await navigator.clipboard.writeText(String(text || '')); setStatus('Message copied.', false); }
-    catch (_) { setStatus('Clipboard access was denied by the browser.', true); }
+    try { await navigator.clipboard.writeText(String(text || '')); setStatus(translate('ai.chat.copied', 'Message copied.'), false); }
+    catch (_) { setStatus(translate('ai.chat.clipboardDenied', 'Clipboard access was denied by the browser.'), true); }
   }
 
   async function rewindMessage(messageIndex) {
     if (!state.current) return;
     var confirmed = typeof window.PBGuiConfirm === 'function'
-      ? await window.PBGuiConfirm({ title: 'Rewind AI chat', message: 'Remove this message and every response after it?', confirmText: 'Rewind' })
+      ? await window.PBGuiConfirm({ title: translate('ai.chat.rewindTitle', 'Rewind AI chat'), message: translate('ai.chat.rewindMessage', 'Remove this message and every response after it?'), confirmText: translate('ai.chat.rewind', 'Rewind') })
       : false;
     if (!confirmed) return;
     try {
@@ -606,7 +740,7 @@
       delete state.retryMessages[state.current];
       state.selectionDirty = true;
       await loadConversation(state.current);
-      setStatus('Chat rewound. Edit or resend the restored prompt.', false);
+      setStatus(translate('ai.chat.rewound', 'Chat rewound. Edit or resend the restored prompt.'), false);
     } catch (error) { setStatus(error.message, true); }
   }
 
@@ -623,40 +757,40 @@
   }
 
   function proposalActionLabel(action) {
-    if (action === 'save') return 'Save PB8 optimizer config';
-    if (action === 'save_and_queue') return 'Save PB8 config and add to queue';
-    if (action === 'queue') return 'Add PB8 config to optimizer queue';
-    if (action === 'start_optimize_queue') return 'Start PB8 optimizer queue jobs';
-    if (action === 'queue_backtests') return 'Queue PB8 Pareto backtests';
-    if (action === 'create_dashboard') return 'Create PBGui dashboard';
-    if (action === 'save_dashboard_layout') return 'Save PBGui dashboard layout';
-    if (action === 'python_analysis') return 'Run sandboxed Python analysis';
-    return 'PBGui action';
+    if (action === 'save') return translate('ai.proposal.actionSave', 'Save PB8 optimizer config');
+    if (action === 'save_and_queue') return translate('ai.proposal.actionSaveAndQueue', 'Save PB8 config and add to queue');
+    if (action === 'queue') return translate('ai.proposal.actionQueue', 'Add PB8 config to optimizer queue');
+    if (action === 'start_optimize_queue') return translate('ai.proposal.actionStartOptimizeQueue', 'Start PB8 optimizer queue jobs');
+    if (action === 'queue_backtests') return translate('ai.proposal.actionQueueBacktests', 'Queue PB8 Pareto backtests');
+    if (action === 'create_dashboard') return translate('ai.proposal.actionCreateDashboard', 'Create PBGui dashboard');
+    if (action === 'save_dashboard_layout') return translate('ai.proposal.actionSaveDashboardLayout', 'Save PBGui dashboard layout');
+    if (action === 'python_analysis') return translate('ai.proposal.actionPythonAnalysis', 'Run sandboxed Python analysis');
+    return translate('ai.proposal.actionDefault', 'PBGui action');
   }
 
   function proposalDetail(preview) {
-    if (preview.action === 'python_analysis') return String(preview.code_bytes || 0) + ' bytes of code - ' + String((preview.input_summary || {}).bytes || 0) + ' bytes of sanitized JSON input';
-    if (preview.action === 'queue_backtests') return String(preview.job_count || 0) + ' backtest jobs across ' + String((preview.exchanges || []).length) + ' exchanges' + (preview.may_start_immediately ? ' - may start immediately' : '');
-    if (preview.action === 'start_optimize_queue') return String(preview.job_count || 0) + ' exact queued PB8 optimizer jobs - starts immediately';
-    if (preview.action === 'create_dashboard') return 'Create from template ' + String(preview.template || '');
-    if (preview.action === 'save_dashboard_layout') return String((preview.layout || {}).rows || 0) + ' rows x ' + String((preview.layout || {}).columns || 0) + ' columns - ' + String(preview.changed_count || 0) + ' changes';
-    return String(preview.changed_count || 0) + ' changes' + (preview.may_start_immediately ? ' - may start immediately' : '');
+    if (preview.action === 'python_analysis') return translate('ai.proposal.detailPython', '{codeBytes} bytes of code · {inputBytes} bytes of sanitized JSON input', { codeBytes: preview.code_bytes || 0, inputBytes: (preview.input_summary || {}).bytes || 0 });
+    if (preview.action === 'queue_backtests') return translate('ai.proposal.detailBacktests', '{jobs} backtest jobs across {exchanges} exchanges', { jobs: preview.job_count || 0, exchanges: (preview.exchanges || []).length }) + (preview.may_start_immediately ? ' · ' + translate('ai.proposal.mayStart', 'may start immediately') : '');
+    if (preview.action === 'start_optimize_queue') return translate('ai.proposal.detailStartOptimizeQueue', '{jobs} exact queued PB8 optimizer jobs · starts immediately', { jobs: preview.job_count || 0 });
+    if (preview.action === 'create_dashboard') return translate('ai.proposal.detailCreateDashboard', 'Create from template {template}', { template: String(preview.template || '') });
+    if (preview.action === 'save_dashboard_layout') return translate('ai.proposal.detailSaveLayout', '{rows} rows x {columns} columns · {changes} changes', { rows: (preview.layout || {}).rows || 0, columns: (preview.layout || {}).columns || 0, changes: preview.changed_count || 0 });
+    return translate('ai.proposal.detailChangedFields', '{count} changed fields', { count: preview.changed_count || 0 }) + (preview.may_start_immediately ? ' · ' + translate('ai.proposal.mayStart', 'may start immediately') : '');
   }
 
   function proposalReviewText(proposal) {
     var preview = proposal.preview || {};
     if (preview.action === 'python_analysis') {
       var inputReview = preview.input_resource
-        ? 'Bound PBGui input resource:\n' + JSON.stringify(preview.input_resource, null, 2)
-        : 'Sanitized JSON input:\n' + JSON.stringify(preview.input_data, null, 2);
-      return 'Code:\n' + String(preview.code || '') + '\n\nInput summary:\n' + JSON.stringify(preview.input_summary || {}, null, 2) + '\n\n' + inputReview + '\n\nPayload digest:\n' + String(proposal.payload_digest || '');
+        ? translate('ai.drawer.boundInput', 'Bound PBGui input resource:') + '\n' + JSON.stringify(preview.input_resource, null, 2)
+        : translate('ai.drawer.sanitizedInput', 'Sanitized JSON input:') + '\n' + JSON.stringify(preview.input_data, null, 2);
+      return translate('ai.drawer.code', 'Code:') + '\n' + String(preview.code || '') + '\n\n' + translate('ai.drawer.inputSummary', 'Input summary:') + '\n' + JSON.stringify(preview.input_summary || {}, null, 2) + '\n\n' + inputReview + '\n\n' + translate('ai.drawer.payloadDigest', 'Payload digest:') + '\n' + String(proposal.payload_digest || '');
     }
     return JSON.stringify({ preview: preview, payload_digest: proposal.payload_digest || '' }, null, 2);
   }
 
   function diffValue(value) {
-    if (value === undefined) return 'Not set';
-    if (value === null) return 'None';
+    if (value === undefined) return translate('ai.drawer.notSet', 'Not set');
+    if (value === null) return translate('ai.drawer.none', 'None');
     if (typeof value === 'string') return value;
     try { return JSON.stringify(value, null, 2); } catch (_) { return String(value); }
   }
@@ -680,7 +814,7 @@
       var matches = part.matchAll(/\[([^\]]+)\]/g);
       Array.from(matches).forEach(function (match) { labels.push(humanizeDiffName(match[1])); });
     });
-    return { section: humanizeDiffName(section), label: labels.join(' / ') || 'Value' };
+    return { section: humanizeDiffName(section), label: labels.join(' / ') || translate('ai.drawer.value', 'Value') };
   }
 
   function changeKind(change) {
@@ -712,17 +846,17 @@
     var heading = el('div', 'pai-change-heading');
     var label = path.label + (change.item ? ' / ' + humanizeDiffName(change.item) : '');
     heading.appendChild(el('strong', 'pai-change-label', label));
-    heading.appendChild(el('span', 'pai-change-kind', kind === 'added' ? 'Added' : kind === 'removed' ? 'Removed' : 'Changed'));
+    heading.appendChild(el('span', 'pai-change-kind', kind === 'added' ? translate('ai.drawer.added', 'Added') : kind === 'removed' ? translate('ai.drawer.removed', 'Removed') : translate('ai.drawer.changed', 'Changed')));
     card.appendChild(heading);
     var values = el('div', 'pai-change-values');
     if (kind === 'changed') {
       var before = el('div', 'pai-change-side before');
-      before.appendChild(el('small', '', 'Before'));
+      before.appendChild(el('small', '', translate('ai.drawer.before', 'Before')));
       appendDiffValue(before, change.before, change.item);
       values.appendChild(before);
       values.appendChild(el('span', 'pai-change-arrow', '→'));
       var after = el('div', 'pai-change-side after');
-      after.appendChild(el('small', '', 'After'));
+      after.appendChild(el('small', '', translate('ai.drawer.after', 'After')));
       appendDiffValue(after, change.after, change.item);
       values.appendChild(after);
     } else {
@@ -748,15 +882,15 @@
       group.appendChild(list);
       diff.appendChild(group);
     });
-    if (!(preview.changes || []).length) diff.appendChild(el('div', 'pai-proposal-detail', 'No field-level differences were returned.'));
+    if (!(preview.changes || []).length) diff.appendChild(el('div', 'pai-proposal-detail', translate('ai.drawer.noDifferences', 'No field-level differences were returned.')));
     return diff;
   }
 
   function buildReviewOverlay() {
     var overlay = el('div', 'pai-review-overlay'); overlay.hidden = true;
     var dialog = el('div', 'pai-review-dialog'); dialog.setAttribute('role', 'dialog'); dialog.setAttribute('aria-modal', 'true');
-    var head = el('div', 'pai-review-head'); head.appendChild(el('strong', '', 'Review proposed changes'));
-    var close = el('button', '', 'X'); close.type = 'button'; close.setAttribute('aria-label', 'Close proposal review'); close.addEventListener('click', closeProposalReview); head.appendChild(close); dialog.appendChild(head);
+    var head = el('div', 'pai-review-head'); head.appendChild(el('strong', '', translate('ai.drawer.reviewTitle', 'Review proposed changes')));
+    var close = el('button', '', 'X'); close.type = 'button'; close.setAttribute('aria-label', translate('ai.drawer.closeReview', 'Close proposal review')); close.addEventListener('click', closeProposalReview); head.appendChild(close); dialog.appendChild(head);
     dialog.appendChild(el('div', 'pai-review-content'));
     dialog.appendChild(el('div', 'pai-review-actions'));
     overlay.appendChild(dialog); return overlay;
@@ -776,10 +910,10 @@
     if (preview.action === 'python_analysis') content.appendChild(el('pre', 'pai-review-raw', proposalReviewText(proposal)));
     else {
       content.appendChild(buildProposalDiff(preview));
-      var raw = el('details', 'pai-proposal-raw'); raw.appendChild(el('summary', '', 'Raw JSON')); raw.appendChild(el('pre', 'pai-review-raw', proposalReviewText(proposal))); content.appendChild(raw);
+      var raw = el('details', 'pai-proposal-raw'); raw.appendChild(el('summary', '', translate('ai.proposal.rawJson', 'Raw JSON'))); raw.appendChild(el('pre', 'pai-review-raw', proposalReviewText(proposal))); content.appendChild(raw);
     }
-    var reject = el('button', '', 'Reject'); reject.type = 'button'; reject.addEventListener('click', async function () { closeProposalReview(); await resolveProposal(proposal, false, card); }); actions.appendChild(reject);
-    var approve = el('button', 'primary', 'Approve'); approve.type = 'button'; approve.addEventListener('click', async function () { closeProposalReview(); await resolveProposal(proposal, true, card); }); actions.appendChild(approve);
+    var reject = el('button', '', translate('ai.proposal.reject', 'Reject')); reject.type = 'button'; reject.addEventListener('click', async function () { closeProposalReview(); await resolveProposal(proposal, false, card); }); actions.appendChild(reject);
+    var approve = el('button', 'primary', translate('ai.proposal.approve', 'Approve')); approve.type = 'button'; approve.addEventListener('click', async function () { closeProposalReview(); await resolveProposal(proposal, true, card); }); actions.appendChild(approve);
     overlay.hidden = false;
     var closeButton = overlay.querySelector('[aria-label="Close proposal review"]');
     if (closeButton) closeButton.focus();
@@ -789,7 +923,7 @@
     var output = result.output || {};
     var rendered = output.format === 'json' ? JSON.stringify(output.value, null, 2) : String(output.text || '');
     var stderr = String(result.stderr || '');
-    var text = 'Python analysis ' + String(result.analysis_status || 'completed') + ' (exit ' + String(result.exit_code) + ').\n\n' + rendered + (stderr ? '\n\nstderr:\n' + stderr : '') + ((result.stdout_truncated || result.stderr_truncated) ? '\n\nOutput was truncated by PBGui limits.' : '');
+    var text = translate('ai.drawer.analysisResult', 'Python analysis {status} (exit {code}).\n\n{output}', { status: String(result.analysis_status || 'completed'), code: String(result.exit_code), output: rendered }) + (stderr ? '\n\n' + translate('ai.drawer.stderr', 'stderr:') + '\n' + stderr : '') + ((result.stdout_truncated || result.stderr_truncated) ? '\n\n' + translate('ai.drawer.outputTruncated', 'Output was truncated by PBGui limits.') : '');
     var box = root.querySelector('.pai-messages');
     var row = el('div', 'pai-message assistant');
     row.appendChild(el('div', 'pai-bubble', text));
@@ -808,11 +942,11 @@
       main.appendChild(el('div', 'pai-proposal-detail', proposalDetail(preview)));
       card.appendChild(main);
       var actions = el('div', 'pai-proposal-actions');
-      var reject = el('button', '', 'Reject');
+      var reject = el('button', '', translate('ai.proposal.reject', 'Reject'));
       reject.type = 'button';
       reject.addEventListener('click', function () { resolveProposal(proposal, false, card); });
       actions.appendChild(reject);
-      var approve = el('button', 'primary', 'Review changes');
+      var approve = el('button', 'primary', translate('ai.proposal.reviewChanges', 'Review changes'));
       approve.type = 'button';
       approve.addEventListener('click', function () { openProposalReview(proposal, card); });
       actions.appendChild(approve);
@@ -828,21 +962,21 @@
     buttons.forEach(function (button) { button.disabled = true; });
     if (approve) {
       var approvalDetail = preview.action === 'python_analysis'
-        ? 'The reviewed code and sanitized input will run without network or host-data access. Proposal integrity is verified before execution.'
+        ? translate('ai.proposal.approvePythonDetail', 'The reviewed code and sanitized input will run without network or host-data access. Proposal integrity is verified before execution.')
         : preview.action === 'start_optimize_queue'
-          ? 'Start ' + String(preview.job_count || 0) + ' exact reviewed PB8 optimizer queue jobs immediately. Proposal integrity and current queued status are verified before execution.'
-        : 'Apply ' + String(preview.changed_count || 0) + ' reviewed changes. ' + (preview.may_start_immediately ? 'Queue autostart is enabled; this may start immediately. ' : '') + 'Proposal integrity is verified before execution.';
+          ? translate('ai.drawer.approveQueueDetail', 'Start {jobs} exact reviewed PB8 optimizer queue jobs immediately. Proposal integrity and current queued status are verified before execution.', { jobs: preview.job_count || 0 })
+        : translate('ai.drawer.approveChangesDetail', 'Apply {count} reviewed changes. {autostart}Proposal integrity is verified before execution.', { count: preview.changed_count || 0, autostart: preview.may_start_immediately ? translate('ai.proposal.autostartEnabled', 'Queue autostart is enabled; this may start immediately. ') : '' });
       var confirmed = typeof window.PBGuiConfirm === 'function' && await window.PBGuiConfirm({
-        title: 'Approve PBGui action',
+        title: translate('ai.proposal.approveTitle', 'Approve PBGui action'),
         message: proposalActionLabel(preview.action) + ' ' + String(preview.name || ''),
         detail: approvalDetail,
-        confirmText: 'Approve'
+        confirmText: translate('ai.proposal.approve', 'Approve')
       });
       if (!confirmed) { buttons.forEach(function (button) { button.disabled = false; }); return; }
     }
     if (!conversationId || conversationId !== state.current) return;
     card.hidden = true;
-    setStatus(approve ? 'Applying approved action...' : 'Rejecting proposal...', false);
+    setStatus(approve ? translate('ai.chat.applyingAction', 'Applying approved action...') : translate('ai.drawer.rejectingProposal', 'Rejecting proposal...'), false);
     try {
       var result = await api('/proposals/' + encodeURIComponent(proposal.proposal_id) + (approve ? '/approve' : '/reject'), {
         method: 'POST',
@@ -855,12 +989,12 @@
       }
       var continuationStatus = String((result.continuation || {}).status || '');
       if (continuationStatus === 'queued' || continuationStatus === 'running') {
-        setStatus('Approved action completed. Continuing requested workflow...', false);
+        setStatus(translate('ai.drawer.continuingWorkflow', 'Approved action completed. Continuing requested workflow...'), false);
         await loadConversation(conversationId);
       } else if (continuationStatus === 'not_started') {
-        setStatus('Approved action completed, but the AI continuation could not start.', true);
+        setStatus(translate('ai.drawer.continuationFailed', 'Approved action completed, but the AI continuation could not start.'), true);
       } else {
-        setStatus(result.status === 'executed' ? 'Approved action completed.' : 'Proposal ' + String(result.status || 'resolved') + '.', false);
+        setStatus(result.status === 'executed' ? translate('ai.drawer.actionCompleted', 'Approved action completed.') : translate('ai.drawer.proposalResolved', 'Proposal {status}.', { status: String(result.status || 'resolved') }), false);
       }
     } catch (error) {
       if (conversationId === state.current) {
@@ -906,7 +1040,7 @@
       : { handled: false };
     if (localResult.handled) {
       setBusy(true);
-      setStatus(localResult.message || 'PBGui action completed.', false);
+      setStatus(localResult.message || translate('ai.drawer.actionCompleted', 'PBGui action completed.'), false);
       try {
         await api('/conversations/' + encodeURIComponent(conversationId) + '/local-action', {
           method: 'POST',
@@ -918,13 +1052,13 @@
       } catch (error) {
         if (conversationId === state.current) {
           setBusy(false);
-          setStatus('PBGui completed the action, but could not record it: ' + error.message, true);
+          setStatus(translate('ai.drawer.actionRecordFailed', 'PBGui completed the action, but could not record it: {error}', { error: error.message }), true);
         }
       }
       return;
     }
     setBusy(true);
-    setStatus('Starting model...', false);
+    setStatus(translate('ai.drawer.startingModel', 'Starting model...'), false);
     try {
       await api('/conversations/' + encodeURIComponent(conversationId) + '/turns', {
         method: 'POST',
@@ -967,16 +1101,16 @@
   async function refreshHealth() {
     try {
       await api('/models/health-refresh', { method: 'POST' });
-      setStatus('Free-model health refresh queued.', false);
+      setStatus(translate('ai.chat.healthQueued', 'Free-model health refresh queued.'), false);
     } catch (error) { setStatus(error.message, true); }
   }
 
   async function deleteConversation() {
     if (!state.current) return;
     var confirmed = typeof window.PBGuiConfirm === 'function' && await window.PBGuiConfirm({
-      title: 'Delete AI chat',
-      message: 'Delete this conversation and its history?',
-      confirmText: 'Delete'
+      title: translate('ai.chat.deleteTitle', 'Delete AI chat'),
+      message: translate('ai.chat.deleteMessage', 'Delete this conversation and its history?'),
+      confirmText: translate('ai.chat.delete', 'Delete')
     });
     if (!confirmed) return;
     var conversationId = state.current;

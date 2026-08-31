@@ -25,7 +25,7 @@ function meta(conversation: ConversationSummary): string {
 </script>
 
 <template>
-  <section class="flex min-h-[180px] flex-col rounded-[10px] border border-border-default bg-panel p-3">
+  <section class="flex min-h-[180px] flex-col rounded-lg border border-border-subtle bg-panel p-3">
     <div class="mb-2 flex items-center justify-between gap-2">
       <span class="font-bold text-primary">{{ t('ai.chat.conversations') }}</span>
       <span class="text-[11px] text-secondary">{{ conversations.length }}</span>
@@ -36,7 +36,7 @@ function meta(conversation: ConversationSummary): string {
         :key="conversation.conversation_id"
         type="button"
         class="h-auto min-h-[42px] w-full flex-col items-stretch gap-0 whitespace-normal p-2"
-        :class="{ 'border-accent! bg-[rgba(96,165,250,.12)]': conversation.conversation_id === conversationId }"
+        :class="{ 'border-accent! bg-accent/14 text-accent-soft': conversation.conversation_id === conversationId }"
         @click="emit('select', conversation.conversation_id)"
       >
         <span class="block text-sm text-primary">{{ conversation.title || t('ai.chat.newChat') }}</span>

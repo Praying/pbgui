@@ -128,12 +128,12 @@ describe('WorkbenchRail', () => {
     expect(wrapper.find('.workbench-rail--temp-expanded').exists()).toBe(false);
   });
 
-  it('disables the AI chat entry until its Vue page works', () => {
+  it('keeps the AI chat entry enabled when its Vue page is available', () => {
     const aiChat = WORKBENCH_NAVIGATION.flatMap(
       (group): NavigationItem[] => [...group.items],
     ).find((item) => item.pageKey === 'info_ai_chat');
 
-    expect(aiChat?.disabled).toBe(true);
+    expect(aiChat?.disabled).toBeUndefined();
   });
 
   it('persists and emits the collapsed preference from mouse activation', async () => {

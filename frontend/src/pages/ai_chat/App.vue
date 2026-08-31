@@ -101,9 +101,9 @@ function onQuickReply(actionId: string, value: string): void {
       <span class="text-xs text-secondary">{{ store.notice.value.message }}</span>
     </template>
 
-    <div class="grid h-[calc(100dvh-112px)] grid-cols-[minmax(260px,330px)_1fr] gap-[var(--component-gap)] p-[var(--page-padding)] max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
+    <div class="grid h-[calc(100dvh-112px)] grid-cols-[minmax(260px,330px)_1fr] gap-4 bg-workspace p-[var(--page-padding)] font-sans max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
       <!-- Left pane: providers + conversations -->
-      <aside class="min-h-0 overflow-y-auto border-r border-border-default bg-[#0d1521] p-[var(--component-gap)] max-[780px]:max-h-[min(220px,35dvh)] max-[780px]:border-r-0 max-[780px]:border-b">
+      <aside class="min-h-0 overflow-y-auto rounded-lg border border-border-subtle bg-sidebar p-4 shadow-panel max-[780px]:max-h-[min(220px,35dvh)]">
         <ProviderPanel
           :chatgpt="store.chatgpt.value"
           :go="store.go.value"
@@ -129,7 +129,7 @@ function onQuickReply(actionId: string, value: string): void {
       </aside>
 
       <!-- Right pane: chat column -->
-      <div class="flex min-h-0 min-w-0 flex-col">
+      <div class="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-border-subtle bg-page shadow-panel">
         <ChatToolbar
           v-model:provider-id="store.providerId.value"
           v-model:model-id="store.modelId.value"
@@ -159,11 +159,11 @@ function onQuickReply(actionId: string, value: string): void {
 
         <ProposalList :proposals="store.visibleProposals.value" @resolve="onResolveProposal" />
 
-        <details v-if="store.reasoningSummary.value" class="mx-4 rounded-md border border-border-default bg-[#0b1320] p-2 text-xs text-[#bfdbfe]">
+        <details v-if="store.reasoningSummary.value" class="mx-4 rounded-md border border-border-subtle bg-input p-2 text-xs text-accent-soft">
           <summary class="cursor-pointer">{{ t('ai.chat.reasoningSummary') }}</summary>
           <pre class="max-h-[180px] overflow-auto whitespace-pre-wrap text-secondary">{{ store.reasoningSummary.value }}</pre>
         </details>
-        <details v-if="store.activityHistory.value" class="mx-4 rounded-md border border-border-default bg-[#0b1320] p-2 text-xs text-[#bfdbfe]">
+        <details v-if="store.activityHistory.value" class="mx-4 rounded-md border border-border-subtle bg-input p-2 text-xs text-accent-soft">
           <summary class="cursor-pointer">{{ t('ai.chat.activity') }}</summary>
           <pre class="max-h-[180px] overflow-auto whitespace-pre-wrap text-secondary">{{ store.activityHistory.value }}</pre>
         </details>

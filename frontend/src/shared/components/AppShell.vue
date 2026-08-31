@@ -7,6 +7,7 @@ import { setupAiDrawerAutoOpen } from '@/shared/ai/drawer';
 import StatusStrip from './StatusStrip.vue';
 import WorkbenchRail from './WorkbenchRail.vue';
 import WorkspaceHeader from './WorkspaceHeader.vue';
+import AiDrawer from './AiDrawer.vue';
 
 const RAIL_STORAGE_KEY = 'pbgui-workbench-rail-collapsed';
 
@@ -87,7 +88,7 @@ const railCollapsed = ref(readCollapsedPreference());
    (?pbgui_ai_action=1 continuation / saved drawer_open preference). */
 onMounted(() => {
   initAiPageMeta(props.pageKey, props.pageTitle);
-  setupAiDrawerAutoOpen();
+  setupAiDrawerAutoOpen({ allowPreferenceAutoOpen: props.pageKey !== 'info_ai_chat' });
 });
 </script>
 
@@ -143,5 +144,7 @@ onMounted(() => {
         </section>
       </main>
     </div>
+
+    <AiDrawer />
   </div>
 </template>

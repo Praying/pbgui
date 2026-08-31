@@ -61,10 +61,10 @@ function onQuickReply(actionId: string, value: string): void {
       :class="{ 'justify-end': message.role === 'user' }"
     >
       <div
-        class="max-w-[min(760px,88%)] whitespace-pre-wrap break-anywhere rounded-xl border border-border-default p-3"
+        class="max-w-[min(760px,88%)] whitespace-pre-wrap break-anywhere rounded-lg border border-border-subtle p-3 shadow-panel"
         :class="message.role === 'user'
-          ? 'border-[rgba(96,165,250,.4)] bg-[rgba(37,99,235,.2)] rounded-tr-[3px]'
-          : 'bg-panel rounded-tl-[3px]'"
+          ? 'border-accent/35 bg-accent/14 text-primary rounded-tr-sm'
+          : 'bg-panel rounded-tl-sm'"
       >{{ message.content }}
         <div v-if="message.role !== 'user' && quickReplies(message.content).length" class="mt-2 flex flex-wrap gap-1 opacity-100">
           <Button
@@ -94,7 +94,7 @@ function onQuickReply(actionId: string, value: string): void {
 
     <!-- Persistent quick replies delivered by the server UI action -->
     <div v-if="quickReplyAction && quickReplyAction.payload" class="mb-4 flex items-start gap-1">
-      <div class="max-w-[min(760px,88%)] rounded-xl rounded-tl-[3px] border border-border-default bg-panel p-3">
+      <div class="max-w-[min(760px,88%)] rounded-lg rounded-tl-sm border border-border-subtle bg-panel p-3 shadow-panel">
         <div>{{ quickReplyAction.payload.question || t('ai.chat.chooseOption') }}</div>
         <div class="mt-2 flex flex-wrap gap-1 opacity-100">
           <Button

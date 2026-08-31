@@ -3,95 +3,40 @@
  *
  * Legacy topnav loads /app/js/ai_drawer.js on first click of #pbgui-ai-btn.
  * Vue pages render the WorkbenchRail instead, so this module reproduces
- * that lazy-load contract: the ~900-line drawer (and its CSS) only hits the
- * network when the assistant is first opened.
+ * that lazy-load contract: the ~900-line drawer script only hits the network
+ * when the assistant is first opened. Its CSS is part of the Vue Tailwind
+ * bundle; legacy standalone pages keep their own fallback loader.
  *
  * The drawer itself stays shared script — it reads window.PBGuiAI and
  * appends #pbgui-ai-drawer to <body>, both of which are generation-neutral.
  */
 import { ref } from 'vue';
 
-import { apiFetch } from '@/shared/api';
-import { getBoot } from '@/shared/boot';
-
-let loading = false;
-/** Set on a real user click so auto-open never overrides a manual toggle. */
-let userInteracted = false;
+import {
+  markAiDrawerInteraction,
+  openAiDrawer as openStaticAiDrawer,
+  setupAiDrawerAutoOpen as setupStaticAiDrawerAutoOpen,
+} from './useAiDrawer';
 
 /**
- * Open the AI drawer, loading js/ai_drawer.js + css/ai_drawer.css on first
- * use. Safe to call repeatedly; resolves when open() has been invoked (or
- * immediately when the drawer is already loaded).
+ * Open the statically mounted Vue AI drawer. The old function name remains
+ * exported so WorkbenchRail and older integrations do not need to change.
  */
 export function openAiDrawer(): void {
-  const facade = window.PBGuiAI;
-  if (facade && typeof facade.toggle === 'function') {
-    facade.toggle();
-    return;
-  }
-  if (loading) return;
-  loading = true;
-
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = '/app/css/ai_drawer.css?v=12';
-  document.head.appendChild(link);
-
-  const script = document.createElement('script');
-  script.src = '/app/js/ai_drawer.js?v=31';
-  script.onload = () => {
-    loading = false;
-    window.PBGuiAI?.open?.();
-  };
-  script.onerror = () => {
-    loading = false;
-  };
-  document.head.appendChild(script);
+  openStaticAiDrawer();
 }
 
 /** Record that the user opened/closed the drawer themselves (legacy isTrusted gate). */
 export function markAiUserInteraction(): void {
-  userInteracted = true;
+  markAiDrawerInteraction();
 }
 
-let autoOpenConfigured = false;
-
 /**
- * Vue port of the pbgui_nav.js drawer auto-open boot logic (v1.99.4):
- * a URL carrying ?pbgui_ai_action=1 (a continuePageAction navigation)
- * strips the flag and opens the drawer; otherwise the saved preference
- * re-opens the drawer unless the user already interacted with it.
- * AppShell calls this once per page mount.
+ * Preserve the existing AppShell API while delegating auto-open to the
+ * module-level Vue Drawer state.
  */
-export function setupAiDrawerAutoOpen(): void {
-  if (autoOpenConfigured) return;
-  autoOpenConfigured = true;
-  try {
-    if (!getBoot().token) return;
-  } catch {
-    // boot.js missing — same graceful skip as useAiDrawerAvailable: never
-    // advertise drawer behaviour the session cannot authenticate.
-    return;
-  }
-
-  const url = new URL(window.location.href);
-  if (url.searchParams.get('pbgui_ai_action') === '1') {
-    url.searchParams.delete('pbgui_ai_action');
-    window.history.replaceState(
-      window.history.state,
-      '',
-      url.pathname + url.search + url.hash,
-    );
-    openAiDrawer();
-    return;
-  }
-  apiFetch<{ drawer_open?: boolean }>(`${getBoot().origin}/api/ai/preferences`)
-    .then((preferences) => {
-      if (preferences?.drawer_open === true && !userInteracted) openAiDrawer();
-    })
-    .catch(() => {
-      // Preferences are optional — auto-open silently skips on failure.
-    });
+export function setupAiDrawerAutoOpen(options: { allowPreferenceAutoOpen?: boolean } = {}): void {
+  void setupStaticAiDrawerAutoOpen(options);
 }
 
 /**

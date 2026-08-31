@@ -28,7 +28,7 @@ function onKeydown(event: KeyboardEvent): void {
 </script>
 
 <template>
-  <div class="grid grid-cols-[1fr_auto] gap-2.5 border-t border-border-default bg-[#0d1521] px-[max(18px,calc((100%-920px)/2))] pt-3 pb-4">
+  <div class="grid grid-cols-[1fr_auto] gap-2.5 border-t border-border-subtle bg-sidebar px-[max(18px,calc((100%-920px)/2))] pt-3 pb-4">
     <Textarea
       id="prompt"
       v-model="draft"

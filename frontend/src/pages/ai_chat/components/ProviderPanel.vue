@@ -39,13 +39,13 @@ function onGoConnect(): void {
       <div class="text-[11px] font-extrabold tracking-[0.14em] text-accent uppercase">{{ t('ai.chat.connectionTest') }}</div>
       <h1 class="mt-1 mb-0.5 text-2xl font-bold text-primary">{{ t('ai.chat.title') }}</h1>
       <p class="m-0 mb-4 text-sm text-secondary">{{ t('ai.chat.subtitle') }}</p>
-      <div class="mb-4 rounded-lg border border-[rgba(251,191,36,.32)] bg-[rgba(251,191,36,.07)] p-3 text-xs text-[#fcd97a]">
+      <div class="mb-4 rounded-lg border border-warning/35 bg-warning/14 p-3 text-xs text-warning-soft">
         {{ t('ai.chat.notice') }}
       </div>
     </div>
 
     <!-- ChatGPT -->
-    <section class="rounded-[10px] border border-border-default bg-panel p-3">
+    <section class="rounded-lg border border-border-subtle bg-panel p-4 shadow-panel">
       <div class="mb-2 flex items-center justify-between gap-2">
         <span class="font-bold text-primary">ChatGPT</span>
         <span
@@ -54,7 +54,7 @@ function onGoConnect(): void {
         >
           <span
             class="inline-block h-[7px] w-[7px] rounded-full"
-            :class="chatgpt.connected ? 'bg-success shadow-[0_0_8px_rgba(52,211,153,.5)]' : chatgpt.available ? 'bg-secondary' : 'bg-danger'"
+            :class="chatgpt.connected ? 'bg-success shadow-[0_0_8px_rgb(var(--success-rgb)/.35)]' : chatgpt.available ? 'bg-secondary' : 'bg-danger'"
           ></span>
           {{ chatgpt.connected ? t('ai.chat.connected') + (chatgpt.plan ? ' · ' + chatgpt.plan : '') : chatgpt.available ? t('ai.chat.notConnected') : t('ai.chat.runtimeMissing') }}
         </span>
@@ -80,10 +80,10 @@ function onGoConnect(): void {
           @click="emit('chatgptDisconnect')"
         >{{ t('ai.chat.disconnect') }}</Button>
       </div>
-      <div v-if="loginVisible" class="mt-2.5 rounded-lg border border-border-default bg-[#0b1320] p-2.5">
+      <div v-if="loginVisible" class="mt-2.5 rounded-lg border border-border-subtle bg-input p-2.5">
         <div>{{ loginInstructions }}</div>
         <a class="mt-1.5 block break-all text-accent" :href="loginUrl" target="_blank" rel="noopener noreferrer">{{ loginUrl }}</a>
-        <div v-if="loginCode" class="my-1.5 font-mono text-xl font-bold tracking-[0.08em] text-[#bfdbfe]">{{ loginCode }}</div>
+        <div v-if="loginCode" class="my-1.5 font-mono text-xl font-bold tracking-[0.08em] text-accent-soft">{{ loginCode }}</div>
         <Button
           type="button"
           class="mt-1.5"
@@ -93,11 +93,11 @@ function onGoConnect(): void {
     </section>
 
     <!-- OpenCode Go -->
-    <section class="rounded-[10px] border border-border-default bg-panel p-3">
+    <section class="rounded-lg border border-border-subtle bg-panel p-4 shadow-panel">
       <div class="mb-2 flex items-center justify-between gap-2">
         <span class="font-bold text-primary">OpenCode</span>
         <span class="inline-flex items-center gap-1.5 text-[11px]" :class="go.connected ? 'text-success' : 'text-secondary'">
-          <span class="inline-block h-[7px] w-[7px] rounded-full" :class="go.connected ? 'bg-success shadow-[0_0_8px_rgba(52,211,153,.5)]' : 'bg-secondary'"></span>
+          <span class="inline-block h-[7px] w-[7px] rounded-full" :class="go.connected ? 'bg-success shadow-[0_0_8px_rgb(var(--success-rgb)/.35)]' : 'bg-secondary'"></span>
           {{ go.connected ? t('ai.chat.connected') : t('ai.chat.notConnected') }}
         </span>
       </div>
@@ -121,7 +121,7 @@ function onGoConnect(): void {
       </div>
       <div v-if="!go.connected" class="mt-1.5 flex gap-2">
         <a
-          class="inline-flex h-8 items-center justify-center rounded-md border border-border-default bg-elevated px-3 text-sm text-primary no-underline transition-colors hover:border-accent"
+          class="inline-flex h-8 items-center justify-center rounded-sm border border-border-default bg-elevated px-3 text-sm text-primary no-underline transition-colors hover:border-accent"
           href="/api/ai/providers/opencode-go/subscribe"
           target="_blank"
           rel="noopener noreferrer"

@@ -110,6 +110,7 @@ export function useAiChat(t: Translate) {
   const goKey = ref('');
   const retryMessages = ref<Record<string, string>>({});
   const activityStartedAt = ref(0);
+  const includeContext = ref(true);
 
   /* ── Generation guards (non-reactive on purpose) ── */
   let requestGeneration = 0;
@@ -419,7 +420,9 @@ export function useAiChat(t: Translate) {
           model: modelId.value,
           provider: providerId.value,
           context:
-            window.PBGuiAI && typeof window.PBGuiAI.collectContext === 'function' ? window.PBGuiAI.collectContext() : null,
+            includeContext.value && window.PBGuiAI && typeof window.PBGuiAI.collectContext === 'function'
+              ? window.PBGuiAI.collectContext()
+              : null,
         }),
       });
       if (generation !== chatGeneration) return;
@@ -713,6 +716,7 @@ export function useAiChat(t: Translate) {
     notice,
     loginBox,
     goKey,
+    includeContext,
     draft,
     retryMessage,
     reasoningSummary,

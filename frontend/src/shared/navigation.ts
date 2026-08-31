@@ -160,8 +160,6 @@ export const WORKBENCH_NAVIGATION = [
         href: '/api/ai/main_page',
         icon: PhSparkle,
         groupId: 'information',
-        /* Vue port serves a blank page for now — disabled until it works. */
-        disabled: true,
       },
       {
         pageKey: 'help',

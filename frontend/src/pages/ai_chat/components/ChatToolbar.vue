@@ -102,7 +102,7 @@ function onEffortSelect(value: unknown): void {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-2.5 border-b border-border-default bg-panel/90 px-4 py-3">
+  <div class="flex flex-wrap items-center gap-2.5 border-b border-border-subtle bg-panel px-4 py-3">
     <span id="provider-select-label" class="text-xs text-secondary">{{ t('ai.chat.provider') }}</span>
     <SelectRoot
       :model-value="providerId"
