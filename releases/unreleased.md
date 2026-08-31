@@ -1,5 +1,21 @@
 # Unreleased
 
+## Help & Tutorials - Simplified Chinese Guides
+
+- Added a full Simplified Chinese guide set: all 30 general guides now have `docs/help_zh/` peers and all 5 Strategy Explorer tutorials have `docs/strategy_explorer_zh/` peers, with filenames matching the English set so deep links and keyword selection keep working.
+- The help endpoints (`/api/help/index`, `/api/help/content`, `/api/docs/index`, `/api/docs/content`) now resolve `lang=ZH` to the Chinese directories via a shared `_help_lang_folder` helper; unknown language codes still fall back to English and the existing bare-`*.md` path-traversal guards are unchanged.
+- Added a 中文 pill to every help language switcher — the Vue Help page (`help-lang-zh`), the legacy `help.html` fallback, the shared overlay (`pbgui-shared-help-lang-zh`, served to all pages via `shared_help_overlay.js?v=8`), and the four still-active inline overlays (v7 edit, VPS monitor, API keys editor, Coin Data).
+- First-time visitors (no stored `help-lang`) now default the help content language to the browser language (`zh*` → ZH), matching the GUI i18n auto-select; manual EN/DE/ZH choices keep persisting in `localStorage['help-lang']`.
+- Coverage tests now enforce EN/DE/ZH topic parity (`tests/test_help_coverage.py`), the Vue page tests cover ZH switching and the browser-language default, and a new `tests/test_help_docs_zh.py` verifies all four ZH endpoints end to end.
+
+## AI Chat - Vue3 Theme Alignment
+
+- Unified the AI Chat page surfaces, provider cards, conversation list, message bubbles, proposal previews, toolbar, and composer with the shared Vue3 graphite palette, Space Grotesk typography, semantic colors, spacing, borders, radius, and elevation tokens without changing chat behavior or approval flows. Applied the same visual language to the legacy side drawer opened by the lower-left AI button, including its controls, context chips, history, proposal review, responsive layout, and focus states.
+- Enabled the Information / AI Chat navigation item now that its Vue3 page is available, while retaining the shared disabled-item behavior for unavailable pages.
+- Added English/Chinese Drawer UI translations, improved the toolbar and composer proportions, and compiled the shared Drawer stylesheet through the Tailwind CSS v4.3 component layer while keeping the legacy standalone fallback.
+- Replaced the Vue-page dynamic Drawer DOM loader with a statically mounted `AiDrawer.vue` and shared `useAiDrawer` state, preserving preference-based auto-open, width persistence, context toggling, conversation actions, and the legacy standalone compatibility path.
+- Updated the Drawer Full-page action to persist the closed state before navigating, and disabled preference-based Drawer auto-open on the full AI Chat page so the destination is not duplicated.
+
 ## Archive credential response hardening
 
 - Stop returning stored archive access tokens from GET /archives/settings; archive Git push and history compaction now resolve omitted tokens server-side, while the Vue setup form preserves configured credentials unless a new token is explicitly supplied.

@@ -1733,7 +1733,7 @@
 
       guideBtn.disabled = true;
       var script = document.createElement('script');
-      script.src = '/app/js/shared_help_overlay.js?v=7';
+      script.src = '/app/js/shared_help_overlay.js?v=8';
       script.onload = function () {
         guideBtn.disabled = false;
         if (window.PBGuiSharedHelp && typeof window.PBGuiSharedHelp.open === 'function') {
@@ -1770,7 +1770,7 @@
       _aiDrawerLoading = true;
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = '/app/css/ai_drawer.css?v=12';
+      link.href = '/app/css/ai_drawer.css?v=13';
       document.head.appendChild(link);
       var script = document.createElement('script');
       script.src = '/app/js/ai_drawer.js?v=31';

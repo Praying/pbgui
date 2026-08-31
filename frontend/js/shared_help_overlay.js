@@ -11,9 +11,23 @@
     return fallback;
   }
 
+  /* Help content language: stored choice wins, otherwise follow the browser
+     (zh* → ZH), like the GUI i18n auto-select; junk stored values count as
+     no preference. */
+  function _defaultHelpLang() {
+    var stored = '';
+    try { stored = localStorage.getItem('help-lang') || ''; } catch (e) { /* private mode */ }
+    if (stored === 'EN' || stored === 'DE' || stored === 'ZH') return stored;
+    try {
+      var nav = String(navigator.language || navigator.userLanguage || '').toLowerCase();
+      if (nav.indexOf('zh') === 0) return 'ZH';
+    } catch (e) { /* ignore */ }
+    return 'EN';
+  }
+
   var state = {
     token: '',
-    lang: localStorage.getItem('help-lang') || 'EN',
+    lang: _defaultHelpLang(),
     topics: [],
     selectedIndex: 0,
     loaded: false,
@@ -164,6 +178,7 @@
       +         '<div class="lang-pill">'
       +           '<button id="pbgui-shared-help-lang-en" type="button">EN</button>'
       +           '<button id="pbgui-shared-help-lang-de" type="button">DE</button>'
+      +           '<button id="pbgui-shared-help-lang-zh" type="button" title="中文 (简体中文)">中文</button>'
       +         '</div>'
       +         '<button class="ovl-tool" id="pbgui-shared-help-maximize" title="' + _helpT('nav.fit_window', 'Fit to browser window') + '" aria-pressed="false">⛶</button>'
       +         '<button class="ovl-close" id="pbgui-shared-help-close" aria-label="' + _helpT('common.close', 'Close') + '">&#x2715;</button>'
@@ -229,6 +244,7 @@
   function syncLangButtons() {
     dom('pbgui-shared-help-lang-en').classList.toggle('active', state.lang === 'EN');
     dom('pbgui-shared-help-lang-de').classList.toggle('active', state.lang === 'DE');
+    dom('pbgui-shared-help-lang-zh').classList.toggle('active', state.lang === 'ZH');
   }
 
   function updateSearchCount() {
@@ -509,6 +525,7 @@
     dom('pbgui-shared-help-toc-filter').addEventListener('input', renderToc);
     dom('pbgui-shared-help-lang-en').addEventListener('click', function () { setLang('EN'); });
     dom('pbgui-shared-help-lang-de').addEventListener('click', function () { setLang('DE'); });
+    dom('pbgui-shared-help-lang-zh').addEventListener('click', function () { setLang('ZH'); });
     dom('pbgui-shared-help-search').addEventListener('input', function () {
       if (state.searchTimer) clearTimeout(state.searchTimer);
       state.searchTimer = setTimeout(function () {

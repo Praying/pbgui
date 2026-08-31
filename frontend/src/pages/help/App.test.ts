@@ -5,7 +5,7 @@ import { getBoot } from '@/shared/boot';
 import App from './App.vue';
 
 /* Page-shell integration with mocked fetch — the contract the legacy
- * help.html IIFE implemented (index render, topic select, EN/DE switch,
+ * help.html IIFE implemented (index render, topic select, EN/DE/ZH switch,
  * toc filter, in-topic + global search, error paths, overlay chrome). */
 
 vi.mock('@/shared/boot', () => ({
@@ -28,6 +28,10 @@ const TOPICS_DE: TopicFixture[] = [
   { title: 'Überblick', file: '00_overview.md', content: '# Willkommen\n\nÜberblick mit pbgui Stichwort.' },
 ];
 
+const TOPICS_ZH: TopicFixture[] = [
+  { title: '总览', file: '00_overview.md', content: '# 欢迎\n\n包含 pbgui 关键词的概述文本。' },
+];
+
 const fetchMock = vi.fn();
 
 function installFetch(
@@ -40,14 +44,14 @@ function installFetch(
       if (opts.indexStatus && opts.indexStatus !== 200) {
         return Promise.resolve(new Response('err', { status: opts.indexStatus }));
       }
-      const list = u.includes('lang=DE') ? TOPICS_DE : topics;
+      const list = u.includes('lang=DE') ? TOPICS_DE : u.includes('lang=ZH') ? TOPICS_ZH : topics;
       return Promise.resolve(new Response(JSON.stringify(list.map(({ title, file }) => ({ title, file }))), { status: 200 }));
     }
     if (u.includes('/api/help/content')) {
       const file = new URL(u).searchParams.get('file') || '';
       const status = opts.contentStatusByFile?.[file] ?? 200;
       if (status !== 200) return Promise.resolve(new Response('err', { status }));
-      const source = u.includes('lang=DE') ? TOPICS_DE : topics;
+      const source = u.includes('lang=DE') ? TOPICS_DE : u.includes('lang=ZH') ? TOPICS_ZH : topics;
       const topic = source.find((tp) => tp.file === file);
       return Promise.resolve(new Response(JSON.stringify({ content: topic?.content ?? '' }), { status: 200 }));
     }
@@ -259,6 +263,33 @@ describe('Help page shell', () => {
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/help/index?lang=DE'))).toBe(true);
     expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/help/content?file=00_overview.md&lang=DE'))).toBe(true);
     expect(w.find('#help-content').text()).toContain('Überblick');
+  });
+
+  it('switches to ZH, persists the choice and refetches everything with lang=ZH', async () => {
+    const w = await mountApp();
+
+    await w.find('#help-lang-zh').trigger('click');
+    await flush();
+
+    expect(w.find('#help-lang-zh').classes()).toContain('active');
+    expect(window.localStorage.getItem('help-lang')).toBe('ZH');
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/help/index?lang=ZH'))).toBe(true);
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/help/content?file=00_overview.md&lang=ZH'))).toBe(true);
+    expect(w.find('#help-content').text()).toContain('包含 pbgui 关键词');
+  });
+
+  it('defaults to ZH on first visit when the browser language is Chinese', async () => {
+    const original = navigator.language;
+    Object.defineProperty(navigator, 'language', { value: 'zh-CN', configurable: true });
+    try {
+      const w = await mountApp();
+
+      expect(w.find('#help-lang-zh').classes()).toContain('active');
+      expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/api/help/index?lang=ZH'))).toBe(true);
+      expect(w.find('#help-content').text()).toContain('包含 pbgui 关键词');
+    } finally {
+      Object.defineProperty(navigator, 'language', { value: original, configurable: true });
+    }
   });
 
   it('shows both load failure messages when the index request fails', async () => {

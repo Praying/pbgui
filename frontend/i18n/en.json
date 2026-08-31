@@ -1845,6 +1845,7 @@
   "misc.help.failedLoadContent": "Failed to load content.",
   "misc.help.failedLoadTopics": "Failed to load topics.",
   "misc.help.filterTopics": "Filter topics...",
+  "misc.help.chineseDocs": "中文 (Simplified Chinese docs)",
   "misc.help.fitWindow": "Fit to browser window",
   "misc.help.found0": "0 found",
   "misc.help.guideHelp": "Guide & Help",

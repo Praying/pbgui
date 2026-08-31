@@ -447,6 +447,7 @@ onBeforeUnmount(() => {
           <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0">
             <Button id="help-lang-en" type="button" variant="ghost" size="sm" :class="store.lang.value === 'EN' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('EN')">EN</Button>
             <Button id="help-lang-de" type="button" variant="ghost" size="sm" :class="store.lang.value === 'DE' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('DE')">DE</Button>
+            <Button id="help-lang-zh" type="button" variant="ghost" size="sm" :title="t('misc.help.chineseDocs')" :class="store.lang.value === 'ZH' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('ZH')">中文</Button>
           </div>
           <Button
             class="ovl-tool"

@@ -1,4 +1,4 @@
-"""Contract tests for bilingual shared-help coverage."""
+"""Contract tests for trilingual shared-help coverage."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NAV_PATH = ROOT / "frontend" / "pbgui_nav.js"
 HELP_DIRS = (ROOT / "docs" / "help", ROOT / "docs" / "strategy_explorer")
 HELP_DIRS_DE = (ROOT / "docs" / "help_de", ROOT / "docs" / "strategy_explorer_de")
+HELP_DIRS_ZH = (ROOT / "docs" / "help_zh", ROOT / "docs" / "strategy_explorer_zh")
 
 
 def _js_object_entries(source: str, name: str) -> dict[str, str]:
@@ -38,12 +39,13 @@ def _configured_page_keys() -> set[str]:
     return pages
 
 
-def test_help_topics_have_exact_english_german_parity() -> None:
-    """Every English general or Strategy Explorer topic has a German peer."""
+def test_help_topics_have_exact_english_german_chinese_parity() -> None:
+    """Every English general or Strategy Explorer topic has DE and ZH peers."""
     assert _topic_names(HELP_DIRS) == _topic_names(HELP_DIRS_DE)
+    assert _topic_names(HELP_DIRS) == _topic_names(HELP_DIRS_ZH)
 
 
-def test_every_registered_page_maps_to_one_bilingual_help_topic() -> None:
+def test_every_registered_page_maps_to_one_trilingual_help_topic() -> None:
     """Navigation routes and rendered page keys must have resolvable help topics."""
     source = NAV_PATH.read_text(encoding="utf-8")
     routes = _js_object_entries(source, "FASTAPI_PAGES")
@@ -54,12 +56,14 @@ def test_every_registered_page_maps_to_one_bilingual_help_topic() -> None:
 
     english = _topic_names(HELP_DIRS)
     german = _topic_names(HELP_DIRS_DE)
+    chinese = _topic_names(HELP_DIRS_ZH)
     for page, topic in topics.items():
         assert english.count(topic) == 1, f"{page} maps to missing or ambiguous EN topic {topic}"
         assert german.count(topic) == 1, f"{page} maps to missing or ambiguous DE topic {topic}"
+        assert chinese.count(topic) == 1, f"{page} maps to missing or ambiguous ZH topic {topic}"
 
 
-def test_strategy_explorer_uses_shared_bilingual_help() -> None:
+def test_strategy_explorer_uses_shared_trilingual_help() -> None:
     """Strategy Explorer must not shadow its complete shared docs with inline help."""
     source = (ROOT / "frontend" / "v7_strategy_explorer.html").read_text(encoding="utf-8")
     topics = _js_object_entries(NAV_PATH.read_text(encoding="utf-8"), "GUIDE_TOPICS")

@@ -629,6 +629,7 @@
         <div class="lang-pill">
           <button id="help-lang-en" class="active">EN</button>
           <button id="help-lang-de">DE</button>
+          <button id="help-lang-zh" title="中文 (简体中文)">中文</button>
         </div>
         <button class="ovl-close" id="help-close">&#x2715;</button>
       </div>
@@ -3495,6 +3496,7 @@
       var helpFilter   = document.getElementById('help-toc-filter');
       var helpLangEN   = document.getElementById('help-lang-en');
       var helpLangDE   = document.getElementById('help-lang-de');
+      var helpLangZH   = document.getElementById('help-lang-zh');
       var helpDragHandle = document.getElementById('help-drag-handle');
 
       var helpLang  = 'EN';
@@ -3726,13 +3728,19 @@
       helpFilter.addEventListener('input', renderToc);
       helpLangEN.addEventListener('click', function () {
         if (helpLang === 'EN') return;
-        helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active');
+        helpLang = 'EN'; helpLangEN.classList.add('active'); helpLangDE.classList.remove('active'); helpLangZH.classList.remove('active');
         _topicCache = {};
         helpSel = 0; loadHelpIndex('api_keys');
       });
       helpLangDE.addEventListener('click', function () {
         if (helpLang === 'DE') return;
-        helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active');
+        helpLang = 'DE'; helpLangDE.classList.add('active'); helpLangEN.classList.remove('active'); helpLangZH.classList.remove('active');
+        _topicCache = {};
+        helpSel = 0; loadHelpIndex('api_keys');
+      });
+      helpLangZH.addEventListener('click', function () {
+        if (helpLang === 'ZH') return;
+        helpLang = 'ZH'; helpLangZH.classList.add('active'); helpLangEN.classList.remove('active'); helpLangDE.classList.remove('active');
         _topicCache = {};
         helpSel = 0; loadHelpIndex('api_keys');
       });
@@ -3785,7 +3793,7 @@
         serial:   PBGUI_SERIAL
     };
     </script>
-    <script src="/app/js/shared_help_overlay.js?v=7"></script>
+    <script src="/app/js/shared_help_overlay.js?v=8"></script>
     <script src="/app/js/pbgui_icons.js?v=1"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>

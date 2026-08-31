@@ -8,8 +8,9 @@
  *  - Stale-response guards (indexSeq/topicSeq) so a slow in-flight request
  *    cannot overwrite a newer language switch — the same convention as the
  *    shared overlay's indexRequestSeq/topicRequestSeq (shared_help_overlay.js).
- *  - Stored 'help-lang' values other than EN/DE normalize to EN (legacy
- *    passed junk values straight through to the API).
+ *  - Stored 'help-lang' values other than EN/DE/ZH fall back to the browser
+ *    default (zh* → ZH, else EN); legacy passed junk values straight through
+ *    to the API.
  */
 import { computed, ref } from 'vue';
 import { apiFetch } from '@/shared/api';
@@ -17,7 +18,7 @@ import { helpApiUrl } from '../config';
 import { renderMarkdown } from '../lib/markdown';
 import { findMatchPositions, snippetAt, stripHtml } from '../lib/search';
 
-export type HelpLang = 'EN' | 'DE';
+export type HelpLang = 'EN' | 'DE' | 'ZH';
 
 export interface HelpTopic {
   title: string;
@@ -38,12 +39,29 @@ export type TopicContentStatus = 'idle' | 'loading' | 'ok' | 'error';
 /** Shared with legacy help.html :631 and shared_help_overlay.js. */
 const LANG_STORAGE_KEY = 'help-lang';
 
-function storedLang(): HelpLang {
+/**
+ * Browser default help content language: zh* → ZH (like the GUI i18n
+ * auto-select), everything else EN.
+ */
+function browserDefaultLang(): HelpLang {
   try {
-    return localStorage.getItem(LANG_STORAGE_KEY) === 'DE' ? 'DE' : 'EN';
+    if (String(navigator.language || '').toLowerCase().startsWith('zh')) return 'ZH';
   } catch {
-    return 'EN';
+    /* ignore */
   }
+  return 'EN';
+}
+
+/** Stored choice wins; junk stored values count as no preference. */
+function storedLang(): HelpLang {
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(LANG_STORAGE_KEY);
+  } catch {
+    /* private mode */
+  }
+  if (stored === 'EN' || stored === 'DE' || stored === 'ZH') return stored;
+  return browserDefaultLang();
 }
 
 export function useHelpContent() {

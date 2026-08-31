@@ -531,6 +531,7 @@
           <div class="lang-pill">
             <button id="help-lang-en" class="active">EN</button>
             <button id="help-lang-de">DE</button>
+            <button id="help-lang-zh" title="中文 (简体中文)">中文</button>
           </div>
           <button class="ovl-tool" id="help-maximize" title="Fit to browser window" aria-pressed="false">⛶</button>
           <button class="ovl-close" id="help-close">&#x2715;</button>
@@ -628,9 +629,19 @@
       var helpFilter = document.getElementById('help-toc-filter');
       var helpLangEN = document.getElementById('help-lang-en');
       var helpLangDE = document.getElementById('help-lang-de');
+      var helpLangZH = document.getElementById('help-lang-zh');
       var helpDragHandle = document.getElementById('help-drag-handle');
 
-      var helpLang = localStorage.getItem('help-lang') || 'EN';
+      /* Stored choice wins; otherwise follow the browser (zh* → ZH), like
+         the GUI i18n auto-select; junk stored values count as no preference. */
+      var helpLang = (function () {
+        var stored = '';
+        try { stored = localStorage.getItem('help-lang') || ''; } catch (e) { /* private mode */ }
+        if (stored === 'EN' || stored === 'DE' || stored === 'ZH') return stored;
+        var nav = String((navigator.language || navigator.userLanguage || '')).toLowerCase();
+        if (nav.indexOf('zh') === 0) return 'ZH';
+        return 'EN';
+      })();
       var helpTopics = [];
       var helpSel = 0;
       var helpLoaded = false;
@@ -650,6 +661,7 @@
       function setLanguageButtons() {
         helpLangEN.classList.toggle('active', helpLang === 'EN');
         helpLangDE.classList.toggle('active', helpLang === 'DE');
+        helpLangZH.classList.toggle('active', helpLang === 'ZH');
       }
 
       function renderMarkdown(md) {
@@ -1028,6 +1040,16 @@
       helpLangDE.addEventListener('click', function () {
         if (helpLang === 'DE') return;
         helpLang = 'DE';
+        localStorage.setItem('help-lang', helpLang);
+        topicCache = {};
+        setLanguageButtons();
+        helpSel = 0;
+        loadHelpIndex('overview');
+      });
+
+      helpLangZH.addEventListener('click', function () {
+        if (helpLang === 'ZH') return;
+        helpLang = 'ZH';
         localStorage.setItem('help-lang', helpLang);
         topicCache = {};
         setLanguageButtons();

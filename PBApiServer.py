@@ -1387,6 +1387,18 @@ async def nav_request(request: Request):
 
 # ── Docs endpoints ────────────────────────────────────────────
 
+def _help_lang_folder(ln: str, kind: str = "help") -> str:
+    """Map an API language code (EN/DE/ZH) to its docs subdirectory name.
+
+    ``kind`` is ``"help"`` or ``"strategy_explorer"``; unknown or missing
+    codes fall back to the English directory (which equals ``kind``).
+    """
+    return {
+        "help": {"DE": "help_de", "ZH": "help_zh"},
+        "strategy_explorer": {"DE": "strategy_explorer_de", "ZH": "strategy_explorer_zh"},
+    }[kind].get(ln, kind)
+
+
 @app.get("/api/docs/index")
 async def docs_index(lang: str = "EN", session: SessionToken = Depends(require_auth)):
     """Return the list of help topics for the given language.
@@ -1397,7 +1409,7 @@ async def docs_index(lang: str = "EN", session: SessionToken = Depends(require_a
     """
     ln = str(lang or "EN").strip().upper()
     root = Path(__file__).parent / "docs"
-    folder = "help_de" if ln == "DE" else "help"
+    folder = _help_lang_folder(ln)
     docs_dir = root / folder
     if not docs_dir.is_dir():
         return []
@@ -1430,7 +1442,7 @@ async def docs_content(file: str, lang: str = "EN", session: SessionToken = Depe
 
     ln = str(lang or "EN").strip().upper()
     root = Path(__file__).parent / "docs"
-    folder = "help_de" if ln == "DE" else "help"
+    folder = _help_lang_folder(ln)
     full_path = (root / folder / safe_name).resolve()
 
     # Must remain within the docs dir (additional safety)
@@ -1464,8 +1476,11 @@ async def help_index(lang: str = "EN", session: SessionToken = Depends(require_a
     result = []
     
     # General help docs
-    folder_help = "help_de" if ln == "DE" else "help"
-    dirs = [(folder_help, "Help"), ("strategy_explorer_de" if ln == "DE" else "strategy_explorer", "Strategy Explorer")]
+    folder_help = _help_lang_folder(ln)
+    dirs = [
+        (folder_help, "Help"),
+        (_help_lang_folder(ln, "strategy_explorer"), "Strategy Explorer"),
+    ]
     
     for folder, category in dirs:
         docs_dir = root / folder
@@ -1509,8 +1524,10 @@ async def help_content(file: str, lang: str = "EN", session: SessionToken = Depe
     root = Path(__file__).parent / "docs"
     
     # Try help directory first, then strategy_explorer
-    for folder in [("help_de" if ln == "DE" else "help"), 
-                   ("strategy_explorer_de" if ln == "DE" else "strategy_explorer")]:
+    for folder in [
+        _help_lang_folder(ln),
+        _help_lang_folder(ln, "strategy_explorer"),
+    ]:
         full_path = (root / folder / safe_name).resolve()
         docs_base = (root / folder).resolve()
         

@@ -1845,6 +1845,7 @@
   "misc.help.failedLoadContent": "内容加载失败。",
   "misc.help.failedLoadTopics": "主题加载失败。",
   "misc.help.filterTopics": "筛选主题...",
+  "misc.help.chineseDocs": "中文（简体中文文档）",
   "misc.help.fitWindow": "适应浏览器窗口",
   "misc.help.found0": "找到 0 个",
   "misc.help.guideHelp": "指南与帮助",
