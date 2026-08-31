@@ -2,11 +2,23 @@
 /**
  * Raw Config stage — a focused Vue editor for the active strategy config.
  * The contenteditable pre preserves the legacy 450 ms validate → sync
- * markets → recalculate flow while the surrounding workbench provides
- * clearer editing context, status feedback, and accessible view controls.
+ * markets → recalculate flow while providing an integrated IDE-style toolbar,
+ * real-time validation tone badges, formatting/reset actions, Tab indentation,
+ * and adaptive viewport height.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { PhArrowsOut, PhCheck, PhCopy, PhMinus, PhPlus } from '@phosphor-icons/vue';
+import {
+  PhArrowCounterClockwise,
+  PhArrowsIn,
+  PhArrowsOut,
+  PhCheck,
+  PhCopy,
+  PhFileCode,
+  PhMinus,
+  PhPlus,
+  PhSparkle,
+  PhSpinnerGap,
+} from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { serverMsg } from '@/shared/i18n';
@@ -22,6 +34,8 @@ const copyFailed = ref(false);
 const expanded = ref(false);
 const editorFontSize = ref(12);
 const isJsonInvalid = ref(false);
+const lineCount = ref(1);
+const charCount = ref(0);
 let dirty = false;
 let timer: ReturnType<typeof setTimeout> | null = null;
 let copyTimer: ReturnType<typeof setTimeout> | null = null;
@@ -50,13 +64,31 @@ function currentRecalculationError(): string | null {
   return engineStatus.toLowerCase().includes('failed') ? serverMsg(engineStatus) : null;
 }
 
-const statusText = computed(() => status.value?.text || t('v7explore.editJsonHint'));
-const statusTone = computed(() => (status.value?.error ? 'danger' : 'ready'));
+const statusText = computed(() => status.value?.text || t('v7explore.jsonValid'));
+const statusTone = computed(() => {
+  if (status.value?.error) return 'danger';
+  const currentText = status.value?.text;
+  if (
+    currentText === t('v7explore.validatingJson') ||
+    currentText === t('v7explore.jsonValidRecalculating') ||
+    currentText === t('v7explore.jsonValidUpdatingSelectors')
+  ) {
+    return 'recalc';
+  }
+  return 'ready';
+});
+
+function updateCounts(): void {
+  const text = editor.value?.textContent || '';
+  charCount.value = text.length;
+  lineCount.value = text ? text.split('\n').length : 1;
+}
 
 function syncFromState(): void {
   const editorElement = editor.value;
   if (!editorElement || dirty || document.activeElement === editorElement) return;
   editorElement.textContent = JSON.stringify(store.state.config || {}, null, 4);
+  updateCounts();
 }
 
 /** bindRawConfigEditor (:1727-1765). */
@@ -67,6 +99,7 @@ function bindEditor(): void {
 
 function onInput(): void {
   const generation = ++editGeneration;
+  updateCounts();
   store.invalidateConfigRequests();
   dirty = true;
   isJsonInvalid.value = false;
@@ -124,6 +157,14 @@ function insertPlainText(text: string): void {
   selection.addRange(range);
 }
 
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    insertPlainText('    ');
+    onInput();
+  }
+}
+
 function onPaste(event: ClipboardEvent): void {
   insertPlainText(event.clipboardData?.getData('text/plain') || '');
   onInput();
@@ -132,6 +173,33 @@ function onPaste(event: ClipboardEvent): void {
 function onDrop(event: DragEvent): void {
   insertPlainText(event.dataTransfer?.getData('text/plain') || '');
   onInput();
+}
+
+function formatJson(): void {
+  const editorElement = editor.value;
+  if (!editorElement) return;
+  try {
+    const text = editorElement.textContent || '{}';
+    const parsed = JSON.parse(text) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(t('v7explore.configJsonMustBeObject'));
+    editorElement.textContent = JSON.stringify(parsed, null, 4);
+    isJsonInvalid.value = false;
+    updateCounts();
+    onInput();
+  } catch (err) {
+    isJsonInvalid.value = true;
+    setStatus(t('editor.json.invalid') + ': ' + (err as Error).message, true);
+  }
+}
+
+function resetConfig(): void {
+  dirty = false;
+  isJsonInvalid.value = false;
+  if (editor.value) {
+    editor.value.textContent = JSON.stringify(store.state.config || {}, null, 4);
+    updateCounts();
+  }
+  setStatus(t('v7explore.editJsonHint'), false);
 }
 
 async function copyConfig(): Promise<void> {
@@ -203,54 +271,122 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="raw-config-panel" class="raw-config-panel overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-panel)]">
-    <header class="raw-config-header flex flex-wrap items-start justify-between gap-4 border-b border-border-default px-5 py-4 max-[640px]:px-4">
-      <div class="min-w-0 max-w-2xl">
-        <div class="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent-soft">{{ t('v7explore.config') }}</div>
-        <h2 class="m-0 text-lg font-semibold tracking-[-0.01em] text-primary">{{ t('v7explore.rawConfig') }}</h2>
-        <p class="m-0 mt-1 max-w-[68ch] text-sm leading-5 text-secondary">{{ t('v7explore.editJsonHint') }}</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2 text-xs">
-        <span class="inline-flex min-h-7 items-center rounded-full border border-border-default bg-page px-2.5 text-secondary">JSON</span>
-        <span class="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-success/30 bg-success/8 px-2.5 text-success-soft">
-          <span class="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true"></span>
-          {{ t('v7explore.active') }}
-        </span>
-      </div>
-    </header>
+    <!-- Streamlined modern IDE editor toolbar -->
+    <header class="raw-config-header flex flex-wrap items-center justify-between gap-3 border-b border-border-default/80 bg-panel px-4 py-2.5 max-[640px]:px-3">
+      <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
+        <div class="flex items-center gap-2">
+          <PhFileCode :size="18" class="text-accent-soft shrink-0" aria-hidden="true" />
+          <h2 class="m-0 text-sm font-semibold tracking-tight text-primary whitespace-nowrap">{{ t('v7explore.rawConfig') }}</h2>
+          <span class="inline-flex items-center rounded border border-border-subtle bg-page/90 px-1.5 py-0.5 font-mono text-[10px] font-medium text-secondary">JSON</span>
+        </div>
 
-    <div class="raw-config-toolbar flex flex-wrap items-center justify-between gap-3 border-b border-border-default/70 bg-page/55 px-4 py-2.5">
-      <div class="flex items-center gap-2 text-xs text-muted">
-        <span class="font-mono uppercase tracking-[0.08em]">JSON</span>
-        <span aria-hidden="true">/</span>
-        <span>{{ t('v7explore.config') }}</span>
-      </div>
-      <div class="flex flex-wrap items-center gap-1.5">
-        <Button type="button" size="sm" variant="ghost" class="raw-config-tool" :aria-label="t('shared.json.copyToClipboard')" @click="copyConfig">
-          <PhCheck v-if="copied" :size="14" weight="bold" aria-hidden="true" />
-          <PhCopy v-else :size="14" aria-hidden="true" />
-          <span>{{ copied ? t('shared.json.copied') : copyFailed ? t('v7run.copyFailed') : t('shared.json.copy') }}</span>
-        </Button>
-        <Button type="button" size="sm" variant="ghost" class="raw-config-tool" :aria-label="expanded ? t('shared.json.collapse') : t('shared.json.expand')" :aria-expanded="expanded" aria-controls="raw-config-json" @click="expanded = !expanded">
-          <PhArrowsOut :size="14" aria-hidden="true" />
-          <span>{{ expanded ? t('shared.json.collapse') : t('shared.json.expand') }}</span>
-        </Button>
-        <div class="raw-config-font-controls" :aria-label="t('shared.json.largerFont')" role="group">
-          <Button type="button" size="icon" variant="ghost" class="raw-config-icon-tool" :aria-label="t('shared.json.smallerFont')" :disabled="editorFontSize <= 10" @click="changeFontSize(-1)">
-            <PhMinus :size="13" aria-hidden="true" />
-          </Button>
-          <span class="min-w-8 text-center font-mono text-[10px] text-muted">{{ editorFontSize }}px</span>
-          <Button type="button" size="icon" variant="ghost" class="raw-config-icon-tool" :aria-label="t('shared.json.largerFont')" :disabled="editorFontSize >= 18" @click="changeFontSize(1)">
-            <PhPlus :size="13" aria-hidden="true" />
-          </Button>
+        <!-- Real-time status indicator tag -->
+        <div
+          class="raw-config-status-tag inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs transition-colors duration-150"
+          :class="statusTone === 'danger'
+            ? 'border-danger/40 bg-danger/10 text-danger-soft'
+            : statusTone === 'recalc'
+              ? 'border-accent/40 bg-accent/10 text-accent-soft'
+              : 'border-success/30 bg-success/8 text-success-soft'"
+          role="status"
+          aria-live="polite"
+        >
+          <PhSpinnerGap v-if="statusTone === 'recalc'" :size="12" class="animate-spin text-accent shrink-0" aria-hidden="true" />
+          <span v-else-if="statusTone === 'danger'" class="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" aria-hidden="true"></span>
+          <PhCheck v-else :size="11" weight="bold" class="text-success shrink-0" aria-hidden="true" />
+          <span class="truncate max-w-[380px] max-[768px]:max-w-[200px]" :title="statusText">{{ statusText }}</span>
         </div>
       </div>
-    </div>
+
+      <!-- Action tools -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          class="raw-config-tool"
+          :title="t('v7explore.formatJsonTip')"
+          :aria-label="t('v7explore.formatJson')"
+          @click="formatJson"
+        >
+          <PhSparkle :size="13" aria-hidden="true" />
+          <span>{{ t('v7explore.formatJson') }}</span>
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          class="raw-config-tool"
+          :title="t('v7explore.resetConfigTip')"
+          :aria-label="t('v7explore.resetConfig')"
+          @click="resetConfig"
+        >
+          <PhArrowCounterClockwise :size="13" aria-hidden="true" />
+          <span>{{ t('v7explore.resetConfig') }}</span>
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          class="raw-config-tool"
+          :aria-label="t('shared.json.copyToClipboard')"
+          @click="copyConfig"
+        >
+          <PhCheck v-if="copied" :size="13" weight="bold" class="text-success" aria-hidden="true" />
+          <PhCopy v-else :size="13" aria-hidden="true" />
+          <span>{{ copied ? t('shared.json.copied') : copyFailed ? t('v7run.copyFailed') : t('shared.json.copy') }}</span>
+        </Button>
+
+        <div class="raw-config-font-controls" :aria-label="t('shared.json.largerFont')" role="group">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            class="raw-config-icon-tool"
+            :aria-label="t('shared.json.smallerFont')"
+            :disabled="editorFontSize <= 10"
+            @click="changeFontSize(-1)"
+          >
+            <PhMinus :size="12" aria-hidden="true" />
+          </Button>
+          <span class="min-w-7 text-center font-mono text-[10px] text-muted">{{ editorFontSize }}px</span>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            class="raw-config-icon-tool"
+            :aria-label="t('shared.json.largerFont')"
+            :disabled="editorFontSize >= 18"
+            @click="changeFontSize(1)"
+          >
+            <PhPlus :size="12" aria-hidden="true" />
+          </Button>
+        </div>
+
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          class="raw-config-tool"
+          :aria-label="expanded ? t('shared.json.collapse') : t('shared.json.expand')"
+          :aria-expanded="expanded"
+          aria-controls="raw-config-json"
+          @click="expanded = !expanded"
+        >
+          <PhArrowsIn v-if="expanded" :size="13" aria-hidden="true" />
+          <PhArrowsOut v-else :size="13" aria-hidden="true" />
+          <span>{{ expanded ? t('shared.json.collapse') : t('shared.json.expand') }}</span>
+        </Button>
+      </div>
+    </header>
 
     <div class="raw-config-editor-wrap bg-deep p-3 max-[640px]:p-2">
       <pre
         id="raw-config-json"
         ref="editor"
-        class="raw-config-editor m-0 overflow-auto rounded-lg border border-border-subtle bg-page px-5 py-4 font-mono leading-[1.65] text-success-soft caret-accent max-[640px]:px-3"
+        class="raw-config-editor m-0 overflow-auto rounded-lg border border-border-subtle bg-page px-4 py-3.5 font-mono text-primary caret-accent max-[640px]:px-3"
         :class="[{ 'raw-config-editor--expanded': expanded, 'raw-invalid': isJsonInvalid }]"
         :style="{ fontSize: editorFontSize + 'px' }"
         contenteditable="plaintext-only"
@@ -259,17 +395,21 @@ onBeforeUnmount(() => {
         :aria-label="t('v7explore.rawConfig')"
         :aria-invalid="isJsonInvalid ? 'true' : 'false'"
         spellcheck="false"
+        @keydown="onKeydown"
         @paste.prevent="onPaste"
         @drop.prevent="onDrop"
       ></pre>
     </div>
 
-    <footer class="raw-config-status flex min-h-10 items-center gap-2.5 border-t border-border-default/70 px-4 py-2 text-xs" :class="statusTone === 'danger' ? 'bg-danger-deep/9 text-danger-soft' : 'bg-page/45 text-secondary'" role="status" aria-live="polite">
-      <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border" :class="statusTone === 'danger' ? 'border-danger/45 bg-danger/10' : 'border-success/35 bg-success/10'" aria-hidden="true">
-        <PhCheck v-if="statusTone !== 'danger'" :size="10" weight="bold" class="text-success" />
-        <span v-else class="h-1.5 w-1.5 rounded-full bg-danger"></span>
-      </span>
-      <span>{{ statusText }}</span>
+    <footer class="raw-config-footer flex flex-wrap items-center justify-between gap-3 border-t border-border-default/70 bg-page/50 px-4 py-2 text-xs text-secondary">
+      <div class="flex min-w-0 items-center gap-2">
+        <span class="text-muted">{{ t('v7explore.editJsonHint') }}</span>
+      </div>
+      <div class="flex items-center gap-2.5 font-mono text-[11px] text-muted">
+        <span>{{ t('v7explore.lines', { count: lineCount }) }}</span>
+        <span aria-hidden="true" class="text-border-default">•</span>
+        <span>{{ t('v7explore.characters', { count: charCount }) }}</span>
+      </div>
     </footer>
   </section>
 </template>
@@ -277,17 +417,18 @@ onBeforeUnmount(() => {
 <style scoped>
 .raw-config-header {
   background:
-    linear-gradient(110deg, rgb(var(--accent-rgb) / 0.08), transparent 42%),
+    linear-gradient(110deg, rgb(var(--accent-rgb) / 0.06), transparent 40%),
     var(--bg-panel);
 }
 
 .raw-config-tool,
 .raw-config-icon-tool {
   display: inline-flex;
-  min-height: 30px;
+  min-height: 28px;
+  height: 28px;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
   background: var(--bg-panel);
@@ -301,12 +442,12 @@ onBeforeUnmount(() => {
 }
 
 .raw-config-tool {
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
 }
 
 .raw-config-icon-tool {
-  width: 30px;
+  width: 26px;
   padding: 0;
 }
 
@@ -352,9 +493,10 @@ onBeforeUnmount(() => {
 }
 
 .raw-config-editor {
-  height: clamp(360px, 54dvh, 720px);
-  min-height: 260px;
+  height: clamp(440px, 62dvh, 820px);
+  min-height: 380px;
   tab-size: 4;
+  line-height: 1.6;
   white-space: pre;
   overflow-wrap: normal;
   scrollbar-gutter: stable;
@@ -369,8 +511,8 @@ onBeforeUnmount(() => {
 }
 
 .raw-config-editor--expanded {
-  height: calc(100dvh - 250px);
-  min-height: 520px;
+  height: calc(100dvh - 180px);
+  min-height: 560px;
 }
 
 .raw-config-editor.raw-invalid {
@@ -380,18 +522,10 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
-  .raw-config-toolbar {
-    align-items: stretch;
-  }
-
-  .raw-config-toolbar > div:last-child {
-    width: 100%;
-  }
-
   .raw-config-editor,
   .raw-config-editor--expanded {
-    height: 58dvh;
-    min-height: 320px;
+    height: 60dvh;
+    min-height: 340px;
   }
 }
 
@@ -403,3 +537,4 @@ onBeforeUnmount(() => {
   }
 }
 </style>
+

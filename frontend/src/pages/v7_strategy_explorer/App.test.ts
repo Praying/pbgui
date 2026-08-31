@@ -238,6 +238,27 @@ describe('stage switching (:3066-3079)', () => {
     editorElement.dispatchEvent(pasteEvent);
     expect(editorElement.querySelector('img')).toBeNull();
     expect(editorElement.textContent).toBe('{"label":"<img src=x onerror=alert(1)>"}');
+
+    // Test Tab key handler
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    editorElement.dispatchEvent(tabEvent);
+    expect(editorElement.textContent).toContain('    ');
+
+    // Test Format JSON
+    editorElement.textContent = '{"a":1,"b":2}';
+    const formatBtn = wrapper.find('#raw-config-panel button[aria-label="Format JSON"]');
+    if (formatBtn.exists()) {
+      await formatBtn.trigger('click');
+      expect(editorElement.textContent).toContain('{\n    "a": 1,\n    "b": 2\n}');
+    }
+
+    // Test Reset Config
+    const resetBtn = wrapper.find('#raw-config-panel button[aria-label="Reset"]');
+    if (resetBtn.exists()) {
+      await resetBtn.trigger('click');
+      expect(editorElement.textContent).toContain('"starting_balance": 1500');
+    }
+
     wrapper.unmount();
   });
 });

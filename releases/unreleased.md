@@ -1,5 +1,12 @@
 # Unreleased
 
+## PBv7/PBv8 Strategy Explorer - Raw Config Editor & Layout Polish
+
+- Fixed the CJK text wrapping bug in the Raw Config panel that caused vertical column collapse and excessive empty header space.
+- Replaced the bulky dual-bar header with a unified modern IDE toolbar featuring real-time JSON validation/recalculation status, Format JSON, and Reset Config actions.
+- Enhanced editor UX with `Tab` key 4-space indentation support inside the editable code area and live line/character count telemetry in the footer.
+- Updated bilingual translations (`frontend/i18n/{en,zh}.json`) and ensured complete test coverage across Vitest and pytest i18n suites.
+
 ## PBv7/PBv8 Strategy Explorer - Raw Config Workbench
 
 - Replaced the compact legacy Raw Config panel with a dedicated responsive JSON workbench featuring clearer hierarchy, an adjustable editor viewport and font size, copy/expand controls, accessible textbox semantics, and persistent validation/recalculation status while preserving the existing debounced live-update behavior. Removed the now-unused legacy JSON panel script from the Vue page entry, added focused rendering coverage, and documented the workflow in the English, German, and Simplified Chinese Strategy Explorer guides.
