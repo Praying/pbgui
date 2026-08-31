@@ -1,5 +1,9 @@
 # Unreleased
 
+## PBv7/PBv8 Strategy Explorer - Raw Config Workbench
+
+- Replaced the compact legacy Raw Config panel with a dedicated responsive JSON workbench featuring clearer hierarchy, an adjustable editor viewport and font size, copy/expand controls, accessible textbox semantics, and persistent validation/recalculation status while preserving the existing debounced live-update behavior. Removed the now-unused legacy JSON panel script from the Vue page entry, added focused rendering coverage, and documented the workflow in the English, German, and Simplified Chinese Strategy Explorer guides.
+
 ## Vue3 Navigation - Swagger API Docs Entry
 
 - Added an API Docs (Swagger) entry to the Vue3 workbench rail under the Information group. It opens the backend Swagger UI (`/docs`) in a new tab, with `external`/`target="_blank"` support added to the shared rail item model, matching EN/ZH labels, and a rendering regression check for the new-tab behavior.

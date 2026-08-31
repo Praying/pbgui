@@ -22,8 +22,8 @@
  * │ ExplorerPlot           │ renderPlot :1391-1701, candle zoom :656-691  │
  * │ ExchangeStatePanel     │ renderExchangeState :1956-2004, sources      │
  * │                        │ :1943-1955                                   │
- * │ RawConfigPanel         │ syncRawFromState/bindRawConfigEditor         │
- * │                        │ :1702-1765 (window.PBGuiJsonPanel global)    │
+ * │ RawConfigPanel         │ editable config editor + live validation     │
+ * │                        │ (Vue component; legacy :1702-1765 flow)      │
  * │ SimulationPanel        │ sim controls :266-302, modes :479-502,       │
  * │                        │ manual start :2091-2105                      │
  * │ ComparePanel           │ compare controls :304-322, result tables     │
@@ -355,9 +355,8 @@ onBeforeUnmount(() => {
      (pseudo-elements; the class names stay as state anchors);
    - Plotly :fullscreen sizing and the scroll-lock pointer-events rule
      (pseudo-class + descendant selectors into Plotly's own DOM);
-   - #raw-config-panel rules targeting the json_panel.js-injected DOM.
-     (The range-slider track/thumb pseudo-elements of ParamTuning left with
-     the range inputs — ui/Slider renders its own track/fill/thumb.)
+   - The range-slider track/thumb pseudo-elements of ParamTuning left with
+     the range inputs — ui/Slider renders its own track/fill/thumb.
    Everything else from the stylesheet became utilities in the templates. */
 html,
 body {
@@ -469,17 +468,4 @@ body {
   height: 100% !important;
 }
 
-#raw-config-panel .json-panel-wrap {
-  margin-top: 0;
-}
-
-#raw-config-panel .json-pre[contenteditable='true'] {
-  outline: none;
-  cursor: text;
-}
-
-#raw-config-panel .json-pre.raw-invalid {
-  border-color: rgb(var(--danger-rgb) / 0.55);
-  color: var(--danger-soft);
-}
 </style>

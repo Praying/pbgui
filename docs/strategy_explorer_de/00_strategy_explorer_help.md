@@ -56,6 +56,9 @@ Dieser Modus hilft zum Beispiel bei folgenden Fragen:
 - "Warum ist ein Order-Level eng oder weit?"
 - "Wie wirkt sich die Aenderung eines Strategieparameters auf den Snapshot aus?"
 
+### Raw Config
+Die Stage **Raw Config** zeigt die vollstaendige aktive Strategie als bearbeitbare JSON-Workbench. Der Header kennzeichnet die Live-Config, die Toolbar kann das JSON kopieren, den Editor erweitern oder die Schriftgroesse anpassen, und die Statuszeile meldet Validierung und Neuberechnung. Gueltiges objektfoermiges JSON aktualisiert nach einer kurzen Verzoegerung automatisch Selektoren und Snapshot; ungueltiges JSON bleibt im Editor markiert, ohne den letzten gueltigen Strategie-State zu ersetzen.
+
 ### 2) Simulation / native Replay
 Die Stage **Simulation** durchlaeuft ein gewaehltes Candle-Fenster und zeichnet Fills auf.
 

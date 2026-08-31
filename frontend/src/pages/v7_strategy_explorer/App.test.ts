@@ -210,6 +210,36 @@ describe('stage switching (:3066-3079)', () => {
     expect((wrapper.get('#stage-analysis').element as HTMLElement).classList.contains('active')).toBe(true);
     wrapper.unmount();
   });
+
+  it('renders the raw config as an accessible, adjustable editor', async () => {
+    stubFetch();
+    const wrapper = await mountApp('/api/strategy-explorer/main_page');
+    await wrapper.find('[data-testid="rail-section-raw"]').trigger('click');
+
+    const editor = wrapper.get('#raw-config-json');
+    expect(editor.attributes('role')).toBe('textbox');
+    expect(editor.attributes('aria-multiline')).toBe('true');
+    expect(editor.text()).toContain('"starting_balance": 1500');
+    expect(wrapper.get('#raw-config-panel').text()).toContain('Edit JSON directly');
+
+    const expandButton = wrapper.get('#raw-config-panel button[aria-expanded="false"]');
+    await expandButton.trigger('click');
+    expect(editor.classes()).toContain('raw-config-editor--expanded');
+    expect(expandButton.attributes('aria-expanded')).toBe('true');
+    expect(expandButton.attributes('aria-controls')).toBe('raw-config-json');
+
+    const editorElement = editor.element as HTMLElement;
+    editorElement.textContent = '';
+    editorElement.focus();
+    const pasteEvent = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(pasteEvent, 'clipboardData', {
+      value: { getData: () => '{"label":"<img src=x onerror=alert(1)>"}' },
+    });
+    editorElement.dispatchEvent(pasteEvent);
+    expect(editorElement.querySelector('img')).toBeNull();
+    expect(editorElement.textContent).toBe('{"label":"<img src=x onerror=alert(1)>"}');
+    wrapper.unmount();
+  });
 });
 
 describe('Strategy Explorer precision palette source contracts', () => {
