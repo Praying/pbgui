@@ -2173,6 +2173,7 @@
   "shared.json.copy": "⧉ 复制",
   "shared.json.copyToClipboard": "复制到剪贴板",
   "shared.json.dragToResize": "拖动以调整大小",
+  "shared.json.empty": "没有数据",
   "shared.json.expand": "⬌ 展开",
   "shared.json.expandCollapse": "展开 / 折叠",
   "shared.json.largerFont": "放大字体",

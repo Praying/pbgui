@@ -9,6 +9,7 @@
  * the buttons use the shared ui/Button like PositionsManageModal.
  */
 import { computed } from 'vue';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import { dashT } from '../../lib/i18n';
 import { previewModalGeometry } from '../../lib/manageLogic';
@@ -29,9 +30,6 @@ const style = computed(() => ({
   left: geometry.value.left + 'px',
   top: geometry.value.top + 'px',
 }));
-
-/* render.js:2430 — JSON.stringify(config || {}, null, 2) */
-const configText = computed<string>(() => JSON.stringify(props.config ?? {}, null, 2));
 </script>
 
 <template>
@@ -49,7 +47,7 @@ const configText = computed<string>(() => JSON.stringify(props.config ?? {}, nul
           <div :class="[dpModalChrome.statusMsg, 'ok text-success-soft']">
             {{ dashT('dash.previewOnly', 'Preview only. No config was saved and no SSH sync was started.') }}
           </div>
-          <pre class="dp-preview min-h-0 flex-auto overflow-auto rounded-md border border-border-default bg-page p-[0.6rem] text-[0.68rem] leading-[1.35] whitespace-pre-wrap text-primary">{{ configText }}</pre>
+          <JsonViewer class="dp-preview min-h-0 flex-auto" fill :data="props.config ?? {}" />
           <div :class="dpModalChrome.actions">
             <span class="spacer flex-1"></span>
             <Button type="button" size="sm" @click="emit('close')">{{ dashT('common.close', 'Close') }}</Button>

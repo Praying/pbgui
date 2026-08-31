@@ -55,6 +55,7 @@ import { getBoot } from '@/shared/boot';
 import { replaceTopLocation } from '@/shared/nav';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -274,17 +275,13 @@ function deepTabClass(active: boolean): string {
 
 const fullLoadBarStyle = computed(() => ({ width: String(store.progress.fullLoad.display) + '%' }));
 
-/** Result Context pre (:2557-2578). */
-const resultMetaJson = computed(() =>
-  JSON.stringify(
-    buildLoadSummary(load.value, result.value, {
-      resultPath: store.state.resultPath,
-      loadStrategy: store.state.loadStrategy,
-      maxConfigs: store.state.maxConfigs,
-    }),
-    null,
-    2
-  )
+/** Result Context card (:2557-2578) — rendered as a JSON tree. */
+const resultMeta = computed(() =>
+  buildLoadSummary(load.value, result.value, {
+    resultPath: store.state.resultPath,
+    loadStrategy: store.state.loadStrategy,
+    maxConfigs: store.state.maxConfigs,
+  })
 );
 
 /** Display-range card (:2347-2412). */
@@ -575,7 +572,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="stage-block half panel-card col-span-6 rounded-xl border border-border-default bg-panel p-3.5 max-[900px]:col-span-12">
             <h3 class="mb-2">{{ t('v7explore.resultContext') }}</h3>
-            <pre id="result-meta-json" class="whitespace-pre-wrap break-words font-mono text-xs text-secondary">{{ resultMetaJson }}</pre>
+            <JsonViewer id="result-meta-json" :data="resultMeta" />
           </div>
         </div>
       </section>

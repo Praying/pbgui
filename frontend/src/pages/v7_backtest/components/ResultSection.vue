@@ -4,11 +4,12 @@
  * onResultActionsChanged (:6614-6786): the view block (liquidation
  * warning, BE + price overlay + log toggle, PnL + log toggle, drawdown,
  * equity hard-stop, TWE, BTC pair), the analysis/config JSON panels
- * (:6697-6721, PBGuiJsonPanel global with a <pre> fallback) and the
+ * (:6697-6721, shared JsonViewer trees) and the
  * plot/fills image lists (:6723-6743).
  */
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import PlotlyDiv from './PlotlyDiv.vue';
@@ -200,18 +201,19 @@ const liquidationReasons = computed<string[]>(() => {
   return reasons;
 });
 
-/* ── JSON panels (:6697-6721) ── */
+/* ── JSON panels (:6697-6721) — JsonViewer trees; load errors keep the
+   legacy "Error: ..." line via the text fallback. ── */
 
-const analysisText = ref('');
-const configText = ref('');
+const analysisData = ref<unknown>(null);
+const configData = ref<unknown>(null);
 
 async function loadAnalysisJson(): Promise<void> {
   if (!props.section.actions.has('analysis')) return;
   try {
     const payload = await props.dataApi.loadAnalysis(result.value.path, result.value);
-    analysisText.value = JSON.stringify(payload, null, 2) ?? '';
+    analysisData.value = payload;
   } catch (error) {
-    analysisText.value = `Error: ${error instanceof Error ? error.message : String(error)}`;
+    analysisData.value = `Error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
@@ -219,9 +221,9 @@ async function loadConfigJson(): Promise<void> {
   if (!props.section.actions.has('config')) return;
   try {
     const payload = await props.dataApi.loadConfig(result.value.path, result.value);
-    configText.value = JSON.stringify(payload, null, 2) ?? '';
+    configData.value = payload;
   } catch (error) {
-    configText.value = `Error: ${error instanceof Error ? error.message : String(error)}`;
+    configData.value = `Error: ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
@@ -364,13 +366,13 @@ const priceMarketLabel = computed(() => {
     <!-- Analysis JSON (:6697-6708) -->
     <div v-if="section.actions.has('analysis')" class="chart-wrap" data-test="analysis-section">
       <h4 style="margin: var(--sp-sm) 0">{{ t('v7backtest.analysis') }}</h4>
-      <pre class="json-pre">{{ analysisText }}</pre>
+      <JsonViewer :data="analysisData" />
     </div>
 
     <!-- Config JSON (:6710-6721) -->
     <div v-if="section.actions.has('config')" class="chart-wrap" data-test="config-section">
       <h4 style="margin: var(--sp-sm) 0">{{ t('v7backtest.configTitle') }}</h4>
-      <pre class="json-pre">{{ configText }}</pre>
+      <JsonViewer :data="configData" />
     </div>
 
     <!-- Plot images (:6723-6732) — literal strings, like the legacy -->

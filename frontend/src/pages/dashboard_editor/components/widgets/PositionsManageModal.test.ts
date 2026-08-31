@@ -446,9 +446,9 @@ describe('PositionsManageModal — action requests (render.js:2453-2508)', () =>
     expect(document.querySelector('.dp-preview-modal .dp-modal-title')!.textContent).toBe(
       'Panic config preview for alice'
     );
-    expect(document.querySelector('.dp-preview')!.textContent).toBe(
-      JSON.stringify({ live: { user: 'alice' } }, null, 2)
-    );
+    const previewTree = document.querySelector('.dp-preview')!;
+    expect(previewTree.querySelector('.vjs-tree')).not.toBeNull();
+    expect(previewTree.textContent).toContain('"live"');
     expect(document.querySelectorAll('.dp-preview-modal .dp-status-msg.ok')[0]!.textContent).toBe(
       'Preview only. No config was saved and no SSH sync was started.'
     );
@@ -587,20 +587,23 @@ describe('PositionsManageModal — drag and resize (render.js:3074-3182)', () =>
 });
 
 describe('PositionsConfigPreviewModal', () => {
-  it('renders the pretty-printed config and closes', async () => {
+  it('renders the config as a JsonViewer tree and closes', async () => {
     const wrapper = mount(PositionsConfigPreviewModal, {
       props: { title: 'T', config: { a: 1 } },
       attachTo: document.createElement('div'),
     });
     await flushPromises();
-    expect(document.querySelector('.dp-preview')!.textContent).toBe(JSON.stringify({ a: 1 }, null, 2));
+    const preview = document.querySelector('.dp-preview')!;
+    expect(preview.querySelector('.vjs-tree')).not.toBeNull();
+    expect(preview.textContent).toContain('"a"');
     await click(document.querySelector('.dp-preview-modal .dp-modal-close')!);
     expect(wrapper.emitted('close')).toHaveLength(1);
   });
 
-  it('stringifies a null config as {}', async () => {
+  it('renders a null config as an empty tree', async () => {
     mount(PositionsConfigPreviewModal, { props: { title: 'T', config: null } });
     await flushPromises();
-    expect(document.querySelector('.dp-preview')!.textContent).toBe('{}');
+    expect(document.querySelector('.dp-preview')!.querySelector('.vjs-tree')).not.toBeNull();
+    expect(document.querySelector('.dp-preview')!.textContent).toContain('{}');
   });
 });

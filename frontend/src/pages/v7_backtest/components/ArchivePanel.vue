@@ -13,6 +13,7 @@ import { PhPushPin, PhTrash } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
@@ -540,7 +541,7 @@ defineExpose({
     <div v-if="store.optimizeViewOpen.value" id="modal-root" :class="modalBackdropClass" data-test="optimize-view-modal">
       <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.optimizeConfigPrefix', { name: store.selectedOptimize.value?.name ?? '' }) }}</h3>
-        <div class="min-h-0 flex-1 overflow-auto"><pre class="json-pre" data-test="optimize-json">{{ JSON.stringify(store.optimizeConfigJson.value ?? {}, null, 2) }}</pre></div>
+        <div class="min-h-0 flex-1 overflow-auto"><JsonViewer data-test="optimize-json" :data="store.optimizeConfigJson.value ?? {}" /></div>
         <div class="mt-5 flex justify-end gap-2">
           <Button type="button" variant="default" class="modal-btn" @click="store.optimizeViewOpen.value = false">{{ t('common.close') }}</Button>
         </div>

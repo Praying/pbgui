@@ -2173,6 +2173,7 @@
   "shared.json.copy": "⧉ Copy",
   "shared.json.copyToClipboard": "Copy to clipboard",
   "shared.json.dragToResize": "Drag to resize",
+  "shared.json.empty": "No data",
   "shared.json.expand": "⬌ Expand",
   "shared.json.expandCollapse": "Expand / Collapse",
   "shared.json.largerFont": "Larger font",

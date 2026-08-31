@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import type { PlotState } from '../composables/useOptimizeActions';
 
-defineProps<{ plot: PlotState }>();
+const props = defineProps<{ plot: PlotState }>();
 const emit = defineEmits<{ close: [] }>();
 const { t } = useI18n();
 const modal = ref<HTMLElement | null>(null);
 const maximized = ref(false);
+
+/** Text-mode plots carry pretty-printed JSON; parse it for the tree viewer
+ *  and fall back to the raw text when it is not valid JSON. */
+const textData = computed<unknown>(() => {
+  const text = props.plot.text || '';
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+});
 let drag: { x: number; y: number; left: number; top: number } | null = null;
 let resize: { dir: string; x: number; y: number; left: number; top: number; width: number; height: number } | null = null;
 
@@ -84,7 +96,7 @@ onBeforeUnmount(() => {
       <div class="opt-plot-body min-h-0 flex-1 overflow-hidden p-0">
         <iframe v-if="plot.kind === 'html'" :srcdoc="plot.html" sandbox="allow-scripts allow-same-origin" :title="t('v7optimize.plot3d')"></iframe>
         <iframe v-else-if="plot.kind === 'url'" :src="plot.url" sandbox="allow-scripts allow-same-origin allow-forms" :title="t('v7optimize.pdParetoDash')"></iframe>
-        <pre v-else>{{ plot.text }}</pre>
+        <JsonViewer v-else fill :data="textData" />
       </div>
     </section>
   </div>
@@ -143,19 +155,6 @@ onBeforeUnmount(() => {
   min-width: 0;
   min-height: 0;
   border: 0;
-}
-
-.opt-plot-body pre {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  margin: 0;
-  overflow: auto;
-  padding: 14px;
-  background: var(--bg-page);
-  color: var(--text-primary);
-  white-space: pre-wrap;
 }
 
 .pnr { position: absolute; z-index: 4; }

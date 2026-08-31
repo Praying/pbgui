@@ -123,11 +123,14 @@ describe('detail render (:3863-3893)', () => {
     wrapper.unmount();
   });
 
-  it('serialises the full config into the JsonPanel pre', () => {
+  it('renders the full config as a JsonViewer tree', () => {
     const store = makeStore();
     store.state.selectedDetail = DETAIL;
     const { wrapper } = mountDetail(store);
-    expect(wrapper.get('#detail-full-config').text()).toBe(JSON.stringify(DETAIL.full_config, null, 2));
+    const viewer = wrapper.get('#detail-full-config');
+    expect(viewer.find('.vjs-tree').exists()).toBe(true);
+    expect(viewer.text()).toContain('"bot"');
+    expect(viewer.text()).toContain('"long"');
     wrapper.unmount();
   });
 
@@ -136,21 +139,6 @@ describe('detail render (:3863-3893)', () => {
     store.state.selectedDetail = { config_index: 1 };
     const { wrapper } = mountDetail(store);
     expect(wrapper.get('#detail-full-config').text()).toBe('Full config unavailable.');
-    wrapper.unmount();
-  });
-
-  it('uses the shared PBGuiJsonPanel chrome when the global is present (:4739-4746)', () => {
-    const createPanelHtml = vi.fn(
-      () => '<div class="json-panel-wrap" id="detail-full-config-wrap"><pre id="detail-full-config" class="json-pre"></pre></div>'
-    );
-    const setContent = vi.fn();
-    vi.stubGlobal('PBGuiJsonPanel', { createPanelHtml, setContent });
-    const store = makeStore();
-    store.state.selectedDetail = DETAIL;
-    const { wrapper } = mountDetail(store);
-    expect(createPanelHtml).toHaveBeenCalledWith({ wrapId: 'detail-full-config-wrap', preId: 'detail-full-config', title: 'Config', collapsedHeight: '400px' });
-    expect(setContent).toHaveBeenCalledWith('detail-full-config', JSON.stringify(DETAIL.full_config, null, 2), { expanded: false });
-    expect(wrapper.find('#detail-full-config-wrap').exists()).toBe(true);
     wrapper.unmount();
   });
 });

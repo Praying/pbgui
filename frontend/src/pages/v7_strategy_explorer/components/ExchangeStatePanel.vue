@@ -7,6 +7,7 @@
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
@@ -91,7 +92,6 @@ function resetExchangeParams(): void {
   store.state.autoExchangeParams = true;
   void store.recalculate();
 }
-const debugJson = computed(() => JSON.stringify(metadata.value, null, 2));
 
 /** Localized stepper tooltip — same resolution order as ParamTuning fields. */
 function fieldTip(key: StepperDef['key']): string {
@@ -115,7 +115,7 @@ function fieldTip(key: StepperDef['key']): string {
          pseudo-element chevron in App.vue's style block), not a form control -->
     <section class="accordion-card overflow-hidden rounded-lg border border-border-default bg-panel mt-2.5" :class="{ collapsed: !debugOpen }">
       <button class="accordion-head flex w-full items-center gap-2.5 border-0 bg-panel px-3 py-2.5 text-left text-primary" type="button" @click="debugOpen = !debugOpen">{{ t('v7explore.debugDataSources') }}</button>
-      <div class="accordion-body border-t border-border-default p-3"><pre id="exchange-state-json" class="w-full max-h-[460px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border-default bg-page p-2.5 font-mono text-xs">{{ debugJson }}</pre></div>
+      <div class="accordion-body border-t border-border-default p-3"><JsonViewer id="exchange-state-json" :data="metadata" :max-height="460" /></div>
     </section>
     <div class="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3 mt-3 max-[1250px]:grid-cols-[1fr]" id="exchange-state-controls">
       <div v-for="def in steppers" :key="def.id" class="flex flex-col gap-1 col-span-6 max-[1250px]:col-span-full">

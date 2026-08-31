@@ -2,60 +2,27 @@
 /**
  * Selected-config detail — renderDetail (:3849-3893) over the legacy markup
  * (:1506-1558): metrics mini-grid, style rows, robustness, scenario metrics,
- * all-metrics (capped at 24) and the full-config panel. The full-config
- * chrome comes from the shared /app/js/json_panel.js global (:4739-4746) —
- * same pattern as v7_strategy_explorer's RawConfigPanel; a plain <pre> is
- * the fallback when the global is unavailable (e.g. jsdom).
+ * all-metrics (capped at 24) and the full-config panel. The full config
+ * renders through the shared JsonViewer (vue-json-pretty tree) instead of
+ * the legacy /app/js/json_panel.js global; the no-config / unavailable
+ * messages keep the old <pre> placeholder look.
  *
  * The "Create Optimize Preset from this Config" section (:1559-1623) is
  * M-v7-7 scope (preset build + handoffs) and lands there.
  */
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { detailViewModel } from '../lib/viewModels';
 import { metricTooltip } from '../lib/metricDocs';
 import type { ParetoStore } from '../composables/useParetoSession';
-
-interface JsonPanelGlobal {
-  createPanelHtml(options: { wrapId: string; preId: string; title: string; collapsedHeight: string }): string;
-  setContent(preId: string, value: unknown, options?: { expanded?: boolean }): void;
-}
 
 const props = defineProps<{ store: ParetoStore }>();
 const { t } = useI18n();
 const store = props.store;
 
-const container = ref<HTMLElement | null>(null);
-
 const detail = computed(() => store.state.selectedDetail);
 const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, params ?? {}), store.state.selectedConfigIndex));
-
-function panel(): JsonPanelGlobal | undefined {
-  return (window as unknown as { PBGuiJsonPanel?: JsonPanelGlobal }).PBGuiJsonPanel;
-}
-
-/** renderDetail's setContent call (:3860, :3892) — collapsed on every apply. */
-function syncContent(): void {
-  panel()?.setContent('detail-full-config', vm.value.fullConfigText, { expanded: false });
-}
-
-/** The one-time panel chrome install (:4739-4746). */
-onMounted(() => {
-  const root = container.value;
-  const jsonPanel = panel();
-  if (!root || !jsonPanel) return;
-  root.innerHTML = jsonPanel.createPanelHtml({
-    wrapId: 'detail-full-config-wrap',
-    preId: 'detail-full-config',
-    title: t('v7explore.config'),
-    collapsedHeight: '400px',
-  });
-  const wrap = document.getElementById('detail-full-config-wrap');
-  if (wrap) wrap.style.marginTop = '0';
-  syncContent();
-});
-
-watch(() => vm.value.fullConfigText, syncContent);
 </script>
 
 <template>
@@ -128,8 +95,8 @@ watch(() => vm.value.fullConfigText, syncContent);
           <summary class="cursor-pointer font-bold group-open:mb-3">{{ t('v7explore.fullConfiguration') }}</summary>
           <!-- M-v7-7: the preset generator section (:1559-1623) lands here -->
           <div id="detail-full-config-panel" style="margin-top: 12px">
-            <div ref="container"></div>
-            <pre v-if="!panel()" id="detail-full-config" class="json-pre whitespace-pre-wrap break-words font-mono text-xs text-success" data-collapsed-height="400px">{{ vm.fullConfigText }}</pre>
+            <JsonViewer v-if="detail && detail.full_config" id="detail-full-config" :data="detail.full_config" />
+            <pre v-else id="detail-full-config" class="json-pre whitespace-pre-wrap break-words font-mono text-xs text-success" data-collapsed-height="400px">{{ vm.fullConfigText }}</pre>
           </div>
         </details>
       </section>

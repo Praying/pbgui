@@ -18,6 +18,7 @@ import { apiFetch, ApiError } from '@/shared/api';
 import AppShell from '@/shared/components/AppShell.vue';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
@@ -109,7 +110,6 @@ function safeText(value: unknown): string { return String(value ?? '').replace(/
 function display(value: unknown): string { return safeText(value) || '—'; }
 function apiMessage(error: unknown): string { return error instanceof ApiError ? `${error.status}: ${error.detail}` : error instanceof Error ? error.message : String(error); }
 function showNotice(text: unknown, kind: 'ok' | 'err' | 'warn' = 'ok'): void { notice.value = { text: safeText(text), kind }; }
-function jsonText(value: unknown): string { return JSON.stringify(value || {}, null, 2); }
 function timeText(value: unknown): string { if (!value) return '—'; const date = new Date(Number(value) * 1000); return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().replace('T', ' ').slice(0, 19); }
 function nodeLabel(node: Record<string, any>): string { return String(node.pbname || node.hostname || node.node_id || '—'); }
 /* Status → Tailwind utility mapping (the former cluster-sync.css carried the
@@ -139,7 +139,6 @@ const pillClass = 'inline-block rounded-full px-2 py-0.5 text-[0.72rem] font-med
 const statClass = 'rounded-md bg-page p-2.75';
 const statValueClass = 'mt-1 text-[1.25rem] font-semibold leading-tight tabular-nums';
 const statMonoClass = 'mt-1 break-all font-mono text-[0.95rem] font-semibold leading-tight';
-const preClass = 'm-0 overflow-auto whitespace-pre-wrap rounded-md bg-page p-2.5 font-mono text-[0.75rem] leading-[1.5] text-primary';
 const thClass = 'sticky top-0 z-[1] border-b border-border-default bg-card px-2.5 py-2.25 text-left align-middle text-[0.72rem] font-semibold tracking-[0.04em] text-secondary';
 const tdClass = 'border-b border-border-default px-2.5 py-2.25 text-left align-top';
 const tdHoverClass = `${tdClass} transition-colors group-hover:bg-accent/8`;
@@ -557,7 +556,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                     <div :class="statValueClass">{{ (credentials.conflicts || []).length }}</div>
                   </div>
                 </div>
-                <pre :class="preClass" class="mt-3">{{ jsonText(credentials.nodes) }}</pre>
+                <JsonViewer :data="credentials.nodes" class="mt-3" />
               </div>
             </article>
             <article :class="cardClass">
@@ -598,7 +597,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <header :class="cardHeadClass">
                 <span :class="cardTitleClass">{{ t('sysmon.retentionReport') }}</span>
               </header>
-              <div class="p-4"><pre :class="preClass">{{ jsonText(retentionReport) }}</pre></div>
+              <div class="p-4"><JsonViewer :data="retentionReport" /></div>
             </article>
           </section>
         </section>

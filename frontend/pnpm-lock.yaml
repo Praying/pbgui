@@ -32,6 +32,9 @@ importers:
       vue-i18n:
         specifier: ^11.1.1
         version: 11.4.9(vue@3.5.41(typescript@5.9.3))
+      vue-json-pretty:
+        specifier: ^2.6.0
+        version: 2.6.0(vue@3.5.41(typescript@5.9.3))
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.3
@@ -1324,6 +1327,12 @@ packages:
     peerDependencies:
       vue: ^3.0.0
 
+  vue-json-pretty@2.6.0:
+    resolution: {integrity: sha512-glz1aBVS35EO8+S9agIl3WOQaW2cJZW192UVKTuGmryx01ZvOVWc4pR3t+5UcyY4jdOfBUgVHjcpRpcnjRhCAg==}
+    engines: {node: '>= 10.0.0', npm: '>= 5.0.0'}
+    peerDependencies:
+      vue: '>=3.0.0'
+
   vue-tsc@2.2.12:
     resolution: {integrity: sha512-P7OP77b2h/Pmk+lZdJ0YWs+5tJ6J2+uOQPo7tlBnY44QqQSPYvS0qVT4wqDJgwrZaLe47etJLLQRFia71GYITw==}
     hasBin: true
@@ -2527,6 +2536,10 @@ snapshots:
       '@intlify/devtools-types': 11.4.9
       '@intlify/shared': 11.4.9
       '@vue/devtools-api': 6.6.4
+      vue: 3.5.41(typescript@5.9.3)
+
+  vue-json-pretty@2.6.0(vue@3.5.41(typescript@5.9.3)):
+    dependencies:
       vue: 3.5.41(typescript@5.9.3)
 
   vue-tsc@2.2.12(typescript@5.9.3):

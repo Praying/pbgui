@@ -6,6 +6,7 @@
  */
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { deepGet, fmt, fmtFixed } from '../lib/format';
 import type { ExplorerStore } from '../composables/useStrategyExplorer';
 import type { StrategyOrder } from '../types';
@@ -90,7 +91,7 @@ const DEBUG_BLOCKS = [
       <div class="accordion-body border-t border-border-default p-3">
         <template v-for="[title, path] in DEBUG_BLOCKS" :key="title">
           <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ title }}</h4>
-          <pre class="w-full max-h-[460px] overflow-auto whitespace-pre-wrap break-words rounded-lg border border-border-default bg-page p-2.5 font-mono text-xs">{{ JSON.stringify(deepGet(side(), path as unknown as string[], {}) || {}, null, 2) }}</pre>
+          <JsonViewer :data="deepGet(side(), path as unknown as string[], {}) || {}" />
         </template>
         <div v-if="deepGet<string>(side(), ['debug', 'next_entry_error'], '')" class="border rounded-[9px] px-3.25 py-2.5 border-danger/38 bg-danger-deep/24 text-danger-soft">{{ deepGet(side(), ['debug', 'next_entry_error'], '') }}</div>
       </div>

@@ -8,6 +8,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import { fmtDay, fmtTS, formatJobDuration } from '../lib/jobsFormat';
 import type { ModalState } from '../composables/useJobsMonitor';
@@ -31,11 +32,6 @@ const job = computed(() => props.modal.detailsJob || null);
 const payload = computed<Record<string, unknown>>(() => job.value?.payload || {});
 const progress = computed<Record<string, unknown>>(() => job.value?.progress || {});
 const lastResult = computed<Record<string, unknown>>(() => (progress.value.last_result as Record<string, unknown>) || {});
-
-function jsonBlock(value: Record<string, unknown>): string {
-  if (!value || Object.keys(value).length === 0) return '';
-  return JSON.stringify(value, null, 2);
-}
 
 /** renderDetailRows (:1841-1849) — empty values drop out. */
 function detailRows(rows: DetailRow[]): DetailRow[] {
@@ -140,18 +136,15 @@ function bodyClass(kind: string): string {
           </div>
           <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
             <h4 class="m-0 text-md text-primary">{{ t('market.payload') }}</h4>
-            <pre v-if="jsonBlock(payload)" class="hlda-json m-0 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-secondary/14 bg-page p-3 text-sm leading-[1.5] text-secondary font-[Fira_Code,Consolas,monospace]">{{ jsonBlock(payload) }}</pre>
-            <div v-else class="hlda-detail-empty text-sm text-muted">{{ t('market.noData') }}</div>
+            <JsonViewer :data="payload" hide-empty :empty-text="t('market.noData')" />
           </div>
           <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
             <h4 class="m-0 text-md text-primary">{{ t('market.progress') }}</h4>
-            <pre v-if="jsonBlock(progress)" class="hlda-json m-0 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-secondary/14 bg-page p-3 text-sm leading-[1.5] text-secondary font-[Fira_Code,Consolas,monospace]">{{ jsonBlock(progress) }}</pre>
-            <div v-else class="hlda-detail-empty text-sm text-muted">{{ t('market.noData') }}</div>
+            <JsonViewer :data="progress" hide-empty :empty-text="t('market.noData')" />
           </div>
           <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
             <h4 class="m-0 text-md text-primary">{{ t('market.lastResult') }}</h4>
-            <pre v-if="jsonBlock(lastResult)" class="hlda-json m-0 overflow-x-auto whitespace-pre-wrap break-words rounded-md border border-secondary/14 bg-page p-3 text-sm leading-[1.5] text-secondary font-[Fira_Code,Consolas,monospace]">{{ jsonBlock(lastResult) }}</pre>
-            <div v-else class="hlda-detail-empty text-sm text-muted">{{ t('market.noData') }}</div>
+            <JsonViewer :data="lastResult" hide-empty :empty-text="t('market.noData')" />
           </div>
         </template>
         <template v-else-if="modal.kind === 'details'">

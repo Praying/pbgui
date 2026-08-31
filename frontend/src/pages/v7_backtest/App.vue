@@ -44,6 +44,7 @@ import AppShell from '@/shared/components/AppShell.vue';
 import ConnectionNotice from '@/shared/components/ConnectionNotice.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import IconButton from '@/shared/components/IconButton.vue';
+import JsonViewer from '@/shared/components/JsonViewer.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -772,7 +773,7 @@ onMounted(() => {
       <div class="min-h-0 flex-1 overflow-auto">
         <div v-if="ohlcvLoading" class="text-secondary">{{ t('editor.preflight.running') }}</div>
         <div v-else-if="ohlcvError" class="field-status field-status-inline error">{{ ohlcvError }}</div>
-        <pre v-else class="m-0 max-h-[60vh] overflow-auto whitespace-pre-wrap break-words">{{ JSON.stringify(ohlcvData, null, 2) }}</pre>
+        <JsonViewer v-else :data="ohlcvData" :max-height="420" />
       </div>
       <div class="mt-5 flex justify-end gap-2">
         <Button type="button" variant="primary" class="modal-btn" data-test="ohlcv-readiness-close" @click="ohlcvOpen = false">{{ t('common.close') }}</Button>
