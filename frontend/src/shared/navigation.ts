@@ -2,6 +2,7 @@ import type { Component } from 'vue';
 import {
   PhActivity,
   PhArrowsClockwise,
+  PhBookOpen,
   PhChartBar,
   PhChartLine,
   PhChartLineUp,
@@ -29,6 +30,8 @@ export interface NavigationItem {
   groupId: string;
   /** Disabled items stay visible but render inert and greyed out. */
   disabled?: boolean;
+  /** External destinations open in a new tab instead of navigating the shell. */
+  external?: boolean;
 }
 
 export interface NavigationGroup {
@@ -167,6 +170,14 @@ export const WORKBENCH_NAVIGATION = [
         href: '/api/help/main_page',
         icon: PhQuestion,
         groupId: 'information',
+      },
+      {
+        pageKey: 'info_api_docs',
+        labelKey: 'nav.page.info_api_docs',
+        href: '/docs',
+        icon: PhBookOpen,
+        groupId: 'information',
+        external: true,
       },
     ],
   },

@@ -1,5 +1,9 @@
 # Unreleased
 
+## Vue3 Navigation - Swagger API Docs Entry
+
+- Added an API Docs (Swagger) entry to the Vue3 workbench rail under the Information group. It opens the backend Swagger UI (`/docs`) in a new tab, with `external`/`target="_blank"` support added to the shared rail item model, matching EN/ZH labels, and a rendering regression check for the new-tab behavior.
+
 ## Help & Tutorials - Simplified Chinese Guides
 
 - Added a full Simplified Chinese guide set: all 30 general guides now have `docs/help_zh/` peers and all 5 Strategy Explorer tutorials have `docs/strategy_explorer_zh/` peers, with filenames matching the English set so deep links and keyword selection keep working.

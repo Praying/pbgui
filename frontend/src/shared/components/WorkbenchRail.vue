@@ -278,6 +278,8 @@ onBeforeUnmount(() => {
                 'workbench-rail__item--disabled': item.disabled,
               }"
               :href="item.disabled ? undefined : item.href"
+              :target="item.external ? '_blank' : undefined"
+              :rel="item.external ? 'noopener noreferrer' : undefined"
               :aria-current="item.pageKey === props.activePage && !item.disabled ? 'page' : undefined"
               :aria-disabled="item.disabled ? 'true' : undefined"
               :aria-label="visuallyCollapsed ? itemTitle(item) : undefined"

@@ -5746,6 +5746,7 @@
   "market.hideAwsSecretKey": "隐藏 AWS 秘密访问密钥",
   "misc.apikeys.users": "用户",
   "nav.page.info_ai_chat": "AI 对话",
+  "nav.page.info_api_docs": "API文档 (Swagger)",
   "nav.ai": "AI",
   "nav.open_ai_assistant": "打开 AI 助手",
   "ai.chat.documentTitle": "AI 对话 - PBGui",

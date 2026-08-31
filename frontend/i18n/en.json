@@ -5746,6 +5746,7 @@
   "market.hideAwsSecretKey": "Hide AWS secret access key",
   "misc.apikeys.users": "Users",
   "nav.page.info_ai_chat": "AI Chat",
+  "nav.page.info_api_docs": "API Docs (Swagger)",
   "nav.ai": "AI",
   "nav.open_ai_assistant": "Open AI assistant",
   "ai.chat.documentTitle": "AI Chat - PBGui",

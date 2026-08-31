@@ -13,6 +13,7 @@ const EXPECTED_NAVIGATION_ROUTES = {
   info_balance_calc: '/api/balance-calc/main_page',
   info_coin_data: '/api/coin-data/main_page',
   info_market_data_fastapi: '/api/market-data/main_page',
+  info_api_docs: '/docs',
   system_api_keys: '/api/api-keys/main_page',
   system_profit_sweep: '/api/profit-sweep/main_page',
   system_cluster: '/api/cluster/main_page',
@@ -134,6 +135,22 @@ describe('WorkbenchRail', () => {
     ).find((item) => item.pageKey === 'info_ai_chat');
 
     expect(aiChat?.disabled).toBeUndefined();
+  });
+
+  it('opens external destinations like the Swagger docs in a new tab', () => {
+    const apiDocs = WORKBENCH_NAVIGATION.flatMap(
+      (group): NavigationItem[] => [...group.items],
+    ).find((item) => item.pageKey === 'info_api_docs');
+
+    expect(apiDocs?.external).toBe(true);
+    expect(apiDocs?.href).toBe('/docs');
+
+    const wrapper = mountRail('system_services', false, { groups: WORKBENCH_NAVIGATION });
+    const link = wrapper.get('a[href="/docs"]');
+
+    expect(link.attributes('target')).toBe('_blank');
+    expect(link.attributes('rel')).toBe('noopener noreferrer');
+    expect(link.attributes('aria-current')).toBeUndefined();
   });
 
   it('persists and emits the collapsed preference from mouse activation', async () => {
