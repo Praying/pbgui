@@ -1,5 +1,9 @@
 # Unreleased
 
+## Archive credential response hardening
+
+- Stop returning stored archive access tokens from GET /archives/settings; archive Git push and history compaction now resolve omitted tokens server-side, while the Vue setup form preserves configured credentials unless a new token is explicitly supplied.
+
 ## Merge origin/main - Vue3 Backtest Archive Parity
 
 - Merged the four remote release commits through v2.0.4, including the upstream release notification, VPS monitor, archive batching, restart serial, and backtest hardening changes. Adapted the new batch archive export, results-panel archive refresh, and pending-archive Git Push action to the Vue3 PBv7/PBv8 Backtest workbench while keeping the legacy page behavior in sync.

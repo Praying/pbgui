@@ -60,7 +60,7 @@ interface OutputModal {
 interface CompactPreviewModal {
   name: string;
   view: ArchiveCompactView;
-  creds: { username: string; email: string; access_token: string };
+  creds: { username: string; email: string };
 }
 
 export interface ArchiveGitStore {
@@ -276,7 +276,6 @@ export function createArchiveGitFlows(ctx: ArchiveGitContext): ArchiveGitStore {
       const body = {
         username: String(settings.username || ''),
         email: String(settings.email || ''),
-        access_token: String(settings.access_token || ''),
       };
       ctx.openLog();
       ctx.notify(ctx.t('v7backtest.pushingArchive', { name: myArchive }), 'info');
@@ -309,7 +308,7 @@ export function createArchiveGitFlows(ctx: ArchiveGitContext): ArchiveGitStore {
         my_archive: String(settings.my_archive || ''),
         username: String(settings.username || ''),
         email: String(settings.email || ''),
-        access_token: String(settings.access_token || ''),
+        access_token: '',
         auto_pull_interval: String(settings.auto_pull_interval || 0),
         readme_title: String(settings.readme_title || 'PBGui Config Archive'),
         readme_static_markdown: String(settings.readme_static_markdown || ''),
@@ -393,7 +392,6 @@ export function createArchiveGitFlows(ctx: ArchiveGitContext): ArchiveGitStore {
       const creds = {
         username: String(settings.username || ''),
         email: String(settings.email || ''),
-        access_token: String(settings.access_token || ''),
       };
       ctx.notify(ctx.t('v7backtest.preparingCompactDryRun'), 'info');
       try {

@@ -249,13 +249,13 @@ describe('git push (:9640-9669)', () => {
   it('pushes with stored credentials and shows the output modal (:9648-9666)', async () => {
     const h = harness({
       routes: {
-        '/archives/settings': { my_archive: 'mine', username: 'u', email: 'e@x', access_token: 'tok' },
+        '/archives/settings': { my_archive: 'mine', username: 'u', email: 'e@x', access_token: 'unexpected-token' },
         '/archives/mine/push': { output: 'pushed 2 files' },
       },
     });
     await h.store.push();
     const post = h.fetchCalls.find((c) => c.path === '/archives/mine/push');
-    expect(lastPostBody(post)).toEqual({ username: 'u', email: 'e@x', access_token: 'tok' });
+    expect(lastPostBody(post)).toEqual({ username: 'u', email: 'e@x' });
     expect(h.openLog).toHaveBeenCalledTimes(1); // showArchiveLog (:9652)
     expect(h.notify.some((n) => n.msg === 'v7backtest.pushingArchive:{"name":"mine"}' && n.kind === 'info')).toBe(true);
     expect(h.store.pushOutput.value).toEqual({ title: 'v7backtest.gitPushPrefix:{"name":"mine"}', output: 'pushed 2 files' });
@@ -287,7 +287,7 @@ describe('setup modal (:9747-9845)', () => {
     my_archive: 'mine',
     username: 'u',
     email: 'e@x',
-    access_token: 'tok',
+    access_token_configured: true,
     auto_pull_interval: 15,
     readme_title: 'My Title',
     readme_static_markdown: 'notes',
@@ -301,7 +301,7 @@ describe('setup modal (:9747-9845)', () => {
       my_archive: 'mine',
       username: 'u',
       email: 'e@x',
-      access_token: 'tok',
+      access_token: '',
       auto_pull_interval: '15',
       readme_title: 'My Title',
       readme_static_markdown: 'notes',
@@ -365,13 +365,14 @@ describe('setup modal (:9747-9845)', () => {
       },
     });
     await h.store.openSetup();
+    h.store.setupForm.value.access_token = 'explicit-token';
     await h.store.testPush();
     const post = h.fetchCalls.find((c) => c.path === '/archives/mine/push');
     expect(lastPostBody(post)).toEqual({
       my_archive: 'mine',
       username: 'u',
       email: 'e@x',
-      access_token: 'tok',
+      access_token: 'explicit-token',
       auto_pull_interval: 15,
       readme_title: 'My Title',
       readme_static_markdown: 'notes',
@@ -397,19 +398,32 @@ describe('setup modal (:9747-9845)', () => {
     });
     await h.store.openSetup();
     h.store.setupForm.value.my_archive = 'mine';
+    h.store.setupForm.value.access_token = 'explicit-token';
     await h.store.saveSetup();
     const post = h.fetchCalls.filter((c) => c.path === '/archives/settings').find((c) => c.init?.method === 'POST');
     expect(lastPostBody(post)).toEqual({
       my_archive: 'mine',
       username: 'u',
       email: 'e@x',
-      access_token: 'tok',
+      access_token: 'explicit-token',
       auto_pull_interval: 15,
       readme_title: 'My Title',
       readme_static_markdown: 'notes',
     });
     expect(h.store.setupOpen.value).toBe(false);
     expect(h.notify).toEqual([{ msg: 'v7backtest.archiveSettingsSaved', kind: 'ok' }]);
+  });
+
+  it('save without a new token preserves the configured token (:9806-9816)', async () => {
+    const h = harness({
+      routes: {
+        '/archives/settings': { ...settings, my_archive: 'mine' },
+      },
+    });
+    await h.store.openSetup();
+    await h.store.saveSetup();
+    const post = h.fetchCalls.filter((c) => c.path === '/archives/settings').find((c) => c.init?.method === 'POST');
+    expect(lastPostBody(post)).not.toHaveProperty('access_token');
   });
 
   it('save without an own archive toasts selectOwnArchive and posts nothing (:9827-9829)', async () => {
@@ -446,7 +460,7 @@ describe('compact history (:9670-9746)', () => {
     const h = harness({
       selectedName: 'mine',
       routes: {
-        '/archives/settings': { username: 'u', email: 'e@x', access_token: 'tok' },
+        '/archives/settings': { username: 'u', email: 'e@x', access_token_configured: true, access_token: 'unexpected-token' },
         '/archives/mine/compact': {
           status: [' M a.json'],
           storage_estimate: { available: true, saved_human: '1 MB', saved_percent: '10', current_human: '10 MB', after_human: '9 MB' },
@@ -460,7 +474,7 @@ describe('compact history (:9670-9746)', () => {
     await h.store.compactHistory();
     expect(h.notify[0]).toEqual({ msg: 'v7backtest.preparingCompactDryRun', kind: 'info' });
     const post = h.fetchCalls.find((c) => c.path === '/archives/mine/compact');
-    expect(lastPostBody(post)).toEqual({ dry_run: true, username: 'u', email: 'e@x', access_token: 'tok' });
+    expect(lastPostBody(post)).toEqual({ dry_run: true, username: 'u', email: 'e@x' });
     expect(h.store.compactPreview.value?.name).toBe('mine');
     expect(h.store.compactPreview.value?.view.savings).toEqual({ available: true, human: '1 MB', percent: '10' });
     expect(h.store.compactPreview.value?.view.branch).toBe('main');

@@ -107,7 +107,7 @@ export interface ArchiveSetupPayload {
   my_archive: string;
   username: string;
   email: string;
-  access_token: string;
+  access_token?: string;
   auto_pull_interval: number;
   readme_title: string;
   readme_static_markdown: string;
@@ -125,7 +125,7 @@ export function collectArchiveSetupForm(form: ArchiveSetupForm): ArchiveSetupPay
     my_archive: myArchive,
     username: form.username.trim(),
     email: form.email.trim(),
-    access_token: form.access_token,
+    ...(form.access_token ? { access_token: form.access_token } : {}),
     auto_pull_interval: parseInt(form.auto_pull_interval, 10) || 0,
     readme_title: form.readme_title.trim(),
     readme_static_markdown: form.readme_static_markdown,

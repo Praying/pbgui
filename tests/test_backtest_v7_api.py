@@ -258,6 +258,33 @@ def test_results_support_progressive_pages_and_config_filter(tmp_path, monkeypat
     assert filtered["pagination"]["has_more"] is False
 
 
+@pytest.mark.parametrize("stored_token, expected_configured", [("synthetic-token", True), ("", False)])
+def test_get_archive_settings_reports_token_configuration_without_returning_token(
+    stored_token: str,
+    expected_configured: bool,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Archive settings expose only whether the access token is configured."""
+    class FakeSnapshot:
+        """Minimal INI snapshot double for the settings endpoint."""
+
+        def has_option(self, section: str, key: str) -> bool:
+            return section == "config_archive" and key == "my_archive_access_token" and bool(stored_token)
+
+        def get(self, section: str, key: str) -> str:
+            if section == "config_archive" and key == "my_archive_access_token":
+                return stored_token
+            return ""
+
+    monkeypatch.setattr(backtest_v7, "load_ini_snapshot", lambda: FakeSnapshot())
+    monkeypatch.setattr(backtest_v7, "apply_metadata", lambda section: {"section": section})
+
+    response = backtest_v7.get_archive_settings(session=None)
+
+    assert "access_token" not in response
+    assert response["access_token_configured"] is expected_configured
+
+
 def test_add_optimize_config_to_archive_uses_worker_thread(tmp_path, monkeypatch):
     """Archive exports should not block the API event loop while file/git work runs."""
 

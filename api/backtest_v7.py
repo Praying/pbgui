@@ -70,6 +70,7 @@ from api.archive_helpers import (
     score_archive_results,
     update_archive_readme,
     update_archive_scores_and_readme,
+    update_archive_manifest_results,
     utc_now_iso,
     write_archive_json,
     write_optimize_meta,
@@ -1646,6 +1647,8 @@ def _compact_archive_history(name: str, dest: Path, body: dict) -> dict[str, Any
     username = str(body.get("username") or "")
     email = str(body.get("email") or "")
     access_token = str(body.get("access_token") or "")
+    if not access_token.strip():
+        access_token = str(load_ini("config_archive", "my_archive_access_token") or "")
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     message = str(body.get("message") or f"Compact {name} archive at {timestamp}")
     log_lines: list[str] = []
@@ -4377,6 +4380,8 @@ def _git_push_locked(name: str, dest: Path, body: dict | None) -> dict:
     username = body.get("username", "")
     email = body.get("email", "")
     access_token = body.get("access_token", "")
+    if not str(access_token).strip():
+        access_token = str(load_ini("config_archive", "my_archive_access_token") or "")
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     message = body.get("message", f"Update {name} at {timestamp}")
     dry_run = bool(body.get("dry_run", False))
@@ -4512,6 +4517,23 @@ async def add_config_to_archive(name: str, body: dict,
                                 session: SessionToken = Depends(require_auth)):
     """Copy a result directory into an archive using the versioned layout."""
     _require_own_archive(name, "Adding backtest results")
+    batch = (body or {}).get("results")
+    if batch is not None:
+        if not isinstance(batch, list) or not batch or len(batch) > 100:
+            raise HTTPException(422, "results must contain between 1 and 100 items")
+        sources: list[tuple[str, str | None]] = []
+        for item in batch:
+            if not isinstance(item, dict):
+                raise HTTPException(422, "Each result must be an object")
+            source_path = str(item.get("source_path") or "").strip()
+            if not source_path:
+                raise HTTPException(400, "source_path is required for every result")
+            declared_version = _normalize_archive_version(
+                item.get("backtest_version") or item.get("version")
+            )
+            sources.append((source_path, declared_version))
+        return await asyncio.to_thread(_add_configs_to_archive_sync, name, sources)
+
     source_path = body.get("source_path", "")
     if not source_path:
         raise HTTPException(400, "source_path is required")
@@ -4529,20 +4551,48 @@ def _add_config_to_archive_sync(
     declared_version: str | None = None,
 ) -> dict[str, Any]:
     """Synchronous result archive copy used from a worker thread."""
+    batch = _add_configs_to_archive_sync(name, [(source_path, declared_version)])
+    copied = batch["results"][0]
+    copied["migration_status"] = batch["migration_status"]
+    copied["manifest"] = batch["manifest"]
+    return copied
+
+
+def _add_configs_to_archive_sync(
+    name: str,
+    sources: list[tuple[str, str | None]],
+) -> dict[str, Any]:
+    """Copy multiple results with one migration check and incremental manifest update."""
     _validate_name(name)
     candidate = _archives_dir() / name
     with archive_transaction(candidate):
         archive_dir = _require_own_archive(name, "Adding backtest results")
-        src, backtest_version = _resolve_managed_backtest_result(source_path, declared_version)
-        _log(SERVICE, f"Archiving backtest result {src} to archive {name}", level="INFO")
-        migration = maybe_migrate_own_archive(name, archive_dir, _own_archive_name())
-        copied = copy_backtest_result_to_archive(src, archive_dir)
-        copied["backtest_version"] = backtest_version
-        copied["migration_status"] = migration.get("status") or archive_migration_status(archive_dir)
+        if load_archive_manifest(archive_dir) is None:
+            migration = maybe_migrate_own_archive(name, archive_dir, _own_archive_name())
+        else:
+            migration = {
+                "ran": False,
+                "reason": "valid_manifest",
+                "status": archive_migration_status(archive_dir, fast=True),
+            }
+        copied_results = []
+        for source_path, declared_version in sources:
+            src, backtest_version = _resolve_managed_backtest_result(source_path, declared_version)
+            _log(SERVICE, f"Archiving backtest result {src} to archive {name}", level="INFO")
+            copied = copy_backtest_result_to_archive(src, archive_dir)
+            copied["backtest_version"] = backtest_version
+            copied_results.append(copied)
+            _log(SERVICE, f"Archived backtest result to archive {name}: {copied.get('relative_path', '')}", level="INFO")
+        migration_status = migration.get("status") or archive_migration_status(archive_dir)
         _invalidate_archive_cache(name)
-        copied["manifest"] = rebuild_archive_manifest(archive_dir)
-        _log(SERVICE, f"Archived backtest result to archive {name}: {copied.get('relative_path', '')}", level="INFO")
-        return copied
+        manifest = update_archive_manifest_results(archive_dir, copied_results)
+        return {
+            "ok": True,
+            "count": len(copied_results),
+            "results": copied_results,
+            "migration_status": migration_status,
+            "manifest": manifest,
+        }
 
 
 @router.post("/archives/{name}/migrate")
@@ -5127,13 +5177,14 @@ def get_archive_settings(session: SessionToken = Depends(require_auth)):
         auto_pull_interval = max(0, int(value("auto_pull_interval") or "0"))
     except (TypeError, ValueError):
         auto_pull_interval = 0
+    access_token_configured = bool(value("my_archive_access_token").strip())
     return {
         "my_archive":        my_archive,
         "my_archive_path":   value("my_archive_path"),
         "generated_paths":   True,
         "username":          value("my_archive_username"),
         "email":             value("my_archive_email"),
-        "access_token":      value("my_archive_access_token"),
+        "access_token_configured": access_token_configured,
         "auto_pull_interval": auto_pull_interval,
         "readme_title":      readme_config.get("title", my_archive or "PBGui Config Archive"),
         "readme_static_markdown": readme_config.get("static_markdown", ""),

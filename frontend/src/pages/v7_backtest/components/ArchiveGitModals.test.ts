@@ -144,7 +144,7 @@ describe('compact preview modal (:9700-9722)', () => {
         statusText: ' M a.json',
         sizeText: 'big',
       },
-      creds: { username: '', email: '', access_token: '' },
+      creds: { username: '', email: '' },
     };
     const wrapper = mountModals(store);
     const modal = wrapper.find('[data-test="archive-compact-preview"]');
@@ -192,7 +192,7 @@ describe('compact preview modal (:9700-9722)', () => {
         statusText: 'Clean working tree',
         sizeText: 'No size estimate available',
       },
-      creds: { username: '', email: '', access_token: '' },
+      creds: { username: '', email: '' },
     };
     const wrapper = mountModals(store);
     const text = wrapper.find('[data-test="archive-compact-preview"]').text();
