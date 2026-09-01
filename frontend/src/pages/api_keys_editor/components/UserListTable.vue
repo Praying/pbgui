@@ -5,7 +5,7 @@
  * expiry badges, in-use state and row actions.
  */
 import { computed } from 'vue';
-import { PhCaretDown, PhCaretUp, PhKey, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhKey, PhMagnifyingGlass, PhPlus, PhShieldCheck, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -16,7 +16,7 @@ import type { BybitExpiryInfo, HlExpiryInfo, UserSummary } from '../types';
 
 const props = defineProps<{ store: ApiKeysStore }>();
 
-const emit = defineEmits<{ (e: 'edit', name: string): void; (e: 'delete', name: string): void }>();
+const emit = defineEmits<{ (e: 'edit', name: string): void; (e: 'delete', name: string): void; (e: 'create'): void }>();
 
 const { t } = useI18n();
 
@@ -33,6 +33,24 @@ const metaByText = computed(() => {
   const by = store.meta.value?.api_by;
   return by ? t('misc.apikeys.byPrefix', { name: by }) : '';
 });
+
+const EXCHANGE_DISPLAY_NAMES: Record<string, string> = {
+  binance: 'Binance',
+  bybit: 'Bybit',
+  bitget: 'Bitget',
+  gateio: 'Gate.io',
+  hyperliquid: 'Hyperliquid',
+  okx: 'OKX',
+  kucoin: 'KuCoin',
+  bitunix: 'Bitunix',
+  weex: 'WEEX',
+};
+
+const DEFAULT_SUPPORTED_EXCHANGES = ['binance', 'bybit', 'bitget', 'gateio', 'hyperliquid', 'okx', 'kucoin', 'bitunix', 'weex'];
+
+function formatExchangeName(ex: string): string {
+  return EXCHANGE_DISPLAY_NAMES[ex.toLowerCase()] || ex;
+}
 
 /** Exchange badges use one accent treatment so the table keeps one visual focus. */
 function exchangeClass(_exchange: string | undefined): string {
@@ -133,50 +151,147 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
 
 <template>
   <div id="userListView" class="mx-auto w-[min(100%,1500px)]">
-    <!-- API keys metadata bar -->
-    <div
-      id="apiMetaBar"
-      class="api-meta-bar mb-4 flex min-h-[42px] items-center justify-between gap-3 rounded-md border border-border-subtle bg-card px-3 py-2 text-xs text-secondary"
-    >
-      <div class="api-meta-bar__identity flex items-center gap-2">
-        <span class="api-meta-bar__icon" aria-hidden="true"><PbIcon :icon="PhKey" :size="15" /></span>
-        <span class="api-meta-bar__label">{{ t('misc.apikeys.serial') }}</span>
-        <span id="metaSerial" class="api-meta-bar__serial">{{ store.meta.value?.api_serial || '-' }}</span>
+    <!-- Unified Toolbar: Filter + Counts (left) & Metadata + Add Button (right) -->
+    <div class="user-list-toolbar mb-3.5 flex flex-wrap items-center justify-between gap-3">
+      <!-- Left: Search filter + User counts -->
+      <div class="flex items-center gap-2.5">
+        <div class="user-filter-control w-72 sm:w-80">
+          <PbIcon class="user-filter-icon" :icon="PhMagnifyingGlass" :size="15" />
+          <Input
+            type="text"
+            id="userFilter"
+            class="h-9 w-full pl-9 pr-9"
+            :model-value="store.filterText.value"
+            :placeholder="t('misc.apikeys.filterByNameOrExchange')"
+            @update:model-value="store.setFilter(String($event ?? ''))"
+            @keydown="onFilterKeydown"
+          />
+          <Button
+            v-if="store.filterText.value"
+            id="userFilterClear"
+            class="user-filter-clear"
+            type="button"
+            variant="ghost"
+            size="icon"
+            :title="t('misc.apikeys.clearFilter')"
+            :aria-label="t('misc.apikeys.clearFilter')"
+            @click="clearFilterAndFocus"
+          >
+            <PbIcon :icon="PhX" :size="14" />
+          </Button>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span
+            id="sb-count"
+            class="sb-count inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-secondary/10 border border-border-subtle/70 px-2.5 text-xs font-semibold text-secondary shadow-2xs"
+          >
+            {{ store.usersState.value === 'ready' ? t('misc.apikeys.usersCount', { count: store.users.value.length }) : store.usersState.value === 'error' ? t('common.error') : '…' }}
+          </span>
+          <span
+            id="sb-inuse"
+            v-show="store.inUseCount.value > 0"
+            class="sb-count inline-flex h-7 shrink-0 items-center whitespace-nowrap rounded-full bg-success/10 border border-success/20 px-2.5 text-xs font-semibold text-success shadow-2xs"
+          >
+            {{ t('misc.apikeys.inUseCount', { count: store.inUseCount.value }) }}
+          </span>
+        </div>
       </div>
-      <div class="api-meta-bar__details flex items-center gap-2">
-        <span id="metaTs">{{ metaTsText }}</span>
-        <span id="metaBy" class="max-[768px]:hidden">{{ metaByText }}</span>
-      </div>
-    </div>
-    <div class="user-list-toolbar">
-      <div class="user-filter-control">
-        <PbIcon class="user-filter-icon" :icon="PhMagnifyingGlass" :size="15" />
-        <Input
-          type="text"
-          id="userFilter"
-          class="w-full pl-9 pr-9"
-          :model-value="store.filterText.value"
-          :placeholder="t('misc.apikeys.filterByNameOrExchange')"
-          @update:model-value="store.setFilter(String($event ?? ''))"
-          @keydown="onFilterKeydown"
-        />
-        <Button
-          v-if="store.filterText.value"
-          id="userFilterClear"
-          class="user-filter-clear"
-          type="button"
-          variant="ghost"
-          size="icon"
-          :title="t('misc.apikeys.clearFilter')"
-          :aria-label="t('misc.apikeys.clearFilter')"
-          @click="clearFilterAndFocus"
+
+      <!-- Right: API keys metadata badge + Add User button -->
+      <div class="flex items-center gap-2.5">
+        <div
+          id="apiMetaBar"
+          class="api-meta-bar inline-flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-card/60 backdrop-blur-sm px-3 text-xs text-secondary shadow-xs"
         >
-          <PbIcon :icon="PhX" :size="14" />
+          <div class="api-meta-bar__identity flex items-center gap-1.5">
+            <span class="api-meta-bar__icon" aria-hidden="true"><PbIcon :icon="PhKey" :size="13" /></span>
+            <span class="api-meta-bar__label font-medium">{{ t('misc.apikeys.serial') }}</span>
+            <span id="metaSerial" class="api-meta-bar__serial">{{ store.meta.value?.api_serial || '-' }}</span>
+          </div>
+          <div class="api-meta-bar__details flex items-center gap-2 border-l border-border-subtle pl-2.5">
+            <span id="metaTs">{{ metaTsText }}</span>
+            <span id="metaBy" class="max-[900px]:hidden">{{ metaByText }}</span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          :variant="store.users.value.length === 0 ? 'outline' : 'primary'"
+          class="h-9 gap-1.5 px-3.5 shadow-xs"
+          data-testid="add-user"
+          @click="emit('create')"
+        >
+          <PbIcon :icon="PhPlus" :size="14" />
+          {{ t('misc.apikeys.addUser') }}
         </Button>
       </div>
     </div>
+
+    <!-- Table Container -->
     <div class="user-table-wrap">
-      <table class="user-table mb-0 w-full border-separate border-spacing-0 bg-panel">
+      <!-- 1. Zero state when users list is empty -->
+      <div
+        v-if="store.usersState.value === 'ready' && store.users.value.length === 0"
+        class="empty-state-container w-full flex flex-col items-center justify-center py-12 px-6 text-center"
+      >
+        <div class="empty-state-icon mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-accent/30 bg-accent/15 text-accent shadow-[0_0_28px_rgba(var(--accent-rgb)/0.22)]">
+          <PbIcon :icon="PhKey" :size="28" />
+        </div>
+        <h3 class="text-base font-semibold text-primary mb-2">
+          {{ t('misc.apikeys.emptyTitle') }}
+        </h3>
+        <p class="empty-state-desc text-sm text-secondary leading-relaxed mb-6 max-w-[540px] w-full mx-auto">
+          {{ t('misc.apikeys.emptyDesc') }}
+        </p>
+        <Button
+          type="button"
+          variant="primary"
+          class="px-6 py-2.5 font-medium shadow-md shadow-accent/20 hover:shadow-accent/30 transition-all gap-2"
+          data-testid="empty-add-user"
+          @click="emit('create')"
+        >
+          <PbIcon :icon="PhPlus" :size="15" />
+          {{ t('misc.apikeys.emptyAddUser') }}
+        </Button>
+
+        <div class="mt-7 flex items-center justify-center gap-2 rounded-full border border-border-subtle bg-card/60 px-4 py-1 text-xs text-muted">
+          <PbIcon :icon="PhShieldCheck" :size="14" class="text-accent" />
+          <span>{{ t('misc.apikeys.securityHint') }}</span>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-1.5 text-xs text-muted">
+          <span class="mr-1 text-muted/70">{{ t('misc.apikeys.supportedExchanges') }}:</span>
+          <span
+            v-for="ex in (store.exchanges.value.length ? store.exchanges.value : DEFAULT_SUPPORTED_EXCHANGES)"
+            :key="ex"
+            class="rounded bg-secondary/8 border border-border-subtle/60 px-2 py-0.5 font-medium text-secondary"
+          >
+            {{ formatExchangeName(ex) }}
+          </span>
+        </div>
+        <span class="sr-only">{{ t('misc.apikeys.noApiKeysConfigured') }}</span>
+      </div>
+
+      <!-- 2. Loading state -->
+      <div
+        v-else-if="store.usersState.value === 'loading'"
+        class="w-full flex items-center justify-center py-24 text-center text-secondary"
+      >
+        <span class="mr-2 inline-block h-5 w-5 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span>
+        <span>{{ t('misc.apikeys.loadingUsers') }}</span>
+      </div>
+
+      <!-- 3. Error state -->
+      <div
+        v-else-if="store.usersState.value === 'error'"
+        class="w-full flex items-center justify-center py-24 text-center text-danger-soft"
+      >
+        <span>{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</span>
+      </div>
+
+      <!-- 4. Data table when users exist -->
+      <table v-else class="user-table mb-0 w-full border-separate border-spacing-0 bg-panel">
         <caption class="sr-only">{{ t('misc.apikeys.users') }}</caption>
         <colgroup>
           <col class="user-table__name-column">
@@ -188,39 +303,48 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         </colgroup>
         <thead>
           <tr>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('name')" :aria-sort="sortAriaValue('name')" id="th-name" @click="store.setSort('name')">
-            <span>{{ t('misc.apikeys.user') }}</span>
-            <PbIcon v-if="store.sortCol.value === 'name'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
-          </th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('exchange')" :aria-sort="sortAriaValue('exchange')" id="th-exchange" @click="store.setSort('exchange')">
-            <span>{{ t('misc.apikeys.exchange') }}</span>
-            <PbIcon v-if="store.sortCol.value === 'exchange'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
-          </th>
-          <th class="border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.credentials') }}</th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('hl_expiry')" :aria-sort="sortAriaValue('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
-            <span>{{ t('misc.apikeys.keyExpiry') }}</span>
-            <PbIcon v-if="store.sortCol.value === 'hl_expiry'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
-          </th>
-          <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" :class="sortClass('status')" :aria-sort="sortAriaValue('status')" id="th-status" @click="store.setSort('status')">
-            <span>{{ t('misc.apikeys.status') }}</span>
-            <PbIcon v-if="store.sortCol.value === 'status'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
-          </th>
-          <th class="border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.actions') }}</th>
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('name')" :aria-sort="sortAriaValue('name')" id="th-name" @click="store.setSort('name')">
+              <span>{{ t('misc.apikeys.user') }}</span>
+              <PbIcon v-if="store.sortCol.value === 'name'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
+            </th>
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('exchange')" :aria-sort="sortAriaValue('exchange')" id="th-exchange" @click="store.setSort('exchange')">
+              <span>{{ t('misc.apikeys.exchange') }}</span>
+              <PbIcon v-if="store.sortCol.value === 'exchange'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
+            </th>
+            <th class="border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary">{{ t('misc.apikeys.credentials') }}</th>
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('hl_expiry')" :aria-sort="sortAriaValue('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
+              <span>{{ t('misc.apikeys.keyExpiry') }}</span>
+              <PbIcon v-if="store.sortCol.value === 'hl_expiry'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
+            </th>
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('status')" :aria-sort="sortAriaValue('status')" id="th-status" @click="store.setSort('status')">
+              <span>{{ t('misc.apikeys.status') }}</span>
+              <PbIcon v-if="store.sortCol.value === 'status'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
+            </th>
+            <th class="border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary">{{ t('misc.apikeys.actions') }}</th>
           </tr>
         </thead>
         <tbody id="userTableBody">
-        <tr v-if="store.usersState.value === 'loading'" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state"><span class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span> {{ t('misc.apikeys.loadingUsers') }}</div></td>
-        </tr>
-        <tr v-else-if="store.usersState.value === 'error'" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state table-state--error">{{ t('misc.apikeys.failedToLoad', { error: store.usersError.value }) }}</div></td>
-        </tr>
-        <tr v-else-if="store.users.value.length === 0" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state">{{ t('misc.apikeys.noApiKeysConfigured') }}</div></td>
-        </tr>
-        <tr v-else-if="store.filteredSortedUsers.value.length === 0" class="loading-row">
-          <td colspan="6" class="border-b border-border-subtle p-10 text-center text-base text-secondary"><div class="table-state">{{ t('misc.apikeys.noUsersMatchFilter') }}</div></td>
-        </tr>
+          <!-- Filter returned no matching rows -->
+          <tr v-if="store.filteredSortedUsers.value.length === 0" class="loading-row">
+            <td colspan="6" class="p-0 border-none">
+              <div class="empty-filter-container flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-border-default bg-card text-muted">
+                  <PbIcon :icon="PhMagnifyingGlass" :size="22" />
+                </div>
+                <p class="text-sm font-medium text-secondary mb-3">
+                  {{ t('misc.apikeys.noUsersMatchFilter') }}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  @click="clearFilterAndFocus"
+                >
+                  {{ t('misc.apikeys.clearFilter') }}
+                </Button>
+              </div>
+            </td>
+          </tr>
         <tr
           v-else
           v-for="u in store.filteredSortedUsers.value"
@@ -280,9 +404,14 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   margin-bottom: 12px;
 }
 
+.sb-count {
+  white-space: nowrap !important;
+  flex-shrink: 0;
+}
+
 .user-filter-control {
   position: relative;
-  width: min(100%, 420px);
+  width: min(100%, 320px);
   max-width: 100%;
 }
 
@@ -344,12 +473,39 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
 }
 
 .user-table-wrap {
+  width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
   background: var(--bg-panel);
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.45);
   scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
+}
+
+.empty-state-container {
+  width: 100%;
+  background: radial-gradient(circle at 50% 25%, rgb(var(--accent-rgb) / 0.08), transparent 70%);
+}
+
+.empty-state-desc {
+  display: block;
+  text-wrap: wrap !important;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.empty-state-icon {
+  animation: float-subtle 4s ease-in-out infinite;
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .user-table-wrap::-webkit-scrollbar {

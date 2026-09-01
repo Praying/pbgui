@@ -347,4 +347,25 @@ describe('API Keys page shell', () => {
     await flushPromises();
     expect(wrapper.find('#userListView').isVisible()).toBe(true);
   });
+
+  it('renders rich empty state when no users are configured and allows adding a user', async () => {
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      const path = apiPath(url).path;
+      const method = (init?.method as string) || 'GET';
+      if (path === '/exchanges') return Promise.resolve(new Response(JSON.stringify(EXCHANGES), { status: 200 }));
+      if (path === '/meta') return Promise.resolve(new Response(JSON.stringify({ api_serial: 'SER-EMPTY', api_ts: null, api_by: null }), { status: 200 }));
+      if (path === '/' && method === 'GET') return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      if (String(url) === '/api/notify_log') return Promise.resolve(new Response('{}', { status: 200 }));
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    });
+
+    const wrapper = await mountApp();
+    expect(wrapper.find('.empty-state-container').exists()).toBe(true);
+    expect(wrapper.text()).toContain('No API Keys Configured');
+    expect(wrapper.find('[data-testid="empty-add-user"]').exists()).toBe(true);
+
+    await wrapper.find('[data-testid="empty-add-user"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('#editPanel').isVisible()).toBe(true);
+  });
 });

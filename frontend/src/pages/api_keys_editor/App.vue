@@ -313,23 +313,8 @@ onMounted(async () => {
 
     <div id="page-body" class="flex h-[calc(100dvh-64px)] min-h-0 gap-[var(--component-gap)] overflow-hidden select-none">
       <div id="main-content" class="min-h-0 min-w-0 flex-1 select-text overflow-y-auto p-[var(--page-padding)]">
-        <!-- User list head: counts + primary action live with the list now
-             that the rail hosts the view sections. -->
-        <div v-show="view === 'list'" class="users-head mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <div class="users-head-meta flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <span class="users-head-title text-xs font-bold uppercase tracking-label text-muted">{{ t('misc.apikeys.users') }}</span>
-            <span class="sb-count rounded-full bg-secondary/8 px-2 py-px text-xs font-semibold text-secondary" id="sb-count">
-              {{ store.usersState.value === 'ready' ? t('misc.apikeys.usersCount', { count: store.users.value.length }) : store.usersState.value === 'error' ? t('common.error') : '…' }}
-            </span>
-            <span class="sb-count rounded-full bg-secondary/8 px-2 py-px text-xs font-semibold text-secondary" id="sb-inuse" v-show="store.inUseCount.value > 0">
-              {{ t('misc.apikeys.inUseCount', { count: store.inUseCount.value }) }}
-            </span>
-          </div>
-          <Button type="button" variant="primary" data-testid="add-user" @click="showCreateForm"><PbIcon :icon="PhPlus" /> {{ t('misc.apikeys.addUser') }}</Button>
-        </div>
-
         <!-- User list -->
-        <UserListTable v-show="view === 'list'" :store="store" @edit="onEditUser" @delete="onDeleteUser" />
+        <UserListTable v-show="view === 'list'" :store="store" @edit="onEditUser" @delete="onDeleteUser" @create="showCreateForm" />
 
         <!-- Edit/Create panel -->
         <EditUserPanel

@@ -408,7 +408,7 @@
   }
 
   p {
-    text-wrap: pretty;
+    text-wrap: wrap;
   }
 
   /* Numeric cells and code share the mono stack with tabular figures */

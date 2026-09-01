@@ -1,5 +1,13 @@
 # Unreleased
 
+## API Keys Management - UI/UX Polish (P0 & P1)
+
+- **P0: Unified Single-Line Toolbar**: Merged the fragmented top action bar and secondary search/metadata bar into a single streamlined, high-efficiency toolbar. Fixed the search box width to 320px (`w-80`), grouped search with the count badge (`#sb-count`) on the left, and aligned the metadata pill with the primary action button on the right at a uniform 36px (`h-9`) height with balanced breathing room.
+- **P0: Zero-State Experience & Visual Elevation**: Replaced the plain table text with a modern zero-state card featuring an animated glowing key icon, balanced radial-gradient surface elevation, structured guide copy without orphan words, a prominent CTA button, a local AES-256 encryption security badge with `PhShieldCheck` icon, and quick ecosystem badges for supported exchanges.
+- **P0: Fix CJK Text Vertical Collapse**: Fixed a Chromium layout issue where `text-wrap: pretty` in `tailwind.css` caused CJK characters without ASCII whitespace to collapse into a single vertical column. Replaced with `text-wrap: wrap` and explicit container width constraints.
+- **P1: Surface Elevation & Visual Depth**: Enhanced the table container with subtle borders (`border-border-default`), card elevation (`shadow-md`), balanced padding, and interactive hover highlights.
+- **i18n**: Added matching bilingual dictionary entries (`misc.apikeys.emptyTitle`, `emptyDesc`, `emptyAddUser`, `securityHint`, `supportedExchanges`) in `frontend/i18n/{en,zh}.json` and full Vitest component test coverage.
+
 ## Vue3 Workspace Header - Breadcrumb & Sidebar Header Height Alignment
 
 - Unified `.workspace-header` height with the left sidebar header (`.workbench-rail__brand`) to a standardized 64px (`--header-height: 64px`), replacing the previous 112px bottom-aligned header.
