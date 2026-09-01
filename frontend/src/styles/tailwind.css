@@ -206,6 +206,7 @@
   --input-h: var(--control-height-md);
   --btn-h: var(--control-height-md);
   --nav-height: 52px;
+  --header-height: 64px;
   --rail-expanded-width: 248px;
   --rail-collapsed-width: 68px;
   --workspace-max-width: 1680px;

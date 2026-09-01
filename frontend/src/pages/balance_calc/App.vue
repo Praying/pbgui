@@ -107,7 +107,7 @@ onMounted(() => {
       />
     </template>
 
-  <div id="page-content" class="h-[calc(100dvh-112px)] overflow-y-auto p-[var(--page-padding)]">
+  <div id="page-content" class="h-[calc(100dvh-64px)] overflow-y-auto p-[var(--page-padding)]">
     <div class="toolbar flex flex-wrap items-center gap-3 border-b border-border-default pb-3 mb-5">
       <span id="sel-instance-label" class="text-sm font-semibold text-secondary">{{ t('misc.balance.instanceLabel') }}</span>
       <SelectRoot :model-value="selectedInstanceValue" @update:model-value="onInstanceSelect">

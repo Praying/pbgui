@@ -1,5 +1,12 @@
 # Unreleased
 
+## Vue3 Workspace Header - Breadcrumb & Sidebar Header Height Alignment
+
+- Unified `.workspace-header` height with the left sidebar header (`.workbench-rail__brand`) to a standardized 64px (`--header-height: 64px`), replacing the previous 112px bottom-aligned header.
+- Centered breadcrumbs vertically alongside the status indicator with matching bottom border lines across the entire viewport.
+- Adjusted the current page breadcrumb title font size to 19px (`--text-section`) for visual weight balance with the PBGui brand title, while retaining adaptive multi-line height for pages with descriptions.
+- Updated main page body viewport height constraints across `api_keys_editor`, `ai_chat`, `balance_calc`, `coin_data`, and `db_tools` to `h-[calc(100dvh-64px)]`.
+
 ## Merge origin/main v2.01 - Vue3 Optimize and VPS Parity
 
 - Merged the upstream v2.01 release, including PB8 scenario templates, Sweep Cycles evaluation, OHLCV start-date jobs, Pareto holdout drafts, AI preview support, and the VPS Manager runtime-version correction.

@@ -101,7 +101,7 @@ function onQuickReply(actionId: string, value: string): void {
       <span class="text-xs text-secondary">{{ store.notice.value.message }}</span>
     </template>
 
-    <div class="grid h-[calc(100dvh-112px)] grid-cols-[minmax(260px,330px)_1fr] gap-4 bg-workspace p-[var(--page-padding)] font-sans max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
+    <div class="grid h-[calc(100dvh-64px)] grid-cols-[minmax(260px,330px)_1fr] gap-4 bg-workspace p-[var(--page-padding)] font-sans max-[780px]:grid-cols-1 max-[780px]:grid-rows-[auto_1fr]">
       <!-- Left pane: providers + conversations -->
       <aside class="min-h-0 overflow-y-auto rounded-lg border border-border-subtle bg-sidebar p-4 shadow-panel max-[780px]:max-h-[min(220px,35dvh)]">
         <ProviderPanel
