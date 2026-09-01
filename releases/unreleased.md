@@ -1,5 +1,10 @@
 # Unreleased
 
+## Profit Sweep - i18n Adaptation (System / 利润划转)
+
+- Completed the English/Simplified Chinese i18n adaptation of the Vue3 Profit Sweep page (`frontend/src/pages/profit_sweep/App.vue`): policy/schedule/vault field labels now resolve through `profitSweep.field.*.label` translations (with the title-case config fallback for options, states, and reasons), the Evaluate preview grid uses translated labels, the Vault/Standard account type and the ` / Vault` suffix are translated, and server error messages pass through the shared `serverMsg()` bridge.
+- Added the `profitSweep.*` dictionary entries (field metadata labels, account types, preview labels, and messages) to `frontend/i18n/{en,zh}.json` with identical key sets; existing key values are unchanged.
+
 ## PBv7/PBv8 Strategy Explorer - Raw Config Editor & Layout Polish
 
 - Fixed the CJK text wrapping bug in the Raw Config panel that caused vertical column collapse and excessive empty header space.
