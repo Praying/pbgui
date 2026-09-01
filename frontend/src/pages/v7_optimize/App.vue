@@ -243,6 +243,18 @@ async function backtestSelectedParetos(): Promise<void> {
   window.location.href = await actions.backtestParetos(items);
 }
 
+async function holdoutSelectedParetos(): Promise<void> {
+  const sweepMetadata = page.paretoMeta.value.sweep_cycles;
+  if (!adapter.isV8 || sweepMetadata?.enabled !== true || Number(sweepMetadata.holdout_count || 0) < 1) {
+    return notify(t('v7optimize.sweepHoldoutUnavailable'));
+  }
+  const items = page.paretos.value
+    .filter((row) => page.selectedParetos.value.has(row.path))
+    .map((row) => ({ path: row.path, name: row.name }));
+  if (!items.length) return notify(t('v7optimize.noParetosSelected'));
+  window.location.href = await actions.queueParetoHoldouts(items);
+}
+
 function sortPanel(kind: 'configs' | 'queue' | 'results' | 'paretos', key: string): void {
   const sort = kind === 'configs' ? page.configSort : kind === 'queue' ? page.queueSort : kind === 'results' ? page.resultSort : page.paretoSort;
   sort.value = sort.value.key === key ? { key, direction: sort.value.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: 'asc' };
@@ -439,7 +451,8 @@ async function handleIncomingDraft(): Promise<void> {
 
 onMounted(async () => {
   document.title = t('editor.optimize.pageTitle');
-  window.PBGUI_HELP_OPENER = () => (window as Window & { PBGuiSharedHelp?: { open?: (topic: string) => void } }).PBGuiSharedHelp?.open?.('optimize');
+  const helpTopic = adapter.isV8 ? '43_pbv8_optimize' : '36_pbv7_optimize';
+  window.PBGUI_HELP_OPENER = () => (window as Window & { PBGuiSharedHelp?: { open?: (topic: string) => void } }).PBGuiSharedHelp?.open?.(helpTopic);
   await page.loadAll();
   await handleIncomingDraft();
   try { pbguiDataPath.value = await actions.pbguiDataPath(); } catch { pbguiDataPath.value = ''; }
@@ -520,6 +533,7 @@ onBeforeUnmount(() => {
       <template v-else>
         <Button type="button" variant="default" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</Button>
         <Button type="button" variant="default" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.backtest') }}</Button>
+        <Button v-if="adapter.isV8" type="button" variant="default" data-test="holdout-paretos" :disabled="!page.selectedParetos.value.size || page.paretoMeta.value.sweep_cycles?.enabled !== true || Number(page.paretoMeta.value.sweep_cycles?.holdout_count || 0) < 1" @click="safely(holdoutSelectedParetos)"><PbIcon :icon="PhHourglass" /> {{ actionLabel('v7optimize.sweepHoldout') }}</Button>
         <Button type="button" variant="default" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos"><PbIcon :icon="PhDna" /> {{ actionLabel('v7optimize.seedSelected') }}</Button>
         <Button type="button" variant="default" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')"><PbIcon :icon="PhFolderOpen" /> {{ actionLabel('v7optimize.seedWholeResult') }}</Button>
       </template>
@@ -551,7 +565,7 @@ onBeforeUnmount(() => {
   </div>
   </AppShell>
 
-  <ConfigEditorModal :open="page.editorOpen.value" :draft="page.editorDraft.value" :version="adapter.version" :error="page.editorError.value" :param-status="page.editorParamStatus.value" :limits-meta="page.settings.value.limitsMeta" :exchange-options="(page.settings.value.exchange_options as string[] | undefined) || []" :bot-params="(page.settings.value.bot_params as string[] | undefined) || []" :hsl-modes="(page.settings.value.hsl_signal_modes as string[] | undefined) || []" :backend-options="(page.settings.value.optimize_backend_options as string[] | undefined) || []" :backend-contract="(page.settings.value.backend_contract as Record<string, unknown> | undefined) || null" :optimize-defaults="(page.settings.value.optimize_defaults as Record<string, unknown> | undefined) || {}" :pymoo-algorithm-options="(page.settings.value.pymoo_algorithm_options as string[] | undefined) || []" :pymoo-ref-dir-method-options="(page.settings.value.pymoo_ref_dir_method_options as string[] | undefined) || []" :strategy-options="(page.settings.value.strategies as string[] | undefined) || []" :pbgui-data-path="pbguiDataPath" :load-symbols="actions.loadSymbols" @close="page.closeEditor" @save="saveEditor" @preflight="runPreflight" />
+  <ConfigEditorModal :open="page.editorOpen.value" :draft="page.editorDraft.value" :version="adapter.version" :error="page.editorError.value" :param-status="page.editorParamStatus.value" :limits-meta="page.settings.value.limitsMeta" :exchange-options="(page.settings.value.exchange_options as string[] | undefined) || []" :bot-params="(page.settings.value.bot_params as string[] | undefined) || []" :hsl-modes="(page.settings.value.hsl_signal_modes as string[] | undefined) || []" :backend-options="(page.settings.value.optimize_backend_options as string[] | undefined) || []" :backend-contract="(page.settings.value.backend_contract as Record<string, unknown> | undefined) || null" :optimize-defaults="(page.settings.value.optimize_defaults as Record<string, unknown> | undefined) || {}" :pymoo-algorithm-options="(page.settings.value.pymoo_algorithm_options as string[] | undefined) || []" :pymoo-ref-dir-method-options="(page.settings.value.pymoo_ref_dir_method_options as string[] | undefined) || []" :strategy-options="(page.settings.value.strategies as string[] | undefined) || []" :pbgui-data-path="pbguiDataPath" :load-symbols="actions.loadSymbols" :preview-scenario-template="actions.previewScenarioTemplate" :start-ohlcv-lookup="actions.startOhlcvStartDateLookup" :load-ohlcv-lookup="actions.loadOhlcvStartDateLookup" :stop-ohlcv-lookup="actions.stopOhlcvStartDateLookup" @close="page.closeEditor" @save="saveEditor" @preflight="runPreflight" />
   <SettingsModal :open="page.settingsOpen.value" :settings="page.settings.value" @close="page.settingsOpen.value = false" @save="page.saveSettings" />
   <ImportConfigModal :open="importOpen" :archives="actions.archives.value" :configs="actions.archiveConfigs.value" :archive-name="actions.archiveName.value" :busy="actions.busy.value" @close="importOpen = false" @load-archives="actions.loadArchives" @load-configs="actions.loadArchiveConfigs" @local-import="importLocal" @archive-import="importArchive" />
   <PlotModal :plot="actions.plot.value" @close="actions.closePlot" />

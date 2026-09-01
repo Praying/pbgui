@@ -63,6 +63,60 @@ export interface ParetoMeta {
   available_metrics?: string[];
   /** Server-side default projection (gain + objectives + drawdown_worst). */
   default_metrics?: string[];
+  /** PB8 Sweep plan metadata attached to Pareto results. */
+  sweep_cycles?: {
+    enabled?: boolean;
+    holdout_count?: number;
+    holdout_scenarios?: ScenarioWindow[];
+    [key: string]: unknown;
+  };
+}
+
+export interface ScenarioWindow {
+  label?: string;
+  start_date: string;
+  end_date: string;
+  exchanges?: string[];
+  [key: string]: unknown;
+}
+
+export interface ScenarioTemplatePreview {
+  contract_version?: number;
+  template: string;
+  template_version?: number;
+  parameters?: Record<string, unknown>;
+  training_scenarios: ScenarioWindow[];
+  holdout_scenarios: ScenarioWindow[];
+  reducer?: Record<string, string>;
+  warnings?: string[];
+  provenance?: Record<string, unknown>;
+}
+
+export interface OhlcvStartDateProgress {
+  percent?: number;
+  completed?: number;
+  total?: number;
+  message?: string;
+  [key: string]: unknown;
+}
+
+export interface OhlcvStartDateJob {
+  job_id?: string;
+  status: 'queued' | 'running' | 'stopping' | 'completed' | 'stopped' | 'error' | string;
+  progress?: OhlcvStartDateProgress;
+  result?: {
+    start_date_options?: Record<string, {
+      available?: boolean;
+      start_date?: string;
+      data_date?: string;
+      detail?: string;
+      [key: string]: unknown;
+    }>;
+    [key: string]: unknown;
+  };
+  error?: string;
+  stop_requested?: boolean;
+  [key: string]: unknown;
 }
 
 export interface OptimizeSettings {

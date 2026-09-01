@@ -1,5 +1,11 @@
 # Unreleased
 
+## Merge origin/main v2.01 - Vue3 Optimize and VPS Parity
+
+- Merged the upstream v2.01 release, including PB8 scenario templates, Sweep Cycles evaluation, OHLCV start-date jobs, Pareto holdout drafts, AI preview support, and the VPS Manager runtime-version correction.
+- Adapted the PB8 Optimize workflow to Vue3 with deterministic Scenario Generator preview/apply, Sweep presets, `1st`/`All` OHLCV date lookup and cancellation, Pareto Holdout queue drafts, version-specific help links, and matching English/Simplified Chinese UI copy.
+- Added shared Vue Suite reducer/provenance parity (`reducer` with `median`/`std` for PB8, `aggregate` for PB7), retained the legacy fallback fixes, and synchronized the English, German, and Simplified Chinese help guides.
+
 ## Profit Sweep - i18n Adaptation (System / 利润划转)
 
 - Completed the English/Simplified Chinese i18n adaptation of the Vue3 Profit Sweep page (`frontend/src/pages/profit_sweep/App.vue`): policy/schedule/vault field labels now resolve through `profitSweep.field.*.label` translations (with the title-case config fallback for options, states, and reasons), the Evaluate preview grid uses translated labels, the Vault/Standard account type and the ` / Vault` suffix are translated, and server error messages pass through the shared `serverMsg()` bridge.

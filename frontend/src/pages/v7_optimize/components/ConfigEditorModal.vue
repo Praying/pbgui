@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PhGear, PhPlus, PhX } from '@phosphor-icons/vue';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -15,6 +15,7 @@ import GpuSettingsEditor from './GpuSettingsEditor.vue';
 import type { OptimizeVersion } from '../config';
 import {
   buildEditorDraft,
+  applyScenarioTemplatePreview,
   cloneValue,
   cleanupOptimizeBackendFields,
   collectEditorConfig,
@@ -25,6 +26,7 @@ import {
   isObject,
   migrateOptimizeBackend,
   normalizeGpuSettings,
+  normalizeScenarioEndDate,
   parseJsonObject,
   scenarioLabels,
   setPath,
@@ -33,6 +35,8 @@ import {
   type JsonObject,
   type OptimizeEditorDraft,
 } from '../lib/configModel';
+import type { OhlcvStartDateJob } from '../types';
+import type { ScenarioGeneratorContext, ScenarioGeneratorPreview, ScenarioGeneratorRequest } from '@/shared/suiteEditor/suiteModel';
 
 const props = defineProps<{
   open: boolean;
@@ -52,6 +56,10 @@ const props = defineProps<{
   strategyOptions?: string[];
   pbguiDataPath?: string;
   loadSymbols?: (exchange: string) => Promise<{ symbols: string[]; catalog?: Record<string, string> }>;
+  previewScenarioTemplate?: (payload: ScenarioGeneratorRequest) => Promise<ScenarioGeneratorPreview>;
+  startOhlcvLookup?: (config: Record<string, unknown>) => Promise<OhlcvStartDateJob>;
+  loadOhlcvLookup?: (jobId: string) => Promise<OhlcvStartDateJob>;
+  stopOhlcvLookup?: (jobId: string) => Promise<OhlcvStartDateJob>;
 }>();
 const emit = defineEmits<{ close: []; save: [draft: OptimizeEditorDraft, queueAfterSave: boolean]; preflight: [draft: OptimizeEditorDraft] }>();
 const { t } = useI18n();
@@ -82,6 +90,7 @@ const tabs: { id: EditorTab; label: string }[] = [
 
 const tab = ref<EditorTab>('general');
 const local = ref<OptimizeEditorDraft | null>(null);
+const suiteEditor = ref<InstanceType<typeof SuiteEditor> | null>(null);
 const localError = ref('');
 const exchangeText = ref('');
 const tagsText = ref('');
@@ -110,6 +119,11 @@ const newBoundKey = ref('');
 const availableCoins = ref<string[]>([]);
 const additionalParamJson = ref<Record<string, string>>({});
 let marketGeneration = 0;
+const ohlcvJob = ref<OhlcvStartDateJob | null>(null);
+const ohlcvError = ref('');
+const ohlcvSignature = ref('');
+let ohlcvGeneration = 0;
+let ohlcvPollTimer: number | undefined;
 
 function json(value: unknown): string { return JSON.stringify(value ?? {}, null, 2); }
 function csv(value: unknown): string { return Array.isArray(value) ? value.map(String).join(', ') : String(value ?? ''); }
@@ -284,7 +298,116 @@ async function loadMarkets(exchanges: string[]): Promise<void> {
   results.forEach((result) => { if (result.status === 'fulfilled') result.value.symbols.forEach((symbol) => coins.add(String(symbol))); });
   availableCoins.value = [...coins].sort();
 }
-watch(() => [props.open, props.draft] as const, ([open]) => { if (open) { load(props.draft); void loadMarkets(props.draft?.exchanges || []); } }, { immediate: true, deep: true });
+
+function clearOhlcvPolling(): void {
+  if (ohlcvPollTimer !== undefined) window.clearTimeout(ohlcvPollTimer);
+  ohlcvPollTimer = undefined;
+}
+
+function stopOhlcvJob(): void {
+  const currentJobId = String(ohlcvJob.value?.job_id || '');
+  ohlcvGeneration += 1;
+  clearOhlcvPolling();
+  ohlcvJob.value = null;
+  ohlcvError.value = '';
+  if (currentJobId && props.stopOhlcvLookup) void props.stopOhlcvLookup(currentJobId).catch(() => undefined);
+}
+
+function isOhlcvJobActive(status: string): boolean {
+  return status === 'queued' || status === 'running' || status === 'stopping';
+}
+
+function currentEditorConfig(): JsonObject {
+  if (!local.value) throw new Error('Optimize editor is not open');
+  applyTextSections();
+  return collectEditorConfig(local.value, props.version);
+}
+
+function applyOhlcvResult(job: OhlcvStartDateJob, mode: 'earliest' | 'all_markets', signature: string): void {
+  if (!local.value || signature !== ohlcvSignature.value) return;
+  let currentSignature = '';
+  try { currentSignature = JSON.stringify(currentEditorConfig()); } catch { return; }
+  if (currentSignature !== signature) {
+    ohlcvError.value = t('v7optimize.ohlcvStartDateStale');
+    return;
+  }
+  const option = job.result?.start_date_options?.[mode];
+  if (!option?.available || !option.start_date) {
+    ohlcvError.value = option?.detail || t('v7optimize.ohlcvStartDateUnavailable');
+    return;
+  }
+  local.value.backtest.start_date = option.start_date;
+  ohlcvError.value = '';
+  emit('preflight', cloneValue(local.value));
+}
+
+async function refreshOhlcvJob(generation: number, mode: 'earliest' | 'all_markets', signature: string): Promise<void> {
+  const jobId = String(ohlcvJob.value?.job_id || '');
+  if (!jobId || !props.loadOhlcvLookup || generation !== ohlcvGeneration) return;
+  try {
+    const nextJob = await props.loadOhlcvLookup(jobId);
+    if (generation !== ohlcvGeneration || String(ohlcvJob.value?.job_id || '') !== jobId) return;
+    ohlcvJob.value = nextJob;
+    if (nextJob.status === 'completed') applyOhlcvResult(nextJob, mode, signature);
+    if (isOhlcvJobActive(nextJob.status)) {
+      ohlcvPollTimer = window.setTimeout(() => { void refreshOhlcvJob(generation, mode, signature); }, 500);
+    } else {
+      clearOhlcvPolling();
+      if (nextJob.status === 'error') ohlcvError.value = nextJob.error || t('v7optimize.ohlcvStartDateUnavailable');
+      ohlcvJob.value = null;
+    }
+  } catch (error) {
+    if (generation === ohlcvGeneration) ohlcvError.value = error instanceof Error ? error.message : String(error);
+  }
+}
+
+async function startOhlcvDateLookup(mode: 'earliest' | 'all_markets'): Promise<void> {
+  if (props.version !== 'v8' || !props.startOhlcvLookup || ohlcvJob.value) return;
+  try {
+    const config = currentEditorConfig();
+    const generation = ++ohlcvGeneration;
+    const signature = JSON.stringify(config);
+    ohlcvSignature.value = signature;
+    ohlcvError.value = '';
+    clearOhlcvPolling();
+    ohlcvJob.value = { status: 'queued', progress: { percent: 0, message: t('v7optimize.ohlcvStartDateStarting') } };
+    const created = await props.startOhlcvLookup(config);
+    if (generation !== ohlcvGeneration || !props.open || !local.value) {
+      if (created.job_id && props.stopOhlcvLookup) void props.stopOhlcvLookup(created.job_id).catch(() => undefined);
+      return;
+    }
+    ohlcvJob.value = created;
+    void refreshOhlcvJob(generation, mode, signature);
+  } catch (error) {
+    ohlcvJob.value = null;
+    ohlcvError.value = error instanceof Error ? error.message : String(error);
+  }
+}
+
+function currentScenarioContext(): ScenarioGeneratorContext {
+  return {
+    start_date: String(local.value?.backtest.start_date || '').trim() || null,
+    end_date: normalizeScenarioEndDate(local.value?.backtest.end_date) || null,
+    exchanges: local.value?.exchanges.slice() || [],
+  };
+}
+
+function applyGeneratedScenarioPreview(preview: ScenarioGeneratorPreview): void {
+  if (!local.value) return;
+  const applied = applyScenarioTemplatePreview(local.value, preview);
+  const config = collectEditorConfig(applied, props.version);
+  const reloaded = buildEditorDraft(config, props.version, applied.name, applied.overrideConfigs);
+  load(reloaded);
+  tab.value = 'suite';
+}
+
+watch(() => [props.open, props.draft] as const, ([open, nextDraft], previous) => {
+  if (!open) { stopOhlcvJob(); return; }
+  if (previous?.[1] !== nextDraft) stopOhlcvJob();
+  load(nextDraft);
+  void loadMarkets(nextDraft?.exchanges || []);
+}, { immediate: true, deep: true });
+onBeforeUnmount(stopOhlcvJob);
 
 const displayedError = computed(() => localError.value || props.error);
 const boundRows = computed(() => Object.entries(local.value?.bounds ?? {}).sort(([a], [b]) => a.localeCompare(b)));
@@ -559,6 +682,7 @@ function save(queueAfterSave: boolean): void {
   if (!local.value) return;
   try {
     localError.value = '';
+    suiteEditor.value?.foldDraft();
     applyTextSections();
     if (!local.value.name.trim()) throw new Error(t('v7optimize.configNameRequired'));
     if (!local.value.exchanges.length) throw new Error(t('v7optimize.selectAtLeastOneExchange'));
@@ -575,6 +699,7 @@ function preflight(): void {
   if (!local.value) return;
   try {
     localError.value = '';
+    suiteEditor.value?.foldDraft();
     applyTextSections();
     emit('preflight', cloneValue(local.value));
   } catch (error) {
@@ -608,7 +733,7 @@ function preflight(): void {
             <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorIdentitySection') }}</h3><p>{{ t('v7optimize.editorIdentityHint') }}</p></div>
             <div class="opt-editor-fields opt-editor-fields--identity">
               <label class="opt-editor-field opt-editor-field--wide">{{ t('v7optimize.configName') }}<Input v-model="local.name" /></label>
-              <label class="opt-editor-field">start_date<Input type="date" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" /></label>
+              <label class="opt-editor-field">start_date<template v-if="version === 'v8'"><div class="flex min-w-0 items-center gap-1.5" data-test="ohlcv-start-date-controls"><Input type="date" class="min-w-0 flex-1" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" /><Button type="button" variant="default" size="sm" data-test="ohlcv-start-first" :disabled="!!ohlcvJob" @click="startOhlcvDateLookup('earliest')">1st</Button><Button type="button" variant="default" size="sm" data-test="ohlcv-start-all" :disabled="!!ohlcvJob" @click="startOhlcvDateLookup('all_markets')">All</Button></div><div v-if="ohlcvJob" class="mt-1.5 grid gap-1" data-test="ohlcv-start-progress" role="status" aria-live="polite"><div class="h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full bg-accent transition-[width]" :style="{ width: `${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0)))}%` }"></div></div><div class="flex items-center justify-between gap-2 text-[11px] text-secondary"><span>{{ ohlcvJob.progress?.message || t('v7optimize.ohlcvStartDateWorking') }}</span><Button type="button" variant="danger" size="sm" data-test="ohlcv-start-stop" :disabled="ohlcvJob.status === 'stopping'" @click="stopOhlcvJob">{{ t('v7optimize.ohlcvStartDateStop') }}</Button></div></div><small v-if="ohlcvError" class="text-danger-soft" data-test="ohlcv-start-error">{{ ohlcvError }}</small></template><Input v-else type="date" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" /></label>
               <label class="opt-editor-field">end_date<Input type="date" :model-value="String(local.backtest.end_date || '')" @update:model-value="setText('backtest', 'end_date', String($event ?? ''))" /></label>
             </div>
           </div>
@@ -750,7 +875,7 @@ function preflight(): void {
             <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">fixed_params<Input :model-value="local.fixedParams.join(', ')" @update:model-value="local.fixedParams = String($event ?? '').split(',').map((v) => v.trim()).filter(Boolean)" /></label>
           </div>
         </section>
-        <section v-else-if="tab === 'suite'"><SuiteEditor v-model="local.suite" :exchanges="availableExchanges" :available-coins="availableCoins" :bot-params="botParams || []" :is-v8="version === 'v8'" :exchange-options="availableExchanges" /></section>
+        <section v-else-if="tab === 'suite'"><SuiteEditor ref="suiteEditor" v-model="local.suite" :exchanges="availableExchanges" :available-coins="availableCoins" :bot-params="botParams || []" :is-v8="version === 'v8'" :exchange-options="availableExchanges" :load-symbols="loadSymbols" :scenario-generator="version === 'v8'" :get-scenario-context="() => currentScenarioContext()" :preview-scenario-template="previewScenarioTemplate" :on-apply-scenario-preview="(preview) => applyGeneratedScenarioPreview(preview)" /></section>
         <section v-else-if="tab === 'runtime'" class="flex min-h-0 flex-col gap-2.5">
           <div v-if="version === 'v8'" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
             <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">fine_tune_params<Input data-field="fine-tune-params" :model-value="fineTuneText" placeholder="long.risk, short.strategy" @update:model-value="setFineTuneText(String($event ?? ''))" /></label>

@@ -15,6 +15,7 @@ export interface BacktestSuiteFragment {
   suite_enabled: boolean;
   scenarios?: unknown[];
   aggregate?: Record<string, unknown>;
+  scenario_template?: Record<string, unknown>;
 }
 
 export interface BacktestCollectContext {
@@ -121,12 +122,23 @@ export function collectBacktestConfig(state: BacktestFormState, ctx: BacktestCol
   /* suite (:4769-4778) */
   bt.suite_enabled = ctx.suite.suite_enabled;
   if (ctx.suite.suite_enabled) {
-    bt.scenarios = ctx.suite.scenarios ? [...ctx.suite.scenarios] : [];
-    bt.aggregate = ctx.suite.aggregate ? { ...ctx.suite.aggregate } : { default: 'mean' };
+    bt.scenarios = ctx.suite.scenarios ? JSON.parse(JSON.stringify(ctx.suite.scenarios)) : [];
+    const suiteAggregate = ctx.suite.aggregate ? JSON.parse(JSON.stringify(ctx.suite.aggregate)) : { default: 'mean' };
+    if (ctx.isV8) {
+      bt.reducer = suiteAggregate;
+      delete bt.aggregate;
+    } else {
+      bt.aggregate = suiteAggregate;
+      delete bt.reducer;
+    }
+    if (ctx.suite.scenario_template) pbgui.scenario_template = JSON.parse(JSON.stringify(ctx.suite.scenario_template));
+    else delete pbgui.scenario_template;
   } else {
     delete bt.scenarios;
     delete bt.aggregate;
+    delete bt.reducer;
     delete bt.suite_enabled;
+    delete pbgui.scenario_template;
   }
 
   /* coin overrides (:4780-4786) */
@@ -135,6 +147,7 @@ export function collectBacktestConfig(state: BacktestFormState, ctx: BacktestCol
 
   /* additional (unknown) backtest params (:4789-4807) */
   for (const field of state.extraBt) {
+    if (field.key === 'suite_enabled' || field.key === 'scenarios' || field.key === 'aggregate' || field.key === 'reducer') continue;
     if (field.kind === 'boolean') bt[field.key] = field.checked;
     else if (field.kind === 'number') {
       const n = parseFloat(field.text);

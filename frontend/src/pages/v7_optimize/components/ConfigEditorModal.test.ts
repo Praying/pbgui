@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, expect, it, vi } from 'vitest';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import { buildEditorDraft } from '../lib/configModel';
@@ -37,6 +37,24 @@ describe('ConfigEditorModal', () => {
     });
     await wrapper.find('button[data-save="config"]').trigger('click');
     expect(wrapper.emitted('save')?.[0]?.[1]).toBe(false);
+  });
+
+  it('folds an open Suite scenario draft before saving', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'], suite_enabled: true, scenarios: [{ label: 'old-label' }] },
+      optimize: {},
+    }, 'v8', 'suite-draft');
+    const wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v8', error: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+    await wrapper.find('[data-tab="suite"]').trigger('click');
+    await wrapper.find('[data-test="suite-edit-0"]').trigger('click');
+    await wrapper.find('[data-test="suite-sc-label"]').setValue('saved-without-done');
+    await wrapper.find('button[data-save="config"]').trigger('click');
+
+    const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
+    expect(saved.suite.scenarios[0]?.label).toBe('saved-without-done');
   });
   it('covers legacy market, optimizer, seed and fixed-bound controls', async () => {
     const draft = buildEditorDraft({
@@ -251,6 +269,76 @@ describe('ConfigEditorModal', () => {
     await wrapper.find('button[data-save="config"]').trigger('click');
     expect(wrapper.emitted('save')).toBeUndefined();
     expect(wrapper.text()).toContain('Scoring Scenario and Aggregate require Suite mode.');
+  });
+
+  it('renders PB8 OHLCV start-date controls and keeps PB7 date input ordinary', async () => {
+    const pb8Draft = buildEditorDraft({ backtest: { exchanges: ['bybit'], start_date: '2024-01-01' }, bot: {}, optimize: {} }, 'v8', 'pb8');
+    const requestStartDate = vi.fn().mockResolvedValue({ job_id: 'job-1', status: 'queued' });
+    const pb8Wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft: pb8Draft, version: 'v8', error: '', startOhlcvLookup: requestStartDate },
+      global: { plugins: [createI18n('en')] },
+    });
+    expect(pb8Wrapper.find('[data-test="ohlcv-start-date-controls"]').exists()).toBe(true);
+    expect(pb8Wrapper.find('[data-test="ohlcv-start-first"]').exists()).toBe(true);
+    await pb8Wrapper.find('[data-test="ohlcv-start-first"]').trigger('click');
+    expect(requestStartDate).toHaveBeenCalledOnce();
+
+    const pb7Draft = buildEditorDraft({ backtest: { exchanges: ['bybit'], start_date: '2024-01-01' }, bot: {}, optimize: {} }, 'v7', 'pb7');
+    const pb7Wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft: pb7Draft, version: 'v7', error: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+    expect(pb7Wrapper.find('[data-test="ohlcv-start-date-controls"]').exists()).toBe(false);
+  });
+
+  it('unlocks OHLCV start-date controls after a completed job', async () => {
+    const draft = buildEditorDraft({ backtest: { exchanges: ['bybit'], start_date: '2024-01-01' }, optimize: {} }, 'v8', 'lookup');
+    const wrapper = mount(ConfigEditorModal, {
+      props: {
+        open: true,
+        draft,
+        version: 'v8',
+        error: '',
+        startOhlcvLookup: vi.fn().mockResolvedValue({ job_id: 'job-1', status: 'queued' }),
+        loadOhlcvLookup: vi.fn().mockResolvedValue({
+          job_id: 'job-1',
+          status: 'completed',
+          result: { start_date_options: { earliest: { available: true, start_date: '2023-02-01' } } },
+        }),
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+    await wrapper.find('[data-test="ohlcv-start-first"]').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-test="ohlcv-start-first"]').attributes('disabled')).toBeUndefined();
+    expect(wrapper.find('[data-test="ohlcv-start-all"]').attributes('disabled')).toBeUndefined();
+  });
+
+  it('previews and applies PB8 scenario training windows through the modal callback', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'], start_date: '2020-01-01', end_date: '2024-12-31' },
+      bot: { long: { risk: { n_positions: 3 } }, short: {} },
+      optimize: { bounds: { bot: { long: { risk: { n_positions: [1, 8], total_wallet_exposure_limit: [1, 12] } } } } },
+      live: { approved_coins: { long: ['BTCUSDT'], short: [] } },
+    }, 'v8', 'generator');
+    const previewScenarioTemplate = vi.fn().mockResolvedValue({
+      template: 'rolling_windows',
+      training_scenarios: [{ label: 'train_01', start_date: '2022-01-01', end_date: '2022-03-31' }],
+      holdout_scenarios: [],
+      reducer: { default: 'mean' },
+      provenance: { template: 'rolling_windows', holdout_scenarios: [] },
+    });
+    const wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v8', error: '', previewScenarioTemplate },
+      global: { plugins: [createI18n('en')] },
+    });
+    await wrapper.find('[data-tab="suite"]').trigger('click');
+    await wrapper.find('[data-test="suite-generator-preview"]').trigger('click');
+    expect(previewScenarioTemplate).toHaveBeenCalledOnce();
+    await flushPromises();
+    expect(wrapper.find('[data-test="suite-generator-apply"]').exists()).toBe(true);
+    await wrapper.find('[data-test="suite-generator-apply"]').trigger('click');
+    expect(wrapper.text()).toContain('train_01');
   });
 
   it('edits PB8 fine-tune and polish runtime settings', async () => {

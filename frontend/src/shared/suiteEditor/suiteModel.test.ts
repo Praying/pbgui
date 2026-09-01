@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   SUITE_TEMPLATES,
+  applySuiteTemplate,
   migrateSuiteTemplateOverrides,
   normalizeSuiteAggMetrics,
+  suiteAggregateMethods,
   suiteCollect,
   suiteLoad,
   type SuiteScenario,
@@ -94,6 +96,37 @@ describe('suiteLoad (:148-176)', () => {
     loaded.scenarios[0]!.label = 'mutated';
     expect((cfg.backtest!.scenarios as SuiteScenario[])[0]!.label).toBe('a');
   });
+
+  it('prefers PB8 reducer and clones scenario provenance', () => {
+    const cfg = {
+      backtest: {
+        suite_enabled: true,
+        scenarios: [{ label: 'generated' }],
+        aggregate: { default: 'mean' },
+        reducer: { default: 'median', drawdown: 'std' },
+      },
+      pbgui: { scenario_template: { template: 'walk_forward', parameters: { window_days: 90 } } },
+    };
+    const loaded = suiteLoad(cfg, state(), { isV8: true });
+    expect(loaded.aggregate).toEqual({ default: 'median', drawdown: 'std' });
+    expect(loaded.scenarioTemplate).toEqual(cfg.pbgui.scenario_template);
+    (loaded.scenarioTemplate!.parameters as Record<string, unknown>).window_days = 30;
+    expect((cfg.pbgui.scenario_template.parameters as Record<string, unknown>).window_days).toBe(90);
+  });
+
+  it('does not load provenance from a disabled suite', () => {
+    const loaded = suiteLoad({ pbgui: { scenario_template: { template: 'rolling_windows' } } }, state({ scenarioTemplate: { template: 'old' } }));
+    expect(loaded.scenarioTemplate).toBeUndefined();
+  });
+
+  it('normalizes unsupported PB7 aggregate methods to mean', () => {
+    const loaded = suiteLoad(
+      { backtest: { suite_enabled: true, aggregate: { default: 'median', drawdown: 'std' } } },
+      state(),
+      { isV8: false },
+    );
+    expect(loaded.aggregate).toEqual({ default: 'mean', drawdown: 'mean' });
+  });
 });
 
 describe('suiteCollect (:179-191)', () => {
@@ -107,5 +140,21 @@ describe('suiteCollect (:179-191)', () => {
     expect(collected).toEqual({ suite_enabled: true, scenarios: [{ label: 'x' }], aggregate: { default: 'min', adg_strategy_eq: 'max' } });
     collected.scenarios![0]!.label = 'changed';
     expect(st.scenarios[0]!.label).toBe('x');
+  });
+
+  it('returns cloned enabled provenance and mutators clear it', () => {
+    const st = state({ enabled: true, scenarioTemplate: { template: 'rolling_windows', parameters: { window_days: 30 } } });
+    const collected = suiteCollect(st);
+    expect(collected.scenario_template).toEqual(st.scenarioTemplate);
+    collected.scenario_template!.parameters = { window_days: 1 };
+    expect((st.scenarioTemplate!.parameters as Record<string, unknown>).window_days).toBe(30);
+    expect(applySuiteTemplate(st, 'Date Windows', true).scenarioTemplate).toBeUndefined();
+  });
+});
+
+describe('PB8 reducer methods', () => {
+  it('allows std and median only for PB8', () => {
+    expect(suiteAggregateMethods(false)).toEqual(['mean', 'min', 'max']);
+    expect(suiteAggregateMethods(true)).toEqual(['mean', 'min', 'max', 'std', 'median']);
   });
 });

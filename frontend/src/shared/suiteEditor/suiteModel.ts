@@ -28,6 +28,44 @@ export interface SuiteState {
   /** Index of the scenario being edited; -1 = none. */
   editIdx: number;
   aggregate: Record<string, string>;
+  /** PB8 scenario-generator provenance stored in pbgui.scenario_template. */
+  scenarioTemplate?: Record<string, unknown>;
+}
+
+export interface ScenarioGeneratorContext {
+  start_date?: string | null;
+  end_date?: string | null;
+  exchanges?: readonly string[];
+}
+
+export interface ScenarioGeneratorDraft {
+  template: 'rolling_windows' | 'walk_forward' | 'sweep_cycles';
+  window_days: number;
+  stride_days: number;
+  training_windows: number;
+  holdout_windows: number;
+  exchange_mode: 'inherit' | 'per_exchange';
+  auto_windows: boolean;
+  balance_multiplier?: number;
+  starting_balance?: number;
+  refill_cost?: number;
+  cooldown_days?: number;
+}
+
+export type ScenarioGeneratorRequest = ScenarioGeneratorDraft & {
+  start_date: string | null;
+  end_date: string | null;
+  exchanges: string[];
+};
+
+export interface ScenarioGeneratorPreview {
+  template: string;
+  training_scenarios: SuiteScenario[];
+  holdout_scenarios: SuiteScenario[];
+  reducer?: Record<string, string>;
+  provenance?: Record<string, unknown>;
+  warnings?: string[];
+  [key: string]: unknown;
 }
 
 export const SUITE_TEMPLATES: Record<string, SuiteTemplate> = {
@@ -101,6 +139,10 @@ export function suiteAggMetricOptions(stateMetrics: readonly string[], extraMetr
   return normalizeSuiteAggMetrics([...stateMetrics, ...extraMetrics]);
 }
 
+export function suiteAggregateMethods(isV8: boolean): string[] {
+  return isV8 ? ['mean', 'min', 'max', 'std', 'median'] : ['mean', 'min', 'max'];
+}
+
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value ?? null)) as T;
 }
@@ -131,6 +173,8 @@ export function migrateSuiteTemplateOverrides(name: string, isV8: boolean): Suit
 export interface SuiteLoadOptions {
   /** Keep editing the same scenario (by label, then index) on re-sync (:160-174). */
   preserveEdit?: boolean;
+  /** PB8 prefers reducer and supports std/median; PB7 uses aggregate only. */
+  isV8?: boolean;
 }
 
 function object(value: unknown): Record<string, unknown> {
@@ -140,16 +184,29 @@ function object(value: unknown): Record<string, unknown> {
 /** suiteLoad (:148-176). */
 export function suiteLoad(cfg: Record<string, unknown>, prev: SuiteState, options: SuiteLoadOptions = {}): SuiteState {
   const bt = object(cfg.backtest);
+  const pbgui = object(cfg.pbgui);
   const prevEditIdx = prev.editIdx;
   let prevLabel = '';
   if (prevEditIdx >= 0 && prev.scenarios[prevEditIdx]) prevLabel = String(prev.scenarios[prevEditIdx]!.label ?? '');
   const nextScenarios: SuiteScenario[] = Array.isArray(bt.scenarios) ? clone(bt.scenarios) : [];
+  const sourceAggregate = options.isV8 && bt.reducer ? bt.reducer : bt.aggregate;
+  const allowedMethods = new Set(suiteAggregateMethods(options.isV8 === true));
+  const aggregate = sourceAggregate && typeof sourceAggregate === 'object' && !Array.isArray(sourceAggregate)
+    ? Object.fromEntries(Object.entries(sourceAggregate as Record<string, unknown>).map(([key, value]) => {
+        const method = String(value || 'mean');
+        return [key, allowedMethods.has(method) ? method : 'mean'];
+      }))
+    : { default: 'mean' };
+  if (!aggregate.default) aggregate.default = 'mean';
   const next: SuiteState = {
     enabled: !!bt.suite_enabled,
     scenarios: nextScenarios,
     editIdx: -1,
-    aggregate: bt.aggregate ? (clone(bt.aggregate) as Record<string, string>) : { default: 'mean' },
+    aggregate,
   };
+  if (next.enabled && pbgui.scenario_template && typeof pbgui.scenario_template === 'object' && !Array.isArray(pbgui.scenario_template)) {
+    next.scenarioTemplate = clone(pbgui.scenario_template) as Record<string, unknown>;
+  }
   if (options.preserveEdit && next.enabled && prevEditIdx >= 0) {
     let nextEditIdx = -1;
     if (prevLabel) {
@@ -167,32 +224,49 @@ export function suiteLoad(cfg: Record<string, unknown>, prev: SuiteState, option
 }
 
 /** suiteCollect (:179-191). */
-export function suiteCollect(state: SuiteState): { suite_enabled: boolean; scenarios?: SuiteScenario[]; aggregate?: Record<string, string> } {
-  const result: { suite_enabled: boolean; scenarios?: SuiteScenario[]; aggregate?: Record<string, string> } = {
+export function suiteCollect(state: SuiteState): {
+  suite_enabled: boolean;
+  scenarios?: SuiteScenario[];
+  aggregate?: Record<string, string>;
+  scenario_template?: Record<string, unknown>;
+} {
+  const result: {
+    suite_enabled: boolean;
+    scenarios?: SuiteScenario[];
+    aggregate?: Record<string, string>;
+    scenario_template?: Record<string, unknown>;
+  } = {
     suite_enabled: state.enabled,
   };
   if (state.enabled) {
     result.scenarios = clone(state.scenarios);
     result.aggregate = clone(state.aggregate);
+    if (state.scenarioTemplate) result.scenario_template = clone(state.scenarioTemplate);
   }
   return result;
+}
+
+function clearScenarioTemplate(state: SuiteState): SuiteState {
+  const next = { ...state };
+  delete next.scenarioTemplate;
+  return next;
 }
 
 /** _suiteApplyTemplate state half (:519-546) — exchanges still merge in the page layer. */
 export function applySuiteTemplate(state: SuiteState, name: string, isV8: boolean): SuiteState {
   const template = migrateSuiteTemplateOverrides(name, isV8);
-  return { ...state, scenarios: clone(template.scenarios), aggregate: clone(template.aggregate), editIdx: -1 };
+  return { ...clearScenarioTemplate(state), scenarios: clone(template.scenarios), aggregate: clone(template.aggregate), editIdx: -1 };
 }
 
 /** _suiteResetToBase (:549-556). */
 export function resetSuiteToBase(state: SuiteState): SuiteState {
-  return { ...state, scenarios: [{ label: 'base' }], aggregate: { default: 'mean' }, editIdx: -1 };
+  return { ...clearScenarioTemplate(state), scenarios: [{ label: 'base' }], aggregate: { default: 'mean' }, editIdx: -1 };
 }
 
 /** _suiteAddScenario (:612-617). */
 export function addSuiteScenario(state: SuiteState): SuiteState {
   const scenarios = [...state.scenarios, { label: 'scenario_' + (state.scenarios.length + 1) }];
-  return { ...state, scenarios, editIdx: scenarios.length - 1 };
+  return { ...clearScenarioTemplate(state), scenarios, editIdx: scenarios.length - 1 };
 }
 
 /** _suiteRemoveScenario (:629-635). */
@@ -201,7 +275,7 @@ export function removeSuiteScenario(state: SuiteState, idx: number): SuiteState 
   let editIdx = state.editIdx;
   if (editIdx === idx) editIdx = -1;
   else if (editIdx > idx) editIdx -= 1;
-  return { ...state, scenarios, editIdx };
+  return { ...clearScenarioTemplate(state), scenarios, editIdx };
 }
 
 /** _suiteMoveScenario (:637-647). */
@@ -215,7 +289,7 @@ export function moveSuiteScenario(state: SuiteState, idx: number, dir: number): 
   let editIdx = state.editIdx;
   if (editIdx === idx) editIdx = newIdx;
   else if (editIdx === newIdx) editIdx = idx;
-  return { ...state, scenarios, editIdx };
+  return { ...clearScenarioTemplate(state), scenarios, editIdx };
 }
 
 /** The override value ladder of _suiteConfirmOverride (:771-775). */

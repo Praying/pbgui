@@ -2,8 +2,9 @@
 import { ref } from 'vue';
 import { apiFetch } from '@/shared/api';
 import type { OptimizeAdapter } from '../config';
-import { applyOptimizeSeed, isObject, objectValue } from '../lib/configModel';
-import type { ConfigPayload, ResultSummary } from '../types';
+import { applyOptimizeSeed, buildSweepHoldoutBacktestConfig, isObject, objectValue } from '../lib/configModel';
+import type { ConfigPayload, OhlcvStartDateJob, ResultSummary, ScenarioWindow } from '../types';
+import type { ScenarioGeneratorPreview, ScenarioGeneratorRequest } from '@/shared/suiteEditor/suiteModel';
 
 export interface ArchiveSummary { name: string; optimize_configs?: number; [key: string]: unknown }
 export interface ArchiveConfig { name?: string; path: string; relative_path?: string; [key: string]: unknown }
@@ -23,6 +24,13 @@ export interface OptimizeActionsOptions {
   adapter: OptimizeAdapter;
   request?: Requester;
   notify?: (message: string, kind?: 'info' | 'success' | 'error') => void;
+}
+
+export type ScenarioTemplateRequest = ScenarioGeneratorRequest;
+
+export interface ParetoHoldoutItem {
+  path: string;
+  name?: string;
 }
 
 function normalizeImportName(value: unknown): string {
@@ -215,10 +223,13 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
     const scenarios = Array.isArray(backtest.scenarios) ? backtest.scenarios.filter(isObject) : [];
     const scenario = scenarios.find((item) => String(item.label || '') === scenarioLabel);
     if (!scenario) throw new Error(`Selected Pareto scenario is no longer available: ${scenarioLabel}`);
-    const exchanges = Array.isArray(scenario.exchanges)
-      ? scenario.exchanges.map(String).filter((exchange, index, values) => values.indexOf(exchange) === index)
+    const exchangeSource = Object.prototype.hasOwnProperty.call(scenario, 'exchanges')
+      ? scenario.exchanges
+      : backtest.exchanges;
+    const exchanges = Array.isArray(exchangeSource)
+      ? exchangeSource.map(String).filter((exchange, index, values) => exchange && values.indexOf(exchange) === index)
       : [];
-    if (!exchanges.length) throw new Error(`Selected Pareto scenario has no exchanges: ${scenarioLabel}`);
+    if (!exchanges.length) throw new Error(`Selected Pareto scenario has no effective exchanges: ${scenarioLabel}`);
     prepared.backtest = { ...backtest, exchanges, scenarios: [scenario] };
     return prepared;
   }
@@ -292,6 +303,58 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
     return request<Record<string, unknown>>(`${adapter.apiBase}/ohlcv-preload/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
   }
 
+  async function previewScenarioTemplate(payload: ScenarioTemplateRequest): Promise<ScenarioGeneratorPreview> {
+    if (!adapter.isV8) throw new Error('Scenario Generator is only available for PB8');
+    return request<ScenarioGeneratorPreview>(`${adapter.apiBase}/scenario-templates/preview`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async function startOhlcvStartDateLookup(config: Record<string, unknown>): Promise<OhlcvStartDateJob> {
+    if (!adapter.isV8) throw new Error('OHLCV start-date lookup is only available for PB8');
+    return request<OhlcvStartDateJob>(`${adapter.apiBase}/ohlcv-start-dates`, {
+      method: 'POST',
+      body: JSON.stringify({ config }),
+    });
+  }
+
+  async function loadOhlcvStartDateLookup(jobId: string): Promise<OhlcvStartDateJob> {
+    return request<OhlcvStartDateJob>(`${adapter.apiBase}/ohlcv-start-dates/${encodeURIComponent(jobId)}`);
+  }
+
+  async function stopOhlcvStartDateLookup(jobId: string): Promise<OhlcvStartDateJob> {
+    return request<OhlcvStartDateJob>(`${adapter.apiBase}/ohlcv-start-dates/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
+  }
+
+  async function queueParetoHoldouts(items: ParetoHoldoutItem[]): Promise<string> {
+    if (!adapter.isV8) throw new Error('Sweep Holdout is only available for PB8');
+    if (!items.length) throw new Error('No paretos selected');
+    const queueItems: Array<{ name: string; config: Record<string, unknown>; override_configs: Record<string, unknown> }> = [];
+    for (const item of items) {
+      const data = await paretoFile(item.path);
+      const payload = normalizeParetoPayload(data);
+      const sweepCycles = isObject(data.sweep_cycles) ? data.sweep_cycles : {};
+      const holdouts = Array.isArray(sweepCycles.holdout_scenarios) ? sweepCycles.holdout_scenarios.filter(isObject) as ScenarioWindow[] : [];
+      if (!holdouts.length) throw new Error(`Sweep Holdout dates are unavailable for ${item.name || 'candidate'}.`);
+      for (let index = 0; index < holdouts.length; index += 1) {
+        const holdout = holdouts[index]!;
+        const label = String(holdout.label || `holdout_${index + 1}`).replace(/[^A-Za-z0-9_.-]/g, '_');
+        const name = (normalizeImportName(`${String(item.name || 'pareto')}_${label}`) || 'pareto_holdout').slice(0, 120);
+        queueItems.push({
+          name,
+          config: extractConfigSections(buildSweepHoldoutBacktestConfig(payload.config, holdout, name)),
+          override_configs: objectValue(payload.override_configs),
+        });
+      }
+    }
+    const draft = await request<{ draft_id?: string }>(`${adapter.backtestApiBase}/queue-draft`, {
+      method: 'POST',
+      body: JSON.stringify({ items: queueItems }),
+    });
+    return backtestMainPageUrl({ queue_draft_id: String(draft.draft_id || '') });
+  }
+
   async function migrateV7(source: { name?: string; path?: string }, targetName: string): Promise<{ name: string; draftId: string }> {
     const body = source.path ? { source_path: source.path, target_name: targetName } : { source_name: source.name, target_name: targetName };
     const data = await request<{ name?: string; draft_id?: string }>(`${adapter.apiBase.replace(/\/optimize-v[78]$/, '/optimize-v8')}/migrate-v7`, { method: 'POST', body: JSON.stringify(body) });
@@ -331,6 +394,11 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
     startOhlcvPreload,
     loadOhlcvPreload,
     stopOhlcvPreload,
+    previewScenarioTemplate,
+    startOhlcvStartDateLookup,
+    loadOhlcvStartDateLookup,
+    stopOhlcvStartDateLookup,
+    queueParetoHoldouts,
     migrateV7,
     paretoExplorerUrl,
   };

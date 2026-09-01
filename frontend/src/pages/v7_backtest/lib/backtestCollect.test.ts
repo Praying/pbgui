@@ -162,6 +162,49 @@ describe('collectConfig (:4662-4810)', () => {
     expect((enabled.backtest as Record<string, unknown>).aggregate).toEqual({ default: 'min' });
   });
 
+  it('writes PB8 reducer and removes the legacy aggregate alias', () => {
+    const form = state({ backtest: { aggregate: { default: 'mean' }, reducer: { default: 'mean' } } }, 'v8cfg', true);
+    const out = collectBacktestConfig(form, ctx({
+      isV8: true,
+      suite: {
+        suite_enabled: true,
+        scenarios: [{ label: 'train' }],
+        aggregate: { default: 'median', nested: { keep: true } },
+        scenario_template: { template: 'walk_forward', parameters: { window_days: 90 } },
+      },
+    }));
+    const backtest = out.backtest as Record<string, unknown>;
+    expect(backtest.reducer).toEqual({ default: 'median', nested: { keep: true } });
+    expect(backtest).not.toHaveProperty('aggregate');
+    expect(out.pbgui).toHaveProperty('scenario_template');
+  });
+
+  it('writes PB7 aggregate and removes reducer', () => {
+    const form = state({ backtest: { reducer: { default: 'median' } } });
+    const out = collectBacktestConfig(form, ctx({ suite: { suite_enabled: true, scenarios: [], aggregate: { default: 'max' } } }));
+    const backtest = out.backtest as Record<string, unknown>;
+    expect(backtest.aggregate).toEqual({ default: 'max' });
+    expect(backtest).not.toHaveProperty('reducer');
+  });
+
+  it('deletes suite aliases and provenance when disabled', () => {
+    const form = state({
+      backtest: {
+        suite_enabled: true,
+        scenarios: [{ label: 'old' }],
+        aggregate: { default: 'mean' },
+        reducer: { default: 'median' },
+      },
+      pbgui: { scenario_template: { template: 'rolling_windows' } },
+    }, 'disabled', true);
+    const out = collectBacktestConfig(form, ctx({ isV8: true }));
+    expect(out.backtest).not.toHaveProperty('suite_enabled');
+    expect(out.backtest).not.toHaveProperty('scenarios');
+    expect(out.backtest).not.toHaveProperty('aggregate');
+    expect(out.backtest).not.toHaveProperty('reducer');
+    expect(out.pbgui).not.toHaveProperty('scenario_template');
+  });
+
   it('moves coin overrides in/out per the panel snapshot (:4780-4786)', () => {
     const without = collectBacktestConfig(state({ coin_overrides: { BTC: {} } }), ctx());
     expect(without).not.toHaveProperty('coin_overrides');

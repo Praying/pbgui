@@ -137,7 +137,11 @@ export function buildEditorDraft(
     fixedParams: rawFixed.map(String),
     scoring: cloneValue(rawScoring),
     limits: cloneValue(rawLimits),
-    suite: suiteLoad(raw, { enabled: false, scenarios: [], editIdx: -1, aggregate: { default: 'mean' } }),
+    suite: suiteLoad(
+      raw,
+      { enabled: false, scenarios: [], editIdx: -1, aggregate: { default: 'mean' } },
+      { isV8: version === 'v8' },
+    ),
     runtimeOverrides: objectValue(optimize.fixed_runtime_overrides ?? runtime.overrides),
     overrideConfigs: objectValue(overrideConfigs),
   };
@@ -166,10 +170,20 @@ export function collectEditorConfig(draft: OptimizeEditorDraft, version: Optimiz
   backtest.suite_enabled = suite.suite_enabled;
   if (suite.suite_enabled) {
     backtest.scenarios = cloneValue(suite.scenarios ?? []);
-    backtest.aggregate = cloneValue(suite.aggregate ?? { default: 'mean' });
+    if (version === 'v8') {
+      backtest.reducer = cloneValue(suite.aggregate ?? { default: 'mean' });
+      delete backtest.aggregate;
+    } else {
+      backtest.aggregate = cloneValue(suite.aggregate ?? { default: 'mean' });
+      delete backtest.reducer;
+    }
+    if (suite.scenario_template) pbgui.scenario_template = cloneValue(suite.scenario_template);
+    else delete pbgui.scenario_template;
   } else {
     delete backtest.scenarios;
     delete backtest.aggregate;
+    delete backtest.reducer;
+    delete pbgui.scenario_template;
   }
   optimize.fixed_runtime_overrides = objectValue(draft.runtimeOverrides);
   const runtime = objectValue(pbgui.optimize_runtime);
@@ -196,6 +210,162 @@ export interface Pb8ScenarioValidationInput {
   objectiveScenario: unknown;
   suiteEnabled: boolean;
   scenarioLabels: unknown[];
+}
+
+export interface ScenarioGeneratorContext {
+  start_date: string;
+  end_date: string;
+  exchanges: string[];
+}
+
+export interface SweepScenarioPreview {
+  template?: string;
+  parameters?: Record<string, unknown>;
+  training_scenarios?: unknown[];
+  reducer?: Record<string, string>;
+  provenance?: Record<string, unknown>;
+}
+
+/** Normalize the legacy `now` end-date sentinel for the PB8 preview contract. */
+export function normalizeScenarioEndDate(value: unknown, today = new Date()): string {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (normalized !== 'now') return String(value ?? '').trim();
+  return [today.getUTCFullYear(), String(today.getUTCMonth() + 1).padStart(2, '0'), String(today.getUTCDate()).padStart(2, '0')].join('-');
+}
+
+/** Build a stable signature used to reject stale async scenario and OHLCV results. */
+export function scenarioContextSignature(context: ScenarioGeneratorContext): string {
+  return JSON.stringify({
+    start_date: context.start_date || null,
+    end_date: normalizeScenarioEndDate(context.end_date) || null,
+    exchanges: context.exchanges.slice(),
+  });
+}
+
+function approvedCoinList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(String).map((coin) => coin.trim()).filter((coin) => coin && coin !== 'all');
+}
+
+function canonicalFixedKey(key: string): string {
+  return key.replace(/^bot\.(long|short)\./, '$1.');
+}
+
+function isSweepHslAutoFixedBound(draft: OptimizeEditorDraft, key: string): boolean {
+  if (!key.startsWith('bot.long.')) return false;
+  const suffix = key.slice('bot.long.'.length);
+  const hslBound = new Set([
+    'hsl_red_threshold',
+    'hsl_ema_span_minutes',
+    'hsl_cooldown_minutes_after_red',
+    'hsl.red_threshold',
+    'hsl.ema_span_minutes',
+    'hsl.cooldown_minutes_after_red',
+  ]).has(suffix);
+  if (!hslBound) return false;
+  const configured = draft.runtimeOverrides['bot.long.hsl_enabled'];
+  const fallback = getPath(draft.botLong, 'hsl.enabled', false);
+  return !(configured === undefined ? fallback : configured);
+}
+
+/** Apply the legacy Sweep long-side bound and fixed-parameter rules immutably. */
+export function applyOptimizeSweepLongBoundsPreset(draft: OptimizeEditorDraft, approvedLong: string[]): OptimizeEditorDraft {
+  const next = cloneValue(draft);
+  const approvedCount = approvedLong.length;
+  if (!approvedCount) return next;
+  const positionsKey = 'bot.long.risk.n_positions';
+  const tweKey = 'bot.long.risk.total_wallet_exposure_limit';
+  next.bounds[positionsKey] = [1, approvedCount];
+  next.bounds[tweKey] = [6, 10];
+  setPath(next.botLong, 'risk.n_positions', approvedCount);
+  setPath(next.botLong, 'risk.total_wallet_exposure_limit', 6);
+
+  const fixed = new Set(next.fixedParams.map(String));
+  Object.entries(next.bounds).forEach(([key, pair]) => {
+    if (!key.startsWith('bot.long.')) return;
+    fixed.delete(key);
+    fixed.delete(canonicalFixedKey(key));
+    const low = Array.isArray(pair) ? pair[0] : undefined;
+    const high = Array.isArray(pair) ? pair[1] : undefined;
+    const zeroWidth = String(low) === String(high);
+    const rankingParameter = approvedCount === 1 && /forager\.score_weights_(ema_readiness|volatility|volume)$/.test(key);
+    if (zeroWidth || isSweepHslAutoFixedBound(next, key) || rankingParameter || (key === positionsKey && approvedCount === 1)) fixed.add(key);
+  });
+  next.fixedParams = [...fixed].sort();
+  return next;
+}
+
+/** Keep PB8 approved coins symmetric while removing overlap from short ignored coins. */
+export function applyOptimizeSweepCoinSymmetry(draft: OptimizeEditorDraft): OptimizeEditorDraft {
+  const next = cloneValue(draft);
+  const approvedRoot = getPath(next.live, 'approved_coins', []);
+  const approvedLongValue = isObject(approvedRoot) ? approvedRoot.long : approvedRoot;
+  const allCoinsApproved = approvedLongValue === 'all'
+    || (Array.isArray(approvedLongValue) && approvedLongValue.map(String).includes('all'));
+  if (allCoinsApproved) {
+    if (isObject(approvedRoot)) setPath(next.live, 'approved_coins.short', 'all');
+    else next.live.approved_coins = 'all';
+    return next;
+  }
+  const approvedLong = approvedCoinList(approvedLongValue);
+  setPath(next.live, 'approved_coins.short', approvedLong);
+  const ignoredShort = approvedCoinList(getPath(next.live, 'ignored_coins.short', []));
+  setPath(next.live, 'ignored_coins.short', ignoredShort.filter((coin) => !approvedLong.includes(coin)));
+  return next;
+}
+
+/** Apply the deterministic PB8 Sweep objective, limits, balance, and symmetry preset. */
+export function applyOptimizeSweepPreset(draft: OptimizeEditorDraft, preview: SweepScenarioPreview): OptimizeEditorDraft {
+  if (preview.template !== 'sweep_cycles') return cloneValue(draft);
+  let next = applyOptimizeSweepCoinSymmetry(draft);
+  const sweepPolicy = isObject(preview.parameters?.sweep_policy) ? preview.parameters!.sweep_policy as JsonObject : {};
+  if (sweepPolicy.starting_balance !== undefined) next.backtest.starting_balance = cloneValue(sweepPolicy.starting_balance);
+  next.scoring = [
+    { metric: 'gain_strategy_eq', goal: 'max' },
+    { metric: 'sortino_ratio_strategy_eq', goal: 'max' },
+    { metric: 'drawdown_worst_strategy_eq', goal: 'min' },
+  ];
+  next.limits = [
+    { metric: 'drawdown_worst_strategy_eq', penalize_if: 'greater_than', value: 0.8 },
+    { metric: 'backtest_completion_ratio', penalize_if: 'less_than', value: 0.99 },
+  ];
+  next.optimize.objective_scenario = null;
+  next.optimize.write_all_results = true;
+  next = applyOptimizeSweepLongBoundsPreset(next, approvedCoinList(getPath(next.live, 'approved_coins.long', [])));
+  return next;
+}
+
+/** Apply generated training scenarios and retain holdout provenance immutably. */
+export function applyScenarioTemplatePreview(draft: OptimizeEditorDraft, preview: SweepScenarioPreview): OptimizeEditorDraft {
+  let next = cloneValue(draft);
+  next.suite = {
+    enabled: true,
+    scenarios: cloneValue(preview.training_scenarios ?? []),
+    editIdx: -1,
+    aggregate: cloneValue(preview.reducer ?? { default: 'mean' }),
+    ...(preview.provenance ? { scenarioTemplate: cloneValue(preview.provenance) } : {}),
+  } as SuiteState;
+  if (preview.provenance) next.pbgui.scenario_template = cloneValue(preview.provenance);
+  return preview.template === 'sweep_cycles' ? applyOptimizeSweepPreset(next, preview) : next;
+}
+
+/** Build one standalone Backtest config from an immutable Sweep holdout window. */
+export function buildSweepHoldoutBacktestConfig(configValue: JsonObject, holdout: { start_date: string; end_date: string }, draftName: string): JsonObject {
+  const config = cloneValue(configValue);
+  const backtest = isObject(config.backtest) ? config.backtest : {};
+  config.backtest = {
+    ...backtest,
+    start_date: holdout.start_date,
+    end_date: holdout.end_date,
+    base_dir: `backtests/pbgui/${draftName}`,
+  };
+  const standalone = config.backtest as JsonObject;
+  delete standalone.suite_enabled;
+  delete standalone.scenarios;
+  delete standalone.reducer;
+  delete standalone.aggregate;
+  if (isObject(config.pbgui)) delete config.pbgui.scenario_template;
+  return config;
 }
 
 /** Validate PB8 suite/objective references with the same strict rules as the legacy editor. */
@@ -557,4 +727,3 @@ export function normalizeGpuSettings(gpuValue: unknown, defaults: JsonObject, st
   }
   return gpu;
 }
-

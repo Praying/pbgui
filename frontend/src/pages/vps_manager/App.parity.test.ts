@@ -65,7 +65,7 @@ const state = {
       {
         hostname: 'alpha', name: 'alpha', nav: 'vps', online: true, ssh_online: true,
         ssh_host_key_status: 'known', role: 'vps', start: '2026-08-18 10:00:00', updates: 3,
-        running_bots: 2, pbgui: 'v1.95', pbgui_branch: 'main (abc)', pb7: 'v7.4',
+        running_bots: 2, pbgui: 'v2.01 /3.12', pbgui_branch: 'feature/vue3 (abc)', pb7: 'v7.4',
         pb7_branch: 'main (def)', pb8: 'v8.1', pb8_branch: 'main (ghi)',
         package_status: { available: true, upgrades: 3, packages: ['git', 'python3'] },
         task_status: 'running', task_current_label: 'Pull source', task_progress: { percent: 50 },
@@ -145,6 +145,17 @@ beforeEach(() => {
 });
 
 describe('VPS Manager legacy parity', () => {
+  it('shows the authoritative PBGui version instead of the branch in Overview', async () => {
+    const wrapper = mountApp();
+    const ws = WebSocketMock.instances[0]!;
+    ws.message({ type: 'state', data: state });
+    await wrapper.vm.$nextTick();
+
+    const pbguiCell = wrapper.get('[data-row-host="alpha"]').findAll('td')[6]!;
+    expect(pbguiCell.text()).toBe('v2.01 /3.12');
+    expect(pbguiCell.text()).not.toContain('feature/vue3');
+  });
+
   it('prompts for the VPS user password before settings reads or remote config apply', async () => {
     const { wrapper, ws } = await mountVps();
     await wrapper.get('[data-testid="rail-section-vps-setup"]').trigger('click');
@@ -177,6 +188,7 @@ describe('VPS Manager legacy parity', () => {
     await wrapper.get('[data-action="open-package-updates"]').trigger('click');
     expect(wrapper.get('[data-modal="package-updates"]').text()).toContain('python3');
     await wrapper.get('[data-close="package-updates"]').trigger('click');
+    expect(wrapper.find('[data-modal="package-updates"]').exists()).toBe(false);
     await wrapper.get('[data-action="cluster-onboard"]').trigger('click');
     await flushPromises();
     expect(apiFetchMock).toHaveBeenCalledWith(expect.stringContaining('/cluster-onboard/alpha/start'), expect.objectContaining({ method: 'POST' }));

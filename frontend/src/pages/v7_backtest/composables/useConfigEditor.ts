@@ -149,7 +149,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
       }
       void loadResultMetrics();
     }
-    suite.value = suiteLoad(cfg, suite.value);
+    suite.value = suiteLoad(cfg, suite.value, { isV8 });
     coinOv.setConfigName(name === '' ? '__new__' : name);
     void coinOv.load(cfg);
     editingName.value = openOptions?.isNew || name === '' ? '__new__' : name;

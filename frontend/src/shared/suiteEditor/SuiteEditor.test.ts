@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import SuiteEditor from './SuiteEditor.vue';
 import type { SuiteState } from './suiteModel';
@@ -230,5 +230,88 @@ describe('aggregate (:861-953)', () => {
 
     await wrapper.find('[data-test="suite-agg-remove"]').trigger('click');
     expect(current(wrapper).aggregate).toEqual({ default: 'max' });
+  });
+
+  it('renders the saved PB8 median reducer and keeps PB7 methods limited', async () => {
+    const pb8 = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'base' }], aggregate: { default: 'median' } }), isV8: true });
+    expect(pb8.find('[data-test="suite-agg-default"]').text()).toContain('median');
+    await pickSelectOption(pb8, '[data-test="suite-agg-default"]', 'std');
+    expect(current(pb8).aggregate.default).toBe('std');
+
+    const pb7 = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'base' }], aggregate: { default: 'mean' } }), isV8: false });
+    expect(pb7.find('[data-test="suite-agg-default"]').text()).not.toContain('median');
+  });
+});
+
+describe('PB8 scenario generator', () => {
+  const preview = {
+    template: 'walk_forward',
+    training_scenarios: [{ label: 'train_01', start_date: '2023-01-01', end_date: '2023-03-31' }],
+    holdout_scenarios: [{ label: 'holdout_01', start_date: '2023-04-01', end_date: '2023-06-30' }],
+    reducer: { default: 'median' },
+    provenance: { template: 'walk_forward', parameters: { window_days: 90 } },
+  };
+
+  it('is PB8-only and applies training scenarios while retaining provenance', async () => {
+    const previewScenarioTemplate = vi.fn().mockResolvedValue(preview);
+    const pb8 = mountSuite({
+      modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }),
+      isV8: true,
+      scenarioGenerator: true,
+      scenarioContext: { start_date: '2023-01-01', end_date: '2023-06-30', exchanges: ['binance'] },
+      previewScenarioTemplate,
+    });
+    const pb7 = mountSuite({ modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }), isV8: false, scenarioGenerator: true });
+    expect(pb8.find('[data-test="suite-scenario-generator"]').exists()).toBe(true);
+    expect(pb7.find('[data-test="suite-scenario-generator"]').exists()).toBe(false);
+
+    await pb8.find('[data-test="suite-generator-preview"]').trigger('click');
+    await flushPromises();
+    expect(previewScenarioTemplate).toHaveBeenCalledWith(expect.objectContaining({
+      template: 'rolling_windows',
+      start_date: '2023-01-01',
+      end_date: '2023-06-30',
+      exchanges: ['binance'],
+    }));
+    await pb8.find('[data-test="suite-generator-apply"]').trigger('click');
+    const applied = current(pb8);
+    expect(applied.scenarios).toEqual(preview.training_scenarios);
+    expect(applied.scenarioTemplate).toEqual(preview.provenance);
+    expect(applied.aggregate).toEqual(preview.reducer);
+    expect(applied.scenarios).not.toContainEqual(preview.holdout_scenarios[0]);
+    expect(pb8.emitted('apply-scenario-preview')![0]![0]).toEqual(preview);
+  });
+
+  it('rejects applying a preview after its base context changes', async () => {
+    const previewScenarioTemplate = vi.fn().mockResolvedValue(preview);
+    const wrapper = mountSuite({
+      modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }),
+      isV8: true,
+      scenarioGenerator: true,
+      scenarioContext: { start_date: '2023-01-01', end_date: '2023-06-30', exchanges: ['binance'] },
+      previewScenarioTemplate,
+    });
+    await wrapper.find('[data-test="suite-generator-preview"]').trigger('click');
+    await flushPromises();
+    await wrapper.setProps({ scenarioContext: { start_date: '2023-02-01', end_date: '2023-06-30', exchanges: ['binance'] } });
+    await wrapper.find('[data-test="suite-generator-apply"]').trigger('click');
+    expect(wrapper.find('[data-test="suite-generator-error"]').text()).toContain('changed');
+    expect((wrapper.props('modelValue') as SuiteState).scenarios).toEqual([{ label: 'base' }]);
+  });
+
+  it('keeps Sweep previews current after automatic field recalculation', async () => {
+    const previewScenarioTemplate = vi.fn().mockResolvedValue({ ...preview, template: 'sweep_cycles' });
+    const wrapper = mountSuite({
+      modelValue: state({ enabled: true, scenarios: [{ label: 'base' }] }),
+      isV8: true,
+      scenarioGenerator: true,
+      scenarioContext: { start_date: '2023-01-01', end_date: '2024-01-01', exchanges: ['binance'] },
+      previewScenarioTemplate,
+    });
+    await wrapper.find('[data-test="suite-generator-template"]').setValue('sweep_cycles');
+    await wrapper.find('[data-test="suite-generator-preview"]').trigger('click');
+    await flushPromises();
+    expect(previewScenarioTemplate).toHaveBeenCalledOnce();
+    expect(wrapper.find('[data-test="suite-generator-apply"]').exists()).toBe(true);
   });
 });

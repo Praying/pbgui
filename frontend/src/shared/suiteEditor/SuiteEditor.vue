@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
@@ -21,7 +21,12 @@ import {
   removeSuiteScenario,
   resetSuiteToBase,
   splitOverrideKey,
+  suiteAggregateMethods,
   suiteAggMetricOptions,
+  type ScenarioGeneratorContext,
+  type ScenarioGeneratorDraft,
+  type ScenarioGeneratorPreview,
+  type ScenarioGeneratorRequest,
   type SuiteScenario,
   type SuiteState,
 } from './suiteModel';
@@ -48,13 +53,43 @@ const props = withDefaults(
     /** Exchange options for the scenario coin_sources editor. */
     exchangeOptions?: readonly string[];
     loadSymbols?(exchange: string): Promise<{ symbols: string[]; catalog?: Record<string, string> }>;
+    /** Show the PB8-only scenario generator panel. */
+    scenarioGenerator?: boolean;
+    /** Base dates and exchanges used to build preview requests. */
+    scenarioContext?: ScenarioGeneratorContext;
+    /** Alternative to scenarioContext for pages with derived form state. */
+    getScenarioContext?(): ScenarioGeneratorContext;
+    /** Page-owned API callback; the shared editor does not know its URL. */
+    previewScenarioTemplate?(request: ScenarioGeneratorRequest): Promise<ScenarioGeneratorPreview>;
+    /** Optional page callback for optimizer-specific generated-template effects. */
+    onApplyScenarioPreview?(preview: ScenarioGeneratorPreview): void;
   }>(),
-  { botParams: () => [], isV8: false, exchangeOptions: () => [], loadSymbols: undefined }
+  {
+    botParams: () => [],
+    isV8: false,
+    exchangeOptions: () => [],
+    loadSymbols: undefined,
+    scenarioGenerator: false,
+    scenarioContext: undefined,
+    getScenarioContext: undefined,
+    previewScenarioTemplate: undefined,
+    onApplyScenarioPreview: undefined,
+  }
 );
 
-const emit = defineEmits<{ 'template-exchanges': [exchanges: string[]] }>();
+const emit = defineEmits<{
+  'template-exchanges': [exchanges: string[]];
+  'apply-scenario-preview': [preview: ScenarioGeneratorPreview];
+}>();
 
 const { t } = useI18n();
+
+function openScenarioGeneratorGuide(): void {
+  const sharedHelp = (window as Window & {
+    PBGuiSharedHelp?: { open?: (topic: string, options?: { anchor?: string }) => void };
+  }).PBGuiSharedHelp;
+  sharedHelp?.open?.('43_pbv8_optimize', { anchor: 'scenario-generator' });
+}
 
 const TEMPLATE_NAMES = ['Exchange Comparison', 'Date Windows', 'TWE Sensitivity', 'n_positions Sensitivity'] as const;
 
@@ -71,6 +106,20 @@ interface ScenarioDraft {
 
 const draft = ref<ScenarioDraft | null>(null);
 let internalUpdate = false;
+
+const DEFAULT_SCENARIO_GENERATOR_DRAFT: ScenarioGeneratorDraft = {
+  template: 'rolling_windows',
+  window_days: 90,
+  stride_days: 30,
+  training_windows: 4,
+  holdout_windows: 0,
+  exchange_mode: 'inherit',
+  auto_windows: false,
+};
+const scenarioGeneratorDraft = ref<ScenarioGeneratorDraft>({ ...DEFAULT_SCENARIO_GENERATOR_DRAFT });
+const scenarioPreview = ref<ScenarioGeneratorPreview | null>(null);
+const scenarioPreviewContextSignature = ref('');
+let scenarioRequestGeneration = 0;
 
 /* The expander folds independently of the enabled flag: the toggle
    lives in the header, so unchecking keeps the card (and the toggle)
@@ -125,7 +174,9 @@ function saveEditing(next: SuiteState): SuiteState {
   if (Object.keys(d.overrides).length > 0) scenario.overrides = { ...d.overrides };
   const scenarios = next.scenarios.slice();
   scenarios[next.editIdx] = scenario;
-  return { ...next, scenarios };
+  const changed = { ...next, scenarios };
+  delete changed.scenarioTemplate;
+  return changed;
 }
 
 watch(
@@ -142,6 +193,7 @@ function toggleEnabled(on: boolean): void {
   let next = saveEditing(model.value);
   const scenarios = on && next.scenarios.length === 0 ? [{ label: 'base' }] : next.scenarios;
   const committed = { ...next, enabled: on, scenarios };
+  if (!on) delete committed.scenarioTemplate;
   commit(committed);
   loadDraft(committed);
   if (on) open.value = true;
@@ -258,22 +310,29 @@ const overrideEntries = computed(() => Object.entries(draft.value?.overrides ?? 
 /* ── aggregate (:861-953) ── */
 const aggregateKeys = computed(() => Object.keys(model.value.aggregate).filter((key) => key !== 'default'));
 const aggregateMetricOptions = computed(() => suiteAggMetricOptions(SUITE_AGG_METRIC_FALLBACKS, aggregateKeys.value));
+const aggregateMethods = computed(() => suiteAggregateMethods(props.isV8));
 const aggregateAddOpen = ref(false);
 const aggregateMetric = ref('');
 const aggregateMethod = ref('max');
 
 function setAggregateDefault(value: string): void {
-  commit({ ...model.value, aggregate: { ...model.value.aggregate, default: value } });
+  const next = { ...model.value, aggregate: { ...model.value.aggregate, default: value } };
+  delete next.scenarioTemplate;
+  commit(next);
 }
 
 function setAggregateMetric(key: string, value: string): void {
-  commit({ ...model.value, aggregate: { ...model.value.aggregate, [key]: value } });
+  const next = { ...model.value, aggregate: { ...model.value.aggregate, [key]: value } };
+  delete next.scenarioTemplate;
+  commit(next);
 }
 
 function removeAggregateMetric(key: string): void {
   const aggregate = { ...model.value.aggregate };
   delete aggregate[key];
-  commit({ ...model.value, aggregate });
+  const next = { ...model.value, aggregate };
+  delete next.scenarioTemplate;
+  commit(next);
 }
 
 function addAggregateMetric(): void {
@@ -281,6 +340,120 @@ function addAggregateMetric(): void {
   setAggregateMetric(aggregateMetric.value, aggregateMethod.value);
   aggregateAddOpen.value = false;
 }
+
+function currentScenarioContext(): ScenarioGeneratorContext {
+  const context = props.getScenarioContext ? props.getScenarioContext() : props.scenarioContext;
+  return {
+    start_date: context?.start_date ?? null,
+    end_date: context?.end_date ?? null,
+    exchanges: Array.isArray(context?.exchanges) ? context.exchanges.map(String) : [],
+  };
+}
+
+function scenarioContextSignature(context: ScenarioGeneratorContext): string {
+  return JSON.stringify({
+    start_date: context.start_date ?? null,
+    end_date: context.end_date ?? null,
+    exchanges: Array.isArray(context.exchanges) ? context.exchanges : [],
+  });
+}
+
+function scenarioGeneratorRequest(): ScenarioGeneratorRequest {
+  const context = currentScenarioContext();
+  const draftValue = scenarioGeneratorDraft.value;
+  return {
+    ...JSON.parse(JSON.stringify(draftValue)) as ScenarioGeneratorDraft,
+    start_date: context.start_date ?? null,
+    end_date: context.end_date ?? null,
+    exchanges: [...(context.exchanges ?? [])],
+  };
+}
+
+function recalculateScenarioGenerator(): void {
+  scenarioPreview.value = null;
+  scenarioPreviewContextSignature.value = '';
+  scenarioRequestGeneration += 1;
+  if (scenarioGeneratorDraft.value.template === 'sweep_cycles') {
+    scenarioGeneratorDraft.value.stride_days = scenarioGeneratorDraft.value.window_days + (scenarioGeneratorDraft.value.cooldown_days ?? 0);
+    const context = currentScenarioContext();
+    const start = Date.parse(`${context.start_date ?? ''}T00:00:00Z`);
+    const end = Date.parse(`${context.end_date ?? ''}T00:00:00Z`);
+    if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+      const availableDays = Math.floor((end - start) / 86400000) + 1;
+      const totalWindows = availableDays < scenarioGeneratorDraft.value.window_days
+        ? 0
+        : 1 + Math.floor((availableDays - scenarioGeneratorDraft.value.window_days) / scenarioGeneratorDraft.value.stride_days);
+      scenarioGeneratorDraft.value.training_windows = Math.max(0, totalWindows - scenarioGeneratorDraft.value.holdout_windows);
+    }
+  }
+}
+
+async function previewScenarioGenerator(): Promise<void> {
+  if (!props.previewScenarioTemplate) return;
+  recalculateScenarioGenerator();
+  // Consume the watcher-triggered invalidation from internal Sweep
+  // recalculation before capturing this request's generation token.
+  await nextTick();
+  const request = scenarioGeneratorRequest();
+  const contextSignature = scenarioContextSignature(currentScenarioContext());
+  const requestGeneration = ++scenarioRequestGeneration;
+  try {
+    const preview = await props.previewScenarioTemplate(request);
+    if (requestGeneration !== scenarioRequestGeneration) return;
+    scenarioPreview.value = JSON.parse(JSON.stringify(preview)) as ScenarioGeneratorPreview;
+    scenarioPreviewContextSignature.value = contextSignature;
+  } catch {
+    if (requestGeneration !== scenarioRequestGeneration) return;
+    scenarioPreview.value = null;
+    scenarioPreviewContextSignature.value = '';
+    scenarioGeneratorError.value = 'Scenario preview failed.';
+  }
+}
+
+function applyScenarioPreview(): void {
+  const preview = scenarioPreview.value;
+  if (!preview || !Array.isArray(preview.training_scenarios)) return;
+  if (scenarioContextSignature(currentScenarioContext()) !== scenarioPreviewContextSignature.value) {
+    scenarioGeneratorError.value = t('editor.suite.generatorContextChanged');
+    return;
+  }
+  const next: SuiteState = {
+    ...model.value,
+    enabled: true,
+    scenarios: JSON.parse(JSON.stringify(preview.training_scenarios)) as SuiteScenario[],
+    aggregate: JSON.parse(JSON.stringify(preview.reducer ?? { default: 'mean' })) as Record<string, string>,
+    editIdx: -1,
+    scenarioTemplate: preview.provenance ? JSON.parse(JSON.stringify(preview.provenance)) as Record<string, unknown> : undefined,
+  };
+  commit(next);
+  emit('apply-scenario-preview', preview);
+  props.onApplyScenarioPreview?.(preview);
+}
+
+const scenarioGeneratorError = ref('');
+
+watch(
+  () => scenarioGeneratorDraft.value,
+  () => {
+    scenarioPreview.value = null;
+    scenarioPreviewContextSignature.value = '';
+    scenarioGeneratorError.value = '';
+    scenarioRequestGeneration += 1;
+  },
+  { deep: true }
+);
+
+watch(
+  () => scenarioContextSignature(currentScenarioContext()),
+  () => {
+    scenarioGeneratorError.value = '';
+    scenarioRequestGeneration += 1;
+  }
+);
+
+onUnmounted(() => {
+  scenarioRequestGeneration += 1;
+});
 
 /* ── scenario summary (:597-609) ── */
 function summary(scenario: SuiteScenario): string {
@@ -330,8 +503,8 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
         {{ t('editor.suite.disabledHint') }}
       </div>
 
-      <template v-if="model.enabled">
-        <div style="display: flex; gap: var(--sp-sm); flex-wrap: wrap; margin-bottom: var(--sp-md)">
+      <template>
+        <div v-if="model.enabled" style="display: flex; gap: var(--sp-sm); flex-wrap: wrap; margin-bottom: var(--sp-md)">
           <span style="font-size: var(--fs-xs); color: var(--text-dim); align-self: center">{{ t('editor.suite.templates') }}:</span>
           <Button
             v-for="name in TEMPLATE_NAMES"
@@ -350,6 +523,81 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
           </Button>
         </div>
 
+        <section v-if="isV8 && scenarioGenerator" data-test="suite-scenario-generator" style="border: 1px solid var(--border); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); background: rgb(var(--accent-rgb) / 0.035)">
+          <div style="display: flex; align-items: start; justify-content: space-between; gap: var(--sp-md); margin-bottom: var(--sp-sm)">
+            <div>
+              <strong>{{ t('editor.suite.generatorTitle') }}</strong>
+              <div style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px">
+                {{ t('editor.suite.generatorBaseDates', { start: currentScenarioContext().start_date || t('editor.suite.generatorUnset'), end: currentScenarioContext().end_date || t('editor.suite.generatorUnset') }) }}
+              </div>
+            </div>
+            <div style="display: flex; gap: var(--sp-xs)">
+              <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-generator-guide" @click="openScenarioGeneratorGuide">{{ t('editor.suite.generatorGuide') }}</Button>
+              <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-generator-recalculate" @click="recalculateScenarioGenerator">{{ t('editor.suite.generatorRecalculate') }}</Button>
+              <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-generator-preview" :disabled="!previewScenarioTemplate" @click="previewScenarioGenerator">{{ t('editor.suite.generatorPreview') }}</Button>
+            </div>
+          </div>
+
+          <div class="form-row cols-4">
+            <div class="form-group">
+              <label>{{ t('editor.suite.generatorTemplate') }}</label>
+              <select v-model="scenarioGeneratorDraft.template" data-test="suite-generator-template" class="form-input">
+                <option value="rolling_windows">{{ t('editor.suite.generatorRollingWindows') }}</option>
+                <option value="walk_forward">{{ t('editor.suite.generatorWalkForward') }}</option>
+                <option value="sweep_cycles">{{ t('editor.suite.generatorSweepCycles') }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>{{ t('editor.suite.generatorWindowDays') }}</label>
+              <Input v-model.number="scenarioGeneratorDraft.window_days" type="number" min="1" max="3650" data-test="suite-generator-window" />
+            </div>
+            <div class="form-group">
+              <label>{{ t('editor.suite.generatorStrideDays') }}</label>
+              <Input v-model.number="scenarioGeneratorDraft.stride_days" type="number" min="1" max="3650" :readonly="scenarioGeneratorDraft.template === 'sweep_cycles'" data-test="suite-generator-stride" />
+            </div>
+            <div class="form-group">
+              <label>{{ t('editor.suite.generatorTrainingWindows') }}</label>
+              <Input v-model.number="scenarioGeneratorDraft.training_windows" type="number" min="1" max="48" :readonly="scenarioGeneratorDraft.template === 'sweep_cycles'" data-test="suite-generator-training" />
+            </div>
+            <div v-if="scenarioGeneratorDraft.template !== 'rolling_windows'" class="form-group">
+              <label>{{ t('editor.suite.generatorHoldoutWindows') }}</label>
+              <Input v-model.number="scenarioGeneratorDraft.holdout_windows" type="number" min="0" max="16" data-test="suite-generator-holdout" />
+            </div>
+            <div class="form-group">
+              <label>{{ t('editor.suite.generatorExchangeMode') }}</label>
+              <select v-model="scenarioGeneratorDraft.exchange_mode" data-test="suite-generator-exchange-mode" class="form-input">
+                <option value="inherit">{{ t('editor.suite.generatorInheritBase') }}</option>
+                <option value="per_exchange">{{ t('editor.suite.generatorPerExchange') }}</option>
+              </select>
+            </div>
+            <template v-if="scenarioGeneratorDraft.template === 'sweep_cycles'">
+              <div class="form-group"><label>{{ t('editor.suite.generatorBalanceMultiplier') }}</label><Input v-model.number="scenarioGeneratorDraft.balance_multiplier" type="number" min="1.01" max="100" step="0.01" data-test="suite-generator-multiplier" /></div>
+              <div class="form-group"><label>{{ t('editor.suite.generatorStartingBalance') }}</label><Input v-model.number="scenarioGeneratorDraft.starting_balance" type="number" min="1" data-test="suite-generator-balance" /></div>
+              <div class="form-group"><label>{{ t('editor.suite.generatorRefillCost') }}</label><Input v-model.number="scenarioGeneratorDraft.refill_cost" type="number" min="0" data-test="suite-generator-refill" /></div>
+              <div class="form-group"><label>{{ t('editor.suite.generatorCooldownDays') }}</label><Input v-model.number="scenarioGeneratorDraft.cooldown_days" type="number" min="0" max="3650" data-test="suite-generator-cooldown" /></div>
+            </template>
+          </div>
+
+          <div v-if="scenarioGeneratorError" style="font-size: var(--fs-sm); color: var(--orange); margin-top: var(--sp-xs)" data-test="suite-generator-error">{{ scenarioGeneratorError }}</div>
+          <div v-if="scenarioPreview" style="margin-top: var(--sp-md); padding-top: var(--sp-sm); border-top: 1px solid var(--border)" data-test="suite-generator-preview-result">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); margin-bottom: var(--sp-sm)">
+              <strong>{{ t('editor.suite.generatorPreviewSummary', { training: scenarioPreview.training_scenarios.length, holdout: scenarioPreview.holdout_scenarios.length }) }}</strong>
+              <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-generator-apply" @click="applyScenarioPreview">{{ t('editor.suite.generatorApply') }}</Button>
+            </div>
+            <div style="max-height: 190px; overflow: auto">
+              <table class="tbl" style="font-size: var(--fs-sm)">
+                <thead><tr><th>{{ t('editor.suite.generatorUse') }}</th><th>{{ t('editor.suite.label') }}</th><th>{{ t('editor.suite.generatorPeriod') }}</th></tr></thead>
+                <tbody>
+                  <tr v-for="scenario in scenarioPreview.training_scenarios" :key="'training-' + scenario.label"><td>{{ t('editor.suite.generatorTrain') }}</td><td>{{ scenario.label }}</td><td>{{ scenario.start_date }} {{ t('editor.suite.generatorTo') }} {{ scenario.end_date }}</td></tr>
+                  <tr v-for="scenario in scenarioPreview.holdout_scenarios" :key="'holdout-' + scenario.label"><td>{{ t('editor.suite.generatorHoldout') }}</td><td>{{ scenario.label }}</td><td>{{ scenario.start_date }} {{ t('editor.suite.generatorTo') }} {{ scenario.end_date }}</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div v-for="warning in scenarioPreview.warnings || []" :key="warning" style="font-size: var(--fs-sm); line-height: 1.45; color: var(--orange); margin-top: 4px">{{ warning }}</div>
+          </div>
+        </section>
+
+        <div v-if="model.enabled">
         <div style="margin-bottom: var(--sp-md)">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-sm)">
             <span style="font-size: var(--fs-sm); font-weight: 600">{{ t('editor.suite.scenariosCount', { n: model.scenarios.length }) }}</span>
@@ -372,7 +620,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                 <td style="font-weight: 600">{{ scenario.label || t('editor.suite.unnamed') }}</td>
                 <td><span style="color: var(--text-dim); font-size: var(--fs-xs)">{{ summary(scenario) }}</span></td>
                 <td>
-                  <Button type="button" variant="outline" size="sm" class="act-btn" @click="editScenario(i)">{{ model.editIdx === i ? t('editor.suite.editing') : t('editor.suite.edit') }}</Button>
+                  <Button type="button" variant="outline" size="sm" class="act-btn" :data-test="'suite-edit-' + i" @click="editScenario(i)">{{ model.editIdx === i ? t('editor.suite.editing') : t('editor.suite.edit') }}</Button>
                   <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" :data-test="'suite-remove'" @click="removeScenario(i)">×</Button>
                   <Button v-if="i > 0" type="button" variant="outline" size="sm" class="act-btn" :data-test="'suite-move-up-' + i" :title="t('editor.suite.moveUp')" @click="moveScenario(i, -1)">↑</Button>
                   <Button v-if="i < model.scenarios.length - 1" type="button" variant="outline" size="sm" class="act-btn" :data-test="'suite-move-down-' + i" :title="t('editor.suite.moveDown')" @click="moveScenario(i, 1)">↓</Button>
@@ -523,9 +771,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                     <span>{{ model.aggregate.default }}</span>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mean">mean</SelectItem>
-                    <SelectItem value="min">min</SelectItem>
-                    <SelectItem value="max">max</SelectItem>
+                    <SelectItem v-for="method in aggregateMethods" :key="method" :value="method">{{ method }}</SelectItem>
                   </SelectContent>
                 </SelectRoot>
               </div>
@@ -543,9 +789,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                     <span>{{ model.aggregate[key] }}</span>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mean">mean</SelectItem>
-                    <SelectItem value="min">min</SelectItem>
-                    <SelectItem value="max">max</SelectItem>
+                    <SelectItem v-for="method in aggregateMethods" :key="method" :value="method">{{ method }}</SelectItem>
                   </SelectContent>
                 </SelectRoot>
                 <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" data-test="suite-agg-remove" @click="removeAggregateMetric(key)">×</Button>
@@ -570,9 +814,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                       <span>{{ aggregateMethod }}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="mean">mean</SelectItem>
-                      <SelectItem value="min">min</SelectItem>
-                      <SelectItem value="max">max</SelectItem>
+                      <SelectItem v-for="method in aggregateMethods" :key="method" :value="method">{{ method }}</SelectItem>
                     </SelectContent>
                   </SelectRoot>
                 </div>
@@ -582,6 +824,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </template>
     </div>

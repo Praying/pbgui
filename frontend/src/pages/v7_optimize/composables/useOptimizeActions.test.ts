@@ -91,6 +91,28 @@ describe('useOptimizeActions', () => {
     expect(multiUrl).toBe('http://testserver/api/backtest-v8/main_page?queue_draft_id=queue-1');
   });
 
+  it('uses base exchanges when a generated scenario inherits them', async () => {
+    const request = vi.fn()
+      .mockResolvedValueOnce({
+        config: {
+          backtest: {
+            exchanges: ['bybit', 'binance'],
+            suite_enabled: true,
+            scenarios: [{ label: 'train_01', start_date: '2024-01-01', end_date: '2024-03-31' }],
+          },
+          bot: {},
+        },
+      })
+      .mockResolvedValueOnce({ draft_id: 'inherited-1' });
+    const actions = useOptimizeActions({ adapter, request });
+
+    await actions.backtestParetos([{ path: '/results/a/pareto/one.json', name: 'one', scenario: 'train_01' }]);
+
+    const requestBody = JSON.parse(String((request.mock.calls[1]?.[1] as RequestInit).body));
+    expect(requestBody.config.backtest.exchanges).toEqual(['bybit', 'binance']);
+    expect(requestBody.config.backtest.scenarios).toEqual([expect.objectContaining({ label: 'train_01' })]);
+  });
+
   it('loads an incoming backtest optimize draft and preserves overrides', async () => {
     const request = vi.fn()
       .mockResolvedValueOnce({
@@ -124,6 +146,29 @@ describe('useOptimizeActions', () => {
     expect(request).toHaveBeenNthCalledWith(1, 'http://testserver/api/optimize-v8/ohlcv-preload', expect.objectContaining({ method: 'POST' }));
     expect(request).toHaveBeenNthCalledWith(2, 'http://testserver/api/optimize-v8/ohlcv-preload/job-1');
     expect(request).toHaveBeenNthCalledWith(3, 'http://testserver/api/optimize-v8/ohlcv-preload/job-1', { method: 'DELETE' });
+  });
+
+  it('previews scenario templates and queues Pareto Sweep holdouts', async () => {
+    const request = vi.fn()
+      .mockResolvedValueOnce({ template: 'sweep_cycles', training_scenarios: [], holdout_scenarios: [] })
+      .mockResolvedValueOnce({
+        config: { backtest: { exchanges: ['bybit'], start_date: '2020-01-01' }, bot: {}, pbgui: { scenario_template: { template: 'sweep_cycles' } } },
+        override_configs: { 'BTCUSDT.json': { long: { n_positions: 2 } } },
+        sweep_cycles: { holdout_scenarios: [{ label: 'holdout_01', start_date: '2024-01-01', end_date: '2024-03-31' }] },
+      })
+      .mockResolvedValueOnce({ draft_id: 'holdout-queue' });
+    const actions = useOptimizeActions({ adapter, request });
+
+    await actions.previewScenarioTemplate({
+      template: 'sweep_cycles', start_date: '2020-01-01', end_date: '2024-12-31', exchanges: ['bybit'],
+      window_days: 90, stride_days: 90, training_windows: 4, holdout_windows: 1, exchange_mode: 'inherit', auto_windows: true,
+    });
+    const url = await actions.queueParetoHoldouts([{ path: '/results/run/pareto/1.json', name: 'candidate' }]);
+
+    expect(request).toHaveBeenNthCalledWith(1, 'http://testserver/api/optimize-v8/scenario-templates/preview', expect.objectContaining({ method: 'POST' }));
+    expect(request).toHaveBeenNthCalledWith(3, 'http://testserver/api/backtest-v8/queue-draft', expect.objectContaining({ method: 'POST', body: expect.stringContaining('holdout_01') }));
+    expect(request).toHaveBeenNthCalledWith(3, 'http://testserver/api/backtest-v8/queue-draft', expect.objectContaining({ body: expect.stringContaining('BTCUSDT.json') }));
+    expect(url).toBe('http://testserver/api/backtest-v8/main_page?queue_draft_id=holdout-queue');
   });
 
 });

@@ -30,6 +30,54 @@ Forager 成交量和波动率 EMA 跨度滑块的最小值为 `1`。要从优化
 
 选择多个交易所保持 PB8 的原生组合数据集行为。每个交易所必须单独评估时，使用显式 Suite 场景。
 
+### Scenario Generator
+
+Scenario Generator 将一个 PB8 Optimize 配置转换为一组可复现的历史测试。PB8 仍执行普通的 Suite 优化；PBGui 负责生成日期窗口、保留实验计划、在 PB8 返回场景指标后评估 Sweep 现金流，并准备最终的 Holdout 回测。
+
+#### 各操作的作用
+
+| 操作 | 会更改什么 | 不会更改什么 |
+| --- | --- | --- |
+| **1st / All**（位于 `start_date` 旁） | 解析基于 OHLCV 的起始日期 | Suite 场景和生成器设置 |
+| **Recalculate** | 重新读取当前日期/交易所，并重新计算 Sweep 的自动窗口数 | 已保存配置和已应用的 Suite |
+| **Preview** | 显示确切的训练/留出窗口和警告 | 配置、Suite、评分、边界和队列 |
+| **Apply Training Scenarios** | 启用 Suite Mode，安装训练场景/缩减器，保存 Holdout 来源信息，并应用 Sweep 预设 | 尚未保存或排队的配置；Holdout 仍不会加入优化 |
+| **Save / Save & Queue** | 持久化或启动已应用的实验 | Holdout 仍排除在优化之外 |
+| **Paretos** | 显示 PB8 指标以及 PBGui 的 `sweep_*` 现金流指标 | 原始 PB8 候选指标 |
+| Pareto 侧栏中的 **Holdout** | 从不可变的 Holdout 日期创建独立 PB8 Backtest 队列草稿 | 候选参数、币种、交易所、余额和覆盖配置 |
+
+#### 设置速览
+
+| 设置 | 含义 |
+| --- | --- |
+| **Template** | Rolling comparison、Walk-Forward 验证，或顺序 Sweep 现金流评估 |
+| **Window days** | 每个场景包含的交易日数量 |
+| **Stride days** | 相邻窗口结束日期之间的距离；Sweep 自动计算 |
+| **Training windows** | PB8 在优化期间评估的场景；Sweep 自动计算 |
+| **Holdout windows** | 为最终样本外 Backtest 保留、不会触碰的时间段 |
+| **Exchange mode** | 继承组合基础交易所，或在支持时扩展为独立交易所场景 |
+| **Starting balance** | PB8 模拟资金，以及 Apply 后 Sweep 的重置资金 |
+| **Balance multiplier** | Sweep 目标：Starting balance 乘以此值 |
+| **Refill cost** | 亏损窗口补回资金时记录的额外外部成本 |
+| **Cooldown days** | Sweep 窗口之间不交易的间隔；会自动计入 Stride |
+
+#### 推荐的 Sweep 流程
+
+1. 选择明确的币种和交易所。
+2. 使用 **All** 获取每个选定交易所/币种共同拥有的起始日期；如果有意使用不断变化的币种集合，则使用 **1st**。
+3. 选择 **Sweep Cycles**，设置 Window、Holdout、Starting balance、Multiplier、Refill cost 和 Cooldown。PBGui 会计算 Stride 和 Training windows。
+4. 每次更改 OHLCV、日期或交易所后点击 **Recalculate**，然后点击 **Preview**。
+5. 点击 **Apply Training Scenarios**。PBGui 会同步基础余额、对称的 Suite 币种列表、缩减器、评分、限制和有意义的 Long 边界。
+6. 保存并排队 Optimize 运行。必须使用 `write_all_results=true`，以便 PBGui 将不可变的 Sweep 计划绑定到正确结果。
+7. 按 `sweep_net_cashflow`、完成的周期数、外部资金/补资次数、Drawdown 和 Sortino 对完成的候选排序。
+8. 选择最终候选并点击 **Holdout**，排队生成的独立 Backtest，不要重新调参。
+
+#### 重要边界
+
+- PBGui 不修改 Passivbot，也不会移动真实资金。
+- PB8 Gain 是起始/结束乘数：`1.0` 表示盈亏平衡，`2.0` 表示资金翻倍，`0.8` 表示损失 20%。
+- Sweep 决策发生在场景窗口边界，而不是发生在未观测的窗口内目标触及时。
+
 PB8.1 评分目标可以继承全局 **Objective Scenario**、显式使用套件聚合，或选择命名的 Suite 场景。聚合目标支持 `mean`、`min`、`max`、`std` 和 `median`。限制可以使用省略 Scenario 的套件聚合、保留显式的 `scenario: null`，或选择命名的 Suite 场景；省略和显式 null 具有相同的运行时基础，但在结构上保持不同。PBGui 从已安装的 PB8 运行时读取规范缩减字段：当前 PB8 使用 `reducer`，而较旧的兼容 PB8 版本对评分使用 `aggregate`，对限制使用 `stat`。命名场景不能同时使用缩减字段。场景标签必须存在于活动 Suite 中。PBGui 在同步可视化编辑器和 Raw JSON 时保留这些区别。
 
 PB8 市场选择使用跨完整交易所集的官方解析器。唯一市场在配置中保持短格式；真实的乘数或场所冲突使用精确作用域标识符，而编辑器保持紧凑标签。精确导入的 ID 在币种列表、Coin Sources、Suite 场景和 Raw JSON 中保持不变。

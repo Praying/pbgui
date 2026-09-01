@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyOptimizeSeed,
+  applyOptimizeSweepPreset,
+  applyScenarioTemplatePreview,
+  buildSweepHoldoutBacktestConfig,
   filterOptimizeEnableOverridesForStrategy,
   buildEditorDraft,
   collectEditorConfig,
   flattenBounds,
+  getPath,
   gpuContractItem,
   gpuDefaults,
   inflateBounds,
@@ -101,6 +105,117 @@ describe('optimize config model', () => {
       'v7optimize.scoringScenarioRequiresSuite',
       'v7optimize.limitScenarioRequiresSuite',
     ]);
+  });
+
+  it('applies the PB8 Sweep preset without mutating the source draft', () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'], starting_balance: 250 },
+      bot: { long: { risk: {} }, short: { risk: {} } },
+      live: { approved_coins: { long: ['BTCUSDT', 'ETHUSDT'], short: ['OLD'] }, ignored_coins: { short: ['BTCUSDT', 'OLD'] } },
+      optimize: { bounds: { bot: { long: { risk: { n_positions: [2, 8], total_wallet_exposure_limit: [1, 4] } } } }, fixed_params: [] },
+    }, 'v8', 'sweep');
+    const next = applyOptimizeSweepPreset(draft, {
+      template: 'sweep_cycles',
+      parameters: { sweep_policy: { starting_balance: 1000 } },
+    });
+
+    expect(draft.backtest.starting_balance).toBe(250);
+    expect(next.backtest.starting_balance).toBe(1000);
+    expect(next.scoring).toEqual([
+      { metric: 'gain_strategy_eq', goal: 'max' },
+      { metric: 'sortino_ratio_strategy_eq', goal: 'max' },
+      { metric: 'drawdown_worst_strategy_eq', goal: 'min' },
+    ]);
+    expect(next.limits).toEqual([
+      { metric: 'drawdown_worst_strategy_eq', penalize_if: 'greater_than', value: 0.8 },
+      { metric: 'backtest_completion_ratio', penalize_if: 'less_than', value: 0.99 },
+    ]);
+    expect(getPath(next.live, 'approved_coins.short')).toEqual(['BTCUSDT', 'ETHUSDT']);
+    expect(next.optimize.write_all_results).toBe(true);
+    expect(next.optimize.objective_scenario).toBeNull();
+    expect(next.bounds['bot.long.risk.n_positions']).toEqual([1, 2]);
+    expect(next.bounds['bot.long.risk.total_wallet_exposure_limit']).toEqual([6, 10]);
+  });
+
+  it('preserves the dynamic all-coins sentinel when applying Sweep symmetry', () => {
+    const draft = buildEditorDraft({
+      live: { approved_coins: 'all', ignored_coins: { short: ['BTCUSDT'] } },
+      optimize: { bounds: {} },
+    }, 'v8', 'all-coins');
+    const next = applyOptimizeSweepPreset(draft, { template: 'sweep_cycles' });
+    expect(next.live.approved_coins).toBe('all');
+  });
+
+  it('creates core Sweep bounds and fixes disabled-HSL Long parameters', () => {
+    const draft = buildEditorDraft({
+      bot: { long: { hsl: { enabled: false } }, short: {} },
+      live: { approved_coins: { long: ['BTCUSDT', 'ETHUSDT'], short: [] } },
+      optimize: {
+        bounds: {
+          bot: {
+            long: {
+              hsl: {
+                red_threshold: [0.2, 0.8],
+                ema_span_minutes: [30, 240],
+                cooldown_minutes_after_red: [60, 600],
+              },
+            },
+          },
+        },
+        fixed_params: [],
+      },
+    }, 'v8', 'hsl-sweep');
+
+    const next = applyOptimizeSweepPreset(draft, { template: 'sweep_cycles' });
+
+    expect(next.bounds['bot.long.risk.n_positions']).toEqual([1, 2]);
+    expect(next.bounds['bot.long.risk.total_wallet_exposure_limit']).toEqual([6, 10]);
+    expect(next.fixedParams).toEqual(expect.arrayContaining([
+      'bot.long.hsl.red_threshold',
+      'bot.long.hsl.ema_span_minutes',
+      'bot.long.hsl.cooldown_minutes_after_red',
+    ]));
+  });
+
+  it('applies scenario provenance and creates standalone holdout configs', () => {
+    const draft = buildEditorDraft({ backtest: { exchanges: ['bybit'], start_date: '2020-01-01' }, pbgui: {} }, 'v8', 'scenario');
+    const applied = applyScenarioTemplatePreview(draft, {
+      template: 'walk_forward',
+      training_scenarios: [{ label: 'train_01' }],
+      reducer: { default: 'median' },
+      provenance: { template: 'walk_forward', holdout_scenarios: [{ label: 'holdout_01' }] },
+    });
+    expect(applied.suite).toMatchObject({ enabled: true, scenarios: [{ label: 'train_01' }], aggregate: { default: 'median' } });
+    expect(applied.pbgui.scenario_template).toMatchObject({ template: 'walk_forward' });
+    const standalone = buildSweepHoldoutBacktestConfig(
+      { backtest: { suite_enabled: true, scenarios: [{ label: 'train' }], aggregate: { default: 'mean' } }, pbgui: { scenario_template: {} } },
+      { start_date: '2024-01-01', end_date: '2024-03-31' },
+      'candidate_holdout',
+    );
+    const standaloneBacktest = standalone.backtest as Record<string, unknown>;
+    const standalonePbgui = standalone.pbgui as Record<string, unknown>;
+    expect(standaloneBacktest).toMatchObject({ start_date: '2024-01-01', end_date: '2024-03-31', base_dir: 'backtests/pbgui/candidate_holdout' });
+    expect(standaloneBacktest.suite_enabled).toBeUndefined();
+    expect(standaloneBacktest.scenarios).toBeUndefined();
+    expect(standalonePbgui.scenario_template).toBeUndefined();
+  });
+
+  it('writes PB8 reducer and clears stale Suite provenance when disabled', () => {
+    const draft = buildEditorDraft({
+      backtest: { suite_enabled: true, scenarios: [{ label: 'train' }], reducer: { default: 'median' } },
+      pbgui: { scenario_template: { template: 'walk_forward' } },
+    }, 'v8', 'suite');
+
+    const enabledConfig = collectEditorConfig(draft, 'v8');
+    expect(enabledConfig.backtest).toMatchObject({ reducer: { default: 'median' } });
+    expect(enabledConfig.backtest).not.toHaveProperty('aggregate');
+    expect(enabledConfig.pbgui).toMatchObject({ scenario_template: { template: 'walk_forward' } });
+
+    draft.suite.enabled = false;
+    const disabledConfig = collectEditorConfig(draft, 'v8');
+    expect(disabledConfig.backtest).not.toHaveProperty('reducer');
+    expect(disabledConfig.backtest).not.toHaveProperty('aggregate');
+    expect(disabledConfig.pbgui).not.toHaveProperty('scenario_template');
   });
 
   it('round trips canonical fixed runtime overrides without moving them under pbgui runtime', () => {
@@ -206,4 +321,3 @@ describe('GPU backend support', () => {
     expect(() => normalizeGpuSettings({ drift_halt: 2 }, { drift_halt: 0.6 }, true)).toThrow(/drift_halt/);
   });
 });
-
