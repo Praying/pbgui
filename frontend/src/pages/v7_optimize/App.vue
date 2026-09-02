@@ -78,7 +78,8 @@ let preflightPollTimer: number | undefined;
 let liveRefreshInFlight = false;
 
 function openOptimizeHelp(): void {
-  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER?.();
+  const helpTopic = adapter.isV8 ? '43_pbv8_optimize' : '36_pbv7_optimize';
+  window.location.href = `/api/help/main_page?topic=${encodeURIComponent(helpTopic)}`;
 }
 
 function notify(message: string, kind: 'info' | 'success' | 'error' = 'info'): void {
@@ -451,8 +452,7 @@ async function handleIncomingDraft(): Promise<void> {
 
 onMounted(async () => {
   document.title = t('editor.optimize.pageTitle');
-  const helpTopic = adapter.isV8 ? '43_pbv8_optimize' : '36_pbv7_optimize';
-  window.PBGUI_HELP_OPENER = () => (window as Window & { PBGuiSharedHelp?: { open?: (topic: string) => void } }).PBGuiSharedHelp?.open?.(helpTopic);
+  window.PBGUI_HELP_OPENER = openOptimizeHelp;
   await page.loadAll();
   await handleIncomingDraft();
   try { pbguiDataPath.value = await actions.pbguiDataPath(); } catch { pbguiDataPath.value = ''; }
@@ -469,6 +469,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pageshow', handlePageShow);
   window.removeEventListener('keydown', handleKeydown);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
+  delete window.PBGUI_HELP_OPENER;
 });
 </script>
 

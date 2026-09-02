@@ -108,10 +108,8 @@ const ws = useRunWs({
 });
 
 function openRunHelp(): void {
-  const sharedHelp = (window as Window & {
-    PBGuiSharedHelp?: { open?: (topic: string) => void };
-  }).PBGuiSharedHelp;
-  sharedHelp?.open?.(adapter.isV8 ? '44_pbv8_run' : '34_pbv7_run');
+  const topic = adapter.isV8 ? '44_pbv8_run' : '34_pbv7_run';
+  window.location.href = `/api/help/main_page?topic=${encodeURIComponent(topic)}`;
 }
 
 /* Page scroll lock while the backup panel is open (:1210). */
@@ -124,6 +122,7 @@ watch(
 
 onMounted(() => {
   document.title = t(adapter.titleKey); // :1449
+  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openRunHelp;
   void store.loadInstances(); // :1452 — initial REST fetch for immediate data
   ws.connect(); // :1453 — then switch to real-time WebSocket
 });
@@ -131,6 +130,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.body.style.overflow = '';
   toast.dispose(); // deviation: legacy leaked the toast timer
+  delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
 });
 </script>
 

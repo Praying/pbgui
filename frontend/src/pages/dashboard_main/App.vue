@@ -355,15 +355,10 @@ function dialogsAlert(options: { title: string; message: string }): void {
 
 /**
  * Legacy window._openDashboardHelp / PBGUI_HELP_OPENER: the pbgui_nav Guide
- * button calls this; it forwards the page keyword to the shared help overlay
- * script (PBGuiSharedHelp.open, loaded by index.html).
+ * button calls this; it navigates to the Help Center.
  */
 function openDashboardHelp(): void {
-  const sharedHelp = (window as Window & {
-    PBGuiSharedHelp?: { open?: (keyword: string, opts?: { token?: string }) => void };
-  }).PBGuiSharedHelp;
-  if (!sharedHelp || typeof sharedHelp.open !== 'function') return;
-  sharedHelp.open('dashboard', { token: getBoot().token });
+  window.location.href = '/api/help/main_page?topic=33_dashboard';
 }
 
 /* ── AI drawer completion (v1.99.4): reload the view when the AI creates or

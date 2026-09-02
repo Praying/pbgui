@@ -184,10 +184,11 @@ function openBalanceCalc(): void {
 }
 
 function openEditHelp(): void {
-  window.PBGUI_HELP_OPENER?.();
+  const topic = adapter.isV8 ? '44_pbv8_run' : '34_pbv7_run';
+  window.location.href = `/api/help/main_page?topic=${encodeURIComponent(topic)}`;
 }
 
-/** PBGUI_HELP_OPENER (:4184-4187) — global shared help overlay. */
+/** PBGUI_HELP_OPENER (:4184-4187) — global shared help opener. */
 declare global {
   interface Window {
     PBGUI_HELP_OPENER?: () => void;
@@ -196,10 +197,7 @@ declare global {
 
 onMounted(() => {
   document.title = t(adapter.titleKey); // :3924
-  window.PBGUI_HELP_OPENER = () => {
-    const shared = (window as Window & { PBGuiSharedHelp?: { open?: (k: string) => void } }).PBGuiSharedHelp;
-    shared?.open?.(adapter.isV8 ? 'pbv8 run' : 'pbv7 run');
-  };
+  window.PBGUI_HELP_OPENER = openEditHelp;
   unbindStructuredSync = page.jsonSync.bindStructuredSyncRoot('main-content'); // :2687-2693
   void page.load(); // init() :1797
 });

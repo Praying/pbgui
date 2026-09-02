@@ -85,10 +85,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 function openScenarioGeneratorGuide(): void {
-  const sharedHelp = (window as Window & {
-    PBGuiSharedHelp?: { open?: (topic: string, options?: { anchor?: string }) => void };
-  }).PBGuiSharedHelp;
-  sharedHelp?.open?.('43_pbv8_optimize', { anchor: 'scenario-generator' });
+  window.location.href = '/api/help/main_page?topic=43_pbv8_optimize#scenario-generator';
 }
 
 const TEMPLATE_NAMES = ['Exchange Comparison', 'Date Windows', 'TWE Sensitivity', 'n_positions Sensitivity'] as const;

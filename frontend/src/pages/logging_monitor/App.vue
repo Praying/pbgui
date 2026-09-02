@@ -153,7 +153,9 @@ onMounted(() => {
   installViewer();
   void initialize();
   window.addEventListener('keydown', onKeydown);
-  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = () => (window as Window & { PBGuiSharedHelp?: { open?: (topic: string) => void } }).PBGuiSharedHelp?.open?.('logging');
+  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = () => {
+    window.location.href = '/api/help/main_page?topic=31_logging';
+  };
 });
 onBeforeUnmount(() => {
   viewer?.close();

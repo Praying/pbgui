@@ -264,3 +264,14 @@ export const WORKBENCH_NAVIGATION = [
     ],
   },
 ] as const satisfies readonly NavigationGroup[];
+
+/**
+ * Direct navigation to the modern Help Center (/api/help/main_page).
+ */
+export function openHelpCenter(topic?: string, anchor?: string): void {
+  const params = new URLSearchParams();
+  if (topic) params.set('topic', topic);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const hash = anchor ? `#${anchor.replace(/^#/, '')}` : '';
+  window.location.href = `/api/help/main_page${query}${hash}`;
+}

@@ -17,7 +17,7 @@
  * FLAVOR: pathname-derived (/api/backtest-v8/ → v8, config.ts) — both
  * routers serve this one build; v8 drops the legacy panel.
  */
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
   PhArchive,
   PhArrowsClockwise,
@@ -90,10 +90,8 @@ const store = useBacktestPage({
 });
 
 function openBacktestHelp(): void {
-  const sharedHelp = (window as Window & {
-    PBGuiSharedHelp?: { open?: (topic: string, options?: { token?: string }) => void };
-  }).PBGuiSharedHelp;
-  sharedHelp?.open?.(store.adapter.isV8 ? '42_pbv8_backtest' : '35_pbv7_backtest', { token: boot.token });
+  const topic = store.adapter.isV8 ? '42_pbv8_backtest' : '35_pbv7_backtest';
+  window.location.href = `/api/help/main_page?topic=${encodeURIComponent(topic)}`;
 }
 
 const queuePanel = ref<InstanceType<typeof QueuePanel> | null>(null);
@@ -423,7 +421,12 @@ function onTemplateExchanges(needed: readonly string[]): void {
 
 onMounted(() => {
   document.title = t(store.adapter.titleKey, store.adapter.titleParams);
+  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openBacktestHelp;
   store.boot();
+});
+
+onBeforeUnmount(() => {
+  delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
 });
 </script>
 

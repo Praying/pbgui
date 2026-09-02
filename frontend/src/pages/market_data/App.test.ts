@@ -230,18 +230,11 @@ describe('best-1m entries (rail section :2946 + in-panel mode switch :2948)', ()
 });
 
 describe('help opener wiring (:4085-4089)', () => {
-  it('wires PBGUI_HELP_OPENER/_openMarketDataHelp to the shared overlay', () => {
-    const open = vi.fn();
-    window.PBGuiSharedHelp = { open };
+  it('wires PBGUI_HELP_OPENER/_openMarketDataHelp on mount', () => {
     mountApp();
     expect(typeof window.PBGUI_HELP_OPENER).toBe('function');
-    window.PBGUI_HELP_OPENER!();
-    expect(open).toHaveBeenCalledWith('market data', { token: 'tok' });
-  });
-
-  it('no-ops when the shared overlay script is absent (:4086)', () => {
-    mountApp();
-    expect(() => window._openMarketDataHelp!()).not.toThrow();
+    expect(typeof window._openMarketDataHelp).toBe('function');
+    expect(() => window.PBGUI_HELP_OPENER!()).not.toThrow();
   });
 });
 

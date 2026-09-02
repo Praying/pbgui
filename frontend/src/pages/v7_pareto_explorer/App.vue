@@ -139,10 +139,7 @@ const railSections = computed<PageSection[]>(() =>
 );
 
 function openParetoHelp(): void {
-  const sharedHelp = (window as Window & {
-    PBGuiSharedHelp?: { open?: (topic: string) => void };
-  }).PBGuiSharedHelp;
-  sharedHelp?.open?.('37_pareto_explorer');
+  window.location.href = '/api/help/main_page?topic=37_pareto_explorer';
 }
 
 const DEEP_TAB_LABEL: Record<DeepTab, string> = {
@@ -360,6 +357,7 @@ const fullscreenListener = useFullscreenRelayout(() => getPlotly());
 
 onMounted(() => {
   document.title = t('v7explore.pageTitle');
+  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openParetoHelp;
   fullscreenListener.install();
   void store.bootstrapSession();
 });
@@ -368,6 +366,7 @@ onBeforeUnmount(() => {
   fullscreenListener.dispose();
   surfaces.dispose();
   store.dispose();
+  delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
 });
 </script>
 

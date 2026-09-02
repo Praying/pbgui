@@ -568,15 +568,10 @@
 
   function openHelp(keyword, options) {
     options = options || {};
-    state.token = String(options.token !== undefined ? options.token : (window.TOKEN || ''));
-    ensureDom();
-    syncLangButtons();
-    return ensureDeps().then(function () {
-      dom('pbgui-shared-help-ovl').classList.add('visible');
-      dom('pbgui-shared-help-ovl').setAttribute('aria-hidden', 'false');
-      document.body.classList.add('pbgui-help-open');
-      loadHelpIndex(keyword || 'overview', options.anchor || '');
-    });
+    var anchor = options.anchor ? '#' + options.anchor.replace(/^#/, '') : '';
+    var topicParam = keyword ? '?topic=' + encodeURIComponent(keyword) : '';
+    window.location.href = '/api/help/main_page' + topicParam + anchor;
+    return Promise.resolve();
   }
 
   function closeHelp() {

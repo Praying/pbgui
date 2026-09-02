@@ -139,12 +139,9 @@ const editRef = ref<InstanceType<typeof EditUserPanel> | null>(null);
 
 /* ── help opener for the nav Guide button (:3760-3766) ── */
 
-type SharedHelpGlobal = { open(keyword: string): void };
-
 function wireHelpOpener(): void {
   (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = () => {
-    const shared = (window as Window & { PBGuiSharedHelp?: SharedHelpGlobal }).PBGuiSharedHelp;
-    if (shared && typeof shared.open === 'function') shared.open('api_keys');
+    window.location.href = '/api/help/main_page?topic=20_api_keys';
   };
 }
 

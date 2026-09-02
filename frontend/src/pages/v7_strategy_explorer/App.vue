@@ -128,10 +128,7 @@ function statusChipClass(cls: string): string {
 }
 
 function openStrategyHelp(): void {
-  const sharedHelp = (window as Window & {
-    PBGuiSharedHelp?: { open?: (topic: string) => void };
-  }).PBGuiSharedHelp;
-  sharedHelp?.open?.('00_strategy_explorer_help');
+  window.location.href = '/api/help/main_page?topic=00_strategy_explorer_help';
 }
 
 /** selectStage (:3066-3079) — stage switching persists the refresh state. */
@@ -241,6 +238,7 @@ function installTooltip(): void {
 }
 
 onMounted(() => {
+  (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openStrategyHelp;
   installDatePicker();
   installTooltip();
   document.addEventListener('keydown', onKeydown);
@@ -267,6 +265,7 @@ onBeforeUnmount(() => {
   disposeTooltip?.();
   disposeTooltip = null;
   if (scrollTimer) clearTimeout(scrollTimer);
+  delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
 });
 </script>
 

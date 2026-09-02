@@ -467,15 +467,11 @@ window._servicesGuideKeyword = 'services_overview';
 
 /**
  * Legacy window._openServicesHelp/PBGUI_HELP_OPENER: the pbgui_nav Guide button
- * calls this; it forwards the current panel's keyword to the shared overlay
- * script (PBGuiSharedHelp.open, loaded by index.html).
+ * calls this; it navigates to the modern Help Center for current panel.
  */
 window.PBGUI_HELP_OPENER = (): void => {
-  const sharedHelp = (window as Window & {
-    PBGuiSharedHelp?: { open?: (keyword: string, opts: { token: string }) => void };
-  }).PBGuiSharedHelp;
-  if (!sharedHelp || typeof sharedHelp.open !== 'function') return;
-  sharedHelp.open(window._servicesGuideKeyword || 'services_overview', { token: getBoot().token });
+  const keyword = window._servicesGuideKeyword || 'services_overview';
+  window.location.href = `/api/help/main_page?topic=${encodeURIComponent(keyword)}`;
 };
 
 /* ── Prices overlay (legacy window.openPricesOverlay target) ── */

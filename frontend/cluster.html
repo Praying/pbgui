@@ -799,8 +799,7 @@
     window.PBGUI_NAV_CONFIG = { subtitle: (window.PBGuiI18n ? PBGuiI18n.t('sysmon.clusterSyncSubtitle2') : 'CLUSTER SYNC'), current: 'system_cluster' };
     document.title = PBGuiI18n.t('sysmon.clusterSyncTitle');
     window.PBGUI_HELP_OPENER = function () {
-      if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== 'function') return;
-      window.PBGuiSharedHelp.open('cluster sync');
+      window.location.href = '/api/help/main_page?topic=39_cluster_sync';
     };
   </script>
   <script src="/app/js/shared_help_overlay.js?v=8"></script>

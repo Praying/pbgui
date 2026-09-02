@@ -863,8 +863,7 @@ loadRotationData();
     });
   }());
   window._openLoggingHelp = function() {
-    if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== 'function') return;
-    window.PBGuiSharedHelp.open('logging');
+    window.location.href = '/api/help/main_page?topic=31_logging';
   };
   window.PBGUI_HELP_OPENER = window._openLoggingHelp;
 }());

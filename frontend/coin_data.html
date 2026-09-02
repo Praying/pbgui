@@ -1976,8 +1976,7 @@
       }());
 
       window._openCoinDataHelp = function () {
-        if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== 'function') return;
-        window.PBGuiSharedHelp.open(helpDefaultTopic, { token: TOKEN });
+        window.location.href = '/api/help/main_page?topic=27_coin_data';
       };
       window.PBGUI_HELP_OPENER = window._openCoinDataHelp;
     }

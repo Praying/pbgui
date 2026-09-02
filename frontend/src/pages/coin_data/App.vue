@@ -240,13 +240,8 @@ declare global {
   }
 }
 
-/** Legacy helpDefaultTopic (:1747). */
-const HELP_DEFAULT_TOPIC = 'coin data';
-
 function openCoinDataHelp(): void {
-  const sharedHelp = window.PBGuiSharedHelp;
-  if (!sharedHelp || typeof sharedHelp.open !== 'function') return; // :1965
-  sharedHelp.open(HELP_DEFAULT_TOPIC, { token: getBoot().token }); // :1966
+  window.location.href = '/api/help/main_page?topic=27_coin_data';
 }
 
 /* ── bootstrap (:3174-3180, :3183-3192) ── */

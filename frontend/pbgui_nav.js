@@ -1718,37 +1718,17 @@
 
     ensureSharedHelpOverlay();
 
-    /* Guide button → keep the current page and lazy-load the shared Help overlay. */
+    /* Guide button → navigate to the modern Help & Tutorials page with current topic. */
     var guideBtn = document.getElementById('pbgui-guide-btn');
     if (guideBtn) guideBtn.addEventListener('click', function () {
       var opener = window.PBGUI_HELP_OPENER;
       if (typeof opener === 'function') {
-        ensureSharedHelpOverlay();
         opener();
-        ensureSharedHelpOverlay();
         return;
       }
-      if (window.PBGuiSharedHelp && typeof window.PBGuiSharedHelp.open === 'function') {
-        window.PBGuiSharedHelp.open(guideTopic, { token: TOKEN });
-        return;
-      }
-
-      guideBtn.disabled = true;
-      var script = document.createElement('script');
-      script.src = '/app/js/shared_help_overlay.js?v=8';
-      script.onload = function () {
-        guideBtn.disabled = false;
-        if (window.PBGuiSharedHelp && typeof window.PBGuiSharedHelp.open === 'function') {
-          window.PBGuiSharedHelp.open(guideTopic, { token: TOKEN });
-          return;
-        }
-        navTo('help');
-      };
-      script.onerror = function () {
-        guideBtn.disabled = false;
-        navTo('help');
-      };
-      document.head.appendChild(script);
+      var targetTopic = guideTopic || '00_overview';
+      var helpBase = (apiOrigin || '') + (FASTAPI_PAGES['help'] || '/api/help/main_page');
+      window.location.href = helpBase + '?topic=' + encodeURIComponent(targetTopic);
     });
 
     /* Notify button → open inline floating log panel */

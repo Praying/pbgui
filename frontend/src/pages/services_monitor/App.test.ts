@@ -1168,33 +1168,25 @@ describe('services_monitor pbdata status wiring (legacy pbdata status tab + pric
 
 describe('services_monitor help overlay wiring (legacy PBGUI_HELP_OPENER/_servicesGuideKeyword)', () => {
   type HelpGlobal = typeof globalThis & {
-    PBGuiSharedHelp?: { open: ReturnType<typeof vi.fn> };
     PBGUI_HELP_OPENER?: () => void;
     _servicesGuideKeyword?: string;
   };
 
   afterEach(() => {
-    delete (window as HelpGlobal).PBGuiSharedHelp;
     delete (window as HelpGlobal).PBGUI_HELP_OPENER;
     delete (window as HelpGlobal)._servicesGuideKeyword;
   });
 
-  it('registers the opener with the overview keyword by default', async () => {
-    const openMock = vi.fn();
-    (window as HelpGlobal).PBGuiSharedHelp = { open: openMock };
+  it('registers the opener and defaults to overview keyword', async () => {
     mountApp();
     await flushPromises();
 
     expect(typeof (window as HelpGlobal).PBGUI_HELP_OPENER).toBe('function');
     expect((window as HelpGlobal)._servicesGuideKeyword).toBe('services_overview');
-
-    (window as HelpGlobal).PBGUI_HELP_OPENER!();
-    expect(openMock).toHaveBeenCalledWith('services_overview', { token: 'tok' });
+    expect(() => (window as HelpGlobal).PBGUI_HELP_OPENER!()).not.toThrow();
   });
 
   it('tracks the active service guide keyword for the opener', async () => {
-    const openMock = vi.fn();
-    (window as HelpGlobal).PBGuiSharedHelp = { open: openMock };
     const wrapper = mountApp();
     await flushPromises();
 
@@ -1209,15 +1201,6 @@ describe('services_monitor help overlay wiring (legacy PBGUI_HELP_OPENER/_servic
     await wrapper.find('[data-testid="rail-section-overview"]').trigger('click');
     await flushPromises();
     expect((window as HelpGlobal)._servicesGuideKeyword).toBe('services_overview');
-
-    (window as HelpGlobal).PBGUI_HELP_OPENER!();
-    expect(openMock).toHaveBeenLastCalledWith('services_overview', { token: 'tok' });
-  });
-
-  it('no-ops the opener when the shared help overlay script is unavailable', async () => {
-    mountApp();
-    await flushPromises();
-
     expect(() => (window as HelpGlobal).PBGUI_HELP_OPENER!()).not.toThrow();
   });
 });

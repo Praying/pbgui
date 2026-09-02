@@ -487,13 +487,8 @@ declare global {
   }
 }
 
-/** Legacy helpDefaultTopic (:3816). */
-const HELP_DEFAULT_TOPIC = 'market data';
-
 function openMarketDataHelp(): void {
-  const sharedHelp = window.PBGuiSharedHelp;
-  if (!sharedHelp || typeof sharedHelp.open !== 'function') return; // :4086
-  sharedHelp.open(HELP_DEFAULT_TOPIC, { token: getBoot().token }); // :4087
+  window.location.href = '/api/help/main_page?topic=26_market_data';
 }
 
 window._openMarketDataHelp = openMarketDataHelp; // :4085

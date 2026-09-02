@@ -1,5 +1,12 @@
 # Unreleased
 
+## Help & Documentation — Unified Direct Help Center Navigation
+
+- **Unified Navigation to Native Help Center**: Standardized all top header/navbar guide buttons (`#pbgui-guide-btn`, `WorkspaceHeader` `PhQuestion` icon buttons) across all Vue 3 pages and legacy templates to navigate directly to the modern native Help Center (`/api/help/main_page?topic=<topic_name>`), completely replacing legacy modal overlay popups (`#help-ovl`, `shared_help_overlay.js`).
+- **Contextual Topic Mapping**: Wired version-aware and section-aware topic routing across PBv7/PBv8 Run (`34_pbv7_run` / `44_pbv8_run`), PBv7/PBv8 Backtest (`35_pbv7_backtest` / `42_pbv8_backtest`), PBv7/PBv8 Optimize (`36_pbv7_optimize` / `43_pbv8_optimize`), Pareto Explorer (`37_pareto_explorer`), Strategy Explorer (`00_strategy_explorer_help`), API Keys (`20_api_keys`), Coin Data (`27_coin_data`), Dashboard (`33_dashboard`), Logging (`31_logging`), Services Monitor (`services_overview` / `pbdata` / `pbapiserver`), Scenario Generator (`43_pbv8_optimize#scenario-generator`), Welcome (`19_welcome`), and Cluster Sync (`39_cluster_sync`).
+- **Defensive Backstop & Shared Navigation**: Exported `openHelpCenter(topic, anchor)` helper in `@/shared/navigation` and redirected legacy fallback calls in `frontend/pbgui_nav.js` and `frontend/js/shared_help_overlay.js` directly to `/api/help/main_page`.
+- **Test Suite Alignment**: Updated unit test expectations across `dashboard_main`, `market_data`, and `services_monitor` suites to verify help opener registration and contextual keyword tracking.
+
 ## Frontend — Favicon Theme Alignment
 
 - **Redesigned SVG Favicon**: Replaced the legacy navy 3-bar icon in `frontend/favicon.svg` with a modern SVG favicon aligned with the Vue 3 graphite dark theme (`#161616` / `#191e26`), precision border, subtle ambient glow (`rgba(143, 207, 242, 0.08)`), and official `PB` brand mark vector geometry matching the left sidebar workbench rail (`WorkbenchRail.vue`).

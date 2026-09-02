@@ -141,9 +141,7 @@ function onKeydown(event: KeyboardEvent): void {
 /* ── help opener (:969-974) ── */
 
 function openWelcomeHelp(): void {
-  const sharedHelp = (window as Window & { PBGuiSharedHelp?: SharedHelpGlobal }).PBGuiSharedHelp;
-  if (!sharedHelp || typeof sharedHelp.open !== 'function') return;
-  sharedHelp.open('welcome', { token: store.token.value });
+  window.location.href = '/api/help/main_page?topic=19_welcome';
 }
 
 onMounted(() => {
