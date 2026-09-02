@@ -1,5 +1,11 @@
 # Unreleased
 
+## Frontend — Favicon Theme Alignment
+
+- **Redesigned SVG Favicon**: Replaced the legacy navy 3-bar icon in `frontend/favicon.svg` with a modern SVG favicon aligned with the Vue 3 graphite dark theme (`#161616` / `#191e26`), precision border, subtle ambient glow (`rgba(143, 207, 242, 0.08)`), and official `PB` brand mark vector geometry matching the left sidebar workbench rail (`WorkbenchRail.vue`).
+- **Brand & Theme Consistency**: Vectorized `PB` monogram paths using the ice-blue accent gradient (`#c8ecff` → `#8fcff2`), ensuring crisp integer-aligned rendering across 16px, 24px, 32px, and 64px tab and bookmark displays without relying on external fonts.
+- **Legacy Fallback Synchronization**: Updated the legacy navigation bar and About dialog logo fallback color literals in `frontend/pbgui_nav.js` to match the Vue 3 palette tokens (`--bg-elevated`, `--accent-deep`, `--accent-soft`, `--accent`, `--text-primary`).
+
 ## Help & Tutorials - Native Documentation Workspace Redesign (Plan A)
 
 - **Native Docs Workspace**: Transformed `/api/help/main_page` (`frontend/src/pages/help/App.vue`) from a floating modal popup with backdrop blur and drag/resize handles into a modern, native full-screen 2-column documentation center seamlessly embedded in `AppShell`.

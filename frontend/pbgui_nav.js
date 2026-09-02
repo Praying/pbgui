@@ -767,12 +767,12 @@
     /* logo */
     html += '<a id="nav-logo" href="#" title="PBGui">'
           + '<svg width="112" height="36" viewBox="0 0 112 36" xmlns="http://www.w3.org/2000/svg">'
-          + '<rect x="1" y="1" width="34" height="34" rx="7" style="fill:var(--bg-elevated,#232b3d);stroke:var(--accent-deep,#3f63ad)" stroke-width="1.5"/>'
-          + '<rect x="7" y="21" width="5" height="9" rx="1.5" style="fill:var(--accent-soft,#96b9f4)"/>'
-          + '<rect x="14.5" y="15" width="5" height="15" rx="1.5" style="fill:var(--accent,#72a0ee)"/>'
-          + '<rect x="22" y="9" width="5" height="21" rx="1.5" style="fill:var(--accent-deep,#3f63ad)"/>'
-          + '<text x="42" y="15" style="font-family:var(--font-family,system-ui,sans-serif);fill:var(--text-primary,#e8ecf4)" font-size="13" font-weight="700" letter-spacing="0.3">PBGui</text>'
-          + '<text x="42" y="28" style="font-family:var(--font-family,system-ui,sans-serif);fill:var(--accent,#72a0ee)" font-size="7.5" font-weight="400" letter-spacing="1.2">' + esc(window.PBGuiI18n ? PBGuiI18n.serverMsg(c.subtitle) : c.subtitle) + '</text>'
+          + '<rect x="1" y="1" width="34" height="34" rx="7" style="fill:var(--bg-elevated,#2b2b2b);stroke:var(--accent-deep,#4fa8d3)" stroke-width="1.5"/>'
+          + '<rect x="7" y="21" width="5" height="9" rx="1.5" style="fill:var(--accent-soft,#b6e1f7)"/>'
+          + '<rect x="14.5" y="15" width="5" height="15" rx="1.5" style="fill:var(--accent,#8fcff2)"/>'
+          + '<rect x="22" y="9" width="5" height="21" rx="1.5" style="fill:var(--accent-deep,#4fa8d3)"/>'
+          + '<text x="42" y="15" style="font-family:var(--font-family,system-ui,sans-serif);fill:var(--text-primary,#f0f0f0)" font-size="13" font-weight="700" letter-spacing="0.3">PBGui</text>'
+          + '<text x="42" y="28" style="font-family:var(--font-family,system-ui,sans-serif);fill:var(--accent,#8fcff2)" font-size="7.5" font-weight="400" letter-spacing="1.2">' + esc(window.PBGuiI18n ? PBGuiI18n.serverMsg(c.subtitle) : c.subtitle) + '</text>'
           + '</svg></a>';
 
     /* groups */
@@ -1338,10 +1338,10 @@
       +   '</div>'
       +   '<div id="pbgui-about-body">'
       +     '<svg width="72" height="72" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:1.1rem">'
-      +       '<rect x="1" y="1" width="34" height="34" rx="7" style="fill:var(--bg-elevated,#232b3d);stroke:var(--accent-deep,#3f63ad)" stroke-width="1.5"/>'
-      +       '<rect x="7" y="21" width="5" height="9" rx="1.5" style="fill:var(--accent-soft,#96b9f4)"/>'
-      +       '<rect x="14.5" y="15" width="5" height="15" rx="1.5" style="fill:var(--accent,#72a0ee)"/>'
-      +       '<rect x="22" y="9" width="5" height="21" rx="1.5" style="fill:var(--accent-deep,#3f63ad)"/>'
+      +       '<rect x="1" y="1" width="34" height="34" rx="7" style="fill:var(--bg-elevated,#2b2b2b);stroke:var(--accent-deep,#4fa8d3)" stroke-width="1.5"/>'
+      +       '<rect x="7" y="21" width="5" height="9" rx="1.5" style="fill:var(--accent-soft,#b6e1f7)"/>'
+      +       '<rect x="14.5" y="15" width="5" height="15" rx="1.5" style="fill:var(--accent,#8fcff2)"/>'
+      +       '<rect x="22" y="9" width="5" height="21" rx="1.5" style="fill:var(--accent-deep,#4fa8d3)"/>'
       +     '</svg>'
       +     '<div id="pbgui-about-ver">PBGui ' + ver + '</div>'
       +     (serial ? '<div id="pbgui-about-serial">' + esc(navT('nav.api_serial', 'API Serial')) + ' ' + serial + '</div>' : '')
