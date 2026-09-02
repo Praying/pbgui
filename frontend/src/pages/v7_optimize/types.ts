@@ -29,6 +29,16 @@ export interface QueueItem {
   pid?: number | null;
   created?: string;
   modified?: string;
+  progress?: {
+    eval?: number | null;
+    target_iters?: number | null;
+    estimated?: boolean;
+    percent?: number | null;
+    evaluation_scan?: {
+      complete?: boolean;
+      percent?: number;
+    } | null;
+  };
   [key: string]: unknown;
 }
 

@@ -1846,7 +1846,8 @@ def test_running_queue_status_prefers_durable_results_over_stale_pareto_log(
 
     assert status["progress"]["evaluations"] == 18_750
     assert status["progress"]["percent"] == 6.25
-    assert status["progress"]["evaluation_source"] == "all_results"
+    assert status["progress"]["evaluation_source"] == "fallback_scan"
+    assert status["progress"]["estimated"] is True
     assert status["progress"]["result"] == "active-run"
 
 
@@ -1859,6 +1860,10 @@ def test_active_all_results_progress_uses_verified_open_result_file(
     result_dir.mkdir(parents=True)
     all_results = result_dir / "all_results.bin"
     all_results.write_bytes(b"".join(msgpack.packb({"evaluation": index}) for index in range(3)))
+    (result_dir / optimize_v8._EVALUATION_PROGRESS_FILENAME).write_text(
+        json.dumps({"contract_version": 1, "evaluations": 3, "all_results_size": all_results.stat().st_size}),
+        encoding="utf-8",
+    )
 
     class Process:
         """Minimal verified process with one durable result file."""
@@ -1884,6 +1889,11 @@ def test_active_all_results_progress_uses_verified_open_result_file(
         "evaluations": 3,
         "result": "active-result",
         "trailing_partial_entry": False,
+        "scan_complete": True,
+        "bytes_scanned": all_results.stat().st_size,
+        "total_bytes": all_results.stat().st_size,
+        "scan_percent": 100.0,
+        "source": "runner",
     }
 
 
@@ -1904,8 +1914,66 @@ def test_active_evaluation_counter_resumes_after_partial_messagepack_record(
         handle.write(pending[-1:])
     second = optimize_v8._all_results_evaluation_count(path)
 
-    assert first == {"evaluations": 2, "trailing_partial_entry": True}
-    assert second == {"evaluations": 3, "trailing_partial_entry": False}
+    assert first["evaluations"] == 2
+    assert first["trailing_partial_entry"] is True
+    assert second["evaluations"] == 3
+    assert second["trailing_partial_entry"] is False
+    assert second["scan_complete"] is True
+
+
+def test_active_evaluation_counter_spreads_cold_scan_across_requests(
+    optimize_v8_roots, monkeypatch
+) -> None:
+    """Large histories advance by a bounded byte budget instead of blocking one status request."""
+    _configs, _queue, _logs, results = optimize_v8_roots
+    path = results / "budgeted-result" / "all_results.bin"
+    path.parent.mkdir(parents=True)
+    records = [msgpack.packb({"evaluation": index, "padding": "x" * 32}) for index in range(4)]
+    path.write_bytes(b"".join(records))
+    monkeypatch.setattr(optimize_v8, "_ACTIVE_EVAL_SCAN_BUDGET_BYTES", len(records[0]) + len(records[1]))
+    monkeypatch.setattr(optimize_v8, "_ACTIVE_EVAL_SCAN_BUDGET_SECONDS", 60.0)
+
+    first = optimize_v8._all_results_evaluation_count(path)
+    second = optimize_v8._all_results_evaluation_count(path)
+
+    assert first["evaluations"] == 2
+    assert first["scan_complete"] is False
+    assert first["scan_percent"] == 50.0
+    assert second["evaluations"] == 4
+    assert second["scan_complete"] is True
+    assert second["scan_percent"] == 100.0
+
+
+def test_active_evaluation_counter_obeys_wall_clock_budget(
+    optimize_v8_roots, monkeypatch
+) -> None:
+    """Dense small records cannot monopolize a status request beyond its time slice."""
+    _configs, _queue, _logs, results = optimize_v8_roots
+    path = results / "timed-result" / "all_results.bin"
+    path.parent.mkdir(parents=True)
+    records = [msgpack.packb({"evaluation": index}) for index in range(5)]
+    path.write_bytes(b"".join(records))
+    monkeypatch.setattr(optimize_v8, "_ACTIVE_EVAL_SCAN_BUDGET_BYTES", 1024 * 1024)
+    monkeypatch.setattr(optimize_v8, "_ACTIVE_EVAL_SCAN_BUDGET_SECONDS", 0.0)
+
+    first = optimize_v8._all_results_evaluation_count(path)
+
+    assert first["evaluations"] == 1
+    assert first["scan_complete"] is False
+    assert first["bytes_scanned"] < first["total_bytes"]
+
+
+def test_log_evaluation_estimate_adds_visible_drops_after_latest_iter(tmp_path) -> None:
+    """Legacy runs get an immediate labeled lower bound before exact history scanning finishes."""
+    path = tmp_path / "optimize.log"
+    path.write_text(
+        "INFO Iter: 120 | Pareto up | size:4\n"
+        "INFO Dropping candidate whose obj score is already present\n"
+        "INFO Dropping candidate whose obj score is already present\n",
+        encoding="utf-8",
+    )
+
+    assert optimize_v8._estimate_log_evaluations(path) == 122
 
 
 def test_config_metadata_seed_backtests_and_result_mode(optimize_v8_roots) -> None:

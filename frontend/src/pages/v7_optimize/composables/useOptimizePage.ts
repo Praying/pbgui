@@ -167,6 +167,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
   }
 
   let settingsGeneration = 0;
+  let queueGeneration = 0;
   let resultsGeneration = 0;
   let paretoGeneration = 0;
   async function loadSettings(): Promise<void> {
@@ -211,8 +212,28 @@ export function useOptimizePage(options: OptimizePageOptions) {
   }
 
   async function loadQueue(): Promise<void> {
+    const generation = ++queueGeneration;
     const data = await request<{ items?: QueueItem[] }>('/queue');
-    queue.value = data.items ?? [];
+    const items = data.items ?? [];
+    if (!adapter.isV8) {
+      queue.value = items;
+      return;
+    }
+    const activeItems = items.filter((item) => item.status === 'running' || item.status === 'optimizing');
+    const progressByFilename = new Map<string, QueueItem['progress']>();
+    await Promise.all(activeItems.map(async (item) => {
+      try {
+        const status = await request<QueueItem>(`/queue/${encodeURIComponent(item.filename)}/status`);
+        if (status.progress) progressByFilename.set(item.filename, status.progress);
+      } catch {
+        // Queue listing remains useful when a process exits during polling.
+      }
+    }));
+    if (generation !== queueGeneration) return;
+    queue.value = items.map((item) => {
+      const progress = progressByFilename.get(item.filename);
+      return progress ? { ...item, progress } : item;
+    });
   }
 
   async function loadResults(): Promise<void> {

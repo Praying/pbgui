@@ -103,6 +103,8 @@ _PARETO_COMPARISON_METRICS = (
 _LAUNCH_MODES = {"fresh", "pareto_seed", "checkpoint_resume"}
 _RESULT_PROGRESS_CACHE_TTL_SECONDS = 15 * 60
 _RESULT_PROGRESS_CACHE_MAX_ENTRIES = 64
+_ACTIVE_EVAL_SCAN_BUDGET_BYTES = 32 * 1024 * 1024
+_ACTIVE_EVAL_SCAN_BUDGET_SECONDS = 0.2
 _RESULT_LIST_SCAN_LIMIT_BYTES = 8 * 1024 * 1024
 _MAX_OVERRIDE_BYTES = 1024 * 1024
 _MAX_OVERRIDE_BUNDLE_BYTES = 8 * 1024 * 1024
@@ -137,6 +139,9 @@ _result_progress_cache: OrderedDict[str, dict] = OrderedDict()
 _result_progress_cache_lock = threading.RLock()
 _active_eval_count_cache: OrderedDict[str, dict] = OrderedDict()
 _active_eval_count_cache_lock = threading.RLock()
+_active_eval_scan_threads: dict[str, threading.Thread] = {}
+_active_eval_scan_stops: dict[str, threading.Event] = {}
+_EVALUATION_PROGRESS_FILENAME = ".pbgui_optimize_progress.json"
 _backtest_count_cache: OrderedDict[str, dict] = OrderedDict()
 _backtest_count_cache_lock = threading.RLock()
 _pareto_list_cache: OrderedDict[tuple[str, int | None, int, int], dict] = OrderedDict()
@@ -1677,23 +1682,31 @@ def _all_results_evaluation_count(path: Path) -> dict:
                 and stat_result.st_mtime_ns != cached.get("mtime_ns")
             )
         )
-        if same_file and stat_result.st_size == cached["size"]:
+        if same_file and stat_result.st_size == cached["size"] and int(cached["offset"]) >= int(cached["size"]):
             cached["accessed_at"] = now
             _active_eval_count_cache.move_to_end(key)
             return {
                 "evaluations": int(cached["evaluations"]),
-                "trailing_partial_entry": int(cached["offset"]) < int(cached["size"]),
+                "trailing_partial_entry": False,
+                "scan_complete": True,
+                "bytes_scanned": int(cached["offset"]),
+                "total_bytes": int(cached["size"]),
+                "scan_percent": 100.0,
             }
 
         offset = int(cached["offset"]) if same_file else 0
         evaluations = int(cached["evaluations"]) if same_file else 0
         last_complete = offset
         error = None
+        scan_reaches_eof = False
+        scan_deadline = time.monotonic() + _ACTIVE_EVAL_SCAN_BUDGET_SECONDS
+        scan_budget_exhausted = False
         try:
             with path.open("rb") as handle:
                 handle.seek(offset)
                 unpacker = msgpack.Unpacker(raw=False, strict_map_key=False, max_buffer_size=64 * 1024 * 1024)
-                remaining = stat_result.st_size - offset
+                remaining = min(stat_result.st_size - offset, _ACTIVE_EVAL_SCAN_BUDGET_BYTES)
+                scan_reaches_eof = offset + remaining >= stat_result.st_size
                 while remaining > 0:
                     chunk = handle.read(min(1024 * 1024, remaining))
                     if not chunk:
@@ -1705,6 +1718,11 @@ def _all_results_evaluation_count(path: Path) -> dict:
                             raise ValueError("all_results.bin contains a non-object record")
                         evaluations += 1
                         last_complete = offset + unpacker.tell()
+                        if time.monotonic() >= scan_deadline:
+                            scan_budget_exhausted = True
+                            break
+                    if scan_budget_exhausted:
+                        break
         except (OSError, ValueError, msgpack.UnpackException) as exc:
             error = str(exc) or exc.__class__.__name__
 
@@ -1723,11 +1741,106 @@ def _all_results_evaluation_count(path: Path) -> dict:
             _active_eval_count_cache.popitem(last=False)
         result = {
             "evaluations": evaluations,
-            "trailing_partial_entry": last_complete < stat_result.st_size,
+            "trailing_partial_entry": bool(scan_reaches_eof and not scan_budget_exhausted and last_complete < stat_result.st_size and not error),
+            "scan_complete": last_complete >= stat_result.st_size,
+            "bytes_scanned": last_complete,
+            "total_bytes": stat_result.st_size,
+            "scan_percent": round(last_complete / stat_result.st_size * 100.0, 1) if stat_result.st_size else 100.0,
         }
         if error:
             result["error"] = error
         return result
+
+
+def _runner_evaluation_progress(path: Path) -> dict | None:
+    """Read the exact count published by PBGui's detached runner for new runs."""
+    sidecar = path.parent / _EVALUATION_PROGRESS_FILENAME
+    try:
+        stat_result = sidecar.stat()
+        if sidecar.is_symlink() or not sidecar.is_file() or stat_result.st_size > 16 * 1024:
+            return None
+        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+        evaluations = int(payload.get("evaluations"))
+        published_size = int(payload.get("all_results_size") or 0)
+        current_size = path.stat().st_size
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if evaluations < 0 or published_size < 0 or published_size > current_size:
+        return None
+    return {
+        "evaluations": evaluations,
+        "trailing_partial_entry": False,
+        "scan_complete": True,
+        "bytes_scanned": published_size,
+        "total_bytes": current_size,
+        "scan_percent": 100.0,
+        "source": "runner",
+    }
+
+
+def _cached_evaluation_scan_progress(path: Path) -> dict:
+    """Return the current non-blocking fallback scan snapshot."""
+    key = str(path.resolve(strict=False))
+    try:
+        total_bytes = path.stat().st_size
+    except OSError:
+        total_bytes = 0
+    with _active_eval_count_cache_lock:
+        cached = copy.deepcopy(_active_eval_count_cache.get(key) or {})
+    offset = min(int(cached.get("offset") or 0), total_bytes)
+    return {
+        "evaluations": int(cached.get("evaluations") or 0),
+        "trailing_partial_entry": False,
+        "scan_complete": bool(total_bytes == 0 or offset >= total_bytes),
+        "bytes_scanned": offset,
+        "total_bytes": total_bytes,
+        "scan_percent": round(offset / total_bytes * 100.0, 1) if total_bytes else 100.0,
+        "source": "fallback_scan",
+    }
+
+
+def _run_active_evaluation_scan(path: Path, key: str, stop_event: threading.Event) -> None:
+    """Continuously drain a legacy result history without blocking status requests."""
+    try:
+        while not stop_event.is_set():
+            progress = _all_results_evaluation_count(path)
+            if progress.get("error") or progress.get("scan_complete"):
+                break
+    finally:
+        with _active_eval_count_cache_lock:
+            _active_eval_scan_threads.pop(key, None)
+            _active_eval_scan_stops.pop(key, None)
+
+
+def _ensure_active_evaluation_scan(path: Path) -> None:
+    """Start at most one bounded fallback scanner for one legacy result file."""
+    key = str(path.resolve(strict=False))
+    with _active_eval_count_cache_lock:
+        thread = _active_eval_scan_threads.get(key)
+        if thread is not None and thread.is_alive():
+            return
+        stop_event = threading.Event()
+        thread = threading.Thread(
+            target=_run_active_evaluation_scan,
+            args=(path, key, stop_event),
+            name=f"pb8-eval-scan-{path.parent.name[:32]}",
+            daemon=True,
+        )
+        _active_eval_scan_stops[key] = stop_event
+        _active_eval_scan_threads[key] = thread
+        thread.start()
+
+
+def _shutdown_active_evaluation_scans() -> None:
+    """Stop and join every API-owned legacy evaluation scanner."""
+    with _active_eval_count_cache_lock:
+        stops = list(_active_eval_scan_stops.values())
+        threads = list(_active_eval_scan_threads.values())
+    for stop_event in stops:
+        stop_event.set()
+    for thread in threads:
+        if thread is not threading.current_thread():
+            thread.join(timeout=2)
 
 
 def _all_results_progress_for_listing(path: Path) -> dict:
@@ -3203,6 +3316,7 @@ async def shutdown() -> None:
     await _worker.stop()
     await asyncio.to_thread(_stop_all_dash_sessions)
     await asyncio.to_thread(shutdown_pb8_ohlcv_start_date_jobs)
+    await asyncio.to_thread(_shutdown_active_evaluation_scans)
     await asyncio.to_thread(interrupt_pb8_migration_helper)
     if _migration_helper_warmup_task is not None:
         await asyncio.gather(_migration_helper_warmup_task, return_exceptions=True)
@@ -4062,6 +4176,26 @@ def _read_optimize_log_excerpt(path: Path, head_bytes: int = 32 * 1024, tail_byt
         return ""
 
 
+def _estimate_log_evaluations(path: Path, max_bytes: int = 64 * 1024 * 1024) -> int | None:
+    """Return a fast lower bound from the latest Iter line plus visible duplicate drops."""
+    if not path.is_file() or path.is_symlink():
+        return None
+    try:
+        with path.open("rb") as handle:
+            handle.seek(0, 2)
+            size = handle.tell()
+            handle.seek(max(0, size - max_bytes))
+            text = handle.read(max_bytes).decode("utf-8", errors="ignore")
+    except OSError:
+        return None
+    matches = list(re.finditer(r"\bIter:\s*(\d+)", text))
+    if not matches:
+        return None
+    latest = matches[-1]
+    drops = text[latest.end() :].count("Dropping candidate whose obj score is already present")
+    return int(latest.group(1)) + drops
+
+
 def _parse_log_number(value) -> float | None:
     try:
         return float(str(value).strip())
@@ -4316,16 +4450,19 @@ def _active_all_results_progress(filename: str) -> dict | None:
                 continue
             if not path.is_file() or path.is_symlink():
                 continue
-            try:
-                progress = _all_results_evaluation_count(path)
-            except RuntimeError:
-                continue
-            if progress.get("error"):
-                continue
+            progress = _runner_evaluation_progress(path)
+            if progress is None:
+                _ensure_active_evaluation_scan(path)
+                progress = _cached_evaluation_scan_progress(path)
             return {
                 "evaluations": int(progress.get("evaluations") or 0),
                 "result": relative.parts[0],
                 "trailing_partial_entry": bool(progress.get("trailing_partial_entry")),
+                "scan_complete": bool(progress.get("scan_complete")),
+                "bytes_scanned": int(progress.get("bytes_scanned") or 0),
+                "total_bytes": int(progress.get("total_bytes") or 0),
+                "scan_percent": float(progress.get("scan_percent") or 0.0),
+                "source": str(progress.get("source") or "fallback_scan"),
             }
     return None
 
@@ -4359,12 +4496,16 @@ def get_queue_status(filename: str, session: SessionToken = Depends(require_auth
             continue
     evaluations = log_summary["evaluations"]
     evaluation_source = "log" if evaluations is not None else None
+    log_estimate = _estimate_log_evaluations(log_path) if item["status"] == "running" else None
+    if log_estimate is not None and (evaluations is None or log_estimate > evaluations):
+        evaluations = log_estimate
+        evaluation_source = "log_lower_bound"
     durable_progress = _active_all_results_progress(filename) if item["status"] == "running" else None
     if durable_progress is not None:
         durable_evaluations = int(durable_progress["evaluations"])
         if evaluations is None or durable_evaluations >= evaluations:
             evaluations = durable_evaluations
-            evaluation_source = "all_results"
+            evaluation_source = durable_progress.get("source") or "fallback_scan"
     if evaluations is None and item["status"] == "complete" and target is not None:
         evaluations = target
         evaluation_source = "complete"
@@ -4412,7 +4553,14 @@ def get_queue_status(filename: str, session: SessionToken = Depends(require_auth
             "target_iters": target,
             "target_evaluations": target,
             "evaluation_source": evaluation_source,
+            "estimated": evaluation_source in {"log_lower_bound", "fallback_scan"},
             "result": durable_progress.get("result") if durable_progress else None,
+            "evaluation_scan": {
+                "complete": bool(durable_progress.get("scan_complete")),
+                "bytes_scanned": int(durable_progress.get("bytes_scanned") or 0),
+                "total_bytes": int(durable_progress.get("total_bytes") or 0),
+                "percent": float(durable_progress.get("scan_percent") or 0.0),
+            } if durable_progress else None,
             "percent": percent,
             "front": log_summary["front"],
             "generation": log_summary["generation"],

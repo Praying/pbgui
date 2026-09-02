@@ -35,6 +35,21 @@ function statusClass(row: QueueItem): string {
   if (status === 'running' || status === 'optimizing') return 'bg-warning/15 text-warning-soft';
   return 'bg-secondary/15 text-secondary';
 }
+function progressLabel(row: QueueItem): string {
+  const progress = row.progress;
+  const evaluations = Number(progress?.eval);
+  if (!progress || !Number.isFinite(evaluations)) return '';
+  const prefix = progress.estimated ? '≥ ' : '';
+  const target = Number(progress.target_iters);
+  const value = Number.isFinite(target) && target > 0
+    ? `${prefix}${evaluations.toLocaleString()} / ${target.toLocaleString()} evals`
+    : `${prefix}${evaluations.toLocaleString()} evals`;
+  const scan = progress.evaluation_scan;
+  if (scan && scan.complete === false && Number.isFinite(Number(scan.percent))) {
+    return `${value} · history ${Number(scan.percent).toFixed(1)}%`;
+  }
+  return value;
+}
 const wrap = ref<HTMLElement | null>(null);
 const tbody = ref<HTMLElement | null>(null);
 const dragSelect = useRowDragSelect({
@@ -83,7 +98,10 @@ function dropRow(row: QueueItem, event: DragEvent): void {
         <tr v-for="row in rows" :key="filename(row)" :data-path="filename(row)" draggable="true" :class="{ selected: selected.has(filename(row)) }" @dragstart="dragStart(row, $event)" @dragover.prevent @drop="dropRow(row, $event)">
           <td class="font-mono">{{ row.name || filename(row) }}</td>
           <td>{{ Array.isArray(row.exchange) ? row.exchange.join(', ') : row.exchange || '—' }}</td>
-          <td><span class="pbgui-badge inline-flex rounded-full px-2 py-[3px] text-xs font-bold" :class="statusClass(row)">{{ row.status || t('v7optimize.statusQueued') }}</span></td>
+          <td>
+            <span class="pbgui-badge inline-flex rounded-full px-2 py-[3px] text-xs font-bold" :class="statusClass(row)">{{ row.status || t('v7optimize.statusQueued') }}</span>
+            <div v-if="progressLabel(row)" class="mt-1 text-xs tabular-nums text-muted" data-test="queue-progress">{{ progressLabel(row) }}</div>
+          </td>
           <td>{{ row.created || row.modified || '—' }}</td>
           <td class="whitespace-nowrap! overflow-visible!" @click.stop>
             <Button type="button" variant="danger" size="sm" v-if="row.status === 'running' || row.status === 'optimizing'" @click="emit('action', filename(row), 'stop')">{{ t('v7optimize.stop') }}</Button>

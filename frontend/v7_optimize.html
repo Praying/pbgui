@@ -2648,7 +2648,7 @@ textarea.json-invalid:focus {
 <div id="data-tip-tooltip"></div>
 
 <script src="/app/js/editor_shared.js?v=14"></script>
-<script src="/app/js/suite_editor.js?v=22"></script>
+<script src="/app/js/suite_editor.js?v=23"></script>
 <script src="/app/js/log_viewer_panel.js?v=30"></script>
 <script src="/app/js/pbgui_dialogs.js?v=8"></script>
 <script>
@@ -5501,7 +5501,7 @@ function renderOptimizeLogDashboard(status) {
   var log = status.log || {};
   var percent = progress.percent == null || !isFinite(Number(progress.percent)) ? null : Number(progress.percent);
   el('optlog-progress-fill').style.width = percent == null ? '0%' : Math.max(0, Math.min(100, percent)) + '%';
-  var progressText = progress.eval == null ? PBGuiI18n.t('v7optimize.waitingForEvaluations') : PBGuiI18n.t('v7optimize.evalsCount', { count: progress.eval.toLocaleString() });
+  var progressText = progress.eval == null ? PBGuiI18n.t('v7optimize.waitingForEvaluations') : (progress.estimated ? '≥ ' : '') + PBGuiI18n.t('v7optimize.evalsCount', { count: progress.eval.toLocaleString() });
   if (runtime.backend === 'gpu' && progress.exact_evaluations != null) {
     var gpuBits = [];
     if (progress.target_exact_evaluations != null) {
@@ -5515,7 +5515,7 @@ function renderOptimizeLogDashboard(status) {
     progressText = gpuBits.join(' · ');
     if (percent != null) progressText += ' (' + percent.toFixed(1) + '%)';
   } else if (progress.target_iters != null && progress.eval != null) {
-    progressText = PBGuiI18n.t('v7optimize.evalsOf', { current: progress.eval.toLocaleString(), target: progress.target_iters.toLocaleString() });
+    progressText = (progress.estimated ? '≥ ' : '') + PBGuiI18n.t('v7optimize.evalsOf', { current: progress.eval.toLocaleString(), target: progress.target_iters.toLocaleString() });
     if (percent != null) progressText += ' (' + percent.toFixed(1) + '%)';
   }
   el('optlog-progress-label').textContent = progressText;
@@ -9535,6 +9535,7 @@ function populateOptimizeEditor(config, opts) {
           start_date: el('opted-start-date').value || null,
           end_date: scenarioEndDate === 'now' ? new Date().toISOString().slice(0, 10) : (scenarioEndDate || null),
           exchanges: optGetMs('ms-opt-exchanges'),
+          starting_balance: Number(el('opted-starting-balance').value) || null,
         };
       },
       onApplyScenarioPreview: function(preview) {

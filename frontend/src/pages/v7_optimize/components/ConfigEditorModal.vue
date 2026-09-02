@@ -389,6 +389,7 @@ function currentScenarioContext(): ScenarioGeneratorContext {
     start_date: String(local.value?.backtest.start_date || '').trim() || null,
     end_date: normalizeScenarioEndDate(local.value?.backtest.end_date) || null,
     exchanges: local.value?.exchanges.slice() || [],
+    starting_balance: Number(local.value?.backtest.starting_balance) || null,
   };
 }
 

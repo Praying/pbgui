@@ -105,6 +105,7 @@ export interface BacktestResultItem {
   sharpe_ratio?: number | null;
   starting_balance?: number | null;
   final_balance?: number | null;
+  final_balance_estimated?: boolean;
   twe_long?: number | null;
   twe_short?: number | null;
   pos_long?: number | null;

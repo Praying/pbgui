@@ -1111,6 +1111,7 @@ var queueItems  = [];          // queue items from WS
 var _lastQueueHash = '';       // JSON hash of last queue state (skip re-render if unchanged)
 var results     = [];          // backtest results
 var resultsByVersion = { v7: [], v8: [] };
+var RESULTS_PAGE_SIZE = 0;
 var _resultsLoadGeneration = 0;
 var _resultsEmptyRetryTimer = null;
 var _resultsEmptyRetryCount = 0;

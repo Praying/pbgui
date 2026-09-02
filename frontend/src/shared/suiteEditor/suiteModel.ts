@@ -36,6 +36,7 @@ export interface ScenarioGeneratorContext {
   start_date?: string | null;
   end_date?: string | null;
   exchanges?: readonly string[];
+  starting_balance?: number | null;
 }
 
 export interface ScenarioGeneratorDraft {
@@ -52,10 +53,11 @@ export interface ScenarioGeneratorDraft {
   cooldown_days?: number;
 }
 
-export type ScenarioGeneratorRequest = ScenarioGeneratorDraft & {
+export type ScenarioGeneratorRequest = Omit<ScenarioGeneratorDraft, 'starting_balance'> & {
   start_date: string | null;
   end_date: string | null;
   exchanges: string[];
+  starting_balance?: number | null;
 };
 
 export interface ScenarioGeneratorPreview {

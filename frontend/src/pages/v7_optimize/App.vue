@@ -457,7 +457,10 @@ onMounted(async () => {
   await handleIncomingDraft();
   try { pbguiDataPath.value = await actions.pbguiDataPath(); } catch { pbguiDataPath.value = ''; }
   page.connect();
-  liveRefreshTimer = window.setInterval(() => { void refreshLiveResults(); }, 3000);
+  liveRefreshTimer = window.setInterval(() => {
+    void refreshLiveResults();
+    if (page.panel.value === 'queue') void page.loadQueue();
+  }, 3000);
   window.addEventListener('pageshow', handlePageShow);
   window.addEventListener('keydown', handleKeydown);
   document.addEventListener('visibilitychange', handleVisibilityChange);

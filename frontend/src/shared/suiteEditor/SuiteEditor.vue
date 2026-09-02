@@ -344,14 +344,26 @@ function currentScenarioContext(): ScenarioGeneratorContext {
     start_date: context?.start_date ?? null,
     end_date: context?.end_date ?? null,
     exchanges: Array.isArray(context?.exchanges) ? context.exchanges.map(String) : [],
+    starting_balance: context?.starting_balance ?? null,
   };
 }
+
+watch(
+  () => currentScenarioContext().starting_balance,
+  (value) => {
+    if (scenarioGeneratorDraft.value.starting_balance !== undefined) return;
+    const balance = Number(value);
+    scenarioGeneratorDraft.value.starting_balance = Number.isFinite(balance) && balance >= 1 ? balance : 1000;
+  },
+  { immediate: true }
+);
 
 function scenarioContextSignature(context: ScenarioGeneratorContext): string {
   return JSON.stringify({
     start_date: context.start_date ?? null,
     end_date: context.end_date ?? null,
     exchanges: Array.isArray(context.exchanges) ? context.exchanges : [],
+    starting_balance: context.starting_balance ?? null,
   });
 }
 
@@ -363,6 +375,7 @@ function scenarioGeneratorRequest(): ScenarioGeneratorRequest {
     start_date: context.start_date ?? null,
     end_date: context.end_date ?? null,
     exchanges: [...(context.exchanges ?? [])],
+    starting_balance: draftValue.starting_balance ?? context.starting_balance ?? null,
   };
 }
 
@@ -371,6 +384,16 @@ function recalculateScenarioGenerator(): void {
   scenarioPreviewContextSignature.value = '';
   scenarioRequestGeneration += 1;
   if (scenarioGeneratorDraft.value.template === 'sweep_cycles') {
+    const contextBalance = Number(currentScenarioContext().starting_balance);
+    const defaultBalance = Number.isFinite(contextBalance) && contextBalance >= 1 ? contextBalance : 1000;
+    const multiplier = Number(scenarioGeneratorDraft.value.balance_multiplier);
+    const startingBalance = Number(scenarioGeneratorDraft.value.starting_balance);
+    const refillCost = Number(scenarioGeneratorDraft.value.refill_cost);
+    const cooldownDays = Number(scenarioGeneratorDraft.value.cooldown_days);
+    scenarioGeneratorDraft.value.balance_multiplier = Number.isFinite(multiplier) && multiplier >= 1.01 && multiplier <= 100 ? multiplier : 2;
+    scenarioGeneratorDraft.value.starting_balance = Number.isFinite(startingBalance) && startingBalance >= 1 ? startingBalance : defaultBalance;
+    scenarioGeneratorDraft.value.refill_cost = Number.isFinite(refillCost) && refillCost >= 0 ? refillCost : 0;
+    scenarioGeneratorDraft.value.cooldown_days = Number.isFinite(cooldownDays) && cooldownDays >= 0 ? cooldownDays : 0;
     scenarioGeneratorDraft.value.stride_days = scenarioGeneratorDraft.value.window_days + (scenarioGeneratorDraft.value.cooldown_days ?? 0);
     const context = currentScenarioContext();
     const start = Date.parse(`${context.start_date ?? ''}T00:00:00Z`);
