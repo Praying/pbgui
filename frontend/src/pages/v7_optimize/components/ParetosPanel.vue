@@ -4,11 +4,22 @@ import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { PARETO_METRIC_PILL_LABELS } from '../lib/configModel';
-import type { ParetoItem, ParetoMeta } from '../types';
+import type { ParetoItem, ParetoMeta, ResultSummary } from '../types';
 
-const props = defineProps<{ rows: ParetoItem[]; meta: ParetoMeta; resultName: string; selected: Set<string>; isV8: boolean; columns?: string[]; availableMetrics?: string[] }>();
+const props = defineProps<{
+  rows: ParetoItem[];
+  meta: ParetoMeta;
+  resultName: string;
+  selected: Set<string>;
+  isV8: boolean;
+  columns?: string[];
+  availableMetrics?: string[];
+  availableResults?: ResultSummary[];
+  selectedResultPath?: string;
+}>();
 const emit = defineEmits<{
   toggle: [path: string];
   view: [row: ParetoItem];
@@ -23,6 +34,8 @@ const emit = defineEmits<{
   toggleColumn: [metric: string, enabled: boolean];
   resetColumns: [];
   selectAllColumns: [];
+  selectResultPath: [path: string];
+  goToResults: [];
 }>();
 const { t } = useI18n();
 const picker = ref<HTMLDetailsElement | null>(null);
@@ -40,6 +53,7 @@ const summaryKeys = computed(() => {
   props.rows.forEach((row) => Object.keys(row.summary || {}).forEach((key) => keys.add(key)));
   return [...keys].sort();
 });
+const totalColumns = computed(() => (summaryKeys.value.length ? summaryKeys.value.length + 3 : 4));
 function summaryValue(row: ParetoItem, key: string): string {
   const value = row.summary?.[key];
   return value === undefined || value === null ? '—' : typeof value === 'number' ? String(Number(value.toPrecision(6))) : String(value);
@@ -64,7 +78,21 @@ onBeforeUnmount(() => dragSelect.dispose());
 
 <template>
   <div class="opt-panel-controls mb-2.5 flex flex-wrap items-center gap-2.5">
-    <span class="opt-result-context">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
+    <div v-if="availableResults && availableResults.length" class="inline-flex items-center gap-1.5 text-xs text-secondary">
+      <span class="font-medium text-primary">{{ t('v7optimize.activeResultSet') }}:</span>
+      <SelectRoot :model-value="selectedResultPath || ''" @update:model-value="emit('selectResultPath', String($event))">
+        <SelectTrigger class="w-auto min-w-[160px] max-w-[280px]" :aria-label="t('v7optimize.activeResultSet')">
+          <span class="truncate">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="res in availableResults" :key="res.path" :value="res.path">
+            {{ res.name || res.result || res.path }}
+          </SelectItem>
+        </SelectContent>
+      </SelectRoot>
+    </div>
+    <span v-else class="opt-result-context font-medium">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
+
     <label v-if="(meta.scenario_labels || []).length" class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.scenario') }}<SelectRoot :model-value="meta.selected_scenario || 'Aggregated'" @update:model-value="emit('update:scenario', String($event))"><SelectTrigger class="w-auto min-w-[120px]" :aria-label="t('v7optimize.scenario')"><span>{{ meta.selected_scenario || 'Aggregated' }}</span></SelectTrigger><SelectContent><SelectItem v-for="scenario in meta.scenario_labels" :key="scenario" :value="scenario">{{ scenario }}</SelectItem></SelectContent></SelectRoot></label>
     <label class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.statistic') }}<SelectRoot :model-value="meta.selected_statistic || 'mean'" @update:model-value="emit('update:statistic', String($event))"><SelectTrigger class="w-auto min-w-[120px]" :aria-label="t('v7optimize.statistic')"><span>{{ meta.selected_statistic || 'mean' }}</span></SelectTrigger><SelectContent><SelectItem v-for="stat in meta.available_statistics || ['mean']" :key="stat" :value="stat">{{ stat }}</SelectItem></SelectContent></SelectRoot></label>
     <details ref="picker" class="relative" data-test="pareto-columns-picker">
@@ -92,12 +120,21 @@ onBeforeUnmount(() => dragSelect.dispose());
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><template v-if="summaryKeys.length"><th v-for="key in summaryKeys" :key="key" :data-sort-key="`summary:${key}`" @click="emit('sort', `summary:${key}`)">{{ key }}</th></template><th v-else>{{ t('v7optimize.thSummary') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr v-for="row in rows" :key="row.path" :data-path="row.path" :class="{ selected: selected.has(row.path) }">
-          <td class="font-mono">{{ row.name }}</td>
-          <template v-if="summaryKeys.length"><td v-for="key in summaryKeys" :key="key" :data-metric="key">{{ summaryValue(row, key) }}</td></template><td v-else class="max-w-[460px]">{{ inlineSummary(row) }}</td>
-          <td>{{ row.modified || '—' }}</td>
+          <td class="font-mono font-medium">{{ row.name }}</td>
+          <template v-if="summaryKeys.length"><td v-for="key in summaryKeys" :key="key" :data-metric="key" class="tabular-nums">{{ summaryValue(row, key) }}</td></template><td v-else class="max-w-[460px] tabular-nums">{{ inlineSummary(row) }}</td>
+          <td class="tabular-nums text-xs text-secondary">{{ row.modified || '—' }}</td>
           <td class="whitespace-nowrap! overflow-visible!" @click.stop><Button type="button" variant="default" size="sm" @click="emit('view', row)">{{ t('v7optimize.viewJson') }}</Button><Button type="button" variant="default" size="sm" @click="emit('seed', row)">{{ t('v7optimize.useAsSeed') }}</Button><Button type="button" variant="default" size="sm" v-if="!isV8" @click="emit('migrate', row)">{{ t('v7optimize.convertParetoToPb8') }}</Button></td>
         </tr>
-        <tr v-if="!rows.length"><td :colspan="summaryKeys.length + 3" class="p-[30px]! text-center text-secondary">{{ t('v7optimize.noParetoFilesFound') }}</td></tr>
+        <tr v-if="!rows.length">
+          <td :colspan="totalColumns" class="p-8! text-center">
+            <EmptyState
+              :title="resultName ? t('v7optimize.noParetoFilesFound') : t('v7optimize.chooseResultSetFirst')"
+              :message="resultName ? undefined : t('v7optimize.emptyParetosHelp')"
+              :action-label="resultName ? undefined : t('v7optimize.backToResults')"
+              @action="emit('goToResults')"
+            />
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>

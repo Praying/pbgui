@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import type { QueueItem } from '../types';
 
 const props = defineProps<{ rows: QueueItem[]; selected: Set<string>; search: string }>();
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   clearSelection: [];
   selectRange: [paths: string[], selected: boolean];
   reorder: [filenames: string[]];
+  goToConfigs: [];
 }>();
 const { t } = useI18n();
 const selectedCount = computed(() => props.selected.size);
@@ -34,6 +36,19 @@ function statusClass(row: QueueItem): string {
   if (status === 'error') return 'bg-danger/15 text-danger';
   if (status === 'running' || status === 'optimizing') return 'bg-warning/15 text-warning-soft';
   return 'bg-secondary/15 text-secondary';
+}
+function progressPercent(row: QueueItem): number {
+  const progress = row.progress;
+  const evaluations = Number(progress?.eval);
+  const target = Number(progress?.target_iters);
+  if (Number.isFinite(evaluations) && Number.isFinite(target) && target > 0) {
+    return Math.min(100, Math.max(0, Math.round((evaluations / target) * 100)));
+  }
+  const scan = progress?.evaluation_scan;
+  if (scan && Number.isFinite(Number(scan.percent))) {
+    return Math.min(100, Math.max(0, Math.round(Number(scan.percent))));
+  }
+  return 0;
 }
 function progressLabel(row: QueueItem): string {
   const progress = row.progress;
@@ -96,13 +111,28 @@ function dropRow(row: QueueItem, event: DragEvent): void {
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><th @click="emit('sort', 'exchange')">{{ t('v7optimize.thExchange') }}</th><th @click="emit('sort', 'status')">{{ t('v7optimize.thStatus') }}</th><th @click="emit('sort', 'created')">{{ t('v7optimize.thCreated') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr v-for="row in rows" :key="filename(row)" :data-path="filename(row)" draggable="true" :class="{ selected: selected.has(filename(row)) }" @dragstart="dragStart(row, $event)" @dragover.prevent @drop="dropRow(row, $event)">
-          <td class="font-mono">{{ row.name || filename(row) }}</td>
+          <td class="font-mono font-medium">{{ row.name || filename(row) }}</td>
           <td>{{ Array.isArray(row.exchange) ? row.exchange.join(', ') : row.exchange || '—' }}</td>
           <td>
-            <span class="pbgui-badge inline-flex rounded-full px-2 py-[3px] text-xs font-bold" :class="statusClass(row)">{{ row.status || t('v7optimize.statusQueued') }}</span>
-            <div v-if="progressLabel(row)" class="mt-1 text-xs tabular-nums text-muted" data-test="queue-progress">{{ progressLabel(row) }}</div>
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-2">
+                <span class="pbgui-badge inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="statusClass(row)">
+                  <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+                  {{ row.status || t('v7optimize.statusQueued') }}
+                </span>
+              </div>
+              <div v-if="progressLabel(row)" class="mt-0.5 max-w-[240px]">
+                <div v-if="progressPercent(row) > 0" class="h-1.5 w-full overflow-hidden rounded-full bg-border-default">
+                  <div class="h-full bg-accent rounded-full transition-all duration-300" :style="{ width: `${progressPercent(row)}%` }"></div>
+                </div>
+                <div class="mt-1 text-xs tabular-nums text-muted flex items-center justify-between gap-1" data-test="queue-progress">
+                  <span>{{ progressLabel(row) }}</span>
+                  <span v-if="progressPercent(row) > 0" class="font-mono font-medium text-primary">{{ progressPercent(row) }}%</span>
+                </div>
+              </div>
+            </div>
           </td>
-          <td>{{ row.created || row.modified || '—' }}</td>
+          <td class="tabular-nums text-xs text-secondary">{{ row.created || row.modified || '—' }}</td>
           <td class="whitespace-nowrap! overflow-visible!" @click.stop>
             <Button type="button" variant="danger" size="sm" v-if="row.status === 'running' || row.status === 'optimizing'" @click="emit('action', filename(row), 'stop')">{{ t('v7optimize.stop') }}</Button>
             <Button type="button" variant="default" size="sm" v-else @click="emit('action', filename(row), 'start')">{{ t('v7optimize.start') }}</Button>
@@ -113,7 +143,16 @@ function dropRow(row: QueueItem, event: DragEvent): void {
             <Button type="button" variant="default" size="sm" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="18" /></Button>
           </td>
         </tr>
-        <tr v-if="!rows.length"><td colspan="5" class="p-[30px]! text-center text-secondary">{{ t('v7optimize.queueIsEmpty') }}</td></tr>
+        <tr v-if="!rows.length">
+          <td colspan="5" class="p-8! text-center">
+            <EmptyState
+              :title="search ? t('v7optimize.noMatches') : t('v7optimize.queueIsEmpty')"
+              :message="search ? undefined : t('v7optimize.emptyQueueHelp')"
+              :action-label="search ? undefined : t('v7optimize.backToConfigList')"
+              @action="emit('goToConfigs')"
+            />
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>

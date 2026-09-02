@@ -54,4 +54,22 @@ describe('ParetosPanel', () => {
     wrapper.unmount();
   });
 
+  it('renders empty state spanning all 4 default columns when no result is selected', () => {
+    const wrapper = mount(ParetosPanel, {
+      props: {
+        rows: [],
+        meta: {},
+        resultName: '',
+        selected: new Set<string>(),
+        isV8: true,
+        columns: [],
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+    const emptyTd = wrapper.find('tbody tr td');
+    expect(emptyTd.exists()).toBe(true);
+    expect(emptyTd.attributes('colspan')).toBe('4');
+    expect(wrapper.text()).toContain('Choose a result set first.');
+    wrapper.unmount();
+  });
 });

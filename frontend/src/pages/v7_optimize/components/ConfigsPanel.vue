@@ -4,6 +4,7 @@ import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import type { ConfigSummary } from '../types';
 
 const props = defineProps<{
@@ -15,6 +16,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:search': [value: string];
   toggle: [name: string];
+  create: [];
   edit: [name: string];
   duplicate: [name: string];
   sort: [key: string];
@@ -46,10 +48,11 @@ onBeforeUnmount(() => dragSelect.dispose());
 <template>
   <div class="opt-panel-controls mb-2.5 flex flex-wrap items-center gap-2.5">
     <div class="opt-panel-search">
-      <Input class="min-w-60"
-      :model-value="search"
-      :placeholder="t('v7optimize.searchOptimizeName')"
-      @update:model-value="emit('update:search', String($event ?? ''))"
+      <Input
+        class="min-w-60"
+        :model-value="search"
+        :placeholder="t('v7optimize.searchOptimizeName')"
+        @update:model-value="emit('update:search', String($event ?? ''))"
       />
     </div>
     <div class="opt-panel-counts">
@@ -71,20 +74,29 @@ onBeforeUnmount(() => dragSelect.dispose());
           :class="{ selected: selected.has(rowName(row)) }"
           @dblclick="emit('edit', rowName(row))"
         >
-          <td class="font-mono">{{ rowName(row) }}</td>
+          <td class="font-mono font-medium">{{ rowName(row) }}</td>
           <td>{{ exchange(row) }}</td>
           <td v-if="isV8">{{ row.strategy || '—' }}</td>
-          <td>{{ row.backtest_count ?? 0 }}</td>
-          <td>{{ value(row, 'start', 'start_date') }}</td>
-          <td>{{ value(row, 'end', 'end_date') }}</td>
+          <td class="tabular-nums">{{ row.backtest_count ?? 0 }}</td>
+          <td class="tabular-nums text-xs text-secondary">{{ value(row, 'start', 'start_date') }}</td>
+          <td class="tabular-nums text-xs text-secondary">{{ value(row, 'end', 'end_date') }}</td>
           <td>{{ flags(row) }}</td>
-          <td>{{ row.modified || '—' }}</td>
+          <td class="tabular-nums text-xs text-secondary">{{ row.modified || '—' }}</td>
           <td class="whitespace-nowrap! overflow-visible!" @click.stop>
             <Button type="button" variant="default" size="sm" @click="emit('edit', rowName(row))">{{ t('v7optimize.editConfig') }}</Button>
             <Button type="button" variant="default" size="sm" @click="emit('duplicate', rowName(row))">{{ t('v7optimize.duplicate') }}</Button>
           </td>
         </tr>
-        <tr v-if="!rows.length"><td :colspan="isV8 ? 9 : 8" class="p-[30px]! text-center text-secondary">{{ t('v7optimize.noOptimizeConfigsFound') }}</td></tr>
+        <tr v-if="!rows.length">
+          <td :colspan="isV8 ? 9 : 8" class="p-8! text-center">
+            <EmptyState
+              :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
+              :message="search ? undefined : t('v7optimize.emptyConfigsHelp')"
+              :action-label="search ? undefined : t('v7optimize.newConfig')"
+              @action="emit('create')"
+            />
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>

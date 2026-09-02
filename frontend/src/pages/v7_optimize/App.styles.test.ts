@@ -37,7 +37,6 @@ describe('Optimize page warning style contracts', () => {
 
   it('uses the shared Warning token for every migrated warning surface', () => {
     expect(appSource).toContain('<ConnectionNotice');
-    expect(appSource).toContain('show-ok');
     expect(appSource).toContain('border-l-warning');
     expect(queuePanelSource).toContain('bg-warning/15 text-warning-soft');
     expect(editorSource).toContain('color: var(--warning-soft);');

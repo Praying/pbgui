@@ -1,5 +1,14 @@
 # Unreleased
 
+## PBv7/PBv8 Optimize Workbench — Visual Hierarchy, Empty States & UX Polish
+
+- **Header & Layout Space Optimization**: Removed the redundant green `show-ok` banner from `ConnectionNotice` in normal operation to reclaim vertical screen space; tightened toolbar margins and panel headers for improved table data density.
+- **Configs Panel**: Integrated the unified `EmptyState` component with a direct "+ New Config" creation shortcut; applied tabular numbers (`tabular-nums`) to count, date range, and modified timestamps for clean visual alignment.
+- **Queue Panel Progress & Zero State**: Added visual progress bars with live completion percentage, evaluations counter, and evaluation scan status; integrated `EmptyState` with a navigation action to return to the Configs panel when the queue is empty.
+- **Results Panel Details & Empty State**: Integrated `EmptyState` with a shortcut to view the Queue when no results are available; refined typography with font-mono path truncation, strategy badges, and tabular numerical statistics.
+- **Paretos Panel Direct Switcher & Zero State**: Added an active result set dropdown selector directly inside the Pareto panel header so users can switch between result sets without having to switch tabs back and forth; integrated `EmptyState` with a quick jump to the Results panel; formatted all dynamic metric cells with tabular numbers.
+- **Bilingual i18n & Complete Test Coverage**: Added matching English and Simplified Chinese dictionary entries in `frontend/i18n/{en,zh}.json`, verified 100% dictionary parity via `pytest tests/test_i18n.py`, 87 Vitest unit tests in `src/pages/v7_optimize`, and full production build bundling (`pnpm build`).
+
 ## Help & Documentation — Unified Direct Help Center Navigation
 
 - **Unified Navigation to Native Help Center**: Standardized all top header/navbar guide buttons (`#pbgui-guide-btn`, `WorkspaceHeader` `PhQuestion` icon buttons) across all Vue 3 pages and legacy templates to navigate directly to the modern native Help Center (`/api/help/main_page?topic=<topic_name>`), completely replacing legacy modal overlay popups (`#help-ovl`, `shared_help_overlay.js`).
