@@ -272,16 +272,15 @@ onBeforeUnmount(() => {
     class="data-page-shell data-page-shell--coin-data"
     page-key="info_coin_data"
     :page-title="t('market.coinDataTitle')"
-    :page-description="t('market.coinDataDescription')"
     :sections="sections"
     :active-section="store.activeView.value"
     @update:section="onSectionSelect"
   >
-    <template #status>
+    <template v-if="store.isLoading.value || store.actionStatus.value.message" #status>
       <StatusStrip
         :label="t('shared.status')"
-        :value="store.isLoading.value ? t('common.loading') : store.actionStatus.value.message || t('common.ok')"
-        :tone="store.actionStatus.value.isError ? 'danger' : store.isLoading.value ? 'warning' : 'success'"
+        :value="store.isLoading.value ? t('common.loading') : store.actionStatus.value.message"
+        :tone="store.actionStatus.value.isError ? 'danger' : 'warning'"
       />
     </template>
 

@@ -375,17 +375,16 @@ onBeforeUnmount(() => {
   <MigrationWatermark />
   <DataTipTooltip class="pointer-events-none fixed z-[4000] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
   <AppShell
-    class="core-workbench-shell core-workbench-shell--pareto"
+    class="core-workbench-shell core-workbench-shell--explorer"
     :page-key="readSeedOptimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer'"
     :page-title="t('v7explore.paretoExplorer')"
-    :page-description="t('v7explore.pageSubtitle')"
     :page-family="readSeedOptimizeVersion() === 'v8' ? 'PBv8' : 'PBv7'"
     :sections="railSections"
     :active-section="store.state.stage"
     @update:section="store.selectStage($event as ParetoStage)"
   >
     <template #status>
-      <div class="status-row flex flex-wrap gap-2">
+      <div class="status-row flex items-center gap-2">
         <span id="result-chip" class="chip sr-only inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ resultChip }}</span>
         <StatusStrip :label="t('v7explore.result')" :value="resultChip" />
         <span id="mode-chip" :class="modeChipClass">{{ modeChip }}</span>

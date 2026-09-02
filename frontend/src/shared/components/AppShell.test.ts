@@ -44,10 +44,9 @@ describe('AppShell', () => {
     const status = wrapper.get('[role="status"]');
 
     expect(wrapper.get('header button').text()).toBe('Restart');
-    expect(status.text()).toContain('Warning');
     expect(status.text()).toContain('Degraded');
     expect(status.get('.pbgui-status-strip__details').text()).toBe('Status: Degraded');
-    expect(status.get('.pbgui-status-strip__value').text()).toBe('Warning');
+    expect(status.get('.pbgui-status-strip__value').text()).toBe('Degraded');
     expect(status.find('.pbgui-status-strip__label').exists()).toBe(false);
     expect(status.attributes('data-tone')).toBe('warning');
   });

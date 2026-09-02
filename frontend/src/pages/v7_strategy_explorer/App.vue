@@ -276,14 +276,13 @@ onBeforeUnmount(() => {
     class="core-workbench-shell core-workbench-shell--strategy"
     :page-key="adapter.navCurrent"
     :page-title="adapter.isV8 ? t('v7explore.titleV8', { label: store.strategyLabel.value }) : t('v7explore.titleV7')"
-    :page-description="subtitle"
     :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
     :sections="railSections"
     :active-section="store.controls.stage"
     @update:section="selectStage"
   >
     <template #status>
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-2">
         <span id="source-chip" class="sr-only inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.25 py-1 text-xs max-[640px]:max-w-full max-[640px]:truncate" :class="[store.sourceChip.value.cls, statusChipClass(store.sourceChip.value.cls)]" :title="store.sourceChip.value.title">{{ store.sourceChip.value.text }}</span>
         <StatusStrip
           :label="t('v7explore.source')"

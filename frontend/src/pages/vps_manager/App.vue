@@ -621,7 +621,6 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
     class="operations-shell operations-shell--vps-manager"
     page-key="system_vps_manager_fastapi"
     :page-title="t('vpsmgr.vpsManager')"
-    :page-description="t('vpsmgr.vueSubtitle')"
     :sections="sections"
     :active-section="activeSection"
     @update:section="onSectionSelect"

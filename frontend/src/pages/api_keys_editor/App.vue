@@ -166,7 +166,7 @@ async function backToList(): Promise<void> {
   if (editRef.value) editRef.value.formDirty = false;
   view.value = 'list';
   history.replaceState(null, '', location.pathname + location.search);
-  setTimeout(() => document.getElementById('userFilter')?.focus(), 50);
+  focusFilter();
 }
 
 function setPanelView(next: Exclude<View, 'list' | 'edit'>, hash: string | null): void {
@@ -228,6 +228,16 @@ async function refreshBybitExpiry(): Promise<void> {
   }
 }
 
+let filterFocusTimer: ReturnType<typeof setTimeout> | null = null;
+function focusFilter(): void {
+  if (filterFocusTimer) clearTimeout(filterFocusTimer);
+  filterFocusTimer = setTimeout(() => {
+    if (typeof document !== 'undefined') {
+      document.getElementById('userFilter')?.focus();
+    }
+  }, 50);
+}
+
 /* ── Escape closes any open panel (:1167-1177) ── */
 
 function onDocumentKeydown(event: KeyboardEvent): void {
@@ -244,9 +254,10 @@ function onPageHide(): void {
 let removeUnauthorizedListener: (() => void) | null = null;
 
 onBeforeUnmount(() => {
+  if (filterFocusTimer) clearTimeout(filterFocusTimer);
   document.removeEventListener('keydown', onDocumentKeydown);
   window.removeEventListener('pagehide', onPageHide);
-  removeUnauthorizedListener?.();
+  if (removeUnauthorizedListener) removeUnauthorizedListener();
   removeUnauthorizedListener = null;
   editRef.value?.clearSecretInputs();
   tradfiStore.clearRevealedApiKey();
@@ -288,7 +299,7 @@ onMounted(async () => {
     await store.loadUsers();
   } else {
     await store.loadUsers();
-    setTimeout(() => document.getElementById('userFilter')?.focus(), 50);
+    focusFilter();
   }
 });
 </script>
@@ -303,11 +314,11 @@ onMounted(async () => {
     @update:section="onSectionSelect"
   >
     <MigrationWatermark />
-    <template #status>
+    <template v-if="store.usersState.value === 'loading' || store.usersState.value === 'error'" #status>
       <StatusStrip
         :label="t('shared.status')"
-        :value="store.usersState.value === 'loading' ? t('common.loading') : store.usersState.value === 'error' ? t('common.error') : t('common.ok')"
-        :tone="store.usersState.value === 'loading' ? 'warning' : store.usersState.value === 'error' ? 'danger' : 'success'"
+        :value="store.usersState.value === 'loading' ? t('common.loading') : t('common.error')"
+        :tone="store.usersState.value === 'loading' ? 'warning' : 'danger'"
       />
     </template>
 

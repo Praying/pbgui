@@ -99,11 +99,11 @@ onMounted(() => {
     page-key="info_balance_calc"
     :page-title="t('misc.balance.title')"
   >
-    <template #status>
+    <template v-if="store.calculating.value" #status>
       <StatusStrip
         :label="t('shared.status')"
-        :value="store.calculating.value ? t('misc.balance.calculating') : t('common.ok')"
-        :tone="store.calculating.value ? 'warning' : 'success'"
+        :value="t('misc.balance.calculating')"
+        tone="warning"
       />
     </template>
 

@@ -680,16 +680,15 @@ onUnmounted(() => {
     class="operations-shell operations-shell--services"
     page-key="system_services"
     :page-title="t('sysmon.servicesTitle')"
-    :page-description="t('sysmon.servicesSubtitle')"
     :sections="sections"
     :active-section="activePanel"
     @update:section="selectPanel"
   >
-    <template #status>
+    <template v-if="statusLoadError || !hasLoadedStatus" #status>
       <StatusStrip
         :label="t('sysmon.status')"
-        :value="statusLoadError ? t('common.error') : hasLoadedStatus ? t('common.ok') : t('common.loading')"
-        :tone="statusLoadError ? 'danger' : hasLoadedStatus ? 'success' : 'warning'"
+        :value="statusLoadError ? t('common.error') : t('common.loading')"
+        :tone="statusLoadError ? 'danger' : 'warning'"
       />
     </template>
 

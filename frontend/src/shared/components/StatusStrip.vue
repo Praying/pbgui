@@ -5,8 +5,8 @@ import { useI18n } from 'vue-i18n';
 type StatusTone = 'neutral' | 'success' | 'warning' | 'danger';
 
 interface StatusStripProps {
-  label: string;
-  value: string;
+  label?: string;
+  value?: string;
   tone?: StatusTone;
   updatedAt?: string;
 }
@@ -17,9 +17,16 @@ const props = withDefaults(defineProps<StatusStripProps>(), {
 
 const { t } = useI18n();
 const toneLabel = computed(() => t(`shared.statusTone.${props.tone}`));
+const displayValue = computed(() => {
+  if (props.value && props.value.trim().length > 0) {
+    return props.value;
+  }
+  return toneLabel.value;
+});
 const statusDetailsId = `pbgui-status-details-${useId()}`;
 const statusDetails = computed(() => {
-  const details = `${props.label}: ${props.value}`;
+  const text = displayValue.value;
+  const details = props.label && props.label.trim().length > 0 ? `${props.label}: ${text}` : text;
   return props.updatedAt ? `${details} (${props.updatedAt})` : details;
 });
 </script>
@@ -36,7 +43,7 @@ const statusDetails = computed(() => {
     :title="statusDetails"
   >
     <span class="pbgui-status-strip__indicator" aria-hidden="true" />
-    <strong class="pbgui-status-strip__value">{{ toneLabel }}</strong>
+    <strong class="pbgui-status-strip__value">{{ displayValue }}</strong>
     <span :id="statusDetailsId" class="pbgui-status-strip__details" role="tooltip">
       {{ statusDetails }}
     </span>

@@ -416,11 +416,11 @@ onUnmounted(() => {
     page-key="dashboards"
     :page-title="t('dash.dashboards')"
   >
-    <template #status>
+    <template v-if="frameLoading || !frameSrc" #status>
       <StatusStrip
         :label="t('shared.status')"
-        :value="frameSrc ? (frameLoading ? t('common.loading') : t('common.ok')) : t('dash.selectDashboard')"
-        :tone="frameSrc ? (frameLoading ? 'warning' : 'success') : 'neutral'"
+        :value="frameLoading ? t('common.loading') : t('dash.selectDashboard')"
+        :tone="frameLoading ? 'warning' : 'neutral'"
       />
     </template>
 

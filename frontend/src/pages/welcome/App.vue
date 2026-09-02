@@ -166,7 +166,6 @@ onBeforeUnmount(() => {
     class="core-workbench-shell core-workbench-shell--welcome"
     page-key="/"
     :page-title="t('misc.welcome.welcome')"
-    :page-description="t('misc.welcome.overviewCopy')"
     :page-family="t('nav.system')"
     :status-text="store.summaryView.value.auth"
     :status-tone="store.summaryView.value.authTone === 'info' ? 'neutral' : store.summaryView.value.authTone"

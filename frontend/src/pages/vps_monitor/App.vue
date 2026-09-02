@@ -346,7 +346,6 @@ onUnmounted(() => { disconnect(); closeViewer(); });
     class="operations-shell operations-shell--vps-monitor"
     page-key="system_vps_monitor"
     :page-title="t('sysmon.vpsMonitor')"
-    :page-description="t('sysmon.vpsMonitorSubtitle')"
     :sections="sections"
     :active-section="activeTab"
     @update:section="onSectionSelect"

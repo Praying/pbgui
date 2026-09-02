@@ -3,12 +3,11 @@ import { describe, expect, it } from 'vitest';
 import WorkspaceHeader from './WorkspaceHeader.vue';
 
 describe('WorkspaceHeader', () => {
-  it('renders its breadcrumb, description, status, and actions', () => {
+  it('renders its breadcrumb, status, and actions in a single-line layout', () => {
     const wrapper = mount(WorkspaceHeader, {
       props: {
         family: 'System',
         title: 'Services',
-        description: 'Control PBGui runtime services.',
         breadcrumbs: [
           { label: 'System' },
           { label: 'Services' },
@@ -25,7 +24,7 @@ describe('WorkspaceHeader', () => {
     expect(wrapper.get('nav[aria-label="Breadcrumb"]').text()).toBe('System / Services');
     expect(wrapper.get('.workspace-header__breadcrumb-item[aria-current="page"]').text()).toContain('Services');
     expect(wrapper.get('h1').text()).toBe('Services');
-    expect(wrapper.get('.workspace-header__description').text()).toBe('Control PBGui runtime services.');
+    expect(wrapper.find('.workspace-header__description').exists()).toBe(false);
     expect(wrapper.get('[data-testid="header-status"]').text()).toBe('Online');
     expect(wrapper.get('button').text()).toBe('Restart');
   });

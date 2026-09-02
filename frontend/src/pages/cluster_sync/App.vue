@@ -208,7 +208,6 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
     class="operations-shell operations-shell--cluster"
     page-key="system_cluster"
     :page-title="t('sysmon.clusterSync')"
-    :page-description="t('sysmon.clusterSyncSubtitle')"
     :sections="sections"
     :active-section="section"
     @update:section="onSectionSelect"
@@ -223,7 +222,6 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
 
     <template #header-actions>
       <Button variant="info" type="button" @click="loadAll"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button>
-      <Button variant="warning" type="button" @click="section = 'setup'"><PbIcon :icon="PhWrench" /> {{ t('sysmon.setup') }}</Button>
     </template>
 
     <div class="flex min-h-0 flex-1 flex-col bg-page text-primary">

@@ -168,7 +168,6 @@ onBeforeUnmount(() => {
     class="operations-shell operations-shell--logging"
     page-key="system_logging"
     :page-title="t('sysmon.loggingTitle')"
-    :page-description="t('sysmon.logging')"
     :sections="sections"
     :active-section="view"
     @update:section="onSectionSelect"

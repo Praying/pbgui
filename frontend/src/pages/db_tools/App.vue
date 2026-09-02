@@ -227,7 +227,6 @@ onBeforeUnmount(() => store.teardown());
     class="data-page-shell data-page-shell--db-tools"
     page-key="system_db_tools"
     :page-title="t('misc.dbtools.pageTitle')"
-    :page-description="t('misc.dbtools.pageSub')"
     :sections="sections"
     :active-section="store.activePanel.value"
     @update:section="onSectionSelect"

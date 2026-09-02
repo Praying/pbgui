@@ -1,5 +1,13 @@
 # Unreleased
 
+## Top Navigation Bar - Unified Single-Line Redesign & Alignment
+
+- **Single-Line Height Alignment**: Standardized `.workspace-header` across all Vue 3 pages to a fixed 64px (`--header-height: 64px`) matching the left workbench rail brand height (`.workbench-rail__brand`), creating a continuous horizontal bottom border across the entire viewport.
+- **Removed Multi-Line Description Dynamic Expansion**: Deprecated `:page-description` and removed `.workspace-header__description` dynamic expansion rules, eliminating vertical jumping and height differences across page switches.
+- **Redesigned Status Indicators**: Modernized `StatusStrip.vue` into a compact 28px rounded pill (`pbgui-status-strip`) with glowing status dots, subtle semantic tone backgrounds (neutral, success, warning, danger), and direct business status display (e.g., "OK", "Running", "Loading...").
+- **Clean Page Header States**: Polished status and header action visibility across all pages (`db_tools`, `api_keys_editor`, `profit_sweep`, `vps_manager`, `dashboard_main`, `cluster_sync`, `coin_data`, `services_monitor`, `balance_calc`, `welcome`, `vps_monitor`, `logging_monitor`, `v7_pareto_explorer`, `v7_strategy_explorer`), removing duplicate redundant actions and keeping the navbar clean and uncluttered.
+- **Test Coverage**: Updated unit tests in `WorkspaceHeader.test.ts`, `AppShell.test.ts`, and individual page test suites to verify single-line layout and status values. All 351 frontend test suites (4,418 unit tests) and backend pytest suite (1,699 tests) pass cleanly.
+
 ## API Keys Management - UI/UX Polish (P0 & P1)
 
 - **P0: Unified Single-Line Toolbar**: Merged the fragmented top action bar and secondary search/metadata bar into a single streamlined, high-efficiency toolbar. Fixed the search box width to 320px (`w-80`), grouped search with the count badge (`#sb-count`) on the left, and aligned the metadata pill with the primary action button on the right at a uniform 36px (`h-9`) height with balanced breathing room.

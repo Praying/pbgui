@@ -112,14 +112,13 @@ onMounted(() => {
       <WorkspaceHeader
         :family="props.pageFamily"
         :title="props.pageTitle"
-        :description="props.pageDescription"
         :breadcrumbs="headerBreadcrumbs"
       >
-        <template v-if="slots.status || props.statusText" #status>
+        <template v-if="slots.status || (props.statusText && props.statusText.trim().length > 0)" #status>
           <slot name="status">
             <StatusStrip
               :label="t('shared.status')"
-              :value="props.statusText ?? ''"
+              :value="props.statusText"
               :tone="props.statusTone"
             />
           </slot>

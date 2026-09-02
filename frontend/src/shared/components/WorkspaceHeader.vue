@@ -9,7 +9,6 @@ interface BreadcrumbItem {
 interface WorkspaceHeaderProps {
   family?: string;
   title: string;
-  description?: string;
   breadcrumbs?: readonly BreadcrumbItem[];
   breadcrumbLabel?: string;
 }
@@ -66,9 +65,6 @@ const headerBreadcrumbs = computed<readonly BreadcrumbItem[]>(() => {
           </li>
         </ol>
       </nav>
-      <p v-if="props.description" class="workspace-header__description">
-        {{ props.description }}
-      </p>
     </div>
 
     <div v-if="slots.status || slots.actions" class="workspace-header__utilities">
