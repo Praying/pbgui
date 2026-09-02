@@ -1,56 +1,19 @@
 <script setup lang="ts">
 /*
- * Help & Tutorials page — the Vue port of frontend/help.html (1,108 lines,
- * legacy line refs below are provenance). Unlike other pages this is NOT a
- * normal page: the whole page is the page-local help overlay (#help-ovl)
- * opened on mount (legacy openHelp(TOPIC || 'overview') :1092). The nav
- * keeps a 'help' entry, and the nav Guide button re-enters this overlay via
- * window.PBGUI_HELP_OPENER (:1086-1087).
- *
- * ┌────────────────────────┬─ Legacy regions ─────────────────────────────┐
- * │ App (this shell)       │ chrome :509-545, bootstrap :547-560, open/   │
- * │                        │ close :893-971, drag :1053-1084, maximize   │
- * │                        │ :898-951, title :548                          │
- * │ HelpToc                │ toc :538-541, renderToc :816-829, filter     │
- * │                        │ :1014, loadHelpIndex :858-891                │
- * │ useHelpContent         │ topics/lang/cache :631-635, loadTopic :831-  │
- * │                        │ 856, ensureTopicCached :712-735, global data │
- * │                        │ :791-814, lang switch :1016-1034             │
- * │ lib/markdown.ts        │ marked+DOMPurify :619, :653-655              │
- * │ lib/search.ts          │ stripHtml/escapeRegExp :657-663, applySearch │
- * │                        │ :689-710, gotoMark :678-687, snippets :795-  │
- * │                        │ 807                                            │
- * │ Topnav                 │ pbgui_nav.js stays a global script loaded by │
- * │                        │ index.html (legacy :1096-1106)                │
- * └────────────────────────┴──────────────────────────────────────────────┘
- *
- * NOT PORTED (documented):
- *  - ensurePageMeta (:601-617) — the legacy static file had literal
- *    %%VERSION%%/%%SERIAL%% placeholders and back-filled them from
- *    /api/help/meta; the Vue page reads version/serial from /api/boot.js
- *    (index.html NAV_CONFIG) instead.
- *  - authHeaders (:562-566) — TOKEN was always '' on the static page, so
- *    every fetch was cookie-authenticated; the shared apiFetch adds the
- *    boot token on top (same-origin cookie still applies).
- *
- * Deliberate deviations (documented):
- *  - body.pbgui-help-open is toggled from a Vue watcher; legacy relied on
- *    pbgui_nav.js's MutationObserver, which cannot see #help-ovl because
- *    the Vue app mounts after nav init. Same visible effect (topnav above
- *    the overlay while open).
- *  - Stale-response guards and normalize stored 'help-lang' (see
- *    useHelpContent.ts).
- *  - Search-mark navigation keeps the legacy DOM approach (classList
- *    current + scrollIntoView) over the v-html-rendered marks.
+ * Help & Tutorials page — Modern documentation workspace in PBGui.
+ * Formatted as a responsive 2-column workspace inside AppShell:
+ * - Left column: TOC sidebar (HelpToc.vue) with instantaneous search/filter
+ * - Right column: Markdown reader (#help-content) with syntax styling and bottom topic pager
+ * - WorkspaceHeader #header-actions: Search bar with in-topic match navigation + global search toggle,
+ *   and language switcher pills (EN / DE / 中文).
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
 import {
   PhArrowDown,
   PhArrowUp,
-  PhArrowsIn,
-  PhArrowsOut,
   PhBookOpen,
-  PhX,
+  PhCaretLeft,
+  PhCaretRight,
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
@@ -66,27 +29,10 @@ import { highlightMarks, highlightSnippet } from './lib/search';
 const { t } = useI18n();
 const store = useHelpContent();
 
-/* ── Tailwind colour mappings (the former help.css state rules) ──
-   The helper returns the COMPLETE colour set per branch — including the
-   neutral default — because Tailwind emits same-property utilities in its
-   own fixed order (a neutral + variant pair in one class list renders
-   neutral). Control chrome itself lives on the shared ui/ components;
-   what stays here is only the pressed/active state tint. */
-
-/* .ovl-tool[aria-pressed="true"] tint; the neutral branch doubles as the
-   .ovl-close default colours. */
-function ovlToolColorClass(pressed: boolean): string {
-  return pressed
-    ? 'border-[rgb(var(--text-secondary-rgb)/0.2)] bg-white/6 text-primary'
-    : 'border-transparent bg-transparent text-muted';
-}
-
-/* .lang-pill active-segment tint — the former .lang-pill button.active
-   rule. 'active' stays as the inert state anchor the page tests assert. */
+/* .lang-pill active-segment tint. 'active' stays as the inert state anchor the page tests assert. */
 const LANG_ACTIVE_CLASS = 'active bg-border-default text-accent-soft';
 
-/* ── bootstrap (legacy :548, :551-557, :1086-1092) ── */
-
+/* ── bootstrap (query param keyword matching) ── */
 const TOPIC = new URLSearchParams(window.location.search).get('topic') || '';
 
 declare global {
@@ -96,24 +42,7 @@ declare global {
   }
 }
 
-/* ── overlay chrome (legacy :893-971) ── */
-
-const overlayVisible = ref(false);
-const maximized = ref(false);
-const ovlEl = useTemplateRef<HTMLElement>('ovlEl');
-let restoreBounds: Record<string, string> = {};
-
-/* Deviation: replaces nav.js's MutationObserver on #help-ovl (see header). */
-watch(
-  overlayVisible,
-  (visible) => {
-    document.body.classList.toggle('pbgui-help-open', visible);
-  },
-  { immediate: true },
-);
-
-/* ── search state (legacy :637-646) ── */
-
+/* ── search state ── */
 const searchTermRaw = ref('');
 const appliedTerm = ref('');
 let searchTimer: number | undefined;
@@ -131,15 +60,13 @@ const searchPlaceholder = computed(() =>
   globalMode.value ? t('misc.help.searchAllTopics') : t('misc.help.searchInTopic'),
 );
 
-/* Legacy updateSearchCount (:672-676). */
 const searchCountText = computed(() => {
   if (globalMode.value) return globalCountText.value;
   if (searchMarksCount.value) return `${searchIndex.value + 1}/${searchMarksCount.value}`;
   return searchTermRaw.value.trim() ? t('misc.help.found0') : '';
 });
 
-/* In-topic view: sanitized html, optionally with <mark> highlights
- * (legacy applySearch innerHTML swap :701-710). */
+/* In-topic view: sanitized html, optionally with <mark> highlights */
 const displayHtml = computed(() => {
   const html = store.topicHtml.value;
   if (html === null) return '';
@@ -154,7 +81,6 @@ async function refreshMarks(): Promise<void> {
   searchIndex.value = -1;
 }
 
-/* Legacy gotoMark (:678-687). */
 function gotoMark(index: number): void {
   if (!markEls.length) return;
   if (searchIndex.value >= 0 && searchIndex.value < markEls.length) {
@@ -163,10 +89,9 @@ function gotoMark(index: number): void {
   searchIndex.value = ((index % markEls.length) + markEls.length) % markEls.length;
   const el = markEls[searchIndex.value]!;
   el.classList.add('current');
-  el.scrollIntoView?.({ block: 'center', behavior: 'smooth' }); // jsdom-safe optional call
+  el.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
 }
 
-/* Legacy showGlobalResults (:772-814) + renderGlobalResults (:737-770). */
 async function runGlobalSearch(term: string): Promise<void> {
   if (!term) {
     globalStatus.value = 'done';
@@ -190,13 +115,12 @@ async function runGlobalSearch(term: string): Promise<void> {
   }
 }
 
-/* Legacy gs-item click (:761-769). */
 function openGlobalResult(index: number): void {
   globalMode.value = false;
   void store.loadTopic(index);
 }
 
-/* Debounced input (legacy :973-980, 260ms). */
+/* Debounced search input (260ms) */
 watch(searchTermRaw, (value) => {
   if (searchTimer !== undefined) clearTimeout(searchTimer);
   searchTimer = window.setTimeout(() => {
@@ -204,7 +128,7 @@ watch(searchTermRaw, (value) => {
   }, 260);
 });
 
-/* Applied term → applySearch/clearSearch (legacy :689-710, :665-670). */
+/* Applied term → applySearch/clearSearch */
 watch(appliedTerm, async () => {
   if (globalMode.value) {
     await runGlobalSearch(appliedTerm.value);
@@ -215,7 +139,7 @@ watch(appliedTerm, async () => {
   if (appliedTerm.value && markEls.length) gotoMark(0);
 });
 
-/* Global-mode checkbox (legacy :997-1012). */
+/* Global-mode checkbox */
 watch(globalMode, async (on) => {
   markEls.length = 0;
   searchMarksCount.value = 0;
@@ -228,8 +152,7 @@ watch(globalMode, async (on) => {
   }
 });
 
-/* Topic content arrived → scroll top + re-apply in-topic search
- * (legacy loadTopic .then :846-852). */
+/* Topic content arrived → scroll top + re-apply in-topic search */
 watch(
   () => store.topicHtml.value,
   async (html) => {
@@ -241,8 +164,6 @@ watch(
   },
 );
 
-/* Input keyboard: Enter/Shift+Enter navigates, Escape clears immediately
- * (legacy :982-992). */
 function onSearchKeydown(event: KeyboardEvent): void {
   if (event.key === 'Enter' && !globalMode.value) {
     event.preventDefault();
@@ -255,85 +176,7 @@ function onSearchKeydown(event: KeyboardEvent): void {
   }
 }
 
-/* ── maximize (legacy :898-951, syncMaximizeButton is reactive here) ── */
-
-function setMaximized(nextValue: boolean): void {
-  const ovl = ovlEl.value;
-  if (!ovl) return;
-  const shouldMaximize = Boolean(nextValue);
-  if (shouldMaximize === maximized.value) return;
-  if (shouldMaximize) {
-    restoreBounds = {
-      left: ovl.style.left || '',
-      top: ovl.style.top || '',
-      right: ovl.style.right || '',
-      bottom: ovl.style.bottom || '',
-      width: ovl.style.width || '',
-      height: ovl.style.height || '',
-      transform: ovl.style.transform || '',
-    };
-    maximized.value = true;
-    if (window.innerWidth <= 720) {
-      ovl.style.left = '7px';
-      ovl.style.top = '59px';
-      ovl.style.right = '7px';
-      ovl.style.bottom = '7px';
-    } else {
-      ovl.style.left = '12px';
-      ovl.style.top = '64px';
-      ovl.style.right = '12px';
-      ovl.style.bottom = '12px';
-    }
-    ovl.style.width = 'auto';
-    ovl.style.height = 'auto';
-    ovl.style.transform = 'none';
-  } else {
-    maximized.value = false;
-    const saved = restoreBounds;
-    ovl.style.left = saved.left || '';
-    ovl.style.top = saved.top || '';
-    ovl.style.right = saved.right || '';
-    ovl.style.bottom = saved.bottom || '';
-    ovl.style.width = saved.width || '';
-    ovl.style.height = saved.height || '';
-    ovl.style.transform = saved.transform || '';
-  }
-}
-
-/* ── drag handle (legacy :1053-1084) ── */
-
-function onDragStart(event: MouseEvent): void {
-  if (window.innerWidth <= 720 || maximized.value) return;
-  const ovl: HTMLElement | null = ovlEl.value;
-  if (!ovl) return;
-  event.preventDefault();
-  const rect = ovl.getBoundingClientRect();
-  ovl.style.transform = 'none';
-  ovl.style.left = rect.left + 'px';
-  ovl.style.top = rect.top + 'px';
-  const startX = event.clientX;
-  const startY = event.clientY;
-  const boxLeft = rect.left;
-  const boxTop = rect.top;
-
-  function onMove(moveEvent: MouseEvent): void {
-    ovl!.style.left = boxLeft + moveEvent.clientX - startX + 'px';
-    ovl!.style.top = boxTop + moveEvent.clientY - startY + 'px';
-  }
-
-  function onUp(): void {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-  }
-
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-}
-
-/* ── open/close (legacy :953-971) ── */
-
 function openHelp(keyword?: string): void {
-  overlayVisible.value = true;
   if (!store.loaded.value) {
     void store.loadIndex(keyword || 'overview');
   } else if (keyword) {
@@ -341,36 +184,15 @@ function openHelp(keyword?: string): void {
   }
 }
 
-function closeLocalHelp(): void {
-  overlayVisible.value = false;
-  try {
-    const previous = document.referrer ? new URL(document.referrer) : null;
-    if (previous && previous.origin === window.location.origin && previous.pathname !== window.location.pathname) {
-      window.history.back();
-    }
-  } catch {
-    /* legacy swallowed referrer parse errors */
-  }
-}
-
-function onDocumentKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape') closeLocalHelp(); // legacy :1049-1051
-}
-
-/* ── lifecycle ── */
-
 onMounted(() => {
-  document.title = t('misc.help.title'); // legacy :548
-  window.openHelpOverlay = openHelp; // legacy :1086
-  window.PBGUI_HELP_OPENER = () => openHelp(); // legacy :1087
-  document.addEventListener('keydown', onDocumentKeydown);
-  openHelp(TOPIC || 'overview'); // legacy :1092
+  document.title = t('misc.help.title');
+  window.openHelpOverlay = openHelp;
+  window.PBGUI_HELP_OPENER = () => openHelp();
+  openHelp(TOPIC || 'overview');
 });
 
 onBeforeUnmount(() => {
-  if (searchTimer !== undefined) clearTimeout(searchTimer); // deviation: legacy leaked the timer
-  document.removeEventListener('keydown', onDocumentKeydown);
-  document.body.classList.remove('pbgui-help-open');
+  if (searchTimer !== undefined) clearTimeout(searchTimer);
   delete window.openHelpOverlay;
   delete window.PBGUI_HELP_OPENER;
 });
@@ -378,247 +200,310 @@ onBeforeUnmount(() => {
 
 <template>
   <AppShell
-    class="support-page-shell support-page-shell--help"
+    class="core-workbench-shell support-page-shell support-page-shell--help"
     page-key="help"
     :page-title="t('misc.help.title')"
   >
-    <MigrationWatermark />
-    <div
-      id="page-content"
-      aria-hidden="true"
-      class="relative h-full overflow-hidden [background:radial-gradient(circle_at_top_right,rgb(var(--accent-deep-rgb)/0.12),transparent_28%),radial-gradient(circle_at_bottom_left,rgb(var(--accent-rgb)/0.08),transparent_22%),var(--bg-page)]"
-    ></div>
-    <div
-      id="help-backdrop"
-      class="fixed inset-0 z-[150] bg-[radial-gradient(circle_at_top_right,rgb(var(--accent-deep-rgb)/0.10),transparent_35%),linear-gradient(180deg,rgb(var(--bg-page-rgb)/0.32),rgb(var(--bg-page-rgb)/0.66))] backdrop-blur-[3px]"
-      :class="overlayVisible ? 'visible block' : 'hidden'"
-    ></div>
-
-  <div
-    id="help-ovl"
-    ref="ovlEl"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="help-dialog-title"
-    class="fixed top-1/2 left-1/2 [transform:translate(-50%,-50%)] z-[3000] w-[min(900px,95vw)] h-[min(700px,90vh)] min-w-[480px] min-h-[300px] bg-page border border-border-default rounded-[12px] shadow-[0_20px_70px_rgba(5,8,14,0.9)] flex-col overflow-hidden max-[720px]:w-[calc(100vw-14px)] max-[720px]:h-[calc(100dvh-66px)] max-[720px]:min-w-0 max-[720px]:min-h-0 max-[720px]:top-[59px] max-[720px]:left-[7px] max-[720px]:[transform:none] max-[720px]:resize-none"
-    :class="[overlayVisible ? 'visible flex' : 'hidden', maximized ? 'is-maximized max-w-none max-h-none resize-none' : 'resize']"
-  >
-    <div class="ovl-panel flex-1 flex flex-col overflow-hidden relative">
-      <div id="help-drag-handle" class="absolute top-0 left-0 right-12 h-[46px] z-[2]" :class="maximized ? 'cursor-default' : 'cursor-move'" @mousedown="onDragStart"></div>
-      <div class="ovl-header flex items-center justify-between py-[0.85rem] pr-[1.1rem] pl-[1.25rem] border-b border-border-subtle shrink-0 bg-card max-[720px]:flex-col max-[720px]:items-start max-[720px]:gap-2.5">
-        <div id="help-dialog-title" class="ovl-header-title flex items-center gap-1.75 text-md font-bold text-primary"><PbIcon :icon="PhBookOpen" /> <span>{{ t('misc.help.guideHelp') }}</span></div>
-        <div class="ovl-header-actions flex items-center gap-1.75 relative z-[3] max-[720px]:flex-wrap max-[720px]:w-full">
-          <div id="help-search-wrap" class="flex items-center gap-[3px]">
-            <Input
-              id="help-search"
-              v-model="searchTermRaw"
-              type="text"
-              class="w-[170px] max-[720px]:w-[140px]"
-              :placeholder="searchPlaceholder"
-              autocomplete="off"
-              @keydown="onSearchKeydown"
-            />
-            <Button
-              class="help-snav-btn"
-              id="help-search-up"
-              type="button"
-              variant="secondary"
-              size="sm"
-              :title="t('misc.help.previousMatch')"
-              :aria-label="t('misc.help.previousMatch')"
-              @click="gotoMark(searchIndex - 1)"
-            ><PbIcon :icon="PhArrowUp" /></Button>
-            <Button
-              class="help-snav-btn"
-              id="help-search-dn"
-              type="button"
-              variant="secondary"
-              size="sm"
-              :title="t('misc.help.nextMatch')"
-              :aria-label="t('misc.help.nextMatch')"
-              @click="gotoMark(searchIndex + 1)"
-            ><PbIcon :icon="PhArrowDown" /></Button>
-            <span id="help-search-count" class="text-xs text-muted whitespace-nowrap min-w-[44px] text-left">{{ searchCountText }}</span>
-            <label id="help-search-global-lbl" class="flex items-center gap-[3px] text-secondary text-xs cursor-pointer whitespace-nowrap select-none" :title="t('misc.help.searchAcrossAll')">
-              <Checkbox id="help-search-global" v-model="globalMode" /> <span>{{ t('common.all') }}</span>
-            </label>
-          </div>
-          <div style="width:1px;height:16px;background:var(--border-default);flex-shrink:0;"></div>
-          <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0">
-            <Button id="help-lang-en" type="button" variant="ghost" size="sm" :class="store.lang.value === 'EN' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('EN')">EN</Button>
-            <Button id="help-lang-de" type="button" variant="ghost" size="sm" :class="store.lang.value === 'DE' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('DE')">DE</Button>
-            <Button id="help-lang-zh" type="button" variant="ghost" size="sm" :title="t('misc.help.chineseDocs')" :class="store.lang.value === 'ZH' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('ZH')">中文</Button>
-          </div>
+    <template #header-actions>
+      <div class="flex items-center gap-2 max-[720px]:flex-wrap">
+        <!-- Search bar -->
+        <div id="help-search-wrap" class="flex items-center gap-1 bg-surface rounded-md px-2 py-0.5 border border-border-default">
+          <Input
+            id="help-search"
+            v-model="searchTermRaw"
+            type="text"
+            class="h-7 w-44 max-[720px]:w-32 text-xs border-0 bg-transparent focus-visible:ring-0 shadow-none px-1"
+            :placeholder="searchPlaceholder"
+            autocomplete="off"
+            @keydown="onSearchKeydown"
+          />
           <Button
-            class="ovl-tool"
-            :class="ovlToolColorClass(maximized)"
-            id="help-maximize"
+            class="help-snav-btn h-6 w-6 p-0"
+            id="help-search-up"
             type="button"
             variant="ghost"
-            size="icon"
-            :title="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
-            :aria-label="maximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow')"
-            :aria-pressed="maximized ? 'true' : 'false'"
-            @click="setMaximized(!maximized)"
-            ><PbIcon :icon="maximized ? PhArrowsIn : PhArrowsOut" /></Button>
-          <Button class="ovl-close" :class="ovlToolColorClass(false)" id="help-close" type="button" variant="ghost" size="icon" :aria-label="t('common.close')" @click="closeLocalHelp"><PbIcon :icon="PhX" /></Button>
+            size="sm"
+            :title="t('misc.help.previousMatch')"
+            :aria-label="t('misc.help.previousMatch')"
+            @click="gotoMark(searchIndex - 1)"
+          ><PbIcon :icon="PhArrowUp" class="w-3.5 h-3.5" /></Button>
+          <Button
+            class="help-snav-btn h-6 w-6 p-0"
+            id="help-search-dn"
+            type="button"
+            variant="ghost"
+            size="sm"
+            :title="t('misc.help.nextMatch')"
+            :aria-label="t('misc.help.nextMatch')"
+            @click="gotoMark(searchIndex + 1)"
+          ><PbIcon :icon="PhArrowDown" class="w-3.5 h-3.5" /></Button>
+          <span id="help-search-count" class="text-xs text-muted whitespace-nowrap min-w-[36px] text-center font-mono">{{ searchCountText }}</span>
+          <div class="w-px h-3.5 bg-border-subtle mx-0.5"></div>
+          <label id="help-search-global-lbl" class="flex items-center gap-1 text-secondary text-xs cursor-pointer whitespace-nowrap select-none hover:text-primary" :title="t('misc.help.searchAcrossAll')">
+            <Checkbox id="help-search-global" v-model="globalMode" />
+            <span>{{ t('common.all') }}</span>
+          </label>
+        </div>
+
+        <!-- Language Switcher Pill -->
+        <div class="lang-pill flex border border-border-default rounded-md overflow-hidden shrink-0 bg-surface">
+          <Button id="help-lang-en" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none" :class="store.lang.value === 'EN' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('EN')">EN</Button>
+          <Button id="help-lang-de" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none border-l border-border-subtle" :class="store.lang.value === 'DE' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('DE')">DE</Button>
+          <Button id="help-lang-zh" type="button" variant="ghost" size="sm" class="h-7 px-2.5 text-xs rounded-none border-l border-border-subtle" :title="t('misc.help.chineseDocs')" :class="store.lang.value === 'ZH' ? LANG_ACTIVE_CLASS : ''" @click="store.switchLang('ZH')">中文</Button>
         </div>
       </div>
-      <div id="help-body" class="flex flex-1 overflow-hidden max-[720px]:flex-col">
-        <HelpToc
-          v-model:filter="store.filter.value"
-          :entries="store.filteredTopics.value"
-          :selected="store.selected.value"
-          :status="store.indexStatus.value"
-          @select="store.loadTopic"
-        />
-        <div id="help-content" ref="contentEl" class="flex-1 overflow-y-auto py-[1.5rem] px-[1.8rem] leading-[1.7] text-primary text-base">
-          <template v-if="globalMode">
-            <div v-if="globalStatus === 'searching'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.searching') }}</div>
-            <p v-else-if="globalMessage" style="color:var(--text-muted);padding:8px 0;">{{ globalMessage }}</p>
-            <div v-else-if="globalResults.length" class="gs-results flex flex-col gap-2 py-1">
-              <div
-                v-for="result in globalResults"
-                :key="result.idx"
-                class="gs-item bg-card border border-border-default rounded-md px-3.5 py-2.5 cursor-pointer transition-[border-color] duration-150 hover:border-secondary"
-                :data-idx="result.idx"
-                @click="openGlobalResult(result.idx)"
-              >
-                <div class="gs-topic text-accent-soft font-semibold text-sm mb-[5px]">{{ result.title }}</div>
-                <!-- escaped + <mark>-wrapped in lib/search.highlightSnippet (never raw server text) -->
+    </template>
+
+    <MigrationWatermark />
+
+    <!-- Main Workspace -->
+    <div id="help-workspace" class="flex flex-1 w-full min-w-0 h-full overflow-hidden max-[720px]:flex-col">
+      <!-- Left Column: Topic List (TOC) -->
+      <HelpToc
+        v-model:filter="store.filter.value"
+        :entries="store.filteredTopics.value"
+        :selected="store.selected.value"
+        :status="store.indexStatus.value"
+        @select="store.loadTopic"
+      />
+
+      <!-- Right Column: Document Reader & Search View -->
+      <div id="help-content-pane" class="flex-1 flex flex-col w-full h-full overflow-hidden min-w-0 bg-page">
+        <div id="help-content" ref="contentEl" class="flex-1 w-full overflow-y-auto px-8 py-8 max-[720px]:px-4 max-[720px]:py-4 text-primary text-base">
+          <div class="help-reader-container w-full max-w-[920px] mx-auto min-h-full flex flex-col justify-between min-w-0">
+            <!-- Global Mode Search Results -->
+            <template v-if="globalMode">
+              <div v-if="globalStatus === 'searching'" class="help-loading text-secondary italic p-12 text-center">{{ t('misc.help.searching') }}</div>
+              <div v-else-if="globalMessage" class="text-muted p-8 text-center bg-card/40 rounded-lg border border-border-subtle">{{ globalMessage }}</div>
+              <div v-else-if="globalResults.length" class="gs-results flex flex-col gap-3 py-2 w-full">
                 <div
-                  v-for="(snippet, i) in result.snippets"
-                  :key="i"
-                  class="gs-snip text-secondary text-xs leading-[1.55] overflow-hidden text-ellipsis"
-                  v-html="highlightSnippet(snippet, appliedTerm)"
-                ></div>
+                  v-for="result in globalResults"
+                  :key="result.idx"
+                  class="gs-item w-full bg-card hover:bg-elevated border border-border-default hover:border-secondary rounded-lg p-4 cursor-pointer transition-all duration-150 shadow-sm"
+                  :data-idx="result.idx"
+                  @click="openGlobalResult(result.idx)"
+                >
+                  <div class="gs-topic text-accent-soft font-semibold text-base mb-1.5 flex items-center gap-2">
+                    <PbIcon :icon="PhBookOpen" class="w-4 h-4 text-accent" />
+                    <span>{{ result.title }}</span>
+                  </div>
+                  <!-- escaped + <mark>-wrapped in lib/search.highlightSnippet (never raw server text) -->
+                  <div
+                    v-for="(snippet, i) in result.snippets"
+                    :key="i"
+                    class="gs-snip text-secondary text-sm leading-relaxed overflow-hidden text-ellipsis pl-6 mt-1"
+                    v-html="highlightSnippet(snippet, appliedTerm)"
+                  ></div>
+                </div>
               </div>
-            </div>
-          </template>
-          <template v-else>
-            <div v-if="store.contentStatus.value === 'loading'" class="help-loading text-secondary italic p-7 text-center">{{ t('common.loading') }}</div>
-            <div v-else-if="store.contentStatus.value === 'error'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.failedLoadContent') }}</div>
-            <div v-else-if="store.indexStatus.value === 'empty'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.noHelpTopics') }}</div>
-            <!-- markdown: DOMPurify-sanitized in lib/markdown.renderMarkdown before v-html (never raw) -->
-            <div v-else-if="store.topicHtml.value !== null" v-html="displayHtml"></div>
-          </template>
+            </template>
+
+            <!-- Normal In-Topic Reader View -->
+            <template v-else>
+              <div v-if="store.contentStatus.value === 'loading'" class="help-loading text-secondary italic p-12 text-center">{{ t('common.loading') }}</div>
+              <div v-else-if="store.contentStatus.value === 'error'" class="help-loading text-secondary italic p-12 text-center">{{ t('misc.help.failedLoadContent') }}</div>
+              <div v-else-if="store.indexStatus.value === 'empty'" class="help-loading text-secondary italic p-12 text-center">{{ t('misc.help.noHelpTopics') }}</div>
+              <template v-else-if="store.topicHtml.value !== null">
+                <!-- markdown: DOMPurify-sanitized in lib/markdown.renderMarkdown before v-html -->
+                <article class="help-article block w-full min-w-full flex-1" v-html="displayHtml"></article>
+
+                <!-- Bottom Topic Pager (Previous / Next) -->
+                <nav
+                  id="help-pager"
+                  aria-label="Topic navigation"
+                  class="mt-12 pt-6 border-t border-border-subtle flex items-stretch justify-between gap-4 select-none w-full max-[600px]:flex-col"
+                >
+                  <div class="flex-1 min-w-0">
+                    <button
+                      v-if="store.prevTopic.value"
+                      id="help-prev-topic"
+                      type="button"
+                      class="group w-full h-full flex flex-col text-left p-4 rounded-lg border border-border-subtle hover:border-accent-soft bg-card/40 hover:bg-elevated transition-colors"
+                      @click="store.loadTopic(store.prevTopic.value.index)"
+                    >
+                      <span class="text-xs text-muted flex items-center gap-1 mb-1 group-hover:text-accent-soft">
+                        <PbIcon :icon="PhCaretLeft" class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+                        {{ t('misc.help.prevTopic') }}
+                      </span>
+                      <span class="text-sm font-semibold text-primary group-hover:text-accent-soft truncate block">
+                        {{ store.prevTopic.value.topic.title }}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div class="flex-1 min-w-0 text-right">
+                    <button
+                      v-if="store.nextTopic.value"
+                      id="help-next-topic"
+                      type="button"
+                      class="group w-full h-full flex flex-col items-end text-right p-4 rounded-lg border border-border-subtle hover:border-accent-soft bg-card/40 hover:bg-elevated transition-colors"
+                      @click="store.loadTopic(store.nextTopic.value.index)"
+                    >
+                      <span class="text-xs text-muted flex items-center gap-1 mb-1 group-hover:text-accent-soft">
+                        {{ t('misc.help.nextTopic') }}
+                        <PbIcon :icon="PhCaretRight" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </span>
+                      <span class="text-sm font-semibold text-primary group-hover:text-accent-soft truncate block">
+                        {{ store.nextTopic.value.topic.title }}
+                      </span>
+                    </button>
+                  </div>
+                </nav>
+              </template>
+            </template>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   </AppShell>
 </template>
 
 <style>
-/* ═══════════════════════════════════════════════════════════════
-   Ported from styles/help.css (deleted at the Tailwind migration).
-   Everything expressible as utilities moved onto the templates
-   (App.vue + HelpToc.vue); the rules below stay as CSS for the
-   documented reasons. This block is unscoped on purpose — the old
-   stylesheet was page-global, and the html/body and injected-markdown
-   rules have no component root to scope to.
-
-   Dropped outright: the * reset and the html/body height/width/
-   font-size/background/colour defaults — preflight and the base layer
-   in src/styles/tailwind.css already provide them identically — plus
-   #help-search-global-lbl input[type="checkbox"] accent-color/margin
-   (base layer + preflight provide those too). Only the html/body
-   declarations that differ from the shared base stay: the legacy
-   CJK-first font stack (the shared stack is Space Grotesk-led) and the
-   page's overflow lock.
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ── Page root chrome ────────────────────────────────────────── */
-html,
-body {
-  overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+/* ── Markdown content (#help-content) ────────────────────────── */
+#help-content {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* ── Markdown content (#help-content) ──────────────────────────
-   The topic body is markdown rendered via v-html (lib/markdown.ts) and
-   the global-search snippets carry <mark> highlights from lib/search.ts
-   — none of that DOM carries this component's scope attribute, so
-   utilities cannot reach it. Every descendant selector stays right
-   here, anchored on the #help-content id exactly like the legacy
-   stylesheet. */
+.help-reader-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 920px;
+  min-width: 0;
+  min-height: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+#help-content article,
+.help-article {
+  display: block;
+  width: 100% !important;
+  min-width: 100% !important;
+  box-sizing: border-box;
+  text-wrap: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+#help-content h1,
+#help-content h2,
+#help-content h3 {
+  display: block;
+  width: 100% !important;
+  text-wrap: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
 #help-content h1 {
   font-size: var(--fs-xl);
   color: var(--text-primary);
-  margin: 0 0 1rem;
-  padding-bottom: 0.5rem;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border-subtle);
+  font-weight: 700;
 }
 
 #help-content h2 {
   font-size: var(--fs-lg);
   color: var(--text-primary);
-  margin: 1.5rem 0 0.5rem;
+  margin: 2rem 0 0.75rem;
+  font-weight: 600;
 }
 
 #help-content h3 {
   font-size: var(--fs-md);
   color: var(--text-primary);
-  margin: 1.1rem 0 0.35rem;
+  margin: 1.5rem 0 0.5rem;
+  font-weight: 600;
 }
 
-#help-content p { margin: 0.5rem 0; }
+#help-content p {
+  display: block;
+  width: 100% !important;
+  margin: 0.75rem 0;
+  line-height: 1.75;
+  text-wrap: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
 #help-content a { color: var(--accent-soft); text-decoration: none; }
 #help-content a:hover { text-decoration: underline; }
-#help-content strong { color: var(--text-primary); }
+#help-content strong { color: var(--text-primary); font-weight: 600; }
 #help-content em { color: var(--text-secondary); font-style: italic; }
 #help-content code {
   background: var(--bg-card);
   color: var(--warning-soft);
-  padding: 0.1em 0.35em;
-  border-radius: 3px;
-  font-size: var(--fs-xs);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.88em;
   font-family: 'Fira Code', 'Consolas', monospace;
+  border: 1px solid var(--border-subtle);
 }
 
 #help-content pre {
-  background: var(--bg-page);
+  background: var(--bg-surface);
   border: 1px solid var(--border-default);
-  border-radius: 6px;
-  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
   overflow-x: auto;
-  margin: 0.75rem 0;
+  margin: 1rem 0;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
 #help-content pre code {
   background: none;
   padding: 0;
+  border: none;
   color: var(--text-secondary);
   font-size: var(--fs-sm);
 }
 
 #help-content ul,
 #help-content ol {
-  padding-left: 1.5rem;
-  margin: 0.5rem 0;
+  padding-left: 1.6rem;
+  margin: 0.75rem 0;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
-#help-content li { margin: 0.2rem 0; }
+#help-content li {
+  margin: 0.35rem 0;
+  text-wrap: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
 
 #help-content blockquote {
   border-left: 3px solid var(--accent-soft);
-  margin: 0.75rem 0;
-  padding: 0.4rem 0.9rem;
-  background: rgb(var(--accent-rgb) / 0.05);
-  border-radius: 0 5px 5px 0;
+  margin: 1rem 0;
+  padding: 0.6rem 1rem;
+  background: rgb(var(--accent-rgb) / 0.06);
+  border-radius: 0 6px 6px 0;
   color: var(--text-secondary);
+  text-wrap: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
 #help-content table {
   border-collapse: collapse;
-  width: 100%;
-  margin: 0.75rem 0;
+  width: 100% !important;
+  margin: 1.25rem 0;
 }
 
 #help-content th,
 #help-content td {
   border: 1px solid var(--border-default);
-  padding: 0.4rem 0.7rem;
+  padding: 0.6rem 0.9rem;
   text-align: left;
   font-size: var(--fs-sm);
   vertical-align: top;
@@ -633,43 +518,46 @@ body {
 #help-content hr {
   border: none;
   border-top: 1px solid var(--border-subtle);
-  margin: 1rem 0;
+  margin: 1.5rem 0;
 }
 
 #help-content img {
   max-width: 100%;
-  border-radius: 6px;
-  margin: 0.5rem 0;
+  border-radius: 8px;
+  margin: 1rem 0;
 }
 
 #help-content mark {
-  background: rgb(var(--warning-rgb) / 0.2);
+  background: rgb(var(--warning-rgb) / 0.25);
   color: var(--warning-soft);
   border-radius: 2px;
+  padding: 0 2px;
 }
 
-/* gotoMark() toggles .current on the injected <mark> nodes via
-   classList — utilities cannot reach that DOM either. */
 #help-content mark.current {
-  background: rgb(var(--warning-rgb) / 0.45);
+  background: rgb(var(--warning-rgb) / 0.5);
   color: var(--warning-soft);
   outline: 1px solid var(--warning);
 }
 </style>
 
 <style scoped>
-/* Page-level AppShell overrides — ported from styles/help.css at the
-   Tailwind migration. The :deep() rules target AppShell internals (the
-   classes live on elements the shared component renders), so they stay
-   as CSS instead of utilities. */
 .support-page-shell :deep(.app-shell__main) {
   width: 100%;
   max-width: none;
   min-height: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
 .support-page-shell :deep(.app-shell__primary) {
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 </style>

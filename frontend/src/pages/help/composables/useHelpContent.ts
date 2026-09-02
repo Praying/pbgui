@@ -80,6 +80,25 @@ export function useHelpContent() {
   let indexSeq = 0;
   let topicSeq = 0;
 
+  /** Currently active topic. */
+  const currentTopic = computed<HelpTopic | null>(() => topics.value[selected.value] ?? null);
+
+  /** Previous topic in the index, if any. */
+  const prevTopic = computed<{ topic: HelpTopic; index: number } | null>(() => {
+    if (selected.value > 0 && selected.value < topics.value.length) {
+      return { topic: topics.value[selected.value - 1]!, index: selected.value - 1 };
+    }
+    return null;
+  });
+
+  /** Next topic in the index, if any. */
+  const nextTopic = computed<{ topic: HelpTopic; index: number } | null>(() => {
+    if (selected.value >= 0 && selected.value < topics.value.length - 1) {
+      return { topic: topics.value[selected.value + 1]!, index: selected.value + 1 };
+    }
+    return null;
+  });
+
   /** TOC entries after the filter (legacy renderToc :816-829). */
   const filteredTopics = computed(() => {
     const needle = filter.value.trim().toLowerCase();
@@ -229,6 +248,9 @@ export function useHelpContent() {
     contentStatus,
     filter,
     loaded,
+    currentTopic,
+    prevTopic,
+    nextTopic,
     filteredTopics,
     loadIndex,
     loadTopic,

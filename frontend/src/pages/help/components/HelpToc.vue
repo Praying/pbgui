@@ -45,18 +45,20 @@ function tocItemClass(isActive: boolean): string {
 <template>
   <div
     id="help-toc"
-    class="w-[230px] min-w-[170px] shrink-0 border-r border-border-subtle overflow-y-auto py-1.75 bg-page max-[720px]:w-full max-[720px]:min-w-0 max-[720px]:max-h-[210px] max-[720px]:border-r-0 max-[720px]:border-b max-[720px]:border-border-subtle"
+    class="w-64 min-w-[240px] shrink-0 border-r border-border-subtle flex flex-col h-full overflow-hidden bg-page max-[720px]:w-full max-[720px]:min-w-0 max-[720px]:max-h-[220px] max-[720px]:border-r-0 max-[720px]:border-b"
   >
-    <Input
-      id="help-toc-filter"
-      type="text"
-      class="w-[calc(100%-1.2rem)] mx-[0.6rem] mb-[0.4rem]"
-      :model-value="filter"
-      :placeholder="t('misc.help.filterTopics')"
-      autocomplete="off"
-      @update:model-value="emit('update:filter', String($event ?? ''))"
-    />
-    <div id="help-toc-list">
+    <div class="p-3 border-b border-border-subtle shrink-0">
+      <Input
+        id="help-toc-filter"
+        type="text"
+        class="w-full"
+        :model-value="filter"
+        :placeholder="t('misc.help.filterTopics')"
+        autocomplete="off"
+        @update:model-value="emit('update:filter', String($event ?? ''))"
+      />
+    </div>
+    <div id="help-toc-list" class="flex-1 overflow-y-auto py-2">
       <div v-if="status === 'loading'" class="help-loading text-secondary italic p-7 text-center">{{ t('common.loading') }}</div>
       <div v-else-if="status === 'error'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.failedLoadTopics') }}</div>
       <template v-else>

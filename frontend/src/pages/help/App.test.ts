@@ -108,16 +108,11 @@ afterEach(() => {
 });
 
 describe('Help page shell', () => {
-  it('opens the overlay on mount, loads the EN index and the first topic', async () => {
+  it('mounts the workspace on load, loads the EN index and the first topic', async () => {
     const w = await mountApp();
 
     expect(w.find('.app-shell').exists()).toBe(true);
-    expect(w.find('#help-ovl').classes()).toContain('visible');
-    expect(w.find('#help-ovl').attributes('role')).toBe('dialog');
-    expect(w.find('#help-ovl').attributes('aria-modal')).toBe('true');
-    expect(w.find('#help-ovl').attributes('aria-labelledby')).toBe('help-dialog-title');
-    expect(w.find('#help-backdrop').classes()).toContain('visible');
-    expect(document.body.classList.contains('pbgui-help-open')).toBe(true);
+    expect(w.find('#help-workspace').exists()).toBe(true);
     expect(w.findAll('.toc-item')).toHaveLength(3);
     expect(w.findAll('.toc-item')[0]!.classes()).toContain('active');
     expect(w.find('#help-content').text()).toContain('Overview text');
@@ -315,43 +310,28 @@ describe('Help page shell', () => {
     expect(w.find('#help-content').text()).toContain('No help topics found.');
   });
 
-  it('hides the overlay and body helper class on close', async () => {
+  it('navigates topics using the bottom topic pager', async () => {
     const w = await mountApp();
-    expect(w.find('#help-ovl').classes()).toContain('visible');
 
-    await w.find('#help-close').trigger('click');
+    expect(w.find('#help-prev-topic').exists()).toBe(false);
+    expect(w.find('#help-next-topic').exists()).toBe(true);
+    expect(w.find('#help-next-topic').text()).toContain('Coin Data Help');
+
+    await w.find('#help-next-topic').trigger('click');
     await flush();
 
-    expect(w.find('#help-ovl').classes()).not.toContain('visible');
-    expect(w.find('#help-backdrop').classes()).not.toContain('visible');
-    expect(document.body.classList.contains('pbgui-help-open')).toBe(false);
-  });
+    expect(w.findAll('.toc-item')[1]!.classes()).toContain('active');
+    expect(w.find('#help-content').text()).toContain('Coin data topic');
+    expect(w.find('#help-prev-topic').exists()).toBe(true);
+    expect(w.find('#help-prev-topic').text()).toContain('Overview');
+    expect(w.find('#help-next-topic').exists()).toBe(true);
+    expect(w.find('#help-next-topic').text()).toContain('DB Tools');
 
-  it('toggles maximize state and aria-pressed (legacy :898-951)', async () => {
-    const w = await mountApp();
-    const btn = w.find('#help-maximize');
-    expect(btn.attributes('aria-pressed')).toBe('false');
+    await w.find('#help-prev-topic').trigger('click');
+    await flush();
 
-    await btn.trigger('click');
-    expect(w.find('#help-ovl').classes()).toContain('is-maximized');
-    expect(btn.attributes('aria-pressed')).toBe('true');
-    expect(btn.find('svg').exists()).toBe(true);
-
-    await btn.trigger('click');
-    expect(w.find('#help-ovl').classes()).not.toContain('is-maximized');
-    expect(btn.attributes('aria-pressed')).toBe('false');
-  });
-
-  it('moves the overlay with the drag handle (legacy :1053-1084)', async () => {
-    const w = await mountApp();
-    const ovl = w.find('#help-ovl').element as HTMLElement;
-
-    await w.find('#help-drag-handle').trigger('mousedown', { clientX: 10, clientY: 10 });
-    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 110, clientY: 60 }));
-    document.dispatchEvent(new MouseEvent('mouseup'));
-
-    expect(ovl.style.left).toBe('100px');
-    expect(ovl.style.top).toBe('50px');
+    expect(w.findAll('.toc-item')[0]!.classes()).toContain('active');
+    expect(w.find('#help-content').text()).toContain('Overview text');
   });
 
   it('registers the help opener for the nav Guide button and cleans up on unmount', async () => {

@@ -1,5 +1,14 @@
 # Unreleased
 
+## Help & Tutorials - Native Documentation Workspace Redesign (Plan A)
+
+- **Native Docs Workspace**: Transformed `/api/help/main_page` (`frontend/src/pages/help/App.vue`) from a floating modal popup with backdrop blur and drag/resize handles into a modern, native full-screen 2-column documentation center seamlessly embedded in `AppShell`.
+- **Sidebar Navigation & Instant Filter**: Optimized `HelpToc.vue` into a full-height sidebar with sticky quick filter search, active topic indicator, and scrollable catalog list.
+- **Header Actions & Global Search**: Moved in-topic match navigation, search match counters, global search across all documentation, and EN / DE / 中文 language switch pills into the standard `AppShell` top header actions.
+- **Topic Pagination & Reader Typography**: Added bottom previous/next topic navigation cards (`#help-pager`) for smooth reading flow, enhanced markdown typography and code block styling with dark-theme tokens.
+- **CJK Text Wrapping & Layout Fix**: Fixed a Chromium layout issue where `text-wrap: balance` on headings in intrinsic flex containers caused CJK text to collapse into a single vertical column; enforced `w-full min-w-0`, `text-wrap: wrap`, and `word-break: break-word` on content containers.
+- **i18n & Test Coverage**: Added matching `misc.help.prevTopic`, `misc.help.nextTopic`, `misc.help.toc` translation keys to English and Chinese dictionaries; updated unit test suite in `App.test.ts` to cover workspace rendering and pager transitions.
+
 ## Workbench Rail - Sidebar Visual Polish & Interaction Refinement
 
 - **Unified Corner Radii**: Aligned expanded and collapsed item border-radius to a consistent 8px (`--radius-lg`), establishing visual harmony across rail states.
