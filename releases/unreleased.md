@@ -1,5 +1,14 @@
 # Unreleased
 
+## Workbench Rail - Sidebar Visual Polish & Interaction Refinement
+
+- **Unified Corner Radii**: Aligned expanded and collapsed item border-radius to a consistent 8px (`--radius-lg`), establishing visual harmony across rail states.
+- **Accordion Tree Guide Lines**: Added subtle vertical tree reference lines (`rgba(255, 255, 255, 0.08)`) and active indicator marks to page sections (`.workbench-rail__subitems`), giving subitems clear parent-child visual grounding.
+- **Active Pill Indicator**: Replaced the 3px solid border-left on active menu items with an embedded floating capsule pill indicator (`::before`), eliminating harsh corner clipping on rounded items.
+- **Smoothed Hover Feedback**: Removed the jarring `translateY(-1px)` jump on collapsed icon hover, replacing it with smooth color and subtle border transitions for reliable, flicker-free interaction.
+- **Scrollbar & Group Polish**: Enhanced navigation groups scrollbar with subtle hover reveal and right-side breathing room to prevent cutting into the sidebar right border; refined section label typography (11px, bold, tracking).
+- **AI Drawer Button Polish**: Added subtle border glow, balanced padding, and a lightweight `Ctrl J` keyboard hint badge.
+
 ## Top Navigation Bar - Unified Single-Line Redesign & Alignment
 
 - **Single-Line Height Alignment**: Standardized `.workspace-header` across all Vue 3 pages to a fixed 64px (`--header-height: 64px`) matching the left workbench rail brand height (`.workbench-rail__brand`), creating a continuous horizontal bottom border across the entire viewport.

@@ -342,6 +342,7 @@ onBeforeUnmount(() => {
       >
         <PbIcon :icon="PhSparkle" :size="20" />
         <span v-if="!visuallyCollapsed" class="workbench-rail__ai-label">{{ t('nav.ai') }}</span>
+        <kbd v-if="!visuallyCollapsed" class="workbench-rail__ai-kbd" aria-hidden="true">Ctrl J</kbd>
       </button>
     </div>
   </nav>
