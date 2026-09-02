@@ -9,7 +9,15 @@ import AppShell from '@/shared/components/AppShell.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import {
+  SelectContent,
+  SelectItem,
+  SelectRoot,
+  SelectTrigger,
+} from '@/shared/components/ui/select';
 import { PhArrowClockwise, PhChartLineUp, PhFloppyDisk, PhPlay, PhTrash, PhWarning } from '@phosphor-icons/vue';
 
 interface SweepUser { name: string; exchange?: string; is_vault?: boolean; operating_mode?: string; due?: unknown; has_policy?: boolean }
@@ -142,7 +150,68 @@ onMounted(() => { document.title = t('profitSweep.title'); void loadPage(); });
         <div v-if="selectedUser" class="grid gap-3 sm:grid-cols-4"><article v-for="item in [{ label: t('profitSweep.mode'), value: currentMode }, { label: t('profitSweep.due'), value: preview?.decision && typeof preview.decision === 'object' ? (preview.decision as Record<string, unknown>).sweep_due : statusState?.sweep_due }, { label: t('profitSweep.lastPnl'), value: statusState?.last_net_pnl }, { label: t('profitSweep.highWatermark'), value: statusState?.high_watermark }]" :key="item.label" class="rounded-lg border border-border-default bg-panel p-3"><p class="text-xs uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 truncate text-lg font-semibold text-primary">{{ formatValue(item.value) }}</p></article></div>
         <nav class="mt-4 flex gap-1 overflow-x-auto rounded-lg border border-border-default bg-panel p-1"><button v-for="tab in (['overview', 'policy', 'schedule', 'vault', 'journal'] as const)" :key="tab" type="button" class="rounded-md px-3 py-2 text-sm font-semibold text-secondary" :class="activeTab === tab ? 'bg-accent/15 text-primary' : ''" @click="activeTab = tab">{{ t(`profitSweep.tabs.${tab}`) }}</button></nav>
         <section v-if="activeTab === 'overview'" class="mt-4 grid gap-4 lg:grid-cols-2"><div class="rounded-lg border border-border-default bg-panel p-4"><h2 class="text-lg font-semibold text-primary">{{ t('profitSweep.overview') }}</h2><dl class="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded border border-border-default bg-border-default"><template v-for="item in [{ label: t('profitSweep.exchange'), value: currentUser?.exchange }, { label: t('profitSweep.accountType'), value: currentUser?.is_vault ? t('profitSweep.vaultType') : t('profitSweep.standardType') }, { label: t('profitSweep.policyState'), value: record ? t('profitSweep.saved') : t('profitSweep.notSaved') }, { label: t('profitSweep.nextRun'), value: statusState?.next_run_at ? formatTime(statusState.next_run_at) : '-' }]" :key="item.label"><div class="bg-field p-3"><dt class="text-xs uppercase text-muted">{{ item.label }}</dt><dd class="mt-1 break-words font-semibold text-primary">{{ formatValue(item.value) }}</dd></div></template></dl></div><div v-if="preview" class="rounded-lg border border-warning/30 bg-warning/5 p-4"><h2 class="text-lg font-semibold text-warning">{{ t('profitSweep.preview') }}</h2><p class="mt-2 text-sm text-secondary">{{ t('profitSweep.previewHint') }}</p><dl class="mt-3 grid grid-cols-2 gap-3 text-sm"><template v-for="key in ['amount', 'reason', 'net_pnl', 'high_watermark', 'sweep_due', 'effective_cap']" :key="key"><div><dt class="text-xs uppercase text-muted">{{ previewLabel(key) }}</dt><dd class="font-semibold text-primary">{{ formatValue((preview.decision as Record<string, unknown> | undefined)?.[key]) }}</dd></div></template></dl></div></section>
-        <section v-else-if="['policy', 'schedule', 'vault'].includes(activeTab)" class="mt-4 rounded-lg border border-border-default bg-panel p-4"><div class="mb-4 flex items-center justify-between"><div><h2 class="text-lg font-semibold text-primary">{{ t(`profitSweep.tabs.${activeTab}`) }}</h2><p class="text-sm text-secondary">{{ t('profitSweep.formHint') }}</p></div><Button variant="primary" :disabled="!selectedUser || actionPending" @click="savePolicy"><PbIcon :icon="PhFloppyDisk" /> {{ t('profitSweep.save') }}</Button></div><div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"><div v-for="field in fieldsFor(activeTab)" :key="field" class="grid gap-1"><label :for="`profit-sweep-${field}`" class="text-sm font-semibold text-secondary">{{ fieldLabel(field) }}</label><select v-if="fieldOptions(field).length" :id="`profit-sweep-${field}`" class="h-9 rounded-md border border-border-default bg-field px-2 text-primary" :value="fieldValue(field) as string" @change="setField(field, ($event.target as HTMLSelectElement).value)"><option v-for="option in fieldOptions(field)" :key="String(option)" :value="String(option)">{{ fieldLabel(String(option)) }}</option></select><label v-else-if="typeof fieldValue(field) === 'boolean'" class="flex h-9 items-center gap-2 rounded-md border border-border-default bg-field px-2 text-sm text-primary"><input :id="`profit-sweep-${field}`" type="checkbox" :checked="fieldValue(field) as boolean" @change="setCheckboxField(field, $event)"> {{ t('profitSweep.enabled') }}</label><Input v-else :id="`profit-sweep-${field}`" :type="typeof fieldValue(field) === 'number' ? 'number' : 'text'" :value="String(fieldValue(field) ?? '')" @input="setInputField(field, $event)" /></div></div><div class="mt-4 flex flex-wrap gap-2"><Button variant="secondary" :disabled="currentMode === 'disabled' || actionPending" @click="setMode('disabled')">{{ t('profitSweep.disable') }}</Button><Button variant="primary" :disabled="!record || schema.live_available !== true || actionPending" @click="enableLive"><PbIcon :icon="PhWarning" /> {{ t('profitSweep.enableLive') }}</Button></div></section>
+        <section v-else-if="['policy', 'schedule', 'vault'].includes(activeTab)" class="mt-4 rounded-lg border border-border-default bg-panel p-4">
+          <div class="mb-4 flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-primary">{{ t(`profitSweep.tabs.${activeTab}`) }}</h2>
+              <p class="text-sm text-secondary">{{ t('profitSweep.formHint') }}</p>
+            </div>
+            <Button variant="primary" :disabled="!selectedUser || actionPending" @click="savePolicy">
+              <PbIcon :icon="PhFloppyDisk" /> {{ t('profitSweep.save') }}
+            </Button>
+          </div>
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div v-for="field in fieldsFor(activeTab)" :key="field" class="grid gap-1.5">
+              <Label :for="`profit-sweep-${field}`" class="text-xs font-semibold uppercase tracking-label text-secondary">
+                {{ fieldLabel(field) }}
+              </Label>
+              <SelectRoot
+                v-if="fieldOptions(field).length"
+                :model-value="String(fieldValue(field) ?? '')"
+                @update:model-value="setField(field, $event)"
+              >
+                <SelectTrigger :id="`profit-sweep-${field}`" class="h-9 rounded-md bg-field text-primary">
+                  <span :class="fieldValue(field) ? undefined : 'text-placeholder'">
+                    {{ fieldLabel(String(fieldValue(field) ?? '')) }}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="option in fieldOptions(field)"
+                    :key="String(option)"
+                    :value="String(option)"
+                  >
+                    {{ fieldLabel(String(option)) }}
+                  </SelectItem>
+                </SelectContent>
+              </SelectRoot>
+              <Label
+                v-else-if="typeof fieldValue(field) === 'boolean'"
+                :for="`profit-sweep-${field}`"
+                class="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border-default bg-field px-2.5 text-sm font-normal normal-case tracking-normal text-primary hover:border-border-strong"
+              >
+                <Checkbox
+                  :id="`profit-sweep-${field}`"
+                  :model-value="Boolean(fieldValue(field))"
+                  @update:model-value="setField(field, $event === true)"
+                />
+                <span>{{ t('profitSweep.enabled') }}</span>
+              </Label>
+              <Input
+                v-else
+                :id="`profit-sweep-${field}`"
+                class="h-9 rounded-md bg-field"
+                :type="typeof fieldValue(field) === 'number' ? 'number' : 'text'"
+                :value="String(fieldValue(field) ?? '')"
+                @input="setInputField(field, $event)"
+              />
+            </div>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <Button variant="secondary" :disabled="currentMode === 'disabled' || actionPending" @click="setMode('disabled')">{{ t('profitSweep.disable') }}</Button>
+            <Button variant="primary" :disabled="!record || schema.live_available !== true || actionPending" @click="enableLive"><PbIcon :icon="PhWarning" /> {{ t('profitSweep.enableLive') }}</Button>
+          </div>
+        </section>
         <section v-else class="mt-4 grid gap-4"><div class="rounded-lg border border-border-default bg-panel p-4"><div class="mb-3 flex items-center justify-between"><h2 class="text-lg font-semibold text-primary">{{ t('profitSweep.journal') }}</h2><Button size="sm" @click="loadAccount(selectedUser)">{{ t('common.refresh') }}</Button></div><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs uppercase text-secondary"><th class="p-2">{{ t('profitSweep.time') }}</th><th class="p-2">{{ t('profitSweep.decision') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.netPnl') }}</th><th class="p-2">{{ t('profitSweep.due') }}</th></tr></thead><tbody><tr v-for="entry in journal" :key="`${entry.created_at}-${entry.amount}`" class="border-b border-border-subtle"><td class="p-2">{{ formatTime(entry.created_at) }}</td><td class="p-2" :class="Number(entry.amount) > 0 ? 'text-warning' : 'text-primary'">{{ Number(entry.amount) > 0 ? t('profitSweep.wouldTransfer') : fieldLabel(String(entry.reason || '-')) }}</td><td class="p-2">{{ formatValue(entry.amount) }}</td><td class="p-2">{{ formatValue(entry.net_pnl) }}</td><td class="p-2">{{ formatValue(entry.due_after) }}</td></tr><tr v-if="!journal.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noJournal') }}</td></tr></tbody></table></div></div><div class="rounded-lg border border-border-default bg-panel p-4"><h2 class="mb-3 text-lg font-semibold text-primary">{{ t('profitSweep.intents') }}</h2><div class="overflow-auto"><table class="w-full min-w-[720px] text-left text-sm"><thead><tr class="border-b border-border-default text-xs uppercase text-secondary"><th class="p-2">{{ t('profitSweep.operation') }}</th><th class="p-2">{{ t('profitSweep.state') }}</th><th class="p-2">{{ t('profitSweep.route') }}</th><th class="p-2">{{ t('profitSweep.amount') }}</th><th class="p-2">{{ t('profitSweep.action') }}</th></tr></thead><tbody><tr v-for="intent in intents" :key="intent.operation_id" class="border-b border-border-subtle"><td class="p-2">{{ intent.operation_id }}</td><td class="p-2">{{ fieldLabel(String(intent.state || 'unknown')) }}</td><td class="p-2">{{ formatValue(intent.route) }}</td><td class="p-2">{{ formatValue(intent.reserved_amount) }}</td><td class="p-2"><Button v-if="intent.can_reconcile" size="sm" variant="warning" @click="reconcile(intent)">{{ t('profitSweep.reconcile') }}</Button><span v-else>-</span></td></tr><tr v-if="!intents.length"><td colspan="5" class="p-6 text-center text-secondary">{{ t('profitSweep.noIntents') }}</td></tr></tbody></table></div></div></section>
       </main>
     </div>

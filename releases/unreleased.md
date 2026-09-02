@@ -1,5 +1,12 @@
 # Unreleased
 
+## Profit Sweep — Unified Dropdown Theme Alignment (系统 / 利润划转)
+
+- **Themed Select Dropdowns**: Replaced native HTML `<select>` dropdown controls in the Profit Sweep Vue 3 page (`frontend/src/pages/profit_sweep/App.vue`) with the shared dark-theme UI components (`SelectRoot`, `SelectTrigger`, `SelectContent`, `SelectItem`), harmonizing the dropdown styling, focus states, and popover menus with the PBGui dark palette.
+- **Form UI Component Modernization**: Standardized form labels and booleans with `@/shared/components/ui/label` (`Label`) and `@/shared/components/ui/checkbox` (`Checkbox`), ensuring uniform height, borders, and interactive feedback across all tabs (Policy, Schedule, Exchange / Vault).
+- **Schema Enum Completeness**: Added `vault_safety_reserve_mode` and `vault_conditional_cost_policy` to `/api/profit-sweep/schema` `options` so Vault reserve mode dropdown options are populated dynamically from the backend schema.
+- **Test Coverage**: Added comprehensive Vitest tests in `frontend/src/pages/profit_sweep/App.test.ts` verifying SelectRoot option listing and selection flows.
+
 ## PBv7/PBv8 Optimize Workbench — Visual Hierarchy, Empty States & UX Polish
 
 - **Header & Layout Space Optimization**: Removed the redundant green `show-ok` banner from `ConnectionNotice` in normal operation to reclaim vertical screen space; tightened toolbar margins and panel headers for improved table data density.

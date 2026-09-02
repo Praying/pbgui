@@ -13,6 +13,7 @@ import uuid
 import ccxt
 import pytest
 from fastapi import HTTPException
+from fastapi.responses import FileResponse
 from starlette.requests import Request
 
 import api.profit_sweep as profit_sweep_api
@@ -390,7 +391,10 @@ def test_main_page_is_cookie_only_secret_free_and_non_cacheable() -> None:
             raise AssertionError(f"session field accessed: {name}")
 
     response = profit_sweep_api.get_main_page(_request(), CookieOnlySession())
-    html = response.body.decode("utf-8")
+    if isinstance(response, FileResponse):
+        html = Path(response.path).read_text(encoding="utf-8")
+    else:
+        html = response.body.decode("utf-8")
 
     assert response.headers["cache-control"] == "no-store"
     assert response.headers["referrer-policy"] == "no-referrer"

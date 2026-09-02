@@ -1770,6 +1770,8 @@ def get_schema(session: SessionToken = Depends(require_auth)) -> dict[str, Any]:
             "safety_reserve_mode": ["fixed", "percent", "max_of_both"],
             "vault_withdraw_mode": ["flat_only", "margin_buffered"],
             "vault_destination": ["main_perps", "main_spot"],
+            "vault_safety_reserve_mode": ["fixed", "percent", "max_of_both"],
+            "vault_conditional_cost_policy": ["pause_on_cost_or_forced_close"],
             "main_destination_activity_policy": ["warn", "pause_future_sweeps"],
         },
     }
