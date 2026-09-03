@@ -99,7 +99,7 @@ function syncScroll(event: Event): void {
     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border-default/80 bg-surface-deep/70 px-3.5 py-2">
       <div class="flex items-center gap-2">
         <PbIcon :icon="PhCode" class="text-accent" :size="17" />
-        <span class="text-[13.5px] font-semibold text-primary">{{ label || t('v7optimize.botStrategyJson') }}</span>
+        <span class="text-[13.5px] font-semibold text-primary" :data-tip="t('v7optimize.tip.botJson')">{{ label || t('v7optimize.botStrategyJson') }}</span>
         <span class="rounded bg-elevated px-1.5 py-0.5 font-mono text-xs text-secondary">
           {{ lines.length }} lines
         </span>

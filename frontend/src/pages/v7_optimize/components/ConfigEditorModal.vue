@@ -2,6 +2,7 @@
 import { PhCheck, PhCode, PhCopy, PhGear, PhMagnifyingGlass, PhPlus, PhShieldCheck, PhSliders, PhSparkle, PhX } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
@@ -62,7 +63,7 @@ const props = defineProps<{
   stopOhlcvLookup?: (jobId: string) => Promise<OhlcvStartDateJob>;
 }>();
 const emit = defineEmits<{ close: []; save: [draft: OptimizeEditorDraft, queueAfterSave: boolean]; preflight: [draft: OptimizeEditorDraft] }>();
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 type EditorTab = 'general' | 'bot-long' | 'bot-short' | 'bounds' | 'optimizer' | 'objectives' | 'suite' | 'runtime' | 'raw';
 type SectionName = 'backtest' | 'optimize' | 'live' | 'pbgui' | 'logging';
@@ -459,6 +460,25 @@ function splitBoundKey(key: string): { prefix: string; name: string } {
   }
   return { prefix: '', name: key };
 }
+
+/**
+ * Normalize a bounds key to its side-agnostic parameter path so one tip
+ * covers long/short and both bound key shapes: PB7 flat `long_<param>`
+ * (`short_entry_grid_spacing_pct`) and PB8 nested `long.<path>`
+ * (`bot.long.risk.n_positions` after a migration import).
+ */
+function boundTipBase(key: string): string {
+  let k = key.startsWith('bot.') ? key.slice(4) : key;
+  if (k.startsWith('long.') || k.startsWith('short.')) return k.slice(k.indexOf('.') + 1);
+  if (k.startsWith('long_') || k.startsWith('short_')) return k.slice(k.indexOf('_') + 1);
+  return '';
+}
+function boundTip(key: string): string {
+  const base = boundTipBase(key);
+  if (!base) return '';
+  const tipKey = `v7optimize.tip.bound.${base}`;
+  return te(tipKey) ? t(tipKey) : '';
+}
 const DEFAULT_EXCHANGES = ['binance', 'bitget', 'bybit', 'gateio', 'hyperliquid', 'kucoin', 'okx'] as const;
 
 const availableExchanges = computed(() => {
@@ -836,11 +856,11 @@ function preflight(): void {
             </div>
             <div class="opt-editor-fields opt-editor-fields--identity grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-12">
               <label class="opt-editor-field sm:col-span-5">
-                <span>{{ t('v7optimize.configName') }}</span>
+                <span :data-tip="t('v7optimize.tip.configName')">{{ t('v7optimize.configName') }}</span>
                 <Input v-model="local.name" class="h-9 text-[13.5px]" />
               </label>
               <label class="opt-editor-field sm:col-span-4 max-[600px]:col-span-full">
-                <span>start_date</span>
+                <span :data-tip="t('v7optimize.tip.start_date')">start_date</span>
                 <template v-if="version === 'v8'">
                   <div class="flex min-w-0 items-center gap-1.5" data-test="ohlcv-start-date-controls">
                     <Input type="date" class="min-w-0 flex-1 h-9 text-[13.5px] tabular-nums" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" />
@@ -861,7 +881,7 @@ function preflight(): void {
                 <Input v-else type="date" class="h-9 text-[13.5px] tabular-nums" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field sm:col-span-3 max-[600px]:col-span-full">
-                <span>end_date</span>
+                <span :data-tip="t('v7optimize.tip.end_date')">end_date</span>
                 <div class="flex min-w-0 items-center gap-1.5">
                   <Input type="date" class="min-w-0 flex-1 h-9 text-[13.5px] tabular-nums" :model-value="String(local.backtest.end_date || '')" @update:model-value="setText('backtest', 'end_date', String($event ?? ''))" />
                   <Button type="button" variant="default" size="sm" class="h-9 px-2.5 text-xs font-semibold" :title="t('v7optimize.nowDate')" @click="setText('backtest', 'end_date', new Date().toISOString().slice(0, 10))">Now</Button>
@@ -879,23 +899,23 @@ function preflight(): void {
             </div>
             <div class="opt-editor-fields">
               <label class="opt-editor-field">
-                <span>starting_balance</span>
+                <span :data-tip="t('v7optimize.tip.starting_balance')">starting_balance</span>
                 <Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'starting_balance', 1000)" @update:model-value="setNumber('backtest', 'starting_balance', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field">
-                <span>candle_interval_minutes</span>
+                <span :data-tip="t('v7optimize.tip.candle_interval_minutes')">candle_interval_minutes</span>
                 <Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'candle_interval_minutes', 60)" @update:model-value="setNumber('backtest', 'candle_interval_minutes', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field" data-field="btc-collateral-cap">
-                <span>btc_collateral_cap</span>
+                <span :data-tip="t('v7optimize.tip.btc_collateral_cap')">btc_collateral_cap</span>
                 <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'btc_collateral_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_cap', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field">
-                <span>btc_collateral_ltv_cap</span>
+                <span :data-tip="t('v7optimize.tip.btc_collateral_ltv_cap')">btc_collateral_ltv_cap</span>
                 <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'btc_collateral_ltv_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_ltv_cap', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field">
-                <span>hsl_signal_mode</span>
+                <span :data-tip="t('v7optimize.tip.hsl_signal_mode')">hsl_signal_mode</span>
                 <SelectRoot :model-value="String(local.live.hsl_signal_mode || '')" @update:model-value="setText('live', 'hsl_signal_mode', String($event))">
                   <SelectTrigger aria-label="hsl_signal_mode" class="h-9 text-[13.5px]">
                     <span>{{ String(local.live.hsl_signal_mode || '') }}</span>
@@ -906,7 +926,7 @@ function preflight(): void {
                 </SelectRoot>
               </label>
               <label v-if="version === 'v8'" class="opt-editor-field">
-                <span>strategy_kind</span>
+                <span :data-tip="t('v7optimize.tip.strategy_kind')">strategy_kind</span>
                 <SelectRoot :model-value="String(local.live.strategy_kind || '')" @update:model-value="onStrategyKindChange(String($event))">
                   <SelectTrigger aria-label="strategy_kind" class="h-9 text-[13.5px]">
                     <span>{{ String(local.live.strategy_kind || '') }}</span>
@@ -917,7 +937,7 @@ function preflight(): void {
                 </SelectRoot>
               </label>
               <label class="opt-editor-field" :class="version === 'v8' ? 'opt-editor-field--wide col-span-2' : 'opt-editor-field--wide col-span-3'">
-                <span>ohlcv_source_dir</span>
+                <span :data-tip="t('v7optimize.tip.ohlcv_source_dir')">ohlcv_source_dir</span>
                 <div class="flex min-w-0 items-center gap-2">
                   <Input class="min-w-0 flex-1 h-9 text-[13px] font-mono" :model-value="String(local.backtest.ohlcv_source_dir || '')" @update:model-value="setText('backtest', 'ohlcv_source_dir', String($event ?? ''))" />
                   <Button type="button" variant="default" size="sm" class="size-9 p-0 text-secondary hover:text-primary shrink-0" :title="t('v7optimize.clearPath')" :aria-label="t('v7optimize.clearPath')" @click="setText('backtest', 'ohlcv_source_dir', '')"><PbIcon :icon="PhX" :size="16" /></Button>
@@ -936,37 +956,37 @@ function preflight(): void {
             </div>
             <div class="opt-editor-fields">
               <label class="opt-editor-field">
-                <span>market_cap</span>
+                <span :data-tip="t('v7optimize.tip.market_cap')">market_cap</span>
                 <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('pbgui', 'market_cap', 0)" @update:model-value="setNumber('pbgui', 'market_cap', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field">
-                <span>vol_mcap</span>
+                <span :data-tip="t('v7optimize.tip.vol_mcap')">vol_mcap</span>
                 <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('pbgui', 'vol_mcap', 0)" @update:model-value="setNumber('pbgui', 'vol_mcap', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field">
-                <span>minimum_coin_age_days</span>
+                <span :data-tip="t('v7optimize.tip.minimum_coin_age_days')">minimum_coin_age_days</span>
                 <Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('live', 'minimum_coin_age_days', 0)" @update:model-value="setNumber('live', 'minimum_coin_age_days', String($event ?? ''))" />
               </label>
               <label class="opt-editor-field">
-                <span>tags</span>
+                <span :data-tip="t('v7optimize.tip.tags')">tags</span>
                 <Input v-model="tagsText" class="h-9 text-[13.5px]" placeholder="e.g. layer1, defi" />
               </label>
               <div class="col-span-2 max-[600px]:col-span-full">
                 <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
                   <Checkbox :model-value="booleanField('pbgui', 'only_cpt')" @update:model-value="setBoolean('pbgui', 'only_cpt', ($event === true))" />
-                  <span class="text-[13px] font-medium text-primary">only_cpt</span>
+                  <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.only_cpt')">only_cpt</span>
                 </label>
               </div>
               <div class="col-span-2 max-[600px]:col-span-full">
                 <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
                   <Checkbox :model-value="booleanField('pbgui', 'notices_ignore')" @update:model-value="setBoolean('pbgui', 'notices_ignore', ($event === true))" />
-                  <span class="text-[13px] font-medium text-primary">notices_ignore</span>
+                  <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.notices_ignore')">notices_ignore</span>
                 </label>
               </div>
               <div class="col-span-4 max-[900px]:col-span-2 max-[600px]:col-span-1 flex flex-col gap-2.5">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <span class="text-[13px] font-semibold text-primary">exchanges</span>
+                    <span class="text-[13px] font-semibold text-primary" :data-tip="t('v7optimize.tip.exchanges')">exchanges</span>
                     <span class="rounded bg-accent/10 px-2 py-0.5 text-xs font-mono font-medium text-accent">
                       {{ local.exchanges.length }} / {{ availableExchanges.length }}
                     </span>
@@ -1012,23 +1032,23 @@ function preflight(): void {
             </div>
             <div class="opt-editor-fields">
               <label class="opt-editor-field">
-                <span>approved_coins.long</span>
+                <span :data-tip="t('v7optimize.tip.approved_coins.long')">approved_coins.long</span>
                 <Input v-model="approvedLongText" class="h-9 text-[13px] font-mono" placeholder="BTC, ETH, SOL..." />
               </label>
               <label class="opt-editor-field">
-                <span>approved_coins.short</span>
+                <span :data-tip="t('v7optimize.tip.approved_coins.short')">approved_coins.short</span>
                 <Input v-model="approvedShortText" class="h-9 text-[13px] font-mono" placeholder="BTC, ETH, SOL..." />
               </label>
               <label class="opt-editor-field">
-                <span>ignored_coins.long</span>
+                <span :data-tip="t('v7optimize.tip.ignored_coins.long')">ignored_coins.long</span>
                 <Input v-model="ignoredLongText" class="h-9 text-[13px] font-mono" placeholder="DOGE, SHIB..." />
               </label>
               <label class="opt-editor-field">
-                <span>ignored_coins.short</span>
+                <span :data-tip="t('v7optimize.tip.ignored_coins.short')">ignored_coins.short</span>
                 <Input v-model="ignoredShortText" class="h-9 text-[13px] font-mono" placeholder="DOGE, SHIB..." />
               </label>
               <label class="opt-editor-field col-span-4 max-[900px]:col-span-2 max-[600px]:col-span-1">
-                <span>coin_sources</span>
+                <span :data-tip="t('v7optimize.tip.coin_sources')">coin_sources</span>
                 <Textarea v-model="coinSourcesJson" class="min-h-[100px] text-[13px] font-mono" placeholder="{}" />
               </label>
             </div>
@@ -1043,16 +1063,16 @@ function preflight(): void {
             </div>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 items-end">
               <label class="grid gap-1.5 text-xs text-secondary">
-                <span class="text-[13px] font-medium text-primary">total_wallet_exposure_limit</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.total_wallet_exposure_limit')">total_wallet_exposure_limit</span>
                 <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('long', 'twe', 1)" @update:model-value="setBotNumber('long', 'twe', String($event ?? ''))" />
               </label>
               <label class="grid gap-1.5 text-xs text-secondary">
-                <span class="text-[13px] font-medium text-primary">n_positions</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.n_positions')">n_positions</span>
                 <Input type="number" step="1" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('long', 'npos', 1)" @update:model-value="setBotNumber('long', 'npos', String($event ?? ''))" />
               </label>
               <label class="flex h-9 items-center gap-2 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
                 <Checkbox :model-value="botBoolean('long', 'hsl')" @update:model-value="setBotBoolean('long', 'hsl', ($event === true))" />
-                <span class="text-[13px] font-medium text-primary">hsl_enabled</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.hsl_enabled')">hsl_enabled</span>
               </label>
             </div>
           </div>
@@ -1067,16 +1087,16 @@ function preflight(): void {
             </div>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 items-end">
               <label class="grid gap-1.5 text-xs text-secondary">
-                <span class="text-[13px] font-medium text-primary">total_wallet_exposure_limit</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.total_wallet_exposure_limit')">total_wallet_exposure_limit</span>
                 <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('short', 'twe', 0)" @update:model-value="setBotNumber('short', 'twe', String($event ?? ''))" />
               </label>
               <label class="grid gap-1.5 text-xs text-secondary">
-                <span class="text-[13px] font-medium text-primary">n_positions</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.n_positions')">n_positions</span>
                 <Input type="number" step="1" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('short', 'npos', 0)" @update:model-value="setBotNumber('short', 'npos', String($event ?? ''))" />
               </label>
               <label class="flex h-9 items-center gap-2 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
                 <Checkbox :model-value="botBoolean('short', 'hsl')" @update:model-value="setBotBoolean('short', 'hsl', ($event === true))" />
-                <span class="text-[13px] font-medium text-primary">hsl_enabled</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.hsl_enabled')">hsl_enabled</span>
               </label>
             </div>
           </div>
@@ -1184,10 +1204,10 @@ function preflight(): void {
           <div class="overflow-hidden rounded-xl border border-border-default/80 bg-card/40 shadow-sm">
             <!-- Sticky Table Header -->
             <div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(140px,1fr)_minmax(80px,0.6fr)_80px_48px] items-center gap-3 border-b border-border-default bg-surface-deep/80 px-3.5 py-2 text-xs font-semibold text-secondary">
-              <div>{{ t('v7optimize.boundsTableHeaderParam') }}</div>
-              <div>{{ t('v7optimize.boundsTableHeaderRange') }}</div>
-              <div>{{ t('v7optimize.boundsTableHeaderStep') }}</div>
-              <div class="text-center">{{ t('v7optimize.boundsTableHeaderFixed') }}</div>
+              <div :data-tip="t('v7optimize.tip.boundsParam')">{{ t('v7optimize.boundsTableHeaderParam') }}</div>
+              <div :data-tip="t('v7optimize.tip.boundsRange')">{{ t('v7optimize.boundsTableHeaderRange') }}</div>
+              <div :data-tip="t('v7optimize.tip.boundsStep')">{{ t('v7optimize.boundsTableHeaderStep') }}</div>
+              <div class="text-center" :data-tip="t('v7optimize.tip.boundsFixed')">{{ t('v7optimize.boundsTableHeaderFixed') }}</div>
               <div class="text-right">{{ t('v7optimize.boundsTableHeaderActions') }}</div>
             </div>
 
@@ -1203,7 +1223,7 @@ function preflight(): void {
                   <div v-if="splitBoundKey(key).prefix" class="truncate text-[11px] font-mono text-secondary">
                     {{ splitBoundKey(key).prefix }}.
                   </div>
-                  <code class="truncate text-[13px] font-mono font-medium text-primary" :title="key">
+                  <code class="truncate text-[13px] font-mono font-medium text-primary" :data-tip="boundTip(key) || undefined" :title="boundTip(key) ? undefined : key">
                     {{ splitBoundKey(key).name }}
                   </code>
                 </div>
@@ -1277,60 +1297,60 @@ function preflight(): void {
         </section>
 
         <section v-else-if="tab === 'optimizer'" class="opt-tab-panel grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">backend</span><SelectRoot :model-value="currentBackend" @update:model-value="switchOptimizeBackend(String($event))"><SelectTrigger data-field="optimizer-backend" aria-label="backend" class="h-9 text-[13.5px]"><span>{{ currentBackend }}</span></SelectTrigger><SelectContent><SelectItem v-for="item in availableBackends" :key="item.value" :value="item.value">{{ item.label }}</SelectItem></SelectContent></SelectRoot></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">iters</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'iters', 100000)" @update:model-value="setNumber('optimize', 'iters', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">n_cpus</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'n_cpus', 1)" @update:model-value="setNumber('optimize', 'n_cpus', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">pareto_max_size</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'pareto_max_size', 100)" @update:model-value="setNumber('optimize', 'pareto_max_size', String($event ?? ''))" /></label>
-          <label v-if="version === 'v7'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">max_pending_starting_evals_per_cpu</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'max_pending_starting_evals_per_cpu', 1)" @update:model-value="setNumber('optimize', 'max_pending_starting_evals_per_cpu', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">round_to_n_significant_digits</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'round_to_n_significant_digits', 5)" @update:model-value="setNumber('optimize', 'round_to_n_significant_digits', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">logging_level</span><Input type="number" min="0" max="3" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'level', 1)" @update:model-value="setNumber('logging', 'level', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">memory_snapshot_interval_minutes</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'memory_snapshot_interval_minutes', 30)" @update:model-value="setNumber('logging', 'memory_snapshot_interval_minutes', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">volume_refresh_info_threshold_seconds</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'volume_refresh_info_threshold_seconds', 30)" @update:model-value="setNumber('logging', 'volume_refresh_info_threshold_seconds', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.backend')">backend</span><SelectRoot :model-value="currentBackend" @update:model-value="switchOptimizeBackend(String($event))"><SelectTrigger data-field="optimizer-backend" aria-label="backend" class="h-9 text-[13.5px]"><span>{{ currentBackend }}</span></SelectTrigger><SelectContent><SelectItem v-for="item in availableBackends" :key="item.value" :value="item.value">{{ item.label }}</SelectItem></SelectContent></SelectRoot></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.iters')">iters</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'iters', 100000)" @update:model-value="setNumber('optimize', 'iters', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.n_cpus')">n_cpus</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'n_cpus', 1)" @update:model-value="setNumber('optimize', 'n_cpus', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pareto_max_size')">pareto_max_size</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'pareto_max_size', 100)" @update:model-value="setNumber('optimize', 'pareto_max_size', String($event ?? ''))" /></label>
+          <label v-if="version === 'v7'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.max_pending_starting_evals_per_cpu')">max_pending_starting_evals_per_cpu</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'max_pending_starting_evals_per_cpu', 1)" @update:model-value="setNumber('optimize', 'max_pending_starting_evals_per_cpu', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.round_to_n_significant_digits')">round_to_n_significant_digits</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'round_to_n_significant_digits', 5)" @update:model-value="setNumber('optimize', 'round_to_n_significant_digits', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.logging_level')">logging_level</span><Input type="number" min="0" max="3" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'level', 1)" @update:model-value="setNumber('logging', 'level', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.memory_snapshot_interval_minutes')">memory_snapshot_interval_minutes</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'memory_snapshot_interval_minutes', 30)" @update:model-value="setNumber('logging', 'memory_snapshot_interval_minutes', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.volume_refresh_info_threshold_seconds')">volume_refresh_info_threshold_seconds</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'volume_refresh_info_threshold_seconds', 30)" @update:model-value="setNumber('logging', 'volume_refresh_info_threshold_seconds', String($event ?? ''))" /></label>
           <div class="flex items-center gap-2.5 col-span-2">
             <label class="flex h-9 flex-1 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
               <Checkbox :model-value="booleanField('optimize', 'compress_results_file')" @update:model-value="setBoolean('optimize', 'compress_results_file', ($event === true))" />
-              <span class="text-[13px] font-medium text-primary">compress_results_file</span>
+              <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.compress_results_file')">compress_results_file</span>
             </label>
             <label class="flex h-9 flex-1 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
               <Checkbox :model-value="booleanField('optimize', 'write_all_results')" @update:model-value="setBoolean('optimize', 'write_all_results', ($event === true))" />
-              <span class="text-[13px] font-medium text-primary">write_all_results</span>
+              <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.write_all_results')">write_all_results</span>
             </label>
           </div>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">seed_mode</span><SelectRoot v-model="seedMode"><SelectTrigger aria-label="seed_mode" class="h-9 text-[13.5px]"><span>{{ seedMode }}</span></SelectTrigger><SelectContent><SelectItem value="none">none</SelectItem><SelectItem value="self">self</SelectItem><SelectItem value="path">path</SelectItem></SelectContent></SelectRoot></label>
-          <label v-if="seedMode === 'path'" class="grid gap-1.5 text-xs text-secondary col-span-3 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="seed-path"><span class="text-[13px] font-medium text-primary">seed_path</span><Input v-model="seedPath" class="h-9 text-[13px] font-mono" /></label>
-          <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">rng_seed</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'seed', 0)" @update:model-value="setNumber('optimize', 'seed', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.seed_mode')">seed_mode</span><SelectRoot v-model="seedMode"><SelectTrigger aria-label="seed_mode" class="h-9 text-[13.5px]"><span>{{ seedMode }}</span></SelectTrigger><SelectContent><SelectItem value="none">none</SelectItem><SelectItem value="self">self</SelectItem><SelectItem value="path">path</SelectItem></SelectContent></SelectRoot></label>
+          <label v-if="seedMode === 'path'" class="grid gap-1.5 text-xs text-secondary col-span-3 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="seed-path"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.seed_path')">seed_path</span><Input v-model="seedPath" class="h-9 text-[13px] font-mono" /></label>
+          <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.rng_seed')">rng_seed</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'seed', 0)" @update:model-value="setNumber('optimize', 'seed', String($event ?? ''))" /></label>
           <GpuSettingsEditor v-if="currentBackend === 'gpu' && version === 'v8'" :gpu="(local.optimize.gpu as JsonObject) || {}" :optimize-defaults="optimizeDefaults || {}" :contract="backendContract" @update:gpu="local.optimize.gpu = $event" />
           <template v-if="currentBackend === 'pymoo'">
             <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">algorithm</span><SelectRoot :model-value="pymooText('algorithm', 'auto')" @update:model-value="setPymooAlgorithm(String($event))"><SelectTrigger data-field="pymoo-algorithm" aria-label="algorithm" class="h-9 text-[13.5px]"><span>{{ pymooText('algorithm', 'auto') }}</span></SelectTrigger><SelectContent><SelectItem v-for="algorithm in availablePymooAlgorithms" :key="algorithm" :value="algorithm">{{ algorithm }}</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">{{ t('v7optimize.effectiveAlgorithm') }}</span><Input data-field="pymoo-effective-algorithm" readonly class="h-9 text-[13px] font-mono bg-surface-deep/60" :model-value="effectivePymooAlgorithm" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">population mode</span><SelectRoot :model-value="pymooPopulationMode()" @update:model-value="setPymooPopulationMode(String($event))"><SelectTrigger data-field="pymoo-population-mode" aria-label="population mode" class="h-9 text-[13.5px]"><span>{{ pymooPopulationMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">population size</span><Input data-field="pymoo-population-size" type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :disabled="pymooPopulationMode() === 'auto'" :model-value="pymooPopulationMode() === 'auto' ? 500 : numberField('optimize', 'population_size', 500)" @update:model-value="setPymooPopulationSize(String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">eliminate_duplicates</span><SelectRoot :model-value="String(!!getPath(pymooShared(), 'eliminate_duplicates', false))" @update:model-value="setPymooValue('shared.eliminate_duplicates', $event === 'true')"><SelectTrigger data-field="pymoo-eliminate-duplicates" aria-label="eliminate_duplicates" class="h-9 text-[13.5px]"><span>{{ String(!!getPath(pymooShared(), 'eliminate_duplicates', false)) }}</span></SelectTrigger><SelectContent><SelectItem value="false">false</SelectItem><SelectItem value="true">true</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.crossover_eta', 20)" @update:model-value="setPymooNumber('shared.crossover_eta', String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_prob_var</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.crossover_prob_var', 0.5)" @update:model-value="setPymooNumber('shared.crossover_prob_var', String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.mutation_eta', 20)" @update:model-value="setPymooNumber('shared.mutation_eta', String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation probability mode</span><SelectRoot :model-value="mutationProbabilityMode()" @update:model-value="setMutationProbabilityMode(String($event))"><SelectTrigger data-field="pymoo-mutation-prob-mode" aria-label="mutation probability mode" class="h-9 text-[13.5px]"><span>{{ mutationProbabilityMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_prob_var</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :disabled="mutationProbabilityMode() === 'auto'" :model-value="mutationProbabilityMode() === 'auto' ? 0 : pymooNumber('shared.mutation_prob_var', 0.1)" @update:model-value="setMutationProbability(String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.algorithm')">algorithm</span><SelectRoot :model-value="pymooText('algorithm', 'auto')" @update:model-value="setPymooAlgorithm(String($event))"><SelectTrigger data-field="pymoo-algorithm" aria-label="algorithm" class="h-9 text-[13.5px]"><span>{{ pymooText('algorithm', 'auto') }}</span></SelectTrigger><SelectContent><SelectItem v-for="algorithm in availablePymooAlgorithms" :key="algorithm" :value="algorithm">{{ algorithm }}</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.effectiveAlgorithm')">{{ t('v7optimize.effectiveAlgorithm') }}</span><Input data-field="pymoo-effective-algorithm" readonly class="h-9 text-[13px] font-mono bg-surface-deep/60" :model-value="effectivePymooAlgorithm" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.populationMode')">population mode</span><SelectRoot :model-value="pymooPopulationMode()" @update:model-value="setPymooPopulationMode(String($event))"><SelectTrigger data-field="pymoo-population-mode" aria-label="population mode" class="h-9 text-[13.5px]"><span>{{ pymooPopulationMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.populationSize')">population size</span><Input data-field="pymoo-population-size" type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :disabled="pymooPopulationMode() === 'auto'" :model-value="pymooPopulationMode() === 'auto' ? 500 : numberField('optimize', 'population_size', 500)" @update:model-value="setPymooPopulationSize(String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.eliminate_duplicates')">eliminate_duplicates</span><SelectRoot :model-value="String(!!getPath(pymooShared(), 'eliminate_duplicates', false))" @update:model-value="setPymooValue('shared.eliminate_duplicates', $event === 'true')"><SelectTrigger data-field="pymoo-eliminate-duplicates" aria-label="eliminate_duplicates" class="h-9 text-[13.5px]"><span>{{ String(!!getPath(pymooShared(), 'eliminate_duplicates', false)) }}</span></SelectTrigger><SelectContent><SelectItem value="false">false</SelectItem><SelectItem value="true">true</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.crossover_eta')">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.crossover_eta', 20)" @update:model-value="setPymooNumber('shared.crossover_eta', String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.crossover_prob_var')">crossover_prob_var</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.crossover_prob_var', 0.5)" @update:model-value="setPymooNumber('shared.crossover_prob_var', String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.mutation_eta')">mutation_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.mutation_eta', 20)" @update:model-value="setPymooNumber('shared.mutation_eta', String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.mutationProbMode')">mutation probability mode</span><SelectRoot :model-value="mutationProbabilityMode()" @update:model-value="setMutationProbabilityMode(String($event))"><SelectTrigger data-field="pymoo-mutation-prob-mode" aria-label="mutation probability mode" class="h-9 text-[13.5px]"><span>{{ mutationProbabilityMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.mutation_prob_var')">mutation_prob_var</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :disabled="mutationProbabilityMode() === 'auto'" :model-value="mutationProbabilityMode() === 'auto' ? 0 : pymooNumber('shared.mutation_prob_var', 0.1)" @update:model-value="setMutationProbability(String($event ?? ''))" /></label>
             </div>
             <div v-if="effectivePymooAlgorithm === 'nsga3'" class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">reference direction method</span><SelectRoot :model-value="pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis')" @update:model-value="setPymooText('algorithms.nsga3.ref_dirs.method', String($event))"><SelectTrigger data-field="pymoo-ref-dir-method" aria-label="reference direction method" class="h-9 text-[13.5px]"><span>{{ pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis') }}</span></SelectTrigger><SelectContent><SelectItem v-for="method in availablePymooRefDirMethods" :key="method" :value="method">{{ method }}</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">partitions mode</span><SelectRoot :model-value="refDirPartitionsMode()" @update:model-value="setRefDirPartitionsMode(String($event))"><SelectTrigger data-field="pymoo-ref-dir-partitions-mode" aria-label="partitions mode" class="h-9 text-[13.5px]"><span>{{ refDirPartitionsMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">reference partitions</span><Input data-field="pymoo-ref-dir-partitions" type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :disabled="refDirPartitionsMode() === 'auto'" :model-value="refDirPartitionsMode() === 'auto' ? 1 : pymooNumber('algorithms.nsga3.ref_dirs.n_partitions', 1)" @update:model-value="setPymooNumber('algorithms.nsga3.ref_dirs.n_partitions', String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.refDirMethod')">reference direction method</span><SelectRoot :model-value="pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis')" @update:model-value="setPymooText('algorithms.nsga3.ref_dirs.method', String($event))"><SelectTrigger data-field="pymoo-ref-dir-method" aria-label="reference direction method" class="h-9 text-[13.5px]"><span>{{ pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis') }}</span></SelectTrigger><SelectContent><SelectItem v-for="method in availablePymooRefDirMethods" :key="method" :value="method">{{ method }}</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.partitionsMode')">partitions mode</span><SelectRoot :model-value="refDirPartitionsMode()" @update:model-value="setRefDirPartitionsMode(String($event))"><SelectTrigger data-field="pymoo-ref-dir-partitions-mode" aria-label="partitions mode" class="h-9 text-[13.5px]"><span>{{ refDirPartitionsMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.refPartitions')">reference partitions</span><Input data-field="pymoo-ref-dir-partitions" type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :disabled="refDirPartitionsMode() === 'auto'" :model-value="refDirPartitionsMode() === 'auto' ? 1 : pymooNumber('algorithms.nsga3.ref_dirs.n_partitions', 1)" @update:model-value="setPymooNumber('algorithms.nsga3.ref_dirs.n_partitions', String($event ?? ''))" /></label>
               <span class="text-xs text-secondary flex items-center">{{ t('v7optimize.nsga3ReferenceDirections') }}</span>
             </div>
-            <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="pymoo-json"><span class="text-[13px] font-medium text-primary">pymoo JSON</span><Textarea v-model="pymooJson" class="min-h-[120px] text-[13px] font-mono" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="pymoo-json"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pymoo.json')">pymoo JSON</span><Textarea v-model="pymooJson" class="min-h-[120px] text-[13px] font-mono" /></label>
           </template>
           <template v-if="currentBackend === 'deap'">
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">population_size</span><Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'population_size', 500)" @update:model-value="setNumber('optimize', 'population_size', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_probability', 0.7)" @update:model-value="setNumber('optimize', 'crossover_probability', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_probability', 0.2)" @update:model-value="setNumber('optimize', 'mutation_probability', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">offspring_multiplier</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'offspring_multiplier', 1)" @update:model-value="setNumber('optimize', 'offspring_multiplier', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_eta', 20)" @update:model-value="setNumber('optimize', 'crossover_eta', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_eta', 20)" @update:model-value="setNumber('optimize', 'mutation_eta', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_indpb</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_indpb', 0.1)" @update:model-value="setNumber('optimize', 'mutation_indpb', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.population_size')">population_size</span><Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'population_size', 500)" @update:model-value="setNumber('optimize', 'population_size', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.crossover_probability')">crossover_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_probability', 0.7)" @update:model-value="setNumber('optimize', 'crossover_probability', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.mutation_probability')">mutation_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_probability', 0.2)" @update:model-value="setNumber('optimize', 'mutation_probability', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.offspring_multiplier')">offspring_multiplier</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'offspring_multiplier', 1)" @update:model-value="setNumber('optimize', 'offspring_multiplier', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.crossover_eta')">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_eta', 20)" @update:model-value="setNumber('optimize', 'crossover_eta', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.mutation_eta')">mutation_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_eta', 20)" @update:model-value="setNumber('optimize', 'mutation_eta', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.mutation_indpb')">mutation_indpb</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_indpb', 0.1)" @update:model-value="setNumber('optimize', 'mutation_indpb', String($event ?? ''))" /></label>
           </template>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary">enable_overrides</span><Textarea v-model="enableOverridesJson" class="min-h-[120px] text-[13px] font-mono" data-field="enable-overrides" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.enable_overrides')">enable_overrides</span><Textarea v-model="enableOverridesJson" class="min-h-[120px] text-[13px] font-mono" data-field="enable-overrides" /></label>
           <div class="flex min-h-0 flex-col gap-2.5 col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
             <div>
               <strong class="text-[13.5px] font-semibold text-primary">{{ t('v7optimize.additionalParameters') }}</strong>
@@ -1351,14 +1371,14 @@ function preflight(): void {
 
         <section v-else-if="tab === 'objectives'" class="opt-tab-panel flex flex-col gap-3.5">
           <div v-if="version === 'v8'" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">objective scenario</span><SelectRoot :model-value="objectiveScenarioMode" @update:model-value="setObjectiveScenario(String($event))"><SelectTrigger data-field="objective-scenario" aria-label="objective scenario" class="h-9 text-[13.5px]"><span>{{ objectiveScenarioMode === 'aggregate' ? 'suite aggregate' : 'named scenario' }}</span></SelectTrigger><SelectContent><SelectItem value="aggregate">suite aggregate</SelectItem><SelectItem value="named">named scenario</SelectItem></SelectContent></SelectRoot></label>
-            <label v-if="objectiveScenarioMode === 'named'" class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary">scenario label</span><Input :model-value="objectiveScenarioName" class="h-9 text-[13.5px]" @update:model-value="setObjectiveScenarioName(String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.objectiveScenario')">objective scenario</span><SelectRoot :model-value="objectiveScenarioMode" @update:model-value="setObjectiveScenario(String($event))"><SelectTrigger data-field="objective-scenario" aria-label="objective scenario" class="h-9 text-[13.5px]"><span>{{ objectiveScenarioMode === 'aggregate' ? 'suite aggregate' : 'named scenario' }}</span></SelectTrigger><SelectContent><SelectItem value="aggregate">suite aggregate</SelectItem><SelectItem value="named">named scenario</SelectItem></SelectContent></SelectRoot></label>
+            <label v-if="objectiveScenarioMode === 'named'" class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.scenarioLabel')">scenario label</span><Input :model-value="objectiveScenarioName" class="h-9 text-[13.5px]" @update:model-value="setObjectiveScenarioName(String($event ?? ''))" /></label>
           </div>
           <ScoringLimitsEditor :scoring="local.scoring" :limits="local.limits" :scenario-labels="scenarioLabels(local.suite)" :version="version" :metadata="limitsMeta" :backend="currentBackend" :backend-contract="backendContract" @update:scoring="local.scoring = $event; scoringJson = json($event)" @update:limits="local.limits = $event; limitsJson = json($event)" />
           <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">scoring JSON</span><Textarea v-model="scoringJson" class="min-h-[220px] text-[13px] font-mono" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">limits JSON</span><Textarea v-model="limitsJson" class="min-h-[220px] text-[13px] font-mono" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary">fixed_params</span><Input :model-value="local.fixedParams.join(', ')" class="h-9 text-[13px] font-mono" @update:model-value="local.fixedParams = String($event ?? '').split(',').map((v) => v.trim()).filter(Boolean)" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.scoringJson')">scoring JSON</span><Textarea v-model="scoringJson" class="min-h-[220px] text-[13px] font-mono" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.limitsJson')">limits JSON</span><Textarea v-model="limitsJson" class="min-h-[220px] text-[13px] font-mono" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.fixed_params')">fixed_params</span><Input :model-value="local.fixedParams.join(', ')" class="h-9 text-[13px] font-mono" @update:model-value="local.fixedParams = String($event ?? '').split(',').map((v) => v.trim()).filter(Boolean)" /></label>
           </div>
         </section>
         <section v-else-if="tab === 'suite'" class="opt-tab-panel flex min-h-0 flex-1 flex-col gap-3.5">
@@ -1389,15 +1409,15 @@ function preflight(): void {
             </div>
             <div class="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3.5 max-[900px]:grid-cols-1">
               <label class="grid gap-1.5 text-xs text-secondary">
-                <span class="text-[13px] font-medium text-primary">fine_tune_params</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.fine_tune_params')">fine_tune_params</span>
                 <Input data-field="fine-tune-params" class="h-9 text-[13px] font-mono" :model-value="fineTuneText" placeholder="long.risk, short.strategy" @update:model-value="setFineTuneText(String($event ?? ''))" />
               </label>
               <label class="grid gap-1.5 text-xs text-secondary">
-                <span class="text-[13px] font-medium text-primary">polish_percentage (%)</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.polish_percentage')">polish_percentage (%)</span>
                 <Input data-field="polish-percentage" type="number" min="0" max="100" step="0.01" class="h-9 text-[13.5px] tabular-nums" :model-value="polishPercentageText" @update:model-value="setPolishPercentage(String($event ?? ''))" />
               </label>
               <label class="grid gap-1.5 text-xs text-secondary">
-                <span class="text-[13px] font-medium text-primary">polish_bounds_mode</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.polish_bounds_mode')">polish_bounds_mode</span>
                 <SelectRoot :model-value="polishBoundsMode" @update:model-value="setPolishBoundsMode(String($event))">
                   <SelectTrigger data-field="polish-bounds-mode" aria-label="polish_bounds_mode" class="h-9 text-[13.5px]">
                     <span>{{ polishBoundsMode }}</span>
@@ -1426,10 +1446,10 @@ function preflight(): void {
               <div class="flex flex-col gap-2.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3">
                 <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface">
                   <Checkbox data-field="runtime-bot-long-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.long.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.long.hsl_enabled', ($event === true))" />
-                  <span class="text-[13px] font-medium text-primary">bot.long.hsl_enabled</span>
+                  <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.runtime.longHslEnabled')">bot.long.hsl_enabled</span>
                 </label>
                 <label class="grid gap-1.5 text-xs text-secondary">
-                  <span class="text-[12.5px] font-medium text-secondary">bot.long.hsl_no_restart_drawdown_threshold</span>
+                  <span class="text-[12.5px] font-medium text-secondary" :data-tip="t('v7optimize.tip.runtime.longHslThreshold')">bot.long.hsl_no_restart_drawdown_threshold</span>
                   <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="(runtimeOverrideValue('bot.long.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.long.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" />
                 </label>
               </div>
@@ -1437,10 +1457,10 @@ function preflight(): void {
               <div class="flex flex-col gap-2.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3">
                 <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface">
                   <Checkbox data-field="runtime-bot-short-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.short.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.short.hsl_enabled', ($event === true))" />
-                  <span class="text-[13px] font-medium text-primary">bot.short.hsl_enabled</span>
+                  <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.runtime.shortHslEnabled')">bot.short.hsl_enabled</span>
                 </label>
                 <label class="grid gap-1.5 text-xs text-secondary">
-                  <span class="text-[12.5px] font-medium text-secondary">bot.short.hsl_no_restart_drawdown_threshold</span>
+                  <span class="text-[12.5px] font-medium text-secondary" :data-tip="t('v7optimize.tip.runtime.shortHslThreshold')">bot.short.hsl_no_restart_drawdown_threshold</span>
                   <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="(runtimeOverrideValue('bot.short.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.short.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" />
                 </label>
               </div>
@@ -1458,11 +1478,11 @@ function preflight(): void {
             </div>
             <div class="grid grid-cols-2 gap-4 flex-1 min-h-0 max-[700px]:grid-cols-1">
               <label class="flex flex-col gap-1.5 text-xs text-secondary flex-1 min-h-0">
-                <span class="text-[13px] font-medium text-primary">runtime overrides</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.runtimeOverrides')">runtime overrides</span>
                 <Textarea v-model="runtimeJson" class="flex-1 min-h-[180px] w-full text-[13px] font-mono leading-relaxed bg-surface-deep/80 border-border-default/80 focus:border-accent p-3" />
               </label>
               <label class="flex flex-col gap-1.5 text-xs text-secondary flex-1 min-h-0">
-                <span class="text-[13px] font-medium text-primary">coin override configs</span>
+                <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.coinOverrideConfigs')">coin override configs</span>
                 <Textarea v-model="overrideJson" class="flex-1 min-h-[180px] w-full text-[13px] font-mono leading-relaxed bg-surface-deep/80 border-border-default/80 focus:border-accent p-3" />
               </label>
             </div>
@@ -1477,7 +1497,7 @@ function preflight(): void {
                   <PbIcon :icon="PhCode" class="h-4 w-4" />
                 </div>
                 <div class="flex items-baseline gap-2">
-                  <span class="text-[14.5px] font-semibold text-primary">{{ t('v7optimize.rawConfigJson') }}</span>
+                  <span class="text-[14.5px] font-semibold text-primary" :data-tip="t('v7optimize.tip.rawConfigJson')">{{ t('v7optimize.rawConfigJson') }}</span>
                   <span class="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-secondary">{{ t('v7optimize.rawConfigLines', { count: rawLineCount }) }}</span>
                   <span class="text-xs font-mono text-dim">{{ rawByteSize }}</span>
                 </div>
@@ -1527,6 +1547,7 @@ function preflight(): void {
         <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-[13.5px] font-medium" data-save="config" @click="save(false)">{{ t('v7optimize.saveConfig') }}</Button>
         <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-[13.5px] font-medium" data-save="queue" @click="save(true)">{{ t('v7optimize.saveConfigAndQueue') }}</Button>
       </footer>
+      <DataTipTooltip />
     </section>
   </div>
 </template>
@@ -1701,5 +1722,41 @@ function preflight(): void {
   .opt-editor-checks { align-items: flex-start; flex-direction: column; gap: 8px; }
   .opt-editor-section__heading { padding: 12px 14px; }
   .opt-editor-footer :deep(button) { flex: 1 1 auto; min-width: 0; }
+}
+</style>
+
+<style>
+/* Document-delegated tooltip layer (DataTipTooltip.vue) for the parameter
+   [data-tip] labels — namespaced under .opt-editor-modal so the unscoped
+   rules only style the editor's own tip layer. */
+.opt-editor-modal #data-tip-tooltip {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3000;
+  max-width: 480px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-elevated);
+  color: var(--text-primary);
+  font-size: var(--fs-xs);
+  font-weight: normal;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Affordance: tipped labels read as help text (same idiom as v7_edit). */
+.opt-editor-modal [data-tip] {
+  cursor: help;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
 }
 </style>

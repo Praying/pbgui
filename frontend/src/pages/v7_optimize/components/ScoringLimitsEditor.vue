@@ -158,7 +158,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
       <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
         <div class="flex items-center gap-2">
           <PbIcon :icon="PhTarget" class="text-accent" :size="18" />
-          <strong class="text-[14.5px] font-bold text-primary">{{ t('v7optimize.scoringObjectives') }}</strong>
+          <strong class="text-[14.5px] font-bold text-primary" :data-tip="t('v7optimize.tip.scoringSection')">{{ t('v7optimize.scoringObjectives') }}</strong>
           <span class="inline-flex items-center rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold text-accent-soft">
             {{ scoringRows.length }}
           </span>
@@ -301,7 +301,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
       <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
         <div class="flex items-center gap-2">
           <PbIcon :icon="PhSliders" class="text-accent" :size="18" />
-          <strong class="text-[14.5px] font-bold text-primary">{{ t('v7optimize.constraintLimits') }}</strong>
+          <strong class="text-[14.5px] font-bold text-primary" :data-tip="t('v7optimize.tip.limitsSection')">{{ t('v7optimize.constraintLimits') }}</strong>
           <span class="inline-flex items-center rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold text-accent-soft">
             {{ limitRows.length }}
           </span>

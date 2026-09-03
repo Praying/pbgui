@@ -717,21 +717,21 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
           <div class="form-row cols-4">
             <div class="form-group">
-              <label>label</label>
+              <label><span :data-tip="t('editor.suite.labelTip')">label</span></label>
               <Input v-model="draft.label" type="text" data-test="suite-sc-label" />
             </div>
             <div class="form-group">
-              <label>start_date</label>
+              <label><span :data-tip="t('editor.suite.startDateTip')">start_date</span></label>
               <DatePicker v-model="draft.startDate" placeholder="e.g. 2023-01-01" :max="draft.endDate || undefined" />
             </div>
             <div class="form-group">
-              <label>end_date</label>
+              <label><span :data-tip="t('editor.suite.endDateTip')">end_date</span></label>
               <DatePicker v-model="draft.endDate" placeholder="e.g. now" :min="draft.startDate || undefined" />
             </div>
           </div>
 
           <div class="form-group" style="margin-bottom: var(--sp-md)">
-            <label>exchanges</label>
+            <label><span :data-tip="t('editor.suite.exchangesTip')">exchanges</span></label>
             <div style="display: flex; gap: var(--sp-md); flex-wrap: wrap">
               <div v-for="exchange in exchanges" :key="exchange" class="chk-row">
                 <Checkbox
@@ -747,7 +747,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
           <div class="form-row cols-2">
             <div class="form-group">
-              <label>coins</label>
+              <label><span :data-tip="t('editor.suite.coinsTip')">coins</span></label>
               <div class="ms-wrap">
                 <span v-for="coin in draft.coins" :key="coin" class="ms-tag">{{ coin }} <span class="ms-x" @click="toggleDraftCoin('coins', coin)">×</span></span>
                 <!-- ui-migration: blocked — chrome-free chip-row filter input inside the custom
@@ -759,7 +759,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               </div>
             </div>
             <div class="form-group">
-              <label>ignored_coins</label>
+              <label><span :data-tip="t('editor.suite.ignoredCoinsTip')">ignored_coins</span></label>
               <div class="ms-wrap">
                 <span v-for="coin in draft.ignoredCoins" :key="coin" class="ms-tag">{{ coin }} <span class="ms-x" @click="toggleDraftCoin('ignoredCoins', coin)">×</span></span>
                 <!-- ui-migration: blocked — chrome-free chip-row filter input inside the custom
@@ -781,7 +781,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
           <div style="margin-top: var(--sp-sm)">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-xs)">
-              <label style="font-size: var(--fs-xs); color: var(--text-dim)">{{ t('editor.suite.overridesCount', { n: overrideEntries.length }) }}</label>
+              <label style="font-size: var(--fs-xs); color: var(--text-dim)" :data-tip="t('editor.suite.overridesTip')">{{ t('editor.suite.overridesCount', { n: overrideEntries.length }) }}</label>
               <button type="button" class="act-btn" data-test="suite-add-override" @click="overrideRowOpen = true">{{ t('editor.suite.addOverride') }}</button>
             </div>
 
@@ -844,7 +844,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
           <div class="expander-body">
             <div class="form-row cols-4" style="margin-bottom: var(--sp-sm)">
               <div class="form-group">
-                <label id="suite-agg-default-label">{{ t('editor.suite.defaultMethod') }}</label>
+                <label id="suite-agg-default-label"><span :data-tip="t('editor.suite.defaultMethodTip')">{{ t('editor.suite.defaultMethod') }}</span></label>
                 <SelectRoot :model-value="model.aggregate.default" @update:model-value="setAggregateDefault(String($event ?? ''))">
                   <SelectTrigger data-test="suite-agg-default" aria-labelledby="suite-agg-default-label">
                     <span>{{ model.aggregate.default }}</span>

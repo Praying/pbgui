@@ -1,9 +1,13 @@
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import { openSelect, pickSelectOption, selectOptionTexts } from '@/shared/testing/select';
 import { buildEditorDraft } from '../lib/configModel';
 import ConfigEditorModal from './ConfigEditorModal.vue';
+import en from '../../../../i18n/en.json';
+import zh from '../../../../i18n/zh.json';
 
 describe('ConfigEditorModal', () => {
   it('edits structured general, bot, bounds, scoring, suite and raw sections', async () => {
@@ -468,4 +472,98 @@ describe('ConfigEditorModal', () => {
     await binanceLabel!.trigger('click');
     expect(wrapper.text()).toContain('1 / 7');
   });
+
+  it('renders localized parameter tooltips on the editor labels', async () => {
+    const draft = buildEditorDraft({ backtest: { exchanges: ['bybit'] }, bot: {}, optimize: {} }, 'v8', 'tips');
+    const wrapperEn = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v8', error: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+    const enTip = wrapperEn.findAll('[data-tip]').find((el) => el.text() === 'starting_balance');
+    expect(enTip?.exists()).toBe(true);
+    expect(enTip?.attributes('data-tip')).toBe(en['v7optimize.tip.starting_balance'] as string);
+    // the delegated tooltip layer is mounted inside the modal
+    expect(wrapperEn.find('#data-tip-tooltip').exists()).toBe(true);
+    wrapperEn.unmount();
+
+    const wrapperZh = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v8', error: '' },
+      global: { plugins: [createI18n('zh')] },
+    });
+    const zhTip = wrapperZh.findAll('[data-tip]').find((el) => el.text() === 'starting_balance');
+    expect(zhTip?.attributes('data-tip')).toBe(zh['v7optimize.tip.starting_balance'] as string);
+    wrapperZh.unmount();
+  });
+
+  it('shows localized tooltips for bounds parameters across key shapes', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'] },
+      bot: {},
+      optimize: {
+        bounds: {
+          long_n_positions: [1, 8, 1],
+          'short.risk.total_wallet_exposure_limit': [0, 1, 0.1],
+          'bot.long.unstuck.threshold': [0.4, 0.9, 0.001],
+          long_unknown_future_param: [0, 1],
+        },
+      },
+    }, 'v7', 'bound-tips');
+    const wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v7', error: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+    await wrapper.find('[data-tab="bounds"]').trigger('click');
+
+    const codeFor = (name: string) => wrapper.findAll('code').find((el) => el.text().trim() === name);
+
+    // PB7 flat key: long_n_positions displays as the full key, tip resolves via base n_positions
+    expect(codeFor('long_n_positions')?.attributes('data-tip')).toBe(en['v7optimize.tip.bound.n_positions'] as string);
+    // PB8 nested key (short side): short.risk.total_wallet_exposure_limit
+    expect(codeFor('total_wallet_exposure_limit')?.attributes('data-tip')).toBe(en['v7optimize.tip.bound.risk.total_wallet_exposure_limit'] as string);
+    // bot.-prefixed nested key: bot.long.unstuck.threshold
+    expect(codeFor('threshold')?.attributes('data-tip')).toBe(en['v7optimize.tip.bound.unstuck.threshold'] as string);
+    // unknown params keep the plain full-key title and no tooltip attribute
+    expect(codeFor('long_unknown_future_param')?.attributes('data-tip')).toBeUndefined();
+    expect(codeFor('long_unknown_future_param')?.attributes('title')).toBe('long_unknown_future_param');
+    wrapper.unmount();
+
+    const wrapperZh = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v7', error: '' },
+      global: { plugins: [createI18n('zh')] },
+    });
+    await wrapperZh.find('[data-tab="bounds"]').trigger('click');
+    const zhNpos = wrapperZh.findAll('code').find((el) => el.text().trim() === 'long_n_positions');
+    expect(zhNpos?.attributes('data-tip')).toBe(zh['v7optimize.tip.bound.n_positions'] as string);
+    wrapperZh.unmount();
+  });
+
+  it('keeps every v7optimize.tip.* key referenced by the editor sources in both dictionaries', () => {
+    const roots = [
+      join(__dirname, '..'),
+      join(__dirname, '../../../shared/suiteEditor'),
+    ];
+    const keyPattern = /'(v7optimize\.tip\.[A-Za-z0-9_.]+)'/g;
+    const used = new Set<string>();
+    for (const root of roots) {
+      for (const file of collectFiles(root)) {
+        for (const match of readFileSync(file, 'utf8').matchAll(keyPattern)) used.add(match[1]!);
+      }
+    }
+    expect(used.size).toBeGreaterThan(50);
+    const missingEn = [...used].filter((key) => !(key in en));
+    const missingZh = [...used].filter((key) => !(key in zh));
+    expect(missingEn).toEqual([]);
+    expect(missingZh).toEqual([]);
+  });
 });
+
+function collectFiles(dir: string): string[] {
+  const files: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      if (entry !== 'node_modules') files.push(...collectFiles(full));
+    } else if (entry.endsWith('.vue') && !entry.endsWith('.test.vue')) files.push(full);
+  }
+  return files;
+}
