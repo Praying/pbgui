@@ -1284,9 +1284,9 @@
     html += '</div>';
 
     html += '<div class="sb-preview-actions">';
-    html += '<button type="button" class="' + refreshBtnClass + '" data-action="refresh">' + i18nT('editor.preflight.refreshBtn', null, '↻ Refresh Check') + '</button>';
+    html += '<button type="button" class="' + refreshBtnClass + '" data-action="refresh">' + i18nT('editor.preflight.refreshBtn', null, 'Refresh Check') + '</button>';
     html += '<button type="button" class="' + preloadBtnClass + '" data-action="preload"' + (preloadDisabled ? ' disabled' : '') + '>' +
-      escapeHtml(jobRunning ? i18nT('editor.preflight.preloadRunning', null, '⏳ Preload running...') : (summary.preload_label || i18nT('editor.preflight.preloadDefault', null, 'Preload OHLCV Data'))) +
+      escapeHtml(jobRunning ? i18nT('editor.preflight.preloadRunning', null, 'Preload running...') : (summary.preload_label || i18nT('editor.preflight.preloadDefault', null, 'Preload OHLCV Data'))) +
     '</button>';
     if (summary.preload_detail) {
       html += '<div class="sb-preview-note">' + escapeHtml(summary.preload_detail) + '</div>';
@@ -1422,7 +1422,7 @@
       }
       if (isJobRunning) {
         html += '<div class="sb-preview-actions" style="margin-top:var(--sp-sm)">';
-        html += '<button type="button" class="sb-btn danger" data-action="stop">' + i18nT('editor.preflight.stopBtn', null, '⏹ Stop Preload') + '</button>';
+        html += '<button type="button" class="sb-btn danger" data-action="stop">' + i18nT('editor.preflight.stopBtn', null, 'Stop Preload') + '</button>';
         html += '</div>';
       }
       if (Array.isArray(job.log_tail) && job.log_tail.length) {

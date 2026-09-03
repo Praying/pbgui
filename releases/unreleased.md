@@ -1,5 +1,16 @@
 # Unreleased
 
+## PBv7/PBv8 Optimize — OHLCV Preflight Modal Dark Theme Unification (OHLCV就绪检查)
+
+- **Solid Dark Surface & Backdrop Stacking (`OhlcvPreflightModal.vue`)**: Replaced the unstyled, translucent `.opt-modal` / `.opt-ohlcv-modal` with a solid system dark theme modal panel (`bg-panel border border-border-default rounded-xl shadow-[var(--shadow-modal)]`) layered above the configuration editor at `z-[1100]` with `bg-backdrop p-3.5 sm:p-5`. Fixed translucent cards (`bg-white/[0.018]`) and missing backgrounds that caused the underlying editor inputs and bounds table to bleed through.
+- **Card Hierarchy, Typography & Status Badging**: Rebuilt the preflight modal structure with structured elevated cards (`bg-surface-deep/50 border-border-default/80`):
+  - **Header**: Compact header with icon box (`PhDatabase`), bold title, hint, and Phosphor close button (`PhX`).
+  - **Summary**: Prominent overall status badge with semantic color fills, clear headline and details, and monospace tabular readiness pills (`counts`).
+  - **Request & Universe**: Structured 2-column grid organizing exchange, timeframes, and universe parameters with clean typography.
+  - **Coin Samples**: Responsive 2-column grid of coin sample articles with monospace symbol names and trading side badges (`[long/short]`).
+  - **Preload Job**: Dedicated background job panel with pulsating running indicators, PID / start / finish metadata tags, and an enclosed monospace log output viewer (`bg-page text-primary`).
+  - **Footer Controls**: Standardized action buttons with Phosphor icons (`PhArrowClockwise`, `PhStop`, `PhDownloadSimple`) for refreshing readiness and launching/stopping OHLCV preloads.
+
 ## PBv7/PBv8 Optimize — Bounds Filter Buttons Color & Contrast Polish (优化/配置/边界)
 
 - **Semantic Color Scheme & High-Contrast Typography (`ConfigEditorModal.vue`)**: Optimized the color schemes and font foreground styling for the four category filter buttons in the Parameter Bounds tab:
