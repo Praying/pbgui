@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhChartLineUp, PhSparkle, PhSquaresFour, PhStack } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
@@ -519,8 +521,65 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
       </div>
     </div>
     <div class="expander-body">
-      <div v-if="!model.enabled" style="padding: var(--sp-sm); margin-bottom: var(--sp-md); border: 1px dashed var(--border); border-radius: 6px; color: var(--text-dim); font-size: var(--fs-sm)">
-        {{ t('editor.suite.disabledHint') }}
+      <div v-if="!model.enabled" class="mb-4 flex flex-col gap-4 rounded-xl border border-border-default/80 bg-surface-deep/40 p-5 shadow-xs">
+        <div class="flex items-start gap-3.5">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-accent/20">
+            <PbIcon :icon="PhStack" class="h-5 w-5" />
+          </div>
+          <div class="flex flex-1 flex-col gap-1">
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-semibold text-primary">{{ t('editor.suite.heroTitle') }}</h3>
+              <span class="rounded bg-surface px-1.5 py-0.5 text-[10.5px] font-medium text-dim">{{ t('editor.suite.mode') }}</span>
+            </div>
+            <p class="text-xs leading-relaxed text-secondary">{{ t('editor.suite.heroSubtitle') }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 max-[850px]:grid-cols-1">
+          <div class="flex flex-col gap-1.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3 transition-colors hover:border-border-default hover:bg-surface-deep/80">
+            <div class="flex items-center gap-2">
+              <div class="flex h-5 w-5 items-center justify-center rounded bg-info/10 text-info">
+                <PbIcon :icon="PhSquaresFour" class="h-3 w-3" />
+              </div>
+              <span class="text-xs font-semibold text-primary">{{ t('editor.suite.featureExchanges') }}</span>
+            </div>
+            <p class="text-[11.5px] leading-relaxed text-secondary">{{ t('editor.suite.featureExchangesDesc') }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3 transition-colors hover:border-border-default hover:bg-surface-deep/80">
+            <div class="flex items-center gap-2">
+              <div class="flex h-5 w-5 items-center justify-center rounded bg-success/10 text-success">
+                <PbIcon :icon="PhChartLineUp" class="h-3 w-3" />
+              </div>
+              <span class="text-xs font-semibold text-primary">{{ t('editor.suite.featureWindows') }}</span>
+            </div>
+            <p class="text-[11.5px] leading-relaxed text-secondary">{{ t('editor.suite.featureWindowsDesc') }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3 transition-colors hover:border-border-default hover:bg-surface-deep/80">
+            <div class="flex items-center gap-2">
+              <div class="flex h-5 w-5 items-center justify-center rounded bg-warning/10 text-warning">
+                <PbIcon :icon="PhSparkle" class="h-3 w-3" />
+              </div>
+              <span class="text-xs font-semibold text-primary">{{ t('editor.suite.featureAggregates') }}</span>
+            </div>
+            <p class="text-[11.5px] leading-relaxed text-secondary">{{ t('editor.suite.featureAggregatesDesc') }}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-border-default/60 pt-3.5 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-2.5">
+          <span class="text-xs text-dim">{{ t('editor.suite.disabledHint') }}</span>
+          <Button
+            type="button"
+            variant="info"
+            size="sm"
+            class="h-8 gap-1.5 px-3.5 text-xs font-medium"
+            @click="toggleEnabled(true)"
+          >
+            <PbIcon :icon="PhStack" class="h-3.5 w-3.5" />
+            <span>{{ t('editor.suite.enableMode') }}</span>
+          </Button>
+        </div>
       </div>
 
       <template>

@@ -5,7 +5,7 @@
  * (reka forbids value="") — the trigger renders 'default' / the placeholder
  * text for an empty model, but the list offers no reset row.
  */
-import { PhX } from '@phosphor-icons/vue';
+import { PhPlus, PhSliders, PhTarget, PhX } from '@phosphor-icons/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -152,52 +152,281 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 </script>
 
 <template>
-  <div class="grid grid-cols-[1fr_1fr] gap-3.5 max-[600px]:grid-cols-1">
-    <section>
-      <header class="mb-2 flex items-center justify-between text-primary"><strong>{{ t('v7optimize.scoring') }}</strong><Button type="button" variant="default" size="sm" @click="addScoring">{{ t('editor.suite.add') }}</Button></header>
-      <template v-if="hasMetadata">
-        <div v-for="(row, index) in scoringRows" :key="`score-${index}`" class="opt-objective-row-advanced grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
-          <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateScoring(index, 'metric', String($event))"><SelectTrigger data-field="scoring-metric" aria-label="metric"><span :class="rowValue(row, 'metric') ? undefined : 'text-placeholder'">{{ rowValue(row, 'metric') || t('v7optimize.selectMetricForScoring') }}</span></SelectTrigger><SelectContent><SelectItem v-for="metric in metricOptions" :key="metric" :value="metric">{{ metric }}</SelectItem></SelectContent></SelectRoot>
-          <SelectRoot :model-value="canonicalGoal(row.goal)" @update:model-value="updateScoring(index, 'goal', String($event))"><SelectTrigger data-field="scoring-goal" aria-label="goal"><span>{{ canonicalGoal(row.goal) }}</span></SelectTrigger><SelectContent><SelectItem v-for="goal in meta.goal_options" :key="goal" :value="goal">{{ goal }}</SelectItem></SelectContent></SelectRoot>
-          <SelectRoot v-if="scenarioLabels.length && version === 'v8'" :model-value="scenarioMode(row)" @update:model-value="updateScoringScenario(index, String($event))"><SelectTrigger data-field="scoring-scenario" aria-label="scenario"><span>{{ scenarioMode(row) === 'inherit' ? 'inherit objective scenario' : scenarioMode(row) === 'aggregate' ? 'Aggregated' : scenarioMode(row) }}</span></SelectTrigger><SelectContent><SelectItem value="inherit">inherit objective scenario</SelectItem><SelectItem value="aggregate">Aggregated</SelectItem><SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem></SelectContent></SelectRoot>
-          <SelectRoot v-if="meta.scoring_basis_field" :model-value="rowValue(row, meta.scoring_basis_field)" @update:model-value="updateScoringAggregate(index, String($event))"><SelectTrigger data-field="scoring-aggregate" aria-label="statistic"><span>{{ rowValue(row, meta.scoring_basis_field) || 'default' }}</span></SelectTrigger><SelectContent><SelectItem v-for="stat in meta.stat_options.filter(Boolean)" :key="stat" :value="stat">{{ stat }}</SelectItem></SelectContent></SelectRoot>
-          <Button type="button" variant="danger" size="sm" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeScoring(index)"><PbIcon :icon="PhX" :size="18" /></Button>
+  <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+    <!-- Scoring section -->
+    <section class="flex flex-col rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+      <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
+        <div class="flex items-center gap-2">
+          <PbIcon :icon="PhTarget" class="text-accent" :size="18" />
+          <strong class="text-[14.5px] font-bold text-primary">{{ t('v7optimize.scoringObjectives') }}</strong>
+          <span class="inline-flex items-center rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold text-accent-soft">
+            {{ scoringRows.length }}
+          </span>
         </div>
-      </template>
-      <template v-else>
-        <div v-for="(row, index) in scoringRows" :key="`score-${index}`" class="grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
-          <Input :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateScoring(index, 'metric', String($event ?? ''))" />
-          <SelectRoot :model-value="canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize'" @update:model-value="updateScoring(index, 'goal', String($event))"><SelectTrigger aria-label="goal"><span>{{ canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize' }}</span></SelectTrigger><SelectContent><SelectItem value="maximize">maximize</SelectItem><SelectItem value="minimize">minimize</SelectItem></SelectContent></SelectRoot>
-          <SelectRoot v-if="scenarioLabels.length" :model-value="rowValue(row, 'scenario') || 'Aggregated'" @update:model-value="updateScoring(index, 'scenario', String($event))"><SelectTrigger aria-label="scenario"><span>{{ rowValue(row, 'scenario') || 'Aggregated' }}</span></SelectTrigger><SelectContent><SelectItem value="Aggregated">Aggregated</SelectItem><SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem></SelectContent></SelectRoot>
-          <Button type="button" variant="danger" size="sm" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeScoring(index)"><PbIcon :icon="PhX" :size="18" /></Button>
-        </div>
-      </template>
-      <p v-if="!scoringRows.length" class="text-xs text-secondary">{{ t('v7optimize.noEntries') }}</p>
+        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-[13px] shadow-sm" @click="addScoring">
+          <PbIcon :icon="PhPlus" :size="14" />
+          {{ t('editor.suite.add') }}
+        </Button>
+      </header>
+
+      <div class="flex flex-col gap-2.5">
+        <template v-if="hasMetadata">
+          <div
+            v-for="(row, index) in scoringRows"
+            :key="`score-${index}`"
+            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-all duration-150 hover:border-border-strong hover:bg-surface-deep/80"
+          >
+            <!-- Primary Row: Metric + Goal + Delete -->
+            <div class="flex items-center gap-2">
+              <div class="min-w-0 flex-1">
+                <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateScoring(index, 'metric', String($event))">
+                  <SelectTrigger data-field="scoring-metric" aria-label="metric" class="h-8.5 w-full truncate text-[13px]">
+                    <span :class="rowValue(row, 'metric') ? 'font-mono text-[13px] font-medium text-primary truncate' : 'text-placeholder'">
+                      {{ rowValue(row, 'metric') || t('v7optimize.selectMetricForScoring') }}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent class="max-h-72">
+                    <SelectItem v-for="metric in metricOptions" :key="metric" :value="metric" class="font-mono text-[13px]">
+                      {{ metric }}
+                    </SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+
+              <div class="w-24 shrink-0">
+                <SelectRoot :model-value="canonicalGoal(row.goal)" @update:model-value="updateScoring(index, 'goal', String($event))">
+                  <SelectTrigger data-field="scoring-goal" aria-label="goal" class="h-8.5 w-full text-[13px]">
+                    <span class="font-mono text-[13px] font-semibold" :class="canonicalGoal(row.goal) === 'max' ? 'text-success' : 'text-warning-soft'">
+                      {{ canonicalGoal(row.goal) }}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="goal in meta.goal_options" :key="goal" :value="goal" class="font-mono text-[13px]">
+                      {{ goal }}
+                    </SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="size-8.5 shrink-0 rounded-md p-0 text-secondary hover:bg-danger/15 hover:text-danger-soft transition-colors"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
+                @click="removeScoring(index)"
+              >
+                <PbIcon :icon="PhX" :size="16" />
+              </Button>
+            </div>
+
+            <!-- Secondary Row: Scenario / Stat Basis -->
+            <div
+              v-if="(scenarioLabels.length && version === 'v8') || meta.scoring_basis_field"
+              class="mt-2 flex flex-wrap items-center gap-2 border-t border-border-subtle/50 pt-2 text-xs"
+            >
+              <div v-if="scenarioLabels.length && version === 'v8'" class="flex min-w-[140px] flex-1 items-center gap-1.5">
+                <span class="text-xs text-secondary shrink-0">{{ t('v7optimize.scenario') }}:</span>
+                <SelectRoot :model-value="scenarioMode(row)" @update:model-value="updateScoringScenario(index, String($event))">
+                  <SelectTrigger data-field="scoring-scenario" aria-label="scenario" class="h-7.5 w-full text-xs">
+                    <span class="truncate">{{ scenarioMode(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioMode(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : scenarioMode(row) }}</span>
+                  </SelectTrigger>
+                  <SelectContent class="max-h-60">
+                    <SelectItem value="inherit">{{ t('v7optimize.inheritObjectiveScenario') }}</SelectItem>
+                    <SelectItem value="aggregate">{{ t('v7optimize.aggregatedScenario') }}</SelectItem>
+                    <SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+
+              <div v-if="meta.scoring_basis_field" class="flex min-w-[120px] flex-1 items-center gap-1.5">
+                <span class="text-xs text-secondary shrink-0">{{ t('v7optimize.statistic') }}:</span>
+                <SelectRoot :model-value="rowValue(row, meta.scoring_basis_field)" @update:model-value="updateScoringAggregate(index, String($event))">
+                  <SelectTrigger data-field="scoring-aggregate" aria-label="statistic" class="h-7.5 w-full text-xs">
+                    <span class="truncate">{{ rowValue(row, meta.scoring_basis_field) || t('v7optimize.defaultStat') }}</span>
+                  </SelectTrigger>
+                  <SelectContent class="max-h-60">
+                    <SelectItem v-for="stat in meta.stat_options.filter(Boolean)" :key="stat" :value="stat">{{ stat }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div
+            v-for="(row, index) in scoringRows"
+            :key="`score-${index}`"
+            class="rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 flex items-center gap-2"
+          >
+            <Input class="h-8.5 flex-1 font-mono text-[13px]" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateScoring(index, 'metric', String($event ?? ''))" />
+            <div class="w-28 shrink-0">
+              <SelectRoot :model-value="canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize'" @update:model-value="updateScoring(index, 'goal', String($event))">
+                <SelectTrigger aria-label="goal" class="h-8.5 w-full text-[13px]">
+                  <span>{{ canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize' }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="maximize">maximize</SelectItem>
+                  <SelectItem value="minimize">minimize</SelectItem>
+                </SelectContent>
+              </SelectRoot>
+            </div>
+            <div v-if="scenarioLabels.length" class="w-32 shrink-0">
+              <SelectRoot :model-value="rowValue(row, 'scenario') || 'Aggregated'" @update:model-value="updateScoring(index, 'scenario', String($event))">
+                <SelectTrigger aria-label="scenario" class="h-8.5 w-full text-[13px]">
+                  <span class="truncate">{{ rowValue(row, 'scenario') || 'Aggregated' }}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Aggregated">Aggregated</SelectItem>
+                  <SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem>
+                </SelectContent>
+              </SelectRoot>
+            </div>
+            <Button type="button" variant="ghost" size="sm" class="size-8.5 shrink-0 p-0 text-secondary hover:bg-danger/15 hover:text-danger-soft" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeScoring(index)">
+              <PbIcon :icon="PhX" :size="16" />
+            </Button>
+          </div>
+        </template>
+
+        <p v-if="!scoringRows.length" class="py-6 text-center text-xs text-secondary">
+          {{ t('v7optimize.noEntries') }}
+        </p>
+      </div>
     </section>
-    <section>
-      <header class="mb-2 flex items-center justify-between text-primary"><strong>{{ t('v7optimize.limits') }}</strong><Button type="button" variant="default" size="sm" @click="addLimit">{{ t('editor.suite.add') }}</Button></header>
-      <template v-if="hasMetadata && Array.isArray(limits)">
-        <div v-for="(row, index) in limitRows" :key="`limit-${index}`" class="opt-objective-row-advanced grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
-          <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateLimit(index, 'metric', String($event))"><SelectTrigger data-field="limit-metric" aria-label="metric"><span :class="rowValue(row, 'metric') ? undefined : 'text-placeholder'">{{ rowValue(row, 'metric') || t('v7optimize.selectMetricForLimit') }}</span></SelectTrigger><SelectContent><SelectItem v-for="metric in metricOptions" :key="metric" :value="metric">{{ metric }}</SelectItem></SelectContent></SelectRoot>
-          <SelectRoot :model-value="rowValue(row, 'penalize_if') || 'greater_than'" @update:model-value="updateLimit(index, 'penalize_if', String($event))"><SelectTrigger data-field="limit-penalize-if" aria-label="penalize_if"><span>{{ rowValue(row, 'penalize_if') || 'greater_than' }}</span></SelectTrigger><SelectContent><SelectItem v-for="operator in meta.penalize_if_options" :key="operator" :value="operator">{{ operator }}</SelectItem></SelectContent></SelectRoot>
-          <SelectRoot :model-value="rowValue(row, meta.limit_basis_field)" @update:model-value="updateLimit(index, meta.limit_basis_field, String($event))"><SelectTrigger data-field="limit-stat" aria-label="statistic"><span>{{ rowValue(row, meta.limit_basis_field) || 'default' }}</span></SelectTrigger><SelectContent><SelectItem v-for="stat in meta.stat_options.filter(Boolean)" :key="stat" :value="stat">{{ stat }}</SelectItem></SelectContent></SelectRoot>
-          <label class="inline-flex items-center gap-1.5 text-xs text-secondary"><Checkbox :model-value="row.enabled !== false" @update:model-value="updateLimit(index, 'enabled', ($event === true))" /> enabled</label>
-          <Button type="button" variant="danger" size="sm" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)"><PbIcon :icon="PhX" :size="18" /></Button>
-          <template v-if="isRange(row)"><Input data-field="limit-range-low" type="number" step="any" :model-value="rangeValue(row, 0)" @update:model-value="updateRange(index, index, 0, String($event ?? ''))" /><Input data-field="limit-range-high" type="number" step="any" :model-value="rangeValue(row, 1)" @update:model-value="updateRange(index, index, 1, String($event ?? ''))" /></template>
-          <Input v-else data-field="limit-value" type="number" step="any" :model-value="rowValue(row, 'value')" @update:model-value="updateLimitNumber(index, 'value', String($event ?? ''))" />
-          <SelectRoot v-if="scenarioLabels.length && version === 'v8'" :model-value="scenarioMode(row)" @update:model-value="updateLimitScenario(index, String($event))"><SelectTrigger data-field="limit-scenario" aria-label="scenario"><span>{{ scenarioMode(row) === 'inherit' ? 'inherit objective scenario' : scenarioMode(row) === 'aggregate' ? 'Aggregated' : scenarioMode(row) }}</span></SelectTrigger><SelectContent><SelectItem value="inherit">inherit objective scenario</SelectItem><SelectItem value="aggregate">Aggregated</SelectItem><SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem></SelectContent></SelectRoot>
+
+    <!-- Limits section -->
+    <section class="flex flex-col rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+      <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
+        <div class="flex items-center gap-2">
+          <PbIcon :icon="PhSliders" class="text-accent" :size="18" />
+          <strong class="text-[14.5px] font-bold text-primary">{{ t('v7optimize.constraintLimits') }}</strong>
+          <span class="inline-flex items-center rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold text-accent-soft">
+            {{ limitRows.length }}
+          </span>
         </div>
-      </template>
-      <template v-else-if="Array.isArray(limits)">
-        <div v-for="(row, index) in limitRows" :key="`limit-${index}`" class="grid grid-cols-[minmax(0,1fr)_130px_130px_auto] gap-1.5 mb-1.5 max-[600px]:grid-cols-[1fr_1fr]">
-          <Input :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateLimit(index, 'metric', String($event ?? ''))" />
-          <Input :model-value="rowValue(row, 'min')" placeholder="min" @update:model-value="updateLimit(index, 'min', String($event ?? ''))" />
-          <Input :model-value="rowValue(row, 'max')" placeholder="max" @update:model-value="updateLimit(index, 'max', String($event ?? ''))" />
-          <Button type="button" variant="danger" size="sm" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)"><PbIcon :icon="PhX" :size="18" /></Button>
-        </div>
-      </template>
-      <p v-if="!Array.isArray(limits)" class="text-xs text-secondary">{{ t('v7optimize.legacyLimitsRawJson') }}</p>
-      <p v-else-if="!limitRows.length" class="text-xs text-secondary">{{ t('v7optimize.noEntries') }}</p>
+        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-[13px] shadow-sm" @click="addLimit">
+          <PbIcon :icon="PhPlus" :size="14" />
+          {{ t('editor.suite.add') }}
+        </Button>
+      </header>
+
+      <div class="flex flex-col gap-2.5">
+        <template v-if="hasMetadata && Array.isArray(limits)">
+          <div
+            v-for="(row, index) in limitRows"
+            :key="`limit-${index}`"
+            class="opt-objective-row-advanced group relative rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 transition-all duration-150 hover:border-border-strong hover:bg-surface-deep/80"
+          >
+            <!-- Primary Row: Enable toggle + Metric + Delete -->
+            <div class="flex items-center gap-2">
+              <label class="flex items-center gap-1.5 cursor-pointer select-none text-xs text-secondary shrink-0 mr-1" :title="row.enabled !== false ? 'Enabled' : 'Disabled'">
+                <Checkbox :model-value="row.enabled !== false" @update:model-value="updateLimit(index, 'enabled', ($event === true))" />
+                <span class="text-xs font-medium" :class="row.enabled !== false ? 'text-primary' : 'text-secondary/60'">{{ row.enabled !== false ? 'ON' : 'OFF' }}</span>
+              </label>
+
+              <div class="min-w-0 flex-1">
+                <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateLimit(index, 'metric', String($event))">
+                  <SelectTrigger data-field="limit-metric" aria-label="metric" class="h-8.5 w-full truncate text-[13px]">
+                    <span :class="rowValue(row, 'metric') ? 'font-mono text-[13px] font-medium text-primary truncate' : 'text-placeholder'">
+                      {{ rowValue(row, 'metric') || t('v7optimize.selectMetricForLimit') }}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent class="max-h-72">
+                    <SelectItem v-for="metric in metricOptions" :key="metric" :value="metric" class="font-mono text-[13px]">
+                      {{ metric }}
+                    </SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="size-8.5 shrink-0 rounded-md p-0 text-secondary hover:bg-danger/15 hover:text-danger-soft transition-colors"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
+                @click="removeLimit(index)"
+              >
+                <PbIcon :icon="PhX" :size="16" />
+              </Button>
+            </div>
+
+            <!-- Secondary Row: Operator + Value/Range + Stat + Scenario -->
+            <div class="mt-2 flex flex-wrap items-center gap-2 border-t border-border-subtle/50 pt-2 text-xs">
+              <!-- Operator (penalize_if) -->
+              <div class="w-36 shrink-0">
+                <SelectRoot :model-value="rowValue(row, 'penalize_if') || 'greater_than'" @update:model-value="updateLimit(index, 'penalize_if', String($event))">
+                  <SelectTrigger data-field="limit-penalize-if" aria-label="penalize_if" class="h-7.5 w-full text-xs">
+                    <span class="truncate">{{ rowValue(row, 'penalize_if') || 'greater_than' }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="operator in meta.penalize_if_options" :key="operator" :value="operator">{{ operator }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+
+              <!-- Threshold value or range -->
+              <div class="flex-1 min-w-[130px] flex items-center gap-1.5">
+                <template v-if="isRange(row)">
+                  <Input data-field="limit-range-low" type="number" step="any" class="h-7.5 text-xs font-mono w-full" placeholder="min" :model-value="rangeValue(row, 0)" @update:model-value="updateRange(index, index, 0, String($event ?? ''))" />
+                  <span class="text-secondary text-xs">→</span>
+                  <Input data-field="limit-range-high" type="number" step="any" class="h-7.5 text-xs font-mono w-full" placeholder="max" :model-value="rangeValue(row, 1)" @update:model-value="updateRange(index, index, 1, String($event ?? ''))" />
+                </template>
+                <template v-else>
+                  <Input data-field="limit-value" type="number" step="any" class="h-7.5 text-xs font-mono w-full" placeholder="threshold" :model-value="rowValue(row, 'value')" @update:model-value="updateLimitNumber(index, 'value', String($event ?? ''))" />
+                </template>
+              </div>
+
+              <!-- Stat Basis -->
+              <div v-if="meta.limit_basis_field" class="w-28 shrink-0">
+                <SelectRoot :model-value="rowValue(row, meta.limit_basis_field)" @update:model-value="updateLimit(index, meta.limit_basis_field, String($event))">
+                  <SelectTrigger data-field="limit-stat" aria-label="statistic" class="h-7.5 w-full text-xs">
+                    <span class="truncate">{{ rowValue(row, meta.limit_basis_field) || t('v7optimize.defaultStat') }}</span>
+                  </SelectTrigger>
+                  <SelectContent class="max-h-60">
+                    <SelectItem v-for="stat in meta.stat_options.filter(Boolean)" :key="stat" :value="stat">{{ stat }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+
+              <!-- Scenario (if v8) -->
+              <div v-if="scenarioLabels.length && version === 'v8'" class="w-36 shrink-0">
+                <SelectRoot :model-value="scenarioMode(row)" @update:model-value="updateLimitScenario(index, String($event))">
+                  <SelectTrigger data-field="limit-scenario" aria-label="scenario" class="h-7.5 w-full text-xs">
+                    <span class="truncate">{{ scenarioMode(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioMode(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : scenarioMode(row) }}</span>
+                  </SelectTrigger>
+                  <SelectContent class="max-h-60">
+                    <SelectItem value="inherit">{{ t('v7optimize.inheritObjectiveScenario') }}</SelectItem>
+                    <SelectItem value="aggregate">{{ t('v7optimize.aggregatedScenario') }}</SelectItem>
+                    <SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template v-else-if="Array.isArray(limits)">
+          <div
+            v-for="(row, index) in limitRows"
+            :key="`limit-${index}`"
+            class="rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 flex items-center gap-2"
+          >
+            <Input class="h-8.5 flex-1 font-mono text-[13px]" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateLimit(index, 'metric', String($event ?? ''))" />
+            <Input class="h-8.5 w-24 font-mono text-[13px]" :model-value="rowValue(row, 'min')" placeholder="min" @update:model-value="updateLimit(index, 'min', String($event ?? ''))" />
+            <Input class="h-8.5 w-24 font-mono text-[13px]" :model-value="rowValue(row, 'max')" placeholder="max" @update:model-value="updateLimit(index, 'max', String($event ?? ''))" />
+            <Button type="button" variant="ghost" size="sm" class="size-8.5 shrink-0 p-0 text-secondary hover:bg-danger/15 hover:text-danger-soft" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)">
+              <PbIcon :icon="PhX" :size="16" />
+            </Button>
+          </div>
+        </template>
+
+        <p v-if="!Array.isArray(limits)" class="py-4 text-xs text-secondary">{{ t('v7optimize.legacyLimitsRawJson') }}</p>
+        <p v-else-if="!limitRows.length" class="py-6 text-center text-xs text-secondary">{{ t('v7optimize.noEntries') }}</p>
+      </div>
     </section>
   </div>
 </template>

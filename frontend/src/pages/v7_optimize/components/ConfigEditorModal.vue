@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhGear, PhPlus, PhX } from '@phosphor-icons/vue';
+import { PhCheck, PhCode, PhCopy, PhGear, PhMagnifyingGlass, PhPlus, PhShieldCheck, PhSliders, PhSparkle, PhX } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -89,9 +89,16 @@ const tabs: { id: EditorTab; label: string }[] = [
 ];
 
 const tab = ref<EditorTab>('general');
+const contentEl = ref<HTMLElement | null>(null);
 const local = ref<OptimizeEditorDraft | null>(null);
 const suiteEditor = ref<InstanceType<typeof SuiteEditor> | null>(null);
 const localError = ref('');
+
+watch(tab, () => {
+  if (contentEl.value) {
+    contentEl.value.scrollTop = 0;
+  }
+});
 const exchangeText = ref('');
 const tagsText = ref('');
 const approvedLongText = ref('');
@@ -408,13 +415,58 @@ watch(() => [props.open, props.draft] as const, ([open, nextDraft], previous) =>
   load(nextDraft);
   void loadMarkets(nextDraft?.exchanges || []);
 }, { immediate: true, deep: true });
-onBeforeUnmount(stopOhlcvJob);
+onBeforeUnmount(() => {
+  if (copiedTimeout) clearTimeout(copiedTimeout);
+  stopOhlcvJob();
+});
 
 const displayedError = computed(() => localError.value || props.error);
 const boundRows = computed(() => Object.entries(local.value?.bounds ?? {}).sort(([a], [b]) => a.localeCompare(b)));
+const boundSearchText = ref('');
+const boundCategoryFilter = ref<'all' | 'long' | 'short' | 'fixed'>('all');
+
+const filteredBoundRows = computed(() => {
+  const query = boundSearchText.value.trim().toLowerCase();
+  const filter = boundCategoryFilter.value;
+  return boundRows.value.filter(([key]) => {
+    if (filter === 'long' && !key.startsWith('long') && !key.startsWith('bot.long')) return false;
+    if (filter === 'short' && !key.startsWith('short') && !key.startsWith('bot.short')) return false;
+    if (filter === 'fixed' && !boundFixed(key)) return false;
+    if (query && !key.toLowerCase().includes(query)) return false;
+    return true;
+  });
+});
+
+const boundCounts = computed(() => {
+  let longCount = 0;
+  let shortCount = 0;
+  let fixedCount = 0;
+  for (const [key] of boundRows.value) {
+    if (key.startsWith('long') || key.startsWith('bot.long')) longCount++;
+    if (key.startsWith('short') || key.startsWith('bot.short')) shortCount++;
+    if (boundFixed(key)) fixedCount++;
+  }
+  return { all: boundRows.value.length, long: longCount, short: shortCount, fixed: fixedCount };
+});
+
+function splitBoundKey(key: string): { prefix: string; name: string } {
+  const parts = key.split('.');
+  if (parts.length > 1) {
+    return {
+      prefix: parts.slice(0, -1).join('.'),
+      name: parts[parts.length - 1]!,
+    };
+  }
+  return { prefix: '', name: key };
+}
+const DEFAULT_EXCHANGES = ['binance', 'bitget', 'bybit', 'gateio', 'hyperliquid', 'kucoin', 'okx'] as const;
+
 const availableExchanges = computed(() => {
-  const values = new Set([...(props.exchangeOptions ?? []), ...(local.value?.exchanges ?? [])]);
-  return [...values].filter(Boolean).sort();
+  const base = props.exchangeOptions && props.exchangeOptions.length > 0
+    ? props.exchangeOptions
+    : DEFAULT_EXCHANGES;
+  const values = new Set([...base, ...(local.value?.exchanges ?? [])]);
+  return [...values].map((v) => String(v).trim().toLowerCase()).filter(Boolean).sort();
 });
 const availableBackends = computed(() => {
   const selected = String(local.value?.optimize.backend || '').trim().toLowerCase();
@@ -527,14 +579,34 @@ function setBoolean(sectionName: SectionName, key: string, value: boolean): void
   if (target) target[key] = value;
 }
 
+function isExchangeSelected(exchange: string): boolean {
+  if (!local.value?.exchanges) return false;
+  const target = exchange.trim().toLowerCase();
+  return local.value.exchanges.some((e) => String(e).trim().toLowerCase() === target);
+}
 function toggleExchange(exchange: string, checked: boolean): void {
   if (!local.value) return;
-  const next = new Set(local.value.exchanges);
-  if (checked) next.add(exchange); else next.delete(exchange);
+  const target = exchange.trim().toLowerCase();
+  const current = local.value.exchanges.map((e) => String(e).trim().toLowerCase());
+  const next = new Set(current);
+  if (checked) next.add(target); else next.delete(target);
   local.value.exchanges = [...next];
   exchangeText.value = local.value.exchanges.join(', ');
 }
-function applyExchangeText(): void { if (local.value) local.value.exchanges = parseCsv(exchangeText.value); }
+function selectAllExchanges(): void {
+  if (!local.value) return;
+  local.value.exchanges = [...availableExchanges.value];
+  exchangeText.value = local.value.exchanges.join(', ');
+}
+function clearExchanges(): void {
+  if (!local.value) return;
+  local.value.exchanges = [];
+  exchangeText.value = '';
+}
+function applyExchangeText(): void {
+  if (!local.value) return;
+  local.value.exchanges = parseCsv(exchangeText.value);
+}
 
 function botJson(side: BotSide): string { return side === 'long' ? botLongJson.value : botShortJson.value; }
 function setBotJson(side: BotSide, value: string): void { if (side === 'long') botLongJson.value = value; else botShortJson.value = value; }
@@ -669,6 +741,30 @@ function applyTextSections(): void {
   }
 }
 
+const copiedRaw = ref(false);
+let copiedTimeout: ReturnType<typeof setTimeout> | null = null;
+async function copyRawJson(): Promise<void> {
+  if (!rawJson.value) return;
+  try {
+    await navigator.clipboard.writeText(rawJson.value);
+    copiedRaw.value = true;
+    if (copiedTimeout) clearTimeout(copiedTimeout);
+    copiedTimeout = setTimeout(() => {
+      copiedRaw.value = false;
+    }, 2000);
+  } catch {}
+}
+const rawLineCount = computed(() => {
+  if (!rawJson.value) return 0;
+  return rawJson.value.split('\n').length;
+});
+const rawByteSize = computed(() => {
+  if (!rawJson.value) return '0 B';
+  const bytes = new Blob([rawJson.value]).size;
+  if (bytes < 1024) return `${bytes} B`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+});
+
 function applyRaw(): void {
   if (!local.value) return;
   try {
@@ -711,212 +807,757 @@ function preflight(): void {
 
 <template>
   <div v-if="open && local" class="fixed inset-0 z-[1000] grid place-items-center bg-backdrop p-4 max-[600px]:p-0">
-    <section class="opt-editor-modal flex w-[min(1120px,100%)] max-h-[min(88vh,900px)] max-h-[min(88dvh,900px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)]" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
-      <header class="opt-editor-header flex shrink-0 items-center justify-between gap-4 border-b border-border-default px-5 py-4 max-[600px]:px-4">
+    <section class="opt-editor-modal flex w-[min(1240px,96vw)] h-[min(88vh,860px)] h-[min(88dvh,860px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)] max-[600px]:h-full max-[600px]:max-h-full max-[600px]:rounded-none" role="dialog" aria-modal="true" aria-labelledby="opt-editor-title">
+      <header class="opt-editor-header flex shrink-0 items-center justify-between gap-4 border-b border-border-default bg-surface-deep/40 px-5 py-2.5 max-[600px]:px-3.5">
         <div class="flex min-w-0 items-center gap-3">
-          <div class="opt-editor-header__icon" aria-hidden="true"><PbIcon :icon="PhGear" :size="20" /></div>
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <h2 id="opt-editor-title" class="m-0 truncate text-base font-semibold tracking-[0.01em]">{{ t('v7optimize.editOptimize') }}</h2>
-              <span class="opt-editor-version">{{ version.toUpperCase() }}</span>
-            </div>
-            <p class="m-0 mt-1 truncate text-xs text-secondary">{{ t('v7optimize.editorDescription') }}</p>
+          <div class="opt-editor-header__icon" aria-hidden="true"><PbIcon :icon="PhGear" :size="17" /></div>
+          <div class="min-w-0 flex items-center gap-2.5">
+            <h2 id="opt-editor-title" class="m-0 truncate text-[15px] font-bold tracking-tight text-primary">{{ t('v7optimize.editOptimize') }}</h2>
+            <span class="opt-editor-version">{{ version.toUpperCase() }}</span>
+            <span class="hidden md:inline-block text-[13px] text-secondary/80 border-l border-border-default/60 pl-2.5 ml-0.5 truncate">{{ t('v7optimize.editorDescription') }}</span>
           </div>
         </div>
-        <Button type="button" variant="default" class="shrink-0" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button>
+        <div class="flex items-center gap-2 shrink-0">
+          <Button type="button" variant="default" size="sm" class="h-8.5 gap-1.5 text-[13px] font-medium shrink-0" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button>
+          <Button type="button" variant="ghost" size="sm" class="size-8 p-0 text-secondary hover:text-primary transition-colors" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="17" /></Button>
+        </div>
       </header>
-      <nav class="opt-editor-tabs flex shrink-0 gap-1 overflow-x-auto border-b border-border-default px-5 max-[600px]:px-4" :aria-label="t('v7optimize.editorNavigation')">
+      <nav class="opt-editor-tabs flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border-default/80 bg-surface-deep/50 px-5 py-2 max-[600px]:px-3" :aria-label="t('v7optimize.editorNavigation')">
         <button v-for="item in tabs" :key="item.id" type="button" :data-tab="item.id" :class="{ active: tab === item.id }" @click="tab = item.id">{{ t(item.label) }}</button>
       </nav>
-      <div class="opt-editor-content grid min-h-0 gap-4 overflow-auto p-5 max-[600px]:gap-3 max-[600px]:p-4">
-        <section v-if="tab === 'general'" class="opt-editor-general grid gap-4">
+      <div ref="contentEl" class="opt-editor-content flex flex-1 min-h-0 flex-col overflow-y-auto p-5 max-[600px]:p-4">
+        <section v-if="tab === 'general'" class="opt-tab-panel opt-editor-general grid gap-4">
           <div class="opt-editor-section">
-            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorIdentitySection') }}</h3><p>{{ t('v7optimize.editorIdentityHint') }}</p></div>
-            <div class="opt-editor-fields opt-editor-fields--identity">
-              <label class="opt-editor-field opt-editor-field--wide">{{ t('v7optimize.configName') }}<Input v-model="local.name" /></label>
-              <label class="opt-editor-field">start_date<template v-if="version === 'v8'"><div class="flex min-w-0 items-center gap-1.5" data-test="ohlcv-start-date-controls"><Input type="date" class="min-w-0 flex-1" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" /><Button type="button" variant="default" size="sm" data-test="ohlcv-start-first" :disabled="!!ohlcvJob" @click="startOhlcvDateLookup('earliest')">1st</Button><Button type="button" variant="default" size="sm" data-test="ohlcv-start-all" :disabled="!!ohlcvJob" @click="startOhlcvDateLookup('all_markets')">All</Button></div><div v-if="ohlcvJob" class="mt-1.5 grid gap-1" data-test="ohlcv-start-progress" role="status" aria-live="polite"><div class="h-1.5 overflow-hidden rounded-full bg-white/10"><div class="h-full bg-accent transition-[width]" :style="{ width: `${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0)))}%` }"></div></div><div class="flex items-center justify-between gap-2 text-[11px] text-secondary"><span>{{ ohlcvJob.progress?.message || t('v7optimize.ohlcvStartDateWorking') }}</span><Button type="button" variant="danger" size="sm" data-test="ohlcv-start-stop" :disabled="ohlcvJob.status === 'stopping'" @click="stopOhlcvJob">{{ t('v7optimize.ohlcvStartDateStop') }}</Button></div></div><small v-if="ohlcvError" class="text-danger-soft" data-test="ohlcv-start-error">{{ ohlcvError }}</small></template><Input v-else type="date" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" /></label>
-              <label class="opt-editor-field">end_date<Input type="date" :model-value="String(local.backtest.end_date || '')" @update:model-value="setText('backtest', 'end_date', String($event ?? ''))" /></label>
+            <div class="opt-editor-section__heading">
+              <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 min-w-0">
+                <h3>{{ t('v7optimize.editorIdentitySection') }}</h3>
+                <p>{{ t('v7optimize.editorIdentityHint') }}</p>
+              </div>
+            </div>
+            <div class="opt-editor-fields opt-editor-fields--identity grid grid-cols-1 gap-3.5 p-4 sm:grid-cols-12">
+              <label class="opt-editor-field sm:col-span-5">
+                <span>{{ t('v7optimize.configName') }}</span>
+                <Input v-model="local.name" class="h-9 text-[13.5px]" />
+              </label>
+              <label class="opt-editor-field sm:col-span-4 max-[600px]:col-span-full">
+                <span>start_date</span>
+                <template v-if="version === 'v8'">
+                  <div class="flex min-w-0 items-center gap-1.5" data-test="ohlcv-start-date-controls">
+                    <Input type="date" class="min-w-0 flex-1 h-9 text-[13.5px] tabular-nums" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" />
+                    <Button type="button" variant="default" size="sm" class="h-9 px-2.5 text-xs font-semibold" data-test="ohlcv-start-first" :disabled="!!ohlcvJob" @click="startOhlcvDateLookup('earliest')">1st</Button>
+                    <Button type="button" variant="default" size="sm" class="h-9 px-2.5 text-xs font-semibold" data-test="ohlcv-start-all" :disabled="!!ohlcvJob" @click="startOhlcvDateLookup('all_markets')">All</Button>
+                  </div>
+                  <div v-if="ohlcvJob" class="mt-1.5 grid gap-1" data-test="ohlcv-start-progress" role="status" aria-live="polite">
+                    <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div class="h-full bg-accent transition-[width]" :style="{ width: `${Math.max(0, Math.min(100, Number(ohlcvJob.progress?.percent || 0)))}%` }"></div>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 text-xs text-secondary">
+                      <span>{{ ohlcvJob.progress?.message || t('v7optimize.ohlcvStartDateWorking') }}</span>
+                      <Button type="button" variant="danger" size="sm" class="h-7 px-2 text-xs" data-test="ohlcv-start-stop" :disabled="ohlcvJob.status === 'stopping'" @click="stopOhlcvJob">{{ t('v7optimize.ohlcvStartDateStop') }}</Button>
+                    </div>
+                  </div>
+                  <small v-if="ohlcvError" class="text-xs text-danger-soft" data-test="ohlcv-start-error">{{ ohlcvError }}</small>
+                </template>
+                <Input v-else type="date" class="h-9 text-[13.5px] tabular-nums" :model-value="String(local.backtest.start_date || '')" @update:model-value="setText('backtest', 'start_date', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field sm:col-span-3 max-[600px]:col-span-full">
+                <span>end_date</span>
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <Input type="date" class="min-w-0 flex-1 h-9 text-[13.5px] tabular-nums" :model-value="String(local.backtest.end_date || '')" @update:model-value="setText('backtest', 'end_date', String($event ?? ''))" />
+                  <Button type="button" variant="default" size="sm" class="h-9 px-2.5 text-xs font-semibold" :title="t('v7optimize.nowDate')" @click="setText('backtest', 'end_date', new Date().toISOString().slice(0, 10))">Now</Button>
+                </div>
+              </label>
             </div>
           </div>
 
           <div class="opt-editor-section">
-            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorDataSection') }}</h3><p>{{ t('v7optimize.editorDataHint') }}</p></div>
+            <div class="opt-editor-section__heading">
+              <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 min-w-0">
+                <h3>{{ t('v7optimize.editorDataSection') }}</h3>
+                <p>{{ t('v7optimize.editorDataHint') }}</p>
+              </div>
+            </div>
             <div class="opt-editor-fields">
-              <label class="opt-editor-field">starting_balance<Input type="number" :model-value="numberField('backtest', 'starting_balance', 1000)" @update:model-value="setNumber('backtest', 'starting_balance', String($event ?? ''))" /></label>
-              <label class="opt-editor-field">candle_interval_minutes<Input type="number" :model-value="numberField('backtest', 'candle_interval_minutes', 60)" @update:model-value="setNumber('backtest', 'candle_interval_minutes', String($event ?? ''))" /></label>
-              <label class="opt-editor-field" data-field="btc-collateral-cap">btc_collateral_cap<Input type="number" step="any" :model-value="numberField('backtest', 'btc_collateral_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_cap', String($event ?? ''))" /></label>
-              <label class="opt-editor-field">btc_collateral_ltv_cap<Input type="number" step="any" :model-value="numberField('backtest', 'btc_collateral_ltv_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_ltv_cap', String($event ?? ''))" /></label>
-              <label class="opt-editor-field">hsl_signal_mode<SelectRoot :model-value="String(local.live.hsl_signal_mode || '')" @update:model-value="setText('live', 'hsl_signal_mode', String($event))"><SelectTrigger aria-label="hsl_signal_mode"><span>{{ String(local.live.hsl_signal_mode || '') }}</span></SelectTrigger><SelectContent><SelectItem v-for="mode in availableHslModes" :key="mode" :value="mode">{{ mode }}</SelectItem></SelectContent></SelectRoot></label>
-              <label v-if="version === 'v8'" class="opt-editor-field">strategy_kind<SelectRoot :model-value="String(local.live.strategy_kind || '')" @update:model-value="onStrategyKindChange(String($event))"><SelectTrigger aria-label="strategy_kind"><span>{{ String(local.live.strategy_kind || '') }}</span></SelectTrigger><SelectContent><SelectItem v-for="strategy in availableStrategies" :key="strategy" :value="strategy">{{ strategy }}</SelectItem></SelectContent></SelectRoot></label>
-              <label class="opt-editor-field opt-editor-field--wide">ohlcv_source_dir<div class="flex min-w-0 items-center gap-2"><Input class="min-w-0 flex-1" :model-value="String(local.backtest.ohlcv_source_dir || '')" @update:model-value="setText('backtest', 'ohlcv_source_dir', String($event ?? ''))" /><Button type="button" variant="default" size="sm" :title="t('v7optimize.clearPath')" :aria-label="t('v7optimize.clearPath')" @click="setText('backtest', 'ohlcv_source_dir', '')"><PbIcon :icon="PhX" :size="18" /></Button><Button type="button" variant="default" size="sm" v-if="pbguiDataPath" @click="setText('backtest', 'ohlcv_source_dir', pbguiDataPath)">{{ t('v7optimize.pbguiData') }}</Button></div></label>
+              <label class="opt-editor-field">
+                <span>starting_balance</span>
+                <Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'starting_balance', 1000)" @update:model-value="setNumber('backtest', 'starting_balance', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field">
+                <span>candle_interval_minutes</span>
+                <Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'candle_interval_minutes', 60)" @update:model-value="setNumber('backtest', 'candle_interval_minutes', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field" data-field="btc-collateral-cap">
+                <span>btc_collateral_cap</span>
+                <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'btc_collateral_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_cap', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field">
+                <span>btc_collateral_ltv_cap</span>
+                <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('backtest', 'btc_collateral_ltv_cap', 0)" @update:model-value="setNumber('backtest', 'btc_collateral_ltv_cap', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field">
+                <span>hsl_signal_mode</span>
+                <SelectRoot :model-value="String(local.live.hsl_signal_mode || '')" @update:model-value="setText('live', 'hsl_signal_mode', String($event))">
+                  <SelectTrigger aria-label="hsl_signal_mode" class="h-9 text-[13.5px]">
+                    <span>{{ String(local.live.hsl_signal_mode || '') }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="mode in availableHslModes" :key="mode" :value="mode">{{ mode }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </label>
+              <label v-if="version === 'v8'" class="opt-editor-field">
+                <span>strategy_kind</span>
+                <SelectRoot :model-value="String(local.live.strategy_kind || '')" @update:model-value="onStrategyKindChange(String($event))">
+                  <SelectTrigger aria-label="strategy_kind" class="h-9 text-[13.5px]">
+                    <span>{{ String(local.live.strategy_kind || '') }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="strategy in availableStrategies" :key="strategy" :value="strategy">{{ strategy }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </label>
+              <label class="opt-editor-field" :class="version === 'v8' ? 'opt-editor-field--wide col-span-2' : 'opt-editor-field--wide col-span-3'">
+                <span>ohlcv_source_dir</span>
+                <div class="flex min-w-0 items-center gap-2">
+                  <Input class="min-w-0 flex-1 h-9 text-[13px] font-mono" :model-value="String(local.backtest.ohlcv_source_dir || '')" @update:model-value="setText('backtest', 'ohlcv_source_dir', String($event ?? ''))" />
+                  <Button type="button" variant="default" size="sm" class="size-9 p-0 text-secondary hover:text-primary shrink-0" :title="t('v7optimize.clearPath')" :aria-label="t('v7optimize.clearPath')" @click="setText('backtest', 'ohlcv_source_dir', '')"><PbIcon :icon="PhX" :size="16" /></Button>
+                  <Button type="button" variant="default" size="sm" class="h-9 shrink-0 text-xs font-medium" v-if="pbguiDataPath" @click="setText('backtest', 'ohlcv_source_dir', pbguiDataPath)">{{ t('v7optimize.pbguiData') }}</Button>
+                </div>
+              </label>
             </div>
           </div>
 
           <div class="opt-editor-section">
-            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorMarketsSection') }}</h3><p>{{ t('v7optimize.editorMarketsHint') }}</p></div>
+            <div class="opt-editor-section__heading">
+              <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 min-w-0">
+                <h3>{{ t('v7optimize.editorMarketsSection') }}</h3>
+                <p>{{ t('v7optimize.editorMarketsHint') }}</p>
+              </div>
+            </div>
             <div class="opt-editor-fields">
-              <label class="opt-editor-field">market_cap<Input type="number" step="any" :model-value="numberField('pbgui', 'market_cap', 0)" @update:model-value="setNumber('pbgui', 'market_cap', String($event ?? ''))" /></label>
-              <label class="opt-editor-field">vol_mcap<Input type="number" step="any" :model-value="numberField('pbgui', 'vol_mcap', 0)" @update:model-value="setNumber('pbgui', 'vol_mcap', String($event ?? ''))" /></label>
-              <label class="opt-editor-field">minimum_coin_age_days<Input type="number" :model-value="numberField('live', 'minimum_coin_age_days', 0)" @update:model-value="setNumber('live', 'minimum_coin_age_days', String($event ?? ''))" /></label>
-              <label class="opt-editor-field opt-editor-field--wide">tags<Input v-model="tagsText" /></label>
-              <div class="opt-editor-checks"><label><Checkbox :model-value="booleanField('pbgui', 'only_cpt')" @update:model-value="setBoolean('pbgui', 'only_cpt', ($event === true))" /> only_cpt</label><label><Checkbox :model-value="booleanField('pbgui', 'notices_ignore')" @update:model-value="setBoolean('pbgui', 'notices_ignore', ($event === true))" /> notices_ignore</label></div>
-              <label class="opt-editor-field opt-editor-field--wide">exchanges<Input v-model="exchangeText" @blur="applyExchangeText" /></label>
-              <div v-if="availableExchanges.length" class="opt-editor-options opt-editor-field--wide"><label v-for="exchange in availableExchanges" :key="exchange"><Checkbox :model-value="local.exchanges.includes(exchange)" @update:model-value="toggleExchange(exchange, ($event === true))" /> {{ exchange }}</label></div>
+              <label class="opt-editor-field">
+                <span>market_cap</span>
+                <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('pbgui', 'market_cap', 0)" @update:model-value="setNumber('pbgui', 'market_cap', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field">
+                <span>vol_mcap</span>
+                <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('pbgui', 'vol_mcap', 0)" @update:model-value="setNumber('pbgui', 'vol_mcap', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field">
+                <span>minimum_coin_age_days</span>
+                <Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('live', 'minimum_coin_age_days', 0)" @update:model-value="setNumber('live', 'minimum_coin_age_days', String($event ?? ''))" />
+              </label>
+              <label class="opt-editor-field">
+                <span>tags</span>
+                <Input v-model="tagsText" class="h-9 text-[13.5px]" placeholder="e.g. layer1, defi" />
+              </label>
+              <div class="col-span-2 max-[600px]:col-span-full">
+                <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
+                  <Checkbox :model-value="booleanField('pbgui', 'only_cpt')" @update:model-value="setBoolean('pbgui', 'only_cpt', ($event === true))" />
+                  <span class="text-[13px] font-medium text-primary">only_cpt</span>
+                </label>
+              </div>
+              <div class="col-span-2 max-[600px]:col-span-full">
+                <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
+                  <Checkbox :model-value="booleanField('pbgui', 'notices_ignore')" @update:model-value="setBoolean('pbgui', 'notices_ignore', ($event === true))" />
+                  <span class="text-[13px] font-medium text-primary">notices_ignore</span>
+                </label>
+              </div>
+              <div class="col-span-4 max-[900px]:col-span-2 max-[600px]:col-span-1 flex flex-col gap-2.5">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[13px] font-semibold text-primary">exchanges</span>
+                    <span class="rounded bg-accent/10 px-2 py-0.5 text-xs font-mono font-medium text-accent">
+                      {{ local.exchanges.length }} / {{ availableExchanges.length }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 text-xs">
+                    <button type="button" class="text-[13px] text-accent hover:underline cursor-pointer font-medium" @click="selectAllExchanges">{{ t('v7optimize.selectAll') }}</button>
+                    <span class="text-secondary/40">•</span>
+                    <button type="button" class="text-[13px] text-secondary hover:text-primary cursor-pointer font-medium" @click="clearExchanges">{{ t('v7optimize.deselectAll') }}</button>
+                  </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 rounded-lg border border-border-default/70 bg-surface-deep/40 p-3 w-full">
+                  <label
+                    v-for="exchange in availableExchanges"
+                    :key="exchange"
+                    class="flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] cursor-pointer select-none transition-all border shadow-2xs"
+                    :class="isExchangeSelected(exchange) ? 'bg-accent/15 border-accent/40 text-accent-soft font-semibold' : 'bg-surface-deep/60 border-border-default/60 text-secondary hover:text-primary hover:border-border-default'"
+                  >
+                    <Checkbox
+                      :model-value="isExchangeSelected(exchange)"
+                      @update:model-value="toggleExchange(exchange, ($event === true))"
+                    />
+                    <span>{{ exchange }}</span>
+                  </label>
+                </div>
+                <Input
+                  v-model="exchangeText"
+                  class="h-9 w-full text-[13px] font-mono"
+                  @blur="applyExchangeText"
+                  @change="applyExchangeText"
+                  @keydown.enter="applyExchangeText"
+                  placeholder="binance, bybit, bitget..."
+                />
+              </div>
             </div>
           </div>
 
           <div class="opt-editor-section">
-            <div class="opt-editor-section__heading"><h3>{{ t('v7optimize.editorCoinsSection') }}</h3><p>{{ t('v7optimize.editorCoinsHint') }}</p></div>
+            <div class="opt-editor-section__heading">
+              <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2.5 min-w-0">
+                <h3>{{ t('v7optimize.editorCoinsSection') }}</h3>
+                <p>{{ t('v7optimize.editorCoinsHint') }}</p>
+              </div>
+            </div>
             <div class="opt-editor-fields">
-              <label class="opt-editor-field">approved_coins.long<Input v-model="approvedLongText" /></label>
-              <label class="opt-editor-field">approved_coins.short<Input v-model="approvedShortText" /></label>
-              <label class="opt-editor-field">ignored_coins.long<Input v-model="ignoredLongText" /></label>
-              <label class="opt-editor-field">ignored_coins.short<Input v-model="ignoredShortText" /></label>
-              <label class="opt-editor-field opt-editor-field--wide">coin_sources<Textarea v-model="coinSourcesJson" class="min-h-[120px]" /></label>
-            </div>
-          </div>
-        </section>
-
-        <section v-else-if="tab === 'bot-long'" class="flex min-h-0 flex-col gap-2.5">
-          <div class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]"><label class="grid gap-1.5 text-xs text-secondary">total_wallet_exposure_limit<Input type="number" step="any" :model-value="botNumber('long', 'twe', 1)" @update:model-value="setBotNumber('long', 'twe', String($event ?? ''))" /></label><label class="grid gap-1.5 text-xs text-secondary">n_positions<Input type="number" step="1" :model-value="botNumber('long', 'npos', 1)" @update:model-value="setBotNumber('long', 'npos', String($event ?? ''))" /></label><label><Checkbox :model-value="botBoolean('long', 'hsl')" @update:model-value="setBotBoolean('long', 'hsl', ($event === true))" /> hsl_enabled</label></div>
-          <BotJsonEditor v-model="botLongJson" label="Bot long JSON" :status="(paramStatus?.long as Record<string, unknown> | undefined) || {}" />
-        </section>
-        <section v-else-if="tab === 'bot-short'" class="flex min-h-0 flex-col gap-2.5">
-          <div class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]"><label class="grid gap-1.5 text-xs text-secondary">total_wallet_exposure_limit<Input type="number" step="any" :model-value="botNumber('short', 'twe', 0)" @update:model-value="setBotNumber('short', 'twe', String($event ?? ''))" /></label><label class="grid gap-1.5 text-xs text-secondary">n_positions<Input type="number" step="1" :model-value="botNumber('short', 'npos', 0)" @update:model-value="setBotNumber('short', 'npos', String($event ?? ''))" /></label><label><Checkbox :model-value="botBoolean('short', 'hsl')" @update:model-value="setBotBoolean('short', 'hsl', ($event === true))" /> hsl_enabled</label></div>
-          <BotJsonEditor v-model="botShortJson" label="Bot short JSON" :status="(paramStatus?.short as Record<string, unknown> | undefined) || {}" />
-        </section>
-
-        <section v-else-if="tab === 'bounds'" class="flex flex-col gap-2.5">
-          <div class="mb-2.5 flex flex-wrap items-center gap-2.5"><Input v-model="newBoundKey" class="flex-1" placeholder="bot.long.risk.wallet_exposure_limit" @keydown.enter.prevent="addBound" /><Button type="button" variant="info" data-test="add-bound" @click="addBound"><PbIcon :icon="PhPlus" /> {{ t('editor.suite.add') }}</Button></div>
-          <div v-for="[key, pair] in boundRows" :key="key" class="grid grid-cols-[minmax(0,1.3fr)_minmax(72px,.9fr)_auto_minmax(72px,.9fr)_minmax(72px,.9fr)_auto_auto] items-center gap-2">
-            <code>{{ key }}</code>
-            <Input type="number" step="any" :model-value="pairValue(pair, 0)" @update:model-value="setBoundValue(key, 0, String($event ?? ''))" />
-            <span>→</span>
-            <Input type="number" step="any" :model-value="pairValue(pair, 1)" @update:model-value="setBoundValue(key, 1, String($event ?? ''))" />
-            <Input type="number" step="any" :data-field="`bound-step-${key}`" :model-value="pairValue(pair, 2)" placeholder="step" @update:model-value="setBoundValue(key, 2, String($event ?? ''))" />
-            <label class="flex items-center gap-1 whitespace-nowrap"><Checkbox :data-field="`bound-fixed-${key}`" :model-value="boundFixed(key)" @update:model-value="setBoundFixed(key, ($event === true))" /> fixed</label>
-            <Button type="button" variant="danger" size="sm" :title="t('common.delete')" :aria-label="t('common.delete')" @click="deleteBound(key)"><PbIcon :icon="PhX" :size="18" /></Button>
-          </div>
-        </section>
-
-        <section v-else-if="tab === 'optimizer'" class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-          <label class="grid gap-1.5 text-xs text-secondary">backend<SelectRoot :model-value="currentBackend" @update:model-value="switchOptimizeBackend(String($event))"><SelectTrigger data-field="optimizer-backend" aria-label="backend"><span>{{ currentBackend }}</span></SelectTrigger><SelectContent><SelectItem v-for="item in availableBackends" :key="item.value" :value="item.value">{{ item.label }}</SelectItem></SelectContent></SelectRoot></label>
-          <label class="grid gap-1.5 text-xs text-secondary">iters<Input type="number" min="1" :model-value="numberField('optimize', 'iters', 100000)" @update:model-value="setNumber('optimize', 'iters', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">n_cpus<Input type="number" min="1" :model-value="numberField('optimize', 'n_cpus', 1)" @update:model-value="setNumber('optimize', 'n_cpus', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">pareto_max_size<Input type="number" min="1" :model-value="numberField('optimize', 'pareto_max_size', 100)" @update:model-value="setNumber('optimize', 'pareto_max_size', String($event ?? ''))" /></label>
-          <label v-if="version === 'v7'" class="grid gap-1.5 text-xs text-secondary">max_pending_starting_evals_per_cpu<Input type="number" min="1" :model-value="numberField('optimize', 'max_pending_starting_evals_per_cpu', 1)" @update:model-value="setNumber('optimize', 'max_pending_starting_evals_per_cpu', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">round_to_n_significant_digits<Input type="number" min="1" :model-value="numberField('optimize', 'round_to_n_significant_digits', 5)" @update:model-value="setNumber('optimize', 'round_to_n_significant_digits', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">logging_level<Input type="number" min="0" max="3" :model-value="numberField('logging', 'level', 1)" @update:model-value="setNumber('logging', 'level', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">memory_snapshot_interval_minutes<Input type="number" min="0" :model-value="numberField('logging', 'memory_snapshot_interval_minutes', 30)" @update:model-value="setNumber('logging', 'memory_snapshot_interval_minutes', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary">volume_refresh_info_threshold_seconds<Input type="number" min="0" :model-value="numberField('logging', 'volume_refresh_info_threshold_seconds', 30)" @update:model-value="setNumber('logging', 'volume_refresh_info_threshold_seconds', String($event ?? ''))" /></label>
-          <label><Checkbox :model-value="booleanField('optimize', 'compress_results_file')" @update:model-value="setBoolean('optimize', 'compress_results_file', ($event === true))" /> compress_results_file</label>
-          <label><Checkbox :model-value="booleanField('optimize', 'write_all_results')" @update:model-value="setBoolean('optimize', 'write_all_results', ($event === true))" /> write_all_results</label>
-          <label class="grid gap-1.5 text-xs text-secondary">seed_mode<SelectRoot v-model="seedMode"><SelectTrigger aria-label="seed_mode"><span>{{ seedMode }}</span></SelectTrigger><SelectContent><SelectItem value="none">none</SelectItem><SelectItem value="self">self</SelectItem><SelectItem value="path">path</SelectItem></SelectContent></SelectRoot></label>
-          <label v-if="seedMode === 'path'" class="grid gap-1.5 text-xs text-secondary col-span-3 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="seed-path">seed_path<Input v-model="seedPath" /></label>
-          <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary">rng_seed<Input type="number" min="0" :model-value="numberField('optimize', 'seed', 0)" @update:model-value="setNumber('optimize', 'seed', String($event ?? ''))" /></label>
-          <GpuSettingsEditor v-if="currentBackend === 'gpu' && version === 'v8'" :gpu="(local.optimize.gpu as JsonObject) || {}" :optimize-defaults="optimizeDefaults || {}" :contract="backendContract" @update:gpu="local.optimize.gpu = $event" />
-          <template v-if="currentBackend === 'pymoo'">
-            <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
-              <label class="grid gap-1.5 text-xs text-secondary">algorithm<SelectRoot :model-value="pymooText('algorithm', 'auto')" @update:model-value="setPymooAlgorithm(String($event))"><SelectTrigger data-field="pymoo-algorithm" aria-label="algorithm"><span>{{ pymooText('algorithm', 'auto') }}</span></SelectTrigger><SelectContent><SelectItem v-for="algorithm in availablePymooAlgorithms" :key="algorithm" :value="algorithm">{{ algorithm }}</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.effectiveAlgorithm') }}<Input data-field="pymoo-effective-algorithm" readonly :model-value="effectivePymooAlgorithm" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary">population mode<SelectRoot :model-value="pymooPopulationMode()" @update:model-value="setPymooPopulationMode(String($event))"><SelectTrigger data-field="pymoo-population-mode" aria-label="population mode"><span>{{ pymooPopulationMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary">population size<Input data-field="pymoo-population-size" type="number" min="1" :disabled="pymooPopulationMode() === 'auto'" :model-value="pymooPopulationMode() === 'auto' ? 500 : numberField('optimize', 'population_size', 500)" @update:model-value="setPymooPopulationSize(String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary">eliminate_duplicates<SelectRoot :model-value="String(!!getPath(pymooShared(), 'eliminate_duplicates', false))" @update:model-value="setPymooValue('shared.eliminate_duplicates', $event === 'true')"><SelectTrigger data-field="pymoo-eliminate-duplicates" aria-label="eliminate_duplicates"><span>{{ String(!!getPath(pymooShared(), 'eliminate_duplicates', false)) }}</span></SelectTrigger><SelectContent><SelectItem value="false">false</SelectItem><SelectItem value="true">true</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary">crossover_eta<Input type="number" step="any" :model-value="pymooNumber('shared.crossover_eta', 20)" @update:model-value="setPymooNumber('shared.crossover_eta', String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary">crossover_prob_var<Input type="number" step="any" :model-value="pymooNumber('shared.crossover_prob_var', 0.5)" @update:model-value="setPymooNumber('shared.crossover_prob_var', String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary">mutation_eta<Input type="number" step="any" :model-value="pymooNumber('shared.mutation_eta', 20)" @update:model-value="setPymooNumber('shared.mutation_eta', String($event ?? ''))" /></label>
-              <label class="grid gap-1.5 text-xs text-secondary">mutation probability mode<SelectRoot :model-value="mutationProbabilityMode()" @update:model-value="setMutationProbabilityMode(String($event))"><SelectTrigger data-field="pymoo-mutation-prob-mode" aria-label="mutation probability mode"><span>{{ mutationProbabilityMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary">mutation_prob_var<Input type="number" step="any" :disabled="mutationProbabilityMode() === 'auto'" :model-value="mutationProbabilityMode() === 'auto' ? 0 : pymooNumber('shared.mutation_prob_var', 0.1)" @update:model-value="setMutationProbability(String($event ?? ''))" /></label>
-            </div>
-            <div v-if="effectivePymooAlgorithm === 'nsga3'" class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
-              <label class="grid gap-1.5 text-xs text-secondary">reference direction method<SelectRoot :model-value="pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis')" @update:model-value="setPymooText('algorithms.nsga3.ref_dirs.method', String($event))"><SelectTrigger data-field="pymoo-ref-dir-method" aria-label="reference direction method"><span>{{ pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis') }}</span></SelectTrigger><SelectContent><SelectItem v-for="method in availablePymooRefDirMethods" :key="method" :value="method">{{ method }}</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary">partitions mode<SelectRoot :model-value="refDirPartitionsMode()" @update:model-value="setRefDirPartitionsMode(String($event))"><SelectTrigger data-field="pymoo-ref-dir-partitions-mode" aria-label="partitions mode"><span>{{ refDirPartitionsMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
-              <label class="grid gap-1.5 text-xs text-secondary">reference partitions<Input data-field="pymoo-ref-dir-partitions" type="number" min="1" :disabled="refDirPartitionsMode() === 'auto'" :model-value="refDirPartitionsMode() === 'auto' ? 1 : pymooNumber('algorithms.nsga3.ref_dirs.n_partitions', 1)" @update:model-value="setPymooNumber('algorithms.nsga3.ref_dirs.n_partitions', String($event ?? ''))" /></label>
-              <span class="text-xs text-secondary">{{ t('v7optimize.nsga3ReferenceDirections') }}</span>
-            </div>
-            <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="pymoo-json">pymoo JSON<Textarea v-model="pymooJson" class="min-h-[120px]" /></label>
-          </template>
-          <template v-if="currentBackend === 'deap'">
-            <label class="grid gap-1.5 text-xs text-secondary">population_size<Input type="number" :model-value="numberField('optimize', 'population_size', 500)" @update:model-value="setNumber('optimize', 'population_size', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">crossover_probability<Input type="number" step="any" :model-value="numberField('optimize', 'crossover_probability', 0.7)" @update:model-value="setNumber('optimize', 'crossover_probability', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">mutation_probability<Input type="number" step="any" :model-value="numberField('optimize', 'mutation_probability', 0.2)" @update:model-value="setNumber('optimize', 'mutation_probability', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">offspring_multiplier<Input type="number" step="any" :model-value="numberField('optimize', 'offspring_multiplier', 1)" @update:model-value="setNumber('optimize', 'offspring_multiplier', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">crossover_eta<Input type="number" step="any" :model-value="numberField('optimize', 'crossover_eta', 20)" @update:model-value="setNumber('optimize', 'crossover_eta', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">mutation_eta<Input type="number" step="any" :model-value="numberField('optimize', 'mutation_eta', 20)" @update:model-value="setNumber('optimize', 'mutation_eta', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">mutation_indpb<Input type="number" step="any" :model-value="numberField('optimize', 'mutation_indpb', 0.1)" @update:model-value="setNumber('optimize', 'mutation_indpb', String($event ?? ''))" /></label>
-          </template>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">enable_overrides<Textarea v-model="enableOverridesJson" class="min-h-[120px]" data-field="enable-overrides" /></label>
-          <div class="flex min-h-0 flex-col gap-2.5 col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
-            <div>
-              <strong>{{ t('v7optimize.additionalParameters') }}</strong>
-              <p class="text-xs text-secondary">{{ t('v7optimize.additionalParametersHint') }}</p>
-            </div>
-            <p v-if="!additionalOptimizeEntries.length" class="text-xs text-secondary">{{ t('v7optimize.noAdditionalParameters') }}</p>
-            <div v-else class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-              <label v-for="entry in additionalOptimizeEntries" :key="entry.key" class="grid gap-1.5 text-xs text-secondary" :class="{ 'span-3': entry.type === 'json' }">
-                {{ entry.key }}
-                <Checkbox v-if="entry.type === 'boolean'" :data-extra-param="entry.key" :model-value="!!entry.value" @update:model-value="setAdditionalBoolean(entry.key, ($event === true))" />
-                <Input v-else-if="entry.type === 'number'" type="number" step="any" :data-extra-param="entry.key" :model-value="(entry.value as number)" @update:model-value="setAdditionalValue(entry.key, String($event ?? ''), entry.type)" />
-                <Textarea v-else-if="entry.type === 'json'" class="min-h-[120px]" :data-extra-param="entry.key" :model-value="additionalParamJson[entry.key]" @update:model-value="setAdditionalJson(entry.key, String($event ?? ''))" />
-                <Input v-else type="text" :data-extra-param="entry.key" :placeholder="entry.type === 'null' ? 'null' : ''" :model-value="entry.value === null ? '' : String(entry.value)" @update:model-value="setAdditionalValue(entry.key, String($event ?? ''), entry.type)" />
+              <label class="opt-editor-field">
+                <span>approved_coins.long</span>
+                <Input v-model="approvedLongText" class="h-9 text-[13px] font-mono" placeholder="BTC, ETH, SOL..." />
+              </label>
+              <label class="opt-editor-field">
+                <span>approved_coins.short</span>
+                <Input v-model="approvedShortText" class="h-9 text-[13px] font-mono" placeholder="BTC, ETH, SOL..." />
+              </label>
+              <label class="opt-editor-field">
+                <span>ignored_coins.long</span>
+                <Input v-model="ignoredLongText" class="h-9 text-[13px] font-mono" placeholder="DOGE, SHIB..." />
+              </label>
+              <label class="opt-editor-field">
+                <span>ignored_coins.short</span>
+                <Input v-model="ignoredShortText" class="h-9 text-[13px] font-mono" placeholder="DOGE, SHIB..." />
+              </label>
+              <label class="opt-editor-field col-span-4 max-[900px]:col-span-2 max-[600px]:col-span-1">
+                <span>coin_sources</span>
+                <Textarea v-model="coinSourcesJson" class="min-h-[100px] text-[13px] font-mono" placeholder="{}" />
               </label>
             </div>
           </div>
         </section>
 
-        <section v-else-if="tab === 'objectives'" class="flex flex-col gap-3.5">
-          <div v-if="version === 'v8'" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-            <label class="grid gap-1.5 text-xs text-secondary">objective scenario<SelectRoot :model-value="objectiveScenarioMode" @update:model-value="setObjectiveScenario(String($event))"><SelectTrigger data-field="objective-scenario" aria-label="objective scenario"><span>{{ objectiveScenarioMode === 'aggregate' ? 'suite aggregate' : 'named scenario' }}</span></SelectTrigger><SelectContent><SelectItem value="aggregate">suite aggregate</SelectItem><SelectItem value="named">named scenario</SelectItem></SelectContent></SelectRoot></label>
-            <label v-if="objectiveScenarioMode === 'named'" class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">scenario label<Input :model-value="objectiveScenarioName" @update:model-value="setObjectiveScenarioName(String($event ?? ''))" /></label>
+        <section v-else-if="tab === 'bot-long'" class="opt-tab-panel flex min-h-0 flex-col gap-3">
+          <div class="rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+            <div class="mb-3 flex items-center justify-between border-b border-border-default/60 pb-2">
+              <span class="text-[13.5px] font-semibold text-primary">{{ t('v7optimize.botCoreSettings') }}</span>
+              <span class="rounded bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent-soft">Long Side</span>
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 items-end">
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-[13px] font-medium text-primary">total_wallet_exposure_limit</span>
+                <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('long', 'twe', 1)" @update:model-value="setBotNumber('long', 'twe', String($event ?? ''))" />
+              </label>
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-[13px] font-medium text-primary">n_positions</span>
+                <Input type="number" step="1" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('long', 'npos', 1)" @update:model-value="setBotNumber('long', 'npos', String($event ?? ''))" />
+              </label>
+              <label class="flex h-9 items-center gap-2 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
+                <Checkbox :model-value="botBoolean('long', 'hsl')" @update:model-value="setBotBoolean('long', 'hsl', ($event === true))" />
+                <span class="text-[13px] font-medium text-primary">hsl_enabled</span>
+              </label>
+            </div>
+          </div>
+          <BotJsonEditor v-model="botLongJson" label="Bot long JSON" :status="(paramStatus?.long as Record<string, unknown> | undefined) || {}" />
+        </section>
+
+        <section v-else-if="tab === 'bot-short'" class="opt-tab-panel flex min-h-0 flex-col gap-3">
+          <div class="rounded-xl border border-border-default/80 bg-card/60 p-4 shadow-sm">
+            <div class="mb-3 flex items-center justify-between border-b border-border-default/60 pb-2">
+              <span class="text-[13.5px] font-semibold text-primary">{{ t('v7optimize.botCoreSettings') }}</span>
+              <span class="rounded bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent-soft">Short Side</span>
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 items-end">
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-[13px] font-medium text-primary">total_wallet_exposure_limit</span>
+                <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('short', 'twe', 0)" @update:model-value="setBotNumber('short', 'twe', String($event ?? ''))" />
+              </label>
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-[13px] font-medium text-primary">n_positions</span>
+                <Input type="number" step="1" class="h-9 text-[13.5px] tabular-nums" :model-value="botNumber('short', 'npos', 0)" @update:model-value="setBotNumber('short', 'npos', String($event ?? ''))" />
+              </label>
+              <label class="flex h-9 items-center gap-2 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
+                <Checkbox :model-value="botBoolean('short', 'hsl')" @update:model-value="setBotBoolean('short', 'hsl', ($event === true))" />
+                <span class="text-[13px] font-medium text-primary">hsl_enabled</span>
+              </label>
+            </div>
+          </div>
+          <BotJsonEditor v-model="botShortJson" label="Bot short JSON" :status="(paramStatus?.short as Record<string, unknown> | undefined) || {}" />
+        </section>
+
+        <section v-else-if="tab === 'bounds'" class="opt-tab-panel flex flex-col gap-3">
+          <!-- Toolbar: Search + Category Filters + Add Bound -->
+          <div class="flex flex-col gap-2.5 rounded-xl border border-border-default/80 bg-card/60 p-3 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2.5">
+              <!-- Search Input -->
+              <div class="relative min-w-[200px] flex-1">
+                <PbIcon :icon="PhMagnifyingGlass" class="absolute left-2.5 top-1/2 -translate-y-1/2 text-secondary pointer-events-none" :size="15" />
+                <Input
+                  v-model="boundSearchText"
+                  class="h-8.5 pl-8.5 text-[13px] placeholder:text-placeholder"
+                  :placeholder="t('v7optimize.searchBoundsPlaceholder')"
+                />
+                <button
+                  v-if="boundSearchText"
+                  type="button"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-secondary hover:text-primary"
+                  @click="boundSearchText = ''"
+                >
+                  <PbIcon :icon="PhX" :size="13" />
+                </button>
+              </div>
+
+              <!-- Add Bound Quick Input -->
+              <div class="flex items-center gap-1.5 min-w-[260px] flex-1">
+                <Input
+                  v-model="newBoundKey"
+                  list="bot-params-datalist"
+                  class="h-8.5 flex-1 text-[13px] font-mono placeholder:text-placeholder"
+                  placeholder="e.g. long.total_wallet_exposure_limit"
+                  @keydown.enter.prevent="addBound"
+                />
+                <datalist id="bot-params-datalist">
+                  <option v-for="param in (props.botParams || [])" :key="param" :value="param" />
+                </datalist>
+                <Button
+                  type="button"
+                  variant="info"
+                  size="sm"
+                  class="h-8.5 gap-1 shrink-0 text-[13px] font-medium"
+                  data-test="add-bound"
+                  @click="addBound"
+                >
+                  <PbIcon :icon="PhPlus" :size="14" />
+                  {{ t('editor.suite.add') }}
+                </Button>
+              </div>
+            </div>
+
+            <!-- Filter Pills / Badges -->
+            <div class="flex flex-wrap items-center gap-1.5 border-t border-border-default/50 pt-2 text-[12.5px]">
+              <span class="text-xs font-medium text-secondary mr-1">Filter:</span>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'all' ? 'bg-accent/20 text-accent-contrast border border-accent/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                @click="boundCategoryFilter = 'all'"
+              >
+                <span>{{ t('v7optimize.filterAll') }}</span>
+                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.all }}</span>
+              </button>
+
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'long' ? 'bg-info/20 text-info border border-info/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                @click="boundCategoryFilter = 'long'"
+              >
+                <span>{{ t('v7optimize.filterLong') }}</span>
+                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.long }}</span>
+              </button>
+
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'short' ? 'bg-warning/20 text-warning-soft border border-warning/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                @click="boundCategoryFilter = 'short'"
+              >
+                <span>{{ t('v7optimize.filterShort') }}</span>
+                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.short }}</span>
+              </button>
+
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'fixed' ? 'bg-success/20 text-success border border-success/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                @click="boundCategoryFilter = 'fixed'"
+              >
+                <span>{{ t('v7optimize.filterFixed') }}</span>
+                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.fixed }}</span>
+              </button>
+
+              <span v-if="filteredBoundRows.length !== boundRows.length" class="ml-auto text-xs text-secondary">
+                Showing {{ filteredBoundRows.length }} / {{ boundRows.length }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-hidden rounded-xl border border-border-default/80 bg-card/40 shadow-sm">
+            <!-- Sticky Table Header -->
+            <div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(140px,1fr)_minmax(80px,0.6fr)_80px_48px] items-center gap-3 border-b border-border-default bg-surface-deep/80 px-3.5 py-2 text-xs font-semibold text-secondary">
+              <div>{{ t('v7optimize.boundsTableHeaderParam') }}</div>
+              <div>{{ t('v7optimize.boundsTableHeaderRange') }}</div>
+              <div>{{ t('v7optimize.boundsTableHeaderStep') }}</div>
+              <div class="text-center">{{ t('v7optimize.boundsTableHeaderFixed') }}</div>
+              <div class="text-right">{{ t('v7optimize.boundsTableHeaderActions') }}</div>
+            </div>
+
+            <!-- Table Rows -->
+            <div class="max-h-[500px] overflow-y-auto divide-y divide-border-default/40">
+              <div
+                v-for="[key, pair] in filteredBoundRows"
+                :key="key"
+                class="grid grid-cols-[minmax(180px,1.5fr)_minmax(140px,1fr)_minmax(80px,0.6fr)_80px_48px] items-center gap-3 px-3.5 py-2 transition-colors hover:bg-surface-deep/50"
+              >
+                <!-- Parameter Column -->
+                <div class="min-w-0 flex flex-col justify-center">
+                  <div v-if="splitBoundKey(key).prefix" class="truncate text-[11px] font-mono text-secondary">
+                    {{ splitBoundKey(key).prefix }}.
+                  </div>
+                  <code class="truncate text-[13px] font-mono font-medium text-primary" :title="key">
+                    {{ splitBoundKey(key).name }}
+                  </code>
+                </div>
+
+                <!-- Range Column (Min → Max) -->
+                <div class="flex items-center gap-1.5">
+                  <Input
+                    type="number"
+                    step="any"
+                    class="h-8 text-[13px] font-mono tabular-nums w-full"
+                    placeholder="min"
+                    :model-value="pairValue(pair, 0)"
+                    @update:model-value="setBoundValue(key, 0, String($event ?? ''))"
+                  />
+                  <span class="text-secondary text-xs select-none">→</span>
+                  <Input
+                    type="number"
+                    step="any"
+                    class="h-8 text-[13px] font-mono tabular-nums w-full"
+                    placeholder="max"
+                    :model-value="pairValue(pair, 1)"
+                    @update:model-value="setBoundValue(key, 1, String($event ?? ''))"
+                  />
+                </div>
+
+                <!-- Step Column -->
+                <div>
+                  <Input
+                    type="number"
+                    step="any"
+                    class="h-8 text-[13px] font-mono tabular-nums w-full"
+                    :data-field="`bound-step-${key}`"
+                    :model-value="pairValue(pair, 2)"
+                    placeholder="step"
+                    @update:model-value="setBoundValue(key, 2, String($event ?? ''))"
+                  />
+                </div>
+
+                <!-- Fixed Column -->
+                <div class="flex justify-center">
+                  <label class="flex items-center justify-center p-1 cursor-pointer select-none">
+                    <Checkbox
+                      :data-field="`bound-fixed-${key}`"
+                      :model-value="boundFixed(key)"
+                      @update:model-value="setBoundFixed(key, ($event === true))"
+                    />
+                  </label>
+                </div>
+
+                <!-- Action Column -->
+                <div class="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    class="size-8 p-0 text-secondary hover:bg-danger/15 hover:text-danger-soft transition-colors"
+                    :title="t('common.delete')"
+                    :aria-label="t('common.delete')"
+                    @click="deleteBound(key)"
+                  >
+                    <PbIcon :icon="PhX" :size="15" />
+                  </Button>
+                </div>
+              </div>
+
+              <div v-if="!filteredBoundRows.length" class="py-10 text-center text-xs text-secondary">
+                {{ boundSearchText ? t('v7optimize.noMatchingBounds') : t('v7optimize.noEntries') }}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section v-else-if="tab === 'optimizer'" class="opt-tab-panel grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">backend</span><SelectRoot :model-value="currentBackend" @update:model-value="switchOptimizeBackend(String($event))"><SelectTrigger data-field="optimizer-backend" aria-label="backend" class="h-9 text-[13.5px]"><span>{{ currentBackend }}</span></SelectTrigger><SelectContent><SelectItem v-for="item in availableBackends" :key="item.value" :value="item.value">{{ item.label }}</SelectItem></SelectContent></SelectRoot></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">iters</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'iters', 100000)" @update:model-value="setNumber('optimize', 'iters', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">n_cpus</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'n_cpus', 1)" @update:model-value="setNumber('optimize', 'n_cpus', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">pareto_max_size</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'pareto_max_size', 100)" @update:model-value="setNumber('optimize', 'pareto_max_size', String($event ?? ''))" /></label>
+          <label v-if="version === 'v7'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">max_pending_starting_evals_per_cpu</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'max_pending_starting_evals_per_cpu', 1)" @update:model-value="setNumber('optimize', 'max_pending_starting_evals_per_cpu', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">round_to_n_significant_digits</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'round_to_n_significant_digits', 5)" @update:model-value="setNumber('optimize', 'round_to_n_significant_digits', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">logging_level</span><Input type="number" min="0" max="3" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'level', 1)" @update:model-value="setNumber('logging', 'level', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">memory_snapshot_interval_minutes</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'memory_snapshot_interval_minutes', 30)" @update:model-value="setNumber('logging', 'memory_snapshot_interval_minutes', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">volume_refresh_info_threshold_seconds</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'volume_refresh_info_threshold_seconds', 30)" @update:model-value="setNumber('logging', 'volume_refresh_info_threshold_seconds', String($event ?? ''))" /></label>
+          <div class="flex items-center gap-2.5 col-span-2">
+            <label class="flex h-9 flex-1 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
+              <Checkbox :model-value="booleanField('optimize', 'compress_results_file')" @update:model-value="setBoolean('optimize', 'compress_results_file', ($event === true))" />
+              <span class="text-[13px] font-medium text-primary">compress_results_file</span>
+            </label>
+            <label class="flex h-9 flex-1 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface-deep">
+              <Checkbox :model-value="booleanField('optimize', 'write_all_results')" @update:model-value="setBoolean('optimize', 'write_all_results', ($event === true))" />
+              <span class="text-[13px] font-medium text-primary">write_all_results</span>
+            </label>
+          </div>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">seed_mode</span><SelectRoot v-model="seedMode"><SelectTrigger aria-label="seed_mode" class="h-9 text-[13.5px]"><span>{{ seedMode }}</span></SelectTrigger><SelectContent><SelectItem value="none">none</SelectItem><SelectItem value="self">self</SelectItem><SelectItem value="path">path</SelectItem></SelectContent></SelectRoot></label>
+          <label v-if="seedMode === 'path'" class="grid gap-1.5 text-xs text-secondary col-span-3 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="seed-path"><span class="text-[13px] font-medium text-primary">seed_path</span><Input v-model="seedPath" class="h-9 text-[13px] font-mono" /></label>
+          <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">rng_seed</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'seed', 0)" @update:model-value="setNumber('optimize', 'seed', String($event ?? ''))" /></label>
+          <GpuSettingsEditor v-if="currentBackend === 'gpu' && version === 'v8'" :gpu="(local.optimize.gpu as JsonObject) || {}" :optimize-defaults="optimizeDefaults || {}" :contract="backendContract" @update:gpu="local.optimize.gpu = $event" />
+          <template v-if="currentBackend === 'pymoo'">
+            <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">algorithm</span><SelectRoot :model-value="pymooText('algorithm', 'auto')" @update:model-value="setPymooAlgorithm(String($event))"><SelectTrigger data-field="pymoo-algorithm" aria-label="algorithm" class="h-9 text-[13.5px]"><span>{{ pymooText('algorithm', 'auto') }}</span></SelectTrigger><SelectContent><SelectItem v-for="algorithm in availablePymooAlgorithms" :key="algorithm" :value="algorithm">{{ algorithm }}</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">{{ t('v7optimize.effectiveAlgorithm') }}</span><Input data-field="pymoo-effective-algorithm" readonly class="h-9 text-[13px] font-mono bg-surface-deep/60" :model-value="effectivePymooAlgorithm" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">population mode</span><SelectRoot :model-value="pymooPopulationMode()" @update:model-value="setPymooPopulationMode(String($event))"><SelectTrigger data-field="pymoo-population-mode" aria-label="population mode" class="h-9 text-[13.5px]"><span>{{ pymooPopulationMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">population size</span><Input data-field="pymoo-population-size" type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :disabled="pymooPopulationMode() === 'auto'" :model-value="pymooPopulationMode() === 'auto' ? 500 : numberField('optimize', 'population_size', 500)" @update:model-value="setPymooPopulationSize(String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">eliminate_duplicates</span><SelectRoot :model-value="String(!!getPath(pymooShared(), 'eliminate_duplicates', false))" @update:model-value="setPymooValue('shared.eliminate_duplicates', $event === 'true')"><SelectTrigger data-field="pymoo-eliminate-duplicates" aria-label="eliminate_duplicates" class="h-9 text-[13.5px]"><span>{{ String(!!getPath(pymooShared(), 'eliminate_duplicates', false)) }}</span></SelectTrigger><SelectContent><SelectItem value="false">false</SelectItem><SelectItem value="true">true</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.crossover_eta', 20)" @update:model-value="setPymooNumber('shared.crossover_eta', String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_prob_var</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.crossover_prob_var', 0.5)" @update:model-value="setPymooNumber('shared.crossover_prob_var', String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="pymooNumber('shared.mutation_eta', 20)" @update:model-value="setPymooNumber('shared.mutation_eta', String($event ?? ''))" /></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation probability mode</span><SelectRoot :model-value="mutationProbabilityMode()" @update:model-value="setMutationProbabilityMode(String($event))"><SelectTrigger data-field="pymoo-mutation-prob-mode" aria-label="mutation probability mode" class="h-9 text-[13.5px]"><span>{{ mutationProbabilityMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_prob_var</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :disabled="mutationProbabilityMode() === 'auto'" :model-value="mutationProbabilityMode() === 'auto' ? 0 : pymooNumber('shared.mutation_prob_var', 0.1)" @update:model-value="setMutationProbability(String($event ?? ''))" /></label>
+            </div>
+            <div v-if="effectivePymooAlgorithm === 'nsga3'" class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">reference direction method</span><SelectRoot :model-value="pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis')" @update:model-value="setPymooText('algorithms.nsga3.ref_dirs.method', String($event))"><SelectTrigger data-field="pymoo-ref-dir-method" aria-label="reference direction method" class="h-9 text-[13.5px]"><span>{{ pymooText('algorithms.nsga3.ref_dirs.method', 'das_dennis') }}</span></SelectTrigger><SelectContent><SelectItem v-for="method in availablePymooRefDirMethods" :key="method" :value="method">{{ method }}</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">partitions mode</span><SelectRoot :model-value="refDirPartitionsMode()" @update:model-value="setRefDirPartitionsMode(String($event))"><SelectTrigger data-field="pymoo-ref-dir-partitions-mode" aria-label="partitions mode" class="h-9 text-[13.5px]"><span>{{ refDirPartitionsMode() === 'auto' ? 'auto' : 'explicit' }}</span></SelectTrigger><SelectContent><SelectItem value="auto">auto</SelectItem><SelectItem value="value">explicit</SelectItem></SelectContent></SelectRoot></label>
+              <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">reference partitions</span><Input data-field="pymoo-ref-dir-partitions" type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :disabled="refDirPartitionsMode() === 'auto'" :model-value="refDirPartitionsMode() === 'auto' ? 1 : pymooNumber('algorithms.nsga3.ref_dirs.n_partitions', 1)" @update:model-value="setPymooNumber('algorithms.nsga3.ref_dirs.n_partitions', String($event ?? ''))" /></label>
+              <span class="text-xs text-secondary flex items-center">{{ t('v7optimize.nsga3ReferenceDirections') }}</span>
+            </div>
+            <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="pymoo-json"><span class="text-[13px] font-medium text-primary">pymoo JSON</span><Textarea v-model="pymooJson" class="min-h-[120px] text-[13px] font-mono" /></label>
+          </template>
+          <template v-if="currentBackend === 'deap'">
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">population_size</span><Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'population_size', 500)" @update:model-value="setNumber('optimize', 'population_size', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_probability', 0.7)" @update:model-value="setNumber('optimize', 'crossover_probability', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_probability', 0.2)" @update:model-value="setNumber('optimize', 'mutation_probability', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">offspring_multiplier</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'offspring_multiplier', 1)" @update:model-value="setNumber('optimize', 'offspring_multiplier', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_eta', 20)" @update:model-value="setNumber('optimize', 'crossover_eta', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_eta', 20)" @update:model-value="setNumber('optimize', 'mutation_eta', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">mutation_indpb</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_indpb', 0.1)" @update:model-value="setNumber('optimize', 'mutation_indpb', String($event ?? ''))" /></label>
+          </template>
+          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary">enable_overrides</span><Textarea v-model="enableOverridesJson" class="min-h-[120px] text-[13px] font-mono" data-field="enable-overrides" /></label>
+          <div class="flex min-h-0 flex-col gap-2.5 col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
+            <div>
+              <strong class="text-[13.5px] font-semibold text-primary">{{ t('v7optimize.additionalParameters') }}</strong>
+              <p class="text-[12.5px] text-secondary mt-0.5">{{ t('v7optimize.additionalParametersHint') }}</p>
+            </div>
+            <p v-if="!additionalOptimizeEntries.length" class="text-xs text-secondary">{{ t('v7optimize.noAdditionalParameters') }}</p>
+            <div v-else class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
+              <label v-for="entry in additionalOptimizeEntries" :key="entry.key" class="grid gap-1.5 text-xs text-secondary" :class="{ 'span-3': entry.type === 'json' }">
+                <span class="text-[13px] font-medium text-primary">{{ entry.key }}</span>
+                <Checkbox v-if="entry.type === 'boolean'" :data-extra-param="entry.key" :model-value="!!entry.value" @update:model-value="setAdditionalBoolean(entry.key, ($event === true))" />
+                <Input v-else-if="entry.type === 'number'" type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :data-extra-param="entry.key" :model-value="(entry.value as number)" @update:model-value="setAdditionalValue(entry.key, String($event ?? ''), entry.type)" />
+                <Textarea v-else-if="entry.type === 'json'" class="min-h-[120px] text-[13px] font-mono" :data-extra-param="entry.key" :model-value="additionalParamJson[entry.key]" @update:model-value="setAdditionalJson(entry.key, String($event ?? ''))" />
+                <Input v-else type="text" class="h-9 text-[13px] font-mono" :data-extra-param="entry.key" :placeholder="entry.type === 'null' ? 'null' : ''" :model-value="entry.value === null ? '' : String(entry.value)" @update:model-value="setAdditionalValue(entry.key, String($event ?? ''), entry.type)" />
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section v-else-if="tab === 'objectives'" class="opt-tab-panel flex flex-col gap-3.5">
+          <div v-if="version === 'v8'" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">objective scenario</span><SelectRoot :model-value="objectiveScenarioMode" @update:model-value="setObjectiveScenario(String($event))"><SelectTrigger data-field="objective-scenario" aria-label="objective scenario" class="h-9 text-[13.5px]"><span>{{ objectiveScenarioMode === 'aggregate' ? 'suite aggregate' : 'named scenario' }}</span></SelectTrigger><SelectContent><SelectItem value="aggregate">suite aggregate</SelectItem><SelectItem value="named">named scenario</SelectItem></SelectContent></SelectRoot></label>
+            <label v-if="objectiveScenarioMode === 'named'" class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary">scenario label</span><Input :model-value="objectiveScenarioName" class="h-9 text-[13.5px]" @update:model-value="setObjectiveScenarioName(String($event ?? ''))" /></label>
           </div>
           <ScoringLimitsEditor :scoring="local.scoring" :limits="local.limits" :scenario-labels="scenarioLabels(local.suite)" :version="version" :metadata="limitsMeta" :backend="currentBackend" :backend-contract="backendContract" @update:scoring="local.scoring = $event; scoringJson = json($event)" @update:limits="local.limits = $event; limitsJson = json($event)" />
-          <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-            <label class="grid gap-1.5 text-xs text-secondary">scoring JSON<Textarea v-model="scoringJson" class="min-h-[220px]" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">limits JSON<Textarea v-model="limitsJson" class="min-h-[220px]" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">fixed_params<Input :model-value="local.fixedParams.join(', ')" @update:model-value="local.fixedParams = String($event ?? '').split(',').map((v) => v.trim()).filter(Boolean)" /></label>
+          <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">scoring JSON</span><Textarea v-model="scoringJson" class="min-h-[220px] text-[13px] font-mono" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary">limits JSON</span><Textarea v-model="limitsJson" class="min-h-[220px] text-[13px] font-mono" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary">fixed_params</span><Input :model-value="local.fixedParams.join(', ')" class="h-9 text-[13px] font-mono" @update:model-value="local.fixedParams = String($event ?? '').split(',').map((v) => v.trim()).filter(Boolean)" /></label>
           </div>
         </section>
-        <section v-else-if="tab === 'suite'"><SuiteEditor ref="suiteEditor" v-model="local.suite" :exchanges="availableExchanges" :available-coins="availableCoins" :bot-params="botParams || []" :is-v8="version === 'v8'" :exchange-options="availableExchanges" :load-symbols="loadSymbols" :scenario-generator="version === 'v8'" :get-scenario-context="() => currentScenarioContext()" :preview-scenario-template="previewScenarioTemplate" :on-apply-scenario-preview="(preview) => applyGeneratedScenarioPreview(preview)" /></section>
-        <section v-else-if="tab === 'runtime'" class="flex min-h-0 flex-col gap-2.5">
-          <div v-if="version === 'v8'" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-            <label class="grid gap-1.5 text-xs text-secondary col-span-2 max-[600px]:col-span-1 max-[900px]:col-span-2">fine_tune_params<Input data-field="fine-tune-params" :model-value="fineTuneText" placeholder="long.risk, short.strategy" @update:model-value="setFineTuneText(String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">polish_percentage (%)<Input data-field="polish-percentage" type="number" min="0" max="100" step="0.01" :model-value="polishPercentageText" @update:model-value="setPolishPercentage(String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">polish_bounds_mode<SelectRoot :model-value="polishBoundsMode" @update:model-value="setPolishBoundsMode(String($event))"><SelectTrigger data-field="polish-bounds-mode" aria-label="polish_bounds_mode"><span>{{ polishBoundsMode }}</span></SelectTrigger><SelectContent><SelectItem value="clamp">clamp</SelectItem><SelectItem value="override-tunable">override-tunable</SelectItem><SelectItem value="override-all">override-all</SelectItem></SelectContent></SelectRoot></label>
+        <section v-else-if="tab === 'suite'" class="opt-tab-panel flex min-h-0 flex-1 flex-col gap-3.5">
+          <SuiteEditor
+            ref="suiteEditor"
+            v-model="local.suite"
+            :exchanges="availableExchanges"
+            :available-coins="availableCoins"
+            :bot-params="botParams || []"
+            :is-v8="version === 'v8'"
+            :exchange-options="availableExchanges"
+            :load-symbols="loadSymbols"
+            :scenario-generator="version === 'v8'"
+            :get-scenario-context="() => currentScenarioContext()"
+            :preview-scenario-template="previewScenarioTemplate"
+            :on-apply-scenario-preview="(preview) => applyGeneratedScenarioPreview(preview)"
+          />
+        </section>
+        <section v-else-if="tab === 'runtime'" class="opt-tab-panel flex min-h-0 flex-1 flex-col gap-4">
+          <!-- Card 1: Fine Tune & Polish (v8 only) -->
+          <div v-if="version === 'v8'" class="rounded-xl border border-border-default/80 bg-surface-deep/30 p-4 shadow-xs">
+            <div class="mb-3 flex items-center gap-2">
+              <div class="flex h-6 w-6 items-center justify-center rounded-md bg-accent/10 text-accent">
+                <PbIcon :icon="PhSliders" class="h-3.5 w-3.5" />
+              </div>
+              <h4 class="text-[13px] font-semibold text-primary uppercase tracking-wider">{{ t('v7optimize.fineTunePolishTitle') }}</h4>
+              <span class="text-xs text-dim ml-1">{{ t('v7optimize.fineTunePolishDesc') }}</span>
+            </div>
+            <div class="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3.5 max-[900px]:grid-cols-1">
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-[13px] font-medium text-primary">fine_tune_params</span>
+                <Input data-field="fine-tune-params" class="h-9 text-[13px] font-mono" :model-value="fineTuneText" placeholder="long.risk, short.strategy" @update:model-value="setFineTuneText(String($event ?? ''))" />
+              </label>
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-[13px] font-medium text-primary">polish_percentage (%)</span>
+                <Input data-field="polish-percentage" type="number" min="0" max="100" step="0.01" class="h-9 text-[13.5px] tabular-nums" :model-value="polishPercentageText" @update:model-value="setPolishPercentage(String($event ?? ''))" />
+              </label>
+              <label class="grid gap-1.5 text-xs text-secondary">
+                <span class="text-[13px] font-medium text-primary">polish_bounds_mode</span>
+                <SelectRoot :model-value="polishBoundsMode" @update:model-value="setPolishBoundsMode(String($event))">
+                  <SelectTrigger data-field="polish-bounds-mode" aria-label="polish_bounds_mode" class="h-9 text-[13.5px]">
+                    <span>{{ polishBoundsMode }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="clamp">clamp</SelectItem>
+                    <SelectItem value="override-tunable">override-tunable</SelectItem>
+                    <SelectItem value="override-all">override-all</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
+              </label>
+            </div>
           </div>
-          <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-            <label><Checkbox data-field="runtime-bot-long-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.long.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.long.hsl_enabled', ($event === true))" /> bot.long.hsl_enabled</label>
-            <label><Checkbox data-field="runtime-bot-short-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.short.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.short.hsl_enabled', ($event === true))" /> bot.short.hsl_enabled</label>
-            <label class="grid gap-1.5 text-xs text-secondary">bot.long.hsl_no_restart_drawdown_threshold<Input type="number" step="any" :model-value="(runtimeOverrideValue('bot.long.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.long.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">bot.short.hsl_no_restart_drawdown_threshold<Input type="number" step="any" :model-value="(runtimeOverrideValue('bot.short.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.short.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" /></label>
+
+          <!-- Card 2: Runtime HSL Settings -->
+          <div class="rounded-xl border border-border-default/80 bg-surface-deep/30 p-4 shadow-xs">
+            <div class="mb-3 flex items-center gap-2">
+              <div class="flex h-6 w-6 items-center justify-center rounded-md bg-accent/10 text-accent">
+                <PbIcon :icon="PhShieldCheck" class="h-3.5 w-3.5" />
+              </div>
+              <h4 class="text-[13px] font-semibold text-primary uppercase tracking-wider">{{ t('v7optimize.runtimeHslTitle') }}</h4>
+              <span class="text-xs text-dim ml-1">{{ t('v7optimize.runtimeHslDesc') }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">
+              <!-- Long Side -->
+              <div class="flex flex-col gap-2.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3">
+                <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface">
+                  <Checkbox data-field="runtime-bot-long-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.long.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.long.hsl_enabled', ($event === true))" />
+                  <span class="text-[13px] font-medium text-primary">bot.long.hsl_enabled</span>
+                </label>
+                <label class="grid gap-1.5 text-xs text-secondary">
+                  <span class="text-[12.5px] font-medium text-secondary">bot.long.hsl_no_restart_drawdown_threshold</span>
+                  <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="(runtimeOverrideValue('bot.long.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.long.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" />
+                </label>
+              </div>
+              <!-- Short Side -->
+              <div class="flex flex-col gap-2.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3">
+                <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface">
+                  <Checkbox data-field="runtime-bot-short-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.short.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.short.hsl_enabled', ($event === true))" />
+                  <span class="text-[13px] font-medium text-primary">bot.short.hsl_enabled</span>
+                </label>
+                <label class="grid gap-1.5 text-xs text-secondary">
+                  <span class="text-[12.5px] font-medium text-secondary">bot.short.hsl_no_restart_drawdown_threshold</span>
+                  <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="(runtimeOverrideValue('bot.short.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.short.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" />
+                </label>
+              </div>
+            </div>
           </div>
-          <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]">
-            <label class="grid gap-1.5 text-xs text-secondary">runtime overrides<Textarea v-model="runtimeJson" class="min-h-[220px]" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary">coin override configs<Textarea v-model="overrideJson" class="min-h-[220px]" /></label>
+
+          <!-- Card 3: Runtime & Coin Overrides JSON -->
+          <div class="flex flex-1 min-h-[280px] flex-col rounded-xl border border-border-default/80 bg-surface-deep/30 p-4 shadow-xs">
+            <div class="mb-3 flex items-center gap-2">
+              <div class="flex h-6 w-6 items-center justify-center rounded-md bg-accent/10 text-accent">
+                <PbIcon :icon="PhCode" class="h-3.5 w-3.5" />
+              </div>
+              <h4 class="text-[13px] font-semibold text-primary uppercase tracking-wider">{{ t('v7optimize.runtimeOverridesTitle') }}</h4>
+              <span class="text-xs text-dim ml-1">{{ t('v7optimize.runtimeOverridesDesc') }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 flex-1 min-h-0 max-[700px]:grid-cols-1">
+              <label class="flex flex-col gap-1.5 text-xs text-secondary flex-1 min-h-0">
+                <span class="text-[13px] font-medium text-primary">runtime overrides</span>
+                <Textarea v-model="runtimeJson" class="flex-1 min-h-[180px] w-full text-[13px] font-mono leading-relaxed bg-surface-deep/80 border-border-default/80 focus:border-accent p-3" />
+              </label>
+              <label class="flex flex-col gap-1.5 text-xs text-secondary flex-1 min-h-0">
+                <span class="text-[13px] font-medium text-primary">coin override configs</span>
+                <Textarea v-model="overrideJson" class="flex-1 min-h-[180px] w-full text-[13px] font-mono leading-relaxed bg-surface-deep/80 border-border-default/80 focus:border-accent p-3" />
+              </label>
+            </div>
           </div>
         </section>
-        <section v-else class="grid gap-2.5"><Textarea v-model="rawJson" class="opt-json min-h-[450px]" aria-label="Raw config JSON" /><Button type="button" variant="default" @click="applyRaw">{{ t('v7optimize.formatJson') }}</Button></section>
+        <section v-else class="opt-tab-panel flex flex-1 min-h-0 flex-col gap-3">
+          <div class="flex flex-1 min-h-0 flex-col rounded-xl border border-border-default/80 bg-surface-deep/40 shadow-xs overflow-hidden">
+            <!-- Editor Header Toolbar -->
+            <div class="flex shrink-0 items-center justify-between border-b border-border-default/80 bg-surface-deep/80 px-4 py-2.5">
+              <div class="flex items-center gap-2.5">
+                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <PbIcon :icon="PhCode" class="h-4 w-4" />
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-[14.5px] font-semibold text-primary">{{ t('v7optimize.rawConfigJson') }}</span>
+                  <span class="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-secondary">{{ t('v7optimize.rawConfigLines', { count: rawLineCount }) }}</span>
+                  <span class="text-xs font-mono text-dim">{{ rawByteSize }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  class="h-8.5 gap-1.5 px-3 text-[13px]"
+                  @click="copyRawJson"
+                >
+                  <PbIcon :icon="copiedRaw ? PhCheck : PhCopy" class="h-3.5 w-3.5" :class="{ 'text-success': copiedRaw }" />
+                  <span>{{ copiedRaw ? t('v7optimize.copied') : t('v7optimize.copyJson') }}</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  class="h-8.5 gap-1.5 px-3 text-[13px]"
+                  @click="applyRaw"
+                >
+                  <PbIcon :icon="PhSparkle" class="h-3.5 w-3.5 text-accent" />
+                  <span>{{ t('v7optimize.formatJson') }}</span>
+                </Button>
+              </div>
+            </div>
+            <!-- Editor Content Area -->
+            <div class="flex-1 min-h-0 p-3 flex flex-col">
+              <Textarea
+                v-model="rawJson"
+                class="opt-json flex-1 min-h-0 w-full resize-none font-mono text-[13px] leading-relaxed border-0 bg-surface-deep/60 p-3.5 text-primary placeholder:text-dim focus-visible:ring-1 focus-visible:ring-accent"
+                aria-label="Raw config JSON"
+                spellcheck="false"
+              />
+            </div>
+            <!-- Editor Footer Tip -->
+            <div class="border-t border-border-default/60 bg-surface-deep/40 px-4 py-2 text-xs text-secondary">
+              {{ t('v7optimize.rawConfigTip') }}
+            </div>
+          </div>
+        </section>
         <p v-if="displayedError" class="text-danger-soft">{{ displayedError }}</p>
       </div>
       <footer class="opt-editor-footer flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-5 py-3.5 max-[600px]:flex-wrap max-[600px]:px-4">
-        <Button type="button" variant="default" @click="emit('close')">{{ t('common.cancel') }}</Button>
-        <Button type="button" variant="info" data-save="config" @click="save(false)">{{ t('v7optimize.saveConfig') }}</Button>
-        <Button type="button" variant="info" data-save="queue" @click="save(true)">{{ t('v7optimize.saveConfigAndQueue') }}</Button>
+        <Button type="button" variant="default" class="h-9.5 min-w-[104px] text-[13.5px] font-medium" @click="emit('close')">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-[13.5px] font-medium" data-save="config" @click="save(false)">{{ t('v7optimize.saveConfig') }}</Button>
+        <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-[13.5px] font-medium" data-save="queue" @click="save(true)">{{ t('v7optimize.saveConfigAndQueue') }}</Button>
       </footer>
     </section>
   </div>
 </template>
 
 <style scoped>
+/* Tab panel fade transition */
+.opt-tab-panel {
+  animation: tab-fade-in 140ms ease-out;
+}
+
+@keyframes tab-fade-in {
+  from {
+    opacity: 0.82;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* The editor uses a quiet surface ladder so the modal reads as a workspace,
    while the controls remain dense enough for advanced configuration work. */
 .opt-editor-header__icon {
   display: grid;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
   border: 1px solid rgb(var(--accent-rgb) / 0.25);
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgb(var(--accent-rgb) / 0.12);
   color: var(--accent);
 }
@@ -926,59 +1567,80 @@ function preflight(): void {
   border-radius: var(--radius-full);
   background: rgb(var(--accent-rgb) / 0.1);
   color: var(--accent-soft);
-  font-size: var(--fs-xs);
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  padding: 3px 8px;
+  padding: 2px 7px;
   white-space: nowrap;
 }
 
 .opt-editor-section {
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: rgb(var(--bg-panel-rgb) / 0.42);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  background: rgb(var(--bg-panel-rgb) / 0.55);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
 }
 
 .opt-editor-section__heading {
   display: flex;
-  align-items: baseline;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--sp-md);
-  padding: 14px 16px 11px;
+  gap: 8px 16px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--border-subtle);
   background: rgb(var(--text-secondary-rgb) / 0.035);
 }
 
 .opt-editor-section__heading h3 {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--text-primary);
-  font-size: var(--fs-sm);
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: 0.01em;
 }
 
+.opt-editor-section__heading h3::before {
+  content: '';
+  display: inline-block;
+  width: 3.5px;
+  height: 15px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+}
+
 .opt-editor-section__heading p {
-  margin: 4px 0 0;
-  color: var(--text-muted);
-  font-size: var(--fs-xs);
-  line-height: 1.45;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .opt-editor-fields {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 13px 12px;
-  padding: 16px;
+  gap: 16px 14px;
+  padding: 18px;
 }
 
 .opt-editor-field {
   display: grid;
   min-width: 0;
-  gap: 6px;
-  color: var(--text-secondary);
-  font-size: var(--fs-xs);
-  line-height: 1.25;
+  gap: 7px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.opt-editor-field span:first-child {
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 500;
 }
 
 .opt-editor-field--wide { grid-column: span 2; }
@@ -987,62 +1649,57 @@ function preflight(): void {
   display: flex;
   min-height: var(--control-height-md);
   align-items: center;
-  gap: 16px;
-  grid-column: span 2;
+  gap: 12px;
   color: var(--text-secondary);
-  font-size: var(--fs-xs);
+  font-size: 13px;
 }
 
 .opt-editor-options {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 14px;
   min-height: var(--control-height-md);
-  padding: 8px 10px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-deep);
-  color: var(--text-secondary);
-  font-size: var(--fs-xs);
 }
 
 .opt-editor-tabs button {
-  min-height: 40px;
-  border: 0;
-  border-bottom: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: var(--fs-xs);
-  padding: 0 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 0 14px;
   white-space: nowrap;
-  transition: color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
+  transition: all var(--motion-fast) var(--ease-standard);
 }
 
-.opt-editor-tabs button:hover { background: rgb(var(--accent-rgb) / 0.06); color: var(--text-primary); }
+.opt-editor-tabs button:hover {
+  background: rgb(255 255 255 / 0.05);
+  color: var(--text-primary);
+}
 
 .opt-editor-tabs button.active {
-  border-bottom-color: var(--accent);
+  background: rgb(var(--accent-rgb) / 0.16);
+  border-color: rgb(var(--accent-rgb) / 0.35);
   color: var(--accent-soft);
-  font-weight: 700;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
 }
 
-.opt-editor-footer :deep(button) { min-width: 112px; }
+.opt-editor-footer :deep(button) { min-width: 104px; }
 
 @media (max-width: 900px) {
   .opt-editor-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 600px) {
-  .opt-editor-fields { grid-template-columns: minmax(0, 1fr); padding: 13px; }
+  .opt-editor-fields { grid-template-columns: minmax(0, 1fr); padding: 14px; }
   .opt-editor-field--wide,
   .opt-editor-checks { grid-column: auto; }
   .opt-editor-checks { align-items: flex-start; flex-direction: column; gap: 8px; }
-  .opt-editor-section__heading { padding: 12px 13px 10px; }
+  .opt-editor-section__heading { padding: 12px 14px; }
   .opt-editor-footer :deep(button) { flex: 1 1 auto; min-width: 0; }
 }
-
-/* Editor tab strip ported from styles/optimize.css — button hover/active
-   states use :not(.active) and border-bottom-color swaps. */
 </style>

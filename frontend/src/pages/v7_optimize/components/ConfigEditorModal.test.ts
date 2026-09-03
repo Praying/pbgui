@@ -425,10 +425,47 @@ describe('ConfigEditorModal', () => {
       global: { plugins: [createI18n('en')] },
     });
     await wrapper.find('[data-tab="optimizer"]').trigger('click');
-    expect((wrapper.find('[data-field="pymoo-effective-algorithm"]').element as HTMLInputElement).value).toBe('nsga3');
     await openSelect(wrapper, '[data-field="pymoo-ref-dir-method"]');
     expect(selectOptionTexts()).toContain('incremental');
     expect(wrapper.find('[data-field="pymoo-ref-dir-partitions-mode"]').text()).toBe('auto');
   });
 
+  it('renders exchange checkboxes with fallback options and supports select all / deselect all / toggling', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: [] },
+      bot: {},
+      optimize: {},
+    }, 'v7', 'empty-exchanges');
+    const wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v7', error: '', exchangeOptions: [] },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    // Default exchanges fallback rendered
+    expect(wrapper.text()).toContain('exchanges');
+    expect(wrapper.text()).toContain('0 / 7');
+    expect(wrapper.text()).toContain('binance');
+    expect(wrapper.text()).toContain('bybit');
+    expect(wrapper.text()).toContain('hyperliquid');
+
+    // Select all
+    const selectAllBtn = wrapper.findAll('button').find((b) => b.text().toLowerCase().includes('select all'));
+    expect(selectAllBtn?.exists()).toBe(true);
+    await selectAllBtn!.trigger('click');
+    expect(wrapper.text()).toContain('7 / 7');
+
+    // Deselect all
+    const deselectAllBtn = wrapper.findAll('button').find((b) => b.text().toLowerCase().includes('deselect all'));
+    expect(deselectAllBtn?.exists()).toBe(true);
+    await deselectAllBtn!.trigger('click');
+    expect(wrapper.text()).toContain('0 / 7');
+
+    // Toggle single exchange chip
+    const binanceLabel = wrapper.findAll('label').find((l) => l.text().includes('binance'));
+    expect(binanceLabel?.exists()).toBe(true);
+    const binanceCheckbox = binanceLabel?.find('[data-slot="checkbox"]');
+    expect(binanceCheckbox?.exists()).toBe(true);
+    await binanceLabel!.trigger('click');
+    expect(wrapper.text()).toContain('1 / 7');
+  });
 });

@@ -284,8 +284,8 @@
   --focus-ring: 0 0 0 3px rgb(143 207 242 / 0.3);
   --focus-ring-offset: 2px;
   --z-navigation: 200;
-  --z-dropdown: 300;
   --z-modal: 1000;
+  --z-dropdown: 1500;
   --z-toast: 2000;
   --z-help: 3200;
   --z-tooltip: 4000; /* pointer-following tips sit above every layer but the migration watermark */

@@ -33,7 +33,7 @@ const delegatedProps = computed(() => {
       data-slot="select-content"
       v-bind="delegatedProps"
       :class="cn(
-        'z-[var(--z-dropdown)] max-h-[min(24rem,var(--reka-select-content-available-height))] min-w-[8rem] overflow-hidden rounded-md border border-border-default bg-elevated text-primary shadow-elevated',
+        'z-[var(--z-dropdown,1500)] max-h-[min(24rem,var(--reka-select-content-available-height))] min-w-[8rem] overflow-hidden rounded-md border border-border-default bg-elevated text-primary shadow-elevated',
         props.position === 'popper' && 'w-full min-w-[var(--reka-select-trigger-width)]',
         props.class,
       )"
