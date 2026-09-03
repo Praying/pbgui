@@ -1,5 +1,14 @@
 # Unreleased
 
+## PBv7/PBv8 Optimize — Bounds Filter Buttons Color & Contrast Polish (优化/配置/边界)
+
+- **Semantic Color Scheme & High-Contrast Typography (`ConfigEditorModal.vue`)**: Optimized the color schemes and font foreground styling for the four category filter buttons in the Parameter Bounds tab:
+  - **All (全部)**: Replaced the dark `#081216` (`text-accent-contrast`) text that blended into the dark background with high-contrast ice-blue styling (`border-accent/45 bg-accent/15 text-accent-soft font-semibold shadow-2xs`).
+  - **Long (多头)**: Corrected the missing Tailwind token (`info`) with standard financial trading green semantic styling (`border-success/45 bg-success/15 text-success-soft font-semibold shadow-2xs`), ensuring Long is immediately identifiable.
+  - **Short (空头)**: Aligned with standard bearish trading conventions using coral-red styling (`border-danger/45 bg-danger/15 text-danger-soft font-semibold shadow-2xs`).
+  - **Fixed (已固定)**: Styled locked/pinned parameters with distinct warm amber styling (`border-warning/45 bg-warning/15 text-warning-soft font-semibold shadow-2xs`).
+  - **Inactive & Badge States**: Added default subtle borders (`border-border-default/40`) to inactive buttons to eliminate 1px layout jumping when toggled, interactive category-tinted hover feedback, and refined monospace tabular number badges (`font-mono tabular-nums`) that inherit the active category's soft foreground color.
+
 ## PBv8 Strategy Explorer — Segment Tab Corner Outline Fix (策略浏览器/分析)
 
 - **Segment Tabs Active Highlighting & Border Radius Alignment (`ParamTuning.vue` & `v7_strategy_explorer.html`)**: Fixed a visual defect on the Strategy Explorer analysis page where the active first segment tab ("入场网格" / Entry Grid) was missing its top-left and bottom-left blue outlines. Added matching inner border-radius (`first:rounded-l-[7px] last:rounded-r-[7px]`) to the segment buttons and replaced the outer-clipping `outline-1 outline-accent/75 -outline-offset-1` with `shadow-[inset_0_0_0_1px_rgba(var(--accent-rgb)/0.75)]`, ensuring the active highlight curves seamlessly along the container's rounded corner without being cut off by `overflow: hidden`.

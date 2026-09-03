@@ -1156,42 +1156,46 @@ function preflight(): void {
               <span class="text-xs font-medium text-secondary mr-1">Filter:</span>
               <button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'all' ? 'bg-accent/20 text-accent-contrast border border-accent/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                data-test="bound-filter-all"
+                class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'all' ? 'border-accent/45 bg-accent/15 text-accent-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-accent/40 hover:text-accent-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'all'"
               >
                 <span>{{ t('v7optimize.filterAll') }}</span>
-                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.all }}</span>
+                <span class="rounded bg-elevated/90 px-1.5 py-0.2 text-[11px] font-mono tabular-nums leading-none">{{ boundCounts.all }}</span>
               </button>
 
               <button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'long' ? 'bg-info/20 text-info border border-info/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                data-test="bound-filter-long"
+                class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'long' ? 'border-success/45 bg-success/15 text-success-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-success/40 hover:text-success-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'long'"
               >
                 <span>{{ t('v7optimize.filterLong') }}</span>
-                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.long }}</span>
+                <span class="rounded bg-elevated/90 px-1.5 py-0.2 text-[11px] font-mono tabular-nums leading-none">{{ boundCounts.long }}</span>
               </button>
 
               <button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'short' ? 'bg-warning/20 text-warning-soft border border-warning/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                data-test="bound-filter-short"
+                class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'short' ? 'border-danger/45 bg-danger/15 text-danger-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-danger/40 hover:text-danger-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'short'"
               >
                 <span>{{ t('v7optimize.filterShort') }}</span>
-                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.short }}</span>
+                <span class="rounded bg-elevated/90 px-1.5 py-0.2 text-[11px] font-mono tabular-nums leading-none">{{ boundCounts.short }}</span>
               </button>
 
               <button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
-                :class="boundCategoryFilter === 'fixed' ? 'bg-success/20 text-success border border-success/40 font-semibold' : 'bg-surface-deep/60 text-secondary hover:text-primary hover:bg-surface-deep'"
+                data-test="bound-filter-fixed"
+                class="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer"
+                :class="boundCategoryFilter === 'fixed' ? 'border-warning/45 bg-warning/15 text-warning-soft font-semibold shadow-2xs' : 'border-border-default/40 bg-surface-deep/50 text-secondary hover:border-warning/40 hover:text-warning-soft hover:bg-surface-deep'"
                 @click="boundCategoryFilter = 'fixed'"
               >
                 <span>{{ t('v7optimize.filterFixed') }}</span>
-                <span class="rounded bg-elevated/80 px-1 py-0.2 text-[11px]">{{ boundCounts.fixed }}</span>
+                <span class="rounded bg-elevated/90 px-1.5 py-0.2 text-[11px] font-mono tabular-nums leading-none">{{ boundCounts.fixed }}</span>
               </button>
 
               <span v-if="filteredBoundRows.length !== boundRows.length" class="ml-auto text-xs text-secondary">

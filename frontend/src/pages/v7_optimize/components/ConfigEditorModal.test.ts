@@ -537,6 +537,66 @@ describe('ConfigEditorModal', () => {
     wrapperZh.unmount();
   });
 
+  it('filters bounds by category with semantic color classes', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'] },
+      bot: {},
+      optimize: {
+        bounds: {
+          long_n_positions: [1, 8, 1],
+          'short.risk.total_wallet_exposure_limit': [0, 1, 0.1],
+          'bot.long.unstuck.threshold': [0.4, 0.9, 0.001],
+        },
+        fixed_params: ['long_n_positions'],
+      },
+    }, 'v7', 'filter-test');
+    const wrapper = mount(ConfigEditorModal, {
+      props: { open: true, draft, version: 'v7', error: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+    await wrapper.find('[data-tab="bounds"]').trigger('click');
+
+    const filterAll = wrapper.find('[data-test="bound-filter-all"]');
+    const filterLong = wrapper.find('[data-test="bound-filter-long"]');
+    const filterShort = wrapper.find('[data-test="bound-filter-short"]');
+    const filterFixed = wrapper.find('[data-test="bound-filter-fixed"]');
+
+    expect(filterAll.exists()).toBe(true);
+    expect(filterLong.exists()).toBe(true);
+    expect(filterShort.exists()).toBe(true);
+    expect(filterFixed.exists()).toBe(true);
+
+    // Initial state: "all" is active with ice-blue accent styling
+    expect(filterAll.classes()).toContain('text-accent-soft');
+    expect(filterAll.classes()).toContain('bg-accent/15');
+
+    // Click "long": activates green success styling and filters rows
+    await filterLong.trigger('click');
+    expect(filterLong.classes()).toContain('text-success-soft');
+    expect(filterLong.classes()).toContain('bg-success/15');
+    expect(wrapper.text()).toContain('long_n_positions');
+    expect(wrapper.text()).toContain('threshold');
+    expect(wrapper.text()).not.toContain('total_wallet_exposure_limit');
+
+    // Click "short": activates coral-red danger styling and filters rows
+    await filterShort.trigger('click');
+    expect(filterShort.classes()).toContain('text-danger-soft');
+    expect(filterShort.classes()).toContain('bg-danger/15');
+    expect(wrapper.text()).toContain('total_wallet_exposure_limit');
+    expect(wrapper.text()).not.toContain('long_n_positions');
+
+    // Click "fixed": activates warm amber warning styling and filters rows
+    await filterFixed.trigger('click');
+    expect(filterFixed.classes()).toContain('text-warning-soft');
+    expect(filterFixed.classes()).toContain('bg-warning/15');
+    expect(wrapper.text()).toContain('long_n_positions');
+    expect(wrapper.text()).not.toContain('total_wallet_exposure_limit');
+
+    // Click "all" again
+    await filterAll.trigger('click');
+    expect(filterAll.classes()).toContain('text-accent-soft');
+  });
+
   it('keeps every v7optimize.tip.* key referenced by the editor sources in both dictionaries', () => {
     const roots = [
       join(__dirname, '..'),
