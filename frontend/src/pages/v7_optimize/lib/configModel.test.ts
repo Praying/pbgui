@@ -3,6 +3,7 @@ import {
   applyOptimizeSeed,
   applyOptimizeSweepPreset,
   applyScenarioTemplatePreview,
+  buildSweepFullTimerangeBacktestConfig,
   buildSweepHoldoutBacktestConfig,
   filterOptimizeEnableOverridesForStrategy,
   buildEditorDraft,
@@ -198,6 +199,15 @@ describe('optimize config model', () => {
     expect(standaloneBacktest.suite_enabled).toBeUndefined();
     expect(standaloneBacktest.scenarios).toBeUndefined();
     expect(standalonePbgui.scenario_template).toBeUndefined();
+
+    const fullTimerange = buildSweepFullTimerangeBacktestConfig(
+      { backtest: { start_date: '2020-01-01', end_date: '2024-12-31', suite_enabled: true, scenarios: [] }, pbgui: { scenario_template: {} } },
+      'candidate_full_timerange',
+    );
+    const fullTimerangeBacktest = fullTimerange.backtest as Record<string, unknown>;
+    expect(fullTimerangeBacktest).toMatchObject({ start_date: '2020-01-01', end_date: '2024-12-31', base_dir: 'backtests/pbgui/candidate_full_timerange' });
+    expect(fullTimerangeBacktest.suite_enabled).toBeUndefined();
+    expect(fullTimerangeBacktest.scenarios).toBeUndefined();
   });
 
   it('writes PB8 reducer and clears stale Suite provenance when disabled', () => {

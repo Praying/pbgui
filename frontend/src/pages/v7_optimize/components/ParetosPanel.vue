@@ -19,6 +19,7 @@ const props = defineProps<{
   availableMetrics?: string[];
   availableResults?: ResultSummary[];
   selectedResultPath?: string;
+  holdoutValidationMode?: 'holdout_only' | 'holdout_and_full_timerange';
 }>();
 const emit = defineEmits<{
   toggle: [path: string];
@@ -36,11 +37,15 @@ const emit = defineEmits<{
   selectAllColumns: [];
   selectResultPath: [path: string];
   goToResults: [];
+  'update:holdoutValidationMode': [value: 'holdout_only' | 'holdout_and_full_timerange'];
 }>();
-const { t } = useI18n();
+const { locale, t } = useI18n();
 const picker = ref<HTMLDetailsElement | null>(null);
 const columns = computed(() => (Array.isArray(props.columns) ? props.columns : []));
 const availableMetrics = computed(() => (Array.isArray(props.availableMetrics) ? props.availableMetrics : []));
+const validationModeLabel = computed(() => locale.value === 'zh' ? '验证模式' : 'Validation mode');
+const holdoutOnlyLabel = computed(() => locale.value === 'zh' ? '仅留出验证' : 'Holdout only');
+const holdoutAndFullTimerangeLabel = computed(() => locale.value === 'zh' ? '留出验证 + 完整时间范围' : 'Holdout + Full timerange');
 function pillLabel(metric: string): string {
   const short = PARETO_METRIC_PILL_LABELS[metric];
   return short && short !== metric ? `${short} (${metric})` : metric;
@@ -92,6 +97,19 @@ onBeforeUnmount(() => dragSelect.dispose());
       </SelectRoot>
     </div>
     <span v-else class="opt-result-context font-medium">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
+
+    <label v-if="isV8 && meta.sweep_cycles?.enabled === true" class="inline-flex items-center gap-1.5 text-xs text-secondary">
+      {{ validationModeLabel }}
+      <SelectRoot :model-value="holdoutValidationMode || 'holdout_only'" @update:model-value="emit('update:holdoutValidationMode', String($event) as 'holdout_only' | 'holdout_and_full_timerange')">
+        <SelectTrigger class="w-auto min-w-[180px]" :aria-label="validationModeLabel">
+          <span>{{ holdoutValidationMode === 'holdout_and_full_timerange' ? holdoutAndFullTimerangeLabel : holdoutOnlyLabel }}</span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="holdout_only">{{ holdoutOnlyLabel }}</SelectItem>
+          <SelectItem value="holdout_and_full_timerange">{{ holdoutAndFullTimerangeLabel }}</SelectItem>
+        </SelectContent>
+      </SelectRoot>
+    </label>
 
     <label v-if="(meta.scenario_labels || []).length" class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.scenario') }}<SelectRoot :model-value="meta.selected_scenario || 'Aggregated'" @update:model-value="emit('update:scenario', String($event))"><SelectTrigger class="w-auto min-w-[120px]" :aria-label="t('v7optimize.scenario')"><span>{{ meta.selected_scenario || 'Aggregated' }}</span></SelectTrigger><SelectContent><SelectItem v-for="scenario in meta.scenario_labels" :key="scenario" :value="scenario">{{ scenario }}</SelectItem></SelectContent></SelectRoot></label>
     <label class="inline-flex items-center gap-1.5 text-xs text-secondary">{{ t('v7optimize.statistic') }}<SelectRoot :model-value="meta.selected_statistic || 'mean'" @update:model-value="emit('update:statistic', String($event))"><SelectTrigger class="w-auto min-w-[120px]" :aria-label="t('v7optimize.statistic')"><span>{{ meta.selected_statistic || 'mean' }}</span></SelectTrigger><SelectContent><SelectItem v-for="stat in meta.available_statistics || ['mean']" :key="stat" :value="stat">{{ stat }}</SelectItem></SelectContent></SelectRoot></label>

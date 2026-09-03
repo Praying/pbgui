@@ -96,6 +96,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
   const settingsOpen = ref(false);
   const queueConfigChoice = ref<QueueConfigChoice | null>(null);
   const loading = ref(false);
+  const resultsLoading = ref(false);
   const error = ref('');
   const runtimeWarning = ref('');
   const connected = ref(false);
@@ -238,9 +239,14 @@ export function useOptimizePage(options: OptimizePageOptions) {
 
   async function loadResults(): Promise<void> {
     const generation = ++resultsGeneration;
-    const data = await request<{ results?: ResultSummary[] }>('/results');
-    if (generation !== resultsGeneration) return;
-    results.value = data.results ?? [];
+    resultsLoading.value = true;
+    try {
+      const data = await request<{ results?: ResultSummary[] }>('/results');
+      if (generation !== resultsGeneration) return;
+      results.value = data.results ?? [];
+    } finally {
+      if (generation === resultsGeneration) resultsLoading.value = false;
+    }
   }
 
   /* ── Pareto metric column selection (legacy v7_optimize.html:2864-2903) ── */
@@ -730,6 +736,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     settingsOpen,
     queueConfigChoice,
     loading,
+    resultsLoading,
     error,
     runtimeWarning,
     connected,

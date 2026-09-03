@@ -20,6 +20,8 @@
     resizing: false,
     drawerWidth: 460,
     retryMessages: {},
+    messageSnapshots: {},
+    resolvingProposalIds: new Set(),
     uiActionIds: new Set(),
     contextTimer: null,
     contextSignature: ''
@@ -560,7 +562,13 @@
     try {
       var conversation = await api('/conversations/' + encodeURIComponent(id));
       if (id !== state.current || generation !== state.requestGeneration) return;
-      renderMessages(conversation.messages || []);
+      var messages = Array.isArray(conversation.messages) ? conversation.messages : [];
+      if (conversation.busy && !messages.length && Array.isArray(state.messageSnapshots[id])) {
+        messages = state.messageSnapshots[id];
+      } else if (messages.length || !conversation.busy) {
+        state.messageSnapshots[id] = messages.slice();
+      }
+      renderMessages(messages);
       renderReasoningSummary(conversation.reasoning_summary || '');
       renderActivityHistory(conversation.activity_history || []);
       var uiActions = conversation.ui_actions || [];
@@ -616,6 +624,10 @@
         return api('/conversations/' + encodeURIComponent(conversationId) + '/ui-actions/' + encodeURIComponent(actionId) + '/ack', {
           method: 'POST'
         });
+      }).then(function () {
+        if (window.PBGuiAI && typeof window.PBGuiAI.completePageActionNavigation === 'function') {
+          window.PBGuiAI.completePageActionNavigation(actionId);
+        }
       }).catch(function (error) {
         state.uiActionIds.delete(actionId);
         setStatus(error && error.message ? error.message : translate('ai.drawer.pageActionFailed', 'PBGui page action failed.'), true);
@@ -770,7 +782,11 @@
 
   function proposalDetail(preview) {
     if (preview.action === 'python_analysis') return translate('ai.proposal.detailPython', '{codeBytes} bytes of code · {inputBytes} bytes of sanitized JSON input', { codeBytes: preview.code_bytes || 0, inputBytes: (preview.input_summary || {}).bytes || 0 });
-    if (preview.action === 'queue_backtests') return translate('ai.proposal.detailBacktests', '{jobs} backtest jobs across {exchanges} exchanges', { jobs: preview.job_count || 0, exchanges: (preview.exchanges || []).length }) + (preview.may_start_immediately ? ' · ' + translate('ai.proposal.mayStart', 'may start immediately') : '');
+    if (preview.action === 'queue_backtests') {
+      var validationMode = String(preview.validation_mode || 'configured');
+      if (validationMode !== 'configured') return translate('ai.proposal.detailValidationJobs', '{jobs} {mode} validation jobs', { jobs: preview.job_count || 0, mode: validationMode.replace(/_/g, ' ') }) + (preview.may_start_immediately ? ' · ' + translate('ai.proposal.mayStart', 'may start immediately') : '');
+      return translate('ai.proposal.detailBacktests', '{jobs} backtest jobs across {exchanges} exchanges', { jobs: preview.job_count || 0, exchanges: (preview.exchanges || []).length }) + (preview.may_start_immediately ? ' · ' + translate('ai.proposal.mayStart', 'may start immediately') : '');
+    }
     if (preview.action === 'start_optimize_queue') return translate('ai.proposal.detailStartOptimizeQueue', '{jobs} exact queued PB8 optimizer jobs · starts immediately', { jobs: preview.job_count || 0 });
     if (preview.action === 'create_dashboard') return translate('ai.proposal.detailCreateDashboard', 'Create from template {template}', { template: String(preview.template || '') });
     if (preview.action === 'save_dashboard_layout') return translate('ai.proposal.detailSaveLayout', '{rows} rows x {columns} columns · {changes} changes', { rows: (preview.layout || {}).rows || 0, columns: (preview.layout || {}).columns || 0, changes: preview.changed_count || 0 });
@@ -935,6 +951,7 @@
     var list = root.querySelector('.pai-proposals');
     list.textContent = '';
     (proposals || []).forEach(function (proposal) {
+      if (state.resolvingProposalIds.has(String(proposal.proposal_id || ''))) return;
       var preview = proposal.preview || {};
       var card = el('div', 'pai-proposal');
       var main = el('div', 'pai-proposal-main');
@@ -975,6 +992,8 @@
       if (!confirmed) { buttons.forEach(function (button) { button.disabled = false; }); return; }
     }
     if (!conversationId || conversationId !== state.current) return;
+    var proposalId = String(proposal.proposal_id || '');
+    state.resolvingProposalIds.add(proposalId);
     card.hidden = true;
     setStatus(approve ? translate('ai.chat.applyingAction', 'Applying approved action...') : translate('ai.drawer.rejectingProposal', 'Rejecting proposal...'), false);
     try {
@@ -997,13 +1016,17 @@
         setStatus(result.status === 'executed' ? translate('ai.drawer.actionCompleted', 'Approved action completed.') : translate('ai.drawer.proposalResolved', 'Proposal {status}.', { status: String(result.status || 'resolved') }), false);
       }
     } catch (error) {
+      state.resolvingProposalIds.delete(proposalId);
       if (conversationId === state.current) {
         card.hidden = false;
         buttons.forEach(function (button) { button.disabled = false; });
         setStatus(error.message, true);
       }
     }
-    finally { await reconcileProposals(conversationId); }
+    finally {
+      await reconcileProposals(conversationId);
+      state.resolvingProposalIds.delete(proposalId);
+    }
   }
 
   async function newConversation() {

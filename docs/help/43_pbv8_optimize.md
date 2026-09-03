@@ -109,7 +109,7 @@ Example: for three non-overlapping quarterly training periods and one untouched 
 
 PB8 Gain values are terminal multipliers, not additive returns: `1.0` is break-even, `2.0` doubles the opening balance, and `0.8` loses 20%. Sweep evaluation therefore calculates each window as `ending_balance = opening_balance × gain_strategy_eq`.
 
-To run the validation without manual editing, select one or more candidates in the Paretos table and click **Holdout** in the sidebar. PBGui reads immutable holdout dates from the result sidecar, creates one standalone PB8 Backtest item per candidate and holdout, disables Suite Mode in those drafts, preserves candidate settings, coins, exchanges, balance, and overrides, and opens the Backtest queue draft ready for submission.
+To run the validation without manual editing, select one or more candidates in the Paretos table, choose **Holdout only** or **Holdout + Full timerange**, and click **Holdout** in the sidebar. PBGui reads immutable holdout dates from the result sidecar, creates one standalone PB8 Backtest item per candidate and holdout, and optionally adds one continuous Backtest over the candidate's original base `start_date` through `end_date`. Every generated draft disables Suite Mode while preserving candidate settings, coins, exchanges, balance, and overrides. The continuous run is a path-dependence and compounding diagnostic that includes training data; it does not replace the untouched Holdout as the out-of-sample validation.
 
 Applying a Sweep Cycles preview also sets the main PB8 `backtest.starting_balance` to the generator's **Starting balance**. Save and Queue reject a later mismatch because PB8 must calculate gains at the same capital size used by the cash-flow model.
 
@@ -164,6 +164,8 @@ Strategy-specific optimizer overrides are removed when switching strategies and 
 ## Results And Paretos
 
 Results are read only from `<pb8dir>/optimize_results`. The Results table shows each run's configured PB8 strategy and can sort by that column. The Results and Paretos panels provide the shared PB7 workflow for result inspection, deletion, 3D plots, Pareto Dash, candidate JSON, metric summaries, and seed bundles.
+
+Opening Results during a cold metadata scan shows an explicit loading state. A background refresh keeps the last confirmed rows visible, and changing panels while the request is running does not discard the completed response.
 
 Switching Optimize result sets clears previous Pareto rows, metadata, and selections immediately before loading the new result. A late response from the earlier result cannot restore stale rows.
 

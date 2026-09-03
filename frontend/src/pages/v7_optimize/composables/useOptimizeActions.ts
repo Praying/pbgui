@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { apiFetch } from '@/shared/api';
 import type { OptimizeAdapter } from '../config';
-import { applyOptimizeSeed, buildSweepHoldoutBacktestConfig, isObject, objectValue } from '../lib/configModel';
+import { applyOptimizeSeed, buildSweepFullTimerangeBacktestConfig, buildSweepHoldoutBacktestConfig, isObject, objectValue } from '../lib/configModel';
 import type { ConfigPayload, OhlcvStartDateJob, ResultSummary, ScenarioWindow } from '../types';
 import type { ScenarioGeneratorPreview, ScenarioGeneratorRequest } from '@/shared/suiteEditor/suiteModel';
 
@@ -327,7 +327,10 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
     return request<OhlcvStartDateJob>(`${adapter.apiBase}/ohlcv-start-dates/${encodeURIComponent(jobId)}`, { method: 'DELETE' });
   }
 
-  async function queueParetoHoldouts(items: ParetoHoldoutItem[]): Promise<string> {
+  async function queueParetoHoldouts(
+    items: ParetoHoldoutItem[],
+    validationMode: 'holdout_only' | 'holdout_and_full_timerange' = 'holdout_only',
+  ): Promise<string> {
     if (!adapter.isV8) throw new Error('Sweep Holdout is only available for PB8');
     if (!items.length) throw new Error('No paretos selected');
     const queueItems: Array<{ name: string; config: Record<string, unknown>; override_configs: Record<string, unknown> }> = [];
@@ -344,6 +347,14 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
         queueItems.push({
           name,
           config: extractConfigSections(buildSweepHoldoutBacktestConfig(payload.config, holdout, name)),
+          override_configs: objectValue(payload.override_configs),
+        });
+      }
+      if (validationMode === 'holdout_and_full_timerange') {
+        const fullTimerangeName = `${String(item.name || 'pareto')}_full_timerange`;
+        queueItems.push({
+          name: fullTimerangeName,
+          config: extractConfigSections(buildSweepFullTimerangeBacktestConfig(payload.config, fullTimerangeName)),
           override_configs: objectValue(payload.override_configs),
         });
       }

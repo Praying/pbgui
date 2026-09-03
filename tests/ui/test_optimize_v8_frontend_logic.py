@@ -334,9 +334,12 @@ def test_late_symbol_load_preserves_first_approved_coin_clear() -> None:
 
 
 def test_sweep_holdout_button_builds_standalone_backtest_config() -> None:
-    """The sidebar Holdout action must remove training Suite state and set immutable dates."""
+    """Holdout and full-range validation must remove training Suite state with correct dates."""
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
-    function_source = _page_function(page, "buildSweepHoldoutBacktestConfig")
+    function_source = "\n".join(
+        _page_function(page, name)
+        for name in ("buildSweepHoldoutBacktestConfig", "buildSweepFullTimerangeBacktestConfig")
+    )
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
@@ -365,10 +368,21 @@ def test_sweep_holdout_button_builds_standalone_backtest_config() -> None:
         assert.equal(Object.hasOwn(result.backtest, 'reducer'), false);
         assert.equal(Object.hasOwn(result.pbgui, 'scenario_template'), false);
         assert.equal(source.backtest.suite_enabled, true);
+
+        const full = buildSweepFullTimerangeBacktestConfig(source, 'candidate_full_timerange');
+        assert.equal(full.backtest.start_date, '2025-01-01');
+        assert.equal(full.backtest.end_date, '2025-03-31');
+        assert.equal(full.backtest.base_dir, 'backtests/pbgui/candidate_full_timerange');
+        assert.equal(Object.hasOwn(full.backtest, 'suite_enabled'), false);
+        assert.equal(Object.hasOwn(full.backtest, 'scenarios'), false);
+        assert.equal(Object.hasOwn(full.backtest, 'reducer'), false);
+        assert.equal(Object.hasOwn(full.pbgui, 'scenario_template'), false);
         """
     )
     _run_node(script)
     assert 'id="btn-holdout-selected-paretos"' in page
+    assert 'value="holdout_and_full_timerange"' in page
+    assert "includeFullTimerange" in page
     assert "backtestSelectedSweepHoldouts().catch(handleError)" in page
     assert "meta.sweep_cycles.holdout_count" in page
 
@@ -390,6 +404,64 @@ def test_generated_pareto_scenario_inherits_base_exchanges() -> None:
         }}, 'train_01');
         assert.deepEqual(result.backtest.exchanges, ['bybit', 'binance']);
         assert.deepEqual(result.backtest.scenarios.map(item => item.label), ['train_01']);
+        """
+    )
+    _run_node(script)
+
+
+def test_sweep_holdout_both_mode_queues_holdout_and_continuous_jobs() -> None:
+    """The combined selector creates one immutable Holdout and one full-range job per candidate."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n".join(
+        _page_function(page, name)
+        for name in (
+            "buildSweepHoldoutBacktestConfig",
+            "buildSweepFullTimerangeBacktestConfig",
+            "backtestSelectedSweepHoldouts",
+        )
+    )
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const deepClone = value => JSON.parse(JSON.stringify(value));
+        const state = {{
+          selectedParetos: new Set(['/candidate.json']),
+          paretoSweepEnabled: true,
+          paretos: [{{path: '/candidate.json', name: 'candidate'}}]
+        }};
+        const optimizeEditorAdapter = {{paretoFilePath: path => path}};
+        const el = id => id === 'holdout-validation-mode'
+          ? {{value: 'holdout_and_full_timerange'}}
+          : null;
+        const normalizeParetoBacktestPayload = data => ({{
+          config: data.config,
+          override_configs: data.override_configs || {{}}
+        }});
+        const extractConfigSections = config => config;
+        const apiFetch = async () => ({{
+          config: {{
+            backtest: {{
+              start_date: '2024-01-01', end_date: '2026-08-30',
+              suite_enabled: true, scenarios: [{{label: 'train_01'}}]
+            }},
+            pbgui: {{scenario_template: {{template: 'sweep_cycles'}}}}
+          }},
+          override_configs: {{'HYPE.json': {{bot: {{}}}}}},
+          sweep_cycles: {{
+            holdout_scenarios: [{{label: 'holdout_01', start_date: '2026-06-01', end_date: '2026-08-30'}}]
+          }}
+        }});
+        let queued = null;
+        const openBacktestQueueDraft = async items => {{ queued = items; return items; }};
+        {functions}
+
+        backtestSelectedSweepHoldouts().then(() => {{
+          assert.equal(queued.length, 2);
+          assert.deepEqual(queued.map(item => item.name), ['candidate_holdout_01', 'candidate_full_timerange']);
+          assert.equal(queued[0].config.backtest.start_date, '2026-06-01');
+          assert.equal(queued[1].config.backtest.start_date, '2024-01-01');
+          assert.equal(queued[0].override_configs['HYPE.json'].bot.constructor, Object);
+        }}).catch(error => {{ console.error(error); process.exitCode = 1; }});
         """
     )
     _run_node(script)
@@ -1760,8 +1832,8 @@ def test_seed_runtime_unknown_overrides_and_pymoo_auto_execute_page_logic() -> N
     _run_node(script)
 
 
-def test_request_generations_reject_stale_http_and_settings_merge_metadata() -> None:
-    """Late HTTP responses cannot replace websocket state, newer requests, or metadata-rich settings."""
+def test_request_generations_reject_stale_http_without_discarding_results_after_navigation() -> None:
+    """Late HTTP responses stay isolated while panel navigation cannot discard a valid Results load."""
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
     functions = "\n".join(_page_function(page, name) for name in ("loadSettings", "loadQueue", "loadResults"))
     script = textwrap.dedent(
@@ -1778,7 +1850,7 @@ def test_request_generations_reject_stale_http_and_settings_merge_metadata() -> 
         const state = {{
           settings: {{strategy_bounds: {{custom: true}}, runtime_options: {{future: true}}}},
           queue: [{{filename: 'ws'}}], results: [], settingsLoadSeq: 0, settingsPushSeq: 0,
-          queueLoadSeq: 0, queuePushSeq: 0, resultsLoadSeq: 0, navigationSeq: 0
+          queueLoadSeq: 0, queuePushSeq: 0, resultsLoadSeq: 0, resultsLoading: false, navigationSeq: 0
         }};
         {functions}
         (async () => {{
@@ -1815,14 +1887,25 @@ def test_request_generations_reject_stale_http_and_settings_merge_metadata() -> 
            await oldResults;
            assert.equal(state.results[0].path, 'new');
            const navigated = loadResults();
-           state.navigationSeq += 1;
-           deferred[5].resolve({{results: [{{path: 'stale-navigation'}}]}});
-           await navigated;
-           assert.equal(state.results[0].path, 'new');
+            state.navigationSeq += 1;
+            deferred[5].resolve({{results: [{{path: 'stale-navigation'}}]}});
+            await navigated;
+            assert.equal(state.results[0].path, 'stale-navigation');
+            assert.equal(state.resultsLoading, false);
         }})().catch((error) => {{ console.error(error); process.exitCode = 1; }});
         """
     )
     _run_node(script)
+
+
+def test_results_show_loading_feedback_without_hiding_cached_rows() -> None:
+    """Cold loads show progress while refreshes keep the last confirmed result rows visible."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+
+    assert "Loading optimize results..." in page
+    assert "Scanning compact result metadata. Large optimizer histories remain lazy." in page
+    assert "filteredResults.length + ' result sets · Refreshing...'" in page
+    assert "state.resultsLoading = true;" in _page_function(page, "loadResults")
 
 
 def test_switching_result_sets_clears_stale_paretos_before_loading() -> None:

@@ -77,7 +77,8 @@ interface PbGuiAiFacade {
     allowlist: Record<string, { path: string; label?: string; validation?: string }>,
   ) => AiFocusedField | null;
   registerPageAction?: (registration: AiPageActionRegistration) => Unregister;
-  continuePageAction?: (url: string) => boolean;
+  continuePageAction?: (url: string, actionId?: string) => boolean;
+  completePageActionNavigation?: (actionId: string) => void;
   tryLocalCommand?: (message: string) => { handled: boolean; message?: string };
   open?: () => void;
   close?: () => void;
@@ -108,6 +109,7 @@ const providers = new Map<string, () => AiPageContext | null | undefined>();
 const pageActions = new Map<string, AiPageActionRegistration>();
 /** Last continuePageAction target: the drawer re-sends actions, the browser must not loop. */
 let actionNavigationTarget = '';
+const actionNavigationStorageKey = 'pbgui.ai.pending-navigation';
 
 /* ── UI-control bridge (legacy _aiControl*, pbgui_nav.js) ──────────────── */
 const controlIds = new WeakMap<Element, string>();
@@ -148,18 +150,40 @@ function registerPageAction(registration: AiPageActionRegistration): Unregister 
 }
 
 /** Navigate to a legacy/Vue page carrying the AI continuation flag (pbgui_nav.js contract). */
-export function continuePageAction(url: string): boolean {
+export function continuePageAction(url: string, actionId = ''): boolean {
   try {
     const target = new URL(String(url || ''), window.location.href);
     if (target.origin !== window.location.origin && target.origin !== aiOrigin()) return false;
+    const normalizedActionId = aiContextText(actionId, 64);
+    if (normalizedActionId) {
+      try {
+        if (window.sessionStorage.getItem(actionNavigationStorageKey) === normalizedActionId) return false;
+        window.sessionStorage.setItem(actionNavigationStorageKey, normalizedActionId);
+      } catch {
+        // Navigation can proceed when session storage is unavailable.
+      }
+    }
     target.searchParams.set('pbgui_ai_action', '1');
     if (actionNavigationTarget === target.href) return false;
     actionNavigationTarget = target.href;
     window.location.assign(target.href);
+    return true;
   } catch {
     // Malformed URL — ignore, the AI falls back to telling the user.
   }
   return false;
+}
+
+export function completePageActionNavigation(actionId: string): void {
+  const normalizedActionId = aiContextText(actionId, 64);
+  if (!normalizedActionId) return;
+  try {
+    if (window.sessionStorage.getItem(actionNavigationStorageKey) === normalizedActionId) {
+      window.sessionStorage.removeItem(actionNavigationStorageKey);
+    }
+  } catch {
+    // Navigation completion remains safe when session storage is unavailable.
+  }
 }
 
 function aiControlVisible(element: Element): boolean {
@@ -404,7 +428,7 @@ function onAiUiAction(event: Event): void {
   const entity = payload.entity && typeof payload.entity === 'object' ? (payload.entity as AiContextEntity) : {} as AiContextEntity;
   if (String(target.page_key || '') !== String(pageMeta.pageKey || '')) {
     const route = PAGE_ROUTES[String(target.page_key || '')];
-    if (route) continuePageAction(`${aiOrigin()}${route}`);
+    if (route) continuePageAction(`${aiOrigin()}${route}`, String((request as { action_id?: string }).action_id || ''));
     return;
   }
   const key = `${String(payload.action || '')}:${String(entity.kind || '')}`;
@@ -506,6 +530,9 @@ export function initAiPageMeta(pageKey: string, title: string, guideTopic?: stri
   }
   if (typeof facade.continuePageAction !== 'function') {
     facade.continuePageAction = continuePageAction;
+  }
+  if (typeof facade.completePageActionNavigation !== 'function') {
+    facade.completePageActionNavigation = completePageActionNavigation;
   }
   if (typeof facade.tryLocalCommand !== 'function') {
     facade.tryLocalCommand = tryLocalCommand;

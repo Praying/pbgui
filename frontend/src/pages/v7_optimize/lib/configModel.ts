@@ -368,6 +368,24 @@ export function buildSweepHoldoutBacktestConfig(configValue: JsonObject, holdout
   return config;
 }
 
+/** Build one standalone Backtest config over the candidate's full timerange. */
+export function buildSweepFullTimerangeBacktestConfig(configValue: JsonObject, draftName: string): JsonObject {
+  const config = cloneValue(configValue);
+  const backtest = isObject(config.backtest) ? config.backtest : {};
+  if (!backtest.start_date || !backtest.end_date) throw new Error('Full timerange dates are unavailable.');
+  config.backtest = {
+    ...backtest,
+    base_dir: `backtests/pbgui/${draftName}`,
+  };
+  const standalone = config.backtest as JsonObject;
+  delete standalone.suite_enabled;
+  delete standalone.scenarios;
+  delete standalone.reducer;
+  delete standalone.aggregate;
+  if (isObject(config.pbgui)) delete config.pbgui.scenario_template;
+  return config;
+}
+
 /** Validate PB8 suite/objective references with the same strict rules as the legacy editor. */
 export function validatePb8ScenarioBases(input: Pb8ScenarioValidationInput): ScenarioValidationIssue[] {
   const issues: ScenarioValidationIssue[] = [];
