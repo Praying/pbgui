@@ -114,7 +114,7 @@ function onSliderChange(): void {
    utilities. */
 function segmentTabClass(isActive: boolean): string {
   return isActive
-    ? 'active bg-accent-deep/22 text-primary outline-1 outline-accent/75 -outline-offset-1 hover:bg-accent/8 hover:text-primary'
+    ? 'active bg-accent-deep/22 text-primary shadow-[inset_0_0_0_1px_rgba(var(--accent-rgb)/0.75)] hover:bg-accent/8 hover:text-primary'
     : 'bg-transparent text-muted hover:bg-secondary/8 hover:text-primary';
 }
 </script>
@@ -131,7 +131,7 @@ function segmentTabClass(isActive: boolean): string {
       <button
         v-for="seg in store.segments.value"
         :key="seg.key"
-        class="pbgui-tab min-w-0 min-h-[31px] cursor-pointer border-0 border-r border-r-secondary/12 bg-transparent px-2 py-1.25 text-xs transition-[color,background-color] duration-150 ease-[ease] last:border-r-0"
+        class="pbgui-tab min-w-0 min-h-[31px] cursor-pointer border-0 border-r border-r-secondary/12 bg-transparent px-2 py-1.25 text-xs transition-[color,background-color] duration-150 ease-[ease] first:rounded-l-[7px] last:rounded-r-[7px] last:border-r-0"
         type="button"
         :class="segmentTabClass(seg.key === segmentKey)"
         @click="setSegment(seg.key)"

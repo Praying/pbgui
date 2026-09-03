@@ -1,5 +1,9 @@
 # Unreleased
 
+## PBv8 Strategy Explorer — Segment Tab Corner Outline Fix (策略浏览器/分析)
+
+- **Segment Tabs Active Highlighting & Border Radius Alignment (`ParamTuning.vue` & `v7_strategy_explorer.html`)**: Fixed a visual defect on the Strategy Explorer analysis page where the active first segment tab ("入场网格" / Entry Grid) was missing its top-left and bottom-left blue outlines. Added matching inner border-radius (`first:rounded-l-[7px] last:rounded-r-[7px]`) to the segment buttons and replaced the outer-clipping `outline-1 outline-accent/75 -outline-offset-1` with `shadow-[inset_0_0_0_1px_rgba(var(--accent-rgb)/0.75)]`, ensuring the active highlight curves seamlessly along the container's rounded corner without being cut off by `overflow: hidden`.
+
 ## PBv7/PBv8 Optimize — Configuration Editor UI/UE Modernization (编辑优化)
 
 - **Compact Header & Segmented Pill Tab Bar (`ConfigEditorModal.vue`)**: Compressed the modal header from ~72px to ~48px (`py-2.5`) aligning the icon, title, version badge, and hint on a single row to save vertical space. Replaced the flat text tab strip with a modern segmented pill bar (`h-[34px]`, 13.5px medium typography, `bg-surface-deep/50` pill track, active tab highlighted with `bg-accent/16 border-accent/35 text-accent-soft shadow-xs`), saving ~38px of vertical screen real estate.
