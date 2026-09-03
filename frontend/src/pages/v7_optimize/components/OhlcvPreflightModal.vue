@@ -10,6 +10,7 @@ import {
 } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { serverMsg } from '@/shared/i18n';
 
 const props = withDefaults(defineProps<{
   open: boolean;
@@ -19,15 +20,19 @@ const props = withDefaults(defineProps<{
   job?: Record<string, unknown> | null;
 }>(), { payload: () => ({}), job: null });
 const emit = defineEmits<{ close: []; refresh: []; preload: []; stop: [] }>();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+function translateServerMsg(msg: string): string {
+  return serverMsg(msg, locale.value);
+}
 
 /* overall_status → Tailwind utilities (same tints as the former
    .opt-status-* rules; spelled out so the scanner sees them). */
 const overallStatusClass = computed(() => {
   const status = String(summary.value?.overall_status || '').toLowerCase();
-  if (status === 'pass' || status === 'ok' || status === 'complete') return 'bg-success/15 text-success-soft border-success/30';
-  if (status === 'error' || status === 'fail') return 'bg-danger/15 text-danger-soft border-danger/30';
-  if (status === 'running' || status === 'preload') return 'bg-warning/15 text-warning-soft border-warning/30';
+  if (status === 'pass' || status === 'ok' || status === 'ready' || status === 'complete') return 'bg-success/15 text-success-soft border-success/30';
+  if (status === 'error' || status === 'fail' || status === 'blocked') return 'bg-danger/15 text-danger-soft border-danger/30';
+  if (status === 'running' || status === 'preload' || status === 'too_young' || status === 'missing_market' || status === 'mixed') return 'bg-warning/15 text-warning-soft border-warning/30';
   return 'bg-surface-deep text-secondary border-border-default/60';
 });
 function object(value: unknown): Record<string, unknown> { return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}; }
@@ -49,6 +54,119 @@ const jobStatusLabel = computed(() => {
   return jobStatus.value;
 });
 function formatKey(value: string): string { return value.replace(/_/g, ' '); }
+
+function overallStatusLabel(status: unknown): string {
+  const s = String(status || '').toLowerCase();
+  if (s === 'pass' || s === 'ok' || s === 'complete') return t('editor.preflight.status.pass');
+  if (s === 'preload') return t('editor.preflight.status.preload');
+  if (s === 'ready') return t('editor.preflight.status.ready');
+  if (s === 'blocked') return t('editor.preflight.status.blocked');
+  if (s === 'legacy') return t('editor.preflight.status.legacy');
+  if (s === 'too_young') return t('editor.preflight.status.too_young');
+  if (s === 'missing_market') return t('editor.preflight.status.missing_market');
+  if (s === 'mixed') return t('editor.preflight.status.mixed');
+  if (s === 'error' || s === 'fail') return t('editor.preflight.status.fail');
+  if (s === 'empty') return t('editor.preflight.status.empty');
+  return s;
+}
+
+const statusCountKeys: Record<string, string> = {
+  store_complete: 'editor.preflight.counts.store_complete',
+  legacy_importable: 'editor.preflight.counts.legacy_importable',
+  missing_local: 'editor.preflight.counts.missing_local',
+  blocked_by_persistent_gap: 'editor.preflight.counts.blocked_by_persistent_gap',
+  missing_market: 'editor.preflight.counts.missing_market',
+  coin_too_young: 'editor.preflight.counts.coin_too_young',
+};
+
+const statusGroupKeys: Record<string, string> = {
+  store_complete: 'editor.preflight.groups.store_complete',
+  legacy_importable: 'editor.preflight.groups.legacy_importable',
+  missing_local: 'editor.preflight.groups.missing_local',
+  blocked_by_persistent_gap: 'editor.preflight.groups.blocked_by_persistent_gap',
+  missing_market: 'editor.preflight.groups.missing_market',
+  coin_too_young: 'editor.preflight.groups.coin_too_young',
+};
+
+function countLabel(status: string): string {
+  const key = statusCountKeys[status];
+  return key ? t(key) : formatKey(status);
+}
+
+function groupLabel(status: string): string {
+  const key = statusGroupKeys[status];
+  return key ? t(key) : formatKey(status);
+}
+
+const detailPattern = /^(\d+)\s+(.+)$/;
+const detailPartKeys: Record<string, string> = {
+  'ready locally': 'editor.preflight.details.ready_locally',
+  'available from the configured source': 'editor.preflight.details.source_available',
+  'missing locally': 'editor.preflight.details.missing_locally',
+  'would fetch on start': 'editor.preflight.details.would_fetch_on_start',
+  'blocked by persistent gaps': 'editor.preflight.details.blocked_by_persistent_gaps',
+  'not available on the selected exchanges': 'editor.preflight.details.not_available_on_exchanges',
+  'too young for the requested window': 'editor.preflight.details.too_young_for_window',
+};
+
+function formatSummaryDetail(detail: unknown): string {
+  if (!detail) return '';
+  const text = String(detail);
+  const direct = translateServerMsg(text);
+  if (direct !== text) return direct;
+
+  const parts = text.split(', ');
+  const mapped = parts.map((part) => {
+    const match = part.match(detailPattern);
+    if (!match) return translateServerMsg(part);
+    const count = match[1];
+    const label = match[2];
+    const key = label ? detailPartKeys[label] : undefined;
+    if (key && count) {
+      return `${count} ${t(key)}`;
+    }
+    return translateServerMsg(part);
+  });
+  return mapped.join('，');
+}
+
+const fieldKeyMap: Record<string, string> = {
+  requested_start_date: 'editor.preflight.fields.requested_start_date',
+  effective_start_date: 'editor.preflight.fields.effective_start_date',
+  end_date: 'editor.preflight.fields.end_date',
+  warmup_minutes: 'editor.preflight.fields.warmup_minutes',
+  minimum_coin_age_days: 'editor.preflight.fields.minimum_coin_age_days',
+  source_dir: 'editor.preflight.fields.source_dir',
+  ohlcv_source_dir: 'editor.preflight.fields.ohlcv_source_dir',
+  catalog_path: 'editor.preflight.fields.catalog_path',
+  catalog_present: 'editor.preflight.fields.catalog_present',
+  exchange: 'editor.preflight.fields.exchange',
+  days: 'editor.preflight.fields.days',
+  coin_count: 'editor.preflight.fields.coin_count',
+  coins_mode: 'editor.preflight.fields.coins_mode',
+  exchange_count: 'editor.preflight.fields.exchange_count',
+  total_symbols: 'editor.preflight.fields.total_symbols',
+  mode: 'editor.preflight.fields.mode',
+};
+
+function fieldLabel(key: string): string {
+  const normKey = key.toLowerCase().replace(/[\s-]+/g, '_');
+  const tKey = fieldKeyMap[normKey] || fieldKeyMap[key];
+  return tKey ? t(tKey) : formatKey(key);
+}
+
+function fieldValue(value: unknown): string {
+  if (value === true || value === 'true') return t('editor.preflight.values.yes');
+  if (value === false || value === 'false') return t('editor.preflight.values.no');
+  if (typeof value === 'string') {
+    const v = value.toLowerCase().trim();
+    if (v === 'explicit') return t('editor.preflight.values.explicit');
+    if (v === 'all') return t('editor.preflight.values.all');
+    return translateServerMsg(value);
+  }
+  return String(value ?? '');
+}
+
 function entryTitle(entry: Record<string, unknown>): string {
   const sides = Array.isArray(entry.sides) && entry.sides.length ? ` [${entry.sides.map(String).join('/')}]` : '';
   const exchange = entry.exchange ? t('editor.preflight.entryOn', { exchange: String(entry.exchange) }) : '';
@@ -107,11 +225,11 @@ function entryTitle(entry: Record<string, unknown>): string {
                 class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
                 :class="overallStatusClass"
               >
-                {{ String(summary.overall_status || '') }}
+                {{ overallStatusLabel(summary.overall_status) }}
               </span>
             </div>
-            <h3 v-if="summary.headline" class="mt-2 text-[14px] font-bold text-primary">{{ String(summary.headline) }}</h3>
-            <p v-if="summary.detail" class="mt-1 text-[13px] text-secondary leading-relaxed">{{ String(summary.detail) }}</p>
+            <h3 v-if="summary.headline" class="mt-2 text-[14px] font-bold text-primary">{{ translateServerMsg(String(summary.headline)) }}</h3>
+            <p v-if="summary.detail" class="mt-1 text-[13px] text-secondary leading-relaxed">{{ formatSummaryDetail(summary.detail) }}</p>
 
             <div v-if="counts.length" class="mt-3 flex flex-wrap gap-2">
               <span
@@ -120,11 +238,11 @@ function entryTitle(entry: Record<string, unknown>): string {
                 class="inline-flex items-center gap-1.5 rounded-md border border-border-default/60 bg-elevated/60 px-2.5 py-1 text-xs text-secondary"
               >
                 <b class="font-mono text-primary font-bold">{{ count }}</b>
-                <span>{{ formatKey(status) }}</span>
+                <span>{{ countLabel(status) }}</span>
               </span>
             </div>
 
-            <p v-if="summary.preload_detail" class="mt-2.5 text-xs text-secondary/80 leading-relaxed">{{ String(summary.preload_detail) }}</p>
+            <p v-if="summary.preload_detail" class="mt-2.5 text-xs text-secondary/80 leading-relaxed">{{ translateServerMsg(String(summary.preload_detail)) }}</p>
           </section>
 
           <!-- Request & Universe 2-Col Grid -->
@@ -133,8 +251,8 @@ function entryTitle(entry: Record<string, unknown>): string {
               <strong class="text-[13px] font-semibold text-primary">{{ t('editor.preflight.sectionRequest') }}</strong>
               <dl class="mt-2.5 grid grid-cols-[minmax(110px,auto)_1fr] gap-x-3 gap-y-1.5 text-xs">
                 <template v-for="(value, key) in request" :key="key">
-                  <dt class="text-secondary font-medium">{{ formatKey(String(key)) }}</dt>
-                  <dd class="m-0 font-mono text-primary truncate" :title="String(value ?? '')">{{ String(value ?? '') }}</dd>
+                  <dt class="text-secondary font-medium">{{ fieldLabel(String(key)) }}</dt>
+                  <dd class="m-0 font-mono text-primary truncate" :title="fieldValue(value)">{{ fieldValue(value) }}</dd>
                 </template>
               </dl>
             </section>
@@ -143,8 +261,8 @@ function entryTitle(entry: Record<string, unknown>): string {
               <strong class="text-[13px] font-semibold text-primary">{{ t('editor.preflight.sectionUniverse') }}</strong>
               <dl class="mt-2.5 grid grid-cols-[minmax(110px,auto)_1fr] gap-x-3 gap-y-1.5 text-xs">
                 <template v-for="(value, key) in universe" :key="key">
-                  <dt class="text-secondary font-medium">{{ formatKey(String(key)) }}</dt>
-                  <dd class="m-0 font-mono text-primary truncate" :title="String(value ?? '')">{{ String(value ?? '') }}</dd>
+                  <dt class="text-secondary font-medium">{{ fieldLabel(String(key)) }}</dt>
+                  <dd class="m-0 font-mono text-primary truncate" :title="fieldValue(value)">{{ fieldValue(value) }}</dd>
                 </template>
               </dl>
             </section>
@@ -153,7 +271,7 @@ function entryTitle(entry: Record<string, unknown>): string {
           <!-- Sample Groups -->
           <section v-for="group in sampleGroups" :key="group.status" class="rounded-lg border border-border-default/80 bg-surface-deep/50 p-4">
             <div class="flex items-center justify-between gap-2">
-              <strong class="text-[13px] font-semibold text-primary capitalize">{{ formatKey(group.status) }}</strong>
+              <strong class="text-[13px] font-semibold text-primary capitalize">{{ groupLabel(group.status) }}</strong>
               <span class="rounded bg-elevated/80 px-1.5 py-0.5 text-[11px] font-mono text-secondary">{{ group.entries.length }}</span>
             </div>
             <div class="mt-2.5 grid grid-cols-2 gap-2 max-[700px]:grid-cols-1">
@@ -165,7 +283,7 @@ function entryTitle(entry: Record<string, unknown>): string {
                 <div class="flex items-center justify-between gap-2">
                   <span class="font-mono font-semibold text-primary text-[12.5px]">{{ entryTitle(entry) }}</span>
                 </div>
-                <span v-if="entry.note || entry.status_label" class="text-secondary leading-snug">{{ String(entry.note || entry.status_label || '') }}</span>
+                <span v-if="entry.note || entry.status_label" class="text-secondary leading-snug">{{ translateServerMsg(String(entry.note || entry.status_label || '')) }}</span>
                 <small v-if="entry.effective_start_date" class="font-mono text-[11px] text-secondary/80">
                   {{ t('editor.preflight.entryStart', { d: String(entry.effective_start_date) }) }}
                 </small>
@@ -175,7 +293,7 @@ function entryTitle(entry: Record<string, unknown>): string {
 
           <!-- Notes -->
           <ul v-if="notes.length" class="m-0 list-disc pl-5 space-y-1 text-xs text-secondary">
-            <li v-for="note in notes" :key="note">{{ note }}</li>
+            <li v-for="note in notes" :key="note">{{ translateServerMsg(note) }}</li>
           </ul>
         </template>
 
@@ -198,7 +316,7 @@ function entryTitle(entry: Record<string, unknown>): string {
             <span v-if="job.finished_at_iso" class="rounded bg-elevated/80 px-2 py-0.5 font-mono"><b class="text-primary">{{ t('editor.preflight.labelFinished') }}</b> {{ String(job.finished_at_iso) }}</span>
           </div>
 
-          <p v-if="job.error" class="mt-2 text-xs text-danger-soft leading-relaxed">{{ String(job.error) }}</p>
+          <p v-if="job.error" class="mt-2 text-xs text-danger-soft leading-relaxed">{{ translateServerMsg(String(job.error)) }}</p>
           <pre v-if="logTail.length" class="mt-2.5 max-h-[220px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default/80 bg-page p-3 font-mono text-[11.5px] leading-relaxed text-primary">{{ logTail.join('\n') }}</pre>
         </section>
       </div>
@@ -214,10 +332,11 @@ function entryTitle(entry: Record<string, unknown>): string {
         </Button>
         <Button v-else variant="primary" data-action="preload" type="button" :disabled="!preloadSupported || loading" class="h-9 gap-1.5 text-[13px]" @click="emit('preload')">
           <PbIcon :icon="PhDownloadSimple" :size="15" />
-          {{ String(summary.preload_label || t('editor.preflight.preloadDefault')) }}
+          {{ translateServerMsg(String(summary.preload_label || t('editor.preflight.preloadDefault'))) }}
         </Button>
       </footer>
     </section>
   </div>
 </template>
+
 

@@ -55,7 +55,9 @@ export function createI18n(lang: 'en' | 'zh' = 'en'): I18n<BridgeMessages, {}, {
 }
 
 /** Exact-match translation of known server English messages; passthrough otherwise. */
-export function serverMsg(text: string): string {
-  if (!text || detectLang() === 'en') return text;
+export function serverMsg(text: string, lang?: string): string {
+  const active = lang ?? detectLang();
+  if (!text || active === 'en') return text;
   return (serverMsgs as FlatDict)[text] ?? text;
 }
+

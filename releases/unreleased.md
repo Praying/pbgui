@@ -1,5 +1,15 @@
 # Unreleased
 
+## PBv7/PBv8 Optimize — OHLCV Preflight Modal Comprehensive i18n Localization (OHLCV就绪检查多语言)
+
+- **End-to-End Chinese Localization (`OhlcvPreflightModal.vue`)**: Localized all dynamic and static elements of the OHLCV Readiness check dialog in Chinese mode:
+  - **Summary Status & Headlines**: Localized status badges (`PASS`, `PRELOAD`, `READY`, `BLOCKED`, `TOO_YOUNG`, `MISSING_MARKET`, `FAIL`), dynamic summary headlines, and comma-separated breakdown counts (e.g. `41 would fetch on start` → `41 个启动时将在线获取`).
+  - **Readiness Pill Counters & Group Titles**: Mapped readiness category keys (`missing_local`, `store_complete`, `legacy_importable`, `blocked_by_persistent_gap`, `missing_market`, `coin_too_young`) to friendly bilingual terms.
+  - **Request & Universe Field Key/Value Mapping**: Formatted request parameters (`requested_start_date`, `catalog_present`, `source_dir`, etc.) and universe keys (`coin_count`, `coins_mode`, etc.), mapping booleans to `是`/`否` and mode strings (e.g. `explicit` → `指定`).
+  - **Backend Server Messages Bridge**: Expanded `frontend/i18n/server_msgs.json` with 44 exact-match translations for PB7/PB8 readiness generator notes, headlines, and action button labels.
+  - **Reactive Locale Handling**: Enhanced `serverMsg(text, lang?)` in `frontend/src/shared/i18n.ts` to support explicit reactive locale injection.
+  - **Unit Test Parity**: Added comprehensive bilingual Vitest unit tests in `OhlcvPreflightModal.test.ts` verifying both English and Chinese rendering across all fields.
+
 ## PBv7/PBv8 Optimize — OHLCV Preflight Modal Dark Theme Unification (OHLCV就绪检查)
 
 - **Solid Dark Surface & Backdrop Stacking (`OhlcvPreflightModal.vue`)**: Replaced the unstyled, translucent `.opt-modal` / `.opt-ohlcv-modal` with a solid system dark theme modal panel (`bg-panel border border-border-default rounded-xl shadow-[var(--shadow-modal)]`) layered above the configuration editor at `z-[1100]` with `bg-backdrop p-3.5 sm:p-5`. Fixed translucent cards (`bg-white/[0.018]`) and missing backgrounds that caused the underlying editor inputs and bounds table to bleed through.
