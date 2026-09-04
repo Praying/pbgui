@@ -243,13 +243,13 @@ defineExpose({
   display: none;
   position: fixed;
   z-index: var(--z-modal);
-  top: 12vh;
+  top: 12dvh;
   left: 50%;
   transform: translateX(-50%);
   width: 540px;
   min-width: 280px;
   min-height: 180px;
-  max-height: 80vh;
+  max-height: 80dvh;
   background: var(--bg-page);
   border: 1px solid var(--border-default);
   border-radius: 10px;

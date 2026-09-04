@@ -35,7 +35,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
   <!-- pull progress (:9512-9525) — Hide keeps the stream running -->
   <div v-if="git.pullOpen.value" id="modal-root" :class="modalBackdropClass" data-test="archive-pull-progress-modal">
     <div
-      class="archive-pull-modal flex h-[min(680px,88vh)] min-w-[160px] w-[min(920px,94vw)] max-h-[88vh] max-w-[94vw] flex-col resize overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal"
+      class="archive-pull-modal flex h-[min(680px,88dvh)] min-w-[160px] w-[min(920px,94vw)] max-h-[88dvh] max-w-[94vw] flex-col resize overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal"
     >
       <div class="mb-3 flex shrink-0 items-center justify-between border-b border-border-default pb-2">
         <span class="text-lg font-semibold" data-test="archive-pull-title">{{ git.pullTitle.value }}</span>

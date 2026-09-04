@@ -57,7 +57,7 @@ const tdClass =
         </Button>
       </div>
     </div>
-    <div class="integrity-table-wrap max-h-[52vh] overflow-auto rounded-md border border-border-default">
+    <div class="integrity-table-wrap max-h-[52dvh] overflow-auto rounded-md border border-border-default">
       <table class="integrity-table w-full border-collapse max-[760px]:min-w-[720px]">
         <thead>
           <tr>

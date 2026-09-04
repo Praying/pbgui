@@ -24,7 +24,7 @@ const { t } = useI18n();
       </div>
     </div>
     <iframe
-      class="best1m-job-monitor-frame h-[min(72vh,820px)] w-full min-h-[520px] rounded-none border-0 bg-transparent"
+      class="best1m-job-monitor-frame h-[min(72dvh,820px)] w-full min-h-[520px] rounded-none border-0 bg-transparent"
       id="integrity-job-monitor-frame"
       :title="t('market.ohlcvIntegrityJobMonitor')"
       :src="src"

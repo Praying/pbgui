@@ -126,7 +126,7 @@ function cellText(columnKey: string, row: InventoryRow): string {
 </script>
 
 <template>
-  <div ref="root" class="inventory-table-wrap max-h-[33vh] overflow-auto rounded-[10px] border border-border-default bg-page/42" id="inventory-table-wrap">
+  <div ref="root" class="inventory-table-wrap max-h-[33dvh] overflow-auto rounded-[10px] border border-border-default bg-page/42" id="inventory-table-wrap">
     <table v-if="rows.length" class="inventory-table w-full min-w-[1180px] border-separate border-spacing-0">
       <thead>
         <tr>

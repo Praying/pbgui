@@ -434,7 +434,7 @@ defineExpose({
             <PbIcon :icon="PhPushPin" :size="18" />
           </Button>
         </div>
-        <div id="archive-results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+        <div id="archive-results-list-wrap" class="relative h-[25dvh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="archive-results-table">
             <ArchiveSchedulesTable v-if="store.mode.value === 'schedules'" :schedules="store.schedulesVisible.value" :own="store.isOwn.value" @run="store.runSchedule" @toggle="store.toggleSchedule" @remove="store.deleteSchedule" />
             <ArchiveOptimizeTable v-else-if="isOptimize" :configs="store.optimizeVisible.value" :selected="store.selectedOptimize.value" @select="onOptimizeSelect" @open="onOptimizeOpen" />
@@ -509,7 +509,7 @@ defineExpose({
 
     <ConfirmModal :open="cleanup.open" :title="t(cleanup.kind === 'liquidated' ? 'v7backtest.removeLiquidatedResults' : 'v7backtest.removeDuplicateResults')" :confirm-label="t('v7backtest.remove')" danger :test-id="`cleanup-${cleanup.kind}-modal`" @confirm="confirmCleanup" @cancel="cleanup = { ...cleanup, open: false }">
       <p>{{ plainLegacyHtml(t(cleanup.kind === 'liquidated' ? 'v7backtest.removeLiquidatedConfirm' : 'v7backtest.removeDuplicatesConfirm', { n: cleanup.items.length, archive: store.selectedName.value })) }}</p>
-      <ul style="max-height: 40vh; overflow: auto">
+      <ul style="max-height: 40dvh; overflow: auto">
         <li v-for="(item, i) in cleanup.items.slice(0, 20)" :key="i">
           {{ cleanupPath(item.path) }} <span class="text-secondary">{{ cleanup.kind === 'liquidated' ? item.reason : t('v7backtest.keeps', { name: cleanupPath(item.keep_path) }) }}</span>
         </li>

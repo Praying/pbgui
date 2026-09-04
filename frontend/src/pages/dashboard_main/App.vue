@@ -1162,7 +1162,7 @@ body {
   transform: translate(-50%, -50%);
   z-index: var(--z-toast);
   width: min(760px, 88vw);
-  height: min(760px, 84vh);
+  height: min(760px, 84dvh);
   min-width: 360px;
   min-height: 300px;
   border-radius: var(--radius-xl);

@@ -147,7 +147,7 @@ function userOptionClass(active: boolean): string {
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop" id="import-modal" @mousedown.self="close">
-      <div class="flex w-[90%] max-w-[800px] max-h-[80vh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
+      <div class="flex w-[90%] max-w-[800px] max-h-[80dvh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
         <h3 class="text-lg">{{ t('v7run.pasteConfig') }}</h3>
         <div class="form-group">
           <label>{{ t('v7run.user') }}</label>

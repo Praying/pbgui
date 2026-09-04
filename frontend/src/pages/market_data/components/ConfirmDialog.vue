@@ -64,7 +64,7 @@ watch(
         </div>
         <div class="confirm-list-wrap grid gap-1" id="confirm-list-wrap" :hidden="!dialog.state.value.items.length">
           <div class="confirm-list-label text-xs uppercase tracking-[0.04em] text-secondary" id="confirm-list-label">{{ dialog.state.value.listLabel }}</div>
-          <div class="confirm-list flex max-h-[min(140px,24vh)] flex-wrap gap-1 overflow-y-auto rounded-lg border border-accent/12 bg-page/42 p-1" id="confirm-list">
+          <div class="confirm-list flex max-h-[min(140px,24dvh)] flex-wrap gap-1 overflow-y-auto rounded-lg border border-accent/12 bg-page/42 p-1" id="confirm-list">
             <span v-for="item in dialog.state.value.items" :key="item" class="confirm-list-item inline-flex min-h-6 items-center whitespace-nowrap rounded-full border border-accent/24 bg-accent/12 py-[1px] px-2 text-xs text-primary">{{ item }}</span>
           </div>
         </div>

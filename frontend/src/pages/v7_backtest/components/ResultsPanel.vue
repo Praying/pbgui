@@ -209,7 +209,7 @@ defineExpose({ deleteSelectedFlow });
         </div>
       </div>
 
-      <div id="results-list-wrap" class="relative h-[clamp(220px,34vh,400px)] min-h-36 overflow-auto bg-page/45" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+      <div id="results-list-wrap" class="relative h-[clamp(220px,34dvh,400px)] min-h-36 overflow-auto bg-page/45" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
         <div id="results-list">
           <LoadingSkeleton v-if="store.checking.value" class="px-5 py-15" :label="t('v7backtest.checkingForResults')" />
           <ResultsTable

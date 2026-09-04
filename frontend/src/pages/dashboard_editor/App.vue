@@ -241,7 +241,7 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <div class="editor-wrapper flex h-[85vh] flex-col overflow-hidden p-[var(--page-padding)]">
+  <div class="editor-wrapper flex h-[85dvh] flex-col overflow-hidden p-[var(--page-padding)]">
     <div class="editor-sticky-top mb-[0.5rem] shrink-0">
       <EditorHeader :msg="statusMsg" :cls="statusCls" :config-revision="configRevision" />
     </div>

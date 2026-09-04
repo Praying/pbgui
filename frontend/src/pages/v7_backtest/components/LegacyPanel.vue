@@ -126,7 +126,7 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             <PbIcon :icon="PhPushPin" :size="18" />
           </Button>
         </div>
-        <div id="legacy-results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+        <div id="legacy-results-list-wrap" class="relative h-[25dvh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="legacy-results-table">
             <EmptyState v-if="store.visible.value.length === 0" class="px-5 py-15" :title="t('v7backtest.noLegacyResults')" />
             <ResultsTable
