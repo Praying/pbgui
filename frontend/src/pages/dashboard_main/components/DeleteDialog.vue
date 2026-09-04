@@ -4,11 +4,13 @@ import { PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 
 /**
  * Legacy #del-dash-dialog (dashboard_main.html openDeleteDialog): a quoted
  * name for a single dashboard, dashboardsCount ({count} dashboards) for
- * multi-deletes. Confirm emits the pending list, cancel closes.
+ * multi-deletes. Confirm emits the pending list, cancel closes. Keeps the
+ * dlg-box visual language (page-scoped styles) — Escape closes it.
  */
 const props = defineProps<{
   visible: boolean;
@@ -21,6 +23,9 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const dialogVisible = computed(() => props.visible);
+useEscapeClose(dialogVisible, () => emit('close'));
 
 const confirmName = computed(() =>
   props.names.length === 1

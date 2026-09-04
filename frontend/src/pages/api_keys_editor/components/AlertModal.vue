@@ -2,12 +2,16 @@
 /*
  * Toast container + alert modal (:1044-1056 markup, showToast :2270-2299,
  * closeAlertModal :2301-2303) — success/info toasts bottom-right, error and
- * warning messages open the modal instead.
+ * warning messages open the modal instead. The alert panel now sits on the
+ * shared Modal primitive (Escape + focus handling for free).
  */
+import { useI18n } from 'vue-i18n';
 import { injectToasts } from '../composables/useToasts';
 import { Button } from '@/shared/components/ui/button';
+import { Modal } from '@/shared/components/ui/modal';
 
 const toasts = injectToasts();
+const { t } = useI18n();
 
 /* Kind → Tailwind utility mappings (the former .toast.success/.info fills and
    the .alert-modal.<kind> rails). Each branch returns the complete colour set
@@ -47,17 +51,25 @@ function alertTitleClass(kind: 'error' | 'warning' | 'success' | 'info'): string
     </div>
   </div>
 
-  <div id="alertModalOverlay" class="modal-backdrop" v-show="toasts.alert.value.visible">
+  <Modal
+    :open="toasts.alert.value.visible"
+    :title="toasts.alert.value.title"
+    panel-class="w-[min(500px,90vw)]"
+    :close-label="t('common.close')"
+    @cancel="toasts.closeAlert()"
+  >
+    <template #title>
+      <span id="alertModalTitle" class="text-md font-bold" :class="alertTitleClass(toasts.alert.value.kind)">{{ toasts.alert.value.title }}</span>
+    </template>
     <div
-      id="alertModalBox"
-      class="alert-modal flex w-[90%] max-w-[500px] flex-col gap-3 rounded-lg border border-border-default bg-panel px-8 py-7 shadow-modal"
+      id="alertModalBody"
+      class="rounded-md border-l-4 px-3 py-2 text-sm leading-[1.5] break-words text-secondary"
       :class="alertBoxClass(toasts.alert.value.kind)"
     >
-      <div id="alertModalTitle" class="text-md font-bold" :class="alertTitleClass(toasts.alert.value.kind)">{{ toasts.alert.value.title }}</div>
-      <div id="alertModalBody" class="text-sm leading-[1.5] text-secondary break-words">{{ toasts.alert.value.message }}</div>
-      <div class="flex justify-end">
-        <Button type="button" variant="primary" class="min-w-[80px]" @click="toasts.closeAlert()">OK</Button>
-      </div>
+      {{ toasts.alert.value.message }}
     </div>
-  </div>
+    <template #footer>
+      <Button id="alertModalOk" type="button" variant="primary" class="min-w-[80px]" @click="toasts.closeAlert()">{{ t('common.ok') }}</Button>
+    </template>
+  </Modal>
 </template>

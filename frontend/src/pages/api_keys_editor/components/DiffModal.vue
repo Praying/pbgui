@@ -7,6 +7,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { diffAllEqual, sideDiffRows, unifiedDiffRows, type DiffRow } from '../lib/diffRows';
 import type { DiffResponse } from '../types';
 
@@ -15,6 +16,11 @@ const props = defineProps<{ data: DiffResponse | null }>();
 const emit = defineEmits<{ (e: 'close'): void }>();
 
 const { t } = useI18n();
+
+/* Full-screen diff view (not a centered panel — keeps its own chrome), so it
+   stays hand-rolled; Escape-to-close is the one dialog behavior it needs. */
+const diffOpen = computed(() => Boolean(props.data));
+useEscapeClose(diffOpen, () => emit('close'));
 
 const mode = ref<'unified' | 'side'>('unified');
 

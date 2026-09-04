@@ -8,9 +8,11 @@
  */
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
+import { computed } from 'vue';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     open: boolean;
     title: string;
@@ -22,6 +24,12 @@ withDefaults(
 );
 
 const emit = defineEmits<{ confirm: []; cancel: [] }>();
+
+/* Escape-close parity with the shared Modal (this dialog keeps legacy
+   modal-* classes for the parity tests, so it stays hand-rolled). */
+const dialogOpen = computed(() => props.open);
+useEscapeClose(dialogOpen, () => emit('cancel'));
+
 const { t } = useI18n();
 </script>
 

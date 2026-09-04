@@ -11,6 +11,8 @@ import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { computed } from 'vue';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { onToggleMultiSelectMousedown } from '../composables/useToggleMultiSelect';
@@ -23,6 +25,12 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ confirm: [fields: RebacktestFields]; close: []; error: [message: string] }>();
+
+/* Escape-close parity with the shared Modal (this dialog keeps legacy
+   modal-* classes for the parity tests, so it stays hand-rolled). */
+const dialogOpen = computed(() => props.open);
+useEscapeClose(dialogOpen, () => emit('close'));
+
 
 const { t } = useI18n();
 

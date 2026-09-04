@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { flushPromises, mount } from '@vue/test-utils';
+import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import App from './App.vue';
 
@@ -98,6 +98,10 @@ afterEach(() => {
   vi.unstubAllGlobals();
   document.body.innerHTML = '';
 });
+// Registered AFTER the body-wipe hook: vitest runs afterEach LIFO, so the
+// teleported Modal unmounts before the wipe destroys its portal anchors
+// (removeFragment crash otherwise — see shared/testing notes).
+enableAutoUnmount(afterEach);
 
 function rowNames(wrapper: ReturnType<typeof mount>): string[] {
   return wrapper
@@ -209,13 +213,13 @@ describe('API Keys page shell', () => {
 
     await wrapper.find('#btnSave').trigger('click');
     await flushPromises();
-    expect(wrapper.find('#alertModalOverlay').isVisible()).toBe(true);
-    expect(wrapper.find('#alertModalBody').text()).toContain('Username is required');
+    // The shared Modal portals to body — query document, not wrapper.
+    expect(document.querySelector('#alertModalBody')?.textContent).toContain('Username is required');
 
     await wrapper.find('#editName').setValue('carol');
     await wrapper.find('#btnSave').trigger('click');
     await flushPromises();
-    expect(wrapper.find('#alertModalBody').text()).toContain('API Key is required');
+    expect(document.querySelector('#alertModalBody')?.textContent).toContain('API Key is required');
   });
 
   it('saves a new user with the exact legacy payload (:1891-1914)', async () => {
