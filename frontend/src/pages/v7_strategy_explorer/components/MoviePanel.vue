@@ -65,15 +65,14 @@ interface FrameRow {
   entryOrders: number;
   closeOrders: number;
 }
-function frameRows(): FrameRow[] {
+const frameRows = computed<FrameRow[]>(() => {
   return (frames.value.slice(0, 500) as NonNullable<typeof frames.value>).map((frame) => ({
     index: frame.index ?? 0,
     time: String(frame.timestamp),
     close: fmt(deepGet<number>(frame, ['candle', 'close'], 0), 8),
     entryOrders: deepGet<number>(frame, [sideKey.value, 'summary', 'entry_orders'], 0),
     closeOrders: deepGet<number>(frame, [sideKey.value, 'summary', 'close_orders'], 0),
-  }));
-}
+  }));});
 interface FillRow {
   idx: number;
   time: string;
@@ -82,7 +81,7 @@ interface FillRow {
   price: string;
   posSize: string;
 }
-function fillRows(): FillRow[] {
+const fillRows = computed<FillRow[]>(() => {
   return (sideEvents.value.slice(0, 500) as FillEvent[]).map((ev, idx) => ({
     idx: idx + 1,
     time: String(ev.timestamp || ev.time || ev.date || '-'),
@@ -90,8 +89,7 @@ function fillRows(): FillRow[] {
     qty: fmt(ev.qty, 8),
     price: fmt(ev.price, 8),
     posSize: fmt(ev.pos_size, 8),
-  }));
-}
+  }));});
 
 function onStepChange(): void {
   store.invalidateMovieRequest();
@@ -291,15 +289,15 @@ const exportCodecLabel = computed(() => {
             </div>
             <p class="text-secondary">{{ t('v7explore.movieEngineMarketLine', { engine: engineLabel, exchange: meta().exchange || '', coin: meta().coin || '' }) }}</p>
             <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.frames') }}</h4>
-            <table v-if="frameRows().length" class="orders">
+            <table v-if="frameRows.length" class="orders">
               <thead><tr><th>#</th><th>{{ t('v7explore.colTime') }}</th><th>{{ t('v7explore.colClose') }}</th><th>{{ t('v7explore.colEntryOrders') }}</th><th>{{ t('v7explore.colCloseOrders') }}</th></tr></thead>
-              <tbody><tr v-for="row in frameRows()" :key="String(row.index) + row.time"><td>{{ row.index }}</td><td>{{ row.time }}</td><td>{{ row.close }}</td><td>{{ row.entryOrders }}</td><td>{{ row.closeOrders }}</td></tr></tbody>
+              <tbody><tr v-for="row in frameRows" :key="String(row.index) + row.time"><td>{{ row.index }}</td><td>{{ row.time }}</td><td>{{ row.close }}</td><td>{{ row.entryOrders }}</td><td>{{ row.closeOrders }}</td></tr></tbody>
             </table>
             <table v-else class="orders"><tbody><tr><td class="text-secondary" style="text-align:left">{{ t('v7explore.noFrames') }}</td></tr></tbody></table>
             <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.fills') }}</h4>
-            <table v-if="fillRows().length" class="orders">
+            <table v-if="fillRows.length" class="orders">
               <thead><tr><th>#</th><th>{{ t('v7explore.colTime') }}</th><th>{{ t('v7explore.colEvent') }}</th><th>{{ t('v7explore.colQty') }}</th><th>{{ t('v7explore.colPrice') }}</th><th>{{ t('v7explore.colPosSize') }}</th></tr></thead>
-              <tbody><tr v-for="row in fillRows()" :key="row.idx"><td>{{ row.idx }}</td><td>{{ row.time }}</td><td>{{ row.event }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.posSize }}</td></tr></tbody>
+              <tbody><tr v-for="row in fillRows" :key="row.idx"><td>{{ row.idx }}</td><td>{{ row.time }}</td><td>{{ row.event }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.posSize }}</td></tr></tbody>
             </table>
             <table v-else class="orders"><tbody><tr><td class="text-secondary" style="text-align:left">{{ t('v7explore.noFills') }}</td></tr></tbody></table>
           </div>
