@@ -34,6 +34,7 @@ beforeEach(() => {
 afterEach(() => {
   delete (window as { PBGuiAI?: unknown }).PBGuiAI;
   delete (window as { PBGUI_AI_PAGE_ACTIONS?: unknown }).PBGUI_AI_PAGE_ACTIONS;
+  window.sessionStorage.removeItem('pbgui:ai:backtest_compare:v1');
   document.body.innerHTML = '';
 });
 
@@ -60,6 +61,28 @@ describe('PBGuiAI page-action bridge (v1.99.2–4 port)', () => {
 
     unregister();
     expect(collectedContext(facade).actions).not.toContainEqual({ id: 'show_log', entity_kind: 'run_config' });
+  });
+
+  it('persists an approved PB8 queue compare handoff before navigating to Backtest', () => {
+    initAiPageMeta('info_ai_chat', 'AI Chat');
+    const assign = vi.fn();
+    vi.stubGlobal('location', { ...window.location, assign });
+
+    const result = window.PBGuiAI!.openQueuedBacktestCompare!({
+      action: 'queue_backtests',
+      compare_after_completion: true,
+      proposal_id: 'proposal-1',
+      queued: [{ filename: 'first.json' }, { filename: 'second.json' }],
+    });
+
+    expect(result).toBe(true);
+    expect(assign).toHaveBeenCalledWith('http://pbgui.test:8000/api/backtest-v8/main_page?panel=queue');
+    expect(JSON.parse(window.sessionStorage.getItem('pbgui:ai:backtest_compare:v1') || '{}')).toMatchObject({
+      version: 'v8',
+      proposal_id: 'proposal-1',
+      filenames: ['first.json', 'second.json'],
+    });
+    vi.unstubAllGlobals();
   });
 
   it('collects visible controls and skips sensitive ones', () => {

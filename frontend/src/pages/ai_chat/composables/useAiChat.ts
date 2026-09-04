@@ -507,6 +507,10 @@ export function useAiChat(t: Translate) {
       if (executed && result.action === 'python_analysis') {
         appendAssistantAnalysis(result as unknown as Parameters<typeof analysisResultText>[0]);
       }
+      if (executed) {
+        window.PBGuiAI?.openQueuedBacktestCompare?.(result);
+        window.dispatchEvent(new CustomEvent('pbgui:ai-action-completed', { detail: result }));
+      }
       setNotice(
         executed
           ? t('ai.chat.actionCompleted', { action: String(result.action || 'approved') })

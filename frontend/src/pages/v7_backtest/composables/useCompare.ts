@@ -131,11 +131,11 @@ export interface CompareFlowOptions {
  * reload results, resolve paths, clear filters, select the rows, plot and
  * warn about skipped items.
  */
-export function compareSelectedQueue(options: CompareFlowOptions): (selectedFilenames: readonly string[], queueItems: readonly QueueItem[]) => Promise<void> {
+export function compareSelectedQueue(options: CompareFlowOptions): (selectedFilenames: readonly string[], queueItems: readonly QueueItem[]) => Promise<boolean> {
   return async (selectedFilenames, queueItems) => {
     if (selectedFilenames.length < 2) {
       options.notify(options.t('v7backtest.selectAtLeast2Queue'), 'err');
-      return;
+      return false;
     }
     const selectedItems = selectedFilenames
       .map((filename) => queueItems.find((item) => item.filename === filename) ?? null)
@@ -145,19 +145,19 @@ export function compareSelectedQueue(options: CompareFlowOptions): (selectedFile
 
     if (completedItems.length < 2) {
       options.notify(options.t('v7backtest.selectAtLeast2CompletedQueue'), 'err');
-      return;
+      return false;
     }
 
     try {
       await options.results.loadResults('');
     } catch {
-      return; // loadResults already toasted (:5414)
+      return false; // loadResults already toasted (:5414)
     }
 
     const matched = resolveQueueComparePaths(completedItems, options.results.results.value);
     if (matched.paths.length < 2) {
       options.notify(options.t('v7backtest.couldNotMatchResults'), 'err');
-      return;
+      return false;
     }
 
     // _clearResultsFilters (:7601-7606) + selectPanel + row selection
@@ -172,6 +172,7 @@ export function compareSelectedQueue(options: CompareFlowOptions): (selectedFile
     if (skippedCount > 0) {
       options.notify(options.t('v7backtest.comparedSkipped', { n: skippedCount }), 'warn');
     }
+    return options.results.compareOpen.value;
   };
 }
 

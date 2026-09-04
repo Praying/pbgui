@@ -76,7 +76,7 @@ export interface BacktestPageStore {
   /** compareSelected (:7778-7791) — the results ctx Compare button. */
   compareResults(): Promise<void>;
   /** compareSelectedQueue (:7744-7776) — the queue ctx Compare button. */
-  compareQueue(selectedFilenames: readonly string[], queueItems: readonly QueueItem[]): Promise<void>;
+  compareQueue(selectedFilenames: readonly string[], queueItems: readonly QueueItem[]): Promise<boolean>;
   /** viewConfigResults (:4983-5006) — configs/queue "view results". */
   viewConfigResults(name: string): void;
   addConfigToQueue(name: string): Promise<void>;
@@ -535,7 +535,7 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     selectPanel: () => selectPanel('results'),
   });
 
-  function compareQueue(selectedFilenames: readonly string[], queueItems: readonly QueueItem[]): Promise<void> {
+  function compareQueue(selectedFilenames: readonly string[], queueItems: readonly QueueItem[]): Promise<boolean> {
     return runCompareQueue(selectedFilenames, queueItems);
   }
 

@@ -147,6 +147,11 @@ function deselectAll(): void {
   selected.value = new Set();
 }
 
+function setSelected(filenames: readonly string[]): void {
+  const available = new Set(props.items.map((item) => item.filename));
+  selected.value = new Set(filenames.filter((filename) => available.has(filename)));
+}
+
 function selectedFilenames(): string[] {
   return sorted.value.map((i) => i.filename).filter((fn) => selected.value.has(fn));
 }
@@ -204,7 +209,7 @@ function badgeToneClass(status: string): string {
   return 'bg-warning/15 text-warning'; // unknown
 }
 
-defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll });
+defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSelected });
 </script>
 
 <template>

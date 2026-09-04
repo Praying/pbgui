@@ -30,6 +30,7 @@ interface Window {
     registerPageAction?(registration: unknown): () => void;
     continuePageAction?(url: string): boolean;
     tryLocalCommand?(message: string): { handled: boolean; message?: string };
+    openQueuedBacktestCompare?(result: unknown): boolean;
     collectContext?(): unknown;
     focusedField?(allowlist: unknown): unknown;
     open?(): void;
@@ -41,4 +42,3 @@ interface Window {
   /** Legacy pages may assign page actions before nav.js loads (v1.99.2+). */
   PBGUI_AI_PAGE_ACTIONS?: unknown[];
 }
-

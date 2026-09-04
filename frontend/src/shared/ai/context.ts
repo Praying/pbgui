@@ -80,6 +80,7 @@ interface PbGuiAiFacade {
   continuePageAction?: (url: string, actionId?: string) => boolean;
   completePageActionNavigation?: (actionId: string) => void;
   tryLocalCommand?: (message: string) => { handled: boolean; message?: string };
+  openQueuedBacktestCompare?: (result: unknown) => boolean;
   open?: () => void;
   close?: () => void;
   toggle?: () => void;
@@ -110,6 +111,48 @@ const pageActions = new Map<string, AiPageActionRegistration>();
 /** Last continuePageAction target: the drawer re-sends actions, the browser must not loop. */
 let actionNavigationTarget = '';
 const actionNavigationStorageKey = 'pbgui.ai.pending-navigation';
+const aiBacktestCompareStorageKey = 'pbgui:ai:backtest_compare:v1';
+
+function openQueuedBacktestCompare(result: unknown): boolean {
+  if (!result || typeof result !== 'object') return false;
+  const payload = result as {
+    action?: string;
+    compare_after_completion?: boolean;
+    compare_handoff_started?: boolean;
+    proposal_id?: string;
+    queued?: Array<{ filename?: string }>;
+  };
+  if (payload.action !== 'queue_backtests' || payload.compare_after_completion !== true) return false;
+  if (payload.compare_handoff_started === true) return true;
+  const filenames = Array.from(
+    new Set(
+      (Array.isArray(payload.queued) ? payload.queued : [])
+        .map((item) => String(item?.filename || ''))
+        .filter((filename) => /^[A-Za-z0-9_.-]{1,128}$/.test(filename)),
+    ),
+  );
+  if (filenames.length < 2 || filenames.length > 1000) return false;
+  const request = {
+    version: 'v8',
+    proposal_id: String(payload.proposal_id || ''),
+    filenames,
+    created_at: Date.now(),
+  };
+  try {
+    window.sessionStorage.setItem(aiBacktestCompareStorageKey, JSON.stringify(request));
+  } catch {
+    return false;
+  }
+  payload.compare_handoff_started = true;
+  if (pageMeta.pageKey === 'v8_backtest') {
+    window.dispatchEvent(new CustomEvent('pbgui:ai-backtest-compare-request', { detail: request }));
+    return true;
+  }
+  const target = PAGE_ROUTES.v8_backtest;
+  if (!target) return false;
+  window.location.assign(aiOrigin() + target + '?panel=queue');
+  return true;
+}
 
 /* ── UI-control bridge (legacy _aiControl*, pbgui_nav.js) ──────────────── */
 const controlIds = new WeakMap<Element, string>();
@@ -536,6 +579,9 @@ export function initAiPageMeta(pageKey: string, title: string, guideTopic?: stri
   }
   if (typeof facade.tryLocalCommand !== 'function') {
     facade.tryLocalCommand = tryLocalCommand;
+  }
+  if (typeof facade.openQueuedBacktestCompare !== 'function') {
+    facade.openQueuedBacktestCompare = openQueuedBacktestCompare;
   }
   if (!uiActionListenerInstalled) {
     uiActionListenerInstalled = true;

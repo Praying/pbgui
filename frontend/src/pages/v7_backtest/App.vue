@@ -208,6 +208,18 @@ const ohlcvOpen = ref(false);
 const ohlcvLoading = ref(false);
 const ohlcvError = ref('');
 const ohlcvData = ref<Record<string, unknown> | null>(null);
+const AI_BACKTEST_COMPARE_STORAGE_KEY = 'pbgui:ai:backtest_compare:v1';
+const AI_BACKTEST_COMPARE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+interface AiQueueCompareRequest {
+  version: 'v8';
+  proposal_id: string;
+  filenames: string[];
+  created_at: number;
+}
+const aiQueueCompareRequest = ref<AiQueueCompareRequest | null>(null);
+let aiQueueCompareOpening = false;
+let aiQueueCompareRetryCount = 0;
+let aiQueueCompareRetryTimer: number | undefined;
 /** The archive/legacy panels mount once their panel is first visited. */
 const archiveMounted = computed(() => store.view.state.panel === 'archive' || store.archive.archives.value.length > 0);
 const legacyMounted = computed(() => store.view.state.panel === 'legacy' || (store.legacy?.rows.value.length ?? 0) > 0);
@@ -419,15 +431,147 @@ function onTemplateExchanges(needed: readonly string[]): void {
   store.toast.show(t('editor.suite.addedExchanges', { ex: added.join(', ') }), 'ok');
 }
 
+function normalizeAiQueueCompareRequest(value: unknown): AiQueueCompareRequest | null {
+  if (!adapterIsV8()) return null;
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Partial<AiQueueCompareRequest>;
+  if (raw.version !== 'v8' || !Array.isArray(raw.filenames)) return null;
+  const filenames = Array.from(
+    new Set(raw.filenames.map((filename) => String(filename)).filter((filename) => /^[A-Za-z0-9_.-]{1,128}$/.test(filename))),
+  );
+  const createdAt = Number(raw.created_at || 0);
+  if (
+    filenames.length < 2 ||
+    filenames.length > 1000 ||
+    !Number.isFinite(createdAt) ||
+    Date.now() - createdAt > AI_BACKTEST_COMPARE_MAX_AGE_MS
+  ) {
+    return null;
+  }
+  return { version: 'v8', proposal_id: String(raw.proposal_id || ''), filenames, created_at: createdAt };
+}
+
+function adapterIsV8(): boolean {
+  return store.adapter.isV8;
+}
+
+function clearAiQueueCompareRequest(): void {
+  aiQueueCompareRequest.value = null;
+  aiQueueCompareOpening = false;
+  aiQueueCompareRetryCount = 0;
+  if (aiQueueCompareRetryTimer !== undefined) window.clearTimeout(aiQueueCompareRetryTimer);
+  aiQueueCompareRetryTimer = undefined;
+  try {
+    window.sessionStorage.removeItem(AI_BACKTEST_COMPARE_STORAGE_KEY);
+  } catch {
+    // Session storage is optional; the in-memory state is still cleared.
+  }
+}
+
+function storeAiQueueCompareRequest(value: unknown): boolean {
+  const normalized = normalizeAiQueueCompareRequest(value);
+  if (!normalized) return false;
+  aiQueueCompareRequest.value = normalized;
+  aiQueueCompareOpening = false;
+  aiQueueCompareRetryCount = 0;
+  if (aiQueueCompareRetryTimer !== undefined) window.clearTimeout(aiQueueCompareRetryTimer);
+  aiQueueCompareRetryTimer = undefined;
+  try {
+    window.sessionStorage.setItem(AI_BACKTEST_COMPARE_STORAGE_KEY, JSON.stringify(normalized));
+  } catch {
+    // The current page can still finish the handoff without persistence.
+  }
+  store.selectPanel('queue');
+  queuePanel.value?.setSelected(normalized.filenames);
+  void maybeOpenAiQueueCompare();
+  return true;
+}
+
+function restoreAiQueueCompareRequest(): void {
+  if (!adapterIsV8()) return;
+  let stored: unknown = null;
+  try {
+    stored = JSON.parse(window.sessionStorage.getItem(AI_BACKTEST_COMPARE_STORAGE_KEY) || 'null');
+  } catch {
+    stored = null;
+  }
+  if (!storeAiQueueCompareRequest(stored)) {
+    try {
+      window.sessionStorage.removeItem(AI_BACKTEST_COMPARE_STORAGE_KEY);
+    } catch {
+      // Ignore unavailable session storage.
+    }
+  }
+}
+
+function scheduleAiQueueCompareRetry(): void {
+  if (aiQueueCompareRetryTimer !== undefined) window.clearTimeout(aiQueueCompareRetryTimer);
+  aiQueueCompareRetryCount += 1;
+  if (aiQueueCompareRetryCount >= 15) {
+    clearAiQueueCompareRequest();
+    store.notifyError(t('v7backtest.couldNotMatchResults'));
+    return;
+  }
+  aiQueueCompareRetryTimer = window.setTimeout(() => {
+    aiQueueCompareRetryTimer = undefined;
+    void maybeOpenAiQueueCompare();
+  }, 2000);
+}
+
+async function maybeOpenAiQueueCompare(): Promise<void> {
+  const request = aiQueueCompareRequest.value;
+  if (!request || aiQueueCompareOpening || !adapterIsV8()) return;
+  const itemsByFilename = new Map(store.queueItems.value.map((item) => [String(item.filename), item]));
+  const selectedItems = request.filenames.map((filename) => itemsByFilename.get(filename)).filter(Boolean);
+  queuePanel.value?.setSelected(request.filenames);
+  if (selectedItems.length !== request.filenames.length) return;
+  const terminalItems = selectedItems.filter((item) => ['complete', 'error', 'stopped'].includes(String(item?.status)));
+  if (terminalItems.length !== selectedItems.length) return;
+  if (terminalItems.filter((item) => item?.status === 'complete').length < 2) {
+    clearAiQueueCompareRequest();
+    store.notifyError(t('v7backtest.selectAtLeast2CompletedQueue'));
+    return;
+  }
+  aiQueueCompareOpening = true;
+  try {
+    const opened = await store.compareQueue(request.filenames, store.queueItems.value);
+    if (opened) {
+      clearAiQueueCompareRequest();
+    } else {
+      aiQueueCompareOpening = false;
+      scheduleAiQueueCompareRetry();
+    }
+  } catch {
+    aiQueueCompareOpening = false;
+    scheduleAiQueueCompareRetry();
+  }
+}
+
+function handleAiQueueCompareRequest(event: Event): void {
+  if (!adapterIsV8()) return;
+  storeAiQueueCompareRequest((event as CustomEvent).detail);
+}
+
 onMounted(() => {
   document.title = t(store.adapter.titleKey, store.adapter.titleParams);
   (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openBacktestHelp;
+  window.addEventListener('pbgui:ai-backtest-compare-request', handleAiQueueCompareRequest);
   store.boot();
+  restoreAiQueueCompareRequest();
 });
 
 onBeforeUnmount(() => {
   delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
+  window.removeEventListener('pbgui:ai-backtest-compare-request', handleAiQueueCompareRequest);
+  if (aiQueueCompareRetryTimer !== undefined) window.clearTimeout(aiQueueCompareRetryTimer);
 });
+
+watch(
+  () => store.queueItems.value,
+  () => {
+    if (aiQueueCompareRequest.value) void maybeOpenAiQueueCompare();
+  },
+);
 </script>
 
 <template>
