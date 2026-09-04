@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
   <meta charset="utf-8">
-  <title>template</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PBGui page template scaffold">
+  <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
+  <!-- boot.js must run before the bundle: the app reads window.__BOOT__ at
+       mount time. -->
+  <script src="/api/boot.js"></script>
+  <!-- Legacy i18n remains available to shared dialogs and help. -->
+  <script src="/app/i18n.js?v=1"></script>
+  <title>PBGui - Template</title>
 </head>
 <body>
   <div id="app"></div>

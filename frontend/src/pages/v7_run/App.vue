@@ -160,7 +160,7 @@ onBeforeUnmount(() => {
     <!-- Page body: filter/action toolbar + main content (:511). The filters
          and instance actions left the sidebar for a top strip; navigation
          lives in the workbench rail. -->
-    <div id="page-body" class="flex h-[calc(100dvh-52px)] flex-col overflow-hidden">
+    <div id="page-body" class="flex h-[calc(100dvh-var(--nav-height))] flex-col overflow-hidden">
     <div class="workbench-page-content min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
       <!-- Filters + instance actions: a top strip, not a sidebar. -->
       <div class="page-toolbar" role="toolbar">
@@ -184,6 +184,7 @@ onBeforeUnmount(() => {
       <InstanceTable
         :rows="store.rows.value"
         :total-count="store.instances.value.length"
+        :loading="store.loading.value"
         :is-v8="adapter.isV8"
         :supports-forced-modes="adapter.supportsForcedModes"
         :supports-conversion="adapter.supportsConversion"
@@ -199,7 +200,7 @@ onBeforeUnmount(() => {
     </div><!-- /page-body -->
   </AppShell>
 
-  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[2000] rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
+  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[var(--z-toast)] rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
   <div id="modal-root"></div>
 
   <Teleport to="#modal-root">

@@ -152,7 +152,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
       @keydown="onKeydown"
     />
     <div
-      class="ms-dropdown coin-tags-dropdown absolute top-[calc(100%+6px)] left-0 right-0 border rounded-xl max-h-[280px] overflow-y-auto z-[120] shadow-elevated"
+      class="ms-dropdown coin-tags-dropdown absolute top-[calc(100%+6px)] left-0 right-0 border rounded-xl max-h-[280px] overflow-y-auto z-[var(--z-dropdown)] shadow-elevated"
       id="tag-options"
       :class="open && !disabled ? 'open block' : 'hidden'"
     >
@@ -163,7 +163,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMousedown))
         :data-val="option"
         @mousedown.prevent="pick(option)"
       >{{ option }}</div>
-      <div v-if="!visibleOptions.length" style="padding:4px 8px;color:var(--text-dim);font-size:var(--fs-xs)">{{ t('editor.ms.noMatches') }}</div>
+      <div v-if="!visibleOptions.length" class="px-2 py-1 text-xs text-secondary">{{ t('editor.ms.noMatches') }}</div>
     </div>
   </div>
 </template>

@@ -10,6 +10,8 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { STATUS_LABEL_KEYS, type RunInstance, type SortState } from '../lib/table';
 
@@ -20,6 +22,7 @@ const props = defineProps<{
   supportsForcedModes: boolean;
   supportsConversion: boolean;
   sort: SortState;
+  loading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -140,15 +143,16 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
               <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')">G</Button>
               <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')">T</Button>
             </template>
-            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-edit="row.name" :title="t('v7run.edit')">&#x270E;</Button>
-            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')">$</Button>
+            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-edit="row.name" :title="t('v7run.edit')"><PbIcon :icon="PhPencilSimple" :size="14" /></Button>
+            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')"><PbIcon :icon="PhCurrencyDollar" :size="14" /></Button>
             <Button v-if="supportsConversion" class="ml-1 h-6 min-w-7 px-1" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')">V8</Button>
-            <Button class="ml-1 h-6 w-7 p-0 text-sm" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')">&#x2716;</Button>
+            <Button class="ml-1 h-6 w-7 p-0 text-sm" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')"><PbIcon :icon="PhX" :size="14" /></Button>
           </td>
         </tr>
         <tr v-if="!rows.length" id="instances-empty-row">
-          <td :colspan="columns.length" style="padding:48px 12px;text-align:center;color:var(--text-dim)">
-            {{ totalCount ? t('v7run.noInstancesMatchFilters') : t('v7run.noLiveInstancesYet', { label: isV8 ? 'PB8' : 'PB7' }) }}
+          <td :colspan="columns.length" class="px-3 py-12 text-center text-secondary">
+            <template v-if="loading">{{ t('common.loading') }}</template>
+            <template v-else>{{ totalCount ? t('v7run.noInstancesMatchFilters') : t('v7run.noLiveInstancesYet', { label: isV8 ? 'PB8' : 'PB7' }) }}</template>
           </td>
         </tr>
       </tbody>

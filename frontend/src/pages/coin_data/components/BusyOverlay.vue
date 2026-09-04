@@ -26,7 +26,7 @@ const progressScale = computed(() => {
 </script>
 
 <template>
-  <div id="busy-overlay" class="fixed top-[52px] right-0 bottom-0 left-0 bg-page/58 items-center justify-center z-[1000]" :class="busy.visible ? 'visible flex' : 'hidden'">
+  <div id="busy-overlay" class="fixed top-[var(--nav-height)] right-0 bottom-0 left-0 bg-page/58 items-center justify-center z-[1000]" :class="busy.visible ? 'visible flex' : 'hidden'">
     <div class="busy-card grid min-w-[280px] gap-2 rounded-xl border px-[1.1rem] py-[1rem] text-center shadow-modal [background:var(--coin-control,var(--surface-panel))] [border-color:var(--coin-border,var(--border-default))]">
       <div class="busy-title text-md font-bold text-primary" id="busy-title">{{ busy.title || t('market.working') }}</div>
       <div class="busy-progress-row flex items-center gap-2">

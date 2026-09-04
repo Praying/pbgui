@@ -124,7 +124,7 @@ function fieldStatusClass(hasError: boolean): string {
           v-for="(line, index) in page.state.rawJson.split('\n')"
           :key="index"
           class="block"
-          :class="errorLines === index + 1 ? 'rounded-[2px] bg-danger/16 shadow-[inset_3px_0_0_rgb(var(--danger-rgb)/0.95)]' : ''"
+          :class="errorLines === index + 1 ? 'v7e-line-error' : ''"
         >{{ line }}</span></pre>
         <!-- ui-migration: Textarea + the legacy json-editor class — the
              un-layered page rules still own the geometry (the highlight

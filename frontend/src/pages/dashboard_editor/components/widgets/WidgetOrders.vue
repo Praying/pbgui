@@ -27,7 +27,9 @@
  *    cfg-refresh handoff) and reportHeight() (R12).
  */
 import { computed, inject, nextTick, onScopeDispose, ref, shallowRef, watch } from 'vue';
+import { PhArrowsOut, PhX } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { PRECISION_PALETTE } from '@/shared/lib/precisionPalette';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch, currentGeneration } from '../../composables/useDashboardFetch';
@@ -82,7 +84,7 @@ function upnlToneClass(cls: string | undefined): string {
    position and radius flip wholesale, so each state carries its own set. */
 function chartWrapClass(fullscreen: boolean): string {
   return fullscreen
-    ? 'do-chart-wrap group fixed left-0 top-0 z-[99999] w-screen! h-dvh! overflow-hidden rounded-none bg-page'
+    ? 'do-chart-wrap group fixed left-0 top-0 z-[var(--z-modal)] w-screen! h-dvh! overflow-hidden rounded-none bg-page'
     : 'do-chart-wrap group relative h-[580px] w-full overflow-hidden rounded-md bg-page';
 }
 
@@ -356,7 +358,8 @@ const icon = WIDGET_META.ORDERS.icon;
             :title="dashT('dash.fullscreen', 'Fullscreen')"
             @click="fs.toggleFullscreen()"
           >
-            {{ fs.isFullscreen.value ? '✕' : '⛶' }}
+            <PbIcon v-if="fs.isFullscreen.value" :icon="PhX" :size="15" />
+            <PbIcon v-else :icon="PhArrowsOut" :size="15" />
           </Button>
         </div>
         <div class="do-legend pointer-events-none absolute left-10 top-1.5 z-10 flex gap-[0.75rem] text-[0.65rem] text-secondary">

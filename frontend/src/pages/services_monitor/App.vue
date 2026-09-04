@@ -58,6 +58,7 @@ import type { PageSection, SectionTone } from '@/shared/navigation';
 import { usePolling } from '@/shared/composables/usePolling';
 import OverviewCards from './components/OverviewCards.vue';
 import ServiceLogPanel, { type ServiceTab } from './components/ServiceLogPanel.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import WorkersPanel from './components/WorkersPanel.vue';
 import MigrationPanel from './components/MigrationPanel.vue';
 import PbDataStatus from './components/PbDataStatus.vue';
@@ -703,15 +704,18 @@ onUnmounted(() => {
         class="svc-panel"
         :class="{ active: panel.id === activePanel }"
       >
-        <OverviewCards
-          v-if="panel.id === 'overview'"
-          :statuses="statuses"
+        <template v-if="panel.id === 'overview'">
+          <LoadingSkeleton v-if="!hasLoadedStatus" :label="t('common.loading')" />
+          <OverviewCards
+            v-else
+            :statuses="statuses"
           :pending="pendingActions"
           :workers-counts="workersCounts"
           :migration-status="migrationStatus"
           @action="serviceAction"
           @select="selectPanel"
-        />
+          />
+        </template>
         <WorkersPanel
           v-else-if="panel.id === 'workers'"
           ref="workersPanelRef"
@@ -852,7 +856,7 @@ onUnmounted(() => {
 /* ── Result popup (raised imperatively by resultPopup.ts on <body>) ── */
 .result-modal {
   position: fixed;
-  z-index: 9000;
+  z-index: var(--z-modal);
   background: var(--bg-page);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;

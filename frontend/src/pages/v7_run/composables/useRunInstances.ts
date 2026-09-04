@@ -64,6 +64,8 @@ export const FORCED_MODES: Record<ForcedMode, ForcedModeInfo> = {
 
 export interface UseRunInstances {
   instances: Ref<RunInstance[]>;
+  /** True until the first load settles — lets the table show loading vs empty. */
+  loading: Ref<boolean>;
   rows: Ref<RunInstance[]>;
   filterSearch: Ref<string>;
   filterStatus: Ref<string>;
@@ -103,6 +105,7 @@ export function useRunInstances(options: {
   const navigate = options.navigate ?? ((url: string) => void (window.location.href = url));
 
   const instances = ref<RunInstance[]>([]);
+  const loading = ref(true); // distinguishes first-load from a real empty list
   const filterSearch = ref('');
   const filterStatus = ref('All');
   const sort = ref<SortState>({ col: 'name', asc: true }); // :578
@@ -134,6 +137,7 @@ export function useRunInstances(options: {
 
   async function loadInstances(): Promise<void> {
     const generation = ++loadGeneration;
+    loading.value = true;
     try {
       const data = (await apiFetch<{ instances?: RunInstance[] }>(apiUrl(adapter, '/instances'), {
         credentials: 'same-origin',
@@ -144,6 +148,8 @@ export function useRunInstances(options: {
     } catch {
       if (generation !== loadGeneration) return;
       setBanner('lost'); // :607-608 (legacy also logged to console.error)
+    } finally {
+      if (generation === loadGeneration) loading.value = false;
     }
   }
 
@@ -316,6 +322,7 @@ export function useRunInstances(options: {
 
   return {
     instances,
+    loading,
     rows,
     filterSearch,
     filterStatus,

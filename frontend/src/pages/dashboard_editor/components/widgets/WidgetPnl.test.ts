@@ -113,7 +113,7 @@ describe('WidgetPnl', () => {
     const { wrapper } = mountPnl();
     await flushPromises();
     expect(wrapper.get('.dt-title').text()).toBe('Daily PNL');
-    expect(wrapper.get('.dt-icon').text()).toBe('📊');
+    expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(wrapper.get('.dt-daterange').text()).toBe('From: 2025-01-01  To: 2025-01-02');
     expect(react.mock.calls[0]![1]).toEqual([
       {

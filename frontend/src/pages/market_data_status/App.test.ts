@@ -120,7 +120,8 @@ describe('App shell (legacy mds-root)', () => {
 
     const app = mountApp();
 
-    expect(app.find('.mds-empty-state').text()).toBe('⚠Missing token or exchange parameter');
+    expect(app.find('.mds-empty-state').text()).toContain('Missing token or exchange parameter');
+    expect(app.find('.mds-empty-state svg').exists()).toBe(true);
     expect(FakeWebSocket.instances).toHaveLength(0);
   });
 

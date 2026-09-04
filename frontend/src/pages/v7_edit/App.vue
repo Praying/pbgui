@@ -297,11 +297,19 @@ onBeforeUnmount(() => {
   <ImportModal ref="importModal" v-model="importOpen" />
   <BalanceCalcModal ref="balanceModal" v-model="balanceOpen" />
 
-  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[2000] hidden rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
+  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[var(--z-toast)] hidden rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
   <DataTipLayer />
 </template>
 
 <style>
+/* Shared JSON-editor line-error marker (BotSection + RawJsonEditor) —
+   the danger inset-rail tint formerly duplicated as utilities. */
+.v7e-line-error {
+  border-radius: 2px;
+  background: rgb(var(--danger-rgb) / 0.16);
+  box-shadow: inset 3px 0 0 rgb(var(--danger-rgb) / 0.95);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Ported from styles/v7-edit.css (deleted at the Tailwind migration).
    Everything expressible as utilities moved onto the templates; the
@@ -509,7 +517,7 @@ body {
   position: absolute; top: 100%; left: 0; right: 0;
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: 0 0 4px 4px; max-height: 200px; overflow-y: auto;
-  z-index: 100; display: none;
+  z-index: var(--z-dropdown); display: none;
 }
 .ms-dropdown.open { display: block; }
 .ms-option {

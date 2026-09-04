@@ -266,7 +266,7 @@ function messageClass(level: string): string {
 /** The .deep-tab-btn / .active pair — complete independent colour sets. */
 function deepTabClass(active: boolean): string {
   return active
-    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent bg-accent px-3 py-0 text-[#f2f5fb] transition-all duration-150'
+    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent bg-accent px-3 py-0 text-primary transition-all duration-150'
     : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-transparent px-3 py-0 text-secondary transition-all duration-150 hover:border-accent hover:text-primary';
 }
 

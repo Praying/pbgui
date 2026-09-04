@@ -109,7 +109,7 @@ describe('WidgetPpl', () => {
     const { wrapper } = mountPpl();
     await flushPromises();
     expect(wrapper.get('.dt-title').text()).toBe('Profits and Losses');
-    expect(wrapper.get('.dt-icon').text()).toBe('📉');
+    expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(react.mock.calls[0]![1]).toEqual([
       {
         x: ['2025-W01', '2025-W02'],

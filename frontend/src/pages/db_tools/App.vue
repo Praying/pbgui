@@ -242,7 +242,7 @@ onBeforeUnmount(() => store.teardown());
   <div id="page-body" class="flex h-[calc(100dvh-64px)] overflow-hidden max-[760px]:flex-col">
     <div id="main-content" class="min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
       <!-- Cleanup -->
-      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-[0_12px_40px_rgba(5,8,14,0.25)]" id="panel-cleanup" :class="store.activePanel.value === 'cleanup' ? 'active block' : 'hidden'">
+      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-cleanup" :class="store.activePanel.value === 'cleanup' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
           <div class="text-lg font-extrabold">{{ t('misc.dbtools.cleanupUserData') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.cleanupUserDataDesc') }}</div>
@@ -306,7 +306,7 @@ onBeforeUnmount(() => store.teardown());
       </section>
 
       <!-- Copy users -->
-      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-[0_12px_40px_rgba(5,8,14,0.25)]" id="panel-copy-users" :class="store.activePanel.value === 'copy-users' ? 'active block' : 'hidden'">
+      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-copy-users" :class="store.activePanel.value === 'copy-users' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
           <div class="text-lg font-extrabold">{{ t('misc.dbtools.copyUserData') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.copyUserDataDesc') }}</div>
@@ -374,7 +374,7 @@ onBeforeUnmount(() => store.teardown());
       </section>
 
       <!-- Copy database -->
-      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-[0_12px_40px_rgba(5,8,14,0.25)]" id="panel-copy-db" :class="store.activePanel.value === 'copy-db' ? 'active block' : 'hidden'">
+      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-copy-db" :class="store.activePanel.value === 'copy-db' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
           <div class="text-lg font-extrabold">{{ t('misc.dbtools.copyCompleteDatabase') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.copyCompleteDatabaseDesc') }}</div>
@@ -421,7 +421,7 @@ onBeforeUnmount(() => store.teardown());
       </section>
 
       <!-- Sync jobs -->
-      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-[0_12px_40px_rgba(5,8,14,0.25)]" id="panel-sync-jobs" :class="store.activePanel.value === 'sync-jobs' ? 'active block' : 'hidden'">
+      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-sync-jobs" :class="store.activePanel.value === 'sync-jobs' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
           <div class="text-lg font-extrabold">{{ t('misc.dbtools.syncJobs') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.syncJobsDesc') }}</div>
@@ -454,7 +454,7 @@ onBeforeUnmount(() => store.teardown());
                 class="grid min-w-[1160px] grid-cols-[minmax(180px,1.4fr)_90px_minmax(130px,.8fr)_minmax(150px,1fr)_minmax(150px,.9fr)_minmax(150px,.9fr)_70px_90px] items-center gap-3 w-full min-h-[44px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left text-primary font-inherit hover:bg-white/3"
                 role="button"
                 tabindex="0"
-                :class="row.job.id === store.syncJobId.value ? 'selected bg-accent/12 text-[#f2f5fb] shadow-[inset_3px_0_0_#72a0ee] pl-2' : ''"
+                :class="row.job.id === store.syncJobId.value ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : ''"
                 :data-job-id="row.job.id"
                 @click="row.job.id === store.syncJobId.value ? store.closeSyncEditor() : store.selectSyncJob(row.job.id)"
                 @keydown.enter.prevent="row.job.id === store.syncJobId.value ? store.closeSyncEditor() : store.selectSyncJob(row.job.id)"
@@ -553,7 +553,7 @@ onBeforeUnmount(() => store.teardown());
       </section>
 
       <!-- Backups -->
-      <section id="panel-backups" class="min-h-[calc(100dvh-120px)] overflow-hidden rounded-xl border border-border-subtle bg-page shadow-[0_12px_40px_rgba(5,8,14,0.25)]" :class="store.activePanel.value === 'backups' ? 'active block' : 'hidden'">
+      <section id="panel-backups" class="min-h-[calc(100dvh-var(--header-height)-var(--nav-height))] overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" :class="store.activePanel.value === 'backups' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
           <div class="text-lg font-extrabold">{{ t('misc.dbtools.backupManager') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.backupManagerDesc') }}</div>
@@ -597,7 +597,7 @@ onBeforeUnmount(() => store.teardown());
                 variant="ghost"
                 class="backup-row grid min-w-[980px] min-h-[42px] grid-cols-[180px_150px_120px_110px_minmax(300px,1fr)] items-center gap-3 w-full justify-start rounded-none border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left font-normal text-primary font-inherit hover:bg-white/3"
                 type="button"
-                :class="store.backupSelected.value.includes(row.name) ? 'selected bg-accent/12 text-[#f2f5fb] shadow-[inset_3px_0_0_#72a0ee] pl-2' : ''"
+                :class="store.backupSelected.value.includes(row.name) ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : ''"
                 :data-value="row.name"
                 :aria-pressed="store.backupSelected.value.includes(row.name) ? 'true' : 'false'"
                 @click="toggleInList(store.backupSelected, row.name, !store.backupSelected.value.includes(row.name))"
@@ -626,7 +626,7 @@ onBeforeUnmount(() => store.teardown());
       </section>
 
       <!-- Copy dashboards -->
-      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-[0_12px_40px_rgba(5,8,14,0.25)]" id="panel-copy-dashboards" :class="store.activePanel.value === 'copy-dashboards' ? 'active block' : 'hidden'">
+      <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-copy-dashboards" :class="store.activePanel.value === 'copy-dashboards' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
           <div class="text-lg font-extrabold">{{ t('misc.dbtools.copyDashboardsAndTemplates') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.copyDashboardsAndTemplatesDesc') }}</div>

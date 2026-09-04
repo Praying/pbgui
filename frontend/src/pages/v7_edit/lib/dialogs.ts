@@ -1,42 +1,7 @@
-import { serverMsg } from '@/shared/i18n';
-
 /**
- * PBGuiDialogs bridge — the page keeps the legacy global dialog chrome
- * (pbgui_dialogs.js, loaded in index.html like v7_run). The 409
- * "Update your VPS first" save/copy blocks use alert(); a missing global
- * falls back to the caller's toast path (never silently lost).
+ * PBGuiDialogs bridge — now a thin re-export of the shared module
+ * (src/shared/lib/dialogs.ts). Kept as a page-local path so existing
+ * imports (`../lib/dialogs`) need no churn.
  */
-
-interface AlertOptions {
-  readonly title: string;
-  readonly message: string;
-  readonly confirmText: string;
-}
-
-type DialogsGlobal = typeof globalThis & {
-  PBGuiDialogs?: {
-    alert?: (options: AlertOptions) => void;
-    confirm?: (options: AlertOptions) => Promise<boolean>;
-  };
-};
-
-/** PBGuiDialogs.alert — returns false when the global is unavailable. */
-export function dialogsAlert(options: AlertOptions): boolean {
-  const dialogs = (window as DialogsGlobal).PBGuiDialogs;
-  if (!dialogs || typeof dialogs.alert !== 'function') return false;
-  dialogs.alert(options);
-  return true;
-}
-
-/**
- * PBGuiDialogs.confirm — resolves false when the global is unavailable so
- * destructive save paths degrade to "cancelled" instead of proceeding.
- */
-export async function dialogsConfirm(options: AlertOptions): Promise<boolean> {
-  const dialogs = (window as DialogsGlobal).PBGuiDialogs;
-  if (!dialogs || typeof dialogs.confirm !== 'function') return false;
-  return await dialogs.confirm(options);
-}
-
-/** i18n serverMsg bridge (PBGuiI18n.serverMsg parity). */
-export { serverMsg };
+export { dialogsAlert, dialogsConfirm, serverMsg } from '@/shared/lib/dialogs';
+export type { DialogsAlertOptions as AlertOptions } from '@/shared/lib/dialogs';

@@ -12,17 +12,25 @@
  * store.clearCell: clearCellKeys + epoch bump + sync).
  */
 import { computed, inject } from 'vue';
+import { PhTrash } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { dashT } from '../../lib/i18n';
 import { dtHeaderClass, dtIconClass, dtTitleClass, dtTrashClass } from './uiClasses';
+import { widgetPhosphorIcon } from './widgetIcons';
 
-defineProps<{
+const props = defineProps<{
   title: string;
-  /** Legacy _widgetIcon(type) emoji — null omits the icon span. */
+  /** Legacy _widgetIcon(type) emoji — null omits the icon span. Known
+   *  emoji render as their Phosphor equivalent (widgetIcons); unknown
+   *  values fall back to the raw text. */
   icon: string | null;
 }>();
+
+/** Phosphor component for the legacy emoji, or null → raw-text fallback. */
+const phosphorIcon = computed(() => widgetPhosphorIcon(props.icon));
 
 const store = useDashboardStore();
 const ctx = inject(cellContextKey, null);
@@ -44,7 +52,10 @@ function onDelete(): void {
     @dragstart="drag?.onHeaderDragStart($event)"
     @dragend="drag?.onHeaderDragEnd()"
   >
-    <span v-if="icon" :class="dtIconClass">{{ icon }}</span>
+    <span v-if="icon" :class="dtIconClass">
+      <PbIcon v-if="phosphorIcon" :icon="phosphorIcon" :size="14" />
+      <template v-else>{{ icon }}</template>
+    </span>
     <span :class="dtTitleClass">{{ title }}</span>
     <slot />
     <Button
@@ -56,7 +67,7 @@ function onDelete(): void {
       :title="dashT('dash.removeWidget', 'Remove widget')"
       @click.stop="onDelete"
     >
-      &#128465;
+      <PbIcon :icon="PhTrash" :size="14" />
     </Button>
   </div>
 </template>

@@ -130,7 +130,7 @@ function cellText(columnKey: string, row: InventoryRow): string {
     <table v-if="rows.length" class="inventory-table w-full min-w-[1180px] border-separate border-spacing-0">
       <thead>
         <tr>
-          <th v-for="column in columns" :key="column.key" class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel py-[0.55rem] px-[0.75rem] text-left align-top text-xs font-semibold uppercase tracking-[0.08em] text-secondary">
+          <th v-for="column in columns" :key="column.key" class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel py-[0.55rem] px-[0.75rem] text-left align-top text-xs font-semibold uppercase tracking-label text-secondary">
             <Button
               variant="ghost"
               size="sm"

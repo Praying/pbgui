@@ -848,7 +848,7 @@ body {
   height: 8px;
   flex: 0 0 8px;
   border: 1px solid var(--border-strong);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--surface-elevated);
   transition:
     background-color var(--motion-fast) var(--ease-standard),
@@ -1033,7 +1033,7 @@ body {
 .content-loading__visual span {
   align-self: end;
   height: 55%;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--accent);
   animation: dashboard-skeleton 1.3s var(--ease-standard) infinite alternate;
 }

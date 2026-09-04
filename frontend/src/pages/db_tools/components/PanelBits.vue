@@ -56,7 +56,7 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
       <div class="text-sm text-secondary">{{ progress.completed || 0 }} / {{ progress.total || 0 }} ({{ progress.percent || 0 }}%)</div>
     </div>
     <div class="h-2 overflow-hidden bg-card">
-      <div class="h-full w-0 transition-[width] duration-200" :class="progress.status === 'error' ? 'bg-danger' : 'bg-[linear-gradient(90deg,#3f63ad,#96b9f4)]'" :style="{ width: (progress.percent || 0) + '%' }"></div>
+      <div class="h-full w-0 transition-[width] duration-200" :class="progress.status === 'error' ? 'bg-danger' : 'bg-[linear-gradient(90deg,var(--accent-deep),var(--accent-soft))]'" :style="{ width: (progress.percent || 0) + '%' }"></div>
     </div>
     <div class="border-b border-border-subtle px-[0.8rem] py-[0.65rem] text-sm text-secondary">{{ progress.current || '' }}</div>
     <div class="grid max-h-[170px] gap-1 overflow-auto pt-[0.45rem] pr-[0.8rem] pb-[0.7rem]">
@@ -64,8 +64,8 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
     </div>
   </div>
 
-  <div id="confirm-ovl" class="fixed inset-0 z-[8000] items-center justify-center bg-backdrop backdrop-blur-[2px]" :class="confirm.active ? 'visible flex' : 'hidden'" :aria-hidden="confirm.active ? 'false' : 'true'">
-    <div id="confirm-box" class="w-[min(480px,92vw)] overflow-hidden rounded-[14px] border border-border-default bg-page shadow-[0_24px_80px_rgba(5,8,14,0.85)]" role="dialog" aria-modal="true" aria-labelledby="confirm-head">
+  <div id="confirm-ovl" class="modal-backdrop backdrop-blur-[2px]" :class="confirm.active ? 'visible flex' : 'hidden'" :aria-hidden="confirm.active ? 'false' : 'true'">
+    <div id="confirm-box" class="w-[min(480px,92vw)] overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-head">
       <div id="confirm-head" class="border-b border-border-subtle bg-card px-4 py-[0.9rem] font-extrabold">{{ confirm.title || t('common.confirm') }}</div>
       <div id="confirm-body" class="grid gap-3 p-5">
         <div id="confirm-msg" class="leading-[1.45] text-primary">{{ confirm.message }}</div>

@@ -184,7 +184,7 @@ defineExpose({ clearSecretIfUnchanged });
 <style scoped>
 .form-field { display: flex; flex-direction: column; gap: 3px; }
 .form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.cmc-modal-backdrop { position: fixed; inset: 0; z-index: 19000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: var(--bg-backdrop); backdrop-filter: blur(2px); }
+.cmc-modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: center; justify-content: center; padding: 1rem; background: var(--bg-backdrop); backdrop-filter: blur(2px); }
 .cmc-modal-card { width: min(480px, 94vw); background: var(--bg-page); border: 1px solid var(--border-default); border-radius: 14px; box-shadow: var(--shadow-modal); overflow: hidden; }
 .cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border-subtle); background: var(--surface-workspace); }
 .cmc-modal-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 700; }

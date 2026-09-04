@@ -165,7 +165,7 @@ describe('WidgetIncome chrome (render.js:903-1009)', () => {
     const { wrapper } = mountIncome();
     await flushPromises();
     expect(wrapper.get('.dt-title').text()).toBe('Income');
-    expect(wrapper.get('.dt-icon').text()).toBe('💰');
+    expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(wrapper.get('.dt-daterange').text()).toBe('From: 2024-01-01  To: 2024-01-31');
     expect(wrapper.find('input.dt-ctrl-num').exists()).toBe(true); /* Last N */
     expect(wrapper.find('.di-root').exists()).toBe(true);

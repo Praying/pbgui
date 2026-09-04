@@ -5,6 +5,8 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhWarning } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { expiryBadgeClass, expiryDaysLabel, expiryWarns } from '../lib/expiry';
 import type { ExpiryBadgeLike } from '../lib/expiry';
 
@@ -43,7 +45,7 @@ const label = computed(() => {
     case 'ok':
     case 'expiring_soon':
     case 'critical':
-      return (expiryWarns(status.value) ? '⚠ ' : '') + expiryDaysLabel(exp);
+      return expiryDaysLabel(exp);
     case 'expired':
       return t('misc.apikeys.expired');
     case 'no_expiry':
@@ -54,8 +56,10 @@ const label = computed(() => {
       return '—';
   }
 });
+
+const warns = computed(() => expiryWarns(status.value));
 </script>
 
 <template>
-  <span class="badge-expiry inline-block rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="toneClass" :title="cls === 'error' ? (exp?.error || '') : undefined">{{ label }}</span>
+  <span class="badge-expiry inline-block rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap" :class="toneClass" :title="cls === 'error' ? (exp?.error || '') : undefined"><PbIcon v-if="warns" :icon="PhWarning" :size="12" class="mr-0.5 align-[-2px] inline-block" />{{ label }}</span>
 </template>

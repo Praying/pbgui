@@ -242,7 +242,7 @@ defineExpose({
 #prices-overlay {
   display: none;
   position: fixed;
-  z-index: 9000;
+  z-index: var(--z-modal);
   top: 12vh;
   left: 50%;
   transform: translateX(-50%);

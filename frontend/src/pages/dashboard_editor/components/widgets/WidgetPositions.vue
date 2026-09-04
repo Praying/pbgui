@@ -27,7 +27,9 @@
  *    legacy editor never passes height to buildPositions (editor:1949-1953).
  */
 import { computed, inject, onScopeDispose, ref, watch } from 'vue';
+import { PhClipboard, PhTrash } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -250,7 +252,7 @@ function onDelete(): void {
       @dragstart="drag?.onHeaderDragStart($event)"
       @dragend="drag?.onHeaderDragEnd()"
     >
-      <span :class="dtIconClass">📋</span>
+      <span :class="dtIconClass"><PbIcon :icon="PhClipboard" :size="14" /></span>
       <span :class="dtTitleClass">{{ dashT('dash.positions', 'Positions') }}</span>
       <Button
         type="button"
@@ -275,7 +277,7 @@ function onDelete(): void {
         :title="dashT('dash.removeWidget', 'Remove widget')"
         @click.stop="onDelete"
       >
-        &#128465;
+        <PbIcon :icon="PhTrash" :size="14" />
       </Button>
     </div>
     <div :class="dtStatusClass" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>

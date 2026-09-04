@@ -140,7 +140,7 @@ defineExpose({ show, jsonEl });
  *  .user-combobox-option/.active rules; hover is handled by the static
  *  hover: utilities on the button). */
 function userOptionClass(active: boolean): string {
-  return active ? 'bg-accent/14 text-[#f2f5fb]' : 'text-primary';
+  return active ? 'bg-accent/14 text-primary' : 'text-primary';
 }
 </script>
 
@@ -198,7 +198,7 @@ function userOptionClass(active: boolean): string {
                 v-for="(match, index) in matches"
                 :key="match.name"
                 type="button"
-                class="block w-full cursor-pointer rounded-sm border-0 bg-transparent px-[7px] py-[9px] text-left hover:bg-accent/14 hover:text-[#f2f5fb]"
+                class="block w-full cursor-pointer rounded-sm border-0 bg-transparent px-[7px] py-[9px] text-left hover:bg-accent/14 hover:text-primary"
                 role="option"
                 :class="userOptionClass(index === activeIndex)"
                 :aria-selected="index === activeIndex ? 'true' : 'false'"

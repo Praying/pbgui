@@ -24,7 +24,9 @@
  * throw on a malformed row; server data is numeric so this is equivalent.
  */
 import { computed, inject, onScopeDispose, ref, watch } from 'vue';
+import { PhScales, PhTrash } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { useDashboardFetch } from '../../composables/useDashboardFetch';
 import { useDashboardUsers } from '../../composables/useDashboardUsers';
@@ -159,7 +161,7 @@ function onDelete(): void {
       @dragstart="drag?.onHeaderDragStart($event)"
       @dragend="drag?.onHeaderDragEnd()"
     >
-      <span :class="dtIconClass">⚖️</span>
+      <span :class="dtIconClass"><PbIcon :icon="PhScales" :size="14" /></span>
       <div class="db-totals flex flex-wrap gap-[1.5rem]">
         <div class="db-total-item">
           <label class="block text-[0.68rem] uppercase tracking-[0.05em] text-muted">{{ dashT('dash.totalBalance', 'Total Balance') }}</label>
@@ -187,7 +189,7 @@ function onDelete(): void {
         :title="dashT('dash.removeWidget', 'Remove widget')"
         @click.stop="onDelete"
       >
-        &#128465;
+        <PbIcon :icon="PhTrash" :size="14" />
       </Button>
     </div>
     <div class="db-status border-b border-b-card bg-page px-[0.75rem] py-[0.15rem] text-[0.68rem] text-muted" :style="{ color: displayStatusColor }">{{ displayStatus }}</div>

@@ -11,6 +11,8 @@
 import { computed, ref, watch } from 'vue';
 import { PhArrowClockwise, PhPlay, PhStop } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import EmptyState from '@/shared/components/EmptyState.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
 import { apiFetch } from '@/shared/api';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -277,12 +279,14 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 
   <div class="workers-shell">
     <div class="workers-groups">
-      <template v-if="loadError">
-        <div class="worker-detail-empty">{{ t('sysmon.failedToLoadWorkerStatus') }}</div>
-      </template>
-      <template v-else-if="!groups.length">
-        <div class="worker-detail-empty">{{ t('sysmon.noWorkersAvailable') }}</div>
-      </template>
+      <ErrorState
+        v-if="loadError"
+        :title="t('common.error')"
+        :message="t('sysmon.failedToLoadWorkerStatus')"
+        :retry-label="t('sysmon.reloadAndRetry')"
+        @retry="emit('refresh')"
+      />
+      <EmptyState v-else-if="!groups.length" :title="t('sysmon.noWorkersAvailable')" />
       <template v-else>
         <section v-for="group in groups" :key="group.id ?? group.label" class="worker-group">
           <div>

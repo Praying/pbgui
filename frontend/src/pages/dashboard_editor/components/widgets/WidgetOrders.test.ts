@@ -284,7 +284,7 @@ describe('WidgetOrders — link resolution (editor:1980-2014)', () => {
     const { wrapper } = mountOrders({ config: linkedConfig() });
     await settle();
     expect(wrapper.get('.dt-title').text()).toBe('Orders');
-    expect(wrapper.get('.dt-icon').text()).toBe('📝');
+    expect(wrapper.find('.dt-icon svg').exists()).toBe(true);
     expect(wrapper.get('.dt-header .dt-meta').text()).toBe(
       'Select a position in the linked Positions widget'
     );
@@ -329,7 +329,7 @@ describe('WidgetOrders — selection linkage (editor:2135-2151)', () => {
       cssRgb(PRECISION_PALETTE.success.base), cssRgb(PRECISION_PALETTE.danger.base),
     ]);
     /* fullscreen toolbar (render.js:3743-3751) */
-    expect(wrapper.get('.do-fs-btn').text()).toBe('⛶');
+    expect(wrapper.find('.do-fs-btn svg').exists()).toBe(true);
   });
 
   it('shows the live uPnL from the exchange payload (render.js:3686-3693)', async () => {

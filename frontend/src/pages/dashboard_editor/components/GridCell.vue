@@ -184,8 +184,7 @@ provide(widgetDragKey, {
       <component :is="widgetComp" v-if="widgetComp" :key="store.epochOf(row, col)" />
       <div
         v-else-if="!viewOnly"
-        class="dt-status min-h-[1.1em] px-[0.75rem] py-[0.2rem] text-[0.68rem] text-muted"
-        style="text-align:center;padding:2rem;color:var(--text-disabled);"
+        class="dt-status min-h-[1.1em] p-[2rem] text-center text-[0.68rem] text-disabled"
       >
         {{ dashT('dash.dragWidgetHere', 'Drag a widget here') }}
       </div>

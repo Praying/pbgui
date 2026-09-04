@@ -172,7 +172,7 @@ async function submit(): Promise<void> {
   <div v-if="open" id="modal-root" :class="modalBackdropClass" data-test="queue-draft-modal">
     <div :class="modalBoxClass">
       <h3>{{ t('v7backtest.selectBacktestParams') }}</h3>
-      <div style="display: flex; flex-direction: column; gap: var(--sp-md)">
+      <div class="flex flex-col gap-3">
         <div v-if="preserveAllTimeranges" class="text-xs text-secondary">{{ t('v7backtest.preserveTimerangeNote') }}</div>
         <template v-else>
           <div>
@@ -186,10 +186,10 @@ async function submit(): Promise<void> {
         </template>
         <div>
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
-          <div style="display: flex; align-items: center; gap: var(--sp-xs)">
+          <div class="flex items-center gap-1">
             <Input v-model="balance" class="text-right" type="number" min="1" step="100" data-test="rbt-balance" />
-            <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></Button>
-            <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-plus" aria-label="Increase starting balance" title="Increase starting balance" @click="adjustBalance(100)"><PbIcon :icon="PhPlus" /></Button>
+            <Button type="button" variant="default" class="act-btn h-auto w-7 p-0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></Button>
+            <Button type="button" variant="default" class="act-btn h-auto w-7 p-0" data-test="rbt-balance-plus" aria-label="Increase starting balance" title="Increase starting balance" @click="adjustBalance(100)"><PbIcon :icon="PhPlus" /></Button>
           </div>
         </div>
         <div v-if="preserveAllExchanges" class="text-xs text-secondary">{{ t('v7backtest.preserveExchangesNote') }}</div>
@@ -198,7 +198,7 @@ async function submit(): Promise<void> {
           <!-- ui-migration: blocked — the reka listbox is single-value; the
                legacy multi-select (ctrl-free toggle via useToggleMultiSelect)
                stays native. -->
-          <select v-model="exchanges" class="sb-input" multiple style="height: auto; min-height: var(--input-h)" data-test="rbt-exchanges" @mousedown="onToggleMultiSelectMousedown">
+          <select v-model="exchanges" class="sb-input h-auto min-h-[var(--input-h)]" multiple data-test="rbt-exchanges" @mousedown="onToggleMultiSelectMousedown">
             <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
           </select>
         </div>

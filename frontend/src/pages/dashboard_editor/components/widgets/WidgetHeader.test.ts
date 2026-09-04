@@ -60,7 +60,7 @@ describe('WidgetHeader', () => {
     const { wrapper } = mountHeader();
     const hdr = wrapper.get('.dt-header');
     expect(hdr.attributes('draggable')).toBe('true');
-    expect(hdr.get('.dt-icon').text()).toBe('📊');
+    expect(hdr.find('.dt-icon svg').exists()).toBe(true);
     expect(hdr.get('.dt-title').text()).toBe('Daily PNL');
     expect(hdr.get('.dt-meta').text()).toBe('META');
   });

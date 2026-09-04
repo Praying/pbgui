@@ -103,32 +103,32 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closeCompactPreview()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
-        <p><b>This rewrites remote Git history.</b> It replaces archive history with one root commit and force-pushes using <code>--force-with-lease</code>.</p>
-        <p>Normal Git Push remains non-destructive. After compaction, stale clones of this archive must be recloned or reset.</p>
+        <p>{{ t('v7backtest.gitCompactIntro') }}</p>
+        <p>{{ t('v7backtest.gitCompactIntroNote') }}</p>
         <div class="my-2 rounded-md border border-white/12 bg-white/4 p-2">
-          <div class="text-xs uppercase tracking-[0.5px] text-secondary">Estimated Savings</div>
+          <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitEstimatedSavings') }}</div>
           <div class="mt-0.5 text-xl font-bold">
             <template v-if="git.compactPreview.value.view.savings.available">
               {{ git.compactPreview.value.view.savings.human }}
               <span class="text-secondary">({{ git.compactPreview.value.view.savings.percent }}%)</span>
             </template>
-            <span v-else class="text-secondary">Estimate unavailable</span>
+            <span v-else class="text-secondary">{{ t('v7backtest.gitEstimateUnavailable') }}</span>
           </div>
           <div class="form-row cols-2">
-            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Before</div><b>{{ git.compactPreview.value.view.before }}</b></div>
-            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">After Compact</div><b>{{ git.compactPreview.value.view.after }}</b></div>
+            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitBefore') }}</div><b>{{ git.compactPreview.value.view.before }}</b></div>
+            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitAfterCompact') }}</div><b>{{ git.compactPreview.value.view.after }}</b></div>
           </div>
           <p class="mt-1 text-secondary">{{ git.compactPreview.value.view.note }}</p>
         </div>
         <div class="form-row cols-2">
-          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Archive</div><b>{{ git.compactPreview.value.name }}</b></div>
-          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Branch</div><b>{{ git.compactPreview.value.view.branch }}</b></div>
+          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitArchive') }}</div><b>{{ git.compactPreview.value.name }}</b></div>
+          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitBranch') }}</div><b>{{ git.compactPreview.value.view.branch }}</b></div>
         </div>
         <div class="form-row cols-2">
-          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Commit Count</div><b>{{ git.compactPreview.value.view.commitCount }}</b></div>
-          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Manifest Items</div><b>{{ git.compactPreview.value.view.manifestItems }}</b></div>
+          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitCommitCount') }}</div><b>{{ git.compactPreview.value.view.commitCount }}</b></div>
+          <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitManifestItems') }}</div><b>{{ git.compactPreview.value.view.manifestItems }}</b></div>
         </div>
-        <div class="text-xs uppercase tracking-[0.5px] text-secondary">Pending Local Changes</div>
+        <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitPendingLocalChanges') }}</div>
         <pre v-if="git.compactPreview.value.view.hasStatus" class="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default bg-page p-2 text-xs">{{ git.compactPreview.value.view.statusText }}</pre>
         <span v-else class="text-secondary">Clean working tree</span>
         <div class="mt-2 text-xs uppercase tracking-[0.5px] text-secondary">Object Size</div>

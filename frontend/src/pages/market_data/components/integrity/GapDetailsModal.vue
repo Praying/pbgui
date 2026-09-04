@@ -55,7 +55,7 @@ const thClass =
 <template>
   <div
     v-if="store.gapOpen.value"
-    class="integrity-gap-backdrop fixed inset-0 z-[20000] flex items-center justify-center bg-backdrop p-5 backdrop-blur-[3px] max-[760px]:p-2"
+    class="integrity-gap-backdrop fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop p-5 backdrop-blur-[3px] max-[760px]:p-2"
     id="integrity-gap-modal"
     role="dialog"
     aria-modal="true"

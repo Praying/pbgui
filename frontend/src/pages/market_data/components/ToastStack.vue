@@ -15,9 +15,9 @@ import type { ToastItem } from '../types';
 defineProps<{ toasts: ToastItem[] }>();
 
 const TOAST_TONE: Record<string, string> = {
-  success: 'bg-success/96 border-success-soft/28 text-[#f2f5fb]',
-  error: 'bg-danger/96 border-danger-soft/28 text-[#f2f5fb]',
-  info: 'bg-accent/96 border-accent-soft/28 text-[#f2f5fb]',
+  success: 'bg-success/96 border-success-soft/28 text-primary',
+  error: 'bg-danger/96 border-danger-soft/28 text-primary',
+  info: 'bg-accent/96 border-accent-soft/28 text-primary',
   warn: 'bg-warning/96 border-warning-soft/28 text-card',
   warning: 'bg-warning/96 border-warning-soft/28 text-card',
 };
@@ -35,7 +35,7 @@ function toastClass(toast: ToastItem): string {
 <template>
   <div
     id="toast-stack"
-    class="pointer-events-none fixed top-[68px] right-5 z-[2000] flex w-[min(420px,calc(100vw-40px))] flex-col gap-2"
+    class="pointer-events-none fixed top-[68px] right-5 z-[var(--z-toast)] flex w-[min(420px,calc(100vw-40px))] flex-col gap-2"
   >
     <div
       v-for="toast in toasts"

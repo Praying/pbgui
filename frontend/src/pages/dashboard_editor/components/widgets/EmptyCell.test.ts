@@ -48,7 +48,7 @@ describe('EmptyCell stub', () => {
     const w = mountEmptyCell();
     const hdr = w.get('.dt-header');
     expect(hdr.attributes('draggable')).toBe('true');
-    expect(hdr.get('.dt-icon').text()).toBe('📊');
+    expect(hdr.find('.dt-icon svg').exists()).toBe(true);
     expect(hdr.get('.dt-title').text()).toBe('PNL');
   });
 

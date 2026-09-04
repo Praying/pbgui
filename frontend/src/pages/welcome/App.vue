@@ -182,13 +182,13 @@ onBeforeUnmount(() => {
 
     <div id="page-body" class="relative flex h-[calc(100dvh_-_var(--nav-height))] min-h-0 overflow-hidden select-none bg-[linear-gradient(135deg,rgb(var(--bg-page-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.96))]">
     <div class="workbench-page-content min-w-0 min-h-0 flex-1 overflow-y-auto select-text bg-page bg-[radial-gradient(circle_at_92%_0%,rgb(var(--accent-rgb)/0.1),transparent_28rem),radial-gradient(circle_at_4%_78%,rgb(var(--accent-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.018)_0_1px,transparent_1px_42px)] p-[var(--page-padding)]">
-      <div id="banner" class="banner mb-3 rounded-[12px] py-3 px-3.5 text-base leading-[1.5]" :class="bannerClass(store.banner.value.message, store.banner.value.kind)">
+      <div id="banner" class="banner mb-3 rounded-lg py-3 px-3.5 text-base leading-[1.5]" :class="bannerClass(store.banner.value.message, store.banner.value.kind)">
         {{ store.banner.value.message }}
       </div>
 
       <!-- Overview -->
       <section id="section-overview" class="page-section grid w-[min(100%,1440px)] gap-4.5 mx-auto mb-5 scroll-mt-4" data-section="overview" :hidden="store.activeSection.value !== 'overview'">
-        <div class="panel pbgui-panel overview-panel relative grid gap-4.5 overflow-hidden rounded-[14px] border border-border-subtle bg-[radial-gradient(circle_at_right_top,rgb(var(--accent-rgb)/0.1),transparent_34%),linear-gradient(180deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-[0_4px_14px_rgba(5,8,14,0.12)] p-5 max-[640px]:p-4">
+        <div class="panel pbgui-panel overview-panel relative grid gap-4.5 overflow-hidden rounded-xl border border-border-subtle bg-[radial-gradient(circle_at_right_top,rgb(var(--accent-rgb)/0.1),transparent_34%),linear-gradient(180deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-[0_4px_14px_rgba(0,0,0,0.12)] p-5 max-[640px]:p-4">
           <div class="overview-header flex items-start justify-between gap-5 pb-5 border-b border-b-secondary/14 max-[980px]:flex-col">
             <div class="overview-heading min-w-0">
               <h1 class="overview-title m-0 max-w-none text-[clamp(28px,3vw,36px)] leading-[1.15] tracking-[-0.035em]">{{ t('misc.welcome.systemOverview') }}</h1>
@@ -201,12 +201,12 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <div class="summary-grid grid grid-cols-4 gap-3 max-[1400px]:grid-cols-2 max-[640px]:grid-cols-1">
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-[12px] border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.authTone}`" :data-tone="store.summaryView.value.authTone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.authTone}`" :data-tone="store.summaryView.value.authTone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">{{ t('misc.welcome.session') }}</span>
               <strong id="summary-auth" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.auth }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-auth-copy">{{ store.summaryView.value.authCopy }}</p>
             </div>
-            <div class="summary-card summary-card--actionable relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-[12px] border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease] flex flex-col items-start" :class="`summary-card--${store.summaryView.value.pb7Tone}`" :data-tone="store.summaryView.value.pb7Tone">
+            <div class="summary-card summary-card--actionable relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease] flex flex-col items-start" :class="`summary-card--${store.summaryView.value.pb7Tone}`" :data-tone="store.summaryView.value.pb7Tone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">PB7</span>
               <strong id="summary-pb7" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb7 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb7-copy">{{ store.summaryView.value.pb7Copy }}</p>
@@ -219,12 +219,12 @@ onBeforeUnmount(() => {
                 @click="store.focusSection('setup')"
               >{{ t('misc.welcome.configurePb7') }}</Button>
             </div>
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-[12px] border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">PB8</span>
               <strong id="summary-pb8" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb8 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb8-copy">{{ store.summaryView.value.pb8Copy }}</p>
             </div>
-            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-[12px] border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.identityTone}`" :data-tone="store.summaryView.value.identityTone">
+            <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.identityTone}`" :data-tone="store.summaryView.value.identityTone">
               <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">{{ t('misc.welcome.identity') }}</span>
               <strong id="summary-identity" :title="store.summaryView.value.identity" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.identity }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-role">{{ store.summaryView.value.roleText }}</p>
@@ -235,7 +235,7 @@ onBeforeUnmount(() => {
           <span class="section-kicker text-sm font-bold uppercase tracking-[0.08em] text-accent-soft">{{ t('misc.welcome.runtime') }}</span>
           <p class="section-copy m-0 text-base">{{ t('misc.welcome.runtimeCopy') }}</p>
         </div>
-        <div class="panel pbgui-panel rounded-[14px] border border-secondary/13 bg-card shadow-[0_18px_42px_rgba(5,8,14,0.18),0_1px_rgba(255,255,255,0.025)_inset] p-5 max-[640px]:p-4">
+        <div class="panel pbgui-panel rounded-xl border border-secondary/13 bg-card shadow-panel p-5 max-[640px]:p-4">
           <h2 class="panel-title m-0 mb-2 text-lg text-primary">{{ t('misc.welcome.runtimeStatus') }}</h2>
           <div class="status-list grid gap-3.5 mt-4.5" id="status-list">
             <section v-for="group in statusGroups" :key="group.key" class="status-group grid gap-2" :data-group="group.key">
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
             </section>
           </div>
           <div class="issues grid gap-3.5 mt-4.5" id="issues">
-            <div v-if="store.loginSecurityBanner.value.showAck" class="issue warning login-security-warning flex items-center justify-between gap-3 py-3 px-3.5 rounded-[12px] text-base leading-[1.5] border border-warning/22 bg-warning-deep/38 text-warning-soft">
+            <div v-if="store.loginSecurityBanner.value.showAck" class="issue warning login-security-warning flex items-center justify-between gap-3 py-3 px-3.5 rounded-lg text-base leading-[1.5] border border-warning/22 bg-warning-deep/38 text-warning-soft">
               <span class="min-w-0">{{ store.loginSecurityBanner.value.summary }}</span>
               <Button type="button" variant="secondary" class="login-security-ack shrink-0" @click="store.acknowledgeLoginSecurity()">{{
                 t('misc.welcome.acknowledge')
@@ -259,7 +259,7 @@ onBeforeUnmount(() => {
             <div
               v-for="(issue, index) in store.issues.value"
               :key="`${issue.kind}-${index}`"
-              class="issue py-3 px-3.5 rounded-[12px] text-base leading-[1.5]"
+              class="issue py-3 px-3.5 rounded-lg text-base leading-[1.5]"
               :class="[issue.kind, issueToneClass(issue.kind)]"
             >{{ issue.text }}</div>
           </div>
@@ -272,14 +272,14 @@ onBeforeUnmount(() => {
           <span class="section-kicker pt-2 text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('misc.welcome.runtimeSettings') }}</span>
           <p class="section-copy mt-1 max-w-[66ch] text-secondary">{{ t('misc.welcome.runtimeSettingsCopy') }}</p>
         </div>
-        <div class="panel settings-panel relative overflow-hidden rounded-[14px] border border-accent/16 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.98))] shadow-[0_18px_42px_rgba(5,8,14,0.18),0_1px_rgba(255,255,255,0.025)_inset] p-[clamp(18px,2.5vw,28px)] max-[640px]:p-4 w-[min(100%,1600px)] max-[1400px]:w-full mx-auto">
+        <div class="panel settings-panel relative overflow-hidden rounded-xl border border-accent/16 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.98))] shadow-panel p-[clamp(18px,2.5vw,28px)] max-[640px]:p-4 w-[min(100%,1600px)] max-[1400px]:w-full mx-auto">
           <div class="panel-heading settings-panel-heading pb-5 border-b border-b-secondary/14">
             <h2 class="panel-title m-0 mb-1.5 text-[20px] tracking-[-0.02em] text-primary">{{ t('misc.welcome.passivbotSetup') }}</h2>
             <p class="panel-copy m-0 max-w-[78ch] text-secondary text-base leading-[1.55]">{{ t('misc.welcome.passivbotSetupCopy') }}</p>
           </div>
 
           <div class="runtime-groups grid grid-cols-2 gap-4 mt-5.5 max-[980px]:grid-cols-1">
-            <section class="runtime-group runtime-group--pb7 relative min-w-0 overflow-hidden rounded-[12px] border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(5,8,14,0.12)]" aria-labelledby="pb7-group-title">
+            <section class="runtime-group runtime-group--pb7 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb7-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
                 <h3 id="pb7-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-[0.01em]">PB7</h3>
                 <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">Passivbot V7</span>
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
               </div>
             </section>
 
-            <section class="runtime-group runtime-group--pb8 relative min-w-0 overflow-hidden rounded-[12px] border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(5,8,14,0.12)]" aria-labelledby="pb8-group-title">
+            <section class="runtime-group runtime-group--pb8 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb8-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
                 <h3 id="pb8-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-[0.01em]">PB8</h3>
                 <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">Passivbot V8 · optional</span>
@@ -363,7 +363,7 @@ onBeforeUnmount(() => {
           <span class="section-kicker text-sm font-bold uppercase tracking-[0.08em] text-accent-soft">{{ t('misc.welcome.security') }}</span>
           <p class="section-copy m-0 text-base">{{ t('misc.welcome.securityCopy') }}</p>
         </div>
-        <div class="panel password-panel rounded-[14px] border border-secondary/13 bg-card shadow-[0_18px_42px_rgba(5,8,14,0.18),0_1px_rgba(255,255,255,0.025)_inset] p-6 max-[640px]:p-4 w-[min(100%,860px)] mx-auto">
+        <div class="panel password-panel rounded-xl border border-secondary/13 bg-card shadow-panel p-6 max-[640px]:p-4 w-[min(100%,860px)] mx-auto">
           <h2 class="panel-title m-0 mb-2 text-lg text-primary" id="password-panel-title">{{
             store.authDisabled.value ? t('misc.welcome.enableAuthentication') : t('misc.welcome.changePassword')
           }}</h2>
@@ -405,8 +405,8 @@ onBeforeUnmount(() => {
   </AppShell>
 
   <!-- File browser modal (:907-920) -->
-  <div id="file-browser-modal" class="browser-modal fixed inset-0 z-[4100] flex items-center justify-center p-5 bg-page/78 backdrop-blur-[6px]" :hidden="!store.fileBrowser.value.open">
-    <div class="panel browser-dialog flex flex-col gap-3 w-[min(860px,calc(100vw_-_40px))] max-h-[calc(100dvh_-_48px)] rounded-[14px] border border-secondary/13 bg-card shadow-[0_18px_42px_rgba(5,8,14,0.18),0_1px_rgba(255,255,255,0.025)_inset] p-5 max-[640px]:p-4" role="dialog" aria-modal="true" aria-labelledby="file-browser-title">
+  <div id="file-browser-modal" class="browser-modal fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-5 bg-page/78 backdrop-blur-[6px]" :hidden="!store.fileBrowser.value.open">
+    <div class="panel browser-dialog flex flex-col gap-3 w-[min(860px,calc(100vw_-_40px))] max-h-[calc(100dvh_-_48px)] rounded-xl border border-secondary/13 bg-card shadow-panel p-5 max-[640px]:p-4" role="dialog" aria-modal="true" aria-labelledby="file-browser-title">
       <div class="browser-head flex items-center justify-between gap-3">
         <h2 id="file-browser-title" class="panel-title m-0 mb-2 text-lg text-primary">{{ browserTitle }}</h2>
         <Button id="file-browser-close" variant="secondary" type="button" @click="store.closeFileBrowser()">{{ t('common.close') }}</Button>
@@ -418,7 +418,7 @@ onBeforeUnmount(() => {
         }}</Button>
         <Input id="file-browser-path" class="browser-path flex-1 min-w-[280px]" type="text" readonly :model-value="store.fileBrowser.value.currentPath" />
       </div>
-      <div id="file-browser-list" class="browser-list grid gap-1 min-h-60 max-h-[420px] overflow-y-auto p-1 rounded-[12px] border border-border-subtle bg-page">
+      <div id="file-browser-list" class="browser-list grid gap-1 min-h-60 max-h-[420px] overflow-y-auto p-1 rounded-lg border border-border-subtle bg-page">
         <div v-if="!store.fileBrowser.value.entries.length" class="browser-empty py-3 px-3.5 rounded-[10px] border border-dashed border-secondary/22 text-secondary text-center">{{ t('misc.welcome.noMatchingEntries') }}</div>
         <button
           v-for="entry in store.fileBrowser.value.entries"

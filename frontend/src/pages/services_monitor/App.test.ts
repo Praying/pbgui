@@ -298,8 +298,8 @@ describe('services_monitor workers wiring', () => {
     expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/status');
     const workersCard = wrapper.findAll('#panel-overview .svc-card').find((c) => c.attributes('data-svc') === 'workers')!;
     expect(workersCard.find('.card-status-row').text()).toBe('3 / 4 running');
-    // Worker groups drive the panel list.
-    expect(wrapper.find('#panel-workers .worker-detail-empty').text()).toContain('No workers available.');
+    // Worker groups drive the panel list (shared EmptyState when no groups).
+    expect(wrapper.find('#panel-workers [data-state="empty"]').text()).toContain('No workers available.');
   });
 
   it('polls worker status every 5s only while the workers panel is active', async () => {

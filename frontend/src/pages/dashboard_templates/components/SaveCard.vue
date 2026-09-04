@@ -86,6 +86,6 @@ onUnmounted(() => window.clearTimeout(msgTimer));
       />
       <Button id="btn-save" variant="info" size="sm" type="button" class="self-center" @click="save">💾 {{ t('common.save') }}</Button>
     </div>
-    <div id="save-msg" class="msg" :class="msgType">{{ msg }}</div>
+    <div id="save-msg" class="msg" :class="msgType" role="status" aria-live="polite">{{ msg }}</div>
   </div>
 </template>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhX } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 
 /**
@@ -57,7 +59,7 @@ onUnmounted(onDragUp);
 <template>
   <div id="tpl-overlay" ref="overlay" v-show="visible">
     <div id="tpl-drag-handle" @mousedown="onDragDown"></div>
-    <Button id="tpl-close-btn" variant="ghost" size="icon" type="button" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')">✕</Button>
+    <Button id="tpl-close-btn" variant="ghost" size="icon" type="button" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="16" /></Button>
     <iframe id="tpl-iframe" :src="url" :title="t('dash.templates')"></iframe>
   </div>
 </template>

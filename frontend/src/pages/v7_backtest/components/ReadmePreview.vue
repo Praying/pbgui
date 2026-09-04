@@ -36,15 +36,15 @@ function flatText(nodes: readonly MdInline[]): string {
 <template>
   <div class="readme-preview" data-test="readme-preview">
     <template v-for="(block, i) in blocks" :key="i">
-      <h1 v-if="block.kind === 'heading' && block.level === 1"><template v-for="(node, j) in block.nodes" :key="j"><template v-if="node.kind === 'strong'"><strong>{{ flatText(node.nodes) }}</strong></template><code v-else-if="node.kind === 'code'">{{ node.text }}</code><a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a><a v-else-if="node.kind === 'link'" href="#" @click.prevent>{{ node.text }}</a><span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span></template></h1>
-      <h2 v-else-if="block.kind === 'heading' && block.level === 2"><template v-for="(node, j) in block.nodes" :key="j"><template v-if="node.kind === 'strong'"><strong>{{ flatText(node.nodes) }}</strong></template><code v-else-if="node.kind === 'code'">{{ node.text }}</code><a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a><a v-else-if="node.kind === 'link'" href="#" @click.prevent>{{ node.text }}</a><span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span></template></h2>
-      <h3 v-else-if="block.kind === 'heading'"><template v-for="(node, j) in block.nodes" :key="j"><template v-if="node.kind === 'strong'"><strong>{{ flatText(node.nodes) }}</strong></template><code v-else-if="node.kind === 'code'">{{ node.text }}</code><a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a><a v-else-if="node.kind === 'link'" href="#" @click.prevent>{{ node.text }}</a><span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span></template></h3>
+      <h1 v-if="block.kind === 'heading' && block.level === 1"><template v-for="(node, j) in block.nodes" :key="j"><template v-if="node.kind === 'strong'"><strong>{{ flatText(node.nodes) }}</strong></template><code v-else-if="node.kind === 'code'">{{ node.text }}</code><a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a><span v-else-if="node.kind === 'link'">{{ node.text }}</span><span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span></template></h1>
+      <h2 v-else-if="block.kind === 'heading' && block.level === 2"><template v-for="(node, j) in block.nodes" :key="j"><template v-if="node.kind === 'strong'"><strong>{{ flatText(node.nodes) }}</strong></template><code v-else-if="node.kind === 'code'">{{ node.text }}</code><a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a><span v-else-if="node.kind === 'link'">{{ node.text }}</span><span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span></template></h2>
+      <h3 v-else-if="block.kind === 'heading'"><template v-for="(node, j) in block.nodes" :key="j"><template v-if="node.kind === 'strong'"><strong>{{ flatText(node.nodes) }}</strong></template><code v-else-if="node.kind === 'code'">{{ node.text }}</code><a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a><span v-else-if="node.kind === 'link'">{{ node.text }}</span><span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span></template></h3>
       <p v-else-if="block.kind === 'paragraph'">
         <template v-for="(node, j) in block.nodes" :key="j">
           <strong v-if="node.kind === 'strong'">{{ flatText(node.nodes) }}</strong>
           <code v-else-if="node.kind === 'code'">{{ node.text }}</code>
           <a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a>
-          <a v-else-if="node.kind === 'link'" href="#" :title="'This relative README link works on GitHub after push.'" @click.prevent>{{ node.text }}</a>
+          <span v-else-if="node.kind === 'link'" :title="'This relative README link works on GitHub after push.'">{{ node.text }}</span>
           <img v-else-if="node.kind === 'image' && node.src" :src="node.src" :alt="node.alt" style="max-width: 100%" />
           <span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span>
         </template>
@@ -55,7 +55,7 @@ function flatText(nodes: readonly MdInline[]): string {
             <strong v-if="node.kind === 'strong'">{{ flatText(node.nodes) }}</strong>
             <code v-else-if="node.kind === 'code'">{{ node.text }}</code>
             <a v-else-if="node.kind === 'link' && node.href" :href="node.href" target="_blank" rel="noopener">{{ node.text }}</a>
-            <a v-else-if="node.kind === 'link'" href="#" @click.prevent>{{ node.text }}</a>
+            <span v-else-if="node.kind === 'link'">{{ node.text }}</span>
             <img v-else-if="node.kind === 'image' && node.src" :src="node.src" :alt="node.alt" style="max-width: 100%" />
             <span v-else>{{ node.kind === 'text' ? node.text : node.kind === 'image' ? node.alt : '' }}</span>
           </template>

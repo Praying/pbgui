@@ -41,6 +41,8 @@
  */
 import { computed, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhArrowClockwise, PhWarning } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { apiFetch } from '@/shared/api';
 import { getBoot } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
@@ -72,6 +74,7 @@ const configOk = hasApiToken() && exchange !== '';
 
 const ws = configOk ? useStatusWs({ url: wsUrl(exchange) }) : null;
 const status = computed(() => ws?.status.value ?? null);
+const connected = computed(() => ws?.connected.value ?? false);
 const received = computed(() => status.value !== null);
 const coinRows = computed(() => status.value?.coin_rows ?? []);
 const queued = computed(() => status.value?.queued === true);
@@ -173,12 +176,13 @@ async function onStopRun(): Promise<void> {
   <div class="mds-root">
     <MigrationWatermark />
     <div v-if="!configOk" class="mds-empty-state">
-      <div class="mds-empty-state-icon">&#9888;</div>
+      <div class="mds-empty-state-icon flex justify-center"><PbIcon :icon="PhWarning" :size="42" /></div>
       <div>{{ t('misc.mds.missingTokenOrExchange') }}</div>
     </div>
     <div v-else class="mds-container">
       <div class="mds-content-wrapper">
-        <ControlsBar :queued="queued" :running="running" :received="received" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
+        <div v-if="configOk && !connected" class="mb-2 inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs text-warning-soft" role="status" aria-live="polite"><PbIcon :icon="PhArrowClockwise" :size="12" class="animate-spin" />{{ t('misc.mds.reconnecting') }}</div>
+        <ControlsBar :queued="queued"  :running="running" :received="received" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
         <ProgressPanel :status="status" />
         <CoinTable :rows="coinRows" :received="received" />
       </div>
@@ -265,9 +269,9 @@ async function onStopRun(): Promise<void> {
   right: 20px;
   padding: 1rem 1.5rem;
   border-radius: 6px;
-  color: white;
+  color: var(--text-primary);
   font-weight: 500;
-  z-index: 10000;
+  z-index: var(--z-toast);
   animation: mds-slideIn 0.3s ease;
 }
 

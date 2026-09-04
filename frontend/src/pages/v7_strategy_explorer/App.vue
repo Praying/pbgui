@@ -362,7 +362,6 @@ body {
   margin: 0;
   color: var(--text);
   background: var(--bg);
-  font: var(--fs-base) / 1.45 var(--font);
   overflow: hidden;
 }
 
@@ -405,7 +404,7 @@ body {
   color: var(--text-dim);
   font-size: var(--fs-xs);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-label);
 }
 
 .orders.compare-grid th,
@@ -414,7 +413,7 @@ body {
 }
 
 .orders.compare-grid tbody tr:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.018);
+  background: rgb(255 255 255 / 0.018);
 }
 
 .orders.compare-grid th {

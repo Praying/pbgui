@@ -128,7 +128,7 @@ describe('WidgetBalance', () => {
     const { wrapper } = mountBalance();
     await flushPromises();
     const header = wrapper.get('.db-header');
-    expect(header.find('.dt-icon').text()).toBe('⚖️');
+    expect(header.find('.dt-icon svg').exists()).toBe(true);
     expect(header.find('.db-user-sel label').text()).toBe('Users:');
     expect(wrapper.findComponent(MultiSelectDropdown).exists()).toBe(true);
     expect(header.find('.dt-trash').exists()).toBe(true);

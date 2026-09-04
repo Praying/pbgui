@@ -223,10 +223,10 @@ onBeforeUnmount(() => {
         <article class="mb-5 rounded-lg border border-border-default bg-panel px-5 py-4 max-[700px]:p-3">
           <h2 class="mb-3 border-b border-border-default pb-2 text-md font-semibold text-primary">{{ t('sysmon.defaultRotation') }}</h2>
           <div class="flex flex-wrap items-end gap-3">
-            <label>{{ t('sysmon.maxFileSizeMb') }}<Input class="w-auto" v-model.number="rotation.default.max_mb" data-field="default-max-mb" type="number" min="1" max="10240"  /></label>
-            <label>{{ t('sysmon.rotatedCopies') }}<Input class="w-auto" v-model.number="rotation.default.backup_count" data-field="default-backup-count" type="number" min="0" max="20"  /></label>
+            <label class="grid gap-1 text-sm text-secondary">{{ t('sysmon.maxFileSizeMb') }}<Input class="w-auto" v-model.number="rotation.default.max_mb" data-field="default-max-mb" type="number" min="1" max="10240"  /></label>
+            <label class="grid gap-1 text-sm text-secondary">{{ t('sysmon.rotatedCopies') }}<Input class="w-auto" v-model.number="rotation.default.backup_count" data-field="default-backup-count" type="number" min="0" max="20"  /></label>
             <Button type="button" variant="primary" data-save-scope="default" :disabled="savingScope === 'default'" @click="saveRule('default', rotation.default)">{{ t('common.save') }}</Button>
-            <span class="text-xs text-success-soft">{{ messages.default || '' }}</span>
+            <span class="text-xs text-success-soft" role="status" aria-live="polite">{{ messages.default || '' }}</span>
           </div>
         </article>
 
@@ -256,8 +256,8 @@ onBeforeUnmount(() => {
     </div>
   </div>
 
-  <div v-if="purgeOpen" class="log-modal-backdrop fixed inset-0 z-[2500] grid place-items-center bg-backdrop">
-    <section class="w-[min(480px,calc(100vw-32px))] rounded-xl border border-border-strong bg-panel p-5 shadow-[0_20px_60px_rgba(5,8,14,0.55)]" role="dialog" aria-modal="true" aria-labelledby="purge-title">
+  <div v-if="purgeOpen" class="log-modal-backdrop modal-backdrop">
+    <section class="w-[min(480px,calc(100vw-32px))] rounded-xl border border-border-strong bg-panel p-5 shadow-modal" role="dialog" aria-modal="true" aria-labelledby="purge-title">
       <h2 id="purge-title" class="m-0 mb-3">{{ t('sysmon.purgeLogFile') }}</h2>
       <p class="my-2">{{ t('sysmon.purgeConfirmMsg', { file: currentFile }) }}</p>
       <p class="text-sm text-secondary">{{ t('sysmon.purgeConfirmDetail') }}</p>

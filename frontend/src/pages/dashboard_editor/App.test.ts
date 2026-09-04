@@ -204,14 +204,24 @@ describe('init (editor:2636-2705)', () => {
     expect(wrapper.findAll('.editor-cell')).toHaveLength(1);
   });
 
-  it('survives a failed init and still renders the empty grid (editor:2695-2702)', async () => {
+  it('survives a failed init: fresh grid state + ErrorState with retry (editor:2695-2702)', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     fetchMock.mockRejectedValue(new Error('network down'));
     const wrapper = mountApp('?name=X&standalone=1');
     await flushPromises();
+    /* store still falls back to the fresh 1×1 (legacy parity) … */
     expect(useDashboardStore().rows).toBe(1);
-    expect(wrapper.findAll('.editor-cell')).toHaveLength(1);
+    /* … but the user sees the error state instead of a silent dead canvas */
+    expect(wrapper.find('[data-state="error"]').exists()).toBe(true);
+    expect(wrapper.findAll('.editor-cell')).toHaveLength(0);
     expect(errorSpy).toHaveBeenCalled();
+
+    /* retry re-runs init against a healthy backend and restores the grid */
+    defaultFetch();
+    await wrapper.get('[data-state="error"] button').trigger('click');
+    await flushPromises();
+    expect(wrapper.find('[data-state="error"]').exists()).toBe(false);
+    expect(wrapper.findAll('.editor-cell').length).toBeGreaterThan(0);
     errorSpy.mockRestore();
   });
 });

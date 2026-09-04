@@ -6,6 +6,8 @@
  * .warn, and a busy state that disables the confirm button and swaps its
  * label ('Deleting…' :971 / 'Syncing…' :1059).
  */
+import { PhWarning } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 
 defineProps<{
@@ -24,10 +26,10 @@ defineEmits<{ cancel: []; confirm: [] }>();
 </script>
 
 <template>
-  <div class="fixed inset-0 z-[1000] flex items-center justify-center bg-backdrop" id="modal-overlay">
+  <div class="modal-backdrop" id="modal-overlay">
     <div class="min-w-[340px] max-w-[460px] rounded-lg border border-border-default bg-panel px-7 py-5 text-center" role="dialog" aria-modal="true">
       <h3 class="mb-3 text-lg">{{ title }}</h3>
-      <p class="font-semibold text-warning">&#x26A0; {{ warn }}</p>
+      <p class="font-semibold text-warning"><PbIcon :icon="PhWarning" :size="14" class="mr-1 align-[-2px] inline-block" />{{ warn }}</p>
       <p class="mb-5 text-base text-secondary">{{ text }}</p>
       <div class="flex justify-center gap-2">
         <Button size="lg" id="modal-cancel" type="button" @click="$emit('cancel')">{{ cancelText }}</Button>

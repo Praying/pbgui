@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
       <div
         v-if="isOpen"
         ref="dropEl"
-        class="msel-drop open fixed z-[60000] mt-[2px] min-w-[180px] max-h-[260px] overflow-hidden rounded-sm border border-secondary bg-card shadow-[var(--shadow-modal)]"
+        class="msel-drop open fixed z-[var(--z-dropdown)] mt-[2px] min-w-[180px] max-h-[260px] overflow-hidden rounded-sm border border-secondary bg-card shadow-[var(--shadow-modal)]"
         :style="dropStyle"
         @click.stop
       >

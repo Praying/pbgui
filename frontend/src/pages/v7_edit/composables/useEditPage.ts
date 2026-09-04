@@ -147,7 +147,9 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
   const alert =
     options.alert ??
     ((title: string, message: string) => {
-      if (!dialogsAlert({ title, message, confirmText: t('common.ok') })) toast(title + ': ' + message, 'err');
+      void dialogsAlert({ title, message, confirmText: t('common.ok') }).then((shown) => {
+        if (!shown) toast(title + ': ' + message, 'err');
+      });
     });
 
   const state = reactive(
@@ -593,7 +595,8 @@ export function useEditPage(options: UseEditPageOptions): UseEditPage {
         const rawDetail = typeof data.detail === 'string' ? data.detail : resp.statusText;
         // 409 "Update your VPS first" → PBGuiDialogs.alert (:2935-2940)
         if (resp.status === 409 && rawDetail.startsWith('Update your VPS first')) {
-          alert(t('v7run.saveBlocked'), serverMsg(rawDetail));
+          const shown = await dialogsAlert({ title: t('v7run.saveBlocked'), message: serverMsg(rawDetail), confirmText: t('common.ok') });
+          if (!shown) toast(t('v7run.saveBlocked') + ': ' + serverMsg(rawDetail), 'err');
         } else {
           toast(t('v7run.saveFailed') + ': ' + serverMsg(rawDetail), 'err');
         }

@@ -61,6 +61,8 @@ export interface StatusWsOptions {
 export interface StatusWsController {
   /** Latest market_data_status frame; null before the first one. */
   readonly status: Ref<MarketDataStatus | null>;
+  /** True while the WebSocket is open — false during connect/back-off. */
+  readonly connected: Ref<boolean>;
   /** Legacy connectWebSocket() — clear the timer and (re)connect now. */
   connect(): void;
   /** Legacy destroyMonitor() — stop reconnecting, close and detach handlers. */
@@ -71,6 +73,7 @@ export function useStatusWs(options: StatusWsOptions): StatusWsController {
   const wsFactory = options.wsFactory ?? ((url: string) => new WebSocket(url) as unknown as WebSocketLike);
 
   const status = ref<MarketDataStatus | null>(null);
+  const connected = ref(false);
   let ws: WebSocketLike | null = null;
   let reconnectAttempts = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -99,9 +102,11 @@ export function useStatusWs(options: StatusWsOptions): StatusWsController {
     ws = wsFactory(options.url);
     ws.onopen = () => {
       reconnectAttempts = 0;
+      connected.value = true;
     };
     ws.onmessage = (evt) => handleMessage(evt.data);
     ws.onclose = () => {
+      connected.value = false;
       if (!destroyed) {
         reconnectAttempts += 1;
         reconnectTimer = setTimeout(connect, reconnectDelayMs(reconnectAttempts));
@@ -132,5 +137,5 @@ export function useStatusWs(options: StatusWsOptions): StatusWsController {
   connect(); // legacy IIFE connects at fragment load
   onScopeDispose(disconnect);
 
-  return { status, connect, disconnect };
+  return { status, connected, connect, disconnect };
 }

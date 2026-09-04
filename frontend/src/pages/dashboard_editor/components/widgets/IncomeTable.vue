@@ -26,7 +26,9 @@
  *    document drag handlers on every rebuild).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
+import { PhWarning } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { dashT } from '../../lib/i18n';
@@ -276,7 +278,7 @@ const confirmMsg = ref('');
 const confirmAction: Ref<(() => void) | null> = ref(null);
 
 function showConfirm(msg: string, onYes: () => void): void {
-  confirmMsg.value = '⚠️ ' + msg;
+  confirmMsg.value = msg;
   confirmAction.value = onYes;
 }
 
@@ -540,13 +542,13 @@ onBeforeUnmount(() => {
 
     <!-- backup panel (render.js:1325-1329, 1403-1469) -->
     <div v-show="selectedCount > 0 && backupOpen" class="di-backup border-t border-t-border-default bg-card px-[0.75rem] py-[0.5rem]">
-      <span v-if="backupsLoading" style="color:var(--text-secondary);font-size:0.73rem;">{{
+      <span v-if="backupsLoading" class="text-[0.73rem] text-secondary">{{
         dashT('dash.loadingBackups', 'Loading backups…')
       }}</span>
-      <span v-else-if="backupsError" style="color:var(--danger-soft);font-size:0.73rem;">{{
+      <span v-else-if="backupsError" class="text-[0.73rem] text-danger-soft">{{
         dashT('dash.errorLoadingBackups', 'Error loading backups')
       }}</span>
-      <span v-else-if="backups.length === 0" style="color:var(--text-secondary);font-size:0.73rem;">{{
+      <span v-else-if="backups.length === 0" class="text-[0.73rem] text-secondary">{{
         dashT('dash.noBackups', 'No backups available.')
       }}</span>
       <template v-else>
@@ -562,7 +564,7 @@ onBeforeUnmount(() => {
         <Button type="button" size="sm" class="di-btn" @click="onRestoreClick">
           {{ dashT('dash.restore', 'Restore') }}
         </Button>
-        <Button type="button" size="sm" class="di-btn" style="margin-left:0.3rem;" @click="backupOpen = false">
+        <Button type="button" size="sm" class="di-btn ml-[0.3rem]" @click="backupOpen = false">
           &#10005;
         </Button>
       </template>
@@ -570,7 +572,9 @@ onBeforeUnmount(() => {
 
     <!-- confirm overlay (render.js:1331-1335, 1351-1376) -->
     <div v-show="confirmMsg !== ''" class="di-confirm absolute inset-0 z-[100] flex flex-col items-center justify-center gap-[0.8rem] bg-[var(--bg-backdrop)] p-[1.5rem] text-center">
-      <div class="di-confirm-msg max-w-[90%] text-[0.85rem] text-warning-soft">{{ confirmMsg }}</div>
+      <div class="di-confirm-msg flex max-w-[90%] items-center justify-center gap-[0.4rem] text-[0.85rem] text-warning-soft">
+        <PbIcon :icon="PhWarning" :size="16" /> {{ confirmMsg }}
+      </div>
       <div class="di-confirm-btns flex gap-[0.8rem]">
         <Button type="button" size="sm" variant="success" class="di-btn di-btn-yes" @click="onConfirmYes">
           {{ dashT('common.yes', 'Yes') }}

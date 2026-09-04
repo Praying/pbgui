@@ -42,7 +42,7 @@ describe('Market Data page style contracts', () => {
       'box-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset;',
     );
     expect(gapDetailsModalSource).toContain(
-      'class="integrity-gap-backdrop fixed inset-0 z-[20000] flex items-center justify-center bg-backdrop',
+      'class="integrity-gap-backdrop fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop',
     );
     expect(gapDetailsModalSource).toContain('shadow-[var(--shadow-modal)]');
   });

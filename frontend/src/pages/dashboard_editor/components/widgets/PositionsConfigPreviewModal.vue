@@ -34,7 +34,7 @@ const style = computed(() => ({
 
 <template>
   <Teleport to="body">
-    <div :class="dpModalChrome.ovl" style="z-index: 30001">
+    <div :class="dpModalChrome.ovl">
       <div
         class="dp-preview-modal fixed flex h-[min(760px,calc(100dvh-72px))] w-[min(1200px,calc(100vw-48px))] min-h-[320px] min-w-[560px] max-h-[calc(100dvh-24px)] max-w-[calc(100vw-16px)] flex-col overflow-visible rounded-[12px] border border-border-default bg-page font-sans text-primary shadow-[var(--shadow-modal)]"
         :style="style"

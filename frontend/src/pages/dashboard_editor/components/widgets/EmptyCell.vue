@@ -11,13 +11,16 @@
  * (legacy onDelete → clearCell, editor:1021-1024).
  */
 import { computed, inject } from 'vue';
+import { PhTrash } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { cellContextKey, widgetDragKey } from '../../lib/cellContext';
 import { WIDGET_META, widgetLabel, type RenderableWidgetType } from '../../lib/grid';
 import { dashT } from '../../lib/i18n';
 import type { WidgetType } from '../../types/widgets';
 import { dtHeaderClass, dtIconClass, dtTitleClass, dtTrashClass } from './uiClasses';
+import { widgetPhosphorIcon } from './widgetIcons';
 
 const store = useDashboardStore();
 const ctx = inject(cellContextKey, null);
@@ -30,6 +33,7 @@ const type = computed<WidgetType>(() =>
 );
 
 const icon = computed<string>(() => WIDGET_META[type.value as RenderableWidgetType]?.icon ?? '');
+const phosphorIcon = computed(() => widgetPhosphorIcon(icon.value));
 const label = computed<string>(() => widgetLabel(type.value));
 const editMode = computed<boolean>(() => !store.config.viewOnly);
 
@@ -47,7 +51,10 @@ function onDelete(): void {
     @dragstart="drag?.onHeaderDragStart($event)"
     @dragend="drag?.onHeaderDragEnd()"
   >
-    <span :class="dtIconClass">{{ icon }}</span>
+    <span :class="dtIconClass">
+      <PbIcon v-if="phosphorIcon" :icon="phosphorIcon" :size="14" />
+      <template v-else>{{ icon }}</template>
+    </span>
     <span :class="dtTitleClass">{{ label }}</span>
     <Button
       v-if="editMode"
@@ -58,7 +65,7 @@ function onDelete(): void {
       :title="dashT('dash.removeWidget', 'Remove widget')"
       @click.stop="onDelete"
     >
-      &#128465;
+      <PbIcon :icon="PhTrash" :size="14" />
     </Button>
   </div>
 </template>

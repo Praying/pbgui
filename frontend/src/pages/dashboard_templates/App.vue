@@ -56,9 +56,10 @@
  *   .tpl-select/.tpl-close redefinitions left with the controls).
  */
 import { onMounted, ref } from 'vue';
-import { PhX } from '@phosphor-icons/vue';
+import { PhClipboard, PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -140,7 +141,7 @@ onMounted(() => {
 <template>
   <MigrationWatermark />
   <div class="tpl-header">
-    <div class="tpl-title"><span class="icon">📋</span> <span>{{ t('dash.dashboardTemplates') }}</span></div>
+    <div class="tpl-title"><span class="icon"><PbIcon :icon="PhClipboard" :size="18" /></span> <span>{{ t('dash.dashboardTemplates') }}</span></div>
     <Button
       id="btn-close"
       class="tpl-close"
@@ -154,7 +155,7 @@ onMounted(() => {
     ><PbIcon :icon="PhX" /></Button>
   </div>
   <div id="content" class="tpl-content">
-    <div v-if="!loaded" style="color:var(--text-disabled);padding:1rem">{{ t('dash.loading') }}</div>
+    <LoadingSkeleton v-if="!loaded" :label="t('dash.loading')" />
     <template v-else>
       <SaveCard v-if="current" :current="current" @saved="onTemplateSaved" />
       <ManageCard :templates="templates" @deleted="onTemplatesDeleted" @renamed="onTemplateRenamed" />
@@ -216,7 +217,7 @@ body {
 .tpl-card {
   background: var(--bg-card);
   border: 1px solid var(--border-default);
-  border-radius: 7px;
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem;
 }
 .tpl-card-title {
@@ -281,8 +282,8 @@ body {
 /* ── Multi-select dropdown ── */
 .msel-wrap { position: relative; width: 100%; }
 .msel-btn {
-  background: var(--border-default); color: var(--text-primary);
-  border: 1px solid var(--text-dim); border-radius: 4px;
+  background: var(--bg-input); color: var(--text-primary);
+  border: 1px solid var(--border-default); border-radius: var(--radius-sm);
   padding: 0.38rem 0.6rem; font-size: var(--fs-base);
   cursor: pointer; width: 100%; text-align: left;
   display: flex; justify-content: space-between; align-items: center;
@@ -292,16 +293,16 @@ body {
 .msel-arrow { font-size: 0.55rem; margin-left: 0.4rem; flex-shrink: 0; }
 .msel-drop {
   display: none; position: absolute; top: 100%; left: 0;
-  background: var(--bg-card); border: 1px solid var(--text-dim); border-radius: 4px;
+  background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-sm);
   min-width: 180px; max-height: 260px; overflow: hidden;
-  z-index: 200; box-shadow: 0 4px 12px rgba(5, 8, 14,0.5);
+  z-index: var(--z-dropdown); box-shadow: var(--shadow-modal);
   margin-top: 2px; width: 100%;
 }
 .msel-drop.open { display: block; }
 .msel-filter {
   width: 100%; box-sizing: border-box;
-  background: var(--border-default); color: var(--text-primary);
-  border: none; border-bottom: 1px solid var(--text-dim);
+  background: var(--bg-input); color: var(--text-primary);
+  border: none; border-bottom: 1px solid var(--border-default);
   padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none;
 }
 .msel-filter::placeholder { color: var(--text-muted); }

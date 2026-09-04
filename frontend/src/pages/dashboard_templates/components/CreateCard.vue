@@ -217,7 +217,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
           <PbIcon :icon="PhClipboardText" /> {{ t('dash.createDashboards') }}
         </Button>
       </div>
-      <div id="create-msg" class="msg" :class="msgType">{{ msg }}</div>
+      <div id="create-msg" class="msg" :class="msgType" role="status" aria-live="polite">{{ msg }}</div>
     </template>
   </div>
 </template>

@@ -49,21 +49,21 @@ const recRows = computed(() => {
     <div class="msg-error rounded-md border border-danger bg-danger/10 px-3 py-2 text-sm text-danger">{{ feedback.message }}</div>
   </template>
   <template v-else-if="results && hasContent">
-    <div v-if="results.exchange" class="result-card rounded-lg border border-border-default bg-panel p-3" style="padding:8px 16px;margin-bottom:8px">
+    <div v-if="results.exchange" class="result-card mb-2 rounded-lg border border-border-default bg-panel px-4 py-2">
       <strong>{{ t('misc.balance.exchange') }}</strong> {{ results.exchange }}
     </div>
 
     <div v-if="results.recommendation" class="result-card rounded-lg border border-border-default bg-panel p-3">
       <h3 class="mb-2 text-md text-accent">{{ t('misc.balance.recommendedBalance', { symbol: results.recommendation.symbol, side: results.recommendation.side }) }}</h3>
       <div class="text-title font-extrabold text-success">{{ results.recommendation.recommended_balance }} USDT</div>
-      <div style="margin-top:8px">
+      <div class="mt-2">
         <div v-for="row in recRows" :key="row.label" class="flex justify-between py-0.5 text-sm">
           <span class="text-secondary">{{ row.label }}</span>
           <span class="font-semibold">{{ row.value }}</span>
         </div>
       </div>
-      <div class="mt-1 text-sm text-secondary font-[Fira_Code,monospace]">min_order_price / ((twe_limit / n_positions) * entry_initial_qty_pct)</div>
-      <div class="mt-1 text-sm text-secondary font-[Fira_Code,monospace]">{{
+      <div class="mt-1 text-sm text-secondary font-mono">min_order_price / ((twe_limit / n_positions) * entry_initial_qty_pct)</div>
+      <div class="mt-1 text-sm text-secondary font-mono">{{
         results.recommendation.min_order_price.toFixed(2) + ' / ((' +
         results.recommendation.total_wallet_exposure_limit.toFixed(2) + ' / ' + results.recommendation.n_positions +
         ') * ' + results.recommendation.entry_initial_qty_pct.toFixed(4) + ') = ' + results.recommendation.calculated_balance.toFixed(2)

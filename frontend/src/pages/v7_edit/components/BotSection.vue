@@ -48,7 +48,7 @@ function onBotInputs(side: 'long' | 'short'): void {
  *  .bot-json-neutralized/.bot-json-pb-default rules). Error keeps the CSS
  *  cascade precedence it had — it wins over a status tint on the same line. */
 function botLineClass(line: { error: boolean; status: string | null }): string {
-  if (line.error) return 'rounded-[2px] bg-danger/16 shadow-[inset_3px_0_0_rgb(var(--danger-rgb)/0.95)]';
+  if (line.error) return 'v7e-line-error';
   if (line.status === 'neutralized') return 'rounded-[2px] bg-[color-mix(in_srgb,var(--warning)_16%,transparent)]';
   if (line.status === 'pb_default') return 'rounded-[2px] bg-[color-mix(in_srgb,var(--danger)_16%,transparent)]';
   return '';

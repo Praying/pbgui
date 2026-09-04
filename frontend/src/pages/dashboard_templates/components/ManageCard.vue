@@ -190,6 +190,6 @@ onUnmounted(() => window.clearTimeout(msgTimer));
         </div>
       </div>
     </template>
-    <div id="manage-msg" class="msg" :class="msgType">{{ msg }}</div>
+    <div id="manage-msg" class="msg" :class="msgType" role="status" aria-live="polite">{{ msg }}</div>
   </div>
 </template>

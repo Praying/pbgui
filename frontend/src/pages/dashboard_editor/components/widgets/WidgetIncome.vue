@@ -185,7 +185,6 @@ watch(
           min="0"
           step="0.01"
           :class="dtCtrlNumClass"
-          style="width:68px"
           :model-value="filterVal"
           @change="onFilterChange"
         />

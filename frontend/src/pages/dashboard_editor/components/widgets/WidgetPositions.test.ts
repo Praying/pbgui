@@ -135,7 +135,7 @@ describe('WidgetPositions', () => {
     const { wrapper } = mountPositions();
     await flushPromises();
     const header = wrapper.get('.dt-header');
-    expect(header.find('.dt-icon').text()).toBe('📋');
+    expect(header.find('.dt-icon svg').exists()).toBe(true);
     expect(header.find('.dt-title').text()).toBe('Positions');
     const manage = header.get('.dp-manage-btn');
     expect(manage.text()).toBe('Manage');

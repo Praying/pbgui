@@ -40,11 +40,12 @@ describe('ReadmePreview', () => {
   it('renders safe links with target=_blank and drops hostile schemes', () => {
     const wrapper = mountPreview('[ok](https://example.com) [bad](javascript:alert(1))');
     const links = wrapper.findAll('a');
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(1);
     expect(links[0]!.attributes('href')).toBe('https://example.com');
     expect(links[0]!.attributes('target')).toBe('_blank');
-    // legacy renders an inert '#' anchor for non-whitelisted schemes (:6252)
-    expect(links[1]!.attributes('href')).toBe('#');
+    // non-whitelisted schemes render as inert plain text, never an anchor
+    expect(wrapper.findAll('a[href="#"]')).toHaveLength(0);
+    expect(wrapper.text()).toContain('bad');
   });
 
   it('renders images only with whitelisted sources', () => {

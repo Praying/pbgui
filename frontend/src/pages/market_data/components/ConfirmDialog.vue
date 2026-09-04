@@ -44,7 +44,7 @@ watch(
 <template>
   <div
     id="confirm-ovl"
-    class="fixed inset-0 z-[3002] items-center justify-center bg-page/72 p-5"
+    class="fixed inset-0 z-[var(--z-modal)] items-center justify-center bg-page/72 p-5"
     :class="dialog.visible.value ? 'visible flex' : 'hidden'"
     :aria-hidden="dialog.visible.value ? 'false' : 'true'"
   >

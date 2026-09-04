@@ -117,7 +117,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           <th
             v-for="column in columns"
             :key="column.key"
-            class="coin-table-header sortable sticky top-0 z-[2] text-secondary text-sm uppercase tracking-[0.055em] font-bold text-left px-[0.65rem] py-[0.6rem] leading-[1.05] border-b whitespace-nowrap"
+            class="coin-table-header sortable sticky top-0 z-[2] text-secondary text-sm uppercase tracking-label font-bold text-left px-[0.65rem] py-[0.6rem] leading-[1.05] border-b whitespace-nowrap"
             :class="column.centered ? 'text-center' : column.numeric ? 'text-right' : ''"
             :data-table="table"
             :data-key="column.key"

@@ -310,7 +310,8 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
     await clickRow(wrapper, 3);
     await clickRow(wrapper, 2);
     await wrapper.findAll('.di-actions .di-btn')[0]!.trigger('click');
-    expect(wrapper.get('.di-confirm-msg').text()).toBe('⚠️ Delete 2 selected income row(s)?');
+    expect(wrapper.get('.di-confirm-msg').text()).toContain('Delete 2 selected income row(s)?');
+    expect(wrapper.find('.di-confirm-msg svg').exists()).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
     await wrapper.get('.di-btn-yes').trigger('click');
     await flushPromises();
@@ -340,8 +341,8 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
     await clickRow(wrapper, 1);
     await clickRow(wrapper, 2);
     await wrapper.findAll('.di-actions .di-btn')[1]!.trigger('click');
-    expect(wrapper.get('.di-confirm-msg').text()).toBe(
-      '⚠️ Delete all income for ALL users with timestamp ≤ 2024-01-25 16:26:40?'
+    expect(wrapper.get('.di-confirm-msg').text()).toContain(
+      'Delete all income for ALL users with timestamp ≤ 2024-01-25 16:26:40?'
     );
     await wrapper.get('.di-btn-yes').trigger('click');
     await flushPromises();
@@ -357,8 +358,8 @@ describe('IncomeTable delete flows (render.js:1275-1311, 1351-1401)', () => {
     await clickRow(wrapper, 3); /* alice */
     await wrapper.findAll('.di-actions .di-btn')[1]!.trigger('click');
     /* scan order follows the row list [3,1] → alice first (render.js:1293) */
-    expect(wrapper.get('.di-confirm-msg').text()).toBe(
-      '⚠️ Delete all income for alice, bob with timestamp ≤ 2024-01-25 16:26:40?'
+    expect(wrapper.get('.di-confirm-msg').text()).toContain(
+      'Delete all income for alice, bob with timestamp ≤ 2024-01-25 16:26:40?'
     );
     await wrapper.get('.di-btn-yes').trigger('click');
     await flushPromises();
@@ -429,8 +430,8 @@ describe('IncomeTable backup/restore panel (render.js:1314-1321, 1403-1469)', ()
     fetchMock.mockClear();
     fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true }) });
     await wrapper.findAll('.di-backup .di-btn')[0]!.trigger('click');
-    expect(wrapper.get('.di-confirm-msg').text()).toBe(
-      '⚠️ Restore database from pbgui-b.db — 2024-01-02 11:00:00?'
+    expect(wrapper.get('.di-confirm-msg').text()).toContain(
+      'Restore database from pbgui-b.db — 2024-01-02 11:00:00?'
     );
     await wrapper.get('.di-btn-yes').trigger('click');
     await flushPromises();

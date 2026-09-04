@@ -41,6 +41,7 @@
  */
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ErrorState from '@/shared/components/ErrorState.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import EditorGrid from './components/EditorGrid.vue';
 import EditorHeader from './components/EditorHeader.vue';
@@ -88,6 +89,14 @@ watch(
 );
 
 /* ── init (editor:2636-2705) ── */
+
+/** Set when init() throws — the editor area renders ErrorState (with a
+ *  retry that re-runs init) instead of a fresh grid the user cannot tell
+ *  apart from a working empty dashboard. */
+const initError = ref('');
+/* TODO(i18n): add dedicated dash.initFailed / dash.retry keys; borrowing
+   dash.statusError + ai.chat.retry until then (en-only fallbacks below). */
+const INIT_ERROR_TITLE_FALLBACK = 'Failed to load dashboard';
 
 interface LoadedConfig {
   found: boolean;
@@ -139,8 +148,16 @@ async function init(): Promise<void> {
   } catch (e) {
     console.error('editor init error', e); // editor:2696
     store.loadConfig({}); // editor:2697
+    initError.value = e instanceof Error ? e.message : String(e);
   }
   configRevision.value++; // editor:2688 — the header name input re-syncs
+}
+
+/** ErrorState retry — re-runs init from the top (listeners/classes are
+ *  idempotent: same-function addEventListener and classList.add no-op). */
+function retryInit(): void {
+  initError.value = '';
+  void init();
 }
 
 /* ── save / cancel + the parent message contract (editor:2707-2742) ── */
@@ -229,8 +246,17 @@ onBeforeUnmount(() => {
       <EditorHeader :msg="statusMsg" :cls="statusCls" :config-revision="configRevision" />
     </div>
     <div class="editor-scroll-area min-h-0 flex-1 overflow-y-auto">
-      <EditorGrid />
-      <GridFooter />
+      <ErrorState
+        v-if="initError"
+        :title="INIT_ERROR_TITLE_FALLBACK"
+        :message="initError"
+        :retry-label="t('ai.chat.retry')"
+        @retry="retryInit"
+      />
+      <template v-else>
+        <EditorGrid />
+        <GridFooter />
+      </template>
     </div>
   </div>
 </template>
@@ -350,7 +376,7 @@ body.view-mode .editor-cell {
   left: 0;
   width: 100vw !important;
   height: 100dvh !important;
-  z-index: 99999;
+  z-index: var(--z-modal);
   border-radius: 0;
   background: var(--bg-page);
 }

@@ -57,7 +57,7 @@ function rowClass(kind: DiffRow['kind']): string {
 </script>
 
 <template>
-  <div id="diffModal" class="diff-modal fixed inset-0 z-[999] flex flex-col overflow-hidden bg-page" v-show="data">
+  <div id="diffModal" class="diff-modal fixed inset-0 z-[calc(var(--z-modal)-1)] flex flex-col overflow-hidden bg-page" v-show="data">
     <div class="diff-modal-header flex shrink-0 items-center justify-between border-b border-border-subtle bg-panel px-4 py-2.5">
       <div style="display:flex; align-items:center; gap:12px;">
         <Button type="button" variant="secondary" size="sm" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</Button>

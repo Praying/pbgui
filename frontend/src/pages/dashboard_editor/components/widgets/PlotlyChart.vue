@@ -26,7 +26,9 @@
  * the epoch-rebuild contract requires the remount to keep it).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { PhX } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { useFullscreen } from '../../composables/useFullscreen';
 import { dashT } from '../../lib/i18n';
 import {
@@ -203,12 +205,12 @@ const heightStyle = computed<{ height: string } | undefined>(() =>
       type="button"
       variant="default"
       size="sm"
-      class="dt-fs-close absolute left-2 top-2 z-[9999] hidden px-[0.55rem] text-[0.82rem] leading-[1.5] hover:border-danger-deep hover:bg-danger-deep hover:text-primary"
+      class="dt-fs-close absolute left-2 top-2 z-[var(--z-modal)] hidden px-[0.55rem] text-[0.82rem] leading-[1.5] hover:border-danger-deep hover:bg-danger-deep hover:text-primary"
       :style="{ display: fs.isFullscreen.value ? 'block' : 'none' }"
       :title="dashT('dash.exitFullscreen', 'Exit Fullscreen')"
       @click="fs.exitFullscreen()"
     >
-      ✕
+      <PbIcon :icon="PhX" :size="14" />
     </Button>
     <div v-if="plotlyMissing" :class="dtStatusClass">
       {{ dashT('dash.plotlyNotLoaded', 'Plotly not loaded') }}

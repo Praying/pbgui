@@ -63,7 +63,7 @@ const pickerBtnClass =
 <template>
   <div
     id="inventory-delete-date-ovl"
-    class="fixed inset-0 z-[3001] items-center justify-center bg-page/68 p-5"
+    class="fixed inset-0 z-[var(--z-modal)] items-center justify-center bg-page/68 p-5"
     :class="visible ? 'visible flex' : 'hidden'"
     :aria-hidden="visible ? 'false' : 'true'"
   >

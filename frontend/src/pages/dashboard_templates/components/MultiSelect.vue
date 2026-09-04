@@ -28,6 +28,8 @@ export const openUid = vueRef<string | null>(null);
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhCaretDown } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -215,10 +217,10 @@ onUnmounted(() => {
 
 <template>
   <div class="msel-wrap">
-    <div class="msel-btn" @click="onButtonClick">
+    <button type="button" class="msel-btn" aria-haspopup="listbox" :aria-expanded="isOpen" @click="onButtonClick">
       <span>{{ labelText }}</span>
-      <span class="msel-arrow">▼</span>
-    </div>
+      <PbIcon :icon="PhCaretDown" :size="12" class="msel-arrow" />
+    </button>
     <div class="msel-drop" :class="{ open: isOpen }" @click.stop>
       <!-- ui-migration: blocked — the dropdown filter input is chrome-free by
            design (borderless inside .msel-drop); the ui/ Input owns the

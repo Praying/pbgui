@@ -718,7 +718,7 @@ onBeforeUnmount(() => {
     </div>
   </AppShell>
 
-  <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-[2000] flex flex-col gap-2">
+  <div id="toast" class="pointer-events-none fixed bottom-6 right-6 z-[var(--z-toast)] flex flex-col gap-2">
     <div
       v-for="item in store.toasts.value"
       :key="item.id"
@@ -1423,11 +1423,11 @@ body {
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 3000;
+  z-index: var(--z-tooltip);
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-md);
   font-size: var(--fs-xs);
   font-weight: normal;
   padding: 6px 10px;
