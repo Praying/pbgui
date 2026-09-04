@@ -10,7 +10,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretUp, PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { forcedModeLabelKey, normalizedForcedMode, STATUS_LABEL_KEYS, type RunInstance, type SortState } from '../lib/table';
@@ -61,11 +61,7 @@ const columns = computed<Column[]>(() => {
   ]);
 });
 
-/** Sort arrow text (:747-748). */
-function arrow(key: string): string {
-  if (props.sort.col !== key) return '';
-  return props.sort.asc ? ' \u25B2' : ' \u25BC';
-}
+
 
 /** buildCells status label (:698). */
 function statusLabel(row: RunInstance): string {
@@ -119,7 +115,7 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
         <tr>
           <th class="sticky top-0 cursor-pointer select-none border-b-2 border-border-default bg-panel text-sm uppercase text-secondary hover:text-primary" v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" :role="col.labelKey ? 'button' : undefined" :tabindex="col.labelKey ? 0 : undefined" :aria-sort="col.labelKey && sort.col === col.key ? (sort.asc ? 'ascending' : 'descending') : undefined" @click="col.labelKey && emit('sort', col.key)" @keydown.enter.prevent="col.labelKey && emit('sort', col.key)">
             <template v-if="col.labelKey">{{ t(col.labelKey) }}</template>
-            <span v-if="col.labelKey" class="ml-0.5 text-[10px]">{{ arrow(col.key) }}</span>
+            <PbIcon v-if="col.labelKey && sort.col === col.key" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="10" class="ml-0.5 inline-block align-[-1px]" />
           </th>
         </tr>
       </thead>

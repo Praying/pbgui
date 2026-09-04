@@ -90,7 +90,7 @@ describe('headers (:5532-5539)', () => {
       'final_balance',
     ]);
     const modified = headers.find((h) => h.attributes('data-col') === 'modified')!;
-    expect(modified.text()).toContain('▼'); // desc
+    expect(modified.find('.sort-arrow').exists()).toBe(true); // desc caret icon
     expect(modified.attributes('title')).toContain('Sort by');
   });
 

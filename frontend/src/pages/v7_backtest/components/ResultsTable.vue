@@ -7,7 +7,7 @@
  * convert button (:5547-5549) and click/drag row selection with wrap
  * auto-scroll (:5731-5785).
  */
-import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage } from '@phosphor-icons/vue';
+import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage , PhCaretDown, PhCaretUp } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -69,9 +69,7 @@ const headers = computed<HeaderColumn[]>(() => {
   return columns;
 });
 
-function arrowFor(col: string): string {
-  return props.sort.col === col ? (props.sort.asc ? ' ▲' : ' ▼') : '';
-}
+
 
 function headerTitle(label: string): string {
   return t('v7backtest.sortBy', { label });
@@ -150,7 +148,7 @@ onBeforeUnmount(() => dragSelect.dispose());
             :title="headerTitle(header.label)"
             @click="emit('sort', header.col)"
           >
-            {{ header.label }}<span class="sort-arrow">{{ arrowFor(header.col) }}</span>
+            {{ header.label }}<PbIcon v-if="sort.col === header.col" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="10" class="sort-arrow ml-0.5 inline-block align-[-1px]" />
           </th>
           <th :title="t('v7backtest.tweTooltip')" class="cursor-default">TWE</th>
           <th class="cursor-default">POS</th>
