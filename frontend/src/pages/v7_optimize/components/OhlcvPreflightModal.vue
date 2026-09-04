@@ -175,7 +175,7 @@ function entryTitle(entry: Record<string, unknown>): string {
 </script>
 
 <template>
-  <div v-if="open" class="fixed inset-0 z-[1100] grid place-items-center bg-backdrop p-3.5 sm:p-5">
+  <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop p-3.5 sm:p-5">
     <section
       class="flex w-[min(780px,100%)] max-h-[min(88vh,800px)] max-h-[min(88dvh,800px)] flex-col overflow-hidden rounded-xl border border-border-default bg-panel shadow-[var(--shadow-modal)]"
       role="dialog"

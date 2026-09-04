@@ -113,7 +113,7 @@ describe('OhlcvPreflightModal', () => {
     });
 
     const overlay = wrapper.find('.fixed.inset-0');
-    expect(overlay.classes()).toContain('z-[1100]');
+    expect(overlay.classes()).toContain('z-[var(--z-modal)]');
     expect(overlay.classes()).toContain('bg-backdrop');
 
     const dialog = wrapper.find('[role="dialog"]');

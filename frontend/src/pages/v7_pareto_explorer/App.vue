@@ -372,7 +372,7 @@ onBeforeUnmount(() => {
 
 <template>
   <MigrationWatermark />
-  <DataTipTooltip class="pointer-events-none fixed z-[4000] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
+  <DataTipTooltip class="pointer-events-none fixed z-[var(--z-tooltip)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
   <AppShell
     class="core-workbench-shell core-workbench-shell--explorer"
     :page-key="readSeedOptimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer'"
@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
       />
     </template>
 
-    <div id="page-body" class="flex h-[calc(100dvh-52px)] overflow-hidden max-[1100px]:flex-col">
+    <div id="page-body" class="flex h-[calc(100dvh-var(--nav-height))] overflow-hidden max-[1100px]:flex-col">
     <div class="workbench-page-content flex min-w-0 flex-1 flex-col gap-[var(--section-gap)] overflow-auto p-[var(--page-padding)]">
     <!-- Stage nav lives in the workbench rail; this strip carries only the
          session actions (legacy ctx-actions :767-777). -->

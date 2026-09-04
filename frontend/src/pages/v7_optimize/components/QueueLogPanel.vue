@@ -23,4 +23,4 @@ function show(): void {
 watch(() => [props.open, props.filename] as const, ([open]) => { if (open) show(); else viewer?.close(); });
 onBeforeUnmount(() => viewer?.close());
 </script>
-<template><aside v-if="open" class="fixed bottom-0 right-0 z-[1100] flex h-[46vh] w-[420px] max-w-[90vw] flex-col border-l border-t border-border-default bg-page"><header><strong>{{ title }}</strong><Button variant="ghost" size="icon" class="h-7 w-7" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="18" /></Button></header><div id="optimize-log-viewer-target"></div></aside></template>
+<template><aside v-if="open" class="fixed bottom-0 right-0 z-[var(--z-modal)] flex h-[46dvh] w-[420px] max-w-[90vw] flex-col border-l border-t border-border-default bg-page"><header><strong>{{ title }}</strong><Button variant="ghost" size="icon" class="h-7 w-7" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="18" /></Button></header><div id="optimize-log-viewer-target"></div></aside></template>

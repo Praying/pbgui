@@ -121,7 +121,7 @@ function onRetentionWheel(event: WheelEvent): void {
 </script>
 
 <template>
-  <div ref="panelEl" class="backup-panel fixed top-1/2 left-1/2 z-[10001] flex h-[min(580px,88dvh)] w-[min(660px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_70px_rgba(5,8,14,0.8)]" id="backup-panel">
+  <div ref="panelEl" class="backup-panel fixed top-1/2 left-1/2 z-[var(--z-modal)] flex h-[min(580px,88dvh)] w-[min(660px,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border border-border-default bg-panel shadow-[0_20px_70px_rgba(5,8,14,0.8)]" id="backup-panel">
     <div ref="dragEl" class="absolute top-0 left-0 right-10 z-[2] h-11 cursor-move" id="backup-drag" @mousedown="bindDragMove"></div>
     <div class="relative flex shrink-0 items-center justify-between rounded-t-lg border-b border-border-default bg-elevated px-3 py-2">
       <h3 class="m-0 text-lg">{{ t('v7run.instanceBackups') }}</h3>
