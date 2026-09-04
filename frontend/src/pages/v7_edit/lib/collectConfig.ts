@@ -1,6 +1,6 @@
 import type { EditAdapter } from '../config';
 import type { EditFormState, ExtraLiveField } from './formModel';
-import { collectApprovedCoinsValue, getOptionalNum, intVal, numVal } from './formModel';
+import { collectApprovedCoinsValue, forcedModeConfigValue, getOptionalNum, intVal, numVal } from './formModel';
 
 /**
  * collectConfig — the port of v7_edit.html:2696-2905. Starts from the raw
@@ -117,8 +117,8 @@ export function collectConfig(state: EditFormState, ctx: CollectContext): Record
       max_n_creations_per_batch: intVal(state.maxCreate),
       fills_recent_overlap_minutes: numVal(state.fillsRecentOverlap),
       fills_confirmation_overlap_minutes: numVal(state.fillsConfirmOverlap),
-      forced_mode_long: state.forcedLong,
-      forced_mode_short: state.forcedShort,
+      forced_mode_long: forcedModeConfigValue(state.forcedLong, adapter.isV8),
+      forced_mode_short: forcedModeConfigValue(state.forcedShort, adapter.isV8),
       hsl_signal_mode: state.hslSignalMode,
       hsl_position_during_cooldown_policy: state.hslCooldownPolicy,
       max_n_restarts_per_day: intVal(state.maxRestarts),

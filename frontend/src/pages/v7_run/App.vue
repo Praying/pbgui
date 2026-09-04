@@ -37,7 +37,7 @@
  *  - modal/panel/tree markup is re-rendered declaratively instead of the
  *    legacy row-diff innerHTML patching (:840-876) — same ids/classes.
  */
-import { onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, useTemplateRef, watch } from 'vue';
 import { PhArrowsClockwise, PhFloppyDisk, PhPlus, PhQuestion } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { aiFocusedField, continuePageAction, useAiPageAction, useAiPageContext } from '@/shared/ai/context';
@@ -74,6 +74,15 @@ const toastEl = useTemplateRef<HTMLElement>('toastEl');
 const toast = createToast(() => toastEl.value); // :1390-1407
 
 const store = useRunInstances({ t: (key, params) => t(key, params ?? {}), adapter, toast });
+
+const pendingForcedInstance = computed(() => {
+  const name = store.pendingForced.value?.name;
+  return name ? store.instances.value.find((instance) => instance.name === name) ?? null : null;
+});
+
+function requestForcedMode(name: string, mode: string, expectedVersion?: number): void {
+  store.requestForcedMode(name, mode as 'panic' | 'graceful_stop' | 'tp_only' | 'normal', expectedVersion);
+}
 
 /* AI drawer page context — Vue port of the legacy instances registration
    (v1.99.2: active instances as run_config entities so the assistant can
@@ -192,7 +201,7 @@ onBeforeUnmount(() => {
         @edit="store.editInstance"
         @balance="store.openBalanceCalculator"
         @convert="store.convertInstanceToV8"
-        @forced-mode="(name, mode) => store.requestForcedMode(name, mode as 'panic' | 'graceful_stop' | 'tp_only')"
+        @forced-mode="requestForcedMode"
         @remove="store.requestDelete"
         @sort="store.setSort"
       />
@@ -224,7 +233,9 @@ onBeforeUnmount(() => {
       v-if="store.pendingForced.value"
       :title="t(FORCED_MODES[store.pendingForced.value.mode]!.titleKey)"
       :warn="store.pendingForced.value.name"
-      :text="t('v7run.forcedModeDetail', { mode: FORCED_MODES[store.pendingForced.value.mode]!.value })"
+      :text="store.pendingForced.value.mode === 'normal'
+        ? t('v7run.clearForcedModeDetail') + (pendingForcedInstance && (pendingForcedInstance.forced_mode_long === 'p' || pendingForcedInstance.forced_mode_short === 'p') ? ` ${t('v7run.clearForcedModePanicWarning')}` : '')
+        : t('v7run.forcedModeDetail', { mode: FORCED_MODES[store.pendingForced.value.mode]!.value })"
       :cancel-text="t('common.cancel')"
       :confirm-text="t(FORCED_MODES[store.pendingForced.value.mode]!.textKey)"
       :confirm-variant="FORCED_MODES[store.pendingForced.value.mode]!.variant"

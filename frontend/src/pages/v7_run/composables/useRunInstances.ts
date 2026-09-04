@@ -44,14 +44,14 @@ import type { ToastHandle } from '../lib/toast';
 
 export type TranslateFn = (key: string, params?: Record<string, unknown>) => string;
 
-export type ForcedMode = 'panic' | 'graceful_stop' | 'tp_only';
+export type ForcedMode = 'panic' | 'graceful_stop' | 'tp_only' | 'normal';
 
 export interface ForcedModeInfo {
   titleKey: string;
   textKey: string;
   /** ui-migration: the legacy modal-button cssClass strings became ui/ Button
       variants (solid danger/warning/success tones → the tinted variants). */
-  variant: 'danger' | 'warning' | 'success';
+  variant: 'danger' | 'warning' | 'success' | 'info';
   value: ForcedMode;
 }
 
@@ -60,6 +60,7 @@ export const FORCED_MODES: Record<ForcedMode, ForcedModeInfo> = {
   panic: { titleKey: 'v7run.panicTitle', textKey: 'v7run.panic', variant: 'danger', value: 'panic' },
   graceful_stop: { titleKey: 'v7run.gracefulStopTitle', textKey: 'v7run.gracefulStop', variant: 'warning', value: 'graceful_stop' },
   tp_only: { titleKey: 'v7run.takeProfitOnlyTitle', textKey: 'v7run.takeProfitOnly', variant: 'success', value: 'tp_only' },
+  normal: { titleKey: 'v7run.clearForcedModeTitle', textKey: 'v7run.clearForcedMode', variant: 'info', value: 'normal' },
 };
 
 export interface UseRunInstances {
@@ -76,7 +77,7 @@ export interface UseRunInstances {
   countText: Ref<string>;
   pendingDeleteName: Ref<string | null>;
   deleteBusy: Ref<boolean>;
-  pendingForced: Ref<{ name: string; mode: ForcedMode } | null>;
+  pendingForced: Ref<{ name: string; mode: ForcedMode; expectedVersion?: number } | null>;
   forcedBusy: Ref<boolean>;
   loadInstances(): Promise<void>;
   setInstancesFromWs(data: unknown[]): void;
@@ -87,7 +88,7 @@ export interface UseRunInstances {
   requestDelete(name: string): void;
   executeDelete(): Promise<void>;
   cancelDelete(): void;
-  requestForcedMode(name: string, mode: ForcedMode): void;
+  requestForcedMode(name: string, mode: ForcedMode, expectedVersion?: number): void;
   executeForcedMode(): Promise<void>;
   cancelForcedMode(): void;
   convertInstanceToV8(name: string): Promise<void>;
@@ -112,7 +113,7 @@ export function useRunInstances(options: {
   const banner = ref<'ok' | 'lost' | 'waiting'>('waiting');
   const pendingDeleteName = ref<string | null>(null);
   const deleteBusy = ref(false);
-  const pendingForced = ref<{ name: string; mode: ForcedMode } | null>(null);
+  const pendingForced = ref<{ name: string; mode: ForcedMode; expectedVersion?: number } | null>(null);
   const forcedBusy = ref(false);
   let loadGeneration = 0; // :581
 
@@ -212,8 +213,8 @@ export function useRunInstances(options: {
 
   /* ── forced modes (:1030-1077) ── */
 
-  function requestForcedMode(name: string, mode: ForcedMode): void {
-    pendingForced.value = { name, mode };
+  function requestForcedMode(name: string, mode: ForcedMode, expectedVersion?: number): void {
+    pendingForced.value = { name, mode, expectedVersion };
   }
 
   function cancelForcedMode(): void {
@@ -232,7 +233,11 @@ export function useRunInstances(options: {
         {
           method: 'POST',
           credentials: 'same-origin',
-          body: JSON.stringify({ mode: pending.mode }), // :1060-1063
+          body: JSON.stringify(
+            pending.mode === 'normal'
+              ? { mode: pending.mode, expected_version: pending.expectedVersion ?? 0 }
+              : { mode: pending.mode },
+          ), // :1060-1063
         }
       )) as { version?: number | string };
       cancelForcedMode();

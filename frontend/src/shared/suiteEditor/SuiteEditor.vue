@@ -385,8 +385,18 @@ function recalculateScenarioGenerator(): void {
   scenarioPreview.value = null;
   scenarioPreviewContextSignature.value = '';
   scenarioRequestGeneration += 1;
-  if (scenarioGeneratorDraft.value.template === 'sweep_cycles') {
-    const contextBalance = Number(currentScenarioContext().starting_balance);
+  const context = currentScenarioContext();
+  const template = scenarioGeneratorDraft.value.template;
+  const windowDays = Math.max(1, Number(scenarioGeneratorDraft.value.window_days) || 1);
+  let strideDays = Math.max(1, Number(scenarioGeneratorDraft.value.stride_days) || 1);
+  const holdoutWindows = template === 'rolling_windows'
+    ? 0
+    : Math.max(0, Number(scenarioGeneratorDraft.value.holdout_windows) || 0);
+
+  scenarioGeneratorDraft.value.window_days = windowDays;
+  scenarioGeneratorDraft.value.holdout_windows = holdoutWindows;
+  if (template === 'sweep_cycles') {
+    const contextBalance = Number(context.starting_balance);
     const defaultBalance = Number.isFinite(contextBalance) && contextBalance >= 1 ? contextBalance : 1000;
     const multiplier = Number(scenarioGeneratorDraft.value.balance_multiplier);
     const startingBalance = Number(scenarioGeneratorDraft.value.starting_balance);
@@ -398,18 +408,28 @@ function recalculateScenarioGenerator(): void {
       : (Number.isFinite(startingBalance) && startingBalance >= 1 ? startingBalance : defaultBalance);
     scenarioGeneratorDraft.value.refill_cost = Number.isFinite(refillCost) && refillCost >= 0 ? refillCost : 0;
     scenarioGeneratorDraft.value.cooldown_days = Number.isFinite(cooldownDays) && cooldownDays >= 0 ? cooldownDays : 0;
-    scenarioGeneratorDraft.value.stride_days = scenarioGeneratorDraft.value.window_days + (scenarioGeneratorDraft.value.cooldown_days ?? 0);
-    const context = currentScenarioContext();
-    const start = Date.parse(`${context.start_date ?? ''}T00:00:00Z`);
-    const end = Date.parse(`${context.end_date ?? ''}T00:00:00Z`);
-    if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
-      const availableDays = Math.floor((end - start) / 86400000) + 1;
-      const totalWindows = availableDays < scenarioGeneratorDraft.value.window_days
-        ? 0
-        : 1 + Math.floor((availableDays - scenarioGeneratorDraft.value.window_days) / scenarioGeneratorDraft.value.stride_days);
-      scenarioGeneratorDraft.value.training_windows = Math.max(0, totalWindows - scenarioGeneratorDraft.value.holdout_windows);
+    strideDays = windowDays + scenarioGeneratorDraft.value.cooldown_days;
+  }
+  scenarioGeneratorDraft.value.stride_days = strideDays;
+
+  const start = Date.parse(`${context.start_date ?? ''}T00:00:00Z`);
+  const end = Date.parse(`${context.end_date ?? ''}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    scenarioGeneratorError.value = t('editor.suite.generatorInvalidContext');
+    return;
+  }
+  const availableDays = Math.floor((end - start) / 86400000) + 1;
+  const totalWindows = availableDays < windowDays ? 0 : 1 + Math.floor((availableDays - windowDays) / strideDays);
+  let trainingWindows = Math.max(0, totalWindows - holdoutWindows);
+  if (template !== 'sweep_cycles') {
+    trainingWindows = Math.min(48, trainingWindows);
+    if (scenarioGeneratorDraft.value.exchange_mode === 'per_exchange') {
+      const exchangeCount = Math.max(1, context.exchanges?.length ?? 0);
+      trainingWindows = Math.min(trainingWindows, Math.max(0, Math.floor(64 / exchangeCount) - holdoutWindows));
     }
   }
+  scenarioGeneratorDraft.value.training_windows = trainingWindows;
+  if (trainingWindows < 1) scenarioGeneratorError.value = t('editor.suite.generatorNoTrainingWindow');
 }
 
 async function previewScenarioGenerator(): Promise<void> {

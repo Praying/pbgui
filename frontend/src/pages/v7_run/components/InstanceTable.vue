@@ -13,7 +13,7 @@ import { useI18n } from 'vue-i18n';
 import { PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
-import { STATUS_LABEL_KEYS, type RunInstance, type SortState } from '../lib/table';
+import { forcedModeLabelKey, normalizedForcedMode, STATUS_LABEL_KEYS, type RunInstance, type SortState } from '../lib/table';
 
 const props = defineProps<{
   rows: RunInstance[];
@@ -29,7 +29,7 @@ const emit = defineEmits<{
   edit: [name: string];
   balance: [name: string];
   convert: [name: string];
-  forcedMode: [name: string, mode: string];
+  forcedMode: [name: string, mode: string, expectedVersion?: number];
   remove: [name: string];
   sort: [col: string];
 }>();
@@ -98,6 +98,14 @@ function orDash(value: unknown): string {
   return value != null && value !== '' ? String(value) : '\u2013';
 }
 
+function forcedModeSummary(row: RunInstance): string {
+  const longMode = normalizedForcedMode(row.forced_mode_long);
+  const shortMode = normalizedForcedMode(row.forced_mode_short);
+  if (!longMode && !shortMode) return '';
+  if (longMode === shortMode) return t(forcedModeLabelKey(longMode));
+  return `L: ${t(forcedModeLabelKey(longMode))} · S: ${t(forcedModeLabelKey(shortMode))}`;
+}
+
 function onRowDblClick(row: RunInstance, event: MouseEvent): void {
   if ((event.target as Element).closest('[data-edit],[data-balance],[data-delete],[data-forced-mode],[data-convert-v8]')) return; // :1442
   emit('edit', row.name); // :1443-1444
@@ -127,9 +135,12 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
           <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.user) }}</td>
           <td v-if="isV8" class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.strategy) }}</td>
           <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.enabled_on) }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated"><span :class="statusClass(row.status)" :title="row.blocked_reason || undefined">
+          <td class="border-b border-border-default px-2 py-1 text-left group-hover:bg-elevated"><span :class="statusClass(row.status)" :title="row.blocked_reason || undefined">
               {{ statusLabel(row) }}
             </span>
+            <div v-if="supportsForcedModes && forcedModeSummary(row)" class="mt-0.5 text-xs font-semibold text-warning" :class="{ 'text-danger': normalizedForcedMode(row.forced_mode_long) === 'panic' || normalizedForcedMode(row.forced_mode_short) === 'panic' }">
+              {{ t('v7run.globalForcedMode') }}: {{ forcedModeSummary(row) }}
+            </div>
           </td>
           <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.version != null ? String(row.version) : '–' }}</td>
           <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.running_version != null ? String(row.running_version) : '–' }}</td>
@@ -139,9 +150,10 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
           <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.note || '' }}</td>
           <td>
             <template v-if="supportsForcedModes">
-              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')">P</Button>
-              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')">G</Button>
-              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')">T</Button>
+              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')" @click="emit('forcedMode', row.name, 'panic')">P</Button>
+              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')" @click="emit('forcedMode', row.name, 'graceful_stop')">G</Button>
+              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')" @click="emit('forcedMode', row.name, 'tp_only')">T</Button>
+              <Button v-if="forcedModeSummary(row)" class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="info" size="sm" type="button" data-forced-mode="normal" :data-forced-name="row.name" :data-forced-version="row.version ?? 0" :title="t('v7run.clearForcedMode')" @click="emit('forcedMode', row.name, 'normal', row.version ?? 0)">N</Button>
             </template>
             <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-edit="row.name" :title="t('v7run.edit')"><PbIcon :icon="PhPencilSimple" :size="14" /></Button>
             <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')"><PbIcon :icon="PhCurrencyDollar" :size="14" /></Button>

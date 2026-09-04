@@ -171,6 +171,20 @@ export function forcedModeSelectValue(value: unknown, isV8: boolean): string {
   return map[normalized] ?? normalized;
 }
 
+/** Converts the select value back to the runtime configuration representation. */
+export function forcedModeConfigValue(value: unknown, isV8: boolean): string {
+  const selected = String(value ?? '').trim().toLowerCase();
+  if (!isV8) return selected;
+  const aliases: Record<string, string> = {
+    n: '',
+    m: 'manual',
+    gs: 'graceful_stop',
+    p: 'panic',
+    t: 'tp_only',
+  };
+  return Object.prototype.hasOwnProperty.call(aliases, selected) ? aliases[selected]! : selected;
+}
+
 /** getCoinSelectionValue (:2144-2153) — 'all' | flat array | per-side object. */
 export function getCoinSelectionValue(rawValue: unknown, side: 'long' | 'short', allowAll: boolean): string[] {
   if (allowAll && rawValue === 'all') return ['all'];

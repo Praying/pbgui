@@ -17,7 +17,7 @@ defineProps<{
   cancelText: string;
   confirmText: string;
   /** ui-migration: the legacy confirmClass css string is a Button variant. */
-  confirmVariant: 'danger' | 'warning' | 'success';
+  confirmVariant: 'danger' | 'warning' | 'success' | 'info';
   busy: boolean;
   busyText: string;
 }>();

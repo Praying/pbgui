@@ -175,6 +175,14 @@ tbody tr { cursor: pointer; }
   white-space: normal;
   overflow-wrap: anywhere;
 }
+.forced-mode-status {
+  margin-top: 2px;
+  color: var(--orange);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: normal;
+}
+.forced-mode-status.panic { color: var(--red); }
 tr.row-inactive td  { opacity: 0.45; }
 
 /* Inline buttons */
@@ -215,7 +223,8 @@ tr.row-inactive td  { opacity: 0.45; }
 .btn-del:hover { background: var(--bg3); }
 .btn-panic,
 .btn-graceful,
-.btn-tp-only {
+.btn-tp-only,
+.btn-normal {
   height: 24px; width: 28px;
   padding: 0;
   font-size: var(--fs-sm);
@@ -231,6 +240,8 @@ tr.row-inactive td  { opacity: 0.45; }
 .btn-graceful:hover { opacity: 0.85; }
 .btn-tp-only { background: var(--green); color: #0b1526; border-color: var(--green); }
 .btn-tp-only:hover { opacity: 0.85; }
+.btn-normal { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-normal:hover { opacity: 0.85; }
 
 /* Confirmation modal */
 .modal-overlay {
@@ -725,6 +736,29 @@ var STATUS_LABELS = {
 var headerRendered = false;
 var rowMap = {};  /* name -> { tr, cells: string[] } */
 
+function normalizedForcedMode(value) {
+  var mode = String(value || '').trim().toLowerCase();
+  var aliases = {
+    n: '', normal: '', m: 'manual', gs: 'graceful_stop', 'graceful-stop': 'graceful_stop',
+    p: 'panic', t: 'tp_only', 'tp-only': 'tp_only', take_profit_only: 'tp_only'
+  };
+  return aliases[mode] !== undefined ? aliases[mode] : mode;
+}
+
+function forcedModeLabel(value) {
+  var mode = normalizedForcedMode(value);
+  return { panic: 'PANIC', graceful_stop: 'GRACEFUL STOP', tp_only: 'TP ONLY', manual: 'MANUAL' }[mode] || 'NORMAL';
+}
+
+function forcedModeSummary(r) {
+  var longMode = normalizedForcedMode(r && r.forced_mode_long);
+  var shortMode = normalizedForcedMode(r && r.forced_mode_short);
+  if (!longMode && !shortMode) return '';
+  return longMode === shortMode
+    ? forcedModeLabel(longMode)
+    : 'L: ' + forcedModeLabel(longMode) + ' · S: ' + forcedModeLabel(shortMode);
+}
+
 function buildCells(r) {
   var stClass = 'st-' + String(r.status || 'disabled').replace(/[^a-z_]/g, '');
   var stLabel = STATUS_LABELS[r.status] || r.status || '\u2013';
@@ -734,6 +768,10 @@ function buildCells(r) {
   var stTitle = statusReason ? ' title="' + esc(statusReason) + '"' : '';
   var statusDetail = r.status === 'config_error' && statusReason
     ? '<div class="status-reason">' + esc(statusReason) + '</div>'
+    : '';
+  var forcedSummary = runListAdapter.supportsForcedModes ? forcedModeSummary(r) : '';
+  var forcedDetail = forcedSummary
+    ? '<div class="forced-mode-status' + (forcedSummary.indexOf('PANIC') >= 0 ? ' panic' : '') + '">Global: ' + esc(forcedSummary) + '</div>'
     : '';
   var runOn = (r.running_on || []).join(', ') || '\u2013';
   if ((!r.running_on || !r.running_on.length) && r.blocked_on && r.blocked_on.length) {
@@ -746,7 +784,7 @@ function buildCells(r) {
   if (runListAdapter.isV8) cells.push(esc(r.strategy || '\u2013'));
   return cells.concat([
     esc(r.enabled_on || '\u2013'),
-    '<span class="' + stClass + '"' + stTitle + '>' + esc(stLabel) + '</span>' + statusDetail,
+    '<span class="' + stClass + '"' + stTitle + '>' + esc(stLabel) + '</span>' + statusDetail + forcedDetail,
     (r.version != null ? String(r.version) : '\u2013'),
     (r.running_version != null ? String(r.running_version) : '\u2013'),
     esc(r.twe || '\u2013'),
@@ -755,7 +793,8 @@ function buildCells(r) {
     esc(r.note || ''),
     (runListAdapter.supportsForcedModes ? '<button class="btn-panic" data-forced-mode="panic" data-forced-name="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.panicAllPositions') + '">P</button>' +
     '<button class="btn-graceful" data-forced-mode="graceful_stop" data-forced-name="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.gracefulStopAllPositions') + '">G</button>' +
-    '<button class="btn-tp-only" data-forced-mode="tp_only" data-forced-name="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.takeProfitOnlyAllPositions') + '">T</button>' : '') +
+    '<button class="btn-tp-only" data-forced-mode="tp_only" data-forced-name="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.takeProfitOnlyAllPositions') + '">T</button>' +
+    (forcedSummary ? '<button class="btn-normal" data-forced-mode="normal" data-forced-name="' + esc(r.name) + '" data-forced-version="' + String(r.version || 0) + '" title="' + PBGuiI18n.t('v7run.clearForcedMode') + '">N</button>' : '') : '') +
     '<button class="btn-edit" data-edit="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.edit') + '">\u270E</button>' +
     '<button class="btn-edit" data-balance="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.openBalanceCalculator') + '">$</button>' +
     (runListAdapter.supportsConversion ? '<button class="btn-v8" data-convert-v8="' + esc(r.name) + '" title="' + PBGuiI18n.t('v7run.convertToV8') + '">V8</button>' : '') +
@@ -1135,14 +1174,20 @@ function openBalanceCalculator(name) {
   window.location.href = window.location.origin + '/api/balance-calc/main_page?' + params.toString();
 }
 
-function confirmForcedMode(name, mode) {
+function confirmForcedMode(name, mode, expectedVersion) {
   var modes = {
     panic: { title: PBGuiI18n.t('v7run.panicTitle'), text: PBGuiI18n.t('v7run.panic'), css: 'modal-btn-delete', value: 'panic' },
     graceful_stop: { title: PBGuiI18n.t('v7run.gracefulStopTitle'), text: PBGuiI18n.t('v7run.gracefulStop'), css: 'modal-btn-graceful', value: 'graceful_stop' },
-    tp_only: { title: PBGuiI18n.t('v7run.takeProfitOnlyTitle'), text: PBGuiI18n.t('v7run.takeProfitOnly'), css: 'modal-btn-tp-only', value: 'tp_only' }
+    tp_only: { title: PBGuiI18n.t('v7run.takeProfitOnlyTitle'), text: PBGuiI18n.t('v7run.takeProfitOnly'), css: 'modal-btn-tp-only', value: 'tp_only' },
+    normal: { title: PBGuiI18n.t('v7run.clearForcedModeTitle'), text: PBGuiI18n.t('v7run.clearForcedMode'), css: 'modal-btn-primary', value: 'normal' }
   };
   var info = modes[mode] || modes.panic;
-  var detail = PBGuiI18n.t('v7run.forcedModeDetail', { mode: info.value });
+  var instance = instances.find(function(item) { return item.name === name; }) || {};
+  var hasPanic = normalizedForcedMode(instance.forced_mode_long) === 'panic' || normalizedForcedMode(instance.forced_mode_short) === 'panic';
+  var detail = mode === 'normal'
+    ? PBGuiI18n.t('v7run.clearForcedModeDetail')
+    : PBGuiI18n.t('v7run.forcedModeDetail', { mode: info.value });
+  if (mode === 'normal' && hasPanic) detail += ' ' + PBGuiI18n.t('v7run.clearForcedModePanicWarning');
   var root = document.getElementById('modal-root');
   root.innerHTML =
     '<div class="modal-overlay" id="modal-overlay">' +
@@ -1158,17 +1203,17 @@ function confirmForcedMode(name, mode) {
     '</div>';
   document.getElementById('modal-cancel').onclick = closeModal;
   document.getElementById('modal-confirm').onclick = function() {
-    executeForcedMode(name, mode, info.text);
+    executeForcedMode(name, mode, info.text, expectedVersion);
   };
 }
 
-function executeForcedMode(name, mode, actionText) {
+function executeForcedMode(name, mode, actionText, expectedVersion) {
   var confirmBtn = document.getElementById('modal-confirm');
   if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = PBGuiI18n.t('v7run.syncing'); }
   apiFetch('/instances/' + encodeURIComponent(name) + '/forced-mode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: mode })
+    body: JSON.stringify(mode === 'normal' ? { mode: mode, expected_version: Number(expectedVersion) } : { mode: mode })
   }).then(function(res) {
     if (!res.ok) {
       return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
@@ -1541,7 +1586,7 @@ document.getElementById('tbody').addEventListener('click', function(e) {
   btn = e.target.closest('[data-convert-v8]');
   if (btn) { convertInstanceToV8(btn.dataset.convertV8); return; }
   btn = e.target.closest('[data-forced-mode]');
-  if (btn) { confirmForcedMode(btn.dataset.forcedName, btn.dataset.forcedMode); return; }
+  if (btn) { confirmForcedMode(btn.dataset.forcedName, btn.dataset.forcedMode, Number(btn.dataset.forcedVersion || 0)); return; }
   btn = e.target.closest('[data-delete]');
   if (btn) { confirmDelete(btn.dataset.delete); return; }
 });

@@ -21,9 +21,38 @@ export interface RunInstance {
   blocked_on?: string[];
   desired_state?: string | null;
   note?: string | null;
+  forced_mode_long?: string | null;
+  forced_mode_short?: string | null;
   blocked_reason?: string | null;
   exchange?: string | null;
   pb8_update_required_on?: string[];
+}
+
+/** Canonicalizes the short and long forced-mode values returned by PB7. */
+export function normalizedForcedMode(value: unknown): string {
+  const mode = String(value || '').trim().toLowerCase();
+  const aliases: Record<string, string> = {
+    n: '',
+    normal: '',
+    m: 'manual',
+    gs: 'graceful_stop',
+    'graceful-stop': 'graceful_stop',
+    p: 'panic',
+    t: 'tp_only',
+    'tp-only': 'tp_only',
+    take_profit_only: 'tp_only',
+  };
+  return Object.prototype.hasOwnProperty.call(aliases, mode) ? aliases[mode]! : mode;
+}
+
+/** Returns the translation key for a canonical forced-mode label. */
+export function forcedModeLabelKey(value: unknown): string {
+  const mode = normalizedForcedMode(value);
+  if (mode === 'panic') return 'v7run.forcedModePanic';
+  if (mode === 'graceful_stop') return 'v7run.forcedModeGracefulStop';
+  if (mode === 'tp_only') return 'v7run.forcedModeTakeProfitOnly';
+  if (mode === 'manual') return 'v7run.forcedModeManual';
+  return 'v7run.forcedModeNormal';
 }
 
 /** The status filter select values (sidebar :524-537). */

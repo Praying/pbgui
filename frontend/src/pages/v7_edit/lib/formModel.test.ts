@@ -4,6 +4,7 @@ import {
   collectApprovedCoinsValue,
   createEmptyFormState,
   executionSyncBounds,
+  forcedModeConfigValue,
   forcedModeSelectValue,
   getCoinSelectionValue,
   getOptionalNum,
@@ -61,6 +62,21 @@ describe('forcedModeSelectValue (:2311-2324)', () => {
   it('v8 keeps the full names', () => {
     expect(forcedModeSelectValue('graceful_stop', true)).toBe('graceful_stop');
     expect(forcedModeSelectValue('N', true)).toBe('n');
+  });
+});
+
+describe('forcedModeConfigValue', () => {
+  it('keeps PB7 short forced-mode values', () => {
+    expect(forcedModeConfigValue('n', false)).toBe('n');
+    expect(forcedModeConfigValue('gs', false)).toBe('gs');
+  });
+
+  it('converts PB8 select aliases to runtime values', () => {
+    expect(forcedModeConfigValue('n', true)).toBe('');
+    expect(forcedModeConfigValue('m', true)).toBe('manual');
+    expect(forcedModeConfigValue('gs', true)).toBe('graceful_stop');
+    expect(forcedModeConfigValue('p', true)).toBe('panic');
+    expect(forcedModeConfigValue('t', true)).toBe('tp_only');
   });
 });
 

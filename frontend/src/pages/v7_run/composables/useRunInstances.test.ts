@@ -153,6 +153,20 @@ describe('forced-mode flow (:1030-1077)', () => {
     expect(String(fetchMock.mock.calls.at(-1)![0])).toBe('http://pbgui.test:8000/api/v7/instances');
   });
 
+  it('posts the current instance version when clearing a forced mode', async () => {
+    fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
+      if (String(url).endsWith('/forced-mode')) return Promise.resolve(new Response(JSON.stringify({ version: 5 }), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify({ instances: [] }), { status: 200 }));
+    });
+
+    store.setInstancesFromWs([{ name: 'main', version: 4, forced_mode_long: 'p', forced_mode_short: 'p' }]);
+    store.requestForcedMode('main', 'normal', 4);
+    await store.executeForcedMode();
+
+    const request = fetchMock.mock.calls.find((call) => String(call[0]).endsWith('/forced-mode'))!;
+    expect(JSON.parse(String((request[1] as RequestInit).body))).toEqual({ mode: 'normal', expected_version: 4 });
+  });
+
   it('fails with a toast carrying the server detail', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ detail: 'host unreachable' }), { status: 502 })));
 
