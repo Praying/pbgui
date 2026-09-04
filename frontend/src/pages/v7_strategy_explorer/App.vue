@@ -55,6 +55,7 @@ import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import type { PageSection } from '@/shared/navigation';
@@ -322,9 +323,13 @@ onBeforeUnmount(() => {
       <AnalysisControls :store="store" />
 
       <section id="stage-analysis" :class="store.controls.stage === 'analysis' ? 'active block' : 'hidden'">
-        <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] items-start gap-4 max-[900px]:grid-cols-[1fr]">
-          <SideWorkspace :store="store" side-key="long" />
-          <SideWorkspace :store="store" side-key="short" />
+        <LoadingSkeleton v-if="store.snapshotLoading.value && !store.state.snapshot" :label="t('common.loading')" :lines="6" />
+        <div v-else class="relative">
+          <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] items-start gap-4 max-[900px]:grid-cols-[1fr]" :class="{ 'pointer-events-none opacity-60': store.snapshotLoading.value }" :aria-busy="store.snapshotLoading.value">
+            <SideWorkspace :store="store" side-key="long" />
+            <SideWorkspace :store="store" side-key="short" />
+          </div>
+          <p v-if="store.snapshotLoading.value" role="status" class="absolute top-2 left-1/2 -translate-x-1/2 rounded-md border border-border-default bg-elevated px-3 py-1 text-xs text-secondary shadow-panel">{{ t('common.loading') }}</p>
         </div>
       </section>
 

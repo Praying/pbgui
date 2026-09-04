@@ -209,7 +209,7 @@ onBeforeUnmount(() => {
     </div><!-- /page-body -->
   </AppShell>
 
-  <div ref="toastEl" id="toast" class="fixed bottom-5 right-5 z-[var(--z-toast)] rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
+  <div ref="toastEl" id="toast" role="status" aria-live="polite" class="fixed bottom-5 right-5 z-[var(--z-toast)] rounded-md px-5 py-2 text-sm font-semibold transition-opacity duration-300"></div>
   <div id="modal-root"></div>
 
   <Teleport to="#modal-root">

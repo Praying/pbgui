@@ -185,6 +185,10 @@ export function useStrategyExplorer(deps: StoreDeps) {
   });
 
   const messages = ref<PageMessage[]>([]);
+  /** True while the initial session load or a /snapshot recalculate is in
+   *  flight — drives the analysis-area skeleton (legacy showed a blank
+   *  chart region with no feedback). */
+  const snapshotLoading = ref(false);
   const segments = ref<Segment[]>(DEFAULT_SEGMENTS);
   const paramFieldMeta = ref<Record<string, ParamFieldMeta>>(DEFAULT_PARAM_FIELD_META);
   const lastMovieData = ref<MovieData | null>(null);
@@ -567,6 +571,7 @@ export function useStrategyExplorer(deps: StoreDeps) {
       }
     }
     const generation = ++generations.snapshot;
+    snapshotLoading.value = true;
     try {
       const snapshot = await apiFetch<StrategySnapshot>(apiBase, '/snapshot', {
         method: 'POST',
@@ -579,6 +584,8 @@ export function useStrategyExplorer(deps: StoreDeps) {
       if (generation !== generations.snapshot) return;
       setMessages([{ level: 'error', text: t('v7explore.snapshotFailed', { error: (err as Error).message }) }]);
       if (options.reportError) throw err;
+    } finally {
+      if (generation === generations.snapshot) snapshotLoading.value = false;
     }
   }
 
@@ -724,6 +731,7 @@ export function useStrategyExplorer(deps: StoreDeps) {
     engineChip,
     marketChip,
     recalculate,
+    snapshotLoading,
     refreshCacheControls,
     persistStrategyRefreshState,
     readRefreshState,

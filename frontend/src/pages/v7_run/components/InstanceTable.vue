@@ -155,10 +155,10 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
               <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')" @click="emit('forcedMode', row.name, 'tp_only')">T</Button>
               <Button v-if="forcedModeSummary(row)" class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="info" size="sm" type="button" data-forced-mode="normal" :data-forced-name="row.name" :data-forced-version="row.version ?? 0" :title="t('v7run.clearForcedMode')" @click="emit('forcedMode', row.name, 'normal', row.version ?? 0)">N</Button>
             </template>
-            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-edit="row.name" :title="t('v7run.edit')"><PbIcon :icon="PhPencilSimple" :size="14" /></Button>
-            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')"><PbIcon :icon="PhCurrencyDollar" :size="14" /></Button>
-            <Button v-if="supportsConversion" class="ml-1 h-6 min-w-7 px-1" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')">V8</Button>
-            <Button class="ml-1 h-6 w-7 p-0 text-sm" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')"><PbIcon :icon="PhX" :size="14" /></Button>
+            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-edit="row.name" :title="t('v7run.edit')" @click="emit('edit', row.name)"><PbIcon :icon="PhPencilSimple" :size="14" /></Button>
+            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')" @click="emit('balance', row.name)"><PbIcon :icon="PhCurrencyDollar" :size="14" /></Button>
+            <Button v-if="supportsConversion" class="ml-1 h-6 min-w-7 px-1" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')" @click="emit('convert', row.name)">V8</Button>
+            <Button class="ml-1 h-6 w-7 p-0 text-sm" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')" @click="emit('remove', row.name)"><PbIcon :icon="PhX" :size="14" /></Button>
           </td>
         </tr>
         <tr v-if="!rows.length" id="instances-empty-row">

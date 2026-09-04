@@ -67,6 +67,9 @@ export interface ParetoState {
   commandCenter: CommandCenterPayload | null;
   selectedConfigIndex: number | null;
   selectedDetail: ConfigDetailPayload | null;
+  /** True while loadConfigDetail is in flight — lets ConfigDetail say
+   *  "loading" instead of the misleading "select a champion" placeholder. */
+  detailLoading: boolean;
   strategyCompareBaseline: StrategyCompareBaseline | null;
   persistDefaults: boolean;
   previewUseWeighted: boolean;
@@ -128,6 +131,7 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     commandCenter: null,
     selectedConfigIndex: null,
     selectedDetail: null,
+    detailLoading: false,
     strategyCompareBaseline: null,
     persistDefaults: true,
     previewUseWeighted: true,
@@ -416,6 +420,7 @@ export function useParetoSession(deps: ParetoSessionDeps) {
     if (nextResultPath !== state.resultPath) {
       generations.detail += 1;
       state.selectedConfigIndex = null;
+      state.detailLoading = false;
       if (state.strategyCompareBaseline && state.strategyCompareBaseline.result_path !== nextResultPath) {
         state.strategyCompareBaseline = null;
       }

@@ -88,6 +88,7 @@ export function useSession(store: ExplorerStore, ctx: SessionContext) {
   async function loadSession(): Promise<void> {
     const sessionGeneration = store.generations.session + 1;
     const snapshotGeneration = store.generations.snapshot + 1;
+    store.snapshotLoading.value = true;
     try {
       await loadSessionInner();
       return;
@@ -119,6 +120,8 @@ export function useSession(store: ExplorerStore, ctx: SessionContext) {
           store.setMessages([{ level: 'error', text: t('v7explore.sessionLoadFailed', { error: (err2 as Error).message }) }]);
         }
       }
+    } finally {
+      if (store.generations.snapshot === snapshotGeneration) store.snapshotLoading.value = false;
     }
   }
 

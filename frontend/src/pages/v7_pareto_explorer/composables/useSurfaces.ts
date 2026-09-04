@@ -143,6 +143,7 @@ export function useSurfaces(deps: SurfacesDeps) {
     const contextGeneration = generations.resultContext;
     state.selectedConfigIndex = configIndex;
     state.selectedDetail = null; // renderDetail(null) while loading (:4087)
+    state.detailLoading = true;
     const isCurrent = () => requestSeq === generations.detail && contextGeneration === generations.resultContext && resultPath === state.resultPath;
     try {
       const data = await apiFetch<DetailResponse>(store.apiBase, '/config-detail', {
@@ -163,11 +164,13 @@ export function useSurfaces(deps: SurfacesDeps) {
       );
       if (!isCurrent()) return resolved;
       state.selectedDetail = resolved && resolved.detail ? resolved.detail : null;
-      if (options.skipPlaygroundRefresh) return resolved;
+      if (options.skipPlaygroundRefresh) { state.detailLoading = false; return resolved; }
       await loadPlayground();
+      state.detailLoading = false;
       return resolved;
     } catch (err) {
       if (!isCurrent()) return null;
+      state.detailLoading = false;
       store.pushMessage('error', t('v7explore.configDetailLoadFailed', { error: serverMsg((err as Error).message) }));
       throw err;
     }

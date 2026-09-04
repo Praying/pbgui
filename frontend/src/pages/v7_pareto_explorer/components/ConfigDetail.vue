@@ -39,7 +39,7 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
           <div>
             <h4 class="mb-2">{{ t('v7explore.metrics') }}</h4>
             <div id="detail-top-metrics" class="mini-grid grid grid-cols-2 gap-2">
-              <div v-if="!vm.topMetrics.length" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px">{{ t('v7explore.selectChampionToPopulate') }}</div>
+              <div v-if="!vm.topMetrics.length" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px" role="status">{{ store.state.detailLoading ? t('common.loading') : t('v7explore.selectChampionToPopulate') }}</div>
               <div v-for="metric in vm.topMetrics" :key="metric.name" class="mini-metric rounded-lg border border-border-default bg-white/2 p-2">
                 <div class="label mb-1 text-xs text-secondary">{{ metric.name }}</div>
                 <div class="value font-bold">{{ metric.value }}</div>
@@ -49,7 +49,7 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
           <div>
             <h4 class="mb-2">{{ t('v7explore.tradingStyle') }}</h4>
             <div id="detail-style-panel" class="detail-list flex flex-col gap-2">
-              <div v-if="!detail" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px">{{ t('v7explore.tradingStyleWillAppear') }}</div>
+              <div v-if="!detail" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px" role="status">{{ store.state.detailLoading ? t('common.loading') : t('v7explore.tradingStyleWillAppear') }}</div>
               <div v-for="(row, index) in vm.styleRows" :key="index" class="detail-item rounded-xl border border-border-default bg-white/2 p-2.5">
                 <div class="detail-head mb-1 flex items-center justify-between gap-3"><strong>{{ row.strong }}</strong><span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ row.chip }}</span></div>
               </div>
