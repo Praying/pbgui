@@ -194,7 +194,7 @@ onBeforeUnmount(() => {
               <h1 class="overview-title m-0 max-w-none text-[clamp(28px,3vw,36px)] leading-[1.15] tracking-[-0.035em]">{{ t('misc.welcome.systemOverview') }}</h1>
               <p class="overview-copy mt-2.5 max-w-[58ch] text-primary leading-[1.5]">{{ t('misc.welcome.overviewCopy') }}</p>
             </div>
-            <div class="meta-strip flex min-w-0 flex-wrap justify-end gap-1.5 m-0 max-[980px]:justify-start max-[640px]:grid max-[640px]:w-full max-[640px]:grid-cols-1" aria-label="PBGui runtime metadata">
+            <div class="meta-strip flex min-w-0 flex-wrap justify-end gap-1.5 m-0 max-[980px]:justify-start max-[640px]:grid max-[640px]:w-full max-[640px]:grid-cols-1" :aria-label="t('misc.welcome.runtimeMetadata')">
               <div class="meta-pill inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-secondary/14 bg-page/42 px-2.5 py-1.75 text-xs text-secondary"><strong class="text-primary font-bold">{{ t('misc.welcome.version') }}</strong> <span id="meta-version">{{ metaVersion }}</span></div>
               <div class="meta-pill inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-secondary/14 bg-page/42 px-2.5 py-1.75 text-xs text-secondary"><strong class="text-primary font-bold">{{ t('misc.welcome.serial') }}</strong> <span id="meta-serial">{{ metaSerial }}</span></div>
               <div class="meta-pill meta-pill-wide inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-secondary/14 bg-page/42 px-2.5 py-1.75 text-xs text-secondary"><strong class="text-primary font-bold">{{ t('misc.welcome.api') }}</strong> <span id="meta-origin" class="min-w-0 truncate">{{ apiOriginText }}</span></div>
@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
             <section class="runtime-group runtime-group--pb7 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb7-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
                 <h3 id="pb7-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-[0.01em]">PB7</h3>
-                <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">Passivbot V7</span>
+                <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">{{ t('misc.welcome.passivbotV7') }}</span>
               </div>
               <div class="field-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
                 <div class="field full flex flex-col gap-1.75 col-span-full">
@@ -305,7 +305,7 @@ onBeforeUnmount(() => {
             <section class="runtime-group runtime-group--pb8 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb8-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
                 <h3 id="pb8-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-[0.01em]">PB8</h3>
-                <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">Passivbot V8 · optional</span>
+                <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">{{ t('misc.welcome.passivbotV8Optional') }}</span>
               </div>
               <div class="field-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
                 <div class="field full flex flex-col gap-1.75 col-span-full">
@@ -428,7 +428,7 @@ onBeforeUnmount(() => {
           :class="browserEntryClass(!entry.is_dir && entry.path === store.fileBrowser.value.selectedPath)"
           @click="entry.is_dir ? store.loadFileBrowser(entry.path) : (store.fileBrowser.value.selectedPath = entry.path)"
         >
-          <span class="browser-entry-kind text-muted text-sm font-bold uppercase tracking-[0.06em] shrink-0">{{ entry.is_dir ? 'DIR' : 'PY' }}</span>
+          <span class="browser-entry-kind text-muted text-sm font-bold uppercase tracking-[0.06em] shrink-0">{{ entry.is_dir ? t('misc.welcome.fileKindDir') : t('misc.welcome.fileKindPy') }}</span>
           <span>{{ entry.name }}</span>
         </button>
       </div>
