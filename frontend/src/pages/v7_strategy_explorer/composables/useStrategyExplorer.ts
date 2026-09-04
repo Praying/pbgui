@@ -380,7 +380,7 @@ export function useStrategyExplorer(deps: StoreDeps) {
       return data;
     } catch (err) {
       if (generation !== generations.market) return null;
-      setMessages([{ level: 'warning', text: 'Failed to load market selectors: ' + (err as Error).message }]);
+      setMessages([{ level: 'warning', text: t('v7explore.marketSelectorsFailed') + (err as Error).message }]);
       return null;
     }
   }

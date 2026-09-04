@@ -292,13 +292,13 @@ const exportCodecLabel = computed(() => {
             <p class="text-secondary">{{ t('v7explore.movieEngineMarketLine', { engine: engineLabel, exchange: meta().exchange || '', coin: meta().coin || '' }) }}</p>
             <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.frames') }}</h4>
             <table v-if="frameRows().length" class="orders">
-              <thead><tr><th>#</th><th>Time</th><th>Close</th><th>Entry Orders</th><th>Close Orders</th></tr></thead>
+              <thead><tr><th>#</th><th>{{ t('v7explore.colTime') }}</th><th>{{ t('v7explore.colClose') }}</th><th>{{ t('v7explore.colEntryOrders') }}</th><th>{{ t('v7explore.colCloseOrders') }}</th></tr></thead>
               <tbody><tr v-for="row in frameRows()" :key="String(row.index) + row.time"><td>{{ row.index }}</td><td>{{ row.time }}</td><td>{{ row.close }}</td><td>{{ row.entryOrders }}</td><td>{{ row.closeOrders }}</td></tr></tbody>
             </table>
             <table v-else class="orders"><tbody><tr><td class="text-secondary" style="text-align:left">{{ t('v7explore.noFrames') }}</td></tr></tbody></table>
             <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.fills') }}</h4>
             <table v-if="fillRows().length" class="orders">
-              <thead><tr><th>#</th><th>Time</th><th>Event</th><th>Qty</th><th>Price</th><th>Pos Size</th></tr></thead>
+              <thead><tr><th>#</th><th>{{ t('v7explore.colTime') }}</th><th>{{ t('v7explore.colEvent') }}</th><th>{{ t('v7explore.colQty') }}</th><th>{{ t('v7explore.colPrice') }}</th><th>{{ t('v7explore.colPosSize') }}</th></tr></thead>
               <tbody><tr v-for="row in fillRows()" :key="row.idx"><td>{{ row.idx }}</td><td>{{ row.time }}</td><td>{{ row.event }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.posSize }}</td></tr></tbody>
             </table>
             <table v-else class="orders"><tbody><tr><td class="text-secondary" style="text-align:left">{{ t('v7explore.noFills') }}</td></tr></tbody></table>

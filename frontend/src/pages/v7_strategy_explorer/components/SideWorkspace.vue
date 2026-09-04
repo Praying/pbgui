@@ -80,7 +80,7 @@ function fillRows(): FillRow[] {
         <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ sideKey === 'long' ? t('v7explore.longFills') : t('v7explore.shortFills') }}</h4>
         <div :id="'sim-' + sideKey">
           <table v-if="fillRows().length" class="orders">
-            <thead><tr><th>#</th><th>Time</th><th>Event</th><th>Qty</th><th>Price</th><th>Pos Size</th></tr></thead>
+            <thead><tr><th>#</th><th>{{ t('v7explore.colTime') }}</th><th>{{ t('v7explore.colEvent') }}</th><th>{{ t('v7explore.colQty') }}</th><th>{{ t('v7explore.colPrice') }}</th><th>{{ t('v7explore.colPosSize') }}</th></tr></thead>
             <tbody>
               <tr v-for="row in fillRows()" :key="row.idx"><td>{{ row.idx }}</td><td>{{ row.time }}</td><td>{{ row.event }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.posSize }}</td></tr>
             </tbody>

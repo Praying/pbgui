@@ -113,7 +113,7 @@ export function useSession(store: ExplorerStore, ctx: SessionContext) {
           { page: {}, handoff: {}, movie: { message: t('v7explore.restoredMovieState') }, messages: [] },
           snapshot,
           cached,
-          'The server-side handoff draft expired. PBGui restored the non-sensitive Strategy Explorer and Movie state from this browser tab; stored-result Compare provenance is no longer available.',
+          t('v7explore.handoffDraftExpired'),
         );
       } catch (err2) {
         if (store.generations.session === sessionGeneration && store.generations.snapshot === snapshotGeneration) {

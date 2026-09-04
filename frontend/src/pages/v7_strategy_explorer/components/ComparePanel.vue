@@ -84,7 +84,7 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
           </table>
           <div style="margin-top:12px">
             <table class="orders">
-              <thead><tr><th>Side</th><th v-for="status in statusModel.statuses" :key="status">{{ statusModel.labels[status] || status }}</th></tr></thead>
+              <thead><tr><th>{{ t('v7explore.colSide') }}</th><th v-for="status in statusModel.statuses" :key="status">{{ statusModel.labels[status] || status }}</th></tr></thead>
               <tbody>
                 <tr v-for="side in ['long', 'short']" :key="side">
                   <td>{{ side.toUpperCase() }}</td>

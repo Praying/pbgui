@@ -305,8 +305,7 @@ const rangeSummary = computed(() => {
         start: pendingRange.value.start + 1,
         end: pendingRange.value.end,
       })
-    // legacy default string (v7_pareto_explorer.html:1156, no i18n key)
-    : 'Scan all_results to select candidates and enable visible-range filtering.';
+    : t('v7explore.scanAllResultsHint');
 });
 /** Single-value Slider adapter for the display-range end thumb (number[] → number). */
 const pendingRangeEnd = computed<number>({
@@ -423,7 +422,7 @@ onBeforeUnmount(() => {
       </Button>
       <Button type="button" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
         <PbIcon v-if="!store.state.fullLoadPending" :icon="PhFolderOpen" />
-        {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : 'Scan all_results' }}
+        {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : t('v7explore.scanAllResults') }}
       </Button>
       <Button v-show="store.state.allResultsLoaded" type="button" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
         <span>{{ t('v7explore.showPassivbotParetos') }}</span>
