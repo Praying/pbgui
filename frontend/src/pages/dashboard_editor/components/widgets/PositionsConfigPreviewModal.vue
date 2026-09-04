@@ -8,13 +8,14 @@
  * The shared modal chrome utilities live in ./uiClasses (dpModalChrome);
  * the buttons use the shared ui/Button like PositionsManageModal.
  */
-import { computed } from 'vue';
+import { computed , ref } from 'vue';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { dashT } from '../../lib/i18n';
 import { previewModalGeometry } from '../../lib/manageLogic';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { dpModalChrome } from './uiClasses';
 
 const props = defineProps<{
@@ -23,6 +24,10 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ close: [] }>();
+
+/* Escape-close parity with the shared Modal (mounted means open). */
+const dialogOpen = ref(true);
+useEscapeClose(dialogOpen, () => emit('close'));
 
 const geometry = computed(() => previewModalGeometry(window.innerWidth, window.innerHeight));
 

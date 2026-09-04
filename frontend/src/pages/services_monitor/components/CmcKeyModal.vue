@@ -11,6 +11,7 @@ import { PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import type { CmcKey } from '../types';
@@ -113,6 +114,10 @@ function requestClose(): void {
   if (props.busy) return;
   emit('update:open', false);
 }
+
+/* Escape parity with the shared Modal (keeps cmc-modal-* chrome). */
+const dialogOpen = computed(() => props.open);
+useEscapeClose(dialogOpen, requestClose);
 
 /** Legacy submitCmcKey: validate, then hand the payload to the parent. */
 function submit(): void {

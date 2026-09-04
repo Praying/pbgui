@@ -7,11 +7,12 @@
  * parent (legacy uses the pool/domains payloads); this modal only picks the
  * target node.
  */
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { PhX } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 
 defineOptions({ name: 'CmcAuthorityModal' });
@@ -75,6 +76,10 @@ function requestClose(): void {
   if (props.busy) return;
   emit('update:open', false);
 }
+
+/* Escape parity with the shared Modal (keeps cmc-modal-* chrome). */
+const dialogOpen = computed(() => props.open);
+useEscapeClose(dialogOpen, requestClose);
 
 /** Legacy submitCmcAuthorityTransfer guard: no submit without a selection. */
 function submit(): void {

@@ -33,6 +33,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
@@ -85,6 +86,11 @@ const emit = defineEmits<{
   /** Legacy onReload — fired 600 ms after a successful non-dry-run action. */
   reload: [];
 }>();
+
+/* Escape-close parity with the shared Modal (dp-modal chrome is legacy,
+   kept for the parity selectors — mounted means open). */
+const dialogOpen = ref(true);
+useEscapeClose(dialogOpen, () => emit('close'));
 
 const cols = POSITION_COLUMNS;
 const RESIZE_DIRS = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const;
