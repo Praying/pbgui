@@ -7,12 +7,14 @@
  * in, events out.
  */
 import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
 import { Button } from '@/shared/components/ui/button';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { Input } from '@/shared/components/ui/input';
 import { fieldLabelClass, noteClass } from '../../lib/uiClasses';
 import type { OlderPreviewView } from '../../lib/inventoryOlderPreview';
 
-defineProps<{
+const props = defineProps<{
   visible: boolean;
   cutoffDay: string;
   view: OlderPreviewView;
@@ -28,6 +30,9 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const dialogVisible = computed(() => props.visible);
+useEscapeClose(dialogVisible, () => emit('close'));
 
 /** Legacy openInventoryDeleteDatePicker (:8120-8132). The ui/ Input exposes
  *  focus/blur/select only, so the picker path resolves the element from the

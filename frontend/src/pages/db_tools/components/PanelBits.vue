@@ -9,6 +9,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import type { PanelStatus, ProgressState, StatusKind } from '../composables/useDbTools';
 
 const props = defineProps<{
@@ -29,6 +30,11 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+/* Escape acts as Cancel (legacy closed only via buttons; Escape → the same
+   cancel path is safe and matches every other dialog on the site). */
+const confirmActive = computed(() => props.confirm.active);
+useEscapeClose(confirmActive, () => emit('confirm', false));
 
 /* Status → Tailwind utility mapping (the former db-tools.css .status.ok/.err
    tints). Returns the FULL colour set for the dynamic border+text pair. */

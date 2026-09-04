@@ -53,8 +53,15 @@ export function showResultPopup({ title, message, output, isOk, hideFoot = false
   const removeModal = (): void => {
     if (closeIconHost) render(null, closeIconHost);
     closeIconHost = null;
+    document.removeEventListener('keydown', onKeydown);
     modal.remove();
   };
+
+  // Escape-close parity with the shared Modal (imperative popup, no reka).
+  const onKeydown = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') removeModal();
+  };
+  document.addEventListener('keydown', onKeydown);
 
   const header = document.createElement('div');
   header.className = 'result-modal-header';

@@ -8,6 +8,7 @@
  * backdrop is position: fixed so nesting under the panel section is safe.
  */
 import { nextTick, watch } from 'vue';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -43,6 +44,9 @@ watch(
   },
   { flush: 'post' }
 );
+
+/* Escape parity with the shared Modal (integrity-gap chrome is legacy). */
+useEscapeClose(props.store.gapOpen, () => props.store.closeGapDetails());
 
 function onDaySelect(value: unknown): void {
   void props.store.loadGapDay(String(value ?? '')); // :9200-9202
