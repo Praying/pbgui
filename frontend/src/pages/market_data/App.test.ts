@@ -127,12 +127,13 @@ describe('panel switching + persistence (:9032-9107, :9736-9746)', () => {
     expect(visiblePanelIds(app)).toEqual(['settings-panel']);
   });
 
-  it('renders placeholders for the M-data-8 activity panel only', () => {
+  it('renders the M-data-8 activity log body with every panel landed', () => {
     const app = mountApp();
-    // only the activity panel remains a placeholder — M-data-7 landed the
-    // best1m + copy-data bodies
-    expect(app.findAll('.panel-placeholder')).toHaveLength(1);
-    expect(app.find('#activity-panel .panel-placeholder').exists()).toBe(true);
+    // M-data-8 replaced the last placeholder — the activity panel hosts the
+    // shared LogViewerPanel script bridge, no .panel-placeholder remains
+    expect(app.findAll('.panel-placeholder')).toHaveLength(0);
+    expect(app.find('#activity-panel .activity-log-shell').exists()).toBe(true);
+    expect(app.find('#activity-log-target').exists()).toBe(true);
     expect(app.find('#best1m-panel .panel-placeholder').exists()).toBe(false);
     expect(app.find('#copy-data-panel .panel-placeholder').exists()).toBe(false);
     expect(app.find('#settings-hyperliquid-tiingo').exists()).toBe(true);

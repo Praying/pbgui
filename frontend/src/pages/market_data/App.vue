@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /*
- * market_data_main migration — M-data-1..8 (scaffold through best-1m +
- * copy-data + the M-data-8 route flip; legacy source
- * frontend/market_data_main.html — deleted, line refs below are provenance)
+ * market_data_main migration — M-data-1..8 (scaffold through the M-data-8
+ * activity log panel; legacy source frontend/market_data_main.html —
+ * deleted, line refs below are provenance)
  *
  * Behavior inventory (this file):
  *
@@ -58,8 +58,8 @@
  * │                      │        │ :9032-9107, :9736-9773                      │
  * │ Topnav / help chrome │ —      │ pbgui_nav.js + shared_help_overlay.js stay  │
  * │                      │        │ as global scripts loaded by index.html      │
- * │ Panel bodies         │ 3..7   │ all landed except activity (M-data-8        │
- * │                      │        │ mounts the global LogViewerPanel script)    │
+ * │ Panel bodies         │ 3..8   │ all landed — the activity panel bridges the  │
+ * │                      │        │ global LogViewerPanel script (M-data-8)     │
  * └──────────────────────┴────────┴─────────────────────────────────────────────┘
  *
  * NOT PORTED (with justification):
@@ -98,12 +98,12 @@ import type { PageSection } from '@/shared/navigation';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import DataTipTooltip from '@/shared/components/DataTipTooltip.vue';
 import ExchangeSelect from './components/ExchangeSelect.vue';
+import ActivityPanel from './components/ActivityPanel.vue';
 import Best1mPanel from './components/best1m/Best1mPanel.vue';
 import CopyDataPanel from './components/copydata/CopyDataPanel.vue';
 import IntegrityPanel from './components/integrity/IntegrityPanel.vue';
 import InventoryPanel from './components/inventory/InventoryPanel.vue';
 import DeleteOlderDialog from './components/inventory/DeleteOlderDialog.vue';
-import PanelPlaceholder from './components/PanelPlaceholder.vue';
 import PanelShell from './components/PanelShell.vue';
 import SettingsPanel from './components/settings/SettingsPanel.vue';
 import StatusPanel from './components/StatusPanel.vue';
@@ -136,7 +136,7 @@ import {
 } from './composables/useContextExchange';
 import { useStatusMonitor } from './composables/useStatusMonitor';
 import { useStatusSummaries } from './composables/useStatusSummaries';
-import type { PanelDef, PanelId } from './types';
+import type { PanelId } from './types';
 
 const { t } = useI18n();
 import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
@@ -461,20 +461,6 @@ const marketStatusTone = computed(() => {
   return statusSummaries.statusSummaries.value.some((summary) => summary.error) ? 'danger' as const : 'success' as const;
 });
 
-/* ── panel placeholder registry (M-data-8 replaces the activity one) ── */
-
-const PLACEHOLDER_TASK: Record<Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel' | 'best1m-panel' | 'copy-data-panel'>, string> = {
-  // the activity panel hosts the global LogViewerPanel script — mounting
-  // it lands with the M-data-8 integration pass
-  'activity-panel': 'M-data-8',
-};
-
-function placeholderTask(panel: PanelDef): string {
-  return panel.id === 'status-panel'
-    ? 'M-data-2'
-    : PLACEHOLDER_TASK[panel.id as Exclude<PanelId, 'status-panel' | 'settings-panel' | 'integrity-panel' | 'inventory-panel' | 'best1m-panel' | 'copy-data-panel'>];
-}
-
 /* ── help opener (legacy initHelpOverlay tail :4085-4089): the nav's Guide
       button calls PBGUI_HELP_OPENER, which forwards the 'market data'
       keyword to the shared overlay script loaded by index.html ── */
@@ -559,7 +545,7 @@ onMounted(() => {
           :store="copyData"
           :confirm="confirmDialog.confirm"
         />
-        <PanelPlaceholder v-else :panel="panel" :task="placeholderTask(panel)" />
+        <ActivityPanel v-else-if="panel.id === 'activity-panel'" :active="activePanel === 'activity-panel'" />
       </PanelShell>
     </div>
     </div>
@@ -593,8 +579,9 @@ onMounted(() => {
    --text-dim/--accent-2 — every one of those variables except --font is
    provided identically by the legacy alias block in src/styles/
    tailwind.css, and --accent-2 was referenced nowhere), the [hidden]
-   rule (the shared base layer provides it), the .activity-log-shell twin
-   of .context-shell (no template emits it), .settings-shell >
+   rule (the shared base layer provides it), the .activity-log-shell
+   twin of .context-shell (replaced by ActivityPanel's utilities),
+   .settings-shell >
    .panel-head (dead since the rail migration — no panel-head is a
    direct child of .settings-shell), .settings-field.compact-field (no
    template emits it), and the html/body margin/padding/height/background
