@@ -52,7 +52,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
           </div>
           <div v-if="git.pullRunning.value" class="archive-pull-bar relative h-2 overflow-hidden rounded-full border border-border-default bg-elevated"></div>
           <pre class="min-h-[180px] flex-1 overflow-auto whitespace-pre-wrap break-words rounded-md border border-border-default bg-page p-3 font-mono text-xs leading-[1.45] text-secondary" data-test="archive-pull-log" aria-live="polite">{{ git.pullLog.value }}</pre>
-          <div class="text-xs text-secondary">You can hide this window; the pull keeps running.</div>
+          <div class="text-xs text-secondary">{{ t('v7backtest.gitHideWindowNote') }}</div>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
@@ -69,7 +69,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         <Button type="button" variant="ghost" class="h-auto border-0 px-2 py-0.5 text-[1.2rem] text-secondary hover:bg-white/10 hover:text-primary" :title="t('common.close')" :aria-label="t('common.close')" @click="git.closePullResults()"><PbIcon :icon="PhX" :size="18" /></Button>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
-        <div v-if="git.pullResults.value.items.length === 0">No archives.</div>
+        <div v-if="git.pullResults.value.items.length === 0">{{ t('v7backtest.gitNoArchives') }}</div>
         <details v-for="(item, i) in git.pullResults.value.items" :key="i" open style="margin-bottom: var(--sp-md)">
           <summary><b>{{ item.name || 'archive' }}</b>: {{ archivePullResultStatus(item) }}</summary>
           <pre class="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default bg-page p-2 text-xs">{{ archivePullResultBody(item) }}</pre>
@@ -130,8 +130,8 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
         </div>
         <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitPendingLocalChanges') }}</div>
         <pre v-if="git.compactPreview.value.view.hasStatus" class="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default bg-page p-2 text-xs">{{ git.compactPreview.value.view.statusText }}</pre>
-        <span v-else class="text-secondary">Clean working tree</span>
-        <div class="mt-2 text-xs uppercase tracking-[0.5px] text-secondary">Object Size</div>
+        <span v-else class="text-secondary">{{ t('v7backtest.gitCleanWorkingTree') }}</span>
+        <div class="mt-2 text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitObjectSize') }}</div>
         <pre class="mt-2 max-h-[320px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default bg-page p-2 text-xs">{{ git.compactPreview.value.view.sizeText }}</pre>
       </div>
       <div class="mt-5 flex justify-end gap-2">
@@ -165,7 +165,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
         <div class="form-group">
-          <label id="setup-arc-name-label" title="Which of your cloned archives is your own (will be used for Git Push).">My Archive</label>
+          <label id="setup-arc-name-label" :title="t('v7backtest.gitMyArchiveTitle')">{{ t('v7backtest.gitMyArchive') }}</label>
           <SelectRoot v-model="git.setupForm.value.my_archive" @update:model-value="git.loadReadmeSetup($event)">
             <SelectTrigger data-test="setup-arc-name" aria-labelledby="setup-arc-name-label">
               <span :class="git.setupForm.value.my_archive ? '' : 'text-placeholder'">{{ git.setupForm.value.my_archive || '(none)' }}</span>
@@ -175,23 +175,23 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
             </SelectContent>
           </SelectRoot>
         </div>
-        <p class="text-secondary">Archive paths are generated automatically from each configuration's config_version.</p>
+        <p class="text-secondary">{{ t('v7backtest.gitPathsGeneratedNote') }}</p>
         <div class="form-row cols-2">
           <div class="form-group">
-            <label title="Git commit author name.">Username</label>
+            <label :title="t('v7backtest.gitAuthorNameTitle')">{{ t('v7backtest.gitAuthorName') }}</label>
             <Input v-model="git.setupForm.value.username" type="text" data-test="setup-arc-user" />
           </div>
           <div class="form-group">
-            <label title="Git commit author email.">Email</label>
+            <label :title="t('v7backtest.gitAuthorEmailTitle')">{{ t('v7backtest.gitAuthorEmail') }}</label>
             <Input v-model="git.setupForm.value.email" type="text" data-test="setup-arc-email" />
           </div>
         </div>
         <div class="form-group">
-          <label title="GitHub / GitLab personal access token for HTTPS push authentication. Leave empty if SSH keys are used.">Access Token</label>
+          <label :title="t('v7backtest.gitAccessTokenTitle')">{{ t('v7backtest.gitAccessToken') }}</label>
           <Input v-model="git.setupForm.value.access_token" type="password" placeholder="ghp_..." data-test="setup-arc-token" />
         </div>
         <div class="form-group">
-          <label title="Automatically pull all archives in the background every N minutes. Set to 0 to disable.">Auto Pull Interval (min, 0 = off)</label>
+          <label :title="t('v7backtest.gitAutoPullIntervalTitle')">{{ t('v7backtest.gitAutoPullInterval') }}</label>
           <Input v-model="git.setupForm.value.auto_pull_interval" type="number" min="0" step="1" class="w-[120px]" data-test="setup-arc-interval" />
         </div>
         <hr class="sb-sep" />
@@ -207,7 +207,7 @@ const statusStyle = computed(() => ({ color: git.pullStatusError.value ? 'var(--
             placeholder="Describe this archive, strategy rules, exchanges, notes…"
             data-test="setup-arc-readme-static"
           />
-          <p class="text-secondary">Saved in <code>pbgui/readme_config.json</code> and written to <code>README.md</code>. The generated score block stays separate.</p>
+          <p class="text-secondary">{{ t('v7backtest.gitReadmeConfigNote') }}</p>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
