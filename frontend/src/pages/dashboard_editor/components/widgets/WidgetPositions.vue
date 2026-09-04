@@ -259,6 +259,7 @@ function onDelete(): void {
         variant="info"
         size="sm"
         class="dp-manage-btn"
+        :disabled="positions.length === 0"
         :title="dashT('dash.manageSelectedPosition', 'Manage selected position')"
         @click="onManageClick"
       >

@@ -51,7 +51,7 @@ function statusChipClass(levelClass: string): string {
 function championItemClass(active: boolean): string {
   return active
     ? 'champion-item active rounded-xl border border-accent bg-accent/8 px-2.5 py-2.25'
-    : 'champion-item rounded-xl border border-border-default bg-white/2 px-2.5 py-2.25';
+    : 'champion-item rounded-xl border border-border-default bg-white/2 px-2.5 py-2.25 transition-colors duration-150 hover:border-accent/60 hover:bg-white/4';
 }
 
 function onChampionClick(configIndex: number | null): void {

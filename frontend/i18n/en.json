@@ -4214,6 +4214,7 @@
   "v7explore.deepParametersLoadFailed": "Deep Intelligence parameters load failed: {error}",
   "v7explore.deepScenariosLoadFailed": "Deep Intelligence scenarios load failed: {error}",
   "v7explore.deepTabShell": "Deep Intelligence tab shell for \"{tab}\".",
+  "v7explore.displayRangeLoadFailed": "Display range load failed: {error}",
   "v7explore.displayRange": "Display Range",
   "v7explore.displayRangeTip": "Limits the ranked result slice used by Overview, Explorer, and Deep Intelligence. Pareto counts and preview stars are recalculated from the visible range.",
   "v7explore.displayRangeUpdateFailed": "Display range update failed: {error}",

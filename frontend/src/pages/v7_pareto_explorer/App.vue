@@ -52,6 +52,7 @@ import { PhBank, PhBrain, PhFolderOpen, PhGear, PhQuestion, PhTarget } from '@ph
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import { getBoot } from '@/shared/boot';
+import { serverMsg } from '@/shared/i18n';
 import { replaceTopLocation } from '@/shared/nav';
 import AppShell from '@/shared/components/AppShell.vue';
 import IconButton from '@/shared/components/IconButton.vue';
@@ -333,8 +334,9 @@ function applyDisplayRange(): void {
       store.state.pendingViewRange = store.state.viewRange ? { ...store.state.viewRange } : null;
       store.progress.finishDisplayRangeProgress(true, store.state.viewRange?.end ?? null, rangeTotal.value);
     })
-    .catch(() => {
+    .catch((error: unknown) => {
       store.progress.finishDisplayRangeProgress(false, store.state.viewRange?.end ?? null, rangeTotal.value);
+      store.pushMessage('error', t('v7explore.displayRangeLoadFailed', { error: serverMsg((error as Error).message) }));
     });
 }
 

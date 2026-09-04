@@ -4214,6 +4214,7 @@
   "v7explore.deepParametersLoadFailed": "深度智能参数加载失败：{error}",
   "v7explore.deepScenariosLoadFailed": "深度智能场景加载失败：{error}",
   "v7explore.deepTabShell": "「{tab}」的深度智能标签外壳。",
+  "v7explore.displayRangeLoadFailed": "显示范围加载失败：{error}",
   "v7explore.displayRange": "显示范围",
   "v7explore.displayRangeTip": "限制概览、浏览器和深度智能使用的排序结果切片。帕累托计数和预览星级会按可见范围重新计算。",
   "v7explore.displayRangeUpdateFailed": "显示范围更新失败：{error}",
