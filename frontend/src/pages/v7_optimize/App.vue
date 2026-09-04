@@ -71,7 +71,8 @@ const preflightJob = ref<Record<string, unknown> | null>(null);
 const preflightConfig = ref<Record<string, unknown> | null>(null);
 const preflightError = ref('');
 const pbguiDataPath = ref('');
-const holdoutValidationMode = ref<'holdout_only' | 'holdout_and_full_timerange'>('holdout_only');
+const holdoutValidationMode = ref<'holdout_only' | 'full_timerange' | 'holdout_and_full_timerange' | 'all_timeranges'>('holdout_only');
+const holdoutRequiresSweepPlan = computed(() => holdoutValidationMode.value === 'holdout_only' || holdoutValidationMode.value === 'all_timeranges');
 const confirmAction = ref<{ title: string; message: string; run: () => Promise<void> } | null>(null);
 let toastTimer: number | undefined;
 let liveRefreshTimer: number | undefined;
@@ -246,15 +247,16 @@ async function backtestSelectedParetos(): Promise<void> {
 }
 
 async function holdoutSelectedParetos(): Promise<void> {
-  const sweepMetadata = page.paretoMeta.value.sweep_cycles;
-  if (!adapter.isV8 || sweepMetadata?.enabled !== true || Number(sweepMetadata.holdout_count || 0) < 1) {
-    return notify(t('v7optimize.sweepHoldoutUnavailable'));
+  if (!adapter.isV8) return notify(t('v7optimize.sweepHoldoutUnavailable'));
+  const mode = holdoutValidationMode.value;
+  if (holdoutRequiresSweepPlan.value && page.paretoMeta.value.sweep_cycles?.enabled !== true) {
+    return notify(t(mode === 'all_timeranges' ? 'v7optimize.sweepTrainingUnavailable' : 'v7optimize.sweepHoldoutUnavailable'));
   }
   const items = page.paretos.value
     .filter((row) => page.selectedParetos.value.has(row.path))
     .map((row) => ({ path: row.path, name: row.name }));
   if (!items.length) return notify(t('v7optimize.noParetosSelected'));
-  window.location.href = await actions.queueParetoHoldouts(items, holdoutValidationMode.value);
+  window.location.href = await actions.queueParetoHoldouts(items, mode);
 }
 
 function sortPanel(kind: 'configs' | 'queue' | 'results' | 'paretos', key: string): void {
@@ -459,6 +461,7 @@ onMounted(async () => {
   document.title = t('editor.optimize.pageTitle');
   window.PBGUI_HELP_OPENER = openOptimizeHelp;
   await page.loadAll();
+  if (page.panel.value === 'paretos') await page.restoreSelectedResult();
   await handleIncomingDraft();
   try { pbguiDataPath.value = await actions.pbguiDataPath(); } catch { pbguiDataPath.value = ''; }
   page.connect();
@@ -541,7 +544,7 @@ onBeforeUnmount(() => {
       <template v-else>
         <Button type="button" variant="default" :disabled="!page.selectedResultPath.value" @click="openParetoExplorer()"><PbIcon :icon="PhTarget" /> {{ actionLabel('v7optimize.paretoExplorer') }}</Button>
         <Button type="button" variant="default" data-test="backtest-paretos" :disabled="!page.selectedParetos.value.size" @click="safely(backtestSelectedParetos)"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7optimize.backtest') }}</Button>
-        <Button v-if="adapter.isV8" type="button" variant="default" data-test="holdout-paretos" :disabled="!page.selectedParetos.value.size || page.paretoMeta.value.sweep_cycles?.enabled !== true || Number(page.paretoMeta.value.sweep_cycles?.holdout_count || 0) < 1" @click="safely(holdoutSelectedParetos)"><PbIcon :icon="PhHourglass" /> {{ actionLabel('v7optimize.sweepHoldout') }}</Button>
+        <Button v-if="adapter.isV8" type="button" variant="default" data-test="holdout-paretos" :disabled="!page.selectedParetos.value.size || (holdoutRequiresSweepPlan && page.paretoMeta.value.sweep_cycles?.enabled !== true)" @click="safely(holdoutSelectedParetos)"><PbIcon :icon="PhHourglass" /> {{ actionLabel('v7optimize.validate') }}</Button>
         <Button type="button" variant="default" :disabled="!page.selectedParetos.value.size" @click="seedSelectedParetos"><PbIcon :icon="PhDna" /> {{ actionLabel('v7optimize.seedSelected') }}</Button>
         <Button type="button" variant="default" :disabled="!page.selectedResultPath.value" @click="runSelectedResult('continue')"><PbIcon :icon="PhFolderOpen" /> {{ actionLabel('v7optimize.seedWholeResult') }}</Button>
       </template>

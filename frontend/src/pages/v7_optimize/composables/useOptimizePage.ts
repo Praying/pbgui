@@ -346,6 +346,59 @@ export function useOptimizePage(options: OptimizePageOptions) {
     applyParetoColumns();
   }
 
+  function selectedResultStorageKey(): string {
+    return `pbgui.optimize.selected-result.${adapter.version}`;
+  }
+
+  function persistSelectedResult(): void {
+    const selected = results.value.find((item) => item.path === selectedResultPath.value);
+    if (!selected) return;
+    const result = selected.result;
+    if (result === undefined || result === null || result === '') return;
+    try {
+      window.sessionStorage.setItem(
+        selectedResultStorageKey(),
+        JSON.stringify({ version: adapter.version, result: String(result) }),
+      );
+    } catch {
+      // Storage may be unavailable (private mode); selection stays in memory.
+    }
+  }
+
+  function clearSelectedResultStorage(): void {
+    try {
+      window.sessionStorage.removeItem(selectedResultStorageKey());
+    } catch {
+      // Ignore storage failures.
+    }
+  }
+
+  async function restoreSelectedResult(): Promise<boolean> {
+    if (!results.value.length) {
+      try {
+        await loadResults();
+      } catch {
+        return false;
+      }
+    }
+    let stored: { version?: string; result?: string } | null = null;
+    try {
+      stored = JSON.parse(window.sessionStorage.getItem(selectedResultStorageKey()) || 'null') as { version?: string; result?: string } | null;
+    } catch {
+      stored = null;
+    }
+    if (!stored || stored.version !== adapter.version || !stored.result) return false;
+    const selected = results.value.find((item) => String(item.result ?? '') === String(stored!.result));
+    if (!selected) {
+      clearSelectedResultStorage();
+      return false;
+    }
+    selectedResultPath.value = selected.path;
+    selectedResultName.value = String(selected.name || selected.result || selected.path || '');
+    await loadParetos();
+    return true;
+  }
+
   async function loadAll(): Promise<void> {
     loading.value = true;
     error.value = '';
@@ -381,6 +434,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
       selectedResultName.value = '';
       paretos.value = [];
       paretoMeta.value = {};
+      clearSelectedResultStorage();
     }
   }
 
@@ -400,11 +454,13 @@ export function useOptimizePage(options: OptimizePageOptions) {
         const row = results.value.find((item) => item.path === key);
         selectedResultPath.value = key;
         selectedResultName.value = String(row?.name || row?.result || key);
+        persistSelectedResult();
       } else if (!selection.size) {
         selectedResultPath.value = '';
         selectedResultName.value = '';
         paretos.value = [];
         paretoMeta.value = {};
+        clearSelectedResultStorage();
       }
     }
   }
@@ -423,11 +479,13 @@ export function useOptimizePage(options: OptimizePageOptions) {
         const row = results.value.find((item) => item.path === key);
         selectedResultPath.value = key;
         selectedResultName.value = String(row?.name || row?.result || key);
+        persistSelectedResult();
       } else if (!selection.size) {
         selectedResultPath.value = '';
         selectedResultName.value = '';
         paretos.value = [];
         paretoMeta.value = {};
+        clearSelectedResultStorage();
       }
     }
   }
@@ -633,6 +691,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     if (paths.includes(selectedResultPath.value)) {
       selectedResultPath.value = '';
       paretos.value = [];
+      clearSelectedResultStorage();
     }
     notify('Selected results deleted', 'success');
   }
@@ -640,6 +699,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
   async function selectResult(result: ResultSummary): Promise<void> {
     selectedResultPath.value = String(result.path || '');
     selectedResultName.value = String(result.name || result.result || result.path || '');
+    persistSelectedResult();
     setPanel('paretos');
     await loadParetos();
   }
@@ -774,6 +834,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     queueAction,
     deleteResults,
     selectResult,
+    restoreSelectedResult,
     saveSettings,
     connect,
     disconnect,

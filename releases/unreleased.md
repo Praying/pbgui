@@ -1,5 +1,15 @@
 # Unreleased
 
+## Merge origin/main v2.01.9 + v2.01.10 into the Vue3 Migration Branch (合并 main 至 Vue3 分支)
+
+- **Merged upstream releases**: Merged `origin/main` releases `v2.01.9` and `v2.01.10` into `feature/frontend-vue3-migration`, resolving conflicts in the legacy `v7_backtest.html` / `v7_optimize.html` fallback templates and the EN/DE PB8 backtest help topics (both sides' content kept).
+- **Vue3 queue-draft validation (`QueueDraftModal.vue`)**: Ported the new `preserve_timerange` / `preserve_exchanges` queue-draft flags so validation drafts opened from PB8 Optimize keep each candidate's own start/end date and exchange group instead of one shared range, and switched the queue-draft deep link to open the Queue panel.
+- **Vue3 optimize holdout-validation modes (`App.vue`, `ParetosPanel.vue`, `useOptimizeActions.ts`)**: Expanded the holdout validation selector from two to four modes (`holdout_only`, `full_timerange`, `holdout_and_full_timerange`, `all_timeranges`), renamed the action to **Validate**, and made `queueParetoHoldouts` queue Training + Holdout + Full-timerange jobs with preserve flags plus a missing-holdout warning.
+- **Vue3 optimize selected-result persistence (`useOptimizePage.ts`)**: Persisted the active result set to `sessionStorage` (keyed per optimize version) and restored it when reopening the Paretos panel.
+- **Vue3 profit-sweep transfer rounding (`App.vue`)**: Added the new `transfer_rounding_step` policy field to the policy group with EN/ZH labels.
+- **Vue3 suite-editor balance sync (`SuiteEditor.vue`)**: Recalculate now re-syncs the sweep-cycles base balance from the current editor context.
+- **i18n**: Added EN/ZH dictionary keys for the validation-mode selector, preserve-flag notes, and the transfer-rounding field.
+
 ## PBv7/PBv8 Optimize — OHLCV Preflight Modal Comprehensive i18n Localization (OHLCV就绪检查多语言)
 
 - **End-to-End Chinese Localization (`OhlcvPreflightModal.vue`)**: Localized all dynamic and static elements of the OHLCV Readiness check dialog in Chinese mode:

@@ -2535,6 +2535,18 @@ function showMigrationReviewNotice(draft) {
 }
 
 
+function getQueueDraftItemExchanges(item, selectedExchanges) {
+  var configured = Array.isArray(selectedExchanges) ? selectedExchanges.slice() : [];
+  var backtest = item && item.config && item.config.backtest;
+  var scenarios = backtest && Array.isArray(backtest.scenarios) ? backtest.scenarios : [];
+  if (!backtest || backtest.suite_enabled !== true || scenarios.length !== 1) return configured;
+  var scenarioExchanges = Array.isArray(scenarios[0] && scenarios[0].exchanges) ? scenarios[0].exchanges : [];
+  scenarioExchanges = scenarioExchanges.map(function(exchange) { return String(exchange || '').trim(); }).filter(Boolean);
+  return scenarioExchanges.filter(function(exchange, index) {
+    return scenarioExchanges.indexOf(exchange) === index && configured.indexOf(exchange) >= 0;
+  });
+}
+
 function showInitialBacktestQueueDraftModal(items) {
   if (!Array.isArray(items) || !items.length) {
     toast(PBGuiI18n.t('v7backtest.noBacktestsInDraft'), 'err');
@@ -2547,25 +2559,37 @@ function showInitialBacktestQueueDraftModal(items) {
   var defExchanges = (firstCfg.backtest && firstCfg.backtest.exchanges) || ['bybit'];
   var defStart = (firstCfg.backtest && firstCfg.backtest.start_date) || '2020-01-01';
   var defBalance = (firstCfg.backtest && firstCfg.backtest.starting_balance) || 1000;
+  var preserveAllTimeranges = items.every(function(item) {
+    return item && item.preserve_timerange === true;
+  });
+  var preserveAllExchanges = items.every(function(item) {
+    return item && item.preserve_exchanges === true;
+  });
 
   var exOpts = allExchanges.map(function(e) {
     return '<option value="' + e + '"' + (defExchanges.indexOf(e) >= 0 ? ' selected' : '') + '>' + e + '</option>';
   }).join('');
 
-  var body =
-    '<div style="display:flex;flex-direction:column;gap:var(--sp-md);height:100%;min-width:0">' +
-      '<div style="flex-shrink:0"><div class="sb-label">start_date</div>' +
+  var timerangeFields = preserveAllTimeranges
+    ? '<div style="flex-shrink:0;color:var(--text-muted);font-size:var(--fs-sm)">' + PBGuiI18n.t('v7backtest.preserveTimerangeNote') + '</div>'
+    : '<div style="flex-shrink:0"><div class="sb-label">start_date</div>' +
         backtestDialogDateInputHtml('rbt-start', defStart) + '</div>' +
       '<div style="flex-shrink:0"><div class="sb-label">end_date</div>' +
-        backtestDialogDateInputHtml('rbt-end', today) + '</div>' +
+        backtestDialogDateInputHtml('rbt-end', today) + '</div>';
+  var exchangeFields = preserveAllExchanges
+    ? '<div style="flex-shrink:0;color:var(--text-muted);font-size:var(--fs-sm)">' + PBGuiI18n.t('v7backtest.preserveExchangesNote') + '</div>'
+    : '<div style="flex:1;display:flex;flex-direction:column;min-height:60px"><div class="sb-label">' + PBGuiI18n.t('v7backtest.exchanges') + '</div>' +
+        '<select id="rbt-exchanges" class="sb-input" multiple data-toggle-multiselect style="flex:1;height:auto;min-height:var(--input-h)">' + exOpts + '</select></div>';
+  var body =
+    '<div style="display:flex;flex-direction:column;gap:var(--sp-md);height:100%;min-width:0">' +
+      timerangeFields +
       '<div style="flex-shrink:0"><div class="sb-label">' + PBGuiI18n.t('v7backtest.startingBalance') + '</div>' +
         '<div style="display:flex;align-items:center;gap:var(--sp-xs)">' +
           '<input id="rbt-balance" class="sb-input" style="flex:1;text-align:right" type="number" min="1" step="100" value="' + defBalance + '">' +
           '<button class="act-btn" style="width:28px;padding:0" onclick="document.getElementById(\'rbt-balance\').value=Math.max(1,parseFloat(document.getElementById(\'rbt-balance\').value)-100)">−</button>' +
           '<button class="act-btn" style="width:28px;padding:0" onclick="document.getElementById(\'rbt-balance\').value=parseFloat(document.getElementById(\'rbt-balance\').value)+100">+</button>' +
         '</div></div>' +
-      '<div style="flex:1;display:flex;flex-direction:column;min-height:60px"><div class="sb-label">' + PBGuiI18n.t('v7backtest.exchanges') + '</div>' +
-        '<select id="rbt-exchanges" class="sb-input" multiple data-toggle-multiselect style="flex:1;height:auto;min-height:var(--input-h)">' + exOpts + '</select></div>' +
+      exchangeFields +
       '<div style="flex-shrink:0;display:flex;align-items:center;gap:var(--sp-sm)">' +
         '<input type="checkbox" id="rbt-pbgui-data"' + pbguiMarketDataDefaultCheckedAttr() + ' style="width:auto;margin:0">' +
         '<label for="rbt-pbgui-data" style="font-size:var(--fs-sm);cursor:pointer">📂 ' + PBGuiI18n.t('v7backtest.usePbguiMarketData') + '</label>' +
@@ -2574,27 +2598,36 @@ function showInitialBacktestQueueDraftModal(items) {
 
   showModal(PBGuiI18n.t('v7backtest.selectBacktestParams'), body, [
     { text: PBGuiI18n.t('common.ok'), cls: 'modal-btn-primary', action: function() {
-      var start = document.getElementById('rbt-start').value.trim();
-      var end = document.getElementById('rbt-end').value.trim();
+      var startInput = document.getElementById('rbt-start');
+      var endInput = document.getElementById('rbt-end');
+      var start = startInput ? startInput.value.trim() : '';
+      var end = endInput ? endInput.value.trim() : '';
       var balance = parseFloat(document.getElementById('rbt-balance').value) || 1000;
       var usePbguiData = document.getElementById('rbt-pbgui-data').checked;
       var exSel = document.getElementById('rbt-exchanges');
       var exchanges = [];
-      for (var i = 0; i < exSel.options.length; i++) {
-        if (exSel.options[i].selected) exchanges.push(exSel.options[i].value);
+      if (exSel) {
+        for (var i = 0; i < exSel.options.length; i++) {
+          if (exSel.options[i].selected) exchanges.push(exSel.options[i].value);
+        }
       }
-      if (!exchanges.length) { toast(PBGuiI18n.t('v7backtest.selectAtLeastOneExchange'), 'err'); return; }
+      if (!preserveAllExchanges && !exchanges.length) { toast(PBGuiI18n.t('v7backtest.selectAtLeastOneExchange'), 'err'); return; }
       closeModal();
       (usePbguiData ? apiFetch('/pbgui_data_path').then(function(d) { return d.path || ''; }) : Promise.resolve('')).then(function(pbguiPath) {
         var promises = [];
         items.forEach(function(item) {
-          exchanges.forEach(function(exchange) {
+          var exchangeVariants = item && item.preserve_exchanges === true
+            ? [null]
+            : getQueueDraftItemExchanges(item, exchanges);
+          exchangeVariants.forEach(function(exchange) {
             var cfg = JSON.parse(JSON.stringify((item && item.config) || {}));
             if (!cfg.backtest) cfg.backtest = {};
-            cfg.backtest.start_date = start;
-            cfg.backtest.end_date = end;
+            if (!(item && item.preserve_timerange === true)) {
+              cfg.backtest.start_date = start;
+              cfg.backtest.end_date = end;
+            }
             cfg.backtest.starting_balance = balance;
-            cfg.backtest.exchanges = [exchange];
+            if (exchange !== null) cfg.backtest.exchanges = [exchange];
             if (pbguiPath) cfg.backtest.ohlcv_source_dir = pbguiPath;
             promises.push(apiFetch('/queue', {
               method: 'POST',
@@ -2627,7 +2660,7 @@ async function openInitialBacktestQueueDraftFromUrl() {
   try {
     var draft = await apiFetch('/queue-draft/' + encodeURIComponent(draftId));
     var items = (draft && draft.items) || [];
-    selectPanel('configs');
+    selectPanel('queue');
     showInitialBacktestQueueDraftModal(items);
     return true;
   } catch (e) {

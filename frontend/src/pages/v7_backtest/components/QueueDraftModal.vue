@@ -19,7 +19,13 @@ import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 const props = withDefaults(
   defineProps<{
     open: boolean;
-    items: readonly { name?: string; config?: Record<string, unknown>; override_configs?: Record<string, unknown> }[];
+    items: readonly {
+      name?: string;
+      config?: Record<string, unknown>;
+      override_configs?: Record<string, unknown>;
+      preserve_timerange?: boolean;
+      preserve_exchanges?: boolean;
+    }[];
     /** settings.use_pbgui_market_data — the checkbox default (:2094). */
     usePbguiMarketData?: boolean;
     fetchFn?: typeof fetch;
@@ -42,6 +48,9 @@ const endDate = ref('');
 const balance = ref('1000');
 const exchanges = ref<string[]>([]);
 const usePbguiData = ref(false);
+
+const preserveAllTimeranges = computed(() => props.items.every((item) => item.preserve_timerange === true));
+const preserveAllExchanges = computed(() => props.items.every((item) => item.preserve_exchanges === true));
 
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -92,8 +101,21 @@ function adjustBalance(delta: number): void {
   balance.value = String(next);
 }
 
+function resolveItemExchanges(config: Record<string, unknown>, selected: string[]): string[] {
+  const backtest = object(config.backtest);
+  const scenarios = Array.isArray(backtest.scenarios) ? backtest.scenarios : [];
+  const scenarioExchangeValues = object(scenarios[0]).exchanges;
+  const scenarioExchanges =
+    backtest.suite_enabled === true && scenarios.length === 1 && Array.isArray(scenarioExchangeValues)
+      ? scenarioExchangeValues
+          .map((exchange: unknown) => String(exchange))
+          .filter((exchange: string, index: number, values: string[]) => values.indexOf(exchange) === index)
+      : selected;
+  return scenarioExchanges.filter((exchange) => selected.includes(exchange));
+}
+
 async function submit(): Promise<void> {
-  if (exchanges.value.length === 0) {
+  if (!preserveAllExchanges.value && exchanges.value.length === 0) {
     emit('error', t('v7backtest.selectAtLeastOneExchange'));
     return;
   }
@@ -109,31 +131,25 @@ async function submit(): Promise<void> {
   const bodies: unknown[] = [];
   for (const item of props.items) {
     const source = object(item).config as Record<string, unknown> | undefined;
-    const cfg: Record<string, unknown> = JSON.parse(JSON.stringify(source ?? {}));
-    const bt = object(cfg.backtest);
-    bt.start_date = startDate.value;
-    bt.end_date = endDate.value;
-    bt.starting_balance = parseFloat(balance.value) || 1000;
-    const scenarios = Array.isArray(bt.scenarios) ? bt.scenarios : [];
-    const scenarioExchangeValues = object(scenarios[0]).exchanges;
-    const scenarioExchanges =
-      bt.suite_enabled === true && scenarios.length === 1 && Array.isArray(scenarioExchangeValues)
-        ? scenarioExchangeValues
-            .map((exchange: unknown) => String(exchange))
-            .filter((exchange: string, index: number, values: string[]) => values.indexOf(exchange) === index)
-        : exchanges.value;
-    const itemExchanges = scenarioExchanges.filter((exchange) => exchanges.value.includes(exchange));
-    for (const exchange of itemExchanges) {
-      const perExchange = JSON.parse(JSON.stringify(cfg)) as Record<string, unknown>;
-      const perBt = object(perExchange.backtest);
-      perBt.exchanges = [exchange];
+    const exchangeVariants = item.preserve_exchanges === true
+      ? [null]
+      : resolveItemExchanges(source ?? {}, exchanges.value);
+    for (const exchange of exchangeVariants) {
+      const cfg: Record<string, unknown> = JSON.parse(JSON.stringify(source ?? {}));
+      const bt = object(cfg.backtest);
+      if (item.preserve_timerange !== true) {
+        bt.start_date = startDate.value;
+        bt.end_date = endDate.value;
+      }
+      bt.starting_balance = parseFloat(balance.value) || 1000;
+      if (exchange !== null) bt.exchanges = [exchange];
       // legacy only sets the dir when the PBGui-data path resolves
       // (:2122) — an unchecked box never clobbers the draft's own value
-      if (pbguiPath) perBt.ohlcv_source_dir = pbguiPath;
-      perExchange.backtest = perBt;
+      if (pbguiPath) bt.ohlcv_source_dir = pbguiPath;
+      cfg.backtest = bt;
       bodies.push({
         name: String(draftItemName(item) || 'rebacktest'),
-        config: perExchange,
+        config: cfg,
         override_configs: object(item).override_configs ?? {},
       });
     }
@@ -157,14 +173,17 @@ async function submit(): Promise<void> {
     <div :class="modalBoxClass">
       <h3>{{ t('v7backtest.selectBacktestParams') }}</h3>
       <div style="display: flex; flex-direction: column; gap: var(--sp-md)">
-        <div>
-          <div class="text-xs uppercase tracking-[0.5px] text-secondary">start_date</div>
-          <Input v-model="startDate" type="text" data-test="rbt-start" />
-        </div>
-        <div>
-          <div class="text-xs uppercase tracking-[0.5px] text-secondary">end_date</div>
-          <Input v-model="endDate" type="text" data-test="rbt-end" />
-        </div>
+        <div v-if="preserveAllTimeranges" class="text-xs text-secondary">{{ t('v7backtest.preserveTimerangeNote') }}</div>
+        <template v-else>
+          <div>
+            <div class="text-xs uppercase tracking-[0.5px] text-secondary">start_date</div>
+            <Input v-model="startDate" type="text" data-test="rbt-start" />
+          </div>
+          <div>
+            <div class="text-xs uppercase tracking-[0.5px] text-secondary">end_date</div>
+            <Input v-model="endDate" type="text" data-test="rbt-end" />
+          </div>
+        </template>
         <div>
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
           <div style="display: flex; align-items: center; gap: var(--sp-xs)">
@@ -173,7 +192,8 @@ async function submit(): Promise<void> {
             <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-plus" aria-label="Increase starting balance" title="Increase starting balance" @click="adjustBalance(100)"><PbIcon :icon="PhPlus" /></Button>
           </div>
         </div>
-        <div>
+        <div v-if="preserveAllExchanges" class="text-xs text-secondary">{{ t('v7backtest.preserveExchangesNote') }}</div>
+        <div v-else>
           <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.exchanges') }}</div>
           <!-- ui-migration: blocked — the reka listbox is single-value; the
                legacy multi-select (ctrl-free toggle via useToggleMultiSelect)

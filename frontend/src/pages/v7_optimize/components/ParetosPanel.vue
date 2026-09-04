@@ -19,7 +19,7 @@ const props = defineProps<{
   availableMetrics?: string[];
   availableResults?: ResultSummary[];
   selectedResultPath?: string;
-  holdoutValidationMode?: 'holdout_only' | 'holdout_and_full_timerange';
+  holdoutValidationMode?: 'holdout_only' | 'full_timerange' | 'holdout_and_full_timerange' | 'all_timeranges';
 }>();
 const emit = defineEmits<{
   toggle: [path: string];
@@ -37,15 +37,25 @@ const emit = defineEmits<{
   selectAllColumns: [];
   selectResultPath: [path: string];
   goToResults: [];
-  'update:holdoutValidationMode': [value: 'holdout_only' | 'holdout_and_full_timerange'];
+  'update:holdoutValidationMode': [value: 'holdout_only' | 'full_timerange' | 'holdout_and_full_timerange' | 'all_timeranges'];
 }>();
 const { locale, t } = useI18n();
 const picker = ref<HTMLDetailsElement | null>(null);
 const columns = computed(() => (Array.isArray(props.columns) ? props.columns : []));
 const availableMetrics = computed(() => (Array.isArray(props.availableMetrics) ? props.availableMetrics : []));
 const validationModeLabel = computed(() => locale.value === 'zh' ? '验证模式' : 'Validation mode');
-const holdoutOnlyLabel = computed(() => locale.value === 'zh' ? '仅留出验证' : 'Holdout only');
-const holdoutAndFullTimerangeLabel = computed(() => locale.value === 'zh' ? '留出验证 + 完整时间范围' : 'Holdout + Full timerange');
+const holdoutValidationModeLabel = computed(() => {
+  switch (props.holdoutValidationMode) {
+    case 'full_timerange':
+      return t('v7optimize.fullTimerangeOnly');
+    case 'holdout_and_full_timerange':
+      return t('v7optimize.holdoutAndFullTimerange');
+    case 'all_timeranges':
+      return t('v7optimize.allTimeranges');
+    default:
+      return t('v7optimize.holdoutOnly');
+  }
+});
 function pillLabel(metric: string): string {
   const short = PARETO_METRIC_PILL_LABELS[metric];
   return short && short !== metric ? `${short} (${metric})` : metric;
@@ -98,15 +108,17 @@ onBeforeUnmount(() => dragSelect.dispose());
     </div>
     <span v-else class="opt-result-context font-medium">{{ resultName || t('v7optimize.chooseResultSetFirst') }}</span>
 
-    <label v-if="isV8 && meta.sweep_cycles?.enabled === true" class="inline-flex items-center gap-1.5 text-xs text-secondary">
+    <label v-if="isV8" class="inline-flex items-center gap-1.5 text-xs text-secondary">
       {{ validationModeLabel }}
-      <SelectRoot :model-value="holdoutValidationMode || 'holdout_only'" @update:model-value="emit('update:holdoutValidationMode', String($event) as 'holdout_only' | 'holdout_and_full_timerange')">
+      <SelectRoot :model-value="holdoutValidationMode || 'holdout_only'" @update:model-value="emit('update:holdoutValidationMode', String($event) as 'holdout_only' | 'full_timerange' | 'holdout_and_full_timerange' | 'all_timeranges')">
         <SelectTrigger class="w-auto min-w-[180px]" :aria-label="validationModeLabel">
-          <span>{{ holdoutValidationMode === 'holdout_and_full_timerange' ? holdoutAndFullTimerangeLabel : holdoutOnlyLabel }}</span>
+          <span>{{ holdoutValidationModeLabel }}</span>
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="holdout_only">{{ holdoutOnlyLabel }}</SelectItem>
-          <SelectItem value="holdout_and_full_timerange">{{ holdoutAndFullTimerangeLabel }}</SelectItem>
+          <SelectItem value="holdout_only">{{ t('v7optimize.holdoutOnly') }}</SelectItem>
+          <SelectItem value="full_timerange">{{ t('v7optimize.fullTimerangeOnly') }}</SelectItem>
+          <SelectItem value="holdout_and_full_timerange">{{ t('v7optimize.holdoutAndFullTimerange') }}</SelectItem>
+          <SelectItem value="all_timeranges">{{ t('v7optimize.allTimeranges') }}</SelectItem>
         </SelectContent>
       </SelectRoot>
     </label>

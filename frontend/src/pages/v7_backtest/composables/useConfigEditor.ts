@@ -85,7 +85,7 @@ export function useConfigEditor(options: ConfigEditorOptions) {
   const shortErrorLine = ref<number | null>(null);
 
   const queueDraftOpen = ref(false);
-  const queueDraftItems = ref<{ name?: string; config?: Record<string, unknown>; override_configs?: Record<string, unknown> }[]>([]);
+  const queueDraftItems = ref<{ name?: string; config?: Record<string, unknown>; override_configs?: Record<string, unknown>; preserve_timerange?: boolean; preserve_exchanges?: boolean }[]>([]);
 
   const coinOptions = ref<string[]>([]);
   const coinLabels = ref<Record<string, string>>({});
@@ -587,12 +587,12 @@ export function useConfigEditor(options: ConfigEditorOptions) {
     if (queueDraftId) {
       try {
         const draft = await requestJson(fetchFn, options.apiBase + '/queue-draft/' + encodeURIComponent(queueDraftId));
-        const items = Array.isArray(draft.items) ? (draft.items as { name?: string; config?: Record<string, unknown>; override_configs?: Record<string, unknown> }[]) : [];
+        const items = Array.isArray(draft.items) ? (draft.items as { name?: string; config?: Record<string, unknown>; override_configs?: Record<string, unknown>; preserve_timerange?: boolean; preserve_exchanges?: boolean }[]) : [];
         if (!items.length) {
           notify(t('v7backtest.noBacktestsInDraft'), 'err');
           return true;
         }
-        options.selectPanel('configs');
+        options.selectPanel('queue');
         queueDraftItems.value = items;
         queueDraftOpen.value = true;
       } catch (error) {

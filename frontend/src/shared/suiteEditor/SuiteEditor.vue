@@ -393,7 +393,9 @@ function recalculateScenarioGenerator(): void {
     const refillCost = Number(scenarioGeneratorDraft.value.refill_cost);
     const cooldownDays = Number(scenarioGeneratorDraft.value.cooldown_days);
     scenarioGeneratorDraft.value.balance_multiplier = Number.isFinite(multiplier) && multiplier >= 1.01 && multiplier <= 100 ? multiplier : 2;
-    scenarioGeneratorDraft.value.starting_balance = Number.isFinite(startingBalance) && startingBalance >= 1 ? startingBalance : defaultBalance;
+    scenarioGeneratorDraft.value.starting_balance = Number.isFinite(contextBalance) && contextBalance >= 1
+      ? contextBalance
+      : (Number.isFinite(startingBalance) && startingBalance >= 1 ? startingBalance : defaultBalance);
     scenarioGeneratorDraft.value.refill_cost = Number.isFinite(refillCost) && refillCost >= 0 ? refillCost : 0;
     scenarioGeneratorDraft.value.cooldown_days = Number.isFinite(cooldownDays) && cooldownDays >= 0 ? cooldownDays : 0;
     scenarioGeneratorDraft.value.stride_days = scenarioGeneratorDraft.value.window_days + (scenarioGeneratorDraft.value.cooldown_days ?? 0);

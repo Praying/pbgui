@@ -329,35 +329,77 @@ export function useOptimizeActions(options: OptimizeActionsOptions) {
 
   async function queueParetoHoldouts(
     items: ParetoHoldoutItem[],
-    validationMode: 'holdout_only' | 'holdout_and_full_timerange' = 'holdout_only',
+    validationMode: 'holdout_only' | 'full_timerange' | 'holdout_and_full_timerange' | 'all_timeranges' = 'holdout_only',
   ): Promise<string> {
     if (!adapter.isV8) throw new Error('Sweep Holdout is only available for PB8');
     if (!items.length) throw new Error('No paretos selected');
-    const queueItems: Array<{ name: string; config: Record<string, unknown>; override_configs: Record<string, unknown> }> = [];
+    const includeTraining = validationMode === 'all_timeranges';
+    const includeHoldouts = validationMode !== 'full_timerange';
+    const includeFullTimerange = validationMode !== 'holdout_only';
+    const queueItems: Array<{
+      name: string;
+      config: Record<string, unknown>;
+      override_configs: Record<string, unknown>;
+      preserve_timerange?: boolean;
+      preserve_exchanges?: boolean;
+    }> = [];
+    let missingHoldouts = 0;
     for (const item of items) {
       const data = await paretoFile(item.path);
       const payload = normalizeParetoPayload(data);
       const sweepCycles = isObject(data.sweep_cycles) ? data.sweep_cycles : {};
       const holdouts = Array.isArray(sweepCycles.holdout_scenarios) ? sweepCycles.holdout_scenarios.filter(isObject) as ScenarioWindow[] : [];
-      if (!holdouts.length) throw new Error(`Sweep Holdout dates are unavailable for ${item.name || 'candidate'}.`);
-      for (let index = 0; index < holdouts.length; index += 1) {
-        const holdout = holdouts[index]!;
-        const label = String(holdout.label || `holdout_${index + 1}`).replace(/[^A-Za-z0-9_.-]/g, '_');
-        const name = (normalizeImportName(`${String(item.name || 'pareto')}_${label}`) || 'pareto_holdout').slice(0, 120);
-        queueItems.push({
-          name,
-          config: extractConfigSections(buildSweepHoldoutBacktestConfig(payload.config, holdout, name)),
-          override_configs: objectValue(payload.override_configs),
-        });
+      const backtest = isObject(payload.config.backtest) ? payload.config.backtest : {};
+      const trainingScenarios = Array.isArray(backtest.scenarios) ? backtest.scenarios.filter(isObject) as ScenarioWindow[] : [];
+      if (includeTraining && !trainingScenarios.length) {
+        throw new Error(`Sweep training dates are unavailable for ${item.name || 'candidate'}.`);
       }
-      if (validationMode === 'holdout_and_full_timerange') {
+      if (includeTraining) {
+        for (let index = 0; index < trainingScenarios.length; index += 1) {
+          const training = trainingScenarios[index]!;
+          if (!training.start_date || !training.end_date) {
+            throw new Error(`Sweep training dates are incomplete for ${item.name || 'candidate'}.`);
+          }
+          const label = String(training.label || `train_${index + 1}`).replace(/[^A-Za-z0-9_.-]/g, '_');
+          const name = (normalizeImportName(`${String(item.name || 'pareto')}_${label}`) || 'pareto_train').slice(0, 120);
+          queueItems.push({
+            name,
+            config: extractConfigSections(buildSweepHoldoutBacktestConfig(payload.config, training, name)),
+            override_configs: objectValue(payload.override_configs),
+            preserve_timerange: true,
+            preserve_exchanges: true,
+          });
+        }
+      }
+      if (includeHoldouts) {
+        if (!holdouts.length) missingHoldouts += 1;
+        for (let index = 0; index < holdouts.length; index += 1) {
+          const holdout = holdouts[index]!;
+          const label = String(holdout.label || `holdout_${index + 1}`).replace(/[^A-Za-z0-9_.-]/g, '_');
+          const name = (normalizeImportName(`${String(item.name || 'pareto')}_${label}`) || 'pareto_holdout').slice(0, 120);
+          queueItems.push({
+            name,
+            config: extractConfigSections(buildSweepHoldoutBacktestConfig(payload.config, holdout, name)),
+            override_configs: objectValue(payload.override_configs),
+            preserve_timerange: true,
+            preserve_exchanges: true,
+          });
+        }
+      }
+      if (includeFullTimerange) {
         const fullTimerangeName = `${String(item.name || 'pareto')}_full_timerange`;
         queueItems.push({
           name: fullTimerangeName,
           config: extractConfigSections(buildSweepFullTimerangeBacktestConfig(payload.config, fullTimerangeName)),
           override_configs: objectValue(payload.override_configs),
+          preserve_timerange: true,
+          preserve_exchanges: true,
         });
       }
+    }
+    if (!queueItems.length) throw new Error('No validation jobs could be created.');
+    if (missingHoldouts && includeFullTimerange) {
+      notify(`No Holdout dates were available for ${missingHoldouts} candidate(s); queued Full timerange only.`, 'info');
     }
     const draft = await request<{ draft_id?: string }>(`${adapter.backtestApiBase}/queue-draft`, {
       method: 'POST',

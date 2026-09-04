@@ -46,7 +46,7 @@ const statusMessage = ref('');
 
 const hiddenFields = new Set(['operating_mode', 'asset', 'simulation_minimum_transfer_amount', 'live_minimum_transfer_amount', 'live_activation_baseline_mode', 'first_live_catchup_limit_enabled', 'first_live_catchup_limit', 'vault_conditional_cost_policy']);
 const groups: Record<string, string[]> = {
-  policy: ['baseline_mode', 'reference_capital', 'trigger_percent', 'sweep_percent', 'minimum_transfer_amount', 'safety_reserve_mode', 'safety_reserve_amount', 'safety_reserve_percent', 'daily_transfer_limit_enabled', 'daily_transfer_limit', 'single_transfer_limit_enabled', 'single_transfer_limit'],
+  policy: ['baseline_mode', 'reference_capital', 'trigger_percent', 'sweep_percent', 'minimum_transfer_amount', 'transfer_rounding_step', 'safety_reserve_mode', 'safety_reserve_amount', 'safety_reserve_percent', 'daily_transfer_limit_enabled', 'daily_transfer_limit', 'single_transfer_limit_enabled', 'single_transfer_limit'],
   schedule: ['trigger_mode', 'periodic_interval', 'settlement_debounce', 'quiet_period', 'stabilization_interval', 'successful_transfer_cooldown', 'vault_transfer_cooldown', 'schedule_jitter_percent', 'maximum_history_age', 'maximum_preflight_age'],
   vault: ['vault_withdraw_mode', 'vault_destination', 'vault_minimum_transfer_amount', 'retained_leader_equity', 'share_safety_buffer', 'vault_safety_reserve_mode', 'vault_safety_reserve_amount', 'vault_safety_reserve_percent', 'main_destination_activity_policy'],
 };
