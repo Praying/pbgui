@@ -1173,7 +1173,10 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await nextTick();
     expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/legacy/results'))).toBe(true);
     expect(wrapper.find('#legacy-results-table tbody tr').text()).toContain('old');
-    expect(wrapper.find('[data-test="legacy-refresh"]').exists()).toBe(true);
+    const refreshButton = wrapper.find('[data-test="legacy-refresh"]');
+    expect(refreshButton.exists()).toBe(true);
+    expect(refreshButton.findAll('svg')).toHaveLength(1);
+    expect(refreshButton.text()).not.toContain('↻');
     expect(wrapper.find('[data-test="legacy-compare"]').exists()).toBe(true);
     wrapper.unmount();
   });

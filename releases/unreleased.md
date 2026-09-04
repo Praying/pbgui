@@ -1,5 +1,11 @@
 # Unreleased
 
+## Merge origin/main v2.01.11 into the Vue3 Migration Branch (合并 main 至 Vue3 分支)
+
+- **Upstream release sync**: Merged `origin/main` commit `e8eeea6d` (`v2.01.11`) into `feature/frontend-vue3-migration`.
+- **Vue3 frontend parity**: The upstream commit contains no frontend page changes, so no additional Vue3 or Tailwind CSS v4.3 adaptation was required; the existing v2.01.10 Vue3 adaptations remain unchanged.
+- **API serial**: Preserved the upstream serial update from `2500` to `2502`.
+
 ## Merge origin/main v2.01.9 + v2.01.10 into the Vue3 Migration Branch (合并 main 至 Vue3 分支)
 
 - **Merged upstream releases**: Merged `origin/main` releases `v2.01.9` and `v2.01.10` into `feature/frontend-vue3-migration`, resolving conflicts in the legacy `v7_backtest.html` / `v7_optimize.html` fallback templates and the EN/DE PB8 backtest help topics (both sides' content kept).

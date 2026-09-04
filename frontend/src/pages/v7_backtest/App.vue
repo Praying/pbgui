@@ -561,7 +561,7 @@ onBeforeUnmount(() => {
       </template>
       <template v-if="!store.adapter.isV8" #ctx-legacy>
         <!-- legacy actions (:772-778); Add to Run lands in M-v7-12 -->
-        <Button type="button" variant="default" class="sb-btn" data-test="legacy-refresh" @click="store.legacy?.loadLegacyResults()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('v7backtest.refresh') }}</Button>
+        <Button type="button" variant="default" class="sb-btn" data-test="legacy-refresh" @click="store.legacy?.loadLegacyResults()"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7backtest.refresh') }}</Button>
         <Button type="button" variant="default" class="sb-btn" data-test="legacy-rebacktest" @click="store.legacy?.startRebacktest(store.editor.openEditor, () => store.selectPanel('configs'))"><PbIcon :icon="PhArrowsClockwise" /> {{ actionLabel('v7backtest.backtest') }}</Button>
         <Button type="button" variant="default" class="sb-btn" data-test="legacy-compare" @click="store.legacy?.compareSelected()"><PbIcon :icon="PhChartLineUp" /> {{ actionLabel('v7backtest.compare') }}</Button>
         <Button type="button" variant="danger" class="sb-btn" data-test="legacy-delete" @click="legacyPanel?.openDelete()"><PbIcon :icon="PhTrash" /> {{ actionLabel('v7backtest.deleteSelected') }}</Button>
