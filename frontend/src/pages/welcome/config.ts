@@ -27,9 +27,3 @@ export function bootSerial(): string {
 export function bootToken(): string {
   return getBoot().token || '';
 }
-
-/** The ?next= redirect target — same-origin absolute paths only (:937-938). */
-export function readNextPath(search: string = window.location.search): string {
-  const value = new URLSearchParams(search).get('next') || '';
-  return value && !value.startsWith('/') ? '' : value;
-}

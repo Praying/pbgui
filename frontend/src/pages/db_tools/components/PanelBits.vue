@@ -10,7 +10,8 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { useEscapeClose } from '@/shared/composables/useEscapeClose';
-import type { PanelStatus, ProgressState, StatusKind } from '../composables/useDbTools';
+import { statusKindClass } from '../lib/statusKind';
+import type { PanelStatus, ProgressState } from '../composables/useDbTools';
 
 const props = defineProps<{
   statusId?: string;
@@ -38,12 +39,6 @@ useEscapeClose(confirmActive, () => emit('confirm', false));
 
 /* Status → Tailwind utility mapping (the former db-tools.css .status.ok/.err
    tints). Returns the FULL colour set for the dynamic border+text pair. */
-function statusKindClass(kind: StatusKind): string {
-  if (kind === 'ok') return 'ok border-success/35 text-success-soft';
-  if (kind === 'err') return 'err border-danger/42 text-danger-soft';
-  return '';
-}
-
 const statusText = computed(() => props.status?.text ?? '');
 
 const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
@@ -55,7 +50,7 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
   <div
     v-if="progress && progress.visible"
     class="block overflow-hidden rounded-[10px] border border-border-subtle bg-page"
-    :class="progress.status === 'error' ? '' : ''"
+    
   >
     <div class="flex items-center justify-between gap-3 border-b border-border-subtle px-[0.8rem] py-[0.7rem]">
       <div class="font-extrabold text-primary">{{ progress.kind || t('misc.dbtools.operation') }}</div>

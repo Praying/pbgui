@@ -36,9 +36,9 @@ import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
 import type { PageSection } from '@/shared/navigation';
-import type { StatusKind } from './composables/useDbTools';
 import LogPanel from './components/LogPanel.vue';
 import PanelBits from './components/PanelBits.vue';
+import { statusKindClass } from './lib/statusKind';
 import SelectList from './components/SelectList.vue';
 import SyncSafetyView from './components/SyncSafetyView.vue';
 import { formatBytes, backupCreatedLabel, shortSyncTime } from './lib/format';
@@ -48,12 +48,6 @@ const { t } = useI18n();
 
 /* Status → Tailwind utility mapping (the former db-tools.css .status.ok/.err
    tints). Returns the FULL colour set for the dynamic border+text pair. */
-function statusKindClass(kind: StatusKind): string {
-  if (kind === 'ok') return 'ok border-success/35 text-success-soft';
-  if (kind === 'err') return 'err border-danger/42 text-danger-soft';
-  return '';
-}
-
 const store = useDbTools({ t: (key, params) => t(key, params ?? {}) });
 
 const PANELS = [

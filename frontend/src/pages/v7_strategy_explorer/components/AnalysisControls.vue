@@ -100,8 +100,6 @@ function onChangeSource(): void {
         <Slider id="context-days-input" v-model="store.controls.contextDays" :min="0.5" :max="60" :step="0.5" :label="t('v7explore.chartContext')" :data-tip="t('v7explore.chartContextTip')" @value-commit="store.recalculate()" />
         <span class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-[10px] font-bold text-accent-soft" id="context-days-value">{{ Number(store.controls.contextDays || 0).toFixed(2) }}</span>
       </div>
-      <!-- ui-migration: blocked — hidden legacy dead control (display:none container, no model, nothing reads it) -->
-      <div class="flex items-center gap-2 text-secondary text-sm" style="display:none"><input id="load-candles-toggle" class="w-auto" type="checkbox" checked><label for="load-candles-toggle">{{ t('v7explore.loadCandles') }}</label></div>
     </div>
   </section>
 </template>
