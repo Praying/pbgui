@@ -23,7 +23,11 @@ interface HistoryPayloadLike {
   [key: string]: unknown;
 }
 
-const props = defineProps<{ data: HistoryPayloadLike | null }>();
+const props = defineProps<{
+  data: HistoryPayloadLike | null;
+  /** Accessible label for the sparkline (e.g. "CPU — host1"). */
+  label?: string;
+}>();
 
 function num(value: unknown): number {
   const n = Number(value);
@@ -65,7 +69,7 @@ const polyline = computed(() => {
 
 <template>
   <div class="w-full min-h-[120px] rounded-md bg-page p-2">
-    <svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img">
+    <svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img" :aria-label="props.label">
       <polyline v-if="rows.length" :points="polyline" fill="none" stroke="var(--accent)" stroke-width="2" />
     </svg>
   </div>
