@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import { getBoot } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
+import MetricHistoryChart from '@/shared/components/MetricHistoryChart.vue';
 import type { PageSection } from '@/shared/navigation';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
@@ -20,7 +21,7 @@ import {
   SelectTrigger,
 } from '@/shared/components/ui/select';
 import { vpsWsUrl } from './config';
-import type { ConnectionInfo, HistoryPayload, HistoryPoint, InstanceRecord, Metrics, ServiceCheck, VpsState } from './types';
+import type { ConnectionInfo, HistoryPayload, InstanceRecord, Metrics, ServiceCheck, VpsState } from './types';
 
 const { t } = useI18n();
 const query = new URLSearchParams(window.location.search);
@@ -252,21 +253,6 @@ function initViewer(): void {
 
 function closeViewer(): void { viewer.value?.close?.(); viewer.value = null; }
 
-function historyValues(data: HistoryPayload | null): Array<{ ts: string; value: string }> {
-  if (!data) return [];
-  const points = data.points || data.cumulative_points || data.fills_points || data.daily_points;
-  if (Array.isArray(points)) return points.map((point) => ({ ts: formatAge((point as HistoryPoint).ts), value: numberValue((point as HistoryPoint).value).toFixed(2) }));
-  if (Array.isArray(data.values)) return data.values.map((value, index) => ({ ts: String(index + 1), value: numberValue(value).toFixed(2) }));
-  return [];
-}
-
-const currentHistoryValues = computed(() => historyValues(historyModal.value?.data || null));
-const currentHistoryPolyline = computed(() => {
-  const values = currentHistoryValues.value;
-  const max = Math.max(1, ...values.map((point) => numberValue(point.value)));
-  return values.map((point, index) => `${(index / Math.max(1, values.length - 1)) * 580 + 10},${165 - (numberValue(point.value) / max) * 145}`).join(' ');
-});
-
 function openHistory(host: string, metric: string, bot = ''): void {
   const requestMetric = metric === 'cpu' ? 'get_cpu_history' : 'get_metric_history';
   historyRequestId.value += 1;
@@ -416,7 +402,7 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
       </section>
     </div>
 
-    <div v-if="historyModal" data-modal="history" class="modal-backdrop p-5" role="dialog" aria-modal="true"><div class="flex max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-[1.05rem]">{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><Button data-close="history" type="button" variant="primary" size="sm" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3"><ErrorState v-if="historyModal.error" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :label="t('common.loading')" /><template v-else><div class="w-full min-h-[120px] rounded-md bg-page p-2"><svg viewBox="0 0 600 180" preserveAspectRatio="none" width="100%" height="180" role="img"><polyline v-if="currentHistoryValues.length" :points="currentHistoryPolyline" fill="none" stroke="var(--accent)" stroke-width="2" /></svg></div><div class="mt-2.5 flex flex-wrap gap-2 text-xs text-primary"><span v-for="point in currentHistoryValues" :key="`${point.ts}:${point.value}`">{{ point.ts }}: {{ point.value }}</span></div></template></div></div></div>
+    <div v-if="historyModal" data-modal="history" class="modal-backdrop p-5" role="dialog" aria-modal="true"><div class="flex max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-[1.05rem]">{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><Button data-close="history" type="button" variant="primary" size="sm" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3"><ErrorState v-if="historyModal.error" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :label="t('common.loading')" /><template v-else><MetricHistoryChart :data="historyModal.data" /></template></div></div></div>
     <div v-if="resultModal" data-modal="result" class="modal-backdrop p-5" role="dialog" aria-modal="true"><div class="flex max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 class="m-0 text-[1.05rem]">{{ resultModal.title }}</h2><Button data-close="result" type="button" variant="primary" size="sm" @click="closeResult"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="pt-3.5 whitespace-pre-wrap break-words text-primary">{{ resultModal.message }}</div></div></div>
   </div>
   </AppShell>
