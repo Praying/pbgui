@@ -37,7 +37,7 @@ function changes(preview: { changes?: ProposalChange[] }): ProposalChange[] {
         </div>
         <div class="text-xs text-secondary">{{ proposalDetail(proposal.preview || {}, t) }}</div>
         <details class="mt-1.5 text-xs text-secondary">
-          <summary class="cursor-pointer text-accent-soft">{{ reviewSummary(proposal.preview || {}) }}</summary>
+          <summary class="cursor-pointer text-accent-soft transition-colors hover:text-accent">{{ reviewSummary(proposal.preview || {}) }}</summary>
           <template v-if="proposal.preview?.action === 'python_analysis'">
             <pre class="mt-1.5 h-[240px] min-h-[140px] resize-y overflow-auto rounded-md bg-deep p-2 whitespace-pre-wrap text-secondary">{{ proposalReviewText(proposal) }}</pre>
           </template>
@@ -50,7 +50,7 @@ function changes(preview: { changes?: ProposalChange[] }): ProposalChange[] {
               </template>
             </div>
             <details class="mt-1.5">
-              <summary class="cursor-pointer text-accent-soft">{{ t('ai.proposal.rawJson') }}</summary>
+              <summary class="cursor-pointer text-accent-soft transition-colors hover:text-accent">{{ t('ai.proposal.rawJson') }}</summary>
               <pre class="mt-1.5 h-[240px] min-h-[140px] resize-y overflow-auto rounded-md bg-deep p-2 whitespace-pre-wrap text-secondary">{{ proposalReviewText(proposal) }}</pre>
             </details>
           </template>

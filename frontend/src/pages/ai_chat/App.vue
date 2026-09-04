@@ -160,11 +160,11 @@ function onQuickReply(actionId: string, value: string): void {
         <ProposalList :proposals="store.visibleProposals.value" @resolve="onResolveProposal" />
 
         <details v-if="store.reasoningSummary.value" class="mx-4 rounded-md border border-border-subtle bg-input p-2 text-xs text-accent-soft">
-          <summary class="cursor-pointer">{{ t('ai.chat.reasoningSummary') }}</summary>
+          <summary class="cursor-pointer text-secondary transition-colors hover:text-primary">{{ t('ai.chat.reasoningSummary') }}</summary>
           <pre class="max-h-[180px] overflow-auto whitespace-pre-wrap text-secondary">{{ store.reasoningSummary.value }}</pre>
         </details>
         <details v-if="store.activityHistory.value" class="mx-4 rounded-md border border-border-subtle bg-input p-2 text-xs text-accent-soft">
-          <summary class="cursor-pointer">{{ t('ai.chat.activity') }}</summary>
+          <summary class="cursor-pointer text-secondary transition-colors hover:text-primary">{{ t('ai.chat.activity') }}</summary>
           <pre class="max-h-[180px] overflow-auto whitespace-pre-wrap text-secondary">{{ store.activityHistory.value }}</pre>
         </details>
 

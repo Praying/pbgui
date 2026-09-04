@@ -225,12 +225,18 @@ async function workerConfirm(title: string, message: string, confirmText: string
   return false;
 }
 
-/** Legacy workerAction: POST, then force a refresh; errors are swallowed. */
+/** Legacy workerAction: POST, then force a refresh; failures surface in
+ *  the result popup (legacy .catch(function () {}) swallowed them). */
 async function workerAction(workerId: string, action: WorkerAction): Promise<void> {
   try {
     await apiFetch(`${apiBase()}/workers/${encodeURIComponent(workerId)}/${action}`, { method: 'POST' });
-  } catch {
-    /* legacy .catch(function () {}) */
+  } catch (error) {
+    showResultPopup({
+      title: t('sysmon.serviceActionFailed'),
+      message: t('sysmon.couldNotAction', { action, svc: workerId }),
+      output: error instanceof Error ? error.message : String(error),
+      isOk: false,
+    });
   }
   emit('refresh');
 }

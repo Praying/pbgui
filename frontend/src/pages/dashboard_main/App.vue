@@ -542,7 +542,7 @@ onUnmounted(() => {
         </div>
         <span class="canvas-mode" :class="{ 'canvas-mode--editing': editMode, 'canvas-mode--ready': frameVisible }">
           <span class="canvas-mode__dot" aria-hidden="true"></span>
-          {{ editMode ? t('dash.editMode') : frameVisible ? t('dash.dashboard') : t('common.ok') }}
+          <span class="canvas-mode__label">{{ editMode ? t('dash.editMode') : frameVisible ? t('dash.dashboard') : t('common.ok') }}</span>
         </span>
       </header>
       <div id="content-loading" :class="{ 'content-loading--empty': !frameSrc }" :style="{ display: frameLoading ? 'flex' : 'none' }" role="status" aria-live="polite">
@@ -1215,8 +1215,8 @@ body {
     padding-inline: 7px;
   }
 
-  .canvas-mode:not(.canvas-mode--editing) {
-    font-size: 0;
+  .canvas-mode:not(.canvas-mode--editing) .canvas-mode__label {
+    display: none;
   }
 
   .canvas-mode:not(.canvas-mode--editing) .canvas-mode__dot {
