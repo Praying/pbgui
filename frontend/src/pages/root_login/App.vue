@@ -17,6 +17,7 @@ import { replaceTopLocation } from '@/shared/nav';
 
 const { t, locale } = useI18n();
 const password = ref('');
+const pwVisible = ref(false);
 const banner = ref('');
 const pending = ref(false);
 
@@ -82,18 +83,29 @@ async function submitLogin(): Promise<void> {
         </svg>
       </div>
       <form id="login-form" @submit.prevent="submitLogin">
-        <div class="field">
+        <div class="field relative">
           <Input
             id="password"
             v-model="password"
             size="lg"
-            class="rounded-md bg-page"
-            type="password"
+            class="rounded-md bg-page pr-[64px]"
+            :type="pwVisible ? 'text' : 'password'"
             autocomplete="current-password"
             autofocus
             :placeholder="t('misc.login.password')"
             :aria-label="t('misc.login.password')"
           />
+          <Button
+            id="pw-eye"
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="absolute right-1 top-1 bottom-1 px-2 text-xs font-bold"
+            :aria-label="t('misc.login.showHidePassword')"
+            @click="pwVisible = !pwVisible"
+          >
+            {{ pwVisible ? t('misc.login.hidePassword') : t('misc.login.showPassword') }}
+          </Button>
         </div>
         <Button id="login-submit" class="submit-btn w-full" variant="primary" size="lg" type="submit" :loading="pending" :disabled="!password">
           {{ pending ? t('misc.login.signingIn') : t('misc.login.submit') }}
@@ -102,7 +114,7 @@ async function submitLogin(): Promise<void> {
       <Button id="pbgui-lang-btn" class="lang-btn mt-3 w-full" variant="ghost" type="button" @click="toggleLang">
         {{ locale === 'zh' ? 'English' : '中文' }}
       </Button>
-      <div id="banner" class="banner" :class="{ show: banner }" role="alert">{{ banner }}</div>
+      <div v-if="banner" id="banner" class="banner show" role="alert">{{ banner }}</div>
     </main>
   </div>
 </template>

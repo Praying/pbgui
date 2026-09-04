@@ -86,7 +86,7 @@ describe('VPS Monitor Vue page', () => {
     WebSocketMock.instances[0]!.onopen?.();
     WebSocketMock.instances[0]!.state(state);
     await wrapper.vm.$nextTick();
-    expect(wrapper.get('[data-status="connection"]').text()).toContain('Connected');
+    expect(wrapper.get('.pbgui-status-strip').text()).toContain('Connected');
     expect(wrapper.text()).toContain('alpha');
     expect(wrapper.get('.vps-monitor').classes()).toContain('compact');
     expect(wrapper.get('[role="status"]').text()).toContain('Connected');

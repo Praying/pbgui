@@ -366,15 +366,6 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
     </template>
 
   <div class="vps-monitor flex min-h-0 flex-1 flex-col bg-page text-primary" :class="{ compact: compactMode }">
-    <div
-      class="px-3.5 py-2 text-center"
-      :class="connection === 'connected' ? 'hidden' : connection === 'lost' ? 'bg-danger/15 text-danger' : 'bg-warning-deep text-warning-soft'"
-      data-status="connection"
-      role="status"
-      aria-live="polite"
-    >
-      {{ connection === 'connected' ? t('sysmon.connected') : connection === 'lost' ? t('sysmon.connectionLost') : t('sysmon.connectingVpsMonitor') }}
-    </div>
     <div class="flex min-h-0 flex-1">
       <section class="flex min-w-0 flex-1 flex-col p-[var(--page-padding)]">
         <div class="mb-3 flex flex-wrap gap-3.5 text-xs text-secondary">

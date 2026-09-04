@@ -76,7 +76,7 @@ describe('root_login App', () => {
       body: JSON.stringify({ password: 'pw' }),
     });
     expect(replaceTopLocationMock).toHaveBeenCalledWith('https://pbgui.test/api/auth/main_page');
-    expect(wrapper.find('#banner').classes()).not.toContain('show');
+    expect(wrapper.find('#banner').exists()).toBe(false);
   });
 
   it('shows the server error in the banner when login fails', async () => {
@@ -101,7 +101,7 @@ describe('root_login App', () => {
 
     apiFetchMock.mockResolvedValueOnce({ ok: true });
     await wrapper.find('form').trigger('submit');
-    expect(wrapper.find('#banner').classes()).not.toContain('show');
+    expect(wrapper.find('#banner').exists()).toBe(false);
   });
 
   it('toggles language through the legacy engine when present', async () => {
