@@ -67,11 +67,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="page.state.dynamicIgnore" id="dynamic-ignore-preview" style="margin-bottom: var(--sp-md)">
-    <div style="font-size: var(--fs-sm); color: var(--text-dim); margin-bottom: 4px">
+  <div v-if="page.state.dynamicIgnore" id="dynamic-ignore-preview" class="mb-3">
+    <div class="text-sm text-secondary mb-1">
       {{ t('v7run.dynamicIgnorePreview') }}
     </div>
-    <pre id="di-approved" style="font-size: var(--fs-xs); color: var(--green); margin-bottom: 4px; white-space: pre-wrap">{{ approved }}</pre>
-    <pre id="di-ignored" style="font-size: var(--fs-xs); color: var(--orange); white-space: pre-wrap">{{ ignored }}</pre>
+    <pre id="di-approved" class="text-xs text-success mb-1 whitespace-pre-wrap">{{ approved }}</pre>
+    <pre id="di-ignored" class="text-xs text-warning whitespace-pre-wrap">{{ ignored }}</pre>
   </div>
 </template>

@@ -334,7 +334,7 @@ defineExpose({
       <div id="archive-list-container">
         <div v-if="store.archives.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary" data-test="archive-empty">
           <div class="mb-3 text-[48px] opacity-40">🗄️</div>
-          <span style="white-space: pre-line">{{ plainLegacyHtml(t('v7backtest.emptyArchivesHtml')) }}</span>
+          <span class="whitespace-pre-line">{{ plainLegacyHtml(t('v7backtest.emptyArchivesHtml')) }}</span>
         </div>
         <table v-else class="tbl">
           <thead>
@@ -352,10 +352,10 @@ defineExpose({
               v-for="entry in store.archives.value"
               :key="entry.name"
               :class="{ selected: entry.name === store.selectedName.value }"
-              style="cursor: pointer"
+              class="cursor-pointer"
               @dblclick="store.viewArchive(entry.name)"
             >
-              <td style="font-weight: 600">{{ entry.name }}</td>
+              <td class="font-semibold">{{ entry.name }}</td>
               <td style="font-size: var(--fs-xs); color: var(--text-dim); word-break: break-all">{{ entry.url ?? '' }}</td>
               <td>{{ entry.results ?? entry.configs ?? 0 }}</td>
               <td>{{ entry.optimize_configs ?? 0 }}</td>
@@ -390,7 +390,7 @@ defineExpose({
           >
             {{ t('v7backtest.retestSchedules') }}
           </Button>
-          <span v-show="isBacktests" id="arc-results-config-filter-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.config') }}</span>
+          <span v-show="isBacktests" id="arc-results-config-filter-label" class="text-sm text-secondary">{{ t('v7backtest.config') }}</span>
           <!-- ui-migration: the legacy <option value="">All configs/All coins</option>
                rows have no reka equivalent — the listboxes offer no reset row;
                the cleared model ('') renders as the trigger label instead. -->
@@ -402,7 +402,7 @@ defineExpose({
               <SelectItem v-for="name in store.configOptions.value" :key="name" :value="name">{{ name }}</SelectItem>
             </SelectContent>
           </SelectRoot>
-          <span v-show="isBacktests" id="arc-results-coin-label" style="font-size: var(--fs-sm); color: var(--text-dim)">{{ t('v7backtest.coinLabel') }}</span>
+          <span v-show="isBacktests" id="arc-results-coin-label" class="text-sm text-secondary">{{ t('v7backtest.coinLabel') }}</span>
           <SelectRoot v-model="store.coinFilter.value">
             <SelectTrigger v-show="isBacktests" id="arc-results-coin-filter" class="w-auto min-w-[100px] max-w-[160px]" aria-labelledby="arc-results-coin-label">
               <span>{{ store.coinFilter.value || t('v7backtest.allCoins') }}</span>
@@ -483,11 +483,11 @@ defineExpose({
     </div>
 
     <ConfirmModal :open="deleteArchiveTarget !== null" :title="t('v7backtest.deleteArchive')" :confirm-label="t('common.delete')" danger test-id="delete-archive-modal" @confirm="confirmDeleteArchive" @cancel="deleteArchiveTarget = null">
-      <p style="white-space: pre-line">{{ plainLegacyHtml(t('v7backtest.deleteArchiveConfirm', { name: deleteArchiveTarget ?? '' })) }}</p>
+      <p class="whitespace-pre-line">{{ plainLegacyHtml(t('v7backtest.deleteArchiveConfirm', { name: deleteArchiveTarget ?? '' })) }}</p>
     </ConfirmModal>
 
     <ConfirmModal :open="deleteResultsOpen" :title="t('v7backtest.deleteArchiveResults')" :confirm-label="t('common.delete')" danger test-id="delete-archive-results-modal" @confirm="confirmDeleteResults" @cancel="deleteResultsOpen = false">
-      <p style="white-space: pre-line">{{ plainLegacyHtml(t('v7backtest.deleteArchiveResultsConfirm', { n: store.getSelected().length, archive: store.selectedName.value })) }}</p>
+      <p class="whitespace-pre-line">{{ plainLegacyHtml(t('v7backtest.deleteArchiveResultsConfirm', { n: store.getSelected().length, archive: store.selectedName.value })) }}</p>
     </ConfirmModal>
 
     <div v-if="renameOpen" id="modal-root" :class="modalBackdropClass" data-test="rename-modal">
@@ -521,10 +521,10 @@ defineExpose({
       <div class="score-preview-modal" :class="modalBoxClass">
         <h3>{{ t('v7backtest.readmePreview', { name: store.selectedName.value }) }}</h3>
         <div class="min-h-0 flex-1 overflow-auto">
-          <p class="text-secondary" style="margin: 0">
+          <p class="text-secondary m-0">
             {{ store.scorePreview.value.rebuilt ? 'Manifest and README were updated. This is the generated README.md preview.' : 'Read-only README.md preview. Git Push updates manifest and README automatically before committing.' }}
           </p>
-          <div class="score-preview-meta" style="display: flex; gap: var(--sp-lg); margin: var(--sp-sm) 0">
+          <div class="score-preview-meta flex gap-5 my-2">
             <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Score Version</div><b>{{ store.scorePreview.value.payload.score_version ?? '' }}</b></div>
             <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Results</div><b>{{ store.scorePreview.value.payload.scored ?? 0 }} / {{ store.scorePreview.value.payload.total ?? 0 }}</b></div>
             <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Generated</div><b>{{ store.scorePreview.value.payload.generated_at ?? '' }}</b></div>

@@ -87,7 +87,7 @@ defineExpose({ show });
     <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop" id="bc-modal" @mousedown.self="open = false">
       <div class="flex w-[90%] max-w-[800px] max-h-[80dvh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5" style="max-width: 560px">
         <h3 class="text-lg">{{ t('v7run.calculateBalance') }}</h3>
-        <div v-if="loading" style="color: var(--text-dim); font-size: var(--fs-sm); margin-bottom: var(--sp-md)">
+        <div v-if="loading" class="text-secondary text-sm mb-3">
           {{ t('v7run.calculating') }}
         </div>
         <template v-if="data">
@@ -104,11 +104,11 @@ defineExpose({ show });
                 &nbsp; <strong>{{ t('v7run.bcEntryInitialQty') }}</strong> {{ data.recommendation.entry_initial_qty_pct }}
               </div>
               <div><strong>{{ t('v7run.bcCalculatedBalance') }}</strong> {{ data.recommendation.calculated_balance }} USDT</div>
-              <div><strong style="color: var(--green)">{{ t('v7run.bcRecommendedBalance') }} {{ data.recommendation.recommended_balance }} USDT</strong></div>
+              <div><strong class="text-success">{{ t('v7run.bcRecommendedBalance') }} {{ data.recommendation.recommended_balance }} USDT</strong></div>
             </template>
             <template v-else>&#x26A0;&#xFE0F; {{ t('v7run.bcNoRecommendation', { exchange: data.exchange || '?' }) }}</template>
           </div>
-          <div style="font-size: var(--fs-xs); color: var(--text-dim)">
+          <div class="text-xs text-secondary">
             <template v-if="data.balance_long?.length">
               <div><strong>{{ t('v7run.bcTopCoinsLong') }}</strong></div>
               <div v-for="row in data.balance_long.slice(0, 5)" :key="'l' + row.coin">&nbsp;&nbsp;{{ row.coin }}: {{ row.balance }} USDT</div>
@@ -119,7 +119,7 @@ defineExpose({ show });
             </template>
           </div>
         </template>
-        <div v-if="errorText" style="color: var(--red); font-size: var(--fs-sm)">{{ errorText }}</div>
+        <div v-if="errorText" class="text-danger text-sm">{{ errorText }}</div>
         <div class="flex justify-end gap-2">
           <Button type="button" @click="open = false">{{ t('common.close') }}</Button>
         </div>

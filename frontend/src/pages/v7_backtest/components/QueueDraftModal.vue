@@ -209,9 +209,9 @@ async function submit(): Promise<void> {
             <option v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</option>
           </select>
         </div>
-        <div style="display: flex; align-items: center; gap: var(--sp-sm)">
-          <Checkbox id="rbt-pbgui-data" v-model="usePbguiData" style="margin: 0" data-test="rbt-pbgui-data" />
-          <label for="rbt-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
+        <div class="flex items-center gap-2">
+          <Checkbox id="rbt-pbgui-data" v-model="usePbguiData" class="m-0" data-test="rbt-pbgui-data" />
+          <label for="rbt-pbgui-data" class="text-sm cursor-pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">

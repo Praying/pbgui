@@ -102,7 +102,7 @@ function clear(): void {
       </span>
       <Input v-model="filter" :id="id + '-input'" class="ms-input" :placeholder="placeholder || t('v7backtest.typeToSearch')" autocomplete="off" @keydown.enter.prevent="filtered.length ? toggle(filtered[0]!) : undefined" />
       <div :id="id + '-dd'" class="ms-dropdown" :class="{ open }">
-        <div v-if="filtered.length === 0" style="padding: 4px 8px; color: var(--text-dim); font-size: var(--fs-xs)">{{ t('v7backtest.noMatches') }}</div>
+        <div v-if="filtered.length === 0" class="py-1 px-2 text-secondary text-xs">{{ t('v7backtest.noMatches') }}</div>
         <!-- mousedown.prevent keeps focus on the search input so focusout
              cannot close the dropdown before the click lands (macOS
              browsers never move focus to buttons on click). -->

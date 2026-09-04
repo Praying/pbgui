@@ -53,8 +53,8 @@ function toggleCoins(): void {
 
 <template>
   <div>
-    <div style="margin-bottom: var(--sp-xs); display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap">
-      <label style="font-size: var(--fs-sm); color: var(--text-dim)" title="Small resolutions with many symbols generate a lot of data and can take a long time to render">
+    <div class="mb-1 flex items-center gap-3 flex-wrap">
+      <label class="text-sm text-secondary" title="Small resolutions with many symbols generate a lot of data and can take a long time to render">
         Resolution (min) <span style="cursor: help; opacity: 0.6">(i)</span>:
       </label>
       <SelectRoot v-model="resolution">
@@ -67,10 +67,10 @@ function toggleCoins(): void {
       </SelectRoot>
       <label class="sb-toggle" title="Show all per-coin traces (double-click a legend entry to isolate one coin)">
         <Checkbox v-model="showCoins" data-test="twe-showcoins" @update:model-value="toggleCoins" />
-        <span style="font-size: var(--fs-sm)">Show coins</span>
+        <span class="text-sm">Show coins</span>
       </label>
     </div>
-    <div v-if="!csv || csv.rows.length === 0" class="empty-state text-center text-md" style="color: var(--text-dim); padding: var(--sp-md)">No fills data</div>
+    <div v-if="!csv || csv.rows.length === 0" class="empty-state text-center text-md text-secondary p-3">No fills data</div>
     <div v-else class="chart-wrap">
       <PlotlyDiv ref="plot" :plot-id="chartId" :traces="traces" :layout="layout" />
     </div>

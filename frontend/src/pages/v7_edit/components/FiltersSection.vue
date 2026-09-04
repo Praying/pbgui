@@ -56,7 +56,7 @@ async function onApplyFilters(): Promise<void> {
       tip="Minimum market capitalisation in million USD. Coins below this threshold are excluded."
       min="0"
       step="50"
-      style="grid-column: span 2"
+      class="col-span-2"
     />
     <FieldNumber
       id="f-vol-mcap"
@@ -65,17 +65,17 @@ async function onApplyFilters(): Promise<void> {
       tip="Minimum volume-to-market-cap ratio. Filters out illiquid coins."
       min="0"
       step="0.05"
-      style="grid-column: span 2"
+      class="col-span-2"
     />
-    <div class="form-group" id="tags-container" style="grid-column: span 2">
+    <div class="form-group col-span-2" id="tags-container">
       <label><span data-tip="Filter by CoinMarketCap category tags (e.g. DeFi, Layer 1). Leave empty to include all.">{{ t('v7run.tags') }}</span></label>
       <MultiSelectField id="ms-tags" v-model="state.tags" :options="ms.options.tags.value" :label="t('v7run.tags')" placeholder="Select tags..." />
     </div>
-    <div class="form-group" style="justify-content: flex-end">
+    <div class="form-group justify-end">
       <FieldCheck id="f-only-cpt" v-model="state.onlyCpt" label="only_cpt" tip="Only include coins from the CPT (Coin Pool Table) approved list." />
       <FieldCheck id="f-notices-ignore" v-model="state.noticesIgnore" label="notices_ignore" tip="Automatically ignore coins flagged in the latest PBGui notices." />
     </div>
-    <div class="form-group" style="justify-content: flex-end">
+    <div class="form-group justify-end">
       <FieldCheck id="f-apply-filters" v-model="state.applyFilters" label="apply_filters" tip="Enable PBGui coin filters. When unchecked all filters above are ignored." @change="onApplyFilters" />
     </div>
   </div>

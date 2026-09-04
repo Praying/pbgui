@@ -58,7 +58,7 @@ const syncBounds = computed(() => executionSyncBounds(state));
         tip="Force all long positions to same mode.
 n=normal  m=manual  gs=graceful_stop
 p=panic  t=take_profit_only"
-        style="grid-column: span 2"
+        class="col-span-2"
       />
       <FieldSelect
         id="f-forced-short"
@@ -69,7 +69,7 @@ p=panic  t=take_profit_only"
         tip="Force all short positions to the same mode.
 n=normal  m=manual  gs=graceful_stop
 p=panic  t=take_profit_only"
-        style="grid-column: span 2"
+        class="col-span-2"
       />
       <FieldSelect
         id="f-hsl-signal-mode"
@@ -94,7 +94,7 @@ normal: treat as operator override once position appears
 manual: leave in manual mode while cooldown runs
 tp_only: allow only close management during cooldown
 graceful_stop: manage with graceful_stop semantics during cooldown"
-        style="grid-column: span 2"
+        class="col-span-2"
       />
       <FieldSelect
         id="f-time-in-force"
@@ -107,7 +107,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
     </div>
     <!-- v8-only checkbox row (legacy data-v8-only block :738-751) -->
     <div v-if="page.isV8" class="form-row cols-8">
-      <div class="form-group" v-show="page.fieldVisible('hsl_accept_incomplete_history')" style="grid-column: span 2; justify-content: flex-end">
+      <div class="form-group col-span-2 justify-end" v-show="page.fieldVisible('hsl_accept_incomplete_history')">
         <FieldCheck
           id="f-hsl-accept-incomplete"
           v-model="state.hslAcceptIncomplete"
@@ -115,7 +115,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
           tip="Allow HSL to operate when the available history is incomplete. Keep disabled unless accepting reduced HSL history confidence is intentional."
         />
       </div>
-      <div class="form-group" v-show="page.fieldVisible('force_cold_startup')" style="grid-column: span 2; justify-content: flex-end">
+      <div class="form-group col-span-2 justify-end" v-show="page.fieldVisible('force_cold_startup')">
         <FieldCheck
           id="f-force-cold-startup"
           v-model="state.forceColdStartup"
@@ -227,10 +227,10 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
       <FieldNumber id="f-max-warmup-min" v-show="page.fieldVisible('max_warmup_minutes')" v-model="state.maxWarmupMin" label="max_warmup_minutes" tip="Hard ceiling for the historical warm-up window (minutes). Use 0 to disable the cap; values above 0 clamp the per-symbol warmup calculated from EMA spans." min="0" step="100" />
       <FieldNumber id="f-warmup-jitter" v-show="page.fieldVisible('warmup_jitter_seconds')" v-model="state.warmupJitter" label="warmup_jitter_seconds" tip="Random startup delay spread (seconds) before warm-up begins. Helps multiple bots on the same machine avoid hitting the same files/APIs simultaneously." min="0" step="1" />
       <FieldNumber id="f-warmup-conc" v-show="page.fieldVisible('warmup_concurrency')" v-model="state.warmupConc" label="warmup_concurrency" tip="Concurrency cap for live warm-up tasks. 0 = auto-select; positive values limit how many symbols warm up in parallel." min="0" step="1" />
-      <div class="form-group" v-show="page.fieldVisible('defer_broad_candle_warmup')" style="justify-content: flex-end">
+      <div class="form-group justify-end" v-show="page.fieldVisible('defer_broad_candle_warmup')">
         <FieldCheck id="f-defer-broad-candle-warmup" v-model="state.deferBroadCandleWarmup" label="defer_broad_candle_warmup" tip="Delay the broad multi-symbol candle warmup pass until it is actually needed. Keeps startup lighter when the bot can begin with narrower warmup data." />
       </div>
-      <div class="form-group" v-show="page.fieldVisible('enable_archive_candle_fetch')" style="justify-content: flex-end">
+      <div class="form-group justify-end" v-show="page.fieldVisible('enable_archive_candle_fetch')">
         <FieldCheck id="f-archive-fetch" v-model="state.archiveFetch" label="enable_archive_candle_fetch" tip="Enables the archive-candle fallback path in live mode. Keep disabled unless you want the live bot to supplement its local candle state from exchange archive endpoints." />
       </div>
       <FieldNumber id="f-max-ohlcv-fetches" v-show="page.fieldVisible('max_ohlcv_fetches_per_minute')" v-model="state.maxOhlcvFetches" label="max_ohlcv_fetches_per_minute" tip="Live OHLCV/network budget for candle-backed indicators (forager ranking, warm-up). Set lower to reduce REST pressure; 0 = rely only on cached data." min="0" step="1" />
@@ -243,14 +243,14 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
       <FieldNumber id="f-forager-hysteresis" v-show="page.fieldVisible('forager_score_hysteresis_pct')" v-model="state.foragerHysteresis" label="forager_score_hysteresis_pct" tip="Hysteresis applied to forager scores so Passivbot does not swap symbols too eagerly on tiny ranking changes." min="0" step="0.001" />
       <FieldNumber id="f-max-forager-stale" v-show="page.fieldVisible('max_forager_candle_staleness_minutes')" v-model="state.maxForagerStale" label="max_forager_candle_staleness_minutes" tip="Optional cap for how stale forager candidate candles may be before Passivbot refreshes them. Leave blank to use the runtime default." min="0" step="1" placeholder="auto" />
       <FieldNumber id="f-max-forager-refresh" v-show="page.fieldVisible('max_forager_candle_refresh_seconds')" v-model="state.maxForagerRefresh" label="max_forager_candle_refresh_seconds" tip="Refresh target for forager candles in seconds. Lower values keep rankings fresher but increase fetch pressure." min="1" step="1" />
-      <div class="form-group" v-show="page.fieldVisible('enable_forager_ws_candles')" style="justify-content: flex-end">
+      <div class="form-group justify-end" v-show="page.fieldVisible('enable_forager_ws_candles')">
         <FieldCheck id="f-enable-forager-ws" v-model="state.enableForagerWs" label="enable_forager_ws_candles" tip="Use completed WebSocket candles for PB8 forager updates when available." />
       </div>
       <FieldNumber id="f-forager-ws-audit" v-show="page.fieldVisible('forager_ws_candle_rest_audit_minutes')" v-model="state.foragerWsAudit" label="forager_ws_candle_rest_audit_minutes" tip="Minutes between REST audits of PB8 forager candles received over WebSocket." min="0.000001" max="60" step="1" />
     </div>
 
     <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.storageFreshnessRuntime') }}</div>
-    <div class="form-row cols-8" style="margin-bottom: 0">
+    <div class="form-row cols-8 mb-0">
       <FieldNumber id="f-max-disk-candles" v-show="page.fieldVisible('max_disk_candles_per_symbol_per_tf')" v-model="state.maxDiskCandles" label="max_disk_candles_per_symbol_per_tf" tip="Maximum candles persisted on disk per symbol and timeframe. Oldest shards are pruned once this limit is hit. Default 2,000,000." min="0" step="10000" />
       <FieldNumber id="f-max-mem-candles" v-show="page.fieldVisible('max_memory_candles_per_symbol')" v-model="state.maxMemCandles" label="max_memory_candles_per_symbol" tip="Maximum 1m candles retained in RAM per symbol. Older entries are trimmed once this cap is exceeded. Default 200,000." min="0" step="10000" />
       <FieldNumber id="f-inactive-ttl" v-show="page.fieldVisible('inactive_coin_candle_ttl_minutes')" v-model="state.inactiveTtl" label="inactive_coin_candle_ttl_minutes" tip="How long (minutes) 1m candles for inactive symbols may stay in RAM before the live bot refreshes them. Lower values keep symbols fresher at the cost of more network/disk activity." min="0" step="1" />
@@ -264,9 +264,9 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
     <template v-if="page.isV8">
       <div class="mb-2 mt-3 text-sm font-semibold text-accent">{{ t('v7run.pb8Runtime') }}</div>
       <div class="form-row cols-8">
-        <FieldNumber id="f-exchange-symbol-cooldown" v-show="page.fieldVisible('exchange_symbol_unavailable_cooldown_hours')" v-model="state.exchangeSymbolCooldown" label="exchange_symbol_unavailable_cooldown_hours" tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts." min="0" max="876600" step="0.1" style="grid-column: span 2" />
-        <FieldText id="f-custom-endpoints-path" v-show="page.fieldVisible('custom_endpoints_path')" v-model="state.customEndpointsPath" label="custom_endpoints_path" tip="Optional path to a PB8 custom-endpoints definition. Leave blank to use built-in endpoints." placeholder="default" style="grid-column: span 2" />
-        <div class="form-group" v-show="page.fieldVisible('startup_phase_budgets')" style="grid-column: span 4">
+        <FieldNumber id="f-exchange-symbol-cooldown" v-show="page.fieldVisible('exchange_symbol_unavailable_cooldown_hours')" v-model="state.exchangeSymbolCooldown" label="exchange_symbol_unavailable_cooldown_hours" tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts." min="0" max="876600" step="0.1" class="col-span-2" />
+        <FieldText id="f-custom-endpoints-path" v-show="page.fieldVisible('custom_endpoints_path')" v-model="state.customEndpointsPath" label="custom_endpoints_path" tip="Optional path to a PB8 custom-endpoints definition. Leave blank to use built-in endpoints." placeholder="default" class="col-span-2" />
+        <div class="form-group col-span-4" v-show="page.fieldVisible('startup_phase_budgets')">
           <label><span data-tip="Expert diagnostic reporting thresholds only; these values do not gate startup or trading. Use canonical phase names with elapsed_ms and/or since_previous_ms non-negative integer values. An empty object uses runtime defaults.">startup_phase_budgets (Expert/Diagnostic)</span></label>
           <!-- ui-migration: Textarea + the legacy json-editor class — the
                un-layered page rules still own the geometry (shared with
@@ -281,13 +281,13 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
         <FieldText id="f-log-dir" v-show="page.fieldVisible('dir')" v-model="state.logDir" label="logging.dir" tip="Directory used by PB8 for its own log files." />
         <FieldNumber id="f-log-max-bytes" v-show="page.fieldVisible('max_bytes_mb')" v-model="state.logMaxBytes" label="logging.max_bytes_mb" tip="Maximum size in MiB of one PB8 log file before rotation." min="0" step="1" />
         <FieldNumber id="f-log-backup-count" v-show="page.fieldVisible('backup_count')" v-model="state.logBackupCount" label="logging.backup_count" tip="Number of rotated PB8 log files retained." min="0" step="1" />
-        <div class="form-group" style="justify-content: flex-end">
+        <div class="form-group justify-end">
           <FieldCheck id="f-log-persist" v-show="page.fieldVisible('persist_to_file')" v-model="state.logPersist" label="logging.persist_to_file" />
         </div>
-        <div class="form-group" style="justify-content: flex-end">
+        <div class="form-group justify-end">
           <FieldCheck id="f-log-rotation" v-show="page.fieldVisible('rotation')" v-model="state.logRotation" label="logging.rotation" />
         </div>
-        <div class="form-group" v-show="page.fieldVisible('live_event_debug_profiles')" style="grid-column: span 3">
+        <div class="form-group col-span-3" v-show="page.fieldVisible('live_event_debug_profiles')">
           <label><span data-tip="PB8 live-event debug profiles as a JSON array.">logging.live_event_debug_profiles</span></label>
           <Textarea id="f-log-debug-profiles" v-model="state.logDebugProfiles" class="json-editor" rows="4" />
           <div id="f-log-debug-profiles-status" class="hidden text-sm leading-[1.35]" aria-live="polite"></div>
@@ -296,7 +296,7 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
 
       <div class="mb-2 mt-3 text-sm font-semibold text-accent" v-show="page.fieldVisible('monitorEnabled')">{{ t('v7run.monitoring') }}</div>
       <div class="form-row cols-8" v-show="page.fieldVisible('monitorEnabled')">
-        <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-enabled" v-show="page.fieldVisible('monitorEnabled')" v-model="state.monitorEnabled" label="monitor.enabled" /></div>
+        <div class="form-group justify-end"><FieldCheck id="f-monitor-enabled" v-show="page.fieldVisible('monitorEnabled')" v-model="state.monitorEnabled" label="monitor.enabled" /></div>
         <FieldText id="f-monitor-root-dir" v-show="page.fieldVisible('root_dir')" v-model="state.monitorRootDir" label="monitor.root_dir" />
         <FieldNumber id="f-monitor-snapshot-interval" v-show="page.fieldVisible('snapshot_interval_seconds')" v-model="state.monitorSnapshotInterval" label="monitor.snapshot_interval_seconds" min="0" step="0.1" />
         <FieldNumber id="f-monitor-checkpoint" v-show="page.fieldVisible('checkpoint_interval_minutes')" v-model="state.monitorCheckpoint" label="monitor.checkpoint_interval_minutes" min="0" step="0.1" />
@@ -305,12 +305,12 @@ graceful_stop: manage with graceful_stop semantics during cooldown"
         <FieldNumber id="f-monitor-max-bytes" v-show="page.fieldVisible('max_total_bytes')" v-model="state.monitorMaxBytes" label="monitor.max_total_bytes" min="0" step="1" />
         <FieldNumber id="f-monitor-price-interval" v-show="page.fieldVisible('price_tick_min_interval_ms')" v-model="state.monitorPriceInterval" label="monitor.price_tick_min_interval_ms" min="0" step="1" />
         <FieldNumber id="f-monitor-retain-days" v-show="page.fieldVisible('retain_days')" v-model="state.monitorRetainDays" label="monitor.retain_days" min="0" step="0.1" />
-        <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-compress" v-show="page.fieldVisible('compress_rotated_segments')" v-model="state.monitorCompress" label="monitor.compress_rotated_segments" /></div>
-        <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-emit-candles" v-show="page.fieldVisible('emit_completed_candles')" v-model="state.monitorEmitCandles" label="monitor.emit_completed_candles" /></div>
-        <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-raw-fills" v-show="page.fieldVisible('include_raw_fill_payloads')" v-model="state.monitorRawFills" label="monitor.include_raw_fill_payloads" /></div>
-        <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-retain-candles" v-show="page.fieldVisible('retain_candles')" v-model="state.monitorRetainCandles" label="monitor.retain_candles" /></div>
-        <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-retain-fills" v-show="page.fieldVisible('retain_fills')" v-model="state.monitorRetainFills" label="monitor.retain_fills" /></div>
-        <div class="form-group" style="justify-content: flex-end"><FieldCheck id="f-monitor-retain-ticks" v-show="page.fieldVisible('retain_price_ticks')" v-model="state.monitorRetainTicks" label="monitor.retain_price_ticks" /></div>
+        <div class="form-group justify-end"><FieldCheck id="f-monitor-compress" v-show="page.fieldVisible('compress_rotated_segments')" v-model="state.monitorCompress" label="monitor.compress_rotated_segments" /></div>
+        <div class="form-group justify-end"><FieldCheck id="f-monitor-emit-candles" v-show="page.fieldVisible('emit_completed_candles')" v-model="state.monitorEmitCandles" label="monitor.emit_completed_candles" /></div>
+        <div class="form-group justify-end"><FieldCheck id="f-monitor-raw-fills" v-show="page.fieldVisible('include_raw_fill_payloads')" v-model="state.monitorRawFills" label="monitor.include_raw_fill_payloads" /></div>
+        <div class="form-group justify-end"><FieldCheck id="f-monitor-retain-candles" v-show="page.fieldVisible('retain_candles')" v-model="state.monitorRetainCandles" label="monitor.retain_candles" /></div>
+        <div class="form-group justify-end"><FieldCheck id="f-monitor-retain-fills" v-show="page.fieldVisible('retain_fills')" v-model="state.monitorRetainFills" label="monitor.retain_fills" /></div>
+        <div class="form-group justify-end"><FieldCheck id="f-monitor-retain-ticks" v-show="page.fieldVisible('retain_price_ticks')" v-model="state.monitorRetainTicks" label="monitor.retain_price_ticks" /></div>
       </div>
     </template>
   </ExpanderGroup>

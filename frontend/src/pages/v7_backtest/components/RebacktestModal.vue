@@ -95,7 +95,7 @@ function onConfirm(): void {
           </div>
           <div>
             <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
-            <div style="display: flex; align-items: center; gap: var(--sp-xs)">
+            <div class="flex items-center gap-1">
               <Input v-model="balance" class="text-right" type="number" min="1" step="100" data-test="rbt-balance" />
               <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></Button>
               <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-plus" aria-label="Increase starting balance" title="Increase starting balance" @click="adjustBalance(100)"><PbIcon :icon="PhPlus" /></Button>
@@ -110,9 +110,9 @@ function onConfirm(): void {
               <option v-for="exchange in ALL_EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
             </select>
           </div>
-          <div style="display: flex; align-items: center; gap: var(--sp-sm)">
-            <Checkbox id="rbt-pbgui-data" v-model="usePbguiData" style="margin: 0" data-test="rbt-pbgui-data" />
-            <label for="rbt-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
+          <div class="flex items-center gap-2">
+            <Checkbox id="rbt-pbgui-data" v-model="usePbguiData" class="m-0" data-test="rbt-pbgui-data" />
+            <label for="rbt-pbgui-data" class="text-sm cursor-pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
           </div>
         </div>
       </div>

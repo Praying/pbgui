@@ -138,7 +138,7 @@ onBeforeUnmount(() => dragSelect.dispose());
       <div class="font-medium text-secondary">{{ t('v7backtest.noResultsFound') }}</div>
     </div>
   </div>
-  <div v-else ref="wrap" style="position: relative">
+  <div v-else ref="wrap" class="relative">
     <table class="tbl min-w-max">
       <thead>
         <tr>
@@ -152,9 +152,9 @@ onBeforeUnmount(() => dragSelect.dispose());
           >
             {{ header.label }}<span class="sort-arrow">{{ arrowFor(header.col) }}</span>
           </th>
-          <th :title="t('v7backtest.tweTooltip')" style="cursor: default">TWE</th>
-          <th style="cursor: default">POS</th>
-          <th class="actions-column sticky right-0 z-3 shadow-[-8px_0_12px_-12px_rgb(0_0_0/0.8)]" style="cursor: default; text-align: center">{{ t('v7backtest.actions') }}</th>
+          <th :title="t('v7backtest.tweTooltip')" class="cursor-default">TWE</th>
+          <th class="cursor-default">POS</th>
+          <th class="actions-column sticky right-0 z-3 shadow-[-8px_0_12px_-12px_rgb(0_0_0/0.8)] cursor-default text-center">{{ t('v7backtest.actions') }}</th>
         </tr>
       </thead>
       <tbody ref="tbody">
@@ -168,12 +168,12 @@ onBeforeUnmount(() => dragSelect.dispose());
           @click="emit('toggle-select', row.path)"
         >
           <td v-if="showVersion" class="font-semibold text-secondary">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
-          <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" class="font-medium text-primary" style="max-width: 280px">
-            <span v-if="row.liquidated" style="color: var(--red)" :title="t('v7backtest.liquidated')">⚠️</span>
+          <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" class="font-medium text-primary max-w-[280px]">
+            <span v-if="row.liquidated" class="text-danger" :title="t('v7backtest.liquidated')">⚠️</span>
             {{ row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}` }}
           </td>
           <td v-if="showStrategy" class="mono">{{ row.strategy || '-' }}</td>
-          <td v-if="showCoins" :title="coinsText(row)" data-col="coins_text" style="max-width: 140px">{{ coinsText(row) }}</td>
+          <td v-if="showCoins" :title="coinsText(row)" data-col="coins_text" class="max-w-[140px]">{{ coinsText(row) }}</td>
           <td>{{ exchangesText(row) }}</td>
           <td class="text-secondary">{{ fmtDate(row.modified) }}</td>
           <td class="font-mono tabular-nums">{{ fmt(row.adg, 4) }}</td>

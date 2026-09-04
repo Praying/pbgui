@@ -271,9 +271,9 @@ defineExpose({ foldSuiteDraft });
     <div class="form-row config-editor-12">
       <div class="form-group editor-span-6">
         <label :data-tip="t('v7backtest.tip.ohlcvSourceDir')">ohlcv_source_dir</label>
-        <div style="display: flex; gap: var(--sp-xs)">
+        <div class="flex gap-1">
           <Input v-model="state.ohlcvSourceDir" type="text" :placeholder="t('v7backtest.leaveEmptyForDefault')" />
-          <Button type="button" variant="default" class="act-btn h-auto" style="white-space: nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">
+          <Button type="button" variant="default" class="act-btn h-auto whitespace-nowrap" title="Use PBGui market data directory" @click="fillPbguiDataPath">
             <PbIcon :icon="PhFolderOpen" />
             PBGui Data
           </Button>

@@ -292,12 +292,12 @@ const priceMarketLabel = computed(() => {
       </div>
 
       <!-- 1. Balance & Equity + price overlay (:6636-6652) -->
-      <div style="margin-bottom: var(--sp-xs); display: flex; align-items: center; gap: var(--sp-md); flex-wrap: wrap">
+      <div class="mb-1 flex items-center gap-3 flex-wrap">
         <label class="sb-toggle">
           <Checkbox data-test="be-log-toggle" @update:model-value="toggleLog(bePlot, $event)" />
-          <span style="font-size: var(--fs-sm)">logarithmic</span>
+          <span class="text-sm">logarithmic</span>
         </label>
-        <label v-if="markets.length" style="font-size: var(--fs-sm); color: var(--text-dim)">
+        <label v-if="markets.length" class="text-sm text-secondary">
           Price (PBGui MarketData)
           <SelectRoot :model-value="state.priceMarket" @update:model-value="state.priceMarket = String($event ?? ''); void onPriceMarketChange()">
             <SelectTrigger class="ml-1 w-auto min-w-[140px] max-w-[220px]" data-test="price-market" aria-label="Price (PBGui MarketData)">
@@ -313,28 +313,28 @@ const priceMarketLabel = computed(() => {
         <span
           v-if="markets.length"
           data-test="price-status"
-          style="font-size: var(--fs-xs); color: var(--text-dim)"
+          class="text-xs text-secondary"
           :style="{ color: state.priceWarning ? 'var(--orange)' : undefined }"
         >
           {{ state.priceStatus }}
         </span>
       </div>
       <div class="chart-wrap">
-        <div v-if="beError" style="color: var(--red); padding: var(--sp-md)">Failed to load BE data: {{ beError }}</div>
-        <div v-else-if="be && !be.time.length" style="color: var(--text-dim); padding: var(--sp-md)">{{ beEmptyMessage() }}</div>
+        <div v-if="beError" class="text-danger p-3">Failed to load BE data: {{ beError }}</div>
+        <div v-else-if="be && !be.time.length" class="text-secondary p-3">{{ beEmptyMessage() }}</div>
         <PlotlyDiv v-else-if="be" ref="bePlot" :plot-id="`be-chart-${index}`" :traces="beTraces" :layout="beLayout" />
       </div>
 
       <!-- 2. PnL per symbol (:6654-6658) -->
-      <div style="margin-bottom: var(--sp-xs)">
+      <div class="mb-1">
         <label class="sb-toggle">
           <Checkbox data-test="pnl-log-toggle" @update:model-value="toggleLog(pnlPlot, $event)" />
-          <span style="font-size: var(--fs-sm)">logarithmic</span>
+          <span class="text-sm">logarithmic</span>
         </label>
       </div>
       <div class="chart-wrap">
-        <div v-if="fillsError" style="color: var(--red); padding: var(--sp-md)">Failed to load fills: {{ fillsError }}</div>
-        <div v-else-if="fillsCsv && pnlChartTraces.length === 0" style="color: var(--text-dim); padding: var(--sp-md)">No fills data</div>
+        <div v-if="fillsError" class="text-danger p-3">Failed to load fills: {{ fillsError }}</div>
+        <div v-else-if="fillsCsv && pnlChartTraces.length === 0" class="text-secondary p-3">No fills data</div>
         <PlotlyDiv v-else-if="fillsCsv" ref="pnlPlot" :plot-id="`pnl-chart-${index}`" :traces="pnlChartTraces" :layout="chartLayout(title, 'Net PnL')" />
       </div>
 
@@ -345,7 +345,7 @@ const priceMarketLabel = computed(() => {
 
       <!-- 4. Equity hard-stop drawdown (:6665-6668) -->
       <div class="chart-wrap">
-        <div v-if="hardStop?.emptyReason" style="color: var(--text-dim); padding: var(--sp-md)">{{ hardStop.emptyReason }}</div>
+        <div v-if="hardStop?.emptyReason" class="text-secondary p-3">{{ hardStop.emptyReason }}</div>
         <PlotlyDiv v-else-if="hardStop" :plot-id="`hard-stop-chart-${index}`" :traces="hardStop.traces" :layout="hardStop.layout" />
       </div>
 
@@ -365,43 +365,43 @@ const priceMarketLabel = computed(() => {
 
     <!-- Analysis JSON (:6697-6708) -->
     <div v-if="section.actions.has('analysis')" class="chart-wrap" data-test="analysis-section">
-      <h4 style="margin: var(--sp-sm) 0">{{ t('v7backtest.analysis') }}</h4>
+      <h4 class="my-2">{{ t('v7backtest.analysis') }}</h4>
       <JsonViewer :data="analysisData" />
     </div>
 
     <!-- Config JSON (:6710-6721) -->
     <div v-if="section.actions.has('config')" class="chart-wrap" data-test="config-section">
-      <h4 style="margin: var(--sp-sm) 0">{{ t('v7backtest.configTitle') }}</h4>
+      <h4 class="my-2">{{ t('v7backtest.configTitle') }}</h4>
       <JsonViewer :data="configData" />
     </div>
 
     <!-- Plot images (:6723-6732) — literal strings, like the legacy -->
-    <div v-if="section.actions.has('plot')" class="chart-wrap" data-test="plot-section" style="margin-top: var(--sp-md)">
-      <div style="padding: var(--sp-md)">
-        <div v-if="plotFilesError" style="color: var(--red)">Failed: {{ plotFilesError }}</div>
-        <div v-else-if="plotFiles.length === 0" style="color: var(--text-dim)">No plot images found</div>
+    <div v-if="section.actions.has('plot')" class="chart-wrap mt-3" data-test="plot-section">
+      <div class="p-3">
+        <div v-if="plotFilesError" class="text-danger">Failed: {{ plotFilesError }}</div>
+        <div v-else-if="plotFiles.length === 0" class="text-secondary">No plot images found</div>
         <img
           v-for="file in plotFiles"
           :key="file"
           :src="dataApi.imageUrl(result.path, result, file)"
           :alt="file"
-          style="width: 100%; margin-bottom: var(--sp-sm); border-radius: 4px"
+          class="w-full mb-2 rounded-sm"
           @error="($event.target as HTMLElement).style.display = 'none'"
         />
       </div>
     </div>
 
     <!-- Fills plots (:6734-6743) -->
-    <div v-if="section.actions.has('fills')" class="chart-wrap" data-test="fills-section" style="margin-top: var(--sp-md)">
-      <div style="padding: var(--sp-md)">
-        <div v-if="fillsFilesError" style="color: var(--red)">Failed: {{ fillsFilesError }}</div>
-        <div v-else-if="fillsFiles.length === 0" style="color: var(--text-dim)">No fills plots found</div>
+    <div v-if="section.actions.has('fills')" class="chart-wrap mt-3" data-test="fills-section">
+      <div class="p-3">
+        <div v-if="fillsFilesError" class="text-danger">Failed: {{ fillsFilesError }}</div>
+        <div v-else-if="fillsFiles.length === 0" class="text-secondary">No fills plots found</div>
         <img
           v-for="file in fillsFiles"
           :key="file"
           :src="dataApi.imageUrl(result.path, result, file)"
           :alt="file"
-          style="width: 100%; margin-bottom: var(--sp-sm); border-radius: 4px"
+          class="w-full mb-2 rounded-sm"
           @error="($event.target as HTMLElement).style.display = 'none'"
         />
       </div>

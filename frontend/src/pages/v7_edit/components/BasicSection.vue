@@ -38,7 +38,7 @@ const enabledOnLabel = computed(() => page.hosts.gate.label(state.enabledOn, pag
     <div class="edit-section-body p-5">
       <div class="form-row cols-8">
     <!-- Row 1: Configuration & Identity -->
-    <div class="form-group" style="grid-column: span 2">
+    <div class="form-group col-span-2">
       <label id="f-user-label"><span data-tip="Fetch API key/secret from api-keys.json.">{{ t('v7run.user') }}</span></label>
       <SelectRoot v-model="state.user" @update:model-value="page.onUserChange()">
         <SelectTrigger id="f-user" aria-labelledby="f-user-label">
@@ -49,7 +49,7 @@ const enabledOnLabel = computed(() => page.hosts.gate.label(state.enabledOn, pag
         </SelectContent>
       </SelectRoot>
     </div>
-    <div class="form-group" style="grid-column: span 2">
+    <div class="form-group col-span-2">
       <label id="f-enabled-on-label">{{ t('v7run.enabledOn') }}</label>
       <SelectRoot v-model="state.enabledOn" @update:model-value="page.onEnabledOnChange()">
         <SelectTrigger
@@ -189,7 +189,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
       step="0.0001"
     />
     <div class="form-group"></div>
-    <div class="form-group" v-show="page.fieldVisible('filter_by_min_effective_cost')" style="grid-column: span 2; justify-content: flex-end">
+    <div class="form-group col-span-2 justify-end" v-show="page.fieldVisible('filter_by_min_effective_cost')">
       <FieldCheck
         id="f-filter-min-cost"
         v-model="state.filterMinCost"
@@ -203,7 +203,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
         tip="Allow market orders when price is very close to market price. If false, only limit orders are placed."
       />
     </div>
-    <div class="form-group" v-show="page.fieldVisible('hedge_mode')" style="grid-column: span 2; justify-content: flex-end">
+    <div class="form-group col-span-2 justify-end" v-show="page.fieldVisible('hedge_mode')">
       <FieldCheck
         id="f-hedge-mode"
         v-model="state.hedgeMode"

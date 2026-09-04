@@ -104,7 +104,7 @@ watch(model, (raw) => {
         <span class="bot-side-role shrink-0 font-mono text-[10px] leading-none tracking-[0.12em] text-secondary">{{ side.toUpperCase() }}</span>
       </h3>
     </header>
-    <div class="form-row cols-2 bot-side-primary" style="margin-bottom: var(--sp-sm)">
+    <div class="form-row cols-2 bot-side-primary mb-2">
       <div class="form-group">
         <label :data-tip="t('v7backtest.tip.totalWalletExposureLimit')">total_wallet_exposure_limit</label>
         <div class="num-stepper">
@@ -141,11 +141,11 @@ watch(model, (raw) => {
           <label :data-tip="t('v7backtest.tip.fullConfigJson')">
             {{ t('v7backtest.fullConfigJson') }}
             <span v-if="hasStatus" style="font-size: var(--fs-xs, 11px); font-weight: 400; opacity: 0.8">
-              ■ <span style="color: var(--warning)">{{ t('v7backtest.neutralized') }}</span>
+              ■ <span class="text-warning">{{ t('v7backtest.neutralized') }}</span>
               &nbsp;■ <span style="color: var(--danger)">{{ t('v7backtest.review') }}</span>
             </span>
           </label>
-          <div class="bot-json-highlight-wrap" style="position: relative">
+          <div class="bot-json-highlight-wrap relative">
             <pre class="bot-json-highlight-pre" aria-hidden="true" style="position: absolute; inset: 0; margin: 0; overflow: hidden; pointer-events: none; z-index: 0; color: transparent; white-space: pre-wrap; word-wrap: break-word"><span
               v-for="(line, i) in lines"
               :key="i"

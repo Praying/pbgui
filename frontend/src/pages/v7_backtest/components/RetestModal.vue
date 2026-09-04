@@ -112,7 +112,7 @@ function onCreateSchedule(): void {
       <h3>{{ t('v7backtest.retestReplaceArchiveResult') }}</h3>
       <div class="min-h-0 flex-1 overflow-auto">
         <div style="display: flex; flex-direction: column; gap: var(--sp-md); height: 100%; min-width: 0">
-          <p class="text-secondary" style="margin: 0">The new backtest always ends at yesterday. Replacement happens only after the new result finished successfully; Git Push stays manual.</p>
+          <p class="text-secondary m-0">The new backtest always ends at yesterday. Replacement happens only after the new result finished successfully; Git Push stays manual.</p>
           <div>
             <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-date-mode-label">Date Mode</div>
             <SelectRoot v-model="dateMode">
@@ -143,13 +143,13 @@ function onCreateSchedule(): void {
               <option v-for="exchange in ALL_EXCHANGES" :key="exchange" :value="exchange">{{ exchange }}</option>
             </select>
           </div>
-          <div style="display: flex; align-items: center; gap: var(--sp-sm)">
-            <Checkbox id="arr-pbgui-data" v-model="usePbguiData" style="margin: 0" data-test="arr-pbgui-data" />
-            <label for="arr-pbgui-data" style="font-size: var(--fs-sm); cursor: pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
+          <div class="flex items-center gap-2">
+            <Checkbox id="arr-pbgui-data" v-model="usePbguiData" class="m-0" data-test="arr-pbgui-data" />
+            <label for="arr-pbgui-data" class="text-sm cursor-pointer"><PbIcon :icon="PhFolderOpen" /> {{ t('v7backtest.usePbguiMarketData') }}</label>
           </div>
-          <div style="display: flex; align-items: center; gap: var(--sp-sm)">
-            <Checkbox id="arr-skip-liquidated" v-model="skipLiquidated" style="margin: 0" data-test="arr-skip-liquidated" />
-            <label for="arr-skip-liquidated" style="font-size: var(--fs-sm); cursor: pointer">Do not replace when the new result is liquidated</label>
+          <div class="flex items-center gap-2">
+            <Checkbox id="arr-skip-liquidated" v-model="skipLiquidated" class="m-0" data-test="arr-skip-liquidated" />
+            <label for="arr-skip-liquidated" class="text-sm cursor-pointer">Do not replace when the new result is liquidated</label>
           </div>
           <hr class="sb-sep" />
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm)">
@@ -169,7 +169,7 @@ function onCreateSchedule(): void {
               <div class="text-xs uppercase tracking-[0.5px] text-secondary">Time</div>
               <Input v-model="time" type="time" data-test="arr-time" />
             </div>
-            <div v-show="cadence === 'weekly'" id="arr-weekday-wrap" style="grid-column: span 2" data-test="arr-weekday-wrap">
+            <div v-show="cadence === 'weekly'" id="arr-weekday-wrap" class="col-span-2" data-test="arr-weekday-wrap">
               <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-weekday-label">Weekday</div>
               <SelectRoot v-model="weekday">
                 <SelectTrigger class="w-full" data-test="arr-weekday" aria-labelledby="arr-weekday-label">
