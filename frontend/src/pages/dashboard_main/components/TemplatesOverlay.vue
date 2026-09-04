@@ -1,21 +1,24 @@
 <script setup lang="ts">
-import { onUnmounted, ref } from 'vue';
+import { onUnmounted, ref , computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { useEscapeClose } from '@/shared/composables/useEscapeClose';
 
 /**
  * Legacy #tpl-overlay (dashboard_main.html templates popup + drag-to-move IIFE):
  * a floating, resizable iframe popup moved by its #tpl-drag-handle. The parent
  * clears the url on close (legacy close set tplIframe.src = '').
  */
-defineProps<{
+const props = defineProps<{
   visible: boolean;
   url: string;
 }>();
 
 const emit = defineEmits<{ close: [] }>();
+const dialogVisible = computed(() => props.visible);
+useEscapeClose(dialogVisible, () => emit('close'));
 const { t } = useI18n();
 const overlay = ref<HTMLElement | null>(null);
 

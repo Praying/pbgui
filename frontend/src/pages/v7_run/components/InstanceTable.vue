@@ -117,7 +117,7 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
     <table class="v7run-table w-full border-collapse text-base">
       <thead id="thead">
         <tr>
-          <th class="sticky top-0 cursor-pointer select-none border-b-2 border-border-default bg-panel text-sm uppercase text-secondary hover:text-primary" v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" @click="col.labelKey && emit('sort', col.key)">
+          <th class="sticky top-0 cursor-pointer select-none border-b-2 border-border-default bg-panel text-sm uppercase text-secondary hover:text-primary" v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" :role="col.labelKey ? 'button' : undefined" :tabindex="col.labelKey ? 0 : undefined" :aria-sort="col.labelKey && sort.col === col.key ? (sort.asc ? 'ascending' : 'descending') : undefined" @click="col.labelKey && emit('sort', col.key)" @keydown.enter.prevent="col.labelKey && emit('sort', col.key)">
             <template v-if="col.labelKey">{{ t(col.labelKey) }}</template>
             <span v-if="col.labelKey" class="ml-0.5 text-[10px]">{{ arrow(col.key) }}</span>
           </th>
@@ -128,7 +128,7 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
           v-for="row in rows"
           :key="row.name"
           :data-key="row.name"
-          :class="row.status === 'disabled' ? 'opacity-45' : ''"
+          :class="row.status === 'disabled' ? 'opacity-60' : ''"
           @dblclick="onRowDblClick(row, $event)"
         >
           <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.name }}</td>

@@ -27,6 +27,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
 const name = ref('');
 const error = ref('');
 const nameInput = ref<HTMLInputElement | null>(null);
