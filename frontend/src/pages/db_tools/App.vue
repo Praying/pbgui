@@ -49,6 +49,11 @@ const { t } = useI18n();
 /* Status → Tailwind utility mapping (the former db-tools.css .status.ok/.err
    tints). Returns the FULL colour set for the dynamic border+text pair. */
 const store = useDbTools({ t: (key, params) => t(key, params ?? {}) });
+/** Sync-table 8-column grid — shared by the sticky header and every row
+ *  so the columns can't drift apart. */
+const syncGridClass = 'grid min-w-[1160px] grid-cols-[minmax(180px,1.4fr)_90px_minmax(130px,.8fr)_minmax(150px,1fr)_minmax(150px,.9fr)_minmax(150px,.9fr)_70px_90px] items-center gap-3';
+/** Backups-table 5-column grid — same header/row contract as syncGridClass. */
+const backupsGridClass = 'grid min-w-[980px] grid-cols-[180px_150px_120px_110px_minmax(300px,1fr)] items-center gap-3';
 
 const PANELS = [
   { key: 'cleanup', labelKey: 'misc.dbtools.cleanup' },
@@ -431,7 +436,7 @@ onBeforeUnmount(() => store.teardown());
               </div>
             </div>
             <div class="block max-h-[300px] select-none overflow-auto p-0" id="sync-job-list">
-              <div class="grid min-w-[1160px] grid-cols-[minmax(180px,1.4fr)_90px_minmax(130px,.8fr)_minmax(150px,1fr)_minmax(150px,.9fr)_minmax(150px,.9fr)_70px_90px] items-center gap-3 sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-extrabold tracking-[0.06em] text-secondary uppercase">
+              <div :class="[syncGridClass, 'sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-extrabold tracking-[0.06em] text-secondary uppercase']">
                 <span>{{ t('misc.dbtools.name') }}</span>
                 <span>{{ t('misc.dbtools.status') }}</span>
                 <span>{{ t('misc.dbtools.source') }}</span>
@@ -445,10 +450,9 @@ onBeforeUnmount(() => store.teardown());
               <div
                 v-for="row in syncJobRows"
                 :key="row.job.id"
-                class="grid min-w-[1160px] grid-cols-[minmax(180px,1.4fr)_90px_minmax(130px,.8fr)_minmax(150px,1fr)_minmax(150px,.9fr)_minmax(150px,.9fr)_70px_90px] items-center gap-3 w-full min-h-[44px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left text-primary font-inherit hover:bg-white/3"
+                :class="[syncGridClass, 'w-full min-h-[44px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left text-primary font-inherit hover:bg-white/3', row.job.id === store.syncJobId.value ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : '']"
                 role="button"
                 tabindex="0"
-                :class="row.job.id === store.syncJobId.value ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : ''"
                 :data-job-id="row.job.id"
                 @click="row.job.id === store.syncJobId.value ? store.closeSyncEditor() : store.selectSyncJob(row.job.id)"
                 @keydown.enter.prevent="row.job.id === store.syncJobId.value ? store.closeSyncEditor() : store.selectSyncJob(row.job.id)"
@@ -577,7 +581,7 @@ onBeforeUnmount(() => store.teardown());
               </div>
             </div>
             <div id="backup-list" class="min-h-[360px] flex-1 select-none overflow-auto p-0">
-              <div class="grid min-w-[980px] grid-cols-[180px_150px_120px_110px_minmax(300px,1fr)] items-center gap-3 sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-extrabold tracking-[0.06em] text-secondary uppercase">
+              <div :class="[backupsGridClass, 'sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-extrabold tracking-[0.06em] text-secondary uppercase']">
                 <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('created')">{{ t('misc.dbtools.created') }}{{ sortMark('created') }}</Button>
                 <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('label')">{{ t('misc.dbtools.operation') }}{{ sortMark('label') }}</Button>
                 <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('db')">{{ t('misc.dbtools.file') }}{{ sortMark('db') }}</Button>
@@ -589,9 +593,8 @@ onBeforeUnmount(() => store.teardown());
                 v-for="row in backupRows"
                 :key="row.name"
                 variant="ghost"
-                class="backup-row grid min-w-[980px] min-h-[42px] grid-cols-[180px_150px_120px_110px_minmax(300px,1fr)] items-center gap-3 w-full justify-start rounded-none border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left font-normal text-primary font-inherit hover:bg-white/3"
+                :class="[backupsGridClass, 'backup-row min-h-[42px] w-full justify-start rounded-none border-0 border-b border-border-subtle bg-transparent px-3 py-2 text-left font-normal text-primary font-inherit hover:bg-white/3', store.backupSelected.value.includes(row.name) ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : '']"
                 type="button"
-                :class="store.backupSelected.value.includes(row.name) ? 'selected bg-accent/12 text-primary shadow-[inset_3px_0_0_var(--accent)] pl-2' : ''"
                 :data-value="row.name"
                 :aria-pressed="store.backupSelected.value.includes(row.name) ? 'true' : 'false'"
                 @click="toggleInList(store.backupSelected, row.name, !store.backupSelected.value.includes(row.name))"
