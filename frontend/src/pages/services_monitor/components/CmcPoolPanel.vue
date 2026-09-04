@@ -460,7 +460,7 @@ async function deleteSelectedCmcKey(): Promise<void> {
         </thead>
         <tbody>
           <tr v-if="!loaded"><td colspan="20">{{ t('sysmon.loadingPool') }}</td></tr>
-          <tr v-else-if="!rows.length"><td colspan="20" class="cmc-empty">No CMC keys configured.</td></tr>
+          <tr v-else-if="!rows.length"><td colspan="20" class="cmc-empty">{{ t('sysmon.noCmcKeysConfigured') }}</td></tr>
           <tr
             v-for="row in rows"
             v-else
@@ -514,7 +514,7 @@ async function deleteSelectedCmcKey(): Promise<void> {
         </thead>
         <tbody>
           <tr v-if="!loaded"><td colspan="11">{{ t('sysmon.loadingLeases') }}</td></tr>
-          <tr v-else-if="!leaseRows.length"><td colspan="11" class="cmc-empty">No lease records.</td></tr>
+          <tr v-else-if="!leaseRows.length"><td colspan="11" class="cmc-empty">{{ t('sysmon.noLeaseRecords') }}</td></tr>
           <tr v-for="(lease, index) in leaseRows" v-else :key="lease.lease_id ?? index">
             <td>{{ lease.lease_id || '-' }}</td>
             <td>{{ lease.credential_id || '-' }}</td>

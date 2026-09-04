@@ -296,7 +296,7 @@ onUnmounted(stopPolling);
       <div v-if="!Object.keys(summary).length" class="fs-note">{{ t('sysmon.noFetchSummaryYet') }}</div>
       <template v-else>
         <div class="fs-header">
-          <span class="fs-title">Fetch Summary<span v-if="summary.timestamp" class="fs-ts">{{ tsNote(summary.timestamp) }}</span></span>
+          <span class="fs-title">{{ t('sysmon.fetchSummary') }}<span v-if="summary.timestamp" class="fs-ts">{{ tsNote(summary.timestamp) }}</span></span>
         </div>
 
         <div class="fs-summary-row">
@@ -387,12 +387,12 @@ onUnmounted(stopPolling);
       <div v-if="!exchangeKeys.length" class="pm-note">{{ t('sysmon.noPollerMetricsYet') }}</div>
       <template v-else>
         <div class="pm-header">
-          <span class="pm-title">Poller Metrics<span v-if="metrics.timestamp" class="fs-ts">{{ tsNote(metrics.timestamp) }} ago</span></span>
+          <span class="pm-title">{{ t('sysmon.pollerMetrics') }}<span v-if="metrics.timestamp" class="fs-ts">{{ tsNote(metrics.timestamp) }} ago</span></span>
           <Button variant="secondary" size="sm" @click="pmCollapsed = !pmCollapsed" id="pm-toggle-btn" type="button"><PbIcon :icon="pmCollapsed ? PhCaretRight : PhCaretDown" /> {{ pmCollapsed ? t('common.show') : t('common.hide') }}</Button>
         </div>
         <div id="pm-body" :style="pmCollapsed ? { display: 'none' } : {}">
           <div class="pm-section">
-            <div class="pm-section-title">Exchange Pollers</div>
+            <div class="pm-section-title">{{ t('sysmon.exchangePollers') }}</div>
             <div style="overflow-x: auto">
               <table class="pm-table">
                 <thead>
@@ -428,7 +428,7 @@ onUnmounted(stopPolling);
           </div>
 
           <div v-if="semaphoreKeys.length" class="pm-section">
-            <div class="pm-section-title">REST Semaphores</div>
+            <div class="pm-section-title">{{ t('sysmon.restSemaphores') }}</div>
             <div style="overflow-x: auto">
               <table class="pm-table">
                 <thead><tr><th>Exchange</th><th>Slots</th><th>Available</th><th>In Use</th></tr></thead>
@@ -445,7 +445,7 @@ onUnmounted(stopPolling);
           </div>
 
           <div v-if="marketDataKeys.length" class="pm-section">
-            <div class="pm-section-title">Market Data Loops</div>
+            <div class="pm-section-title">{{ t('sysmon.marketDataLoops') }}</div>
             <div style="overflow-x: auto">
               <table class="pm-table">
                 <thead><tr><th>Loop</th><th>Exchange</th><th>Status</th><th>Progress</th><th>Last Run</th><th>Duration</th><th>Current</th></tr></thead>
@@ -467,7 +467,7 @@ onUnmounted(stopPolling);
           </div>
 
           <div v-if="budgetKeys.length" class="pm-section">
-            <div class="pm-section-title">Rate Limit Budgets</div>
+            <div class="pm-section-title">{{ t('sysmon.rateLimitBudgets') }}</div>
             <div style="overflow-x: auto">
               <table class="pm-table">
                 <thead>
