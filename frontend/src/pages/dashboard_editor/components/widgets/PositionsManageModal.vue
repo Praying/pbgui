@@ -31,6 +31,8 @@
  *    which stop updateManageDialogSize from re-centering.
  */
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { PhX } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
@@ -471,7 +473,7 @@ watch(() => props.rows, () => {
         :style="modalStyle" :data-user-moved="userMoved ? '1' : undefined" :data-user-resized="userResized ? '1' : undefined">
         <div :class="dpModalChrome.head" @mousedown="onHeadMouseDown">
           <div :class="dpModalChrome.title">{{ dashT('dash.managePositions', 'Manage positions') }}</div>
-          <Button ref="closeBtnEl" type="button" variant="ghost" :class="dpModalChrome.close" @click="emit('close')">&#x2715;</Button>
+          <Button ref="closeBtnEl" type="button" variant="ghost" :class="dpModalChrome.close" :aria-label="dashT('common.close', 'Close')" @click="emit('close')"><PbIcon :icon="PhX" :size="16" /></Button>
         </div>
         <div :class="dpModalChrome.body">
           <div class="dp-manage-wrap min-h-0 flex-none overflow-auto rounded-lg border border-border-default bg-page" :style="{ maxHeight: tableHeight + 'px' }">

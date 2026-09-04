@@ -24,6 +24,8 @@
  * interactive after its host widget was rebuilt.
  */
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { PhCaretDown } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Input } from '@/shared/components/ui/input';
 import { dashT } from '../lib/i18n';
 import { mselPosition } from '../lib/mselPosition';
@@ -215,7 +217,7 @@ onBeforeUnmount(() => {
       @click="onBtnClick"
     >
       <span>{{ label }}</span>
-      <span class="msel-arrow ml-[0.4rem] shrink-0 text-[0.55rem]">▼</span>
+      <PbIcon :icon="PhCaretDown" :size="12" class="msel-arrow ml-[0.4rem] shrink-0" />
     </div>
     <Teleport to="body">
       <div

@@ -13,7 +13,7 @@
  * numeric counters, so they render as plain template spans here.
  */
 import { computed, onUnmounted, ref, watch } from 'vue';
-import { PhCaretDown, PhCaretRight } from '@phosphor-icons/vue';
+import { PhCaretDown, PhCaretRight, PhCheck, PhArrowElbowDownRight } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -388,7 +388,7 @@ onUnmounted(stopPolling);
       <template v-else>
         <div class="pm-header">
           <span class="pm-title">Poller Metrics<span v-if="metrics.timestamp" class="fs-ts">{{ tsNote(metrics.timestamp) }} ago</span></span>
-          <Button variant="secondary" size="sm" @click="pmCollapsed = !pmCollapsed" id="pm-toggle-btn" type="button"><PbIcon :icon="pmCollapsed ? PhCaretRight : PhCaretDown" /> {{ pmCollapsed ? 'Show' : 'Hide' }}</Button>
+          <Button variant="secondary" size="sm" @click="pmCollapsed = !pmCollapsed" id="pm-toggle-btn" type="button"><PbIcon :icon="pmCollapsed ? PhCaretRight : PhCaretDown" /> {{ pmCollapsed ? t('common.show') : t('common.hide') }}</Button>
         </div>
         <div id="pm-body" :style="pmCollapsed ? { display: 'none' } : {}">
           <div class="pm-section">
@@ -412,7 +412,7 @@ onUnmounted(stopPolling);
                     <td><span :class="!metrics!.exchanges![ex]!.history_cycle_ms ? 'pm-muted' : ''">{{ fmtMs(metrics!.exchanges![ex]!.history_cycle_ms) }}</span></td>
                     <td>{{ metrics!.exchanges![ex]!.history_users || 0 }}</td>
                     <td>
-                      <span v-if="backoffParts(metrics!.exchanges![ex]!).none" class="pm-ok">&#10003;</span>
+                      <span v-if="backoffParts(metrics!.exchanges![ex]!).none" class="pm-ok"><PbIcon :icon="PhCheck" :size="14" /></span>
                       <template v-else>
                         <span v-if="backoffParts(metrics!.exchanges![ex]!).bo" class="pm-err">{{ backoffParts(metrics!.exchanges![ex]!).bo }}s</span>
                         <span v-if="backoffParts(metrics!.exchanges![ex]!).hbo" class="pm-warn">hist:{{ backoffParts(metrics!.exchanges![ex]!).hbo }}s</span>
@@ -490,7 +490,7 @@ onUnmounted(stopPolling);
                       <td><span :class="!metrics!.budgets![ex]!.total_waited_ms ? 'pm-muted' : ''">{{ waitText(metrics!.budgets![ex]!.total_waited_ms) }}</span></td>
                     </tr>
                     <tr v-for="op in budgetOperations(metrics!.budgets![ex]!)" :key="op" style="font-size: 0.85em; opacity: 0.8">
-                      <td style="padding-left: 1.6em" class="pm-muted">&#8627; {{ op }}</td>
+                      <td style="padding-left: 1.6em" class="pm-muted"><PbIcon :icon="PhArrowElbowDownRight" :size="12" class="align-[-1px] inline-block" /> {{ op }}</td>
                       <td></td><td></td><td></td><td></td>
                       <td>{{ metrics!.budgets![ex]!.per_operation![op]!.consumed || 0 }}</td>
                       <td>{{ metrics!.budgets![ex]!.per_operation![op]!.requests || 0 }}</td>

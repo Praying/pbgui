@@ -9,6 +9,7 @@
 import { PhPushPin } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -127,7 +128,7 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
         </div>
         <div id="legacy-results-list-wrap" class="relative h-[25vh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="legacy-results-table">
-            <div v-if="store.visible.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noLegacyResults') }}</div>
+            <EmptyState v-if="store.visible.value.length === 0" class="px-5 py-15" :title="t('v7backtest.noLegacyResults')" />
             <ResultsTable
               v-else
               :rows="store.visible.value"

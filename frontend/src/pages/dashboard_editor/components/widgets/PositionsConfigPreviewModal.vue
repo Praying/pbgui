@@ -10,6 +10,8 @@
  */
 import { computed } from 'vue';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
+import { PhX } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { dashT } from '../../lib/i18n';
 import { previewModalGeometry } from '../../lib/manageLogic';
@@ -41,7 +43,7 @@ const style = computed(() => ({
       >
         <div :class="dpModalChrome.head">
           <div :class="dpModalChrome.title">{{ title }}</div>
-          <Button type="button" variant="ghost" :class="dpModalChrome.close" @click="emit('close')">&#x2715;</Button>
+          <Button type="button" variant="ghost" :class="dpModalChrome.close" :aria-label="dashT('common.close', 'Close')" @click="emit('close')"><PbIcon :icon="PhX" :size="16" /></Button>
         </div>
         <div class="dp-preview-body flex min-h-0 flex-1 flex-col gap-[0.55rem] overflow-hidden p-[0.85rem]">
           <div :class="[dpModalChrome.statusMsg, 'ok text-success-soft']">

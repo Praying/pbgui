@@ -8,6 +8,8 @@
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhCalendar } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -172,7 +174,7 @@ const exportCodecLabel = computed(() => {
             <div style="position:relative">
               <Input id="movie-start-date-input" v-model="store.controls.movieStartDate" type="text" placeholder="YYYY-MM-DD" style="padding-right:28px" @change="store.invalidateMovieRequest()" />
               <!-- ui-migration: blocked — legacy window.__dp datepicker bridge (lib/datePicker.ts); the trigger stays raw -->
-              <button type="button" data-dp="movie-start-date-input" title="Open calendar" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text);padding:0 3px;font-size:var(--fs-sm);line-height:1;cursor:pointer" @click="openDatePicker('movie-start-date-input', $event.currentTarget as HTMLElement)">&#x1F4C5;</button>
+              <button type="button" data-dp="movie-start-date-input" :title="t('v7explore.openCalendar')" :aria-label="t('v7explore.openCalendar')" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent p-0 px-[3px] text-secondary leading-none hover:text-primary" @click="openDatePicker('movie-start-date-input', $event.currentTarget as HTMLElement)"><PbIcon :icon="PhCalendar" :size="14" /></button>
             </div>
           </div>
           <div class="flex flex-col gap-1">

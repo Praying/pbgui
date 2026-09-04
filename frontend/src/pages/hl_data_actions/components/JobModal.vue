@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /*
- * The job modal (:498-506) — log / details / error views. Closes only via
- * the ✕ button (no backdrop click-close; the legacy modal had none either).
+ * The job modal (:498-506) — log / details / error views. Closes via the ✕
+ * button or Escape (backdrop close stays off; the legacy modal had none).
  * Details render the summary/scope grids (renderJobDetails :1851-1904) and
  * pretty-printed payload/progress/last_result blocks; every value renders
  * through interpolation (the renderDetailRows escaping contract).
@@ -9,7 +9,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
-import { Button } from '@/shared/components/ui/button';
+import { Modal } from '@/shared/components/ui/modal';
 import { fmtDay, fmtTS, formatJobDuration } from '../lib/jobsFormat';
 import type { ModalState } from '../composables/useJobsMonitor';
 
@@ -105,16 +105,15 @@ function bodyClass(kind: string): string {
 </script>
 
 <template>
-  <div
-    class="hlda-modal fixed inset-0 z-[1000] items-center justify-center overflow-y-auto bg-backdrop px-5 pt-[calc(var(--hlda-modal-visible-top-offset,0px)_+_20px)] pb-[calc(var(--hlda-modal-visible-bottom-offset,0px)_+_20px)]"
-    :class="modal.active ? 'active flex' : 'hidden'"
+  <Modal
+    :open="modal.active"
+    :title="modal.title || t('market.jobLog')"
+    :backdrop-close="false"
+    panel-class="w-[min(800px,calc(100vw-40px))]"
+    :close-label="t('common.close')"
+    @cancel="$emit('close')"
   >
-    <div class="hlda-modal-box flex max-h-[calc(var(--hlda-modal-visible-height,100dvh)-40px)] w-[min(800px,calc(100vw-40px))] max-w-[800px] flex-col overflow-hidden rounded-lg border border-border-default bg-page">
-      <div class="hlda-modal-hd flex items-center justify-between border-b border-elevated px-4 py-3">
-        <h3 class="text-md font-semibold">{{ modal.title || t('market.jobLog') }}</h3>
-        <Button type="button" variant="ghost" class="hlda-modal-close h-auto border-0 px-1 py-0 text-xl font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('close')">✕</Button>
-      </div>
-      <div class="hlda-modal-body flex-1 overflow-y-auto px-4 py-3 leading-[1.5]" :class="bodyClass(modal.kind)">
+    <div class="hlda-modal-body leading-[1.5]" :class="bodyClass(modal.kind)">
         <template v-if="modal.kind === 'details' && job">
           <div class="hlda-detail-section grid gap-2 rounded-lg border border-secondary/18 bg-page/82 p-3">
             <h4 class="m-0 text-md text-primary">{{ t('market.summary') }}</h4>
@@ -151,7 +150,6 @@ function bodyClass(kind: string): string {
           <div class="hlda-detail-empty text-sm text-muted">{{ t('market.loading') }}</div>
         </template>
         <template v-else>{{ modal.bodyText }}</template>
-      </div>
     </div>
-  </div>
+  </Modal>
 </template>

@@ -70,6 +70,6 @@ defineExpose({
 
 <template>
   <div :id="plotId" ref="chartEl" class="chart-inner" :style="{ height: height + 'px' }">
-    <div v-if="plotlyMissing" style="color: var(--red); padding: var(--sp-md)">Plotly not loaded</div>
+    <div v-if="plotlyMissing" class="p-4 text-danger">{{ t('dash.plotlyNotLoaded') }}</div>
   </div>
 </template>

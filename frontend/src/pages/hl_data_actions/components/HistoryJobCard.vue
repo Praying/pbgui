@@ -7,6 +7,8 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhCaretDown, PhCaretRight } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { fmtBytes, fmtDay, fmtTS, formatJobDuration } from '../lib/jobsFormat';
 import type { JobRecord } from '../types';
@@ -76,7 +78,7 @@ const duration = computed(() => formatJobDuration(props.job));
     </div>
     <div class="hlda-jerr mt-1 text-[12px] text-danger" v-if="job.error">{{ job.error }}</div>
     <div class="hlda-exp mt-1.5" v-if="hasStats || coinPreview">
-      <Button type="button" variant="ghost" size="sm" class="hlda-exp-toggle h-auto border-0 px-0 py-0.5 font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('expand')">{{ expanded ? '▼' : '▶' }} {{ t('market.details') }}</Button>
+      <Button type="button" variant="ghost" size="sm" class="hlda-exp-toggle h-auto border-0 px-0 py-0.5 font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('expand')"><PbIcon :icon="expanded ? PhCaretDown : PhCaretRight" :size="12" class="align-[-1px] inline-block" /> {{ t('market.details') }}</Button>
       <div class="hlda-exp-body pt-1.5 pl-2 text-xs text-secondary" :class="expanded ? 'open block' : 'hidden'">
         <div class="dr mb-0.5" v-if="coinPreview">{{ t('market.coinsLabel', { coins: coinPreview }) }}</div>
         <div class="dr mb-0.5" v-if="onlyMissing !== undefined">{{

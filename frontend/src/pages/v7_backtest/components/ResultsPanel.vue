@@ -13,6 +13,7 @@ import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import CompareModal from './CompareModal.vue';
 import ResultCharts from './ResultCharts.vue';
@@ -210,7 +211,7 @@ defineExpose({ deleteSelectedFlow });
 
       <div id="results-list-wrap" class="relative h-[clamp(220px,34vh,400px)] min-h-36 overflow-auto bg-page/45" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
         <div id="results-list">
-          <div v-if="store.checking.value" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.checkingForResults') }}</div>
+          <LoadingSkeleton v-if="store.checking.value" class="px-5 py-15" :label="t('v7backtest.checkingForResults')" />
           <ResultsTable
             v-else
             :rows="store.visible.value"

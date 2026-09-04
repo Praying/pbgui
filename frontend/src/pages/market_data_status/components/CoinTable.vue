@@ -9,6 +9,8 @@
  *     ellipsized note with a title tooltip
  */
 import { useI18n } from 'vue-i18n';
+import { PhChartBar, PhHourglass } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { formatNextRun, formatTimestamp, resultClass } from '../format';
 import type { CoinRow } from '../types';
 
@@ -40,8 +42,8 @@ function dashIfFalsy(value: string | number): string {
         <tbody>
           <tr v-if="rows.length === 0">
             <td colspan="8" class="mds-empty-state">
-              <div v-if="!received" class="mds-empty-state-icon">&#9203;</div>
-              <div v-else class="mds-empty-state-icon">&#128202;</div>
+              <div v-if="!received" class="mds-empty-state-icon flex justify-center"><PbIcon :icon="PhHourglass" :size="42" /></div>
+              <div v-else class="mds-empty-state-icon flex justify-center"><PbIcon :icon="PhChartBar" :size="42" /></div>
               <div v-if="!received">{{ t('misc.mds.waitingForStatus') }}</div>
               <div v-else>{{ t('misc.mds.noCoinStatusAvailable') }}</div>
             </td>

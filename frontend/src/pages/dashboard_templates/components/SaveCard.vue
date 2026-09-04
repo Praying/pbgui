@@ -10,6 +10,8 @@
 import { onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch } from '@/shared/api';
+import { PhFloppyDisk } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { dashboardsUrl, templatesUrl } from '../config';
@@ -84,7 +86,7 @@ onUnmounted(() => window.clearTimeout(msgTimer));
         :placeholder="t('dash.templateNamePlaceholder')"
         autocomplete="off"
       />
-      <Button id="btn-save" variant="info" size="sm" type="button" class="self-center" @click="save">💾 {{ t('common.save') }}</Button>
+      <Button id="btn-save" variant="info" size="sm" type="button" class="self-center" @click="save"><PbIcon :icon="PhFloppyDisk" :size="14" class="align-[-2px] inline-block" /> {{ t('common.save') }}</Button>
     </div>
     <div id="save-msg" class="msg" :class="msgType" role="status" aria-live="polite">{{ msg }}</div>
   </div>

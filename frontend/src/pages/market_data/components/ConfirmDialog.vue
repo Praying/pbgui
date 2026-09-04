@@ -9,6 +9,8 @@
 import { onBeforeUnmount, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import { PhX } from '@phosphor-icons/vue';
 import type { ConfirmDialogController } from '../composables/useConfirmDialog';
 
 const props = defineProps<{
@@ -52,7 +54,7 @@ watch(
       <div class="ovl-header flex flex-shrink-0 items-center justify-between border-b border-border-subtle bg-card pt-[0.85rem] pr-[1.1rem] pb-[0.85rem] pl-[1.25rem]">
         <div class="ovl-header-title flex items-center gap-[0.5rem] text-md font-bold text-primary" id="confirm-title">{{ dialog.state.value.title }}</div>
         <div class="ovl-header-actions relative z-[3] flex items-center gap-[0.5rem]">
-          <Button class="ovl-close text-md leading-none" variant="ghost" size="sm" id="confirm-close" type="button" aria-label="close" @click="dialog.cancel()">✕</Button>
+          <Button class="ovl-close text-md leading-none" variant="ghost" size="sm" id="confirm-close" type="button" :aria-label="t('common.close')" @click="dialog.cancel()"><PbIcon :icon="PhX" :size="16" /></Button>
         </div>
       </div>
       <div class="confirm-body grid gap-3 p-3">

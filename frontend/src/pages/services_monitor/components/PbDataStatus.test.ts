@@ -301,7 +301,7 @@ describe('PbDataStatus poller metrics rendering (legacy renderPollerMetrics)', (
     ]);
     const perOp = pm.findAll('.pm-table tbody tr')[4]!;
     expect(perOp.findAll('td').map((td) => td.text())).toEqual([
-      '↳ trades', '', '', '', '', '200', '10', '2', '0.9s',
+      'trades', '', '', '', '', '200', '10', '2', '0.9s',
     ]);
   });
 
@@ -311,7 +311,7 @@ describe('PbDataStatus poller metrics rendering (legacy renderPollerMetrics)', (
     });
 
     const row = wrapper.find('#pbdata-poller-metrics-wrap .pm-table tbody tr');
-    expect(row.findAll('td').map((td) => td.text())).toEqual(['okx', '-', '-', '0', '-', '-', '0', '✓', '0', '0', '0']);
+    expect(row.findAll('td').map((td) => td.text())).toEqual(['okx', '-', '-', '0', '-', '-', '0', '', '0', '0', '0']);
   });
 
   it('collapses and expands the metrics body from the toggle button', async () => {

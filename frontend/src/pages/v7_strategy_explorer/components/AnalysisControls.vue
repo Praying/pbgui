@@ -5,6 +5,8 @@
  * the OHLCV source swap repopulates markets (:1169-1178).
  */
 import { useI18n } from 'vue-i18n';
+import { PhCalendar } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
@@ -78,7 +80,7 @@ function onChangeSource(): void {
         <div class="relative">
           <Input id="start-date-input" class="pr-7" v-model="store.controls.startDate" type="text" placeholder="YYYY-MM-DD" :data-tip="t('v7explore.startDateTip')" />
           <!-- ui-migration: blocked — legacy window.__dp datepicker bridge (lib/datePicker.ts); the trigger stays raw -->
-          <button type="button" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0.75 py-0 text-sm leading-none text-primary" data-dp="start-date-input" :title="t('v7explore.openCalendar')" @click="openDatePicker('start-date-input', $event.currentTarget as HTMLElement)">&#x1F4C5;</button>
+          <button type="button" class="absolute right-0.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0.75 py-0 text-sm leading-none text-primary" data-dp="start-date-input" :title="t('v7explore.openCalendar')" :aria-label="t('v7explore.openCalendar')" @click="openDatePicker('start-date-input', $event.currentTarget as HTMLElement)"><PbIcon :icon="PhCalendar" :size="14" /></button>
         </div>
       </div>
       <div class="flex flex-col gap-0.75">

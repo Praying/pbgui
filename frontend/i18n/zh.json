@@ -115,6 +115,8 @@
   "common.ok": "确定",
   "common.refresh": "刷新",
   "common.restore": "还原",
+  "common.show": "显示",
+  "common.hide": "隐藏",
   "common.save": "保存",
   "common.saved": "已保存",
   "common.search": "搜索",

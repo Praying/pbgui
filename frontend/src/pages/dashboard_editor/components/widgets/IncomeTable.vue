@@ -26,7 +26,7 @@
  *    document drag handlers on every rebuild).
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
-import { PhWarning } from '@phosphor-icons/vue';
+import { PhWarning, PhX } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Input } from '@/shared/components/ui/input';
@@ -564,8 +564,8 @@ onBeforeUnmount(() => {
         <Button type="button" size="sm" class="di-btn" @click="onRestoreClick">
           {{ dashT('dash.restore', 'Restore') }}
         </Button>
-        <Button type="button" size="sm" class="di-btn ml-[0.3rem]" @click="backupOpen = false">
-          &#10005;
+        <Button type="button" size="sm" class="di-btn ml-[0.3rem]" :aria-label="dashT('common.cancel', 'Cancel')" @click="backupOpen = false">
+          <PbIcon :icon="PhX" :size="14" />
         </Button>
       </template>
     </div>
