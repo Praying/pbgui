@@ -17,6 +17,9 @@ import {
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import AppShell from '@/shared/components/AppShell.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -273,7 +276,7 @@ onBeforeUnmount(() => {
           <div class="help-reader-container w-full max-w-[920px] mx-auto min-h-full flex flex-col justify-between min-w-0">
             <!-- Global Mode Search Results -->
             <template v-if="globalMode">
-              <div v-if="globalStatus === 'searching'" class="help-loading text-secondary italic p-12 text-center">{{ t('misc.help.searching') }}</div>
+              <LoadingSkeleton v-if="globalStatus === 'searching'" class="p-12" :label="t('misc.help.searching')" />
               <div v-else-if="globalMessage" class="text-muted p-8 text-center bg-card/40 rounded-lg border border-border-subtle">{{ globalMessage }}</div>
               <div v-else-if="globalResults.length" class="gs-results flex flex-col gap-3 py-2 w-full">
                 <div
@@ -300,9 +303,16 @@ onBeforeUnmount(() => {
 
             <!-- Normal In-Topic Reader View -->
             <template v-else>
-              <div v-if="store.contentStatus.value === 'loading'" class="help-loading text-secondary italic p-12 text-center">{{ t('common.loading') }}</div>
-              <div v-else-if="store.contentStatus.value === 'error'" class="help-loading text-secondary italic p-12 text-center">{{ t('misc.help.failedLoadContent') }}</div>
-              <div v-else-if="store.indexStatus.value === 'empty'" class="help-loading text-secondary italic p-12 text-center">{{ t('misc.help.noHelpTopics') }}</div>
+              <LoadingSkeleton v-if="store.contentStatus.value === 'loading'" class="p-12" :label="t('common.loading')" />
+              <ErrorState
+                v-else-if="store.contentStatus.value === 'error'"
+                class="p-12"
+                :title="t('common.error')"
+                :message="t('misc.help.failedLoadContent')"
+                :retry-label="t('market.retry')"
+                @retry="store.loadTopic(store.selected.value)"
+              />
+              <EmptyState v-else-if="store.indexStatus.value === 'empty'" class="p-12" :title="t('misc.help.noHelpTopics')" />
               <template v-else-if="store.topicHtml.value !== null">
                 <!-- markdown: DOMPurify-sanitized in lib/markdown.renderMarkdown before v-html -->
                 <article class="help-article block w-full min-w-full flex-1" v-html="displayHtml"></article>
