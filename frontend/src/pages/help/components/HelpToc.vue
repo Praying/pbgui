@@ -7,6 +7,8 @@
  * innerHTML placeholders from loadHelpIndex (:859, :888).
  */
 import { useI18n } from 'vue-i18n';
+import ErrorState from '@/shared/components/ErrorState.vue';
+import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import { Input } from '@/shared/components/ui/input';
 import type { HelpIndexStatus, HelpTopic } from '../composables/useHelpContent';
 
@@ -59,15 +61,17 @@ function tocItemClass(isActive: boolean): string {
       />
     </div>
     <div id="help-toc-list" class="flex-1 overflow-y-auto py-2">
-      <div v-if="status === 'loading'" class="help-loading text-secondary italic p-7 text-center">{{ t('common.loading') }}</div>
-      <div v-else-if="status === 'error'" class="help-loading text-secondary italic p-7 text-center">{{ t('misc.help.failedLoadTopics') }}</div>
+      <LoadingSkeleton v-if="status === 'loading'" class="p-7" :label="t('common.loading')" />
+      <ErrorState v-else-if="status === 'error'" class="p-7" :title="t('common.error')" :message="t('misc.help.failedLoadTopics')" />
       <template v-else>
-        <div
+        <button
           v-for="entry in entries"
           :key="entry.topic.file"
+          type="button"
           :class="tocItemClass(entry.index === selected)"
+          :aria-current="entry.index === selected ? 'true' : undefined"
           @click="emit('select', entry.index)"
-        >{{ entry.topic.title }}</div>
+        >{{ entry.topic.title }}</button>
       </template>
     </div>
   </div>

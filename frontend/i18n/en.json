@@ -3074,6 +3074,7 @@
   "sysmon.helpTypeSearchTerm": "Type a search term to find across all topics.",
   "sysmon.helpZeroFound": "0 found",
   "sysmon.fetchSummary": "Fetch Summary",
+  "sysmon.prices": "Prices",
   "sysmon.pollerMetrics": "Poller Metrics",
   "sysmon.exchangePollers": "Exchange Pollers",
   "sysmon.restSemaphores": "REST Semaphores",

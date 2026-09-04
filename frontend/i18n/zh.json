@@ -3074,6 +3074,7 @@
   "sysmon.helpTypeSearchTerm": "输入搜索词以在全部主题中查找。",
   "sysmon.helpZeroFound": "找到 0 条",
   "sysmon.fetchSummary": "拉取概要",
+  "sysmon.prices": "价格",
   "sysmon.pollerMetrics": "轮询器指标",
   "sysmon.exchangePollers": "交易所轮询器",
   "sysmon.restSemaphores": "REST 信号量",

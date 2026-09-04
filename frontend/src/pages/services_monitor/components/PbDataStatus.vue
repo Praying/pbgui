@@ -321,8 +321,8 @@ onUnmounted(stopPolling);
               <div class="fs-cnt"><span class="fs-dot-rest">&#9679;</span><span class="fs-cnt-lbl">REST</span><span class="fs-cnt-val">&nbsp;{{ (summary.orders?.rest ?? []).length }}</span></div>
             </div>
           </div>
-          <div class="fs-group fs-group-clickable" :title="t('sysmon.clickToViewPrices')" @click="emit('open-prices')">
-            <div class="fs-group-title">Prices</div>
+          <div class="fs-group fs-group-clickable" role="button" tabindex="0" :title="t('sysmon.clickToViewPrices')" :aria-label="t('sysmon.clickToViewPrices')" @click="emit('open-prices')" @keydown.enter.prevent="emit('open-prices')" @keydown.space.prevent="emit('open-prices')">
+            <div class="fs-group-title">{{ t('sysmon.prices') }}</div>
             <div class="fs-group-body">
               <div class="fs-cnt"><span class="fs-dot-ws">&#9679;</span><span class="fs-cnt-lbl">WS</span><span class="fs-cnt-val">&nbsp;{{ pricesCounters.activeCount }}/{{ pricesCounters.total }}</span></div>
               <div class="fs-cnt"><span class="fs-cnt-lbl">Sym</span><span class="fs-cnt-val">&nbsp;{{ pricesCounters.totalSymbols }}</span></div>
