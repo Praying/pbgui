@@ -67,7 +67,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="page.state.dynamicIgnore" id="dynamic-ignore-preview" class="mb-3">
+  <div v-if="page.state.dynamicIgnore" id="dynamic-ignore-preview">
     <div class="text-sm text-secondary mb-1">
       {{ t('v7run.dynamicIgnorePreview') }}
     </div>

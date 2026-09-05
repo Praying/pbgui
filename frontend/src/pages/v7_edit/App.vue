@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
     <!-- Main content (:568). The legacy sidebar column (:545-565) became a
          top strip (v7_run precedent): same buttons, ids and gating; the
          drag-resize handle left with the column. -->
-    <div class="workbench-page-content flex-1 overflow-y-auto p-[var(--page-padding)]">
+    <div class="workbench-page-content flex flex-1 flex-col gap-[var(--component-gap)] overflow-y-auto p-[var(--page-padding)]">
       <div class="page-toolbar" role="toolbar" :aria-label="t(adapter.sidebarTitleKey)">
         <span class="sb-label">{{ t(adapter.sidebarTitleKey) }}</span>
         <hr class="sb-sep" />
@@ -268,7 +268,7 @@ onBeforeUnmount(() => {
       </div>
       <section
         v-if="migrationReviewFields.length"
-        class="mb-4 rounded-md border border-l-4 border-l-warning border-warning/48 bg-warning/10 px-3.5 py-3 leading-[1.45] text-warning-soft"
+        class="rounded-md border border-l-4 border-l-warning border-warning/48 bg-warning/10 px-3.5 py-3 leading-[1.45] text-warning-soft"
         data-test="migration-review-notice"
         role="status"
       >
@@ -347,6 +347,13 @@ body {
   width: 100%;
   max-width: 1420px;
   margin-inline: auto;
+}
+
+/* The flex gap above is this page's inter-card rhythm; the shared
+   .page-toolbar rule's bottom margin would double-space the strip,
+   so zero it here (v7_run still relies on the shared margin). */
+.workbench-page-content > .page-toolbar {
+  margin-bottom: 0;
 }
 
 /* ── Shared editor form system ─────────────────────────────────
