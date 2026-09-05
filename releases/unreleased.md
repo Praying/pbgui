@@ -1,5 +1,10 @@
 # Unreleased
 
+## PBv8 回测与优化列表视觉统一
+
+- **统一列表节奏**：统一回测配置、回测结果、优化配置和优化结果列表的工具栏、滚动容器、表头、行高、分隔线、悬停态和固定操作区，改善密集数据浏览时的横向与纵向对齐。
+- **保留交互语义**：不改变排序、整行选择、拖拽范围选择、双击编辑和结果操作，仅将优化列表的操作按钮收纳到一致的操作组中。
+
 ## Merge origin/main v2.01.11 into the Vue3 Migration Branch (合并 main 至 Vue3 分支)
 
 - **Upstream release sync**: Merged `origin/main` commit `e8eeea6d` (`v2.01.11`) into `feature/frontend-vue3-migration`.

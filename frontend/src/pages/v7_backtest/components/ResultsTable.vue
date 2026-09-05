@@ -137,7 +137,7 @@ onBeforeUnmount(() => dragSelect.dispose());
     </div>
   </div>
   <div v-else ref="wrap" class="relative">
-    <table class="tbl min-w-max">
+    <table class="tbl pbgui-list-table min-w-max">
       <thead>
         <tr>
           <th

@@ -617,12 +617,14 @@ body { overflow: hidden; }
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: 9px 10px;
-  background: var(--bg-card);
+  height: 34px;
+  padding: 8px 10px;
+  background: var(--surface-panel);
   border-bottom: 2px solid var(--border-default);
   color: var(--text-secondary);
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.045em;
   text-align: left;
   text-transform: uppercase;
   white-space: nowrap;
@@ -630,16 +632,16 @@ body { overflow: hidden; }
 
 .opt-table td {
   max-width: 300px;
-  min-height: 46px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-default);
+  height: 42px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.opt-table tbody tr { cursor: pointer; }
-.opt-table tbody tr:hover td { background: rgb(var(--accent-rgb) / 0.05); }
+.opt-table tbody tr { cursor: pointer; transition: background-color var(--motion-fast) var(--ease-standard); }
+.opt-table tbody tr:hover td { background: rgb(var(--accent-rgb) / 0.055); }
 .opt-table tbody tr.selected td { background: rgb(var(--accent-rgb) / 0.12); }
 .opt-table tbody tr.selected td:first-child {
   border-left: 3px solid var(--accent);
@@ -775,7 +777,16 @@ body { overflow: hidden; }
 }
 
 .opt-table td:last-child > [data-slot='button'] {
-  margin: 2px 4px 2px 0;
+  margin: 0;
+}
+
+.opt-table td.pbgui-list-actions {
+  min-width: max-content;
+  padding-right: 12px;
+}
+
+.opt-table .pbgui-list-actions__group {
+  gap: 4px;
 }
 
 .opt-table tbody tr:last-child td {

@@ -1859,6 +1859,90 @@
     cursor: default;
   }
 
+  /* ── Workbench list surfaces ─────────────────────────────────
+     PBv8 backtest and optimize use different table contracts for historical
+     reasons. These primitives align their toolbars, scroll frames, and
+     action rails without changing data-specific columns or interactions. */
+
+  .pbgui-list-toolbar {
+    border-color: rgb(var(--text-secondary-rgb) / 0.13);
+    background: rgb(var(--bg-page-rgb) / 0.28);
+  }
+
+  .pbgui-list-wrap {
+    background: var(--surface-deep);
+    scrollbar-color: var(--border-strong) transparent;
+    scrollbar-width: thin;
+  }
+
+  .pbgui-list-wrap::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  .pbgui-list-wrap::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .pbgui-list-wrap::-webkit-scrollbar-thumb {
+    border-radius: var(--radius-full);
+    background: var(--border-strong);
+  }
+
+  .pbgui-list-actions__group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--control-gap);
+  }
+
+  .pbgui-list-table th {
+    height: 34px;
+    padding: 8px 10px;
+    background: var(--surface-panel);
+    border-bottom: 2px solid var(--border-default);
+    color: var(--text-secondary);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .pbgui-list-table td {
+    height: 42px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
+    line-height: 1.25;
+  }
+
+  .pbgui-list-table tbody tr {
+    transition: background-color var(--motion-fast) var(--ease-standard);
+  }
+
+  .pbgui-list-table tbody tr:hover td {
+    background: rgb(var(--accent-rgb) / 0.055);
+  }
+
+  .pbgui-list-table th:last-child,
+  .pbgui-list-table td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--surface-deep);
+    box-shadow: -10px 0 16px -16px rgb(0 0 0 / 0.9);
+  }
+
+  .pbgui-list-table th:last-child {
+    z-index: 3;
+    background: var(--surface-panel);
+  }
+
+  .pbgui-list-table tbody tr:hover td:last-child {
+    background: rgb(var(--accent-rgb) / 0.055);
+  }
+
   /* ── Forms ──────────────────────────────────────────────────── */
 
   .form-group {

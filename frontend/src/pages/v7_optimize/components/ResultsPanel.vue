@@ -46,7 +46,7 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="opt-panel-controls mb-2.5 flex flex-wrap items-center gap-2.5">
+  <div class="opt-panel-controls pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
     <div class="opt-panel-search">
       <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
     </div>
@@ -58,8 +58,8 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" data-test="select-all-results" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
-    <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+  <div ref="wrap" class="opt-table-wrap pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <table class="opt-table pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><th @click="emit('sort', 'result')">{{ t('v7optimize.thResult') }}</th><th v-if="isV8" @click="emit('sort', 'strategy')">{{ t('v7optimize.thStrategy') }}</th><th @click="emit('sort', 'pareto_count')">{{ t('v7optimize.thParetos') }}</th><th @click="emit('sort', 'mode')">{{ t('v7optimize.thMode') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr v-for="row in rows" :key="path(row)" :data-path="path(row)" :class="{ selected: selected.has(path(row)), 'is-open': selectedPath === path(row) }" @dblclick="hasPareto(row) && emit('open', row)">
@@ -69,14 +69,16 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td class="tabular-nums font-semibold">{{ row.pareto_count ?? 0 }}</td>
           <td>{{ mode(row) }}</td>
           <td class="tabular-nums text-xs text-secondary">{{ row.modified || '—' }}</td>
-          <td class="whitespace-nowrap! overflow-visible!" @click.stop>
-            <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="paretos" @click="emit('open', row)">{{ t('v7optimize.paretos') }}</Button>
-            <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="explorer" @click="emit('action', row, 'explorer')">{{ t('v7optimize.paretoExplorer') }}</Button>
-            <Button type="button" variant="default" size="sm" v-if="supportsDash(row)" data-action="dash" @click="emit('action', row, 'dash')">{{ t('v7optimize.pdParetoDash') }}</Button>
-            <Button type="button" variant="default" size="sm" v-if="supports3d(row)" data-action="plot3d" @click="emit('action', row, 'plot3d')">{{ t('v7optimize.plot3d') }}</Button>
-            <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="continue" @click="emit('action', row, 'continue')">{{ t('v7optimize.continueOptimize') }}</Button>
-            <Button type="button" variant="default" size="sm" v-if="resumable(row)" data-action="resume" @click="emit('action', row, 'resume')">{{ t('v7optimize.resumeCheckpoint') }}</Button>
-            <Button type="button" variant="default" size="sm" v-if="hasConfig(row)" data-action="config" @click="emit('action', row, 'config')">{{ t('v7optimize.configDraft') }}</Button>
+          <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
+            <div class="pbgui-list-actions__group">
+              <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="paretos" @click="emit('open', row)">{{ t('v7optimize.paretos') }}</Button>
+              <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="explorer" @click="emit('action', row, 'explorer')">{{ t('v7optimize.paretoExplorer') }}</Button>
+              <Button type="button" variant="default" size="sm" v-if="supportsDash(row)" data-action="dash" @click="emit('action', row, 'dash')">{{ t('v7optimize.pdParetoDash') }}</Button>
+              <Button type="button" variant="default" size="sm" v-if="supports3d(row)" data-action="plot3d" @click="emit('action', row, 'plot3d')">{{ t('v7optimize.plot3d') }}</Button>
+              <Button type="button" variant="default" size="sm" v-if="hasPareto(row)" data-action="continue" @click="emit('action', row, 'continue')">{{ t('v7optimize.continueOptimize') }}</Button>
+              <Button type="button" variant="default" size="sm" v-if="resumable(row)" data-action="resume" @click="emit('action', row, 'resume')">{{ t('v7optimize.resumeCheckpoint') }}</Button>
+              <Button type="button" variant="default" size="sm" v-if="hasConfig(row)" data-action="config" @click="emit('action', row, 'config')">{{ t('v7optimize.configDraft') }}</Button>
+            </div>
           </td>
         </tr>
         <tr v-if="!rows.length">

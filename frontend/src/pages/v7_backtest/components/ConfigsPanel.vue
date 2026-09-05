@@ -192,7 +192,7 @@ defineExpose({
 
 <template>
   <div>
-    <div v-if="configs.length > 0" id="configs-toolbar" class="mb-2 flex flex-wrap items-center gap-2">
+    <div v-if="configs.length > 0" id="configs-toolbar" class="pbgui-list-toolbar mb-2 flex flex-wrap items-center gap-2">
       <Input
         v-model="filter"
         type="text"
@@ -248,7 +248,7 @@ defineExpose({
         </Button>
       </div>
     </section>
-    <table v-else class="tbl configs-tbl">
+    <table v-else class="tbl pbgui-list-table configs-tbl">
       <thead>
         <tr>
           <th class="check-col">
