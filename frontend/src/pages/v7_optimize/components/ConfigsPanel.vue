@@ -46,8 +46,8 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="opt-panel-controls pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
-    <div class="opt-panel-search">
+  <div class="opt-panel-controls opt-filter-bar pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
+    <div class="opt-panel-search" role="search">
       <Input
         class="min-w-60"
         :model-value="search"
@@ -55,7 +55,7 @@ onBeforeUnmount(() => dragSelect.dispose());
         @update:model-value="emit('update:search', String($event ?? ''))"
       />
     </div>
-    <div class="opt-panel-counts">
+    <div class="opt-panel-counts" aria-live="polite">
       <span class="opt-panel-count">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
       <span v-if="selectedCount" class="opt-panel-count opt-panel-count--selected">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
     </div>
@@ -63,8 +63,8 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="opt-table-wrap pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
-    <table class="opt-table pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+  <div ref="wrap" class="opt-table-wrap opt-table-wrap--configs pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <table class="opt-table opt-table--configs pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><th @click="emit('sort', 'exchange')">{{ t('v7optimize.thExchange') }}</th><th v-if="isV8" @click="emit('sort', 'strategy')">{{ t('v7optimize.thStrategy') }}</th><th @click="emit('sort', 'backtest_count')">{{ t('v7optimize.thBacktests') }}</th><th @click="emit('sort', 'start')">{{ t('v7optimize.thStart') }}</th><th @click="emit('sort', 'end')">{{ t('v7optimize.thEnd') }}</th><th>{{ t('v7optimize.thFlags') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr
@@ -74,13 +74,18 @@ onBeforeUnmount(() => dragSelect.dispose());
           :class="{ selected: selected.has(rowName(row)) }"
           @dblclick="emit('edit', rowName(row))"
         >
-          <td class="font-mono font-medium">{{ rowName(row) }}</td>
-          <td>{{ exchange(row) }}</td>
+          <td class="opt-primary-column">
+            <div class="opt-primary-cell">
+              <span class="opt-primary-label font-mono">{{ rowName(row) }}</span>
+              <span v-if="isV8 && row.strategy" class="opt-secondary-label">{{ row.strategy }}</span>
+            </div>
+          </td>
+          <td><span class="opt-value-chip opt-value-chip--neutral">{{ exchange(row) }}</span></td>
           <td v-if="isV8">{{ row.strategy || '—' }}</td>
-          <td class="tabular-nums">{{ row.backtest_count ?? 0 }}</td>
+          <td class="tabular-nums"><span class="opt-number-chip">{{ row.backtest_count ?? 0 }}</span></td>
           <td class="tabular-nums text-xs text-secondary">{{ value(row, 'start', 'start_date') }}</td>
           <td class="tabular-nums text-xs text-secondary">{{ value(row, 'end', 'end_date') }}</td>
-          <td>{{ flags(row) }}</td>
+          <td><span class="opt-value-chip opt-value-chip--muted">{{ flags(row) }}</span></td>
           <td class="tabular-nums text-xs text-secondary">{{ row.modified || '—' }}</td>
           <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
             <div class="pbgui-list-actions__group">

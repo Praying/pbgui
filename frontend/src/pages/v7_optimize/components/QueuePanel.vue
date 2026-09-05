@@ -94,11 +94,11 @@ function dropRow(row: QueueItem, event: DragEvent): void {
 </script>
 
 <template>
-  <div class="opt-panel-controls mb-2.5 flex flex-wrap items-center gap-2.5">
-    <div class="opt-panel-search">
+  <div class="opt-panel-controls opt-filter-bar mb-2.5 flex flex-wrap items-center gap-2.5">
+    <div class="opt-panel-search" role="search">
       <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
     </div>
-    <div class="opt-panel-counts">
+    <div class="opt-panel-counts" aria-live="polite">
       <span class="opt-panel-count">{{ t('v7optimize.queuedCount', { count: rows.length }) }}</span>
       <span v-if="selectedCount" class="opt-panel-count opt-panel-count--selected">{{ t('v7optimize.queueItemsSelected', { count: selectedCount }) }}</span>
     </div>
@@ -106,17 +106,22 @@ function dropRow(row: QueueItem, event: DragEvent): void {
     <Button type="button" variant="default" size="sm" data-test="select-all-queue" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
-    <table class="opt-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+  <div ref="wrap" class="opt-table-wrap opt-table-wrap--queue min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <table class="opt-table opt-table--queue w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><th @click="emit('sort', 'exchange')">{{ t('v7optimize.thExchange') }}</th><th @click="emit('sort', 'status')">{{ t('v7optimize.thStatus') }}</th><th @click="emit('sort', 'created')">{{ t('v7optimize.thCreated') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr v-for="row in rows" :key="filename(row)" :data-path="filename(row)" draggable="true" :class="{ selected: selected.has(filename(row)) }" @dragstart="dragStart(row, $event)" @dragover.prevent @drop="dropRow(row, $event)">
-          <td class="font-mono font-medium">{{ row.name || filename(row) }}</td>
-          <td>{{ Array.isArray(row.exchange) ? row.exchange.join(', ') : row.exchange || '—' }}</td>
+          <td class="opt-primary-column">
+            <div class="opt-primary-cell">
+              <span class="opt-primary-label font-mono">{{ row.name || filename(row) }}</span>
+              <span class="opt-secondary-label font-mono">{{ filename(row) }}</span>
+            </div>
+          </td>
+          <td><span class="opt-value-chip opt-value-chip--neutral">{{ Array.isArray(row.exchange) ? row.exchange.join(', ') : row.exchange || '—' }}</span></td>
           <td>
             <div class="flex flex-col gap-1">
               <div class="flex items-center gap-2">
-                <span class="pbgui-badge inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="statusClass(row)">
+                <span class="pbgui-badge opt-status-badge inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="statusClass(row)">
                   <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
                   {{ row.status || t('v7optimize.statusQueued') }}
                 </span>
@@ -133,14 +138,15 @@ function dropRow(row: QueueItem, event: DragEvent): void {
             </div>
           </td>
           <td class="tabular-nums text-xs text-secondary">{{ row.created || row.modified || '—' }}</td>
-          <td class="whitespace-nowrap! overflow-visible!" @click.stop>
-            <Button type="button" variant="danger" size="sm" v-if="row.status === 'running' || row.status === 'optimizing'" @click="emit('action', filename(row), 'stop')">{{ t('v7optimize.stop') }}</Button>
-            <Button type="button" variant="default" size="sm" v-else @click="emit('action', filename(row), 'start')">{{ t('v7optimize.start') }}</Button>
-            <Button type="button" variant="default" size="sm" @click="emit('action', filename(row), 'requeue')">{{ t('v7optimize.requeue') }}</Button>
-            <Button type="button" variant="default" size="sm" @click="emit('edit', filename(row))">{{ t('v7optimize.editConfig') }}</Button>
-            <Button type="button" variant="default" size="sm" @click="emit('log', row)">Log</Button>
-            <Button type="button" variant="default" size="sm" data-test="queue-move-up" :title="t('editor.suite.moveUp')" :aria-label="t('editor.suite.moveUp')" @click="emit('move', filename(row), -1)"><PbIcon :icon="PhArrowUp" :size="18" /></Button>
-            <Button type="button" variant="default" size="sm" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="18" /></Button>
+          <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
+            <div class="pbgui-list-actions__group">
+              <Button type="button" :variant="row.status === 'running' || row.status === 'optimizing' ? 'danger' : 'success'" size="sm" @click="emit('action', filename(row), row.status === 'running' || row.status === 'optimizing' ? 'stop' : 'start')">{{ row.status === 'running' || row.status === 'optimizing' ? t('v7optimize.stop') : t('v7optimize.start') }}</Button>
+              <Button type="button" variant="default" size="sm" @click="emit('action', filename(row), 'requeue')">{{ t('v7optimize.requeue') }}</Button>
+              <Button type="button" variant="default" size="sm" @click="emit('edit', filename(row))">{{ t('v7optimize.editConfig') }}</Button>
+              <Button type="button" variant="default" size="sm" @click="emit('log', row)">Log</Button>
+              <Button type="button" variant="default" size="sm" data-test="queue-move-up" :title="t('editor.suite.moveUp')" :aria-label="t('editor.suite.moveUp')" @click="emit('move', filename(row), -1)"><PbIcon :icon="PhArrowUp" :size="18" /></Button>
+              <Button type="button" variant="default" size="sm" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="18" /></Button>
+            </div>
           </td>
         </tr>
         <tr v-if="!rows.length">

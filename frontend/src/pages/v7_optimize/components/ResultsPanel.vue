@@ -46,11 +46,11 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="opt-panel-controls pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
-    <div class="opt-panel-search">
+  <div class="opt-panel-controls opt-filter-bar pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
+    <div class="opt-panel-search" role="search">
       <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
     </div>
-    <div class="opt-panel-counts">
+    <div class="opt-panel-counts" aria-live="polite">
       <span class="opt-panel-count">{{ t('v7optimize.resultSetCount', { count: rows.length }) }}</span>
       <span v-if="selectedCount" class="opt-panel-count opt-panel-count--selected">{{ t('v7optimize.resultsSelected', { count: selectedCount }) }}</span>
     </div>
@@ -58,16 +58,21 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" data-test="select-all-results" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="opt-table-wrap pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
-    <table class="opt-table pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+  <div ref="wrap" class="opt-table-wrap opt-table-wrap--results pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <table class="opt-table opt-table--results pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
       <thead><tr><th @click="emit('sort', 'name')">{{ t('v7optimize.thName') }}</th><th @click="emit('sort', 'result')">{{ t('v7optimize.thResult') }}</th><th v-if="isV8" @click="emit('sort', 'strategy')">{{ t('v7optimize.thStrategy') }}</th><th @click="emit('sort', 'pareto_count')">{{ t('v7optimize.thParetos') }}</th><th @click="emit('sort', 'mode')">{{ t('v7optimize.thMode') }}</th><th @click="emit('sort', 'modified')">{{ t('v7optimize.thModified') }}</th><th>{{ t('v7optimize.thActions') }}</th></tr></thead>
       <tbody ref="tbody">
         <tr v-for="row in rows" :key="path(row)" :data-path="path(row)" :class="{ selected: selected.has(path(row)), 'is-open': selectedPath === path(row) }" @dblclick="hasPareto(row) && emit('open', row)">
-          <td class="font-mono font-medium">{{ displayName(row) }}</td>
-          <td class="max-w-[360px] truncate font-mono text-xs text-secondary" :title="String(row.result || '')">{{ row.result || '—' }}</td>
-          <td v-if="isV8" class="font-mono">{{ row.strategy || '—' }}</td>
-          <td class="tabular-nums font-semibold">{{ row.pareto_count ?? 0 }}</td>
-          <td>{{ mode(row) }}</td>
+          <td class="opt-primary-column">
+            <div class="opt-primary-cell">
+              <span class="opt-primary-label font-mono">{{ displayName(row) }}</span>
+              <span class="opt-secondary-label">{{ mode(row) }}</span>
+            </div>
+          </td>
+          <td class="opt-result-name max-w-[360px] truncate font-mono text-xs" :title="String(row.result || '')">{{ row.result || '—' }}</td>
+          <td v-if="isV8" class="font-mono text-secondary">{{ row.strategy || '—' }}</td>
+          <td class="tabular-nums font-semibold"><span class="opt-number-chip opt-number-chip--accent">{{ row.pareto_count ?? 0 }}</span></td>
+          <td><span class="opt-value-chip opt-value-chip--neutral">{{ mode(row) }}</span></td>
           <td class="tabular-nums text-xs text-secondary">{{ row.modified || '—' }}</td>
           <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
             <div class="pbgui-list-actions__group">

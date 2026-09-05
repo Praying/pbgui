@@ -654,9 +654,13 @@ body { overflow: hidden; }
 }
 
 .core-workbench-shell--optimize .page-toolbar {
-  gap: 6px;
-  margin-bottom: 10px;
-  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
   background: var(--surface-panel);
   box-shadow: var(--shadow-panel);
 }
@@ -671,17 +675,23 @@ body { overflow: hidden; }
 
 .opt-panel-heading {
   position: relative;
-  padding-left: 12px;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin-bottom: 14px;
+  padding: 2px 0 2px 16px;
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
 }
 
 .opt-panel-heading::before {
   position: absolute;
-  top: 2px;
-  bottom: 2px;
+  top: 5px;
+  bottom: 5px;
   left: 0;
-  width: 3px;
-  border-radius: var(--radius-full);
+  width: 4px;
+  border-radius: 3px;
   background: var(--accent);
+  box-shadow: 0 0 14px rgb(var(--accent-rgb) / 0.3);
   content: '';
 }
 
@@ -693,19 +703,26 @@ body { overflow: hidden; }
 
 .opt-panel-heading p {
   max-width: 70ch;
-  line-height: 1.5;
+  margin-top: 4px;
+  line-height: 1.45;
 }
 
 .opt-panel-controls {
-  min-height: 38px;
-  padding: 6px 8px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: rgb(var(--text-secondary-rgb) / 0.035);
+  min-height: 44px;
+  padding: 7px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
+}
+
+.opt-filter-bar {
+  position: relative;
+  z-index: 2;
 }
 
 .opt-panel-search {
-  width: min(100%, 360px);
+  width: min(100%, 380px);
 }
 
 .opt-panel-search [data-slot='input'] {
@@ -731,6 +748,7 @@ body { overflow: hidden; }
   color: var(--text-secondary);
   font-size: var(--fs-xs);
   font-weight: 600;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
@@ -748,9 +766,10 @@ body { overflow: hidden; }
 }
 
 .opt-table-wrap {
-  border-color: var(--border-subtle);
+  border-color: var(--border-default);
+  border-radius: var(--radius-lg);
   background: var(--surface-deep);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.035);
   scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
 }
@@ -791,6 +810,176 @@ body { overflow: hidden; }
 
 .opt-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Optimize lists are intentionally compact, but the primary identifier and
+   operational status get a second line so dense rows remain scannable. */
+.opt-table tbody tr:nth-child(even):not(:last-child) td {
+  background: rgb(var(--text-secondary-rgb) / 0.018);
+}
+
+.opt-table tbody tr:hover td,
+.opt-table tbody tr:nth-child(even):hover td {
+  background: rgb(var(--accent-rgb) / 0.075);
+}
+
+.opt-table tbody tr.selected td,
+.opt-table tbody tr.selected:hover td {
+  background: rgb(var(--accent-rgb) / 0.14);
+}
+
+.opt-table td {
+  height: 56px;
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+
+.opt-table th {
+  height: 38px;
+  padding: 9px 12px;
+  background: var(--surface-panel);
+  border-bottom-color: var(--border-strong);
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.opt-table th:hover {
+  color: var(--accent-soft);
+}
+
+.opt-table .opt-primary-column {
+  min-width: 220px;
+}
+
+.opt-primary-cell {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.opt-primary-label {
+  display: block;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opt-secondary-label {
+  display: block;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opt-value-chip,
+.opt-number-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  max-width: 220px;
+  padding: 3px 8px;
+  overflow: hidden;
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.16);
+  border-radius: var(--radius-sm);
+  background: rgb(var(--text-secondary-rgb) / 0.055);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opt-value-chip--neutral {
+  border-color: rgb(var(--accent-rgb) / 0.2);
+  background: rgb(var(--accent-rgb) / 0.07);
+  color: var(--accent-soft);
+}
+
+.opt-value-chip--muted {
+  color: var(--text-muted);
+}
+
+.opt-number-chip {
+  min-width: 30px;
+  justify-content: center;
+  padding-inline: 7px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.opt-number-chip--accent {
+  border-color: rgb(var(--success-rgb) / 0.24);
+  background: rgb(var(--success-rgb) / 0.09);
+  color: var(--success-soft);
+}
+
+.opt-result-name {
+  color: var(--text-secondary);
+}
+
+.opt-status-badge {
+  min-width: 82px;
+  justify-content: center;
+  border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
+  letter-spacing: 0.02em;
+}
+
+.opt-table .pbgui-list-actions {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  min-width: max-content;
+  padding-right: 14px;
+  background: var(--surface-deep);
+  box-shadow: -14px 0 22px -22px rgb(0 0 0 / 0.9);
+}
+
+.opt-table tbody tr:nth-child(even) .pbgui-list-actions {
+  background: rgb(22 22 22 / 0.98);
+}
+
+.opt-table tbody tr:hover .pbgui-list-actions {
+  background: rgb(25 32 36 / 0.98);
+}
+
+.opt-table tbody tr.selected .pbgui-list-actions,
+.opt-table tbody tr.selected:hover .pbgui-list-actions {
+  background: rgb(30 43 50 / 0.98);
+}
+
+.opt-table .pbgui-list-actions__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.opt-table .pbgui-list-actions [data-slot='button'] {
+  min-height: 30px;
+  padding-inline: 9px;
+  font-size: 12px;
+}
+
+.opt-table .pbgui-list-actions [data-slot='button'][data-test^='queue-move'] {
+  width: 30px;
+  padding-inline: 0;
+}
+
+.opt-table--queue td:nth-child(3) {
+  min-width: 220px;
+}
+
+.opt-table--results td:nth-child(2) {
+  min-width: 260px;
 }
 
 @media (max-width: 720px) {
