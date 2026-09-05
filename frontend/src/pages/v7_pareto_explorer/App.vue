@@ -264,11 +264,13 @@ function messageClass(level: string): string {
   return `message info rounded-xl border border-accent/30 bg-accent/8 px-3.5 py-3 text-accent-soft`;
 }
 
-/** The .deep-tab-btn / .active pair — complete independent colour sets. */
+/* The deep-intelligence tabs use the same tonal contrast as the shared
+   Button variants: a visible graphite surface when idle and a restrained
+   accent wash when selected, rather than a bright solid accent fill. */
 function deepTabClass(active: boolean): string {
   return active
-    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent bg-accent px-3 py-0 text-primary transition-all duration-150'
-    : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-transparent px-3 py-0 text-secondary transition-all duration-150 hover:border-accent hover:text-primary';
+    ? 'deep-tab-btn active h-8 cursor-pointer rounded-lg border border-accent/35 bg-accent/14 px-3 py-0 text-accent-soft transition-all duration-150 hover:border-accent hover:bg-accent/20'
+    : 'deep-tab-btn h-8 cursor-pointer rounded-lg border border-border-default bg-elevated px-3 py-0 text-secondary transition-all duration-150 hover:border-border-strong hover:bg-border-default hover:text-primary';
 }
 
 const fullLoadBarStyle = computed(() => ({ width: String(store.progress.fullLoad.display) + '%' }));
@@ -404,13 +406,14 @@ onBeforeUnmount(() => {
     <!-- Stage nav lives in the workbench rail; this strip carries only the
          session actions (legacy ctx-actions :767-777). -->
     <div class="page-toolbar" role="toolbar">
-      <Button type="button" id="btn-back-optimize" @click="goBackToOptimize">
+      <Button variant="ghost" type="button" id="btn-back-optimize" @click="goBackToOptimize">
         <span>{{ t('v7explore.backToOptimize') }}</span>
       </Button>
-      <Button type="button" id="btn-run-backtest" @click="requireSelectedConfig">
+      <Button variant="info" type="button" id="btn-run-backtest" @click="requireSelectedConfig">
         <span>{{ t('v7explore.runBacktest') }}</span>
       </Button>
       <Button
+        variant="success"
         v-show="store.isV8.value"
         type="button"
         id="btn-pin-strategy-baseline"
@@ -419,14 +422,14 @@ onBeforeUnmount(() => {
       >
         {{ t('v7explore.pinExplorerBaseline') }}
       </Button>
-      <Button type="button" id="btn-open-strategy-explorer" @click="requireSelectedConfig">
+      <Button variant="outline" type="button" id="btn-open-strategy-explorer" @click="requireSelectedConfig">
         <span>{{ t('v7explore.strategyExplorer') }}</span>
       </Button>
-      <Button type="button" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
+      <Button variant="primary" type="button" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
         <PbIcon v-if="!store.state.fullLoadPending" :icon="PhFolderOpen" />
         {{ store.state.fullLoadPending ? t('v7explore.scanningAllResults') : t('v7explore.scanAllResults') }}
       </Button>
-      <Button v-show="store.state.allResultsLoaded" type="button" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
+      <Button variant="secondary" v-show="store.state.allResultsLoaded" type="button" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
         <span>{{ t('v7explore.showPassivbotParetos') }}</span>
       </Button>
     </div>
@@ -650,5 +653,56 @@ button[data-tip] {
   flex: 1;
   height: 100% !important;
   min-height: 0;
+}
+
+/* ── Explorer layout rhythm ──────────────────────────────────
+   Keep every explorer stage on one spacing scale. The page has several
+   independently-rendered surfaces, so this page-scoped layer normalizes
+   their gaps without changing the shared panel component contract. */
+.core-workbench-shell--explorer .workbench-page-content {
+  gap: 16px;
+  padding: 20px 24px 32px !important;
+}
+
+.core-workbench-shell--explorer .workbench-page-content > .page-toolbar {
+  margin-bottom: 0;
+}
+
+.core-workbench-shell--explorer .stage-grid,
+.core-workbench-shell--explorer .metric-grid,
+.core-workbench-shell--explorer .compact-three-col,
+.core-workbench-shell--explorer .preview-grid,
+.core-workbench-shell--explorer .detail-grid,
+.core-workbench-shell--explorer .overview-grid {
+  gap: 16px;
+}
+
+.core-workbench-shell--explorer .panel-card {
+  padding: 16px;
+}
+
+.core-workbench-shell--explorer .form-grid {
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .core-workbench-shell--explorer .workbench-page-content {
+    gap: 12px;
+    padding: 12px 12px 20px !important;
+  }
+
+  .core-workbench-shell--explorer .stage-grid,
+  .core-workbench-shell--explorer .metric-grid,
+  .core-workbench-shell--explorer .compact-three-col,
+  .core-workbench-shell--explorer .preview-grid,
+  .core-workbench-shell--explorer .detail-grid,
+  .core-workbench-shell--explorer .overview-grid,
+  .core-workbench-shell--explorer .form-grid {
+    gap: 12px;
+  }
+
+  .core-workbench-shell--explorer .panel-card {
+    padding: 12px;
+  }
 }
 </style>
