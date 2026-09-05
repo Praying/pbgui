@@ -2,13 +2,13 @@
 /**
  * ResultsPanel — the results view chrome (:834-869): the sticky toolbar
  * (version/config/text filters, count label :5493-5503, select-all /
- * deselect / pin :6415-6419), the list wrap + resize handle (:853-858),
- * the inline compare area (:862-863) and the charts area (:865), plus
- * deleteSelectedResults' confirm flow (:8509-8532). Takes the results
- * store as its single prop — App owns the store.
+ * deselect / pin :6415-6419), the full-height list wrap + resize handle
+ * (:853-858), the compare area (:862-863), the focused result dialog and
+ * deleteSelectedResults' confirm flow (:8509-8532). Takes the results store
+ * as its single prop — App owns the store.
  */
 import { PhChartLineUp, PhMagnifyingGlass, PhPushPin } from '@phosphor-icons/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -17,6 +17,7 @@ import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import CompareModal from './CompareModal.vue';
 import ResultCharts from './ResultCharts.vue';
+import ResultDetailsDialog from './ResultDetailsDialog.vue';
 import ResultsTable from './ResultsTable.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { ResultsStore } from '../composables/useResults';
@@ -51,6 +52,18 @@ const countLabel = computed<string>(() => {
 
 const selectedCount = computed<number>(() => store.selectedPaths.value.size);
 
+/** The report viewer is a single focused dialog, rather than a stack of
+ * progressively taller inline result sections below the table. */
+const detailsDialogOpen = ref(false);
+const detailsPath = ref<string | null>(null);
+const detailsAction = ref<ResultActionKind | null>(null);
+const detailsSection = computed(() => store.activeResults.value.find((section) => section.result.path === detailsPath.value) ?? null);
+const inlineChartsVisible = computed(() => !detailsDialogOpen.value && (store.activeResults.value.length > 0 || store.compareOpen.value));
+
+watch(detailsSection, (section) => {
+  if (!section && detailsDialogOpen.value) closeDetailsDialog();
+});
+
 const compareTraces = computed<PlotlyTrace[]>(() => store.compareTraces.value as PlotlyTrace[]);
 const compareLayout = computed<PlotlyLayout>(() => store.compareLayout.value as PlotlyLayout);
 
@@ -76,7 +89,33 @@ function onSelectPaths(paths: string[], selected: boolean): void {
 }
 
 function onToggleAction(path: string, kind: ResultActionKind): void {
+  const wasActive = store.actionsByPath.value[path]?.has(kind) ?? false;
+  if (detailsPath.value !== null && detailsPath.value !== path) {
+    store.clearActionsForPaths([detailsPath.value]);
+  }
+  // A result report is easier to scan when one requested surface owns the
+  // dialog. Preserve the store's action state for the surrounding pages, but
+  // replace the previous surface for this result instead of stacking panels.
+  store.clearActionsForPaths([path]);
+  if (wasActive) {
+    if (detailsPath.value === path) closeDetailsDialog();
+    return;
+  }
   store.toggleAction(path, kind);
+  detailsPath.value = path;
+  detailsAction.value = kind;
+  detailsDialogOpen.value = true;
+}
+
+function closeDetailsDialog(): void {
+  if (detailsPath.value !== null) store.clearActionsForPaths([detailsPath.value]);
+  detailsDialogOpen.value = false;
+  detailsPath.value = null;
+  detailsAction.value = null;
+}
+
+function onDetailsDialogOpenChange(open: boolean): void {
+  if (!open) closeDetailsDialog();
 }
 
 function selectAllVisible(): void {
@@ -121,15 +160,12 @@ defineExpose({ deleteSelectedFlow });
 </script>
 
 <template>
-  <!-- results-panel-root must not generate a box: in the legacy page
-       #results-fixed-top and #results-scroll-area were direct children of
-       the #panel-results flex column, so #results-scroll-area's flex:1
-       made it fill + scroll. A wrapping <div> here would sit between them,
-       collapse the flex chain and clip the charts with no scrollbar. -->
-  <div class="results-panel-root contents">
+  <!-- The results panel owns the viewport-height flex chain. The table grows
+       into all remaining space; report content is moved to the dialog below. -->
+  <div class="results-panel-root flex min-h-0 min-w-0 flex-1 flex-col">
     <div
       id="results-fixed-top"
-      class="mb-4 overflow-hidden rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel"
+      class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel"
     >
       <div class="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-secondary/12 px-4 py-3">
         <div class="flex min-w-0 items-center gap-3">
@@ -209,7 +245,11 @@ defineExpose({ deleteSelectedFlow });
         </div>
       </div>
 
-      <div id="results-list-wrap" class="pbgui-list-wrap relative h-[clamp(220px,34dvh,400px)] min-h-36 overflow-auto bg-page/45" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
+      <div
+        id="results-list-wrap"
+        class="pbgui-list-wrap relative min-h-36 flex-1 overflow-auto bg-page/45"
+        :style="wrapHeight !== null ? { height: wrapHeight + 'px', flex: '0 0 auto' } : undefined"
+      >
         <div id="results-list">
           <LoadingSkeleton v-if="store.checking.value" class="px-5 py-15" :label="t('v7backtest.checkingForResults')" />
           <ResultsTable
@@ -232,10 +272,19 @@ defineExpose({ deleteSelectedFlow });
       </div>
     </div>
 
-    <div id="results-scroll-area" class="min-h-0 flex-1 overflow-y-auto pb-5">
+    <div id="results-scroll-area" class="min-h-0 flex-1 overflow-y-auto pb-5" :class="inlineChartsVisible ? '' : 'hidden'">
       <CompareModal :open="store.compareOpen.value" :traces="compareTraces" :layout="compareLayout" />
-      <ResultCharts :sections="store.activeResults.value" :version="store.version" :data-api="store.dataApi" />
+      <ResultCharts v-if="!detailsDialogOpen" :sections="store.activeResults.value" :version="store.version" :data-api="store.dataApi" />
     </div>
+
+    <ResultDetailsDialog
+      :open="detailsDialogOpen"
+      :section="detailsSection"
+      :version="store.version"
+      :data-api="store.dataApi"
+      :action="detailsAction"
+      @update:open="onDetailsDialogOpenChange"
+    />
 
     <div v-if="deleteConfirmOpen" id="modal-root" :class="modalBackdropClass" data-test="results-delete-modal">
       <div :class="modalBoxClass">

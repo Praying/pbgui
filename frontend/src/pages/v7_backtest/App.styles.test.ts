@@ -220,12 +220,15 @@ describe('PBv7 config editor CSS contracts', () => {
 });
 
 describe('results panel flex chain', () => {
-  it('keeps the results wrapper boxless so #results-scroll-area stays a flex child', () => {
-    // A box-generating <ResultsPanel> root would sit between #panel-results
-    // and #results-scroll-area, collapsing the flex chain and clipping charts.
+  it('keeps the results wrapper as the viewport-height flex owner', () => {
+    // The results table now owns the available height. Reports are opened in
+    // a dialog, so the wrapper can safely be an explicit flex column.
     const resultsPanel = readComponent('ResultsPanel.vue');
     expect(resultsPanel).toContain('results-panel-root');
-    expect(resultsPanel).toContain('contents');
+    expect(resultsPanel).toContain('flex min-h-0 min-w-0 flex-1 flex-col');
+    expect(resultsPanel).toContain('relative min-h-36 flex-1 overflow-auto');
+    expect(resultsPanel).not.toContain('h-[clamp(220px,34dvh,400px)]');
+    expect(resultsPanel).not.toContain('results-panel-root contents');
   });
 });
 

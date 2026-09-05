@@ -1025,6 +1025,7 @@ body {
    CSS outranks @layer utilities, so the unpinned release wins). */
 #panel-results.active:not(.unpinned) { height: 100%; }
 #panel-results.active.unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
+#panel-results.active.unpinned .results-panel-root { flex: none; }
 #panel-results.unpinned #results-scroll-area { flex: none; min-height: unset; overflow-y: visible; }
 #panel-archive.active:not(.arc-unpinned) { height: 100%; }
 #panel-archive.active.arc-unpinned { overflow: visible; flex: none; min-height: unset; height: auto; }
@@ -1067,6 +1068,13 @@ body {
   outline-offset: 2px;
   box-shadow: var(--focus-ring);
 }
+#panel-results .actions-column { min-width: 204px; }
+#panel-results .backtest-row-actions { gap: 6px; }
+#panel-results .backtest-row-action {
+  transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+}
+#panel-results .backtest-row-action:hover:not(:disabled) { transform: translateY(-1px); }
+#panel-results .backtest-row-action:active:not(:disabled) { transform: translateY(1px) scale(0.97); }
 .sort-arrow { margin-left: 4px; font-size: var(--fs-xs); }
 /* Configs list: checkbox column + zebra. The checkboxes themselves are
    ui/ Checkbox now — the former .check-col input sizing rule is dead. */

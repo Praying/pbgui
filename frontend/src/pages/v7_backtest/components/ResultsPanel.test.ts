@@ -158,6 +158,19 @@ describe('table area (:853-859)', () => {
     expect(wrapper.find('#results-list').text()).toContain('alpha');
   });
 
+  it('opens the selected report surface in a focused dialog', async () => {
+    const store = await loadedStore();
+    const wrapper = mountPanel(store);
+    await wrapper.find('button[data-action="analysis"][data-path="p1"]').trigger('click');
+    await vi.waitFor(() => {
+      const dialog = document.querySelector('[role="dialog"]');
+      expect(dialog).not.toBeNull();
+      expect(dialog?.textContent).toContain('alpha');
+      expect(dialog?.textContent).toContain('Analysis JSON');
+    });
+    expect(wrapper.find('#results-scroll-area').classes()).toContain('hidden');
+  });
+
   it('the resize handle drag grows the list wrap (:856-858)', async () => {
     const store = await loadedStore();
     const wrapper = mountPanel(store);
