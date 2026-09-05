@@ -46,11 +46,12 @@ export async function queueRebacktests(options: QueueRebacktestsOptions): Promis
           backtest.exchanges = [exchange];
           if (options.pbguiPath) backtest.ohlcv_source_dir = options.pbguiPath;
           cfgForExchange.backtest = backtest;
+          const queueName = options.nameFor(path) + (options.fields.exchanges.length > 1 ? `_${exchange}` : '');
           const response = await fetchFn(`${options.apiBase}/queue`, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: options.nameFor(path), config: cfgForExchange }),
+            body: JSON.stringify({ name: queueName, config: cfgForExchange }),
           });
           if (!response.ok) {
             const data: unknown = await response.json().catch(() => ({}));

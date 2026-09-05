@@ -52,6 +52,21 @@ _PANIC_GLOBAL_MODE = "p"
 _PANIC_OVERRIDE_MODE = "panic"
 _GRACEFUL_STOP_MODE = "graceful_stop"
 _TP_ONLY_MODE = "tp_only"
+_income_restore_active = threading.Event()
+
+
+def restart_block_reason() -> str:
+    """Keep API-owned restore work alive until SQLite commits or rolls back."""
+    return "Income database restore is running. Wait for it to finish." if _income_restore_active.is_set() else ""
+
+
+def _script_json(value: Any) -> str:
+    """Encode inline-script values, including markers used in later replacements."""
+    return (json.dumps(value)
+            .replace("&", "\\u0026")
+            .replace("<", "\\u003c")
+            .replace(">", "\\u003e")
+            .replace("%", "\\u0025"))
 
 
 def _classify_position_orders(orders: list, side: str) -> tuple[int, float, float]:
@@ -1916,7 +1931,7 @@ def set_pending_full(
 def get_editor_page(
     request: Request,
     name: str = Query(default="", description="Dashboard name"),
-    api_base: str = Query(default="", description="API base URL"),
+    api_base: str = Query(default="", description="Legacy iframe parameter (ignored; always same-origin)"),
     view_only: bool = Query(default=False, description="View-only mode (no editing controls)"),
     standalone: bool = Query(default=False, description="Standalone mode (save/cancel post to parent)"),
     session: SessionToken = Depends(require_auth),
@@ -1970,7 +1985,7 @@ def get_main_page(
 def get_templates_page(
     request: Request,
     current: str = Query(default="", description="Currently open dashboard name"),
-    api_base: str = Query(default="", description="API base URL"),
+    api_base: str = Query(default="", description="Legacy iframe parameter (ignored; always same-origin)"),
     session: SessionToken = Depends(require_auth),
 ) -> FileResponse:
     """Serve the template manager popup: the built Vue bundle only.
@@ -2369,10 +2384,15 @@ def delete_income_by_ids(
     db = _get_db()
     # Pause PBData, backup, delete, restart
     was_running = _pbdata_stop()
-    backup = db.backup_full_db()
-    deleted = db.delete_income_by_ids(payload.ids)
-    if was_running:
-        _pbdata_start()
+    try:
+        backup = db.backup_full_db()
+        if not backup:
+            _log(SERVICE, "Income deletion blocked: database backup unavailable", level="WARNING")
+            raise HTTPException(status_code=409, detail="Database backup failed or is busy. No income was deleted.")
+        deleted = db.delete_income_by_ids(payload.ids)
+    finally:
+        if was_running:
+            _pbdata_start()
     return {"deleted": deleted, "backup": backup or ""}
 
 
@@ -2390,10 +2410,15 @@ def delete_income_older(
     """Delete income entries older-than-or-equal to cutoff for given users."""
     db = _get_db()
     was_running = _pbdata_stop()
-    backup = db.backup_full_db()
-    deleted = db.delete_income_older_than(payload.users, payload.cutoff_ms)
-    if was_running:
-        _pbdata_start()
+    try:
+        backup = db.backup_full_db()
+        if not backup:
+            _log(SERVICE, "Income deletion blocked: database backup unavailable", level="WARNING")
+            raise HTTPException(status_code=409, detail="Database backup failed or is busy. No income was deleted.")
+        deleted = db.delete_income_older_than(payload.users, payload.cutoff_ms)
+    finally:
+        if was_running:
+            _pbdata_start()
     return {"deleted": deleted, "backup": backup or ""}
 
 
@@ -2430,21 +2455,37 @@ def restore_income_backup(
     payload: IncomeRestore,
     session: SessionToken = Depends(require_auth),
 ):
-    """Restore the DB from a backup file."""
+    """Restore a validated snapshot atomically without stopping live DB writers."""
     from pbgui_purefunc import PBGDIR
-    backup_dir = Path(f"{PBGDIR}/data/backup/db").resolve()
+    from database_lock import DatabaseBusyError, acquire_database_lock
+    from master_update_lock import MasterUpdateBusyError, acquire_master_runtime_lock
+    from sqlite_backup import InvalidBackupError, RestoreBusyError, restore_sqlite_backup
+
     try:
-        restore_path = Path(payload.path).resolve()
-    except (ValueError, OSError):
-        raise HTTPException(status_code=400, detail="Invalid path")
-    if not restore_path.is_relative_to(backup_dir):
-        raise HTTPException(status_code=400, detail="Path outside backup directory")
-    db = _get_db()
-    was_running = _pbdata_stop()
-    ok = db.restore_db_from(str(restore_path))
-    if was_running:
-        _pbdata_start()
-    return {"ok": ok}
+        # Only the API-owned restore reserves restart admission. Independent
+        # scans and sync workers share a separate database-maintenance lease.
+        with acquire_master_runtime_lock(Path(PBGDIR)), acquire_database_lock(Path(PBGDIR), exclusive=True):
+            _income_restore_active.set()
+            try:
+                restore_sqlite_backup(
+                    Path(payload.path), Path(PBGDIR) / "data" / "pbgui.db",
+                    Path(PBGDIR) / "data" / "backup" / "db",
+                )
+            finally:
+                _income_restore_active.clear()
+    except HTTPException:
+        raise
+    except InvalidBackupError as exc:
+        _log(SERVICE, "Backup validation failed", level="WARNING", meta={"exception_type": type(exc).__name__})
+        raise HTTPException(status_code=400, detail="Backup is not a safe, compatible SQLite snapshot") from exc
+    except (DatabaseBusyError, MasterUpdateBusyError, RestoreBusyError) as exc:
+        _log(SERVICE, "Database restore blocked or timed out", level="WARNING", meta={"exception_type": type(exc).__name__})
+        raise HTTPException(status_code=409, detail="Database restore is busy or blocked by a local operation. Retry after it finishes.") from exc
+    except Exception as exc:
+        _log(SERVICE, "Database restore failed", level="ERROR", meta={"exception_type": type(exc).__name__})
+        raise HTTPException(status_code=500, detail="Database restore failed") from exc
+    _log(SERVICE, "Restored income database from a validated SQLite snapshot", meta={"operation": "restore_db_from"})
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------- PBData helpers
@@ -2805,14 +2846,17 @@ def get_orders_data(
                         "l": c[3], "c": c[4], "v": c[5]} for c in cached]
         else:
             # Cache miss — fetch from exchange and populate cache
-            exchange = _get_exchange(user_obj)
-            symbol_ccxt = _symbol_to_ccxt(symbol)
             try:
+                exchange = _get_exchange(user_obj)
+                symbol_ccxt = _symbol_to_ccxt(symbol)
                 ohlcv = exchange.fetch_ohlcv(
                     symbol_ccxt, "futures",
                     timeframe=timeframe, limit=limit
                 )
-            except Exception:
+            except HTTPException:
+                raise
+            except Exception as exc:
+                _log(SERVICE, "Orders candle fetch failed", level="WARNING", meta={"exception_type": type(exc).__name__})
                 ohlcv = []
             if ohlcv:
                 _ohlcv_cache_put(user, symbol, timeframe, ohlcv)
@@ -2820,14 +2864,17 @@ def get_orders_data(
                         "l": c[3], "c": c[4], "v": c[5]} for c in (ohlcv or [])]
     else:
         # Historical navigation — always fetch from exchange
-        exchange = _get_exchange(user_obj)
-        symbol_ccxt = _symbol_to_ccxt(symbol)
         try:
+            exchange = _get_exchange(user_obj)
+            symbol_ccxt = _symbol_to_ccxt(symbol)
             ohlcv = exchange.fetch_ohlcv(
                 symbol_ccxt, "futures",
                 timeframe=timeframe, limit=limit, since=since
             )
-        except Exception:
+        except HTTPException:
+            raise
+        except Exception as exc:
+            _log(SERVICE, "Orders candle fetch failed", level="WARNING", meta={"exception_type": type(exc).__name__})
             ohlcv = []
         candles = [{"t": c[0], "o": c[1], "h": c[2],
                     "l": c[3], "c": c[4], "v": c[5]} for c in (ohlcv or [])]

@@ -192,10 +192,11 @@ export function useLegacyResults(options: UseLegacyOptions): LegacyResultsStore 
       const backtest = (cfg.backtest as Record<string, unknown> | undefined) ?? {};
       const exchanges = Array.isArray(backtest.exchanges) ? (backtest.exchanges as string[]).map(String) : [];
       const settingsValue = options.getSettings?.().use_pbgui_market_data;
+      const startingBalance = Number(backtest.starting_balance);
       rebacktestDefaults.value = {
         start: String(backtest.start_date || '2020-01-01'),
         end: today,
-        balance: Number(backtest.starting_balance) || 1000,
+        balance: Number.isFinite(startingBalance) ? startingBalance : 1000,
         exchanges: exchanges.length > 0 ? exchanges : ['bybit'],
         // :8207 seeds the checkbox from settings like pbguiMarketDataDefaultCheckedAttr (:1478-1480)
         usePbguiData: settingsValue === true || String(settingsValue).toLowerCase() === 'true',

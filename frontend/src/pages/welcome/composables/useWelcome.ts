@@ -7,14 +7,13 @@
 
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { serverMsg } from '@/shared/i18n';
-import { apiOrigin, bootToken } from '../config';
+import { apiOrigin } from '../config';
 import { loginSecuritySummary, type LoginSecurity } from '../lib/loginSecurity';
 
 /** fetchJson (:985-1000) — non-JSON bodies degrade to {detail: text}. */
-async function fetchJson(url: string, options: RequestInit = {}, token: string): Promise<Record<string, unknown>> {
+async function fetchJson(url: string, options: RequestInit = {}): Promise<Record<string, unknown>> {
   const headers = new Headers(options.headers);
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, credentials: 'same-origin', headers });
   const text = await response.text();
   let data: Record<string, unknown> = {};
   if (text) {
@@ -80,7 +79,6 @@ export type BannerKind = 'info' | 'error' | 'success';
 export type TranslateFn = (key: string, params?: Record<string, unknown>) => string;
 
 export interface UseWelcome {
-  token: Ref<string>;
   banner: Ref<{ message: string; kind: BannerKind }>;
   activeSection: Ref<'overview' | 'setup' | 'password'>;
   bootstrap: Ref<Record<string, any> | null>;
@@ -123,7 +121,6 @@ export interface UseWelcome {
 export function useWelcome(options: { t: TranslateFn }): UseWelcome {
   const t = options.t;
 
-  const token = ref(bootToken());
   const banner = ref<{ message: string; kind: BannerKind }>({ message: '', kind: 'info' });
   const activeSection = ref<'overview' | 'setup' | 'password'>('overview');
   const bootstrap = ref<Record<string, any> | null>(null);
@@ -334,8 +331,20 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
 
   async function loadBootstrap(message = '', kind: BannerKind = 'info'): Promise<void> {
     try {
-      const data = await fetchJson(`${apiOrigin()}/api/auth/bootstrap`, {}, token.value);
-      if (!(data.auth as Record<string, unknown>)?.authenticated) token.value = ''; // :1439
+      let data = await fetchJson(`${apiOrigin()}/api/auth/bootstrap`);
+      const authState = (data.auth || {}) as Record<string, unknown>;
+      if (
+        window.self === window.top &&
+        authState.password_required === false &&
+        authState.authenticated === false &&
+        !authState.error
+      ) {
+        data = await fetchJson(`${apiOrigin()}/api/auth/passwordless-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+      }
       applyBootstrap(data);
       setBanner(message, kind);
     } catch (error) {
@@ -359,7 +368,6 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
             role: role.value,
           }),
         },
-        token.value
       );
       applyBootstrap(data);
       setBanner(serverMsg(String(data.message || '')) || t('misc.welcome.setupSaved'), 'success');
@@ -383,7 +391,6 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
             disable_auth: disableAuth,
           }),
         },
-        token.value
       );
       currentPassword.value = '';
       newPassword.value = '';
@@ -420,7 +427,7 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
 
   async function acknowledgeLoginSecurity(): Promise<void> {
     try {
-      const data = await fetchJson(`${apiOrigin()}/api/auth/login-security/ack`, { method: 'POST' }, token.value);
+      const data = await fetchJson(`${apiOrigin()}/api/auth/login-security/ack`, { method: 'POST' });
       if (bootstrap.value) {
         bootstrap.value = {
           ...bootstrap.value,
@@ -460,7 +467,6 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
       const data = (await fetchJson(
         `${apiOrigin()}/api/auth/browse?path=${encodeURIComponent(path || '')}&mode=${encodeURIComponent(fileBrowser.value.mode)}`,
         {},
-        token.value
       )) as Record<string, any>;
       fileBrowser.value = {
         ...fileBrowser.value,
@@ -491,7 +497,6 @@ export function useWelcome(options: { t: TranslateFn }): UseWelcome {
   }
 
   return {
-    token,
     banner,
     activeSection,
     bootstrap,

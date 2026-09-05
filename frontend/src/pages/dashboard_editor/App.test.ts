@@ -242,7 +242,7 @@ describe('save/cancel flows (editor:2707-2742)', () => {
     expect(body.name).toBe('Draft');
     expect(body.rows).toBe(2);
     expect(body.dashboard_type_1_1).toBe('PNL');
-    expect(parentPost).toHaveBeenCalledWith({ type: 'pbgui_editor_saved', name: 'Draft' }, '*');
+    expect(parentPost).toHaveBeenCalledWith({ type: 'pbgui_editor_saved', name: 'Draft' }, window.location.origin);
   });
 
   it('shows the saved status after a successful save (editor:2712-2721)', async () => {
@@ -297,7 +297,7 @@ describe('save/cancel flows (editor:2707-2742)', () => {
     await message({ type: 'pbgui_trigger_cancel' });
     expect(parentPost).toHaveBeenCalledWith(
       { type: 'pbgui_editor_cancelled', original_name: 'Orig' },
-      '*'
+      window.location.origin
     );
   });
 
@@ -311,7 +311,7 @@ describe('save/cancel flows (editor:2707-2742)', () => {
       (c) => String(c[0]).includes('/dashboards/') && (c[1] as RequestInit | undefined)?.method === 'POST'
     );
     expect(post?.[0]).toBe(`${API}/dashboards/ViewMe`);
-    expect(parentPost).toHaveBeenCalledWith({ type: 'pbgui_view_saved' }, '*');
+    expect(parentPost).toHaveBeenCalledWith({ type: 'pbgui_view_saved' }, window.location.origin);
   });
 
   it('ignores non-object message data (editor:2734)', async () => {

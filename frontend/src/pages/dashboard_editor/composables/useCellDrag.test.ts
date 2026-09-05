@@ -167,6 +167,6 @@ describe('handleCellDrop — cell move (editor:2280-2285)', () => {
     const drag = useCellDrag();
     drag.beginCellDrag(1, 1);
     drag.handleCellDrop(1, 2, dataTransfer({}));
-    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, '*');
+    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, window.location.origin);
   });
 });

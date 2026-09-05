@@ -97,7 +97,7 @@ describe('ResizeHandle', () => {
     env.cell.appendChild(wrap);
 
     await w.get('.resize-handle').trigger('mousedown', { clientY: 300 });
-    expect(env.parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_resize_start' }, '*');
+    expect(env.parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_resize_start' }, window.location.origin);
     expect(w.get('.resize-handle').classes()).toContain('active');
     expect((w.emitted('update:liveHeight') as number[][])[0]).toEqual([500]);
     expect(wrap.style.overflowY).toBe('hidden');
@@ -105,7 +105,7 @@ describe('ResizeHandle', () => {
     document.dispatchEvent(new MouseEvent('mouseup', { clientY: 300 }));
     await nextTick();
     expect(wrap.style.overflowY).toBe('auto'); // restored
-    expect(env.parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_resize_end' }, '*');
+    expect(env.parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_resize_end' }, window.location.origin);
   });
 
   it('clamps the live height to the 120 px minimum during the drag', async () => {
@@ -185,7 +185,7 @@ describe('ResizeHandle', () => {
     document.dispatchEvent(new MouseEvent('mousemove', { clientY: 400 }));
     document.dispatchEvent(new MouseEvent('mouseup', { clientY: 400 }));
     await nextTick();
-    expect(env.parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, '*');
+    expect(env.parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, window.location.origin);
     expect(env.store.state['dashboard_height_1_1']).toBe(600);
   });
 

@@ -200,7 +200,7 @@ describe('clearCell (editor:585-593 + _makeDeleteCb 1021-1024)', () => {
     store.clearCell(1, 1);
     vi.advanceTimersByTime(1000);
     expect(fetchFn).not.toHaveBeenCalled();
-    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, '*');
+    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, window.location.origin);
   });
 });
 
@@ -253,7 +253,7 @@ describe('swapCells (editor:2181-2209)', () => {
     store.swapCells(1, 1, 1, 2);
     vi.advanceTimersByTime(1000);
     expect(fetchFn).not.toHaveBeenCalled();
-    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, '*');
+    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, window.location.origin);
   });
 });
 
@@ -338,7 +338,7 @@ describe('cell height persistence (editor:2373-2505)', () => {
     vi.advanceTimersByTime(1000);
     expect(fetchFn).not.toHaveBeenCalled();
     expect(parent.postMessage).toHaveBeenCalledTimes(2);
-    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, '*');
+    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, window.location.origin);
   });
 });
 
@@ -421,7 +421,7 @@ describe('markViewDirty (editor:612-615)', () => {
     const { parent } = setup({ viewOnly: true });
     const store = useDashboardStore();
     store.markViewDirty();
-    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, '*');
+    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_dirty' }, window.location.origin);
   });
 
   it('swallows parent postMessage failures', () => {
@@ -447,7 +447,7 @@ describe('saveViewLayout (editor:617-626)', () => {
     expect(init?.method).toBe('POST');
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
     expect(body['dashboard_height_1_1']).toBe(420);
-    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_saved' }, '*');
+    expect(parent.postMessage).toHaveBeenCalledWith({ type: 'pbgui_view_saved' }, window.location.origin);
   });
 
   it('stays dirty on failure — no message posted', async () => {

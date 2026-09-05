@@ -336,7 +336,7 @@ function createDashboardStore(config: DashboardStoreConfig): DashboardStore {
 
   function postParentMessage(type: string): void {
     try {
-      parentWindow()?.postMessage({ type }, '*');
+      parentWindow()?.postMessage({ type }, window.location.origin);
     } catch {
       /* legacy swallows cross-origin postMessage failures */
     }

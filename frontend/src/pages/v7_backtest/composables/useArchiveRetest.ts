@@ -57,9 +57,10 @@ export function createArchiveRetestFlows(ctx: ArchiveRetestContext): ArchiveRete
       const cfg = await ctx.archiveResultFetch(selected[0]!, `/results/config?path=${encodeURIComponent(selected[0]!)}`);
       const backtest = (cfg.backtest as Record<string, unknown> | undefined) ?? {};
       const exchanges = Array.isArray(backtest.exchanges) ? (backtest.exchanges as string[]).map(String) : [];
+      const startingBalance = Number(backtest.starting_balance);
       retestDefaults.value = {
         days: archiveRetestDefaultDays(cfg),
-        balance: Number(backtest.starting_balance) || 1000,
+        balance: Number.isFinite(startingBalance) ? startingBalance : 1000,
         exchanges: exchanges.length > 0 ? exchanges : ['bybit'],
         usePbguiData: pbguiMarketDataDefault(),
       };

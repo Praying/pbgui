@@ -1,5 +1,13 @@
 # Unreleased
 
+## 合并主线 v2.02.1 并同步 Vue3 页面行为
+
+- **主线合并**：合并远端 `origin/main` 的单个提交 `11897f6e`（`Release v2.02.1`），吸收认证安全、数据库锁、dashboard 和回归测试更新。
+- **Vue3 欢迎页认证**：欢迎页改用 same-origin session cookie 与显式 passwordless session POST，不再通过 Vue 状态或页面注入传递 session token。
+- **Vue3 回测适配**：多 Exchange rebacktest 队列任务追加 Exchange 名称后缀，并将非有限的 imported starting balance 回退到默认值。
+- **Vue3 dashboard 编辑器**：父子 iframe 的 postMessage 目标限制为当前 origin。
+- **API serial**：保留上游 `api/serial.txt` 从 `2536` 更新至 `2541`。
+
 ## PBv8 回测结果 Dialog 标题栏尺寸微调
 
 - **进一步压缩头部**：将结果详情 Dialog 的标题栏调整为约 42px 高，减少标题、图标和关闭按钮的额外占位。

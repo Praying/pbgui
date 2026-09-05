@@ -90,6 +90,7 @@ function onUp(e: MouseEvent): void {
 }
 
 function onMouseDown(e: MouseEvent): void {
+  if (e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
   const cell = props.cellElement;

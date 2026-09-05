@@ -924,12 +924,10 @@
     <script src="/app/js/pbgui_dialogs.js?v=8"></script>
     <script>
         document.title = PBGuiI18n.t('misc.welcome.title');
-        var TOKEN = "%%TOKEN%%";
         var API_ORIGIN = "%%API_ORIGIN%%";
         var PBGUI_VERSION = "%%VERSION%%";
         var PBGUI_SERIAL = "%%SERIAL%%";
 
-        if (TOKEN === "%%" + "TOKEN%%") TOKEN = "";
         if (API_ORIGIN === "%%" + "API_ORIGIN%%") API_ORIGIN = window.location.origin;
         if (PBGUI_VERSION === "%%" + "VERSION%%") PBGUI_VERSION = "";
         if (PBGUI_SERIAL === "%%" + "SERIAL%%") PBGUI_SERIAL = "";
@@ -941,6 +939,7 @@
 
         var state = {
             bootstrap: null,
+            bootstrapLoading: false,
             passwordOpen: false,
             activeSection: "overview",
             fileBrowser: {
@@ -961,7 +960,6 @@
             window.PBGUI_NAV_CONFIG = {
                 subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.welcome.subtitle') : "WELCOME"),
                 current: "/",
-                token: TOKEN,
                 apiBase: API_BASE,
                 version: PBGUI_VERSION,
                 serial: PBGUI_SERIAL
@@ -970,7 +968,8 @@
 
         function initWelcomeHelp() {
             window.PBGUI_HELP_OPENER = function () {
-                window.location.href = '/api/help/main_page?topic=19_welcome';
+                if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== "function") return;
+                window.PBGuiSharedHelp.open("welcome");
             };
         }
 
@@ -979,7 +978,6 @@
         function authHeaders(jsonBody) {
             var headers = {};
             if (jsonBody !== false) headers["Content-Type"] = "application/json";
-            if (TOKEN) headers["Authorization"] = "Bearer " + TOKEN;
             return headers;
         }
 
@@ -1176,8 +1174,9 @@
         }
 
         function navigateTo(path) {
-            if (!TOKEN) {
-                setBanner(t('misc.welcome.loginRequiredBeforeLeaving'), "error");
+            var auth = (state.bootstrap && state.bootstrap.auth) || {};
+            if (!auth.authenticated) {
+                setBanner("Login required before leaving the welcome page.", "error");
                 focusSection("overview");
                 return;
             }
@@ -1325,7 +1324,7 @@
         function renderSummary(auth, setup) {
             document.getElementById("summary-auth").textContent = auth.authenticated ? t('misc.welcome.authenticated') : t('misc.welcome.guest');
             document.getElementById("summary-auth-copy").textContent = auth.authenticated
-                ? t('misc.welcome.validTokenActive')
+                ? "This browser is authenticated with a protected session cookie."
                 : auth.password_required
                     ? t('misc.welcome.useRootLoginPage')
                     : t('misc.welcome.authenticatedAutomatically');
@@ -1434,14 +1433,26 @@
         }
 
         async function loadBootstrap(message, kind) {
+            if (state.bootstrapLoading) return;
+            state.bootstrapLoading = true;
             try {
-                var headers = TOKEN ? { "Authorization": "Bearer " + TOKEN } : {};
-                var data = await fetchJson(API_ORIGIN + "/api/auth/bootstrap", { headers: headers });
-                if (!data.auth.authenticated) TOKEN = "";
+                var data = await fetchJson(API_ORIGIN + "/api/auth/bootstrap");
+                var auth = data.auth || {};
+                // A static copy of this page must not bootstrap sessions inside an attacker's frame.
+                if (window.self === window.top && auth.password_required === false && auth.authenticated === false && !auth.error) {
+                    data = await fetchJson(API_ORIGIN + "/api/auth/passwordless-session", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: authHeaders(true),
+                        body: "{}"
+                    });
+                }
                 render(data);
                 setBanner(message || "", kind || "info");
             } catch (error) {
-                setBanner(m(error.message), "error");
+                setBanner(error.message, "error");
+            } finally {
+                state.bootstrapLoading = false;
             }
         }
 

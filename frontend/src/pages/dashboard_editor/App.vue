@@ -164,7 +164,7 @@ function retryInit(): void {
 
 function postParent(msg: EditorOutboundMessage): void {
   try {
-    window.parent.postMessage(msg, '*');
+    window.parent.postMessage(msg, window.location.origin);
   } catch {
     /* cross-origin postMessage failures are swallowed (store parity) */
   }

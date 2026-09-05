@@ -400,11 +400,12 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
       }
       const backtest = (cfg.backtest as Record<string, unknown> | undefined) ?? {};
       const exchanges = Array.isArray(backtest.exchanges) ? (backtest.exchanges as string[]).map(String) : [];
+      const startingBalance = Number(backtest.starting_balance);
       const usePbgui = settingsStore.settings.value.use_pbgui_market_data === true || String(settingsStore.settings.value.use_pbgui_market_data).toLowerCase() === 'true';
       resultsRebacktestDefaults.value = {
         start: String(backtest.start_date || '2020-01-01'),
         end: today,
-        balance: Number(backtest.starting_balance) || 1000,
+        balance: Number.isFinite(startingBalance) ? startingBalance : 1000,
         exchanges: exchanges.length > 0 ? exchanges : ['bybit'],
         usePbguiData: usePbgui,
       };

@@ -109,6 +109,10 @@ Zeigt alle ausstehenden, laufenden und abgeschlossenen Backtest-Jobs mit Echtzei
 
 Die Queue-Ansicht beginnt mit Zaehlern fuer wartende, aktive, abgeschlossene und zu pruefende Jobs. Die thematisch einheitliche Tabelle behaelt den Kopf sichtbar, scrollt auf schmalen Bildschirmen horizontal, zeigt die aktuelle Anzahl ausgewaehlter Zeilen und unterstuetzt Auswahl per Klick, Klick-Ziehen, **Enter** oder **Leertaste**. Zeilenaktionen verwenden die gemeinsamen semantischen Button-Farben.
 
+Wird ein Results-Rebacktest oder Queue-Draft in mehrere Exchange-Jobs aufgeteilt, erhalten die Namen einen Exchange-Suffix wie `_binance` oder `_bybit`, damit die Ausgabeverzeichnisse getrennt bleiben. Einzel-Exchange-Jobs behalten ihre bisherigen Namen.
+
+Backtest-Parameterdialoge behandeln importierte Startbalances als endliche Zahlen, niemals als HTML. Ungueltige oder nicht endliche gespeicherte Werte verwenden den Dialogstandard; die angezeigte Balance vor dem Einreihen pruefen.
+
 ### Tabellenspalten
 
 | Spalte | Beschreibung |
