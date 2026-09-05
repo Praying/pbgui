@@ -1071,7 +1071,11 @@ body {
 /* Configs list: checkbox column + zebra. The checkboxes themselves are
    ui/ Checkbox now — the former .check-col input sizing rule is dead. */
 .check-col { width: 34px; padding-left: 8px !important; }
+.configs-tbl { background: var(--surface-deep); }
 .configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td { background: rgb(var(--text-secondary-rgb) / 0.04); }
+.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td:last-child { background: rgb(var(--text-secondary-rgb) / 0.04); }
+.configs-tbl tbody tr:hover td:last-child { background: rgb(var(--accent-rgb) / 0.055); }
+.configs-tbl tbody tr.selected td:last-child { background: rgb(var(--accent-rgb) / 0.12); }
 
 /* ═══════════════════════════════════════════════════════════════
    Shared editor form system — CROSS-PAGE CONTRACT.
