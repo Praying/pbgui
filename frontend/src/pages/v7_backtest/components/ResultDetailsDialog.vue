@@ -50,7 +50,7 @@ function close(): void {
 <template>
   <Modal
     :open="props.open && props.section !== null"
-    panel-class="w-[min(1180px,96vw)]"
+    panel-class="result-details-dialog h-[min(900px,calc(100dvh-2rem))] w-[min(1180px,96vw)]"
     :title="actionLabel"
     :backdrop-close="false"
     :close-label="t('common.close')"
@@ -98,3 +98,13 @@ function close(): void {
     </template>
   </Modal>
 </template>
+
+<style>
+/* The result dialog keeps the report roomy while using a compact 48px
+   header. The selector is intentionally scoped by the panel class because
+   the shared Modal header remains appropriately spacious for form dialogs. */
+.result-details-dialog > div:first-child {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+</style>

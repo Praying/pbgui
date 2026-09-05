@@ -52,7 +52,7 @@ function onOpenChange(open: boolean): void {
       <DialogContent
         :class="props.panelClass"
         aria-modal="true"
-        class="fixed top-1/2 left-1/2 z-[var(--z-modal)] max-h-[85dvh] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[12px] border border-border-default bg-page shadow-[0_20px_70px_rgba(5,8,14,0.9)] focus:outline-none"
+        class="fixed top-1/2 left-1/2 z-[var(--z-modal)] flex max-h-[85dvh] min-h-0 flex-col -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[12px] border border-border-default bg-page shadow-[0_20px_70px_rgba(5,8,14,0.9)] focus:outline-none"
         @escape-key-down="!props.dismissable && $event.preventDefault()"
         @interact-outside="!(props.dismissable && props.backdropClose) && $event.preventDefault()"
         @pointer-down-outside="!(props.dismissable && props.backdropClose) && $event.preventDefault()"
@@ -72,7 +72,7 @@ function onOpenChange(open: boolean): void {
             <PbIcon :icon="PhX" :size="16" />
           </Button>
         </div>
-        <div class="grid gap-3 overflow-y-auto p-5">
+        <div class="grid min-h-0 flex-1 gap-3 overflow-y-auto p-5">
           <slot />
           <div v-if="$slots.footer" class="flex flex-wrap justify-end gap-2">
             <slot name="footer" />

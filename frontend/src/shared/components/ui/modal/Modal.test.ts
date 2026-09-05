@@ -34,6 +34,17 @@ describe('Modal', () => {
     expect(dialog!.querySelector('.modal-body-text')?.textContent).toBe('Are you sure?');
   });
 
+  it('keeps the modal body shrinkable so long content can scroll', async () => {
+    await mountModal();
+
+    const dialog = document.querySelector('[role="dialog"]');
+    const body = dialog?.querySelector('.modal-body-text')?.parentElement;
+    expect(dialog?.className).toContain('flex');
+    expect(body?.className).toContain('min-h-0');
+    expect(body?.className).toContain('flex-1');
+    expect(body?.className).toContain('overflow-y-auto');
+  });
+
   it('emits update:open(false) and cancel on Escape', async () => {
     const onUpdate = vi.fn();
     const onCancel = vi.fn();
