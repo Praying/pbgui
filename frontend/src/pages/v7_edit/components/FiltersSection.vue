@@ -45,15 +45,15 @@ async function onApplyFilters(): Promise<void> {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-border-default bg-panel">
-    <header class="flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2"><h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.filters') }}</h3></header>
+  <section class="edit-section-card overflow-hidden rounded-xl border border-border-default bg-panel">
+    <header class="edit-section-card__header flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2"><h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.filters') }}</h3></header>
     <div class="edit-section-body p-5">
   <div class="form-row cols-8">
     <FieldNumber
       id="f-market-cap"
       v-model="state.marketCap"
       label="market_cap (min M$)"
-      tip="Minimum market capitalisation in million USD. Coins below this threshold are excluded."
+      :tip="t('v7run.tip.marketCap')"
       min="0"
       step="50"
       class="col-span-2"
@@ -62,21 +62,21 @@ async function onApplyFilters(): Promise<void> {
       id="f-vol-mcap"
       v-model="state.volMcap"
       label="vol/mcap"
-      tip="Minimum volume-to-market-cap ratio. Filters out illiquid coins."
+      :tip="t('v7run.tip.volumeToMarketCap')"
       min="0"
       step="0.05"
       class="col-span-2"
     />
     <div class="form-group col-span-2" id="tags-container">
-      <label><span data-tip="Filter by CoinMarketCap category tags (e.g. DeFi, Layer 1). Leave empty to include all.">{{ t('v7run.tags') }}</span></label>
+      <label><span :data-tip="t('v7run.tip.tags')">{{ t('v7run.tags') }}</span></label>
       <MultiSelectField id="ms-tags" v-model="state.tags" :options="ms.options.tags.value" :label="t('v7run.tags')" placeholder="Select tags..." />
     </div>
     <div class="form-group justify-end">
-      <FieldCheck id="f-only-cpt" v-model="state.onlyCpt" label="only_cpt" tip="Only include coins from the CPT (Coin Pool Table) approved list." />
-      <FieldCheck id="f-notices-ignore" v-model="state.noticesIgnore" label="notices_ignore" tip="Automatically ignore coins flagged in the latest PBGui notices." />
+      <FieldCheck id="f-only-cpt" v-model="state.onlyCpt" label="only_cpt" :tip="t('v7run.tip.onlyCpt')" />
+      <FieldCheck id="f-notices-ignore" v-model="state.noticesIgnore" label="notices_ignore" :tip="t('v7run.tip.noticesIgnore')" />
     </div>
     <div class="form-group justify-end">
-      <FieldCheck id="f-apply-filters" v-model="state.applyFilters" label="apply_filters" tip="Enable PBGui coin filters. When unchecked all filters above are ignored." @change="onApplyFilters" />
+    <FieldCheck id="f-apply-filters" v-model="state.applyFilters" label="apply_filters" :tip="t('v7run.tip.applyFilters')" @change="onApplyFilters" />
     </div>
   </div>
 
@@ -120,7 +120,7 @@ async function onApplyFilters(): Promise<void> {
         id="f-dynamic-ignore"
         v-model="state.dynamicIgnore"
         label="dynamic_ignore"
-        tip="Use the current filters and notices to auto-build ignored symbols dynamically at runtime."
+        :tip="t('v7run.tip.dynamicIgnore')"
       />
     </div>
     <div class="form-group"></div>

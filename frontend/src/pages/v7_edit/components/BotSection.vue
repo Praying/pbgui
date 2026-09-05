@@ -87,11 +87,11 @@ function reveal(side: 'long' | 'short'): void {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-border-default bg-panel">
-    <header class="flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2">
+  <section class="edit-section-card overflow-hidden rounded-xl border border-border-default bg-panel">
+    <header class="edit-section-card__header flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2">
       <h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.botConfiguration') }}</h3>
       <div class="form-group ml-auto w-[min(280px,45%)] max-[700px]:ml-0 max-[700px]:w-full" v-show="page.fieldVisible('strategyKind')">
-        <label id="f-strategy-kind-label"><span data-tip="PB8 strategy schema reported by the installed runtime.">strategy_kind</span></label>
+        <label id="f-strategy-kind-label"><span :data-tip="t('v7run.tip.strategyKind')">strategy_kind</span></label>
         <SelectRoot v-model="state.strategyKind" @update:model-value="page.changeStrategyKind(state.strategyKind)">
           <SelectTrigger id="f-strategy-kind" aria-labelledby="f-strategy-kind-label">
             <span>{{ state.strategyKind }}</span>

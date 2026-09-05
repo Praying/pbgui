@@ -33,13 +33,13 @@ const enabledOnLabel = computed(() => page.hosts.gate.label(state.enabledOn, pag
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-border-default bg-panel">
-    <header class="flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2"><h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.basicSettings') }}</h3></header>
+  <section class="edit-section-card overflow-hidden rounded-xl border border-border-default bg-panel">
+    <header class="edit-section-card__header flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2"><h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.basicSettings') }}</h3></header>
     <div class="edit-section-body p-5">
       <div class="form-row cols-8">
     <!-- Row 1: Configuration & Identity -->
     <div class="form-group col-span-2">
-      <label id="f-user-label"><span data-tip="Fetch API key/secret from api-keys.json.">{{ t('v7run.user') }}</span></label>
+      <label id="f-user-label"><span :data-tip="t('v7run.tip.userApiCredentials')">{{ t('v7run.user') }}</span></label>
       <SelectRoot v-model="state.user" @update:model-value="page.onUserChange()">
         <SelectTrigger id="f-user" aria-labelledby="f-user-label">
           <span>{{ state.user }}</span>
@@ -74,7 +74,7 @@ const enabledOnLabel = computed(() => page.hosts.gate.label(state.enabledOn, pag
       v-show="page.fieldVisible('version')"
       v-model="state.version"
       :label="t('v7run.configVersion')"
-      tip="The Version number of the configuration. Required for synchronisation to VPS."
+      :tip="t('v7run.tip.configVersion')"
       min="0"
       step="1"
       :readonly="page.isV8"
@@ -84,7 +84,7 @@ const enabledOnLabel = computed(() => page.hosts.gate.label(state.enabledOn, pag
       v-show="page.fieldVisible('leverage')"
       v-model="state.leverage"
       label="Leverage"
-      tip="Leverage set on exchange"
+      :tip="t('v7run.tip.leverage')"
       min="0"
       max="100"
       step="1"
@@ -95,11 +95,7 @@ const enabledOnLabel = computed(() => page.hosts.gate.label(state.enabledOn, pag
       v-model="state.marginMode"
       label="margin_mode_preference"
       :options="marginModeOptions"
-      tip="Preferred margin mode when symbol supports both cross and isolated.
-auto/auto_cross: prefer cross
-auto_isolated: prefer isolated
-cross: require cross (isolated-only skipped)
-isolated: require isolated (cross-only skipped)"
+      :tip="t('v7run.tip.marginModePreference')"
     />
     <FieldSelect
       id="f-logging-level"
@@ -107,7 +103,7 @@ isolated: require isolated (cross-only skipped)"
       v-model="state.loggingLevel"
       :label="t('v7run.loggingLevel')"
       :options="loggingLevelOptions"
-      tip="0=warning, 1=info, 2=debug, 3=trace"
+      :tip="t('v7run.tip.loggingLevel')"
     />
 
     <!-- Row 2: Timing & Risk -->
@@ -116,7 +112,7 @@ isolated: require isolated (cross-only skipped)"
       v-show="page.fieldVisible('minimum_coin_age_days')"
       v-model="state.minCoinAge"
       label="minimum_coin_age_days"
-      tip="Disallows coins younger than given days"
+      :tip="t('v7run.tip.minimumCoinAge')"
       min="0"
       step="1"
     />
@@ -125,7 +121,7 @@ isolated: require isolated (cross-only skipped)"
       v-show="page.fieldVisible('pnls_max_lookback_days')"
       v-model="state.pnlsLookback"
       label="pnls_max_lookback_days"
-      tip="How far into the past to fetch PnL history"
+      :tip="t('v7run.tip.pnlLookback')"
       min="0"
       max="365"
       step="1"
@@ -135,7 +131,7 @@ isolated: require isolated (cross-only skipped)"
       v-show="page.fieldVisible('warmup_ratio')"
       v-model="state.warmupRatio"
       label="warmup_ratio"
-      tip="Multiplier for EMA span warmup window. 0.0&#8211;1.0"
+      :tip="t('v7run.tip.warmupRatio')"
       min="0"
       max="1"
       step="0.1"
@@ -145,15 +141,13 @@ isolated: require isolated (cross-only skipped)"
       v-show="page.fieldVisible('max_realized_loss_pct')"
       v-model="state.maxLossPct"
       label="max_realized_loss_pct"
-      tip="Global realized-loss gate for close orders anchored to peak realized balance.
-1.0 = disabled (default). &lt;=0.0 = block all lossy closes.
-Example: 0.05 blocks closes once balance would fall below 95% of peak."
+      :tip="t('v7run.tip.maxRealizedLoss')"
       min="0"
       max="2"
       step="0.01"
     />
     <div class="form-group span-4">
-      <label for="f-note"><span data-tip="Personal note for organising instances">{{ t('v7run.note') }}</span></label>
+      <label for="f-note"><span :data-tip="t('v7run.tip.note')">{{ t('v7run.note') }}</span></label>
       <Input id="f-note" v-model="state.note" type="text" placeholder="" />
     </div>
 
@@ -163,7 +157,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
       v-show="page.fieldVisible('initial_entry_exec_max_market_dist_pct')"
       v-model="state.priceDist"
       :label="page.priceDistLabel.value"
-      tip="Executor-side market-distance gate for initial entry posting. Initial entry limit orders are only posted when they are close enough to market. Default 0.005 (0.5%)."
+      :tip="t('v7run.tip.initialEntryDistance')"
       min="0"
       max="1"
       step="0.001"
@@ -173,7 +167,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
       v-show="page.fieldVisible('execution_delay_seconds')"
       v-model="state.execDelay"
       label="execution_delay_seconds"
-      tip="Wait x seconds after executing to exchange"
+      :tip="t('v7run.tip.executionDelay')"
       min="1"
       max="60"
       step="1"
@@ -183,7 +177,7 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
       v-show="page.fieldVisible('market_order_near_touch_threshold')"
       v-model="state.marketOrderThreshold"
       label="market_order_near_touch_threshold"
-      tip="Fractional distance from market price at which a limit order is promoted to market order (requires market_orders_allowed). Default 0.001."
+      :tip="t('v7run.tip.marketOrderThreshold')"
       min="0"
       max="0.1"
       step="0.0001"
@@ -194,13 +188,13 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
         id="f-filter-min-cost"
         v-model="state.filterMinCost"
         label="filter_by_min_effective_cost"
-        tip="Skip coins where balance &#215; WE_limit &#215; entry_initial_qty_pct is below the exchange minimum effective cost."
+        :tip="t('v7run.tip.filterMinEffectiveCost')"
       />
       <FieldCheck
         id="f-market-orders"
         v-model="state.marketOrders"
         label="market_orders_allowed"
-        tip="Allow market orders when price is very close to market price. If false, only limit orders are placed."
+        :tip="t('v7run.tip.marketOrdersAllowed')"
       />
     </div>
     <div class="form-group col-span-2 justify-end" v-show="page.fieldVisible('hedge_mode')">
@@ -208,13 +202,13 @@ Example: 0.05 blocks closes once balance would fall below 95% of peak."
         id="f-hedge-mode"
         v-model="state.hedgeMode"
         label="hedge_mode"
-        tip="Requests simultaneous long and short positions on the same coin when the exchange supports it."
+        :tip="t('v7run.tip.hedgeMode')"
       />
       <FieldCheck
         id="f-auto-gs"
         v-model="state.autoGs"
         label="auto_gs"
-        tip="Automatically enable graceful stop for positions on disapproved coins instead of manual mode."
+        :tip="t('v7run.tip.autoGracefulStop')"
       />
     </div>
       </div>

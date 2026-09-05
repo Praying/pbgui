@@ -236,7 +236,7 @@ onBeforeUnmount(() => {
          drag-resize handle left with the column. -->
     <div
       class="workbench-page-content flex flex-1 flex-col overflow-y-auto p-[var(--page-padding)]"
-      :class="adapter.isV8 ? 'gap-6' : 'gap-[var(--component-gap)]'"
+      :class="adapter.isV8 ? 'gap-4' : 'gap-[var(--component-gap)]'"
     >
       <div class="page-toolbar" role="toolbar" :aria-label="t(adapter.sidebarTitleKey)">
         <span class="sb-label">{{ t(adapter.sidebarTitleKey) }}</span>
@@ -350,6 +350,9 @@ body {
   width: 100%;
   max-width: 1420px;
   margin-inline: auto;
+  /* The content column scrolls; individual cards must keep their natural
+     height instead of shrinking until overflow-hidden clips their fields. */
+  flex-shrink: 0;
 }
 
 /* The flex gap above is this page's inter-card rhythm; the shared
@@ -357,6 +360,75 @@ body {
    so zero it here (v7_run still relies on the shared margin). */
 .workbench-page-content > .page-toolbar {
   margin-bottom: 0;
+}
+
+/* ── Editor card hierarchy ────────────────────────────────────
+   Keep the dense configuration form easy to scan: cards are separated by
+   the page stack while their headers and field areas have distinct surfaces.
+   This is intentionally limited to the editor instead of changing shared
+   panels used by other workbenches. */
+.core-workbench-shell--edit .workbench-page-content {
+  padding: 20px 24px 32px !important;
+}
+
+.core-workbench-shell--edit .edit-section-card,
+.core-workbench-shell--edit #exp-advanced {
+  border-color: var(--border-strong);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.035);
+}
+
+.core-workbench-shell--edit .edit-section-card__header,
+.core-workbench-shell--edit #exp-advanced .expander-header {
+  position: relative;
+  min-height: 46px;
+  padding-inline: 24px;
+}
+
+.core-workbench-shell--edit .edit-section-card__header::before,
+.core-workbench-shell--edit #exp-advanced .expander-header::before {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  width: 3px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  content: '';
+  opacity: 0.85;
+  transform: translateY(-50%);
+}
+
+.core-workbench-shell--edit .edit-section-body,
+.core-workbench-shell--edit #exp-advanced .expander-body {
+  padding: 20px 24px 24px;
+}
+
+.core-workbench-shell--edit .edit-section-body .form-row,
+.core-workbench-shell--edit #exp-advanced .form-row {
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 700px) {
+  .core-workbench-shell--edit .workbench-page-content {
+    padding: 12px 12px 20px !important;
+  }
+
+  .core-workbench-shell--edit .edit-section-card__header,
+  .core-workbench-shell--edit #exp-advanced .expander-header {
+    min-height: 42px;
+    padding-inline: 16px;
+  }
+
+  .core-workbench-shell--edit .edit-section-card__header::before,
+  .core-workbench-shell--edit #exp-advanced .expander-header::before {
+    left: 8px;
+  }
+
+  .core-workbench-shell--edit .edit-section-body,
+  .core-workbench-shell--edit #exp-advanced .expander-body {
+    padding: 16px;
+  }
 }
 
 /* ── Shared editor form system ─────────────────────────────────
