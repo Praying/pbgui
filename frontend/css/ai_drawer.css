@@ -120,6 +120,18 @@
     transform var(--motion-fast, 120ms) var(--ease-standard, ease);
 }
 
+.pai-head .pai-pin {
+  width: 32px;
+  padding: 0;
+  font-size: 15px;
+}
+
+.pai-head .pai-pin[aria-pressed='true'] {
+  border-color: var(--pai-accent);
+  background: rgb(var(--pai-accent-rgb) / 0.16);
+  color: var(--pai-accent-soft);
+}
+
 .pai-head button:hover:not(:disabled),
 .pai-toolbar button:hover:not(:disabled),
 .pai-compose button:hover:not(:disabled),
@@ -387,9 +399,16 @@
   #pbgui-ai-drawer, .pai-body, .pai-head button, .pai-toolbar button, .pai-compose button, .pai-history button, .pai-message-actions { transition: none; }
 }
 
+@media (min-width: 761px) {
+  html.pbgui-ai-drawer-pinned body {
+    width: calc(100% - var(--pbgui-ai-drawer-width, 460px)) !important;
+  }
+}
+
 @media (max-width: 760px) {
   #pbgui-ai-drawer { width: 100vw !important; min-width: 0; height: calc(100dvh - var(--nav-height, 52px)); }
-  .pai-resize { display: none; }
+  .pai-resize,
+  .pai-head .pai-pin { display: none; }
   .pai-body.history-open { grid-template-columns: 156px 1fr; }
   .pai-context-chip { max-width: 170px; }
   .pai-proposals { max-height: 220px; }

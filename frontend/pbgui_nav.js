@@ -552,6 +552,8 @@
     { id: 'system', label: 'System', items: [
       { page: '/',                    icon: 'house',            label: 'Welcome'           },
       { page: 'system_api_keys',      icon: 'key',              label: 'API-Keys'          },
+      { page: 'system_profit_sweep',  icon: 'wallet',           label: 'Profit Sweep'      },
+      { page: 'system_transfers',     icon: 'arrows-left-right', label: 'Transfers'        },
       { page: 'system_cluster',       icon: 'arrows-clockwise', label: 'Cluster Sync'      },
       { page: 'system_services',      icon: 'wrench',           label: 'PBGUI Services'    },
       { page: 'system_db_tools',      icon: 'database',         label: 'DB Tools'          },
@@ -1511,13 +1513,14 @@
     'info_market_data_fastapi': '/api/market-data/main_page',
     'info_ai_chat':      '/api/ai/main_page',
     'system_api_keys':   '/api/api-keys/main_page',
+    'system_profit_sweep': '/api/profit-sweep/main_page',
+    'system_transfers':  '/api/profit-sweep/transfers/main_page',
     'system_cluster':    '/api/cluster/main_page',
     'system_vps_manager_fastapi': '/api/vps-manager/main_page',
     'system_logging':     '/api/logging/main_page',
     'system_vps_monitor': '/api/vps/main_page',
     'system_services':    '/api/services/main_page',
     'system_db_tools':    '/api/db-tools/main_page',
-    'system_profit_sweep': '/api/profit-sweep/main_page',
     'help':               '/api/help/main_page',
     'v7_run':             '/api/v7/main_page',
     'v7_backtest':        '/api/backtest-v7/main_page',
@@ -1540,13 +1543,14 @@
     'info_market_data_fastapi':    '26_market_data',
     'info_ai_chat':                 '45_ai_chat',
     'system_api_keys':             '20_api_keys',
+    'system_profit_sweep':          '46_profit_sweep',
+    'system_transfers':             '47_transfers',
     'system_cluster':              '39_cluster_sync',
     'system_vps_manager_fastapi':  '32_vps_manager',
     'system_logging':              '31_logging',
     'system_vps_monitor':          '29_vps_monitor',
     'system_services':             '23_services_overview',
     'system_db_tools':             '41_db_tools',
-    'system_profit_sweep':         '46_profit_sweep',
     'help':                        '00_overview',
     'v7_run':                      '34_pbv7_run',
     'v7_backtest':                 '35_pbv7_backtest',
@@ -1809,7 +1813,7 @@
       link.href = '/app/css/ai_drawer.css?v=13';
       document.head.appendChild(link);
       var script = document.createElement('script');
-      script.src = '/app/js/ai_drawer.js?v=38';
+      script.src = '/app/js/ai_drawer.js?v=39';
       script.onload = function () { _aiDrawerLoading = false; if (window.PBGuiAI && window.PBGuiAI.open) window.PBGuiAI.open(); };
       script.onerror = function () { _aiDrawerLoading = false; };
       document.head.appendChild(script);

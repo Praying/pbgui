@@ -19,6 +19,8 @@
     busy: false,
     resizing: false,
     drawerWidth: 460,
+    drawerPinned: false,
+    drawerPinnedDirty: false,
     retryMessages: {},
     messageSnapshots: {},
     resolvingProposalIds: new Set(),
@@ -36,6 +38,8 @@
       'ai.drawer.full': 'Full',
       'ai.drawer.fullTitle': 'Open full AI Chat',
       'ai.drawer.close': 'Collapse AI assistant',
+      'ai.drawer.pin': 'Place AI beside PBGui',
+      'ai.drawer.unpin': 'Overlay AI over PBGui',
       'ai.drawer.health': 'Health',
       'ai.drawer.healthTitle': 'Refresh free-model availability',
       'ai.drawer.includeContext': 'Include page context',
@@ -87,6 +91,8 @@
       'ai.drawer.full': '完整页面',
       'ai.drawer.fullTitle': '打开完整 AI 对话页',
       'ai.drawer.close': '收起 AI 助手',
+      'ai.drawer.pin': '将 AI 固定在 PBGui 旁边',
+      'ai.drawer.unpin': '将 AI 覆盖在 PBGui 上方',
       'ai.drawer.health': '健康检查',
       'ai.drawer.healthTitle': '刷新免费模型可用性',
       'ai.drawer.includeContext': '包含当前页面上下文',
@@ -193,6 +199,12 @@
     });
     head.appendChild(history);
     head.appendChild(el('div', 'pai-title', translate('ai.drawer.title', 'PBGui AI')));
+    var pin = el('button', 'pai-pin', '\uD83D\uDCCC');
+    pin.type = 'button';
+    pin.setAttribute('aria-label', translate('ai.drawer.pin', 'Place AI beside PBGui'));
+    pin.setAttribute('aria-pressed', 'false');
+    pin.addEventListener('click', togglePinned);
+    head.appendChild(pin);
     var full = el('button', '', translate('ai.drawer.full', 'Full'));
     full.type = 'button';
     full.title = translate('ai.drawer.fullTitle', 'Open full AI Chat');
@@ -362,7 +374,10 @@
   async function refreshAll() {
     try {
       var preferences = await api('/preferences');
+      if (!state.drawerPinnedDirty) state.drawerPinned = preferences.drawer_pinned === true;
       if (!state.resizing) applyWidth(preferences.drawer_width);
+      else applyDrawerLayout();
+      notifyLayoutChange();
       var status = await api('/status');
       state.providers = status.providers || {};
       await rebuildProviders();
@@ -372,8 +387,46 @@
 
   function applyWidth(value) {
     state.drawerWidth = Math.max(180, Number(value || 460));
-    if (!root || window.innerWidth <= 760) return;
-    root.style.width = Math.round(Math.min(state.drawerWidth, window.innerWidth)) + 'px';
+    applyDrawerLayout();
+  }
+
+  function applyDrawerLayout() {
+    var desktop = window.innerWidth > 760;
+    var maxWidth = state.drawerPinned && desktop ? Math.max(180, window.innerWidth - 360) : window.innerWidth;
+    var width = Math.round(Math.min(state.drawerWidth, maxWidth));
+    var pinned = !!(root && state.open && state.drawerPinned && desktop);
+    if (root && desktop) root.style.width = width + 'px';
+    document.documentElement.style.setProperty('--pbgui-ai-drawer-width', width + 'px');
+    document.documentElement.classList.toggle('pbgui-ai-drawer-pinned', pinned);
+    if (!root) return;
+    root.classList.toggle('pinned', state.drawerPinned);
+    var pin = root.querySelector('.pai-pin');
+    if (!pin) return;
+    pin.setAttribute('aria-pressed', state.drawerPinned ? 'true' : 'false');
+    var pinLabel = state.drawerPinned
+      ? translate('ai.drawer.unpin', 'Overlay AI over PBGui')
+      : translate('ai.drawer.pin', 'Place AI beside PBGui');
+    pin.setAttribute('aria-label', pinLabel);
+    pin.title = pinLabel;
+  }
+
+  function notifyLayoutChange() {
+    window.requestAnimationFrame(function () {
+      if (!window.Plotly || !Plotly.Plots || typeof Plotly.Plots.resize !== 'function') return;
+      document.querySelectorAll('.js-plotly-plot').forEach(function (plot) {
+        if (plot.offsetParent !== null) Plotly.Plots.resize(plot);
+      });
+    });
+  }
+
+  async function togglePinned() {
+    state.drawerPinnedDirty = true;
+    state.drawerPinned = !state.drawerPinned;
+    applyDrawerLayout();
+    notifyLayoutChange();
+    try {
+      await saveDrawerPreferences();
+    } catch (error) { setStatus(error.message, true); }
   }
 
   function saveDrawerPreferences(drawerOpen) {
@@ -383,7 +436,8 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         drawer_width: Math.round(width),
-        drawer_open: drawerOpen == null ? state.open : !!drawerOpen
+        drawer_open: drawerOpen == null ? state.open : !!drawerOpen,
+        drawer_pinned: state.drawerPinned
       })
     });
   }
@@ -412,6 +466,7 @@
         document.body.style.userSelect = previousUserSelect;
         state.resizing = false;
         handle.classList.remove('active');
+        notifyLayoutChange();
         try {
           await saveDrawerPreferences();
         } catch (error) { setStatus(error.message, true); }
@@ -1177,6 +1232,8 @@
     state.open = true;
     root.classList.add('open');
     root.setAttribute('aria-hidden', 'false');
+    applyDrawerLayout();
+    notifyLayoutChange();
     renderContext(collectDisplayContext());
     startContextWatch();
     var button = document.getElementById('pbgui-ai-btn');
@@ -1192,6 +1249,8 @@
     stopContextWatch();
     root.classList.remove('open');
     root.setAttribute('aria-hidden', 'true');
+    applyDrawerLayout();
+    notifyLayoutChange();
     var button = document.getElementById('pbgui-ai-btn');
     if (button) { button.setAttribute('aria-expanded', 'false'); button.focus(); }
     saveDrawerPreferences(false).catch(function (error) { setStatus(error.message, true); });
@@ -1202,6 +1261,10 @@
   facade.close = closeDrawer;
   facade.toggle = function () { state.open ? closeDrawer() : openDrawer(); };
   window.PBGuiAI = facade;
-  window.addEventListener('resize', function () { if (root && window.innerWidth > 760) applyWidth(state.drawerWidth); });
-  window.addEventListener('pagehide', function () { stopPoll(); stopContextWatch(); });
+  window.addEventListener('resize', function () { if (root) applyWidth(state.drawerWidth); });
+  window.addEventListener('pagehide', function () {
+    document.documentElement.classList.remove('pbgui-ai-drawer-pinned');
+    stopPoll();
+    stopContextWatch();
+  });
 }());

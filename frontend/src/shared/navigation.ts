@@ -1,6 +1,7 @@
 import type { Component } from 'vue';
 import {
   PhActivity,
+  PhArrowsLeftRight,
   PhArrowsClockwise,
   PhBookOpen,
   PhChartBar,
@@ -79,6 +80,13 @@ export const WORKBENCH_NAVIGATION = [
         labelKey: 'nav.page.system_profit_sweep',
         href: '/api/profit-sweep/main_page',
         icon: PhWallet,
+        groupId: 'system',
+      },
+      {
+        pageKey: 'system_transfers',
+        labelKey: 'nav.page.system_transfers',
+        href: '/api/profit-sweep/transfers/main_page',
+        icon: PhArrowsLeftRight,
         groupId: 'system',
       },
       {

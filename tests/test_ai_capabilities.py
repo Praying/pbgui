@@ -93,6 +93,18 @@ def test_tool_catalog_separates_reads_from_proposals(tmp_path: Path) -> None:
         item for item in service.responses_tools() if item["name"] == "select_pareto_candidates"
     )
     assert pareto_selection["parameters"]["properties"]["candidate_resources"]["maxItems"] == 1000
+    backtest_list = next(
+        item for item in service.responses_tools() if item["name"] == "list_backtests"
+    )
+    assert backtest_list["parameters"]["properties"]["limit"]["maximum"] == 100
+    assert backtest_list["parameters"]["properties"]["limit"]["minimum"] == 0
+    assert backtest_list["parameters"]["properties"]["offset"]["maximum"] == 5000
+    assert backtest_list["parameters"]["properties"]["name"]["maxLength"] == 128
+    backtest_selection = next(
+        item for item in service.responses_tools() if item["name"] == "select_backtest_results"
+    )
+    assert backtest_selection["parameters"]["properties"]["resources"]["minItems"] == 1
+    assert backtest_selection["parameters"]["properties"]["mode"]["enum"] == ["replace", "add"]
     assert "exchanges" not in pareto_backtests["parameters"]["required"]
 
 
@@ -514,10 +526,70 @@ def test_backtest_compare_capability_resolves_exact_resources_without_paths(
     assert result["selected"] == 2
     assert result["ui_action"]["type"] == "backtest.compare_results"
     assert result["ui_action"]["target"] == {"page_key": "v8_backtest", "version": "v8"}
+    assert result["ui_action"]["payload"]["mode"] == "replace"
     assert "private" not in json.dumps(result)
     assert result["ui_action"]["payload"]["selectors"][0]["config_name"] == "grid"
+    added = service._select_backtest_results(
+        {"version": "v8", "resources": [resources[0]]}
+    )
+    assert added["selected"] == 1
+    assert added["ui_action"]["payload"]["mode"] == "add"
     with pytest.raises(AICapabilityError, match="duplicates"):
         service._select_backtest_results({"version": "v8", "resources": [resources[0], resources[0]]})
+    with pytest.raises(AICapabilityError, match="selection mode"):
+        service._select_backtest_results(
+            {"version": "v8", "resources": resources, "mode": "append"}
+        )
+
+
+def test_list_backtests_can_page_or_filter_to_an_exact_holdout(tmp_path: Path, monkeypatch) -> None:
+    """AI result discovery must reach holdouts beyond the first global result page."""
+    from api import backtest_v8
+
+    service = AICapabilityService(tmp_path / "capabilities")
+    calls = []
+
+    def get_results(*, name, offset, limit, session):
+        calls.append({"name": name, "offset": offset, "limit": limit})
+        return {
+            "results": [
+                {
+                    "path": "/private/holdout",
+                    "config_name": name or "candidate_holdout_01_20260307_180d",
+                    "result_name": "2026-09-04T15_10_00",
+                    "exchange_dir": "combined",
+                }
+            ],
+            "pagination": {
+                "total": 52,
+                "offset": offset,
+                "limit": limit,
+                "returned": 1,
+                "has_more": False,
+                "next_offset": 52,
+            },
+        }
+
+    monkeypatch.setattr(backtest_v8, "get_results", get_results)
+    filtered = service._list_backtests(
+        {
+            "version": "v8",
+            "name": "candidate_holdout_01_20260307_180d",
+            "limit": 100,
+        }
+    )
+    paged = service._list_backtests({"version": "v8", "offset": 50, "limit": 100})
+    all_results = service._list_backtests({"version": "v8", "limit": 0})
+
+    assert calls == [
+        {"name": "candidate_holdout_01_20260307_180d", "offset": 0, "limit": 100},
+        {"name": None, "offset": 50, "limit": 100},
+        {"name": None, "offset": 0, "limit": 0},
+    ]
+    assert paged["pagination"]["next_offset"] == 52
+    assert all_results["returned"] == 1
+    assert filtered["backtests"][0]["resource"].startswith("pbgui://backtest/v8/")
+    assert "private" not in json.dumps(filtered)
 
 
 def test_generic_page_capability_returns_exact_browser_action() -> None:
@@ -1215,6 +1287,32 @@ def test_pb8_json_patch_supports_open_bounded_config_edits() -> None:
         AICapabilityService._apply_json_patch_operation(
             config, {"op": "replace", "path": "/api_key", "value": "secret"}
         )
+    with pytest.raises(AICapabilityError, match="JSON Patch values"):
+        AICapabilityService._apply_json_patch_operation(
+            config,
+            {"op": "replace", "path": "/optimize", "value": {"pbgui": {"version": 1}}},
+        )
+    with pytest.raises(AICapabilityError, match="JSON Patch values"):
+        AICapabilityService._apply_json_patch_operation(
+            config,
+            {
+                "op": "replace",
+                "path": "/optimize/scoring",
+                "value": [{"metric": "gain", "api_key": "secret"}],
+            },
+        )
+
+
+def test_pb8_json_patch_limits_the_complete_result(monkeypatch) -> None:
+    """Individually valid patch values cannot build an oversized final config."""
+
+    monkeypatch.setattr("ai_capabilities._MAX_CONFIG_BYTES", 100)
+
+    with pytest.raises(AICapabilityError, match="Patched config is too large"):
+        AICapabilityService._require_bounded_config(
+            {"first": "a" * 60, "second": "b" * 60},
+            "Patched config",
+        )
 
 
 def test_patch_validation_preserves_existing_protected_paths() -> None:
@@ -1222,6 +1320,7 @@ def test_patch_validation_preserves_existing_protected_paths() -> None:
     original = {
         "backtest": {"base_dir": "original-base", "ohlcv_source_dir": "original-ohlcv"},
         "optimize": {"limits": [{"value": 0.25}]},
+        "pbgui": {"scenario_template": {"template": "sweep_cycles"}},
     }
     prepared = {
         "backtest": {
@@ -1239,6 +1338,52 @@ def test_patch_validation_preserves_existing_protected_paths() -> None:
         "ohlcv_source_dir": "original-ohlcv",
     }
     assert prepared["optimize"]["limits"][0]["value"] == 0.2
+    assert prepared["pbgui"] == original["pbgui"]
+
+
+def test_pb8_patch_proposal_accepts_authoritative_pbgui_metadata(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Stored PBGui provenance must survive safe model patches without draft rejection."""
+    async def scenario() -> None:
+        service = AICapabilityService(tmp_path / "capabilities")
+        current = {
+            "optimize": {"limits": [{"metric": "drawdown", "value": 0.25}]},
+            "pbgui": {"scenario_template": {"template": "sweep_cycles"}},
+        }
+        monkeypatch.setattr(
+            service,
+            "_current_pb8_bundle",
+            lambda name: (copy.deepcopy(current), {}, "sha256:current"),
+        )
+        monkeypatch.setattr(
+            service,
+            "_validate_pb8_config",
+            lambda name, config: copy.deepcopy(config),
+        )
+        captured = {}
+
+        async def capture(owner, conversation_id, action, name, config, **kwargs):
+            captured["config"] = config
+            return {"proposal_id": "a" * 32}
+
+        monkeypatch.setattr(service, "_create_proposal", capture)
+        await service._propose_pb8_config_patch(
+            "b" * 32,
+            "c" * 32,
+            {
+                "name": "DOGE_ema_sweep",
+                "operations": [
+                    {"op": "replace", "path": "/optimize/limits/0/value", "value": 0.2}
+                ],
+            },
+        )
+
+        assert captured["config"]["optimize"]["limits"][0]["value"] == 0.2
+        assert captured["config"]["pbgui"] == current["pbgui"]
+        await service.shutdown()
+
+    asyncio.run(scenario())
 
 
 def test_full_pb8_proposal_preserves_existing_protected_paths(tmp_path: Path, monkeypatch) -> None:
