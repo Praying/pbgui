@@ -45,6 +45,13 @@ describe('Modal', () => {
     expect(body?.className).toContain('overflow-y-auto');
   });
 
+  it('supports an optional compact header class', async () => {
+    await mountModal(true, { headerClass: 'compact-modal-header' });
+
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog?.querySelector('.compact-modal-header')).not.toBeNull();
+  });
+
   it('emits update:open(false) and cancel on Escape', async () => {
     const onUpdate = vi.fn();
     const onCancel = vi.fn();

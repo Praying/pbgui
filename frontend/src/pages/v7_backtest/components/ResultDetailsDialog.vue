@@ -51,19 +51,20 @@ function close(): void {
   <Modal
     :open="props.open && props.section !== null"
     panel-class="result-details-dialog h-[min(900px,calc(100dvh-2rem))] w-[min(1180px,96vw)]"
+    header-class="result-details-dialog__header"
     :title="actionLabel"
     :backdrop-close="false"
     :close-label="t('common.close')"
     @update:open="emit('update:open', $event)"
   >
     <template #title>
-      <div class="flex min-w-0 items-center gap-3">
-        <span class="grid size-8 shrink-0 place-items-center rounded-lg border border-accent/22 bg-accent/10 text-accent-soft">
-          <PbIcon :icon="PhChartLineUp" :size="17" />
+      <div class="flex min-w-0 items-center gap-2.5">
+        <span class="grid size-7 shrink-0 place-items-center rounded-md border border-accent/22 bg-accent/10 text-accent-soft">
+          <PbIcon :icon="PhChartLineUp" :size="15" />
         </span>
         <span class="min-w-0">
-          <span class="block truncate text-md font-bold text-primary">{{ resultLabel }}</span>
-          <span class="mt-0.5 block text-xs font-medium text-muted">{{ actionLabel }}</span>
+          <span class="block truncate text-sm font-bold leading-tight text-primary">{{ resultLabel }}</span>
+          <span class="mt-0.5 block truncate text-[10px] font-medium leading-tight text-muted">{{ actionLabel }}</span>
         </span>
       </div>
     </template>
@@ -100,11 +101,10 @@ function close(): void {
 </template>
 
 <style>
-/* The result dialog keeps the report roomy while using a compact 48px
-   header. The selector is intentionally scoped by the panel class because
-   the shared Modal header remains appropriately spacious for form dialogs. */
-.result-details-dialog > div:first-child {
-  padding-top: 8px;
-  padding-bottom: 8px;
+/* Keep the report roomy while giving its header a compact, explicit height.
+   This class is applied to the shared Modal header by headerClass. */
+.result-details-dialog__header {
+  min-height: 42px;
+  padding: 5px 16px;
 }
 </style>

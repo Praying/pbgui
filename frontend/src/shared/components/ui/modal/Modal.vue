@@ -28,6 +28,8 @@ interface ModalProps {
   backdropClose?: boolean;
   /** Already-translated aria-label for the ✕ button (ui primitives stay i18n-free). */
   closeLabel?: string;
+  /** Optional header classes for content-heavy dialogs that need a denser chrome. */
+  headerClass?: string;
 }
 
 const props = withDefaults(defineProps<ModalProps>(), {
@@ -35,6 +37,7 @@ const props = withDefaults(defineProps<ModalProps>(), {
   dismissable: true,
   backdropClose: true,
   closeLabel: 'Close',
+  headerClass: '',
 });
 
 const emit = defineEmits<{ 'update:open': [open: boolean]; cancel: [] }>();
@@ -57,7 +60,7 @@ function onOpenChange(open: boolean): void {
         @interact-outside="!(props.dismissable && props.backdropClose) && $event.preventDefault()"
         @pointer-down-outside="!(props.dismissable && props.backdropClose) && $event.preventDefault()"
       >
-        <div class="flex flex-shrink-0 items-center justify-between gap-2 border-b border-border-subtle bg-card px-5 py-3.5">
+        <div :class="['flex flex-shrink-0 items-center justify-between gap-2 border-b border-border-subtle bg-card px-5 py-3.5', props.headerClass]">
           <DialogTitle class="text-md font-bold text-primary">
             <slot name="title">{{ props.title }}</slot>
           </DialogTitle>
