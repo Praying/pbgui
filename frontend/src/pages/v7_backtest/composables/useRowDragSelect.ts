@@ -118,7 +118,7 @@ export function useRowDragSelect(options: RowDragSelectOptions): RowDragSelect {
     if (event.button !== 0) return;
     const target = event.target as HTMLElement | null;
     const row = target?.closest('tr[data-path]') as HTMLElement | null;
-    if (!row || target?.closest('.actions-cell')) return;
+    if (!row || target?.closest('.pbgui-list-actions')) return;
     // scope to THIS table's rows — the document-level listener must not
     // cross-fire when sibling panels (archive/legacy) render their own
     // tr[data-path] tables at the same time (:5877 vs :5936)

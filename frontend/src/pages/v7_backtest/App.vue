@@ -1028,42 +1028,17 @@ body {
 #panel-legacy.leg-unpinned #legacy-results-view { overflow: visible; flex: none; min-height: unset; }
 #panel-legacy.leg-unpinned #legacy-results-scroll { flex: none; min-height: unset; overflow-y: visible; }
 
-/* ── Shared table system (.tbl) ────────────────────────────────
-   Cross-page contract: src/shared/coinOverrides/components/
-   CoinOverridesPanel.vue renders .tbl markup too, and the row hover/
-   selected states paint td descendants — a relationship utilities
-   cannot express. .actions-cell stays with it (a test anchor on the
-   queue table). All PBv7/PBv8 lists moved onto the pbgui-list-table
-   contract in components.css; .tbl's th/td padding would outrank any
-   utility placed on those cells (un-layered CSS beats @layer
-   utilities). */
-.tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-base); user-select: none; }
-.tbl th { position: sticky; top: 0; z-index: 2; background: var(--bg2); font-size: var(--fs-sm);
-          text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim);
-          padding: 8px 10px; text-align: left; border-bottom: 2px solid var(--border);
-          cursor: pointer; user-select: none; white-space: nowrap; }
-.tbl th:hover { color: var(--text); }
-.tbl td { padding: 7px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
-          overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-.tbl tr:hover td { background: rgba(255,255,255,.03); }
-.tbl tbody tr { cursor: pointer; }
-.tbl tr.selected td { background: rgb(var(--accent-rgb) / .12); }
-.tbl tr.selected td:first-child { border-left: 3px solid var(--accent); }
-.tbl td.actions-cell { white-space: nowrap; overflow: visible; padding: 6px 8px; }
-.actions-column { min-width: 84px; }
-.backtest-row-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--control-gap);
-}
+/* ── Backtest row action buttons ────────────────────────────────
+   The legacy page-local table system is retired — every PBv7/PBv8
+   list (and CoinOverridesPanel) renders the shared pbgui-list-table
+   contract from components.css; its row hover/selected states paint
+   td descendants there. What stays here is the BacktestRowActionButton
+   chrome: the focus ring and the results panel's press/hover motion. */
 .backtest-row-action:focus-visible {
   outline: 2px solid var(--accent-soft);
   outline-offset: 2px;
   box-shadow: var(--focus-ring);
 }
-#panel-results .actions-column { min-width: 204px; }
-#panel-results .backtest-row-actions { gap: 6px; }
 #panel-results .backtest-row-action {
   transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
 }

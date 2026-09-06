@@ -108,7 +108,7 @@ describe('useRowDragSelect (:5755-5784)', () => {
   it('mousedown on the actions cell is ignored (:5758)', () => {
     const { rows, dispose } = setup();
     const td = document.createElement('td');
-    td.className = 'actions-cell';
+    td.className = 'pbgui-list-actions';
     rows[0]!.appendChild(td);
     mouse(td, 'mousedown', 10);
     mouse(document.body, 'mouseup', 10);

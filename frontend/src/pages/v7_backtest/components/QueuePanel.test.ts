@@ -95,7 +95,7 @@ describe('renderQueue (:5136-5177)', () => {
 
   it('renders the per-status action buttons (:5159-5172)', () => {
     const wrapper = mountPanel();
-    const actionsOf = (filename: string) => rowByFilename(wrapper, filename).findAll('td.actions-cell button');
+    const actionsOf = (filename: string) => rowByFilename(wrapper, filename).findAll('td.pbgui-list-actions button');
     // queued → start
     expect(actionsOf('a.json').map((b) => b.attributes('title'))).toContain('Start');
     // running → stop (danger)
@@ -124,7 +124,7 @@ describe('renderQueue (:5136-5177)', () => {
 
   it('emits the queue actions with the item filename (:5190-5212)', async () => {
     const wrapper = mountPanel();
-    const buttons = rowByFilename(wrapper, 'a.json').findAll('td.actions-cell button');
+    const buttons = rowByFilename(wrapper, 'a.json').findAll('td.pbgui-list-actions button');
     const start = buttons.find((b) => b.attributes('title') === 'Start')!;
     await start.trigger('click');
     expect(wrapper.emitted('start')).toEqual([['a.json']]);
@@ -136,7 +136,7 @@ describe('renderQueue (:5136-5177)', () => {
 
   it('emits view-results for a complete item and show-log with the filename', async () => {
     const wrapper = mountPanel();
-    const complete = rowByFilename(wrapper, 'd.json').findAll('td.actions-cell button');
+    const complete = rowByFilename(wrapper, 'd.json').findAll('td.pbgui-list-actions button');
     await complete.find((b) => b.attributes('title') === 'View Results')!.trigger('click');
     expect(wrapper.emitted('viewResults')).toEqual([['delta']]);
     const log = complete.find((b) => b.attributes('title') === 'Log')!;
@@ -229,7 +229,7 @@ describe('row selection (:5787-5855)', () => {
 
   it('action-cell clicks never change selection (:5817)', async () => {
     const wrapper = mountPanel();
-    const cell = rows(wrapper)[0]!.find('td.actions-cell');
+    const cell = rows(wrapper)[0]!.find('td.pbgui-list-actions');
     await cell.trigger('mousedown');
     await cell.trigger('mouseup');
     expect(wrapper.vm.selectedFilenames()).toEqual([]);

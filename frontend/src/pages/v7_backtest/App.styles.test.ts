@@ -5,11 +5,11 @@ import { describe, expect, it } from 'vitest';
 
 /* The former backtest-shell.css was deleted at the Tailwind migration:
    everything expressible as utilities moved onto the templates, and the
-   rules that must stay CSS (the shared editor-form contract, the .tbl
-   row states, the container queries and their @supports fallback, the
-   pseudo-elements and the root chrome) live in App.vue's unscoped
-   <style> block. These contracts pin that block — the template anchors
-   that replaced the rest are checked against the components. */
+   rules that must stay CSS (the shared editor-form contract, the
+   container queries and their @supports fallback, the pseudo-elements
+   and the root chrome) live in App.vue's unscoped <style> block. These
+   contracts pin that block — the template anchors that replaced the
+   rest are checked against the components. */
 
 const pageRoot = import.meta.dirname;
 
@@ -137,7 +137,6 @@ describe('PBv7 config editor CSS contracts', () => {
     expect(css).toContain('grid-template-columns: repeat(12, minmax(0, 1fr))');
     expect(css).toContain('.act-btn');
     expect(css).toContain('.form-group');
-    expect(css).toContain('.tbl');
   });
 
   it('ties the editor-width rules to the container queries', () => {
@@ -194,11 +193,13 @@ describe('PBv7 config editor CSS contracts', () => {
     expect(css).not.toContain('.bot-side-panel > h3');
   });
 
-  it('keeps the table row-state group shared with CoinOverridesPanel', () => {
-    expectDeclaration(findRule(root, '.tbl'), 'user-select', 'none');
-    expectDeclaration(findRule(root, '.tbl tr:hover td'), 'background', 'rgba(255,255,255,.03)');
-    expectDeclaration(findRule(root, '.tbl tr.selected td'), 'background', 'rgb(var(--accent-rgb) / .12)');
-    expectDeclaration(findRule(root, '.tbl tr.selected td:first-child'), 'border-left', '3px solid var(--accent)');
+  it('retires the legacy page-local table system for the shared list contract', () => {
+    /* Every list renders pbgui-list-table (components.css) — the retired
+       page-local rules must not creep back, and the BacktestRowActionButton
+       chrome that stayed keeps its focus ring. */
+    expect(css).not.toContain('.tbl');
+    expectDeclaration(findRule(root, '.backtest-row-action:focus-visible'), 'outline', '2px solid var(--accent-soft)');
+    expectDeclaration(findRule(root, '#panel-results .backtest-row-action:hover:not(:disabled)'), 'transform', 'translateY(-1px)');
   });
 
   it('keeps the shell scroll-release and panel pin-state rules', () => {

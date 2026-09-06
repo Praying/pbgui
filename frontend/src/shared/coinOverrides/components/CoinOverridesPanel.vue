@@ -10,6 +10,8 @@
  */
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhX } from '@phosphor-icons/vue';
+import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -198,22 +200,24 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
       >
     </div>
     <div class="expander-body">
-      <!-- Summary table (:813-834) -->
-      <table v-if="overrideCount > 0" class="tbl" style="font-size: var(--fs-sm)">
+      <!-- Summary table (:813-834) — pbgui-list-table contract, so the panel
+           renders the shared chrome on every host page (the former .tbl class
+           was styled only where the backtest page's stylesheet was loaded). -->
+      <table v-if="overrideCount > 0" class="pbgui-list-table w-full text-sm">
         <thead>
           <tr>
             <th>{{ t('editor.overrides.coin') }}</th>
             <th>{{ t('editor.overrides.overrides') }}</th>
-            <th style="width: 100px">{{ t('editor.overrides.actions') }}</th>
+            <th class="w-[100px]">{{ t('editor.overrides.actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="coin in sortedCoins"
             :key="coin"
-            :style="store.editCoin.value === coin ? 'background:rgb(var(--accent-rgb) / .06)' : undefined"
+            :class="{ selected: store.editCoin.value === coin }"
           >
-            <td style="font-weight: 600" :title="coin">{{ coinLabel(coin) }}</td>
+            <td class="truncate font-medium" :title="coin">{{ coinLabel(coin) }}</td>
             <td>
               <span
                 class="cov-badge"
@@ -221,11 +225,13 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
                 @mouseout="hideTooltip"
               >{{ badgeSummary(store.overrides[coin] ?? {}) }}</span>
             </td>
-            <td>
-              <Button type="button" variant="outline" size="sm" class="act-btn" @click="editCoin(coin)">
-                {{ store.editCoin.value === coin ? t('editor.overrides.editing') : t('editor.overrides.edit') }}
-              </Button>
-              <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" @click="store.removeCoin(coin)">&#x00D7;</Button>
+            <td class="pbgui-list-actions">
+              <div class="pbgui-list-actions__group">
+                <Button type="button" variant="default" size="sm" @click="editCoin(coin)">
+                  {{ store.editCoin.value === coin ? t('editor.overrides.editing') : t('editor.overrides.edit') }}
+                </Button>
+                <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" :title="t('common.delete')" :aria-label="t('common.delete')" @click="store.removeCoin(coin)"><PbIcon :icon="PhX" :size="16" /></Button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -301,17 +307,17 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
             <span style="font-weight: 600; font-size: var(--fs-sm)" :style="{ color: section.color }">{{ section.label }}</span>
           </div>
 
-          <table v-if="sectionParams(section).length" class="tbl" style="font-size: var(--fs-xs); margin-bottom: var(--sp-xs)">
+          <table v-if="sectionParams(section).length" class="pbgui-list-table mb-2 w-full text-xs">
             <thead>
               <tr>
                 <th>{{ t('editor.overrides.parameter') }}</th>
                 <th>{{ t('editor.overrides.value') }}</th>
-                <th style="width: 40px"></th>
+                <th class="w-10"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="param in sectionParams(section)" :key="section.key + param">
-                <td>{{ param }}</td>
+                <td class="truncate font-mono">{{ param }}</td>
                 <td>
                   <SelectRoot
                     v-if="inputMode(section, param) === 'forced-mode'"
@@ -338,8 +344,10 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
                   </SelectRoot>
                   <Input v-else v-model="store.inlineValues[section.key + '.' + param]" type="text" size="sm" class="w-[100px]" />
                 </td>
-                <td>
-                  <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" @click="removeParam(section, param)">&#x00D7;</Button>
+                <td class="pbgui-list-actions">
+                  <div class="pbgui-list-actions__group">
+                    <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeParam(section, param)"><PbIcon :icon="PhX" :size="16" /></Button>
+                  </div>
                 </td>
               </tr>
             </tbody>

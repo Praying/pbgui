@@ -283,7 +283,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
             </td>
             <td class="max-w-[180px] truncate text-secondary" :title="exchangeText(item)">{{ exchangeText(item) }}</td>
             <td class="font-mono text-xs tabular-nums text-secondary" :title="item.created ?? ''">{{ fmtDate(item.created) }}</td>
-            <td class="actions-cell pbgui-list-actions" @mousedown.stop>
+            <td class="pbgui-list-actions" @mousedown.stop>
               <div class="pbgui-list-actions__group justify-end">
               <BacktestRowActionButton
                 v-if="item.status === 'error'"

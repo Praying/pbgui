@@ -806,7 +806,7 @@ describe('queue panel actions (App wiring, :5190-5226)', () => {
     });
     await nextTick();
     await nextTick();
-    const start = wrapper.findAll('#queue-list td.actions-cell button').find((b) => b.attributes('title') === 'Start')!;
+    const start = wrapper.findAll('#queue-list td.pbgui-list-actions button').find((b) => b.attributes('title') === 'Start')!;
     await start.trigger('click');
     await flush();
     const call = fetchMock.mock.calls.find((c) => String(c[0]).includes('/queue/a.json/start'));
