@@ -305,6 +305,39 @@ async function migrateSelected(): Promise<void> {
 async function runQueueAction(filename: string, action: 'start' | 'stop' | 'restart' | 'requeue'): Promise<void> { await safely(() => page.queueAction(filename, action)); }
 function openQueueLog(row: QueueItem): void { logFilename.value = row.filename; logTitle.value = String(row.name || row.filename); logOpen.value = true; }
 
+/* Log dialog → results handoff (legacy openLogPanelResults/openLogPanelParetoExplorer):
+   exact name/path match first, then substring, newest modified wins. */
+function queueLogResultQuery(): string { return String(logTitle.value || logFilename.value || '').trim(); }
+function findQueueLogResult(): ResultSummary | null {
+  const query = queueLogResultQuery().toLowerCase();
+  if (!query) return null;
+  const rows = page.results.value;
+  let matches = rows.filter((row) => {
+    const name = String(row.name || row.result || '').toLowerCase();
+    return name === query || String(row.path || '').toLowerCase().split('/').pop() === query;
+  });
+  if (!matches.length) {
+    matches = rows.filter((row) => String(row.name || row.result || row.path || '').toLowerCase().includes(query));
+  }
+  const time = (row: ResultSummary): number => {
+    const value = row.modified ? new Date(row.modified).getTime() : 0;
+    return Number.isNaN(value) ? 0 : value;
+  };
+  return [...matches].sort((a, b) => time(b) - time(a))[0] || null;
+}
+function queueLogGoToResults(): void {
+  const match = findQueueLogResult();
+  if (match) void safely(() => page.selectResult(match));
+  else page.resultSearch.value = queueLogResultQuery();
+  page.setPanel('results');
+  logOpen.value = false;
+}
+function queueLogOpenExplorer(): void {
+  const match = findQueueLogResult();
+  if (!match) return notify(t('v7optimize.noResultLinkedToLog'));
+  window.location.href = actions.paretoExplorerUrl(match.path);
+}
+
 async function openResult(row: ResultSummary | null): Promise<void> { if (row) await safely(() => page.selectResult(row)); else notify(t('v7optimize.selectOneResultFirst')); }
 async function selectParetoResultPath(path: string): Promise<void> {
   const target = page.results.value.find((row) => (row.path === path || row.result === path || row.name === path));
@@ -577,7 +610,7 @@ onBeforeUnmount(() => {
   <SettingsModal :open="page.settingsOpen.value" :settings="page.settings.value" @close="page.settingsOpen.value = false" @save="page.saveSettings" />
   <ImportConfigModal :open="importOpen" :archives="actions.archives.value" :configs="actions.archiveConfigs.value" :archive-name="actions.archiveName.value" :busy="actions.busy.value" @close="importOpen = false" @load-archives="actions.loadArchives" @load-configs="actions.loadArchiveConfigs" @local-import="importLocal" @archive-import="importArchive" />
   <PlotModal :plot="actions.plot.value" @close="actions.closePlot" />
-  <QueueLogPanel :open="logOpen" :filename="logFilename" :title="logTitle" :adapter="adapter" @close="logOpen = false" />
+  <QueueLogPanel :open="logOpen" :filename="logFilename" :title="logTitle" :adapter="adapter" @close="logOpen = false" @open-results="queueLogGoToResults" @open-explorer="queueLogOpenExplorer" />
 
   <div v-if="page.queueConfigChoice.value" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop">
     <section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true">

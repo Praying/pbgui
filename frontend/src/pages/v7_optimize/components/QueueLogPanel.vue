@@ -1,27 +1,86 @@
 <script setup lang="ts">
+/**
+ * Optimize queue log dialog — Vue port of the legacy floating #log-panel
+ * (frontend/v7_optimize.html on main). The legacy panel wedged a drag/resize
+ * shell around three regions: a header, the #opt-log-dashboard status cards
+ * polled from /queue/{filename}/status every 2.5s, and the LogViewerPanel
+ * terminal. This dialog keeps that composition under the workbench's modal
+ * language: the header stays, the dashboard lives in OptimizeLogDashboard and
+ * the local-file log stream in QueueLogTerminal (no more window.LogViewerPanel
+ * global — that dependency is why the dialog used to render empty).
+ */
 import { PhTerminalWindow, PhX } from '@phosphor-icons/vue';
-import { onBeforeUnmount, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getBoot } from '@/shared/boot';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { apiFetch } from '@/shared/api';
 import { Button } from '@/shared/components/ui/button';
+import OptimizeLogDashboard from './OptimizeLogDashboard.vue';
+import QueueLogTerminal from './QueueLogTerminal.vue';
 import type { OptimizeAdapter } from '../config';
-interface Viewer { open(): void; close(): void; setHost?(host: string): void; setFile?(file: string): void }
-type ViewerCtor = new (options: Record<string, unknown>) => Viewer;
+import type { OptimizeLogStatus } from '../lib/optimizeLogStatus';
+
 const props = defineProps<{ open: boolean; filename: string; title: string; adapter: OptimizeAdapter }>();
-const emit = defineEmits<{ close: [] }>();
+const emit = defineEmits<{ close: []; openResults: []; openExplorer: [] }>();
 const { t } = useI18n();
-let viewer: Viewer | null = null;
-function wsBase(): string { return getBoot().origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:'); }
-function show(): void {
-  viewer?.close();
-  const Ctor = (window as Window & { LogViewerPanel?: ViewerCtor }).LogViewerPanel;
-  if (!Ctor || !props.filename) return;
-  viewer = new Ctor({ containerId: 'optimize-log-viewer-target', wsBase: wsBase(), defaultHost: 'local', defaultFile: props.adapter.queueLogPrefix + props.filename + '.log', presets: 'system', showRestart: false, height: '100%', startLocalAtEnd: false });
-  viewer.open();
+
+/** Legacy poll cadence: startOptimizeLogStatusPolling used 2500ms. */
+const STATUS_POLL_MS = 2500;
+
+const status = ref<OptimizeLogStatus | null>(null);
+const statusError = ref('');
+let pollTimer: number | undefined;
+let pollInFlight = false;
+/** Filename the in-flight request belongs to (legacy state.logFilename guard). */
+let pollFilename = '';
+
+async function refreshStatus(): Promise<void> {
+  if (pollInFlight || !pollFilename || document.visibilityState !== 'visible') return;
+  pollInFlight = true;
+  try {
+    const payload = await apiFetch<OptimizeLogStatus>(
+      `${props.adapter.apiBase}/queue/${encodeURIComponent(pollFilename)}/status`,
+    );
+    if (!props.open || props.filename !== pollFilename) return;
+    status.value = payload;
+    statusError.value = '';
+  } catch (error) {
+    if (!props.open || props.filename !== pollFilename) return;
+    // Legacy refreshOptimizeLogStatus fallback: dashboard resets, activity
+    // becomes "Status unavailable" and the error row carries the message.
+    status.value = null;
+    statusError.value = error instanceof Error ? error.message : String(error);
+  } finally {
+    pollInFlight = false;
+  }
 }
-watch(() => [props.open, props.filename] as const, ([open]) => { if (open) show(); else viewer?.close(); });
-onBeforeUnmount(() => viewer?.close());
+
+function stopPolling(): void {
+  if (pollTimer !== undefined) window.clearInterval(pollTimer);
+  pollTimer = undefined;
+}
+
+function startPolling(): void {
+  stopPolling();
+  pollFilename = props.filename;
+  status.value = null;
+  statusError.value = '';
+  void refreshStatus();
+  pollTimer = window.setInterval(() => { void refreshStatus(); }, STATUS_POLL_MS);
+}
+
+watch(
+  () => [props.open, props.filename] as const,
+  ([open]) => {
+    if (open && props.filename) startPolling();
+    else stopPolling();
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(stopPolling);
+
+const heading = () => t('v7optimize.optimizeLogWithName', { name: props.title || props.filename });
 </script>
 
 <template>
@@ -38,13 +97,9 @@ onBeforeUnmount(() => viewer?.close());
             <PbIcon :icon="PhTerminalWindow" :size="19" weight="duotone" />
           </span>
           <div class="optimize-log-dialog__title-group">
-            <h2 id="optimize-log-title">{{ title }}</h2>
-            <code :title="filename">{{ filename }}</code>
+            <h2 id="optimize-log-title">{{ heading() }}</h2>
+            <code :title="filename">{{ adapter.queueLogPrefix }}{{ filename }}.log</code>
           </div>
-          <span class="optimize-log-dialog__live" aria-hidden="true">
-            <span class="optimize-log-dialog__live-dot"></span>
-            {{ t('v7optimize.connected') }}
-          </span>
         </div>
         <Button
           variant="ghost"
@@ -58,7 +113,20 @@ onBeforeUnmount(() => viewer?.close());
         </Button>
       </header>
       <div class="optimize-log-dialog__content">
-        <div id="optimize-log-viewer-target"></div>
+        <OptimizeLogDashboard
+          :status="status"
+          :status-error="statusError"
+          :actions-enabled="!!(title || filename)"
+          @open-results="emit('openResults')"
+          @open-explorer="emit('openExplorer')"
+        />
+        <div class="optimize-log-dialog__viewer">
+          <QueueLogTerminal
+            v-if="filename"
+            :key="filename"
+            :file="adapter.queueLogPrefix + filename + '.log'"
+          />
+        </div>
       </div>
     </section>
   </div>
@@ -78,7 +146,7 @@ onBeforeUnmount(() => viewer?.close());
 .optimize-log-dialog {
   display: flex;
   width: min(1180px, 100%);
-  height: min(760px, calc(100dvh - 48px));
+  height: min(780px, calc(100dvh - 48px));
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
@@ -147,84 +215,27 @@ onBeforeUnmount(() => viewer?.close());
   white-space: nowrap;
 }
 
-.optimize-log-dialog__live {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: 4px;
-  padding: 4px 8px;
-  border: 1px solid rgb(var(--success-rgb) / 0.22);
-  border-radius: var(--radius-full);
-  background: rgb(var(--success-rgb) / 0.08);
-  color: var(--success-soft);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-}
-
-.optimize-log-dialog__live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
-  box-shadow: 0 0 8px rgb(var(--success-rgb) / 0.65);
-}
-
 .optimize-log-dialog__close {
   flex: 0 0 auto;
   border-color: var(--border-default);
 }
 
+/* Dashboard strip (own borders/padding) then the terminal fills the rest. */
 .optimize-log-dialog__content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface-deep);
+}
+
+.optimize-log-dialog__viewer {
+  display: flex;
   min-height: 0;
   flex: 1;
   padding: 12px;
-  overflow: hidden;
   background: var(--surface-deep);
-}
-
-#optimize-log-viewer-target {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  background: var(--surface-deep);
-}
-
-#optimize-log-viewer-target .lvp-root {
-  gap: 10px;
-  padding: 10px;
-  background: var(--surface-deep);
-}
-
-#optimize-log-viewer-target .lvp-sidebar {
-  min-width: 180px;
-  border-right-color: var(--border-default);
-  background: var(--surface-panel);
-}
-
-#optimize-log-viewer-target .lvp-viewer {
-  gap: 8px;
-}
-
-#optimize-log-viewer-target .lvp-toolbar {
-  min-height: 34px;
-  padding: 4px 6px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-panel);
-}
-
-#optimize-log-viewer-target .lvp-terminal {
-  border-color: var(--border-default);
-  border-radius: var(--radius-md);
-  background: var(--surface-deep);
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.55;
-  scrollbar-color: var(--border-strong) transparent;
 }
 
 @media (max-width: 720px) {
@@ -241,26 +252,8 @@ onBeforeUnmount(() => viewer?.close());
     padding-inline: 12px;
   }
 
-  .optimize-log-dialog__live {
-    display: none;
-  }
-
-  .optimize-log-dialog__content {
+  .optimize-log-dialog__viewer {
     padding: 8px;
-  }
-
-  #optimize-log-viewer-target .lvp-root {
-    padding: 6px;
-  }
-
-  #optimize-log-viewer-target .lvp-sidebar {
-    min-width: 140px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .optimize-log-dialog__live-dot {
-    box-shadow: none;
   }
 }
 </style>

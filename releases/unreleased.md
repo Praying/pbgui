@@ -1,5 +1,12 @@
 # Unreleased
 
+## PBv8 优化队列日志对话框完整移植
+
+- **移植状态仪表盘**：日志对话框顶部新增优化状态仪表盘，按原版节奏轮询 `/queue/{filename}/status`，呈现进度条、Phase、Pareto Front、后端、运行时长、CPU、内存与队列摘要卡，以及目标、范围、最近活动和错误详情行，布局对齐 main 分支原版浮动日志面板。
+- **纯 Vue 日志终端**：日志流改由 Vue 组件实现，复刻 legacy `log_viewer_panel.js` 的本地文件 WebSocket 协议（订阅前缀日志文件、2 秒重连、4001 会话过期跳转、5000 行上限、级别检测），不再依赖 `window.LogViewerPanel` 全局脚本，解决日志对话框为空的问题。
+- **完整过滤工具栏**：提供级别按钮（DBG/INF/WRN/ERR/CRT）、系统预设过滤（错误、警告、错误+警告、连接、重启、Traceback）、防抖搜索、过滤开关、匹配计数与上下导航，以及暂停/继续、清空和连接状态徽章。
+- **结果联动**：Pareto Front 卡片保留 Results 与 Pareto Explorer 快捷按钮，按名称精确/包含匹配优化结果并跳转对应面板。
+
 ## PBv8 优化配置编辑器与主线对齐
 
 - **补齐运行时选项**：Vue3 新建配置编辑器现在显示 PB8 运行时公布的 optimizer helper 复选框，并按 Long、Short、Other 动态呈现 fixed runtime overrides。
