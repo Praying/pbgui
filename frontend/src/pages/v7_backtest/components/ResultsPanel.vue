@@ -201,7 +201,7 @@ defineExpose({ deleteSelectedFlow });
         </div>
       </div>
 
-      <div id="results-toolbar" class="pbgui-list-toolbar flex flex-wrap items-end gap-3 border-b border-secondary/12 bg-page/24 px-4 py-3">
+      <div id="results-toolbar" class="pbgui-list-toolbar flex flex-wrap items-end gap-3 border-b px-4 py-3">
         <label class="grid min-w-[112px] gap-1.5">
           <span id="results-version-filter-label" class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('v7backtest.version') }}</span>
           <SelectRoot :model-value="store.versionFilter.value" @update:model-value="store.setVersionFilter(String($event ?? '') as 'v7' | 'v8' | 'both')">
@@ -247,7 +247,7 @@ defineExpose({ deleteSelectedFlow });
 
       <div
         id="results-list-wrap"
-        class="pbgui-list-wrap relative min-h-36 flex-1 overflow-auto bg-page/45"
+        class="pbgui-list-wrap relative min-h-36 flex-1 overflow-auto"
         :style="wrapHeight !== null ? { height: wrapHeight + 'px', flex: '0 0 auto' } : undefined"
       >
         <div id="results-list">

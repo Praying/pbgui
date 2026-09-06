@@ -8,6 +8,8 @@
  * selection surface.
  */
 import {
+  PhCaretDown,
+  PhCaretUp,
   PhChartBar,
   PhCheckCircle,
   PhClock,
@@ -176,11 +178,11 @@ function confirmDelete(): void {
 }
 
 function exchangeText(item: QueueItem): string {
-  return Array.isArray(item.exchange) ? item.exchange.join(', ') : String(item.exchange ?? '—');
+  return Array.isArray(item.exchange) ? item.exchange.join(', ') : String(item.exchange ?? '-');
 }
 
 function fmtDate(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     const d = new Date(iso);
     return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -233,14 +235,14 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
     </div>
 
     <div class="queue-table-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
-      <div id="queue-toolbar" class="flex items-center justify-between gap-3 border-b border-border-subtle bg-card px-3 py-2.5 max-[760px]:flex-wrap">
+      <div id="queue-toolbar" class="pbgui-list-toolbar flex items-center justify-between gap-3 border-b px-3 py-2.5 max-[760px]:flex-wrap">
         <span class="inline-flex items-center gap-2 text-sm text-secondary"><span class="rounded-full border border-accent/25 bg-accent/8 px-2 py-0.5 text-xs font-semibold tabular-nums text-accent-soft" data-test="queue-selected-count">{{ selectedCount }}</span>{{ t('v7backtest.queueSelected') }}</span>
         <div class="flex items-center gap-2">
           <Button type="button" variant="secondary" size="sm" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
           <Button type="button" variant="ghost" size="sm" data-test="queue-deselect-all" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
         </div>
       </div>
-      <div id="queue-list" class="queue-list min-h-0 flex-1 overflow-auto" @mousemove="onListMouseMove">
+      <div id="queue-list" class="queue-list pbgui-list-wrap min-h-0 flex-1 overflow-auto" @mousemove="onListMouseMove">
       <div v-if="!items.length" class="empty-state queue-empty-state flex min-h-[260px] flex-col items-center justify-center gap-3 px-5 py-12 text-center text-md text-secondary">
         <span class="grid h-12 w-12 place-items-center rounded-lg border border-border-default bg-card text-muted" aria-hidden="true"><PbIcon :icon="PhHourglass" :size="22" /></span>
         <template v-for="(line, index) in emptyLines" :key="index">
@@ -248,13 +250,13 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
           <span>{{ line }}</span>
         </template>
       </div>
-      <table v-else class="queue-table w-full min-w-[820px] border-collapse text-sm">
+      <table v-else class="queue-table pbgui-list-table w-full min-w-[820px] select-none border-separate border-spacing-0 text-sm">
         <thead>
           <tr>
-            <th v-for="column in COLUMNS" :key="column.key" class="sticky top-0 z-[2] cursor-pointer border-b border-border-default bg-card px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary" @click="setSort(column.key)">
-              {{ t(column.labelKey) }}<span class="sort-arrow">{{ sortCol === column.key ? (sortAsc ? ' ▲' : ' ▼') : '' }}</span>
+            <th v-for="column in COLUMNS" :key="column.key" class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" @click="setSort(column.key)">
+              <span class="inline-flex items-center gap-1">{{ t(column.labelKey) }}<PbIcon v-if="sortCol === column.key" :icon="sortAsc ? PhCaretUp : PhCaretDown" :size="12" class="text-accent-soft" /></span>
             </th>
-            <th class="sticky top-0 z-[2] border-b border-border-default bg-card px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-label text-secondary">{{ t('v7backtest.actions') }}</th>
+            <th class="sticky top-0 cursor-default text-center">{{ t('v7backtest.actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -270,14 +272,19 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
             @mouseup="onMouseUp(item)"
             @keydown="onRowKeydown($event, item)"
           >
-            <td class="border-b border-border-subtle px-3 py-3 align-middle"><span class="badge pbgui-badge inline-flex rounded-full border border-current/20 px-2 py-0.5 text-xs font-semibold tracking-[0.3px]" :class="['badge-' + String(item.status || 'unknown').toLowerCase(), badgeToneClass(String(item.status || 'unknown').toLowerCase())]">{{ item.status }}</span></td>
-            <td class="border-b border-border-subtle px-3 py-3 align-middle font-medium text-primary" :title="item.filename" @dblclick="emit('editConfig', item.name ?? '')">
+            <td>
+              <span class="badge pbgui-badge inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold" :class="['badge-' + String(item.status || 'unknown').toLowerCase(), badgeToneClass(String(item.status || 'unknown').toLowerCase())]">
+                <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+                {{ item.status }}
+              </span>
+            </td>
+            <td class="max-w-[280px] truncate font-medium text-primary" :title="item.filename" @dblclick="emit('editConfig', item.name ?? '')">
               {{ item.name }}
             </td>
-            <td class="border-b border-border-subtle px-3 py-3 align-middle text-secondary">{{ exchangeText(item) }}</td>
-            <td class="border-b border-border-subtle px-3 py-3 align-middle font-mono text-xs text-secondary">{{ fmtDate(item.created) }}</td>
-            <td class="actions-cell border-b border-border-subtle px-3 py-2 align-middle" @mousedown.stop>
-              <div class="backtest-row-actions justify-end">
+            <td class="max-w-[180px] truncate text-secondary" :title="exchangeText(item)">{{ exchangeText(item) }}</td>
+            <td class="font-mono text-xs tabular-nums text-secondary" :title="item.created ?? ''">{{ fmtDate(item.created) }}</td>
+            <td class="actions-cell pbgui-list-actions" @mousedown.stop>
+              <div class="pbgui-list-actions__group justify-end">
               <BacktestRowActionButton
                 v-if="item.status === 'error'"
                 :icon="PhPlay"
@@ -338,38 +345,16 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
 </template>
 
 <style scoped>
-.queue-list {
-  background: var(--surface-panel);
-  scrollbar-color: var(--border-strong) transparent;
-  scrollbar-width: thin;
-}
-
-.queue-list::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.queue-list::-webkit-scrollbar-thumb {
-  border-radius: var(--radius-full);
-  background: var(--border-strong);
-}
-
-.queue-row td {
-  transition: background-color var(--motion-fast) var(--ease-standard);
-}
-
-.queue-row:hover td,
+/* Only what the pbgui-list-table contract does not own: the keyboard
+   focus feedback on the tabbable, keyboard-selectable queue rows, and
+   dropping the last row's separator. Hover/selected tints and the row
+   transition come from the shared contract in components.css. */
 .queue-row:focus-visible td {
   background: rgb(var(--accent-rgb) / 0.055);
 }
 
-.queue-row.selected td {
-  background: var(--accent-bg);
-}
-
-.queue-row.selected td:first-child,
 .queue-row:focus-visible td:first-child {
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .queue-row:last-child td {

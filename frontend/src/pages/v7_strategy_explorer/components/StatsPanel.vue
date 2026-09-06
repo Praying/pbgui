@@ -66,18 +66,18 @@ const DEBUG_BLOCKS = [
       <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-[0.05em]">{{ t('v7explore.welPerPos') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().wallet_exposure_limit_per_position, 4) }}</div></div>
     </div>
     <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.entryOrders') }}</h4>
-    <table class="orders">
+    <table class="orders pbgui-list-table">
       <thead><tr><th></th><th>{{ t('v7explore.qty') }}</th><th>{{ t('v7explore.price') }}</th><th>{{ t('v7explore.maxTweAfter') }}</th><th>{{ t('v7explore.orderType') }}</th></tr></thead>
       <tbody>
-        <tr v-if="!orderRows(entries()).length"><td colspan="5" class="text-secondary" style="text-align:left">{{ t('common.none') }}</td></tr>
+        <tr v-if="!orderRows(entries()).length"><td colspan="5" class="text-secondary text-left!">{{ t('common.none') }}</td></tr>
         <tr v-for="(row, i) in orderRows(entries())" :key="'e' + i"><td>{{ row.idx }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.twe }}</td><td>{{ row.type }}</td></tr>
       </tbody>
     </table>
     <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.closeOrders') }}</h4>
-    <table class="orders">
+    <table class="orders pbgui-list-table">
       <thead><tr><th></th><th>{{ t('v7explore.qty') }}</th><th>{{ t('v7explore.price') }}</th><th>{{ t('v7explore.maxTweAfter') }}</th><th>{{ t('v7explore.orderType') }}</th></tr></thead>
       <tbody>
-        <tr v-if="!orderRows(closes()).length"><td colspan="5" class="text-secondary" style="text-align:left">{{ t('common.none') }}</td></tr>
+        <tr v-if="!orderRows(closes()).length"><td colspan="5" class="text-secondary text-left!">{{ t('common.none') }}</td></tr>
         <tr v-for="(row, i) in orderRows(closes())" :key="'c' + i"><td>{{ row.idx }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.twe }}</td><td>{{ row.type }}</td></tr>
       </tbody>
     </table>

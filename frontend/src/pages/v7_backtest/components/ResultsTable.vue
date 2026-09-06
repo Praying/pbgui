@@ -137,22 +137,22 @@ onBeforeUnmount(() => dragSelect.dispose());
     </div>
   </div>
   <div v-else ref="wrap" class="relative">
-    <table class="tbl pbgui-list-table min-w-max">
+    <table class="pbgui-list-table w-full min-w-max select-none text-sm">
       <thead>
         <tr>
           <th
             v-for="header in headers"
             :key="header.col"
             :data-col="header.col"
-            class="group"
+            class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary"
             :title="headerTitle(header.label)"
             @click="emit('sort', header.col)"
           >
-            {{ header.label }}<PbIcon v-if="sort.col === header.col" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="10" class="sort-arrow ml-0.5 inline-block align-[-1px]" />
+            <span class="inline-flex items-center gap-1">{{ header.label }}<PbIcon v-if="sort.col === header.col" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="12" class="text-accent-soft" /></span>
           </th>
-          <th :title="t('v7backtest.tweTooltip')" class="cursor-default">TWE</th>
-          <th class="cursor-default">POS</th>
-          <th class="actions-column sticky right-0 z-3 shadow-[-8px_0_12px_-12px_rgb(0_0_0/0.8)] cursor-default text-center">{{ t('v7backtest.actions') }}</th>
+          <th :title="t('v7backtest.tweTooltip')" class="sticky top-0 z-[2] cursor-default">TWE</th>
+          <th class="sticky top-0 z-[2] cursor-default">POS</th>
+          <th class="sticky top-0 cursor-default text-center">{{ t('v7backtest.actions') }}</th>
         </tr>
       </thead>
       <tbody ref="tbody">
@@ -165,25 +165,25 @@ onBeforeUnmount(() => dragSelect.dispose());
           :style="row.liquidated ? { background: 'rgb(var(--danger-rgb) / .10)' } : undefined"
           @click="emit('toggle-select', row.path)"
         >
-          <td v-if="showVersion" class="font-semibold text-secondary">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
-          <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" class="font-medium text-primary max-w-[280px]">
+          <td v-if="showVersion" class="truncate font-semibold text-secondary">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
+          <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" class="max-w-[280px] truncate font-medium text-primary">
             <span v-if="row.liquidated" class="mr-1 inline-flex items-baseline align-[-1px] text-danger" :title="t('v7backtest.liquidated')"><PbIcon :icon="PhWarning" :size="12" /></span>
             {{ row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}` }}
           </td>
-          <td v-if="showStrategy" class="mono">{{ row.strategy || '-' }}</td>
-          <td v-if="showCoins" :title="coinsText(row)" data-col="coins_text" class="max-w-[140px]">{{ coinsText(row) }}</td>
-          <td>{{ exchangesText(row) }}</td>
-          <td class="text-secondary">{{ fmtDate(row.modified) }}</td>
-          <td class="font-mono tabular-nums">{{ fmt(row.adg, 4) }}</td>
-          <td class="font-mono tabular-nums">{{ fmt(row.gain, 2) }}</td>
-          <td class="font-mono tabular-nums">{{ fmt(row.drawdown_worst, 4) }}</td>
-          <td class="font-mono tabular-nums">{{ fmt(row.sharpe_ratio, 4) }}</td>
-          <td class="font-mono tabular-nums">{{ fmt(row.starting_balance, 0) }}</td>
-          <td class="font-mono tabular-nums">{{ row.final_balance_estimated ? '~ ' : '' }}{{ fmt(row.final_balance, 0) }}</td>
-          <td class="font-mono tabular-nums">{{ fmt(row.twe_long, 2) }} / {{ fmt(row.twe_short, 2) }}</td>
-          <td class="font-mono tabular-nums">{{ fmt(row.pos_long, 0) }} / {{ fmt(row.pos_short, 0) }}</td>
-          <td class="actions-cell sticky right-0 z-1 bg-[var(--bg-page)] shadow-[-8px_0_12px_-12px_rgb(0_0_0/0.8)]" @click.stop>
-            <div class="backtest-row-actions">
+          <td v-if="showStrategy" class="truncate font-mono">{{ row.strategy || '-' }}</td>
+          <td v-if="showCoins" :title="coinsText(row)" data-col="coins_text" class="max-w-[140px] truncate">{{ coinsText(row) }}</td>
+          <td class="truncate" :title="exchangesText(row)">{{ exchangesText(row) }}</td>
+          <td class="truncate text-xs tabular-nums text-secondary" :title="row.modified || ''">{{ fmtDate(row.modified) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ fmt(row.adg, 4) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ fmt(row.gain, 2) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ fmt(row.drawdown_worst, 4) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ fmt(row.sharpe_ratio, 4) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ fmt(row.starting_balance, 0) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ row.final_balance_estimated ? '~ ' : '' }}{{ fmt(row.final_balance, 0) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ fmt(row.twe_long, 2) }} / {{ fmt(row.twe_short, 2) }}</td>
+          <td class="truncate font-mono tabular-nums">{{ fmt(row.pos_long, 0) }} / {{ fmt(row.pos_short, 0) }}</td>
+          <td class="pbgui-list-actions" @click.stop>
+            <div class="pbgui-list-actions__group">
               <BacktestRowActionButton
                 v-for="action in ACTION_BUTTONS"
                 :key="action.kind"

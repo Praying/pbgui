@@ -9,7 +9,7 @@
  * remove-liquidated/-duplicates previews, score preview, optimize
  * view/import/delete). The flows are exposed for App's ctx sidebar.
  */
-import { PhPushPin, PhTrash } from '@phosphor-icons/vue';
+import { PhArchive, PhPushPin, PhTrash } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -333,18 +333,18 @@ defineExpose({
     <div v-if="!store.selectedName.value" id="archive-list-view" class="min-h-0 flex-1 overflow-y-auto">
       <div id="archive-list-container">
         <div v-if="store.archives.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary" data-test="archive-empty">
-          <div class="mb-3 text-[48px] opacity-40">🗄️</div>
+          <div class="mx-auto mb-3 grid size-12 place-items-center rounded-xl border border-accent/16 bg-accent/7 text-accent-soft"><PbIcon :icon="PhArchive" :size="24" /></div>
           <span class="whitespace-pre-line">{{ plainLegacyHtml(t('v7backtest.emptyArchivesHtml')) }}</span>
         </div>
-        <table v-else class="tbl">
+        <table v-else class="pbgui-list-table w-full select-none text-sm">
           <thead>
             <tr>
-              <th>{{ t('v7backtest.name') }}</th>
-              <th>URL</th>
-              <th>{{ t('v7backtest.backtests') }}</th>
-              <th>{{ t('v7backtest.optimize') }}</th>
-              <th>{{ t('v7backtest.layout') }}</th>
-              <th>{{ t('v7backtest.actions') }}</th>
+              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.name') }}</th>
+              <th class="sticky top-0 z-[2] cursor-default">URL</th>
+              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.backtests') }}</th>
+              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.optimize') }}</th>
+              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.layout') }}</th>
+              <th class="sticky top-0 cursor-default">{{ t('v7backtest.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -355,13 +355,15 @@ defineExpose({
               class="cursor-pointer"
               @dblclick="store.viewArchive(entry.name)"
             >
-              <td class="font-semibold">{{ entry.name }}</td>
-              <td style="font-size: var(--fs-xs); color: var(--text-dim); word-break: break-all">{{ entry.url ?? '' }}</td>
-              <td>{{ entry.results ?? entry.configs ?? 0 }}</td>
-              <td>{{ entry.optimize_configs ?? 0 }}</td>
-              <td class="text-secondary">{{ entry.migration_status?.label ?? '' }}</td>
-              <td class="actions-cell" @click.stop>
-                <Button type="button" variant="danger" class="act-btn act-btn-danger h-auto" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="18" /></Button>
+              <td class="max-w-[240px] truncate font-medium" :title="entry.name">{{ entry.name }}</td>
+              <td class="max-w-[280px] break-all text-xs text-secondary" :title="entry.url ?? ''">{{ entry.url ?? '' }}</td>
+              <td class="tabular-nums">{{ entry.results ?? entry.configs ?? 0 }}</td>
+              <td class="tabular-nums">{{ entry.optimize_configs ?? 0 }}</td>
+              <td class="truncate text-secondary" :title="entry.migration_status?.label ?? ''">{{ entry.migration_status?.label ?? '' }}</td>
+              <td class="pbgui-list-actions" @click.stop>
+                <div class="pbgui-list-actions__group">
+                  <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="16" /></Button>
+                </div>
               </td>
             </tr>
           </tbody>

@@ -76,14 +76,14 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
       <div id="compare-summary" class="text-secondary">
         <span v-if="compare.summaryText.value" class="text-secondary">{{ compare.summaryText.value }}</span>
         <template v-else-if="data && data.ok">
-          <table class="orders">
+          <table class="orders pbgui-list-table">
             <thead><tr><th>{{ t('v7explore.source') }}</th><th>{{ t('v7explore.long') }}</th><th>{{ t('v7explore.short') }}</th><th>{{ t('v7explore.total') }}</th></tr></thead>
             <tbody>
               <tr v-for="[key, item] in eventRows" :key="key"><td>{{ sourceLabels[key] || key }}</td><td>{{ item?.long || 0 }}</td><td>{{ item?.short || 0 }}</td><td>{{ item?.total || 0 }}</td></tr>
             </tbody>
           </table>
           <div style="margin-top:12px">
-            <table class="orders">
+            <table class="orders pbgui-list-table">
               <thead><tr><th>{{ t('v7explore.colSide') }}</th><th v-for="status in statusModel.statuses" :key="status">{{ statusModel.labels[status] || status }}</th></tr></thead>
               <tbody>
                 <tr v-for="side in ['long', 'short']" :key="side">
@@ -104,20 +104,20 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
       <div id="compare-result" style="margin-top:12px" v-if="data && data.ok">
         <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.longCompareRows') }}</h4>
         <div style="overflow:auto">
-          <table class="orders compare-grid">
+          <table class="orders compare-grid pbgui-list-table">
             <thead><tr><th v-for="[key, label] in columns" :key="key">{{ label }}</th></tr></thead>
             <tbody>
-              <tr v-if="!sideRows('long').length"><td class="text-secondary" style="text-align:left">{{ t('v7explore.noRows') }}</td></tr>
+              <tr v-if="!sideRows('long').length"><td class="text-secondary text-left!">{{ t('v7explore.noRows') }}</td></tr>
               <tr v-for="(row, idx) in sideRows('long')" :key="'l' + idx"><td v-for="[key] in columns" :key="key">{{ compareCellText(row, key, idx, statusModel.labels) }}</td></tr>
             </tbody>
           </table>
         </div>
         <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.shortCompareRows') }}</h4>
         <div style="overflow:auto">
-          <table class="orders compare-grid">
+          <table class="orders compare-grid pbgui-list-table">
             <thead><tr><th v-for="[key, label] in columns" :key="key">{{ label }}</th></tr></thead>
             <tbody>
-              <tr v-if="!sideRows('short').length"><td class="text-secondary" style="text-align:left">{{ t('v7explore.noRows') }}</td></tr>
+              <tr v-if="!sideRows('short').length"><td class="text-secondary text-left!">{{ t('v7explore.noRows') }}</td></tr>
               <tr v-for="(row, idx) in sideRows('short')" :key="'s' + idx"><td v-for="[key] in columns" :key="key">{{ compareCellText(row, key, idx, statusModel.labels) }}</td></tr>
             </tbody>
           </table>

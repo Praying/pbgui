@@ -385,16 +385,20 @@ body {
   text-decoration-thickness: 1px;
 }
 
+/* ── Order/stat tables (.orders) ───────────────────────────────
+   The shared chrome (header weight/tracking, separators, padding, hover
+   tint) comes from the pbgui-list-table contract in components.css;
+   .orders only adds the numeric right-alignment (first two columns back
+   to left) and the compare-grid full-grid/zebra/sticky-header variant. */
 .orders {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: var(--fs-sm);
 }
 
 .orders th,
 .orders td {
-  border-bottom: 1px solid var(--border);
-  padding: 7px 6px;
   text-align: right;
 }
 
@@ -405,26 +409,33 @@ body {
   text-align: left;
 }
 
-.orders th {
-  color: var(--text-dim);
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
+.orders td {
+  font-variant-numeric: tabular-nums;
 }
 
 .orders.compare-grid th,
 .orders.compare-grid td {
-  border: 1px solid var(--border);
+  border-left: 1px solid var(--border);
 }
 
-.orders.compare-grid tbody tr:nth-child(odd) {
+.orders.compare-grid th:first-child,
+.orders.compare-grid td:first-child {
+  border-left: none;
+}
+
+.orders.compare-grid tbody tr:nth-child(odd) td {
   background: rgb(255 255 255 / 0.018);
+}
+
+/* Outranks the zebra rule so hover keeps the shared accent tint. */
+.orders.compare-grid tbody tr:hover td,
+.orders.compare-grid tbody tr:nth-child(odd):hover td {
+  background: rgb(var(--accent-rgb) / 0.055);
 }
 
 .orders.compare-grid th {
   position: sticky;
   top: 0;
-  background: var(--bg2);
   z-index: 1;
 }
 

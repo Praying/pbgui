@@ -457,7 +457,7 @@ onBeforeUnmount(() => {
             <h3 class="mb-2">{{ t('v7explore.displayRange') }}</h3>
             <p class="hint text-secondary">{{ t('v7explore.filterRankedVisible') }}</p>
           </div>
-          <span id="display-range-total-chip" class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ t('v7explore.selectedCount', { total: rangeTotal }) }}</span>
+          <span id="display-range-total-chip" class="chip inline-flex items-center gap-1.5 rounded-full border border-border-default/70 bg-elevated/40 px-2.5 py-1 text-xs font-semibold tabular-nums text-secondary">{{ t('v7explore.selectedCount', { total: rangeTotal }) }}</span>
         </div>
         <div class="range-controls grid grid-cols-[minmax(0,1fr)_88px_88px_auto] items-center gap-2.5 max-[900px]:grid-cols-1">
           <!-- ui/Slider owns the track/thumb chrome now; the legacy gradient

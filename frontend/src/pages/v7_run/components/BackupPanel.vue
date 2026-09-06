@@ -10,8 +10,11 @@
  */
 import { computed, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhFloppyDisk, PhX } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import PbIcon from '@/shared/components/PbIcon.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import type { BackupGroup } from '../composables/useBackups';
 
 const props = defineProps<{
@@ -125,9 +128,9 @@ function onRetentionWheel(event: WheelEvent): void {
     <div ref="dragEl" class="absolute top-0 left-0 right-10 z-[2] h-11 cursor-move" id="backup-drag" @mousedown="bindDragMove"></div>
     <div class="relative flex shrink-0 items-center justify-between rounded-t-lg border-b border-border-default bg-elevated px-3 py-2">
       <h3 class="m-0 text-lg">{{ t('v7run.instanceBackups') }}</h3>
-      <Button class="relative z-[3] text-lg leading-none" variant="ghost" size="sm" id="backup-close" type="button" @click="$emit('close')">&#x2715;</Button>
+      <Button class="relative z-[3]" variant="ghost" size="icon" id="backup-close" type="button" :title="t('common.close')" :aria-label="t('common.close')" @click="$emit('close')"><PbIcon :icon="PhX" :size="16" /></Button>
     </div>
-    <div class="flex shrink-0 flex-wrap items-center gap-2 border-b border-border-default px-3 py-1.5 text-sm">
+    <div class="pbgui-list-toolbar flex shrink-0 flex-wrap items-center gap-2 border-b border-border-default px-3 py-1.5 text-sm">
       <label class="whitespace-nowrap text-secondary">{{ t('v7run.retentionLimit') }} </label>
       <div class="num-stepper flex items-center">
         <Button type="button" class="h-[26px] w-6 shrink-0 p-0 leading-none" id="ret-minus" @click="$emit('step', -1)">&#x2212;</Button>
@@ -142,7 +145,7 @@ function onRetentionWheel(event: WheelEvent): void {
         />
         <Button type="button" class="h-[26px] w-6 shrink-0 p-0 leading-none" id="ret-plus" @click="$emit('step', 1)">+</Button>
       </div>
-      <Button id="backup-retention-save" variant="outline" type="button" class="h-[26px] px-2" :title="t('v7run.saveRetentionLimit')" @click="$emit('saveRetention')">&#xD83D;&#xDCBE;</Button>
+      <Button id="backup-retention-save" variant="outline" type="button" class="h-[26px] w-7 shrink-0 p-0" :title="t('v7run.saveRetentionLimit')" :aria-label="t('v7run.saveRetentionLimit')" @click="$emit('saveRetention')"><PbIcon :icon="PhFloppyDisk" :size="14" /></Button>
       <span id="backup-retention-msg" v-if="retentionMsg" :style="{ marginLeft: '6px', fontSize: '0.85em', color: retentionMsg.color }">
         {{ retentionMsg.text }}
       </span>
@@ -158,22 +161,22 @@ function onRetentionWheel(event: WheelEvent): void {
       </div>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto p-3">
-      <div v-if="loadError" id="backup-content" class="p-3 text-center text-sm text-secondary">{{ loadError }}</div>
-      <div v-else-if="loading && !groups.length" id="backup-content" class="p-3 text-center text-sm text-secondary">{{ t('v7run.loading') }}</div>
-      <div v-else-if="!groups.length" id="backup-content" class="p-3 text-center text-sm text-secondary">
-        {{ filterText ? t('v7run.noBackupsMatchFilter') : t('v7run.noBackupsAvailable') }}
+      <div v-if="loadError" id="backup-content" class="p-3"><EmptyState :title="loadError" /></div>
+      <div v-else-if="loading && !groups.length" id="backup-content" class="p-3"><EmptyState :title="t('v7run.loading')" /></div>
+      <div v-else-if="!groups.length" id="backup-content" class="p-3">
+        <EmptyState :title="filterText ? t('v7run.noBackupsMatchFilter') : t('v7run.noBackupsAvailable')" />
       </div>
       <div v-else id="backup-content" class="text-left">
-        <div v-for="group in groups" :key="group.backup.name" class="mb-2 border-b border-border-default pb-2 last:border-b-0 last:mb-0">
-          <div class="mb-1 flex items-center gap-2 text-base font-bold text-primary">
+        <div v-for="group in groups" :key="group.backup.name" class="mb-2.5 border-b border-border-subtle pb-2.5 last:mb-0 last:border-b-0">
+          <div class="mb-1.5 flex items-center gap-2 text-sm font-semibold text-primary">
             {{ group.backup.name }}
-            <span v-if="group.backup.currently_exists" class="rounded-[3px] bg-elevated px-1.5 py-px text-xs text-secondary">{{ t('v7run.active') }}</span>
-            <span v-if="group.backup.running_on && group.backup.running_on.length" class="rounded-[3px] border border-warning/35 bg-warning/12 px-1.5 py-px text-xs text-warning">
+            <span v-if="group.backup.currently_exists" class="inline-flex items-center rounded-md border border-border-default/70 bg-elevated/40 px-1.5 py-0.5 text-xs font-medium text-secondary">{{ t('v7run.active') }}</span>
+            <span v-if="group.backup.running_on && group.backup.running_on.length" class="inline-flex items-center rounded-md border border-warning/35 bg-warning/12 px-1.5 py-0.5 text-xs font-medium text-warning">
               {{ t('v7run.runningOn', { hosts: group.backup.running_on.join(', ') }) }}
             </span>
           </div>
-          <div v-for="item in group.items" :key="item.id" class="my-0.5 flex items-center gap-2 rounded-sm bg-white/3 px-2 py-1 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_3px_rgba(5,8,14,0.3)]">
-            <span class="min-w-[68px] text-primary tabular-nums">{{ item.id }}</span>
+          <div v-for="item in group.items" :key="item.id" class="my-1 flex items-center gap-2 rounded-md border border-border-subtle bg-elevated/40 px-2.5 py-1.5 text-sm transition-colors hover:border-accent/30 hover:bg-accent/5">
+            <span class="min-w-[68px] font-medium text-primary tabular-nums">{{ item.id }}</span>
             <span class="flex-1 text-secondary tabular-nums">{{ item.created_at || '-' }}</span>
             <Button
               v-if="group.backup.can_restore !== false"
@@ -187,14 +190,17 @@ function onRetentionWheel(event: WheelEvent): void {
               {{ t('v7run.loadInEditor') }}
             </Button>
             <Button
+              class="size-7 shrink-0 rounded-md p-0"
               variant="danger"
               size="sm"
               type="button"
               :data-del-name="group.backup.name"
               :data-del-ts="item.id"
+              :title="t('common.delete')"
+              :aria-label="t('common.delete')"
               @click="$emit('deleteBackup', group.backup.name, item.id)"
             >
-              &#x2716;
+              <PbIcon :icon="PhX" :size="16" />
             </Button>
           </div>
         </div>

@@ -1032,9 +1032,11 @@ body {
    Cross-page contract: src/shared/coinOverrides/components/
    CoinOverridesPanel.vue renders .tbl markup too, and the row hover/
    selected states paint td descendants — a relationship utilities
-   cannot express. .check-col/.actions-cell/.sort-arrow stay with it
-   because .tbl's own th/td padding would outrank any utility placed
-   on those cells (un-layered CSS beats @layer utilities). */
+   cannot express. .actions-cell stays with it (a test anchor on the
+   queue table). All PBv7/PBv8 lists moved onto the pbgui-list-table
+   contract in components.css; .tbl's th/td padding would outrank any
+   utility placed on those cells (un-layered CSS beats @layer
+   utilities). */
 .tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--fs-base); user-select: none; }
 .tbl th { position: sticky; top: 0; z-index: 2; background: var(--bg2); font-size: var(--fs-sm);
           text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim);
@@ -1067,13 +1069,12 @@ body {
 }
 #panel-results .backtest-row-action:hover:not(:disabled) { transform: translateY(-1px); }
 #panel-results .backtest-row-action:active:not(:disabled) { transform: translateY(1px) scale(0.97); }
-.sort-arrow { margin-left: 4px; font-size: var(--fs-xs); }
-/* Configs list: checkbox column + zebra. The checkboxes themselves are
-   ui/ Checkbox now — the former .check-col input sizing rule is dead. */
-.check-col { width: 34px; padding-left: 8px !important; }
+/* Configs list: sticky-column background compensation + zebra at the shared
+   workbench tint (optimize .opt-table uses the same 0.018). The checkboxes
+   are ui/ Checkbox now — the checkbox column is w-10 pr-1 utilities. */
 .configs-tbl { background: var(--surface-deep); }
-.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td { background: rgb(var(--text-secondary-rgb) / 0.04); }
-.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td:last-child { background: rgb(var(--text-secondary-rgb) / 0.04); }
+.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td { background: rgb(var(--text-secondary-rgb) / 0.018); }
+.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td:last-child { background: rgb(var(--text-secondary-rgb) / 0.018); }
 .configs-tbl tbody tr:hover td:last-child { background: rgb(var(--accent-rgb) / 0.055); }
 .configs-tbl tbody tr.selected td:last-child { background: rgb(var(--accent-rgb) / 0.12); }
 

@@ -268,7 +268,7 @@ describe('review round 1 fixes', () => {
     // delete-archive confirm (list-view trash)
     store.closeArchive();
     await nextTick();
-    await wrapper.find('#archive-list-container .act-btn-danger').trigger('click');
+    await wrapper.find('#archive-list-container [data-test="archive-delete"]').trigger('click');
     await nextTick();
     const archiveModal = wrapper.find('[data-test="delete-archive-modal"]');
     expect(archiveModal.text()).toContain('Delete archive mine from disk?\nThis cannot be undone.');

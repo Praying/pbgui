@@ -2,17 +2,19 @@
 /**
  * The instances table — the Vue form of the legacy thead/tbody rendering
  * (v7_run.html:664-891): the column list with the v8-only Strategy column
- * spliced in at index 2 (:678), sortable headers with ▲/▼ arrows (:740-768),
+ * spliced in at index 2 (:678), sortable headers with caret arrows (:740-768),
  * the status/blocked cell classes from buildCells (:696-726), the inline row
  * buttons (data-edit/data-balance/data-convert-v8/data-forced-mode/
  * data-delete) and the empty row (:876-890). The legacy diff-based DOM
- * update becomes plain declarative rows.
+ * update becomes plain declarative rows. Styled by the shared
+ * pbgui-list-table contract (components.css) like the optimize workbench.
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhCaretDown, PhCaretUp, PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { forcedModeLabelKey, normalizedForcedMode, STATUS_LABEL_KEYS, type RunInstance, type SortState } from '../lib/table';
 
 const props = defineProps<{
@@ -66,32 +68,32 @@ const columns = computed<Column[]>(() => {
 /** buildCells status label (:698). */
 function statusLabel(row: RunInstance): string {
   const key = STATUS_LABEL_KEYS[row.status ?? ''] ?? null;
-  return key ? t(key) : row.status || '\u2013';
+  return key ? t(key) : row.status || '-';
 }
 
 /** buildCells running_on text (:700-703). */
 function runningOn(row: RunInstance): string {
-  const runOn = (row.running_on || []).join(', ') || '\u2013';
+  const runOn = (row.running_on || []).join(', ') || '-';
   if ((!row.running_on || !row.running_on.length) && row.blocked_on && row.blocked_on.length) {
     return t('v7run.blockedOn', { hosts: row.blocked_on.join(', ') });
   }
   return runOn;
 }
 
-/** Status → Tailwind utilities (the former v7-run.css .st-* tints). */
+/** Status → pbgui-badge tint utilities (the former v7-run.css .st-* tints;
+   branches spelled out because Tailwind cannot see dynamically concatenated
+   class names). */
 function statusClass(status: string | null | undefined): string {
   const st = String(status || 'disabled').replace(/[^a-z_]/g, '');
-  if (st === 'synced') return 'font-semibold text-success';
-  if (st === 'outdated') return 'font-semibold text-warning';
-  if (st === 'activate_needed') return 'text-warning';
-  if (st === 'stop_needed') return 'text-danger';
-  if (st === 'blocked' || st === 'conflicted' || st === 'tombstoned' || st === 'config_error') return 'font-semibold text-danger';
-  if (st === 'collecting') return 'italic text-secondary';
-  return 'text-secondary';
+  if (st === 'synced') return 'bg-success/15 text-success';
+  if (st === 'outdated' || st === 'activate_needed') return 'bg-warning/15 text-warning';
+  if (st === 'stop_needed' || st === 'blocked' || st === 'conflicted' || st === 'tombstoned' || st === 'config_error') return 'bg-danger/15 text-danger';
+  if (st === 'collecting') return 'bg-secondary/12 text-secondary';
+  return 'bg-secondary/10 text-secondary';
 }
 
 function orDash(value: unknown): string {
-  return value != null && value !== '' ? String(value) : '\u2013';
+  return value != null && value !== '' ? String(value) : '-';
 }
 
 function forcedModeSummary(row: RunInstance): string {
@@ -106,61 +108,71 @@ function onRowDblClick(row: RunInstance, event: MouseEvent): void {
   if ((event.target as Element).closest('[data-edit],[data-balance],[data-delete],[data-forced-mode],[data-convert-v8]')) return; // :1442
   emit('edit', row.name); // :1443-1444
 }
+
+/* Secondary row actions are icon buttons sharing the workbench chrome; the
+   P/G/T/N forced-mode keys keep their semantic variant tints. */
+const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
 </script>
 
 <template>
-  <div class="overflow-x-auto">
-    <table class="v7run-table w-full border-collapse text-base">
+  <div class="pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <table class="pbgui-list-table w-full min-w-max border-separate border-spacing-0 text-sm">
       <thead id="thead">
         <tr>
-          <th class="sticky top-0 cursor-pointer select-none border-b-2 border-border-default bg-panel text-sm uppercase text-secondary hover:text-primary" v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" :role="col.labelKey ? 'button' : undefined" :tabindex="col.labelKey ? 0 : undefined" :aria-sort="col.labelKey && sort.col === col.key ? (sort.asc ? 'ascending' : 'descending') : undefined" @click="col.labelKey && emit('sort', col.key)" @keydown.enter.prevent="col.labelKey && emit('sort', col.key)">
-            <template v-if="col.labelKey">{{ t(col.labelKey) }}</template>
-            <PbIcon v-if="col.labelKey && sort.col === col.key" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="10" class="ml-0.5 inline-block align-[-1px]" />
+          <th class="sticky top-0 z-[2]" :class="col.labelKey ? 'cursor-pointer select-none transition-colors hover:text-primary' : ''" v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" :role="col.labelKey ? 'button' : undefined" :tabindex="col.labelKey ? 0 : undefined" :aria-sort="col.labelKey && sort.col === col.key ? (sort.asc ? 'ascending' : 'descending') : undefined" @click="col.labelKey && emit('sort', col.key)" @keydown.enter.prevent="col.labelKey && emit('sort', col.key)">
+            <span v-if="col.labelKey" class="inline-flex items-center gap-1">{{ t(col.labelKey) }}<PbIcon v-if="sort.col === col.key" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="12" class="text-accent-soft" /></span>
           </th>
         </tr>
       </thead>
       <tbody id="tbody">
-        <tr class="group cursor-pointer"
+        <tr class="cursor-pointer"
           v-for="row in rows"
           :key="row.name"
           :data-key="row.name"
           :class="row.status === 'disabled' ? 'opacity-60' : ''"
           @dblclick="onRowDblClick(row, $event)"
         >
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.name }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.user) }}</td>
-          <td v-if="isV8" class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.strategy) }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.enabled_on) }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left group-hover:bg-elevated"><span :class="statusClass(row.status)" :title="row.blocked_reason || undefined">
+          <td class="whitespace-nowrap font-medium">{{ row.name }}</td>
+          <td class="whitespace-nowrap">{{ orDash(row.user) }}</td>
+          <td v-if="isV8" class="whitespace-nowrap">{{ orDash(row.strategy) }}</td>
+          <td class="whitespace-nowrap">{{ orDash(row.enabled_on) }}</td>
+          <td>
+            <span class="pbgui-badge inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="statusClass(row.status)" :title="row.blocked_reason || undefined">
+              <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
               {{ statusLabel(row) }}
             </span>
-            <div v-if="supportsForcedModes && forcedModeSummary(row)" class="mt-0.5 text-xs font-semibold text-warning" :class="{ 'text-danger': normalizedForcedMode(row.forced_mode_long) === 'panic' || normalizedForcedMode(row.forced_mode_short) === 'panic' }">
+            <div v-if="supportsForcedModes && forcedModeSummary(row)" class="mt-1 text-xs font-semibold text-warning" :class="{ 'text-danger': normalizedForcedMode(row.forced_mode_long) === 'panic' || normalizedForcedMode(row.forced_mode_short) === 'panic' }">
               {{ t('v7run.globalForcedMode') }}: {{ forcedModeSummary(row) }}
             </div>
           </td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.version != null ? String(row.version) : '–' }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.running_version != null ? String(row.running_version) : '–' }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.twe) }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ runningOn(row) }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ orDash(row.desired_state) }}</td>
-          <td class="border-b border-border-default px-2 py-1 text-left whitespace-nowrap group-hover:bg-elevated">{{ row.note || '' }}</td>
-          <td>
-            <template v-if="supportsForcedModes">
-              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')" @click="emit('forcedMode', row.name, 'panic')">P</Button>
-              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')" @click="emit('forcedMode', row.name, 'graceful_stop')">G</Button>
-              <Button class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')" @click="emit('forcedMode', row.name, 'tp_only')">T</Button>
-              <Button v-if="forcedModeSummary(row)" class="ml-1 h-6 w-7 p-0 text-sm font-bold" variant="info" size="sm" type="button" data-forced-mode="normal" :data-forced-name="row.name" :data-forced-version="row.version ?? 0" :title="t('v7run.clearForcedMode')" @click="emit('forcedMode', row.name, 'normal', row.version ?? 0)">N</Button>
-            </template>
-            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-edit="row.name" :title="t('v7run.edit')" @click="emit('edit', row.name)"><PbIcon :icon="PhPencilSimple" :size="14" /></Button>
-            <Button class="h-6 w-7 p-0 text-sm" variant="info" size="sm" type="button" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')" @click="emit('balance', row.name)"><PbIcon :icon="PhCurrencyDollar" :size="14" /></Button>
-            <Button v-if="supportsConversion" class="ml-1 h-6 min-w-7 px-1" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')" @click="emit('convert', row.name)">V8</Button>
-            <Button class="ml-1 h-6 w-7 p-0 text-sm" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')" @click="emit('remove', row.name)"><PbIcon :icon="PhX" :size="14" /></Button>
+          <td class="whitespace-nowrap tabular-nums">{{ row.version != null ? String(row.version) : '-' }}</td>
+          <td class="whitespace-nowrap tabular-nums">{{ row.running_version != null ? String(row.running_version) : '-' }}</td>
+          <td class="whitespace-nowrap tabular-nums">{{ orDash(row.twe) }}</td>
+          <td class="whitespace-nowrap">{{ runningOn(row) }}</td>
+          <td class="whitespace-nowrap">{{ orDash(row.desired_state) }}</td>
+          <td class="whitespace-nowrap">{{ row.note || '' }}</td>
+          <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!">
+            <div class="pbgui-list-actions__group">
+              <template v-if="supportsForcedModes">
+                <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')" :aria-label="t('v7run.panicAllPositions')" @click="emit('forcedMode', row.name, 'panic')">P</Button>
+                <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')" :aria-label="t('v7run.gracefulStopAllPositions')" @click="emit('forcedMode', row.name, 'graceful_stop')">G</Button>
+                <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')" :aria-label="t('v7run.takeProfitOnlyAllPositions')" @click="emit('forcedMode', row.name, 'tp_only')">T</Button>
+                <Button v-if="forcedModeSummary(row)" class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="info" size="sm" type="button" data-forced-mode="normal" :data-forced-name="row.name" :data-forced-version="row.version ?? 0" :title="t('v7run.clearForcedMode')" :aria-label="t('v7run.clearForcedMode')" @click="emit('forcedMode', row.name, 'normal', row.version ?? 0)">N</Button>
+              </template>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-edit="row.name" :title="t('v7run.edit')" :aria-label="t('v7run.edit')" @click="emit('edit', row.name)"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')" :aria-label="t('v7run.openBalanceCalculator')" @click="emit('balance', row.name)"><PbIcon :icon="PhCurrencyDollar" :size="16" /></Button>
+              <Button v-if="supportsConversion" class="h-7 shrink-0 rounded-md px-1.5 text-xs font-semibold" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')" :aria-label="t('v7run.convertToV8')" @click="emit('convert', row.name)">V8</Button>
+              <Button class="size-7 shrink-0 rounded-md p-0" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')" :aria-label="t('common.delete')" @click="emit('remove', row.name)"><PbIcon :icon="PhX" :size="16" /></Button>
+            </div>
           </td>
         </tr>
         <tr v-if="!rows.length" id="instances-empty-row">
-          <td :colspan="columns.length" class="px-3 py-12 text-center text-secondary">
-            <template v-if="loading">{{ t('common.loading') }}</template>
-            <template v-else>{{ totalCount ? t('v7run.noInstancesMatchFilters') : t('v7run.noLiveInstancesYet', { label: isV8 ? 'PB8' : 'PB7' }) }}</template>
+          <td :colspan="columns.length" class="p-8! text-center">
+            <EmptyState
+              :title="loading
+                ? t('common.loading')
+                : totalCount ? t('v7run.noInstancesMatchFilters') : t('v7run.noLiveInstancesYet', { label: isV8 ? 'PB8' : 'PB7' })"
+            />
           </td>
         </tr>
       </tbody>
