@@ -53,7 +53,7 @@ const emptyCopy = computed(() => {
   };
 });
 
-const newConfigLabel = computed(() => t('v7backtest.newConfig').replace(/^\s*\+\s*/, ''));
+const newConfigLabel = computed(() => t('v7backtest.newConfig'));
 
 const filter = ref('');
 const exchangeFilter = ref('');
@@ -149,12 +149,12 @@ function exchangeText(entry: ConfigSummary): string {
 }
 
 function num(value: number | null | undefined, decimals: number): string {
-  return value === null || value === undefined ? '—' : Number(value).toFixed(decimals);
+  return value === null || value === undefined ? '-' : Number(value).toFixed(decimals);
 }
 
 /** Trim the noisy ISO microseconds (:47.207418) to YYYY-MM-DD HH:MM. */
 function formatDateTime(value: string | undefined): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const withTime = String(value).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
   if (withTime) return `${withTime[1]}-${withTime[2]}-${withTime[3]} ${withTime[4]}:${withTime[5]}`;
   const dateOnly = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -169,7 +169,7 @@ function coinsText(entry: ConfigSummary): string {
     const shown = list.slice(0, 3).join(', ');
     return list.length > 3 ? `${shown} +${list.length - 3}` : shown;
   }
-  return entry.coins != null ? String(entry.coins) : '—';
+  return entry.coins != null ? String(entry.coins) : '-';
 }
 
 function coinsTitle(entry: ConfigSummary): string {

@@ -7,7 +7,7 @@
  * convert button (:5547-5549) and click/drag row selection with wrap
  * auto-scroll (:5731-5785).
  */
-import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage , PhCaretDown, PhCaretUp } from '@phosphor-icons/vue';
+import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage, PhCaretDown, PhCaretUp, PhWarning } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -77,13 +77,13 @@ function headerTitle(label: string): string {
 
 /** fmt (:6490-6493). */
 function fmt(value: number | null | undefined, decimals: number): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+  if (value === null || value === undefined || Number.isNaN(value)) return '-';
   return Number(value).toFixed(decimals);
 }
 
 /** fmtDate (:6497-6502). */
 function fmtDate(iso: string | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     const date = new Date(iso);
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
@@ -167,7 +167,7 @@ onBeforeUnmount(() => dragSelect.dispose());
         >
           <td v-if="showVersion" class="font-semibold text-secondary">PB{{ (row.backtest_version || '').toUpperCase() }}</td>
           <td :title="row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}`" data-col="config_name" class="font-medium text-primary max-w-[280px]">
-            <span v-if="row.liquidated" class="text-danger" :title="t('v7backtest.liquidated')">⚠️</span>
+            <span v-if="row.liquidated" class="mr-1 inline-flex items-baseline align-[-1px] text-danger" :title="t('v7backtest.liquidated')"><PbIcon :icon="PhWarning" :size="12" /></span>
             {{ row.display_name || `${row.config_name}/${row.exchange_dir || ''}/${row.result_name}` }}
           </td>
           <td v-if="showStrategy" class="mono">{{ row.strategy || '-' }}</td>

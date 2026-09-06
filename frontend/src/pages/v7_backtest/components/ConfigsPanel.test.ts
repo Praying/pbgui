@@ -57,7 +57,7 @@ describe('rendering (:1677-1705)', () => {
     expect(wrapper.find('#configs-toolbar').exists()).toBe(false);
     expect(emptyState.find('svg').exists()).toBe(true);
     expect(wrapper.get('[data-test="configs-empty-title"]').text()).toBe('No saved configs yet.');
-    expect(wrapper.get('[data-test="configs-empty-message"]').text()).toBe('Click + New Config to create one.');
+    expect(wrapper.get('[data-test="configs-empty-message"]').text()).toBe('Click New Config to create one.');
     expect(emptyState.text()).not.toContain('<br>');
     expect(emptyState.text()).not.toContain('<b>');
     expect(emptyState.text()).toContain('PBv8 / 00');

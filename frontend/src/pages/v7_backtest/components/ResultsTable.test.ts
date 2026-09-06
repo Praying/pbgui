@@ -135,17 +135,17 @@ describe('rows (:5541-5574)', () => {
     expect(text).toContain('1456');
   });
 
-  it('null metrics render the em dash (:fmt)', () => {
+  it('null metrics render the plain dash (:fmt)', () => {
     const wrapper = mountTable({ rows: [row({ path: 'p1', adg: null, gain: null })] });
     const text = wrapper.findAll('tbody tr')[0]!.findAll('td').map((c) => c.text());
-    expect(text).toContain('—');
+    expect(text.filter((value) => value === '-').length).toBeGreaterThanOrEqual(2); // adg + gain
   });
 
   it('tints liquidated rows and prefixes the warning (:5545-5552)', () => {
     const wrapper = mountTable({ rows: [row({ path: 'p1', liquidated: true, drawdown_worst: 0.97 })] });
     const tr = wrapper.find('tbody tr');
     expect(tr.attributes('data-liquidated')).toBe('true');
-    expect(tr.find('td[data-col="config_name"]').text()).toContain('⚠️');
+    expect(tr.find('td[data-col="config_name"] svg').exists()).toBe(true);
   });
 
   it('marks the selected rows', () => {

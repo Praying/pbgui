@@ -68,7 +68,7 @@ describe('ParetosPanel', () => {
     });
     const emptyTd = wrapper.find('tbody tr td');
     expect(emptyTd.exists()).toBe(true);
-    expect(emptyTd.attributes('colspan')).toBe('4');
+    expect(emptyTd.attributes('colspan')).toBe('5');
     expect(wrapper.text()).toContain('Choose a result set first.');
     wrapper.unmount();
   });

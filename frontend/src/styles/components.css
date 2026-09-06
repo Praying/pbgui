@@ -1943,6 +1943,30 @@
     background: rgb(var(--accent-rgb) / 0.055);
   }
 
+  /* The "currently open" row (ResultsPanel selectedPath) reads weaker than
+     a selected row; placed before the selected rules so selected wins when both apply. */
+  .pbgui-list-table tbody tr.is-open td,
+  .pbgui-list-table tbody tr.is-open td:last-child {
+    background: rgb(var(--accent-rgb) / 0.05);
+  }
+
+  /* Selected rows: accent tint + a 2px left marker on the first cell.
+     Placed after the hover rules so a selected row keeps its tint on hover
+     (equal specificity, later wins); the :hover variants below outrank both. */
+  .pbgui-list-table tbody tr.selected td,
+  .pbgui-list-table tbody tr.selected td:last-child {
+    background: rgb(var(--accent-rgb) / 0.09);
+  }
+
+  .pbgui-list-table tbody tr.selected td:first-child {
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+
+  .pbgui-list-table tbody tr.selected:hover td,
+  .pbgui-list-table tbody tr.selected:hover td:last-child {
+    background: rgb(var(--accent-rgb) / 0.13);
+  }
+
   /* ── Forms ──────────────────────────────────────────────────── */
 
   .form-group {
