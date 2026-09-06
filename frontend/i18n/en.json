@@ -6855,5 +6855,8 @@
   "transfers.entry": "Entry",
   "transfers.unrealizedPnl": "Unrealized PNL",
   "transfers.liquidation": "Liquidation",
-  "transfers.leverage": "Leverage"
+  "transfers.leverage": "Leverage",
+  "transfers.vaultSection": "Vault",
+  "transfers.amountRange": "Between {min} and {max} {asset}",
+  "transfers.noHistoryHint": "Submitted transfers for this account will appear here."
 }

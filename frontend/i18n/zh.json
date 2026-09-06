@@ -6780,5 +6780,8 @@
   "transfers.entry": "入场价",
   "transfers.unrealizedPnl": "未实现 PNL",
   "transfers.liquidation": "强平价",
-  "transfers.leverage": "杠杆"
+  "transfers.leverage": "杠杆",
+  "transfers.vaultSection": "Vault",
+  "transfers.amountRange": "介于 {min} 与 {max} {asset} 之间",
+  "transfers.noHistoryHint": "该账户已提交的划转将显示在这里。"
 }
