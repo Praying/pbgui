@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
 import { apiFetch, ApiError } from '@/shared/api';
 import App from './App.vue';
+import ConfigEditorModal from './components/ConfigEditorModal.vue';
 
 vi.mock('@/shared/api', () => ({
   apiFetch: vi.fn().mockResolvedValue({ settings: {}, configs: [], items: [], results: [] }),
@@ -13,6 +14,9 @@ vi.mock('@/shared/api', () => ({
 
 describe('v7_optimize App', () => {
   beforeEach(() => {
+    vi.mocked(apiFetch).mockReset();
+    vi.mocked(apiFetch).mockResolvedValue({ settings: {}, configs: [], items: [], results: [] });
+    window.history.replaceState({}, '', '/api/optimize-v7/main_page');
     vi.stubGlobal('__BOOT__', { origin: 'http://testserver', token: '', version: 'test', serial: '1' });
     vi.stubGlobal('WebSocket', class { onopen = null; onmessage = null; onclose = null; onerror = null; close() {} send() {} } as unknown as typeof WebSocket);
   });
@@ -113,6 +117,42 @@ describe('v7_optimize App', () => {
     expect(wrapper.find('[data-test="pb8-runtime-warning"]').text()).toContain('PB8 update incomplete');
     expect(wrapper.find('[data-test="pb8-runtime-warning"] a').attributes('href')).toBe('/api/vps-manager/main_page');
     expect(wrapper.text()).toContain('alpha');
+  });
+
+  it('passes PB8 runtime optimizer metadata into the new config editor', async () => {
+    window.history.replaceState({}, '', '/api/optimize-v8/main_page');
+    vi.mocked(apiFetch).mockImplementation(async (url) => {
+      const path = String(url);
+      if (path.endsWith('/settings')) return { optimize_backend_options: ['pymoo'] };
+      if (path.endsWith('/metadata')) return {
+        optimizer_overrides: ['lossless_close_trailing', 'forward_tp_grid'],
+        fixed_runtime_overrides: { 'bot.long.hsl.restart_after_red_policy': 'always' },
+        runtime_options: { polish_bounds_mode: { choices: ['clamp', 'override-all'] } },
+        strategy_defaults: { long: { ema_anchor: { span: 42 } } },
+        active_bounds: { ema_anchor: { bot: { long: { strategy: { ema_anchor: { span: [10, 100] } } } } } },
+      };
+      if (path.endsWith('/configs/new-config')) return {
+        config: { backtest: { exchanges: ['bybit'] }, bot: { long: {}, short: {} }, optimize: {} },
+      };
+      if (path.includes('/symbols?')) return { symbols: [] };
+      if (path.includes('/configs')) return { configs: [] };
+      if (path.includes('/queue')) return { items: [] };
+      return {};
+    });
+    const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
+    await flushPromises();
+
+    const editor = wrapper.findComponent(ConfigEditorModal);
+    expect(editor.props('optimizerOverrides')).toEqual(['lossless_close_trailing', 'forward_tp_grid']);
+    expect(editor.props('fixedRuntimeOverrides')).toEqual({ 'bot.long.hsl.restart_after_red_policy': 'always' });
+    expect(editor.props('runtimeOptions')).toEqual({ polish_bounds_mode: { choices: ['clamp', 'override-all'] } });
+    expect(editor.props('strategyDefaults')).toEqual({ long: { ema_anchor: { span: 42 } } });
+    expect(editor.props('activeBounds')).toEqual({ ema_anchor: { bot: { long: { strategy: { ema_anchor: { span: [10, 100] } } } } } });
+
+    await wrapper.find('[data-test="new-config"]').trigger('click');
+    await flushPromises();
+    await wrapper.find('[data-tab="optimizer"]').trigger('click');
+    expect(wrapper.find('[data-field="optimizer-override-lossless_close_trailing"]').exists()).toBe(true);
   });
 
   it('does not use native confirmation APIs for destructive actions', () => {

@@ -122,6 +122,40 @@ function updateLimitScenario(index: number, value: string): void {
   else if (value !== 'inherit') next[index]!.scenario = value;
   emit('update:limits', next);
 }
+function scenarioSelection(row: Row): 'inherit' | 'aggregate' | 'named' {
+  if (!Object.prototype.hasOwnProperty.call(row, 'scenario')) return 'inherit';
+  return row.scenario == null ? 'aggregate' : 'named';
+}
+function selectScoringScenarioMode(index: number, value: string): void {
+  const next = scoringRows.value.map((row) => ({ ...row }));
+  if (value === 'inherit') delete next[index]!.scenario;
+  else if (value === 'aggregate') next[index]!.scenario = null;
+  else {
+    if (next[index]!.scenario == null) next[index]!.scenario = '';
+    delete next[index]![meta.value.scoring_basis_field];
+  }
+  emit('update:scoring', next);
+}
+function setScoringScenarioName(index: number, value: string): void {
+  const next = scoringRows.value.map((row) => ({ ...row }));
+  next[index]!.scenario = value;
+  emit('update:scoring', next);
+}
+function selectLimitScenarioMode(index: number, value: string): void {
+  const next = limitRows.value.map((row) => ({ ...row }));
+  if (value === 'inherit') delete next[index]!.scenario;
+  else if (value === 'aggregate') next[index]!.scenario = null;
+  else {
+    if (next[index]!.scenario == null) next[index]!.scenario = '';
+    delete next[index]![meta.value.limit_basis_field];
+  }
+  emit('update:limits', next);
+}
+function setLimitScenarioName(index: number, value: string): void {
+  const next = limitRows.value.map((row) => ({ ...row }));
+  next[index]!.scenario = value;
+  emit('update:limits', next);
+}
 function addScoring(): void {
   emit('update:scoring', [...scoringRows.value, hasMetadata.value ? { metric: metricOptions.value[0] || '', goal: 'max' } : { metric: '', goal: 'maximize' }]);
 }
@@ -223,22 +257,23 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 
             <!-- Secondary Row: Scenario / Stat Basis -->
             <div
-              v-if="(scenarioLabels.length && version === 'v8') || meta.scoring_basis_field"
+              v-if="version === 'v8' || meta.scoring_basis_field"
               class="mt-2 flex flex-wrap items-center gap-2 border-t border-border-subtle/50 pt-2 text-xs"
             >
-              <div v-if="scenarioLabels.length && version === 'v8'" class="flex min-w-[140px] flex-1 items-center gap-1.5">
+              <div v-if="version === 'v8'" class="flex min-w-[140px] flex-1 items-center gap-1.5">
                 <span class="text-xs text-secondary shrink-0">{{ t('v7optimize.scenario') }}:</span>
-                <SelectRoot :model-value="scenarioMode(row)" @update:model-value="updateScoringScenario(index, String($event))">
+                <SelectRoot :model-value="scenarioSelection(row)" @update:model-value="selectScoringScenarioMode(index, String($event))">
                   <SelectTrigger data-field="scoring-scenario" aria-label="scenario" class="h-7.5 w-full text-xs">
-                    <span class="truncate">{{ scenarioMode(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioMode(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : scenarioMode(row) }}</span>
+                    <span class="truncate">{{ scenarioSelection(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioSelection(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : t('v7optimize.namedScenario') }}</span>
                   </SelectTrigger>
                   <SelectContent class="max-h-60">
                     <SelectItem value="inherit">{{ t('v7optimize.inheritObjectiveScenario') }}</SelectItem>
                     <SelectItem value="aggregate">{{ t('v7optimize.aggregatedScenario') }}</SelectItem>
-                    <SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem>
+                    <SelectItem value="named">{{ t('v7optimize.namedScenario') }}</SelectItem>
                   </SelectContent>
                 </SelectRoot>
               </div>
+              <Input v-if="version === 'v8' && scenarioSelection(row) === 'named'" data-field="scoring-scenario-name" class="h-7.5 min-w-[130px] flex-1 text-xs" :list="scenarioLabels.length ? 'scoring-scenario-labels' : undefined" :model-value="rowValue(row, 'scenario')" :placeholder="t('v7optimize.scenarioLabel')" @update:model-value="setScoringScenarioName(index, String($event ?? ''))" />
 
               <div v-if="meta.scoring_basis_field" class="flex min-w-[120px] flex-1 items-center gap-1.5">
                 <span class="text-xs text-secondary shrink-0">{{ t('v7optimize.statistic') }}:</span>
@@ -393,18 +428,19 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
               </div>
 
               <!-- Scenario (if v8) -->
-              <div v-if="scenarioLabels.length && version === 'v8'" class="w-36 shrink-0">
-                <SelectRoot :model-value="scenarioMode(row)" @update:model-value="updateLimitScenario(index, String($event))">
+              <div v-if="version === 'v8'" class="w-36 shrink-0">
+                <SelectRoot :model-value="scenarioSelection(row)" @update:model-value="selectLimitScenarioMode(index, String($event))">
                   <SelectTrigger data-field="limit-scenario" aria-label="scenario" class="h-7.5 w-full text-xs">
-                    <span class="truncate">{{ scenarioMode(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioMode(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : scenarioMode(row) }}</span>
+                    <span class="truncate">{{ scenarioSelection(row) === 'inherit' ? t('v7optimize.inheritObjectiveScenario') : scenarioSelection(row) === 'aggregate' ? t('v7optimize.aggregatedScenario') : t('v7optimize.namedScenario') }}</span>
                   </SelectTrigger>
                   <SelectContent class="max-h-60">
                     <SelectItem value="inherit">{{ t('v7optimize.inheritObjectiveScenario') }}</SelectItem>
                     <SelectItem value="aggregate">{{ t('v7optimize.aggregatedScenario') }}</SelectItem>
-                    <SelectItem v-for="label in scenarioLabels" :key="label" :value="label">{{ label }}</SelectItem>
+                    <SelectItem value="named">{{ t('v7optimize.namedScenario') }}</SelectItem>
                   </SelectContent>
                 </SelectRoot>
               </div>
+              <Input v-if="version === 'v8' && scenarioSelection(row) === 'named'" data-field="limit-scenario-name" class="h-7.5 min-w-[130px] flex-1 text-xs" :list="scenarioLabels.length ? 'limit-scenario-labels' : undefined" :model-value="rowValue(row, 'scenario')" :placeholder="t('v7optimize.scenarioLabel')" @update:model-value="setLimitScenarioName(index, String($event ?? ''))" />
             </div>
           </div>
         </template>
@@ -428,5 +464,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
         <p v-else-if="!limitRows.length" class="py-6 text-center text-xs text-secondary">{{ t('v7optimize.noEntries') }}</p>
       </div>
     </section>
+    <datalist id="scoring-scenario-labels"><option v-for="label in scenarioLabels" :key="label" :value="label"></option></datalist>
+    <datalist id="limit-scenario-labels"><option v-for="label in scenarioLabels" :key="label" :value="label"></option></datalist>
   </div>
 </template>

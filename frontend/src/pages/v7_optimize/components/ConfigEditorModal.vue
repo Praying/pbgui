@@ -21,6 +21,7 @@ import {
   cleanupOptimizeBackendFields,
   collectEditorConfig,
   filterOptimizeEnableOverridesForStrategy,
+  flattenBounds,
   getPath,
   gpuContractItem,
   gpuDefaults,
@@ -52,6 +53,11 @@ const props = defineProps<{
   backendOptions?: string[];
   backendContract?: unknown;
   optimizeDefaults?: Record<string, unknown>;
+  optimizerOverrides?: string[];
+  fixedRuntimeOverrides?: Record<string, unknown>;
+  runtimeOptions?: Record<string, unknown>;
+  strategyDefaults?: Record<string, unknown>;
+  activeBounds?: Record<string, unknown>;
   pymooAlgorithmOptions?: string[];
   pymooRefDirMethodOptions?: string[];
   strategyOptions?: string[];
@@ -70,12 +76,29 @@ type SectionName = 'backtest' | 'optimize' | 'live' | 'pbgui' | 'logging';
 type BotSide = 'long' | 'short';
 type SeedMode = 'none' | 'self' | 'path';
 type AdditionalParamType = 'boolean' | 'number' | 'json' | 'null' | 'string';
+interface RuntimeOverrideField {
+  key: string;
+  label: string;
+  side: BotSide | 'other';
+  type: 'boolean' | 'number' | 'string';
+  defaultValue: unknown;
+  choices: string[];
+  minimum?: number;
+  maximum?: number;
+  step?: number;
+}
 const KNOWN_OPTIMIZE_KEYS = new Set([
   'iters', 'n_cpus', 'starting_config', 'pareto_max_size', 'backend', 'max_pending_starting_evals_per_cpu',
   'offspring_multiplier', 'population_size', 'crossover_probability', 'mutation_probability', 'mutation_indpb',
   'crossover_eta', 'mutation_eta', 'round_to_n_significant_digits', 'compress_results_file', 'write_all_results',
-  'enable_overrides', 'fixed_params', 'fixed_runtime_overrides', 'scoring', 'limits', 'bounds', 'pymoo',
+  'enable_overrides', 'fixed_params', 'fixed_runtime_overrides', 'scoring', 'limits', 'bounds', 'pymoo', 'gpu',
 ]);
+const LEGACY_RUNTIME_OVERRIDE_KEYS: Record<string, string> = {
+  'bot.long.hsl_enabled': 'bot.long.hsl.enabled',
+  'bot.long.hsl_no_restart_drawdown_threshold': 'bot.long.hsl.no_restart_drawdown_threshold',
+  'bot.short.hsl_enabled': 'bot.short.hsl.enabled',
+  'bot.short.hsl_no_restart_drawdown_threshold': 'bot.short.hsl.no_restart_drawdown_threshold',
+};
 const DEAP_HINT_KEYS = ['offspring_multiplier', 'crossover_probability', 'mutation_probability', 'mutation_indpb', 'crossover_eta', 'mutation_eta'];
 const tabs: { id: EditorTab; label: string }[] = [
   { id: 'general', label: 'v7optimize.editorTabGeneral' },
@@ -126,6 +149,12 @@ const polishBoundsMode = ref('clamp');
 const newBoundKey = ref('');
 const availableCoins = ref<string[]>([]);
 const additionalParamJson = ref<Record<string, string>>({});
+let activeStrategy = '';
+let sharedBoundsCache: Record<string, BoundPair> = {};
+let strategyBoundsCache: Record<string, Record<string, BoundPair>> = {};
+let sharedFixedParamsCache: string[] = [];
+let strategyFixedParamsCache: Record<string, string[]> = {};
+let strategyBotCache: Record<BotSide, Record<string, JsonObject>> = { long: {}, short: {} };
 let marketGeneration = 0;
 const ohlcvJob = ref<OhlcvStartDateJob | null>(null);
 const ohlcvError = ref('');
@@ -159,6 +188,177 @@ function inferOptimizeBackend(optimize: JsonObject): string {
   return DEAP_HINT_KEYS.some((key) => Object.prototype.hasOwnProperty.call(optimize, key)) ? 'deap' : 'pymoo';
 }
 
+function canonicalRuntimeOverrideKey(key: string): string {
+  return LEGACY_RUNTIME_OVERRIDE_KEYS[key] || key;
+}
+
+function normalizeRuntimeOverrideMap(value: unknown): JsonObject {
+  if (!isObject(value)) return {};
+  const normalized: JsonObject = {};
+  Object.entries(value).forEach(([rawKey, fieldValue]) => {
+    const key = canonicalRuntimeOverrideKey(rawKey.trim());
+    if (key) normalized[key] = cloneValue(fieldValue);
+  });
+  return normalized;
+}
+
+const optimizerOverrideOptions = computed(() => {
+  const values = Array.isArray(props.optimizerOverrides) ? props.optimizerOverrides : [];
+  return [...new Set(values.map((value) => String(value).trim()).filter(Boolean))];
+});
+
+const polishBoundsModeOptions = computed(() => {
+  const metadata = isObject(props.runtimeOptions) && isObject(props.runtimeOptions.polish_bounds_mode)
+    ? props.runtimeOptions.polish_bounds_mode
+    : {};
+  const configured = Array.isArray(metadata.choices) ? metadata.choices.map(String).filter(Boolean) : [];
+  return configured.length ? configured : ['clamp', 'override-tunable', 'override-all'];
+});
+
+const runtimeOverrideFields = computed<RuntimeOverrideField[]>(() => {
+  const defaults = normalizeRuntimeOverrideMap(props.fixedRuntimeOverrides);
+  const fields = new Map<string, RuntimeOverrideField>();
+  const addField = (key: string, defaultValue: unknown, side: BotSide | 'other' = 'other'): void => {
+    const canonicalKey = canonicalRuntimeOverrideKey(key);
+    const restartPolicy = canonicalKey.endsWith('.hsl.restart_after_red_policy');
+    fields.set(canonicalKey, {
+      key: canonicalKey,
+      label: canonicalKey,
+      side,
+      type: restartPolicy ? 'string' : typeof defaultValue === 'boolean' ? 'boolean' : typeof defaultValue === 'number' ? 'number' : 'string',
+      defaultValue,
+      choices: restartPolicy ? ['always', 'threshold', 'never'] : [],
+      minimum: canonicalKey.endsWith('.hsl.no_restart_drawdown_threshold') ? 0 : undefined,
+      maximum: canonicalKey.endsWith('.hsl.no_restart_drawdown_threshold') ? 1 : undefined,
+      step: canonicalKey.endsWith('.hsl.no_restart_drawdown_threshold') ? 0.01 : undefined,
+    });
+  };
+
+  (['long', 'short'] as BotSide[]).forEach((side) => {
+    addField(`bot.${side}.hsl.enabled`, getPath(local.value?.[side === 'long' ? 'botLong' : 'botShort'], 'hsl.enabled', false), side);
+    addField(`bot.${side}.hsl.no_restart_drawdown_threshold`, getPath(local.value?.[side === 'long' ? 'botLong' : 'botShort'], 'hsl.no_restart_drawdown_threshold', 1), side);
+  });
+  Object.entries(defaults).forEach(([key, value]) => {
+    const match = key.match(/^bot\.(long|short)\./);
+    addField(key, value, match ? match[1] as BotSide : 'other');
+  });
+  return [...fields.values()];
+});
+
+function runtimeOverrideFieldsFor(side: BotSide | 'other'): RuntimeOverrideField[] {
+  return runtimeOverrideFields.value.filter((field) => field.side === side);
+}
+
+function runtimeOverrideDataField(key: string): string {
+  return `runtime-${key.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}`;
+}
+
+function strategyFromParameterPath(path: string): string {
+  return path.replace(/^bot\./, '').match(/^(?:long|short)\.strategy\.([^.]+)(?:\.|$)/)?.[1] || '';
+}
+
+function strategyBotDefault(side: BotSide, strategy: string): JsonObject {
+  const sideDefaults = isObject(props.strategyDefaults?.[side]) ? props.strategyDefaults[side] : {};
+  return isObject(sideDefaults[strategy]) ? cloneValue(sideDefaults[strategy]) : {};
+}
+
+function cacheStrategyBotBlocks(): void {
+  if (!local.value) return;
+  (['long', 'short'] as BotSide[]).forEach((side) => {
+    const sideConfig = side === 'long' ? local.value!.botLong : local.value!.botShort;
+    const blocks = isObject(sideConfig.strategy) ? sideConfig.strategy : {};
+    Object.entries(blocks).forEach(([strategy, value]) => {
+      if (isObject(value)) strategyBotCache[side][strategy] = cloneValue(value);
+    });
+  });
+}
+
+function cacheVisibleStrategyState(strategy: string): void {
+  if (!local.value || !strategy) return;
+  strategyBoundsCache[strategy] = {};
+  sharedBoundsCache = {};
+  Object.entries(local.value.bounds).forEach(([key, value]) => {
+    const boundStrategy = strategyFromParameterPath(key);
+    if (boundStrategy) {
+      const target = strategyBoundsCache[boundStrategy] || {};
+      target[key] = cloneValue(value);
+      strategyBoundsCache[boundStrategy] = target;
+    } else {
+      sharedBoundsCache[key] = cloneValue(value);
+    }
+  });
+  strategyFixedParamsCache[strategy] = [];
+  sharedFixedParamsCache = [];
+  local.value.fixedParams.forEach((key) => {
+    const fixedStrategy = strategyFromParameterPath(key);
+    if (fixedStrategy) {
+      const target = strategyFixedParamsCache[fixedStrategy] || [];
+      if (!target.includes(key)) target.push(key);
+      strategyFixedParamsCache[fixedStrategy] = target;
+    } else if (!sharedFixedParamsCache.includes(key)) {
+      sharedFixedParamsCache.push(key);
+    }
+  });
+  cacheStrategyBotBlocks();
+}
+
+function initializeStrategyState(): void {
+  activeStrategy = String(local.value?.live.strategy_kind || '').trim();
+  sharedBoundsCache = {};
+  strategyBoundsCache = {};
+  sharedFixedParamsCache = [];
+  strategyFixedParamsCache = {};
+  strategyBotCache = { long: {}, short: {} };
+  if (!local.value || props.version !== 'v8') return;
+  cacheVisibleStrategyState(activeStrategy);
+  showStrategyState(activeStrategy);
+}
+
+function defaultStrategyBounds(strategy: string): Record<string, BoundPair> {
+  const nested = props.activeBounds?.[strategy];
+  return isObject(nested) ? flattenBounds(nested) : {};
+}
+
+function showStrategyState(strategy: string): void {
+  if (!local.value || !strategy) return;
+  const cachedBounds = strategyBoundsCache[strategy];
+  local.value.bounds = {
+    ...cloneValue(sharedBoundsCache),
+    ...cloneValue(cachedBounds && Object.keys(cachedBounds).length ? cachedBounds : defaultStrategyBounds(strategy)),
+  };
+  local.value.fixedParams = [...new Set([
+    ...sharedFixedParamsCache,
+    ...(strategyFixedParamsCache[strategy] || []),
+  ])];
+  (['long', 'short'] as BotSide[]).forEach((side) => {
+    const sideConfig = side === 'long' ? local.value!.botLong : local.value!.botShort;
+    const existingBlocks = isObject(sideConfig.strategy) ? sideConfig.strategy : {};
+    if (!strategyBotCache[side][strategy]) {
+      strategyBotCache[side][strategy] = isObject(existingBlocks[strategy])
+        ? cloneValue(existingBlocks[strategy])
+        : strategyBotDefault(side, strategy);
+    }
+    sideConfig.strategy = {
+      ...cloneValue(existingBlocks),
+      ...cloneValue(strategyBotCache[side]),
+      [strategy]: cloneValue(strategyBotCache[side][strategy]),
+    };
+  });
+  botLongJson.value = json(local.value.botLong);
+  botShortJson.value = json(local.value.botShort);
+}
+
+function collectAllStrategyState(): void {
+  if (!local.value || props.version !== 'v8' || !activeStrategy) return;
+  cacheVisibleStrategyState(activeStrategy);
+  local.value.bounds = cloneValue(sharedBoundsCache);
+  Object.values(strategyBoundsCache).forEach((bounds) => Object.assign(local.value!.bounds, cloneValue(bounds)));
+  local.value.fixedParams = [...new Set([
+    ...sharedFixedParamsCache,
+    ...Object.values(strategyFixedParamsCache).flat(),
+  ])];
+}
+
 function load(source: OptimizeEditorDraft | null): void {
   local.value = source ? cloneValue(source) : null;
   localError.value = '';
@@ -169,6 +369,7 @@ function load(source: OptimizeEditorDraft | null): void {
     const existingGpu = isObject(local.value.optimize.gpu) ? local.value.optimize.gpu : {};
     local.value.optimize.gpu = { ...gpuDefaults(props.optimizeDefaults), ...existingGpu };
   }
+  initializeStrategyState();
   initializeAdditionalParams();
   exchangeText.value = local.value.exchanges.join(', ');
   tagsText.value = csv(local.value.pbgui.tags);
@@ -185,6 +386,7 @@ function load(source: OptimizeEditorDraft | null): void {
   local.value.optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(local.value.optimize.enable_overrides, local.value.live.strategy_kind);
   enableOverridesJson.value = json(local.value.optimize.enable_overrides);
   coinSourcesJson.value = json(local.value.backtest.coin_sources ?? local.value.pbgui.coin_sources);
+  local.value.runtimeOverrides = normalizeRuntimeOverrideMap(local.value.runtimeOverrides);
   runtimeJson.value = json(local.value.runtimeOverrides);
   overrideJson.value = json(local.value.overrideConfigs);
   rawJson.value = json(collectEditorConfig(local.value, props.version));
@@ -197,8 +399,8 @@ function load(source: OptimizeEditorDraft | null): void {
   objectiveScenarioMode.value = objectiveScenarioName.value ? 'named' : 'aggregate';
   const runtime = getPath(local.value.pbgui, 'optimize_runtime', {}) as JsonObject;
   fineTuneText.value = Array.isArray(runtime.fine_tune_params) ? runtime.fine_tune_params.map(String).join(', ') : String(runtime.fine_tune_params || '');
-  const polish = Number(runtime.polish_percentage);
-  polishPercentageText.value = Number.isFinite(polish) ? String(polish * 100) : '';
+  const polish = runtime.polish_percentage == null ? null : Number(runtime.polish_percentage);
+  polishPercentageText.value = polish !== null && Number.isFinite(polish) ? String(polish * 100) : '';
   polishBoundsMode.value = String(runtime.polish_bounds_mode || 'clamp');
 }
 
@@ -289,11 +491,25 @@ function setPolishBoundsMode(value: string): void {
   polishBoundsMode.value = value;
   setPath(optimizeRuntime(), 'polish_bounds_mode', value);
 }
-function runtimeOverrideValue(key: string, fallback: unknown): unknown { return local.value?.runtimeOverrides[key] ?? fallback; }
+function runtimeOverrideValue(key: string, fallback: unknown): unknown {
+  return local.value?.runtimeOverrides[canonicalRuntimeOverrideKey(key)] ?? fallback;
+}
 function setRuntimeOverride(key: string, value: unknown): void {
   if (!local.value) return;
-  local.value.runtimeOverrides[key] = value;
+  const canonicalKey = canonicalRuntimeOverrideKey(key);
+  local.value.runtimeOverrides[canonicalKey] = value;
+  Object.entries(LEGACY_RUNTIME_OVERRIDE_KEYS).forEach(([legacyKey, replacement]) => {
+    if (replacement === canonicalKey) delete local.value!.runtimeOverrides[legacyKey];
+  });
   runtimeJson.value = json(local.value.runtimeOverrides);
+}
+function setRuntimeOverrideText(field: RuntimeOverrideField, value: string): void {
+  if (field.type === 'number') {
+    const parsed = Number(value);
+    setRuntimeOverride(field.key, Number.isFinite(parsed) ? parsed : value);
+    return;
+  }
+  setRuntimeOverride(field.key, value);
 }
 
 
@@ -568,11 +784,50 @@ function numberField(sectionName: SectionName, key: string, fallback = 0): numbe
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
 }
+function optimizeDefaultNumber(key: string, fallback: number): number {
+  const value = Number(props.optimizeDefaults?.[key]);
+  return Number.isFinite(value) ? value : fallback;
+}
 function setNumber(sectionName: SectionName, key: string, value: string): void {
   const target = section(sectionName);
   if (!target) return;
   const parsed = Number(value);
   target[key] = Number.isFinite(parsed) ? parsed : value;
+}
+function nullableRngSeed(): string {
+  const value = local.value?.optimize.seed;
+  return value === null || value === undefined ? '' : String(value);
+}
+function setNullableRngSeed(value: string): void {
+  if (!local.value) return;
+  const text = value.trim();
+  if (!text) {
+    local.value.optimize.seed = null;
+    return;
+  }
+  const parsed = Number(text);
+  local.value.optimize.seed = Number.isFinite(parsed) ? Math.round(parsed) : value;
+}
+function loggingLevel(): string {
+  const value = Math.max(0, Math.min(3, Math.round(numberField('logging', 'level', 1))));
+  return String(value);
+}
+function setLoggingLevel(value: string): void {
+  setNumber('logging', 'level', value);
+}
+function optimizerOverrideEnabled(value: string): boolean {
+  return Array.isArray(local.value?.optimize.enable_overrides)
+    && local.value.optimize.enable_overrides.map(String).includes(value);
+}
+function setOptimizerOverride(value: string, enabled: boolean): void {
+  if (!local.value) return;
+  const current = Array.isArray(local.value.optimize.enable_overrides)
+    ? local.value.optimize.enable_overrides.map(String)
+    : [];
+  const next = current.filter((item) => item !== value);
+  if (enabled) next.push(value);
+  local.value.optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(next, local.value.live.strategy_kind);
+  enableOverridesJson.value = json(local.value.optimize.enable_overrides);
 }
 /**
  * changeOptimizeStrategyKind (v1.98.36 syncOptimizeOverrideStrategyCompatibility):
@@ -580,8 +835,22 @@ function setNumber(sectionName: SectionName, key: string, value: string): void {
  * mirrors the filtered list back into the enable_overrides textarea.
  */
 function onStrategyKindChange(value: string): void {
+  const previousStrategy = activeStrategy;
+  if (props.version === 'v8' && previousStrategy && previousStrategy !== value) {
+    try {
+      if (local.value) {
+        local.value.botLong = parseJsonObject(botLongJson.value, 'Bot long');
+        local.value.botShort = parseJsonObject(botShortJson.value, 'Bot short');
+      }
+    } catch {
+      // Keep the last valid structured bot state while switching selectors.
+    }
+    cacheVisibleStrategyState(previousStrategy);
+  }
   setText('live', 'strategy_kind', value);
   if (!local.value) return;
+  activeStrategy = value;
+  if (props.version === 'v8') showStrategyState(value);
   local.value.optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(local.value.optimize.enable_overrides, value);
   enableOverridesJson.value = json(local.value.optimize.enable_overrides);
 }
@@ -737,10 +1006,12 @@ function applyTextSections(): void {
   // v1.98.36: apply the strategy filter before save/queue/launch
   local.value.optimize.enable_overrides = filterOptimizeEnableOverridesForStrategy(cloneValue(parsedEnableOverrides), local.value.live.strategy_kind);
   local.value.backtest.coin_sources = parseJsonObject(coinSourcesJson.value, 'Coin sources');
-  local.value.runtimeOverrides = parseJsonObject(runtimeJson.value, 'Runtime overrides');
+  local.value.runtimeOverrides = normalizeRuntimeOverrideMap(parseJsonObject(runtimeJson.value, 'Runtime overrides'));
+  runtimeJson.value = json(local.value.runtimeOverrides);
   local.value.overrideConfigs = parseJsonObject(overrideJson.value, 'Override configs');
   applySeedState();
   applyAdditionalJsonParams();
+  collectAllStrategyState();
   if (props.version === 'v8') {
     local.value.optimize.objective_scenario = objectiveScenarioMode.value === 'named' ? objectiveScenarioName.value.trim() : null;
   }
@@ -1307,7 +1578,7 @@ function preflight(): void {
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.pareto_max_size')">pareto_max_size</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'pareto_max_size', 100)" @update:model-value="setNumber('optimize', 'pareto_max_size', String($event ?? ''))" /></label>
           <label v-if="version === 'v7'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.max_pending_starting_evals_per_cpu')">max_pending_starting_evals_per_cpu</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'max_pending_starting_evals_per_cpu', 1)" @update:model-value="setNumber('optimize', 'max_pending_starting_evals_per_cpu', String($event ?? ''))" /></label>
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.round_to_n_significant_digits')">round_to_n_significant_digits</span><Input type="number" min="1" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'round_to_n_significant_digits', 5)" @update:model-value="setNumber('optimize', 'round_to_n_significant_digits', String($event ?? ''))" /></label>
-          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.logging_level')">logging_level</span><Input type="number" min="0" max="3" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'level', 1)" @update:model-value="setNumber('logging', 'level', String($event ?? ''))" /></label>
+          <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.logging_level')">logging_level</span><SelectRoot :model-value="loggingLevel()" @update:model-value="setLoggingLevel(String($event))"><SelectTrigger data-field="logging-level" aria-label="logging_level" class="h-9 text-[13.5px]"><span>{{ ['warning', 'info', 'debug', 'trace'][Number(loggingLevel())] }}</span></SelectTrigger><SelectContent><SelectItem value="0">warning</SelectItem><SelectItem value="1">info</SelectItem><SelectItem value="2">debug</SelectItem><SelectItem value="3">trace</SelectItem></SelectContent></SelectRoot></label>
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.memory_snapshot_interval_minutes')">memory_snapshot_interval_minutes</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'memory_snapshot_interval_minutes', 30)" @update:model-value="setNumber('logging', 'memory_snapshot_interval_minutes', String($event ?? ''))" /></label>
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.volume_refresh_info_threshold_seconds')">volume_refresh_info_threshold_seconds</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('logging', 'volume_refresh_info_threshold_seconds', 30)" @update:model-value="setNumber('logging', 'volume_refresh_info_threshold_seconds', String($event ?? ''))" /></label>
           <div class="flex items-center gap-2.5 col-span-2">
@@ -1322,7 +1593,7 @@ function preflight(): void {
           </div>
           <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.seed_mode')">seed_mode</span><SelectRoot v-model="seedMode"><SelectTrigger aria-label="seed_mode" class="h-9 text-[13.5px]"><span>{{ seedMode }}</span></SelectTrigger><SelectContent><SelectItem value="none">none</SelectItem><SelectItem value="self">self</SelectItem><SelectItem value="path">path</SelectItem></SelectContent></SelectRoot></label>
           <label v-if="seedMode === 'path'" class="grid gap-1.5 text-xs text-secondary col-span-3 max-[600px]:col-span-1 max-[900px]:col-span-2" data-field="seed-path"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.seed_path')">seed_path</span><Input v-model="seedPath" class="h-9 text-[13px] font-mono" /></label>
-          <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.rng_seed')">rng_seed</span><Input type="number" min="0" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'seed', 0)" @update:model-value="setNumber('optimize', 'seed', String($event ?? ''))" /></label>
+          <label v-if="version === 'v8'" class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.rng_seed')">rng_seed</span><Input data-field="rng-seed" type="number" step="1" class="h-9 text-[13.5px] tabular-nums" :model-value="nullableRngSeed()" @update:model-value="setNullableRngSeed(String($event ?? ''))" /></label>
           <GpuSettingsEditor v-if="currentBackend === 'gpu' && version === 'v8'" :gpu="(local.optimize.gpu as JsonObject) || {}" :optimize-defaults="optimizeDefaults || {}" :contract="backendContract" @update:gpu="local.optimize.gpu = $event" />
           <template v-if="currentBackend === 'pymoo'">
             <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))] col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
@@ -1349,12 +1620,21 @@ function preflight(): void {
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.population_size')">population_size</span><Input type="number" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'population_size', 500)" @update:model-value="setNumber('optimize', 'population_size', String($event ?? ''))" /></label>
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.crossover_probability')">crossover_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_probability', 0.7)" @update:model-value="setNumber('optimize', 'crossover_probability', String($event ?? ''))" /></label>
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.mutation_probability')">mutation_probability</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_probability', 0.2)" @update:model-value="setNumber('optimize', 'mutation_probability', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.offspring_multiplier')">offspring_multiplier</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'offspring_multiplier', 1)" @update:model-value="setNumber('optimize', 'offspring_multiplier', String($event ?? ''))" /></label>
-            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.crossover_eta')">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_eta', 20)" @update:model-value="setNumber('optimize', 'crossover_eta', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.offspring_multiplier')">offspring_multiplier</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'offspring_multiplier', optimizeDefaultNumber('offspring_multiplier', 2))" @update:model-value="setNumber('optimize', 'offspring_multiplier', String($event ?? ''))" /></label>
+            <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.crossover_eta')">crossover_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'crossover_eta', optimizeDefaultNumber('crossover_eta', 15))" @update:model-value="setNumber('optimize', 'crossover_eta', String($event ?? ''))" /></label>
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.mutation_eta')">mutation_eta</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_eta', 20)" @update:model-value="setNumber('optimize', 'mutation_eta', String($event ?? ''))" /></label>
             <label class="grid gap-1.5 text-xs text-secondary"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.deap.mutation_indpb')">mutation_indpb</span><Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="numberField('optimize', 'mutation_indpb', 0.1)" @update:model-value="setNumber('optimize', 'mutation_indpb', String($event ?? ''))" /></label>
           </template>
-          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.enable_overrides')">enable_overrides</span><Textarea v-model="enableOverridesJson" class="min-h-[120px] text-[13px] font-mono" data-field="enable-overrides" /></label>
+          <div v-if="version === 'v8' && optimizerOverrideOptions.length" class="grid gap-2 col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
+            <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.enable_overrides')">enable_overrides</span>
+            <div class="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2 max-[600px]:grid-cols-1 max-[900px]:grid-cols-2">
+              <label v-for="overrideName in optimizerOverrideOptions" :key="overrideName" class="flex min-h-9 items-center gap-2 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 cursor-pointer select-none">
+                <Checkbox :data-field="`optimizer-override-${overrideName}`" :model-value="optimizerOverrideEnabled(overrideName)" @update:model-value="setOptimizerOverride(overrideName, $event === true)" />
+                <span class="break-all text-[12.5px] font-mono text-primary">{{ overrideName }}</span>
+              </label>
+            </div>
+          </div>
+          <label class="grid gap-1.5 text-xs text-secondary col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2"><span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.enable_overrides')">{{ version === 'v8' ? t('v7optimize.enableOverridesAdvanced') : 'enable_overrides' }}</span><Textarea v-model="enableOverridesJson" class="min-h-[96px] text-[13px] font-mono" data-field="enable-overrides" /></label>
           <div class="flex min-h-0 flex-col gap-2.5 col-span-4 max-[600px]:col-span-1 max-[900px]:col-span-2">
             <div>
               <strong class="text-[13.5px] font-semibold text-primary">{{ t('v7optimize.additionalParameters') }}</strong>
@@ -1427,9 +1707,7 @@ function preflight(): void {
                     <span>{{ polishBoundsMode }}</span>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="clamp">clamp</SelectItem>
-                    <SelectItem value="override-tunable">override-tunable</SelectItem>
-                    <SelectItem value="override-all">override-all</SelectItem>
+                    <SelectItem v-for="mode in polishBoundsModeOptions" :key="mode" :value="mode">{{ mode }}</SelectItem>
                   </SelectContent>
                 </SelectRoot>
               </label>
@@ -1448,26 +1726,41 @@ function preflight(): void {
             <div class="grid grid-cols-2 gap-4 max-[700px]:grid-cols-1">
               <!-- Long Side -->
               <div class="flex flex-col gap-2.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3">
-                <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface">
-                  <Checkbox data-field="runtime-bot-long-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.long.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.long.hsl_enabled', ($event === true))" />
-                  <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.runtime.longHslEnabled')">bot.long.hsl_enabled</span>
-                </label>
-                <label class="grid gap-1.5 text-xs text-secondary">
-                  <span class="text-[12.5px] font-medium text-secondary" :data-tip="t('v7optimize.tip.runtime.longHslThreshold')">bot.long.hsl_no_restart_drawdown_threshold</span>
-                  <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="(runtimeOverrideValue('bot.long.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.long.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" />
+                <strong class="text-xs font-semibold uppercase tracking-wider text-secondary">Long</strong>
+                <label v-for="field in runtimeOverrideFieldsFor('long')" :key="field.key" :class="field.type === 'boolean' ? 'flex min-h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none' : 'grid gap-1.5 text-xs text-secondary'">
+                  <Checkbox v-if="field.type === 'boolean'" :data-field="runtimeOverrideDataField(field.key)" :model-value="!!runtimeOverrideValue(field.key, field.defaultValue)" @update:model-value="setRuntimeOverride(field.key, $event === true)" />
+                  <span class="break-all text-[12.5px] font-medium text-primary">{{ field.label }}</span>
+                  <SelectRoot v-if="field.choices.length" :model-value="String(runtimeOverrideValue(field.key, field.defaultValue))" @update:model-value="setRuntimeOverride(field.key, String($event))">
+                    <SelectTrigger :data-field="runtimeOverrideDataField(field.key)" :aria-label="field.label" class="h-9 text-[13px]"><span>{{ String(runtimeOverrideValue(field.key, field.defaultValue)) }}</span></SelectTrigger>
+                    <SelectContent><SelectItem v-for="choice in field.choices" :key="choice" :value="choice">{{ choice }}</SelectItem></SelectContent>
+                  </SelectRoot>
+                  <Input v-else-if="field.type !== 'boolean'" :data-field="runtimeOverrideDataField(field.key)" :type="field.type === 'number' ? 'number' : 'text'" :min="field.minimum" :max="field.maximum" :step="field.step || 'any'" class="h-9 text-[13px] font-mono" :model-value="String(runtimeOverrideValue(field.key, field.defaultValue) ?? '')" @update:model-value="setRuntimeOverrideText(field, String($event ?? ''))" />
                 </label>
               </div>
               <!-- Short Side -->
               <div class="flex flex-col gap-2.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3">
-                <label class="flex h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none transition-colors hover:border-border-default hover:bg-surface">
-                  <Checkbox data-field="runtime-bot-short-hsl-enabled" :model-value="!!runtimeOverrideValue('bot.short.hsl_enabled', false)" @update:model-value="setRuntimeOverride('bot.short.hsl_enabled', ($event === true))" />
-                  <span class="text-[13px] font-medium text-primary" :data-tip="t('v7optimize.tip.runtime.shortHslEnabled')">bot.short.hsl_enabled</span>
-                </label>
-                <label class="grid gap-1.5 text-xs text-secondary">
-                  <span class="text-[12.5px] font-medium text-secondary" :data-tip="t('v7optimize.tip.runtime.shortHslThreshold')">bot.short.hsl_no_restart_drawdown_threshold</span>
-                  <Input type="number" step="any" class="h-9 text-[13.5px] tabular-nums" :model-value="(runtimeOverrideValue('bot.short.hsl_no_restart_drawdown_threshold', 1) as number)" @update:model-value="setRuntimeOverride('bot.short.hsl_no_restart_drawdown_threshold', Number(String($event ?? '')))" />
+                <strong class="text-xs font-semibold uppercase tracking-wider text-secondary">Short</strong>
+                <label v-for="field in runtimeOverrideFieldsFor('short')" :key="field.key" :class="field.type === 'boolean' ? 'flex min-h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none' : 'grid gap-1.5 text-xs text-secondary'">
+                  <Checkbox v-if="field.type === 'boolean'" :data-field="runtimeOverrideDataField(field.key)" :model-value="!!runtimeOverrideValue(field.key, field.defaultValue)" @update:model-value="setRuntimeOverride(field.key, $event === true)" />
+                  <span class="break-all text-[12.5px] font-medium text-primary">{{ field.label }}</span>
+                  <SelectRoot v-if="field.choices.length" :model-value="String(runtimeOverrideValue(field.key, field.defaultValue))" @update:model-value="setRuntimeOverride(field.key, String($event))">
+                    <SelectTrigger :data-field="runtimeOverrideDataField(field.key)" :aria-label="field.label" class="h-9 text-[13px]"><span>{{ String(runtimeOverrideValue(field.key, field.defaultValue)) }}</span></SelectTrigger>
+                    <SelectContent><SelectItem v-for="choice in field.choices" :key="choice" :value="choice">{{ choice }}</SelectItem></SelectContent>
+                  </SelectRoot>
+                  <Input v-else-if="field.type !== 'boolean'" :data-field="runtimeOverrideDataField(field.key)" :type="field.type === 'number' ? 'number' : 'text'" :min="field.minimum" :max="field.maximum" :step="field.step || 'any'" class="h-9 text-[13px] font-mono" :model-value="String(runtimeOverrideValue(field.key, field.defaultValue) ?? '')" @update:model-value="setRuntimeOverrideText(field, String($event ?? ''))" />
                 </label>
               </div>
+            </div>
+            <div v-if="runtimeOverrideFieldsFor('other').length" class="mt-4 grid grid-cols-2 gap-3 max-[700px]:grid-cols-1">
+              <label v-for="field in runtimeOverrideFieldsFor('other')" :key="field.key" :class="field.type === 'boolean' ? 'flex min-h-9 items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/60 px-3 cursor-pointer select-none' : 'grid gap-1.5 text-xs text-secondary'">
+                <Checkbox v-if="field.type === 'boolean'" :data-field="runtimeOverrideDataField(field.key)" :model-value="!!runtimeOverrideValue(field.key, field.defaultValue)" @update:model-value="setRuntimeOverride(field.key, $event === true)" />
+                <span class="break-all text-[12.5px] font-medium text-primary">{{ field.label }}</span>
+                <SelectRoot v-if="field.choices.length" :model-value="String(runtimeOverrideValue(field.key, field.defaultValue))" @update:model-value="setRuntimeOverride(field.key, String($event))">
+                  <SelectTrigger :data-field="runtimeOverrideDataField(field.key)" :aria-label="field.label" class="h-9 text-[13px]"><span>{{ String(runtimeOverrideValue(field.key, field.defaultValue)) }}</span></SelectTrigger>
+                  <SelectContent><SelectItem v-for="choice in field.choices" :key="choice" :value="choice">{{ choice }}</SelectItem></SelectContent>
+                </SelectRoot>
+                <Input v-else-if="field.type !== 'boolean'" :data-field="runtimeOverrideDataField(field.key)" :type="field.type === 'number' ? 'number' : 'text'" :min="field.minimum" :max="field.maximum" :step="field.step || 'any'" class="h-9 text-[13px] font-mono" :model-value="String(runtimeOverrideValue(field.key, field.defaultValue) ?? '')" @update:model-value="setRuntimeOverrideText(field, String($event ?? ''))" />
+              </label>
             </div>
           </div>
 

@@ -18,7 +18,7 @@ Configs 列表与较慢的 PB8 设置和元数据并行开始加载。其表格�
 - 官方 **Convert to V8** 迁移可用于 PBv7 Optimize 配置。完整配置传递给 PB8 并作为未保存的编辑器预览打开；用户显式保存前不创建或替换任何配置 bundle。迁移报告随预览一起旅行，并随该手动保存持久化。审查阻止仅限于可能影响 Optimize 评估的 `optimize`、`backtest` 和 `bot` 发现；仅 Run 的 `live` 发现不阻止此上下文。迁移前移除 PBGui 元数据和冗余的旧版默认 `max_pending_starting_evals_per_cpu=1`。PB8 迁移后，PBGui 移除与策略不兼容的优化器覆盖，发出规范的固定运行时路径，冻结已禁用的方向，并恢复隐式的正阈值 V7 执行器。这些确定性更正报告为 `ok_with_adjustments`；冲突或未解析路径仍阻止预览。仅加权评分、ADG/MDG 下限、插入的 V8 默认值和固定的新冷却边界产生报告警告，但绝不会被重写为优化器配方。真正的失败显示有界的字段和行为警告列表，而不是转储完整迁移报告。
 - PBv7 Pareto 候选暴露相同的官方迁移操作，并且只接受来自受管 PB7 结果目录的候选。
 
-PB8 编辑器在单独的 Long 和 Short 卡片中暴露所有已安装的 HSL 模式和优化器覆盖。**HSL enabled** 控制硬止损行为是否参与优化器评估。**Restart after RED** 是显式的 `always`、`threshold` 或 `never` 选择；`always` 是 PB8 的优化默认值，因此评估在冷却后恢复，而不是在持续回撤时终止。`polish_percentage` 显示为普通百分比，但转换为 PB8 的小数 `--polish-pct` 值，因此 `20` 表示 `0.20`。Pymoo 保持 PB8 的原生自动大小：NSGA-II 使用 `250`，而 NSGA-III 从 `500` 的预算派生其参考方向。
+PB8 编辑器会把已安装运行时公布的每个优化器辅助覆盖显示为独立复选框。固定运行时覆盖按 Long、Short 和 Other 分组，并使用规范的点分路径；未知的未来值仍可在 JSON 编辑器中访问。**HSL enabled** 控制硬止损行为是否参与优化器评估。**Restart after RED** 是显式的 `always`、`threshold` 或 `never` 选择；`always` 是 PB8 的优化默认值，因此评估在冷却后恢复，而不是在持续回撤时终止。`polish_percentage` 显示为普通百分比，但转换为 PB8 的小数 `--polish-pct` 值，因此 `20` 表示 `0.20`。Pymoo 保持 PB8 的原生自动大小：NSGA-II 使用 `250`，而 NSGA-III 从 `500` 的预算派生其参考方向。
 
 PB8 的 `gpu` 后端意味着实验性的 **Apple MPS**，而不是 CUDA。PBGui 区分 PB8 注册的后端与当前主机上可用的后端。GPU 在不受支持的主机上仍可作为显式编辑器预览选择，因此可以测试所有字段，并且可以保存可移植配置而不静默替换其后端。Queue 和 Start 仍会在创建快照或进程前以 PB8 的确切运行时原因失败。PBGui 安装和 PB8 更新工作流请求可选的 `gpu-mps` 配置文件；其平台标记只在 Apple Silicon 上安装 PyTorch。
 

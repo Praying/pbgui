@@ -45,4 +45,32 @@ describe('ScoringLimitsEditor', () => {
     expect(wrapper.emitted('update:limits')?.at(-1)?.[0]).toMatchObject([{ enabled: false }]);
   });
 
+  it('edits named PB8 scenarios even before the Suite label exists', async () => {
+    const wrapper = mount(ScoringLimitsEditor, {
+      props: {
+        version: 'v8',
+        scoring: [{ metric: 'adg', goal: 'max' }],
+        limits: [{ metric: 'drawdown', penalize_if: 'greater_than', value: 0.5 }],
+        scenarioLabels: [],
+        metadata: {
+          all_valid_metrics: ['adg', 'drawdown'],
+          goal_options: ['min', 'max'],
+          penalize_if_options: ['greater_than'],
+          stat_options: ['', 'mean'],
+        },
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    await pickSelectOption(wrapper, '[data-field="scoring-scenario"]', 'Named scenario');
+    await wrapper.setProps({ scoring: wrapper.emitted('update:scoring')?.at(-1)?.[0] as unknown[] });
+    await wrapper.find('[data-field="scoring-scenario-name"]').setValue('future-suite-scenario');
+    expect(wrapper.emitted('update:scoring')?.at(-1)?.[0]).toMatchObject([{ scenario: 'future-suite-scenario' }]);
+
+    await pickSelectOption(wrapper, '[data-field="limit-scenario"]', 'Named scenario');
+    await wrapper.setProps({ limits: wrapper.emitted('update:limits')?.at(-1)?.[0] as unknown[] });
+    await wrapper.find('[data-field="limit-scenario-name"]').setValue('future-suite-scenario');
+    expect(wrapper.emitted('update:limits')?.at(-1)?.[0]).toMatchObject([{ scenario: 'future-suite-scenario' }]);
+  }, 15_000);
+
 });

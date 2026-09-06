@@ -129,8 +129,9 @@ describe('ConfigEditorModal', () => {
     expect((saved.optimize.pymoo as Record<string, unknown>).algorithm).toBe('nsga3');
     expect(((saved.optimize.pymoo as Record<string, unknown>).algorithms as Record<string, unknown>).nsga3).toMatchObject({ ref_dirs: { method: 'uniform', n_partitions: 6 } });
     expect(saved.optimize.objective_scenario).toBeNull();
-    expect(saved.runtimeOverrides['bot.long.hsl_enabled']).toBe(false);
-  });
+    expect(saved.runtimeOverrides['bot.long.hsl.enabled']).toBe(false);
+    expect(saved.runtimeOverrides['bot.long.hsl_enabled']).toBeUndefined();
+  }, 15_000);
 
   it('migrates optimizer backend fields and removes inactive backend values', async () => {
     const draft = buildEditorDraft({
@@ -410,6 +411,122 @@ describe('ConfigEditorModal', () => {
     const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
     expect(saved.optimize.enable_overrides).toEqual(['mirror_short_from_long']);
   });
+
+  it('switches PB8 strategy bounds from runtime metadata and preserves inactive strategy state', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'] },
+      bot: { long: { strategy: { trailing_martingale: { ema_span_0: 100 } } }, short: { strategy: {} } },
+      live: { strategy_kind: 'trailing_martingale' },
+      optimize: {
+        bounds: {
+          bot: {
+            long: {
+              risk: { n_positions: [1, 4] },
+              strategy: { trailing_martingale: { ema_span_0: [100, 200] } },
+            },
+          },
+        },
+        fixed_params: ['bot.long.strategy.trailing_martingale.ema_span_0'],
+      },
+    }, 'v8', 'strategy-switch');
+    const wrapper = mount(ConfigEditorModal, {
+      props: {
+        open: true,
+        draft,
+        version: 'v8',
+        error: '',
+        strategyOptions: ['trailing_martingale', 'ema_anchor'],
+        strategyDefaults: { long: { ema_anchor: { ema_span_0: 42 } }, short: { ema_anchor: { ema_span_0: 84 } } },
+        activeBounds: {
+          ema_anchor: {
+            bot: {
+              long: {
+                risk: { n_positions: [1, 6] },
+                strategy: { ema_anchor: { ema_span_0: [10, 80] } },
+              },
+            },
+          },
+        },
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    await pickSelectOption(wrapper, '[aria-label="strategy_kind"]', 'ema_anchor');
+    await wrapper.find('[data-tab="bounds"]').trigger('click');
+    expect(wrapper.text()).toContain('ema_anchor.');
+    expect(wrapper.text()).not.toContain('trailing_martingale.');
+
+    await wrapper.find('[data-tab="general"]').trigger('click');
+    await pickSelectOption(wrapper, '[aria-label="strategy_kind"]', 'trailing_martingale');
+    await wrapper.find('button[data-save="config"]').trigger('click');
+
+    const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
+    expect(saved.bounds).toMatchObject({
+      'bot.long.strategy.trailing_martingale.ema_span_0': [100, 200],
+      'bot.long.strategy.ema_anchor.ema_span_0': [10, 80],
+    });
+    expect((saved.botLong.strategy as Record<string, unknown>).ema_anchor).toEqual({ ema_span_0: 42 });
+    expect(saved.fixedParams).toContain('bot.long.strategy.trailing_martingale.ema_span_0');
+  }, 15_000);
+
+  it('uses PB8 runtime metadata for optimizer and runtime controls without losing unknown values', async () => {
+    const draft = buildEditorDraft({
+      backtest: { exchanges: ['bybit'] },
+      bot: {
+        long: { hsl: { enabled: false, no_restart_drawdown_threshold: 1 } },
+        short: { hsl: { enabled: false, no_restart_drawdown_threshold: 1 } },
+      },
+      live: { strategy_kind: 'trailing_grid_v7' },
+      logging: { level: 1 },
+      optimize: {
+        backend: 'pymoo',
+        seed: null,
+        enable_overrides: ['forward_tp_grid', 'future_helper'],
+        gpu: { future_gpu_key: 17 },
+      },
+    }, 'v8', 'runtime-metadata');
+    const wrapper = mount(ConfigEditorModal, {
+      props: {
+        open: true,
+        draft,
+        version: 'v8',
+        error: '',
+        optimizerOverrides: ['lossless_close_trailing', 'forward_tp_grid', 'backward_tp_grid', 'mirror_short_from_long'],
+        fixedRuntimeOverrides: {
+          'bot.long.hsl.restart_after_red_policy': 'always',
+          'future.runtime.flag': true,
+        },
+        runtimeOptions: { polish_bounds_mode: { choices: ['clamp', 'override-all'] } },
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    await wrapper.find('[data-tab="optimizer"]').trigger('click');
+    expect(wrapper.find('[data-field="optimizer-override-forward_tp_grid"]').attributes('data-state')).toBe('checked');
+    expect(wrapper.find('[data-field="optimizer-override-backward_tp_grid"]').exists()).toBe(true);
+    expect(wrapper.find('[data-extra-param="gpu"]').exists()).toBe(false);
+    await wrapper.find('[data-field="optimizer-override-forward_tp_grid"]').trigger('click');
+    await wrapper.find('[data-field="optimizer-override-backward_tp_grid"]').trigger('click');
+    await pickSelectOption(wrapper, '[data-field="logging-level"]', 'debug');
+    await wrapper.find('[data-field="rng-seed"]').setValue('42');
+    await wrapper.find('[data-field="rng-seed"]').setValue('');
+
+    await wrapper.find('[data-tab="runtime"]').trigger('click');
+    expect(wrapper.find('[data-field="runtime-bot-long-hsl-restart-after-red-policy"]').exists()).toBe(true);
+    expect(wrapper.find('[data-field="runtime-future-runtime-flag"]').exists()).toBe(true);
+    await pickSelectOption(wrapper, '[data-field="runtime-bot-long-hsl-restart-after-red-policy"]', 'never');
+    await wrapper.find('[data-field="runtime-future-runtime-flag"]').trigger('click');
+    await wrapper.find('button[data-save="config"]').trigger('click');
+
+    const saved = wrapper.emitted('save')?.[0]?.[0] as typeof draft;
+    expect(saved.optimize.enable_overrides).toEqual(['future_helper', 'backward_tp_grid']);
+    expect(saved.optimize.seed).toBeNull();
+    expect(saved.logging.level).toBe(2);
+    expect(saved.runtimeOverrides).toMatchObject({
+      'bot.long.hsl.restart_after_red_policy': 'never',
+      'future.runtime.flag': false,
+    });
+  }, 15_000);
 
   it('uses runtime pymoo options and resolves auto to NSGA-III for four objectives', async () => {
     const draft = buildEditorDraft({

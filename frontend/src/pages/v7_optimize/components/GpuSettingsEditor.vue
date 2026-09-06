@@ -81,7 +81,17 @@ function numeric(value: string): number | string {
 }
 
 function reset(): void {
-  emit('update:gpu', gpuDefaults(props.optimizeDefaults));
+  const runtimeDefaults = gpuDefaults(props.optimizeDefaults);
+  const currentHalving = isObject(props.gpu.successive_halving) ? props.gpu.successive_halving : {};
+  const defaultHalving = isObject(runtimeDefaults.successive_halving) ? runtimeDefaults.successive_halving : {};
+  emit('update:gpu', {
+    ...props.gpu,
+    ...runtimeDefaults,
+    successive_halving: {
+      ...currentHalving,
+      ...defaultHalving,
+    },
+  });
 }
 
 const fieldGrid = 'grid grid-cols-[repeat(4,minmax(0,1fr))] gap-2.5 max-[600px]:grid-cols-1 max-[900px]:grid-cols-[repeat(2,minmax(0,1fr))]';

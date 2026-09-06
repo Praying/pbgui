@@ -1,5 +1,13 @@
 # Unreleased
 
+## PBv8 优化配置编辑器与主线对齐
+
+- **补齐运行时选项**：Vue3 新建配置编辑器现在显示 PB8 运行时公布的 optimizer helper 复选框，并按 Long、Short、Other 动态呈现 fixed runtime overrides。
+- **同步策略配置**：切换 `strategy_kind` 时使用 runtime 的 bot 默认值和 active bounds，并缓存未保存的各策略 bounds、fixed params 与 bot block，保存时无损合并。
+- **修正配置语义**：HSL runtime override 使用规范点分路径，兼容迁移旧扁平键；日志级别改为语义下拉框，可空 RNG seed 可正确保留 `null`。
+- **保持未来兼容**：GPU 配置不再重复出现在 Additional Parameters，重置 GPU 默认值时保留未知未来字段，Scoring/Limits 可直接录入命名场景。
+- **补充回归覆盖**：增加 metadata 接线、override 保存、GPU reset、场景输入和中英文文案测试，并同步 PBv8 Optimize 三语指南。
+
 ## 合并主线 v2.02.1 并同步 Vue3 页面行为
 
 - **主线合并**：合并远端 `origin/main` 的单个提交 `11897f6e`（`Release v2.02.1`），吸收认证安全、数据库锁、dashboard 和回归测试更新。
