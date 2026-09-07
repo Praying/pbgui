@@ -32,6 +32,7 @@ class _Process:
         self.calls.append(signum)
 
 
+@pytest.mark.skipif(not hasattr(os, "pidfd_open"), reason="os.pidfd_open unavailable on this platform")
 def test_pidfd_open_seccomp_failure_falls_back_to_identity_checked_psutil(monkeypatch) -> None:
     """EPERM from pidfd_open does not disable safe lifecycle signalling."""
     identity = lifecycle.ProcessIdentity(42, 10.0)
@@ -44,6 +45,7 @@ def test_pidfd_open_seccomp_failure_falls_back_to_identity_checked_psutil(monkey
     assert calls == [signal.SIGTERM]
 
 
+@pytest.mark.skipif(not hasattr(os, "pidfd_open"), reason="os.pidfd_open unavailable on this platform")
 def test_pidfd_send_unsupported_falls_back_after_immediate_revalidation(monkeypatch) -> None:
     """An unsupported pidfd send retries only after creation-time revalidation."""
     identity = lifecycle.ProcessIdentity(42, 10.0)

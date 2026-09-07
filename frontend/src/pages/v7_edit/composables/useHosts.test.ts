@@ -46,10 +46,10 @@ describe('requestHostCapabilities (:1910-1928)', () => {
       host_capabilities: { h1: { pb7_capable: true } },
     };
     const fetchFn = vi.fn(async () => new Response(JSON.stringify(payload), { status: 200 }));
-    const result = await requestHostCapabilities('http://x/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch);
+    const result = await requestHostCapabilities('/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch);
     expect(result).toEqual(payload);
     expect(fetchFn).toHaveBeenCalledWith(
-      'http://x/api/v7/hosts?request_id=r-1',
+      '/api/v7/hosts?request_id=r-1',
       expect.objectContaining({ cache: 'no-store' })
     );
   });
@@ -59,14 +59,14 @@ describe('requestHostCapabilities (:1910-1928)', () => {
       new Response(JSON.stringify({ request_id: 'other', hosts: [], host_capabilities: {} }), { status: 200 })
     );
     await expect(
-      requestHostCapabilities('http://x/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch)
+      requestHostCapabilities('/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch)
     ).rejects.toThrow('request ID mismatch');
   });
 
   it('throws on HTTP errors', async () => {
     const fetchFn = vi.fn(async () => new Response('{}', { status: 503 }));
     await expect(
-      requestHostCapabilities('http://x/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch)
+      requestHostCapabilities('/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch)
     ).rejects.toThrow('HTTP 503');
   });
 
@@ -76,7 +76,7 @@ describe('requestHostCapabilities (:1910-1928)', () => {
       throw abort;
     });
     await expect(
-      requestHostCapabilities('http://x/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch)
+      requestHostCapabilities('/api/v7', 'r-1', { isV8: false, instanceName: '' }, fetchFn as unknown as typeof fetch)
     ).rejects.toBe(abort);
   });
 });
@@ -144,7 +144,7 @@ describe('useHosts composable', () => {
       const requestId = new URL(url, 'http://x').searchParams.get('request_id') ?? '';
       return new Response(JSON.stringify({ ...payload, request_id: requestId }), { status: 200 });
     });
-    const hosts = useHosts('http://x/api/v7', V7, '', fetchFn as unknown as typeof fetch);
+    const hosts = useHosts('/api/v7', V7, '', fetchFn as unknown as typeof fetch);
     hosts.allHosts.value = ['disabled', 'alpha'];
     hosts.selected.value = 'alpha';
     await hosts.refresh();
@@ -166,7 +166,7 @@ describe('useHosts composable', () => {
         },
       }), { status: 200 });
     });
-    const hosts = useHosts('http://x/api/v8', V8, 'alice', fetchFn as unknown as typeof fetch);
+    const hosts = useHosts('/api/v8', V8, 'alice', fetchFn as unknown as typeof fetch);
     hosts.allHosts.value = ['disabled', 'old'];
     hosts.selected.value = 'old';
     await hosts.refresh();
@@ -191,7 +191,7 @@ describe('useHosts composable', () => {
           }
         })
     );
-    const hosts = useHosts('http://x/api/v7', V7, '', fetchFn as unknown as typeof fetch);
+    const hosts = useHosts('/api/v7', V7, '', fetchFn as unknown as typeof fetch);
     const first = hosts.refresh();
     const second = hosts.refresh();
     resolveFirst({ request_id: 'stale-but-checked', hosts: ['first'], host_capabilities: {} });
@@ -202,7 +202,7 @@ describe('useHosts composable', () => {
 
   it('swallows non-abort errors without touching the list (:1947-1950)', async () => {
     const fetchFn = vi.fn(async () => new Response('{}', { status: 500 }));
-    const hosts = useHosts('http://x/api/v7', V7, '', fetchFn as unknown as typeof fetch);
+    const hosts = useHosts('/api/v7', V7, '', fetchFn as unknown as typeof fetch);
     hosts.allHosts.value = ['disabled', 'kept'];
     await hosts.refresh();
     expect(hosts.allHosts.value).toEqual(['disabled', 'kept']);

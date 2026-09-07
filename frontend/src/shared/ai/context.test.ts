@@ -13,7 +13,10 @@ import { initAiPageMeta, useAiPageAction, type AiCollectedContext } from './cont
  * beforeEach drops window.PBGuiAI so initAiPageMeta reinstalls the facade.
  */
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 /** env.d.ts keeps the facade loosely typed; collectContext is typed for assertions. */

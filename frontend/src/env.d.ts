@@ -7,8 +7,11 @@ declare module '*.vue' {
 }
 
 interface BootInfo {
-  token: string;
   origin: string;
+  /** Trusted ASGI mount prefix ("" when unmounted), from /api/boot.js. */
+  base_prefix: string;
+  /** True when the boot script saw a valid session cookie. */
+  authenticated: boolean;
   version: string;
   serial: string;
 }

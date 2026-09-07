@@ -1,5 +1,3 @@
-import { getBoot } from './boot';
-
 export class ApiError extends Error {
   constructor(public status: number, public detail: string) {
     super(`API ${status}: ${detail}`);
@@ -8,10 +6,8 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  const token = getBoot().token;
-  if (token) headers.set('Authorization', `Bearer ${token}`);
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  const resp = await fetch(url, { ...init, headers });
+  const resp = await fetch(url, { ...init, headers, credentials: 'same-origin' });
   const data: unknown = await resp.json().catch(() => ({}));
   if (!resp.ok) {
     // Legacy detail order: body detail → body error → statusText.

@@ -48,9 +48,13 @@ def test_legacy_fallback_keeps_v7_and_v8_placeholders(clients, tmp_path, monkeyp
     monkeypatch.setattr(optimize_v8, 'get_pb8_optimize_metadata', lambda: {'limits': {'metrics': ['adg']}})
     response7 = clients[0].get('/api/optimize-v7/main_page')
     response8 = clients[1].get('/api/optimize-v8/main_page')
-    assert 'http://testserver/api/optimize-v7' in response7.text and 'var OV="v7"' in response7.text
-    assert 'http://testserver/api/optimize-v8' in response8.text and 'var OV="v8"' in response8.text
-    assert '%%' not in response7.text and '%%' not in response8.text
+    assert '/api/optimize-v7' in response7.text and 'var OV="v7"' in response7.text
+    assert '/api/optimize-v8' in response8.text and 'var OV="v8"' in response8.text
+    # %%TOKEN%% stays literal (cookie model); every other placeholder resolves.
+    assert 'var TOKEN="%%TOKEN%%"' in response7.text and 'var TOKEN="%%TOKEN%%"' in response8.text
+    assert '%%API_BASE%%' not in response7.text and '%%API_BASE%%' not in response8.text
+    assert '%%WS_BASE%%' not in response7.text and '%%WS_BASE%%' not in response8.text
+    assert '%%LIMITS_META%%' not in response7.text and '%%LIMITS_META%%' not in response8.text
 
 def test_missing_build_and_legacy_returns_build_hint(clients, tmp_path, monkeypatch):
     set_files(monkeypatch, tmp_path, None, None)

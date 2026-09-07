@@ -42,10 +42,10 @@ describe('fetchCoinStatuses (:3750-3767)', () => {
       void init;
       return jsonResponse({ statuses: { BTC: { status: 'ok' } } });
     });
-    const statuses = await fetchCoinStatuses('http://x/api/v7', 'binance', ['BTC', 'ETH'], fetchFn as unknown as typeof fetch);
+    const statuses = await fetchCoinStatuses('/api/v7', 'binance', ['BTC', 'ETH'], fetchFn as unknown as typeof fetch);
     expect(statuses).toEqual({ BTC: { status: 'ok' } });
     const call = fetchFn.mock.calls[0]!;
-    expect(call[0]).toBe('http://x/api/v7/coins/status');
+    expect(call[0]).toBe('/api/v7/coins/status');
     expect(JSON.parse(String((call[1] as RequestInit).body))).toEqual({
       exchanges: ['binance'],
       coins: ['BTC', 'ETH'],
@@ -54,7 +54,7 @@ describe('fetchCoinStatuses (:3750-3767)', () => {
 
   it('rethrows failures for the caller to clear meta', async () => {
     const fetchFn = vi.fn(async () => jsonResponse({ detail: 'nope' }, false));
-    await expect(fetchCoinStatuses('http://x/api/v7', 'binance', ['BTC'], fetchFn as unknown as typeof fetch)).rejects.toThrow();
+    await expect(fetchCoinStatuses('/api/v7', 'binance', ['BTC'], fetchFn as unknown as typeof fetch)).rejects.toThrow();
   });
 });
 
@@ -67,7 +67,7 @@ describe('useSymbolsTags (loadSymbolsAndTags :2071-2131)', () => {
       if (url.includes('/coins/status')) return jsonResponse({ statuses: {} });
       throw new Error('unexpected ' + url);
     });
-    const loader = useSymbolsTags('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const loader = useSymbolsTags('/api/v7', fetchFn as unknown as typeof fetch);
     const selections = {
       approvedLong: ['BTC'],
       approvedShort: [] as string[],
@@ -97,7 +97,7 @@ describe('useSymbolsTags (loadSymbolsAndTags :2071-2131)', () => {
       if (url.includes('/coins/status')) return jsonResponse({ statuses: {} });
       throw new Error('unexpected ' + url);
     });
-    const loader = useSymbolsTags('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const loader = useSymbolsTags('/api/v7', fetchFn as unknown as typeof fetch);
     loader.selected.approvedLong.value = ['kept-coin'];
     await loader.load('binance', { approvedLong: [], approvedShort: [], ignoredLong: [], ignoredShort: [], tags: [] }, {});
     expect(loader.selected.approvedLong.value).toEqual(['kept-coin']);
@@ -107,7 +107,7 @@ describe('useSymbolsTags (loadSymbolsAndTags :2071-2131)', () => {
     const fetchFn = vi.fn(async () => {
       throw new Error('should not fetch');
     });
-    const loader = useSymbolsTags('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const loader = useSymbolsTags('/api/v7', fetchFn as unknown as typeof fetch);
     await loader.load('', { approvedLong: ['BTC'], approvedShort: [], ignoredLong: [], ignoredShort: [], tags: ['T'] }, {
       preferConfigValues: true,
     });
@@ -132,7 +132,7 @@ describe('useSymbolsTags (loadSymbolsAndTags :2071-2131)', () => {
       if (url.includes('/coins/status')) return Promise.resolve(jsonResponse({ statuses: {} }));
       throw new Error('unexpected ' + url);
     });
-    const loader = useSymbolsTags('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const loader = useSymbolsTags('/api/v7', fetchFn as unknown as typeof fetch);
     const selections = { approvedLong: [], approvedShort: [], ignoredLong: [], ignoredShort: [], tags: [] };
     const first = loader.load('binance', selections, {});
     const second = loader.load('binance', selections, {});
@@ -147,7 +147,7 @@ describe('useSymbolsTags (loadSymbolsAndTags :2071-2131)', () => {
       if (url.includes('/coins/status')) return jsonResponse({ statuses: {} });
       throw new Error('unexpected ' + url);
     });
-    const loader = useSymbolsTags('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const loader = useSymbolsTags('/api/v7', fetchFn as unknown as typeof fetch);
     await loader.load('binance', { approvedLong: ['BTC'], approvedShort: [], ignoredLong: [], ignoredShort: [], tags: [] }, {
       preferConfigValues: true,
     });
@@ -170,7 +170,7 @@ describe('useSymbolsTags (loadSymbolsAndTags :2071-2131)', () => {
       }
       return jsonResponse({ statuses: {} });
     });
-    const loader = useSymbolsTags('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const loader = useSymbolsTags('/api/v7', fetchFn as unknown as typeof fetch);
     const selections = { approvedLong: [], approvedShort: [], ignoredLong: [], ignoredShort: [], tags: [] };
     const first = loader.queue('binance', selections, {});
     release = true;

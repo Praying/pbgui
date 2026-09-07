@@ -62,6 +62,10 @@ const enabledHosts = ref<string[]>([]);
 const monitorConfig = ref<Record<string, string>>({});
 const telegramToken = ref('');
 const telegramChatId = ref('');
+/** True when the server reports stored Telegram credentials. */
+const telegramConfigured = ref(false);
+/** Write-only model: checked = clear the stored credentials on save. */
+const clearTelegram = ref(false);
 /** Explicit routing flags; ids absent here render checked (legacy !== false). */
 const routing = ref<Record<string, boolean>>({});
 /** Legacy togglePw: the token input flips password ↔ text and lights the eye. */
@@ -87,8 +91,12 @@ function applySettings(data: ApiServerSettingsData): void {
   }
   monitorConfig.value = config;
 
-  telegramToken.value = data.telegram_token || '';
-  telegramChatId.value = data.telegram_chat_id || '';
+  // Write-only credentials: inputs start empty; a stored value is only
+  // hinted through the placeholder (v2.02.5 write-only model).
+  telegramConfigured.value = Boolean(data.telegram_configured);
+  telegramToken.value = '';
+  telegramChatId.value = '';
+  clearTelegram.value = false;
 
   const flags: Record<string, boolean> = {};
   for (const id of ROUTING_IDS) {
@@ -147,8 +155,11 @@ function save(): void {
     auto_restart: autoRestart.value,
     enabled_hosts: enabledHosts.value,
     monitor_config: collectMonitorConfig(),
-    telegram_token: telegramToken.value,
-    telegram_chat_id: telegramChatId.value,
+    // Omitted (null) values keep the stored credentials; the explicit
+    // checkbox clears them (v2.02.5 write-only model).
+    telegram_token: telegramToken.value || null,
+    telegram_chat_id: telegramChatId.value || null,
+    clear_telegram_credentials: clearTelegram.value,
     ...collectAlertRouting(), // legacy Object.assign(body, collectAlertRoutingFromForm())
   };
 
@@ -224,7 +235,7 @@ defineExpose({ load });
               class="token-input"
               :type="tokenVisible ? 'text' : 'password'"
               id="apiserver-telegram-token"
-              :placeholder="t('sysmon.pasteToken')"
+              :placeholder="telegramConfigured ? t('sysmon.storedValueHidden') : t('sysmon.pasteToken')"
               autocomplete="off"
               v-model="telegramToken"
             />
@@ -246,11 +257,15 @@ defineExpose({ load });
             class="medium"
             type="text"
             id="apiserver-telegram-chat-id"
-            :placeholder="t('sysmon.chatIdExample')"
+            :placeholder="telegramConfigured ? t('sysmon.storedValueHidden') : t('sysmon.chatIdExample')"
             v-model="telegramChatId"
           />
         </div>
       </div>
+      <label class="form-hint clear-telegram">
+        <input type="checkbox" v-model="clearTelegram" />
+        {{ t('sysmon.clearTelegramCredentials') }}
+      </label>
       <AlertRouting v-model:routing="routing" />
       <div class="save-row">
         <Button class="save" type="button" variant="primary" @click="save"><PbIcon :icon="PhFloppyDisk" /> {{ t('common.save') }}</Button>
@@ -290,4 +305,15 @@ defineExpose({ load });
 .inline-msg { font-size: var(--fs-xs); color: var(--success); margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
 .inline-msg.visible { opacity: 1; }
 .inline-msg.error { color: var(--danger-soft); }
+</style>
+
+<style scoped>
+.clear-telegram {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  color: var(--danger, #ef4444);
+}
 </style>

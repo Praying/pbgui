@@ -6,7 +6,10 @@ import WorkersPanel from './WorkersPanel.vue';
 import type { WorkersStatus } from '../types';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 vi.mock('@/shared/api', () => ({
@@ -194,7 +197,7 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
       message: 'Stop worker "Frontend"?',
       confirmText: 'Stop',
     });
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/w1/stop', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/workers/w1/stop', {
       method: 'POST',
     });
     expect(wrapper.emitted('refresh')).toHaveLength(1);
@@ -221,7 +224,7 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
       message: 'Restart worker "Frontend"?',
       confirmText: 'Restart',
     });
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/w1/restart', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/workers/w1/restart', {
       method: 'POST',
     });
   });
@@ -233,7 +236,7 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
     await flushPromises();
 
     expect((window as DialogsGlobal).PBGuiDialogs!.confirm).not.toHaveBeenCalled();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/w2/start', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/workers/w2/start', {
       method: 'POST',
     });
   });

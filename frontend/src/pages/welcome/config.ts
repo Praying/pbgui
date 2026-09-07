@@ -1,4 +1,4 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, pageOrigin } from '@/shared/boot';
 
 /**
  * Welcome page config — the Vue replacement for the legacy server-side
@@ -13,7 +13,7 @@ import { getBoot } from '@/shared/boot';
  */
 
 export function apiOrigin(): string {
-  return getBoot().origin;
+  return pageOrigin();
 }
 
 export function bootVersion(): string {
@@ -24,6 +24,3 @@ export function bootSerial(): string {
   return getBoot().serial;
 }
 
-export function bootToken(): string {
-  return getBoot().token || '';
-}

@@ -1,14 +1,14 @@
 import { ref } from 'vue';
 
 import { apiFetch } from '@/shared/api';
-import { getBoot } from '@/shared/boot';
+import { getBoot, apiPath } from '@/shared/boot';
 
 const isOpen = ref(false);
 const drawerWidth = ref(480);
 let userInteracted = false;
 
 function getPreferencesUrl(): string {
-  return `${getBoot().origin}/api/ai/preferences`;
+  return apiPath('/api/ai/preferences');
 }
 
 async function savePreferences(open: boolean): Promise<void> {
@@ -51,7 +51,7 @@ export function saveAiDrawerWidth(): void {
 
 export async function setupAiDrawerAutoOpen(options: { allowPreferenceAutoOpen?: boolean } = {}): Promise<void> {
   try {
-    if (!getBoot().token) return;
+    if (!getBoot().authenticated) return;
   } catch {
     return;
   }

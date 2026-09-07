@@ -5,7 +5,10 @@ import PbDataStatus from './PbDataStatus.vue';
 import type { FetchSummaryData, PollerMetricsData } from '../types';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -106,7 +109,7 @@ describe('PbDataStatus loading (legacy loadFetchSummary/loadPollerMetrics)', () 
     const urls = fetchMock.mock.calls.map(([url]) => String(url));
     expect(urls.filter((u) => u.endsWith('/fetch-summary'))).toHaveLength(1);
     expect(urls.filter((u) => u.endsWith('/poller-metrics'))).toHaveLength(1);
-    expect(urls[0]).toBe('http://pbgui.test:8000/api/services/fetch-summary');
+    expect(urls[0]).toBe('/api/services/fetch-summary');
   });
 
   it('shows the loading placeholders before the fetches resolve', async () => {

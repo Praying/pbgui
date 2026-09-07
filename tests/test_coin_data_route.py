@@ -87,9 +87,8 @@ def test_coin_data_falls_back_to_legacy_template(
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
-    assert '"tok-1"' in resp.text
     assert "/api/coin-data" in resp.text
-    assert "%%TOKEN%%" not in resp.text
+    assert "%%TOKEN%%" in resp.text  # placeholder stays literal (cookie model)
 
 
 def test_coin_data_errors_clearly_when_no_build_and_no_legacy(
@@ -126,7 +125,6 @@ def test_hlda_falls_back_to_prefixed_legacy_template(
 
     assert resp.status_code == 200
     assert 'id="hlda_fastapi_market_data"' in resp.text
-    assert 'data-token="tok-1"' in resp.text
     assert 'data-initial-section="build"' in resp.text
 
 

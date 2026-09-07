@@ -25,7 +25,10 @@ import {
  */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: 'v1.99', serial: 'S9' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: 'v1.99', serial: 'S9' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 describe('detectExplorerFlavor (legacy IS_V8 :384)', () => {
@@ -73,11 +76,11 @@ describe('createExplorerAdapter', () => {
 
 describe('explorerApiBase (:176 / :534 injections)', () => {
   it('v7 base is the origin + /api/strategy-explorer', () => {
-    expect(explorerApiBase(createExplorerAdapter('v7'))).toBe('http://pbgui.test:8000/api/strategy-explorer');
+    expect(explorerApiBase(createExplorerAdapter('v7'))).toBe('/api/strategy-explorer');
   });
 
   it('v8 base is the origin + /api/strategy-explorer-v8 (request route path)', () => {
-    expect(explorerApiBase(createExplorerAdapter('v8'))).toBe('http://pbgui.test:8000/api/strategy-explorer-v8');
+    expect(explorerApiBase(createExplorerAdapter('v8'))).toBe('/api/strategy-explorer-v8');
   });
 });
 

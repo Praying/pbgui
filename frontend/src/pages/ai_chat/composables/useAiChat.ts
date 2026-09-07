@@ -11,7 +11,7 @@
  */
 import { computed, onBeforeUnmount, ref, shallowRef } from 'vue';
 import { apiFetch } from '@/shared/api';
-import { getBoot } from '@/shared/boot';
+import { getBoot, apiPath } from '@/shared/boot';
 import { analysisResultText, type AiProposal, type ProposalPreview } from '../lib/proposal';
 
 export interface ProviderInfo {
@@ -85,7 +85,7 @@ interface LoginBoxState {
 
 type Translate = (key: string, params?: Record<string, unknown>) => string;
 
-const AI_API_BASE = () => getBoot().origin + '/api/ai';
+const AI_API_BASE = () => apiPath('/api/ai');
 
 export function useAiChat(t: Translate) {
   /* ── Reactive surface ── */

@@ -1,4 +1,4 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 /**
  * Editor page config — the Vue replacement for the legacy server-side
@@ -40,7 +40,7 @@ export function readEditorConfig(search: string = window.location.search): Edito
   const params = new URLSearchParams(search);
   const apiBaseParam = (params.get('api_base') ?? '').trim();
   return {
-    apiBase: apiBaseParam || `${getBoot().origin}/api`,
+    apiBase: apiBaseParam || `${getBoot().base_prefix}/api`,
     origName: params.get('name') ?? '',
     viewOnly: params.get('view_only') === '1',
     standalone: params.get('standalone') === '1',
@@ -53,6 +53,9 @@ export function readEditorConfig(search: string = window.location.search): Edito
  * relative '/ws/dashboard' the legacy empty API_BASE produced.
  */
 export function wsDashboardUrl(apiBase: string): string {
+  // A relative apiBase (the boot-prefix default) cannot host a WebSocket
+  // URL — derive the ws origin from the runtime location instead.
+  if (!/^https?:/.test(apiBase)) return wsOrigin() + '/ws/dashboard';
   const wsBase = apiBase
     .replace(/\/api$/, '')
     .replace(/^http:/, 'ws:')

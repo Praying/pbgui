@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field, StrictStr
 
 from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
-from api.page_templates import render_page_urls
+from api.page_templates import render_page_urls, script_json
 from logging_helpers import human_log as _log
 from pbgui_purefunc import PBGDIR, PBGUI_SERIAL, PBGUI_VERSION
 from profit_sweep import ProfitSweepStore, calculate_sweep, default_policy, round_transfer_amount

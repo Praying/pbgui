@@ -11,7 +11,10 @@ import {
 } from './cmc';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -49,8 +52,8 @@ describe('cmcFetch (legacy cmcFetch error semantics)', () => {
 
     await expect(cmcFetch('/cmc-pool')).resolves.toEqual({ keys: [] });
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://pbgui.test:8000/api/services/cmc-pool',
-      expect.objectContaining({ headers: expect.objectContaining({ Authorization: 'Bearer tok' }) })
+      '/api/services/cmc-pool',
+      expect.objectContaining({ credentials: 'same-origin' })
     );
   });
 
@@ -144,7 +147,7 @@ describe('createCmcMutationControl (legacy cmcMutationFetch state machine)', () 
     await control.run(candidate({ secretValue: 'secret' }));
 
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/cmc-pool/keys');
+    expect(url).toBe('/api/services/cmc-pool/keys');
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body as string)).toEqual({ api_key: 'secret', operation_id: 'op-1' });
     expect(clearSecret).toHaveBeenCalledOnce(); // legacy clearCmcMutationContext(pending, true)
@@ -160,7 +163,7 @@ describe('createCmcMutationControl (legacy cmcMutationFetch state machine)', () 
     await control.run(candidate({ path: '/cmc-pool/keys/k1/disable', method: 'POST', transport: 'query', body: {}, modal: '' }));
 
     expect(fetchMock.mock.calls[0]![0]).toBe(
-      'http://pbgui.test:8000/api/services/cmc-pool/keys/k1/disable?operation_id=op-1'
+      '/api/services/cmc-pool/keys/k1/disable?operation_id=op-1'
     );
     expect(fetchMock.mock.calls[0]![1].body).toBeUndefined();
   });
@@ -202,9 +205,9 @@ describe('createCmcMutationControl (legacy cmcMutationFetch state machine)', () 
     await control.run(candidate()).catch(() => {}); // 409 leaves the pending context behind
     await control.run(candidate()); // retry resolves it first
 
-    expect(fetchMock.mock.calls[1]![0]).toBe('http://pbgui.test:8000/api/services/cmc-pool/operations/op-1');
+    expect(fetchMock.mock.calls[1]![0]).toBe('/api/services/cmc-pool/operations/op-1');
     const [url, init] = fetchMock.mock.calls[2]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/cmc-pool/keys');
+    expect(url).toBe('/api/services/cmc-pool/keys');
     expect(JSON.parse(init.body as string).operation_id).toBe('op-1'); // pending id, not a new one
   });
 
@@ -279,7 +282,7 @@ describe('createCmcMutationControl (legacy cmcMutationFetch state machine)', () 
     };
     await control.run(different);
 
-    expect(fetchMock.mock.calls[2]![0]).toBe('http://pbgui.test:8000/api/services/cmc-pool/keys/k9');
+    expect(fetchMock.mock.calls[2]![0]).toBe('/api/services/cmc-pool/keys/k9');
     expect(JSON.parse(fetchMock.mock.calls[2]![1].body as string)).toMatchObject({
       label: 'renamed',
       operation_id: 'op-2',

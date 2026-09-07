@@ -14,7 +14,7 @@ import { getBoot } from '@/shared/boot';
 
 /** REST base for the coin-data router, e.g. http://host:port/api/coin-data. */
 export function coinDataApiBase(): string {
-  return `${getBoot().origin}/api/coin-data`;
+  return `${getBoot().base_prefix}/api/coin-data`;
 }
 
 /** Legacy plain concatenation (buildStateUrl :2134, runRefresh :2233). */

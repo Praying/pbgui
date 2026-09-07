@@ -1,4 +1,4 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 /**
  * PBv7/PBv8 Run list page config — the Vue replacement for the legacy
@@ -68,7 +68,7 @@ export function currentRunAdapter(pathname: string = window.location.pathname): 
 
 /** REST base for the run router, e.g. http://host:port/api/v7 (:2462). */
 export function runApiBase(adapter: RunAdapter): string {
-  return `${getBoot().origin}/api/${adapter.version}`;
+  return `${getBoot().base_prefix}/api/${adapter.version}`;
 }
 
 /** Legacy plain concatenation (apiFetch(path) = API_BASE + path, :585-591). */
@@ -80,8 +80,9 @@ export function apiUrl(adapter: RunAdapter, path: string): string {
  * Legacy WS_BASE + adapter.websocketPath (:619): the origin with the scheme
  * rewritten to ws/wss. The boot origin always carries http(s).
  */
-export function wsUrl(adapter: RunAdapter): string {
-  return `${getBoot().origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')}${adapter.websocketPath}`;
+export function wsUrl(adapter: RunAdapter, origin: string = wsOrigin()): string {
+  const wsBase = origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+  return `${wsBase}${adapter.websocketPath}`;
 }
 
 /** Legacy edit-page navigation (editInstance :900, addInstance :906). */
@@ -94,15 +95,15 @@ export function editPageUrl(adapter: RunAdapter, name: string | null): string {
 /** Cross-router targets the legacy page reached via window.location.origin. */
 export function balanceCalcPageUrl(params: Record<string, string>): string {
   const query = new URLSearchParams(params);
-  return `${getBoot().origin}/api/balance-calc/main_page?${query.toString()}`;
+  return `${getBoot().base_prefix}/api/balance-calc/main_page?${query.toString()}`;
 }
 
 export function backtestV8PageUrl(config: string): string {
-  return `${getBoot().origin}/api/backtest-v8/main_page?config=${encodeURIComponent(config)}`;
+  return `${getBoot().base_prefix}/api/backtest-v8/main_page?config=${encodeURIComponent(config)}`;
 }
 
 export function migrateV7Url(): string {
-  return `${getBoot().origin}/api/backtest-v8/migrate-v7`;
+  return `${getBoot().base_prefix}/api/backtest-v8/migrate-v7`;
 }
 
 /**

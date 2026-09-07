@@ -21,7 +21,7 @@ function mountPreview() {
   const page = {
     state,
     selectedUserExchange: () => 'binance',
-    apiBaseOf: () => 'http://pbgui.test:8000/api/v7',
+    apiBaseOf: () => '/api/v7',
   } as unknown as UseEditPage;
   const wrapper = mount(DynamicIgnorePreview, {
     global: {

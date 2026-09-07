@@ -7,23 +7,26 @@ import { apiUrl, coinDataApiBase } from './config';
    /api/boot.js at runtime (market_data config.ts convention). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 beforeEach(() => {
-  getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
 });
 
 describe('coin-data URL bases', () => {
   it('derives the coin-data base from the boot origin', () => {
-    expect(coinDataApiBase()).toBe('http://pbgui.test:8000/api/coin-data');
+    expect(coinDataApiBase()).toBe('/api/coin-data');
   });
 
   it('concatenates paths onto the base (apiUrl, legacy :2134/:2233)', () => {
-    expect(apiUrl('/state?market_cap=0')).toBe('http://pbgui.test:8000/api/coin-data/state?market_cap=0');
-    expect(apiUrl('/refresh/exchange')).toBe('http://pbgui.test:8000/api/coin-data/refresh/exchange');
-    expect(apiUrl('/refresh/jobs/abc')).toBe('http://pbgui.test:8000/api/coin-data/refresh/jobs/abc');
+    expect(apiUrl('/state?market_cap=0')).toBe('/api/coin-data/state?market_cap=0');
+    expect(apiUrl('/refresh/exchange')).toBe('/api/coin-data/refresh/exchange');
+    expect(apiUrl('/refresh/jobs/abc')).toBe('/api/coin-data/refresh/jobs/abc');
   });
 });

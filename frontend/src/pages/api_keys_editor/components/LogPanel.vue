@@ -7,7 +7,7 @@
  */
 import { onBeforeUnmount, watch } from 'vue';
 import BackButton from './BackButton.vue';
-import { bootToken, wsBase } from '../config';
+import { wsBase } from '../config';
 
 type LogViewer = { open(): void; close(): void };
 
@@ -24,7 +24,6 @@ function ensureViewer(): LogViewer | null {
   viewer = new Ctor({
     containerId: 'logViewerTarget',
     wsBase: wsBase(),
-    token: bootToken(),
     defaultFile: 'ApiKeys.log',
     height: 'calc(100dvh - 300px)',
   });

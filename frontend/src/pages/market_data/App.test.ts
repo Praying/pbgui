@@ -29,11 +29,15 @@ import {
 
 vi.mock('@/shared/boot', () => ({
   getBoot: vi.fn(() => ({
-    token: 'tok',
     origin: 'http://pbgui.test:8000',
+    base_prefix: '',
+    authenticated: true,
     version: '1.0.0',
     serial: 'S1',
   })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -175,7 +179,7 @@ describe('exchange context bar (:2965-2977, :7304-7313, :9766)', () => {
     expect(app.find('#page-exchange').text()).toContain('Binance USDM');
     expect(window.localStorage.getItem(LS_KEY_EXCHANGE)).toBe('binance');
     const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
-    expect(frame.src).toBe(`${BASE}/api/market-data/status-monitor/binanceusdm`);
+    expect(frame.src).toBe(`${location.origin}/api/market-data/status-monitor/binanceusdm`);
   });
 });
 

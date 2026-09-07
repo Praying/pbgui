@@ -16,7 +16,10 @@ import type { WebSocketLike } from './composables/useDashboardWs';
 enableAutoUnmount(afterEach);
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 class FakeWebSocket implements WebSocketLike {
@@ -38,7 +41,7 @@ class FakeWebSocket implements WebSocketLike {
   }
 }
 
-const API = 'http://pbgui.test:8000/api';
+const API = '/api';
 
 function json(body: unknown, ok = true): Response {
   return { ok, json: async () => body } as Response;

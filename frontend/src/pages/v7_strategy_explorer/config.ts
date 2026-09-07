@@ -71,13 +71,13 @@ export function detectExplorerFlavor(pathname: string = window.location.pathname
 /** The adapter for the page the browser is on. */
 export function currentExplorerAdapter(
   pathname: string = window.location.pathname,
-  origin: string = getBoot().origin
+  origin: string = getBoot().base_prefix
 ): { adapter: ExplorerAdapter; origin: string } {
   return { adapter: createExplorerAdapter(detectExplorerFlavor(pathname)), origin };
 }
 
 /** REST base for the explorer router (:176 v7, :534 v8). */
-export function explorerApiBase(adapter: ExplorerAdapter, origin: string = getBoot().origin): string {
+export function explorerApiBase(adapter: ExplorerAdapter, origin: string = getBoot().base_prefix): string {
   return origin + (adapter.isV8 ? '/api/strategy-explorer-v8' : '/api/strategy-explorer');
 }
 

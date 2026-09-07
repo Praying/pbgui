@@ -27,6 +27,7 @@ const props = defineProps<{
   tags: string[];
   tagOptions: string[];
   quoteFilter: string[];
+  availableQuotes: string[];
   hip3Dex: string;
   hip3DexOptions: string[];
   hip3DexVisible: boolean;
@@ -38,16 +39,23 @@ const emit = defineEmits<{
   (e: 'number-change', key: NumberFilterKey): void;
   (e: 'step-number', key: NumberFilterKey, direction: number): void;
   (e: 'set-tags', tags: string[]): void;
+  (e: 'set-quotes', quotes: string[]): void;
   (e: 'set-hip3-dex', value: string): void;
   (e: 'reset'): void;
 }>();
 
 const { t } = useI18n();
 
-/** Sync draft display (syncFilterNumberInput :2418-2430) — the store owns the text. */
-const quotesLabel = computed(() =>
-  t('market.quotesPill', { quotes: props.quoteFilter.join(', ') || '-' }) // :2304
-);
+/** Quote picker (legacy renderQuoteFilter :2485-2514): toggle with a
+ *  one-quote minimum; the store reloads on change. */
+function toggleQuote(quote: string): void {
+  const selected = props.quoteFilter.includes(quote);
+  if (selected && props.quoteFilter.length === 1) return;
+  const next = selected
+    ? props.quoteFilter.filter((entry) => entry !== quote)
+    : [...props.quoteFilter, quote];
+  emit('set-quotes', next);
+}
 
 /* The stepper inputs keep the legacy draft-then-commit flow (:2418-2430):
    the prop text renders, every keystroke emits number-input, change commits.
@@ -80,7 +88,20 @@ function onExchangeSelect(value: unknown): void {
           <h2 class="filter-panel-title text-md font-semibold text-primary">{{ t('market.filterData') }}</h2>
           <p class="filter-panel-hint text-sm text-muted">{{ t('market.filterDataHint') }}</p>
         </div>
-        <span class="filter-panel-context inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold text-secondary" id="quotes-pill">{{ quotesLabel }}</span>
+        <div class="flex items-center gap-1.5" id="quote-picker" role="group" aria-label="quotes">
+          <template v-if="availableQuotes.length">
+            <button
+              v-for="quote in availableQuotes"
+              :key="quote"
+              type="button"
+              class="quote-picker-button rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors"
+              :class="quoteFilter.includes(quote) ? 'selected' : ''"
+              :aria-pressed="quoteFilter.includes(quote) ? 'true' : 'false'"
+              @click="toggleQuote(quote)"
+            >{{ quote }}</button>
+          </template>
+          <span v-else class="filter-panel-context inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold text-secondary" id="quotes-pill">N/A</span>
+        </div>
       </div>
       <div class="filters-grid grid grid-cols-[minmax(180px,1fr)_minmax(130px,0.7fr)_minmax(130px,0.7fr)_minmax(240px,1.45fr)_auto] gap-3 items-end max-[1280px]:grid-cols-[repeat(3,minmax(0,1fr))] max-[980px]:grid-cols-1">
         <label class="field grid gap-[0.35rem] min-w-0">
@@ -187,6 +208,24 @@ function onExchangeSelect(value: unknown): void {
 
 .filter-panel-hint {
   margin: 0.2rem 0 0;
+}
+
+.quote-picker-button {
+  border-color: var(--coin-border-strong);
+  background: var(--coin-input);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.quote-picker-button:hover {
+  border-color: var(--accent);
+  color: var(--accent-soft);
+}
+
+.quote-picker-button.selected {
+  border-color: rgb(var(--accent-rgb) / 0.35);
+  background: var(--accent-bg);
+  color: var(--accent-soft);
 }
 
 .filter-panel-context {

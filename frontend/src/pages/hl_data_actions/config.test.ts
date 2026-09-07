@@ -7,22 +7,25 @@ import { apiBase, apiHost, apiUrl, initialSection, jobsWsUrl } from './config';
    the section came through the route's ?section= query. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 beforeEach(() => {
-  getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
   window.history.replaceState({}, '', '/api/market-data/data-actions/hyperliquid');
 });
 
 describe('hl data-actions URL config', () => {
   it('derives the /api base and concatenates paths', () => {
-    expect(apiBase()).toBe('http://pbgui.test:8000/api');
-    expect(apiUrl('/heatmap/l2book-download-info')).toBe('http://pbgui.test:8000/api/heatmap/l2book-download-info');
+    expect(apiBase()).toBe('/api');
+    expect(apiUrl('/heatmap/l2book-download-info')).toBe('/api/heatmap/l2book-download-info');
     expect(apiUrl('/jobs/?states=done&limit=20&job_type=hl_best_1m')).toBe(
-      'http://pbgui.test:8000/api/jobs/?states=done&limit=20&job_type=hl_best_1m'
+      '/api/jobs/?states=done&limit=20&job_type=hl_best_1m'
     );
   });
 

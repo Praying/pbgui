@@ -1,5 +1,19 @@
 # Unreleased
 
+## Merge origin/main v2.02.2–v2.02.8 into the Vue3 Migration Branch (合并 main 至 Vue3 分支)
+
+- **Upstream merge**: Merged the nine `origin/main` commits from `v2.02.2` through `v2.02.8` into `feature/frontend-vue3-migration`, resolving 47 conflicted files (17 API routers, 22 legacy templates, 7 deleted-by-us pages, docs and tests) by keeping the branch's Vue-first page serving and main's endpoint/security fixes together.
+- **Vue3 cookie-auth alignment**: `/api/boot.js` no longer publishes a session token; it now publishes the validated origin, the trusted ASGI mount prefix, and an `authenticated` flag. `apiFetch` sends `credentials: 'same-origin'` and every former Bearer-header usage across the Vue pages was removed, matching main's HttpOnly-cookie model.
+- **Mount-prefix-safe URLs**: Added `apiPath`/`wsOrigin`/`pageOrigin` helpers in `shared/boot.ts` and re-pointed every page `config.ts`, composable and component at them, so REST bases are prefix-relative paths and WebSocket URLs derive from `window.location` plus the trusted prefix (never the request host), surviving reverse-proxy mounts and IPv6 hosts.
+- **PB8 validation groups (v2.02.4/2.02.5)**: The Vue backtest results table now collapses Optimize-validation result groups (`result_group`) into sticky header rows with a one-click group Compare button and expand/collapse state; single-member groups render as plain rows like the legacy contract.
+- **Coin Data quote selector (v2.02.7)**: Ported main's interactive quote picker onto the Vue filters panel — toggle buttons from `available_quotes` with a one-quote minimum, exchange-specific defaults mirrored from the server, and URL persistence.
+- **Telegram write-only credentials (v2.02.5)**: The Services Monitor API-server settings now show a hidden-value placeholder when credentials are stored, keep unchanged values on save, and clear stored credentials only through an explicit checkbox.
+- **Worker action guards (v2.02.7)**: Services Monitor worker Start/Stop/Restart buttons lock and relabel while an action POST is in flight, preventing double actions on the same worker.
+- **Tiingo links (v2.02.5)**: The Market Data Tiingo card links directly to Tiingo's API-token and official usage pages.
+- **API-keys stale-request guards (v2.02.7)**: The Vue editor drops slow user loads when a newer open supersedes them, clears the stale hash on failure, and expiry checks ignore responses for a different user.
+- **Shared JS hardening**: `log_viewer_panel.js` (50,000-line cap, WebSocket generation guards), `shared_help_overlay.js` and `pbgui_nav.js` (cookie auth, Help-Center navigation, `_appPath` mount handling) carry main's fixes; cache-bust versions were merged past both sides (log viewer v31, dialogs v10, help overlay v9, nav v1788).
+- **API serial**: bumped from main's `2574` to `2575`.
+
 ## PBv8 优化队列日志对话框完整移植
 
 - **移植状态仪表盘**：日志对话框顶部新增优化状态仪表盘，按原版节奏轮询 `/queue/{filename}/status`，呈现进度条、Phase、Pareto Front、后端、运行时长、CPU、内存与队列摘要卡，以及目标、范围、最近活动和错误详情行，布局对齐 main 分支原版浮动日志面板。

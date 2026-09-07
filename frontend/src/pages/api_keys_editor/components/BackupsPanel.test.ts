@@ -8,7 +8,10 @@ import { TOASTS_KEY, useToasts } from '../composables/useToasts';
    restore :3153-3171. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -33,7 +36,7 @@ beforeEach(() => {
   (window as Window & { PBGuiDialogs?: { confirm: ReturnType<typeof vi.fn> } }).PBGuiDialogs = { confirm: vi.fn(async () => true) };
   fetchMock.mockReset();
   fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
-    const u = String(url).replace('http://pbgui.test:8000/api/api-keys', '');
+    const u = String(url).replace('/api/api-keys', '');
     const method = (init?.method as string) || 'GET';
     if (u === '/backups' && method === 'GET') return Promise.resolve(new Response(JSON.stringify(BACKUPS), { status: 200 }));
     if (u === '/backups/restore')
@@ -128,7 +131,7 @@ describe('BackupsPanel', () => {
 
   it('shows the identical-files view when nothing differs (:3309-3319)', async () => {
     fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
-      const u = String(url).replace('http://pbgui.test:8000/api/api-keys', '');
+      const u = String(url).replace('/api/api-keys', '');
       if (u === '/backups/diff') {
         return Promise.resolve(
           new Response(

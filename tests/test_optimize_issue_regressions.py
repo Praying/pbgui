@@ -240,6 +240,7 @@ def test_multiexchange_rebacktest_queue_names_are_distinct(mode):
                           for name in ("showInitialBacktestQueueDraftModal", "getQueueDraftItemExchanges", "rebacktestSelected"))
     script = r"""
 const assert = require('node:assert/strict');
+const PBGuiI18n = { t: (_k, p) => Object.values(p || {}).join(' '), serverMsg: (m) => m };
 const mode = MODE;
 const queued = [], errors = [];
 const cfg = {backtest: {exchanges: ['binance', 'bybit'], start_date:'2020-01-01', end_date:'2021-01-01'}};

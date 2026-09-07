@@ -336,6 +336,7 @@ onBeforeUnmount(() => {
         :tags="store.filters.value.tags"
         :tag-options="store.serverState.value?.options.tags || []"
         :quote-filter="store.serverState.value?.options.quote_filter || []"
+        :available-quotes="store.serverState.value?.options.available_quotes || []"
         :hip3-dex="store.filters.value.hip3Dex"
         :hip3-dex-options="store.hip3DexOptions.value"
         :hip3-dex-visible="hip3DexFieldVisible"
@@ -344,6 +345,7 @@ onBeforeUnmount(() => {
         @number-change="store.onNumberChange"
         @step-number="store.stepNumberFilter"
         @set-tags="store.setTags"
+        @set-quotes="store.setQuotes"
         @set-hip3-dex="store.setHip3Dex"
         @reset="store.resetFilters"
       />

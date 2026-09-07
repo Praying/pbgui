@@ -14,7 +14,7 @@ import type { CommandCenterPayload, ConfigDetailPayload, LoadData, PlaygroundPay
 
 const i18n = createI18n('en');
 const t = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
-const API_BASE = 'http://pbgui.test:8000/api/pareto-explorer';
+const API_BASE = '/api/pareto-explorer';
 
 const COMMAND_CENTER: CommandCenterPayload = {
   champions: [{ config_index: 4, style: 'momentum' }, { config_index: 9, style: 'revert' }],

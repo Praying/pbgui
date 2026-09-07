@@ -135,10 +135,10 @@ export function useOptimizePage(options: OptimizePageOptions) {
   }
 
   async function requestQueueConfig(filename: string): Promise<ConfigPayload> {
-    const headers = new Headers();
-    const token = getBoot().token;
-    if (token) headers.set('Authorization', `Bearer ${token}`);
-    const response = await fetch(`${adapter.apiBase}/queue/${encodeURIComponent(filename)}/config`, { headers });
+    const response = await fetch(`${adapter.apiBase}/queue/${encodeURIComponent(filename)}/config`, {
+      headers: new Headers(),
+      credentials: 'same-origin',
+    });
     const data: unknown = await response.json().catch(() => ({}));
     if (!response.ok) {
       const detail = isObject(data) ? data.detail : undefined;

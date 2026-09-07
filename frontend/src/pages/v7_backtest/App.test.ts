@@ -72,7 +72,7 @@ beforeEach(() => {
   localStorage.clear();
   replaceTopLocationMock.mockReset();
   window.history.replaceState({}, '', '/api/backtest-v7/main_page');
-  (window as unknown as { __BOOT__: unknown }).__BOOT__ = { origin: 'http://h:8000', token: 'tok', version: 'v9.9.9', serial: 's1' };
+  (window as unknown as { __BOOT__: unknown }).__BOOT__ = { origin: 'http://h:8000', base_prefix: '', authenticated: true, version: 'v9.9.9', serial: 's1' };
   vi.stubGlobal(
     'fetch',
     fetchMock.mockReset().mockImplementation((url: string) => {

@@ -23,7 +23,8 @@ beforeEach(() => {
   // config.ts derives the base from boot.js
   (globalThis as { __BOOT__?: unknown }).__BOOT__ = {
     origin: 'http://pbgui.test:8000',
-    token: 'tok',
+    base_prefix: '',
+    authenticated: true,
     version: 'v',
     serial: 's',
   };
@@ -37,11 +38,11 @@ describe('refreshStatuses (:9080-9096)', () => {
   it('fetches /status/{statusKey} for all five exchanges in parallel', async () => {
     await refreshStatuses();
     expect(calls.map((c) => c.url)).toEqual([
-      'http://pbgui.test:8000/api/market-data/status/hyperliquid',
-      'http://pbgui.test:8000/api/market-data/status/binanceusdm',
-      'http://pbgui.test:8000/api/market-data/status/bybit',
-      'http://pbgui.test:8000/api/market-data/status/bitget',
-      'http://pbgui.test:8000/api/market-data/status/okx',
+      '/api/market-data/status/hyperliquid',
+      '/api/market-data/status/binanceusdm',
+      '/api/market-data/status/bybit',
+      '/api/market-data/status/bitget',
+      '/api/market-data/status/okx',
     ]);
   });
 

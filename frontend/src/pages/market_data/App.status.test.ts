@@ -17,11 +17,15 @@ import { pickSelectOption } from '@/shared/testing/select';
 
 vi.mock('@/shared/boot', () => ({
   getBoot: vi.fn(() => ({
-    token: 'tok',
     origin: 'http://pbgui.test:8000',
+    base_prefix: '',
+    authenticated: true,
     version: '1.0.0',
     serial: 'S1',
   })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 beforeEach(() => {
@@ -37,7 +41,7 @@ describe('status monitor iframe mount (:3223-3227, :4142-4174, :7406-7413, M-dat
     const app = mountApp();
     await flushPromises();
     const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
-    expect(frame.src).toBe(`${BASE}/api/market-data/status-monitor/hyperliquid`);
+    expect(frame.src).toBe(`${location.origin}/api/market-data/status-monitor/hyperliquid`);
     expect(frame.dataset.exchange).toBe('hyperliquid');
     expect(frame.tagName).toBe('IFRAME');
   });
@@ -58,7 +62,7 @@ describe('status monitor iframe mount (:3223-3227, :4142-4174, :7406-7413, M-dat
     const frame = app.find('#status-monitor-host').element as HTMLIFrameElement;
     await pickSelectOption(app, '#page-exchange', 'Bybit');
     await flushPromises();
-    expect(frame.src).toBe(`${BASE}/api/market-data/status-monitor/bybit`);
+    expect(frame.src).toBe(`${location.origin}/api/market-data/status-monitor/bybit`);
     expect(frame.dataset.exchange).toBe('bybit');
   });
 

@@ -71,8 +71,7 @@ def test_api_keys_page_falls_back_to_legacy_template_with_injections(
 ) -> None:
     legacy = (
         "<html><script>\n"
-        '  var TOKEN = "%%TOKEN%%";\n'
-        '  var API_BASE = "%%API_BASE%%";\n'
+                '  var API_BASE = "%%API_BASE%%";\n'
         '  var PBGUI_VERSION = "%%VERSION%%";\n'
         '  var PBGUI_SERIAL = "%%SERIAL%%";\n'
         '  var NAV_HASH = "%%NAV_HASH%%";\n'
@@ -85,8 +84,7 @@ def test_api_keys_page_falls_back_to_legacy_template_with_injections(
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
     # token is empty by design: browser auth uses the same-origin cookie
-    assert 'var TOKEN = "";' in resp.text
-    assert 'var API_BASE = "http://testserver/api/api-keys";' in resp.text
+    assert 'var API_BASE = "/api/api-keys";' in resp.text
     assert "%%TOKEN%%" not in resp.text
     assert "%%API_BASE%%" not in resp.text
     assert "%%VERSION%%" not in resp.text

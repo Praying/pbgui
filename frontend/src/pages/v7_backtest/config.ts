@@ -1,4 +1,4 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 import type { ArchiveMode, BacktestPanel, BacktestSorts, BacktestVersion, NavItem, SortSpec } from './types';
 
 /**
@@ -82,7 +82,7 @@ export function currentBacktestAdapter(pathname: string = window.location.pathna
 }
 
 /** REST base for the serving router (:2836, backtest_v8.py:1513). */
-export function backtestApiBase(origin: string = getBoot().origin, version: BacktestVersion = detectBacktestVersion()): string {
+export function backtestApiBase(origin: string = getBoot().base_prefix, version: BacktestVersion = detectBacktestVersion()): string {
   return `${origin}/api/backtest-${version}`;
 }
 
@@ -102,7 +102,7 @@ export function queueLogFile(adapter: BacktestAdapter, filename: string): string
 }
 
 /** WS_BASE + adapter.websocketPath (:1269) with the legacy scheme rewrite. */
-export function wsUrl(adapter: BacktestAdapter, origin: string = getBoot().origin): string {
+export function wsUrl(adapter: BacktestAdapter, origin: string = wsOrigin()): string {
   return `${origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')}${adapter.websocketPath}`;
 }
 

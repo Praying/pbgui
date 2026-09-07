@@ -20,13 +20,16 @@ import {
    run_list_adapter.js (frontend/js/run_list_adapter.js) supplied the rest. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 beforeEach(() => {
-  getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
 });
 
 describe('run version detection (the %%RUN_VERSION%% successor)', () => {
@@ -79,39 +82,38 @@ describe('run adapter (run_list_adapter.js create())', () => {
 
 describe('URL derivation', () => {
   it('derives the REST base per version (legacy :2462/:1797)', () => {
-    expect(runApiBase(createRunAdapter('v7'))).toBe('http://pbgui.test:8000/api/v7');
-    expect(runApiBase(createRunAdapter('v8'))).toBe('http://pbgui.test:8000/api/v8');
-    expect(apiUrl(createRunAdapter('v7'), '/instances')).toBe('http://pbgui.test:8000/api/v7/instances');
-    expect(apiUrl(createRunAdapter('v8'), '/backups')).toBe('http://pbgui.test:8000/api/v8/backups');
+    expect(runApiBase(createRunAdapter('v7'))).toBe('/api/v7');
+    expect(runApiBase(createRunAdapter('v8'))).toBe('/api/v8');
+    expect(apiUrl(createRunAdapter('v7'), '/instances')).toBe('/api/v7/instances');
+    expect(apiUrl(createRunAdapter('v8'), '/backups')).toBe('/api/v8/backups');
   });
 
   it('rewrites the scheme for the WS URL (:2463/:619)', () => {
     expect(wsUrl(createRunAdapter('v7'))).toBe('ws://pbgui.test:8000/api/v7/ws/v7');
     expect(wsUrl(createRunAdapter('v8'))).toBe('ws://pbgui.test:8000/api/v8/ws/v8');
-    getBootMock.mockReturnValue({ token: 'tok', origin: 'https://pbgui.test', version: '1.0.0', serial: 'S1' });
-    expect(wsUrl(createRunAdapter('v8'))).toBe('wss://pbgui.test/api/v8/ws/v8');
+    expect(wsUrl(createRunAdapter('v8'), 'https://pbgui.test')).toBe('wss://pbgui.test/api/v8/ws/v8');
   });
 
   it('builds the edit-page URLs (:900/:906)', () => {
     const adapter = createRunAdapter('v7');
-    expect(editPageUrl(adapter, 'bybit_SOLUSDT')).toBe('http://pbgui.test:8000/api/v7/edit_page?name=bybit_SOLUSDT');
+    expect(editPageUrl(adapter, 'bybit_SOLUSDT')).toBe('/api/v7/edit_page?name=bybit_SOLUSDT');
     expect(editPageUrl(adapter, 'name with spaces')).toBe(
-      'http://pbgui.test:8000/api/v7/edit_page?name=name%20with%20spaces'
+      '/api/v7/edit_page?name=name%20with%20spaces'
     );
-    expect(editPageUrl(adapter, null)).toBe('http://pbgui.test:8000/api/v7/edit_page?new=1');
+    expect(editPageUrl(adapter, null)).toBe('/api/v7/edit_page?new=1');
   });
 
   it('builds the cross-router URLs the legacy page reached via location.origin', () => {
     expect(balanceCalcPageUrl({ instance: 'main', instance_version: 'v7', exchange: 'bybit' })).toBe(
-      'http://pbgui.test:8000/api/balance-calc/main_page?instance=main&instance_version=v7&exchange=bybit'
+      '/api/balance-calc/main_page?instance=main&instance_version=v7&exchange=bybit'
     );
     expect(balanceCalcPageUrl({ draft_id: 'd1', exchange: '' })).toBe(
-      'http://pbgui.test:8000/api/balance-calc/main_page?draft_id=d1&exchange='
+      '/api/balance-calc/main_page?draft_id=d1&exchange='
     );
     expect(backtestV8PageUrl('cfg_v8')).toBe(
-      'http://pbgui.test:8000/api/backtest-v8/main_page?config=cfg_v8'
+      '/api/backtest-v8/main_page?config=cfg_v8'
     );
-    expect(migrateV7Url()).toBe('http://pbgui.test:8000/api/backtest-v8/migrate-v7');
+    expect(migrateV7Url()).toBe('/api/backtest-v8/migrate-v7');
   });
 
   it('sanitizes the convert target name (:911)', () => {

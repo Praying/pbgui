@@ -45,8 +45,8 @@ function defaultNotify(message: string, level: ToastLevel): void {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${getBoot().token}`,
     },
+    credentials: 'same-origin',
     body: JSON.stringify({ msg: message, level }),
   }).catch(() => {
     /* legacy swallowed relay failures (:4980) */

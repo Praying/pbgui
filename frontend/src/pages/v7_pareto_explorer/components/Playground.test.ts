@@ -23,7 +23,7 @@ function ok(body: unknown): Promise<Response> {
 }
 
 function makeStore(): ParetoStore {
-  const store = useParetoSession({ apiBase: 'http://pbgui.test:8000/api/pareto-explorer', origin: 'http://pbgui.test:8000', seedVersion: 'v7', resultPath: '/r', t });
+  const store = useParetoSession({ apiBase: '/api/pareto-explorer', origin: 'http://pbgui.test:8000', seedVersion: 'v7', resultPath: '/r', t });
   store.applySession({ result_valid: true, result: { name: 'run1' } });
   return store;
 }

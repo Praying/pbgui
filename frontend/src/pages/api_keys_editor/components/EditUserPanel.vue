@@ -111,21 +111,30 @@ defineExpose({
 
 /* ── open / populate (:1494-1604) ── */
 
+/** v2.02.7 stale-open guard: bump on every open/create; slow loads drop. */
+let editorOpenGeneration = 0;
+
 async function openEdit(userName: string): Promise<boolean> {
+  const generation = ++editorOpenGeneration;
   try {
     const user = await pageFetch<UserDetail>('/' + encodeURIComponent(userName));
+    if (generation !== editorOpenGeneration) return false;
     editMode.value = 'edit';
     editingName.value = userName;
     location.hash = '#edit/' + encodeURIComponent(userName);
     showPanel(user);
     return true;
   } catch (e) {
+    if (generation !== editorOpenGeneration) return false;
+    // Clear the stale hash so a reload returns to the list (v2.02.7).
+    history.replaceState(null, '', location.pathname + location.search);
     toasts.showToast(t('misc.apikeys.failedToLoadUser', { error: serverMsg(e instanceof Error ? e.message : '') }), 'error');
     return false;
   }
 }
 
 function openCreate(): void {
+  editorOpenGeneration += 1;
   editMode.value = 'create';
   editingName.value = null;
   showPanel({
@@ -237,38 +246,44 @@ function updateBybitInline(exp: BybitExpiryInfo | null, ips: string[] | null): v
 
 async function checkSingleHlExpiry(): Promise<void> {
   if (!editingName.value) return;
+  const requestedName = editingName.value;
   checkingHl.value = true;
   try {
     // Unsaved private keys travel only in the POST body, never the URL (:1645-1651)
     const unsavedKey = maskedFieldValue(privateKeyField);
-    const data = await pageFetch<HlExpiryInfo>('/' + encodeURIComponent(editingName.value) + '/hl-expiry', unsavedKey ? {
+    const data = await pageFetch<HlExpiryInfo>('/' + encodeURIComponent(requestedName) + '/hl-expiry', unsavedKey ? {
       method: 'POST',
       body: JSON.stringify({ private_key: unsavedKey }),
     } : {});
-    if (!unsavedKey && editingName.value) {
-      store.hlExpiryData.value = { ...store.hlExpiryData.value, [editingName.value]: data };
+    if (!unsavedKey && editingName.value === requestedName) {
+      store.hlExpiryData.value = { ...store.hlExpiryData.value, [requestedName]: data };
+      updateHlInline(data);
+    } else if (editingName.value === requestedName) {
+      updateHlInline(data);
     }
-    updateHlInline(data);
   } catch (e) {
+    if (editingName.value !== requestedName) return;
     hlInline.value = { ...hlInline.value, exp: null, errorText: t('misc.apikeys.errorPrefix', { error: serverMsg(e instanceof Error ? e.message : '') }) };
   } finally {
-    checkingHl.value = false;
+    if (editingName.value === requestedName) checkingHl.value = false;
   }
 }
 
 async function checkSingleBybitExpiry(): Promise<void> {
   if (!editingName.value) return;
+  const requestedName = editingName.value;
   checkingBybit.value = true;
   try {
-    const data = await pageFetch<BybitExpiryInfo>('/' + encodeURIComponent(editingName.value) + '/bybit-expiry');
-    if (editingName.value) {
-      store.bybitExpiryData.value = { ...store.bybitExpiryData.value, [editingName.value]: data };
+    const data = await pageFetch<BybitExpiryInfo>('/' + encodeURIComponent(requestedName) + '/bybit-expiry');
+    if (editingName.value === requestedName) {
+      store.bybitExpiryData.value = { ...store.bybitExpiryData.value, [requestedName]: data };
+      updateBybitInline(data, data.ips);
     }
-    updateBybitInline(data, data.ips);
   } catch (e) {
+    if (editingName.value !== requestedName) return;
     bybitInline.value = { ...bybitInline.value, exp: null, errorText: t('misc.apikeys.errorPrefix', { error: serverMsg(e instanceof Error ? e.message : '') }) };
   } finally {
-    checkingBybit.value = false;
+    if (editingName.value === requestedName) checkingBybit.value = false;
   }
 }
 

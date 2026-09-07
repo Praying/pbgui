@@ -10,7 +10,10 @@ import App from './App.vue';
 enableAutoUnmount(afterEach);
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 vi.mock('@/shared/api', () => ({
@@ -23,7 +26,7 @@ vi.mock('@/shared/api', () => ({
 }));
 
 const apiFetchMock = vi.mocked(apiFetch);
-const DASHBOARDS_URL = 'http://pbgui.test:8000/api/dashboards';
+const DASHBOARDS_URL = '/api/dashboards';
 const appSource = readFileSync(resolve(import.meta.dirname, 'App.vue'), 'utf8');
 
 interface DialogsStub {
@@ -208,7 +211,7 @@ describe('initial current dashboard', () => {
     await flushPromises();
 
     expect(frameSrc(wrapper)).toBe(
-      'http://pbgui.test:8000/api/dashboard/editor_page?name=B&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi&view_only=1'
+      '/api/dashboard/editor_page?name=B&api_base=%2Fapi&view_only=1'
     );
     expect(wrapper.find('.sb-item.active .sb-item-name').text()).toBe('B');
   });
@@ -278,7 +281,7 @@ describe('view loading', () => {
     await wrapper.find('.sb-item[data-name="B"]').trigger('click');
 
     expect(frameSrc(wrapper)).toBe(
-      'http://pbgui.test:8000/api/dashboard/editor_page?name=B&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi&view_only=1'
+      '/api/dashboard/editor_page?name=B&api_base=%2Fapi&view_only=1'
     );
     expect(wrapper.find('.sb-item[data-name="B"]').classes()).toContain('active');
   });
@@ -342,7 +345,7 @@ describe('edit mode', () => {
     await wrapper.find('#sb-edit').trigger('click');
 
     expect(frameSrc(wrapper)).toBe(
-      'http://pbgui.test:8000/api/dashboard/editor_page?name=B&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi&standalone=1'
+      '/api/dashboard/editor_page?name=B&api_base=%2Fapi&standalone=1'
     );
     expect(wrapper.find('#edit-mode-banner').classes()).toContain('visible');
     expect(wrapper.find('#sb-save').exists()).toBe(true);
@@ -378,7 +381,7 @@ describe('edit mode', () => {
 
     expect(wrapper.find('#new-dash-dialog').isVisible()).toBe(false);
     expect(frameSrc(wrapper)).toBe(
-      'http://pbgui.test:8000/api/dashboard/editor_page?name=Fresh&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi&standalone=1'
+      '/api/dashboard/editor_page?name=Fresh&api_base=%2Fapi&standalone=1'
     );
     expect(wrapper.find('#edit-mode-banner').classes()).toContain('visible');
   });
@@ -496,7 +499,7 @@ describe('postMessage from the editor iframe', () => {
     await flushPromises();
 
     expect(frameSrc(wrapper)).toBe(
-      'http://pbgui.test:8000/api/dashboard/editor_page?name=Draft&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi&view_only=1'
+      '/api/dashboard/editor_page?name=Draft&api_base=%2Fapi&view_only=1'
     );
     expect(wrapper.find('#edit-mode-banner').classes()).not.toContain('visible');
   });
@@ -629,7 +632,7 @@ describe('templates overlay', () => {
 
     expect(wrapper.find('#tpl-overlay').isVisible()).toBe(true);
     expect(wrapper.find('#tpl-iframe').attributes('src')).toBe(
-      'http://pbgui.test:8000/api/dashboard/templates_page?current=B&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi'
+      '/api/dashboard/templates_page?current=B&api_base=%2Fapi'
     );
   });
 

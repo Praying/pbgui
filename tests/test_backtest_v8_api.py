@@ -269,7 +269,7 @@ def test_shared_backtest_refine_builder_routes_pb8_actions_to_pb8() -> None:
     assert "saveOptimizePresetConfig(name, config, BACKTEST_VERSION)" in page
     assert "queueOptimizePreset(name, BACKTEST_VERSION)" in page
     assert "openOptimizeSeedDraft(config, name, BACKTEST_VERSION)" in page
-    assert "optimize_preset_builder.js?v=4" in page
+    assert "optimize_preset_builder.js?v=5" in page
 
 
 def test_concurrent_pb8_draft_creation_stays_bounded() -> None:

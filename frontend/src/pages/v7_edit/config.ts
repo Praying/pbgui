@@ -145,7 +145,7 @@ export function readEditPageParams(search: string = window.location.search): Edi
 }
 
 /** REST base for the editing router (legacy %%API_BASE%%, :1223). */
-export function editApiBase(adapter: EditAdapter, origin: string = getBoot().origin): string {
+export function editApiBase(adapter: EditAdapter, origin: string = getBoot().base_prefix): string {
   return `${origin}/api/${adapter.version}`;
 }
 

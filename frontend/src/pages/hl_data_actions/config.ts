@@ -15,7 +15,7 @@ import { getBoot } from '@/shared/boot';
 
 /** REST base, e.g. http://host:port/api (legacy API_BASE). */
 export function apiBase(): string {
-  return `${getBoot().origin}/api`;
+  return `${getBoot().base_prefix}/api`;
 }
 
 /** Legacy plain concatenation (doInit :940, submitDL :1563 …). */

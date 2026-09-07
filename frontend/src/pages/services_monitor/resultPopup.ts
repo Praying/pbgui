@@ -17,7 +17,7 @@ let closeIconHost: HTMLSpanElement | null = null;
 /** Legacy _logUiNotification: fire-and-forget POST to the server-side notification log. */
 function logUiNotification(message: string, level: 'ok' | 'err'): void {
   const text = message.trim();
-  if (!text || !getBoot().token) return;
+  if (!text) return;
   void apiFetch('/api/notify_log', {
     method: 'POST',
     body: JSON.stringify({ msg: text, level }),

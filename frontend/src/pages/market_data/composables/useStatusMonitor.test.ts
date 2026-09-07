@@ -40,7 +40,8 @@ beforeEach(() => {
   nowValue = 1_000;
   (globalThis as { __BOOT__?: unknown }).__BOOT__ = {
     origin: 'http://pbgui.test:8000',
-    token: 'tok',
+    base_prefix: '',
+    authenticated: true,
     version: 'v',
     serial: 's',
   };
@@ -58,14 +59,14 @@ describe('mountStatusMonitor (iframe src swap)', () => {
     void controller.mountStatusMonitor(getExchangeMeta('bybit'), false);
     expect(frame.dataset.exchange).toBe('bybit');
     expect(controller.phase.value).toBe('loading');
-    expect(frame.src).toBe('http://pbgui.test:8000/api/market-data/status-monitor/bybit');
+    expect(frame.src).toBe(`${location.origin}/api/market-data/status-monitor/bybit`);
   });
 
   it('uses each exchange status key in the URL (:4108-4114)', () => {
     const controller = makeController();
     const frame = attachFrame(controller);
     void controller.mountStatusMonitor(getExchangeMeta('binance'), false);
-    expect(frame.src).toBe('http://pbgui.test:8000/api/market-data/status-monitor/binanceusdm');
+    expect(frame.src).toBe(`${location.origin}/api/market-data/status-monitor/binanceusdm`);
   });
 
   it('appends a ?_ts= cache-bust on force reload (:4108-4114, corrected)', () => {
@@ -74,7 +75,7 @@ describe('mountStatusMonitor (iframe src swap)', () => {
     nowValue = 1_770_000_000_000;
     void controller.mountStatusMonitor(getExchangeMeta('okx'), true);
     expect(frame.src).toBe(
-      'http://pbgui.test:8000/api/market-data/status-monitor/okx?_ts=1770000000000'
+      `${location.origin}/api/market-data/status-monitor/okx?_ts=1770000000000`
     );
   });
 

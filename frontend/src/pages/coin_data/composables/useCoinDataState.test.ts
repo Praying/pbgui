@@ -7,14 +7,18 @@ import { useCoinDataState } from './useCoinDataState';
    loading, exchange normalization, sorting, CMC gating and number drafts. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 function stateFixture(overrides: Partial<CoinDataState> = {}): CoinDataState {
   return {
     cmc_pool: { ready: true, active_credentials: 1 },
     filters: { exchange: 'binance', market_cap: 0, vol_mcap: 10, tags: [], only_cpt: false, hide_notices: false },
-    options: { exchanges: ['binance', 'bybit'], tags: ['meme', 'ai'], quote_filter: ['USDT'], vol_mcap_values: [1, 5, 10] },
+    options: { exchanges: ['binance', 'bybit'], tags: ['meme', 'ai'], quote_filter: ['USDT'],
+ available_quotes: ['USDT'], vol_mcap_values: [1, 5, 10] },
     meta: {
       cmc_line: 'CMC refreshed 1m ago',
       cmc_line_detail: 'CMC detail',
@@ -75,7 +79,7 @@ describe('buildStateUrl (:2126-2135)', () => {
     expect(url).toContain('tags=meme');
     expect(url).toContain('tags=ai');
     expect(url).toContain('only_cpt=true');
-    expect(url.startsWith('http://pbgui.test:8000/api/coin-data/state?')).toBe(true);
+    expect(url.startsWith('/api/coin-data/state?')).toBe(true);
   });
 
   it('drops only_cpt for exchanges without copy-trading support (:2132)', async () => {

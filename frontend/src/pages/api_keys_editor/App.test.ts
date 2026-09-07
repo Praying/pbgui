@@ -9,7 +9,10 @@ import App from './App.vue';
    dirty guard :1789-1819, hash deep links :1185-1212. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -59,7 +62,7 @@ async function mountApp() {
 
 function apiPath(url: string | URL): { path: string; method: string; body?: unknown } {
   const u = String(url);
-  const path = u.replace('http://pbgui.test:8000/api/api-keys', '') || '/';
+  const path = u.replace('/api/api-keys', '') || '/';
   return { path, method: 'GET' };
 }
 

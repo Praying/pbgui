@@ -44,6 +44,8 @@ function browser(apiBase = prefix + '/api/balance-calc', mount = prefixArg) {
     URL, console, WeakMap, Map, Set,
     location, API_BASE: apiBase,
     PBGUI_NAV_CONFIG: {current: 'info_balance_calc', authenticated: true},
+    PBGuiI18n: {t: (key, fallback) => fallback, serverMsg: (message) => message},
+    PBGuiIcons: {create: () => '<svg></svg>'},
     sessionStorage: {getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value), removeItem: key => stored.delete(key)},
     addEventListener(name, handler) { (listeners[name] ||= []).push(handler); },
     setInterval(fn, delay) { intervals.push({fn, delay}); return intervals.length; },
@@ -116,14 +118,14 @@ async function main() {
     assert.equal(b.requests.at(-1).input, app + '/api/vps/alerts/ack-all');
 
     b.nodes['pbgui-guide-btn'].click();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/shared_help_overlay.js?v=7');
-    b.assets.at(-1).onerror();
-    assert.equal(c.location.href, app + '/app/help.html?v=1766');
+    // The Vue-migration guide button navigates to the Help Center page
+    // instead of lazy-loading the legacy overlay script.
+    assert.equal(c.location.href, app + c.testNav.FASTAPI_PAGES['help'] + '?topic=38_balance_calc');
     b.nodes['pbgui-ai-btn'].click();
     assert.equal(b.assets.at(-2).href, prefix + '/app/css/ai_drawer.css?v=13');
     assert.equal(b.assets.at(-1).src, prefix + '/app/js/ai_drawer.js?v=39');
     b.nodes['pbgui-notify-btn'].click();
-    assert.equal(b.assets.at(-1).src, prefix + '/app/js/log_viewer_panel.js?v=30');
+    assert.equal(b.assets.at(-1).src, prefix + '/app/js/log_viewer_panel.js?v=31');
     let viewerOptions;
     c.LogViewerPanel = class {constructor(options) {viewerOptions = options;} open() {} close() {}};
     b.assets.at(-1).onload();

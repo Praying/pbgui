@@ -40,6 +40,7 @@ export interface UseCoinDataState {
     marketCap: number;
     volMcap: number;
     tags: string[];
+    quotes: string[];
     onlyCpt: boolean;
   }>;
   marketCapDraft: Ref<string | null>;
@@ -72,6 +73,7 @@ export interface UseCoinDataState {
   setExchange(exchange: string): void;
   setHip3Dex(dex: string): void;
   setTags(tags: string[]): void;
+  setQuotes(quotes: string[]): void;
   toggleOnlyCpt(): void;
   resetFilters(): void;
   setActiveView(view: TableViewName): void;
@@ -93,6 +95,7 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     marketCap: number;
     volMcap: number;
     tags: string[];
+    quotes: string[];
     onlyCpt: boolean;
   }>({
     exchange: '',
@@ -100,6 +103,7 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     marketCap: 0,
     volMcap: 10, // :1723
     tags: [],
+    quotes: [],
     onlyCpt: false,
   });
   const marketCapDraft = ref<string | null>(null); // filterDrafts :1727-1730
@@ -186,6 +190,10 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     if (tags) {
       filters.value.tags = tags.split(',').map((tag) => tag.trim()).filter(Boolean);
     }
+    const quotes = params.get('quotes');
+    if (quotes) {
+      filters.value.quotes = quotes.split(',').map((quote) => quote.trim()).filter(Boolean);
+    }
   }
 
   function saveFiltersToQuery(): void {
@@ -197,6 +205,8 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     params.set('vol_mcap', String(filters.value.volMcap || 0));
     if (filters.value.tags.length) params.set('tags', filters.value.tags.join(','));
     else params.delete('tags');
+    if (filters.value.quotes.length) params.set('quotes', filters.value.quotes.join(','));
+    else params.delete('quotes');
     if (filters.value.onlyCpt) params.set('only_cpt', '1');
     else params.delete('only_cpt');
     const nextUrl = window.location.pathname + '?' + params.toString();
@@ -213,6 +223,7 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     params.set('vol_mcap', String(filters.value.volMcap || 0));
     if (filters.value.onlyCpt && supportsCopyTradingFilter.value) params.set('only_cpt', 'true');
     filters.value.tags.forEach((tag) => params.append('tags', tag));
+    filters.value.quotes.forEach((quote) => params.append('quotes', quote));
     return apiUrl('/state?' + params.toString());
   }
 
@@ -259,6 +270,9 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     filters.value.tags = (next.filters.tags || []).slice();
     filters.value.onlyCpt = Boolean(next.filters.only_cpt);
     normalizeExchangeSpecificState(filters.value.exchange);
+    // The server owns the effective selection (exchange-specific defaults,
+    // v2.02.7) — mirror it back into the filter state (legacy :2230).
+    filters.value.quotes = (next.options?.quote_filter || []).slice();
     if (selectedKey.value) {
       const allRows: Array<Record<string, unknown>> = [
         ...(next.rows || []) as unknown as Array<Record<string, unknown>>,
@@ -313,6 +327,15 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     scheduleFilterReload();
   }
 
+  /** Quote picker (legacy renderQuoteFilter :2485-2514): toggle with a
+   *  one-quote minimum, then reload immediately. */
+  function setQuotes(quotes: string[]): void {
+    if (!quotes.length) return;
+    filters.value.quotes = quotes;
+    selectedKey.value = '';
+    void loadState();
+  }
+
   function toggleOnlyCpt(): void {
     filters.value.onlyCpt = !filters.value.onlyCpt;
     void loadState();
@@ -325,6 +348,7 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     marketCapDraft.value = null;
     volMcapDraft.value = null;
     filters.value.tags = [];
+    filters.value.quotes = [];
     filters.value.onlyCpt = false;
     void loadState();
   }
@@ -549,6 +573,7 @@ export function useCoinDataState(options: { t: TranslateFn }): UseCoinDataState 
     setExchange,
     setHip3Dex,
     setTags,
+    setQuotes,
     toggleOnlyCpt,
     resetFilters,
     setActiveView,

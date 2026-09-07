@@ -8,7 +8,7 @@ import {
 } from './useLivePoll';
 import type { FetchLike } from './useDashboardFetch';
 
-const BASE = 'http://pbgui.test:8000/api';
+const BASE = '/api';
 
 function okJson(data: unknown): FetchLike {
   return vi.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve(data) });

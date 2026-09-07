@@ -1,4 +1,4 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 /**
  * API Keys editor config — the Vue replacement for the legacy server-side
@@ -13,11 +13,7 @@ import { getBoot } from '@/shared/boot';
  */
 
 export function apiBase(): string {
-  return getBoot().origin + '/api/api-keys';
-}
-
-export function bootToken(): string {
-  return getBoot().token || '';
+  return getBoot().base_prefix + '/api/api-keys';
 }
 
 export function bootVersion(): string {
@@ -31,7 +27,7 @@ export function bootSerial(): string {
 /** WebSocket origin for LogViewerPanel (legacy _getWsBase :3426-3434). */
 export function wsBase(): string {
   try {
-    return getBoot().origin.replace(/^http/, 'ws');
+    return wsOrigin();
   } catch {
     return (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host;
   }

@@ -18,13 +18,16 @@ import {
    config.ts convention) and keeps the rewrites verbatim. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 beforeEach(() => {
-  getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
 });
 
 afterEach(() => {
@@ -33,23 +36,23 @@ afterEach(() => {
 
 describe('market-data URL bases (legacy apiUrl :4176, jobsApiUrl :4180, heatmapApiBase :4888)', () => {
   it('derives the market-data base from the boot origin', () => {
-    expect(marketDataApiBase()).toBe('http://pbgui.test:8000/api/market-data');
+    expect(marketDataApiBase()).toBe('/api/market-data');
   });
 
   it('concatenates paths onto the market-data base (apiUrl)', () => {
-    expect(apiUrl('/status/hyperliquid')).toBe('http://pbgui.test:8000/api/market-data/status/hyperliquid');
-    expect(apiUrl('/settings/binance')).toBe('http://pbgui.test:8000/api/market-data/settings/binance');
+    expect(apiUrl('/status/hyperliquid')).toBe('/api/market-data/status/hyperliquid');
+    expect(apiUrl('/settings/binance')).toBe('/api/market-data/settings/binance');
   });
 
   it('strips /market-data for the jobs root (jobsApiUrl :4180-4183)', () => {
-    expect(jobsApiUrl('/jobs/')).toBe('http://pbgui.test:8000/api/jobs/');
-    expect(jobsApiUrl('/api-keys/tradfi/profiles')).toBe('http://pbgui.test:8000/api/api-keys/tradfi/profiles');
+    expect(jobsApiUrl('/jobs/')).toBe('/api/jobs/');
+    expect(jobsApiUrl('/api-keys/tradfi/profiles')).toBe('/api/api-keys/tradfi/profiles');
   });
 
   it('rewrites /market-data to /heatmap (heatmapApiBase :4888-4890)', () => {
-    expect(heatmapApiBase()).toBe('http://pbgui.test:8000/api/heatmap');
-    expect(heatmapApiUrl('/overview')).toBe('http://pbgui.test:8000/api/heatmap/overview');
-    expect(heatmapApiUrl('/queue-build-ohlcv')).toBe('http://pbgui.test:8000/api/heatmap/queue-build-ohlcv');
+    expect(heatmapApiBase()).toBe('/api/heatmap');
+    expect(heatmapApiUrl('/overview')).toBe('/api/heatmap/overview');
+    expect(heatmapApiUrl('/queue-build-ohlcv')).toBe('/api/heatmap/queue-build-ohlcv');
   });
 
   it('keeps the literal notify_log path', () => {
@@ -59,12 +62,12 @@ describe('market-data URL bases (legacy apiUrl :4176, jobsApiUrl :4180, heatmapA
 
 describe('legacy regex parity (pure base rewrites)', () => {
   it('jobs root strip tolerates the optional trailing slash (legacy /\\/market-data\\/?$)', () => {
-    expect(jobsApiUrl('/jobs/')).toBe('http://pbgui.test:8000/api/jobs/');
+    expect(jobsApiUrl('/jobs/')).toBe('/api/jobs/');
   });
 
   it('only strips a trailing /market-data segment, not inner occurrences', () => {
     // legacy replace(/\/market-data\/?$/, '') anchors at the end
-    const base = 'http://pbgui.test:8000/api/market-data';
+    const base = '/api/market-data';
     expect(jobsApiUrl('/jobs/')).toBe(base.replace(/\/market-data\/?$/, '') + '/jobs/');
   });
 

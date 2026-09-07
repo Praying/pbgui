@@ -509,9 +509,14 @@ def test_recovery_submissions_and_policy_save_share_account_lock(isolated_api, m
 @pytest.mark.parametrize("page", [api.get_main_page, api.get_transfers_main_page])
 @pytest.mark.parametrize("server", [("example.com", 443), ("::1", 8000)])
 @pytest.mark.parametrize("prefix", ["", "/pbgui", "/mount space"])
-def test_pages_use_mounted_same_origin_urls(page, server, prefix):
+def test_pages_use_mounted_same_origin_urls(page, server, prefix, monkeypatch, tmp_path):
     """IPv6 and proxy mounts never leak an unbracketed authority into API URLs."""
 
+    # Serve the legacy fallback: a built Vue bundle would answer instead and
+    # this test asserts the server-side URL injection contract.
+    import api.auth as auth
+
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda _page: tmp_path / "missing-dist" / _page)
     request = Request({"type": "http", "scheme": "https", "server": server, "root_path": prefix, "path": "/main_page", "headers": [], "query_string": b""})
     response = page(request, object())
     source = response.body.decode()

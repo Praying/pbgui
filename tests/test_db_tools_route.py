@@ -74,10 +74,9 @@ def test_falls_back_to_legacy_template_with_injections(
     resp = client.get("/api/db-tools/main_page")
 
     assert resp.status_code == 200
-    assert '"http://testserver/api/db-tools"' in resp.text
-    assert 'ws://testserver' in resp.text
-    assert '"tok-1"' in resp.text
-    assert "%%" not in resp.text
+    assert '"/api/db-tools"' in resp.text
+    assert "window.location.host + \"\"" in resp.text
+    assert 'var TOKEN = "%%TOKEN%%"' in resp.text  # placeholder stays literal (cookie model)
 
 
 def test_errors_clearly_when_no_build_and_no_legacy(

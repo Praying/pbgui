@@ -38,7 +38,10 @@ function extractSelectorBlocks(source: string, selector: string): string[] {
 }
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -96,7 +99,7 @@ describe('PricesOverlay open/close (legacy openPricesOverlay/closePricesOverlay)
 
     expect(wrapper.find('#prices-overlay').classes()).toContain('active');
     expect((wrapper.find('#po-search').element as HTMLInputElement).value).toBe('');
-    expect(fetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/prices-snapshot', expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith('/api/services/prices-snapshot', expect.anything());
     expect(wrapper.findAll('.po-table tbody tr')).toHaveLength(4);
   });
 

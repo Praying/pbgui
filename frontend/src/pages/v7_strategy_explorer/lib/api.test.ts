@@ -13,9 +13,9 @@ describe('apiFetch (:722-731)', () => {
   it('prepends the explorer API base and sends same-origin credentials', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
-    await apiFetch('http://x/api/strategy-explorer', '/snapshot');
+    await apiFetch('/api/strategy-explorer', '/snapshot');
     const { url, init } = lastCall();
-    expect(url).toBe('http://x/api/strategy-explorer/snapshot');
+    expect(url).toBe('/api/strategy-explorer/snapshot');
     expect(init.credentials).toBe('same-origin');
     vi.unstubAllGlobals();
   });

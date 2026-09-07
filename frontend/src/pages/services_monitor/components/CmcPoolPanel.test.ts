@@ -6,7 +6,10 @@ import CmcPoolPanel from './CmcPoolPanel.vue';
 import type { CmcLeasesResponse, CmcPool } from '../types';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -294,7 +297,7 @@ describe('CmcPoolPanel key mutations (legacy openCmcKeyModal/submitCmcKey)', () 
     await flushPromises();
 
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/cmc-pool/keys');
+    expect(url).toBe('/api/services/cmc-pool/keys');
     expect(init.method).toBe('POST');
     const body = JSON.parse(init.body as string);
     expect(body).toMatchObject({ api_key: 'sec-1', label: 'New', imported: false, shared: false, active: true });
@@ -317,7 +320,7 @@ describe('CmcPoolPanel key mutations (legacy openCmcKeyModal/submitCmcKey)', () 
     await flushPromises();
 
     let [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/cmc-pool/keys/k1/rotate');
+    expect(url).toBe('/api/services/cmc-pool/keys/k1/rotate');
     const firstOpId = JSON.parse(init.body as string).operation_id;
 
     // Retry the same rotate: the operations record is resolved first and the
@@ -339,7 +342,7 @@ describe('CmcPoolPanel key mutations (legacy openCmcKeyModal/submitCmcKey)', () 
     await flushPromises();
 
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/cmc-pool/keys/k1');
+    expect(url).toBe('/api/services/cmc-pool/keys/k1');
     expect(init.method).toBe('PATCH');
     const body = JSON.parse(init.body as string);
     expect(body).toMatchObject({ label: 'Renamed', imported: false, shared: true, active: true });
@@ -388,7 +391,7 @@ describe('CmcPoolPanel enable/disable/delete (legacy toggle/delete flows)', () =
 
     expect(wrapper.find('.cmc-pool-message').text()).toBe('Disabling Primary...');
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toMatch(/^http:\/\/pbgui\.test:8000\/api\/services\/cmc-pool\/keys\/k1\/disable\?operation_id=/);
+    expect(url).toMatch(/^\/api\/services\/cmc-pool\/keys\/k1\/disable\?operation_id=/);
     expect(init.method).toBe('POST');
     expect(init.body).toBeUndefined();
     expect(wrapper.emitted('refresh')).toHaveLength(1);
@@ -404,7 +407,7 @@ describe('CmcPoolPanel enable/disable/delete (legacy toggle/delete flows)', () =
     expect(wrapper.find('.cmc-pool-message').text()).toBe('Re-enabling Backup...');
     // Re-enable is a body-transport PATCH: the operation id rides in the body.
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/cmc-pool/keys/k2');
+    expect(url).toBe('/api/services/cmc-pool/keys/k2');
     expect(init.method).toBe('PATCH');
     expect(JSON.parse(init.body as string)).toMatchObject({ active: true });
     expect(typeof JSON.parse(init.body as string).operation_id).toBe('string');
@@ -424,7 +427,7 @@ describe('CmcPoolPanel enable/disable/delete (legacy toggle/delete flows)', () =
       confirmText: 'Delete',
     });
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toMatch(/^http:\/\/pbgui\.test:8000\/api\/services\/cmc-pool\/keys\/k1\?operation_id=/);
+    expect(url).toMatch(/^\/api\/services\/cmc-pool\/keys\/k1\?operation_id=/);
     expect(init.method).toBe('DELETE');
     expect(wrapper.emitted('refresh')).toHaveLength(1);
     expect(wrapper.find('#cmc-delete-btn').attributes('disabled')).toBeDefined();
@@ -477,7 +480,7 @@ describe('CmcPoolPanel authority transfer (legacy openCmcAuthorityModal/submit)'
       confirmText: 'Transfer Authority',
     });
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/cmc-pool/authority/transfer');
+    expect(url).toBe('/api/services/cmc-pool/authority/transfer');
     expect(init.method).toBe('POST');
     const body = JSON.parse(init.body as string);
     expect(body).toMatchObject({ quota_domain_id: 'd1', authority_node_id: 'n2', expected_epoch: 3 });

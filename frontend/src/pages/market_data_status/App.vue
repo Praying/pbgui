@@ -54,7 +54,6 @@ import { dialogsConfirm } from './dialogs';
 import {
   NOTIFY_LOG_URL,
   cancelRefreshUrl,
-  hasApiToken,
   readExchange,
   refreshNowUrl,
   stopRunUrl,
@@ -70,7 +69,7 @@ const TOAST_VISIBLE_MS = 3000;
 const TOAST_SLIDE_OUT_MS = 300;
 
 const exchange = readExchange();
-const configOk = hasApiToken() && exchange !== '';
+const configOk = exchange !== '';
 
 const ws = configOk ? useStatusWs({ url: wsUrl(exchange) }) : null;
 const status = computed(() => ws?.status.value ?? null);
@@ -108,8 +107,8 @@ function showToast(message: string, kind: ToastKind = 'info'): void {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${getBoot().token}`,
     },
+    credentials: 'same-origin',
     body: JSON.stringify({ msg: String(message ?? ''), level: kind }),
   }).catch(() => {
     /* legacy swallowed relay failures */

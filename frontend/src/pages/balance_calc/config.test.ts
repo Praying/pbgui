@@ -7,20 +7,23 @@ import { EXCHANGES, apiUrl, balanceCalcApiBase, readInitParams } from './config'
    route's query params (:461-464). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 beforeEach(() => {
-  getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
 });
 
 describe('balance-calc URL config', () => {
   it('derives the base from the boot origin', () => {
-    expect(balanceCalcApiBase()).toBe('http://pbgui.test:8000/api/balance-calc');
-    expect(apiUrl('/calculate')).toBe('http://pbgui.test:8000/api/balance-calc/calculate');
-    expect(apiUrl('/draft/abc')).toBe('http://pbgui.test:8000/api/balance-calc/draft/abc');
+    expect(balanceCalcApiBase()).toBe('/api/balance-calc');
+    expect(apiUrl('/calculate')).toBe('/api/balance-calc/calculate');
+    expect(apiUrl('/draft/abc')).toBe('/api/balance-calc/draft/abc');
   });
 
   it('mirrors the API exchange list (api/balance_calc.py :52)', () => {

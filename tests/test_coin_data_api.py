@@ -359,14 +359,14 @@ def test_coin_data_frontend_gates_only_cmc_refresh_and_keeps_cached_state() -> N
     """The page consumes pool readiness, preserves cached views, and shows exact rejection detail.
 
     Re-pointed at the Vue sources with the coin_data migration: the store
-    (useCoinDataState.ts) consumes the pool status, SidebarPanel.vue binds the
-    CMC-button gating, useRefreshJobs.ts formats the rejection detail, and
-    App.vue wires the refresh buttons.
+    (useCoinDataState.ts) consumes the pool status and exposes the CMC-button
+    gating, useRefreshJobs.ts formats the rejection detail, and App.vue wires
+    the refresh buttons (the standalone SidebarPanel was folded back into
+    App.vue with the rail migration).
     """
     root = Path(__file__).resolve().parent.parent
     page = root / "frontend" / "src" / "pages" / "coin_data"
     store = (page / "composables" / "useCoinDataState.ts").read_text(encoding="utf-8")
-    sidebar = (page / "components" / "SidebarPanel.vue").read_text(encoding="utf-8")
     refresh = (page / "composables" / "useRefreshJobs.ts").read_text(encoding="utf-8")
     app = (page / "App.vue").read_text(encoding="utf-8")
     en = json.loads((root / "frontend" / "i18n" / "en.json").read_text(encoding="utf-8"))
@@ -376,16 +376,16 @@ def test_coin_data_frontend_gates_only_cmc_refresh_and_keeps_cached_state() -> N
     assert "pool.ready ? t('market.ready')" in store
     # CMC-only gating: both CMC buttons disabled without a materialized key,
     # the exchange refresh stays enabled (renderSidebarMeta :2283-2291)
-    assert ':disabled="!hasMaterializedCmcKey"' in sidebar
-    assert 'id="btn-refresh-cmc"' in sidebar
-    assert 'id="btn-refresh-exchange"' in sidebar
-    assert ':disabled' not in sidebar.split('id="btn-refresh-exchange"')[1].split(">")[0]
+    assert ':disabled="!store.hasMaterializedCmcKey.value"' in app
+    assert 'id="btn-refresh-cmc"' in app
+    assert 'id="btn-refresh-exchange"' in app
+    assert ':disabled' not in app.split('id="btn-refresh-exchange"')[1].split(">")[0]
     assert_text_present(en["market.cachedCoinDataReadable"], "Cached Coin Data remains readable.")
     assert_text_present(en["market.cachedCoinDataAvailable"], "Cached Coin Data remains available.")
     # exact rejection detail surfaces (runRefresh :2246-2248)
     assert "${error.status}: ${error.detail}" in refresh
     # the refresh buttons stay wired (bindControls :3085-3096)
-    assert "@refresh-exchange" in app
+    assert "@click=\"onRefresh('/refresh/exchange'" in app
 
 def _capture_refresh_outcome(
     monkeypatch,

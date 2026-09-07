@@ -1,5 +1,5 @@
 /** Route-aware configuration for the shared PBv7/PBv8 Optimize page. */
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 export type OptimizeVersion = 'v7' | 'v8';
 export type OptimizePanel = 'configs' | 'queue' | 'results' | 'paretos';
@@ -24,23 +24,23 @@ export function detectOptimizeVersion(pathname: string = window.location.pathnam
 }
 
 export function optimizeApiBase(
-  origin: string = getBoot().origin,
+  origin: string = getBoot().base_prefix,
   version: OptimizeVersion = detectOptimizeVersion(),
 ): string {
   return `${origin}/api/optimize-${version}`;
 }
 
 export function optimizeWsUrl(
-  origin: string = getBoot().origin,
+  origin: string = wsOrigin(),
   version: OptimizeVersion = detectOptimizeVersion(),
 ): string {
-  const wsOrigin = origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
-  return `${wsOrigin}/api/optimize-${version}/ws/opt${version === 'v8' ? '8' : '7'}`;
+  const wsBase = origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+  return `${wsBase}/api/optimize-${version}/ws/opt${version === 'v8' ? '8' : '7'}`;
 }
 
 export function currentOptimizeAdapter(
   pathname: string = window.location.pathname,
-  origin: string = getBoot().origin,
+  origin: string = getBoot().base_prefix,
 ): OptimizeAdapter {
   const version = detectOptimizeVersion(pathname);
   const isV8 = version === 'v8';

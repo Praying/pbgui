@@ -367,13 +367,17 @@ def test_retention_report_is_read_only_and_main_page_exposes_no_session_token(
     ],
 )
 def test_cluster_page_urls_preserve_mount_and_ipv6(
-    scheme: str, host: str, prefix: str, expected_prefix: str,
+    scheme: str, host: str, prefix: str, expected_prefix: str, monkeypatch, tmp_path,
 ) -> None:
     """Page URLs are browser-origin relative, mounted, and free of session tokens."""
 
     import re
     from urllib.parse import urljoin
 
+    # Serve the legacy fallback — a built Vue bundle would answer instead.
+    import api.auth as auth
+
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda _page: tmp_path / "missing-dist" / _page)
     request = Request({
         "type": "http", "scheme": scheme, "method": "GET",
         "path": "/api/cluster/main_page", "root_path": prefix,

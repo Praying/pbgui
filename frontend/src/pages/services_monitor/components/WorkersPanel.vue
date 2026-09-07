@@ -176,17 +176,30 @@ interface WorkerButton {
 
 type WorkerAction = 'start' | 'stop' | 'restart';
 
+/** v2.02.7 _workerActionPending: the in-flight action per worker id. */
+const actionPending = ref<Record<string, WorkerAction>>({});
+
+/** Progressive label while an action POST is in flight (Stopping... etc.). */
+function pendingLabel(action: WorkerAction): string {
+  if (action === 'stop') return t('sysmon.stopping');
+  if (action === 'restart') return t('sysmon.restarting');
+  return t('sysmon.starting');
+}
+
 /** Legacy renderWorkerActionButtons - same can_stop/can_start gating. */
 function actionButtons(item: Worker): WorkerButton[] {
   if (!item || item.available === false) return [];
+  const pending = actionPending.value[item.id];
   const buttons: WorkerButton[] = [];
   if (item.running) {
     if (item.can_stop !== false) {
-      buttons.push({ action: 'stop', label: t('sysmon.stop') });
-      if (item.can_start !== false) buttons.push({ action: 'restart', label: t('sysmon.restart') });
+      buttons.push({ action: 'stop', label: pending === 'stop' ? pendingLabel('stop') : t('sysmon.stop') });
+      if (item.can_start !== false) {
+        buttons.push({ action: 'restart', label: pending === 'restart' ? pendingLabel('restart') : t('sysmon.restart') });
+      }
     }
   } else if (item.can_start !== false) {
-    buttons.push({ action: 'start', label: t('sysmon.start') });
+    buttons.push({ action: 'start', label: pending === 'start' ? pendingLabel('start') : t('sysmon.start') });
   }
   return buttons;
 }
@@ -226,8 +239,12 @@ async function workerConfirm(title: string, message: string, confirmText: string
 }
 
 /** Legacy workerAction: POST, then force a refresh; failures surface in
- *  the result popup (legacy .catch(function () {}) swallowed them). */
+ *  the result popup (legacy .catch(function () {}) swallowed them). The
+ *  v2.02.7 pending lock blocks a second action on the same worker while the
+ *  first POST is still in flight. */
 async function workerAction(workerId: string, action: WorkerAction): Promise<void> {
+  if (actionPending.value[workerId]) return;
+  actionPending.value[workerId] = action;
   try {
     await apiFetch(`${apiBase()}/workers/${encodeURIComponent(workerId)}/${action}`, { method: 'POST' });
   } catch (error) {
@@ -237,6 +254,8 @@ async function workerAction(workerId: string, action: WorkerAction): Promise<voi
       output: error instanceof Error ? error.message : String(error),
       isOk: false,
     });
+  } finally {
+    delete actionPending.value[workerId];
   }
   emit('refresh');
 }
@@ -326,6 +345,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
                   :variant="actionVariants[b.action]"
                   size="sm"
                   type="button"
+                  :disabled="!!actionPending[item.id]"
                   @click.stop="onWorkerButton(item.id, b.action)"
                 ><PbIcon :icon="actionIcons[b.action]" /> {{ b.label }}</Button>
               </div>
@@ -354,6 +374,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
             <Button
               v-for="b in actionButtons(selectedWorker)"
               :key="b.action"
+              :disabled="!!actionPending[selectedWorker.id]"
               class="ctrl-btn"
               :class="b.action"
               :variant="actionVariants[b.action]"

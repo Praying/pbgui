@@ -73,14 +73,14 @@ describe('normalizeEditorConfigPayload (editor_shared.js:566-607)', () => {
 describe('loadUsers', () => {
   it('reads the users list', async () => {
     const fetchFn = vi.fn(async () => jsonResponse({ users: [{ name: 'a', exchange: 'binance' }] }));
-    const users = await loadUsers('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const users = await loadUsers('/api/v7', fetchFn as unknown as typeof fetch);
     expect(users).toEqual([{ name: 'a', exchange: 'binance' }]);
-    expect(fetchFn).toHaveBeenCalledWith('http://x/api/v7/users', expect.anything());
+    expect(fetchFn).toHaveBeenCalledWith('/api/v7/users', expect.anything());
   });
 
   it('defaults to an empty list when the server omits users', async () => {
     const fetchFn = vi.fn(async () => jsonResponse({}));
-    const users = await loadUsers('http://x/api/v7', fetchFn as unknown as typeof fetch);
+    const users = await loadUsers('/api/v7', fetchFn as unknown as typeof fetch);
     expect(users).toEqual([]);
   });
 });
@@ -107,7 +107,7 @@ describe('buildDefaultConfig (:2007-2069)', () => {
 describe('fetchTemplateConfig (:1987-2005)', () => {
   it('uses the server template and overrides the user', async () => {
     const fetchFn = vi.fn(async () => jsonResponse({ config: { live: { user: 'template' } } }));
-    const cfg = await fetchTemplateConfig('http://x/api/v7', V7, 'bob', fetchFn as unknown as typeof fetch);
+    const cfg = await fetchTemplateConfig('/api/v7', V7, 'bob', fetchFn as unknown as typeof fetch);
     expect((cfg.live as Record<string, string>).user).toBe('bob');
     expect(cfg.pbgui).toEqual({});
   });
@@ -116,7 +116,7 @@ describe('fetchTemplateConfig (:1987-2005)', () => {
     const fetchFn = vi.fn(async () => {
       throw new Error('offline');
     });
-    const cfg = await fetchTemplateConfig('http://x/api/v7', V7, 'carol', fetchFn as unknown as typeof fetch);
+    const cfg = await fetchTemplateConfig('/api/v7', V7, 'carol', fetchFn as unknown as typeof fetch);
     expect((cfg.live as Record<string, string>).user).toBe('carol');
     expect((cfg.live as Record<string, number>).leverage).toBe(10);
   });
@@ -125,12 +125,12 @@ describe('fetchTemplateConfig (:1987-2005)', () => {
     const fetchFn = vi.fn(async () => {
       throw new Error('offline');
     });
-    await expect(fetchTemplateConfig('http://x/api/v8', V8, 'dave', fetchFn)).rejects.toThrow('offline');
+    await expect(fetchTemplateConfig('/api/v8', V8, 'dave', fetchFn)).rejects.toThrow('offline');
   });
 
   it('throws the PB8 template message when the endpoint answers non-ok', async () => {
     const fetchFn = vi.fn(async () => jsonResponse({ detail: 'no template' }, false));
-    await expect(fetchTemplateConfig('http://x/api/v8', V8, 'dave', fetchFn)).rejects.toThrow();
+    await expect(fetchTemplateConfig('/api/v8', V8, 'dave', fetchFn)).rejects.toThrow();
   });
 });
 
@@ -147,7 +147,7 @@ describe('loadInstanceConfig (init :1834-1890)', () => {
         });
       throw new Error('unexpected fetch ' + url);
     });
-    const result = await loadInstanceConfig('http://x/api/v7', V7, { ...EMPTY_PARAMS, draftId: 'd-1' }, fetchFn as unknown as typeof fetch);
+    const result = await loadInstanceConfig('/api/v7', V7, { ...EMPTY_PARAMS, draftId: 'd-1' }, fetchFn as unknown as typeof fetch);
     expect(result.source).toBe('draft');
     expect((result.cfg.live as Record<string, string>).user).toBe('from-draft');
     expect(result.paramStatus).toEqual({ long: { neat: 'pb_default' } });
@@ -162,7 +162,7 @@ describe('loadInstanceConfig (init :1834-1890)', () => {
         config: { pbgui: { from_backup_config: { name: 'bk', timestamp: '2026-08-18T10:00:00Z' } } },
       })
     );
-    const result = await loadInstanceConfig('http://x/api/v7', V7, { ...EMPTY_PARAMS, draftId: 'd-2' }, fetchFn as unknown as typeof fetch);
+    const result = await loadInstanceConfig('/api/v7', V7, { ...EMPTY_PARAMS, draftId: 'd-2' }, fetchFn as unknown as typeof fetch);
     expect(result.warnings).toEqual([{ kind: 'backup-loaded', name: 'bk', timestamp: '2026-08-18T10:00:00Z' }]);
   });
 
@@ -173,7 +173,7 @@ describe('loadInstanceConfig (init :1834-1890)', () => {
       throw new Error('unexpected fetch ' + url);
     });
     const result = await loadInstanceConfig(
-      'http://x/api/v7',
+      '/api/v7',
       V7,
       { name: '', isNew: true, draftId: 'missing' },
       fetchFn as unknown as typeof fetch
@@ -189,7 +189,7 @@ describe('loadInstanceConfig (init :1834-1890)', () => {
       throw new Error('unexpected fetch ' + url);
     });
     const result = await loadInstanceConfig(
-      'http://x/api/v7',
+      '/api/v7',
       V7,
       { name: '', isNew: true, draftId: '' },
       fetchFn as unknown as typeof fetch,
@@ -210,7 +210,7 @@ describe('loadInstanceConfig (init :1834-1890)', () => {
       throw new Error('unexpected fetch ' + url);
     });
     const result = await loadInstanceConfig(
-      'http://x/api/v7',
+      '/api/v7',
       V7,
       { name: 'alice', isNew: false, draftId: '' },
       fetchFn as unknown as typeof fetch
@@ -218,7 +218,7 @@ describe('loadInstanceConfig (init :1834-1890)', () => {
     expect(result.source).toBe('instance');
     expect(result.overrideConfigs).toEqual({ BTC: { long: {} } });
     expect(fetchFn).toHaveBeenCalledWith(
-      'http://x/api/v7/instances/alice/config',
+      '/api/v7/instances/alice/config',
       expect.objectContaining({ credentials: 'same-origin' })
     );
   });
@@ -226,7 +226,7 @@ describe('loadInstanceConfig (init :1834-1890)', () => {
   it('propagates load failures for the named-instance mode', async () => {
     const fetchFn = vi.fn(async () => jsonResponse({ detail: 'no such instance' }, false));
     await expect(
-      loadInstanceConfig('http://x/api/v7', V7, { name: 'ghost', isNew: false, draftId: '' }, fetchFn as unknown as typeof fetch)
+      loadInstanceConfig('/api/v7', V7, { name: 'ghost', isNew: false, draftId: '' }, fetchFn as unknown as typeof fetch)
     ).rejects.toThrow();
   });
 });

@@ -71,6 +71,11 @@ import type { BacktestPanel } from './types';
 const { t } = useI18n();
 const boot = getBoot();
 
+/** Group compare (v2.02.4): the group's paths are selected; run Compare. */
+async function onCompareGroup(): Promise<void> {
+  await store.compareResults();
+}
+
 const store = useBacktestPage({
   origin: boot.origin,
   t: (key, params) => t(key, params ?? {}),
@@ -829,6 +834,7 @@ watch(
           :version-bound-actions="store.results.versionFilter.value !== store.adapter.version"
           :allow-v8-convert="!store.adapter.isV8"
           @convert="convertResultToV8"
+          @compare-group="onCompareGroup"
         />
       </div>
 

@@ -7,7 +7,10 @@ import { apiBase, wsBase } from './config';
 import type { ServiceStatusMap } from './types';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 vi.mock('@/shared/api', () => ({
@@ -182,7 +185,7 @@ describe('services_monitor overview panel', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/status');
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/status');
     expect(wrapper.findAll('#panel-overview .svc-card')).toHaveLength(9);
     expect(wrapper.find('#panel-overview .svc-card[data-svc="pbcluster"] .card-status-row').text()).toBe('Running');
     expect(wrapper.find('#panel-overview .svc-card[data-svc="pbrun"] .card-status-row').text()).toBe('Stopped');
@@ -201,12 +204,12 @@ describe('services_monitor overview panel', () => {
     await wrapper.find('#panel-overview .svc-card[data-svc="pbrun"] .card-btn.start').trigger('click');
     await flushPromises();
 
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/pbrun/start', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/pbrun/start', {
       method: 'POST',
     });
     // Legacy svcAction triggers an immediate status refresh after the action.
     expect(
-      apiFetchMock.mock.calls.some(([url]) => url === 'http://pbgui.test:8000/api/services/status')
+      apiFetchMock.mock.calls.some(([url]) => url === '/api/services/status')
     ).toBe(true);
   });
 
@@ -269,9 +272,9 @@ describe('services_monitor overview panel', () => {
   });
 
   it('routes the api-server restart through the legacy restart endpoint', async () => {
-    const overlayCalls: Array<[string, string]> = [];
-    (window as { showRestartOverlay?: unknown }).showRestartOverlay = (origin: string, token: string) => {
-      overlayCalls.push([origin, token]);
+    const overlayCalls: Array<[string]> = [];
+    (window as { showRestartOverlay?: unknown }).showRestartOverlay = (origin: string) => {
+      overlayCalls.push([origin]);
     };
     try {
       const wrapper = mountApp();
@@ -280,10 +283,10 @@ describe('services_monitor overview panel', () => {
       await wrapper.find('#panel-overview .svc-card[data-svc="api-server"] .card-btn.restart').trigger('click');
       await flushPromises();
 
-      expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/api-server/restart', {
+      expect(apiFetchMock).toHaveBeenCalledWith('/api/services/api-server/restart', {
         method: 'POST',
       });
-      expect(overlayCalls).toEqual([['http://pbgui.test:8000', 'tok']]);
+      expect(overlayCalls).toEqual([['http://pbgui.test:8000']]);
     } finally {
       delete (window as { showRestartOverlay?: unknown }).showRestartOverlay;
     }
@@ -295,7 +298,7 @@ describe('services_monitor workers wiring', () => {
     const wrapper = mountApp();
     await flushPromises();
 
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/status');
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/workers/status');
     const workersCard = wrapper.findAll('#panel-overview .svc-card').find((c) => c.attributes('data-svc') === 'workers')!;
     expect(workersCard.find('.card-status-row').text()).toBe('3 / 4 running');
     // Worker groups drive the panel list (shared EmptyState when no groups).
@@ -372,7 +375,7 @@ describe('services_monitor service log wiring', () => {
     await wrapper.find('#panel-pbrun .ctrl-btn.start').trigger('click');
     await flushPromises();
 
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/pbrun/start', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/pbrun/start', {
       method: 'POST',
     });
   });
@@ -428,8 +431,8 @@ describe('services_monitor cmc pool wiring', () => {
     await flushPromises();
 
     const urls = fetchMock.mock.calls.map(([url]) => url);
-    expect(urls).toContain('http://pbgui.test:8000/api/services/cmc-pool');
-    expect(urls).toContain('http://pbgui.test:8000/api/services/cmc-pool/leases');
+    expect(urls).toContain('/api/services/cmc-pool');
+    expect(urls).toContain('/api/services/cmc-pool/leases');
     expect(cmcPoolLoads()).toBe(1);
     // Legacy markup: the status bar sits between the ctrl strip and the tab bar
     // (visible on every pbcoindata tab, not just the pool tab).
@@ -529,7 +532,7 @@ describe('services_monitor pbdata settings wiring', () => {
     await flushPromises();
 
     expect(settingsCalls()).toHaveLength(1);
-    expect(settingsCalls()[0]![0]).toBe('http://pbgui.test:8000/api/services/settings/pbdata');
+    expect(settingsCalls()[0]![0]).toBe('/api/services/settings/pbdata');
     expect(wrapper.find('#panel-pbdata #pbdata-settings-wrap').exists()).toBe(true);
     expect(wrapper.findAll('#panel-pbdata .form-section-title').map((s) => s.text())).toEqual([
       'Users',
@@ -645,7 +648,7 @@ describe('services_monitor apiserver settings wiring', () => {
     await flushPromises();
 
     expect(settingsCalls()).toHaveLength(1);
-    expect(settingsCalls()[0]![0]).toBe('http://pbgui.test:8000/api/services/settings/api-server');
+    expect(settingsCalls()[0]![0]).toBe('/api/services/settings/api-server');
     expect(wrapper.find('#panel-api-server #apiserver-settings-wrap').exists()).toBe(true);
     expect(wrapper.findAll('#panel-api-server .form-section-title').map((s) => s.text())).toEqual([
       'Connection',
@@ -765,7 +768,7 @@ describe('services_monitor pbcoindata settings wiring', () => {
     await flushPromises();
 
     expect(settingsCalls()).toHaveLength(1);
-    expect(settingsCalls()[0]![0]).toBe('http://pbgui.test:8000/api/services/settings/pbcoindata');
+    expect(settingsCalls()[0]![0]).toBe('/api/services/settings/pbcoindata');
     expect(wrapper.find('#panel-pbcoindata #coindata-settings-wrap').exists()).toBe(true);
     expect(wrapper.find('#panel-pbcoindata #coindata-settings-wrap .form-section-title').text()).toBe('Intervals');
     expect((wrapper.find('#panel-pbcoindata #coindata-fetch-interval').element as HTMLInputElement).value).toBe('6');
@@ -817,7 +820,7 @@ describe('services_monitor pbcoindata settings wiring', () => {
 
 describe('services_monitor config', () => {
   it('derives the services API base from the boot origin', () => {
-    expect(apiBase()).toBe('http://pbgui.test:8000/api/services');
+    expect(apiBase()).toBe('/api/services');
   });
 
   it('derives the websocket base from the boot origin', () => {
@@ -907,7 +910,7 @@ describe('services_monitor migration wiring (legacy loadMigrationStatus/testSyst
     releaseTest({ ok: true, warnings: ['legacy ini found'], errors: [], logs: ['would install units'] });
     await flushPromises();
 
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/migration/test', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/migration/test', {
       method: 'POST',
     });
     const modal = document.getElementById('result-modal')!;
@@ -963,7 +966,7 @@ describe('services_monitor migration wiring (legacy loadMigrationStatus/testSyst
       message: 'Migrate this master to systemd user services now? PBGui daemons and the API server will restart after the migration.',
       confirmText: 'Migrate',
     });
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/migration/run', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/migration/run', {
       method: 'POST',
     });
     // after payload with migration_needed: false → run button disabled again.
@@ -1101,8 +1104,8 @@ describe('services_monitor pbdata status wiring (legacy pbdata status tab + pric
     await selectPbdataStatusTab(wrapper);
 
     const urls = apiFetchMock.mock.calls.map(([url]) => String(url));
-    expect(urls).toContain('http://pbgui.test:8000/api/services/fetch-summary');
-    expect(urls).toContain('http://pbgui.test:8000/api/services/poller-metrics');
+    expect(urls).toContain('/api/services/fetch-summary');
+    expect(urls).toContain('/api/services/poller-metrics');
   });
 
   it('does not load the status endpoints while other tabs are active', async () => {
@@ -1116,8 +1119,8 @@ describe('services_monitor pbdata status wiring (legacy pbdata status tab + pric
     await flushPromises();
 
     const urls = apiFetchMock.mock.calls.map(([url]) => String(url));
-    expect(urls).not.toContain('http://pbgui.test:8000/api/services/fetch-summary');
-    expect(urls).not.toContain('http://pbgui.test:8000/api/services/poller-metrics');
+    expect(urls).not.toContain('/api/services/fetch-summary');
+    expect(urls).not.toContain('/api/services/poller-metrics');
   });
 
   it('opens the prices overlay from the fetch-summary Prices group', async () => {
@@ -1141,7 +1144,7 @@ describe('services_monitor pbdata status wiring (legacy pbdata status tab + pric
     await flushPromises();
 
     expect(wrapper.find('#prices-overlay').classes()).toContain('active');
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/prices-snapshot');
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/prices-snapshot');
     expect(wrapper.find('#prices-overlay .po-table tbody tr').text()).toContain('BTCUSDT');
   });
 

@@ -28,6 +28,10 @@ def _row(coin="BTC", minimum=10, **extra):
 @pytest.fixture
 def client(monkeypatch, tmp_path):
     """Expose only calculator routes with auth, mappings, and run roots isolated."""
+    # Serve the legacy fallback — the inline-JSON injection contract lives there.
+    import api.auth as auth
+
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda _page: tmp_path / "missing-dist" / _page)
     monkeypatch.setattr(balance_calc, "RUN_V7_DIR", tmp_path / "run_v7")
     monkeypatch.setattr(balance_calc, "RUN_V8_DIR", tmp_path / "run_v8")
     monkeypatch.setattr(balance_calc, "_load_mapping", lambda exchange: [_row()])

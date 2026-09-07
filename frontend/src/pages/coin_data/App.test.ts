@@ -10,7 +10,10 @@ import type { CoinDataState } from './types';
    gating in the DOM (the contract the legacy HTML-string pytest asserted). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const BASE = 'http://pbgui.test:8000';
@@ -19,7 +22,8 @@ function stateFixture(overrides: Partial<CoinDataState> = {}): CoinDataState {
   return {
     cmc_pool: { ready: true, active_credentials: 1 },
     filters: { exchange: 'binance', market_cap: 0, vol_mcap: 10, tags: [], only_cpt: false, hide_notices: false },
-    options: { exchanges: ['binance', 'bybit', 'hyperliquid'], tags: ['meme', 'ai'], quote_filter: ['USDT'], vol_mcap_values: [1, 5, 10] },
+    options: { exchanges: ['binance', 'bybit', 'hyperliquid'], tags: ['meme', 'ai'], quote_filter: ['USDT'],
+ available_quotes: ['USDT'], vol_mcap_values: [1, 5, 10] },
     meta: { cmc_line: 'CMC refreshed 1m ago', cmc_line_detail: 'd1', exchange_line: 'binance refreshed 1m ago', exchange_line_detail: 'd2', timestamps: {} },
     counts: { main: 2, unmatched_visible: 1, unmatched_all: 3, hip3: 0 },
     sections: { unmatched_title: 'CMC unmatched (binance) - USDT: 1, all quotes: 3', main_title: 'Filtered symbols (2)', hip3_title: 'HIP-3 symbols (0)' },
@@ -80,7 +84,7 @@ describe('Coin Data page shell', () => {
     expect(mainRows[0]!.text()).toContain('1.00T');
     expect(mainRows[0]!.text()).toContain('0.0100x');
     expect(wrapper.find('#main-panel-title').text()).toContain('Matched symbols (2)');
-    expect(wrapper.find('#quotes-pill').text()).toBe('Quotes: USDT');
+    expect(wrapper.find('#quote-picker .quote-picker-button.selected').text()).toBe('USDT');
     expect(wrapper.get('#filters-panel').classes()).toContain('coin-filter-panel');
     expect(wrapper.get('#main-panel').classes()).toContain('coin-data-panel');
     expect(wrapper.get('#main-panel .table-wrap').classes()).toContain('coin-data-table-wrap');

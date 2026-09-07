@@ -10,7 +10,10 @@ const { apiFetchMock, replaceTopLocationMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: '', origin: 'https://pbgui.test', version: '1.0.0', serial: '' }),
+  getBoot: () => ({ origin: 'https://pbgui.test', base_prefix: '', authenticated: true, version: '1.0.0', serial: '' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'wss://pbgui.test',
+  pageOrigin: () => 'https://pbgui.test',
 }));
 
 vi.mock('@/shared/api', () => ({

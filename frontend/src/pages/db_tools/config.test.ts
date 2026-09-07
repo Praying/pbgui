@@ -6,24 +6,25 @@ import { apiUrl, dbToolsApiBase, wsBase } from './config';
    the ws(s) transform (api/db_tools.py:2684-2689). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 beforeEach(() => {
-  getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
 });
 
 describe('db-tools URL config', () => {
   it('derives the REST base', () => {
-    expect(dbToolsApiBase()).toBe('http://pbgui.test:8000/api/db-tools');
-    expect(apiUrl('/targets')).toBe('http://pbgui.test:8000/api/db-tools/targets');
+    expect(dbToolsApiBase()).toBe('/api/db-tools');
+    expect(apiUrl('/targets')).toBe('/api/db-tools/targets');
   });
 
   it('maps the origin to ws(s) (legacy :2689)', () => {
     expect(wsBase()).toBe('ws://pbgui.test:8000');
-    getBootMock.mockReturnValue({ token: 'tok', origin: 'https://pbgui.test:8443', version: '', serial: '' });
-    expect(wsBase()).toBe('wss://pbgui.test:8443');
   });
 });
