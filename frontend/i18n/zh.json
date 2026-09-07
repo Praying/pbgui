@@ -3498,6 +3498,7 @@
   "sysmon.usedForRepairOnly": "仅用于此修复请求，不会被保存。",
   "sysmon.users": "用户",
   "sysmon.v7": "V7",
+  "sysmon.botDesiredState": "机器人期望状态",
   "sysmon.v7DesiredState": "V7 期望状态",
   "sysmon.v7Monitor": "V7 监控",
   "sysmon.v7State": "V7 状态",

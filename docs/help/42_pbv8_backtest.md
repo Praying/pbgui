@@ -40,11 +40,11 @@ Frequently used PB8-specific backtest fields have structured controls:
 
 ## Queue
 
-The V8 queue is stored separately under `data/bt_v8_queue`. **Start** launches `<venv_pb8>/bin/passivbot backtest <snapshot>`. **Stop**, **Restart**, **Delete**, and **Clear Finished** affect only V8 queue items.
+The V8 queue is stored separately under `data/bt_v8_queue`. **Start** launches `<venv_pb8>/bin/passivbot backtest <snapshot>`. **Stop**, **Restart**, **Delete**, and **Clear Finished** affect only V8 queue items. Live queue updates use the version-specific `/api/backtest-v8/ws/bt8` WebSocket; the historical `/ws/bt7` route remains an authenticated compatibility alias.
 
 The Queue view starts with counters for queued, active, complete, and attention-needed jobs. The themed table keeps its header visible, scrolls horizontally on narrow screens, shows the current selected-row count, and supports click, click-drag, **Enter**, or **Space** selection. Per-row start, stop, restart, results, log, and remove actions use the shared semantic button colors.
 
-PB8 Pareto drafts opened from Optimize preserve each candidate's configured start/end date and exchange group instead of replacing the batch with one shared range or splitting Combined scenarios into single-exchange jobs. Automatic validation drafts can additionally carry distinct Training, Holdout, and Full timeranges; the resulting names remain directly selectable together in **Compare**.
+PB8 Pareto drafts opened from Optimize preserve each candidate's configured start/end date and exchange group instead of replacing the batch with one shared range or splitting Combined scenarios into single-exchange jobs. Automatic validation drafts can additionally carry distinct Training, Holdout, and Full timeranges; the resulting names remain directly selectable together in **Compare**. Matching Suite, Holdout, and Full results for one candidate appear under an **Optimize validation** header in Backtest Results, including compatible results created before grouping metadata was introduced. Use the compact chart button before the expander to select and compare the complete group immediately, or click the header to expand or collapse its members. Runs with changed strategy or risk settings remain separate.
 
 Running backtests are independent jobs. Restarting PBGui or updating PB8 does not stop them, and they do not block an update. New starts remain queued while PB8 is being installed or updated and continue afterward. A new start always uses the PB8 installation available at that time; the version and Git commit are recorded on the queue item.
 

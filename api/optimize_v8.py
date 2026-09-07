@@ -31,6 +31,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from api.auth import SessionToken, authenticate_websocket, require_auth, serve_vue_or_legacy_page
+from api.page_templates import render_page_urls, script_json
 from api.pb8_ohlcv_tools import (
     PB8OhlcvUnavailableError,
     build_pb8_ohlcv_preflight,
@@ -3369,20 +3370,17 @@ def main_page(request: Request, session: SessionToken = Depends(require_auth)) -
     del session
 
     def _inject(html: str, req: Request) -> str:
-        origin = str(req.base_url).rstrip("/")
         try:
             limits = get_pb8_optimize_metadata().get("limits") or {}
         except PB8ConfigurationError as exc:
             _log(SERVICE, f"Rendering PB8 Optimize without unavailable runtime metadata: {exc}", level="WARNING")
             limits = {}
+        html = render_page_urls(req, html, "/api/optimize-v8")
         replacements = {
-            '"%%TOKEN%%"': json.dumps(""),
-            '"%%API_BASE%%"': json.dumps(origin + "/api/optimize-v8"),
-            '"%%WS_BASE%%"': json.dumps(origin.replace("http://", "ws://").replace("https://", "wss://")),
             "%%LIMITS_META%%": json.dumps(limits),
-            '"%%VERSION%%"': json.dumps(PBGUI_VERSION),
+            '"%%VERSION%%"': script_json(PBGUI_VERSION),
             "%%VERSION%%": PBGUI_VERSION,
-            '"%%SERIAL%%"': json.dumps(PBGUI_SERIAL),
+            '"%%SERIAL%%"': script_json(PBGUI_SERIAL),
             "%%SERIAL%%": PBGUI_SERIAL,
             "%%OPTIMIZE_VERSION%%": "v8",
             "%%OPTIMIZE_NAV_TITLE%%": "PBv8 OPTIMIZE",

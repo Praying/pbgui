@@ -1292,7 +1292,6 @@ def main_page(
         )
 
     def _inject(html: str, req: Request) -> str:
-        html = html.replace('"%%TOKEN%%"', '""')
         html = html.replace('"%%API_ORIGIN%%"', json.dumps(_request_origin(req)))
         html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
         html = html.replace('%%VERSION%%', PBGUI_VERSION)

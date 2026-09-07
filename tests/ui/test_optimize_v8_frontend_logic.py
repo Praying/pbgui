@@ -480,7 +480,7 @@ def test_sweep_holdout_both_mode_queues_holdout_and_continuous_jobs() -> None:
           paretoSweepEnabled: true,
           paretos: [{{path: '/candidate.json', name: 'candidate'}}]
         }};
-        const optimizeEditorAdapter = {{paretoFilePath: path => path}};
+        const optimizeEditorAdapter = {{isV8: true, paretoFilePath: path => path}};
         const el = id => id === 'holdout-validation-mode'
           ? {{value: 'holdout_and_full_timerange'}}
           : null;
@@ -512,6 +512,11 @@ def test_sweep_holdout_both_mode_queues_holdout_and_continuous_jobs() -> None:
           assert.equal(queued[0].config.backtest.start_date, '2026-06-01');
           assert.equal(queued[1].config.backtest.start_date, '2024-01-01');
           assert.equal(queued[0].override_configs['HYPE.json'].bot.constructor, Object);
+          const groups = queued.map(item => item.config.pbgui.backtest_result_group);
+          assert.equal(groups[0].kind, 'optimize_validate');
+          assert.equal(groups[0].id, groups[1].id);
+          assert.equal(groups[0].label, 'candidate');
+          assert.deepEqual(groups.map(group => group.item), ['holdout_01', 'full_timerange']);
         }}).catch(error => {{ console.error(error); process.exitCode = 1; }});
         """
     )
@@ -538,7 +543,7 @@ def test_all_timeranges_validation_queues_training_holdout_and_full_jobs() -> No
           selectedParetos: new Set(['/candidate.json']), paretoSweepEnabled: true,
           paretos: [{{path: '/candidate.json', name: 'candidate'}}]
         }};
-        const optimizeEditorAdapter = {{paretoFilePath: path => path}};
+        const optimizeEditorAdapter = {{isV8: true, paretoFilePath: path => path}};
         const el = id => id === 'holdout-validation-mode' ? {{value: 'all_timeranges'}} : null;
         const normalizeParetoBacktestPayload = data => ({{config: data.config, override_configs: data.override_configs}});
         const extractConfigSections = config => config;
@@ -569,6 +574,11 @@ def test_all_timeranges_validation_queues_training_holdout_and_full_jobs() -> No
           assert.equal(queued.every(item => item.preserve_timerange === true), true);
           assert.equal(queued.every(item => item.preserve_exchanges === true), true);
           assert.equal(queued.every(item => JSON.stringify(item.config.backtest.exchanges) === '["binance","bybit"]'), true);
+          const groupIds = new Set(queued.map(item => item.config.pbgui.backtest_result_group.id));
+          assert.equal(groupIds.size, 1);
+          assert.deepEqual(queued.map(item => item.config.pbgui.backtest_result_group.item), [
+            'train_01', 'train_02', 'holdout_01', 'full_timerange'
+          ]);
         }}).catch(error => {{ console.error(error); process.exitCode = 1; }});
         """
     )
@@ -590,7 +600,7 @@ def test_full_timerange_validation_works_without_sweep_holdouts() -> None:
           selectedParetos: new Set(['/candidate.json']), paretoSweepEnabled: false,
           paretos: [{{path: '/candidate.json', name: 'candidate'}}]
         }};
-        const optimizeEditorAdapter = {{paretoFilePath: path => path}};
+        const optimizeEditorAdapter = {{isV8: true, paretoFilePath: path => path}};
         const el = id => id === 'holdout-validation-mode' ? {{value: 'full_timerange'}} : null;
         const normalizeParetoBacktestPayload = data => ({{config: data.config, override_configs: {{}}}});
         const extractConfigSections = config => config;
@@ -606,6 +616,7 @@ def test_full_timerange_validation_works_without_sweep_holdouts() -> None:
           assert.equal(queued.length, 1);
           assert.equal(queued[0].name, 'candidate_full_timerange');
           assert.equal(queued[0].config.backtest.start_date, '2024-01-01');
+          assert.equal(queued[0].config.pbgui.backtest_result_group.kind, 'optimize_validate');
         }}).catch(error => {{ console.error(error); process.exitCode = 1; }});
         """
     )
@@ -1934,8 +1945,9 @@ def test_cookie_auth_and_v7_migration_are_available_from_the_shared_page() -> No
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
     api_v7 = (ROOT / "api" / "optimize_v7.py").read_text(encoding="utf-8")
 
-    assert "if (TOKEN) headers.Authorization = 'Bearer ' + TOKEN" in page
-    assert "Object.assign({}, init.headers || {}, { Authorization" not in page
+    assert "%%TOKEN%%" not in page
+    assert "Authorization" not in page
+    assert "credentials: 'same-origin'" in page
     assert "cfg-migrate-v8" in page
     assert "pareto-migrate-v8" in page
     assert "migrateOptimizeConfigToV8" in page
@@ -1951,7 +1963,9 @@ def test_cookie_auth_and_v7_migration_are_available_from_the_shared_page() -> No
     assert "showOptimizeMigrationReviewWarnings" not in page
     assert "V8 conversion review recommended" not in page
     assert "/api/optimize-v8/migrate-v7" in page
-    assert "json.dumps(\"\")" in api_v7
+    assert "authFetch(BASE_PREFIX + '/api/optimize-v8/migrate-v7'" in page
+    assert "window.location.href = BASE_PREFIX + '/api/optimize-v8/main_page" in page
+    assert "render_page_urls(request, html, \"/api/optimize-v7\")" in api_v7
 
     optimize_migration = _page_function(page, "migrateOptimizeConfigToV8")
     pareto_migration = _page_function(page, "migrateParetoConfigToV8")

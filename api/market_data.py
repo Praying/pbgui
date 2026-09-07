@@ -22,6 +22,7 @@ from hyperliquid_best_1m import (
     resolve_tradfi_symbol,
 )
 from credential_store import CredentialStore
+from api.page_templates import render_page_urls, script_json
 from market_data import (
     _get_pb7_root_dir,
     _get_pb8_root_dir,
@@ -168,9 +169,8 @@ def get_main_page(
     """Serve the Market Data page: the built Vue bundle only.
 
     The legacy frontend/market_data_main.html template was removed with the
-    Vue migration (M-data-8); the page reads token/origin values from
-    /api/boot.js at runtime. A missing build fails loudly with the pnpm build
-    hint.
+    Vue migration (M-data-8); the page reads boot values from /api/boot.js at
+    runtime. A missing build fails loudly with the pnpm build hint.
     """
     vue_path = _frontend_dist_path("market_data")
     if vue_path.is_file():
@@ -180,13 +180,6 @@ def get_main_page(
         status_code=500,
         detail="market_data page unavailable: run `cd frontend && pnpm run build` to produce the Vue bundle",
     )
-
-
-def _get_request_origin(request: Request) -> str:
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    return f"{scheme}://{host}" + (f":{port}" if port else "")
 
 
 def _normalize_settings_exchange(exchange: str) -> str:
@@ -1256,7 +1249,6 @@ def _serve_market_data_status_page(request: Request, exchange: str) -> HTMLRespo
 
 def _render_hl_data_actions_html(
     request: Request,
-    token: str,
     initial_section: str = "",
     html_content: str | None = None,
 ) -> str:
@@ -1264,24 +1256,14 @@ def _render_hl_data_actions_html(
         html_path = PBGDIR / "frontend" / "hl_data_actions.html"
         html_content = html_path.read_text(encoding="utf-8")
 
-    browser_origin = _get_request_origin(request)
-    api_host_str = request.url.netloc or request.headers.get("host", "127.0.0.1")
-    api_base_str = browser_origin + "/api"
-
     instance_id = "hlda_fastapi_market_data"
     html_content = html_content.replace("__HLDA_ROOT__", instance_id)
     html_content = html_content.replace("__HLDA__", f"{instance_id}_")
 
     html_content = html_content.replace(
-        'data-token=""', f'data-token="{token}"'
-    ).replace(
-        'data-api-base=""', f'data-api-base="{api_base_str}"'
-    ).replace(
-        'data-api-host=""', f'data-api-host="{api_host_str}"'
-    ).replace(
         'data-initial-section=""', f'data-initial-section="{initial_section}"'
     )
-    return html_content
+    return render_page_urls(request, html_content, "/api")
 
 
 BEST_1M_EXCHANGES: dict[str, dict[str, str]] = {
@@ -3583,7 +3565,6 @@ def get_hyperliquid_data_actions(
         request,
         inject=lambda html, req: _render_hl_data_actions_html(
             request=req,
-            token=session.token,
             initial_section=section_clean,
             html_content=html,
         ),
@@ -3623,7 +3604,7 @@ def queue_best_1m_job(
     from datetime import date as _date
 
     from market_data import append_exchange_download_log
-    from task_queue import enqueue_job, enqueue_running_job, is_pid_running, move_job_file, read_worker_pid, update_job_file
+    from task_queue import enqueue_job, enqueue_running_job, move_job_file, update_job_file
 
     exchange_clean = _normalize_settings_exchange(exchange)
     meta = _best_1m_exchange_meta(exchange_clean)
@@ -3727,14 +3708,10 @@ def queue_best_1m_job(
             return {"success": False, "error": f"Failed to launch {meta['label']} worker: {exc}"}
 
     try:
-        pid = read_worker_pid()
-        if not run_immediately and not (pid and is_pid_running(int(pid))):
-            subprocess.Popen(
-                [sys.executable, str(Path(__file__).resolve().parents[1] / "task_worker.py")],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                close_fds=True,
-            )
+        if not run_immediately:
+            from task_worker_ownership import ensure_task_worker_started
+
+            ensure_task_worker_started()
     except Exception:
         pass
 

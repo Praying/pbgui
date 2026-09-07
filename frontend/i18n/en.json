@@ -3498,6 +3498,7 @@
   "sysmon.usedForRepairOnly": "Used only for this repair request. It is not saved.",
   "sysmon.users": "Users",
   "sysmon.v7": "V7",
+  "sysmon.botDesiredState": "Bot Desired State",
   "sysmon.v7DesiredState": "V7 Desired State",
   "sysmon.v7Monitor": "V7 Monitor",
   "sysmon.v7State": "V7 State",

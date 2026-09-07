@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
+from api.page_templates import render_page_urls, script_json
 from api.strategy_explorer_movie import movie_builder_status
 from api.strategy_explorer_sim import simulation_modes
 from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
@@ -131,20 +132,6 @@ def _get_draft_config(draft_id: str) -> dict[str, Any] | None:
     return copy.deepcopy(config)
 
 
-def _page_context(request: Request, session: SessionToken) -> dict[str, str]:
-    """Build replacement values for the standalone HTML page."""
-    del session
-    scheme = request.url.scheme
-    host = request.url.hostname or "127.0.0.1"
-    port = request.url.port
-    origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-    return {
-        "token": "",
-        "api_base": origin + "/api/strategy-explorer",
-        "ws_base": origin.replace("http://", "ws://").replace("https://", "wss://"),
-    }
-
-
 def _script_json(value: Any) -> str:
     """Serialize one inline-script value without permitting an HTML end tag."""
     return (
@@ -165,21 +152,18 @@ def main_page(
     """Serve the standalone Strategy Explorer page: Vue entry first, legacy fallback.
 
     The Vue page (frontend/src/pages/v7_strategy_explorer) reads
-    token/origin values from /api/boot.js at runtime and derives the
+    boot values from /api/boot.js at runtime and derives the
     explorer flavour from the serving route's path (config.ts
     detectExplorerFlavor). The legacy v7_strategy_explorer.html keeps its
     server-side placeholder injections as the fallback for checkouts
     without a build; /api/strategy-explorer-v8/main_page serves the same
     Vue build.
     """
-    ctx = _page_context(request, session)
+    del session
 
     def _inject(html: str, req: Request) -> str:
-        del req
+        html = render_page_urls(req, html, "/api/strategy-explorer")
         replacements = {
-            '"%%TOKEN%%"': _script_json(ctx["token"]),
-            '"%%API_BASE%%"': _script_json(ctx["api_base"]),
-            '"%%WS_BASE%%"': _script_json(ctx["ws_base"]),
             '"%%DRAFT_ID%%"': _script_json(str(draft_id or "")),
             '"%%RESULT_PATH%%"': _script_json(str(result_path or "")),
             '"%%VERSION%%"': _script_json(PBGUI_VERSION),

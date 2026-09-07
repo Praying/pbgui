@@ -21,6 +21,17 @@ from api import backtest_v8
 from master_update_lock import acquire_master_update_lock
 
 
+def test_pb8_queue_websocket_has_canonical_and_legacy_routes() -> None:
+    """New clients use bt8 while the historical bt7 path remains compatible."""
+
+    paths = {
+        route.path
+        for route in backtest_v8.router.routes
+        if getattr(route, "endpoint", None) is backtest_v8.ws_backtest
+    }
+    assert paths == {"/ws/bt7", "/ws/bt8"}
+
+
 def _patch_roots(tmp_path: Path, monkeypatch) -> tuple[Path, Path, Path, Path]:
     """Redirect all PB8 backtest state to an isolated temporary tree."""
     configs = tmp_path / "data" / "bt_v8"
@@ -221,7 +232,12 @@ def test_result_run_draft_reuses_canonical_result_without_pb8_prepare(
 
     result_dir = tmp_path / "result-1"
     result_dir.mkdir()
-    config = {"live": {"user": "alice"}, "pbgui": {"enabled_on": "old-host"}}
+    config = {
+        "live": {"user": "alice"},
+        "logging": {"dir": "None", "level": 1},
+        "monitor": {"root_dir": "None", "enabled": True},
+        "pbgui": {"enabled_on": "old-host"},
+    }
     (result_dir / "config.json").write_text(json.dumps(config), encoding="utf-8")
     monkeypatch.setattr(backtest_v8, "_resolve_result_dir", lambda _path, **_kwargs: result_dir)
     captured = {}
@@ -236,6 +252,8 @@ def test_result_run_draft_reuses_canonical_result_without_pb8_prepare(
 
     assert result == {"draft_id": "draft-1", "expires_in": 300, "name": "result-1"}
     assert captured["config"]["live"]["user"] == "alice"
+    assert captured["config"]["logging"] == {"dir": "logs", "level": 1}
+    assert captured["config"]["monitor"] == {"root_dir": "monitor", "enabled": True}
     assert captured["config"]["pbgui"] == {"enabled_on": "disabled", "runtime": "pb8"}
 
 
@@ -246,10 +264,11 @@ def test_shared_backtest_refine_builder_routes_pb8_actions_to_pb8() -> None:
 
     assert "'/api/optimize-'" in source
     assert "'/api/backtest-'" in source
-    assert "if (String(token || '').trim()) headers.Authorization" in source
-    assert "saveOptimizePresetConfig(TOKEN, name, config, BACKTEST_VERSION)" in page
-    assert "queueOptimizePreset(TOKEN, name, BACKTEST_VERSION)" in page
-    assert "openOptimizeSeedDraft(TOKEN, config, name, BACKTEST_VERSION)" in page
+    assert "credentials: 'same-origin'" in source
+    assert "Authorization" not in source
+    assert "saveOptimizePresetConfig(name, config, BACKTEST_VERSION)" in page
+    assert "queueOptimizePreset(name, BACKTEST_VERSION)" in page
+    assert "openOptimizeSeedDraft(config, name, BACKTEST_VERSION)" in page
     assert "optimize_preset_builder.js?v=4" in page
 
 
@@ -1166,8 +1185,10 @@ def test_main_page_renders_shared_editor_without_exposing_session_token(monkeypa
     assert "current:  BACKTEST_NAV_CURRENT" in html
     assert "backtestEditorAdapter.isV8 ? 'v8_backtest' : 'v7_backtest'" in html
     assert 'var BACKTEST_VERSION = "v8"' in html
-    assert 'var API_BASE      = "https://example.test/api/backtest-v8"' in html
-    assert 'var TOKEN         = ""' in html
+    assert 'var API_BASE      = "/api/backtest-v8"' in html
+    assert "window.location.host + BASE_PREFIX" in html
+    assert "example.test" not in html
+    assert "var TOKEN" not in html
     assert "function showConfigEditor(" in html
     assert "Canonical V8 Config" not in html
 
@@ -1475,6 +1496,15 @@ def test_results_are_read_only_from_pb8_root(tmp_path, monkeypatch) -> None:
                     "strategy_kind": "ema_anchor",
                     "approved_coins": {"long": ["BTC"], "short": ["ETH"]},
                 },
+                "pbgui": {
+                    "backtest_result_group": {
+                        "schema_version": 1,
+                        "kind": "optimize_validate",
+                        "id": "validation-123:0",
+                        "label": "candidate-a",
+                        "item": "holdout_01",
+                    }
+                },
             }
         ),
         encoding="utf-8",
@@ -1508,6 +1538,64 @@ def test_results_are_read_only_from_pb8_root(tmp_path, monkeypatch) -> None:
     assert results[0]["strategy"] == "ema_anchor"
     assert results[0]["twe_long"] == 2.0
     assert results[0]["pos_long"] == 6
+    assert results[0]["result_group"] == {
+        "kind": "optimize_validate",
+        "id": "validation-123:0",
+        "label": "candidate-a",
+        "item": "holdout_01",
+    }
+
+
+def test_results_derive_optimize_candidate_groups_without_pbgui_metadata(tmp_path, monkeypatch) -> None:
+    """Historical Suite, Holdout, and Full results group by candidate and strategy identity."""
+    root = tmp_path / "pb8" / "backtests" / "pbgui"
+    candidate = "d38a64d850004376ebe771dc927be6c0c849cebbfd93a743ba8afc2a0a036482"
+    common = {
+        "backtest": {"starting_balance": 1000, "exchanges": ["hyperliquid"]},
+        "bot": {"long": {"risk": {"total_wallet_exposure_limit": 6.55}}},
+        "live": {"strategy_kind": "trailing_martingale", "approved_coins": {}},
+    }
+
+    def write_result(relative: Path, *, start: str, end: str, twe: float = 6.55) -> Path:
+        """Write one minimal PB8 result with period-specific orchestration fields."""
+        result_dir = root / relative
+        result_dir.mkdir(parents=True)
+        config = copy.deepcopy(common)
+        config["backtest"].update({"base_dir": f"backtests/pbgui/{relative.parts[0]}", "start_date": start, "end_date": end})
+        config["bot"]["long"]["risk"]["total_wallet_exposure_limit"] = twe
+        (result_dir / "analysis.json").write_text(json.dumps({"gain_usd": 1.2}), encoding="utf-8")
+        (result_dir / "config.json").write_text(json.dumps(config), encoding="utf-8")
+        return result_dir / "analysis.json"
+
+    suite = write_result(
+        Path(candidate) / "suite_runs" / "2026-08-31T21_19_57" / "train_05_20260303_90d" / "hyperliquid" / "run-suite",
+        start="2026-03-03",
+        end="2026-05-31",
+    )
+    holdout = write_result(
+        Path(f"{candidate}_holdout_01") / "hyperliquid" / "run-holdout",
+        start="2026-06-01",
+        end="2026-08-31",
+    )
+    full = write_result(
+        Path(candidate) / "hyperliquid" / "run-full",
+        start="2020-03-03",
+        end="2026-09-01",
+    )
+    changed = write_result(
+        Path(candidate) / "hyperliquid" / "run-changed",
+        start="2020-03-03",
+        end="2026-09-01",
+        twe=5.0,
+    )
+    monkeypatch.setattr(backtest_v8, "_results_root", lambda: root)
+
+    by_path = {item["path"]: item for item in backtest_v8._list_results([suite, holdout, full, changed])}
+
+    grouped = [by_path[str(path.parent)]["result_group"] for path in (suite, holdout, full)]
+    assert len({group["id"] for group in grouped}) == 1
+    assert [group["item"] for group in grouped] == ["train_05_20260303_90d", "holdout_01", "full_timerange"]
+    assert by_path[str(changed.parent)]["result_group"]["id"] != grouped[0]["id"]
 
 
 def test_results_support_newest_first_pagination_and_config_filter(tmp_path, monkeypatch) -> None:

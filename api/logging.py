@@ -9,7 +9,6 @@ Provides REST API for:
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import re
 import traceback
@@ -17,9 +16,10 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api.auth import require_auth, serve_vue_or_legacy_page, SessionToken
+from api.page_templates import render_page_urls, script_json
 import logging_helpers
 from ini_settings import apply_metadata
 from logging_helpers import (
@@ -31,6 +31,8 @@ from logging_helpers import (
     set_rotate_settings,
     get_managed_scope_settings,
     set_managed_scope_settings,
+    MAX_ROTATE_BACKUP_COUNT,
+    MAX_ROTATE_MAX_BYTES,
 )
 
 SERVICE = "ApiLogging"
@@ -50,8 +52,8 @@ _RETIRED_LOG_STEMS = {
 class RotationSaveIn(BaseModel):
     """Body for POST /rotation — saves one rotation rule."""
     scope: str       # "default" or service/log-stem name
-    max_mb: int
-    backup_count: int
+    max_mb: int = Field(ge=1, le=MAX_ROTATE_MAX_BYTES // (1024 * 1024))
+    backup_count: int = Field(ge=0, le=MAX_ROTATE_BACKUP_COUNT)
 
 
 # ── Endpoints ─────────────────────────────────────────────────
@@ -75,6 +77,7 @@ def list_log_files(session: SessionToken = Depends(require_auth)) -> dict:
 
         variants: list[str] = []
         _, backup_count = get_rotate_settings(logfile=str(p))
+        backup_count = min(backup_count, MAX_ROTATE_BACKUP_COUNT)
         for i in range(1, backup_count + 1):
             rp = logging_helpers.LOG_ROOT / f"{name}.{i}"
             if rp.is_file():
@@ -155,6 +158,11 @@ def save_rotation(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         _log(SERVICE, f"Managed rotation for '{scope_id}' updated: max={body.max_mb} MB, files={backup_count}", level="INFO")
     else:
+        if not _BASE_LOG_NAME_RE.fullmatch(f"{body.scope}.log"):
+            raise HTTPException(status_code=400, detail="Invalid log rotation scope")
+        managed_scope = logging_helpers.resolve_managed_log_scope(logging_helpers.LOG_ROOT / f"{body.scope}.log")
+        if managed_scope:
+            raise HTTPException(status_code=400, detail=f"Use managed:{managed_scope} for this log")
         set_rotate_settings(body.scope, max_bytes, backup_count)
         _log(SERVICE, f"Rotation for '{body.scope}' updated: max={body.max_mb} MB, files={backup_count}", level="INFO")
 
@@ -212,18 +220,13 @@ def get_main_page(
     del session
 
     def _inject(html: str, req: Request) -> str:
-        scheme = req.url.scheme
-        host = req.url.hostname or "127.0.0.1"
-        port = req.url.port
-        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-        api_logging_base = origin + "/api/logging"
-        html = html.replace('"%%API_BASE%%"', json.dumps(api_logging_base))
+        html = render_page_urls(req, html, "/api/logging")
 
         from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION
 
-        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
+        html = html.replace('"%%VERSION%%"', script_json(PBGUI_VERSION))
         html = html.replace("%%VERSION%%", PBGUI_VERSION)
-        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = html.replace('"%%SERIAL%%"', script_json(PBGUI_SERIAL))
         html = html.replace("%%SERIAL%%", PBGUI_SERIAL)
         nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
         nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION

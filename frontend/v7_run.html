@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/app/src/styles/tokens.css">
     <link rel="stylesheet" href="/app/css/sidebar.css?v=1">
 <script src="/app/js/sidebar_resize.js?v=1"></script>
-<script src="/app/js/pbgui_dialogs.js?v=8"></script>
+<script src="/app/js/pbgui_dialogs.js?v=9"></script>
 <script src="/app/js/run_list_adapter.js?v=3"></script>
 <style>
 /* ─── Reset & Base ─────────────────────────────────────────── */
@@ -319,6 +319,8 @@ tr.row-inactive td  { opacity: 0.45; }
 }
 .backup-ts-row .btn-restore { background: var(--green); color: #f2f5fb; border-color: var(--green); }
 .backup-ts-row .btn-restore:hover { opacity: 0.85; }
+.backup-ts-row .btn-rollback { background: var(--orange); color: #111; border-color: var(--orange); }
+.backup-ts-row .btn-rollback:hover { opacity: 0.85; }
 .backup-ts-row .btn-del-backup { background: transparent; color: var(--red); border-color: var(--red); }
 .backup-ts-row .btn-del-backup:hover { background: var(--red); color: #f2f5fb; }
 .backup-empty { color: var(--text-dim); font-size: var(--fs-sm); padding: var(--sp-md); text-align: center; }
@@ -1476,6 +1478,9 @@ function fetchBackups() {
         if (canRestore) {
           html += '\x3Cbutton class="btn-restore" data-restore-name="' + esc(b.name) + '" data-restore-ts="' + esc(item.id) + '">' + PBGuiI18n.t('v7run.loadInEditor') + '\x3C/button>';
         }
+        if (runListAdapter.isV8 && b.currently_exists) {
+          html += '\x3Cbutton class="btn-rollback" data-rollback-name="' + esc(b.name) + '" data-rollback-ts="' + esc(item.id) + '">Rollback\x3C/button>';
+        }
         html += '\x3Cbutton class="btn-del-backup" data-del-name="' + esc(b.name) + '" data-del-ts="' + esc(item.id) + '">\u2716\x3C/button>';
         html += '\x3C/div>';
       });
@@ -1486,6 +1491,8 @@ function fetchBackups() {
     container.onclick = function(e) {
       var btn = e.target.closest('[data-restore-name]');
       if (btn) { loadBackupInEditor(btn.dataset.restoreName, btn.dataset.restoreTs); return; }
+      btn = e.target.closest('[data-rollback-name]');
+      if (btn) { rollbackBackup(btn.dataset.rollbackName, btn.dataset.rollbackTs); return; }
       btn = e.target.closest('[data-del-name]');
       if (btn) { doDeleteBackup(btn.dataset.delName, btn.dataset.delTs); return; }
     };
@@ -1514,6 +1521,28 @@ function loadBackupInEditor(name, ts) {
     window.location.href = data.edit_url;
   }).catch(function(e) {
     toast(PBGuiI18n.t('v7run.loadBackupFailed') + ': ' + e.message, 'err');
+  });
+}
+
+async function rollbackBackup(name, ts) {
+  if (!(await window.PBGuiDialogs.confirm({
+    title: 'Rollback PB8 instance',
+    message: "Restore '" + name + "' from backup " + ts + '?',
+    detail: 'The instance must be stopped everywhere. PBGui will back up the current bundle, restore config.json and all referenced overrides, publish a new version, and keep the restored instance disabled.',
+    confirmText: 'Rollback'
+  }))) return;
+  var url = '/restore/' + encodeURIComponent(name) + '/' + encodeURIComponent(ts);
+  apiFetch(url, { method: 'POST' }).then(function(res) {
+    if (!res.ok) {
+      return res.json().then(function(d) { throw new Error(d.detail || 'HTTP ' + res.status); });
+    }
+    return res.json();
+  }).then(function(data) {
+    toast('Restored ' + name + ' as version ' + data.version, 'ok');
+    fetchBackups();
+    loadInstances();
+  }).catch(function(e) {
+    toast('Rollback failed: ' + e.message, 'err');
   });
 }
 

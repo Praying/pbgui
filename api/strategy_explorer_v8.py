@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 
 from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
+from api.page_templates import render_page_urls
 from logging_helpers import human_log as _log
 from pbgui_purefunc import PBGUI_SERIAL, PBGUI_VERSION, pb8_runtime_status
 from api.pb8_ohlcv_tools import (
@@ -536,14 +537,8 @@ def main_page(
     del session
 
     def _inject(html: str, req: Request) -> str:
-        origin = str(req.base_url).rstrip("/")
-        route_base = req.url.path.rsplit("/main_page", 1)[0]
-        api_base = origin + route_base
-        ws_base = origin.replace("http://", "ws://", 1).replace("https://", "wss://", 1)
+        html = render_page_urls(req, html, "/api/strategy-explorer-v8")
         replacements = {
-            '"%%TOKEN%%"': _script_json(""),
-            '"%%API_BASE%%"': _script_json(api_base),
-            '"%%WS_BASE%%"': _script_json(ws_base),
             '"%%DRAFT_ID%%"': _script_json(str(draft_id or "")),
             '"%%RESULT_PATH%%"': _script_json(""),
             '"%%VERSION%%"': _script_json(PBGUI_VERSION),

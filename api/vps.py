@@ -15,6 +15,7 @@ import json
 import re
 import time
 import traceback
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from time import mktime
 from typing import Any, Optional
@@ -28,7 +29,7 @@ from pbgui_purefunc import load_ini, save_ini
 from logging_helpers import human_log as _log
 from master.async_monitor import VPSMonitor
 from master.async_logs import (
-    AsyncLogStreamer, LocalLogSub, resolve_bot_log_path,
+    AsyncLogStreamer, LocalLogSub, MAX_REMOTE_LOG_LINES, resolve_bot_log_path,
     local_logs_dir, normalize_remote_log_lines, tail_file,
     resolve_local_log_path,
 )
@@ -49,6 +50,49 @@ _clients: set[WebSocket] = set()
 STATE_PUSH_INTERVAL = 1.0    # max rate for full-state push
 LOG_PUSH_INTERVAL = 0.15     # ~150ms for log line push
 LOCAL_LOG_PUSH_INTERVAL = 0.15
+
+
+def _normalize_log_request_lines(value: object, default: int = 200) -> int:
+    """Return a bounded viewer request, including legacy ``All`` value zero."""
+    lines = normalize_remote_log_lines(value, default=default)
+    return MAX_REMOTE_LOG_LINES if lines == 0 else lines
+
+
+@dataclass
+class _RemoteLogSubscription:
+    """Track one WebSocket's atomically replaceable remote stream ownership."""
+
+    generation: int = 0
+    stream_id: Optional[str] = None
+    sid: Optional[str] = None
+    ready: bool = False
+
+    def invalidate(self) -> tuple[int, Optional[str]]:
+        """Clear the active pair and return the new generation plus prior stream."""
+        self.generation += 1
+        old_stream_id = self.stream_id
+        self.stream_id = None
+        self.sid = None
+        self.ready = False
+        return self.generation, old_stream_id
+
+    def register(self, generation: int, stream_id: str, sid: Optional[str]) -> bool:
+        """Claim a created stream only if this operation still owns the generation."""
+        if generation != self.generation:
+            return False
+        self.stream_id = stream_id
+        self.sid = sid
+        self.ready = False
+        return True
+
+    def activate(self, generation: int, stream_id: str) -> None:
+        """Expose an owned stream to the push loop after snapshot handoff."""
+        if generation == self.generation and stream_id == self.stream_id:
+            self.ready = True
+
+    def current(self) -> tuple[Optional[str], Optional[str]]:
+        """Return the active stream/SID pair as one state read."""
+        return (self.stream_id, self.sid) if self.ready else (None, None)
 
 
 def _local_optional_service_blocker(service: str) -> str:
@@ -211,10 +255,46 @@ async def get_bot_log_matches(hostname: str, bot_name: str, *, pb_version: str |
     paths = [path for path in discovered if f"/pb{version}/logs/" in f"/{str(path).lstrip('/')}" ]
     if not paths:
         paths = [f"software/pb{version}/logs/{bot_name}.log"]
-    output = await _streamer.get_recent_log_files(hostname, paths, line_limit, contains=" ERROR ")
-    if not output:
-        return []
-    return [line for line in output.splitlines() if is_today(line) and " ERROR " in line][-line_limit:]
+    paths = list(dict.fromkeys(paths))
+    matches = []
+    # The monitor RPC accepts at most 32 files per request. Scan every batch,
+    # including newer sessions beyond the first page of archived bot logs.
+    for offset in range(0, len(paths), 32):
+        output = await _streamer.get_recent_log_files(
+            hostname, paths[offset:offset + 32], line_limit, contains=" ERROR ",
+        )
+        if output is None:
+            return []
+        matches.extend(line for line in output.splitlines() if is_today(line) and " ERROR " in line)
+        matches = matches[-line_limit:]
+    return matches
+
+
+async def get_bot_log_tail(hostname: str, bot_name: str, *, pb_version: str = "7", lines: int = 500) -> str:
+    """Return a bounded remote bot log tail through the shared SSH streamer."""
+
+    if not _streamer or not hostname or not bot_name:
+        return ""
+    version = "8" if str(pb_version).strip().lower() in {"8", "v8", "pb8"} else "7"
+    line_limit = max(1, min(int(lines or 500), 10_000))
+    discovered: list[str] = []
+    if _monitor:
+        host_logs = _monitor.store.bot_logs.get(hostname) or {}
+        discovered = list(host_logs.get(f"{version}:{bot_name}") or [])
+        if not discovered and version == "7":
+            discovered = list(host_logs.get(bot_name) or [])
+    paths = [
+        path for path in discovered
+        if str(path).endswith((".log", ".log.old"))
+    ]
+    if not paths:
+        paths = [
+            f"data/run_v{version}/{bot_name}/passivbot_err.log.old",
+            f"data/run_v{version}/{bot_name}/passivbot_err.log",
+            f"software/pb{version}/logs/{bot_name}.log",
+        ]
+    output = await _streamer.get_recent_log_files(hostname, list(dict.fromkeys(paths)), line_limit)
+    return str(output or "")
 
 
 def get_monitor_state_snapshot() -> dict:
@@ -385,14 +465,13 @@ async def ws_vps(websocket: WebSocket):
     _log(SERVICE, f"[ws] Client connected: {websocket.client}")
 
     # Per-client subscriptions
-    log_stream_id: Optional[str] = None
-    log_sid: Optional[str] = None
+    remote_sub = _RemoteLogSubscription()
     local_sub: Optional[LocalLogSub] = None
 
     # Background push tasks for this client
     push_state_task = asyncio.create_task(_push_state_loop(websocket))
     push_log_task = asyncio.create_task(
-        _push_log_loop(websocket, lambda: log_stream_id, lambda: log_sid)
+        _push_log_loop(websocket, remote_sub.current)
     )
     push_local_log_task = asyncio.create_task(
         _push_local_log_loop(websocket, lambda: local_sub)
@@ -430,19 +509,18 @@ async def ws_vps(websocket: WebSocket):
 
             # ── subscribe_logs (remote) ──
             elif cmd == "subscribe_logs":
-                # Stop previous sub
-                if log_stream_id and _streamer:
-                    await _stop_remote_stream(log_stream_id)
-                log_stream_id, log_sid = await _cmd_subscribe_logs(
-                    websocket, request
+                generation, old_stream_id = remote_sub.invalidate()
+                if old_stream_id and _streamer:
+                    await _stop_remote_stream(old_stream_id)
+                await _cmd_subscribe_logs(
+                    websocket, request, remote_sub, generation
                 )
 
             # ── unsubscribe_logs ──
             elif cmd == "unsubscribe_logs":
-                if log_stream_id and _streamer:
-                    await _stop_remote_stream(log_stream_id)
-                log_stream_id = None
-                log_sid = None
+                _generation, old_stream_id = remote_sub.invalidate()
+                if old_stream_id and _streamer:
+                    await _stop_remote_stream(old_stream_id)
 
             # ── kill_instance ──
             elif cmd == "kill_instance":
@@ -476,12 +554,17 @@ async def ws_vps(websocket: WebSocket):
 
             # ── subscribe_local_logs ──
             elif cmd == "subscribe_local_logs":
+                if local_sub:
+                    local_sub.reset_cursor()
+                    local_sub = None
                 local_sub = await _cmd_subscribe_local_logs(
                     websocket, request
                 )
 
             # ── unsubscribe_local_logs ──
             elif cmd == "unsubscribe_local_logs":
+                if local_sub:
+                    local_sub.reset_cursor()
                 local_sub = None
 
             else:
@@ -503,12 +586,15 @@ async def ws_vps(websocket: WebSocket):
         await asyncio.gather(*push_tasks, return_exceptions=True)
         # Daemon-backed streams use a bounded idle lease so an API restart does
         # not tear down their SSH channel before the browser reconnects.
+        _generation, log_stream_id = remote_sub.invalidate()
         if log_stream_id and _streamer:
             detach = getattr(_streamer, "detach_stream", None)
             if callable(detach):
                 detach(log_stream_id)
             else:
                 _streamer.stop_stream(log_stream_id)
+        if local_sub:
+            local_sub.reset_cursor()
         _log(SERVICE, f"[ws] Client disconnected: {websocket.client}")
 
 
@@ -533,13 +619,12 @@ async def _push_state_loop(ws: WebSocket):
         _log(SERVICE, f"[ws] State push error: {e}", level="WARNING")
 
 
-async def _push_log_loop(ws: WebSocket,
-                         get_stream_id, get_sid):
+async def _push_log_loop(ws: WebSocket, get_subscription):
     """Push buffered remote log lines at ~150ms intervals."""
     try:
         while True:
             await asyncio.sleep(LOG_PUSH_INTERVAL)
-            stream_id = get_stream_id()
+            stream_id, sid = get_subscription()
             if not stream_id or not _streamer:
                 continue
             read_async = getattr(_streamer, "read_stream_async", None)
@@ -547,6 +632,8 @@ async def _push_log_loop(ws: WebSocket,
                 lines = await read_async(stream_id, max_lines=50)
             else:
                 lines = _streamer.read_stream(stream_id, max_lines=50)
+            if (stream_id, sid) != get_subscription():
+                continue
             if not lines:
                 continue
             status_async = getattr(_streamer, "get_stream_status_async", None)
@@ -554,15 +641,18 @@ async def _push_log_loop(ws: WebSocket,
                 status = await status_async(stream_id)
             else:
                 status = _streamer.get_stream_status(stream_id)
+            if (stream_id, sid) != get_subscription():
+                continue
             msg: dict = {
                 "type": "log_lines",
                 "lines": lines,
                 "host": status.get("hostname", "") if status else "",
                 "service": status.get("log_path", "") if status else "",
             }
-            sid = get_sid()
             if sid is not None:
                 msg["sid"] = sid
+            if (stream_id, sid) != get_subscription():
+                continue
             await ws.send_json(msg)
     except (asyncio.CancelledError, WebSocketDisconnect):
         pass
@@ -581,6 +671,7 @@ async def _push_local_log_loop(ws: WebSocket, get_sub):
             new_lines = _streamer.read_local_log_delta(sub)
             if not new_lines:
                 continue
+            new_lines = new_lines[-MAX_REMOTE_LOG_LINES:]
             msg: dict = {
                 "type": "local_log_lines",
                 "file": sub.name,
@@ -662,7 +753,7 @@ async def _local_restart_service(service: str) -> dict:
                 "host": "local", "service": service, "success": False,
                 "error": blocker}
     try:
-        result = _service_action(svc_id, "restart")
+        result = await asyncio.to_thread(_service_action, svc_id, "restart")
         _log(SERVICE, f"[local] Restarted service {service} ({svc_id})")
         return {"type": "result", "cmd": "restart_service",
                 "host": "local", "service": service,
@@ -733,7 +824,7 @@ async def _cmd_get_logs(request: dict) -> dict:
     if not host or not service or not _streamer:
         return {"type": "error", "error": "host and service required"}
     try:
-        lines_n = normalize_remote_log_lines(request.get("lines"), default=200)
+        lines_n = _normalize_log_request_lines(request.get("lines"), default=200)
     except ValueError as exc:
         return {"type": "error", "error": str(exc)}
 
@@ -760,6 +851,7 @@ async def _cmd_get_logs(request: dict) -> dict:
 async def _cmd_get_log_info(request: dict) -> dict:
     host = request.get("host", "")
     service = request.get("service", "")
+    sid = request.get("sid")
     if not host or not service or not _streamer:
         return {"type": "error", "error": "host and service required"}
     try:
@@ -769,14 +861,19 @@ async def _cmd_get_log_info(request: dict) -> dict:
         info = await _streamer.get_log_info(host, service, pb_version)
     except ValueError as exc:
         return {"type": "error", "error": str(exc)}
-    return {
+    response = {
         "type": "log_info", "host": host, "service": service,
         "size": info["size"] if info else None,
     }
+    if sid is not None:
+        response["sid"] = sid
+    return response
 
 
 async def _cmd_subscribe_logs(ws: WebSocket,
-                              request: dict) -> tuple[Optional[str], Optional[str]]:
+                              request: dict,
+                              subscription: _RemoteLogSubscription,
+                              generation: int) -> tuple[Optional[str], Optional[str]]:
     """Start remote log stream + send initial chunk. Returns (stream_id, sid)."""
     host = request.get("host", "")
     service = request.get("service", "")
@@ -786,7 +883,7 @@ async def _cmd_subscribe_logs(ws: WebSocket,
                             "error": "host and service required"})
         return None, None
     try:
-        lines_n = normalize_remote_log_lines(request.get("lines"), default=200)
+        lines_n = _normalize_log_request_lines(request.get("lines"), default=200)
     except ValueError as exc:
         await ws.send_json({"type": "error", "error": str(exc)})
         return None, None
@@ -809,6 +906,9 @@ async def _cmd_subscribe_logs(ws: WebSocket,
             "type": "error",
             "error": f"Failed to start log stream for {service} on {host}",
         })
+        return None, None
+    if not subscription.register(generation, stream_id, sid):
+        await _stop_remote_stream(stream_id)
         return None, None
 
     # Send initial chunk
@@ -840,6 +940,7 @@ async def _cmd_subscribe_logs(ws: WebSocket,
         else:
             _streamer.read_stream(stream_id, max_lines=9999)
 
+    subscription.activate(generation, stream_id)
     return stream_id, sid
 
 
@@ -884,10 +985,13 @@ async def _cmd_set_setting(request: dict):
 
 def _cmd_get_local_logs(request: dict) -> dict:
     filename = request.get("file", "")
-    lines_n = int(request.get("lines", 200))
     sid = request.get("sid")
     if not _streamer:
         return {"type": "error", "error": "streamer not available"}
+    try:
+        lines_n = _normalize_log_request_lines(request.get("lines"), default=200)
+    except ValueError as exc:
+        return {"type": "error", "error": str(exc)}
     content, file_size = _streamer.get_local_logs(filename, lines_n)
     resp: dict = {
         "type": "local_logs", "file": filename,
@@ -947,9 +1051,13 @@ async def _cmd_subscribe_local_logs(ws: WebSocket,
                                     request: dict) -> Optional[LocalLogSub]:
     """Subscribe to local log streaming. Returns LocalLogSub."""
     filename = request.get("file", "")
-    lines_n = int(request.get("lines", 200))
     sid = request.get("sid")
     start_at_end = bool(request.get("start_at_end"))
+    try:
+        lines_n = _normalize_log_request_lines(request.get("lines"), default=200)
+    except ValueError as exc:
+        await ws.send_json({"type": "error", "error": str(exc)})
+        return None
     fp = resolve_local_log_path(filename) if filename else None
 
     if fp is None:
@@ -958,11 +1066,13 @@ async def _cmd_subscribe_local_logs(ws: WebSocket,
         })
         return None
 
-    content = [] if start_at_end else (tail_file(fp, lines_n) if fp.exists() else [])
-    try:
-        file_size = fp.stat().st_size
-    except Exception:
-        file_size = 0
+    content, file_size, sub = AsyncLogStreamer.initialize_local_log_subscription(
+        fp,
+        filename,
+        lines_n,
+        sid,
+        start_at_end=start_at_end,
+    )
 
     resp: dict = {
         "type": "local_logs", "file": filename,
@@ -971,9 +1081,4 @@ async def _cmd_subscribe_local_logs(ws: WebSocket,
     if sid is not None:
         resp["sid"] = sid
     await ws.send_json(resp)
-
-    try:
-        pos = fp.stat().st_size
-    except Exception:
-        pos = 0
-    return LocalLogSub(file=fp, name=filename, pos=pos, sid=sid)
+    return sub
