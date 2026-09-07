@@ -2681,6 +2681,7 @@ class AICapabilityService:
                         executable,
                         script,
                         self._python_analysis_nproc_limit(),
+                        additional_runtime_root=Path(sys.base_prefix).resolve(),
                     )
                 subprocess_options: dict[str, Any] = {}
                 if seccomp_fd is not None:
@@ -2913,8 +2914,16 @@ class AICapabilityService:
         executable: Path,
         script: Path,
         nproc_limit: int,
+        *,
+        additional_runtime_root: Path | None = None,
     ) -> list[str]:
-        """Build the namespace-free Landlock analysis command."""
+        """Build the namespace-free Landlock analysis command.
+
+        Virtual environments execute from one prefix while importing the
+        standard library from ``sys.base_prefix``. Both roots must be allowed
+        or the interpreter can fail while importing a harmless module such as
+        ``pkgutil``.
+        """
 
         if not _LANDLOCK_RUNNER_PATH.is_file():
             raise AICapabilityError("Python analysis filesystem sandbox is unavailable")
@@ -2931,6 +2940,7 @@ class AICapabilityService:
             str(_LANDLOCK_RUNNER_PATH),
             str(script),
             str(runtime_root),
+            *([str(additional_runtime_root)] if additional_runtime_root and additional_runtime_root != runtime_root else []),
         ]
 
     @staticmethod

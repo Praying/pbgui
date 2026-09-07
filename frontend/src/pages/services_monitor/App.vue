@@ -431,6 +431,7 @@ const activePanel = ref(panelFromHash());
 /* AI drawer page context — Vue port of the legacy services registration
    (active panel, selected worker on the workers panel). */
 const workersPanelRef = ref<InstanceType<typeof WorkersPanel> | null>(null);
+const cmcPoolPanelRef = ref<InstanceType<typeof CmcPoolPanel> | null>(null);
 useAiPageContext({
   id: 'services',
   getContext: () => ({
@@ -438,7 +439,9 @@ useAiPageContext({
     entities:
       activePanel.value === 'workers' && workersPanelRef.value?.selectedWorkerId
         ? [{ kind: 'service_worker', name: String(workersPanelRef.value.selectedWorkerId) }]
-        : [],
+        : activePanel.value === 'pbcoindata' && cmcPoolPanelRef.value?.selectedKeyId
+          ? [{ kind: 'cmc_key', name: String(cmcPoolPanelRef.value.selectedKeyId) }]
+          : [],
   }),
 });
 
@@ -750,6 +753,7 @@ onUnmounted(() => {
           </template>
           <template v-if="panel.id === 'pbcoindata'" #tab-pool>
             <CmcPoolPanel
+              ref="cmcPoolPanelRef"
               :pool="cmcPool"
               :leases="cmcLeases"
               :loaded="cmcLoaded"

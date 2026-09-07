@@ -71,11 +71,15 @@ def test_backend_never_injects_session_tokens_into_browser_content() -> None:
 
 @pytest.mark.parametrize(("renderer", "api_path"), [
     (logging_api.get_main_page, "/mounted/api/logging"),
-    (services_api.get_main_page, "/mounted/api/services"),
     (coin_data_api.get_main_page, "/mounted/api/coin-data"),
 ])
-def test_issue_pages_use_cookie_only_mount_aware_same_origin_urls(renderer, api_path: str) -> None:
+def test_issue_pages_use_cookie_only_mount_aware_same_origin_urls(renderer, api_path: str, monkeypatch, tmp_path) -> None:
     """Affected page routes ignore Host and never inspect or render the authenticated token."""
+    import api.auth as auth
+
+    # Force the legacy fallback so the server-side injection contract is
+    # observable (a built Vue bundle answers as a static FileResponse).
+    monkeypatch.setattr(auth, "_frontend_dist_path", lambda _page: tmp_path / "missing-dist" / _page)
     response = renderer(_request(), _CookieOnlySession())
     html = response.body.decode("utf-8")
     assert api_path in html
@@ -85,16 +89,32 @@ def test_issue_pages_use_cookie_only_mount_aware_same_origin_urls(renderer, api_
     assert response.headers["cache-control"] == "no-store"
 
 
+def test_services_page_serves_the_static_vue_bundle_cookie_only(monkeypatch, tmp_path) -> None:
+    """The retired-template page serves the built Vue bundle with no injection surface."""
+    response = services_api.get_main_page(_CookieOnlySession())
+    from fastapi.responses import FileResponse
+
+    assert isinstance(response, FileResponse)
+    assert response.headers["cache-control"] == "no-store"
+    # A static file response carries no rendered session material by design;
+    # the page boots through /api/boot.js which publishes no token.
+    assert not hasattr(response, "body")
+
+
 def test_market_data_fragments_use_cookie_only_mount_aware_urls() -> None:
     """Embedded Market Data views retain no token or request-authority transport."""
-    status_html = market_data_api._render_market_data_status_html(_request(), "binance")
+    # The status monitor is the Vue page (M-data-8): its route injects only the
+    # exchange attribute and reads everything else from /api/boot.js.
+    source = Path("api/market_data.py").read_text(encoding="utf-8")
+    assert 'data-exchange=""' in source
+    assert "data-token" not in source
+    # The legacy HL data-actions fragment still renders server-side.
     actions_html = market_data_api._render_hl_data_actions_html(_request())
-    for html in (status_html, actions_html):
-        assert 'data-api-base="/mounted/api"' in html
-        assert "data-token" not in html
-        assert "attacker.example" not in html
-        assert "Authorization" not in html
-        assert "Bearer" not in html
+    assert 'data-api-base="/mounted/api"' in actions_html
+    assert "data-token" not in actions_html
+    assert "attacker.example" not in actions_html
+    assert "Authorization" not in actions_html
+    assert "Bearer" not in actions_html
 
 
 def test_affected_frontend_requests_use_same_origin_credentials() -> None:
@@ -105,16 +125,14 @@ def test_affected_frontend_requests_use_same_origin_credentials() -> None:
         "frontend/js/editor_shared.js": "options.credentials = 'same-origin'",
         "frontend/js/optimize_preset_builder.js": "credentials: 'same-origin'",
         "frontend/js/shared_help_overlay.js": "credentials: 'same-origin'",
-        "frontend/services_monitor.html": "opts.credentials = 'same-origin'",
         "frontend/coin_data.html": "credentials: 'same-origin'",
         "frontend/db_tools.html": "credentials: 'same-origin'",
-        "frontend/market_data_main.html": "credentials: 'same-origin'",
-        "frontend/market_data_status.html": "credentials: 'same-origin'",
         "frontend/hl_data_actions.html": "opts.credentials = 'same-origin'",
         "frontend/v7_backtest.html": "opts.credentials = 'same-origin'",
         "frontend/v7_optimize.html": "opts.credentials = 'same-origin'",
         "frontend/help.html": "credentials: 'same-origin'",
-        "frontend/gap_heatmap.html": "credentials: 'same-origin'",
+        # Vue-migrated pages share one cookie-authenticated fetch helper.
+        "frontend/src/shared/api.ts": "credentials: 'same-origin'",
     }
     for relative_path, marker in contracts.items():
         source = (ROOT / relative_path).read_text(encoding="utf-8")

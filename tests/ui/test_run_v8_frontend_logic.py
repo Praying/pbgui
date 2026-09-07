@@ -152,11 +152,11 @@ def test_pb8_runtime_json_fields_share_compact_desktop_rows() -> None:
     """PB8 diagnostic JSON editors use free desktop columns without adding rows."""
 
     page = (ROOT / "frontend" / "v7_edit.html").read_text(encoding="utf-8")
-    runtime = page.split('<div class="subsection-title" data-v8-only>PB8 Runtime</div>', 1)[1]
+    runtime = page.split('<div class="subsection-title" data-v8-only data-i18n="v7run.pb8Runtime">PB8 Runtime</div>', 1)[1]
     runtime = runtime.split('<!-- Filters section -->', 1)[0]
-    pb8_runtime = runtime.split('<div class="subsection-title" data-v8-only>Logging</div>', 1)[0]
-    logging = runtime.split('<div class="subsection-title" data-v8-only>Logging</div>', 1)[1]
-    logging = logging.split('<div class="subsection-title" data-v8-only>Monitoring</div>', 1)[0]
+    pb8_runtime = runtime.split('<div class="subsection-title" data-v8-only data-i18n="v7run.logging">Logging</div>', 1)[0]
+    logging = runtime.split('<div class="subsection-title" data-v8-only data-i18n="v7run.logging">Logging</div>', 1)[1]
+    logging = logging.split('<div class="subsection-title" data-v8-only data-i18n="v7run.monitoring">Monitoring</div>', 1)[0]
 
     assert ".json-editor.compact-json-editor { min-height: 72px; max-height: 180px; }" in page
     assert 'class="json-editor compact-json-editor" id="f-startup-phase-budgets" rows="3"' in runtime

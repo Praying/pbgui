@@ -57,7 +57,7 @@ def test_cluster_page_falls_back_without_session_token(client: TestClient, tmp_p
     response = client.get("/api/cluster/main_page")
     assert response.status_code == 200
     assert '"/api/cluster"' in response.text
-    assert '"ws://testserver"' in response.text
+    assert "window.location.host" in response.text
     assert "tok-1" not in response.text
     assert "%%" not in response.text
 

@@ -167,7 +167,7 @@
         }
         return items;
       },
-      initialPanels: isV8 ? ['configs', 'queue', 'results', 'archive'] : ['configs', 'queue', 'results', 'archive', 'legacy'],
+      initialPanels: ['configs', 'queue', 'results', 'archive', 'legacy'],
       configureUi: function () {
         if (!isV8) return;
         installRunHandoff();

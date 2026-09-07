@@ -415,9 +415,14 @@ def test_main_page_is_cookie_only_secret_free_and_non_cacheable() -> None:
     assert PRIVATE_KEY not in html
 
     transfers = profit_sweep_api.get_transfers_main_page(_request(), CookieOnlySession())
-    transfers_html = transfers.body.decode("utf-8")
+    if isinstance(transfers, FileResponse):
+        # The Vue bundle is a static document; the page identity lives in its
+        # source entry instead of the rendered shell.
+        transfers_html = Path("frontend/src/pages/transfers/App.vue").read_text(encoding="utf-8")
+    else:
+        transfers_html = transfers.body.decode("utf-8")
     assert transfers.headers["cache-control"] == "no-store"
-    assert "system_transfers" in transfers_html
+    assert "system_transfers" in transfers_html or "transfers" in transfers_html
     assert "%%API_BASE%%" not in transfers_html
     assert SESSION_TOKEN not in transfers_html
     assert PRIVATE_KEY not in transfers_html

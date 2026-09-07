@@ -371,7 +371,7 @@ def test_html_route_requires_auth_without_rendering_session_token() -> None:
     secret = "browser-session-secret-must-not-render"
 
     response = api_module.get_main_page(request, SimpleNamespace(token=secret))
-    html = response.body.decode("utf-8")
+    html = Path(response.path).read_text(encoding="utf-8") if hasattr(response, "path") else response.body.decode("utf-8")
 
     assert secret not in html
     assert "%%TOKEN%%" not in html

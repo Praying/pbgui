@@ -858,7 +858,7 @@ textarea.json-invalid:focus {
         <button class="sb-btn info" onclick="saveAndQueue()" title="Save and add to queue" data-i18n-title="v7backtest.saveAndQueueTitle" data-i18n="v7backtest.saveQueue">▶ Save &amp; Queue</button>
         <button class="sb-btn" onclick="importConfig()" title="Import JSON config" data-i18n-title="v7backtest.importJsonConfig" data-i18n="v7backtest.import">📥 Import</button>
         <hr class="sb-sep">
-        <button class="sb-btn" id="sb-btn-results" onclick="goEditorResults()" title="Jump to results for this config" disabled data-i18n-title="v7backtest.jumpToResults" data-i18n="v7backtest.results">📊 Results</button>
+        <button class="sb-btn" id="sb-btn-results" onclick="goEditorResults()" title="Show all backtest results" data-i18n="v7backtest.results">📊 Results</button>
         <button class="sb-btn" id="sb-btn-convert-v8" onclick="convertConfigToV8(editingConfig)" title="Convert the saved V7 config to V8" disabled data-i18n-title="v7backtest.convertV7ToV8Title" data-i18n="v7backtest.convertToV8">⏩ Convert to V8</button>
         <button class="sb-btn" id="sb-btn-add-to-run" onclick="addConfigToRunByName(editingConfig)" title="Open this config in Run V7 editor" disabled data-i18n-title="v7backtest.openInRunV7" data-i18n="v7backtest.addToRun">▶ Add to Run</button>
         <button class="sb-btn" onclick="goStrategyExplorer()" title="Open Strategy Explorer" data-i18n-title="v7backtest.openStrategyExplorer" data-i18n="v7backtest.strategyExplorer">🔍 Strategy Explorer</button>
@@ -2157,9 +2157,13 @@ function hideEditorSidebar() {
 }
 
 function goEditorResults() {
-  var name = editingConfig || '';
   closeEditor();
-  viewConfigResults(name);
+  _pendingResultFilter = '';
+  var textFilter = document.getElementById('results-filter');
+  var configFilter = document.getElementById('results-config-filter');
+  if (textFilter) textFilter.value = '';
+  if (configFilter) configFilter.value = '';
+  selectPanel('results');
 }
 
 function goStrategyExplorer() {
@@ -3411,6 +3415,10 @@ function showConfigEditor(name, cfg, rawOverride, paramStatusOverride) {
   '</div>';
 
   ed.innerHTML = html;
+  if (_pendingMigrationReviewDraft) {
+    showMigrationReviewNotice(_pendingMigrationReviewDraft);
+    _pendingMigrationReviewDraft = null;
+  }
   autoResizeTa(document.getElementById('cfg-bot-long'));
   autoResizeTa(document.getElementById('cfg-bot-short'));
   _applyBotJsonHighlight(document.getElementById('cfg-bot-long'), paramStatus.long);
@@ -5535,26 +5543,32 @@ function addConfigToQueue(name) {
 function viewConfigResults(name) {
   _pendingResultFilter = name;
   document.getElementById('results-filter').value = '';
-  /* If we already have results cached, filter and render immediately — no empty-table flash */
-  if (results.length > 0) {
-    var cfgSel = document.getElementById('results-config-filter');
-    if (cfgSel) {
-      var names = {};
-      results.forEach(function(r) { if (r.config_name) names[r.config_name] = true; });
-      var sorted = Object.keys(names).sort();
-      cfgSel.innerHTML = '\x3Coption value="">' + PBGuiI18n.t('v7backtest.allConfigs') + '\x3C/option>';
-      sorted.forEach(function(n) {
-        cfgSel.innerHTML += '\x3Coption value="' + esc(n) + '"' + (n === name ? ' selected' : '') + '>' + esc(n) + '\x3C/option>';
-      });
+  var cfgSel = document.getElementById('results-config-filter');
+  if (cfgSel && name) {
+    var hasRequestedOption = Array.prototype.some.call(cfgSel.options, function(option) {
+      return option.value === name;
+    });
+    if (!hasRequestedOption) {
+      var requestedOption = document.createElement('option');
+      requestedOption.value = name;
+      requestedOption.textContent = name;
+      cfgSel.appendChild(requestedOption);
     }
-    _pendingResultFilter = '';  /* already applied */
-    selectPanel('results');
-    renderResults();
-    /* Refresh in background so newly finished jobs appear */
-    loadResults();
-  } else {
-    selectPanel('results');  /* triggers loadResults via results.length === 0 */
+    cfgSel.value = name;
   }
+  /* If we already have results cached, filter and render immediately — no empty-table flash */
+  var hasCachedResults = results.length > 0;
+  if (hasCachedResults) {
+    _pendingResultFilter = '';  /* already applied */
+    selectPanel('results', { deferResultsLoad: true });
+    renderResults();
+  } else {
+    var list = document.getElementById('results-list');
+    if (list) list.innerHTML = '\x3Cdiv class="empty-state">Checking for matching results…\x3C/div>';
+    hideResultsCountLabel('results-count-label');
+    selectPanel('results', { deferResultsLoad: true });
+  }
+  loadResults(name, { keepVisible: hasCachedResults });
 }
 
 function fillPbguiDataPath() {
@@ -5936,20 +5950,79 @@ function loadResults(filterName, loadOptions) {
   var loadGeneration = ++_resultsLoadGeneration;
   var selectedVersion = selectedResultsVersion();
   var versions = selectedVersion === 'both' ? ['v7', 'v8'] : [selectedVersion];
-  return Promise.all(versions.map(function(version) {
-    return apiFetchFrom(backtestApiBase(version), '/results').then(function(d) {
-      resultsByVersion[version] = (d.results || []).map(function(result) {
-        return Object.assign({}, result, { backtest_version: version });
+  var progress = {};
+  versions.forEach(function(version) {
+    resultsByVersion[version] = [];
+    progress[version] = { loaded: 0, total: null, hasMore: true };
+  });
+  if (!loadOptions.emptyRetry && !loadOptions.keepVisible) {
+    var initialList = document.getElementById('results-list');
+    if (initialList) initialList.innerHTML = '\x3Cdiv class="empty-state">Loading results…\x3C/div>';
+    hideResultsCountLabel('results-count-label');
+  }
+
+  function renderLoadedPages() {
+    var applied = _applyResultsData(resultsByVersion.v7.concat(resultsByVersion.v8), selectedFilter);
+    var loaded = versions.reduce(function(total, version) { return total + progress[version].loaded; }, 0);
+    var totalsKnown = versions.every(function(version) { return Number.isFinite(progress[version].total); });
+    var total = totalsKnown
+      ? versions.reduce(function(sum, version) { return sum + progress[version].total; }, 0)
+      : null;
+    var loading = versions.some(function(version) { return progress[version].hasMore; });
+    var label = document.getElementById('results-count-label');
+    if (loading && label) {
+      label.textContent = total === null
+        ? 'Loaded ' + loaded + (loaded === 1 ? ' result…' : ' results…')
+        : 'Loaded ' + loaded + ' of ' + total + (total === 1 ? ' result…' : ' results…');
+      label.style.display = '';
+    }
+    return applied;
+  }
+
+  function waitForResultsPaint() {
+    return new Promise(function(resolve) {
+      window.requestAnimationFrame(function() {
+        window.requestAnimationFrame(resolve);
       });
     });
+  }
+
+  function loadVersionPage(version, offset) {
+    var path = '/results?offset=' + offset + '&limit=' + RESULTS_PAGE_SIZE;
+    if (selectedFilter) path += '&name=' + encodeURIComponent(selectedFilter);
+    return apiFetchFrom(backtestApiBase(version), path).then(function(d) {
+      if (loadGeneration !== _resultsLoadGeneration) return;
+      var page = (d.results || []).map(function(result) {
+        return Object.assign({}, result, { backtest_version: version });
+      });
+      resultsByVersion[version] = resultsByVersion[version].concat(page);
+      var pagination = d.pagination && typeof d.pagination === 'object' ? d.pagination : null;
+      progress[version].loaded = resultsByVersion[version].length;
+      progress[version].total = pagination && Number.isFinite(Number(pagination.total))
+        ? Number(pagination.total)
+        : progress[version].loaded;
+      progress[version].hasMore = !!(pagination && pagination.has_more);
+      renderLoadedPages();
+      if (progress[version].hasMore) {
+        var nextOffset = Number(pagination.next_offset);
+        if (!Number.isFinite(nextOffset) || nextOffset <= offset) nextOffset = offset + RESULTS_PAGE_SIZE;
+        return waitForResultsPaint().then(function() {
+          return loadVersionPage(version, nextOffset);
+        });
+      }
+    });
+  }
+
+  return Promise.all(versions.map(function(version) {
+    return loadVersionPage(version, 0);
   })).then(function() {
     if (loadGeneration !== _resultsLoadGeneration) return results;
-    var applied = _applyResultsData(resultsByVersion.v7.concat(resultsByVersion.v8), selectedFilter);
+    var applied = results;
     var selectedItems = resultsForSelectedVersion(applied);
     if (currentPanel === 'results' && selectedItems.length === 0 && _resultsEmptyRetryCount < 3) {
       _resultsEmptyRetryCount += 1;
       var list = document.getElementById('results-list');
-      if (list) list.innerHTML = '\x3Cdiv class="empty-state">' + PBGuiI18n.t('v7backtest.checkingForResults') + '\x3C/div>';
+      if (list) list.innerHTML = '\x3Cdiv class="empty-state">Checking for results…\x3C/div>';
       var retryDelay = 400 * _resultsEmptyRetryCount;
       _resultsEmptyRetryTimer = setTimeout(function() {
         _resultsEmptyRetryTimer = null;
@@ -5963,7 +6036,7 @@ function loadResults(filterName, loadOptions) {
     return applied;
   }).catch(function(e) {
     if (loadGeneration !== _resultsLoadGeneration) return results;
-    toast(PBGuiI18n.t('v7backtest.loadResultsFailed', { msg: PBGuiI18n.serverMsg(e.message) }), 'err');
+    toast('Load results failed: ' + e.message, 'err');
     throw e;
   });
 }

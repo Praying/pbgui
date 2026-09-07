@@ -59,9 +59,9 @@ describe('createBacktestAdapter', () => {
     expect(adapter.navCurrent).toBe('v8_backtest');
     expect(adapter.websocketPath).toBe('/api/backtest-v8/ws/bt7');
     expect(adapter.queueLogFile('job1')).toBe('backtests_v8/job1.log');
-    // R-guard: v8 drops the legacy panel (adapter.js:160-162, :165)
-    expect(adapter.initialPanels).toEqual(['configs', 'queue', 'results', 'archive']);
-    expect(adapter.navItems().map((i) => i.panel)).toEqual(['configs', 'queue', 'results', 'archive']);
+    // v2.02.5: v8 keeps Legacy browsing and Compare read-only.
+    expect(adapter.initialPanels).toEqual(['configs', 'queue', 'results', 'archive', 'legacy']);
+    expect(adapter.navItems().map((i) => i.panel)).toEqual(['configs', 'queue', 'results', 'archive', 'legacy']);
     // the queue nav item is the only badged one (:156)
     expect(adapter.navItems().filter((i) => i.badge)).toHaveLength(1);
   });

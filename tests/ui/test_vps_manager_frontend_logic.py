@@ -141,7 +141,9 @@ class TestVpsManagerFrontendLogic:
         sidebar_source = _extract_function(source, "renderSidebarActions")
 
         assert ".sb-btn.install {" in source
-        assert "background: #3182ce;" in source
+        # The Vue-migration theme tokenized the filled-blue emphasis; the
+        # accent-deep fill keeps the same "install = filled blue" semantics.
+        assert "background: var(--accent-deep" in source
         assert "st.pb8_installed ? 'sb-btn ok' : 'sb-btn install'" in sidebar_source
         assert sidebar_source.count("st.pb8_installed ? 'sb-btn ok' : 'sb-btn install'") == 2
         assert "st.pb7_installed ? 'sb-btn ok' : 'sb-btn install'" in sidebar_source

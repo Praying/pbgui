@@ -8,12 +8,13 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXCLUDED_PARTS = {"tests", "data", "pb7", "upstream", "vendor", "generated", ".git", ".venv", "venv"}
+EXCLUDED_PARTS = {"tests", "data", "pb7", "upstream", "vendor", "generated", ".git", ".venv", "venv", ".cursor", ".claude", "node_modules", "design-preview", "ai"}
 DOCUMENTED_SCRIPT_DIRS = {
     "scripts": "One-off maintenance and diagnostic scripts are human-facing CLIs.",
     "tools": "Developer audit and comparison tools intentionally report to stdout.",
 }
 PRINT_ALLOWLIST = {
+    "frontend/codemod_colors.py": "One-off color-token migration CLI for the palette rework.",
     "pb7_guard.py": "PB7 guard is a human-facing install/update safety CLI.",
     "starter.py": "Starter is the human-facing service-control CLI.",
     "reprocess_tradfi_splits.py": "Maintenance CLI prints progress and its final report.",

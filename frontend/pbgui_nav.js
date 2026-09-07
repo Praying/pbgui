@@ -52,6 +52,30 @@
     return entity;
   }
 
+  function aiContextEvidence(value) {
+    if (!value || typeof value !== 'object' || value.kind !== 'log_excerpt') return null;
+    var title = aiContextText(value.title, 160);
+    var content = redactAIEvidenceText(value.content);
+    if (!title || !content) return null;
+    return { kind: 'log_excerpt', title: title, content: content };
+  }
+
+  function redactAIEvidenceText(value) {
+    return String(value == null ? '' : value)
+      .replace(/\x1b\[[0-?]*[ -\/]*[@-~]/g, '')
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)"(?:\\.|[^"\\])*"/gi, '$1$2$1$3"[REDACTED]"')
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)'(?:\\.|[^'\\])*'/gi, "$1$2$1$3'[REDACTED]'")
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)"(?!\[REDACTED\]")[\s\S]*$/gi, '$1$2$1$3"[REDACTED]')
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)'(?!\[REDACTED\]')[\s\S]*$/gi, "$1$2$1$3'[REDACTED]")
+      .replace(/\b(authorization)\s*[:=]\s*[^\r\n]+/gi, '$1: [REDACTED]')
+      .replace(/\b(password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\b(\s*[:=]\s*)[^\s,;]+/gi, '$1$2[REDACTED]')
+      .replace(/\b(bearer|basic)\s+[A-Za-z0-9._~+\/=-]{8,}/gi, '$1 [REDACTED]')
+      .replace(/([?&](?:token|access_token|api_key|apikey|key|secret|session)=)[^&\s]+/gi, '$1[REDACTED]')
+      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ')
+      .trim()
+      .slice(-12000);
+  }
+
   function aiContextFocusedField(value) {
     if (!value || typeof value !== 'object') return null;
     var path = aiContextText(value.path, 256);
@@ -163,17 +187,60 @@
     return aiContextText(heading ? heading.textContent : shell.id, 160).replace(/\s+/g, ' ');
   }
 
-  function aiControlId(element) {
-    var id = _aiControlIds.get(element);
-    if (!id) {
-      _aiControlSequence += 1;
-      id = 'control_' + _aiControlSequence;
-      _aiControlIds.set(element, id);
-    }
-    return id;
+  function aiControlResourceIdentity(element) {
+    var scope = element.closest('[data-id],[data-key],[data-name],[data-user],[data-config],tr,li');
+    if (!scope) return '';
+    var attributes = ['data-id', 'data-key', 'data-name', 'data-user', 'data-config'].map(function (name) {
+      return scope.hasAttribute(name) ? name + '=' + String(scope.getAttribute(name) || '') : '';
+    }).filter(Boolean);
+    if (attributes.length) return attributes.join('|');
+    var label = scope.matches('tr') ? scope.querySelector('th,td') : scope;
+    return aiContextText(label ? label.textContent : '', 160).replace(/\s+/g, ' ');
   }
 
-  function aiControlDescriptor(element) {
+  function aiControlPageIdentity() {
+    var state = { page_key: String(cfg().current || ''), sections: [], entities: [] };
+    Object.keys(_aiContextProviders).sort().forEach(function (id) {
+      try {
+        var value = _aiContextProviders[id]();
+        if (!value || typeof value !== 'object') return;
+        if (value.section) state.sections.push(aiContextText(value.section, 128));
+        (Array.isArray(value.entities) ? value.entities : []).slice(0, 8).forEach(function (entity) {
+          var projected = aiContextEntity(entity);
+          if (projected) state.entities.push(projected);
+        });
+      } catch (_) {}
+    });
+    return JSON.stringify(state);
+  }
+
+  function aiControlStateIdentity(element) {
+    var type = String(element.type || '').toLowerCase();
+    var value = '';
+    if (element.tagName === 'SELECT' || element.tagName === 'TEXTAREA' || element.isContentEditable) {
+      value = element.isContentEditable ? element.textContent : element.value;
+    } else if (element.tagName === 'INPUT' && ['button', 'submit', 'reset'].indexOf(type) < 0) {
+      value = element.value;
+    }
+    return JSON.stringify({
+      disabled: !!element.disabled,
+      checked: !!element.checked,
+      value: String(value == null ? '' : value),
+      resource: aiControlResourceIdentity(element)
+    });
+  }
+
+  function aiControlId(element, identity) {
+    var entry = _aiControlIds.get(element);
+    if (!entry || entry.identity !== identity) {
+      _aiControlSequence += 1;
+      entry = { id: 'control_' + _aiControlSequence, identity: identity };
+      _aiControlIds.set(element, entry);
+    }
+    return entry.id;
+  }
+
+  function aiControlDescriptor(element, pageIdentity) {
     var tag = String(element.tagName || '').toLowerCase();
     var type = String(element.type || '').toLowerCase();
     var role = String(element.getAttribute('role') || '').toLowerCase();
@@ -199,7 +266,6 @@
     var label = aiControlLabel(element);
     if (!label || aiControlSensitive(element, label)) return null;
     var descriptor = {
-      id: aiControlId(element),
       role: tag === 'input' ? (type || 'input') : (role || tag),
       label: label,
       operations: operations
@@ -212,6 +278,14 @@
         return { value: aiContextText(option.value, 160), label: aiContextText(option.textContent, 160) };
       }).filter(function (option) { return !!option.label; });
     }
+    descriptor.id = aiControlId(element, JSON.stringify([
+      pageIdentity,
+      descriptor.role,
+      descriptor.name,
+      descriptor.operations,
+      descriptor.options || [],
+      aiControlStateIdentity(element)
+    ]));
     return descriptor;
   }
 
@@ -221,7 +295,8 @@
     var selector = 'body *';
     Array.from(document.querySelectorAll(selector)).forEach(function (element, index) {
       if (!aiControlVisible(element)) return;
-      var descriptor = aiControlDescriptor(element);
+      var pageIdentity = aiControlPageIdentity();
+      var descriptor = aiControlDescriptor(element, pageIdentity);
       if (!descriptor) return;
       candidates.push({ element: element, descriptor: descriptor, index: index, priority: descriptor.context ? 0 : 1 });
     });
@@ -328,6 +403,7 @@
       guide_topic: String(GUIDE_TOPICS[c.current] || '').slice(0, 128),
       pages: collectAIPages(),
       entities: [],
+      evidence: [],
       actions: Object.keys(_aiPageActions).sort().slice(0, 16).map(function (key) {
         return { id: _aiPageActions[key].id, entity_kind: _aiPageActions[key].entity_kind };
       }),
@@ -344,10 +420,17 @@
             if (projected) context.entities.push(projected);
           });
         }
+        if (Array.isArray(value.evidence)) {
+          value.evidence.slice(0, 2).forEach(function (item) {
+            var projectedEvidence = aiContextEvidence(item);
+            if (projectedEvidence) context.evidence.push(projectedEvidence);
+          });
+        }
         if (value.focused_field && !context.focused_field) context.focused_field = aiContextFocusedField(value.focused_field);
       } catch (_) {}
     });
     context.entities = context.entities.slice(0, 8);
+    context.evidence = context.evidence.slice(0, 2);
     while (context.controls.length && JSON.stringify(context).length > 256 * 1024) context.controls.pop();
     return context;
   }
@@ -448,7 +531,7 @@
         result.catch(function (error) { console.error('PBGui page action failed:', error); });
       }
     } catch (error) {
-      event.preventDefault();
+      request.browser_error = error;
       console.error('PBGui page action failed:', error);
     }
   });

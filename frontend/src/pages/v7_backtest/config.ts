@@ -47,9 +47,7 @@ export interface BacktestAdapter {
 
 export function createBacktestAdapter(version: BacktestVersion): BacktestAdapter {
   const isV8 = version === 'v8';
-  const panels: readonly BacktestPanel[] = isV8
-    ? ['configs', 'queue', 'results', 'archive']
-    : ['configs', 'queue', 'results', 'archive', 'legacy'];
+  const panels: readonly BacktestPanel[] = ['configs', 'queue', 'results', 'archive', 'legacy'];
   return {
     version: isV8 ? 'v8' : 'v7',
     isV8,
@@ -106,7 +104,7 @@ export function wsUrl(adapter: BacktestAdapter, origin: string = wsOrigin()): st
   return `${origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')}${adapter.websocketPath}`;
 }
 
-/** Sidebar nav items (adapter.js:153-164): queue is badged; v8 drops legacy. */
+/** Sidebar nav items (adapter.js:153-164): queue is badged; PB8 keeps legacy read-only. */
 export function navItems(adapter: BacktestAdapter): NavItem[] {
   const items: NavItem[] = [
     { panel: 'configs', icon: '📋', labelKey: 'editor.shell.navConfigs' },
@@ -114,9 +112,9 @@ export function navItems(adapter: BacktestAdapter): NavItem[] {
     { panel: 'results', icon: '📊', labelKey: 'editor.shell.navResults' },
   ];
   items.push({ panel: 'archive', icon: '🗄️', labelKey: 'editor.backtest.navArchive' });
-  if (!adapter.isV8) {
-    items.push({ panel: 'legacy', icon: '🧭', labelKey: 'editor.backtest.navLegacy' });
-  }
+  // v2.02.5: PB8 reuses the Legacy panel for read-only browsing and Compare;
+  // the write actions are gated inside LegacyPanel for V8.
+  items.push({ panel: 'legacy', icon: '🧭', labelKey: 'editor.backtest.navLegacy' });
   return items;
 }
 

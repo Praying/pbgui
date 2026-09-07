@@ -43,6 +43,21 @@ from master.cluster_state import (
 import pbgui_purefunc
 
 
+@pytest.fixture(autouse=True)
+def _isolate_barrier_process_scan(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the migration unit tests independent of live host services.
+
+    process_barrier_readiness scans the real process table for PBApiServer
+    and friends; a long-running PBGui deployment on this host would otherwise
+    block every standalone-master scenario with protocol_barrier. The unit
+    contract is the state machine, not the host's service inventory.
+    """
+
+    import credential_process_registry
+
+    monkeypatch.setattr(credential_process_registry, "running_relevant_processes", lambda _root: [])
+
+
 REMOTE_NODE_ID = "pbgui-node-22222222-2222-4222-8222-222222222222"
 
 

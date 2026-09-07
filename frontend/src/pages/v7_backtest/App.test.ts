@@ -196,17 +196,17 @@ describe('boot chain (:10012-10024)', () => {
     wrapper.unmount();
   });
 
-  it('falls back to configs for a stored panel the flavor does not serve (:10023)', async () => {
+  it('restores a stored legacy panel for the PB8 read-only view (:10023)', async () => {
     localStorage.setItem('pbgui:v8_backtest:view_state', JSON.stringify({ panel: 'legacy' }));
     window.history.replaceState({}, '', '/api/backtest-v8/main_page');
     const wrapper = mountApp();
     await flush();
     await nextTick();
-    expect(wrapper.find('#panel-configs').classes()).toContain('active');
+    expect(wrapper.find('#panel-legacy').classes()).toContain('active');
     wrapper.unmount();
   });
 
-  it('v8 drops the legacy nav + panel and uses the v8 routers', async () => {
+  it('v8 keeps the read-only legacy panel and uses the v8 routers', async () => {
     window.history.replaceState({}, '', '/api/backtest-v8/main_page');
     const wrapper = mountApp();
     await flush();
@@ -216,8 +216,9 @@ describe('boot chain (:10012-10024)', () => {
       'rail-section-queue',
       'rail-section-results',
       'rail-section-archive',
+      'rail-section-legacy',
     ]);
-    expect(wrapper.find('#panel-legacy').exists()).toBe(false);
+    expect(wrapper.find('#panel-legacy').exists()).toBe(true);
     expect(sockets[0]!.url).toBe('ws://h:8000/api/backtest-v8/ws/bt7');
     expect(fetchMock.mock.calls.map((c) => String(c[0]))).toContain('http://h:8000/api/backtest-v8/settings');
     expect(document.title).toBe('PBGui — PBv8 Backtest');
@@ -1181,7 +1182,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     wrapper.unmount();
   });
 
-  it('v8 keeps the archive panel but never mounts the legacy one (:160-162)', async () => {
+  it('v8 keeps the archive panel and the read-only legacy one (:160-162)', async () => {
     stubArchiveRoutes();
     window.history.replaceState({}, '', '/api/backtest-v8/main_page');
     const wrapper = mountApp();
@@ -1191,7 +1192,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await flush();
     await nextTick();
     expect(wrapper.find('#panel-archive').exists()).toBe(true);
-    expect(wrapper.find('#panel-legacy').exists()).toBe(false);
+    expect(wrapper.find('#panel-legacy').exists()).toBe(true);
     wrapper.unmount();
   });
 });

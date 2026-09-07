@@ -504,6 +504,7 @@ def test_api_key_rename_requires_capability_and_validates_canonical_response() -
         fields.editPanel = { querySelectorAll: function() { return Object.values(fields).filter(function(field) { return field !== fields.editPanel; }); } };
         global.document = { getElementById: function(id) { return fields[id]; } };
         function getMaskedFieldValue() { return null; }
+        function m(text) { return String(text || ''); }
         function setEditorSaveBusy(busy) { fields.btnSave.disabled = busy; }
         function showToast(message) { messages.push(message); }
         async function apiFetch(path, options) {

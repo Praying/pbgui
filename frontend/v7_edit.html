@@ -1228,8 +1228,8 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <div id="cov-tooltip"></div>
 <div id="data-tip-tooltip"></div>
 
-<script src="/app/js/editor_shared.js?v=15"></script>
-<script src="/app/js/pbgui_dialogs.js?v=9"></script>
+<script src="/app/js/editor_shared.js?v=16"></script>
+<script src="/app/js/pbgui_dialogs.js?v=10"></script>
 <script src="/app/js/run_editor_adapter.js?v=9"></script>
 <script src="/app/js/log_viewer_panel.js?v=31"></script>
 <script src="/app/js/coin_overrides_editor.js?v=26"></script>
@@ -3649,17 +3649,21 @@ async function applyRunFilters() {
       '&tags=' + encodeURIComponent(tags);
     var resp = await apiFetch(url);
     var data = await resp.json();
-    if (!resp.ok) throw new Error(PBGuiI18n.serverMsg((data && data.detail) || resp.statusText || PBGuiI18n.t('v7run.filterRequestFailed')));
-    if (runEditorAdapter.isV8 && Array.isArray(data.unresolved) && data.unresolved.length) {
-      throw new Error(PBGuiI18n.t('v7run.pb8CannotProjectCoins', { coins: data.unresolved.join(', ') }));
-    }
-    setMultiselectValues('ms-approved-long', data.approved || []);
-    setMultiselectValues('ms-approved-short', data.approved || []);
-    setMultiselectValues('ms-ignored-long', data.ignored || []);
-    setMultiselectValues('ms-ignored-short', data.ignored || []);
-    toast(PBGuiI18n.t('v7run.filtersApplied'), 'info');
+    if (!resp.ok) throw new Error((data && data.detail) || resp.statusText || 'Filter request failed');
+    var approved = data.approved || [];
+    var ignored = data.ignored || [];
+    var unresolvedCount = runEditorAdapter.isV8 && Array.isArray(data.unresolved) ? data.unresolved.length : 0;
+    setMultiselectValues('ms-approved-long', approved);
+    setMultiselectValues('ms-approved-short', approved);
+    setMultiselectValues('ms-ignored-long', ignored);
+    setMultiselectValues('ms-ignored-short', ignored);
+    var unresolvedSuffix = unresolvedCount ? '; ' + unresolvedCount + ' unavailable PB8 symbols skipped' : '';
+    toast(
+      'Filters applied: ' + approved.length + ' approved, ' + ignored.length + ' ignored' + unresolvedSuffix,
+      unresolvedCount ? 'info' : 'ok'
+    );
   } catch (e) {
-    toast(PBGuiI18n.t('v7run.filterError') + ': ' + e.message, 'err');
+    toast('Filter error: ' + e.message, 'err');
   } finally {
     if (button) button.disabled = false;
   }
@@ -4110,10 +4114,35 @@ _editorInitPromise = init();
 document.title = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.titleEditV8' : 'v7run.titleEdit');
 var _sbTitle = document.querySelector('.sb-title');
 if (_sbTitle) _sbTitle.textContent = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.editPb8Instance' : 'v7run.editInstance');
+function visibleRunLogLines(limit) {
+  if (!_logPanelOpen || !_runLogViewer || typeof _runLogViewer._q !== 'function') return [];
+  var terminal = _runLogViewer._q('terminal');
+  if (!terminal) return [];
+  var terminalRect = terminal.getBoundingClientRect();
+  var viewportTop = Math.max(0, terminalRect.top);
+  var viewportBottom = Math.min(window.innerHeight, terminalRect.bottom);
+  return Array.from(terminal.children).filter(function (line) {
+    if (line.classList.contains('lvp-hidden') || line.classList.contains('lvp-level-hidden')) return false;
+    var rect = line.getBoundingClientRect();
+    return rect.bottom > viewportTop && rect.top < viewportBottom;
+  }).map(function (line) {
+    return String(line.dataset.text || line.textContent || '');
+  }).filter(Boolean).slice(-limit);
+}
 window.PBGUI_AI_PAGE_CONTEXT = function () {
+  var visibleLogEvidence = [];
+  var visibleLines = visibleRunLogLines(120);
+  if (visibleLines.length) {
+    visibleLogEvidence.push({
+      kind: 'log_excerpt',
+      title: 'Visible Passivbot output on ' + String(_runLogViewer._host || 'local'),
+      content: visibleLines.join('\n')
+    });
+  }
   return {
     section: 'Run config editor',
-    entities: INSTANCE_NAME ? [{ kind: 'run_config', version: runEditorAdapter.version, name: INSTANCE_NAME }] : []
+    entities: INSTANCE_NAME ? [{ kind: 'run_config', version: runEditorAdapter.version, name: INSTANCE_NAME }] : [],
+    evidence: visibleLogEvidence
   };
 };
 window.PBGUI_AI_PAGE_ACTIONS = [{

@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/app/src/styles/tokens.css">
     <link rel="stylesheet" href="/app/css/sidebar.css?v=1">
 <script src="/app/js/sidebar_resize.js?v=1"></script>
-<script src="/app/js/pbgui_dialogs.js?v=9"></script>
+<script src="/app/js/pbgui_dialogs.js?v=10"></script>
 <script src="/app/js/run_list_adapter.js?v=3"></script>
 <style>
 /* ─── Reset & Base ─────────────────────────────────────────── */
@@ -863,10 +863,10 @@ function renderPb8UpdateWarning(rows) {
     });
   }
   hosts.sort();
-  warning.hidden = hosts.length === 0;
-  hostText.textContent = hosts.length
-    ? PBGuiI18n.t('v7run.pb8RuntimeNotReady', { hosts: hosts.join(', ') })
-    : '';
+  var details = runtimeErrors.slice();
+  if (hosts.length) details.push('The validated PB8 runtime is not ready on ' + hosts.join(', ') + '.');
+  warning.hidden = details.length === 0;
+  hostText.textContent = details.join(' ');
 }
 
 function render() {

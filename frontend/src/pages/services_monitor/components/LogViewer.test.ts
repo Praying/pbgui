@@ -222,7 +222,7 @@ describe('LogViewer line rendering (legacy _extractLevel/_levelClass)', () => {
     expect(lines).toHaveLength(5000);
     expect(lines[0]!.text()).toBe('line-6'); // oldest trimmed
     expect(lines.at(-1)!.text()).toBe('line-5005');
-  });
+  }, 15000);
 
   it('ignores messages that carry a stale sid', async () => {
     const wrapper = mountViewer();

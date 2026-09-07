@@ -28,7 +28,8 @@ def test_balance_calculator_lives_under_information_navigation() -> None:
     assert "v7_balance_calc" not in nav
     assert "'info_balance_calc':  '/api/balance-calc/main_page'" in nav
     assert "'info_balance_calc':           '38_balance_calc'" in nav
-    assert "current: 'info_balance_calc'" in index_html
+    # The Vue page carries the nav identity through AppShell's page-key.
+    assert 'page-key="info_balance_calc"' in app
     assert "PBv7 Balance Calculator" not in index_html + app
     assert "misc.balance.instanceLabel" in app  # 'PB7 / PB8 Instance:' label key
     assert "%%TOKEN%%" not in index_html + app
@@ -49,8 +50,8 @@ def test_pb8_backtest_handoffs_use_shared_balance_calculator() -> None:
     for action in ("goBalanceCalc", "goCalcBalance", "goBalanceCalculatorFromResult", "calcBalanceFromResult"):
         assert f"'{action}'" not in adapter
     assert "openBalanceCalculatorWithConfig(cfg" in page
-    assert "/app/js/editor_shared.js?v=15" in page
-    assert "/app/js/backtest_editor_adapter.js?v=12" in page
+    assert "/app/js/editor_shared.js?v=16" in page
+    assert "/app/js/backtest_editor_adapter.js?v=13" in page
 
 
 def test_pb8_run_sidebar_uses_shared_balance_calculator() -> None:
@@ -65,7 +66,7 @@ def test_pb8_run_sidebar_uses_shared_balance_calculator() -> None:
     assert 'onclick="goBalanceCalc()"' in page
     assert 'onclick="calculateBalance()"' in page
     assert "supportsBalanceCalculator: true" in adapter
-    assert "/app/js/editor_shared.js?v=15" in page
+    assert "/app/js/editor_shared.js?v=16" in page
     assert "/app/js/run_editor_adapter.js?v=9" in page
 
 

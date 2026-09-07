@@ -1965,7 +1965,7 @@ def test_cookie_auth_and_v7_migration_are_available_from_the_shared_page() -> No
     assert "/api/optimize-v8/migrate-v7" in page
     assert "authFetch(BASE_PREFIX + '/api/optimize-v8/migrate-v7'" in page
     assert "window.location.href = BASE_PREFIX + '/api/optimize-v8/main_page" in page
-    assert "render_page_urls(request, html, \"/api/optimize-v7\")" in api_v7
+    assert 'render_page_urls(req, html, "/api/optimize-v7")' in api_v7
 
     optimize_migration = _page_function(page, "migrateOptimizeConfigToV8")
     pareto_migration = _page_function(page, "migrateParetoConfigToV8")

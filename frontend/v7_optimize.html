@@ -11026,7 +11026,9 @@ function updateMetaCounts() {
   el('nav-result-count').textContent = String(state.results.length);
   el('nav-pareto-count').textContent = String(state.paretos.length);
   el('config-count-chip').textContent = PBGuiI18n.t('v7optimize.configCount', { count: filteredConfigs.length });
-  el('result-count-chip').textContent = PBGuiI18n.t('v7optimize.resultSetCount', { count: filteredResults.length });
+  el('result-count-chip').textContent = state.resultsLoading
+    ? (filteredResults.length ? filteredResults.length + ' result sets · Refreshing...' : 'Loading result sets...')
+    : PBGuiI18n.t('v7optimize.resultSetCount', { count: filteredResults.length });
   el('pareto-count-chip').textContent = PBGuiI18n.t('v7optimize.paretoCount', { count: state.paretos.length });
 }
 
@@ -11782,7 +11784,13 @@ function renderResults() {
   renderResultsTableHead();
   tbody.innerHTML = '';
   if (!results.length) {
-    renderEmpty('results-tbody', optimizeEditorAdapter.isV8 ? 7 : 6, PBGuiI18n.t('v7optimize.noOptimizeResultsFound'), '', '');
+    renderEmpty(
+      'results-tbody',
+      optimizeEditorAdapter.isV8 ? 7 : 6,
+      state.resultsLoading ? 'Loading optimize results...' : PBGuiI18n.t('v7optimize.noOptimizeResultsFound'),
+      state.resultsLoading ? 'Scanning compact result metadata. Large optimizer histories remain lazy.' : '',
+      ''
+    );
     updateResultSelectionUi(results);
     updateMetaCounts();
     return;
@@ -13230,7 +13238,6 @@ function removeQueueItemsFromState(filenames) {
 
 async function loadResults() {
   var requestSeq = ++state.resultsLoadSeq;
-  var navigationSeq = state.navigationSeq;
   state.resultsLoading = true;
   renderResults();
   var data;
@@ -13243,7 +13250,7 @@ async function loadResults() {
     }
     throw error;
   }
-  if (requestSeq !== state.resultsLoadSeq || navigationSeq !== state.navigationSeq) return;
+  if (requestSeq !== state.resultsLoadSeq) return;
   state.resultsLoading = false;
   state.resultsLoadedOnce = true;
   state.results = data.results || [];

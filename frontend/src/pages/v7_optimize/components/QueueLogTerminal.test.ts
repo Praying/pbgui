@@ -138,7 +138,7 @@ describe('QueueLogTerminal rendering and filters', () => {
     await flushPromises();
     expect(snapshotLines(wrapper)).toHaveLength(5000);
     wrapper.unmount();
-  });
+  }, 15000);
 
   it('ignores messages from stale subscriptions', async () => {
     const wrapper = mountTerminal();

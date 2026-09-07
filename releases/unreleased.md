@@ -1,5 +1,23 @@
 # Unreleased
 
+## Complete post-merge Python and frontend regression repair
+
+- **Regression suite**: Adapted the remaining legacy-oriented tests to the Vue3/Tailwind v4.3 page structure, cookie authentication, mount-safe URL model, read-only PB8 Legacy panel, and current cache-busted assets.
+- **PB8 Legacy parity**: Kept Legacy browsing and Compare available in PB8 while gating destructive and rebacktest actions through the Vue panel's read-only mode.
+- **AI and worker coverage**: Moved log evidence and CMC context assertions to the Vue implementations and added Vue coverage for worker duplicate-action suppression, pending labels, and error cleanup.
+- **Sandbox portability**: Landlock Python analysis now permits the virtual-environment prefix and the base interpreter prefix, allowing standard-library imports without Bubblewrap while retaining filesystem and syscall restrictions.
+- **PB7 checkout state**: VPS Manager reads the live PB7 branch and commit when available, falling back to persisted metadata only for unavailable checkouts.
+- **Validation**: Complete offline Python suite: 7,768 passed, 43 skipped; frontend typecheck: 0 errors; frontend Vitest: 4,491 passed; frontend build: passed.
+- **API serial**: bumped from `2576` to `2577` after the API runtime fixes.
+
+## Fix Python regressions after the v2.02.2-v2.02.8 merge
+
+- **AI Python analysis sandbox**: Landlock analysis now permits both the virtual-environment prefix and the base interpreter prefix, allowing standard-library imports to complete when Bubblewrap is unavailable without weakening the filesystem boundary.
+- **PB7 branch state**: VPS Manager reads the current branch and commit from the live PB7 checkout, falling back to persisted metadata only when the checkout cannot be inspected.
+- **Regression isolation**: Credential-migration tests no longer inspect unrelated live PBApiServer processes; frontend/static-contract tests now target the Vue3 sources and the cookie-authenticated page model.
+- **Validation**: The complete offline suite passes with 7,768 tests passed and 43 skipped.
+- **API serial**: bumped from `2575` to `2576`.
+
 ## Merge origin/main v2.02.2–v2.02.8 into the Vue3 Migration Branch (合并 main 至 Vue3 分支)
 
 - **Upstream merge**: Merged the nine `origin/main` commits from `v2.02.2` through `v2.02.8` into `feature/frontend-vue3-migration`, resolving 47 conflicted files (17 API routers, 22 legacy templates, 7 deleted-by-us pages, docs and tests) by keeping the branch's Vue-first page serving and main's endpoint/security fixes together.

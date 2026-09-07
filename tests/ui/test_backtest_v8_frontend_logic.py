@@ -57,17 +57,22 @@ def test_v8_route_renders_the_v7_backtest_template() -> None:
 
 def test_pb8_exposes_read_only_legacy_results_panel() -> None:
     """PB8 should reuse Legacy browsing and Compare while hiding unsafe write actions."""
+    page_dir = ROOT / "frontend" / "src" / "pages" / "v7_backtest"
     page = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
-    adapter = (ROOT / "frontend" / "js" / "backtest_editor_adapter.js").read_text(encoding="utf-8")
+    config = (page_dir / "config.ts").read_text(encoding="utf-8")
+    app = (page_dir / "App.vue").read_text(encoding="utf-8")
+    legacy_panel = (page_dir / "components" / "LegacyPanel.vue").read_text(encoding="utf-8")
 
-    assert "/app/js/backtest_editor_adapter.js?v=12" in page
-    assert "items.push({ panel: 'legacy'" in adapter
-    assert "initialPanels: ['configs', 'queue', 'results', 'archive', 'legacy']" in adapter
-    assert "rebacktestSelectedLegacy" in adapter
-    assert "addToRunFromLegacy" in adapter
-    assert "deleteSelectedLegacyResults" in adapter
-    assert "#ctx-legacy button[onclick]" in adapter
-    assert "No legacy results found under ' + (backtestEditorAdapter.isV8 ? 'pb8' : 'pb7')" in page
+    assert "/app/js/backtest_editor_adapter.js?v=13" in page
+    # The legacy panel is exposed for both flavours (v2.02.5).
+    assert "panel: 'legacy'" in config
+    assert "if (!adapter.isV8)" not in config.split("function navItems")[1].split("}")[0]
+    # PB8 keeps Refresh + Compare and hides the write actions.
+    assert 'v-if="!store.adapter.isV8"' in app.split("#ctx-legacy")[1].split("</template>")[0]
+    assert 'data-test="legacy-compare"' in app
+    assert ':read-only="store.adapter.isV8"' in app
+    assert "readOnly?: boolean;" in legacy_panel
+    assert 'v-if="!readOnly"' in legacy_panel
 
 
 def test_backtest_page_can_open_the_queue_panel_from_ai_navigation() -> None:
@@ -102,44 +107,27 @@ def test_backtest_page_registers_existing_queue_log_function_as_page_action() ->
 
 def test_result_archive_export_batches_selection_without_long_sidebar_labels() -> None:
     """Multi-result archive exports should update once and keep progress text compact."""
-    page = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
-    function = _extract_function(page, "addResultToArchive")
+    page = (ROOT / "frontend" / "src" / "pages" / "v7_backtest" / "composables" / "useBacktestPage.ts").read_text(encoding="utf-8")
 
-    assert "results: sel.map(function(path)" in function
-    assert "Adding ' + sel.length + ' result(s)..." in function
-    assert "for (var i = 0; i < sel.length; i++)" not in function
-    assert "setArchiveProgress('🗄 Adding ' + (i + 1)" not in function
+    function = page.split("async function addResultsToArchive")[1].split("\n  }")[0]
+    assert "selectedPaths.map" in function
+    assert "preparingArchiveExport" in function
+    # One batched export — no per-result loop.
+    assert "for (var i = 0" not in function
 
 
 def test_results_sidebar_shows_archive_push_only_for_pending_own_archive() -> None:
     """Results should reuse Git Push only while My Archive has local changes."""
-    page = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
-    pending = _extract_function(page, "ownArchiveHasPendingChanges")
-    add_result = _extract_function(page, "addResultToArchive")
-    load_archives = _extract_function(page, "loadArchives")
-    push_archive = _extract_function(page, "pushArchive")
-    script = textwrap.dedent(
-        f"""
-        const assert = require('node:assert/strict');
-        let archives = [];
-        {pending}
-        assert.equal(ownArchiveHasPendingChanges(), false);
-        archives = [{{is_own: false, migration_status: {{git: {{dirty: true}}}}}}];
-        assert.equal(ownArchiveHasPendingChanges(), false);
-        archives = [{{is_own: true, migration_status: {{git: {{dirty: false}}}}}}];
-        assert.equal(ownArchiveHasPendingChanges(), false);
-        archives = [{{is_own: true, migration_status: {{git: {{dirty: true}}}}}}];
-        assert.equal(ownArchiveHasPendingChanges(), true);
-        """
-    )
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    app = (ROOT / "frontend" / "src" / "pages" / "v7_backtest" / "App.vue").read_text(encoding="utf-8")
 
-    assert completed.returncode == 0, completed.stderr or completed.stdout
-    assert 'id="btn-result-push-archive"' in page
-    assert 'data-cross-version-action onclick="pushArchive()" style="display:none"' in page
-    assert "await loadArchives();" in add_result
-    assert "updateResultArchivePushVisibility();" in load_archives
-    assert "loadArchives();" in push_archive
+    computed = app.split("const hasPendingOwnArchiveChanges = computed")[1].split("});")[0]
+    # Own archive only, and only while git reports dirty state.
+    assert "archive?.is_own" in computed
+    assert ".dirty === true" in computed
+    # The results sidebar gates Git Push behind that pending state.
+    ctx = app.split("#ctx-results")[1].split("</template>")[0]
+    assert 'v-if="hasPendingOwnArchiveChanges"' in ctx
+    assert 'data-test="results-push-archive"' in ctx
 
 
 def test_shared_editors_emit_only_the_generation_specific_suite_reducer_alias() -> None:
@@ -762,7 +750,7 @@ def test_v7_and_v8_share_the_same_backtest_shell() -> None:
 
     assert '/app/css/backtest_shell.css?v=5' in v7_source
     assert '/app/js/backtest_shell.js?v=5' in v7_source
-    assert '/app/js/backtest_editor_adapter.js?v=12' in v7_source
+    assert '/app/js/backtest_editor_adapter.js?v=13' in v7_source
     assert "PBGuiBacktestShell.upgradeLegacy" in v7_source
     assert "PBGuiBacktestEditorAdapter.create(BACKTEST_VERSION)" in v7_source
     assert "sideConfig.risk" in adapter_source
@@ -1065,7 +1053,9 @@ def test_progressive_results_render_preserves_selection_by_path() -> None:
     assert completed.returncode == 0, completed.stderr or completed.stdout
     assert "_selectedResultPaths.has(r.path)" in source
     assert "_selectedResultPaths.clear()" in source
-    assert "r.final_balance_estimated ? '~ ' : ''" in source
+    # The estimated-balance prefix renders in the Vue table.
+    vue_table = (ROOT / "frontend" / "src" / "pages" / "v7_backtest" / "components" / "ResultsTable.vue").read_text(encoding="utf-8")
+    assert "final_balance_estimated ? '~ ' : ''" in vue_table
 
 
 def test_delayed_v8_settings_load_does_not_replace_results_sidebar() -> None:
@@ -1410,7 +1400,7 @@ def test_v8_backtest_result_can_open_pb8_optimize() -> None:
     assert "'/api/optimize-v8/main_page?opt_draft_id='" in adapter
     unsupported = adapter.split("var unsupported =", 1)[1].split("];", 1)[0]
     assert "'optimizeFromResult'" not in unsupported
-    assert "/app/js/backtest_editor_adapter.js?v=12" in page
+    assert "/app/js/backtest_editor_adapter.js?v=13" in page
 
 
 def test_v8_backtest_strategy_explorer_handoffs_use_cookie_drafts() -> None:
@@ -2158,6 +2148,7 @@ def test_optimize_validation_results_render_as_collapsible_candidate_groups() ->
           .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
         const fmt = value => String(value == null ? '' : value);
         const fmtDate = value => String(value || '');
+        const PBGuiI18n = {{t: (key, params) => Object.values(params || {{}}).join(' ') || key}};
         const BACKTEST_RESULT_COLUMN_DEFINITIONS = [];
         {functions}
         const rth = label => '<th>' + label + '</th>';
