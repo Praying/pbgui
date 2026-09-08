@@ -827,6 +827,13 @@ body { overflow: hidden; }
   box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
 }
 
+/* The Configs panel mirrors PBv7 Backtest: short lists end immediately at
+   the terminal count bar instead of stretching the frame to the viewport. */
+.opt-table-frame--content-sized {
+  flex: 0 1 auto;
+  max-height: 100%;
+}
+
 .opt-table-wrap {
   position: relative;
   isolation: isolate;
@@ -834,6 +841,16 @@ body { overflow: hidden; }
   background: #151a1f;
   scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
+}
+
+.opt-table-frame--content-sized .opt-table-wrap {
+  flex: 0 1 auto;
+  max-height: calc(100% - 34px);
+  padding-bottom: 0;
+}
+
+.opt-table-frame--content-sized .opt-table-wrap::after {
+  display: none;
 }
 
 /* Keep a short table connected to its viewport instead of ending in a flat

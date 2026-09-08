@@ -78,6 +78,16 @@ describe('Optimize page warning style contracts', () => {
     expect(appSource).toContain('box-shadow: var(--shadow-elevated), inset 0 1px 0');
   });
 
+  it('matches the PBv7 Backtest configuration table terminal-bar finish', () => {
+    expect(configsPanelSource).toContain('class="opt-table-frame opt-table-frame--content-sized"');
+    expect(configsPanelSource).toContain('class="pbgui-list-footer"');
+    expect(configsPanelSource).toContain('data-test="configs-list-footer"');
+    expect(configsPanelSource).toContain("t('v7optimize.configCount', { count: rows.length })");
+    expect(appSource).toMatch(/\.opt-table-frame--content-sized \{[\s\S]*?flex: 0 1 auto;/);
+    expect(appSource).toMatch(/\.opt-table-frame--content-sized \.opt-table-wrap \{[\s\S]*?padding-bottom: 0;/);
+    expect(appSource).toContain('.opt-table-frame--content-sized .opt-table-wrap::after');
+  });
+
   it('renders semantic compact notification states with reduced-motion support', () => {
     expect(appSource).toContain('opt-toast-card');
     expect(appSource).toContain('opt-toast-card__icon');

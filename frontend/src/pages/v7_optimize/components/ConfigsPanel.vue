@@ -94,7 +94,7 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div class="opt-table-frame">
+  <div class="opt-table-frame opt-table-frame--content-sized">
     <div ref="wrap" class="opt-table-wrap opt-table-wrap--configs pbgui-list-wrap min-h-0 flex-1 overflow-auto">
       <table class="opt-table opt-table--configs pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
         <thead>
