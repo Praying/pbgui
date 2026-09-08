@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-import type { Component } from 'vue';
-import { PhCaretDown, PhCaretUp, PhCopy, PhPencilSimple } from '@phosphor-icons/vue';
+import { PhCopy, PhPencilSimple } from '@phosphor-icons/vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
-import EmptyState from '@/shared/components/EmptyState.vue';
+import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import type { ConfigSummary } from '../types';
 
 const props = withDefaults(
@@ -60,15 +59,13 @@ function shortDateTime(input: unknown): string {
 }
 const editLabel = computed(() => t('v7optimize.editConfig'));
 const duplicateLabel = computed(() => t('v7optimize.duplicate'));
-function isSorted(key: string): boolean { return props.sort.key === key; }
-function sortIcon(key: string): Component { return props.sort.key === key && props.sort.direction === 'desc' ? PhCaretDown : PhCaretUp; }
 /* Icon-only row actions (edit / duplicate) reuse the backtest row-action tone: quiet border, accent on hover. */
 const iconActionClass = 'pbgui-config-action size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
-const wrap = ref<HTMLElement | null>(null);
+const wrap = ref<InstanceType<typeof ListWrap> | null>(null);
 const tbody = ref<HTMLElement | null>(null);
 const dragSelect = useRowDragSelect({
   getRows: () => tbody.value ? Array.from(tbody.value.querySelectorAll('tr[data-path]')) : [],
-  getWrap: () => wrap.value,
+  getWrap: () => wrap.value?.root ?? null,
   isSelected: (path) => props.selected.has(path),
   onToggle: (path) => emit('toggle', path),
   onSelectRange: (paths, selected) => emit('selectRange', paths, selected),
@@ -96,20 +93,20 @@ onBeforeUnmount(() => dragSelect.dispose());
       <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
     </div>
     <div class="pbgui-config-frame">
-      <div ref="wrap" class="pbgui-config-wrap pbgui-list-wrap">
-        <table class="pbgui-config-table pbgui-list-table w-full border-separate border-spacing-0 text-sm">
+      <ListWrap ref="wrap" class="pbgui-config-wrap">
+        <Table class="pbgui-config-table">
           <thead>
             <tr>
-            <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="configs-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'exchange')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thExchange') }}<PbIcon v-if="isSorted('exchange')" :icon="sortIcon('exchange')" :size="12" class="text-accent-soft" /></span></th>
-            <th v-if="isV8" class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'strategy')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStrategy') }}<PbIcon v-if="isSorted('strategy')" :icon="sortIcon('strategy')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'backtest_count')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thBacktests') }}<PbIcon v-if="isSorted('backtest_count')" :icon="sortIcon('backtest_count')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'start')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStart') }}<PbIcon v-if="isSorted('start')" :icon="sortIcon('start')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'end')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thEnd') }}<PbIcon v-if="isSorted('end')" :icon="sortIcon('end')" :size="12" class="text-accent-soft" /></span></th>
-            <th>{{ t('v7optimize.thFlags') }}</th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thModified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
-            <th>{{ t('v7optimize.thActions') }}</th>
+            <Th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="configs-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
+            <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
+            <SortTh sort-key="exchange" :label="t('v7optimize.thExchange')" :sort="sort.key === 'exchange' ? sort.direction : undefined" @sort="emit('sort', 'exchange')" />
+            <SortTh v-if="isV8" sort-key="strategy" :label="t('v7optimize.thStrategy')" :sort="sort.key === 'strategy' ? sort.direction : undefined" @sort="emit('sort', 'strategy')" />
+            <SortTh sort-key="backtest_count" :label="t('v7optimize.thBacktests')" :sort="sort.key === 'backtest_count' ? sort.direction : undefined" @sort="emit('sort', 'backtest_count')" />
+            <SortTh sort-key="start" :label="t('v7optimize.thStart')" :sort="sort.key === 'start' ? sort.direction : undefined" @sort="emit('sort', 'start')" />
+            <SortTh sort-key="end" :label="t('v7optimize.thEnd')" :sort="sort.key === 'end' ? sort.direction : undefined" @sort="emit('sort', 'end')" />
+            <Th>{{ t('v7optimize.thFlags') }}</Th>
+            <SortTh sort-key="modified" :label="t('v7optimize.thModified')" :sort="sort.key === 'modified' ? sort.direction : undefined" @sort="emit('sort', 'modified')" />
+            <Th>{{ t('v7optimize.thActions') }}</Th>
             </tr>
           </thead>
           <tbody ref="tbody">
@@ -138,27 +135,23 @@ onBeforeUnmount(() => dragSelect.dispose());
               <span v-else class="text-muted">-</span>
             </td>
             <td class="pbgui-config-date" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
-            <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
-              <div class="pbgui-list-actions__group">
-                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="editLabel" :aria-label="editLabel" data-test="config-edit" @click="emit('edit', rowName(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
-                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="duplicateLabel" :aria-label="duplicateLabel" data-test="config-duplicate" @click="emit('duplicate', rowName(row))"><PbIcon :icon="PhCopy" :size="16" /></Button>
-              </div>
-            </td>
+            <TdActions>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="editLabel" :aria-label="editLabel" data-test="config-edit" @click="emit('edit', rowName(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="duplicateLabel" :aria-label="duplicateLabel" data-test="config-duplicate" @click="emit('duplicate', rowName(row))"><PbIcon :icon="PhCopy" :size="16" /></Button>
+            </TdActions>
             </tr>
-            <tr v-if="!rows.length">
-            <td :colspan="isV8 ? 10 : 9" class="p-8! text-center">
-              <EmptyState
-                :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
-                :message="search ? undefined : t('v7optimize.emptyConfigsHelp')"
-                :action-label="search ? undefined : t('v7optimize.newConfig')"
-                @action="emit('create')"
-              />
-            </td>
-            </tr>
+            <EmptyRow
+              v-if="!rows.length"
+              :colspan="isV8 ? 10 : 9"
+              :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
+              :message="search ? undefined : t('v7optimize.emptyConfigsHelp')"
+              :action-label="search ? undefined : t('v7optimize.newConfig')"
+              @action="emit('create')"
+            />
           </tbody>
-        </table>
-      </div>
-      <footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true"></footer>
+        </Table>
+      </ListWrap>
+      <ListFooter data-test="configs-list-footer" aria-hidden="true"></ListFooter>
     </div>
   </div>
 </template>

@@ -7,11 +7,12 @@
  * convert button (:5547-5549) and click/drag row selection with wrap
  * auto-scroll (:5731-5785).
  */
-import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage, PhCaretDown, PhCaretRight, PhCaretUp, PhWarning } from '@phosphor-icons/vue';
+import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage, PhCaretDown, PhCaretRight, PhWarning } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { useRowDragSelect } from '../composables/useRowDragSelect';
 import { collectResultGroups, resultGroupKey, type ResultGroupBlock } from '../lib/resultsModel';
@@ -192,22 +193,22 @@ onBeforeUnmount(() => dragSelect.dispose());
     </div>
   </div>
   <div v-else ref="wrap" class="relative">
-    <table class="pbgui-list-table w-full min-w-max select-none text-sm">
+    <Table class="min-w-max select-none">
       <thead>
         <tr>
-          <th
+          <SortTh
             v-for="header in headers"
             :key="header.col"
+            :sort-key="header.col"
             :data-col="header.col"
-            class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary"
+            :label="header.label"
             :title="headerTitle(header.label)"
-            @click="emit('sort', header.col)"
-          >
-            <span class="inline-flex items-center gap-1">{{ header.label }}<PbIcon v-if="sort.col === header.col" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="12" class="text-accent-soft" /></span>
-          </th>
-          <th :title="t('v7backtest.tweTooltip')" class="sticky top-0 z-[2] cursor-default">TWE</th>
-          <th class="sticky top-0 z-[2] cursor-default">POS</th>
-          <th class="sticky top-0 cursor-default text-center">{{ t('v7backtest.actions') }}</th>
+            :sort="sort.col === header.col ? (sort.asc ? 'asc' : 'desc') : undefined"
+            @sort="emit('sort', header.col)"
+          />
+          <Th :title="t('v7backtest.tweTooltip')" class="cursor-default">TWE</Th>
+          <Th class="cursor-default">POS</Th>
+          <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
         </tr>
       </thead>
       <tbody ref="tbody">
@@ -262,34 +263,32 @@ onBeforeUnmount(() => dragSelect.dispose());
           <td class="truncate font-mono tabular-nums">{{ entry.row.final_balance_estimated ? '~ ' : '' }}{{ fmt(entry.row.final_balance, 0) }}</td>
           <td class="truncate font-mono tabular-nums">{{ fmt(entry.row.twe_long, 2) }} / {{ fmt(entry.row.twe_short, 2) }}</td>
           <td class="truncate font-mono tabular-nums">{{ fmt(entry.row.pos_long, 0) }} / {{ fmt(entry.row.pos_short, 0) }}</td>
-          <td class="pbgui-list-actions" @click.stop>
-            <div class="pbgui-list-actions__group">
-              <BacktestRowActionButton
-                v-for="action in ACTION_BUTTONS"
-                :key="action.kind"
-                :icon="action.icon"
-                :label="action.kind === 'plot' ? t('v7backtest.plotImages', { version: String(entry.row.backtest_version || 'v7').toUpperCase() }) : t(action.titleKey)"
-                :pressed="activeActions[entry.row.path]?.has(action.kind)"
-                :data-action="action.kind"
-                :data-path="entry.row.path"
-                @click="emit('toggle-action', entry.row.path, action.kind)"
-              />
-              <BacktestRowActionButton
-                v-if="allowV8Convert && entry.row.backtest_version === 'v7'"
-                :label="t('v7backtest.convertResultToV8')"
-                tone="accent"
-                data-action="convert"
-                :data-path="entry.row.path"
-                @click="emit('convert', entry.row.path)"
-              >
-                <span class="font-mono text-[10px] font-bold tracking-tight">V8</span>
-              </BacktestRowActionButton>
-            </div>
-          </td>
+          <TdActions>
+            <BacktestRowActionButton
+              v-for="action in ACTION_BUTTONS"
+              :key="action.kind"
+              :icon="action.icon"
+              :label="action.kind === 'plot' ? t('v7backtest.plotImages', { version: String(entry.row.backtest_version || 'v7').toUpperCase() }) : t(action.titleKey)"
+              :pressed="activeActions[entry.row.path]?.has(action.kind)"
+              :data-action="action.kind"
+              :data-path="entry.row.path"
+              @click="emit('toggle-action', entry.row.path, action.kind)"
+            />
+            <BacktestRowActionButton
+              v-if="allowV8Convert && entry.row.backtest_version === 'v7'"
+              :label="t('v7backtest.convertResultToV8')"
+              tone="accent"
+              data-action="convert"
+              :data-path="entry.row.path"
+              @click="emit('convert', entry.row.path)"
+            >
+              <span class="font-mono text-[10px] font-bold tracking-tight">V8</span>
+            </BacktestRowActionButton>
+          </TdActions>
         </tr>
         </template>
       </tbody>
-    </table>
+    </Table>
   </div>
 </template>
 

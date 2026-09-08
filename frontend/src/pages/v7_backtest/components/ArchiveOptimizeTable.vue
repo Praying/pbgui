@@ -5,6 +5,7 @@
  * single-row click-select and the dblclick view action (:9258-9266).
  */
 import { useI18n } from 'vue-i18n';
+import { Table, Th } from '@/shared/components/ui/table';
 import type { ArchiveOptimizeConfigItem } from '../types';
 
 const props = defineProps<{
@@ -38,15 +39,15 @@ function isSelected(item: ArchiveOptimizeConfigItem): boolean {
 <template>
   <div>
     <div v-if="configs.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noOptimizeSettings') }}</div>
-    <table v-else class="pbgui-list-table w-full select-none text-sm">
+    <Table v-else class="select-none">
       <thead>
         <tr>
-          <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.name') }}</th>
-          <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.owner') }}</th>
-          <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.configVersion') }}</th>
-          <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.pbguiVersion') }}</th>
-          <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.modified') }}</th>
-          <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.path') }}</th>
+          <Th class="cursor-default">{{ t('v7backtest.name') }}</Th>
+          <Th class="cursor-default">{{ t('v7backtest.owner') }}</Th>
+          <Th class="cursor-default">{{ t('v7backtest.configVersion') }}</Th>
+          <Th class="cursor-default">{{ t('v7backtest.pbguiVersion') }}</Th>
+          <Th class="cursor-default">{{ t('v7backtest.modified') }}</Th>
+          <Th class="cursor-default">{{ t('v7backtest.path') }}</Th>
         </tr>
       </thead>
       <tbody>
@@ -69,6 +70,6 @@ function isSelected(item: ArchiveOptimizeConfigItem): boolean {
           <td class="max-w-[360px] break-all text-secondary" :title="item.relative_path ?? item.path">{{ item.relative_path ?? item.path }}</td>
         </tr>
       </tbody>
-    </table>
+    </Table>
   </div>
 </template>

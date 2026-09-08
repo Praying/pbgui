@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { PhArrowDown, PhArrowUp, PhArrowsClockwise, PhCaretDown, PhCaretUp, PhFileText, PhPencilSimple } from '@phosphor-icons/vue';
+import { PhArrowDown, PhArrowUp, PhArrowsClockwise, PhFileText, PhPencilSimple } from '@phosphor-icons/vue';
 import { computed, onBeforeUnmount, ref } from 'vue';
-import type { Component } from 'vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
+import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import PbIcon from '@/shared/components/PbIcon.vue';
-import EmptyState from '@/shared/components/EmptyState.vue';
 import type { QueueItem } from '../types';
 
 const props = withDefaults(
@@ -86,16 +85,14 @@ function shortDateTime(input: unknown): string {
   const dateOnly = text.match(/^(\d{4}-\d{2}-\d{2})/);
   return dateOnly?.[1] ?? text;
 }
-function isSorted(key: string): boolean { return props.sort.key === key; }
-function sortIcon(key: string): Component { return props.sort.key === key && props.sort.direction === 'desc' ? PhCaretDown : PhCaretUp; }
 /* Secondary row actions are icon buttons (Start/Stop keeps its label because
    it is the state-dependent primary action with danger/success semantics). */
 const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
-const wrap = ref<HTMLElement | null>(null);
+const wrap = ref<InstanceType<typeof ListWrap> | null>(null);
 const tbody = ref<HTMLElement | null>(null);
 const dragSelect = useRowDragSelect({
   getRows: () => tbody.value ? Array.from(tbody.value.querySelectorAll('tr[data-path]')) : [],
-  getWrap: () => wrap.value,
+  getWrap: () => wrap.value?.root ?? null,
   isSelected: (path) => props.selected.has(path),
   onToggle: (path) => emit('toggle', path),
   onSelectRange: (paths, selected) => emit('selectRange', paths, selected),
@@ -133,16 +130,16 @@ function dropRow(row: QueueItem, event: DragEvent): void {
     <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
   <div class="opt-table-frame">
-    <div ref="wrap" class="opt-table-wrap opt-table-wrap--queue pbgui-list-wrap min-h-0 flex-1 overflow-auto">
-      <table class="opt-table opt-table--queue pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+    <ListWrap ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto">
+      <Table class="opt-table opt-table--queue max-[800px]:min-w-[720px]">
         <thead>
           <tr>
-            <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="queue-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'exchange')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thExchange') }}<PbIcon v-if="isSorted('exchange')" :icon="sortIcon('exchange')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'status')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStatus') }}<PbIcon v-if="isSorted('status')" :icon="sortIcon('status')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'created')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thCreated') }}<PbIcon v-if="isSorted('created')" :icon="sortIcon('created')" :size="12" class="text-accent-soft" /></span></th>
-            <th>{{ t('v7optimize.thActions') }}</th>
+            <Th :sticky="false" class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="queue-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
+            <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
+            <SortTh sort-key="exchange" :label="t('v7optimize.thExchange')" :sort="sort.key === 'exchange' ? sort.direction : undefined" @sort="emit('sort', 'exchange')" />
+            <SortTh sort-key="status" :label="t('v7optimize.thStatus')" :sort="sort.key === 'status' ? sort.direction : undefined" @sort="emit('sort', 'status')" />
+            <SortTh sort-key="created" :label="t('v7optimize.thCreated')" :sort="sort.key === 'created' ? sort.direction : undefined" @sort="emit('sort', 'created')" />
+            <Th>{{ t('v7optimize.thActions') }}</Th>
           </tr>
         </thead>
         <tbody ref="tbody">
@@ -180,33 +177,29 @@ function dropRow(row: QueueItem, event: DragEvent): void {
               </div>
             </td>
             <td class="tabular-nums text-xs text-secondary" :title="String(row.created || row.modified || '')">{{ shortDateTime(row.created || row.modified) || '-' }}</td>
-            <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
-              <div class="pbgui-list-actions__group">
-                <Button type="button" :variant="isRunning(row) ? 'danger' : 'success'" size="sm" @click="emit('action', filename(row), isRunning(row) ? 'stop' : 'start')">{{ isRunning(row) ? t('v7optimize.stop') : t('v7optimize.start') }}</Button>
-                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.requeue')" :aria-label="t('v7optimize.requeue')" data-test="queue-requeue" @click="emit('action', filename(row), 'requeue')"><PbIcon :icon="PhArrowsClockwise" :size="16" /></Button>
-                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.editConfig')" :aria-label="t('v7optimize.editConfig')" data-test="queue-edit" @click="emit('edit', filename(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
-                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.openLog')" :aria-label="t('v7optimize.openLog')" data-test="queue-log" @click="emit('log', row)"><PbIcon :icon="PhFileText" :size="16" /></Button>
-                <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-up" :title="t('editor.suite.moveUp')" :aria-label="t('editor.suite.moveUp')" @click="emit('move', filename(row), -1)"><PbIcon :icon="PhArrowUp" :size="16" /></Button>
-                <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="16" /></Button>
-              </div>
-            </td>
+            <TdActions>
+              <Button type="button" :variant="isRunning(row) ? 'danger' : 'success'" size="sm" @click="emit('action', filename(row), isRunning(row) ? 'stop' : 'start')">{{ isRunning(row) ? t('v7optimize.stop') : t('v7optimize.start') }}</Button>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.requeue')" :aria-label="t('v7optimize.requeue')" data-test="queue-requeue" @click="emit('action', filename(row), 'requeue')"><PbIcon :icon="PhArrowsClockwise" :size="16" /></Button>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.editConfig')" :aria-label="t('v7optimize.editConfig')" data-test="queue-edit" @click="emit('edit', filename(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.openLog')" :aria-label="t('v7optimize.openLog')" data-test="queue-log" @click="emit('log', row)"><PbIcon :icon="PhFileText" :size="16" /></Button>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-up" :title="t('editor.suite.moveUp')" :aria-label="t('editor.suite.moveUp')" @click="emit('move', filename(row), -1)"><PbIcon :icon="PhArrowUp" :size="16" /></Button>
+              <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="16" /></Button>
+            </TdActions>
           </tr>
-          <tr v-if="!rows.length">
-            <td colspan="6" class="p-8! text-center">
-              <EmptyState
-                :title="search ? t('v7optimize.noMatches') : t('v7optimize.queueIsEmpty')"
-                :message="search ? undefined : t('v7optimize.emptyQueueHelp')"
-                :action-label="search ? undefined : t('v7optimize.backToConfigList')"
-                @action="emit('goToConfigs')"
-              />
-            </td>
-          </tr>
+          <EmptyRow
+            v-if="!rows.length"
+            :colspan="6"
+            :title="search ? t('v7optimize.noMatches') : t('v7optimize.queueIsEmpty')"
+            :message="search ? undefined : t('v7optimize.emptyQueueHelp')"
+            :action-label="search ? undefined : t('v7optimize.backToConfigList')"
+            @action="emit('goToConfigs')"
+          />
         </tbody>
-      </table>
-    </div>
-    <footer class="pbgui-list-footer" data-test="queue-list-footer">
+      </Table>
+    </ListWrap>
+    <ListFooter data-test="queue-list-footer">
       <span class="tabular-nums">{{ t('v7optimize.queuedCount', { count: rows.length }) }}</span>
       <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7optimize.queueItemsSelected', { count: selectedCount }) }}</span>
-    </footer>
+    </ListFooter>
   </div>
 </template>

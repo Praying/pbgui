@@ -6,6 +6,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
+import { Table, Th } from '@/shared/components/ui/table';
 import {
   SelectContent,
   SelectItem,
@@ -686,13 +687,13 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-generator-apply" @click="applyScenarioPreview">{{ t('editor.suite.generatorApply') }}</Button>
             </div>
             <div style="max-height: 190px; overflow: auto">
-              <table class="tbl" style="font-size: var(--fs-sm)">
-                <thead><tr><th>{{ t('editor.suite.generatorUse') }}</th><th>{{ t('editor.suite.label') }}</th><th>{{ t('editor.suite.generatorPeriod') }}</th></tr></thead>
+              <Table>
+                <thead><tr><Th :sticky="false">{{ t('editor.suite.generatorUse') }}</Th><Th :sticky="false">{{ t('editor.suite.label') }}</Th><Th :sticky="false">{{ t('editor.suite.generatorPeriod') }}</Th></tr></thead>
                 <tbody>
                   <tr v-for="scenario in scenarioPreview.training_scenarios" :key="'training-' + scenario.label"><td>{{ t('editor.suite.generatorTrain') }}</td><td>{{ scenario.label }}</td><td>{{ scenario.start_date }} {{ t('editor.suite.generatorTo') }} {{ scenario.end_date }}</td></tr>
                   <tr v-for="scenario in scenarioPreview.holdout_scenarios" :key="'holdout-' + scenario.label"><td>{{ t('editor.suite.generatorHoldout') }}</td><td>{{ scenario.label }}</td><td>{{ scenario.start_date }} {{ t('editor.suite.generatorTo') }} {{ scenario.end_date }}</td></tr>
                 </tbody>
-              </table>
+              </Table>
             </div>
             <div v-for="warning in scenarioPreview.warnings || []" :key="warning" style="font-size: var(--fs-sm); line-height: 1.45; color: var(--orange); margin-top: 4px">{{ warning }}</div>
           </div>
@@ -708,12 +709,12 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
           <div v-if="model.scenarios.length === 0" style="color: var(--text-dim); font-size: var(--fs-sm); padding: var(--sp-sm)">
             {{ t('editor.suite.noScenarios') }}
           </div>
-          <table v-else class="tbl" style="font-size: var(--fs-sm)">
+          <Table v-else>
             <thead>
               <tr>
-                <th style="width: 30%">{{ t('editor.suite.label') }}</th>
-                <th>{{ t('editor.suite.details') }}</th>
-                <th style="width: 140px">{{ t('editor.suite.actions') }}</th>
+                <Th :sticky="false" style="width: 30%">{{ t('editor.suite.label') }}</Th>
+                <Th :sticky="false">{{ t('editor.suite.details') }}</Th>
+                <Th :sticky="false" style="width: 140px">{{ t('editor.suite.actions') }}</Th>
               </tr>
             </thead>
             <tbody>
@@ -728,7 +729,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                 </td>
               </tr>
             </tbody>
-          </table>
+          </Table>
         </div>
 
         <div v-if="editing && draft" style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); background: rgb(var(--accent-rgb) / 0.03)">
@@ -807,13 +808,13 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               <button type="button" class="act-btn" data-test="suite-add-override" @click="overrideRowOpen = true">{{ t('editor.suite.addOverride') }}</button>
             </div>
 
-            <table v-if="overrideEntries.length > 0" class="tbl" style="font-size: var(--fs-xs); margin-bottom: var(--sp-xs)">
+            <Table v-if="overrideEntries.length > 0" class="text-xs" style="margin-bottom: var(--sp-xs)">
               <thead>
                 <tr>
-                  <th>{{ t('editor.suite.side') }}</th>
-                  <th>{{ t('editor.suite.parameter') }}</th>
-                  <th>{{ t('editor.suite.value') }}</th>
-                  <th style="width: 40px"></th>
+                  <Th :sticky="false">{{ t('editor.suite.side') }}</Th>
+                  <Th :sticky="false">{{ t('editor.suite.parameter') }}</Th>
+                  <Th :sticky="false">{{ t('editor.suite.value') }}</Th>
+                  <Th :sticky="false" style="width: 40px"></Th>
                 </tr>
               </thead>
               <tbody>
@@ -824,7 +825,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                   <td><Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" data-test="suite-ov-remove" @click="removeOverride(key)">×</Button></td>
                 </tr>
               </tbody>
-            </table>
+            </Table>
 
             <div v-if="overrideRowOpen" style="display: flex; gap: var(--sp-sm); align-items: end; margin-top: var(--sp-xs)">
               <div class="form-group">

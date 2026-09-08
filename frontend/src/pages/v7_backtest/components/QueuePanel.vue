@@ -8,8 +8,6 @@
  * selection surface.
  */
 import {
-  PhCaretDown,
-  PhCaretUp,
   PhChartBar,
   PhCheckCircle,
   PhClock,
@@ -25,6 +23,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { QueueItem } from '../types';
@@ -250,13 +249,18 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
           <span>{{ line }}</span>
         </template>
       </div>
-      <table v-else class="queue-table pbgui-list-table w-full min-w-[820px] select-none border-separate border-spacing-0 text-sm">
+      <Table v-else class="queue-table min-w-[820px] select-none">
         <thead>
           <tr>
-            <th v-for="column in COLUMNS" :key="column.key" class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" @click="setSort(column.key)">
-              <span class="inline-flex items-center gap-1">{{ t(column.labelKey) }}<PbIcon v-if="sortCol === column.key" :icon="sortAsc ? PhCaretUp : PhCaretDown" :size="12" class="text-accent-soft" /></span>
-            </th>
-            <th class="sticky top-0 cursor-default text-center">{{ t('v7backtest.actions') }}</th>
+            <SortTh
+              v-for="column in COLUMNS"
+              :key="column.key"
+              :sort-key="column.key"
+              :label="t(column.labelKey)"
+              :sort="sortCol === column.key ? (sortAsc ? 'asc' : 'desc') : undefined"
+              @sort="setSort(column.key)"
+            />
+            <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
           </tr>
         </thead>
         <tbody>
@@ -283,8 +287,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
             </td>
             <td class="max-w-[180px] truncate text-secondary" :title="exchangeText(item)">{{ exchangeText(item) }}</td>
             <td class="font-mono text-xs tabular-nums text-secondary" :title="item.created ?? ''">{{ fmtDate(item.created) }}</td>
-            <td class="pbgui-list-actions" @mousedown.stop>
-              <div class="pbgui-list-actions__group justify-end">
+            <TdActions>
               <BacktestRowActionButton
                 v-if="item.status === 'error'"
                 :icon="PhPlay"
@@ -320,16 +323,15 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
                 tone="danger"
                 @click.stop="emit('remove', item.filename)"
               />
-              </div>
-            </td>
+            </TdActions>
           </tr>
         </tbody>
-      </table>
+      </Table>
       </div>
-      <footer class="pbgui-list-footer" data-test="queue-list-footer">
+      <ListFooter data-test="queue-list-footer">
         <span class="tabular-nums">{{ t('v7backtest.queueItemsCount', { count: items.length }) }}</span>
         <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ selectedCount }} {{ t('v7backtest.queueSelected') }}</span>
-      </footer>
+      </ListFooter>
     </div>
 
     <!-- deleteSelectedQueue confirm (:5860-5870) -->

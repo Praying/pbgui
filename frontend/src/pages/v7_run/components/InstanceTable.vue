@@ -11,10 +11,10 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PhCaretDown, PhCaretUp, PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
+import { PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
-import EmptyState from '@/shared/components/EmptyState.vue';
+import { EmptyRow, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import { forcedModeLabelKey, normalizedForcedMode, STATUS_LABEL_KEYS, type RunInstance, type SortState } from '../lib/table';
 
 const props = defineProps<{
@@ -115,13 +115,20 @@ const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default
 </script>
 
 <template>
-  <div class="pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
-    <table class="pbgui-list-table w-full min-w-max border-separate border-spacing-0 text-sm">
+  <ListWrap class="min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
+    <Table class="min-w-max">
       <thead id="thead">
         <tr>
-          <th class="sticky top-0 z-[2]" :class="col.labelKey ? 'cursor-pointer select-none transition-colors hover:text-primary' : ''" v-for="col in columns" :key="col.key" :data-sort="col.labelKey ? col.key : undefined" :role="col.labelKey ? 'button' : undefined" :tabindex="col.labelKey ? 0 : undefined" :aria-sort="col.labelKey && sort.col === col.key ? (sort.asc ? 'ascending' : 'descending') : undefined" @click="col.labelKey && emit('sort', col.key)" @keydown.enter.prevent="col.labelKey && emit('sort', col.key)">
-            <span v-if="col.labelKey" class="inline-flex items-center gap-1">{{ t(col.labelKey) }}<PbIcon v-if="sort.col === col.key" :icon="sort.asc ? PhCaretUp : PhCaretDown" :size="12" class="text-accent-soft" /></span>
-          </th>
+          <template v-for="col in columns" :key="col.key">
+            <SortTh
+              v-if="col.labelKey"
+              :sort-key="col.key"
+              :label="t(col.labelKey)"
+              :sort="sort.col === col.key ? (sort.asc ? 'asc' : 'desc') : undefined"
+              @sort="emit('sort', col.key)"
+            />
+            <Th v-else />
+          </template>
         </tr>
       </thead>
       <tbody id="tbody">
@@ -151,31 +158,27 @@ const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default
           <td class="whitespace-nowrap">{{ runningOn(row) }}</td>
           <td class="whitespace-nowrap">{{ orDash(row.desired_state) }}</td>
           <td class="whitespace-nowrap">{{ row.note || '' }}</td>
-          <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!">
-            <div class="pbgui-list-actions__group">
-              <template v-if="supportsForcedModes">
-                <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')" :aria-label="t('v7run.panicAllPositions')" @click="emit('forcedMode', row.name, 'panic')">P</Button>
-                <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')" :aria-label="t('v7run.gracefulStopAllPositions')" @click="emit('forcedMode', row.name, 'graceful_stop')">G</Button>
-                <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')" :aria-label="t('v7run.takeProfitOnlyAllPositions')" @click="emit('forcedMode', row.name, 'tp_only')">T</Button>
-                <Button v-if="forcedModeSummary(row)" class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="info" size="sm" type="button" data-forced-mode="normal" :data-forced-name="row.name" :data-forced-version="row.version ?? 0" :title="t('v7run.clearForcedMode')" :aria-label="t('v7run.clearForcedMode')" @click="emit('forcedMode', row.name, 'normal', row.version ?? 0)">N</Button>
-              </template>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-edit="row.name" :title="t('v7run.edit')" :aria-label="t('v7run.edit')" @click="emit('edit', row.name)"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')" :aria-label="t('v7run.openBalanceCalculator')" @click="emit('balance', row.name)"><PbIcon :icon="PhCurrencyDollar" :size="16" /></Button>
-              <Button v-if="supportsConversion" class="h-7 shrink-0 rounded-md px-1.5 text-xs font-semibold" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')" :aria-label="t('v7run.convertToV8')" @click="emit('convert', row.name)">V8</Button>
-              <Button class="size-7 shrink-0 rounded-md p-0" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')" :aria-label="t('common.delete')" @click="emit('remove', row.name)"><PbIcon :icon="PhX" :size="16" /></Button>
-            </div>
-          </td>
+          <TdActions>
+            <template v-if="supportsForcedModes">
+              <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="danger" size="sm" type="button" data-forced-mode="panic" :data-forced-name="row.name" :title="t('v7run.panicAllPositions')" :aria-label="t('v7run.panicAllPositions')" @click="emit('forcedMode', row.name, 'panic')">P</Button>
+              <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="warning" size="sm" type="button" data-forced-mode="graceful_stop" :data-forced-name="row.name" :title="t('v7run.gracefulStopAllPositions')" :aria-label="t('v7run.gracefulStopAllPositions')" @click="emit('forcedMode', row.name, 'graceful_stop')">G</Button>
+              <Button class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="success" size="sm" type="button" data-forced-mode="tp_only" :data-forced-name="row.name" :title="t('v7run.takeProfitOnlyAllPositions')" :aria-label="t('v7run.takeProfitOnlyAllPositions')" @click="emit('forcedMode', row.name, 'tp_only')">T</Button>
+              <Button v-if="forcedModeSummary(row)" class="size-7 shrink-0 rounded-md p-0 text-xs font-bold" variant="info" size="sm" type="button" data-forced-mode="normal" :data-forced-name="row.name" :data-forced-version="row.version ?? 0" :title="t('v7run.clearForcedMode')" :aria-label="t('v7run.clearForcedMode')" @click="emit('forcedMode', row.name, 'normal', row.version ?? 0)">N</Button>
+            </template>
+            <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-edit="row.name" :title="t('v7run.edit')" :aria-label="t('v7run.edit')" @click="emit('edit', row.name)"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
+            <Button type="button" variant="default" size="icon" :class="iconActionClass" :data-balance="row.name" :title="t('v7run.openBalanceCalculator')" :aria-label="t('v7run.openBalanceCalculator')" @click="emit('balance', row.name)"><PbIcon :icon="PhCurrencyDollar" :size="16" /></Button>
+            <Button v-if="supportsConversion" class="h-7 shrink-0 rounded-md px-1.5 text-xs font-semibold" variant="info" size="sm" type="button" :data-convert-v8="row.name" :title="t('v7run.convertToV8')" :aria-label="t('v7run.convertToV8')" @click="emit('convert', row.name)">V8</Button>
+            <Button class="size-7 shrink-0 rounded-md p-0" variant="danger" size="sm" type="button" :data-delete="row.name" :title="t('common.delete')" :aria-label="t('common.delete')" @click="emit('remove', row.name)"><PbIcon :icon="PhX" :size="16" /></Button>
+          </TdActions>
         </tr>
-        <tr v-if="!rows.length" id="instances-empty-row">
-          <td :colspan="columns.length" class="p-8! text-center">
-            <EmptyState
-              :title="loading
-                ? t('common.loading')
-                : totalCount ? t('v7run.noInstancesMatchFilters') : t('v7run.noLiveInstancesYet', { label: isV8 ? 'PB8' : 'PB7' })"
-            />
-          </td>
-        </tr>
+        <EmptyRow
+          v-if="!rows.length"
+          :colspan="columns.length"
+          :title="loading
+            ? t('common.loading')
+            : totalCount ? t('v7run.noInstancesMatchFilters') : t('v7run.noLiveInstancesYet', { label: isV8 ? 'PB8' : 'PB7' })"
+        />
       </tbody>
-    </table>
-  </div>
+    </Table>
+  </ListWrap>
 </template>

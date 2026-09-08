@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhCaretDown, PhCaretUp, PhChartBar, PhClipboardText, PhCopy, PhPencilSimple, PhPlay, PhPlus } from '@phosphor-icons/vue';
+import { PhChartBar, PhClipboardText, PhCopy, PhPencilSimple, PhPlay, PhPlus } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { ConfigSummary, SortSpec } from '../types';
@@ -40,11 +41,6 @@ const emit = defineEmits<{
 }>();
 
 const { t, tm } = useI18n();
-
-/* Sort header helpers — the shared caret language of the pbgui-list-table
-   contract (optimize QueuePanel renders the same pair). */
-function isSorted(col: string): boolean { return props.sort.col === col; }
-function sortIcon(col: string) { return props.sort.col === col && !props.sort.asc ? PhCaretDown : PhCaretUp; }
 
 function stripLegacyMarkup(value: string): string {
   return value.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
@@ -257,28 +253,28 @@ defineExpose({
       </div>
     </section>
     <div v-else class="pbgui-config-frame">
-      <div class="pbgui-config-wrap pbgui-list-wrap">
-        <table class="pbgui-config-table pbgui-list-table w-full select-none text-sm">
+      <ListWrap class="pbgui-config-wrap">
+        <Table class="pbgui-config-table select-none">
       <thead>
         <tr>
-          <th class="sticky top-0 z-[2] w-10 pr-1!">
+          <Th class="w-10 pr-1!">
             <Checkbox
               :model-value="allSelected"
               :aria-label="t('v7backtest.selectAll')"
               data-test="configs-select-all-check"
               @update:model-value="toggleAll"
             />
-          </th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="name" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7backtest.name') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="exchanges" @click="emit('sort', 'exchanges')"><span class="inline-flex items-center gap-1">{{ t('v7backtest.exchange') }}<PbIcon v-if="isSorted('exchanges')" :icon="sortIcon('exchanges')" :size="12" class="text-accent-soft" /></span></th>
-          <th v-if="isV8" class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="strategy" @click="emit('sort', 'strategy')"><span data-test="strategy-col-header" class="inline-flex items-center gap-1">{{ t('v7backtest.strategy') }}<PbIcon v-if="isSorted('strategy')" :icon="sortIcon('strategy')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="coins" @click="emit('sort', 'coins')"><span class="inline-flex items-center gap-1">{{ t('v7backtest.coins') }}<PbIcon v-if="isSorted('coins')" :icon="sortIcon('coins')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="twe_long" :title="t('v7backtest.tweTooltip')" @click="emit('sort', 'twe_long')"><span class="inline-flex items-center gap-1">TWE L/S<PbIcon v-if="isSorted('twe_long')" :icon="sortIcon('twe_long')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="start_date" @click="emit('sort', 'start_date')"><span class="inline-flex items-center gap-1">{{ t('v7backtest.start') }}<PbIcon v-if="isSorted('start_date')" :icon="sortIcon('start_date')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="end_date" @click="emit('sort', 'end_date')"><span class="inline-flex items-center gap-1">{{ t('v7backtest.end') }}<PbIcon v-if="isSorted('end_date')" :icon="sortIcon('end_date')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="results" @click="emit('sort', 'results')"><span class="inline-flex items-center gap-1">{{ t('v7backtest.resultCountHeader') }}<PbIcon v-if="isSorted('results')" :icon="sortIcon('results')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 z-[2] cursor-pointer transition-colors hover:text-primary" data-col="modified" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7backtest.modified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="sticky top-0 cursor-default text-center!">{{ t('v7backtest.actions') }}</th>
+          </Th>
+          <SortTh sort-key="name" data-col="name" :label="t('v7backtest.name')" :sort="sort.col === 'name' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'name')" />
+          <SortTh sort-key="exchanges" data-col="exchanges" :label="t('v7backtest.exchange')" :sort="sort.col === 'exchanges' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'exchanges')" />
+          <SortTh v-if="isV8" sort-key="strategy" data-col="strategy" :sort="sort.col === 'strategy' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'strategy')"><span data-test="strategy-col-header">{{ t('v7backtest.strategy') }}</span></SortTh>
+          <SortTh sort-key="coins" data-col="coins" :label="t('v7backtest.coins')" :sort="sort.col === 'coins' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'coins')" />
+          <SortTh sort-key="twe_long" data-col="twe_long" :title="t('v7backtest.tweTooltip')" :sort="sort.col === 'twe_long' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'twe_long')">TWE L/S</SortTh>
+          <SortTh sort-key="start_date" data-col="start_date" :label="t('v7backtest.start')" :sort="sort.col === 'start_date' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'start_date')" />
+          <SortTh sort-key="end_date" data-col="end_date" :label="t('v7backtest.end')" :sort="sort.col === 'end_date' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'end_date')" />
+          <SortTh sort-key="results" data-col="results" :label="t('v7backtest.resultCountHeader')" :sort="sort.col === 'results' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'results')" />
+          <SortTh sort-key="modified" data-col="modified" :label="t('v7backtest.modified')" :sort="sort.col === 'modified' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'modified')" />
+          <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
         </tr>
       </thead>
       <tbody>
@@ -304,19 +300,17 @@ defineExpose({
             {{ entry.results ?? 0 }}
           </td>
           <td class="pbgui-config-date truncate" :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
-          <td class="pbgui-list-actions" @click.stop>
-            <div class="pbgui-list-actions__group">
-              <BacktestRowActionButton class="pbgui-config-action" :icon="PhPencilSimple" :label="t('v7backtest.edit')" data-test="cfg-edit" @click="emit('edit', entry.name)" />
-              <BacktestRowActionButton class="pbgui-config-action" :icon="PhPlay" :label="t('v7backtest.addToQueueTitle')" tone="accent" data-test="cfg-queue" @click="emit('queue', entry.name)" />
-              <BacktestRowActionButton class="pbgui-config-action" :icon="PhChartBar" :label="t('v7backtest.viewResults')" tone="success" :disabled="!entry.results" data-test="cfg-results" @click="emit('view-results', entry.name)" />
-              <BacktestRowActionButton class="pbgui-config-action" :icon="PhCopy" :label="t('v7backtest.duplicateConfig')" data-test="cfg-duplicate" @click="emit('duplicate', entry.name)" />
-            </div>
-          </td>
+          <TdActions>
+            <BacktestRowActionButton class="pbgui-config-action" :icon="PhPencilSimple" :label="t('v7backtest.edit')" data-test="cfg-edit" @click="emit('edit', entry.name)" />
+            <BacktestRowActionButton class="pbgui-config-action" :icon="PhPlay" :label="t('v7backtest.addToQueueTitle')" tone="accent" data-test="cfg-queue" @click="emit('queue', entry.name)" />
+            <BacktestRowActionButton class="pbgui-config-action" :icon="PhChartBar" :label="t('v7backtest.viewResults')" tone="success" :disabled="!entry.results" data-test="cfg-results" @click="emit('view-results', entry.name)" />
+            <BacktestRowActionButton class="pbgui-config-action" :icon="PhCopy" :label="t('v7backtest.duplicateConfig')" data-test="cfg-duplicate" @click="emit('duplicate', entry.name)" />
+          </TdActions>
         </tr>
       </tbody>
-        </table>
-      </div>
-      <footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true"></footer>
+        </Table>
+      </ListWrap>
+      <ListFooter data-test="configs-list-footer" aria-hidden="true"></ListFooter>
     </div>
 
     <div v-if="deleteConfirmOpen" id="modal-root" :class="modalBackdropClass" data-test="configs-delete-modal">

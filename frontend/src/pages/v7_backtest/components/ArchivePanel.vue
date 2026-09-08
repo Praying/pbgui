@@ -17,6 +17,7 @@ import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
+import { Table, TdActions, Th } from '@/shared/components/ui/table';
 import ArchiveOptimizeTable from './ArchiveOptimizeTable.vue';
 import ArchiveSchedulesTable from './ArchiveSchedulesTable.vue';
 import ConfirmModal from './ConfirmModal.vue';
@@ -336,15 +337,15 @@ defineExpose({
           <div class="mx-auto mb-3 grid size-12 place-items-center rounded-xl border border-accent/16 bg-accent/7 text-accent-soft"><PbIcon :icon="PhArchive" :size="24" /></div>
           <span class="whitespace-pre-line">{{ plainLegacyHtml(t('v7backtest.emptyArchivesHtml')) }}</span>
         </div>
-        <table v-else class="pbgui-list-table w-full select-none text-sm">
+        <Table v-else class="select-none">
           <thead>
             <tr>
-              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.name') }}</th>
-              <th class="sticky top-0 z-[2] cursor-default">URL</th>
-              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.backtests') }}</th>
-              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.optimize') }}</th>
-              <th class="sticky top-0 z-[2] cursor-default">{{ t('v7backtest.layout') }}</th>
-              <th class="sticky top-0 cursor-default">{{ t('v7backtest.actions') }}</th>
+              <Th class="cursor-default">{{ t('v7backtest.name') }}</Th>
+              <Th class="cursor-default">URL</Th>
+              <Th class="cursor-default">{{ t('v7backtest.backtests') }}</Th>
+              <Th class="cursor-default">{{ t('v7backtest.optimize') }}</Th>
+              <Th class="cursor-default">{{ t('v7backtest.layout') }}</Th>
+              <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
             </tr>
           </thead>
           <tbody>
@@ -360,14 +361,12 @@ defineExpose({
               <td class="tabular-nums">{{ entry.results ?? entry.configs ?? 0 }}</td>
               <td class="tabular-nums">{{ entry.optimize_configs ?? 0 }}</td>
               <td class="truncate text-secondary" :title="entry.migration_status?.label ?? ''">{{ entry.migration_status?.label ?? '' }}</td>
-              <td class="pbgui-list-actions" @click.stop>
-                <div class="pbgui-list-actions__group">
-                  <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="16" /></Button>
-                </div>
-              </td>
+              <TdActions>
+                <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="16" /></Button>
+              </TdActions>
             </tr>
           </tbody>
-        </table>
+        </Table>
       </div>
     </div>
 

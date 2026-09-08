@@ -5,6 +5,9 @@ import { describe, expect, it } from 'vitest';
 const pageRoot = import.meta.dirname;
 const appSource = readFileSync(resolve(pageRoot, 'App.vue'), 'utf8');
 const configsPanelSource = readFileSync(resolve(pageRoot, 'components/ConfigsPanel.vue'), 'utf8');
+const listWrapSource = readFileSync(resolve(pageRoot, '../../shared/components/ui/table/ListWrap.vue'), 'utf8');
+const tableSource = readFileSync(resolve(pageRoot, '../../shared/components/ui/table/Table.vue'), 'utf8');
+const listFooterSource = readFileSync(resolve(pageRoot, '../../shared/components/ui/table/ListFooter.vue'), 'utf8');
 const sharedComponentsSource = readFileSync(resolve(pageRoot, '../../styles/components.css'), 'utf8');
 const queuePanelSource = readFileSync(resolve(pageRoot, 'components/QueuePanel.vue'), 'utf8');
 const resultsPanelSource = readFileSync(resolve(pageRoot, 'components/ResultsPanel.vue'), 'utf8');
@@ -83,9 +86,13 @@ describe('Optimize page warning style contracts', () => {
   it('uses one shared visual contract for Backtest and Optimize configuration tables', () => {
     expect(configsPanelSource).toContain('class="pbgui-config-list');
     expect(configsPanelSource).toContain('class="pbgui-config-frame"');
-    expect(configsPanelSource).toContain('class="pbgui-config-wrap pbgui-list-wrap"');
-    expect(configsPanelSource).toContain('class="pbgui-config-table pbgui-list-table');
-    expect(configsPanelSource).toContain('class="pbgui-list-footer"');
+    expect(configsPanelSource).toContain('<ListWrap ref="wrap" class="pbgui-config-wrap">');
+    expect(configsPanelSource).toContain('<Table class="pbgui-config-table">');
+    expect(configsPanelSource).toContain('<ListFooter');
+    // the list contract classes now live in the shared ui/table components
+    expect(listWrapSource).toContain("'pbgui-list-wrap'");
+    expect(tableSource).toContain("'pbgui-list-table");
+    expect(listFooterSource).toContain("'pbgui-list-footer'");
     expect(configsPanelSource).toContain('data-test="configs-list-footer"');
     expect(configsPanelSource).toContain("t('v7optimize.configCount', { count: rows.length })");
     expect(sharedComponentsSource).toContain('.pbgui-config-frame');
@@ -109,7 +116,7 @@ describe('Optimize page warning style contracts', () => {
   });
 
   it('keeps the config terminal bar visual-only to avoid duplicate counts', () => {
-    expect(configsPanelSource).toMatch(/<footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true">\s*<\/footer>/);
+    expect(configsPanelSource).toMatch(/<ListFooter data-test="configs-list-footer" aria-hidden="true">\s*<\/ListFooter>/);
   });
 
   it('renders semantic compact notification states with reduced-motion support', () => {

@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-import type { Component } from 'vue';
-import { PhArrowsClockwise, PhCaretDown, PhCaretUp, PhChartBar, PhCube, PhFileText, PhPlant, PhSquaresFour, PhTarget } from '@phosphor-icons/vue';
+import { PhArrowsClockwise, PhChartBar, PhCube, PhFileText, PhPlant, PhSquaresFour, PhTarget } from '@phosphor-icons/vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
+import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import PbIcon from '@/shared/components/PbIcon.vue';
-import EmptyState from '@/shared/components/EmptyState.vue';
 import type { ResultSummary } from '../types';
 
 const props = withDefaults(
@@ -56,16 +55,14 @@ function shortDateTime(input: unknown): string {
   const dateOnly = text.match(/^(\d{4}-\d{2}-\d{2})/);
   return dateOnly?.[1] ?? text;
 }
-function isSorted(key: string): boolean { return props.sort.key === key; }
-function sortIcon(key: string): Component { return props.sort.key === key && props.sort.direction === 'desc' ? PhCaretDown : PhCaretUp; }
 /* Conditionally rendered row actions (up to 7) are icon buttons aligned with
    the workbench rail icons for the same actions; data-action keys are a test contract. */
 const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
-const wrap = ref<HTMLElement | null>(null);
+const wrap = ref<InstanceType<typeof ListWrap> | null>(null);
 const tbody = ref<HTMLElement | null>(null);
 const dragSelect = useRowDragSelect({
   getRows: () => tbody.value ? Array.from(tbody.value.querySelectorAll('tr[data-path]')) : [],
-  getWrap: () => wrap.value,
+  getWrap: () => wrap.value?.root ?? null,
   isSelected: (rowPath) => props.selected.has(rowPath),
   onToggle: (rowPath) => emit('toggle', rowPath),
   onSelectRange: (paths, selected) => emit('selectRange', paths, selected),
@@ -87,18 +84,18 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
   <div class="opt-table-frame">
-    <div ref="wrap" class="opt-table-wrap opt-table-wrap--results pbgui-list-wrap min-h-0 flex-1 overflow-auto">
-      <table class="opt-table opt-table--results pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+    <ListWrap ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto">
+      <Table class="opt-table opt-table--results max-[800px]:min-w-[720px]">
         <thead>
           <tr>
-            <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="results-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'result')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thResult') }}<PbIcon v-if="isSorted('result')" :icon="sortIcon('result')" :size="12" class="text-accent-soft" /></span></th>
-            <th v-if="isV8" class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'strategy')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStrategy') }}<PbIcon v-if="isSorted('strategy')" :icon="sortIcon('strategy')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'pareto_count')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thParetos') }}<PbIcon v-if="isSorted('pareto_count')" :icon="sortIcon('pareto_count')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'mode')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thMode') }}<PbIcon v-if="isSorted('mode')" :icon="sortIcon('mode')" :size="12" class="text-accent-soft" /></span></th>
-            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thModified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
-            <th>{{ t('v7optimize.thActions') }}</th>
+            <Th :sticky="false" class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="results-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
+            <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
+            <SortTh sort-key="result" :label="t('v7optimize.thResult')" :sort="sort.key === 'result' ? sort.direction : undefined" @sort="emit('sort', 'result')" />
+            <SortTh v-if="isV8" sort-key="strategy" :label="t('v7optimize.thStrategy')" :sort="sort.key === 'strategy' ? sort.direction : undefined" @sort="emit('sort', 'strategy')" />
+            <SortTh sort-key="pareto_count" :label="t('v7optimize.thParetos')" :sort="sort.key === 'pareto_count' ? sort.direction : undefined" @sort="emit('sort', 'pareto_count')" />
+            <SortTh sort-key="mode" :label="t('v7optimize.thMode')" :sort="sort.key === 'mode' ? sort.direction : undefined" @sort="emit('sort', 'mode')" />
+            <SortTh sort-key="modified" :label="t('v7optimize.thModified')" :sort="sort.key === 'modified' ? sort.direction : undefined" @sort="emit('sort', 'modified')" />
+            <Th>{{ t('v7optimize.thActions') }}</Th>
           </tr>
         </thead>
         <tbody ref="tbody">
@@ -112,34 +109,30 @@ onBeforeUnmount(() => dragSelect.dispose());
             <td class="tabular-nums" :class="Number(row.pareto_count ?? 0) ? 'font-semibold' : 'text-muted'">{{ row.pareto_count ?? 0 }}</td>
             <td class="text-xs text-secondary">{{ mode(row) }}</td>
             <td class="tabular-nums text-xs text-secondary" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
-            <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
-              <div class="pbgui-list-actions__group">
-                <Button v-if="hasPareto(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.paretos')" :aria-label="t('v7optimize.paretos')" data-action="paretos" @click="emit('open', row)"><PbIcon :icon="PhChartBar" :size="16" /></Button>
-                <Button v-if="hasPareto(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.paretoExplorer')" :aria-label="t('v7optimize.paretoExplorer')" data-action="explorer" @click="emit('action', row, 'explorer')"><PbIcon :icon="PhTarget" :size="16" /></Button>
-                <Button v-if="supportsDash(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.pdParetoDash')" :aria-label="t('v7optimize.pdParetoDash')" data-action="dash" @click="emit('action', row, 'dash')"><PbIcon :icon="PhSquaresFour" :size="16" /></Button>
-                <Button v-if="supports3d(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.plot3d')" :aria-label="t('v7optimize.plot3d')" data-action="plot3d" @click="emit('action', row, 'plot3d')"><PbIcon :icon="PhCube" :size="16" /></Button>
-                <Button v-if="hasPareto(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.continueOptimize')" :aria-label="t('v7optimize.continueOptimize')" data-action="continue" @click="emit('action', row, 'continue')"><PbIcon :icon="PhPlant" :size="16" /></Button>
-                <Button v-if="resumable(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.resumeCheckpoint')" :aria-label="t('v7optimize.resumeCheckpoint')" data-action="resume" @click="emit('action', row, 'resume')"><PbIcon :icon="PhArrowsClockwise" :size="16" /></Button>
-                <Button v-if="hasConfig(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.configDraft')" :aria-label="t('v7optimize.configDraft')" data-action="config" @click="emit('action', row, 'config')"><PbIcon :icon="PhFileText" :size="16" /></Button>
-              </div>
-            </td>
+            <TdActions>
+              <Button v-if="hasPareto(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.paretos')" :aria-label="t('v7optimize.paretos')" data-action="paretos" @click="emit('open', row)"><PbIcon :icon="PhChartBar" :size="16" /></Button>
+              <Button v-if="hasPareto(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.paretoExplorer')" :aria-label="t('v7optimize.paretoExplorer')" data-action="explorer" @click="emit('action', row, 'explorer')"><PbIcon :icon="PhTarget" :size="16" /></Button>
+              <Button v-if="supportsDash(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.pdParetoDash')" :aria-label="t('v7optimize.pdParetoDash')" data-action="dash" @click="emit('action', row, 'dash')"><PbIcon :icon="PhSquaresFour" :size="16" /></Button>
+              <Button v-if="supports3d(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.plot3d')" :aria-label="t('v7optimize.plot3d')" data-action="plot3d" @click="emit('action', row, 'plot3d')"><PbIcon :icon="PhCube" :size="16" /></Button>
+              <Button v-if="hasPareto(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.continueOptimize')" :aria-label="t('v7optimize.continueOptimize')" data-action="continue" @click="emit('action', row, 'continue')"><PbIcon :icon="PhPlant" :size="16" /></Button>
+              <Button v-if="resumable(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.resumeCheckpoint')" :aria-label="t('v7optimize.resumeCheckpoint')" data-action="resume" @click="emit('action', row, 'resume')"><PbIcon :icon="PhArrowsClockwise" :size="16" /></Button>
+              <Button v-if="hasConfig(row)" type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.configDraft')" :aria-label="t('v7optimize.configDraft')" data-action="config" @click="emit('action', row, 'config')"><PbIcon :icon="PhFileText" :size="16" /></Button>
+            </TdActions>
           </tr>
-          <tr v-if="!rows.length">
-            <td :colspan="isV8 ? 8 : 7" class="p-8! text-center">
-              <EmptyState
-                :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeResultsFound')"
-                :message="search ? undefined : t('v7optimize.emptyResultsHelp')"
-                :action-label="search ? undefined : t('v7optimize.openQueue')"
-                @action="emit('goToQueue')"
-              />
-            </td>
-          </tr>
+          <EmptyRow
+            v-if="!rows.length"
+            :colspan="isV8 ? 8 : 7"
+            :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeResultsFound')"
+            :message="search ? undefined : t('v7optimize.emptyResultsHelp')"
+            :action-label="search ? undefined : t('v7optimize.openQueue')"
+            @action="emit('goToQueue')"
+          />
         </tbody>
-      </table>
-    </div>
-    <footer class="pbgui-list-footer" data-test="results-list-footer">
+      </Table>
+    </ListWrap>
+    <ListFooter data-test="results-list-footer">
       <span class="tabular-nums">{{ t('v7optimize.resultSetCount', { count: rows.length }) }}</span>
       <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7optimize.resultsSelected', { count: selectedCount }) }}</span>
-    </footer>
+    </ListFooter>
   </div>
 </template>

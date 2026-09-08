@@ -10,6 +10,7 @@ import { deepGet, fmt } from '../lib/format';
 import ParamTuning from './ParamTuning.vue';
 import ExplorerPlot from './ExplorerPlot.vue';
 import StatsPanel from './StatsPanel.vue';
+import { Table, Th } from '@/shared/components/ui/table';
 import type { ExplorerStore } from '../composables/useStrategyExplorer';
 import type { FillEvent } from '../types';
 
@@ -78,13 +79,13 @@ const fillRows = computed<FillRow[]>(() => {
       <section class="border border-border-default rounded-xl bg-panel p-3.5">
         <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ sideKey === 'long' ? t('v7explore.longFills') : t('v7explore.shortFills') }}</h4>
         <div :id="'sim-' + sideKey">
-          <table v-if="fillRows.length" class="orders pbgui-list-table">
-            <thead><tr><th>#</th><th>{{ t('v7explore.colTime') }}</th><th>{{ t('v7explore.colEvent') }}</th><th>{{ t('v7explore.colQty') }}</th><th>{{ t('v7explore.colPrice') }}</th><th>{{ t('v7explore.colPosSize') }}</th></tr></thead>
+          <Table v-if="fillRows.length" class="orders">
+            <thead><tr><Th :sticky="false">#</Th><Th :sticky="false">{{ t('v7explore.colTime') }}</Th><Th :sticky="false">{{ t('v7explore.colEvent') }}</Th><Th :sticky="false">{{ t('v7explore.colQty') }}</Th><Th :sticky="false">{{ t('v7explore.colPrice') }}</Th><Th :sticky="false">{{ t('v7explore.colPosSize') }}</Th></tr></thead>
             <tbody>
               <tr v-for="row in fillRows" :key="row.idx"><td>{{ row.idx }}</td><td>{{ row.time }}</td><td>{{ row.event }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.posSize }}</td></tr>
             </tbody>
-          </table>
-          <table v-else class="orders pbgui-list-table"><tbody><tr><td class="text-secondary text-left!">{{ t('v7explore.noFills') }}</td></tr></tbody></table>
+          </Table>
+          <Table v-else class="orders"><tbody><tr><td class="text-secondary text-left!">{{ t('v7explore.noFills') }}</td></tr></tbody></Table>
         </div>
       </section>
     </template>
