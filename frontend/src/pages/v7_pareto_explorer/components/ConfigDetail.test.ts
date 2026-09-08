@@ -16,7 +16,7 @@ const i18n = createI18n('en');
 const t = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
 
 function makeStore(): ParetoStore {
-  return useParetoSession({ apiBase: 'http://pbgui.test:8000/api/pareto-explorer', origin: 'http://pbgui.test:8000', seedVersion: 'v7', resultPath: '/r', t });
+  return useParetoSession({ apiBase: '/api/pareto-explorer', origin: 'http://pbgui.test:8000', seedVersion: 'v7', resultPath: '/r', t });
 }
 
 function mountDetail(store: ParetoStore) {

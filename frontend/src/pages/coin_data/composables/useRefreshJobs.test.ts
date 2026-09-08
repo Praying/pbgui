@@ -7,7 +7,10 @@ import { useRefreshJobs } from './useRefreshJobs';
    350 ms job polling, completed-state application and error surfacing. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -78,7 +81,7 @@ afterEach(() => {
 });
 
 describe('runRefresh POST contract (:2230-2262)', () => {
-  it('posts the filter payload with the bearer header', async () => {
+  it('posts the filter payload with cookie credentials', async () => {
     makeJobs([[{ status: 'completed', state: { counts: { main: 0 } } }]]);
     const jobs = makeStore();
 
@@ -86,9 +89,9 @@ describe('runRefresh POST contract (:2230-2262)', () => {
     await vi.advanceTimersByTimeAsync(0);
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://pbgui.test:8000/api/coin-data/refresh/exchange');
+    expect(url).toBe('/api/coin-data/refresh/exchange');
     expect(init.method).toBe('POST');
-    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer tok');
+    expect(init.credentials).toBe('same-origin');
     expect(JSON.parse(String(init.body))).toEqual({
       exchange: 'binance',
       market_cap: 0,

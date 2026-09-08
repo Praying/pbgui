@@ -33,7 +33,7 @@ const desired = { instances: [{ instance: 'bot-a', current_version: '1', desired
 function mountApp() { return mount(App, { global: { plugins: [createI18n('en')] } }); }
 
 beforeEach(() => {
-  (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = { origin: 'http://test', token: '', version: 'test', serial: '1' };
+  (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = { origin: 'http://test', base_prefix: '', authenticated: true, version: 'test', serial: '1' };
   apiFetchMock.mockReset();
   apiFetchMock.mockImplementation((url: string, init?: RequestInit) => {
     if (url.endsWith('/status')) return Promise.resolve(status);
@@ -88,13 +88,13 @@ describe('Cluster Sync Vue page', () => {
     await wrapper.get('[data-testid="rail-section-nodes"]').trigger('click');
     await wrapper.get('[data-action="toggle-sync"][data-node-id="node-remote"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/cluster/nodes/node-remote/sync?sync_enabled=false', expect.objectContaining({ method: 'POST' }));
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/cluster/nodes/node-remote/sync?sync_enabled=false', expect.objectContaining({ method: 'POST' }));
 
     await wrapper.get('[data-testid="rail-section-retention"]').trigger('click');
     await wrapper.get('[data-field="history-days"]').setValue('30');
     await wrapper.get('[data-action="save-retention"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/cluster/retention/settings', expect.objectContaining({ method: 'POST', body: expect.stringContaining('30') }));
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/cluster/retention/settings', expect.objectContaining({ method: 'POST', body: expect.stringContaining('30') }));
   });
 
   it('requires explicit controls for remove confirmation and does not close on backdrop click', async () => {

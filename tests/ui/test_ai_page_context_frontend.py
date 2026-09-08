@@ -181,11 +181,15 @@ def test_sensitive_pages_never_register_sensitive_values() -> None:
 def test_services_context_binds_cmc_toolbar_controls_to_selected_key() -> None:
     """Changing the selected CMC key must invalidate delayed toolbar control IDs."""
 
-    services = (FRONTEND / "services_monitor.html").read_text(encoding="utf-8")
-    adapter = services.split("window.PBGuiAI.registerPageContext({", 1)[1]
+    app = (FRONTEND / "src" / "pages" / "services_monitor" / "App.vue").read_text(encoding="utf-8")
+    panel = (FRONTEND / "src" / "pages" / "services_monitor" / "components" / "CmcPoolPanel.vue").read_text(encoding="utf-8")
 
-    assert "_currentPanelId === 'pbcoindata' && _selectedCmcKeyId" in adapter
-    assert "{ kind: 'cmc_key', name: _selectedCmcKeyId }" in adapter
+    # The Vue port registers one CMC key entity while the Coin Data panel is
+    # active, following the selected key so control descriptors rebuild on change.
+    assert "activePanel.value === 'pbcoindata'" in app
+    assert "kind: 'cmc_key'" in app
+    assert "cmcPoolPanelRef.value?.selectedKeyId" in app
+    assert "defineExpose({ selectedKeyId })" in panel
 
 
 def test_optimize_context_prefers_the_live_open_editor_config() -> None:

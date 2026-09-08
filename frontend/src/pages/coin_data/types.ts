@@ -78,6 +78,7 @@ export interface CoinDataState {
     exchanges: string[];
     tags: string[];
     quote_filter: string[];
+    available_quotes: string[];
     vol_mcap_values: number[];
   };
   meta: {

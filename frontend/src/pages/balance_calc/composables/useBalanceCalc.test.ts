@@ -6,7 +6,10 @@ import { useBalanceCalc } from './useBalanceCalc';
    load, the calculate flow and the draft pre-load. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -41,7 +44,7 @@ describe('loadInstances (:296-321)', () => {
     const store = makeStore();
     await store.loadInstances('main', 'v8');
 
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('http://pbgui.test:8000/api/balance-calc/instances');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('/api/balance-calc/instances');
     expect(store.instances.value).toHaveLength(2);
     expect(store.selectedInstance.value?.name).toBe('main');
     expect(store.configText.value).toBe(JSON.stringify({ bot: true }, null, 4));
@@ -64,7 +67,7 @@ describe('selectInstance / load-config (:324-347)', () => {
     await store.selectInstance({ name: 'bot', version: 'v7' });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://pbgui.test:8000/api/balance-calc/load-config');
+    expect(url).toBe('/api/balance-calc/load-config');
     expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual({ name: 'bot', version: 'v7' });
     expect(store.configText.value).toBe(JSON.stringify({ a: 1 }, null, 4));
@@ -120,7 +123,7 @@ describe('calculate (:360-403)', () => {
     await store.calculate();
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://pbgui.test:8000/api/balance-calc/calculate');
+    expect(url).toBe('/api/balance-calc/calculate');
     expect(JSON.parse(String(init.body))).toEqual({ config: { x: 1 }, exchange: 'bybit' });
     expect(store.results.value?.recommendation?.symbol).toBe('BTC');
     expect(store.calculating.value).toBe(false);
@@ -161,7 +164,7 @@ describe('loadDraft (:514-527)', () => {
     const loaded = await store.loadDraft('d-1');
 
     expect(loaded).toBe(true);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('http://pbgui.test:8000/api/balance-calc/draft/d-1');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('/api/balance-calc/draft/d-1');
     expect(store.configText.value).toBe(JSON.stringify({ draft: true }, null, 4));
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain('/calculate'); // auto-calculate
   });

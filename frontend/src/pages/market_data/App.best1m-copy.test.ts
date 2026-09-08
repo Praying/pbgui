@@ -16,11 +16,15 @@ import { pickSelectOption } from '@/shared/testing/select';
 
 vi.mock('@/shared/boot', () => ({
   getBoot: vi.fn(() => ({
-    token: 'tok',
     origin: 'http://pbgui.test:8000',
+    base_prefix: '',
+    authenticated: true,
     version: '1.0.0',
     serial: 'S1',
   })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -64,7 +68,7 @@ describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', (
     expect(app.find('#best1m-generic-panel').attributes('hidden')).toBeDefined();
     const frame = app.find('#best1m-hyperliquid-frame').element as HTMLIFrameElement;
     expect(frame.getAttribute('src')).toBe(
-      `${BASE}/api/market-data/data-actions/hyperliquid?section=build`
+      '/api/market-data/data-actions/hyperliquid?section=build'
     );
     app.unmount();
   });

@@ -60,7 +60,8 @@ beforeEach(() => {
   vi.useRealTimers();
   (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = {
     origin: 'http://test',
-    token: '',
+    base_prefix: '',
+    authenticated: true,
     version: 'test',
     serial: '1',
   };
@@ -95,7 +96,7 @@ describe('Shared Jobs Monitor Vue page', () => {
   it('renders filtered live jobs and worker connection state from the cookie-authenticated WebSocket', async () => {
     const wrapper = mountApp('?embed=1&exchange=bitget&job_type=bitget_best_1m_distributed');
     expect(document.documentElement.classList.contains('is-embedded')).toBe(true);
-    expect(WebSocketMock.instances[0]?.url).toBe('ws://test/ws/jobs');
+    expect(WebSocketMock.instances[0]?.url).toBe(`ws://${location.host}/ws/jobs`);
     expect(wrapper.find('.app-shell').exists()).toBe(true);
     expect(wrapper.findAll('[data-status]')).toHaveLength(2);
     expect(wrapper.get('.jobs-tab-panel.active [role="status"]').text()).toContain('No Active jobs');
@@ -135,9 +136,9 @@ describe('Shared Jobs Monitor Vue page', () => {
   });
 
   it('renders empty history copy after a successful empty response', async () => {
+    apiFetchMock.mockResolvedValueOnce({}); // AI drawer preferences (AppShell mount)
     apiFetchMock.mockResolvedValueOnce({ jobs: [] });
     const wrapper = mountApp('?exchange=bitget');
-
     await wrapper.get('[data-tab="done"]').trigger('click');
     await flushPromises();
 
@@ -156,8 +157,8 @@ describe('Shared Jobs Monitor Vue page', () => {
     await wrapper.get('[data-action="cancel"]').trigger('click');
     await wrapper.get('[data-confirm="accept"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/jobs/run-1/run', expect.objectContaining({ method: 'POST' }));
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/jobs/cancel', expect.objectContaining({ method: 'POST' }));
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/jobs/run-1/run', expect.objectContaining({ method: 'POST' }));
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/jobs/cancel', expect.objectContaining({ method: 'POST' }));
 
     await wrapper.get('[data-tab="failed"]').trigger('click');
     await flushPromises();
@@ -165,19 +166,19 @@ describe('Shared Jobs Monitor Vue page', () => {
     await wrapper.get('[data-action="retry"]').trigger('click');
     await wrapper.get('[data-confirm="accept"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/jobs/failed-1/retry', expect.objectContaining({ method: 'POST' }));
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/jobs/failed-1/retry', expect.objectContaining({ method: 'POST' }));
 
     await wrapper.get('[data-tab="done"]').trigger('click');
     await flushPromises();
     await wrapper.get('[data-action="requeue"]').trigger('click');
     await wrapper.get('[data-confirm="accept"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/jobs/done-1/requeue', expect.objectContaining({ method: 'POST' }));
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/jobs/done-1/requeue', expect.objectContaining({ method: 'POST' }));
 
     await wrapper.get('.jobs-tab-panel.active [data-action="delete"]').trigger('click');
     await wrapper.get('[data-confirm="accept"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/jobs/done-1?states=done', expect.objectContaining({ method: 'DELETE' }));
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/jobs/done-1?states=done', expect.objectContaining({ method: 'DELETE' }));
   });
 
   it('uses explicit modal controls for logs, details, and delete-all', async () => {
@@ -207,7 +208,7 @@ describe('Shared Jobs Monitor Vue page', () => {
     expect(wrapper.find('[data-modal="confirm"]').exists()).toBe(true);
     await wrapper.get('[data-confirm="accept"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://test/api/jobs/bulk-delete', expect.objectContaining({
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/jobs/bulk-delete', expect.objectContaining({
       method: 'POST',
       body: JSON.stringify({ delete_all: true, state: 'done', exchange: 'bitget' }),
     }));

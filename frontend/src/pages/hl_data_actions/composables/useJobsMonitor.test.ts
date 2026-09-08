@@ -6,7 +6,10 @@ import type { JobRecord } from '../types';
 /* connectWS/tab-history/actions port of hl_data_actions.html :1617-2009. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -142,7 +145,7 @@ describe('job actions (:1906-2009)', () => {
 
     await monitor.runJob('job-1');
 
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('http://pbgui.test:8000/api/jobs/job-1/run');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('/api/jobs/job-1/run');
     expect(monitor.modal.value.active).toBe(true);
     expect(monitor.modal.value.kind).toBe('error');
     expect(monitor.modal.value.bodyText).toContain('worker offline');
@@ -153,7 +156,7 @@ describe('job actions (:1906-2009)', () => {
     await monitor.cancelJob('job-2');
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('http://pbgui.test:8000/api/jobs/cancel');
+    expect(url).toBe('/api/jobs/cancel');
     expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual({ job_id: 'job-2', reason: 'user cancel' });
   });
@@ -167,7 +170,7 @@ describe('job actions (:1906-2009)', () => {
     await monitor.deleteJob('job-3');
     await vi.advanceTimersByTimeAsync(1);
 
-    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('http://pbgui.test:8000/api/jobs/job-3');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toBe('/api/jobs/job-3');
     expect((fetchMock.mock.calls[0]?.[1] as RequestInit).method).toBe('DELETE');
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain('states=done'); // history reload
   });

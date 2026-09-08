@@ -5,7 +5,10 @@ import ApiServerSettings from './ApiServerSettings.vue';
 import type { ApiServerSettingsData, AlertRoutingId } from '../types';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -49,8 +52,9 @@ const SETTINGS: ApiServerSettingsData = {
     error_warning_v7: 5, error_error_v7: 10,
     traceback_warning_v7: 1, traceback_error_v7: 3,
   },
-  telegram_token: 'tok-secret',
-  telegram_chat_id: '-1001234567',
+  telegram_configured: true,
+  telegram_token: null,
+  telegram_chat_id: null,
   offline_gui: true,
   service_gui: false,
   ssh_lost_telegram: false,
@@ -63,8 +67,9 @@ const SAVED_PAYLOAD = {
   auto_restart: false,
   enabled_hosts: ['vps1.example.com', 'vps3.example.com'],
   monitor_config: SETTINGS.monitor_config,
-  telegram_token: 'tok-secret',
-  telegram_chat_id: '-1001234567',
+  telegram_token: null,
+  telegram_chat_id: null,
+  clear_telegram_credentials: false,
   offline_gui: true,
   service_gui: false,
   system_gui: true,
@@ -133,9 +138,9 @@ describe('ApiServerSettings loading (legacy loadSettings/applySettings)', () => 
     await mountedSettings();
 
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/settings/api-server');
+    expect(url).toBe('/api/services/settings/api-server');
     expect(init.method).toBeUndefined();
-    expect((init.headers as Headers).get('Authorization')).toBe('Bearer tok');
+    expect(init.credentials).toBe('same-origin');
   });
 
   it('keeps the placeholder when the load fails (legacy silent catch)', async () => {
@@ -237,9 +242,9 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
 
     const token = wrapper.find('#apiserver-telegram-token');
     expect(token.attributes('type')).toBe('password');
-    expect(token.attributes('placeholder')).toBe('Paste token…');
+    expect(token.attributes('placeholder')).toBe('Stored value hidden - enter to replace');
     expect(token.attributes('autocomplete')).toBe('off');
-    expect((token.element as HTMLInputElement).value).toBe('tok-secret');
+    expect((token.element as HTMLInputElement).value).toBe('');
 
     const eye = wrapper.find('.pw-eye');
     expect(eye.find('svg').exists()).toBe(true);
@@ -264,8 +269,24 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
 
     const chat = wrapper.find('#apiserver-telegram-chat-id');
     expect(chat.attributes('type')).toBe('text');
-    expect(chat.attributes('placeholder')).toBe('e.g. -1001234567');
-    expect((chat.element as HTMLInputElement).value).toBe('-1001234567');
+    expect(chat.attributes('placeholder')).toBe('Stored value hidden - enter to replace');
+    expect((chat.element as HTMLInputElement).value).toBe('');
+  });
+
+  it('clears the stored credentials only through the explicit checkbox', async () => {
+    const wrapper = await mountedSettings();
+
+    const clear = wrapper.find('.clear-telegram input');
+    expect((clear.element as HTMLInputElement).checked).toBe(false);
+
+    const untouched = await saveAndGetBody(wrapper);
+    expect(untouched.telegram_token).toBeNull();
+    expect(untouched.telegram_chat_id).toBeNull();
+    expect(untouched.clear_telegram_credentials).toBe(false);
+
+    await clear.setValue(true);
+    const cleared = await saveAndGetBody(wrapper);
+    expect(cleared.clear_telegram_credentials).toBe(true);
   });
 
   it('renders the alert routing checkboxes with false flags unchecked', async () => {
@@ -286,17 +307,19 @@ describe('ApiServerSettings Alerts/Telegram section (legacy markup + togglePw)',
   });
 });
 
+/** Shared save helper: click Save and return the captured POST body. */
+async function saveAndGetBody(wrapper: ReturnType<typeof mountSettings>): Promise<Record<string, unknown>> {
+  fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
+  await wrapper.find('button.save').trigger('click');
+  await flushPromises();
+  const [url, init] = fetchMock.mock.calls.at(-1)!;
+  expect(url).toBe('/api/services/settings/api-server');
+  expect(init.method).toBe('POST');
+  expect((init.headers as Headers).get('Content-Type')).toBe('application/json');
+  return JSON.parse(init.body as string);
+}
+
 describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
-  async function saveAndGetBody(wrapper: ReturnType<typeof mountSettings>): Promise<Record<string, unknown>> {
-    fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
-    await wrapper.find('button.save').trigger('click');
-    await flushPromises();
-    const [url, init] = fetchMock.mock.calls.at(-1)!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/settings/api-server');
-    expect(init.method).toBe('POST');
-    expect((init.headers as Headers).get('Content-Type')).toBe('application/json');
-    return JSON.parse(init.body as string);
-  }
 
   it('POSTs the exact legacy payload for untouched form state', async () => {
     const wrapper = await mountedSettings();
@@ -328,6 +351,7 @@ describe('ApiServerSettings save (legacy saveApiServerSettings/_post)', () => {
       auto_restart: true,
       telegram_token: 'new-token',
       telegram_chat_id: '-42',
+      clear_telegram_credentials: false,
     });
   });
 

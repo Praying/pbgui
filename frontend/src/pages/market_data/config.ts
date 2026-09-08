@@ -17,7 +17,7 @@ export const NOTIFY_LOG_URL = '/api/notify_log';
 
 /** REST base for the market-data router, e.g. http://host:port/api/market-data. */
 export function marketDataApiBase(): string {
-  return `${getBoot().origin}/api/market-data`;
+  return `${getBoot().base_prefix}/api/market-data`;
 }
 
 /** Legacy apiUrl (:4176-4178) — plain concatenation. */

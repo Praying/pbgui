@@ -346,9 +346,9 @@ export function useBacktestPage(options: BacktestPageOptions): BacktestPageStore
     notify: (message, kind) => toast.show(message, kind === 'warn' ? 'info' : kind),
   });
 
-  const legacy = adapter.isV8
-    ? null
-    : useLegacyResults({
+  // PB8 reuses LegacyResultsStore for read-only browsing and Compare; its
+  // API exposes no legacy write endpoints, while LegacyPanel hides those UI actions.
+  const legacy = useLegacyResults({
         apiBase,
         version,
         t,

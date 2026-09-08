@@ -13,7 +13,7 @@ import {
   usersParam,
 } from './endpoints';
 
-const BASE = 'http://pbgui.test:8000/api';
+const BASE = '/api';
 
 describe('usersParam (editor inline builders)', () => {
   it('joins selected users', () => {

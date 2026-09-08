@@ -251,6 +251,7 @@ body {
 <script>
   document.title = PBGuiI18n.t('misc.balance.title');
   var API_BASE     = "%%API_BASE%%";
+  window.PBGUI_BASE_PREFIX = "%%BASE_PREFIX%%";
   var PBGUI_VERSION= "%%VERSION%%";
   var PBGUI_SERIAL = "%%SERIAL%%";
   var INIT_INSTANCE= "%%INSTANCE%%";
@@ -397,7 +398,12 @@ body {
       headers: authHeaders(),
       body: JSON.stringify({ config: config, exchange: exchange })
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      return r.json().then(function(data) {
+        if (!r.ok) throw new Error(data.detail || data.error || ('HTTP ' + r.status));
+        return data;
+      });
+    })
     .then(function(data) {
       btnCalc.disabled = false;
       calcStatus.textContent = '';
@@ -527,7 +533,12 @@ body {
     fetch(API_BASE + '/draft/' + encodeURIComponent(DRAFT_ID), {
       credentials: 'same-origin'
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+      return r.json().then(function(data) {
+        if (!r.ok) throw new Error(data.detail || ('HTTP ' + r.status));
+        return data;
+      });
+    })
     .then(function(d) {
       if (d.config) {
         configEditor.value = JSON.stringify(d.config, null, 4);
@@ -535,7 +546,7 @@ body {
         btnCalc.click();
       }
     })
-    .catch(function(e) { console.error('Failed to load draft:', e); });
+    .catch(function(e) { showError('Failed to load draft: ' + e.message); });
   }
 })();
 </script>

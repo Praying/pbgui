@@ -56,7 +56,7 @@ def test_logging_page_falls_back_without_exposing_session_token(client: TestClie
     _set_files(monkeypatch, tmp_path, None, legacy)
     response = client.get("/api/logging/main_page")
     assert response.status_code == 200
-    assert '"http://testserver/api/logging"' in response.text
+    assert '"/api/logging"' in response.text
     assert "%%" not in response.text
     assert "tok-1" not in response.text
 

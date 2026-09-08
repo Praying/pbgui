@@ -24,7 +24,7 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { PhCaretDown, PhCaretUp, PhPause, PhPlay, PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
@@ -83,7 +83,7 @@ const activeIsRegex = ref(false);
 let atBottom = true;
 
 function wsBase(): string {
-  return getBoot().origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+  return wsOrigin();
 }
 
 /** Legacy _stripAnsi, assembled without literal escape sequences so the

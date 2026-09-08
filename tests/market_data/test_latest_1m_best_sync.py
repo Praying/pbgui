@@ -263,6 +263,7 @@ def test_improve_stock_perp_uses_tradfi_path_not_crypto(monkeypatch) -> None:
     monkeypatch.setattr(hb, "_list_best_days", lambda **_kwargs: [])
     monkeypatch.setattr(hb, "get_local_l2book_day_range", lambda **_kwargs: None)
     monkeypatch.setattr(hb, "_is_stock_perp_coin", lambda _coin: True)
+    monkeypatch.setattr(hb, "resolve_tradfi_symbol", lambda _ticker: ("AAPL", None, False, d))
 
     monkeypatch.setattr(hb, "_read_day_npz", lambda *_args, **_kwargs: {})
     monkeypatch.setattr(hb, "get_source_codes_for_day", lambda **_kwargs: None)

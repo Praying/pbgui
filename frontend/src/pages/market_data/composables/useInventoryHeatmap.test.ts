@@ -3,7 +3,10 @@ import { reactive } from 'vue';
 import { useInventoryHeatmap, type InventoryHeatmapController } from './useInventoryHeatmap';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', token: 'tok', serial: 'S1', version: '1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, serial: 'S1', version: '1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 import { createInventoryViewState } from './useInventoryViewState';
 import type { PlotlyLike } from '../lib/heatmapFigure';
@@ -289,7 +292,7 @@ describe('syncOhlcvFrame (:8557-8583)', () => {
     expect(h.controller.ohlcvFrameSrc.value).toBe(''); // details closed → no src
     h.controller.toggleOhlcv(true);
     expect(h.controller.ohlcvFrameSrc.value).toBe(
-      'http://pbgui.test:8000/api/market-data/inventory/chart/ohlcv?exchange=hyperliquid&dataset=1m&coin=XYZ%3ATSLA'
+      '/api/market-data/inventory/chart/ohlcv?exchange=hyperliquid&dataset=1m&coin=XYZ%3ATSLA'
     );
     h.controller.toggleOhlcv(false);
     expect(h.controller.ohlcvFrameSrc.value).toBe('');

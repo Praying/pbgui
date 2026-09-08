@@ -91,7 +91,7 @@ const routeLabels: Record<string, string> = {
 };
 
 const { t } = useI18n();
-const apiBase = `${getBoot().origin}/api/profit-sweep`;
+const apiBase = getBoot().base_prefix + '/api/profit-sweep';
 const users = ref<TransferUser[]>([]);
 const selectedUser = ref('');
 const search = ref('');

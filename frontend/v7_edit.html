@@ -341,6 +341,7 @@ body {
   border-radius: 4px; padding: var(--sp-sm); resize: vertical;
   color: var(--text); tab-size: 4;
 }
+.json-editor.compact-json-editor { min-height: 72px; max-height: 180px; }
 textarea.json-invalid,
 textarea.json-invalid:focus {
   border-color: var(--red);
@@ -948,65 +949,65 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 
     <div class="subsection-title" data-v8-only data-i18n="v7run.pb8Runtime">PB8 Runtime</div>
     <div class="form-row cols-8" data-v8-only>
-    <div class="form-group" style="grid-column:span 2">
-      <label><span data-tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts.">exchange_symbol_unavailable_cooldown_hours</span></label>
-      <input type="number" id="f-exchange-symbol-cooldown" min="0" max="876600" step="0.1" value="6">
-    </div>
-    <div class="form-group" style="grid-column:span 2">
-      <label><span data-tip="Optional path to a PB8 custom-endpoints definition. Leave blank to use built-in endpoints.">custom_endpoints_path</span></label>
-      <input type="text" id="f-custom-endpoints-path" value="" placeholder="default">
-    </div>
-    <div class="form-group" style="grid-column:span 4">
-      <label><span data-tip="Expert diagnostic reporting thresholds only; these values do not gate startup or trading. Use canonical phase names with elapsed_ms and/or since_previous_ms non-negative integer values. An empty object uses runtime defaults.">startup_phase_budgets (Expert/Diagnostic)</span></label>
-      <textarea class="json-editor" id="f-startup-phase-budgets" rows="4">{}</textarea>
-      <div id="f-startup-phase-budgets-status" class="field-status field-status-inline" aria-live="polite"></div>
-    </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label><span data-tip="Hours PB8 keeps an exchange-reported unavailable symbol in its in-memory cooldown. 0 disables the cooldown. The state resets when PB8 restarts.">exchange_symbol_unavailable_cooldown_hours</span></label>
+        <input type="number" id="f-exchange-symbol-cooldown" min="0" max="876600" step="0.1" value="6">
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label><span data-tip="Optional path to a PB8 custom-endpoints definition. Leave blank to use built-in endpoints.">custom_endpoints_path</span></label>
+        <input type="text" id="f-custom-endpoints-path" value="" placeholder="default">
+      </div>
+      <div class="form-group" style="grid-column:span 4">
+        <label><span data-tip="Expert diagnostic reporting thresholds only; these values do not gate startup or trading. Use canonical phase names with elapsed_ms and/or since_previous_ms non-negative integer values. An empty object uses runtime defaults.">startup_phase_budgets (Expert/Diagnostic)</span></label>
+        <textarea class="json-editor compact-json-editor" id="f-startup-phase-budgets" rows="3">{}</textarea>
+        <div id="f-startup-phase-budgets-status" class="field-status field-status-inline" aria-live="polite"></div>
+      </div>
     </div>
 
     <div class="subsection-title" data-v8-only data-i18n="v7run.logging">Logging</div>
     <div class="form-row cols-8" data-v8-only>
-    <div class="form-group">
-      <label><span data-tip="Directory used by PB8 for its own log files.">logging.dir</span></label>
-      <input type="text" id="f-log-dir" value="logs">
-    </div>
-    <div class="form-group">
-      <label><span data-tip="Maximum size in MiB of one PB8 log file before rotation.">logging.max_bytes_mb</span></label>
-      <input type="number" id="f-log-max-bytes" min="0" step="1" value="10">
-    </div>
-    <div class="form-group">
-      <label><span data-tip="Number of rotated PB8 log files retained.">logging.backup_count</span></label>
-      <input type="number" id="f-log-backup-count" min="0" step="1" value="5">
-    </div>
-    <div class="form-group" style="justify-content:flex-end">
-      <div class="chk-row"><input type="checkbox" id="f-log-persist"><label for="f-log-persist">logging.persist_to_file</label></div>
-    </div>
-    <div class="form-group" style="justify-content:flex-end">
-      <div class="chk-row"><input type="checkbox" id="f-log-rotation"><label for="f-log-rotation">logging.rotation</label></div>
-    </div>
-    <div class="form-group" style="grid-column:span 3">
-      <label><span data-tip="PB8 live-event debug profiles as a JSON array.">logging.live_event_debug_profiles</span></label>
-      <textarea class="json-editor" id="f-log-debug-profiles" rows="4">[]</textarea>
-      <div id="f-log-debug-profiles-status" class="field-status field-status-inline" aria-live="polite"></div>
-    </div>
+      <div class="form-group">
+        <label><span data-tip="Directory used by PB8 for its own log files.">logging.dir</span></label>
+        <input type="text" id="f-log-dir" value="logs">
+      </div>
+      <div class="form-group">
+        <label><span data-tip="Maximum size in MiB of one PB8 log file before rotation.">logging.max_bytes_mb</span></label>
+        <input type="number" id="f-log-max-bytes" min="0" step="1" value="10">
+      </div>
+      <div class="form-group">
+        <label><span data-tip="Number of rotated PB8 log files retained.">logging.backup_count</span></label>
+        <input type="number" id="f-log-backup-count" min="0" step="1" value="5">
+      </div>
+      <div class="form-group" style="justify-content:flex-end;gap:var(--sp-xs)">
+        <div class="chk-row"><input type="checkbox" id="f-log-persist"><label for="f-log-persist">logging.persist_to_file</label></div>
+        <div class="chk-row"><input type="checkbox" id="f-log-rotation"><label for="f-log-rotation">logging.rotation</label></div>
+      </div>
+      <div class="form-group" style="grid-column:span 4">
+        <label><span data-tip="PB8 live-event debug profiles as a JSON array.">logging.live_event_debug_profiles</span></label>
+        <textarea class="json-editor compact-json-editor" id="f-log-debug-profiles" rows="3">[]</textarea>
+        <div id="f-log-debug-profiles-status" class="field-status field-status-inline" aria-live="polite"></div>
+      </div>
     </div>
 
     <div class="subsection-title" data-v8-only data-i18n="v7run.monitoring">Monitoring</div>
     <div class="form-row cols-8" data-v8-only>
-    <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-enabled"><label for="f-monitor-enabled">monitor.enabled</label></div></div>
-    <div class="form-group"><label>monitor.root_dir</label><input type="text" id="f-monitor-root-dir" value="monitor"></div>
-    <div class="form-group"><label>monitor.snapshot_interval_seconds</label><input type="number" id="f-monitor-snapshot-interval" min="0" step="0.1" value="1"></div>
-    <div class="form-group"><label>monitor.checkpoint_interval_minutes</label><input type="number" id="f-monitor-checkpoint" min="0" step="0.1" value="10"></div>
-    <div class="form-group"><label>monitor.event_rotation_mb</label><input type="number" id="f-monitor-rotation-mb" min="0" step="1" value="128"></div>
-    <div class="form-group"><label>monitor.event_rotation_minutes</label><input type="number" id="f-monitor-rotation-minutes" min="0" step="1" value="60"></div>
-    <div class="form-group"><label>monitor.max_total_bytes</label><input type="number" id="f-monitor-max-bytes" min="0" step="1" value="1073741824"></div>
-    <div class="form-group"><label>monitor.price_tick_min_interval_ms</label><input type="number" id="f-monitor-price-interval" min="0" step="1" value="500"></div>
-    <div class="form-group"><label>monitor.retain_days</label><input type="number" id="f-monitor-retain-days" min="0" step="0.1" value="7"></div>
-    <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-compress"><label for="f-monitor-compress">monitor.compress_rotated_segments</label></div></div>
-    <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-emit-candles"><label for="f-monitor-emit-candles">monitor.emit_completed_candles</label></div></div>
-    <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-raw-fills"><label for="f-monitor-raw-fills">monitor.include_raw_fill_payloads</label></div></div>
-    <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-retain-candles"><label for="f-monitor-retain-candles">monitor.retain_candles</label></div></div>
-    <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-retain-fills"><label for="f-monitor-retain-fills">monitor.retain_fills</label></div></div>
-    <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-retain-ticks"><label for="f-monitor-retain-ticks">monitor.retain_price_ticks</label></div></div>
+      <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-enabled"><label for="f-monitor-enabled">monitor.enabled</label></div></div>
+      <div class="form-group"><label>monitor.root_dir</label><input type="text" id="f-monitor-root-dir" value="monitor"></div>
+      <div class="form-group"><label>monitor.snapshot_interval_seconds</label><input type="number" id="f-monitor-snapshot-interval" min="0" step="0.1" value="1"></div>
+      <div class="form-group"><label>monitor.checkpoint_interval_minutes</label><input type="number" id="f-monitor-checkpoint" min="0" step="0.1" value="10"></div>
+      <div class="form-group"><label>monitor.event_rotation_mb</label><input type="number" id="f-monitor-rotation-mb" min="0" step="1" value="128"></div>
+      <div class="form-group"><label>monitor.event_rotation_minutes</label><input type="number" id="f-monitor-rotation-minutes" min="0" step="1" value="60"></div>
+      <div class="form-group"><label>monitor.max_total_bytes</label><input type="number" id="f-monitor-max-bytes" min="0" step="1" value="1073741824"></div>
+      <div class="form-group"><label>monitor.price_tick_min_interval_ms</label><input type="number" id="f-monitor-price-interval" min="0" step="1" value="500"></div>
+    </div>
+    <div class="form-row cols-8" data-v8-only>
+      <div class="form-group"><label>monitor.retain_days</label><input type="number" id="f-monitor-retain-days" min="0" step="0.1" value="7"></div>
+      <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-compress"><label for="f-monitor-compress">monitor.compress_rotated_segments</label></div></div>
+      <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-emit-candles"><label for="f-monitor-emit-candles">monitor.emit_completed_candles</label></div></div>
+      <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-raw-fills"><label for="f-monitor-raw-fills">monitor.include_raw_fill_payloads</label></div></div>
+      <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-retain-candles"><label for="f-monitor-retain-candles">monitor.retain_candles</label></div></div>
+      <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-retain-fills"><label for="f-monitor-retain-fills">monitor.retain_fills</label></div></div>
+      <div class="form-group" style="justify-content:flex-end"><div class="chk-row"><input type="checkbox" id="f-monitor-retain-ticks"><label for="f-monitor-retain-ticks">monitor.retain_price_ticks</label></div></div>
     </div>
   </div>
 </div>
@@ -1227,10 +1228,10 @@ graceful_stop: manage with graceful_stop semantics during cooldown">hsl_position
 <div id="cov-tooltip"></div>
 <div id="data-tip-tooltip"></div>
 
-<script src="/app/js/editor_shared.js?v=14"></script>
-<script src="/app/js/pbgui_dialogs.js?v=8"></script>
+<script src="/app/js/editor_shared.js?v=16"></script>
+<script src="/app/js/pbgui_dialogs.js?v=10"></script>
 <script src="/app/js/run_editor_adapter.js?v=9"></script>
-<script src="/app/js/log_viewer_panel.js?v=30"></script>
+<script src="/app/js/log_viewer_panel.js?v=31"></script>
 <script src="/app/js/coin_overrides_editor.js?v=26"></script>
 <script>
 /* ─── Injected Vars ────────────────────────────────────────── */
@@ -2301,6 +2302,16 @@ function cloneRunConfigValue(value) {
   return JSON.parse(JSON.stringify(value == null ? {} : value));
 }
 
+function pb8LogDirValue(value) {
+  var logDir = String(value == null ? '' : value).trim();
+  return !logDir || /^(none|null)$/i.test(logDir) ? 'logs' : logDir;
+}
+
+function pb8MonitorRootDirValue(value) {
+  var rootDir = String(value == null ? '' : value).trim();
+  return !rootDir || /^(none|null)$/i.test(rootDir) ? 'monitor' : rootDir;
+}
+
 function getRunStrategyDefault(side, strategy) {
   var defaults = editorMetadata.strategy_defaults || {};
   var sideDefaults = defaults[side] && typeof defaults[side] === 'object' ? defaults[side] : {};
@@ -2538,14 +2549,14 @@ function populateForm(opts) {
   setVal('f-forager-ws-audit', live.forager_ws_candle_rest_audit_minutes != null ? live.forager_ws_candle_rest_audit_minutes : 30);
   setVal('f-custom-endpoints-path', live.custom_endpoints_path != null ? live.custom_endpoints_path : '');
   setVal('f-startup-phase-budgets', JSON.stringify(live.startup_phase_budgets || {}, null, 2));
-  setVal('f-log-dir', logging.dir || 'logs');
+  setVal('f-log-dir', pb8LogDirValue(logging.dir));
   setVal('f-log-max-bytes', logging.max_bytes_mb != null ? logging.max_bytes_mb : 10);
   setVal('f-log-backup-count', logging.backup_count != null ? logging.backup_count : 5);
   setChk('f-log-persist', logging.persist_to_file !== false);
   setChk('f-log-rotation', logging.rotation !== false);
   setVal('f-log-debug-profiles', JSON.stringify(logging.live_event_debug_profiles || [], null, 2));
   setChk('f-monitor-enabled', monitor.enabled !== false);
-  setVal('f-monitor-root-dir', monitor.root_dir || 'monitor');
+  setVal('f-monitor-root-dir', pb8MonitorRootDirValue(monitor.root_dir));
   setVal('f-monitor-snapshot-interval', monitor.snapshot_interval_seconds != null ? monitor.snapshot_interval_seconds : 1);
   setVal('f-monitor-checkpoint', monitor.checkpoint_interval_minutes != null ? monitor.checkpoint_interval_minutes : 10);
   setVal('f-monitor-rotation-mb', monitor.event_rotation_mb != null ? monitor.event_rotation_mb : 128);
@@ -3461,10 +3472,11 @@ async function openLogPanel() {
     if (value === ('BotErr:' + INSTANCE_NAME) || value === ('BotErr:' + INSTANCE_NAME + ':' + runtimeNumber)) return true;
     if (value === ('data/run_v' + runtimeNumber + '/' + INSTANCE_NAME + '/passivbot_err.log')) return true;
     if (value === ('data/run_v' + runtimeNumber + '/' + INSTANCE_NAME + '/passivbot_err.log.old')) return true;
+    if (runEditorAdapter.isV8 && value.indexOf('BotBackup:' + INSTANCE_NAME + ':8:') === 0) return true;
     return value.indexOf((runEditorAdapter.isV8 ? 'pb8/logs/' : 'pb7/logs/')) === 0 && value.indexOf(INSTANCE_NAME) >= 0;
   }
 
-  function _initViewer(host) {
+  function _initViewer(host, defaultFile) {
     if (_runLogViewer) { _runLogViewer.close(); _runLogViewer = null; }
     var isLocal = (!host || host === 'local');
     _runLogViewer = new LogViewerPanel({
@@ -3472,7 +3484,7 @@ async function openLogPanel() {
       wsBase: WS_BASE,
       defaultHost: isLocal ? 'local' : host,
       defaultService: isLocal ? 'PBRun' : svc,
-      defaultFile: isLocal ? svc : '',
+      defaultFile: isLocal ? (defaultFile || svc) : '',
       localFileFilter: isLocal ? isLocalBotLogFile : null,
       presets: 'trading',
       showRestart: true,
@@ -3484,10 +3496,28 @@ async function openLogPanel() {
   badge.textContent = PBGuiI18n.t('v7run.searching');
   badge.className = 'disabled';
   if (runEditorAdapter.isV8) {
-    var isCurrentLocal = !!MASTER_NAME && enabledOn === MASTER_NAME;
-    badge.textContent = enabledOn === 'disabled' ? 'local' : enabledOn;
-    badge.className = isCurrentLocal || enabledOn === 'disabled' ? 'disabled' : 'connected';
-    _initViewer(isCurrentLocal || enabledOn === 'disabled' ? 'local' : enabledOn);
+    apiFetch('/instances/' + encodeURIComponent(INSTANCE_NAME) + '/log-smart?lines=1')
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(data) {
+      var masterHost = data.master || MASTER_NAME || '';
+      var host = data.host || '';
+      if (data.backup_file) {
+        badge.textContent = data.source_label || ('backup v' + (data.version || '?'));
+        badge.className = 'disabled';
+        _initViewer('local', data.backup_file);
+        return;
+      }
+      var isLocal = !host || host === masterHost;
+      badge.textContent = host ? (host + (data.version ? ' (v' + data.version + ')' : '')) : 'local';
+      badge.className = isLocal ? 'disabled' : 'connected';
+      _initViewer(isLocal ? 'local' : host);
+    })
+    .catch(function() {
+      var isCurrentLocal = !!MASTER_NAME && enabledOn === MASTER_NAME;
+      badge.textContent = enabledOn === 'disabled' ? 'local' : enabledOn;
+      badge.className = isCurrentLocal || enabledOn === 'disabled' ? 'disabled' : 'connected';
+      _initViewer(isCurrentLocal || enabledOn === 'disabled' ? 'local' : enabledOn);
+    });
     return;
   }
   apiFetch('/last-active-host/' + encodeURIComponent(INSTANCE_NAME))
@@ -3619,17 +3649,21 @@ async function applyRunFilters() {
       '&tags=' + encodeURIComponent(tags);
     var resp = await apiFetch(url);
     var data = await resp.json();
-    if (!resp.ok) throw new Error(PBGuiI18n.serverMsg((data && data.detail) || resp.statusText || PBGuiI18n.t('v7run.filterRequestFailed')));
-    if (runEditorAdapter.isV8 && Array.isArray(data.unresolved) && data.unresolved.length) {
-      throw new Error(PBGuiI18n.t('v7run.pb8CannotProjectCoins', { coins: data.unresolved.join(', ') }));
-    }
-    setMultiselectValues('ms-approved-long', data.approved || []);
-    setMultiselectValues('ms-approved-short', data.approved || []);
-    setMultiselectValues('ms-ignored-long', data.ignored || []);
-    setMultiselectValues('ms-ignored-short', data.ignored || []);
-    toast(PBGuiI18n.t('v7run.filtersApplied'), 'info');
+    if (!resp.ok) throw new Error((data && data.detail) || resp.statusText || 'Filter request failed');
+    var approved = data.approved || [];
+    var ignored = data.ignored || [];
+    var unresolvedCount = runEditorAdapter.isV8 && Array.isArray(data.unresolved) ? data.unresolved.length : 0;
+    setMultiselectValues('ms-approved-long', approved);
+    setMultiselectValues('ms-approved-short', approved);
+    setMultiselectValues('ms-ignored-long', ignored);
+    setMultiselectValues('ms-ignored-short', ignored);
+    var unresolvedSuffix = unresolvedCount ? '; ' + unresolvedCount + ' unavailable PB8 symbols skipped' : '';
+    toast(
+      'Filters applied: ' + approved.length + ' approved, ' + ignored.length + ' ignored' + unresolvedSuffix,
+      unresolvedCount ? 'info' : 'ok'
+    );
   } catch (e) {
-    toast(PBGuiI18n.t('v7run.filterError') + ': ' + e.message, 'err');
+    toast('Filter error: ' + e.message, 'err');
   } finally {
     if (button) button.disabled = false;
   }
@@ -4080,10 +4114,35 @@ _editorInitPromise = init();
 document.title = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.titleEditV8' : 'v7run.titleEdit');
 var _sbTitle = document.querySelector('.sb-title');
 if (_sbTitle) _sbTitle.textContent = PBGuiI18n.t(runEditorAdapter.isV8 ? 'v7run.editPb8Instance' : 'v7run.editInstance');
+function visibleRunLogLines(limit) {
+  if (!_logPanelOpen || !_runLogViewer || typeof _runLogViewer._q !== 'function') return [];
+  var terminal = _runLogViewer._q('terminal');
+  if (!terminal) return [];
+  var terminalRect = terminal.getBoundingClientRect();
+  var viewportTop = Math.max(0, terminalRect.top);
+  var viewportBottom = Math.min(window.innerHeight, terminalRect.bottom);
+  return Array.from(terminal.children).filter(function (line) {
+    if (line.classList.contains('lvp-hidden') || line.classList.contains('lvp-level-hidden')) return false;
+    var rect = line.getBoundingClientRect();
+    return rect.bottom > viewportTop && rect.top < viewportBottom;
+  }).map(function (line) {
+    return String(line.dataset.text || line.textContent || '');
+  }).filter(Boolean).slice(-limit);
+}
 window.PBGUI_AI_PAGE_CONTEXT = function () {
+  var visibleLogEvidence = [];
+  var visibleLines = visibleRunLogLines(120);
+  if (visibleLines.length) {
+    visibleLogEvidence.push({
+      kind: 'log_excerpt',
+      title: 'Visible Passivbot output on ' + String(_runLogViewer._host || 'local'),
+      content: visibleLines.join('\n')
+    });
+  }
   return {
     section: 'Run config editor',
-    entities: INSTANCE_NAME ? [{ kind: 'run_config', version: runEditorAdapter.version, name: INSTANCE_NAME }] : []
+    entities: INSTANCE_NAME ? [{ kind: 'run_config', version: runEditorAdapter.version, name: INSTANCE_NAME }] : [],
+    evidence: visibleLogEvidence
   };
 };
 window.PBGUI_AI_PAGE_ACTIONS = [{
@@ -4162,7 +4221,7 @@ window.PBGUI_NAV_CONFIG = {
   });
 })();
 </script>
-<script src="/app/js/shared_help_overlay.js?v=8"></script>
+<script src="/app/js/shared_help_overlay.js?v=9"></script>
 <script src="/app/js/pbgui_icons.js?v=1"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 

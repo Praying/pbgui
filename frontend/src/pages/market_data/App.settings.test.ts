@@ -14,11 +14,15 @@ import { pickSelectOption } from '@/shared/testing/select';
 
 vi.mock('@/shared/boot', () => ({
   getBoot: vi.fn(() => ({
-    token: 'tok',
     origin: 'http://pbgui.test:8000',
+    base_prefix: '',
+    authenticated: true,
     version: '1.0.0',
     serial: 'S1',
   })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 let fetchMock: ReturnType<typeof vi.fn>;

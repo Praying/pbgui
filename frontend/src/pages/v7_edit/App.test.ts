@@ -16,7 +16,10 @@ import App from './App.vue';
  */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: 'v1.99', serial: 'S9' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: 'v1.99', serial: 'S9' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -233,7 +236,7 @@ describe('Edit page shell (v8 flavour)', () => {
     const put = fetchMock.mock.calls.find(
       (c) => String(c[0]).includes('/instances/alice/config') && (c[1]?.method ?? 'GET') === 'PUT'
     )!;
-    expect(String(put[0])).toBe('http://pbgui.test:8000/api/v8/instances/alice/config');
+    expect(String(put[0])).toBe('/api/v8/instances/alice/config');
     expect(String(put[1]!.method)).toBe('PUT');
     const body = JSON.parse(String(put[1]!.body)) as {
       config: { live: Record<string, unknown>; pbgui: Record<string, unknown> };

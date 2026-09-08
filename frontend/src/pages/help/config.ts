@@ -14,7 +14,7 @@ import { getBoot } from '@/shared/boot';
 
 /** REST base for the help endpoints, e.g. http://host:port/api/help. */
 export function helpApiBase(): string {
-  return `${getBoot().origin}/api/help`;
+  return `${getBoot().base_prefix}/api/help`;
 }
 
 /** Legacy concatenation (relative '/api/help/...' made absolute via boot). */

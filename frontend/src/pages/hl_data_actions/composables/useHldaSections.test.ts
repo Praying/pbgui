@@ -5,7 +5,10 @@ import { useHldaSections } from './useHldaSections';
 /* doInit/populate/submit port of hl_data_actions.html :936-1053, :1555-1592. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -109,7 +112,7 @@ describe('submitDownload (:1555-1573)', () => {
     await store.submitDownload();
 
     const [url, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
-    expect(url).toBe('http://pbgui.test:8000/api/heatmap/queue-l2book-download-bulk');
+    expect(url).toBe('/api/heatmap/queue-l2book-download-bulk');
     expect(init.method).toBe('POST');
     expect(JSON.parse(String(init.body))).toEqual({
       coins: ['BTC'],
@@ -146,7 +149,7 @@ describe('submitBuild (:1575-1592)', () => {
     await store.submitBuild();
 
     const [url, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
-    expect(url).toBe('http://pbgui.test:8000/api/heatmap/queue-build-ohlcv');
+    expect(url).toBe('/api/heatmap/queue-build-ohlcv');
     expect(JSON.parse(String(init.body))).toEqual({
       coins: ['All'],
       start_day: '20240101',

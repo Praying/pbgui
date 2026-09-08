@@ -23,9 +23,7 @@ export class CmcApiError extends Error {
 /** Legacy authOptions: plain-object headers with the bearer token merged in. */
 function authOptions(options: RequestInit = {}): RequestInit {
   const headers: Record<string, string> = { ...(options.headers as Record<string, string> | undefined) };
-  const token = getBoot().token;
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return { ...options, headers };
+  return { ...options, headers, credentials: 'same-origin' };
 }
 
 /** Legacy cmcFetch: unwrap detail objects, expose status + operation_id. */

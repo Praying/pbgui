@@ -2,17 +2,20 @@ import { describe, expect, it, vi } from 'vitest';
 import { dashboardsUrl, editorPageUrl, templatesPageUrl } from './config';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 describe('dashboard_main config', () => {
   it('derives the api base from the boot origin like the legacy %%API_BASE%%', () => {
-    expect(dashboardsUrl()).toBe('http://pbgui.test:8000/api/dashboards');
+    expect(dashboardsUrl()).toBe('/api/dashboards');
   });
 
   it('builds the view-mode editor url with name, api_base and view_only=1', () => {
     expect(editorPageUrl('My Dash', 'view')).toBe(
-      'http://pbgui.test:8000/api/dashboard/editor_page?name=My+Dash&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi&view_only=1'
+      '/api/dashboard/editor_page?name=My+Dash&api_base=%2Fapi&view_only=1'
     );
   });
 
@@ -26,7 +29,7 @@ describe('dashboard_main config', () => {
 
   it('builds the templates page url with current and api_base', () => {
     expect(templatesPageUrl('My Dash')).toBe(
-      'http://pbgui.test:8000/api/dashboard/templates_page?current=My+Dash&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi'
+      '/api/dashboard/templates_page?current=My+Dash&api_base=%2Fapi'
     );
   });
 });

@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useInventory, type InventoryApi, type InventoryController } from './useInventory';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', token: 'tok', serial: 'S1', version: '1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, serial: 'S1', version: '1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 import type { PlotlyLike } from '../lib/heatmapFigure';
 import type { InventoryPayload } from '../lib/inventoryTypes';

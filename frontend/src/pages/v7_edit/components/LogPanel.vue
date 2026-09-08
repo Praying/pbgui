@@ -8,7 +8,7 @@
  */
 import { onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 import { Button } from '@/shared/components/ui/button';
 import { useEditPageContext } from '../composables/useEditPage';
 
@@ -28,7 +28,7 @@ let cachedMaster = '';
 async function masterName(): Promise<string> {
   if (cachedMaster || !page.isV8) return cachedMaster;
   try {
-    const resp = await fetch(getBoot().origin + '/api/server-status', {
+    const resp = await fetch(getBoot().base_prefix + '/api/server-status', {
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -51,8 +51,7 @@ const runtimeNumber = page.isV8 ? '8' : '7';
 const svc = 'Bot:' + page.instanceName.value + ':' + runtimeNumber;
 
 function wsBase(): string {
-  const origin = getBoot().origin || window.location.origin;
-  return origin.replace('http://', 'ws://').replace('https://', 'wss://');
+  return wsOrigin();
 }
 
 function isLocalBotLogFile(file: string): boolean {

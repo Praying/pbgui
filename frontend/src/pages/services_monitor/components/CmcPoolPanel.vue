@@ -65,6 +65,9 @@ watch(
 const selectedKeyId = ref('');
 const selectedKey = computed(() => keys.value.find((item) => item.id === selectedKeyId.value) ?? null);
 
+/** The page AI context reads the selected key id (legacy _selectedCmcKeyId). */
+defineExpose({ selectedKeyId });
+
 /** Legacy renderCmcPool: drop the selection when the key leaves the payload. */
 watch(keys, (list) => {
   if (selectedKeyId.value && !list.some((item) => item.id === selectedKeyId.value)) {

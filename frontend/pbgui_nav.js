@@ -8,7 +8,7 @@
  *        </script>
  *        <script src="/app/pbgui_nav.js"></script>
  *   3. The following globals must be set anywhere before this script runs:
- *        TOKEN, API_BASE, PBGUI_VERSION
+ *        API_BASE, PBGUI_VERSION
  *
  * The 'current' value in PBGUI_NAV_CONFIG must match a 'page' key in NAV_GROUPS below.
  * The active nav group is highlighted automatically.
@@ -50,6 +50,30 @@
     };
     if (!entity.kind || !entity.name || aiContextSensitiveName(entity.kind)) return null;
     return entity;
+  }
+
+  function aiContextEvidence(value) {
+    if (!value || typeof value !== 'object' || value.kind !== 'log_excerpt') return null;
+    var title = aiContextText(value.title, 160);
+    var content = redactAIEvidenceText(value.content);
+    if (!title || !content) return null;
+    return { kind: 'log_excerpt', title: title, content: content };
+  }
+
+  function redactAIEvidenceText(value) {
+    return String(value == null ? '' : value)
+      .replace(/\x1b\[[0-?]*[ -\/]*[@-~]/g, '')
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)"(?:\\.|[^"\\])*"/gi, '$1$2$1$3"[REDACTED]"')
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)'(?:\\.|[^'\\])*'/gi, "$1$2$1$3'[REDACTED]'")
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)"(?!\[REDACTED\]")[\s\S]*$/gi, '$1$2$1$3"[REDACTED]')
+      .replace(/(["'])(authorization|password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\1(\s*:\s*)'(?!\[REDACTED\]')[\s\S]*$/gi, "$1$2$1$3'[REDACTED]")
+      .replace(/\b(authorization)\s*[:=]\s*[^\r\n]+/gi, '$1: [REDACTED]')
+      .replace(/\b(password|passwd|secret|token|api[_ -]?key|private[_ -]?key|session|cookie)\b(\s*[:=]\s*)[^\s,;]+/gi, '$1$2[REDACTED]')
+      .replace(/\b(bearer|basic)\s+[A-Za-z0-9._~+\/=-]{8,}/gi, '$1 [REDACTED]')
+      .replace(/([?&](?:token|access_token|api_key|apikey|key|secret|session)=)[^&\s]+/gi, '$1[REDACTED]')
+      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ')
+      .trim()
+      .slice(-12000);
   }
 
   function aiContextFocusedField(value) {
@@ -163,17 +187,60 @@
     return aiContextText(heading ? heading.textContent : shell.id, 160).replace(/\s+/g, ' ');
   }
 
-  function aiControlId(element) {
-    var id = _aiControlIds.get(element);
-    if (!id) {
-      _aiControlSequence += 1;
-      id = 'control_' + _aiControlSequence;
-      _aiControlIds.set(element, id);
-    }
-    return id;
+  function aiControlResourceIdentity(element) {
+    var scope = element.closest('[data-id],[data-key],[data-name],[data-user],[data-config],tr,li');
+    if (!scope) return '';
+    var attributes = ['data-id', 'data-key', 'data-name', 'data-user', 'data-config'].map(function (name) {
+      return scope.hasAttribute(name) ? name + '=' + String(scope.getAttribute(name) || '') : '';
+    }).filter(Boolean);
+    if (attributes.length) return attributes.join('|');
+    var label = scope.matches('tr') ? scope.querySelector('th,td') : scope;
+    return aiContextText(label ? label.textContent : '', 160).replace(/\s+/g, ' ');
   }
 
-  function aiControlDescriptor(element) {
+  function aiControlPageIdentity() {
+    var state = { page_key: String(cfg().current || ''), sections: [], entities: [] };
+    Object.keys(_aiContextProviders).sort().forEach(function (id) {
+      try {
+        var value = _aiContextProviders[id]();
+        if (!value || typeof value !== 'object') return;
+        if (value.section) state.sections.push(aiContextText(value.section, 128));
+        (Array.isArray(value.entities) ? value.entities : []).slice(0, 8).forEach(function (entity) {
+          var projected = aiContextEntity(entity);
+          if (projected) state.entities.push(projected);
+        });
+      } catch (_) {}
+    });
+    return JSON.stringify(state);
+  }
+
+  function aiControlStateIdentity(element) {
+    var type = String(element.type || '').toLowerCase();
+    var value = '';
+    if (element.tagName === 'SELECT' || element.tagName === 'TEXTAREA' || element.isContentEditable) {
+      value = element.isContentEditable ? element.textContent : element.value;
+    } else if (element.tagName === 'INPUT' && ['button', 'submit', 'reset'].indexOf(type) < 0) {
+      value = element.value;
+    }
+    return JSON.stringify({
+      disabled: !!element.disabled,
+      checked: !!element.checked,
+      value: String(value == null ? '' : value),
+      resource: aiControlResourceIdentity(element)
+    });
+  }
+
+  function aiControlId(element, identity) {
+    var entry = _aiControlIds.get(element);
+    if (!entry || entry.identity !== identity) {
+      _aiControlSequence += 1;
+      entry = { id: 'control_' + _aiControlSequence, identity: identity };
+      _aiControlIds.set(element, entry);
+    }
+    return entry.id;
+  }
+
+  function aiControlDescriptor(element, pageIdentity) {
     var tag = String(element.tagName || '').toLowerCase();
     var type = String(element.type || '').toLowerCase();
     var role = String(element.getAttribute('role') || '').toLowerCase();
@@ -199,7 +266,6 @@
     var label = aiControlLabel(element);
     if (!label || aiControlSensitive(element, label)) return null;
     var descriptor = {
-      id: aiControlId(element),
       role: tag === 'input' ? (type || 'input') : (role || tag),
       label: label,
       operations: operations
@@ -212,6 +278,14 @@
         return { value: aiContextText(option.value, 160), label: aiContextText(option.textContent, 160) };
       }).filter(function (option) { return !!option.label; });
     }
+    descriptor.id = aiControlId(element, JSON.stringify([
+      pageIdentity,
+      descriptor.role,
+      descriptor.name,
+      descriptor.operations,
+      descriptor.options || [],
+      aiControlStateIdentity(element)
+    ]));
     return descriptor;
   }
 
@@ -221,7 +295,8 @@
     var selector = 'body *';
     Array.from(document.querySelectorAll(selector)).forEach(function (element, index) {
       if (!aiControlVisible(element)) return;
-      var descriptor = aiControlDescriptor(element);
+      var pageIdentity = aiControlPageIdentity();
+      var descriptor = aiControlDescriptor(element, pageIdentity);
       if (!descriptor) return;
       candidates.push({ element: element, descriptor: descriptor, index: index, priority: descriptor.context ? 0 : 1 });
     });
@@ -328,6 +403,7 @@
       guide_topic: String(GUIDE_TOPICS[c.current] || '').slice(0, 128),
       pages: collectAIPages(),
       entities: [],
+      evidence: [],
       actions: Object.keys(_aiPageActions).sort().slice(0, 16).map(function (key) {
         return { id: _aiPageActions[key].id, entity_kind: _aiPageActions[key].entity_kind };
       }),
@@ -344,10 +420,17 @@
             if (projected) context.entities.push(projected);
           });
         }
+        if (Array.isArray(value.evidence)) {
+          value.evidence.slice(0, 2).forEach(function (item) {
+            var projectedEvidence = aiContextEvidence(item);
+            if (projectedEvidence) context.evidence.push(projectedEvidence);
+          });
+        }
         if (value.focused_field && !context.focused_field) context.focused_field = aiContextFocusedField(value.focused_field);
       } catch (_) {}
     });
     context.entities = context.entities.slice(0, 8);
+    context.evidence = context.evidence.slice(0, 2);
     while (context.controls.length && JSON.stringify(context).length > 256 * 1024) context.controls.pop();
     return context;
   }
@@ -380,7 +463,7 @@
     }
     var route = FASTAPI_PAGES.v8_backtest;
     if (!route) return false;
-    window.location.assign(_getApiOrigin() + route + '?panel=queue');
+    window.location.assign(_getAppBase() + route + '?panel=queue');
     return true;
   };
   window.PBGuiAI.registerPageContext = function (registration) {
@@ -416,6 +499,7 @@
     var entity = payload.entity && typeof payload.entity === 'object' ? payload.entity : {};
     if (String(target.page_key || '') !== String(cfg().current || '')) {
       var route = FASTAPI_PAGES[String(target.page_key || '')];
+      if (route) route = _appPath(route);
       if (route && !continuePageAction(_getApiOrigin() + route, request.action_id)) {
         event.preventDefault();
       }
@@ -447,7 +531,7 @@
         result.catch(function (error) { console.error('PBGui page action failed:', error); });
       }
     } catch (error) {
-      event.preventDefault();
+      request.browser_error = error;
       console.error('PBGui page action failed:', error);
     }
   });
@@ -509,7 +593,6 @@
   function cfg() {
     var c = window.PBGUI_NAV_CONFIG || {};
     return {
-      token:    c.token    !== undefined ? c.token    : (window.TOKEN    || ''),
       authenticated: c.authenticated === true,
       apiBase:  c.apiBase  !== undefined ? c.apiBase  : (window.API_BASE || ''),
       version:  c.version  !== undefined ? c.version  : (window.PBGUI_VERSION || ''),
@@ -537,11 +620,11 @@
     return out;
   }
 
-  function authOptions(token, options) {
+  function authOptions(options) {
     var opts = Object.assign({}, options || {});
     var headers = Object.assign({}, opts.headers || {});
-    if (token) headers.Authorization = 'Bearer ' + token;
     opts.headers = headers;
+    opts.credentials = 'same-origin';
     return opts;
   }
 
@@ -930,7 +1013,7 @@
   function _ensureLogViewer(cb) {
     if (typeof window.LogViewerPanel === 'function') { cb(); return; }
     var s = document.createElement('script');
-    s.src = '/app/js/log_viewer_panel.js?v=30';
+    s.src = _appPath('/app/js/log_viewer_panel.js?v=31');
     s.onload = cb;
     s.onerror = function() { console.warn('Failed to load log_viewer_panel.js'); };
     document.head.appendChild(s);
@@ -939,7 +1022,7 @@
   function _getWsBase() {
     if (window.WS_BASE) return window.WS_BASE;
     var proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return proto + '//' + window.location.host;
+    return proto + '//' + window.location.host + _getBasePrefix();
   }
 
   function _getApiOrigin() {
@@ -952,8 +1035,44 @@
     return apiOrigin || window.location.origin;
   }
 
-  function _notificationToken() {
-    return cfg().token || window.TOKEN || window.API_TOKEN || '';
+  function _getBasePrefix() {
+    var prefix = window.PBGUI_BASE_PREFIX;
+    if (prefix === undefined) prefix = window.BASE_PREFIX;
+    if (prefix === undefined) {
+      var apiBase = String(cfg().apiBase || '');
+      try {
+        var apiPath = new URL(apiBase, window.location.origin).pathname;
+        var apiMarker = apiPath.lastIndexOf('/api/');
+        if (apiMarker >= 0) prefix = apiPath.slice(0, apiMarker);
+      } catch (_) {
+        prefix = undefined;
+      }
+    }
+    if (prefix === undefined) {
+      var appMarker = window.location.pathname.lastIndexOf('/app/');
+      prefix = appMarker >= 0 ? window.location.pathname.slice(0, appMarker) : '';
+    }
+    if (prefix === '') return '';
+    // The server supplies an encoded ASGI path, never an origin or a URL.
+    if (typeof prefix !== 'string' || !/^\/(?:[A-Za-z0-9._~/-]|%[0-9a-f]{2})*$/i.test(prefix)
+        || prefix.indexOf('//') === 0) throw new Error('Invalid PBGui mount path');
+    prefix.split('/').forEach(function (part) {
+      var decoded;
+      try { decoded = decodeURIComponent(part); } catch (_) { throw new Error('Invalid PBGui mount path'); }
+      if (decoded === '.' || decoded === '..' || /[\\/\x00-\x1f\x7f]/.test(decoded)) {
+        throw new Error('Invalid PBGui mount path');
+      }
+    });
+    return prefix.replace(/\/+$/, '');
+  }
+
+  // Only nav-owned root-relative paths use this helper; fetch inputs are untouched.
+  function _appPath(path) {
+    return _getBasePrefix() + path;
+  }
+
+  function _getAppBase() {
+    return _getApiOrigin() + _getBasePrefix();
   }
 
   function _normalizeNotificationLevel(level) {
@@ -966,11 +1085,11 @@
 
   function logUiNotification(message, level) {
     var text = String(message == null ? '' : message).trim();
-    var token = _notificationToken();
-    if (!text || !token) return;
-    fetch(_getApiOrigin() + '/api/notify_log', {
+    if (!text) return;
+    fetch(_getAppBase() + '/api/notify_log', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ msg: text, level: _normalizeNotificationLevel(level) })
     }).catch(function () {});
   }
@@ -1140,14 +1259,7 @@
       openMonitor.onclick = function (e) {
         e.preventDefault();
         closeAlertOverlay();
-        var c = cfg();
-        var apiOrigin = '';
-        if (c.apiBase) {
-          var m = c.apiBase.match(/^(https?:\/\/[^/]+)/);
-          if (m) apiOrigin = m[1];
-        }
-        if (!apiOrigin) apiOrigin = window.location.origin;
-        var url = apiOrigin + '/api/vps/main_page';
+        var url = _getAppBase() + '/api/vps/main_page';
         window.location.href = url;
       };
     }
@@ -1235,14 +1347,8 @@
   }
 
   function fetchAlerts() {
-    var c = cfg();
-    var apiOrigin = '';
-    if (c.apiBase) {
-      var m = c.apiBase.match(/^(https?:\/\/[^/]+)/);
-      if (m) apiOrigin = m[1];
-    }
-    if (!apiOrigin) apiOrigin = window.location.origin;
-    fetch(apiOrigin + '/api/vps/alerts', authOptions(c.token, { cache: 'no-store' }))
+    var apiOrigin = _getAppBase();
+    fetch(apiOrigin + '/api/vps/alerts', authOptions({ cache: 'no-store' }))
       .then(function (resp) {
         if (!resp.ok) throw new Error('alerts failed');
         return resp.json();
@@ -1262,14 +1368,8 @@
   }
 
   function ackAlert(alertId) {
-    var c = cfg();
-    var apiOrigin = '';
-    if (c.apiBase) {
-      var m = c.apiBase.match(/^(https?:\/\/[^/]+)/);
-      if (m) apiOrigin = m[1];
-    }
-    if (!apiOrigin) apiOrigin = window.location.origin;
-    fetch(apiOrigin + '/api/vps/alerts/ack', authOptions(c.token, {
+    var apiOrigin = _getAppBase();
+    fetch(apiOrigin + '/api/vps/alerts/ack', authOptions({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: alertId })
@@ -1287,14 +1387,8 @@
   }
 
   function ackAllAlerts() {
-    var c = cfg();
-    var apiOrigin = '';
-    if (c.apiBase) {
-      var m = c.apiBase.match(/^(https?:\/\/[^/]+)/);
-      if (m) apiOrigin = m[1];
-    }
-    if (!apiOrigin) apiOrigin = window.location.origin;
-    fetch(apiOrigin + '/api/vps/alerts/ack-all', authOptions(c.token, { method: 'POST' }))
+    var apiOrigin = _getAppBase();
+    fetch(apiOrigin + '/api/vps/alerts/ack-all', authOptions({ method: 'POST' }))
       .then(function (resp) {
         if (!resp.ok) throw new Error('ack-all failed');
         return resp.json();
@@ -1678,19 +1772,11 @@
      ════════════════════════════════════ */
   function setupHandlers() {
     var c = cfg();
-    var TOKEN   = c.token;
     var guideTopic = GUIDE_TOPICS[c.current] || '00_overview';
     installNotificationHooks();
 
-    /* Derive API origin (scheme + host + port) from apiBase or current location */
-    var apiOrigin = '';
-    if (c.apiBase) {
-      var m = c.apiBase.match(/^(https?:\/\/[^/]+)/);
-      if (m) apiOrigin = m[1];
-    }
-    if (!apiOrigin) {
-      apiOrigin = window.location.origin;
-    }
+    /* URL construction uses the application base; origin checks stay origin-only. */
+    var apiOrigin = _getAppBase();
 
     function navTo(page) {
       if (!page) return;
@@ -1810,10 +1896,10 @@
       _aiDrawerLoading = true;
       var link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = '/app/css/ai_drawer.css?v=13';
+      link.href = _appPath('/app/css/ai_drawer.css?v=13');
       document.head.appendChild(link);
       var script = document.createElement('script');
-      script.src = '/app/js/ai_drawer.js?v=39';
+      script.src = _appPath('/app/js/ai_drawer.js?v=39');
       script.onload = function () { _aiDrawerLoading = false; if (window.PBGuiAI && window.PBGuiAI.open) window.PBGuiAI.open(); };
       script.onerror = function () { _aiDrawerLoading = false; };
       document.head.appendChild(script);
@@ -1829,7 +1915,7 @@
       aiBtn.addEventListener('click', function (event) {
         if (event.isTrusted) aiUserInteracted = true;
       });
-      fetch(_getApiOrigin() + '/api/ai/preferences', {
+      fetch(_getAppBase() + '/api/ai/preferences', {
         credentials: 'same-origin',
         cache: 'no-store'
       }).then(function (response) {
@@ -1851,7 +1937,7 @@
 
     var logoutBtn = document.getElementById('pbgui-logout-btn');
     if (logoutBtn) {
-      logoutBtn.style.display = (TOKEN || c.authenticated) ? 'inline-flex' : 'none';
+      logoutBtn.style.display = c.authenticated ? 'inline-flex' : 'none';
       logoutBtn.addEventListener('click', function () { performLogout(); });
     }
 
@@ -1923,17 +2009,11 @@
           confirmText: navT('nav.restart', 'Restart')
         }).then(function (confirmed) {
           if (!confirmed) return;
-          var c2 = cfg();
-          var origin2 = '';
-          if (c2.apiBase) { var m2 = c2.apiBase.match(/^(https?:\/\/[^/]+)/); if (m2) origin2 = m2[1]; }
-          if (!origin2) origin2 = window.location.origin;
+          var origin2 = _getAppBase();
           restartBtn.disabled = true;
           restartBtn.classList.add('disabled');
           restartBtn.innerHTML = '<span class="nav-restart-dot"></span>' + esc(navT('nav.restarting', 'Restarting...'));
-          fetch(origin2 + '/api/server-restart', authOptions(c2.token, {
-            method: 'POST',
-            credentials: 'same-origin'
-          })).then(function(resp) {
+          fetch(origin2 + '/api/server-restart', authOptions({ method: 'POST' })).then(function(resp) {
             if (!resp.ok) {
               return resp.json().catch(function () { return {}; }).then(function (data) {
                 var detail = (data && data.detail) ? String(data.detail) : navT('nav.restart_failed_default', 'Restart failed.');
@@ -1942,12 +2022,12 @@
             }
             return resp.json().catch(function () { return {}; });
           }).then(function(data) {
-            showRestartOverlay(origin2, c2.token, data && Array.isArray(data.restart_services) ? data.restart_services : []);
+            showRestartOverlay(origin2, data && Array.isArray(data.restart_services) ? data.restart_services : []);
           }).catch(function(err) {
             restartBtn.disabled = false;
             restartBtn.classList.remove('disabled');
             restartBtn.innerHTML = '<span class="nav-restart-dot"></span>' + esc(navT('nav.restart', 'Restart'));
-            fetchRestartStatus(c2.token, origin2);
+            fetchRestartStatus(origin2);
             showNavConfirm({
               title: navT('nav.restart_failed', 'Restart failed'),
               message: navT('nav.restart_rejected', 'The PBGui service restart request was rejected.'),
@@ -1963,9 +2043,9 @@
 
     function startRestartStatusWatch() {
       stopRestartStatusWatch();
-      fetchRestartStatus(TOKEN, apiOrigin);
-      _restartPollTimer = setInterval(function () { fetchRestartStatus(TOKEN, apiOrigin); }, 30000);
-      setupRestartSSE(TOKEN, apiOrigin);
+      fetchRestartStatus(apiOrigin);
+      _restartPollTimer = setInterval(function () { fetchRestartStatus(apiOrigin); }, 30000);
+      setupRestartSSE(apiOrigin);
     }
     startRestartStatusWatch();
     window.addEventListener('pagehide', stopRestartStatusWatch);
@@ -1974,7 +2054,7 @@
     });
   }
 
-  function showRestartOverlay(origin, token, requestedServices) {
+  function showRestartOverlay(origin, requestedServices) {
     /* Remove any existing overlay first */
     var existing = document.getElementById('pbgui-restart-overlay');
     if (existing) existing.remove();
@@ -2001,7 +2081,7 @@
     function probe() {
       attempts++;
       if (statusEl) statusEl.textContent = navT('nav.reconnecting', 'Reconnecting\u2026 ({done}/{total})', { done: attempts, total: maxAttempts });
-      fetch(apiBase + '/api/server-status', authOptions(token, { cache: 'no-store', credentials: 'same-origin' }))
+      fetch(apiBase + '/api/server-status', authOptions({ cache: 'no-store' }))
         .then(function (r) {
           if (!r.ok) throw new Error('status unavailable');
           return r.json();
@@ -2021,10 +2101,7 @@
                 if (label) requestedRestartServices[label] = true;
               });
               if (statusEl) statusEl.textContent = navT('nav.restarting_remaining', 'Restarting remaining outdated services...');
-              fetch(apiBase + '/api/server-restart', authOptions(token, {
-                method: 'POST',
-                credentials: 'same-origin'
-              })).then(function (response) {
+              fetch(apiBase + '/api/server-restart', authOptions({ method: 'POST' })).then(function (response) {
                 if (response.ok) return;
                 return response.json().catch(function () { return {}; }).then(function (payload) {
                   throw new Error((payload && payload.detail) ? String(payload.detail) : 'remaining service restart failed');
@@ -2108,9 +2185,9 @@
       : navT('nav.auth_disabled_host', 'Authentication disabled on {host}. Anyone who can reach this address has full access.', { host: bindHost });
   }
 
-  function fetchRestartStatus(token, apiOrigin) {
+  function fetchRestartStatus(apiOrigin) {
     if (!apiOrigin) return;
-    fetch(apiOrigin + '/api/server-status', authOptions(token, { cache: 'no-store' }))
+    fetch(apiOrigin + '/api/server-status', authOptions({ cache: 'no-store' }))
       .then(function (resp) {
         if (!resp.ok) throw new Error('server-status failed');
         return resp.json();
@@ -2121,7 +2198,7 @@
       .catch(function () {});
   }
 
-  function setupRestartSSE(token, apiOrigin) {
+  function setupRestartSSE(apiOrigin) {
     if (!apiOrigin) return;
     if (_restartEventSource) _restartEventSource.close();
     var url = apiOrigin + '/api/server-status/stream';
@@ -2137,11 +2214,11 @@
       if (_restartEventSource !== es) return;
       es.close();
       _restartEventSource = null;
-      fetchRestartStatus(token, apiOrigin);
+      fetchRestartStatus(apiOrigin);
       if (_restartRetryTimer) clearTimeout(_restartRetryTimer);
       _restartRetryTimer = setTimeout(function() {
         _restartRetryTimer = null;
-        setupRestartSSE(token, apiOrigin);
+        setupRestartSSE(apiOrigin);
       }, 15000);
     };
   }
@@ -2171,10 +2248,10 @@
   }
 
   /* ════════════════════════════════════
-     TOKEN KEEP-ALIVE & 401 REDIRECT
+     SESSION KEEP-ALIVE & 401 REDIRECT
      ════════════════════════════════════ */
 
-  /* Redirect to the standalone root login when token is invalid/expired. */
+  /* Redirect to the standalone root login when the session is invalid/expired. */
   var _authRedirecting = false;
   function replaceTopLocation(url) {
     try {
@@ -2195,30 +2272,14 @@
       clearInterval(_refreshTimer);
       _refreshTimer = null;
     }
-    var c = cfg();
-    var origin = '';
-    if (c.apiBase) {
-      var match = String(c.apiBase).match(/^(https?:\/\/[^/]+)/);
-      if (match) origin = match[1];
-    }
-    if (!origin) origin = window.location.origin;
-    var url = new URL(origin + '/');
+    var url = new URL(_getAppBase() + '/');
     replaceTopLocation(url.toString());
   }
 
   function performLogout() {
-    var c = cfg();
-    var origin = '';
-    if (c.apiBase) {
-      var match = String(c.apiBase).match(/^(https?:\/\/[^/]+)/);
-      if (match) origin = match[1];
-    }
-    if (!origin) origin = window.location.origin;
+    var origin = _getAppBase();
 
-    fetch(origin + '/api/auth/logout', authOptions(c.token, {
-      method: 'POST',
-      credentials: 'same-origin'
-    })).finally(function () {
+    fetch(origin + '/api/auth/logout', authOptions({ method: 'POST' })).finally(function () {
       redirectToLogin();
     });
   }
@@ -2233,14 +2294,13 @@
       var m = String(window.API_BASE).match(/^(https?:\/\/[^/]+)/);
       apiRoot = m ? m[1] : '';
     }
-    return apiRoot + '/api/token-refresh';
+    return apiRoot + _appPath('/api/token-refresh');
   }
 
   function confirmTokenStillValid() {
     if (_authCheckPending) return;
-    var c = cfg();
     _authCheckPending = true;
-    _origFetch(tokenRefreshUrl(), authOptions(c.token, { method: 'POST' }))
+    _origFetch(tokenRefreshUrl(), authOptions({ method: 'POST' }))
       .then(function (r) {
         if (r.status === 401) {
           redirectToLogin();
@@ -2253,10 +2313,9 @@
 
   function startTokenRefresh() {
     if (_refreshTimer) return;
-    var c = cfg();
     function doRefresh() {
       if (_authRedirecting) return;
-      _origFetch(tokenRefreshUrl(), authOptions(c.token, { method: 'POST' }))
+      _origFetch(tokenRefreshUrl(), authOptions({ method: 'POST' }))
         .then(function (r) {
           if (r.status === 401) { redirectToLogin(); return; }
           if (r.ok) { var ai = document.getElementById('pbgui-ai-btn'); if (ai) ai.style.display = 'inline-flex'; }

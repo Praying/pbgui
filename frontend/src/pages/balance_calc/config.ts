@@ -22,7 +22,7 @@ export const EXCHANGES = ['binance', 'bybit', 'bitget', 'gateio', 'hyperliquid',
 
 /** REST base for the balance-calc router, e.g. http://host:port/api/balance-calc. */
 export function balanceCalcApiBase(): string {
-  return `${getBoot().origin}/api/balance-calc`;
+  return `${getBoot().base_prefix}/api/balance-calc`;
 }
 
 /** Legacy plain concatenation (loadInstances :297, calculate :382). */

@@ -14,8 +14,8 @@ import type { ViewStateStore } from './useViewState';
  * (:5932-5986, :6049-6061), deleteSelectedLegacyResults (:6364-6380),
  * rebacktestSelectedLegacy (:8169-8252 — the single-open path here, the
  * queue posts through queueRebacktests) and compareSelectedLegacy
- * (:7829-7862 — plain-path labels). v7-only: the adapter drops the
- * panel on v8, so every fetch goes to the v7 router.
+ * (:7829-7862 — plain-path labels). PB8 uses this store read-only; its
+ * LegacyPanel gates the write actions while keeping browsing and Compare.
  */
 
 export interface UseLegacyOptions {

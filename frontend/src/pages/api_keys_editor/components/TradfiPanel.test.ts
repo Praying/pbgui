@@ -11,7 +11,10 @@ import { useTradfi } from '../composables/useTradfi';
    save intent (:2568-2610, :2959-3023), yfinance (:2852-2921). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -55,7 +58,7 @@ beforeEach(() => {
   (window as unknown as { PBGuiDialogs?: unknown }).PBGuiDialogs = { confirm: vi.fn(async () => true) };
   fetchMock.mockReset();
   fetchMock.mockImplementation((url: string | URL, init?: RequestInit) => {
-    const u = String(url).replace('http://pbgui.test:8000/api/api-keys', '');
+    const u = String(url).replace('/api/api-keys', '');
     const method = (init?.method as string) || 'GET';
     if (u === '/tradfi/profiles') return Promise.resolve(new Response(JSON.stringify(PROFILES), { status: 200 }));
     if (u === '/tradfi/yfinance/status') return Promise.resolve(new Response(JSON.stringify({ installed: true, version: '0.2.40' }), { status: 200 }));

@@ -14,7 +14,7 @@ import type { CommandCenterPayload, PlaygroundPayload } from '../types';
 
 const i18n = createI18n('en');
 const t = (key: string, params?: Record<string, unknown>) => i18n.global.t(key, params ?? {});
-const API_BASE = 'http://pbgui.test:8000/api/pareto-explorer';
+const API_BASE = '/api/pareto-explorer';
 
 const fetchMock = vi.fn();
 const plotlyNewPlot = vi.fn((_el: HTMLElement, _traces: unknown, _layout: unknown) => Promise.resolve());

@@ -4,7 +4,8 @@
  * toolbar (config filter + text search :922-926, select-all/deselect/
  * pin :928-930), the 25vh wrap + resize handle (:932-938), the compare
  * area (:941), the charts host (:942) and deleteSelectedLegacyResults'
- * confirm flow (:6364-6380). v7-only — App never mounts it on v8.
+ * confirm flow (:6364-6380). v2.02.5: PB8 mounts it read-only (browsing +
+ * Compare; the write actions stay hidden).
  */
 import { PhPushPin } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
@@ -26,6 +27,8 @@ import type { ResultsSection } from '../composables/useResults';
 const props = defineProps<{
   legacy: LegacyResultsStore;
   active: boolean;
+  /** v2.02.5: PB8 browses and compares legacy results read-only. */
+  readOnly?: boolean;
 }>();
 
 const { t } = useI18n();
@@ -155,11 +158,12 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
       </div>
     </div>
 
-    <ConfirmModal :open="deleteOpen" :title="t('v7backtest.deleteLegacyResults')" :confirm-label="t('common.delete')" danger test-id="legacy-delete-modal" @confirm="confirmDelete" @cancel="deleteOpen = false">
+    <ConfirmModal v-if="!readOnly" :open="deleteOpen" :title="t('v7backtest.deleteLegacyResults')" :confirm-label="t('common.delete')" danger test-id="legacy-delete-modal" @confirm="confirmDelete" @cancel="deleteOpen = false">
       <p>{{ t('v7backtest.deleteLegacyResultsConfirm', { n: store.getSelected().length }) }}</p>
     </ConfirmModal>
 
     <RebacktestModal
+      v-if="!readOnly"
       :open="store.rebacktestOpen.value"
       :defaults="store.rebacktestDefaults.value"
       @confirm="(fields) => { store.rebacktestOpen.value = false; void store.confirmRebacktest(fields); }"

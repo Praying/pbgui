@@ -15,7 +15,7 @@ import App from './App.vue';
 export const LS_KEY_PANEL = 'market_data_fastapi_active_panel';
 export const LS_KEY_EXCHANGE = 'market_data_fastapi_context_exchange';
 
-export const BASE = 'http://pbgui.test:8000';
+export const BASE = '';
 
 export const SETTINGS_PAYLOAD = {
   exchange: 'hyperliquid',

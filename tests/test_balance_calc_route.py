@@ -91,7 +91,7 @@ def test_falls_back_to_legacy_template_with_injections(
     resp = client.get("/api/balance-calc/main_page", params={"instance": "main", "draft_id": "d1", "exchange": "bybit"})
 
     assert resp.status_code == 200
-    assert '"http://testserver/api/balance-calc"' in resp.text
+    assert '"/api/balance-calc"' in resp.text
     assert '"main"' in resp.text
     assert '"d1"' in resp.text
     assert json.dumps(balance_calc.EXCHANGES) in resp.text

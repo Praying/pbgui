@@ -6,7 +6,10 @@ import WorkersPanel from './WorkersPanel.vue';
 import type { WorkersStatus } from '../types';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 vi.mock('@/shared/api', () => ({
@@ -194,7 +197,7 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
       message: 'Stop worker "Frontend"?',
       confirmText: 'Stop',
     });
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/w1/stop', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/workers/w1/stop', {
       method: 'POST',
     });
     expect(wrapper.emitted('refresh')).toHaveLength(1);
@@ -221,7 +224,7 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
       message: 'Restart worker "Frontend"?',
       confirmText: 'Restart',
     });
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/w1/restart', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/workers/w1/restart', {
       method: 'POST',
     });
   });
@@ -233,7 +236,7 @@ describe('WorkersPanel actions (legacy workerConfirmAction/workerRestart/workerA
     await flushPromises();
 
     expect((window as DialogsGlobal).PBGuiDialogs!.confirm).not.toHaveBeenCalled();
-    expect(apiFetchMock).toHaveBeenCalledWith('http://pbgui.test:8000/api/services/workers/w2/start', {
+    expect(apiFetchMock).toHaveBeenCalledWith('/api/services/workers/w2/start', {
       method: 'POST',
     });
   });
@@ -348,5 +351,92 @@ describe('WorkersPanel worker metadata i18n (backend English text)', () => {
     expect(cardById(wrapper, 'w1').find('.worker-type').text()).toBe('uvicorn');
     expect(wrapper.find('.worker-detail-subtitle').text()).toBe('uvicorn • serving on :8080');
     expect(wrapper.findAll('.worker-stat-label').map((el) => el.text())).toEqual(['CPU', 'MEM', 'UP', 'HIDDEN']);
+  });
+});
+
+describe('WorkersPanel action guards (v2.02.7)', () => {
+  beforeEach(() => {
+    apiFetchMock.mockReset();
+    apiFetchMock.mockResolvedValue({ ok: true });
+  });
+
+  it('suppresses a duplicate action while the first POST is pending', async () => {
+    let resolveAction: (value: unknown) => void = () => {};
+    apiFetchMock.mockReturnValue(new Promise((resolve) => { resolveAction = resolve; }));
+
+    const wrapper = mount(WorkersPanel, {
+      global: { plugins: [createI18n('en')] },
+      props: { workers: WORKERS },
+    });
+    await flushPromises();
+
+    // Fire start twice on the stopped worker w2.
+    void (wrapper.vm as unknown as { onWorkerButton: (id: string, action: string) => void }).onWorkerButton('w2', 'start');
+    void (wrapper.vm as unknown as { onWorkerButton: (id: string, action: string) => void }).onWorkerButton('w2', 'start');
+    await flushPromises();
+
+    expect(apiFetchMock).toHaveBeenCalledTimes(1);
+
+    resolveAction({ ok: true });
+    await flushPromises();
+    // The pending lock is released after the first POST settles.
+    void (wrapper.vm as unknown as { onWorkerButton: (id: string, action: string) => void }).onWorkerButton('w2', 'stop');
+    await flushPromises();
+    expect(apiFetchMock).toHaveBeenCalledTimes(2);
+    wrapper.unmount();
+  });
+
+  it('disables the row buttons and shows the progressive label while pending', async () => {
+    let resolveAction: (value: unknown) => void = () => {};
+    apiFetchMock.mockReturnValue(new Promise((resolve) => { resolveAction = resolve; }));
+
+    const wrapper = mount(WorkersPanel, {
+      global: { plugins: [createI18n('en')] },
+      props: { workers: WORKERS },
+    });
+    await flushPromises();
+
+    void (wrapper.vm as unknown as { onWorkerButton: (id: string, action: string) => void }).onWorkerButton('w2', 'start');
+    await flushPromises();
+
+    // w2 is the stopped worker; its card sits after w1's running card.
+    const startButton = wrapper
+      .findAll('.worker-btnrow .card-btn')
+      .find((candidate) => candidate.text().includes('Starting...'));
+    expect(startButton).toBeDefined();
+    expect(startButton!.attributes('disabled')).toBeDefined();
+
+    resolveAction({ ok: true });
+    await flushPromises();
+    const settled = wrapper
+      .findAll('.worker-btnrow .card-btn')
+      .find((candidate) => candidate.text().includes('Start'));
+    expect(settled!.attributes('disabled')).toBeUndefined();
+    wrapper.unmount();
+  });
+
+  it('reports action errors through the result popup and releases the lock', async () => {
+    apiFetchMock.mockRejectedValue(new Error('network offline'));
+
+    const wrapper = mount(WorkersPanel, {
+      global: { plugins: [createI18n('en')] },
+      props: { workers: WORKERS },
+    });
+    await flushPromises();
+
+    void (wrapper.vm as unknown as { onWorkerButton: (id: string, action: string) => void }).onWorkerButton('w2', 'start');
+    await flushPromises();
+
+    // The popup mounts imperatively on document.body (resultPopup.ts).
+    const modal = document.getElementById('result-modal');
+    expect(modal).not.toBeNull();
+    expect(modal!.textContent).toContain('Service action failed');
+    document.getElementById('result-modal')?.remove();
+    // The lock is free again after the failure.
+    const settled = wrapper
+      .findAll('.worker-btnrow .card-btn')
+      .find((candidate) => candidate.text().includes('Start'));
+    expect(settled!.attributes('disabled')).toBeUndefined();
+    wrapper.unmount();
   });
 });

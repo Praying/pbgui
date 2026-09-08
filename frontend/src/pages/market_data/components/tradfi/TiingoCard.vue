@@ -34,6 +34,19 @@ const { t } = useI18n();
         <div class="eyebrow">{{ t('market.tiingoSettingsStockPerp') }}</div>
       </div>
       <div class="panel-actions">
+        <!-- Direct links to Tiingo's token and usage pages (v2.02.5). -->
+        <a
+          class="btn small secondary"
+          href="https://www.tiingo.com/account/api/token"
+          target="_blank"
+          rel="noopener noreferrer"
+        >{{ t('market.tiingoGetApiToken') }}</a>
+        <a
+          class="btn small secondary"
+          href="https://www.tiingo.com/account/api/usage"
+          target="_blank"
+          rel="noopener noreferrer"
+        >{{ t('market.tiingoOfficialUsage') }}</a>
         <Button
           variant="info"
           id="btn-test-tiingo"

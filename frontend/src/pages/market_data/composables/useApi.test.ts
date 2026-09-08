@@ -8,10 +8,13 @@ import { useApi } from './useApi';
    :4943-4955. URL bases come from config.ts (M-data-1). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
-const BASE = 'http://pbgui.test:8000/api/market-data';
+const BASE = '/api/market-data';
 
 interface RecordedCall {
   url: string;
@@ -103,7 +106,7 @@ describe('fetchJobsJson (:4933-4941)', () => {
     const api = useApi();
     respond([{ id: 'j1' }]);
     const data = await api.fetchJobsJson<{ id: string }[]>('/jobs/');
-    expect(calls[0]?.url).toBe('http://pbgui.test:8000/api/jobs/');
+    expect(calls[0]?.url).toBe('/api/jobs/');
     expect(data).toEqual([{ id: 'j1' }]);
   });
 
@@ -126,7 +129,7 @@ describe('fetchHeatmapJson (:4943-4955)', () => {
     const api = useApi();
     respond({ figure: {} });
     await api.fetchHeatmapJson('/overview');
-    expect(calls[0]?.url).toBe('http://pbgui.test:8000/api/heatmap/overview');
+    expect(calls[0]?.url).toBe('/api/heatmap/overview');
   });
 
   it('adds a JSON content-type when a body is sent and defaults no-store', async () => {
@@ -148,7 +151,7 @@ describe('fetchApiKeysJson (:4910-4931)', () => {
     const api = useApi();
     respond({ profiles: [] });
     await api.fetchApiKeysJson('/tradfi/profiles');
-    expect(calls[0]?.url).toBe('http://pbgui.test:8000/api/api-keys/tradfi/profiles');
+    expect(calls[0]?.url).toBe('/api/api-keys/tradfi/profiles');
   });
 
   it('returns the parsed payload', async () => {

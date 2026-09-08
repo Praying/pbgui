@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { PhCaretDown, PhCaretRight, PhCheckCircle, PhGear, PhStop, PhX, PhXCircle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 import AppShell from '@/shared/components/AppShell.vue';
 import MetricHistoryChart from '@/shared/components/MetricHistoryChart.vue';
 import type { PageSection } from '@/shared/navigation';
@@ -242,9 +242,8 @@ function initViewer(): void {
   if (viewer.value || typeof window === 'undefined') return;
   const Viewer = (window as Window & { LogViewerPanel?: new (options: Record<string, unknown>) => any }).LogViewerPanel;
   if (!Viewer) return;
-  const origin = getBoot().origin;
   viewer.value = new Viewer({
-    containerId: 'vps-log-viewer', wsBase: origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:'),
+    containerId: 'vps-log-viewer', wsBase: wsOrigin(),
     defaultHost: 'local', defaultService: 'PBRun', presets: 'trading', showRestart: true, height: '100%',
     serviceStatusProvider: (host: string, service: string) => serviceStatus(host, service),
   });

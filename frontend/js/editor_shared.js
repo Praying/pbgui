@@ -1624,7 +1624,6 @@
     var loadConfig = typeof opts.loadConfig === 'function' ? opts.loadConfig : function() { return {}; };
     var pageLabel = String(opts.pageLabel || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config')).trim() || i18nT('editor.ohlcvPreview.defaultPageLabel', null, 'Config');
     var apiBase = String(opts.apiBase || '').trim();
-    var token = String(opts.token || '').trim();
     var containerOpenClass = String(opts.containerOpenClass || 'visible').trim() || 'visible';
     var isOpen = false;
     var isStale = false;
@@ -1699,7 +1698,8 @@
     async function requestJson(path, init) {
       if (!apiBase) throw new Error('Missing API base');
       var options = init ? Object.assign({}, init) : {};
-      options.headers = Object.assign({ 'Authorization': 'Bearer ' + token }, options.headers || {});
+      options.headers = Object.assign({}, options.headers || {});
+      options.credentials = 'same-origin';
       return resolveJsonResult(fetch(apiBase + path, options));
     }
 

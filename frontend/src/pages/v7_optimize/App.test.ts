@@ -17,7 +17,7 @@ describe('v7_optimize App', () => {
     vi.mocked(apiFetch).mockReset();
     vi.mocked(apiFetch).mockResolvedValue({ settings: {}, configs: [], items: [], results: [] });
     window.history.replaceState({}, '', '/api/optimize-v7/main_page');
-    vi.stubGlobal('__BOOT__', { origin: 'http://testserver', token: '', version: 'test', serial: '1' });
+    vi.stubGlobal('__BOOT__', { origin: 'http://testserver', base_prefix: '', authenticated: true, version: 'test', serial: '1' });
     vi.stubGlobal('WebSocket', class { onopen = null; onmessage = null; onclose = null; onerror = null; close() {} send() {} } as unknown as typeof WebSocket);
   });
   it('renders the four workbench panels and opens the new config editor', async () => {
@@ -106,6 +106,7 @@ describe('v7_optimize App', () => {
   it('keeps the PB8 workbench visible with an update warning when runtime metadata is unavailable', async () => {
     window.history.replaceState({}, '', '/api/optimize-v8/main_page');
     vi.mocked(apiFetch)
+      .mockResolvedValueOnce({}) // AI drawer preferences (AppShell mount)
       .mockRejectedValueOnce(new ApiError(503, 'PB8 update incomplete'))
       .mockResolvedValueOnce({ configs: [{ name: 'alpha' }] })
       .mockResolvedValueOnce({ items: [] })

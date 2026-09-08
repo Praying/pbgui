@@ -8,7 +8,7 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
-import { getBoot } from '@/shared/boot';
+import { getBoot, pageOrigin } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -34,7 +34,7 @@ onMounted(() => {
   document.title = t('misc.login.title');
   // Session-expiry guard: never render the login form inside a dashboard iframe.
   if (window.self !== window.top) {
-    replaceTopLocation(new URL(getBoot().origin + '/').toString());
+    replaceTopLocation(new URL(pageOrigin() + '/').toString());
   }
 });
 

@@ -61,6 +61,7 @@ const GRID = [
 ];
 
 beforeEach(() => {
+  (globalThis as { __BOOT__?: unknown }).__BOOT__ = { origin: 'http://localhost:3000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' };
   FakeWebSocket.instances = [];
   resetMselRegistry();
   vi.useFakeTimers();
@@ -98,13 +99,13 @@ describe('wsTypesForMessage (editor:2797-2803 dispatch table)', () => {
 
 describe('connection lifecycle (editor:2786-2823)', () => {
   it('connects to /ws/dashboard derived from the api base on creation', () => {
-    useDashboardWs({ apiBase: 'http://pbgui.test:8000/api', store: makeStore(GRID) });
-    expect(lastSocket().url).toBe('ws://pbgui.test:8000/ws/dashboard');
+    useDashboardWs({ apiBase: '/api', store: makeStore(GRID) });
+    expect(lastSocket().url).toBe(`ws://${location.host}/ws/dashboard`);
   });
 
   it('supports the relative api base (legacy empty API_BASE)', () => {
     useDashboardWs({ apiBase: '/api', store: makeStore(GRID) });
-    expect(lastSocket().url).toBe('/ws/dashboard');
+    expect(lastSocket().url).toBe(`ws://${location.host}/ws/dashboard`);
   });
 
   it('resets the reconnect delay on open', () => {

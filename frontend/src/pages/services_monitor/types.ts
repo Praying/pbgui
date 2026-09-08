@@ -207,8 +207,10 @@ export type ApiServerSettingsData = {
   available_hosts?: string[];
   enabled_hosts?: string[];
   monitor_config?: Record<string, number>;
-  telegram_token?: string;
-  telegram_chat_id?: string;
+  /** True when stored credentials exist; values themselves are never sent. */
+  telegram_configured?: boolean;
+  telegram_token?: string | null;
+  telegram_chat_id?: string | null;
 } & {
   /** Alert-routing flags ride the same payload (undefined renders checked). */
   [routingId in AlertRoutingId]?: boolean;

@@ -4612,6 +4612,15 @@ class VPSManagerService:
         local_meta = self._get_local_host_meta()
         current_branch = str(local_meta.get("pb7b") or "unknown")
         current_commit = str(local_meta.get("pb7c") or "")
+        if repo_dir:
+            try:
+                live_branch, live_commit = get_current_pb7_status(repo_dir)
+                current_branch = str(live_branch or current_branch or "unknown")
+                current_commit = str(live_commit or current_commit or "")
+            except (OSError, RuntimeError, ValueError):
+                # Keep the last persisted host metadata when the checkout is
+                # unavailable or cannot be inspected.
+                pass
         current_branch = _pb7_branch_label(current_branch, current_commit)
         branches = release_info.get("branches") or {}
         known_remotes = list_git_remotes(repo_dir) if repo_dir and include_remote_details else []

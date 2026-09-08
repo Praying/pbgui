@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/app/css/modals_shared.css?v=1">
 <script src="/app/js/sidebar_resize.js?v=1"></script>
 <script src="/app/js/backtest_shell.js?v=5"></script>
-<script src="/app/js/backtest_editor_adapter.js?v=10"></script>
+<script src="/app/js/backtest_editor_adapter.js?v=13"></script>
 <script src="/app/js/backtest_advanced_fields.js?v=3"></script>
 <style>
 /* ── Design Tokens ─────────────────────────────── */
@@ -724,7 +724,7 @@ textarea.json-invalid:focus {
 .gs-topic { color:#96b9f4; font-weight:600; font-size: var(--fs-sm); margin-bottom:5px; }
 .gs-snip { color:var(--text-secondary, #a3adc2); font-size: var(--fs-xs); line-height:1.55; overflow:hidden; text-overflow:ellipsis; }
 </style>
-<link rel="stylesheet" href="/app/css/backtest_shell.css?v=3">
+<link rel="stylesheet" href="/app/css/backtest_shell.css?v=5">
 </head>
 <body>
 
@@ -858,7 +858,7 @@ textarea.json-invalid:focus {
         <button class="sb-btn info" onclick="saveAndQueue()" title="Save and add to queue" data-i18n-title="v7backtest.saveAndQueueTitle" data-i18n="v7backtest.saveQueue">▶ Save &amp; Queue</button>
         <button class="sb-btn" onclick="importConfig()" title="Import JSON config" data-i18n-title="v7backtest.importJsonConfig" data-i18n="v7backtest.import">📥 Import</button>
         <hr class="sb-sep">
-        <button class="sb-btn" id="sb-btn-results" onclick="goEditorResults()" title="Jump to results for this config" disabled data-i18n-title="v7backtest.jumpToResults" data-i18n="v7backtest.results">📊 Results</button>
+        <button class="sb-btn" id="sb-btn-results" onclick="goEditorResults()" title="Show all backtest results" data-i18n="v7backtest.results">📊 Results</button>
         <button class="sb-btn" id="sb-btn-convert-v8" onclick="convertConfigToV8(editingConfig)" title="Convert the saved V7 config to V8" disabled data-i18n-title="v7backtest.convertV7ToV8Title" data-i18n="v7backtest.convertToV8">⏩ Convert to V8</button>
         <button class="sb-btn" id="sb-btn-add-to-run" onclick="addConfigToRunByName(editingConfig)" title="Open this config in Run V7 editor" disabled data-i18n-title="v7backtest.openInRunV7" data-i18n="v7backtest.addToRun">▶ Add to Run</button>
         <button class="sb-btn" onclick="goStrategyExplorer()" title="Open Strategy Explorer" data-i18n-title="v7backtest.openStrategyExplorer" data-i18n="v7backtest.strategyExplorer">🔍 Strategy Explorer</button>
@@ -1083,17 +1083,17 @@ textarea.json-invalid:focus {
 <div id="cov-tooltip"></div>
 <div id="data-tip-tooltip"></div>
 
-<script src="/app/js/editor_shared.js?v=14"></script>
+<script src="/app/js/editor_shared.js?v=16"></script>
 <script src="/app/js/json_panel.js?v=2"></script>
-<script src="/app/js/optimize_preset_builder.js?v=4"></script>
-<script src="/app/js/pbgui_dialogs.js?v=8"></script>
+<script src="/app/js/optimize_preset_builder.js?v=5"></script>
+<script src="/app/js/pbgui_dialogs.js?v=10"></script>
 <script>
 /* ════════════════════════════════════════════════
    GLOBALS (injected by server)
    ════════════════════════════════════════════════ */
-var TOKEN         = "%%TOKEN%%";
 var API_BASE      = "%%API_BASE%%";
-var WS_BASE       = "%%WS_BASE%%";
+var BASE_PREFIX   = "%%BASE_PREFIX%%";
+var WS_BASE       = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + BASE_PREFIX;
 var PBGUI_VERSION = "%%VERSION%%";
 var PBGUI_SERIAL  = "%%SERIAL%%";
 var BACKTEST_VERSION = "%%BACKTEST_VERSION%%";
@@ -1113,6 +1113,7 @@ var results     = [];          // backtest results
 var resultsByVersion = { v7: [], v8: [] };
 var RESULTS_PAGE_SIZE = 0;
 var _resultsLoadGeneration = 0;
+var _selectedResultPaths = new Set();
 var _resultsEmptyRetryTimer = null;
 var _resultsEmptyRetryCount = 0;
 var archives    = [];          // git archives
@@ -1384,9 +1385,10 @@ function apiFetch(path, opts) {
 }
 
 function apiFetchFrom(base, path, opts) {
-  opts = opts || {};
+  opts = Object.assign({}, opts || {});
   var url = base + path;
-  opts.headers = bearerHeaders(opts.headers);
+  opts.headers = requestHeaders(opts.headers);
+  opts.credentials = 'same-origin';
   return fetch(url, opts).then(function(r) {
     return r.text().then(function(text) {
       var payload = null;
@@ -1436,17 +1438,16 @@ function apiHttpError(message, status) {
   return error;
 }
 
-function bearerHeaders(extra) {
-  var headers = Object.assign({}, extra || {});
-  if (TOKEN) headers.Authorization = 'Bearer ' + TOKEN;
-  return headers;
+function requestHeaders(extra) {
+  return Object.assign({}, extra || {});
 }
 
 function apiFetchNdjson(path, opts, onEvent) {
-  opts = opts || {};
+  opts = Object.assign({}, opts || {});
   var base = /^\/archives(?:\/|$)/.test(String(path || '')) ? archiveApiBase() : API_BASE;
   var url = base + path;
-  opts.headers = bearerHeaders(opts.headers);
+  opts.headers = requestHeaders(opts.headers);
+  opts.credentials = 'same-origin';
   return fetch(url, opts).then(function(r) {
     if (!r.ok) return r.json().then(function(e) { throw new Error(e.detail || r.statusText); });
     if (!r.body || !r.body.getReader || typeof TextDecoder === 'undefined') {
@@ -1494,7 +1495,8 @@ function toast(msg, type) {
   /* ── write to server log (fire-and-forget) ── */
   fetch('/api/notify_log', {
     method: 'POST',
-    headers: bearerHeaders({ 'Content-Type': 'application/json' }),
+    credentials: 'same-origin',
+    headers: requestHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ msg: msg, level: type })
   }).catch(function() {});
   var el = document.createElement('div');
@@ -2046,7 +2048,7 @@ async function migrateV7SourceToV8(requestBody) {
   var targetName = requestBody.target_name;
   setV8ConversionStatus('Converting V7 config with PB8...');
   try {
-    var response = await fetch(window.location.origin + '/api/backtest-v8/migrate-v7', {
+    var response = await fetch(BASE_PREFIX + '/api/backtest-v8/migrate-v7', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
@@ -2057,11 +2059,11 @@ async function migrateV7SourceToV8(requestBody) {
     if (!response.ok) throw v8MigrationError(payload, response.status);
     if (payload.editor === 'backtest' && payload.draft_id) {
       setV8ConversionStatus('Opening unsaved PB8 Backtest preview...');
-      window.location.href = window.location.origin + '/api/backtest-v8/main_page?opt_draft_id=' + encodeURIComponent(payload.draft_id)
+      window.location.href = BASE_PREFIX + '/api/backtest-v8/main_page?opt_draft_id=' + encodeURIComponent(payload.draft_id)
         + '&draft_name=' + encodeURIComponent(payload.name || targetName);
       return;
     }
-    window.location.href = window.location.origin + '/api/backtest-v8/main_page?config=' + encodeURIComponent(payload.name || targetName);
+    window.location.href = BASE_PREFIX + '/api/backtest-v8/main_page?config=' + encodeURIComponent(payload.name || targetName);
   } catch (error) {
     setV8ConversionStatus('');
     toast('V8 conversion failed: ' + error.message, 'err');
@@ -2116,7 +2118,6 @@ function initBacktestOhlcvPreflightController() {
     syncRoot: 'configs-editor',
     pageLabel: 'Backtest',
     apiBase: API_BASE,
-    token: TOKEN,
     loadConfig: function() {
       return { config: collectConfig() };
     }
@@ -2156,9 +2157,13 @@ function hideEditorSidebar() {
 }
 
 function goEditorResults() {
-  var name = editingConfig || '';
   closeEditor();
-  viewConfigResults(name);
+  _pendingResultFilter = '';
+  var textFilter = document.getElementById('results-filter');
+  var configFilter = document.getElementById('results-config-filter');
+  if (textFilter) textFilter.value = '';
+  if (configFilter) configFilter.value = '';
+  selectPanel('results');
 }
 
 function goStrategyExplorer() {
@@ -2194,10 +2199,8 @@ function goStrategyExplorer() {
 }
 
 function strategyExplorerApiBase(version) {
-  var match = String(API_BASE || '').match(/^(https?:\/\/[^/]+)/);
-  var origin = match ? match[1] : window.location.origin;
   var isV8 = version ? String(version).toLowerCase() === 'v8' : backtestEditorAdapter.isV8;
-  return origin + (isV8 ? '/api/strategy-explorer-v8' : '/api/strategy-explorer');
+  return BASE_PREFIX + (isV8 ? '/api/strategy-explorer-v8' : '/api/strategy-explorer');
 }
 
 function getConfigDefaultExchange(cfg) {
@@ -2209,7 +2212,6 @@ function getConfigDefaultExchange(cfg) {
 function openBalanceCalculatorWithConfig(cfg, defaultExchange) {
   return window.PBGuiEditorShared.openBalanceCalcPage({
     apiBase: API_BASE,
-    token: TOKEN,
     config: cfg,
     exchange: defaultExchange || 'binance',
   });
@@ -2274,8 +2276,8 @@ function clearInitialBacktestUrlParams(url, keys) {
 var initialDraftOverrideConfigs = {};
 
 async function fetchRunBacktestDraft(draftId) {
-  var response = await fetch(window.location.origin + '/api/v7/draft/' + encodeURIComponent(draftId), {
-    headers: bearerHeaders()
+  var response = await fetch(BASE_PREFIX + '/api/v7/draft/' + encodeURIComponent(draftId), {
+    credentials: 'same-origin'
   });
   if (!response.ok) {
     var message = '';
@@ -3413,6 +3415,10 @@ function showConfigEditor(name, cfg, rawOverride, paramStatusOverride) {
   '</div>';
 
   ed.innerHTML = html;
+  if (_pendingMigrationReviewDraft) {
+    showMigrationReviewNotice(_pendingMigrationReviewDraft);
+    _pendingMigrationReviewDraft = null;
+  }
   autoResizeTa(document.getElementById('cfg-bot-long'));
   autoResizeTa(document.getElementById('cfg-bot-short'));
   _applyBotJsonHighlight(document.getElementById('cfg-bot-long'), paramStatus.long);
@@ -3693,7 +3699,7 @@ function revealJsonFieldError(textareaId) {
 function bindJsonFieldValidation(textareaId, opts) {
   var textarea = document.getElementById(textareaId);
   if (!textarea) return;
-  opts = opts || {};
+  opts = Object.assign({}, opts || {});
   textarea.dataset.jsonStatusId = opts.statusId || (textareaId + '-status');
   textarea.dataset.jsonLabel = opts.label || textareaId;
   textarea.dataset.jsonExpectObject = opts.expectObject ? '1' : '';
@@ -4155,7 +4161,8 @@ function cfgRemoveAllInvalidCoins() {
 async function cfgFetchV7Json(path, opts) {
   opts = opts || {};
   var v7Base = backtestEditorAdapter.metadataApiBase(API_BASE);
-  opts.headers = bearerHeaders(opts.headers);
+  opts.headers = requestHeaders(opts.headers);
+  opts.credentials = 'same-origin';
   var resp = await fetch(v7Base + path, opts);
   var data = await resp.json();
   if (!resp.ok) throw new Error((data && data.detail) || resp.statusText || 'Request failed');
@@ -4446,7 +4453,7 @@ async function kvLoadCoins(prefix) {
   var v7Base = backtestEditorAdapter.metadataApiBase(API_BASE);
   try {
     var r = await fetch(v7Base + '/symbols?exchange=' + encodeURIComponent(exchange), {
-      headers: bearerHeaders()
+      credentials: 'same-origin'
     });
     var data = await r.json();
     _kvSymCache[exchange] = (data.symbols || []).slice().sort();
@@ -4554,7 +4561,7 @@ async function cfgApplyFilters() {
         '&market_cap=' + mcap + '&vol_mcap=' + volMcap +
         '&only_cpt=' + onlyCpt + '&notices_ignore=' + noticesIgnore;
       if (tags.length) url += '&tags=' + encodeURIComponent(tags.join(','));
-      var resp = await fetch(url, { headers: bearerHeaders() });
+      var resp = await fetch(url, { credentials: 'same-origin' });
       var data = await resp.json();
       if (!resp.ok) throw new Error((data && data.detail) || resp.statusText || ('Filter failed for ' + ex));
       if (backtestEditorAdapter.isV8 && Array.isArray(data.unresolved)) {
@@ -5536,26 +5543,32 @@ function addConfigToQueue(name) {
 function viewConfigResults(name) {
   _pendingResultFilter = name;
   document.getElementById('results-filter').value = '';
-  /* If we already have results cached, filter and render immediately — no empty-table flash */
-  if (results.length > 0) {
-    var cfgSel = document.getElementById('results-config-filter');
-    if (cfgSel) {
-      var names = {};
-      results.forEach(function(r) { if (r.config_name) names[r.config_name] = true; });
-      var sorted = Object.keys(names).sort();
-      cfgSel.innerHTML = '\x3Coption value="">' + PBGuiI18n.t('v7backtest.allConfigs') + '\x3C/option>';
-      sorted.forEach(function(n) {
-        cfgSel.innerHTML += '\x3Coption value="' + esc(n) + '"' + (n === name ? ' selected' : '') + '>' + esc(n) + '\x3C/option>';
-      });
+  var cfgSel = document.getElementById('results-config-filter');
+  if (cfgSel && name) {
+    var hasRequestedOption = Array.prototype.some.call(cfgSel.options, function(option) {
+      return option.value === name;
+    });
+    if (!hasRequestedOption) {
+      var requestedOption = document.createElement('option');
+      requestedOption.value = name;
+      requestedOption.textContent = name;
+      cfgSel.appendChild(requestedOption);
     }
-    _pendingResultFilter = '';  /* already applied */
-    selectPanel('results');
-    renderResults();
-    /* Refresh in background so newly finished jobs appear */
-    loadResults();
-  } else {
-    selectPanel('results');  /* triggers loadResults via results.length === 0 */
+    cfgSel.value = name;
   }
+  /* If we already have results cached, filter and render immediately — no empty-table flash */
+  var hasCachedResults = results.length > 0;
+  if (hasCachedResults) {
+    _pendingResultFilter = '';  /* already applied */
+    selectPanel('results', { deferResultsLoad: true });
+    renderResults();
+  } else {
+    var list = document.getElementById('results-list');
+    if (list) list.innerHTML = '\x3Cdiv class="empty-state">Checking for matching results…\x3C/div>';
+    hideResultsCountLabel('results-count-label');
+    selectPanel('results', { deferResultsLoad: true });
+  }
+  loadResults(name, { keepVisible: hasCachedResults });
 }
 
 function fillPbguiDataPath() {
@@ -5791,7 +5804,6 @@ function _openLogPanel(title, logViewerOpts) {
   _btLogViewer = new LogViewerPanel(Object.assign({
     containerId: 'log-viewer-target',
     wsBase: WS_BASE,
-    token: TOKEN,
     presets: 'system',
     showRestart: false,
     height: '100%'
@@ -5938,20 +5950,79 @@ function loadResults(filterName, loadOptions) {
   var loadGeneration = ++_resultsLoadGeneration;
   var selectedVersion = selectedResultsVersion();
   var versions = selectedVersion === 'both' ? ['v7', 'v8'] : [selectedVersion];
-  return Promise.all(versions.map(function(version) {
-    return apiFetchFrom(backtestApiBase(version), '/results').then(function(d) {
-      resultsByVersion[version] = (d.results || []).map(function(result) {
-        return Object.assign({}, result, { backtest_version: version });
+  var progress = {};
+  versions.forEach(function(version) {
+    resultsByVersion[version] = [];
+    progress[version] = { loaded: 0, total: null, hasMore: true };
+  });
+  if (!loadOptions.emptyRetry && !loadOptions.keepVisible) {
+    var initialList = document.getElementById('results-list');
+    if (initialList) initialList.innerHTML = '\x3Cdiv class="empty-state">Loading results…\x3C/div>';
+    hideResultsCountLabel('results-count-label');
+  }
+
+  function renderLoadedPages() {
+    var applied = _applyResultsData(resultsByVersion.v7.concat(resultsByVersion.v8), selectedFilter);
+    var loaded = versions.reduce(function(total, version) { return total + progress[version].loaded; }, 0);
+    var totalsKnown = versions.every(function(version) { return Number.isFinite(progress[version].total); });
+    var total = totalsKnown
+      ? versions.reduce(function(sum, version) { return sum + progress[version].total; }, 0)
+      : null;
+    var loading = versions.some(function(version) { return progress[version].hasMore; });
+    var label = document.getElementById('results-count-label');
+    if (loading && label) {
+      label.textContent = total === null
+        ? 'Loaded ' + loaded + (loaded === 1 ? ' result…' : ' results…')
+        : 'Loaded ' + loaded + ' of ' + total + (total === 1 ? ' result…' : ' results…');
+      label.style.display = '';
+    }
+    return applied;
+  }
+
+  function waitForResultsPaint() {
+    return new Promise(function(resolve) {
+      window.requestAnimationFrame(function() {
+        window.requestAnimationFrame(resolve);
       });
     });
+  }
+
+  function loadVersionPage(version, offset) {
+    var path = '/results?offset=' + offset + '&limit=' + RESULTS_PAGE_SIZE;
+    if (selectedFilter) path += '&name=' + encodeURIComponent(selectedFilter);
+    return apiFetchFrom(backtestApiBase(version), path).then(function(d) {
+      if (loadGeneration !== _resultsLoadGeneration) return;
+      var page = (d.results || []).map(function(result) {
+        return Object.assign({}, result, { backtest_version: version });
+      });
+      resultsByVersion[version] = resultsByVersion[version].concat(page);
+      var pagination = d.pagination && typeof d.pagination === 'object' ? d.pagination : null;
+      progress[version].loaded = resultsByVersion[version].length;
+      progress[version].total = pagination && Number.isFinite(Number(pagination.total))
+        ? Number(pagination.total)
+        : progress[version].loaded;
+      progress[version].hasMore = !!(pagination && pagination.has_more);
+      renderLoadedPages();
+      if (progress[version].hasMore) {
+        var nextOffset = Number(pagination.next_offset);
+        if (!Number.isFinite(nextOffset) || nextOffset <= offset) nextOffset = offset + RESULTS_PAGE_SIZE;
+        return waitForResultsPaint().then(function() {
+          return loadVersionPage(version, nextOffset);
+        });
+      }
+    });
+  }
+
+  return Promise.all(versions.map(function(version) {
+    return loadVersionPage(version, 0);
   })).then(function() {
     if (loadGeneration !== _resultsLoadGeneration) return results;
-    var applied = _applyResultsData(resultsByVersion.v7.concat(resultsByVersion.v8), selectedFilter);
+    var applied = results;
     var selectedItems = resultsForSelectedVersion(applied);
     if (currentPanel === 'results' && selectedItems.length === 0 && _resultsEmptyRetryCount < 3) {
       _resultsEmptyRetryCount += 1;
       var list = document.getElementById('results-list');
-      if (list) list.innerHTML = '\x3Cdiv class="empty-state">' + PBGuiI18n.t('v7backtest.checkingForResults') + '\x3C/div>';
+      if (list) list.innerHTML = '\x3Cdiv class="empty-state">Checking for results…\x3C/div>';
       var retryDelay = 400 * _resultsEmptyRetryCount;
       _resultsEmptyRetryTimer = setTimeout(function() {
         _resultsEmptyRetryTimer = null;
@@ -5965,7 +6036,7 @@ function loadResults(filterName, loadOptions) {
     return applied;
   }).catch(function(e) {
     if (loadGeneration !== _resultsLoadGeneration) return results;
-    toast(PBGuiI18n.t('v7backtest.loadResultsFailed', { msg: PBGuiI18n.serverMsg(e.message) }), 'err');
+    toast('Load results failed: ' + e.message, 'err');
     throw e;
   });
 }
@@ -5993,7 +6064,7 @@ function parseCSV(text) {
 /* ── Fetch CSV from file-streaming endpoint ── */
 function fetchCSV(path, file, result) {
   var url = resultApiBase(result) + '/results/' + file + '?path=' + encodeURIComponent(path);
-  return fetch(url, { headers: bearerHeaders() })
+  return fetch(url, { credentials: 'same-origin' })
     .then(function(r) {
       if (!r.ok) throw new Error(r.statusText);
       return r.text();
@@ -6003,6 +6074,32 @@ function fetchCSV(path, file, result) {
 
 /* ── Results table — icon buttons + row-click selection ── */
 var _resSort = 'modified', _resSortAsc = false;
+var _expandedResultGroups = new Set();
+
+function resultGroupKey(result) {
+  var group = result && result.result_group;
+  if (!group || group.kind !== 'optimize_validate' || !group.id) return '';
+  return String(result.backtest_version || '') + ':' + String(group.id);
+}
+
+function toggleResultGroup(button) {
+  var key = String(button && button.dataset && button.dataset.resultGroupKey || '');
+  if (!key) return;
+  if (_expandedResultGroups.has(key)) _expandedResultGroups.delete(key);
+  else _expandedResultGroups.add(key);
+  renderResults();
+}
+
+function compareResultGroup(button) {
+  var key = String(button && button.dataset && button.dataset.resultGroupKey || '');
+  var data = _activeResultsCtx && Array.isArray(_activeResultsCtx.data) ? _activeResultsCtx.data : [];
+  var paths = data.filter(function(result) { return resultGroupKey(result) === key; })
+    .map(function(result) { return result && result.path; }).filter(Boolean);
+  if (paths.length < 2) { toast('This validation group has fewer than 2 results', 'err'); return; }
+  setSelectedResults(paths);
+  _compareResultPaths(paths, results, document.getElementById('compare-chart-area'), 'compare-chart-div');
+}
+
 function setResSort(col) {
   if (_resSort === col) _resSortAsc = !_resSortAsc;
   else { _resSort = col; _resSortAsc = false; }
@@ -6097,6 +6194,16 @@ function _renderResultsTableInto(el, data, chartsEl, rthFn, options) {
     return;
   }
 
+  var validationGroups = new Map();
+  if (options.groupValidation) {
+    data.forEach(function(result, index) {
+      var key = resultGroupKey(result);
+      if (!key) return;
+      if (!validationGroups.has(key)) validationGroups.set(key, { indices: [], result: result });
+      validationGroups.get(key).indices.push(index);
+    });
+  }
+
   /* Columns: Version | Backtest Name | Strategy | Exch. | Result Time | exact metrics | balances | TWE | POS | Actions */
   var html = '\x3Ctable class="tbl">\x3Cthead>\x3Ctr>' +
     (showVersion && hasColumn('backtest_version') ? rthFn('Version', 'backtest_version') : '') +
@@ -6121,7 +6228,7 @@ function _renderResultsTableInto(el, data, chartsEl, rthFn, options) {
     '\x3Cth style="text-align:center">Actions\x3C/th>' +
     '\x3C/tr>\x3C/thead>\x3Ctbody>';
 
-  data.forEach(function(r, i) {
+  function appendResultRow(r, i, grouped, hidden) {
     r = r || {};
     var btName = r.display_name || (r.config_name + '/' + (r.exchange_dir || '') + '/' + r.result_name);
     var coinsText = r.coins_text || (Array.isArray(r.coins) ? r.coins.join(', ') : '');
@@ -6130,7 +6237,12 @@ function _renderResultsTableInto(el, data, chartsEl, rthFn, options) {
     var convertAction = options.allowV8Convert && r.backtest_version === 'v7'
       ? '\x3Cbutton class="icon-btn" onclick="convertResultToV8(' + i + ')" title="' + PBGuiI18n.t('v7backtest.convertResultToV8') + '">V8\x3C/button>'
       : '';
-    html += '\x3Ctr data-idx="' + i + '" data-path="' + esc(r.path) + '"' + liqStyle + '>' +
+    var rowClasses = [];
+    if (_selectedResultPaths.has(r.path)) rowClasses.push('selected');
+    if (grouped) rowClasses.push('result-group-member');
+    html += '\x3Ctr data-idx="' + i + '" data-path="' + esc(r.path) + '"' +
+      (rowClasses.length ? ' class="' + rowClasses.join(' ') + '"' : '') +
+      (hidden ? ' hidden' : '') + liqStyle + '>' +
       (showVersion && hasColumn('backtest_version') ? '\x3Ctd>PB' + esc((r.backtest_version || '').toUpperCase()) + '\x3C/td>' : '') +
       '\x3Ctd title="' + esc(btName) + esc(liqTitle) + '" style="max-width:250px">' + (r.liquidated ? '\x3Cspan style="color:var(--red)" title="Liquidated">\u26a0\ufe0f\x3C/span> ' : '') + esc(btName) + '\x3C/td>' +
       (showStrategy && hasColumn('strategy') ? '\x3Ctd class="mono">' + esc(r.strategy || '-') + '\x3C/td>' : '') +
@@ -6159,6 +6271,39 @@ function _renderResultsTableInto(el, data, chartsEl, rthFn, options) {
         convertAction +
       '\x3C/td>' +
       '\x3C/tr>';
+  }
+
+  var renderedGroups = new Set();
+  data.forEach(function(r, i) {
+    var groupKey = options.groupValidation ? resultGroupKey(r) : '';
+    var group = groupKey ? validationGroups.get(groupKey) : null;
+    if (!group || group.indices.length < 2) {
+      appendResultRow(r, i, false, false);
+      return;
+    }
+    if (renderedGroups.has(groupKey)) return;
+    renderedGroups.add(groupKey);
+    var expanded = _expandedResultGroups.has(groupKey);
+    var resultGroup = group.result.result_group || {};
+    var groupLabel = resultGroup.label || group.result.config_name || 'Pareto candidate';
+    var countLabel = group.indices.length + (group.indices.length === 1 ? ' result' : ' results');
+    html += '\x3Ctr class="result-group-row">' +
+      '\x3Ctd colspan="99">' +
+        '\x3Cdiv class="result-group-header">' +
+          '\x3Cbutton type="button" class="result-group-compare" data-result-group-key="' + esc(groupKey) + '"' +
+            ' onclick="compareResultGroup(this)" title="Compare this validation group" aria-label="Compare this validation group">📈\x3C/button>' +
+          '\x3Cbutton type="button" class="result-group-toggle" data-result-group-key="' + esc(groupKey) + '"' +
+            ' aria-expanded="' + (expanded ? 'true' : 'false') + '" onclick="toggleResultGroup(this)">' +
+            '\x3Cspan class="result-group-chevron" aria-hidden="true">' + (expanded ? '▼' : '▶') + '\x3C/span>' +
+            '\x3Cspan class="result-group-kind">Optimize validation\x3C/span>' +
+            '\x3Cstrong>' + esc(groupLabel) + '\x3C/strong>' +
+            '\x3Cspan class="result-group-count">' + esc(countLabel) + '\x3C/span>' +
+          '\x3C/button>' +
+        '\x3C/div>' +
+      '\x3C/td>\x3C/tr>';
+    group.indices.forEach(function(memberIndex) {
+      appendResultRow(data[memberIndex], memberIndex, true, !expanded);
+    });
   });
   html += '\x3C/tbody>\x3C/table>';
   el.innerHTML = html;
@@ -6197,7 +6342,7 @@ function renderResults() {
       return 0;
     });
 
-    _renderResultsTableInto(el, filtered, chartsEl, rth, { showVersion: true, showStrategy: true, allowV8Convert: !backtestEditorAdapter.isV8, columnContext: 'results' });
+    _renderResultsTableInto(el, filtered, chartsEl, rth, { showVersion: true, showStrategy: true, allowV8Convert: !backtestEditorAdapter.isV8, groupValidation: true, columnContext: 'results' });
   } catch (e) {
     if (el) el.innerHTML = '\x3Cdiv class="empty-state">' + PBGuiI18n.t('v7backtest.failedRenderResults', { msg: esc(e.message || e) }) + '\x3C/div>';
     toast(PBGuiI18n.t('v7backtest.renderResultsFailed', { msg: PBGuiI18n.serverMsg(e.message || e) }), 'err');
@@ -6317,9 +6462,18 @@ var _cfgDragMode = null;
 }());
 
 /* ── Results row selection: click to toggle, drag to multi-select ── */
+function setResultRowSelection(row, selected) {
+  if (!row) return;
+  row.classList.toggle('selected', !!selected);
+  var path = String(row.dataset.path || '');
+  if (!path) return;
+  if (selected) _selectedResultPaths.add(path);
+  else _selectedResultPaths.delete(path);
+}
+
 (function() {
   function rowsOfRes() {
-    return Array.from(document.querySelectorAll('#results-list .tbl tbody tr'));
+    return Array.from(document.querySelectorAll('#results-list .tbl tbody tr[data-path]:not([hidden])'));
   }
   function rowIdxAtY(rows, y) {
     var idx = 0;
@@ -6343,7 +6497,7 @@ var _cfgDragMode = null;
   document.addEventListener('mousedown', function(e) {
     if (e.button !== 0) return;
     var tr = e.target.closest('#results-list .tbl tbody tr');
-    if (!tr || e.target.closest('.actions-cell')) return;
+    if (!tr || !tr.dataset.path || e.target.closest('.actions-cell')) return;
     e.preventDefault(); /* prevent text-selection / drag cursor */
     _rowDragStart = { tr: tr, y: e.clientY };
     _rowDragSelecting = false;
@@ -6585,24 +6739,24 @@ function deselectAllConfigs() {
 }
 
 function selectAllResults() {
-  document.querySelectorAll('#results-list .tbl tbody tr').forEach(function(tr) { tr.classList.add('selected'); });
+  document.querySelectorAll('#results-list .tbl tbody tr[data-path]').forEach(function(tr) { setResultRowSelection(tr, true); });
 }
 
 function deselectAllResults() {
-  document.querySelectorAll('#results-list .tbl tbody tr').forEach(function(tr) { tr.classList.remove('selected'); });
+  _selectedResultPaths.clear();
+  document.querySelectorAll('#results-list .tbl tbody tr[data-path]').forEach(function(tr) { setResultRowSelection(tr, false); });
 }
 
 function getSelectedResults() {
   var sel = [];
-  document.querySelectorAll('#results-list .tbl tbody tr.selected').forEach(function(tr) { sel.push(tr.dataset.path); });
+  document.querySelectorAll('#results-list .tbl tbody tr[data-path].selected').forEach(function(tr) { sel.push(tr.dataset.path); });
   return sel;
 }
 
 function setSelectedResults(paths) {
-  var selected = {};
-  (paths || []).forEach(function(path) { selected[path] = true; });
-  document.querySelectorAll('#results-list .tbl tbody tr').forEach(function(tr) {
-    tr.classList.toggle('selected', !!selected[tr.dataset.path]);
+  _selectedResultPaths = new Set((paths || []).map(function(path) { return String(path || ''); }).filter(Boolean));
+  document.querySelectorAll('#results-list .tbl tbody tr[data-path]').forEach(function(tr) {
+    setResultRowSelection(tr, _selectedResultPaths.has(tr.dataset.path));
   });
 }
 
@@ -8996,7 +9150,8 @@ function addConfigToRunByName(name) {
     cfgToSend.pbgui.enabled_on = 'disabled';
     return fetch(v7Base + '/draft', {
       method: 'POST',
-      headers: bearerHeaders({ 'Content-Type': 'application/json' }),
+      credentials: 'same-origin',
+      headers: requestHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ config: cfgToSend })
     }).then(function(r) { return r.json(); }).then(function(d) {
       var editUrl = v7Base + '/edit_page?new=1&draft_id=' + encodeURIComponent(d.draft_id);
@@ -9006,8 +9161,8 @@ function addConfigToRunByName(name) {
 
   Promise.all([
     apiFetch('/configs/' + encodeURIComponent(name)),
-    fetch(v7Base + '/instances', { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); }),
-    fetch(v7Base + '/users',     { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); })
+    fetch(v7Base + '/instances', { credentials: 'same-origin' }).then(function(r) { return r.json(); }),
+    fetch(v7Base + '/users',     { credentials: 'same-origin' }).then(function(r) { return r.json(); })
   ]).then(function(res) {
     var cfgResp   = res[0] || {};
     var cfg       = cfgResp.config || {};
@@ -9057,7 +9212,8 @@ function addToRun() {
     cfgToSend.live.user = finalUser;
     return fetch(v7Base + '/draft', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config: cfgToSend })
     }).then(function(r) { return r.json(); }).then(function(d) {
       var editUrl = v7Base + '/edit_page?new=1&draft_id=' + encodeURIComponent(d.draft_id);
@@ -9067,8 +9223,8 @@ function addToRun() {
 
   Promise.all([
     apiFetch('/results/config?path=' + encodeURIComponent(sel[0])),
-    fetch(v7Base + '/instances', { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); }),
-    fetch(v7Base + '/users',     { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); })
+    fetch(v7Base + '/instances', { credentials: 'same-origin' }).then(function(r) { return r.json(); }),
+    fetch(v7Base + '/users',     { credentials: 'same-origin' }).then(function(r) { return r.json(); })
   ]).then(function(res) {
     var cfg       = res[0];
     var instances = res[1].instances || [];
@@ -9126,7 +9282,8 @@ function addToRunFromArchive() {
     cfgToSend.live.user = finalUser;
     return fetch(v7Base + '/draft', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config: cfgToSend })
     }).then(function(r) { return r.json(); }).then(function(d) {
       var editUrl = v7Base + '/edit_page?new=1&draft_id=' + encodeURIComponent(d.draft_id);
@@ -9136,8 +9293,8 @@ function addToRunFromArchive() {
 
   Promise.all([
     archiveResultApiFetch(sel[0], '/results/config?path=' + encodeURIComponent(sel[0])),
-    fetch(v7Base + '/instances', { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); }),
-    fetch(v7Base + '/users',     { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); })
+    fetch(v7Base + '/instances', { credentials: 'same-origin' }).then(function(r) { return r.json(); }),
+    fetch(v7Base + '/users',     { credentials: 'same-origin' }).then(function(r) { return r.json(); })
   ]).then(function(res) {
     var cfg       = res[0];
     var instances = res[1].instances || [];
@@ -9179,7 +9336,8 @@ function addToRunFromLegacy() {
     cfgToSend.live.user = finalUser;
     return fetch(v7Base + '/draft', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config: cfgToSend })
     }).then(function(r) { return r.json(); }).then(function(d) {
       var editUrl = v7Base + '/edit_page?new=1&draft_id=' + encodeURIComponent(d.draft_id);
@@ -9189,8 +9347,8 @@ function addToRunFromLegacy() {
 
   Promise.all([
     apiFetch('/results/config?path=' + encodeURIComponent(sel[0])),
-    fetch(v7Base + '/instances', { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); }),
-    fetch(v7Base + '/users',     { headers: { 'Authorization': 'Bearer ' + TOKEN } }).then(function(r) { return r.json(); })
+    fetch(v7Base + '/instances', { credentials: 'same-origin' }).then(function(r) { return r.json(); }),
+    fetch(v7Base + '/users',     { credentials: 'same-origin' }).then(function(r) { return r.json(); })
   ]).then(function(res) {
     var cfg       = res[0];
     var instances = res[1].instances || [];
@@ -9366,7 +9524,6 @@ function runInlineCalcBalance() {
   resEl.innerHTML = '';
   window.PBGuiEditorShared.requestBalanceCalculation({
     apiBase: API_BASE,
-    token: TOKEN,
     config: cfg,
     exchange: exchEl.value,
   }).then(function(data) {
@@ -9424,7 +9581,7 @@ function optimizeFromResult() {
       var parts = baseDir.split('/').filter(function(part) { return !!part; });
       if (parts.length) draftName = parts[parts.length - 1];
     }
-    var targetUrl = window.location.origin + '/api/optimize-v7/main_page'
+    var targetUrl = BASE_PREFIX + '/api/optimize-v7/main_page'
       + '?opt_draft_id=' + encodeURIComponent(draft.draft_id || '');
     if (draftName) targetUrl += '&draft_name=' + encodeURIComponent(draftName);
     window.location.href = targetUrl;
@@ -9482,13 +9639,13 @@ function optimizePresetFromResult() {
       });
     },
     saveConfig: function(name, config) {
-      return window.PBGuiOptimizePresetBuilder.saveOptimizePresetConfig(TOKEN, name, config, BACKTEST_VERSION);
+      return window.PBGuiOptimizePresetBuilder.saveOptimizePresetConfig(name, config, BACKTEST_VERSION);
     },
     queueConfig: function(name) {
-      return window.PBGuiOptimizePresetBuilder.queueOptimizePreset(TOKEN, name, BACKTEST_VERSION);
+      return window.PBGuiOptimizePresetBuilder.queueOptimizePreset(name, BACKTEST_VERSION);
     },
     openOptimize: function(config, name) {
-      return window.PBGuiOptimizePresetBuilder.openOptimizeSeedDraft(TOKEN, config, name, BACKTEST_VERSION);
+      return window.PBGuiOptimizePresetBuilder.openOptimizeSeedDraft(config, name, BACKTEST_VERSION);
     }
   });
 }
@@ -10058,7 +10215,8 @@ function archiveOptimizeDefaultName(path, name) {
 function requestArchiveOptimizeImport(path, importName, collision, version) {
   return fetch(archiveApiBase() + '/archives/' + encodeURIComponent(selectedArchiveName) + '/optimize-configs/import', {
     method: 'POST',
-    headers: bearerHeaders({ 'Content-Type': 'application/json' }),
+    credentials: 'same-origin',
+    headers: requestHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ path: path, name: importName.trim(), collision: collision, optimize_version: version || 'v7' })
   }).then(function(response) {
     return response.json().catch(function() { return {}; }).then(function(payload) {
@@ -10101,7 +10259,7 @@ function importArchiveOptimizeWithCollision(path, importName, version) {
 
 function openOptimizeEditorForConfig(configName, version) {
   var optimizeVersion = String(version || 'v7').toLowerCase() === 'v8' ? 'v8' : 'v7';
-  window.location.href = '/api/optimize-' + optimizeVersion + '/main_page?open_config=' + encodeURIComponent(configName);
+  window.location.href = BASE_PREFIX + '/api/optimize-' + optimizeVersion + '/main_page?open_config=' + encodeURIComponent(configName);
 }
 
 function optimizeFromArchiveOptimizeConfig(path, name, version) {
@@ -10776,7 +10934,7 @@ initializeBacktestPageFromUrl();
 window.PBGUI_NAV_CONFIG = {
   subtitle: BACKTEST_SUBTITLE,
   current:  BACKTEST_NAV_CURRENT,
-  token:    TOKEN,
+  authenticated: true,
   apiBase:  API_BASE,
   version:  PBGUI_VERSION,
   serial:   PBGUI_SERIAL
@@ -10932,8 +11090,8 @@ window.PBGUI_AI_PAGE_ACTIONS = [{
   });
 })();
 </script>
-<script src="/app/js/log_viewer_panel.js?v=30"></script>
-<script src="/app/js/shared_help_overlay.js?v=8"></script>
+<script src="/app/js/log_viewer_panel.js?v=31"></script>
+<script src="/app/js/shared_help_overlay.js?v=9"></script>
 <script src="/app/js/pbgui_icons.js?v=1"></script>
 <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 
@@ -11026,7 +11184,7 @@ window.PBGuiSidebarResize.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize
     if (_topicCache[idx] !== undefined) { cb(_topicCache[idx]); return; }
     var t = helpTopics[idx];
     if (!t) { cb(''); return; }
-    fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { headers: bearerHeaders() })
+    fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(d) { _topicCache[idx] = mdToHtml(d.content || ''); cb(_topicCache[idx]); })
       .catch(function() { _topicCache[idx] = ''; cb(''); });
@@ -11087,7 +11245,7 @@ window.PBGuiSidebarResize.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize
 
   function loadHelpIndex(keyword) {
     helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
-    fetch(docsBase + '/docs/index?lang=' + helpLang, { headers: bearerHeaders() })
+    fetch(docsBase + '/docs/index?lang=' + helpLang, { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         helpTopics = data || [];
@@ -11128,7 +11286,7 @@ window.PBGuiSidebarResize.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize
     if (!t) return;
     _rawHtml = null; _sMarks = []; _sIdx = -1; helpSearchCount.textContent = '';
     helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
-    fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { headers: bearerHeaders() })
+    fetch(docsBase + '/docs/content?file=' + encodeURIComponent(t.file) + '&lang=' + helpLang, { credentials: 'same-origin' })
       .then(function(r) { return r.json(); })
       .then(function(d) {
         _rawHtml = mdToHtml(d.content || '');
@@ -11172,7 +11330,7 @@ window.PBGuiSidebarResize.init({ sidebarId: 'sidebar', handleId: 'sidebar-resize
 
   window._openBacktestHelp = function() {
     if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== 'function') return;
-    window.PBGuiSharedHelp.open('backtest', { token: TOKEN });
+    window.PBGuiSharedHelp.open('backtest');
   };
   window.PBGUI_HELP_OPENER = window._openBacktestHelp;
 }());

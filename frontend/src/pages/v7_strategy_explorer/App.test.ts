@@ -14,7 +14,10 @@ import App from './App.vue';
  */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: 'v1.99', serial: 'S9' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: 'v1.99', serial: 'S9' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -98,7 +101,7 @@ describe('Strategy Explorer page shell (v7 flavour)', () => {
     expect(wrapper.find('main#app-shell-main').exists()).toBe(true);
     expect(wrapper.find('div.workbench-page-content').exists()).toBe(true);
     const sessionCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/session'))!;
-    expect(String(sessionCall[0])).toBe('http://pbgui.test:8000/api/strategy-explorer/session?draft_id=&result_path=');
+    expect(String(sessionCall[0])).toBe('/api/strategy-explorer/session?draft_id=&result_path=');
 
     expect(document.title).toBe('PBGui - Strategy Explorer');
     const title = wrapper.get('#strategy-explorer-title');
@@ -132,7 +135,7 @@ describe('Strategy Explorer page shell (v8 flavour)', () => {
     const wrapper = await mountApp('/api/strategy-explorer-v8/main_page?draft_id=d-9');
 
     const sessionCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/session'))!;
-    expect(String(sessionCall[0])).toBe('http://pbgui.test:8000/api/strategy-explorer-v8/session?draft_id=d-9');
+    expect(String(sessionCall[0])).toBe('/api/strategy-explorer-v8/session?draft_id=d-9');
 
     expect(document.title).toBe('PBGui - PB8 Strategy Explorer');
     expect(wrapper.get('#strategy-explorer-title').text()).toBe('PB8 Strategy Explorer');

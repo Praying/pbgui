@@ -14,7 +14,7 @@ vi.mock('@/shared/api', () => ({
 describe('useOptimizePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('__BOOT__', { origin: 'http://testserver', token: '' });
+    vi.stubGlobal('__BOOT__', { origin: 'http://testserver', base_prefix: '', authenticated: true });
     vi.stubGlobal('WebSocket', class { close() {} send() {} } as unknown as typeof WebSocket);
   });
 

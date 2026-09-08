@@ -6,7 +6,10 @@ import PbDataSettings from './PbDataSettings.vue';
 import type { PbDataSettingsData } from '../types';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -112,9 +115,9 @@ describe('PbDataSettings loading (legacy loadSettings/applySettings)', () => {
     await mountedSettings();
 
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/settings/pbdata');
+    expect(url).toBe('/api/services/settings/pbdata');
     expect(init.method).toBeUndefined();
-    expect((init.headers as Headers).get('Authorization')).toBe('Bearer tok');
+    expect(init.credentials).toBe('same-origin');
   });
 
   it('keeps the placeholder when the load fails (legacy silent catch)', async () => {
@@ -260,7 +263,7 @@ describe('PbDataSettings save (legacy savePBDataSettings/_post/_flash)', () => {
     await wrapper.find('button.save').trigger('click');
     await flushPromises();
     const [url, init] = fetchMock.mock.calls.at(-1)!;
-    expect(url).toBe('http://pbgui.test:8000/api/services/settings/pbdata');
+    expect(url).toBe('/api/services/settings/pbdata');
     expect(init.method).toBe('POST');
     expect((init.headers as Headers).get('Content-Type')).toBe('application/json');
     return JSON.parse(init.body as string);

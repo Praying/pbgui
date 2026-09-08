@@ -230,7 +230,7 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
         "welcome.html",
     }
     for filename in expected_consumers:
-        assert "pbgui_dialogs.js?v=8" in html_sources[filename]
+        assert "pbgui_dialogs.js?v=10" in html_sources[filename]
 
     # services_monitor.html and the dashboard legacy pages (dashboard_main,
     # dashboard_templates, dashboard_editor + their fragments) were replaced
@@ -250,4 +250,4 @@ def test_dialog_cache_version_is_bumped_for_all_consumers() -> None:
         vue_index = (ROOT / "frontend" / "src" / "pages" / page / "index.html").read_text(
             encoding="utf-8"
         )
-        assert "pbgui_dialogs.js?v=8" in vue_index, page
+        assert "pbgui_dialogs.js?v=10" in vue_index, page

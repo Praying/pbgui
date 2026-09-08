@@ -1,5 +1,5 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 /** Same-origin REST and WebSocket endpoints for VPS Manager. */
-export function managerApiBase(): string { return `${getBoot().origin}/api/vps-manager`; }
-export function managerWsUrl(): string { return `${getBoot().origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')}/api/vps-manager/ws`; }
+export function managerApiBase(): string { return `${getBoot().base_prefix}/api/vps-manager`; }
+export function managerWsUrl(): string { return `${wsOrigin()}/api/vps-manager/ws`; }

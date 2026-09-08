@@ -268,7 +268,7 @@ export function useRunInstances(options: {
         }), // :917
       })) as { name?: string; draft_id?: string; editor?: string };
       if (payload.editor === 'run' && payload.draft_id) {
-        navigate(`${getBoot().origin}/api/v8/edit_page?new=1&draft_id=${encodeURIComponent(payload.draft_id)}`);
+        navigate(`${getBoot().base_prefix}/api/v8/edit_page?new=1&draft_id=${encodeURIComponent(payload.draft_id)}`);
         return;
       }
       navigate(backtestV8PageUrl(payload.name || targetName)); // :931
@@ -304,7 +304,7 @@ export function useRunInstances(options: {
           apiUrl(adapter, '/instances/' + encodeURIComponent(name) + '/config'),
           { credentials: 'same-origin' }
         )) as { config?: unknown };
-        const draftPayload = (await apiFetch<{ draft_id?: string }>(`${getBoot().origin}/api/balance-calc/draft`, {
+        const draftPayload = (await apiFetch<{ draft_id?: string }>(`${getBoot().base_prefix}/api/balance-calc/draft`, {
           method: 'POST',
           credentials: 'same-origin',
           body: JSON.stringify({ config: configPayload.config || {} }), // :1014

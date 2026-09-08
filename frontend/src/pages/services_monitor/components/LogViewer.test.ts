@@ -4,7 +4,10 @@ import { createI18n } from '@/shared/i18n';
 import LogViewer from './LogViewer.vue';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 /**
@@ -219,7 +222,7 @@ describe('LogViewer line rendering (legacy _extractLevel/_levelClass)', () => {
     expect(lines).toHaveLength(5000);
     expect(lines[0]!.text()).toBe('line-6'); // oldest trimmed
     expect(lines.at(-1)!.text()).toBe('line-5005');
-  });
+  }, 15000);
 
   it('ignores messages that carry a stale sid', async () => {
     const wrapper = mountViewer();

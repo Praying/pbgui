@@ -148,6 +148,24 @@ def test_every_runtime_control_has_forward_and_reverse_mapping() -> None:
         assert f"'{field_id}'" in collect or f"'{field_id}'" in populate, f"{field_id} has no config mapping"
 
 
+def test_pb8_runtime_json_fields_share_compact_desktop_rows() -> None:
+    """PB8 diagnostic JSON editors use free desktop columns without adding rows."""
+
+    page = (ROOT / "frontend" / "v7_edit.html").read_text(encoding="utf-8")
+    runtime = page.split('<div class="subsection-title" data-v8-only data-i18n="v7run.pb8Runtime">PB8 Runtime</div>', 1)[1]
+    runtime = runtime.split('<!-- Filters section -->', 1)[0]
+    pb8_runtime = runtime.split('<div class="subsection-title" data-v8-only data-i18n="v7run.logging">Logging</div>', 1)[0]
+    logging = runtime.split('<div class="subsection-title" data-v8-only data-i18n="v7run.logging">Logging</div>', 1)[1]
+    logging = logging.split('<div class="subsection-title" data-v8-only data-i18n="v7run.monitoring">Monitoring</div>', 1)[0]
+
+    assert ".json-editor.compact-json-editor { min-height: 72px; max-height: 180px; }" in page
+    assert 'class="json-editor compact-json-editor" id="f-startup-phase-budgets" rows="3"' in runtime
+    assert 'class="json-editor compact-json-editor" id="f-log-debug-profiles" rows="3"' in runtime
+    assert pb8_runtime.count('<div class="form-row cols-8" data-v8-only>') == 1
+    assert logging.count('<div class="form-row cols-8" data-v8-only>') == 1
+    assert runtime.count('<div class="form-row cols-8" data-v8-only>') == 4
+
+
 def test_zero_values_are_not_replaced_by_editor_defaults() -> None:
     """Valid numeric zeroes must survive the Config-to-Form path unchanged."""
 
@@ -580,6 +598,18 @@ def test_log_panel_waits_for_remote_assignment_before_opening() -> None:
     assert "_editorInitPromise = init();" in page
 
 
+def test_pb8_log_panel_uses_smart_history_and_backup_viewer_alias() -> None:
+    """PB8 log opening resolves remote history and keeps backup paths server-side."""
+
+    page = (ROOT / "frontend" / "v7_edit.html").read_text(encoding="utf-8")
+    open_log_panel = _page_function(page, "openLogPanel")
+
+    assert "'/instances/' + encodeURIComponent(INSTANCE_NAME) + '/log-smart?lines=1'" in open_log_panel
+    assert "if (data.backup_file)" in open_log_panel
+    assert "_initViewer('local', data.backup_file)" in open_log_panel
+    assert "BotBackup:' + INSTANCE_NAME + ':8:" in open_log_panel
+
+
 def test_save_waits_for_editor_initialization_before_validating_raw_json() -> None:
     """An early Save click must not validate the temporarily empty Raw JSON field."""
 
@@ -875,6 +905,8 @@ def test_populate_form_restores_every_runtime_field_into_its_control() -> None:
         _page_function(page, name)
         for name in (
             "cloneRunConfigValue",
+            "pb8LogDirValue",
+            "pb8MonitorRootDirValue",
             "getRunStrategyDefault",
             "cacheRunStrategyBlocks",
             "selectRunStrategyConfig",
@@ -953,6 +985,18 @@ def test_populate_form_restores_every_runtime_field_into_its_control() -> None:
         assert.equal(checked['f-notices-ignore'], false);
         assert.deepEqual(JSON.parse(nodes['f-long-json'].value).strategy, {{alpha: {{entry: 1}}}});
         assert.equal(JSON.parse(nodes['cfg-raw-json'].value).live.strategy_kind, 'alpha');
+        cfg.logging.dir = 'None';
+        populateForm();
+        assert.equal(restored['f-log-dir'], 'logs');
+        cfg.logging.dir = null;
+        populateForm();
+        assert.equal(restored['f-log-dir'], 'logs');
+        cfg.monitor.root_dir = 'None';
+        populateForm();
+        assert.equal(restored['f-monitor-root-dir'], 'monitor');
+        cfg.monitor.root_dir = null;
+        populateForm();
+        assert.equal(restored['f-monitor-root-dir'], 'monitor');
         """
     )
     _run_node(script)
@@ -1039,6 +1083,63 @@ def test_run_strategy_switch_replaces_key_caches_edits_and_marks_runtime_default
         assert.deepEqual(JSON.parse(nodes['f-long-json'].value).strategy, {{alpha: {{custom: 77}}}});
         assert.deepEqual(JSON.parse(nodes['f-short-json'].value).strategy, {{alpha: {{custom: 12}}}});
         assert.equal(scheduled, 4);
+        """
+    )
+    _run_node(script)
+
+
+def test_backup_renderer_shows_rollback_only_for_existing_pb8_instances() -> None:
+    """Backup rows render for both runtimes while rollback stays limited to active PB8 configs."""
+
+    page = (ROOT / "frontend" / "v7_run.html").read_text(encoding="utf-8")
+    fetch_backups = _page_function(page, "fetchBackups")
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const nodes = {{
+          'backup-content': {{className: '', innerHTML: '', textContent: '', onclick: null}},
+          'backup-filter': {{value: ''}}
+        }};
+        const document = {{getElementById: (id) => nodes[id] || null}};
+        const esc = (value) => String(value == null ? '' : value);
+        let responseData;
+        let runListAdapter;
+        function apiFetch(path) {{
+          assert.equal(path, '/backups');
+          return Promise.resolve({{ok: true, json: async () => responseData}});
+        }}
+        {fetch_backups}
+
+        async function renderBackup(isV8, currentlyExists, name) {{
+          nodes['backup-content'].className = '';
+          nodes['backup-content'].innerHTML = '';
+          nodes['backup-content'].textContent = '';
+          runListAdapter = {{isV8}};
+          responseData = {{backups: [{{
+            name,
+            currently_exists: currentlyExists,
+            can_restore: true,
+            backup_items: [{{id: '2026-09-06T12-00-00', created_at: '2026-09-06 12:00:00'}}]
+          }}]}};
+          fetchBackups();
+          await new Promise((resolve) => setImmediate(resolve));
+          assert.equal(nodes['backup-content'].textContent, '');
+          return nodes['backup-content'].innerHTML;
+        }}
+
+        (async () => {{
+          const existingPb8 = await renderBackup(true, true, 'pb8-active');
+          assert.match(existingPb8, /data-restore-name="pb8-active"/);
+          assert.match(existingPb8, /data-rollback-name="pb8-active"/);
+
+          const archivedPb8 = await renderBackup(true, false, 'pb8-archived');
+          assert.match(archivedPb8, /data-restore-name="pb8-archived"/);
+          assert.doesNotMatch(archivedPb8, /data-rollback-name/);
+
+          const pb7 = await renderBackup(false, true, 'pb7-active');
+          assert.match(pb7, /data-restore-name="pb7-active"/);
+          assert.doesNotMatch(pb7, /data-rollback-name/);
+        }})().catch(error => {{ console.error(error); process.exit(1); }});
         """
     )
     _run_node(script)

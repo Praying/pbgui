@@ -968,6 +968,8 @@ def test_session_tokens_are_absent_from_browser_and_backend_urls() -> None:
     for path in sorted(frontend_root.rglob("*")):
         if path.suffix not in {".html", ".js", ".ts", ".vue"}:
             continue
+        if "node_modules" in path.parts or not path.is_file():
+            continue
         if forbidden.search(path.read_text(encoding="utf-8")):
             offenders.append(str(path))
     assert offenders == []
@@ -979,9 +981,10 @@ def test_session_tokens_are_absent_from_browser_and_backend_urls() -> None:
 
     nav_source = Path("frontend/pbgui_nav.js").read_text(encoding="utf-8")
     help_source = Path("frontend/help.html").read_text(encoding="utf-8")
-    assert "document.head.appendChild(script)" in nav_source
-    assert "var guideTopic = GUIDE_TOPICS[c.current] || '00_overview';" in nav_source
-    assert "window.PBGuiSharedHelp.open(guideTopic" in nav_source
+    # The Vue migration navigates the guide button to the Help Center page
+    # (the legacy lazy-load overlay flow was retired with help.html's port).
+    assert "FASTAPI_PAGES['help']" in nav_source
+    assert "?topic=' + encodeURIComponent(targetTopic)" in nav_source
     assert "window.history.back()" in help_source
 
     auth_source = Path("api/auth.py").read_text(encoding="utf-8")

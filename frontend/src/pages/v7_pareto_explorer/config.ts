@@ -107,6 +107,6 @@ export function buildLocationUrl(href: string, resultPath: string, stage: string
 }
 
 /** REST base for the single pareto router (pareto_explorer.py:3352). */
-export function paretoApiBase(origin: string = getBoot().origin): string {
+export function paretoApiBase(origin: string = getBoot().base_prefix): string {
   return origin + '/api/pareto-explorer';
 }

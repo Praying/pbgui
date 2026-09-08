@@ -10,7 +10,10 @@ import type { MarketDataStatus } from './types';
 enableAutoUnmount(afterEach);
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 vi.mock('@/shared/api', () => ({
@@ -23,7 +26,7 @@ vi.mock('@/shared/api', () => ({
 }));
 
 const apiFetchMock = vi.mocked(apiFetch);
-const API_BASE = 'http://pbgui.test:8000/api';
+const API_BASE = '/api';
 
 /** Fake socket mirroring the legacy page's WebSocket usage. */
 class FakeWebSocket {
@@ -85,7 +88,7 @@ function actionsResolve(body: Record<string, unknown> = { success: true }): void
 
 beforeEach(() => {
   // Reset per-test: the missing-token test mutates this mock.
-  vi.mocked(getBoot).mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  vi.mocked(getBoot).mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
   FakeWebSocket.instances = [];
   fetchMock = vi.fn().mockResolvedValue({ ok: true } as Response);
   confirmSpy = vi.fn().mockResolvedValue(true);
@@ -114,16 +117,6 @@ describe('App shell (legacy mds-root)', () => {
     expect(app.find('.mds-empty-state').text()).toContain('Waiting for market data status...');
   });
 
-  it('replaces content with the warning when the token is missing', async () => {
-    const { getBoot } = await import('@/shared/boot');
-    vi.mocked(getBoot).mockReturnValue({ token: '', origin: 'http://pbgui.test:8000', version: '1', serial: 'S' });
-
-    const app = mountApp();
-
-    expect(app.find('.mds-empty-state').text()).toContain('Missing token or exchange parameter');
-    expect(app.find('.mds-empty-state svg').exists()).toBe(true);
-    expect(FakeWebSocket.instances).toHaveLength(0);
-  });
 
   it('replaces content with the warning when the exchange is missing', () => {
     const app = mountApp({ exchange: '' });
@@ -338,7 +331,7 @@ describe('toasts (legacy showToast)', () => {
     );
     const init = fetchMock.mock.calls[0]![1] as RequestInit;
     const headers = new Headers(init.headers);
-    expect(headers.get('authorization')).toBe('Bearer tok');
+    expect(init.credentials).toBe('same-origin');
     expect(headers.get('content-type')).toBe('application/json');
   });
 

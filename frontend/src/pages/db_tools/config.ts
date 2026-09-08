@@ -1,4 +1,4 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 /**
  * DB Tools page config — the Vue replacement for the legacy server-side
@@ -12,7 +12,7 @@ import { getBoot } from '@/shared/boot';
 
 /** REST base, e.g. http://host:port/api/db-tools. */
 export function dbToolsApiBase(): string {
-  return `${getBoot().origin}/api/db-tools`;
+  return `${getBoot().base_prefix}/api/db-tools`;
 }
 
 /** Legacy plain concatenation (apiFetch :320). */
@@ -22,5 +22,5 @@ export function apiUrl(path: string): string {
 
 /** Legacy WS transform (:2689). */
 export function wsBase(): string {
-  return getBoot().origin.replace('http://', 'ws://').replace('https://', 'wss://');
+  return wsOrigin();
 }

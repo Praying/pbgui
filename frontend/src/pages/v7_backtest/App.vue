@@ -71,6 +71,11 @@ import type { BacktestPanel } from './types';
 const { t } = useI18n();
 const boot = getBoot();
 
+/** Group compare (v2.02.4): the group's paths are selected; run Compare. */
+async function onCompareGroup(): Promise<void> {
+  await store.compareResults();
+}
+
 const store = useBacktestPage({
   origin: boot.origin,
   t: (key, params) => t(key, params ?? {}),
@@ -695,12 +700,14 @@ watch(
           <Button v-if="store.archive.mode.value === 'backtests' && store.archive.isOwn.value" type="button" variant="danger" class="sb-btn" data-test="archive-delete" @click="archivePanel?.openDeleteResults()"><PbIcon :icon="PhTrash" /> {{ t('v7backtest.deleteSelected') }}</Button>
         </template>
       </template>
-      <template v-if="!store.adapter.isV8" #ctx-legacy>
-        <!-- legacy actions (:772-778); Add to Run lands in M-v7-12 -->
+      <template #ctx-legacy>
+        <!-- legacy actions (:772-778); Add to Run lands in M-v7-12.
+             v2.02.5: PB8 keeps read-only browsing + Compare and hides the
+             unsafe write actions. -->
         <Button type="button" variant="default" class="sb-btn" data-test="legacy-refresh" @click="store.legacy?.loadLegacyResults()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('v7backtest.refresh') }}</Button>
-        <Button type="button" variant="default" class="sb-btn" data-test="legacy-rebacktest" @click="store.legacy?.startRebacktest(store.editor.openEditor, () => store.selectPanel('configs'))"><PbIcon :icon="PhArrowsClockwise" /> {{ t('v7backtest.backtest') }}</Button>
+        <Button v-if="!store.adapter.isV8" type="button" variant="default" class="sb-btn" data-test="legacy-rebacktest" @click="store.legacy?.startRebacktest(store.editor.openEditor, () => store.selectPanel('configs'))"><PbIcon :icon="PhArrowsClockwise" /> {{ t('v7backtest.backtest') }}</Button>
         <Button type="button" variant="default" class="sb-btn" data-test="legacy-compare" @click="store.legacy?.compareSelected()"><PbIcon :icon="PhChartLineUp" /> {{ t('v7backtest.compare') }}</Button>
-        <Button type="button" variant="danger" class="sb-btn" data-test="legacy-delete" @click="legacyPanel?.openDelete()"><PbIcon :icon="PhTrash" /> {{ t('v7backtest.deleteSelected') }}</Button>
+        <Button v-if="!store.adapter.isV8" type="button" variant="danger" class="sb-btn" data-test="legacy-delete" @click="legacyPanel?.openDelete()"><PbIcon :icon="PhTrash" /> {{ t('v7backtest.deleteSelected') }}</Button>
       </template>
 
       <!-- Editor toolbar (:782-804, setEditorMode :211-222) — replaces the
@@ -829,6 +836,7 @@ watch(
           :version-bound-actions="store.results.versionFilter.value !== store.adapter.version"
           :allow-v8-convert="!store.adapter.isV8"
           @convert="convertResultToV8"
+          @compare-group="onCompareGroup"
         />
       </div>
 
@@ -842,13 +850,14 @@ watch(
         :version="store.adapter.version"
       />
 
-      <!-- LEGACY panel (:918-945) — v7 only (adapter drops it on v8, :160-162) -->
+      <!-- LEGACY panel (:918-945) — PB8 keeps read-only browsing and Compare. -->
       <LegacyPanel
-        v-if="!store.adapter.isV8 && legacyMounted"
+        v-if="legacyMounted || store.adapter.isV8"
         ref="legacyPanel"
         v-model:pinned="legacyPinned"
         :legacy="store.legacy!"
         :active="store.view.state.panel === 'legacy'"
+        :read-only="store.adapter.isV8"
       />
       </div>
     </div>

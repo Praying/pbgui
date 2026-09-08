@@ -1970,7 +1970,8 @@ class AICapabilityService:
                 if widget == "TOP":
                     cell["top_n"] = int(config.get(f"dashboard_top_symbols_top_{suffix}") or 10)
                 if widget == "INCOME":
-                    cell["last_n"] = int(config.get(f"dashboard_income_last_{suffix}") or 10)
+                    raw_last_n = config.get(f"dashboard_income_last_{suffix}")
+                    cell["last_n"] = int(raw_last_n) if raw_last_n not in (None, "") else 0
                     cell["minimum_income"] = float(config.get(f"dashboard_income_filter_{suffix}") or 0)
                 if widget == "ORDERS":
                     link = str(config.get(f"dashboard_orders_{suffix}") or "")
@@ -2066,7 +2067,7 @@ class AICapabilityService:
             if widget == "TOP":
                 prepared.setdefault(f"dashboard_top_symbols_top_{suffix}", 10)
             if widget == "INCOME":
-                prepared.setdefault(f"dashboard_income_last_{suffix}", 10)
+                prepared.setdefault(f"dashboard_income_last_{suffix}", 0)
                 prepared.setdefault(f"dashboard_income_filter_{suffix}", 0)
             if "users" in cell:
                 users = cell.get("users")
@@ -2095,10 +2096,16 @@ class AICapabilityService:
                 prepared[f"dashboard_ppl_sum_period_{suffix}"] = value
             for field, key_prefix, minimum, maximum in (
                 ("top_n", "dashboard_top_symbols_top", 1, 100),
-                ("last_n", "dashboard_income_last", 1, 100),
+                ("last_n", "dashboard_income_last", 0, 100),
                 ("height", "dashboard_height", 120, 2000),
             ):
                 if field in cell:
+                    if field == "top_n" and widget != "TOP":
+                        raise AICapabilityError("Top N is only valid for TOP widgets")
+                    if field == "last_n" and widget != "INCOME":
+                        raise AICapabilityError("Last N is only valid for INCOME widgets")
+                    if field == "last_n" and (isinstance(cell[field], bool) or not isinstance(cell[field], int)):
+                        raise AICapabilityError("Dashboard last_n is invalid")
                     try:
                         value = int(cell[field])
                     except (TypeError, ValueError) as exc:
@@ -2674,6 +2681,7 @@ class AICapabilityService:
                         executable,
                         script,
                         self._python_analysis_nproc_limit(),
+                        additional_runtime_root=Path(sys.base_prefix).resolve(),
                     )
                 subprocess_options: dict[str, Any] = {}
                 if seccomp_fd is not None:
@@ -2906,8 +2914,16 @@ class AICapabilityService:
         executable: Path,
         script: Path,
         nproc_limit: int,
+        *,
+        additional_runtime_root: Path | None = None,
     ) -> list[str]:
-        """Build the namespace-free Landlock analysis command."""
+        """Build the namespace-free Landlock analysis command.
+
+        Virtual environments execute from one prefix while importing the
+        standard library from ``sys.base_prefix``. Both roots must be allowed
+        or the interpreter can fail while importing a harmless module such as
+        ``pkgutil``.
+        """
 
         if not _LANDLOCK_RUNNER_PATH.is_file():
             raise AICapabilityError("Python analysis filesystem sandbox is unavailable")
@@ -2924,6 +2940,7 @@ class AICapabilityService:
             str(_LANDLOCK_RUNNER_PATH),
             str(script),
             str(runtime_root),
+            *([str(additional_runtime_root)] if additional_runtime_root and additional_runtime_root != runtime_root else []),
         ]
 
     @staticmethod
@@ -4482,7 +4499,12 @@ class AICapabilityService:
                                     "mode": {"type": "string", "enum": ["bar", "line"]},
                                     "sum_period": {"type": "string", "enum": ["DAY", "WEEK", "MONTH"]},
                                     "top_n": {"type": "integer", "minimum": 1, "maximum": 100},
-                                    "last_n": {"type": "integer", "minimum": 1, "maximum": 100},
+                                    "last_n": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 100,
+                                        "description": "INCOME mode: 0 shows the cumulative chart; 1-100 shows the latest N rows as a table.",
+                                    },
                                     "minimum_income": {"type": "number"},
                                     "positions_row": {"type": "integer", "minimum": 1, "maximum": 10},
                                     "positions_column": {"type": "integer", "minimum": 1, "maximum": 2},

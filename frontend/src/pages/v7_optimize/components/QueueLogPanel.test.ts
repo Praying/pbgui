@@ -64,7 +64,7 @@ function statusPayload(): Record<string, unknown> {
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  vi.stubGlobal('__BOOT__', { origin: 'http://testserver', token: '' });
+  vi.stubGlobal('__BOOT__', { origin: 'http://testserver', base_prefix: '', authenticated: true });
   FakeWebSocket.instances = [];
   vi.stubGlobal('WebSocket', FakeWebSocket);
   fetchMock = vi.fn(async () => ({ ok: true, json: async () => statusPayload() }));

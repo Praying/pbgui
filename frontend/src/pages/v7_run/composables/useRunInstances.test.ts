@@ -10,7 +10,10 @@ import { FORCED_MODES, useRunInstances } from './useRunInstances';
    observable through the injected navigate and window stubs. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const INSTANCES = { instances: [{ name: 'main', user: 'alice', status: 'synced', exchange: 'Bybit', running_on: [] }] };
@@ -50,7 +53,7 @@ describe('loadInstances (:593-609)', () => {
     expect(store.instances.value.map((r) => r.name)).toEqual(['main']);
     expect(store.banner.value).toBe('ok');
     expect(store.countText.value).toBe('1/1');
-    expect(String(fetchMock.mock.calls[0]![0])).toBe('http://pbgui.test:8000/api/v7/instances');
+    expect(String(fetchMock.mock.calls[0]![0])).toBe('/api/v7/instances');
   });
 
   it('marks the banner lost on failure', async () => {
@@ -82,9 +85,9 @@ describe('navigation (:899-908)', () => {
     await store.loadInstances();
 
     store.editInstance('main');
-    expect(navigate).toHaveBeenLastCalledWith('http://pbgui.test:8000/api/v7/edit_page?name=main');
+    expect(navigate).toHaveBeenLastCalledWith('/api/v7/edit_page?name=main');
     store.addInstance();
-    expect(navigate).toHaveBeenLastCalledWith('http://pbgui.test:8000/api/v7/edit_page?new=1');
+    expect(navigate).toHaveBeenLastCalledWith('/api/v7/edit_page?new=1');
   });
 });
 
@@ -114,7 +117,7 @@ describe('delete flow (:943-1001)', () => {
 
     expect(store.pendingDeleteName.value).toBeNull();
     expect(store.instances.value).toEqual([]);
-    expect(String(fetchMock.mock.calls.at(-1)![0])).toBe('http://pbgui.test:8000/api/v7/instances/main');
+    expect(String(fetchMock.mock.calls.at(-1)![0])).toBe('/api/v7/instances/main');
     expect((fetchMock.mock.calls.at(-1)![1] as RequestInit).method).toBe('DELETE');
     expect(toastText()).toContain('v7run.instanceDeleted');
     expect(toastText()).toContain('v7run.vpsHostsOkWithFail');
@@ -148,9 +151,9 @@ describe('forced-mode flow (:1030-1077)', () => {
        loadInstances() fires immediately, so the snapshot GET is the call
        after the forced-mode POST ( spying on the store property cannot
        intercept the internal closure call). */
-    expect(String(fetchMock.mock.calls.at(-2)![0])).toBe('http://pbgui.test:8000/api/v7/instances/main/forced-mode');
+    expect(String(fetchMock.mock.calls.at(-2)![0])).toBe('/api/v7/instances/main/forced-mode');
     expect((fetchMock.mock.calls.at(-2)![1] as RequestInit).method).toBe('POST');
-    expect(String(fetchMock.mock.calls.at(-1)![0])).toBe('http://pbgui.test:8000/api/v7/instances');
+    expect(String(fetchMock.mock.calls.at(-1)![0])).toBe('/api/v7/instances');
   });
 
   it('posts the current instance version when clearing a forced mode', async () => {
@@ -192,14 +195,14 @@ describe('V8 conversion (:910-941)', () => {
 
     await store.convertInstanceToV8('main');
 
-    expect(String(fetchMock.mock.calls[0]![0])).toBe('http://pbgui.test:8000/api/backtest-v8/migrate-v7');
+    expect(String(fetchMock.mock.calls[0]![0])).toBe('/api/backtest-v8/migrate-v7');
     expect(JSON.parse(String((fetchMock.mock.calls[0]![1] as RequestInit).body))).toEqual({
       source_type: 'run_config',
       source_name: 'main',
       target_name: 'main_v8',
       allow_manual_review_output: true,
     });
-    expect(navigate).toHaveBeenLastCalledWith('http://pbgui.test:8000/api/backtest-v8/main_page?config=main_v8');
+    expect(navigate).toHaveBeenLastCalledWith('/api/backtest-v8/main_page?config=main_v8');
   });
 
   it('a 409 alerts and opens the existing config', async () => {
@@ -210,7 +213,7 @@ describe('V8 conversion (:910-941)', () => {
     await store.convertInstanceToV8('main');
 
     expect(alertMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'v7run.v8ConfigExists', confirmText: 'v7run.open' }));
-    expect(navigate).toHaveBeenLastCalledWith('http://pbgui.test:8000/api/backtest-v8/main_page?config=main_v8');
+    expect(navigate).toHaveBeenLastCalledWith('/api/backtest-v8/main_page?config=main_v8');
   });
 
   it('other failures toast and alert (:933-939)', async () => {
@@ -233,7 +236,7 @@ describe('balance calculator handoff (:1003-1028)', () => {
     await store.openBalanceCalculator('main');
 
     expect(navigate).toHaveBeenLastCalledWith(
-      'http://pbgui.test:8000/api/balance-calc/main_page?instance=main&instance_version=v7&exchange=bybit'
+      '/api/balance-calc/main_page?instance=main&instance_version=v7&exchange=bybit'
     );
   });
 
@@ -250,7 +253,7 @@ describe('balance calculator handoff (:1003-1028)', () => {
     await v8Store.openBalanceCalculator('main');
 
     expect(navigate).toHaveBeenLastCalledWith(
-      'http://pbgui.test:8000/api/balance-calc/main_page?draft_id=d-9&exchange=bybit'
+      '/api/balance-calc/main_page?draft_id=d-9&exchange=bybit'
     );
   });
 

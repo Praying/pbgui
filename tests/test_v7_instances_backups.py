@@ -8,6 +8,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import parse_qs, urlparse
 
+from starlette.datastructures import URL
+
 from api import v7_instances
 
 from tests.i18n_helpers import assert_text_present
@@ -57,7 +59,7 @@ def test_backup_draft_for_deleted_instance_preserves_editor_name(monkeypatch, tm
     monkeypatch.setattr(v7_instances, "PBGDIR", str(tmp_path))
     v7_instances._draft_configs.clear()
 
-    request = SimpleNamespace(url_for=lambda name: "http://test/api/v7/edit_page")
+    request = SimpleNamespace(url_for=lambda name: URL("http://test/api/v7/edit_page"))
     session = SimpleNamespace(token="tok")
 
     result = v7_instances.create_backup_draft("hl_mani10_PEPE", "7", request, session=session)
@@ -65,5 +67,6 @@ def test_backup_draft_for_deleted_instance_preserves_editor_name(monkeypatch, tm
 
     assert query["name"] == ["hl_mani10_PEPE"]
     assert query["draft_id"] == [result["draft_id"]]
-    assert query["token"] == ["tok"]
+    assert "token" not in query
+    assert result["edit_url"].startswith("/api/v7/edit_page?")
     assert "new" not in query

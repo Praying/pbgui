@@ -1,6 +1,6 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 /** WebSocket origin for the authenticated VPS monitor stream. */
 export function vpsWsUrl(): string {
-  return `${getBoot().origin.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:')}/ws/vps`;
+  return `${wsOrigin()}/ws/vps`;
 }

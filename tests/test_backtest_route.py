@@ -89,8 +89,7 @@ def test_v7_falls_back_to_legacy_template_with_injections(
     v7_client, _ = backtest_clients
     legacy = (
         "<html><script>\n"
-        '  var TOKEN = "%%TOKEN%%";\n'
-        '  var API_BASE = "%%API_BASE%%";\n'
+                '  var API_BASE = "%%API_BASE%%";\n'
         '  var WS_BASE = "%%WS_BASE%%";\n'
         '  var BACKTEST_VERSION = "%%BACKTEST_VERSION%%";\n'
         '  var BACKTEST_LABEL = "%%BACKTEST_LABEL%%";\n'
@@ -106,10 +105,9 @@ def test_v7_falls_back_to_legacy_template_with_injections(
     resp = v7_client.get("/api/backtest-v7/main_page")
 
     assert resp.status_code == 200
-    assert resp.headers["cache-control"] == "no-store"
-    assert 'var TOKEN = "tok-1";' in resp.text  # the v7 router injects the session token (:2838)
-    assert 'var API_BASE = "http://testserver/api/backtest-v7";' in resp.text
-    assert 'var WS_BASE = "ws://testserver";' in resp.text
+    assert resp.headers["cache-control"] == "no-store"  # the v7 router injects the session token (:2838)
+    assert 'var API_BASE = "/api/backtest-v7";' in resp.text
+    assert "window.location.host" in resp.text
     assert 'var BACKTEST_VERSION = "v7";' in resp.text
     assert 'var BACKTEST_LABEL = "V7";' in resp.text
     assert 'var BACKTEST_SUBTITLE = "PBv7 BACKTEST";' in resp.text
@@ -125,8 +123,7 @@ def test_v8_falls_back_to_legacy_template_with_v8_injections(
     _, v8_client = backtest_clients
     legacy = (
         "<html><script>\n"
-        '  var TOKEN = "%%TOKEN%%";\n'
-        '  var API_BASE = "%%API_BASE%%";\n'
+                '  var API_BASE = "%%API_BASE%%";\n'
         '  var BACKTEST_VERSION = "%%BACKTEST_VERSION%%";\n'
         '  var BACKTEST_LABEL = "%%BACKTEST_LABEL%%";\n'
         '  var BACKTEST_NAV_CURRENT = "%%BACKTEST_NAV_CURRENT%%";\n'
@@ -137,9 +134,8 @@ def test_v8_falls_back_to_legacy_template_with_v8_injections(
     resp = v8_client.get("/api/backtest-v8/main_page")
 
     assert resp.status_code == 200
-    assert resp.headers["cache-control"] == "no-store"
-    assert 'var TOKEN = "";' in resp.text  # the v8 router never carried a token (:1510)
-    assert 'var API_BASE = "http://testserver/api/backtest-v8";' in resp.text
+    assert resp.headers["cache-control"] == "no-store"  # the v8 router never carried a token (:1510)
+    assert 'var API_BASE = "/api/backtest-v8";' in resp.text
     assert 'var BACKTEST_VERSION = "v8";' in resp.text
     assert 'var BACKTEST_LABEL = "V8";' in resp.text
     assert 'var BACKTEST_NAV_CURRENT = "v8_backtest";' in resp.text

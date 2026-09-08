@@ -423,3 +423,48 @@ export function pricePayloadCoversChart(payload: { available?: boolean; time?: s
     ? coverageStart <= chartStart && coverageEnd >= chartEnd
     : Boolean(payload.coverage_complete);
 }
+
+
+/** resultGroupKey (v2.02.4): version + group id identify one validation group. */
+export function resultGroupKey(row: BacktestResultItem): string {
+  const group = row.result_group;
+  if (!group || group.kind !== 'optimize_validate' || !group.id) return '';
+  return String(row.backtest_version || '') + ':' + group.id;
+}
+
+/** One collapsible Optimize-validation group over ≥2 matching results. */
+export interface ResultGroupBlock {
+  key: string;
+  label: string;
+  item: string;
+  paths: string[];
+}
+
+/**
+ * Collect validation groups with at least two members (legacy validationGroups
+ * builder). Single-member groups render as plain rows like the legacy
+ * `if (!group || group.indices.length < 2)` branch.
+ */
+export function collectResultGroups(rows: readonly BacktestResultItem[]): Map<string, ResultGroupBlock> {
+  const groups = new Map<string, ResultGroupBlock>();
+  for (const row of rows) {
+    const key = resultGroupKey(row);
+    if (!key) continue;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.paths.push(row.path);
+      continue;
+    }
+    const meta = row.result_group!;
+    groups.set(key, {
+      key,
+      label: meta.label || row.config_name || 'Pareto candidate',
+      item: meta.item || '',
+      paths: [row.path],
+    });
+  }
+  for (const [key, block] of groups) {
+    if (block.paths.length < 2) groups.delete(key);
+  }
+  return groups;
+}

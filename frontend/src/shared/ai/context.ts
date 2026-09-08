@@ -17,7 +17,7 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue';
 
-import { getBoot } from '@/shared/boot';
+import { getBoot, pageOrigin } from '@/shared/boot';
 import { WORKBENCH_NAVIGATION } from '@/shared/navigation';
 
 export interface AiContextEntity {
@@ -169,7 +169,7 @@ for (const group of WORKBENCH_NAVIGATION) {
 }
 
 function aiOrigin(): string {
-  return getBoot().origin || window.location.origin;
+  return pageOrigin();
 }
 
 function aiPageAction(value: unknown): AiPageActionRegistration | null {

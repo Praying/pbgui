@@ -7,7 +7,7 @@ import { readEditorConfig, wsDashboardUrl } from './config';
    %%VIEW_ONLY%% / %%STANDALONE%%; dashboard_main builds those URLs with
    URLSearchParams (dashboard_main/config.ts:26-29). */
 
-const BOOT = { origin: 'http://pbgui.test:8000', token: 'tok', version: '1.0.0', serial: 'S1' };
+const BOOT = { origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' };
 
 beforeEach(() => {
   (globalThis as { __BOOT__?: unknown }).__BOOT__ = BOOT;
@@ -55,12 +55,12 @@ describe('readEditorConfig', () => {
 
   it('falls back to the boot origin + /api when api_base is missing', () => {
     const cfg = readEditorConfig('?name=A');
-    expect(cfg.apiBase).toBe('http://pbgui.test:8000/api');
+    expect(cfg.apiBase).toBe('/api');
   });
 
   it('keeps an explicitly empty api_base as boot-derived (legacy empty → relative; same-origin equivalence)', () => {
     const cfg = readEditorConfig('?name=A&api_base=');
-    expect(cfg.apiBase).toBe('http://pbgui.test:8000/api');
+    expect(cfg.apiBase).toBe('/api');
   });
 
   it('treats view_only=1 only when the exact literal "1" is passed', () => {
@@ -75,17 +75,16 @@ describe('readEditorConfig', () => {
 });
 
 describe('wsDashboardUrl (editor:2788-2791)', () => {
-  it('rewrites http:// + /api to ws:// + /ws/dashboard', () => {
-    expect(wsDashboardUrl('http://pbgui.test:8000/api')).toBe('ws://pbgui.test:8000/ws/dashboard');
+  it('derives the ws origin from the runtime location for a relative base', () => {
+    expect(wsDashboardUrl('/api')).toBe(`ws://${location.host}/ws/dashboard`);
   });
 
   it('rewrites https:// to wss://', () => {
     expect(wsDashboardUrl('https://pbgui.test/api')).toBe('wss://pbgui.test/ws/dashboard');
   });
 
-  it('handles a relative api base like the legacy empty API_BASE', () => {
-    expect(wsDashboardUrl('/api')).toBe('/ws/dashboard');
-    expect(wsDashboardUrl('')).toBe('/ws/dashboard');
+  it('handles an empty api base the same way', () => {
+    expect(wsDashboardUrl('')).toBe(`ws://${location.host}/ws/dashboard`);
   });
 
   it('only strips a trailing /api (legacy replace anchor)', () => {

@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field, StrictStr
 
 from api.auth import SessionToken, require_auth, serve_vue_or_legacy_page
+from api.page_templates import render_page_urls, script_json
 from logging_helpers import human_log as _log
 from pbgui_purefunc import PBGDIR, PBGUI_SERIAL, PBGUI_VERSION
 from profit_sweep import ProfitSweepStore, calculate_sweep, default_policy, round_transfer_amount
@@ -68,6 +69,13 @@ class BaselineRequest(BaseModel):
 
     cumulative_net_pnl: str
     expected_policy_fingerprint: StrictStr
+
+
+class TransferBackRequest(BaseModel):
+    """Bind an explicit return attempt to a client ID and an optional failed attempt."""
+
+    operation_id: StrictStr
+    retry_of: StrictStr | None = None
 
 
 class DeletePolicyRequest(BaseModel):
@@ -240,7 +248,13 @@ async def _run_owned_thread(function: Any, *args: Any, **kwargs: Any) -> Any:
     try:
         return await asyncio.shield(task)
     except asyncio.CancelledError:
-        await asyncio.gather(task, return_exceptions=True)
+        completion = asyncio.gather(task, return_exceptions=True)
+        while not completion.done():
+            try:
+                await asyncio.shield(completion)
+            except asyncio.CancelledError:
+                # A second cancellation must not release the account lock over a live thread.
+                continue
         raise
     finally:
         _ACTIVE_OPERATION_TASKS.discard(task)
@@ -611,12 +625,24 @@ def _requested_test_operation_id(value: Any) -> str:
     return canonical
 
 
-def _public_test_operation(operation: dict[str, Any], *, can_transfer_back: bool = False) -> dict[str, Any]:
+def _public_test_operation(
+    operation: dict[str, Any], *, can_transfer_back: bool = False, retry_of: str | None = None
+) -> dict[str, Any]:
     """Project a test operation without exposing descriptors, routes, or payloads."""
 
     error = operation["error"]
     submission = operation.get("submission")
     descriptor = operation.get("descriptor")
+    return_endpoints = {
+        "perp_to_spot": {"source": "Hyperliquid Spot", "destination": "Hyperliquid Perps"},
+        "vault_to_main_perps": {"source": "Leader Main Perps", "destination": "Hyperliquid Vault"},
+        "main_perps_to_spot": {"source": "Leader Main Spot", "destination": "Leader Main Perps"},
+        "unified_to_fund": {"source": "Bybit Funding", "destination": "Bybit Unified Trading"},
+        "umfuture_to_funding": {"source": "Binance Funding", "destination": "Binance USD-M Futures"},
+        "usdt_futures_to_p2p": {"source": "Bitget P2P", "destination": "Bitget USDT Futures"},
+        "usdt_futures_to_spot": {"source": "Bitget Spot", "destination": "Bitget USDT Futures"},
+        "uta_to_spot": {"source": "Bitget Spot", "destination": "Bitget UTA"},
+    }.get(str(descriptor.get("route") or "")) if isinstance(descriptor, dict) else None
     vault_return_below_minimum = False
     if isinstance(descriptor, dict) and descriptor.get("adapter") == "hyperliquid_vault":
         returned_amount = operation.get("actual_amount") or operation.get("requested_amount") or "0"
@@ -688,6 +714,9 @@ def _public_test_operation(operation: dict[str, Any], *, can_transfer_back: bool
         "submitted_at": operation["submitted_at"],
         "resolved_at": operation["resolved_at"],
         "error": error,
+        "can_reconcile": operation["state"] in {"submitting", "unknown"},
+        "retry_of": retry_of if can_transfer_back else None,
+        "return_endpoints": return_endpoints if operation["direction"] == "forward" else None,
         "can_transfer_back": bool(
             can_transfer_back and operation["state"] == "confirmed" and not vault_return_below_minimum
         ),
@@ -779,22 +808,30 @@ def _execute_test_operation(
         "submitted_at_ms": int(time.time() * 1000),
     }
     operation = store.transition_test_operation(operation_id, submission=submitting, claim=True)
-    submission = (
-        submit_browser_signed_transfer(user, operation["descriptor"], browser_signature)
-        if browser_signature is not None
-        else submit_transfer(user, operation["descriptor"])
-    )
-    operation = store.transition_test_operation(operation_id, submission=submission)
-    reconciliation: dict[str, Any] = {"status": "pending"}
-    for attempt in range(_TRANSFER_RECONCILE_ATTEMPTS):
-        reconciliation = reconcile_transfer(user, operation["descriptor"], submission)
-        if reconciliation.get("status") != "pending":
-            break
-        if attempt + 1 < _TRANSFER_RECONCILE_ATTEMPTS:
-            time.sleep(_TRANSFER_RECONCILE_DELAY_SECONDS)
-    persisted_submission = {**submission, "reconciliation": dict(reconciliation)}
-    store.transition_test_operation(operation_id, submission=persisted_submission)
-    return store.reconcile_test_operation(operation_id, reconciliation)
+    try:
+        submission = (
+            submit_browser_signed_transfer(user, operation["descriptor"], browser_signature)
+            if browser_signature is not None
+            else submit_transfer(user, operation["descriptor"])
+        )
+        operation = store.transition_test_operation(operation_id, submission=submission)
+        reconciliation: dict[str, Any] = {"status": "pending"}
+        for attempt in range(_TRANSFER_RECONCILE_ATTEMPTS):
+            reconciliation = reconcile_transfer(user, operation["descriptor"], submission)
+            if reconciliation.get("status") != "pending":
+                break
+            if attempt + 1 < _TRANSFER_RECONCILE_ATTEMPTS:
+                time.sleep(_TRANSFER_RECONCILE_DELAY_SECONDS)
+        persisted_submission = {**submission, "reconciliation": dict(reconciliation)}
+        store.transition_test_operation(operation_id, submission=persisted_submission)
+        return store.reconcile_test_operation(operation_id, reconciliation)
+    except Exception:
+        # Exception messages/tracebacks may contain signed request bodies or credentials.
+        _log(SERVICE, "Manual transfer outcome is unknown after submission claim", level="ERROR",
+             user=operation["user_name"], meta={"operation": "manual_transfer_outcome_unknown"})
+        return store.reconcile_test_operation(
+            operation_id, {"status": "unknown", "reason": "submission_or_reconciliation_outcome_unknown"}
+        )
 
 
 def _test_transfer_sync(
@@ -854,7 +891,6 @@ def _test_transfer_sync(
         asset=_test_asset(snapshot),
         route=route,
         snapshot=snapshot,
-        nonce=int(time.time() * 1000) if str(getattr(user, "exchange", "")).lower() == "hyperliquid" else None,
     )
     conflict = _recent_manual_transfer_conflict(user_name, route, descriptor["amount"])
     if conflict:
@@ -877,7 +913,9 @@ def _test_transfer_sync(
     }
 
 
-def _test_transfer_back_sync(user_name: str, operation_id: str) -> dict[str, Any]:
+def _test_transfer_back_sync(
+    user_name: str, operation_id: str, request_id: str | None = None, retry_of: str | None = None
+) -> dict[str, Any]:
     """Reverse one confirmed forward test transfer exactly once."""
 
     user = _user_or_404(user_name)
@@ -886,13 +924,28 @@ def _test_transfer_back_sync(user_name: str, operation_id: str) -> dict[str, Any
         raise KeyError("Profit Sweep test operation not found")
     if forward["state"] != "confirmed":
         raise ValueError("Only a confirmed forward test transfer can be sent back")
-    if any(
-        item["direction"] == "back" and item.get("parent_id") == operation_id
-        for item in _store().list_test_operations(user_name)
-    ):
+    if request_id is not None:
+        request_id = _requested_test_operation_id(request_id)
+        try:
+            existing = _store().get_test_operation(request_id)
+        except KeyError:
+            pass
+        else:
+            if existing["user_name"] != user_name or existing["parent_id"] != operation_id or existing["direction"] != "back":
+                raise ValueError("operation_id is already assigned to another transfer")
+            return {"status": existing["state"], "can_transfer_back": False, "operation": _public_test_operation(existing)}
+    attempts = [
+        item for item in _store().list_test_operations(user_name)
+        if item["direction"] == "back" and item.get("parent_id") == operation_id
+    ]
+    if any(item["state"] != "failed" or not item.get("retry_safe") for item in attempts):
         raise ValueError("Test transfer has already been sent back")
+    if attempts and (request_id is None or retry_of not in {item["operation_id"] for item in attempts}):
+        raise ValueError("Explicit retry confirmation and a new operation_id are required")
+    if retry_of is not None and not attempts:
+        raise ValueError("Failed return attempt not found")
     amount = str(forward.get("actual_amount") or forward["requested_amount"])
-    if bool(getattr(user, "is_vault", False)) and Decimal(amount) < _VAULT_TEST_MINIMUM:
+    if forward["descriptor"].get("adapter") == "hyperliquid_vault" and Decimal(amount) < _VAULT_TEST_MINIMUM:
         raise ValueError("Transfer back requires at least 5 USDC because Hyperliquid enforces that Vault deposit minimum")
     snapshot, _capability = _test_snapshot(user, str(forward["descriptor"]["asset"]))
     reverse_route = reverse_transfer_route(user, snapshot, forward["route"])
@@ -902,11 +955,12 @@ def _test_transfer_back_sync(user_name: str, operation_id: str) -> dict[str, Any
     if snapshot.get("account_kind") == "vault":
         balances = snapshot.get("account_balances") if isinstance(snapshot.get("account_balances"), dict) else {}
         destinations = balances.get("destination") if isinstance(balances.get("destination"), dict) else {}
-        main_perps = destinations.get("main_perps") if isinstance(destinations.get("main_perps"), dict) else {}
-        main_balance = _decimal(main_perps.get("balance"), "Main Perps balance")
+        source_key = "main_spot" if reverse_route == "main_spot_to_perps" else "main_perps"
+        main_source = destinations.get(source_key) if isinstance(destinations.get(source_key), dict) else {}
+        main_balance = _decimal(main_source.get("balance"), "Main source balance")
         if Decimal(amount) > main_balance:
-            raise ValueError("Test transfer return amount exceeds the fresh Main Perps balance")
-    reverse_id = _operation_id(str(getattr(user, "exchange", "") or ""))
+            raise ValueError("Test transfer return amount exceeds the fresh Main source balance")
+    reverse_id = request_id or _operation_id(str(getattr(user, "exchange", "") or ""))
     previous_nonce = forward["descriptor"].get("request", {}).get("nonce")
     nonce = None
     if str(getattr(user, "exchange", "")).lower() == "hyperliquid":
@@ -918,7 +972,7 @@ def _test_transfer_back_sync(user_name: str, operation_id: str) -> dict[str, Any
         asset=forward["descriptor"]["asset"],
         route=reverse_route,
         snapshot=snapshot,
-        nonce=nonce,
+        minimum_nonce=nonce or 0,
     )
     operation = _store().create_test_operation(
         user_name,
@@ -944,7 +998,7 @@ def _retry_amount_matches(value: Any, operation: dict[str, Any]) -> bool:
     descriptor = operation.get("descriptor") if isinstance(operation.get("descriptor"), dict) else {}
     descriptor_amount = str(descriptor.get("amount") or "")
     expected = _decimal(descriptor_amount, "persisted transfer amount")
-    precision = descriptor.get("amount_precision") if descriptor.get("schema_version") == 2 else None
+    precision = descriptor.get("amount_precision") if descriptor.get("schema_version") in {2, 3} else None
     if precision is not None:
         if isinstance(precision, int) or str(precision).isdigit():
             step = Decimal(1).scaleb(-int(precision))
@@ -1220,7 +1274,6 @@ def _top_up_sync(user_name: str, amount_value: Any, operation_id_value: Any, rou
         asset=selected["asset"],
         route=route,
         snapshot=snapshot,
-        nonce=int(time.time() * 1000) if str(getattr(user, "exchange", "") or "").lower() == "hyperliquid" else None,
     )
     amount = descriptor["amount"]
     if Decimal(amount) < Decimal(selected["minimum_amount"]):
@@ -1354,7 +1407,7 @@ def _prepare_persisted_intent(
         asset=policy_record["policy"]["asset"],
         route=route,
         snapshot=snapshot,
-        nonce=nonce,
+        minimum_nonce=nonce or 0,
     )
     return _store().create_live_intent(
         policy_record["user_name"],
@@ -1588,7 +1641,6 @@ def _evaluate_live_sync(user_name: str) -> dict[str, Any]:
         parent_id=root_id if is_vault else None,
         leg=1,
         route=route,
-        nonce=int(time.time() * 1000) if policy_record["exchange"].lower() == "hyperliquid" else None,
         reservation_guard=decision["reservation_guard"],
     )
     result["decision"]["reserved_total"] = intent["reserved_amount"]
@@ -1884,7 +1936,12 @@ def _reconcile_manual_operation_sync(operation: dict[str, Any]) -> dict[str, Any
         "status": "unknown",
         "submitted_at_ms": int(operation["submitted_at"] or operation["updated_at"]) * 1000,
     }
-    reconciliation = reconcile_transfer(user, operation["descriptor"], submission)
+    try:
+        reconciliation = reconcile_transfer(user, operation["descriptor"], submission)
+    except Exception:
+        _log(SERVICE, "Manual transfer reconciliation outcome is unknown", level="ERROR",
+             user=operation["user_name"], meta={"operation": "manual_transfer_reconcile_unknown"})
+        reconciliation = {"status": "unknown", "reason": "reconciliation_outcome_unknown"}
     return _store().reconcile_test_operation(operation["operation_id"], reconciliation)
 
 
@@ -1897,11 +1954,30 @@ def _reconcile_top_up_sync(user_name: str, operation_id: str) -> dict[str, Any]:
     return _reconcile_manual_operation_sync(operation)
 
 
-def _reconcile_unresolved_sync() -> None:
-    """Reconcile every submitted durable operation before scheduler evaluation."""
+def _recovery_accounts_sync() -> list[str]:
+    """Discover recovery owners without submitting or changing any operation."""
+
+    store = _store()
+    return sorted(
+        {item["user_name"] for item in store.list_policies()}
+        | {item["user_name"] for item in store.list_unresolved_transfer_operations()}
+    )
+
+
+async def _reconcile_unresolved() -> None:
+    """Recover each account under the same cancellation-safe lock as policy saves."""
+
+    for user_name in await _run_owned_thread(_recovery_accounts_sync):
+        await _run_account_operation(user_name, _reconcile_unresolved_sync, user_name)
+
+
+def _reconcile_unresolved_sync(user_name: str) -> None:
+    """Recover one account's manual operations, prepared intents, and missing forwarding legs."""
 
     store = _store()
     for operation in store.list_unresolved_transfer_operations():
+        if operation["user_name"] != user_name:
+            continue
         try:
             if operation["operation_kind"] == "top_up" and operation["state"] == "prepared":
                 store.transition_test_operation(
@@ -1933,7 +2009,8 @@ def _reconcile_unresolved_sync() -> None:
                 meta={"operation": "manual_transfer_recovery", "traceback": traceback.format_exc()},
             )
     for policy_record in store.list_policies():
-        user_name = policy_record["user_name"]
+        if policy_record["user_name"] != user_name:
+            continue
         for intent in store.list_live_intents(user_name, unresolved_only=True):
             try:
                 _reconcile_operation_sync(user_name, intent["operation_id"])
@@ -2016,7 +2093,7 @@ async def _scheduler_loop() -> None:
     if _SCHEDULER_WAKE is None:
         _SCHEDULER_WAKE = asyncio.Event()
     try:
-        await _run_owned_thread(_reconcile_unresolved_sync)
+        await _reconcile_unresolved()
     except asyncio.CancelledError:
         raise
     except Exception as exc:
@@ -2156,13 +2233,9 @@ def get_main_page(request: Request, session: SessionToken = Depends(require_auth
     def inject_legacy_page(html: str, legacy_request: Request) -> str:
         """Fill the legacy fallback's runtime values without exposing secrets."""
 
-        scheme = legacy_request.url.scheme
-        host = legacy_request.url.hostname or "127.0.0.1"
-        port = legacy_request.url.port
-        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-        html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/profit-sweep"))
-        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = render_page_urls(legacy_request, html, "/api/profit-sweep")
+        html = html.replace('"%%VERSION%%"', script_json(PBGUI_VERSION))
+        html = html.replace('"%%SERIAL%%"', script_json(PBGUI_SERIAL))
         nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
         nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
         return html.replace("%%NAV_HASH%%", nav_hash)
@@ -2179,13 +2252,9 @@ def get_transfers_main_page(request: Request, session: SessionToken = Depends(re
     def inject_legacy_page(html: str, legacy_request: Request) -> str:
         """Fill the legacy fallback's runtime values without exposing secrets."""
 
-        scheme = legacy_request.url.scheme
-        host = legacy_request.url.hostname or "127.0.0.1"
-        port = legacy_request.url.port
-        origin = f"{scheme}://{host}" + (f":{port}" if port else "")
-        html = html.replace('"%%API_BASE%%"', json.dumps(origin + "/api/profit-sweep"))
-        html = html.replace('"%%VERSION%%"', json.dumps(PBGUI_VERSION))
-        html = html.replace('"%%SERIAL%%"', json.dumps(PBGUI_SERIAL))
+        html = render_page_urls(legacy_request, html, "/api/profit-sweep")
+        html = html.replace('"%%VERSION%%"', script_json(PBGUI_VERSION))
+        html = html.replace('"%%SERIAL%%"', script_json(PBGUI_SERIAL))
         nav_js = Path(__file__).parent.parent / "frontend" / "pbgui_nav.js"
         nav_hash = str(int(nav_js.stat().st_mtime)) if nav_js.exists() else PBGUI_VERSION
         return html.replace("%%NAV_HASH%%", nav_hash)
@@ -2371,11 +2440,17 @@ def get_policy(user_name: str, session: SessionToken = Depends(require_auth)) ->
 
 
 @router.put("/policies/{user_name}")
-def save_policy(
+async def save_policy(
     user_name: str,
     body: PolicyRequest,
     session: SessionToken = Depends(require_auth),
 ) -> dict[str, Any]:
+    """Serialize policy saves with the account's owned real-funds worker."""
+
+    return await _run_account_operation(user_name, _save_policy_sync, user_name, body)
+
+
+def _save_policy_sync(user_name: str, body: PolicyRequest) -> dict[str, Any]:
     """Create or update a policy without allowing Live activation bypass."""
 
     user = _user_or_404(user_name)
@@ -2690,12 +2765,14 @@ async def test_transfer_back(
     user_name: str,
     operation_id: str,
     session: SessionToken = Depends(require_auth),
+    body: TransferBackRequest | None = None,
 ) -> dict[str, Any]:
     """Reverse one confirmed manual test transfer without resubmitting its forward leg."""
 
     try:
         result = await _run_account_operation(
-            user_name, _test_transfer_back_sync, user_name, operation_id
+            user_name, _test_transfer_back_sync, user_name, operation_id,
+            body.operation_id if body else None, body.retry_of if body else None,
         )
     except HTTPException:
         raise
@@ -2824,11 +2901,17 @@ def get_test_transfers(
         item["parent_id"]
         for item in operations
         if item["direction"] == "back" and item.get("parent_id") is not None
+        and (item["state"] != "failed" or not item.get("retry_safe"))
+    }
+    retryable = {
+        item["parent_id"]: item["operation_id"] for item in operations
+        if item["direction"] == "back" and item["state"] == "failed" and item.get("retry_safe")
     }
     return {
         "operations": [
             _public_test_operation(
                 item,
+                retry_of=retryable.get(item["operation_id"]),
                 can_transfer_back=(
                     item["direction"] == "forward"
                     and item["state"] == "confirmed"
@@ -2838,6 +2921,33 @@ def get_test_transfers(
             for item in operations
         ]
     }
+
+
+@router.post("/test-transfers/{user_name}/{operation_id}/reconcile")
+async def reconcile_test_transfer(
+    user_name: str,
+    operation_id: str,
+    session: SessionToken = Depends(require_auth),
+) -> dict[str, Any]:
+    """Read the outcome of one owned test operation without submitting any transfer."""
+
+    _user_or_404(user_name)
+    try:
+        operation = await _run_account_operation(
+            user_name, _reconcile_test_operation_sync, user_name, operation_id
+        )
+    except HTTPException:
+        raise
+    except KeyError as exc:
+        raise _logged_http_error(404, "Profit Sweep test operation not found",
+                                 operation="reconcile_test_transfer", user_name=user_name) from exc
+    except ValueError as exc:
+        raise _logged_http_error(409, "Test operation cannot be reconciled",
+                                 operation="reconcile_test_transfer", user_name=user_name) from exc
+    except Exception as exc:
+        raise _logged_http_error(503, "Test operation reconciliation unavailable",
+                                 operation="reconcile_test_transfer", user_name=user_name) from exc
+    return {"status": operation["state"], "operation": _public_test_operation(operation)}
 
 
 @router.post("/reconcile/{user_name}/{operation_id}")

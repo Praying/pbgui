@@ -105,8 +105,8 @@ def test_v7_falls_back_to_legacy_template_with_injections(
 
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
-    assert 'var API_BASE = "http://testserver/api/strategy-explorer";' in resp.text
-    assert 'var WS_BASE = "ws://testserver";' in resp.text
+    assert 'var API_BASE = "/api/strategy-explorer";' in resp.text
+    assert "window.location.host" in resp.text
     assert 'var DRAFT_ID = "d-7";' in resp.text
     assert 'var RESULT_PATH = "/data/bt/2024";' in resp.text
     for token in ("%%API_BASE%%", "%%WS_BASE%%", "%%DRAFT_ID%%", "%%RESULT_PATH%%", "%%VERSION%%", "%%SERIAL%%", "%%NAV_HASH%%"):
@@ -124,8 +124,7 @@ def test_v8_falls_back_to_legacy_template_with_v8_injections(
         '  var API_BASE = "%%API_BASE%%";\n'
         '  var DRAFT_ID = "%%DRAFT_ID%%";\n'
         '  var RESULT_PATH = "%%RESULT_PATH%%";\n'
-        '  var TOKEN = "%%TOKEN%%";\n'
-        "</script></html>"
+                "</script></html>"
     )
     _set_files(monkeypatch, tmp_path, None, legacy)
 
@@ -134,11 +133,10 @@ def test_v8_falls_back_to_legacy_template_with_v8_injections(
     assert resp.status_code == 200
     assert resp.headers["cache-control"] == "no-store"
     # v8 api_base derives from the request route path (:531-534)
-    assert 'var API_BASE = "http://testserver/api/strategy-explorer-v8";' in resp.text
+    assert 'var API_BASE = "/api/strategy-explorer-v8";' in resp.text
     assert 'var DRAFT_ID = "d-8";' in resp.text
     # v8 ignores result_path (:527) and authenticates cookie-only (:526)
     assert 'var RESULT_PATH = "";' in resp.text
-    assert 'var TOKEN = "";' in resp.text
     assert "%%API_BASE%%" not in resp.text
     assert "%%DRAFT_ID%%" not in resp.text
 

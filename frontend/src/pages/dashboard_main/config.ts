@@ -10,7 +10,7 @@ import { getBoot } from '@/shared/boot';
 
 /** REST base for the dashboard API, e.g. http://host:port/api. */
 export function apiBase(): string {
-  return `${getBoot().origin}/api`;
+  return `${getBoot().base_prefix}/api`;
 }
 
 /** GET /api/dashboards + DELETE /api/dashboards/{name} base (api/dashboards.py). */

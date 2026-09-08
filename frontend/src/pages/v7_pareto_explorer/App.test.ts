@@ -10,7 +10,10 @@ import App from './App.vue';
  */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: 'v1.99', serial: 'S9' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: 'v1.99', serial: 'S9' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const fetchMock = vi.fn();
@@ -56,7 +59,7 @@ describe('Pareto Explorer scaffold', () => {
     expect(wrapper.find('div.workbench-page-content').exists()).toBe(true);
     const sessionCall = fetchMock.mock.calls.find((c) => String(c[0]).includes('/session'))!;
     expect(String(sessionCall[0])).toBe(
-      'http://pbgui.test:8000/api/pareto-explorer/session?result_path=' + encodeURIComponent('/opt/results/run1') + '&optimize_version=v7'
+      '/api/pareto-explorer/session?result_path=' + encodeURIComponent('/opt/results/run1') + '&optimize_version=v7'
     );
     expect(wrapper.get('#result-chip').text()).toBe('No result selected');
     // renderSession overwrites the static "Bootstrap only" chip (:3963)
@@ -157,7 +160,7 @@ describe('load control (settings stage)', () => {
     await wrapper.get('#btn-command-load').trigger('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
     const loadCall = fetchMock.mock.calls.find((c) => String(c[0]).endsWith('/load'))!;
-    expect(String(loadCall[0])).toBe('http://pbgui.test:8000/api/pareto-explorer/load');
+    expect(String(loadCall[0])).toBe('/api/pareto-explorer/load');
     const body = JSON.parse(String(loadCall[1]?.body));
     expect(body.result_path).toBe('/new/path');
     expect(body.max_configs).toBe(500);

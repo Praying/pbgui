@@ -4,7 +4,6 @@ import {
   NOTIFY_LOG_URL,
   apiBase,
   cancelRefreshUrl,
-  hasApiToken,
   readExchange,
   refreshNowUrl,
   stopRunUrl,
@@ -12,14 +11,17 @@ import {
 } from './config';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 describe('market_data_status config', () => {
   beforeEach(() => {
-    getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+    getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
     window.history.replaceState(null, '', '/');
   });
 
@@ -28,7 +30,7 @@ describe('market_data_status config', () => {
   });
 
   it('derives the REST base from boot.js origin', () => {
-    expect(apiBase()).toBe('http://pbgui.test:8000/api');
+    expect(apiBase()).toBe('/api');
   });
 
   it('derives the market-data WebSocket URL from the boot origin', () => {
@@ -40,23 +42,15 @@ describe('market_data_status config', () => {
   });
 
   it('builds the three action endpoints on the market-data router', () => {
-    expect(refreshNowUrl()).toBe('http://pbgui.test:8000/api/market-data/refresh-now');
-    expect(cancelRefreshUrl()).toBe('http://pbgui.test:8000/api/market-data/cancel-refresh');
-    expect(stopRunUrl()).toBe('http://pbgui.test:8000/api/market-data/stop-run');
+    expect(refreshNowUrl()).toBe('/api/market-data/refresh-now');
+    expect(cancelRefreshUrl()).toBe('/api/market-data/cancel-refresh');
+    expect(stopRunUrl()).toBe('/api/market-data/stop-run');
   });
 
   it('keeps the legacy literal notify_log path', () => {
     expect(NOTIFY_LOG_URL).toBe('/api/notify_log');
   });
 
-  it('reports the token as present when boot provides one', () => {
-    expect(hasApiToken()).toBe(true);
-  });
-
-  it('reports the token as missing when boot has an empty token', () => {
-    getBootMock.mockReturnValue({ token: '', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
-    expect(hasApiToken()).toBe(false);
-  });
 });
 
 describe('readExchange (legacy data-exchange resolution)', () => {

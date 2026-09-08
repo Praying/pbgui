@@ -51,7 +51,7 @@ import type { Component } from 'vue';
 import { PhBank, PhBrain, PhFolderOpen, PhGear, PhQuestion, PhTarget } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
-import { getBoot } from '@/shared/boot';
+import { pageOrigin } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
 import { replaceTopLocation } from '@/shared/nav';
 import AppShell from '@/shared/components/AppShell.vue';
@@ -89,7 +89,6 @@ import type { PageSection } from '@/shared/navigation';
 
 const { t } = useI18n();
 
-const boot = getBoot();
 
 /**
  * The bootstrap hook is a mutable indirection: the surfaces composable needs
@@ -99,8 +98,8 @@ const boot = getBoot();
 let onSessionApplied: ((data: ParetoSession) => void | Promise<void>) | null = null;
 
 const store = useParetoSession({
-  apiBase: paretoApiBase(boot.origin),
-  origin: boot.origin,
+  apiBase: paretoApiBase(),
+  origin: pageOrigin(),
   seedVersion: readSeedOptimizeVersion(),
   resultPath: readResultPath(),
   route: readRouteState(),

@@ -85,6 +85,14 @@ export interface ConfigSummary {
 
 /* ── Results view (M-v7-10) ─────────────────────────────────────────── */
 
+/** PBGui grouping metadata on Optimize Validate results (v2.02.4). */
+export interface BacktestResultGroup {
+  kind: 'optimize_validate';
+  id: string;
+  label: string;
+  item?: string;
+}
+
 /** The results version filter (:839-841, seeded from the flavor :10010). */
 export type ResultsVersionFilter = 'v7' | 'v8' | 'both';
 
@@ -126,6 +134,8 @@ export interface BacktestResultItem {
   pb7_config_version?: string;
   /** Preloaded analysis payload (skips the /results/analysis fetch, :7534). */
   analysis?: unknown;
+  /** Optimize-validation grouping metadata (v2.02.4; API _result_group). */
+  result_group?: BacktestResultGroup;
 }
 
 /* ── Archive + legacy views (M-v7-11) ──────────────────────────────── */

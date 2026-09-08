@@ -8,7 +8,10 @@ import App from './App.vue';
 enableAutoUnmount(afterEach);
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 vi.mock('@/shared/api', () => ({
@@ -21,8 +24,8 @@ vi.mock('@/shared/api', () => ({
 }));
 
 const apiFetchMock = vi.mocked(apiFetch);
-const BASE = 'http://pbgui.test:8000/api/dashboards';
-const DEFAULT_SEARCH = '?current=B&api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi';
+const BASE = '/api/dashboards';
+const DEFAULT_SEARCH = '?current=B&api_base=%2Fapi';
 
 interface ApiState {
   templates: string[];
@@ -160,7 +163,7 @@ describe('dashboard_templates page shell', () => {
 
   it('hides the save card when no current dashboard is open', async () => {
     installTemplatesApi({ templates: ['T1'], users: [] });
-    const wrapper = mountApp('en', '?api_base=http%3A%2F%2Fpbgui.test%3A8000%2Fapi');
+    const wrapper = mountApp('en', '?api_base=%2Fapi');
     await flushPromises();
 
     expect(wrapper.find('#save-name').exists()).toBe(false);

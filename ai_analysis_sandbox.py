@@ -135,11 +135,15 @@ def _seccomp_restrict() -> None:
 def main() -> int:
     """Apply irreversible restrictions and execute the approved analysis script."""
 
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in (3, 4):
         raise RuntimeError("Sandbox arguments are invalid")
     script = Path(sys.argv[1]).resolve(strict=True)
     runtime_root = Path(sys.argv[2]).resolve(strict=True)
     allowed = [Path("/usr"), Path("/lib"), Path("/lib64"), runtime_root, script]
+    if len(sys.argv) == 4:
+        additional_runtime_root = Path(sys.argv[3]).resolve(strict=True)
+        if additional_runtime_root != runtime_root:
+            allowed.append(additional_runtime_root)
     os.chdir("/")
     _seccomp_restrict()
     _landlock_restrict(allowed)

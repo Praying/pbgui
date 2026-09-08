@@ -9,7 +9,10 @@ import App from './App.vue';
  * toc filter, in-topic + global search, error paths, overlay chrome). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 interface TopicFixture {
@@ -48,7 +51,7 @@ function installFetch(
       return Promise.resolve(new Response(JSON.stringify(list.map(({ title, file }) => ({ title, file }))), { status: 200 }));
     }
     if (u.includes('/api/help/content')) {
-      const file = new URL(u).searchParams.get('file') || '';
+      const file = new URL(u, window.location.origin).searchParams.get('file') || '';
       const status = opts.contentStatusByFile?.[file] ?? 200;
       if (status !== 200) return Promise.resolve(new Response('err', { status }));
       const source = u.includes('lang=DE') ? TOPICS_DE : u.includes('lang=ZH') ? TOPICS_ZH : topics;

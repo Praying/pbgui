@@ -26,6 +26,7 @@ import type { ResultActionKind } from '../types';
 
 const emit = defineEmits<{
   convert: [path: string];
+  'compare-group': [paths: string[]];
 }>();
 
 const props = defineProps<{
@@ -77,6 +78,11 @@ function onToggleSelect(path: string): void {
 
 function onConvert(path: string): void {
   emit('convert', path);
+}
+
+/** Group compare (v2.02.4): the table already selected the group paths. */
+function onCompareGroup(paths: string[]): void {
+  emit('compare-group', paths);
 }
 
 function onSelectPaths(paths: string[], selected: boolean): void {
@@ -259,11 +265,13 @@ defineExpose({ deleteSelectedFlow });
             :sort="store.sort.value"
             :active-actions="store.actionsByPath.value"
             :allow-v8-convert="props.allowV8Convert"
+            :group-validation="true"
             @sort="onSort"
             @convert="onConvert"
             @toggle-select="onToggleSelect"
             @select-paths="onSelectPaths"
             @toggle-action="onToggleAction"
+            @compare-group="onCompareGroup"
           />
         </div>
       </div>

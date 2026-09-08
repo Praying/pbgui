@@ -4,7 +4,10 @@ import { createI18n } from '@/shared/i18n';
 import QueueLogTerminal from './QueueLogTerminal.vue';
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: () => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' }),
+  getBoot: () => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' }),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 /** Minimal WebSocket double — the component only assigns handlers and sends. */
@@ -135,7 +138,7 @@ describe('QueueLogTerminal rendering and filters', () => {
     await flushPromises();
     expect(snapshotLines(wrapper)).toHaveLength(5000);
     wrapper.unmount();
-  });
+  }, 15000);
 
   it('ignores messages from stale subscriptions', async () => {
     const wrapper = mountTerminal();

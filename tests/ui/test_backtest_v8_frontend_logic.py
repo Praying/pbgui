@@ -57,17 +57,22 @@ def test_v8_route_renders_the_v7_backtest_template() -> None:
 
 def test_pb8_exposes_read_only_legacy_results_panel() -> None:
     """PB8 should reuse Legacy browsing and Compare while hiding unsafe write actions."""
+    page_dir = ROOT / "frontend" / "src" / "pages" / "v7_backtest"
     page = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
-    adapter = (ROOT / "frontend" / "js" / "backtest_editor_adapter.js").read_text(encoding="utf-8")
+    config = (page_dir / "config.ts").read_text(encoding="utf-8")
+    app = (page_dir / "App.vue").read_text(encoding="utf-8")
+    legacy_panel = (page_dir / "components" / "LegacyPanel.vue").read_text(encoding="utf-8")
 
-    assert "/app/js/backtest_editor_adapter.js?v=11" in page
-    assert "items.push({ panel: 'legacy'" in adapter
-    assert "initialPanels: ['configs', 'queue', 'results', 'archive', 'legacy']" in adapter
-    assert "rebacktestSelectedLegacy" in adapter
-    assert "addToRunFromLegacy" in adapter
-    assert "deleteSelectedLegacyResults" in adapter
-    assert "#ctx-legacy button[onclick]" in adapter
-    assert "No legacy results found under ' + (backtestEditorAdapter.isV8 ? 'pb8' : 'pb7')" in page
+    assert "/app/js/backtest_editor_adapter.js?v=13" in page
+    # The legacy panel is exposed for both flavours (v2.02.5).
+    assert "panel: 'legacy'" in config
+    assert "if (!adapter.isV8)" not in config.split("function navItems")[1].split("}")[0]
+    # PB8 keeps Refresh + Compare and hides the write actions.
+    assert 'v-if="!store.adapter.isV8"' in app.split("#ctx-legacy")[1].split("</template>")[0]
+    assert 'data-test="legacy-compare"' in app
+    assert ':read-only="store.adapter.isV8"' in app
+    assert "readOnly?: boolean;" in legacy_panel
+    assert 'v-if="!readOnly"' in legacy_panel
 
 
 def test_backtest_page_can_open_the_queue_panel_from_ai_navigation() -> None:
@@ -102,44 +107,27 @@ def test_backtest_page_registers_existing_queue_log_function_as_page_action() ->
 
 def test_result_archive_export_batches_selection_without_long_sidebar_labels() -> None:
     """Multi-result archive exports should update once and keep progress text compact."""
-    page = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
-    function = _extract_function(page, "addResultToArchive")
+    page = (ROOT / "frontend" / "src" / "pages" / "v7_backtest" / "composables" / "useBacktestPage.ts").read_text(encoding="utf-8")
 
-    assert "results: sel.map(function(path)" in function
-    assert "Adding ' + sel.length + ' result(s)..." in function
-    assert "for (var i = 0; i < sel.length; i++)" not in function
-    assert "setArchiveProgress('🗄 Adding ' + (i + 1)" not in function
+    function = page.split("async function addResultsToArchive")[1].split("\n  }")[0]
+    assert "selectedPaths.map" in function
+    assert "preparingArchiveExport" in function
+    # One batched export — no per-result loop.
+    assert "for (var i = 0" not in function
 
 
 def test_results_sidebar_shows_archive_push_only_for_pending_own_archive() -> None:
     """Results should reuse Git Push only while My Archive has local changes."""
-    page = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
-    pending = _extract_function(page, "ownArchiveHasPendingChanges")
-    add_result = _extract_function(page, "addResultToArchive")
-    load_archives = _extract_function(page, "loadArchives")
-    push_archive = _extract_function(page, "pushArchive")
-    script = textwrap.dedent(
-        f"""
-        const assert = require('node:assert/strict');
-        let archives = [];
-        {pending}
-        assert.equal(ownArchiveHasPendingChanges(), false);
-        archives = [{{is_own: false, migration_status: {{git: {{dirty: true}}}}}}];
-        assert.equal(ownArchiveHasPendingChanges(), false);
-        archives = [{{is_own: true, migration_status: {{git: {{dirty: false}}}}}}];
-        assert.equal(ownArchiveHasPendingChanges(), false);
-        archives = [{{is_own: true, migration_status: {{git: {{dirty: true}}}}}}];
-        assert.equal(ownArchiveHasPendingChanges(), true);
-        """
-    )
-    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    app = (ROOT / "frontend" / "src" / "pages" / "v7_backtest" / "App.vue").read_text(encoding="utf-8")
 
-    assert completed.returncode == 0, completed.stderr or completed.stdout
-    assert 'id="btn-result-push-archive"' in page
-    assert 'data-cross-version-action onclick="pushArchive()" style="display:none"' in page
-    assert "await loadArchives();" in add_result
-    assert "updateResultArchivePushVisibility();" in load_archives
-    assert "loadArchives();" in push_archive
+    computed = app.split("const hasPendingOwnArchiveChanges = computed")[1].split("});")[0]
+    # Own archive only, and only while git reports dirty state.
+    assert "archive?.is_own" in computed
+    assert ".dirty === true" in computed
+    # The results sidebar gates Git Push behind that pending state.
+    ctx = app.split("#ctx-results")[1].split("</template>")[0]
+    assert 'v-if="hasPendingOwnArchiveChanges"' in ctx
+    assert 'data-test="results-push-archive"' in ctx
 
 
 def test_shared_editors_emit_only_the_generation_specific_suite_reducer_alias() -> None:
@@ -450,6 +438,7 @@ def test_v7_run_manual_review_conversion_opens_unsaved_pb8_editor_draft() -> Non
         f"""
         const assert = require('node:assert/strict');
         let requestBody = null;
+        const BASE_PREFIX = '/mounted';
         const window = {{
           location: {{origin: 'https://example.test', href: ''}},
           PBGuiDialogs: {{alert() {{ throw new Error('alert must not open for a review draft'); }}}}
@@ -669,6 +658,7 @@ def test_v7_backtest_manual_review_conversion_opens_unsaved_pb8_editor_draft() -
         f"""
         const assert = require('node:assert/strict');
         let requestBody = null;
+        const BASE_PREFIX = '/mounted';
         const window = {{
           location: {{origin: 'https://example.test', href: ''}},
           PBGuiDialogs: {{alert() {{ throw new Error('alert must not open for a review draft'); }}}}
@@ -688,7 +678,7 @@ def test_v7_backtest_manual_review_conversion_opens_unsaved_pb8_editor_draft() -
           assert.equal(requestBody.allow_manual_review_output, true);
           assert.equal(
             window.location.href,
-            'https://example.test/api/backtest-v8/main_page?opt_draft_id=review-draft&draft_name=demo_v8'
+            '/mounted/api/backtest-v8/main_page?opt_draft_id=review-draft&draft_name=demo_v8'
           );
         }}).catch(error => {{ console.error(error); process.exit(1); }});
         """
@@ -719,6 +709,7 @@ def test_v7_backtest_successful_conversion_always_opens_unsaved_draft() -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        const BASE_PREFIX = '/mounted';
         const window = {{
           location: {{origin: 'https://example.test', href: ''}},
           PBGuiDialogs: {{alert() {{ throw new Error('success dialog must not open'); }}}}
@@ -738,7 +729,7 @@ def test_v7_backtest_successful_conversion_always_opens_unsaved_draft() -> None:
         migrateV7SourceToV8({{source_type: 'backtest_config', source_name: 'demo', target_name: 'demo_v8'}}).then(() => {{
           assert.equal(
             window.location.href,
-            'https://example.test/api/backtest-v8/main_page?opt_draft_id=clean-draft&draft_name=demo_v8'
+            '/mounted/api/backtest-v8/main_page?opt_draft_id=clean-draft&draft_name=demo_v8'
           );
         }}).catch(error => {{ console.error(error); process.exit(1); }});
         """
@@ -757,9 +748,9 @@ def test_v7_and_v8_share_the_same_backtest_shell() -> None:
     shell_source = (ROOT / "frontend" / "js" / "backtest_shell.js").read_text(encoding="utf-8")
     adapter_source = (ROOT / "frontend" / "js" / "backtest_editor_adapter.js").read_text(encoding="utf-8")
 
-    assert '/app/css/backtest_shell.css?v=3' in v7_source
+    assert '/app/css/backtest_shell.css?v=5' in v7_source
     assert '/app/js/backtest_shell.js?v=5' in v7_source
-    assert '/app/js/backtest_editor_adapter.js?v=11' in v7_source
+    assert '/app/js/backtest_editor_adapter.js?v=13' in v7_source
     assert "PBGuiBacktestShell.upgradeLegacy" in v7_source
     assert "PBGuiBacktestEditorAdapter.create(BACKTEST_VERSION)" in v7_source
     assert "sideConfig.risk" in adapter_source
@@ -1062,7 +1053,9 @@ def test_progressive_results_render_preserves_selection_by_path() -> None:
     assert completed.returncode == 0, completed.stderr or completed.stdout
     assert "_selectedResultPaths.has(r.path)" in source
     assert "_selectedResultPaths.clear()" in source
-    assert "r.final_balance_estimated ? '~ ' : ''" in source
+    # The estimated-balance prefix renders in the Vue table.
+    vue_table = (ROOT / "frontend" / "src" / "pages" / "v7_backtest" / "components" / "ResultsTable.vue").read_text(encoding="utf-8")
+    assert "final_balance_estimated ? '~ ' : ''" in vue_table
 
 
 def test_delayed_v8_settings_load_does_not_replace_results_sidebar() -> None:
@@ -1407,7 +1400,7 @@ def test_v8_backtest_result_can_open_pb8_optimize() -> None:
     assert "'/api/optimize-v8/main_page?opt_draft_id='" in adapter
     unsupported = adapter.split("var unsupported =", 1)[1].split("];", 1)[0]
     assert "'optimizeFromResult'" not in unsupported
-    assert "/app/js/backtest_editor_adapter.js?v=11" in page
+    assert "/app/js/backtest_editor_adapter.js?v=13" in page
 
 
 def test_v8_backtest_strategy_explorer_handoffs_use_cookie_drafts() -> None:
@@ -1902,6 +1895,8 @@ def test_editor_adapter_preserves_v7_paths_and_writes_v8_risk_paths() -> None:
         assert.equal(v7.getHslValue({ hsl_enabled: true }, 'enabled', false), true);
         assert.deepEqual(v8.initialPanels, ['configs', 'queue', 'results', 'archive', 'legacy']);
         assert.equal(v8.archiveApiBase('https://example.test/api/backtest-v8'), 'https://example.test/api/backtest-v7');
+        assert.equal(v8.websocketPath, '/api/backtest-v8/ws/bt8');
+        assert.equal(v7.websocketPath, '/api/backtest-v7/ws/bt7');
         """
     )
     completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
@@ -2128,6 +2123,95 @@ def test_backtest_v8_results_render_strategy_without_changing_v7_rows() -> None:
           exchanges: ['bybit'], coins: [], modified: '2026-08-05'
         }}], null, rth, {{showVersion: true, showStrategy: true}});
         assert.doesNotMatch(v7.innerHTML, /data-key="strategy"/);
+        """
+    )
+    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+
+
+def test_optimize_validation_results_render_as_collapsible_candidate_groups() -> None:
+    """PB8 Optimize validation members stay adjacent behind one collapsible header."""
+    source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
+    functions = "\n\n".join(
+        _extract_function(source, name)
+        for name in ("resultGroupKey", "_renderResultsTableInto")
+    )
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const window = {{}};
+        let _activeResultsCtx = null;
+        const _selectedResultPaths = new Set();
+        const _expandedResultGroups = new Set();
+        const backtestEditorAdapter = {{version: 'v8'}};
+        const esc = value => String(value == null ? '' : value)
+          .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+        const fmt = value => String(value == null ? '' : value);
+        const fmtDate = value => String(value || '');
+        const PBGuiI18n = {{t: (key, params) => Object.values(params || {{}}).join(' ') || key}};
+        const BACKTEST_RESULT_COLUMN_DEFINITIONS = [];
+        {functions}
+        const rth = label => '<th>' + label + '</th>';
+        const group = {{kind: 'optimize_validate', id: 'batch:0', label: '<candidate>'}};
+        const data = [
+          {{backtest_version: 'v8', config_name: 'candidate_holdout', result_name: 'a', path: '/group-a', result_group: group}},
+          {{backtest_version: 'v8', config_name: 'solo', result_name: 'run', path: '/solo'}},
+          {{backtest_version: 'v8', config_name: 'candidate_full', result_name: 'b', path: '/group-b', result_group: group}}
+        ];
+        const host = {{innerHTML: ''}};
+        _renderResultsTableInto(host, data, null, rth, {{showVersion: true, groupValidation: true}});
+        assert.equal((host.innerHTML.match(/result-group-row/g) || []).length, 1);
+        assert.equal((host.innerHTML.match(/class="result-group-member" hidden/g) || []).length, 2);
+        assert.match(host.innerHTML, /class="result-group-compare"/);
+        assert.ok(host.innerHTML.indexOf('result-group-compare') < host.innerHTML.indexOf('result-group-toggle'));
+        assert.match(host.innerHTML, /&lt;candidate&gt;/);
+        assert.ok(host.innerHTML.indexOf('/group-a') < host.innerHTML.indexOf('/group-b'));
+        assert.ok(host.innerHTML.indexOf('/group-b') < host.innerHTML.indexOf('/solo'));
+
+        _expandedResultGroups.add(resultGroupKey(data[0]));
+        _renderResultsTableInto(host, data, null, rth, {{showVersion: true, groupValidation: true}});
+        assert.doesNotMatch(host.innerHTML, /class="result-group-member" hidden/);
+        """
+    )
+    completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)
+    assert completed.returncode == 0, completed.stderr or completed.stdout
+    assert "groupValidation: true" in source
+    assert "tbody tr[data-path]:not([hidden])" in source
+
+
+def test_optimize_validation_group_compare_selects_and_opens_all_members() -> None:
+    """The compact group action compares every member without expanding the group."""
+    source = (ROOT / "frontend" / "v7_backtest.html").read_text(encoding="utf-8")
+    functions = "\n\n".join(
+        _extract_function(source, name)
+        for name in ("resultGroupKey", "compareResultGroup")
+    )
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const group = {{kind: 'optimize_validate', id: 'batch:0'}};
+        const results = [
+          {{backtest_version: 'v8', path: '/group-a', result_group: group}},
+          {{backtest_version: 'v8', path: '/solo'}},
+          {{backtest_version: 'v8', path: '/group-b', result_group: group}}
+        ];
+        const _activeResultsCtx = {{data: results}};
+        const compareArea = {{}};
+        const document = {{getElementById: id => id === 'compare-chart-area' ? compareArea : null}};
+        let selected = null;
+        let compared = null;
+        const setSelectedResults = paths => {{ selected = paths; }};
+        const _compareResultPaths = (paths, resultSet, target, chartId) => {{
+          compared = {{paths, resultSet, target, chartId}};
+        }};
+        const toast = () => assert.fail('Compare should not show an error');
+        {functions}
+        compareResultGroup({{dataset: {{resultGroupKey: 'v8:batch:0'}}}});
+        assert.deepEqual(selected, ['/group-a', '/group-b']);
+        assert.deepEqual(compared.paths, selected);
+        assert.equal(compared.resultSet, results);
+        assert.equal(compared.target, compareArea);
+        assert.equal(compared.chartId, 'compare-chart-div');
         """
     )
     completed = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True, check=False)

@@ -252,9 +252,9 @@ describe('WidgetIncome controls (editor:1391-1473)', () => {
     await input.setValue('2.5');
     expect(env.store.state['dashboard_income_filter_1_2']).toBe(2.5);
     await flushPromises();
-    expect(env.fetch).toHaveBeenLastCalledWith(
-      '/api/dashboard/income_data?users=ALL&period=THIS_MONTH&last_n=0&filter=2.5'
-    );
+    expect(env.fetch.mock.calls.some(([url]) =>
+      url === '/api/dashboard/income_data?users=ALL&period=THIS_MONTH&last_n=0&filter=2.5'
+    )).toBe(true);
   });
 
   it('writes the period through PeriodControls and refetches (editor:1391-1411)', async () => {

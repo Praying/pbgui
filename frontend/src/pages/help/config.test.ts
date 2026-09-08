@@ -8,24 +8,27 @@ import { helpApiBase, helpApiUrl } from './config';
    /api/help/* endpoints live on the main FastAPI app (PBApiServer.py). */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 const getBootMock = vi.mocked(getBoot);
 
 beforeEach(() => {
-  getBootMock.mockReturnValue({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' });
+  getBootMock.mockReturnValue({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' });
 });
 
 describe('help URL bases', () => {
   it('derives the /api/help base from the boot origin', () => {
-    expect(helpApiBase()).toBe('http://pbgui.test:8000/api/help');
+    expect(helpApiBase()).toBe('/api/help');
   });
 
   it('joins the legacy endpoint paths onto the base', () => {
-    expect(helpApiUrl('/index?lang=EN')).toBe('http://pbgui.test:8000/api/help/index?lang=EN');
+    expect(helpApiUrl('/index?lang=EN')).toBe('/api/help/index?lang=EN');
     expect(helpApiUrl('/content?file=00_overview.md&lang=DE')).toBe(
-      'http://pbgui.test:8000/api/help/content?file=00_overview.md&lang=DE',
+      '/api/help/content?file=00_overview.md&lang=DE',
     );
   });
 });

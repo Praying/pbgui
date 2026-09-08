@@ -52,7 +52,7 @@ import { computed, onMounted, onUnmounted, ref, watch, type ComponentPublicInsta
 import { PhArrowClockwise } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { ApiError, apiFetch } from '@/shared/api';
-import { getBoot } from '@/shared/boot';
+import { getBoot, pageOrigin } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
 import type { PageSection, SectionTone } from '@/shared/navigation';
 import { usePolling } from '@/shared/composables/usePolling';
@@ -431,6 +431,7 @@ const activePanel = ref(panelFromHash());
 /* AI drawer page context — Vue port of the legacy services registration
    (active panel, selected worker on the workers panel). */
 const workersPanelRef = ref<InstanceType<typeof WorkersPanel> | null>(null);
+const cmcPoolPanelRef = ref<InstanceType<typeof CmcPoolPanel> | null>(null);
 useAiPageContext({
   id: 'services',
   getContext: () => ({
@@ -438,7 +439,9 @@ useAiPageContext({
     entities:
       activePanel.value === 'workers' && workersPanelRef.value?.selectedWorkerId
         ? [{ kind: 'service_worker', name: String(workersPanelRef.value.selectedWorkerId) }]
-        : [],
+        : activePanel.value === 'pbcoindata' && cmcPoolPanelRef.value?.selectedKeyId
+          ? [{ kind: 'cmc_key', name: String(cmcPoolPanelRef.value.selectedKeyId) }]
+          : [],
   }),
 });
 
@@ -598,9 +601,9 @@ function actionErrorText(error: unknown): string {
 async function restartApiServer(): Promise<void> {
   try {
     await apiFetch(`${apiBase()}/api-server/restart`, { method: 'POST' });
-    const overlay = (window as Window & { showRestartOverlay?: (origin: string, token: string) => void })
+    const overlay = (window as Window & { showRestartOverlay?: (origin: string) => void })
       .showRestartOverlay;
-    if (typeof overlay === 'function') overlay(getBoot().origin, getBoot().token);
+    if (typeof overlay === 'function') overlay(pageOrigin());
   } catch (error) {
     showResultPopup({
       title: t('sysmon.restartBlocked'),
@@ -750,6 +753,7 @@ onUnmounted(() => {
           </template>
           <template v-if="panel.id === 'pbcoindata'" #tab-pool>
             <CmcPoolPanel
+              ref="cmcPoolPanelRef"
               :pool="cmcPool"
               :leases="cmcLeases"
               :loaded="cmcLoaded"

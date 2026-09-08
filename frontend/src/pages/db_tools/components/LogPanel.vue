@@ -46,7 +46,6 @@ function ensureViewer() {
   viewer = new window.LogViewerPanel({
     containerId: 'dbtools-log-viewer-target',
     wsBase: wsBase(),
-    token: getBoot().token,
     defaultHost: 'local',
     defaultFile: '',
     presets: 'system',

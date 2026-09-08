@@ -44,7 +44,7 @@ const vpsDetail = {
 function mountApp() { return mount(App, { global: { plugins: [createI18n('en')] } }); }
 
 beforeEach(() => {
-  (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = { origin: 'http://test', token: '', version: 'test', serial: '1' };
+  (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = { origin: 'http://test', base_prefix: '', authenticated: true, version: 'test', serial: '1' };
   WebSocketMock.instances = [];
   vi.stubGlobal('WebSocket', WebSocketMock);
   apiFetchMock.mockReset();

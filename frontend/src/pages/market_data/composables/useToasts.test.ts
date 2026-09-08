@@ -7,7 +7,10 @@ import { useToasts } from './useToasts';
    appends a .toast {level} node and removes it 3200 ms + 220 ms later. */
 
 vi.mock('@/shared/boot', () => ({
-  getBoot: vi.fn(() => ({ token: 'tok', origin: 'http://pbgui.test:8000', version: '1.0.0', serial: 'S1' })),
+  getBoot: vi.fn(() => ({ origin: 'http://pbgui.test:8000', base_prefix: '', authenticated: true, version: '1.0.0', serial: 'S1' })),
+  apiPath: (path: string) => path,
+  wsOrigin: () => 'ws://pbgui.test:8000',
+  pageOrigin: () => 'http://pbgui.test:8000',
 }));
 
 let fetchMock: ReturnType<typeof vi.fn>;
@@ -41,14 +44,14 @@ describe('showToast guards (:4983-4986)', () => {
 });
 
 describe('notify_log relay (logNotification :4969-4981)', () => {
-  it('posts {msg, level} with the boot bearer token to /api/notify_log', () => {
+  it('posts {msg, level} with cookie credentials to /api/notify_log', () => {
     const { showToast } = useToasts();
     showToast('Checksum saved', 'success');
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('/api/notify_log');
     expect(init.method).toBe('POST');
-    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer tok');
+    expect(init.credentials).toBe('same-origin');
     expect(new Headers(init.headers).get('Content-Type')).toBe('application/json');
     expect(JSON.parse(String(init.body))).toEqual({ msg: 'Checksum saved', level: 'success' });
   });

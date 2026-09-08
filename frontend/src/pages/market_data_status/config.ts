@@ -1,4 +1,4 @@
-import { getBoot } from '@/shared/boot';
+import { getBoot, wsOrigin } from '@/shared/boot';
 
 /**
  * Legacy market_data_status.html received `data-token` / `data-exchange` /
@@ -17,12 +17,12 @@ export const NOTIFY_LOG_URL = '/api/notify_log';
 
 /** REST base for the market-data router, e.g. http://host:port/api. */
 export function apiBase(): string {
-  return `${getBoot().origin}/api`;
+  return `${getBoot().base_prefix}/api`;
 }
 
 /** WebSocket URL for /ws/market-data (PBApiServer.py:1044). */
 export function wsUrl(exchange: string): string {
-  const wsBase = getBoot().origin.replace(/^http/, 'ws');
+  const wsBase = wsOrigin();
   return `${wsBase}/ws/market-data?exchange=${encodeURIComponent(exchange)}`;
 }
 
@@ -39,11 +39,6 @@ export function cancelRefreshUrl(): string {
 /** POST /api/market-data/stop-run. */
 export function stopRunUrl(): string {
   return `${apiBase()}/market-data/stop-run`;
-}
-
-/** Legacy guard: `if (!API_TOKEN || !EXCHANGE)` replaced the page with a warning. */
-export function hasApiToken(): boolean {
-  return getBoot().token !== '';
 }
 
 /**
