@@ -1,5 +1,12 @@
 # Unreleased
 
+## PBv7/PBv8 Optimize 工作区表格与通知视觉优化
+
+- **自然表格收尾**：配置、队列、结果和 Pareto 四个面板统一使用冷炭黑表面、底部呼吸空间、柔和渐变与内阴影，短列表和空态不再直接落入大片深黑区域。
+- **深色层次优化**：细分表格视口、数据行、斑马纹和固定操作列的背景层级，同时保留现有悬停、选中、排序和滚动行为。
+- **紧凑状态通知**：右下角通知升级为带语义色轨和 Phosphor 状态图标的紧凑卡片，支持长文本换行、轻量入场动画和 reduced-motion 偏好。
+- **保持行为稳定**：不修改字段、API、数据加载、批量选择、行操作或现有四秒通知生命周期。
+
 ## Complete post-merge Python and frontend regression repair
 
 - **Regression suite**: Adapted the remaining legacy-oriented tests to the Vue3/Tailwind v4.3 page structure, cookie authentication, mount-safe URL model, read-only PB8 Legacy panel, and current cache-busted assets.

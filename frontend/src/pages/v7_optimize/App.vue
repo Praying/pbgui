@@ -5,6 +5,7 @@ import {
   PhArchive,
   PhArrowsClockwise,
   PhChartBar,
+  PhCheckCircle,
   PhClipboardText,
   PhCompassTool,
   PhCopy,
@@ -13,14 +14,16 @@ import {
   PhFileText,
   PhFolderOpen,
   PhGear,
-  PhHourglass,
   PhDna,
+  PhHourglass,
+  PhInfo,
   PhPencilSimple,
   PhPlant,
   PhPlus,
   PhQuestion,
   PhTarget,
   PhTrash,
+  PhWarningCircle,
 } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageAction, useAiPageContext } from '@/shared/ai/context';
@@ -506,6 +509,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (liveRefreshTimer !== undefined) window.clearInterval(liveRefreshTimer);
+  if (toastTimer !== undefined) window.clearTimeout(toastTimer);
   stopPreflightPolling();
   window.removeEventListener('pageshow', handlePageShow);
   window.removeEventListener('keydown', handleKeydown);
@@ -542,7 +546,7 @@ onBeforeUnmount(() => {
       :ok-text="t('v7optimize.connected')"
     />
     <div id="page-body" class="flex h-[calc(100dvh-82px)] flex-col overflow-hidden">
-    <div class="workbench-page-content min-h-0 min-w-0 flex-1 overflow-hidden bg-page p-[var(--page-padding)]">
+    <div class="workbench-page-content optimize-workspace min-h-0 min-w-0 flex-1 overflow-hidden bg-page p-[var(--page-padding)]">
     <!-- Converged navigation: panel switching lives in the workbench rail
          (AppShell sections); this strip carries only the active panel's
          contextual actions. -->
@@ -632,7 +636,21 @@ onBeforeUnmount(() => {
   <OhlcvPreflightModal :open="preflightOpen" :loading="preflightLoading" :error="preflightError" :payload="preflightData" :job="preflightJob" @close="closePreflight" @refresh="refreshPreflightData" @preload="startPreload" @stop="stopPreload" />
   <div v-if="duplicateSource" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.duplicateConfig') }}</h2><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.close') }}</Button></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.duplicateConfigAs') }}<Input v-model="duplicateName" /></label></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.cancel') }}</Button><Button type="button" variant="info" @click="duplicate">{{ t('common.save') }}</Button></footer></section></div>
   <div v-if="confirmAction" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ confirmAction.title }}</h2></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><p>{{ confirmAction.message }}</p></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="confirmAction = null">{{ t('common.cancel') }}</Button><Button type="button" variant="danger" @click="acceptConfirm">{{ t('common.confirm') }}</Button></footer></section></div>
-  <div v-if="toast" class="fixed right-[18px] bottom-[18px] z-[1200] max-w-[min(520px,calc(100vw-36px))] rounded-md border border-border-default bg-panel px-3.5 py-2.5 shadow-[var(--shadow-elevated)]" :class="`opt-toast-${toast.kind}`">{{ toast.message }}</div>
+  <Transition name="opt-toast">
+    <div
+      v-if="toast"
+      :key="`${toast.kind}-${toast.message}`"
+      class="opt-toast-card fixed right-[18px] bottom-[18px] z-[1200] shadow-[var(--shadow-elevated)]"
+      :class="`opt-toast-card--${toast.kind}`"
+      :role="toast.kind === 'error' ? 'alert' : 'status'"
+      :aria-live="toast.kind === 'error' ? 'assertive' : 'polite'"
+    >
+      <span class="opt-toast-card__icon" aria-hidden="true">
+        <PbIcon :icon="toast.kind === 'success' ? PhCheckCircle : toast.kind === 'error' ? PhWarningCircle : PhInfo" :size="18" />
+      </span>
+      <span class="opt-toast-card__message">{{ toast.message }}</span>
+    </div>
+  </Transition>
 </template>
 
 
@@ -796,12 +814,127 @@ body { overflow: hidden; }
 }
 
 .opt-table-wrap {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: 24px;
   border-color: var(--border-default);
   border-radius: var(--radius-lg);
-  background: var(--surface-deep);
-  box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.035);
+  background: #151a1f;
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
   scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
+}
+
+/* Keep a short table connected to its viewport instead of ending in a flat
+   black void. The finish sits behind the table and only shows in the reserved
+   bottom breathing room, so it cannot cover rows or sticky actions. */
+.optimize-workspace .opt-table-wrap::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  height: 24px;
+  border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
+  background: linear-gradient(180deg, rgb(23 28 33 / 0%), rgb(21 26 31 / 0.96) 88%);
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.025);
+  content: '';
+  pointer-events: none;
+}
+
+.optimize-workspace .opt-table {
+  position: relative;
+  z-index: 1;
+  background: #171c21;
+}
+
+.optimize-workspace .opt-table tbody {
+  background: #171c21;
+}
+
+.optimize-workspace .opt-table tbody tr:nth-child(even):not(:last-child) td {
+  background: rgb(255 255 255 / 0.018);
+}
+
+.optimize-workspace .opt-table .pbgui-list-actions {
+  background: #171c21;
+}
+
+.optimize-workspace .opt-table tbody tr:nth-child(even) .pbgui-list-actions {
+  background: #191f24;
+}
+
+.optimize-workspace .opt-table tbody tr:hover .pbgui-list-actions {
+  background: #1c272c;
+}
+
+.optimize-workspace .opt-table tbody tr.selected .pbgui-list-actions,
+.optimize-workspace .opt-table tbody tr.selected:hover .pbgui-list-actions {
+  background: #1f3037;
+}
+
+.opt-toast-card {
+  display: grid;
+  grid-template-columns: 3px 30px minmax(0, 1fr);
+  align-items: center;
+  width: min(340px, calc(100vw - 36px));
+  min-height: 54px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: #1a2025;
+  box-shadow: var(--shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.05);
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.opt-toast-card::before {
+  align-self: stretch;
+  background: var(--accent);
+  content: '';
+}
+
+.opt-toast-card__icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgb(var(--accent-rgb) / 0.24);
+  border-radius: var(--radius-md);
+  background: rgb(var(--accent-rgb) / 0.1);
+  color: var(--accent-soft);
+}
+
+.opt-toast-card__message {
+  min-width: 0;
+  padding: 13px 14px 13px 11px;
+  overflow-wrap: anywhere;
+}
+
+.opt-toast-card--success::before { background: var(--success); }
+.opt-toast-card--success .opt-toast-card__icon {
+  border-color: rgb(var(--success-rgb) / 0.28);
+  background: rgb(var(--success-rgb) / 0.1);
+  color: var(--success-soft);
+}
+
+.opt-toast-card--error::before { background: var(--danger); }
+.opt-toast-card--error .opt-toast-card__icon {
+  border-color: rgb(var(--danger-rgb) / 0.28);
+  background: rgb(var(--danger-rgb) / 0.1);
+  color: var(--danger-soft);
+}
+
+.opt-toast-enter-active,
+.opt-toast-leave-active {
+  transition: opacity 160ms var(--ease-standard), transform 160ms var(--ease-standard);
+}
+
+.opt-toast-enter-from,
+.opt-toast-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 .opt-table-wrap::-webkit-scrollbar {
@@ -1028,6 +1161,18 @@ body { overflow: hidden; }
 
   .opt-panel-controls > .flex-1 {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opt-toast-enter-active,
+  .opt-toast-leave-active {
+    transition: opacity 1ms linear;
+  }
+
+  .opt-toast-enter-from,
+  .opt-toast-leave-to {
+    transform: none;
   }
 }
 </style>

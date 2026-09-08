@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest';
 
 const pageRoot = import.meta.dirname;
 const appSource = readFileSync(resolve(pageRoot, 'App.vue'), 'utf8');
+const configsPanelSource = readFileSync(resolve(pageRoot, 'components/ConfigsPanel.vue'), 'utf8');
 const queuePanelSource = readFileSync(resolve(pageRoot, 'components/QueuePanel.vue'), 'utf8');
+const resultsPanelSource = readFileSync(resolve(pageRoot, 'components/ResultsPanel.vue'), 'utf8');
+const paretosPanelSource = readFileSync(resolve(pageRoot, 'components/ParetosPanel.vue'), 'utf8');
 const editorSource = readFileSync(resolve(pageRoot, 'components/BotJsonEditor.vue'), 'utf8');
 const configEditorModalSource = readFileSync(
   resolve(pageRoot, 'components/ConfigEditorModal.vue'),
@@ -56,5 +59,35 @@ describe('Optimize page warning style contracts', () => {
   it('uses the canonical primary foreground role for the JSON editor caret', () => {
     expect(editorSource).toContain('caret-primary');
     expect(editorSource).not.toContain('caret-[#e8ecf4]');
+  });
+
+  it('uses the Optimize workspace finish for every data panel', () => {
+    const dataPanelSources = [configsPanelSource, queuePanelSource, resultsPanelSource, paretosPanelSource];
+
+    for (const dataPanelSource of dataPanelSources) {
+      expect(dataPanelSource).toContain('class="opt-table-wrap');
+    }
+    expect(appSource).toContain('optimize-workspace');
+    expect(appSource).toContain('.optimize-workspace .opt-table-wrap');
+    expect(appSource).toContain('.optimize-workspace .opt-table-wrap::after');
+    expect(appSource).toContain('background: #151a1f;');
+    expect(appSource).toContain('padding-bottom: 24px;');
+    expect(appSource).toMatch(/\.optimize-workspace \.opt-table-wrap::after \{[\s\S]*?z-index: 0;[\s\S]*?height: 24px;/);
+    expect(appSource).toMatch(/\.optimize-workspace \.opt-table \{[\s\S]*?position: relative;[\s\S]*?z-index: 1;/);
+    expect(appSource).toContain('z-index: 0;');
+    expect(appSource).toContain('box-shadow: var(--shadow-elevated), inset 0 1px 0');
+  });
+
+  it('renders semantic compact notification states with reduced-motion support', () => {
+    expect(appSource).toContain('opt-toast-card');
+    expect(appSource).toContain('opt-toast-card__icon');
+    expect(appSource).toContain('PhCheckCircle');
+    expect(appSource).toContain('PhWarningCircle');
+    expect(appSource).toContain(`:role="toast.kind === 'error' ? 'alert' : 'status'"`);
+    expect(appSource).toContain(`:aria-live="toast.kind === 'error' ? 'assertive' : 'polite'"`);
+    expect(appSource).toContain('overflow-wrap: anywhere;');
+    expect(appSource).toContain('}, 4000);');
+    expect(appSource).toMatch(/onBeforeUnmount\(\(\) => \{[\s\S]*?window\.clearTimeout\(toastTimer\);/);
+    expect(appSource).toContain('@media (prefers-reduced-motion: reduce)');
   });
 });
