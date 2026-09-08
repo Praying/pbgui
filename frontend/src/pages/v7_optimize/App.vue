@@ -813,14 +813,25 @@ body { overflow: hidden; }
   font-family: var(--font-mono);
 }
 
+/* The frame owns the wrap's former chrome (border, radius, shadow) so the
+   pbgui-list-footer can sit inside it as the table's terminal bar. */
+.opt-table-frame {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 0%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: #151a1f;
+  box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
+}
+
 .opt-table-wrap {
   position: relative;
   isolation: isolate;
   padding-bottom: 24px;
-  border-color: var(--border-default);
-  border-radius: var(--radius-lg);
   background: #151a1f;
-  box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
   scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
 }
@@ -969,10 +980,6 @@ body { overflow: hidden; }
 
 .opt-table .pbgui-list-actions__group {
   gap: 4px;
-}
-
-.opt-table tbody tr:last-child td {
-  border-bottom: none;
 }
 
 /* Optimize lists are intentionally compact, but the primary identifier and

@@ -1917,6 +1917,33 @@
     line-height: 1.25;
   }
 
+  /* Framed lists end on the wrap's own edge: the last data row (and the lone
+     empty-state row) drop their separator so the frame reads as one clean
+     finish instead of a doubled line. Bare document-flow tables (strategy
+     explorer orders, coin overrides) are not matched and keep the row rule
+     as their only bottom edge. */
+  .pbgui-list-wrap .pbgui-list-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  /* Terminal bar of a framed list — the count mirror of the toolbar that
+     opens it, closing the table's bottom edge. Static (never aria-live):
+     the toolbar counts already announce changes. */
+  .pbgui-list-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-sm);
+    flex-shrink: 0;
+    min-height: 34px;
+    padding: 6px 10px;
+    border-top: 1px solid var(--border-default);
+    background: var(--surface-panel);
+    color: var(--text-secondary);
+    font-size: var(--fs-xs);
+  }
+
   .pbgui-list-table tbody tr {
     transition: background-color var(--motion-fast) var(--ease-standard);
   }

@@ -167,46 +167,52 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="opt-table-wrap opt-table-wrap--paretos pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
-    <table class="opt-table opt-table--paretos pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
-      <thead>
-        <tr>
-          <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="paretos-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
-          <template v-if="summaryKeys.length"><th v-for="key in summaryKeys" :key="key" class="cursor-pointer transition-colors hover:text-primary" :data-sort-key="`summary:${key}`" @click="emit('sort', `summary:${key}`)"><span class="inline-flex items-center gap-1">{{ key }}<PbIcon v-if="isSorted(`summary:${key}`)" :icon="sortIcon(`summary:${key}`)" :size="12" class="text-accent-soft" /></span></th></template>
-          <th v-else>{{ t('v7optimize.thSummary') }}</th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thModified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
-          <th>{{ t('v7optimize.thActions') }}</th>
-        </tr>
-      </thead>
-      <tbody ref="tbody">
-        <tr v-for="row in rows" :key="row.path" :data-path="row.path" :class="{ selected: selected.has(row.path) }">
-          <td class="w-10 pr-1!" @click.stop>
-            <Checkbox :model-value="selected.has(row.path)" :aria-label="row.name" @update:model-value="emit('toggle', row.path)" />
-          </td>
-          <td class="max-w-[280px] truncate font-mono font-medium" :title="row.name">{{ row.name }}</td>
-          <template v-if="summaryKeys.length"><td v-for="key in summaryKeys" :key="key" :data-metric="key" class="tabular-nums">{{ summaryValue(row, key) }}</td></template>
-          <td v-else class="max-w-[460px] tabular-nums">{{ inlineSummary(row) }}</td>
-          <td class="tabular-nums text-xs text-secondary" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
-          <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
-            <div class="pbgui-list-actions__group">
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.viewJson')" :aria-label="t('v7optimize.viewJson')" data-test="pareto-view" @click="emit('view', row)"><PbIcon :icon="PhFileText" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.useAsSeed')" :aria-label="t('v7optimize.useAsSeed')" data-test="pareto-seed" @click="emit('seed', row)"><PbIcon :icon="PhDna" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" v-if="!isV8" :title="t('v7optimize.convertParetoToPb8')" :aria-label="t('v7optimize.convertParetoToPb8')" data-test="pareto-migrate" @click="emit('migrate', row)"><PbIcon :icon="PhArrowRight" :size="16" /></Button>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="!rows.length">
-          <td :colspan="totalColumns" class="p-8! text-center">
-            <EmptyState
-              :title="resultName ? t('v7optimize.noParetoFilesFound') : t('v7optimize.chooseResultSetFirst')"
-              :message="resultName ? undefined : t('v7optimize.emptyParetosHelp')"
-              :action-label="resultName ? undefined : t('v7optimize.backToResults')"
-              @action="emit('goToResults')"
-            />
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="opt-table-frame">
+    <div ref="wrap" class="opt-table-wrap opt-table-wrap--paretos pbgui-list-wrap min-h-0 flex-1 overflow-auto">
+      <table class="opt-table opt-table--paretos pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+        <thead>
+          <tr>
+            <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="paretos-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
+            <template v-if="summaryKeys.length"><th v-for="key in summaryKeys" :key="key" class="cursor-pointer transition-colors hover:text-primary" :data-sort-key="`summary:${key}`" @click="emit('sort', `summary:${key}`)"><span class="inline-flex items-center gap-1">{{ key }}<PbIcon v-if="isSorted(`summary:${key}`)" :icon="sortIcon(`summary:${key}`)" :size="12" class="text-accent-soft" /></span></th></template>
+            <th v-else>{{ t('v7optimize.thSummary') }}</th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thModified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
+            <th>{{ t('v7optimize.thActions') }}</th>
+          </tr>
+        </thead>
+        <tbody ref="tbody">
+          <tr v-for="row in rows" :key="row.path" :data-path="row.path" :class="{ selected: selected.has(row.path) }">
+            <td class="w-10 pr-1!" @click.stop>
+              <Checkbox :model-value="selected.has(row.path)" :aria-label="row.name" @update:model-value="emit('toggle', row.path)" />
+            </td>
+            <td class="max-w-[280px] truncate font-mono font-medium" :title="row.name">{{ row.name }}</td>
+            <template v-if="summaryKeys.length"><td v-for="key in summaryKeys" :key="key" :data-metric="key" class="tabular-nums">{{ summaryValue(row, key) }}</td></template>
+            <td v-else class="max-w-[460px] tabular-nums">{{ inlineSummary(row) }}</td>
+            <td class="tabular-nums text-xs text-secondary" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
+            <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
+              <div class="pbgui-list-actions__group">
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.viewJson')" :aria-label="t('v7optimize.viewJson')" data-test="pareto-view" @click="emit('view', row)"><PbIcon :icon="PhFileText" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.useAsSeed')" :aria-label="t('v7optimize.useAsSeed')" data-test="pareto-seed" @click="emit('seed', row)"><PbIcon :icon="PhDna" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" v-if="!isV8" :title="t('v7optimize.convertParetoToPb8')" :aria-label="t('v7optimize.convertParetoToPb8')" data-test="pareto-migrate" @click="emit('migrate', row)"><PbIcon :icon="PhArrowRight" :size="16" /></Button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="!rows.length">
+            <td :colspan="totalColumns" class="p-8! text-center">
+              <EmptyState
+                :title="resultName ? t('v7optimize.noParetoFilesFound') : t('v7optimize.chooseResultSetFirst')"
+                :message="resultName ? undefined : t('v7optimize.emptyParetosHelp')"
+                :action-label="resultName ? undefined : t('v7optimize.backToResults')"
+                @action="emit('goToResults')"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <footer class="pbgui-list-footer" data-test="paretos-list-footer">
+      <span class="tabular-nums">{{ t('v7optimize.paretosCount', { count: rows.length }) }}</span>
+      <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7optimize.paretosSelected', { count: selectedCount }) }}</span>
+    </footer>
   </div>
 </template>

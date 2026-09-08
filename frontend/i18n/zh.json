@@ -5075,6 +5075,7 @@
   "v7optimize.paretoJsonWithName": "帕累托 JSON - {name}",
   "v7optimize.paretoSeedDraft": "帕累托种子草稿",
   "v7optimize.paretos": "帕累托",
+  "v7optimize.paretosCount": "{count}个帕累托",
   "v7optimize.paretosSelected": "已选择 {count}个帕累托。",
   "v7optimize.paretosSelectedPlural": "已选择 {count}个帕累托。",
   "v7optimize.pasteJsonOrChooseFile": "粘贴 JSON 或选择 .json 文件。",

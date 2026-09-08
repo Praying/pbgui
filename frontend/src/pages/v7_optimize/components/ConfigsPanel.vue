@@ -94,67 +94,73 @@ onBeforeUnmount(() => dragSelect.dispose());
     <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
     <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
   </div>
-  <div ref="wrap" class="opt-table-wrap opt-table-wrap--configs pbgui-list-wrap min-h-0 flex-1 overflow-auto rounded-md border border-border-default">
-    <table class="opt-table opt-table--configs pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
-      <thead>
-        <tr>
-          <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="configs-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'exchange')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thExchange') }}<PbIcon v-if="isSorted('exchange')" :icon="sortIcon('exchange')" :size="12" class="text-accent-soft" /></span></th>
-          <th v-if="isV8" class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'strategy')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStrategy') }}<PbIcon v-if="isSorted('strategy')" :icon="sortIcon('strategy')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'backtest_count')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thBacktests') }}<PbIcon v-if="isSorted('backtest_count')" :icon="sortIcon('backtest_count')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'start')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStart') }}<PbIcon v-if="isSorted('start')" :icon="sortIcon('start')" :size="12" class="text-accent-soft" /></span></th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'end')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thEnd') }}<PbIcon v-if="isSorted('end')" :icon="sortIcon('end')" :size="12" class="text-accent-soft" /></span></th>
-          <th>{{ t('v7optimize.thFlags') }}</th>
-          <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thModified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
-          <th>{{ t('v7optimize.thActions') }}</th>
-        </tr>
-      </thead>
-      <tbody ref="tbody">
-        <tr
-          v-for="row in rows"
-          :key="rowName(row)"
-          :data-path="rowName(row)"
-          :class="{ selected: selected.has(rowName(row)) }"
-          @dblclick="emit('edit', rowName(row))"
-        >
-          <td class="w-10 pr-1!" @click.stop>
-            <Checkbox :model-value="selected.has(rowName(row))" :aria-label="rowName(row)" @update:model-value="emit('toggle', rowName(row))" />
-          </td>
-          <td class="max-w-[280px] truncate font-mono" :title="rowName(row)">{{ rowName(row) }}</td>
-          <td>
-            <span v-if="exchange(row)" class="inline-flex max-w-[180px] items-center truncate rounded-md border border-border-default/70 bg-elevated/40 px-1.5 py-0.5 font-mono text-xs text-secondary" :title="exchange(row)">{{ exchange(row) }}</span>
-            <span v-else class="text-muted">-</span>
-          </td>
-          <td v-if="isV8"><span v-if="row.strategy" class="font-mono text-xs text-secondary">{{ row.strategy }}</span><span v-else class="text-muted">-</span></td>
-          <td class="tabular-nums" :class="backtestCount(row) ? 'font-semibold' : 'text-muted'">{{ backtestCount(row) }}</td>
-          <td class="tabular-nums text-xs text-secondary">{{ shortDate(value(row, 'start', 'start_date')) || '-' }}</td>
-          <td class="tabular-nums text-xs text-secondary">{{ shortDate(value(row, 'end', 'end_date')) || '-' }}</td>
-          <td>
-            <span v-if="flagList(row).length" class="flex flex-wrap items-center gap-1">
-              <span v-for="flag in flagList(row)" :key="flag" class="inline-flex items-center rounded border border-border-default/60 px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ flag }}</span>
-            </span>
-            <span v-else class="text-muted">-</span>
-          </td>
-          <td class="tabular-nums text-xs text-secondary" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
-          <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
-            <div class="pbgui-list-actions__group">
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="editLabel" :aria-label="editLabel" data-test="config-edit" @click="emit('edit', rowName(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="duplicateLabel" :aria-label="duplicateLabel" data-test="config-duplicate" @click="emit('duplicate', rowName(row))"><PbIcon :icon="PhCopy" :size="16" /></Button>
-            </div>
-          </td>
-        </tr>
-        <tr v-if="!rows.length">
-          <td :colspan="isV8 ? 10 : 9" class="p-8! text-center">
-            <EmptyState
-              :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
-              :message="search ? undefined : t('v7optimize.emptyConfigsHelp')"
-              :action-label="search ? undefined : t('v7optimize.newConfig')"
-              @action="emit('create')"
-            />
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="opt-table-frame">
+    <div ref="wrap" class="opt-table-wrap opt-table-wrap--configs pbgui-list-wrap min-h-0 flex-1 overflow-auto">
+      <table class="opt-table opt-table--configs pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
+        <thead>
+          <tr>
+            <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="configs-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'exchange')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thExchange') }}<PbIcon v-if="isSorted('exchange')" :icon="sortIcon('exchange')" :size="12" class="text-accent-soft" /></span></th>
+            <th v-if="isV8" class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'strategy')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStrategy') }}<PbIcon v-if="isSorted('strategy')" :icon="sortIcon('strategy')" :size="12" class="text-accent-soft" /></span></th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'backtest_count')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thBacktests') }}<PbIcon v-if="isSorted('backtest_count')" :icon="sortIcon('backtest_count')" :size="12" class="text-accent-soft" /></span></th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'start')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thStart') }}<PbIcon v-if="isSorted('start')" :icon="sortIcon('start')" :size="12" class="text-accent-soft" /></span></th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'end')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thEnd') }}<PbIcon v-if="isSorted('end')" :icon="sortIcon('end')" :size="12" class="text-accent-soft" /></span></th>
+            <th>{{ t('v7optimize.thFlags') }}</th>
+            <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thModified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
+            <th>{{ t('v7optimize.thActions') }}</th>
+          </tr>
+        </thead>
+        <tbody ref="tbody">
+          <tr
+            v-for="row in rows"
+            :key="rowName(row)"
+            :data-path="rowName(row)"
+            :class="{ selected: selected.has(rowName(row)) }"
+            @dblclick="emit('edit', rowName(row))"
+          >
+            <td class="w-10 pr-1!" @click.stop>
+              <Checkbox :model-value="selected.has(rowName(row))" :aria-label="rowName(row)" @update:model-value="emit('toggle', rowName(row))" />
+            </td>
+            <td class="max-w-[280px] truncate font-mono" :title="rowName(row)">{{ rowName(row) }}</td>
+            <td>
+              <span v-if="exchange(row)" class="inline-flex max-w-[180px] items-center truncate rounded-md border border-border-default/70 bg-elevated/40 px-1.5 py-0.5 font-mono text-xs text-secondary" :title="exchange(row)">{{ exchange(row) }}</span>
+              <span v-else class="text-muted">-</span>
+            </td>
+            <td v-if="isV8"><span v-if="row.strategy" class="font-mono text-xs text-secondary">{{ row.strategy }}</span><span v-else class="text-muted">-</span></td>
+            <td class="tabular-nums" :class="backtestCount(row) ? 'font-semibold' : 'text-muted'">{{ backtestCount(row) }}</td>
+            <td class="tabular-nums text-xs text-secondary">{{ shortDate(value(row, 'start', 'start_date')) || '-' }}</td>
+            <td class="tabular-nums text-xs text-secondary">{{ shortDate(value(row, 'end', 'end_date')) || '-' }}</td>
+            <td>
+              <span v-if="flagList(row).length" class="flex flex-wrap items-center gap-1">
+                <span v-for="flag in flagList(row)" :key="flag" class="inline-flex items-center rounded border border-border-default/60 px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ flag }}</span>
+              </span>
+              <span v-else class="text-muted">-</span>
+            </td>
+            <td class="tabular-nums text-xs text-secondary" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
+            <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
+              <div class="pbgui-list-actions__group">
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="editLabel" :aria-label="editLabel" data-test="config-edit" @click="emit('edit', rowName(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="duplicateLabel" :aria-label="duplicateLabel" data-test="config-duplicate" @click="emit('duplicate', rowName(row))"><PbIcon :icon="PhCopy" :size="16" /></Button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="!rows.length">
+            <td :colspan="isV8 ? 10 : 9" class="p-8! text-center">
+              <EmptyState
+                :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
+                :message="search ? undefined : t('v7optimize.emptyConfigsHelp')"
+                :action-label="search ? undefined : t('v7optimize.newConfig')"
+                @action="emit('create')"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <footer class="pbgui-list-footer" data-test="configs-list-footer">
+      <span class="tabular-nums">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
+      <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
+    </footer>
   </div>
 </template>

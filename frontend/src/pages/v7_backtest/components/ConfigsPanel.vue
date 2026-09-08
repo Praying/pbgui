@@ -311,7 +311,10 @@ defineExpose({
       </tbody>
     </table>
 
-    <div v-if="configs.length > 0" class="px-0.5 pt-2 text-sm text-secondary">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</div>
+    <footer v-if="configs.length > 0" class="pbgui-list-footer" data-test="configs-list-footer">
+      <span class="tabular-nums">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
+      <span v-if="selected.length" class="font-medium text-accent-soft tabular-nums">{{ selected.length }} {{ t('v7backtest.queueSelected') }}</span>
+    </footer>
 
     <div v-if="deleteConfirmOpen" id="modal-root" :class="modalBackdropClass" data-test="configs-delete-modal">
       <div :class="modalBoxClass">

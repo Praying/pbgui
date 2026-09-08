@@ -275,6 +275,10 @@ defineExpose({ deleteSelectedFlow });
           />
         </div>
       </div>
+      <footer class="pbgui-list-footer" data-test="results-list-footer">
+        <span class="tabular-nums">{{ countLabel }}</span>
+        <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7backtest.resultsSelected', { n: selectedCount }) }}</span>
+      </footer>
       <div id="results-resize-handle" class="flex h-2 cursor-row-resize select-none items-center justify-center border-t border-secondary/12 bg-page/55" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
         <span class="h-0.5 w-10 rounded-full bg-secondary/35"></span>
       </div>

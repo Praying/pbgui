@@ -5075,6 +5075,7 @@
   "v7optimize.paretoJsonWithName": "Pareto JSON - {name}",
   "v7optimize.paretoSeedDraft": "Pareto Seed Draft",
   "v7optimize.paretos": "Paretos",
+  "v7optimize.paretosCount": "{count} paretos",
   "v7optimize.paretosSelected": "{count} pareto selected.",
   "v7optimize.paretosSelectedPlural": "{count} paretos selected.",
   "v7optimize.pasteJsonOrChooseFile": "Paste JSON or choose a .json file.",

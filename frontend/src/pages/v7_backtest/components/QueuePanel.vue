@@ -326,6 +326,10 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
         </tbody>
       </table>
       </div>
+      <footer class="pbgui-list-footer" data-test="queue-list-footer">
+        <span class="tabular-nums">{{ t('v7backtest.queueItemsCount', { count: items.length }) }}</span>
+        <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ selectedCount }} {{ t('v7backtest.queueSelected') }}</span>
+      </footer>
     </div>
 
     <!-- deleteSelectedQueue confirm (:5860-5870) -->
@@ -346,18 +350,15 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
 
 <style scoped>
 /* Only what the pbgui-list-table contract does not own: the keyboard
-   focus feedback on the tabbable, keyboard-selectable queue rows, and
-   dropping the last row's separator. Hover/selected tints and the row
-   transition come from the shared contract in components.css. */
+   focus feedback on the tabbable, keyboard-selectable queue rows.
+   Hover/selected tints, the row transition, and the last row's dropped
+   separator (the wrap's own edge closes the list) come from the shared
+   contract in components.css. */
 .queue-row:focus-visible td {
   background: rgb(var(--accent-rgb) / 0.055);
 }
 
 .queue-row:focus-visible td:first-child {
   box-shadow: inset 2px 0 0 var(--accent);
-}
-
-.queue-row:last-child td {
-  border-bottom: 0;
 }
 </style>
