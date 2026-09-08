@@ -21,6 +21,13 @@ page. Follow it exactly; deviate only where a section below says you may.
 | `<input type="radio">` group | `<RadioGroup>` + `<RadioGroupItem>` |
 | `<input type="range">` | `<Slider>` |
 | loading spinner + disabled button | `<Button :loading="…">` (built-in spinner + `aria-busy`) |
+| `<table class="pbgui-list-table …">` shell | `<Table class="…">` (contract + `border-separate border-spacing-0` built in; width floors like `min-w-max` stay caller-owned) |
+| hand-written sortable `<th>` + `isSorted`/`sortIcon` helpers | `<SortTh sort-key :sort :label @sort>` (caret, hover, aria-sort, Enter/Space all owned by the component) |
+| static `<th class="sticky top-0 z-[2] …">` | `<Th>` (sticky by default; `:sticky="false"` for document-flow tables like the strategy explorer orders) |
+| `<td class="pbgui-list-actions …" @click.stop>` + `__group` div | `<TdActions>` (click + mousedown stopped, group div built in) |
+| empty-state `<tr><td colspan…><EmptyState/></td></tr>` | `<EmptyRow :colspan :title :message :action-label @action>` |
+| `<div class="pbgui-list-wrap …">` scroll frame | `<ListWrap class="…">` (exposes `.root` for drag-select `getWrap`; framing utilities stay caller-owned) |
+| `<footer class="pbgui-list-footer">` | `<ListFooter data-test="…">` |
 
 Variant mapping for buttons: `btn-primary`/`accent` → `primary`, `btn-secondary` → `secondary`,
 `btn-info`/soft-accent tones → `info`, `btn-success` → `success`, `btn-warning`/`warn` → `warning`,
