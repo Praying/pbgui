@@ -158,9 +158,6 @@ onBeforeUnmount(() => dragSelect.dispose());
         </tbody>
       </table>
     </div>
-    <footer class="pbgui-list-footer" data-test="configs-list-footer">
-      <span class="tabular-nums">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
-      <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
-    </footer>
+    <footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true"></footer>
   </div>
 </template>

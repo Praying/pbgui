@@ -880,7 +880,7 @@ body { overflow: hidden; }
   background: #171c21;
 }
 
-.optimize-workspace .opt-table tbody tr:nth-child(even):not(:last-child) td {
+.optimize-workspace .opt-table tbody tr:nth-child(even):not(:last-child):not(.selected) td {
   background: rgb(255 255 255 / 0.018);
 }
 
@@ -888,7 +888,7 @@ body { overflow: hidden; }
   background: #171c21;
 }
 
-.optimize-workspace .opt-table tbody tr:nth-child(even) .pbgui-list-actions {
+.optimize-workspace .opt-table tbody tr:nth-child(even):not(.selected) .pbgui-list-actions {
   background: #191f24;
 }
 
@@ -1001,7 +1001,7 @@ body { overflow: hidden; }
 
 /* Optimize lists are intentionally compact, but the primary identifier and
    operational status get a second line so dense rows remain scannable. */
-.opt-table tbody tr:nth-child(even):not(:last-child) td {
+.opt-table tbody tr:nth-child(even):not(:last-child):not(.selected) td {
   background: rgb(var(--text-secondary-rgb) / 0.018);
 }
 
@@ -1131,7 +1131,7 @@ body { overflow: hidden; }
   box-shadow: -14px 0 22px -22px rgb(0 0 0 / 0.9);
 }
 
-.opt-table tbody tr:nth-child(even) .pbgui-list-actions {
+.opt-table tbody tr:nth-child(even):not(.selected) .pbgui-list-actions {
   background: rgb(22 22 22 / 0.98);
 }
 

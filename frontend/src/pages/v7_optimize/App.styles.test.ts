@@ -88,6 +88,15 @@ describe('Optimize page warning style contracts', () => {
     expect(appSource).toContain('.opt-table-frame--content-sized .opt-table-wrap::after');
   });
 
+  it('excludes selected rows from zebra stripes and action-cell backgrounds', () => {
+    expect(appSource).toContain('tr:nth-child(even):not(:last-child):not(.selected) td');
+    expect(appSource).toContain('tr:nth-child(even):not(.selected) .pbgui-list-actions');
+  });
+
+  it('keeps the config terminal bar visual-only to avoid duplicate counts', () => {
+    expect(configsPanelSource).toMatch(/<footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true">\s*<\/footer>/);
+  });
+
   it('renders semantic compact notification states with reduced-motion support', () => {
     expect(appSource).toContain('opt-toast-card');
     expect(appSource).toContain('opt-toast-card__icon');
