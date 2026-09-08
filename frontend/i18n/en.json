@@ -2714,6 +2714,8 @@
   "profitSweep.yourShare": "Your Share",
   "profitSweep.yourShareDetail": "Your current equity as a percentage of TVL",
   "profitSweep.yourVaultEquity": "Your Vault Equity",
+  "shared.breadcrumb.copied": "Path copied",
+  "shared.breadcrumb.copyPath": "Copy path",
   "shared.dialog.done": "Done.",
   "shared.dialog.enterAValue": "Enter a value.",
   "shared.dialog.enterValue": "Enter value",

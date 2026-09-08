@@ -758,6 +758,13 @@
   }
 
   .workspace-header__identity {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-xs);
+    min-width: 0;
+  }
+
+  .workspace-header__breadcrumb {
     min-width: 0;
   }
 
@@ -833,6 +840,29 @@
   .workspace-header__utilities {
     justify-content: flex-end;
     flex-wrap: wrap;
+  }
+
+  /* Compact ghost icon-button for the breadcrumb path copy action — keeps
+     the workspace header quiet until hovered (base .pbgui-icon-button is
+     card-styled; the doubled-class prefix out-specifies it). */
+  button.pbgui-icon-button.pbgui-icon-button.workspace-header__copy {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    border-color: transparent;
+    background: transparent;
+    color: var(--text-muted);
+  }
+
+  button.pbgui-icon-button.pbgui-icon-button.workspace-header__copy:hover:not(:disabled) {
+    border-color: transparent;
+    background: var(--surface-elevated);
+    color: var(--text-secondary);
+  }
+
+  button.pbgui-icon-button.pbgui-icon-button.workspace-header__copy--copied,
+  button.pbgui-icon-button.pbgui-icon-button.workspace-header__copy--copied:hover:not(:disabled) {
+    color: var(--success);
   }
 
   /* ── Icon and icon-button primitives ─────────────────────────── */

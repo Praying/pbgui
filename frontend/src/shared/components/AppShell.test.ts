@@ -43,7 +43,7 @@ describe('AppShell', () => {
     const wrapper = mountShell();
     const status = wrapper.get('[role="status"]');
 
-    expect(wrapper.get('header button').text()).toBe('Restart');
+    expect(wrapper.get('.workspace-header__actions button').text()).toBe('Restart');
     expect(status.text()).toContain('Degraded');
     expect(status.get('.pbgui-status-strip__details').text()).toBe('Status: Degraded');
     expect(status.get('.pbgui-status-strip__value').text()).toBe('Degraded');

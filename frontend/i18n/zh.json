@@ -2714,6 +2714,8 @@
   "profitSweep.yourShare": "您的份额",
   "profitSweep.yourShareDetail": "您当前占 TVL 的权益百分比",
   "profitSweep.yourVaultEquity": "您的 Vault 权益",
+  "shared.breadcrumb.copied": "路径已复制",
+  "shared.breadcrumb.copyPath": "复制路径",
   "shared.dialog.done": "完成。",
   "shared.dialog.enterAValue": "请输入一个值。",
   "shared.dialog.enterValue": "输入值",
