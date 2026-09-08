@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 const pageRoot = import.meta.dirname;
 const appSource = readFileSync(resolve(pageRoot, 'App.vue'), 'utf8');
 const configsPanelSource = readFileSync(resolve(pageRoot, 'components/ConfigsPanel.vue'), 'utf8');
+const sharedComponentsSource = readFileSync(resolve(pageRoot, '../../styles/components.css'), 'utf8');
 const queuePanelSource = readFileSync(resolve(pageRoot, 'components/QueuePanel.vue'), 'utf8');
 const resultsPanelSource = readFileSync(resolve(pageRoot, 'components/ResultsPanel.vue'), 'utf8');
 const paretosPanelSource = readFileSync(resolve(pageRoot, 'components/ParetosPanel.vue'), 'utf8');
@@ -62,11 +63,12 @@ describe('Optimize page warning style contracts', () => {
   });
 
   it('uses the Optimize workspace finish for every data panel', () => {
-    const dataPanelSources = [configsPanelSource, queuePanelSource, resultsPanelSource, paretosPanelSource];
+    const dataPanelSources = [queuePanelSource, resultsPanelSource, paretosPanelSource];
 
     for (const dataPanelSource of dataPanelSources) {
       expect(dataPanelSource).toContain('class="opt-table-wrap');
     }
+    expect(configsPanelSource).not.toContain('class="opt-table-wrap');
     expect(appSource).toContain('optimize-workspace');
     expect(appSource).toContain('.optimize-workspace .opt-table-wrap');
     expect(appSource).toContain('.optimize-workspace .opt-table-wrap::after');
@@ -78,14 +80,27 @@ describe('Optimize page warning style contracts', () => {
     expect(appSource).toContain('box-shadow: var(--shadow-elevated), inset 0 1px 0');
   });
 
-  it('matches the PBv7 Backtest configuration table terminal-bar finish', () => {
-    expect(configsPanelSource).toContain('class="opt-table-frame opt-table-frame--content-sized"');
+  it('uses one shared visual contract for Backtest and Optimize configuration tables', () => {
+    expect(configsPanelSource).toContain('class="pbgui-config-list');
+    expect(configsPanelSource).toContain('class="pbgui-config-frame"');
+    expect(configsPanelSource).toContain('class="pbgui-config-wrap pbgui-list-wrap"');
+    expect(configsPanelSource).toContain('class="pbgui-config-table pbgui-list-table');
     expect(configsPanelSource).toContain('class="pbgui-list-footer"');
     expect(configsPanelSource).toContain('data-test="configs-list-footer"');
     expect(configsPanelSource).toContain("t('v7optimize.configCount', { count: rows.length })");
-    expect(appSource).toMatch(/\.opt-table-frame--content-sized \{[\s\S]*?flex: 0 1 auto;/);
-    expect(appSource).toMatch(/\.opt-table-frame--content-sized \.opt-table-wrap \{[\s\S]*?padding-bottom: 0;/);
-    expect(appSource).toContain('.opt-table-frame--content-sized .opt-table-wrap::after');
+    expect(sharedComponentsSource).toContain('.pbgui-config-frame');
+    expect(sharedComponentsSource).toContain('.pbgui-config-toolbar');
+    expect(sharedComponentsSource).toContain('.pbgui-config-table');
+    expect(sharedComponentsSource).toContain('min-width: 900px;');
+    expect(sharedComponentsSource).toContain('background: rgb(var(--accent-rgb) / 0.12);');
+    expect(sharedComponentsSource).toContain('border-left: 3px solid var(--accent);');
+    expect(sharedComponentsSource).toMatch(/\.pbgui-config-list \{[\s\S]*?display: flex;[\s\S]*?height: 100%;[\s\S]*?min-height: 0;/);
+    expect(sharedComponentsSource).toContain('.pbgui-config-list .pbgui-config-toolbar');
+    expect(sharedComponentsSource).toContain('.pbgui-config-list .pbgui-config-frame');
+    expect(sharedComponentsSource).toContain('tr:nth-child(even):not(:hover):not(.selected) td');
+    expect(sharedComponentsSource).toMatch(/\.pbgui-config-list \.pbgui-config-table td \{[\s\S]*?max-width: 300px;[\s\S]*?overflow: hidden;[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/);
+    expect(sharedComponentsSource).toMatch(/\.pbgui-config-list \.pbgui-config-table td\.pbgui-list-actions \{[\s\S]*?max-width: none;[\s\S]*?overflow: visible;[\s\S]*?text-overflow: clip;/);
+    expect(appSource).not.toContain('.opt-table-frame--content-sized');
   });
 
   it('excludes selected rows from zebra stripes and action-cell backgrounds', () => {

@@ -196,12 +196,12 @@ defineExpose({
 </script>
 
 <template>
-  <div>
-    <div v-if="configs.length > 0" id="configs-toolbar" class="pbgui-list-toolbar mb-2 flex flex-wrap items-center gap-2">
+  <div class="pbgui-config-list">
+    <div v-if="configs.length > 0" id="configs-toolbar" class="pbgui-config-toolbar pbgui-list-toolbar mb-2 flex flex-wrap items-center gap-2">
       <Input
         v-model="filter"
         type="text"
-        class="w-auto max-w-[220px]"
+        class="pbgui-config-search"
         :placeholder="t('v7backtest.searchName')"
         data-test="configs-filter"
         @input="emit('filter', filter)"
@@ -225,7 +225,10 @@ defineExpose({
           <SelectItem v-for="strategy in strategyOptions" :key="strategy" :value="strategy">{{ strategy }}</SelectItem>
         </SelectContent>
       </SelectRoot>
-      <span class="whitespace-nowrap text-sm text-secondary">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
+      <div class="pbgui-config-counts" aria-live="polite">
+        <span>{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
+        <span v-if="selected.length" class="pbgui-config-selected-count">{{ selected.length }} {{ t('v7backtest.queueSelected') }}</span>
+      </div>
       <span class="flex-1"></span>
       <Button type="button" variant="default" size="sm" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
       <Button type="button" variant="default" size="sm" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
@@ -253,7 +256,9 @@ defineExpose({
         </Button>
       </div>
     </section>
-    <table v-else class="pbgui-list-table configs-tbl w-full select-none text-sm">
+    <div v-else class="pbgui-config-frame">
+      <div class="pbgui-config-wrap pbgui-list-wrap">
+        <table class="pbgui-config-table pbgui-list-table w-full select-none text-sm">
       <thead>
         <tr>
           <th class="sticky top-0 z-[2] w-10 pr-1!">
@@ -284,37 +289,35 @@ defineExpose({
           <td class="w-10 pr-1!" @click.stop>
             <Checkbox :model-value="selected.includes(entry.name)" :aria-label="entry.name" @update:model-value="toggleRow(entry.name)" />
           </td>
-          <td class="max-w-[240px] truncate font-medium" :title="entry.name">{{ entry.name }}</td>
-          <td class="truncate" :title="exchangeText(entry)">{{ exchangeText(entry) }}</td>
+          <td class="pbgui-config-name max-w-[240px] truncate" :title="entry.name">{{ entry.name }}</td>
+          <td class="truncate" :title="exchangeText(entry)"><span class="pbgui-config-exchange">{{ exchangeText(entry) || '-' }}</span></td>
           <td v-if="isV8" class="truncate">{{ entry.strategy || '-' }}</td>
           <td class="max-w-[160px] truncate" :title="coinsTitle(entry)">{{ coinsText(entry) }}</td>
           <td class="truncate font-mono tabular-nums">{{ num(entry.twe_long, 2) }} / {{ num(entry.twe_short, 2) }}</td>
-          <td class="truncate text-xs tabular-nums text-secondary">{{ formatDateTime(entry.start_date) }}</td>
-          <td class="truncate text-xs tabular-nums text-secondary">{{ formatDateTime(entry.end_date) }}</td>
+          <td class="pbgui-config-date truncate">{{ formatDateTime(entry.start_date) }}</td>
+          <td class="pbgui-config-date truncate">{{ formatDateTime(entry.end_date) }}</td>
           <td
-            class="tabular-nums"
+            class="pbgui-config-count"
             :class="entry.results ? 'cursor-pointer font-semibold text-accent-soft' : 'cursor-default font-normal text-disabled'"
             @click.stop="entry.results ? emit('view-results', entry.name) : undefined"
           >
             {{ entry.results ?? 0 }}
           </td>
-          <td class="truncate text-xs tabular-nums text-secondary" :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
+          <td class="pbgui-config-date truncate" :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
           <td class="pbgui-list-actions" @click.stop>
             <div class="pbgui-list-actions__group">
-              <BacktestRowActionButton :icon="PhPencilSimple" :label="t('v7backtest.edit')" data-test="cfg-edit" @click="emit('edit', entry.name)" />
-              <BacktestRowActionButton :icon="PhPlay" :label="t('v7backtest.addToQueueTitle')" tone="accent" data-test="cfg-queue" @click="emit('queue', entry.name)" />
-              <BacktestRowActionButton :icon="PhChartBar" :label="t('v7backtest.viewResults')" tone="success" :disabled="!entry.results" data-test="cfg-results" @click="emit('view-results', entry.name)" />
-              <BacktestRowActionButton :icon="PhCopy" :label="t('v7backtest.duplicateConfig')" data-test="cfg-duplicate" @click="emit('duplicate', entry.name)" />
+              <BacktestRowActionButton class="pbgui-config-action" :icon="PhPencilSimple" :label="t('v7backtest.edit')" data-test="cfg-edit" @click="emit('edit', entry.name)" />
+              <BacktestRowActionButton class="pbgui-config-action" :icon="PhPlay" :label="t('v7backtest.addToQueueTitle')" tone="accent" data-test="cfg-queue" @click="emit('queue', entry.name)" />
+              <BacktestRowActionButton class="pbgui-config-action" :icon="PhChartBar" :label="t('v7backtest.viewResults')" tone="success" :disabled="!entry.results" data-test="cfg-results" @click="emit('view-results', entry.name)" />
+              <BacktestRowActionButton class="pbgui-config-action" :icon="PhCopy" :label="t('v7backtest.duplicateConfig')" data-test="cfg-duplicate" @click="emit('duplicate', entry.name)" />
             </div>
           </td>
         </tr>
       </tbody>
-    </table>
-
-    <footer v-if="configs.length > 0" class="pbgui-list-footer" data-test="configs-list-footer">
-      <span class="tabular-nums">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
-      <span v-if="selected.length" class="font-medium text-accent-soft tabular-nums">{{ selected.length }} {{ t('v7backtest.queueSelected') }}</span>
-    </footer>
+        </table>
+      </div>
+      <footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true"></footer>
+    </div>
 
     <div v-if="deleteConfirmOpen" id="modal-root" :class="modalBackdropClass" data-test="configs-delete-modal">
       <div :class="modalBoxClass">

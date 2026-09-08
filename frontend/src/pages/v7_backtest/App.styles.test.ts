@@ -198,6 +198,7 @@ describe('PBv7 config editor CSS contracts', () => {
        page-local rules must not creep back, and the BacktestRowActionButton
        chrome that stayed keeps its focus ring. */
     expect(css).not.toContain('.tbl');
+    expect(css).not.toContain('.configs-tbl');
     expectDeclaration(findRule(root, '.backtest-row-action:focus-visible'), 'outline', '2px solid var(--accent-soft)');
     expectDeclaration(findRule(root, '#panel-results .backtest-row-action:hover:not(:disabled)'), 'transform', 'translateY(-1px)');
   });

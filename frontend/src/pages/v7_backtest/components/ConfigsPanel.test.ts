@@ -35,6 +35,23 @@ afterEach(() => {
 });
 
 describe('rendering (:1677-1705)', () => {
+  it('renders the shared configuration-list visual contract', async () => {
+    const wrapper = mountPanel({ configs: [config({ name: 'alpha' })] });
+    await nextTick();
+
+    expect(wrapper.classes()).toContain('pbgui-config-list');
+    expect(wrapper.find('.pbgui-config-toolbar').exists()).toBe(true);
+    expect(wrapper.find('.pbgui-config-frame').exists()).toBe(true);
+    expect(wrapper.find('.pbgui-config-wrap').exists()).toBe(true);
+    expect(wrapper.find('table.pbgui-config-table').exists()).toBe(true);
+    expect(wrapper.find('.pbgui-config-name').text()).toBe('alpha');
+    expect(wrapper.find('.pbgui-config-exchange').text()).toBe('bybit');
+    expect(wrapper.find('.pbgui-config-date').text()).toContain('2021-01-01');
+    expect(wrapper.find('.pbgui-config-count').text()).toBe('2');
+    expect(wrapper.find('.pbgui-config-action').exists()).toBe(true);
+    expect(wrapper.get('[data-test="configs-list-footer"]').attributes('aria-hidden')).toBe('true');
+  });
+
   it('renders rows with the columns and the version-gated strategy column', async () => {
     const wrapper = mountPanel({ configs: [config({ name: 'alpha' }), config({ name: 'beta' })] });
     await nextTick();

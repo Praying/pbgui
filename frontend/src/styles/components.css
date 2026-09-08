@@ -1994,6 +1994,169 @@
     background: rgb(var(--accent-rgb) / 0.13);
   }
 
+  /* Backtest and Optimize configuration lists share one visual contract
+     while retaining their page-specific columns and selection behavior. */
+  .pbgui-config-list {
+    display: flex;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .pbgui-config-list .pbgui-config-toolbar {
+    min-height: 42px;
+    padding: 6px;
+    border: 1px solid rgb(var(--text-secondary-rgb) / 0.13);
+    border-radius: var(--radius-lg);
+    background: rgb(var(--bg-page-rgb) / 0.28);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
+  }
+
+  .pbgui-config-list .pbgui-config-search-wrap {
+    flex: 0 1 380px;
+    min-width: 240px;
+  }
+
+  .pbgui-config-list .pbgui-config-search {
+    width: min(380px, 100%);
+    min-width: 240px;
+  }
+
+  .pbgui-config-list .pbgui-config-counts {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-sm);
+    color: var(--text-secondary);
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .pbgui-config-list .pbgui-config-selected-count {
+    color: var(--accent-soft);
+    font-weight: 600;
+  }
+
+  .pbgui-config-list .pbgui-config-frame {
+    display: flex;
+    min-height: 0;
+    max-height: 100%;
+    flex: 0 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    background: var(--surface-deep);
+    box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
+  }
+
+  .pbgui-config-list .pbgui-config-wrap {
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .pbgui-config-list .pbgui-config-table {
+    min-width: 900px;
+    border-spacing: 0;
+    background: var(--surface-deep);
+  }
+
+  .pbgui-config-list .pbgui-config-table td {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pbgui-config-list .pbgui-config-table td.pbgui-list-actions {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+
+  .pbgui-config-list .pbgui-config-table th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .pbgui-config-list .pbgui-config-table tbody tr:nth-child(even):not(:hover):not(.selected) td {
+    background: rgb(var(--text-secondary-rgb) / 0.018);
+  }
+
+  .pbgui-config-list .pbgui-config-table tbody tr.selected td,
+  .pbgui-config-list .pbgui-config-table tbody tr.selected td:last-child {
+    background: rgb(var(--accent-rgb) / 0.12);
+  }
+
+  .pbgui-config-list .pbgui-config-table tbody td:first-child {
+    border-left: 3px solid transparent;
+  }
+
+  .pbgui-config-list .pbgui-config-table tbody tr.selected td:first-child {
+    border-left: 3px solid var(--accent);
+    box-shadow: none;
+  }
+
+  .pbgui-config-list .pbgui-config-table tbody tr.selected:hover td,
+  .pbgui-config-list .pbgui-config-table tbody tr.selected:hover td:last-child {
+    background: rgb(var(--accent-rgb) / 0.14);
+  }
+
+  .pbgui-config-list .pbgui-config-name {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+
+  .pbgui-config-list .pbgui-config-exchange {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pbgui-config-list .pbgui-config-date,
+  .pbgui-config-list .pbgui-config-count {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pbgui-config-list .pbgui-config-date {
+    color: var(--text-secondary);
+    font-size: var(--fs-xs);
+  }
+
+  .pbgui-config-list .pbgui-config-action:focus-visible {
+    outline: 2px solid var(--accent-soft);
+    outline-offset: 2px;
+    box-shadow: var(--focus-ring);
+  }
+
+  .pbgui-config-list .pbgui-config-frame > .pbgui-list-footer {
+    min-height: 30px;
+    padding-block: 5px;
+  }
+
+  @media (max-width: 640px) {
+    .pbgui-config-list .pbgui-config-search-wrap,
+    .pbgui-config-list .pbgui-config-search {
+      width: 100%;
+      min-width: 0;
+      flex-basis: 100%;
+    }
+
+    .pbgui-config-list .pbgui-config-counts {
+      flex-basis: 100%;
+    }
+  }
+
   /* ── Forms ──────────────────────────────────────────────────── */
 
   .form-group {

@@ -63,7 +63,7 @@ const duplicateLabel = computed(() => t('v7optimize.duplicate'));
 function isSorted(key: string): boolean { return props.sort.key === key; }
 function sortIcon(key: string): Component { return props.sort.key === key && props.sort.direction === 'desc' ? PhCaretDown : PhCaretUp; }
 /* Icon-only row actions (edit / duplicate) reuse the backtest row-action tone: quiet border, accent on hover. */
-const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
+const iconActionClass = 'pbgui-config-action size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
 const wrap = ref<HTMLElement | null>(null);
 const tbody = ref<HTMLElement | null>(null);
 const dragSelect = useRowDragSelect({
@@ -77,28 +77,29 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="opt-panel-controls opt-filter-bar pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
-    <div class="opt-panel-search" role="search">
-      <Input
-        class="min-w-60"
-        :model-value="search"
-        :placeholder="t('v7optimize.searchOptimizeName')"
-        @update:model-value="emit('update:search', String($event ?? ''))"
-      />
+  <div class="pbgui-config-list flex min-h-0 flex-col">
+    <div class="pbgui-config-toolbar pbgui-list-toolbar mb-2 flex flex-wrap items-center gap-2">
+      <div class="pbgui-config-search-wrap" role="search">
+        <Input
+          class="pbgui-config-search"
+          :model-value="search"
+          :placeholder="t('v7optimize.searchOptimizeName')"
+          @update:model-value="emit('update:search', String($event ?? ''))"
+        />
+      </div>
+      <div class="pbgui-config-counts" aria-live="polite">
+        <span>{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
+        <span v-if="selectedCount" class="pbgui-config-selected-count">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
+      </div>
+      <span class="flex-1"></span>
+      <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
+      <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
     </div>
-    <div class="opt-panel-counts flex items-center gap-2.5 text-xs text-secondary" aria-live="polite">
-      <span>{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
-      <span v-if="selectedCount" class="font-medium text-accent-soft">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
-    </div>
-    <span class="flex-1"></span>
-    <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
-    <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
-  </div>
-  <div class="opt-table-frame opt-table-frame--content-sized">
-    <div ref="wrap" class="opt-table-wrap opt-table-wrap--configs pbgui-list-wrap min-h-0 flex-1 overflow-auto">
-      <table class="opt-table opt-table--configs pbgui-list-table w-full border-separate border-spacing-0 text-sm max-[800px]:min-w-[720px]">
-        <thead>
-          <tr>
+    <div class="pbgui-config-frame">
+      <div ref="wrap" class="pbgui-config-wrap pbgui-list-wrap">
+        <table class="pbgui-config-table pbgui-list-table w-full border-separate border-spacing-0 text-sm">
+          <thead>
+            <tr>
             <th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="configs-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></th>
             <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'name')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thName') }}<PbIcon v-if="isSorted('name')" :icon="sortIcon('name')" :size="12" class="text-accent-soft" /></span></th>
             <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'exchange')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thExchange') }}<PbIcon v-if="isSorted('exchange')" :icon="sortIcon('exchange')" :size="12" class="text-accent-soft" /></span></th>
@@ -109,43 +110,42 @@ onBeforeUnmount(() => dragSelect.dispose());
             <th>{{ t('v7optimize.thFlags') }}</th>
             <th class="cursor-pointer transition-colors hover:text-primary" @click="emit('sort', 'modified')"><span class="inline-flex items-center gap-1">{{ t('v7optimize.thModified') }}<PbIcon v-if="isSorted('modified')" :icon="sortIcon('modified')" :size="12" class="text-accent-soft" /></span></th>
             <th>{{ t('v7optimize.thActions') }}</th>
-          </tr>
-        </thead>
-        <tbody ref="tbody">
-          <tr
-            v-for="row in rows"
-            :key="rowName(row)"
-            :data-path="rowName(row)"
-            :class="{ selected: selected.has(rowName(row)) }"
-            @dblclick="emit('edit', rowName(row))"
-          >
+            </tr>
+          </thead>
+          <tbody ref="tbody">
+            <tr
+              v-for="row in rows"
+              :key="rowName(row)"
+              :data-path="rowName(row)"
+              :class="{ selected: selected.has(rowName(row)) }"
+              @dblclick="emit('edit', rowName(row))"
+            >
             <td class="w-10 pr-1!" @click.stop>
               <Checkbox :model-value="selected.has(rowName(row))" :aria-label="rowName(row)" @update:model-value="emit('toggle', rowName(row))" />
             </td>
-            <td class="max-w-[280px] truncate font-mono" :title="rowName(row)">{{ rowName(row) }}</td>
+            <td class="pbgui-config-name max-w-[280px] truncate" :title="rowName(row)">{{ rowName(row) }}</td>
             <td>
-              <span v-if="exchange(row)" class="inline-flex max-w-[180px] items-center truncate rounded-md border border-border-default/70 bg-elevated/40 px-1.5 py-0.5 font-mono text-xs text-secondary" :title="exchange(row)">{{ exchange(row) }}</span>
-              <span v-else class="text-muted">-</span>
+              <span class="pbgui-config-exchange" :title="exchange(row)">{{ exchange(row) || '-' }}</span>
             </td>
-            <td v-if="isV8"><span v-if="row.strategy" class="font-mono text-xs text-secondary">{{ row.strategy }}</span><span v-else class="text-muted">-</span></td>
-            <td class="tabular-nums" :class="backtestCount(row) ? 'font-semibold' : 'text-muted'">{{ backtestCount(row) }}</td>
-            <td class="tabular-nums text-xs text-secondary">{{ shortDate(value(row, 'start', 'start_date')) || '-' }}</td>
-            <td class="tabular-nums text-xs text-secondary">{{ shortDate(value(row, 'end', 'end_date')) || '-' }}</td>
-            <td>
+            <td v-if="isV8" data-test="config-strategy" :title="String(row.strategy || '')"><span v-if="row.strategy" class="font-mono text-xs text-secondary">{{ row.strategy }}</span><span v-else class="text-muted">-</span></td>
+            <td class="pbgui-config-count" :class="backtestCount(row) ? 'font-semibold' : 'text-muted'">{{ backtestCount(row) }}</td>
+            <td class="pbgui-config-date">{{ shortDate(value(row, 'start', 'start_date')) || '-' }}</td>
+            <td class="pbgui-config-date">{{ shortDate(value(row, 'end', 'end_date')) || '-' }}</td>
+            <td data-test="config-flags" :title="flagList(row).join(', ')">
               <span v-if="flagList(row).length" class="flex flex-wrap items-center gap-1">
                 <span v-for="flag in flagList(row)" :key="flag" class="inline-flex items-center rounded border border-border-default/60 px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ flag }}</span>
               </span>
               <span v-else class="text-muted">-</span>
             </td>
-            <td class="tabular-nums text-xs text-secondary" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
+            <td class="pbgui-config-date" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
             <td class="pbgui-list-actions whitespace-nowrap! overflow-visible!" @click.stop>
               <div class="pbgui-list-actions__group">
                 <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="editLabel" :aria-label="editLabel" data-test="config-edit" @click="emit('edit', rowName(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
                 <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="duplicateLabel" :aria-label="duplicateLabel" data-test="config-duplicate" @click="emit('duplicate', rowName(row))"><PbIcon :icon="PhCopy" :size="16" /></Button>
               </div>
             </td>
-          </tr>
-          <tr v-if="!rows.length">
+            </tr>
+            <tr v-if="!rows.length">
             <td :colspan="isV8 ? 10 : 9" class="p-8! text-center">
               <EmptyState
                 :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
@@ -154,10 +154,11 @@ onBeforeUnmount(() => dragSelect.dispose());
                 @action="emit('create')"
               />
             </td>
-          </tr>
-        </tbody>
-      </table>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true"></footer>
     </div>
-    <footer class="pbgui-list-footer" data-test="configs-list-footer" aria-hidden="true"></footer>
   </div>
 </template>

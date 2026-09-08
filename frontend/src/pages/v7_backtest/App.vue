@@ -1053,19 +1053,6 @@ body {
 }
 #panel-results .backtest-row-action:hover:not(:disabled) { transform: translateY(-1px); }
 #panel-results .backtest-row-action:active:not(:disabled) { transform: translateY(1px) scale(0.97); }
-/* Configs list: sticky-column background compensation + zebra at the shared
-   workbench tint (optimize .opt-table uses the same 0.018). The checkboxes
-   are ui/ Checkbox now — the checkbox column is w-10 pr-1 utilities. */
-.configs-tbl { background: var(--surface-deep); }
-/* The bare configs table has no framing wrap, so the pbgui-list-footer's
-   top border takes over as the closing edge — the last row drops its own
-   separator to match the framed lists. */
-.configs-tbl tbody tr:last-child td { border-bottom: 0; }
-.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td { background: rgb(var(--text-secondary-rgb) / 0.018); }
-.configs-tbl tbody tr:nth-child(even):not(:hover):not(.selected) td:last-child { background: rgb(var(--text-secondary-rgb) / 0.018); }
-.configs-tbl tbody tr:hover td:last-child { background: rgb(var(--accent-rgb) / 0.055); }
-.configs-tbl tbody tr.selected td:last-child { background: rgb(var(--accent-rgb) / 0.12); }
-
 /* ═══════════════════════════════════════════════════════════════
    Shared editor form system — CROSS-PAGE CONTRACT.
    src/shared/coinOverrides/components/CoinOverridesPanel.vue renders
