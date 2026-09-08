@@ -661,28 +661,15 @@ onBeforeUnmount(() => {
    unscoped block. */
 body { overflow: hidden; }
 
-.opt-table th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  height: 34px;
-  padding: 8px 10px;
-  background: var(--surface-panel);
-  border-bottom: 2px solid var(--border-default);
-  color: var(--text-secondary);
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.045em;
-  text-align: left;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
+/* Header chrome (height, casing, 2px rule) and cell geometry (height, padding,
+   the 1px row separator) come from the .pbgui-list-table contract in
+   components.css, and the sticky offset from the ui/table Th/SortTh utilities.
+   Do NOT restate them here: this block is un-layered, so it would override
+   the contract's "last data row drops its separator" finish rule for every
+   opt table and leave the list without a clean ending (the Queue panel bug).
+   Only the opt-specific cell truncation stays. */
 .opt-table td {
   max-width: 300px;
-  height: 42px;
-  padding: 8px 10px;
-  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

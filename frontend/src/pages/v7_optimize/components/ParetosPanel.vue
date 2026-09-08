@@ -169,7 +169,7 @@ onBeforeUnmount(() => dragSelect.dispose());
       <Table class="opt-table opt-table--paretos max-[800px]:min-w-[720px]">
         <thead>
           <tr>
-            <Th :sticky="false" class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="paretos-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
+            <Th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="paretos-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
             <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
             <template v-if="summaryKeys.length"><SortTh v-for="key in summaryKeys" :key="key" :sort-key="`summary:${key}`" :label="key" :data-sort-key="`summary:${key}`" :sort="sort.key === `summary:${key}` ? sort.direction : undefined" @sort="emit('sort', `summary:${key}`)" /></template>
             <Th v-else>{{ t('v7optimize.thSummary') }}</Th>

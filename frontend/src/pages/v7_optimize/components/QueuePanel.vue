@@ -134,7 +134,7 @@ function dropRow(row: QueueItem, event: DragEvent): void {
       <Table class="opt-table opt-table--queue max-[800px]:min-w-[720px]">
         <thead>
           <tr>
-            <Th :sticky="false" class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="queue-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
+            <Th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="queue-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
             <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
             <SortTh sort-key="exchange" :label="t('v7optimize.thExchange')" :sort="sort.key === 'exchange' ? sort.direction : undefined" @sort="emit('sort', 'exchange')" />
             <SortTh sort-key="status" :label="t('v7optimize.thStatus')" :sort="sort.key === 'status' ? sort.direction : undefined" @sort="emit('sort', 'status')" />
