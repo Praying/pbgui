@@ -11,7 +11,14 @@
  * without a look change. The default width is the 520px confirm size;
  * override via `panel-class` for wider dialogs.
  */
-import { DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle } from 'reka-ui';
+import {
+  DialogContent,
+  DialogDescription,
+  DialogOverlay,
+  DialogPortal,
+  DialogRoot,
+  DialogTitle,
+} from 'reka-ui';
 import { PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -28,6 +35,8 @@ interface ModalProps {
   backdropClose?: boolean;
   /** Already-translated aria-label for the ✕ button (ui primitives stay i18n-free). */
   closeLabel?: string;
+  /** Screen-reader description; the generic default keeps every dialog labelled. */
+  description?: string;
   /** Optional header classes for content-heavy dialogs that need a denser chrome. */
   headerClass?: string;
 }
@@ -37,6 +46,7 @@ const props = withDefaults(defineProps<ModalProps>(), {
   dismissable: true,
   backdropClose: true,
   closeLabel: 'Close',
+  description: 'Dialog content',
   headerClass: '',
 });
 
@@ -75,6 +85,9 @@ function onOpenChange(open: boolean): void {
             <PbIcon :icon="PhX" :size="16" />
           </Button>
         </div>
+        <DialogDescription data-slot="dialog-description" class="sr-only">
+          {{ props.description }}
+        </DialogDescription>
         <div class="grid min-h-0 flex-1 gap-3 overflow-y-auto p-5">
           <slot />
           <div v-if="$slots.footer" class="flex flex-wrap justify-end gap-2">

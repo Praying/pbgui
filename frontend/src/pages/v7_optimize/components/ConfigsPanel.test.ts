@@ -21,6 +21,20 @@ describe('ConfigsPanel', () => {
     expect(wrapper.find('.pbgui-config-count').text()).toBe('3');
     expect(wrapper.find('.pbgui-config-action').exists()).toBe(true);
     expect(wrapper.get('[data-test="configs-list-footer"]').attributes('aria-hidden')).toBe('true');
+    expect(wrapper.get('tbody tr[data-path="alpha"]').attributes('aria-selected')).toBe('false');
+    expect(wrapper.get('tbody tr[data-path="alpha"]').attributes('tabindex')).toBe('0');
+    wrapper.unmount();
+  });
+
+  it('toggles config selection from keyboard activation', async () => {
+    const wrapper = mount(ConfigsPanel, {
+      props: { rows: [{ name: 'alpha', exchange: 'bybit' }], selected: new Set<string>(), search: '', isV8: false },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    await wrapper.get('tbody tr[data-path="alpha"]').trigger('keydown', { key: 'Enter' });
+
+    expect(wrapper.emitted('toggle')).toEqual([['alpha']]);
     wrapper.unmount();
   });
 

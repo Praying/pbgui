@@ -89,6 +89,18 @@ describe('Coin Data page shell', () => {
     expect(wrapper.get('#main-panel').classes()).toContain('coin-data-panel');
     expect(wrapper.get('#main-panel .table-wrap').classes()).toContain('coin-data-table-wrap');
     expect(wrapper.get('#main-panel th').classes()).toContain('coin-table-header');
+    expect(mainRows[0]!.attributes('aria-selected')).toBe('false');
+    expect(mainRows[0]!.attributes('tabindex')).toBe('0');
+  });
+
+  it('supports keyboard selection for symbol rows', async () => {
+    const wrapper = await mountApp();
+    const firstRow = wrapper.get('#main-body tr.data-row');
+
+    await firstRow.trigger('keydown', { key: 'Enter' });
+
+    expect(firstRow.attributes('aria-selected')).toBe('true');
+    expect(firstRow.classes()).toContain('selected');
   });
 
   it('switches views through the rail sections and renders the unmatched table', async () => {

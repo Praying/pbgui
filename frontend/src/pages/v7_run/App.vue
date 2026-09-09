@@ -150,6 +150,7 @@ onBeforeUnmount(() => {
     class="core-workbench-shell core-workbench-shell--run"
     :page-key="adapter.navCurrent"
     :page-title="t(adapter.titleKey)"
+    :page-description="t('v7run.pageDescription')"
     :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
   >
     <template #header-actions>

@@ -10,6 +10,7 @@
 import { useI18n } from 'vue-i18n';
 import { PhCaretDown, PhCaretUp, PhDatabase } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
+import { Table } from '@/shared/components/ui/table';
 import { columnsForTable, type ColumnDef } from '../lib/columns';
 import { formatCompact, formatPrice, formatRatio, rowKey } from '../lib/format';
 import type { SortState, TableViewName } from '../types';
@@ -62,6 +63,12 @@ function rowClass(selected: boolean): string {
   return selected ? 'selected' : '';
 }
 
+function onRowKeydown(event: KeyboardEvent, key: string): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  emit('select', props.table, key);
+}
+
 function headerLabel(column: ColumnDef): string {
   return column.labelKey ? t(column.labelKey) : column.key;
 }
@@ -110,7 +117,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
 
 <template>
   <div class="table-wrap" :class="tableWrapClass()">
-    <table :class="tableClass()">
+    <Table :class="tableClass()">
       <colgroup><col v-for="column in columns" :key="column.key" :style="{ width: column.width }" /></colgroup>
       <thead>
         <tr>
@@ -146,7 +153,10 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           :class="rowClass(selectedKey === rowKey(row, table))"
           :data-table="table"
           :data-key="rowKey(row, table)"
+          :aria-selected="selectedKey === rowKey(row, table) ? 'true' : 'false'"
+          tabindex="0"
           @click="emit('select', table, rowKey(row, table))"
+          @keydown="onRowKeydown($event, rowKey(row, table))"
         >
           <td v-for="column in columns" :key="column.key" class="coin-table-cell px-[0.65rem] py-[0.38rem] border-b text-primary leading-[1.12] align-middle overflow-hidden text-ellipsis whitespace-nowrap" :class="[column.mono ? 'mono text-sm' : 'text-md', column.centered ? 'text-center' : column.numeric ? 'text-right' : '']" :title="cellText(row, column)">
             <template v-if="column.render === 'cpt'">
@@ -168,7 +178,7 @@ function rowTags(row: Record<string, unknown>, column: ColumnDef): string[] {
           </td>
         </tr>
       </tbody>
-    </table>
+    </Table>
   </div>
   <div class="coin-table-empty empty-state flex flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center" :id="table + '-empty'" :class="rows.length > 0 ? 'hidden' : ''">
     <span class="grid h-12 w-12 place-items-center rounded-xl border text-secondary">

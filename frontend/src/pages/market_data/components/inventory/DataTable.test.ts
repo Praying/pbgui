@@ -66,6 +66,8 @@ describe('rendering (:8034-8062)', () => {
     const table = makeTable({ selectedIds: ['eth'] });
     const selected = table.findAll('tbody tr').filter((r) => r.classes('is-selected'));
     expect(selected.map((r) => r.attributes('data-row-id'))).toEqual(['eth']);
+    expect(selected[0]!.attributes('aria-selected')).toBe('true');
+    expect(table.findAll('tbody tr')[0]!.attributes('aria-selected')).toBe('false');
   });
 });
 
@@ -133,6 +135,16 @@ describe('row selection (:9417-9423, :9498-9510)', () => {
     document.dispatchEvent(new MouseEvent('mouseup'));
     // the DOM now holds btc (kept) + sol (toggled)
     expect(table.emitted('commit')).toEqual([[['btc', 'sol']]]);
+  });
+
+  it('commits keyboard row selection with Enter and Space', async () => {
+    const table = makeTable();
+    const row = table.findAll('tbody tr')[1]!;
+
+    await row.trigger('keydown', { key: 'Enter' });
+    await row.trigger('keydown', { key: ' ' });
+
+    expect(table.emitted('commit')).toEqual([[['eth']], [[]]]);
   });
 });
 

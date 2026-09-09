@@ -34,6 +34,15 @@ describe('Modal', () => {
     expect(dialog!.querySelector('.modal-body-text')?.textContent).toBe('Are you sure?');
   });
 
+  it('provides an accessible description for every dialog', async () => {
+    await mountModal(true, { description: 'Review this action before continuing.' });
+
+    const dialog = document.querySelector('[role="dialog"]');
+    const description = dialog?.querySelector('[data-slot="dialog-description"]');
+    expect(description?.textContent).toBe('Review this action before continuing.');
+    expect(dialog?.getAttribute('aria-describedby')).toBe(description?.getAttribute('id'));
+  });
+
   it('keeps the modal body shrinkable so long content can scroll', async () => {
     await mountModal();
 

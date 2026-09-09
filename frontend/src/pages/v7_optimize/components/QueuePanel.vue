@@ -114,6 +114,12 @@ function dropRow(row: QueueItem, event: DragEvent): void {
   order.splice(index < 0 ? order.length : index + 1, 0, source);
   emit('reorder', order);
 }
+
+function onQueueRowKeydown(event: KeyboardEvent, queueFilename: string): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  emit('toggle', queueFilename);
+}
 </script>
 
 <template>
@@ -143,7 +149,7 @@ function dropRow(row: QueueItem, event: DragEvent): void {
           </tr>
         </thead>
         <tbody ref="tbody">
-          <tr v-for="row in rows" :key="filename(row)" :data-path="filename(row)" draggable="true" :class="{ selected: selected.has(filename(row)) }" @dragstart="dragStart(row, $event)" @dragover.prevent @drop="dropRow(row, $event)">
+          <tr v-for="row in rows" :key="filename(row)" :data-path="filename(row)" draggable="true" :class="{ selected: selected.has(filename(row)) }" :aria-selected="selected.has(filename(row)) ? 'true' : 'false'" tabindex="0" @dragstart="dragStart(row, $event)" @dragover.prevent @drop="dropRow(row, $event)" @keydown="onQueueRowKeydown($event, filename(row))">
             <td class="w-10 pr-1!" @click.stop>
               <Checkbox :model-value="selected.has(filename(row))" :aria-label="row.name || filename(row)" @update:model-value="emit('toggle', filename(row))" />
             </td>

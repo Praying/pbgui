@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { Modal } from '@/shared/components/ui/modal';
 import { useEditPageContext } from '../composables/useEditPage';
 import { validateJsonText } from '@/shared/jsonValidation';
 
@@ -145,10 +146,15 @@ function userOptionClass(active: boolean): string {
 </script>
 
 <template>
-  <Teleport to="body">
-    <div v-if="open" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-backdrop" id="import-modal" @mousedown.self="close">
-      <div class="flex w-[90%] max-w-[800px] max-h-[80dvh] flex-col gap-3 rounded-lg border border-border-default bg-panel p-5">
-        <h3 class="text-lg">{{ t('v7run.pasteConfig') }}</h3>
+  <Modal
+    v-model:open="open"
+    :title="t('v7run.pasteConfig')"
+    :dismissable="true"
+    :backdrop-close="false"
+    :close-label="t('common.close')"
+    panel-class="w-[min(800px,90vw)]"
+    @cancel="close"
+  >
         <div class="form-group">
           <label>{{ t('v7run.user') }}</label>
           <div class="user-combobox relative">
@@ -224,7 +230,5 @@ function userOptionClass(active: boolean): string {
           <Button variant="success" type="button" @click="doImport()">{{ t('common.ok') }}</Button>
           <Button type="button" @click="close()">{{ t('common.cancel') }}</Button>
         </div>
-      </div>
-    </div>
-  </Teleport>
+  </Modal>
 </template>

@@ -680,6 +680,7 @@ onUnmounted(() => {
     class="operations-shell operations-shell--services"
     page-key="system_services"
     :page-title="t('sysmon.servicesTitle')"
+    :page-description="t('sysmon.servicesDescription')"
     :sections="sections"
     :active-section="activePanel"
     @update:section="selectPanel"

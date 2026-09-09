@@ -15,6 +15,20 @@ describe('QueuePanel', () => {
     expect(moveDown.attributes('aria-label')).toBeTruthy();
     expect(moveUp.find('svg').exists()).toBe(true);
     expect(moveDown.find('svg').exists()).toBe(true);
+    expect(wrapper.get('tbody tr[data-path="a"]').attributes('aria-selected')).toBe('false');
+    expect(wrapper.get('tbody tr[data-path="a"]').attributes('tabindex')).toBe('0');
+    wrapper.unmount();
+  });
+
+  it('toggles queue selection from keyboard activation', async () => {
+    const wrapper = mount(QueuePanel, {
+      props: { rows: [{ filename: 'a', name: 'a' }], selected: new Set<string>(), search: '' },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    await wrapper.get('tbody tr[data-path="a"]').trigger('keydown', { key: ' ' });
+
+    expect(wrapper.emitted('toggle')).toEqual([['a']]);
     wrapper.unmount();
   });
 

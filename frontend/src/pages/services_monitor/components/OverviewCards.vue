@@ -11,6 +11,7 @@ import { PhArrowClockwise, PhArrowRight, PhPlay, PhStop, PhToggleLeft, PhToggleR
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { StatusBadge } from '@/shared/components/ui/workbench-primitives';
 import { SERVICES } from '../services';
 import {
   migrationStatusMeta,
@@ -150,6 +151,13 @@ const cards = computed<Card[]>(() => {
 
   return list;
 });
+
+function statusTone(card: Card): 'neutral' | 'success' | 'warning' | 'danger' | 'info' {
+  if (card.dotCls === 'running') return 'success';
+  if (card.dotCls === 'stopped') return 'danger';
+  if (card.dotCls === 'warn') return 'warning';
+  return 'neutral';
+}
 </script>
 
 <template>
@@ -163,7 +171,16 @@ const cards = computed<Card[]>(() => {
       @click="emit('select', c.panelId)"
     >
       <div class="card-name">{{ c.name }}</div>
-      <div class="card-status-row" :title="c.title"><span class="card-dot" :class="c.dotCls"></span>{{ c.statusText }}</div>
+      <StatusBadge
+        class="card-status-row"
+        :label="c.statusText"
+        :tone="statusTone(c)"
+        :title="c.title"
+      >
+        <template #indicator>
+          <span class="card-dot" :class="c.dotCls" aria-hidden="true"></span>
+        </template>
+      </StatusBadge>
       <div class="card-buttons">
         <Button
           v-for="b in c.buttons"

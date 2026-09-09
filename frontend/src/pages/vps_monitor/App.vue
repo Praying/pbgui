@@ -14,7 +14,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
-import { MetricBlock } from '@/shared/components/ui/workbench-primitives';
+import { ChartFrame, MetricBlock } from '@/shared/components/ui/workbench-primitives';
 import {
   SelectContent,
   SelectItem,
@@ -339,6 +339,7 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
     class="operations-shell operations-shell--vps-monitor"
     page-key="system_vps_monitor"
     :page-title="t('sysmon.vpsMonitor')"
+    :page-description="t('sysmon.vpsMonitorDescription')"
     :sections="sections"
     :active-section="activeTab"
     @update:section="onSectionSelect"
@@ -417,7 +418,7 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
       </section>
     </div>
 
-    <div v-if="historyModal" data-modal="history" class="modal-backdrop p-5" role="dialog" aria-modal="true" aria-labelledby="history-modal-title"><div class="flex max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 id="history-modal-title" class="m-0 text-[1.05rem]">{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><Button data-close="history" type="button" variant="primary" size="sm" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3"><ErrorState v-if="historyModal.error" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :label="t('common.loading')" /><template v-else><MetricHistoryChart :data="historyModal.data" :label="`${metricTitle(historyModal.metric)} — ${historyModal.host}`" /></template></div></div></div>
+    <div v-if="historyModal" data-modal="history" class="modal-backdrop p-5" role="dialog" aria-modal="true" aria-labelledby="history-modal-title"><div class="flex max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 id="history-modal-title" class="m-0 text-[1.05rem]">{{ metricTitle(historyModal.metric) }} — {{ historyModal.host }}</h2><Button data-close="history" type="button" variant="primary" size="sm" @click="historyModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3"><ErrorState v-if="historyModal.error" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('common.error')" :message="historyModal.error" :retry-label="t('common.refresh')" @retry="openHistory(historyModal!.host, historyModal!.metric, historyModal!.bot)" /><LoadingSkeleton v-else-if="!historyModal.data" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :label="t('common.loading')" /><ChartFrame v-else :title="`${metricTitle(historyModal.metric)} — ${historyModal.host}`"><MetricHistoryChart :data="historyModal.data" :label="`${metricTitle(historyModal.metric)} — ${historyModal.host}`" /></ChartFrame></div></div></div>
     <div v-if="resultModal" data-modal="result" class="modal-backdrop p-5" role="dialog" aria-modal="true" aria-labelledby="result-modal-title"><div class="flex max-h-[calc(100dvh-40px)] w-[min(1000px,calc(100vw-40px))] flex-col overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal p-4.5"><div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5"><h2 id="result-modal-title" class="m-0 text-[1.05rem]">{{ resultModal.title }}</h2><Button data-close="result" type="button" variant="primary" size="sm" @click="closeResult"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="pt-3.5 whitespace-pre-wrap break-words text-primary">{{ resultModal.message }}</div></div></div>
   </div>
   </AppShell>

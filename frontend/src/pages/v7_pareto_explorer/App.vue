@@ -66,6 +66,7 @@ import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Slider } from '@/shared/components/ui/slider';
+import { PageToolbar } from '@/shared/components/ui/workbench-primitives';
 import CommandCenter from './components/CommandCenter.vue';
 import ConfigDetail from './components/ConfigDetail.vue';
 import Playground from './components/Playground.vue';
@@ -379,6 +380,7 @@ onBeforeUnmount(() => {
     class="core-workbench-shell core-workbench-shell--explorer"
     :page-key="readSeedOptimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer'"
     :page-title="t('v7explore.paretoExplorer')"
+    :page-description="t('v7explore.pageSubtitle')"
     :page-family="readSeedOptimizeVersion() === 'v8' ? 'PBv8' : 'PBv7'"
     :sections="railSections"
     :active-section="store.state.stage"
@@ -404,7 +406,7 @@ onBeforeUnmount(() => {
     <div class="workbench-page-content flex min-w-0 flex-1 flex-col gap-[var(--section-gap)] overflow-auto p-[var(--page-padding)]">
     <!-- Stage nav lives in the workbench rail; this strip carries only the
          session actions (legacy ctx-actions :767-777). -->
-    <div class="page-toolbar" role="toolbar">
+    <PageToolbar :label="t('v7explore.paretoExplorer')">
       <Button variant="ghost" type="button" id="btn-back-optimize" @click="goBackToOptimize">
         <span>{{ t('v7explore.backToOptimize') }}</span>
       </Button>
@@ -431,7 +433,7 @@ onBeforeUnmount(() => {
       <Button variant="secondary" v-show="store.state.allResultsLoaded" type="button" id="btn-load-pareto-only" @click="store.loadParetoOnly()">
         <span>{{ t('v7explore.showPassivbotParetos') }}</span>
       </Button>
-    </div>
+    </PageToolbar>
 
       <section class="page-title sr-only flex items-start justify-between gap-5">
         <div>

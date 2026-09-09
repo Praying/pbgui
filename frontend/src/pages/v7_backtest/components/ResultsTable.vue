@@ -98,6 +98,12 @@ function compareGroup(paths: string[]): void {
   emit('select-paths', paths, true);
   emit('compare-group', paths);
 }
+
+function onResultRowKeydown(event: KeyboardEvent, resultPath: string): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  emit('toggle-select', resultPath);
+}
 const showCoins = computed(() =>
   props.rows.some((row) => Boolean(row.coins_text) || (Array.isArray(row.coins) && row.coins.length > 0))
 );
@@ -243,8 +249,11 @@ onBeforeUnmount(() => dragSelect.dispose());
             :data-liquidated="entry.row.liquidated ? 'true' : undefined"
             :class="{ selected: selected.has(entry.row.path), 'result-group-member': entry.grouped }"
             :hidden="entry.hidden || undefined"
+            :aria-selected="selected.has(entry.row.path) ? 'true' : 'false'"
+            tabindex="0"
             :style="entry.row.liquidated ? { background: 'rgb(var(--danger-rgb) / .10)' } : undefined"
             @click="emit('toggle-select', entry.row.path)"
+            @keydown="onResultRowKeydown($event, entry.row.path)"
           >
           <td v-if="showVersion" class="truncate font-semibold text-secondary">PB{{ (entry.row.backtest_version || '').toUpperCase() }}</td>
           <td :title="entry.row.display_name || `${entry.row.config_name}/${entry.row.exchange_dir || ''}/${entry.row.result_name}`" data-col="config_name" class="max-w-[280px] truncate font-medium text-primary">

@@ -121,6 +121,18 @@ describe('rows (:5541-5574)', () => {
     const wrapper = mountTable();
     expect(wrapper.find('thead input[type="checkbox"]').exists()).toBe(false);
     expect(wrapper.find('tbody input[type="checkbox"]').exists()).toBe(false);
+    expect(wrapper.find('tbody tr[data-path="p2"]').attributes('aria-selected')).toBe('true');
+    expect(wrapper.find('tbody tr[data-path="p1"]').attributes('tabindex')).toBe('0');
+  });
+
+  it('toggles full-row selection from Enter and Space', async () => {
+    const wrapper = mountTable({ selected: new Set<string>() });
+    const rowElement = wrapper.find('tbody tr[data-path="p1"]');
+
+    await rowElement.trigger('keydown', { key: 'Enter' });
+    await rowElement.trigger('keydown', { key: ' ' });
+
+    expect(wrapper.emitted('toggle-select')).toEqual([['p1'], ['p1']]);
   });
 
   it('renders metric cells with legacy precision and the TWE/POS pairs', () => {

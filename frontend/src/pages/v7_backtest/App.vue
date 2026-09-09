@@ -578,6 +578,7 @@ watch(
     class="core-workbench-shell core-workbench-shell--backtest"
     :page-key="store.adapter.navCurrent"
     :page-title="t(store.adapter.titleKey, store.adapter.titleParams)"
+    :page-description="t('v7backtest.pageDescription')"
     :page-family="store.adapter.label"
     :status-text="bannerText"
     :status-tone="bannerClass === 'conn-ok' ? 'success' : bannerClass === 'conn-lost' ? 'danger' : 'neutral'"

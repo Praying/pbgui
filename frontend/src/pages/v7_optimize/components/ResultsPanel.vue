@@ -47,6 +47,12 @@ function mode(row: ResultSummary): string {
   const count = Number(row.scenario_count || 0);
   return count > 0 ? `${label} · ${count}` : label;
 }
+
+function onResultRowKeydown(event: KeyboardEvent, resultPath: string): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  emit('toggle', resultPath);
+}
 /* Trim the noisy ISO microseconds (:47.207418) to YYYY-MM-DD HH:MM. */
 function shortDateTime(input: unknown): string {
   const text = String(input ?? '');
@@ -99,7 +105,7 @@ onBeforeUnmount(() => dragSelect.dispose());
           </tr>
         </thead>
         <tbody ref="tbody">
-          <tr v-for="row in rows" :key="path(row)" :data-path="path(row)" :class="{ selected: selected.has(path(row)), 'is-open': selectedPath === path(row) }" @dblclick="hasPareto(row) && emit('open', row)">
+          <tr v-for="row in rows" :key="path(row)" :data-path="path(row)" :class="{ selected: selected.has(path(row)), 'is-open': selectedPath === path(row) }" :aria-selected="selected.has(path(row)) ? 'true' : 'false'" tabindex="0" @dblclick="hasPareto(row) && emit('open', row)" @keydown="onResultRowKeydown($event, path(row))">
             <td class="w-10 pr-1!" @click.stop>
               <Checkbox :model-value="selected.has(path(row))" :aria-label="displayName(row)" @update:model-value="emit('toggle', path(row))" />
             </td>

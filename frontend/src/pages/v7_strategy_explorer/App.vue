@@ -276,6 +276,7 @@ onBeforeUnmount(() => {
     class="core-workbench-shell core-workbench-shell--strategy"
     :page-key="adapter.navCurrent"
     :page-title="adapter.isV8 ? t('v7explore.titleV8', { label: store.strategyLabel.value }) : t('v7explore.titleV7')"
+    :page-description="t('v7explore.pageSubtitle')"
     :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
     :sections="railSections"
     :active-section="store.controls.stage"

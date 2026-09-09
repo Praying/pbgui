@@ -57,6 +57,12 @@ function shortDateTime(input: unknown): string {
   const withTime = text.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/);
   return withTime ? `${withTime[1]} ${withTime[2]}` : shortDate(text);
 }
+
+function onConfigRowKeydown(event: KeyboardEvent, configName: string): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  emit('toggle', configName);
+}
 const editLabel = computed(() => t('v7optimize.editConfig'));
 const duplicateLabel = computed(() => t('v7optimize.duplicate'));
 /* Icon-only row actions (edit / duplicate) reuse the backtest row-action tone: quiet border, accent on hover. */
@@ -115,7 +121,10 @@ onBeforeUnmount(() => dragSelect.dispose());
               :key="rowName(row)"
               :data-path="rowName(row)"
               :class="{ selected: selected.has(rowName(row)) }"
+              :aria-selected="selected.has(rowName(row)) ? 'true' : 'false'"
+              tabindex="0"
               @dblclick="emit('edit', rowName(row))"
+              @keydown="onConfigRowKeydown($event, rowName(row))"
             >
             <td class="w-10 pr-1!" @click.stop>
               <Checkbox :model-value="selected.has(rowName(row))" :aria-label="rowName(row)" @update:model-value="emit('toggle', rowName(row))" />

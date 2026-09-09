@@ -72,6 +72,7 @@ import IconButton from '@/shared/components/IconButton.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
+import { PageToolbar } from '@/shared/components/ui/workbench-primitives';
 import CoinOverridesPanel from '@/shared/coinOverrides/components/CoinOverridesPanel.vue';
 import AdvancedSection from './components/AdvancedSection.vue';
 import BasicSection from './components/BasicSection.vue';
@@ -219,6 +220,7 @@ onBeforeUnmount(() => {
     class="core-workbench-shell core-workbench-shell--edit"
     :page-key="adapter.navCurrent"
     :page-title="t(adapter.titleKey)"
+    :page-description="t('v7edit.pageDescription')"
     :page-family="adapter.isV8 ? 'PBv8' : 'PBv7'"
   >
     <template #header-actions>
@@ -238,7 +240,7 @@ onBeforeUnmount(() => {
       class="workbench-page-content flex flex-1 flex-col overflow-y-auto p-[var(--page-padding)]"
       :class="adapter.isV8 ? 'gap-4' : 'gap-[var(--component-gap)]'"
     >
-      <div class="page-toolbar" role="toolbar" :aria-label="t(adapter.sidebarTitleKey)">
+      <PageToolbar :label="t(adapter.sidebarTitleKey)">
         <span class="sb-label">{{ t(adapter.sidebarTitleKey) }}</span>
         <hr class="sb-sep" />
         <Button type="button" :title="t('v7run.backToList')" @click="goBack()"><PbIcon :icon="PhHouse" /> {{ t('v7run.home') }}</Button>
@@ -268,7 +270,7 @@ onBeforeUnmount(() => {
           :title="t('v7run.livePassivbotLog')"
           @click="logOpen = !logOpen"
         ><PbIcon :icon="PhFileText" /> {{ t('v7run.log') }}</Button>
-      </div>
+      </PageToolbar>
       <section
         v-if="migrationReviewFields.length"
         class="rounded-md border border-l-4 border-l-warning border-warning/48 bg-warning/10 px-3.5 py-3 leading-[1.45] text-warning-soft"

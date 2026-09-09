@@ -7,6 +7,17 @@
 - **统一状态与静态卡片反馈**：StatusStrip 的语义色改用集中式 RGB token；静态卡片不再通过上浮阴影模拟可点击行为，减少误导性的交互暗示。
 - **建立共享工作台复合组件**：新增 PanelHeader、ActionGroup、PageToolbar、StatusBadge、MetricBlock、FormSection 和 ChartFrame，并将 PBv7/PBv8 Run、Optimize 的 contextual toolbar 接入 PageToolbar。
 - **迁移运营摘要**：VPS Monitor 的 Connected、Connecting 和 Disconnected 汇总改用 MetricBlock，保留原有 WebSocket、日志、实例和历史图表行为，同时在窄屏下采用可堆叠的摘要网格。
+- **扩展共享组件采用范围**：Services Monitor Overview 卡片改用 StatusBadge，Optimize 的四个配置/队列/结果/Pareto 标题改用 PanelHeader，VPS Monitor 历史指标弹窗改用 ChartFrame。
+- **补齐双语页面描述**：Run、Optimize、VPS Monitor 和 Services Monitor 现在使用 EN/ZH 页面描述，帮助用户在高密度工作台中快速确认当前页面职责。
+- **收敛高密度表格外壳**：Coin Data 的动态交易对表和 Market Data Inventory 表接入共享 Table 原语，保留各自的排序、拖拽选择、横向滚动和页面专用列定义。
+- **完成 Optimize 标题层级迁移**：配置、队列、结果和 Pareto 四个工作区标题统一使用 PanelHeader，减少页面局部 heading 样式差异。
+- **补齐 Backtest 页面身份**：Backtest 工作台接入双语页面描述，与 Run、Optimize 共享相同的标题上下文层级。
+- **覆盖核心分析工作台**：Edit、Pareto Explorer 和 Strategy Explorer 接入共享页面描述；Pareto/Strategy 复用现有双语页面副标题，Edit 使用独立的双语编辑器说明。
+- **补齐 Backtest 上下文**：Backtest 工作台接入双语页面描述，使编辑、回测、优化和分析页面在共享 Header 中保持统一的职责说明。
+- **统一核心分析工具栏**：v7 Edit 与 Pareto Explorer 的页面级操作条接入共享 PageToolbar，保留现有按钮顺序、筛选/跳转动作与 legacy `.page-toolbar` 选择器。
+- **收敛编辑器导入弹窗**：v7 Edit 的 Import Config 流程改用共享 Modal，保留用户 combobox、JSON 校验、草稿提交和显式取消/确认操作，并禁止背景点击误关闭。
+- **统一批量表格键盘语义**：Backtest Results、Optimize Configs/Queue/Results、Coin Data 和 Market Data Inventory 行现在暴露 `aria-selected`、键盘焦点和 Enter/Space 选择操作，同时保留原有 checkbox、拖拽选择、双击编辑和拖拽排序。
+- **补齐共享 Modal 可访问性**：每个共享 Modal 现在提供 DialogDescription，消除无描述警告并保留可选的自定义屏幕阅读器说明。
 - **补充契约测试**：覆盖共享 header 描述、文本转义、状态 token、工作台复合组件、rail 样式、typecheck 和代表页面兼容性验证；未改变 API、数据字段或业务动作。
 
 ## PBv7/PBv8 回测与优化配置表视觉统一

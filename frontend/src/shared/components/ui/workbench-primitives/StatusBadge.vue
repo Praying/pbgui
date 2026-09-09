@@ -22,7 +22,9 @@ const props = withDefaults(defineProps<StatusBadgeProps>(), {
     :class="`status-badge--${props.tone}`"
     :data-tone="props.tone"
   >
-    <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />
+    <slot name="indicator">
+      <span class="size-1.5 rounded-full bg-current" aria-hidden="true" />
+    </slot>
     {{ props.label }}
   </span>
 </template>

@@ -24,6 +24,23 @@ describe('ResultsPanel', () => {
     expect(wrapper.find('[data-action="dash"]').exists()).toBe(false);
     expect(wrapper.find('[data-action="continue"]').exists()).toBe(true);
     expect(wrapper.find('[data-action="resume"]').exists()).toBe(true);
+    expect(wrapper.find('tbody tr[data-path="/results/a"]').attributes('aria-selected')).toBe('false');
+    expect(wrapper.find('tbody tr[data-path="/results/a"]').attributes('tabindex')).toBe('0');
+    wrapper.unmount();
+  });
+
+  it('toggles result selection from keyboard activation', async () => {
+    const wrapper = mount(ResultsPanel, {
+      props: {
+        rows: [{ path: '/results/a', name: 'alpha', result: 'run-1', pareto_count: 0 }],
+        selected: new Set<string>(), search: '', selectedPath: '', isV8: false,
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    await wrapper.get('tbody tr[data-path="/results/a"]').trigger('keydown', { key: 'Enter' });
+
+    expect(wrapper.emitted('toggle')).toEqual([['/results/a']]);
     wrapper.unmount();
   });
 });

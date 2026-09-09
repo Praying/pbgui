@@ -13,6 +13,7 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { Button } from '@/shared/components/ui/button';
+import { Table } from '@/shared/components/ui/table';
 import type { InventoryColumn } from '../../lib/inventoryColumns';
 import { formatInventoryTableValue } from '../../lib/inventoryColumns';
 import type { InventoryRow } from '../../lib/inventoryTypes';
@@ -107,6 +108,21 @@ function onMouseup(): void {
   dragMode = null;
 }
 
+function onRowKeydown(event: KeyboardEvent, rowIdentifier: string): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  const row = tableRows().find((tableRow) => rowId(tableRow) === rowIdentifier);
+  if (!row) return;
+  row.classList.toggle('is-selected');
+  emit(
+    'commit',
+    tableRows()
+      .filter((tableRow) => tableRow.classList.contains('is-selected'))
+      .map(rowId)
+      .filter(Boolean),
+  );
+}
+
 onMounted(() => {
   document.addEventListener('mousedown', onMousedown);
   document.addEventListener('mousemove', onMousemove);
@@ -127,7 +143,7 @@ function cellText(columnKey: string, row: InventoryRow): string {
 
 <template>
   <div ref="root" class="inventory-table-wrap max-h-[33dvh] overflow-auto rounded-[10px] border border-border-default bg-page/42" id="inventory-table-wrap">
-    <table v-if="rows.length" class="inventory-table w-full min-w-[1180px] border-separate border-spacing-0">
+    <Table v-if="rows.length" class="inventory-table w-full min-w-[1180px]">
       <thead>
         <tr>
           <th v-for="column in columns" :key="column.key" class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel py-[0.55rem] px-[0.75rem] text-left align-top text-xs font-semibold uppercase tracking-label text-secondary">
@@ -150,13 +166,16 @@ function cellText(columnKey: string, row: InventoryRow): string {
           :data-row-id="String(row.row_id ?? '')"
           class="cursor-pointer transition-[background-color] duration-[120ms]"
           :class="{ 'is-selected': selectedIds.includes(String(row.row_id ?? '')) }"
+          :aria-selected="selectedIds.includes(String(row.row_id ?? '')) ? 'true' : 'false'"
+          tabindex="0"
+          @keydown="onRowKeydown($event, String(row.row_id ?? ''))"
         >
           <td v-for="column in columns" :key="column.key" class="border-b border-secondary/12 py-[0.55rem] px-[0.75rem] text-left align-top text-sm whitespace-nowrap" :title="cellText(column.key, row)">
             {{ cellText(column.key, row) }}
           </td>
         </tr>
       </tbody>
-    </table>
+    </Table>
     <div v-else class="inventory-empty p-5 text-base text-secondary">{{ emptyText }}</div>
   </div>
 </template>
