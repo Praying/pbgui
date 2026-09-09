@@ -1,5 +1,14 @@
 # Unreleased
 
+## Vue3 工作台共享视觉与页面身份收敛
+
+- **完善共享页面身份**：AppShell 现在将可选的页面描述传递到 WorkspaceHeader，标题、breadcrumb、描述和复制路径控件形成一致的页面上下文层级，并在窄屏下允许描述自然换行。
+- **增加语义交互 token**：补充 hover、selected、pressed、focus、overlay、interactive text 和 selected border token，同时保留全部 legacy alias，降低页面局部颜色方言带来的视觉漂移。
+- **统一状态与静态卡片反馈**：StatusStrip 的语义色改用集中式 RGB token；静态卡片不再通过上浮阴影模拟可点击行为，减少误导性的交互暗示。
+- **建立共享工作台复合组件**：新增 PanelHeader、ActionGroup、PageToolbar、StatusBadge、MetricBlock、FormSection 和 ChartFrame，并将 PBv7/PBv8 Run、Optimize 的 contextual toolbar 接入 PageToolbar。
+- **迁移运营摘要**：VPS Monitor 的 Connected、Connecting 和 Disconnected 汇总改用 MetricBlock，保留原有 WebSocket、日志、实例和历史图表行为，同时在窄屏下采用可堆叠的摘要网格。
+- **补充契约测试**：覆盖共享 header 描述、文本转义、状态 token、工作台复合组件、rail 样式、typecheck 和代表页面兼容性验证；未改变 API、数据字段或业务动作。
+
 ## PBv7/PBv8 回测与优化配置表视觉统一
 
 - **统一表格框架**：回测和优化的配置列表现在共用同一套圆角边框、滚动视口、粘性表头和底部收口，短列表不再呈现两种不同的容器结构。

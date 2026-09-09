@@ -23,6 +23,7 @@ describe('WorkspaceHeader', () => {
       props: {
         family: 'System',
         title: 'Services',
+        description: 'Control PBGui runtime services.',
         breadcrumbs: [
           { label: 'System' },
           { label: 'Services' },
@@ -39,7 +40,9 @@ describe('WorkspaceHeader', () => {
     expect(wrapper.get('nav[aria-label="Breadcrumb"]').text()).toBe('System / Services');
     expect(wrapper.get('.workspace-header__breadcrumb-item[aria-current="page"]').text()).toContain('Services');
     expect(wrapper.get('h1').text()).toBe('Services');
-    expect(wrapper.find('.workspace-header__description').exists()).toBe(false);
+    expect(wrapper.get('.workspace-header__description').text()).toBe(
+      'Control PBGui runtime services.',
+    );
     expect(wrapper.get('[data-testid="header-status"]').text()).toBe('Online');
     expect(wrapper.get('.workspace-header__actions button').text()).toBe('Restart');
   });
@@ -53,6 +56,18 @@ describe('WorkspaceHeader', () => {
     expect(wrapper.find('.workspace-header__description').exists()).toBe(false);
     expect(wrapper.find('.workspace-header__status').exists()).toBe(false);
     expect(wrapper.find('.workspace-header__actions').exists()).toBe(false);
+  });
+
+  it('renders long descriptions as escaped text content', () => {
+    const wrapper = mount(WorkspaceHeader, {
+      props: {
+        title: 'Services',
+        description: '<script>alert(1)</script>',
+      },
+    });
+
+    expect(wrapper.get('.workspace-header__description').text()).toBe('<script>alert(1)</script>');
+    expect(wrapper.find('script').exists()).toBe(false);
   });
 
   it('uses the family as a fallback ancestor when no breadcrumb is supplied', () => {

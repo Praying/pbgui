@@ -88,6 +88,9 @@ describe('VPS Monitor Vue page', () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.get('.pbgui-status-strip').text()).toContain('Connected');
     expect(wrapper.text()).toContain('alpha');
+    expect(wrapper.findAll('[data-tone="success"] dt').map((element) => element.text())).toContain(
+      'Connected',
+    );
     expect(wrapper.get('.vps-monitor').classes()).toContain('compact');
     expect(wrapper.get('[role="status"]').text()).toContain('Connected');
     await wrapper.get('[data-option="compact"]').trigger('click');

@@ -48,6 +48,7 @@ import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { PageToolbar } from '@/shared/components/ui/workbench-primitives';
 import {
   SelectContent,
   SelectItem,
@@ -172,7 +173,7 @@ onBeforeUnmount(() => {
     <div id="page-body" class="flex h-[calc(100dvh-var(--nav-height))] flex-col overflow-hidden">
     <div class="workbench-page-content min-w-0 flex-1 overflow-y-auto p-[var(--page-padding)]">
       <!-- Filters + instance actions: a top strip, not a sidebar. -->
-      <div class="page-toolbar" role="toolbar">
+      <PageToolbar :label="t('v7run.instances')">
         <span class="sb-label">{{ t('v7run.instances') }}&nbsp;<span class="sb-count" id="instance-count">{{ store.countText.value }}</span></span>
         <Input type="text" id="f-search" class="w-auto min-w-[160px]" v-model="store.filterSearch.value" :placeholder="t('v7run.searchPlaceholder')" />
         <span class="sb-label" id="f-status-label">{{ t('v7run.status') }}</span>
@@ -188,7 +189,7 @@ onBeforeUnmount(() => {
         <Button class="sb-btn" type="button" @click="store.loadInstances()"><PbIcon :icon="PhArrowsClockwise" /> {{ t('common.refresh') }}</Button>
         <Button class="sb-btn" id="add-instance-btn" type="button" @click="store.addInstance()"><PbIcon :icon="PhPlus" /> {{ t(adapter.addInstanceKey) }}</Button>
         <Button class="sb-btn" type="button" @click="backups.open()"><PbIcon :icon="PhFloppyDisk" /> {{ t('v7run.backups') }}</Button>
-      </div>
+      </PageToolbar>
       <Pb8UpdateWarning :hosts="store.pb8Hosts.value" />
       <InstanceTable
         :rows="store.rows.value"

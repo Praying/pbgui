@@ -764,6 +764,12 @@
     min-width: 0;
   }
 
+  .workspace-header__identity-copy {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+  }
+
   .workspace-header__breadcrumb {
     min-width: 0;
   }
@@ -824,9 +830,76 @@
   .workspace-header__title {
     margin: 0;
     color: var(--text-primary);
-    font-size: var(--text-section);
-    font-weight: 650;
+    font-size: var(--text-lg);
+    font-weight: 700;
     line-height: 1.2;
+  }
+
+  .workspace-header__description {
+    max-width: min(68ch, 58rem);
+    margin: 0;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Canonical workbench composition states ──────────────────── */
+
+  .status-badge--neutral {
+    border-color: var(--border-default);
+    background: var(--surface-hover);
+    color: var(--text-secondary);
+  }
+
+  .status-badge--info {
+    border-color: rgb(var(--accent-rgb) / 0.28);
+    background: var(--accent-bg);
+    color: var(--accent-soft);
+  }
+
+  .status-badge--success {
+    border-color: rgb(var(--success-rgb) / 0.28);
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .status-badge--warning {
+    border-color: rgb(var(--warning-rgb) / 0.28);
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .status-badge--danger {
+    border-color: rgb(var(--danger-rgb) / 0.28);
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+
+  .metric-block--neutral {
+    border-color: var(--border-subtle);
+  }
+
+  .metric-block--info {
+    border-color: rgb(var(--accent-rgb) / 0.3);
+    background: rgb(var(--accent-rgb) / 0.08);
+  }
+
+  .metric-block--success {
+    border-color: rgb(var(--success-rgb) / 0.3);
+    background: rgb(var(--success-rgb) / 0.08);
+  }
+
+  .metric-block--warning {
+    border-color: rgb(var(--warning-rgb) / 0.3);
+    background: rgb(var(--warning-rgb) / 0.08);
+  }
+
+  .metric-block--danger {
+    border-color: rgb(var(--danger-rgb) / 0.3);
+    background: rgb(var(--danger-rgb) / 0.08);
   }
 
   .workspace-header__utilities,
@@ -1044,30 +1117,30 @@
   }
 
   .pbgui-status-strip--success {
-    border-color: rgba(34, 197, 94, 0.25);
-    background: rgba(34, 197, 94, 0.08);
+    border-color: rgb(var(--success-rgb) / 0.25);
+    background: rgb(var(--success-rgb) / 0.08);
   }
   .pbgui-status-strip--success .pbgui-status-strip__indicator {
     background: var(--success);
-    box-shadow: 0 0 6px rgba(34, 197, 94, 0.45);
+    box-shadow: 0 0 6px rgb(var(--success-rgb) / 0.45);
   }
 
   .pbgui-status-strip--warning {
-    border-color: rgba(234, 179, 8, 0.25);
-    background: rgba(234, 179, 8, 0.08);
+    border-color: rgb(var(--warning-rgb) / 0.25);
+    background: rgb(var(--warning-rgb) / 0.08);
   }
   .pbgui-status-strip--warning .pbgui-status-strip__indicator {
     background: var(--warning);
-    box-shadow: 0 0 6px rgba(234, 179, 8, 0.45);
+    box-shadow: 0 0 6px rgb(var(--warning-rgb) / 0.45);
   }
 
   .pbgui-status-strip--danger {
-    border-color: rgba(239, 68, 68, 0.25);
-    background: rgba(239, 68, 68, 0.08);
+    border-color: rgb(var(--danger-rgb) / 0.25);
+    background: rgb(var(--danger-rgb) / 0.08);
   }
   .pbgui-status-strip--danger .pbgui-status-strip__indicator {
     background: var(--danger);
-    box-shadow: 0 0 6px rgba(239, 68, 68, 0.45);
+    box-shadow: 0 0 6px rgb(var(--danger-rgb) / 0.45);
   }
 
   /* ── Loading, empty, and error primitives ────────────────────── */
@@ -1454,9 +1527,8 @@
   }
 
   .pbgui-card.pbgui-card:hover {
-    background: var(--surface-elevated);
+    background: var(--surface-hover);
     border-color: var(--border-strong);
-    transform: translateY(-1px);
     box-shadow: var(--shadow-panel);
   }
 
@@ -1753,6 +1825,11 @@
       align-items: flex-start;
       gap: var(--sp-md);
       padding: var(--sp-md) var(--page-padding);
+    }
+
+    .workspace-header__description {
+      max-width: calc(100vw - (var(--page-padding) * 2));
+      white-space: normal;
     }
 
     .workspace-header__utilities,

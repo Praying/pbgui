@@ -35,6 +35,7 @@ import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { PageToolbar, PanelHeader } from '@/shared/components/ui/workbench-primitives';
 import { currentOptimizeAdapter, readIncomingDraft } from './config';
 import ConfigEditorModal from './components/ConfigEditorModal.vue';
 import ConfigsPanel from './components/ConfigsPanel.vue';
@@ -550,7 +551,7 @@ onBeforeUnmount(() => {
     <!-- Converged navigation: panel switching lives in the workbench rail
          (AppShell sections); this strip carries only the active panel's
          contextual actions. -->
-    <div class="page-toolbar" role="toolbar">
+    <PageToolbar :label="t('editor.optimize.pageTitle')">
       <template v-if="page.panel.value === 'configs'">
         <Button type="button" variant="info" data-test="new-config" @click="page.openEditor()"><PbIcon :icon="PhPlus" /> {{ t('v7optimize.newConfig') }}</Button>
         <Button type="button" variant="default" @click="importOpen = true"><PbIcon :icon="PhDownloadSimple" /> {{ t('v7optimize.importConfig') }}</Button>
@@ -584,7 +585,7 @@ onBeforeUnmount(() => {
       </template>
       <hr v-if="page.editorOpen.value" class="sb-sep" />
       <Button type="button" variant="default" v-if="page.editorOpen.value" @click="runPreflight()"><PbIcon :icon="PhCompassTool" /> {{ t('v7optimize.ohlcvReadiness') }}</Button>
-    </div>
+    </PageToolbar>
 
       <div v-if="page.runtimeWarning.value" class="mb-3 grid gap-1.25 rounded-md border border-warning/55 border-l-4 border-l-warning bg-warning/12 px-3.5 py-3 text-primary" data-test="pb8-runtime-warning" role="status" aria-live="polite">
         <strong>{{ t('v7optimize.pb8UpdateRequired') }}</strong>

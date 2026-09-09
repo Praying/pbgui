@@ -32,6 +32,9 @@ describe('AppShell', () => {
 
     expect(wrapper.get('nav').attributes('aria-label')).toBe('Primary navigation');
     expect(wrapper.get('header').text()).toContain('Services');
+    expect(wrapper.get('.workspace-header__description').text()).toBe(
+      'Control PBGui runtime services.',
+    );
     expect(wrapper.get('.workspace-header__breadcrumb-list').text()).toBe('System / PBGUI Services');
     expect(wrapper.get('main').attributes('id')).toBe('app-shell-main');
     expect(wrapper.get('a[href="#app-shell-main"]').text()).toBe('Skip to main content');

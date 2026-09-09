@@ -127,6 +127,18 @@
   --color-elevated: #2b2b2b;
   --color-backdrop: rgb(15 15 15 / 0.72);
 
+  /* ── Interaction states ──────────────────────────────────────
+     These semantic surfaces keep hover and selection treatments aligned
+     across canonical Vue components without changing legacy aliases. */
+  --color-surface-hover: rgb(255 255 255 / 0.06);
+  --color-surface-selected: rgb(143 207 242 / 0.14);
+  --color-surface-pressed: rgb(255 255 255 / 0.1);
+  --color-surface-focus: rgb(143 207 242 / 0.1);
+  --color-surface-overlay: var(--color-elevated);
+  --color-border-focus: var(--color-accent);
+  --color-border-selected: rgb(143 207 242 / 0.35);
+  --color-text-interactive: var(--color-accent-soft);
+
   /* ── Borders ────────────────────────────────────────────────── */
   --color-border-subtle: #343434;
   --color-border-default: #464646;
@@ -226,11 +238,18 @@
   --surface-panel: var(--color-panel);
   --surface-card: var(--color-card);
   --surface-elevated: var(--color-elevated);
+  --surface-hover: var(--color-surface-hover);
+  --surface-selected: var(--color-surface-selected);
+  --surface-pressed: var(--color-surface-pressed);
+  --surface-focus: var(--color-surface-focus);
+  --surface-overlay: var(--color-surface-overlay);
 
   /* ── Border aliases ─────────────────────────────────────────── */
   --border-subtle: var(--color-border-subtle);
   --border-default: var(--color-border-default);
   --border-strong: var(--color-border-strong);
+  --border-focus: var(--color-border-focus);
+  --border-selected: var(--color-border-selected);
 
   /* ── Text aliases ───────────────────────────────────────────── */
   --text-primary: var(--color-primary);
@@ -238,6 +257,7 @@
   --text-muted: var(--color-muted);
   --text-disabled: var(--color-disabled);
   --text-placeholder: var(--color-placeholder);
+  --text-interactive: var(--color-text-interactive);
 
   /* ── Semantic aliases (+ alpha companions) ──────────────────── */
   --accent: var(--color-accent);

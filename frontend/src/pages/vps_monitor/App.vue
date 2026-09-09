@@ -14,6 +14,7 @@ import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
+import { MetricBlock } from '@/shared/components/ui/workbench-primitives';
 import {
   SelectContent,
   SelectItem,
@@ -359,10 +360,25 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
           <label class="flex items-center gap-1.75"><Checkbox v-model="debugLogging" @update:model-value="setSetting('debug_logging', $event === true)" /> {{ t('sysmon.debugLog') }}</label>
         </div>
         <div v-if="activeTab === 'dashboard'" class="min-h-0 flex-1 overflow-auto">
-          <div class="mb-3.5 flex flex-wrap gap-3.75 text-xs text-primary">
-            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--success)"></span>{{ t('sysmon.connectedCount', { n: summary.connected }) }}</span>
-            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--warning)"></span>{{ t('sysmon.connectingCount', { n: summary.connecting }) }}</span>
-            <span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--danger)"></span>{{ t('sysmon.disconnectedCount', { n: summary.disconnected }) }}</span>
+          <div class="mb-3.5 grid grid-cols-1 gap-2.5 text-xs text-primary sm:grid-cols-3">
+            <MetricBlock
+              :label="t('sysmon.connected')"
+              :value="summary.connected"
+              :detail="t('sysmon.connectedCount', { n: summary.connected })"
+              tone="success"
+            />
+            <MetricBlock
+              :label="t('sysmon.connecting')"
+              :value="summary.connecting"
+              :detail="t('sysmon.connectingCount', { n: summary.connecting })"
+              tone="warning"
+            />
+            <MetricBlock
+              :label="t('sysmon.disconnected')"
+              :value="summary.disconnected"
+              :detail="t('sysmon.disconnectedCount', { n: summary.disconnected })"
+              tone="danger"
+            />
           </div>
           <article v-for="host in hosts" :key="host" class="mb-2.5 overflow-hidden rounded-lg border border-border-default bg-card">
             <header class="flex max-[780px]:flex-wrap cursor-pointer items-center gap-2.25 px-3.25 py-2.75 hover:bg-accent/20" role="button" tabindex="0" :aria-expanded="!isHostCollapsed(host)" @click="toggleHost(host)" @keydown.enter.prevent="toggleHost(host)" @keydown.space.prevent="toggleHost(host)">

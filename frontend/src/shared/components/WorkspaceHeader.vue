@@ -12,6 +12,7 @@ interface BreadcrumbItem {
 interface WorkspaceHeaderProps {
   family?: string;
   title: string;
+  description?: string;
   breadcrumbs?: readonly BreadcrumbItem[];
   breadcrumbLabel?: string;
 }
@@ -88,38 +89,43 @@ onBeforeUnmount(() => {
 <template>
   <header class="workspace-header">
     <div class="workspace-header__identity">
-      <nav class="workspace-header__breadcrumb" :aria-label="props.breadcrumbLabel">
-        <ol class="workspace-header__breadcrumb-list">
-          <li
-            v-for="(breadcrumb, index) in headerBreadcrumbs"
-            :key="`${breadcrumb.label}-${index}`"
-            class="workspace-header__breadcrumb-item"
-            :aria-current="index === headerBreadcrumbs.length - 1 ? 'page' : undefined"
-          >
-            <span
-              v-if="index > 0"
-              class="workspace-header__breadcrumb-separator"
-              aria-hidden="true"
+      <div class="workspace-header__identity-copy">
+        <nav class="workspace-header__breadcrumb" :aria-label="props.breadcrumbLabel">
+          <ol class="workspace-header__breadcrumb-list">
+            <li
+              v-for="(breadcrumb, index) in headerBreadcrumbs"
+              :key="`${breadcrumb.label}-${index}`"
+              class="workspace-header__breadcrumb-item"
+              :aria-current="index === headerBreadcrumbs.length - 1 ? 'page' : undefined"
             >
-              /
-            </span>
-            <a
-              v-if="breadcrumb.href && index < headerBreadcrumbs.length - 1"
-              class="workspace-header__breadcrumb-link"
-              :href="breadcrumb.href"
-            >
-              {{ breadcrumb.label }}
-            </a>
-            <span
-              v-else-if="index < headerBreadcrumbs.length - 1"
-              class="workspace-header__breadcrumb-ancestor"
-            >
-              {{ breadcrumb.label }}
-            </span>
-            <h1 v-else class="workspace-header__title">{{ breadcrumb.label }}</h1>
-          </li>
-        </ol>
-      </nav>
+              <span
+                v-if="index > 0"
+                class="workspace-header__breadcrumb-separator"
+                aria-hidden="true"
+              >
+                /
+              </span>
+              <a
+                v-if="breadcrumb.href && index < headerBreadcrumbs.length - 1"
+                class="workspace-header__breadcrumb-link"
+                :href="breadcrumb.href"
+              >
+                {{ breadcrumb.label }}
+              </a>
+              <span
+                v-else-if="index < headerBreadcrumbs.length - 1"
+                class="workspace-header__breadcrumb-ancestor"
+              >
+                {{ breadcrumb.label }}
+              </span>
+              <h1 v-else class="workspace-header__title">{{ breadcrumb.label }}</h1>
+            </li>
+          </ol>
+        </nav>
+        <p v-if="props.description" class="workspace-header__description">
+          {{ props.description }}
+        </p>
+      </div>
       <IconButton
         class="pbgui-icon-button workspace-header__copy"
         :class="{ 'workspace-header__copy--copied': copied }"

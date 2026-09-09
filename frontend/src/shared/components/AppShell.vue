@@ -112,6 +112,7 @@ onMounted(() => {
       <WorkspaceHeader
         :family="props.pageFamily"
         :title="props.pageTitle"
+        :description="props.pageDescription"
         :breadcrumbs="headerBreadcrumbs"
       >
         <template v-if="slots.status || (props.statusText && props.statusText.trim().length > 0)" #status>
