@@ -272,7 +272,7 @@ onMounted(() => { document.title = t('transfers.title'); void loadUsers(); });
 </script>
 
 <template>
-  <AppShell page-key="system_transfers" :page-title="t('transfers.title')" class="transfers-shell">
+  <AppShell page-key="system_transfers" :page-title="t('transfers.title')" :page-description="t('transfers.pageDescription')" class="transfers-shell">
     <template v-if="loading || errorMessage" #status><StatusStrip :label="t('shared.status')" :value="loading ? t('common.loading') : t('common.error')" :tone="errorMessage ? 'danger' : 'warning'" /></template>
     <template #header-actions><Button size="sm" :disabled="loading || actionPending" @click="loadUsers"><PbIcon :icon="PhArrowClockwise" /> {{ t('common.refresh') }}</Button></template>
     <div class="flex min-h-0 flex-1 gap-4 overflow-hidden p-4 max-[900px]:flex-col">

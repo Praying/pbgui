@@ -18,6 +18,7 @@
 - **收敛编辑器导入弹窗**：v7 Edit 的 Import Config 流程改用共享 Modal，保留用户 combobox、JSON 校验、草稿提交和显式取消/确认操作，并禁止背景点击误关闭。
 - **统一批量表格键盘语义**：Backtest Results、Optimize Configs/Queue/Results、Coin Data 和 Market Data Inventory 行现在暴露 `aria-selected`、键盘焦点和 Enter/Space 选择操作，同时保留原有 checkbox、拖拽选择、双击编辑和拖拽排序。
 - **补齐共享 Modal 可访问性**：每个共享 Modal 现在提供 DialogDescription，消除无描述警告并保留可选的自定义屏幕阅读器说明。
+- **补齐 Transfers 页面身份**：Internal Transfers 接入共享 Header 页面描述，说明余额检查与安全资金路径操作，未改变转账确认或提交流程。
 - **补充契约测试**：覆盖共享 header 描述、文本转义、状态 token、工作台复合组件、rail 样式、typecheck 和代表页面兼容性验证；未改变 API、数据字段或业务动作。
 
 ## PBv7/PBv8 回测与优化配置表视觉统一
