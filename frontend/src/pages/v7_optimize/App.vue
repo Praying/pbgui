@@ -690,6 +690,11 @@ body { overflow: hidden; }
   background: var(--surface-workspace);
 }
 
+.optimize-workspace {
+  --opt-table-surface-rgb: 23 28 33;
+  --opt-table-surface: rgb(var(--opt-table-surface-rgb));
+}
+
 .core-workbench-shell--optimize .page-toolbar {
   display: flex;
   align-items: center;
@@ -707,6 +712,8 @@ body { overflow: hidden; }
 }
 
 .opt-panel-view {
+  flex: 1 1 0%;
+  height: auto;
   min-width: 0;
 }
 
@@ -812,7 +819,7 @@ body { overflow: hidden; }
   overflow: hidden;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  background: #151a1f;
+  background: var(--opt-table-surface);
   box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
 }
 
@@ -820,7 +827,7 @@ body { overflow: hidden; }
   position: relative;
   isolation: isolate;
   padding-bottom: 24px;
-  background: #151a1f;
+  background: var(--opt-table-surface);
   scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
 }
@@ -836,7 +843,7 @@ body { overflow: hidden; }
   z-index: 0;
   height: 24px;
   border-radius: 0 0 calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px);
-  background: linear-gradient(180deg, rgb(23 28 33 / 0%), rgb(21 26 31 / 0.96) 88%);
+  background: linear-gradient(180deg, rgb(var(--opt-table-surface-rgb) / 0%), rgb(var(--opt-table-surface-rgb) / 0.96) 88%);
   box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.025);
   content: '';
   pointer-events: none;
@@ -845,11 +852,11 @@ body { overflow: hidden; }
 .optimize-workspace .opt-table {
   position: relative;
   z-index: 1;
-  background: #171c21;
+  background: var(--opt-table-surface);
 }
 
 .optimize-workspace .opt-table tbody {
-  background: #171c21;
+  background: var(--opt-table-surface);
 }
 
 .optimize-workspace .opt-table tbody tr:nth-child(even):not(:last-child):not(.selected) td {
@@ -857,7 +864,7 @@ body { overflow: hidden; }
 }
 
 .optimize-workspace .opt-table .pbgui-list-actions {
-  background: #171c21;
+  background: var(--opt-table-surface);
 }
 
 .optimize-workspace .opt-table tbody tr:nth-child(even):not(.selected) .pbgui-list-actions {
@@ -985,6 +992,19 @@ body { overflow: hidden; }
 .opt-table tbody tr.selected td,
 .opt-table tbody tr.selected:hover td {
   background: rgb(var(--accent-rgb) / 0.14);
+}
+
+.optimize-workspace .opt-table tbody tr[data-slot='empty-row'] td,
+.optimize-workspace .opt-table tbody tr[data-slot='empty-row']:hover td {
+  background: var(--opt-table-surface);
+  padding: 16px;
+}
+
+.optimize-workspace .opt-table tbody tr[data-slot='empty-row'] .pbgui-empty-state {
+  background: var(--opt-table-surface);
+  border-color: rgb(var(--text-secondary-rgb) / 0.1);
+  box-shadow: none;
+  padding: 24px 16px;
 }
 
 .opt-table td {

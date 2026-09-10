@@ -382,7 +382,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <div class="raw-config-editor-wrap bg-deep p-3 max-[640px]:p-2">
+    <div class="raw-config-editor-wrap bg-page p-3 max-[640px]:p-2">
       <pre
         id="raw-config-json"
         ref="editor"
@@ -537,4 +537,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-

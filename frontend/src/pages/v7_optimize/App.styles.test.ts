@@ -73,9 +73,19 @@ describe('Optimize page warning style contracts', () => {
     }
     expect(configsPanelSource).not.toContain('class="opt-table-wrap');
     expect(appSource).toContain('optimize-workspace');
+    expect(appSource).toContain('--opt-table-surface-rgb: 23 28 33;');
+    expect(appSource).toContain('--opt-table-surface: rgb(var(--opt-table-surface-rgb));');
     expect(appSource).toContain('.optimize-workspace .opt-table-wrap');
     expect(appSource).toContain('.optimize-workspace .opt-table-wrap::after');
-    expect(appSource).toContain('background: #151a1f;');
+    expect(appSource).toContain("tr[data-slot='empty-row'] td");
+    expect(appSource).toContain("tr[data-slot='empty-row']:hover td");
+    expect(appSource).toContain("tr[data-slot='empty-row'] .pbgui-empty-state");
+    expect(appSource).toContain('border-color: rgb(var(--text-secondary-rgb) / 0.1);');
+    expect(appSource).toContain('box-shadow: none;');
+    expect(appSource).toContain('padding: 24px 16px;');
+    expect(appSource).not.toContain('background: #151a1f;');
+    expect(appSource).not.toContain('background: #171c21;');
+    expect(countOccurrences(appSource, 'background: var(--opt-table-surface);')).toBeGreaterThanOrEqual(6);
     expect(appSource).toContain('padding-bottom: 24px;');
     expect(appSource).toMatch(/\.optimize-workspace \.opt-table-wrap::after \{[\s\S]*?z-index: 0;[\s\S]*?height: 24px;/);
     expect(appSource).toMatch(/\.optimize-workspace \.opt-table \{[\s\S]*?position: relative;[\s\S]*?z-index: 1;/);

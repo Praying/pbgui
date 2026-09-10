@@ -1,5 +1,25 @@
 # Unreleased
 
+## Optimize 空态面板间距与边界收紧
+
+- **消除嵌套卡片感**：空态面板与表格主体共用页面级表面 token，移除空态阴影并将内外留白收紧，避免空列表与 Table 背景出现割裂。
+- **保留软边界**：保留低对比度细边框、空态说明和操作按钮，同时不改变表格滚动、terminal bar 或列表交互。
+
+## Optimize 表格背景层次统一
+
+- **统一主体表面**：Optimize 的 frame、滚动视口、表格主体和空态行现在使用同一冷炭灰背景，消除 Results、Queue、Pareto 表格内部的色差断层。
+- **保留结构层次**：表头和底部 terminal bar 继续使用独立的面板层，并保留悬停、选中、滚动和空态卡片行为。
+
+## Internal Transfers 表单控件对齐
+
+- **统一方向与数量控件基线**：划转表单改为顶部对齐，使方向选择器与数量输入框在桌面布局中处于同一水平线。
+- **保持响应式行为**：提交按钮仅在桌面布局下补齐控件高度偏移，移动端继续按原有顺序自然堆叠；不改变划转校验或提交逻辑。
+
+## PBv8 Optimize 空态表格背景统一
+
+- **统一空态表面**：Optimize 队列、结果和 Pareto 列表的空状态行现在与表格视口使用一致的冷炭灰背景，避免空态单元格与周围面板出现割裂的黑色块面。
+- **保留内容层次**：空状态提示卡继续保留略亮的内部层次、边框和操作按钮，不改变现有布局、文案或交互行为。
+
 ## Merge origin/main v2.02.9-v2.02.12 into the Vue3 migration branch
 
 - **Upstream synchronization**: Merged the four remote `main` release commits while preserving the current Vue3 + Tailwind CSS v4.3 page entrypoints and shared frontend contracts.

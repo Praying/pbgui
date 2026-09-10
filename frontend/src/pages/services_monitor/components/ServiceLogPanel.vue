@@ -216,6 +216,11 @@ watch(
   background: var(--bg-page);
 }
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1;
   padding: 0.3rem 0.75rem;
   border: none;
   background: transparent;
@@ -225,6 +230,12 @@ watch(
   font-family: inherit;
   border-bottom: 2px solid transparent;
   transition: all 0.12s;
+}
+.tab-btn :deep(svg) {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
 }
 .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 .tab-btn:hover:not(.active) { color: var(--text-secondary); }
