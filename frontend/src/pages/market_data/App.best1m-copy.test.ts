@@ -84,6 +84,8 @@ describe('best1m panel integration (M-data-7, :9058, :7321-7323, :7662-7685)', (
     expect(monitor.getAttribute('src')).toBe(
       `/api/jobs/main_page?v=S1&embed=1&exchange=bybit&job_type=bybit_best_1m`
     );
+    expect(monitor.className).toContain('min-[1200px]:-mx-5');
+    expect(monitor.className).toContain('min-[1200px]:w-[calc(100%+40px)]');
     const infoCalls = fetchMock.mock.calls
       .map((call) => String(call[0]))
       .filter((url) => url.includes('/best-1m/info/'));
@@ -127,6 +129,8 @@ describe('copy-data panel integration (M-data-7, :9059-9064, :5127-5153)', () =>
       expect(frame.getAttribute('src')).toBe(
         `/api/jobs/main_page?v=S1&embed=1&exchange=ohlcv&job_type=ohlcv_copy%2Cohlcv_copy_dry_run`
       );
+      expect(frame.className).toContain('min-[1200px]:-mx-5');
+      expect(frame.className).toContain('min-[1200px]:w-[calc(100%+40px)]');
       await vi.advanceTimersByTimeAsync(15_000);
       expect(
         fetchMock.mock.calls.map((call) => String(call[0])).filter((url) => url.endsWith('/copy-data/schedules'))

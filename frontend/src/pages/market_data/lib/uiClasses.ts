@@ -124,7 +124,7 @@ export function contextDayClass(selected: boolean): string {
 /** The former .best1m-job-monitor-frame rule — shared by the best-1m and
  *  copy-data panels' AutoResizeFrame (passed via its frame-class prop). */
 export const jobMonitorFrameClass =
-  'best1m-job-monitor-frame h-[min(72vh,820px)] w-full min-h-[520px] rounded-none border-0 bg-transparent';
+  'best1m-job-monitor-frame h-[min(72vh,820px)] w-full min-h-[520px] rounded-none border-0 bg-transparent min-[1200px]:-mx-5 min-[1200px]:w-[calc(100%+40px)] max-[1199px]:mx-0 max-[1199px]:w-full';
 
 /** The former .best1m-frame rule (hyperliquid flat iframe). */
 export const best1mFrameClass = 'best1m-frame w-full min-h-0 border-0 bg-transparent';
