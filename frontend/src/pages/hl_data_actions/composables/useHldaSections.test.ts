@@ -89,6 +89,41 @@ describe('init (doInit :936-963)', () => {
     await vi.advanceTimersByTimeAsync(1500);
     expect(store.initPhase.value).toBe('failed');
   });
+
+  it('retries an initially empty but retryable build response', async () => {
+    let buildInfoCalls = 0;
+    fetchMock.mockImplementation((url: string) => {
+      if (url.includes('/heatmap/l2book-download-info')) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              coins: ['BTC'],
+              has_aws_creds: true,
+              archive_range: { oldest_day: '20230101', newest_day: '20240201' },
+            }),
+            { status: 200 }
+          )
+        );
+      }
+      buildInfoCalls += 1;
+      const payload = buildInfoCalls === 1
+        ? { eligible_coins: [], coins_with_downloaded_history: [], retryable: true, empty_reason: 'Discovery is refreshing.' }
+        : { eligible_coins: ['BTC'], coins_with_downloaded_history: [], retryable: false, empty_reason: '' };
+      return Promise.resolve(new Response(JSON.stringify(payload), { status: 200 }));
+    });
+
+    const store = makeStore();
+    store.init();
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(store.buildCoins.value).toEqual([]);
+    expect(store.buildEmptyReason.value).toBe('Discovery is refreshing.');
+    expect(store.buildInfoRetrying.value).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(store.buildCoins.value).toEqual(['BTC']);
+    expect(store.buildInfoRetrying.value).toBe(false);
+  });
 });
 
 describe('submitDownload (:1555-1573)', () => {

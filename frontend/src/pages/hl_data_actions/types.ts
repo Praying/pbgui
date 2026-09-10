@@ -50,6 +50,8 @@ export interface L2bookDownloadInfo {
 export interface BuildOhlcvInfo {
   eligible_coins: string[];
   coins_with_downloaded_history: string[];
+  retryable?: boolean;
+  empty_reason?: string;
 }
 
 /** Queue reply for both POST endpoints (error XOR queued fields). */

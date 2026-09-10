@@ -44,6 +44,10 @@ export interface UseHldaSections {
   buildTradfiOnly: Ref<boolean>;
   buildNoLocalData: Ref<boolean>;
   buildCoinsWithDownloadedHistory: Ref<Set<string>>;
+  buildEmptyReason: Ref<string>;
+  buildRetryable: Ref<boolean>;
+  buildInfoRetrying: Ref<boolean>;
+  buildRetryAttempt: Ref<number>;
   buildStartDate: Ref<string>;
   buildEndDate: Ref<string>;
   buildRefetch: Ref<boolean>;
@@ -63,6 +67,7 @@ export interface UseHldaSections {
   submitDownload(): Promise<void>;
   submitBuild(): Promise<void>;
   ensureBuildDateOrder(changed: 'start' | 'end', silent?: boolean): boolean;
+  dispose(): void;
 }
 
 export function useHldaSections(options: { t: (key: string, params?: Record<string, unknown>) => string }): UseHldaSections {
@@ -88,15 +93,74 @@ export function useHldaSections(options: { t: (key: string, params?: Record<stri
   const buildTradfiOnly = ref(false);
   const buildNoLocalData = ref(false);
   const buildCoinsWithDownloadedHistory = ref<Set<string>>(new Set());
+  const buildEmptyReason = ref('');
+  const buildRetryable = ref(false);
+  const buildInfoRetrying = ref(false);
+  const buildRetryAttempt = ref(0);
   const buildStartDate = ref('');
   const buildEndDate = ref('');
   const buildRefetch = ref(false);
   const buildMessage = ref<SectionMessage>(null);
   const buildBusy = ref(false);
 
+  const BUILD_INFO_MAX_RETRIES = 12;
+  const BUILD_INFO_RETRY_DELAY_MS = 5000;
+  let initGeneration = 0;
+  let buildInfoRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  let initRetryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function isRetryableBuildInfoError(error: unknown): boolean {
+    const status = typeof error === 'object' && error !== null && 'status' in error
+      ? Number((error as { status?: unknown }).status)
+      : 0;
+    return !status || status === 408 || status === 425 || status === 429 || status >= 500;
+  }
+
+  function applyBuildInfo(data: BuildOhlcvInfo): void {
+    buildCoins.value = data.eligible_coins || [];
+    buildCoinsWithDownloadedHistory.value = new Set(data.coins_with_downloaded_history || []);
+    buildEmptyReason.value = String(data.empty_reason || '');
+    buildRetryable.value = data.retryable === true;
+    buildInfoRetrying.value = false;
+  }
+
+  function showBuildInfoFailure(message: string): void {
+    buildCoins.value = [];
+    buildEmptyReason.value = message;
+    buildRetryable.value = false;
+    buildInfoRetrying.value = false;
+  }
+
+  function scheduleBuildInfoRetry(generation: number, attempt: number): void {
+    if (buildInfoRetryTimer || generation !== initGeneration) return;
+    if (attempt >= BUILD_INFO_MAX_RETRIES) {
+      buildRetryable.value = false;
+      buildInfoRetrying.value = false;
+      return;
+    }
+    buildInfoRetrying.value = true;
+    buildRetryAttempt.value = attempt + 1;
+    buildInfoRetryTimer = setTimeout(async () => {
+      buildInfoRetryTimer = null;
+      if (generation !== initGeneration) return;
+      try {
+        const data = await apiFetch<BuildOhlcvInfo>(apiUrl('/heatmap/build-ohlcv-info'));
+        if (generation !== initGeneration) return;
+        applyBuildInfo(data);
+        if (!buildCoins.value.length && data.retryable === true) {
+          scheduleBuildInfoRetry(generation, attempt + 1);
+        }
+      } catch (error) {
+        if (generation !== initGeneration) return;
+        if (isRetryableBuildInfoError(error)) scheduleBuildInfoRetry(generation, attempt + 1);
+        else showBuildInfoFailure(error instanceof Error ? error.message : String(error));
+      }
+    }, BUILD_INFO_RETRY_DELAY_MS);
+  }
+
   /* ── init with retry (:936-963) ── */
 
-  async function doInit(attempt: number): Promise<void> {
+  async function doInit(attempt: number, generation: number): Promise<void> {
     initPhase.value = attempt === 0 ? 'loading' : 'retrying';
     initRetry.value = attempt;
     try {
@@ -104,19 +168,26 @@ export function useHldaSections(options: { t: (key: string, params?: Record<stri
         apiFetch<L2bookDownloadInfo>(apiUrl('/heatmap/l2book-download-info')),
         apiFetch<BuildOhlcvInfo>(apiUrl('/heatmap/build-ohlcv-info')),
       ]);
+      if (generation !== initGeneration) return;
       dlCoins.value = dlD.coins || [];
       dlHasCreds.value = Boolean(dlD.has_aws_creds);
       dlArchive.value = dlD.archive_range || { oldest_day: '', newest_day: '' };
       dlStartDate.value = fmtDayInput(dlArchive.value.oldest_day);
       dlEndDate.value = fmtDayInput(dlArchive.value.newest_day);
-      buildCoins.value = bD.eligible_coins || [];
-      buildCoinsWithDownloadedHistory.value = new Set(bD.coins_with_downloaded_history || []);
+      applyBuildInfo(bD);
       initPhase.value = 'ready';
-    } catch {
+      if (!buildCoins.value.length && bD.retryable === true) {
+        scheduleBuildInfoRetry(generation, 0);
+      }
+    } catch (error) {
+      if (generation !== initGeneration) return;
       if (attempt < INIT_MAX_RETRIES) {
         initPhase.value = 'retrying';
         initRetry.value = attempt + 1;
-        setTimeout(() => void doInit(attempt + 1), INIT_RETRY_DELAY_MS);
+        initRetryTimer = setTimeout(() => {
+          initRetryTimer = null;
+          void doInit(attempt + 1, generation);
+        }, INIT_RETRY_DELAY_MS);
       } else {
         initPhase.value = 'failed';
       }
@@ -128,7 +199,22 @@ export function useHldaSections(options: { t: (key: string, params?: Record<stri
   }
 
   function init(): void {
-    void doInit(0);
+    initGeneration += 1;
+    if (initRetryTimer) clearTimeout(initRetryTimer);
+    if (buildInfoRetryTimer) clearTimeout(buildInfoRetryTimer);
+    initRetryTimer = null;
+    buildInfoRetryTimer = null;
+    buildInfoRetrying.value = false;
+    void doInit(0, initGeneration);
+  }
+
+  function dispose(): void {
+    initGeneration += 1;
+    if (initRetryTimer) clearTimeout(initRetryTimer);
+    if (buildInfoRetryTimer) clearTimeout(buildInfoRetryTimer);
+    initRetryTimer = null;
+    buildInfoRetryTimer = null;
+    buildInfoRetrying.value = false;
   }
 
   /* ── picker view models (:1102-1107, :1193-1202, ordering :1164-1169) ── */
@@ -298,6 +384,10 @@ export function useHldaSections(options: { t: (key: string, params?: Record<stri
     buildTradfiOnly,
     buildNoLocalData,
     buildCoinsWithDownloadedHistory,
+    buildEmptyReason,
+    buildRetryable,
+    buildInfoRetrying,
+    buildRetryAttempt,
     buildStartDate,
     buildEndDate,
     buildRefetch,
@@ -316,5 +406,6 @@ export function useHldaSections(options: { t: (key: string, params?: Record<stri
     submitDownload,
     submitBuild,
     ensureBuildDateOrder,
+    dispose,
   };
 }

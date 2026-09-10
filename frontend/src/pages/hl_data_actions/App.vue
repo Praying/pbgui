@@ -142,6 +142,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  sections.dispose();
   dlMonitor.disconnect();
   buildMonitor.disconnect();
 });
@@ -155,6 +156,10 @@ const initRetryLabel = computed(() =>
   t('market.connectionRetrying', { current: sections.initRetry.value, max: 3 })
 );
 const initFailedLabel = computed(() => t('market.failedToLoad', { message: '' }));
+const buildEmptyLabel = computed(() => sections.buildEmptyReason.value || t('market.noEligibleCoins'));
+const buildRetryLabel = computed(() =>
+  t('market.connectionRetrying', { current: sections.buildRetryAttempt.value, max: 12 })
+);
 
 /** Section body state for the v-if chain (loading → retrying → failed → content). */
 function sectionPhase(kind: 'dl' | 'build'): string {
@@ -259,7 +264,10 @@ function msgKindClass(kind: string): string {
       <div v-if="sectionPhase('build') === 'loading'" class="text-sm text-muted">{{ t('market.loading') }}</div>
       <div v-else-if="sectionPhase('build') === 'retrying'" class="hlda-empty p-4 text-center text-sm text-muted">{{ initRetryLabel }}</div>
       <div v-else-if="sectionPhase('build') === 'failed'" class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" :class="msgKindClass('error')">{{ initFailedLabel }}</div>
-      <div v-else-if="sectionPhase('build') === 'no-coins'" class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" :class="msgKindClass('warning')">{{ t('market.noEligibleCoins') }}</div>
+      <div v-else-if="sectionPhase('build') === 'no-coins'" class="hlda-msg mt-2.5 rounded-md px-3 py-2 text-sm" :class="msgKindClass('warning')">
+        {{ buildEmptyLabel }}
+        <span v-if="sections.buildInfoRetrying.value" class="ml-1">{{ buildRetryLabel }}</span>
+      </div>
       <template v-else>
         <CoinPickerGrid
           ref="buildGrid"

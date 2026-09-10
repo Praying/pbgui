@@ -1,5 +1,12 @@
 # Unreleased
 
+## Merge origin/main v2.02.9-v2.02.12 into the Vue3 migration branch
+
+- **Upstream synchronization**: Merged the four remote `main` release commits while preserving the current Vue3 + Tailwind CSS v4.3 page entrypoints and shared frontend contracts.
+- **Vue3 heatmap parity**: Ported the new `build-ohlcv-info` `retryable` and `empty_reason` response handling into the HL Data Actions composable, including bounded refresh retries, stale-generation protection, and timer cleanup on unmount.
+- **Legacy compatibility**: Updated shared log viewer cache-busting to v35 and retained the branch's i18n, modal, icon, datepicker, and Vue migration assets while incorporating main's remote restart-handler behavior.
+- **API restart visibility**: Advanced `api/serial.txt` to `2584` after the release merge and runtime changes.
+
 ## Vue3 工作台共享视觉与页面身份收敛
 
 - **完善共享页面身份**：AppShell 现在将可选的页面描述传递到 WorkspaceHeader，标题、breadcrumb、描述和复制路径控件形成一致的页面上下文层级，并在窄屏下允许描述自然换行。
