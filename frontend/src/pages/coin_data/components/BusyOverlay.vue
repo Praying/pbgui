@@ -4,12 +4,16 @@
  * progress label format of updateBusyProgress (:2041-2051: clamp 0-100,
  * one decimal, trailing '.0' stripped).
  */
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { BusyState } from '../composables/useRefreshJobs';
 
 const props = defineProps<{
   busy: BusyState;
+}>();
+
+const emit = defineEmits<{
+  dismiss: [];
 }>();
 
 const { t } = useI18n();
@@ -23,6 +27,16 @@ const progressScale = computed(() => {
   const safePercent = Math.max(0, Math.min(100, props.busy.percent));
   return `scaleX(${safePercent / 100})`;
 });
+
+function dismissOnEscape(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && props.busy.visible) {
+    event.preventDefault();
+    emit('dismiss');
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', dismissOnEscape));
+onUnmounted(() => window.removeEventListener('keydown', dismissOnEscape));
 </script>
 
 <template>
@@ -38,6 +52,9 @@ const progressScale = computed(() => {
         <div class="busy-progress-label min-w-[3.3rem] text-right text-sm font-bold text-accent-soft" id="busy-progress-label">{{ percentLabel }}</div>
       </div>
       <div class="busy-subtle text-sm text-secondary" id="busy-subtle">{{ busy.subtle || t('market.pleaseWait') }}</div>
+      <button type="button" class="busy-dismiss justify-self-center rounded-md border border-border-default bg-card px-3 py-1.5 text-sm text-secondary hover:border-accent hover:text-primary" @click="emit('dismiss')">
+        {{ t('market.dismissToBackground') }}
+      </button>
     </div>
   </div>
 </template>

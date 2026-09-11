@@ -199,4 +199,20 @@ describe('job polling (:2184-2228)', () => {
 
     expect(applyState).toHaveBeenCalledTimes(1); // first chain dropped by the second start
   });
+
+  it('dismisses the overlay without stopping the refresh job', async () => {
+    makeJobs([[{ status: 'running' }, { status: 'completed', state: { marker: 'done' } }]]);
+    const applyState = vi.fn();
+    const jobs = makeStore(applyState, vi.fn());
+
+    void jobs.runRefresh('/refresh/exchange', 'Busy', 'Done');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(jobs.busy.value.visible).toBe(true);
+
+    jobs.dismiss();
+    expect(jobs.busy.value.visible).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(350);
+    expect(applyState).toHaveBeenCalledWith({ marker: 'done' });
+  });
 });

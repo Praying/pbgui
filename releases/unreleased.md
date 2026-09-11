@@ -1,5 +1,11 @@
 # Unreleased
 
+## Merge origin/main v2.02.13-v2.02.15 into the Vue3 branch
+
+- **Upstream synchronization**: Merged the three remote `main` release commits while preserving the Vue3 + Tailwind CSS v4.3 page entrypoints and shared frontend contracts.
+- **Vue3 parity fixes**: Added stale-request protection to Balance Calculator, background dismissal for Coin Data refresh jobs, and WebSocket action failure/timeout recovery for VPS Monitor.
+- **Runtime visibility**: Resolved the API serial conflict at `2602` and retained the upstream VPS, cluster, monitoring, logging, documentation, and regression-test updates.
+
 ## Optimize 队列设置弹窗紧凑化
 
 - **移除重复关闭入口**：删除标题栏中的「关闭」按钮，保留底部「取消」作为唯一可见的放弃修改操作，同时继续支持 Escape 关闭。

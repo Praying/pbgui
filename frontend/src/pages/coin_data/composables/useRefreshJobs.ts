@@ -27,6 +27,7 @@ export interface UseRefreshJobs {
   busy: Ref<BusyState>;
   isRefreshing: Ref<boolean>;
   runRefresh(path: RefreshPath, busyTitle: string, okFallback: string): Promise<void>;
+  dismiss(): void;
   stop(): void;
 }
 
@@ -75,6 +76,11 @@ export function useRefreshJobs(options: {
 
   function hideBusy(): void {
     stopPolling();
+    busy.value = { ...busy.value, visible: false };
+  }
+
+  /** Hide the blocking overlay while allowing the server job to finish. */
+  function dismiss(): void {
     busy.value = { ...busy.value, visible: false };
   }
 
@@ -152,5 +158,5 @@ export function useRefreshJobs(options: {
     busy.value = { ...busy.value, visible: false };
   }
 
-  return { busy, isRefreshing, runRefresh, stop };
+  return { busy, isRefreshing, runRefresh, dismiss, stop };
 }

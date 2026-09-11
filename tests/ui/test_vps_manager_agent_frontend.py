@@ -205,6 +205,7 @@ def test_linux_update_counts_open_escaped_package_details() -> None:
     assert_text_present(modal, "Package removals planned")
     assert_text_present(modal, "Routine updates available")
     assert_text_present(modal, "Stale cache: these are last-known package details from {age} ago. Refresh the agent cache before making an urgency decision.")
+    assert "Deferred by apt" in modal
     assert "esc(item.name || '-')" in modal
     assert "esc(item.candidate_version || '-')" in modal
     assert "openPackageUpdatesModal(host)" in handler

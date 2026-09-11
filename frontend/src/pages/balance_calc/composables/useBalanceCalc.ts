@@ -85,6 +85,7 @@ export function useBalanceCalc(options: {
   const results = ref<CalcResults | null>(null);
   const feedback = ref<CalcFeedback>({ kind: 'info', message: '' });
   const calculating = ref(false);
+  let configLoadGeneration = 0;
 
   function setError(message: string): void {
     feedback.value = { kind: 'error', message };
@@ -115,6 +116,7 @@ export function useBalanceCalc(options: {
 
   async function selectInstance(inst: BalanceInstance | null): Promise<void> {
     selectedInstance.value = inst;
+    const generation = ++configLoadGeneration;
     if (!inst || !inst.name || !inst.version) return;
     try {
       const data = (await apiFetch<{ config: unknown; exchange?: string }>(apiUrl('/load-config'), {
@@ -122,9 +124,11 @@ export function useBalanceCalc(options: {
         credentials: 'same-origin',
         body: JSON.stringify({ name: inst.name, version: inst.version }), // :330-331
       })) as { config: unknown; exchange?: string };
+      if (generation !== configLoadGeneration) return;
       configText.value = JSON.stringify(data.config, null, 4); // :339
-      if (data.exchange) exchange.value = data.exchange; // :340-342
+      exchange.value = data.exchange || ''; // :340-342
     } catch (error) {
+      if (generation !== configLoadGeneration) return;
       const message = error instanceof ApiError ? serverMsg(error.detail) : String(error);
       configText.value = '// ' + t('misc.balance.failedLoadConfig', { error: message }); // :345
     }

@@ -227,7 +227,7 @@ body {
     <select id="sel-instance"><option value="" data-i18n="misc.balance.loadFromInstance">— load from instance —</option></select>
 
     <label for="sel-exchange" data-i18n="misc.balance.exchange">Exchange:</label>
-    <select id="sel-exchange"></select>
+    <select id="sel-exchange"><option value="">— select exchange —</option></select>
 
     <button id="btn-calc" data-i18n="misc.balance.calculate">Calculate</button>
     <span id="calc-status"></span>
@@ -282,6 +282,7 @@ body {
   var configEditor = document.getElementById('config-editor');
   var resultsPanel = document.getElementById('results-panel');
   var calcStatus   = document.getElementById('calc-status');
+  var configLoadGeneration = 0;
   window.PBGuiAI.registerPageContext({
     id: 'balance-calculator',
     getContext: function () {
@@ -323,7 +324,7 @@ body {
               var d = JSON.parse(selInstance.options[i].value);
               if (d.name === INIT_INSTANCE && (!INIT_VERSION || d.version === INIT_VERSION)) {
                 selInstance.selectedIndex = i;
-                loadInstanceConfig(d);
+                if (!DRAFT_ID) loadInstanceConfig(d);
                 break;
               }
             } catch(e) {}
@@ -336,6 +337,10 @@ body {
   // ── Load instance config ────────────────────────────────
   function loadInstanceConfig(inst) {
     if (!inst || !inst.name || !inst.version) return;
+    var generation = ++configLoadGeneration;
+    configEditor.value = '';
+    btnCalc.disabled = true;
+    calcStatus.innerHTML = '<span class="spinner"></span> Loading config...';
     fetch(API_BASE + '/load-config', {
       method: 'POST',
       credentials: 'same-origin',
@@ -349,20 +354,29 @@ body {
       });
     })
     .then(function(data) {
+      if (generation !== configLoadGeneration) return;
       configEditor.value = JSON.stringify(data.config, null, 4);
-      if (data.exchange) {
-        selExchange.value = data.exchange;
-      }
+      selExchange.value = data.exchange || '';
+      btnCalc.disabled = false;
+      calcStatus.textContent = '';
     })
     .catch(function(e) {
-      configEditor.value = '// ' + t('misc.balance.failedLoadConfig', { error: m(e) });
+      if (generation !== configLoadGeneration) return;
+      btnCalc.disabled = false;
+      calcStatus.textContent = '';
+      showError(t('misc.balance.failedLoadConfig', { error: m(e) }));
     });
   }
 
   // ── Instance selection change ───────────────────────────
   selInstance.addEventListener('change', function() {
     var val = selInstance.value;
-    if (!val) return;
+    if (!val) {
+      configLoadGeneration++;
+      btnCalc.disabled = false;
+      calcStatus.textContent = '';
+      return;
+    }
     try {
       var inst = JSON.parse(val);
       loadInstanceConfig(inst);
@@ -530,6 +544,9 @@ body {
 
   // Auto-load draft config if provided (e.g. from backtest result or optimizer)
   if (DRAFT_ID) {
+    var draftGeneration = ++configLoadGeneration;
+    btnCalc.disabled = true;
+    calcStatus.innerHTML = '<span class="spinner"></span> Loading draft...';
     fetch(API_BASE + '/draft/' + encodeURIComponent(DRAFT_ID), {
       credentials: 'same-origin'
     })
@@ -540,13 +557,24 @@ body {
       });
     })
     .then(function(d) {
+      if (draftGeneration !== configLoadGeneration) return;
+      btnCalc.disabled = false;
+      calcStatus.textContent = '';
       if (d.config) {
         configEditor.value = JSON.stringify(d.config, null, 4);
-        // Auto-calculate immediately
-        btnCalc.click();
+        if (selExchange.value) {
+          btnCalc.click();
+        } else {
+          calcStatus.textContent = 'Select an exchange to calculate.';
+        }
       }
     })
-    .catch(function(e) { showError('Failed to load draft: ' + e.message); });
+    .catch(function(e) {
+      if (draftGeneration !== configLoadGeneration) return;
+      btnCalc.disabled = false;
+      calcStatus.textContent = '';
+      showError('Failed to load draft: ' + e.message);
+    });
   }
 })();
 </script>

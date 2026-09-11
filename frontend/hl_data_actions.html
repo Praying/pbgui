@@ -1657,8 +1657,10 @@
                 body: JSON.stringify({ coins: coins, start_day:sd, end_day:ed,
                     only_missing_1m_src_hours: $('dl-only')?$('dl-only').checked:true }),
             }));
-            var data = await resp.json();
-            if (data.error) { showMsg('dl','error',data.error); }
+            var data = await resp.json().catch(function() { return {}; });
+            if (!resp.ok) {
+                showMsg('dl','error',data.detail||data.error||data.message||('HTTP '+resp.status));
+            } else if (data.error) { showMsg('dl','error',data.error); }
             else showQueuedMsg('dl', data);
         } catch(e) { showMsg('dl','error',PBGuiI18n.t('market.requestFailed', { message: e.message })); }
         finally { btn.disabled=false; lo.classList.remove('active'); }
@@ -1676,8 +1678,10 @@
                 body: JSON.stringify({ coins: coins, start_day:sd, end_day:ed,
                     refetch: $('build-refetch')?$('build-refetch').checked:false }),
             }));
-            var data = await resp.json();
-            if (data.error) { showMsg('build','error',data.error); }
+            var data = await resp.json().catch(function() { return {}; });
+            if (!resp.ok) {
+                showMsg('build','error',data.detail||data.error||data.message||('HTTP '+resp.status));
+            } else if (data.error) { showMsg('build','error',data.error); }
             else showQueuedMsg('build', data);
         } catch(e) { showMsg('build','error',PBGuiI18n.t('market.requestFailed', { message: e.message })); }
         finally { btn.disabled=false; lo.classList.remove('active'); }

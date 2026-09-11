@@ -66,7 +66,10 @@ const socket = ref<WebSocket | null>(null);
 const generation = ref(0);
 const viewer = ref<any>(null);
 const historyRequestId = ref(0);
+const pendingServiceActions = ref<Record<string, boolean>>({});
+const pendingInstanceActions = ref<Record<string, boolean>>({});
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+const actionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
 const connectionMap = computed<Record<string, ConnectionInfo>>(() => state.value?.connections?.connections || {});
 const hosts = computed(() => Object.keys(connectionMap.value).sort((a, b) => {
@@ -146,15 +149,25 @@ function stateMessage(message: unknown): string {
   return String(message ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').trim();
 }
 
-function send(command: Record<string, unknown>): void {
+function send(command: Record<string, unknown>): boolean {
   const ws = socket.value;
-  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(command));
+  if (!ws || ws.readyState !== WebSocket.OPEN) return false;
+  try {
+    ws.send(JSON.stringify(command));
+    return true;
+  } catch {
+    connection.value = 'lost';
+    return false;
+  }
 }
 
 function closeResult(): void { resultModal.value = null; }
 
 function handleResult(message: Record<string, unknown>): void {
   const ok = message.ok === true || message.success === true;
+  const command = String(message.cmd || '');
+  if (command === 'restart_service') clearPendingAction(`${String(message.host || '')}:${String(message.service || '')}`);
+  if (command === 'kill_instance') clearPendingAction(`${String(message.host || '')}:${String(message.name || '')}`);
   const detail = stateMessage(message.message || message.detail || message.error || (ok ? t('sysmon.actionCompleted', { svc: String(message.cmd || '') }) : t('common.error')));
   resultModal.value = { title: ok ? t('sysmon.action') : t('common.error'), message: detail || JSON.stringify(message) };
 }
@@ -204,6 +217,10 @@ function disconnect(): void {
   const ws = socket.value;
   socket.value = null;
   if (ws) { ws.onopen = null; ws.onmessage = null; ws.onerror = null; ws.onclose = null; ws.close(); }
+  for (const key of Object.keys(pendingServiceActions.value)) delete pendingServiceActions.value[key];
+  for (const key of Object.keys(pendingInstanceActions.value)) delete pendingInstanceActions.value[key];
+  for (const timeout of actionTimeouts.values()) clearTimeout(timeout);
+  actionTimeouts.clear();
 }
 
 function setSetting(key: string, value: boolean): void {
@@ -220,8 +237,50 @@ function toggleServices(host: string): void { collapsedServices.value = { ...col
 function isHostCollapsed(host: string): boolean { return collapsedHosts.value[host] ?? compactMode.value; }
 function isServiceCollapsed(host: string): boolean { return collapsedServices.value[host] ?? compactMode.value; }
 
-function restartService(host: string, service: string): void { send({ cmd: 'restart_service', host, service }); }
-function killInstance(host: string, row: InstanceRecord): void { send({ cmd: 'kill_instance', host, name: instanceName(row), pb_version: instanceVersion(row) }); }
+function clearPendingAction(actionKey: string): void {
+  delete pendingServiceActions.value[actionKey];
+  delete pendingInstanceActions.value[actionKey];
+  const timeout = actionTimeouts.get(actionKey);
+  if (timeout) clearTimeout(timeout);
+  actionTimeouts.delete(actionKey);
+}
+
+function restartService(host: string, service: string): void {
+  const actionKey = `${host}:${service}`;
+  if (pendingServiceActions.value[actionKey]) return;
+  pendingServiceActions.value[actionKey] = true;
+  if (!send({ cmd: 'restart_service', host, service })) {
+    clearPendingAction(actionKey);
+    resultModal.value = { title: t('common.error'), message: t('sysmon.connectionLost') };
+    return;
+  }
+  const timeout = setTimeout(() => {
+    if (!pendingServiceActions.value[actionKey]) return;
+    clearPendingAction(actionKey);
+    actionTimeouts.delete(actionKey);
+    resultModal.value = { title: t('common.error'), message: t('sysmon.actionTimedOut') };
+  }, 10000);
+  actionTimeouts.set(actionKey, timeout);
+}
+
+function killInstance(host: string, row: InstanceRecord): void {
+  const name = instanceName(row);
+  const actionKey = `${host}:${name}`;
+  if (pendingInstanceActions.value[actionKey]) return;
+  pendingInstanceActions.value[actionKey] = true;
+  if (!send({ cmd: 'kill_instance', host, name, pb_version: instanceVersion(row) })) {
+    clearPendingAction(actionKey);
+    resultModal.value = { title: t('common.error'), message: t('sysmon.connectionLost') };
+    return;
+  }
+  const timeout = setTimeout(() => {
+    if (!pendingInstanceActions.value[actionKey]) return;
+    clearPendingAction(actionKey);
+    actionTimeouts.delete(actionKey);
+    resultModal.value = { title: t('common.error'), message: t('sysmon.actionTimedOut') };
+  }, 10000);
+  actionTimeouts.set(actionKey, timeout);
+}
 
 function instanceName(row: InstanceRecord): string { return String(row.name || row.u || '?'); }
 function instanceVersion(row: InstanceRecord): string { return String(row.pb_version || row.p || '7'); }

@@ -82,6 +82,23 @@ describe('selectInstance / load-config (:324-347)', () => {
     expect(store.configText.value).toContain('misc.balance.failedLoadConfig');
     expect(store.configText.value).toContain('instance missing');
   });
+
+  it('ignores a slower config response after a newer instance selection', async () => {
+    let resolveFirst: ((response: Response) => void) | undefined;
+    const firstResponse = new Promise<Response>((resolve) => { resolveFirst = resolve; });
+    fetchMock
+      .mockReturnValueOnce(firstResponse)
+      .mockResolvedValueOnce(jsonResponse({ config: { selected: 'new' }, exchange: 'bybit' }));
+    const store = makeStore();
+
+    const firstLoad = store.selectInstance({ name: 'old', version: 'v7' });
+    await store.selectInstance({ name: 'new', version: 'v7' });
+    resolveFirst?.(jsonResponse({ config: { selected: 'old' }, exchange: 'binance' }));
+    await firstLoad;
+
+    expect(store.configText.value).toBe(JSON.stringify({ selected: 'new' }, null, 4));
+    expect(store.exchange.value).toBe('bybit');
+  });
 });
 
 describe('calculate (:360-403)', () => {

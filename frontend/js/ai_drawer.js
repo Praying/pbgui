@@ -178,6 +178,15 @@
     return data;
   }
 
+  async function confirmAction(options) {
+    if (window.PBGuiDialogs && typeof window.PBGuiDialogs.confirm === 'function') {
+      return window.PBGuiDialogs.confirm(options);
+    }
+    if (typeof window.PBGuiConfirm === 'function') return window.PBGuiConfirm(options);
+    setStatus('Confirmation dialog is unavailable. Reload PBGui and try again.', true);
+    return false;
+  }
+
   function build() {
     if (root) return;
     root = el('aside');
@@ -797,9 +806,11 @@
 
   async function rewindMessage(messageIndex) {
     if (!state.current) return;
-    var confirmed = typeof window.PBGuiConfirm === 'function'
-      ? await window.PBGuiConfirm({ title: translate('ai.chat.rewindTitle', 'Rewind AI chat'), message: translate('ai.chat.rewindMessage', 'Remove this message and every response after it?'), confirmText: translate('ai.chat.rewind', 'Rewind') })
-      : false;
+    var confirmed = await confirmAction({
+      title: translate('ai.chat.rewindTitle', 'Rewind AI chat'),
+      message: translate('ai.chat.rewindMessage', 'Remove this message and every response after it?'),
+      confirmText: translate('ai.chat.rewind', 'Rewind')
+    });
     if (!confirmed) return;
     try {
       var result = await api('/conversations/' + encodeURIComponent(state.current) + '/rewind', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message_index: messageIndex }) });
@@ -1042,7 +1053,7 @@
         : preview.action === 'start_optimize_queue'
           ? translate('ai.drawer.approveQueueDetail', 'Start {jobs} exact reviewed PB8 optimizer queue jobs immediately. Proposal integrity and current queued status are verified before execution.', { jobs: preview.job_count || 0 })
         : translate('ai.drawer.approveChangesDetail', 'Apply {count} reviewed changes. {autostart}Proposal integrity is verified before execution.', { count: preview.changed_count || 0, autostart: preview.may_start_immediately ? translate('ai.proposal.autostartEnabled', 'Queue autostart is enabled; this may start immediately. ') : '' });
-      var confirmed = typeof window.PBGuiConfirm === 'function' && await window.PBGuiConfirm({
+      var confirmed = await confirmAction({
         title: translate('ai.proposal.approveTitle', 'Approve PBGui action'),
         message: proposalActionLabel(preview.action) + ' ' + String(preview.name || ''),
         detail: approvalDetail,
@@ -1197,7 +1208,7 @@
 
   async function deleteConversation() {
     if (!state.current) return;
-    var confirmed = typeof window.PBGuiConfirm === 'function' && await window.PBGuiConfirm({
+    var confirmed = await confirmAction({
       title: translate('ai.chat.deleteTitle', 'Delete AI chat'),
       message: translate('ai.chat.deleteMessage', 'Delete this conversation and its history?'),
       confirmText: translate('ai.chat.delete', 'Delete')

@@ -458,7 +458,7 @@ onBeforeUnmount(() => {
     </div>
     </div>
 
-    <BusyOverlay :busy="refresh.busy.value" />
+    <BusyOverlay :busy="refresh.busy.value" @dismiss="refresh.dismiss" />
   </AppShell>
 </template>
 
