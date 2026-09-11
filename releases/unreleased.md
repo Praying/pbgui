@@ -1,5 +1,10 @@
 # Unreleased
 
+## Services Monitor 嵌入式任务监控配色统一
+
+- **统一嵌入表面**：任务监控 iframe 在 Services Monitor 中使用工作区页面表面 token，消除与外层工作节点详情区域之间的灰度跳变。
+- **收敛空态层次**：嵌入模式下移除空任务卡片的强阴影并降低边界对比度，保留标签激活态和任务内容的现有交互与语义色。
+
 ## Merge origin/main v2.02.13-v2.02.15 into the Vue3 branch
 
 - **Upstream synchronization**: Merged the three remote `main` release commits while preserving the Vue3 + Tailwind CSS v4.3 page entrypoints and shared frontend contracts.

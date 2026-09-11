@@ -98,6 +98,7 @@ describe('Shared Jobs Monitor Vue page', () => {
     expect(document.documentElement.classList.contains('is-embedded')).toBe(true);
     expect(WebSocketMock.instances[0]?.url).toBe(`ws://${location.host}/ws/jobs`);
     expect(wrapper.find('.app-shell').exists()).toBe(true);
+    expect(wrapper.get('.jobs-monitor-content').classes()).toContain('jobs-monitor-content--embedded');
     expect(wrapper.findAll('[data-status]')).toHaveLength(2);
     expect(wrapper.get('.jobs-tab-panel.active [role="status"]').text()).toContain('No Active jobs');
     expect(wrapper.text()).toContain('Connecting');
@@ -110,6 +111,13 @@ describe('Shared Jobs Monitor Vue page', () => {
     expect(wrapper.text()).toContain('run-1');
     expect(wrapper.text()).not.toContain('hidden-1');
     expect(wrapper.get('[data-status="worker"]').text()).toContain('Running');
+  });
+
+  it('does not apply embedded surface styling to the standalone monitor', () => {
+    const wrapper = mountApp();
+
+    expect(wrapper.get('.jobs-monitor-content').classes()).not.toContain('jobs-monitor-content--embedded');
+    wrapper.unmount();
   });
 
   it('keeps visible action labels beside Phosphor icons', async () => {

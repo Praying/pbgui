@@ -537,7 +537,10 @@ onUnmounted(() => {
       </div>
     </template>
 
-  <div class="min-h-0 bg-page text-primary" :class="embedMode ? 'p-3' : ''">
+  <div
+    class="jobs-monitor-content min-h-0 bg-page text-primary"
+    :class="{ 'jobs-monitor-content--embedded': embedMode, 'p-3': embedMode }"
+  >
     <div class="mx-auto max-w-[1400px]">
       <nav class="pbgui-tab-bar mb-4 gap-1.5" aria-label="Job tabs">
         <button v-for="tab in (['running', 'done', 'failed'] as JobsTab[])" :key="tab" class="pbgui-tab px-3.5 py-2.5" :class="{ active: currentTab === tab }" :data-tab="tab" @click="switchTab(tab)">
@@ -640,5 +643,19 @@ html.is-embedded .operations-shell--jobs .app-shell__main {
   width: 100%;
   max-width: none;
   padding: 0;
+}
+
+/* Embedded monitor surfaces belong to the surrounding worker detail panel,
+   rather than looking like a second standalone page. */
+html.is-embedded body,
+html.is-embedded .operations-shell--jobs,
+html.is-embedded .operations-shell--jobs .jobs-monitor-content {
+  background: var(--surface-workspace);
+}
+
+html.is-embedded .operations-shell--jobs .jobs-monitor-content .pbgui-empty-state {
+  background: var(--surface-workspace);
+  border-color: var(--border-subtle);
+  box-shadow: none;
 }
 </style>
