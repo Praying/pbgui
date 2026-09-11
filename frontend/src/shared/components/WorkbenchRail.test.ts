@@ -319,9 +319,37 @@ describe('WorkbenchRail', () => {
     expect(nav.attributes('aria-modal')).toBe('true');
     expect(workspace.hasAttribute('inert')).toBe(true);
 
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.emitted('update:collapsed')).toContainEqual([true]);
+    await wrapper.setProps({ collapsed: true });
+    expect(nav.attributes('role')).toBeUndefined();
+    expect(workspace.hasAttribute('inert')).toBe(false);
+
     wrapper.unmount();
     expect(workspace.hasAttribute('inert')).toBe(false);
     appShell.remove();
+    vi.unstubAllGlobals();
+  });
+
+  it('starts collapsed on mobile even when desktop expansion was persisted', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(max-width: 720px)',
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    const wrapper = mountRail('system_services', false);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.emitted('update:collapsed')).toEqual([[true]]);
+    wrapper.unmount();
     vi.unstubAllGlobals();
   });
 

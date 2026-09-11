@@ -29,6 +29,7 @@ function onKeydown(event: KeyboardEvent): void {
 
 <template>
   <div class="grid grid-cols-[1fr_auto] gap-2.5 border-t border-border-subtle bg-sidebar px-[max(18px,calc((100%-920px)/2))] pt-3 pb-4">
+    <p v-if="!enabled" class="col-span-full m-0 text-xs text-secondary">{{ t('ai.chat.composerDisabledHint') }}</p>
     <Textarea
       id="prompt"
       v-model="draft"

@@ -46,9 +46,9 @@
  * legacy :4732-4733); a mid-session version flip updates buttons and URL
  * builders but not the nav highlight (legacy quirk, preserved + documented).
  */
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import type { Component } from 'vue';
-import { PhBank, PhBrain, PhFolderOpen, PhGear, PhQuestion, PhTarget } from '@phosphor-icons/vue';
+import { PhBank, PhBrain, PhFolderOpen, PhGear, PhMagnifyingGlass, PhPlay, PhQuestion, PhTarget } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import { pageOrigin } from '@/shared/boot';
@@ -138,6 +138,12 @@ const STAGE_META: Record<ParetoStage, { icon: Component; labelKey: string }> = {
 const railSections = computed<PageSection[]>(() =>
   VALID_STAGES.map((stage) => ({ key: stage, label: t(STAGE_META[stage].labelKey) })),
 );
+
+const paretoPageTitle = computed(() =>
+  t(store.isV8.value ? 'v7explore.pageTitleParetoV8' : 'v7explore.pageTitle'),
+);
+const paretoPageKey = computed(() => (store.isV8.value ? 'v8_pareto_explorer' : 'v7_pareto_explorer'));
+const paretoPageFamily = computed(() => (store.isV8.value ? 'PBv8' : 'PBv7'));
 
 function openParetoHelp(): void {
   window.location.href = '/api/help/main_page?topic=37_pareto_explorer';
@@ -359,11 +365,14 @@ function commandLoad(): void {
 const fullscreenListener = useFullscreenRelayout(() => getPlotly());
 
 onMounted(() => {
-  document.title = t('v7explore.pageTitle');
   (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = openParetoHelp;
   fullscreenListener.install();
   void store.bootstrapSession();
 });
+
+watch(paretoPageTitle, (title) => {
+  document.title = title;
+}, { immediate: true });
 
 onBeforeUnmount(() => {
   fullscreenListener.dispose();
@@ -378,10 +387,10 @@ onBeforeUnmount(() => {
   <DataTipTooltip class="pointer-events-none fixed z-[var(--z-tooltip)] hidden max-w-[480px] rounded-[5px] border border-border-strong bg-card px-2.5 py-1.5 text-xs font-normal leading-[1.5] text-primary whitespace-pre-wrap shadow-[0_4px_12px_rgba(5,8,14,0.5)]" />
   <AppShell
     class="core-workbench-shell core-workbench-shell--explorer"
-    :page-key="readSeedOptimizeVersion() === 'v8' ? 'v8_pareto_explorer' : 'v7_pareto_explorer'"
-    :page-title="t('v7explore.paretoExplorer')"
+    :page-key="paretoPageKey"
+    :page-title="paretoPageTitle"
     :page-description="t('v7explore.pageSubtitle')"
-    :page-family="readSeedOptimizeVersion() === 'v8' ? 'PBv8' : 'PBv7'"
+    :page-family="paretoPageFamily"
     :sections="railSections"
     :active-section="store.state.stage"
     @update:section="store.selectStage($event as ParetoStage)"
@@ -411,6 +420,7 @@ onBeforeUnmount(() => {
         <span>{{ t('v7explore.backToOptimize') }}</span>
       </Button>
       <Button variant="info" type="button" id="btn-run-backtest" @click="requireSelectedConfig">
+        <PbIcon :icon="PhPlay" />
         <span>{{ t('v7explore.runBacktest') }}</span>
       </Button>
       <Button
@@ -424,6 +434,7 @@ onBeforeUnmount(() => {
         {{ t('v7explore.pinExplorerBaseline') }}
       </Button>
       <Button variant="outline" type="button" id="btn-open-strategy-explorer" @click="requireSelectedConfig">
+        <PbIcon :icon="PhMagnifyingGlass" />
         <span>{{ t('v7explore.strategyExplorer') }}</span>
       </Button>
       <Button variant="primary" type="button" id="btn-load-all-results" :disabled="store.state.fullLoadPending" @click="store.loadAllResults()">
@@ -434,13 +445,6 @@ onBeforeUnmount(() => {
         <span>{{ t('v7explore.showPassivbotParetos') }}</span>
       </Button>
     </PageToolbar>
-
-      <section class="page-title sr-only flex items-start justify-between gap-5">
-        <div>
-          <h1 class="mb-1 text-xl">{{ t('v7explore.paretoExplorer') }}</h1>
-          <p id="page-subtitle" class="text-secondary">{{ t('v7explore.pageSubtitle') }}</p>
-        </div>
-      </section>
 
       <section id="messages" class="messages flex flex-col gap-2">
         <div
@@ -524,7 +528,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section v-show="store.state.stage === 'settings'" id="stage-settings" class="stage-view">
+      <section v-show="store.state.stage === 'settings'" id="stage-settings" class="stage-view" :aria-hidden="store.state.stage !== 'settings'">
         <div class="stage-grid grid grid-cols-[repeat(12,minmax(0,1fr))] gap-3">
           <div class="stage-block half panel-card col-span-6 rounded-xl border border-border-default bg-panel p-3.5 max-[900px]:col-span-12">
             <h3 class="mb-2">{{ t('v7explore.loadControl') }}</h3>
@@ -580,11 +584,11 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <CommandCenter v-show="store.state.stage === 'command_center'" :store="store" :surfaces="surfaces" />
-      <Playground v-show="store.state.stage === 'pareto_playground'" :store="store" :surfaces="surfaces" />
+      <CommandCenter v-show="store.state.stage === 'command_center'" :aria-hidden="store.state.stage !== 'command_center'" :store="store" :surfaces="surfaces" />
+      <Playground v-show="store.state.stage === 'pareto_playground'" :aria-hidden="store.state.stage !== 'pareto_playground'" :store="store" :surfaces="surfaces" />
 
       <!-- M-v7-7: deep-intelligence tab payloads + preset handoffs land here -->
-      <section v-show="store.state.stage === 'deep_intelligence'" id="stage-deep-intelligence" class="stage-view flex flex-col gap-3">
+      <section v-show="store.state.stage === 'deep_intelligence'" id="stage-deep-intelligence" class="stage-view flex flex-col gap-3" :aria-hidden="store.state.stage !== 'deep_intelligence'">
         <div class="panel-card rounded-xl border border-border-default bg-panel p-3.5">
           <div class="deep-tabs flex flex-wrap gap-2">
             <!-- ui-migration: out of scope — stage tab switcher (tabs are

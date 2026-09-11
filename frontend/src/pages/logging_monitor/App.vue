@@ -131,6 +131,7 @@ async function confirmPurge(): Promise<void> {
   finally { purging.value = false; }
 }
 function installViewer(): void {
+  viewerUnavailable.value = false;
   const Ctor = (window as Window & { LogViewerPanel?: ViewerCtor }).LogViewerPanel;
   if (typeof Ctor !== 'function') { viewerUnavailable.value = true; return; }
   viewer = new Ctor({
@@ -143,6 +144,11 @@ function installViewer(): void {
     onFileChange,
   });
   viewer.open();
+}
+function retryViewer(): void {
+  viewer?.close();
+  viewer = null;
+  installViewer();
 }
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && purgeOpen.value) purgeOpen.value = false;
@@ -203,8 +209,11 @@ onBeforeUnmount(() => {
         <ErrorState
           v-if="viewerUnavailable"
           class="mx-3.5 my-2 text-danger-soft"
+          data-action="retry-viewer"
           :title="t('common.error')"
           :message="t('sysmon.logViewerUnavailable', { v: 'LogViewerPanel' })"
+          :retry-label="t('common.refresh')"
+          @retry="retryViewer"
         />
         <div id="logging-viewer-target" class="flex flex-1 min-h-0 overflow-hidden"></div>
       </section>

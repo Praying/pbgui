@@ -5,6 +5,14 @@
 - **统一嵌入表面**：任务监控 iframe 在 Services Monitor 中使用工作区页面表面 token，消除与外层工作节点详情区域之间的灰度跳变。
 - **收敛空态层次**：嵌入模式下移除空任务卡片的强阴影并降低边界对比度，保留标签激活态和任务内容的现有交互与语义色。
 
+## UI/UX 审查改进
+
+- **修复日志查看器加载**：经典脚本现在正确发布 `window.LogViewerPanel`，日志页在构造器不可用时提供显式重试入口。
+- **Swagger 离线化**：Swagger UI 的 JavaScript、CSS 和 PBGui 样式改为本地资源，移除文档页对第三方 CDN 的运行时依赖。
+- **统一版本身份**：帕累托浏览器根据运行时结果同步 V7/V8 页面标题、工作台身份，并移除重复的页面级 H1。
+- **改善空态与移动导航**：VPS 监控未配置状态增加下一步引导；移动视口默认收起持久化展开的工作台导航，优先展示当前内容。
+- **统一操作图标**：帕累托浏览器的回测和策略浏览器操作使用 Phosphor 图标替代 emoji，同时保留可见文字。
+
 ## Merge origin/main v2.02.13-v2.02.15 into the Vue3 branch
 
 - **Upstream synchronization**: Merged the three remote `main` release commits while preserving the Vue3 + Tailwind CSS v4.3 page entrypoints and shared frontend contracts.

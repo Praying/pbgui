@@ -101,6 +101,16 @@ describe('Pareto Explorer scaffold', () => {
 });
 
 describe('runtime flavor on the page (R3)', () => {
+  it('updates the document title and keeps one page-level heading for a v8 result', async () => {
+    stubFetch({ result_valid: true, result: { name: 'pb8run', optimize_version: 'v8' }, messages: [] });
+    const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r&optimize_version=v8');
+
+    expect(document.title).toContain('V8');
+    expect(wrapper.findAll('h1')).toHaveLength(1);
+    expect(wrapper.get('.workspace-header__breadcrumb').text()).toContain('PBv8');
+    wrapper.unmount();
+  });
+
   it('reveals the v8-only baseline pin when a v8 result loads on the v7-seeded URL', async () => {
     stubFetch({ result_valid: true, result: { name: 'pb8run', optimize_version: 'v8' }, messages: [] });
     const wrapper = await mountApp('/api/pareto-explorer/main_page?result_path=/r');

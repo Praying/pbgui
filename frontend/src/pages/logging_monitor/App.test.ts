@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createI18n } from '@/shared/i18n';
 import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
@@ -56,6 +58,26 @@ beforeEach(() => {
 });
 
 describe('Logging Monitor Vue page', () => {
+  it('publishes the shared viewer constructor for the classic script loader', () => {
+    const frontendRoot = resolve(import.meta.dirname, '../../..');
+    const viewerSource = readFileSync(resolve(frontendRoot, 'js/log_viewer_panel.js'), 'utf8');
+
+    expect(viewerSource).toContain('window.LogViewerPanel = LogViewerPanel');
+  });
+
+  it('offers a viewer retry when the classic constructor is unavailable', async () => {
+    delete (window as unknown as { LogViewerPanel?: typeof ViewerMock }).LogViewerPanel;
+    const wrapper = mountApp();
+    await flushPromises();
+
+    expect(wrapper.get('[data-state="error"]').text()).toContain('LogViewerPanel');
+    (window as unknown as { LogViewerPanel: typeof ViewerMock }).LogViewerPanel = ViewerMock;
+    await wrapper.get('[data-action="retry-viewer"] button').trigger('click');
+
+    expect(ViewerMock.instances).toHaveLength(1);
+    expect(ViewerMock.instances[0]?.open).toHaveBeenCalled();
+  });
+
   it('mounts the shared log viewer and exposes rotated files and purge confirmation', async () => {
     const wrapper = mountApp();
     await flushPromises();

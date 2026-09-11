@@ -139,7 +139,15 @@ function hasActiveHigherLayer(): boolean {
 }
 
 function onDocumentKeydown(event: KeyboardEvent): void {
-  if (event.key !== 'Escape' || !tempExpanded.value || hasActiveHigherLayer()) return;
+  if (event.key !== 'Escape' || hasActiveHigherLayer()) return;
+
+  if (mobileDrawerExpanded.value) {
+    tempExpanded.value = false;
+    emit('update:collapsed', true);
+    return;
+  }
+
+  if (!tempExpanded.value) return;
 
   tempExpanded.value = false;
   void nextTick(() => {
@@ -150,6 +158,7 @@ function onDocumentKeydown(event: KeyboardEvent): void {
 onMounted(() => {
   mobileViewportQuery = window.matchMedia?.(MOBILE_DRAWER_QUERY);
   mobileViewport.value = mobileViewportQuery?.matches ?? false;
+  if (mobileViewport.value && !props.collapsed) emit('update:collapsed', true);
   mobileViewportQuery?.addEventListener('change', onMobileViewportChange);
   document.addEventListener('pointerdown', onDocumentPointerdown);
   document.addEventListener('keydown', onDocumentKeydown);
@@ -158,6 +167,7 @@ onMounted(() => {
 
 function onMobileViewportChange(event: MediaQueryListEvent): void {
   mobileViewport.value = event.matches;
+  if (event.matches && !props.collapsed) emit('update:collapsed', true);
 }
 
 function updateWorkspaceIsolation(shouldIsolate: boolean): void {
@@ -192,8 +202,13 @@ watch(() => [props.activePage, visuallyCollapsed.value], () => {
   if (!visuallyCollapsed.value) scrollActiveIntoView();
 });
 
-watch(() => props.collapsed, () => {
+watch(() => props.collapsed, (collapsed) => {
   tempExpanded.value = false;
+  if (collapsed && mobileViewport.value) {
+    void nextTick(() => {
+      railEl.value?.querySelector<HTMLButtonElement>('[data-testid="rail-toggle"]')?.focus();
+    });
+  }
 });
 
 watch(mobileDrawerExpanded, updateWorkspaceIsolation);

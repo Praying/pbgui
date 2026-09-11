@@ -81,6 +81,17 @@ beforeEach(() => {
 });
 
 describe('VPS Monitor Vue page', () => {
+  it('explains the unconfigured state and links to VPS Manager', async () => {
+    const wrapper = mountApp();
+    WebSocketMock.instances[0]!.state({ connections: { total: 0, connected: 0, connecting: 0, disconnected: 0, connections: {} } });
+    await wrapper.vm.$nextTick();
+
+    const emptyState = wrapper.get('[data-state="empty"]');
+    expect(emptyState.text()).toContain('No VPS servers configured.');
+    expect(emptyState.text()).toContain('Add a VPS host in VPS Manager');
+    expect(emptyState.text()).toContain('Open VPS Manager');
+  });
+
   it('renders live dashboard state safely and applies URL/UI filters', async () => {
     const wrapper = mountApp('?hide_ip=1&compact=1');
     WebSocketMock.instances[0]!.onopen?.();

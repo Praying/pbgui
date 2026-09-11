@@ -41,7 +41,8 @@ import psutil
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from secure_files import harden_sensitive_paths
@@ -952,6 +953,8 @@ async def _lifespan(app: FastAPI):
 
 app = FastAPI(
     lifespan=_lifespan,
+    docs_url=None,
+    openapi_url=None,
     title="PBGui API",
     description=(
         "REST API + WebSocket for PBGui backend services.\n\n"
@@ -1002,6 +1005,43 @@ app = FastAPI(
         {"name": "vps", "description": "VPS monitoring WebSocket (`/ws/vps`) — live metrics, log streaming, service control"},
     ],
 )
+
+
+@app.get("/docs", include_in_schema=False, response_class=HTMLResponse)
+def get_local_swagger_ui(request: Request, session: SessionToken = Depends(require_auth)) -> HTMLResponse:
+    """Serve Swagger UI using only PBGui-hosted browser assets."""
+    del session
+    root_path = str(request.scope.get("root_path") or "").rstrip("/")
+
+    def rooted_path(path: str) -> str:
+        """Prefix an application URL with the reverse-proxy root path."""
+        return f"{root_path}{path}"
+
+    response = get_swagger_ui_html(
+        openapi_url=rooted_path("/openapi.json"),
+        title=f"{app.title} - Swagger UI",
+        swagger_js_url=rooted_path("/app/vendor/swagger-ui/swagger-ui-bundle.js"),
+        swagger_css_url=rooted_path("/app/vendor/swagger-ui/swagger-ui.css"),
+        swagger_favicon_url=rooted_path("/app/favicon.svg?v=2"),
+        swagger_ui_parameters={
+            "deepLinking": True,
+            "displayRequestDuration": True,
+            "docExpansion": "none",
+            "filter": True,
+        },
+    )
+    html = response.body.decode("utf-8").replace(
+        "</head>",
+        f'<link rel="stylesheet" href="{rooted_path("/app/vendor/swagger-ui/pbgui-swagger.css")}">\n</head>',
+    )
+    return HTMLResponse(content=html, status_code=response.status_code)
+
+
+@app.get("/openapi.json", include_in_schema=False)
+def get_authenticated_openapi(session: SessionToken = Depends(require_auth)) -> JSONResponse:
+    """Serve the OpenAPI schema only to authenticated API users."""
+    del session
+    return JSONResponse(content=app.openapi())
 
 _cors_origins, _cors_allow_credentials = _configured_cors()
 app.add_middleware(

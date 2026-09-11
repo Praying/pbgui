@@ -50,6 +50,9 @@ const sections = computed<PageSection[]>(() => [
 function onSectionSelect(key: string): void {
   if (key === 'dashboard' || key === 'instances' || key === 'services' || key === 'logs') switchTab(key);
 }
+function openVpsManager(): void {
+  window.location.href = '/api/vps-manager/main_page';
+}
 const state = ref<VpsState | null>(null);
 const connection = ref<'connecting' | 'connected' | 'lost'>('connecting');
 const compactMode = ref(queryCompact);
@@ -463,6 +466,9 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
             v-if="!hosts.length"
             class="pt-3.5 whitespace-pre-wrap break-words text-primary"
             :title="t('sysmon.noVpsConfigured')"
+            :message="t('sysmon.noVpsConfiguredHint')"
+            :action-label="t('sysmon.openVpsManager')"
+            @action="openVpsManager"
           />
         </div>
 

@@ -2917,3 +2917,6 @@ class LogViewerPanel {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 }
+
+/* The Vue logging page and legacy pages load this file as a classic script. */
+window.LogViewerPanel = LogViewerPanel;
