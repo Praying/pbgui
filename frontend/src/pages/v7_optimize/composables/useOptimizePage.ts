@@ -43,6 +43,8 @@ export interface QueueConfigChoice {
   intent: 'edit' | 'start' | 'stop' | 'restart' | 'requeue';
 }
 
+export type OptimizeBannerState = 'ok' | 'lost' | 'waiting';
+
 function detailOf(error: unknown): string {
   if (error instanceof ApiError) return error.detail;
   return error instanceof Error ? error.message : String(error);
@@ -100,9 +102,29 @@ export function useOptimizePage(options: OptimizePageOptions) {
   const error = ref('');
   const runtimeWarning = ref('');
   const connected = ref(false);
+  const banner = ref<OptimizeBannerState>('ok');
   const ws = ref<WebSocket | null>(null);
   let wsGeneration = 0;
   let disposed = false;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let reconnectDelay = 1000;
+  const WS_RECONNECT_MAX_MS = 30000;
+
+  function clearReconnectTimer(): void {
+    if (reconnectTimer !== null) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+  }
+
+  function scheduleReconnect(): void {
+    if (reconnectTimer !== null || disposed) return;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      connect();
+      reconnectDelay = Math.min(reconnectDelay * 2, WS_RECONNECT_MAX_MS);
+    }, reconnectDelay);
+  }
 
   const filteredConfigs = computed(() => sortRows(filterRows(configs.value, configSearch.value, ['name', 'strategy', 'exchange', 'coins_text']), configSort.value));
   const filteredQueue = computed(() => sortRows(filterRows(queue.value, configSearch.value, ['name', 'filename', 'status', 'exchange']), queueSort.value));
@@ -712,12 +734,21 @@ export function useOptimizePage(options: OptimizePageOptions) {
   }
 
   function connect(): void {
+    if (ws.value && (ws.value.readyState === WebSocket.OPEN || ws.value.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+    clearReconnectTimer();
     const generation = ++wsGeneration;
     const socket = new WebSocket(optimizeWsUrl((globalThis as { __BOOT__?: { origin?: string } }).__BOOT__?.origin || window.location.origin, adapter.version));
     ws.value = socket;
     socket.onopen = () => {
-      if (generation !== wsGeneration || disposed) return;
+      if (generation !== wsGeneration || disposed) {
+        socket.close();
+        return;
+      }
+      reconnectDelay = 1000;
       connected.value = true;
+      banner.value = 'ok';
       socket.send(JSON.stringify({ type: 'refresh' }));
     };
     socket.onmessage = (event) => {
@@ -733,22 +764,36 @@ export function useOptimizePage(options: OptimizePageOptions) {
     socket.onclose = () => {
       if (generation !== wsGeneration || disposed) return;
       connected.value = false;
+      banner.value = 'lost';
+      scheduleReconnect();
     };
     socket.onerror = () => {
-      if (generation === wsGeneration) connected.value = false;
+      if (generation !== wsGeneration || disposed) return;
+      connected.value = false;
+      banner.value = 'lost';
     };
   }
 
   function disconnect(): void {
     wsGeneration += 1;
-    ws.value?.close();
+    clearReconnectTimer();
+    const current = ws.value;
     ws.value = null;
     connected.value = false;
+    banner.value = 'ok';
+    if (current) {
+      current.onopen = null;
+      current.onmessage = null;
+      current.onclose = null;
+      current.onerror = null;
+      current.close();
+    }
   }
 
   if (getCurrentInstance()) {
     onBeforeUnmount(() => {
       disposed = true;
+      clearReconnectTimer();
       if (paretoMetricReloadTimer !== null) {
         clearTimeout(paretoMetricReloadTimer);
         paretoMetricReloadTimer = null;
@@ -800,6 +845,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     error,
     runtimeWarning,
     connected,
+    banner,
     filteredConfigs,
     filteredQueue,
     filteredResults,

@@ -192,4 +192,44 @@ describe('v7_optimize App', () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
   });
 
+  it('suppresses connection banner on initial load, shows disconnect on close, and hides on reconnect', async () => {
+    class FakeWs {
+      static latest: FakeWs | null = null;
+      onopen: (() => void) | null = null;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      close() {}
+      send = vi.fn();
+      constructor() {
+        FakeWs.latest = this;
+      }
+    }
+
+    vi.stubGlobal('WebSocket', FakeWs as unknown as typeof WebSocket);
+
+    const wrapper = mount(App, { global: { plugins: [createI18n('en')], stubs: { teleport: true } } });
+    await flushPromises();
+
+    // On initial load, no yellow banner is rendered at the top of the page
+    expect(wrapper.find('#conn-banner').exists()).toBe(false);
+
+    // When connected, still quiet
+    FakeWs.latest?.onopen?.();
+    await flushPromises();
+    expect(wrapper.find('#conn-banner').exists()).toBe(false);
+
+    // When connection is lost, shows red banner
+    FakeWs.latest?.onclose?.();
+    await flushPromises();
+    const banner = wrapper.find('#conn-banner');
+    expect(banner.exists()).toBe(true);
+    expect(banner.classes()).toContain('conn-lost');
+    expect(banner.text()).toContain('Connection lost');
+
+    // When reconnected, banner is hidden again
+    FakeWs.latest?.onopen?.();
+    await flushPromises();
+    expect(wrapper.find('#conn-banner').exists()).toBe(false);
+  });
+
 });

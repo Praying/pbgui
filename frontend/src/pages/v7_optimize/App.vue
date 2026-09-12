@@ -494,11 +494,11 @@ async function handleIncomingDraft(): Promise<void> {
 onMounted(async () => {
   document.title = t('editor.optimize.pageTitle');
   window.PBGUI_HELP_OPENER = openOptimizeHelp;
+  page.connect();
   await page.loadAll();
   if (page.panel.value === 'paretos') await page.restoreSelectedResult();
   await handleIncomingDraft();
   try { pbguiDataPath.value = await actions.pbguiDataPath(); } catch { pbguiDataPath.value = ''; }
-  page.connect();
   liveRefreshTimer = window.setInterval(() => {
     void refreshLiveResults();
     if (page.panel.value === 'queue') void page.loadQueue();
@@ -526,8 +526,8 @@ onBeforeUnmount(() => {
     :page-title="t('editor.optimize.pageTitle')"
     :page-description="t('editor.optimize.pageDescription')"
     :page-family="adapter.label"
-    :status-text="page.connected.value ? t('v7optimize.connected') : t('v7optimize.connectingToQueue')"
-    :status-tone="page.connected.value ? 'success' : 'warning'"
+    :status-text="page.connected.value ? t('v7optimize.connected') : (page.banner.value === 'lost' ? t('v7optimize.connectionLost') : t('v7optimize.connectingToQueue'))"
+    :status-tone="page.connected.value ? 'success' : (page.banner.value === 'lost' ? 'danger' : 'neutral')"
     :sections="railSections"
     :active-section="page.panel.value"
     @update:section="onRailSection"
@@ -542,7 +542,7 @@ onBeforeUnmount(() => {
     </template>
 
     <ConnectionNotice
-      :state="page.connected.value ? 'ok' : 'waiting'"
+      :state="page.banner.value"
       :waiting-text="t('v7optimize.connectingToQueue')"
       :lost-text="t('v7optimize.connectionLost')"
       :ok-text="t('v7optimize.connected')"

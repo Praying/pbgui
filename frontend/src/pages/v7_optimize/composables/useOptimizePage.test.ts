@@ -218,4 +218,62 @@ describe('useOptimizePage', () => {
     localStorage.removeItem('pbgui.optimize.v7.pareto_columns');
   });
 
+  it('manages connection lifecycle: quiet on mount, lost on close, schedules reconnect', async () => {
+    vi.useFakeTimers();
+    let latestWs: {
+      onopen: (() => void) | null;
+      onclose: (() => void) | null;
+      onerror: (() => void) | null;
+      close: () => void;
+      send: (data: string) => void;
+      readyState: number;
+    } | null = null;
+
+    vi.stubGlobal('WebSocket', class {
+      onopen: (() => void) | null = null;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      readyState = 0;
+      close() { this.readyState = 3; }
+      send = vi.fn();
+      constructor() {
+        latestWs = this;
+      }
+    } as unknown as typeof WebSocket);
+
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v7/main_page', 'http://testserver') });
+    expect(page.banner.value).toBe('ok');
+    expect(page.connected.value).toBe(false);
+
+    page.connect();
+    expect(latestWs).not.toBeNull();
+    expect(page.banner.value).toBe('ok');
+
+    latestWs!.readyState = 1;
+    latestWs!.onopen?.();
+    expect(page.connected.value).toBe(true);
+    expect(page.banner.value).toBe('ok');
+
+    latestWs!.onclose?.();
+    expect(page.connected.value).toBe(false);
+    expect(page.banner.value).toBe('lost');
+
+    // Auto-reconnect scheduled with timer
+    latestWs = null;
+    vi.advanceTimersByTime(1000);
+    expect(latestWs).not.toBeNull();
+
+    // Reconnected
+    latestWs!.readyState = 1;
+    latestWs!.onopen?.();
+    expect(page.connected.value).toBe(true);
+    expect(page.banner.value).toBe('ok');
+
+    page.disconnect();
+    expect(page.connected.value).toBe(false);
+    expect(page.banner.value).toBe('ok');
+
+    vi.useRealTimers();
+  });
+
 });
