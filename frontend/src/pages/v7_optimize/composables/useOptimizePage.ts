@@ -193,6 +193,24 @@ export function useOptimizePage(options: OptimizePageOptions) {
   let queueGeneration = 0;
   let resultsGeneration = 0;
   let paretoGeneration = 0;
+  const queueProgressCache = new Map<string, QueueItem['progress']>();
+
+  function mergeQueueWithProgress(items: QueueItem[]): QueueItem[] {
+    return items.map((item) => {
+      const isRunning = item.status === 'running' || item.status === 'optimizing';
+      if (item.progress) {
+        queueProgressCache.set(item.filename, item.progress);
+        return item;
+      }
+      if (isRunning && queueProgressCache.has(item.filename)) {
+        return { ...item, progress: queueProgressCache.get(item.filename) };
+      }
+      if (!isRunning) {
+        queueProgressCache.delete(item.filename);
+      }
+      return item;
+    });
+  }
   async function loadSettings(): Promise<void> {
     const generation = ++settingsGeneration;
     runtimeWarning.value = '';
@@ -238,25 +256,24 @@ export function useOptimizePage(options: OptimizePageOptions) {
     const generation = ++queueGeneration;
     const data = await request<{ items?: QueueItem[] }>('/queue');
     const items = data.items ?? [];
-    if (!adapter.isV8) {
-      queue.value = items;
-      return;
-    }
-    const activeItems = items.filter((item) => item.status === 'running' || item.status === 'optimizing');
-    const progressByFilename = new Map<string, QueueItem['progress']>();
+    if (generation !== queueGeneration) return;
+    queue.value = mergeQueueWithProgress(items);
+
+    const activeItems = queue.value.filter((item) => item.status === 'running' || item.status === 'optimizing');
+    if (activeItems.length === 0) return;
+
     await Promise.all(activeItems.map(async (item) => {
       try {
         const status = await request<QueueItem>(`/queue/${encodeURIComponent(item.filename)}/status`);
-        if (status.progress) progressByFilename.set(item.filename, status.progress);
+        if (status.progress) {
+          queueProgressCache.set(item.filename, status.progress);
+        }
       } catch {
         // Queue listing remains useful when a process exits during polling.
       }
     }));
     if (generation !== queueGeneration) return;
-    queue.value = items.map((item) => {
-      const progress = progressByFilename.get(item.filename);
-      return progress ? { ...item, progress } : item;
-    });
+    queue.value = mergeQueueWithProgress(queue.value);
   }
 
   async function loadResults(): Promise<void> {
@@ -755,8 +772,10 @@ export function useOptimizePage(options: OptimizePageOptions) {
       if (generation !== wsGeneration || disposed) return;
       try {
         const data = JSON.parse(String(event.data)) as { type?: string; items?: QueueItem[]; queue?: QueueItem[] };
-        if (Array.isArray(data.items)) queue.value = data.items;
-        else if (Array.isArray(data.queue)) queue.value = data.queue;
+        const rawItems = Array.isArray(data.items) ? data.items : Array.isArray(data.queue) ? data.queue : null;
+        if (rawItems) {
+          queue.value = mergeQueueWithProgress(rawItems);
+        }
       } catch {
         // Ignore malformed pushes; the next REST refresh remains authoritative.
       }
@@ -794,6 +813,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     onBeforeUnmount(() => {
       disposed = true;
       clearReconnectTimer();
+      queueProgressCache.clear();
       if (paretoMetricReloadTimer !== null) {
         clearTimeout(paretoMetricReloadTimer);
         paretoMetricReloadTimer = null;

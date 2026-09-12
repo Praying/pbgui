@@ -45,4 +45,61 @@ describe('QueuePanel', () => {
     expect(wrapper.emitted('reorder')?.[0]?.[0]).toEqual(['b', 'a']);
     wrapper.unmount();
   });
+
+  it('always renders progress bar track and labels for running queue items even before progress arrives', () => {
+    const wrapper = mount(QueuePanel, {
+      props: {
+        rows: [{ filename: 'run-1', name: 'Task 1', status: 'running' }],
+        selected: new Set<string>(),
+        search: '',
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+    const progressBlock = wrapper.find('[data-test="queue-progress"]');
+    expect(progressBlock.exists()).toBe(true);
+    expect(progressBlock.text()).toContain('0 evals');
+    expect(progressBlock.text()).toContain('0%');
+    const track = wrapper.find('.bg-border-default');
+    expect(track.exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('renders 1 decimal place for small progress under 10% and formats evaluation targets', () => {
+    const wrapper = mount(QueuePanel, {
+      props: {
+        rows: [{
+          filename: 'run-2',
+          name: 'Task 2',
+          status: 'running',
+          progress: { eval: 329, target_iters: 18000 },
+        }],
+        selected: new Set<string>(),
+        search: '',
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+    const progressBlock = wrapper.find('[data-test="queue-progress"]');
+    expect(progressBlock.exists()).toBe(true);
+    expect(progressBlock.text()).toContain('329 / 18,000 evals');
+    // 329 / 18000 = ~1.827% -> 1.8%
+    expect(progressBlock.text()).toContain('1.8%');
+    wrapper.unmount();
+  });
+
+  it('does not render progress bar for completed or queued items without progress', () => {
+    const wrapper = mount(QueuePanel, {
+      props: {
+        rows: [
+          { filename: 'comp-1', name: 'Task Completed', status: 'complete' },
+          { filename: 'queue-1', name: 'Task Queued', status: 'queued' },
+        ],
+        selected: new Set<string>(),
+        search: '',
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+    const progressBlocks = wrapper.findAll('[data-test="queue-progress"]');
+    expect(progressBlocks).toHaveLength(0);
+    wrapper.unmount();
+  });
 });

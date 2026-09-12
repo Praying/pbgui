@@ -1839,6 +1839,30 @@ def test_queue_status_returns_complete_shared_dashboard_shape(optimize_v8_roots)
     assert {"cpu_percent", "memory_percent", "swap_percent"} <= status["system"].keys()
 
 
+def test_load_queue_includes_progress_for_running_items(optimize_v8_roots, monkeypatch) -> None:
+    """_load_queue must include active progress directly for running items."""
+    _write_queue_job("running-task", 0)
+    monkeypatch.setattr(optimize_v8, "_queue_status", lambda item: ("running", 12345))
+    launch = optimize_v8._launch_dir("running-task")
+    launch.mkdir(parents=True)
+    optimize_v8._write_json(
+        optimize_v8._launch_config_file("running-task"),
+        {"optimize": {"backend": "pymoo", "iters": 1000, "pymoo": {"algorithm": "nsga2"}}},
+    )
+    (optimize_v8._log_dir() / "running-task.log").write_text(
+        "2026-07-21T12:00:00Z INFO Pareto update | eval=250 | front=3\n",
+        encoding="utf-8",
+    )
+    items = optimize_v8._load_queue()
+    target = next((item for item in items if item["filename"] == "running-task"), None)
+    assert target is not None
+    assert target["status"] == "running"
+    assert "progress" in target
+    assert target["progress"]["evaluations"] == 250
+    assert target["progress"]["target_evaluations"] == 1000
+    assert target["progress"]["percent"] == 25.0
+
+
 def test_running_queue_status_prefers_durable_results_over_stale_pareto_log(
     optimize_v8_roots, monkeypatch
 ) -> None:

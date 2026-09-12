@@ -49,25 +49,44 @@ function statusClass(row: QueueItem): string {
   if (status === 'running' || status === 'optimizing') return 'bg-warning/15 text-warning-soft';
   return 'bg-secondary/15 text-secondary';
 }
-function progressPercent(row: QueueItem): number {
+function progressWidth(row: QueueItem): number {
   const progress = row.progress;
   const evaluations = Number(progress?.eval);
   const target = Number(progress?.target_iters);
   if (Number.isFinite(evaluations) && Number.isFinite(target) && target > 0) {
-    return Math.min(100, Math.max(0, Math.round((evaluations / target) * 100)));
+    return Math.min(100, Math.max(0, (evaluations / target) * 100));
   }
   const scan = progress?.evaluation_scan;
   if (scan && Number.isFinite(Number(scan.percent))) {
-    return Math.min(100, Math.max(0, Math.round(Number(scan.percent))));
+    return Math.min(100, Math.max(0, Number(scan.percent)));
   }
   return 0;
+}
+function progressPercent(row: QueueItem): number {
+  return Math.min(100, Math.max(0, Math.round(progressWidth(row))));
+}
+function progressPercentText(row: QueueItem): string {
+  const width = progressWidth(row);
+  if (width <= 0) return '0%';
+  if (width >= 100) return '100%';
+  if (width < 10) {
+    return `${width.toFixed(1)}%`;
+  }
+  return `${Math.round(width)}%`;
 }
 function progressLabel(row: QueueItem): string {
   const progress = row.progress;
   const evaluations = Number(progress?.eval);
-  if (!progress || !Number.isFinite(evaluations)) return '';
+  const target = Number(progress?.target_iters);
+  if (!progress || !Number.isFinite(evaluations)) {
+    if (isRunning(row)) {
+      return Number.isFinite(target) && target > 0
+        ? `0 / ${target.toLocaleString()} evals`
+        : '0 evals';
+    }
+    return '';
+  }
   const prefix = progress.estimated ? '≥ ' : '';
-  const target = Number(progress.target_iters);
   const value = Number.isFinite(target) && target > 0
     ? `${prefix}${evaluations.toLocaleString()} / ${target.toLocaleString()} evals`
     : `${prefix}${evaluations.toLocaleString()} evals`;
@@ -171,13 +190,13 @@ function onQueueRowKeydown(event: KeyboardEvent, queueFilename: string): void {
                     {{ row.status || t('v7optimize.statusQueued') }}
                   </span>
                 </div>
-                <div v-if="progressLabel(row)" class="mt-0.5 max-w-[240px]">
-                  <div v-if="progressPercent(row) > 0" class="h-1.5 w-full overflow-hidden rounded-full bg-border-default">
-                    <div class="h-full bg-accent rounded-full transition-all duration-300" :style="{ width: `${progressPercent(row)}%` }"></div>
+                <div v-if="isRunning(row) || Boolean(row.progress && progressLabel(row))" class="mt-0.5 max-w-[240px]">
+                  <div class="h-1.5 w-full overflow-hidden rounded-full bg-border-default">
+                    <div class="h-full bg-accent rounded-full transition-all duration-300" :style="{ width: `${progressWidth(row)}%` }"></div>
                   </div>
                   <div class="mt-1 text-xs tabular-nums text-muted flex items-center justify-between gap-1" data-test="queue-progress">
                     <span>{{ progressLabel(row) }}</span>
-                    <span v-if="progressPercent(row) > 0" class="font-mono font-medium text-primary">{{ progressPercent(row) }}%</span>
+                    <span class="font-mono font-medium text-primary">{{ progressPercentText(row) }}</span>
                   </div>
                 </div>
               </div>

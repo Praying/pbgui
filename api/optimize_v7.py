@@ -945,6 +945,45 @@ def _collect_optimize_system_stats() -> dict:
     }
 
 
+def _build_optimize_progress(item: dict) -> dict:
+    log_path = Path(str(item.get("log_path") or ""))
+    _store._migrate_old_log(str(item.get("filename") or ""), log_path)
+    log_excerpt = _read_optimize_log_excerpt(log_path)
+    log_summary = _parse_optimize_log_summary(log_excerpt)
+
+    config_path = Path(str(item.get("json") or ""))
+    target_iters = None
+    if config_path.exists():
+        try:
+            cfg = load_pb7_config(config_path)
+            optimize = cfg.get("optimize") if isinstance(cfg.get("optimize"), dict) else {}
+            try:
+                target_iters = int(optimize.get("iters")) if optimize.get("iters") not in (None, "") else None
+            except Exception:
+                target_iters = None
+        except Exception:
+            pass
+
+    eval_count = log_summary.get("eval") or log_summary.get("iter")
+    progress_pct = None
+    if isinstance(eval_count, int) and isinstance(target_iters, int) and target_iters > 0:
+        progress_pct = max(0.0, min(100.0, (eval_count / target_iters) * 100.0))
+
+    return {
+        "eval": eval_count,
+        "iter": log_summary.get("iter"),
+        "target_iters": target_iters,
+        "percent": progress_pct,
+        "front": log_summary.get("front"),
+        "pareto_added": log_summary.get("pareto_added"),
+        "pareto_removed": log_summary.get("pareto_removed"),
+        "starting_configs_loaded": log_summary.get("starting_configs_loaded"),
+        "starting_configs_done": log_summary.get("starting_configs_done"),
+        "starting_configs_total": log_summary.get("starting_configs_total"),
+        "population_size": log_summary.get("population_size"),
+    }
+
+
 def _build_optimize_runtime_status(item: dict) -> dict:
     log_path = Path(str(item.get("log_path") or ""))
     _store._migrate_old_log(str(item.get("filename") or ""), log_path)
@@ -975,12 +1014,7 @@ def _build_optimize_runtime_status(item: dict) -> dict:
         except Exception:
             pass
 
-    eval_count = log_summary.get("eval") or log_summary.get("iter")
-    target_iters = config_meta.get("iters")
-    progress_pct = None
-    if isinstance(eval_count, int) and isinstance(target_iters, int) and target_iters > 0:
-        progress_pct = max(0.0, min(100.0, (eval_count / target_iters) * 100.0))
-
+    progress = _build_optimize_progress(item)
     process_stats = _collect_optimize_process_stats(item.get("pid"))
     system_stats = _collect_optimize_system_stats()
 
@@ -1016,19 +1050,7 @@ def _build_optimize_runtime_status(item: dict) -> dict:
         "name": item.get("name"),
         "status": item.get("status"),
         "phase": phase,
-        "progress": {
-            "eval": eval_count,
-            "iter": log_summary.get("iter"),
-            "target_iters": target_iters,
-            "percent": progress_pct,
-            "front": log_summary.get("front"),
-            "pareto_added": log_summary.get("pareto_added"),
-            "pareto_removed": log_summary.get("pareto_removed"),
-            "starting_configs_loaded": log_summary.get("starting_configs_loaded"),
-            "starting_configs_done": log_summary.get("starting_configs_done"),
-            "starting_configs_total": log_summary.get("starting_configs_total"),
-            "population_size": log_summary.get("population_size"),
-        },
+        "progress": progress,
         "runtime": {
             "backend": log_summary.get("backend") or config_meta.get("backend"),
             "algorithm": log_summary.get("algorithm"),
@@ -2067,7 +2089,7 @@ class OptimizeStore:
                     seed_path = ""
                     if cfg_path.exists():
                         seed_mode, seed_path = self._resolve_seed_info_cached(cfg_path)
-                    found[filename] = {
+                    item_entry = {
                         "filename": filename,
                         "name": data.get("name", filename),
                         "json": str(data.get("json") or ""),
@@ -2081,6 +2103,14 @@ class OptimizeStore:
                         "created": datetime.datetime.fromtimestamp(created_ts).isoformat(),
                         "order": _coerce_queue_order(data.get("order")),
                     }
+                    if status in {"running", "optimizing"}:
+                        try:
+                            prog = _build_optimize_progress(item_entry)
+                            if prog:
+                                item_entry["progress"] = prog
+                        except Exception:
+                            pass
+                    found[filename] = item_entry
                 except Exception as exc:
                     _log(SERVICE, f"Error loading queue item {fp}: {exc}", level="WARNING")
             self.items = found
@@ -2755,19 +2785,25 @@ def _load_queue_sync() -> list[dict]:
             )
             _store._migrate_old_log(filename, log_path)
             status = _store._determine_status(pid, log_path)
-            items.append(
-                {
-                    "filename": filename,
-                    "name": data.get("name", filename),
-                    "json": str(data.get("json") or ""),
-                    "exchange": _serialize_exchange(data.get("exchange")),
-                    "status": status,
-                    "pid": pid,
-                    "log_path": str(log_path),
-                    "created": datetime.datetime.fromtimestamp(created_ts).isoformat(),
-                    "order": _coerce_queue_order(data.get("order")),
-                }
-            )
+            item_entry = {
+                "filename": filename,
+                "name": data.get("name", filename),
+                "json": str(data.get("json") or ""),
+                "exchange": _serialize_exchange(data.get("exchange")),
+                "status": status,
+                "pid": pid,
+                "log_path": str(log_path),
+                "created": datetime.datetime.fromtimestamp(created_ts).isoformat(),
+                "order": _coerce_queue_order(data.get("order")),
+            }
+            if status in {"running", "optimizing"}:
+                try:
+                    prog = _build_optimize_progress(item_entry)
+                    if prog:
+                        item_entry["progress"] = prog
+                except Exception:
+                    pass
+            items.append(item_entry)
         except Exception as exc:
             _log(SERVICE, f"Error loading optimize queue item {fp}: {exc}", level="WARNING")
     return items

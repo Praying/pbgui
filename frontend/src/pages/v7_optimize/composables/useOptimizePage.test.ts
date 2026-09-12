@@ -276,4 +276,56 @@ describe('useOptimizePage', () => {
     vi.useRealTimers();
   });
 
+  it('preserves cached progress across WebSocket queue updates for running items', () => {
+    let latestWs: {
+      onopen: (() => void) | null;
+      onmessage: ((evt: { data: string }) => void) | null;
+      close: () => void;
+      send: (data: string) => void;
+      readyState: number;
+    } | null = null;
+    vi.stubGlobal('WebSocket', class {
+      onopen: (() => void) | null = null;
+      onmessage: ((evt: { data: string }) => void) | null = null;
+      readyState = 1;
+      close() {}
+      send() {}
+      constructor() {
+        latestWs = this;
+      }
+    } as unknown as typeof WebSocket);
+
+    const page = useOptimizePage({ adapter: currentOptimizeAdapter('/api/optimize-v8/main_page', 'http://testserver') });
+    page.connect();
+    latestWs!.onopen?.();
+
+    // 1. Initial push with running item and progress
+    latestWs!.onmessage?.({
+      data: JSON.stringify({
+        type: 'queue_update',
+        items: [{ filename: 'job-1', name: 'Task 1', status: 'running', progress: { eval: 100, target_iters: 1000 } }],
+      }),
+    });
+    expect(page.queue.value[0]?.progress?.eval).toBe(100);
+
+    // 2. Intermediate push with running item lacking progress property (e.g. basic list)
+    latestWs!.onmessage?.({
+      data: JSON.stringify({
+        type: 'queue_update',
+        items: [{ filename: 'job-1', name: 'Task 1', status: 'running' }],
+      }),
+    });
+    expect(page.queue.value[0]?.progress?.eval).toBe(100);
+
+    // 3. Completed item clears cached progress
+    latestWs!.onmessage?.({
+      data: JSON.stringify({
+        type: 'queue_update',
+        items: [{ filename: 'job-1', name: 'Task 1', status: 'complete' }],
+      }),
+    });
+    expect(page.queue.value[0]?.progress).toBeUndefined();
+
+    page.disconnect();
+  });
 });

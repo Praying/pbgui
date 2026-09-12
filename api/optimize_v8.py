@@ -1436,7 +1436,7 @@ def _load_queue() -> list[dict]:
             _log(SERVICE, f"Failed to load PB8 optimize queue item {path.name}: {exc}", level="WARNING")
     pending_order = _pending_reorder_filenames()
     pending_rank = {filename: index for index, filename in enumerate(pending_order)}
-    return sorted(
+    sorted_items = sorted(
         items,
         key=lambda item: (
             pending_rank.get(item["filename"], 10**18)
@@ -1446,6 +1446,12 @@ def _load_queue() -> list[dict]:
             item["filename"],
         ),
     )
+    for item in sorted_items:
+        if item.get("status") in {"running", "optimizing"}:
+            progress = _active_queue_item_progress(item["filename"], status=item["status"])
+            if progress:
+                item["progress"] = progress
+    return sorted_items
 
 
 def _pending_reorder_filenames() -> list[str]:
@@ -4487,6 +4493,85 @@ def _active_all_results_progress(filename: str) -> dict | None:
     return None
 
 
+def _active_queue_item_progress(filename: str, status: str = "running") -> dict | None:
+    try:
+        log_path = _safe_path(_log_dir() / f"{filename}.log", _log_dir())
+        log_summary = _parse_optimize_log_status(_read_optimize_log_excerpt(log_path))
+        config = {}
+        for path in (_launch_config_file(filename), _snapshot_file(filename)):
+            try:
+                if path.is_file() and not path.is_symlink():
+                    config = _read_json(path)
+                    break
+            except RuntimeError:
+                pass
+        optimize = config.get("optimize") if isinstance(config.get("optimize"), dict) else {}
+        target = None
+        for key in ("iters", "max_evaluations", "n_evaluations"):
+            try:
+                if optimize.get(key) not in (None, ""):
+                    target = int(optimize[key])
+                    break
+            except (TypeError, ValueError):
+                continue
+        evaluations = log_summary.get("evaluations")
+        evaluation_source = "log" if evaluations is not None else None
+        durable_progress = None
+        if status in {"running", "optimizing"}:
+            log_estimate = _estimate_log_evaluations(log_path)
+            if log_estimate is not None and (evaluations is None or log_estimate > evaluations):
+                evaluations = log_estimate
+                evaluation_source = "log_lower_bound"
+            durable_progress = _active_all_results_progress(filename)
+            if durable_progress is not None:
+                durable_evaluations = int(durable_progress["evaluations"])
+                if evaluations is None or durable_evaluations >= evaluations:
+                    evaluations = durable_evaluations
+                    evaluation_source = durable_progress.get("source") or "fallback_scan"
+        elif status == "complete" and evaluations is None and target is not None:
+            evaluations = target
+            evaluation_source = "complete"
+
+        percent = None
+        if evaluations is not None and target and target > 0:
+            percent = max(0.0, min(100.0, evaluations / target * 100.0))
+
+        backend = log_summary.get("backend") or optimize.get("backend")
+        return {
+            "eval": evaluations,
+            "evaluations": evaluations,
+            "iter": log_summary.get("iter"),
+            "target_iters": target,
+            "target_evaluations": target,
+            "percent": percent,
+            "evaluation_source": evaluation_source,
+            "estimated": evaluation_source in {"log_lower_bound", "fallback_scan"},
+            "result": durable_progress.get("result") if durable_progress else None,
+            "evaluation_scan": (
+                {
+                    "complete": bool(durable_progress.get("scan_complete")),
+                    "bytes_scanned": int(durable_progress.get("bytes_scanned") or 0),
+                    "total_bytes": int(durable_progress.get("total_bytes") or 0),
+                    "percent": float(durable_progress.get("scan_percent") or 0.0),
+                }
+                if durable_progress
+                else None
+            ),
+            "front": log_summary.get("front"),
+            "generation": log_summary.get("generation"),
+            "proxy_evaluations": log_summary.get("proxy_evaluations"),
+            "proxy_rate": log_summary.get("proxy_rate"),
+            "exact_evaluations": log_summary.get("exact_evaluations"),
+            "target_exact_evaluations": target if backend == "gpu" else None,
+            "exact_inflight": log_summary.get("exact_inflight"),
+            "dispatch": log_summary.get("dispatch"),
+            "halving": log_summary.get("halving"),
+        }
+    except Exception as exc:
+        _log(SERVICE, f"Failed to compute active queue progress for {filename}: {exc}", level="WARNING")
+        return None
+
+
 @router.get("/queue/{filename}/status")
 def get_queue_status(filename: str, session: SessionToken = Depends(require_auth)) -> dict:
     item = next((item for item in _load_queue() if item["filename"] == filename), None)
@@ -4506,32 +4591,7 @@ def get_queue_status(filename: str, session: SessionToken = Depends(require_auth
     optimize = config.get("optimize") if isinstance(config.get("optimize"), dict) else {}
     pymoo = optimize.get("pymoo") if isinstance(optimize.get("pymoo"), dict) else {}
     specs = _pareto_objective_specs(config)
-    target = None
-    for key in ("iters", "max_evaluations", "n_evaluations"):
-        try:
-            if optimize.get(key) not in (None, ""):
-                target = int(optimize[key])
-                break
-        except (TypeError, ValueError):
-            continue
-    evaluations = log_summary["evaluations"]
-    evaluation_source = "log" if evaluations is not None else None
-    log_estimate = _estimate_log_evaluations(log_path) if item["status"] == "running" else None
-    if log_estimate is not None and (evaluations is None or log_estimate > evaluations):
-        evaluations = log_estimate
-        evaluation_source = "log_lower_bound"
-    durable_progress = _active_all_results_progress(filename) if item["status"] == "running" else None
-    if durable_progress is not None:
-        durable_evaluations = int(durable_progress["evaluations"])
-        if evaluations is None or durable_evaluations >= evaluations:
-            evaluations = durable_evaluations
-            evaluation_source = durable_progress.get("source") or "fallback_scan"
-    if evaluations is None and item["status"] == "complete" and target is not None:
-        evaluations = target
-        evaluation_source = "complete"
-    percent = None
-    if evaluations is not None and target and target > 0:
-        percent = max(0.0, min(100.0, evaluations / target * 100.0))
+    progress = _active_queue_item_progress(filename, status=item["status"])
     queue_items = _load_queue()
     queue_totals = {
         status: sum(1 for queued in queue_items if queued["status"] == status)
@@ -4566,31 +4626,26 @@ def get_queue_status(filename: str, session: SessionToken = Depends(require_auth
     return {
         **item,
         "phase": phase,
-        "progress": {
-            "eval": evaluations,
-            "evaluations": evaluations,
-            "iter": log_summary["iter"],
-            "target_iters": target,
-            "target_evaluations": target,
-            "evaluation_source": evaluation_source,
-            "estimated": evaluation_source in {"log_lower_bound", "fallback_scan"},
-            "result": durable_progress.get("result") if durable_progress else None,
-            "evaluation_scan": {
-                "complete": bool(durable_progress.get("scan_complete")),
-                "bytes_scanned": int(durable_progress.get("bytes_scanned") or 0),
-                "total_bytes": int(durable_progress.get("total_bytes") or 0),
-                "percent": float(durable_progress.get("scan_percent") or 0.0),
-            } if durable_progress else None,
-            "percent": percent,
-            "front": log_summary["front"],
-            "generation": log_summary["generation"],
-            "proxy_evaluations": log_summary["proxy_evaluations"],
-            "proxy_rate": log_summary["proxy_rate"],
-            "exact_evaluations": log_summary["exact_evaluations"],
-            "target_exact_evaluations": target if backend == "gpu" else None,
-            "exact_inflight": log_summary["exact_inflight"],
-            "dispatch": log_summary["dispatch"],
-            "halving": log_summary["halving"],
+        "progress": progress or {
+            "eval": None,
+            "evaluations": None,
+            "iter": None,
+            "target_iters": None,
+            "target_evaluations": None,
+            "percent": None,
+            "evaluation_source": None,
+            "estimated": False,
+            "result": None,
+            "evaluation_scan": None,
+            "front": None,
+            "generation": None,
+            "proxy_evaluations": None,
+            "proxy_rate": None,
+            "exact_evaluations": None,
+            "target_exact_evaluations": None,
+            "exact_inflight": None,
+            "dispatch": None,
+            "halving": None,
         },
         "runtime": {
             "launch_mode": item["launch_mode"],
