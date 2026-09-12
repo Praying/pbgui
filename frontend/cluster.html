@@ -3245,7 +3245,7 @@
         }).catch(function (err) {
           setMessage('Bootstrap failed: ' + err.message, 'err');
         }).finally(function () {
-          if (btn) btn.textContent = 'Apply Bootstrap';
+          renderBootstrap(lastBootstrapPlan || {});
         });
       }
 

@@ -581,6 +581,12 @@ def test_api_key_account_generation_guards_test_and_expiry_results() -> None:
           assert.deepEqual(bybitExpiryData, {});
           assert.deepEqual(effects, []);
           assert.equal(fields.balanceDisplay.style.display, 'none');
+          assert.equal(fields.btnHLExpiryInline.disabled, false);
+          assert.equal(fields.btnHLExpiryInline.textContent, '↻ Check Expiry');
+          assert.equal(fields.btnBybitExpiryInline.disabled, false);
+          assert.equal(fields.btnBybitExpiryInline.textContent, '↻ Check Expiry + IPs');
+          assert.equal(fields.btnTest.disabled, false);
+          assert.equal(fields.btnTest.textContent, 'Test Connection');
         }()).catch(function(error) { console.error(error); process.exitCode = 1; });
     """
     _run_frontend_node(
@@ -588,6 +594,65 @@ def test_api_key_account_generation_guards_test_and_expiry_results() -> None:
         [
             "beginEditorAccount", "advanceEditorGeneration", "captureEditorRequest",
             "isCurrentEditorRequest", "checkSingleHLExpiry", "checkSingleBybitExpiry", "testConnection",
+        ],
+        bootstrap,
+        assertions,
+    )
+
+
+def test_api_key_stale_global_expiry_requests_restore_only_their_button() -> None:
+    """Generation changes unlock completed actions without letting old requests unlock newer ones."""
+    bootstrap = r"""
+        let editorGeneration = 1;
+        let editorAccountName = null;
+        let editorController = null;
+        let saveInFlight = false;
+        let hlExpiryData = {};
+        let bybitExpiryData = {};
+        const pending = {};
+        const fields = {
+          btnHLExpiry: { disabled: false, innerHTML: '', textContent: '' },
+          btnBybitExpiry: { disabled: false, innerHTML: '', textContent: '' }
+        };
+        global.document = { getElementById: function(id) { return fields[id]; } };
+        function apiFetch(path) {
+          return new Promise(function(resolve) {
+            if (!pending[path]) pending[path] = [];
+            pending[path].push(resolve);
+          });
+        }
+        function renderUserTable() { throw new Error('stale result rendered'); }
+        function renderHLExpiryPanel() { throw new Error('stale result rendered'); }
+        function renderBybitExpiryPanel() { throw new Error('stale result rendered'); }
+        function showToast() { throw new Error('stale result rendered'); }
+    """
+    assertions = r"""
+        (async function() {
+          const oldHL = refreshHLExpiry();
+          const newHL = refreshHLExpiry();
+          pending['/hl-expiry?force=true'][0]([]);
+          await oldHL;
+          assert.equal(fields.btnHLExpiry.disabled, true);
+
+          advanceEditorGeneration();
+          pending['/hl-expiry?force=true'][1]([]);
+          await newHL;
+          assert.equal(fields.btnHLExpiry.disabled, false);
+          assert.equal(fields.btnHLExpiry.textContent, 'HL Expiry Check');
+
+          const bybit = refreshBybitExpiry();
+          advanceEditorGeneration();
+          pending['/bybit-expiry?force=true'][0]([]);
+          await bybit;
+          assert.equal(fields.btnBybitExpiry.disabled, false);
+          assert.equal(fields.btnBybitExpiry.textContent, 'Bybit Expiry Check');
+        }()).catch(function(error) { console.error(error); process.exitCode = 1; });
+    """
+    _run_frontend_node(
+        "frontend/api_keys_editor.html",
+        [
+            "beginEditorAccount", "advanceEditorGeneration", "captureEditorRequest",
+            "isCurrentEditorRequest", "refreshHLExpiry", "refreshBybitExpiry",
         ],
         bootstrap,
         assertions,

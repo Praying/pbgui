@@ -95,4 +95,4 @@ def test_async_config_loading_cannot_overwrite_drafts_or_expose_stale_config() -
     assert "if (selExchange.value)" in page
     assert "Select an exchange to calculate." in page
     assert "// Failed to load config:" not in page
-    assert "showError('Failed to load instance config:" in page
+    assert "showError(t('misc.balance.failedLoadConfig', { error: m(e) }))" in page

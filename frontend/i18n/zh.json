@@ -6808,5 +6808,13 @@
   "transfers.leverage": "杠杆",
   "transfers.vaultSection": "Vault",
   "transfers.amountRange": "介于 {min} 与 {max} {asset} 之间",
-  "transfers.noHistoryHint": "该账户已提交的划转将显示在这里。"
+  "transfers.noHistoryHint": "该账户已提交的划转将显示在这里。",
+  "pb8ParameterHelp.open": "PB8 参数帮助",
+  "pb8ParameterHelp.title": "PB8 参数帮助",
+  "pb8ParameterHelp.description": "用于配置和优化参数的本地 PB8 原始文档。",
+  "pb8ParameterHelp.backtestDescription": "编辑回测配置时，搜索 PB8 回测设置和运行时参数参考。",
+  "pb8ParameterHelp.optimizeDescription": "编辑优化配置时，搜索 PB8 优化器、机器人、运行时和回测参数参考。",
+  "pb8ParameterHelp.searchPlaceholder": "按参数路径或说明搜索",
+  "pb8ParameterHelp.loading": "正在加载 PB8 文档……",
+  "pb8ParameterHelp.empty": "没有匹配当前搜索条件的 PB8 参数文档。"
 }

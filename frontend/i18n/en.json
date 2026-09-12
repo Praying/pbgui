@@ -6883,5 +6883,13 @@
   "transfers.leverage": "Leverage",
   "transfers.vaultSection": "Vault",
   "transfers.amountRange": "Between {min} and {max} {asset}",
-  "transfers.noHistoryHint": "Submitted transfers for this account will appear here."
+  "transfers.noHistoryHint": "Submitted transfers for this account will appear here.",
+  "pb8ParameterHelp.open": "PB8 parameter help",
+  "pb8ParameterHelp.title": "PB8 parameter help",
+  "pb8ParameterHelp.description": "Original local PB8 documentation for configuration and optimization parameters.",
+  "pb8ParameterHelp.backtestDescription": "Search the PB8 backtest settings and runtime parameter reference while editing a backtest configuration.",
+  "pb8ParameterHelp.optimizeDescription": "Search the PB8 optimizer, bot, runtime, and backtest parameter reference while editing an optimizer configuration.",
+  "pb8ParameterHelp.searchPlaceholder": "Search by parameter path or description",
+  "pb8ParameterHelp.loading": "Loading PB8 documentation...",
+  "pb8ParameterHelp.empty": "No PB8 parameter documentation matches this search."
 }

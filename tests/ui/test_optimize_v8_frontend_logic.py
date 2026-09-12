@@ -26,6 +26,63 @@ NODE_I18N_BOOTSTRAP = NODE_I18N_STUB + (
 )
 
 
+def test_pb84_mutation_controls_round_trip_auto_explicit_and_legacy_values() -> None:
+    """Both mutation probabilities stay independent, validated, and compatible with PB7."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    names = (
+        "usesOptimizeSplitMutation", "optimizeSplitMutationValue",
+        "buildOptimizeSplitMutationHtml", "populateOptimizeSplitMutation",
+        "collectOptimizeSplitMutation",
+    )
+    functions = "\n".join(_page_function(page, name) for name in names)
+    _run_node(textwrap.dedent(f"""
+        const assert = require('node:assert/strict');
+        const optimizeEditorAdapter = {{isV8: true}};
+        let defaults = {{mutation_prob: 'auto', mutation_prob_per_variable: 'auto'}};
+        const optimizePymooSharedDefaults = () => defaults;
+        const esc = value => String(value).replaceAll('"', '&quot;');
+        const tipSpan = (label, tip) => label;
+        const fieldSelect = (id, label) => '<select id="' + id + '">' + label + '</select>';
+        const nodes = {{}};
+        const el = id => nodes[id] || null;
+        for (const key of ['mutation_prob', 'mutation_prob_per_variable']) {{
+          nodes['opted-' + key + '-mode'] = {{value: ''}};
+          nodes['opted-' + key + '-value'] = {{value: '', disabled: false}};
+        }}
+        {functions}
+        const shared = {{mutation_prob_var: 0.23, mutation_prob_per_variable: 0, future: 7}};
+        const html = buildOptimizeSplitMutationHtml(shared);
+        assert.match(html, /opted-mutation_prob-mode/);
+        assert.match(html, /opted-mutation_prob_per_variable-mode/);
+        populateOptimizeSplitMutation(shared);
+        assert.equal(el('opted-mutation_prob-value').value, '0.23');
+        assert.equal(el('opted-mutation_prob_per_variable-value').value, '0');
+        collectOptimizeSplitMutation(shared, true);
+        assert.deepEqual(shared, {{mutation_prob: 0.23, mutation_prob_per_variable: 0, future: 7}});
+        el('opted-mutation_prob-mode').value = 'auto';
+        el('opted-mutation_prob-mode').onchange();
+        assert.equal(el('opted-mutation_prob-value').disabled, true);
+        el('opted-mutation_prob_per_variable-value').value = '0.42';
+        collectOptimizeSplitMutation(shared, true);
+        assert.equal(shared.mutation_prob, 'auto');
+        assert.equal(shared.mutation_prob_per_variable, 0.42);
+        for (const bad of ['', 'NaN', '-0.1', '1.1', 'Infinity']) {{
+          el('opted-mutation_prob_per_variable-value').value = bad;
+          assert.throws(() => collectOptimizeSplitMutation(shared, true), /between 0 and 1/);
+        }}
+        assert.equal(optimizeSplitMutationValue({{mutation_prob: 0, mutation_prob_var: 0.4}}, 'mutation_prob'), 0);
+        populateOptimizeSplitMutation({{}});
+        const automatic = {{}};
+        collectOptimizeSplitMutation(automatic, true);
+        assert.deepEqual(automatic, {{mutation_prob: 'auto', mutation_prob_per_variable: 'auto'}});
+        optimizeEditorAdapter.isV8 = false;
+        assert.equal(buildOptimizeSplitMutationHtml(shared), '');
+        optimizeEditorAdapter.isV8 = true;
+        defaults = {{mutation_prob_var: 'auto'}};
+        assert.equal(buildOptimizeSplitMutationHtml({{mutation_prob_var: 0.2}}), '');
+    """))
+
+
 def test_pb8_optimize_enables_the_shared_scenario_generator_only_for_v8() -> None:
     """The shared Optimize page exposes deterministic generation only through its PB8 adapter."""
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
@@ -432,7 +489,7 @@ def test_sweep_holdout_button_builds_standalone_backtest_config() -> None:
     assert 'value="full_timerange"' in page
     assert 'value="holdout_and_full_timerange"' in page
     assert 'value="all_timeranges"' in page
-    assert "requiresSweepPlan = validationMode === 'holdout_only' || validationMode === 'all_timeranges'" in page
+    assert "requiresSweepPlan = validationMode === 'holdout_only'" in page
     assert "includeFullTimerange" in page
     assert "backtestSelectedSweepHoldouts().catch(handleError)" in page
     assert "meta.sweep_cycles.holdout_count" in page
@@ -628,6 +685,94 @@ def test_all_timeranges_validation_queues_training_holdout_and_full_jobs() -> No
             'train_01', 'train_02', 'holdout_01', 'full_timerange'
           ]);
         }}).catch(error => {{ console.error(error); process.exitCode = 1; }});
+        """
+    )
+    _run_node(script)
+
+
+def test_all_timeranges_without_sweep_plan_queues_training_and_full_jobs() -> None:
+    """Suite results without Holdout provenance can still validate Training and Full periods."""
+
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n".join(
+        _page_function(page, name)
+        for name in (
+            "buildSweepHoldoutBacktestConfig",
+            "buildSweepFullTimerangeBacktestConfig",
+            "backtestSelectedSweepHoldouts",
+        )
+    )
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const deepClone = value => JSON.parse(JSON.stringify(value));
+        const state = {{
+          selectedParetos: new Set(['/candidate.json']), paretoSweepEnabled: false,
+          paretos: [{{path: '/candidate.json', name: 'candidate'}}]
+        }};
+        const optimizeEditorAdapter = {{isV8: true, paretoFilePath: path => path}};
+        const el = id => id === 'holdout-validation-mode' ? {{value: 'all_timeranges'}} : null;
+        const normalizeParetoBacktestPayload = data => ({{config: data.config, override_configs: {{}}}});
+        const extractConfigSections = config => config;
+        const apiFetch = async () => ({{
+          config: {{backtest: {{
+            start_date: '2024-01-01', end_date: '2026-08-30', suite_enabled: true,
+            scenarios: [
+              {{label: 'train_01', start_date: '2024-01-01', end_date: '2024-03-31'}},
+              {{label: 'train_02', start_date: '2024-04-08', end_date: '2024-07-07'}}
+            ]
+          }}}}
+        }});
+        let warning = '';
+        const toast = message => {{ warning = message; }};
+        let queued = null;
+        const openBacktestQueueDraft = async items => {{ queued = items; }};
+        {functions}
+
+        backtestSelectedSweepHoldouts().then(() => {{
+          assert.deepEqual(queued.map(item => item.name), [
+            'candidate_train_01', 'candidate_train_02', 'candidate_full_timerange'
+          ]);
+          assert.match(warning, /queued Training and Full timerange only/);
+        }}).catch(error => {{ console.error(error); process.exitCode = 1; }});
+        """
+    )
+    _run_node(script)
+
+
+def test_all_timeranges_button_stays_enabled_without_sweep_plan() -> None:
+    """All-period validation remains available when a Suite result has selected candidates."""
+
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    function_source = _page_function(page, "updateParetoSelectionUi")
+    script = textwrap.dedent(
+        f"""
+        const assert = require('node:assert/strict');
+        const controls = {{
+          'pareto-selection-summary': {{}},
+          'btn-open-pareto-explorer-paretos': {{}},
+          'btn-backtest-selected-paretos': {{}},
+          'btn-holdout-selected-paretos': {{}},
+          'btn-seed-selected-paretos': {{}},
+          'btn-seed-whole-result': {{}},
+          'holdout-validation-mode': {{value: 'all_timeranges'}}
+        }};
+        const el = id => controls[id];
+        const pruneSelectionSet = () => {{}};
+        const syncSelectedParetoScenarios = () => {{}};
+        const state = {{
+          selectedParetos: new Set(['/candidate.json']),
+          selectedResultPath: '/result',
+          paretoSweepEnabled: false,
+          paretos: [{{path: '/candidate.json'}}]
+        }};
+        {function_source}
+
+        updateParetoSelectionUi();
+        assert.equal(controls['btn-holdout-selected-paretos'].disabled, false);
+        controls['holdout-validation-mode'].value = 'holdout_only';
+        updateParetoSelectionUi();
+        assert.equal(controls['btn-holdout-selected-paretos'].disabled, true);
         """
     )
     _run_node(script)

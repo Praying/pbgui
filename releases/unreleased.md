@@ -1,5 +1,12 @@
 # Unreleased
 
+## Merge origin/main v2.02.16-v2.03.1 into the Vue3 branch
+
+- **Upstream synchronization**: Merged the four remote `main` release commits while preserving the Vue3 + Tailwind CSS v4.3 page entrypoints and shared frontend contracts.
+- **Runtime parity**: Retained the upstream PB8 parameter-help endpoint, PB8 metadata compatibility error, job-log path validation, VPS Monitor capability reporting, and related backend security and monitoring updates.
+- **Legacy compatibility**: Kept the Vue3 pages as the active implementation while retaining only the legacy fallback behavior and localized pending-action states needed by the existing HTML templates.
+- **API serial**: Advanced `api/serial.txt` to `2620` after incorporating the API and monitor runtime changes.
+
 ## Services Monitor 嵌入式任务监控配色统一
 
 - **统一嵌入表面**：任务监控 iframe 在 Services Monitor 中使用工作区页面表面 token，消除与外层工作节点详情区域之间的灰度跳变。

@@ -1723,6 +1723,8 @@
         const context = captureEditorRequest(requestedName);
         if (!context) return;
         const btn = document.getElementById("btnHLExpiryInline");
+        const buttonOwner = {};
+        btn._requestOwner = buttonOwner;
         btn.disabled = true;
         btn.textContent = t('misc.apikeys.checkingEllipsis');
         try {
@@ -1748,7 +1750,8 @@
             badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
             badge.style.color = "#ee8d84";
         } finally {
-            if (isCurrentEditorRequest(context) && editingName === requestedName) {
+            if (btn._requestOwner === buttonOwner) {
+                delete btn._requestOwner;
                 btn.disabled = false;
                 btn.textContent = "↻ " + t('misc.apikeys.checkExpiry');
             }
@@ -1783,6 +1786,8 @@
         const context = captureEditorRequest(requestedName);
         if (!context) return;
         const btn = document.getElementById("btnBybitExpiryInline");
+        const buttonOwner = {};
+        btn._requestOwner = buttonOwner;
         btn.disabled = true;
         btn.textContent = t('misc.apikeys.checkingEllipsis');
         try {
@@ -1797,7 +1802,8 @@
             badge.textContent = t('misc.apikeys.errorPrefix', { error: m(e.message) });
             badge.style.color = "#ee8d84";
         } finally {
-            if (isCurrentEditorRequest(context) && editingName === requestedName) {
+            if (btn._requestOwner === buttonOwner) {
+                delete btn._requestOwner;
                 btn.disabled = false;
                 btn.textContent = "↻ " + t('misc.apikeys.checkExpiryAndIps');
             }
@@ -1808,6 +1814,8 @@
         if (saveInFlight) return;
         const context = beginEditorAccount("__bybit_expiry__");
         const btn = document.getElementById("btnBybitExpiry");
+        const buttonOwner = {};
+        btn._requestOwner = buttonOwner;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.checking');
 
@@ -1837,7 +1845,8 @@
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
             showToast(t('misc.apikeys.bybitExpiryCheckFailed', { error: m(e.message) }), "error");
         } finally {
-            if (isCurrentEditorRequest(context)) {
+            if (btn._requestOwner === buttonOwner) {
+                delete btn._requestOwner;
                 btn.disabled = false;
                 btn.textContent = t('misc.apikeys.bybitExpiryCheck');
             }
@@ -2139,6 +2148,8 @@
         if (!context) return;
 
         const btn = document.getElementById("btnTest");
+        const buttonOwner = {};
+        btn._requestOwner = buttonOwner;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.testing');
 
@@ -2185,7 +2196,8 @@
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
             showToast(t('misc.apikeys.testFailed', { error: m(e.message) }), "error");
         } finally {
-            if (isCurrentEditorRequest(context) && editingName === name) {
+            if (btn._requestOwner === buttonOwner) {
+                delete btn._requestOwner;
                 btn.disabled = false;
                 btn.textContent = t('misc.apikeys.testConnection');
             }
@@ -2197,6 +2209,8 @@
         if (saveInFlight) return;
         const context = beginEditorAccount("__hl_expiry__");
         const btn = document.getElementById("btnHLExpiry");
+        const buttonOwner = {};
+        btn._requestOwner = buttonOwner;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> ' + t('misc.apikeys.checking');
 
@@ -2227,7 +2241,8 @@
             if (!isCurrentEditorRequest(context) || e.name === "AbortError") return;
             showToast(t('misc.apikeys.hlExpiryCheckFailed', { error: m(e.message) }), "error");
         } finally {
-            if (isCurrentEditorRequest(context)) {
+            if (btn._requestOwner === buttonOwner) {
+                delete btn._requestOwner;
                 btn.disabled = false;
                 btn.textContent = t('misc.apikeys.hlExpiryCheck');
             }

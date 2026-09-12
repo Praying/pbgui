@@ -3515,6 +3515,7 @@
       }
       renderUi({ forceSidebarActions: true, forceView: isOverviewSettingsView() || store.view === 'overview' });
       refreshLocalInteractiveState();
+      saveVpsDeploySettings({ silent: true });
     }
 
     function setVpsDeployMode(value) {
@@ -6497,10 +6498,10 @@
     }
 
     function openConfirmModal(title, message, onConfirm) {
-      document.getElementById('alertModalTitle').textContent = esc(title);
+      document.getElementById('alertModalTitle').textContent = String(title || '');
       const box = document.getElementById('alertModalBody');
       box.className = 'notice';
-      box.innerHTML = '<div style="margin-bottom:10px">' + esc(message) + '</div>';
+      box.innerHTML = '<div style="margin-bottom:10px;white-space:pre-line">' + esc(message) + '</div>';
       document.getElementById('alertModalBtnRow').innerHTML = '<button class=\'btn ghost\' type=\'button\' onclick=\'closeAlertModal()\'>' + PBGuiI18n.t('vpsmgr.cancel') + '</button> <button class=\'btn primary\' type=\'button\' id=\'confirm-modal-ok\'>' + PBGuiI18n.t('vpsmgr.confirm') + '</button>';
       document.getElementById('alertModalOverlay').classList.add('visible');
       document.getElementById('confirm-modal-ok').onclick = null;
@@ -6926,11 +6927,13 @@
         renderSummaryBar();
       };
       ws.onclose = function (event) {
+        if (store.ws !== ws) return;
         store.connected = false;
+        clearInterruptedSettingsReads();
         store.packageCheckHosts = [];
         store.packageCheckRequestId = '';
         renderSummaryBar();
-        renderUi({ forceSidebarActions: true });
+        renderUi({ forceSidebarActions: true, forceView: true });
         if (event.code === 4001) {
           store.authExpired = true;
           store.ws = null;
@@ -6954,6 +6957,19 @@
         store.reconnectTimer = 0;
         if (!store.authExpired) connectWs();
       }, 1600);
+    }
+
+    function clearInterruptedSettingsReads() {
+      Object.keys(store.vps).forEach(function (host) {
+        if (!store.vps[host].readSettingsLoading) return;
+        updateReadSettingsProgress(host, {
+          step: 'error', status: 'error',
+          label: 'Connection lost while reading settings. Reconnect and retry Read VPS settings.'
+        }, { render: false });
+      });
+      store.pendingWsMessages = (store.pendingWsMessages || []).filter(function (item) {
+        return item.cmd !== 'read_vps_settings';
+      });
     }
 
     function send(payload) {
@@ -8237,6 +8253,7 @@
           const flow = store.clusterNodesImport || defaultClusterNodesImportState();
           if (String(flow.jobId || '') !== cleanJobId) return;
           flow.applying = false;
+          flow.progress = null;
           flow.progressTimer = 0;
           flow.error = String(err && err.message ? PBGuiI18n.serverMsg(err.message) : (err ? PBGuiI18n.serverMsg(err) : PBGuiI18n.t('vpsmgr.importProgressFailed')));
           store.clusterNodesImport = flow;
@@ -8335,6 +8352,7 @@
     function loadClusterNodesImportPreview() {
       stopClusterNodesImportProgressPolling();
       const flow = store.clusterNodesImport || defaultClusterNodesImportState();
+      const currentPasswords = Object.assign({}, flow.passwords || {});
       flow.loading = true;
       flow.applying = false;
       flow.error = '';
@@ -8343,13 +8361,19 @@
       flow.result = null;
       store.clusterNodesImport = flow;
       renderClusterNodesImportModal();
-      vpsManagerGet('/cluster-import/preview', {})
+      return vpsManagerGet('/cluster-import/preview', {})
         .then(function (data) {
-          store.clusterNodesImport = { loading: false, applying: false, error: '', preview: data || null };
+          store.clusterNodesImport = Object.assign(defaultClusterNodesImportState(), {
+            passwords: currentPasswords,
+            preview: data || null
+          });
           renderClusterNodesImportModal();
         })
         .catch(function (err) {
-          store.clusterNodesImport = { loading: false, applying: false, error: String(err && err.message ? PBGuiI18n.serverMsg(err.message) : (err ? PBGuiI18n.serverMsg(err) : PBGuiI18n.t('vpsmgr.previewFailed'))), preview: null };
+          store.clusterNodesImport = Object.assign(defaultClusterNodesImportState(), {
+            error: String(err && err.message ? PBGuiI18n.serverMsg(err.message) : (err ? PBGuiI18n.serverMsg(err) : PBGuiI18n.t('vpsmgr.previewFailed'))),
+            passwords: currentPasswords
+          });
           renderClusterNodesImportModal();
         });
     }
@@ -8394,7 +8418,7 @@
       flow.result = null;
       store.clusterNodesImport = flow;
       renderClusterNodesImportModal();
-      vpsManagerPost('/cluster-import/apply', { local_sudo_pw: flow.localSudoPw || '', passwords: flow.passwords || {} })
+      return vpsManagerPost('/cluster-import/apply', { local_sudo_pw: flow.localSudoPw || '', passwords: flow.passwords || {} })
         .then(function (data) {
           const next = store.clusterNodesImport || defaultClusterNodesImportState();
           next.jobId = String((data || {}).job_id || '');
@@ -8407,6 +8431,7 @@
             pollClusterNodesImportProgress(next.jobId);
           } else {
             next.applying = false;
+            next.progress = null;
             next.error = PBGuiI18n.t('vpsmgr.importDidNotReturnJobId');
             store.clusterNodesImport = next;
             renderClusterNodesImportModal();
@@ -8415,6 +8440,7 @@
         .catch(function (err) {
           const next = store.clusterNodesImport || defaultClusterNodesImportState();
           next.applying = false;
+          next.progress = null;
           next.error = String(err && err.message ? PBGuiI18n.serverMsg(err.message) : (err ? PBGuiI18n.serverMsg(err) : PBGuiI18n.t('vpsmgr.importFailed')));
           store.clusterNodesImport = next;
           renderClusterNodesImportModal();

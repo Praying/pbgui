@@ -19,7 +19,7 @@ DE_GUIDE = ROOT / "docs" / "help_de" / "29_vps_monitor.md"
 # to mirror i18n.js so assertions on interpolated English ("healthy through
 # 15s") still hold in Node evals.
 _NODE_I18N_T_INTERP = (
-    "PBGuiI18n.t = function (key, params) {\n"
+    "globalThis.PBGuiI18n.t = function (key, params) {\n"
     "  var value = __PBGUI_I18N_EN__[key];\n"
     "  if (value === undefined) return key;\n"
     "  return String(value).replace(/\\{(\\w+)\\}/g, function (match, name) {\n"
@@ -78,6 +78,7 @@ def _run_agent_assertions(assertions: str) -> None:
         f"""
         const assert = require('node:assert/strict');
         {NODE_I18N_BOOTSTRAP}
+        const PBGuiI18n = globalThis.PBGuiI18n;
         const TELEMETRY_STALE_SECONDS = 15;
         const MONITOR_AGENT_COLLECTOR_STALE_SECONDS = 30;
         const MONITOR_AGENT_REQUIRED_FILES = [
@@ -155,6 +156,8 @@ def test_disconnected_actions_and_history_clear_pending_states() -> None:
     source = HTML_PATH.read_text(encoding="utf-8")
     names = [
         "send",
+        "monitorActionKey",
+        "finishMonitorAction",
         "restoreRestartButton",
         "restoreKillButton",
         "failMetricHistory",
@@ -168,6 +171,16 @@ def test_disconnected_actions_and_history_clear_pending_states() -> None:
     script = textwrap.dedent(
         f"""
         const assert = require('node:assert/strict');
+        const PBGuiI18n = {{t: function (key) {{
+          return {{
+            'sysmon.killing': 'Killing...',
+            'sysmon.restarting': 'Restarting...',
+            'sysmon.restart': 'Restart',
+            'sysmon.restartKill': 'Restart (kill)',
+            'sysmon.viewLog': 'View Log',
+            'sysmon.loading': 'Loading...'
+          }}[key] || key;
+        }}}};
         const WebSocket = {{OPEN: 1}};
         const timers = new Map();
         let nextTimer = 0;
@@ -205,6 +218,7 @@ def test_disconnected_actions_and_history_clear_pending_states() -> None:
         function metricHistoryTitle() {{ return 'History'; }}
         function metricHistoryMeta() {{ return {{}}; }}
         function metricHistoryLoadingSubtitle() {{ return 'Loading'; }}
+        const pendingMonitorActions = new Map();
         let ws = null;
         let cpuHistoryRequestId = 0;
         let cpuHistoryTimeout = null;
@@ -326,7 +340,7 @@ def test_host_and_bot_action_markup_escapes_xss_payloads() -> None:
     esc_start = source.index("function escAttr(")
     instance_start = source.index("function renderInstanceActions(")
     service_start = source.index("function renderServiceRestartButton(")
-    functions = "\n\n".join([
+    functions = "const pendingMonitorActions = new Map();\n" + _extract_function(source, "monitorActionKey") + "\n" + "\n\n".join([
         source[esc_start:source.index("function toggleCard(", esc_start)],
         source[instance_start:source.index("function instanceCpuCell(", instance_start)],
         source[service_start:source.index("function restartService(", service_start)],

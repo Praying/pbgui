@@ -9,6 +9,7 @@ import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
+import Pb8ParameterHelp from '@/shared/components/Pb8ParameterHelp.vue';
 import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
 import ScoringLimitsEditor from './ScoringLimitsEditor.vue';
 import BotJsonEditor from './BotJsonEditor.vue';
@@ -1109,6 +1110,7 @@ function preflight(): void {
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
+          <Pb8ParameterHelp v-if="version === 'v8'" editor="optimize" />
           <Button type="button" variant="default" size="sm" class="h-8.5 gap-1.5 text-[13px] font-medium shrink-0" data-action="preflight" @click="preflight">{{ t('v7optimize.ohlcvReadiness') }}</Button>
           <Button type="button" variant="ghost" size="sm" class="size-8 p-0 text-secondary hover:text-primary transition-colors" :title="t('common.close')" :aria-label="t('common.close')" @click="emit('close')"><PbIcon :icon="PhX" :size="17" /></Button>
         </div>

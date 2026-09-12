@@ -8,6 +8,7 @@ import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
+import Pb8ParameterHelp from '@/shared/components/Pb8ParameterHelp.vue';
 import DatePicker from '@/shared/datepicker/DatePicker.vue';
 import KvCoinSources from '@/shared/kvCoinSources/KvCoinSources.vue';
 import SuiteEditor from '@/shared/suiteEditor/SuiteEditor.vue';
@@ -126,6 +127,7 @@ defineExpose({ foldSuiteDraft });
         <p class="mt-2 max-w-[760px] text-sm leading-[1.55] text-secondary">{{ t('v7backtest.editorIntro') }}</p>
       </div>
       <div class="mt-[7px] inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-accent/28 bg-accent-deep/10 px-[11px] py-[7px] text-xs text-accent-soft shadow-[0_0_0_3px_rgb(var(--accent-deep-rgb)/0.04)] max-[900px]:self-start max-[700px]:mt-0">
+        <Pb8ParameterHelp v-if="isV8" editor="backtest" />
         <span class="h-[7px] w-[7px] rounded-full bg-accent shadow-[0_0_0_3px_rgb(var(--accent-rgb)/0.14),0_0_12px_rgb(var(--accent-rgb)/0.4)]"></span>{{ state.name || t('v7backtest.editorDraftStatus') }}
       </div>
     </div>
