@@ -42,9 +42,19 @@ export function calloutClass(warning = false): string {
 /** The former .note rule. */
 export const noteClass = 'note text-sm text-secondary';
 
+/** Card-head description line — the note tone capped to a readable measure
+ *  so long sentences do not run the full card width. Kept separate from
+ *  noteClass: inline count/status spans must stay unconstrained. */
+export const panelNoteClass = `${noteClass} max-w-[70ch]`;
+
 /** The former .panel-head rule (legacy :758-765). */
 export const panelHeadClass =
   'panel-head mb-3 flex flex-wrap items-start justify-between gap-3';
+
+/** The former .panel-actions rule — the legacy class carried no surviving
+ *  CSS after the Tailwind migration, so the action-row layout (one flexible
+ *  row, even gutter, vertically centred) is expressed here instead. */
+export const panelActionsClass = 'panel-actions flex flex-wrap items-center gap-2';
 
 /** The former .settings-toggle rule. */
 export const settingsToggleClass =

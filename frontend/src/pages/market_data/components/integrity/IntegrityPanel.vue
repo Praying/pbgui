@@ -13,7 +13,13 @@
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
-import { calloutClass, noteClass, panelCardClass, panelHeadClass, stackClass } from '../../lib/uiClasses';
+import {
+  calloutClass,
+  noteClass,
+  panelActionsClass,
+  panelCardClass,
+  stackClass,
+} from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import type { IntegrityPollingController } from '../../composables/useIntegrityPolling';
 import ArchiveSelects from './ArchiveSelects.vue';
@@ -56,13 +62,12 @@ onBeforeUnmount(() => {
             <span>{{ t('market.dailyChecksums') }}</span>
             <span class="integrity-exchange-chip">{{ store.meta.value.label }}</span>
           </div>
-          <div class="eyebrow">{{ t('market.integrityDescription') }}</div>
           <h2>{{ t('market.ohlcvIntegrity') }}</h2>
           <p :class="noteClass" id="integrity-description">{{ store.descriptionText.value }}</p>
         </div>
         <div class="integrity-command-panel">
           <div class="integrity-command-label">{{ t('market.action') }}</div>
-          <div class="panel-actions integrity-command-actions">
+          <div :class="[panelActionsClass, 'integrity-command-actions']">
             <Button
               v-if="store.isHyperliquid.value"
               variant="info"
@@ -115,7 +120,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .integrity-panel {
-  gap: 14px;
+  /* Track the app's component gutter instead of the old ad-hoc 14px so the
+     card rhythm matches the page chrome above the panel. */
+  gap: var(--component-gap);
 }
 
 .integrity-overview-card {
@@ -215,12 +222,6 @@ onBeforeUnmount(() => {
   font-weight: 700;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-}
-
-.integrity-command-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .integrity-command-note {

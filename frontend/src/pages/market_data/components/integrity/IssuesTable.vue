@@ -8,7 +8,13 @@
  */
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
-import { noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
+import {
+  noteClass,
+  panelActionsClass,
+  panelCardClass,
+  panelHeadClass,
+  panelNoteClass,
+} from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import type { IssueGroup } from '../../lib/integrityView';
 
@@ -42,9 +48,9 @@ const tdClass =
       <div>
         <div class="eyebrow">{{ t('market.damagedDays') }}</div>
         <h3>{{ t('market.repairQueue') }}</h3>
-        <p :class="noteClass" id="integrity-issues-note">{{ t('market.repairQueueNote') }}</p>
+        <p :class="panelNoteClass" id="integrity-issues-note">{{ t('market.repairQueueNote') }}</p>
       </div>
-      <div class="panel-actions">
+      <div :class="panelActionsClass">
         <span :class="noteClass" id="integrity-issue-count">{{ store.issueCountText.value }}</span>
         <Button
           variant="primary"

@@ -16,7 +16,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <article class="best1m-job-monitor-shell integrity-job-monitor-shell mt-3 grid gap-3 rounded-[10px] border border-border-default bg-page/55 p-4 pt-4 shadow-[var(--shadow-panel)]">
+  <article class="best1m-job-monitor-shell integrity-job-monitor-shell grid gap-3 rounded-[10px] border border-border-default bg-page/55 p-4 shadow-[var(--shadow-panel)]">
     <div :class="panelHeadClass">
       <div>
         <div class="eyebrow">{{ t('market.queue') }}</div>

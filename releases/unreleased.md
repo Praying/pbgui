@@ -1,5 +1,14 @@
 # Unreleased
 
+## 「信息 / 行情数据 / OHLCV 完整性」页面组件布局与间距优化
+
+- **存档设置卡片消除网格空洞**：原先两列网格按「发布开关 / 发布存档 / 参考存档」顺序自动填充，第二行的「参考存档」右侧留下半个空单元格，与上方字段错位。现将发布开关独占一行、两个存档下拉并排等宽（窄屏自动堆叠），网格边界始终对齐。
+- **卡片操作按钮行补齐间距**：遗留类 `.panel-actions` 在 Tailwind 迁移后已无任何样式，按钮仅靠标签间的空白分隔。新增共享 `panelActionsClass`（`panel-actions flex flex-wrap items-center gap-2`），并在存档设置、已移除市场、修复队列、参考差异四张卡片统一应用，右下角计数与按钮组对齐一致。
+- **面板卡片间距收敛**：完整性面板的卡片间距由一次性 14px 改为跟随全局 `--component-gap`（16px）；任务监控卡片移除多余的 `mt-3` 与重复的 `pt-4`，不再与栅格 `gap` 叠加成双倍空隙。
+- **卡片说明文字限制阅读宽度**：新增 `panelNoteClass`（`note` 基调 + `max-w-[70ch]`），用于各卡片头部说明，长句不再横贯整张卡片；行内计数/状态文本仍用原 `noteClass` 保持不换行约束。
+- **Hero 标题层级清理**：删除与动态描述（`market.integrityDescriptionRepair`）几乎逐句重复的静态说明行（`market.integrityDescription`），Hero 现在按「Daily Checksums 微标签 + 交易所胶囊 → OHLCV 完整性标题 → 动态说明」三层阅读，不再出现两行同义正文互相竞争。
+- **间隔详情弹窗对齐表单规范**：弹窗内「损坏日期」下拉的标签改用共享 `settingsFieldClass` + `fieldLabelClass`，与页面其余表单字段的字号、颜色和堆叠间距一致。
+
 ## 系统 / API 密钥 / 日志页面现代化重构（Vue 3 + Tailwind CSS）
 
 - **全面移除遗留 LogViewerPanel DOM 注入，重构为纯 Vue 3 + Tailwind CSS 响应式组件**：

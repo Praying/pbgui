@@ -4,7 +4,13 @@
  * (market_data_main.html:3317-3332, rows :4490-4518).
  */
 import { useI18n } from 'vue-i18n';
-import { noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
+import {
+  noteClass,
+  panelActionsClass,
+  panelCardClass,
+  panelHeadClass,
+  panelNoteClass,
+} from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 
 defineProps<{
@@ -23,9 +29,11 @@ const thClass =
       <div>
         <div class="eyebrow">{{ t('market.referenceDifferences') }}</div>
         <h3>{{ t('market.localVsPublic') }}</h3>
-        <p :class="noteClass">{{ t('market.referenceDiffNote') }}</p>
+        <p :class="panelNoteClass">{{ t('market.referenceDiffNote') }}</p>
       </div>
-      <span :class="noteClass" id="integrity-difference-count">{{ store.differenceCountText.value }}</span>
+      <div :class="panelActionsClass">
+        <span :class="noteClass" id="integrity-difference-count">{{ store.differenceCountText.value }}</span>
+      </div>
     </div>
     <div class="integrity-table-wrap max-h-[52dvh] overflow-auto rounded-md border border-border-default">
       <table class="integrity-table w-full border-collapse max-[760px]:min-w-[720px]">

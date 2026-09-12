@@ -16,9 +16,10 @@ import {
 } from '@/shared/components/ui/select';
 import {
   fieldLabelClass,
-  noteClass,
+  panelActionsClass,
   panelCardClass,
   panelHeadClass,
+  panelNoteClass,
   settingsFieldClass,
   settingsToggleClass,
 } from '../../lib/uiClasses';
@@ -61,42 +62,46 @@ function archiveLabel(options: readonly { value: string; label: string }[], valu
       <div>
         <div class="eyebrow">{{ t('market.checksumSharing') }}</div>
         <h3>{{ t('market.archiveSettings') }}</h3>
-        <p :class="noteClass">{{ t('market.checksumPublishNote') }}</p>
+        <p :class="panelNoteClass">{{ t('market.checksumPublishNote') }}</p>
       </div>
     </div>
-    <div class="integrity-settings-grid grid grid-cols-[repeat(2,minmax(240px,1fr))] gap-3 max-[760px]:grid-cols-1">
+    <!-- Toggle on its own row, then the two selects as an even pair: the legacy
+         two-column grid left the reference cell's row with an empty half. -->
+    <div class="integrity-settings-grid flex flex-col gap-4">
       <label :class="[settingsToggleClass, 'cursor-pointer']">
         <Checkbox id="integrity-publish-enabled" v-model="store.form.publishEnabled.value" />
         <span>{{ t('market.publishChecksumDaily') }}</span>
       </label>
-      <label :class="settingsFieldClass">
-        <span :class="fieldLabelClass" id="integrity-publish-archive-label">{{ t('market.publishArchive') }}</span>
-        <SelectRoot :model-value="encodeArchive(store.form.publishArchive.value)" @update:model-value="onPublishArchiveSelect">
-          <SelectTrigger id="integrity-publish-archive" aria-labelledby="integrity-publish-archive-label">
-            <span>{{ archiveLabel(store.archiveOptions.value.publish, store.form.publishArchive.value) }}</span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem v-for="option in store.archiveOptions.value.publish" :key="option.value || NONE_ARCHIVE" :value="encodeArchive(option.value)">
-              {{ option.label }}
-            </SelectItem>
-          </SelectContent>
-        </SelectRoot>
-      </label>
-      <label :class="settingsFieldClass">
-        <span :class="fieldLabelClass" id="integrity-reference-archive-label">{{ t('market.referenceArchive') }}</span>
-        <SelectRoot :model-value="encodeArchive(store.form.referenceArchive.value)" @update:model-value="onReferenceArchiveSelect">
-          <SelectTrigger id="integrity-reference-archive" aria-labelledby="integrity-reference-archive-label">
-            <span>{{ archiveLabel(store.archiveOptions.value.reference, store.form.referenceArchive.value) }}</span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem v-for="option in store.archiveOptions.value.reference" :key="option.value || NONE_ARCHIVE" :value="encodeArchive(option.value)">
-              {{ option.label }}
-            </SelectItem>
-          </SelectContent>
-        </SelectRoot>
-      </label>
+      <div class="grid grid-cols-[repeat(2,minmax(240px,1fr))] gap-4 max-[760px]:grid-cols-1">
+        <label :class="settingsFieldClass">
+          <span :class="fieldLabelClass" id="integrity-publish-archive-label">{{ t('market.publishArchive') }}</span>
+          <SelectRoot :model-value="encodeArchive(store.form.publishArchive.value)" @update:model-value="onPublishArchiveSelect">
+            <SelectTrigger id="integrity-publish-archive" aria-labelledby="integrity-publish-archive-label">
+              <span>{{ archiveLabel(store.archiveOptions.value.publish, store.form.publishArchive.value) }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="option in store.archiveOptions.value.publish" :key="option.value || NONE_ARCHIVE" :value="encodeArchive(option.value)">
+                {{ option.label }}
+              </SelectItem>
+            </SelectContent>
+          </SelectRoot>
+        </label>
+        <label :class="settingsFieldClass">
+          <span :class="fieldLabelClass" id="integrity-reference-archive-label">{{ t('market.referenceArchive') }}</span>
+          <SelectRoot :model-value="encodeArchive(store.form.referenceArchive.value)" @update:model-value="onReferenceArchiveSelect">
+            <SelectTrigger id="integrity-reference-archive" aria-labelledby="integrity-reference-archive-label">
+              <span>{{ archiveLabel(store.archiveOptions.value.reference, store.form.referenceArchive.value) }}</span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="option in store.archiveOptions.value.reference" :key="option.value || NONE_ARCHIVE" :value="encodeArchive(option.value)">
+                {{ option.label }}
+              </SelectItem>
+            </SelectContent>
+          </SelectRoot>
+        </label>
+      </div>
     </div>
-    <div class="panel-actions">
+    <div :class="[panelActionsClass, 'mt-4']">
       <Button
         variant="primary"
         id="btn-integrity-save"

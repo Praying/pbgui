@@ -21,9 +21,11 @@ import {
   calloutClass,
   contextDayClass,
   contextHourClass,
+  fieldLabelClass,
   gapCellClass,
   noteClass,
   panelHeadClass,
+  settingsFieldClass,
 } from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 import SummaryCards from './SummaryCards.vue';
@@ -82,8 +84,8 @@ const thClass =
         </Button>
       </div>
       <div class="integrity-gap-controls flex flex-wrap items-end gap-3">
-        <label class="min-w-[180px]">
-          <span id="integrity-gap-day-label">{{ t('market.damagedDay') }}</span>
+        <label :class="[settingsFieldClass, 'min-w-[180px]']">
+          <span :class="fieldLabelClass" id="integrity-gap-day-label">{{ t('market.damagedDay') }}</span>
           <SelectRoot :model-value="store.gapSelectedDay.value" @update:model-value="onDaySelect">
             <SelectTrigger id="integrity-gap-day" aria-labelledby="integrity-gap-day-label">
               <span>{{ store.gapDayOptions.value.find((option) => option.value === store.gapSelectedDay.value)?.label ?? store.gapSelectedDay.value }}</span>

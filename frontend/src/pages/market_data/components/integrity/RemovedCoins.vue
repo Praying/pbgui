@@ -9,7 +9,13 @@
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
-import { noteClass, panelCardClass, panelHeadClass } from '../../lib/uiClasses';
+import {
+  noteClass,
+  panelActionsClass,
+  panelCardClass,
+  panelHeadClass,
+  panelNoteClass,
+} from '../../lib/uiClasses';
 import type { IntegrityController } from '../../composables/useIntegrity';
 
 const props = defineProps<{
@@ -42,9 +48,9 @@ const tdClass =
       <div>
         <div class="eyebrow">{{ t('market.removedMarkets') }}</div>
         <h3>{{ t('market.unavailableCoinData') }}</h3>
-        <p :class="noteClass" id="integrity-removed-note">{{ store.removedNoteText.value }}</p>
+        <p :class="panelNoteClass" id="integrity-removed-note">{{ store.removedNoteText.value }}</p>
       </div>
-      <div class="panel-actions">
+      <div :class="panelActionsClass">
         <span :class="noteClass" id="integrity-removed-count">{{ store.removedCountText.value }}</span>
         <Button
           variant="danger"
