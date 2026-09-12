@@ -48,8 +48,7 @@ describe('rendering (:1677-1705)', () => {
     expect(wrapper.find('.pbgui-config-exchange').text()).toBe('bybit');
     expect(wrapper.find('.pbgui-config-date').text()).toContain('2021-01-01');
     expect(wrapper.find('.pbgui-config-count').text()).toBe('2');
-    expect(wrapper.find('.pbgui-config-action').exists()).toBe(true);
-    expect(wrapper.get('[data-test="configs-list-footer"]').attributes('aria-hidden')).toBe('true');
+    expect(wrapper.get('[data-test="configs-list-footer"]').text()).toContain('1 configs');
   });
 
   it('renders rows with the columns and the version-gated strategy column', async () => {
@@ -121,11 +120,21 @@ describe('selection (:816-817, :5109-5123)', () => {
     expect(wrapper.findAll('tbody tr.selected')).toHaveLength(0);
   });
 
-  it('clicking a row toggles its selection', async () => {
+  it('clicking a row toggles its selection and updates footer', async () => {
     const wrapper = mountPanel({ configs: [config({ name: 'a' })] });
     await nextTick();
     await wrapper.find('tbody tr').trigger('click');
     expect(wrapper.findAll('tbody tr.selected')).toHaveLength(1);
+    expect(wrapper.get('[data-test="configs-list-footer"]').text()).toContain('1 selected');
+  });
+
+  it('navigating rows via Enter or Space toggles selection', async () => {
+    const wrapper = mountPanel({ configs: [config({ name: 'a' })] });
+    await nextTick();
+    await wrapper.find('tbody tr').trigger('keydown', { key: 'Enter' });
+    expect(wrapper.findAll('tbody tr.selected')).toHaveLength(1);
+    await wrapper.find('tbody tr').trigger('keydown', { key: ' ' });
+    expect(wrapper.findAll('tbody tr.selected')).toHaveLength(0);
   });
 });
 

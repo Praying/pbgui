@@ -4128,7 +4128,7 @@
   "v7backtest.v8ConfigOpenedNoOverwrite": "The existing V8 config will be opened without overwriting it.",
   "v7backtest.v8ConversionFailed": "V8 conversion failed: {msg}",
   "v7backtest.v8ConversionFailedTitle": "V8 conversion failed",
-  "v7backtest.version": "Version:",
+  "v7backtest.version": "Version",
   "v7backtest.viewChartsTitle": "Balance & Equity, PnL, Drawdown, WE charts",
   "v7backtest.viewConfig": "View Config",
   "v7backtest.viewResults": "View Results",

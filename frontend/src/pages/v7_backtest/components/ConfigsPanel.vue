@@ -110,6 +110,61 @@ function toggleRow(name: string): void {
   selected.value = selected.value.includes(name) ? selected.value.filter((entry) => entry !== name) : [...selected.value, name];
 }
 
+let dragStart: { index: number; y: number } | null = null;
+let dragging = false;
+let dragMode: 'add' | 'remove' | null = null;
+
+function onMouseDown(event: MouseEvent, name: string): void {
+  if (event.button !== 0) return;
+  const idx = visible.value.findIndex((entry) => entry.name === name);
+  dragStart = { index: idx, y: event.clientY };
+  dragging = false;
+  dragMode = null;
+}
+
+function onListMouseMove(event: MouseEvent): void {
+  if (!dragStart) return;
+  if (!dragging && Math.abs(event.clientY - dragStart.y) > 5) {
+    dragging = true;
+    const initialName = visible.value[dragStart.index]?.name;
+    dragMode = initialName && selected.value.includes(initialName) ? 'remove' : 'add';
+  }
+}
+
+function onMouseEnter(name: string): void {
+  if (!dragging || !dragStart) return;
+  const anchor = dragStart.index;
+  const current = visible.value.findIndex((entry) => entry.name === name);
+  if (anchor === -1 || current === -1) return;
+  const lo = Math.min(anchor, current);
+  const hi = Math.max(anchor, current);
+  const next = new Set(selected.value);
+  visible.value.slice(lo, hi + 1).forEach((entry) => {
+    if (dragMode === 'add') next.add(entry.name);
+    else next.delete(entry.name);
+  });
+  selected.value = Array.from(next);
+}
+
+function onMouseUp(): void {
+  dragStart = null;
+  setTimeout(() => {
+    dragging = false;
+  }, 0);
+  dragMode = null;
+}
+
+function onRowClick(name: string): void {
+  if (dragging) return;
+  toggleRow(name);
+}
+
+function onRowKeydown(event: KeyboardEvent, name: string): void {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  toggleRow(name);
+}
+
 function toggleAll(): void {
   selected.value = allSelected.value ? [] : visible.value.map((entry) => entry.name);
 }
@@ -192,44 +247,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="pbgui-config-list">
-    <div v-if="configs.length > 0" id="configs-toolbar" class="pbgui-config-toolbar pbgui-list-toolbar mb-2 flex flex-wrap items-center gap-2">
-      <Input
-        v-model="filter"
-        type="text"
-        class="pbgui-config-search"
-        :placeholder="t('v7backtest.searchName')"
-        data-test="configs-filter"
-        @input="emit('filter', filter)"
-      />
-      <!-- ui-migration: the legacy <option value=""> placeholder rows have no
-           reka equivalent — the listboxes offer no reset row; the cleared
-           model ('') renders as the trigger label instead. -->
-      <SelectRoot v-model="exchangeFilter">
-        <SelectTrigger class="w-auto min-w-[120px] max-w-[180px]" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')" :aria-label="t('v7backtest.filterExchange')">
-          <span :class="exchangeFilter ? '' : 'text-placeholder'">{{ exchangeFilter || t('v7backtest.filterExchange') }}</span>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</SelectItem>
-        </SelectContent>
-      </SelectRoot>
-      <SelectRoot v-if="isV8" v-model="strategyFilter">
-        <SelectTrigger class="w-auto min-w-[120px] max-w-[180px]" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')" :aria-label="t('v7backtest.filterStrategy')">
-          <span :class="strategyFilter ? '' : 'text-placeholder'">{{ strategyFilter || t('v7backtest.filterStrategy') }}</span>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem v-for="strategy in strategyOptions" :key="strategy" :value="strategy">{{ strategy }}</SelectItem>
-        </SelectContent>
-      </SelectRoot>
-      <div class="pbgui-config-counts" aria-live="polite">
-        <span>{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
-        <span v-if="selected.length" class="pbgui-config-selected-count">{{ selected.length }} {{ t('v7backtest.queueSelected') }}</span>
-      </div>
-      <span class="flex-1"></span>
-      <Button type="button" variant="default" size="sm" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
-      <Button type="button" variant="default" size="sm" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
-    </div>
-
+  <div class="pbgui-config-list flex min-h-0 flex-1 flex-col overflow-hidden">
     <section
       v-if="configs.length === 0"
       class="empty-state configs-empty-state mx-auto mt-[clamp(20px,7vh,72px)] grid w-[min(720px,calc(100%_-_32px))] grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-accent/18 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--accent-rgb)/0.11),transparent_18rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel max-[640px]:grid-cols-1"
@@ -252,65 +270,106 @@ defineExpose({
         </Button>
       </div>
     </section>
-    <div v-else class="pbgui-config-frame">
-      <ListWrap class="pbgui-config-wrap">
-        <Table class="pbgui-config-table select-none">
-      <thead>
-        <tr>
-          <Th class="w-10 pr-1!">
-            <Checkbox
-              :model-value="allSelected"
-              :aria-label="t('v7backtest.selectAll')"
-              data-test="configs-select-all-check"
-              @update:model-value="toggleAll"
-            />
-          </Th>
-          <SortTh sort-key="name" data-col="name" :label="t('v7backtest.name')" :sort="sort.col === 'name' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'name')" />
-          <SortTh sort-key="exchanges" data-col="exchanges" :label="t('v7backtest.exchange')" :sort="sort.col === 'exchanges' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'exchanges')" />
-          <SortTh v-if="isV8" sort-key="strategy" data-col="strategy" :sort="sort.col === 'strategy' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'strategy')"><span data-test="strategy-col-header">{{ t('v7backtest.strategy') }}</span></SortTh>
-          <SortTh sort-key="coins" data-col="coins" :label="t('v7backtest.coins')" :sort="sort.col === 'coins' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'coins')" />
-          <SortTh sort-key="twe_long" data-col="twe_long" :title="t('v7backtest.tweTooltip')" :sort="sort.col === 'twe_long' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'twe_long')">TWE L/S</SortTh>
-          <SortTh sort-key="start_date" data-col="start_date" :label="t('v7backtest.start')" :sort="sort.col === 'start_date' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'start_date')" />
-          <SortTh sort-key="end_date" data-col="end_date" :label="t('v7backtest.end')" :sort="sort.col === 'end_date' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'end_date')" />
-          <SortTh sort-key="results" data-col="results" :label="t('v7backtest.resultCountHeader')" :sort="sort.col === 'results' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'results')" />
-          <SortTh sort-key="modified" data-col="modified" :label="t('v7backtest.modified')" :sort="sort.col === 'modified' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'modified')" />
-          <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="visible.length === 0">
-          <td :colspan="isV8 ? 11 : 10" class="empty-state px-5! py-15! text-center text-md text-secondary">{{ t('v7backtest.noConfigsMatch') }}</td>
-        </tr>
-        <tr v-for="entry in visible" :key="entry.name" :class="{ selected: selected.includes(entry.name) }" @click="toggleRow(entry.name)">
-          <td class="w-10 pr-1!" @click.stop>
-            <Checkbox :model-value="selected.includes(entry.name)" :aria-label="entry.name" @update:model-value="toggleRow(entry.name)" />
-          </td>
-          <td class="pbgui-config-name max-w-[240px] truncate" :title="entry.name">{{ entry.name }}</td>
-          <td class="truncate" :title="exchangeText(entry)"><span class="pbgui-config-exchange">{{ exchangeText(entry) || '-' }}</span></td>
-          <td v-if="isV8" class="truncate">{{ entry.strategy || '-' }}</td>
-          <td class="max-w-[160px] truncate" :title="coinsTitle(entry)">{{ coinsText(entry) }}</td>
-          <td class="truncate font-mono tabular-nums">{{ num(entry.twe_long, 2) }} / {{ num(entry.twe_short, 2) }}</td>
-          <td class="pbgui-config-date truncate">{{ formatDateTime(entry.start_date) }}</td>
-          <td class="pbgui-config-date truncate">{{ formatDateTime(entry.end_date) }}</td>
-          <td
-            class="pbgui-config-count"
-            :class="entry.results ? 'cursor-pointer font-semibold text-accent-soft' : 'cursor-default font-normal text-disabled'"
-            @click.stop="entry.results ? emit('view-results', entry.name) : undefined"
-          >
-            {{ entry.results ?? 0 }}
-          </td>
-          <td class="pbgui-config-date truncate" :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
-          <TdActions>
-            <BacktestRowActionButton class="pbgui-config-action" :icon="PhPencilSimple" :label="t('v7backtest.edit')" data-test="cfg-edit" @click="emit('edit', entry.name)" />
-            <BacktestRowActionButton class="pbgui-config-action" :icon="PhPlay" :label="t('v7backtest.addToQueueTitle')" tone="accent" data-test="cfg-queue" @click="emit('queue', entry.name)" />
-            <BacktestRowActionButton class="pbgui-config-action" :icon="PhChartBar" :label="t('v7backtest.viewResults')" tone="success" :disabled="!entry.results" data-test="cfg-results" @click="emit('view-results', entry.name)" />
-            <BacktestRowActionButton class="pbgui-config-action" :icon="PhCopy" :label="t('v7backtest.duplicateConfig')" data-test="cfg-duplicate" @click="emit('duplicate', entry.name)" />
-          </TdActions>
-        </tr>
-      </tbody>
+
+    <div v-else class="pbgui-config-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
+      <div id="configs-toolbar" class="pbgui-config-toolbar pbgui-list-toolbar flex flex-wrap items-center gap-2 border-b border-border-subtle px-3 py-2.5">
+        <Input
+          v-model="filter"
+          type="text"
+          class="pbgui-config-search h-8 w-auto min-w-[160px] max-w-[240px]"
+          :placeholder="t('v7backtest.searchName')"
+          data-test="configs-filter"
+          @input="emit('filter', filter)"
+        />
+        <!-- ui-migration: the legacy <option value=""> placeholder rows have no
+             reka equivalent — the listboxes offer no reset row; the cleared
+             model ('') renders as the trigger label instead. -->
+        <SelectRoot v-model="exchangeFilter">
+          <SelectTrigger class="h-8 w-auto min-w-[120px] max-w-[180px]" data-test="configs-exchange-filter" :title="t('v7backtest.filterExchange')" :aria-label="t('v7backtest.filterExchange')">
+            <span :class="exchangeFilter ? '' : 'text-placeholder'">{{ exchangeFilter || t('v7backtest.filterExchange') }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="exchange in exchangeOptions" :key="exchange" :value="exchange">{{ exchange }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
+        <SelectRoot v-if="isV8" v-model="strategyFilter">
+          <SelectTrigger class="h-8 w-auto min-w-[120px] max-w-[180px]" data-test="configs-strategy-filter" :title="t('v7backtest.filterStrategy')" :aria-label="t('v7backtest.filterStrategy')">
+            <span :class="strategyFilter ? '' : 'text-placeholder'">{{ strategyFilter || t('v7backtest.filterStrategy') }}</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="strategy in strategyOptions" :key="strategy" :value="strategy">{{ strategy }}</SelectItem>
+          </SelectContent>
+        </SelectRoot>
+        <span class="flex-1"></span>
+        <div class="flex items-center gap-2">
+          <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
+          <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" :disabled="selected.length === 0" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
+        </div>
+      </div>
+
+      <ListWrap class="pbgui-config-wrap min-h-0 flex-1 overflow-auto bg-panel" @mousemove="onListMouseMove">
+        <Table class="pbgui-config-table min-w-[900px] select-none bg-transparent">
+          <thead>
+            <tr>
+              <SortTh sort-key="name" data-col="name" :label="t('v7backtest.name')" :sort="sort.col === 'name' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'name')" />
+              <SortTh sort-key="exchanges" data-col="exchanges" :label="t('v7backtest.exchange')" :sort="sort.col === 'exchanges' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'exchanges')" />
+              <SortTh v-if="isV8" sort-key="strategy" data-col="strategy" :sort="sort.col === 'strategy' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'strategy')"><span data-test="strategy-col-header">{{ t('v7backtest.strategy') }}</span></SortTh>
+              <SortTh sort-key="coins" data-col="coins" :label="t('v7backtest.coins')" :sort="sort.col === 'coins' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'coins')" />
+              <SortTh sort-key="twe_long" data-col="twe_long" :title="t('v7backtest.tweTooltip')" :sort="sort.col === 'twe_long' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'twe_long')">TWE L/S</SortTh>
+              <SortTh sort-key="start_date" data-col="start_date" :label="t('v7backtest.start')" :sort="sort.col === 'start_date' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'start_date')" />
+              <SortTh sort-key="end_date" data-col="end_date" :label="t('v7backtest.end')" :sort="sort.col === 'end_date' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'end_date')" />
+              <SortTh sort-key="results" data-col="results" :label="t('v7backtest.resultCountHeader')" :sort="sort.col === 'results' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'results')" />
+              <SortTh sort-key="modified" data-col="modified" :label="t('v7backtest.modified')" :sort="sort.col === 'modified' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'modified')" />
+              <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="visible.length === 0">
+              <td :colspan="isV8 ? 10 : 9" class="empty-state px-5! py-15! text-center text-md text-secondary">{{ t('v7backtest.noConfigsMatch') }}</td>
+            </tr>
+            <tr
+              v-for="entry in visible"
+              :key="entry.name"
+              :data-name="entry.name"
+              class="config-row cursor-pointer outline-none"
+              :class="{ selected: selected.includes(entry.name) }"
+              tabindex="0"
+              @mousedown="onMouseDown($event, entry.name)"
+              @mouseenter="onMouseEnter(entry.name)"
+              @mouseup="onMouseUp"
+              @click="onRowClick(entry.name)"
+              @keydown="onRowKeydown($event, entry.name)"
+              @dblclick="emit('edit', entry.name)"
+            >
+              <td class="pbgui-config-name max-w-[240px] truncate" :title="entry.name">{{ entry.name }}</td>
+              <td class="truncate" :title="exchangeText(entry)"><span class="pbgui-config-exchange font-mono text-xs">{{ exchangeText(entry) || '-' }}</span></td>
+              <td v-if="isV8" class="truncate font-mono text-xs text-secondary">{{ entry.strategy || '-' }}</td>
+              <td class="max-w-[160px] truncate font-mono text-xs tabular-nums text-secondary" :title="coinsTitle(entry)">{{ coinsText(entry) }}</td>
+              <td class="truncate font-mono text-xs tabular-nums">{{ num(entry.twe_long, 2) }} / {{ num(entry.twe_short, 2) }}</td>
+              <td class="pbgui-config-date truncate font-mono text-xs tabular-nums">{{ formatDateTime(entry.start_date) }}</td>
+              <td class="pbgui-config-date truncate font-mono text-xs tabular-nums">{{ formatDateTime(entry.end_date) }}</td>
+              <td
+                class="pbgui-config-count font-mono text-xs tabular-nums"
+                :class="entry.results ? 'cursor-pointer font-semibold text-accent-soft hover:underline' : 'cursor-default font-normal text-muted'"
+                @click.stop="entry.results ? emit('view-results', entry.name) : undefined"
+              >
+                {{ entry.results ?? 0 }}
+              </td>
+              <td class="pbgui-config-date truncate font-mono text-xs tabular-nums" :title="String(entry.modified || '')">{{ formatDateTime(entry.modified) }}</td>
+              <TdActions>
+                <BacktestRowActionButton class="pbgui-config-action" :icon="PhPencilSimple" :label="t('v7backtest.edit')" data-test="cfg-edit" @click="emit('edit', entry.name)" />
+                <BacktestRowActionButton class="pbgui-config-action" :icon="PhPlay" :label="t('v7backtest.addToQueueTitle')" tone="accent" data-test="cfg-queue" @click="emit('queue', entry.name)" />
+                <BacktestRowActionButton class="pbgui-config-action" :icon="PhChartBar" :label="t('v7backtest.viewResults')" tone="success" :disabled="!entry.results" data-test="cfg-results" @click="emit('view-results', entry.name)" />
+                <BacktestRowActionButton class="pbgui-config-action" :icon="PhCopy" :label="t('v7backtest.duplicateConfig')" data-test="cfg-duplicate" @click="emit('duplicate', entry.name)" />
+              </TdActions>
+            </tr>
+          </tbody>
         </Table>
       </ListWrap>
-      <ListFooter data-test="configs-list-footer" aria-hidden="true"></ListFooter>
+      <ListFooter data-test="configs-list-footer">
+        <span class="tabular-nums">{{ t('v7backtest.totalConfigs', { n: visible.length }) }}</span>
+        <span v-if="selected.length" class="font-medium text-accent-soft tabular-nums">{{ selected.length }} {{ t('v7backtest.queueSelected') }}</span>
+      </ListFooter>
     </div>
 
     <div v-if="deleteConfirmOpen" id="modal-root" :class="modalBackdropClass" data-test="configs-delete-modal">

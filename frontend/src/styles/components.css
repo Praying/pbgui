@@ -2005,8 +2005,9 @@
 
   .pbgui-list-table th {
     height: 34px;
-    padding: 8px 10px;
-    background: var(--surface-panel);
+    padding: 8px 12px;
+    background: rgb(var(--bg-page-rgb) / 0.85);
+    backdrop-filter: blur(8px);
     border-bottom: 2px solid var(--border-default);
     color: var(--text-secondary);
     font-size: var(--fs-xs);
@@ -2019,23 +2020,17 @@
 
   .pbgui-list-table td {
     height: 42px;
-    padding: 8px 10px;
-    border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
+    padding: 8px 12px;
+    border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
     line-height: 1.25;
   }
 
-  /* Framed lists end on the wrap's own edge: the last data row (and the lone
-     empty-state row) drop their separator so the frame reads as one clean
-     finish instead of a doubled line. Bare document-flow tables (strategy
-     explorer orders, coin overrides) are not matched and keep the row rule
-     as their only bottom edge. */
   .pbgui-list-wrap .pbgui-list-table tbody tr:last-child td {
     border-bottom: 0;
   }
 
   /* Terminal bar of a framed list — the count mirror of the toolbar that
-     opens it, closing the table's bottom edge. Static (never aria-live):
-     the toolbar counts already announce changes. */
+     opens it, closing the table's bottom edge. */
   .pbgui-list-footer {
     display: flex;
     flex-wrap: wrap;
@@ -2043,12 +2038,16 @@
     justify-content: space-between;
     gap: var(--sp-sm);
     flex-shrink: 0;
-    min-height: 34px;
-    padding: 6px 10px;
-    border-top: 1px solid var(--border-default);
-    background: var(--surface-panel);
+    min-height: 36px;
+    padding: 6px 14px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgb(var(--bg-page-rgb) / 0.45);
     color: var(--text-secondary);
     font-size: var(--fs-xs);
+  }
+
+  .pbgui-list-table tbody td:first-child {
+    border-left: 3px solid transparent;
   }
 
   .pbgui-list-table tbody tr {
@@ -2064,13 +2063,13 @@
     position: sticky;
     right: 0;
     z-index: 1;
-    background: var(--surface-deep);
+    background: var(--bg-panel);
     box-shadow: -10px 0 16px -16px rgb(0 0 0 / 0.9);
   }
 
   .pbgui-list-table th:last-child {
     z-index: 3;
-    background: var(--surface-panel);
+    background: rgb(var(--bg-page-rgb) / 0.95);
   }
 
   .pbgui-list-table tbody tr:hover td:last-child {
@@ -2084,21 +2083,22 @@
     background: rgb(var(--accent-rgb) / 0.05);
   }
 
-  /* Selected rows: accent tint + a 2px left marker on the first cell.
-     Placed after the hover rules so a selected row keeps its tint on hover
-     (equal specificity, later wins); the :hover variants below outrank both. */
+  /* Selected rows: accent tint (0.12) + 3px accent border on the first cell.
+     Placed after the hover rules so a selected row keeps its tint on hover;
+     the :hover variants below outrank both. */
   .pbgui-list-table tbody tr.selected td,
   .pbgui-list-table tbody tr.selected td:last-child {
-    background: rgb(var(--accent-rgb) / 0.09);
+    background: rgb(var(--accent-rgb) / 0.12);
   }
 
   .pbgui-list-table tbody tr.selected td:first-child {
-    box-shadow: inset 2px 0 0 var(--accent);
+    border-left: 3px solid var(--accent);
+    box-shadow: none;
   }
 
   .pbgui-list-table tbody tr.selected:hover td,
   .pbgui-list-table tbody tr.selected:hover td:last-child {
-    background: rgb(var(--accent-rgb) / 0.13);
+    background: rgb(var(--accent-rgb) / 0.14);
   }
 
   /* Backtest and Optimize configuration lists share one visual contract
@@ -2150,24 +2150,26 @@
     display: flex;
     min-height: 0;
     max-height: 100%;
-    flex: 0 1 auto;
+    flex: 1 1 0%;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    background: var(--surface-deep);
-    box-shadow: var(--shadow-panel), inset 0 1px 0 rgb(255 255 255 / 0.04), inset 0 -1px 0 rgb(0 0 0 / 0.42);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-panel);
   }
 
   .pbgui-config-list .pbgui-config-wrap {
+    flex: 1 1 0%;
     min-height: 0;
     overflow: auto;
+    background: var(--bg-panel);
   }
 
   .pbgui-config-list .pbgui-config-table {
     min-width: 900px;
     border-spacing: 0;
-    background: var(--surface-deep);
+    background: transparent;
   }
 
   .pbgui-config-list .pbgui-config-table td {
@@ -2247,8 +2249,10 @@
   }
 
   .pbgui-config-list .pbgui-config-frame > .pbgui-list-footer {
-    min-height: 30px;
-    padding-block: 5px;
+    min-height: 36px;
+    padding: 6px 14px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgb(var(--bg-page-rgb) / 0.45);
   }
 
   @media (max-width: 640px) {

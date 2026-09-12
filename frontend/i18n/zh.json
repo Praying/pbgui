@@ -4128,7 +4128,7 @@
   "v7backtest.v8ConfigOpenedNoOverwrite": "将打开现有的 V8 配置，不会覆盖它。",
   "v7backtest.v8ConversionFailed": "V8 转换失败：{msg}",
   "v7backtest.v8ConversionFailedTitle": "V8 转换失败",
-  "v7backtest.version": "版本：",
+  "v7backtest.version": "版本",
   "v7backtest.viewChartsTitle": "余额与权益、盈亏、回撤、WE 图表",
   "v7backtest.viewConfig": "查看配置",
   "v7backtest.viewResults": "查看结果",

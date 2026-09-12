@@ -223,7 +223,6 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
           <p class="mt-1 max-w-[70ch] text-sm leading-relaxed text-secondary">{{ t('v7backtest.queueWorkbenchHint') }}</p>
         </div>
       </div>
-      <span class="inline-flex shrink-0 items-center rounded-full border border-border-default bg-card px-2.5 py-1 text-xs font-semibold tabular-nums text-secondary">{{ t('v7backtest.queueItemsCount', { count: items.length }) }}</span>
     </header>
 
     <div class="queue-summary mb-3 grid grid-cols-[repeat(4,minmax(0,1fr))] gap-3 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
@@ -234,14 +233,11 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
     </div>
 
     <div class="queue-table-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
-      <div id="queue-toolbar" class="pbgui-list-toolbar flex items-center justify-between gap-3 border-b px-3 py-2.5 max-[760px]:flex-wrap">
-        <span class="inline-flex items-center gap-2 text-sm text-secondary"><span class="rounded-full border border-accent/25 bg-accent/8 px-2 py-0.5 text-xs font-semibold tabular-nums text-accent-soft" data-test="queue-selected-count">{{ selectedCount }}</span>{{ t('v7backtest.queueSelected') }}</span>
-        <div class="flex items-center gap-2">
-          <Button type="button" variant="secondary" size="sm" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
-          <Button type="button" variant="ghost" size="sm" data-test="queue-deselect-all" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
-        </div>
+      <div id="queue-toolbar" class="pbgui-list-toolbar flex items-center justify-end gap-2 border-b border-border-subtle px-3 py-2">
+        <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="queue-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
+        <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="queue-deselect-all" :disabled="selectedCount === 0" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
       </div>
-      <div id="queue-list" class="queue-list pbgui-list-wrap min-h-0 flex-1 overflow-auto" @mousemove="onListMouseMove">
+      <div id="queue-list" class="queue-list pbgui-list-wrap min-h-0 flex-1 overflow-auto bg-panel" @mousemove="onListMouseMove">
       <div v-if="!items.length" class="empty-state queue-empty-state flex min-h-[260px] flex-col items-center justify-center gap-3 px-5 py-12 text-center text-md text-secondary">
         <span class="grid h-12 w-12 place-items-center rounded-lg border border-border-default bg-card text-muted" aria-hidden="true"><PbIcon :icon="PhHourglass" :size="22" /></span>
         <template v-for="(line, index) in emptyLines" :key="index">
@@ -249,7 +245,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
           <span>{{ line }}</span>
         </template>
       </div>
-      <Table v-else class="queue-table min-w-[820px] select-none">
+      <Table v-else class="queue-table min-w-[820px] select-none bg-transparent">
         <thead>
           <tr>
             <SortTh
@@ -330,7 +326,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
       </div>
       <ListFooter data-test="queue-list-footer">
         <span class="tabular-nums">{{ t('v7backtest.queueItemsCount', { count: items.length }) }}</span>
-        <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ selectedCount }} {{ t('v7backtest.queueSelected') }}</span>
+        <span class="font-medium text-accent-soft tabular-nums"><span data-test="queue-selected-count">{{ selectedCount }}</span> {{ t('v7backtest.queueSelected') }}</span>
       </ListFooter>
     </div>
 

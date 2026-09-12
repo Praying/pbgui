@@ -171,32 +171,24 @@ defineExpose({ deleteSelectedFlow });
   <div class="results-panel-root flex min-h-0 min-w-0 flex-1 flex-col">
     <div
       id="results-fixed-top"
-      class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-secondary/14 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel"
+      class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel"
     >
-      <div class="flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-secondary/12 px-4 py-3">
+      <div class="flex min-h-12 flex-wrap items-center justify-between gap-3 border-b border-border-subtle px-4 py-2.5">
         <div class="flex min-w-0 items-center gap-3">
           <div class="grid size-8 shrink-0 place-items-center rounded-lg border border-accent/20 bg-accent/8 text-accent-soft">
             <PbIcon :icon="PhChartLineUp" :size="18" />
           </div>
           <div class="min-w-0">
-            <div class="text-[10px] font-bold uppercase tracking-[0.18em] text-muted">{{ t('v7backtest.results') }}</div>
-            <div id="results-count-label" class="mt-0.5 truncate text-sm font-semibold text-primary" aria-live="polite">{{ countLabel }}</div>
+            <h2 class="m-0 text-base font-semibold tracking-tight text-primary">{{ t('v7backtest.results') }}</h2>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <span
-            class="rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums"
-            :class="selectedCount > 0 ? 'border-accent/24 bg-accent/10 text-accent-soft' : 'border-secondary/12 bg-page/35 text-muted'"
-            aria-live="polite"
-          >
-            {{ t('v7backtest.resultsSelected', { n: selectedCount }) }}
-          </span>
           <Button
             id="results-pin-btn"
             type="button"
             variant="ghost"
             class="size-8 p-0 text-secondary hover:text-primary"
-            :class="pinned ? 'border border-accent/20 bg-accent/8 text-accent-soft' : 'unpinned border border-secondary/12 opacity-55'"
+            :class="pinned ? 'border border-accent/20 bg-accent/8 text-accent-soft' : 'unpinned border border-border-subtle opacity-55'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
             :aria-pressed="pinned"
@@ -207,11 +199,11 @@ defineExpose({ deleteSelectedFlow });
         </div>
       </div>
 
-      <div id="results-toolbar" class="pbgui-list-toolbar flex flex-wrap items-end gap-3 border-b px-4 py-3">
+      <div id="results-toolbar" class="pbgui-list-toolbar flex flex-wrap items-end gap-3 border-b border-border-subtle px-4 py-2.5">
         <label class="grid min-w-[112px] gap-1.5">
           <span id="results-version-filter-label" class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('v7backtest.version') }}</span>
           <SelectRoot :model-value="store.versionFilter.value" @update:model-value="store.setVersionFilter(String($event ?? '') as 'v7' | 'v8' | 'both')">
-            <SelectTrigger id="results-version-filter" class="w-full border-secondary/16 bg-page/68" aria-labelledby="results-version-filter-label">
+            <SelectTrigger id="results-version-filter" class="h-8 w-full" aria-labelledby="results-version-filter-label">
               <span>{{ store.versionFilter.value === 'v7' ? 'PBv7' : store.versionFilter.value === 'v8' ? 'PBv8' : t('v7backtest.both') }}</span>
             </SelectTrigger>
             <SelectContent>
@@ -228,7 +220,7 @@ defineExpose({ deleteSelectedFlow });
                reka equivalent — the cleared model ('' = all configs) renders as
                the trigger label instead. -->
           <SelectRoot v-model="store.configFilter.value">
-            <SelectTrigger id="results-config-filter" class="w-full border-secondary/16 bg-page/68" aria-labelledby="results-config-filter-label">
+            <SelectTrigger id="results-config-filter" class="h-8 w-full" aria-labelledby="results-config-filter-label">
               <span>{{ store.configFilter.value || t('v7backtest.allConfigs') }}</span>
             </SelectTrigger>
             <SelectContent>
@@ -241,19 +233,19 @@ defineExpose({ deleteSelectedFlow });
           <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('common.search') }}</span>
           <span class="relative block">
             <PbIcon :icon="PhMagnifyingGlass" :size="15" class="pointer-events-none absolute left-2.5 top-1/2 z-1 -translate-y-1/2 text-muted" />
-            <Input id="results-filter" v-model="store.textFilter.value" type="search" class="w-full border-secondary/16 bg-page/68 pl-8" :placeholder="t('v7backtest.searchName')" />
+            <Input id="results-filter" v-model="store.textFilter.value" type="search" class="h-8 w-full pl-8" :placeholder="t('v7backtest.searchName')" />
           </span>
         </label>
 
         <div class="ml-auto flex items-center gap-2 pb-px">
-          <Button type="button" variant="outline" size="sm" class="h-8 border-secondary/16 px-3" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</Button>
+          <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="results-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAllVisible">{{ t('v7backtest.selectAll') }}</Button>
           <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="results-deselect" :title="t('v7backtest.deselectAll')" :disabled="selectedCount === 0" @click="store.deselectAll()">{{ t('v7backtest.deselect') }}</Button>
         </div>
       </div>
 
       <div
         id="results-list-wrap"
-        class="pbgui-list-wrap relative min-h-36 flex-1 overflow-auto"
+        class="pbgui-list-wrap relative min-h-36 flex-1 overflow-auto bg-panel"
         :style="wrapHeight !== null ? { height: wrapHeight + 'px', flex: '0 0 auto' } : undefined"
       >
         <div id="results-list">
@@ -276,10 +268,10 @@ defineExpose({ deleteSelectedFlow });
         </div>
       </div>
       <footer class="pbgui-list-footer" data-test="results-list-footer">
-        <span class="tabular-nums">{{ countLabel }}</span>
-        <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7backtest.resultsSelected', { n: selectedCount }) }}</span>
+        <span id="results-count-label" class="tabular-nums" aria-live="polite">{{ countLabel }}</span>
+        <span class="font-medium text-accent-soft tabular-nums">{{ t('v7backtest.resultsSelected', { n: selectedCount }) }}</span>
       </footer>
-      <div id="results-resize-handle" class="flex h-2 cursor-row-resize select-none items-center justify-center border-t border-secondary/12 bg-page/55" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
+      <div id="results-resize-handle" class="flex h-2 cursor-row-resize select-none items-center justify-center border-t border-border-subtle bg-panel/60" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
         <span class="h-0.5 w-10 rounded-full bg-secondary/35"></span>
       </div>
     </div>
