@@ -20,7 +20,7 @@ describe('ConfigsPanel', () => {
     expect(wrapper.find('.pbgui-config-date').text()).toBe('2024-01-01');
     expect(wrapper.find('.pbgui-config-count').text()).toBe('3');
     expect(wrapper.find('.pbgui-config-action').exists()).toBe(true);
-    expect(wrapper.get('[data-test="configs-list-footer"]').attributes('aria-hidden')).toBe('true');
+    expect(wrapper.get('[data-test="configs-list-footer"]').text()).toContain('1 config');
     expect(wrapper.get('tbody tr[data-path="alpha"]').attributes('aria-selected')).toBe('false');
     expect(wrapper.get('tbody tr[data-path="alpha"]').attributes('tabindex')).toBe('0');
     wrapper.unmount();

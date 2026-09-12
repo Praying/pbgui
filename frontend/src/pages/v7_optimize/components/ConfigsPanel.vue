@@ -5,7 +5,6 @@ import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
-import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import type { ConfigSummary } from '../types';
@@ -80,7 +79,7 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div class="pbgui-config-list flex min-h-0 flex-col">
+  <div class="pbgui-config-list flex min-h-0 flex-1 flex-col">
     <div class="pbgui-config-toolbar pbgui-list-toolbar mb-2 flex flex-wrap items-center gap-2">
       <div class="pbgui-config-search-wrap" role="search">
         <Input
@@ -90,29 +89,24 @@ onBeforeUnmount(() => dragSelect.dispose());
           @update:model-value="emit('update:search', String($event ?? ''))"
         />
       </div>
-      <div class="pbgui-config-counts" aria-live="polite">
-        <span>{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
-        <span v-if="selectedCount" class="pbgui-config-selected-count">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
-      </div>
       <span class="flex-1"></span>
       <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
       <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
     </div>
     <div class="pbgui-config-frame">
       <ListWrap ref="wrap" class="pbgui-config-wrap">
-        <Table class="pbgui-config-table">
+        <Table class="pbgui-config-table select-none">
           <thead>
             <tr>
-            <Th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="configs-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
-            <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
-            <SortTh sort-key="exchange" :label="t('v7optimize.thExchange')" :sort="sort.key === 'exchange' ? sort.direction : undefined" @sort="emit('sort', 'exchange')" />
-            <SortTh v-if="isV8" sort-key="strategy" :label="t('v7optimize.thStrategy')" :sort="sort.key === 'strategy' ? sort.direction : undefined" @sort="emit('sort', 'strategy')" />
-            <SortTh sort-key="backtest_count" :label="t('v7optimize.thBacktests')" :sort="sort.key === 'backtest_count' ? sort.direction : undefined" @sort="emit('sort', 'backtest_count')" />
-            <SortTh sort-key="start" :label="t('v7optimize.thStart')" :sort="sort.key === 'start' ? sort.direction : undefined" @sort="emit('sort', 'start')" />
-            <SortTh sort-key="end" :label="t('v7optimize.thEnd')" :sort="sort.key === 'end' ? sort.direction : undefined" @sort="emit('sort', 'end')" />
-            <Th>{{ t('v7optimize.thFlags') }}</Th>
-            <SortTh sort-key="modified" :label="t('v7optimize.thModified')" :sort="sort.key === 'modified' ? sort.direction : undefined" @sort="emit('sort', 'modified')" />
-            <Th>{{ t('v7optimize.thActions') }}</Th>
+              <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
+              <SortTh sort-key="exchange" :label="t('v7optimize.thExchange')" :sort="sort.key === 'exchange' ? sort.direction : undefined" @sort="emit('sort', 'exchange')" />
+              <SortTh v-if="isV8" sort-key="strategy" :label="t('v7optimize.thStrategy')" :sort="sort.key === 'strategy' ? sort.direction : undefined" @sort="emit('sort', 'strategy')" />
+              <SortTh sort-key="backtest_count" :label="t('v7optimize.thBacktests')" :sort="sort.key === 'backtest_count' ? sort.direction : undefined" @sort="emit('sort', 'backtest_count')" />
+              <SortTh sort-key="start" :label="t('v7optimize.thStart')" :sort="sort.key === 'start' ? sort.direction : undefined" @sort="emit('sort', 'start')" />
+              <SortTh sort-key="end" :label="t('v7optimize.thEnd')" :sort="sort.key === 'end' ? sort.direction : undefined" @sort="emit('sort', 'end')" />
+              <Th>{{ t('v7optimize.thFlags') }}</Th>
+              <SortTh sort-key="modified" :label="t('v7optimize.thModified')" :sort="sort.key === 'modified' ? sort.direction : undefined" @sort="emit('sort', 'modified')" />
+              <Th>{{ t('v7optimize.thActions') }}</Th>
             </tr>
           </thead>
           <tbody ref="tbody">
@@ -120,38 +114,37 @@ onBeforeUnmount(() => dragSelect.dispose());
               v-for="row in rows"
               :key="rowName(row)"
               :data-path="rowName(row)"
+              class="config-row cursor-pointer outline-none"
               :class="{ selected: selected.has(rowName(row)) }"
               :aria-selected="selected.has(rowName(row)) ? 'true' : 'false'"
               tabindex="0"
-              @dblclick="emit('edit', rowName(row))"
+              @click="emit('toggle', rowName(row))"
               @keydown="onConfigRowKeydown($event, rowName(row))"
+              @dblclick="emit('edit', rowName(row))"
             >
-            <td class="w-10 pr-1!" @click.stop>
-              <Checkbox :model-value="selected.has(rowName(row))" :aria-label="rowName(row)" @update:model-value="emit('toggle', rowName(row))" />
-            </td>
-            <td class="pbgui-config-name max-w-[280px] truncate" :title="rowName(row)">{{ rowName(row) }}</td>
-            <td>
-              <span class="pbgui-config-exchange" :title="exchange(row)">{{ exchange(row) || '-' }}</span>
-            </td>
-            <td v-if="isV8" data-test="config-strategy" :title="String(row.strategy || '')"><span v-if="row.strategy" class="font-mono text-xs text-secondary">{{ row.strategy }}</span><span v-else class="text-muted">-</span></td>
-            <td class="pbgui-config-count" :class="backtestCount(row) ? 'font-semibold' : 'text-muted'">{{ backtestCount(row) }}</td>
-            <td class="pbgui-config-date">{{ shortDate(value(row, 'start', 'start_date')) || '-' }}</td>
-            <td class="pbgui-config-date">{{ shortDate(value(row, 'end', 'end_date')) || '-' }}</td>
-            <td data-test="config-flags" :title="flagList(row).join(', ')">
-              <span v-if="flagList(row).length" class="flex flex-wrap items-center gap-1">
-                <span v-for="flag in flagList(row)" :key="flag" class="inline-flex items-center rounded border border-border-default/60 px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ flag }}</span>
-              </span>
-              <span v-else class="text-muted">-</span>
-            </td>
-            <td class="pbgui-config-date" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
-            <TdActions>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="editLabel" :aria-label="editLabel" data-test="config-edit" @click="emit('edit', rowName(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="duplicateLabel" :aria-label="duplicateLabel" data-test="config-duplicate" @click="emit('duplicate', rowName(row))"><PbIcon :icon="PhCopy" :size="16" /></Button>
-            </TdActions>
+              <td class="pbgui-config-name max-w-[280px] truncate" :title="rowName(row)">{{ rowName(row) }}</td>
+              <td>
+                <span class="pbgui-config-exchange" :title="exchange(row)">{{ exchange(row) || '-' }}</span>
+              </td>
+              <td v-if="isV8" data-test="config-strategy" :title="String(row.strategy || '')"><span v-if="row.strategy" class="font-mono text-xs text-secondary">{{ row.strategy }}</span><span v-else class="text-muted">-</span></td>
+              <td class="pbgui-config-count" :class="backtestCount(row) ? 'font-semibold' : 'text-muted'">{{ backtestCount(row) }}</td>
+              <td class="pbgui-config-date">{{ shortDate(value(row, 'start', 'start_date')) || '-' }}</td>
+              <td class="pbgui-config-date">{{ shortDate(value(row, 'end', 'end_date')) || '-' }}</td>
+              <td data-test="config-flags" :title="flagList(row).join(', ')">
+                <span v-if="flagList(row).length" class="flex flex-wrap items-center gap-1">
+                  <span v-for="flag in flagList(row)" :key="flag" class="inline-flex items-center rounded border border-border-default/60 px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ flag }}</span>
+                </span>
+                <span v-else class="text-muted">-</span>
+              </td>
+              <td class="pbgui-config-date" :title="String(row.modified || '')">{{ shortDateTime(row.modified) || '-' }}</td>
+              <TdActions>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="editLabel" :aria-label="editLabel" data-test="config-edit" @click="emit('edit', rowName(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="duplicateLabel" :aria-label="duplicateLabel" data-test="config-duplicate" @click="emit('duplicate', rowName(row))"><PbIcon :icon="PhCopy" :size="16" /></Button>
+              </TdActions>
             </tr>
             <EmptyRow
               v-if="!rows.length"
-              :colspan="isV8 ? 10 : 9"
+              :colspan="isV8 ? 9 : 8"
               :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
               :message="search ? undefined : t('v7optimize.emptyConfigsHelp')"
               :action-label="search ? undefined : t('v7optimize.newConfig')"
@@ -160,7 +153,10 @@ onBeforeUnmount(() => dragSelect.dispose());
           </tbody>
         </Table>
       </ListWrap>
-      <ListFooter data-test="configs-list-footer" aria-hidden="true"></ListFooter>
+      <ListFooter data-test="configs-list-footer">
+        <span class="tabular-nums">{{ t('v7optimize.configCount', { count: rows.length }) }}</span>
+        <span v-if="selectedCount" class="pbgui-config-selected-count font-medium text-accent-soft tabular-nums">{{ t('v7optimize.configsSelected', { count: selectedCount }) }}</span>
+      </ListFooter>
     </div>
   </div>
 </template>

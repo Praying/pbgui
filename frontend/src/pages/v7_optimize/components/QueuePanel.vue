@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { PhArrowDown, PhArrowUp, PhArrowsClockwise, PhFileText, PhPencilSimple } from '@phosphor-icons/vue';
-import { computed, onBeforeUnmount, ref } from 'vue';
-import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
-import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -107,16 +105,6 @@ function shortDateTime(input: unknown): string {
 /* Secondary row actions are icon buttons (Start/Stop keeps its label because
    it is the state-dependent primary action with danger/success semantics). */
 const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default bg-elevated text-secondary shadow-none hover:border-accent/45 hover:bg-accent/10 hover:text-accent-soft';
-const wrap = ref<InstanceType<typeof ListWrap> | null>(null);
-const tbody = ref<HTMLElement | null>(null);
-const dragSelect = useRowDragSelect({
-  getRows: () => tbody.value ? Array.from(tbody.value.querySelectorAll('tr[data-path]')) : [],
-  getWrap: () => wrap.value?.root ?? null,
-  isSelected: (path) => props.selected.has(path),
-  onToggle: (path) => emit('toggle', path),
-  onSelectRange: (paths, selected) => emit('selectRange', paths, selected),
-});
-onBeforeUnmount(() => dragSelect.dispose());
 function dragStart(row: QueueItem, event: DragEvent): void {
   const filenameValue = filename(row);
   if (!filenameValue || !event.dataTransfer) return;
@@ -142,89 +130,97 @@ function onQueueRowKeydown(event: KeyboardEvent, queueFilename: string): void {
 </script>
 
 <template>
-  <div class="opt-panel-controls opt-filter-bar pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
-    <div class="opt-panel-search" role="search">
-      <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
+  <div class="opt-panel flex min-h-0 flex-1 flex-col">
+    <div class="opt-panel-controls opt-filter-bar pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
+      <div class="opt-panel-search" role="search">
+        <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
+      </div>
+      <span class="flex-1"></span>
+      <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-queue" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
+      <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
     </div>
-    <div class="opt-panel-counts flex items-center gap-2.5 text-xs text-secondary" aria-live="polite">
-      <span>{{ t('v7optimize.queuedCount', { count: rows.length }) }}</span>
-      <span v-if="selectedCount" class="font-medium text-accent-soft">{{ t('v7optimize.queueItemsSelected', { count: selectedCount }) }}</span>
+    <div class="opt-table-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
+      <ListWrap class="opt-table-wrap min-h-0 flex-1 overflow-auto bg-panel">
+        <Table class="opt-table opt-table--queue max-[800px]:min-w-[720px] select-none bg-transparent">
+          <thead>
+            <tr>
+              <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
+              <SortTh sort-key="exchange" :label="t('v7optimize.thExchange')" :sort="sort.key === 'exchange' ? sort.direction : undefined" @sort="emit('sort', 'exchange')" />
+              <SortTh sort-key="status" :label="t('v7optimize.thStatus')" :sort="sort.key === 'status' ? sort.direction : undefined" @sort="emit('sort', 'status')" />
+              <SortTh sort-key="created" :label="t('v7optimize.thCreated')" :sort="sort.key === 'created' ? sort.direction : undefined" @sort="emit('sort', 'created')" />
+              <Th>{{ t('v7optimize.thActions') }}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in rows"
+              :key="filename(row)"
+              :data-path="filename(row)"
+              draggable="true"
+              class="queue-row cursor-pointer outline-none"
+              :class="{ selected: selected.has(filename(row)) }"
+              :aria-selected="selected.has(filename(row)) ? 'true' : 'false'"
+              tabindex="0"
+              @click="emit('toggle', filename(row))"
+              @dragstart="dragStart(row, $event)"
+              @dragover.prevent
+              @drop="dropRow(row, $event)"
+              @keydown="onQueueRowKeydown($event, filename(row))"
+            >
+              <td class="max-w-[280px]">
+                <div class="flex min-w-0 flex-col">
+                  <span class="truncate font-medium" :title="row.name || filename(row)">{{ row.name || filename(row) }}</span>
+                  <span class="truncate font-mono text-xs text-muted" :title="filename(row)">{{ filename(row) }}</span>
+                </div>
+              </td>
+              <td>
+                <span v-if="exchangeText(row)" class="inline-flex max-w-[180px] items-center truncate rounded-md border border-border-default/70 bg-elevated/40 px-1.5 py-0.5 font-mono text-xs text-secondary" :title="exchangeText(row)">{{ exchangeText(row) }}</span>
+                <span v-else class="text-muted">-</span>
+              </td>
+              <td>
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-2">
+                    <span class="pbgui-badge opt-status-badge inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="statusClass(row)">
+                      <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
+                      {{ row.status || t('v7optimize.statusQueued') }}
+                    </span>
+                  </div>
+                  <div v-if="isRunning(row) || Boolean(row.progress && progressLabel(row))" class="mt-0.5 max-w-[240px]">
+                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-border-default">
+                      <div class="h-full bg-accent rounded-full transition-all duration-300" :style="{ width: `${progressWidth(row)}%` }"></div>
+                    </div>
+                    <div class="mt-1 text-xs tabular-nums text-muted flex items-center justify-between gap-1" data-test="queue-progress">
+                      <span>{{ progressLabel(row) }}</span>
+                      <span class="font-mono font-medium text-primary">{{ progressPercentText(row) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="tabular-nums text-xs text-secondary" :title="String(row.created || row.modified || '')">{{ shortDateTime(row.created || row.modified) || '-' }}</td>
+              <TdActions>
+                <Button type="button" :variant="isRunning(row) ? 'danger' : 'success'" size="sm" @click.stop="emit('action', filename(row), isRunning(row) ? 'stop' : 'start')">{{ isRunning(row) ? t('v7optimize.stop') : t('v7optimize.start') }}</Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.requeue')" :aria-label="t('v7optimize.requeue')" data-test="queue-requeue" @click.stop="emit('action', filename(row), 'requeue')"><PbIcon :icon="PhArrowsClockwise" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.editConfig')" :aria-label="t('v7optimize.editConfig')" data-test="queue-edit" @click.stop="emit('edit', filename(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.openLog')" :aria-label="t('v7optimize.openLog')" data-test="queue-log" @click.stop="emit('log', row)"><PbIcon :icon="PhFileText" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-up" :title="t('editor.suite.moveUp')" :aria-label="t('editor.suite.moveUp')" @click.stop="emit('move', filename(row), -1)"><PbIcon :icon="PhArrowUp" :size="16" /></Button>
+                <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click.stop="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="16" /></Button>
+              </TdActions>
+            </tr>
+            <EmptyRow
+              v-if="!rows.length"
+              :colspan="5"
+              :title="search ? t('v7optimize.noMatches') : t('v7optimize.queueIsEmpty')"
+              :message="search ? undefined : t('v7optimize.emptyQueueHelp')"
+              :action-label="search ? undefined : t('v7optimize.backToConfigList')"
+              @action="emit('goToConfigs')"
+            />
+          </tbody>
+        </Table>
+      </ListWrap>
+      <ListFooter data-test="queue-list-footer">
+        <span class="tabular-nums">{{ t('v7optimize.queuedCount', { count: rows.length }) }}</span>
+        <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums" data-test="queue-selected-count">{{ t('v7optimize.queueItemsSelected', { count: selectedCount }) }}</span>
+      </ListFooter>
     </div>
-    <span class="flex-1"></span>
-    <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-queue" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
-    <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
-  </div>
-  <div class="opt-table-frame">
-    <ListWrap ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto">
-      <Table class="opt-table opt-table--queue max-[800px]:min-w-[720px]">
-        <thead>
-          <tr>
-            <Th class="w-10 pr-1!"><Checkbox :model-value="allSelected" :disabled="!rows.length" :aria-label="t('v7optimize.selectAll')" data-test="queue-select-all-check" @update:model-value="allSelected ? emit('clearSelection') : emit('selectAll')" /></Th>
-            <SortTh sort-key="name" :label="t('v7optimize.thName')" :sort="sort.key === 'name' ? sort.direction : undefined" @sort="emit('sort', 'name')" />
-            <SortTh sort-key="exchange" :label="t('v7optimize.thExchange')" :sort="sort.key === 'exchange' ? sort.direction : undefined" @sort="emit('sort', 'exchange')" />
-            <SortTh sort-key="status" :label="t('v7optimize.thStatus')" :sort="sort.key === 'status' ? sort.direction : undefined" @sort="emit('sort', 'status')" />
-            <SortTh sort-key="created" :label="t('v7optimize.thCreated')" :sort="sort.key === 'created' ? sort.direction : undefined" @sort="emit('sort', 'created')" />
-            <Th>{{ t('v7optimize.thActions') }}</Th>
-          </tr>
-        </thead>
-        <tbody ref="tbody">
-          <tr v-for="row in rows" :key="filename(row)" :data-path="filename(row)" draggable="true" :class="{ selected: selected.has(filename(row)) }" :aria-selected="selected.has(filename(row)) ? 'true' : 'false'" tabindex="0" @dragstart="dragStart(row, $event)" @dragover.prevent @drop="dropRow(row, $event)" @keydown="onQueueRowKeydown($event, filename(row))">
-            <td class="w-10 pr-1!" @click.stop>
-              <Checkbox :model-value="selected.has(filename(row))" :aria-label="row.name || filename(row)" @update:model-value="emit('toggle', filename(row))" />
-            </td>
-            <td class="max-w-[280px]">
-              <div class="flex min-w-0 flex-col">
-                <span class="truncate font-medium" :title="row.name || filename(row)">{{ row.name || filename(row) }}</span>
-                <span class="truncate font-mono text-xs text-muted" :title="filename(row)">{{ filename(row) }}</span>
-              </div>
-            </td>
-            <td>
-              <span v-if="exchangeText(row)" class="inline-flex max-w-[180px] items-center truncate rounded-md border border-border-default/70 bg-elevated/40 px-1.5 py-0.5 font-mono text-xs text-secondary" :title="exchangeText(row)">{{ exchangeText(row) }}</span>
-              <span v-else class="text-muted">-</span>
-            </td>
-            <td>
-              <div class="flex flex-col gap-1">
-                <div class="flex items-center gap-2">
-                  <span class="pbgui-badge opt-status-badge inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="statusClass(row)">
-                    <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
-                    {{ row.status || t('v7optimize.statusQueued') }}
-                  </span>
-                </div>
-                <div v-if="isRunning(row) || Boolean(row.progress && progressLabel(row))" class="mt-0.5 max-w-[240px]">
-                  <div class="h-1.5 w-full overflow-hidden rounded-full bg-border-default">
-                    <div class="h-full bg-accent rounded-full transition-all duration-300" :style="{ width: `${progressWidth(row)}%` }"></div>
-                  </div>
-                  <div class="mt-1 text-xs tabular-nums text-muted flex items-center justify-between gap-1" data-test="queue-progress">
-                    <span>{{ progressLabel(row) }}</span>
-                    <span class="font-mono font-medium text-primary">{{ progressPercentText(row) }}</span>
-                  </div>
-                </div>
-              </div>
-            </td>
-            <td class="tabular-nums text-xs text-secondary" :title="String(row.created || row.modified || '')">{{ shortDateTime(row.created || row.modified) || '-' }}</td>
-            <TdActions>
-              <Button type="button" :variant="isRunning(row) ? 'danger' : 'success'" size="sm" @click="emit('action', filename(row), isRunning(row) ? 'stop' : 'start')">{{ isRunning(row) ? t('v7optimize.stop') : t('v7optimize.start') }}</Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.requeue')" :aria-label="t('v7optimize.requeue')" data-test="queue-requeue" @click="emit('action', filename(row), 'requeue')"><PbIcon :icon="PhArrowsClockwise" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.editConfig')" :aria-label="t('v7optimize.editConfig')" data-test="queue-edit" @click="emit('edit', filename(row))"><PbIcon :icon="PhPencilSimple" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" :title="t('v7optimize.openLog')" :aria-label="t('v7optimize.openLog')" data-test="queue-log" @click="emit('log', row)"><PbIcon :icon="PhFileText" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-up" :title="t('editor.suite.moveUp')" :aria-label="t('editor.suite.moveUp')" @click="emit('move', filename(row), -1)"><PbIcon :icon="PhArrowUp" :size="16" /></Button>
-              <Button type="button" variant="default" size="icon" :class="iconActionClass" data-test="queue-move-down" :title="t('editor.suite.moveDown')" :aria-label="t('editor.suite.moveDown')" @click="emit('move', filename(row), 1)"><PbIcon :icon="PhArrowDown" :size="16" /></Button>
-            </TdActions>
-          </tr>
-          <EmptyRow
-            v-if="!rows.length"
-            :colspan="6"
-            :title="search ? t('v7optimize.noMatches') : t('v7optimize.queueIsEmpty')"
-            :message="search ? undefined : t('v7optimize.emptyQueueHelp')"
-            :action-label="search ? undefined : t('v7optimize.backToConfigList')"
-            @action="emit('goToConfigs')"
-          />
-        </tbody>
-      </Table>
-    </ListWrap>
-    <ListFooter data-test="queue-list-footer">
-      <span class="tabular-nums">{{ t('v7optimize.queuedCount', { count: rows.length }) }}</span>
-      <span v-if="selectedCount" class="font-medium text-accent-soft tabular-nums">{{ t('v7optimize.queueItemsSelected', { count: selectedCount }) }}</span>
-    </ListFooter>
   </div>
 </template>

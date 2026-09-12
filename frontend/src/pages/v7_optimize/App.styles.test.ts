@@ -96,8 +96,8 @@ describe('Optimize page warning style contracts', () => {
   it('uses one shared visual contract for Backtest and Optimize configuration tables', () => {
     expect(configsPanelSource).toContain('class="pbgui-config-list');
     expect(configsPanelSource).toContain('class="pbgui-config-frame"');
-    expect(configsPanelSource).toContain('<ListWrap ref="wrap" class="pbgui-config-wrap">');
-    expect(configsPanelSource).toContain('<Table class="pbgui-config-table">');
+    expect(configsPanelSource).toContain('class="pbgui-config-wrap"');
+    expect(configsPanelSource).toContain('class="pbgui-config-table');
     expect(configsPanelSource).toContain('<ListFooter');
     // the list contract classes now live in the shared ui/table components
     expect(listWrapSource).toContain("'pbgui-list-wrap'");
@@ -125,8 +125,10 @@ describe('Optimize page warning style contracts', () => {
     expect(appSource).toContain('tr:nth-child(even):not(.selected) .pbgui-list-actions');
   });
 
-  it('keeps the config terminal bar visual-only to avoid duplicate counts', () => {
-    expect(configsPanelSource).toMatch(/<ListFooter data-test="configs-list-footer" aria-hidden="true">\s*<\/ListFooter>/);
+  it('displays converged total and selected counts in the config list footer', () => {
+    expect(configsPanelSource).toContain('<ListFooter data-test="configs-list-footer">');
+    expect(configsPanelSource).toContain("t('v7optimize.configCount', { count: rows.length })");
+    expect(configsPanelSource).toContain("t('v7optimize.configsSelected', { count: selectedCount })");
   });
 
   it('renders semantic compact notification states with reduced-motion support', () => {
