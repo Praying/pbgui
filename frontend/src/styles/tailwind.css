@@ -236,6 +236,9 @@
   --surface-workspace: var(--color-workspace);
   --surface-sidebar: var(--color-sidebar);
   --surface-panel: var(--color-panel);
+  /* One list surface for the table body, its scroll frame, and the empty
+     placeholder standing in for it — the three must never drift apart. */
+  --surface-list: var(--surface-panel);
   --surface-card: var(--color-card);
   --surface-elevated: var(--color-elevated);
   --surface-hover: var(--color-surface-hover);
@@ -296,6 +299,8 @@
   --text-secondary-rgb: 189 189 189;
   --bg-page-rgb: 22 22 22;
   --bg-panel-rgb: 34 34 34;
+  /* RGB triplet companion of --surface-list, for alpha and gradient stops. */
+  --surface-list-rgb: var(--bg-panel-rgb);
 
   /* ── Motion, focus and layering ─────────────────────────────── */
   --motion-fast: 120ms;

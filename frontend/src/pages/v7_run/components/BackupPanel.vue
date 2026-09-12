@@ -10,7 +10,7 @@
  */
 import { computed, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PhFloppyDisk, PhX } from '@phosphor-icons/vue';
+import { PhCloudArrowDown, PhFloppyDisk, PhHourglass, PhMagnifyingGlass, PhWarning, PhX } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -161,10 +161,14 @@ function onRetentionWheel(event: WheelEvent): void {
       </div>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto p-3">
-      <div v-if="loadError" id="backup-content" class="p-3"><EmptyState :title="loadError" /></div>
-      <div v-else-if="loading && !groups.length" id="backup-content" class="p-3"><EmptyState :title="t('v7run.loading')" /></div>
+      <div v-if="loadError" id="backup-content" class="p-3"><EmptyState size="inline" :icon="PhWarning" :title="loadError" /></div>
+      <div v-else-if="loading && !groups.length" id="backup-content" class="p-3"><EmptyState size="inline" :icon="PhHourglass" :title="t('v7run.loading')" /></div>
       <div v-else-if="!groups.length" id="backup-content" class="p-3">
-        <EmptyState :title="filterText ? t('v7run.noBackupsMatchFilter') : t('v7run.noBackupsAvailable')" />
+        <EmptyState
+          size="inline"
+          :icon="filterText ? PhMagnifyingGlass : PhCloudArrowDown"
+          :title="filterText ? t('v7run.noBackupsMatchFilter') : t('v7run.noBackupsAvailable')"
+        />
       </div>
       <div v-else id="backup-content" class="text-left">
         <div v-for="group in groups" :key="group.backup.name" class="mb-2.5 border-b border-border-subtle pb-2.5 last:mb-0 last:border-b-0">

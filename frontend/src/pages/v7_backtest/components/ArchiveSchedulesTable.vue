@@ -4,8 +4,9 @@
  * status/cadence/targets/date-mode/next-run/last-status columns, the
  * own-only actions cell (:9167, :9183-9187) and the empty state.
  */
-import { PhCheckCircle, PhPause, PhPlay, PhTrash } from '@phosphor-icons/vue';
+import { PhCalendarDots, PhCheckCircle, PhPause, PhPlay, PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Table, TdActions, Th } from '@/shared/components/ui/table';
@@ -30,7 +31,7 @@ function statusText(item: ArchiveRetestScheduleItem): string {
 
 <template>
   <div>
-    <div v-if="schedules.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noRetestSchedules') }}</div>
+    <EmptyState v-if="schedules.length === 0" size="inline" class="px-5 py-10" :icon="PhCalendarDots" :title="t('v7backtest.noRetestSchedules')" />
     <Table v-else class="select-none">
       <thead>
         <tr>

@@ -100,13 +100,19 @@ afterEach(() => {
 enableAutoUnmount(afterEach);
 
 describe('archive list view (:8864-8888)', () => {
-  it('renders the empty state with flattened legacy html (no v-html)', async () => {
+  it('renders the shared empty state with the flattened legacy html split into title and message', async () => {
     const store = makeStore();
     store.archives.value = [];
     const wrapper = mountPanel(store);
     expect(wrapper.find('#archive-list-view').exists()).toBe(true);
     expect(wrapper.find('#archive-results-view').exists()).toBe(false);
-    expect(wrapper.find('[data-test="archive-empty"]').text()).toContain('No archives yet.\nClick + Add Archive to clone one.');
+    const emptyState = wrapper.get('[data-test="archive-empty"] .pbgui-empty-state');
+    // the emptyArchivesHtml key's two <br>-split lines become title + message
+    expect(emptyState.get('.pbgui-empty-state__title').text()).toBe('No archives yet.');
+    expect(emptyState.get('.pbgui-empty-state__message').text()).toBe('Click + Add Archive to clone one.');
+    expect(emptyState.find('.pbgui-empty-state__icon svg').exists()).toBe(true);
+    // the CTA opens the Add Archive modal
+    expect(emptyState.get('button').text()).toBe('Add Archive');
     expect(wrapper.html()).not.toContain('<br>');
   });
 

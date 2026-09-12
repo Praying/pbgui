@@ -21,6 +21,7 @@ import {
 } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
@@ -190,12 +191,15 @@ function fmtDate(iso?: string): string {
   }
 }
 
-/** The emptyQueueHtml key carries a literal <br> — render without v-html. */
+/** The emptyQueueHtml key carries a literal <br> — render without v-html:
+    the first line becomes the title, the rest the explanation. */
 const emptyLines = computed<string[]>(() =>
   t('v7backtest.emptyQueueHtml')
     .split(/<br\s*\/?>/i)
     .map((line) => line.trim())
 );
+const emptyTitle = computed(() => emptyLines.value[0] ?? '');
+const emptyMessage = computed(() => emptyLines.value.slice(1).join(' ') || undefined);
 
 /* Queue status → badge tint (the former .badge-queued/running/backtesting/
    complete/error/stopped/unknown rules). Every branch returns the complete
@@ -238,12 +242,8 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
         <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="queue-deselect-all" :disabled="selectedCount === 0" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
       </div>
       <div id="queue-list" class="queue-list pbgui-list-wrap min-h-0 flex-1 overflow-auto bg-panel" @mousemove="onListMouseMove">
-      <div v-if="!items.length" class="empty-state queue-empty-state flex min-h-[260px] flex-col items-center justify-center gap-3 px-5 py-12 text-center text-md text-secondary">
-        <span class="grid h-12 w-12 place-items-center rounded-lg border border-border-default bg-card text-muted" aria-hidden="true"><PbIcon :icon="PhHourglass" :size="22" /></span>
-        <template v-for="(line, index) in emptyLines" :key="index">
-          <br v-if="index > 0" />
-          <span>{{ line }}</span>
-        </template>
+      <div v-if="!items.length" class="queue-empty-state flex min-h-[260px] flex-1 items-center justify-center p-4">
+        <EmptyState class="w-[min(720px,100%)]" :icon="PhHourglass" :title="emptyTitle" :message="emptyMessage" />
       </div>
       <Table v-else class="queue-table min-w-[820px] select-none bg-transparent">
         <thead>

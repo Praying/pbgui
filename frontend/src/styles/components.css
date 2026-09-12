@@ -1207,7 +1207,9 @@
     padding: var(--sp-3xl);
     border: 1px dashed var(--border-default);
     border-radius: var(--radius-lg);
-    background: var(--surface-panel);
+    /* --surface-list is the one list surface: the placeholder and the table
+       body it replaces must never drift apart. */
+    background: var(--surface-list);
     box-shadow: var(--shadow-panel);
     color: var(--text-secondary);
     text-align: center;
@@ -1239,6 +1241,34 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--sp-sm);
+  }
+
+  .pbgui-empty-state__icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgb(var(--accent-rgb) / 0.16);
+    border-radius: var(--radius-lg);
+    background: rgb(var(--accent-rgb) / 0.07);
+    color: var(--accent-soft);
+  }
+
+  /* Compact variant for table rows and sub-tables: the placeholder has to
+     read as part of the surrounding list, not as a standalone card. */
+  .pbgui-empty-state--inline {
+    min-height: 0;
+    padding: var(--sp-2xl) var(--sp-lg);
+    box-shadow: none;
+  }
+
+  .pbgui-empty-state--inline .pbgui-empty-state__icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .pbgui-empty-state--inline .pbgui-empty-state__title {
+    font-size: var(--text-sm);
   }
 
   .pbgui-empty-state :is(button, a):focus-visible,
@@ -1977,7 +2007,7 @@
   }
 
   .pbgui-list-wrap {
-    background: var(--surface-deep);
+    background: var(--surface-list);
     scrollbar-color: var(--border-strong) transparent;
     scrollbar-width: thin;
   }
@@ -2027,6 +2057,19 @@
 
   .pbgui-list-wrap .pbgui-list-table tbody tr:last-child td {
     border-bottom: 0;
+  }
+
+  /* The empty row is a placeholder, not data: it paints no row background and
+     its panel is transparent, so the placeholder is always the exact colour of
+     the table surface it stands in for (and hover never tints it). */
+  .pbgui-list-table tbody tr[data-slot='empty-row'] td,
+  .pbgui-list-table tbody tr[data-slot='empty-row']:hover td {
+    background: transparent;
+  }
+
+  .pbgui-list-table tbody tr[data-slot='empty-row'] .pbgui-empty-state {
+    background: transparent;
+    box-shadow: none;
   }
 
   /* Terminal bar of a framed list — the count mirror of the toolbar that

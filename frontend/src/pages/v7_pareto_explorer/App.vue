@@ -55,6 +55,7 @@ import { pageOrigin } from '@/shared/boot';
 import { serverMsg } from '@/shared/i18n';
 import { replaceTopLocation } from '@/shared/nav';
 import AppShell from '@/shared/components/AppShell.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import IconButton from '@/shared/components/IconButton.vue';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
 import MigrationWatermark from '@/shared/components/MigrationWatermark.vue';
@@ -607,7 +608,13 @@ onBeforeUnmount(() => {
           <p class="hint text-secondary" id="deep-tab-description">{{ t(DEEP_TAB_DESC[store.state.deepTab]) }}</p>
         </div>
         <div class="panel-card rounded-xl border border-border-default bg-panel p-3.5" id="deep-tab-active-panel">
-          <div class="placeholder-chart flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" id="deep-tab-placeholder">{{ t('v7explore.tabPlaceholder', { tab: store.state.deepTab }) }}</div>
+          <EmptyState
+            id="deep-tab-placeholder"
+            class="placeholder-chart min-h-[220px]"
+            size="inline"
+            :icon="PhTarget"
+            :title="t('v7explore.tabPlaceholder', { tab: store.state.deepTab })"
+          />
         </div>
       </section>
 

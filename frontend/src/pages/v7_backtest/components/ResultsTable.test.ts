@@ -167,9 +167,12 @@ describe('rows (:5541-5574)', () => {
     expect(trs[1]!.classes()).toContain('selected');
   });
 
-  it('empty rows render the no-results empty state (:5520-5522)', () => {
+  it('empty rows render the shared no-results empty state (:5520-5522)', () => {
     const wrapper = mountTable({ rows: [] });
-    expect(wrapper.find('.empty-state').text()).toContain('No results');
+    const emptyState = wrapper.get('.pbgui-empty-state');
+    expect(emptyState.classes()).toContain('pbgui-empty-state--inline');
+    expect(emptyState.text()).toContain('No results');
+    expect(emptyState.find('.pbgui-empty-state__icon svg').exists()).toBe(true);
   });
 });
 

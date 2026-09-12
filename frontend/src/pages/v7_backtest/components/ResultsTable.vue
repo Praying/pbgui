@@ -11,6 +11,7 @@ import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage, PhCaretDown
 import { computed, onBeforeUnmount, ref } from 'vue';
 import type { Component } from 'vue';
 import { useI18n } from 'vue-i18n';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import BacktestRowActionButton from './BacktestRowActionButton.vue';
@@ -190,14 +191,13 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <div v-if="rows.length === 0" class="empty-state grid min-h-[220px] place-items-center px-5 py-12 text-center text-md text-secondary">
-    <div>
-      <div class="mx-auto mb-3 grid size-12 place-items-center rounded-xl border border-accent/16 bg-accent/7 text-accent-soft">
-        <PbIcon :icon="PhChartLineUp" :size="24" />
-      </div>
-      <div class="font-medium text-secondary">{{ t('v7backtest.noResultsFound') }}</div>
-    </div>
-  </div>
+  <EmptyState
+    v-if="rows.length === 0"
+    class="min-h-[220px]"
+    size="inline"
+    :icon="PhChartLineUp"
+    :title="t('v7backtest.noResultsFound')"
+  />
   <div v-else ref="wrap" class="relative">
     <Table class="min-w-max select-none">
       <thead>

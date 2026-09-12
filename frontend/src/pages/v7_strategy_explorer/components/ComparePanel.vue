@@ -7,10 +7,11 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhListBullets } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
-import { Table, Th } from '@/shared/components/ui/table';
+import { EmptyRow, Table, Th } from '@/shared/components/ui/table';
 import { Label } from '@/shared/components/ui/label';
 import { RadioGroup, RadioItem } from '@/shared/components/ui/radio-group';
 import { deepGet } from '../lib/format';
@@ -108,7 +109,7 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
           <Table class="orders compare-grid">
             <thead><tr><Th v-for="[key, label] in columns" :key="key" :sticky="false">{{ label }}</Th></tr></thead>
             <tbody>
-              <tr v-if="!sideRows('long').length"><td class="text-secondary text-left!">{{ t('v7explore.noRows') }}</td></tr>
+              <EmptyRow v-if="!sideRows('long').length" :colspan="columns.length || 1" size="inline" :icon="PhListBullets" :title="t('v7explore.noRows')" />
               <tr v-for="(row, idx) in sideRows('long')" :key="'l' + idx"><td v-for="[key] in columns" :key="key">{{ compareCellText(row, key, idx, statusModel.labels) }}</td></tr>
             </tbody>
           </Table>
@@ -118,7 +119,7 @@ function sideRows(side: 'long' | 'short'): CompareRow[] {
           <Table class="orders compare-grid">
             <thead><tr><Th v-for="[key, label] in columns" :key="key" :sticky="false">{{ label }}</Th></tr></thead>
             <tbody>
-              <tr v-if="!sideRows('short').length"><td class="text-secondary text-left!">{{ t('v7explore.noRows') }}</td></tr>
+              <EmptyRow v-if="!sideRows('short').length" :colspan="columns.length || 1" size="inline" :icon="PhListBullets" :title="t('v7explore.noRows')" />
               <tr v-for="(row, idx) in sideRows('short')" :key="'s' + idx"><td v-for="[key] in columns" :key="key">{{ compareCellText(row, key, idx, statusModel.labels) }}</td></tr>
             </tbody>
           </Table>

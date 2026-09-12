@@ -1,5 +1,20 @@
 # Unreleased
 
+## PBv7/PBv8 空状态与列表底色统一
+
+- **空状态统一为共享虚线面板 + 图标块 + 标题 + 说明 + 主按钮**：以现有共享 `pbgui-empty-state` 为唯一基准，把 PBv7/PBv8 十个页面（回测、运行、优化、策略浏览器、帕累托浏览器）的 22 处空状态全部迁移到同一个组件，不再有一次性写法。
+  - 共享组件 `frontend/src/shared/components/EmptyState.vue` 新增可选 `icon`（装饰性 Phosphor 图标块，`aria-hidden`）、`size`（`panel` / `inline` 两级）、`actionVariant`（首次为空用 `primary`，筛选无结果沿用 `secondary`）；默认值与既有 DOM、`role="status"`、`data-state="empty"`、`aria-labelledby/aria-describedby` 契约保持不变，`vps_monitor`、`profit_sweep`、`logging_monitor`、`jobs_monitor`、`transfers`、`services_monitor` 等范围外页面零改动。
+  - `frontend/src/shared/components/ui/table/EmptyRow.vue` 新增 `icon` / `size` / `actionVariant`，`size="inline"` 时改用 `p-4!` 并把紧凑变体透传给 EmptyState（默认仍是 `p-8!`）。
+  - 删除「PBv7/PBv8 回测 / 配置」的自定义 hero 空状态（左侧图标栏、`PBv7 / 00` 等宽标记、径向渐变背景、clamp 大标题、胶囊按钮），改用共享面板；`emptyConfigsHtml` / `emptyQueueHtml` / `emptyArchivesHtml` 的 `<br>` 两行文案改为标题 + 说明两段。
+  - 新图标：配置 `PhClipboardText`、队列 `PhHourglass`、存档 `PhArchive`、结果 `PhChartLineUp`、实例 `PhDesktop`、备份 `PhCloudArrowDown`、优化配置 `PhClipboardText`、优化帕累托 `PhTarget`、策略浏览器 `PhListBullets`、帕累托浏览器 `PhTrophy`；筛选无结果统一 `PhMagnifyingGlass`，加载中统一 `PhHourglass`，错误统一 `PhWarning`。
+  - 首次为空的面板补上主按钮：优化队列「返回配置列表」、优化结果「打开队列」、优化帕累托「返回结果」、存档「添加存档」均改为 `action-variant="primary"`。
+  - 策略浏览器与帕累托浏览器原先的单格 `<td>纯文字</td>` 空行、`.placeholder-panel` / `.placeholder-chart`（`bg-white/1`）虚线框也统一为同一组件（保留 `placeholder-*` 与 `noFills`/`noFrames`/`noRows`/`noChampions`/`noInsights` 类名与文案键）。
+- **列表与空状态收敛到同一个底色 token，消除色差**：
+  - 新增共享 token `--surface-list`（= `--surface-panel`，深炭灰 `#222222`）与 `--surface-list-rgb`；`.pbgui-list-wrap` 由 `--surface-deep` `#0f0f0f` 改为 `--surface-list`，`.pbgui-empty-state` / `.pbgui-error-state` 同步改由该 token 提供底色。
+  - 新增空行契约：`tr[data-slot='empty-row']` 的单元格（含 hover）与其中 `.pbgui-empty-state` 背景透明、去阴影，保证表格内的空状态面板与其所在的表格像素级同色，且悬停不再给空行染色（优化页与策略浏览器页的悬停/斑马纹规则同步排除空行）。
+  - 移除 v7_optimize 私有冷灰底色 `#171c21`：`.optimize-workspace` 的 `--opt-table-surface` / `--opt-table-surface-rgb` 改指共享 token，删除该页对空行单元格与空状态面板的覆盖，以及操作列固定栏的 `#191f24` / `#1c272c` / `#1f3037` 字面量，固定栏改为跟随共享契约的行状态着色；`.opt-table-wrap` 的 `padding-bottom: 24px` 收尾渐变与 `::after` 机制保留，仅换用共享颜色。
+  - `--surface-deep` 本身保留，日志终端（`QueueLogModal`、`QueueLogPanel`、优化页日志区）与编辑器底纹继续使用。
+
 ## 全局右下角通知持续显示不消失问题修复及显示时长统一
 
 - **统一通知显示时长为 4 秒（4000ms）**：

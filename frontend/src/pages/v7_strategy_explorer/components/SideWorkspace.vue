@@ -6,11 +6,12 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhListBullets } from '@phosphor-icons/vue';
 import { deepGet, fmt } from '../lib/format';
 import ParamTuning from './ParamTuning.vue';
 import ExplorerPlot from './ExplorerPlot.vue';
 import StatsPanel from './StatsPanel.vue';
-import { Table, Th } from '@/shared/components/ui/table';
+import { EmptyRow, Table, Th } from '@/shared/components/ui/table';
 import type { ExplorerStore } from '../composables/useStrategyExplorer';
 import type { FillEvent } from '../types';
 
@@ -85,7 +86,7 @@ const fillRows = computed<FillRow[]>(() => {
               <tr v-for="row in fillRows" :key="row.idx"><td>{{ row.idx }}</td><td>{{ row.time }}</td><td>{{ row.event }}</td><td>{{ row.qty }}</td><td>{{ row.price }}</td><td>{{ row.posSize }}</td></tr>
             </tbody>
           </Table>
-          <Table v-else class="orders"><tbody><tr><td class="text-secondary text-left!">{{ t('v7explore.noFills') }}</td></tr></tbody></Table>
+          <Table v-else class="orders"><tbody><EmptyRow :colspan="6" size="inline" :icon="PhListBullets" :title="t('v7explore.noFills')" /></tbody></Table>
         </div>
       </section>
     </template>

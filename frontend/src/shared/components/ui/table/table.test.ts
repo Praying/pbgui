@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
+import { PhMagnifyingGlass } from '@phosphor-icons/vue';
 import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '.';
 
 describe('Table', () => {
@@ -134,6 +135,24 @@ describe('EmptyRow', () => {
     expect(wrapper.get('td').attributes('colspan')).toBe('8');
     expect(wrapper.get('td').classes()).toContain('p-8!');
     expect(wrapper.get('[data-state="empty"]').attributes('aria-labelledby')).toBeTruthy();
+    expect(wrapper.get('.pbgui-empty-state').classes()).toContain('pbgui-empty-state--panel');
+
+    await wrapper.get('button').trigger('click');
+    expect(wrapper.emitted('action')).toHaveLength(1);
+  });
+
+  it('renders the compact inline row for workbench lists', async () => {
+    const wrapper = mount(EmptyRow, {
+      props: { colspan: 5, title: 'No matches', icon: PhMagnifyingGlass, size: 'inline', actionVariant: 'primary', actionLabel: 'Reset' },
+    });
+
+    const cell = wrapper.get('td');
+    expect(cell.classes()).toContain('p-4!');
+    expect(cell.classes()).not.toContain('p-8!');
+    const state = wrapper.get('.pbgui-empty-state');
+    expect(state.classes()).toContain('pbgui-empty-state--inline');
+    expect(state.find('.pbgui-empty-state__icon svg').exists()).toBe(true);
+    expect(wrapper.get('button').classes()).toContain('bg-accent');
 
     await wrapper.get('button').trigger('click');
     expect(wrapper.emitted('action')).toHaveLength(1);

@@ -424,13 +424,14 @@ body {
   border-left: none;
 }
 
-.orders.compare-grid tbody tr:nth-child(odd) td {
+/* The empty placeholder row is not data — no zebra stripe, no hover tint. */
+.orders.compare-grid tbody tr:not([data-slot='empty-row']):nth-child(odd) td {
   background: rgb(255 255 255 / 0.018);
 }
 
 /* Outranks the zebra rule so hover keeps the shared accent tint. */
-.orders.compare-grid tbody tr:hover td,
-.orders.compare-grid tbody tr:nth-child(odd):hover td {
+.orders.compare-grid tbody tr:not([data-slot='empty-row']):hover td,
+.orders.compare-grid tbody tr:not([data-slot='empty-row']):nth-child(odd):hover td {
   background: rgb(var(--accent-rgb) / 0.055);
 }
 

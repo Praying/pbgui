@@ -7,6 +7,8 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhChartLineUp, PhTrophy } from '@phosphor-icons/vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import ScatterChart from './ScatterChart.vue';
 import { bestMatchText, championRows, insightRows, previewSummaries } from '../lib/viewModels';
@@ -70,7 +72,7 @@ function onPlotClick(configIndex: number): void {
       <div class="stage-block half panel-card col-span-6 rounded-xl border border-border-default bg-panel p-3.5 max-[900px]:col-span-12">
         <h3 class="mb-2">{{ t('v7explore.topChampions') }}</h3>
         <div id="champion-list" class="champion-list flex flex-col gap-2">
-          <div v-if="!champions.length" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary">{{ t('v7explore.noChampions') }}</div>
+          <EmptyState v-if="!champions.length" class="placeholder-panel min-h-[220px]" size="inline" :icon="PhTrophy" :title="t('v7explore.noChampions')" />
           <!-- ui-migration: out of scope — clickable champion cards (card
                content, not a form control; .champion-item/.active anchors
                stay for the tests). -->
@@ -98,7 +100,7 @@ function onPlotClick(configIndex: number): void {
       <div class="stage-block half panel-card col-span-6 rounded-xl border border-border-default bg-panel p-3.5 max-[900px]:col-span-12">
         <h3 class="mb-2">{{ t('v7explore.insights') }}</h3>
         <div id="insight-list" class="insight-list flex flex-col gap-2">
-          <div v-if="!insights.length" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary">{{ t('v7explore.noInsights') }}</div>
+          <EmptyState v-if="!insights.length" class="placeholder-panel min-h-[220px]" size="inline" :icon="PhChartLineUp" :title="t('v7explore.noInsights')" />
           <div v-for="(insight, index) in insights" :key="index" class="insight-item rounded-xl border border-border-default bg-white/2 p-2.5">
             <div class="status-chip" :class="statusChipClass(insight.levelClass)" style="margin-bottom: 8px">{{ insight.levelText }}</div>
             <div>{{ insight.text }}</div>

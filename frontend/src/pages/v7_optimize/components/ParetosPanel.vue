@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PhArrowRight, PhDna, PhFileText } from '@phosphor-icons/vue';
+import { PhArrowRight, PhDna, PhFileText, PhTarget } from '@phosphor-icons/vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
@@ -207,10 +207,13 @@ onBeforeUnmount(() => dragSelect.dispose());
             </tr>
             <EmptyRow
               v-if="!rows.length"
+              size="inline"
               :colspan="totalColumns"
+              :icon="PhTarget"
               :title="resultName ? t('v7optimize.noParetoFilesFound') : t('v7optimize.chooseResultSetFirst')"
               :message="resultName ? undefined : t('v7optimize.emptyParetosHelp')"
               :action-label="resultName ? undefined : t('v7optimize.backToResults')"
+              :action-variant="resultName ? 'secondary' : 'primary'"
               @action="emit('goToResults')"
             />
           </tbody>

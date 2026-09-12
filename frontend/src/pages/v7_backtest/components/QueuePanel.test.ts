@@ -84,12 +84,15 @@ describe('renderQueue (:5136-5177)', () => {
     wrapper.unmount();
   });
 
-  it('shows the empty state when the queue is empty (:5138-5140)', () => {
+  it('shows the shared empty state when the queue is empty (:5138-5140)', () => {
     const wrapper = mountPanel({ items: [] });
-    expect(wrapper.find('.empty-state').exists()).toBe(true);
-    // the emptyQueueHtml key renders its two <br>-split lines without v-html
-    expect(wrapper.find('.empty-state').text()).toContain('Queue is empty.');
-    expect(wrapper.find('.empty-state').text()).toContain('Add configs to start backtesting.');
+    const emptyState = wrapper.get('.pbgui-empty-state');
+    // the emptyQueueHtml key renders its two <br>-split lines without v-html:
+    // the first line is the title, the second the explanation
+    expect(emptyState.get('.pbgui-empty-state__title').text()).toBe('Queue is empty.');
+    expect(emptyState.get('.pbgui-empty-state__message').text()).toBe('Add configs to start backtesting.');
+    expect(emptyState.find('.pbgui-empty-state__icon svg').exists()).toBe(true);
+    expect(emptyState.text()).not.toContain('<br>');
     wrapper.unmount();
   });
 

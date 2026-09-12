@@ -11,7 +11,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PhCurrencyDollar, PhPencilSimple, PhX } from '@phosphor-icons/vue';
+import { PhCurrencyDollar, PhDesktop, PhHourglass, PhMagnifyingGlass, PhPencilSimple, PhX } from '@phosphor-icons/vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
 import { EmptyRow, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
@@ -64,6 +64,10 @@ const columns = computed<Column[]>(() => {
 });
 
 
+
+/** The empty placeholder's icon mirrors its state: loading, filtered to zero,
+    or genuinely no instances. */
+const emptyIcon = computed(() => (props.loading ? PhHourglass : props.totalCount ? PhMagnifyingGlass : PhDesktop));
 
 /** buildCells status label (:698). */
 function statusLabel(row: RunInstance): string {
@@ -173,7 +177,9 @@ const iconActionClass = 'size-7 shrink-0 rounded-md border border-border-default
         </tr>
         <EmptyRow
           v-if="!rows.length"
+          size="inline"
           :colspan="columns.length"
+          :icon="emptyIcon"
           :title="loading
             ? t('common.loading')
             : totalCount ? t('v7run.noInstancesMatchFilters') : t('v7run.noLiveInstancesYet', { label: isV8 ? 'PB8' : 'PB7' })"

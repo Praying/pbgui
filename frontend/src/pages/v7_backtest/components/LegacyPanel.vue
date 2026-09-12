@@ -7,7 +7,7 @@
  * confirm flow (:6364-6380). v2.02.5: PB8 mounts it read-only (browsing +
  * Compare; the write actions stay hidden).
  */
-import { PhPushPin } from '@phosphor-icons/vue';
+import { PhClockCounterClockwise, PhPushPin } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import EmptyState from '@/shared/components/EmptyState.vue';
@@ -131,7 +131,13 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
         </div>
         <div id="legacy-results-list-wrap" class="relative h-[25dvh] min-h-20 overflow-y-auto rounded-sm border border-border-default" :style="wrapHeight !== null ? { height: wrapHeight + 'px' } : undefined">
           <div id="legacy-results-table">
-            <EmptyState v-if="store.visible.value.length === 0" class="px-5 py-15" :title="t('v7backtest.noLegacyResults')" />
+            <EmptyState
+              v-if="store.visible.value.length === 0"
+              class="px-5 py-15"
+              size="inline"
+              :icon="PhClockCounterClockwise"
+              :title="t('v7backtest.noLegacyResults')"
+            />
             <ResultsTable
               v-else
               :rows="store.visible.value"

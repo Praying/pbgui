@@ -66,20 +66,38 @@ describe('rendering (:1677-1705)', () => {
     expect(v8.find('[data-test="strategy-col-header"]').exists()).toBe(true);
   });
 
-  it('shows a structured PBv8 empty state with a working create action', async () => {
+  it('shows the shared empty state with a working create action', async () => {
     const wrapper = mountPanel({ configs: [], isV8: true });
     await nextTick();
     const emptyState = wrapper.get('[data-test="configs-empty"]');
     expect(wrapper.find('#configs-toolbar').exists()).toBe(false);
-    expect(emptyState.find('svg').exists()).toBe(true);
-    expect(wrapper.get('[data-test="configs-empty-title"]').text()).toBe('No saved configs yet.');
-    expect(wrapper.get('[data-test="configs-empty-message"]').text()).toBe('Click New Config to create one.');
+    expect(emptyState.classes()).toContain('pbgui-empty-state');
+    expect(emptyState.classes()).toContain('pbgui-empty-state--panel');
+    // the decorative icon tile, not a text marker
+    expect(emptyState.find('.pbgui-empty-state__icon svg').exists()).toBe(true);
+    expect(emptyState.find('.pbgui-empty-state__title').text()).toBe('No saved configs yet.');
+    expect(emptyState.find('.pbgui-empty-state__message').text()).toBe('Click New Config to create one.');
     expect(emptyState.text()).not.toContain('<br>');
     expect(emptyState.text()).not.toContain('<b>');
-    expect(emptyState.text()).toContain('PBv8 / 00');
+    // the panel is the primary button of the page-level empty state
+    const action = emptyState.get('button');
+    expect(action.classes()).toContain('font-semibold');
+    expect(action.text()).toBe('New Config');
 
-    await wrapper.get('[data-test="configs-empty-new"]').trigger('click');
+    await action.trigger('click');
     expect(wrapper.emitted('new-config')).toEqual([[]]);
+  });
+
+  it('renders the filtered empty state as a compact inline row', async () => {
+    const wrapper = mountPanel({ configs: [config({ name: 'alpha' })] });
+    await nextTick();
+    await wrapper.get('[data-test="configs-filter"]').setValue('zzz');
+    await nextTick();
+
+    const emptyRow = wrapper.get('tr[data-slot="empty-row"]');
+    expect(emptyRow.get('td').classes()).toContain('p-4!');
+    expect(emptyRow.find('.pbgui-empty-state--inline').exists()).toBe(true);
+    expect(emptyRow.text()).toContain('No configs match your search.');
   });
 });
 

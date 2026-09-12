@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { PhChartBar, PhClipboardText, PhCopy, PhPencilSimple, PhPlay, PhPlus } from '@phosphor-icons/vue';
+import { PhChartBar, PhClipboardText, PhCopy, PhMagnifyingGlass, PhPencilSimple, PhPlay } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import PbIcon from '@/shared/components/PbIcon.vue';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
-import { ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
+import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { ConfigSummary, SortSpec } from '../types';
@@ -248,28 +248,17 @@ defineExpose({
 
 <template>
   <div class="pbgui-config-list flex min-h-0 flex-1 flex-col overflow-hidden">
-    <section
+    <EmptyState
       v-if="configs.length === 0"
-      class="empty-state configs-empty-state mx-auto mt-[clamp(20px,7vh,72px)] grid w-[min(720px,calc(100%_-_32px))] grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-accent/18 bg-[radial-gradient(circle_at_0%_0%,rgb(var(--accent-rgb)/0.11),transparent_18rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-panel max-[640px]:grid-cols-1"
+      class="configs-empty-state mx-auto mt-[clamp(20px,7vh,72px)] w-[min(720px,calc(100%_-_32px))]"
       data-test="configs-empty"
-      aria-live="polite"
-    >
-      <div class="relative grid min-h-[210px] place-items-center border-r border-accent/14 bg-accent-deep/8 max-[640px]:min-h-[104px] max-[640px]:border-b max-[640px]:border-r-0">
-        <div class="grid h-16 w-16 place-items-center rounded-2xl border border-accent/24 bg-page/70 text-accent-soft shadow-[0_14px_32px_rgb(0_0_0/0.3),inset_0_1px_0_rgb(255_255_255/0.1)]">
-          <PbIcon :icon="PhClipboardText" :size="30" />
-        </div>
-        <span class="absolute bottom-4 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-secondary/65 max-[640px]:bottom-2">{{ isV8 ? 'PBv8' : 'PBv7' }} / 00</span>
-      </div>
-      <div class="flex min-w-0 flex-col items-start justify-center px-[clamp(24px,5vw,52px)] py-[clamp(28px,5vw,46px)] text-left">
-        <span class="mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-accent-soft">{{ isV8 ? 'PBv8' : 'PBv7' }} · {{ t('v7backtest.configs') }}</span>
-        <h2 class="text-[clamp(20px,2.4vw,27px)] font-semibold leading-tight tracking-[-0.035em] text-primary" data-test="configs-empty-title">{{ emptyCopy.title }}</h2>
-        <p class="mt-3 max-w-[48ch] text-sm leading-relaxed text-secondary" data-test="configs-empty-message">{{ emptyCopy.message }}</p>
-        <Button type="button" variant="primary" class="group mt-6 rounded-full px-5" data-test="configs-empty-new" @click="emit('new-config')">
-          <PbIcon :icon="PhPlus" :size="17" />
-          {{ newConfigLabel }}
-        </Button>
-      </div>
-    </section>
+      :icon="PhClipboardText"
+      :title="emptyCopy.title"
+      :message="emptyCopy.message"
+      :action-label="newConfigLabel"
+      action-variant="primary"
+      @action="emit('new-config')"
+    />
 
     <div v-else class="pbgui-config-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
       <div id="configs-toolbar" class="pbgui-config-toolbar pbgui-list-toolbar flex flex-wrap items-center gap-2 border-b border-border-subtle px-3 py-2.5">
@@ -324,9 +313,13 @@ defineExpose({
             </tr>
           </thead>
           <tbody>
-            <tr v-if="visible.length === 0">
-              <td :colspan="isV8 ? 10 : 9" class="empty-state px-5! py-15! text-center text-md text-secondary">{{ t('v7backtest.noConfigsMatch') }}</td>
-            </tr>
+            <EmptyRow
+              v-if="visible.length === 0"
+              :colspan="isV8 ? 10 : 9"
+              size="inline"
+              :icon="PhMagnifyingGlass"
+              :title="t('v7backtest.noConfigsMatch')"
+            />
             <tr
               v-for="entry in visible"
               :key="entry.name"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PhArrowDown, PhArrowUp, PhArrowsClockwise, PhFileText, PhPencilSimple } from '@phosphor-icons/vue';
+import { PhArrowDown, PhArrowUp, PhArrowsClockwise, PhFileText, PhHourglass, PhMagnifyingGlass, PhPencilSimple } from '@phosphor-icons/vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
@@ -208,10 +208,13 @@ function onQueueRowKeydown(event: KeyboardEvent, queueFilename: string): void {
             </tr>
             <EmptyRow
               v-if="!rows.length"
+              size="inline"
               :colspan="5"
+              :icon="search ? PhMagnifyingGlass : PhHourglass"
               :title="search ? t('v7optimize.noMatches') : t('v7optimize.queueIsEmpty')"
               :message="search ? undefined : t('v7optimize.emptyQueueHelp')"
               :action-label="search ? undefined : t('v7optimize.backToConfigList')"
+              :action-variant="search ? 'secondary' : 'primary'"
               @action="emit('goToConfigs')"
             />
           </tbody>

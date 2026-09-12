@@ -4,7 +4,9 @@
  * name/owner/config-version/pbgui-version/modified/path columns with a
  * single-row click-select and the dblclick view action (:9258-9266).
  */
+import { PhSlidersHorizontal } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import { Table, Th } from '@/shared/components/ui/table';
 import type { ArchiveOptimizeConfigItem } from '../types';
 
@@ -38,7 +40,7 @@ function isSelected(item: ArchiveOptimizeConfigItem): boolean {
 
 <template>
   <div>
-    <div v-if="configs.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noOptimizeSettings') }}</div>
+    <EmptyState v-if="configs.length === 0" size="inline" class="px-5 py-10" :icon="PhSlidersHorizontal" :title="t('v7backtest.noOptimizeSettings')" />
     <Table v-else class="select-none">
       <thead>
         <tr>

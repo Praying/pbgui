@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { PhCopy, PhPencilSimple } from '@phosphor-icons/vue';
+import { PhClipboardText, PhCopy, PhMagnifyingGlass, PhPencilSimple } from '@phosphor-icons/vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
 import PbIcon from '@/shared/components/PbIcon.vue';
@@ -144,10 +144,13 @@ onBeforeUnmount(() => dragSelect.dispose());
             </tr>
             <EmptyRow
               v-if="!rows.length"
+              size="inline"
               :colspan="isV8 ? 9 : 8"
+              :icon="search ? PhMagnifyingGlass : PhClipboardText"
               :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeConfigsFound')"
               :message="search ? undefined : t('v7optimize.emptyConfigsHelp')"
               :action-label="search ? undefined : t('v7optimize.newConfig')"
+              :action-variant="search ? 'secondary' : 'primary'"
               @action="emit('create')"
             />
           </tbody>

@@ -73,19 +73,26 @@ describe('Optimize page warning style contracts', () => {
     }
     expect(configsPanelSource).not.toContain('class="opt-table-wrap');
     expect(appSource).toContain('optimize-workspace');
-    expect(appSource).toContain('--opt-table-surface-rgb: 23 28 33;');
-    expect(appSource).toContain('--opt-table-surface: rgb(var(--opt-table-surface-rgb));');
+    /* The optimize list surface is the shared one — the former private cool
+       grey (#171c21) must never come back, or the empty placeholder would sit
+       on a different shade than the table it replaces. */
+    expect(appSource).toContain('--opt-table-surface: var(--surface-list);');
+    expect(appSource).toContain('--opt-table-surface-rgb: var(--surface-list-rgb);');
+    expect(appSource).not.toContain('--opt-table-surface-rgb: 23 28 33;');
+    expect(appSource).not.toContain('background: #191f24;');
+    expect(appSource).not.toContain('background: #1c272c;');
+    expect(appSource).not.toContain('background: #1f3037;');
     expect(appSource).toContain('.optimize-workspace .opt-table-wrap');
     expect(appSource).toContain('.optimize-workspace .opt-table-wrap::after');
-    expect(appSource).toContain("tr[data-slot='empty-row'] td");
-    expect(appSource).toContain("tr[data-slot='empty-row']:hover td");
-    expect(appSource).toContain("tr[data-slot='empty-row'] .pbgui-empty-state");
-    expect(appSource).toContain('border-color: rgb(var(--text-secondary-rgb) / 0.1);');
-    expect(appSource).toContain('box-shadow: none;');
-    expect(appSource).toContain('padding: 24px 16px;');
+    /* The empty row (cell background, placeholder background, hover) belongs to
+       the shared list contract, not to the optimize page. */
+    expect(appSource).not.toContain("tr[data-slot='empty-row']:hover td");
+    expect(appSource).not.toContain("tr[data-slot='empty-row'] .pbgui-empty-state");
+    expect(sharedComponentsSource).toContain("tr[data-slot='empty-row'] td,");
+    expect(sharedComponentsSource).toContain("tr[data-slot='empty-row'] .pbgui-empty-state");
+    expect(sharedComponentsSource).toContain('background: var(--surface-list);');
     expect(appSource).not.toContain('background: #151a1f;');
-    expect(appSource).not.toContain('background: #171c21;');
-    expect(countOccurrences(appSource, 'background: var(--opt-table-surface);')).toBeGreaterThanOrEqual(6);
+    expect(countOccurrences(appSource, 'background: var(--opt-table-surface);')).toBeGreaterThanOrEqual(4);
     expect(appSource).toContain('padding-bottom: 24px;');
     expect(appSource).toMatch(/\.optimize-workspace \.opt-table-wrap::after \{[\s\S]*?z-index: 0;[\s\S]*?height: 24px;/);
     expect(appSource).toMatch(/\.optimize-workspace \.opt-table \{[\s\S]*?position: relative;[\s\S]*?z-index: 1;/);
@@ -120,9 +127,13 @@ describe('Optimize page warning style contracts', () => {
     expect(appSource).not.toContain('.opt-table-frame--content-sized');
   });
 
-  it('excludes selected rows from zebra stripes and action-cell backgrounds', () => {
+  it('excludes selected rows from zebra stripes and leaves the actions rail to the shared contract', () => {
     expect(appSource).toContain('tr:nth-child(even):not(:last-child):not(.selected) td');
-    expect(appSource).toContain('tr:nth-child(even):not(.selected) .pbgui-list-actions');
+    /* the rail follows its row through the shared list contract instead of a
+       page-private background */
+    expect(appSource).not.toContain('.pbgui-list-actions {\n  position: sticky;');
+    expect(sharedComponentsSource).toContain('.pbgui-list-table tbody tr.selected td:last-child');
+    expect(sharedComponentsSource).toContain('.pbgui-list-table tbody tr:hover td:last-child');
   });
 
   it('displays converged total and selected counts in the config list footer', () => {

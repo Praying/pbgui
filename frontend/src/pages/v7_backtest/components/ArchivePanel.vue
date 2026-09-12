@@ -9,9 +9,10 @@
  * remove-liquidated/-duplicates previews, score preview, optimize
  * view/import/delete). The flows are exposed for App's ctx sidebar.
  */
-import { PhArchive, PhPushPin, PhTrash } from '@phosphor-icons/vue';
+import { PhArchive, PhChartLineUp, PhPushPin, PhTrash } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -69,6 +70,15 @@ const scoreReadme = computed(() => store.scorePreview.value?.payload.readme_mark
 const remoteBase = computed(() => {
   const archive = store.archives.value.find((entry: ArchiveSummary) => entry.name === store.selectedName.value);
   return archiveRemoteBrowserUrl(archive?.url ?? '');
+});
+
+/* The emptyArchivesHtml key carries a literal <br> — the first line becomes
+   the placeholder title, the rest the explanation (no v-html). */
+const emptyCopy = computed(() => {
+  const [title = '', message = ''] = String(t('v7backtest.emptyArchivesHtml'))
+    .split(/<br\s*\/?>/i)
+    .map((line) => plainLegacyHtml(line).trim());
+  return { title, message: message || undefined };
 });
 
 /* ── the wrap height drag (:905-908) ── */
@@ -333,9 +343,8 @@ defineExpose({
     <!-- list view (:876-878) -->
     <div v-if="!store.selectedName.value" id="archive-list-view" class="min-h-0 flex-1 overflow-y-auto">
       <div id="archive-list-container">
-        <div v-if="store.archives.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary" data-test="archive-empty">
-          <div class="mx-auto mb-3 grid size-12 place-items-center rounded-xl border border-accent/16 bg-accent/7 text-accent-soft"><PbIcon :icon="PhArchive" :size="24" /></div>
-          <span class="whitespace-pre-line">{{ plainLegacyHtml(t('v7backtest.emptyArchivesHtml')) }}</span>
+        <div v-if="store.archives.value.length === 0" class="archive-empty-state p-4" data-test="archive-empty">
+          <EmptyState :icon="PhArchive" :title="emptyCopy.title" :message="emptyCopy.message" :action-label="t('v7backtest.addArchive')" action-variant="primary" @action="openAddArchive" />
         </div>
         <Table v-else class="select-none">
           <thead>
@@ -440,7 +449,13 @@ defineExpose({
             <ArchiveSchedulesTable v-if="store.mode.value === 'schedules'" :schedules="store.schedulesVisible.value" :own="store.isOwn.value" @run="store.runSchedule" @toggle="store.toggleSchedule" @remove="store.deleteSchedule" />
             <ArchiveOptimizeTable v-else-if="isOptimize" :configs="store.optimizeVisible.value" :selected="store.selectedOptimize.value" @select="onOptimizeSelect" @open="onOptimizeOpen" />
             <template v-else>
-              <div v-if="store.visible.value.length === 0" class="empty-state px-5 py-15 text-center text-md text-secondary">{{ t('v7backtest.noResultsInArchive') }}</div>
+              <EmptyState
+                v-if="store.visible.value.length === 0"
+                size="inline"
+                class="px-5 py-10"
+                :icon="PhChartLineUp"
+                :title="t('v7backtest.noResultsInArchive')"
+              />
               <ResultsTable
                 v-else
                 :rows="store.visible.value"

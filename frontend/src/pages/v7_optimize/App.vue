@@ -680,7 +680,8 @@ body { overflow: hidden; }
 }
 
 .opt-table tbody tr { cursor: pointer; transition: background-color var(--motion-fast) var(--ease-standard); }
-.opt-table tbody tr:hover td { background: rgb(var(--accent-rgb) / 0.055); }
+/* The empty placeholder row is not data — never tint it on hover. */
+.opt-table tbody tr:not([data-slot='empty-row']):hover td { background: rgb(var(--accent-rgb) / 0.055); }
 .opt-table tbody tr.selected td { background: rgb(var(--accent-rgb) / 0.12); }
 .opt-table tbody tr.selected td:first-child {
   border-left: 3px solid var(--accent);
@@ -692,9 +693,12 @@ body { overflow: hidden; }
   background: var(--surface-workspace);
 }
 
+/* The list surface is shared with every other PBv7/PBv8 workbench list. The
+   former private cool grey (#171c21) is retired: an optimize table and the
+   empty placeholder standing in for it must be the same colour. */
 .optimize-workspace {
-  --opt-table-surface-rgb: 23 28 33;
-  --opt-table-surface: rgb(var(--opt-table-surface-rgb));
+  --opt-table-surface: var(--surface-list);
+  --opt-table-surface-rgb: var(--surface-list-rgb);
 }
 
 .core-workbench-shell--optimize .page-toolbar {
@@ -865,22 +869,10 @@ body { overflow: hidden; }
   background: rgb(255 255 255 / 0.018);
 }
 
-.optimize-workspace .opt-table .pbgui-list-actions {
-  background: var(--opt-table-surface);
-}
-
-.optimize-workspace .opt-table tbody tr:nth-child(even):not(.selected) .pbgui-list-actions {
-  background: #191f24;
-}
-
-.optimize-workspace .opt-table tbody tr:hover .pbgui-list-actions {
-  background: #1c272c;
-}
-
-.optimize-workspace .opt-table tbody tr.selected .pbgui-list-actions,
-.optimize-workspace .opt-table tbody tr.selected:hover .pbgui-list-actions {
-  background: #1f3037;
-}
+/* The sticky actions rail is owned by the shared list contract: it paints
+   --bg-panel (== --surface-list) and follows the row's hover/selected accent
+   tint. The former private #191f24/#1c272c/#1f3037 rail colours are retired
+   so the rail can never sit on a different shade than its row. */
 
 .opt-toast-card {
   display: grid;
@@ -986,8 +978,8 @@ body { overflow: hidden; }
   background: rgb(var(--text-secondary-rgb) / 0.018);
 }
 
-.opt-table tbody tr:hover td,
-.opt-table tbody tr:nth-child(even):hover td {
+.opt-table tbody tr:not([data-slot='empty-row']):hover td,
+.opt-table tbody tr:nth-child(even):not([data-slot='empty-row']):hover td {
   background: rgb(var(--accent-rgb) / 0.075);
 }
 
@@ -996,17 +988,11 @@ body { overflow: hidden; }
   background: rgb(var(--accent-rgb) / 0.14);
 }
 
-.optimize-workspace .opt-table tbody tr[data-slot='empty-row'] td,
-.optimize-workspace .opt-table tbody tr[data-slot='empty-row']:hover td {
-  background: var(--opt-table-surface);
-  padding: 16px;
-}
-
-.optimize-workspace .opt-table tbody tr[data-slot='empty-row'] .pbgui-empty-state {
-  background: var(--opt-table-surface);
-  border-color: rgb(var(--text-secondary-rgb) / 0.1);
-  box-shadow: none;
-  padding: 24px 16px;
+/* The empty row is owned by the shared list contract (components.css): its
+   cell and its placeholder stay transparent so the panel is exactly the table
+   colour, and the ui/ EmptyState `inline` variant owns the compact spacing. */
+.optimize-workspace .opt-table tbody tr[data-slot='empty-row'] td {
+  height: auto;
 }
 
 .opt-table td {
@@ -1115,28 +1101,10 @@ body { overflow: hidden; }
   letter-spacing: 0.02em;
 }
 
-.opt-table .pbgui-list-actions {
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  min-width: max-content;
-  padding-right: 14px;
-  background: var(--surface-deep);
-  box-shadow: -14px 0 22px -22px rgb(0 0 0 / 0.9);
-}
-
-.opt-table tbody tr:nth-child(even):not(.selected) .pbgui-list-actions {
-  background: rgb(22 22 22 / 0.98);
-}
-
-.opt-table tbody tr:hover .pbgui-list-actions {
-  background: rgb(25 32 36 / 0.98);
-}
-
-.opt-table tbody tr.selected .pbgui-list-actions,
-.opt-table tbody tr.selected:hover .pbgui-list-actions {
-  background: rgb(30 43 50 / 0.98);
-}
+/* The actions rail keeps only its geometry here: the sticky offsets, the
+   surface background, and the hover/selected/zebra tints all come from the
+   shared list contract (components.css) so no page paints a private rail
+   colour — that keeps the rail exactly as dark as the row it belongs to. */
 
 .opt-table .pbgui-list-actions__group {
   display: inline-flex;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { PhArrowsClockwise, PhChartBar, PhCube, PhFileText, PhPlant, PhSquaresFour, PhTarget } from '@phosphor-icons/vue';
+import { PhArrowsClockwise, PhChartBar, PhChartLineUp, PhCube, PhFileText, PhMagnifyingGlass, PhPlant, PhSquaresFour, PhTarget } from '@phosphor-icons/vue';
 import { useRowDragSelect } from '../../v7_backtest/composables/useRowDragSelect';
 import { useI18n } from 'vue-i18n';
 import { Button } from '@/shared/components/ui/button';
@@ -130,10 +130,13 @@ onBeforeUnmount(() => dragSelect.dispose());
             </tr>
             <EmptyRow
               v-if="!rows.length"
+              size="inline"
               :colspan="isV8 ? 7 : 6"
+              :icon="search ? PhMagnifyingGlass : PhChartLineUp"
               :title="search ? t('v7optimize.noMatches') : t('v7optimize.noOptimizeResultsFound')"
               :message="search ? undefined : t('v7optimize.emptyResultsHelp')"
               :action-label="search ? undefined : t('v7optimize.openQueue')"
+              :action-variant="search ? 'secondary' : 'primary'"
               @action="emit('goToQueue')"
             />
           </tbody>
