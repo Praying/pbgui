@@ -1,5 +1,12 @@
 # Unreleased
 
+## 回测队列任务日志查看器修复
+
+- **恢复日志弹窗交互**：修复了 PBv8/PBv7 回测队列中点击任务行「日志」按钮时由于 `onQueueShowLog` 为空桩而无法弹出日志窗口的问题。
+- **共享实时日志终端**：将纯 Vue 3 WebSocket 实时日志流组件 `QueueLogTerminal.vue` 提升为共享组件，支持日志等级筛选、关键词搜索与高亮、断线重连及自动滚动。
+- **回测队列日志模态窗**：为回测页面实现 `QueueLogModal.vue` 模态弹窗，展示任务名称与日志相对路径（PBv8 对应 `backtests_v8/{name}.log`，PBv7 对应 `backtests/{name}.log`），符合无原生弹窗与显式关闭的设计规范。
+- **注册 AI 页面动作**：在回测页面中注册 `backtest_queue_item` 的 `show_log` AI 动作，对齐优化页面的 AI 集成体验。
+
 ## Merge origin/main v2.02.16-v2.03.1 into the Vue3 branch
 
 - **Upstream synchronization**: Merged the four remote `main` release commits while preserving the Vue3 + Tailwind CSS v4.3 page entrypoints and shared frontend contracts.

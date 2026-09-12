@@ -59,7 +59,7 @@ export function createBacktestAdapter(version: BacktestVersion): BacktestAdapter
     titleParams: { label: isV8 ? 'PBv8' : 'PBv7' },
     websocketPath: isV8 ? '/api/backtest-v8/ws/bt7' : '/api/backtest-v7/ws/bt7',
     queueLogFilePrefix: isV8 ? 'backtests_v8/' : 'backtests/',
-    queueLogFile: (filename) => (isV8 ? 'backtests_v8/' : 'backtests/') + filename + '.log',
+    queueLogFile: (filename) => (isV8 ? 'backtests_v8/' : 'backtests/') + filename.replace(/\.json$/i, '') + '.log',
     initialPanels: panels,
     navItems: () => navItems(createBacktestAdapter(isV8 ? 'v8' : 'v7')),
   };
@@ -96,7 +96,7 @@ export function archiveApiBase(apiBase: string): string {
 
 /** Result log path (:150-152). */
 export function queueLogFile(adapter: BacktestAdapter, filename: string): string {
-  return adapter.queueLogFilePrefix + filename + '.log';
+  return adapter.queueLogFilePrefix + filename.replace(/\.json$/i, '') + '.log';
 }
 
 /** WS_BASE + adapter.websocketPath (:1269) with the legacy scheme rewrite. */

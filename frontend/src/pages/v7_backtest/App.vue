@@ -59,13 +59,14 @@ import LegacyPanel from './components/LegacyPanel.vue';
 import RebacktestModal from './components/RebacktestModal.vue';
 import PanelShell from './components/PanelShell.vue';
 import QueueDraftModal from './components/QueueDraftModal.vue';
+import QueueLogModal from './components/QueueLogModal.vue';
 import QueuePanel from './components/QueuePanel.vue';
 import ResultsPanel from './components/ResultsPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import { useBacktestPage } from './composables/useBacktestPage';
 import { modalBackdropClass, modalBoxClass } from './lib/uiClasses';
 import type { PageSection } from '@/shared/navigation';
-import { aiFocusedField, useAiPageContext } from '@/shared/ai/context';
+import { aiFocusedField, useAiPageAction, useAiPageContext } from '@/shared/ai/context';
 import type { BacktestPanel } from './types';
 
 const { t } = useI18n();
@@ -181,8 +182,18 @@ useAiPageContext({
     };
   },
 });
+useAiPageAction({
+  id: 'show_log',
+  entity_kind: 'backtest_queue_item',
+  run: (filename) => {
+    onQueueShowLog(filename);
+  },
+});
 const editorHasSavedConfig = computed(() => !!store.editor.editingName.value && store.editor.editingName.value !== '__new__');
 const importOpen = ref(false);
+const logOpen = ref(false);
+const logFilename = ref('');
+const logTitle = ref('');
 
 /* Converged navigation: the five panels are rail sections under the active
    Backtest page item; the queue count rides along as the section badge. */
@@ -255,8 +266,10 @@ function onQueueViewResults(name: string): void {
   store.viewConfigResults(name);
 }
 function onQueueShowLog(filename: string): void {
-  /* the LogViewerPanel wrapper lands with the M-v7-10 log surface */
-  void filename;
+  const item = store.queueItems.value.find((entry) => entry.filename === filename);
+  logFilename.value = filename;
+  logTitle.value = item?.name || filename;
+  logOpen.value = true;
 }
 function onQueueEditConfig(name: string): void {
   void store.editor.editConfig(name);
@@ -942,6 +955,13 @@ watch(
   <!-- archive git-maintenance modals (M-v7-12, the M-v7-11 DEFERRED block) -->
   <ArchiveGitModals :git="store.archiveGit" />
   <ArchiveLogPanel ref="archiveLogPanel" />
+  <QueueLogModal
+    :open="logOpen"
+    :filename="logFilename"
+    :title="logTitle"
+    :file="store.adapter.queueLogFile(logFilename)"
+    @close="logOpen = false"
+  />
 </template>
 
 <style>

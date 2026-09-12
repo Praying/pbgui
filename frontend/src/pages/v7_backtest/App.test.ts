@@ -856,6 +856,62 @@ describe('queue panel actions (App wiring, :5190-5226)', () => {
     wrapper.unmount();
   });
 
+  it('clicking the queue row Log button opens the task log modal and close dismisses it', async () => {
+    const wrapper = mountApp();
+    await flush();
+    await wrapper.find('[data-testid="rail-section-queue"]').trigger('click');
+    await nextTick();
+    sockets[0]!.readyState = 1;
+    sockets[0]!.onmessage?.({
+      data: JSON.stringify({
+        type: 'queue_update',
+        items: [{ filename: 'test-task.json', name: 'test-task', status: 'error' }],
+      }),
+    });
+    await nextTick();
+    await nextTick();
+
+    expect(wrapper.find('[data-test="backtest-log-overlay"]').exists()).toBe(false);
+    const logButton = wrapper.find('#queue-list tbody tr button[title="Log"]');
+    expect(logButton.exists()).toBe(true);
+    await logButton.trigger('click');
+    await nextTick();
+
+    expect(wrapper.find('[data-test="backtest-log-overlay"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="backtest-log-title"]').text()).toContain('test-task');
+    expect(wrapper.find('[data-test="backtest-log-path"]').text()).toBe('backtests/test-task.log');
+
+    await wrapper.find('[data-test="backtest-log-close"]').trigger('click');
+    await nextTick();
+    expect(wrapper.find('[data-test="backtest-log-overlay"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it('PBv8 backtest queue resolves log path under backtests_v8/', async () => {
+    window.history.replaceState({}, '', '/api/backtest-v8/main_page#queue');
+    const wrapper = mountApp();
+    await flush();
+    sockets[0]!.readyState = 1;
+    sockets[0]!.onmessage?.({
+      data: JSON.stringify({
+        type: 'queue_update',
+        items: [{ filename: '6-7-bnb.json', name: '6-7-bnb', status: 'error' }],
+      }),
+    });
+    await nextTick();
+    await nextTick();
+
+    const logButton = wrapper.find('#queue-list tbody tr button[title="Log"]');
+    expect(logButton.exists()).toBe(true);
+    await logButton.trigger('click');
+    await nextTick();
+
+    expect(wrapper.find('[data-test="backtest-log-overlay"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="backtest-log-title"]').text()).toContain('6-7-bnb');
+    expect(wrapper.find('[data-test="backtest-log-path"]').text()).toBe('backtests_v8/6-7-bnb.log');
+    wrapper.unmount();
+  });
+
   it('delete-selected confirms then deletes each item and pulls a refresh (:5857-5871)', async () => {
     const wrapper = mountApp();
     await flush();
@@ -1109,7 +1165,7 @@ describe('archive + legacy panels (M-v7-11)', () => {
     await wrapper.find('[data-testid="rail-section-archive"]').trigger('click');
     await flush();
     await nextTick();
-    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(2);
+    expect(fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/archives'))).toHaveLength(3);
     wrapper.unmount();
   });
 
