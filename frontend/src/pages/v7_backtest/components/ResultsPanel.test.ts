@@ -171,19 +171,14 @@ describe('table area (:853-859)', () => {
     expect(wrapper.find('#results-scroll-area').classes()).toContain('hidden');
   });
 
-  it('the resize handle drag grows the list wrap (:856-858)', async () => {
+  it('renders a fixed table footer and no resize handle', async () => {
     const store = await loadedStore();
     const wrapper = mountPanel(store);
-    const wrap = wrapper.find('#results-list-wrap').element as HTMLElement;
-    const before = wrap.getBoundingClientRect().height;
-    vi.spyOn(wrap, 'getBoundingClientRect').mockReturnValue({ top: 0, bottom: before, height: before } as DOMRect);
-    const handle = wrapper.find('#results-resize-handle');
-    handle.element.dispatchEvent(new MouseEvent('mousedown', { button: 0, clientY: 300, bubbles: true }));
-    document.body.dispatchEvent(new MouseEvent('mousemove', { clientY: 380, bubbles: true }));
-    document.body.dispatchEvent(new MouseEvent('mouseup', { clientY: 380, bubbles: true }));
-    await vi.waitFor(() => {
-      expect(Number.parseInt(wrap.style.height, 10)).toBeGreaterThan(Number.parseInt(String(before), 10) || 0);
-    });
+    expect(wrapper.find('#results-resize-handle').exists()).toBe(false);
+    const footer = wrapper.find('[data-test="results-list-footer"]');
+    expect(footer.exists()).toBe(true);
+    expect(footer.classes()).toContain('pbgui-list-footer');
+    expect(footer.classes()).toContain('shrink-0');
   });
 });
 

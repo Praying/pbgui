@@ -128,25 +128,6 @@ function selectAllVisible(): void {
   store.selectAll(store.visible.value.map((row) => row.path));
 }
 
-/** The wrap height drag (:856-858 resize handle). */
-const wrapHeight = ref<number | null>(null);
-
-function onResizeStart(event: MouseEvent): void {
-  if (event.button !== 0) return;
-  const startY = event.clientY;
-  const startHeight = wrapHeight.value ?? 200;
-  function onMove(move: MouseEvent): void {
-    wrapHeight.value = Math.max(80, startHeight + move.clientY - startY);
-  }
-  function onUp(): void {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-  }
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-  event.preventDefault();
-}
-
 /* ── deleteSelectedResults (:8509-8532) — App's ctx-bar target ── */
 
 function deleteSelectedFlow(): void {
@@ -246,7 +227,6 @@ defineExpose({ deleteSelectedFlow });
       <div
         id="results-list-wrap"
         class="pbgui-list-wrap relative min-h-36 flex-1 overflow-auto bg-panel"
-        :style="wrapHeight !== null ? { height: wrapHeight + 'px', flex: '0 0 auto' } : undefined"
       >
         <div id="results-list">
           <LoadingSkeleton v-if="store.checking.value" class="px-5 py-15" :label="t('v7backtest.checkingForResults')" />
@@ -267,13 +247,10 @@ defineExpose({ deleteSelectedFlow });
           />
         </div>
       </div>
-      <footer class="pbgui-list-footer" data-test="results-list-footer">
+      <footer class="pbgui-list-footer shrink-0" data-test="results-list-footer">
         <span id="results-count-label" class="tabular-nums" aria-live="polite">{{ countLabel }}</span>
         <span class="font-medium text-accent-soft tabular-nums">{{ t('v7backtest.resultsSelected', { n: selectedCount }) }}</span>
       </footer>
-      <div id="results-resize-handle" class="flex h-2 cursor-row-resize select-none items-center justify-center border-t border-border-subtle bg-panel/60" :title="t('v7backtest.dragToResize')" @mousedown="onResizeStart">
-        <span class="h-0.5 w-10 rounded-full bg-secondary/35"></span>
-      </div>
     </div>
 
     <div id="results-scroll-area" class="min-h-0 flex-1 overflow-y-auto pb-5" :class="inlineChartsVisible ? '' : 'hidden'">

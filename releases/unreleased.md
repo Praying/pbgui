@@ -1,5 +1,10 @@
 # Unreleased
 
+## 回测结果表格 Table Foot 固定底端位置优化
+
+- **Table Foot 改为固定底端位置**：移除「PBv7/PBv8 回测/结果」页面表格底部的可拉动手柄（`#results-resize-handle`）以及列表容器的动态像素高度限制，使结果列表容器（`#results-list-wrap`）弹性撑满剩余视口高度并在内部自适应滚动，底部 `ListFooter` 始终稳固锚定在卡片最底端，彻底消除由于拖动导致的表格下半部分大面积黑斑悬空问题。
+- **修复浏览器环境下 fetchFn 导致的非法调用（Illegal invocation）报错**：修复 `useResults.ts`、`useLegacyResults.ts`、`useConfigs.ts` 中解构 native `fetch` 时因缺少 `globalThis` 上下文抛出的 `TypeError: Illegal invocation` 异常，确保回测结果分页与首屏加载平稳无误。
+
 ## 回测与优化全页面「操作」列及数据列对齐方式统一与优化
 
 - **统一「操作」列表头与按钮居左对齐**：修复「PBv8/回测/队列」、「PBv8/回测/配置」、「PBv8/回测/结果」中操作列表头使用 `<Th align="center">` 导致文字居中而下方操作按钮靠左悬浮错位的问题。将回测模块操作列表头与「PBv8/优化/配置」、「PBv8/优化/队列」、「PBv8/优化/结果」、「PBv8/优化/帕累托」全面对齐为标准居左，实现表头与操作按钮垂直边界严格平直对齐。

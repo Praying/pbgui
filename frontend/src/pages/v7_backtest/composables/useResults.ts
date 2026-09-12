@@ -115,7 +115,7 @@ export interface ResultsStore {
 }
 
 export function useResults(options: UseResultsOptions): ResultsStore {
-  const fetchFn = options.fetchFn ?? fetch;
+  const fetchFn = options.fetchFn ?? ((...args: Parameters<typeof fetch>) => globalThis.fetch(...args));
   const timers = options.timers ?? { setTimeout, clearTimeout };
   const version = options.version;
 

@@ -72,7 +72,7 @@ export interface LegacyResultsStore {
 }
 
 export function useLegacyResults(options: UseLegacyOptions): LegacyResultsStore {
-  const fetchFn = options.fetchFn ?? fetch;
+  const fetchFn = options.fetchFn ?? ((...args: Parameters<typeof fetch>) => globalThis.fetch(...args));
   const t = options.t;
   const notify = options.notify;
 

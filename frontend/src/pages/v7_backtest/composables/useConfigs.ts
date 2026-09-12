@@ -14,7 +14,7 @@ export interface ConfigsStoreOptions {
 }
 
 export function useConfigs(options: ConfigsStoreOptions) {
-  const fetchFn = options.fetchFn ?? fetch;
+  const fetchFn = options.fetchFn ?? ((...args: Parameters<typeof fetch>) => globalThis.fetch(...args));
   const configs = ref<ConfigSummary[]>([]);
   const loadedOnce = ref(false);
   let flight: Promise<void> | null = null;
