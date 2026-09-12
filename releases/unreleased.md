@@ -1,5 +1,22 @@
 # Unreleased
 
+## 系统 / API 密钥 / 日志页面现代化重构（Vue 3 + Tailwind CSS）
+
+- **全面移除遗留 LogViewerPanel DOM 注入，重构为纯 Vue 3 + Tailwind CSS 响应式组件**：
+  - 彻底淘汰 `LogPanel.vue` 中对旧版全局 `window.LogViewerPanel` 的 DOM 包装，解决原页面默认请求不存在的 `ApiKeys.log` 导致异常回退显示 `BacktestV8.log` 的缺陷。
+  - 接入 PBGui 现代深色主题设计系统规范（`@theme` 设计令牌、`hl-expiry-panel` 容器布局与精致面板边框）。
+- **实时日志流与智能过滤系统**：
+  - 通过 `/ws/vps` WebSocket 原生对接后端，自动探测获取本地全部日志文件列表（`{ cmd: 'list_local_logs' }`），支持随时切换查看其他日志。
+  - 默认自动订阅 `PBGui.log`，并默认激活 `[ApiKeys]` 预设过滤，精准呈现 API 密钥的创建、编辑、同步、权限变动及安全生命周期操作。
+  - 工具栏提供预设过滤快速切换：`全部 (All)`、`[ApiKeys]`、`错误 (Errors)`、`警告 (Warnings)`。
+  - 支持快捷过滤日志级别（`DBG`、`INF`、`WRN`、`ERR`、`CRT`），动态高亮 WARNING / ERROR / CRITICAL 重音左边框与底色。
+- **丰富的日志浏览与排查工具**：
+  - 集成带防抖（debounce）的关键字实时搜索与过滤切换，支持命中词 `<mark>` 高亮展示及上下匹配项逐条平滑跳转（Match stepper）。
+  - 支持实时流（Stream）与暂停（Pause）控制、控制台清屏（Clear）、日志行号切换（Line numbers）以及一键导出下载日志文本文件（Download）。
+  - 支持视口智能吸底（Pin to bottom）与浮动快速回到底部按钮（Scroll to bottom），并在 WebSocket 连接状态改变（连接中/已连接/已断开/会话过期）时提供动态状态徽标提示。
+- **完善的单元测试保障**：
+  - 新增 `frontend/src/pages/api_keys_editor/components/LogPanel.test.ts`，涵盖组件渲染、文件选择、日志预设过滤、级别切换、流控暂停/恢复、清屏、行号及会话过期等 12 项测试，并通过 `vue-tsc` 与 Vite 生产构建校验。
+
 ## Vue3 全站字体与字号体系统一（统一字号阶梯 + 字距/字重契约）
 
 - **建立全站唯一的字号阶梯**：`frontend/src/styles/tailwind.css` 的 `@theme` 现定义十档 px 字号，每档绑定显式行高，成为所有 Vue3 页面字号的唯一来源：`text-micro` 11 / `text-xs` 12 / `text-compact` 13（新增）/ `text-sm` 14 / `text-base` 15 / `text-md` 16 / `text-lg` 19 / `text-xl` 23 / `text-2xl` 26 / `text-3xl` 34。
