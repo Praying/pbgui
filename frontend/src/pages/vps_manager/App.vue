@@ -47,6 +47,8 @@ useAiPageContext({
   },
 });
 const hostname = ref('');
+import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
+
 const state = ref<JsonRecord>({ config: {}, overview: { rows: [] }, deploys: { history: [], progress_rows: [] } });
 /** False until the first WS `state` message lands — drives the overview skeleton
  *  (state.overview itself starts as a truthy empty object, so it can't be the flag). */
@@ -54,6 +56,7 @@ const stateLoaded = ref(false);
 const detail = ref<JsonRecord | null>(null);
 const connection = ref<'connecting' | 'connected' | 'lost'>('connecting');
 const notice = ref<{ text: string; kind: 'ok' | 'err' } | null>(null);
+let noticeTimer: ReturnType<typeof setTimeout> | null = null;
 const modal = ref<ModalKind>(null);
 const modalData = ref<JsonRecord>({});
 const ws = ref<WebSocket | null>(null);
@@ -209,7 +212,14 @@ function checkStatusClass(ok: unknown): string {
 function formatBytes(value: unknown): string { const n = Number(value || 0); if (!Number.isFinite(n) || n <= 0) return '0 B'; const units = ['B', 'KB', 'MB', 'GB', 'TB']; const i = Math.min(units.length - 1, Math.floor(Math.log(n) / Math.log(1024))); return `${(n / 1024 ** i).toFixed(1)} ${units[i]}`; }
 function formatPercent(value: unknown): string { const n = Number(value); return Number.isFinite(n) ? `${n.toFixed(1)}%` : '—'; }
 function actionText(action: unknown): string { return clean(action).replace(/^vps-/, '').replace(/-/g, ' ') || '—'; }
-function showNotice(value: unknown, kind: 'ok' | 'err' = 'ok'): void { notice.value = { text: messageOf(value), kind }; }
+function showNotice(value: unknown, kind: 'ok' | 'err' = 'ok'): void {
+  if (noticeTimer !== null) clearTimeout(noticeTimer);
+  notice.value = { text: messageOf(value), kind };
+  noticeTimer = setTimeout(() => {
+    notice.value = null;
+    noticeTimer = null;
+  }, TOAST_VISIBLE_MS);
+}
 function closeModal(): void { modal.value = null; modalData.value = {}; }
 function onEscape(event: KeyboardEvent): void { if (event.key === 'Escape' && modal.value) closeModal(); }
 function setModal(kind: ModalKind, data: JsonRecord = {}): void { modalData.value = data; modal.value = kind; }
@@ -624,7 +634,12 @@ onMounted(() => {
   window.addEventListener('keydown', onEscape);
   connect();
 });
-onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); window.removeEventListener('keydown', onEscape); disconnect(); });
+onUnmounted(() => {
+  if (noticeTimer !== null) clearTimeout(noticeTimer);
+  document.removeEventListener('pointerup', endOverviewDrag);
+  window.removeEventListener('keydown', onEscape);
+  disconnect();
+});
 </script>
 
 <template>
@@ -651,7 +666,7 @@ onUnmounted(() => { document.removeEventListener('pointerup', endOverviewDrag); 
   <div class="vps-manager flex min-h-0 flex-1 flex-col bg-page text-primary">
     <div class="flex min-h-0 flex-1 max-[680px]:block">
       <section class="min-w-0 flex-1 overflow-auto p-[var(--page-padding)]">
-        <div v-if="notice" class="mb-3 block rounded-lg bg-card px-3 py-2.25 whitespace-pre-line" role="status" aria-live="polite" :class="noticeKindClass(notice.kind)">{{ notice.text }}</div>
+        <div v-if="notice" class="mb-3 block rounded-lg bg-card px-3 py-2.25 whitespace-pre-line cursor-pointer select-none" role="status" aria-live="polite" :class="noticeKindClass(notice.kind)" @click="notice = null">{{ notice.text }}</div>
 
         <section v-if="view === 'overview'" class="grid gap-3.5">
           <article class="mb-3.5 min-w-0 overflow-hidden rounded-[9px] border border-border-default bg-panel">

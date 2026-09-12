@@ -152,7 +152,7 @@ const { activePanel, setActivePanel, restorePanel } = usePanels({ hooks: panelHo
 
 /* ── toasts (showToast :4983-5002) — provided for M-data-2..7 panels ── */
 
-const { toasts, showToast } = useToasts();
+const { toasts, showToast, removeToast } = useToasts();
 provide(SHOW_TOAST_KEY, showToast);
 
 /* ── M-data-4: tiingo vault + tradfi map controllers, created before the
@@ -551,7 +551,7 @@ onMounted(() => {
     </div>
 
   <DataTipTooltip />
-  <ToastStack :toasts="toasts" />
+  <ToastStack :toasts="toasts" @dismiss="removeToast" />
   <ConfirmDialog :dialog="confirmDialog" />
   <!-- legacy #inventory-delete-date-ovl :2861-2891 — page-level overlay -->
   <DeleteOlderDialog

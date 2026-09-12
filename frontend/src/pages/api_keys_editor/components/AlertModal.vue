@@ -44,8 +44,9 @@ function alertTitleClass(kind: 'error' | 'warning' | 'success' | 'info'): string
     <div
       v-for="toast in toasts.toasts.value"
       :key="toast.id"
-      class="fixed bottom-5 right-5 z-[var(--z-toast)] max-w-[400px] rounded-md px-5 py-3 text-base opacity-100 transition-opacity duration-300"
+      class="fixed bottom-5 right-5 z-[var(--z-toast)] max-w-[400px] rounded-md px-5 py-3 text-base opacity-100 transition-opacity duration-300 cursor-pointer select-none"
       :class="toastClass(toast.kind)"
+      @click="toasts.dismissToast(toast.id)"
     >
       {{ toast.message }}
     </div>

@@ -2457,12 +2457,17 @@
         const toast = document.createElement("div");
         toast.className = "toast " + type;
         toast.textContent = message;
-        container.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add("show"));
-        setTimeout(() => {
+        toast.style.cursor = "pointer";
+        const timer = setTimeout(() => {
             toast.classList.remove("show");
             setTimeout(() => toast.remove(), 300);
         }, 4000);
+        toast.onclick = () => {
+            clearTimeout(timer);
+            toast.remove();
+        };
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add("show"));
     }
 
     function closeAlertModal() {

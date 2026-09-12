@@ -1,12 +1,14 @@
+import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
+
 /*
- * The page toast (v7_run.html:1388-1407): shows the message for 8 s with a
+ * The page toast (v7_run.html:1388-1407): shows the message for 4 s with a
  * 300 ms fade, and mirrors every message into the notification log via
  * POST /api/notify_log (same-origin cookie session, failures swallowed).
  */
 
 export type ToastKind = 'ok' | 'err' | 'info';
 
-export const TOAST_VISIBLE_MS = 8000;
+export { TOAST_VISIBLE_MS };
 export const TOAST_FADE_MS = 300;
 
 /** Kind → Tailwind colour utilities (v7_edit/lib/toast.ts parity). The static
@@ -27,7 +29,11 @@ export interface ToastHandle {
 }
 
 /** Notify-log mirror (:1391-1396) — best effort, never surfaces errors. */
-export function notifyLog(msg: string, level: ToastKind, fetchFn: typeof fetch = fetch): void {
+export function notifyLog(
+  msg: string,
+  level: ToastKind,
+  fetchFn: typeof fetch = (...args) => globalThis.fetch(...args)
+): void {
   void fetchFn('/api/notify_log', {
     method: 'POST',
     credentials: 'same-origin',
@@ -41,7 +47,7 @@ export function notifyLog(msg: string, level: ToastKind, fetchFn: typeof fetch =
 export function createToast(
   el: () => HTMLElement | null,
   notify: typeof notifyLog = notifyLog,
-  fetchFn: typeof fetch = fetch
+  fetchFn: typeof fetch = (...args) => globalThis.fetch(...args)
 ): ToastHandle {
   let hideTimer: ReturnType<typeof setTimeout> | null = null;
   let fadeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -64,6 +70,11 @@ export function createToast(
       node.classList.add(...TOAST_CLASSES[kind]);
       node.style.display = 'block';
       node.style.opacity = '1';
+      node.style.cursor = 'pointer';
+      node.onclick = () => {
+        clearTimers();
+        node.style.display = 'none';
+      };
       hideTimer = setTimeout(() => {
         node.style.opacity = '0';
         fadeTimer = setTimeout(() => {
@@ -74,7 +85,10 @@ export function createToast(
     dispose(): void {
       clearTimers();
       const node = el();
-      if (node) node.style.display = 'none';
+      if (node) {
+        node.onclick = null;
+        node.style.display = 'none';
+      }
     },
   };
 }

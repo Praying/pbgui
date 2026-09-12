@@ -5212,10 +5212,15 @@ function toast(message, kind) {
   var node = document.createElement('div');
   node.className = 'toast ' + (kind || 'ok');
   node.textContent = message;
-  stack.appendChild(node);
-  window.setTimeout(function() {
+  node.style.cursor = 'pointer';
+  var timer = window.setTimeout(function() {
     node.remove();
-  }, 3200);
+  }, 4000);
+  node.onclick = function() {
+    window.clearTimeout(timer);
+    node.remove();
+  };
+  stack.appendChild(node);
 }
 
 function authenticatedHeaders(extra) {

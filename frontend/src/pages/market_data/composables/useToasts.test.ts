@@ -80,10 +80,10 @@ describe('toast lifecycle (:4987-5001)', () => {
     expect(toasts.value[0]).toMatchObject({ message: 'hello', level: 'info', leaving: false });
   });
 
-  it('marks the toast is-leaving after 3200 ms', () => {
+  it('marks the toast is-leaving after TOAST_VISIBLE_MS', () => {
     const { toasts, showToast } = useToasts();
     showToast('hello', 'error');
-    vi.advanceTimersByTime(3199);
+    vi.advanceTimersByTime(3999);
     expect(toasts.value[0]?.leaving).toBe(false);
     vi.advanceTimersByTime(1);
     expect(toasts.value[0]?.leaving).toBe(true);
@@ -93,7 +93,7 @@ describe('toast lifecycle (:4987-5001)', () => {
   it('removes the toast 220 ms after the leaving phase', () => {
     const { toasts, showToast } = useToasts();
     showToast('hello');
-    vi.advanceTimersByTime(3200 + 219);
+    vi.advanceTimersByTime(4000 + 219);
     expect(toasts.value).toHaveLength(1);
     vi.advanceTimersByTime(1);
     expect(toasts.value).toHaveLength(0);
@@ -104,12 +104,23 @@ describe('toast lifecycle (:4987-5001)', () => {
     showToast('first');
     vi.advanceTimersByTime(1000);
     showToast('second');
-    vi.advanceTimersByTime(2200); // first hits 3200
+    vi.advanceTimersByTime(3000); // first hits 4000
     expect(toasts.value.map((t) => t.message)).toEqual(['first', 'second']);
     expect(toasts.value[0]?.leaving).toBe(true);
     expect(toasts.value[1]?.leaving).toBe(false);
     vi.advanceTimersByTime(220); // first fully gone; second only at leaving edge
     expect(toasts.value.map((t) => t.message)).toEqual(['second']);
+  });
+
+  it('removeToast removes a toast immediately by id', () => {
+    const { toasts, showToast, removeToast } = useToasts();
+    showToast('one');
+    showToast('two');
+    expect(toasts.value).toHaveLength(2);
+    const firstId = toasts.value[0]?.id;
+    if (firstId !== undefined) removeToast(firstId);
+    expect(toasts.value).toHaveLength(1);
+    expect(toasts.value[0]?.message).toBe('two');
   });
 
   it('gives each toast a distinct id', () => {

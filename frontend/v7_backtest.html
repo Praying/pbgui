@@ -1504,8 +1504,13 @@ function toast(msg, type) {
   var el = document.createElement('div');
   el.className = 'toast-msg toast-' + type;
   el.textContent = msg;
+  el.style.cursor = 'pointer';
+  var timer = setTimeout(function() { el.remove(); }, 4000);
+  el.onclick = function() {
+    clearTimeout(timer);
+    el.remove();
+  };
   document.getElementById('toast').appendChild(el);
-  setTimeout(function() { el.remove(); }, 4000);
 }
 
 /* ════════════════════════════════════════════════

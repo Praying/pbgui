@@ -1581,11 +1581,16 @@ function toast(msg, type) {
   el.className = 'toast-' + (type || 'info');
   el.style.display = 'block';
   el.style.opacity = '1';
+  el.style.cursor = 'pointer';
+  el.onclick = function() {
+    clearTimeout(toastTimer);
+    el.style.display = 'none';
+  };
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function() {
     el.style.opacity = '0';
     setTimeout(function() { el.style.display = 'none'; }, 300);
-  }, 8000);
+  }, 4000);
 }
 
 /* ─── Banner ──────────────────────────────────────────────── */

@@ -62,10 +62,11 @@ import {
 import { useStatusWs } from './statusWs';
 import type { ToastItem, ToastKind } from './types';
 
+import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
+
 const { t } = useI18n();
 
-/* Legacy showToast timing: visible 3 s, then slideOut 0.3 s (html:585-588). */
-const TOAST_VISIBLE_MS = 3000;
+/* Legacy showToast timing: visible 4 s, then slideOut 0.3 s (html:585-588). */
 const TOAST_SLIDE_OUT_MS = 300;
 
 const exchange = readExchange();
@@ -103,7 +104,8 @@ function scheduleToastRemoval(id: number): void {
 }
 
 function showToast(message: string, kind: ToastKind = 'info'): void {
-  void fetch(NOTIFY_LOG_URL, {
+  const fetchFn = (...args: Parameters<typeof fetch>) => globalThis.fetch(...args);
+  void fetchFn(NOTIFY_LOG_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -194,6 +196,7 @@ async function onStopRun(): Promise<void> {
         background: toastBackground(toast.kind),
         animation: toast.leaving ? 'mds-slideOut 0.3s ease' : undefined,
       }"
+      @click="removeToast(toast.id)"
     >
       {{ toast.message }}
     </div>
@@ -272,6 +275,8 @@ async function onStopRun(): Promise<void> {
   font-weight: 500;
   z-index: var(--z-toast);
   animation: mds-slideIn 0.3s ease;
+  cursor: pointer;
+  user-select: none;
 }
 
 @keyframes mds-slideIn {

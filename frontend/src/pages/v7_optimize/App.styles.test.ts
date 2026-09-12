@@ -139,7 +139,7 @@ describe('Optimize page warning style contracts', () => {
     expect(appSource).toContain(`:role="toast.kind === 'error' ? 'alert' : 'status'"`);
     expect(appSource).toContain(`:aria-live="toast.kind === 'error' ? 'assertive' : 'polite'"`);
     expect(appSource).toContain('overflow-wrap: anywhere;');
-    expect(appSource).toContain('}, 4000);');
+    expect(appSource).toMatch(/},\s*(?:4000|TOAST_VISIBLE_MS)\);/);
     expect(appSource).toMatch(/onBeforeUnmount\(\(\) => \{[\s\S]*?window\.clearTimeout\(toastTimer\);/);
     expect(appSource).toContain('@media (prefers-reduced-motion: reduce)');
   });

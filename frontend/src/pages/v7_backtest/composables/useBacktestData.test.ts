@@ -136,6 +136,29 @@ describe('createToastQueue (:1233-1251)', () => {
     await Promise.resolve();
     q.dispose();
   });
+
+  it('dismiss removes item immediately and cancels timer', () => {
+    const t = timers();
+    const q = queue(t);
+    q.show('item 1', 'info');
+    q.show('item 2', 'ok');
+    expect(q.items.value).toHaveLength(2);
+    q.dismiss(1);
+    expect(q.items.value).toHaveLength(1);
+    expect(q.items.value[0]?.msg).toBe('item 2');
+    expect(t.ids.has(1)).toBe(false);
+    q.dispose();
+  });
+
+  it('works with default options without throwing Illegal invocation', () => {
+    const q = createToastQueue();
+    expect(() => q.show('test message', 'info')).not.toThrow();
+    expect(q.items.value).toHaveLength(1);
+    const id = q.items.value[0]?.id;
+    if (id !== undefined) q.dismiss(id);
+    expect(q.items.value).toHaveLength(0);
+    q.dispose();
+  });
 });
 
 describe('formatArchivePullElapsed (:9495-9499)', () => {

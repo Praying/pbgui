@@ -49,6 +49,7 @@ import ResultsPanel from './components/ResultsPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import { useOptimizeActions } from './composables/useOptimizeActions';
 import { useOptimizePage } from './composables/useOptimizePage';
+import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
 import type { OptimizePanel } from './config';
 import type { ParetoItem, QueueItem, ResultSummary } from './types';
 import type { PageSection } from '@/shared/navigation';
@@ -88,7 +89,7 @@ function openOptimizeHelp(): void {
 function notify(message: string, kind: 'info' | 'success' | 'error' = 'info'): void {
   toast.value = { message, kind };
   window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => { toast.value = null; }, 4000);
+  toastTimer = window.setTimeout(() => { toast.value = null; }, TOAST_VISIBLE_MS);
 }
 
 function detail(error: unknown): string { return error instanceof Error ? error.message : String(error); }
@@ -642,10 +643,11 @@ onBeforeUnmount(() => {
     <div
       v-if="toast"
       :key="`${toast.kind}-${toast.message}`"
-      class="opt-toast-card fixed right-[18px] bottom-[18px] z-[1200] shadow-[var(--shadow-elevated)]"
+      class="opt-toast-card fixed right-[18px] bottom-[18px] z-[1200] shadow-[var(--shadow-elevated)] cursor-pointer select-none"
       :class="`opt-toast-card--${toast.kind}`"
       :role="toast.kind === 'error' ? 'alert' : 'status'"
       :aria-live="toast.kind === 'error' ? 'assertive' : 'polite'"
+      @click="toast = null"
     >
       <span class="opt-toast-card__icon" aria-hidden="true">
         <PbIcon :icon="toast.kind === 'success' ? PhCheckCircle : toast.kind === 'error' ? PhWarningCircle : PhInfo" :size="18" />

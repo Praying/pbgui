@@ -335,7 +335,7 @@ describe('toasts (legacy showToast)', () => {
     expect(headers.get('content-type')).toBe('application/json');
   });
 
-  it('slides out after 3 seconds and is removed 300ms later', async () => {
+  it('slides out after 4 seconds and is removed 300ms later', async () => {
     vi.useFakeTimers();
     try {
       actionsResolve({ success: true });
@@ -349,7 +349,7 @@ describe('toasts (legacy showToast)', () => {
       const toast = app.find('.mds-toast').element as HTMLElement;
       expect(toast.style.animation).toBe('');
 
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(4000);
       await nextTick();
       expect((app.find('.mds-toast').element as HTMLElement).style.animation).toBe('mds-slideOut 0.3s ease');
 
@@ -359,6 +359,21 @@ describe('toasts (legacy showToast)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('clicking the toast removes it immediately', async () => {
+    actionsResolve({ success: true });
+    const app = mountApp();
+
+    FakeWebSocket.instances[0]!.message(statusMessage());
+    await nextTick();
+    await app.find('.mds-btn').trigger('click');
+    await flushPromises();
+
+    expect(app.find('.mds-toast').exists()).toBe(true);
+    await app.find('.mds-toast').trigger('click');
+    await nextTick();
+    expect(app.find('.mds-toast').exists()).toBe(false);
   });
 
   it('colors success and error toasts with the legacy accents', async () => {

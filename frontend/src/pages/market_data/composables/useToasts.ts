@@ -1,5 +1,6 @@
 import { onScopeDispose, ref, type Ref } from 'vue';
 import { getBoot } from '@/shared/boot';
+import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
 import { NOTIFY_LOG_URL } from '../config';
 import type { ToastItem, ToastLevel } from '../types';
 
@@ -10,15 +11,15 @@ import type { ToastItem, ToastLevel } from '../types';
  *   - trim the text; empty → no-op (no relay, no toast)
  *   - relay {msg, level} to POST /api/notify_log with the boot bearer token,
  *     failures swallowed
- *   - append a toast; after 3200 ms mark it leaving; 220 ms later remove it
+ *   - append a toast; after 4000 ms mark it leaving; 220 ms later remove it
  *
  * Deviation (documented): legacy leaked its timers on unload; the composable
  * clears them on scope dispose (same cleanup call the dashboard/status
  * migrations apply).
  */
 
-/** Legacy visibility window before the leaving phase (:4994). */
-export const TOAST_VISIBLE_MS = 3200;
+/** Unified visibility window before the leaving phase. */
+export { TOAST_VISIBLE_MS };
 /** Legacy leaving-phase length before removal (:4996-5001, CSS 0.22 s). */
 export const TOAST_LEAVE_MS = 220;
 
@@ -35,13 +36,15 @@ export interface UseToastsOptions {
 export interface UseToasts {
   toasts: Ref<ToastItem[]>;
   showToast(message: unknown, level?: ToastLevel): void;
+  removeToast(id: number): void;
   /** Clear all pending timers (legacy had no equivalent; leak fix). */
   dispose(): void;
 }
 
 /** Legacy logNotification relay (:4969-4981) — fire-and-forget POST. */
 function defaultNotify(message: string, level: ToastLevel): void {
-  void fetch(NOTIFY_LOG_URL, {
+  const fetchFn = (...args: Parameters<typeof fetch>) => globalThis.fetch(...args);
+  void fetchFn(NOTIFY_LOG_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -101,5 +104,5 @@ export function useToasts(options: UseToastsOptions = {}): UseToasts {
 
   onScopeDispose(dispose);
 
-  return { toasts, showToast, dispose };
+  return { toasts, showToast, removeToast, dispose };
 }

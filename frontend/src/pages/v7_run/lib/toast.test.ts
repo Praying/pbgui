@@ -100,6 +100,15 @@ describe('createToast (:1397-1407)', () => {
     expect(el.style.display).toBe('none');
   });
 
+  it('clicking the toast dismisses it immediately', () => {
+    const toast = createToast(() => el, () => undefined);
+    toast.show('msg', 'info');
+    expect(el.style.display).toBe('block');
+    el.click();
+    expect(el.style.display).toBe('none');
+    toast.dispose();
+  });
+
   it('dispose clears pending timers and hides the element', () => {
     const toast = createToast(() => el, () => undefined);
     toast.show('msg', 'info');
@@ -109,3 +118,4 @@ describe('createToast (:1397-1407)', () => {
     expect(el.style.opacity).toBe('1'); // fade timer was cleared
   });
 });
+

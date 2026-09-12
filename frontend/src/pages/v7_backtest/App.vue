@@ -881,8 +881,11 @@ watch(
     <div
       v-for="item in store.toasts.value"
       :key="item.id"
-      class="toast-msg pointer-events-auto animate-[bt-fade-in_0.2s] rounded-md px-4 py-2.5 text-sm font-medium"
+      class="toast-msg pointer-events-auto animate-[bt-fade-in_0.2s] rounded-md px-4 py-2.5 text-sm font-medium cursor-pointer select-none transition-opacity hover:opacity-85"
       :class="['toast-' + item.kind, toastToneClass(item.kind)]"
+      role="status"
+      data-test="toast-msg"
+      @click="store.toast.dismiss(item.id)"
     >
       {{ item.msg }}
     </div>

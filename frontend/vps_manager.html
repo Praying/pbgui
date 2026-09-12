@@ -6135,12 +6135,17 @@
       const node = document.createElement('div');
       node.className = 'toast ' + safeType;
       node.textContent = message;
-      document.getElementById('toastContainer').appendChild(node);
-      setTimeout(function () {
+      node.style.cursor = 'pointer';
+      const timer = setTimeout(function () {
         node.style.opacity = '0';
         node.style.transform = 'translateY(8px)';
         setTimeout(function () { node.remove(); }, 220);
-      }, safeType === 'error' ? 4200 : 2600);
+      }, 4000);
+      node.onclick = function () {
+        clearTimeout(timer);
+        node.remove();
+      };
+      document.getElementById('toastContainer').appendChild(node);
     }
 
     async function apiKeysFetch(path, options) {

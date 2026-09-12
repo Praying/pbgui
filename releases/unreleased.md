@@ -1,5 +1,27 @@
 # Unreleased
 
+## 全局右下角通知持续显示不消失问题修复及显示时长统一
+
+- **统一通知显示时长为 4 秒（4000ms）**：
+  - 针对全局所有模块的右下角 Toast 通知、Notice 提示和状态提示，统一标准展示时长为 4000 毫秒（`TOAST_VISIBLE_MS = 4000`）。
+  - 创建全局共享常数模块 `frontend/src/shared/lib/toast.ts`，导出 `TOAST_VISIBLE_MS`。
+  - 全面统一重构各模块显示时长：
+    - `v7_run`：由 8000ms 统一调整为 4000ms。
+    - `v7_edit`：由 8000ms 统一调整为 4000ms。
+    - `v7_optimize`：接入统一常量 `TOAST_VISIBLE_MS`（4000ms）。
+    - `market_data`：接入统一常量 `TOAST_VISIBLE_MS`（4000ms）。
+    - `market_data_status`：由 3000ms 统一调整为 4000ms。
+    - `api_keys_editor`：由 4300ms 统一调整为 4000ms。
+    - `vps_manager`：修复 Notice 弹条此前无自动消失定时器而永久常驻在右下角的问题，加入 4000ms 自动关闭定时器并在组件卸载时安全清理。
+    - 历史兼容模板：`frontend/v7_run.html`（8s → 4s）、`frontend/v7_edit.html`（8s → 4s）、`frontend/v7_optimize.html`（3.2s → 4s）、`frontend/vps_manager.html`（2.6s/4.2s → 4s）。
+- **彻底根除 WebKit/Safari 原生定时器 Illegal invocation 非法调用导致的通知卡死常驻**：
+  - 排查发现：在部分浏览器及 WebKit 内核环境下，从全局对象解构 `setTimeout`、`clearTimeout` 并以 `{ setTimeout, clearTimeout }` 对象形式传入 `createToastQueue` 执行 `timers.setTimeout(...)` 时，由于上下文接收者（`this`）为普通对象而非 `Window`，抛出 `TypeError: 'setTimeout' called on an object that does not implement interface Window` 异常。
+  - 由于异常发生在 toast 推入响应式数组之后、定时器调度完成之前，导致通知显示在页面右下角后永远无法启动销毁定时器，形成「通知持续显示、永不消失」的缺陷。
+  - 修复方案：在 `v7_backtest/lib/toast.ts` 及各模块中将定时器与 fetch 调用封装为安全代理函数 `(...args) => globalThis.setTimeout(...args)`、`(...args) => globalThis.clearTimeout(...args)` 与 `(...args) => globalThis.fetch(...args)`，彻底杜绝上下文解绑造成的运行时崩溃。
+- **全页面支持点击通知即刻关闭（Click-to-dismiss）**：
+  - 在所有 Vue 页面及历史 HTML 页面的右下角通知卡片、提示条上新增点击即刻关闭交互与鼠标手势（`cursor-pointer`、`select-none` 与 `@click="dismiss"` / `node.onclick`）。
+  - 点击时同步触发 `clearTimeout` 释放定时器句柄并从 DOM / 响应式数组中移除通知，赋予用户随时手动清除通知的能力。
+
 ## 回测结果表格 Table Foot 固定底端位置优化
 
 - **Table Foot 改为固定底端位置**：移除「PBv7/PBv8 回测/结果」页面表格底部的可拉动手柄（`#results-resize-handle`）以及列表容器的动态像素高度限制，使结果列表容器（`#results-list-wrap`）弹性撑满剩余视口高度并在内部自适应滚动，底部 `ListFooter` 始终稳固锚定在卡片最底端，彻底消除由于拖动导致的表格下半部分大面积黑斑悬空问题。

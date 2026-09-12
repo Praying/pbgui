@@ -13,6 +13,7 @@
 import type { ToastItem } from '../types';
 
 defineProps<{ toasts: ToastItem[] }>();
+defineEmits<{ (e: 'dismiss', id: number): void }>();
 
 const TOAST_TONE: Record<string, string> = {
   success: 'bg-success/96 border-success-soft/28 text-primary',
@@ -28,7 +29,7 @@ function toastClass(toast: ToastItem): string {
   const animation = toast.leaving
     ? 'is-leaving animate-[toast-slide-out_0.22s_ease_forwards]'
     : 'animate-[toast-slide-in_0.22s_ease]';
-  return `toast ${toast.level} pointer-events-auto rounded-[10px] border px-3 py-2 text-base leading-[1.45] break-words shadow-[0_18px_40px_rgba(5,8,14,0.28)] ${tone} ${animation}`;
+  return `toast ${toast.level} pointer-events-auto rounded-[10px] border px-3 py-2 text-base leading-[1.45] break-words shadow-[0_18px_40px_rgba(5,8,14,0.28)] cursor-pointer select-none ${tone} ${animation}`;
 }
 </script>
 
@@ -41,6 +42,7 @@ function toastClass(toast: ToastItem): string {
       v-for="toast in toasts"
       :key="toast.id"
       :class="toastClass(toast)"
+      @click="$emit('dismiss', toast.id)"
     >{{ toast.message }}</div>
   </div>
 </template>

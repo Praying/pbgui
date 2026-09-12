@@ -1,4 +1,5 @@
 import { provide, inject, ref, type InjectionKey } from 'vue';
+import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
 import type { Translator } from '../types';
 
 /**
@@ -27,6 +28,7 @@ export interface Toasts {
   toasts: typeof toastsRef;
   alert: typeof alertRef;
   showToast(message: string, type?: ToastKind): void;
+  dismissToast(id: number): void;
   updateAlert(message: string, type: 'error' | 'warning' | 'success' | 'info'): void;
   closeAlert(): void;
 }
@@ -36,9 +38,11 @@ const alertRef = ref<AlertState>({ visible: false, kind: 'error', title: '', mes
 
 let nextToastId = 1;
 let currentT: Translator = (key) => key;
+const toastTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
 function relayToNotifyLog(message: string, kind: ToastKind): void {
-  void fetch('/api/notify_log', {
+  const fetchFn = (...args: Parameters<typeof fetch>) => globalThis.fetch(...args);
+  void fetchFn('/api/notify_log', {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
@@ -46,15 +50,27 @@ function relayToNotifyLog(message: string, kind: ToastKind): void {
   }).catch(() => {});
 }
 
+function dismissToast(id: number): void {
+  const timer = toastTimers.get(id);
+  if (timer !== undefined) {
+    clearTimeout(timer);
+    toastTimers.delete(id);
+  }
+  toastsRef.value = toastsRef.value.filter((toast) => toast.id !== id);
+}
+
 export function useToasts(t: Translator): Toasts {
   currentT = t;
   // Fresh state per instance keeps mounted units isolated in tests.
+  for (const timer of toastTimers.values()) clearTimeout(timer);
+  toastTimers.clear();
   toastsRef.value = [];
   alertRef.value = { visible: false, kind: 'error', title: '', message: '' };
   return {
     toasts: toastsRef,
     alert: alertRef,
     showToast,
+    dismissToast,
     updateAlert,
     closeAlert,
   };
@@ -91,9 +107,12 @@ function showToast(message: string, type: ToastKind = 'success'): void {
   }
   const id = nextToastId++;
   toastsRef.value = [...toastsRef.value, { id, kind: type, message }];
-  setTimeout(() => {
-    toastsRef.value = toastsRef.value.filter((toast) => toast.id !== id);
-  }, 4300);
+  toastTimers.set(
+    id,
+    setTimeout(() => {
+      dismissToast(id);
+    }, TOAST_VISIBLE_MS)
+  );
 }
 
 function updateAlert(message: string, type: 'error' | 'warning' | 'success' | 'info'): void {
@@ -103,3 +122,4 @@ function updateAlert(message: string, type: 'error' | 'warning' | 'success' | 'i
 function closeAlert(): void {
   alertRef.value = { ...alertRef.value, visible: false };
 }
+
