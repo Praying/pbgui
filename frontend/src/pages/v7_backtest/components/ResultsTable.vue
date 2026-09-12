@@ -214,7 +214,7 @@ onBeforeUnmount(() => dragSelect.dispose());
           />
           <Th :title="t('v7backtest.tweTooltip')" class="cursor-default">TWE</Th>
           <Th class="cursor-default">POS</Th>
-          <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
+          <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
         </tr>
       </thead>
       <tbody ref="tbody">

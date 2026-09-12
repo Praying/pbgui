@@ -320,7 +320,7 @@ defineExpose({
               <SortTh sort-key="end_date" data-col="end_date" :label="t('v7backtest.end')" :sort="sort.col === 'end_date' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'end_date')" />
               <SortTh sort-key="results" data-col="results" :label="t('v7backtest.resultCountHeader')" :sort="sort.col === 'results' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'results')" />
               <SortTh sort-key="modified" data-col="modified" :label="t('v7backtest.modified')" :sort="sort.col === 'modified' ? (sort.asc ? 'asc' : 'desc') : undefined" @sort="emit('sort', 'modified')" />
-              <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
+              <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
             </tr>
           </thead>
           <tbody>

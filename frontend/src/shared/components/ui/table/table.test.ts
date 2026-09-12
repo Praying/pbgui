@@ -109,6 +109,20 @@ describe('TdActions', () => {
     expect(onMousedown).not.toHaveBeenCalled();
     wrapper.unmount();
   });
+
+  it('supports align prop with matching cell and group alignment classes', () => {
+    const left = mount(TdActions);
+    expect(left.get('td').classes()).toContain('text-left');
+    expect(left.get('.pbgui-list-actions__group').classes()).toContain('justify-start');
+
+    const center = mount(TdActions, { props: { align: 'center' } });
+    expect(center.get('td').classes()).toContain('text-center');
+    expect(center.get('.pbgui-list-actions__group').classes()).toContain('justify-center');
+
+    const right = mount(TdActions, { props: { align: 'right' } });
+    expect(right.get('td').classes()).toContain('text-right');
+    expect(right.get('.pbgui-list-actions__group').classes()).toContain('justify-end');
+  });
 });
 
 describe('EmptyRow', () => {

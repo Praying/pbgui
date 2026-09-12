@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue';
+import { computed } from 'vue';
 import { cn } from '@/shared/lib/utils';
 
 /**
@@ -12,19 +13,34 @@ import { cn } from '@/shared/lib/utils';
  */
 interface Props {
   class?: HTMLAttributes['class'];
+  align?: 'left' | 'center' | 'right';
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  align: 'left',
+});
+
+const alignClass = computed(() => {
+  if (props.align === 'center') return 'text-center';
+  if (props.align === 'right') return 'text-right';
+  return 'text-left';
+});
+
+const groupAlignClass = computed(() => {
+  if (props.align === 'center') return 'justify-center';
+  if (props.align === 'right') return 'justify-end';
+  return 'justify-start';
+});
 </script>
 
 <template>
   <td
     data-slot="td-actions"
-    :class="cn('pbgui-list-actions whitespace-nowrap! overflow-visible!', props.class)"
+    :class="cn('pbgui-list-actions whitespace-nowrap! overflow-visible!', alignClass, props.class)"
     @click.stop
     @mousedown.stop
   >
-    <div class="pbgui-list-actions__group">
+    <div :class="cn('pbgui-list-actions__group', groupAlignClass)">
       <slot />
     </div>
   </td>

@@ -256,7 +256,7 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
               :sort="sortCol === column.key ? (sortAsc ? 'asc' : 'desc') : undefined"
               @sort="setSort(column.key)"
             />
-            <Th align="center" class="cursor-default">{{ t('v7backtest.actions') }}</Th>
+            <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
           </tr>
         </thead>
         <tbody>
