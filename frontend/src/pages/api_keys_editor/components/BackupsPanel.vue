@@ -154,7 +154,7 @@ async function openDiffSelected(): Promise<void> {
       <BackButton @back="emit('back')" />
       <h3 class="text-lg tracking-tight text-primary" style="margin:0;">{{ t('misc.apikeys.apiKeyBackups') }}</h3>
     </div>
-    <p style="font-size:var(--fs-sm); color:var(--text-secondary); margin:0 0 12px;" v-html="t('misc.apikeys.backupsDesc')"></p>
+    <p style="font-size:var(--text-sm); color:var(--text-secondary); margin:0 0 12px;" v-html="t('misc.apikeys.backupsDesc')"></p>
     <div id="backupsList">
       <div v-if="state === 'loading'" style="text-align:center;color:var(--text-secondary);padding:20px;">
         <span class="mr-1.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-accent align-middle"></span> {{ t('common.loading') }}
@@ -165,7 +165,7 @@ async function openDiffSelected(): Promise<void> {
       <div v-else-if="state === 'error'" style="color:var(--danger);padding:20px;">{{ errorText }}</div>
       <template v-else>
         <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-          <span style="font-size:var(--fs-sm); color:var(--text-secondary);">{{ t('misc.apikeys.selectTwoToCompare') }}</span>
+          <span style="font-size:var(--text-sm); color:var(--text-secondary);">{{ t('misc.apikeys.selectTwoToCompare') }}</span>
           <Button
             variant="secondary"
             size="sm"
@@ -200,7 +200,7 @@ async function openDiffSelected(): Promise<void> {
               @mousedown="onRowMousedown($event, b.filename)"
               @keydown="onRowKeydown($event, b.filename)"
             >
-              <td class="border-b border-border-subtle px-2.5 py-2 text-sm" style="font-size:var(--fs-xs);font-family:monospace;color:var(--text-secondary);word-break:break-all;">{{ b.filename }}</td>
+              <td class="border-b border-border-subtle px-2.5 py-2 text-sm" style="font-size:var(--text-xs);font-family:monospace;color:var(--text-secondary);word-break:break-all;">{{ b.filename }}</td>
               <td class="border-b border-border-subtle px-2.5 py-2 text-sm">{{ b.ts.replace('T', ' ') }}</td>
               <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><span class="badge-exchange inline-block rounded-full border border-secondary/14 bg-secondary/7 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-secondary">{{ b.target }}</span></td>
               <td class="border-b border-border-subtle px-2.5 py-2 text-sm">{{ b.size_kb }} KB</td>

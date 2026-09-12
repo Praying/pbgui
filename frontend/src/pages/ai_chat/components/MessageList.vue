@@ -49,7 +49,7 @@ function onQuickReply(actionId: string, value: string): void {
   <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto px-[max(18px,calc((100%-920px)/2))] py-5">
     <div v-if="!messages.length && !pendingMessage" class="grid min-h-full place-items-center text-center text-secondary">
       <div>
-        <strong class="mb-1 block text-[17px] text-primary">{{ t('ai.chat.emptyTitle') }}</strong>
+        <strong class="mb-1 block text-md text-primary">{{ t('ai.chat.emptyTitle') }}</strong>
         {{ t('ai.chat.emptyBody') }}
       </div>
     </div>

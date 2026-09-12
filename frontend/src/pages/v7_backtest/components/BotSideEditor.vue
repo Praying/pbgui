@@ -101,7 +101,7 @@ watch(model, (raw) => {
     <header class="bot-side-head mb-2.5 flex min-w-0 items-center justify-between gap-2 border-b border-secondary/12 pb-2">
       <h3 :id="'bot-side-title-' + side" class="bot-side-title flex min-w-0 items-center justify-between gap-2">
         <span class="bot-side-direction min-w-0 font-bold text-primary [overflow-wrap:anywhere]">{{ t(side === 'long' ? 'v7backtest.long' : 'v7backtest.short') }}</span>
-        <span class="bot-side-role shrink-0 font-mono text-[10px] leading-none tracking-[0.12em] text-secondary">{{ side.toUpperCase() }}</span>
+        <span class="bot-side-role shrink-0 font-mono text-micro leading-none tracking-label text-secondary">{{ side.toUpperCase() }}</span>
       </h3>
     </header>
     <div class="form-row cols-2 bot-side-primary mb-2">

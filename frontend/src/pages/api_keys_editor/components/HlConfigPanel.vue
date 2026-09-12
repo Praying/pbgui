@@ -99,7 +99,7 @@ async function save(): Promise<void> {
             {{ configured ? t('misc.apikeys.configured') : t('misc.apikeys.notConfigured') }}
           </span>
           <div class="flex items-end gap-2">
-            <strong class="font-mono text-[2rem] leading-none text-primary">{{ loading ? '…' : days }}</strong>
+            <strong class="font-mono text-2xl leading-none text-primary">{{ loading ? '…' : days }}</strong>
             <span class="pb-0.5 text-sm text-muted">{{ Number(days) === 1 ? t('misc.apikeys.day') : t('misc.apikeys.days') }}</span>
           </div>
           <p id="hlWarningConfigStatus" class="m-0 text-sm leading-relaxed" :class="configured ? 'text-success-soft' : 'text-warning-soft'">

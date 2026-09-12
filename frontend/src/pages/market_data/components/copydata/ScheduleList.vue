@@ -80,7 +80,7 @@ const { t } = useI18n();
             <div class="copy-data-schedule-name font-bold text-primary">{{ row.name }}</div>
             <span
               v-if="!row.enabled"
-              class="copy-data-schedule-badge inline-flex items-center gap-1 rounded-sm border border-border-default bg-card/70 px-1.5 py-px text-[10px] font-medium uppercase tracking-label text-secondary"
+              class="copy-data-schedule-badge inline-flex items-center gap-1 rounded-sm border border-border-default bg-card/70 px-1.5 py-px text-micro font-medium uppercase tracking-label text-secondary"
             ><PbIcon :icon="PhPauseCircle" :size="12" />{{ t('common.disabled') }}</span>
           </div>
           <div class="copy-data-schedule-detail text-xs text-secondary [overflow-wrap:anywhere]">{{ row.timing }}</div>

@@ -19,7 +19,7 @@ const summaryCardClass =
 <template>
   <div class="summary-grid grid gap-3 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]" :id="id">
     <div v-for="card in cards" :key="card.label" :class="summaryCardClass">
-      <div class="summary-label text-xs uppercase tracking-[0.08em] text-secondary">{{ card.label }}</div>
+      <div class="summary-label text-xs uppercase tracking-label text-secondary">{{ card.label }}</div>
       <div class="summary-value text-md font-bold text-primary break-words">{{ card.value }}</div>
       <div :class="noteClass">{{ card.note }}</div>
     </div>

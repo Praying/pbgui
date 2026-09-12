@@ -117,7 +117,7 @@ function onToggle(routing: Record<string, boolean>, id: string, value: boolean |
 .alert-routing-title {
   padding: 0.55rem 0.85rem;
   border-bottom: 1px solid var(--border-subtle);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--accent-soft);
   font-weight: 600;
 }
@@ -131,17 +131,17 @@ function onToggle(routing: Record<string, boolean>, id: string, value: boolean |
 .alert-routing-col { display: grid; gap: 0.35rem; }
 .alert-routing-col.telegram-col { gap: 0.45rem; }
 .alert-routing-col-header {
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-disabled);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-label);
 }
 .alert-routing-check {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 .alert-routing-check .label-hint { color: var(--text-disabled); }

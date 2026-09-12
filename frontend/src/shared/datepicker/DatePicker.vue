@@ -257,7 +257,7 @@ const canToday = computed(() => {
   padding: 6px 8px;
   border-radius: var(--radius-sm);
   text-align: left;
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   cursor: pointer;
   transition: background-color var(--motion-fast) var(--ease-standard);

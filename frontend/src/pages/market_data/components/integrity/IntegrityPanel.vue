@@ -153,9 +153,9 @@ onBeforeUnmount(() => {
   gap: 8px;
   margin-bottom: 14px;
   color: var(--text-secondary);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
 
@@ -177,14 +177,15 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-full);
   background: rgb(var(--accent-rgb) / 0.08);
   color: var(--accent-soft);
-  font-size: 11px;
-  letter-spacing: 0.02em;
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-label);
   text-transform: none;
 }
 
 .integrity-hero-copy h2 {
   margin: 4px 0 8px;
-  font-size: clamp(24px, 3vw, 34px);
+  /* Fluid hero: bounds snap to the ladder (xl -> 3xl), the middle stays viewport-driven. */
+  font-size: clamp(var(--text-xl), 3vw, var(--text-3xl));
   letter-spacing: var(--tracking-display);
   line-height: 1.05;
 }
@@ -210,7 +211,7 @@ onBeforeUnmount(() => {
 .integrity-command-label,
 .integrity-snapshot-heading .eyebrow {
   color: var(--text-muted);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
@@ -227,7 +228,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 9px;
   color: var(--text-muted);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   line-height: 1.4;
 }
 
@@ -249,7 +250,7 @@ onBeforeUnmount(() => {
 .integrity-snapshot-heading h3 {
   margin: 4px 0 0;
   color: var(--text-primary);
-  font-size: var(--fs-lg);
+  font-size: var(--text-lg);
   letter-spacing: var(--tracking-tight);
 }
 

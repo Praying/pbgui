@@ -89,7 +89,7 @@ watch(isOpen, (open) => {
     type="button"
     variant="ghost"
     size="sm"
-    class="h-8.5 shrink-0 gap-1.5 text-[13px] font-medium"
+    class="h-8.5 shrink-0 gap-1.5 text-compact font-medium"
     data-test="pb8-parameter-help-open"
     @click="openReference"
   >
@@ -127,7 +127,7 @@ watch(isOpen, (open) => {
         <article v-for="item in filteredEntries" :key="item.path" class="rounded-lg border border-border-subtle bg-card px-3.5 py-3">
           <code class="break-all text-xs font-semibold text-accent-soft">{{ item.path }}</code>
           <p class="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-secondary">{{ plainText(item.entry.text || '') }}</p>
-          <p v-if="item.entry.source" class="mt-1 text-[11px] text-disabled">{{ item.entry.source }}<span v-if="item.entry.heading"> · {{ item.entry.heading }}</span></p>
+          <p v-if="item.entry.source" class="mt-1 text-micro text-disabled">{{ item.entry.source }}<span v-if="item.entry.heading"> · {{ item.entry.heading }}</span></p>
         </article>
       </div>
     </div>

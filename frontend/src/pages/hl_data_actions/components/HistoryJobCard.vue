@@ -60,9 +60,9 @@ const duration = computed(() => formatJobDuration(props.job));
   <div class="hlda-jc mb-2 rounded-md border border-elevated bg-workspace px-3 py-2.5">
     <div class="hlda-jh flex flex-wrap items-center justify-between gap-1.5">
       <div class="hlda-ji flex flex-wrap items-center gap-2">
-        <span class="jid break-all text-[12px] font-semibold text-primary">{{ job.id }}</span>
-        <span class="jtype text-[12px] text-muted">{{ job.type }}</span>
-        <span v-if="duration" class="jdur text-[12px] text-muted">{{ duration }}</span>
+        <span class="jid break-all text-xs font-semibold text-primary">{{ job.id }}</span>
+        <span class="jtype text-xs text-muted">{{ job.type }}</span>
+        <span v-if="duration" class="jdur text-xs text-muted">{{ duration }}</span>
       </div>
       <div class="hlda-ja flex gap-1.5">
         <Button type="button" variant="info" size="sm" class="hlda-jbtn" @click="$emit('view')">{{ t('market.view') }}</Button>
@@ -72,11 +72,11 @@ const duration = computed(() => formatJobDuration(props.job));
         <Button type="button" variant="danger" size="sm" class="hlda-jbtn" @click="$emit('delete')">{{ t('common.delete') }}</Button>
       </div>
     </div>
-    <div class="hlda-jd mt-1 flex flex-wrap gap-1.5 text-[12px] text-muted">
+    <div class="hlda-jd mt-1 flex flex-wrap gap-1.5 text-xs text-muted">
       <span>{{ fmtTS(job.updated_ts) }}</span>
       <span v-if="range">{{ t('market.rangeLabel', { range }) }}</span>
     </div>
-    <div class="hlda-jerr mt-1 text-[12px] text-danger" v-if="job.error">{{ job.error }}</div>
+    <div class="hlda-jerr mt-1 text-xs text-danger" v-if="job.error">{{ job.error }}</div>
     <div class="hlda-exp mt-1.5" v-if="hasStats || coinPreview">
       <Button type="button" variant="ghost" size="sm" class="hlda-exp-toggle h-auto border-0 px-0 py-0.5 font-normal text-muted hover:bg-transparent hover:text-primary" @click="$emit('expand')"><PbIcon :icon="expanded ? PhCaretDown : PhCaretRight" :size="12" class="align-[-1px] inline-block" /> {{ t('market.details') }}</Button>
       <div class="hlda-exp-body pt-1.5 pl-2 text-xs text-secondary" :class="expanded ? 'open block' : 'hidden'">

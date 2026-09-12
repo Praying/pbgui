@@ -99,7 +99,7 @@ function syncScroll(event: Event): void {
     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-border-default/80 bg-surface-deep/70 px-3.5 py-2">
       <div class="flex items-center gap-2">
         <PbIcon :icon="PhCode" class="text-accent" :size="17" />
-        <span class="text-[13.5px] font-semibold text-primary" :data-tip="t('v7optimize.tip.botJson')">{{ label || t('v7optimize.botStrategyJson') }}</span>
+        <span class="text-compact font-semibold text-primary" :data-tip="t('v7optimize.tip.botJson')">{{ label || t('v7optimize.botStrategyJson') }}</span>
         <span class="rounded bg-elevated px-1.5 py-0.5 font-mono text-xs text-secondary">
           {{ lines.length }} lines
         </span>
@@ -143,14 +143,14 @@ function syncScroll(event: Event): void {
     </div>
 
     <!-- Code Editor Canvas -->
-    <div class="relative min-h-[360px] bg-page font-mono text-[13px]">
+    <div class="relative min-h-[360px] bg-page font-mono text-compact">
       <pre
         ref="highlight"
-        class="pointer-events-none absolute inset-0 box-border h-full w-full overflow-auto whitespace-pre-wrap p-3 font-mono text-[13px] leading-relaxed text-transparent"
+        class="pointer-events-none absolute inset-0 box-border h-full w-full overflow-auto whitespace-pre-wrap p-3 font-mono text-compact leading-relaxed text-transparent"
         aria-hidden="true"
       ><span v-for="line in lines" :key="line.number" :data-status="line.status || undefined" :class="line.status ? `is-${line.status}` : undefined">{{ line.text }}</span></pre>
       <Textarea
-        class="opt-bot-json-input absolute inset-0 z-[1] box-border h-full min-h-0 resize-y overflow-auto whitespace-pre-wrap rounded-none border-0 bg-transparent p-3 font-mono text-[13px] leading-relaxed caret-primary focus-visible:ring-0 focus-visible:outline-none"
+        class="opt-bot-json-input absolute inset-0 z-[1] box-border h-full min-h-0 resize-y overflow-auto whitespace-pre-wrap rounded-none border-0 bg-transparent p-3 font-mono text-compact leading-relaxed caret-primary focus-visible:ring-0 focus-visible:outline-none"
         :aria-label="label"
         :model-value="modelValue"
         spellcheck="false"

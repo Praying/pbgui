@@ -234,8 +234,8 @@ function statusTone(card: Card): 'neutral' | 'success' | 'warning' | 'danger' | 
 }
 .svc-card.running { border-color: rgb(var(--success-rgb) / 0.45); }
 .svc-card.stopped { border-color: rgb(var(--danger-rgb) / 0.35); }
-.card-name { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary); }
-.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: var(--text-muted); }
+.card-name { font-size: var(--text-sm); font-weight: 700; color: var(--text-primary); }
+.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--text-xs); color: var(--text-muted); }
 .card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-disabled); flex-shrink: 0; }
 .card-dot.running { background: var(--success); }
 .card-dot.stopped { background: var(--danger); }

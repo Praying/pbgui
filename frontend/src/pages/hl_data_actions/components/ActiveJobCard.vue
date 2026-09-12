@@ -58,9 +58,9 @@ function statusBadgeClass(status: string): string {
   <div class="hlda-jc mb-2 rounded-md border border-elevated bg-workspace px-3 py-2.5">
     <div class="hlda-jh flex flex-wrap items-center justify-between gap-1.5">
       <div class="hlda-ji flex flex-wrap items-center gap-2">
-        <span class="jid break-all text-[12px] font-semibold text-primary">{{ job.id }}</span>
+        <span class="jid break-all text-xs font-semibold text-primary">{{ job.id }}</span>
         <span class="hlda-sbadge rounded-[3px] px-2 py-0.5 text-xs font-medium" :class="statusBadgeClass(job.status)">{{ job.status }}</span>
-        <span class="jtype text-[12px] text-muted">{{ job.type }}</span>
+        <span class="jtype text-xs text-muted">{{ job.type }}</span>
       </div>
       <div class="hlda-ja flex gap-1.5">
         <Button v-if="job.status === 'pending'" type="button" variant="success" size="sm" class="hlda-jbtn" @click="$emit('run')">{{ t('market.run') }}</Button>
@@ -69,7 +69,7 @@ function statusBadgeClass(status: string): string {
         <Button type="button" variant="danger" size="sm" class="hlda-jbtn" @click="$emit('cancel')">{{ t('common.cancel') }}</Button>
       </div>
     </div>
-    <div class="hlda-jd mt-1 flex flex-wrap gap-1.5 text-[12px] text-muted">
+    <div class="hlda-jd mt-1 flex flex-wrap gap-1.5 text-xs text-muted">
       <span v-if="coin">{{ t('market.coinLabel', { coin }) }}</span>
       <span v-if="chunk">{{ t('market.chunkLabel', { chunk }) }}</span>
       <span>{{ t('market.updatedLabel', { ts: fmtTS(job.updated_ts) }) }}</span>

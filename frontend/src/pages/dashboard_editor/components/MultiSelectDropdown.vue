@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
 .dt-meta-controls .msel-btn {
   min-width: 80px;
   max-width: 120px;
-  font-size: 0.73rem;
+  font-size: var(--text-micro);
   padding: 0.2rem 0.35rem;
 }
 </style>

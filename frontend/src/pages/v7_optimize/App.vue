@@ -621,7 +621,7 @@ onBeforeUnmount(() => {
 
   <div v-if="page.queueConfigChoice.value" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop">
     <section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true">
-      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.repairQueuedConfig') }}</h2><Button type="button" variant="default" @click="page.closeQueueConfigChoice">{{ t('common.close') }}</Button></header>
+      <header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-tight">{{ t('v7optimize.repairQueuedConfig') }}</h2><Button type="button" variant="default" @click="page.closeQueueConfigChoice">{{ t('common.close') }}</Button></header>
       <div class="grid min-h-0 gap-3 overflow-auto p-3.5">
         <p>{{ page.queueConfigChoice.value.message || t('v7optimize.queueConfigPathMissing') }}</p>
         <code class="block rounded-md border border-border-default bg-page p-2 [overflow-wrap:anywhere]">{{ page.queueConfigChoice.value.configPath }}</code>
@@ -637,8 +637,8 @@ onBeforeUnmount(() => {
   </div>
 
   <OhlcvPreflightModal :open="preflightOpen" :loading="preflightLoading" :error="preflightError" :payload="preflightData" :job="preflightJob" @close="closePreflight" @refresh="refreshPreflightData" @preload="startPreload" @stop="stopPreload" />
-  <div v-if="duplicateSource" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ t('v7optimize.duplicateConfig') }}</h2><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.close') }}</Button></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.duplicateConfigAs') }}<Input v-model="duplicateName" /></label></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.cancel') }}</Button><Button type="button" variant="info" @click="duplicate">{{ t('common.save') }}</Button></footer></section></div>
-  <div v-if="confirmAction" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-[-0.01em]">{{ confirmAction.title }}</h2></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><p>{{ confirmAction.message }}</p></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="confirmAction = null">{{ t('common.cancel') }}</Button><Button type="button" variant="danger" @click="acceptConfirm">{{ t('common.confirm') }}</Button></footer></section></div>
+  <div v-if="duplicateSource" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-tight">{{ t('v7optimize.duplicateConfig') }}</h2><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.close') }}</Button></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><label class="grid gap-1.5 text-xs text-secondary">{{ t('v7optimize.duplicateConfigAs') }}<Input v-model="duplicateName" /></label></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="duplicateSource = ''">{{ t('common.cancel') }}</Button><Button type="button" variant="info" @click="duplicate">{{ t('common.save') }}</Button></footer></section></div>
+  <div v-if="confirmAction" class="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-backdrop"><section class="flex w-[min(520px,calc(100vw-30px))] flex-col rounded-lg border border-border-default bg-panel shadow-[var(--shadow-modal)] max-h-[min(760px,calc(100dvh-30px))]" role="dialog" aria-modal="true"><header class="flex shrink-0 items-center justify-between gap-2.5 border-b border-border-default px-3.5 py-3"><h2 class="m-0 text-lg font-bold tracking-tight">{{ confirmAction.title }}</h2></header><div class="grid min-h-0 gap-3 overflow-auto p-3.5"><p>{{ confirmAction.message }}</p></div><footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-3.5 py-3"><Button type="button" variant="default" @click="confirmAction = null">{{ t('common.cancel') }}</Button><Button type="button" variant="danger" @click="acceptConfirm">{{ t('common.confirm') }}</Button></footer></section></div>
   <Transition name="opt-toast">
     <div
       v-if="toast"
@@ -746,9 +746,9 @@ body { overflow: hidden; }
 }
 
 .opt-panel-heading h1 {
-  font-size: var(--text-section);
+  font-size: var(--text-lg);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tight);
 }
 
 .opt-panel-heading p {
@@ -796,9 +796,9 @@ body { overflow: hidden; }
   border-radius: var(--radius-full);
   background: rgb(var(--text-secondary-rgb) / 0.06);
   color: var(--text-secondary);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: normal;
   white-space: nowrap;
 }
 
@@ -886,7 +886,7 @@ body { overflow: hidden; }
   background: #1a2025;
   box-shadow: var(--shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.05);
   color: var(--text-primary);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   line-height: 1.4;
 }
 
@@ -1007,8 +1007,8 @@ body { overflow: hidden; }
   background: var(--surface-panel);
   border-bottom-color: var(--border-strong);
   color: var(--text-muted);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-label);
 }
 
 .opt-table th:hover {
@@ -1029,8 +1029,8 @@ body { overflow: hidden; }
   display: block;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--text-compact);
+  font-weight: 600;
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1040,7 +1040,7 @@ body { overflow: hidden; }
   display: block;
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--text-micro);
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1058,8 +1058,8 @@ body { overflow: hidden; }
   border-radius: var(--radius-sm);
   background: rgb(var(--text-secondary-rgb) / 0.055);
   color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 550;
+  font-size: var(--text-xs);
+  font-weight: 600;
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1098,7 +1098,7 @@ body { overflow: hidden; }
   min-width: 82px;
   justify-content: center;
   border: 1px solid rgb(var(--text-secondary-rgb) / 0.14);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-label);
 }
 
 /* The actions rail keeps only its geometry here: the sticky offsets, the
@@ -1115,7 +1115,7 @@ body { overflow: hidden; }
 .opt-table .pbgui-list-actions [data-slot='button'] {
   min-height: 30px;
   padding-inline: 9px;
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .opt-table .pbgui-list-actions [data-slot='button'][data-test^='queue-move'] {

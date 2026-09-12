@@ -274,7 +274,7 @@ defineExpose({
   flex-shrink: 0;
 }
 #prices-overlay-title span {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -286,7 +286,7 @@ defineExpose({
 .po-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
 }
 .po-table th {
   position: sticky;

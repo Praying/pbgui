@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
         <div class="panel pbgui-panel overview-panel relative grid gap-4.5 overflow-hidden rounded-xl border border-border-subtle bg-[radial-gradient(circle_at_right_top,rgb(var(--accent-rgb)/0.1),transparent_34%),linear-gradient(180deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-page-rgb)/0.98))] shadow-[0_4px_14px_rgba(0,0,0,0.12)] p-5 max-[640px]:p-4">
           <div class="overview-header flex items-start justify-between gap-5 pb-5 border-b border-b-secondary/14 max-[980px]:flex-col">
             <div class="overview-heading min-w-0">
-              <h1 class="overview-title m-0 max-w-none text-[clamp(28px,3vw,36px)] leading-[1.15] tracking-[-0.035em]">{{ t('misc.welcome.systemOverview') }}</h1>
+              <h1 class="overview-title m-0 max-w-none text-[clamp(28px,3vw,36px)] leading-[1.15] tracking-display">{{ t('misc.welcome.systemOverview') }}</h1>
               <p class="overview-copy mt-2.5 max-w-[58ch] text-primary leading-[1.5]">{{ t('misc.welcome.overviewCopy') }}</p>
             </div>
             <div class="meta-strip flex min-w-0 flex-wrap justify-end gap-1.5 m-0 max-[980px]:justify-start max-[640px]:grid max-[640px]:w-full max-[640px]:grid-cols-1" :aria-label="t('misc.welcome.runtimeMetadata')">
@@ -202,12 +202,12 @@ onBeforeUnmount(() => {
           </div>
           <div class="summary-grid grid grid-cols-4 gap-3 max-[1400px]:grid-cols-2 max-[640px]:grid-cols-1">
             <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.authTone}`" :data-tone="store.summaryView.value.authTone">
-              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">{{ t('misc.welcome.session') }}</span>
+              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">{{ t('misc.welcome.session') }}</span>
               <strong id="summary-auth" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.auth }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-auth-copy">{{ store.summaryView.value.authCopy }}</p>
             </div>
             <div class="summary-card summary-card--actionable relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease] flex flex-col items-start" :class="`summary-card--${store.summaryView.value.pb7Tone}`" :data-tone="store.summaryView.value.pb7Tone">
-              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">PB7</span>
+              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">PB7</span>
               <strong id="summary-pb7" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb7 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb7-copy">{{ store.summaryView.value.pb7Copy }}</p>
               <Button
@@ -220,30 +220,30 @@ onBeforeUnmount(() => {
               >{{ t('misc.welcome.configurePb7') }}</Button>
             </div>
             <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.pb8Tone}`" :data-tone="store.summaryView.value.pb8Tone">
-              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">PB8</span>
+              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">PB8</span>
               <strong id="summary-pb8" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.pb8 }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-pb8-copy">{{ store.summaryView.value.pb8Copy }}</p>
             </div>
             <div class="summary-card relative min-w-0 overflow-hidden min-h-[126px] max-[640px]:min-h-0 rounded-lg border border-secondary/14 bg-page/44 pt-3.75 pr-4 pb-3.75 pl-4.5 transition-[transform,border-color,background] duration-[0.18s] ease-[ease]" :class="`summary-card--${store.summaryView.value.identityTone}`" :data-tone="store.summaryView.value.identityTone">
-              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-[0.08em]">{{ t('misc.welcome.identity') }}</span>
+              <span class="summary-label block mb-1.75 text-xs font-bold uppercase tracking-label">{{ t('misc.welcome.identity') }}</span>
               <strong id="summary-identity" :title="store.summaryView.value.identity" class="block mb-1.5 truncate text-lg leading-[1.3] text-primary font-bold">{{ store.summaryView.value.identity }}</strong>
               <p class="summary-copy m-0 text-base text-secondary leading-[1.55]" id="summary-role">{{ store.summaryView.value.roleText }}</p>
             </div>
           </div>
         </div>
         <div class="section-heading flex flex-col gap-1 mb-2 px-0.5 pt-0.5 pb-0">
-          <span class="section-kicker text-sm font-bold uppercase tracking-[0.08em] text-accent-soft">{{ t('misc.welcome.runtime') }}</span>
+          <span class="section-kicker text-sm font-bold uppercase tracking-label text-accent-soft">{{ t('misc.welcome.runtime') }}</span>
           <p class="section-copy m-0 text-base">{{ t('misc.welcome.runtimeCopy') }}</p>
         </div>
         <div class="panel pbgui-panel rounded-xl border border-secondary/13 bg-card shadow-panel p-5 max-[640px]:p-4">
           <h2 class="panel-title m-0 mb-2 text-lg text-primary">{{ t('misc.welcome.runtimeStatus') }}</h2>
           <div class="status-list grid gap-3.5 mt-4.5" id="status-list">
             <section v-for="group in statusGroups" :key="group.key" class="status-group grid gap-2" :data-group="group.key">
-              <h3 class="status-group-title m-0 text-muted text-xs font-bold uppercase tracking-[0.09em]">{{ group.label }}</h3>
+              <h3 class="status-group-title m-0 text-muted text-xs font-bold uppercase tracking-label">{{ group.label }}</h3>
               <div class="status-group-rows grid gap-2">
                 <div v-for="row in group.rows" :key="row.label" class="status-row grid grid-cols-[130px_110px_minmax(0,1fr)] gap-2.5 items-center rounded-[10px] border border-secondary/12 bg-page/35 px-3.75 py-3.25 transition-[background,border-color] duration-[0.18s] ease-[ease] hover:border-accent/20 hover:bg-panel/48 max-[980px]:grid-cols-[minmax(120px,0.45fr)_minmax(0,1fr)] max-[640px]:grid-cols-1">
                   <div class="status-label text-primary font-bold">{{ row.label }}</div>
-                  <div class="status-value status-badge w-fit min-w-[72px] px-2 py-1 rounded-full text-center text-sm font-bold uppercase tracking-[0.04em]" :class="[`status-badge--${row.tone}`, statusBadgeToneClass(row.tone)]" :data-tone="row.tone">{{ row.state }}</div>
+                  <div class="status-value status-badge w-fit min-w-[72px] px-2 py-1 rounded-full text-center text-sm font-bold uppercase tracking-label" :class="[`status-badge--${row.tone}`, statusBadgeToneClass(row.tone)]" :data-tone="row.tone">{{ row.state }}</div>
                   <div class="status-detail text-secondary min-w-0 [overflow-wrap:anywhere] max-[980px]:col-span-full max-[640px]:col-auto">{{ row.detail }}</div>
                 </div>
               </div>
@@ -269,19 +269,19 @@ onBeforeUnmount(() => {
       <!-- Setup -->
       <section id="section-setup" class="page-section grid w-[min(100%,1600px)] gap-4 mx-auto mb-5 scroll-mt-4" data-section="setup" :hidden="store.activeSection.value !== 'setup'">
         <div class="section-heading settings-section-heading relative flex flex-col gap-1 mb-2 px-1 pt-1 pb-0.5 w-[min(100%,1600px)] max-[1400px]:w-full mx-auto">
-          <span class="section-kicker pt-2 text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('misc.welcome.runtimeSettings') }}</span>
+          <span class="section-kicker pt-2 text-md font-bold tracking-tight text-primary">{{ t('misc.welcome.runtimeSettings') }}</span>
           <p class="section-copy mt-1 max-w-[66ch] text-secondary">{{ t('misc.welcome.runtimeSettingsCopy') }}</p>
         </div>
         <div class="panel settings-panel relative overflow-hidden rounded-xl border border-accent/16 bg-[radial-gradient(circle_at_100%_0%,rgb(var(--accent-deep-rgb)/0.08),transparent_24rem),linear-gradient(145deg,rgb(var(--bg-panel-rgb)/0.98),rgb(var(--bg-panel-rgb)/0.98))] shadow-panel p-[clamp(18px,2.5vw,28px)] max-[640px]:p-4 w-[min(100%,1600px)] max-[1400px]:w-full mx-auto">
           <div class="panel-heading settings-panel-heading pb-5 border-b border-b-secondary/14">
-            <h2 class="panel-title m-0 mb-1.5 text-[20px] tracking-[-0.02em] text-primary">{{ t('misc.welcome.passivbotSetup') }}</h2>
+            <h2 class="panel-title m-0 mb-1.5 text-lg tracking-tight text-primary">{{ t('misc.welcome.passivbotSetup') }}</h2>
             <p class="panel-copy m-0 max-w-[78ch] text-secondary text-base leading-[1.55]">{{ t('misc.welcome.passivbotSetupCopy') }}</p>
           </div>
 
           <div class="runtime-groups grid grid-cols-2 gap-4 mt-5.5 max-[980px]:grid-cols-1">
             <section class="runtime-group runtime-group--pb7 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb7-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
-                <h3 id="pb7-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-[0.01em]">PB7</h3>
+                <h3 id="pb7-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-tight">PB7</h3>
                 <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">{{ t('misc.welcome.passivbotV7') }}</span>
               </div>
               <div class="field-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
@@ -304,7 +304,7 @@ onBeforeUnmount(() => {
 
             <section class="runtime-group runtime-group--pb8 relative min-w-0 overflow-hidden rounded-lg border border-secondary/13 bg-page/44 p-4.5 max-[640px]:p-4 shadow-[0_10px_24px_rgba(0,0,0,0.12)]" aria-labelledby="pb8-group-title">
               <div class="group-heading flex items-center gap-2.5 mb-4.5 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-1.75">
-                <h3 id="pb8-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-[0.01em]">PB8</h3>
+                <h3 id="pb8-group-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-tight">PB8</h3>
                 <span class="group-caption px-1.75 py-0.75 rounded-full border border-secondary/12 bg-secondary/6 text-muted text-xs">{{ t('misc.welcome.passivbotV8Optional') }}</span>
               </div>
               <div class="field-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
@@ -328,7 +328,7 @@ onBeforeUnmount(() => {
 
           <section class="identity-section mt-6 pt-5 border-t border-t-secondary/12" aria-labelledby="identity-section-title">
             <div class="section-divider flex items-center gap-3 mb-4">
-              <h3 id="identity-section-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-[0.01em]">{{ t('misc.welcome.identity') }}</h3>
+              <h3 id="identity-section-title" class="group-title m-0 text-primary text-md leading-[1.3] tracking-tight">{{ t('misc.welcome.identity') }}</h3>
             </div>
             <div class="field-grid identity-grid grid grid-cols-2 gap-4 max-[980px]:grid-cols-1">
               <div class="field flex flex-col gap-1.75">
@@ -360,7 +360,7 @@ onBeforeUnmount(() => {
       <!-- Password -->
       <section id="section-password" class="page-section password-section grid w-[min(100%,860px)] gap-4.5 mx-auto mb-5 scroll-mt-4" data-section="password" :hidden="store.activeSection.value !== 'password'">
         <div class="section-heading password-section-heading flex flex-col gap-1 mb-2 px-0.5 pt-0.5 pb-0 w-[min(100%,860px)] mx-auto">
-          <span class="section-kicker text-sm font-bold uppercase tracking-[0.08em] text-accent-soft">{{ t('misc.welcome.security') }}</span>
+          <span class="section-kicker text-sm font-bold uppercase tracking-label text-accent-soft">{{ t('misc.welcome.security') }}</span>
           <p class="section-copy m-0 text-base">{{ t('misc.welcome.securityCopy') }}</p>
         </div>
         <div class="panel password-panel rounded-xl border border-secondary/13 bg-card shadow-panel p-6 max-[640px]:p-4 w-[min(100%,860px)] mx-auto">
@@ -428,7 +428,7 @@ onBeforeUnmount(() => {
           :class="browserEntryClass(!entry.is_dir && entry.path === store.fileBrowser.value.selectedPath)"
           @click="entry.is_dir ? store.loadFileBrowser(entry.path) : (store.fileBrowser.value.selectedPath = entry.path)"
         >
-          <span class="browser-entry-kind text-muted text-sm font-bold uppercase tracking-[0.06em] shrink-0">{{ entry.is_dir ? t('misc.welcome.fileKindDir') : t('misc.welcome.fileKindPy') }}</span>
+          <span class="browser-entry-kind text-muted text-sm font-bold uppercase tracking-label shrink-0">{{ entry.is_dir ? t('misc.welcome.fileKindDir') : t('misc.welcome.fileKindPy') }}</span>
           <span>{{ entry.name }}</span>
         </button>
       </div>

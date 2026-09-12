@@ -286,7 +286,7 @@ function onDelete(): void {
       {{ dashT('dash.noOpenPositions', 'No open positions.') }}
     </div>
     <div v-else class="dp-table-wrap max-h-[70vh] overflow-x-auto overflow-y-auto">
-      <table class="dp-table w-full border-collapse text-[0.78rem]">
+      <table class="dp-table w-full border-collapse text-xs">
         <thead>
           <tr>
             <th
@@ -295,7 +295,7 @@ function onDelete(): void {
             class="sticky top-0 cursor-pointer select-none border-b border-b-border-default bg-card px-[0.5rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary hover:text-primary"
             @click="onSortClick(c.key)"
           >
-              {{ dashT(c.i18nKey, c.fallback) }}<span class="dp-sort ml-[0.2rem] text-[0.65rem] text-muted">{{ sortArrow(c.key) }}</span>
+              {{ dashT(c.i18nKey, c.fallback) }}<span class="dp-sort ml-[0.2rem] text-micro text-muted">{{ sortArrow(c.key) }}</span>
             </th>
           </tr>
         </thead>

@@ -236,7 +236,7 @@ onBeforeUnmount(() => dragSelect.dispose());
                   @click.stop="toggleGroup(entry.block.key)"
                 >
                   <PbIcon :icon="entry.expanded ? PhCaretDown : PhCaretRight" :size="12" class="shrink-0 text-accent-soft" />
-                  <span class="text-[11px] font-semibold uppercase tracking-wide text-accent-soft">{{ t('v7backtest.optimizeValidation') }}</span>
+                  <span class="text-micro font-semibold uppercase tracking-label text-accent-soft">{{ t('v7backtest.optimizeValidation') }}</span>
                   <strong class="truncate font-medium text-primary" :title="entry.block.label">{{ entry.block.label }}</strong>
                   <span class="shrink-0 text-xs text-secondary">{{ t('v7backtest.groupResultsCount', { n: entry.block.paths.length }) }}</span>
                 </button>
@@ -291,7 +291,7 @@ onBeforeUnmount(() => dragSelect.dispose());
               :data-path="entry.row.path"
               @click="emit('convert', entry.row.path)"
             >
-              <span class="font-mono text-[10px] font-bold tracking-tight">V8</span>
+              <span class="font-mono text-micro font-bold tracking-tight">V8</span>
             </BacktestRowActionButton>
           </TdActions>
         </tr>

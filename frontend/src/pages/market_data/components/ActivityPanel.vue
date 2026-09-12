@@ -78,7 +78,7 @@ onBeforeUnmount(() => viewer?.close());
   <article :class="[panelCardClass, 'activity-log-shell flex min-h-0 flex-col gap-4']">
     <div :class="panelHeadClass">
       <div>
-        <div class="text-xs font-bold tracking-[0.08em] text-secondary uppercase">
+        <div class="text-xs font-bold tracking-label text-secondary uppercase">
           {{ t('market.activityLog') }}
         </div>
         <h2 class="mt-1 text-lg font-semibold tracking-tight text-primary">

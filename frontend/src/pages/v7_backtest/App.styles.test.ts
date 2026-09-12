@@ -93,27 +93,35 @@ describe('PBv7 config editor CSS contracts', () => {
   });
 
   it('keeps the shared frontend typography scale canonical', () => {
+    expect(sharedCss).toContain('--text-micro: 11px;');
+    expect(sharedCss).toContain('--text-micro--line-height: 14px;');
     expect(sharedCss).toContain('--text-xs: 12px;');
+    expect(sharedCss).toContain('--text-xs--line-height: 15px;');
+    expect(sharedCss).toContain('--text-compact: 13px;');
+    expect(sharedCss).toContain('--text-compact--line-height: 18px;');
     expect(sharedCss).toContain('--text-sm: 14px;');
+    expect(sharedCss).toContain('--text-sm--line-height: 19px;');
     expect(sharedCss).toContain('--text-base: 15px;');
+    expect(sharedCss).toContain('--text-base--line-height: 22px;');
     expect(sharedCss).toContain('--text-md: 16px;');
+    expect(sharedCss).toContain('--text-md--line-height: 22px;');
     expect(sharedCss).toContain('--text-lg: 19px;');
+    expect(sharedCss).toContain('--text-lg--line-height: 26px;');
     expect(sharedCss).toContain('--text-xl: 23px;');
-    expect(sharedCss).toContain('--text-display: 34px;');
-    expect(sharedCss).toContain('--text-title: 26px;');
-    expect(sharedCss).toContain('--text-section: 19px;');
-    expect(sharedCss).toContain('--text-body: 15px;');
-    expect(sharedCss).toContain('--text-small: 14px;');
-    expect(sharedCss).toContain('--text-caption: 12px;');
+    expect(sharedCss).toContain('--text-xl--line-height: 26px;');
+    expect(sharedCss).toContain('--text-2xl: 26px;');
+    expect(sharedCss).toContain('--text-2xl--line-height: 30px;');
+    expect(sharedCss).toContain('--text-3xl: 34px;');
+    expect(sharedCss).toContain('--text-3xl--line-height: 34px;');
   });
 
   it('uses the shared typography scale across the backtest page', () => {
     expect(css).not.toContain('.core-workbench-shell--backtest {');
-    expectDeclaration(findRule(root, '.core-workbench-shell--backtest #configs-editor .config-editor-intro h1'), 'font-size', 'clamp(var(--text-title), 2.6vw, var(--text-display))');
-    expectDeclaration(findRule(root, '.core-workbench-shell--backtest #configs-editor .config-editor-section header h2'), 'font-size', 'var(--text-section)');
-    expectDeclaration(findRule(root, '#configs-editor .form-group > label'), 'font-size', '12px');
-    expectDeclaration(findRule(root, '.core-workbench-shell--backtest .ms-clear-btn'), 'font-size', '12px');
-    expectDeclaration(findRule(root, '.core-workbench-shell--backtest .ms-tag .ms-x'), 'font-size', '12px');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest #configs-editor .config-editor-intro h1'), 'font-size', 'clamp(var(--text-2xl), 2.6vw, var(--text-3xl))');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest #configs-editor .config-editor-section header h2'), 'font-size', 'var(--text-lg)');
+    expectDeclaration(findRule(root, '#configs-editor .form-group > label'), 'font-size', 'var(--text-xs)');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest .ms-clear-btn'), 'font-size', 'var(--text-xs)');
+    expectDeclaration(findRule(root, '.core-workbench-shell--backtest .ms-tag .ms-x'), 'font-size', 'var(--text-xs)');
   });
 
   it('keeps the compact grid, multiselect, stepper, expander and raw JSON surfaces', () => {

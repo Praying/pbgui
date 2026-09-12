@@ -552,7 +552,7 @@ async function testConnection(): Promise<void> {
         <h3 id="editPanelTitle" class="m-0 truncate text-lg font-semibold tracking-tight text-primary">{{ title }}</h3>
         <div class="mt-0.5 text-xs text-muted">{{ t('misc.apikeys.credentials') }}</div>
       </div>
-      <span class="rounded-full border border-accent/18 bg-accent/8 px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-accent-soft">
+      <span class="rounded-full border border-accent/18 bg-accent/8 px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-label text-accent-soft">
         {{ exchange || t('misc.apikeys.notSelected') }}
       </span>
     </header>

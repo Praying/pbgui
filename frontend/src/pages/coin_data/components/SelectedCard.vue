@@ -330,7 +330,7 @@ defineExpose({ fitToContent, resetLayout });
     </div>
     <div ref="grid" class="details-grid grid pt-[0.95rem] px-[1rem] pb-[1rem] grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 overflow-auto flex-1 min-h-0 content-start max-[980px]:grid-cols-1" id="selected-grid">
       <div v-for="field in fields" :key="field.label" class="grid gap-[0.2rem] min-w-0" :class="field.wide ? 'kv wide col-span-full' : 'kv'">
-        <div class="kv-label text-xs text-muted uppercase tracking-[0.06em]">{{ field.label }}</div>
+        <div class="kv-label text-xs text-muted uppercase tracking-label">{{ field.label }}</div>
         <div class="text-base text-primary" :class="field.wrap ? 'kv-value wrap whitespace-normal overflow-visible text-clip break-words leading-[1.55]' : 'kv-value whitespace-nowrap overflow-hidden text-ellipsis'" :title="field.value">{{ field.value }}</div>
       </div>
       <div v-if="notice" class="notice-box col-span-full border border-warning/28 bg-warning/8 rounded-[10px] px-[0.9rem] py-[0.75rem] text-warning-soft text-sm leading-[1.55] whitespace-pre-wrap"><strong>{{ t('market.notice') }}</strong><br>{{ notice }}</div>

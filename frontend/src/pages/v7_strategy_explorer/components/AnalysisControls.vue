@@ -98,7 +98,7 @@ function onChangeSource(): void {
       <div class="flex flex-col gap-0.75">
         <Label for="context-days-input" :data-tip="t('v7explore.chartContextTip')">{{ t('v7explore.chartContext') }}</Label>
         <Slider id="context-days-input" v-model="store.controls.contextDays" :min="0.5" :max="60" :step="0.5" :label="t('v7explore.chartContext')" :data-tip="t('v7explore.chartContextTip')" @value-commit="store.recalculate()" />
-        <span class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-[10px] font-bold text-accent-soft" id="context-days-value">{{ Number(store.controls.contextDays || 0).toFixed(2) }}</span>
+        <span class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft" id="context-days-value">{{ Number(store.controls.contextDays || 0).toFixed(2) }}</span>
       </div>
     </div>
   </section>

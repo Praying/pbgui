@@ -122,8 +122,8 @@ defineExpose({ foldSuiteDraft });
   >
     <div class="config-editor-intro relative flex min-h-[72px] items-start justify-between gap-5 border-b border-secondary/15 px-1 pb-3 pt-2 max-[900px]:flex-col max-[900px]:gap-2 max-[700px]:gap-3">
       <div>
-        <div class="pt-[7px] text-xs font-bold uppercase tracking-[0.16em] text-accent-soft">{{ isV8 ? 'PBv8' : 'PBv7' }}</div>
-        <h1 class="mt-1.5 text-[clamp(24px,2.4vw,34px)] leading-[1.15] tracking-[-0.035em] text-primary">{{ state.name ? t('v7backtest.editBacktest') : t('v7backtest.newBacktestConfig', { version: isV8 ? 'PBv8' : 'PBv7' }) }}</h1>
+        <div class="pt-[7px] text-xs font-bold uppercase tracking-label text-accent-soft">{{ isV8 ? 'PBv8' : 'PBv7' }}</div>
+        <h1 class="mt-1.5 text-[clamp(24px,2.4vw,34px)] leading-[1.15] tracking-display text-primary">{{ state.name ? t('v7backtest.editBacktest') : t('v7backtest.newBacktestConfig', { version: isV8 ? 'PBv8' : 'PBv7' }) }}</h1>
         <p class="mt-2 max-w-[760px] text-sm leading-[1.55] text-secondary">{{ t('v7backtest.editorIntro') }}</p>
       </div>
       <div class="mt-[7px] inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-accent/28 bg-accent-deep/10 px-[11px] py-[7px] text-xs text-accent-soft shadow-[0_0_0_3px_rgb(var(--accent-deep-rgb)/0.04)] max-[900px]:self-start max-[700px]:mt-0">
@@ -137,8 +137,8 @@ defineExpose({ foldSuiteDraft });
       data-test="editor-section-basics"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
-        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorBasics') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorBasicsHint') }}</p></div>
-        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">01</span>
+        <div><h2 class="text-md font-bold tracking-tight text-primary">{{ t('v7backtest.editorBasics') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorBasicsHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-label text-accent-soft opacity-75">01</span>
       </header>
       <!-- Row 1: Identity & Time (:2599-2613) -->
     <div class="form-row config-editor-12">
@@ -156,7 +156,7 @@ defineExpose({ foldSuiteDraft });
       <div class="form-group editor-span-2">
         <label :data-tip="t('v7backtest.tip.endDate')">end_date</label>
         <DatePicker v-model="state.endDate" :min="state.startDate || undefined" />
-        <label v-if="state.endDateIsNow" :data-tip="t('v7backtest.tip.endDateIsNow')" style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px; display: flex; gap: 4px; align-items: center">
+        <label v-if="state.endDateIsNow" :data-tip="t('v7backtest.tip.endDateIsNow')" style="font-size: var(--text-xs); color: var(--text-dim); margin-top: 2px; display: flex; gap: 4px; align-items: center">
           <Checkbox v-model="state.endDateIsNow" /> semantic 'now'
         </label>
       </div>
@@ -168,8 +168,8 @@ defineExpose({ foldSuiteDraft });
       data-test="editor-section-trading"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
-        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorTrading') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorTradingHint') }}</p></div>
-        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">02</span>
+        <div><h2 class="text-md font-bold tracking-tight text-primary">{{ t('v7backtest.editorTrading') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorTradingHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-label text-accent-soft opacity-75">02</span>
       </header>
       <!-- Row 2: Balance, Collateral & Behavior (:2615-2634) -->
     <div class="form-row config-editor-12 config-editor-trading-primary">
@@ -266,8 +266,8 @@ defineExpose({ foldSuiteDraft });
       data-test="editor-section-market-data"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
-        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorMarketData') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorMarketDataHint') }}</p></div>
-        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">03</span>
+        <div><h2 class="text-md font-bold tracking-tight text-primary">{{ t('v7backtest.editorMarketData') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorMarketDataHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-label text-accent-soft opacity-75">03</span>
       </header>
       <!-- Row 4: Data Source (:2681-2698) -->
     <div class="form-row config-editor-12">
@@ -305,9 +305,9 @@ defineExpose({ foldSuiteDraft });
       data-test="editor-section-filters"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
-        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.coinsAndFilters') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorFiltersHint') }}</p></div>
+        <div><h2 class="text-md font-bold tracking-tight text-primary">{{ t('v7backtest.coinsAndFilters') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorFiltersHint') }}</p></div>
         <div class="flex shrink-0 items-center gap-2 max-[700px]:w-full max-[700px]:justify-between" data-test="editor-filter-toolbar">
-          <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">04</span>
+          <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-label text-accent-soft opacity-75">04</span>
           <Button type="button" variant="default" class="act-btn h-auto" :title="t('v7backtest.applyFiltersTitle')" @click="applyFilters">{{ t('v7backtest.applyFilters') }}</Button>
         </div>
       </header>
@@ -344,8 +344,8 @@ defineExpose({ foldSuiteDraft });
       data-test="editor-section-bot"
     >
       <header class="mb-3 flex items-start justify-between gap-3 border-b border-secondary/14 pb-[9px] max-[700px]:flex-col">
-        <div><h2 class="text-[16px] font-bold tracking-[-0.01em] text-primary">{{ t('v7backtest.editorBot') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorBotHint') }}</p></div>
-        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-[0.08em] text-accent-soft opacity-75">05</span>
+        <div><h2 class="text-md font-bold tracking-tight text-primary">{{ t('v7backtest.editorBot') }}</h2><p class="mt-[5px] max-w-[70ch] text-xs leading-[1.5] text-secondary">{{ t('v7backtest.editorBotHint') }}</p></div>
+        <span class="min-w-[31px] rounded-md border border-accent/20 bg-accent-deep/8 px-[7px] py-1 text-center font-mono text-xs font-bold tracking-label text-accent-soft opacity-75">05</span>
       </header>
 
     <!-- Bot Configuration (:2812-2871) -->
@@ -388,7 +388,7 @@ defineExpose({ foldSuiteDraft });
             <Input v-else-if="field.kind === 'number'" v-model="field.text" type="number" />
             <Textarea v-else-if="field.kind === 'json'" v-model="field.text" :data-test="'extra-bt-' + field.key" style="overflow: hidden; resize: vertical" />
             <Input v-else v-model="field.text" type="text" :placeholder="field.kind === 'null' ? 'null' : ''" />
-            <div v-if="EXTRA_BT_META[field.key]?.fmt" style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px">{{ EXTRA_BT_META[field.key]!.fmt }}</div>
+            <div v-if="EXTRA_BT_META[field.key]?.fmt" style="font-size: var(--text-xs); color: var(--text-dim); margin-top: 2px">{{ EXTRA_BT_META[field.key]!.fmt }}</div>
           </div>
         </div>
       </div>

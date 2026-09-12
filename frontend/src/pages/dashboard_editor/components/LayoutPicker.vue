@@ -36,7 +36,7 @@ function pick(lt: LayoutPreset): void {
 <template>
   <div class="layout-picker flex flex-wrap items-end gap-[0.4rem]">
     <div class="lt-group flex flex-col gap-[0.25rem]">
-      <div class="lt-lbl pb-[0.1rem] text-xs uppercase tracking-[0.04em] text-secondary whitespace-nowrap">{{ dashT('dash.oneCol', '1 COL') }}</div>
+      <div class="lt-lbl pb-[0.1rem] text-xs uppercase tracking-label text-secondary whitespace-nowrap">{{ dashT('dash.oneCol', '1 COL') }}</div>
       <div class="lt-thumbs flex gap-[0.3rem]">
         <div
           v-for="lt in oneCol"
@@ -60,7 +60,7 @@ function pick(lt: LayoutPreset): void {
     </div>
     <div class="lt-sep mx-[0.1rem] w-px self-stretch bg-border-default"></div>
     <div class="lt-group flex flex-col gap-[0.25rem]">
-      <div class="lt-lbl pb-[0.1rem] text-xs uppercase tracking-[0.04em] text-secondary whitespace-nowrap">{{ dashT('dash.twoCols', '2 COLS') }}</div>
+      <div class="lt-lbl pb-[0.1rem] text-xs uppercase tracking-label text-secondary whitespace-nowrap">{{ dashT('dash.twoCols', '2 COLS') }}</div>
       <div class="lt-thumbs flex gap-[0.3rem]">
         <div
           v-for="lt in twoCol"
@@ -83,7 +83,7 @@ function pick(lt: LayoutPreset): void {
       </div>
     </div>
     <span
-      class="lt-dim h-[34px] w-[44px] items-center justify-center rounded-sm border border-warning-soft bg-warning/14 text-center text-[0.6rem] font-semibold leading-[34px] text-warning-soft whitespace-nowrap"
+      class="lt-dim h-[34px] w-[44px] items-center justify-center rounded-sm border border-warning-soft bg-warning/14 text-center text-micro font-semibold leading-[34px] text-warning-soft whitespace-nowrap"
       :style="{ display: presetMatched ? 'none' : 'inline-flex' }"
     >
       {{ store.cols }}×{{ store.rows }}

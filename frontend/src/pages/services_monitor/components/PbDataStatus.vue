@@ -513,25 +513,25 @@ onUnmounted(stopPolling);
 <style scoped>
 .fetch-summary { padding: 1rem 1.5rem; overflow-y: auto; flex: 1; }
 .fs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.9rem; }
-.fs-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 600; }
-.fs-ts { color: var(--text-muted); font-size: var(--fs-xs); }
+.fs-title { color: var(--text-primary); font-size: var(--text-md); font-weight: 600; }
+.fs-ts { color: var(--text-muted); font-size: var(--text-xs); }
 .fs-note { color: var(--text-disabled); padding: 0.5rem; font-style: italic; }
 .fs-error { color: var(--danger-soft); padding: 1rem; }
 .fs-summary-row { display: flex; gap: 0.65rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .fs-group { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.45rem 0.9rem; }
 .fs-group-clickable { cursor: pointer; }
 .fs-group-clickable:hover { border-color: var(--success); background: var(--bg-page); }
-.fs-group-title { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: 0.25rem; }
+.fs-group-title { font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 0.25rem; }
 .fs-group-body { display: flex; gap: 0.9rem; }
 .fs-cnt { display: flex; align-items: center; gap: 0.25rem; }
-.fs-dot-ws { color: var(--success); font-size: 0.55rem; }
-.fs-dot-rest { color: var(--warning); font-size: 0.55rem; }
-.fs-cnt-lbl { font-size: var(--fs-xs); color: var(--text-muted); }
-.fs-cnt-val { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary); }
+.fs-dot-ws { color: var(--success); font-size: var(--text-micro); }
+.fs-dot-rest { color: var(--warning); font-size: var(--text-micro); }
+.fs-cnt-lbl { font-size: var(--text-xs); color: var(--text-muted); }
+.fs-cnt-val { font-size: var(--text-sm); font-weight: 700; color: var(--text-primary); }
 .fs-filters { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 0.5rem 0 0.75rem; }
-.fs-filter-label { display: flex; align-items: center; gap: 0.4rem; font-size: var(--fs-xs); color: var(--text-secondary); cursor: pointer; }
+.fs-filter-label { display: flex; align-items: center; gap: 0.4rem; font-size: var(--text-xs); color: var(--text-secondary); cursor: pointer; }
 .fs-table-wrap { overflow-x: auto; }
-.fs-table { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); }
+.fs-table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); }
 .fs-table th { background: var(--bg-page); color: var(--text-muted); padding: 0.4rem 0.6rem; text-align: left; border-bottom: 1px solid var(--border-subtle); white-space: nowrap; }
 .fs-table td { padding: 0.3rem 0.6rem; border-bottom: 1px solid var(--bg-page); white-space: nowrap; color: var(--text-secondary); }
 .fs-table tr:hover td { background: var(--bg-page); }
@@ -541,10 +541,10 @@ onUnmounted(stopPolling);
 
 .poller-metrics { padding: 0.5rem 1.5rem 1rem; }
 .pm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; margin-top: 0.5rem; }
-.pm-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 600; }
+.pm-title { color: var(--text-primary); font-size: var(--text-md); font-weight: 600; }
 .pm-section { margin-bottom: 0.75rem; }
-.pm-section-title { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
-.pm-table { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); }
+.pm-section-title { font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: var(--tracking-label); }
+.pm-table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); }
 .pm-table th { background: var(--bg-page); color: var(--text-muted); padding: 0.35rem 0.6rem; text-align: left; border-bottom: 1px solid var(--border-subtle); white-space: nowrap; }
 .pm-table td { padding: 0.3rem 0.6rem; border-bottom: 1px solid var(--bg-page); white-space: nowrap; color: var(--text-secondary); }
 .pm-table tr:hover td { background: var(--bg-page); }
@@ -553,7 +553,7 @@ onUnmounted(stopPolling);
 .pm-err { color: var(--danger); }
 .pm-muted { color: var(--text-disabled); }
 .pm-note { color: var(--text-disabled); padding: 0.5rem; font-style: italic; }
-.pm-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: var(--fs-xs); font-weight: 600; }
+.pm-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: var(--text-xs); font-weight: 600; }
 .pm-badge-run { background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); color: var(--success); }
 .pm-badge-idle { background: var(--border-subtle); color: var(--text-muted); }
 </style>

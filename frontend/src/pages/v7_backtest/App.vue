@@ -728,26 +728,26 @@ watch(
            panel actions while a config session is open -->
       <template #editor>
         <div v-if="editorOpen" id="editor-toolbar" class="editor-toolbar flex w-full flex-wrap items-center gap-x-5 gap-y-2">
-          <span class="tb-title text-xs font-bold uppercase tracking-[0.13em] text-primary">{{ t('v7backtest.editBacktest') }}</span>
+          <span class="tb-title text-xs font-bold uppercase tracking-label text-primary">{{ t('v7backtest.editBacktest') }}</span>
           <div class="editor-nav-group flex flex-wrap items-center gap-1.5" data-test="editor-nav-group">
-            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorNavigation') }}</div>
+            <div class="editor-action-label px-0.5 text-micro font-bold uppercase tracking-label text-muted">{{ t('v7backtest.editorNavigation') }}</div>
             <Button type="button" variant="default" class="sb-btn" data-test="editor-home" :title="t('v7backtest.backToConfigsList')" @click="store.editor.closeEditor()"><PbIcon :icon="PhHouse" /> {{ t('v7backtest.home') }}</Button>
             <Button type="button" variant="default" class="sb-btn" data-test="editor-import" @click="openImport"><PbIcon :icon="PhDownloadSimple" /> {{ t('v7backtest.import') }}</Button>
           </div>
           <div class="editor-analysis-group flex flex-wrap items-center gap-1.5" data-test="editor-analysis-group">
-            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorAnalysis') }}</div>
+            <div class="editor-action-label px-0.5 text-micro font-bold uppercase tracking-label text-muted">{{ t('v7backtest.editorAnalysis') }}</div>
             <Button type="button" variant="default" class="sb-btn" data-test="editor-results" :disabled="!editorHasSavedConfig" @click="editorResults"><PbIcon :icon="PhChartBar" /> {{ t('v7backtest.results') }}</Button>
             <Button type="button" variant="default" class="sb-btn" data-test="editor-strategy-explorer" @click="openStrategyExplorer">{{ t('v7backtest.strategyExplorer') }}</Button>
             <Button type="button" variant="default" class="sb-btn" data-test="editor-balance-calc" @click="openBalanceCalculator"><PbIcon :icon="PhWallet" /> {{ t('v7backtest.balanceCalculator') }}</Button>
             <Button type="button" variant="default" class="sb-btn" data-test="editor-ohlcv" @click="openOhlcvReadiness"><PbIcon :icon="PhCompassTool" /> {{ t('v7backtest.ohlcvReadiness') }}</Button>
           </div>
           <div class="editor-config-group flex flex-wrap items-center gap-1.5" data-test="editor-config-group">
-            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorConfigActions') }}</div>
+            <div class="editor-action-label px-0.5 text-micro font-bold uppercase tracking-label text-muted">{{ t('v7backtest.editorConfigActions') }}</div>
             <Button v-if="!store.adapter.isV8" type="button" variant="default" class="sb-btn" data-test="editor-convert-v8" :disabled="!editorHasSavedConfig" @click="convertEditorToV8">{{ t('v7backtest.convertToV8') }}</Button>
             <Button type="button" variant="default" class="sb-btn" data-test="editor-add-run" :disabled="!editorHasSavedConfig" @click="addEditorToRun"><PbIcon :icon="PhPlay" /> {{ t('v7backtest.addToRun') }}</Button>
           </div>
           <div class="editor-save-group ml-auto flex flex-wrap items-center gap-1.5" data-test="editor-save-group">
-            <div class="editor-action-label px-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{{ t('v7backtest.editorSaveActions') }}</div>
+            <div class="editor-action-label px-0.5 text-micro font-bold uppercase tracking-label text-muted">{{ t('v7backtest.editorSaveActions') }}</div>
             <Button
               type="button"
               variant="primary"
@@ -1016,11 +1016,11 @@ body {
 
 /* Keep the editor's prominent headings on the shared semantic type scale. */
 .core-workbench-shell--backtest #configs-editor .config-editor-intro h1 {
-  font-size: clamp(var(--text-title), 2.6vw, var(--text-display));
+  font-size: clamp(var(--text-2xl), 2.6vw, var(--text-3xl));
 }
 
 .core-workbench-shell--backtest #configs-editor .config-editor-section header h2 {
-  font-size: var(--text-section);
+  font-size: var(--text-lg);
 }
 
 /* ── Shell scroll release (:has() — no utility form) ─────────── */
@@ -1094,15 +1094,15 @@ body {
 .cols-2 { grid-template-columns: 1fr 1fr; }
 
 .form-group { display: flex; flex-direction: column; min-width: 0; margin-bottom: var(--sp-sm); }
-.form-group label { font-size: var(--fs-xs); color: var(--text-dim); letter-spacing: .03em; margin-bottom: 2px; }
+.form-group label { font-size: var(--text-xs); color: var(--text-dim); letter-spacing: var(--tracking-label); margin-bottom: 2px; }
 .form-group input, .form-group select, .form-group textarea { min-height: var(--input-h); padding: var(--sp-sm); background: var(--bg-input);
-    color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: var(--fs-sm); outline: none; width: 100%; }
+    color: var(--text); border: 1px solid var(--border); border-radius: 4px; font-size: var(--text-sm); outline: none; width: 100%; }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
 .form-group textarea { height: auto; min-height: 140px; font-family: var(--mono, ui-monospace, monospace); resize: vertical; }
 
 /* Action buttons — shared with CoinOverridesPanel */
 .act-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim);
-           cursor: pointer; padding: 3px 8px; font-size: var(--fs-xs); transition: all .15s; }
+           cursor: pointer; padding: 3px 8px; font-size: var(--text-xs); transition: all .15s; }
 .act-btn:hover { color: var(--text); border-color: var(--accent); }
 .act-btn-danger:hover { color: var(--red); border-color: var(--red); }
 .act-btn:disabled { opacity: .45; cursor: not-allowed; }
@@ -1110,19 +1110,19 @@ body {
 /* Checkbox row */
 .chk-row { display: flex; align-items: flex-start; gap: 6px; min-height: var(--input-h); height: auto; min-width: 0; }
 .chk-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
-.chk-row label { margin: 0; min-width: 0; flex: 1 1 auto; color: var(--text); font-size: var(--fs-sm); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; word-break: break-word; cursor: pointer; }
-.section-title { margin: var(--sp-lg) 0 var(--sp-sm); padding-bottom: var(--sp-xs); border-bottom: 1px solid var(--border); font-size: var(--fs-md); font-weight: 600; }
+.chk-row label { margin: 0; min-width: 0; flex: 1 1 auto; color: var(--text); font-size: var(--text-sm); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; word-break: break-word; cursor: pointer; }
+.section-title { margin: var(--sp-lg) 0 var(--sp-sm); padding-bottom: var(--sp-xs); border-bottom: 1px solid var(--border); font-size: var(--text-md); font-weight: 600; }
 
 /* Expanders */
 .expander { margin: var(--sp-sm) 0 var(--sp-md); border: 1px solid var(--border); border-radius: 6px; }
 .expander-header {
   display: flex; align-items: center; gap: 6px; width: 100%; padding: var(--sp-sm) var(--sp-md);
   border: 0; border-radius: 6px; background: var(--bg2); color: var(--text); font: inherit;
-  font-size: var(--fs-sm); font-weight: 600; text-align: left; cursor: pointer; user-select: none;
+  font-size: var(--text-sm); font-weight: 600; text-align: left; cursor: pointer; user-select: none;
 }
 .expander.open .expander-header { border-radius: 6px 6px 0 0; }
 .expander-header:hover { background: var(--bg3); }
-.expander-header .arrow { font-size: 10px; transition: transform .2s; }
+.expander-header .arrow { font-size: var(--text-micro); transition: transform .2s; }
 .expander.open .expander-header .arrow { transform: rotate(90deg); }
 .expander-body { display: none; padding: var(--sp-md); }
 .expander.open .expander-body { display: block; }
@@ -1136,7 +1136,7 @@ body {
 .stepper-btn {
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 28px; height: var(--input-h); padding: 0; border: 1px solid var(--border);
-  background: var(--bg3); color: var(--text); font-size: 16px; line-height: 1; cursor: pointer;
+  background: var(--bg3); color: var(--text); font-size: var(--text-md); line-height: 1; cursor: pointer;
 }
 .stepper-btn:first-child { border-right: 0; border-radius: 4px 0 0 4px; }
 .stepper-btn:last-child { border-left: 0; border-radius: 0 4px 4px 0; }
@@ -1151,30 +1151,30 @@ body {
 .ms-wrap:focus-within { border-color: var(--accent); }
 .form-group .ms-wrap input.ms-input {
   flex: 1; width: auto; min-width: 60px; height: 24px; min-height: 24px; padding: 0;
-  border: 0; background: transparent; color: var(--text); font-family: var(--font); font-size: var(--fs-sm); outline: 0;
+  border: 0; background: transparent; color: var(--text); font-family: var(--font); font-size: var(--text-sm); outline: 0;
 }
 .core-workbench-shell--backtest .ms-clear-btn,
-.core-workbench-shell--backtest .ms-all-btn { margin-left: 2px; padding: 0 3px; border-radius: 3px; color: var(--text-dim); font-size: 12px; cursor: pointer; }
+.core-workbench-shell--backtest .ms-all-btn { margin-left: 2px; padding: 0 3px; border-radius: 3px; color: var(--text-dim); font-size: var(--text-xs); cursor: pointer; }
 .ms-clear-btn:hover { background: rgb(var(--danger-rgb) / .15); color: var(--red); }
 .ms-all-btn:hover { background: rgb(var(--accent-rgb) / .15); color: var(--accent); }
 .ms-tag {
   display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px;
-  border: 1px solid var(--border); border-radius: 3px; background: var(--bg3); color: var(--text); font-size: var(--fs-xs);
+  border: 1px solid var(--border); border-radius: 3px; background: var(--bg3); color: var(--text); font-size: var(--text-xs);
 }
 .ms-tag.ms-tag-all { border-color: var(--green); background: var(--green); color: var(--accent-contrast); font-weight: 600; }
-.core-workbench-shell--backtest .ms-tag .ms-x { color: var(--text-dim); font-size: 12px; line-height: 1; cursor: pointer; }
+.core-workbench-shell--backtest .ms-tag .ms-x { color: var(--text-dim); font-size: var(--text-xs); line-height: 1; cursor: pointer; }
 .ms-tag .ms-x:hover { color: var(--red); }
 .ms-dropdown {
   position: absolute; z-index: 100; top: 100%; right: 0; left: 0; display: none;
   max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 0 0 4px 4px; background: var(--bg-input);
 }
 .ms-dropdown.open { display: block; }
-.ms-option { padding: 4px 8px; font-size: var(--fs-sm); cursor: pointer; }
+.ms-option { padding: 4px 8px; font-size: var(--text-sm); cursor: pointer; }
 .ms-option:hover, .ms-option.highlight, .ms-option.highlighted { background: var(--bg3); }
 .ms-option.selected { color: var(--accent); }
 .raw-json-wrap { position: relative; width: 100%; min-width: 0; }
 .raw-json-wrap textarea { display: block; width: 100%; min-width: 0; }
-.field-status { display: none; font-size: var(--fs-sm); line-height: 1.35; }
+.field-status { display: none; font-size: var(--text-sm); line-height: 1.35; }
 .field-status.error { display: block; color: var(--red); }
 .field-status-inline.error { margin-top: var(--sp-xs); padding: 6px 10px; border: 1px solid rgb(var(--danger-rgb) / .35); border-radius: 4px; background: rgb(var(--danger-deep-rgb) / .35); }
 
@@ -1237,9 +1237,9 @@ body {
   min-height: 2.25em;
   overflow: visible;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.2;
-  letter-spacing: 0.035em;
+  letter-spacing: var(--tracking-label);
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: normal;
@@ -1293,7 +1293,7 @@ body {
   min-height: 0;
   min-width: 0;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-micro);
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: normal;
@@ -1576,7 +1576,7 @@ body {
   color: var(--text-primary);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   font-weight: normal;
   padding: 6px 10px;
   white-space: pre-wrap;

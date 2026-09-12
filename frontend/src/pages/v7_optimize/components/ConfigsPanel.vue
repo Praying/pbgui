@@ -132,7 +132,7 @@ onBeforeUnmount(() => dragSelect.dispose());
               <td class="pbgui-config-date">{{ shortDate(value(row, 'end', 'end_date')) || '-' }}</td>
               <td data-test="config-flags" :title="flagList(row).join(', ')">
                 <span v-if="flagList(row).length" class="flex flex-wrap items-center gap-1">
-                  <span v-for="flag in flagList(row)" :key="flag" class="inline-flex items-center rounded border border-border-default/60 px-1.5 py-0.5 font-mono text-[11px] text-muted">{{ flag }}</span>
+                  <span v-for="flag in flagList(row)" :key="flag" class="inline-flex items-center rounded border border-border-default/60 px-1.5 py-0.5 font-mono text-micro text-muted">{{ flag }}</span>
                 </span>
                 <span v-else class="text-muted">-</span>
               </td>

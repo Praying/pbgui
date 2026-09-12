@@ -59,10 +59,10 @@ const fillRows = computed<FillRow[]>(() => {
 <template>
   <section class="flex min-w-0 flex-col gap-3.5" :id="(prefix || '') + (simMode ? 'sim-' : '') + sideKey + '-workspace'">
     <div class="flex items-center justify-between gap-3 border border-secondary/13 rounded-t-[10px] bg-page/84 py-2.25 px-3">
-      <h3 class="m-0 text-primary text-md tracking-[0.08em]">{{ sideKey.toUpperCase() }}</h3>
+      <h3 class="m-0 text-primary text-md tracking-label">{{ sideKey.toUpperCase() }}</h3>
       <span
         :id="(prefix || '') + (simMode ? 'sim-' : '') + sideKey + '-active-chip'"
-        class="inline-flex min-h-[25px] items-center gap-1.5 rounded-full border bg-elevated px-2 py-0.75 text-[10px]"
+        class="inline-flex min-h-[25px] items-center gap-1.5 rounded-full border bg-elevated px-2 py-0.75 text-micro"
         :class="active ? 'border-success/35 text-success' : 'border-warning/35 text-warning'"
       >
         {{ active ? t('v7explore.active') : t('v7explore.inactive') }}

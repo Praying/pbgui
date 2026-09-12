@@ -57,14 +57,14 @@ const DEBUG_BLOCKS = [
 <template>
   <section :id="sideKey + '-stats'" class="p-3.5 border border-secondary/13 rounded-xl bg-page/76 [content-visibility:auto] [contain-intrinsic-size:720px]">
     <div class="flex items-center justify-between gap-3 border border-secondary/13 rounded-t-[10px] bg-page/84 py-2.25 px-3">
-      <h3 class="m-0 text-primary text-md tracking-[0.08em]">{{ t('v7explore.sideStatistics', { side: sideKey.toUpperCase() }) }}</h3>
-      <span class="inline-flex min-h-[25px] items-center gap-1.5 rounded-full border border-border-default bg-elevated px-2 py-0.75 text-[10px] text-secondary">{{ modes().entry || '-' }} / {{ modes().close || '-' }}</span>
+      <h3 class="m-0 text-primary text-md tracking-label">{{ t('v7explore.sideStatistics', { side: sideKey.toUpperCase() }) }}</h3>
+      <span class="inline-flex min-h-[25px] items-center gap-1.5 rounded-full border border-border-default bg-elevated px-2 py-0.75 text-micro text-secondary">{{ modes().entry || '-' }} / {{ modes().close || '-' }}</span>
     </div>
     <div class="grid gap-3" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:12px">
-      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-[0.05em]">{{ t('v7explore.entryOrders') }}</div><div class="mt-1 truncate text-lg font-bold">{{ summary().entry_orders || 0 }}</div></div>
-      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-[0.05em]">{{ t('v7explore.entryAvg') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().entry_avg_price, 8) }}</div></div>
-      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-[0.05em]">{{ t('v7explore.entryGrid') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().entry_grid_pct, 2) }}%</div></div>
-      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-[0.05em]">{{ t('v7explore.welPerPos') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().wallet_exposure_limit_per_position, 4) }}</div></div>
+      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.entryOrders') }}</div><div class="mt-1 truncate text-lg font-bold">{{ summary().entry_orders || 0 }}</div></div>
+      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.entryAvg') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().entry_avg_price, 8) }}</div></div>
+      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.entryGrid') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().entry_grid_pct, 2) }}%</div></div>
+      <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.welPerPos') }}</div><div class="mt-1 truncate text-lg font-bold">{{ fmt(summary().wallet_exposure_limit_per_position, 4) }}</div></div>
     </div>
     <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.entryOrders') }}</h4>
     <Table class="orders">

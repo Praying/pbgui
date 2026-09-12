@@ -123,7 +123,7 @@ defineExpose({ openDelete, refresh: () => void store.loadLegacyResults() });
             :class="pinned ? '' : 'unpinned opacity-40'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
-            style="font-size: 15px; padding: 0 6px"
+            style="font-size: var(--text-base); padding: 0 6px"
             @click="pinned = !pinned"
           >
             <PbIcon :icon="PhPushPin" :size="18" />

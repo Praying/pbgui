@@ -87,7 +87,7 @@ const pickerBtnClass =
             id="inventory-delete-date-selection"
             :hidden="!view.showSelection"
           >
-            <div class="inventory-delete-date-selection-label text-xs uppercase tracking-[0.04em] text-secondary">{{ t('market.selectedCoins') }}</div>
+            <div class="inventory-delete-date-selection-label text-xs uppercase tracking-label text-secondary">{{ t('market.selectedCoins') }}</div>
             <div class="inventory-delete-date-selection-list flex max-h-[min(132px,22vh)] flex-wrap gap-1 overflow-y-auto rounded-lg border border-accent/12 bg-page/42 p-1" id="inventory-delete-date-selection-list">
               <span
                 v-for="item in view.selectionItems"

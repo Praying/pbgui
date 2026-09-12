@@ -20,6 +20,9 @@ const visible = import.meta.env.VITE_MIGRATION_WATERMARK === 'on';
 .migration-watermark-text {
   font-size: 9vw;
   font-weight: 700;
+  /* Deliberate exception to the three-value tracking contract: this is
+     decorative letter-spacing on a 6%-opacity rotated watermark, not
+     readable type, so it stays wider than --tracking-label. */
   letter-spacing: 0.35em;
   color: #f2f5fb;
   opacity: 0.06;

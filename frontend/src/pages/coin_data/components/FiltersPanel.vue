@@ -118,7 +118,7 @@ function onExchangeSelect(value: unknown): void {
         <label class="field grid gap-[0.35rem] min-w-0">
           <span class="field-label text-sm text-secondary font-semibold">market_cap</span>
           <div class="num-stepper flex items-center">
-            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', -1)">−</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', -1)">−</Button>
             <Input
               id="filter-market-cap"
               v-model="marketCapModel"
@@ -129,13 +129,13 @@ function onExchangeSelect(value: unknown): void {
               @wheel.prevent="emit('step-number', 'market_cap', ($event as WheelEvent).deltaY < 0 ? 1 : -1)"
               @change="emit('number-change', 'market_cap')"
             />
-            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', 1)">+</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'market_cap', 1)">+</Button>
           </div>
         </label>
         <label class="field grid gap-[0.35rem] min-w-0">
           <span class="field-label text-sm text-secondary font-semibold">vol/mcap</span>
           <div class="num-stepper flex items-center">
-            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', -1)">−</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-l-lg rounded-r-none border-r-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', -1)">−</Button>
             <Input
               id="filter-vol-mcap"
               v-model="volMcapModel"
@@ -147,7 +147,7 @@ function onExchangeSelect(value: unknown): void {
               @wheel.prevent="emit('step-number', 'vol_mcap', ($event as WheelEvent).deltaY < 0 ? 1 : -1)"
               @change="emit('number-change', 'vol_mcap')"
             />
-            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-[16px] leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', 1)">+</Button>
+            <Button class="stepper-btn coin-stepper-btn w-7 shrink-0 rounded-r-lg rounded-l-none border-l-0 p-0 text-md leading-none" type="button" @mousedown.prevent @click="emit('step-number', 'vol_mcap', 1)">+</Button>
           </div>
         </label>
         <div class="field grid gap-[0.35rem] min-w-0">

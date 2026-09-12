@@ -389,7 +389,7 @@ function onProfileRowKeydown(event: KeyboardEvent, profileId: string): void {
 
 .tradfi-profile-table th {
   font-size: var(--text-xs);
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }

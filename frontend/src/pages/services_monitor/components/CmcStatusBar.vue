@@ -58,7 +58,7 @@ const statusText = computed(() => {
 <style scoped>
 .cmc-status-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-  margin: 0.5rem 1rem 0; padding: 0.55rem 0.9rem; border-radius: 8px; font-size: var(--fs-sm);
+  margin: 0.5rem 1rem 0; padding: 0.55rem 0.9rem; border-radius: 8px; font-size: var(--text-sm);
   border: 1px solid var(--border-subtle); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); color: var(--success); min-height: 2.2rem;
   flex-shrink: 0;
 }

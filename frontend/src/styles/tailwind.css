@@ -60,31 +60,81 @@
   --font-mono: ui-monospace, 'Cascadia Code', 'SF Mono', 'JetBrains Mono',
     'Fira Code', 'Consolas', 'Noto Sans Mono CJK SC', monospace;
 
-  /* Project font-size tokens; they replace Tailwind's rem defaults so
-     the numeric utility scale and the named scale agree at 16px root. */
-  --text-xs: 12px;
-  --text-sm: 14px;
-  --text-base: 15px;
-  --text-md: 16px;
-  --text-lg: 19px;
-  --text-xl: 23px;
-  --text-display: 34px;
-  --text-title: 26px;
-  --text-section: 19px;
-  --text-body: 15px;
-  --text-small: 14px;
-  --text-caption: 12px;
+  /* ── The PBGui type ladder ──────────────────────────────────────
+     Ten steps, one name per size, strictly increasing. This is the only
+     sanctioned source of font sizes: never write text-[13px] or a raw
+     `font-size` in page code, pick the step whose role matches.
 
-  /* Display/headline tracking — tighten as size grows.
-     (--tracking-tight already matches the Tailwind default -0.025em.) */
+       11 micro    uppercase micro labels, kbd, rail group labels
+       12 xs       captions, hints, dense table cells, table headings
+       13 compact  dense body, field text, menu rows
+       14 sm       standard body
+       15 base     default body, control values
+       16 md       emphasized values, panel titles
+       19 lg       section headings
+       23 xl       page / workspace titles
+       26 2xl      metric numerals, modal headlines
+       34 3xl      display numerals
+
+     Values are px, not rem: the base layer pins html to 15px, so a rem
+     step would silently compute against 15px and disagree with the
+     px-based --fs-* aliases the un-migrated pages still use.
+
+     Line heights are px too, and are frozen to the values this UI
+     already rendered (Tailwind's rem defaults x the 15px root, rounded),
+     so binding them per step is a no-op rather than a reflow. Two ratios
+     stay deliberately tight and are tracked separately: xl (23/26) and
+     3xl (34/34). Tailwind's own 2xl/3xl rem defaults were non-monotonic
+     against this ladder (2xl resolved to 22.5px, *below* the 23px xl).
+
+     These bound line heights are the DEFAULT for single-line chrome
+     (labels, cells, buttons, titles). Wrapping copy keeps its explicit
+     `leading-*` utility: the frozen values are Tailwind's tight defaults
+     (xs 15px, compact 18px), while the pages deliberately set ~1.5 on
+     paragraphs, warning lists, tooltips and mono editors. Do not delete a
+     `leading-*` that sits on multi-line text - it would tighten it by
+     20-30%. */
+  --text-micro: 11px;
+  --text-micro--line-height: 14px;
+  --text-xs: 12px;
+  --text-xs--line-height: 15px;
+  --text-compact: 13px;
+  --text-compact--line-height: 18px;
+  --text-sm: 14px;
+  --text-sm--line-height: 19px;
+  --text-base: 15px;
+  --text-base--line-height: 22px;
+  --text-md: 16px;
+  --text-md--line-height: 22px;
+  --text-lg: 19px;
+  --text-lg--line-height: 26px;
+  --text-xl: 23px;
+  --text-xl--line-height: 26px;
+  --text-2xl: 26px;
+  --text-2xl--line-height: 30px;
+  --text-3xl: 34px;
+  --text-3xl--line-height: 34px;
+  /* Above the ladder: pinned so Tailwind's rem defaults cannot reappear
+     non-monotonic (its 4xl/5xl would resolve to 33.75px / 45px). */
+  --text-4xl: 42px;
+  --text-5xl: 52px;
+
+  /* Exactly three tracking values exist, declared here rather than left to
+     Tailwind's defaults so `var(--tracking-*)` is always resolvable outside
+     the utility layer. --tracking-tight is the title/heading cut (and equals
+     Tailwind's own -0.025em default), --tracking-label the uppercase
+     micro-label and pill cut (replaces the ad-hoc 0.02-0.16em spellings plus
+     tracking-wider/widest), --tracking-display the display numeral cut. */
+  --tracking-tight: -0.025em;
   --tracking-display: -0.035em;
   --tracking-label: 0.06em;
 
   /* ── Spacing ────────────────────────────────────────────────── */
   /* The numeric scale is pinned to 4px per unit (p-3 = 12px, gap-2.25 =
      9px). Tailwind's default --spacing is 0.25rem, and this project's base
-     layer sets html { font-size: 14px }, which would silently render the
-     scale at 3.5px/unit — 12.5% tighter than every ported page expects. */
+     layer sets html `font-size: var(--text-base)` (15px), which would
+     silently render the scale at 3.75px/unit — 6.25% tighter than every
+     ported page expects. */
   --spacing: 4px;
 
   /* Named spacing tokens alongside the numeric scale.
@@ -379,6 +429,17 @@
     font-weight: bold;
   }
 
+  /* Vue pages: headings belong on the type ladder, not on the UA em sizes
+     above (which resolve to 22.5 / 17.55 / 12.45 / 10.05px at the 15px
+     root) or on whatever a legacy reset happened to leave behind. Scope is
+     #app, so the standalone legacy HTML pages keep their UA sizes. Page
+     <style> blocks are un-layered and still win, so this only moves the
+     headings no page stylesheet sizes. Line heights mirror the ladder. */
+  #app h1 { font-size: var(--text-2xl); line-height: 30px; }
+  #app h2 { font-size: var(--text-lg); line-height: 26px; }
+  #app h3 { font-size: var(--text-md); line-height: 22px; }
+  #app h4, #app h5, #app h6 { font-size: var(--text-base); line-height: 22px; }
+
   p, blockquote, figure, dl, pre { margin-block: 1em; }
   blockquote, figure { margin-inline: 40px; }
   ul, ol { margin-block: 1em; }
@@ -411,7 +472,7 @@
     background: var(--surface-page);
     color: var(--text-primary);
     font-family: var(--font-family);
-    font-size: var(--fs-base);
+    font-size: var(--text-base);
     line-height: 1.5;
     font-variant-numeric: tabular-nums; /* trading UI: aligned digits everywhere */
     -webkit-font-smoothing: antialiased;
@@ -446,7 +507,7 @@
 
   button, input, select, textarea {
     font-family: var(--font-family);
-    font-size: var(--fs-base);
+    font-size: var(--text-base);
     accent-color: var(--accent);
   }
 
@@ -563,7 +624,7 @@
     border-radius: var(--radius-sm);
     padding: var(--sp-sm);
     overflow: auto;
-    font-size: var(--fs-xs);
+    font-size: var(--text-xs);
     line-height: 1.4;
     color: var(--text-primary);
   }

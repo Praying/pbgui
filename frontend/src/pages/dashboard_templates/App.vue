@@ -194,14 +194,14 @@ body {
   user-select: none;
 }
 .tpl-title {
-  font-size: var(--fs-md);
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-.tpl-title span.icon { font-size: var(--fs-lg); }
+.tpl-title span.icon { font-size: var(--text-lg); }
 
 /* ── Content area ── */
 .tpl-content {
@@ -221,11 +221,11 @@ body {
   padding: 0.85rem 1rem;
 }
 .tpl-card-title {
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-label);
   margin-bottom: 0.65rem;
 }
 
@@ -239,7 +239,7 @@ body {
 /* ── Template list ── */
 .tpl-empty {
   color: var(--text-dim);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   font-style: italic;
   padding: 0.4rem 0;
 }
@@ -254,7 +254,7 @@ body {
 
 /* ── Status messages ── */
 .msg {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   min-height: 1.1rem;
   margin-top: 0.35rem;
   padding: 0;
@@ -266,7 +266,7 @@ body {
 
 /* ── Divider ── */
 .tpl-label {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--text-muted);
   margin-bottom: 0.35rem;
 }
@@ -284,13 +284,13 @@ body {
 .msel-btn {
   background: var(--bg-input); color: var(--text-primary);
   border: 1px solid var(--border-default); border-radius: var(--radius-sm);
-  padding: 0.38rem 0.6rem; font-size: var(--fs-base);
+  padding: 0.38rem 0.6rem; font-size: var(--text-base);
   cursor: pointer; width: 100%; text-align: left;
   display: flex; justify-content: space-between; align-items: center;
   white-space: nowrap; overflow: hidden;
 }
 .msel-btn:hover { border-color: var(--accent-soft); }
-.msel-arrow { font-size: 0.55rem; margin-left: 0.4rem; flex-shrink: 0; }
+.msel-arrow { font-size: var(--text-micro); margin-left: 0.4rem; flex-shrink: 0; }
 .msel-drop {
   display: none; position: absolute; top: 100%; left: 0;
   background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-sm);
@@ -303,13 +303,13 @@ body {
   width: 100%; box-sizing: border-box;
   background: var(--bg-input); color: var(--text-primary);
   border: none; border-bottom: 1px solid var(--border-default);
-  padding: 0.35rem 0.5rem; font-size: var(--fs-sm); outline: none;
+  padding: 0.35rem 0.5rem; font-size: var(--text-sm); outline: none;
 }
 .msel-filter::placeholder { color: var(--text-muted); }
 .msel-list { max-height: 200px; overflow-y: auto; }
 .msel-item {
   display: flex; align-items: center; gap: 0.4rem;
-  padding: 0.3rem 0.6rem; cursor: pointer; font-size: var(--fs-sm);
+  padding: 0.3rem 0.6rem; cursor: pointer; font-size: var(--text-sm);
   color: var(--text-primary); white-space: nowrap;
 }
 .msel-item:hover { background: var(--border-default); }

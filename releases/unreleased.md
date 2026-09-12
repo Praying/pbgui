@@ -1,5 +1,24 @@
 # Unreleased
 
+## Vue3 全站字体与字号体系统一（统一字号阶梯 + 字距/字重契约）
+
+- **建立全站唯一的字号阶梯**：`frontend/src/styles/tailwind.css` 的 `@theme` 现定义十档 px 字号，每档绑定显式行高，成为所有 Vue3 页面字号的唯一来源：`text-micro` 11 / `text-xs` 12 / `text-compact` 13（新增）/ `text-sm` 14 / `text-base` 15 / `text-md` 16 / `text-lg` 19 / `text-xl` 23 / `text-2xl` 26 / `text-3xl` 34。
+  - 修复阶梯非单调缺陷：此前 `--text-xl` 为 23px，而 Tailwind 继承的 `text-2xl` 按 1.5rem（15px 根字号）解析为 **22.5px**，比 xl 还小；`--text-title` 26px 则卡在 2xl/3xl 之间。现将 `text-2xl` 钉为 26px、`text-3xl` 钉为 34px，并把阶梯之上的 `text-4xl`/`text-5xl` 钉为 42/52px，防止 Tailwind 的 rem 默认值再次造成倒挂。
+  - 新增 `text-compact`(13px) 档，吸收原先散落最多的近似值：13px（140 处）、13.5px（65 处）、12.5px（11 处）、0.85rem、0.9rem 等；新增 `text-micro`(11px) 档，吸收 10px、10.5px、11px、11.5px、0.68rem、0.72rem、0.73rem、0.75rem 等。
+  - 删除与数值档位重复的第二套语义令牌（`--text-display`/`title`/`section`/`body`/`small`/`caption`），其 18 处调用点并入数值阶梯，全站词汇表归一。
+- **行高从"静默漂移"改为显式绑定**：此前各档行高沿用 Tailwind 的 rem 默认值，在 15px 根字号下产生错位——`text-lg`(19px) 与 `text-xl`(23px) 共用同一个 26.25px 行高，`text-md` 则完全没有行高。现每档均声明 px 行高，取值冻结为改动前的实际渲染值（Tailwind rem 默认 × 15px 取整），因此绑定本身不产生重排。
+- **字距收敛为 3 个值**：`--tracking-label`（大写微标签与胶囊）、`--tracking-tight`（标题）、`--tracking-display`（显示级数字）；原先同一个"大写小标签"角色用了 7 种字距（0.02/0.04/0.045/0.05/0.06/0.08em 等），另有 10 种一次性 `tracking-[…]` 写法与 `tracking-wide/wider/widest`，现全部并入契约；`--tracking-tight` 显式声明以便 CSS 侧 `var()` 可靠解析。
+- **字重收敛为 4 个值**：400/500/600/700。移除 650/750/550/800/300 等中间值以及 `font-extrabold`(33 处)/`font-black`(7 处)。这不只是整洁问题：Space Grotesk 是可变字体，但中文回退到静态字重的系统字体（PingFang SC、微软雅黑），中间字重会被渲染成伪粗体。
+- **一次性扫除全部硬编码字号**：新增 `frontend/codemod_type_scale.py`（默认 dry-run，`--write` 落盘，`--report` 列出保留项），按可复核的阈值表（11.5 / 12.4 / 13.5 / 14.4 / 15.5 / 17.5 / 21 / 24.5 / 30px）把 45 个文件里的 **462 处 `text-[…]`** 归入阶梯；同时把 `frontend/src` 内 **253 处 `var(--fs-*)`** 改为 `var(--text-*)`，让 Vue 侧只剩一套词汇表。累计改写 791 处字号引用。
+  - 编码器具备注释感知能力（先屏蔽 `/* */` 与 `<!-- -->` 再改写），避免把阶梯自身文档里的 `text-[13px]`、"不要写 text-[13px]" 等说明文字改坏。
+  - `em` 与 `clamp()` 字号刻意不改写，由 `--report` 列出人工复核：`em` 相对自身上下文生效，`clamp()` 本就有意流式。仅将 `IntegrityPanel` 的 hero 标题 clamp 上下界对齐阶梯（24px→`--text-xl`，34px→`--text-3xl`）。
+- **Vue 页面标题纳入阶梯**：此前 179 个标题中有 78 个没有显式字号，直接落在浏览器 `em` 默认值上（h2 22.5px、h3 17.55px、h5 12.45px、h6 10.05px，均不在任何阶梯上）。现于 base 层按 `#app` 作用域把 h1→`--text-2xl`、h2→`--text-lg`、h3→`--text-md`、h4~h6→`--text-base`；未分层页面样式仍然优先，因此只影响原本无人设置字号的标题，legacy 独立 HTML 页面保持原 UA 尺寸不变。
+- **共享层成为唯一基准**：`components.css` 中残留的 `font-size` 字面量（11px×2、10px、1.2rem、40px）与 5 处大写字距（0.02/0.04/0.045/0.05/0.08em）全部改走令牌；`Label`/`Input`/`Button`/`Select`/`Textarea`/表格与 workbench 基础组件同步对齐阶梯，`text-compact` 成为密集表单控件的正式字号（原先页面用 `h-9 text-[13.5px]` 硬覆盖共享组件）。
+- **新增防回归契约测试** `frontend/src/shared/components/typography-tokens.test.ts`：断言十档字号与行高取值、阶梯严格递增、3 个字距令牌、4 个字重值、已删除的重复语义令牌不得回归，并在屏蔽注释后扫描全部 `frontend/src`，禁止任何绝对 `font-size: <px|rem>`、`text-[<尺寸>]`、`tracking-[…]` 以及 400/500/600/700 之外的字重。
+- **契约写入 `AGENTS.md`**，含档位到角色的对照表、行高与字距/字重规则、以及 `codemod_type_scale.py` 的用法。
+- **有意保留、未执行的项**：页面中约 130 处 `leading-*` 行高工具类**未按原计划删除**。实测显示这些覆盖集中落在会换行的正文上（段落、告警列表、tooltip、mono 编辑器），而阶梯冻结的档位行高是 Tailwind 偏紧的默认值（`xs` 15px、`compact` 18px，比率 1.25–1.36），删除会让多行正文收紧 20–30%，属于可读性回退。因此维持现状，并把"档位行高仅为单行 UI 默认值、换行正文保留显式 `leading-*`"写入阶梯文档与 `AGENTS.md`。
+- **唯一有意的视觉变化**：11 处指标数字由 `text-2xl` 的 22.5px 变为 26px；表格表头与大写标签的字距按契约统一（0.04/0.045/0.05em → 0.06em），字号保持 12px 不变。legacy HTML 页面与 `--fs-*` 别名（约 812 处引用）完全未动。
+
 ## PBv7/PBv8 空状态与列表底色统一
 
 - **空状态统一为共享虚线面板 + 图标块 + 标题 + 说明 + 主按钮**：以现有共享 `pbgui-empty-state` 为唯一基准，把 PBv7/PBv8 十个页面（回测、运行、优化、策略浏览器、帕累托浏览器）的 22 处空状态全部迁移到同一个组件，不再有一次性写法。

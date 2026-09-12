@@ -245,7 +245,7 @@ const exportCodecLabel = computed(() => {
               </SelectRoot>
             </div>
             <div class="flex flex-col gap-1"><Label class="invisible" aria-hidden="true">&nbsp;</Label><Button class="action-btn" variant="info" id="btn-export-movie" type="button" :disabled="movie.exporting.value" @click="movie.exportMovieMp4()">{{ movie.exporting.value ? t('v7explore.exportingMp4') : t('v7explore.exportMp4') }}</Button></div>
-            <div class="flex flex-col gap-1"><label class="text-secondary text-xs uppercase tracking-[0.04em]">&nbsp;</label><a v-if="movie.download.value" id="movie-export-download" class="inline-flex min-h-9 items-center justify-center border border-success/45 rounded-sm px-3 py-0 text-success no-underline" :href="movie.download.value.url" :download="movie.download.value.filename">{{ movie.download.value.label }}</a></div>
+            <div class="flex flex-col gap-1"><label class="text-secondary text-xs uppercase tracking-label">&nbsp;</label><a v-if="movie.download.value" id="movie-export-download" class="inline-flex min-h-9 items-center justify-center border border-success/45 rounded-sm px-3 py-0 text-success no-underline" :href="movie.download.value.url" :download="movie.download.value.filename">{{ movie.download.value.label }}</a></div>
           </div>
           <p class="text-secondary" id="movie-export-info">{{ movie.exportInfo.value || t('v7explore.exportDirectlyHint') }}</p>
           <details class="mt-2">
@@ -285,8 +285,8 @@ const exportCodecLabel = computed(() => {
           <div><MoviePlot ref="plotRef" :store="store" :movie="movie" /></div>
           <div id="movie-frame-details">
             <div class="grid gap-3" style="grid-template-columns:1fr 1fr;margin-bottom:12px">
-              <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-[0.05em]">{{ t('v7explore.frames') }}</div><div class="mt-1 truncate text-lg font-bold">{{ frames.length }}</div></div>
-              <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-[0.05em]">{{ t('v7explore.fills') }}</div><div class="mt-1 truncate text-lg font-bold">{{ sideEvents.length }}</div></div>
+              <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.frames') }}</div><div class="mt-1 truncate text-lg font-bold">{{ frames.length }}</div></div>
+              <div class="min-w-0 rounded-lg border border-border-default bg-elevated p-3"><div class="text-secondary text-xs uppercase tracking-label">{{ t('v7explore.fills') }}</div><div class="mt-1 truncate text-lg font-bold">{{ sideEvents.length }}</div></div>
             </div>
             <p class="text-secondary">{{ t('v7explore.movieEngineMarketLine', { engine: engineLabel, exchange: meta().exchange || '', coin: meta().coin || '' }) }}</p>
             <h4 class="m-0 mb-2.5 mt-4 text-secondary">{{ t('v7explore.frames') }}</h4>

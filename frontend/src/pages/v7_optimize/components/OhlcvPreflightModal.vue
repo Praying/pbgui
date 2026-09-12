@@ -188,7 +188,7 @@ function entryTitle(entry: Record<string, unknown>): string {
             <PbIcon :icon="PhDatabase" :size="17" />
           </div>
           <div class="min-w-0">
-            <h2 id="opt-ohlcv-title" class="m-0 truncate text-[15px] font-bold tracking-tight text-primary">{{ t('editor.preflight.title') }}</h2>
+            <h2 id="opt-ohlcv-title" class="m-0 truncate text-base font-bold tracking-tight text-primary">{{ t('editor.preflight.title') }}</h2>
             <p class="mt-0.5 text-xs leading-snug text-secondary">{{ t('editor.preflight.running') }}</p>
           </div>
         </div>
@@ -205,13 +205,13 @@ function entryTitle(entry: Record<string, unknown>): string {
         </Button>
       </header>
 
-      <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 max-[600px]:p-4 text-[13px]">
+      <div class="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 max-[600px]:p-4 text-compact">
         <div v-if="loading" class="flex flex-col items-center justify-center py-12 gap-3 text-secondary">
           <PbIcon :icon="PhArrowClockwise" :size="24" class="animate-spin text-accent" />
-          <p class="text-[13px] font-medium text-secondary">{{ t('editor.preflight.running') }}</p>
+          <p class="text-compact font-medium text-secondary">{{ t('editor.preflight.running') }}</p>
         </div>
 
-        <div v-if="error" class="rounded-lg border border-danger/40 bg-danger/10 p-3.5 text-[13px] text-danger-soft leading-relaxed">
+        <div v-if="error" class="rounded-lg border border-danger/40 bg-danger/10 p-3.5 text-compact text-danger-soft leading-relaxed">
           {{ error }}
         </div>
 
@@ -219,17 +219,17 @@ function entryTitle(entry: Record<string, unknown>): string {
           <!-- Summary Card -->
           <section class="rounded-lg border border-border-default/80 bg-surface-deep/50 p-4">
             <div class="flex items-center justify-between gap-3">
-              <strong class="text-[13.5px] font-semibold text-primary">{{ t('editor.preflight.sectionSummary') }}</strong>
+              <strong class="text-compact font-semibold text-primary">{{ t('editor.preflight.sectionSummary') }}</strong>
               <span
                 v-if="summary.overall_status"
-                class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider"
+                class="inline-flex rounded-md border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-label"
                 :class="overallStatusClass"
               >
                 {{ overallStatusLabel(summary.overall_status) }}
               </span>
             </div>
-            <h3 v-if="summary.headline" class="mt-2 text-[14px] font-bold text-primary">{{ translateServerMsg(String(summary.headline)) }}</h3>
-            <p v-if="summary.detail" class="mt-1 text-[13px] text-secondary leading-relaxed">{{ formatSummaryDetail(summary.detail) }}</p>
+            <h3 v-if="summary.headline" class="mt-2 text-sm font-bold text-primary">{{ translateServerMsg(String(summary.headline)) }}</h3>
+            <p v-if="summary.detail" class="mt-1 text-compact text-secondary leading-relaxed">{{ formatSummaryDetail(summary.detail) }}</p>
 
             <div v-if="counts.length" class="mt-3 flex flex-wrap gap-2">
               <span
@@ -248,7 +248,7 @@ function entryTitle(entry: Record<string, unknown>): string {
           <!-- Request & Universe 2-Col Grid -->
           <div v-if="Object.keys(request).length || Object.keys(universe).length" class="grid grid-cols-2 gap-3.5 max-[700px]:grid-cols-1">
             <section v-if="Object.keys(request).length" class="rounded-lg border border-border-default/80 bg-surface-deep/50 p-4">
-              <strong class="text-[13px] font-semibold text-primary">{{ t('editor.preflight.sectionRequest') }}</strong>
+              <strong class="text-compact font-semibold text-primary">{{ t('editor.preflight.sectionRequest') }}</strong>
               <dl class="mt-2.5 grid grid-cols-[minmax(110px,auto)_1fr] gap-x-3 gap-y-1.5 text-xs">
                 <template v-for="(value, key) in request" :key="key">
                   <dt class="text-secondary font-medium">{{ fieldLabel(String(key)) }}</dt>
@@ -258,7 +258,7 @@ function entryTitle(entry: Record<string, unknown>): string {
             </section>
 
             <section v-if="Object.keys(universe).length" class="rounded-lg border border-border-default/80 bg-surface-deep/50 p-4">
-              <strong class="text-[13px] font-semibold text-primary">{{ t('editor.preflight.sectionUniverse') }}</strong>
+              <strong class="text-compact font-semibold text-primary">{{ t('editor.preflight.sectionUniverse') }}</strong>
               <dl class="mt-2.5 grid grid-cols-[minmax(110px,auto)_1fr] gap-x-3 gap-y-1.5 text-xs">
                 <template v-for="(value, key) in universe" :key="key">
                   <dt class="text-secondary font-medium">{{ fieldLabel(String(key)) }}</dt>
@@ -271,8 +271,8 @@ function entryTitle(entry: Record<string, unknown>): string {
           <!-- Sample Groups -->
           <section v-for="group in sampleGroups" :key="group.status" class="rounded-lg border border-border-default/80 bg-surface-deep/50 p-4">
             <div class="flex items-center justify-between gap-2">
-              <strong class="text-[13px] font-semibold text-primary capitalize">{{ groupLabel(group.status) }}</strong>
-              <span class="rounded bg-elevated/80 px-1.5 py-0.5 text-[11px] font-mono text-secondary">{{ group.entries.length }}</span>
+              <strong class="text-compact font-semibold text-primary capitalize">{{ groupLabel(group.status) }}</strong>
+              <span class="rounded bg-elevated/80 px-1.5 py-0.5 text-micro font-mono text-secondary">{{ group.entries.length }}</span>
             </div>
             <div class="mt-2.5 grid grid-cols-2 gap-2 max-[700px]:grid-cols-1">
               <article
@@ -281,10 +281,10 @@ function entryTitle(entry: Record<string, unknown>): string {
                 class="flex flex-col gap-1 rounded-md border border-border-default/60 bg-elevated/40 p-2.5 text-xs"
               >
                 <div class="flex items-center justify-between gap-2">
-                  <span class="font-mono font-semibold text-primary text-[12.5px]">{{ entryTitle(entry) }}</span>
+                  <span class="font-mono font-semibold text-primary text-compact">{{ entryTitle(entry) }}</span>
                 </div>
                 <span v-if="entry.note || entry.status_label" class="text-secondary leading-snug">{{ translateServerMsg(String(entry.note || entry.status_label || '')) }}</span>
-                <small v-if="entry.effective_start_date" class="font-mono text-[11px] text-secondary/80">
+                <small v-if="entry.effective_start_date" class="font-mono text-micro text-secondary/80">
                   {{ t('editor.preflight.entryStart', { d: String(entry.effective_start_date) }) }}
                 </small>
               </article>
@@ -300,7 +300,7 @@ function entryTitle(entry: Record<string, unknown>): string {
         <!-- Preload Job section -->
         <section v-if="job" class="opt-ohlcv-job rounded-lg border border-border-default/80 bg-surface-deep/50 p-4">
           <div class="flex items-center justify-between gap-3">
-            <strong class="text-[13.5px] font-semibold text-primary">{{ t('editor.preflight.jobTitle') }}</strong>
+            <strong class="text-compact font-semibold text-primary">{{ t('editor.preflight.jobTitle') }}</strong>
             <span
               class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-semibold"
               :class="jobRunning ? 'bg-warning/15 text-warning-soft border border-warning/30' : 'bg-elevated text-secondary border border-border-default/60'"
@@ -317,20 +317,20 @@ function entryTitle(entry: Record<string, unknown>): string {
           </div>
 
           <p v-if="job.error" class="mt-2 text-xs text-danger-soft leading-relaxed">{{ translateServerMsg(String(job.error)) }}</p>
-          <pre v-if="logTail.length" class="mt-2.5 max-h-[220px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default/80 bg-page p-3 font-mono text-[11.5px] leading-relaxed text-primary">{{ logTail.join('\n') }}</pre>
+          <pre v-if="logTail.length" class="mt-2.5 max-h-[220px] overflow-auto whitespace-pre-wrap rounded-md border border-border-default/80 bg-page p-3 font-mono text-micro leading-relaxed text-primary">{{ logTail.join('\n') }}</pre>
         </section>
       </div>
 
       <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default bg-surface-deep/40 px-5 py-3.5 max-[600px]:px-4">
-        <Button data-action="refresh" type="button" variant="default" :disabled="loading" class="h-9 gap-1.5 text-[13px]" @click="emit('refresh')">
+        <Button data-action="refresh" type="button" variant="default" :disabled="loading" class="h-9 gap-1.5 text-compact" @click="emit('refresh')">
           <PbIcon :icon="PhArrowClockwise" :size="15" :class="{ 'animate-spin': loading }" />
           {{ t('editor.preflight.refreshBtn') }}
         </Button>
-        <Button v-if="jobRunning" variant="danger" data-action="stop" type="button" class="h-9 gap-1.5 text-[13px]" @click="emit('stop')">
+        <Button v-if="jobRunning" variant="danger" data-action="stop" type="button" class="h-9 gap-1.5 text-compact" @click="emit('stop')">
           <PbIcon :icon="PhStop" :size="15" />
           {{ t('editor.preflight.stopBtn') }}
         </Button>
-        <Button v-else variant="primary" data-action="preload" type="button" :disabled="!preloadSupported || loading" class="h-9 gap-1.5 text-[13px]" @click="emit('preload')">
+        <Button v-else variant="primary" data-action="preload" type="button" :disabled="!preloadSupported || loading" class="h-9 gap-1.5 text-compact" @click="emit('preload')">
           <PbIcon :icon="PhDownloadSimple" :size="15" />
           {{ translateServerMsg(String(summary.preload_label || t('editor.preflight.preloadDefault'))) }}
         </Button>

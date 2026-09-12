@@ -182,7 +182,7 @@ watch(
   background: var(--surface-workspace);
 }
 .ctrl-title {
-  font-size: var(--fs-md);
+  font-size: var(--text-md);
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -202,10 +202,10 @@ watch(
 .status-dot.stopped { background: var(--danger); }
 .status-dot.warn { background: var(--warning); }
 .status-label {
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
 }
 .tab-bar {
   display: flex;
@@ -226,7 +226,7 @@ watch(
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   font-family: inherit;
   border-bottom: 2px solid transparent;
   transition: all 0.12s;
@@ -250,7 +250,7 @@ watch(
   color: var(--text-muted);
 }
 .tab-placeholder-hint {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--text-disabled);
 }
 
@@ -268,8 +268,8 @@ watch(
 
 .ctrl-title {
   color: var(--text-secondary);
-  font-size: 16px;
-  letter-spacing: -0.015em;
+  font-size: var(--text-md);
+  letter-spacing: var(--tracking-tight);
 }
 
 .ctrl-status {
@@ -304,8 +304,8 @@ watch(
 
 .status-label {
   color: var(--text-secondary);
-  font-size: 11px;
-  letter-spacing: 0.07em;
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-label);
 }
 
 .ctrl-btns {

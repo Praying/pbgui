@@ -82,8 +82,8 @@ function toggle(option: string): void {
 <style scoped>
 .multiselect-filter { margin-bottom: 0.35rem; width: 220px; }
 .multiselect-wrap { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: 5px; padding: 0.3rem; min-height: 36px; max-height: 160px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 4px; }
-.multiselect-empty { color: var(--text-disabled); font-size: var(--fs-xs); }
-.tag { display: inline-flex; align-items: center; background: rgb(var(--accent-rgb) / 0.18); border: 1px solid var(--accent); color: var(--accent-soft); border-radius: 4px; padding: 2px 8px; font-size: var(--fs-xs); cursor: pointer; user-select: none; transition: all 0.1s; }
+.multiselect-empty { color: var(--text-disabled); font-size: var(--text-xs); }
+.tag { display: inline-flex; align-items: center; background: rgb(var(--accent-rgb) / 0.18); border: 1px solid var(--accent); color: var(--accent-soft); border-radius: 4px; padding: 2px 8px; font-size: var(--text-xs); cursor: pointer; user-select: none; transition: all 0.1s; }
 .tag:hover { background: var(--accent-deep); }
 .tag.inactive { background: transparent; border-color: var(--border-default); color: var(--text-muted); }
 .tag.inactive:hover { border-color: var(--border-strong); color: var(--text-secondary); }

@@ -58,7 +58,7 @@ function statusToneClass(status: string): string {
     </div>
     <div class="copy-data-summary-grid grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-2">
       <div v-for="[label, value], index in view.rows" :key="label" :class="summaryItemClass">
-        <div class="copy-data-summary-label text-xs uppercase tracking-[0.05em] text-secondary">{{ label }}</div>
+        <div class="copy-data-summary-label text-xs uppercase tracking-label text-secondary">{{ label }}</div>
         <div class="copy-data-summary-value font-bold [overflow-wrap:anywhere]" :class="index === 0 ? statusToneClass(value) : 'text-primary'">{{ value }}</div>
       </div>
     </div>

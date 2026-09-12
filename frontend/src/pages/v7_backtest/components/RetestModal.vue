@@ -114,7 +114,7 @@ function onCreateSchedule(): void {
         <div style="display: flex; flex-direction: column; gap: var(--sp-md); height: 100%; min-width: 0">
           <p class="text-secondary m-0">The new backtest always ends at yesterday. Replacement happens only after the new result finished successfully; Git Push stays manual.</p>
           <div>
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-date-mode-label">Date Mode</div>
+            <div class="text-xs uppercase tracking-label text-secondary" id="arr-date-mode-label">Date Mode</div>
             <SelectRoot v-model="dateMode">
               <SelectTrigger class="w-full" data-test="arr-date-mode" aria-labelledby="arr-date-mode-label">
                 <span>{{ dateMode === 'last_x_days' ? 'Last X days, end yesterday' : 'Same duration, end yesterday' }}</span>
@@ -126,16 +126,16 @@ function onCreateSchedule(): void {
             </SelectRoot>
           </div>
           <div>
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">Last X days / fallback window</div>
+            <div class="text-xs uppercase tracking-label text-secondary">Last X days / fallback window</div>
             <Input v-model="lastDays" class="text-right" type="number" min="1" max="3650" step="1" data-test="arr-last-days" />
             <div class="text-secondary">Used directly in Last X days mode, and as fallback when the old result has no valid dates.</div>
           </div>
           <div>
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
+            <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.startingBalance') }}</div>
             <Input v-model="balance" class="text-right" type="number" min="1" step="100" data-test="arr-balance" />
           </div>
           <div style="flex: 1; display: flex; flex-direction: column; min-height: 60px">
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.exchanges') }}</div>
+            <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.exchanges') }}</div>
             <!-- ui-migration: blocked — the reka listbox is single-value; the
                  legacy multi-select (ctrl-free toggle via useToggleMultiSelect)
                  stays native. -->
@@ -154,7 +154,7 @@ function onCreateSchedule(): void {
           <hr class="sb-sep" />
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-sm)">
             <div>
-              <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-cadence-label">Schedule</div>
+              <div class="text-xs uppercase tracking-label text-secondary" id="arr-cadence-label">Schedule</div>
               <SelectRoot v-model="cadence">
                 <SelectTrigger class="w-full" data-test="arr-cadence" aria-labelledby="arr-cadence-label">
                   <span>{{ cadence === 'weekly' ? 'Weekly' : 'Daily' }}</span>
@@ -166,11 +166,11 @@ function onCreateSchedule(): void {
               </SelectRoot>
             </div>
             <div>
-              <div class="text-xs uppercase tracking-[0.5px] text-secondary">Time</div>
+              <div class="text-xs uppercase tracking-label text-secondary">Time</div>
               <Input v-model="time" type="time" data-test="arr-time" />
             </div>
             <div v-show="cadence === 'weekly'" id="arr-weekday-wrap" class="col-span-2" data-test="arr-weekday-wrap">
-              <div class="text-xs uppercase tracking-[0.5px] text-secondary" id="arr-weekday-label">Weekday</div>
+              <div class="text-xs uppercase tracking-label text-secondary" id="arr-weekday-label">Weekday</div>
               <SelectRoot v-model="weekday">
                 <SelectTrigger class="w-full" data-test="arr-weekday" aria-labelledby="arr-weekday-label">
                   <span>{{ weekdayOptions.find((option) => option.value === weekday)?.label ?? weekday }}</span>

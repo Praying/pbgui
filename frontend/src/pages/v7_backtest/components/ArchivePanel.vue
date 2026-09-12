@@ -438,7 +438,7 @@ defineExpose({
             :class="pinned ? '' : 'unpinned opacity-40'"
             :title="t('v7backtest.pinTable')"
             :aria-label="t('v7backtest.pinTable')"
-            style="font-size: 15px; padding: 0 6px"
+            style="font-size: var(--text-base); padding: 0 6px"
             @click="pinned = !pinned"
           >
             <PbIcon :icon="PhPushPin" :size="18" />
@@ -486,9 +486,9 @@ defineExpose({
       <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.addArchiveModal') }}</h3>
         <div class="min-h-0 flex-1 overflow-auto">
-          <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.archiveName') }}</div>
+          <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.archiveName') }}</div>
           <Input v-model="addName" placeholder="my_archive" data-test="arc-name" />
-          <div class="mt-2 text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.gitUrl') }}</div>
+          <div class="mt-2 text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.gitUrl') }}</div>
           <Input v-model="addUrl" placeholder="https://github.com/..." data-test="arc-url" />
         </div>
         <div class="mt-5 flex justify-end gap-2">
@@ -541,9 +541,9 @@ defineExpose({
             {{ store.scorePreview.value.rebuilt ? 'Manifest and README were updated. This is the generated README.md preview.' : 'Read-only README.md preview. Git Push updates manifest and README automatically before committing.' }}
           </p>
           <div class="score-preview-meta flex gap-5 my-2">
-            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Score Version</div><b>{{ store.scorePreview.value.payload.score_version ?? '' }}</b></div>
-            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Results</div><b>{{ store.scorePreview.value.payload.scored ?? 0 }} / {{ store.scorePreview.value.payload.total ?? 0 }}</b></div>
-            <div><div class="text-xs uppercase tracking-[0.5px] text-secondary">Generated</div><b>{{ store.scorePreview.value.payload.generated_at ?? '' }}</b></div>
+            <div><div class="text-xs uppercase tracking-label text-secondary">Score Version</div><b>{{ store.scorePreview.value.payload.score_version ?? '' }}</b></div>
+            <div><div class="text-xs uppercase tracking-label text-secondary">Results</div><b>{{ store.scorePreview.value.payload.scored ?? 0 }} / {{ store.scorePreview.value.payload.total ?? 0 }}</b></div>
+            <div><div class="text-xs uppercase tracking-label text-secondary">Generated</div><b>{{ store.scorePreview.value.payload.generated_at ?? '' }}</b></div>
           </div>
           <ReadmePreview :markdown="scoreReadme" :remote-base="remoteBase" />
         </div>
@@ -568,7 +568,7 @@ defineExpose({
       <div :class="modalBoxClass">
         <h3>{{ t('v7backtest.importOptimizeConfig') }}</h3>
         <div class="min-h-0 flex-1 overflow-auto">
-          <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.importAs') }}</div>
+          <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.importAs') }}</div>
           <Input v-model="importNameValue" data-test="import-name" />
           <p class="text-secondary">{{ t('v7backtest.importOverwriteHint') }}</p>
         </div>

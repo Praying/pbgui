@@ -89,7 +89,7 @@ const details = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--mds-text-primary);
   text-shadow: 0 0 4px rgba(5, 8, 14, 0.8);
@@ -97,7 +97,7 @@ const details = computed(() => {
 }
 
 .mds-progress-text {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--mds-text-secondary);
 }
 </style>

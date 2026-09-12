@@ -410,7 +410,7 @@ onBeforeUnmount(() => {
 }
 
 #help-content h1 {
-  font-size: var(--fs-xl);
+  font-size: var(--text-xl);
   color: var(--text-primary);
   margin: 0 0 1.25rem;
   padding-bottom: 0.75rem;
@@ -419,14 +419,14 @@ onBeforeUnmount(() => {
 }
 
 #help-content h2 {
-  font-size: var(--fs-lg);
+  font-size: var(--text-lg);
   color: var(--text-primary);
   margin: 2rem 0 0.75rem;
   font-weight: 600;
 }
 
 #help-content h3 {
-  font-size: var(--fs-md);
+  font-size: var(--text-md);
   color: var(--text-primary);
   margin: 1.5rem 0 0.5rem;
   font-weight: 600;
@@ -472,7 +472,7 @@ onBeforeUnmount(() => {
   padding: 0;
   border: none;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
 }
 
 #help-content ul,
@@ -515,7 +515,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--border-default);
   padding: 0.6rem 0.9rem;
   text-align: left;
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   vertical-align: top;
 }
 

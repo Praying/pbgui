@@ -196,7 +196,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
   <div class="expander" id="exp-coin-ov" :class="{ open: expanded || overrideCount > 0 }">
     <div class="expander-header" @click="expanded = !expanded">
       <span class="arrow">&#x25B6;</span> {{ t('editor.overrides.title') }}
-      <span v-if="overrideCount > 0" style="color: var(--text-dim); font-size: var(--fs-xs); margin-left: 6px"
+      <span v-if="overrideCount > 0" style="color: var(--text-dim); font-size: var(--text-xs); margin-left: 6px"
         >({{ t('editor.overrides.coinCount', { n: overrideCount, s: overrideCount > 1 ? 's' : '' }) }})</span
       >
     </div>
@@ -277,22 +277,22 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
         style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-top: var(--sp-sm); background: rgb(var(--accent-rgb) / 0.03)"
       >
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-sm)">
-          <span style="font-size: var(--fs-sm); font-weight: 600; color: var(--accent)"
+          <span style="font-size: var(--text-sm); font-weight: 600; color: var(--accent)"
             >{{ t('editor.overrides.editCoin', { coin: store.editCoin.value }) }}</span
           >
           <Button type="button" variant="outline" size="sm" class="act-btn" @click="store.closeEdit()">{{ t('editor.overrides.done') }}</Button>
         </div>
 
-        <div v-if="store.allowedParams.value === null" style="margin-bottom: var(--sp-sm); color: var(--text-dim); font-size: var(--fs-sm)">
+        <div v-if="store.allowedParams.value === null" style="margin-bottom: var(--sp-sm); color: var(--text-dim); font-size: var(--text-sm)">
           {{ t('editor.overrides.loadingParams') }}
         </div>
-        <div v-else-if="store.allowedParamsError.value" style="margin-bottom: var(--sp-sm); color: var(--red); font-size: var(--fs-sm)">
+        <div v-else-if="store.allowedParamsError.value" style="margin-bottom: var(--sp-sm); color: var(--red); font-size: var(--text-sm)">
           {{ t('editor.overrides.paramsUnavailable', { msg: store.allowedParamsError.value }) }}
         </div>
-        <div v-else-if="allowedParamCount === 0" style="margin-bottom: var(--sp-sm); color: var(--text-dim); font-size: var(--fs-sm)">
+        <div v-else-if="allowedParamCount === 0" style="margin-bottom: var(--sp-sm); color: var(--text-dim); font-size: var(--text-sm)">
           {{ t('editor.overrides.noInlineParams') }}
         </div>
-        <div v-if="unsupportedInline.length" style="margin-bottom: var(--sp-sm); color: var(--red); font-size: var(--fs-sm)">
+        <div v-if="unsupportedInline.length" style="margin-bottom: var(--sp-sm); color: var(--red); font-size: var(--text-sm)">
           {{ t('editor.overrides.unsupportedInline', { params: unsupportedInline.join(', ') }) }}
         </div>
 
@@ -303,7 +303,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
           style="margin-bottom: var(--sp-sm); padding-bottom: var(--sp-sm); border-bottom: 1px solid var(--border)"
         >
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-xs)">
-            <span style="font-weight: 600; font-size: var(--fs-sm)" :style="{ color: section.color }">{{ section.label }}</span>
+            <span style="font-weight: 600; font-size: var(--text-sm)" :style="{ color: section.color }">{{ section.label }}</span>
           </div>
 
           <Table v-if="sectionParams(section).length" class="mb-2 w-full text-xs">
@@ -394,12 +394,12 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
           >
             <span
               class="arrow"
-              style="font-size: var(--fs-xs); color: var(--text-dim); display: inline-block"
+              style="font-size: var(--text-xs); color: var(--text-dim); display: inline-block"
               :style="{ transform: store.fileValues.open ? 'rotate(90deg)' : 'none' }"
               >&#x25B6;</span
             >
-            <span style="font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim)">{{ t('editor.overrides.configFile') }}</span>
-            <span style="font-size: var(--fs-xs); color: var(--text-dim)"
+            <span style="font-size: var(--text-sm); font-weight: 600; color: var(--text-dim)">{{ t('editor.overrides.configFile') }}</span>
+            <span style="font-size: var(--text-xs); color: var(--text-dim)"
               >{{ t('editor.overrides.configFileHint', { coin: store.editCoin.value }) }}</span
             >
           </div>
@@ -432,7 +432,7 @@ const emit = defineEmits<{ (e: 'notify', msg: string, kind: 'err' | 'info'): voi
                 </div>
               </div>
             </div>
-            <span style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px; display: block">
+            <span style="font-size: var(--text-xs); color: var(--text-dim); margin-top: 2px; display: block">
               {{ t('editor.overrides.savedAs', { coin: store.editCoin.value }) }}
             </span>
           </div>

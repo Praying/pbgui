@@ -428,7 +428,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   background: var(--surface-workspace);
 }
 .ctrl-title {
-  font-size: var(--fs-md);
+  font-size: var(--text-md);
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -447,10 +447,10 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 .status-dot.running { background: var(--success); }
 .status-dot.stopped { background: var(--danger); }
 .status-label {
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
 }
 
 .workers-shell {
@@ -471,13 +471,13 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 }
 .worker-group { display: flex; flex-direction: column; gap: var(--sp-md); }
 .worker-group-title {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   color: var(--text-secondary);
 }
-.worker-group-subtitle { font-size: var(--fs-xs); color: var(--text-muted); }
+.worker-group-subtitle { font-size: var(--text-xs); color: var(--text-muted); }
 .worker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-md); }
 .worker-card {
   background: var(--surface-card);
@@ -503,17 +503,17 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 .worker-card.running { border-color: rgb(var(--success-rgb) / 0.4); }
 .worker-card.stopped { border-color: rgb(var(--danger-rgb) / 0.3); }
 .worker-type {
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
 }
-.card-name { font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary); }
-.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: var(--text-muted); }
+.card-name { font-size: var(--text-sm); font-weight: 700; color: var(--text-primary); }
+.card-status-row { display: flex; align-items: center; gap: 5px; font-size: var(--text-xs); color: var(--text-muted); }
 .card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-disabled); flex-shrink: 0; }
 .card-dot.running { background: var(--success); }
 .card-dot.stopped { background: var(--danger); }
-.worker-summary { font-size: var(--fs-sm); color: var(--text-secondary); }
+.worker-summary { font-size: var(--text-sm); color: var(--text-secondary); }
 .worker-stats-inline { display: flex; flex-wrap: wrap; gap: var(--sp-xs); }
 .worker-pill {
   display: inline-flex;
@@ -522,7 +522,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   padding: 2px 7px;
   border-radius: 999px;
   border: 1px solid var(--border-default);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   background: var(--surface-workspace);
 }
@@ -545,7 +545,7 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
 }
 .worker-detail-empty {
   color: var(--text-muted);
-  font-size: var(--fs-base);
+  font-size: var(--text-base);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -553,11 +553,11 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   text-align: center;
 }
 .worker-detail-top { display: flex; justify-content: space-between; gap: var(--sp-md); align-items: flex-start; }
-.worker-detail-title { font-size: var(--fs-lg); font-weight: 700; color: var(--text-primary); }
-.worker-detail-subtitle { font-size: var(--fs-sm); color: var(--text-secondary); margin-top: var(--sp-xs); }
-.worker-detail-desc { font-size: var(--fs-base); color: var(--text-secondary); line-height: 1.5; }
+.worker-detail-title { font-size: var(--text-lg); font-weight: 700; color: var(--text-primary); }
+.worker-detail-subtitle { font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--sp-xs); }
+.worker-detail-desc { font-size: var(--text-base); color: var(--text-secondary); line-height: 1.5; }
 .worker-detail-note {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--warning-soft);
   background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card));
   border: 1px solid rgb(var(--warning-rgb) / 0.45);
@@ -571,10 +571,10 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   padding: 4px 9px;
   border-radius: 999px;
   border: 1px solid var(--border-default);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
 }
 .worker-state-badge.running { color: var(--success); border-color: rgb(var(--success-rgb) / 0.45); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
 .worker-state-badge.stopped { color: var(--danger-soft); border-color: rgb(var(--danger-rgb) / 0.35); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
@@ -588,13 +588,13 @@ function onWorkerButton(workerId: string, action: WorkerAction): void {
   min-width: 0;
 }
 .worker-stat-label {
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
   margin-bottom: 3px;
 }
-.worker-stat-value { font-size: var(--fs-md); color: var(--text-primary); font-weight: 700; }
+.worker-stat-value { font-size: var(--text-md); color: var(--text-primary); font-weight: 700; }
 .worker-log-section { flex: 1; min-height: 320px; overflow: hidden; display: flex; flex-direction: column; }
 .worker-log-empty {
   flex: 1;

@@ -64,7 +64,7 @@ function close(): void {
         </span>
         <span class="min-w-0">
           <span class="block truncate text-sm font-bold leading-tight text-primary">{{ resultLabel }}</span>
-          <span class="mt-0.5 block truncate text-[10px] font-medium leading-tight text-muted">{{ actionLabel }}</span>
+          <span class="mt-0.5 block truncate text-micro font-medium leading-tight text-muted">{{ actionLabel }}</span>
         </span>
       </div>
     </template>

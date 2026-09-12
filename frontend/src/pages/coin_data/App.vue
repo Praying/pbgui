@@ -588,7 +588,7 @@ body {
   border-radius: 7px;
   background: var(--accent-bg);
   color: var(--accent-soft);
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
@@ -629,7 +629,7 @@ details.panel > summary::before {
   display: inline-block;
   margin-right: 6px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--text-micro);
   transition: transform 0.12s;
 }
 

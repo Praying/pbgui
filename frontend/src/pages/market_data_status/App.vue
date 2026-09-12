@@ -260,7 +260,7 @@ async function onStopRun(): Promise<void> {
 }
 
 .mds-empty-state-icon {
-  font-size: 3rem;
+  font-size: var(--text-3xl);
   margin-bottom: 1rem;
   opacity: 0.3;
 }

@@ -197,7 +197,7 @@ const heading = () => t('v7optimize.optimizeLogWithName', { name: props.title ||
   margin: 0;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: var(--text-base);
   font-weight: 700;
   line-height: 1.2;
   text-overflow: ellipsis;
@@ -209,7 +209,7 @@ const heading = () => t('v7optimize.optimizeLogWithName', { name: props.title ||
   overflow: hidden;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-micro);
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;

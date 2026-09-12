@@ -29,7 +29,7 @@ function onDragEnd(): void {
 
 <template>
   <div id="widget-palette" class="widget-palette flex min-w-[80px] flex-auto flex-wrap items-center gap-[0.4rem]">
-    <span class="palette-label mr-[0.25rem] shrink-0 select-none text-xs uppercase tracking-[0.06em] text-secondary">{{ dashT('dash.widgets', 'Widgets') }}</span>
+    <span class="palette-label mr-[0.25rem] shrink-0 select-none text-xs uppercase tracking-label text-secondary">{{ dashT('dash.widgets', 'Widgets') }}</span>
     <div id="palette-items" class="palette-items flex flex-wrap gap-[0.4rem]">
       <div
         v-for="type in PALETTE_TYPES"

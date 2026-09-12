@@ -182,7 +182,7 @@ defineExpose({ deleteSelectedFlow });
 
       <div id="results-toolbar" class="pbgui-list-toolbar flex flex-wrap items-end gap-3 border-b border-border-subtle px-4 py-2.5">
         <label class="grid min-w-[112px] gap-1.5">
-          <span id="results-version-filter-label" class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('v7backtest.version') }}</span>
+          <span id="results-version-filter-label" class="text-micro font-bold uppercase tracking-label text-muted">{{ t('v7backtest.version') }}</span>
           <SelectRoot :model-value="store.versionFilter.value" @update:model-value="store.setVersionFilter(String($event ?? '') as 'v7' | 'v8' | 'both')">
             <SelectTrigger id="results-version-filter" class="h-8 w-full" aria-labelledby="results-version-filter-label">
               <span>{{ store.versionFilter.value === 'v7' ? 'PBv7' : store.versionFilter.value === 'v8' ? 'PBv8' : t('v7backtest.both') }}</span>
@@ -196,7 +196,7 @@ defineExpose({ deleteSelectedFlow });
         </label>
 
         <label class="grid min-w-[180px] max-w-[260px] flex-1 gap-1.5">
-          <span id="results-config-filter-label" class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('v7backtest.config') }}</span>
+          <span id="results-config-filter-label" class="text-micro font-bold uppercase tracking-label text-muted">{{ t('v7backtest.config') }}</span>
           <!-- ui-migration: the legacy <option value="">All configs</option> has no
                reka equivalent — the cleared model ('' = all configs) renders as
                the trigger label instead. -->
@@ -211,7 +211,7 @@ defineExpose({ deleteSelectedFlow });
         </label>
 
         <label class="grid min-w-[220px] max-w-[360px] flex-[1.4] gap-1.5">
-          <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">{{ t('common.search') }}</span>
+          <span class="text-micro font-bold uppercase tracking-label text-muted">{{ t('common.search') }}</span>
           <span class="relative block">
             <PbIcon :icon="PhMagnifyingGlass" :size="15" class="pointer-events-none absolute left-2.5 top-1/2 z-1 -translate-y-1/2 text-muted" />
             <Input id="results-filter" v-model="store.textFilter.value" type="search" class="h-8 w-full pl-8" :placeholder="t('v7backtest.searchName')" />

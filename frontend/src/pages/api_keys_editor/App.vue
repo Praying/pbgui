@@ -420,9 +420,9 @@ body #pbgui-dialog-header {
 body #pbgui-dialog-title {
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: var(--text-section);
-  font-weight: 650;
-  letter-spacing: -0.015em;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
 }
 
 body #pbgui-dialog-close {
@@ -459,14 +459,14 @@ body #pbgui-dialog-body {
 body #pbgui-dialog-message {
   color: var(--text-secondary);
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text-base);
   line-height: 1.6;
 }
 
 body #pbgui-dialog-detail {
   color: var(--text-muted);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text-xs);
 }
 
 body #pbgui-dialog-actions {
@@ -479,7 +479,7 @@ body .pbgui-dialog-btn {
   padding: 0 12px;
   border-radius: var(--radius-sm);
   font-family: var(--font-sans);
-  font-size: var(--text-small);
+  font-size: var(--text-sm);
   font-weight: 600;
   transition: background-color 120ms var(--ease-standard), border-color 120ms var(--ease-standard), color 120ms var(--ease-standard), transform 120ms var(--ease-standard);
 }

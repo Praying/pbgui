@@ -354,7 +354,7 @@ const icon = WIDGET_META.ORDERS.icon;
             type="button"
             variant="ghost"
             size="sm"
-            class="do-fs-btn px-1.25 py-0.5 text-[15px] leading-none hover:bg-elevated"
+            class="do-fs-btn px-1.25 py-0.5 text-base leading-none hover:bg-elevated"
             :title="dashT('dash.fullscreen', 'Fullscreen')"
             @click="fs.toggleFullscreen()"
           >
@@ -362,7 +362,7 @@ const icon = WIDGET_META.ORDERS.icon;
             <PbIcon v-else :icon="PhArrowsOut" :size="15" />
           </Button>
         </div>
-        <div class="do-legend pointer-events-none absolute left-10 top-1.5 z-10 flex gap-[0.75rem] text-[0.65rem] text-secondary">
+        <div class="do-legend pointer-events-none absolute left-10 top-1.5 z-10 flex gap-[0.75rem] text-micro text-secondary">
           <span v-for="li in legend" :key="li.label" class="do-leg-item inline-flex items-center gap-1">
             <span :class="legSwatchClass(li.style)" :style="{ borderColor: li.color }"></span>{{ li.label }}
           </span>

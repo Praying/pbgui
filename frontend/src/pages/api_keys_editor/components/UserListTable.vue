@@ -303,24 +303,24 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
         </colgroup>
         <thead>
           <tr>
-            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('name')" :aria-sort="sortAriaValue('name')" id="th-name" @click="store.setSort('name')">
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary transition-colors" :class="sortClass('name')" :aria-sort="sortAriaValue('name')" id="th-name" @click="store.setSort('name')">
               <span>{{ t('misc.apikeys.user') }}</span>
               <PbIcon v-if="store.sortCol.value === 'name'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
             </th>
-            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('exchange')" :aria-sort="sortAriaValue('exchange')" id="th-exchange" @click="store.setSort('exchange')">
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary transition-colors" :class="sortClass('exchange')" :aria-sort="sortAriaValue('exchange')" id="th-exchange" @click="store.setSort('exchange')">
               <span>{{ t('misc.apikeys.exchange') }}</span>
               <PbIcon v-if="store.sortCol.value === 'exchange'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
             </th>
-            <th class="border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary">{{ t('misc.apikeys.credentials') }}</th>
-            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('hl_expiry')" :aria-sort="sortAriaValue('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
+            <th class="border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.credentials') }}</th>
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary transition-colors" :class="sortClass('hl_expiry')" :aria-sort="sortAriaValue('hl_expiry')" id="th-hl_expiry" @click="store.setSort('hl_expiry')">
               <span>{{ t('misc.apikeys.keyExpiry') }}</span>
               <PbIcon v-if="store.sortCol.value === 'hl_expiry'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
             </th>
-            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors" :class="sortClass('status')" :aria-sort="sortAriaValue('status')" id="th-status" @click="store.setSort('status')">
+            <th class="sortable cursor-pointer select-none border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary hover:text-primary transition-colors" :class="sortClass('status')" :aria-sort="sortAriaValue('status')" id="th-status" @click="store.setSort('status')">
               <span>{{ t('misc.apikeys.status') }}</span>
               <PbIcon v-if="store.sortCol.value === 'status'" class="sort-icon" :icon="store.sortDir.value === 1 ? PhCaretUp : PhCaretDown" />
             </th>
-            <th class="border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-secondary">{{ t('misc.apikeys.actions') }}</th>
+            <th class="border-b border-border-default bg-card px-3.5 py-2.5 text-left text-xs font-semibold uppercase tracking-label text-secondary">{{ t('misc.apikeys.actions') }}</th>
           </tr>
         </thead>
         <tbody id="userTableBody">
@@ -469,7 +469,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-label);
 }
 
 .user-table-wrap {
@@ -559,8 +559,8 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
 
 .user-name {
   font-family: var(--font-mono);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.01em;
+  font-size: var(--text-sm);
+  letter-spacing: normal;
 }
 
 .credential-list {
@@ -579,7 +579,7 @@ function onRowKeydown(event: KeyboardEvent, name: string): void {
   background: rgb(var(--text-secondary-rgb) / 0.07);
   color: var(--text-secondary);
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   line-height: 1.2;
 }
 

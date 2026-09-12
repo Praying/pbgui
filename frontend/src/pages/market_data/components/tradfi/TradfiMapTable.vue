@@ -113,7 +113,7 @@ function onStatusSelect(value: unknown): void {
             <th
               v-for="column in columns"
               :key="column"
-              class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm font-semibold uppercase tracking-[0.04em] text-primary"
+              class="border-b border-secondary/12 py-[0.7rem] px-[0.8rem] text-left align-top text-sm font-semibold uppercase tracking-label text-primary"
             >{{ column }}</th>
           </tr>
         </thead>

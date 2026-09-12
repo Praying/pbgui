@@ -143,9 +143,9 @@ function segmentTabClass(isActive: boolean): string {
       <div class="flex min-h-[22px] items-center justify-between gap-2 text-sm">
         <span class="min-w-0 truncate text-secondary text-xs" :data-tip="field.tip">{{ field.label }}</span>
         <span class="inline-flex flex-none items-center gap-1.5">
-          <span v-if="field.nearBound" class="px-1.5 py-0.5 rounded-full border border-warning/32 bg-warning-deep/13 text-warning-soft text-[9px] font-bold uppercase tracking-[0.04em]">{{ field.nearBound === 'lower' ? t('v7explore.nearLowerBound') : t('v7explore.nearUpperBound') }}</span>
-          <span v-if="field.kind === 'select'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-[10px] font-bold text-accent-soft">{{ field.value || '-' }}</span>
-          <span v-else-if="field.kind === 'number'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-[10px] font-bold text-accent-soft">{{ sliderDisplay(field) }}</span>
+          <span v-if="field.nearBound" class="px-1.5 py-0.5 rounded-full border border-warning/32 bg-warning-deep/13 text-warning-soft text-micro font-bold uppercase tracking-label">{{ field.nearBound === 'lower' ? t('v7explore.nearLowerBound') : t('v7explore.nearUpperBound') }}</span>
+          <span v-if="field.kind === 'select'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft">{{ field.value || '-' }}</span>
+          <span v-else-if="field.kind === 'number'" class="min-w-16 px-1.5 py-0.5 rounded-[5px] border border-accent/18 bg-accent-deep/8 text-right font-mono text-micro font-bold text-accent-soft">{{ sliderDisplay(field) }}</span>
           <span class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border-default text-accent-soft text-xs" :data-tip="field.tip">?</span>
         </span>
       </div>

@@ -67,7 +67,7 @@ function rowClass(kind: DiffRow['kind']): string {
     <div class="diff-modal-header flex shrink-0 items-center justify-between border-b border-border-subtle bg-panel px-4 py-2.5">
       <div style="display:flex; align-items:center; gap:12px;">
         <Button type="button" variant="secondary" size="sm" @click="emit('close')">&#8592; {{ t('misc.apikeys.back') }}</Button>
-        <span id="diffTitle" style="font-size:var(--fs-sm); color:var(--text-secondary); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;">
+        <span id="diffTitle" style="font-size:var(--text-sm); color:var(--text-secondary); font-family:monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw;">
           {{ data ? backupLabel(data.filename1) + '  →  ' + backupLabel(data.filename2) : '' }}
         </span>
       </div>
@@ -82,10 +82,10 @@ function rowClass(kind: DiffRow['kind']): string {
       <span style="color:var(--text-secondary);">&#9608; {{ t('misc.apikeys.unchanged') }}</span>
     </div>
     <div id="diffContent" style="flex:1; overflow:auto;">
-      <div v-if="identical" style="text-align:center;padding:40px 20px;color:var(--success);font-size:var(--fs-md);">
-        <span style="font-size:var(--fs-xl);">&#10003;</span><br />
+      <div v-if="identical" style="text-align:center;padding:40px 20px;color:var(--success);font-size:var(--text-md);">
+        <span style="font-size:var(--text-xl);">&#10003;</span><br />
         <strong>{{ t('misc.apikeys.filesIdentical') }}</strong><br />
-        <span style="font-size:var(--fs-sm);color:var(--text-secondary);margin-top:6px;display:block;">
+        <span style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:6px;display:block;">
           {{ data ? t('misc.apikeys.identicalContent', { lines: data.lines1.length }) : '' }}
         </span>
       </div>

@@ -535,7 +535,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
   <div class="expander" :class="{ open }" data-test="suite-expander">
     <div class="expander-header" data-test="suite-header" @click="open = !open">
       <span class="arrow">▶</span> {{ t('editor.suite.mode') }}
-      <span v-if="model.enabled" style="color: var(--green); font-size: var(--fs-xs); margin-left: 6px">
+      <span v-if="model.enabled" style="color: var(--green); font-size: var(--text-xs); margin-left: 6px">
         {{ t('editor.suite.enabled') }} ({{ t('editor.suite.scenario', { n: model.scenarios.length, s: model.scenarios.length !== 1 ? 's' : '' }) }})
       </span>
       <div class="chk-row" style="margin-left: auto; min-height: 0; padding: 0; border: 0; background: none" @click.stop>
@@ -552,7 +552,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
           <div class="flex flex-1 flex-col gap-1">
             <div class="flex items-center gap-2">
               <h3 class="text-sm font-semibold text-primary">{{ t('editor.suite.heroTitle') }}</h3>
-              <span class="rounded bg-surface px-1.5 py-0.5 text-[10.5px] font-medium text-dim">{{ t('editor.suite.mode') }}</span>
+              <span class="rounded bg-surface px-1.5 py-0.5 text-micro font-medium text-dim">{{ t('editor.suite.mode') }}</span>
             </div>
             <p class="text-xs leading-relaxed text-secondary">{{ t('editor.suite.heroSubtitle') }}</p>
           </div>
@@ -566,7 +566,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               </div>
               <span class="text-xs font-semibold text-primary">{{ t('editor.suite.featureExchanges') }}</span>
             </div>
-            <p class="text-[11.5px] leading-relaxed text-secondary">{{ t('editor.suite.featureExchangesDesc') }}</p>
+            <p class="text-micro leading-relaxed text-secondary">{{ t('editor.suite.featureExchangesDesc') }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3 transition-colors hover:border-border-default hover:bg-surface-deep/80">
@@ -576,7 +576,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               </div>
               <span class="text-xs font-semibold text-primary">{{ t('editor.suite.featureWindows') }}</span>
             </div>
-            <p class="text-[11.5px] leading-relaxed text-secondary">{{ t('editor.suite.featureWindowsDesc') }}</p>
+            <p class="text-micro leading-relaxed text-secondary">{{ t('editor.suite.featureWindowsDesc') }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5 rounded-lg border border-border-default/60 bg-surface-deep/50 p-3 transition-colors hover:border-border-default hover:bg-surface-deep/80">
@@ -586,7 +586,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
               </div>
               <span class="text-xs font-semibold text-primary">{{ t('editor.suite.featureAggregates') }}</span>
             </div>
-            <p class="text-[11.5px] leading-relaxed text-secondary">{{ t('editor.suite.featureAggregatesDesc') }}</p>
+            <p class="text-micro leading-relaxed text-secondary">{{ t('editor.suite.featureAggregatesDesc') }}</p>
           </div>
         </div>
 
@@ -607,7 +607,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
       <template>
         <div v-if="model.enabled" style="display: flex; gap: var(--sp-sm); flex-wrap: wrap; margin-bottom: var(--sp-md)">
-          <span style="font-size: var(--fs-xs); color: var(--text-dim); align-self: center">{{ t('editor.suite.templates') }}:</span>
+          <span style="font-size: var(--text-xs); color: var(--text-dim); align-self: center">{{ t('editor.suite.templates') }}:</span>
           <Button
             v-for="name in TEMPLATE_NAMES"
             :key="name"
@@ -629,7 +629,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
           <div style="display: flex; align-items: start; justify-content: space-between; gap: var(--sp-md); margin-bottom: var(--sp-sm)">
             <div>
               <strong>{{ t('editor.suite.generatorTitle') }}</strong>
-              <div style="font-size: var(--fs-xs); color: var(--text-dim); margin-top: 2px">
+              <div style="font-size: var(--text-xs); color: var(--text-dim); margin-top: 2px">
                 {{ t('editor.suite.generatorBaseDates', { start: currentScenarioContext().start_date || t('editor.suite.generatorUnset'), end: currentScenarioContext().end_date || t('editor.suite.generatorUnset') }) }}
               </div>
             </div>
@@ -680,7 +680,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
             </template>
           </div>
 
-          <div v-if="scenarioGeneratorError" style="font-size: var(--fs-sm); color: var(--orange); margin-top: var(--sp-xs)" data-test="suite-generator-error">{{ scenarioGeneratorError }}</div>
+          <div v-if="scenarioGeneratorError" style="font-size: var(--text-sm); color: var(--orange); margin-top: var(--sp-xs)" data-test="suite-generator-error">{{ scenarioGeneratorError }}</div>
           <div v-if="scenarioPreview" style="margin-top: var(--sp-md); padding-top: var(--sp-sm); border-top: 1px solid var(--border)" data-test="suite-generator-preview-result">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); margin-bottom: var(--sp-sm)">
               <strong>{{ t('editor.suite.generatorPreviewSummary', { training: scenarioPreview.training_scenarios.length, holdout: scenarioPreview.holdout_scenarios.length }) }}</strong>
@@ -695,18 +695,18 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
                 </tbody>
               </Table>
             </div>
-            <div v-for="warning in scenarioPreview.warnings || []" :key="warning" style="font-size: var(--fs-sm); line-height: 1.45; color: var(--orange); margin-top: 4px">{{ warning }}</div>
+            <div v-for="warning in scenarioPreview.warnings || []" :key="warning" style="font-size: var(--text-sm); line-height: 1.45; color: var(--orange); margin-top: 4px">{{ warning }}</div>
           </div>
         </section>
 
         <div v-if="model.enabled">
         <div style="margin-bottom: var(--sp-md)">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-sm)">
-            <span style="font-size: var(--fs-sm); font-weight: 600">{{ t('editor.suite.scenariosCount', { n: model.scenarios.length }) }}</span>
+            <span style="font-size: var(--text-sm); font-weight: 600">{{ t('editor.suite.scenariosCount', { n: model.scenarios.length }) }}</span>
             <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-add-scenario" @click="addScenario">{{ t('editor.suite.addScenario') }}</Button>
           </div>
 
-          <div v-if="model.scenarios.length === 0" style="color: var(--text-dim); font-size: var(--fs-sm); padding: var(--sp-sm)">
+          <div v-if="model.scenarios.length === 0" style="color: var(--text-dim); font-size: var(--text-sm); padding: var(--sp-sm)">
             {{ t('editor.suite.noScenarios') }}
           </div>
           <Table v-else>
@@ -720,7 +720,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
             <tbody>
               <tr v-for="(scenario, i) in model.scenarios" :key="i" :style="model.editIdx === i ? 'background: rgb(var(--accent-rgb) / .06)' : ''">
                 <td style="font-weight: 600">{{ scenario.label || t('editor.suite.unnamed') }}</td>
-                <td><span style="color: var(--text-dim); font-size: var(--fs-xs)">{{ summary(scenario) }}</span></td>
+                <td><span style="color: var(--text-dim); font-size: var(--text-xs)">{{ summary(scenario) }}</span></td>
                 <td>
                   <Button type="button" variant="outline" size="sm" class="act-btn" :data-test="'suite-edit-' + i" @click="editScenario(i)">{{ model.editIdx === i ? t('editor.suite.editing') : t('editor.suite.edit') }}</Button>
                   <Button type="button" variant="danger" size="sm" class="act-btn act-btn-danger" :data-test="'suite-remove'" @click="removeScenario(i)">×</Button>
@@ -734,7 +734,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
         <div v-if="editing && draft" style="border: 1px solid var(--accent); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); background: rgb(var(--accent-rgb) / 0.03)">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-sm)">
-            <span style="font-size: var(--fs-sm); font-weight: 600; color: var(--accent)">{{ t('editor.suite.editScenario', { label: draft.label }) }}</span>
+            <span style="font-size: var(--text-sm); font-weight: 600; color: var(--accent)">{{ t('editor.suite.editScenario', { label: draft.label }) }}</span>
             <Button type="button" variant="outline" size="sm" class="act-btn" data-test="suite-done" @click="done">{{ t('editor.suite.done') }}</Button>
           </div>
 
@@ -804,7 +804,7 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
           <div style="margin-top: var(--sp-sm)">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-xs)">
-              <label style="font-size: var(--fs-xs); color: var(--text-dim)" :data-tip="t('editor.suite.overridesTip')">{{ t('editor.suite.overridesCount', { n: overrideEntries.length }) }}</label>
+              <label style="font-size: var(--text-xs); color: var(--text-dim)" :data-tip="t('editor.suite.overridesTip')">{{ t('editor.suite.overridesCount', { n: overrideEntries.length }) }}</label>
               <button type="button" class="act-btn" data-test="suite-add-override" @click="overrideRowOpen = true">{{ t('editor.suite.addOverride') }}</button>
             </div>
 
@@ -881,11 +881,11 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
 
             <div style="margin-bottom: var(--sp-xs)">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-xs)">
-                <label style="font-size: var(--fs-xs); color: var(--text-dim)">{{ t('editor.suite.metricOverrides', { n: aggregateKeys.length }) }}</label>
+                <label style="font-size: var(--text-xs); color: var(--text-dim)">{{ t('editor.suite.metricOverrides', { n: aggregateKeys.length }) }}</label>
                 <button type="button" class="act-btn" data-test="suite-agg-add" @click="aggregateAddOpen = true">{{ t('editor.suite.addMetric') }}</button>
               </div>
               <div v-for="key in aggregateKeys" :key="key" style="display: flex; gap: var(--sp-sm); align-items: center; margin-bottom: 2px">
-                <span style="font-size: var(--fs-xs); flex: 1">{{ key }}</span>
+                <span style="font-size: var(--text-xs); flex: 1">{{ key }}</span>
                 <SelectRoot :model-value="model.aggregate[key]" @update:model-value="setAggregateMetric(key, String($event ?? ''))">
                   <SelectTrigger class="w-[90px]">
                     <span>{{ model.aggregate[key] }}</span>

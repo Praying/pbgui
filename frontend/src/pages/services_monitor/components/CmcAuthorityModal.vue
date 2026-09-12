@@ -133,13 +133,13 @@ function selectedText(options: CmcAuthorityOption[], nodeId: string): string {
 <!-- Styles ported from frontend/services_monitor.html (CMC modal + settings form). -->
 <style scoped>
 .form-field { display: flex; flex-direction: column; gap: 3px; }
-.form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.form-hint { font-size: var(--fs-xs); color: var(--text-disabled); }
+.form-label { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: var(--tracking-label); }
+.form-hint { font-size: var(--text-xs); color: var(--text-disabled); }
 .cmc-modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: flex; align-items: center; justify-content: center; padding: 1rem; background: var(--bg-backdrop); backdrop-filter: blur(2px); }
 .cmc-modal-card { width: min(480px, 94vw); background: var(--bg-page); border: 1px solid var(--border-default); border-radius: 14px; box-shadow: var(--shadow-modal); overflow: hidden; }
 .cmc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border-subtle); background: var(--surface-workspace); }
-.cmc-modal-title { color: var(--text-primary); font-size: var(--fs-md); font-weight: 700; }
+.cmc-modal-title { color: var(--text-primary); font-size: var(--text-md); font-weight: 700; }
 .cmc-modal-body { display: grid; gap: 0.8rem; padding: 1rem 1.1rem; }
-.cmc-modal-error { min-height: 1rem; color: var(--danger-soft); font-size: var(--fs-xs); }
+.cmc-modal-error { min-height: 1rem; color: var(--danger-soft); font-size: var(--text-xs); }
 .cmc-modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0 1.1rem 1rem; }
 </style>

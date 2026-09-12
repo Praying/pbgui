@@ -51,7 +51,7 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
             <div id="detail-style-panel" class="detail-list flex flex-col gap-2">
               <div v-if="!detail" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px" role="status">{{ store.state.detailLoading ? t('common.loading') : t('v7explore.tradingStyleWillAppear') }}</div>
               <div v-for="(row, index) in vm.styleRows" :key="index" class="detail-item rounded-xl border border-border-default bg-white/2 p-2.5">
-                <div class="detail-head mb-1 flex items-center justify-between gap-3"><strong>{{ row.strong }}</strong><span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ row.chip }}</span></div>
+                <div class="detail-head mb-1 flex items-center justify-between gap-3"><strong>{{ row.strong }}</strong><span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ row.chip }}</span></div>
               </div>
             </div>
           </div>
@@ -82,10 +82,10 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
           <div v-for="row in vm.scenarioRows" :key="row.name" class="detail-item rounded-xl border border-border-default bg-white/2 p-2.5">
             <div class="detail-head mb-1 flex items-center justify-between gap-3">
               <strong>{{ row.name }}</strong>
-              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ t('v7explore.metricsShown', { count: row.metricsShown }) }}</span>
+              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ t('v7explore.metricsShown', { count: row.metricsShown }) }}</span>
             </div>
             <div class="detail-meta flex flex-wrap gap-1.25">
-              <span v-for="chip in row.chips" :key="chip.key" class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ chip.key }}: {{ chip.value }}</span>
+              <span v-for="chip in row.chips" :key="chip.key" class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ chip.key }}: {{ chip.value }}</span>
             </div>
           </div>
         </div>
@@ -106,7 +106,7 @@ const vm = computed(() => detailViewModel(detail.value, (key, params) => t(key, 
           <div id="detail-all-metrics" class="detail-list flex flex-col gap-2" style="margin-top: 12px">
             <div v-if="!vm.hasAllMetrics" class="placeholder-panel flex min-h-[220px] items-center justify-center rounded-[12px] border border-dashed border-border-default bg-white/1 p-5 text-center text-secondary" style="min-height: 120px">{{ t('v7explore.allMetricsWillBeListed') }}</div>
             <div v-for="metric in vm.allMetrics" :key="metric.name" class="detail-item rounded-xl border border-border-default bg-white/2 p-2.5">
-              <div class="detail-head mb-1 flex items-center justify-between gap-3"><strong :data-tip="metricTooltip(metric.name) || undefined">{{ metric.name }}</strong><span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ metric.value }}</span></div>
+              <div class="detail-head mb-1 flex items-center justify-between gap-3"><strong :data-tip="metricTooltip(metric.name) || undefined">{{ metric.name }}</strong><span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ metric.value }}</span></div>
             </div>
           </div>
         </details>

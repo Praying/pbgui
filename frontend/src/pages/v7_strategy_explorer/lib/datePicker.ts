@@ -48,7 +48,7 @@ export function installDatePicker(): void {
       '#__dp .dp-ctl:hover{background:rgba(255,255,255,.08)!important;border-color:var(--accent)!important}' +
       '#__dp .dp-dd{position:absolute;top:calc(100% + 4px);z-index:2;display:none;background:var(--bg-elevated);border:1px solid var(--border-default);border-radius:6px;box-shadow:0 8px 18px rgb(0 0 0 / 0.55);max-height:220px;overflow:auto;padding:4px}' +
       '#__dp .dp-dd.open{display:block}' +
-      '#__dp .dp-dd-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text-primary);font-size:var(--fs-xs);padding:6px 8px;border-radius:4px;cursor:pointer}' +
+      '#__dp .dp-dd-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text-primary);font-size:var(--text-xs);padding:6px 8px;border-radius:4px;cursor:pointer}' +
       '#__dp .dp-dd-item:hover{background:rgba(255,255,255,.10)!important}' +
       '#__dp .dp-dd-item.selected{background:var(--accent);color:var(--accent-contrast)}' +
       '#__dp .dp-foot:hover{background:rgba(255,255,255,.15)!important}' +
@@ -120,7 +120,7 @@ export function installDatePicker(): void {
     void nextMonth;
     const btnS = 'background:none;border:none;color:var(--text-primary);cursor:pointer;font-size:1.3em;padding:0 6px;line-height:1';
     const ctlS =
-      'background:var(--bg-elevated);border:1px solid var(--border-default);color:var(--text-primary);border-radius:4px;padding:2px 6px;font-size:var(--fs-xs);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px';
+      'background:var(--bg-elevated);border:1px solid var(--border-default);color:var(--text-primary);border-radius:4px;padding:2px 6px;font-size:var(--text-xs);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px';
     let h =
       '<div style="display:flex;align-items:center;gap:4px;margin-bottom:8px">' +
       '<button type="button" class="dp-nav" onclick="window.__dp.pm()" style="' +
@@ -130,7 +130,7 @@ export function installDatePicker(): void {
       ctlS +
       ';width:100%">' +
       MN[_m] +
-      '<span style="font-size:10px;opacity:.8">▾</span></button><div class="dp-dd' +
+      '<span style="font-size:var(--text-micro);opacity:.8">▾</span></button><div class="dp-dd' +
       (_menu === 'month' ? ' open' : '') +
       '" style="left:0;right:auto;min-width:140px">' +
       _monthMenu() +
@@ -139,7 +139,7 @@ export function installDatePicker(): void {
       ctlS +
       ';width:100%">' +
       _y +
-      '<span style="font-size:10px;opacity:.8">▾</span></button><div class="dp-dd' +
+      '<span style="font-size:var(--text-micro);opacity:.8">▾</span></button><div class="dp-dd' +
       (_menu === 'year' ? ' open' : '') +
       '" style="right:0;left:auto;min-width:72px">' +
       _yearMenu() +
@@ -149,7 +149,7 @@ export function installDatePicker(): void {
       '">&#8250;</button></div>';
     h += '<div style="display:grid;grid-template-columns:repeat(7,30px);gap:2px;text-align:center">';
     ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach((d) => {
-      h += '<div style="color:var(--text-muted);font-size:var(--fs-xs);padding-bottom:4px">' + d + '</div>';
+      h += '<div style="color:var(--text-muted);font-size:var(--text-xs);padding-bottom:4px">' + d + '</div>';
     });
     for (let i = 0; i < sdow; i++) h += '<div></div>';
     for (let day = 1; day <= dim; day++) {
@@ -163,14 +163,14 @@ export function installDatePicker(): void {
         bg +
         ';color:var(--text-primary);font-weight:' +
         (isS || isT ? '600' : '400') +
-        ';font-size:var(--fs-sm)">' +
+        ';font-size:var(--text-sm)">' +
         day +
         '</div>';
     }
     h +=
-      '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' +
+      '</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button type="button" class="dp-foot" onclick="window.__dp.hide()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:var(--text-xs);padding:2px 6px;border-radius:4px">' +
       t('common.close') +
-      '</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:var(--fs-xs);padding:2px 6px;border-radius:4px">' +
+      '</button><button type="button" class="dp-foot" onclick="window.__dp.today()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:var(--text-xs);padding:2px 6px;border-radius:4px">' +
       t('v7explore.today') +
       '</button></div>';
     e.innerHTML = h;

@@ -46,7 +46,7 @@ async function onApplyFilters(): Promise<void> {
 
 <template>
   <section class="edit-section-card overflow-hidden rounded-xl border border-border-default bg-panel">
-    <header class="edit-section-card__header flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2"><h3 class="text-md font-bold tracking-[0.01em] text-primary">{{ t('v7run.filters') }}</h3></header>
+    <header class="edit-section-card__header flex items-center gap-3 border-b border-border-default bg-elevated px-5 py-2.5 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-2"><h3 class="text-md font-bold tracking-tight text-primary">{{ t('v7run.filters') }}</h3></header>
     <div class="edit-section-body p-5">
   <div class="form-row cols-8">
     <FieldNumber

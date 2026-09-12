@@ -28,7 +28,7 @@ function meta(conversation: ConversationSummary): string {
   <section class="flex min-h-[180px] flex-col rounded-lg border border-border-subtle bg-panel p-3">
     <div class="mb-2 flex items-center justify-between gap-2">
       <span class="font-bold text-primary">{{ t('ai.chat.conversations') }}</span>
-      <span class="text-[11px] text-secondary">{{ conversations.length }}</span>
+      <span class="text-micro text-secondary">{{ conversations.length }}</span>
     </div>
     <div class="grid min-h-0 content-start gap-1.5 overflow-y-auto">
       <Button

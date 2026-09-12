@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   border-radius: 4px;
   padding: 1px 8px;
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   line-height: 1.5;
 }
 
@@ -184,7 +184,7 @@ onBeforeUnmount(() => {
    tree to the PBGui dark palette (the lib's dark mode only changes hover
    backgrounds, so key/value colours are set here). */
 :deep(.vjs-tree) {
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.6;
   padding: 6px 10px;
 }

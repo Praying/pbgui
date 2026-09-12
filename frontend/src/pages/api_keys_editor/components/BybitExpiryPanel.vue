@@ -44,9 +44,9 @@ const rows = computed(() => sortByPanelOrder(props.data, bybitPanelOrder));
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm"><ExpiryBadge :exp="exp" /></td>
           <td class="border-b border-border-subtle px-2.5 py-2 text-sm">
             <template v-if="exp.ips && exp.ips.length > 0">
-              <span v-for="ip in exp.ips" :key="ip" style="font-family:monospace;font-size:var(--fs-xs);margin-right:8px;">{{ ip }}</span>
+              <span v-for="ip in exp.ips" :key="ip" style="font-family:monospace;font-size:var(--text-xs);margin-right:8px;">{{ ip }}</span>
             </template>
-            <span v-else style="color:var(--text-secondary);font-size:var(--fs-xs);">{{ t('misc.apikeys.noneUnrestricted') }}</span>
+            <span v-else style="color:var(--text-secondary);font-size:var(--text-xs);">{{ t('misc.apikeys.noneUnrestricted') }}</span>
           </td>
         </tr>
       </tbody>

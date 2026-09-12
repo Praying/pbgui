@@ -53,7 +53,7 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
     
   >
     <div class="flex items-center justify-between gap-3 border-b border-border-subtle px-[0.8rem] py-[0.7rem]">
-      <div class="font-extrabold text-primary">{{ progress.kind || t('misc.dbtools.operation') }}</div>
+      <div class="font-bold text-primary">{{ progress.kind || t('misc.dbtools.operation') }}</div>
       <div class="text-sm text-secondary">{{ progress.completed || 0 }} / {{ progress.total || 0 }} ({{ progress.percent || 0 }}%)</div>
     </div>
     <div class="h-2 overflow-hidden bg-card">
@@ -67,7 +67,7 @@ const progressSteps = computed(() => (props.progress?.steps || []).slice(-20));
 
   <div id="confirm-ovl" class="modal-backdrop backdrop-blur-[2px]" :class="confirm.active ? 'visible flex' : 'hidden'" :aria-hidden="confirm.active ? 'false' : 'true'">
     <div id="confirm-box" class="w-[min(480px,92vw)] overflow-hidden rounded-lg border border-border-default bg-panel shadow-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-head">
-      <div id="confirm-head" class="border-b border-border-subtle bg-card px-4 py-[0.9rem] font-extrabold">{{ confirm.title || t('common.confirm') }}</div>
+      <div id="confirm-head" class="border-b border-border-subtle bg-card px-4 py-[0.9rem] font-bold">{{ confirm.title || t('common.confirm') }}</div>
       <div id="confirm-body" class="grid gap-3 p-5">
         <div id="confirm-msg" class="leading-[1.45] text-primary">{{ confirm.message }}</div>
         <div id="confirm-detail" class="text-sm leading-[1.45] text-secondary">{{ confirm.detail }}</div>

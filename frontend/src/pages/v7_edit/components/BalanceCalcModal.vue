@@ -92,7 +92,7 @@ defineExpose({ show });
         </div>
         <template v-if="data">
           <div
-            style="background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); font-size: var(--fs-sm)"
+            style="background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: var(--sp-md); margin-bottom: var(--sp-md); font-size: var(--text-sm)"
           >
             <template v-if="data.recommendation">
               <div>&#x2705; {{ t('v7run.bcRecommendation', { side: data.recommendation.side }) }} — <strong>{{ data.exchange || '?' }}</strong></div>

@@ -133,13 +133,13 @@ function noticeKindClass(kind: 'ok' | 'err' | 'warn'): string {
    (Button/Input/Label/Select/Checkbox), which owns their chrome. */
 const cardClass = 'overflow-hidden rounded-[9px] border border-border-default bg-card';
 const cardHeadClass = 'flex items-center justify-between gap-2.5 border-b border-border-default px-4 py-3';
-const cardTitleClass = 'text-[0.9rem] font-semibold tracking-[0.01em]';
-const pillClass = 'inline-block rounded-full px-2 py-0.5 text-[0.72rem] font-medium';
+const cardTitleClass = 'text-compact font-semibold tracking-tight';
+const pillClass = 'inline-block rounded-full px-2 py-0.5 text-micro font-medium';
 /* Stat wells sink to the page tone so cards read as one raised surface. */
 const statClass = 'rounded-md bg-page p-2.75';
-const statValueClass = 'mt-1 text-[1.25rem] font-semibold leading-tight tabular-nums';
-const statMonoClass = 'mt-1 break-all font-mono text-[0.95rem] font-semibold leading-tight';
-const thClass = 'sticky top-0 z-[1] border-b border-border-default bg-card px-2.5 py-2.25 text-left align-middle text-[0.72rem] font-semibold tracking-[0.04em] text-secondary';
+const statValueClass = 'mt-1 text-lg font-semibold leading-tight tabular-nums';
+const statMonoClass = 'mt-1 break-all font-mono text-sm font-semibold leading-tight';
+const thClass = 'sticky top-0 z-[1] border-b border-border-default bg-card px-2.5 py-2.25 text-left align-middle text-micro font-semibold tracking-label text-secondary';
 const tdClass = 'border-b border-border-default px-2.5 py-2.25 text-left align-top';
 const tdHoverClass = `${tdClass} transition-colors group-hover:bg-accent/8`;
 
@@ -229,7 +229,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
         <section class="flex min-w-0 flex-1 flex-col overflow-auto p-[var(--page-padding)]">
           <div
             v-if="notice"
-            class="mb-4 block whitespace-pre-line rounded-md px-3.5 py-2.5 text-[0.85rem] font-medium"
+            class="mb-4 block whitespace-pre-line rounded-md px-3.5 py-2.5 text-compact font-medium"
             :class="noticeKindClass(notice.kind)"
             :role="notice.kind === 'err' ? 'alert' : 'status'"
             :aria-live="notice.kind === 'err' ? 'assertive' : 'polite'"
@@ -255,15 +255,15 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <div class="p-4">
                   <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.clusterId') }}</div>
+                      <div class="text-micro text-secondary">{{ t('sysmon.clusterId') }}</div>
                       <div :class="statMonoClass" data-field="cluster-id">{{ display(identity.cluster_id) }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.nodeId') }}</div>
+                      <div class="text-micro text-secondary">{{ t('sysmon.nodeId') }}</div>
                       <div :class="statMonoClass">{{ display(identity.node_id) }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.generation') }}</div>
+                      <div class="text-micro text-secondary">{{ t('sysmon.generation') }}</div>
                       <div :class="statValueClass">{{ counts.oplog || 0 }}</div>
                     </div>
                   </div>
@@ -276,20 +276,20 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <div class="p-4">
                   <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.nodes') }}</div>
+                      <div class="text-micro text-secondary">{{ t('sysmon.nodes') }}</div>
                       <div :class="statValueClass" data-count="nodes">{{ counts.nodes || 0 }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.v7') }}</div>
+                      <div class="text-micro text-secondary">{{ t('sysmon.v7') }}</div>
                       <div :class="statValueClass">{{ counts.instances || 0 }}</div>
                     </div>
                     <div :class="statClass">
-                      <div class="text-[0.72rem] text-secondary">{{ t('sysmon.conflicts') }}</div>
+                      <div class="text-micro text-secondary">{{ t('sysmon.conflicts') }}</div>
                       <div :class="statValueClass">{{ counts.conflicts || 0 }}</div>
                     </div>
                   </div>
                   <div v-if="warnings.length" class="mt-3 grid gap-1">
-                    <div v-for="warning in warnings" :key="warning" class="text-[0.78rem] leading-[1.5] text-warning-soft">{{ warning }}</div>
+                    <div v-for="warning in warnings" :key="warning" class="text-xs leading-[1.5] text-warning-soft">{{ warning }}</div>
                   </div>
                 </div>
               </article>
@@ -301,7 +301,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               </header>
               <div class="flex flex-wrap items-center gap-2.5 p-4">
                 <span :class="[pillClass, statusClass(status.checkpoint?.status)]">{{ display(status.checkpoint?.status) }}</span>
-                <span class="text-[0.82rem] text-secondary">{{ display(status.sync_status?.healthy ? t('common.ok') : t('sysmon.unknownState')) }}</span>
+                <span class="text-xs text-secondary">{{ display(status.sync_status?.healthy ? t('common.ok') : t('sysmon.unknownState')) }}</span>
               </div>
             </article>
           </section>
@@ -314,9 +314,9 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <Button variant="warning" type="button" :disabled="!bootstrap.items?.length" @click="applyBootstrap">{{ t('sysmon.applyBootstrap') }}</Button>
               </header>
               <div class="p-4">
-                <p class="m-0 text-[0.82rem] leading-[1.55] text-secondary">{{ t('sysmon.bootstrapClusterStateNote') }}</p>
+                <p class="m-0 text-xs leading-[1.55] text-secondary">{{ t('sysmon.bootstrapClusterStateNote') }}</p>
                 <div v-if="bootstrap.items?.length" class="mt-3 overflow-auto">
-                  <table class="w-full border-collapse text-[0.78rem]">
+                  <table class="w-full border-collapse text-xs">
                     <thead>
                       <tr>
                         <th :class="thClass">{{ t('sysmon.type') }}</th>
@@ -350,7 +350,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <Label class="grid gap-1">{{ t('sysmon.sshHost') }}<Input v-model="selfJoinForm.ssh_host" /></Label>
                 <Label class="grid gap-1">{{ t('sysmon.sshUser') }}<Input v-model="selfJoinForm.ssh_user" /></Label>
                 <Label class="grid gap-1">{{ t('sysmon.sshPort') }}<Input v-model.number="selfJoinForm.ssh_port" type="number" /></Label>
-                <label class="flex items-center gap-1.75 text-[0.8rem] text-secondary"><Checkbox v-model="selfJoinForm.reset" /> {{ t('sysmon.recovery') }}</label>
+                <label class="flex items-center gap-1.75 text-xs text-secondary"><Checkbox v-model="selfJoinForm.reset" /> {{ t('sysmon.recovery') }}</label>
               </div>
             </article>
           </section>
@@ -419,7 +419,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                       <div class="flex items-center gap-2">
                         <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border-default bg-card text-secondary" aria-hidden="true"><PbIcon :icon="PhDesktopTower" :size="15" /></span>
                         <div class="min-w-0">
-                          <div class="flex items-center gap-2"><strong class="text-primary">{{ nodeLabel(node) }}</strong><span v-if="node.node_id === localNodeId" class="rounded-full border border-accent/25 bg-accent/8 px-1.5 py-px text-[0.68rem] font-semibold text-accent-soft">{{ t('sysmon.local') }}</span></div>
+                          <div class="flex items-center gap-2"><strong class="text-primary">{{ nodeLabel(node) }}</strong><span v-if="node.node_id === localNodeId" class="rounded-full border border-accent/25 bg-accent/8 px-1.5 py-px text-micro font-semibold text-accent-soft">{{ t('sysmon.local') }}</span></div>
                           <div class="font-mono text-xs text-muted">{{ node.node_id }}</div>
                         </div>
                       </div>
@@ -455,7 +455,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <span :class="cardTitleClass">{{ t('sysmon.v7State') }}</span>
             </header>
             <div class="overflow-auto p-4">
-              <table class="w-full border-collapse text-[0.78rem]">
+              <table class="w-full border-collapse text-xs">
                 <thead>
                   <tr>
                     <th :class="thClass">{{ t('sysmon.instance') }}</th>
@@ -484,7 +484,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <span :class="cardTitleClass">{{ t('sysmon.tombstones') }}</span>
             </header>
             <div class="overflow-auto p-4">
-              <table class="w-full border-collapse text-[0.78rem]">
+              <table class="w-full border-collapse text-xs">
                 <thead>
                   <tr>
                     <th :class="thClass">{{ t('sysmon.instance') }}</th>
@@ -495,7 +495,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <tbody>
                   <tr v-for="item in desired.tombstones || []" :key="item.instance" class="group">
                     <td :class="tdHoverClass">{{ display(item.instance || item.name) }}</td>
-                    <td class="font-mono text-[0.75rem] text-secondary" :class="tdHoverClass">{{ timeText(item.created_at) }}</td>
+                    <td class="font-mono text-micro text-secondary" :class="tdHoverClass">{{ timeText(item.created_at) }}</td>
                     <td class="text-secondary" :class="tdHoverClass">{{ display(item.reason) }}</td>
                   </tr>
                 </tbody>
@@ -509,7 +509,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <span :class="cardTitleClass">{{ t('sysmon.oplog') }}</span>
             </header>
             <div class="overflow-auto p-4">
-              <table class="w-full border-collapse text-[0.78rem]">
+              <table class="w-full border-collapse text-xs">
                 <thead>
                   <tr>
                     <th :class="thClass">{{ t('sysmon.created') }}</th>
@@ -520,7 +520,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 </thead>
                 <tbody>
                   <tr v-for="op in oplog" :key="op.op_id || `${op.seq}:${op.created_at}`" class="group">
-                    <td class="font-mono text-[0.75rem] text-secondary" :class="tdHoverClass">{{ timeText(op.created_at) }}</td>
+                    <td class="font-mono text-micro text-secondary" :class="tdHoverClass">{{ timeText(op.created_at) }}</td>
                     <td :class="tdHoverClass">
                       <span :class="pillClass" class="bg-elevated">{{ display(op.op) }}</span>
                     </td>
@@ -546,11 +546,11 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
               <div class="p-4">
                 <div class="grid grid-cols-[repeat(auto-fit,minmax(125px,1fr))] gap-2.5">
                   <div :class="statClass">
-                    <div class="text-[0.72rem] text-secondary">{{ t('sysmon.active') }}</div>
+                    <div class="text-micro text-secondary">{{ t('sysmon.active') }}</div>
                     <div :class="statValueClass">{{ credentials.active || 0 }}</div>
                   </div>
                   <div :class="statClass">
-                    <div class="text-[0.72rem] text-secondary">{{ t('sysmon.conflicts') }}</div>
+                    <div class="text-micro text-secondary">{{ t('sysmon.conflicts') }}</div>
                     <div :class="statValueClass">{{ (credentials.conflicts || []).length }}</div>
                   </div>
                 </div>
@@ -562,8 +562,8 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                 <span :class="cardTitleClass">{{ t('sysmon.localClusterSsh') }}</span>
               </header>
               <div class="p-4">
-                <div class="text-[0.72rem] text-secondary">{{ t('sysmon.fingerprint') }}</div>
-                <div class="mt-1 break-all font-mono text-[0.82rem]">{{ display(localClusterSsh.fingerprint) }}</div>
+                <div class="text-micro text-secondary">{{ t('sysmon.fingerprint') }}</div>
+                <div class="mt-1 break-all font-mono text-xs">{{ display(localClusterSsh.fingerprint) }}</div>
               </div>
             </article>
           </section>
@@ -588,7 +588,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
                   </SelectRoot>
                 </Label>
                 <Label class="grid gap-1">{{ t('sysmon.historyDays') }}<Input data-field="history-days" v-model.number="retentionDays" type="number" min="1" max="3650" /></Label>
-                <p class="m-0 text-[0.82rem] leading-[1.55] text-secondary">{{ t('sysmon.clusterHistoryRetentionNote') }}</p>
+                <p class="m-0 text-xs leading-[1.55] text-secondary">{{ t('sysmon.clusterHistoryRetentionNote') }}</p>
               </div>
             </article>
             <article :class="cardClass">
@@ -605,10 +605,10 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
       <div v-if="removeNode" data-modal="remove" class="modal-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
         <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
           <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
-            <h2 class="m-0 text-[1.05rem] font-semibold">{{ t('sysmon.removeNode') }}</h2>
+            <h2 class="m-0 text-md font-semibold">{{ t('sysmon.removeNode') }}</h2>
             <Button data-close="remove" variant="secondary" type="button" @click="closeRemove"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button>
           </div>
-          <p class="m-0 mt-3.5 text-[0.85rem] leading-[1.55]">{{ t('sysmon.removeNodeMsg', { node: `${nodeLabel(removeNode)} (${removeNode.node_id})` }) }}</p>
+          <p class="m-0 mt-3.5 text-compact leading-[1.55]">{{ t('sysmon.removeNodeMsg', { node: `${nodeLabel(removeNode)} (${removeNode.node_id})` }) }}</p>
           <div class="mt-4 flex justify-end gap-1.75">
             <Button variant="secondary" type="button" @click="closeRemove">{{ t('common.cancel') }}</Button>
             <Button variant="danger" type="button" @click="confirmRemove">{{ t('sysmon.removeNode') }}</Button>
@@ -620,7 +620,7 @@ onMounted(() => { document.title = t('sysmon.clusterSyncTitle'); void loadAll();
       <div v-if="settingsNode" class="modal-backdrop p-5" role="dialog" aria-modal="true" @click.stop>
         <div class="max-h-[calc(100dvh-40px)] w-[min(640px,calc(100vw-40px))] overflow-auto rounded-lg bg-card p-4.5 shadow-modal">
           <div class="flex items-center justify-between gap-2.5 border-b border-border-default pb-2.5">
-            <h2 class="m-0 text-[1.05rem] font-semibold">{{ t('sysmon.editClusterNode') }}</h2>
+            <h2 class="m-0 text-md font-semibold">{{ t('sysmon.editClusterNode') }}</h2>
             <Button variant="secondary" type="button" @click="closeSettings"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button>
           </div>
           <div class="grid gap-3 pt-3.5">

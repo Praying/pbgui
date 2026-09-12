@@ -480,7 +480,7 @@ onBeforeUnmount(() => {
     <div ref="wrapEl" class="di-table-wrap min-h-0 flex-1 overflow-x-auto overflow-y-auto">
       <table
         ref="tableEl"
-        class="di-table w-full select-none border-separate border-spacing-0 text-[0.78rem]"
+        class="di-table w-full select-none border-separate border-spacing-0 text-xs"
         @mousedown="onTableMouseDown"
         @keydown="onTableKeydown"
       >
@@ -492,7 +492,7 @@ onBeforeUnmount(() => {
               class="sticky top-0 cursor-pointer select-none border-b-2 border-b-border-default bg-card px-[0.5rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary hover:text-primary"
               @click="onSortClick(c.key)"
             >
-              {{ dashT(c.labelKey, c.fallback) }}<span class="di-sort ml-[0.2rem] text-[0.65rem] text-muted">{{ sortArrow(c.key) }}</span>
+              {{ dashT(c.labelKey, c.fallback) }}<span class="di-sort ml-[0.2rem] text-micro text-muted">{{ sortArrow(c.key) }}</span>
               <Input
                 v-if="c.key === 'date'"
                 type="date"
@@ -542,13 +542,13 @@ onBeforeUnmount(() => {
 
     <!-- backup panel (render.js:1325-1329, 1403-1469) -->
     <div v-show="selectedCount > 0 && backupOpen" class="di-backup border-t border-t-border-default bg-card px-[0.75rem] py-[0.5rem]">
-      <span v-if="backupsLoading" class="text-[0.73rem] text-secondary">{{
+      <span v-if="backupsLoading" class="text-micro text-secondary">{{
         dashT('dash.loadingBackups', 'Loading backups…')
       }}</span>
-      <span v-else-if="backupsError" class="text-[0.73rem] text-danger-soft">{{
+      <span v-else-if="backupsError" class="text-micro text-danger-soft">{{
         dashT('dash.errorLoadingBackups', 'Error loading backups')
       }}</span>
-      <span v-else-if="backups.length === 0" class="text-[0.73rem] text-secondary">{{
+      <span v-else-if="backups.length === 0" class="text-micro text-secondary">{{
         dashT('dash.noBackups', 'No backups available.')
       }}</span>
       <template v-else>
@@ -572,7 +572,7 @@ onBeforeUnmount(() => {
 
     <!-- confirm overlay (render.js:1331-1335, 1351-1376) -->
     <div v-show="confirmMsg !== ''" class="di-confirm absolute inset-0 z-[100] flex flex-col items-center justify-center gap-[0.8rem] bg-[var(--bg-backdrop)] p-[1.5rem] text-center">
-      <div class="di-confirm-msg flex max-w-[90%] items-center justify-center gap-[0.4rem] text-[0.85rem] text-warning-soft">
+      <div class="di-confirm-msg flex max-w-[90%] items-center justify-center gap-[0.4rem] text-compact text-warning-soft">
         <PbIcon :icon="PhWarning" :size="16" /> {{ confirmMsg }}
       </div>
       <div class="di-confirm-btns flex gap-[0.8rem]">
@@ -586,7 +586,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- status line (render.js:1337-1341, 1378-1382) -->
-    <div v-show="statusMsg !== ''" class="di-status px-[0.75rem] py-[0.3rem] text-[0.73rem] text-success-soft">{{ statusMsg }}</div>
+    <div v-show="statusMsg !== ''" class="di-status px-[0.75rem] py-[0.3rem] text-micro text-success-soft">{{ statusMsg }}</div>
   </template>
 </template>
 

@@ -42,7 +42,7 @@ function changes(preview: { changes?: ProposalChange[] }): ProposalChange[] {
             <pre class="mt-1.5 h-[240px] min-h-[140px] resize-y overflow-auto rounded-md bg-deep p-2 whitespace-pre-wrap text-secondary">{{ proposalReviewText(proposal) }}</pre>
           </template>
           <template v-else>
-            <div class="mt-1.5 grid h-[240px] min-h-[140px] resize-y content-start gap-1.5 overflow-auto rounded-md bg-deep p-2 font-mono text-[11px] leading-[1.4]">
+            <div class="mt-1.5 grid h-[240px] min-h-[140px] resize-y content-start gap-1.5 overflow-auto rounded-md bg-deep p-2 font-mono text-micro leading-[1.4]">
               <template v-for="(change, index) in changes(proposal.preview || {})" :key="index">
                 <div class="font-bold text-accent-soft">{{ String(change.path || '(root)') }}</div>
                 <div class="rounded bg-danger/14 p-1 text-danger-soft">- {{ proposalDiffValue(change.before) }}</div>

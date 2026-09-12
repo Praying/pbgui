@@ -23,7 +23,7 @@ defineProps<{
    to exactly ['status', cls], so no utility may ride along; the tone
    variants are the legacy .status.saved/.status.error rules. */
 .status {
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   align-self: flex-end;
   padding-bottom: 0.15rem;

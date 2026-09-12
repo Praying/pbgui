@@ -192,12 +192,12 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
       <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
         <div class="flex items-center gap-2">
           <PbIcon :icon="PhTarget" class="text-accent" :size="18" />
-          <strong class="text-[14.5px] font-bold text-primary" :data-tip="t('v7optimize.tip.scoringSection')">{{ t('v7optimize.scoringObjectives') }}</strong>
+          <strong class="text-base font-bold text-primary" :data-tip="t('v7optimize.tip.scoringSection')">{{ t('v7optimize.scoringObjectives') }}</strong>
           <span class="inline-flex items-center rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold text-accent-soft">
             {{ scoringRows.length }}
           </span>
         </div>
-        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-[13px] shadow-sm" @click="addScoring">
+        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-compact shadow-sm" @click="addScoring">
           <PbIcon :icon="PhPlus" :size="14" />
           {{ t('editor.suite.add') }}
         </Button>
@@ -214,13 +214,13 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             <div class="flex items-center gap-2">
               <div class="min-w-0 flex-1">
                 <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateScoring(index, 'metric', String($event))">
-                  <SelectTrigger data-field="scoring-metric" aria-label="metric" class="h-8.5 w-full truncate text-[13px]">
-                    <span :class="rowValue(row, 'metric') ? 'font-mono text-[13px] font-medium text-primary truncate' : 'text-placeholder'">
+                  <SelectTrigger data-field="scoring-metric" aria-label="metric" class="h-8.5 w-full truncate text-compact">
+                    <span :class="rowValue(row, 'metric') ? 'font-mono text-compact font-medium text-primary truncate' : 'text-placeholder'">
                       {{ rowValue(row, 'metric') || t('v7optimize.selectMetricForScoring') }}
                     </span>
                   </SelectTrigger>
                   <SelectContent class="max-h-72">
-                    <SelectItem v-for="metric in metricOptions" :key="metric" :value="metric" class="font-mono text-[13px]">
+                    <SelectItem v-for="metric in metricOptions" :key="metric" :value="metric" class="font-mono text-compact">
                       {{ metric }}
                     </SelectItem>
                   </SelectContent>
@@ -229,13 +229,13 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 
               <div class="w-24 shrink-0">
                 <SelectRoot :model-value="canonicalGoal(row.goal)" @update:model-value="updateScoring(index, 'goal', String($event))">
-                  <SelectTrigger data-field="scoring-goal" aria-label="goal" class="h-8.5 w-full text-[13px]">
-                    <span class="font-mono text-[13px] font-semibold" :class="canonicalGoal(row.goal) === 'max' ? 'text-success' : 'text-warning-soft'">
+                  <SelectTrigger data-field="scoring-goal" aria-label="goal" class="h-8.5 w-full text-compact">
+                    <span class="font-mono text-compact font-semibold" :class="canonicalGoal(row.goal) === 'max' ? 'text-success' : 'text-warning-soft'">
                       {{ canonicalGoal(row.goal) }}
                     </span>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem v-for="goal in meta.goal_options" :key="goal" :value="goal" class="font-mono text-[13px]">
+                    <SelectItem v-for="goal in meta.goal_options" :key="goal" :value="goal" class="font-mono text-compact">
                       {{ goal }}
                     </SelectItem>
                   </SelectContent>
@@ -296,10 +296,10 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             :key="`score-${index}`"
             class="rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 flex items-center gap-2"
           >
-            <Input class="h-8.5 flex-1 font-mono text-[13px]" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateScoring(index, 'metric', String($event ?? ''))" />
+            <Input class="h-8.5 flex-1 font-mono text-compact" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateScoring(index, 'metric', String($event ?? ''))" />
             <div class="w-28 shrink-0">
               <SelectRoot :model-value="canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize'" @update:model-value="updateScoring(index, 'goal', String($event))">
-                <SelectTrigger aria-label="goal" class="h-8.5 w-full text-[13px]">
+                <SelectTrigger aria-label="goal" class="h-8.5 w-full text-compact">
                   <span>{{ canonicalGoal(row.goal) === 'max' ? 'maximize' : 'minimize' }}</span>
                 </SelectTrigger>
                 <SelectContent>
@@ -310,7 +310,7 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             </div>
             <div v-if="scenarioLabels.length" class="w-32 shrink-0">
               <SelectRoot :model-value="rowValue(row, 'scenario') || 'Aggregated'" @update:model-value="updateScoring(index, 'scenario', String($event))">
-                <SelectTrigger aria-label="scenario" class="h-8.5 w-full text-[13px]">
+                <SelectTrigger aria-label="scenario" class="h-8.5 w-full text-compact">
                   <span class="truncate">{{ rowValue(row, 'scenario') || 'Aggregated' }}</span>
                 </SelectTrigger>
                 <SelectContent>
@@ -336,12 +336,12 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
       <header class="mb-3.5 flex items-center justify-between border-b border-border-default/60 pb-3">
         <div class="flex items-center gap-2">
           <PbIcon :icon="PhSliders" class="text-accent" :size="18" />
-          <strong class="text-[14.5px] font-bold text-primary" :data-tip="t('v7optimize.tip.limitsSection')">{{ t('v7optimize.constraintLimits') }}</strong>
+          <strong class="text-base font-bold text-primary" :data-tip="t('v7optimize.tip.limitsSection')">{{ t('v7optimize.constraintLimits') }}</strong>
           <span class="inline-flex items-center rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-semibold text-accent-soft">
             {{ limitRows.length }}
           </span>
         </div>
-        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-[13px] shadow-sm" @click="addLimit">
+        <Button type="button" variant="default" size="sm" class="h-8 gap-1 text-compact shadow-sm" @click="addLimit">
           <PbIcon :icon="PhPlus" :size="14" />
           {{ t('editor.suite.add') }}
         </Button>
@@ -363,13 +363,13 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
 
               <div class="min-w-0 flex-1">
                 <SelectRoot :model-value="rowValue(row, 'metric')" @update:model-value="updateLimit(index, 'metric', String($event))">
-                  <SelectTrigger data-field="limit-metric" aria-label="metric" class="h-8.5 w-full truncate text-[13px]">
-                    <span :class="rowValue(row, 'metric') ? 'font-mono text-[13px] font-medium text-primary truncate' : 'text-placeholder'">
+                  <SelectTrigger data-field="limit-metric" aria-label="metric" class="h-8.5 w-full truncate text-compact">
+                    <span :class="rowValue(row, 'metric') ? 'font-mono text-compact font-medium text-primary truncate' : 'text-placeholder'">
                       {{ rowValue(row, 'metric') || t('v7optimize.selectMetricForLimit') }}
                     </span>
                   </SelectTrigger>
                   <SelectContent class="max-h-72">
-                    <SelectItem v-for="metric in metricOptions" :key="metric" :value="metric" class="font-mono text-[13px]">
+                    <SelectItem v-for="metric in metricOptions" :key="metric" :value="metric" class="font-mono text-compact">
                       {{ metric }}
                     </SelectItem>
                   </SelectContent>
@@ -451,9 +451,9 @@ function updateRange(index: number, rowIndex: number, bound: 0 | 1, raw: string)
             :key="`limit-${index}`"
             class="rounded-lg border border-border-default/70 bg-surface-deep/50 p-2.5 flex items-center gap-2"
           >
-            <Input class="h-8.5 flex-1 font-mono text-[13px]" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateLimit(index, 'metric', String($event ?? ''))" />
-            <Input class="h-8.5 w-24 font-mono text-[13px]" :model-value="rowValue(row, 'min')" placeholder="min" @update:model-value="updateLimit(index, 'min', String($event ?? ''))" />
-            <Input class="h-8.5 w-24 font-mono text-[13px]" :model-value="rowValue(row, 'max')" placeholder="max" @update:model-value="updateLimit(index, 'max', String($event ?? ''))" />
+            <Input class="h-8.5 flex-1 font-mono text-compact" :model-value="rowValue(row, 'metric')" placeholder="metric" @update:model-value="updateLimit(index, 'metric', String($event ?? ''))" />
+            <Input class="h-8.5 w-24 font-mono text-compact" :model-value="rowValue(row, 'min')" placeholder="min" @update:model-value="updateLimit(index, 'min', String($event ?? ''))" />
+            <Input class="h-8.5 w-24 font-mono text-compact" :model-value="rowValue(row, 'max')" placeholder="max" @update:model-value="updateLimit(index, 'max', String($event ?? ''))" />
             <Button type="button" variant="ghost" size="sm" class="size-8.5 shrink-0 p-0 text-secondary hover:bg-danger/15 hover:text-danger-soft" :title="t('common.delete')" :aria-label="t('common.delete')" @click="removeLimit(index)">
               <PbIcon :icon="PhX" :size="16" />
             </Button>

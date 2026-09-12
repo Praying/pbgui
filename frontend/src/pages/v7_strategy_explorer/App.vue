@@ -395,7 +395,7 @@ body {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
 }
 
 .orders th,

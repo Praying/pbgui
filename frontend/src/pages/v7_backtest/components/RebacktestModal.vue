@@ -86,15 +86,15 @@ function onConfirm(): void {
       <div class="min-h-0 flex-1 overflow-auto">
         <div style="display: flex; flex-direction: column; gap: var(--sp-md); height: 100%; min-width: 0">
           <div>
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">start_date</div>
+            <div class="text-xs uppercase tracking-label text-secondary">start_date</div>
             <Input v-model="start" type="text" data-test="rbt-start" />
           </div>
           <div>
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">end_date</div>
+            <div class="text-xs uppercase tracking-label text-secondary">end_date</div>
             <Input v-model="end" type="text" data-test="rbt-end" />
           </div>
           <div>
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.startingBalance') }}</div>
+            <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.startingBalance') }}</div>
             <div class="flex items-center gap-1">
               <Input v-model="balance" class="text-right" type="number" min="1" step="100" data-test="rbt-balance" />
               <Button type="button" variant="default" class="act-btn h-auto" style="width: 28px; padding: 0" data-test="rbt-balance-minus" aria-label="Decrease starting balance" title="Decrease starting balance" @click="adjustBalance(-100)"><PbIcon :icon="PhMinus" /></Button>
@@ -102,7 +102,7 @@ function onConfirm(): void {
             </div>
           </div>
           <div style="flex: 1; display: flex; flex-direction: column; min-height: 60px">
-            <div class="text-xs uppercase tracking-[0.5px] text-secondary">{{ t('v7backtest.exchanges') }}</div>
+            <div class="text-xs uppercase tracking-label text-secondary">{{ t('v7backtest.exchanges') }}</div>
             <!-- ui-migration: blocked — the reka listbox is single-value; the
                  legacy multi-select (ctrl-free toggle via useToggleMultiSelect)
                  stays native. -->

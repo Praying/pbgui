@@ -295,13 +295,13 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 .lvp-conn-badge {
-  font-size: 11px;
+  font-size: var(--text-micro);
   color: var(--text-muted);
 }
 .lvp-terminal {
   overflow-y: auto;
   font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.45;
   background: var(--bg-page);
   color: var(--text-secondary);
@@ -411,7 +411,7 @@ onUnmounted(() => {
   border-radius: 999px;
   background: rgb(var(--bg-page-rgb) / 0.4);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-micro);
   white-space: nowrap;
 }
 
@@ -424,7 +424,7 @@ onUnmounted(() => {
     var(--bg-page);
   box-shadow: 0 16px 34px rgb(0 0 0 / 0.24), 0 1px rgb(255 255 255 / 0.025) inset;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.55;
   scrollbar-color: rgb(var(--accent-rgb) / 0.32) rgb(var(--text-secondary-rgb) / 0.04);
 }
@@ -478,7 +478,7 @@ onUnmounted(() => {
 
   .lvp-terminal {
     padding: 11px 10px;
-    font-size: 11px;
+    font-size: var(--text-micro);
   }
 }
 

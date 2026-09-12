@@ -22,16 +22,16 @@ const conflicts = computed(() => props.safety.conflicts || []);
 
 <template>
   <div class="grid gap-3 text-primary">
-    <div class="text-md font-black text-primary" :class="safety.ok ? 'text-success-soft' : 'text-danger-soft'">{{
+    <div class="text-md font-bold text-primary" :class="safety.ok ? 'text-success-soft' : 'text-danger-soft'">{{
       safety.ok ? t('misc.dbtools.safetyCheckPassed') : t('misc.dbtools.safetyCheckBlocked')
     }}</div>
     <div class="text-sm text-secondary">{{ t('misc.dbtools.safetyChecked') }}</div>
 
     <template v-if="targetEntries.length">
       <div class="grid gap-[7px]">
-        <div class="font-black text-primary">{{ t('misc.dbtools.targets') }}</div>
+        <div class="font-bold text-primary">{{ t('misc.dbtools.targets') }}</div>
         <div v-for="[target, status] in targetEntries" :key="target" class="grid gap-[7px]">
-          <div class="font-black text-primary">
+          <div class="font-bold text-primary">
             {{ target }}:
             {{ (blocked[target] || []).length ? t('misc.dbtools.blocked') : t('misc.dbtools.safe') }}
             <span class="text-sm text-secondary">({{ status.running ? t('misc.dbtools.pbdataRunning') : t('misc.dbtools.pbdataNotRunning') }})</span>
@@ -41,7 +41,7 @@ const conflicts = computed(() => props.safety.conflicts || []);
               <span
                 v-for="user in users"
                 :key="user"
-                class="safety-bubble inline-flex items-center gap-[7px] rounded-full px-2.5 py-[3px] text-sm font-extrabold"
+                class="safety-bubble inline-flex items-center gap-[7px] rounded-full px-2.5 py-[3px] text-sm font-bold"
                 :class="(blocked[target] || []).includes(user) ? 'border-danger/35 bg-danger/12 text-danger-soft' : 'border-success/30 bg-success/12 text-success-soft'"
               >{{ user }}{{ (blocked[target] || []).includes(user) ? t('misc.dbtools.activeOnTarget') : t('misc.dbtools.safeSuffix') }}</span>
             </template>
@@ -53,8 +53,8 @@ const conflicts = computed(() => props.safety.conflicts || []);
     <div v-else class="text-sm text-secondary">{{ t('misc.dbtools.noTargetsSelected') }}</div>
 
     <div v-if="conflicts.length" class="grid gap-[7px]">
-      <div class="font-black text-primary">{{ t('misc.dbtools.jobConflicts') }}</div>
-      <span v-for="(item, index) in conflicts" :key="index" class="safety-bubble inline-flex items-center gap-[7px] rounded-full border border-danger/35 bg-danger/12 px-2.5 py-[3px] text-sm font-extrabold text-danger-soft">
+      <div class="font-bold text-primary">{{ t('misc.dbtools.jobConflicts') }}</div>
+      <span v-for="(item, index) in conflicts" :key="index" class="safety-bubble inline-flex items-center gap-[7px] rounded-full border border-danger/35 bg-danger/12 px-2.5 py-[3px] text-sm font-bold text-danger-soft">
         {{ item.job_name || item.job_id || t('misc.dbtools.existingJob') }}:
         {{ t('misc.dbtools.conflictDetail', { source: item.source || '-', users: (item.users || []).join(', ') }) }}
       </span>

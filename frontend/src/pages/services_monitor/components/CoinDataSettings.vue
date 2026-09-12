@@ -136,12 +136,12 @@ defineExpose({ load });
 <style scoped>
 .settings-wrap { padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1; }
 .settings-loading { color: var(--text-disabled); font-style: italic; }
-.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-secondary); margin: 0 0 0.5rem; }
+.form-section-title { font-size: var(--text-sm); font-weight: 700; color: var(--text-secondary); margin: 0 0 0.5rem; }
 .form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .form-field { display: flex; flex-direction: column; gap: 3px; }
-.form-label { font-size: var(--fs-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.form-label { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: var(--tracking-label); }
 .narrow { width: 90px; }
-.inline-msg { font-size: var(--fs-xs); color: var(--success); margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
+.inline-msg { font-size: var(--text-xs); color: var(--success); margin-left: 0.5rem; opacity: 0; transition: opacity 0.3s; }
 .inline-msg.visible { opacity: 1; }
 .inline-msg.error { color: var(--danger-soft); }
 </style>

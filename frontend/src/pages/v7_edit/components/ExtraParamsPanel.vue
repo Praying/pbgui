@@ -18,7 +18,7 @@ const page = useEditPageContext();
 <template>
   <ExpanderGroup v-if="page.extraLive.value.length" id="exp-extra-live" :title="t('v7run.additionalParameters')">
     <template #header-extra>
-      <span style="margin-left: auto; font-size: var(--fs-xs); color: var(--text-dim)">{{ t('v7run.parametersNotInGui') }}</span>
+      <span style="margin-left: auto; font-size: var(--text-xs); color: var(--text-dim)">{{ t('v7run.parametersNotInGui') }}</span>
     </template>
     <div class="form-row cols-3">
       <div

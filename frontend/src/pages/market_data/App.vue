@@ -623,7 +623,7 @@ body {
   color: var(--text-primary);
   border: 1px solid var(--border-strong);
   border-radius: 5px;
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   font-weight: 400;
   padding: 6px 10px;
   white-space: pre-wrap;

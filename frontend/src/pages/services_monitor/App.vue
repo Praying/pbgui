@@ -887,10 +887,10 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .result-modal-header:active { cursor: grabbing; }
-.result-modal-header h3 { margin: 0; font-size: var(--fs-md); color: var(--text-primary); }
-.result-modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; padding: 0 4px; }
+.result-modal-header h3 { margin: 0; font-size: var(--text-md); color: var(--text-primary); }
+.result-modal-close { background: none; border: none; color: var(--text-muted); font-size: var(--text-lg); cursor: pointer; padding: 0 4px; }
 .result-modal-close:hover { color: var(--text-primary); }
-.result-modal-status { padding: 0.6rem 1rem; font-size: var(--fs-sm); font-weight: 600; flex-shrink: 0; }
+.result-modal-status { padding: 0.6rem 1rem; font-size: var(--text-sm); font-weight: 600; flex-shrink: 0; }
 .result-modal-status.ok { background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); color: var(--success); border-bottom: 1px solid var(--success-deep); }
 .result-modal-status.fail { background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); color: var(--danger-soft); border-bottom: 1px solid var(--danger-deep); }
 .result-modal-body {
@@ -898,7 +898,7 @@ onUnmounted(() => {
   overflow-y: auto;
   padding: 0.75rem 1rem;
   font-family: monospace;
-  font-size: var(--fs-xs);
+  font-size: var(--text-xs);
   color: var(--text-secondary);
   white-space: pre-wrap;
   word-break: break-all;
@@ -911,7 +911,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 0.35rem 1.2rem;
   cursor: pointer;
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
 }
 .result-modal-footer button:hover { background: var(--accent-deep); }
 
@@ -926,11 +926,11 @@ onUnmounted(() => {
   color: var(--text-muted);
 }
 .panel-placeholder-name {
-  font-size: var(--fs-lg);
+  font-size: var(--text-lg);
   font-weight: 700;
 }
 .panel-placeholder-hint {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--text-disabled);
 }
 
@@ -981,9 +981,9 @@ body {
   padding-bottom: 14px;
   border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   color: var(--accent-soft);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.13em;
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
 }
 
 .sb-btn {
@@ -1076,8 +1076,8 @@ body {
 
 #overview-grid .card-name {
   color: var(--text-secondary);
-  font-size: 14px;
-  letter-spacing: -0.01em;
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-tight);
 }
 
 #overview-grid .card-status-row {
@@ -1166,12 +1166,12 @@ button:focus-visible {
 
   #sidebar-inner::before {
     margin-inline: 6px;
-    font-size: 10px;
+    font-size: var(--text-micro);
   }
 
   .sb-btn {
     padding-inline: 9px;
-    font-size: 12px;
+    font-size: var(--text-xs);
   }
 
   #panel-overview {

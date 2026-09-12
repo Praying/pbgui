@@ -240,7 +240,7 @@ const modeChip = computed(() => {
    plus the legacy variant anchor (warn/good/bad/info) the tests and the
    message level classes key off; the neutral branch carries no tint, exactly
    like the variant-less .status-chip in the legacy stylesheet. */
-const CHIP_BASE = 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold tracking-[0.04em]';
+const CHIP_BASE = 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold tracking-label';
 
 function statusChipClass(variant: 'good' | 'warn' | 'bad' | 'info'): string {
   if (variant === 'good') return `status-chip good ${CHIP_BASE} bg-success/15 text-success`;
@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
   >
     <template #status>
       <div class="status-row flex items-center gap-2">
-        <span id="result-chip" class="chip sr-only inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ resultChip }}</span>
+        <span id="result-chip" class="chip sr-only inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ resultChip }}</span>
         <StatusStrip :label="t('v7explore.result')" :value="resultChip" />
         <span id="mode-chip" :class="modeChipClass">{{ modeChip }}</span>
       </div>
@@ -504,15 +504,15 @@ onBeforeUnmount(() => {
 
       <section class="metric-grid grid grid-cols-[minmax(0,2fr)_repeat(2,minmax(0,1fr))] gap-3 max-[1500px]:grid-cols-[repeat(2,minmax(0,1fr))] max-[900px]:grid-cols-1" id="summary-metrics">
         <div class="metric-card result-metric min-w-0 rounded-xl border border-border-default bg-panel p-3">
-          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.result') }}</div>
-          <div class="value text-[16px] font-bold leading-[1.25] [overflow-wrap:anywhere] break-words" id="metric-result">{{ metricResult }}</div>
+          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-label">{{ t('v7explore.result') }}</div>
+          <div class="value text-md font-bold leading-[1.25] [overflow-wrap:anywhere] break-words" id="metric-result">{{ metricResult }}</div>
         </div>
         <div class="metric-card min-w-0 rounded-xl border border-border-default bg-panel p-3">
-          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.paretoFront') }}</div>
+          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-label">{{ t('v7explore.paretoFront') }}</div>
           <div class="value text-lg font-bold leading-[1.25] [overflow-wrap:anywhere] break-words" id="metric-paretos">{{ metricParetos }}</div>
         </div>
         <div class="metric-card min-w-0 rounded-xl border border-border-default bg-panel p-3">
-          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-[0.05em]">{{ t('v7explore.candidateSet') }}</div>
+          <div class="label mb-1.5 text-xs text-secondary uppercase tracking-label">{{ t('v7explore.candidateSet') }}</div>
           <div class="value text-lg font-bold leading-[1.25] [overflow-wrap:anywhere] break-words">
             <span id="metric-all-results">{{ metricAllResults }}</span>
             <!-- shown only once the full load finished (:2436-2439, handoff 4) -->
@@ -551,10 +551,10 @@ onBeforeUnmount(() => {
                 </select>
               </div>
               <div class="form-field col-span-4 flex flex-col gap-1.5 max-[900px]:col-span-12">
-                <label class="text-xs text-secondary uppercase tracking-[0.05em]">&nbsp;</label>
+                <label class="text-xs text-secondary uppercase tracking-label">&nbsp;</label>
                 <div class="check-row flex min-h-8 items-center gap-2 text-secondary">
                   <Checkbox id="persist-defaults-toggle" v-model="store.state.persistDefaults" />
-                  <label for="persist-defaults-toggle" class="text-xs text-secondary uppercase tracking-[0.05em] cursor-pointer">{{ t('v7explore.persistDefaults') }}</label>
+                  <label for="persist-defaults-toggle" class="text-xs text-secondary uppercase tracking-label cursor-pointer">{{ t('v7explore.persistDefaults') }}</label>
                 </div>
               </div>
               <div class="form-field full col-span-12 flex flex-col gap-1.5">

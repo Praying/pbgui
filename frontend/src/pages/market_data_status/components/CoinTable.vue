@@ -105,16 +105,16 @@ th {
   font-weight: 600;
   color: var(--mds-text-primary);
   border-bottom: 2px solid var(--mds-border-color);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-label);
   white-space: nowrap;
 }
 
 td {
   padding: 0.6rem 0.75rem;
   border-bottom: 1px solid var(--mds-border-color);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--mds-text-secondary);
 }
 
@@ -137,7 +137,7 @@ tbody tr:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--mds-accent-warning);
 }
 
@@ -148,7 +148,7 @@ tbody tr:hover {
 }
 
 .mds-empty-state-icon {
-  font-size: 3rem;
+  font-size: var(--text-3xl);
   margin-bottom: 1rem;
   opacity: 0.3;
 }

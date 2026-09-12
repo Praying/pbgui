@@ -610,7 +610,7 @@ onUnmounted(() => {
     </div>
 
     <div v-if="logModal" data-modal="log" class="modal-backdrop p-5" :style="embeddedModalStyle" role="dialog" aria-modal="true">
-      <div class="flex max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(900px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ t('sysmon.jobLog') }} {{ logModal.jobId }}</h2><Button data-close="log" type="button" variant="danger" size="sm" @click="logModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3.5"><pre class="min-h-[240px] whitespace-pre-wrap break-words rounded-sm bg-page p-3 font-mono text-[0.82rem] leading-[1.45] text-primary">{{ logModal.text }}</pre></div></div>
+      <div class="flex max-h-[calc(100dvh-40px)] flex-col overflow-hidden rounded-lg border border-border-default bg-panel p-5 shadow-modal w-[min(900px,calc(100vw-40px))]"><div class="flex items-center justify-between gap-3 border-b border-border-subtle pb-3"><h2 class="m-0 break-all text-lg">{{ t('sysmon.jobLog') }} {{ logModal.jobId }}</h2><Button data-close="log" type="button" variant="danger" size="sm" @click="logModal = null"><PbIcon :icon="PhX" /> {{ t('common.close') }}</Button></div><div class="overflow-auto pt-3.5"><pre class="min-h-[240px] whitespace-pre-wrap break-words rounded-sm bg-page p-3 font-mono text-xs leading-[1.45] text-primary">{{ logModal.text }}</pre></div></div>
     </div>
 
     <div v-if="detailsModal" data-modal="details" class="modal-backdrop p-5" :style="embeddedModalStyle" role="dialog" aria-modal="true">

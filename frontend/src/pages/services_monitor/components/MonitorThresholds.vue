@@ -85,7 +85,7 @@ function onUpdate(config: Record<string, string>, key: string, value: string | n
 <style scoped>
 .monitor-group { margin-top: 1rem; }
 .monitor-group-title {
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   color: var(--accent-soft);
   font-weight: 600;
   margin-bottom: 0.4rem;
@@ -96,5 +96,5 @@ function onUpdate(config: Record<string, string>, key: string, value: string | n
   gap: 0.5rem;
 }
 .monitor-cell { display: flex; flex-direction: column; gap: 2px; }
-.monitor-label { font-size: var(--fs-xs); color: var(--text-secondary); }
+.monitor-label { font-size: var(--text-xs); color: var(--text-secondary); }
 </style>

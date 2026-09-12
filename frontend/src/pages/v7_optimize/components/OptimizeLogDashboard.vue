@@ -94,7 +94,7 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
 
     <div class="grid grid-cols-2 gap-2 lg:grid-cols-4">
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-phase">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.phase') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.phase') }}</div>
         <div class="mt-1">
           <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-[2px] text-xs font-semibold" :class="phaseClass" data-test="log-phase">
             <span class="h-1.5 w-1.5 rounded-full bg-current opacity-80"></span>
@@ -105,13 +105,13 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
 
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-pareto">
         <div class="flex items-center justify-between gap-2">
-          <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logParetoFront') }}</div>
+          <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logParetoFront') }}</div>
           <div class="flex shrink-0 items-center gap-1">
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              class="h-6 px-1.5 text-[11px]"
+              class="h-6 px-1.5 text-micro"
               :disabled="!actionsEnabled"
               :title="t('v7optimize.showMatchingResults')"
               data-test="log-open-results"
@@ -121,7 +121,7 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
               type="button"
               variant="ghost"
               size="sm"
-              class="h-6 px-1.5 text-[11px]"
+              class="h-6 px-1.5 text-micro"
               :disabled="!actionsEnabled"
               :title="t('v7optimize.openInParetoExplorer')"
               data-test="log-open-explorer"
@@ -133,46 +133,46 @@ const errorText = computed(() => (props.statusError ? props.statusError : logErr
       </div>
 
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-backend">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logBackend') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logBackend') }}</div>
         <div class="mt-1 overflow-hidden text-sm font-semibold text-primary whitespace-nowrap text-ellipsis" :title="backendText" data-test="log-backend">{{ backendText }}</div>
       </div>
 
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-elapsed">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logElapsed') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logElapsed') }}</div>
         <div class="mt-1 text-sm font-semibold tabular-nums text-primary" data-test="log-elapsed">{{ elapsedText }}</div>
       </div>
 
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-cpu">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logCpu') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logCpu') }}</div>
         <div class="mt-1 overflow-hidden text-sm font-semibold tabular-nums text-primary whitespace-nowrap text-ellipsis" :title="cpuTip" data-test="log-cpu">{{ cpuText }}</div>
       </div>
 
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-memory">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logSystemMemory') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logSystemMemory') }}</div>
         <div class="mt-1 overflow-hidden text-sm font-semibold tabular-nums text-primary whitespace-nowrap text-ellipsis" data-test="log-memory">{{ memoryText }}</div>
       </div>
 
       <div class="min-w-0 rounded-md border border-border-default bg-elevated/40 px-3 py-2" data-test="log-card-queue">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.queue') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.queue') }}</div>
         <div class="mt-1 overflow-hidden text-sm font-semibold text-primary whitespace-nowrap text-ellipsis" data-test="log-queue">{{ queueText }}</div>
       </div>
     </div>
 
     <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
       <div class="min-w-0 rounded-md border border-border-subtle bg-page/40 px-3 py-2" data-test="log-detail-objectives">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logObjectives') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logObjectives') }}</div>
         <div class="mt-1 overflow-hidden text-xs font-mono text-secondary whitespace-nowrap text-ellipsis" :title="objectivesText" data-test="log-objectives">{{ objectivesText }}</div>
       </div>
       <div class="min-w-0 rounded-md border border-border-subtle bg-page/40 px-3 py-2" data-test="log-detail-ranges">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logRanges') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logRanges') }}</div>
         <div class="mt-1 overflow-hidden text-xs font-mono text-secondary whitespace-nowrap text-ellipsis" :title="rangesText" data-test="log-ranges">{{ rangesText }}</div>
       </div>
       <div class="min-w-0 rounded-md border border-border-subtle bg-page/40 px-3 py-2" data-test="log-detail-activity">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logActivity') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logActivity') }}</div>
         <div class="mt-1 overflow-hidden text-xs font-mono text-secondary whitespace-nowrap text-ellipsis" :title="activityText" data-test="log-activity">{{ activityText }}</div>
       </div>
       <div class="min-w-0 rounded-md border border-border-subtle bg-page/40 px-3 py-2" :class="{ 'border-danger/40': errorText !== '-' }" data-test="log-detail-error">
-        <div class="text-[10px] font-semibold tracking-[0.06em] text-muted uppercase">{{ t('v7optimize.logError') }}</div>
+        <div class="text-micro font-semibold tracking-label text-muted uppercase">{{ t('v7optimize.logError') }}</div>
         <div class="mt-1 overflow-hidden text-xs font-mono whitespace-nowrap text-ellipsis" :class="errorText !== '-' ? 'text-danger-soft' : 'text-secondary'" :title="errorText" data-test="log-error">{{ errorText }}</div>
       </div>
     </div>

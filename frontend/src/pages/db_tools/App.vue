@@ -243,7 +243,7 @@ onBeforeUnmount(() => store.teardown());
       <!-- Cleanup -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-cleanup" :class="store.activePanel.value === 'cleanup' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
-          <div class="text-lg font-extrabold">{{ t('misc.dbtools.cleanupUserData') }}</div>
+          <div class="text-lg font-bold">{{ t('misc.dbtools.cleanupUserData') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.cleanupUserDataDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
@@ -287,7 +287,7 @@ onBeforeUnmount(() => store.teardown());
             @toggle="(value, selected) => { toggleInList(store.cleanupUsers, value, selected); store.cleanupPreview.value = null; }"
             @set-all="(values) => { store.cleanupUsers.value = values; store.cleanupPreview.value = null; }"
           >
-            <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.users') }}</div></template>
+            <template #title><div class="text-sm font-bold text-primary">{{ t('misc.dbtools.users') }}</div></template>
           </SelectList>
           <div class="flex flex-wrap items-center gap-2">
             <Button type="button" variant="secondary" id="cleanup-refresh" @click="store.loadUsers(store.cleanupTarget.value, 'cleanup')">{{ t('misc.dbtools.refreshUsers') }}</Button>
@@ -307,7 +307,7 @@ onBeforeUnmount(() => store.teardown());
       <!-- Copy users -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-copy-users" :class="store.activePanel.value === 'copy-users' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
-          <div class="text-lg font-extrabold">{{ t('misc.dbtools.copyUserData') }}</div>
+          <div class="text-lg font-bold">{{ t('misc.dbtools.copyUserData') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.copyUserDataDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
@@ -355,7 +355,7 @@ onBeforeUnmount(() => store.teardown());
             @toggle="(value, selected) => { toggleInList(store.copyUsers, value, selected); store.usersPreview.value = null; }"
             @set-all="(values) => { store.copyUsers.value = values; store.usersPreview.value = null; }"
           >
-            <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.usersFromSource') }}</div></template>
+            <template #title><div class="text-sm font-bold text-primary">{{ t('misc.dbtools.usersFromSource') }}</div></template>
           </SelectList>
           <div class="flex flex-wrap items-center gap-2">
             <Button type="button" variant="secondary" id="users-refresh" @click="store.loadUsers(store.usersSource.value, 'copy')">{{ t('misc.dbtools.refreshSourceUsers') }}</Button>
@@ -375,7 +375,7 @@ onBeforeUnmount(() => store.teardown());
       <!-- Copy database -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-copy-db" :class="store.activePanel.value === 'copy-db' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
-          <div class="text-lg font-extrabold">{{ t('misc.dbtools.copyCompleteDatabase') }}</div>
+          <div class="text-lg font-bold">{{ t('misc.dbtools.copyCompleteDatabase') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.copyCompleteDatabaseDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
@@ -422,21 +422,21 @@ onBeforeUnmount(() => store.teardown());
       <!-- Sync jobs -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-sync-jobs" :class="store.activePanel.value === 'sync-jobs' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
-          <div class="text-lg font-extrabold">{{ t('misc.dbtools.syncJobs') }}</div>
+          <div class="text-lg font-bold">{{ t('misc.dbtools.syncJobs') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.syncJobsDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
           <div class="rounded-[10px] border border-warning-deep/45 bg-warning/14 p-3 text-sm leading-[1.45] text-warning-soft">{{ t('misc.dbtools.syncJobsNotice') }}</div>
           <div class="overflow-hidden rounded-[10px] border border-border-subtle bg-page">
             <div class="flex items-center justify-between gap-2 border-b border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
-              <div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.configuredSyncJobs') }}</div>
+              <div class="text-sm font-bold text-primary">{{ t('misc.dbtools.configuredSyncJobs') }}</div>
               <div class="flex gap-1">
                 <Button type="button" variant="secondary" size="sm" id="sync-reload" @click="store.loadSyncJobs()">{{ t('misc.dbtools.reload') }}</Button>
                 <Button type="button" variant="primary" size="sm" id="sync-new" @click="store.newSyncJob()">{{ t('misc.dbtools.newJob') }}</Button>
               </div>
             </div>
             <div class="block max-h-[300px] select-none overflow-auto p-0" id="sync-job-list">
-              <div :class="[syncGridClass, 'sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-extrabold tracking-[0.06em] text-secondary uppercase']">
+              <div :class="[syncGridClass, 'sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-bold tracking-label text-secondary uppercase']">
                 <span>{{ t('misc.dbtools.name') }}</span>
                 <span>{{ t('misc.dbtools.status') }}</span>
                 <span>{{ t('misc.dbtools.source') }}</span>
@@ -458,8 +458,8 @@ onBeforeUnmount(() => store.teardown());
                 @keydown.enter.prevent="row.job.id === store.syncJobId.value ? store.closeSyncEditor() : store.selectSyncJob(row.job.id)"
                 @keydown.space.prevent="row.job.id === store.syncJobId.value ? store.closeSyncEditor() : store.selectSyncJob(row.job.id)"
               >
-                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-black text-primary">{{ row.job.name || row.job.id }}</span>
-                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"><span class="inline-flex items-center rounded-full border border-border-default px-2 py-0.5 text-xs font-black" :class="row.pillClass">{{ row.pillText }}</span></span>
+                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-bold text-primary">{{ row.job.name || row.job.id }}</span>
+                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"><span class="inline-flex items-center rounded-full border border-border-default px-2 py-0.5 text-xs font-bold" :class="row.pillClass">{{ row.pillText }}</span></span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ row.job.source || '-' }}</span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ (row.job.targets || []).join(', ') || '-' }}</span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{{ shortSyncTimeText(row.job.last_run) }}</span>
@@ -474,7 +474,7 @@ onBeforeUnmount(() => store.teardown());
 
           <div class="hidden gap-5" id="sync-editor" :class="store.syncEditorVisible.value ? 'visible grid gap-5' : 'hidden'">
             <div class="flex items-center justify-between gap-3 rounded-[10px] border border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
-              <div class="font-black text-primary" id="sync-editor-title">{{ store.syncEditorTitle.value || t('misc.dbtools.newSyncJob') }}</div>
+              <div class="font-bold text-primary" id="sync-editor-title">{{ store.syncEditorTitle.value || t('misc.dbtools.newSyncJob') }}</div>
               <Button type="button" variant="secondary" size="sm" id="sync-close" @click="store.closeSyncEditor()">{{ t('misc.dbtools.closeEditor') }}</Button>
             </div>
             <div class="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
@@ -513,7 +513,7 @@ onBeforeUnmount(() => store.teardown());
                 @toggle="(value, selected) => toggleInList(store.syncTargets, value, selected)"
                 @set-all="(values) => (store.syncTargets.value = values)"
               >
-                <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.targetMasters') }}</div></template>
+                <template #title><div class="text-sm font-bold text-primary">{{ t('misc.dbtools.targetMasters') }}</div></template>
               </SelectList>
               <SelectList
                 id="sync-users"
@@ -523,7 +523,7 @@ onBeforeUnmount(() => store.teardown());
                 @toggle="(value, selected) => toggleInList(store.syncUsers, value, selected)"
                 @set-all="(values) => (store.syncUsers.value = values)"
               >
-                <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.usersFromSource') }}</div></template>
+                <template #title><div class="text-sm font-bold text-primary">{{ t('misc.dbtools.usersFromSource') }}</div></template>
               </SelectList>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -553,7 +553,7 @@ onBeforeUnmount(() => store.teardown());
       <!-- Backups -->
       <section id="panel-backups" class="min-h-[calc(100dvh-var(--header-height)-var(--nav-height))] overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" :class="store.activePanel.value === 'backups' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
-          <div class="text-lg font-extrabold">{{ t('misc.dbtools.backupManager') }}</div>
+          <div class="text-lg font-bold">{{ t('misc.dbtools.backupManager') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.backupManagerDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
@@ -573,20 +573,20 @@ onBeforeUnmount(() => store.teardown());
           </div>
           <div class="flex min-h-0 flex-col overflow-hidden rounded-[10px] border border-border-subtle bg-page">
             <div class="flex items-center justify-between gap-2 border-b border-border-subtle bg-card px-[0.8rem] py-[0.65rem]">
-              <div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.databaseBackups') }}</div>
+              <div class="text-sm font-bold text-primary">{{ t('misc.dbtools.databaseBackups') }}</div>
               <div class="flex gap-1">
-                <span class="mr-2 self-center text-xs font-extrabold text-secondary" id="backup-total-summary">{{ backupSummary }}</span>
+                <span class="mr-2 self-center text-xs font-bold text-secondary" id="backup-total-summary">{{ backupSummary }}</span>
                 <Button type="button" variant="secondary" size="sm" @click="store.backupSelected.value = backupRows.map((row) => row.name)">{{ t('common.all') }}</Button>
                 <Button type="button" variant="secondary" size="sm" @click="store.backupSelected.value = []">{{ t('common.none') }}</Button>
               </div>
             </div>
             <div id="backup-list" class="min-h-[360px] flex-1 select-none overflow-auto p-0">
-              <div :class="[backupsGridClass, 'sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-extrabold tracking-[0.06em] text-secondary uppercase']">
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('created')">{{ t('misc.dbtools.created') }}{{ sortMark('created') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('label')">{{ t('misc.dbtools.operation') }}{{ sortMark('label') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('db')">{{ t('misc.dbtools.file') }}{{ sortMark('db') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('size')">{{ t('misc.dbtools.size') }}{{ sortMark('size') }}</Button>
-                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-extrabold uppercase tracking-[0.06em] hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('name')">{{ t('misc.dbtools.backupName') }}{{ sortMark('name') }}</Button>
+              <div :class="[backupsGridClass, 'sticky top-0 z-[2] border-b-2 border-border-default bg-page px-3 py-2 text-xs font-bold tracking-label text-secondary uppercase']">
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('created')">{{ t('misc.dbtools.created') }}{{ sortMark('created') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('label')">{{ t('misc.dbtools.operation') }}{{ sortMark('label') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('db')">{{ t('misc.dbtools.file') }}{{ sortMark('db') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('size')">{{ t('misc.dbtools.size') }}{{ sortMark('size') }}</Button>
+                <Button type="button" variant="ghost" class="h-auto justify-start rounded-none border-0 p-0 text-xs font-bold uppercase tracking-label hover:bg-transparent active:scale-100" @click="store.toggleBackupSort('name')">{{ t('misc.dbtools.backupName') }}{{ sortMark('name') }}</Button>
               </div>
               <div v-if="!backupRows.length" class="select-row w-full min-h-[34px] appearance-none cursor-pointer border-0 border-b border-border-subtle bg-transparent py-[7px] pl-2.5 pr-[10px] text-left text-primary hover:bg-white/3" aria-disabled="true">{{ t('misc.dbtools.noBackupsFound') }}</div>
               <Button
@@ -599,10 +599,10 @@ onBeforeUnmount(() => store.teardown());
                 :aria-pressed="store.backupSelected.value.includes(row.name) ? 'true' : 'false'"
                 @click="toggleInList(store.backupSelected, row.name, !store.backupSelected.value.includes(row.name))"
               >
-                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-extrabold text-primary">{{ row.created }}</span>
-                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"><span class="inline-flex items-center rounded-full border border-accent/24 bg-accent/9 px-2 py-px text-xs font-extrabold text-accent-soft">{{ row.label }}</span></span>
-                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"><span class="inline-flex items-center rounded-full border border-accent/24 bg-accent/9 px-2 py-px text-xs font-extrabold text-accent-soft">{{ row.dbLabel }}</span></span>
-                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-right font-extrabold text-primary">{{ row.sizeLabel }}</span>
+                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-bold text-primary">{{ row.created }}</span>
+                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"><span class="inline-flex items-center rounded-full border border-accent/24 bg-accent/9 px-2 py-px text-xs font-bold text-accent-soft">{{ row.label }}</span></span>
+                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"><span class="inline-flex items-center rounded-full border border-accent/24 bg-accent/9 px-2 py-px text-xs font-bold text-accent-soft">{{ row.dbLabel }}</span></span>
+                <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-right font-bold text-primary">{{ row.sizeLabel }}</span>
                 <span class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-secondary">{{ row.name }}</span>
               </Button>
             </div>
@@ -625,7 +625,7 @@ onBeforeUnmount(() => store.teardown());
       <!-- Copy dashboards -->
       <section class="overflow-hidden rounded-xl border border-border-subtle bg-page shadow-panel" id="panel-copy-dashboards" :class="store.activePanel.value === 'copy-dashboards' ? 'active block' : 'hidden'">
         <div class="border-b border-border-subtle bg-card p-5">
-          <div class="text-lg font-extrabold">{{ t('misc.dbtools.copyDashboardsAndTemplates') }}</div>
+          <div class="text-lg font-bold">{{ t('misc.dbtools.copyDashboardsAndTemplates') }}</div>
           <div class="mt-1 text-sm leading-[1.45] text-secondary">{{ t('misc.dbtools.copyDashboardsAndTemplatesDesc') }}</div>
         </div>
         <div class="grid gap-5 p-5">
@@ -673,7 +673,7 @@ onBeforeUnmount(() => store.teardown());
               @toggle="(value, selected) => { toggleInList(store.dashSelected, value, selected); store.dashPreview.value = null; }"
               @set-all="(values) => { store.dashSelected.value = values; store.dashPreview.value = null; }"
             >
-              <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.dashboards') }}</div></template>
+              <template #title><div class="text-sm font-bold text-primary">{{ t('misc.dbtools.dashboards') }}</div></template>
             </SelectList>
             <SelectList
               id="template-list"
@@ -682,7 +682,7 @@ onBeforeUnmount(() => store.teardown());
               @toggle="(value, selected) => { toggleInList(store.templateSelected, value, selected); store.dashPreview.value = null; }"
               @set-all="(values) => { store.templateSelected.value = values; store.dashPreview.value = null; }"
             >
-              <template #title><div class="text-sm font-extrabold text-primary">{{ t('misc.dbtools.templates') }}</div></template>
+              <template #title><div class="text-sm font-bold text-primary">{{ t('misc.dbtools.templates') }}</div></template>
             </SelectList>
           </div>
           <div class="flex flex-wrap items-center gap-2">

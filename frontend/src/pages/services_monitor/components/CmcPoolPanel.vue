@@ -563,15 +563,15 @@ async function deleteSelectedCmcKey(): Promise<void> {
 .cmc-pool-wrap { padding: 1rem 1.5rem 1.5rem; overflow-y: auto; flex: 1; }
 .cmc-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; margin-bottom: 0.8rem; }
 .cmc-summary-card { background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.55rem 0.7rem; min-width: 0; }
-.cmc-summary-label { color: var(--text-muted); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.05em; }
-.cmc-summary-value { color: var(--text-primary); font-size: var(--fs-md); font-weight: 700; margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; }
+.cmc-summary-label { color: var(--text-muted); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-label); }
+.cmc-summary-value { color: var(--text-primary); font-size: var(--text-md); font-weight: 700; margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; }
 .cmc-pool-toolbar { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
-.cmc-pool-message { color: var(--text-muted); font-size: var(--fs-xs); margin-left: auto; }
+.cmc-pool-message { color: var(--text-muted); font-size: var(--text-xs); margin-left: auto; }
 .cmc-pool-message.error { color: var(--danger-soft); }
 .cmc-pool-warnings { display: grid; gap: 0.35rem; margin-bottom: 0.7rem; }
-.cmc-pool-warning { color: var(--warning); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); border: 1px solid var(--warning-deep); border-radius: 6px; padding: 0.45rem 0.6rem; font-size: var(--fs-xs); }
+.cmc-pool-warning { color: var(--warning); background: color-mix(in srgb, var(--warning-deep) 28%, var(--bg-card)); border: 1px solid var(--warning-deep); border-radius: 6px; padding: 0.45rem 0.6rem; font-size: var(--text-xs); }
 .cmc-table-wrap { overflow: auto; border: 1px solid var(--border-subtle); border-radius: 8px; }
-.cmc-table { width: 100%; border-collapse: collapse; font-size: var(--fs-xs); min-width: 1500px; }
+.cmc-table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); min-width: 1500px; }
 .cmc-table th { position: sticky; top: 0; z-index: 1; background: var(--surface-workspace); color: var(--text-muted); padding: 0.45rem 0.6rem; text-align: left; border-bottom: 2px solid var(--border-subtle); white-space: nowrap; }
 .cmc-table td { padding: 0.42rem 0.6rem; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); white-space: nowrap; }
 .cmc-table tbody tr { cursor: pointer; }
@@ -585,5 +585,5 @@ async function deleteSelectedCmcKey(): Promise<void> {
 .cmc-state { display: inline-flex; align-items: center; padding: 0.1rem 0.42rem; border-radius: 999px; border: 1px solid var(--border-default); color: var(--text-secondary); font-weight: 700; text-transform: uppercase; }
 .cmc-state.active { color: var(--success); border-color: rgb(var(--success-rgb) / 0.45); background: color-mix(in srgb, var(--success-deep) 28%, var(--bg-card)); }
 .cmc-state.disabled, .cmc-state.invalid { color: var(--danger-soft); border-color: var(--danger-deep); background: color-mix(in srgb, var(--danger-deep) 28%, var(--bg-card)); }
-.form-section-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text-secondary); margin: 0 0 0.5rem; }
+.form-section-title { font-size: var(--text-sm); font-weight: 700; color: var(--text-secondary); margin: 0 0 0.5rem; }
 </style>

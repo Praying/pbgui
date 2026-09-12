@@ -228,7 +228,7 @@ function onRetentionWheel(event: WheelEvent): void {
   color: var(--success);
   border: 1px solid var(--border-default);
   padding: 2px 4px;
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   height: 26px;
   -moz-appearance: textfield;
 }

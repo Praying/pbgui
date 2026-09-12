@@ -104,7 +104,7 @@ function onEnter(): void {
 <template>
   <div>
     <div class="kv-chips" data-test="kv-chips">
-      <span v-if="entries.length === 0" style="color: var(--text-dim); font-size: var(--fs-xs)">{{ t('v7backtest.noEntries') }}</span>
+      <span v-if="entries.length === 0" style="color: var(--text-dim); font-size: var(--text-xs)">{{ t('v7backtest.noEntries') }}</span>
       <span v-for="coin in entries" :key="coin" class="kv-chip">
         <span class="kv-chip-ex">{{ model[coin] }}</span>
         {{ coin }}
@@ -139,7 +139,7 @@ function onEnter(): void {
             @keydown.enter.prevent="onEnter"
           />
           <div class="ms-dropdown" :class="{ open }">
-            <div v-if="visible.length === 0" style="padding: 4px 8px; color: var(--text-dim); font-size: var(--fs-xs)">{{ t('v7backtest.noMatches') }}</div>
+            <div v-if="visible.length === 0" style="padding: 4px 8px; color: var(--text-dim); font-size: var(--text-xs)">{{ t('v7backtest.noMatches') }}</div>
             <div
               v-for="symbol in visible"
               :key="symbol"

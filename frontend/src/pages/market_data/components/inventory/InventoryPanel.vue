@@ -158,7 +158,7 @@ function onSelectView(view: InventorySubsection): void {
           @click="store.deselectAll()"
         >{{ t('market.deselect') }}</Button>
         <div class="inventory-timeframe-filter flex items-center gap-1" id="inventory-timeframe-filter" v-if="store.timeframeFilterSupported.value">
-          <span class="inventory-timeframe-filter-label text-xs uppercase tracking-[0.06em] text-secondary">TF</span>
+          <span class="inventory-timeframe-filter-label text-xs uppercase tracking-label text-secondary">TF</span>
           <Button
             v-for="timeframe in timeframeButtons()"
             :key="timeframe"

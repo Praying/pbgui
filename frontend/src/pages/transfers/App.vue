@@ -286,7 +286,7 @@ onMounted(() => { document.title = t('transfers.title'); void loadUsers(); });
         </div>
       </aside>
       <main class="min-w-0 flex-1 overflow-auto">
-        <header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-wider text-accent">{{ preview?.exchange || t('transfers.eyebrow') }}</p><h1 class="text-2xl font-bold text-primary">{{ selectedUser || t('transfers.title') }}</h1><p class="text-sm text-secondary">{{ selectedUser ? t('transfers.accountSubtitle', { type: preview?.account_type || 'standard' }) : t('transfers.selectAccount') }}</p></div></header>
+        <header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-label text-accent">{{ preview?.exchange || t('transfers.eyebrow') }}</p><h1 class="text-2xl font-bold text-primary">{{ selectedUser || t('transfers.title') }}</h1><p class="text-sm text-secondary">{{ selectedUser ? t('transfers.accountSubtitle', { type: preview?.account_type || 'standard' }) : t('transfers.selectAccount') }}</p></div></header>
         <p v-if="errorMessage" class="mb-3 rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{{ errorMessage }}</p>
         <p v-if="statusMessage" class="mb-3 rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success">{{ statusMessage }}</p>
         <section class="rounded-lg border border-border-default bg-panel">
@@ -302,19 +302,19 @@ onMounted(() => { document.title = t('transfers.title'); void loadUsers(); });
             <template v-else>
               <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <article class="min-w-0 rounded-lg border border-border-default bg-field p-3 sm:col-span-2">
-                  <p class="text-xs uppercase tracking-wide text-muted">{{ t('transfers.route') }}</p>
+                  <p class="text-xs uppercase tracking-label text-muted">{{ t('transfers.route') }}</p>
                   <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-lg font-semibold text-primary"><span class="break-words">{{ formatValue(selectedRoute?.source) }}</span><PbIcon :icon="PhArrowRight" aria-hidden="true" class="shrink-0 text-accent" /><span class="break-words">{{ formatValue(selectedRoute?.destination) }}</span></p>
                 </article>
                 <article class="min-w-0 rounded-lg border border-border-default bg-field p-3 sm:col-span-2 lg:col-span-1">
-                  <p class="text-xs uppercase tracking-wide text-muted">{{ t('transfers.available') }}</p>
+                  <p class="text-xs uppercase tracking-label text-muted">{{ t('transfers.available') }}</p>
                   <p class="mt-1 break-words text-xl font-semibold tabular-nums text-primary">{{ selectedRoute ? selectedRoute.max_transferable : '-' }} <span class="text-xs font-normal text-secondary">{{ selectedRoute?.asset || 'USDC' }}</span></p>
                 </article>
-                <article v-for="item in [{ label: t('transfers.minimum'), value: selectedRoute ? `${selectedRoute.minimum_amount} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.sourceBalance'), value: selectedRoute ? `${selectedRoute.source_balance} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.destinationBalance'), value: selectedRoute?.destination_balance ? `${selectedRoute.destination_balance} ${selectedRoute.asset || 'USDC'}` : '-' }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-field p-3"><p class="text-xs uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
+                <article v-for="item in [{ label: t('transfers.minimum'), value: selectedRoute ? `${selectedRoute.minimum_amount} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.sourceBalance'), value: selectedRoute ? `${selectedRoute.source_balance} ${selectedRoute.asset || 'USDC'}` : '-' }, { label: t('transfers.destinationBalance'), value: selectedRoute?.destination_balance ? `${selectedRoute.destination_balance} ${selectedRoute.asset || 'USDC'}` : '-' }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-field p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
               </div>
               <section v-if="isVault" class="border-t border-border-default pt-4">
                 <h3 class="mb-3 text-sm font-semibold text-primary">{{ t('transfers.vaultSection') }}</h3>
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <article v-for="item in [{ label: t('transfers.vaultEquity'), value: preview?.your_vault_equity }, { label: t('transfers.vaultAccountValue'), value: preview?.vault_account_value }, { label: t('transfers.maxWithdrawable'), value: preview?.user_max_withdrawable }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-field p-3"><p class="text-xs uppercase tracking-wide text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
+                  <article v-for="item in [{ label: t('transfers.vaultEquity'), value: preview?.your_vault_equity }, { label: t('transfers.vaultAccountValue'), value: preview?.vault_account_value }, { label: t('transfers.maxWithdrawable'), value: preview?.user_max_withdrawable }]" :key="item.label" class="min-w-0 rounded-lg border border-border-default bg-field p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 break-words text-base font-semibold tabular-nums text-primary">{{ formatValue(item.value) }}</p></article>
                 </div>
               </section>
             </template>

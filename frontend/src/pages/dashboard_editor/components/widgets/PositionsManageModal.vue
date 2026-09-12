@@ -483,7 +483,7 @@ watch(() => props.rows, () => {
         </div>
         <div :class="dpModalChrome.body">
           <div class="dp-manage-wrap min-h-0 flex-none overflow-auto rounded-lg border border-border-default bg-page" :style="{ maxHeight: tableHeight + 'px' }">
-            <table class="dp-manage-table w-full min-w-[1320px] border-collapse text-[0.76rem]">
+            <table class="dp-manage-table w-full min-w-[1320px] border-collapse text-micro">
               <thead>
                 <tr>
                   <th v-for="c in cols" :key="c.key" class="sticky top-0 z-[1] border-b border-b-border-default bg-card px-[0.45rem] py-[0.35rem] text-left font-semibold whitespace-nowrap text-secondary">{{ dashT(c.i18nKey, c.fallback) }}</th>
@@ -588,7 +588,7 @@ watch(() => props.rows, () => {
               </tbody>
             </table>
           </div>
-          <div class="dp-note text-[0.74rem] leading-[1.45] text-secondary">
+          <div class="dp-note text-micro leading-[1.45] text-secondary">
             {{ dashT('dash.manageNote', 'Market close sends a direct reduce-only market order only for exchange contracts verified by PBGui; unavailable contracts remain visibly disabled. Panic, Graceful Stop and Take Profit Only actions save the Passivbot config and sync it. Use preview to inspect all-position configs without saving or syncing.') }}
           </div>
           <div :class="[dpModalChrome.statusMsg, statusToneClass(status.kind)]">{{ status.msg }}</div>

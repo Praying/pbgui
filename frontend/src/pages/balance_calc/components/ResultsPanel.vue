@@ -55,7 +55,7 @@ const recRows = computed(() => {
 
     <div v-if="results.recommendation" class="result-card rounded-lg border border-border-default bg-panel p-3">
       <h3 class="mb-2 text-md text-accent">{{ t('misc.balance.recommendedBalance', { symbol: results.recommendation.symbol, side: results.recommendation.side }) }}</h3>
-      <div class="text-title font-extrabold text-success">{{ results.recommendation.recommended_balance }} USDT</div>
+      <div class="text-2xl font-bold text-success">{{ results.recommendation.recommended_balance }} USDT</div>
       <div class="mt-2">
         <div v-for="row in recRows" :key="row.label" class="flex justify-between py-0.5 text-sm">
           <span class="text-secondary">{{ row.label }}</span>

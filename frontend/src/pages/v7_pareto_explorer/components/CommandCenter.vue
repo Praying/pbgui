@@ -40,7 +40,7 @@ const leftSummary = computed(() =>
 /* Variant → complete Tailwind colour set (the former .status-chip.good/
    .warn/.bad rules; the variant-less levels stayed untinted). Each branch
    keeps the legacy level anchor (good/warn/bad) the tests key off. */
-const CHIP_BASE = 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold tracking-[0.04em]';
+const CHIP_BASE = 'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold tracking-label';
 
 function statusChipClass(levelClass: string): string {
   if (levelClass === 'good') return `good ${CHIP_BASE} bg-success/15 text-success`;
@@ -86,13 +86,13 @@ function onPlotClick(configIndex: number): void {
             <div class="champion-row mb-1 flex min-w-0 items-center justify-between gap-2.5">
               <div class="champion-head mb-1 flex items-center justify-between gap-3"><strong class="text-base text-primary">#{{ champion.configIndex }}</strong></div>
               <div class="champion-style min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-secondary">{{ champion.style }}</div>
-              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ champion.rankText }}</span>
+              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ champion.rankText }}</span>
             </div>
             <div class="champion-meta flex flex-wrap gap-1.25">
-              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ champion.scoreText }}</span>
-              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ champion.perfText }}</span>
-              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ champion.robText }}</span>
-              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-[0.04em] text-secondary">{{ champion.riskText }}</span>
+              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ champion.scoreText }}</span>
+              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ champion.perfText }}</span>
+              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ champion.robText }}</span>
+              <span class="chip inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2.5 py-1 text-xs font-bold tracking-label text-secondary">{{ champion.riskText }}</span>
             </div>
           </button>
         </div>

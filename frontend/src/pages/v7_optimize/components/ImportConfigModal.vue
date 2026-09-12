@@ -83,7 +83,7 @@ function submit(): void {
             <PbIcon :icon="PhDownloadSimple" :size="17" />
           </div>
           <div class="min-w-0">
-            <h2 id="opt-import-title" class="m-0 truncate text-[15px] font-bold tracking-tight text-primary">{{ t('v7optimize.importOptimizeConfig') }}</h2>
+            <h2 id="opt-import-title" class="m-0 truncate text-base font-bold tracking-tight text-primary">{{ t('v7optimize.importOptimizeConfig') }}</h2>
             <p class="mt-0.5 text-xs leading-snug text-secondary">{{ t('v7optimize.importConfigHint') }}</p>
           </div>
         </div>
@@ -108,43 +108,43 @@ function submit(): void {
 
       <div class="grid min-h-0 flex-1 content-start gap-4 overflow-auto p-5 max-[600px]:p-4">
         <label class="grid gap-1.5">
-          <span class="text-[13px] font-medium text-primary">{{ t('v7optimize.configName') }}</span>
-          <Input v-model="name" class="h-9 text-[13.5px]" />
+          <span class="text-compact font-medium text-primary">{{ t('v7optimize.configName') }}</span>
+          <Input v-model="name" class="h-9 text-compact" />
         </label>
 
         <template v-if="source === 'local'">
           <div class="grid gap-1.5">
-            <span class="text-[13px] font-medium text-primary">{{ t('v7optimize.importJsonFile') }}</span>
+            <span class="text-compact font-medium text-primary">{{ t('v7optimize.importJsonFile') }}</span>
             <label class="flex h-9 cursor-pointer select-none items-center gap-2.5 rounded-lg border border-border-default/70 bg-surface-deep/40 px-3 transition-colors hover:border-border-default hover:bg-surface-deep">
               <PbIcon :icon="PhFileText" :size="16" class="shrink-0 text-secondary" />
-              <span class="min-w-0 flex-1 truncate text-[13px] font-medium" :class="fileName ? 'text-primary' : 'text-placeholder'">{{ fileName || t('v7optimize.importChooseJsonFile') }}</span>
+              <span class="min-w-0 flex-1 truncate text-compact font-medium" :class="fileName ? 'text-primary' : 'text-placeholder'">{{ fileName || t('v7optimize.importChooseJsonFile') }}</span>
               <input type="file" accept="application/json,.json" class="sr-only" @change="readFile" />
             </label>
           </div>
           <label class="grid gap-1.5">
-            <span class="text-[13px] font-medium text-primary">{{ t('v7optimize.importPasteJson') }}</span>
-            <Textarea v-model="raw" class="min-h-[200px] text-[13px]" :placeholder="t('editor.optimize.importPlaceholder', { version: 'PB' })" />
+            <span class="text-compact font-medium text-primary">{{ t('v7optimize.importPasteJson') }}</span>
+            <Textarea v-model="raw" class="min-h-[200px] text-compact" :placeholder="t('editor.optimize.importPlaceholder', { version: 'PB' })" />
           </label>
         </template>
 
         <template v-else>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="grid min-w-0 gap-1.5">
-              <span class="text-[13px] font-medium text-primary">{{ t('v7optimize.backtestArchive') }}</span>
+              <span class="text-compact font-medium text-primary">{{ t('v7optimize.backtestArchive') }}</span>
               <SelectRoot :model-value="selectedArchive" @update:model-value="chooseArchive(String($event))">
                 <SelectTrigger :aria-label="t('v7optimize.backtestArchive')"><span :class="selectedArchive ? undefined : 'text-placeholder'">{{ selectedArchive || t('v7optimize.chooseArchive') }}</span></SelectTrigger>
                 <SelectContent><SelectItem v-for="archive in archives" :key="archive.name" :value="archive.name">{{ archive.name }} ({{ archive.optimize_configs || 0 }})</SelectItem></SelectContent>
               </SelectRoot>
             </label>
             <label class="grid min-w-0 gap-1.5">
-              <span class="text-[13px] font-medium text-primary">{{ t('v7optimize.archivedConfig') }}</span>
+              <span class="text-compact font-medium text-primary">{{ t('v7optimize.archivedConfig') }}</span>
               <SelectRoot v-model="selectedPath">
                 <SelectTrigger :aria-label="t('v7optimize.archivedConfig')"><span :class="selectedPath ? undefined : 'text-placeholder'">{{ selectedPath ? (configs.find((item) => item.path === selectedPath)?.name || configs.find((item) => item.path === selectedPath)?.relative_path || selectedPath) : t('v7optimize.chooseConfig') }}</span></SelectTrigger>
                 <SelectContent><SelectItem v-for="item in configs" :key="item.path" :value="item.path">{{ item.name || item.relative_path || item.path }}</SelectItem></SelectContent>
               </SelectRoot>
             </label>
             <label class="grid min-w-0 gap-1.5">
-              <span class="text-[13px] font-medium text-primary">{{ t('v7optimize.importCollision') }}</span>
+              <span class="text-compact font-medium text-primary">{{ t('v7optimize.importCollision') }}</span>
               <SelectRoot v-model="collision">
                 <SelectTrigger :aria-label="t('v7optimize.importCollision')"><span>{{ collision === 'error' ? t('v7optimize.importAskOnConflict') : collision === 'copy' ? t('v7optimize.importAsCopy') : t('v7optimize.overwrite') }}</span></SelectTrigger>
                 <SelectContent><SelectItem value="error">{{ t('v7optimize.importAskOnConflict') }}</SelectItem><SelectItem value="copy">{{ t('v7optimize.importAsCopy') }}</SelectItem><SelectItem value="overwrite">{{ t('v7optimize.overwrite') }}</SelectItem></SelectContent>
@@ -153,12 +153,12 @@ function submit(): void {
           </div>
         </template>
 
-        <p v-if="error" class="m-0 rounded-lg border-l-2 border-danger bg-danger/15 px-3 py-2.5 text-[13px] leading-snug text-danger-soft" role="alert">{{ error }}</p>
+        <p v-if="error" class="m-0 rounded-lg border-l-2 border-danger bg-danger/15 px-3 py-2.5 text-compact leading-snug text-danger-soft" role="alert">{{ error }}</p>
       </div>
 
       <footer class="flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-5 py-3.5 max-[600px]:px-4">
-        <Button type="button" variant="default" class="h-9 min-w-[104px] text-[13.5px] font-medium" @click="emit('close')">{{ t('common.cancel') }}</Button>
-        <Button type="button" variant="info" class="h-9 min-w-[104px] text-[13.5px] font-medium" :disabled="busy" @click="submit">{{ t('v7optimize.importToEditor') }}</Button>
+        <Button type="button" variant="default" class="h-9 min-w-[104px] text-compact font-medium" @click="emit('close')">{{ t('common.cancel') }}</Button>
+        <Button type="button" variant="info" class="h-9 min-w-[104px] text-compact font-medium" :disabled="busy" @click="submit">{{ t('v7optimize.importToEditor') }}</Button>
       </footer>
     </section>
   </div>
@@ -172,9 +172,9 @@ function submit(): void {
   align-items: center;
   gap: 8px;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--text-compact);
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: normal;
 }
 
 .opt-import-eyebrow::before {
@@ -198,7 +198,7 @@ function submit(): void {
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: var(--text-compact);
   font-weight: 500;
   padding: 0 14px;
   white-space: nowrap;

@@ -394,7 +394,7 @@ onUnmounted(() => {
         type="button"
         variant="ghost"
         size="sm"
-        class="h-6 px-1.5 font-mono text-[11px] font-bold"
+        class="h-6 px-1.5 font-mono text-micro font-bold"
         :class="levelClass(level)"
         :data-lvl="level"
         :aria-pressed="visibleLevels.has(level)"
@@ -409,7 +409,7 @@ onUnmounted(() => {
         type="button"
         variant="ghost"
         size="sm"
-        class="h-6 px-1.5 text-[11px]"
+        class="h-6 px-1.5 text-micro"
         :class="presetIndex === index ? 'border-accent/40 bg-accent/12 text-accent-soft' : 'border-border-default bg-elevated/40 text-muted'"
         :aria-pressed="presetIndex === index"
         :data-preset="preset.pattern"
@@ -428,12 +428,12 @@ onUnmounted(() => {
         @keydown.enter.prevent="searchMatchStep($event.shiftKey ? -1 : 1)"
       />
 
-      <label class="flex cursor-pointer items-center gap-1.5 text-[11px] text-secondary" data-test="log-filter-label">
+      <label class="flex cursor-pointer items-center gap-1.5 text-micro text-secondary" data-test="log-filter-label">
         <Checkbox :model-value="filterMode" data-test="log-filter" @update:model-value="filterMode = Boolean($event)" />
         {{ t('shared.log.filter') }}
       </label>
 
-      <span v-if="searchTestRe" class="text-[11px] whitespace-nowrap text-muted" data-test="log-match-count">
+      <span v-if="searchTestRe" class="text-micro whitespace-nowrap text-muted" data-test="log-match-count">
         {{ t('shared.log.matches', { count: matchCount }) }}
         <Button type="button" variant="ghost" size="sm" class="h-5 w-5 px-0" :title="t('shared.log.prevMatch')" :aria-label="t('shared.log.prevMatch')" @click="searchMatchStep(-1)"><PbIcon :icon="PhCaretUp" :size="12" /></Button>
         <Button type="button" variant="ghost" size="sm" class="h-5 w-5 px-0" :title="t('shared.log.nextMatch')" :aria-label="t('shared.log.nextMatch')" @click="searchMatchStep(1)"><PbIcon :icon="PhCaretDown" :size="12" /></Button>
@@ -445,7 +445,7 @@ onUnmounted(() => {
         type="button"
         variant="ghost"
         size="sm"
-        class="h-6 px-1.5 text-[11px]"
+        class="h-6 px-1.5 text-micro"
         :class="streaming ? 'border-success/40 bg-success/16 text-success-soft' : 'border-border-default bg-elevated/40 text-muted'"
         data-test="log-stream"
         @click="toggleStream"
@@ -453,12 +453,12 @@ onUnmounted(() => {
         <PbIcon :icon="streaming ? PhPause : PhPlay" :size="12" />
         {{ streaming ? t('shared.log.pause') : t('shared.log.stream') }}
       </Button>
-      <Button type="button" variant="ghost" size="sm" class="h-6 px-1.5 text-[11px] hover:border-danger/36 hover:bg-danger/16 hover:text-danger-soft" data-test="log-clear" @click="clearTerminal">
+      <Button type="button" variant="ghost" size="sm" class="h-6 px-1.5 text-micro hover:border-danger/36 hover:bg-danger/16 hover:text-danger-soft" data-test="log-clear" @click="clearTerminal">
         <PbIcon :icon="PhTrash" :size="12" />
         {{ t('shared.log.clear') }}
       </Button>
 
-      <span class="rounded-full border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap" :class="connClass" data-test="log-conn">{{ conn }}</span>
+      <span class="rounded-full border px-2 py-0.5 text-micro font-medium whitespace-nowrap" :class="connClass" data-test="log-conn">{{ conn }}</span>
     </div>
 
     <div

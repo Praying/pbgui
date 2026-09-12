@@ -277,7 +277,7 @@ onBeforeUnmount(() => {
         <div class="flex items-center gap-2">
           <PhFileCode :size="18" class="text-accent-soft shrink-0" aria-hidden="true" />
           <h2 class="m-0 text-sm font-semibold tracking-tight text-primary whitespace-nowrap">{{ t('v7explore.rawConfig') }}</h2>
-          <span class="inline-flex items-center rounded border border-border-subtle bg-page/90 px-1.5 py-0.5 font-mono text-[10px] font-medium text-secondary">JSON</span>
+          <span class="inline-flex items-center rounded border border-border-subtle bg-page/90 px-1.5 py-0.5 font-mono text-micro font-medium text-secondary">JSON</span>
         </div>
 
         <!-- Real-time status indicator tag -->
@@ -351,7 +351,7 @@ onBeforeUnmount(() => {
           >
             <PhMinus :size="12" aria-hidden="true" />
           </Button>
-          <span class="min-w-7 text-center font-mono text-[10px] text-muted">{{ editorFontSize }}px</span>
+          <span class="min-w-7 text-center font-mono text-micro text-muted">{{ editorFontSize }}px</span>
           <Button
             type="button"
             size="icon"
@@ -405,7 +405,7 @@ onBeforeUnmount(() => {
       <div class="flex min-w-0 items-center gap-2">
         <span class="text-muted">{{ t('v7explore.editJsonHint') }}</span>
       </div>
-      <div class="flex items-center gap-2.5 font-mono text-[11px] text-muted">
+      <div class="flex items-center gap-2.5 font-mono text-micro text-muted">
         <span>{{ t('v7explore.lines', { count: lineCount }) }}</span>
         <span aria-hidden="true" class="text-border-default">•</span>
         <span>{{ t('v7explore.characters', { count: charCount }) }}</span>
@@ -443,7 +443,7 @@ onBeforeUnmount(() => {
 
 .raw-config-tool {
   padding: 2px 8px;
-  font-size: 11px;
+  font-size: var(--text-micro);
 }
 
 .raw-config-icon-tool {

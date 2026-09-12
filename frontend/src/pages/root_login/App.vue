@@ -212,7 +212,7 @@ form {
   border: 1px solid rgb(var(--danger-rgb) / 0.28);
   background: var(--danger-bg);
   color: var(--danger-soft);
-  font-size: var(--fs-sm);
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
