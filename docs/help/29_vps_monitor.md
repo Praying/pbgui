@@ -59,12 +59,31 @@ The detail panel shows heartbeat and effective ages, every required file state, 
 
 ## Live log features
 
-- Real file line numbers
-- Group collapse and expansion for log blocks
-- Full-text search with highlighting
-- Auto-scroll and compact mode
-- Host and service selectors with stream control
-- Restart pre-arms the selected log stream so early startup lines remain visible without a manual Fetch
+The Live Logs tab uses the same native Vue viewer as `System → Logging → Log
+Viewer`, so both pages share one look, font scale and control set.
+
+- **Host selector**: `Local` plus every configured VPS host
+- **Target list**: local log files (each with its size) or, for a VPS host, the
+  host's services, running bots and extra log files, grouped by kind
+- **Line count**: 200 / 500 / 1000 / 2000 / 5000 / 10000 / 25000 / Max (50,000)
+- **Level filters**: DBG / INF / WRN / ERR / CRT
+- **Presets**: Errors, Warnings, Errors + Warnings, Orders / Fills,
+  Balance / PnL, Positions, Startup, Connection, Restart / Stop, Traceback;
+  **All** clears the filter
+- **Search**: full-text highlighting with ▲ / ▼ match stepping and a **Filter**
+  checkbox that hides non-matching lines
+- **Line numbers** toggle
+- **Stream / Pause**, **Fetch** (re-subscribe) and **Clear**
+- **Download**: saves the buffered lines as a text file
+- **Restart**: restarts the service behind the selected target, or kills the
+  selected bot instance; it stays hidden when the service is disabled or not
+  expected
+- **Connection badge**: WebSocket state (connecting / connected / disconnected)
+  with automatic reconnect; a session expiry returns to the login page
+
+Search, level and preset filtering run in the browser on the buffered lines, so
+changing a filter never re-fetches from the server. The legacy grouped-log
+collapse view is no longer part of this page.
 
 ## Requirements
 

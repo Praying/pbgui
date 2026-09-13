@@ -1,5 +1,29 @@
 # Unreleased
 
+## 日志查看器改为原生 Vue 3 + Tailwind 共享组件（日志页 / API 密钥 / VPS 监控）
+
+- **用原生 Vue 3 组件替换遗留的全局日志查看器**：新增共享组件 `frontend/src/shared/components/LogViewer.vue`，取代原先通过 `window.LogViewerPanel` 注入、自注入 CSS 的 `frontend/js/log_viewer_panel.js`（2922 行，硬编码 `#10141d`/`#232b3d` 调色板）。日志页、API 密钥日志面板与 VPS 监控实时日志现在共用同一个查看器，三套近似实现归一。
+  - 传输与模型抽离到 `frontend/src/shared/log/useLogStream.ts`（`/ws/vps` 连接与自动重连、订阅/一次性获取、重启、行缓冲上限 50000、会话过期重定向）。
+  - 预设与本地服务映射抽离到 `frontend/src/shared/log/logViewerPresets.ts`（`SYSTEM_PRESETS` / `TRADING_PRESETS` / `APIKEYS_PRESETS`，`PBRun/PBRemote/PBCoinData/PBData` 与 `Bot:<name>:7` 推导）。
+  - 行解析抽离到 `frontend/src/shared/log/logLine.ts`（ANSI 清理、级别识别与优先级、匹配高亮切分）。
+- **「信息 / 日志 / 日志查看器」整页对齐设计主题**：`frontend/src/pages/logging_monitor/App.vue` 改为挂载共享查看器，保留旋转版本选择、Purge 确认与状态药丸；`index.html` 不再加载 `log_viewer_panel.js`。文件侧边栏显示每个日志的当前大小，工具栏统一为行数、级别按钮、预设按钮、搜索与匹配跳转、行号、重启、暂停/流式、获取、清除、下载与连接徽标，全部仅使用 `@theme` 令牌与十档字号阶梯（无 `text-[…]`、无硬编码 `font-size`）。
+  - 完整保留既有能力：文件侧边栏、行数选择（200…Max 50,000）、6 个系统预设、DBG/INF/WRN/ERR/CRT 级别过滤、搜索与匹配跳转、Filter 复选框、行号、暂停/恢复、获取、清除、下载、重启、轮转变体一次性获取、Purge 与会话过期跳转。
+  - 有意改动：搜索/级别过滤改为浏览器端对缓冲区过滤（原先为服务端过滤），并移除了遗留的重复行折叠展开机制（其浏览器测试仍直接针对 `log_viewer_panel.js`）。
+- **API 密钥日志面板收敛为共享查看器的轻量宿主**：`frontend/src/pages/api_keys_editor/components/LogPanel.vue` 从 834 行缩减为仅保留卡片头部（返回按钮、标题、文件胶囊）与 API 密钥预设集，查看器主体改用共享组件；`api_keys_editor/index.html` 移除已不再使用的 `log_viewer_panel.js`。
+- **共享查看器补齐「远程 VPS 服务」模式，VPS 监控实时日志也随之切换**：`frontend/src/pages/vps_monitor/App.vue` 的实时日志标签改为挂载共享查看器（`show-host` / `remote-items` / `service-checks` / `default-host` / `default-service`），`index.html` 不再加载 `log_viewer_panel.js`；实例表的「查看日志」改为先写入目标主机与 `Bot:<name>:<ver>` 再切标签，查看器挂载时直接订阅。
+  - `frontend/src/shared/log/useLogStream.ts` 增加远程分支：`LOCAL_LOG_HOST`、`subscribe_logs` / `unsubscribe_logs` / `get_logs` / `get_log_info`、`log_info` 尺寸回报、按主机与 `Bot:<name>:<ver>` 推导 `restart_service` / `kill_instance`；本地文件与会话过期逻辑不变。
+  - 新增 `frontend/src/shared/log/vpsLogItems.ts`：把遗留 `_getServices` / `_svcLabel` 的服务、机器人实例、`passivbot_err.log[.old]` 与 `pb7/logs` 归档命名移植为纯函数（`remoteLogItems` / `groupRemoteLogItems` / `remoteRestartCommand` / `remoteRestartBlocker`），供查看器的主机选择与分组列表使用。
+  - 查看器新增主机下拉与「服务 / 机器人 / 文件」分组侧边栏，并把远程服务的预期状态传入重启按钮的可用性判断；VPS 监控的 `vps_state`（`host_meta` / `v7_instances` / `v8_instances` / `bot_logs`）经 `remote-items` prop 注入，页面自身的 `/ws/vps` 连接保持不变。
+  - 新增 i18n `shared.log.bots`（en/zh）；顺带把服务标签页的卡片底色由 `bg-card` 改为 `bg-page/45`，与其余面板一致。
+  - `frontend/src/shared/log/vpsLogItems.test.ts` 覆盖远程条目标签、分组顺序（服务 → 机器人 → 文件）、归档/错误日志识别与重启命令/阻止条件。
+- **顺带修复移植参考实现中的三处缺陷**：
+  - WS 文件列表消息类型写错为 `local_log_files`，后端实际发送 `local_logs_list`，导致 API 密钥日志面板的文件列表从未被填充；现按正确类型处理。
+  - 12 处 `text-[11px]` 违反字号阶梯契约，是 `frontend/src/shared/components/typography-tokens.test.ts` 唯一失败原因；现改用 `text-micro`/`text-xs`/`text-compact`，该契约测试恢复通过。
+  - INFO 级别样式使用了不存在的 `--color-info` 令牌（`border-info/…`/`bg-info/…` 解析为空），现改走 accent 色系。
+- **测试**：新增 `frontend/src/shared/log/useLogStream.test.ts`（订阅、缓冲、sid 丢弃、一次性获取、重启命令推导、会话过期、激活切换）；重写 `logging_monitor/App.test.ts`（移除 ViewerMock，改用真实共享组件与伪 WebSocket）与 `api_keys_editor/components/LogPanel.test.ts`，保留 `data-test`/`data-lvl`/`data-line` 钩子。
+- **文档**：更新 `docs/help/31_logging.md`、`docs/help_de/31_logging.md`、`docs/help_zh/31_logging.md` 的布局、搜索与流控制章节（预设按钮、浏览器端过滤、Fetch/Restart、连接徽标），并更新 `docs/help/29_vps_monitor.md`、`docs/help_de/29_vps_monitor.md`、`docs/help_zh/29_vps_monitor.md` 的实时日志功能说明。
+- **未改动**：`frontend/js/log_viewer_panel.js` 与其 `?v=44` 引用继续服务于 `vps_manager`、`db_tools`、`market_data` ActivityPanel、`services_monitor` LogViewer 与遗留 `*.html` 页面；`frontend/logging_monitor.html` 与 `frontend/vps_monitor.html`（遗留独立页面）保持不变。
+
 ## 「信息 / 行情数据 / OHLCV 完整性」页面组件布局与间距优化
 
 - **存档设置卡片消除网格空洞**：原先两列网格按「发布开关 / 发布存档 / 参考存档」顺序自动填充，第二行的「参考存档」右侧留下半个空单元格，与上方字段错位。现将发布开关独占一行、两个存档下拉并排等宽（窄屏自动堆叠），网格边界始终对齐。

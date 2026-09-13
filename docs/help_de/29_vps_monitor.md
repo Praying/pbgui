@@ -59,12 +59,32 @@ Der Detailbereich zeigt Heartbeat- und effektive Alter, den Status jeder erforde
 
 ## Live-Log-Features
 
-- Echte Datei-Zeilennummern
-- Blockweises Ein- und Ausklappen von Logblöcken
-- Volltextsuche mit Hervorhebung
-- Auto-Scroll und Compact Mode
-- Host- und Service-Auswahl mit Stream-Steuerung
-- Restart aktiviert den ausgewaehlten Log-Stream vorab, damit fruehe Startzeilen ohne manuellen Fetch sichtbar bleiben
+Der Tab Live Logs nutzt denselben nativen Vue-Viewer wie `System → Logging →
+Log Viewer`; beide Seiten teilen damit Optik, Schriftskala und Bedienelemente.
+
+- **Host-Auswahl**: `Lokal` plus jeder konfigurierte VPS-Host
+- **Zielliste**: lokale Log-Dateien (mit Groesse) oder, fuer einen VPS-Host,
+  dessen Dienste, laufende Bots und weitere Log-Dateien — nach Art gruppiert
+- **Zeilenanzahl**: 200 / 500 / 1000 / 2000 / 5000 / 10000 / 25000 / Max (50,000)
+- **Level-Filter**: DBG / INF / WRN / ERR / CRT
+- **Presets**: Errors, Warnings, Errors + Warnings, Orders / Fills,
+  Balance / PnL, Positions, Startup, Connection, Restart / Stop, Traceback;
+  **All** loescht den Filter
+- **Suche**: Volltext-Hervorhebung mit ▲ / ▼-Treffernavigation und einer
+  **Filter**-Checkbox, die nicht passende Zeilen ausblendet
+- **Zeilennummern** umschalten
+- **Stream / Pause**, **Fetch** (neu abonnieren) und **Clear**
+- **Download**: speichert die gepufferten Zeilen als Textdatei
+- **Restart**: startet den Dienst hinter dem gewaehlten Ziel neu bzw. beendet
+  die gewaehlte Bot-Instanz; der Knopf bleibt verborgen, wenn der Dienst
+  deaktiviert oder nicht erwartet wird
+- **Verbindungsanzeige**: WebSocket-Zustand (connecting / connected /
+  disconnected) mit automatischem Reconnect; ein Session-Ablauf fuehrt zurueck
+  zur Login-Seite
+
+Suche, Level- und Preset-Filter laufen im Browser auf den gepufferten Zeilen;
+ein Filterwechsel loest daher keinen Server-Abruf aus. Die alte gruppierte
+Log-Faltansicht ist nicht mehr Teil dieser Seite.
 
 ## Voraussetzungen
 

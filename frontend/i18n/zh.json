@@ -2774,6 +2774,7 @@
   "shared.json.largerFont": "放大字体",
   "shared.json.smallerFont": "缩小字体",
   "shared.log.balancePnl": "余额 / PnL",
+  "shared.log.bots": "机器人",
   "shared.log.clear": "清除",
   "shared.log.collapseAll": "全部折叠",
   "shared.log.connConnecting": "连接中…",

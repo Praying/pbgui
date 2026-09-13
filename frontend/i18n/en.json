@@ -2774,6 +2774,7 @@
   "shared.json.largerFont": "Larger font",
   "shared.json.smallerFont": "Smaller font",
   "shared.log.balancePnl": "Balance / PnL",
+  "shared.log.bots": "Bots",
   "shared.log.clear": "Clear",
   "shared.log.collapseAll": "Collapse all",
   "shared.log.connConnecting": "connecting…",

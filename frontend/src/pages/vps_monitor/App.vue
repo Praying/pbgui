@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { PhCaretDown, PhCaretRight, PhCheckCircle, PhGear, PhStop, PhX, PhXCircle } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
@@ -21,6 +21,10 @@ import {
   SelectRoot,
   SelectTrigger,
 } from '@/shared/components/ui/select';
+import LogViewer from '@/shared/components/LogViewer.vue';
+import { TRADING_PRESETS } from '@/shared/log/logViewerPresets';
+import { LOCAL_LOG_HOST } from '@/shared/log/useLogStream';
+import { remoteLogItems } from '@/shared/log/vpsLogItems';
 import { vpsWsUrl } from './config';
 import type { ConnectionInfo, HistoryPayload, InstanceRecord, Metrics, ServiceCheck, VpsState } from './types';
 
@@ -67,7 +71,9 @@ const resultModal = ref<{ title: string; message: string } | null>(null);
 const historyModal = ref<{ host: string; bot: string; metric: string; data: HistoryPayload | null; error: string } | null>(null);
 const socket = ref<WebSocket | null>(null);
 const generation = ref(0);
-const viewer = ref<any>(null);
+/** Live-log viewer host + default service; the viewer owns the live selection. */
+const logHost = ref(LOCAL_LOG_HOST);
+const logService = ref('PBRun');
 const historyRequestId = ref(0);
 const pendingServiceActions = ref<Record<string, boolean>>({});
 const pendingInstanceActions = ref<Record<string, boolean>>({});
@@ -232,7 +238,6 @@ function setSetting(key: string, value: boolean): void {
 
 function switchTab(tab: 'dashboard' | 'instances' | 'services' | 'logs'): void {
   activeTab.value = tab;
-  if (tab === 'logs') void nextTick(initViewer);
 }
 
 function toggleHost(host: string): void { collapsedHosts.value = { ...collapsedHosts.value, [host]: !collapsedHosts.value[host] }; }
@@ -289,31 +294,24 @@ function instanceName(row: InstanceRecord): string { return String(row.name || r
 function instanceVersion(row: InstanceRecord): string { return String(row.pb_version || row.p || '7'); }
 
 function viewInstanceLog(host: string, row: InstanceRecord): void {
+  // The logs tab mounts the viewer on demand; seed its defaults first so the
+  // fresh mount subscribes straight to this host's bot log.
+  logHost.value = host;
+  logService.value = `Bot:${instanceName(row)}:${instanceVersion(row)}`;
   switchTab('logs');
-  void nextTick(() => {
-    initViewer();
-    viewer.value?.setHost?.(host);
-    viewer.value?.setService?.(`Bot:${instanceName(row)}:${instanceVersion(row)}`);
-  });
 }
 
 function serviceStatus(host: string, service: string): ServiceCheck | null {
   return services.value[host]?.[service] || null;
 }
 
-function initViewer(): void {
-  if (viewer.value || typeof window === 'undefined') return;
-  const Viewer = (window as Window & { LogViewerPanel?: new (options: Record<string, unknown>) => any }).LogViewerPanel;
-  if (!Viewer) return;
-  viewer.value = new Viewer({
-    containerId: 'vps-log-viewer', wsBase: wsOrigin(),
-    defaultHost: 'local', defaultService: 'PBRun', presets: 'trading', showRestart: true, height: '100%',
-    serviceStatusProvider: (host: string, service: string) => serviceStatus(host, service),
-  });
-  viewer.value.open?.();
-}
-
-function closeViewer(): void { viewer.value?.close?.(); viewer.value = null; }
+/** Remote log targets + health checks for the viewer's currently selected host. */
+const remoteLogTargets = computed(() =>
+  logHost.value === LOCAL_LOG_HOST ? [] : remoteLogItems(logHost.value, state.value ?? {})
+);
+const logServiceChecks = computed(() =>
+  logHost.value === LOCAL_LOG_HOST ? {} : services.value[logHost.value] ?? {}
+);
 
 function openHistory(host: string, metric: string, bot = ''): void {
   const requestMetric = metric === 'cpu' ? 'get_cpu_history' : 'get_metric_history';
@@ -393,7 +391,7 @@ onMounted(() => {
   connect();
 });
 
-onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect(); closeViewer(); });
+onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect(); });
 </script>
 
 <template>
@@ -444,7 +442,7 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
             />
           </div>
           <article v-for="host in hosts" :key="host" class="mb-2.5 overflow-hidden rounded-lg border border-border-default bg-card">
-            <header class="flex max-[780px]:flex-wrap cursor-pointer items-center gap-2.25 px-3.25 py-2.75 hover:bg-accent/20" role="button" tabindex="0" :aria-expanded="!isHostCollapsed(host)" @click="toggleHost(host)" @keydown.enter.prevent="toggleHost(host)" @keydown.space.prevent="toggleHost(host)">
+            <header class="flex max-[780px]:flex-wrap cursor-pointer items-center gap-2.25 px-3.25 py-2.75 hover:bg-accent/8" role="button" tabindex="0" :aria-expanded="!isHostCollapsed(host)" @click="toggleHost(host)" @keydown.enter.prevent="toggleHost(host)" @keydown.space.prevent="toggleHost(host)">
               <span class="flex-1 font-bold"><PbIcon :icon="connectionMap[host]?.status === 'connected' ? PhCheckCircle : PhXCircle" /> {{ host }}</span>
               <span v-if="!hideIpMode" :data-ip="host" class="rounded-full bg-border-strong px-1.75 py-0.75 text-xs">{{ connectionMap[host]?.ip || '?' }}</span>
               <span class="rounded-full px-1.75 py-0.75 text-xs" :class="badgeStatusClass(monitorAgent(host).state)">{{ t('sysmon.monitorAgentLabel', { label: monitorAgentLabel(host) }) }}</span>
@@ -452,11 +450,11 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
               <PbIcon :icon="collapsedHosts[host] ? PhCaretRight : PhCaretDown" aria-hidden="true" />
             </header>
             <div v-if="!isHostCollapsed(host)" class="border-t border-border-default p-3">
-              <div v-if="Object.keys(monitorAgent(host)).length" class="mb-3 grid gap-1.75 rounded-md bg-card p-2.25 text-xs text-primary"><div>{{ t('sysmon.collectorHeartbeat') }} {{ formatAge((monitorAgent(host).collector as Record<string, unknown>)?.generated_at || monitorAgent(host).generated_at) }}</div><div class="flex flex-wrap gap-1.5"><span v-for="file in agentFiles(host)" :key="file.name" class="rounded-sm px-1.25 py-0.5" :class="agentFileClass(file.state)">{{ file.name }}: {{ file.state }}</span></div></div>
+              <div v-if="Object.keys(monitorAgent(host)).length" class="mb-3 grid gap-1.75 rounded-md bg-page/45 p-2.25 text-xs text-secondary"><div>{{ t('sysmon.collectorHeartbeat') }} {{ formatAge((monitorAgent(host).collector as Record<string, unknown>)?.generated_at || monitorAgent(host).generated_at) }}</div><div class="flex flex-wrap gap-1.5"><span v-for="file in agentFiles(host)" :key="file.name" class="rounded-sm px-1.25 py-0.5" :class="agentFileClass(file.state)">{{ file.name }}: {{ file.state }}</span></div></div>
               <div v-if="connectionMap[host]?.status !== 'connected'" class="pt-3.5 whitespace-pre-wrap break-words text-primary">{{ serviceLabel(connectionMap[host]?.status) }}<span v-if="connectionMap[host]?.error">: {{ connectionMap[host]?.error }}</span></div>
               <div v-else-if="!state?.system?.[host]" class="pt-3.5 whitespace-pre-wrap break-words text-primary">{{ t('sysmon.waitingSystemMetrics') }}</div>
               <div v-else class="grid grid-cols-[repeat(auto-fit,minmax(165px,1fr))] gap-2.25">
-                <div v-for="metric in (['cpu', 'memory', 'disk', 'swap'] as const)" v-show="metric !== 'swap' || numberValue(state?.system?.[host]?.swap_total) > 0" :key="metric" class="cursor-pointer rounded-md border border-border-default bg-card p-2.5 hover:border-accent" :data-history-host="host" :data-history-metric="metric" role="button" tabindex="0" @click="openHistory(host, metric)" @keydown.enter.prevent="openHistory(host, metric)" @keydown.space.prevent="openHistory(host, metric)">
+                <div v-for="metric in (['cpu', 'memory', 'disk', 'swap'] as const)" v-show="metric !== 'swap' || numberValue(state?.system?.[host]?.swap_total) > 0" :key="metric" class="cursor-pointer rounded-md border border-border-default bg-page/45 p-2.5 hover:border-accent/40" :data-history-host="host" :data-history-metric="metric" role="button" tabindex="0" @click="openHistory(host, metric)" @keydown.enter.prevent="openHistory(host, metric)" @keydown.space.prevent="openHistory(host, metric)">
                   <div class="text-xs text-secondary">{{ metricLabel(metric) }}</div><div class="mt-0.75 text-lg font-bold" :style="{ color: pctColor(metricValue(state?.system?.[host], metric)) }">{{ metric === 'cpu' ? cpuDisplay(state?.system?.[host]).value : formatBytes(metric === 'memory' ? state?.system?.[host]?.mem_used : metric === 'disk' ? state?.system?.[host]?.disk_used : state?.system?.[host]?.swap_used) }}</div><div class="text-xs text-secondary">{{ metric === 'cpu' ? cpuDisplay(state?.system?.[host]).sub : `${metricValue(state?.system?.[host], metric).toFixed(1)}%` }}</div><div class="mt-1.75 h-1.25 overflow-hidden rounded-full bg-border-strong"><div class="h-full" :style="{ width: `${Math.min(100, metricValue(state?.system?.[host], metric))}%`, background: pctColor(metricValue(state?.system?.[host], metric)) }"></div></div>
                 </div>
               </div>
@@ -474,12 +472,29 @@ onUnmounted(() => { window.removeEventListener('keydown', onKeydown); disconnect
 
         <div v-else-if="activeTab === 'instances'" class="min-h-0 flex-1 overflow-auto">
           <div class="mb-3.5 flex flex-wrap gap-3.75 text-xs text-primary"><span class="inline-flex items-center gap-1.5"><span id="instance-server-label">{{ t('sysmon.server') }}</span> <SelectRoot v-model="instanceServerFilter"><SelectTrigger class="w-auto min-w-[110px]" aria-labelledby="instance-server-label"><span>{{ instanceServerFilter }}</span></SelectTrigger><SelectContent><SelectItem value="All">{{ t('common.all') }}</SelectItem><SelectItem v-for="host in hosts" :key="host" :value="host">{{ host }}</SelectItem></SelectContent></SelectRoot></span><span class="inline-flex items-center gap-1.5"><span id="instance-version-label">{{ t('sysmon.version') }}</span> <SelectRoot v-model="instanceVersionFilter"><SelectTrigger class="w-auto min-w-[90px]" aria-labelledby="instance-version-label"><span>{{ instanceVersionFilter }}</span></SelectTrigger><SelectContent><SelectItem value="All">{{ t('common.all') }}</SelectItem><SelectItem value="7">7</SelectItem><SelectItem value="8">8</SelectItem><SelectItem value="V7">V7</SelectItem><SelectItem value="V8">V8</SelectItem></SelectContent></SelectRoot></span><label class="flex items-center gap-1.75"><Checkbox v-model="instanceErrorsOnly" /> {{ t('sysmon.onlyWithErrors') }}</label><label class="flex items-center gap-1.75"><Checkbox v-model="instanceShowOther" /> {{ t('sysmon.showOther') }}</label></div>
-          <table class="w-full max-[780px]:min-w-[850px] border-collapse text-xs"><thead><tr><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.host') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.name') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.version') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.cpu') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.totalPnl') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.totalFills') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.status') }}</th><th class="sticky top-0 z-[1] border-b border-border-default bg-card px-1.75 py-2 text-left align-middle text-primary">{{ t('sysmon.action') }}</th></tr></thead><tbody><tr class="group" v-for="entry in visibleInstanceRows" :key="`${entry.host}:${instanceName(entry.row)}`"><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ entry.host }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ instanceName(entry.row) }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ instanceVersion(entry.row) }}</td><td class="cursor-pointer border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8" role="button" tabindex="0" :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="cpu" @click="openHistory(entry.host, 'cpu', instanceName(entry.row))" @keydown.enter="openHistory(entry.host, 'cpu', instanceName(entry.row))">{{ numberValue(entry.row.c || entry.row.cpu).toFixed(1) }}%</td><td class="cursor-pointer border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8" role="button" tabindex="0" :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="pnl" @click="openHistory(entry.host, 'pnl', instanceName(entry.row))" @keydown.enter="openHistory(entry.host, 'pnl', instanceName(entry.row))">{{ numberValue(entry.row.pt || entry.row.pnlToday || entry.row.pnl_hist_total).toFixed(2) }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ numberValue(entry.row.ct || entry.row.fillsToday).toLocaleString() }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8"><span class="rounded-full px-1.75 py-0.75 text-xs" :class="badgeStatusClass(entry.row.status || 'running')">{{ entry.row.status || t('sysmon.running') }}</span></td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8"><Button data-action="view-instance-log" type="button" variant="default" size="sm" @click="viewInstanceLog(entry.host, entry.row)">{{ t('sysmon.viewLog') }}</Button> <Button data-action="kill-instance" type="button" variant="danger" size="sm" @click="killInstance(entry.host, entry.row)"><PbIcon :icon="PhStop" /> {{ t('sysmon.restartKill') }}</Button></td></tr></tbody></table><EmptyState v-if="!visibleInstanceRows.length" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('sysmon.noInstances')" />
+          <table class="w-full max-[780px]:min-w-[850px] border-collapse text-xs"><thead><tr><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.host') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.name') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.version') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.cpu') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.totalPnl') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.totalFills') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.status') }}</th><th class="sticky top-0 z-[1] border-b-2 border-border-default bg-panel px-2 py-2 text-left align-middle text-xs text-secondary">{{ t('sysmon.action') }}</th></tr></thead><tbody><tr class="group" v-for="entry in visibleInstanceRows" :key="`${entry.host}:${instanceName(entry.row)}`"><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ entry.host }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ instanceName(entry.row) }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ instanceVersion(entry.row) }}</td><td class="cursor-pointer border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8" role="button" tabindex="0" :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="cpu" @click="openHistory(entry.host, 'cpu', instanceName(entry.row))" @keydown.enter="openHistory(entry.host, 'cpu', instanceName(entry.row))">{{ numberValue(entry.row.c || entry.row.cpu).toFixed(1) }}%</td><td class="cursor-pointer border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8" role="button" tabindex="0" :data-history-host="entry.host" :data-history-bot="instanceName(entry.row)" data-history-metric="pnl" @click="openHistory(entry.host, 'pnl', instanceName(entry.row))" @keydown.enter="openHistory(entry.host, 'pnl', instanceName(entry.row))">{{ numberValue(entry.row.pt || entry.row.pnlToday || entry.row.pnl_hist_total).toFixed(2) }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8">{{ numberValue(entry.row.ct || entry.row.fillsToday).toLocaleString() }}</td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8"><span class="rounded-full px-1.75 py-0.75 text-xs" :class="badgeStatusClass(entry.row.status || 'running')">{{ entry.row.status || t('sysmon.running') }}</span></td><td class="border-b border-border-default px-1.75 py-2 group-hover:bg-accent/8"><Button data-action="view-instance-log" type="button" variant="default" size="sm" @click="viewInstanceLog(entry.host, entry.row)">{{ t('sysmon.viewLog') }}</Button> <Button data-action="kill-instance" type="button" variant="danger" size="sm" @click="killInstance(entry.host, entry.row)"><PbIcon :icon="PhStop" /> {{ t('sysmon.restartKill') }}</Button></td></tr></tbody></table><EmptyState v-if="!visibleInstanceRows.length" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('sysmon.noInstances')" />
         </div>
 
-        <div v-else-if="activeTab === 'services'" class="min-h-0 flex-1 overflow-auto"><div class="grid gap-2.5"><section v-for="host in serviceHosts" :key="host" class="overflow-hidden rounded-lg border border-border-default"><header class="flex cursor-pointer justify-between bg-card px-3 py-2.5 text-primary" role="button" tabindex="0" :aria-expanded="!isServiceCollapsed(host)" :aria-label="host" @click="toggleServices(host)" @keydown.enter.prevent="toggleServices(host)" @keydown.space.prevent="toggleServices(host)"><span>{{ host }}</span><PbIcon :icon="isServiceCollapsed(host) ? PhCaretRight : PhCaretDown" aria-hidden="true" /></header><div v-if="!isServiceCollapsed(host)" class="grid gap-1.5 p-2.5"><div v-for="(check, service) in services[host]" :key="service" class="flex items-center justify-between gap-2.5 rounded-md bg-card p-2"><div><div class="font-semibold">{{ service }}</div><div class="text-xs" :class="serviceStatusClass(check.status)">{{ serviceLabel(check.status) }}<span v-if="check.pid"> (PID: {{ check.pid }})</span></div><div v-if="check.reason" class="text-xs text-secondary">{{ check.reason }}</div><div v-if="check.error" class="text-xs text-danger-soft">{{ check.error }}</div></div><Button v-if="check.expected !== false && check.status !== 'disabled'" data-action="restart-service" type="button" variant="primary" size="sm" @click="restartService(host, String(service))"><PbIcon :icon="PhGear" /> {{ t('sysmon.restart') }}</Button></div></div></section></div><EmptyState v-if="!serviceHosts.length" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('sysmon.noServices')" /></div>
+        <div v-else-if="activeTab === 'services'" class="min-h-0 flex-1 overflow-auto"><div class="grid gap-2.5"><section v-for="host in serviceHosts" :key="host" class="overflow-hidden rounded-lg border border-border-default"><header class="flex cursor-pointer justify-between bg-card px-3 py-2.5 text-primary" role="button" tabindex="0" :aria-expanded="!isServiceCollapsed(host)" :aria-label="host" @click="toggleServices(host)" @keydown.enter.prevent="toggleServices(host)" @keydown.space.prevent="toggleServices(host)"><span>{{ host }}</span><PbIcon :icon="isServiceCollapsed(host) ? PhCaretRight : PhCaretDown" aria-hidden="true" /></header><div v-if="!isServiceCollapsed(host)" class="grid gap-1.5 p-2.5"><div v-for="(check, service) in services[host]" :key="service" class="flex items-center justify-between gap-2.5 rounded-md bg-page/45 p-2"><div><div class="font-semibold">{{ service }}</div><div class="text-xs" :class="serviceStatusClass(check.status)">{{ serviceLabel(check.status) }}<span v-if="check.pid"> (PID: {{ check.pid }})</span></div><div v-if="check.reason" class="text-xs text-secondary">{{ check.reason }}</div><div v-if="check.error" class="text-xs text-danger-soft">{{ check.error }}</div></div><Button v-if="check.expected !== false && check.status !== 'disabled'" data-action="restart-service" type="button" variant="primary" size="sm" @click="restartService(host, String(service))"><PbIcon :icon="PhGear" /> {{ t('sysmon.restart') }}</Button></div></div></section></div><EmptyState v-if="!serviceHosts.length" class="pt-3.5 whitespace-pre-wrap break-words text-primary" :title="t('sysmon.noServices')" /></div>
 
-        <div v-else class="min-h-0 flex-1 overflow-auto"><div id="vps-log-viewer" class="h-full min-h-[420px]"></div></div>
+        <div v-else class="flex min-h-0 flex-1 flex-col">
+          <LogViewer
+            variant="page"
+            show-host
+            show-sidebar
+            show-restart
+            :active="activeTab === 'logs'"
+            :ws-base="wsOrigin()"
+            :hosts="hosts"
+            :files="state?.local_logs ?? []"
+            :remote-items="remoteLogTargets"
+            :service-checks="logServiceChecks"
+            :presets="TRADING_PRESETS"
+            :default-host="logHost"
+            :default-service="logService"
+            @host-change="logHost = $event"
+          />
+        </div>
       </section>
     </div>
 

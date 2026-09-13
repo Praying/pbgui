@@ -9,6 +9,7 @@ import type { PageSection } from '@/shared/navigation';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import ErrorState from '@/shared/components/ErrorState.vue';
 import LoadingSkeleton from '@/shared/components/LoadingSkeleton.vue';
+import LogViewer, { type LogViewerHandle } from '@/shared/components/LogViewer.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
 import { Button } from '@/shared/components/ui/button';
@@ -20,12 +21,11 @@ import {
   SelectTrigger,
 } from '@/shared/components/ui/select';
 import { useAiPageContext } from '@/shared/ai/context';
+import { SYSTEM_PRESETS } from '@/shared/log/logViewerPresets';
 import { loggingApiBase, loggingWsBase } from './config';
 import type { LogFilesPayload, ManagedRotationRule, RotationPayload, RotationRule } from './types';
 
 type PageView = 'logs' | 'settings';
-type Viewer = { open(): void; close(): void; setFile?(name: string): void; fetchFile?(name: string): void };
-type ViewerCtor = new (options: Record<string, unknown>) => Viewer;
 
 const { t } = useI18n();
 const view = ref<PageView>('logs');
@@ -45,13 +45,12 @@ const currentFile = ref('');
 const selectedVariant = ref('current');
 const loading = ref(true);
 const error = ref('');
-const viewerUnavailable = ref(false);
 const purgeOpen = ref(false);
 const purging = ref(false);
 const savingScope = ref('');
 const messages = ref<Record<string, string>>({});
 const messageTimers = new Map<string, number>();
-let viewer: Viewer | null = null;
+const logViewer = ref<LogViewerHandle | null>(null);
 
 const variants = computed(() => files.value.rotated[currentFile.value] || []);
 const managedRows = computed(() => Object.entries(rotation.value.managed_scopes).sort(([a], [b]) => a.localeCompare(b)));
@@ -114,9 +113,9 @@ function onFileChange(filename: string): void {
 }
 function selectVariant(value: string): void {
   selectedVariant.value = value;
-  if (!viewer || !currentFile.value) return;
-  if (value === 'current') viewer.setFile?.(currentFile.value);
-  else viewer.fetchFile?.(value);
+  if (!currentFile.value) return;
+  if (value === 'current') logViewer.value?.setFile(currentFile.value);
+  else logViewer.value?.fetchFile(value);
 }
 async function confirmPurge(): Promise<void> {
   if (!currentFile.value) return;
@@ -126,29 +125,9 @@ async function confirmPurge(): Promise<void> {
     await apiFetch(`${loggingApiBase()}/purge/${encodeURIComponent(currentFile.value)}`, { method: 'POST', body: '{}' });
     purgeOpen.value = false;
     await loadFiles();
-    viewer?.setFile?.(currentFile.value);
+    logViewer.value?.setFile(currentFile.value);
   } catch (caught) { error.value = detail(caught); }
   finally { purging.value = false; }
-}
-function installViewer(): void {
-  viewerUnavailable.value = false;
-  const Ctor = (window as Window & { LogViewerPanel?: ViewerCtor }).LogViewerPanel;
-  if (typeof Ctor !== 'function') { viewerUnavailable.value = true; return; }
-  viewer = new Ctor({
-    containerId: 'logging-viewer-target',
-    wsBase: loggingWsBase(),
-    defaultHost: 'local',
-    presets: 'system',
-    showRestart: true,
-    height: '100%',
-    onFileChange,
-  });
-  viewer.open();
-}
-function retryViewer(): void {
-  viewer?.close();
-  viewer = null;
-  installViewer();
 }
 function onKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && purgeOpen.value) purgeOpen.value = false;
@@ -156,7 +135,6 @@ function onKeydown(event: KeyboardEvent): void {
 
 onMounted(() => {
   document.title = t('sysmon.loggingTitle');
-  installViewer();
   void initialize();
   window.addEventListener('keydown', onKeydown);
   (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER = () => {
@@ -164,7 +142,6 @@ onMounted(() => {
   };
 });
 onBeforeUnmount(() => {
-  viewer?.close();
   messageTimers.forEach((timer) => window.clearTimeout(timer));
   window.removeEventListener('keydown', onKeydown);
   delete (window as Window & { PBGUI_HELP_OPENER?: () => void }).PBGUI_HELP_OPENER;
@@ -206,16 +183,20 @@ onBeforeUnmount(() => {
           </div>
           <Button data-action="purge" type="button" variant="danger" @click="purgeOpen = true"><PbIcon :icon="PhTrash" /> {{ t('sysmon.purge') }}</Button>
         </div>
-        <ErrorState
-          v-if="viewerUnavailable"
-          class="mx-3.5 my-2 text-danger-soft"
-          data-action="retry-viewer"
-          :title="t('common.error')"
-          :message="t('sysmon.logViewerUnavailable', { v: 'LogViewerPanel' })"
-          :retry-label="t('common.refresh')"
-          @retry="retryViewer"
-        />
-        <div id="logging-viewer-target" class="flex flex-1 min-h-0 overflow-hidden"></div>
+        <div class="flex min-h-0 flex-1 flex-col px-3.5 pb-3.5 pt-2">
+          <LogViewer
+            ref="logViewer"
+            :active="view === 'logs'"
+            :ws-base="loggingWsBase()"
+            :default-file="currentFile"
+            show-sidebar
+            show-restart
+            :files="files.files"
+            :file-sizes="files.sizes"
+            :presets="SYSTEM_PRESETS"
+            @file-change="onFileChange"
+          />
+        </div>
       </section>
 
       <section v-show="view === 'settings'" class="flex-1 min-h-0 overflow-y-auto p-[var(--page-padding)]">

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createI18n } from '@/shared/i18n';
+import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import LogPanel from './LogPanel.vue';
 
 vi.mock('@/shared/boot', () => ({
@@ -79,10 +80,11 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('LogPanel Vue 3 + Tailwind CSS component', () => {
-  it('renders modern card layout, header with title, back button, and default file badge', () => {
+describe('LogPanel host around the shared LogViewer', () => {
+  it('renders the card chrome with title, back button, file chip and the shared viewer', () => {
     const wrapper = mountLogPanel();
     expect(wrapper.find('h3').text()).toContain('Logs');
+    expect(wrapper.find('.back-btn').exists()).toBe(true);
     expect(wrapper.text()).toContain('PBGui.log');
     expect(wrapper.find('[data-test="log-terminal"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="preset-apikeys"]').exists()).toBe(true);
@@ -90,8 +92,7 @@ describe('LogPanel Vue 3 + Tailwind CSS component', () => {
 
   it('emits back when back button is clicked', async () => {
     const wrapper = mountLogPanel();
-    const backBtn = wrapper.find('.back-btn');
-    await backBtn.trigger('click');
+    await wrapper.find('.back-btn').trigger('click');
     expect(wrapper.emitted('back')).toBeTruthy();
   });
 
@@ -113,18 +114,19 @@ describe('LogPanel Vue 3 + Tailwind CSS component', () => {
     });
   });
 
-  it('populates availableFiles when receiving local_log_files', async () => {
+  it('populates the file picker from the WS local_logs_list reply', async () => {
     const wrapper = mountLogPanel();
     const ws = FakeWebSocket.instances[0]!;
     openSocket(ws);
 
     pushMessage(ws, {
-      type: 'local_log_files',
+      type: 'local_logs_list',
       files: ['PBGui.log', 'PBApiServer.log', 'VPSMonitor.log'],
     });
     await flushPromises();
 
-    expect(wrapper.text()).toContain('PBGui.log');
+    await openSelect(wrapper, '[data-test="log-file-select"]');
+    expect(selectOptionTexts()).toEqual(['PBGui.log', 'PBApiServer.log', 'VPSMonitor.log']);
   });
 
   it('filters lines by [ApiKeys] preset by default', async () => {
@@ -198,16 +200,14 @@ describe('LogPanel Vue 3 + Tailwind CSS component', () => {
 
     expect(snapshotLines(wrapper)).toHaveLength(3);
 
-    // Toggle off INFO
     const infoBtn = wrapper.find('button[data-lvl="INFO"]');
     await infoBtn.trigger('click');
     await flushPromises();
 
     const afterInfoOff = snapshotLines(wrapper);
     expect(afterInfoOff).toHaveLength(2);
-    expect(afterInfoOff.some((l) => l.includes('Info message'))).toBe(false);
+    expect(afterInfoOff.some((line) => line.includes('Info message'))).toBe(false);
 
-    // Toggle INFO back on
     await infoBtn.trigger('click');
     await flushPromises();
     expect(snapshotLines(wrapper)).toHaveLength(3);
@@ -229,12 +229,9 @@ describe('LogPanel Vue 3 + Tailwind CSS component', () => {
     const streamBtn = wrapper.find('[data-test="log-stream"]');
     expect(streamBtn.text()).toContain('Pause');
 
-    // Click Pause
     await streamBtn.trigger('click');
     expect(ws.sentObjs()).toContainEqual({ cmd: 'unsubscribe_local_logs' });
-    expect(streamBtn.text()).toContain('Stream');
 
-    // Click Stream to resume
     await streamBtn.trigger('click');
     const sent = ws.sentObjs();
     expect(sent[sent.length - 1]).toEqual({

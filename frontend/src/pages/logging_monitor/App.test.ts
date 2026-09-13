@@ -1,7 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { createI18n } from '@/shared/i18n';
 import { openSelect, selectOptionTexts } from '@/shared/testing/select';
 import App from './App.vue';
@@ -12,22 +10,41 @@ vi.mock('@/shared/api', async () => {
   return { ...actual, apiFetch: (...args: unknown[]) => apiFetchMock(...args) };
 });
 
-class ViewerMock {
-  static instances: ViewerMock[] = [];
-  options: Record<string, unknown>;
-  open = vi.fn();
-  close = vi.fn();
-  setFile = vi.fn();
-  fetchFile = vi.fn();
-  constructor(options: Record<string, unknown>) {
-    this.options = options;
-    ViewerMock.instances.push(this);
+class FakeWebSocket {
+  static readonly OPEN = 1;
+  static instances: FakeWebSocket[] = [];
+
+  url: string;
+  readyState = FakeWebSocket.OPEN;
+  sent: string[] = [];
+  closed = false;
+  onopen: (() => void) | null = null;
+  onmessage: ((evt: { data: string }) => void) | null = null;
+  onerror: (() => void) | null = null;
+  onclose: ((event: { code?: number }) => void) | null = null;
+
+  constructor(url: string) {
+    this.url = url;
+    FakeWebSocket.instances.push(this);
+  }
+
+  send(data: string): void {
+    this.sent.push(data);
+  }
+
+  close(): void {
+    this.closed = true;
+    this.readyState = 3;
+  }
+
+  sentObjs(): Array<Record<string, unknown>> {
+    return this.sent.map((entry) => JSON.parse(entry) as Record<string, unknown>);
   }
 }
 
 const filesPayload = {
-  files: ['PBGui.log'],
-  sizes: { 'PBGui.log': 100, 'PBGui.log.1': 50 },
+  files: ['PBGui.log', 'PBApiServer.log'],
+  sizes: { 'PBGui.log': 4096, 'PBGui.log.1': 512, 'PBApiServer.log': 128 },
   rotated: { 'PBGui.log': ['PBGui.log.1'] },
 };
 const rotationPayload = {
@@ -43,11 +60,24 @@ function mountApp() {
   return mount(App, { global: { plugins: [createI18n('en')] } });
 }
 
+function openSocket(): FakeWebSocket {
+  const ws = FakeWebSocket.instances[0]!;
+  ws.onopen?.();
+  return ws;
+}
+
 beforeEach(() => {
-  (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = { origin: 'http://test', base_prefix: '', authenticated: true, version: 'test', serial: '1' };
+  (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = {
+    origin: 'http://test',
+    base_prefix: '',
+    authenticated: true,
+    version: 'test',
+    serial: '1',
+  };
   apiFetchMock.mockReset();
-  ViewerMock.instances = [];
-  (window as unknown as { LogViewerPanel: typeof ViewerMock }).LogViewerPanel = ViewerMock;
+  FakeWebSocket.instances = [];
+  vi.stubGlobal('WebSocket', FakeWebSocket);
+  Element.prototype.scrollIntoView = vi.fn();
   apiFetchMock.mockImplementation((url: string, init?: RequestInit) => {
     if (url.endsWith('/rotation') && (!init || init.method !== 'POST')) return Promise.resolve(rotationPayload);
     if (url.endsWith('/api/logging')) return Promise.resolve(filesPayload);
@@ -57,51 +87,84 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
 describe('Logging Monitor Vue page', () => {
-  it('publishes the shared viewer constructor for the classic script loader', () => {
-    const frontendRoot = resolve(import.meta.dirname, '../../..');
-    const viewerSource = readFileSync(resolve(frontendRoot, 'js/log_viewer_panel.js'), 'utf8');
-
-    expect(viewerSource).toContain('window.LogViewerPanel = LogViewerPanel');
-  });
-
-  it('offers a viewer retry when the classic constructor is unavailable', async () => {
-    delete (window as unknown as { LogViewerPanel?: typeof ViewerMock }).LogViewerPanel;
+  it('mounts the shared log viewer with the system presets and restart control', async () => {
     const wrapper = mountApp();
     await flushPromises();
-
-    expect(wrapper.get('[data-state="error"]').text()).toContain('LogViewerPanel');
-    (window as unknown as { LogViewerPanel: typeof ViewerMock }).LogViewerPanel = ViewerMock;
-    await wrapper.get('[data-action="retry-viewer"] button').trigger('click');
-
-    expect(ViewerMock.instances).toHaveLength(1);
-    expect(ViewerMock.instances[0]?.open).toHaveBeenCalled();
-  });
-
-  it('mounts the shared log viewer and exposes rotated files and purge confirmation', async () => {
-    const wrapper = mountApp();
+    openSocket();
     await flushPromises();
+
     expect(wrapper.find('.app-shell').exists()).toBe(true);
     expect(wrapper.find('#topnav').exists()).toBe(false);
     expect(wrapper.get('[role="status"]').text()).toContain('Connected');
-    expect(ViewerMock.instances).toHaveLength(1);
-    const viewer = ViewerMock.instances[0]!;
-    expect(viewer.options).toMatchObject({ defaultHost: 'local', presets: 'system', showRestart: true });
-    expect(viewer.open).toHaveBeenCalled();
 
-    (viewer.options.onFileChange as (name: string) => void)('PBGui.log');
-    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="log-terminal"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="log-restart"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="log-file-list"]').exists()).toBe(true);
+    for (const preset of ['errors', 'warnings', 'errorsWarnings', 'connection', 'restartStop', 'traceback']) {
+      expect(wrapper.find(`[data-test="preset-${preset}"]`).exists()).toBe(true);
+    }
+    expect(FakeWebSocket.instances).toHaveLength(1);
+  });
+
+  it('auto-selects the first log file, subscribes to it and reveals rotated variants', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    const ws = openSocket();
+    await flushPromises();
+
     expect(wrapper.find('[data-field="rotation-version"]').exists()).toBe(true);
     await openSelect(wrapper, '[data-field="rotation-version"]');
     expect(selectOptionTexts()).toEqual(['Current', '.1']); // "PBGui.log.1".slice("PBGui.log".length)
 
+    const subscribe = ws.sentObjs().find((entry) => entry.cmd === 'subscribe_local_logs');
+    expect(subscribe).toMatchObject({ file: 'PBGui.log', lines: 200, start_at_end: false });
+  });
+
+  it('wires the rotated-variant select to the viewer handle (one-shot fetch, then resubscribe)', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    const ws = openSocket();
+    await flushPromises();
+
+    const handle = wrapper.findComponent({ name: 'LogViewer' }).vm as unknown as {
+      fetchFile(file: string): void;
+      setFile(file: string): void;
+    };
+
+    handle.fetchFile('PBGui.log.1');
+    await flushPromises();
+    expect(ws.sentObjs()).toContainEqual(
+      expect.objectContaining({ cmd: 'get_local_logs', file: 'PBGui.log.1' })
+    );
+
+    handle.setFile('PBGui.log');
+    await flushPromises();
+    const last = ws.sentObjs().at(-1);
+    expect(last).toEqual(
+      expect.objectContaining({ cmd: 'subscribe_local_logs', file: 'PBGui.log' })
+    );
+  });
+
+  it('purges the selected log file through the confirmation dialog', async () => {
+    const wrapper = mountApp();
+    await flushPromises();
+    openSocket();
+    await flushPromises();
+
     await wrapper.find('[data-action="purge"]').trigger('click');
-    expect(wrapper.get('[data-action="purge"]').find('svg').exists()).toBe(true);
     expect(wrapper.find('[role="dialog"]').text()).toContain('Purge log file');
     await wrapper.find('[data-confirm="purge"]').trigger('click');
     await flushPromises();
-    expect(apiFetchMock).toHaveBeenCalledWith(expect.stringContaining('/purge/PBGui.log'), expect.objectContaining({ method: 'POST' }));
-    expect(viewer.setFile).toHaveBeenCalledWith('PBGui.log');
+    expect(apiFetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/purge/PBGui.log'),
+      expect.objectContaining({ method: 'POST' })
+    );
   });
 
   it('loads and saves default, managed, and per-log rotation settings', async () => {
@@ -150,9 +213,6 @@ describe('Logging Monitor Vue page', () => {
   it('requires an explicit button to close the purge dialog', async () => {
     const wrapper = mountApp();
     await flushPromises();
-    const viewer = ViewerMock.instances[0]!;
-    (viewer.options.onFileChange as (name: string) => void)('PBGui.log');
-    await wrapper.vm.$nextTick();
     await wrapper.find('[data-action="purge"]').trigger('click');
     await wrapper.find('.log-modal-backdrop').trigger('click');
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);

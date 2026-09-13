@@ -5,14 +5,17 @@ Logs stream live via WebSocket — no page reload required.
 
 ## Layout
 
-- **Sidebar (left)**: list of all available log files in `data/logs/`, with adjustable width on desktop
-- **Toolbar**: level filter, lines count, version selector, stream controls
+- **Sidebar (left)**: list of all available log files in `data/logs/`, each with its current size
+- **Toolbar**: line count, level filters, preset buttons, search and find controls, line numbers, restart, stream/pause, fetch, clear, download and the connection indicator
 - **Log area**: scrollable terminal output with search and highlighting
+
+The viewer is a native Vue component of the Logging page, styled with the same
+theme tokens as the rest of PBGui.
 
 ## Selecting a log file
 
 Click any file name in the sidebar to load it.  
-The current file name and size appear in the toolbar.  
+The selected file is highlighted and its size is shown next to the name.  
 Streaming starts automatically — new lines are appended in real time.
 
 ## Lines dropdown
@@ -20,11 +23,9 @@ Streaming starts automatically — new lines are appended in real time.
 Controls how many lines are loaded when opening or switching a file.  
 Options: 200 / 500 / 1000 / 2000 / 5000 / 10000 / 25000 / Max (50,000).
 Changing the value while a file is open reloads with the new count.
-The selected count is the source-tail and rendered-line limit. Unfiltered and
-remote views keep that bounded live buffer in the browser. An active local
-filter keeps only matches and context in the browser while the server searches
-the complete selected tail. **Max (50,000)** is a bounded tail, not the complete
-file.
+The selected count is the source-tail and rendered-line limit; the browser keeps
+that bounded live buffer and filters it locally. **Max (50,000)** is a bounded
+tail, not the complete file.
 
 ## Version dropdown
 
@@ -53,22 +54,32 @@ Lines not matching an active level are hidden instantly without refetching.
 - Type in the **Search** field to filter or highlight matching lines
 - **Filter** checkbox: when checked, hides non-matching lines; when unchecked, highlights only
 - Use the **▲ / ▼** buttons to jump between matches
-- **Preset** dropdown: common search patterns (Errors, Warnings, Traceback, …)
+- **Preset** buttons: one-click patterns (Errors, Warnings, Errors + Warnings,
+  Connection, Restart / Stop, Traceback); **All** clears the filter
 
-Local filtered searches are debounced and run on the server. Existing results
-remain visible until the current request arrives, and live streaming sends only
-new matches and required context. Clearing the filter restores the unfiltered
-buffer. Download still saves the complete selected source tail.
+Search and filtering run in the browser against the buffered lines, so typing a
+term or switching a preset never re-fetches from the server. Clearing the filter
+restores the full buffer.
 
 ## Stream controls
 
-| Button    | Action                                         |
-|-----------|------------------------------------------------|
-| ⏸ Pause  | Stop receiving new lines (buffer is kept)      |
-| ▶ Stream | Resume live streaming from current position    |
-| 🗑 Clear  | Clear the display buffer (does not delete file) |
-| ⬇ Download | Save the complete selected source tail       |
-| ## Lines | Toggle line number display                      |
+| Button       | Action                                            |
+|--------------|---------------------------------------------------|
+| Pause        | Stop receiving new lines (buffer is kept)         |
+| Stream       | Resume live streaming from the current position   |
+| Fetch        | Reload the selected file with the current line count |
+| Restart      | Restart the service that owns the selected log file |
+| Clear        | Clear the display buffer (does not delete the file) |
+| Download     | Save the buffered lines as a text file            |
+| ## Lines     | Toggle line number display                        |
+
+**Restart** derives the service from the selected file name (`PBRun.log` →
+PBRun, `PBData.log` → PBData, bot instance logs → `Bot:<name>:7`) and is hidden
+when no service can be derived.
+
+The connection badge shows the WebSocket state (connecting / connected /
+disconnected) and reconnects automatically after an unexpected drop. A session
+expiry (close code 4001) redirects to the login page.
 
 ## Settings
 

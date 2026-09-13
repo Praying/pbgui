@@ -16,16 +16,9 @@ class WebSocketMock {
   close = vi.fn();
   constructor(url: string) { this.url = url; WebSocketMock.instances.push(this); }
   send(value: string): void { this.sent.push(value); }
+  sentObjs(): Array<Record<string, unknown>> { return this.sent.map((entry) => JSON.parse(entry) as Record<string, unknown>); }
   state(data: unknown): void { this.onmessage?.({ data: JSON.stringify({ type: 'state', data }) } as MessageEvent<string>); }
   message(message: unknown): void { this.onmessage?.({ data: JSON.stringify(message) } as MessageEvent<string>); }
-}
-
-class ViewerMock {
-  static instances: ViewerMock[] = [];
-  options: Record<string, unknown>;
-  open = vi.fn();
-  close = vi.fn();
-  constructor(options: Record<string, unknown>) { this.options = options; ViewerMock.instances.push(this); }
 }
 
 const state = {
@@ -57,8 +50,8 @@ const state = {
     },
   },
   instances: { alpha: [{ name: 'bot-a', pb_version: '7', status: 'running', cpu: 12.3, pnlToday: 1.2, pnl4w: 10, fillsToday: 2, fills4w: 20, tbsToday: 0, tbs4w: 1 }] },
-  v7_instances: { alpha: [] },
-  v8_instances: { alpha: [] },
+  v7_instances: { alpha: [{ name: 'bot-a', running: true }] },
+  v8_instances: { alpha: [{ name: 'bot-b', running: true }] },
   host_meta: { alpha: { bots: {} } },
   services: { alpha: { PBRun: { status: 'running', pid: 123 } } },
   streams: { alpha: { monitor_agent: { status: 'ok', heartbeat: 1, files: [] } } },
@@ -75,9 +68,7 @@ function mountApp(search = '') {
 beforeEach(() => {
   (globalThis as typeof globalThis & { __BOOT__: Record<string, unknown> }).__BOOT__ = { origin: 'http://test', base_prefix: '', authenticated: true, version: 'test', serial: '1' };
   WebSocketMock.instances = [];
-  ViewerMock.instances = [];
   vi.stubGlobal('WebSocket', WebSocketMock);
-  (window as unknown as { LogViewerPanel: typeof ViewerMock }).LogViewerPanel = ViewerMock;
 });
 
 describe('VPS Monitor Vue page', () => {
@@ -111,7 +102,7 @@ describe('VPS Monitor Vue page', () => {
     expect(wrapper.find('[data-ip="alpha"]').exists()).toBe(false);
   });
 
-  it('switches tabs, sends service/instance commands, opens metric history, and uses shared log viewer', async () => {
+  it('switches tabs, sends service/instance commands and opens metric history', async () => {
     const wrapper = mountApp();
     const ws = WebSocketMock.instances[0]!;
     ws.state(state);
@@ -134,10 +125,54 @@ describe('VPS Monitor Vue page', () => {
     await wrapper.vm.$nextTick();
     expect(wrapper.get('[data-modal="history"]').text()).toContain('20');
     await wrapper.get('[data-close="history"]').trigger('click');
+  });
+
+  it('mounts the shared Vue log viewer on the Live Logs tab with host + trading presets', async () => {
+    const wrapper = mountApp();
+    WebSocketMock.instances[0]!.state(state);
+    await wrapper.vm.$nextTick();
 
     await wrapper.get('[data-testid="rail-section-logs"]').trigger('click');
-    expect(ViewerMock.instances).toHaveLength(1);
-    expect(ViewerMock.instances[0]!.options).toMatchObject({ defaultHost: 'local', presets: 'trading', showRestart: true });
+    await flushPromises();
+
+    // Page socket stays instances[0]; the viewer opens its own connection.
+    const viewerSocket = WebSocketMock.instances[1]!;
+    expect(viewerSocket).toBeTruthy();
+
+    expect(wrapper.find('[data-test="log-terminal"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="log-host-select"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="log-file-list"]').exists()).toBe(true);
+    for (const preset of ['ordersFills', 'balancePnl', 'positions', 'startup']) {
+      expect(wrapper.find(`[data-test="preset-${preset}"]`).exists()).toBe(true);
+    }
+    // Local default host, Trading preset set.
+    expect(viewerSocket.sentObjs()).toContainEqual(
+      expect.objectContaining({ cmd: 'subscribe_local_logs', file: 'PBGui.log' })
+    );
+  });
+
+  it('drives a remote bot subscription from the Instances log action', async () => {
+    const wrapper = mountApp();
+    WebSocketMock.instances[0]!.state(state);
+    await wrapper.vm.$nextTick();
+
+    await wrapper.get('[data-testid="rail-section-instances"]').trigger('click');
+    await wrapper.get('[data-action="view-instance-log"]').trigger('click');
+    await flushPromises();
+
+    const viewerSocket = WebSocketMock.instances[1]!;
+    viewerSocket.onopen?.();
+    await flushPromises();
+
+    expect(viewerSocket.sentObjs()).toContainEqual(
+      expect.objectContaining({ cmd: 'subscribe_logs', host: 'alpha', service: 'Bot:bot-a:7' })
+    );
+    expect(viewerSocket.sentObjs()).toContainEqual(
+      expect.objectContaining({ cmd: 'get_log_info', host: 'alpha', service: 'Bot:bot-a:7' })
+    );
+    // The remote item list exposes the host's services and running bots.
+    expect(wrapper.find('[data-test="log-remote-item-PBRun"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="log-remote-item-Bot:bot-a:7"]').exists()).toBe(true);
   });
 
   it('renders server results without HTML interpolation and closes modal explicitly', async () => {
@@ -166,13 +201,15 @@ describe('VPS Monitor Vue page', () => {
     expect(wrapper.text()).toContain('heartbeat: stale');
   });
 
-  it('cleans up the WebSocket generation and closes the shared viewer', async () => {
+  it('cleans up the WebSocket generation and the viewer connection', async () => {
     const wrapper = mountApp();
     const ws = WebSocketMock.instances[0]!;
     await flushPromises();
     await wrapper.get('[data-testid="rail-section-logs"]').trigger('click');
+    await flushPromises();
+    const viewerSocket = WebSocketMock.instances[1]!;
     wrapper.unmount();
     expect(ws.close).toHaveBeenCalled();
-    expect(ViewerMock.instances[0]!.close).toHaveBeenCalled();
+    expect(viewerSocket.close).toHaveBeenCalled();
   });
 });

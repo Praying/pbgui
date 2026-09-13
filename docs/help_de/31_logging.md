@@ -5,14 +5,17 @@ Logs werden live per WebSocket gestreamt — kein Neuladen der Seite erforderlic
 
 ## Aufbau
 
-- **Sidebar (links)**: Liste aller verfügbaren Log-Dateien in `data/logs/`, mit anpassbarer Breite auf dem Desktop
-- **Toolbar**: Level-Filter, Zeilenanzahl, Versionsauswahl, Stream-Steuerung
+- **Sidebar (links)**: Liste aller verfügbaren Log-Dateien in `data/logs/`, jeweils mit aktueller Größe
+- **Toolbar**: Zeilenanzahl, Level-Filter, Preset-Schaltflächen, Suche und Treffer-Navigation, Zeilennummern, Neustart, Stream/Pause, Aktualisieren, Leeren, Download und die Verbindungsanzeige
 - **Log-Bereich**: scrollbares Terminal-Ausgabefeld mit Suche und Hervorhebung
+
+Der Viewer ist eine native Vue-Komponente der Logging-Seite und nutzt dieselben
+Theme-Tokens wie der Rest von PBGui.
 
 ## Log-Datei auswählen
 
 Auf einen Dateinamen in der Sidebar klicken, um ihn zu laden.  
-Dateiname und Größe werden in der Toolbar angezeigt.  
+Die gewählte Datei wird hervorgehoben und ihre Größe steht neben dem Namen.  
 Das Streaming startet automatisch — neue Zeilen werden live angehängt.
 
 ## Lines-Dropdown
@@ -20,10 +23,8 @@ Das Streaming startet automatisch — neue Zeilen werden live angehängt.
 Legt fest, wie viele Zeilen beim Öffnen oder Wechseln einer Datei geladen werden.  
 Optionen: 200 / 500 / 1000 / 2000 / 5000 / 10000 / 25000 / Max (50,000).
 Beim Ändern des Werts wird die Datei mit der neuen Anzahl neu geladen.
-Die ausgewaehlte Anzahl begrenzt den Quell-Tail und die gerenderten Zeilen.
-Ungefilterte und entfernte Ansichten behalten diesen begrenzten Live-Puffer im
-Browser. Bei einem aktiven lokalen Filter speichert der Browser nur Treffer und
-Kontext, waehrend der Server den vollstaendigen gewaehlten Tail durchsucht.
+Die ausgewaehlte Anzahl begrenzt den Quell-Tail und die gerenderten Zeilen; der
+Browser haelt diesen begrenzten Live-Puffer und filtert ihn lokal.
 **Max (50,000)** ist ein begrenzter Datei-Tail und nicht die vollstaendige Datei.
 
 ## Version-Dropdown
@@ -53,23 +54,32 @@ Zeilen, die keinem aktiven Level entsprechen, werden sofort ausgeblendet — ohn
 - Text im **Search**-Feld eingeben, um passende Zeilen zu filtern oder hervorzuheben
 - **Filter**-Checkbox: aktiviert → nicht passende Zeilen ausblenden; deaktiviert → nur hervorheben
 - **▲ / ▼**-Schaltflächen zum Springen zwischen Treffern
-- **Preset**-Dropdown: häufige Suchmuster (Errors, Warnings, Traceback …)
+- **Preset**-Schaltflächen: Muster mit einem Klick (Errors, Warnings,
+  Errors + Warnings, Connection, Restart / Stop, Traceback); **All** loescht den Filter
 
-Lokale Filtersuchen werden entprellt auf dem Server ausgefuehrt. Die bisherigen
-Ergebnisse bleiben sichtbar, bis die aktuelle Antwort eintrifft; beim
-Live-Streaming werden nur neue Treffer und erforderlicher Kontext uebertragen.
-Das Leeren des Filters stellt den ungefilterten Puffer wieder her. Download
-speichert weiterhin den vollstaendigen gewaehlten Quell-Tail.
+Suche und Filterung laufen im Browser auf den gepufferten Zeilen; das Tippen
+eines Begriffs oder ein Preset-Wechsel loest daher keinen Server-Abruf aus.
+Das Leeren des Filters stellt den vollstaendigen Puffer wieder her.
 
 ## Stream-Steuerung
 
 | Schaltfläche | Aktion                                                   |
 |--------------|----------------------------------------------------------|
-| ⏸ Pause     | Keine neuen Zeilen empfangen (Puffer bleibt erhalten)    |
-| ▶ Stream    | Live-Streaming ab aktueller Position fortsetzen          |
-| 🗑 Clear     | Anzeigepuffer leeren (Datei wird nicht gelöscht)         |
-| ⬇ Download  | Vollstaendigen gewaehlten Quell-Tail speichern           |
-| ## Lines    | Zeilennummern ein-/ausblenden                            |
+| Pause        | Keine neuen Zeilen empfangen (Puffer bleibt erhalten)    |
+| Stream       | Live-Streaming ab aktueller Position fortsetzen          |
+| Fetch        | Gewaehlte Datei mit der aktuellen Zeilenanzahl neu laden |
+| Restart      | Dienst hinter der gewaehlten Log-Datei neu starten       |
+| Clear        | Anzeigepuffer leeren (Datei wird nicht gelöscht)         |
+| Download     | Gepufferte Zeilen als Textdatei speichern                |
+| ## Lines     | Zeilennummern ein-/ausblenden                            |
+
+**Restart** leitet den Dienst aus dem gewaehlten Dateinamen ab (`PBRun.log` →
+PBRun, `PBData.log` → PBData, Bot-Instanz-Logs → `Bot:<name>:7`) und wird
+ausgeblendet, wenn kein Dienst ableitbar ist.
+
+Die Verbindungsanzeige zeigt den WebSocket-Zustand (connecting / connected /
+disconnected) und verbindet nach einem unerwarteten Abbruch automatisch neu. Ein
+Session-Ablauf (Close-Code 4001) leitet zur Login-Seite um.
 
 ## Einstellungen
 
