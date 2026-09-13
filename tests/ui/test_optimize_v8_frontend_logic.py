@@ -26,6 +26,35 @@ NODE_I18N_BOOTSTRAP = NODE_I18N_STUB + (
 )
 
 
+def test_gpu_runtime_labels_and_native_alias_choices() -> None:
+    """CUDA identity and accepted aliases work without changing CPU metric choices."""
+    page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
+    functions = "\n".join(_page_function(page, name) for name in (
+        "optimizeGpuRuntimeLabel", "optimizeGpuMetricSet", "metricAvailableForCurrentBackend",
+    ))
+    _run_node(textwrap.dedent(f"""
+        const assert = require('node:assert/strict');
+        let backend = 'gpu';
+        const el = () => ({{value: backend}});
+        const normalizeOptimizeBackendValue = x => x;
+        const state = {{settings: {{optimize_backend_contract: {{metric_sets: {{
+          gpu_proxy: ['pnl_ratio_long_short', 'long_short_profit_ratio']
+        }}}}}}}};
+        {functions}
+        assert.equal(metricAvailableForCurrentBackend('long_short_profit_ratio'), true);
+        assert.equal(metricAvailableForCurrentBackend('pnl_ratio_long_short'), true);
+        assert.equal(metricAvailableForCurrentBackend('exact_only'), false);
+        backend = 'pymoo';
+        assert.equal(metricAvailableForCurrentBackend('exact_only'), true);
+        assert.equal(optimizeGpuRuntimeLabel({{available:true, runtime:{{accelerator:'nvidia_cuda', device_name:'Test GPU'}}}}),
+          'Host runtime: NVIDIA CUDA — Test GPU (available)');
+        assert.match(optimizeGpuRuntimeLabel({{available:true, runtime:{{accelerator:'apple_mps'}}}}), /Apple MPS/);
+        assert.match(optimizeGpuRuntimeLabel(null), /unavailable/);
+    """))
+    assert "escapeHtml(optimizeGpuRuntimeLabel(gpuCapability))" in page
+    assert "<b>Apple MPS GPU</b>" not in page
+
+
 def test_pb84_mutation_controls_round_trip_auto_explicit_and_legacy_values() -> None:
     """Both mutation probabilities stay independent, validated, and compatible with PB7."""
     page = (ROOT / "frontend" / "v7_optimize.html").read_text(encoding="utf-8")
@@ -925,6 +954,7 @@ def test_suite_generator_applies_training_only_and_invalidates_stale_provenance(
     """Applying a preview excludes holdout windows and later manual edits clear provenance."""
     script = textwrap.dedent(
         """
+        (async () => {
         const assert = require('node:assert/strict');
         const fs = require('node:fs');
         eval(fs.readFileSync('frontend/js/suite_editor.js', 'utf8'));
@@ -943,7 +973,7 @@ def test_suite_generator_applies_training_only_and_invalidates_stale_provenance(
           provenance: {template: 'walk_forward', holdout_scenarios: [{label: 'holdout_01'}]}
         };
 
-        _suiteApplyScenarioPreview();
+        await _suiteApplyScenarioPreview();
         let collected = suiteCollect();
         assert.deepEqual(collected.scenarios.map(item => item.label), ['train_01', 'train_02']);
         assert.equal(collected.scenario_template.template, 'walk_forward');
@@ -962,8 +992,9 @@ def test_suite_generator_applies_training_only_and_invalidates_stale_provenance(
         _suiteState.getScenarioContext = () => ({
           start_date: '2023-02-01', end_date: '2024-01-31', exchanges: ['binance']
         });
-        _suiteApplyScenarioPreview();
+        await _suiteApplyScenarioPreview();
         assert.deepEqual(_suiteState.scenarios, [{label: 'keep_current'}]);
+        })().catch(error => { console.error(error); process.exitCode = 1; });
         """
     )
     _run_node(script)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { apiFetch, ApiError } from '@/shared/api';
 import { serverMsg } from '@/shared/i18n';
@@ -22,12 +22,15 @@ import {
   SelectTrigger,
 } from '@/shared/components/ui/select';
 import { PhArrowClockwise, PhChartLineUp, PhFloppyDisk, PhPlay, PhTrash, PhWarning } from '@phosphor-icons/vue';
+import OverviewPanel from './components/OverviewPanel.vue';
+import type { OverviewAccount } from './types';
 
 interface SweepUser { name: string; exchange?: string; is_vault?: boolean; operating_mode?: string; due?: unknown; has_policy?: boolean }
 interface SweepSchema { defaults: Record<string, unknown>; options?: Record<string, unknown>; live_available?: boolean }
 interface SweepRecord { policy: Record<string, unknown>; generation?: number; policy_fingerprint?: string; simulation_state?: Record<string, unknown>; live_state?: Record<string, unknown>; [key: string]: unknown }
 interface SweepJournalEntry { created_at?: string; reason?: string; amount?: unknown; net_pnl?: unknown; due_after?: unknown }
 interface SweepIntent { operation_id?: string; state?: string; route?: string; reserved_amount?: unknown; can_reconcile?: boolean }
+interface OverviewResponse { accounts?: OverviewAccount[]; refresh_minutes?: number }
 
 const { t, te } = useI18n();
 const boot = getBoot();
@@ -46,6 +49,14 @@ const loading = ref(false);
 const actionPending = ref(false);
 const errorMessage = ref('');
 const statusMessage = ref('');
+const overviewAccounts = ref<OverviewAccount[]>([]);
+const overviewLoading = ref(false);
+const overviewMessage = ref('');
+const overviewRefreshMinutes = ref(15);
+const overviewAnonymized = ref(false);
+const overviewAliases = new Map<string, string>();
+let overviewGeneration = 0;
+let overviewTimer: number | undefined;
 
 const hiddenFields = new Set(['operating_mode', 'asset', 'simulation_minimum_transfer_amount', 'live_minimum_transfer_amount', 'live_activation_baseline_mode', 'first_live_catchup_limit_enabled', 'first_live_catchup_limit', 'vault_conditional_cost_policy']);
 const groups: Record<string, string[]> = {
@@ -98,6 +109,20 @@ function setInputField(field: string, event: Event): void { const input = event.
 function setCheckboxField(field: string, event: Event): void { setField(field, (event.target as HTMLInputElement).checked); }
 function formatValue(value: unknown): string { return value === undefined || value === null || value === '' ? '-' : String(value); }
 function formatTime(value: unknown): string { if (!value) return '-'; const date = new Date(String(value)); return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(); }
+function formatAmount(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '-';
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(value);
+}
+function overviewDisplayName(name: string): string {
+  if (!overviewAnonymized.value) return name;
+  if (!overviewAliases.has(name)) overviewAliases.set(name, `Account ${String(overviewAliases.size + 1).padStart(2, '0')}`);
+  return overviewAliases.get(name) || name;
+}
+function setOverviewAnonymized(enabled: boolean): void {
+  overviewAnonymized.value = enabled;
+  overviewAccounts.value = overviewAccounts.value.map((account) => ({ ...account, display_name: overviewDisplayName(account.name) }));
+}
 function detailOf(error: unknown): string {
   const raw = error instanceof ApiError ? error.detail : error instanceof Error ? error.message : String(error);
   return serverMsg(raw);
@@ -119,8 +144,39 @@ async function loadAccount(name: string): Promise<void> {
 }
 async function loadPage(): Promise<void> {
   loading.value = true;
-  try { schema.value = await apiFetch<SweepSchema>(`${apiBase}/schema`); const response = await apiFetch<{ users?: SweepUser[] }>(`${apiBase}/users`); users.value = response.users || []; const first = users.value.find((user) => user.name === selectedUser.value)?.name || users.value[0]?.name || ''; if (first) await loadAccount(first); }
+  try { schema.value = await apiFetch<SweepSchema>(`${apiBase}/schema`); const response = await apiFetch<{ users?: SweepUser[] }>(`${apiBase}/users`); users.value = response.users || []; const first = users.value.find((user) => user.name === selectedUser.value)?.name || users.value[0]?.name || ''; await Promise.all([loadOverview(), first ? loadAccount(first) : Promise.resolve()]); }
   catch (error) { errorMessage.value = detailOf(error); } finally { loading.value = false; }
+}
+async function loadOverview(): Promise<void> {
+  const generation = ++overviewGeneration;
+  overviewLoading.value = true;
+  try {
+    const response = await apiFetch<OverviewResponse>(`${apiBase}/overview`, { cache: 'no-store' });
+    if (generation !== overviewGeneration) return;
+    overviewAccounts.value = (response.accounts || []).map((account) => ({ ...account, display_name: overviewDisplayName(account.name) }));
+    overviewRefreshMinutes.value = Number(response.refresh_minutes || 15);
+    overviewMessage.value = '';
+  } catch (error) {
+    if (generation !== overviewGeneration) return;
+    overviewAccounts.value = overviewAccounts.value.map((account) => ({ ...account, stale: true }));
+    overviewMessage.value = detailOf(error);
+  } finally {
+    if (generation === overviewGeneration) overviewLoading.value = false;
+  }
+}
+async function refreshOverviewNow(): Promise<void> {
+  try {
+    await apiFetch(`${apiBase}/overview/refresh`, { method: 'POST', body: '{}' });
+    overviewMessage.value = t('profitSweep.refreshQueued');
+    await loadOverview();
+  } catch (error) { overviewMessage.value = detailOf(error); }
+}
+async function updateOverviewMinutes(value: number): Promise<void> {
+  if (![5, 15, 30, 60].includes(value)) return;
+  try {
+    const response = await apiFetch<{ refresh_minutes?: number }>(`${apiBase}/overview/settings`, { method: 'PUT', body: JSON.stringify({ refresh_minutes: value }) });
+    overviewRefreshMinutes.value = Number(response.refresh_minutes || value);
+  } catch (error) { overviewMessage.value = detailOf(error); }
 }
 async function savePolicy(): Promise<void> {
   if (!selectedUser.value) return; actionPending.value = true;
@@ -153,7 +209,8 @@ async function reconcile(intent: SweepIntent): Promise<void> {
 }
 
 useAiPageContext({ id: 'profit-sweep', getContext: () => ({ section: activeTab.value, entities: currentUser.value ? [{ kind: 'exchange_account', name: currentUser.value.name }] : [] }) });
-onMounted(() => { document.title = t('profitSweep.title'); void loadPage(); });
+onMounted(() => { document.title = t('profitSweep.title'); void loadPage(); overviewTimer = window.setInterval(() => { if (activeTab.value === 'overview') void loadOverview(); }, 30000); });
+onBeforeUnmount(() => { if (overviewTimer !== undefined) window.clearInterval(overviewTimer); overviewGeneration += 1; });
 </script>
 
 <template>
@@ -165,7 +222,31 @@ onMounted(() => { document.title = t('profitSweep.title'); void loadPage(); });
       <main class="min-w-0 flex-1 overflow-auto"><header class="mb-4 flex flex-wrap items-start justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-label text-accent">{{ currentUser?.exchange || t('profitSweep.selectAccount') }}</p><h1 class="text-2xl font-bold text-primary">{{ currentUser?.name || t('profitSweep.title') }}</h1><p class="text-sm text-secondary">{{ t('profitSweep.readOnlyHint') }}</p></div><div class="flex flex-wrap gap-2"><Button variant="warning" :disabled="!selectedUser || actionPending" @click="setMode('dry')"><PbIcon :icon="PhChartLineUp" /> {{ t('profitSweep.enableDry') }}</Button><Button :disabled="!selectedUser || actionPending" @click="evaluate"><PbIcon :icon="PhPlay" /> {{ t('profitSweep.evaluate') }}</Button><Button variant="danger" :disabled="!record || actionPending" @click="deletePolicy"><PbIcon :icon="PhTrash" /> {{ t('profitSweep.delete') }}</Button></div></header><p v-if="!selectedUser" class="mb-3 rounded-md border border-border-subtle bg-card p-3 text-sm text-secondary">{{ t('profitSweep.selectAccountHint') }}</p><p v-if="errorMessage" class="mb-3 rounded-md border border-danger/30 bg-danger/10 p-3 text-sm text-danger">{{ errorMessage }}</p><p v-if="statusMessage" class="mb-3 rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success">{{ statusMessage }}</p>
         <div v-if="selectedUser" class="grid gap-3 sm:grid-cols-4"><article v-for="item in [{ label: t('profitSweep.mode'), value: modeLabel(currentMode) }, { label: t('profitSweep.due'), value: preview?.decision && typeof preview.decision === 'object' ? (preview.decision as Record<string, unknown>).sweep_due : statusState?.sweep_due }, { label: t('profitSweep.lastPnl'), value: statusState?.last_net_pnl }, { label: t('profitSweep.highWatermark'), value: statusState?.high_watermark }]" :key="item.label" class="rounded-lg border border-border-default bg-panel p-3"><p class="text-xs uppercase tracking-label text-muted">{{ item.label }}</p><p class="mt-1 truncate text-lg font-semibold text-primary">{{ formatValue(item.value) }}</p></article></div>
         <nav class="mt-4 flex gap-1 overflow-x-auto rounded-lg border border-border-default bg-panel p-1"><button v-for="tab in (['overview', 'policy', 'schedule', 'vault', 'journal'] as const)" :key="tab" type="button" class="rounded-md px-3 py-2 text-sm font-semibold text-secondary hover:bg-card hover:text-primary" :class="activeTab === tab ? 'bg-accent/15 text-primary' : ''" @click="activeTab = tab">{{ t(`profitSweep.tabs.${tab}`) }}</button></nav>
-        <section v-if="activeTab === 'overview'" class="mt-4 grid gap-4 lg:grid-cols-2"><div class="rounded-lg border border-border-default bg-panel p-4"><h2 class="text-lg font-semibold text-primary">{{ t('profitSweep.overview') }}</h2><dl class="mt-3 grid grid-cols-2 gap-px overflow-hidden rounded border border-border-default bg-border-default"><template v-for="item in [{ label: t('profitSweep.exchange'), value: currentUser?.exchange }, { label: t('profitSweep.accountType'), value: currentUser?.is_vault ? t('profitSweep.vaultType') : t('profitSweep.standardType') }, { label: t('profitSweep.policyState'), value: record ? t('profitSweep.saved') : t('profitSweep.notSaved') }, { label: t('profitSweep.nextRun'), value: statusState?.next_run_at ? formatTime(statusState.next_run_at) : '-' }]" :key="item.label"><div class="bg-field p-3"><dt class="text-xs uppercase text-muted">{{ item.label }}</dt><dd class="mt-1 break-words font-semibold text-primary">{{ formatValue(item.value) }}</dd></div></template></dl></div><div v-if="preview" class="rounded-lg border border-warning/30 bg-warning/5 p-4"><h2 class="text-lg font-semibold text-warning">{{ t('profitSweep.preview') }}</h2><p class="mt-2 text-sm text-secondary">{{ t('profitSweep.previewHint') }}</p><dl class="mt-3 grid grid-cols-2 gap-3 text-sm"><template v-for="key in ['amount', 'reason', 'net_pnl', 'high_watermark', 'sweep_due', 'effective_cap']" :key="key"><div><dt class="text-xs uppercase text-muted">{{ previewLabel(key) }}</dt><dd class="font-semibold text-primary">{{ formatValue((preview.decision as Record<string, unknown> | undefined)?.[key]) }}</dd></div></template></dl></div></section>
+        <OverviewPanel
+          :accounts="overviewAccounts"
+          :loading="overviewLoading"
+          :anonymized="overviewAnonymized"
+          :refresh-minutes="overviewRefreshMinutes"
+          :message="overviewMessage"
+          :format-amount="formatAmount"
+          :format-time="formatTime"
+          @select="loadAccount"
+          @refresh="refreshOverviewNow"
+          @update:anonymized="setOverviewAnonymized"
+          @update:refresh-minutes="updateOverviewMinutes"
+        />
+        <section v-if="preview" class="mt-4 rounded-lg border border-warning/30 bg-warning/5 p-4">
+          <h2 class="text-lg font-semibold text-warning">{{ t('profitSweep.preview') }}</h2>
+          <p class="mt-2 text-sm text-secondary">{{ t('profitSweep.previewHint') }}</p>
+          <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+            <template v-for="key in ['amount', 'reason', 'net_pnl', 'high_watermark', 'sweep_due', 'effective_cap']" :key="key">
+              <div>
+                <dt class="text-xs uppercase text-muted">{{ previewLabel(key) }}</dt>
+                <dd class="font-semibold text-primary">{{ formatValue((preview.decision as Record<string, unknown> | undefined)?.[key]) }}</dd>
+              </div>
+            </template>
+          </dl>
+        </section>
         <section v-else-if="['policy', 'schedule', 'vault'].includes(activeTab)" class="mt-4 rounded-lg border border-border-default bg-panel p-4">
           <div class="mb-4 flex items-center justify-between">
             <div>

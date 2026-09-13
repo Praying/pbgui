@@ -183,6 +183,7 @@ export function useArchive(options: UseArchiveOptions): ArchiveStore {
   const notify = options.notify;
 
   const archives = ref<ArchiveSummary[]>([]);
+  let archiveListGeneration = 0;
   const ownArchiveName = ref('');
   const results = ref<BacktestResultItem[]>([]);
   const optimizeConfigs = ref<ArchiveOptimizeConfigItem[]>([]);
@@ -255,8 +256,10 @@ export function useArchive(options: UseArchiveOptions): ArchiveStore {
   /* ── archive list (:8825-8888) ── */
 
   async function loadArchives(): Promise<void> {
+    const generation = archiveListGeneration;
     try {
       const data = await archiveFetch('/archives');
+      if (generation !== archiveListGeneration) return;
       archives.value = Array.isArray(data.archives) ? (data.archives as ArchiveSummary[]) : [];
       const own = archives.value.find((archive) => archive && archive.is_own);
       if (own) ownArchiveName.value = own.name; // :8829 — keep the last known own name
@@ -353,6 +356,7 @@ export function useArchive(options: UseArchiveOptions): ArchiveStore {
       else scheduleArchivesListRefresh();
       return;
     }
+    archiveListGeneration += 1;
     archives.value = []; // invalidate so the next visit fetches fresh (:1315)
   }
 

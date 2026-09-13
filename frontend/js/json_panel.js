@@ -6,16 +6,6 @@
 
   var STYLE_ID = 'pbgui-json-panel-styles';
 
-  /* i18n helper: translate via PBGuiI18n, fall back to the English original. */
-  function _jsonT(key, fallback) {
-    var F = window.PBGuiI18n;
-    if (F && typeof F.t === 'function') {
-      var v = F.t(key);
-      return v === key ? fallback : v;
-    }
-    return fallback;
-  }
-
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -49,7 +39,7 @@
     ensureStyles();
     var wrapId = String(options.wrapId || '');
     var preId = String(options.preId || '');
-    var title = escapeHtml(options.title || _jsonT('shared.json.config', 'Config'));
+    var title = escapeHtml(options.title || 'Config');
     var closeOnclick = String(options.closeOnclick || '');
     var resizeHandler = String(options.resizeHandler || '');
     var collapsedHeight = String(options.collapsedHeight || '400px');
@@ -59,15 +49,15 @@
       +   '<div class="json-panel-hdr">'
       +     '<span class="json-panel-title">' + title + '</span>'
       +     '<div class="json-panel-actions">'
-      +       '<button class="json-panel-btn" onclick="copyJsonPanel(\'' + escapeHtml(preId) + '\',this)" title="' + _jsonT('shared.json.copyToClipboard', 'Copy to clipboard') + '">' + _jsonT('shared.json.copy', '⧉ Copy') + '</button>'
-      +       '<button class="json-panel-btn json-panel-expand-btn" onclick="expandJsonPanel(\'' + escapeHtml(preId) + '\',this)" title="' + _jsonT('shared.json.expandCollapse', 'Expand / Collapse') + '">' + _jsonT('shared.json.expand', '⬌ Expand') + '</button>'
-      +       '<button class="json-panel-btn" onclick="zoomJsonPanel(\'' + escapeHtml(preId) + '\',-1)" title="' + _jsonT('shared.json.smallerFont', 'Smaller font') + '">A−</button>'
-      +       '<button class="json-panel-btn" onclick="zoomJsonPanel(\'' + escapeHtml(preId) + '\',1)" title="' + _jsonT('shared.json.largerFont', 'Larger font') + '">A+</button>'
+      +       '<button class="json-panel-btn" onclick="copyJsonPanel(\'' + escapeHtml(preId) + '\',this)" title="Copy to clipboard">⧉ Copy</button>'
+      +       '<button class="json-panel-btn json-panel-expand-btn" onclick="expandJsonPanel(\'' + escapeHtml(preId) + '\',this)" title="Expand / Collapse">⬌ Expand</button>'
+      +       '<button class="json-panel-btn" onclick="zoomJsonPanel(\'' + escapeHtml(preId) + '\',-1)" title="Smaller font">A−</button>'
+      +       '<button class="json-panel-btn" onclick="zoomJsonPanel(\'' + escapeHtml(preId) + '\',1)" title="Larger font">A+</button>'
       +     '</div>'
-      +     (closeOnclick ? '<button class="json-panel-close" onclick="' + closeOnclick + '" title="' + _jsonT('common.close', 'Close') + '">✕</button>' : '')
+      +     (closeOnclick ? '<button class="json-panel-close" onclick="' + closeOnclick + '" title="Close">✕</button>' : '')
       +   '</div>'
       +   '<pre id="' + escapeHtml(preId) + '" class="json-pre" data-collapsed-height="' + escapeHtml(collapsedHeight) + '">' + initialText + '</pre>'
-      +   (resizeHandler ? '<div class="chart-resize-handle" onmousedown="' + resizeHandler + '" title="' + _jsonT('shared.json.dragToResize', 'Drag to resize') + '"><span></span></div>' : '')
+      +   (resizeHandler ? '<div class="chart-resize-handle" onmousedown="' + resizeHandler + '" title="Drag to resize"><span></span></div>' : '')
       + '</div>';
   }
 
@@ -75,7 +65,7 @@
     var wrap = pre && pre.closest ? pre.closest('.json-panel-wrap') : null;
     var btn = wrap ? wrap.querySelector('.json-panel-expand-btn') : null;
     if (!btn) return;
-    btn.textContent = pre.dataset.expanded === '1' ? _jsonT('shared.json.collapse', '⬍ Collapse') : _jsonT('shared.json.expand', '⬌ Expand');
+    btn.textContent = pre.dataset.expanded === '1' ? '⬍ Collapse' : '⬌ Expand';
   }
 
   function setExpanded(preId, expanded) {
@@ -87,61 +77,15 @@
     syncExpandButton(el);
   }
 
-  function setCopyButtonStatus(btn, text, original) {
-    if (!btn) return;
-    btn.textContent = text;
-    window.setTimeout(function() { btn.textContent = original; }, 1400);
-  }
-
-  function fallbackCopyText(text) {
-    if (!document.body || typeof document.execCommand !== 'function') return false;
-    var active = document.activeElement;
-    var textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', '');
-    textarea.style.position = 'fixed';
-    textarea.style.inset = '0 auto auto -9999px';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.focus();
-    textarea.select();
-    var copied = false;
-    try {
-      copied = document.execCommand('copy');
-    } catch (_) {
-      copied = false;
-    }
-    textarea.remove();
-    if (active && typeof active.focus === 'function') active.focus();
-    return copied;
-  }
-
-  function writeClipboardText(text) {
-    var clipboard = navigator.clipboard;
-    if (clipboard && typeof clipboard.writeText === 'function') {
-      try {
-        return Promise.resolve(clipboard.writeText(text)).catch(function() {
-          if (fallbackCopyText(text)) return;
-          throw new Error('Clipboard write failed');
-        });
-      } catch (_) {
-        if (fallbackCopyText(text)) return Promise.resolve();
-        return Promise.reject(new Error('Clipboard write failed'));
-      }
-    }
-    if (fallbackCopyText(text)) return Promise.resolve();
-    return Promise.reject(new Error('Clipboard API unavailable'));
-  }
-
   function copyJsonPanel(preId, btn) {
     var el = document.getElementById(preId);
-    if (!el) return Promise.resolve();
-    var original = btn ? btn.textContent : '';
-    return writeClipboardText(el.textContent || '').then(function() {
-      setCopyButtonStatus(btn, _jsonT('shared.json.copied', '✓ Copied'), original);
-    }).catch(function() {
-      setCopyButtonStatus(btn, _jsonT('shared.json.copyFailed', 'Copy failed'), original);
-    });
+    if (!el) return;
+    navigator.clipboard.writeText(el.textContent || '').then(function() {
+      if (!btn) return;
+      var original = btn.textContent;
+      btn.textContent = '✓ Copied';
+      window.setTimeout(function() { btn.textContent = original; }, 1400);
+    }).catch(function() {});
   }
 
   function expandJsonPanel(preId, btn) {

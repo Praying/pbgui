@@ -1,5 +1,9 @@
 # PBv7 Run
 
+Backup-retention responses preserve values typed while loading. Repeated conversion clicks are ignored while conversion runs; pending Delete and forced-mode actions cannot close a later dialog. Dynamic Ignore previews refresh when tags change.
+
+If an existing instance configuration cannot be loaded, the editor reports the error and disables Save. Reload the editor after resolving the load error.
+
 The **PBv7 Run** page manages your live Passivbot v7 trading instances.
 Each instance ties together an API-key user, a bot configuration, and a target VPS.
 
@@ -117,3 +121,5 @@ Dynamic Ignore is a target-host capability, not a per-instance or per-VPS key se
 ### Disable a bot
 1. Open the instance with **Edit** → set **Enabled On** to `disabled` → **💾 Save**
 2. The bot is stopped on the VPS automatically
+
+JSON Import asks for confirmation before replacing the current editor values, including unsaved changes. Cancel keeps the editor draft and import text intact.

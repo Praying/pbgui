@@ -3,23 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
-<script src="/app/i18n.js?v=1"></script>
   <title>Coin Data - PBGui</title>
-  <link rel="stylesheet" href="/app/src/styles/tokens.css">
-    <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
+  <link rel="stylesheet" href="/app/css/sidebar.css?v=4">
   <script src="/app/js/sidebar_resize.js?v=1"></script>
   <style>
     :root {
-      --bg:var(--bg-page);
-      --bg2:var(--bg-panel);
-      --bg3:var(--bg-elevated);
-      --border:var(--border-default);
-      --text:var(--text-primary);
-      --text-dim:var(--text-secondary);
-      --accent:#72a0ee;
-      --blue:var(--accent);
-      --font:var(--font-family);
+      --bg: #0e1117;
+      --bg2: #1a202c;
+      --bg3: #252d3d;
+      --border: #2d3748;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --accent: #63b3ed;
+      --blue: #1d4ed8;
+      --font: 'Segoe UI', system-ui, sans-serif;
       --fs-xs: 11px;
       --fs-sm: 13px;
       --fs-base: 14px;
@@ -40,9 +37,9 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
-      background: var(--bg-page, #10141d);
-      color: var(--text-primary, #e8ecf4);
-      font-family: 'Segoe UI', system-ui, sans-serif, 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+      background: #0e1117;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       font-size: var(--fs-base);
     }
 
@@ -54,8 +51,8 @@
 
     #sidebar {
       flex-shrink: 0;
-      background: var(--bg-page, #10141d);
-      border-right: 1px solid var(--border-subtle, #262f45);
+      background: #0e1117;
+      border-right: 1px solid #1e2736;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -79,17 +76,17 @@
       font-size: var(--fs-sm);
       text-transform: uppercase;
       letter-spacing: 0.09em;
-      color: #717b8e;
+      color: #64748b;
       font-weight: 700;
     }
 
     .sb-count {
       font-size: var(--fs-sm);
-      background: var(--bg-card, #1b2231);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #1a202c;
+      border: 1px solid #2d3748;
       border-radius: 999px;
       padding: 0.1rem 0.5rem;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       font-weight: 600;
     }
 
@@ -98,12 +95,12 @@
       flex-direction: column;
       gap: 0.35rem;
       padding: 0.2rem 0.1rem 0.6rem;
-      border-bottom: 1px solid var(--border-subtle, #262f45);
+      border-bottom: 1px solid #1e2736;
     }
 
     .sb-sep {
       border: none;
-      border-top: 1px solid var(--border-subtle, #262f45);
+      border-top: 1px solid #1e2736;
       margin: 4px 0;
     }
 
@@ -115,9 +112,9 @@
       width: 100%;
       padding: 0.42rem 0.65rem;
       border-radius: 6px;
-      border: 1px solid var(--border-default, #333f5c);
-      background: var(--bg-card, #1b2231);
-      color: var(--text-secondary, #a3adc2);
+      border: 1px solid #2d3748;
+      background: #1a202c;
+      color: #94a3b8;
       font-size: var(--fs-base);
       cursor: pointer;
       transition: background 0.12s, border-color 0.12s, color 0.12s;
@@ -125,24 +122,24 @@
     }
 
     .sb-btn:hover {
-      background: #232b3d;
-      color: var(--text-primary, #e8ecf4);
-      border-color: var(--text-disabled, #4d5c82);
+      background: #252d3d;
+      color: #e2e8f0;
+      border-color: #4a5568;
     }
 
     .sb-btn.primary {
-      background: #3f63ad;
-      border-color: #3f63ad;
-      color: #f2f5fb;
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+      color: #fff;
     }
 
-    .sb-btn.primary:hover { background: #72a0ee; }
-    .sb-btn.info { color: var(--accent-soft, #96b9f4); border-color: rgb(var(--accent-soft-rgb, 141 185 248) / 0.28); }
-    .sb-btn.info:hover { background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.1); }
+    .sb-btn.primary:hover { background: #2563eb; }
+    .sb-btn.info { color: #63b3ed; border-color: rgba(99, 179, 237, 0.28); }
+    .sb-btn.info:hover { background: rgba(99, 179, 237, 0.1); }
     .sb-btn.active {
       background: rgba(38, 166, 154, 0.12);
-      border-color: var(--accent);
-      color: var(--success, #46c88f);
+      border-color: #26a69a;
+      color: #26a69a;
     }
     .sb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -153,8 +150,8 @@
     }
 
     .meta-card {
-      background: #16141d;
-      border: 1px solid #1b2231;
+      background: #121826;
+      border: 1px solid #1f2a3a;
       border-radius: 10px;
       padding: 0.75rem 0.8rem;
     }
@@ -163,25 +160,25 @@
       font-size: var(--fs-xs);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: #717b8e;
+      color: #64748b;
       margin-bottom: 0.25rem;
     }
 
     .meta-value {
       font-size: var(--fs-md);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       font-weight: 600;
     }
 
     .meta-subtle {
       font-size: var(--fs-sm);
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
     }
 
     #action-status {
       min-height: 40px;
       font-size: var(--fs-sm);
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       line-height: 1.5;
     }
 
@@ -214,17 +211,17 @@
       gap: 0.35rem;
       padding: 0.28rem 0.6rem;
       border-radius: 999px;
-      background: var(--bg-card, #1b2231);
-      border: 1px solid var(--border-default, #333f5c);
-      color: var(--text-primary, #e8ecf4);
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      color: #cbd5e0;
       font-size: var(--fs-sm);
       white-space: nowrap;
     }
 
     .warning-box {
-      border: 1px solid rgb(var(--warning-rgb, 227 164 74) / 0.35);
-      background: rgb(var(--warning-rgb, 227 164 74) / 0.08);
-      color: #e0a458;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.08);
+      color: #fbbf24;
       border-radius: 10px;
       padding: 0.8rem 0.95rem;
       font-size: var(--fs-sm);
@@ -232,9 +229,9 @@
     }
 
     .panel {
-      border: 1px solid #1b2231;
+      border: 1px solid #1f2a3a;
       border-radius: 12px;
-      background: var(--surface-sidebar, #131826);
+      background: #111827;
       overflow: hidden;
     }
 
@@ -306,14 +303,14 @@
       justify-content: space-between;
       gap: var(--sp-sm);
       padding: var(--sp-sm) var(--sp-md);
-      border-bottom: 1px solid var(--border-default, #333f5c);
-      background: #10141d;
+      border-bottom: 1px solid #2d3748;
+      background: #131b2b;
     }
 
     .panel-title {
       font-size: var(--fs-md);
       font-weight: 600;
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
     }
 
     .panel-title-wrap {
@@ -326,7 +323,7 @@
 
     .panel-meta {
       font-size: var(--fs-sm);
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -350,7 +347,7 @@
 
     .field-label {
       font-size: var(--fs-sm);
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       font-weight: 600;
     }
 
@@ -362,9 +359,9 @@
       height: var(--input-h);
       padding: 0 0.75rem;
       border-radius: 8px;
-      border: 1px solid var(--border-default, #333f5c);
-      background: var(--bg-card, #1b2231);
-      color: var(--text-primary, #e8ecf4);
+      border: 1px solid #2d3748;
+      background: #1a202c;
+      color: #e2e8f0;
       font-size: var(--fs-base);
       outline: none;
     }
@@ -373,7 +370,7 @@
     .stepper-input:focus,
     select:focus,
     .multi-summary:focus {
-      border-color: var(--text-disabled, #4d5c82);
+      border-color: #4a5568;
     }
 
     .num-stepper {
@@ -403,9 +400,9 @@
       width: 28px;
       height: var(--input-h);
       flex-shrink: 0;
-      background: #232b3d;
-      border: 1px solid var(--border-default, #333f5c);
-      color: var(--text-primary, #e8ecf4);
+      background: #252d3d;
+      border: 1px solid #2d3748;
+      color: #e2e8f0;
       font-size: 16px;
       line-height: 1;
       cursor: pointer;
@@ -427,9 +424,9 @@
     }
 
     .stepper-btn:hover {
-      background: var(--accent-soft, #96b9f4);
-      color: #0c1018;
-      border-color: var(--accent-soft, #96b9f4);
+      background: #63b3ed;
+      color: #0b1220;
+      border-color: #63b3ed;
     }
 
     .stepper-btn:active {
@@ -459,30 +456,30 @@
     .btn {
       height: var(--btn-h);
       padding: 0 0.9rem;
-      border: 1px solid var(--border-default, #333f5c);
+      border: 1px solid #2d3748;
       border-radius: 8px;
-      background: var(--bg-card, #1b2231);
-      color: var(--text-primary, #e8ecf4);
+      background: #1a202c;
+      color: #cbd5e0;
       font-size: var(--fs-base);
       cursor: pointer;
       transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
 
     .btn:hover {
-      background: #232b3d;
-      border-color: var(--text-disabled, #4d5c82);
-      color: #f2f5fb;
+      background: #252d3d;
+      border-color: #4a5568;
+      color: #fff;
     }
 
     .btn.secondary {
-      color: var(--accent-soft, #96b9f4);
-      border-color: rgb(var(--accent-soft-rgb, 141 185 248) / 0.25);
+      color: #63b3ed;
+      border-color: rgba(99, 179, 237, 0.25);
     }
 
     .ms-wrap {
-      border: 1px solid var(--border-default, #333f5c);
+      border: 1px solid #2d3748;
       border-radius: 8px;
-      background: var(--surface-sidebar, #131826);
+      background: #111827;
       min-height: var(--input-h);
       padding: 2px 4px;
       display: flex;
@@ -494,7 +491,7 @@
     }
 
     .ms-wrap:focus-within {
-      border-color: var(--text-disabled, #4d5c82);
+      border-color: #4a5568;
     }
 
     .field .ms-wrap input.ms-input {
@@ -503,7 +500,7 @@
       padding: 0;
       height: 24px;
       width: auto;
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       font-size: var(--fs-base);
       outline: none;
       min-width: 80px;
@@ -512,30 +509,30 @@
     }
 
     .field .ms-wrap input.ms-input::placeholder {
-      color: #717b8e;
+      color: #64748b;
     }
 
     .ms-tag {
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      background: var(--bg-card, #1b2231);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #1a202c;
+      border: 1px solid #2d3748;
       border-radius: 4px;
       padding: 1px 6px;
       font-size: var(--fs-xs);
-      color: var(--text-primary, #e8ecf4);
+      color: #cbd5e0;
     }
 
     .ms-tag .ms-x {
       cursor: pointer;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       font-size: var(--fs-xs);
       line-height: 1;
     }
 
     .ms-tag .ms-x:hover {
-      color: #e5615c;
+      color: #f87171;
     }
 
     .ms-dropdown {
@@ -543,14 +540,14 @@
       top: calc(100% + 6px);
       left: 0;
       right: 0;
-      background: var(--surface-sidebar, #131826);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #111827;
+      border: 1px solid #2d3748;
       border-radius: 10px;
       max-height: 280px;
       overflow-y: auto;
       z-index: 120;
       display: none;
-      box-shadow: 0 14px 36px rgba(5, 8, 14, 0.45);
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
     }
 
     .ms-dropdown.open { display: block; }
@@ -558,17 +555,17 @@
     .ms-option {
       padding: 6px 8px;
       font-size: var(--fs-sm);
-      color: var(--text-primary, #e8ecf4);
+      color: #cbd5e0;
       cursor: pointer;
     }
 
     .ms-option:hover,
     .ms-option.highlighted {
-      background: var(--bg-card, #1b2231);
+      background: #1a202c;
     }
 
     .ms-option.selected {
-      color: var(--accent-soft, #96b9f4);
+      color: #63b3ed;
     }
 
     .quote-picker {
@@ -615,13 +612,13 @@
       min-height: 280px;
       max-width: calc(100vw - 2rem);
       max-height: calc(100vh - 88px);
-      border: 1px solid rgb(var(--accent-soft-rgb, 141 185 248) / 0.2);
-      background: rgb(var(--bg-page-rgb, 19 17 20) / 0.7);
+      border: 1px solid rgba(99, 179, 237, 0.2);
+      background: rgba(15, 23, 42, 0.7);
       border-radius: 12px;
       overflow: hidden;
       flex-direction: column;
       z-index: 125;
-      box-shadow: 0 24px 56px rgba(5, 8, 14, 0.38);
+      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.38);
       backdrop-filter: blur(12px);
     }
 
@@ -633,7 +630,7 @@
       justify-content: space-between;
       gap: var(--sp-sm);
       padding: 0.85rem 1rem;
-      border-bottom: 1px solid rgb(var(--accent-soft-rgb, 141 185 248) / 0.16);
+      border-bottom: 1px solid rgba(99, 179, 237, 0.16);
       flex-shrink: 0;
       cursor: move;
       user-select: none;
@@ -654,9 +651,9 @@
       min-height: var(--btn-h);
       padding: 0 var(--sp-md);
       border-radius: 6px;
-      border: 1px solid rgb(var(--accent-soft-rgb, 141 185 248) / 0.28);
-      background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.08);
-      color: var(--accent-soft, #96b9f4);
+      border: 1px solid rgba(99, 179, 237, 0.28);
+      background: rgba(99, 179, 237, 0.08);
+      color: #63b3ed;
       font-size: var(--fs-base);
       font-weight: 600;
       text-decoration: none;
@@ -664,15 +661,15 @@
     }
 
     .details-link:hover {
-      background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.16);
-      border-color: rgb(var(--accent-soft-rgb, 141 185 248) / 0.45);
-      color: #96b9f4;
+      background: rgba(99, 179, 237, 0.16);
+      border-color: rgba(99, 179, 237, 0.45);
+      color: #bfdbfe;
     }
 
     .details-title {
       font-size: var(--fs-md);
       font-weight: 700;
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
     }
 
     .details-close {
@@ -683,18 +680,18 @@
       height: 28px;
       padding: 0;
       border-radius: 6px;
-      border: 1px solid var(--border-default, #333f5c);
-      background: var(--bg-card, #1b2231);
-      color: var(--text-secondary, #a3adc2);
+      border: 1px solid #2d3748;
+      background: #1a202c;
+      color: #94a3b8;
       font-size: var(--fs-md);
       cursor: pointer;
       transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
 
     .details-close:hover {
-      background: #232b3d;
-      border-color: var(--text-disabled, #4d5c82);
-      color: var(--text-primary, #e8ecf4);
+      background: #252d3d;
+      border-color: #4a5568;
+      color: #e2e8f0;
     }
 
     .details-grid {
@@ -720,14 +717,14 @@
 
     .kv-label {
       font-size: var(--fs-xs);
-      color: #717b8e;
+      color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
 
     .kv-value {
       font-size: var(--fs-base);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -811,11 +808,11 @@
 
     .notice-box {
       grid-column: 1 / -1;
-      border: 1px solid rgb(var(--warning-rgb, 227 164 74) / 0.28);
-      background: rgb(var(--warning-rgb, 227 164 74) / 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      background: rgba(245, 158, 11, 0.08);
       border-radius: 10px;
       padding: 0.75rem 0.9rem;
-      color: #ecc381;
+      color: #fcd34d;
       font-size: var(--fs-sm);
       line-height: 1.55;
       white-space: pre-wrap;
@@ -827,8 +824,8 @@
       padding: var(--sp-sm) var(--sp-md);
       font-size: var(--fs-sm);
       font-weight: 600;
-      color: var(--text-primary, #e8ecf4);
-      background: #10141d;
+      color: #e2e8f0;
+      background: #131b2b;
       border-bottom: 1px solid transparent;
       user-select: none;
     }
@@ -849,7 +846,7 @@
       transition: transform 0.12s;
     }
     details.panel[open] > summary::before { transform: rotate(90deg); }
-    details.panel[open] > summary { border-bottom-color: var(--border-default, #333f5c); }
+    details.panel[open] > summary { border-bottom-color: #2d3748; }
 
     .summary-title {
       display: inline-flex;
@@ -882,7 +879,7 @@
 
     .summary-field-label {
       font-size: var(--fs-sm);
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       white-space: nowrap;
     }
 
@@ -895,7 +892,7 @@
       flex: 1 1 auto;
       min-height: 0;
       scrollbar-width: thin;
-      scrollbar-color: #4d5c82 var(--surface-sidebar, #131826);
+      scrollbar-color: #475569 #111827;
     }
 
     .table-wrap::-webkit-scrollbar {
@@ -904,17 +901,17 @@
     }
 
     .table-wrap::-webkit-scrollbar-track {
-      background: var(--surface-sidebar, #131826);
+      background: #111827;
     }
 
     .table-wrap::-webkit-scrollbar-thumb {
-      background: #4d5c82;
+      background: #475569;
       border-radius: 999px;
-      border: 2px solid var(--surface-sidebar, #131826);
+      border: 2px solid #111827;
     }
 
     .table-wrap::-webkit-scrollbar-thumb:hover {
-      background: #717b8e;
+      background: #64748b;
     }
 
     table {
@@ -927,8 +924,8 @@
       position: sticky;
       top: 0;
       z-index: 2;
-      background: #10141d;
-      color: var(--text-secondary, #a3adc2);
+      background: #0f172a;
+      color: #94a3b8;
       font-size: var(--fs-base);
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -936,17 +933,17 @@
       text-align: left;
       padding: 0.48rem 0.6rem;
       line-height: 1.05;
-      border-bottom: 1px solid #1b2231;
+      border-bottom: 1px solid #1f2a3a;
       white-space: nowrap;
     }
 
     th.sortable { cursor: pointer; }
-    th.sortable:hover { color: var(--text-primary, #e8ecf4); }
+    th.sortable:hover { color: #e2e8f0; }
 
     td {
       padding: 0.28rem 0.6rem;
-      border-bottom: 1px solid #1b2231;
-      color: #96b9f4;
+      border-bottom: 1px solid #1f2a3a;
+      color: #dbe4ee;
       font-size: var(--fs-md);
       line-height: 1.08;
       vertical-align: middle;
@@ -978,21 +975,21 @@
     }
 
     .badge.ok {
-      background: rgb(var(--success-rgb, 63 186 111) / 0.15);
+      background: rgba(38, 166, 154, 0.15);
       border-color: rgba(38, 166, 154, 0.3);
-      color: #96b9f4;
+      color: #5eead4;
     }
 
     .badge.dim {
-      background: rgb(163, 173, 194, 0.12);
-      border-color: rgb(163, 173, 194, 0.2);
-      color: var(--text-primary, #e8ecf4);
+      background: rgba(148, 163, 184, 0.12);
+      border-color: rgba(148, 163, 184, 0.2);
+      color: #cbd5e0;
     }
 
     .badge.warn {
-      background: rgb(var(--warning-rgb, 227 164 74) / 0.14);
-      border-color: rgb(var(--warning-rgb, 227 164 74) / 0.28);
-      color: #ecc381;
+      background: rgba(245, 158, 11, 0.14);
+      border-color: rgba(245, 158, 11, 0.28);
+      color: #fcd34d;
     }
 
     .tags-cell {
@@ -1012,9 +1009,9 @@
       max-width: 82px;
       padding: 0.02rem 0.34rem;
       border-radius: 999px;
-      background: rgb(163, 173, 194, 0.12);
-      border: 1px solid rgb(163, 173, 194, 0.16);
-      color: var(--text-primary, #e8ecf4);
+      background: rgba(148, 163, 184, 0.12);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      color: #cbd5e0;
       font-size: var(--fs-xs);
       line-height: 1;
       overflow: hidden;
@@ -1025,7 +1022,7 @@
     .empty-state {
       padding: 2rem 1rem;
       text-align: center;
-      color: #717b8e;
+      color: #64748b;
       font-size: var(--fs-md);
     }
 
@@ -1048,9 +1045,9 @@
       min-width: 280px;
       padding: 1rem 1.1rem;
       border-radius: 12px;
-      border: 1px solid var(--border-default, #333f5c);
-      background: var(--surface-sidebar, #131826);
-      box-shadow: 0 20px 60px rgba(5, 8, 14, 0.45);
+      border: 1px solid #2d3748;
+      background: #111827;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
       display: grid;
       gap: var(--sp-sm);
       text-align: center;
@@ -1077,9 +1074,9 @@
       width: 100%;
       height: 10px;
       border-radius: 999px;
-      background: #1c1927;
-      border: 1px solid var(--border-default, #333f5c);
-      box-shadow: inset 0 1px 2px rgb(var(--bg-page-rgb, 19 17 20) / 0.45);
+      background: #1a2232;
+      border: 1px solid #2d3748;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.45);
     }
 
     .busy-progress-row {
@@ -1093,8 +1090,8 @@
       inset: 1px auto 1px 1px;
       width: 0%;
       border-radius: 999px;
-      background: linear-gradient(90deg, #333f5c, var(--accent-soft, #96b9f4) 55%, var(--accent-soft, #96b9f4));
-      box-shadow: 0 0 18px rgb(var(--accent-soft-rgb, 141 185 248) / 0.35);
+      background: linear-gradient(90deg, #2c5282, #63b3ed 55%, #90cdf4);
+      box-shadow: 0 0 18px rgba(99, 179, 237, 0.35);
       transition: width 0.18s ease;
     }
 
@@ -1103,18 +1100,18 @@
       text-align: right;
       font-size: var(--fs-sm);
       font-weight: 700;
-      color: var(--accent-soft, #96b9f4);
+      color: #63b3ed;
     }
 
     .busy-title {
       font-size: var(--fs-md);
       font-weight: 700;
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
     }
 
     .busy-subtle {
       font-size: var(--fs-sm);
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
     }
 
     #help-ovl {
@@ -1128,10 +1125,10 @@
       height: min(700px, 90vh);
       min-width: 480px;
       min-height: 300px;
-      background: #10141d;
-      border: 1px solid var(--border-default, #333f5c);
+      background: #131b2b;
+      border: 1px solid #2d3748;
       border-radius: 12px;
-      box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9);
       flex-direction: column;
       overflow: hidden;
       resize: both;
@@ -1162,15 +1159,15 @@
       align-items: center;
       justify-content: space-between;
       padding: 0.85rem 1.1rem 0.85rem 1.25rem;
-      border-bottom: 1px solid var(--border-subtle, #262f45);
+      border-bottom: 1px solid #1e2736;
       flex-shrink: 0;
-      background: var(--surface-sidebar, #131826);
+      background: #111827;
     }
 
     .ovl-header-title {
       font-size: var(--fs-md);
       font-weight: 700;
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -1187,7 +1184,7 @@
     .ovl-close {
       background: transparent;
       border: none;
-      color: #717b8e;
+      color: #64748b;
       font-size: var(--fs-lg);
       cursor: pointer;
       padding: 0.2rem 0.35rem;
@@ -1197,13 +1194,13 @@
     }
 
     .ovl-close:hover {
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       background: rgba(255, 255, 255, 0.06);
     }
 
     .lang-pill {
       display: flex;
-      border: 1px solid var(--border-default, #333f5c);
+      border: 1px solid #2d3748;
       border-radius: 6px;
       overflow: hidden;
       flex-shrink: 0;
@@ -1212,7 +1209,7 @@
     .lang-pill button {
       background: transparent;
       border: none;
-      color: #717b8e;
+      color: #64748b;
       font-size: var(--fs-xs);
       font-weight: 600;
       letter-spacing: 0.05em;
@@ -1222,13 +1219,13 @@
     }
 
     .lang-pill button.active {
-      background: #333f5c;
-      color: var(--accent-soft, #96b9f4);
+      background: #1e3a5f;
+      color: #63b3ed;
     }
 
     .lang-pill button:hover:not(.active) {
       background: rgba(255, 255, 255, 0.04);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
     }
 
     #help-body {
@@ -1241,31 +1238,31 @@
       width: 230px;
       min-width: 170px;
       flex-shrink: 0;
-      border-right: 1px solid var(--border-subtle, #262f45);
+      border-right: 1px solid #1e2736;
       overflow-y: auto;
       padding: 0.5rem 0;
-      background: var(--bg-page, #10141d);
+      background: #0e1117;
     }
 
     #help-toc-filter {
       width: calc(100% - 1.2rem);
       margin: 0 0.6rem 0.4rem;
-      background: var(--bg-card, #1b2231);
-      color: var(--text-primary, #e8ecf4);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #1a202c;
+      color: #e2e8f0;
+      border: 1px solid #2d3748;
       border-radius: 5px;
       padding: 0.35rem 0.5rem;
       font-size: var(--fs-sm);
       outline: none;
     }
 
-    #help-toc-filter:focus { border-color: var(--text-disabled, #4d5c82); }
-    #help-toc-filter::placeholder { color: var(--text-disabled, #4d5c82); }
+    #help-toc-filter:focus { border-color: #4a5568; }
+    #help-toc-filter::placeholder { color: #4a5568; }
 
     .toc-item {
       display: block;
       padding: 0.42rem 0.9rem;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       font-size: var(--fs-sm);
       cursor: pointer;
       border-left: 3px solid transparent;
@@ -1276,14 +1273,14 @@
     }
 
     .toc-item:hover {
-      background: #171c29;
-      color: var(--text-primary, #e8ecf4);
+      background: #1a2030;
+      color: #e2e8f0;
     }
 
     .toc-item.active {
-      border-left-color: var(--accent-soft, #96b9f4);
-      color: var(--accent-soft, #96b9f4);
-      background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.07);
+      border-left-color: #63b3ed;
+      color: #63b3ed;
+      background: rgba(99, 179, 237, 0.07);
       font-weight: 600;
     }
 
@@ -1292,44 +1289,44 @@
       overflow-y: auto;
       padding: 1.5rem 1.8rem;
       line-height: 1.7;
-      color: var(--text-primary, #e8ecf4);
+      color: #cbd5e0;
       font-size: var(--fs-base);
     }
 
     #help-content h1 {
       font-size: var(--fs-xl);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       margin: 0 0 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border-subtle, #262f45);
+      border-bottom: 1px solid #1e2736;
     }
 
     #help-content h2 {
       font-size: var(--fs-lg);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       margin: 1.5rem 0 0.5rem;
     }
 
     #help-content h3 {
       font-size: var(--fs-md);
-      color: var(--text-primary, #e8ecf4);
+      color: #cbd5e0;
       margin: 1.1rem 0 0.35rem;
     }
 
     #help-content p { margin: 0.5rem 0; }
 
     #help-content a {
-      color: var(--accent-soft, #96b9f4);
+      color: #63b3ed;
       text-decoration: none;
     }
 
     #help-content a:hover { text-decoration: underline; }
-    #help-content strong { color: var(--text-primary, #e8ecf4); }
-    #help-content em { color: var(--text-secondary, #a3adc2); font-style: italic; }
+    #help-content strong { color: #e2e8f0; }
+    #help-content em { color: #94a3b8; font-style: italic; }
 
     #help-content code {
-      background: var(--bg-card, #1b2231);
-      color: var(--warning-soft, #ecc381);
+      background: #1a202c;
+      color: #f6ad55;
       padding: 0.1em 0.35em;
       border-radius: 3px;
       font-size: 0.85em;
@@ -1337,8 +1334,8 @@
     }
 
     #help-content pre {
-      background: var(--bg-page, #10141d);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #0e1117;
+      border: 1px solid #2d3748;
       border-radius: 6px;
       padding: 0.9rem 1rem;
       overflow-x: auto;
@@ -1348,7 +1345,7 @@
     #help-content pre code {
       background: none;
       padding: 0;
-      color: var(--text-secondary, var(--text-secondary, #a3adc2));
+      color: #a0aec0;
     }
 
     #help-content ul,
@@ -1360,12 +1357,12 @@
     #help-content li { margin: 0.2rem 0; }
 
     #help-content blockquote {
-      border-left: 3px solid var(--accent-soft, #96b9f4);
+      border-left: 3px solid #63b3ed;
       margin: 0.75rem 0;
       padding: 0.4rem 0.9rem;
-      background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.05);
+      background: rgba(99, 179, 237, 0.05);
       border-radius: 0 5px 5px 0;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
     }
 
     #help-content table {
@@ -1376,21 +1373,21 @@
 
     #help-content th,
     #help-content td {
-      border: 1px solid var(--border-default, #333f5c);
+      border: 1px solid #2d3748;
       padding: 0.4rem 0.7rem;
       text-align: left;
       font-size: var(--fs-sm);
     }
 
     #help-content th {
-      background: var(--bg-card, #1b2231);
-      color: var(--text-primary, #e8ecf4);
+      background: #1a202c;
+      color: #e2e8f0;
       font-weight: 600;
     }
 
     #help-content hr {
       border: none;
-      border-top: 1px solid var(--border-subtle, #262f45);
+      border-top: 1px solid #1e2736;
       margin: 1rem 0;
     }
 
@@ -1401,7 +1398,7 @@
     }
 
     .help-loading {
-      color: var(--text-disabled, #4d5c82);
+      color: #4a5568;
       font-style: italic;
       padding: 2rem;
       text-align: center;
@@ -1421,7 +1418,7 @@
         min-width: 0;
         max-width: none;
         border-right: none;
-        border-bottom: 1px solid var(--border-subtle, #262f45);
+        border-bottom: 1px solid #1e2736;
       }
       #sidebar-resize {
         display: none;
@@ -1481,22 +1478,21 @@
     <div class="ovl-panel">
       <div id="help-drag-handle"></div>
       <div class="ovl-header">
-        <div class="ovl-header-title" data-i18n-html="market.helpGuideTitle">&#128218; Guide &amp; Help</div>
+        <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
         <div class="ovl-header-actions">
           <div class="lang-pill">
             <button id="help-lang-en" class="active">EN</button>
             <button id="help-lang-de">DE</button>
-            <button id="help-lang-zh" title="中文 (简体中文)">中文</button>
           </div>
           <button class="ovl-close" id="help-close">&#x2715;</button>
         </div>
       </div>
       <div id="help-body">
         <div id="help-toc">
-          <input id="help-toc-filter" type="text" placeholder="Filter topics..." data-i18n-placeholder="market.helpFilterPlaceholder" autocomplete="off">
+          <input id="help-toc-filter" type="text" placeholder="Filter topics..." autocomplete="off">
           <div id="help-toc-list"></div>
         </div>
-        <div id="help-content"><div class="help-loading" data-i18n="market.helpSelectTopic">Select a topic from the left.</div></div>
+        <div id="help-content"><div class="help-loading">Select a topic from the left.</div></div>
       </div>
     </div>
   </div>
@@ -1505,20 +1501,20 @@
     <aside id="sidebar">
       <div id="sidebar-sticky">
         <div id="sidebar-header">
-          <span class="sb-title" data-i18n="market.coinData">Coin Data</span>
+          <span class="sb-title">Coin Data</span>
           <span class="sb-count" id="sb-count">0 rows</span>
         </div>
 
         <div id="sidebar-toolbar">
-          <button class="sb-btn primary" id="btn-refresh-exchange" data-i18n="market.refreshSelectedExchange">Refresh Selected Exchange</button>
-          <button class="sb-btn info" id="btn-refresh-all" data-i18n="market.refreshAllExchanges">Refresh All Exchanges</button>
-          <button class="sb-btn info" id="btn-refresh-cmc" data-i18n="market.refreshCmcSelected">Refresh CMC + Selected Exchange</button>
-          <button class="sb-btn info" id="btn-refresh-cmc-all" data-i18n="market.refreshCmcAll">Refresh CMC + All Exchanges</button>
+          <button class="sb-btn primary" id="btn-refresh-exchange">Refresh Selected Exchange</button>
+          <button class="sb-btn info" id="btn-refresh-all">Refresh All Exchanges</button>
+          <button class="sb-btn info" id="btn-refresh-cmc">Refresh CMC + Selected Exchange</button>
+          <button class="sb-btn info" id="btn-refresh-cmc-all">Refresh CMC + All Exchanges</button>
           <hr class="sb-sep">
-          <button class="sb-btn" id="btn-view-main" data-i18n="market.matchedSymbols">Matched Symbols</button>
-          <button class="sb-btn" id="btn-view-unmatched" data-i18n="market.cmcUnmatched">CMC Unmatched</button>
-          <button class="sb-btn" id="btn-view-hip3" data-i18n="market.hip3Symbols">HIP-3 Symbols</button>
-          <button class="sb-btn" id="btn-only-cpt" data-i18n="market.onlyCopyTrading">Only Copy Trading</button>
+          <button class="sb-btn" id="btn-view-main">Matched Symbols</button>
+          <button class="sb-btn" id="btn-view-unmatched">CMC Unmatched</button>
+          <button class="sb-btn" id="btn-view-hip3">HIP-3 Symbols</button>
+          <button class="sb-btn" id="btn-only-cpt">Only Copy Trading</button>
         </div>
       </div>
       <div id="sidebar-resize"></div>
@@ -1531,7 +1527,7 @@
         <div class="panel-body">
           <div class="filters-grid">
             <label class="field">
-              <span class="field-label" data-i18n="market.exchange">Exchange</span>
+              <span class="field-label">Exchange</span>
               <select id="filter-exchange"></select>
             </label>
             <label class="field">
@@ -1543,9 +1539,9 @@
               <input id="filter-vol-mcap" class="stepper-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
             </label>
             <div class="field">
-              <span class="field-label" data-i18n="market.tags">Tags</span>
+              <span class="field-label">Tags</span>
               <div class="ms-wrap" id="tag-filter-wrap">
-                <input class="ms-input" id="tag-filter-input" placeholder="Select tags..." data-i18n-placeholder="market.selectTags" autocomplete="off">
+                <input class="ms-input" id="tag-filter-input" placeholder="Select tags..." autocomplete="off">
                 <div class="ms-dropdown" id="tag-options"></div>
               </div>
             </div>
@@ -1554,7 +1550,7 @@
               <div class="quote-picker" id="quote-picker" role="group" aria-labelledby="quote-filter-label"></div>
             </div>
             <div class="filters-reset">
-              <button class="btn" id="btn-reset-filters" data-i18n="market.reset">Reset</button>
+              <button class="btn" id="btn-reset-filters">Reset</button>
             </div>
           </div>
         </div>
@@ -1570,17 +1566,17 @@
         <div class="details-resize-handle corner corner-bottom-right" data-resize="bottom-right"></div>
         <div class="details-resize-handle corner corner-bottom-left" data-resize="bottom-left"></div>
         <div class="details-head">
-          <div class="details-title" id="selected-title" data-i18n="market.selectedSymbol">Selected symbol</div>
+          <div class="details-title" id="selected-title">Selected symbol</div>
           <div class="details-actions">
-            <a class="details-link" id="selected-cmc-link" href="#" target="_blank" rel="noopener noreferrer" title="Open on CoinMarketCap" data-i18n-title="market.openOnCoinMarketCap" hidden data-i18n="market.openCmc">Open CMC</a>
-            <button class="details-close" id="btn-close-details" type="button" title="Close details" data-i18n-title="market.closeDetails">&#x2715;</button>
+            <a class="details-link" id="selected-cmc-link" href="#" target="_blank" rel="noopener noreferrer" title="Open on CoinMarketCap" hidden>Open CMC</a>
+            <button class="details-close" id="btn-close-details" type="button" title="Close details">&#x2715;</button>
           </div>
         </div>
         <div class="details-grid" id="selected-grid"></div>
       </section>
 
       <details class="panel" id="unmatched-panel" open>
-        <summary id="unmatched-summary" data-i18n="market.cmcUnmatchedSummary">CMC unmatched</summary>
+        <summary id="unmatched-summary">CMC unmatched</summary>
         <div class="panel-body">
           <div class="table-wrap">
             <table class="coin-unmatched-table">
@@ -1593,27 +1589,27 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th class="sortable" data-table="unmatched" data-key="coin" data-i18n="market.coin">Coin</th>
-                  <th class="sortable" data-table="unmatched" data-key="symbol" data-i18n="market.symbol">Symbol</th>
-                  <th class="sortable" data-table="unmatched" data-key="base" data-i18n="market.base">Base</th>
-                  <th class="sortable" data-table="unmatched" data-key="quote" data-i18n="market.quote">Quote</th>
-                  <th class="sortable" data-table="unmatched" data-key="ccxt_symbol" data-i18n="market.ccxtSymbol">CCXT Symbol</th>
+                  <th class="sortable" data-table="unmatched" data-key="coin">Coin</th>
+                  <th class="sortable" data-table="unmatched" data-key="symbol">Symbol</th>
+                  <th class="sortable" data-table="unmatched" data-key="base">Base</th>
+                  <th class="sortable" data-table="unmatched" data-key="quote">Quote</th>
+                  <th class="sortable" data-table="unmatched" data-key="ccxt_symbol">CCXT Symbol</th>
                 </tr>
               </thead>
               <tbody id="unmatched-body"></tbody>
             </table>
           </div>
-          <div class="empty-state hidden" id="unmatched-empty" data-i18n="market.noUnmatchedSymbols">No unmatched CMC symbols for the selected exchange.</div>
+          <div class="empty-state hidden" id="unmatched-empty">No unmatched CMC symbols for the selected exchange.</div>
         </div>
       </details>
 
       <section class="panel" id="main-panel">
         <div class="panel-head">
           <div class="panel-title-wrap">
-            <div class="panel-title" id="main-panel-title" data-i18n="market.filteredSymbols">Filtered symbols</div>
-            <span class="panel-meta" id="main-panel-meta" data-i18n="market.loadingExchangeStatus">Loading exchange status...</span>
+            <div class="panel-title" id="main-panel-title">Filtered symbols</div>
+            <span class="panel-meta" id="main-panel-meta">Loading exchange status...</span>
           </div>
-          <span class="pill" id="main-sort-pill" data-i18n="market.sortedByMarketCap">Sorted by market cap</span>
+          <span class="pill" id="main-sort-pill">Sorted by market cap</span>
         </div>
         <div class="table-wrap">
           <table class="coin-main-table">
@@ -1633,36 +1629,36 @@
             </colgroup>
             <thead>
               <tr>
-                <th class="sortable" data-table="main" data-key="coin" data-i18n="market.coin">Coin</th>
-                <th class="sortable" data-table="main" data-key="ccxt_symbol" data-i18n="market.ccxtSymbol">CCXT Symbol</th>
-                <th class="sortable" data-table="main" data-key="base" data-i18n="market.base">Base</th>
-                <th class="sortable" data-table="main" data-key="quote" data-i18n="market.quote">Quote</th>
-                <th class="sortable" data-table="main" data-key="copy_trading" data-i18n="market.cpt">CPT</th>
-                <th class="sortable" data-table="main" data-key="cmc_rank" data-i18n="market.rank">Rank</th>
-                <th class="sortable" data-table="main" data-key="price" data-i18n="market.price">Price</th>
-                <th class="sortable" data-table="main" data-key="market_cap" data-i18n="market.marketCapLabel">Market Cap</th>
-                <th class="sortable" data-table="main" data-key="volume_24h" data-i18n="market.volume24h">Volume 24h</th>
+                <th class="sortable" data-table="main" data-key="coin">Coin</th>
+                <th class="sortable" data-table="main" data-key="ccxt_symbol">CCXT Symbol</th>
+                <th class="sortable" data-table="main" data-key="base">Base</th>
+                <th class="sortable" data-table="main" data-key="quote">Quote</th>
+                <th class="sortable" data-table="main" data-key="copy_trading">CPT</th>
+                <th class="sortable" data-table="main" data-key="cmc_rank">Rank</th>
+                <th class="sortable" data-table="main" data-key="price">Price</th>
+                <th class="sortable" data-table="main" data-key="market_cap">Market Cap</th>
+                <th class="sortable" data-table="main" data-key="volume_24h">Volume 24h</th>
                 <th class="sortable" data-table="main" data-key="vol_mcap">vol/mcap</th>
-                <th data-i18n="market.tags">Tags</th>
-                <th data-i18n="market.notice">Notice</th>
+                <th>Tags</th>
+                <th>Notice</th>
               </tr>
             </thead>
             <tbody id="main-body"></tbody>
           </table>
         </div>
-        <div class="empty-state hidden" id="main-empty" data-i18n="market.noSymbolsMatch">No symbols match the current filters.</div>
+        <div class="empty-state hidden" id="main-empty">No symbols match the current filters.</div>
       </section>
 
       <details class="panel" id="hip3-panel">
         <summary id="hip3-summary">
           <span class="summary-title">
-            <span class="summary-title-text" id="hip3-summary-title" data-i18n="market.hip3SummaryTitle">HIP-3 symbols</span>
+            <span class="summary-title-text" id="hip3-summary-title">HIP-3 symbols</span>
           </span>
           <span class="summary-inline-actions">
             <label class="summary-field hidden" id="field-hip3-dex">
-              <span class="summary-field-label" data-i18n="market.dex">DEX</span>
+              <span class="summary-field-label">DEX</span>
               <select id="filter-hip3-dex">
-                <option value="" data-i18n="market.allDexes">All DEXes</option>
+                <option value="">All DEXes</option>
               </select>
             </label>
           </span>
@@ -1682,20 +1678,20 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th class="sortable" data-table="hip3" data-key="dex" data-i18n="market.dex">DEX</th>
-                  <th class="sortable" data-table="hip3" data-key="coin" data-i18n="market.coin">Coin</th>
-                  <th class="sortable" data-table="hip3" data-key="ccxt_symbol" data-i18n="market.ccxtSymbol">CCXT Symbol</th>
-                  <th class="sortable" data-table="hip3" data-key="quote" data-i18n="market.quote">Quote</th>
-                  <th class="sortable" data-table="hip3" data-key="price" data-i18n="market.price">Price</th>
-                  <th class="sortable" data-table="hip3" data-key="volume_24h" data-i18n="market.volume24h">Volume 24h</th>
-                  <th class="sortable" data-table="hip3" data-key="copy_trading" data-i18n="market.cpt">CPT</th>
-                  <th data-i18n="market.notice">Notice</th>
+                  <th class="sortable" data-table="hip3" data-key="dex">DEX</th>
+                  <th class="sortable" data-table="hip3" data-key="coin">Coin</th>
+                  <th class="sortable" data-table="hip3" data-key="ccxt_symbol">CCXT Symbol</th>
+                  <th class="sortable" data-table="hip3" data-key="quote">Quote</th>
+                  <th class="sortable" data-table="hip3" data-key="price">Price</th>
+                  <th class="sortable" data-table="hip3" data-key="volume_24h">Volume 24h</th>
+                  <th class="sortable" data-table="hip3" data-key="copy_trading">CPT</th>
+                  <th>Notice</th>
                 </tr>
               </thead>
               <tbody id="hip3-body"></tbody>
             </table>
           </div>
-          <div class="empty-state hidden" id="hip3-empty" data-i18n="market.noHip3Symbols">No HIP-3 symbols match the current state.</div>
+          <div class="empty-state hidden" id="hip3-empty">No HIP-3 symbols match the current state.</div>
         </div>
       </details>
     </main>
@@ -1703,14 +1699,14 @@
 
   <div id="busy-overlay">
     <div class="busy-card">
-      <div class="busy-title" id="busy-title" data-i18n="market.working">Working...</div>
+      <div class="busy-title" id="busy-title">Working...</div>
       <div class="busy-progress-row">
         <div class="busy-progress" aria-hidden="true">
           <div class="busy-progress-fill" id="busy-progress-fill"></div>
         </div>
         <div class="busy-progress-label" id="busy-progress-label">0%</div>
       </div>
-      <div class="busy-subtle" id="busy-subtle" data-i18n="market.pleaseWait">Please wait.</div>
+      <div class="busy-subtle" id="busy-subtle">Please wait.</div>
       <button type="button" class="busy-dismiss" id="btn-busy-dismiss">Dismiss to background</button>
     </div>
   </div>
@@ -1797,237 +1793,12 @@
     };
     var helpDefaultTopic = 'coin data';
 
-    function mdToHtml(md) {
-      var lines = md.split('\n');
-      var html = '';
-      var inPre = false;
-      var preBuf = '';
-      var inUl = false;
-      var inOl = false;
+    window._openCoinDataHelp = function () {
+      if (!window.PBGuiSharedHelp || typeof window.PBGuiSharedHelp.open !== 'function') return;
+      window.PBGuiSharedHelp.open(helpDefaultTopic);
+    };
+    window.PBGUI_HELP_OPENER = window._openCoinDataHelp;
 
-      function flushList() {
-        if (inUl) { html += '</ul>'; inUl = false; }
-        if (inOl) { html += '</ol>'; inOl = false; }
-      }
-
-      function inlineFormat(text) {
-        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-        text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-        text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-        text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
-        text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        text = text.replace(/_(.+?)_/g, '<em>$1</em>');
-        return text;
-      }
-
-      for (var i = 0; i < lines.length; i += 1) {
-        var line = lines[i];
-        if (line.match(/^```/)) {
-          if (!inPre) {
-            flushList();
-            inPre = true;
-            preBuf = '';
-          } else {
-            html += '<pre><code>' + preBuf.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code></pre>';
-            inPre = false;
-          }
-          continue;
-        }
-        if (inPre) {
-          preBuf += (preBuf ? '\n' : '') + line;
-          continue;
-        }
-        if (line.match(/^---+$/) || line.match(/^\*\*\*+$/)) {
-          flushList();
-          html += '<hr>';
-          continue;
-        }
-        var heading = line.match(/^(#{1,6})\s+(.*)/);
-        if (heading) {
-          flushList();
-          var level = heading[1].length;
-          html += '<h' + level + '>' + inlineFormat(heading[2]) + '</h' + level + '>';
-          continue;
-        }
-        if (line.match(/^>\s?/)) {
-          flushList();
-          html += '<blockquote>' + inlineFormat(line.replace(/^>\s?/, '')) + '</blockquote>';
-          continue;
-        }
-        var ulMatch = line.match(/^[\-*]\s+(.*)/);
-        if (ulMatch) {
-          if (!inUl) {
-            if (inOl) { html += '</ol>'; inOl = false; }
-            html += '<ul>';
-            inUl = true;
-          }
-          html += '<li>' + inlineFormat(ulMatch[1]) + '</li>';
-          continue;
-        }
-        var olMatch = line.match(/^\d+\.\s+(.*)/);
-        if (olMatch) {
-          if (!inOl) {
-            if (inUl) { html += '</ul>'; inUl = false; }
-            html += '<ol>';
-            inOl = true;
-          }
-          html += '<li>' + inlineFormat(olMatch[1]) + '</li>';
-          continue;
-        }
-        if (line.trim() === '') {
-          flushList();
-          html += '<p></p>';
-          continue;
-        }
-        flushList();
-        html += '<p>' + inlineFormat(line) + '</p>';
-      }
-      flushList();
-      return html;
-    }
-
-    function renderHelpToc() {
-      var helpFilter = document.getElementById('help-toc-filter');
-      var helpTocList = document.getElementById('help-toc-list');
-      var filterValue = helpFilter.value.trim().toLowerCase();
-      helpTocList.innerHTML = '';
-      helpTopics.forEach(function (topic, index) {
-        if (filterValue && topic.title.toLowerCase().indexOf(filterValue) === -1) return;
-        var item = document.createElement('div');
-        item.className = 'toc-item' + (index === helpSel ? ' active' : '');
-        item.textContent = topic.title;
-        item.addEventListener('click', function () {
-          loadHelpTopic(index);
-        });
-        helpTocList.appendChild(item);
-      });
-    }
-
-    function loadHelpTopic(index) {
-      var helpContent = document.getElementById('help-content');
-      helpSel = index;
-      renderHelpToc();
-      var topic = helpTopics[index];
-      if (!topic) return;
-      helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('common.loading') + '</div>';
-      fetch('/api/help/content?file=' + encodeURIComponent(topic.file) + '&lang=' + helpLang, { credentials: 'same-origin' })
-        .then(function (response) { return response.json(); })
-        .then(function (payload) {
-          helpContent.innerHTML = mdToHtml(payload.content || '');
-          helpContent.scrollTop = 0;
-        })
-        .catch(function () {
-          helpContent.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('market.helpFailedContent') + '</div>';
-        });
-    }
-
-    function loadHelpIndex(keyword) {
-      var helpTocList = document.getElementById('help-toc-list');
-      helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('common.loading') + '</div>';
-      fetch('/api/help/index?lang=' + helpLang, { credentials: 'same-origin' })
-        .then(function (response) { return response.json(); })
-        .then(function (data) {
-          helpTopics = data || [];
-          renderHelpToc();
-          if (!helpTopics.length) {
-            document.getElementById('help-content').innerHTML = '<div class="help-loading">' + PBGuiI18n.t('market.helpNoTopics') + '</div>';
-            return;
-          }
-          var startIdx = 0;
-          if (keyword) {
-            var search = keyword.toLowerCase();
-            for (var i = 0; i < helpTopics.length; i += 1) {
-              if (helpTopics[i].title.toLowerCase().indexOf(search) !== -1 ||
-                  (helpTopics[i].file && helpTopics[i].file.toLowerCase().indexOf(search.replace(/\s+/g, '_')) !== -1)) {
-                startIdx = i;
-                break;
-              }
-            }
-          }
-          loadHelpTopic(startIdx);
-        })
-        .catch(function () {
-          helpTocList.innerHTML = '<div class="help-loading">' + PBGuiI18n.t('market.helpFailedTopics') + '</div>';
-        });
-    }
-
-    function initHelpOverlay() {
-      var helpOvl = document.getElementById('help-ovl');
-      var helpFilter = document.getElementById('help-toc-filter');
-      var helpDragHandle = document.getElementById('help-drag-handle');
-      var helpLangEN = document.getElementById('help-lang-en');
-      var helpLangDE = document.getElementById('help-lang-de');
-      var helpLangZH = document.getElementById('help-lang-zh');
-      var helpClose = document.getElementById('help-close');
-
-      helpFilter.addEventListener('input', renderHelpToc);
-      helpLangEN.addEventListener('click', function () {
-        if (helpLang === 'EN') return;
-        helpLang = 'EN';
-        helpLangEN.classList.add('active');
-        helpLangDE.classList.remove('active');
-        helpLangZH.classList.remove('active');
-        loadHelpIndex(helpDefaultTopic);
-      });
-      helpLangDE.addEventListener('click', function () {
-        if (helpLang === 'DE') return;
-        helpLang = 'DE';
-        helpLangDE.classList.add('active');
-        helpLangEN.classList.remove('active');
-        helpLangZH.classList.remove('active');
-        loadHelpIndex(helpDefaultTopic);
-      });
-      helpLangZH.addEventListener('click', function () {
-        if (helpLang === 'ZH') return;
-        helpLang = 'ZH';
-        helpLangZH.classList.add('active');
-        helpLangEN.classList.remove('active');
-        helpLangDE.classList.remove('active');
-        loadHelpIndex(helpDefaultTopic);
-      });
-      helpClose.addEventListener('click', function () {
-        helpOvl.classList.remove('visible');
-      });
-      document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-          helpOvl.classList.remove('visible');
-        }
-      });
-
-      (function () {
-        var startX;
-        var startY;
-        var boxLeft;
-        var boxTop;
-        helpDragHandle.addEventListener('mousedown', function (event) {
-          event.preventDefault();
-          var rect = helpOvl.getBoundingClientRect();
-          helpOvl.style.transform = 'none';
-          helpOvl.style.left = rect.left + 'px';
-          helpOvl.style.top = rect.top + 'px';
-          startX = event.clientX;
-          startY = event.clientY;
-          boxLeft = rect.left;
-          boxTop = rect.top;
-          function onMove(moveEvent) {
-            helpOvl.style.left = (boxLeft + moveEvent.clientX - startX) + 'px';
-            helpOvl.style.top = (boxTop + moveEvent.clientY - startY) + 'px';
-          }
-          function onUp() {
-            document.removeEventListener('mousemove', onMove);
-            document.removeEventListener('mouseup', onUp);
-          }
-          document.addEventListener('mousemove', onMove);
-          document.addEventListener('mouseup', onUp);
-        });
-      }());
-
-      window._openCoinDataHelp = function () {
-        window.location.href = '/api/help/main_page?topic=27_coin_data';
-      };
-      window.PBGUI_HELP_OPENER = window._openCoinDataHelp;
-    }
     function getUiStorageKey() {
       return 'coin-data-ui-state';
     }
@@ -2138,8 +1909,8 @@
 
     function showBusy(title, subtle) {
       stopBusyPolling();
-      document.getElementById('busy-title').textContent = title || PBGuiI18n.t('market.working');
-      updateBusyProgress(0, subtle || PBGuiI18n.t('market.pleaseWait'));
+      document.getElementById('busy-title').textContent = title || 'Working...';
+      updateBusyProgress(0, subtle || 'Please wait.');
       document.getElementById('busy-overlay').classList.add('visible');
     }
 
@@ -2156,7 +1927,7 @@
     function setActionStatus(message, isError) {
       var node = document.getElementById('action-status');
       if (!node) return;
-      node.textContent = message || PBGuiI18n.t('market.ready');
+      node.textContent = message || 'Ready.';
       node.style.color = isError === 'warning' ? '#fbbf24' : (isError ? '#fca5a5' : '#94a3b8');
     }
 
@@ -2266,10 +2037,13 @@
     }
 
     function loadState() {
+      var runtimeI18n = typeof PBGuiI18n === 'undefined'
+        ? { t: function(key, params) { return key === 'market.failedLoadCoinData' ? 'Failed to load Coin Data: ' + (params && params.message || '') : key; } }
+        : PBGuiI18n;
       var requestSeq = ++loadStateRequestSeq;
       if (loadStateController) loadStateController.abort();
       loadStateController = new AbortController();
-      setActionStatus(PBGuiI18n.t('market.loadingCoinData'), false);
+      setActionStatus('Loading Coin Data...', false);
       return fetch(buildStateUrl(), { cache: 'no-store', credentials: 'same-origin', signal: loadStateController.signal })
         .then(function (response) {
           if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -2279,13 +2053,13 @@
           if (requestSeq !== loadStateRequestSeq) return;
           applyServerState(data);
           var pool = data.cmc_pool || {};
-          var reason = pool.error || pool.reason || PBGuiI18n.t('market.noCmcKey');
-          setActionStatus(pool.ready ? PBGuiI18n.t('market.ready') : reason + PBGuiI18n.t('market.cachedCoinDataAvailable'), !pool.ready);
+          var reason = pool.error || pool.reason || 'No active materialized CoinMarketCap key is available.';
+          setActionStatus(pool.ready ? 'Ready.' : reason + ' Cached Coin Data remains available.', !pool.ready);
         })
         .catch(function (error) {
           if (requestSeq !== loadStateRequestSeq || error.name === 'AbortError') return;
-          setActionStatus(PBGuiI18n.t('market.failedLoadCoinData', { message: error.message }), true);
-          throw error;
+          setActionStatus('Failed to load Coin Data: ' + error.message, true);
+          return null;
         });
     }
 
@@ -2294,7 +2068,7 @@
         .then(function (response) {
           if (!response.ok) {
             return response.json().catch(function () { return {}; }).then(function (payload) {
-              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || PBGuiI18n.t('market.refreshRejected')));
+              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || 'Refresh rejected'));
             });
           }
           return response.json();
@@ -2302,7 +2076,7 @@
         .then(function (payload) {
           var job = payload.job || {};
           if (busyJobId !== jobId) return;
-          updateBusyProgress(Number(job.percent || 0), job.message || PBGuiI18n.t('market.working'));
+          updateBusyProgress(Number(job.percent || 0), job.message || 'Working...');
           if (job.status === 'completed' || job.status === 'partial') {
             if (job.state) applyServerState(job.state);
             setActionStatus(refreshJobMessage(job, okFallback), job.status === 'partial' ? 'warning' : false);
@@ -2311,7 +2085,7 @@
           }
           if (job.status === 'error') {
             if (job.state) applyServerState(job.state);
-            setActionStatus(refreshJobMessage(job, PBGuiI18n.t('market.refreshFailed')), true);
+            setActionStatus(refreshJobMessage(job, 'Refresh failed'), true);
             hideBusy();
           }
         });
@@ -2337,7 +2111,7 @@
     }
 
     function runRefresh(path, busyTitle, okFallback) {
-      showBusy(busyTitle, PBGuiI18n.t('market.startingRefresh'));
+      showBusy(busyTitle, 'Starting refresh...');
       setActionStatus(busyTitle + '...', false);
       return fetch(API_BASE + path, {
         method: 'POST',
@@ -2348,14 +2122,14 @@
         .then(function (response) {
           if (!response.ok) {
             return response.json().catch(function () { return {}; }).then(function (payload) {
-              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || PBGuiI18n.t('market.refreshRejected')));
+              throw new Error(response.status + ': ' + (payload.detail || payload.reason || response.statusText || 'Refresh rejected'));
             });
           }
           return response.json();
         })
         .then(function (payload) {
           if (!payload.job_id) {
-            throw new Error(PBGuiI18n.t('market.refreshNoJobId'));
+            throw new Error('Refresh job did not return a job id');
           }
           startRefreshJobPolling(payload.job_id, okFallback);
         })
@@ -2383,15 +2157,15 @@
       var currentCount = serverState.counts.main || 0;
       if (uiState.activeView === 'unmatched') currentCount = serverState.counts.unmatched_visible || 0;
       if (uiState.activeView === 'hip3') currentCount = getFilteredHip3Rows().length;
-      document.getElementById('sb-count').textContent = PBGuiI18n.t('market.rowsCount', { count: currentCount });
+      document.getElementById('sb-count').textContent = currentCount + ' rows';
       var pool = serverState.cmc_pool || {};
       var hasMaterializedKey = pool.ready === true && Number(pool.active_credentials || 0) > 0;
-      var reason = pool.error || pool.reason || PBGuiI18n.t('market.noCmcKey');
+      var reason = pool.error || pool.reason || 'No active materialized CoinMarketCap key is available.';
       ['btn-refresh-cmc', 'btn-refresh-cmc-all'].forEach(function (id) {
         var button = document.getElementById(id);
         button.disabled = !hasMaterializedKey;
         if (hasMaterializedKey) button.removeAttribute('title');
-        else button.title = reason + PBGuiI18n.t('market.cachedCoinDataReadable');
+        else button.title = reason + ' Cached Coin Data remains readable.';
       });
     }
 
@@ -2401,11 +2175,11 @@
       var hip3CountLabel = filters.hip3_dex
         ? (hip3VisibleCount + ' of ' + hip3TotalCount)
         : String(hip3VisibleCount);
-      document.getElementById('btn-view-main').textContent = PBGuiI18n.t('market.matchedSymbolsCount', { count: (serverState.counts.main || 0) });
-      document.getElementById('btn-view-unmatched').textContent = PBGuiI18n.t('market.cmcUnmatchedCount', { count: (serverState.counts.unmatched_visible || 0) });
-      document.getElementById('btn-view-hip3').textContent = PBGuiI18n.t('market.hip3SymbolsCount', { count: hip3CountLabel });
-      document.getElementById('btn-only-cpt').textContent = PBGuiI18n.t('market.onlyCopyTrading');
-      document.getElementById('main-panel-title').textContent = PBGuiI18n.t('market.matchedSymbolsLowerCount', { count: (serverState.counts.main || 0) });
+      document.getElementById('btn-view-main').textContent = 'Matched Symbols (' + (serverState.counts.main || 0) + ')';
+      document.getElementById('btn-view-unmatched').textContent = 'CMC Unmatched (' + (serverState.counts.unmatched_visible || 0) + ')';
+      document.getElementById('btn-view-hip3').textContent = 'HIP-3 Symbols (' + hip3CountLabel + ')';
+      document.getElementById('btn-only-cpt').textContent = 'Only Copy Trading';
+      document.getElementById('main-panel-title').textContent = 'Matched symbols (' + (serverState.counts.main || 0) + ')';
       document.getElementById('main-panel-meta').textContent = serverState.meta.exchange_line + ' | ' + serverState.meta.cmc_line;
       document.getElementById('main-panel-meta').title = [
         serverState.meta.exchange_line_detail || serverState.meta.exchange_line,
@@ -2413,7 +2187,7 @@
       ].filter(Boolean).join(' | ');
       document.getElementById('unmatched-summary').textContent = serverState.sections.unmatched_title;
       document.getElementById('hip3-summary-title').textContent = filters.hip3_dex
-        ? PBGuiI18n.t('market.hip3SymbolsDexCount', { visible: hip3VisibleCount, total: hip3TotalCount, dex: filters.hip3_dex })
+        ? ('HIP-3 symbols (' + hip3VisibleCount + ' of ' + hip3TotalCount + ', DEX: ' + filters.hip3_dex + ')')
         : serverState.sections.hip3_title;
     }
 
@@ -2459,7 +2233,7 @@
       if (!supportsHip3(filters.exchange) || uiState.activeView !== 'hip3') {
         filters.hip3_dex = '';
         field.classList.add('hidden');
-        select.innerHTML = '<option value="">' + PBGuiI18n.t('market.allDexes') + '</option>';
+        select.innerHTML = '<option value="">All DEXes</option>';
         select.disabled = true;
         return;
       }
@@ -2471,7 +2245,7 @@
 
       field.classList.remove('hidden');
       select.disabled = !options.length;
-      select.innerHTML = '<option value="">' + PBGuiI18n.t('market.allDexes') + '</option>' + options.map(function (dex) {
+      select.innerHTML = '<option value="">All DEXes</option>' + options.map(function (dex) {
         var selected = dex === filters.hip3_dex ? ' selected' : '';
         return '<option value="' + escapeHtml(dex) + '"' + selected + '>' + escapeHtml(dex) + '</option>';
       }).join('');
@@ -2484,7 +2258,7 @@
         onAfterRender: function (id, state, renderOpts) {
           if (id !== 'tag-filter-wrap') return;
           var input = document.getElementById('tag-filter-input');
-          if (input) input.placeholder = state.selected.length ? '' : PBGuiI18n.t('market.selectTags');
+          if (input) input.placeholder = state.selected.length ? '' : 'Select tags...';
           filters.tags = tagMsController.getValues(id);
           if (!(renderOpts && renderOpts.silent)) loadState();
         }
@@ -2498,7 +2272,7 @@
       if (!tagMsController || !input) return;
       input.disabled = !tags.length;
       input.value = '';
-      input.placeholder = tags.length ? PBGuiI18n.t('market.selectTags') : PBGuiI18n.t('market.noTagsAvailable');
+      input.placeholder = tags.length ? 'Select tags...' : 'No tags available';
       tagMsController.rebuild('tag-filter-wrap', tags, filters.tags, { silent: true });
     }
 
@@ -2753,13 +2527,13 @@
 
     function noticeBadge(notice) {
       if (!notice) return '<span class="badge dim">-</span>';
-      return '<span class="badge warn" title="' + escapeHtml(notice) + '">' + PBGuiI18n.t('market.notice') + '</span>';
+      return '<span class="badge warn" title="' + escapeHtml(notice) + '">Notice</span>';
     }
 
     function cptBadge(copyTrading) {
       return copyTrading
-        ? '<span class="badge ok">' + PBGuiI18n.t('common.yes') + '</span>'
-        : '<span class="badge dim">' + PBGuiI18n.t('common.no') + '</span>';
+        ? '<span class="badge ok">Yes</span>'
+        : '<span class="badge dim">No</span>';
     }
 
     function renderMainRows() {
@@ -2939,7 +2713,7 @@
       }
 
       card.classList.add('visible');
-      document.getElementById('selected-title').textContent = row.coin || row.symbol || row.ccxt_symbol || PBGuiI18n.t('market.selectedSymbol');
+      document.getElementById('selected-title').textContent = row.coin || row.symbol || row.ccxt_symbol || 'Selected symbol';
 
       if (row.cmc_link) {
         cmcLink.hidden = false;
@@ -2950,22 +2724,22 @@
       }
 
       var fields = [
-        { label: PBGuiI18n.t('market.ccxtSymbol'), value: row.ccxt_symbol || row.symbol || '-' },
-        { label: PBGuiI18n.t('market.base'), value: row.base || '-' },
-        { label: PBGuiI18n.t('market.quote'), value: row.quote || '-' },
-        { label: PBGuiI18n.t('market.cmcId'), value: row.cmc_id == null ? '-' : row.cmc_id },
-        { label: PBGuiI18n.t('market.cmcRank'), value: row.cmc_rank == null ? '-' : row.cmc_rank },
-        { label: PBGuiI18n.t('market.price'), value: formatPrice(row.price) },
-        { label: PBGuiI18n.t('market.marketCapLabel'), value: formatCompact(row.market_cap) },
-        { label: PBGuiI18n.t('market.volume24h'), value: formatCompact(row.volume_24h) },
+        { label: 'CCXT Symbol', value: row.ccxt_symbol || row.symbol || '-' },
+        { label: 'Base', value: row.base || '-' },
+        { label: 'Quote', value: row.quote || '-' },
+        { label: 'CMC ID', value: row.cmc_id == null ? '-' : row.cmc_id },
+        { label: 'CMC Rank', value: row.cmc_rank == null ? '-' : row.cmc_rank },
+        { label: 'Price', value: formatPrice(row.price) },
+        { label: 'Market Cap', value: formatCompact(row.market_cap) },
+        { label: 'Volume 24h', value: formatCompact(row.volume_24h) },
         { label: 'vol/mcap', value: formatRatio(row.vol_mcap) },
-        { label: PBGuiI18n.t('market.contractSize'), value: row.contract_size == null ? '-' : row.contract_size },
-        { label: PBGuiI18n.t('market.minAmount'), value: row.min_amount == null ? '-' : row.min_amount },
-        { label: PBGuiI18n.t('market.minCost'), value: row.min_cost == null ? '-' : row.min_cost },
-        { label: PBGuiI18n.t('market.precisionAmount'), value: row.precision_amount == null ? '-' : row.precision_amount },
-        { label: PBGuiI18n.t('market.maxLeverage'), value: row.max_leverage == null ? '-' : row.max_leverage },
-        { label: PBGuiI18n.t('market.minOrderPrice'), value: row.min_order_price == null ? '-' : row.min_order_price },
-        { label: PBGuiI18n.t('market.tags'), value: (row.tags || []).join(', ') || '-', wide: true, wrap: true }
+        { label: 'Contract Size', value: row.contract_size == null ? '-' : row.contract_size },
+        { label: 'Min Amount', value: row.min_amount == null ? '-' : row.min_amount },
+        { label: 'Min Cost', value: row.min_cost == null ? '-' : row.min_cost },
+        { label: 'Precision Amount', value: row.precision_amount == null ? '-' : row.precision_amount },
+        { label: 'Max Leverage', value: row.max_leverage == null ? '-' : row.max_leverage },
+        { label: 'Min Order Price', value: row.min_order_price == null ? '-' : row.min_order_price },
+        { label: 'Tags', value: (row.tags || []).join(', ') || '-', wide: true, wrap: true }
       ];
 
       grid.innerHTML = fields.map(function (field) {
@@ -2975,7 +2749,7 @@
       }).join('');
 
       if (row.notice) {
-        grid.innerHTML += '<div class="notice-box"><strong>' + PBGuiI18n.t('market.notice') + '</strong><br>' + escapeHtml(row.notice) + '</div>';
+        grid.innerHTML += '<div class="notice-box"><strong>Notice</strong><br>' + escapeHtml(row.notice) + '</div>';
       }
 
       requestAnimationFrame(fitSelectedCardToContent);
@@ -2983,7 +2757,7 @@
 
     function renderSortPill() {
       var state = sortState.main;
-      document.getElementById('main-sort-pill').textContent = PBGuiI18n.t('market.sortedBy', { key: state.key.replace('_', ' '), dir: state.dir });
+      document.getElementById('main-sort-pill').textContent = 'Sorted by ' + state.key.replace('_', ' ') + ' (' + state.dir + ')';
     }
 
     function syncActiveTableViewport() {
@@ -3251,16 +3025,16 @@
       });
 
       document.getElementById('btn-refresh-exchange').addEventListener('click', function () {
-        runRefresh('/refresh/exchange', PBGuiI18n.t('market.refreshingSelectedExchange'), PBGuiI18n.t('market.refreshedSelectedExchange'));
+        runRefresh('/refresh/exchange', 'Refreshing selected exchange...', 'Refreshed selected exchange.');
       });
       document.getElementById('btn-refresh-all').addEventListener('click', function () {
-        runRefresh('/refresh/all', PBGuiI18n.t('market.refreshingAllExchanges'), PBGuiI18n.t('market.allExchangesRefreshed'));
+        runRefresh('/refresh/all', 'Refreshing all exchanges...', 'All exchanges refreshed.');
       });
       document.getElementById('btn-refresh-cmc').addEventListener('click', function () {
-        runRefresh('/refresh/cmc', PBGuiI18n.t('market.refreshingCmcSelected'), PBGuiI18n.t('market.cmcSelectedRefreshed'));
+        runRefresh('/refresh/cmc', 'Refreshing CMC + selected exchange...', 'CoinMarketCap data and the selected exchange refreshed.');
       });
       document.getElementById('btn-refresh-cmc-all').addEventListener('click', function () {
-        runRefresh('/refresh/cmc_all', PBGuiI18n.t('market.refreshingCmcAll'), PBGuiI18n.t('market.cmcAllRefreshed'));
+        runRefresh('/refresh/cmc_all', 'Refreshing CMC + all exchanges...', 'CoinMarketCap data and all exchanges refreshed.');
       });
       document.getElementById('btn-busy-dismiss').addEventListener('click', dismissBusy);
       document.addEventListener('keydown', function (event) {
@@ -3369,9 +3143,8 @@
   </script>
 
   <script>
-    document.title = PBGuiI18n.t('market.coinDataTitle');
     window.PBGUI_NAV_CONFIG = {
-      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('market.coinDataSubtitle') : 'COIN DATA'),
+      subtitle: 'COIN DATA',
       current: 'info_coin_data',
       authenticated: true,
       apiBase: API_BASE,
@@ -3379,8 +3152,7 @@
       serial: PBGUI_SERIAL
     };
   </script>
-  <script src="/app/js/shared_help_overlay.js?v=9"></script>
-  <script src="/app/js/pbgui_icons.js?v=1"></script>
+  <script src="/app/js/shared_help_overlay.js?v=7"></script>
   <script src="/app/pbgui_nav.js?v=%%NAV_HASH%%"></script>
 </body>
 </html>

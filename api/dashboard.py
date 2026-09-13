@@ -1996,6 +1996,16 @@ def set_pending_full(
     return {"status": "ok"}
 
 
+@router.delete("/pending_full")
+def discard_pending_full(
+    name: str = Query(default="", description="Dashboard name (original)"),
+    session: SessionToken = Depends(require_auth),
+) -> dict[str, str]:
+    """Discard an editor draft without changing the saved dashboard."""
+    _pending_full_configs.pop(name, None)
+    return {"status": "ok"}
+
+
 # ---------------------------------------------------------------- /editor_page
 
 @router.get("/editor_page", response_class=HTMLResponse, response_model=None)

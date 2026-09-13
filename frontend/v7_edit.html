@@ -1272,6 +1272,7 @@ var _symbolsAndTagsLoadSeq = 0;
 var _symbolsAndTagsLoadPromise = Promise.resolve();
 var _hostCapabilityGeneration = 0;
 var _hostCapabilityController = null;
+var _configLoadFailed = false;  // existing-instance config failed to load; saving is blocked
 var _editorInitPromise = null;
 var _runStrategyBotCache = { long: {}, short: {} };
 var _activeRunStrategyKind = '';
@@ -1993,8 +1994,22 @@ async function init() {
       populateForm();
       queueSymbolsAndTagsLoad(cfg, { preferConfigValues: true });
     } else {
-      var cfgResp = await apiFetch('/instances/' + encodeURIComponent(INSTANCE_NAME) + '/config').then(function(r) { return r.json(); });
-      cfg = cfgResp.config || {};
+      var cfgResponse = await apiFetch('/instances/' + encodeURIComponent(INSTANCE_NAME) + '/config');
+      var cfgResp = {};
+      try {
+        cfgResp = await cfgResponse.json();
+      } catch (parseError) {
+        cfgResp = {};
+      }
+      if (!cfgResponse.ok) {
+        throw new Error((cfgResp && cfgResp.detail) || ('Could not load config: HTTP ' + cfgResponse.status));
+      }
+      if (!cfgResp || typeof cfgResp !== 'object' || Array.isArray(cfgResp)
+          || !cfgResp.config || typeof cfgResp.config !== 'object'
+          || Array.isArray(cfgResp.config) || Object.keys(cfgResp.config).length === 0) {
+        throw new Error('Could not load config: invalid or empty configuration response.');
+      }
+      cfg = cfgResp.config;
       paramStatus = cfgResp.param_status || {};
       draftOverrideConfigs = cfgResp.override_configs || {};
       var configuredHost = String(((cfg.pbgui || {}).enabled_on) || '').trim();
@@ -2021,6 +2036,11 @@ async function init() {
     document.getElementById('f-enabled-on').addEventListener('focus', refreshHostCapabilities);
 
   } catch (e) {
+    if (IS_NEW !== 'true') {
+      _configLoadFailed = true;
+      var btnSaveInit = document.getElementById('btn-save');
+      if (btnSaveInit) btnSaveInit.disabled = true;
+    }
     toast('Failed to initialize: ' + e.message, 'err');
     console.error(e);
   }
@@ -3071,12 +3091,21 @@ async function resolveRunSaveTarget(name, wasNew, expectedVersion, config) {
 }
 
 async function saveConfig() {
+  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
   var btnSave = document.getElementById('btn-save');
+  if (_configLoadFailed) {
+    toast('Config was not loaded. Saving is disabled to prevent overwriting the instance with an empty configuration.', 'err');
+    return;
+  }
   btnSave.disabled = true;
-  btnSave.innerHTML = '<span class="spinner"></span> ' + PBGuiI18n.t('v7run.saving');
+  btnSave.innerHTML = '<span class="spinner"></span> ' + runtimeI18n.t('v7run.saving');
   try {
     if (_editorInitPromise) await _editorInitPromise;
     await _symbolsAndTagsLoadPromise;
+    if (_configLoadFailed) {
+      toast('Config was not loaded. Reload the editor before saving.', 'err');
+      return;
+    }
     if (!ensureRawJsonValidForSave()) return;
     if (!ensureStructuredJsonFieldsValidForSave()) return;
     if (!validateExecutionSyncFieldsForSave()) return;
@@ -3084,7 +3113,7 @@ async function saveConfig() {
     var wasNew = IS_NEW === 'true';
     var name = wasNew ? runEditorAdapter.newInstanceName(config) : INSTANCE_NAME;
     if (!name) {
-      toast(PBGuiI18n.t('v7run.userRequired'), 'err');
+      toast(runtimeI18n.t('v7run.userRequired'), 'err');
       return;
     }
     var overrideSnapshot = runEditorAdapter.isV8 && typeof coinOvSnapshotPendingFiles === 'function'
@@ -3102,12 +3131,12 @@ async function saveConfig() {
       var detail = data.detail || resp.statusText;
       if (resp.status === 409 && String(detail || '').indexOf('Update your VPS first') === 0) {
         window.PBGuiDialogs.alert({
-          title: PBGuiI18n.t('v7run.saveBlocked'),
-          message: PBGuiI18n.serverMsg(detail),
-          confirmText: PBGuiI18n.t('common.ok')
+          title: runtimeI18n.t('v7run.saveBlocked'),
+          message: runtimeI18n.serverMsg(detail),
+          confirmText: runtimeI18n.t('common.ok')
         });
       } else {
-        toast(PBGuiI18n.t('v7run.saveFailed') + ': ' + PBGuiI18n.serverMsg(detail), 'err');
+        toast(runtimeI18n.t('v7run.saveFailed') + ': ' + runtimeI18n.serverMsg(detail), 'err');
       }
       return;
     }
@@ -3135,17 +3164,17 @@ async function saveConfig() {
     var syncOk = (data.sync && data.sync.ok) || 0;
     var syncFail = (data.sync && data.sync.failed) || 0;
     var syncMsg = '';
-    if (syncOk > 0) syncMsg = PBGuiI18n.t('v7run.sshSyncOk', { count: syncOk });
-    else if (syncFail > 0) syncMsg = PBGuiI18n.t('v7run.sshSyncFailed', { count: syncFail });
+    if (syncOk > 0) syncMsg = runtimeI18n.t('v7run.sshSyncOk', { count: syncOk });
+    else if (syncFail > 0) syncMsg = runtimeI18n.t('v7run.sshSyncFailed', { count: syncFail });
 
-    toast(PBGuiI18n.t('v7run.savedVersion', { label: runEditorAdapter.label, version: data.version }) + syncMsg, 'ok');
+    toast(runtimeI18n.t('v7run.savedVersion', { label: runEditorAdapter.label, version: data.version }) + syncMsg, 'ok');
     dirty = false;
   } catch (e) {
-    toast(PBGuiI18n.t('v7run.saveError') + ': ' + e.message, 'err');
+    toast(runtimeI18n.t('v7run.saveError') + ': ' + e.message, 'err');
     console.error(e);
   } finally {
-    btnSave.disabled = false;
-    btnSave.innerHTML = '💾 ' + PBGuiI18n.t('common.save');
+    btnSave.disabled = _configLoadFailed;
+    btnSave.innerHTML = '💾 ' + runtimeI18n.t('common.save');
   }
 }
 
@@ -3394,6 +3423,7 @@ function closeImportModal() {
 }
 
 async function doImport() {
+  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
   var jsonEl = document.getElementById('import-json');
   var errEl = document.getElementById('import-error');
   var validation = validateJsonFieldTextarea(jsonEl);
@@ -3409,8 +3439,8 @@ async function doImport() {
   if (!matchedUser) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: PBGuiI18n.t('v7run.importFailed'),
-      message: PBGuiI18n.t('v7run.selectConfiguredUser')
+      summary: runtimeI18n.t('v7run.importFailed'),
+      message: runtimeI18n.t('v7run.selectConfiguredUser')
     });
     return;
   }
@@ -3430,11 +3460,19 @@ async function doImport() {
         ? currentEditorVersion
         : await fetchNextInstanceVersion(INSTANCE_NAME);
     }
+    if (!window.PBGuiDialogs || typeof window.PBGuiDialogs.confirm !== 'function') {
+      throw new Error('Confirmation dialog unavailable. Reload the page and try again.');
+    }
+    if (!(await window.PBGuiDialogs.confirm({
+      title: 'Replace current editor config?',
+      message: 'Importing replaces all current editor values, including unsaved changes.',
+      confirmText: 'Replace and Import'
+    }))) return;
   } catch (e) {
     window.PBGuiEditorShared.setInlineStatusError(errEl, {
       baseClassName: 'field-status field-status-inline',
-      summary: PBGuiI18n.t('v7run.importFailed'),
-      message: e.message || PBGuiI18n.t('v7run.unableToPrepareImport')
+      summary: runtimeI18n.t('v7run.importFailed'),
+      message: e.message || runtimeI18n.t('v7run.unableToPrepareImport')
     });
     return;
   }
@@ -3444,7 +3482,7 @@ async function doImport() {
   populateForm();
   queueSymbolsAndTagsLoad(cfg, { preferConfigValues: true });
   closeImportModal();
-  toast(PBGuiI18n.t('v7run.configImported'), 'ok');
+  toast(runtimeI18n.t('v7run.configImported'), 'ok');
 }
 
 
@@ -3645,12 +3683,7 @@ function _scheduleIgnoreRefresh() {
 ['f-only-cpt', 'f-notices-ignore'].forEach(function(id) {
   document.getElementById(id).addEventListener('change', _scheduleIgnoreRefresh);
 });
-// Hook into tag multiselect: wrap renderMultiselectTags to fire refresh for ms-tags
-var _origRenderTags = renderMultiselectTags;
-renderMultiselectTags = function(wrapId) {
-  _origRenderTags(wrapId);
-  if (wrapId === 'ms-tags') _scheduleIgnoreRefresh();
-};
+
 
 /* ─── Apply Filters ────────────────────────────────────────── */
 async function applyRunFilters() {
@@ -3901,8 +3934,9 @@ var _runMsController = window.PBGuiEditorShared.createMultiselectController({
       display: 'block'
     };
   },
-  onAfterRender: function() {
+  onAfterRender: function(id) {
     scheduleStructuredEditorSync();
+    if (id === 'ms-tags') _scheduleIgnoreRefresh();
   }
 });
 var msState = _runMsController.state;

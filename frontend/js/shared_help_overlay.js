@@ -1,32 +1,8 @@
 ;(function () {
   'use strict';
 
-  /* i18n helper: translate via PBGuiI18n, fall back to the English original. */
-  function _helpT(key, fallback, params) {
-    var F = window.PBGuiI18n;
-    if (F && typeof F.t === 'function') {
-      var v = F.t(key, params);
-      return v === key ? fallback : v;
-    }
-    return fallback;
-  }
-
-  /* Help content language: stored choice wins, otherwise follow the browser
-     (zh* → ZH), like the GUI i18n auto-select; junk stored values count as
-     no preference. */
-  function _defaultHelpLang() {
-    var stored = '';
-    try { stored = localStorage.getItem('help-lang') || ''; } catch (e) { /* private mode */ }
-    if (stored === 'EN' || stored === 'DE' || stored === 'ZH') return stored;
-    try {
-      var nav = String(navigator.language || navigator.userLanguage || '').toLowerCase();
-      if (nav.indexOf('zh') === 0) return 'ZH';
-    } catch (e) { /* ignore */ }
-    return 'EN';
-  }
-
   var state = {
-    lang: _defaultHelpLang(),
+    lang: localStorage.getItem('help-lang') || 'EN',
     topics: [],
     selectedIndex: 0,
     loaded: false,
@@ -113,58 +89,58 @@
     style.textContent = [
       '#pbgui-shared-help-ovl{display:none;position:fixed;inset:0;z-index:3065;pointer-events:none;}',
       '#pbgui-shared-help-ovl.visible{display:block;}',
-      '#pbgui-shared-help-box{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(900px,95vw);height:min(700px,90vh);min-width:480px;min-height:300px;background:#171c29;border:1px solid #333f5c;border-radius:12px;box-shadow:0 20px 70px rgba(5, 8, 14,.9);overflow:hidden;resize:both;pointer-events:auto;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e8ecf4;}',
+      '#pbgui-shared-help-box{display:flex;flex-direction:column;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(900px,95vw);height:min(700px,90vh);min-width:480px;min-height:300px;background:#131b2b;border:1px solid #2d3748;border-radius:12px;box-shadow:0 20px 70px rgba(0,0,0,.9);overflow:hidden;resize:both;pointer-events:auto;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e2e8f0;}',
       '#pbgui-shared-help-box.is-maximized{top:64px;left:12px;right:12px;bottom:12px;width:auto;height:auto;transform:none;max-width:none;max-height:none;resize:none;border-radius:14px;}',
       '#pbgui-shared-help-box,#pbgui-shared-help-box *{box-sizing:border-box;}',
       '#pbgui-shared-help-box button,#pbgui-shared-help-box input,#pbgui-shared-help-box label{font:inherit;letter-spacing:normal;text-transform:none;}',
       '#pbgui-shared-help-box button:hover{transform:none;}',
       '#pbgui-shared-help-drag{position:absolute;top:0;left:0;right:48px;height:46px;cursor:move;z-index:2;}',
       '#pbgui-shared-help-box.is-maximized #pbgui-shared-help-drag{cursor:default;pointer-events:none;}',
-      '#pbgui-shared-help-box .ovl-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem .85rem 1.25rem;border-bottom:1px solid #262f45;flex-shrink:0;background:#10141d;}',
-      '#pbgui-shared-help-box .ovl-header-title{font-size:15px;font-weight:700;color:#e8ecf4;display:flex;align-items:center;gap:.5rem;}',
+      '#pbgui-shared-help-box .ovl-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem .85rem 1.25rem;border-bottom:1px solid #1e2736;flex-shrink:0;background:#111827;}',
+      '#pbgui-shared-help-box .ovl-header-title{font-size:15px;font-weight:700;color:#e2e8f0;display:flex;align-items:center;gap:.5rem;}',
       '#pbgui-shared-help-box .ovl-header-actions{display:flex;align-items:center;gap:.5rem;position:relative;z-index:3;}',
-      '#pbgui-shared-help-box .lang-pill{display:flex;border:1px solid #333f5c;border-radius:6px;overflow:hidden;flex-shrink:0;}',
-      '#pbgui-shared-help-box .lang-pill button{background:transparent;border:none;color:#717b8e;font-size:11px;font-weight:600;letter-spacing:.05em;padding:.2rem .55rem;cursor:pointer;transition:all .12s;}',
-      '#pbgui-shared-help-box .lang-pill button.active{background:#1e3a5f;color:#96b9f4;}',
-      '#pbgui-shared-help-box .lang-pill button:hover:not(.active){background:rgba(255,255,255,.04);color:#e8ecf4;}',
-      '#pbgui-shared-help-box .ovl-tool,#pbgui-shared-help-box .ovl-close{background:transparent;border:1px solid transparent;color:#717b8e;font-size:15px;cursor:pointer;width:28px;height:28px;padding:0;border-radius:4px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:color .12s,background .12s,border-color .12s;}',
-      '#pbgui-shared-help-box .ovl-tool[aria-pressed="true"]{color:#e8ecf4;border-color:rgba(162, 156, 166,.2);background:rgba(255,255,255,.06);}',
-      '#pbgui-shared-help-box .ovl-tool:hover,#pbgui-shared-help-box .ovl-close:hover{color:#e8ecf4;border-color:rgba(162, 156, 166,.18);background:rgba(255,255,255,.06);}',
+      '#pbgui-shared-help-box .lang-pill{display:flex;border:1px solid #2d3748;border-radius:6px;overflow:hidden;flex-shrink:0;}',
+      '#pbgui-shared-help-box .lang-pill button{background:transparent;border:none;color:#64748b;font-size:11px;font-weight:600;letter-spacing:.05em;padding:.2rem .55rem;cursor:pointer;transition:all .12s;}',
+      '#pbgui-shared-help-box .lang-pill button.active{background:#1e3a5f;color:#63b3ed;}',
+      '#pbgui-shared-help-box .lang-pill button:hover:not(.active){background:rgba(255,255,255,.04);color:#e2e8f0;}',
+      '#pbgui-shared-help-box .ovl-tool,#pbgui-shared-help-box .ovl-close{background:transparent;border:1px solid transparent;color:#64748b;font-size:15px;cursor:pointer;width:28px;height:28px;padding:0;border-radius:4px;line-height:1;display:inline-flex;align-items:center;justify-content:center;transition:color .12s,background .12s,border-color .12s;}',
+      '#pbgui-shared-help-box .ovl-tool[aria-pressed="true"]{color:#e2e8f0;border-color:rgba(148,163,184,.2);background:rgba(255,255,255,.06);}',
+      '#pbgui-shared-help-box .ovl-tool:hover,#pbgui-shared-help-box .ovl-close:hover{color:#e2e8f0;border-color:rgba(148,163,184,.18);background:rgba(255,255,255,.06);}',
       '#pbgui-shared-help-body{display:flex;flex:1;overflow:hidden;}',
-      '#pbgui-shared-help-toc{width:230px;min-width:170px;flex-shrink:0;border-right:1px solid #262f45;overflow-y:auto;padding:.5rem 0;background:#0c1018;}',
-      '#pbgui-shared-help-toc-filter{width:calc(100% - 1.2rem);margin:0 .6rem .4rem;background:#171c29;color:#e8ecf4;border:1px solid #333f5c;border-radius:5px;padding:.35rem .5rem;font-size:13px;outline:none;}',
-      '#pbgui-shared-help-search{background:#171c29;color:#e8ecf4;border:1px solid #333f5c;border-radius:5px;padding:.28rem .5rem;font-size:13px;outline:none;width:170px;}',
-      '#pbgui-shared-help-toc-filter:focus,#pbgui-shared-help-search:focus{border-color:#4d5c82;}',
-      '#pbgui-shared-help-toc-filter::placeholder,#pbgui-shared-help-search::placeholder{color:#4d5c82;}',
-      '.pbgui-shared-help-toc-item{display:block;padding:.42rem .9rem;color:#a3adc2;font-size:13px;cursor:pointer;border-left:3px solid transparent;transition:all .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-      '.pbgui-shared-help-toc-item:hover{background:rgba(99,179,237,.08);color:#e8ecf4;}',
-      '.pbgui-shared-help-toc-item.active{background:rgba(99,179,237,.12);border-left-color:#96b9f4;color:#96b9f4;font-weight:600;}',
-      '#pbgui-shared-help-content{flex:1;min-width:0;overflow:auto;padding:1.2rem 1.3rem 1.4rem;line-height:1.7;color:#e8ecf4;}',
-      '#pbgui-shared-help-content h1,#pbgui-shared-help-content h2,#pbgui-shared-help-content h3{color:#f2f5fb;margin:0 0 .75rem;}',
+      '#pbgui-shared-help-toc{width:230px;min-width:170px;flex-shrink:0;border-right:1px solid #1e2736;overflow-y:auto;padding:.5rem 0;background:#0e1117;}',
+      '#pbgui-shared-help-toc-filter{width:calc(100% - 1.2rem);margin:0 .6rem .4rem;background:#1a202c;color:#e2e8f0;border:1px solid #2d3748;border-radius:5px;padding:.35rem .5rem;font-size:13px;outline:none;}',
+      '#pbgui-shared-help-search{background:#1a202c;color:#e2e8f0;border:1px solid #2d3748;border-radius:5px;padding:.28rem .5rem;font-size:13px;outline:none;width:170px;}',
+      '#pbgui-shared-help-toc-filter:focus,#pbgui-shared-help-search:focus{border-color:#4a5568;}',
+      '#pbgui-shared-help-toc-filter::placeholder,#pbgui-shared-help-search::placeholder{color:#4a5568;}',
+      '.pbgui-shared-help-toc-item{display:block;padding:.42rem .9rem;color:#94a3b8;font-size:13px;cursor:pointer;border-left:3px solid transparent;transition:all .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.pbgui-shared-help-toc-item:hover{background:rgba(99,179,237,.08);color:#e2e8f0;}',
+      '.pbgui-shared-help-toc-item.active{background:rgba(99,179,237,.12);border-left-color:#63b3ed;color:#63b3ed;font-weight:600;}',
+      '#pbgui-shared-help-content{flex:1;min-width:0;overflow:auto;padding:1.2rem 1.3rem 1.4rem;line-height:1.7;color:#cbd5e1;}',
+      '#pbgui-shared-help-content h1,#pbgui-shared-help-content h2,#pbgui-shared-help-content h3{color:#f8fafc;margin:0 0 .75rem;}',
       '#pbgui-shared-help-content p,#pbgui-shared-help-content ul,#pbgui-shared-help-content ol,#pbgui-shared-help-content pre,#pbgui-shared-help-content blockquote,#pbgui-shared-help-content table{margin:0 0 .9rem;}',
-      '#pbgui-shared-help-content a{color:#96b9f4;text-decoration:none;}','#pbgui-shared-help-content a:hover{text-decoration:underline;}',
-      '#pbgui-shared-help-content code{background:#171c29;color:#f6ad55;padding:.1em .35em;border-radius:3px;font-size:11px;font-family:"Fira Code","Consolas",monospace;}',
-      '#pbgui-shared-help-content pre{background:#0c1018;border:1px solid #333f5c;border-radius:6px;padding:.9rem 1rem;overflow-x:auto;}',
+      '#pbgui-shared-help-content a{color:#63b3ed;text-decoration:none;}','#pbgui-shared-help-content a:hover{text-decoration:underline;}',
+      '#pbgui-shared-help-content code{background:#1a202c;color:#f6ad55;padding:.1em .35em;border-radius:3px;font-size:11px;font-family:"Fira Code","Consolas",monospace;}',
+      '#pbgui-shared-help-content pre{background:#0e1117;border:1px solid #2d3748;border-radius:6px;padding:.9rem 1rem;overflow-x:auto;}',
       '#pbgui-shared-help-content pre code{background:none;padding:0;color:#a0aec0;font-size:13px;}',
       '#pbgui-shared-help-content ul,#pbgui-shared-help-content ol{padding-left:1.5rem;}',
-      '#pbgui-shared-help-content blockquote{border-left:3px solid #96b9f4;padding:.4rem .9rem;background:rgba(99,179,237,.05);border-radius:0 5px 5px 0;color:#a3adc2;}',
+      '#pbgui-shared-help-content blockquote{border-left:3px solid #63b3ed;padding:.4rem .9rem;background:rgba(99,179,237,.05);border-radius:0 5px 5px 0;color:#94a3b8;}',
       '#pbgui-shared-help-content table{border-collapse:collapse;width:100%;}',
-      '#pbgui-shared-help-content th,#pbgui-shared-help-content td{border:1px solid #333f5c;padding:.4rem .7rem;text-align:left;font-size:13px;}',
-      '#pbgui-shared-help-content th{background:#171c29;color:#e8ecf4;font-weight:600;}',
-      '.pbgui-shared-help-loading{color:#4d5c82;font-style:italic;padding:2rem;text-align:center;}',
+      '#pbgui-shared-help-content th,#pbgui-shared-help-content td{border:1px solid #2d3748;padding:.4rem .7rem;text-align:left;font-size:13px;}',
+      '#pbgui-shared-help-content th{background:#1a202c;color:#e2e8f0;font-weight:600;}',
+      '.pbgui-shared-help-loading{color:#4a5568;font-style:italic;padding:2rem;text-align:center;}',
       '#pbgui-shared-help-search-wrap{display:flex;align-items:center;gap:3px;}',
-      '.pbgui-shared-help-snav{background:#171c29;border:1px solid #333f5c;border-radius:3px;color:#a3adc2;cursor:pointer;font-size:11px;padding:2px 5px;line-height:1.4;transition:color .1s,border-color .1s;}',
-      '.pbgui-shared-help-snav:hover{color:#e8ecf4;border-color:#4d5c82;}',
-      '#pbgui-shared-help-search-count{font-size:11px;color:#717b8e;white-space:nowrap;min-width:44px;text-align:left;}',
+      '.pbgui-shared-help-snav{background:#1a202c;border:1px solid #2d3748;border-radius:3px;color:#94a3b8;cursor:pointer;font-size:11px;padding:2px 5px;line-height:1.4;transition:color .1s,border-color .1s;}',
+      '.pbgui-shared-help-snav:hover{color:#e2e8f0;border-color:#4a5568;}',
+      '#pbgui-shared-help-search-count{font-size:11px;color:#64748b;white-space:nowrap;min-width:44px;text-align:left;}',
       '#pbgui-shared-help-content mark{background:rgba(255,200,0,.2);color:#fcd34d;border-radius:2px;}',
       '#pbgui-shared-help-content mark.current{background:rgba(251,146,60,.45);color:#fef08a;outline:1px solid #f59e0b;}',
-      '#pbgui-shared-help-search-global-lbl{display:flex;align-items:center;gap:3px;color:#a3adc2;font-size:11px;font-weight:400;cursor:pointer;white-space:nowrap;user-select:none;}',
-      '#pbgui-shared-help-search-global-lbl input[type=checkbox]{accent-color:#72a0ee;cursor:pointer;margin:0;}',
+      '#pbgui-shared-help-search-global-lbl{display:flex;align-items:center;gap:3px;color:#94a3b8;font-size:11px;font-weight:400;cursor:pointer;white-space:nowrap;user-select:none;}',
+      '#pbgui-shared-help-search-global-lbl input[type=checkbox]{accent-color:#4da6ff;cursor:pointer;margin:0;}',
       '.pbgui-shared-help-gs-results{display:flex;flex-direction:column;gap:8px;padding:4px 0;}',
-      '.pbgui-shared-help-gs-item{background:#171c29;border:1px solid #333f5c;border-radius:6px;padding:10px 14px;cursor:pointer;transition:border-color .15s;}',
-      '.pbgui-shared-help-gs-item:hover{border-color:#4d5c82;}',
+      '.pbgui-shared-help-gs-item{background:#1a202c;border:1px solid #2d3748;border-radius:6px;padding:10px 14px;cursor:pointer;transition:border-color .15s;}',
+      '.pbgui-shared-help-gs-item:hover{border-color:#4a5568;}',
       '.pbgui-shared-help-gs-topic{color:#93c5fd;font-weight:600;font-size:13px;margin-bottom:5px;}',
-      '.pbgui-shared-help-gs-snip{color:#a3adc2;font-size:11px;line-height:1.55;overflow:hidden;text-overflow:ellipsis;}'
+      '.pbgui-shared-help-gs-snip{color:#94a3b8;font-size:11px;line-height:1.55;overflow:hidden;text-overflow:ellipsis;}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -178,31 +154,30 @@
       +   '<div id="pbgui-shared-help-box" role="dialog" aria-modal="true" aria-labelledby="pbgui-shared-help-title">'
       +     '<div id="pbgui-shared-help-drag"></div>'
       +     '<div class="ovl-header">'
-      +       '<div class="ovl-header-title" id="pbgui-shared-help-title">&#128218; ' + _helpT('shared.help.title', 'Guide & Help') + '</div>'
+      +       '<div class="ovl-header-title" id="pbgui-shared-help-title">&#128218; Guide &amp; Help</div>'
       +       '<div class="ovl-header-actions">'
       +         '<div id="pbgui-shared-help-search-wrap">'
-      +           '<input id="pbgui-shared-help-search" type="text" placeholder="' + _helpT('shared.help.searchInTopic', 'Search in topic...') + '" autocomplete="off">'
-      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-up" title="' + _helpT('shared.help.prevMatch', 'Previous match (Shift+Enter)') + '">&#9650;</button>'
-      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-dn" title="' + _helpT('shared.help.nextMatch', 'Next match (Enter)') + '">&#9660;</button>'
+      +           '<input id="pbgui-shared-help-search" type="text" placeholder="Search in topic..." autocomplete="off">'
+      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>'
+      +           '<button class="pbgui-shared-help-snav" id="pbgui-shared-help-search-dn" title="Next match (Enter)">&#9660;</button>'
       +           '<span id="pbgui-shared-help-search-count"></span>'
-      +           '<label id="pbgui-shared-help-search-global-lbl" title="' + _helpT('shared.help.searchAllTitle', 'Search across all topics') + '"><input type="checkbox" id="pbgui-shared-help-search-global"> ' + _helpT('common.all', 'All') + '</label>'
+      +           '<label id="pbgui-shared-help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="pbgui-shared-help-search-global"> All</label>'
       +         '</div>'
-      +         '<div style="width:1px;height:16px;background:#333f5c;flex-shrink:0;"></div>'
+      +         '<div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>'
       +         '<div class="lang-pill">'
       +           '<button id="pbgui-shared-help-lang-en" type="button">EN</button>'
       +           '<button id="pbgui-shared-help-lang-de" type="button">DE</button>'
-      +           '<button id="pbgui-shared-help-lang-zh" type="button" title="中文 (简体中文)">中文</button>'
       +         '</div>'
-      +         '<button class="ovl-tool" id="pbgui-shared-help-maximize" title="' + _helpT('nav.fit_window', 'Fit to browser window') + '" aria-pressed="false">⛶</button>'
-      +         '<button class="ovl-close" id="pbgui-shared-help-close" aria-label="' + _helpT('common.close', 'Close') + '">&#x2715;</button>'
+      +         '<button class="ovl-tool" id="pbgui-shared-help-maximize" title="Fit to browser window" aria-pressed="false">⛶</button>'
+      +         '<button class="ovl-close" id="pbgui-shared-help-close">&#x2715;</button>'
       +       '</div>'
       +     '</div>'
       +     '<div id="pbgui-shared-help-body">'
       +       '<div id="pbgui-shared-help-toc">'
-      +         '<input id="pbgui-shared-help-toc-filter" type="text" placeholder="' + _helpT('shared.help.filterTopics', 'Filter topics...') + '" autocomplete="off">'
+      +         '<input id="pbgui-shared-help-toc-filter" type="text" placeholder="Filter topics..." autocomplete="off">'
       +         '<div id="pbgui-shared-help-toc-list"></div>'
       +       '</div>'
-      +       '<div id="pbgui-shared-help-content"><div class="pbgui-shared-help-loading">' + _helpT('shared.help.loadingTopics', 'Loading help topics...') + '</div></div>'
+      +       '<div id="pbgui-shared-help-content"><div class="pbgui-shared-help-loading">Loading help topics...</div></div>'
       +     '</div>'
       +   '</div>'
       + '</div>';
@@ -296,13 +271,12 @@
   function syncLangButtons() {
     dom('pbgui-shared-help-lang-en').classList.toggle('active', state.lang === 'EN');
     dom('pbgui-shared-help-lang-de').classList.toggle('active', state.lang === 'DE');
-    dom('pbgui-shared-help-lang-zh').classList.toggle('active', state.lang === 'ZH');
   }
 
   function updateSearchCount() {
     dom('pbgui-shared-help-search-count').textContent = state.searchMarks.length
       ? (state.searchIndex + 1) + '/' + state.searchMarks.length
-      : (dom('pbgui-shared-help-search').value.trim() ? _helpT('shared.help.zeroFound', '0 found') : '');
+      : (dom('pbgui-shared-help-search').value.trim() ? '0 found' : '');
   }
 
   function gotoMark(index) {
@@ -375,13 +349,11 @@
     var expr;
     try { expr = new RegExp('(' + escapeRegExp(term) + ')', 'gi'); } catch (_) { return; }
     if (!results.length) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
-      dom('pbgui-shared-help-search-count').textContent = _helpT('shared.help.zeroFound', '0 found');
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
+      dom('pbgui-shared-help-search-count').textContent = '0 found';
       return;
     }
-    dom('pbgui-shared-help-search-count').textContent = results.length === 1
-      ? _helpT('shared.help.resultTopic', results.length + ' topic', { count: results.length })
-      : _helpT('shared.help.resultTopics', results.length + ' topics', { count: results.length });
+    dom('pbgui-shared-help-search-count').textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
     var container = document.createElement('div');
     container.className = 'pbgui-shared-help-gs-results';
     results.forEach(function (result) {
@@ -402,7 +374,7 @@
         var idx = parseInt(item.dataset.idx, 10);
         dom('pbgui-shared-help-search-global').checked = false;
         state.globalMode = false;
-        dom('pbgui-shared-help-search').placeholder = _helpT('shared.help.searchInTopic', 'Search in topic...');
+        dom('pbgui-shared-help-search').placeholder = 'Search in topic...';
         loadTopic(idx);
       });
       container.appendChild(item);
@@ -412,17 +384,17 @@
 
   function showGlobalResults(term) {
     if (!term) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + _helpT('shared.help.searchPrompt', 'Type a search term to find across all topics.') + '</p>';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>';
       dom('pbgui-shared-help-search-count').textContent = '';
       return;
     }
     var expr;
     try { expr = new RegExp(escapeRegExp(term), 'gi'); } catch (_) { return; }
-    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.searching', 'Searching...') + '</div>';
+    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Searching...</div>';
     var pending = state.topics.length;
     var results = [];
     if (!pending) {
-      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + _helpT('shared.help.noResults', 'No results found.') + '</p>';
+      dom('pbgui-shared-help-content').innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
       return;
     }
     state.topics.forEach(function (topic, index) {
@@ -475,7 +447,7 @@
     state.searchMarks = [];
     state.searchIndex = -1;
     dom('pbgui-shared-help-search-count').textContent = '';
-    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('common.loading', 'Loading...') + '</div>';
+    dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Loading...</div>';
     fetch(appPath('/api/help/content?file=') + encodeURIComponent(topic.file) + '&lang=' + state.lang, { credentials: 'same-origin' })
       .then(function (response) { if (!response.ok) throw new Error('HTTP ' + response.status); return response.json(); })
       .then(function (data) {
@@ -493,7 +465,7 @@
       })
       .catch(function () {
         if (requestSeq !== state.topicRequestSeq) return;
-        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.loadFailed', 'Failed to load content.') + '</div>';
+        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Failed to load content.</div>';
       });
   }
 
@@ -502,7 +474,7 @@
     state.topicRequestSeq += 1;
     state.currentKeyword = String(keyword || 'overview');
     state.pendingAnchor = String(anchor || '');
-    dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('common.loading', 'Loading...') + '</div>';
+    dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">Loading...</div>';
     fetch(appPath('/api/help/index?lang=') + state.lang, { credentials: 'same-origin' })
       .then(function (response) { if (!response.ok) throw new Error('HTTP ' + response.status); return response.json(); })
       .then(function (data) {
@@ -510,7 +482,7 @@
         state.topics = data || [];
         renderToc();
         if (!state.topics.length) {
-          dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.noTopics', 'No help topics found.') + '</div>';
+          dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">No help topics found.</div>';
           return;
         }
         var startIndex = 0;
@@ -528,8 +500,8 @@
       })
       .catch(function () {
         if (requestSeq !== state.indexRequestSeq) return;
-        dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.topicsFailed', 'Failed to load topics.') + '</div>';
-        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">' + _helpT('shared.help.loadFailed', 'Failed to load content.') + '</div>';
+        dom('pbgui-shared-help-toc-list').innerHTML = '<div class="pbgui-shared-help-loading">Failed to load topics.</div>';
+        dom('pbgui-shared-help-content').innerHTML = '<div class="pbgui-shared-help-loading">Failed to load content.</div>';
       });
   }
 
@@ -580,7 +552,7 @@
       box.classList.toggle('is-maximized', next);
       dom('pbgui-shared-help-maximize').setAttribute('aria-pressed', next ? 'true' : 'false');
       dom('pbgui-shared-help-maximize').textContent = next ? '❐' : '⛶';
-      dom('pbgui-shared-help-maximize').setAttribute('title', next ? _helpT('nav.restore_window', 'Restore window size') : _helpT('nav.fit_window', 'Fit to browser window'));
+      dom('pbgui-shared-help-maximize').setAttribute('title', next ? 'Restore window size' : 'Fit to browser window');
     });
   }
 
@@ -592,7 +564,6 @@
     dom('pbgui-shared-help-toc-filter').addEventListener('input', renderToc);
     dom('pbgui-shared-help-lang-en').addEventListener('click', function () { setLang('EN'); });
     dom('pbgui-shared-help-lang-de').addEventListener('click', function () { setLang('DE'); });
-    dom('pbgui-shared-help-lang-zh').addEventListener('click', function () { setLang('ZH'); });
     dom('pbgui-shared-help-search').addEventListener('input', function () {
       if (state.searchTimer) clearTimeout(state.searchTimer);
       state.searchTimer = setTimeout(function () {
@@ -616,7 +587,7 @@
     dom('pbgui-shared-help-search-dn').addEventListener('click', function () { gotoMark(state.searchIndex + 1); });
     dom('pbgui-shared-help-search-global').addEventListener('change', function () {
       state.globalMode = dom('pbgui-shared-help-search-global').checked;
-      dom('pbgui-shared-help-search').placeholder = state.globalMode ? _helpT('shared.help.searchAllTopics', 'Search all topics...') : _helpT('shared.help.searchInTopic', 'Search in topic...');
+      dom('pbgui-shared-help-search').placeholder = state.globalMode ? 'Search all topics...' : 'Search in topic...';
       var term = dom('pbgui-shared-help-search').value.trim();
       if (state.globalMode) showGlobalResults(term);
       else {
@@ -635,10 +606,14 @@
 
   function openHelp(keyword, options) {
     options = options || {};
-    var anchor = options.anchor ? '#' + options.anchor.replace(/^#/, '') : '';
-    var topicParam = keyword ? '?topic=' + encodeURIComponent(keyword) : '';
-    window.location.href = appPath('/api/help/main_page') + topicParam + anchor;
-    return Promise.resolve();
+    ensureDom();
+    syncLangButtons();
+    return ensureDeps().then(function () {
+      dom('pbgui-shared-help-ovl').classList.add('visible');
+      dom('pbgui-shared-help-ovl').setAttribute('aria-hidden', 'false');
+      document.body.classList.add('pbgui-help-open');
+      loadHelpIndex(keyword || 'overview', options.anchor || '');
+    });
   }
 
   function closeHelp() {

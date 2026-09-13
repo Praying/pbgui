@@ -8,23 +8,6 @@
   }
 
   var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var MN_ZH = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-  var DOW = ['Mo','Tu','We','Th','Fr','Sa','Su'];
-  var DOW_ZH = ['一','二','三','四','五','六','日'];
-
-  /* i18n helper: translate via PBGuiI18n, fall back to the English/Chinese arrays. */
-  function _dpT(key, fallback) {
-    var F = window.PBGuiI18n;
-    if (F && typeof F.t === 'function') {
-      var v = F.t(key);
-      return v === key ? fallback : v;
-    }
-    return fallback;
-  }
-  function _dpIsZh() { return !!(window.PBGuiI18n && window.PBGuiI18n.lang === 'zh'); }
-  function monthName(i) { return _dpT('shared.dp.month.' + i, _dpIsZh() ? MN_ZH[i] : MN[i]); }
-  function dowName(i) { return _dpT('shared.dp.dow.' + i, _dpIsZh() ? DOW_ZH[i] : DOW[i]); }
-
   var inputId = null;
   var panel = null;
   var year = 0;
@@ -38,22 +21,22 @@
     style.textContent = [
       '.date-input-wrap{position:relative;}',
       '.date-input-wrap input{padding-right:28px;}',
-      '.calendar-trigger{position:absolute;right:2px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--text,#e8ecf4);padding:0 3px;font-size:var(--fs-sm,13px);line-height:1;cursor:pointer;}',
-      '.pbgui-dp{position:fixed;z-index:12000;background:var(--bg2,#171c29);border:1px solid var(--line2,#333f5c);border-radius:8px;padding:8px;box-shadow:0 18px 50px rgba(5, 8, 14,.65);width:232px;color:var(--text,#e8ecf4);font:var(--fs-sm,13px)/1.35 inherit;}',
+      '.calendar-trigger{position:absolute;right:2px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--text,#e2e8f0);padding:0 3px;font-size:var(--fs-sm,13px);line-height:1;cursor:pointer;}',
+      '.pbgui-dp{position:fixed;z-index:12000;background:var(--bg2,#131b2b);border:1px solid var(--line2,#2d3748);border-radius:8px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.65);width:232px;color:var(--text,#e2e8f0);font:var(--fs-sm,13px)/1.35 inherit;}',
       '.pbgui-dp-row{display:grid;grid-template-columns:28px 1fr 74px 28px;gap:4px;align-items:center;margin-bottom:6px;}',
-      '.pbgui-dp button{border:1px solid var(--line2,#333f5c);background:#10141d;color:var(--text,#e8ecf4);border-radius:5px;cursor:pointer;font:inherit;min-height:24px;}',
-      '.pbgui-dp button:hover{border-color:var(--accent,#96b9f4);}',
+      '.pbgui-dp button{border:1px solid var(--line2,#2d3748);background:#111827;color:var(--text,#e2e8f0);border-radius:5px;cursor:pointer;font:inherit;min-height:24px;}',
+      '.pbgui-dp button:hover{border-color:var(--accent,#63b3ed);}',
       '.pbgui-dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;}',
-      '.pbgui-dp-dow{color:var(--muted,#a3adc2);font-size:var(--fs-xs,11px);padding:3px 0;}',
+      '.pbgui-dp-dow{color:var(--muted,#94a3b8);font-size:var(--fs-xs,11px);padding:3px 0;}',
       '.pbgui-dp-day{border-radius:4px;padding:4px 0;cursor:pointer;}',
       '.pbgui-dp-day:hover{background:rgba(99,179,237,.16);}',
-      '.pbgui-dp-day.today{color:var(--accent,#96b9f4);font-weight:700;}',
+      '.pbgui-dp-day.today{color:var(--accent,#63b3ed);font-weight:700;}',
       '.pbgui-dp-day.selected{background:rgba(99,179,237,.24);font-weight:700;}',
-      '.pbgui-dp-menu{position:absolute;background:var(--bg2,#171c29);border:1px solid var(--line2,#333f5c);border-radius:6px;box-shadow:0 10px 28px rgba(5, 8, 14,.55);max-height:190px;overflow:auto;display:none;padding:4px;}',
+      '.pbgui-dp-menu{position:absolute;background:var(--bg2,#131b2b);border:1px solid var(--line2,#2d3748);border-radius:6px;box-shadow:0 10px 28px rgba(0,0,0,.55);max-height:190px;overflow:auto;display:none;padding:4px;}',
       '.pbgui-dp-menu.open{display:grid;gap:3px;}',
-      '.pbgui-dp-menu button.selected{border-color:var(--accent,#96b9f4);}',
+      '.pbgui-dp-menu button.selected{border-color:var(--accent,#63b3ed);}',
       '.pbgui-dp-foot{display:flex;justify-content:space-between;margin-top:7px;}',
-      '.pbgui-dp-foot button{background:transparent;border:0;color:var(--muted,#a3adc2);padding:2px 6px;min-height:20px;}'
+      '.pbgui-dp-foot button{background:transparent;border:0;color:var(--muted,#94a3b8);padding:2px 6px;min-height:20px;}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -83,7 +66,7 @@
 
   function monthMenu() {
     var html = '';
-    for (var i = 0; i < 12; i++) html += '<button type="button" class="' + (i === month ? 'selected' : '') + '" onclick="window.__dp.sm(' + i + ')">' + monthName(i) + '</button>';
+    for (var i = 0; i < 12; i++) html += '<button type="button" class="' + (i === month ? 'selected' : '') + '" onclick="window.__dp.sm(' + i + ')">' + MN[i] + '</button>';
     return html;
   }
 
@@ -105,24 +88,17 @@
     var blanks = (first.getDay() + 6) % 7;
     var html = '<div class="pbgui-dp-row">'
       + '<button type="button" onclick="window.__dp.pm()">&#8249;</button>'
-      + '<div style="position:relative"><button type="button" onclick="window.__dp.tm()" style="width:100%">' + monthName(month) + ' <span style="font-size:10px;opacity:.8">▾</span></button><div class="pbgui-dp-menu ' + (menu === 'month' ? 'open' : '') + '" style="left:0;min-width:112px">' + monthMenu() + '</div></div>'
+      + '<div style="position:relative"><button type="button" onclick="window.__dp.tm()" style="width:100%">' + MN[month] + ' <span style="font-size:10px;opacity:.8">▾</span></button><div class="pbgui-dp-menu ' + (menu === 'month' ? 'open' : '') + '" style="left:0;min-width:112px">' + monthMenu() + '</div></div>'
       + '<div style="position:relative"><button type="button" onclick="window.__dp.ty()" style="width:100%">' + year + ' <span style="font-size:10px;opacity:.8">▾</span></button><div class="pbgui-dp-menu ' + (menu === 'year' ? 'open' : '') + '" style="right:0;min-width:74px">' + yearMenu() + '</div></div>'
       + '<button type="button" onclick="window.__dp.nm()">&#8250;</button></div>';
-    html += '<div class="pbgui-dp-grid">'
-      + '<div class="pbgui-dp-dow">' + dowName(0) + '</div>'
-      + '<div class="pbgui-dp-dow">' + dowName(1) + '</div>'
-      + '<div class="pbgui-dp-dow">' + dowName(2) + '</div>'
-      + '<div class="pbgui-dp-dow">' + dowName(3) + '</div>'
-      + '<div class="pbgui-dp-dow">' + dowName(4) + '</div>'
-      + '<div class="pbgui-dp-dow">' + dowName(5) + '</div>'
-      + '<div class="pbgui-dp-dow">' + dowName(6) + '</div>';
+    html += '<div class="pbgui-dp-grid"><div class="pbgui-dp-dow">Mo</div><div class="pbgui-dp-dow">Tu</div><div class="pbgui-dp-dow">We</div><div class="pbgui-dp-dow">Th</div><div class="pbgui-dp-dow">Fr</div><div class="pbgui-dp-dow">Sa</div><div class="pbgui-dp-dow">Su</div>';
     for (var b = 0; b < blanks; b++) html += '<div></div>';
     for (var day = 1; day <= days; day++) {
       var isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
       var isSelected = selected && selected.getFullYear() === year && selected.getMonth() === month && selected.getDate() === day;
       html += '<div class="pbgui-dp-day' + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + '" onclick="window.__dp.pick(' + day + ')">' + day + '</div>';
     }
-    html += '</div><div class="pbgui-dp-foot"><button type="button" onclick="window.__dp.hide()">' + _dpT('common.close', 'Close') + '</button><button type="button" onclick="window.__dp.today()">' + _dpT('shared.dp.today', 'Today') + '</button></div>';
+    html += '</div><div class="pbgui-dp-foot"><button type="button" onclick="window.__dp.hide()">Close</button><button type="button" onclick="window.__dp.today()">Today</button></div>';
     panel.innerHTML = html;
   }
 

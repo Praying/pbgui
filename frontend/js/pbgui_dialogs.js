@@ -1,16 +1,6 @@
 (function () {
   'use strict';
 
-  /* i18n helper: translate via PBGuiI18n, fall back to the English original. */
-  function _dlgT(key, fallback) {
-    var F = window.PBGuiI18n;
-    if (F && typeof F.t === 'function') {
-      var v = F.t(key);
-      return v === key ? fallback : v;
-    }
-    return fallback;
-  }
-
   var STYLE_ID = 'pbgui-dialogs-style';
   var OVERLAY_ID = 'pbgui-dialog-ovl';
   var resolveDialog = null;
@@ -38,31 +28,31 @@
     style.id = STYLE_ID;
     style.textContent = [
       ':root{--fs-xs:11px;--fs-sm:13px;--fs-base:14px;--fs-md:15px;--fs-lg:18px;--sp-xs:4px;--sp-sm:8px;--sp-md:12px;--sp-lg:20px;--input-h:32px;--btn-h:32px;}',
-      '#' + OVERLAY_ID + '{display:none;position:fixed;inset:0;background:rgba(5, 8, 14,.72);z-index:20000;align-items:center;justify-content:center;backdrop-filter:blur(2px);padding:var(--sp-lg);}',
+      '#' + OVERLAY_ID + '{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:20000;align-items:center;justify-content:center;backdrop-filter:blur(2px);padding:var(--sp-lg);}',
       '#' + OVERLAY_ID + '.visible{display:flex;}',
-      '#pbgui-dialog-box{box-sizing:border-box;min-width:0;background:#171c29;border:1px solid #333f5c;border-radius:14px;box-shadow:0 20px 70px rgba(5, 8, 14,.9);overflow:hidden;width:min(480px,100%);max-width:100%;}',
-      '#pbgui-dialog-header{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-sm);padding:.85rem 1.1rem;border-bottom:1px solid #262f45;background:#10141d;}',
-      '#pbgui-dialog-title{font-size:var(--fs-md);font-weight:700;color:#e8ecf4;}',
-      '#pbgui-dialog-close{background:transparent;border:none;color:#717b8e;font-size:var(--fs-lg);cursor:pointer;padding:.2rem .35rem;border-radius:5px;line-height:1;}',
-      '#pbgui-dialog-close:hover{color:#e8ecf4;background:rgba(255,255,255,.06);}',
+      '#pbgui-dialog-box{box-sizing:border-box;min-width:0;background:#131b2b;border:1px solid #2d3748;border-radius:14px;box-shadow:0 20px 70px rgba(0,0,0,.9);overflow:hidden;width:min(480px,100%);max-width:100%;}',
+      '#pbgui-dialog-header{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-sm);padding:.85rem 1.1rem;border-bottom:1px solid #1e2736;background:#111827;}',
+      '#pbgui-dialog-title{font-size:var(--fs-md);font-weight:700;color:#e2e8f0;}',
+      '#pbgui-dialog-close{background:transparent;border:none;color:#64748b;font-size:var(--fs-lg);cursor:pointer;padding:.2rem .35rem;border-radius:5px;line-height:1;}',
+      '#pbgui-dialog-close:hover{color:#e2e8f0;background:rgba(255,255,255,.06);}',
       '#pbgui-dialog-body{box-sizing:border-box;display:grid;width:100%;max-width:100%;min-width:0;gap:var(--sp-md);padding:var(--sp-lg);overflow:hidden;}',
-      '#pbgui-dialog-message{min-width:0;font-size:var(--fs-base);line-height:1.5;color:#e8ecf4;white-space:pre-wrap;overflow-wrap:anywhere;}',
-      '#pbgui-dialog-detail{min-width:0;max-width:100%;font-size:var(--fs-sm);line-height:1.45;color:#a3adc2;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;}',
+      '#pbgui-dialog-message{min-width:0;font-size:var(--fs-base);line-height:1.5;color:#e2e8f0;white-space:pre-wrap;overflow-wrap:anywhere;}',
+      '#pbgui-dialog-detail{min-width:0;max-width:100%;font-size:var(--fs-sm);line-height:1.45;color:#94a3b8;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;}',
       '#pbgui-dialog-detail[hidden],#pbgui-dialog-field[hidden],#pbgui-dialog-cancel[hidden]{display:none!important;}',
       '#pbgui-dialog-field{display:grid;gap:var(--sp-xs);}',
-      '#pbgui-dialog-field label{font-size:var(--fs-sm);font-weight:600;color:#e8ecf4;}',
-      '#pbgui-dialog-input{width:100%;height:var(--input-h);padding:0 var(--sp-sm);border-radius:8px;border:1px solid #333f5c;background:#10141d;color:#e8ecf4;font-size:var(--fs-base);outline:none;}',
-      '#pbgui-dialog-input:focus{border-color:#96b9f4;box-shadow:0 0 0 1px rgba(99,179,237,.4);}',
+      '#pbgui-dialog-field label{font-size:var(--fs-sm);font-weight:600;color:#cbd5e1;}',
+      '#pbgui-dialog-input{width:100%;height:var(--input-h);padding:0 var(--sp-sm);border-radius:8px;border:1px solid #2d3748;background:#0f172a;color:#e2e8f0;font-size:var(--fs-base);outline:none;}',
+      '#pbgui-dialog-input:focus{border-color:#63b3ed;box-shadow:0 0 0 1px rgba(99,179,237,.4);}',
       '#pbgui-dialog-actions{box-sizing:border-box;display:flex;width:100%;max-width:100%;min-width:0;justify-content:flex-end;gap:var(--sp-sm);padding:0;overflow:visible;flex-wrap:wrap;}',
       '#pbgui-dialog-choices{display:flex;justify-content:flex-end;gap:var(--sp-sm);flex-wrap:wrap;}',
       '#pbgui-dialog-choices[hidden]{display:none!important;}',
       '.pbgui-dialog-btn{display:inline-flex;flex:0 0 auto;max-width:100%;align-items:center;justify-content:center;height:var(--btn-h);padding:0 var(--sp-md);border-radius:8px;border:1px solid transparent;font-size:var(--fs-base);font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}',
-      '.pbgui-dialog-btn.secondary{background:rgba(99,179,237,.08);border-color:rgba(99,179,237,.25);color:#e8ecf4;}',
-      '.pbgui-dialog-btn.secondary:hover{background:rgba(99,179,237,.16);border-color:#96b9f4;}',
-      '.pbgui-dialog-btn.primary{background:#96b9f4;border-color:#96b9f4;color:#0b1220;}',
+      '.pbgui-dialog-btn.secondary{background:rgba(99,179,237,.08);border-color:rgba(99,179,237,.25);color:#e2e8f0;}',
+      '.pbgui-dialog-btn.secondary:hover{background:rgba(99,179,237,.16);border-color:#63b3ed;}',
+      '.pbgui-dialog-btn.primary{background:#63b3ed;border-color:#63b3ed;color:#0b1220;}',
       '.pbgui-dialog-btn.primary:hover{background:#7cc4f5;}',
-      '.pbgui-dialog-btn.danger{background:#dc2626;border-color:#e5615c;color:#f2f5fb;}',
-      '.pbgui-dialog-btn.danger:hover{background:#e5615c;border-color:#f87171;}'
+      '.pbgui-dialog-btn.danger{background:#dc2626;border-color:#ef4444;color:#fff;}',
+      '.pbgui-dialog-btn.danger:hover{background:#ef4444;border-color:#f87171;}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -100,8 +90,6 @@
     var cancelBtn = document.getElementById('pbgui-dialog-cancel');
     var acceptBtn = document.getElementById('pbgui-dialog-accept');
     var input = document.getElementById('pbgui-dialog-input');
-
-    if (closeBtn) closeBtn.setAttribute('aria-label', _dlgT('common.close', 'Close'));
 
     closeBtn.addEventListener('click', function () { close(false); });
     cancelBtn.addEventListener('click', function () { close(false); });
@@ -196,17 +184,17 @@
     }
 
     currentMode = mode;
-    title.textContent = String(options.title || (mode === 'prompt' ? _dlgT('shared.dialog.enterValue', 'Enter value') : mode === 'alert' ? _dlgT('shared.dialog.notice', 'Notice') : _dlgT('common.confirmAction', 'Confirm action')));
-    message.textContent = String(options.message || (mode === 'prompt' ? _dlgT('shared.dialog.enterAValue', 'Enter a value.') : mode === 'alert' ? _dlgT('shared.dialog.done', 'Done.') : _dlgT('common.areYouSure', 'Are you sure?')));
+    title.textContent = String(options.title || (mode === 'prompt' ? 'Enter value' : mode === 'alert' ? 'Notice' : 'Confirm action'));
+    message.textContent = String(options.message || (mode === 'prompt' ? 'Enter a value.' : mode === 'alert' ? 'Done.' : 'Are you sure?'));
     var detailText = String(options.detail || '').trim();
     detail.textContent = detailText;
     detail.hidden = !detailText;
     field.hidden = mode !== 'prompt';
-    label.textContent = String(options.label || _dlgT('shared.dialog.value', 'Value'));
+    label.textContent = String(options.label || 'Value');
     input.value = String(options.defaultValue == null ? '' : options.defaultValue);
     input.placeholder = String(options.placeholder || '');
-    acceptBtn.textContent = String(options.confirmText || (mode === 'prompt' ? _dlgT('common.save', 'Save') : mode === 'alert' ? _dlgT('common.ok', 'OK') : _dlgT('common.confirm', 'Confirm')));
-    cancelBtn.textContent = String(options.cancelText || _dlgT('common.cancel', 'Cancel'));
+    acceptBtn.textContent = String(options.confirmText || (mode === 'prompt' ? 'Save' : mode === 'alert' ? 'OK' : 'Confirm'));
+    cancelBtn.textContent = String(options.cancelText || 'Cancel');
     cancelBtn.hidden = mode === 'alert' || mode === 'choose';
     acceptBtn.hidden = mode === 'choose';
     choices.hidden = mode !== 'choose';

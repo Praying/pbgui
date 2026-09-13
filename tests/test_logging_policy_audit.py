@@ -15,6 +15,7 @@ DOCUMENTED_SCRIPT_DIRS = {
 }
 PRINT_ALLOWLIST = {
     "frontend/codemod_colors.py": "One-off color-token migration CLI for the palette rework.",
+    "frontend/codemod_type_scale.py": "One-off typography-token migration CLI for the type-scale rework.",
     "pb7_guard.py": "PB7 guard is a human-facing install/update safety CLI.",
     "starter.py": "Starter is the human-facing service-control CLI.",
     "reprocess_tradfi_splits.py": "Maintenance CLI prints progress and its final report.",
@@ -68,7 +69,7 @@ LOGGING_CALL_ALLOWLIST = {
     "PBApiServer.py": "Bridges third-party logger records into human_log.",
 }
 HUMAN_LOG_SERVICE_MODULES = {
-    "Database.py", "Exchange.py", "ParetoDataLoader.py", "Status.py", "vps_manager_core.py",
+    "Database.py", "Exchange.py", "ParetoDataLoader.py", "vps_manager_core.py",
     "PBRun.py", "PBCoinData.py", "PBData.py", "market_data.py", "binance_best_1m.py",
     "hyperliquid_aws.py", "tradfi_sync.py", "api/live.py",
 }

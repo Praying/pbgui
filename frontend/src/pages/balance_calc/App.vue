@@ -23,6 +23,7 @@ import { useI18n } from 'vue-i18n';
 import { useAiPageContext } from '@/shared/ai/context';
 import AppShell from '@/shared/components/AppShell.vue';
 import StatusStrip from '@/shared/components/StatusStrip.vue';
+import { dialogsConfirm } from '@/shared/lib/dialogs';
 import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
 import {
@@ -57,6 +58,11 @@ const store = useBalanceCalc({
   t: (key, params) => t(key, params ?? {}),
   exchanges: EXCHANGES,
   initExchange: init.exchange,
+  confirmReplace: () => dialogsConfirm({
+    title: t('misc.balance.replaceConfigTitle'),
+    message: t('misc.balance.replaceConfigMessage'),
+    confirmText: t('misc.balance.replaceConfigConfirm'),
+  }),
 });
 
 const instanceOptions = computed(() =>

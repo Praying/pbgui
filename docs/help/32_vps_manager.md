@@ -140,8 +140,13 @@ Sidebar actions:
 | **Reboot VPS** | Restart the VPS |
 | **Cleanup VPS** | Remove old packages and logs |
 
+PB8 full-profile updates select optional GPU dependencies on the target host: `gpu-mps` on Apple Silicon and `gpu-cuda` on Linux/WSL2 with a working NVIDIA driver and a compatible PB8 revision. CPU hosts keep the CPU full profile, and VPS live-only profiles do not install GPU packages. Install the NVIDIA driver before updating PB8. See **PBv8 Optimize** for runtime checks and GPU settings.
+
 The **VPS** content area also contains:
 - a setup/config grid for password, swap, and firewall fields; **Apply VPS Changes** saves changes locally and applies changed swap and firewall settings on the VPS
+- **Apply VPS Changes** remains available for valid settings even when the target is already saved, so an interrupted swap resize can be retried. PBGui asks for the VPS user password if needed and compares the target with active remote swap before starting a resize. **Read VPS settings** loads the actual remote swap size; read failures leave the saved size intact.
+- After a browser reload, Change VPS waits for the saved configuration before showing editable fields, including the saved swap size.
+- After applying swap or firewall changes, the task viewer opens the log for that specific run, including output already written before the viewer opened.
 - **PBGui Branch Management**, **PB7 Branch Management**, and installed-runtime **PB8 Branch Management** with the same switch / update workflow as the Master page
 - a **Remote Monitor** section with server metrics plus runtime-labelled PB7 and PB8 activity from detailed process metrics and Cluster Sync fallbacks
 - a **Progress** section with separate status buckets for init, setup and update runs; use the sidebar action buttons to open the shared **Command Log Viewer** whenever you need the full ansible output

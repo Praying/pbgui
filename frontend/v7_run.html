@@ -904,10 +904,24 @@ function render() {
     if (Array.isArray(vb)) vb = vb.join(',');
     if (va == null) va = '';
     if (vb == null) vb = '';
-    if (typeof va === 'string') { va = va.toLowerCase(); vb = ('' + vb).toLowerCase(); }
-    var cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+    var cmp;
+    if (['version', 'running_version', 'twe'].indexOf(sort.col) >= 0) {
+      var numbers = function(value) {
+        var matches = String(value).match(/-?\d+(?:\.\d+)?/g);
+        return matches ? matches.map(Number) : [];
+      };
+      var na = numbers(va), nb = numbers(vb);
+      cmp = 0;
+      for (var n = 0; n < Math.max(na.length, nb.length); n++) {
+        if (n >= na.length) { cmp = -1; break; }
+        if (n >= nb.length) { cmp = 1; break; }
+        if (na[n] !== nb[n]) { cmp = na[n] < nb[n] ? -1 : 1; break; }
+      }
+    } else {
+      cmp = String(va).localeCompare(String(vb), undefined, {numeric: true, sensitivity: 'base'});
+    }
     if (cmp !== 0) return sort.asc ? cmp : -cmp;
-    return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
+    return a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'});
   });
 
   document.getElementById('instance-count').textContent =
@@ -1043,6 +1057,8 @@ function setV8RunConversionStatus(message) {
 
 
 async function convertInstanceToV8(name) {
+  if (conversionBusy) return;
+  conversionBusy = true;
   var targetName = String(name || '').replace(/[\\/\x00-\x1f]/g, '_').slice(0, 120) + '_v8';
   setV8RunConversionStatus('Converting V7 Run config with PB8...');
   try {
@@ -1086,6 +1102,8 @@ async function convertInstanceToV8(name) {
       detail: PBGuiI18n.t('v7run.v8ConversionFailedDetail'),
       confirmText: PBGuiI18n.t('common.ok')
     });
+  } finally {
+    conversionBusy = false;
   }
 }
 
@@ -1116,18 +1134,23 @@ function confirmDelete(name) {
 }
 
 function executeDelete(name) {
+  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
   var confirmBtn = document.getElementById('modal-confirm');
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = PBGuiI18n.t('v7run.deleting'); }
+  if (confirmBtn && confirmBtn.disabled) return;
+  var cancelBtn = document.getElementById('modal-cancel');
+  if (cancelBtn) cancelBtn.disabled = true;
+  var ownedModal = document.getElementById('modal-root').firstElementChild;
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = runtimeI18n.t('v7run.deleting'); }
   apiFetch('/instances/' + encodeURIComponent(name), { method: 'DELETE' }).then(function(res) {
     if (res.status === 409) {
-      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : PBGuiI18n.t('v7run.instanceRunning')); });
+      return res.json().then(function(d) { throw new Error(d.detail ? runtimeI18n.serverMsg(d.detail) : runtimeI18n.t('v7run.instanceRunning')); });
     }
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
+      return res.json().then(function(d) { throw new Error(d.detail ? runtimeI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
     }
     return res.json();
   }).then(function(data) {
-    closeModal();
+    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
     var hostInfo = '';
     if (data.hosts) {
       var ok = 0, fail = 0;
@@ -1135,17 +1158,17 @@ function executeDelete(name) {
         if (data.hosts[h].success) ok++; else fail++;
       });
       if (ok > 0 || fail > 0) {
-        hostInfo = PBGuiI18n.t(fail > 0 ? 'v7run.vpsHostsOkWithFail' : 'v7run.vpsHostsOk', { ok: ok, total: ok + fail, failed: fail });
+        hostInfo = runtimeI18n.t(fail > 0 ? 'v7run.vpsHostsOkWithFail' : 'v7run.vpsHostsOk', { ok: ok, total: ok + fail, failed: fail });
       }
     }
-    toast(PBGuiI18n.t('v7run.instanceDeleted', { name: name }) + hostInfo, 'ok');
+    toast(runtimeI18n.t('v7run.instanceDeleted', { name: name }) + hostInfo, 'ok');
     /* Remove from local state immediately */
     instances = instances.filter(function(r) { return r.name !== name; });
     if (rowMap[name]) { rowMap[name].tr.remove(); delete rowMap[name]; }
     render();
   }).catch(function(e) {
-    closeModal();
-    toast(PBGuiI18n.t('v7run.deleteFailed') + ': ' + e.message, 'err');
+    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
+    toast(runtimeI18n.t('v7run.deleteFailed') + ': ' + e.message, 'err');
   });
 }
 
@@ -1210,24 +1233,29 @@ function confirmForcedMode(name, mode, expectedVersion) {
 }
 
 function executeForcedMode(name, mode, actionText, expectedVersion) {
+  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
   var confirmBtn = document.getElementById('modal-confirm');
-  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = PBGuiI18n.t('v7run.syncing'); }
+  if (confirmBtn && confirmBtn.disabled) return;
+  var cancelBtn = document.getElementById('modal-cancel');
+  if (cancelBtn) cancelBtn.disabled = true;
+  var ownedModal = document.getElementById('modal-root').firstElementChild;
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = runtimeI18n.t('v7run.syncing'); }
   apiFetch('/instances/' + encodeURIComponent(name) + '/forced-mode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(mode === 'normal' ? { mode: mode, expected_version: Number(expectedVersion) } : { mode: mode })
   }).then(function(res) {
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
+      return res.json().then(function(d) { throw new Error(d.detail ? runtimeI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
     }
     return res.json();
   }).then(function(data) {
-    closeModal();
-    toast(PBGuiI18n.t('v7run.forcedModeSynced', { action: actionText, name: name, version: data.version }), 'ok');
+    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
+    toast(runtimeI18n.t('v7run.forcedModeSynced', { action: actionText, name: name, version: data.version }), 'ok');
     loadInstances();
   }).catch(function(e) {
-    closeModal();
-    toast(PBGuiI18n.t('v7run.forcedModeFailed', { action: actionText }) + ': ' + e.message, 'err');
+    if (document.getElementById('modal-root').firstElementChild === ownedModal) closeModal();
+    toast(runtimeI18n.t('v7run.forcedModeFailed', { action: actionText }) + ': ' + e.message, 'err');
   });
 }
 
@@ -1368,20 +1396,26 @@ function openBackups() {
 }
 
 var _retSavedVal = 50;
+var _retentionGeneration = 0;
+var _retentionEditGeneration = 0;
 
 function fetchRetention() {
+  var generation = ++_retentionGeneration;
+  var editGeneration = _retentionEditGeneration;
   apiFetch('/backup-settings').then(function(res) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   }).then(function(data) {
+    if (generation !== _retentionGeneration) return;
     var inp = document.getElementById('backup-retention');
     var v = data.max_versions || 50;
     _retSavedVal = v;
-    if (inp) { inp.value = v; inp.style.color = '#46c88f'; }
+    if (inp && editGeneration === _retentionEditGeneration) { inp.value = v; inp.style.color = '#46c88f'; }
   }).catch(function() {
+    if (generation !== _retentionGeneration) return;
     var inp = document.getElementById('backup-retention');
     _retSavedVal = 50;
-    if (inp) { inp.value = 50; inp.style.color = '#46c88f'; }
+    if (inp && editGeneration === _retentionEditGeneration) { inp.value = 50; inp.style.color = '#46c88f'; }
   });
 }
 
@@ -1395,13 +1429,17 @@ function stepRetention(dir) {
 }
 
 function markRetentionDirty() {
+  ++_retentionEditGeneration;
   var inp = document.getElementById('backup-retention');
   if (!inp) return;
   var cur = parseInt(inp.value, 10);
-  inp.style.color = (cur === _retSavedVal) ? '#46c88f' : '#d0a36f';
+  inp.style.color = (cur === _retSavedVal) ? '#46c88f' : '#ff9800';
 }
 
 function saveRetention() {
+  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
+  var generation = ++_retentionGeneration;
+  var editGeneration = _retentionEditGeneration;
   var inp = document.getElementById('backup-retention');
   var msg = document.getElementById('backup-retention-msg');
   if (!inp) return;
@@ -1415,13 +1453,16 @@ function saveRetention() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   }).then(function(data) {
+    if (generation !== _retentionGeneration) return;
     _retSavedVal = data.max_versions;
-    inp.value = data.max_versions;
-    inp.style.color = '#46c88f';
-    if (msg) { msg.textContent = PBGuiI18n.t('v7run.saved'); msg.style.color = '#46c88f'; }
+    if (editGeneration === _retentionEditGeneration) {
+      inp.value = data.max_versions;
+      inp.style.color = '#46c88f';
+    }
+    if (msg) { msg.textContent = runtimeI18n.t('v7run.saved'); msg.style.color = '#46c88f'; }
     setTimeout(function() { if (msg) msg.textContent = ''; }, 2000);
   }).catch(function(e) {
-    if (msg) { msg.textContent = PBGuiI18n.t('common.error') + ': ' + e.message; msg.style.color = '#e5615c'; }
+    if (msg) { msg.textContent = runtimeI18n.t('common.error') + ': ' + e.message; msg.style.color = '#e5615c'; }
   });
 }
 
@@ -1556,7 +1597,7 @@ async function doDeleteBackup(name, ts) {
   var url = '/backups/' + encodeURIComponent(name) + '/' + encodeURIComponent(ts);
   apiFetch(url, { method: 'DELETE' }).then(function(res) {
     if (!res.ok) {
-      return res.json().then(function(d) { throw new Error(d.detail ? PBGuiI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
+      return res.json().then(function(d) { throw new Error(d.detail ? runtimeI18n.serverMsg(d.detail) : ('HTTP ' + res.status)); });
     }
     return res.json();
   }).then(function() {

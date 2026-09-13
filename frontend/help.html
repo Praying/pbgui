@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="/app/src/styles/tokens.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="/app/favicon.svg?v=2">
-<script src="/app/i18n.js?v=1"></script>
   <title>PBGui — Help & Tutorials</title>
   <script src="./vendor/marked.min.js?v=1"></script>
   <script src="./vendor/purify.min.js?v=1"></script>
   <style>
     :root {
-      --fs-xs: 12px;
-      --fs-sm: 14px;
-      --fs-base: 15px;
-      --fs-md: 16px;
-      --fs-lg: 19px;
-      --fs-xl: 23px;
+      --fs-xs: 11px;
+      --fs-sm: 13px;
+      --fs-base: 14px;
+      --fs-md: 15px;
+      --fs-lg: 18px;
+      --fs-xl: 22px;
       --sp-xs: 4px;
       --sp-sm: 8px;
       --sp-md: 12px;
@@ -29,10 +26,10 @@
     html, body {
       height: 100%;
       width: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: var(--fs-base);
-      background: var(--bg-page, #10141d);
-      color: var(--text-primary, #e8ecf4);
+      background: #0e1117;
+      color: #e2e8f0;
       overflow: hidden;
     }
 
@@ -43,7 +40,7 @@
       background:
         radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 28%),
         radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.08), transparent 22%),
-        var(--bg-page, #10141d);
+        #0e1117;
     }
 
     #help-backdrop {
@@ -70,10 +67,10 @@
       height: min(700px, 90vh);
       min-width: 480px;
       min-height: 300px;
-      background: #10141d;
-      border: 1px solid var(--border-default, #333f5c);
+      background: #131b2b;
+      border: 1px solid #2d3748;
       border-radius: 12px;
-      box-shadow: 0 20px 70px rgba(5, 8, 14, 0.9);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.9);
       flex-direction: column;
       overflow: hidden;
       resize: both;
@@ -114,15 +111,15 @@
       align-items: center;
       justify-content: space-between;
       padding: 0.85rem 1.1rem 0.85rem 1.25rem;
-      border-bottom: 1px solid var(--border-subtle, #262f45);
+      border-bottom: 1px solid #1e2736;
       flex-shrink: 0;
-      background: var(--surface-sidebar, #131826);
+      background: #111827;
     }
 
     .ovl-header-title {
       font-size: var(--fs-md);
       font-weight: 700;
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -140,7 +137,7 @@
     .ovl-close {
       background: transparent;
       border: 1px solid transparent;
-      color: #717b8e;
+      color: #64748b;
       font-size: var(--fs-md);
       cursor: pointer;
       width: 28px;
@@ -155,21 +152,21 @@
     }
 
     .ovl-tool[aria-pressed="true"] {
-      color: var(--text-primary, #e8ecf4);
-      border-color: rgb(163, 173, 194, 0.2);
+      color: #e2e8f0;
+      border-color: rgba(148, 163, 184, 0.2);
       background: rgba(255, 255, 255, 0.06);
     }
 
     .ovl-tool:hover,
     .ovl-close:hover {
-      color: var(--text-primary, #e8ecf4);
-      border-color: rgb(163, 173, 194, 0.18);
+      color: #e2e8f0;
+      border-color: rgba(148, 163, 184, 0.18);
       background: rgba(255, 255, 255, 0.06);
     }
 
     .lang-pill {
       display: flex;
-      border: 1px solid var(--border-default, #333f5c);
+      border: 1px solid #2d3748;
       border-radius: 6px;
       overflow: hidden;
       flex-shrink: 0;
@@ -178,7 +175,7 @@
     .lang-pill button {
       background: transparent;
       border: none;
-      color: #717b8e;
+      color: #64748b;
       font-size: var(--fs-xs);
       font-weight: 600;
       letter-spacing: 0.05em;
@@ -188,13 +185,13 @@
     }
 
     .lang-pill button.active {
-      background: #333f5c;
-      color: var(--accent-soft, #96b9f4);
+      background: #1e3a5f;
+      color: #63b3ed;
     }
 
     .lang-pill button:hover:not(.active) {
       background: rgba(255, 255, 255, 0.04);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
     }
 
     #help-body {
@@ -207,31 +204,31 @@
       width: 230px;
       min-width: 170px;
       flex-shrink: 0;
-      border-right: 1px solid var(--border-subtle, #262f45);
+      border-right: 1px solid #1e2736;
       overflow-y: auto;
       padding: 0.5rem 0;
-      background: var(--bg-page, #10141d);
+      background: #0e1117;
     }
 
     #help-toc-filter {
       width: calc(100% - 1.2rem);
       margin: 0 0.6rem 0.4rem;
-      background: var(--bg-card, #1b2231);
-      color: var(--text-primary, #e8ecf4);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #1a202c;
+      color: #e2e8f0;
+      border: 1px solid #2d3748;
       border-radius: 5px;
       padding: 0.35rem 0.5rem;
       font-size: var(--fs-sm);
       outline: none;
     }
 
-    #help-toc-filter:focus { border-color: var(--text-disabled, #4d5c82); }
-    #help-toc-filter::placeholder { color: var(--text-disabled, #4d5c82); }
+    #help-toc-filter:focus { border-color: #4a5568; }
+    #help-toc-filter::placeholder { color: #4a5568; }
 
     .toc-item {
       display: block;
       padding: 0.42rem 0.9rem;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       font-size: var(--fs-sm);
       cursor: pointer;
       border-left: 3px solid transparent;
@@ -242,14 +239,14 @@
     }
 
     .toc-item:hover {
-      background: #171c29;
-      color: var(--text-primary, #e8ecf4);
+      background: #1a2030;
+      color: #e2e8f0;
     }
 
     .toc-item.active {
-      border-left-color: var(--accent-soft, #96b9f4);
-      color: var(--accent-soft, #96b9f4);
-      background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.07);
+      border-left-color: #63b3ed;
+      color: #63b3ed;
+      background: rgba(99, 179, 237, 0.07);
       font-weight: 600;
     }
 
@@ -258,38 +255,38 @@
       overflow-y: auto;
       padding: 1.5rem 1.8rem;
       line-height: 1.7;
-      color: var(--text-primary, #e8ecf4);
+      color: #cbd5e0;
       font-size: var(--fs-base);
     }
 
     #help-content h1 {
       font-size: var(--fs-xl);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       margin: 0 0 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border-subtle, #262f45);
+      border-bottom: 1px solid #1e2736;
     }
 
     #help-content h2 {
       font-size: var(--fs-lg);
-      color: var(--text-primary, #e8ecf4);
+      color: #e2e8f0;
       margin: 1.5rem 0 0.5rem;
     }
 
     #help-content h3 {
       font-size: var(--fs-md);
-      color: var(--text-primary, #e8ecf4);
+      color: #cbd5e0;
       margin: 1.1rem 0 0.35rem;
     }
 
     #help-content p { margin: 0.5rem 0; }
-    #help-content a { color: var(--accent-soft, #96b9f4); text-decoration: none; }
+    #help-content a { color: #63b3ed; text-decoration: none; }
     #help-content a:hover { text-decoration: underline; }
-    #help-content strong { color: var(--text-primary, #e8ecf4); }
-    #help-content em { color: var(--text-secondary, #a3adc2); font-style: italic; }
+    #help-content strong { color: #e2e8f0; }
+    #help-content em { color: #94a3b8; font-style: italic; }
     #help-content code {
-      background: var(--bg-card, #1b2231);
-      color: var(--warning-soft, #ecc381);
+      background: #1a202c;
+      color: #f6ad55;
       padding: 0.1em 0.35em;
       border-radius: 3px;
       font-size: var(--fs-xs);
@@ -297,8 +294,8 @@
     }
 
     #help-content pre {
-      background: var(--bg-page, #10141d);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #0e1117;
+      border: 1px solid #2d3748;
       border-radius: 6px;
       padding: 0.9rem 1rem;
       overflow-x: auto;
@@ -308,7 +305,7 @@
     #help-content pre code {
       background: none;
       padding: 0;
-      color: var(--text-secondary, var(--text-secondary, #a3adc2));
+      color: #a0aec0;
       font-size: var(--fs-sm);
     }
 
@@ -321,12 +318,12 @@
     #help-content li { margin: 0.2rem 0; }
 
     #help-content blockquote {
-      border-left: 3px solid var(--accent-soft, #96b9f4);
+      border-left: 3px solid #63b3ed;
       margin: 0.75rem 0;
       padding: 0.4rem 0.9rem;
-      background: rgb(var(--accent-soft-rgb, 141 185 248) / 0.05);
+      background: rgba(99, 179, 237, 0.05);
       border-radius: 0 5px 5px 0;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
     }
 
     #help-content table {
@@ -337,7 +334,7 @@
 
     #help-content th,
     #help-content td {
-      border: 1px solid var(--border-default, #333f5c);
+      border: 1px solid #2d3748;
       padding: 0.4rem 0.7rem;
       text-align: left;
       font-size: var(--fs-sm);
@@ -345,14 +342,14 @@
     }
 
     #help-content th {
-      background: var(--bg-card, #1b2231);
-      color: var(--text-primary, #e8ecf4);
+      background: #1a202c;
+      color: #e2e8f0;
       font-weight: 600;
     }
 
     #help-content hr {
       border: none;
-      border-top: 1px solid var(--border-subtle, #262f45);
+      border-top: 1px solid #1e2736;
       margin: 1rem 0;
     }
 
@@ -363,7 +360,7 @@
     }
 
     .help-loading {
-      color: var(--text-disabled, #4d5c82);
+      color: #4a5568;
       font-style: italic;
       padding: 2rem;
       text-align: center;
@@ -376,9 +373,9 @@
     }
 
     #help-search {
-      background: var(--bg-card, #1b2231);
-      color: var(--text-primary, #e8ecf4);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #1a202c;
+      color: #e2e8f0;
+      border: 1px solid #2d3748;
       border-radius: 5px;
       padding: 0.28rem 0.5rem;
       font-size: var(--fs-sm);
@@ -386,14 +383,14 @@
       width: 170px;
     }
 
-    #help-search:focus { border-color: var(--text-disabled, #4d5c82); }
-    #help-search::placeholder { color: var(--text-disabled, #4d5c82); }
+    #help-search:focus { border-color: #4a5568; }
+    #help-search::placeholder { color: #4a5568; }
 
     .help-snav-btn {
-      background: var(--bg-card, #1b2231);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #1a202c;
+      border: 1px solid #2d3748;
       border-radius: 3px;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       cursor: pointer;
       font-size: var(--fs-xs);
       padding: 2px 5px;
@@ -402,35 +399,35 @@
     }
 
     .help-snav-btn:hover {
-      color: var(--text-primary, #e8ecf4);
-      border-color: var(--text-disabled, #4d5c82);
+      color: #e2e8f0;
+      border-color: #4a5568;
     }
 
     #help-search-count {
       font-size: var(--fs-xs);
-      color: #717b8e;
+      color: #64748b;
       white-space: nowrap;
       min-width: 44px;
       text-align: left;
     }
 
     #help-content mark {
-      background: rgb(var(--warning-rgb, 227 164 74) / 0.2);
-      color: #ecc381;
+      background: rgba(255, 200, 0, 0.2);
+      color: #fcd34d;
       border-radius: 2px;
     }
 
     #help-content mark.current {
-      background: rgb(var(--warning-rgb, 227 164 74) / 0.45);
-      color: #ecc381;
-      outline: 1px solid #e0a458;
+      background: rgba(251, 146, 60, 0.45);
+      color: #fef08a;
+      outline: 1px solid #f59e0b;
     }
 
     #help-search-global-lbl {
       display: flex;
       align-items: center;
       gap: 3px;
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       font-size: var(--fs-xs);
       cursor: pointer;
       white-space: nowrap;
@@ -438,7 +435,7 @@
     }
 
     #help-search-global-lbl input[type="checkbox"] {
-      accent-color: #72a0ee;
+      accent-color: #4da6ff;
       cursor: pointer;
       margin: 0;
     }
@@ -451,25 +448,25 @@
     }
 
     .gs-item {
-      background: var(--bg-card, #1b2231);
-      border: 1px solid var(--border-default, #333f5c);
+      background: #1a202c;
+      border: 1px solid #2d3748;
       border-radius: 6px;
       padding: 10px 14px;
       cursor: pointer;
       transition: border-color 0.15s;
     }
 
-    .gs-item:hover { border-color: var(--text-disabled, #4d5c82); }
+    .gs-item:hover { border-color: #4a5568; }
 
     .gs-topic {
-      color: #96b9f4;
+      color: #93c5fd;
       font-weight: 600;
       font-size: var(--fs-sm);
       margin-bottom: 5px;
     }
 
     .gs-snip {
-      color: var(--text-secondary, #a3adc2);
+      color: #94a3b8;
       font-size: var(--fs-xs);
       line-height: 1.55;
       overflow: hidden;
@@ -493,7 +490,7 @@
         min-width: 0;
         max-height: 210px;
         border-right: none;
-        border-bottom: 1px solid var(--border-subtle, #262f45);
+        border-bottom: 1px solid #1e2736;
       }
       .ovl-header {
         align-items: flex-start;
@@ -518,20 +515,19 @@
     <div class="ovl-panel">
       <div id="help-drag-handle"></div>
       <div class="ovl-header">
-        <div class="ovl-header-title">&#128218; <span data-i18n="misc.help.guideHelp">Guide &amp; Help</span></div>
+        <div class="ovl-header-title">&#128218; Guide &amp; Help</div>
         <div class="ovl-header-actions">
           <div id="help-search-wrap">
-            <input id="help-search" type="text" placeholder="Search in topic..." data-i18n-placeholder="misc.help.searchInTopic" autocomplete="off">
-            <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)" data-i18n-title="misc.help.previousMatch">&#9650;</button>
-            <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)" data-i18n-title="misc.help.nextMatch">&#9660;</button>
+            <input id="help-search" type="text" placeholder="Search in topic..." autocomplete="off">
+            <button class="help-snav-btn" id="help-search-up" title="Previous match (Shift+Enter)">&#9650;</button>
+            <button class="help-snav-btn" id="help-search-dn" title="Next match (Enter)">&#9660;</button>
             <span id="help-search-count"></span>
-            <label id="help-search-global-lbl" title="Search across all topics" data-i18n-title="misc.help.searchAcrossAll"><input type="checkbox" id="help-search-global"> <span data-i18n="common.all">All</span></label>
+            <label id="help-search-global-lbl" title="Search across all topics"><input type="checkbox" id="help-search-global"> All</label>
           </div>
-          <div style="width:1px;height:16px;background:#333f5c;flex-shrink:0;"></div>
+          <div style="width:1px;height:16px;background:#2d3748;flex-shrink:0;"></div>
           <div class="lang-pill">
             <button id="help-lang-en" class="active">EN</button>
             <button id="help-lang-de">DE</button>
-            <button id="help-lang-zh" title="中文 (简体中文)">中文</button>
           </div>
           <button class="ovl-tool" id="help-maximize" title="Fit to browser window" aria-pressed="false">⛶</button>
           <button class="ovl-close" id="help-close">&#x2715;</button>
@@ -539,18 +535,15 @@
       </div>
       <div id="help-body">
         <div id="help-toc">
-          <input id="help-toc-filter" type="text" placeholder="Filter topics..." data-i18n-placeholder="misc.help.filterTopics" autocomplete="off">
+          <input id="help-toc-filter" type="text" placeholder="Filter topics..." autocomplete="off">
           <div id="help-toc-list"></div>
         </div>
-        <div id="help-content"><div class="help-loading" data-i18n="misc.help.loadingHelpTopics">Loading help topics...</div></div>
+        <div id="help-content"><div class="help-loading">Loading help topics...</div></div>
       </div>
     </div>
   </div>
 
   <script>
-    document.title = PBGuiI18n.t('misc.help.title');
-    function t(key, params) { return window.PBGuiI18n.t(key, params); }
-
     var _query = new URLSearchParams(window.location.search);
     var API_BASE = '%%API_BASE%%';
     var WS_BASE = '%%WS_BASE%%';
@@ -629,23 +622,15 @@
       var helpFilter = document.getElementById('help-toc-filter');
       var helpLangEN = document.getElementById('help-lang-en');
       var helpLangDE = document.getElementById('help-lang-de');
-      var helpLangZH = document.getElementById('help-lang-zh');
       var helpDragHandle = document.getElementById('help-drag-handle');
 
-      /* Stored choice wins; otherwise follow the browser (zh* → ZH), like
-         the GUI i18n auto-select; junk stored values count as no preference. */
-      var helpLang = (function () {
-        var stored = '';
-        try { stored = localStorage.getItem('help-lang') || ''; } catch (e) { /* private mode */ }
-        if (stored === 'EN' || stored === 'DE' || stored === 'ZH') return stored;
-        var nav = String((navigator.language || navigator.userLanguage || '')).toLowerCase();
-        if (nav.indexOf('zh') === 0) return 'ZH';
-        return 'EN';
-      })();
+      var helpLang = localStorage.getItem('help-lang') || 'EN';
       var helpTopics = [];
       var helpSel = 0;
       var helpLoaded = false;
       var topicCache = {};
+      var topicLoadGeneration = 0;
+      var helpIndexGeneration = 0;
 
       var helpSearch = document.getElementById('help-search');
       var helpSearchUp = document.getElementById('help-search-up');
@@ -661,7 +646,6 @@
       function setLanguageButtons() {
         helpLangEN.classList.toggle('active', helpLang === 'EN');
         helpLangDE.classList.toggle('active', helpLang === 'DE');
-        helpLangZH.classList.toggle('active', helpLang === 'ZH');
       }
 
       function renderMarkdown(md) {
@@ -725,7 +709,7 @@
       function updateSearchCount() {
         helpSearchCount.textContent = searchMarks.length
           ? (searchIndex + 1) + '/' + searchMarks.length
-          : (helpSearch.value.trim() ? t('misc.help.found0') : '');
+          : (helpSearch.value.trim() ? '0 found' : '');
       }
 
       function gotoMark(index) {
@@ -769,6 +753,8 @@
       }
 
       function ensureTopicCached(index, callback) {
+        var generation = helpIndexGeneration;
+        var language = helpLang;
         if (topicCache[index] !== undefined) {
           callback(topicCache[index]);
           return;
@@ -778,16 +764,18 @@
           callback('');
           return;
         }
-        fetch(appPath('/api/help/content?file=') + encodeURIComponent(topic.file) + '&lang=' + helpLang, { credentials: 'same-origin' })
+        fetch(appPath('/api/help/content?file=') + encodeURIComponent(topic.file) + '&lang=' + language, { credentials: 'same-origin' })
           .then(function (response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
             return response.json();
           })
           .then(function (data) {
+            if (generation !== helpIndexGeneration || language !== helpLang) return;
             topicCache[index] = renderMarkdown(data.content || '');
             callback(topicCache[index]);
           })
           .catch(function () {
+            if (generation !== helpIndexGeneration || language !== helpLang) return;
             topicCache[index] = '';
             callback('');
           });
@@ -801,11 +789,11 @@
           return;
         }
         if (!results.length) {
-          helpContent.innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
-          helpSearchCount.textContent = t('misc.help.found0');
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
+          helpSearchCount.textContent = '0 found';
           return;
         }
-        helpSearchCount.textContent = results.length + (results.length === 1 ? ' ' + t('misc.help.topic') : ' ' + t('misc.help.topics'));
+        helpSearchCount.textContent = results.length + (results.length === 1 ? ' topic' : ' topics');
         var container = document.createElement('div');
         container.className = 'gs-results';
         results.forEach(function (result) {
@@ -826,7 +814,7 @@
             var idx = parseInt(item.dataset.idx, 10);
             helpSearchGlobal.checked = false;
             globalMode = false;
-            helpSearch.placeholder = t('misc.help.searchInTopic');
+            helpSearch.placeholder = 'Search in topic...';
             loadTopic(idx);
           });
           container.appendChild(item);
@@ -835,8 +823,10 @@
       }
 
       function showGlobalResults(term) {
+        var generation = ++topicLoadGeneration;
+        var language = helpLang;
         if (!term) {
-          helpContent.innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + t('misc.help.typeSearchTerm') + '</p>';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">Type a search term to find across all topics.</p>';
           helpSearchCount.textContent = '';
           return;
         }
@@ -846,15 +836,16 @@
         } catch (error) {
           return;
         }
-        helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.searching') + '</div>';
+        helpContent.innerHTML = '<div class="help-loading">Searching...</div>';
         var pending = helpTopics.length;
         var results = [];
         if (!pending) {
-          helpContent.innerHTML = '<p style="color:#717b8e;padding:8px 0;">' + t('misc.help.noResultsFound') + '</p>';
+          helpContent.innerHTML = '<p style="color:#64748b;padding:8px 0;">No results found.</p>';
           return;
         }
         helpTopics.forEach(function (topic, index) {
           ensureTopicCached(index, function (html) {
+            if (generation !== topicLoadGeneration || language !== helpLang) return;
             var text = stripHtml(html);
             var matches = [];
             var match;
@@ -894,6 +885,8 @@
       }
 
       function loadTopic(index) {
+        var generation = ++topicLoadGeneration;
+        var language = helpLang;
         helpSel = index;
         renderToc();
         var topic = helpTopics[index];
@@ -902,13 +895,14 @@
         searchMarks = [];
         searchIndex = -1;
         helpSearchCount.textContent = '';
-        helpContent.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
-        fetch(appPath('/api/help/content?file=') + encodeURIComponent(topic.file) + '&lang=' + helpLang, { credentials: 'same-origin' })
+        helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+        fetch(appPath('/api/help/content?file=') + encodeURIComponent(topic.file) + '&lang=' + language, { credentials: 'same-origin' })
           .then(function (response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
             return response.json();
           })
           .then(function (data) {
+            if (generation !== topicLoadGeneration || language !== helpLang) return;
             rawHtml = renderMarkdown(data.content || '');
             topicCache[index] = rawHtml;
             helpContent.innerHTML = rawHtml;
@@ -916,22 +910,31 @@
             if (helpSearch.value.trim() && !globalMode) applySearch(helpSearch.value.trim());
           })
           .catch(function () {
-            helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadContent') + '</div>';
+            if (generation !== topicLoadGeneration || language !== helpLang) return;
+            helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>';
           });
       }
 
       function loadHelpIndex(keyword) {
-        helpTocList.innerHTML = '<div class="help-loading">' + t('common.loading') + '</div>';
-        fetch(appPath('/api/help/index?lang=') + helpLang, { credentials: 'same-origin' })
+        var generation = ++helpIndexGeneration;
+        var language = helpLang;
+        ++topicLoadGeneration;
+        topicCache = {};
+        rawHtml = null;
+        helpTopics = [];
+        helpContent.innerHTML = '<div class="help-loading">Loading...</div>';
+        helpTocList.innerHTML = '<div class="help-loading">Loading...</div>';
+        fetch(appPath('/api/help/index?lang=') + language, { credentials: 'same-origin' })
           .then(function (response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
             return response.json();
           })
           .then(function (data) {
+            if (generation !== helpIndexGeneration || language !== helpLang) return;
             helpTopics = data || [];
             renderToc();
             if (!helpTopics.length) {
-              helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.noHelpTopics') + '</div>';
+              helpContent.innerHTML = '<div class="help-loading">No help topics found.</div>';
               return;
             }
             var startIndex = 0;
@@ -950,8 +953,9 @@
             helpLoaded = true;
           })
           .catch(function () {
-            helpTocList.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadTopics') + '</div>';
-            helpContent.innerHTML = '<div class="help-loading">' + t('misc.help.failedLoadContent') + '</div>';
+            if (generation !== helpIndexGeneration || language !== helpLang) return;
+            helpTocList.innerHTML = '<div class="help-loading">Failed to load topics.</div>';
+            helpContent.innerHTML = '<div class="help-loading">Failed to load content.</div>';
           });
       }
 
@@ -965,7 +969,7 @@
         if (!maxBtn) return;
         var isMaximized = helpOvl.classList.contains('is-maximized');
         maxBtn.setAttribute('aria-pressed', isMaximized ? 'true' : 'false');
-        maxBtn.setAttribute('title', isMaximized ? t('misc.help.restoreWindow') : t('misc.help.fitWindow'));
+        maxBtn.setAttribute('title', isMaximized ? 'Restore window size' : 'Fit to browser window');
         maxBtn.textContent = isMaximized ? '❐' : '⛶';
       }
 
@@ -1061,7 +1065,7 @@
 
       helpSearchGlobal.addEventListener('change', function () {
         globalMode = helpSearchGlobal.checked;
-        helpSearch.placeholder = globalMode ? t('misc.help.searchAllTopics') : t('misc.help.searchInTopic');
+        helpSearch.placeholder = globalMode ? 'Search all topics...' : 'Search in topic...';
         var term = helpSearch.value.trim();
         if (globalMode) {
           showGlobalResults(term);
@@ -1091,16 +1095,6 @@
       helpLangDE.addEventListener('click', function () {
         if (helpLang === 'DE') return;
         helpLang = 'DE';
-        localStorage.setItem('help-lang', helpLang);
-        topicCache = {};
-        setLanguageButtons();
-        helpSel = 0;
-        loadHelpIndex('overview');
-      });
-
-      helpLangZH.addEventListener('click', function () {
-        if (helpLang === 'ZH') return;
-        helpLang = 'ZH';
         localStorage.setItem('help-lang', helpLang);
         topicCache = {};
         setLanguageButtons();
@@ -1170,7 +1164,7 @@
 
   <script>
     window.PBGUI_NAV_CONFIG = {
-      subtitle: (window.PBGuiI18n ? PBGuiI18n.t('misc.help.subtitle') : 'HELP'),
+      subtitle: 'HELP',
       current: 'help',
       authenticated: true,
       apiBase: API_BASE,
@@ -1178,7 +1172,6 @@
       serial: PBGUI_SERIAL
     };
   </script>
-  <script src="/app/js/pbgui_icons.js?v=1"></script>
-  <script src="./pbgui_nav.js?v=1788"></script>
+  <script src="./pbgui_nav.js?v=1787"></script>
 </body>
 </html>

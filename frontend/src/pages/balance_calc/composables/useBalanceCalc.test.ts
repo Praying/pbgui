@@ -14,11 +14,12 @@ vi.mock('@/shared/boot', () => ({
 
 const fetchMock = vi.fn();
 
-function makeStore(initExchange = '') {
+function makeStore(initExchange = '', confirmReplace?: () => Promise<boolean>) {
   return useBalanceCalc({
     t: (key, params) => `${key}${params ? ':' + JSON.stringify(params) : ''}`,
     exchanges: ['binance', 'bybit'],
     initExchange,
+    confirmReplace,
   });
 }
 
@@ -73,14 +74,29 @@ describe('selectInstance / load-config (:324-347)', () => {
     expect(store.configText.value).toBe(JSON.stringify({ a: 1 }, null, 4));
   });
 
-  it('writes the localized failure note into the editor on error (:345)', async () => {
+  it('preserves the editor and reports a localized failure on error (:345)', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ detail: 'instance missing' }, 404));
-    const store = makeStore();
+    const store = makeStore('', vi.fn().mockResolvedValue(true));
+    store.configText.value = '{"keep":true}';
 
     await store.selectInstance({ name: 'gone', version: 'v7' });
 
-    expect(store.configText.value).toContain('misc.balance.failedLoadConfig');
-    expect(store.configText.value).toContain('instance missing');
+    expect(store.configText.value).toBe('{"keep":true}');
+    expect(store.feedback.value?.message).toContain('misc.balance.failedLoadConfig');
+    expect(store.feedback.value?.message).toContain('instance missing');
+  });
+
+  it('requires confirmation before replacing an edited config', async () => {
+    const confirmReplace = vi.fn().mockResolvedValue(false);
+    const store = makeStore('', confirmReplace);
+    store.configText.value = '{"keep":true}';
+
+    await store.selectInstance({ name: 'new', version: 'v7' });
+
+    expect(confirmReplace).toHaveBeenCalledOnce();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(store.selectedInstance.value).toBeNull();
+    expect(store.configText.value).toBe('{"keep":true}');
   });
 
   it('ignores a slower config response after a newer instance selection', async () => {

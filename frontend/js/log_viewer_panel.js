@@ -23,57 +23,6 @@
  *   viewer.setFile(f);   // programmatic file switch (local)
  *   viewer.fetchFile(f); // one-shot fetch, no streaming (e.g. rotated files)
  */
-
-/* ── i18n helper: translate via PBGuiI18n, fall back to the English original ── */
-function _lvpT(key, fallback, params) {
-    var F = window.PBGuiI18n;
-    if (F && typeof F.t === 'function') {
-        var v = F.t(key, params);
-        return v === key ? fallback : v;
-    }
-    return fallback;
-}
-
-/* ── i18n key maps (English label → dictionary key) ─────────────────────── */
-const _LVP_PRESET_KEYS = {
-    'Errors': 'shared.log.errors',
-    'Warnings': 'shared.log.warnings',
-    'Errors + Warnings': 'shared.log.errorsWarnings',
-    'Connection': 'shared.log.connection',
-    'Restart / Stop': 'shared.log.restartStop',
-    'Traceback': 'shared.log.traceback',
-    'Orders / Fills': 'shared.log.ordersFills',
-    'Balance / PnL': 'shared.log.balancePnl',
-    'Positions': 'shared.log.positions',
-    'Startup': 'shared.log.startup',
-};
-
-const _LVP_TASK_LABEL_KEYS = {
-    'init': 'shared.log.task.initialize',
-    'setup': 'shared.log.task.setupVps',
-    'update': 'shared.log.task.update',
-    'vps_init': 'shared.log.task.initialize',
-    'vps_setup': 'shared.log.task.setupVps',
-    'vps_update': 'shared.log.task.update',
-    'vps-init': 'shared.log.task.initialize',
-    'vps-setup': 'shared.log.task.setupVps',
-    'vps-update': 'shared.log.task.updateLinux',
-    'vps-update-pbgui': 'shared.log.task.updatePbgui',
-    'vps-update-pb': 'shared.log.task.updatePbguiAndPb7',
-    'vps-pb7-python312': 'shared.log.task.updatePb7Venv',
-    'vps-pbgui-python312': 'shared.log.task.updatePbguiVenv',
-    'vps-reboot': 'shared.log.task.rebootVps',
-    'vps-cleanup': 'shared.log.task.cleanupVps',
-    'vps-resize-swap': 'shared.log.task.resizeSwap',
-    'vps-update-firewall': 'shared.log.task.updateFirewall',
-    'vps-update-coindata': 'shared.log.task.updateCoindata',
-    'master-update-pb': 'shared.log.task.updatePbguiAndPb7',
-    'master-update-pbgui': 'shared.log.task.updatePbgui',
-    'master-update-pb7': 'shared.log.task.updatePb7',
-    'master-install-rustup': 'shared.log.task.installRustup',
-    'master-install-rclone': 'shared.log.task.installRclone'
-};
-
 class LogViewerPanel {
 
     static MAX_LINES = 50000;
@@ -115,7 +64,7 @@ class LogViewerPanel {
 /* sidebar */
 .lvp-sidebar{
     width:auto;min-width:140px;
-    background:#10141d;border-right:1px solid #232b3d;
+    background:#111827;border-right:1px solid #1e293b;
     display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
     position:relative;
 }
@@ -126,38 +75,38 @@ class LogViewerPanel {
     user-select:none;
 }
 .lvp-sidebar-header{
-    padding:4px 10px;border-bottom:1px solid #232b3d;
+    padding:4px 10px;border-bottom:1px solid #1e293b;
     flex-shrink:0;white-space:nowrap;display:flex;align-items:center;gap:6px;
 }
 .lvp-sb-hdr-toggle{
     display:inline-flex;align-items:center;gap:4px;flex:1;min-width:0;padding:4px 0;
-    background:none;border:none;color:#717b8e;
+    background:none;border:none;color:#64748b;
     font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
     cursor:pointer;text-align:left;transition:color .15s;user-select:none;
 }
-.lvp-sb-hdr-toggle:hover{color:#e8ecf4}
+.lvp-sb-hdr-toggle:hover{color:#e2e8f0}
 .lvp-sb-hdr-toggle-arrow{font-size:9px;margin-left:auto;opacity:.6}
 .lvp-sort-btn{
     display:inline-flex;align-items:center;justify-content:center;
     min-width:18px;height:18px;padding:0 4px;
-    background:#232b3d;border:1px solid #333f5c;border-radius:4px;
-    color:#a3adc2;font-size:10px;cursor:pointer;transition:all .15s;
+    background:#1e293b;border:1px solid #334155;border-radius:4px;
+    color:#94a3b8;font-size:10px;cursor:pointer;transition:all .15s;
 }
-.lvp-sort-btn:hover{border-color:#717b8e;color:#e8ecf4}
+.lvp-sort-btn:hover{border-color:#64748b;color:#e2e8f0}
 .lvp-item-list{flex:1;overflow-y:auto;padding:4px 0}
 .lvp-item-btn{
     display:block;width:100%;text-align:left;padding:5px 10px;
     background:none;border:none;border-left:3px solid transparent;
-    color:#e8ecf4;font-family:'Cascadia Code','Fira Code','Consolas',monospace;
+    color:#e2e8f0;font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     font-size:11px;cursor:pointer;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;transition:background .12s;
 }
-.lvp-item-btn.lvp-subitem{padding-left:26px;color:#e8ecf4;font-size:10px}
-.lvp-item-btn:hover{background:#232b3d}
+.lvp-item-btn.lvp-subitem{padding-left:26px;color:#cbd5e1;font-size:10px}
+.lvp-item-btn:hover{background:#1e293b}
 .lvp-item-btn.lvp-active{
-    background:#232b3d;border-left-color:#72a0ee;color:#72a0ee;font-weight:600;
+    background:#1e293b;border-left-color:#4da6ff;color:#4da6ff;font-weight:600;
 }
-.lvp-item-size{font-size:9px;color:#717b8e;margin-left:6px}
+.lvp-item-size{font-size:9px;color:#64748b;margin-left:6px}
 
 /* viewer */
 .lvp-viewer{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;overflow:hidden}
@@ -165,106 +114,106 @@ class LogViewerPanel {
 /* toolbar */
 .lvp-toolbar{display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:wrap}
 .lvp-host-sel,.lvp-lines-sel{
-    font-size:12px;background:#232b3d;color:#e8ecf4;
-    border:1px solid #333f5c;border-radius:4px;padding:2px 4px;cursor:pointer;
+    font-size:12px;background:#1e293b;color:#e2e8f0;
+    border:1px solid #334155;border-radius:4px;padding:2px 4px;cursor:pointer;
 }
 .lvp-sb-toggle{
     display:inline-flex;align-items:center;gap:4px;padding:3px 8px;
-    background:#232b3d;border:1px solid #333f5c;border-radius:4px;
-    color:#a3adc2;font-size:11px;cursor:pointer;transition:all .15s;user-select:none;
+    background:#1e293b;border:1px solid #334155;border-radius:4px;
+    color:#94a3b8;font-size:11px;cursor:pointer;transition:all .15s;user-select:none;
 }
-.lvp-sb-toggle:hover{border-color:#717b8e;color:#e8ecf4}
+.lvp-sb-toggle:hover{border-color:#64748b;color:#e2e8f0}
 .lvp-sb-arrow{transition:transform .18s;display:inline-block;font-size:9px;line-height:1}
 .lvp-sb-toggle.lvp-sb-open .lvp-sb-arrow{transform:rotate(90deg)}
 .lvp-item-badge{
-    font-size:11px;color:#a3adc2;
+    font-size:11px;color:#94a3b8;
     font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.lvp-sep{width:1px;height:18px;background:#333f5c;flex-shrink:0}
-.lvp-file-size{font-size:11px;color:#717b8e;min-width:40px}
+.lvp-sep{width:1px;height:18px;background:#334155;flex-shrink:0}
+.lvp-file-size{font-size:11px;color:#888;min-width:40px}
 .lvp-host-label{
-    font-size:12px;color:#a3adc2;display:flex;align-items:center;gap:4px;white-space:nowrap;
+    font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:4px;white-space:nowrap;
 }
 .lvp-lines-label{
-    font-size:12px;color:#a3adc2;display:flex;align-items:center;gap:4px;white-space:nowrap;
+    font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:4px;white-space:nowrap;
 }
 
 /* level buttons */
 .lvp-lvl-btn{
-    padding:3px 7px;border-radius:3px;border:1px solid #333f5c;
-    background:#232b3d;font-size:11px;font-weight:700;cursor:pointer;
+    padding:3px 7px;border-radius:3px;border:1px solid #333640;
+    background:#262730;font-size:11px;font-weight:700;cursor:pointer;
     font-family:monospace;transition:all .15s;opacity:.4;color:#aaa;
 }
 .lvp-lvl-btn.on{opacity:1.0}
-.lvp-lvl-btn[data-lvl="DEBUG"].on   {background:#3a3f4b;border-color:#5d6575;color:#e8ecf4}
-.lvp-lvl-btn[data-lvl="INFO"].on    {background:#0d3b20;border-color:#46c88f;color:#46c88f}
-.lvp-lvl-btn[data-lvl="WARNING"].on {background:#3b2700;border-color:#e0a458;color:#e0a458}
-.lvp-lvl-btn[data-lvl="ERROR"].on   {background:#3b0d0d;border-color:#e5615c;color:#e5615c}
-.lvp-lvl-btn[data-lvl="CRITICAL"].on{background:#2d0040;border-color:#9b8ede;color:#9b8ede}
+.lvp-lvl-btn[data-lvl="DEBUG"].on   {background:#3a3f4b;border-color:#555;color:#e2e8f0}
+.lvp-lvl-btn[data-lvl="INFO"].on    {background:#0d3b20;border-color:#21c354;color:#21c354}
+.lvp-lvl-btn[data-lvl="WARNING"].on {background:#3b2700;border-color:#ff8c00;color:#ff8c00}
+.lvp-lvl-btn[data-lvl="ERROR"].on   {background:#3b0d0d;border-color:#ff4b4b;color:#ff4b4b}
+.lvp-lvl-btn[data-lvl="CRITICAL"].on{background:#2d0040;border-color:#b39ddb;color:#b39ddb}
 
 /* control buttons */
 .lvp-ctrl-btn{
-    padding:3px 9px;background:#232b3d;border:1px solid #333f5c;
-    border-radius:4px;color:#e8ecf4;font-size:12px;cursor:pointer;
+    padding:3px 9px;background:#262730;border:1px solid #333640;
+    border-radius:4px;color:#e2e8f0;font-size:12px;cursor:pointer;
     white-space:nowrap;transition:all .15s;line-height:1.6;
 }
-.lvp-ctrl-btn:hover{background:#72a0ee;color:#0b1526;border-color:#72a0ee}
-.lvp-ctrl-btn.lvp-stream-on{background:#46c88f;color:#0b1526;border-color:#46c88f}
-.lvp-ctrl-btn.lvp-active{background:#72a0ee;color:#0b1526}
+.lvp-ctrl-btn:hover{background:#4da6ff;color:#000;border-color:#4da6ff}
+.lvp-ctrl-btn.lvp-stream-on{background:#21c354;color:#000;border-color:#21c354}
+.lvp-ctrl-btn.lvp-active{background:#4da6ff;color:#000}
 
 /* terminal */
 .lvp-terminal{
     overflow-y:auto;
     font-family:'Cascadia Code','Fira Code','Consolas',monospace;
     font-size:12px;line-height:1.45;
-    background:#0a0d15;color:#a3adc2;
-    padding:10px 12px;border:1px solid #232b3d;border-radius:5px;
+    background:#000;color:#b0b0b0;
+    padding:10px 12px;border:1px solid #1e293b;border-radius:5px;
     white-space:pre-wrap;word-break:break-all;
     flex:1;min-height:0;
 }
 .lvp-terminal.show-line-nums > div{padding-left:52px;position:relative}
 .lvp-terminal.show-line-nums > div::before{
     content:attr(data-ln);position:absolute;left:0;width:44px;
-    text-align:right;color:#5d6575;font-size:11px;user-select:none;pointer-events:none;
+    text-align:right;color:#555;font-size:11px;user-select:none;pointer-events:none;
 }
 .lvp-terminal.show-line-nums > div.lvp-separator::before{content:''}
 .lvp-terminal > div[data-ln]{content-visibility:auto;contain-intrinsic-size:auto 18px}
 
 /* log line classes */
 .lvp-log-debug   {color:#808080}
-.lvp-log-info    {color:#a3adc2}
-.lvp-log-warning {color:#e0a458}
-.lvp-log-error   {color:#e5615c}
-.lvp-log-critical{color:#9b8ede;font-weight:600}
+.lvp-log-info    {color:#b0b0b0}
+.lvp-log-warning {color:#ff8c00}
+.lvp-log-error   {color:#ff4b4b}
+.lvp-log-critical{color:#b39ddb;font-weight:600}
 .lvp-ansi-bold{font-weight:600}
 .lvp-ansi-fg-30{color:#8b95a7}
-.lvp-ansi-fg-31{color:#e5615c}
-.lvp-ansi-fg-32{color:#46c88f}
+.lvp-ansi-fg-31{color:#ff4b4b}
+.lvp-ansi-fg-32{color:#21c354}
 .lvp-ansi-fg-33{color:#f4b942}
 .lvp-ansi-fg-34{color:#7cc7ff}
 .lvp-ansi-fg-35{color:#d28cff}
 .lvp-ansi-fg-36{color:#58c7e6}
-.lvp-ansi-fg-37{color:#e8ecf4}
-.lvp-ansi-fg-90{color:#717b8e}
+.lvp-ansi-fg-37{color:#e2e8f0}
+.lvp-ansi-fg-90{color:#64748b}
 .lvp-ansi-fg-91{color:#ff7a7a}
 .lvp-ansi-fg-92{color:#69e69c}
 .lvp-ansi-fg-93{color:#ffd36b}
 .lvp-ansi-fg-94{color:#9bd7ff}
 .lvp-ansi-fg-95{color:#ebb0ff}
 .lvp-ansi-fg-96{color:#86eaff}
-.lvp-ansi-fg-97{color:#f2f5fb}
+.lvp-ansi-fg-97{color:#f8fafc}
 .lvp-hidden      {display:none !important}
 .lvp-level-hidden{display:none !important}
 .lvp-highlight      {background:rgba(255,200,0,.18)}
-.lvp-highlight mark {background:#e0a458;color:#0b1526;border-radius:2px;padding:0 1px}
-.lvp-current-match  {background:rgba(255,160,0,.40);outline:1px solid #e0a458}
+.lvp-highlight mark {background:#e8a620;color:#000;border-radius:2px;padding:0 1px}
+.lvp-current-match  {background:rgba(255,160,0,.40);outline:1px solid #e8a620}
 
 /* context / blocks */
 .lvp-context{opacity:.5}
 .lvp-separator{
-    text-align:center;color:#717b8e;font-size:11px;padding:2px 0;
-    user-select:none;border-top:1px dotted #333f5c;border-bottom:1px dotted #333f5c;margin:2px 0;
+    text-align:center;color:#64748b;font-size:11px;padding:2px 0;
+    user-select:none;border-top:1px dotted #334155;border-bottom:1px dotted #334155;margin:2px 0;
 }
 .lvp-terminal.lvp-groups-collapsed .lvp-grp-detail,
 .lvp-terminal.lvp-groups-collapsed .lvp-separator{display:none}
@@ -272,40 +221,40 @@ class LogViewerPanel {
 .lvp-terminal .lvp-grp-detail.lvp-group-folded{display:none}
 .lvp-group-first{cursor:pointer;padding-left:20px !important;position:relative}
 .lvp-group-first .grp-arrow{
-    position:absolute;left:2px;top:0;color:#f2f5fb;font-size:11px;
-    text-shadow:0 0 2px rgba(5, 8, 14,.8);pointer-events:none;
+    position:absolute;left:2px;top:0;color:#fff;font-size:11px;
+    text-shadow:0 0 2px rgba(0,0,0,.8);pointer-events:none;
 }
 .lvp-terminal.show-line-nums .lvp-group-first{padding-left:72px !important}
 .lvp-terminal.show-line-nums .lvp-group-first .grp-arrow{left:52px}
-.lvp-group-first .grp-count{font-size:10px;color:#717b8e;margin-left:8px}
+.lvp-group-first .grp-count{font-size:10px;color:#64748b;margin-left:8px}
 
 /* search bar */
 .lvp-searchbar{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap}
 .lvp-searchbar select{
-    font-size:12px;background:#232b3d;color:#e8ecf4;
-    border:1px solid #333f5c;border-radius:4px;padding:3px 6px;
+    font-size:12px;background:#1e293b;color:#e2e8f0;
+    border:1px solid #334155;border-radius:4px;padding:3px 6px;
 }
 .lvp-searchbar input[type="text"]{
-    flex:1;min-width:140px;font-size:12px;background:#232b3d;color:#e8ecf4;
-    border:1px solid #333f5c;border-radius:4px;padding:4px 8px;
+    flex:1;min-width:140px;font-size:12px;background:#1e293b;color:#e2e8f0;
+    border:1px solid #334155;border-radius:4px;padding:4px 8px;
 }
 .lvp-searchbar label{
-    font-size:12px;color:#a3adc2;display:inline-flex;align-items:center;
+    font-size:12px;color:#94a3b8;display:inline-flex;align-items:center;
     gap:4px;cursor:pointer;white-space:nowrap;
 }
 .lvp-ctx-sel{padding:3px 6px;font-size:11px}
 .lvp-grp-link{
-    font-size:11px;color:#717b8e;text-decoration:underline;cursor:pointer;
+    font-size:11px;color:#64748b;text-decoration:underline;cursor:pointer;
     background:none;border:none;font-family:inherit;
 }
-.lvp-grp-link:hover{color:#e8ecf4}
+.lvp-grp-link:hover{color:#e2e8f0}
 .lvp-nav-btn{
-    background:#232b3d;border:1px solid #333f5c;border-radius:3px;
-    color:#a3adc2;cursor:pointer;font-size:12px;padding:2px 6px;line-height:1;
+    background:#262730;border:1px solid #333640;border-radius:3px;
+    color:#94a3b8;cursor:pointer;font-size:12px;padding:2px 6px;line-height:1;
 }
-.lvp-nav-btn:hover{color:#e8ecf4;border-color:#a3adc2}
-.lvp-match-count{font-size:11px;color:#717b8e;min-width:70px}
-.lvp-conn-badge{font-size:11px;color:#717b8e}
+.lvp-nav-btn:hover{color:#e2e8f0;border-color:#94a3b8}
+.lvp-match-count{font-size:11px;color:#888;min-width:70px}
+.lvp-conn-badge{font-size:11px;color:#64748b}
 /* ── end LogViewerPanel v2 ─────────────────────────────────────────── */
 `;
         document.head.appendChild(s);
@@ -485,11 +434,10 @@ class LogViewerPanel {
         var esc = function(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
 
         /* preset options */
-        var preOpts = '<option value="">' + esc(_lvpT('shared.log.presetPlaceholder', '\u2014 Preset \u2014')) + '</option>';
+        var preOpts = '<option value="">\u2014 Preset \u2014</option>';
         for (var i = 0; i < this._presetSet.length; i++) {
             var pr = this._presetSet[i];
-            var prKey = _LVP_PRESET_KEYS[pr.l];
-            preOpts += '<option value="' + esc(pr.v) + '">' + esc(prKey ? _lvpT(prKey, pr.l) : pr.l) + '</option>';
+            preOpts += '<option value="' + esc(pr.v) + '">' + esc(pr.l) + '</option>';
         }
 
         c.innerHTML =
@@ -498,9 +446,9 @@ class LogViewerPanel {
   '<div class="lvp-sidebar" id="' + p + 'sidebar">' +
     '<div class="lvp-sidebar-header">' +
       '<button class="lvp-sb-hdr-toggle" id="' + p + 'sb-hdr-toggle">' +
-        _lvpT('shared.log.files', 'Files') + ' <span class="lvp-sb-hdr-toggle-arrow">&#9664;</span>' +
+        'Files <span class="lvp-sb-hdr-toggle-arrow">&#9664;</span>' +
       '</button>' +
-      '<button class="lvp-sort-btn lvp-hidden" type="button" id="' + p + 'sort-btn" title="' + _lvpT('shared.log.toggleSortOrder', 'Toggle sort order') + '" aria-label="' + _lvpT('shared.log.toggleSortOrder', 'Toggle sort order') + '">&#8595;</button>' +
+      '<button class="lvp-sort-btn lvp-hidden" type="button" id="' + p + 'sort-btn" title="Toggle sort order" aria-label="Toggle sort order">&#8595;</button>' +
     '</div>' +
     '<div class="lvp-item-list" id="' + p + 'item-list"></div>' +
     '<div class="lvp-sidebar-resize" id="' + p + 'sidebar-resize"></div>' +
@@ -509,14 +457,14 @@ class LogViewerPanel {
   '<div class="lvp-viewer">' +
     '<!-- toolbar -->' +
     '<div class="lvp-toolbar">' +
-      '<label class="lvp-host-label">' + _lvpT('shared.log.host', 'Host:') +
+      '<label class="lvp-host-label">Host:' +
         '<select class="lvp-host-sel" id="' + p + 'host-sel">' +
-          '<option value="local" selected>' + _lvpT('shared.log.local', 'Local') + '</option>' +
+          '<option value="local" selected>Local</option>' +
         '</select>' +
       '</label>' +
       '<div class="lvp-sep"></div>' +
       '<button class="lvp-sb-toggle lvp-sb-open" id="' + p + 'sb-toggle" style="display:none">' +
-        '<span class="lvp-sb-arrow">&#9658;</span> ' + _lvpT('shared.log.files', 'Files') +
+        '<span class="lvp-sb-arrow">&#9658;</span> Files' +
       '</button>' +
       '<span class="lvp-item-badge" id="' + p + 'item-badge"></span>' +
       '<div class="lvp-sep"></div>' +
@@ -528,7 +476,7 @@ class LogViewerPanel {
         '<button class="lvp-lvl-btn on" data-lvl="CRITICAL" id="' + p + 'lvl-CRITICAL">CRT</button>' +
       '</div>' +
       '<div class="lvp-sep"></div>' +
-      '<label class="lvp-lines-label">' + _lvpT('shared.log.lines', 'Lines:') +
+      '<label class="lvp-lines-label">Lines:' +
         '<select class="lvp-lines-sel" id="' + p + 'lines-sel">' +
           '<option value="200" selected>200</option>' +
           '<option value="500">500</option>' +
@@ -542,35 +490,35 @@ class LogViewerPanel {
       '</label>' +
       '<span class="lvp-file-size" id="' + p + 'file-size"></span>' +
       '<div class="lvp-sep"></div>' +
-      '<button class="lvp-ctrl-btn lvp-stream-on" id="' + p + 'stream-btn">&#9208; ' + _lvpT('shared.log.pause', 'Pause') + '</button>' +
-      '<button class="lvp-ctrl-btn" id="' + p + 'fetch-btn">&#128229; ' + _lvpT('shared.log.fetch', 'Fetch') + '</button>' +
-      '<button class="lvp-ctrl-btn" id="' + p + 'clear-btn">&#128465; ' + _lvpT('shared.log.clear', 'Clear') + '</button>' +
-      '<button class="lvp-ctrl-btn" id="' + p + 'dl-btn">\u2B07 ' + _lvpT('shared.log.download', 'Download') + '</button>' +
+      '<button class="lvp-ctrl-btn lvp-stream-on" id="' + p + 'stream-btn">&#9208; Pause</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'fetch-btn">&#128229; Fetch</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'clear-btn">&#128465; Clear</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'dl-btn">\u2B07 Download</button>' +
       (this._showRestart
-        ? '<button class="lvp-ctrl-btn" id="' + p + 'restart-btn">&#128260; ' + _lvpT('shared.log.restart', 'Restart') + '</button>'
+        ? '<button class="lvp-ctrl-btn" id="' + p + 'restart-btn">&#128260; Restart</button>'
         : '') +
-      '<button class="lvp-ctrl-btn" id="' + p + 'ln-btn">' + _lvpT('shared.log.linesBtn', '# Lines') + '</button>' +
+      '<button class="lvp-ctrl-btn" id="' + p + 'ln-btn"># Lines</button>' +
       '<div class="lvp-sep"></div>' +
-      '<span class="lvp-conn-badge" id="' + p + 'conn">' + _lvpT('shared.log.connConnecting', 'connecting\u2026') + '</span>' +
+      '<span class="lvp-conn-badge" id="' + p + 'conn">connecting\u2026</span>' +
     '</div>' +
     '<!-- search bar -->' +
     '<div class="lvp-searchbar">' +
       '<select id="' + p + 'preset">' + preOpts + '</select>' +
-      '<input type="text" id="' + p + 'search" placeholder="' + _lvpT('shared.log.searchLogs', 'Search logs\u2026') + '">' +
-      '<label><input type="checkbox" id="' + p + 'filter-chk" checked> ' + _lvpT('shared.log.filter', 'Filter') + '</label>' +
+      '<input type="text" id="' + p + 'search" placeholder="Search logs\u2026">' +
+      '<label><input type="checkbox" id="' + p + 'filter-chk" checked> Filter</label>' +
       '<select class="lvp-ctx-sel" id="' + p + 'ctx-sel" style="display:none">' +
-        '<option value="3">' + _lvpT('shared.log.contextLines', '\u00b13 lines', {n: 3}) + '</option>' +
-        '<option value="5" selected>' + _lvpT('shared.log.contextLines', '\u00b15 lines', {n: 5}) + '</option>' +
-        '<option value="10">' + _lvpT('shared.log.contextLines', '\u00b110 lines', {n: 10}) + '</option>' +
-        '<option value="20">' + _lvpT('shared.log.contextLines', '\u00b120 lines', {n: 20}) + '</option>' +
+        '<option value="3">\u00b13 lines</option>' +
+        '<option value="5" selected>\u00b15 lines</option>' +
+        '<option value="10">\u00b110 lines</option>' +
+        '<option value="20">\u00b120 lines</option>' +
       '</select>' +
       '<span id="' + p + 'grp-actions" style="display:none">' +
-        '<button class="lvp-grp-link" id="' + p + 'expand-all">' + _lvpT('shared.log.expandAll', 'Expand all') + '</button>' +
-        '<button class="lvp-grp-link" id="' + p + 'collapse-all">' + _lvpT('shared.log.collapseAll', 'Collapse all') + '</button>' +
+        '<button class="lvp-grp-link" id="' + p + 'expand-all">Expand all</button>' +
+        '<button class="lvp-grp-link" id="' + p + 'collapse-all">Collapse all</button>' +
       '</span>' +
       '<span id="' + p + 'nav-btns" style="display:none;gap:2px;">' +
-        '<button class="lvp-nav-btn" id="' + p + 'nav-up" title="' + _lvpT('shared.log.prevMatch', 'Prev (Shift+Enter)') + '">&#9650;</button>' +
-        '<button class="lvp-nav-btn" id="' + p + 'nav-dn" title="' + _lvpT('shared.log.nextMatch', 'Next (Enter)') + '">&#9660;</button>' +
+        '<button class="lvp-nav-btn" id="' + p + 'nav-up" title="Prev (Shift+Enter)">&#9650;</button>' +
+        '<button class="lvp-nav-btn" id="' + p + 'nav-dn" title="Next (Enter)">&#9660;</button>' +
       '</span>' +
       '<span class="lvp-match-count" id="' + p + 'match-count"></span>' +
     '</div>' +
@@ -736,7 +684,7 @@ class LogViewerPanel {
         ws.onopen = function() {
             if (me._ws !== ws || me._wsGeneration !== generation) return;
             var ce = me._q('conn');
-            if (ce) ce.textContent = _lvpT('shared.log.connected', 'connected');
+            if (ce) ce.textContent = 'connected';
             ws.send(JSON.stringify({ cmd: 'list_local_logs' }));
             if (!me._flushPendingRestart(ws)) me._subscribe();
         };
@@ -747,7 +695,7 @@ class LogViewerPanel {
         ws.onerror = function() {
             if (me._ws !== ws || me._wsGeneration !== generation) return;
             var ce = me._q('conn');
-            if (ce) ce.textContent = _lvpT('shared.log.connError', 'error');
+            if (ce) ce.textContent = 'error';
         };
         ws.onclose = function(event) {
             if (me._ws !== ws || me._wsGeneration !== generation) return;
@@ -769,11 +717,11 @@ class LogViewerPanel {
                     clearTimeout(me._reconnectTimer);
                     me._reconnectTimer = 0;
                 }
-                if (ce) ce.textContent = _lvpT('shared.log.connSessionExpired', 'session expired');
+                if (ce) ce.textContent = 'session expired';
                 window.location.replace('/');
                 return;
             }
-            if (ce) ce.textContent = _lvpT('shared.log.disconnected', 'disconnected');
+            if (ce) ce.textContent = 'disconnected';
             if (!me._authExpired && !me._closed && !me._reconnectTimer) {
                 me._reconnectTimer = setTimeout(function() {
                     me._reconnectTimer = 0;
@@ -896,8 +844,8 @@ class LogViewerPanel {
                 var rb = this._q('restart-btn');
                 if (rb) {
                     rb.disabled = false;
-                    rb.textContent = msg.success ? '\u2705 ' + _lvpT('shared.log.restarted', 'Restarted') : '\u274c ' + _lvpT('shared.log.failed', 'Failed');
-                    setTimeout(function() { rb.textContent = '\ud83d\udd04 ' + _lvpT('shared.log.restart', 'Restart'); }, 3000);
+                    rb.textContent = msg.success ? '\u2705 Restarted' : '\u274c Failed';
+                    setTimeout(function() { rb.textContent = '\ud83d\udd04 Restart'; }, 3000);
                 }
                 this._finishRestartAttempt();
             }
@@ -921,7 +869,7 @@ class LogViewerPanel {
         var rb = this._q('restart-btn');
         if (rb) {
             rb.disabled = false;
-            rb.textContent = '\ud83d\udd04 ' + _lvpT('shared.log.restart', 'Restart');
+            rb.textContent = '\ud83d\udd04 Restart';
         }
     }
 
@@ -935,7 +883,7 @@ class LogViewerPanel {
         attempt.sent = true;
         this._send(attempt.command);
         var rb = this._q('restart-btn');
-        if (rb) rb.textContent = '\u231b ' + _lvpT('shared.log.restarting', 'Restarting\u2026');
+        if (rb) rb.textContent = '\u231b Restarting\u2026';
     }
 
     _ingestLines(newLines) {
@@ -1041,7 +989,7 @@ class LogViewerPanel {
         this._unsubscribe();
         this._clear();
 
-        var label = this._isLocal() ? _lvpT('shared.log.files', 'Files') : _lvpT('shared.log.services', 'Services');
+        var label = this._isLocal() ? 'Files' : 'Services';
         var sbToggle = this._q('sb-toggle');
         if (sbToggle)
             sbToggle.innerHTML = '<span class="lvp-sb-arrow">&#9658;</span> ' + label;
@@ -1085,7 +1033,7 @@ class LogViewerPanel {
         for (var i = 0; i < hosts.length; i++) {
             var o = document.createElement('option');
             o.value = hosts[i];
-            o.textContent = hosts[i] === 'local' ? _lvpT('shared.log.local', 'Local') : hosts[i];
+            o.textContent = hosts[i] === 'local' ? 'Local' : hosts[i];
             sel.appendChild(o);
         }
         if (hosts.indexOf(prev) >= 0) sel.value = prev;
@@ -1158,7 +1106,7 @@ class LogViewerPanel {
             'master-install-rustup': 'Install or Update rustup',
             'master-install-rclone': 'Install or Update rclone'
         };
-        var titleLabel = labels[command] || command
+        var label = labels[command] || command
             .replace(/^vps[-_]/, '')
             .replace(/^master[-_]/, '')
             .split(/[-_]+/)
@@ -1167,13 +1115,11 @@ class LogViewerPanel {
                 return part.charAt(0).toUpperCase() + part.slice(1);
             })
             .join(' ');
-        var labelKey = _LVP_TASK_LABEL_KEYS[command];
-        var label = labelKey ? _lvpT(labelKey, titleLabel) : titleLabel;
         return {
             command: command,
             history: history,
             runId: runId,
-            label: label || _lvpT('shared.log.task.fallback', 'Task')
+            label: label || 'Task'
         };
     }
 
@@ -1253,7 +1199,7 @@ class LogViewerPanel {
         var f = file || '';
         if (!f) return '';
         if (f.indexOf('Bot:') === 0) return '\ud83e\udd16 ' + f.substring(4);
-        if (f.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + f.substring(7) + ' ' + _lvpT('shared.log.errorLog', 'error');
+        if (f.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + f.substring(7) + ' error';
         if (f.indexOf('pb7/logs/') === 0 || f.indexOf('software/pb7/logs/') === 0) {
             return this._svcLabel(f);
         }
@@ -1261,13 +1207,11 @@ class LogViewerPanel {
             var vpsParts = f.split(':');
             var host = vpsParts[1] || 'VPS';
             var vpsInfo = this._taskLabel(vpsParts.slice(2).join(':'));
-            var vpsHist = vpsInfo.history ? ' ' + _lvpT('shared.log.historyParen', '(History ' + vpsInfo.history + ')', { n: vpsInfo.history }) : '';
-            return host + ' ' + vpsInfo.label + vpsHist;
+            return host + ' ' + vpsInfo.label + (vpsInfo.history ? ' (History ' + vpsInfo.history + ')' : '');
         }
         if (f.indexOf('MasterAction:') === 0) {
             var masterInfo = this._taskLabel(f.split(':').slice(1).join(':'));
-            var masterHist = masterInfo.history ? ' ' + _lvpT('shared.log.historyParen', '(History ' + masterInfo.history + ')', { n: masterInfo.history }) : '';
-            return _lvpT('nav.master', 'Master') + ' ' + masterInfo.label + masterHist;
+            return 'Master ' + masterInfo.label + (masterInfo.history ? ' (History ' + masterInfo.history + ')' : '');
         }
         if (f.indexOf('/') >= 0) {
             var pathParts = f.split('/').filter(Boolean);
@@ -1284,12 +1228,8 @@ class LogViewerPanel {
             if (this._taskBrowseMode) {
                 sortBtn.classList.remove('lvp-hidden');
                 sortBtn.textContent = this._taskListSortMode === 'alphabetical' ? 'A' : (this._taskListSortMode === 'oldest' ? '\u2191' : '\u2193');
-                var sortMode = this._taskListSortMode || 'newest';
-                var sortModeKeys = { newest: 'shared.log.sortNewest', oldest: 'shared.log.sortOldest', alphabetical: 'shared.log.sortAlphabetical' };
-                var sortModeLabel = _lvpT(sortModeKeys[sortMode] || 'shared.log.sortNewest', sortMode);
-                var sortTitle = _lvpT('shared.log.sortLabel', 'Sort: ' + sortMode, { mode: sortModeLabel });
-                sortBtn.title = sortTitle;
-                sortBtn.setAttribute('aria-label', sortTitle);
+                sortBtn.title = 'Sort: ' + (this._taskListSortMode || 'newest');
+                sortBtn.setAttribute('aria-label', 'Sort: ' + (this._taskListSortMode || 'newest'));
             } else {
                 sortBtn.classList.add('lvp-hidden');
             }
@@ -1433,7 +1373,7 @@ class LogViewerPanel {
             if (errMeta) {
                 ensureGroup(errMeta.bot).history.push({
                     value: svc,
-                    label: errMeta.isOld ? _lvpT('shared.log.errorLogOld', 'error.old') : _lvpT('shared.log.errorLog', 'error'),
+                    label: errMeta.isOld ? 'error.old' : 'error',
                     title: svc,
                     className: 'lvp-subitem',
                     sortKey: errMeta.isOld ? '1' : '2',
@@ -1550,7 +1490,7 @@ class LogViewerPanel {
     }
 
     _svcLabel(s) {
-        if (s.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + s.substring(7) + ' ' + _lvpT('shared.log.errorLog', 'error');
+        if (s.indexOf('BotErr:') === 0) return '\u26a0\ufe0f ' + s.substring(7) + ' error';
         if (s.indexOf('Bot:') === 0) {
             var parts = s.substring(4).split(':');
             return '\ud83e\udd16 ' + parts[0];
@@ -1558,11 +1498,11 @@ class LogViewerPanel {
         if (s.indexOf('/') >= 0) {
             var pathParts = s.split('/').filter(Boolean);
             var errMeta = this._botErrorLogMeta(s);
-            if (errMeta) return errMeta.bot + ' ' + (errMeta.isOld ? _lvpT('shared.log.errorLogOld', 'error.old') : _lvpT('shared.log.errorLog', 'error'));
+            if (errMeta) return errMeta.bot + ' ' + (errMeta.isOld ? 'error.old' : 'error');
             if (s.indexOf('pb7/logs/') === 0 || s.indexOf('software/pb7/logs/') === 0) {
                 var archive = this._archiveLogMeta(s);
                 if (archive && archive.bot && archive.timestamp) return '\ud83d\udcdc ' + archive.bot + ' ' + archive.timestamp;
-                if (archive && archive.bot) return '\ud83d\udcdc ' + archive.bot + ' ' + _lvpT('shared.log.history', 'history');
+                if (archive && archive.bot) return '\ud83d\udcdc ' + archive.bot + ' history';
                 if (archive && archive.timestamp) return '\ud83d\udcdc ' + archive.timestamp;
             }
             if (pathParts.length >= 2 && pathParts[pathParts.length - 1] === 'passivbot.log') {
@@ -1606,7 +1546,7 @@ class LogViewerPanel {
     _updateBadge() {
         var badge = this._q('item-badge');
         if (!badge) return;
-        if (this._isLocal()) badge.textContent = this._fileLabel(this._file) || _lvpT('shared.log.noFile', '(no file)');
+        if (this._isLocal()) badge.textContent = this._fileLabel(this._file) || '(no file)';
         else badge.textContent = this._svcLabel(this._service);
     }
 
@@ -1757,10 +1697,10 @@ class LogViewerPanel {
         var btn = this._q('stream-btn');
         if (!btn) return;
         if (this._streaming) {
-            btn.textContent = '\u23f8 ' + _lvpT('shared.log.pause', 'Pause');
+            btn.textContent = '\u23f8 Pause';
             btn.className   = 'lvp-ctrl-btn lvp-stream-on';
         } else {
-            btn.textContent = '\u25b6 ' + _lvpT('shared.log.stream', 'Stream');
+            btn.textContent = '\u25b6 Stream';
             btn.className   = 'lvp-ctrl-btn';
         }
     }
@@ -1888,7 +1828,7 @@ class LogViewerPanel {
         }
         if (!check) return '';
         if (check.expected === false || check.status === 'disabled') {
-            return check.reason || _lvpT('shared.log.serviceNotConfigured', 'Service is not configured');
+            return check.reason || 'Service is not configured';
         }
         return '';
     }
@@ -1929,7 +1869,7 @@ class LogViewerPanel {
             return;
         }
 
-        if (rb) { rb.disabled = true; rb.textContent = '\u231b ' + _lvpT('shared.log.preparingLog', 'Preparing log\u2026'); }
+        if (rb) { rb.disabled = true; rb.textContent = '\u231b Preparing log\u2026'; }
 
         var command;
         if (svc.indexOf('Bot:') === 0) {
@@ -1943,14 +1883,14 @@ class LogViewerPanel {
             this._prepareRestartStream(command);
         } else {
             this._pendingRestartCommand = command;
-            if (rb) rb.textContent = _lvpT('shared.log.connecting', 'Connecting...');
+            if (rb) rb.textContent = 'Connecting...';
             this._connect();
         }
 
         this._restartTimeout = setTimeout(function() {
             if (generation !== me._restartGeneration) return;
             me._finishRestartAttempt();
-            if (rb) { rb.disabled = false; rb.textContent = '\ud83d\udd04 ' + _lvpT('shared.log.restart', 'Restart'); }
+            if (rb) { rb.disabled = false; rb.textContent = '\ud83d\udd04 Restart'; }
         }, 15000);
     }
 
@@ -2201,8 +2141,8 @@ class LogViewerPanel {
         var idx = 0;
         this._fullRenderPending = true;
         var status = document.createElement('div');
-        status.style.cssText = 'color:#717b8e;padding:8px;font-size:12px';
-        status.textContent = _lvpT('shared.log.rendering', 'Rendering\u2026');
+        status.style.cssText = 'color:#888;padding:8px;font-size:12px';
+        status.textContent = 'Rendering\u2026';
         term.appendChild(status);
 
         function rChunk() {
@@ -2225,7 +2165,7 @@ class LogViewerPanel {
                 else me._updateMatchCount(0);
             } else {
                 term.insertBefore(frag, status);
-                status.textContent = _lvpT('shared.log.rendering', 'Rendering\u2026') + ' ' + Math.round(idx / total * 100) + '%';
+                status.textContent = 'Rendering\u2026 ' + Math.round(idx / total * 100) + '%';
                 requestAnimationFrame(rChunk);
             }
         }
@@ -2677,7 +2617,7 @@ class LogViewerPanel {
             for (; idx < end; idx++)
                 me._applyHighlightDiv(children[idx], isMatch[idx], re);
             if (idx < total) {
-                if (countEl) countEl.textContent = _lvpT('shared.log.filtering', 'Filtering\u2026') + ' ' + Math.round(idx / total * 100) + '%';
+                if (countEl) countEl.textContent = 'Filtering\u2026 ' + Math.round(idx / total * 100) + '%';
                 requestAnimationFrame(processChunk);
             } else {
                 me._cacheNavMatches();
@@ -2743,7 +2683,7 @@ class LogViewerPanel {
             if (detailCount > 0) {
                 var span = document.createElement('span');
                 span.className = 'grp-count';
-                span.textContent = ' ' + _lvpT('shared.log.linesMore', '(+' + detailCount + ' lines)', { n: detailCount });
+                span.textContent = ' (+' + detailCount + ' lines)';
                 div.appendChild(span);
             }
         } else if (isMatch[idx]) {
@@ -2903,11 +2843,11 @@ class LogViewerPanel {
             ? (this._renderMode === 'filtered' ? this._filteredMatchCount : (terminal ? terminal.querySelectorAll('.lvp-highlight').length : 0))
             : exactCount;
         if (this._filterMode && blockCount > 0)
-            el.textContent = _lvpT('shared.log.matchesInBlocks', count + ' matches in ' + blockCount + ' blocks', { count: count, blocks: blockCount });
+            el.textContent = count + ' matches in ' + blockCount + ' blocks';
         else if (!this._filterMode && this._matchIdx >= 0)
             el.textContent = (this._matchIdx + 1) + ' / ' + count;
         else
-            el.textContent = _lvpT('shared.log.matches', count + ' matches', { count: count });
+            el.textContent = count + ' matches';
     }
 
     /* ── Utility ──────────────────────────────────────────────── */
@@ -2917,6 +2857,3 @@ class LogViewerPanel {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 }
-
-/* The Vue logging page and legacy pages load this file as a classic script. */
-window.LogViewerPanel = LogViewerPanel;

@@ -392,6 +392,7 @@ var snapshotRequestGeneration = 0;
 var marketRequestGeneration = 0;
 var compareRequestGeneration = 0;
 var simulationRequestGeneration = 0;
+var simulationActionBusy = false;
 var movieRequestGeneration = 0;
 var configRevision = 0;
 var movieAbortController = null;
@@ -1921,8 +1922,10 @@ function renderSimulationWorkspace(snapshot) {
   updateActiveChip('sim-long-active-chip', deepGet(snapshot, ['sides', 'long', 'active'], false));
   updateActiveChip('sim-short-active-chip', deepGet(snapshot, ['sides', 'short', 'active'], false));
   if (document.getElementById('stage-simulation').classList.contains('active')) {
-    renderPlot('long', snapshot, 'sim-');
-    renderPlot('short', snapshot, 'sim-');
+    var active = state.simulations && state.simulations[state.activeSimulationMode];
+    var plotSnapshot = active ? simulationSnapshotForPlot(active) : snapshot;
+    renderPlot('long', plotSnapshot, 'sim-');
+    renderPlot('short', plotSnapshot, 'sim-');
   }
 }
 function renderNumberStepper(id, label, value, step, sourceText) {
@@ -2113,8 +2116,11 @@ function updateSimulationButtons() {
   if (pb7Btn) pb7Btn.classList.toggle('active-sim', state.activeSimulationMode === (pb7Btn.dataset.simulationMode || 'pb7_engine'));
 }
 function runSimulation(mode) {
+  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
+  if (simulationActionBusy) return;
   stopSimulationProgressPolling();
   var opts = simulationOptions();
+  simulationActionBusy = true;
   var generation = ++simulationRequestGeneration;
   state.activeSimulationMode = mode;
   updateSimulationButtons();
@@ -2122,19 +2128,23 @@ function runSimulation(mode) {
   opts.progress_id = simulationProgressId;
   var localBtn = document.getElementById('btn-run-local-sim');
   var pb7Btn = document.getElementById('btn-run-pb7-engine');
+  var compareBtn = document.getElementById('btn-run-compare');
+  if (compareBtn) compareBtn.disabled = true;
   if (localBtn) localBtn.disabled = true;
   if (pb7Btn) pb7Btn.disabled = true;
   setMessages([]);
-  setSimulationProgress(0, PBGuiI18n.t('v7explore.startingSimulation'));
+  setSimulationProgress(0, runtimeI18n.t('v7explore.startingSimulation'));
   startSimulationProgressPolling(simulationProgressId);
   function finishSimulationButtons() {
+    simulationActionBusy = false;
+    if (compareBtn) compareBtn.disabled = false;
     if (localBtn) localBtn.disabled = false;
     if (pb7Btn) pb7Btn.disabled = false;
   }
   apiFetch('/simulate', { method: 'POST', body: JSON.stringify({ config: state.config, options: opts, mode: mode, progress_id: simulationProgressId }) }).then(function(data) {
     if (generation !== simulationRequestGeneration) { stopSimulationProgressPolling(); finishSimulationButtons(); return; }
     stopSimulationProgressPolling();
-    setSimulationProgress(1, PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.simulationFinished'));
+    setSimulationProgress(1, runtimeI18n.serverMsg(data.message) || runtimeI18n.t('v7explore.simulationFinished'));
     state.simulations[mode] = data;
     state.activeSimulationMode = mode;
     updateSimulationButtons();
@@ -2150,8 +2160,8 @@ function runSimulation(mode) {
   }).catch(function(err) {
     if (generation !== simulationRequestGeneration) { stopSimulationProgressPolling(); finishSimulationButtons(); return; }
     stopSimulationProgressPolling();
-    setSimulationProgress(1, PBGuiI18n.t('v7explore.simulationFailed', { error: PBGuiI18n.serverMsg(err.message) }));
-    setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.simulationFailed', { error: PBGuiI18n.serverMsg(err.message) }) }]);
+    setSimulationProgress(1, runtimeI18n.t('v7explore.simulationFailed', { error: runtimeI18n.serverMsg(err.message) }));
+    setMessages([{ level: 'error', text: runtimeI18n.t('v7explore.simulationFailed', { error: runtimeI18n.serverMsg(err.message) }) }]);
     finishSimulationButtons();
   });
 }
@@ -2182,40 +2192,50 @@ function startSimulationProgressPolling(progressId) {
   }, 700);
 }
 function runCompare() {
+  var runtimeI18n = typeof PBGuiI18n === 'undefined' ? { t: function(key) { return key; }, serverMsg: function(value) { return value; } } : PBGuiI18n;
+  if (simulationActionBusy) return;
   stopCompareProgressPolling();
   var opts = compareOptions();
+  simulationActionBusy = true;
+  var localBtn = document.getElementById('btn-run-local-sim');
+  var engineBtn = document.getElementById('btn-run-pb7-engine');
+  if (localBtn) localBtn.disabled = true;
+  if (engineBtn) engineBtn.disabled = true;
   var btn = document.getElementById('btn-run-compare');
   var oldText = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = PBGuiI18n.t('v7explore.compareRunning'); }
+  if (btn) { btn.disabled = true; btn.textContent = runtimeI18n.t('v7explore.compareRunning'); }
   compareProgressId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : String(Date.now()) + '-' + String(Math.random()).slice(2);
   var generation = ++compareRequestGeneration;
   opts.progress_id = compareProgressId;
-  setMessages([{ level: 'info', text: PBGuiI18n.t('v7explore.runningCompare') }]);
-  document.getElementById('compare-summary').innerHTML = '<span class="muted">' + PBGuiI18n.t('v7explore.compareRunning') + '</span>';
+  setMessages([{ level: 'info', text: runtimeI18n.t('v7explore.runningCompare') }]);
+  document.getElementById('compare-summary').innerHTML = '<span class="muted">' + runtimeI18n.t('v7explore.compareRunning') + '</span>';
   document.getElementById('compare-result').innerHTML = '';
-  setCompareProgress(0, PBGuiI18n.t('v7explore.startingCompare'));
+  setCompareProgress(0, runtimeI18n.t('v7explore.startingCompare'));
   startCompareProgressPolling(compareProgressId);
   function finishCompareButton() {
-    if (btn) { btn.disabled = false; btn.textContent = oldText || PBGuiI18n.t('v7explore.startCompare'); }
+    simulationActionBusy = false;
+    if (localBtn) localBtn.disabled = false;
+    if (engineBtn) engineBtn.disabled = false;
+    if (btn) { btn.disabled = false; btn.textContent = oldText || runtimeI18n.t('v7explore.startCompare'); }
   }
   apiFetch('/compare', { method: 'POST', body: JSON.stringify({ config: state.config, options: opts, progress_id: compareProgressId }) }).then(function(data) {
     if (generation !== compareRequestGeneration) { stopCompareProgressPolling(); finishCompareButton(); return; }
     stopCompareProgressPolling();
-    setCompareProgress(1, PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.compareFinished'));
+    setCompareProgress(1, runtimeI18n.serverMsg(data.message) || runtimeI18n.t('v7explore.compareFinished'));
     renderCompareResult(data);
     var partial = deepGet(data, ['summary', 'coverage', 'partial'], false) === true;
     setMessages([{
       level: partial || !data.ok ? 'warning' : 'info',
-      text: (PBGuiI18n.serverMsg(data.message) || PBGuiI18n.t('v7explore.compareFinished')) + (partial ? ' ' + PBGuiI18n.t('v7explore.candleLimitPartial') : '')
+      text: (runtimeI18n.serverMsg(data.message) || runtimeI18n.t('v7explore.compareFinished')) + (partial ? ' ' + runtimeI18n.t('v7explore.candleLimitPartial') : '')
     }]);
     finishCompareButton();
   }).catch(function(err) {
     if (generation !== compareRequestGeneration) { stopCompareProgressPolling(); finishCompareButton(); return; }
     stopCompareProgressPolling();
-    setCompareProgress(1, PBGuiI18n.t('v7explore.compareFailedDetail', { error: PBGuiI18n.serverMsg(err.message) }));
-    document.getElementById('compare-summary').innerHTML = '<span class="muted">' + esc(PBGuiI18n.t('v7explore.compareFailedDetail', { error: PBGuiI18n.serverMsg(err.message) })) + '</span>';
+    setCompareProgress(1, runtimeI18n.t('v7explore.compareFailedDetail', { error: runtimeI18n.serverMsg(err.message) }));
+    document.getElementById('compare-summary').innerHTML = '<span class="muted">' + esc(runtimeI18n.t('v7explore.compareFailedDetail', { error: runtimeI18n.serverMsg(err.message) })) + '</span>';
     document.getElementById('compare-result').innerHTML = '';
-    setMessages([{ level: 'error', text: PBGuiI18n.t('v7explore.compareFailedDetail', { error: PBGuiI18n.serverMsg(err.message) }) }]);
+    setMessages([{ level: 'error', text: runtimeI18n.t('v7explore.compareFailedDetail', { error: runtimeI18n.serverMsg(err.message) }) }]);
     finishCompareButton();
   });
 }
@@ -2453,7 +2473,7 @@ function saveMovieExportSettings() {
   try { window.localStorage.setItem('pbgui_strategy_explorer_movie_export', JSON.stringify(selectedMovieExportOptions(null))); } catch (err) {}
 }
 function applyMovieExportPreset() {
-  var preset = document.getElementById('movie-export-preset').value || 'Balanced';
+  var preset = (document.getElementById('movie-export-preset') && document.getElementById('movie-export-preset').value) || 'Balanced';
   if (preset !== 'Custom') setMovieExportInputs(movieExportPresetValues(preset));
   saveMovieExportSettings();
 }
@@ -2464,20 +2484,21 @@ function markMovieExportCustom() {
 }
 function selectedMovieExportOptions(spec) {
   function intValue(id, fallback) {
-    var value = Number(document.getElementById(id).value || fallback);
+    var input = document.getElementById(id);
+    var value = Number((input && input.value) || fallback);
     return isFinite(value) ? Math.floor(value) : fallback;
   }
   var duration = spec ? deepGet(spec, ['layout', 'updatemenus', 0, 'buttons', 0, 'args', 1, 'frame', 'duration'], 120) : 120;
   var fps = 15;
   if (Number(duration) > 0) fps = Math.max(1, Math.round(1000 / Number(duration)));
   return {
-    preset: document.getElementById('movie-export-preset').value || 'Balanced',
+    preset: (document.getElementById('movie-export-preset') && document.getElementById('movie-export-preset').value) || 'Balanced',
     width: intValue('movie-export-width', 1600),
     height: intValue('movie-export-height', 800),
     scale: intValue('movie-export-scale', 1),
     crf: intValue('movie-export-crf', 18),
-    ffmpeg_preset: document.getElementById('movie-export-ffmpeg-preset').value || 'veryfast',
-    codec: document.getElementById('movie-export-codec').value || 'auto',
+    ffmpeg_preset: (document.getElementById('movie-export-ffmpeg-preset') && document.getElementById('movie-export-ffmpeg-preset').value) || 'veryfast',
+    codec: (document.getElementById('movie-export-codec') && document.getElementById('movie-export-codec').value) || 'auto',
     fps: fps,
     filename: movieExportFilename()
   };

@@ -66,7 +66,7 @@ export interface UseBalanceCalc {
   feedback: Ref<CalcFeedback>;
   calculating: Ref<boolean>;
   loadInstances(initInstance: string, initVersion: string): Promise<void>;
-  selectInstance(inst: BalanceInstance | null): void;
+  selectInstance(inst: BalanceInstance | null): Promise<void>;
   calculate(): Promise<void>;
   loadDraft(draftId: string): Promise<boolean>;
 }
@@ -75,6 +75,7 @@ export function useBalanceCalc(options: {
   t: TranslateFn;
   exchanges: readonly string[];
   initExchange: string;
+  confirmReplace?: () => Promise<boolean>;
 }): UseBalanceCalc {
   const t = options.t;
 
@@ -115,9 +116,16 @@ export function useBalanceCalc(options: {
   /* ── instance config (:324-347) ── */
 
   async function selectInstance(inst: BalanceInstance | null): Promise<void> {
-    selectedInstance.value = inst;
+    const previousInstance = selectedInstance.value;
+    const previousConfigText = configText.value;
     const generation = ++configLoadGeneration;
     if (!inst || !inst.name || !inst.version) return;
+    if (previousConfigText.trim() && previousInstance?.name !== inst.name) {
+      const accepted = await options.confirmReplace?.() ?? false;
+      if (generation !== configLoadGeneration) return;
+      if (!accepted) return;
+    }
+    selectedInstance.value = inst;
     try {
       const data = (await apiFetch<{ config: unknown; exchange?: string }>(apiUrl('/load-config'), {
         method: 'POST',
@@ -125,12 +133,18 @@ export function useBalanceCalc(options: {
         body: JSON.stringify({ name: inst.name, version: inst.version }), // :330-331
       })) as { config: unknown; exchange?: string };
       if (generation !== configLoadGeneration) return;
+      if (configText.value !== previousConfigText) {
+        selectedInstance.value = previousInstance;
+        return;
+      }
       configText.value = JSON.stringify(data.config, null, 4); // :339
       exchange.value = data.exchange || ''; // :340-342
     } catch (error) {
       if (generation !== configLoadGeneration) return;
       const message = error instanceof ApiError ? serverMsg(error.detail) : String(error);
-      configText.value = '// ' + t('misc.balance.failedLoadConfig', { error: message }); // :345
+      selectedInstance.value = previousInstance;
+      configText.value = previousConfigText;
+      setError(t('misc.balance.failedLoadConfig', { error: message })); // :345
     }
   }
 
