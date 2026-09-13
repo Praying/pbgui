@@ -12,13 +12,12 @@
 import { PhArchive, PhChartLineUp, PhPushPin, PhTrash } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import JsonViewer from '@/shared/components/JsonViewer.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { SelectContent, SelectItem, SelectRoot, SelectTrigger } from '@/shared/components/ui/select';
-import { ListFooter, ListWrap, Table, TdActions, Th } from '@/shared/components/ui/table';
+import { EmptyRow, ListFooter, ListWrap, Table, TdActions, Th } from '@/shared/components/ui/table';
 import ArchiveOptimizeTable from './ArchiveOptimizeTable.vue';
 import ArchiveSchedulesTable from './ArchiveSchedulesTable.vue';
 import ConfirmModal from './ConfirmModal.vue';
@@ -343,46 +342,54 @@ defineExpose({
     <!-- list view (:876-878) -->
     <div v-if="!store.selectedName.value" id="archive-list-view" class="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div id="archive-list-container" class="archive-table-card flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
-        <div v-if="store.archives.value.length === 0" class="archive-empty-state flex min-h-[260px] flex-1 items-center justify-center p-4" data-test="archive-empty">
-          <EmptyState :icon="PhArchive" :title="emptyCopy.title" :message="emptyCopy.message" :action-label="t('v7backtest.addArchive')" action-variant="primary" @action="openAddArchive" />
-        </div>
-        <template v-else>
-          <ListWrap class="min-h-0 flex-1 overflow-auto bg-panel">
-            <Table class="select-none bg-transparent">
-              <thead>
-                <tr>
-                  <Th class="cursor-default">{{ t('v7backtest.name') }}</Th>
-                  <Th class="cursor-default">URL</Th>
-                  <Th class="cursor-default">{{ t('v7backtest.backtests') }}</Th>
-                  <Th class="cursor-default">{{ t('v7backtest.optimize') }}</Th>
-                  <Th class="cursor-default">{{ t('v7backtest.layout') }}</Th>
-                  <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="entry in store.archives.value"
-                  :key="entry.name"
-                  :class="{ selected: entry.name === store.selectedName.value }"
-                  class="cursor-pointer"
-                  @dblclick="store.viewArchive(entry.name)"
-                >
-                  <td class="max-w-[240px] truncate font-medium" :title="entry.name">{{ entry.name }}</td>
-                  <td class="max-w-[280px] break-all text-xs text-secondary" :title="entry.url ?? ''">{{ entry.url ?? '' }}</td>
-                  <td class="tabular-nums">{{ entry.results ?? entry.configs ?? 0 }}</td>
-                  <td class="tabular-nums">{{ entry.optimize_configs ?? 0 }}</td>
-                  <td class="truncate text-secondary" :title="entry.migration_status?.label ?? ''">{{ entry.migration_status?.label ?? '' }}</td>
-                  <TdActions>
-                    <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="16" /></Button>
-                  </TdActions>
-                </tr>
-              </tbody>
-            </Table>
-          </ListWrap>
-          <ListFooter data-test="archive-list-footer">
-            <span class="tabular-nums">{{ store.archives.value.length }} {{ t('v7backtest.archives') }}</span>
-          </ListFooter>
-        </template>
+        <ListWrap class="min-h-0 flex-1 overflow-auto bg-panel">
+          <Table class="select-none bg-transparent">
+            <thead>
+              <tr>
+                <Th class="cursor-default">{{ t('v7backtest.name') }}</Th>
+                <Th class="cursor-default">URL</Th>
+                <Th class="cursor-default">{{ t('v7backtest.backtests') }}</Th>
+                <Th class="cursor-default">{{ t('v7backtest.optimize') }}</Th>
+                <Th class="cursor-default">{{ t('v7backtest.layout') }}</Th>
+                <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              <EmptyRow
+                v-if="store.archives.value.length === 0"
+                size="inline"
+                :colspan="6"
+                :icon="PhArchive"
+                :title="emptyCopy.title"
+                :message="emptyCopy.message"
+                :action-label="t('v7backtest.addArchive')"
+                action-variant="primary"
+                data-test="archive-empty"
+                @action="openAddArchive"
+              />
+              <tr
+                v-else
+                v-for="entry in store.archives.value"
+                :key="entry.name"
+                :class="{ selected: entry.name === store.selectedName.value }"
+                class="cursor-pointer"
+                @dblclick="store.viewArchive(entry.name)"
+              >
+                <td class="max-w-[240px] truncate font-medium" :title="entry.name">{{ entry.name }}</td>
+                <td class="max-w-[280px] break-all text-xs text-secondary" :title="entry.url ?? ''">{{ entry.url ?? '' }}</td>
+                <td class="tabular-nums">{{ entry.results ?? entry.configs ?? 0 }}</td>
+                <td class="tabular-nums">{{ entry.optimize_configs ?? 0 }}</td>
+                <td class="truncate text-secondary" :title="entry.migration_status?.label ?? ''">{{ entry.migration_status?.label ?? '' }}</td>
+                <TdActions>
+                  <Button type="button" variant="danger" size="sm" class="size-7 shrink-0 rounded-md p-0" data-test="archive-delete" :title="t('v7backtest.delete')" :aria-label="t('v7backtest.delete')" @click="deleteArchiveTarget = entry.name"><PbIcon :icon="PhTrash" :size="16" /></Button>
+                </TdActions>
+              </tr>
+            </tbody>
+          </Table>
+        </ListWrap>
+        <ListFooter data-test="archive-list-footer">
+          <span class="tabular-nums">{{ store.archives.value.length }} {{ t('v7backtest.archives') }}</span>
+        </ListFooter>
       </div>
     </div>
 

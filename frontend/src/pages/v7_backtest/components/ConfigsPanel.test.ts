@@ -69,10 +69,11 @@ describe('rendering (:1677-1705)', () => {
   it('shows the shared empty state with a working create action', async () => {
     const wrapper = mountPanel({ configs: [], isV8: true });
     await nextTick();
-    const emptyState = wrapper.get('[data-test="configs-empty"]');
-    expect(wrapper.find('#configs-toolbar').exists()).toBe(false);
+    const emptyRow = wrapper.get('[data-test="configs-empty"]');
+    expect(wrapper.find('#configs-toolbar').exists()).toBe(true);
+    const emptyState = emptyRow.get('.pbgui-empty-state');
     expect(emptyState.classes()).toContain('pbgui-empty-state');
-    expect(emptyState.classes()).toContain('pbgui-empty-state--panel');
+    expect(emptyState.classes()).toContain('pbgui-empty-state--inline');
     // the decorative icon tile, not a text marker
     expect(emptyState.find('.pbgui-empty-state__icon svg').exists()).toBe(true);
     expect(emptyState.find('.pbgui-empty-state__title').text()).toBe('No saved configs yet.');

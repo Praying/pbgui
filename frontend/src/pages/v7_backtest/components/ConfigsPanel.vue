@@ -2,7 +2,6 @@
 import { PhChartBar, PhClipboardText, PhCopy, PhMagnifyingGlass, PhPencilSimple, PhPlay } from '@phosphor-icons/vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import EmptyState from '@/shared/components/EmptyState.vue';
 import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Input } from '@/shared/components/ui/input';
@@ -248,19 +247,7 @@ defineExpose({
 
 <template>
   <div class="pbgui-config-list flex min-h-0 flex-1 flex-col overflow-hidden">
-    <EmptyState
-      v-if="configs.length === 0"
-      class="configs-empty-state mx-auto mt-[clamp(20px,7vh,72px)] w-[min(720px,calc(100%_-_32px))]"
-      data-test="configs-empty"
-      :icon="PhClipboardText"
-      :title="emptyCopy.title"
-      :message="emptyCopy.message"
-      :action-label="newConfigLabel"
-      action-variant="primary"
-      @action="emit('new-config')"
-    />
-
-    <div v-else class="pbgui-config-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
+    <div class="pbgui-config-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
       <div id="configs-toolbar" class="pbgui-config-toolbar pbgui-list-toolbar flex flex-wrap items-center gap-2 border-b border-border-subtle px-3 py-2.5">
         <Input
           v-model="filter"
@@ -291,7 +278,7 @@ defineExpose({
         </SelectRoot>
         <span class="flex-1"></span>
         <div class="flex items-center gap-2">
-          <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
+          <Button type="button" variant="secondary" size="sm" class="h-8 px-3" data-test="configs-select-all" :title="t('v7backtest.selectAllVisible')" :disabled="visible.length === 0" @click="selectAll">{{ t('v7backtest.selectAll') }}</Button>
           <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="configs-deselect" :title="t('v7backtest.deselectAll')" :disabled="selected.length === 0" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
         </div>
       </div>
@@ -314,9 +301,21 @@ defineExpose({
           </thead>
           <tbody>
             <EmptyRow
-              v-if="visible.length === 0"
-              :colspan="isV8 ? 10 : 9"
+              v-if="configs.length === 0"
               size="inline"
+              :colspan="isV8 ? 10 : 9"
+              :icon="PhClipboardText"
+              :title="emptyCopy.title"
+              :message="emptyCopy.message"
+              :action-label="newConfigLabel"
+              action-variant="primary"
+              data-test="configs-empty"
+              @action="emit('new-config')"
+            />
+            <EmptyRow
+              v-else-if="visible.length === 0"
+              size="inline"
+              :colspan="isV8 ? 10 : 9"
               :icon="PhMagnifyingGlass"
               :title="t('v7backtest.noConfigsMatch')"
             />

@@ -2,6 +2,10 @@
 
 ## PBv7 / PBv8 回测与优化页面视觉规范与表格设计统一
 
+- **统一「回测 / 配置」与「回测 / 存档」空状态面板**：
+  - 将 `v7_backtest/components/ConfigsPanel.vue` 的空状态重构为始终保留外层 `.pbgui-config-frame` 卡片容器、顶部 `#configs-toolbar` 工具栏、完整的表头（`thead`）与底部 `<ListFooter>`；无配置数据时在 `tbody` 内部渲染行内 `<EmptyRow size="inline" :colspan="isV8 ? 10 : 9" />` 并保留「新建配置」CTA 按钮。
+  - 将 `v7_backtest/components/ArchivePanel.vue` 的存档列表空状态重构为始终保留完整表格容器（`ListWrap`、`Table`、`thead` 与 `<ListFooter>`）；无存档数据时在 `tbody` 内部渲染行内 `<EmptyRow size="inline" :colspan="6" />` 并保留「添加存档」CTA 按钮。
+  - 彻底消除了回测配置与存档在空状态下整个卡片和表头丢失的问题，使「PBv7/回测」与「PBv8/回测」全部子面板（配置、队列、结果、存档）具有统一连贯的卡片框架、表头和空状态视觉体验。
 - **统一空状态面板（EmptyState / EmptyRow）**：
   - 队列与结果表格在空数据时统一保留标准表头（`thead` 与排序列标题），在 `tbody` 内部通过标准 `<EmptyRow size="inline" :colspan="..." />` 呈现统一的图标、标题、说明与操作按钮（支持国际化）。
   - 优化了「回测 / 队列」、「回测 / 结果」、「回测 / 存档（优化配置与重测计划）」的空状态展示，避免原先整表卸载切换为块级空面板导致的表头抖动与排版不一致。
