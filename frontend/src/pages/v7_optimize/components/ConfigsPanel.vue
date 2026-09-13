@@ -80,20 +80,20 @@ onBeforeUnmount(() => dragSelect.dispose());
 
 <template>
   <div class="pbgui-config-list flex min-h-0 flex-1 flex-col">
-    <div class="pbgui-config-toolbar pbgui-list-toolbar mb-2 flex flex-wrap items-center gap-2">
-      <div class="pbgui-config-search-wrap" role="search">
-        <Input
-          class="pbgui-config-search"
-          :model-value="search"
-          :placeholder="t('v7optimize.searchOptimizeName')"
-          @update:model-value="emit('update:search', String($event ?? ''))"
-        />
-      </div>
-      <span class="flex-1"></span>
-      <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
-      <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
-    </div>
     <div class="pbgui-config-frame">
+      <div class="pbgui-config-toolbar pbgui-list-toolbar flex flex-wrap items-center gap-2 border-b border-border-subtle px-3 py-2.5">
+        <div class="pbgui-config-search-wrap" role="search">
+          <Input
+            class="pbgui-config-search"
+            :model-value="search"
+            :placeholder="t('v7optimize.searchOptimizeName')"
+            @update:model-value="emit('update:search', String($event ?? ''))"
+          />
+        </div>
+        <span class="flex-1"></span>
+        <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-configs" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
+        <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
+      </div>
       <ListWrap ref="wrap" class="pbgui-config-wrap">
         <Table class="pbgui-config-table select-none">
           <thead>

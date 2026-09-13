@@ -1,5 +1,18 @@
 # Unreleased
 
+## PBv7 / PBv8 回测与优化页面视觉规范与表格设计统一
+
+- **统一空状态面板（EmptyState / EmptyRow）**：
+  - 队列与结果表格在空数据时统一保留标准表头（`thead` 与排序列标题），在 `tbody` 内部通过标准 `<EmptyRow size="inline" :colspan="..." />` 呈现统一的图标、标题、说明与操作按钮（支持国际化）。
+  - 优化了「回测 / 队列」、「回测 / 结果」、「回测 / 存档（优化配置与重测计划）」的空状态展示，避免原先整表卸载切换为块级空面板导致的表头抖动与排版不一致。
+- **统一表格卡片与工具栏样式（Frame Card & Integrated Toolbar）**：
+  - 优化页面的「配置」、「队列」、「结果」、「帕累托」面板统一将工具栏整合在 `.pbgui-config-frame` / `.opt-table-frame` 卡片容器内部，顶部为浅色边框工具栏（`border-b border-border-subtle`），下方包裹带有滚动容器的 `<ListWrap>` 和底部统一统计状态的 `<ListFooter>`。
+  - 回测「存档」列表面板同样统一封装为 `.archive-table-card` 结构并接入 `<ListWrap>` 与 `<ListFooter>`，呈现存档总数计数。
+- **统一表格配色与尺寸规格**：
+  - 对齐 `v7_optimize` 与 `v7_backtest` 的表格规范：表头 `th` 高度统一固定为 34px、内边距 8px 12px、背景色半透明磨砂玻璃、下边框 2px `var(--border-default)`、字号统一为 `var(--text-xs)`（12px）大写加粗；单元格 `td` 最小高度 42px、内边距 8px 12px、行下边框统一使用 `1px solid rgb(var(--text-secondary-rgb) / 0.12)`。
+- **统一页面背景调色（Page Mesh Radial Gradient）**：
+  - 将「PBv7/优化」及「PBv8/优化」页面工作区背景与回测工作区统一，引入一致的径向渐变网格（Accent/Success 微晕染渐变网格），彻底消除两页面在暗黑主题下背景色底不统一的问题。
+
 ## 系统 / VPS 监控 / 实例页面国际化适配修复
 
 - **补齐缺失的翻译键，空状态不再显示原始键名**：`frontend/src/pages/vps_monitor/App.vue` 的实例与服务工作区引用了 `sysmon.noInstances`、`sysmon.noServices`，但两者从未写入词典，中文界面直接渲染出 `sysmon.noInstances`。现于 `frontend/i18n/en.json` 与 `frontend/i18n/zh.json` 补齐（en `No instances found.` / `No services found.`，zh `未发现实例。` / `未发现服务。`）。

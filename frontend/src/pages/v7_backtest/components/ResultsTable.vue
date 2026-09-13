@@ -8,12 +8,10 @@
  * auto-scroll (:5731-5785).
  */
 import { PhChartLineUp, PhCopy, PhEye, PhFileText, PhFlask, PhImage, PhCaretDown, PhCaretRight, PhWarning } from '@phosphor-icons/vue';
-import { computed, onBeforeUnmount, ref } from 'vue';
-import type { Component } from 'vue';
+import { computed, onBeforeUnmount, ref, type Component } from 'vue';
 import { useI18n } from 'vue-i18n';
-import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
-import { SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
+import { EmptyRow, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { useRowDragSelect } from '../composables/useRowDragSelect';
 import { collectResultGroups, resultGroupKey, type ResultGroupBlock } from '../lib/resultsModel';
@@ -32,6 +30,8 @@ const props = withDefaults(
     groupValidation?: boolean;
     /** The scrolling wrap this table auto-scrolls (:5773, :5918, :5977). */
     wrapId?: string;
+    /** Custom title when table is empty. */
+    emptyTitle?: string;
   }>(),
   { showVersion: true, showStrategy: true, allowV8Convert: false, groupValidation: false, wrapId: '#results-list-wrap' }
 );
@@ -191,14 +191,7 @@ onBeforeUnmount(() => dragSelect.dispose());
 </script>
 
 <template>
-  <EmptyState
-    v-if="rows.length === 0"
-    class="min-h-[220px]"
-    size="inline"
-    :icon="PhChartLineUp"
-    :title="t('v7backtest.noResultsFound')"
-  />
-  <div v-else ref="wrap" class="relative">
+  <div ref="wrap" class="relative">
     <Table class="min-w-max select-none">
       <thead>
         <tr>
@@ -218,7 +211,14 @@ onBeforeUnmount(() => dragSelect.dispose());
         </tr>
       </thead>
       <tbody ref="tbody">
-        <template v-for="entry in renderEntries" :key="entry.type === 'group' ? entry.block.key : entry.row.path">
+        <EmptyRow
+          v-if="rows.length === 0"
+          size="inline"
+          :colspan="headers.length + 3"
+          :icon="PhChartLineUp"
+          :title="emptyTitle || t('v7backtest.noResultsFound')"
+        />
+        <template v-else v-for="entry in renderEntries" :key="entry.type === 'group' ? entry.block.key : entry.row.path">
           <tr v-if="entry.type === 'group'" class="result-group-row">
             <td :colspan="headers.length + 3" class="p-0">
               <div class="result-group-header flex items-center gap-2 px-3 py-1.5">

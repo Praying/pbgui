@@ -6,10 +6,9 @@
  */
 import { PhCalendarDots, PhCheckCircle, PhPause, PhPlay, PhTrash } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
-import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
-import { Table, TdActions, Th } from '@/shared/components/ui/table';
+import { EmptyRow, Table, TdActions, Th } from '@/shared/components/ui/table';
 import { scheduleCadenceLabel, scheduleModeLabel, scheduleStatusLabel } from '../lib/archiveModel';
 import type { ArchiveRetestScheduleItem } from '../types';
 import type { I18nT } from '../types.i18n';
@@ -31,8 +30,7 @@ function statusText(item: ArchiveRetestScheduleItem): string {
 
 <template>
   <div>
-    <EmptyState v-if="schedules.length === 0" size="inline" class="px-5 py-10" :icon="PhCalendarDots" :title="t('v7backtest.noRetestSchedules')" />
-    <Table v-else class="select-none">
+    <Table class="select-none">
       <thead>
         <tr>
           <Th class="cursor-default">{{ t('v7backtest.status') }}</Th>
@@ -45,7 +43,14 @@ function statusText(item: ArchiveRetestScheduleItem): string {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in schedules" :key="item.id">
+        <EmptyRow
+          v-if="schedules.length === 0"
+          size="inline"
+          :colspan="own ? 7 : 6"
+          :icon="PhCalendarDots"
+          :title="t('v7backtest.noRetestSchedules')"
+        />
+        <tr v-else v-for="item in schedules" :key="item.id">
           <td class="truncate">{{ scheduleStatusLabel(item, tt) }}</td>
           <td class="truncate text-secondary">{{ scheduleCadenceLabel(item, tt) }}</td>
           <td class="tabular-nums">{{ (item.targets ?? []).length }}</td>

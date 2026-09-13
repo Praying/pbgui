@@ -2163,6 +2163,14 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
   }
 
+  .pbgui-config-list .pbgui-config-frame .pbgui-config-toolbar {
+    border: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
   .pbgui-config-list .pbgui-config-search-wrap {
     flex: 0 1 380px;
     min-width: 240px;

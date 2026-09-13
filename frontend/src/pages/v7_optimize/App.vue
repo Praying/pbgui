@@ -549,7 +549,7 @@ onBeforeUnmount(() => {
       :ok-text="t('v7optimize.connected')"
     />
     <div id="page-body" class="flex h-[calc(100dvh-82px)] flex-col overflow-hidden">
-    <div class="workbench-page-content optimize-workspace min-h-0 min-w-0 flex-1 overflow-hidden bg-page p-[var(--page-padding)]">
+    <div class="workbench-page-content optimize-workspace flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-page bg-[radial-gradient(circle_at_94%_0%,rgb(var(--accent-rgb)/0.09),transparent_28rem),radial-gradient(circle_at_0%_84%,rgb(var(--success-rgb)/0.05),transparent_24rem),repeating-linear-gradient(135deg,rgb(var(--text-secondary-rgb)/0.016)_0_1px,transparent_1px_42px)] p-[var(--page-padding)]">
     <!-- Converged navigation: panel switching lives in the workbench rail
          (AppShell sections); this strip carries only the active panel's
          contextual actions. -->
@@ -690,7 +690,8 @@ body { overflow: hidden; }
 .opt-table tbody tr.is-open td { background: rgb(var(--success-rgb) / 0.08); }
 
 .core-workbench-shell--optimize .workbench-page-content {
-  background: var(--surface-workspace);
+  display: flex;
+  flex-direction: column;
 }
 
 /* The list surface is shared with every other PBv7/PBv8 workbench list. The
@@ -996,18 +997,21 @@ body { overflow: hidden; }
 }
 
 .opt-table td {
-  height: 56px;
-  padding: 10px 12px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgb(var(--text-secondary-rgb) / 0.12);
   vertical-align: middle;
 }
 
 .opt-table th {
-  height: 38px;
-  padding: 9px 12px;
-  background: var(--surface-panel);
-  border-bottom-color: var(--border-strong);
-  color: var(--text-muted);
-  font-size: var(--text-micro);
+  height: 34px;
+  padding: 8px 12px;
+  background: rgb(var(--bg-page-rgb) / 0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 700;
   letter-spacing: var(--tracking-label);
 }
 

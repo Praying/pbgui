@@ -6,8 +6,7 @@
  */
 import { PhSlidersHorizontal } from '@phosphor-icons/vue';
 import { useI18n } from 'vue-i18n';
-import EmptyState from '@/shared/components/EmptyState.vue';
-import { Table, Th } from '@/shared/components/ui/table';
+import { EmptyRow, Table, Th } from '@/shared/components/ui/table';
 import type { ArchiveOptimizeConfigItem } from '../types';
 
 const props = defineProps<{
@@ -40,8 +39,7 @@ function isSelected(item: ArchiveOptimizeConfigItem): boolean {
 
 <template>
   <div>
-    <EmptyState v-if="configs.length === 0" size="inline" class="px-5 py-10" :icon="PhSlidersHorizontal" :title="t('v7backtest.noOptimizeSettings')" />
-    <Table v-else class="select-none">
+    <Table class="select-none">
       <thead>
         <tr>
           <Th class="cursor-default">{{ t('v7backtest.name') }}</Th>
@@ -53,7 +51,15 @@ function isSelected(item: ArchiveOptimizeConfigItem): boolean {
         </tr>
       </thead>
       <tbody>
+        <EmptyRow
+          v-if="configs.length === 0"
+          size="inline"
+          :colspan="6"
+          :icon="PhSlidersHorizontal"
+          :title="t('v7backtest.noOptimizeSettings')"
+        />
         <tr
+          v-else
           v-for="item in configs"
           :key="item.path"
           :data-path="item.path"

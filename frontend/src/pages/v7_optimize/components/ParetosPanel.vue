@@ -117,7 +117,8 @@ onBeforeUnmount(() => dragSelect.dispose());
 
 <template>
   <div class="opt-panel flex min-h-0 flex-1 flex-col">
-    <div class="opt-panel-controls mb-2.5 flex flex-wrap items-center gap-2.5">
+    <div class="opt-table-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
+      <div class="opt-panel-controls pbgui-list-toolbar flex flex-wrap items-center gap-2.5 border-b border-border-subtle px-3 py-2.5">
       <div v-if="availableResults && availableResults.length" class="inline-flex items-center gap-1.5 text-xs text-secondary">
         <span class="font-medium text-primary">{{ t('v7optimize.activeResultSet') }}:</span>
         <SelectRoot :model-value="selectedResultPath || ''" @update:model-value="emit('selectResultPath', String($event))">
@@ -170,8 +171,7 @@ onBeforeUnmount(() => dragSelect.dispose());
       <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-paretos" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
       <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
     </div>
-    <div class="opt-table-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
-      <ListWrap ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto bg-panel">
+    <ListWrap ref="wrap" class="opt-table-wrap min-h-0 flex-1 overflow-auto bg-panel">
         <Table class="opt-table opt-table--paretos max-[800px]:min-w-[720px] select-none bg-transparent">
           <thead>
             <tr>

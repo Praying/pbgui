@@ -24,7 +24,7 @@ import { useI18n } from 'vue-i18n';
 import EmptyState from '@/shared/components/EmptyState.vue';
 import PbIcon from '@/shared/components/PbIcon.vue';
 import { Button } from '@/shared/components/ui/button';
-import { ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
+import { EmptyRow, ListFooter, ListWrap, SortTh, Table, TdActions, Th } from '@/shared/components/ui/table';
 import BacktestRowActionButton from './BacktestRowActionButton.vue';
 import { modalBackdropClass, modalBoxClass } from '../lib/uiClasses';
 import type { QueueItem } from '../types';
@@ -242,27 +242,33 @@ defineExpose({ selectedFilenames, deleteSelected, selectAll, deselectAll, setSel
         <Button type="button" variant="ghost" size="sm" class="h-8 px-3 text-secondary" data-test="queue-deselect-all" :disabled="selectedCount === 0" :title="t('v7backtest.deselectAll')" @click="deselectAll">{{ t('v7backtest.deselect') }}</Button>
       </div>
       <div id="queue-list" class="queue-list pbgui-list-wrap min-h-0 flex-1 overflow-auto bg-panel" @mousemove="onListMouseMove">
-      <div v-if="!items.length" class="queue-empty-state flex min-h-[260px] flex-1 items-center justify-center p-4">
-        <EmptyState class="w-[min(720px,100%)]" :icon="PhHourglass" :title="emptyTitle" :message="emptyMessage" />
-      </div>
-      <Table v-else class="queue-table min-w-[820px] select-none bg-transparent">
-        <thead>
-          <tr>
-            <SortTh
-              v-for="column in COLUMNS"
-              :key="column.key"
-              :sort-key="column.key"
-              :label="t(column.labelKey)"
-              :sort="sortCol === column.key ? (sortAsc ? 'asc' : 'desc') : undefined"
-              @sort="setSort(column.key)"
+        <Table class="queue-table min-w-[820px] select-none bg-transparent">
+          <thead>
+            <tr>
+              <SortTh
+                v-for="column in COLUMNS"
+                :key="column.key"
+                :sort-key="column.key"
+                :label="t(column.labelKey)"
+                :sort="sortCol === column.key ? (sortAsc ? 'asc' : 'desc') : undefined"
+                @sort="setSort(column.key)"
+              />
+              <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            <EmptyRow
+              v-if="!items.length"
+              size="inline"
+              :colspan="COLUMNS.length + 1"
+              :icon="PhHourglass"
+              :title="emptyTitle"
+              :message="emptyMessage"
             />
-            <Th class="cursor-default">{{ t('v7backtest.actions') }}</Th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="item in sorted"
-            :key="item.filename"
+            <tr
+              v-else
+              v-for="item in sorted"
+              :key="item.filename"
             :data-filename="item.filename"
             class="queue-row cursor-pointer outline-none"
             :class="{ selected: isItemSelected(item) }"

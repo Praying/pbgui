@@ -131,15 +131,15 @@ function onQueueRowKeydown(event: KeyboardEvent, queueFilename: string): void {
 
 <template>
   <div class="opt-panel flex min-h-0 flex-1 flex-col">
-    <div class="opt-panel-controls opt-filter-bar pbgui-list-toolbar mb-2.5 flex flex-wrap items-center gap-2.5">
-      <div class="opt-panel-search" role="search">
-        <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
-      </div>
-      <span class="flex-1"></span>
-      <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-queue" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
-      <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
-    </div>
     <div class="opt-table-frame flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border-subtle bg-panel shadow-panel">
+      <div class="opt-panel-controls opt-filter-bar pbgui-list-toolbar flex flex-wrap items-center gap-2.5 border-b border-border-subtle px-3 py-2.5">
+        <div class="opt-panel-search" role="search">
+          <Input class="min-w-60" :model-value="search" :placeholder="t('v7optimize.searchOptimizeName')" @update:model-value="emit('update:search', String($event ?? ''))" />
+        </div>
+        <span class="flex-1"></span>
+        <Button type="button" variant="default" size="sm" :disabled="!rows.length" data-test="select-all-queue" @click="emit('selectAll')">{{ t('v7optimize.selectAll') }}</Button>
+        <Button type="button" variant="default" size="sm" :disabled="!selectedCount" @click="emit('clearSelection')">{{ t('v7optimize.deselect') }}</Button>
+      </div>
       <ListWrap class="opt-table-wrap min-h-0 flex-1 overflow-auto bg-panel">
         <Table class="opt-table opt-table--queue max-[800px]:min-w-[720px] select-none bg-transparent">
           <thead>
