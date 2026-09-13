@@ -83,6 +83,31 @@ describe('VPS Monitor Vue page', () => {
     expect(emptyState.text()).toContain('Open VPS Manager');
   });
 
+  it('renders the localized instance empty state instead of the raw key', async () => {
+    const wrapper = mountApp();
+    WebSocketMock.instances[0]!.state({ ...state, instances: {}, v7_instances: {}, v8_instances: {} });
+    await wrapper.vm.$nextTick();
+
+    await wrapper.get('[data-testid="rail-section-instances"]').trigger('click');
+    const emptyState = wrapper.get('[data-state="empty"]');
+    expect(emptyState.text()).toContain('No instances found.');
+    expect(wrapper.text()).not.toContain('sysmon.noInstances');
+  });
+
+  it('translates instance status tokens instead of rendering raw values', async () => {
+    const wrapper = mountApp();
+    WebSocketMock.instances[0]!.state({
+      ...state,
+      instances: { alpha: [{ name: 'bot-a', pb_version: '7', status: 'synced', cpu: 1, pnlToday: 0, fillsToday: 0 }] },
+      v7_instances: {},
+      v8_instances: {},
+    });
+    await wrapper.vm.$nextTick();
+
+    await wrapper.get('[data-testid="rail-section-instances"]').trigger('click');
+    expect(wrapper.get('tbody').text()).toContain('Synced');
+  });
+
   it('renders live dashboard state safely and applies URL/UI filters', async () => {
     const wrapper = mountApp('?hide_ip=1&compact=1');
     WebSocketMock.instances[0]!.onopen?.();

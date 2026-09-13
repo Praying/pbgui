@@ -1,5 +1,13 @@
 # Unreleased
 
+## 系统 / VPS 监控 / 实例页面国际化适配修复
+
+- **补齐缺失的翻译键，空状态不再显示原始键名**：`frontend/src/pages/vps_monitor/App.vue` 的实例与服务工作区引用了 `sysmon.noInstances`、`sysmon.noServices`，但两者从未写入词典，中文界面直接渲染出 `sysmon.noInstances`。现于 `frontend/i18n/en.json` 与 `frontend/i18n/zh.json` 补齐（en `No instances found.` / `No services found.`，zh `未发现实例。` / `未发现服务。`）。
+- **实例表「状态」列改为走 i18n，不再回退原始英文枚举**：原先直接输出 `entry.row.status`，`synced` / `outdated` / `pending` 等状态在中文界面仍显示小写英文。新增统一的 `statusLabel()` 与 `STATUS_LABEL_KEYS`，覆盖连接、服务与实例状态（`running` / `stopped` / `restarting` / `disabled` / `connected` / `connecting` / `lost` / `synced` / `outdated` / `pending` / `ok` / `stale` / `missing` / `error`），未知令牌仍回退原始值；新增 `sysmon.outdated`（en `Outdated` / zh `已过时`）与 `sysmon.pending`（en `Pending` / zh `待处理`）。
+- **仪表盘指标标签本地化**：`metricLabel()` 此前硬编码 `RAM` 并用首字母大写生成 `Disk` / `Swap` / `Cpu`，中文界面保持英文。现改为按 `sysmon.ram` / `sysmon.disk` / `sysmon.swap` / `sysmon.cpu` 取词，新增 `sysmon.ram`（en `RAM`，保留原英文显示 / zh `内存`）。
+- **测试**：`frontend/src/pages/vps_monitor/App.test.ts` 新增两项回归用例——实例为空时渲染本地化文案且不出现 `sysmon.noInstances` 原始键名；实例状态 `synced` 渲染为 `Synced`。
+- **未改动**：`frontend/vps_monitor.html`（遗留独立页面）、后端与 API 启动代码；因此不需要递增 `api/serial.txt`。
+
 ## 日志查看器改为原生 Vue 3 + Tailwind 共享组件（日志页 / API 密钥 / VPS 监控）
 
 - **用原生 Vue 3 组件替换遗留的全局日志查看器**：新增共享组件 `frontend/src/shared/components/LogViewer.vue`，取代原先通过 `window.LogViewerPanel` 注入、自注入 CSS 的 `frontend/js/log_viewer_panel.js`（2922 行，硬编码 `#10141d`/`#232b3d` 调色板）。日志页、API 密钥日志面板与 VPS 监控实时日志现在共用同一个查看器，三套近似实现归一。
