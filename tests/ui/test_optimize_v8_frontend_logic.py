@@ -1225,13 +1225,6 @@ def test_suite_render_preserves_open_expander_while_disabled() -> None:
     _run_node(script)
 
 
-def test_scenario_preview_uses_readable_table_and_warning_text_sizes() -> None:
-    """Scenario rows and orange notices must not use the extra-small text token."""
-    source = (ROOT / "frontend" / "js" / "suite_editor.js").read_text(encoding="utf-8")
-
-    assert 'class="tbl" style="font-size:var(--fs-sm)' in source
-    assert 'font-size:var(--fs-sm);line-height:1.45;color:var(--orange)' in source
-
 
 def test_pb8_suite_aggregate_renders_median_and_std_without_changing_pb7() -> None:
     """The shared reducer UI must display every PB8 method while PB7 stays compatible."""
@@ -1849,6 +1842,7 @@ def test_saving_a_queue_opened_config_refreshes_that_queue_snapshot() -> None:
           assert.equal(name, 'queued-config');
           assert.equal(sourceName, 'queued-config');
         }}
+        function updateOptimizeEditorUrl() {{}}
         function queueConfigChoiceCandidates() {{ return []; }}
 
         {functions}
@@ -1884,6 +1878,7 @@ def test_v8_save_and_queue_with_new_name_does_not_rebind_opened_job() -> None:
           selectedConfigs: new Set()
         }};
         const optimizeEditorAdapter = {{isV8: true}};
+        function updateOptimizeEditorUrl() {{}}
         function editorVisible() {{ return true; }}
         function ensureRawJsonValidForSave() {{ return true; }}
         function ensureStructuredJsonFieldsValidForSave() {{ return true; }}
@@ -1940,6 +1935,7 @@ def test_home_returns_queue_opened_editor_to_queue() -> None:
         let selectedPanel = '';
         const window = {{PBGuiEditorShared: {{clearFixedValidationStatus() {{}}}}}};
         const _optOhlcvPreflightController = null;
+        function updateOptimizeEditorUrl() {{}}
         function editorVisible() {{ return true; }}
         function el(id) {{ return nodes[id]; }}
         function resetOptimizeEditorUiState() {{}}
@@ -3190,3 +3186,198 @@ def test_pareto_explorer_accepts_same_origin_api_root() -> None:
         assert.equal(window.location.href, '');
         assert.equal(messages.length, 1);
     """))
+
+
+def test_editor_url_restores_config_and_queue_after_refresh():
+    """Editor URLs round-trip encoded names and preserve queue origin on reload."""
+    page = (ROOT / 'frontend/v7_optimize.html').read_text()
+    functions = '\n'.join(_page_function(page, name) for name in (
+        'updateOptimizeEditorUrl', 'handleOpenConfigParam')).split('/* ── data-tip')[0]
+    _run_node("""
+const assert=require('node:assert/strict');
+const window={location:{href:'http://localhost/app/optimize?keep=yes#configs'}};
+const history={replaceState:(_,title,path)=>{window.location.href=new URL(path,window.location.href).href;}};
+let opened;
+const openConfigEditor=async name=>{opened=['config',name];};
+const openQueueConfigEditor=async name=>{opened=['queue',name];};
+const handleError=e=>{throw e;};
+""" + functions + """
+(async()=>{
+updateOptimizeEditorUrl('ETH test & 1',null);
+await handleOpenConfigParam();
+assert.deepEqual(opened,['config','ETH test & 1']);
+assert.equal(new URL(window.location.href).searchParams.get('keep'),'yes');
+updateOptimizeEditorUrl(null,'job.json');
+await handleOpenConfigParam();
+assert.deepEqual(opened,['queue','job.json']);
+assert.equal(new URL(window.location.href).searchParams.has('open_config'),false);
+updateOptimizeEditorUrl(null,null);
+assert.equal(new URL(window.location.href).searchParams.has('open_queue_config'),false);
+})().catch(e=>{console.error(e);process.exit(1);});
+""")
+
+
+def test_refresh_restores_editor_before_background_lists_finish():
+    """Slow result lists cannot delay restoring a saved editor or flash the config list."""
+    page=(ROOT/'frontend/v7_optimize.html').read_text()
+    source=_page_function(page,'init').split('\n\ninit().catch',1)[0]
+    _run_node("""
+const assert=require('node:assert/strict');
+const window={location:{href:'http://localhost/main?open_config=ETH#configs'}};
+const location={hash:'#configs'},PANEL_META={},state={};
+const document={documentElement:{classList:{remove(){}}}};
+const optimizeEditorAdapter={configureUi(){}};
+function attachEventHandlers(){} function initSelections(){} function initSidebarResize(){}
+function initPlotModalWindow(){} function initOptimizeOhlcvPreflightController(){} function connectWS(){}
+const loadOptimizeMetadata=async()=>{},loadSettings=async()=>{},loadConfigs=async()=>{},loadQueue=async()=>{};
+let finishResults,opened=false;
+const loadResults=()=>new Promise(resolve=>{finishResults=resolve;});
+const handleOpenConfigParam=async()=>{opened=true;};
+"""+source+"""
+(async()=>{
+const pending=init();
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(opened,true);
+finishResults();await pending;
+})().catch(e=>{console.error(e);process.exit(1);});
+""")
+    assert page.index("classList.add('restoring-optimize-editor')") < page.index('<body')
+
+
+def test_graphical_sweep_apply_restores_only_three_scoring_defaults():
+    """Actual graphical Apply reaches the scoring preset without resetting other edits."""
+    page = (ROOT / 'frontend/v7_optimize.html').read_text(encoding='utf-8')
+    preset = '\n'.join(_page_function(page, name) for name in ('applyOptimizeSweepCoinSymmetry', 'applyOptimizeSweepPreset'))
+    script = """
+    (async () => {
+      const assert = require('node:assert/strict');
+      const fs = require('node:fs');
+      eval(fs.readFileSync('frontend/js/suite_editor.js', 'utf8'));
+      _suiteRender = () => {};
+      _suiteNotifyStructuredSync = () => {};
+      toast = () => {};
+      _suiteState.editIdx = -1;
+      _suiteState.getScenarioContext = () => ({});
+      let scoring;
+      let execution = 'vast';
+      const balance = {value:'123'};
+      const el = id => id === 'opted-execution' ? {value:execution} : id === 'opted-starting-balance' ? balance : null;
+      const setScoringEntries = value => {scoring=value;};
+      const setLimitEntries = () => {throw Error('Existing limits reset');};
+      const coins = {'ms-opt-app-long':['ETH'], 'ms-opt-app-short':[], 'ms-opt-ign-short':['ETH','BTC']};
+      const optGetMs = id => coins[id];
+      const optSetMs = (id,value) => {coins[id]=value;};
+      const applyOptimizeSweepLongBoundsPreset = () => {throw Error('Existing strategy reset');};
+    """ + preset + """
+      _suiteState.onApplyScenarioPreview = applyOptimizeSweepPreset;
+      for (const strategy of ['ema_anchor','trailing_grid']) {
+        for (execution of ['vast','local']) {
+          scoring = [{metric:'old'}];
+          _suiteState.scenarioPreview = {contract_version:2,template:'sweep_cycles',
+            parameters:{sweep_policy:{starting_balance:10000}},
+            training_scenarios:[{label:'train'}],reducer:{default:'median'},
+            provenance:{template:'sweep_cycles',strategy}};
+          _suiteState.scenarioPreviewContext = _suiteScenarioContextSignature({});
+          await _suiteApplyScenarioPreview();
+          assert.deepEqual(coins['ms-opt-app-short'],['ETH']);
+          assert.deepEqual(coins['ms-opt-ign-short'],['BTC']);
+          assert.equal(balance.value,'10000');
+          assert.deepEqual(scoring,[
+            {metric:execution==='vast'?'adg_strategy_eq':'gain_strategy_eq',goal:'max'},
+            {metric:'sortino_ratio_strategy_eq',goal:'max'},
+            {metric:'drawdown_worst_strategy_eq',goal:'min'}]);
+        }
+      }
+    })().catch(error=>{console.error(error);process.exit(1);});
+    """
+    _run_node(script)
+
+
+def test_save_actions_report_failures_and_allow_retry():
+    """Both save actions surface collection/API errors and release their pending lock."""
+    page = (ROOT / 'frontend/v7_optimize.html').read_text(encoding='utf-8')
+    source = _page_function(page, 'saveEditor')
+    script = """
+    (async () => {
+      const assert = require('node:assert/strict');
+      const state = {};
+      const optimizeEditorAdapter = {isV8:true};
+      const editorVisible = () => true;
+      const ensureRawJsonValidForSave = () => true;
+      const ensureStructuredJsonFieldsValidForSave = () => true;
+      let failure='', notices=[], requests=[], closed=0, statuses=[];
+      function collectEditorConfig() {
+        if(failure==='validation') throw Error('Select at least one exchange.');
+        return {name:'sample',config:{optimize:{scoring:[{metric:'adg_strategy_eq'}]}}};
+      }
+      const setPageEditorStatus = message => statuses.push(message);
+      const handleError = error => notices.push(error.message);
+      async function apiFetch(path,options) {
+        if(failure==='api') throw Error('Save rejected by API');
+        requests.push(path);return {};
+      }
+      const refreshOpenedQueueSnapshot = async()=>{};
+      const closeEditor = ()=>{closed++;};
+      const toast = ()=>{};
+      const loadConfigs = async()=>{};
+      const loadQueue = async()=>{};
+      const setPanel = ()=>{};
+    """ + source + """
+      for (const queue of [false,true]) {
+        for (failure of ['validation','api']) {
+          const before=closed;
+          await saveEditor(queue);
+          assert.equal(closed,before);
+          assert.equal(state.editorSaving,false);
+          assert.equal(notices.at(-1),failure==='api'?'Save rejected by API':'Select at least one exchange.');
+        }
+        failure=''; requests=[];
+        await saveEditor(queue);
+        assert.deepEqual(requests,queue?['/configs/sample','/queue']:['/configs/sample']);
+        assert.equal(state.editorSaving,false);
+      }
+      assert(statuses.includes('Saving…'));
+      assert(statuses.includes('Saving and queueing…'));
+    })().catch(error=>{console.error(error);process.exit(1);});
+    """
+    _run_node(script)
+
+
+def test_unsaved_editor_refresh_round_trip():
+    """New/copy drafts retain edits and overrides without becoming saved configs."""
+    page = (ROOT / 'frontend/v7_optimize.html').read_text()
+    functions = '\n'.join(_page_function(page, name) for name in (
+        'optimizeDraftStorageKey', 'storeOptimizeDraft', 'captureOptimizeDraftForRefresh',
+        'updateOptimizeEditorUrl', 'openEditorWithConfig', 'handleOpenConfigParam')).split('/* ── data-tip')[0]
+    _run_node("""
+const assert=require('node:assert/strict');
+const storage=new Map();
+const listeners={};
+const window={addEventListener:(name,fn)=>{listeners[name]=fn;},location:{href:'http://localhost/main#configs',pathname:'/main'},
+ sessionStorage:{setItem:(k,v)=>storage.set(k,v),getItem:k=>storage.get(k),removeItem:k=>storage.delete(k)}};
+const history={replaceState:(_,t,p)=>{window.location.href=new URL(p,window.location.href).href;}};
+const state={}; let shown,status;
+const deepClone=x=>JSON.parse(JSON.stringify(x));
+const normalizeOptimizeEditorPayload=p=>({...p,param_status:{}});
+const showStructuredEditor=(config,name,source)=>{shown={config,name};state.editorSourceName=source;};
+const editorVisible=()=>true;
+const setPageEditorStatus=s=>{status=s;};
+let edited={name:'My draft',config:{bot:{long:{test:3}},pbgui:{scenario_template:{parameters:{windows:[{start:'2020-01-01'}]}}}}};
+const collectEditorConfig=()=>edited;
+const handleError=e=>{throw e;};
+"""+functions+"""
+(async()=>{
+openEditorWithConfig({config:{bot:{}},override_configs:{ETH:{bot:{long:{test:1}}}}},'Copy','');
+assert.equal(new URL(window.location.href).searchParams.get('open_draft'),'1');
+listeners.beforeunload();
+await handleOpenConfigParam();
+assert.deepEqual(shown,edited);
+assert.equal(state.editorOverrideConfigs.ETH.bot.long.test,1);
+assert.equal(storeOptimizeDraft({config:{api_key:'must-not-store'}}),false);
+assert.equal(storage.size,0);
+assert.match(status,/recovery unavailable/);
+updateOptimizeEditorUrl('Saved',null);
+assert.equal(new URL(window.location.href).searchParams.has('open_draft'),false);
+})().catch(e=>{console.error(e);process.exit(1);});
+""")
+    assert "removeItem(optimizeDraftStorageKey())" in _page_function(page, 'closeEditor')

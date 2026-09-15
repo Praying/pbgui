@@ -580,3 +580,53 @@ def test_optimizer_start_time_reads_worker_record(value, valid):
         with pytest.raises(VastError, match='start time unavailable'):
             optimizer_started_at(connection)
     assert calls == [('head -c 512 /work/pbgui/jobs/test/started.json', {'max_output': 512})]
+
+
+def test_native_import_retains_distributed_validation_windows(job):
+    """Vast result collection publishes explicit Holdouts for subsequent Validate actions."""
+    from pathlib import Path
+    from scenario_templates import generate_scenario_template
+    from scenario_windows import validation_holdouts
+    store, identifier, _ = job
+    directory = store.directory(identifier)
+    native = directory / 'final-results/optimize_results/window_run'
+    native.mkdir(parents=True)
+    (native / 'all_results.bin').write_bytes(msgpack.packb({'config': {}, 'metrics': {}}))
+    (native / 'pareto').mkdir()
+    (native / 'pareto/a.json').write_text('{}')
+    (directory / 'input').mkdir()
+    plan = generate_scenario_template({'start_date':'2024-01-01','end_date':'2024-12-31','windows':[
+        {'id':'a','label':'a','role':'training','start_date':'2024-01-01','end_date':'2024-03-31'},
+        {'id':'h','label':'h','role':'holdout','start_date':'2024-04-01','end_date':'2024-04-30'},
+        {'id':'b','label':'b','role':'training','start_date':'2024-05-01','end_date':'2024-12-31'}]})['provenance']
+    write_json(directory / 'input/manifest.json', {'validation_plan': plan})
+    result = import_results(store, identifier)
+    assert validation_holdouts(Path(result['result_path'])) == plan['holdout_scenarios']
+
+
+@pytest.mark.parametrize('owner_state', ['alive', 'dead', 'reused', 'unknown'])
+def test_interrupted_preparation_recovery(job, monkeypatch, owner_state):
+    """Only exited owners or reused PIDs unlock retry; live preparation stays intact."""
+    import vast_jobs
+    store, identifier, _ = job
+    store.update(identifier, status='preparing', preparation_owner={'pid': 123, 'created_at': 10})
+
+    class Process:
+        """Isolated process identity without inspecting host processes."""
+        def __init__(self, pid):
+            if owner_state == 'dead':
+                raise vast_jobs.psutil.NoSuchProcess(pid)
+            if owner_state == 'unknown':
+                raise vast_jobs.psutil.AccessDenied(pid)
+
+        def create_time(self):
+            """Simulate PID reuse."""
+            return 11 if owner_state == 'reused' else 10
+
+        def is_running(self):
+            """Report the current mock process as running."""
+            return True
+
+    monkeypatch.setattr(vast_jobs.psutil, 'Process', Process)
+    state = store.recover_interrupted_preparation(identifier)
+    assert state['status'] == ('failed' if owner_state in {'dead', 'reused'} else 'preparing')

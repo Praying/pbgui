@@ -48,4 +48,39 @@ describe('VastCloudPanel', () => {
     expect((apiKeyInput.element as HTMLInputElement).value).toBe('');
     wrapper.unmount();
   });
+
+  it('rents the explicitly selected compatible offer without starting a replacement queue job', async () => {
+    vi.mocked(apiFetch).mockImplementation(async (url: string) => {
+      if (url === '/api/vast/settings') return { configured: true };
+      if (url === '/api/vast/gpu-preferences') return { gpu_name: '', max_price: 0.8 };
+      if (url === '/api/vast/configs') return { configs: [] };
+      if (url === '/api/vast/jobs') return { jobs: [], worker: null };
+      if (url.startsWith('/api/vast/offers?')) {
+        return { offers: [{ id: 42, gpu_name: 'RTX 4090', vram_gb: 24, price_hour_usd: 0.4, location: 'EU' }] };
+      }
+      return {};
+    });
+    const wrapper = mount(VastCloudPanel, { global: { plugins: [createI18n('en')] } });
+    await flushPromises();
+
+    await wrapper.findAll('button').find((button) => button.text() === 'Find GPU offers')!.trigger('click');
+    await flushPromises();
+    await wrapper.find('tbody tr').trigger('click');
+    await wrapper.findAll('button').find((button) => button.text() === 'Rent selected offer')!.trigger('click');
+    await flushPromises();
+
+    expect(vi.mocked(apiFetch).mock.calls).toContainEqual([
+      '/api/vast/queue/start',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          use_saved_settings: true,
+          accept_rental_and_cleanup: true,
+          rent_only: true,
+          offer_id: 42,
+        }),
+      },
+    ]);
+    wrapper.unmount();
+  });
 });

@@ -15,6 +15,7 @@ import {
 } from '@/shared/components/ui/select';
 import DatePicker from '@/shared/datepicker/DatePicker.vue';
 import KvCoinSources from '@/shared/kvCoinSources/KvCoinSources.vue';
+import ScenarioVisualEditor, { type VisualScenarioWindow } from './ScenarioVisualEditor.vue';
 import {
   SUITE_AGG_METRIC_FALLBACKS,
   addSuiteScenario,
@@ -30,6 +31,7 @@ import {
   type ScenarioGeneratorDraft,
   type ScenarioGeneratorPreview,
   type ScenarioGeneratorRequest,
+  type ScenarioGeneratorWindow,
   type SuiteScenario,
   type SuiteState,
 } from './suiteModel';
@@ -382,6 +384,68 @@ function scenarioGeneratorRequest(): ScenarioGeneratorRequest {
   };
 }
 
+function toVisualWindow(item: Partial<ScenarioGeneratorWindow>, index: number, role: 'training' | 'holdout'): VisualScenarioWindow {
+  return {
+    id: String(item.id || `${role}_${index + 1}`),
+    role,
+    label: String(item.label || `${role}_${index + 1}`),
+    start_date: String(item.start_date || currentScenarioContext().start_date || ''),
+    end_date: String(item.end_date || currentScenarioContext().end_date || ''),
+    scenario: item.scenario ? { ...item.scenario } : undefined,
+  };
+}
+
+const visualWindows = computed<VisualScenarioWindow[]>(() => {
+  const configured = scenarioGeneratorDraft.value.windows;
+  if (Array.isArray(configured) && configured.length) {
+    return configured.map((item, index) => toVisualWindow(item, index, item.role));
+  }
+  const provenanceParameters = model.value.scenarioTemplate?.parameters;
+  const provenanceWindows = provenanceParameters && typeof provenanceParameters === 'object'
+    ? (provenanceParameters as Record<string, unknown>).windows
+    : undefined;
+  if (Array.isArray(provenanceWindows) && provenanceWindows.length) {
+    return provenanceWindows.filter((item): item is ScenarioGeneratorWindow => !!item && typeof item === 'object')
+      .map((item, index) => toVisualWindow(item, index, item.role));
+  }
+  return model.value.scenarios.map((scenario, index) => toVisualWindow({
+    id: `training_${index + 1}`,
+    role: 'training',
+    label: String(scenario.label || `training_${index + 1}`),
+    start_date: scenario.start_date,
+    end_date: scenario.end_date,
+    scenario,
+  }, index, 'training'));
+});
+
+function updateVisualWindows(windows: VisualScenarioWindow[]): void {
+  scenarioGeneratorDraft.value.windows = JSON.parse(JSON.stringify(windows)) as ScenarioGeneratorWindow[];
+  scenarioPreview.value = null;
+  scenarioPreviewContextSignature.value = '';
+  scenarioRequestGeneration += 1;
+}
+
+async function applyVisualWindows(): Promise<void> {
+  if (!props.previewScenarioTemplate) return;
+  const context = currentScenarioContext();
+  const contextSignature = scenarioContextSignature(context);
+  const requestGeneration = ++scenarioRequestGeneration;
+  try {
+    const preview = await props.previewScenarioTemplate({
+      ...scenarioGeneratorRequest(),
+      windows: JSON.parse(JSON.stringify(visualWindows.value)) as ScenarioGeneratorWindow[],
+      reducer: model.value.aggregate,
+    } as ScenarioGeneratorRequest);
+    if (requestGeneration !== scenarioRequestGeneration) return;
+    scenarioPreview.value = JSON.parse(JSON.stringify(preview)) as ScenarioGeneratorPreview;
+    scenarioPreviewContextSignature.value = contextSignature;
+    applyScenarioPreview();
+  } catch (caught) {
+    if (requestGeneration !== scenarioRequestGeneration) return;
+    scenarioGeneratorError.value = caught instanceof Error ? caught.message : String(caught);
+  }
+}
+
 function recalculateScenarioGenerator(): void {
   scenarioPreview.value = null;
   scenarioPreviewContextSignature.value = '';
@@ -697,6 +761,15 @@ function draftCoinOptions(list: 'coins' | 'ignoredCoins'): string[] {
             </div>
             <div v-for="warning in scenarioPreview.warnings || []" :key="warning" style="font-size: var(--text-sm); line-height: 1.45; color: var(--orange); margin-top: 4px">{{ warning }}</div>
           </div>
+
+          <ScenarioVisualEditor
+            class="mt-3"
+            :windows="visualWindows"
+            :start-date="currentScenarioContext().start_date"
+            :end-date="currentScenarioContext().end_date"
+            @update:windows="updateVisualWindows"
+            @apply="applyVisualWindows"
+          />
         </section>
 
         <div v-if="model.enabled">

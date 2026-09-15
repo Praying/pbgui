@@ -133,7 +133,7 @@ def test_offer_projection_and_query(monkeypatch):
         """Provide one affordable offer and one outside the requested price cap."""
         calls.append((method,path,body))
         return {'offers':[
-            {'id':7,'gpu_name':'RTX 3090','gpu_ram':24576,'cpu_ram':32768,'cpu_cores_effective':8.7,'dph_total':0.17,'verification':'verified','inet_up_cost':0.01,'inet_down_cost':0.02,'secret':'hidden'},
+            {'id':7,'gpu_name':'RTX 3090','gpu_ram':24576,'cpu_ram':32768,'cpu_cores_effective':8.7,'total_flops':35.58,'dph_total':0.17,'verification':'verified','inet_up_cost':0.01,'inet_down_cost':0.02,'secret':'hidden'},
             {'id':8,'dph_total':3}, {'id':9,'dph_total':'nan'},
         ]}
     monkeypatch.setattr(VastClient,'request',request)
@@ -141,6 +141,7 @@ def test_offer_projection_and_query(monkeypatch):
     assert len(rows)==1 and rows[0]['vram_gb']==24
     assert rows[0]['verified'] and rows[0]['price_hour_usd']==0.17
     assert 'hidden' not in json.dumps(rows)
+    assert rows[0]['tflops'] == 35.58
     assert calls[0][:2]==('POST','/bundles')
     assert calls[0][2]['allocated_storage']==40
     assert calls[0][2]['type']=='on-demand'
@@ -440,3 +441,51 @@ def test_browser_auth_error_has_no_vast_marker(client, status):
     response = http.post('/api/vast/account')
     assert response.status_code == status
     assert 'x-pbgui-error-source' not in response.headers
+
+
+def test_exact_offer_search_uses_contract_id(monkeypatch):
+    """A selected offer remains discoverable despite general-search deduplication."""
+    queries = []
+    def request(self, method, path, body=None):
+        """Model the provider returning another representative in a general search."""
+        queries.append(body)
+        identifier = 7 if body.get('ask_contract_id') == {'eq': 7} else 8
+        return {'offers': [{'id': identifier, 'dph_total': .17}]}
+    monkeypatch.setattr(VastClient, 'request', request)
+    assert VastClient('fake').offers()[0]['id'] == 8
+    assert VastClient('fake').offers(offer_id=7)[0]['id'] == 7
+    assert queries[-1]['ask_contract_id'] == {'eq': 7}
+    assert 'id' not in queries[-1]
+
+
+@pytest.mark.parametrize('deleted', [False, True])
+def test_requeue_after_interrupted_attempt_shows_latest_only(tmp_path, monkeypatch, deleted):
+    """An old failed sibling must not override the newest replacement in polling."""
+    from vast_jobs import JobStore, write_json
+    from vast_queue import CloudQueue
+    from secure_files import ensure_private_directory
+    from fastapi import Response
+    store = JobStore(tmp_path / 'queue')
+    states = [
+        dict(id='a'*32, status='failed', created_at=1, deleted_at=4 if deleted else None),
+        dict(id='b'*32, status='failed', created_at=2, requeue_from='a'*32),
+        dict(id='c'*32, status='preparing', created_at=3, requeue_from='a'*32),
+    ]
+    for state in states:
+        directory = ensure_private_directory(store.root / 'jobs' / state['id'])
+        write_json(directory / 'state.json', dict(rental_state='none', **state))
+    monkeypatch.setattr(vast, 'CloudQueue', lambda: CloudQueue(store))
+    monkeypatch.setattr(vast, 'services_available', lambda: False)
+    assert [row['id'] for row in vast.jobs(Response(), None)['jobs']] == ['c'*32]
+
+
+def test_deadline_route_requires_explicit_valid_request(client, monkeypatch):
+    """The authenticated endpoint accepts only the two supported deadline steps."""
+    http, _, _ = client
+    calls = []
+    monkeypatch.setattr('vast_deadline.request_deadline', lambda queue, worker, expected, minutes:
+                        calls.append((worker, expected, minutes)) or {'pending':True})
+    response = http.post('/api/vast/queue/deadline', json=dict(worker_id='a'*32, expected_deadline=8000, minutes=30))
+    assert response.status_code == 202
+    assert calls == [('a'*32, 8000, 30)]
+    assert http.post('/api/vast/queue/deadline', json=dict(worker_id='a'*32, expected_deadline=8000, minutes=60)).status_code == 422

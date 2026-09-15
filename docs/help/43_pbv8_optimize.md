@@ -52,7 +52,7 @@ Selecting several exchanges keeps PB8's native combined-dataset behavior. Use ex
 
 The two compact buttons beside PB8 Optimize's **start_date** resolve PB8's first available candles for the currently selected exchanges and explicit approved coins. **1st** uses the oldest known selected market history. **All** starts only after every selected coin has a known OHLCV timestamp on every selected exchange. While the lookup runs, a compact progress bar reports genuinely completed Exchange/Coin pairs and names the current PB8 operation. **Stop** cancels only this lookup. PBGui adds PB8's required strategy warmup and rounds up to the first fully usable UTC day before setting the date-only `backtest.start_date`. **All** fails with the first unresolved pair when a coin is missing from an exchange or its first timestamp is unknown. Dynamic `all` coin selection is not accepted, and one lookup is limited to 200 exchange/coin pairs. The explicit lookup may populate PB8's native first-timestamp cache but does not download the full OHLCV range. Closing or replacing the editor stops its active lookup automatically.
 
-The **PB8 Scenario Generator** inside Suite Mode previews deterministic `rolling_windows`, `walk_forward`, and `sweep_cycles` plans from the editor's base date range. Window length, stride, training count, optional holdout count, and exchange expansion are validated server-side and capped at 64 generated scenarios. Preview does not modify the config. **Apply Training Scenarios** explicitly replaces the unsaved Suite scenarios and reducer and applies the same default scoring and limits recipe for all three templates; holdout windows remain outside `backtest.scenarios` and are stored as `pbgui.scenario_template` provenance. Any later manual Suite edit clears that provenance. Sweep Cycles additionally binds this immutable plan to the PB8 result and calculates sequential sweep/refill cash-flow metrics from each Pareto candidate's per-scenario gain. PBGui AI exposes the same generator as a read-only preview tool and must still use the existing proposal flow for Save or Queue operations.
+The **PB8 Scenario Generator** inside Suite Mode previews deterministic `rolling_windows`, `walk_forward`, and `sweep_cycles` plans from the editor's base date range. Window length, stride, training count, optional holdout count, and exchange expansion are validated server-side and capped at 64 generated scenarios. Preview does not modify the config. **Check & Apply windows** explicitly replaces the unsaved Suite scenarios and reducer and applies the same default scoring and limits recipe for all three templates; holdout windows remain outside `backtest.scenarios` and are stored as `pbgui.scenario_template` provenance. Legacy preset provenance is cleared by manual Suite edits. Explicit visual window plans retain their Holdouts when editing training scenarios or aggregation. Sweep Cycles additionally binds this immutable plan to the PB8 result and calculates sequential sweep/refill cash-flow metrics from each Pareto candidate's per-scenario gain. PBGui AI exposes the same generator as a read-only preview tool and must still use the existing proposal flow for Save or Queue operations.
 
 ### Scenario Generator
 
@@ -64,8 +64,8 @@ The Scenario Generator turns one PB8 Optimize config into a reproducible group o
 | --- | --- | --- |
 | **1st / All** beside `start_date` | Resolves an OHLCV-based start date | Suite scenarios and generator settings |
 | **Recalculate** | Re-reads current base settings and fits the maximum valid Training count for every template | Saved config and applied Suite |
-| **Preview** | Shows exact Train/Holdout windows and warnings | Config, Suite, scoring, bounds, and queue |
-| **Apply Training Scenarios** | Enables Suite Mode, installs Train scenarios/reducer, stores Holdout provenance, and applies the Sweep preset | No config is saved or queued yet |
+| **Generate windows** | Shows exact Train/Holdout windows and warnings | Config, Suite, scoring, bounds, and queue |
+| **Check & Apply windows** | Enables Suite Mode, installs Train scenarios/reducer, stores Holdout provenance, and applies the Sweep preset | No config is saved or queued yet |
 | **Save / Save & Queue** | Persists or launches the applied experiment | Holdout remains excluded from optimization |
 | **Paretos** | Shows PB8 metrics plus PBGui `sweep_*` cash-flow metrics | Original PB8 candidate metrics |
 | **Holdout** in the Pareto sidebar | Builds standalone PB8 Backtest queue drafts from immutable Holdout dates | Candidate parameters, coins, exchange, balance, and overrides |
@@ -90,8 +90,8 @@ The Scenario Generator turns one PB8 Optimize config into a reproducible group o
 1. Select explicit coins and exchanges.
 2. Use **All** for a start date common to every selected Exchange/Coin pair, or **1st** when changing-universe history is intentional.
 3. Select **Sweep Cycles**, set Window, Holdout, Starting balance, Multiplier, Refill cost, and Cooldown. PBGui calculates Stride and Training windows.
-4. Click **Recalculate** after any OHLCV/date/exchange change, then **Preview**.
-5. Click **Apply Training Scenarios**. PBGui synchronizes base balance, symmetric Suite coin lists, reducer, scoring, limits, and meaningful Long bounds.
+4. Click **Recalculate** after any OHLCV/date/exchange change, then **Generate windows**.
+5. Click **Check & Apply windows**. PBGui synchronizes base balance, symmetric Suite coin lists, reducer, scoring, limits, and meaningful Long bounds.
 6. Save and queue the Optimize run. `write_all_results=true` is mandatory so PBGui can bind the immutable Sweep plan to the correct result.
 7. Rank completed candidates by `sweep_net_cashflow`, cycles completed, external capital/refills, Drawdown, and Sortino.
 8. Select finalists and click **Holdout**. Queue the generated standalone Backtests without retuning them.
@@ -114,12 +114,12 @@ The Scenario Generator turns one PB8 Optimize config into a reproducible group o
    - **Sweep Cycles** creates one sequential combined-exchange track and evaluates each candidate's window gains with carry, sweep-reset, and refill-reset rules. PBGui automatically calculates Stride and the maximum number of complete Training windows from the base date range after reserving Holdouts.
 4. Set **Window days** to the length of each scenario. Rolling Windows and Walk-Forward accept a manual **Stride days** value. Sweep Cycles calculates Stride automatically as Window days plus Cooldown days.
 5. Set **Training windows** manually for Rolling Windows or Walk-Forward, or use **Recalculate** to fit their maximum count from the current dates and configured Stride. Sweep Cycles always calculates the maximum complete Training count automatically after reserving **Holdout windows**. A range fitting no training window remains invalid instead of being forced to one. With **Exchange mode = Inherit base**, every window uses the combined base exchange selection.
-6. Click **Preview**. Review the generated labels, exact date ranges, Train/Holdout classification, scenario count, and warnings. Preview alone does not change the Suite or config.
-7. Click **Apply Training Scenarios** when the plan is correct. This enables Suite Mode, replaces the current unsaved Suite scenarios, and applies the suggested reducer. Holdout rows are deliberately not copied into `backtest.scenarios`.
+6. Click **Generate windows**. Review and adjust the generated windows directly in the chart. Generating windows alone does not change the Suite or config.
+7. Click **Check & Apply windows** when the plan is correct. This enables Suite Mode, replaces the current unsaved Suite scenarios, and preserves the configured reducer. Holdout rows are deliberately not copied into `backtest.scenarios`.
 8. Review named Objective Scenario, scoring, and limit references after replacing an existing Suite. Their scenario labels must still exist in the newly generated training set.
 9. Use the normal **Save** or Queue workflow only after reviewing the applied Suite. Saving persists the generator parameters and holdout rows under `pbgui.scenario_template` for traceability.
 
-Run **Preview** again before Apply if the base dates or exchanges changed. PBGui blocks application of a stale preview. Editing, adding, removing, reordering, or replacing Suite scenarios after Apply clears the generator provenance because the saved Suite no longer exactly matches the generated plan.
+Run **Generate windows** again before Apply if the base dates or exchanges changed. PBGui blocks application of a stale preview. Editing, adding, removing, reordering, or replacing Suite scenarios after Apply clears the generator provenance because the saved Suite no longer exactly matches the generated plan.
 
 After changing approved coins, base Starting balance, or `start_date` through **1st** or **All**, click **Recalculate** beside **Guide**. It reloads the current base settings, fits Rolling/Walk-Forward counts with their configured Stride, recalculates automatic Sweep Stride/counts, and discards stale Preview state. Preview still preserves a manually selected smaller Rolling/Walk-Forward count.
 
@@ -229,3 +229,93 @@ Pareto Explorer can be opened from imported Vast results as well as local result
 Queue Backtest and Queue Validation now add the selected candidates directly and keep the current chart, filters and selection. Open Queue is the only navigation action; its count includes pending and running jobs. The status shows whether existing autostart settings may launch queued jobs. Adding does not send a start command. Keep candidate dates, exchanges, balance and overrides as configured; change them in Backtests if needed. You can select and add further candidates while earlier batches are transferred in the background. Each click captures its configuration and validation mode; batches are submitted sequentially and the status shows waiting batches. Repeated submissions skip jobs already confirmed during this page session. Keep this page open until additions finish. While work is pending, Open Queue opens another tab so additions can continue. On a partial PB8 failure, retry continues with unconfirmed items using the same operation IDs.
 
 Explicitly applying **Sweep Cycles** restores exactly three scoring objectives for both EMA and Trailing: gain (ADG for Vast GPU), Sortino, and worst drawdown. All supported metrics remain available for subsequent manual edits.
+
+### Visual Scenario Editor
+
+Open **Suite Mode → Visual windows**. The upper chart reads local OHLCV archives and shows daily candles or a price line; selecting its exchange/coin changes only the reference chart. Missing days are orange and partial days are counted. No exchange download is triggered. The chart automatically switches from a price line to candles when zoom provides enough space. Only configured optimizer coins are offered as reference sources. Empty Holdout lanes remain available as drop targets; lane positions stay stable during dragging. Optimization keeps its original data resolution.
+
+- Drag a window body to move it or either edge to resize it. Dates snap to UTC days.
+- Draw Training/Holdout windows on empty chart space, delete with the trash and undo/redo edits directly in the draft.
+- Holdouts may lie between training periods. Training windows are automatically trimmed or split around Holdouts when the edit is completed. Training/Holdout overlap blocks Apply; overlapping training windows use separate lanes. Sweep also requires chronological, non-overlapping windows with the configured cooldown.
+- **Check & Apply windows** validates dates and exports only Training to the Suite. It preserves scoring, limits and aggregation. Use **Save** or **Save & Queue** to persist the applied configuration. Up to 48 Training and 16 Holdout windows are supported.
+
+Rolling Windows and Windows + Holdouts remain quick presets for creating equal windows. Preview regenerates their draft; the visual editor then allows individual changes. Existing presets remain compatible. A distributed Holdout is an excluded period, not necessarily a chronological forward test: true walk-forward would optimize separately using only data preceding each test period.
+
+Local and Vast result imports retain the explicit Holdout dates. **Validate** in Results and Pareto Explorer uses those dates, including distributed Holdouts. Editing aggregation does not remove them. A stale plan that no longer matches the training config must be applied again before launching.
+
+Visual window plans require `optimize.write_all_results=true` so local result metadata can be bound to its result stream.
+
+New windows use the current **Window days** and **Stride days**. Training continues after the latest training start plus stride; the first Holdout follows the existing windows. If the full window does not fit, extend the range or draw it explicitly; PBGui does not shorten it automatically.
+
+The reference defaults to a configured coin using local market mappings. If none matches, choose it explicitly. Manual reference choices survive editor refreshes. Missing history appears as a thin orange strip. **Full range** restores the entire configured period without changing window dates.
+
+Daily chart summaries are cached in API memory for up to five minutes and reused across chart reloads. Changed source files invalidate the corresponding day immediately. The first load still reads the local minute archives; no exchange download is started.
+
+Delete a selected window using the toolbar trash icon, or drag its bar onto the trash. Undo restores it. The markers inside the price chart show green joins, orange gaps and red overlaps across all windows; hover a marker for dates and day counts. Training overlaps can be intentional.
+
+Thin green joins appear inside the price chart. A floating label follows a dragged window to the trash.
+
+Use the mouse wheel over the chart to zoom around the pointer. Shift-drag the price area to pan; double-click empty chart space to restore the full period. Window bars still move and resize their dates.
+
+Draw a new window directly by dragging empty chart space. The Holdout lane creates Holdouts; other empty areas create Training windows. A click alone creates nothing.
+
+Browser refresh reopens the saved config currently open in Optimize, including configs opened from the queue. Unsaved changes to an existing saved config are not restored; new and copied drafts have separate temporary tab recovery. Home/closing the editor removes that editor address.
+
+The four chart toolbar icons are Undo, Redo, Trash and Full range, with tooltips. Move a window onto the other Training/Holdout lane to change its role. New windows are drawn directly; there are no add-window or separate price-history buttons.
+
+While dragging, only the window under the pointer is displayed; its original timeline copy is hidden until release. Refresh restores the editor without briefly displaying the Configs list.
+
+The dragged window previews the destination role with a Training/Holdout label and matching color before dropping.
+
+The magnet icon toggles snapping (initially on). Moving or resizing within eight screen pixels of another window boundary snaps to it; moving preserves duration. Bars show start/end dates and duration; hover for the complete text on narrow windows.
+
+Check & Apply shows validation progress and any error beside the button. Successful application updates the scenario list below; it does not save the config to disk.
+
+Holdouts automatically exclude their dates from Training when edited or dropped. Overlapping Training windows are trimmed, split or removed. Undo restores the complete previous edit, including affected Training. The backend still rejects any remaining Training/Holdout overlap.
+
+Adjacent windows have a shared boundary grip when the pair is unambiguous. Drag it to change the left end and right start together, keeping outer dates fixed and both windows at least one day long. Undo restores both windows.
+
+At a shared boundary, the left grip changes only the left window end, the middle grip resizes both, and the right grip changes only the right window start. Drag a side grip away to separate windows; the magnet still snaps within its normal distance and can be disabled.
+
+Side grips use small marks along the bottom edge; their larger invisible mouse targets keep them easy to grab without covering dates.
+
+Below the chart, only **Check & Apply windows** and validation feedback remain. Select and edit windows directly in the chart.
+
+The chart is the scenario preview. **Generate windows** builds the graphical draft from template settings. **Check & Apply windows** validates it and directly replaces the Suite scenario list; no separate preview table or second Apply step is needed. Failed validation leaves existing scenarios unchanged. Save persists the configuration.
+
+The compact reference line shows exchange, coin, days and Complete. Missing or incomplete days appear only when present. Hover for source resolution and coverage scope; this describes the reference chart only.
+
+Vast uploads use resumable 2 MiB blocks and stable compressed archives. The progress bar counts checksum-verified blocks; in-flight bytes are separately acknowledged by the host. Reconnects retry only unverified blocks. Speed measures verified bytes during the current attempt. Uploads may exceed ten minutes while the receiver keeps progressing; 120 seconds without receiver progress triggers a retry, and the rental deadline still bounds the transfer.
+
+Select a compatible offer in Optimizer Settings and click **Rent** to rent that exact GPU immediately. Billing and the rental deadline start immediately; queued jobs stay paused. An unavailable or more expensive offer requires a new selection, never an automatic substitute. The reservation stays available until the first job, explicit **End rental**, or the deadline. **Start queue** reuses the reserved GPU; after its first job, the normal idle cleanup setting applies. The Queue and Settings show the active rental and an **End rental** button. Ending a rental with an active job uses the existing stop-and-collect cleanup flow.
+
+For Sweep Cycles, graphical **Check & Apply windows** restores the three scoring defaults for both EMA and Trailing: ADG (Vast) or Gain (local), Sortino, and worst Drawdown. Edited strategy settings and limits are retained. Apply also mirrors the Long approved coins to Short (without enabling Short trading) and copies the Sweep starting balance to the backtest.
+
+Save and Save & Queue show pending status and notify validation or API failures without closing the editor. Fix the reported issue and retry; repeated clicks while saving do not create duplicate requests.
+
+New and copied Optimize drafts are restored in the same browser tab after refresh. This is temporary browser recovery, not a saved config or queue entry. Closing the editor clears it. Configs containing credential fields are not stored for recovery.
+
+Rent rechecks the selected offer directly by its contract ID; a general marketplace search may show a different representative offer. Rental failures appear beside Rent. No replacement GPU is rented automatically.
+
+The GPU row and Details show Vast-reported TFLOPS. This compares compute capacity, not measured optimizer throughput; CPU validation and memory also affect run speed. Missing values show “TFLOPS unknown”.
+
+Cache availability is checked in pages of 1,024 files, so large multi-coin datasets do not need a single oversized SSH response. Up to two 2 MiB blocks upload concurrently. Progress combines both connections; only checksum-verified blocks count as completed. A permanent transfer failure cancels and joins the other connection; verified blocks remain reusable. This works with the existing worker image.
+
+Automatic CPU selection uses the smaller of measured container capacity and the rented offer allocation, rounded down to whole workers (minimum one). For example, a host reporting 256 CPUs with a 21.3-core rental uses 21 exact workers. Invalid allocation data blocks startup.
+
+A manually reserved GPU has its provider startup log collected every 60 seconds, even before queue start. A preparing/queued cloud job can display this rental log until its own provider or optimizer log becomes available. The provider log describes container startup, not optimizer progress.
+
+The queue rental bar also provides **Start queue**. After starting, a reserved GPU waits until an input bundle is ready; starting the queue does not bypass preparation.
+
+If input preparation is interrupted by process shutdown, the job is marked failed when detected. Use **Requeue** to prepare it again; an existing rental can be reused.
+
+Upload status distinguishes cache checking, archive preparation, byte transfer, verification and installation. Byte percentages apply to verified transferred blocks, not cache checking or packaging. Opening the log again shows the persisted phase and available startup/optimizer log; before a log exists, a phase-specific waiting message is shown.
+
+
+Upload speed and host network bandwidth both use **Mbps**; payload sizes remain **MB** (1 byte = 8 bits). During transfer, PBGui shows measured speed, advertised host download speed, the percentage reached, and both remaining-time estimates simultaneously. The host-rate estimate is theoretical: local uplink, route, SSH overhead and retries also limit throughput, so a low reached percentage does not prove inaccurate host specifications. Packaging, reconnects and verification do not show transfer estimates.
+
+The **− / +** buttons beside **Budget / deadline** request 30-minute changes for the active rental. They preserve the existing budget, allow at most 24 hours from rental acceptance, and require at least ten minutes remaining for collection and cleanup. The confirmed date stays visible while **Awaiting worker confirmation** is displayed; retries use the same request and cannot add another 30 minutes. Old worker images with immutable guards show disabled controls. New rentals created with PBGui v2.04.6 use the published queue-v2 worker with this protocol. Existing rentals retain their original worker and remain manageable, but require a new rental to gain deadline adjustment.
+
+GPU logs may repeat `chunks=2/2 candidates=1024/1024`: in Suite mode a candidate batch is screened separately for each scenario. `eta=0` refers to that dispatch, not the whole optimization. Exact/Pareto results arrive after the selected candidates complete their CPU evaluations; the first suite pass can therefore show GPU activity before any exact results.
+
+Multicoin GPU runtime need not scale linearly with coin count. Compare warm proxy profiles with the same coin set, scenarios and candidate count: `kernel_execution` isolates GPU computation from compilation and data transfer. A busy GPU alone does not establish normal host performance.

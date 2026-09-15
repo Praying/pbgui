@@ -80,12 +80,33 @@
   function copyJsonPanel(preId, btn) {
     var el = document.getElementById(preId);
     if (!el) return;
-    navigator.clipboard.writeText(el.textContent || '').then(function() {
+    var text = el.textContent || '';
+    function copied() {
       if (!btn) return;
       var original = btn.textContent;
       btn.textContent = '✓ Copied';
       window.setTimeout(function() { btn.textContent = original; }, 1400);
-    }).catch(function() {});
+    }
+    function fallbackCopy() {
+      var textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      var copiedByCommand = false;
+      try { copiedByCommand = document.execCommand('copy'); } catch (_) {}
+      textarea.remove();
+      if (copiedByCommand) copied();
+      else if (btn) btn.textContent = 'Copy failed';
+    }
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+      fallbackCopy();
+      return Promise.resolve();
+    }
+    return navigator.clipboard.writeText(text).then(copied).catch(fallbackCopy);
   }
 
   function expandJsonPanel(preId, btn) {

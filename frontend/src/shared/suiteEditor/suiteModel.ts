@@ -51,6 +51,16 @@ export interface ScenarioGeneratorDraft {
   starting_balance?: number;
   refill_cost?: number;
   cooldown_days?: number;
+  windows?: ScenarioGeneratorWindow[];
+}
+
+export interface ScenarioGeneratorWindow {
+  id: string;
+  role: 'training' | 'holdout';
+  label: string;
+  start_date: string;
+  end_date: string;
+  scenario?: SuiteScenario;
 }
 
 export type ScenarioGeneratorRequest = Omit<ScenarioGeneratorDraft, 'starting_balance'> & {

@@ -85,6 +85,23 @@ describe('enable toggle (:508-516)', () => {
     await wrapper.find('#suite-enabled').trigger('click');
     expect(current(wrapper).enabled).toBe(true);
   });
+
+  it('renders the Vue visual window editor for PB8 scenario generation', () => {
+    const wrapper = mount(SuiteEditor, {
+      props: {
+        modelValue: { enabled: true, scenarios: [{ label: 'train_01' }], editIdx: -1, aggregate: { default: 'mean' } },
+        exchanges: ['bybit'],
+        availableCoins: ['BTCUSDT'],
+        isV8: true,
+        scenarioGenerator: true,
+        scenarioContext: { start_date: '2024-01-01', end_date: '2024-12-31', exchanges: ['bybit'] },
+        previewScenarioTemplate: vi.fn(),
+      },
+      global: { plugins: [createI18n('en')] },
+    });
+
+    expect(wrapper.find('[data-test="suite-visual-window-editor"]').exists()).toBe(true);
+  });
 });
 
 describe('templates (:518-546)', () => {
