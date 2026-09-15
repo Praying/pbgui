@@ -28,6 +28,7 @@ export interface OptimizePageOptions {
   adapter: OptimizeAdapter;
   notify?: (message: string, kind?: 'info' | 'success' | 'error') => void;
   search?: string;
+  queueCloudConfig?: (name: string, config: Record<string, unknown>) => Promise<void>;
 }
 
 export interface QueueConfigCandidate {
@@ -632,10 +633,16 @@ export function useOptimizePage(options: OptimizePageOptions) {
       const saveBody = adapter.isV8 ? { config, override_configs: draft.overrideConfigs } : config;
       await request(`/configs/${encoded}`, { method: 'PUT', body: JSON.stringify(saveBody) });
       if (queueAfterSave) {
-        const queueBody = adapter.isV8
-          ? { name, config, override_configs: draft.overrideConfigs }
-          : { name, config };
-        await request('/queue', { method: 'POST', body: JSON.stringify(queueBody) });
+        const execution = isObject(config.pbgui) ? String(config.pbgui.execution || '').trim().toLowerCase() : '';
+        if (adapter.isV8 && execution === 'vast') {
+          if (!options.queueCloudConfig) throw new Error('Vast cloud controls are unavailable.');
+          await options.queueCloudConfig(name, config);
+        } else {
+          const queueBody = adapter.isV8
+            ? { name, config, override_configs: draft.overrideConfigs }
+            : { name, config };
+          await request('/queue', { method: 'POST', body: JSON.stringify(queueBody) });
+        }
       }
       editorName.value = name;
       editorDraft.value = draft;

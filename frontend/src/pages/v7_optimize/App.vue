@@ -47,6 +47,7 @@ import QueueLogPanel from './components/QueueLogPanel.vue';
 import QueuePanel from './components/QueuePanel.vue';
 import ResultsPanel from './components/ResultsPanel.vue';
 import SettingsModal from './components/SettingsModal.vue';
+import VastCloudPanel from './components/VastCloudPanel.vue';
 import { useOptimizeActions } from './composables/useOptimizeActions';
 import { useOptimizePage } from './composables/useOptimizePage';
 import { TOAST_VISIBLE_MS } from '@/shared/lib/toast';
@@ -54,6 +55,7 @@ import type { OptimizePanel } from './config';
 import type { ParetoItem, QueueItem, ResultSummary } from './types';
 import type { PageSection } from '@/shared/navigation';
 import { applyOptimizeSeed, buildEditorDraft, collectEditorConfig, type OptimizeEditorDraft } from './lib/configModel';
+import { queueVastConfig } from './lib/vastApi';
 import '@/styles/tailwind.css';
 
 const { t } = useI18n();
@@ -120,7 +122,12 @@ function handleKeydown(event: KeyboardEvent): void {
 }
 async function safely(action: () => Promise<void>): Promise<void> { try { await action(); } catch (error) { notify(detail(error), 'error'); } }
 
-const page = useOptimizePage({ adapter, notify, search: window.location.search });
+const page = useOptimizePage({
+  adapter,
+  notify,
+  search: window.location.search,
+  queueCloudConfig: (name, config) => queueVastConfig(name, config),
+});
 
 /* AI drawer page context — Vue port of the legacy optimize registration:
    the live editor-name wins (renames after drawer open stay visible),
@@ -605,7 +612,7 @@ onBeforeUnmount(() => {
       <LoadingSkeleton v-if="page.loading.value" class="p-[30px] text-secondary" :label="t('common.loading')" />
       <template v-else>
         <section v-if="page.panel.value === 'configs'" class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><ConfigsPanel :is-v8="adapter.isV8" :rows="page.filteredConfigs.value" :selected="page.selectedConfigs.value" :search="page.configSearch.value" :sort="page.configSort.value" @update:search="page.configSearch.value = $event" @toggle="(name) => toggle('configs', name)" @create="page.openEditor()" @edit="page.openEditor" @duplicate="openDuplicate" @sort="(key: string) => sortPanel('configs', key)" @select-all="selectVisible('configs')" @clear-selection="clearVisible('configs')" @select-range="(paths, selected) => page.setSelection('configs', paths, selected)" /></section>
-        <section v-else-if="page.panel.value === 'queue'" class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" :sort="page.queueSort.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" @go-to-configs="page.setPanel('configs')" /></section>
+        <section v-else-if="page.panel.value === 'queue'" class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><VastCloudPanel v-if="adapter.isV8" class="mb-3 shrink-0" /><QueuePanel :rows="page.filteredQueue.value" :selected="page.selectedQueue.value" :search="page.configSearch.value" :sort="page.queueSort.value" @update:search="page.configSearch.value = $event" @toggle="(filename) => toggle('queue', filename)" @action="runQueueAction" @edit="page.openQueueConfig" @log="openQueueLog" @move="(filename, delta) => safely(() => page.moveQueue(filename, delta))" @sort="(key: string) => sortPanel('queue', key)" @select-all="selectVisible('queue')" @clear-selection="clearVisible('queue')" @select-range="(paths, selected) => page.setSelection('queue', paths, selected)" @reorder="(filenames) => safely(() => page.reorderQueue(filenames))" @go-to-configs="page.setPanel('configs')" /></section>
         <section v-else-if="page.panel.value === 'results'" class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><ResultsPanel :rows="page.filteredResults.value" :selected="page.selectedResults.value" :selected-path="page.selectedResultPath.value" :is-v8="adapter.isV8" :search="page.resultSearch.value" :sort="page.resultSort.value" @update:search="page.resultSearch.value = $event" @toggle="(path) => toggle('results', path)" @open="openResult" @action="resultAction" @sort="(key: string) => sortPanel('results', key)" @select-all="selectVisible('results')" @clear-selection="clearVisible('results')" @select-range="(paths, selected) => page.setSelection('results', paths, selected)" @go-to-queue="page.setPanel('queue')" /></section>
         <section v-else class="opt-panel-view flex min-h-0 flex-col h-full"><PanelHeader class="mb-2" :title="panelTitle" :description="panelSubtitle" /><ParetosPanel :rows="page.filteredParetos.value" :meta="page.paretoMeta.value" :result-name="page.selectedResultName.value" :selected="page.selectedParetos.value" :is-v8="adapter.isV8" :columns="page.paretoMetricColumns.value" :available-metrics="page.paretoAvailableMetrics.value" :available-results="page.results.value" :selected-result-path="page.selectedResultPath.value" :holdout-validation-mode="holdoutValidationMode" :sort="page.paretoSort.value" @toggle="(path) => toggle('paretos', path)" @view="viewPareto" @seed="seedPareto" @migrate="migratePareto" @update:scenario="updateParetoFilter('scenario', $event)" @update:statistic="updateParetoFilter('statistic', $event)" @update:holdout-validation-mode="holdoutValidationMode = $event" @toggle-column="onToggleParetoColumn" @reset-columns="onResetParetoColumns" @select-all-columns="onResetParetoColumns" @select-result-path="selectParetoResultPath" @go-to-results="page.setPanel('results')" @sort="(key: string) => sortPanel('paretos', key)" @select-all="selectVisible('paretos')" @clear-selection="clearVisible('paretos')" @select-range="(paths, selected) => page.setSelection('paretos', paths, selected)" /></section>
       </template>

@@ -43,6 +43,7 @@ def test_log_viewer_close_4001_is_terminal_and_redirects() -> None:
     """A rejected shared viewer socket must never reconnect, even if reopened."""
 
     source = LOG_VIEWER.read_text(encoding="utf-8")
+    open_method = re.search(r"    open\(\).*", source).group(0)
     connect_start = source.index("    _connect() {")
     connect_method = source[connect_start:source.index("    _disconnect() {", connect_start)]
     script = textwrap.dedent(
@@ -69,6 +70,8 @@ def test_log_viewer_close_4001_is_terminal_and_redirects() -> None:
         globalThis.clearTimeout = function () {{}};
         class Panel {{
         {connect_method}
+        {open_method}
+          _watchTailLayout() {{}}
           _disconnect() {{}}
         }}
         const panel = Object.create(Panel.prototype);
@@ -93,13 +96,12 @@ def test_log_viewer_close_4001_is_terminal_and_redirects() -> None:
         assert.equal(panel._reconnectTimer, 0);
         assert.deepEqual(redirects, ['/']);
         assert.equal(timers, 0);
-        panel._connect();
+        panel.open();
         assert.equal(sockets.length, 1);
         """
     )
     result = run_node_script(script)
     assert result.returncode == 0, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-    assert "open()  { this._closed = false; if (!this._authExpired) this._connect(); }" in source
 
 
 def test_replaced_log_viewer_socket_callbacks_cannot_mutate_current_state() -> None:
@@ -686,8 +688,8 @@ def test_every_log_viewer_asset_reference_uses_current_cache_version() -> None:
         references.extend((path, match.group(0)) for match in re.finditer(r"log_viewer_panel\.js\?v=\d+", source))
 
     assert references
-    assert all(reference.endswith("?v=44") for _path, reference in references), references
-    assert "log_viewer_panel.js?v=44" in NAV.read_text(encoding="utf-8")
+    assert all(reference.endswith("?v=46") for _path, reference in references), references
+    assert "log_viewer_panel.js?v=46" in NAV.read_text(encoding="utf-8")
 
 
 def test_api_keys_local_viewer_disables_vps_state_transport() -> None:

@@ -716,6 +716,7 @@ const availableBackends = computed(() => {
     return { value, label: value + (unavailable ? ' (unavailable on this host)' : '') };
   });
 });
+const executionMode = computed(() => String(local.value?.pbgui.execution || 'local') === 'vast' ? 'vast' : 'local');
 const availableStrategies = computed(() => {
   const selected = String(local.value?.live.strategy_kind || '');
   return [...new Set([...(props.strategyOptions ?? []), selected].filter(Boolean))];
@@ -749,6 +750,11 @@ function switchOptimizeBackend(nextBackend: string): void {
     local.value.optimize.gpu = { ...gpuDefaults(props.optimizeDefaults), ...existingGpu };
   }
   pymooJson.value = json(local.value.optimize.pymoo);
+}
+function setExecutionMode(value: string): void {
+  if (!local.value || props.version !== 'v8') return;
+  if (value === 'vast') local.value.pbgui.execution = 'vast';
+  else delete local.value.pbgui.execution;
 }
 function setAdditionalBoolean(key: string, value: boolean): void { if (local.value) local.value.optimize[key] = value; }
 function setAdditionalValue(key: string, value: string, type: AdditionalParamType): void {
@@ -1159,6 +1165,18 @@ function preflight(): void {
                   <Input type="date" class="min-w-0 flex-1 h-9 text-compact tabular-nums" :model-value="String(local.backtest.end_date || '')" @update:model-value="setText('backtest', 'end_date', String($event ?? ''))" />
                   <Button type="button" variant="default" size="sm" class="h-9 px-2.5 text-xs font-semibold" :title="t('v7optimize.nowDate')" @click="setText('backtest', 'end_date', new Date().toISOString().slice(0, 10))">Now</Button>
                 </div>
+              </label>
+              <label v-if="version === 'v8'" class="opt-editor-field sm:col-span-3 max-[600px]:col-span-full">
+                <span :data-tip="t('v7optimize.cloudExecutionTip')">{{ t('v7optimize.cloudExecution') }}</span>
+                <SelectRoot :model-value="executionMode" @update:model-value="setExecutionMode(String($event))">
+                  <SelectTrigger aria-label="execution" class="h-9 text-compact">
+                    <span>{{ executionMode === 'vast' ? t('v7optimize.cloudExecutionVast') : t('v7optimize.cloudExecutionLocal') }}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="local">{{ t('v7optimize.cloudExecutionLocal') }}</SelectItem>
+                    <SelectItem value="vast">{{ t('v7optimize.cloudExecutionVast') }}</SelectItem>
+                  </SelectContent>
+                </SelectRoot>
               </label>
             </div>
           </div>
