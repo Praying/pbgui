@@ -105,6 +105,10 @@ export const PB8_ADVANCED_BT_PARAMS: readonly string[] = ['market_settings', 'vi
 
 /** Per-key hints for the Additional Parameters expander (:1110-1120). */
 export const EXTRA_BT_META: Record<string, { tip: string; fmt: string; options?: string[] }> = {
+  offline: {
+    tip: 'v7backtest.tip.offline',
+    fmt: 'Requires complete local candles and cached metadata. Does not download missing data.',
+  },
   hlcvs_data_dir: {
     /** i18n key — resolved by the editor label's data-tip. */
     tip: 'v7backtest.tip.hlcvsDataDir',

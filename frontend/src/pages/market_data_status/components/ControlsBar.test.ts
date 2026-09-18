@@ -6,10 +6,10 @@ import ControlsBar from './ControlsBar.vue';
 enableAutoUnmount(afterEach);
 
 function mountBar(
-  props: { queued: boolean; running: boolean; received: boolean },
+  props: { queued: boolean; running: boolean; received: boolean; actionPending?: boolean },
   lang: 'en' | 'zh' = 'en',
 ) {
-  return mount(ControlsBar, { props, global: { plugins: [createI18n(lang)] } });
+  return mount(ControlsBar, { props: { actionPending: false, ...props }, global: { plugins: [createI18n(lang)] } });
 }
 
 /** The three buttons in legacy order: Refresh Now, Cancel Queued, Stop. */
@@ -52,10 +52,11 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
     expect(stop.isVisible()).toBe(false);
   });
 
-  it('shows Stop Current Run alongside Refresh Now while running', () => {
+  it('shows Stop Current Run and disables Refresh Now while running', () => {
     const { refresh, stop } = buttons(mountBar({ queued: false, running: true, received: true }));
 
     expect(refresh.isVisible()).toBe(true);
+    expect(refresh.attributes('disabled')).toBeDefined();
     expect(stop.isVisible()).toBe(true);
     expect(stop.attributes('disabled')).toBeUndefined();
     expect(stop.text()).toContain('Stop Current Run');
@@ -67,13 +68,21 @@ describe('ControlsBar (legacy mds-controls button matrix)', () => {
     expect(bar.findAll('button')[2]!.attributes('disabled')).toBeDefined();
   });
 
+  it('disables every action while a request is pending', () => {
+    const bar = mountBar({ queued: false, running: true, received: true, actionPending: true });
+
+    expect(bar.findAll('button')[0]!.attributes('disabled')).toBeDefined();
+    expect(bar.findAll('button')[2]!.attributes('disabled')).toBeDefined();
+  });
+
   it('emits refresh/cancel/stop from the buttons a user can actually click', async () => {
-    // Refresh+Stop are clickable while running unqueued; Cancel only while queued.
-    const active = mountBar({ queued: false, running: true, received: true });
+    // Refresh is clickable while idle; Stop is clickable while running.
+    const active = mountBar({ queued: false, running: false, received: true });
     await active.findAll('button')[0]!.trigger('click');
-    await active.findAll('button')[2]!.trigger('click');
+    const running = mountBar({ queued: false, running: true, received: true });
+    await running.findAll('button')[2]!.trigger('click');
     expect(active.emitted('refresh')).toHaveLength(1);
-    expect(active.emitted('stop')).toHaveLength(1);
+    expect(running.emitted('stop')).toHaveLength(1);
 
     const queued = mountBar({ queued: true, running: false, received: true });
     await queued.findAll('button')[1]!.trigger('click');

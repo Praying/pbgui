@@ -96,6 +96,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
   const editorParamStatus = ref<Record<string, unknown>>({});
   const editorError = ref('');
   const editorOpen = ref(false);
+  const editorSaving = ref(false);
   const settingsOpen = ref(false);
   const queueConfigChoice = ref<QueueConfigChoice | null>(null);
   const loading = ref(false);
@@ -620,12 +621,14 @@ export function useOptimizePage(options: OptimizePageOptions) {
   }
 
   async function saveEditor(queueAfterSave = false, submittedDraft: OptimizeEditorDraft | null = editorDraft.value): Promise<void> {
+    if (editorSaving.value) return;
     const draft = submittedDraft ? JSON.parse(JSON.stringify(submittedDraft)) as OptimizeEditorDraft : null;
     const name = String(draft?.name || editorName.value).trim();
     if (!name || !draft) {
       editorError.value = 'Config name is required';
       return;
     }
+    editorSaving.value = true;
     try {
       draft.name = name;
       const config = collectEditorConfig(draft, adapter.version);
@@ -659,6 +662,8 @@ export function useOptimizePage(options: OptimizePageOptions) {
     } catch (caught) {
       editorError.value = detailOf(caught);
       notify(editorError.value, 'error');
+    } finally {
+      editorSaving.value = false;
     }
   }
 
@@ -865,6 +870,7 @@ export function useOptimizePage(options: OptimizePageOptions) {
     editorParamStatus,
     editorError,
     editorOpen,
+    editorSaving,
     settingsOpen,
     queueConfigChoice,
     loading,

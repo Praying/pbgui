@@ -58,6 +58,8 @@ export interface InventoryActionsController {
   olderDialogVisible: Ref<boolean>;
   /** The build button's await guard (:8413 disable → :8469 finally re-enable). */
   buildInFlight: Ref<boolean>;
+  /** Prevent duplicate delete-by-date requests across the confirmation await. */
+  deleteOlderInFlight: Ref<boolean>;
   /** openInventoryDeleteOlderDialog (:8217-8232). */
   openOlderDialog(): void;
   /** closeInventoryDeleteOlderDialog (:8134-8139). */
@@ -85,6 +87,7 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
   let olderPreviewRequestId = 0; // inventoryState.olderPreviewRequestId
   const olderDialogVisible = ref(false);
   const buildInFlight = ref(false); // buildBtn.disabled during the await (:8413)
+  const deleteOlderInFlight = ref(false);
 
   /** openInventoryDeleteOlderDialog (:8217-8232). */
   function openOlderDialog(): void {
@@ -267,6 +270,7 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
 
   /** runInventoryDeleteOlder (:8778-8823). */
   async function runDeleteOlder(): Promise<void> {
+    if (deleteOlderInFlight.value) return;
     const viewState = getViewState();
     const coins = getSelectedCoins();
     const coinLabels = getCoinLabels();
@@ -280,20 +284,20 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
       showToast(t('market.selectRowOrCoins'), 'error'); // :8788-8791
       return;
     }
-    if (
-      !(await confirm({
-        title: t('market.deleteFilesByDate'),
-        message: t('market.deleteOlderMsg', { date: viewState.olderCutoffDay }),
-        detail: `${String(exchangeMeta.label || getExchange())} • ${String(payload.view_label || getViewKey())}`,
-        items: coinLabels,
-        listLabel: coins.length === 1 ? t('market.selectedCoin') : t('market.selectedCoins'),
-        confirmText: t('market.deleteFiles'),
-      }))
-    ) {
-      return; // :8792-8799
-    }
-
+    deleteOlderInFlight.value = true;
     try {
+      if (
+        !(await confirm({
+          title: t('market.deleteFilesByDate'),
+          message: t('market.deleteOlderMsg', { date: viewState.olderCutoffDay }),
+          detail: `${String(exchangeMeta.label || getExchange())} • ${String(payload.view_label || getViewKey())}`,
+          items: coinLabels,
+          listLabel: coins.length === 1 ? t('market.selectedCoin') : t('market.selectedCoins'),
+          confirmText: t('market.deleteFiles'),
+        }))
+      ) {
+        return; // :8792-8799
+      }
       const result = await api.fetchJson<QueueResultPayload>(deleteOlderPath(getExchange()), {
         method: 'POST',
         body: JSON.stringify({
@@ -314,6 +318,8 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
           ? serverMsg(error.message)
           : t('market.failedDeleteOldFiles');
       showToast(message, 'error'); // :8821
+    } finally {
+      deleteOlderInFlight.value = false;
     }
   }
 
@@ -356,6 +362,7 @@ export function useInventoryActions(options: UseInventoryActionsOptions): Invent
   return {
     olderDialogVisible,
     buildInFlight,
+    deleteOlderInFlight,
     openOlderDialog,
     closeOlderDialog,
     loadOlderPreview,

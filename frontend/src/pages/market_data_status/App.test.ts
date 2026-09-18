@@ -153,7 +153,7 @@ describe('status-driven UI (legacy updateUI)', () => {
     FakeWebSocket.instances[0]!.message(statusMessage({ running: true, coins_done: 2, coins_total: 4, current_coin: 'BTC' }));
     await nextTick();
     expect(app.findAll('.mds-btn')[0]!.isVisible()).toBe(true);
-    expect(app.findAll('.mds-btn')[0]!.attributes('disabled')).toBeUndefined();
+    expect(app.findAll('.mds-btn')[0]!.attributes('disabled')).toBeDefined();
     expect(app.findAll('.mds-btn')[2]!.isVisible()).toBe(true);
     expect(app.find('.mds-progress-section').isVisible()).toBe(true);
     expect(app.find('.mds-progress-label').text()).toBe('2 / 4');

@@ -441,6 +441,14 @@ export function useAiChat(t: Translate) {
     if (!busy.value) return;
     const id = conversationId.value;
     setNotice(t('ai.chat.stopping'), false);
+    if (!id) {
+      ++chatGeneration;
+      busy.value = false;
+      pendingMessage.value = '';
+      stopActivityPolling();
+      setNotice(t('ai.chat.responseStopped'));
+      return;
+    }
     if (id) {
       try {
         await api('/conversations/' + encodeURIComponent(id) + '/cancel', { method: 'POST' });

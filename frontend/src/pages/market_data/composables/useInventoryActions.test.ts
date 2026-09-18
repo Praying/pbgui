@@ -354,6 +354,25 @@ describe('delete-older flow (:8217-8232, :8313-8337, :8778-8823)', () => {
     expect(h.fetchJson).not.toHaveBeenCalled();
   });
 
+  it('ignores a second delete request while confirmation or deletion is pending', async () => {
+    let releaseConfirm!: (value: boolean) => void;
+    const h = makeHarness({
+      confirmResult: true,
+    });
+    h.viewState.olderCutoffDay = '2024-01-15';
+    h.confirmSpy.mockImplementationOnce(() => new Promise<boolean>((resolve) => { releaseConfirm = resolve; }));
+
+    const first = h.controller.runDeleteOlder();
+    const second = h.controller.runDeleteOlder();
+    expect(h.controller.deleteOlderInFlight.value).toBe(true);
+    releaseConfirm(true);
+    await Promise.all([first, second]);
+
+    expect(h.confirmSpy).toHaveBeenCalledTimes(1);
+    expect(h.fetchJson).toHaveBeenCalledTimes(1);
+    expect(h.controller.deleteOlderInFlight.value).toBe(false);
+  });
+
   it('posts the cutoff digits, closes the dialog and reloads (:8803-8817)', async () => {
     const h = makeHarness();
     h.viewState.olderCutoffDay = '2024-01-15';

@@ -1,5 +1,11 @@
 # Unreleased
 
+## 合并远端 main v2.04.10-v2.04.11 并补齐 Vue 3 页面行为
+
+- 合并远端 `main` 的 v2.04.10 和 v2.04.11 发布修复，纳入 PB8、Vast GPU、优化队列、实例同步和运行时更新。
+- 保留 Vue 3 + Tailwind CSS v4.3 页面架构，并将 AI Chat、市场数据操作、Suite Editor、Backtest、V7 Edit 和 Optimize/Vast 的对应行为适配到 Vue 路径。
+- 同步 API serial、发布说明、帮助文档和回归测试，遗留 HTML/JS 继续作为兼容回退。
+
 ## 合并远端 main v2.04.7-v2.04.9 并完成 Vue 3 云端功能对齐
 
 - 合并远端 `main` 的 v2.04.7、v2.04.8 和 v2.04.9，纳入 Vast 多交易所场景导出、可恢复 rsync 输入同步、Worker guard 迁移、主机偏好/屏蔽、吞吐采样、性能历史以及 PB8 Suite 币种规范化修复。

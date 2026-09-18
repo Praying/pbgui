@@ -79,6 +79,7 @@ const received = computed(() => status.value !== null);
 const coinRows = computed(() => status.value?.coin_rows ?? []);
 const queued = computed(() => status.value?.queued === true);
 const running = computed(() => status.value?.running === true);
+const actionPending = ref(false);
 
 /* ── toasts (legacy showToast + notify_log relay) ── */
 
@@ -138,6 +139,9 @@ function errorMessage(error: unknown): string {
 }
 
 async function callEndpoint(url: string, successMessage: string): Promise<void> {
+  if (actionPending.value) return;
+  if (url === refreshNowUrl() && (queued.value || running.value)) return;
+  actionPending.value = true;
   try {
     const data = await apiFetch<{ success?: boolean; error?: string }>(url, {
       method: 'POST',
@@ -150,6 +154,8 @@ async function callEndpoint(url: string, successMessage: string): Promise<void> 
     }
   } catch (error) {
     showToast(t('misc.mds.errorPrefix', { error: errorMessage(error) }), 'error');
+  } finally {
+    actionPending.value = false;
   }
 }
 
@@ -183,7 +189,7 @@ async function onStopRun(): Promise<void> {
     <div v-else class="mds-container">
       <div class="mds-content-wrapper">
         <div v-if="configOk && !connected" class="mb-2 inline-flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2.5 py-1 text-xs text-warning-soft" role="status" aria-live="polite"><PbIcon :icon="PhArrowClockwise" :size="12" class="animate-spin" />{{ t('misc.mds.reconnecting') }}</div>
-        <ControlsBar :queued="queued"  :running="running" :received="received" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
+        <ControlsBar :queued="queued" :running="running" :received="received" :action-pending="actionPending" @refresh="onRefreshNow" @cancel="onCancelRefresh" @stop="onStopRun" />
         <ProgressPanel :status="status" />
         <CoinTable :rows="coinRows" :received="received" />
       </div>

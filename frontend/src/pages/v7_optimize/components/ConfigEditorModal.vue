@@ -41,8 +41,9 @@ import {
 import type { OhlcvStartDateJob } from '../types';
 import type { ScenarioGeneratorContext, ScenarioGeneratorPreview, ScenarioGeneratorRequest } from '@/shared/suiteEditor/suiteModel';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   open: boolean;
+  saving?: boolean;
   draft: OptimizeEditorDraft | null;
   version: OptimizeVersion;
   error: string;
@@ -68,7 +69,7 @@ const props = defineProps<{
   startOhlcvLookup?: (config: Record<string, unknown>) => Promise<OhlcvStartDateJob>;
   loadOhlcvLookup?: (jobId: string) => Promise<OhlcvStartDateJob>;
   stopOhlcvLookup?: (jobId: string) => Promise<OhlcvStartDateJob>;
-}>();
+}>(), { saving: false });
 const emit = defineEmits<{ close: []; save: [draft: OptimizeEditorDraft, queueAfterSave: boolean]; preflight: [draft: OptimizeEditorDraft] }>();
 const { t, te } = useI18n();
 
@@ -1074,7 +1075,7 @@ function applyRaw(): void {
   }
 }
 function save(queueAfterSave: boolean): void {
-  if (!local.value) return;
+  if (!local.value || props.saving) return;
   try {
     localError.value = '';
     suiteEditor.value?.foldDraft();
@@ -1861,8 +1862,8 @@ function preflight(): void {
       </div>
       <footer class="opt-editor-footer flex shrink-0 items-center justify-end gap-2.5 border-t border-border-default px-5 py-3.5 max-[600px]:flex-wrap max-[600px]:px-4">
         <Button type="button" variant="default" class="h-9.5 min-w-[104px] text-compact font-medium" @click="emit('close')">{{ t('common.cancel') }}</Button>
-        <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-compact font-medium" data-save="config" @click="save(false)">{{ t('v7optimize.saveConfig') }}</Button>
-        <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-compact font-medium" data-save="queue" @click="save(true)">{{ t('v7optimize.saveConfigAndQueue') }}</Button>
+        <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-compact font-medium" data-save="config" :disabled="saving" @click="save(false)">{{ saving ? t('v7optimize.savingConfig') : t('v7optimize.saveConfig') }}</Button>
+        <Button type="button" variant="info" class="h-9.5 min-w-[104px] text-compact font-medium" data-save="queue" :disabled="saving" @click="save(true)">{{ saving ? t('v7optimize.savingConfig') : t('v7optimize.saveConfigAndQueue') }}</Button>
       </footer>
       <DataTipTooltip />
     </section>
